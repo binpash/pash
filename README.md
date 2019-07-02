@@ -74,3 +74,13 @@ find . '*.md' | # Parallelizable, given a distributed FS
     nc -l 80    # netcat could default-but-configurably parallelizable
 ```
 
+# (Some) Related Work
+
+In shell scripting:
+* Attempts on distributed shells: `rc`, 
+* Parallel commands: GNU's `parallel`, 
+* Tons of parallel scripting: Lsf, Swift, ..
+
+Outside shell scripting:
+* Cluster computing: Hadoop, esp. Spark
+* Stream processing:
