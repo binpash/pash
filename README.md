@@ -84,3 +84,26 @@ In shell scripting:
 Outside shell scripting:
 * Cluster computing: Hadoop, esp. Spark
 * Stream processing:
+
+# Evaluation
+
+There are several directions for evaluating these ideas:
+
+* Find  "scripts" out in the  wild and "auto-convert" them  to parallel. Compare
+performance (and, possibly, correctness) over sequential runs.
+
+*  Take distributed  / MR  / Spark  / Stream  programs that  map to  our subset;
+convert  them  to  sequential  shell   scripts  (manually),  and  then  back  to
+distributed scripts (w/ our tool), and compare.
+
+# Future Ideas
+
+> Look into literature  on streaming sorts (log steps); the  first few things do
+> not have  to wait  for the whole  thing---FPGA merge-sorts and  how do  you go
+> through the various stages
+> (Andre')
+
+Since this is a relatively simplified and well-understood model, we could easily
+take into account scheduling aspects---i.e.,  where to schedule pipeline stages,
+based on available hardware. For example, I might have GPUs / FPGAs, or a set of
+tightly-coupled processors.
