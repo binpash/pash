@@ -96,6 +96,33 @@ performance (and, possibly, correctness) over sequential runs.
 convert  them  to  sequential  shell   scripts  (manually),  and  then  back  to
 distributed scripts (w/ our tool), and compare.
 
+# Notes
+
+## K: On distributing user written commands
+
+It seems that a very important feature of a distributed shell, would
+be to correctly distribute any command that might have been written by
+the user. By default we should never distribute a command that hasn't
+been analysed to make sure that it can be distributed safely.
+
+It might be feasible to study some of the standard shell commands
+(grep, ls, ...) and implement a distributed version of them (either
+custom or on top of the standard implementation). However what happens
+with user-written commands? In order to deal with this, we should come
+up with some abstraction, that represents how to 'lightly' distribute
+each user written command. This could be given to the system by the
+user using some configuration file, so that our implementations knows
+how and when to distribute a user-written command. 
+
+Is this a necessary feature for a distributed shell? If so, what is a
+nice abstraction that represents how "much" can one command be lightly
+distributed. Has something like that been implemented in any other
+distributed shell?
+
+By lightly distributed, I mean that the command is run several times
+as is, the only extension being that the input is split and the output
+is merged appropriately.
+
 # Future Ideas
 
 > Look into literature  on streaming sorts (log steps); the  first few things do
