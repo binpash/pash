@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+
+help(){
+    cat<<__EOF__
+    usage: m wallpaper [ /path/to/file.jpg | help ]
+
+    Examples:
+      m wallpaper ./wallpapers/tree.jpg  # set wallpaper
+__EOF__
+}
+
+set_wallpaper(){
+    osascript -e "tell application \"Finder\" to set desktop picture to \"${1}\" as POSIX file"
+}
+
+case $1 in
+    help)
+        help
+        ;;
+    *)
+        [ -z "$1" ] && help && exit 1
+        set_wallpaper "$1"
+        shift
+        ;;
+esac

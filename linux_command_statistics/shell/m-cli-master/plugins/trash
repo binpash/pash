@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+
+help(){
+    cat<<__EOF__
+    usage: m trash [ status | clean | help ]
+
+    Examples:
+      m trash status    # get trash info
+      m trash clean     # clean trash
+__EOF__
+}
+
+clean_trash(){
+    [ ! -e "$HOME/.Trash"  ] && echo "Trash not found" && exit 1
+    sudo chflags -R nouchg $HOME/.Trash/* 2>/dev/null
+    sudo rm -rf $HOME/.Trash/* 2>/dev/null
+    echo "Done!"
+}
+
+case $1 in
+    help)
+        help
+        ;;
+    clean)
+        clean_trash
+        ;;
+    status)
+        du -ch $HOME/.Trash/* 2>/dev/null | tail -n 1 | awk '{print "Size: ", $1}'
+        find $HOME/.Trash/* 2>/dev/null | wc -l | awk '{print "Number of files:", $1}'
+        ;;
+    *)
+        help
+        ;;
+esac
