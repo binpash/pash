@@ -1,0 +1,23 @@
+language: bash
+
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+    - os: osx
+  allow_failures:
+    - os: linux
+
+before_install:
+  - sudo ./install.sh all
+  - export TASTE_API_KEY='290044-Taste-QIQUQKOZ'
+
+install:
+  - if [ $TRAVIS_OS_NAME = linux ]; then sudo add-apt-repository ppa:duggan/bats --yes; fi
+  - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; fi
+  - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get install -qq bats; else brew install bats; fi
+  - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get install -qq openssl; else brew install openssl; fi
+
+script:
+  - bats tests
