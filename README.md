@@ -85,7 +85,8 @@ Outside shell scripting:
 * [pipelines vs. CSP etc.](https://swtch.com/~rsc/thread/)
 * [Pipeline minutiae](https://en.wikipedia.org/wiki/Pipeline_(Unix))
 * [RDDs](https://www.usenix.org/system/files/conference/nsdi12/nsdi12-final138.pdf)
-* [Smoosh papers] http://shell.cs.pomona.edu/)
+* [Smoosh papers](http://shell.cs.pomona.edu/)
+* [dgsh](https://github.com/dspinellis/dgsh)
 
 # Evaluation
 
