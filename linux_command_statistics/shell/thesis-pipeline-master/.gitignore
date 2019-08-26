@@ -1,0 +1,12 @@
+dev/
+set*/
+tmp/
+test/
+archive/
+legacy/
+reference/
+logs/
+validation/
+errors/
+core/pipeline.state
+core/pipeline.config

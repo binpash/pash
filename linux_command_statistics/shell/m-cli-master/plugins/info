@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+
+help(){
+    cat<<__EOF__
+    usage: m info [ help ]
+
+    Examples:
+      m info        #  print macOS operating system version information
+__EOF__
+}
+
+case $1 in
+    help)
+        help
+        ;;
+    *)
+        sw_vers
+        ;;
+esac

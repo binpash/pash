@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+
+help(){
+    cat<<__EOF__
+    usage:  m  shutdown [-f | --force | help ]
+
+    Examples:
+      m shutdown     # shutdown computer (needs confirmation)
+      m shutdown -f  # shutdown computer (without confirmation)
+__EOF__
+}
+
+shutdown(){
+    osascript -e 'tell app "loginwindow" to «event aevtrsdn»'
+}
+
+force_shutdown(){
+    osascript -e 'tell app "System Events" to shut down'
+}
+
+
+case $1 in
+    help)
+        help
+        ;;
+    -f|--force)
+        force_shutdown
+        ;;
+    *)
+        shutdown
+        ;;
+esac
