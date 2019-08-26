@@ -82,8 +82,10 @@ In shell scripting:
 * Tons of parallel scripting: Lsf, Swift, ..
 
 Outside shell scripting:
-* Cluster computing: Hadoop, esp. Spark
-* Stream processing:
+* [pipelines vs. CSP etc.](https://swtch.com/~rsc/thread/)
+* [Pipeline minutiae](https://en.wikipedia.org/wiki/Pipeline_(Unix))
+* [RDDs](https://www.usenix.org/system/files/conference/nsdi12/nsdi12-final138.pdf)
+* [Smoosh papers] http://shell.cs.pomona.edu/)
 
 # Evaluation
 
@@ -107,3 +109,4 @@ Since this is a relatively simplified and well-understood model, we could easily
 take into account scheduling aspects---i.e.,  where to schedule pipeline stages,
 based on available hardware. For example, I might have GPUs / FPGAs, or a set of
 tightly-coupled processors.
+
