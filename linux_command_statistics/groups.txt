@@ -97,7 +97,7 @@ uniq            - mostly-stateless (looks at pairs)
 paste           - 6.91085003455425E-4
 perl            - Turing-complete
 wait            - Synchronization primitive
-addresses       - 6.142977808492667E-4
+addresses       - This has no GNU nor BSD entry
 chown           - 6.142977808492667E-4
 gpg             - 6.142977808492667E-4
 host            - 6.142977808492667E-4
