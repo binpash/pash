@@ -3,33 +3,46 @@ package dshell.test;
 import dshell.core.Operator;
 import dshell.core.nodes.AtomicGraph;
 import dshell.core.nodes.SerialGraph;
+import dshell.core.nodes.Sink;
 import dshell.core.nodes.StatelessOperator;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+
 public class GraphTest {
     @Test
     public void wordCount() {
-        Operator cat = new StatelessOperator("cat", new String[]{"~/Desktop/tekst.txt"});
+        Operator cat = new StatelessOperator("cat", new String[]{"/home/cvetkovic/Desktop/tekst.txt"});
         Operator wc = new StatelessOperator("wc", new String[]{"-w"});
+        Sink sink = Sink.createPrinter();
 
-        SerialGraph graph = new SerialGraph(new AtomicGraph(cat), new AtomicGraph(wc));
+        SerialGraph graph = new SerialGraph(new AtomicGraph(cat), new AtomicGraph(wc), new AtomicGraph(sink));
 
-        //System.out.println(graph.toString());
-        //Assert.assertTrue(graph.toString().equals("cat /home/cvetkovic/Desktop/example_text.txt | wc -w"));
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(baos));
 
         graph.executeLocally();
+
+        String output = baos.toString();
+        Assert.assertTrue(output.equals("2923\n"));
     }
 
     @Test
     public void grep() {
-        Operator cat = new StatelessOperator("cat", new String[]{"$INPUT"});
-        Operator wc = new StatelessOperator("grep", new String[]{"'[a-zA-Z0-9]\\+@[a-zA-Z0-9]\\+\\.[a-z]\\{2,\\}'"});
+        Operator cat = new StatelessOperator("cat", new String[]{"/home/cvetkovic/Desktop/tekst.txt"});
+        Operator wc = new StatelessOperator("grep", new String[]{"\"[a-zA-Z0-9]\\+@[a-zA-Z0-9]\\+\\.[a-z]\\{2,\\}\""});
 
         SerialGraph graph = new SerialGraph(new AtomicGraph(cat), new AtomicGraph(wc));
 
-        System.out.println(graph.toString());
-        Assert.assertTrue(graph.toString().equals("cat $INPUT | grep '[a-zA-Z0-9]\\+@[a-zA-Z0-9]\\+\\.[a-z]\\{2,\\}'"));
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(baos));
+
+        graph.executeLocally();
+
+        String output = baos.toString();
+        Assert.assertTrue(output.equals("tutabugarin@gmail.com\n"));
     }
 
     @Test
