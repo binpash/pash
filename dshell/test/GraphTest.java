@@ -12,9 +12,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 public class GraphTest {
+    public static String INPUT_FILE = "/home/cvetkovic/Desktop/tekst.txt";
+
     @Test
     public void wordCount() {
-        Operator cat = new StatelessOperator("cat", new String[]{"/home/cvetkovic/Desktop/tekst.txt"});
+        Operator cat = new StatelessOperator("cat", new String[]{INPUT_FILE});
         Operator wc = new StatelessOperator("wc", new String[]{"-w"});
         Sink sink = Sink.createPrinter();
 
@@ -31,10 +33,11 @@ public class GraphTest {
 
     @Test
     public void grep() {
-        Operator cat = new StatelessOperator("cat", new String[]{"/home/cvetkovic/Desktop/tekst.txt"});
-        Operator wc = new StatelessOperator("grep", new String[]{"\"[a-zA-Z0-9]\\+@[a-zA-Z0-9]\\+\\.[a-z]\\{2,\\}\""});
+        Operator cat = new StatelessOperator("cat", new String[]{INPUT_FILE});
+        Operator grep = new StatelessOperator("grep", new String[]{"[a-zA-Z0-9]\\+@[a-zA-Z0-9]\\+\\.[a-z]\\{2,\\}"});
+        Sink sink = Sink.createPrinter();
 
-        SerialGraph graph = new SerialGraph(new AtomicGraph(cat), new AtomicGraph(wc));
+        SerialGraph graph = new SerialGraph(new AtomicGraph(cat), new AtomicGraph(grep), new AtomicGraph(sink));
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         System.setOut(new PrintStream(baos));
@@ -42,12 +45,12 @@ public class GraphTest {
         graph.executeLocally();
 
         String output = baos.toString();
-        Assert.assertTrue(output.equals("tutabugarin@gmail.com\n"));
+        Assert.assertTrue(output.equals("tutabugarin@gmail.com\r\n"));
     }
 
     @Test
     public void wordFrequencies() {
-        Operator cat = new StatelessOperator("cat", new String[]{"$INPUT"});
+        Operator cat = new StatelessOperator("cat", new String[]{INPUT_FILE});
         Operator tr1 = new StatelessOperator("tr", new String[]{"-cs A-Za-z'\n'"});
         Operator tr2 = new StatelessOperator("tr", new String[]{"A-Z a-z"});
         Operator sort1 = new StatelessOperator("sort");
@@ -69,7 +72,7 @@ public class GraphTest {
 
     @Test
     public void topNTerms() {
-        Operator cat = new StatelessOperator("cat", new String[]{"$INPUT"});
+        Operator cat = new StatelessOperator("cat", new String[]{INPUT_FILE});
         Operator tr1 = new StatelessOperator("tr", new String[]{"-cs A-Za-z '\n'"});
         Operator tr2 = new StatelessOperator("tr", new String[]{"A-Z a-z"});
         Operator sort1 = new StatelessOperator("sort");
