@@ -1,5 +1,7 @@
 package dshell.core;
 
+import dshell.core.nodes.Sink;
+
 public abstract class Graph {
     protected abstract Operator getOperator();
 
@@ -11,7 +13,7 @@ public abstract class Graph {
         StringBuilder sb = new StringBuilder();
         Operator op = getOperator();
 
-        while (op != null) {
+        while (op != null && !(op instanceof Sink)) {
             sb.append(op.getProgram());
             if (op.getCommandLineArguments() != null) {
                 for (String s : op.getCommandLineArguments()) {
@@ -19,7 +21,7 @@ public abstract class Graph {
                 }
             }
 
-            if (op.getConsumer() != null)
+            if (op.getConsumer() != null && !(op.getConsumer() instanceof Sink))
                 sb.append(" | ");
 
             op = (Operator) op.getConsumer();

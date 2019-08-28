@@ -2,11 +2,9 @@ package dshell.core.nodes;
 
 import dshell.core.Operator;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 
-public class StatelessOperator extends Operator<String, String> {
+public class StatelessOperator extends Operator<byte[], byte[]> {
     public StatelessOperator(String program) {
         super(program);
     }
@@ -16,31 +14,24 @@ public class StatelessOperator extends Operator<String, String> {
     }
 
     @Override
-    public void next(String data) {
-        String execParameter = program + " " + getArgumentsAsString();
-        StringBuilder processOutput = new StringBuilder();
-        String s;
-
+    public void next(byte[] data) {
         try {
-            ProcessBuilder processBuilder = new ProcessBuilder(execParameter);
+            ProcessBuilder processBuilder = new ProcessBuilder(program, getArgumentsAsString());
             Process process = processBuilder.start();
 
             if (data != null) {
                 OutputStream os = process.getOutputStream();
-                os.write(data.getBytes());
+                os.write(data);
+                os.flush();
+                os.close();
             }
 
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            while ((s = bufferedReader.readLine()) != null)
-                processOutput.append(s);
+            byte[] systemOut = process.getInputStream().readAllBytes();
 
             process.waitFor();
             process.destroy();
 
-            if (consumer != null)
-                consumer.next(processOutput.toString());
-            else
-                System.out.println(processOutput.toString());
+            consumer.next(systemOut);
         } catch (Exception e) {
             e.printStackTrace();
         }
