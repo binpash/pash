@@ -1,0 +1,180 @@
+https://9p.io/wiki/plan9/plan_9_wiki/
+https://en.wikipedia.org/wiki/List_of_Plan_9_applications
+
+# General user
+dd[1] – convert and copy a file
+date[2] – date and time
+echo[3] – print arguments
+file[4] – determine file type
+ns[5] – display namespace
+plumb[6] – send message to plumber
+plumber[7] – interprocess messaging
+rc[8] – rc is the Plan 9 shell
+rio[9] – the new Plan 9 windowing system
+8½ – the old Plan 9 windowing system [1]
+uptime[10] – show how long the system has been running
+
+# Process and task management
+time[11] – time a command
+kill,[12] slay,[12] broke[12] – print commands to kill processes
+sleep[13] – suspend execution for an interval
+ps[14] – process status
+psu[14] – process status information about processes started by a specific user
+User management and support
+passwd,[15] netkey,[15] iam – change user password
+who[16] – who is using the machine
+man,[17] lookman[17] – print or find pages of this manual
+
+# File system and server
+/boot/boot[18] – connect to the root file server
+fossil/fossil, fossil/flchk, fossil/flfmt, fossil/conf, fossil/last – archival file server
+history[19] – print file names from the dump
+users[20] – file server user list format
+vac[21] – create a vac archive on Venti
+venti/buildindex, venti/checkarenas, venti/checkindex, venti/conf, venti/copy,[22] venti/fmtarenas, venti/fmtindex, venti/fmtisect, venti/rdarena, venti/rdarenablocks, venti/read,[22] venti/wrarenablocks, venti/write[22] – Venti maintenance and debugging commands
+venti/venti,[23] venti/sync – an archival block storage server
+yesterday,[24] diffy[24] – print file names from the dump
+
+# Hardware devices
+setrtc – set real time clock(RTC) on PC hardware
+
+# Files and text
+Filesystem utilities
+chgrp[25] – change file group
+chmod[26] – change mode
+cp,[27] fcp,[27] mv[27] – copy, move files
+du[28] – disk usage
+ls,[29] lc[29] – list contents of directory
+mkdir[30] – make a directory
+bind,[31] mount,[31] umount[31] – change name space
+pwd,[32] pbd[32] – working directory
+rm[33] – remove files
+touch[34] – set modification date of a file
+
+# Archivers and compression
+ar[35] – archive and library maintainer
+gzip,[36] gunzip,[36] bzip2,[36] bunzip2,[36] compress,[36] uncompress,[36] zip,[36] unzip[36] – compress and expand data
+tar[37] – archiver
+Text processing
+awk – pattern-directed scanning and processing language
+cat, read – catenate files
+cmp – compare two files
+diff – differential file comparator
+doc2txt, xls2txt – extract printable strings from Microsoft Office documents
+doctype – intuit command line for formatting a document
+fmt, htmlfmt – simple text formatters
+freq – print histogram of character frequencies
+grep – search a file for a pattern
+idiff – interactive diff
+mc – multicolumn print
+p[38] – paginate
+pr[39] – print file
+sed – stream editor
+spell, sprog – find spelling errors
+split – split a file into pieces
+tail – deliver the last part of a file
+tcs – translate character sets
+tr – translate characters
+wc – word count
+xd – hex, octal, decimal or ASCII dump of file
+
+# Editors
+acme[40] – interactive text editor and shell
+ed[41] – text editor
+sam[42] – screen editor with structural regular expressions
+Communication, networking and remote access
+con, telnet, rx, xms, xmr – remote login, execution, and XMODEM file transfer
+cpu – connection to CPU server
+dial/at, dial/drain, dial/expect, dial/pass – dialer scripting tools
+netstat – summarize network connections
+replica/changes, replica/pull, replica/push, replica/scan – client–server replica management
+ssh, sshnet, scp, aux/sshserve – secure login and file copy from/to Unix or Plan 9
+tel, iwhois – look in phone book
+vncs, vncv – remote frame buffer server and viewer for Virtual Network Computing (VNC)
+
+# Email and news programs
+faces, seemail, vwhois – mailbox interface
+mail – mail and mailboxes
+news – print news items
+upas/filter, upas/list, upas/deliver, upas/token, upas/vf – filtering mail
+upas/fs – mail file server
+upas/marshal – formatting and sending mail
+upas/ml, upas/mlmgr, upas/mlowner – unmoderated mailing lists
+upas/nedmail – reading mail
+upas/scanmail, upas/testscan – spam filters
+upas/send – mail routing and delivery
+upas/smtp, upas/smtpd – mail transport
+
+# Network system services
+ip/dhcpd, ip/dhcpleases, ip/rarpd, ip/tftpd – Internet booting
+aux/listen – listen for calls on a network device
+ndb/query, ndb/mkhash, ndb/mkdb, ndb/cs, ndb/csquery, ndb/dns, ndb/dnsquery, ndb/ipquery, ndb/dnsdebug, ndb/mkhosts – network database
+upas/pop3, ip/imap4d – mail servers
+aux/timesync – NTP client
+Network utilities
+aan – always available network
+ip/ipconfig, ip/rip – Internet configuration and routing
+ip/telnetd, ip/rlogind, ip/rexexec, ip/ftpd – Internet remote access daemons
+ip/ping, ip/gping, ip/traceroute, ip/hogports – probe the Internet
+snoopy – spy on network packets
+ip/udpecho – echo UDP packets
+Security
+auth/aescbc, ipso, auth/secstore – secstore commands
+auth/changeuser, auth/wrkey, auth/convkeys, auth/convkeys2, auth/printnetkey, auth/status, auth/authsrv, auth/guard.srv, auth/login, auth/disable, auth/enable – maintain authentication databases
+auth/factotum, auth/fgui – authentication agent
+auth/secstored, auth/secuser – secstore commands
+delkey – delete keys from factotum
+
+# Compilers and programming tools
+0a, 1a, 2a, 5a, 7a, 8a, ka, qa, va – assemblers
+0c, 1c, 2c, 5c, 7c, 8c, kc, qc, vc – C compilers
+0l, 1l, 2l, 5l, 7l, 8l, kl, ql, vl – loaders
+acid, truss, trump – debugger
+bc – arbitrary–precision arithmetic language
+cb – C program beautifier
+cpp – C language preprocessor
+ktrace – interpret kernel stack dumps
+leak, kmem – help find memory leaks
+mk, membername – maintain (make) related files
+patch – simple patch creation and tracking system
+pcc – APE C compiler driver
+strip – remove symbols from binary files
+syscall – test a system call
+yacc – yet another compiler-compiler
+
+# Web browsers
+abaco[43] – a "lame" text-based and graphical web browser
+i – rough web browser, based on charon
+links – a text-based and graphical web browser
+mothra – a very basic web browser
+Desktop publishing
+deroff, delatex – remove formatting requests
+eqn – typeset mathematics
+gs – Aladdin Ghostscript (PostScript and PDF language interpreter)
+htmlroff – HTML formatting and typesetting
+lp – printer output
+ms2html, html2ms – convert between troff's ms macros and html
+page – view FAX, image, graphic PostScript PDF, and typesetter output files
+pic, tpic – troff and tex preprocessors for drawing pictures
+pr – print file
+ps2pdf, pdf2ps – convert between PostScript and PDF
+tbl – format tables for nroff or troff
+troff, nroff – text formatting and typesetting
+troff2html – convert troff output into HTML
+
+# Graphics and multimedia
+getmap,[44] colors[44] – display color map
+jpg,[45] gif,[45] png,[45] ppm,[45] bmp,[45] v210,[45] yuv,[45] ico,[45] togif,[45] toppm,[45] topng,[45] toico[45] – view and convert pictures
+Various utilities and games
+astro[46] – print astronomical information
+cal[47] – print calendar
+calendar[48] – print upcoming events
+clock[49] – draws a simple analog clock
+dict[50] – dictionary browser
+fortune[51] – sample lines from a file
+juke,[52] games/jukebox,[52] games/jukefs[52] – music jukebox
+lens[53] – interactive screen magnifier
+map,[54] mapdemo[54] – draw maps on various projections
+games/playlistfs[55] – playlist file system
+thesaurus[56] – search online thesaurus
+scat[57] – sky catalogue
