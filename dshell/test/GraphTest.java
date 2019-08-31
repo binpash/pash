@@ -45,6 +45,7 @@ public class GraphTest {
 
     @Test
     public void wordFrequencies() {
+
         Operator cat = new StatelessOperator("cat", new String[]{INPUT_FILE});
         Operator tr1 = new StatelessOperator("tr", new String[]{"-cs A-Za-z'\n'"});
         Operator tr2 = new StatelessOperator("tr", new String[]{"A-Z a-z"});
