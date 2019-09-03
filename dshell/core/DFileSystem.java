@@ -10,7 +10,7 @@ import org.apache.hadoop.io.IOUtils;
 import java.util.UUID;
 
 public class DFileSystem {
-    private static final String HDFS_SERVER = "hdfs://";
+    private static final String HDFS_SERVER = "hdfs://localhost:9000/";
 
     public static String generateFilename() {
         UUID uuid = UUID.randomUUID();
@@ -19,7 +19,7 @@ public class DFileSystem {
 
     public static void uploadFile(String filename, byte[] rawData) {
         Configuration configuration = new Configuration();
-        configuration.set("fs.default.name", HDFS_SERVER);
+        //configuration.set("fs.default.name", HDFS_SERVER);
         FSDataOutputStream dos = null;
 
         try {
@@ -41,7 +41,7 @@ public class DFileSystem {
 
     public static byte[] downloadFile(String filename) {
         Configuration configuration = new Configuration();
-        configuration.set("fs.default.name", HDFS_SERVER);
+        //configuration.set("fs.default.name", HDFS_SERVER);
         FSDataInputStream dis = null;
         byte[] result = null;
 
@@ -50,7 +50,7 @@ public class DFileSystem {
             Path inputFile = new Path(filename);
 
             if (!fileSystem.exists(inputFile))
-                throw new RuntimeException("File with the given filename does not exists within current HDFS context.");
+                throw new RuntimeException("File with the given filename does not exist within current HDFS context.");
 
             dis = fileSystem.open(inputFile);
             result = dis.readAllBytes();
