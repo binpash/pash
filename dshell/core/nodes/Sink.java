@@ -1,5 +1,6 @@
 package dshell.core.nodes;
 
+import dshell.core.DFileSystem;
 import dshell.core.Operator;
 
 import java.io.DataOutputStream;
@@ -7,7 +8,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 
-public abstract class Sink extends Operator<byte[], byte[]> {
+public abstract class Sink extends Operator<String, String> {
     public static final int NETWORK_PRINTER_PORT = 38137;
 
     private Sink(String program) {
@@ -15,13 +16,13 @@ public abstract class Sink extends Operator<byte[], byte[]> {
     }
 
     @Override
-    public abstract void next(byte[] data);
+    public abstract void next(String data);
 
     public static Sink createPrinter() {
         return new Sink(null) {
             @Override
-            public void next(byte[] data) {
-                System.out.print(new String(data));
+            public void next(String data) {
+                System.out.print(new String(DFileSystem.downloadFile(data)));
             }
         };
     }
@@ -33,7 +34,7 @@ public abstract class Sink extends Operator<byte[], byte[]> {
             private DataOutputStream dos;
 
             @Override
-            public void next(byte[] data) {
+            public void next(String data) {
                 try {
                     if (socket == null) {
                         socket = new Socket("localhost", NETWORK_PRINTER_PORT);
@@ -41,7 +42,7 @@ public abstract class Sink extends Operator<byte[], byte[]> {
                         dos = new DataOutputStream(os);
                     }
 
-                    dos.write(data);
+                    dos.write(data.getBytes());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
