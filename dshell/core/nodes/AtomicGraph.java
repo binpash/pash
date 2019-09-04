@@ -11,7 +11,7 @@ public class AtomicGraph extends Graph {
     }
 
     @Override
-    protected Operator getOperator() {
+    public Operator getOperator() {
         return operator;
     }
 }

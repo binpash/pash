@@ -49,6 +49,6 @@ public class Shell {
         String bashCommand = args[0];
         Graph graph = createGraph(bashCommand);
 
-        graph.executeLocally();
+        graph.executeLocallySingleThreaded();
     }
 }
