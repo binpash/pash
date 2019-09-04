@@ -23,8 +23,19 @@ public class GraphTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         System.setOut(new PrintStream(baos));
 
-        graph.executeLocally();
+        graph.executeLocallySingleThreaded();
+        String output = baos.toString();
+        Assert.assertTrue(output.equals("2923\n"));
+    }
 
+    @Test
+    public void wordCountDistributted() {
+        String command = "cat " + INPUT_FILE + " | wc -w";
+        Graph graph = Shell.createGraph(command);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(baos));
+
+        graph.executeLocallyDistributed();
         String output = baos.toString();
         Assert.assertTrue(output.equals("2923\n"));
     }
@@ -37,7 +48,7 @@ public class GraphTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         System.setOut(new PrintStream(baos));
 
-        graph.executeLocally();
+        graph.executeLocallySingleThreaded();
 
         String output = baos.toString();
         Assert.assertTrue(output.equals("tutabugarin@gmail.com\r\n"));

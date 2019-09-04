@@ -27,7 +27,7 @@ public abstract class Sink extends Operator<String, String> {
         };
     }
 
-    public static Sink createNetworkPrinter() {
+    public static Sink createNetworkPrinter(String address, int port) {
         return new Sink(null) {
             private Socket socket;
             private OutputStream os;
@@ -37,7 +37,7 @@ public abstract class Sink extends Operator<String, String> {
             public void next(String data) {
                 try {
                     if (socket == null) {
-                        socket = new Socket("localhost", NETWORK_PRINTER_PORT);
+                        socket = new Socket(address, port);
                         os = socket.getOutputStream();
                         dos = new DataOutputStream(os);
                     }
