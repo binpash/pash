@@ -1,6 +1,7 @@
 package dshell.test;
 
 import dshell.Shell;
+import dshell.core.DFileSystem;
 import dshell.core.Graph;
 import dshell.core.Operator;
 import dshell.core.nodes.AtomicGraph;
@@ -29,15 +30,18 @@ public class GraphTest {
     }
 
     @Test
-    public void wordCountDistributted() {
+    public void wordCountDistributed() {
         String command = "cat " + INPUT_FILE + " | wc -w";
         Graph graph = Shell.createGraph(command);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         System.setOut(new PrintStream(baos));
 
-        graph.executeLocallyDistributed();
+        graph.executeDistributed("output.txt");
         String output = baos.toString();
         Assert.assertTrue(output.equals("2923\n"));
+
+        byte[] file = DFileSystem.downloadFile("output.txt");
+        Assert.assertTrue((new String(file)).equals("2923\n"));
     }
 
     @Test
@@ -56,7 +60,6 @@ public class GraphTest {
 
     @Test
     public void wordFrequencies() {
-
         Operator cat = new StatelessOperator("cat", new String[]{INPUT_FILE});
         Operator tr1 = new StatelessOperator("tr", new String[]{"-cs A-Za-z'\n'"});
         Operator tr2 = new StatelessOperator("tr", new String[]{"A-Z a-z"});

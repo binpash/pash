@@ -28,7 +28,7 @@ public abstract class Graph {
 
     private int i;
 
-    public void executeLocallyDistributed() {
+    public void executeDistributed(String outputFile) {
         try {
             Thread[] threads = null;
 
