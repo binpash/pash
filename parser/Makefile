@@ -1,0 +1,30 @@
+PARSER=parse_to_json
+
+.PHONY : all test dependencies clean
+
+all : $(PARSER).native $(PARSER).byte
+
+test : $(PARSER).native $(PARSER).byte $(wildcard tests/*)
+	@echo "TESTING test.native"
+	@for f in tests/*; do \
+		./round_trip.sh ./$(PARSER).native $$f 2>test.err; \
+	done
+	@echo "TESTING test.byte"
+	@for f in tests/*; do \
+		./round_trip.sh ./$(PARSER).byte $$f 2>test.err; \
+	done
+
+
+$(PARSER).native : $(PARSER).ml
+	ocamlfind ocamlopt -g -package dash,ctypes,ctypes.foreign -linkpkg $^ -o $(PARSER).native
+
+$(PARSER).byte : $(PARSER).ml 
+	ocamlfind ocamlcp -p a -package dash,ctypes,ctypes.foreign -linkpkg $^ -o $(PARSER).byte
+
+clean :
+	rm -f *.o *.cmo *.cmi *.cmx $(PARSER).native $(PARSER).byte test.err
+
+dependencies:
+	opam install ctypes.0.11.5
+	opam install ctypes-foreign
+	opam install atdgen
