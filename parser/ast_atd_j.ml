@@ -21,20 +21,22 @@ and args = Ast_atd_t.args
 
 and assign = Ast_atd_t.assign
 
+and case = Ast_atd_t.case = { cpattern: arg list; cbody: t }
+
 and redirection = Ast_atd_t.redirection
 
 and t = Ast_atd_t.t
 
-let write__6 = (
+let write__7 = (
   Atdgen_runtime.Oj_run.write_option (
     Yojson.Safe.write_string
   )
 )
-let string_of__6 ?(len = 1024) x =
+let string_of__7 ?(len = 1024) x =
   let ob = Bi_outbuf.create len in
-  write__6 ob x;
+  write__7 ob x;
   Bi_outbuf.contents ob
-let read__6 = (
+let read__7 = (
   fun p lb ->
     Yojson.Safe.read_space p lb;
     match Yojson.Safe.start_any_variant p lb with
@@ -80,8 +82,8 @@ let read__6 = (
               Atdgen_runtime.Oj_run.invalid_variant_tag p x
         )
 )
-let _6_of_string s =
-  read__6 (Yojson.Safe.init_lexer ()) (Lexing.from_string s)
+let _7_of_string s =
+  read__7 (Yojson.Safe.init_lexer ()) (Lexing.from_string s)
 let write_char = (
   Yojson.Safe.write_int
 )
@@ -388,7 +390,7 @@ and string_of__3 ?(len = 1024) x =
   Bi_outbuf.contents ob
 and write__4 ob x = (
   Atdgen_runtime.Oj_run.write_list (
-    write_arg
+    write_case
   )
 ) ob x
 and string_of__4 ?(len = 1024) x =
@@ -397,15 +399,24 @@ and string_of__4 ?(len = 1024) x =
   Bi_outbuf.contents ob
 and write__5 ob x = (
   Atdgen_runtime.Oj_run.write_list (
-    write_arg_char
+    write_arg
   )
 ) ob x
 and string_of__5 ?(len = 1024) x =
   let ob = Bi_outbuf.create len in
   write__5 ob x;
   Bi_outbuf.contents ob
+and write__6 ob x = (
+  Atdgen_runtime.Oj_run.write_list (
+    write_arg_char
+  )
+) ob x
+and string_of__6 ?(len = 1024) x =
+  let ob = Bi_outbuf.create len in
+  write__6 ob x;
+  Bi_outbuf.contents ob
 and write_arg ob x = (
-  write__5
+  write__6
 ) ob x
 and string_of_arg ?(len = 1024) x =
   let ob = Bi_outbuf.create len in
@@ -429,7 +440,7 @@ and write_arg_char = (
       | `T x ->
         Bi_outbuf.add_string ob "<\"T\":";
         (
-          write__6
+          write__7
         ) ob x;
         Bi_outbuf.add_char ob '>'
       | `A x ->
@@ -487,7 +498,7 @@ and string_of_arg_char ?(len = 1024) x =
   write_arg_char ob x;
   Bi_outbuf.contents ob
 and write_args ob x = (
-  write__4
+  write__5
 ) ob x
 and string_of_args ?(len = 1024) x =
   let ob = Bi_outbuf.create len in
@@ -512,6 +523,34 @@ and write_assign = (
 and string_of_assign ?(len = 1024) x =
   let ob = Bi_outbuf.create len in
   write_assign ob x;
+  Bi_outbuf.contents ob
+and write_case : _ -> case -> _ = (
+  fun ob x ->
+    Bi_outbuf.add_char ob '{';
+    let is_first = ref true in
+    if !is_first then
+      is_first := false
+    else
+      Bi_outbuf.add_char ob ',';
+    Bi_outbuf.add_string ob "\"cpattern\":";
+    (
+      write__5
+    )
+      ob x.cpattern;
+    if !is_first then
+      is_first := false
+    else
+      Bi_outbuf.add_char ob ',';
+    Bi_outbuf.add_string ob "\"cbody\":";
+    (
+      write_t
+    )
+      ob x.cbody;
+    Bi_outbuf.add_char ob '}';
+)
+and string_of_case ?(len = 1024) x =
+  let ob = Bi_outbuf.create len in
+  write_case ob x;
   Bi_outbuf.contents ob
 and write_redirection = (
   fun ob x ->
@@ -862,6 +901,31 @@ and write_t = (
             Bi_outbuf.add_char ob ')';
         ) ob x;
         Bi_outbuf.add_char ob '>'
+      | `Case x ->
+        Bi_outbuf.add_string ob "<\"Case\":";
+        (
+          fun ob x ->
+            Bi_outbuf.add_char ob '(';
+            (let x, _, _ = x in
+            (
+              write_linno
+            ) ob x
+            );
+            Bi_outbuf.add_char ob ',';
+            (let _, x, _ = x in
+            (
+              write_arg
+            ) ob x
+            );
+            Bi_outbuf.add_char ob ',';
+            (let _, _, x = x in
+            (
+              write__4
+            ) ob x
+            );
+            Bi_outbuf.add_char ob ')';
+        ) ob x;
+        Bi_outbuf.add_char ob '>'
       | `Defun x ->
         Bi_outbuf.add_string ob "<\"Defun\":";
         (
@@ -915,20 +979,27 @@ and _3_of_string s =
   read__3 (Yojson.Safe.init_lexer ()) (Lexing.from_string s)
 and read__4 p lb = (
   Atdgen_runtime.Oj_run.read_list (
-    read_arg
+    read_case
   )
 ) p lb
 and _4_of_string s =
   read__4 (Yojson.Safe.init_lexer ()) (Lexing.from_string s)
 and read__5 p lb = (
   Atdgen_runtime.Oj_run.read_list (
-    read_arg_char
+    read_arg
   )
 ) p lb
 and _5_of_string s =
   read__5 (Yojson.Safe.init_lexer ()) (Lexing.from_string s)
+and read__6 p lb = (
+  Atdgen_runtime.Oj_run.read_list (
+    read_arg_char
+  )
+) p lb
+and _6_of_string s =
+  read__6 (Yojson.Safe.init_lexer ()) (Lexing.from_string s)
 and read_arg p lb = (
-  read__5
+  read__6
 ) p lb
 and arg_of_string s =
   read_arg (Yojson.Safe.init_lexer ()) (Lexing.from_string s)
@@ -959,7 +1030,7 @@ and read_arg_char = (
             | "T" ->
               Atdgen_runtime.Oj_run.read_until_field_value p lb;
               let x = (
-                  read__6
+                  read__7
                 ) p lb
               in
               Yojson.Safe.read_space p lb;
@@ -1101,7 +1172,7 @@ and read_arg_char = (
               Yojson.Safe.read_comma p lb;
               Yojson.Safe.read_space p lb;
               let x = (
-                  read__6
+                  read__7
                 ) p lb
               in
               Yojson.Safe.read_space p lb;
@@ -1221,7 +1292,7 @@ and read_arg_char = (
 and arg_char_of_string s =
   read_arg_char (Yojson.Safe.init_lexer ()) (Lexing.from_string s)
 and read_args p lb = (
-  read__4
+  read__5
 ) p lb
 and args_of_string s =
   read_args (Yojson.Safe.init_lexer ()) (Lexing.from_string s)
@@ -1271,6 +1342,129 @@ and read_assign = (
 )
 and assign_of_string s =
   read_assign (Yojson.Safe.init_lexer ()) (Lexing.from_string s)
+and read_case = (
+  fun p lb ->
+    Yojson.Safe.read_space p lb;
+    Yojson.Safe.read_lcurl p lb;
+    let field_cpattern = ref (Obj.magic (Sys.opaque_identity 0.0)) in
+    let field_cbody = ref (Obj.magic (Sys.opaque_identity 0.0)) in
+    let bits0 = ref 0 in
+    try
+      Yojson.Safe.read_space p lb;
+      Yojson.Safe.read_object_end lb;
+      Yojson.Safe.read_space p lb;
+      let f =
+        fun s pos len ->
+          if pos < 0 || len < 0 || pos + len > String.length s then
+            invalid_arg "out-of-bounds substring position or length";
+          match len with
+            | 5 -> (
+                if String.unsafe_get s pos = 'c' && String.unsafe_get s (pos+1) = 'b' && String.unsafe_get s (pos+2) = 'o' && String.unsafe_get s (pos+3) = 'd' && String.unsafe_get s (pos+4) = 'y' then (
+                  1
+                )
+                else (
+                  -1
+                )
+              )
+            | 8 -> (
+                if String.unsafe_get s pos = 'c' && String.unsafe_get s (pos+1) = 'p' && String.unsafe_get s (pos+2) = 'a' && String.unsafe_get s (pos+3) = 't' && String.unsafe_get s (pos+4) = 't' && String.unsafe_get s (pos+5) = 'e' && String.unsafe_get s (pos+6) = 'r' && String.unsafe_get s (pos+7) = 'n' then (
+                  0
+                )
+                else (
+                  -1
+                )
+              )
+            | _ -> (
+                -1
+              )
+      in
+      let i = Yojson.Safe.map_ident p f lb in
+      Atdgen_runtime.Oj_run.read_until_field_value p lb;
+      (
+        match i with
+          | 0 ->
+            field_cpattern := (
+              (
+                read__5
+              ) p lb
+            );
+            bits0 := !bits0 lor 0x1;
+          | 1 ->
+            field_cbody := (
+              (
+                read_t
+              ) p lb
+            );
+            bits0 := !bits0 lor 0x2;
+          | _ -> (
+              Yojson.Safe.skip_json p lb
+            )
+      );
+      while true do
+        Yojson.Safe.read_space p lb;
+        Yojson.Safe.read_object_sep p lb;
+        Yojson.Safe.read_space p lb;
+        let f =
+          fun s pos len ->
+            if pos < 0 || len < 0 || pos + len > String.length s then
+              invalid_arg "out-of-bounds substring position or length";
+            match len with
+              | 5 -> (
+                  if String.unsafe_get s pos = 'c' && String.unsafe_get s (pos+1) = 'b' && String.unsafe_get s (pos+2) = 'o' && String.unsafe_get s (pos+3) = 'd' && String.unsafe_get s (pos+4) = 'y' then (
+                    1
+                  )
+                  else (
+                    -1
+                  )
+                )
+              | 8 -> (
+                  if String.unsafe_get s pos = 'c' && String.unsafe_get s (pos+1) = 'p' && String.unsafe_get s (pos+2) = 'a' && String.unsafe_get s (pos+3) = 't' && String.unsafe_get s (pos+4) = 't' && String.unsafe_get s (pos+5) = 'e' && String.unsafe_get s (pos+6) = 'r' && String.unsafe_get s (pos+7) = 'n' then (
+                    0
+                  )
+                  else (
+                    -1
+                  )
+                )
+              | _ -> (
+                  -1
+                )
+        in
+        let i = Yojson.Safe.map_ident p f lb in
+        Atdgen_runtime.Oj_run.read_until_field_value p lb;
+        (
+          match i with
+            | 0 ->
+              field_cpattern := (
+                (
+                  read__5
+                ) p lb
+              );
+              bits0 := !bits0 lor 0x1;
+            | 1 ->
+              field_cbody := (
+                (
+                  read_t
+                ) p lb
+              );
+              bits0 := !bits0 lor 0x2;
+            | _ -> (
+                Yojson.Safe.skip_json p lb
+              )
+        );
+      done;
+      assert false;
+    with Yojson.End_of_object -> (
+        if !bits0 <> 0x3 then Atdgen_runtime.Oj_run.missing_fields p [| !bits0 |] [| "cpattern"; "cbody" |];
+        (
+          {
+            cpattern = !field_cpattern;
+            cbody = !field_cbody;
+          }
+         : case)
+      )
+)
+and case_of_string s =
+  read_case (Yojson.Safe.init_lexer ()) (Lexing.from_string s)
 and read_redirection = (
   fun p lb ->
     Yojson.Safe.read_space p lb;
@@ -2318,6 +2512,67 @@ and read_t = (
               Yojson.Safe.read_space p lb;
               Yojson.Safe.read_gt p lb;
               `For x
+            | "Case" ->
+              Atdgen_runtime.Oj_run.read_until_field_value p lb;
+              let x = (
+                  fun p lb ->
+                    Yojson.Safe.read_space p lb;
+                    let std_tuple = Yojson.Safe.start_any_tuple p lb in
+                    let len = ref 0 in
+                    let end_of_tuple = ref false in
+                    (try
+                      let x0 =
+                        let x =
+                          (
+                            read_linno
+                          ) p lb
+                        in
+                        incr len;
+                        Yojson.Safe.read_space p lb;
+                        Yojson.Safe.read_tuple_sep2 p std_tuple lb;
+                        x
+                      in
+                      let x1 =
+                        let x =
+                          (
+                            read_arg
+                          ) p lb
+                        in
+                        incr len;
+                        Yojson.Safe.read_space p lb;
+                        Yojson.Safe.read_tuple_sep2 p std_tuple lb;
+                        x
+                      in
+                      let x2 =
+                        let x =
+                          (
+                            read__4
+                          ) p lb
+                        in
+                        incr len;
+                        (try
+                          Yojson.Safe.read_space p lb;
+                          Yojson.Safe.read_tuple_sep2 p std_tuple lb;
+                        with Yojson.End_of_tuple -> end_of_tuple := true);
+                        x
+                      in
+                      if not !end_of_tuple then (
+                        try
+                          while true do
+                            Yojson.Safe.skip_json p lb;
+                            Yojson.Safe.read_space p lb;
+                            Yojson.Safe.read_tuple_sep2 p std_tuple lb;
+                          done
+                        with Yojson.End_of_tuple -> ()
+                      );
+                      (x0, x1, x2)
+                    with Yojson.End_of_tuple ->
+                      Atdgen_runtime.Oj_run.missing_tuple_fields p !len [ 0; 1; 2 ]);
+                ) p lb
+              in
+              Yojson.Safe.read_space p lb;
+              Yojson.Safe.read_gt p lb;
+              `Case x
             | "Defun" ->
               Atdgen_runtime.Oj_run.read_until_field_value p lb;
               let x = (
@@ -3060,6 +3315,69 @@ and read_t = (
               Yojson.Safe.read_space p lb;
               Yojson.Safe.read_rbr p lb;
               `For x
+            | "Case" ->
+              Yojson.Safe.read_space p lb;
+              Yojson.Safe.read_comma p lb;
+              Yojson.Safe.read_space p lb;
+              let x = (
+                  fun p lb ->
+                    Yojson.Safe.read_space p lb;
+                    let std_tuple = Yojson.Safe.start_any_tuple p lb in
+                    let len = ref 0 in
+                    let end_of_tuple = ref false in
+                    (try
+                      let x0 =
+                        let x =
+                          (
+                            read_linno
+                          ) p lb
+                        in
+                        incr len;
+                        Yojson.Safe.read_space p lb;
+                        Yojson.Safe.read_tuple_sep2 p std_tuple lb;
+                        x
+                      in
+                      let x1 =
+                        let x =
+                          (
+                            read_arg
+                          ) p lb
+                        in
+                        incr len;
+                        Yojson.Safe.read_space p lb;
+                        Yojson.Safe.read_tuple_sep2 p std_tuple lb;
+                        x
+                      in
+                      let x2 =
+                        let x =
+                          (
+                            read__4
+                          ) p lb
+                        in
+                        incr len;
+                        (try
+                          Yojson.Safe.read_space p lb;
+                          Yojson.Safe.read_tuple_sep2 p std_tuple lb;
+                        with Yojson.End_of_tuple -> end_of_tuple := true);
+                        x
+                      in
+                      if not !end_of_tuple then (
+                        try
+                          while true do
+                            Yojson.Safe.skip_json p lb;
+                            Yojson.Safe.read_space p lb;
+                            Yojson.Safe.read_tuple_sep2 p std_tuple lb;
+                          done
+                        with Yojson.End_of_tuple -> ()
+                      );
+                      (x0, x1, x2)
+                    with Yojson.End_of_tuple ->
+                      Atdgen_runtime.Oj_run.missing_tuple_fields p !len [ 0; 1; 2 ]);
+                ) p lb
+              in
+              Yojson.Safe.read_space p lb;
+              Yojson.Safe.read_rbr p lb;
+              `Case x
             | "Defun" ->
               Yojson.Safe.read_space p lb;
               Yojson.Safe.read_comma p lb;
