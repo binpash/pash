@@ -21,6 +21,8 @@ and args = Ast_atd_t.args
 
 and assign = Ast_atd_t.assign
 
+and case = Ast_atd_t.case = { cpattern: arg list; cbody: t }
+
 and redirection = Ast_atd_t.redirection
 
 and t = Ast_atd_t.t
@@ -224,6 +226,26 @@ val read_assign :
 val assign_of_string :
   string -> assign
   (** Deserialize JSON data of type {!assign}. *)
+
+val write_case :
+  Bi_outbuf.t -> case -> unit
+  (** Output a JSON value of type {!case}. *)
+
+val string_of_case :
+  ?len:int -> case -> string
+  (** Serialize a value of type {!case}
+      into a JSON string.
+      @param len specifies the initial length
+                 of the buffer used internally.
+                 Default: 1024. *)
+
+val read_case :
+  Yojson.Safe.lexer_state -> Lexing.lexbuf -> case
+  (** Input JSON data of type {!case}. *)
+
+val case_of_string :
+  string -> case
+  (** Deserialize JSON data of type {!case}. *)
 
 val write_redirection :
   Bi_outbuf.t -> redirection -> unit
