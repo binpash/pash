@@ -1,23 +1,18 @@
 package dshell.core.worker;
 
 import dshell.core.Operator;
+import dshell.core.OperatorFactory;
 import dshell.core.nodes.Sink;
 
-import java.io.IOException;
-import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class WorkerThread extends Thread {
     private Socket client;
-    private String outputHost;
-    private int outputPort;
 
-    public WorkerThread(Socket client, String outputHost, int outputPort) {
+    public WorkerThread(Socket client) {
         this.client = client;
-        this.outputHost = outputHost;
-        this.outputPort = outputPort;
     }
 
     @Override
@@ -26,11 +21,15 @@ public class WorkerThread extends Thread {
              ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
              ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream())) {
 
-            Operator operator = (Operator) inputStream.readObject();
-            byte[] data = (byte[]) inputStream.readObject();
+            RemoteExecutionData red = (RemoteExecutionData) inputStream.readObject();
+            Operator operator = red.getOperator();
 
-            operator.subscribe(Sink.createNetworkPrinter(outputHost, outputPort));
-            operator.next(data);
+            if (!(red.getOperator() instanceof Sink)) {
+                operator.subscribe(OperatorFactory.createSocketedOutput(red.getOutputHost(), red.getOutputPort()));
+                operator.next(red);
+            }
+            else
+                operator.next(red.getInputData());
         } catch (Exception e) {
             e.printStackTrace();
         }

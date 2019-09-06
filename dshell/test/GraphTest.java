@@ -15,8 +15,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 public class GraphTest {
-    public static String INPUT_FILE = "/home/cvetkovic/Desktop/tekst.txt";
+    private static String INPUT_FILE = "/home/cvetkovic/sdsh/scripts/input.txt";
+    private static String HDFS_OUTPUT_FILE = "output.txt";
 
+    /*
     @Test
     public void wordCount() {
         String command = "cat " + INPUT_FILE + " | wc -w";
@@ -27,23 +29,24 @@ public class GraphTest {
         graph.executeLocallySingleThreaded();
         String output = baos.toString();
         Assert.assertTrue(output.equals("2923\n"));
-    }
+    }*/
 
     @Test
-    public void wordCountDistributed() {
+    public void wordCountDistributed() throws Exception {
         String command = "cat " + INPUT_FILE + " | wc -w";
-        Graph graph = Shell.createGraph(command);
+        Graph graph = Shell.createGraph(command, HDFS_OUTPUT_FILE);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         System.setOut(new PrintStream(baos));
 
         graph.executeDistributed("output.txt");
-        String output = baos.toString();
-        Assert.assertTrue(output.equals("2923\n"));
+
+        Thread.sleep(15000);
 
         byte[] file = DFileSystem.downloadFile("output.txt");
-        Assert.assertTrue((new String(file)).equals("2923\n"));
+        Assert.assertTrue((new String(file)).equals("566311\n"));
     }
 
+    /*
     @Test
     public void grep() {
         String command = "cat " + INPUT_FILE + " | grep [a-zA-Z0-9]\\+@[a-zA-Z0-9]\\+\\.[a-z]\\{2,\\}";
@@ -56,8 +59,9 @@ public class GraphTest {
 
         String output = baos.toString();
         Assert.assertTrue(output.equals("tutabugarin@gmail.com\r\n"));
-    }
+    }*/
 
+    /*
     @Test
     public void wordFrequencies() {
         Operator cat = new StatelessOperator("cat", new String[]{INPUT_FILE});
@@ -104,5 +108,5 @@ public class GraphTest {
 
         System.out.println(graph.toString());
         Assert.assertTrue(graph.toString().equals("cat $INPUT | tr -cs A-Za-z '\n' | tr A-Z a-z | sort | uniq -c | sort -rn | sed 1000q"));
-    }
+    }*/
 }
