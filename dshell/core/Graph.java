@@ -9,8 +9,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public abstract class Graph {
-    private final static int SERVER_PORT = 56789;
-
     public abstract Operator getOperator();
 
     public void executeLocallySingleThreaded() {
@@ -26,54 +24,22 @@ public abstract class Graph {
         getOperator().next(null);
     }
 
-    private int i;
-
     public void executeDistributed(String outputFile) {
         try {
-            Thread[] threads = null;
+            if (this instanceof SerialGraph) {
+                SerialGraph g = (SerialGraph) this;
+                for (int i = 0; i < g.getAtomicGraphs().length; i++) {
+                    Sink sink = null;
+                    if (i != g.getAtomicGraphs().length - 1) {
+                        sink = OperatorFactory.createSocketedOutput("localhost", 4000);
 
-            if (this instanceof AtomicGraph) {
-                threads = new Thread[1];
-            } else if (this instanceof SerialGraph) {
-                SerialGraph graph = (SerialGraph) this;
-                threads = new Thread[graph.getAtomicGraphs().length];
-
-                for (i = 0; i < threads.length; i++) {
-                    graph.getAtomicGraphs()[i].getOperator().subscribe(Sink.createNetworkPrinter("localhost", SERVER_PORT + i + 1));
-
-                    // this simulates the distributed environment
-                    threads[i] = new Thread(new Runnable() {
-                        private final int port = SERVER_PORT + i;
-
-                        @Override
-                        public void run() {
-                            try {
-                                ServerSocket ss = new ServerSocket(port);
-
-                                if (port - SERVER_PORT == 0)
-                                    getOperator().next(null);
-                                else {
-                                    Socket s = ss.accept();
-
-                                    Object data = new String(s.getInputStream().readAllBytes());
-                                    getOperator().next(data);
-
-                                    s.close();
-                                }
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    });
+                        g.getAtomicGraphs()[i].getOperator().subscribe(sink);
+                        g.getAtomicGraphs()[i].getOperator().setNextOperator(g.getAtomicGraphs()[i + 1].getOperator());
+                    }
                 }
+            }
 
-                for (i = 0; i < threads.length; i++)
-                    threads[i].start();
-
-                // TODO: put barrier here for synchronization and then close all the sockets
-                while(true);
-            } else
-                throw new RuntimeException("Other types of graphs have not been implemented yet.");
+            getOperator().next(null);
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         }
