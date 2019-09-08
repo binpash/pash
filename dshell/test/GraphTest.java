@@ -38,7 +38,7 @@ public class GraphTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         System.setOut(new PrintStream(baos));
 
-        graph.executeDistributed("output.txt");
+        graph.executeDistributed(3529);
 
         Thread.sleep(15000);
 
@@ -46,20 +46,20 @@ public class GraphTest {
         Assert.assertTrue((new String(file)).equals("566311\n"));
     }
 
-    /*
     @Test
-    public void grep() {
+    public void grep() throws Exception {
         String command = "cat " + INPUT_FILE + " | grep [a-zA-Z0-9]\\+@[a-zA-Z0-9]\\+\\.[a-z]\\{2,\\}";
-        Graph graph = Shell.createGraph(command);
-
+        Graph graph = Shell.createGraph(command, HDFS_OUTPUT_FILE);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         System.setOut(new PrintStream(baos));
 
-        graph.executeLocallySingleThreaded();
+        graph.executeDistributed(3529);
 
-        String output = baos.toString();
-        Assert.assertTrue(output.equals("tutabugarin@gmail.com\r\n"));
-    }*/
+        Thread.sleep(15000);
+
+        byte[] file = DFileSystem.downloadFile("output.txt");
+        Assert.assertTrue((new String(file)).equals("email business@pglaf.org. Email contact links and up to date contact\r\n     gbnewby@pglaf.org\r\n"));
+    }
 
     /*
     @Test

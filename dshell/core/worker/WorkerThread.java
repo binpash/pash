@@ -5,6 +5,7 @@ import dshell.core.OperatorFactory;
 import dshell.core.nodes.Sink;
 
 import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
@@ -26,10 +27,18 @@ public class WorkerThread extends Thread {
 
             if (!(red.getOperator() instanceof Sink)) {
                 operator.subscribe(OperatorFactory.createSocketedOutput(red.getOutputHost(), red.getOutputPort()));
-                operator.next(red);
+                operator.next(0, red);
+            } else // instance of sink
+            {
+                operator.next(0, red.getInputData());
+
+                // let know the client that the system has finished computing
+                try (Socket callbackSocket = new Socket(red.getCallbackHost(), red.getCallBackPort());
+                     ObjectOutputStream callbackOOS = new ObjectOutputStream(callbackSocket.getOutputStream())) {
+
+                    callbackOOS.writeBoolean(true);
+                }
             }
-            else
-                operator.next(red.getInputData());
         } catch (Exception e) {
             e.printStackTrace();
         }

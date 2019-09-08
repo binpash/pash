@@ -1,50 +1,41 @@
 package dshell.core.nodes;
 
-import dshell.core.DFileSystem;
 import dshell.core.Operator;
 import dshell.core.worker.RemoteExecutionData;
 
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.rmi.Remote;
 
 public class StatelessOperator extends Operator<Object, Object> {
     private final int parallelizationHint;
 
-    public StatelessOperator(String program) {
-        super(program);
-        this.parallelizationHint = 1;
+    public StatelessOperator(int inputArity, int outputArity, String program) {
+        this(inputArity, outputArity, program, null, 1);
     }
 
-    public StatelessOperator(String program, int parallelizationHint) {
-        super(program);
-        this.parallelizationHint = parallelizationHint;
+    public StatelessOperator(int inputArity, int outputArity, String program, String[] commandLineArguments) {
+        this(inputArity, outputArity, program, commandLineArguments, 1);
     }
 
-    public StatelessOperator(String program, String[] commandLineArguments) {
-        super(program, commandLineArguments);
-        this.parallelizationHint = 1;
-    }
+    public StatelessOperator(int inputArity, int outputArity, String program, String[] commandLineArguments, int parallelizationHint) {
+        super(inputArity, outputArity, program, commandLineArguments);
 
-    public StatelessOperator(String program, String[] commandLineArguments, int parallelizationHint) {
-        super(program, commandLineArguments);
         this.parallelizationHint = parallelizationHint;
     }
 
     @Override
-    public void next(Object data) {
+    public void next(int inputChannel, Object data) {
         try {
             // creating new process
             ProcessBuilder processBuilder = new ProcessBuilder(program, getArgumentsAsString());
             Process process = processBuilder.start();
 
             if (!process.isAlive() && process.exitValue() != 0)
-                throw new RuntimeException("Execution of program '" + program + "' returned with exit value " + process.exitValue());
+                throw new RuntimeException("Execution of program '" + program + "' returned with exit value " + process.exitValue() + ".");
 
             // getting standard input
             if (data != null) {
                 OutputStream os = process.getOutputStream();
-                RemoteExecutionData d = (RemoteExecutionData)data;
+                RemoteExecutionData d = (RemoteExecutionData) data;
 
                 // write to standard input of the process
                 os.write(d.getInputData());
@@ -58,8 +49,9 @@ public class StatelessOperator extends Operator<Object, Object> {
             process.waitFor();
             process.destroy();
 
-            RemoteExecutionData red = new RemoteExecutionData(nextOperator, systemOut, "localhost", 4000);
-            consumer.next(red);
+            // send output of current operator to nextOperator that will output its output to localhost:4000
+            RemoteExecutionData red = new RemoteExecutionData(nextOperator, systemOut, "localhost", 4000, "localhost", 3529);
+            consumers[0].next(0, red);
         } catch (Exception e) {
             e.printStackTrace();
         }

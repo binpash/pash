@@ -6,23 +6,28 @@ import dshell.core.interfaces.Producer;
 import java.io.Serializable;
 
 public abstract class Operator<A, B> implements Consumer<A>, Producer<B>, Serializable {
-    protected Consumer<B> consumer;
+    protected int inputArity;
+    protected int outputArity;
+
+    protected Consumer<B>[] consumers;
     protected Operator nextOperator;
 
     protected String program;
     protected String[] commandLineArguments;
 
-    public Operator(String program) {
-        this.program = program;
+    public Operator(int inputArity, int outputArity, String program) {
+        this(inputArity, outputArity, program, null);
     }
 
-    public Operator(String program, String[] commandLineArguments) {
+    public Operator(int inputArity, int outputArity, String program, String[] commandLineArguments) {
         this.program = program;
         this.commandLineArguments = commandLineArguments;
+        this.inputArity = inputArity;
+        this.outputArity = outputArity;
     }
 
     @Override
-    public abstract void next(A data);
+    public abstract void next(int inputChannel, A data);
 
     public Operator getNextOperator() {
         return nextOperator;
@@ -36,11 +41,11 @@ public abstract class Operator<A, B> implements Consumer<A>, Producer<B>, Serial
     }
 
     @Override
-    public void subscribe(Consumer<B> consumer) {
+    public void subscribe(Consumer<B>... consumers) {
         /*if (this.consumer != null)
             throw new RuntimeException("Operator is immutable object and hence cannot be assigned with a consumer again.");*/
 
-        this.consumer = consumer;
+        this.consumers = consumers;
     }
 
     public String getProgram() {
@@ -51,8 +56,8 @@ public abstract class Operator<A, B> implements Consumer<A>, Producer<B>, Serial
         return commandLineArguments;
     }
 
-    public Consumer<B> getConsumer() {
-        return consumer;
+    public Consumer<B>[] getConsumers() {
+        return consumers;
     }
 
     public String getArgumentsAsString() {
