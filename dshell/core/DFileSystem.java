@@ -1,12 +1,12 @@
 package dshell.core;
 
+import dshell.core.misc.Tuple;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.*;
 import org.apache.hadoop.io.IOUtils;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
 public class DFileSystem {
@@ -19,7 +19,6 @@ public class DFileSystem {
 
     public static void uploadFile(String filename, byte[] rawData) {
         Configuration configuration = new Configuration();
-        //configuration.set("fs.default.name", HDFS_SERVER);
         FSDataOutputStream dos = null;
 
         try {
@@ -41,7 +40,6 @@ public class DFileSystem {
 
     public static byte[] downloadFile(String filename) {
         Configuration configuration = new Configuration();
-        //configuration.set("fs.default.name", HDFS_SERVER);
         FSDataInputStream dis = null;
         byte[] result = null;
 
@@ -58,6 +56,35 @@ public class DFileSystem {
             ex.printStackTrace();
         } finally {
             IOUtils.closeStream(dis);
+        }
+
+        return result;
+    }
+
+    public static List<Tuple<String, Integer>> getFileLocations(String filename) {
+        List<Tuple<String, Integer>> result = new LinkedList<>();
+        Configuration configuration = new Configuration();
+
+        try {
+            FileSystem fileSystem = FileSystem.get(configuration);
+            Path file = new Path(filename);
+
+            if (!fileSystem.exists(file))
+                throw new RuntimeException("File with the given filename does not exist within current HDFS context.");
+
+            BlockLocation[] locations = fileSystem.getFileBlockLocations(file, 0, fileSystem.getLength(file));
+            for (BlockLocation b : locations) {
+                String[] names = b.getNames();
+                for (String n : names) {
+                    String host = n.substring(0, n.indexOf(':') - 1);
+                    Integer port = Integer.parseInt(n.substring(n.indexOf(':') + 1));
+
+                    result.add(new Tuple(host, port));
+                }
+            }
+        } catch (
+                Exception ex) {
+            ex.printStackTrace();
         }
 
         return result;
