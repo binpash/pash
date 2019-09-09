@@ -10,7 +10,15 @@ import java.util.List;
 import java.util.UUID;
 
 public class DFileSystem {
-    private static final String HDFS_SERVER = "hdfs://localhost:9000/";
+    private static final String HDFS_SERVER = "hdfs://localhost:9000";
+    private static final Configuration configuration;
+
+    static {
+        configuration = new Configuration();
+        configuration.set("fs.defaultFS", HDFS_SERVER);
+        configuration.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+        configuration.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+    }
 
     public static String generateFilename() {
         UUID uuid = UUID.randomUUID();
@@ -18,7 +26,6 @@ public class DFileSystem {
     }
 
     public static void uploadFile(String filename, byte[] rawData) {
-        Configuration configuration = new Configuration();
         FSDataOutputStream dos = null;
 
         try {
@@ -39,7 +46,6 @@ public class DFileSystem {
     }
 
     public static byte[] downloadFile(String filename) {
-        Configuration configuration = new Configuration();
         FSDataInputStream dis = null;
         byte[] result = null;
 
