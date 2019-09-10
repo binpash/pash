@@ -1,3 +1,0 @@
-[submodule "libdash"]
-	path = libdash
-	url = git@github.com:mgree/libdash.git
