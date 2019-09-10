@@ -18,7 +18,7 @@ The following process was followed to make the parser output the ast to json.
 
 2. I ran `atdgen -j ast_atd.atd` which produced the `ast_atd_j.ml` file.
 
-3. I then copied the part of the file without the type definitions to `ast_json.ml`.
+3. I then copied it to `ast_json.ml` (without the `char` definition).
 
 4. I also had to make a small adjustment in the `ast.ml`, `ast.mli` files in `libdash/ocaml`.
 
