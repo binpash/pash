@@ -1,8 +1,8 @@
-type char = int
+type char <ocaml predef module="Ast"> = int <ocaml repr="char">
 
-type linno = int
+type linno <ocaml predef module="Ast"> = int
 
-type t = [
+type t <ocaml predef module="Ast"> = [
     Command of (linno * assign list * args * redirection list) (* assign, args, redir *)
   | Pipe of (bool * t list) (* background?, commands *)
   | Redir of (linno * t * redirection list)
@@ -17,39 +17,39 @@ type t = [
   | For of (linno * arg * t * string) (* args, body, var *)
   | Case of (linno * arg * case list)
   | Defun of (linno * string * t) (* name, body *)
-]
+] <ocaml repr="classic">
 
-type assign = (string * arg)
+type assign <ocaml predef module="Ast"> = (string * arg) <ocaml repr="classic">
 
-type redirection = [
+type redirection <ocaml predef module="Ast"> = [
      File of (redir_type * int * arg)
    | Dup of (dup_type * int * arg)
    | Heredoc of (heredoc_type * int * arg)
-]
+] <ocaml repr="classic">
 
-type redir_type = [
+type redir_type <ocaml predef module="Ast"> = [
      To
    | Clobber
    | From
    | FromTo
    | Append
-]
+] <ocaml repr="classic">
 
-type dup_type = [
+type dup_type <ocaml predef module="Ast"> = [
      ToFD
    | FromFD
-]
+] <ocaml repr="classic">
 
-type heredoc_type = [
+type heredoc_type <ocaml predef module="Ast"> = [
      Here
    | XHere (* for when in a quote... not sure when this comes up *)
-]
+] <ocaml repr="classic">
 
-type args = arg list
+type args <ocaml predef module="Ast"> = arg list
 
-type arg = arg_char list
+type arg <ocaml predef module="Ast"> = arg_char list
 
-type arg_char = [
+type arg_char <ocaml predef module="Ast"> = [
      C of char
    | E of char (* escape... necessary for expansion *)
    | T of string option (* tilde *)
@@ -57,9 +57,9 @@ type arg_char = [
    | V of (var_type * bool (* VSNUL? *) * string * arg)
    | Q of arg (* quoted *)
    | B of t (* backquote *)
-]
+] <ocaml repr="classic">
 
-type var_type = [
+type var_type <ocaml predef module="Ast"> = [
      Normal
    | Minus
    | Plus
@@ -70,9 +70,9 @@ type var_type = [
    | TrimL
    | TrimLMax
    | Length
-]
+] <ocaml repr="classic">
 
-type case = {
+type case <ocaml predef module="Ast"> = {
   cpattern : arg list;
   cbody : t
 }

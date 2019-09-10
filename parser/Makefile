@@ -1,4 +1,5 @@
 PARSER=parse_to_json
+AST_I=../libdash/ocaml/ast.mli
 
 .PHONY : all test dependencies clean
 
@@ -15,11 +16,13 @@ test : $(PARSER).native $(PARSER).byte $(wildcard tests/*)
 	done
 
 
-$(PARSER).native : $(PARSER).ml
-	ocamlfind ocamlopt -g -package dash,ctypes,ctypes.foreign -linkpkg $^ -o $(PARSER).native
+$(PARSER).native : ast_json.ml $(PARSER).ml 
+	ocamlfind ocamlopt -g -package dash,ctypes,ctypes.foreign,atdgen \
+	-linkpkg $^ -o $(PARSER).native
 
 $(PARSER).byte : $(PARSER).ml 
-	ocamlfind ocamlcp -p a -package dash,ctypes,ctypes.foreign -linkpkg $^ -o $(PARSER).byte
+	ocamlfind ocamlcp -p a -package dash,ctypes,ctypes.foreign,atdgen \
+	-linkpkg -i -i $(AST_I) $^ -o $(PARSER).byte
 
 clean :
 	rm -f *.o *.cmo *.cmi *.cmx $(PARSER).native $(PARSER).byte test.err
