@@ -1,61 +1,7 @@
 (* Auto-generated from "ast_atd.atd" *)
 [@@@ocaml.warning "-27-32-35-39"]
 
-type char = Ast.char
-
-type dup_type = Ast.dup_type =  ToFD | FromFD 
-
-type heredoc_type = Ast.heredoc_type =  Here | XHere 
-
-type linno = Ast.linno
-
-type redir_type = Ast.redir_type =  To | Clobber | From | FromTo | Append 
-
-type var_type = Ast.var_type = 
-    Normal | Minus | Plus | Question | Assign | TrimR | TrimRMax | TrimL
-  | TrimLMax | Length
-
-
-type arg = Ast.arg
-
-and arg_char = Ast.arg_char = 
-    C of char
-  | E of char
-  | T of string option
-  | A of arg
-  | V of (var_type * bool * string * arg)
-  | Q of arg
-  | B of t
-
-
-and args = Ast.args
-
-and assign = Ast.assign
-
-and case = Ast.case = { cpattern: arg list; cbody: t }
-
-and redirection = Ast.redirection = 
-    File of (redir_type * int * arg)
-  | Dup of (dup_type * int * arg)
-  | Heredoc of (heredoc_type * int * arg)
-
-
-and t = Ast.t = 
-    Command of (linno * assign list * args * redirection list)
-  | Pipe of (bool * t list)
-  | Redir of (linno * t * redirection list)
-  | Background of (linno * t * redirection list)
-  | Subshell of (linno * t * redirection list)
-  | And of (t * t)
-  | Or of (t * t)
-  | Not of t
-  | Semi of (t * t)
-  | If of (t * t * t)
-  | While of (t * t)
-  | For of (linno * arg * t * string)
-  | Case of (linno * arg * case list)
-  | Defun of (linno * string * t)
-
+open Ast
 
 let write__7 = (
   Atdgen_runtime.Oj_run.write_option (

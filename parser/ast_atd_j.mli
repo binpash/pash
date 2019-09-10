@@ -1,31 +1,61 @@
 (* Auto-generated from "ast_atd.atd" *)
 [@@@ocaml.warning "-27-32-35-39"]
 
-type char = Ast_atd_t.char
+type char = Ast.char
 
-type dup_type = Ast_atd_t.dup_type
+type dup_type = Ast.dup_type =  ToFD | FromFD 
 
-type heredoc_type = Ast_atd_t.heredoc_type
+type heredoc_type = Ast.heredoc_type =  Here | XHere 
 
-type linno = Ast_atd_t.linno
+type linno = Ast.linno
 
-type redir_type = Ast_atd_t.redir_type
+type redir_type = Ast.redir_type =  To | Clobber | From | FromTo | Append 
 
-type var_type = Ast_atd_t.var_type
+type var_type = Ast.var_type = 
+    Normal | Minus | Plus | Question | Assign | TrimR | TrimRMax | TrimL
+  | TrimLMax | Length
 
-type arg = Ast_atd_t.arg
 
-and arg_char = Ast_atd_t.arg_char
+type arg = Ast.arg
 
-and args = Ast_atd_t.args
+and arg_char = Ast.arg_char = 
+    C of char
+  | E of char
+  | T of string option
+  | A of arg
+  | V of (var_type * bool * string * arg)
+  | Q of arg
+  | B of t
 
-and assign = Ast_atd_t.assign
 
-and case = Ast_atd_t.case = { cpattern: arg list; cbody: t }
+and args = Ast.args
 
-and redirection = Ast_atd_t.redirection
+and assign = Ast.assign
 
-and t = Ast_atd_t.t
+and case = Ast.case = { cpattern: arg list; cbody: t }
+
+and redirection = Ast.redirection = 
+    File of (redir_type * int * arg)
+  | Dup of (dup_type * int * arg)
+  | Heredoc of (heredoc_type * int * arg)
+
+
+and t = Ast.t = 
+    Command of (linno * assign list * args * redirection list)
+  | Pipe of (bool * t list)
+  | Redir of (linno * t * redirection list)
+  | Background of (linno * t * redirection list)
+  | Subshell of (linno * t * redirection list)
+  | And of (t * t)
+  | Or of (t * t)
+  | Not of t
+  | Semi of (t * t)
+  | If of (t * t * t)
+  | While of (t * t)
+  | For of (linno * arg * t * string)
+  | Case of (linno * arg * case list)
+  | Defun of (linno * string * t)
+
 
 val write_char :
   Bi_outbuf.t -> char -> unit
