@@ -35,7 +35,7 @@ let main () =
   parse_args ();
   set_input_src ();
   let cs = parse_all () in
-  List.map (fun c -> print_endline (Ast.to_string c)) cs
+  List.map (fun c -> print_endline (Ast_json.string_of_t c)) cs
 ;;
 
 main ()

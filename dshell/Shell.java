@@ -1,5 +1,6 @@
 package dshell;
 
+import dshell.core.DFileSystem;
 import dshell.core.Graph;
 import dshell.core.Operator;
 import dshell.core.OperatorFactory;
@@ -32,7 +33,7 @@ public class Shell {
                 arguments = null;
             }
 
-            pipeline.add(new StatelessOperator(program, arguments));
+            pipeline.add(new StatelessOperator(1, 1, program, arguments));
         }
 
         AtomicGraph[] graph = new AtomicGraph[pipeline.size() + 1];
@@ -44,20 +45,18 @@ public class Shell {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length < 1)
+        if (args.length < 2)
             throw new RuntimeException("Incorrect invocation argument.");
 
-        //setupSlaves();
+        String bashCommand = args[0].replace("\"", "");
+        int clientPort = Integer.parseInt(args[1]);
+        String writeToFile = args[2];
 
-        // TODO: fix main method
-        /*String bashCommand = args[0];
-        Graph graph = createGraph(bashCommand);
+        Graph graph = createGraph(bashCommand, writeToFile);
+        graph.executeDistributed(clientPort);
 
-        graph.executeLocallySingleThreaded();*/
+        // TODO: remove after debugging done
+        byte[] b = DFileSystem.downloadFile(writeToFile);
+        System.out.println(new String(b));
     }
-
-    /*private static void setupSlaves() throws IOException {
-        ProcessBuilder processBuilder = new ProcessBuilder("");
-        Process p1 = processBuilder.start();
-    }*/
 }
