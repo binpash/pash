@@ -52,8 +52,32 @@ public class Shell {
         int clientPort = Integer.parseInt(args[1]);
         String writeToFile = args[2];
 
-        Graph graph = createGraph(bashCommand, writeToFile);
-        graph.executeDistributed(clientPort);
+        int readArgumentFromPosition = 3;
+        boolean printMeasurement = false;
+        long performanceMeasurement = 0;
+        int numberOfMeasurement = 1;
+
+        if (args.length >= 4) {
+            if (args[readArgumentFromPosition].equals("-p")) {
+                numberOfMeasurement = Integer.parseInt(args[readArgumentFromPosition + 1]);
+                printMeasurement = true;
+                readArgumentFromPosition += 2;
+            }
+        }
+
+        for (int i = 0; i < numberOfMeasurement; i++) {
+            Graph graph = createGraph(bashCommand, writeToFile);
+
+            long begin = System.currentTimeMillis();
+            graph.executeDistributed(clientPort);
+            long end = System.currentTimeMillis();
+
+            // JVM warmup
+            if (i > i / 10)
+                performanceMeasurement += end - begin;
+        }
+        if (printMeasurement)
+            System.out.println("Average time it took to compute the topology is: " + (performanceMeasurement) / (0.9 * numberOfMeasurement) + " ms");
 
         // TODO: remove after debugging done
         byte[] b = DFileSystem.downloadFile(writeToFile);
