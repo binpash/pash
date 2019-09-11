@@ -9,7 +9,7 @@ factor       stateless      Factors numbers
 od           stateless*     Dumps files in octal and other formats [nv: but changes \n location]
 pathchk      stateless      Checks whether file names are valid or portable
 printf       stateless      Formats and prints data
-shuf         stateless*      generate random permutations
+shuf         stateless*     generate random permutations
 test         stateless      Evaluates an expression
 tr           stateless      Translates or deletes characters
 unexpand     stateless      Converts spaces to tabs
