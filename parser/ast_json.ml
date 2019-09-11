@@ -1,8 +1,6 @@
 (* Auto-generated from "ast_atd.atd" *)
 [@@@ocaml.warning "-27-32-35-39"]
 
-type char = Ast.char
-
 type dup_type = Ast.dup_type =  ToFD | FromFD 
 
 type heredoc_type = Ast.heredoc_type =  Here | XHere 

@@ -1,10 +1,11 @@
 package dshell.core;
 
-import dshell.core.nodes.AtomicGraph;
 import dshell.core.nodes.SerialGraph;
 import dshell.core.nodes.Sink;
 
-import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -21,10 +22,10 @@ public abstract class Graph {
             }
         }
 
-        getOperator().next(null);
+        getOperator().next(0, null);
     }
 
-    public void executeDistributed(String outputFile) {
+    public void executeDistributed(int clientSocket) {
         try {
             if (this instanceof SerialGraph) {
                 SerialGraph g = (SerialGraph) this;
@@ -39,13 +40,28 @@ public abstract class Graph {
                 }
             }
 
-            getOperator().next(null);
+            System.out.println("The graph has started computing.");
+            getOperator().next(0, null);
+            System.out.println("Waiting for the graph to finish computing...");
+
+            // wait here until the computation has finished
+            ServerSocket serverSocket = new ServerSocket(clientSocket);
+            try (Socket s = serverSocket.accept();
+                 ObjectInputStream ois = new ObjectInputStream(s.getInputStream())) {
+
+                boolean val = ois.readBoolean();
+                if (!val)
+                    throw new RuntimeException("Error receiving the end of computation marker");
+            } finally {
+                serverSocket.close();
+            }
+            System.out.println("The graph has finished computing.");
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         }
     }
 
-    public String toString() {
+    /*public String toString() {
         StringBuilder sb = new StringBuilder();
         Operator op = getOperator();
 
@@ -57,12 +73,12 @@ public abstract class Graph {
                 }
             }
 
-            if (op.getConsumer() != null && !(op.getConsumer() instanceof Sink))
+            if (op.getConsumers() != null && !(op.getConsumer() instanceof Sink))
                 sb.append(" | ");
 
             op = (Operator) op.getConsumer();
         }
 
         return sb.toString();
-    }
+    }*/
 }

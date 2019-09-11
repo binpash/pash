@@ -8,14 +8,20 @@ import java.io.Serializable;
 public class RemoteExecutionData implements Serializable {
     private Operator operator;
     private byte[] inputData;
+
     private String outputHost;
     private int outputPort;
 
-    public RemoteExecutionData(Operator operator, byte[] inputData, String outputHost, int outputPort) {
+    private String callbackHost;
+    private int callBackPort;
+
+    public RemoteExecutionData(Operator operator, byte[] inputData, String outputHost, int outputPort, String callbackHost, int callBackPort) {
         this.operator = operator;
         this.inputData = inputData;
         this.outputHost = outputHost;
         this.outputPort = outputPort;
+        this.callbackHost = callbackHost;
+        this.callBackPort = callBackPort;
     }
 
     public Operator getOperator() {
@@ -32,5 +38,13 @@ public class RemoteExecutionData implements Serializable {
 
     public int getOutputPort() {
         return outputPort;
+    }
+
+    public String getCallbackHost() {
+        return callbackHost;
+    }
+
+    public int getCallBackPort() {
+        return callBackPort;
     }
 }
