@@ -1,6 +1,7 @@
 package dshell.core.worker;
 
 import dshell.core.Operator;
+
 import java.io.Serializable;
 
 /**
@@ -9,6 +10,7 @@ import java.io.Serializable;
 public class RemoteExecutionData implements Serializable {
     // representation of computation
     private Operator operator;
+    private boolean initialOperator;
 
     // URL for receiving the data from other operators
     private int inputPort;
@@ -21,8 +23,12 @@ public class RemoteExecutionData implements Serializable {
     private String callbackHost;
     private int callBackPort;
 
-    public RemoteExecutionData(Operator operator, int inputPort, String outputHost, int outputPort, String callbackHost, int callBackPort) {
+    public RemoteExecutionData() {
+    }
+
+    public RemoteExecutionData(Operator operator, boolean initialOperator, int inputPort, String outputHost, int outputPort, String callbackHost, int callBackPort) {
         this.operator = operator;
+        this.initialOperator = initialOperator;
         this.inputPort = inputPort;
         this.outputHost = outputHost;
         this.outputPort = outputPort;
@@ -36,6 +42,14 @@ public class RemoteExecutionData implements Serializable {
 
     public void setOperator(Operator operator) {
         this.operator = operator;
+    }
+
+    public boolean isInitialOperator() {
+        return initialOperator;
+    }
+
+    public void setInitialOperator(boolean initialOperator) {
+        this.initialOperator = initialOperator;
     }
 
     public int getInputPort() {

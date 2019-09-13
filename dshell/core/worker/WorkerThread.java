@@ -29,14 +29,17 @@ public class WorkerThread extends Thread {
 
             // operation to execute with all the additional info
             RemoteExecutionData red = (RemoteExecutionData) inputStream.readObject();
-            byte[] data;
+            byte[] data = null;
 
-            // socket called 'inputDataSocket' is used to get the input data from another operator
-            try (ServerSocket inputDataServerSocket = new ServerSocket(red.getInputPort())) {
-                try (Socket inputDataSocket = inputDataServerSocket.accept();
-                     ObjectOutputStream oos = new ObjectOutputStream(inputDataSocket.getOutputStream());
-                     ObjectInputStream ois = new ObjectInputStream(inputDataSocket.getInputStream())) {
-                    data = (byte[]) ois.readObject();
+            // do not wait for data in case that the operator is the first one to execute
+            if (!red.isInitialOperator()) {
+                // socket called 'inputDataSocket' is used to get the input data from another operator
+                try (ServerSocket inputDataServerSocket = new ServerSocket(red.getInputPort())) {
+                    try (Socket inputDataSocket = inputDataServerSocket.accept();
+                         ObjectOutputStream oos = new ObjectOutputStream(inputDataSocket.getOutputStream());
+                         ObjectInputStream ois = new ObjectInputStream(inputDataSocket.getInputStream())) {
+                        data = (byte[]) ois.readObject();
+                    }
                 }
             }
 

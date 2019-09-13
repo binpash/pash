@@ -42,20 +42,20 @@ public class OperatorFactory {
         };
     }
 
-    public static Operator<byte[], byte[]> createSplit(int outputArity) {
-        return new Operator<byte[], byte[]>(1, outputArity, null) {
+    public static Operator<byte[], byte[]> createSplitter(int outputArity) {
+        return new Operator<>(1, outputArity, null) {
             @Override
             public void next(int inputChannel, byte[] data) {
-                byte[][] splitted = Utilities.splitData(data, outputArity);
+                byte[][] split = Utilities.splitData(data, outputArity);
 
                 for (int i = 0; i < this.outputArity; i++)
-                    consumers[i].next(0, splitted[i]);
+                    consumers[i].next(0, split[i]);
             }
         };
     }
 
-    public static Operator<byte[], byte[]> createMerge(int inputArity) {
-        return new Operator<byte[], byte[]>(inputArity, 1, null) {
+    public static Operator<byte[], byte[]> createMerger(int inputArity) {
+        return new Operator<>(inputArity, 1, null) {
             private int received = 0;
 
             @Override
@@ -65,8 +65,7 @@ public class OperatorFactory {
                 if (buffer[inputChannel] == null) {
                     buffer[inputChannel] = data;
                     received++;
-                }
-                else
+                } else
                     throw new RuntimeException("The data for the specified channel has been received already.");
 
                 if (received == inputArity)

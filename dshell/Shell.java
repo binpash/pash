@@ -58,10 +58,13 @@ public class Shell {
         int numberOfMeasurement = 1;
 
         if (args.length >= 4) {
-            if (args[readArgumentFromPosition].equals("-p")) {
-                numberOfMeasurement = Integer.parseInt(args[readArgumentFromPosition + 1]);
-                printMeasurement = true;
-                readArgumentFromPosition += 2;
+            while (readArgumentFromPosition < args.length) {
+                if (args[readArgumentFromPosition].equals("-p")) {
+                    numberOfMeasurement = Integer.parseInt(args[readArgumentFromPosition + 1]);
+                    printMeasurement = true;
+                    readArgumentFromPosition += 2;
+                }
+                // here add new features as 'else if' branch
             }
         }
 
@@ -73,7 +76,7 @@ public class Shell {
             long end = System.currentTimeMillis();
 
             // JVM warmup
-            if (i > i / 10)
+            if (i > numberOfMeasurement / 10)
                 performanceMeasurement += end - begin;
         }
         if (printMeasurement)
