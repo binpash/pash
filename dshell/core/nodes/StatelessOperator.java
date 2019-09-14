@@ -8,7 +8,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 
 public class StatelessOperator extends Operator<Object, Object> {
-    private final int parallelizationHint;
+    private int parallelizationHint;
 
     public StatelessOperator(int inputArity, int outputArity, String program) {
         this(inputArity, outputArity, program, null, 1);
@@ -42,7 +42,7 @@ public class StatelessOperator extends Operator<Object, Object> {
                 OutputStream os = process.getOutputStream();
 
                 // write to standard input of the process
-                os.write((byte[])data);
+                os.write((byte[]) data);
                 os.flush();
                 os.close();
             }
@@ -63,5 +63,13 @@ public class StatelessOperator extends Operator<Object, Object> {
 
     public int getParallelizationHint() {
         return parallelizationHint;
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        StatelessOperator o = (StatelessOperator) super.clone();
+        o.parallelizationHint = 1;
+
+        return o;
     }
 }

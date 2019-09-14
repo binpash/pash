@@ -6,10 +6,8 @@ import dshell.core.Operator;
 import dshell.core.OperatorFactory;
 import dshell.core.nodes.AtomicGraph;
 import dshell.core.nodes.SerialGraph;
-import dshell.core.nodes.Sink;
 import dshell.core.nodes.StatelessOperator;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -72,7 +70,7 @@ public class Shell {
             Graph graph = createGraph(bashCommand, writeToFile);
 
             long begin = System.currentTimeMillis();
-            graph.executeDistributed(clientPort);
+            graph.executeRemote(clientPort);
             long end = System.currentTimeMillis();
 
             // JVM warmup
