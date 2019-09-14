@@ -16,11 +16,29 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.rmi.Remote;
+import java.util.*;
 
 public abstract class Graph {
     public abstract Operator getOperator();
+
+    public void executeLocallySingleThreaded() {
+        compileTopology();
+
+        getOperator().next(0, null);
+    }
+
+    public void executeRemote(int clientSocket) {
+        try {
+            compileTopology();
+            delegateWorkers();
+
+            // block here until the computation has finished distributively
+            waitWhileNotFinished(clientSocket);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
+    }
 
     private void compileTopology() {
         if (this instanceof SerialGraph) {
@@ -31,13 +49,13 @@ public abstract class Graph {
 
             for (int i = 0; i < graphs.length - 1; i++) {
                 StatelessOperator current = (StatelessOperator) graphs[i].getOperator();
-                StatelessOperator next = (StatelessOperator) graphs[i].getOperator();
+                StatelessOperator next = (StatelessOperator) graphs[i + 1].getOperator();
 
                 if (current.getParallelizationHint() == 1 && next.getParallelizationHint() > 1) {
                     // add splitter here
                     // -------------------------------------------
                     // create replicas of the same operator
-                    Operator[] replicas = replicateOperator(current, next.getParallelizationHint());
+                    Operator[] replicas = replicateOperator(next, next.getParallelizationHint());
                     // create splitter
                     Operator splitter = OperatorFactory.createSplitter(next.getParallelizationHint());
                     // current -> splitter -> replicas
@@ -75,58 +93,6 @@ public abstract class Graph {
         }
     }
 
-    public void executeLocallySingleThreaded() {
-        compileTopology();
-        getOperator().next(0, null);
-    }
-
-    public void executeDistributed(int clientSocket) {
-        try {
-            /*if (this instanceof SerialGraph) {
-                SerialGraph g = (SerialGraph) this;
-                for (int i = 0; i < g.getAtomicGraphs().length; i++) {
-                    Sink sink = null;
-                    if (i != g.getAtomicGraphs().length - 1) {
-                        sink = OperatorFactory.createSocketedOutput("localhost", 4000);
-
-                        g.getAtomicGraphs()[i].getOperator().subscribe(sink);
-                        g.getAtomicGraphs()[i].getOperator().setNextOperator(g.getAtomicGraphs()[i + 1].getOperator());
-                    }
-                }
-            }
-
-            System.out.println("The graph has started computing.");
-            getOperator().next(0, null);
-            System.out.println("Waiting for the graph to finish computing...");*/
-            /*
-            // TODO: support other types of graphs rather then just serial ones
-            if (this instanceof SerialGraph) {
-                SerialGraph serialGraph = (SerialGraph) this;
-                AtomicGraph[] atomicGraphs = serialGraph.getAtomicGraphs();
-                for (int i = 0; i < atomicGraphs.length - 1; i++) {
-                    Operator current = atomicGraphs[i].getOperator();
-                    Operator next = atomicGraphs[i + 1].getOperator();
-
-                    if (current instanceof StatelessOperator && next instanceof StatelessOperator) {
-                        if (((StatelessOperator) current).getParallelizationHint() != ((StatelessOperator) next).getParallelizationHint() &&
-                                ((StatelessOperator) next).getParallelizationHint() != 1) {
-                            // e.g. 3 replicas should output to two replicas of the following operator
-                            // invalid case
-                            throw new RuntimeException("Error defining the topology. Not implemented yet.");
-                        }
-                    }
-                }
-            }*/
-            compileTopology();
-            delegateWorkers();
-
-            // block here until the computation has finished distributively
-            waitWhileNotFinished(clientSocket);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
-    }
-
     private Operator[] replicateOperator(Operator operator, int numberOfReplicas) {
         Operator[] operators = new Operator[numberOfReplicas];
 
@@ -142,7 +108,8 @@ public abstract class Graph {
     }
 
     private void delegateWorkers() {
-        List listOfWorkers = WorkloadDistributer.getAvailableNodes();
+        // TODO: support multiple servers
+        //List listOfWorkers = WorkloadDistributer.getAvailableNodes();
         Operator initial = null;
 
         // figuring out who is the initial operator in the graph
@@ -153,18 +120,89 @@ public abstract class Graph {
         else
             throw new RuntimeException("Type of graph is not supported by the compiler.");
 
-        traverseGraph(initial, null);
+        // creating data that will be sent to coordinator process
+        List<RemoteExecutionData> remoteExecutionDataList = createWorkerMetadata(initial);
+
+        // TODO: fix hardcoded values of server
+        try (Socket coordinator = new Socket("localhost", 4000);
+             ObjectOutputStream oos = new ObjectOutputStream(coordinator.getOutputStream());
+             ObjectInputStream ois = new ObjectInputStream(coordinator.getInputStream())) {
+
+            for (RemoteExecutionData rem : remoteExecutionDataList)
+                oos.writeObject(rem);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex.getStackTrace().toString());
+        }
     }
 
-    private void traverseGraph(Operator current, Operator previous) {
-        for (int i = 0; i < current.getConsumers().length; i++) {
-            Operator next = (Operator) current.getConsumers()[i];
+    private List<RemoteExecutionData> createWorkerMetadata(Operator root) {
+        List<RemoteExecutionData> metadata = new ArrayList<>();
+        depthTraversal(root, null, metadata);
 
-            RemoteExecutionData rem = new RemoteExecutionData();
-            if (previous == null)
-                rem.setInitialOperator(true);
+        return metadata;
+    }
 
-            traverseGraph(next, current);
+    private static class TraversalPair {
+        private Operator operator;
+        private Operator previous;
+
+        public TraversalPair(Operator operator, Operator previous) {
+            this.operator = operator;
+            this.previous = previous;
+        }
+
+        public Operator getOperator() {
+            return operator;
+        }
+
+        public Operator getPrevious() {
+            return previous;
+        }
+    }
+
+    private void depthTraversal(Operator current, Operator previous, List<RemoteExecutionData> metadata) {
+        int port = 4001;
+        Set<Operator> visited = new HashSet<>();
+        Map<Operator, Integer> previousOperatorPorts = new HashMap<>();
+
+        Stack<TraversalPair> stack = new Stack<>();
+        stack.push(new TraversalPair(current, previous));
+
+        while (!stack.empty()) {
+            TraversalPair pair = stack.pop();
+            current = pair.operator;
+            previous = pair.previous;
+
+            if (!visited.contains(current)) {
+                // graph traversal data
+                visited.add(current);
+                for (int i = 0; current.getConsumers() != null && i < current.getConsumers().length; i++)
+                    stack.push(new TraversalPair((Operator) current.getConsumers()[i], current));
+
+                RemoteExecutionData rem = new RemoteExecutionData();
+                rem.setOperator(current);
+
+                // input
+                if (previous == null)
+                    rem.setInitialOperator(true);
+                else
+                    rem.setInputPort(previousOperatorPorts.get(previous));
+                // ------------------------------------------------------------------------------
+
+                if (current.getConsumers() != null) {
+                    // output
+                    rem.setOutputHost("localhost");
+                    rem.setOutputPort(port);
+                    previousOperatorPorts.put(current, port++);
+                } else {
+                    // callback to client that the graph execution has been completed
+                    rem.setCallbackHost("localhost");
+                    rem.setCallBackPort(3529);
+                }
+                // ------------------------------------------------------------------------------
+
+                metadata.add(rem);
+            }
         }
     }
 
