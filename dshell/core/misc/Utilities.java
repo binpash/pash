@@ -5,6 +5,9 @@ import jdk.jshell.spi.ExecutionControl;
 import java.util.Arrays;
 
 public class Utilities {
+
+    public static String linuxFileRegex = "(\\/[^\\/ ]*)+\\/?";
+
     public static byte[][] splitData(byte[] input, int numberOfChunks) {
         int chunkSize = (int) Math.ceil(input.length / (double) numberOfChunks);
         byte[][] result = new byte[numberOfChunks][];

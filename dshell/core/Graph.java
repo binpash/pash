@@ -2,6 +2,8 @@ package dshell.core;
 
 import dshell.core.interfaces.Consumer;
 import dshell.core.misc.SystemMessage;
+import dshell.core.misc.Tuple;
+import dshell.core.misc.Utilities;
 import dshell.core.nodes.AtomicGraph;
 import dshell.core.nodes.SerialGraph;
 import dshell.core.nodes.Sink;
@@ -11,13 +13,14 @@ import dshell.core.worker.RemoteExecutionData;
 import dshell.core.worker.WorkloadDistributer;
 import org.xbill.DNS.Serial;
 
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
 import java.rmi.Remote;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class Graph {
     public abstract Operator getOperator();
@@ -30,6 +33,8 @@ public abstract class Graph {
 
     public void executeRemote(int clientSocket) {
         try {
+            // uploading has to be done before the graph expansion
+            uploadInputFiles();
             compileTopology();
             delegateWorkers();
 
@@ -107,6 +112,16 @@ public abstract class Graph {
         return operators;
     }
 
+    private void uploadInputFiles() throws IOException {
+        Matcher matcher = Pattern.compile(Utilities.linuxFileRegex).matcher(this.toString());
+        while (matcher.find()) {
+            String uri = matcher.group();
+            byte[] data = Files.readAllBytes(new File(uri).toPath());
+
+            DFileSystem.uploadFile(uri, data);
+        }
+    }
+
     private void delegateWorkers() {
         // TODO: support multiple servers
         //List listOfWorkers = WorkloadDistributer.getAvailableNodes();
@@ -163,7 +178,8 @@ public abstract class Graph {
     private void depthTraversal(Operator current, Operator previous, List<RemoteExecutionData> metadata) {
         int port = 4001;
         Set<Operator> visited = new HashSet<>();
-        Map<Operator, Integer> previousOperatorPorts = new HashMap<>();
+        Map<Operator, Tuple<int[], Integer>> previousOperatorPorts = new HashMap<>();
+        Map<Operator, RemoteExecutionData> newlyCreatedREMs = new HashMap<>();
 
         Stack<TraversalPair> stack = new Stack<>();
         stack.push(new TraversalPair(current, previous));
@@ -185,15 +201,33 @@ public abstract class Graph {
                 // input
                 if (previous == null)
                     rem.setInitialOperator(true);
-                else
-                    rem.setInputPort(previousOperatorPorts.get(previous));
+                else {
+                    Tuple<int[], Integer> portPair = previousOperatorPorts.get(previous);
+                    int inputPort = portPair.getU()[portPair.getV()];
+                    portPair.setV(portPair.getV() + 1);
+                    rem.setInputPort(inputPort);
+                }
                 // ------------------------------------------------------------------------------
 
                 if (current.getConsumers() != null) {
                     // output
-                    rem.setOutputHost("localhost");
-                    rem.setOutputPort(port);
-                    previousOperatorPorts.put(current, port++);
+                    String[] outputHosts = new String[current.getOutputArity()];
+                    int[] outputPorts = new int[current.getOutputArity()];
+                    for (int i = 0; i < current.getOutputArity(); i++) {
+                        // TODO: hardcoded server location
+                        if (current.getConsumers() == null || ((Operator) current.getConsumers()[i]).getInputArity() == 1 ||
+                                newlyCreatedREMs.containsKey(current.getConsumers()[i]) == false) {
+                            outputHosts[i] = "localhost";
+                            outputPorts[i] = port++;
+                        } else {
+                            // TODO: how to get address of the host?
+                            outputHosts[i] = "localhost";
+                            outputPorts[i] = newlyCreatedREMs.get(current.getConsumers()[i]).getInputPort();
+                        }
+                    }
+                    rem.setOutputHost(outputHosts);
+                    rem.setOutputPort(outputPorts);
+                    previousOperatorPorts.put(current, new Tuple<int[], Integer>(outputPorts, 0));
                 } else {
                     // callback to client that the graph execution has been completed
                     rem.setCallbackHost("localhost");
@@ -202,6 +236,7 @@ public abstract class Graph {
                 // ------------------------------------------------------------------------------
 
                 metadata.add(rem);
+                newlyCreatedREMs.put(current, rem);
             }
         }
     }
@@ -222,24 +257,41 @@ public abstract class Graph {
         }
     }
 
-    /*public String toString() {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
-        Operator op = getOperator();
 
-        while (op != null && !(op instanceof Sink)) {
+        if (this instanceof AtomicGraph) {
+            Operator op = getOperator();
+
             sb.append(op.getProgram());
             if (op.getCommandLineArguments() != null) {
                 for (String s : op.getCommandLineArguments()) {
                     sb.append(" " + s);
                 }
             }
+        } else if (this instanceof SerialGraph) {
+            AtomicGraph[] atomicGraphs = ((SerialGraph) this).getAtomicGraphs();
 
-            if (op.getConsumers() != null && !(op.getConsumer() instanceof Sink))
-                sb.append(" | ");
+            for (int i = 0; i < atomicGraphs.length; i++) {
+                Operator op = atomicGraphs[i].getOperator();
 
-            op = (Operator) op.getConsumer();
+                if (atomicGraphs[i].getOperator() instanceof Sink)
+                    continue;
+
+                sb.append(op.getProgram());
+                if (op.getCommandLineArguments() != null) {
+                    for (String s : op.getCommandLineArguments()) {
+                        sb.append(" " + s);
+                    }
+                }
+
+                if (i < atomicGraphs.length - 1 &&
+                        atomicGraphs[i+1].getOperator() != null &&
+                        !(atomicGraphs[i+1].getOperator() instanceof Sink))
+                    sb.append(" | ");
+            }
         }
 
         return sb.toString();
-    }*/
+    }
 }
