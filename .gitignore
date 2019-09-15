@@ -28,3 +28,5 @@ revision.tex
 *.byte
 *.o
 
+# local directory w/ related work
+./papers
