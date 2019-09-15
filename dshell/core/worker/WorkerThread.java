@@ -48,8 +48,14 @@ public class WorkerThread extends Thread {
 
             if (!(operator instanceof Sink)) {
                 // connecting output socket to current operator
-                operator.subscribe(OperatorFactory.createSocketedOutput(red.getOutputHost(), red.getOutputPort()));
+                Operator[] socketedOutput = new Operator[operator.getConsumers().length];
+                for (int i = 0; i < operator.getConsumers().length; i++)
+                    socketedOutput[i] = OperatorFactory.createSocketedOutput(red.getOutputHost()[i], red.getOutputPort()[i]);
+                operator.subscribe(socketedOutput);
+
                 // invoking the operator's computation; after the computation, the data is sent via socket to next node
+                // if this is split operator the data splitting will be done inside an operator and the data will be
+                // outputted to the sockets that were created few lines before this
                 operator.next(0, data);
             } else // instance of sink
             {

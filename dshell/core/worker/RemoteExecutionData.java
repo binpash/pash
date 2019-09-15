@@ -16,8 +16,8 @@ public class RemoteExecutionData implements Serializable {
     private int inputPort;
 
     // URL for sending the data to other operators
-    private String outputHost;
-    private int outputPort;
+    private String[] outputHost;
+    private int[] outputPort;
 
     // URL for notifying the client that the computation was finished or that it threw an exception
     private String callbackHost;
@@ -26,7 +26,7 @@ public class RemoteExecutionData implements Serializable {
     public RemoteExecutionData() {
     }
 
-    public RemoteExecutionData(Operator operator, boolean initialOperator, int inputPort, String outputHost, int outputPort, String callbackHost, int callBackPort) {
+    public RemoteExecutionData(Operator operator, boolean initialOperator, int inputPort, String[] outputHost, int[] outputPort, String callbackHost, int callBackPort) {
         this.operator = operator;
         this.initialOperator = initialOperator;
         this.inputPort = inputPort;
@@ -60,19 +60,19 @@ public class RemoteExecutionData implements Serializable {
         this.inputPort = inputPort;
     }
 
-    public String getOutputHost() {
+    public String[] getOutputHost() {
         return outputHost;
     }
 
-    public void setOutputHost(String outputHost) {
+    public void setOutputHost(String[] outputHost) {
         this.outputHost = outputHost;
     }
 
-    public int getOutputPort() {
+    public int[] getOutputPort() {
         return outputPort;
     }
 
-    public void setOutputPort(int outputPort) {
+    public void setOutputPort(int[] outputPort) {
         this.outputPort = outputPort;
     }
 
