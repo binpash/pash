@@ -34,7 +34,8 @@ public abstract class Graph {
     public void executeRemote(int clientSocket) {
         try {
             // uploading has to be done before the graph expansion
-            uploadInputFiles();
+            // TODO: uncomment HDFS
+            //uploadInputFiles();
             compileTopology();
             delegateWorkers();
 
@@ -145,6 +146,8 @@ public abstract class Graph {
 
             for (RemoteExecutionData rem : remoteExecutionDataList)
                 oos.writeObject(rem);
+
+            oos.writeObject(new SystemMessage.EndOfREM());
         } catch (Exception ex) {
             throw new RuntimeException(ex.getStackTrace().toString());
         }
@@ -173,6 +176,7 @@ public abstract class Graph {
         public Operator getPrevious() {
             return previous;
         }
+
     }
 
     private void depthTraversal(Operator current, Operator previous, List<RemoteExecutionData> metadata) {
@@ -286,8 +290,8 @@ public abstract class Graph {
                 }
 
                 if (i < atomicGraphs.length - 1 &&
-                        atomicGraphs[i+1].getOperator() != null &&
-                        !(atomicGraphs[i+1].getOperator() instanceof Sink))
+                        atomicGraphs[i + 1].getOperator() != null &&
+                        !(atomicGraphs[i + 1].getOperator() instanceof Sink))
                     sb.append(" | ");
             }
         }
