@@ -21,6 +21,32 @@
 \usepackage{listings}
 \usepackage{amsmath}
 
+\captionsetup[figure]{font=footnotesize,name={Fig.},labelfont={bf, footnotesize}}
+\captionsetup[table]{font=footnotesize,name={Tab.},labelfont={bf, footnotesize}, skip=2pt, aboveskip=2pt}
+\captionsetup{font=footnotesize,labelfont={bf, footnotesize}, belowskip=2pt}
+
+\newcommand{\eg}{{\em e.g.}, }
+\newcommand{\ie}{{\em i.e.}, }
+\newcommand{\etc}{{\em etc.}\xspace}
+\newcommand{\vs}{{\em vs.} }
+\newcommand{\cmpn}{compartmentalization} 
+\newcommand{\heading}[1]{\vspace{4pt}\noindent\textbf{#1}\enspace}
+\newcommand{\ttt}[1]{\texttt{\small #1}}
+\newcommand{\ttiny}[1]{\texttt{\scriptsize #1}}
+\newcommand{\spol}[1]{\scriptsize{\sc#1}}
+\newcommand{\pol}[1]{\texttt{\small {\color{purple}#1}}}
+\newcommand{\rf}[1]{\ref{#1}}
+\newcommand{\wka}{\ttt{a\textsubscript{1}}}
+\newcommand{\wkq}{\ttt{q\textsubscript{1-4}}}
+
+% For comments
+\newcommand{\eat}[1]{}
+\newcommand{\TODO}[1]{\hl{\textbf{TODO:} #1}\xspace}
+\newcommand{\todo}[1]{\hl{#1}\xspace}
+\newcommand{\nv}[1]{[{\color{cyan}#1 --- Nikos}]}
+\newcommand{\review}[1]{{\color{red}#1}}
+
+
 
 %% Conference information
 %% Supplied to authors by publisher for camera-ready submission;
