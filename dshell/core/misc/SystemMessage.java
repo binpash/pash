@@ -1,7 +1,9 @@
 package dshell.core.misc;
 
-public class SystemMessage {
-    public static class Payload {
+import java.io.Serializable;
+
+public class SystemMessage implements Serializable {
+    public static class Payload implements Serializable{
         // an empty class
     }
 
@@ -24,6 +26,10 @@ public class SystemMessage {
     }
 
     public static class ComputationFinished extends Payload {
+
+    }
+
+    public static class EndOfREM extends Payload {
 
     }
 }

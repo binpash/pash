@@ -42,7 +42,7 @@ public class StatelessOperator extends Operator<Object, Object> {
                 OutputStream os = process.getOutputStream();
 
                 // write to standard input of the process
-                os.write((byte[]) data);
+                os.write(((byte[][]) data)[0]);
                 os.flush();
                 os.close();
             }
