@@ -225,6 +225,24 @@
 \newcommand{\sx}[1]{(\S\ref{#1})}
 \newcommand{\sys}{{\scshape Dish}\xspace}
 
+%% Abstract
+%% Note: \begin{abstract}...\end{abstract} environment must come
+%% before \maketitle command
+\begin{abstract}
+  Distributed systems offer notable benefits over centralized systems.
+  Reaping these benefits, however, requires developers to develop and deploy
+  software in a manner that makes distribution explicit---a process
+  that is quite different from how they compose software for centralized
+  systems.
+% 
+  \emph{Light-touch distribution} is a new approach for scaling out distribution-oblivious shell scripts.
+  It leverages the fact that 
+% introduced as a drop-in replacement of a language runtime's module system, 
+  Our \sys prototype shows substantial speedups over 
+  as well as the ability to operate on large input sizes, all without
+  any developer input.
+\end{abstract}
+
 
 %% 2012 ACM Computing Classification System (CSS) concepts
 %% Generate at 'http://dl.acm.org/ccs/ccs.cfm'.
@@ -258,6 +276,49 @@
 %% commands, abstract environment, Computing Classification System
 %% environment and commands, and keywords command.
 \maketitle
+
+
+\section{Introduction}
+
+Distributed systems offer significant benefits over their centralized counterparts.
+By parallelizing computation they can  
+can speed up computations, mitigate resource-exhaustion attacks, improve fault-tolerance, and balance load during spikes.
+% offer notable benefits over their centralized counterparts:
+%   using partitioning and replication, they can process and store data with increased throughput and fault-tolerance.
+Yet, only a minority of developers, employed by the select few companies that deal with massive datasets, have the luxury of engineering software systems with distribution baked in from the start.
+The remaining majority starts by developing and deploying software in a centralized manner---that is, \emph{until} there is a significant change of requirements, such as a load increase.
+
+Despite these benefits, the development and deployment of distributed software remains different from and significantly more difficult than its centralized counterpart.
+Whereas anyone can stitch together a Bash script to compute on a single machine, 
+  % domain-experts routinely glue scripts together to process and share data. % without the help of a computing expert.
+   scaling out to multiple computers requires expert labor around ``point'' solutions with expensive setups, restricted programming interfaces, and exorbitant composition costs~\cite{maas2014holistic, schwarzkopf2013dios, andromeda:hotos:2015, jonas2017occupy, varghese2018next, nefele:18}.
+Consider the following Unix pipeline featured in Bentley's Programming Pearls column, slightly modified to work on today's Unix.
+
+% \begin{lstlisting}[language=sh,float=h,numbers=none]
+% cat doc.ms |                   # print input file
+% groff -t -e -mandoc -Tascii |  # remove formatting
+% col -bx |                      # remove backspaces 
+% tr A-Z a-z |                   # convert to lower case
+% tr -d '[:punct:]' |            # remove punctuation
+% sort |                         # put words in alphabetical order
+% unique |                       # remove duplicate words
+% comm -13 /usr/share/dict -     # report words not in dictionary 
+% \end{lstlisting}
+
+\begin{lstlisting}[language=sh,float=h,numbers=none]
+ cat *.txt |
+ tr -cs A-Za-z`\n` |
+ tr A-Z a-z |
+ sort |
+ uniq -c |
+ sort -rn |
+ head 5 > output.txt
+\end{lstlisting}
+
+
+This pipeline takes an input file (line 1), removes 
+
+
 
 
 %% Acknowledgments
