@@ -46,6 +46,61 @@
 \newcommand{\nv}[1]{[{\color{cyan}#1 --- Nikos}]}
 \newcommand{\review}[1]{{\color{red}#1}}
 
+\definecolor{editorGray}{rgb}{0.95, 0.95, 0.95}
+\definecolor{editorOcher}{rgb}{1, 0.5, 0} % #FF7F00 -> rgb(239, 169, 0)
+\definecolor{editorGreen}{rgb}{0, 0.5, 0} % #007C00 -> rgb(0, 124, 0)
+
+\definecolor{cdb}{rgb}{0.37, 0.62, 0.63} % cadet blue
+
+\lstdefinelanguage{sh}{
+  morekeywords={for, in, do, done, \|},
+  keywordstyle=\color{purple}\ttfamily,
+  % ndkeywords={curl, grep, wget, awk, xargs, find, nc, mdc, gunzip, cut, sort, head, join},
+  ndkeywordstyle=\color{black}\ttfamily\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{\#},
+  commentstyle=\color{lightgray},
+% morecomment=[s]{/\\*\\*, \\*/},
+  stringstyle=\color{darkgray}\ttfamily,
+  morestring=[b]',
+  morestring=[b]",
+% numbersep=1pt,
+% numberstyle=\footnotesize\bf\color{gray},   % the style that is used for the line-numbers
+  abovecaptionskip=0pt,
+  aboveskip=0pt,
+  belowcaptionskip=0pt,
+  belowskip=0pt,
+  frame=none                     % adds a frame around the code
+% moredelim=[s][\color{gray}]{c:}{>},
+% moredelim=[s][\color{orange}]{/*}{/}
+}
+
+\lstset{ %
+  backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
+  basicstyle=\small\ttfamily,  % the size of the fonts that are used for the code
+  upquote=true,
+  captionpos=b,                    % sets the caption-position to bottom
+% frame=B,                    % adds a frame around the code
+  numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+  numbersep=2pt,                   % how far the line-numbers are from the code
+  numberstyle=\tiny\color{gray},   % the style that is used for the line-numbers
+  rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+  framerule=0pt,
+	xleftmargin=0pt,
+	xrightmargin=0pt,
+	breakindent=0pt,
+  aboveskip=0pt,
+  framesep=0pt,
+  abovecaptionskip=0pt,
+  aboveskip=0pt,
+  belowcaptionskip=0pt,
+  belowskip=0pt,
+  frame=none,
+  framexbottommargin=0pt,
+  resetmargins=true
+}
+
 
 
 %% Conference information
