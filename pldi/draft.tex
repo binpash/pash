@@ -283,19 +283,28 @@
 
 \section{Introduction}
 
+% 1. Shell scripting; pipelines, in particular, are a common abstraction for expressing filters
+% They are an easy way to , because they combine a set of assumptions that work well with Unix
+% They work great on a single machine, but are difficult to scale out
+% Could we fully automate distribution? 
+% The key insight is that pipelines already express a domain-specific
+% computation that is easily amenable to distribution.
+% 
+
 Distributed systems offer significant benefits over their centralized counterparts.
-By parallelizing computation they can  
-can speed up computations, mitigate resource-exhaustion attacks, improve fault-tolerance, and balance load during spikes.
+For example, they can speed up computations and can process amounts that would not fit into any single machine.
 % offer notable benefits over their centralized counterparts:
 %   using partitioning and replication, they can process and store data with increased throughput and fault-tolerance.
-Yet, only a minority of developers, employed by the select few companies that deal with massive datasets, have the luxury of engineering software systems with distribution baked in from the start.
-The remaining majority starts by developing and deploying software in a centralized manner---that is, \emph{until} there is a significant change of requirements, such as a load increase.
+% Yet, only a minority of developers, employed by the select few companies that deal with massive datasets, have the luxury of engineering software systems with distribution baked in from the start.
+% The remaining majority starts by developing and deploying software in a centralized manner---that is, \emph{until} there is a significant change of requirements, such as a load increase.
 
-Despite these benefits, the development and deployment of distributed software remains different from and significantly more difficult than its centralized counterpart.
-Whereas anyone can stitch together a Bash script to compute on a single machine, 
+Despite these benefits, their development remains different from and significantly more difficult than their centralized counterparts.
+Whereas anyone can stitch together a Bash script to compute on a single computer, 
   % domain-experts routinely glue scripts together to process and share data. % without the help of a computing expert.
-   scaling out to multiple computers requires expert labor around ``point'' solutions with expensive setups, restricted programming interfaces, and exorbitant composition costs~\cite{maas2014holistic, schwarzkopf2013dios, andromeda:hotos:2015, jonas2017occupy, varghese2018next, nefele:18}.
-Consider the following Unix pipeline featured in Bentley's Programming Pearls column, slightly modified to work on today's Unix.
+   scaling out to multiple ones requires expert labor around ``point'' solutions with expensive setups, restricted programming interfaces, and exorbitant composition costs~\cite{maas2014holistic, schwarzkopf2013dios, andromeda:hotos:2015, jonas2017occupy, varghese2018next, nefele:18}.
+
+To understand this sharp contrast, consider calculating frequencies of terms within a set of input files.
+For a developer with \emph{one} computer, this is achievable with a short \unix pipeline:
 
 % \begin{lstlisting}[language=sh,float=h,numbers=none]
 % cat doc.ms |                   # print input file
@@ -307,30 +316,75 @@ Consider the following Unix pipeline featured in Bentley's Programming Pearls co
 % unique |                       # remove duplicate words
 % comm -13 /usr/share/dict -     # report words not in dictionary 
 % \end{lstlisting}
-
+% greece; stops
+% AWS policy specification
 \begin{lstlisting}[language=sh,float=h,numbers=none]
- cat *.txt |
- tr -cs A-Za-z`\n` |
- tr A-Z a-z |
- sort |
- uniq -c |
- sort -rn |
- head 5 > output.txt
+ cat * | tr -cs A-Za-z`\n` | tr A-Z a-z |
+   sort | uniq -c | sort -rn | head 5 > out
 \end{lstlisting}
 
+Combining several features, Unix makes small tasks easy to express;
+  composition allows the composition of general primitives
+Key elements of \unix are the ability to stitch together programs written in different languages, the abstraction of a file system as a set of resident streams, as well as naming---the ability to resolve command, file names within a global context.
+Under the hood, the \unix kernel buffers results, concurrency control 
 
-This pipeline takes an input file (line 1), removes 
+% Key insight 
+% % The garden-hose philosophy is similar to Haskell 
+% This pipeline takes an input file (line 1), removes 
+% * do not need to use specialized frameworks for composition---instead, as long as they conform to the shell, individual primitives can be written in any programming language.
+% * do not need to rewrite ---
+
+Unfortunately, 
+A developer with many computers has to choose between three options, all of which require significant manual effort.
+The most popular is to leverage domain-specific ; this requires rewriting portions of the program in a new language and use operations
+
+% If developers have already expressed their computation as a Unix pipeline, they should not have to manually rewrite the program in other environment---\eg Hadoop, Spark---to exploit distribution.
+For simple, one-off pipelines that take a few minutes to compose this cost---order of magnitude higher than---becomes unjustifiable.
+For many legacy pipelines  
+Could the generation and execution of a distributing version of the pipeline be automated?
+
+The key insight behind our work is that Unix pipelines already provide most of the information for distributing a computation.
+Indeed, the primary reason behind $p_1$'s succinctness is that the pipeline is a domain-specific language for describing operations on streams.
+Primitives 
+\sys enables \emph{distribution-oblivious programming}: 
+  multi-order of magnitude speedups with correctness guarantees and without any developer effort.
+
+The a series of transformations that 
+Second, we are using describing composition . For this, we are restricting the study to a subset of the POSIX shell--
+
+Local operations and identifiers have to be carefully translated to distributed ones, a translation that depends on the types of the operations and associated identifiers.
+
+The semantics is enough to capture powerful features such as stream branching and feedback constructs found in practice and in the system's evaluation.
 
 
+The paper is structured as follows.
+We first start with a background section outlining pipeline concepts.
+Sections \ref{profiling}--\ref{recipes} highlight our key contributions:
+\begin{itemize}
 
+  \item
+  \S\ref{overview} overviews the system and introduces the notion of command classes.
+	introduces \emph{load-detection transformations} that collect windowed statistics about load at each module boundary.
+  Control-plane coordination with a global view of load and available resources helps decide when to initiate scale-out of a bottlenecked module.
 
-%% Acknowledgments
-\begin{acks}                            %% acks environment is optional
-                                        %% contents suppressed with 'anonymous'
-  %% Commands \grantsponsor{<sponsorID>}{<name>}{<url>} and
-  %% \grantnum[<url>]{<sponsorID>}{<number>} should be used to
-  %% acknowledge financial support and will be used by metadata
-  %% extraction tools.
+  \item
+  \S\ref{core} presents a set of parametrizable \emph{distribution transformations} that transparently scale modules out.
+  These transformations can create module replicas, hook communication channels among them, schedule requests, and forward side-effects such as mutation and collection of memory.
+
+  \item
+  \S\ref{recipes} outlines \emph{distribution recipes}, lightweight annotations that guide the semantics of the resulting distribution.
+  They offer significant flexibility by\eat{ generating configurations that} parametrizing transformations, including tuning state management, replication consistency, event propagation, and colocation preferences.
+\end{itemize}
+
+\noindent
+\sys's evaluation~\sx{eval} uses a combination of one-liner micro-benchmarks that highlight certain features and three multi-line programs---a web crawling and indexing engine, a production genomics pipeline, and a climate data processing.
+We close with a discussion of related prior work~\sx{related} and possible future directions~\sx{discussion}.
+
+\section{Background}
+
+\begin{acks}
+  % Dumping people so that we don't forget
+  % 
   This material is based upon work supported by the
   \grantsponsor{GS100000001}{National Science
     Foundation}{http://dx.doi.org/10.13039/100000001} under Grant
@@ -348,8 +402,11 @@ This pipeline takes an input file (line 1), removes
 
 %% Appendix
 \appendix
-\section{Appendix}
+\section{Scripts used in the evaluation}
 
-Text of appendix \ldots
+This appendix contains the source code of the scripts used in the evaluation of
+the \sys. They are part of the codebase (released as open source with the camera
+ready), and are provided here only to aid the reviewers.
+
 
 \end{document}
