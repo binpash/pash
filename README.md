@@ -37,6 +37,8 @@ Outside shell scripting:
 * [Smoosh papers](http://shell.cs.pomona.edu/)
 * [dgsh](https://github.com/dspinellis/dgsh)
 
+[RaftLib](https://github.com/RaftLib/RaftLib)
+
 # Evaluation
 
 There are several directions for evaluating these ideas:
@@ -47,6 +49,8 @@ performance (and, possibly, correctness) over sequential runs.
 *  Take distributed  / MR  / Spark  / Stream  programs that  map to  our subset;
 convert  them  to  sequential  shell   scripts  (manually),  and  then  back  to
 distributed scripts (w/ our tool), and compare.
+
+Compare with RaftLib.
 
 # Notes
 
