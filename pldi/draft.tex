@@ -320,8 +320,8 @@ pipeline~\cite{bentley1986literate}:
 % greece; stops
 % AWS policy specification
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- cat * | tr -cs A-Za-z`\n` | tr A-Z a-z |      (($$p_1$$))
-   sort | uniq -c | sort -rn | head 5 > out
+cat * | tr -cs A-Za-z`\n` | tr A-Z a-z | (($$p_1$$))
+  sort | uniq -c | sort -rn | head 5 > out
 \end{lstlisting}
 
 Combining several features, Unix makes small tasks easy to express;
@@ -382,40 +382,87 @@ Sections \ref{profiling}--\ref{recipes} highlight our key contributions:
 We close with a discussion of related prior work~\sx{related} and possible future directions~\sx{discussion}.
 
 \section{Background}
+\label{bg}
 
 This section breaks down $p_1$ to presents important background on and challenges
 of shell scripting.
 
 \subsection{Unix Pipelines, Informally}
+\label{bg:pipelines}
 
-Shell scripting
+Pipelines are a mechanism for program composition.
+Individual programs, specified as commands, conform to a common but general interface. 
+Broadly, this interface commands allows commands to do a combination of the following:
+  accept input from their input stream (stdin),
+  generate output to their output stream (stdout)
+Input and output streams are standard text streams---lines of text separated by the newline character.
+Leveraging this interface, pipelines chain together commands by their standard streams, such that the output stream of one command (stdout) is passed directly as input (stdin) to the next one.
+% This concept gave rise to the toolbox philosophy: 
+%   programs that do one thing and do it well, that work together, and that handle text streams as a universal interface.
 
 \heading{Basics}
 
+The standard shell syntax for anonymous pipes is to list multiple commands, separated by vertical bars ("pipes" in common Unix verbiage).
+that are not interpreted by the shell, but are local to each command.
+
+Additional details augment this simple interface.
+Commands can be specified with options arguments
+
+
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- ls -l | wc -l                                                  (($$p_2$$))
+ ls -l | wc -l                           (($$p_2$$))
 \end{lstlisting}
 
 \heading{Generation}
+A central concept in pipelines---and Unix, in general---is the file system, which allows interfacing with persistent data.
+There are many commands that take as input a file identifier 
+Reading a file or a set of files generates a stream; 
+  similarly, streams can be trivially redirected to the file system---by appending with the file identifier.
+
+Expansion---the key is that expansion and evaluation are handled by the shell at an earlier stage 
+The most powerful---and interesting, for \ttt{dish}---type of expansion is subshell expansion, that allows replacing entire input streams 
+
+
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- cat * | wc -l > out.txt                                          (($$p_2$$))
+ cat * | wc -l > out.txt                 (($$p_3$$))
 \end{lstlisting}
 
 \heading{Identifiers}
+The file-system is a common abstraction layer used for many other operations than just serving files (this will be become clearer when talking about file-system commands in \S\ref{bg:cmd}).
+as such, different identifiers many not resolve to actual files, but rather in-memory or OS-internal structures.
+
+Unix already specifies a few classes of files:
+
+Here are a few special files:
+  \ttt{proc} called 
+
+Technically, anonymous pipes show up as file identifiers in a hidden filesystem.
+Similarly, open files and other ephemeral identifiers 
+
+
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- cat /proc/ >                                                   (($$p_2$$))
+ cat /proc/ >                            (($$p_4$$))
 \end{lstlisting}
 
 \heading{Stream Manipulation}
+A small but powerful set of primitives are concerned with stream manipulation.
+First, as described above, several commands can be redirected
+Second, 
+
+\ttt{xargs}
+\ttt{tee}
+
+In combination, these constructs are powerful enough to introduce circular streams. % or stream cycles?
+
 Explicit Redirection
 Implicit splitting and merging 
 This can be done through the file-system operators 
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- cat /proc/ >                                                   (($$p_2$$))
+ cat /proc/ >                            (($$p_5$$))
 \end{lstlisting}
 
-\heading{Grouping}
+\heading{Composition}
 Composition
 
 The shell provides several ways of grouping commands and manipulating their
@@ -424,6 +471,7 @@ overall input and output channels
 { echo 1; echo 2; } > out.txt
 
 \subsection{Comnands}
+\label{bg:cmd}
 
 % Sets vs. Classes
 
@@ -444,6 +492,7 @@ Distributability classes, based on how
 \heading{Irreversably Side-effectful}
 
 \subsection{The Shell Language}
+\label{bg:shell}
 
 \heading{Implicits}
 Expansion
