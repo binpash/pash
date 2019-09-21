@@ -301,10 +301,11 @@ For example, they can speed up computations and can process amounts that would n
 Despite these benefits, their development remains different from and significantly more difficult than their centralized counterparts.
 Whereas anyone can stitch together a Bash script to compute on a single computer, 
   % domain-experts routinely glue scripts together to process and share data. % without the help of a computing expert.
-   scaling out to multiple ones requires expert labor around ``point'' solutions with expensive setups, restricted programming interfaces, and exorbitant composition costs~\cite{maas2014holistic, schwarzkopf2013dios, andromeda:hotos:2015, jonas2017occupy, varghese2018next, nefele:18}.
+   scaling out to multiple ones requires expert labor around ``point'' solutions with expensive setups, restricted programming interfaces, and exorbitant composition costs~\cite{taurus:14, dios:13, andromeda:2015, pywren:17, futuredata:18, nefele:18}.
 
 To understand this sharp contrast, consider calculating frequencies of terms within a set of input files.
-For a developer with \emph{one} computer, this is achievable with a short \unix pipeline:
+For a developer with \emph{one} computer, this is achievable with a short \unix
+pipeline~\cite{bentley1986literate}:
 
 % \begin{lstlisting}[language=sh,float=h,numbers=none]
 % cat doc.ms |                   # print input file
@@ -397,7 +398,7 @@ We close with a discussion of related prior work~\sx{related} and possible futur
 
 
 %% Bibliography
-\bibliography{../../bib/bib}
+\bibliography{./bib}
 
 
 %% Appendix
