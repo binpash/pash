@@ -319,8 +319,8 @@ pipeline~\cite{bentley1986literate}:
 % \end{lstlisting}
 % greece; stops
 % AWS policy specification
-\begin{lstlisting}[language=sh,float=h,numbers=none]
- cat * | tr -cs A-Za-z`\n` | tr A-Z a-z |
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+ cat * | tr -cs A-Za-z`\n` | tr A-Z a-z |      (($$p_1$$))
    sort | uniq -c | sort -rn | head 5 > out
 \end{lstlisting}
 
@@ -382,6 +382,83 @@ Sections \ref{profiling}--\ref{recipes} highlight our key contributions:
 We close with a discussion of related prior work~\sx{related} and possible future directions~\sx{discussion}.
 
 \section{Background}
+
+This section breaks down $p_1$ to presents important background on and challenges
+of shell scripting.
+
+\subsection{Unix Pipelines, Informally}
+
+Shell scripting
+
+\heading{Basics}
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+ ls -l | wc -l                                                  (($$p_2$$))
+\end{lstlisting}
+
+\heading{Generation}
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+ cat * | wc -l > out.txt                                          (($$p_2$$))
+\end{lstlisting}
+
+\heading{Identifiers}
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+ cat /proc/ >                                                   (($$p_2$$))
+\end{lstlisting}
+
+\heading{Stream Manipulation}
+Explicit Redirection
+Implicit splitting and merging 
+This can be done through the file-system operators 
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+ cat /proc/ >                                                   (($$p_2$$))
+\end{lstlisting}
+
+\heading{Grouping}
+Composition
+
+The shell provides several ways of grouping commands and manipulating their
+overall input and output channels 
+
+{ echo 1; echo 2; } > out.txt
+
+\subsection{Comnands}
+
+% Sets vs. Classes
+
+Distributability classes, based on how 
+
+\heading{Preliminaries}
+
+\heading{POSIX, GNU Core-utils, and beyond}
+
+\heading{Stateless}
+
+\heading{Pure}
+
+\heading{File-system}
+
+\heading{Side-effectful}
+
+\heading{Irreversably Side-effectful}
+
+\subsection{The Shell Language}
+
+\heading{Implicits}
+Expansion
+Implicits
+Context
+
+\heading{Language Constructs}
+
+Even without these, the Unix pipeline language is powerful enough to capture complex pipelines.
+
+We can encode powerful
+
+\section{Dish Overview}
+
+\section{Related Work}
 
 \begin{acks}
   % Dumping people so that we don't forget
