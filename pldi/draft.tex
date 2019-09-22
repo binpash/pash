@@ -435,6 +435,38 @@ The most powerful---and interesting, for \ttt{dish}---type of expansion is subsh
 The file-system is a common abstraction layer used for many other operations than just serving files (this will be become clearer when talking about file-system commands in \S\ref{bg:cmd}).
 as such, different identifiers many not resolve to actual files, but rather in-memory or OS-internal structures.
 
+At a high level, POSIX defines several file types:
+(-) regular files, storing lines of text or binary data,
+(d) directories, grouping together multiple other files,
+(l) symbolic links, pointing to other files,
+(p) named pipes or FIFOs, communication primitives that can be named and manipulated like files,
+(s) domain sockets or DSes, full-duplex communication primitives that support passing file descriptors, and
+(b or c) special files, interfaces to device drivers or low-level abstractions, presented as ordinary files.
+
+Most of these identifiers are manipulated by file-system commands---\eg \ttt{mkdir} for directories and \ttt{mkfifo} for FIFOs.
+FIFOs and DSes look like files but are streams.
+
+Special files are particularly interesting because they are resolved to OS structures.
+One set is pseudo-devices---device files that simply;
+For example /dev/urandom returns a stream of random characters and /dev/null accepts and discards all input written to it.
+Another set is proc filesystem (procfs), a special filesystem in Unix-like operating systems that presents information about processes and other system information.
+For example, /proc/PID/cmdline contains command that originally started the process and /proc/PID/cwd contains a symlink to the current working directory of the process.
+
+sysfs is a pseudo file system provided by the Linux kernel that exports information about various kernel subsystems, hardware devices, and 
+
+/modules, one of the most important files in /proc, containing a list of the kernel modules currently loaded . It gives some indication (not always entirely correct) of dependencies.
+/cpuinfo
+
+symbolic links, FIFO specials, 
+device files
+block special, character special, 
+and domain sockets.
+
+There are 3 standard streams (stdin, stdout, stderr) created automatically for most Unix programs.
+These correspond to \ttt{/dev/fd/0}.
+% These streams are created by the C library (glibc) at the start of program execution,
+and new streams can be created to connect to files, sockets, pipes,
+
 Unix already specifies a few classes of files:
 
 Here are a few special files:
@@ -467,6 +499,8 @@ This can be done through the file-system operators
 \end{lstlisting}
 
 \heading{Composition}
+anonymous pipes
+
 Composition
 
 The shell provides several ways of grouping commands and manipulating their
