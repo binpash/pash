@@ -392,17 +392,21 @@ of shell scripting.
 
 Pipelines are a mechanism for program composition.
 Individual programs, specified as commands, conform to a common but general interface. 
-Broadly, this interface commands allows commands to do a combination of the following:
-  accept input from their input stream (stdin),
-  generate output to their output stream (stdout)
-Input and output streams are standard text streams---lines of text separated by the newline character.
+For now, this interface allows a combination of the following:
+  accepting input from the standard input stream (stdin),
+  generating output to the standard output stream (stdout), and
+  generating errors or diagnostics to the standard error stream (stderr)
+Standard streams are streams of characters with a few special characters---for example, EOF is a special end-of-file character signaling the end of the input stream.
+% For Unix commands, the newline character is special; as such, Unix streams can be seen as lazy lists of strings---lines of text separated by the newline character.
+
 Leveraging this interface, pipelines chain together commands by their standard streams, such that the output stream of one command (stdout) is passed directly as input (stdin) to the next one.
-% This concept gave rise to the toolbox philosophy: 
-%   programs that do one thing and do it well, that work together, and that handle text streams as a universal interface.
+Pipeline chaining goes hand-in-hand with the Unix toolbox philosophy: 
+  programs do one thing well, they work together, and they manipulate text streams as their universal interface.
+The next few paragraphs describe the details.
 
 \heading{Basics}
+The standard shell syntax for pipelines a list of commands separated by vertical bars (``pipes'', in Unix terminology).
 
-The standard shell syntax for anonymous pipes is to list multiple commands, separated by vertical bars ("pipes" in common Unix verbiage).
 that are not interpreted by the shell, but are local to each command.
 
 Additional details augment this simple interface.
