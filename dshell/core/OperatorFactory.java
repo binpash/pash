@@ -21,7 +21,7 @@ public class OperatorFactory {
         return new Sink() {
             @Override
             public void next(int inputChannel, Object data) {
-                DFileSystem.uploadFile(filename, ((byte[][]) data)[0]);
+                //DFileSystem.uploadFile(filename, ((byte[][]) data)[0]);
             }
         };
     }
@@ -31,8 +31,7 @@ public class OperatorFactory {
             @Override
             public void next(int inputChannel, Object data) {
                 try (Socket socket = new Socket(address, port);
-                     ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-                     ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream())) {
+                     ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream())) {
 
                     outputStream.writeObject(data);
                 } catch (Exception e) {
