@@ -141,8 +141,7 @@ public abstract class Graph {
 
         // TODO: fix hardcoded values of server
         try (Socket coordinator = new Socket("localhost", 4000);
-             ObjectOutputStream oos = new ObjectOutputStream(coordinator.getOutputStream());
-             ObjectInputStream ois = new ObjectInputStream(coordinator.getInputStream())) {
+             ObjectOutputStream oos = new ObjectOutputStream(coordinator.getOutputStream())) {
 
             for (RemoteExecutionData rem : remoteExecutionDataList)
                 oos.writeObject(rem);

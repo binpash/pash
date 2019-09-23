@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public class DistributedTask {
-    private final static int NUMBER_OF_THREADS = 128;
+    private final static int NUMBER_OF_THREADS = 8;
 
     public static void main(String[] args) throws Exception {
         if (args.length < 1)
@@ -27,7 +27,6 @@ public class DistributedTask {
 
             while (true) {
                 try (Socket client = serverSocket.accept();
-                     ObjectOutputStream oos = new ObjectOutputStream(client.getOutputStream());
                      ObjectInputStream ois = new ObjectInputStream(client.getInputStream())) {
 
                     while (true) {
@@ -45,7 +44,5 @@ public class DistributedTask {
         } catch (Exception e) {
             System.out.println(e.getStackTrace());
         }
-
-        System.out.println("Node has been shutdown successfully.");
     }
 }

@@ -36,7 +36,6 @@ public class WorkerThread extends Thread {
                 try (ServerSocket inputDataServerSocket = new ServerSocket(red.getInputPort())) {
                     for (int i = 0; i < operator.getInputArity(); i++) {
                         try (Socket inputDataSocket = inputDataServerSocket.accept();
-                             ObjectOutputStream oos = new ObjectOutputStream(inputDataSocket.getOutputStream());
                              ObjectInputStream ois = new ObjectInputStream(inputDataSocket.getInputStream())) {
 
                             // here order is not dependent because the operator is stateless

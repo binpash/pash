@@ -12,12 +12,19 @@ import java.util.UUID;
 public class DFileSystem {
     private static final String HDFS_SERVER = "hdfs://localhost:9000";
     private static final Configuration configuration;
+    private static FileSystem fileSystem;
 
     static {
         configuration = new Configuration();
         configuration.set("fs.defaultFS", HDFS_SERVER);
         configuration.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
         configuration.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+
+        try {
+            fileSystem = FileSystem.get(configuration);
+        } catch (Exception ex) {
+            throw new RuntimeException("File system failed to initialize.");
+        }
     }
 
     public static String generateFilename() {
@@ -29,12 +36,10 @@ public class DFileSystem {
         FSDataOutputStream dos = null;
 
         try {
-            FileSystem fileSystem = FileSystem.get(configuration);
             Path outputFile = new Path(filename);
 
             if (fileSystem.exists(outputFile))
                 fileSystem.delete(outputFile);
-            fileSystem.createFile(outputFile);
 
             dos = fileSystem.create(outputFile);
             dos.write(rawData);
@@ -50,7 +55,6 @@ public class DFileSystem {
         byte[] result = null;
 
         try {
-            FileSystem fileSystem = FileSystem.get(configuration);
             Path inputFile = new Path(filename);
 
             if (!fileSystem.exists(inputFile))
@@ -72,7 +76,6 @@ public class DFileSystem {
         Configuration configuration = new Configuration();
 
         try {
-            FileSystem fileSystem = FileSystem.get(configuration);
             Path file = new Path(filename);
 
             if (!fileSystem.exists(file))
