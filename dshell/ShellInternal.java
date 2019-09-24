@@ -7,7 +7,7 @@ import dshell.core.nodes.StatelessOperator;
 
 public class ShellInternal {
 
-    private static String INPUT_FILE = "/home/cvetkovic/sdsh/scripts/input.txt";
+    private static String INPUT_FILE = "/home/cvetkovic/Downloads/input.txt";
     private static String HDFS_OUTPUT_FILE = "output.txt";
 
     public static void main(String[] args) {

@@ -54,8 +54,8 @@ public abstract class Graph {
             Operator[] previous = null;
 
             for (int i = 0; i < graphs.length - 1; i++) {
-                StatelessOperator current = (StatelessOperator) graphs[i].getOperator();
-                StatelessOperator next = (StatelessOperator) graphs[i + 1].getOperator();
+                Operator current = graphs[i].getOperator();
+                Operator next = graphs[i + 1].getOperator();
 
                 if (current.getParallelizationHint() == 1 && next.getParallelizationHint() > 1) {
                     // add splitter here
@@ -231,11 +231,11 @@ public abstract class Graph {
                     rem.setOutputHost(outputHosts);
                     rem.setOutputPort(outputPorts);
                     previousOperatorPorts.put(current, new Tuple<int[], Integer>(outputPorts, 0));
-                } else {
-                    // callback to client that the graph execution has been completed
-                    rem.setCallbackHost("localhost");
-                    rem.setCallBackPort(3529);
                 }
+
+                // callback to client that the graph execution has been completed
+                rem.setCallbackHost("localhost");
+                rem.setCallBackPort(3529);
                 // ------------------------------------------------------------------------------
 
                 metadata.add(rem);
