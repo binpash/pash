@@ -11,7 +11,6 @@ public abstract class Operator<A, B> implements Consumer<A>, Producer<B>, Serial
     protected int outputArity;
 
     protected Consumer<B>[] consumers;
-    protected Operator nextOperator;
 
     protected String program;
     protected String[] commandLineArguments;
@@ -30,22 +29,8 @@ public abstract class Operator<A, B> implements Consumer<A>, Producer<B>, Serial
     @Override
     public abstract void next(int inputChannel, A data);
 
-    public Operator getNextOperator() {
-        return nextOperator;
-    }
-
-    public void setNextOperator(Operator nextOperator) {
-        if (this.nextOperator != null)
-            throw new RuntimeException("Operator is immutable object and hence cannot be assigned with a next operator again.");
-
-        this.nextOperator = nextOperator;
-    }
-
     @Override
     public void subscribe(Consumer<B>... consumers) {
-        /*if (this.consumer != null)
-            throw new RuntimeException("Operator is immutable object and hence cannot be assigned with a consumer again.");*/
-
         this.consumers = consumers;
     }
 
