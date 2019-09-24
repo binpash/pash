@@ -3,10 +3,9 @@ package dshell.test;
 import dshell.Shell;
 import dshell.core.DFileSystem;
 import dshell.core.Graph;
-import dshell.core.Operator;
+import dshell.core.OperatorFactory;
 import dshell.core.nodes.AtomicGraph;
 import dshell.core.nodes.SerialGraph;
-import dshell.core.nodes.Sink;
 import dshell.core.nodes.StatelessOperator;
 import org.junit.Assert;
 import org.junit.Test;
@@ -14,7 +13,7 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-public class GraphTest {
+public class DShellTest {
     private static String INPUT_FILE = "/home/cvetkovic/sdsh/scripts/input.txt";
     private static String HDFS_OUTPUT_FILE = "output.txt";
 
@@ -38,9 +37,7 @@ public class GraphTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         System.setOut(new PrintStream(baos));
 
-        graph.executeDistributed(3529);
-
-        Thread.sleep(15000);
+        graph.executeRemote(3529);
 
         byte[] file = DFileSystem.downloadFile("output.txt");
         Assert.assertTrue((new String(file)).equals("566311\n"));
@@ -53,12 +50,40 @@ public class GraphTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         System.setOut(new PrintStream(baos));
 
-        graph.executeDistributed(3529);
-
-        Thread.sleep(15000);
+        graph.executeRemote(3529);
 
         byte[] file = DFileSystem.downloadFile("output.txt");
         Assert.assertTrue((new String(file)).equals("email business@pglaf.org. Email contact links and up to date contact\r\n     gbnewby@pglaf.org\r\n"));
+    }
+
+    @Test
+    public void compilationTest() throws Exception {
+        throw new RuntimeException("Not implemented yet.");
+    }
+
+    @Test
+    public void parallelizationTest1() throws Exception {
+        AtomicGraph cat = new AtomicGraph(new StatelessOperator(0, 1, "cat", new String[]{INPUT_FILE}));
+        AtomicGraph wc = new AtomicGraph(new StatelessOperator(1, 1, "wc", new String[]{"-m"}, 1));
+        AtomicGraph hdfsPrinter = new AtomicGraph(OperatorFactory.createHDFSFilePrinter("output.txt"));
+        SerialGraph graph = new SerialGraph(cat, wc, hdfsPrinter);
+
+        graph.executeRemote(3529);
+
+        /*long time = 0;
+        int cases = 10;
+
+        for (int i = 0; i < cases; i++) {
+            long start = System.currentTimeMillis();
+            if (i > cases / 5)
+                time += System.currentTimeMillis() - start;
+        }
+
+        System.out.println(time / (cases * 0.8));*/
+
+
+        /*byte[] file = DFileSystem.downloadFile("output.txt");
+        Assert.assertTrue((new String(file)).equals("1641662\n1641662\n"));*/
     }
 
     /*

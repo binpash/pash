@@ -5,13 +5,14 @@ import dshell.core.misc.Tuple;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class WorkloadDistributer {
-    private static List<Tuple<String, Integer>> getAvailableNodes() {
+    public static List<Tuple<String, Integer>> getAvailableNodes() {
         List<Tuple<String, Integer>> result = new ArrayList<>();
 
-        try (BufferedReader bufferedReader = new BufferedReader(new FileReader("/home/cvetkovic/IdeaProjects/nodes_config.txt"))) {
+        /*try (BufferedReader bufferedReader = new BufferedReader(new FileReader("/home/cvetkovic/IdeaProjects/nodes_config.txt"))) {
             String line;
 
             while ((line = bufferedReader.readLine()) != null) {
@@ -24,6 +25,9 @@ public class WorkloadDistributer {
             e.printStackTrace();
         }
 
-        return result;
+        return result;*/
+
+        // TODO: hardcoded worker URL
+        return Collections.singletonList(new Tuple<String, Integer>("localhost", 4000));
     }
 }
