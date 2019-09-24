@@ -5,6 +5,7 @@ import dshell.core.OperatorFactory;
 import dshell.core.misc.SystemMessage;
 import dshell.core.nodes.Sink;
 import dshell.core.nodes.StatelessOperator;
+import org.apache.hadoop.yarn.webapp.RemoteExceptionData;
 
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
@@ -12,16 +13,14 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.rmi.Remote;
 
-public class WorkerThread extends Thread {
-    private RemoteExecutionData red;
+public class WorkerProcess {
+    private static RemoteExecutionData red;
 
-    public WorkerThread(RemoteExecutionData red) {
-        this.red = red;
-    }
+    public static void main(String[] args) {
+        red = extractREDFromCommandLineArgs(args);
 
-    @Override
-    public void run() {
         try {
             // TODO: fix this once non-stateless operator are introduced
             Operator operator = red.getOperator();
@@ -75,5 +74,51 @@ public class WorkerThread extends Thread {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    private static RemoteExecutionData extractREDFromCommandLineArgs(String[] args) {
+        RemoteExecutionData red = new RemoteExecutionData();
+        int readFrom = 0;
+
+        int inputArity = Integer.parseInt(args[readFrom++]);
+        int outputArity = Integer.parseInt(args[readFrom++]);
+        String program = args[readFrom++];
+        int numberOfArgs = Integer.parseInt(args[readFrom++]);
+        String[] commandLineArgs = null;
+        if (numberOfArgs >= 1) {
+            commandLineArgs = new String[numberOfArgs];
+            for (int i = 0; i < numberOfArgs; i++)
+                commandLineArgs[i] = args[readFrom++];
+        }
+        // PARALLELIZATION HINT IS INVALID PARAMETER HERE
+
+        Operator operator = new StatelessOperator(inputArity,
+                outputArity,
+                program,
+                commandLineArgs);
+        red.setOperator(operator);
+
+        boolean initialOperator = Boolean.parseBoolean(args[readFrom++]);
+        red.setInitialOperator(initialOperator);
+
+        int inputPort = Integer.parseInt(args[readFrom++]);
+        red.setInputPort(inputPort);
+
+        int numberOfOutputHosts = Integer.parseInt(args[readFrom++]);
+        String[] outputHosts = new String[numberOfOutputHosts];
+        int[] outputPorts = new int[numberOfOutputHosts];
+        for (int i = 0; i < numberOfOutputHosts; i++) {
+            outputHosts[i] = args[readFrom++];
+            outputPorts[i] = Integer.parseInt(args[readFrom++]);
+        }
+        red.setOutputHost(outputHosts);
+        red.setOutputPort(outputPorts);
+
+        String callbackHost = args[readFrom++];
+        int callbackPort = Integer.parseInt(args[readFrom++]);
+        red.setCallbackHost(callbackHost);
+        red.setCallBackPort(callbackPort);
+
+        return red;
     }
 }
