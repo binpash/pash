@@ -17,11 +17,11 @@ test : $(PARSER).native $(PARSER).byte $(wildcard tests/*)
 
 
 $(PARSER).native : ast_json.ml $(PARSER).ml 
-	ocamlfind ocamlopt -g -package dash,ctypes,ctypes.foreign,atdgen \
+	ocamlfind ocamlopt -g -package dash,ctypes,ctypes.foreign,atdgen,dum \
 	-linkpkg $^ -o $(PARSER).native
 
 $(PARSER).byte : $(PARSER).ml 
-	ocamlfind ocamlcp -p a -package dash,ctypes,ctypes.foreign,atdgen \
+	ocamlfind ocamlcp -p a -package dash,ctypes,ctypes.foreign,atdgen,dum \
 	-linkpkg -i -i $(AST_I) $^ -o $(PARSER).byte
 
 clean :
