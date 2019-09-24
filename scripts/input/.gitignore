@@ -1,0 +1,5 @@
+# Ignore everything but a few
+*
+!README.md
+!.gitignore
+!*.sh
