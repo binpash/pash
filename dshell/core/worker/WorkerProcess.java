@@ -2,9 +2,11 @@ package dshell.core.worker;
 
 import dshell.core.Operator;
 import dshell.core.OperatorFactory;
+import dshell.core.OperatorType;
 import dshell.core.misc.SystemMessage;
 import dshell.core.nodes.Sink;
 import dshell.core.nodes.StatelessOperator;
+import org.apache.hadoop.hdfs.server.datanode.FileIoProvider;
 import org.apache.hadoop.yarn.webapp.RemoteExceptionData;
 
 import java.io.ObjectInput;
@@ -24,7 +26,6 @@ public class WorkerProcess {
         try {
             // TODO: fix this once non-stateless operator are introduced
             Operator operator = red.getOperator();
-
             byte[][] data = null;
 
             // do not wait for data in case that the operator is the first one to execute
@@ -44,10 +45,11 @@ public class WorkerProcess {
                 }
             }
 
-            if (!(operator instanceof Sink)) {
+            if (operator.getOperatorType() != OperatorType.HDFS_OUTPUT &&
+                    operator.getOperatorType() != OperatorType.SOCKETED_OUTPUT) {
                 // connecting output socket to current operator
-                Operator[] socketedOutput = new Operator[operator.getConsumers().length];
-                for (int i = 0; i < operator.getConsumers().length; i++)
+                Operator[] socketedOutput = new Operator[operator.getOutputArity()];
+                for (int i = 0; i < operator.getOutputArity(); i++)
                     socketedOutput[i] = OperatorFactory.createSocketedOutput(red.getOutputHost()[i], red.getOutputPort()[i]);
                 operator.subscribe(socketedOutput);
 
@@ -82,21 +84,31 @@ public class WorkerProcess {
 
         int inputArity = Integer.parseInt(args[readFrom++]);
         int outputArity = Integer.parseInt(args[readFrom++]);
-        String program = args[readFrom++];
-        int numberOfArgs = Integer.parseInt(args[readFrom++]);
-        String[] commandLineArgs = null;
-        if (numberOfArgs >= 1) {
-            commandLineArgs = new String[numberOfArgs];
-            for (int i = 0; i < numberOfArgs; i++)
-                commandLineArgs[i] = args[readFrom++];
-        }
-        // PARALLELIZATION HINT IS INVALID PARAMETER HERE
+        OperatorType operatorType = OperatorType.parseInteger(Integer.parseInt(args[readFrom++]));
+        if (operatorType == OperatorType.STATELESS) {
+            String program = args[readFrom++];
+            int numberOfArgs = Integer.parseInt(args[readFrom++]);
+            String[] commandLineArgs = null;
 
-        Operator operator = new StatelessOperator(inputArity,
-                outputArity,
-                program,
-                commandLineArgs);
-        red.setOperator(operator);
+            if (numberOfArgs >= 1) {
+                commandLineArgs = new String[numberOfArgs];
+                for (int i = 0; i < numberOfArgs; i++)
+                    commandLineArgs[i] = args[readFrom++];
+            }
+            // PARALLELIZATION HINT IS INVALID PARAMETER HERE
+            Operator operator = new StatelessOperator(inputArity,
+                    outputArity,
+                    program,
+                    commandLineArgs);
+            red.setOperator(operator);
+        } else if (operatorType == OperatorType.MERGE)
+            red.setOperator(OperatorFactory.createMerger(inputArity));
+        else if (operatorType == OperatorType.SPLIT)
+            red.setOperator(OperatorFactory.createSplitter(outputArity));
+        else if (operatorType == OperatorType.HDFS_OUTPUT)
+            red.setOperator(OperatorFactory.createHDFSFilePrinter("output.txt"));
+        else
+            throw new RuntimeException("Not supported type of operator");
 
         boolean initialOperator = Boolean.parseBoolean(args[readFrom++]);
         red.setInitialOperator(initialOperator);

@@ -1,6 +1,7 @@
 package dshell.core.nodes;
 
 import dshell.core.Operator;
+import dshell.core.OperatorType;
 import dshell.core.misc.Utilities;
 import dshell.core.worker.RemoteExecutionData;
 
@@ -8,7 +9,6 @@ import java.io.OutputStream;
 import java.util.Arrays;
 
 public class StatelessOperator extends Operator<Object, Object> {
-    private int parallelizationHint;
 
     public StatelessOperator(int inputArity, int outputArity, String program) {
         this(inputArity, outputArity, program, null, 1);
@@ -19,9 +19,7 @@ public class StatelessOperator extends Operator<Object, Object> {
     }
 
     public StatelessOperator(int inputArity, int outputArity, String program, String[] commandLineArguments, int parallelizationHint) {
-        super(inputArity, outputArity, program, commandLineArguments);
-
-        this.parallelizationHint = parallelizationHint;
+        super(OperatorType.STATELESS, inputArity, outputArity, program, commandLineArguments, parallelizationHint);
     }
 
     @Override
@@ -59,10 +57,6 @@ public class StatelessOperator extends Operator<Object, Object> {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public int getParallelizationHint() {
-        return parallelizationHint;
     }
 
     @Override
