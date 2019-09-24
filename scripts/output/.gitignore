@@ -1,0 +1,3 @@
+# Ignore everything but a few
+*
+!.gitignore
