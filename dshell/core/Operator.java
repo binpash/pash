@@ -3,9 +3,10 @@ package dshell.core;
 import dshell.core.interfaces.Consumer;
 import dshell.core.interfaces.Producer;
 
+import java.io.Closeable;
 import java.io.Serializable;
 
-public abstract class Operator<A, B> implements Consumer<A>, Producer<B>, Serializable {
+public abstract class Operator<A, B> implements Consumer<A>, Producer<B>, Serializable, Cloneable {
     protected int inputArity;
     protected int outputArity;
 
@@ -66,5 +67,18 @@ public abstract class Operator<A, B> implements Consumer<A>, Producer<B>, Serial
             sb.append(s);
 
         return sb.toString();
+    }
+
+    public int getInputArity() {
+        return inputArity;
+    }
+
+    public int getOutputArity() {
+        return outputArity;
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }

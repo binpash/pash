@@ -1,12 +1,14 @@
 package dshell.core.nodes;
 
 import dshell.core.Operator;
+import dshell.core.misc.Utilities;
 import dshell.core.worker.RemoteExecutionData;
 
 import java.io.OutputStream;
+import java.util.Arrays;
 
 public class StatelessOperator extends Operator<Object, Object> {
-    private final int parallelizationHint;
+    private int parallelizationHint;
 
     public StatelessOperator(int inputArity, int outputArity, String program) {
         this(inputArity, outputArity, program, null, 1);
@@ -29,29 +31,31 @@ public class StatelessOperator extends Operator<Object, Object> {
             ProcessBuilder processBuilder = new ProcessBuilder(program, getArgumentsAsString());
             Process process = processBuilder.start();
 
+            // if the following condition hold then either the program does not exists or the command line arguments
+            // were specified wrong
+            // NOTE: arguments passing syntax can hereby be different than it would be as if it was typed in raw linux terminal
             if (!process.isAlive() && process.exitValue() != 0)
                 throw new RuntimeException("Execution of program '" + program + "' returned with exit value " + process.exitValue() + ".");
 
-            // getting standard input
+            // passing the data to standard input of the process
             if (data != null) {
                 OutputStream os = process.getOutputStream();
-                RemoteExecutionData d = (RemoteExecutionData) data;
 
                 // write to standard input of the process
-                os.write(d.getInputData());
+                os.write(((byte[][]) data)[0]);
                 os.flush();
                 os.close();
             }
 
+            // getting the standard output of the process
             byte[] systemOut = process.getInputStream().readAllBytes();
 
             // waiting for process to finish and terminating it
             process.waitFor();
             process.destroy();
 
-            // send output of current operator to nextOperator that will output its output to localhost:4000
-            RemoteExecutionData red = new RemoteExecutionData(nextOperator, systemOut, "localhost", 4000, "localhost", 3529);
-            consumers[0].next(0, red);
+            // sending computed output to the next subscribed operator
+            consumers[0].next(0, systemOut);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -59,5 +63,13 @@ public class StatelessOperator extends Operator<Object, Object> {
 
     public int getParallelizationHint() {
         return parallelizationHint;
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        StatelessOperator o = (StatelessOperator) super.clone();
+        o.parallelizationHint = 1;
+
+        return o;
     }
 }

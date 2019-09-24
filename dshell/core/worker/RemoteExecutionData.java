@@ -1,23 +1,35 @@
 package dshell.core.worker;
 
 import dshell.core.Operator;
-import dshell.core.interfaces.Consumer;
 
 import java.io.Serializable;
 
+/**
+ * Class that all the data needed for the computation on a remote machine
+ */
 public class RemoteExecutionData implements Serializable {
+    // representation of computation
     private Operator operator;
-    private byte[] inputData;
+    private boolean initialOperator;
 
-    private String outputHost;
-    private int outputPort;
+    // URL for receiving the data from other operators
+    private int inputPort;
 
+    // URL for sending the data to other operators
+    private String[] outputHost;
+    private int[] outputPort;
+
+    // URL for notifying the client that the computation was finished or that it threw an exception
     private String callbackHost;
     private int callBackPort;
 
-    public RemoteExecutionData(Operator operator, byte[] inputData, String outputHost, int outputPort, String callbackHost, int callBackPort) {
+    public RemoteExecutionData() {
+    }
+
+    public RemoteExecutionData(Operator operator, boolean initialOperator, int inputPort, String[] outputHost, int[] outputPort, String callbackHost, int callBackPort) {
         this.operator = operator;
-        this.inputData = inputData;
+        this.initialOperator = initialOperator;
+        this.inputPort = inputPort;
         this.outputHost = outputHost;
         this.outputPort = outputPort;
         this.callbackHost = callbackHost;
@@ -28,23 +40,55 @@ public class RemoteExecutionData implements Serializable {
         return operator;
     }
 
-    public byte[] getInputData() {
-        return inputData;
+    public void setOperator(Operator operator) {
+        this.operator = operator;
     }
 
-    public String getOutputHost() {
+    public boolean isInitialOperator() {
+        return initialOperator;
+    }
+
+    public void setInitialOperator(boolean initialOperator) {
+        this.initialOperator = initialOperator;
+    }
+
+    public int getInputPort() {
+        return inputPort;
+    }
+
+    public void setInputPort(int inputPort) {
+        this.inputPort = inputPort;
+    }
+
+    public String[] getOutputHost() {
         return outputHost;
     }
 
-    public int getOutputPort() {
+    public void setOutputHost(String[] outputHost) {
+        this.outputHost = outputHost;
+    }
+
+    public int[] getOutputPort() {
         return outputPort;
+    }
+
+    public void setOutputPort(int[] outputPort) {
+        this.outputPort = outputPort;
     }
 
     public String getCallbackHost() {
         return callbackHost;
     }
 
+    public void setCallbackHost(String callbackHost) {
+        this.callbackHost = callbackHost;
+    }
+
     public int getCallBackPort() {
         return callBackPort;
+    }
+
+    public void setCallBackPort(int callBackPort) {
+        this.callBackPort = callBackPort;
     }
 }

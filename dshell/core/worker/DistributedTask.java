@@ -1,8 +1,14 @@
 package dshell.core.worker;
 
+import dshell.core.misc.SystemMessage;
+
 import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.rmi.Remote;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -20,13 +26,23 @@ public class DistributedTask {
             System.out.println("Running distributed task executor on port " + managerPort);
 
             while (true) {
-                Socket client = serverSocket.accept();
-                executor.execute(new WorkerThread(client));
+                try (Socket client = serverSocket.accept();
+                     ObjectInputStream ois = new ObjectInputStream(client.getInputStream())) {
+
+                    while (true) {
+                        Object received = ois.readObject();
+
+                        if (received instanceof RemoteExecutionData)
+                            executor.execute(new WorkerThread((RemoteExecutionData) received));
+                        else if (received instanceof SystemMessage.EndOfREM)
+                            break;
+                        else
+                            throw new RuntimeException("Not supported type of input data received by worker coordinator.");
+                    }
+                }
             }
         } catch (Exception e) {
             System.out.println(e.getStackTrace());
         }
-
-        System.out.println("Node has been shutdown successfully.");
     }
 }

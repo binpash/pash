@@ -16,4 +16,12 @@ public class Tuple<U,V> {
     public V getV() {
         return v;
     }
+
+    public void setU(U u) {
+        this.u = u;
+    }
+
+    public void setV(V v) {
+        this.v = v;
+    }
 }
