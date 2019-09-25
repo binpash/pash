@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Cute intro to brackets, for anyone interested
+# https://www.assertnotmagic.com/2018/06/20/bash-brackets-quick-reference/
+
 OUT=./output/maximal.txt
 touch $OUT
 
