@@ -2,6 +2,7 @@ package dshell.core;
 
 import dshell.core.misc.Utilities;
 import dshell.core.nodes.Sink;
+import org.apache.hadoop.yarn.webapp.hamlet2.Hamlet;
 
 import java.io.*;
 import java.net.Socket;
@@ -17,8 +18,8 @@ public class OperatorFactory {
         };
     }
 
-    public static Sink createHDFSFilePrinter(String filename) {
-        return new Sink() {
+    public static Operator<Object, Object> createHDFSFilePrinter(String filename) {
+        return new Operator(OperatorType.HDFS_OUTPUT, 1, 0, null, 1) {
             @Override
             public void next(int inputChannel, Object data) {
                 //DFileSystem.uploadFile(filename, ((byte[][]) data)[0]);
@@ -26,8 +27,8 @@ public class OperatorFactory {
         };
     }
 
-    public static Sink createSocketedOutput(String address, int port) {
-        return new Sink() {
+    public static Operator<Object, Object> createSocketedOutput(String address, int port) {
+        return new Operator(OperatorType.SOCKETED_OUTPUT, 1, 0, null, 1) {
             @Override
             public void next(int inputChannel, Object data) {
                 try (Socket socket = new Socket(address, port);
@@ -42,7 +43,7 @@ public class OperatorFactory {
     }
 
     public static Operator<Object, Object> createSplitter(int outputArity) {
-        return new Operator<>(1, outputArity, null) {
+        return new Operator<>(OperatorType.SPLIT, 1, outputArity, null, 1) {
             @Override
             public void next(int inputChannel, Object data) {
                 byte[][] split = Utilities.splitData(((byte[][]) data)[0], outputArity);
@@ -54,7 +55,7 @@ public class OperatorFactory {
     }
 
     public static Operator<Object, Object> createMerger(int inputArity) {
-        return new Operator<>(inputArity, 1, null) {
+        return new Operator<>(OperatorType.MERGE, inputArity, 1, null, 1) {
             private int received = 0;
             private byte[][] buffer = new byte[inputArity][];
 
