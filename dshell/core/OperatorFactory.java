@@ -1,8 +1,8 @@
 package dshell.core;
 
+import dshell.core.misc.SystemMessage;
 import dshell.core.misc.Utilities;
 import dshell.core.nodes.Sink;
-import org.apache.hadoop.yarn.webapp.hamlet2.Hamlet;
 
 import java.io.*;
 import java.net.Socket;
@@ -18,25 +18,59 @@ public class OperatorFactory {
         };
     }
 
-    public static Operator<Object, Object> createHDFSFilePrinter(String filename) {
+    public static Operator createHDFSFilePrinter(String filename) {
         return new Operator(OperatorType.HDFS_OUTPUT, 1, 0, null, 1) {
             @Override
             public void next(int inputChannel, Object data) {
                 //DFileSystem.uploadFile(filename, ((byte[][]) data)[0]);
+
+                if (data instanceof byte[]) {
+                    byte[] d = (byte[]) data;
+                    for (int i = 0; i < d.length; i++)
+                        if ((char)d[i] != 0)
+                            System.out.print((char)d[i]);
+                }
+                else    // discard all the other data (SystemMessages)
+                    return;
             }
         };
     }
 
-    public static Operator<Object, Object> createSocketedOutput(String address, int port) {
+    public static Operator createSocketedOutput(String address, int port) {
         return new Operator(OperatorType.SOCKETED_OUTPUT, 1, 0, null, 1) {
+            private Socket socket;
+            private ObjectOutputStream outputStream;
+
             @Override
             public void next(int inputChannel, Object data) {
-                try (Socket socket = new Socket(address, port);
-                     ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream())) {
+                try {
+                    if (socket == null) {
+                        socket = new Socket(address, port);
+                        outputStream = new ObjectOutputStream(socket.getOutputStream());
+                    }
 
-                    outputStream.writeObject(data);
+                    // here writeUnshared() is used because of the usage of the same buffer reference
+                    // in other cause it wouldn't work on other side of the socket
+                    outputStream.writeUnshared(data);
+
+                    // close socket on signal
+                    if (data instanceof SystemMessage.EndOfData)
+                        closeOutput();
                 } catch (Exception e) {
                     e.printStackTrace();
+
+                    try {
+                        closeOutput();
+                    } catch (Exception ex) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            public void closeOutput() throws Exception {
+                if (socket != null) {
+                    outputStream.close();
+                    socket.close();
                 }
             }
         };

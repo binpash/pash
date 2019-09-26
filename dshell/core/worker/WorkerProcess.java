@@ -4,66 +4,91 @@ import dshell.core.Operator;
 import dshell.core.OperatorFactory;
 import dshell.core.OperatorType;
 import dshell.core.misc.SystemMessage;
-import dshell.core.nodes.Sink;
 import dshell.core.nodes.StatelessOperator;
-import org.apache.hadoop.hdfs.server.datanode.FileIoProvider;
-import org.apache.hadoop.yarn.webapp.RemoteExceptionData;
 
-import java.io.ObjectInput;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.rmi.Remote;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class WorkerProcess {
+    // if this is changed to threaded implementation remove keyword 'static'
     private static RemoteExecutionData red;
+
+    private static final long TIMEOUT_QUANTITY = 1;
+    private static final TimeUnit TIMEOUT_UNIT = TimeUnit.DAYS;
+
+    public WorkerProcess(RemoteExecutionData red) {
+        this.red = red;
+    }
 
     public static void main(String[] args) {
         red = extractREDFromCommandLineArgs(args);
 
         try {
-            // TODO: fix this once non-stateless operator are introduced
             Operator operator = red.getOperator();
-            byte[][] data = null;
-
-            // do not wait for data in case that the operator is the first one to execute
-            if (!red.isInitialOperator()) {
-                data = new byte[operator.getInputArity()][];
-
-                // socket called 'inputDataSocket' is used to get the input data from another operator
-                try (ServerSocket inputDataServerSocket = new ServerSocket(red.getInputPort())) {
-                    for (int i = 0; i < operator.getInputArity(); i++) {
-                        try (Socket inputDataSocket = inputDataServerSocket.accept();
-                             ObjectInputStream ois = new ObjectInputStream(inputDataSocket.getInputStream())) {
-
-                            // here order is not dependent because the operator is stateless
-                            data[i] = (byte[]) ois.readObject();
-                        }
-                    }
-                }
-            }
 
             if (operator.getOperatorType() != OperatorType.HDFS_OUTPUT &&
                     operator.getOperatorType() != OperatorType.SOCKETED_OUTPUT) {
+
                 // connecting output socket to current operator
                 Operator[] socketedOutput = new Operator[operator.getOutputArity()];
                 for (int i = 0; i < operator.getOutputArity(); i++)
-                    socketedOutput[i] = OperatorFactory.createSocketedOutput(red.getOutputHost()[i], red.getOutputPort()[i]);
+                    socketedOutput[i] = OperatorFactory.createSocketedOutput(red.getOutputHost().get(i), red.getOutputPort().get(i));
                 operator.subscribe(socketedOutput);
+            }
 
-                // invoking the operator's computation; after the computation, the data is sent via socket to next node
-                // if this is split operator the data splitting will be done inside an operator and the data will be
-                // outputted to the sockets that were created few lines before this
-                boolean done = false;
-                for (int i = 0; i < operator.getInputArity() || (!done && operator.getInputArity() == 0); i++) {
-                    operator.next(i, data);
-                    done = true;
+            // do not wait for data in case that the operator is the first one to execute
+            if (!red.isInitialOperator()) {
+                // all the operators that outputting to this one share the same port
+                try (ServerSocket inputDataServerSocket = new ServerSocket(red.getInputPort())) {
+                    // receive data from all of them
+                    ExecutorService inputThreadPool = Executors.newFixedThreadPool(operator.getInputArity());
+                    List<Callable<Object>> inputGateThreads = new ArrayList<>(operator.getInputArity());
+
+                    for (int i = 0; i < operator.getInputArity(); i++) {
+                        inputGateThreads.add(Executors.callable(() -> {// connect by socket with all of them
+                            try (Socket inputDataSocket = inputDataServerSocket.accept();
+                                 ObjectInputStream ois = new ObjectInputStream(inputDataSocket.getInputStream())) {
+                                byte[] data = null;
+
+                                while (true) {
+                                    Object received = ois.readObject();
+
+                                    if (received instanceof SystemMessage.EndOfData) {
+                                        for (int j = 0; j < operator.getInputArity(); j++)
+                                            operator.next(j, new SystemMessage.EndOfData());
+
+                                        break;
+                                    } else {
+                                        data = (byte[]) received;
+
+                                        // invoking the operator's computation; after the computation, the data is sent via socket to next node
+                                        // if this is split operator the data splitting will be done inside an operator and the data will be
+                                        // outputted to the sockets that were created few lines before this
+                                        for (int j = 0; j < operator.getInputArity(); j++)
+                                            operator.next(j, data);
+                                    }
+                                }
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
+                        }));
+                    }
+
+                    // wait for the listening threads to complete before proceeding any further
+                    inputThreadPool.invokeAll(inputGateThreads);
                 }
-            } else // instance of sink
-            {
-                operator.next(0, data);
+            } else // this will only be called if operator is initial
+                operator.next(0, null);
+
+            if (operator.getOperatorType() == OperatorType.HDFS_OUTPUT || operator.getOperatorType() == OperatorType.SOCKETED_OUTPUT) {
 
                 // note: this operator is the last operator in the pipeline and therefore it sends signal back to client
                 // that the computation has been completed
@@ -75,6 +100,15 @@ public class WorkerProcess {
             }
         } catch (Exception ex) {
             ex.printStackTrace();
+            SystemMessage.RemoteException exception = new SystemMessage.RemoteException(red.getOperator().getProgram(), ex.getMessage());
+
+            try (Socket callbackSocket = new Socket(red.getCallbackHost(), red.getCallBackPort());
+                 ObjectOutputStream callbackOOS = new ObjectOutputStream(callbackSocket.getOutputStream())) {
+
+                callbackOOS.writeObject(exception);
+            } catch (Exception e) {
+                System.err.println("Error communicating with client whose submitted job was aborted.");
+            }
         }
     }
 
@@ -117,11 +151,11 @@ public class WorkerProcess {
         red.setInputPort(inputPort);
 
         int numberOfOutputHosts = Integer.parseInt(args[readFrom++]);
-        String[] outputHosts = new String[numberOfOutputHosts];
-        int[] outputPorts = new int[numberOfOutputHosts];
+        List<String> outputHosts = new ArrayList<>((numberOfOutputHosts));
+        List<Integer> outputPorts = new ArrayList<>((numberOfOutputHosts));
         for (int i = 0; i < numberOfOutputHosts; i++) {
-            outputHosts[i] = args[readFrom++];
-            outputPorts[i] = Integer.parseInt(args[readFrom++]);
+            outputHosts.add(args[readFrom++]);
+            outputPorts.add(Integer.parseInt(args[readFrom++]));
         }
         red.setOutputHost(outputHosts);
         red.setOutputPort(outputPorts);
