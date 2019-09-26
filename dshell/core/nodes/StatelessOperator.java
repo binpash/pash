@@ -2,13 +2,21 @@ package dshell.core.nodes;
 
 import dshell.core.Operator;
 import dshell.core.OperatorType;
+import dshell.core.misc.SystemMessage;
 import dshell.core.misc.Utilities;
 import dshell.core.worker.RemoteExecutionData;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
 public class StatelessOperator extends Operator<Object, Object> {
+    private Object processBuilder;
+    private Object process;
+    private boolean initialized = false;
+
+    // TODO: find out ideal packet length for TCP socket
+    private static final int BUFFER_SIZE = 1024;
 
     public StatelessOperator(int inputArity, int outputArity, String program) {
         this(inputArity, outputArity, program, null, 1);
@@ -24,36 +32,50 @@ public class StatelessOperator extends Operator<Object, Object> {
 
     @Override
     public void next(int inputChannel, Object data) {
+        if (!initialized) {
+            try {
+                processBuilder = new ProcessBuilder(program, getArgumentsAsString());
+                process = ((ProcessBuilder) processBuilder).start();
+
+                // if the following condition hold then either the program does not exists or the command line arguments
+                // were specified wrong
+                // NOTE: arguments passing syntax can here be different than it would be as if it was typed in raw linux terminal
+                if (!((Process) process).isAlive() && ((Process) process).exitValue() != 0)
+                    throw new RuntimeException("Execution of program '" + program + "' returned with exit value " + ((Process) process).exitValue() + ".");
+            } catch (Exception ex) {
+                throw new RuntimeException("Error creating process '" + program + "'.");
+            }
+
+            if (process == null)
+                throw new RuntimeException("Child process was not created. Operator execution has been aborted.");
+
+            initialized = true;
+        }
+
         try {
-            // creating new process
-            ProcessBuilder processBuilder = new ProcessBuilder(program, getArgumentsAsString());
-            Process process = processBuilder.start();
-
-            // if the following condition hold then either the program does not exists or the command line arguments
-            // were specified wrong
-            // NOTE: arguments passing syntax can hereby be different than it would be as if it was typed in raw linux terminal
-            if (!process.isAlive() && process.exitValue() != 0)
-                throw new RuntimeException("Execution of program '" + program + "' returned with exit value " + process.exitValue() + ".");
-
             // passing the data to standard input of the process
             if (data != null) {
-                OutputStream os = process.getOutputStream();
+                OutputStream standardInput = ((Process) process).getOutputStream();
 
-                // write to standard input of the process
-                os.write(((byte[][]) data)[0]);
-                os.flush();
-                os.close();
+                if (data instanceof SystemMessage.EndOfData) {
+                    standardInput.close();
+                } else {
+                    // write to standard input of the process
+                    standardInput.write((byte[]) data);
+                    return;
+                }
             }
 
             // getting the standard output of the process
-            byte[] systemOut = process.getInputStream().readAllBytes();
-
-            // waiting for process to finish and terminating it
-            process.waitFor();
-            process.destroy();
+            InputStream standardOutput = ((Process) process).getInputStream();
+            byte[] buffer = new byte[BUFFER_SIZE];
 
             // sending computed output to the next subscribed operator
-            consumers[0].next(0, systemOut);
+            while (standardOutput.read(buffer, 0, BUFFER_SIZE) != -1)
+                consumers[0].next(0, buffer);
+
+            // send end of data signal
+            consumers[0].next(0, new SystemMessage.EndOfData());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -65,5 +87,14 @@ public class StatelessOperator extends Operator<Object, Object> {
         o.parallelizationHint = 1;
 
         return o;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+
+        // waiting for process to finish and terminating it
+        ((Process) process).waitFor();
+        ((Process) process).destroy();
     }
 }

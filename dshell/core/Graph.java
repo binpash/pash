@@ -181,7 +181,7 @@ public abstract class Graph {
     private void depthTraversal(Operator current, Operator previous, List<RemoteExecutionData> metadata) {
         int port = 4001;
         Set<Operator> visited = new HashSet<>();
-        Map<Operator, Tuple<int[], Integer>> previousOperatorPorts = new HashMap<>();
+        Map<Operator, Tuple<List<Integer>, Integer>> previousOperatorPorts = new HashMap<>();
         Map<Operator, RemoteExecutionData> newlyCreatedREMs = new HashMap<>();
 
         Stack<TraversalPair> stack = new Stack<>();
@@ -205,8 +205,8 @@ public abstract class Graph {
                 if (previous == null)
                     rem.setInitialOperator(true);
                 else {
-                    Tuple<int[], Integer> portPair = previousOperatorPorts.get(previous);
-                    int inputPort = portPair.getU()[portPair.getV()];
+                    Tuple<List<Integer>, Integer> portPair = previousOperatorPorts.get(previous);
+                    int inputPort = portPair.getU().get(portPair.getV());
                     portPair.setV(portPair.getV() + 1);
                     rem.setInputPort(inputPort);
                 }
@@ -214,23 +214,23 @@ public abstract class Graph {
 
                 if (current.getConsumers() != null) {
                     // output
-                    String[] outputHosts = new String[current.getOutputArity()];
-                    int[] outputPorts = new int[current.getOutputArity()];
+                    List<String> outputHosts = new ArrayList<>(current.getOutputArity());
+                    List<Integer> outputPorts = new ArrayList<>(current.getOutputArity());
                     for (int i = 0; i < current.getOutputArity(); i++) {
                         // TODO: hardcoded server location
                         if (current.getConsumers() == null || ((Operator) current.getConsumers()[i]).getInputArity() == 1 ||
                                 newlyCreatedREMs.containsKey(current.getConsumers()[i]) == false) {
-                            outputHosts[i] = "localhost";
-                            outputPorts[i] = port++;
+                            outputHosts.add("localhost");
+                            outputPorts.add(port++);
                         } else {
                             // TODO: how to get address of the host?
-                            outputHosts[i] = "localhost";
-                            outputPorts[i] = newlyCreatedREMs.get(current.getConsumers()[i]).getInputPort();
+                            outputHosts.add("localhost");
+                            outputPorts.add(newlyCreatedREMs.get(current.getConsumers()[i]).getInputPort());
                         }
                     }
                     rem.setOutputHost(outputHosts);
                     rem.setOutputPort(outputPorts);
-                    previousOperatorPorts.put(current, new Tuple<int[], Integer>(outputPorts, 0));
+                    previousOperatorPorts.put(current, new Tuple<List<Integer>, Integer>(outputPorts, 0));
                 }
 
                 // callback to client that the graph execution has been completed

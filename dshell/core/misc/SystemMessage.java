@@ -3,7 +3,7 @@ package dshell.core.misc;
 import java.io.Serializable;
 
 public class SystemMessage implements Serializable {
-    public static class Payload implements Serializable{
+    public static class Payload implements Serializable {
         // an empty class
     }
 
@@ -30,6 +30,10 @@ public class SystemMessage implements Serializable {
     }
 
     public static class EndOfREM extends Payload {
+
+    }
+
+    public static class EndOfData extends Payload {
 
     }
 }
