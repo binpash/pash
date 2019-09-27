@@ -1,7 +1,6 @@
 package dshell;
 
 import dshell.core.OperatorFactory;
-import dshell.core.misc.SystemMessage;
 import dshell.core.nodes.AtomicGraph;
 import dshell.core.nodes.SerialGraph;
 import dshell.core.nodes.StatelessOperator;
@@ -13,12 +12,12 @@ public class ShellInternal {
 
     public static void main(String[] args) {
         AtomicGraph cat = new AtomicGraph(new StatelessOperator(0, 1, "cat", new String[]{INPUT_FILE}));
-        AtomicGraph wc = new AtomicGraph(new StatelessOperator(1, 1, "wc", new String[]{"-m"}, 1));
+        AtomicGraph wc = new AtomicGraph(new StatelessOperator(1, 1, "wc", new String[]{"-m"}, 2));
         AtomicGraph hdfsPrinter = new AtomicGraph(OperatorFactory.createHDFSFilePrinter("output.txt"));
         SerialGraph graph = new SerialGraph(cat, wc, hdfsPrinter);
 
         long time = 0;
-        int cases = 10;
+        int cases = 5;
 
         for (int i = 0; i < cases; i++) {
             long start = System.currentTimeMillis();

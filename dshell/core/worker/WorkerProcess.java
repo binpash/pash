@@ -21,16 +21,12 @@ public class WorkerProcess {
     // if this is changed to threaded implementation remove keyword 'static'
     private static RemoteExecutionData red;
 
-    private static final long TIMEOUT_QUANTITY = 1;
-    private static final TimeUnit TIMEOUT_UNIT = TimeUnit.DAYS;
-
-    public WorkerProcess(RemoteExecutionData red) {
+    /*public WorkerProcess(RemoteExecutionData red) {
         this.red = red;
-    }
+    }*/
 
     public static void main(String[] args) {
-        red = extractREDFromCommandLineArgs(args);
-
+        red = deserializeArgs(args);
         try {
             Operator operator = red.getOperator();
 
@@ -53,6 +49,7 @@ public class WorkerProcess {
                     List<Callable<Object>> inputGateThreads = new ArrayList<>(operator.getInputArity());
 
                     for (int i = 0; i < operator.getInputArity(); i++) {
+                        final int inputChannelParameter = i;
                         inputGateThreads.add(Executors.callable(() -> {// connect by socket with all of them
                             try (Socket inputDataSocket = inputDataServerSocket.accept();
                                  ObjectInputStream ois = new ObjectInputStream(inputDataSocket.getInputStream())) {
@@ -62,9 +59,6 @@ public class WorkerProcess {
                                     Object received = ois.readObject();
 
                                     if (received instanceof SystemMessage.EndOfData) {
-                                        for (int j = 0; j < operator.getInputArity(); j++)
-                                            operator.next(j, new SystemMessage.EndOfData());
-
                                         break;
                                     } else {
                                         data = (byte[]) received;
@@ -72,8 +66,7 @@ public class WorkerProcess {
                                         // invoking the operator's computation; after the computation, the data is sent via socket to next node
                                         // if this is split operator the data splitting will be done inside an operator and the data will be
                                         // outputted to the sockets that were created few lines before this
-                                        for (int j = 0; j < operator.getInputArity(); j++)
-                                            operator.next(j, data);
+                                        operator.next(inputChannelParameter, data);
                                     }
                                 }
                             } catch (Exception ex) {
@@ -84,6 +77,10 @@ public class WorkerProcess {
 
                     // wait for the listening threads to complete before proceeding any further
                     inputThreadPool.invokeAll(inputGateThreads);
+
+                    // all the threads have now finished outputting
+                    for (int j = 0; j < operator.getInputArity(); j++)
+                        operator.next(j, new SystemMessage.EndOfData());
                 }
             } else // this will only be called if operator is initial
                 operator.next(0, null);
@@ -112,7 +109,7 @@ public class WorkerProcess {
         }
     }
 
-    private static RemoteExecutionData extractREDFromCommandLineArgs(String[] args) {
+    private static RemoteExecutionData deserializeArgs(String[] args) {
         RemoteExecutionData red = new RemoteExecutionData();
         int readFrom = 0;
 
