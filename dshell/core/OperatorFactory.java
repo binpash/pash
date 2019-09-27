@@ -27,10 +27,9 @@ public class OperatorFactory {
                 if (data instanceof byte[]) {
                     byte[] d = (byte[]) data;
                     for (int i = 0; i < d.length; i++)
-                        if ((char)d[i] != 0)
-                            System.out.print((char)d[i]);
-                }
-                else    // discard all the other data (SystemMessages)
+                        if ((char) d[i] != 0)
+                            System.out.print((char) d[i]);
+                } else    // discard all the other data (SystemMessages)
                     return;
             }
         };
@@ -80,31 +79,32 @@ public class OperatorFactory {
         return new Operator<>(OperatorType.SPLIT, 1, outputArity, null, 1) {
             @Override
             public void next(int inputChannel, Object data) {
-                byte[][] split = Utilities.splitData(((byte[][]) data)[0], outputArity);
+                if (data instanceof SystemMessage.Payload)
+                    for (int i = 0; i < this.outputArity; i++)
+                        consumers[i].next(0, data);
+                else {
+                    byte[][] split = Utilities.splitData((byte[]) data, outputArity);
 
-                for (int i = 0; i < this.outputArity; i++)
-                    consumers[i].next(0, split[i]);
+                    for (int i = 0; i < this.outputArity; i++)
+                        consumers[i].next(0, split[i]);
+                }
             }
         };
     }
 
     public static Operator<Object, Object> createMerger(int inputArity) {
         return new Operator<>(OperatorType.MERGE, inputArity, 1, null, 1) {
-            private int received = 0;
-            private byte[][] buffer = new byte[inputArity][];
+            private int receivedEOD = 0;
 
+            // NOTE: this method has to be declared as synchronized
             @Override
-            public void next(int inputChannel, Object data) {
-                if (buffer[inputChannel] == null) {
-                    buffer[inputChannel] = ((byte[][]) data)[0];
-                    received++;
+            public synchronized void next(int inputChannel, Object data) {
+                if (data instanceof SystemMessage.EndOfData) {
+                    receivedEOD++;
+                    if (receivedEOD == inputArity)
+                        consumers[0].next(0, new SystemMessage.EndOfData());
                 } else
-                    throw new RuntimeException("The data for the specified channel has been received already.");
-
-                if (received == inputArity) {
-                    byte[] input = Utilities.mergeData(buffer);
-                    consumers[0].next(0, input);
-                }
+                    consumers[0].next(0, data);
             }
         };
     }
