@@ -1,6 +1,6 @@
 import json
 import re
-from ir import Command
+from ir import *
 
 # json_filename = "../scripts/json/ngrams.sh.json"
 json_filename = "../scripts/json/grep.sh.json"
@@ -39,7 +39,7 @@ def parse_json_ast(json_filename):
         lines = json_file.readlines()
         ast_objects = [parse_json_line(line) for line in lines]
         for ast_object in ast_objects:
-            print(json.dumps(ast_object, indent=2))
+            # print(json.dumps(ast_object, indent=2))
             print(ast_object)
         return ast_objects
 
@@ -54,13 +54,6 @@ def check_if_asts_supported(ast_objects):
 ## TODO: Move to another file
 def flatten(l):
     return [item for sublist in l for item in sublist]
-
-## This function gets a key and a value from a dictionary that only
-## has one key
-def get_kv(dic):
-    dic_items = list(dic.items())
-    assert(len(dic_items) == 1)
-    return dic_items[0]
 
 ## For now these checks are too simple. 
 ##
