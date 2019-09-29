@@ -2,8 +2,37 @@ import json
 import re
 from ir import *
 
-json_filename = "../scripts/json/ngrams.sh.json"
+# The following files just contain POSIX (no process substitution)
+# pipes and commands
+#
+# json_filename = "../scripts/json/compile.sh.json"
 # json_filename = "../scripts/json/grep.sh.json"
+# json_filename = "../scripts/json/minimal.sh.json"
+# json_filename = "../scripts/json/shortest-scripts.sh.json"
+# json_filename = "../scripts/json/spell.sh.json"
+# json_filename = "../scripts/json/topn.sh.json"
+# json_filename = "../scripts/json/wc.sh.json"
+# json_filename = "../scripts/json/wf.sh.json"
+
+# The following contain And operatos together with pipes and commands
+#
+# json_filename = "../scripts/json/ngrams.sh.json" 
+
+
+# The following is interesting, since it contains command substitution
+# (which is parsed as backticks in the Greenberg parser). The
+# backticks seem to mean that whatever is in the backticks will
+# execute first, and its output will become a string in place of the
+# backticks
+#
+# TODO: Handle appropriately
+#
+# json_filename = "../scripts/json/page-count.sh.json"
+
+# Unidentified
+#
+# json_filename = "../scripts/json/maximal.sh.json"
+
 
 ## The json dumper in ocaml seems to print <, >, and parentheses
 ## instead of {, }, [,]. Therefore we need to replace the characters
@@ -38,9 +67,9 @@ def parse_json_ast(json_filename):
     with open(json_filename) as json_file:
         lines = json_file.readlines()
         ast_objects = [parse_json_line(line) for line in lines]
-        for ast_object in ast_objects:
+        # for ast_object in ast_objects:
             # print(json.dumps(ast_object, indent=2))
-            print(ast_object)
+            # print(ast_object)
         return ast_objects
 
 ## Checks if the given ASTs are supported
@@ -88,8 +117,24 @@ def compile_node(ast_node, nodes):
     elif (construct == 'Command'):
         check_command(construct, arguments)
 
-        command_name = arguments[2][0]
-        options = arguments[2][1:]
+        ## If there are no arguments, the command is just an
+        ## assignment
+        if(len(arguments[2]) == 0):
+            ## TODO: Should we even deal with assignments? If not,
+            ## then we can just return them as is
+            command_name = []
+            options = []
+        else:
+            command_name = arguments[2][0]
+            options = arguments[2][1:]
+
+        ## TODO: If any of the command arguments leads to a backtick,
+        ## then we have to separate this whole subtree (in the
+        ## backticks) to be a separate AST, possibly with its own
+        ## subtree graph internal representations? For simplicity we
+        ## could start by not adding a command to the graph if one of
+        ## its arguments contains backticks (command substitution).
+        ##
         new_nodes = [Command(command_name, options=options)]
 
     # elif (cnstruct == 'And'):
@@ -97,7 +142,7 @@ def compile_node(ast_node, nodes):
 
     #     left_node = arguments[0]
     #     right_node = arguments[0]
-            
+
     return new_nodes
 
 ## Compiles a given AST to an intermediate representation tree, which
@@ -109,7 +154,7 @@ def compile_node(ast_node, nodes):
 ## without knowing about previous or later subtrees that can be
 ## distributed. Is that reasonable?
 def compile_ast(ast_object):
-    nodes = compile_node(ast_object)
+    nodes = compile_node(ast_object, [])
     return nodes
 
 ## Translation process:
@@ -122,6 +167,7 @@ check_if_asts_supported(ast_objects)
 
 for i, ast_object in enumerate(ast_objects):
     print("Compiling AST {}".format(i))
+    print(ast_object)
     nodes = compile_ast(ast_object)
     print("Nodes:")
     print(nodes)
