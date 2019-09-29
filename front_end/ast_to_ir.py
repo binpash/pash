@@ -2,8 +2,8 @@ import json
 import re
 from ir import *
 
-# json_filename = "../scripts/json/ngrams.sh.json"
-json_filename = "../scripts/json/grep.sh.json"
+json_filename = "../scripts/json/ngrams.sh.json"
+# json_filename = "../scripts/json/grep.sh.json"
 
 ## The json dumper in ocaml seems to print <, >, and parentheses
 ## instead of {, }, [,]. Therefore we need to replace the characters
@@ -64,6 +64,9 @@ def check_pipe(construct, arguments):
 def check_command(construct, arguments):
     assert(len(arguments) == 4)
 
+def check_and(construct, arguments):
+    assert(len(arguments) == 2)
+
 def compile_node(ast_node, nodes):
     # print("Compiling node: {}".format(ast_node))
 
@@ -88,12 +91,25 @@ def compile_node(ast_node, nodes):
         command_name = arguments[2][0]
         options = arguments[2][1:]
         new_nodes = [Command(command_name, options=options)]
-        
+
+    # elif (cnstruct == 'And'):
+    #     check_and(construct, arguments)
+
+    #     left_node = arguments[0]
+    #     right_node = arguments[0]
+            
     return new_nodes
 
-## Compiles a given AST to the intermediate representation graph
+## Compiles a given AST to an intermediate representation tree, which
+## has some subtrees in it that are graphs representing a distributed
+## computation.
+##
+## The above assumes that subtrees of the AST are disjoint
+## computations that can be distributed separately (locally/modularly)
+## without knowing about previous or later subtrees that can be
+## distributed. Is that reasonable?
 def compile_ast(ast_object):
-    nodes = compile_node(ast_object, [])
+    nodes = compile_node(ast_object)
     return nodes
 
 ## Translation process:
