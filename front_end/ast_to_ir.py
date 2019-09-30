@@ -27,7 +27,7 @@ from ir import *
 #
 # TODO: Handle appropriately
 #
-# json_filename = "../scripts/json/page-count.sh.json"
+json_filename = "../scripts/json/page-count.sh.json"
 
 # Unidentified
 #
@@ -78,12 +78,6 @@ def check_if_asts_supported(ast_objects):
     return
 
 
-### Utils
-
-## TODO: Move to another file
-def flatten(l):
-    return [item for sublist in l for item in sublist]
-
 ## For now these checks are too simple. 
 ##
 ## Maybe we can move them to the check_if_ast_is_supported?
@@ -96,11 +90,40 @@ def check_command(construct, arguments):
 def check_and(construct, arguments):
     assert(len(arguments) == 2)
 
+def compile_arg_char(arg_char):
+    key, val = get_kv(arg_char)
+    if (key == 'C'):
+        return arg_char
+    elif (key == 'B'):
+        compiled_node = compile_node(val, [])
+        return {key : compiled_node}
+    elif (key == 'Q'):
+        compiled_val = compile_command_argument(val)
+        return {key : compiled_val}
+    else:
+        ## TODO: Complete this
+        return arg_char
+    
+def compile_command_argument(argument):
+    compiled_argument = [compile_arg_char(char) for char in argument]
+    return compiled_argument
+    
+def compile_command_arguments(arguments):
+    compiled_arguments = [compile_command_argument(arg) for arg in arguments]
+    return compiled_arguments
+    
 def compile_node(ast_node, nodes):
     # print("Compiling node: {}".format(ast_node))
 
     construct, arguments = get_kv(ast_node)
     new_nodes = []
+
+    ## TODO: For simplicity and to get things going, a node that has a
+    ## descendant that is backtick should not be distributed for
+    ## now.
+    ##
+    ## Warning: Eventually we should find a way to lift the above assumption
+    
     if (construct == 'Pipe'):
         check_pipe(construct, arguments)
 
@@ -126,15 +149,8 @@ def compile_node(ast_node, nodes):
             options = []
         else:
             command_name = arguments[2][0]
-            options = arguments[2][1:]
+            options = compile_command_arguments(arguments[2][1:])
 
-        ## TODO: If any of the command arguments leads to a backtick,
-        ## then we have to separate this whole subtree (in the
-        ## backticks) to be a separate AST, possibly with its own
-        ## subtree graph internal representations? For simplicity we
-        ## could start by not adding a command to the graph if one of
-        ## its arguments contains backticks (command substitution).
-        ##
         new_nodes = [Command(command_name, options=options)]
 
     # elif (cnstruct == 'And'):

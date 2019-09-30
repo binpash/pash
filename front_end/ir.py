@@ -1,4 +1,10 @@
 
+### Utils
+
+## TODO: Move to another file
+def flatten(l):
+    return [item for sublist in l for item in sublist]
+
 ## This function gets a key and a value from a dictionary that only
 ## has one key
 def get_kv(dic):
@@ -11,7 +17,8 @@ def format_arg_char(arg_char):
     if (key == 'C'):
         return str(chr(val))
     elif (key == 'B'):
-        return '$()' # This is just for illustration
+        # The $() is just for illustration. This is backticks
+        return '$({})'.format(val)
     elif (key == 'Q'):
         return '"{}"'.format("".join([format_arg_char(c) for c in val]))
     else:
