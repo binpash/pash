@@ -10,6 +10,10 @@ def format_arg_char(arg_char):
     key, val = get_kv(arg_char)
     if (key == 'C'):
         return str(chr(val))
+    elif (key == 'B'):
+        return '$()' # This is just for illustration
+    elif (key == 'Q'):
+        return '"{}"'.format("".join([format_arg_char(c) for c in val]))
     else:
         ## TODO: Make this correct
         return key
