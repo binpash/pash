@@ -300,17 +300,15 @@ Experiments for complex pipelines show substantial speedups and the ability to o
 % computation that is easily amenable to distribution.
 % 
 
-Distributed systems offer significant benefits over their centralized counterparts.
-For example, they can speed up computations and can process amounts that would not fit into any single machine.
+Distributed systems offer significant benefits over their centralized counterparts---for example, they can speed up expensive computations or process data that would not fit into any single machine.
 % offer notable benefits over their centralized counterparts:
 %   using partitioning and replication, they can process and store data with increased throughput and fault-tolerance.
 % Yet, only a minority of developers, employed by the select few companies that deal with massive datasets, have the luxury of engineering software systems with distribution baked in from the start.
 % The remaining majority starts by developing and deploying software in a centralized manner---that is, \emph{until} there is a significant change of requirements, such as a load increase.
-
 Despite these benefits, their development remains different from and significantly more difficult than their centralized counterparts.
-Whereas anyone can stitch together a Bash script to compute on a single computer, 
+Whereas anyone can quickly stitch together a Bash script to compute on a single computer, 
   % domain-experts routinely glue scripts together to process and share data. % without the help of a computing expert.
-   scaling out to multiple ones requires expert labor around ``point'' solutions with expensive setups, restricted programming interfaces, and exorbitant composition costs~\cite{taurus:14, dios:13, andromeda:2015, pywren:17, futuredata:18, nefele:18}.
+   scaling out to multiple ones requires expert labor around ``point'' solutions with expensive setups, restricted programming interfaces, and exorbitant composition costs~\cite{taurus:14, dios:13, andromeda:15, pywren:17, futuredata:18, nefele:18}.
 
 To understand this sharp contrast, consider calculating frequencies of terms within a set of input files.
 For a developer with \emph{one} computer, this is achievable with a short \unix
@@ -441,6 +439,7 @@ The most powerful---and interesting, for \ttt{dish}---type of expansion is subsh
 \end{lstlisting}
 
 \heading{Identifiers}
+
 The file-system is a common abstraction layer used for many other operations than just serving files (this will be become clearer when talking about file-system commands in \S\ref{bg:cmd}).
 as such, different identifiers many not resolve to actual files, but rather in-memory or OS-internal structures.
 
