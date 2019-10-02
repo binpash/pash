@@ -45,4 +45,21 @@ class Arg:
     def __repr__(self):
         chars = [format_arg_char(arg_char) for arg_char in self.arg_char_list]
         return "".join(chars)
-        
+
+## Note: This might need more information to simplify the
+## implementation (like the IRs stdin, stdout)
+class IR:
+    def __init__(self, nodes = []):
+        self.nodes = nodes
+
+    def __repr__(self):
+        output = "(| IR: {} |)".format(self.nodes)
+        return output
+
+    ## TODO: There have to be more complex methods to combine two IRs
+    def append(self, other):
+        self.nodes += other.nodes
+        return self
+
+    def empty(self):
+        return (len(self.nodes) == 0)

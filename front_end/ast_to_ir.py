@@ -16,7 +16,7 @@ from ir import *
 
 # The following contain And operatos together with pipes and commands
 #
-# json_filename = "../scripts/json/ngrams.sh.json" 
+json_filename = "../scripts/json/ngrams.sh.json" 
 
 
 # The following is interesting, since it contains command substitution
@@ -27,7 +27,7 @@ from ir import *
 #
 # TODO: Handle appropriately
 #
-json_filename = "../scripts/json/page-count.sh.json"
+# json_filename = "../scripts/json/page-count.sh.json"
 
 # Unidentified
 #
@@ -78,6 +78,27 @@ def check_if_asts_supported(ast_objects):
     return
 
 
+## This checks all ast children nodes of a pipe, and merges the
+## consecutive ones to larger IRs.
+def combine_pipe(ast_nodes):
+    combined_nodes = []
+    curr = IR()
+    for ast_node in ast_nodes:
+        if (isinstance(ast_node, IR)):
+            curr.append(ast_node)
+        else:
+            if (not curr.empty()):
+                combined_nodes.append(curr)
+                curr = IR()
+            
+            combined_nodes.append(ast_node)
+
+    if (not curr.empty()):
+        combined_nodes.append(curr)
+    
+    return combined_nodes
+
+
 ## For now these checks are too simple. 
 ##
 ## Maybe we can move them to the check_if_ast_is_supported?
@@ -95,7 +116,7 @@ def compile_arg_char(arg_char):
     if (key == 'C'):
         return arg_char
     elif (key == 'B'):
-        compiled_node = compile_node(val, [])
+        compiled_node = compile_node(val)
         return {key : compiled_node}
     elif (key == 'Q'):
         compiled_val = compile_command_argument(val)
@@ -112,12 +133,11 @@ def compile_command_arguments(arguments):
     compiled_arguments = [compile_command_argument(arg) for arg in arguments]
     return compiled_arguments
     
-def compile_node(ast_node, nodes):
+def compile_node(ast_node):
     # print("Compiling node: {}".format(ast_node))
 
     construct, arguments = get_kv(ast_node)
-    new_nodes = []
-
+    
     ## TODO: For simplicity and to get things going, a node that has a
     ## descendant that is backtick should not be distributed for
     ## now.
@@ -129,7 +149,9 @@ def compile_node(ast_node, nodes):
 
         # TODO: Refactor this into a function of its own
         pipe_items = arguments[1]
-        new_nodes = flatten([compile_node(pipe_item, []) for pipe_item in pipe_items])
+        compiled_ast = {construct : [arguments[0]] +
+                        combine_pipe([compile_node(pipe_item)
+                                      for pipe_item in pipe_items])}
         # Note: I am not sure if it is fine to just give an empty list
         # to each compile node, or whether the compile node needs to
         # get the nodes that were created previously (The concern is
@@ -151,15 +173,22 @@ def compile_node(ast_node, nodes):
             command_name = arguments[2][0]
             options = compile_command_arguments(arguments[2][1:])
 
-        new_nodes = [Command(command_name, options=options)]
+        ## Question: Should we return the command in an IR if one of
+        ## its arguments is a command substitution? Meaning that we
+        ## will have to wait for its command to execute first?
+        compiled_ast = IR(nodes = [Command(command_name, options=options)])
 
-    # elif (cnstruct == 'And'):
-    #     check_and(construct, arguments)
-
-    #     left_node = arguments[0]
-    #     right_node = arguments[0]
-
-    return new_nodes
+    elif (construct == 'And'):
+        check_and(construct, arguments)
+        
+        left_node = arguments[0]
+        right_node = arguments[1]
+        compiled_ast = {construct : [compile_node(left_node), compile_node(right_node)]}
+        
+    else:
+        raise Error("Unimplemented construct: {}".format(construct))
+    
+    return compiled_ast
 
 ## Compiles a given AST to an intermediate representation tree, which
 ## has some subtrees in it that are graphs representing a distributed
@@ -170,8 +199,8 @@ def compile_node(ast_node, nodes):
 ## without knowing about previous or later subtrees that can be
 ## distributed. Is that reasonable?
 def compile_ast(ast_object):
-    nodes = compile_node(ast_object, [])
-    return nodes
+    compiled_ast = compile_node(ast_object)
+    return compiled_ast
 
 ## Translation process:
 ## 1. Parse json to an AST object
@@ -184,6 +213,6 @@ check_if_asts_supported(ast_objects)
 for i, ast_object in enumerate(ast_objects):
     print("Compiling AST {}".format(i))
     print(ast_object)
-    nodes = compile_ast(ast_object)
-    print("Nodes:")
-    print(nodes)
+    compiled_ast = compile_ast(ast_object)
+    print("Compiled AST:")
+    print(compiled_ast)
