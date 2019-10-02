@@ -310,9 +310,8 @@ Whereas anyone can quickly stitch together a Bash script to compute on a single 
   % domain-experts routinely glue scripts together to process and share data. % without the help of a computing expert.
    scaling out to multiple ones requires expert labor around ``point'' solutions with expensive setups, restricted programming interfaces, and exorbitant composition costs~\cite{taurus:14, dios:13, andromeda:15, pywren:17, futuredata:18, nefele:18}.
 
-To understand this sharp contrast, consider calculating frequencies of terms within a set of input files.
-For a developer with \emph{one} computer, this is achievable with a short \unix
-pipeline~\cite{bentley1986literate}:
+To understand this contrast, consider calculating term frequencies over a set of input files.
+For a user with \emph{one} computer, this is achievable with a short \unix pipeline~\cite{bentley1986literate}:
 
 % \begin{lstlisting}[language=sh,float=h,numbers=none]
 % cat doc.ms |                   # print input file
@@ -324,17 +323,17 @@ pipeline~\cite{bentley1986literate}:
 % unique |                       # remove duplicate words
 % comm -13 /usr/share/dict -     # report words not in dictionary 
 % \end{lstlisting}
-% greece; stops
-% AWS policy specification
+
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-cat * | tr -cs A-Za-z`\n` | tr A-Z a-z | (($$p_1$$))
+cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$[p_1]$$)
   sort | uniq -c | sort -rn | head 5 > out
 \end{lstlisting}
 
-Combining several features, Unix makes small tasks easy to express;
-  composition allows the composition of general primitives
-Key elements of \unix are the ability to stitch together programs written in different languages, the abstraction of a file system as a set of resident streams, as well as naming---the ability to resolve command, file names within a global context.
-Under the hood, the \unix kernel buffers results, concurrency control 
+Combining several features, Unix makes small tasks easy to express:
+  $p_1$ creates a character stream, breaks it down to words, transliterates them lower-case, sorts them to group duplicates, counts and replaces duplicates, sorts them numerically and in reverse order, picks the top five results and writes them to a file \ttt{out}.
+% composition allows the composition of general primitives
+Key elements of \unix are the ability to compose programs written in different languages, the abstraction of a file system as a set of resident streams, a small but extensible library of commands, and the ability to resolve names within a global context.
+Under the hood, the \unix kernel buffers results, synchronizes processing stages, and generally orchestrates the computation.
 
 % Key insight 
 % % The garden-hose philosophy is similar to Haskell 
@@ -342,17 +341,49 @@ Under the hood, the \unix kernel buffers results, concurrency control
 % * do not need to use specialized frameworks for composition---instead, as long as they conform to the shell, individual primitives can be written in any programming language.
 % * do not need to rewrite ---
 
-Unfortunately, 
-A developer with many computers has to choose between three options, all of which require significant manual effort.
-The most popular is to leverage domain-specific ; this requires rewriting portions of the program in a new language and use operations
+
+%      dish      ignis, mozart    hadoop, spark, ...      erlang, elixir
+%       \/           \   /             \     /                \   /
+% auto <-------------------------------------------------------------> manual
+%                      [rewrite (not write) cost]
+
+For a user with many computers, however, rewriting this pipeline to exploit distribution requires a significant cost in terms of manual effort.
+% The scope of such rewrites, and therefore the cost of manual effort, can vary considerably.
+Such cost is at best moderate when pipelines can be expressed in domain-specific frameworks---for example, Hadoop and Spark provide a few purely functional primitives that 
+As long as the program fits into the model this is only moderately difficult;
+For simple, one-off pipelines that take a few minutes to compose this cost---order of magnitude higher than---becomes unjustifiable.
+
+More realistic programs, such as the pipelines presented in this paper, require distributed programming language or a distributed operating system---\eg Plan9's \ttt{rc} shell.
+For many legacy pipelines  
+Could the generation and execution of $p_1$'s distributing version be fully and correctly automated?
+
+
+ has to choose between three options, all of which require significant manual effort.
+The most invasive is to rewrite the entire program in a distributed programming language
+The most popular is to leverage 
+
+Use a distributed programming language, even higher rewrites
+Or use some form of annotations 
+
+ this requires rewriting portions of the program in a new language and use operations
+
+
+In the simplest case, annotations
+
+Often, they only focus on a few parts of the system---for example, upgrading to a distributed storage layer.
+More rarely, companies rewrite entire systems (\eg Twitter's Ruby-to-Scala rewrite~\cite{twitter}), a process that is notoriously difficult under schedule constraints and competitive pressures~\cite{rewrite1, rewrite2}.
+The manual effort is expensive, and can introduce new bugs, cascading changes, or regressions of previously fixed performance issues, especially since software today makes extensive use of third-party modules~\cite{breakapp:plos:2017}.
+
 
 % If developers have already expressed their computation as a Unix pipeline, they should not have to manually rewrite the program in other environment---\eg Hadoop, Spark---to exploit distribution.
-For simple, one-off pipelines that take a few minutes to compose this cost---order of magnitude higher than---becomes unjustifiable.
-For many legacy pipelines  
-Could the generation and execution of a distributing version of the pipeline be automated?
 
-The key insight behind our work is that Unix pipelines already provide most of the information for distributing a computation.
-Indeed, the primary reason behind $p_1$'s succinctness is that the pipeline is a domain-specific language for describing operations on streams.
+
+
+
+
+
+The key insight behind our work is that \unix pipelines already provide most of the information for distributing a computation.
+Indeed, the primary reason behind $p_1$'s succinctness is that the pipeline is a domain-specific language for describing operations over streams.
 Primitives 
 \sys enables \emph{distribution-oblivious programming}: 
   multi-order of magnitude speedups with correctness guarantees and without any developer effort.
