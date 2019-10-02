@@ -232,18 +232,27 @@
 %% Note: \begin{abstract}...\end{abstract} environment must come
 %% before \maketitle command
 \begin{abstract}
-  Distributed systems offer notable benefits over centralized systems.
-  Reaping these benefits, however, requires developers to develop and deploy
-  software in a manner that makes distribution explicit---a process
-  that is quite different from how they compose software for centralized
-  systems.
+  \nv{placeholder}
+  Distributed systems offer notable benefits over centralized ones.
+  Reaping these benefits, however, requires programming in a way that makes distribution explicit---\eg via new programming languages, distributed framework interfaces, or distribution annotations.
 % 
-  \emph{Light-touch distribution} is a new approach for scaling out distribution-oblivious shell scripts.
-  It leverages the fact that 
-% introduced as a drop-in replacement of a language runtime's module system, 
-  Our \sys prototype shows substantial speedups over 
-  as well as the ability to operate on large input sizes, all without
-  any developer input.
+%   \emph{Distribution-oblivious programming} is a new approach for..?
+  This paper presents \sys, a shell variant that automatically and correctly scales out distribution-oblivious shell pipelines. %  with regards to the sequential program.
+  % leveraging the insight that such programs already express stream computations, with their stages falling under a few, known distributability classes.
+  \sys's insight is that shell pipelines already express stream computations that can automatically distributed.
+  To achieve this, \sys
+% a series of techniques for automatically 
+decomposes primitives into distributability classes,
+identifies high-distributability stages,
+applies rewriting rules for largest possible subprograms,
+and orchestrates the distributed program.
+Its runtime component provides orchestration and planning support during the execution of the program.
+% 
+% Key challenges include 
+% surprisingly expressive, 
+% maximally distributable subprograms
+% 
+Experiments for complex pipelines show substantial speedups and the ability to operate on large input datasets, all without any developer input.
 \end{abstract}
 
 
