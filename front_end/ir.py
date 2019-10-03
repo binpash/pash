@@ -21,6 +21,8 @@ def format_arg_char(arg_char):
         return '$({})'.format(val)
     elif (key == 'Q'):
         return '"{}"'.format("".join([format_arg_char(c) for c in val]))
+    elif (key == 'V'):
+        return '${}'.format(val[2])
     else:
         ## TODO: Make this correct
         return key

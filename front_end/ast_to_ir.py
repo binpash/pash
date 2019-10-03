@@ -31,7 +31,7 @@ json_filename = "../scripts/json/page-count.sh.json"
 
 # Unidentified
 #
-# json_filename = "../scripts/json/maximal.sh.json"
+json_filename = "../scripts/json/maximal.sh.json"
 
 
 ## The json dumper in ocaml seems to print <, >, and parentheses
@@ -128,6 +128,21 @@ def check_command(construct, arguments):
 def check_and(construct, arguments):
     assert(len(arguments) == 2)
 
+def check_or(construct, arguments):
+    assert(len(arguments) == 2)
+
+def check_semi(construct, arguments):
+    assert(len(arguments) == 2)
+
+def check_redir(construct, arguments):
+    assert(len(arguments) == 3)
+
+def check_subshell(construct, arguments):
+    assert(len(arguments) == 3)
+
+def check_background(construct, arguments):
+    assert(len(arguments) == 3)
+
 def compile_arg_char(arg_char):
     key, val = get_kv(arg_char)
     if (key == 'C'):
@@ -216,9 +231,80 @@ def compile_node(ast_node):
         left_node = arguments[0]
         right_node = arguments[1]
         compiled_ast = {construct : [compile_node(left_node), compile_node(right_node)]}
+
+    elif (construct == 'Or'):
+        check_or(construct, arguments)
         
+        left_node = arguments[0]
+        right_node = arguments[1]
+        compiled_ast = {construct : [compile_node(left_node), compile_node(right_node)]}
+        
+    elif (construct == 'Semi'):
+        check_semi(construct, arguments)
+        
+        left_node = arguments[0]
+        right_node = arguments[1]
+        compiled_ast = {construct : [compile_node(left_node), compile_node(right_node)]}
+
+    elif (construct == 'Redir'):
+        check_redir(construct, arguments)
+
+        line_no = arguments[0]
+        node = arguments[1]
+        redir_list = arguments[2]
+
+        compiled_node = compile_node(node)
+
+        if (isinstance(compiled_node, IR)):
+            ## TODO: I should use the redir list to redirect the files of
+            ##       the IR accordingly
+            compiled_ast = compiled_node
+        else:
+            compiled_ast = {construct : [line_no, compiled_node, redir_list]}
+
+    elif (construct == 'Subshell'):
+        check_subshell(construct, arguments)
+
+        line_no = arguments[0]
+        node = arguments[1]
+        redir_list = arguments[2]
+
+        compiled_node = compile_node(node)
+
+        ## Question: It seems that subshell can be handled exactly
+        ##           like a redir. Is that true?
+
+        ## TODO: Make sure that propagating the IR up, doesn't create
+        ##       any issue.
+        
+        if (isinstance(compiled_node, IR)):
+            ## TODO: I should use the redir list to redirect the files of
+            ##       the IR accordingly
+            compiled_ast = compiled_node
+        else:
+            compiled_ast = {construct : [line_no, compiled_node, redir_list]}
+            
+    elif (construct == 'Background'):
+        check_background(construct, arguments)
+
+        line_no = arguments[0]
+        node = arguments[1]
+        redir_list = arguments[2]
+
+        compiled_node = compile_node(node)
+        
+        ## TODO: I should use the redir list to redirect the files of
+        ##       the IR accordingly
+        if (isinstance(compiled_node, IR)):
+            compiled_ast = compiled_node
+        else:
+            ## Note: It seems that background nodes can be added in
+            ##       the distributed graph similarly to the children
+            ##       of pipelines.
+            compiled_ast = IR(nodes = [compiled_node])
+            
     else:
-        raise Error("Unimplemented construct: {}".format(construct))
+        raise TypeError("Unimplemented construct: {}".format(construct))
     
     return compiled_ast
 
