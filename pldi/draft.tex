@@ -347,31 +347,38 @@ For a user with \emph{one} computer and small input, this pipeline takes a few s
 
 For a user with many computers and larger inputs, however, developing $p_1$'s distributed equivalent requires a significant effort.
 % The scope of such rewrites, and therefore the cost of manual effort, can vary considerably.
-Such cost is at best moderate when pipelines can be expressed in domain-specific frameworks---for example, Hadoop and Spark provide a few purely functional primitives that 
-As long as the program fits into the model this is only moderately difficult;
-For simple, one-off pipelines that take a few minutes to compose this cost---order of magnitude higher than---becomes unjustifiable.
+In simple cases comprised of pure functions, has to be rewritten in the language and interfaces exposed by the chosen big-data framework or DSL.
+This cost is unjustifiable for one-off pipelines that take a few minutes to compose (but are applied to large datasets).
+More complex pipelines, such as the ones presented in later sections, require full-fledged distributed programming language or a distributed operating system---\eg Plan9's \ttt{rc} shell.
+In these cases, manual rewriting is expensive and can introduce new bugs, cascading changes, or divergence from legacy functionality---
+Could the generation and execution of $p_1$'s distributed version be fully and correctly automated?
 
-More realistic programs, such as the pipelines presented in this paper, require distributed programming language or a distributed operating system---\eg Plan9's \ttt{rc} shell.
-For many legacy pipelines  
-Could the generation and execution of $p_1$'s distributing version be fully and correctly automated?
-
-
- has to choose between three options, all of which require significant manual effort.
-The most invasive is to rewrite the entire program in a distributed programming language
-The most popular is to leverage 
-
-Use a distributed programming language, even higher rewrites
-Or use some form of annotations 
-
- this requires rewriting portions of the program in a new language and use operations
-
-
-In the simplest case, annotations
-
-Often, they only focus on a few parts of the system---for example, upgrading to a distributed storage layer.
-More rarely, companies rewrite entire systems (\eg Twitter's Ruby-to-Scala rewrite~\cite{twitter}), a process that is notoriously difficult under schedule constraints and competitive pressures~\cite{rewrite1, rewrite2}.
-The manual effort is expensive, and can introduce new bugs, cascading changes, or regressions of previously fixed performance issues, especially since software today makes extensive use of third-party modules~\cite{breakapp:plos:2017}.
-
+% Some (parts of) pipelines require only moderate effort, as they are 
+% For some pipelines, this effort is merely moderate, as 
+%  can be expressed in domain-specific frameworks---for example, Hadoop and Spark provide a few purely functional primitives that 
+%   ---still requiring rewriting the program in a different (\eg Scala for Spark).
+% 
+% This effort is moderate if the program expressed by these pipelines fits into a domain-specific framework.
+% At times, such pipelines
+% As long as the program fits into the model this is only moderately difficult;
+% 
+% For many legacy pipelines  
+%  has to choose between three options, all of which require significant manual effort.
+% The most invasive is to rewrite the entire program in a distributed programming language
+% The most popular is to leverage 
+% 
+% Use a distributed programming language, even higher rewrites
+% Or use some form of annotations 
+% 
+%  this requires rewriting portions of the program in a new language and use operations
+% 
+% 
+% In the simplest case, annotations
+% 
+% Often, they only focus on a few parts of the system---for example, upgrading to a distributed storage layer.
+% More rarely, companies rewrite entire systems (\eg Twitter's Ruby-to-Scala rewrite~\cite{twitter}), a process that is notoriously difficult under schedule constraints and competitive pressures~\cite{rewrite1, rewrite2}.
+%  especially since software today makes extensive use of third-party modules~\cite{breakapp:plos:2017}.
+% 
 
 % If developers have already expressed their computation as a Unix pipeline, they should not have to manually rewrite the program in other environment---\eg Hadoop, Spark---to exploit distribution.
 
