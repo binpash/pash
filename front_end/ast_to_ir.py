@@ -16,7 +16,7 @@ from ir import *
 
 # The following contain And operatos together with pipes and commands
 #
-json_filename = "../scripts/json/ngrams.sh.json" 
+# json_filename = "../scripts/json/ngrams.sh.json" 
 
 
 # The following is interesting, since it contains command substitution
@@ -27,7 +27,7 @@ json_filename = "../scripts/json/ngrams.sh.json"
 #
 # TODO: Handle appropriately
 #
-# json_filename = "../scripts/json/page-count.sh.json"
+json_filename = "../scripts/json/page-count.sh.json"
 
 # Unidentified
 #
@@ -80,7 +80,11 @@ def check_if_asts_supported(ast_objects):
 
 ## This checks all ast children nodes of a pipe, and merges the
 ## consecutive ones to larger IRs.
-def combine_pipe(ast_nodes):
+##
+## Note: I believe that this is very conservative, since pipelines
+## should spawn a different subshell for each of their parts. Thus
+## being concurrent by nature.
+def conservative_combine_pipe(ast_nodes):
     combined_nodes = []
     curr = IR()
     for ast_node in ast_nodes:
@@ -97,6 +101,19 @@ def combine_pipe(ast_nodes):
         combined_nodes.append(curr)
     
     return combined_nodes
+
+## This combines all the children of the Pipeline to an IR, even
+## though they might not be IRs themselves. This means that an IR
+## might contain mixed commands and ASTs. The ASTs can be
+## (conservatively) considered as stateful commands by default).
+def combine_pipe(ast_nodes):
+    combined_nodes = IR()
+    for ast_node in ast_nodes:
+        if (isinstance(ast_node, IR)):
+            combined_nodes.append(ast_node)
+        else:
+            combined_nodes.append(IR(nodes = [ast_nodes]))
+    return [combined_nodes]
 
 
 ## For now these checks are too simple. 
@@ -147,18 +164,33 @@ def compile_node(ast_node):
     if (construct == 'Pipe'):
         check_pipe(construct, arguments)
 
-        # TODO: Refactor this into a function of its own
+        ## TODO: Refactor this into a function of its own
         pipe_items = arguments[1]
-        compiled_ast = {construct : [arguments[0]] +
-                        combine_pipe([compile_node(pipe_item)
-                                      for pipe_item in pipe_items])}
-        # Note: I am not sure if it is fine to just give an empty list
-        # to each compile node, or whether the compile node needs to
-        # get the nodes that were created previously (The concern is
-        # whether "compilation" is a map or a fold)
+
+        background = arguments[0]
+        compiled_pipe_nodes = combine_pipe([compile_node(pipe_item)
+                                            for pipe_item in pipe_items])
+
+        ## Question: The first argument of the Pipe is whether it is
+        ##           run in the background. Could that influence
+        ##           distribution in any way? Should we keep it
+        ##           somewhere?
+
+        if (len(compiled_pipe_nodes) == 1):
+            ## Note: When calling combine_pipe_nodes (which
+            ##       optimistically distributes all the children of a
+            ##       pipeline) the compiled_pipe_nodes should always
+            ##       be one IR
+            compiled_ast = compiled_pipe_nodes[0]
+        else:
+            compiled_ast = {construct : [arguments[0]] + [compiled_pipe_nodes]}
         
-        ## TODO: Connect the stdins with the stdouts
-        
+        ## TODO: Connect the stdins with the stdouts. Since the new
+        ##       combine_pipe combines all children nodes of a
+        ##       pipeline in an IR, we should make sure that ASTs are
+        ##       unified with Commands, in the sense that they both
+        ##       have getters and setters for stdin, stdout.
+
     elif (construct == 'Command'):
         check_command(construct, arguments)
 
