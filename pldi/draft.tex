@@ -310,8 +310,7 @@ Whereas anyone can quickly stitch together a Bash script to compute on a single 
   % domain-experts routinely glue scripts together to process and share data. % without the help of a computing expert.
    scaling out to multiple ones requires expert labor around ``point'' solutions with expensive setups, restricted programming interfaces, and exorbitant composition costs~\cite{taurus:14, dios:13, andromeda:15, pywren:17, futuredata:18, nefele:18}.
 
-To understand this contrast, consider calculating term frequencies over a set of input files.
-For a user with \emph{one} computer, this is achievable with a short \unix pipeline~\cite{bentley1986literate}:
+To understand this sharp contrast, consider calculating term frequencies over a set of input files:
 
 % \begin{lstlisting}[language=sh,float=h,numbers=none]
 % cat doc.ms |                   # print input file
@@ -329,11 +328,10 @@ cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$[p_1]$$)
   sort | uniq -c | sort -rn | head 5 > out
 \end{lstlisting}
 
-Combining several features, Unix makes small tasks easy to express:
+Combining several features, \unix makes small tasks easy to express:
   $p_1$ creates a character stream, breaks it down to words, transliterates them lower-case, sorts them to group duplicates, counts and replaces duplicates, sorts them numerically and in reverse order, picks the top five results and writes them to a file \ttt{out}.
+For a user with \emph{one} computer and small input, this pipeline takes a few seconds to compose and execute~\cite{bentley1986literate}.
 % composition allows the composition of general primitives
-Key elements of \unix are the ability to compose programs written in different languages, the abstraction of a file system as a set of resident streams, a small but extensible library of commands, and the ability to resolve names within a global context.
-Under the hood, the \unix kernel buffers results, synchronizes processing stages, and generally orchestrates the computation.
 
 % Key insight 
 % % The garden-hose philosophy is similar to Haskell 
@@ -347,7 +345,7 @@ Under the hood, the \unix kernel buffers results, synchronizes processing stages
 % auto <-------------------------------------------------------------> manual
 %                      [rewrite (not write) cost]
 
-For a user with many computers, however, rewriting this pipeline to exploit distribution requires a significant cost in terms of manual effort.
+For a user with many computers and larger inputs, however, developing $p_1$'s distributed equivalent requires a significant effort.
 % The scope of such rewrites, and therefore the cost of manual effort, can vary considerably.
 Such cost is at best moderate when pipelines can be expressed in domain-specific frameworks---for example, Hadoop and Spark provide a few purely functional primitives that 
 As long as the program fits into the model this is only moderately difficult;
