@@ -383,12 +383,14 @@ Could the generation and execution of $p_1$'s distributed version be fully and c
 % If developers have already expressed their computation as a Unix pipeline, they should not have to manually rewrite the program in other environment---\eg Hadoop, Spark---to exploit distribution.
 
 
-
-
-
-
 The key insight behind our work is that \unix pipelines already provide most of the information for distributing a computation.
+Commands 
+
 Indeed, the primary reason behind $p_1$'s succinctness is that the pipeline is a domain-specific language for describing operations over streams.
+Key elements of \unix are the ability to compose programs written in different languages, the abstraction of a file system as a set of resident streams, a small but extensible library of commands, and the ability to resolve names within a global context.
+Under the hood, the \unix kernel buffers results, synchronizes processing stages, and generally orchestrates the computation.
+
+
 Primitives 
 \sys enables \emph{distribution-oblivious programming}: 
   multi-order of magnitude speedups with correctness guarantees and without any developer effort.
