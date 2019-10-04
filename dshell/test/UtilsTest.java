@@ -32,6 +32,33 @@ public class UtilsTest {
         Assert.assertTrue(s2[1][0] == 0x02);
         Assert.assertTrue(s2[1][1] == 0x03);
         Assert.assertTrue(s2[2][0] == 0x04);
+
+
+
+
+        byte[] twoPartsA = {0x00, 0x01, 0x02, 0x03, 0x04};
+        byte[] twoPartsB = {0x00, 0x01, 0x02, 0x03};
+
+        byte[][] s3 = Utilities.splitData(twoPartsA, 2);
+        byte[][] s4 = Utilities.splitData(twoPartsB, 2);
+        Assert.assertTrue(s3.length == 2);
+        Assert.assertTrue(s3[0].length == 3);
+        Assert.assertTrue(s3[1].length == 2);
+
+        Assert.assertTrue(s4.length == 2);
+        Assert.assertTrue(s4[0].length == 2);
+        Assert.assertTrue(s4[1].length == 2);
+
+        Assert.assertTrue(s3[0][0] == 0x00);
+        Assert.assertTrue(s3[0][1] == 0x01);
+        Assert.assertTrue(s3[0][2] == 0x02);
+        Assert.assertTrue(s3[1][0] == 0x03);
+        Assert.assertTrue(s3[1][1] == 0x04);
+
+        Assert.assertTrue(s4[0][0] == 0x00);
+        Assert.assertTrue(s4[0][1] == 0x01);
+        Assert.assertTrue(s4[1][0] == 0x02);
+        Assert.assertTrue(s4[1][1] == 0x03);
     }
 
     @Test

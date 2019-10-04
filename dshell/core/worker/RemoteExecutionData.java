@@ -3,6 +3,7 @@ package dshell.core.worker;
 import dshell.core.Operator;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * Class that all the data needed for the computation on a remote machine
@@ -16,8 +17,8 @@ public class RemoteExecutionData implements Serializable {
     private int inputPort;
 
     // URL for sending the data to other operators
-    private String[] outputHost;
-    private int[] outputPort;
+    private List<String> outputHost;
+    private List<Integer> outputPort;
 
     // URL for notifying the client that the computation was finished or that it threw an exception
     private String callbackHost;
@@ -26,7 +27,7 @@ public class RemoteExecutionData implements Serializable {
     public RemoteExecutionData() {
     }
 
-    public RemoteExecutionData(Operator operator, boolean initialOperator, int inputPort, String[] outputHost, int[] outputPort, String callbackHost, int callBackPort) {
+    public RemoteExecutionData(Operator operator, boolean initialOperator, int inputPort, List<String> outputHost, List<Integer> outputPort, String callbackHost, int callBackPort) {
         this.operator = operator;
         this.initialOperator = initialOperator;
         this.inputPort = inputPort;
@@ -60,19 +61,19 @@ public class RemoteExecutionData implements Serializable {
         this.inputPort = inputPort;
     }
 
-    public String[] getOutputHost() {
+    public List<String> getOutputHost() {
         return outputHost;
     }
 
-    public void setOutputHost(String[] outputHost) {
+    public void setOutputHost(List<String> outputHost) {
         this.outputHost = outputHost;
     }
 
-    public int[] getOutputPort() {
+    public List<Integer> getOutputPort() {
         return outputPort;
     }
 
-    public void setOutputPort(int[] outputPort) {
+    public void setOutputPort(List<Integer> outputPort) {
         this.outputPort = outputPort;
     }
 

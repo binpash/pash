@@ -7,17 +7,17 @@ import dshell.core.nodes.StatelessOperator;
 
 public class ShellInternal {
 
-    private static String INPUT_FILE = "/home/cvetkovic/Downloads/input.txt";
+    private static String INPUT_FILE = "/home/cvetkovic/Desktop/i1M.txt";
     private static String HDFS_OUTPUT_FILE = "output.txt";
 
     public static void main(String[] args) {
         AtomicGraph cat = new AtomicGraph(new StatelessOperator(0, 1, "cat", new String[]{INPUT_FILE}));
-        AtomicGraph wc = new AtomicGraph(new StatelessOperator(1, 1, "wc", new String[]{"-m"}, 4));
+        AtomicGraph wc = new AtomicGraph(new StatelessOperator(1, 1, "wc", new String[]{"-m"}, 2));
         AtomicGraph hdfsPrinter = new AtomicGraph(OperatorFactory.createHDFSFilePrinter("output.txt"));
         SerialGraph graph = new SerialGraph(cat, wc, hdfsPrinter);
 
         long time = 0;
-        int cases = 10;
+        int cases = 5;
 
         for (int i = 0; i < cases; i++) {
             long start = System.currentTimeMillis();

@@ -3,6 +3,7 @@ package dshell.core.worker;
 import dshell.core.misc.SystemMessage;
 import dshell.core.nodes.StatelessOperator;
 import org.apache.hadoop.hdfs.security.token.delegation.DelegationTokenSecretManager;
+import org.jboss.netty.channel.socket.Worker;
 
 import java.io.InputStream;
 import java.io.ObjectInput;
@@ -23,8 +24,7 @@ public class DistributedTask {
     static {
         try {
             JAVA_PATH = System.getenv("JAVA_HOME") + "/java";
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new RuntimeException("Could not find environmental variable 'JAVA_HOME' defined on this machine.");
         }
     }
@@ -45,12 +45,18 @@ public class DistributedTask {
                     // TODO: do the graph traversal from the end so that initial opeators is sent last
                     // if it is not last it can make problems during the execution because some ports won't be opened for listening
                     ProcessBuilder pipelineInitiator = null;
+                    RemoteExecutionData initial = null;
 
                     while (true) {
                         Object received = ois.readObject();
 
                         if (received instanceof RemoteExecutionData) {
                             RemoteExecutionData red = (RemoteExecutionData) received;
+                            /*if (!red.isInitialOperator())
+                                new Thread(new WorkerProcess(red)).start();
+                            else
+                                initial = red;*/
+
                             List<String> argsToSend = new ArrayList<>();
 
                             argsToSend.add(JAVA_PATH);
@@ -75,13 +81,12 @@ public class DistributedTask {
                             argsToSend.add(Integer.toString(red.getInputPort()));
 
                             if (red.getOutputHost() != null) {
-                                argsToSend.add(Integer.toString(red.getOutputHost().length));
-                                for (int i = 0; i < red.getOutputHost().length; i++) {
-                                    argsToSend.add(red.getOutputHost()[i]);
-                                    argsToSend.add(Integer.toString(red.getOutputPort()[i]));
+                                argsToSend.add(Integer.toString(red.getOutputHost().size()));
+                                for (int i = 0; i < red.getOutputHost().size(); i++) {
+                                    argsToSend.add(red.getOutputHost().get(i));
+                                    argsToSend.add(Integer.toString(red.getOutputPort().get(i)));
                                 }
-                            }
-                            else
+                            } else
                                 argsToSend.add(Integer.toString(0));
 
                             argsToSend.add(red.getCallbackHost());
@@ -89,6 +94,7 @@ public class DistributedTask {
 
                             ProcessBuilder builder = new ProcessBuilder(argsToSend.toArray(new String[0]));
                             builder.redirectError(ProcessBuilder.Redirect.INHERIT);
+                            builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
                             if (!red.isInitialOperator())
                                 builder.start();
                             else
@@ -101,6 +107,7 @@ public class DistributedTask {
                             throw new RuntimeException("Not supported type of input data received by worker coordinator.");
                     }
 
+                    //new Thread(new WorkerProcess(initial)).start();
                     pipelineInitiator.start();
                 }
             }
