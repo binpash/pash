@@ -14,10 +14,12 @@ from union_find import *
 # json_filename = "../scripts/json/topn.sh.json"
 # json_filename = "../scripts/json/wc.sh.json"
 # json_filename = "../scripts/json/wf.sh.json"
+# json_filename = "../scripts/json/ngrams.sh.json"
+json_filename = "../scripts/json/diff.sh.json" 
 
 # The following contain And operatos together with pipes and commands
 #
-# json_filename = "../scripts/json/ngrams.sh.json" 
+# json_filename = "../scripts/json/old_ngrams.sh.json" 
 
 
 # The following is interesting, since it contains command substitution
@@ -25,7 +27,7 @@ from union_find import *
 # backticks seem to mean that whatever is in the backticks will
 # execute first, and its output will become a string in place of the
 # backticks
-json_filename = "../scripts/json/page-count.sh.json"
+# json_filename = "../scripts/json/page-count.sh.json"
 
 # Unidentified
 #
@@ -128,6 +130,9 @@ def check_subshell(construct, arguments):
 def check_background(construct, arguments):
     assert(len(arguments) == 3)
 
+def check_defun(construct, arguments):
+    assert(len(arguments) == 3)
+
 def compile_arg_char(arg_char, fileIdGen):
     key, val = get_kv(arg_char)
     if (key == 'C'):
@@ -169,10 +174,13 @@ def compile_node(ast_node, fileIdGen):
     if (construct == 'Pipe'):
         check_pipe(construct, arguments)
 
-        ## TODO: Refactor this into a function of its own
+        ## Note: Background indicates when the pipe should be run in the background.
+        ##
+        ## TODO: Investigate whether we can optimize more by running
+        ##       the background pipes in a distributed fashion.
+        background = arguments[0]
         pipe_items = arguments[1]
 
-        background = arguments[0]
         compiled_pipe_nodes = combine_pipe([compile_node(pipe_item, fileIdGen)
                                             for pipe_item in pipe_items])
 
@@ -306,7 +314,27 @@ def compile_node(ast_node, fileIdGen):
             ## Question: What happens with the stdin, stdout. Should
             ## they be closed?
             compiled_ast = IR([compiled_node])
-            
+
+    elif (construct == 'Defun'):
+        check_defun(construct, arguments)
+        
+        ## It is not clear how we should handle functions.
+        ##
+        ## - Should we transform their body to IR?
+        ## - Should we handle calls to the functions as commands?
+        ##
+        ## It seems that we should do both. But we have to think if
+        ## this introduces any possible problem.
+
+        line_no = arguments[0]
+        name = arguments[1]
+        body = arguments[2]
+
+        ## TODO: Investigate whether it is fine to just compile the
+        ##       body of functions.
+        compiled_body = compile_node(body, fileIdGen)
+        compiled_ast = {construct : [line_no, name, compiled_body]}
+        
     else:
         raise TypeError("Unimplemented construct: {}".format(construct))
 
