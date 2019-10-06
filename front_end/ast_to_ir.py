@@ -1,13 +1,14 @@
 import json
 import re
 from ir import *
+from union_find import *
 
 # The following files just contain POSIX (no process substitution)
 # pipes and commands
 #
 # json_filename = "../scripts/json/compile.sh.json"
 # json_filename = "../scripts/json/grep.sh.json"
-json_filename = "../scripts/json/minimal.sh.json"
+# json_filename = "../scripts/json/minimal.sh.json"
 # json_filename = "../scripts/json/shortest-scripts.sh.json"
 # json_filename = "../scripts/json/spell.sh.json"
 # json_filename = "../scripts/json/topn.sh.json"
@@ -27,7 +28,7 @@ json_filename = "../scripts/json/minimal.sh.json"
 #
 # TODO: Handle appropriately
 #
-# json_filename = "../scripts/json/page-count.sh.json"
+json_filename = "../scripts/json/page-count.sh.json"
 
 # Unidentified
 #
@@ -86,14 +87,14 @@ def check_if_asts_supported(ast_objects):
 ## being concurrent by nature.
 def conservative_combine_pipe(ast_nodes):
     combined_nodes = []
-    curr = IR()
+    curr = IR([])
     for ast_node in ast_nodes:
         if (isinstance(ast_node, IR)):
             curr.append(ast_node)
         else:
             if (not curr.empty()):
                 combined_nodes.append(curr)
-                curr = IR()
+                curr = IR([])
             
             combined_nodes.append(ast_node)
 
@@ -107,7 +108,7 @@ def conservative_combine_pipe(ast_nodes):
 ## might contain mixed commands and ASTs. The ASTs can be
 ## (conservatively) considered as stateful commands by default).
 def combine_pipe(ast_nodes):
-    combined_nodes = IR()
+    combined_nodes = IR([])
     for ast_node in ast_nodes:
         if (isinstance(ast_node, IR)):
             ## TODO: Change this to a pipe_append that also redirects
@@ -115,7 +116,8 @@ def combine_pipe(ast_nodes):
             combined_nodes.append(ast_node)
         else:
             ## TODO: Similarly to the background node below. What should the stdin and stdout be here?
-            combined_nodes.append(IR(nodes = [ast_nodes]))
+            combined_nodes.append(IR([ast_node]))
+
     return [combined_nodes]
 
 
@@ -228,10 +230,10 @@ def compile_node(ast_node, fileIdGen):
         ## Question: Should we return the command in an IR if one of
         ## its arguments is a command substitution? Meaning that we
         ## will have to wait for its command to execute first?
-        compiled_ast = IR(nodes = [Command(command_name,
-                                           stdin = stdin_fid,
-                                           stdout = stdout_fid,
-                                           options=options)],
+        compiled_ast = IR([Command(command_name,
+                                   stdin = stdin_fid,
+                                   stdout = stdout_fid,
+                                   options=options)],
                           stdin = stdin_fid,
                           stdout = stdout_fid)
 
@@ -309,18 +311,21 @@ def compile_node(ast_node, fileIdGen):
         ## TODO: I should use the redir list to redirect the files of
         ##       the IR accordingly
         if (isinstance(compiled_node, IR)):
+            ## TODO: Redirect the stdout, stdin accordingly
             compiled_ast = compiled_node
         else:
             ## Note: It seems that background nodes can be added in
             ##       the distributed graph similarly to the children
             ##       of pipelines.
             ##
-            ## TODO: What should the stdin and stdout be here?
-            compiled_ast = IR(nodes = [compiled_node])
+            ## Question: What happens with the stdin, stdout. Should
+            ## they be closed?
+            compiled_ast = IR([compiled_node])
             
     else:
         raise TypeError("Unimplemented construct: {}".format(construct))
-    
+
+    # print("Compiled node: {}".format(compiled_ast))
     return compiled_ast
 
 ## Compiles a given AST to an intermediate representation tree, which
@@ -350,5 +355,3 @@ for i, ast_object in enumerate(ast_objects):
     compiled_ast = compile_ast(ast_object, fileIdGen)
     print("Compiled AST:")
     print(compiled_ast)
-    
-print("FileIdGen next: {}".format(fileIdGen.next_file_id()))

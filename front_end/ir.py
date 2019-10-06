@@ -1,3 +1,4 @@
+import copy
 
 ### Utils
 
@@ -45,6 +46,9 @@ class FileIdGen:
         return fileId
     
 ## Question: Is this information adequate?
+##
+## Note: It seems that the command needs separate information for
+##       stdin, stdout (together with the IR())
 class Command:
     def __init__(self, command, stdin=None, stdout=None, options=None):
         self.command = Arg(command)
@@ -69,7 +73,7 @@ class Arg:
 ## descriptors of the IR, and in general any other local information
 ## that might be relevant.
 class IR:
-    def __init__(self, nodes = [], stdin = None, stdout = None):
+    def __init__(self, nodes, stdin = None, stdout = None):
         self.nodes = nodes
         self.stdin = stdin
         self.stdout = stdout
@@ -81,7 +85,6 @@ class IR:
     ## TODO: There have to be more complex methods to combine two IRs
     def append(self, other):
         self.nodes += other.nodes
-        return self
 
     def empty(self):
         return (len(self.nodes) == 0)
