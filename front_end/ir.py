@@ -27,6 +27,23 @@ def format_arg_char(arg_char):
         ## TODO: Make this correct
         return key
 
+class FileId:
+    def __init__(self, ident):
+        self.ident = ident
+
+    def __repr__(self):
+        output = "#file{}".format(self.ident)
+        return output
+    
+class FileIdGen:
+    def __init__(self):
+        self.next = 0
+
+    def next_file_id(self):
+        fileId = FileId(self.next)
+        self.next += 1
+        return fileId
+    
 ## Question: Is this information adequate?
 class Command:
     def __init__(self, command, stdin=None, stdout=None, options=None):
@@ -48,14 +65,17 @@ class Arg:
         chars = [format_arg_char(arg_char) for arg_char in self.arg_char_list]
         return "".join(chars)
 
-## Note: This might need more information to simplify the
-## implementation (like the IRs stdin, stdout)
+## Note: This might need more information. E.g. all the file
+## descriptors of the IR, and in general any other local information
+## that might be relevant.
 class IR:
-    def __init__(self, nodes = []):
+    def __init__(self, nodes = [], stdin = None, stdout = None):
         self.nodes = nodes
+        self.stdin = stdin
+        self.stdout = stdout
 
     def __repr__(self):
-        output = "(| IR: {} |)".format(self.nodes)
+        output = "(|-{} IR: {} {}-|)".format(self.stdin, self.nodes, self.stdout)
         return output
 
     ## TODO: There have to be more complex methods to combine two IRs
