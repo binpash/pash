@@ -7,7 +7,7 @@ from ir import *
 #
 # json_filename = "../scripts/json/compile.sh.json"
 # json_filename = "../scripts/json/grep.sh.json"
-# json_filename = "../scripts/json/minimal.sh.json"
+json_filename = "../scripts/json/minimal.sh.json"
 # json_filename = "../scripts/json/shortest-scripts.sh.json"
 # json_filename = "../scripts/json/spell.sh.json"
 # json_filename = "../scripts/json/topn.sh.json"
@@ -27,11 +27,11 @@ from ir import *
 #
 # TODO: Handle appropriately
 #
-json_filename = "../scripts/json/page-count.sh.json"
+# json_filename = "../scripts/json/page-count.sh.json"
 
 # Unidentified
 #
-json_filename = "../scripts/json/maximal.sh.json"
+# json_filename = "../scripts/json/maximal.sh.json"
 
 
 ## The json dumper in ocaml seems to print <, >, and parentheses
@@ -110,8 +110,11 @@ def combine_pipe(ast_nodes):
     combined_nodes = IR()
     for ast_node in ast_nodes:
         if (isinstance(ast_node, IR)):
+            ## TODO: Change this to a pipe_append that also redirects
+            ##       stdin to stdout
             combined_nodes.append(ast_node)
         else:
+            ## TODO: Similarly to the background node below. What should the stdin and stdout be here?
             combined_nodes.append(IR(nodes = [ast_nodes]))
     return [combined_nodes]
 
@@ -143,29 +146,29 @@ def check_subshell(construct, arguments):
 def check_background(construct, arguments):
     assert(len(arguments) == 3)
 
-def compile_arg_char(arg_char):
+def compile_arg_char(arg_char, fileIdGen):
     key, val = get_kv(arg_char)
     if (key == 'C'):
         return arg_char
     elif (key == 'B'):
-        compiled_node = compile_node(val)
+        compiled_node = compile_node(val, fileIdGen)
         return {key : compiled_node}
     elif (key == 'Q'):
-        compiled_val = compile_command_argument(val)
+        compiled_val = compile_command_argument(val, fileIdGen)
         return {key : compiled_val}
     else:
         ## TODO: Complete this
         return arg_char
     
-def compile_command_argument(argument):
-    compiled_argument = [compile_arg_char(char) for char in argument]
+def compile_command_argument(argument, fileIdGen):
+    compiled_argument = [compile_arg_char(char, fileIdGen) for char in argument]
     return compiled_argument
     
-def compile_command_arguments(arguments):
-    compiled_arguments = [compile_command_argument(arg) for arg in arguments]
+def compile_command_arguments(arguments, fileIdGen):
+    compiled_arguments = [compile_command_argument(arg, fileIdGen) for arg in arguments]
     return compiled_arguments
     
-def compile_node(ast_node):
+def compile_node(ast_node, fileIdGen):
     # print("Compiling node: {}".format(ast_node))
 
     construct, arguments = get_kv(ast_node)
@@ -183,7 +186,7 @@ def compile_node(ast_node):
         pipe_items = arguments[1]
 
         background = arguments[0]
-        compiled_pipe_nodes = combine_pipe([compile_node(pipe_item)
+        compiled_pipe_nodes = combine_pipe([compile_node(pipe_item, fileIdGen)
                                             for pipe_item in pipe_items])
 
         ## Question: The first argument of the Pipe is whether it is
@@ -218,33 +221,43 @@ def compile_node(ast_node):
             options = []
         else:
             command_name = arguments[2][0]
-            options = compile_command_arguments(arguments[2][1:])
+            options = compile_command_arguments(arguments[2][1:], fileIdGen)
 
+        stdin_fid = fileIdGen.next_file_id()
+        stdout_fid = fileIdGen.next_file_id()
         ## Question: Should we return the command in an IR if one of
         ## its arguments is a command substitution? Meaning that we
         ## will have to wait for its command to execute first?
-        compiled_ast = IR(nodes = [Command(command_name, options=options)])
+        compiled_ast = IR(nodes = [Command(command_name,
+                                           stdin = stdin_fid,
+                                           stdout = stdout_fid,
+                                           options=options)],
+                          stdin = stdin_fid,
+                          stdout = stdout_fid)
 
     elif (construct == 'And'):
         check_and(construct, arguments)
         
         left_node = arguments[0]
         right_node = arguments[1]
-        compiled_ast = {construct : [compile_node(left_node), compile_node(right_node)]}
+        compiled_ast = {construct : [compile_node(left_node, fileIdGen),
+                                     compile_node(right_node, fileIdGen)]}
 
     elif (construct == 'Or'):
         check_or(construct, arguments)
         
         left_node = arguments[0]
         right_node = arguments[1]
-        compiled_ast = {construct : [compile_node(left_node), compile_node(right_node)]}
+        compiled_ast = {construct : [compile_node(left_node, fileIdGen),
+                                     compile_node(right_node, fileIdGen)]}
         
     elif (construct == 'Semi'):
         check_semi(construct, arguments)
         
         left_node = arguments[0]
         right_node = arguments[1]
-        compiled_ast = {construct : [compile_node(left_node), compile_node(right_node)]}
+        compiled_ast = {construct : [compile_node(left_node, fileIdGen),
+                                     compile_node(right_node, fileIdGen)]}
 
     elif (construct == 'Redir'):
         check_redir(construct, arguments)
@@ -253,7 +266,7 @@ def compile_node(ast_node):
         node = arguments[1]
         redir_list = arguments[2]
 
-        compiled_node = compile_node(node)
+        compiled_node = compile_node(node, fileIdGen)
 
         if (isinstance(compiled_node, IR)):
             ## TODO: I should use the redir list to redirect the files of
@@ -269,7 +282,7 @@ def compile_node(ast_node):
         node = arguments[1]
         redir_list = arguments[2]
 
-        compiled_node = compile_node(node)
+        compiled_node = compile_node(node, fileIdGen)
 
         ## Question: It seems that subshell can be handled exactly
         ##           like a redir. Is that true?
@@ -291,7 +304,7 @@ def compile_node(ast_node):
         node = arguments[1]
         redir_list = arguments[2]
 
-        compiled_node = compile_node(node)
+        compiled_node = compile_node(node, fileIdGen)
         
         ## TODO: I should use the redir list to redirect the files of
         ##       the IR accordingly
@@ -301,6 +314,8 @@ def compile_node(ast_node):
             ## Note: It seems that background nodes can be added in
             ##       the distributed graph similarly to the children
             ##       of pipelines.
+            ##
+            ## TODO: What should the stdin and stdout be here?
             compiled_ast = IR(nodes = [compiled_node])
             
     else:
@@ -316,8 +331,8 @@ def compile_node(ast_node):
 ## computations that can be distributed separately (locally/modularly)
 ## without knowing about previous or later subtrees that can be
 ## distributed. Is that reasonable?
-def compile_ast(ast_object):
-    compiled_ast = compile_node(ast_object)
+def compile_ast(ast_object, fileIdGen):
+    compiled_ast = compile_node(ast_object, fileIdGen)
     return compiled_ast
 
 ## Translation process:
@@ -327,10 +342,13 @@ def compile_ast(ast_object):
 
 ast_objects = parse_json_ast(json_filename)
 check_if_asts_supported(ast_objects)
+fileIdGen = FileIdGen()
 
 for i, ast_object in enumerate(ast_objects):
     print("Compiling AST {}".format(i))
     print(ast_object)
-    compiled_ast = compile_ast(ast_object)
+    compiled_ast = compile_ast(ast_object, fileIdGen)
     print("Compiled AST:")
     print(compiled_ast)
+    
+print("FileIdGen next: {}".format(fileIdGen.next_file_id()))
