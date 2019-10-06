@@ -25,9 +25,6 @@ from union_find import *
 # backticks seem to mean that whatever is in the backticks will
 # execute first, and its output will become a string in place of the
 # backticks
-#
-# TODO: Handle appropriately
-#
 json_filename = "../scripts/json/page-count.sh.json"
 
 # Unidentified
@@ -84,22 +81,21 @@ def check_if_asts_supported(ast_objects):
 ## might contain mixed commands and ASTs. The ASTs can be
 ## (conservatively) considered as stateful commands by default).
 def combine_pipe(ast_nodes):
-    combined_nodes = IR([])
-    for ast_node in ast_nodes:
-        if (isinstance(ast_node, IR)):
-            ## TODO: Change this to a pipe_append that also redirects
-            ##       stdin to stdout
-            combined_nodes.append(ast_node)
-        else:
-            ## TODO: Similarly to the background node below. What should the stdin and stdout be here?
-            combined_nodes.append(IR([ast_node]))
-
-    ## If the first and last ast_node is an IR, use their stdin and
-    ## stdout to set the stdin and stdout of the returned combined IR
+    ## Initialize the IR with the first node in the Pipe
     if (isinstance(ast_nodes[0], IR)):
-        combined_nodes.stdin = ast_nodes[0].stdin
-    if (isinstance(ast_nodes[-1], IR)):
-        combined_nodes.stdout = ast_nodes[0].stdout
+        combined_nodes = ast_nodes[0]
+    else:
+        combined_nodes = IR([ast_nodes[0]])
+
+    ## Combine the rest of the nodes
+    for ast_node in ast_nodes[1:]:
+        if (isinstance(ast_node, IR)):
+            combined_nodes.pipe_append(ast_node)
+        else:
+            ## FIXME: This one will not work. The IR of an AST node
+            ##        doesn't have any stdin or stdout.
+            combined_nodes.pipe_append(IR([ast_node]))
+            
     return [combined_nodes]
 
 
@@ -137,6 +133,11 @@ def compile_arg_char(arg_char, fileIdGen):
     if (key == 'C'):
         return arg_char
     elif (key == 'B'):
+        ## TODO: I probably have to redirect the input of the compiled
+        ##       node (IR) to be closed, and the output to be
+        ##       redirected to some file that we will use to write to
+        ##       the command argument to complete the command
+        ##       substitution.
         compiled_node = compile_node(val, fileIdGen)
         return {key : compiled_node}
     elif (key == 'Q'):
