@@ -79,30 +79,6 @@ def check_if_asts_supported(ast_objects):
     return
 
 
-## This checks all ast children nodes of a pipe, and merges the
-## consecutive ones to larger IRs.
-##
-## Note: I believe that this is very conservative, since pipelines
-## should spawn a different subshell for each of their parts. Thus
-## being concurrent by nature.
-def conservative_combine_pipe(ast_nodes):
-    combined_nodes = []
-    curr = IR([])
-    for ast_node in ast_nodes:
-        if (isinstance(ast_node, IR)):
-            curr.append(ast_node)
-        else:
-            if (not curr.empty()):
-                combined_nodes.append(curr)
-                curr = IR([])
-            
-            combined_nodes.append(ast_node)
-
-    if (not curr.empty()):
-        combined_nodes.append(curr)
-    
-    return combined_nodes
-
 ## This combines all the children of the Pipeline to an IR, even
 ## though they might not be IRs themselves. This means that an IR
 ## might contain mixed commands and ASTs. The ASTs can be
@@ -118,6 +94,12 @@ def combine_pipe(ast_nodes):
             ## TODO: Similarly to the background node below. What should the stdin and stdout be here?
             combined_nodes.append(IR([ast_node]))
 
+    ## If the first and last ast_node is an IR, use their stdin and
+    ## stdout to set the stdin and stdout of the returned combined IR
+    if (isinstance(ast_nodes[0], IR)):
+        combined_nodes.stdin = ast_nodes[0].stdin
+    if (isinstance(ast_nodes[-1], IR)):
+        combined_nodes.stdout = ast_nodes[0].stdout
     return [combined_nodes]
 
 
@@ -126,6 +108,8 @@ def combine_pipe(ast_nodes):
 ## Maybe we can move them to the check_if_ast_is_supported?
 def check_pipe(construct, arguments):
     assert(len(arguments) == 2)
+    ## The pipe should have at least 2 children
+    assert(len(arguments[1]) >= 2)
 
 def check_command(construct, arguments):
     assert(len(arguments) == 4)
