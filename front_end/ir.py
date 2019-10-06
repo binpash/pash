@@ -1,5 +1,5 @@
 import copy
-
+from union_find import *
 ### Utils
 
 ## TODO: Move to another file
@@ -28,13 +28,22 @@ def format_arg_char(arg_char):
         ## TODO: Make this correct
         return key
 
+## Note: The NULL ident is considered to be the default unknown file id
 class FileId:
     def __init__(self, ident):
         self.ident = ident
+        ## Initialize the parent
+        MakeSet(self)
 
     def __repr__(self):
-        output = "#file{}".format(self.ident)
+        ## Note: Outputs the parent of the union and not the file id
+        ##       itself.
+        output = "#file{}".format(Find(self).ident)
+        # output = "#file{}".format(self.ident)
         return output
+
+    def isNull(self):
+        return self.ident == "NULL"
     
 class FileIdGen:
     def __init__(self):
@@ -69,22 +78,52 @@ class Arg:
         chars = [format_arg_char(arg_char) for arg_char in self.arg_char_list]
         return "".join(chars)
 
+    
 ## Note: This might need more information. E.g. all the file
 ## descriptors of the IR, and in general any other local information
 ## that might be relevant.
 class IR:
     def __init__(self, nodes, stdin = None, stdout = None):
         self.nodes = nodes
-        self.stdin = stdin
-        self.stdout = stdout
+        if(stdin is None):
+            self.stdin = FileId("NULL")
+        else:
+            self.stdin = stdin
+        if(stdout is None):
+            self.stdout = FileId("NULL")
+        else:
+            self.stdout = stdout
 
     def __repr__(self):
         output = "(|-{} IR: {} {}-|)".format(self.stdin, self.nodes, self.stdout)
         return output
 
-    ## TODO: There have to be more complex methods to combine two IRs
-    def append(self, other):
+    def pipe_append(self, other):
+        assert(self.valid())
+        assert(other.valid())
         self.nodes += other.nodes
-
+        
+        ## This combines the two IRs by adding all of the nodes
+        ## together, and by union-ing the stdout of the first with the
+        ## stdout of the second.
+        ##
+        ## Question: What happens if one of them is NULL. This
+        ##           shouldn't be the case after we check that
+        ##           both self and other are not empty.
+        assert(not self.stdout.isNull())
+        assert(not other.stdin.isNull())
+        Union(self.stdout, other.stdin)
+        self.stdout = other.stdout
+            
+    ## Note: We assume that no nodes is an adequate condition to check
+    ##       emptiness.
     def empty(self):
         return (len(self.nodes) == 0)
+
+    ## This function checks whether an IR is valid -- that is, if it
+    ## has at least one node, and stdin, stdout set to some non-null
+    ## file identifiers.
+    def valid(self):
+        return (len(self.nodes) > 0 and
+                not self.stdin.isNull() and
+                not self.stdin.isNull())
