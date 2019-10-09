@@ -1,7 +1,7 @@
 package dshell.test;
 
-import dshell.core.misc.ReaderWriter;
 import dshell.core.misc.Utilities;
+import dshell.core.worker.InternalBuffer;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -84,18 +84,13 @@ public class UtilsTest {
 
     @Test
     public void readerWriterTest() throws Exception {
-        // TODO: make reader-writer test
-        //throw new RuntimeException("Not implemented yet");
-
-        ReaderWriter rw = new ReaderWriter();
+        InternalBuffer rw = new InternalBuffer();
 
         Thread reader = new Thread(new Runnable() {
             @Override
             public void run() {
                 for (int i = 0; i < 1000; i++) {
-                    rw.startRead();
-                    System.out.println(i + " READER");
-                    rw.endRead();
+                    System.out.println(rw.read());
                 }
             }
         });
@@ -103,9 +98,7 @@ public class UtilsTest {
             @Override
             public void run() {
                 for (int i = 0; i < 1000; i++) {
-                    rw.startWrite();
-                    System.out.println(i + " WRITER");
-                    rw.endWrite();
+                    rw.write(i + " WRITER");
                 }
             }
         });
