@@ -1,21 +1,12 @@
 package dshell.core.worker;
 
 import dshell.core.misc.SystemMessage;
-import dshell.core.nodes.StatelessOperator;
-import org.apache.hadoop.hdfs.security.token.delegation.DelegationTokenSecretManager;
-import org.jboss.netty.channel.socket.Worker;
 
-import java.io.InputStream;
-import java.io.ObjectInput;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.rmi.Remote;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 public class DistributedTask {
     private static String JAVA_PATH; //= "/usr/lib/jvm/java-11-openjdk-amd64/bin/java";
@@ -30,10 +21,17 @@ public class DistributedTask {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length < 1)
+        if (args.length < 2)
             throw new RuntimeException("Invalid program call arguments.");
 
         int managerPort = Integer.parseInt(args[0]);
+        boolean threadedMode;
+        if (args[1].equals("-t"))
+            threadedMode = true;
+        else if (args[1].equals("-p"))
+            threadedMode = false;
+        else
+            throw new RuntimeException("Unsupported running method specified.");
 
         try (ServerSocket serverSocket = new ServerSocket(managerPort)) {
             System.out.println("Running distributed task executor on port " + managerPort);
@@ -52,10 +50,13 @@ public class DistributedTask {
 
                         if (received instanceof RemoteExecutionData) {
                             RemoteExecutionData red = (RemoteExecutionData) received;
-                            /*if (!red.isInitialOperator())
-                                new Thread(new WorkerProcess(red)).start();
-                            else
-                                initial = red;*/
+
+                            if (threadedMode) {
+                                if (!red.isInitialOperator())
+                                    new Thread(new WorkerProcess(red)).start();
+                                else
+                                    initial = red;
+                            }
 
                             List<String> argsToSend = new ArrayList<>();
 
@@ -92,13 +93,15 @@ public class DistributedTask {
                             argsToSend.add(red.getCallbackHost());
                             argsToSend.add(Integer.toString(red.getCallBackPort()));
 
-                            ProcessBuilder builder = new ProcessBuilder(argsToSend.toArray(new String[0]));
-                            builder.redirectError(ProcessBuilder.Redirect.INHERIT);
-                            builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-                            if (!red.isInitialOperator())
-                                builder.start();
-                            else
-                                pipelineInitiator = builder;
+                            if (!threadedMode) {
+                                ProcessBuilder builder = new ProcessBuilder(argsToSend.toArray(new String[0]));
+                                builder.redirectError(ProcessBuilder.Redirect.INHERIT);
+                                builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+                                if (!red.isInitialOperator())
+                                    builder.start();
+                                else
+                                    pipelineInitiator = builder;
+                            }
 
                             // NOTE: process will terminate itself upon completion of main method
                         } else if (received instanceof SystemMessage.EndOfREM)
@@ -107,8 +110,10 @@ public class DistributedTask {
                             throw new RuntimeException("Not supported type of input data received by worker coordinator.");
                     }
 
-                    //new Thread(new WorkerProcess(initial)).start();
-                    pipelineInitiator.start();
+                    if (threadedMode)
+                        new Thread(new WorkerProcess(initial)).start();
+                    else
+                        pipelineInitiator.start();
                 }
             }
         } catch (Exception e) {
