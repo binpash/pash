@@ -3,6 +3,7 @@ package dshell.core.worker;
 import dshell.core.Operator;
 import dshell.core.OperatorFactory;
 import dshell.core.OperatorType;
+import dshell.core.misc.ReaderWriter;
 import dshell.core.misc.SystemMessage;
 import dshell.core.nodes.StatelessOperator;
 
@@ -11,11 +12,12 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class WorkerProcess implements Runnable {
     // if this is changed to threaded implementation remove keyword 'static'
@@ -39,6 +41,9 @@ public class WorkerProcess implements Runnable {
     public void run() {
         try {
             Operator operator = red.getOperator();
+            ReaderWriter[] internalBuffers = new ReaderWriter[operator.getOutputArity()];
+            Thread[] internalThreads = new Thread[operator.getOutputArity()];
+            Queue<Object>[] internalQueue = new Queue[operator.getOutputArity()];
 
             if (operator.getOperatorType() != OperatorType.HDFS_OUTPUT &&
                     operator.getOperatorType() != OperatorType.SOCKETED_OUTPUT) {
@@ -60,6 +65,15 @@ public class WorkerProcess implements Runnable {
 
                     for (int i = 0; i < operator.getInputArity(); i++) {
                         final int inputChannelParameter = i;
+
+                        internalBuffers[i] = new ReaderWriter();
+                        internalQueue[i] = new LinkedList<>();
+                        internalThreads[i] = new Thread(new SocketToProcessThread(internalBuffers[i],
+                                inputChannelParameter,
+                                operator.getConsumers()[i],
+                                internalQueue[i]));
+                        internalThreads[i].start();
+
                         inputGateThreads.add(Executors.callable(() -> {// connect by socket with all of them
                             try (Socket inputDataSocket = inputDataServerSocket.accept();
                                  ObjectInputStream ois = new ObjectInputStream(inputDataSocket.getInputStream())) {
@@ -73,10 +87,9 @@ public class WorkerProcess implements Runnable {
                                     } else {
                                         data = (byte[]) received;
 
-                                        // invoking the operator's computation; after the computation, the data is sent via socket to next node
-                                        // if this is split operator the data splitting will be done inside an operator and the data will be
-                                        // outputted to the sockets that were created few lines before this
-                                        operator.next(inputChannelParameter, data);
+                                        internalBuffers[inputChannelParameter].startWrite();
+                                        internalQueue[inputChannelParameter].add(data);
+                                        internalBuffers[inputChannelParameter].endWrite();
                                     }
                                 }
                             } catch (Exception ex) {

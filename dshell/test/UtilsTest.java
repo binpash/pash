@@ -1,5 +1,6 @@
 package dshell.test;
 
+import dshell.core.misc.ReaderWriter;
 import dshell.core.misc.Utilities;
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,8 +33,6 @@ public class UtilsTest {
         Assert.assertTrue(s2[1][0] == 0x02);
         Assert.assertTrue(s2[1][1] == 0x03);
         Assert.assertTrue(s2[2][0] == 0x04);
-
-
 
 
         byte[] twoPartsA = {0x00, 0x01, 0x02, 0x03, 0x04};
@@ -81,5 +80,40 @@ public class UtilsTest {
         Assert.assertTrue(merger[2] == 0x02);
         Assert.assertTrue(merger[3] == 0x03);
         Assert.assertTrue(merger[4] == 0x04);
+    }
+
+    @Test
+    public void readerWriterTest() throws Exception {
+        // TODO: make reader-writer test
+        //throw new RuntimeException("Not implemented yet");
+
+        ReaderWriter rw = new ReaderWriter();
+
+        Thread reader = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < 1000; i++) {
+                    rw.startRead();
+                    System.out.println(i + " READER");
+                    rw.endRead();
+                }
+            }
+        });
+        Thread writer = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < 1000; i++) {
+                    rw.startWrite();
+                    System.out.println(i + " WRITER");
+                    rw.endWrite();
+                }
+            }
+        });
+
+        reader.start();
+        writer.start();
+
+        reader.join();
+        writer.join();
     }
 }

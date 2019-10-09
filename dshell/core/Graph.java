@@ -83,6 +83,7 @@ public abstract class Graph {
                     previous = replicas;
                 } else if (current.getParallelizationHint() > 1 && next.getParallelizationHint() > 1 && current.getParallelizationHint() != next.getParallelizationHint()) {
                     // TODO: solve this by adding merger and the splitter between 'current' and 'next'
+                    // maybe another way (??? SEMANTICS ???) would be to link everything with everything
                     // -------------------------------------------
                     throw new RuntimeException("Could not resolve this type of graph.");
                 } else if (current.getParallelizationHint() > 1 && next.getParallelizationHint() == 1) {
