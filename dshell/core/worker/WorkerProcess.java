@@ -3,7 +3,6 @@ package dshell.core.worker;
 import dshell.core.Operator;
 import dshell.core.OperatorFactory;
 import dshell.core.OperatorType;
-import dshell.core.misc.ReaderWriter;
 import dshell.core.misc.SystemMessage;
 import dshell.core.nodes.StatelessOperator;
 
@@ -41,9 +40,9 @@ public class WorkerProcess implements Runnable {
     public void run() {
         try {
             Operator operator = red.getOperator();
-            ReaderWriter[] internalBuffers = new ReaderWriter[operator.getOutputArity()];
-            Thread[] internalThreads = new Thread[operator.getOutputArity()];
-            Queue<Object>[] internalQueue = new Queue[operator.getOutputArity()];
+
+            InternalBuffer[] internalBuffers = new InternalBuffer[operator.getInputArity()];
+            Thread[] internalThreads = new Thread[operator.getInputArity()];
 
             if (operator.getOperatorType() != OperatorType.HDFS_OUTPUT &&
                     operator.getOperatorType() != OperatorType.SOCKETED_OUTPUT) {
@@ -66,12 +65,10 @@ public class WorkerProcess implements Runnable {
                     for (int i = 0; i < operator.getInputArity(); i++) {
                         final int inputChannelParameter = i;
 
-                        internalBuffers[i] = new ReaderWriter();
-                        internalQueue[i] = new LinkedList<>();
+                        internalBuffers[i] = new InternalBuffer();
                         internalThreads[i] = new Thread(new SocketToProcessThread(internalBuffers[i],
                                 inputChannelParameter,
-                                operator.getConsumers()[i],
-                                internalQueue[i]));
+                                operator));
                         internalThreads[i].start();
 
                         inputGateThreads.add(Executors.callable(() -> {// connect by socket with all of them
@@ -86,10 +83,7 @@ public class WorkerProcess implements Runnable {
                                         break;
                                     } else {
                                         data = (byte[]) received;
-
-                                        internalBuffers[inputChannelParameter].startWrite();
-                                        internalQueue[inputChannelParameter].add(data);
-                                        internalBuffers[inputChannelParameter].endWrite();
+                                        internalBuffers[inputChannelParameter].write(data);
                                     }
                                 }
                             } catch (Exception ex) {

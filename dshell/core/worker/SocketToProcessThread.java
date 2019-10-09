@@ -1,33 +1,29 @@
 package dshell.core.worker;
 
 import dshell.core.interfaces.Consumer;
-import dshell.core.misc.ReaderWriter;
 import dshell.core.misc.SystemMessage;
 
 import java.util.Queue;
 
 public class SocketToProcessThread implements Runnable {
-    private ReaderWriter readerWriter;
+    private InternalBuffer internalBuffer;
     private int inputChannel;
     private Consumer nextOperator;
-    private Queue<Object> commonQueue;
 
-    public SocketToProcessThread(ReaderWriter readerWriter, int inputChannel, Consumer nextOperator, Queue<Object> commonQueue) {
-        this.readerWriter = readerWriter;
+    public SocketToProcessThread(InternalBuffer internalBuffer, int inputChannel, Consumer nextOperator) {
+        this.internalBuffer = internalBuffer;
         this.inputChannel = inputChannel;
         this.nextOperator = nextOperator;
-        this.commonQueue = commonQueue;
     }
 
     @Override
     public void run() {
         Object data;
-        boolean endNotReceived = false;
+        boolean endNotReceived = true;
 
         while (endNotReceived) {
-            readerWriter.startRead();
-            data = commonQueue.poll();
-            readerWriter.endRead();
+            // NOTE: internalBuffer.read() is a blocking method
+            data = internalBuffer.read();
 
             if (data instanceof SystemMessage.EndOfData) {
                 endNotReceived = false;
