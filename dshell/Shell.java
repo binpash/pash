@@ -69,6 +69,8 @@ public class Shell {
         for (int i = 0; i < numberOfMeasurement; i++) {
             Graph graph = createGraph(bashCommand, writeToFile);
 
+            // NOTE: the time measurement here includes both the preparation and the execution time
+            // TODO: split topology preparation time from the distributed topology executionn time
             long begin = System.currentTimeMillis();
             graph.executeRemote(clientPort);
             long end = System.currentTimeMillis();
