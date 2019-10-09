@@ -17,16 +17,26 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class WorkerProcess {
+public class WorkerProcess implements Runnable {
     // if this is changed to threaded implementation remove keyword 'static'
-    private static RemoteExecutionData red;
+    private RemoteExecutionData red;
 
-    /*public WorkerProcess(RemoteExecutionData red) {
+    public WorkerProcess(RemoteExecutionData red) {
         this.red = red;
-    }*/
+    }
 
+    // This method will only be called in process mode
     public static void main(String[] args) {
-        red = deserializeArgs(args);
+        RemoteExecutionData rem = deserializeArgs(args);
+        WorkerProcess workerProcess = new WorkerProcess(rem);
+
+        // Will not be executed as a thread
+        workerProcess.run();
+    }
+
+    // This method is used both for the execution in threaded and in process mode
+    @Override
+    public void run() {
         try {
             Operator operator = red.getOperator();
 
