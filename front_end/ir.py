@@ -98,6 +98,9 @@ class IR:
         output = "(|-{} IR: {} {}-|)".format(self.stdin, self.nodes, self.stdout)
         return output
 
+    def set_ast(self, ast):
+        self.ast = ast
+    
     def pipe_append(self, other):
         assert(self.valid())
         assert(other.valid())
@@ -114,6 +117,10 @@ class IR:
         assert(not other.stdin.isNull())
         Union(self.stdout, other.stdin)
         self.stdout = other.stdout
+
+        ## Note: The ast is not extensible, and thus should be
+        ## invalidated if an operation happens on the IR
+        self.ast = None
             
     ## Note: We assume that no nodes is an adequate condition to check
     ##       emptiness.

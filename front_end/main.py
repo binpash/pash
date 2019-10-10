@@ -1,6 +1,7 @@
 from ast_to_ir import *
 from distr_plan import *
 from ir import *
+from json_ast import *
 
 # The following files just contain POSIX (no process substitution)
 # pipes and commands
@@ -49,7 +50,32 @@ for i, ast_object in enumerate(ast_objects):
     compiled_ast = compile_ast(ast_object, fileIdGen)
     print("Compiled AST:")
     print(compiled_ast)
-    
+
+
+
+##
+## BIG TODO:
+##
+## Complete an end-to-end prototype for the system
+##
+## 1. Krataw to json tou paliou object se ena field tou IR
+##
+## 2. Ftiaxnw mia sunarthsh return_IR, gia kathe shmeio sto compile pou epistrefei IR
+##
+## 3. Ekei anti na epistrefw to IR, grafw mia serialize kai mia
+##    deserialize gia to IR kai to apothikeuw se ena arxeio
+##
+## 4. Sth thesi tou epistrefw ena python3 kai to onoma tou arxeiou distr_planner.py
+##
+## 5. Ftiaxnw ena trivial distrib planner pou apla trexei thn entolh
+##    pou exei se shell (Shmeiwnw oti kanonika ekei tha kalousame to
+##    implementation tou Lazar)
+##
+## 6. Kanw extend to ast_to_ir wste na kalei to ocaml serialize gia na
+##    xanagrafei shell apo to kainourgio AST
+##
+## 7. sto telos olwn autwn, prepei na uparxei ena arxeio me to neo
+##    script. To trexw.
 
 ## Note: It seems that in order for distribution and planning to
 ## happen correctly, the planner has to be invoked as late as possible
@@ -82,3 +108,11 @@ for i, ast_object in enumerate(ast_objects):
 ## - Extend the main.py to rewrite the AST in json, and call the
 ##   libdash pretty printer, to actually produce a new shell
 ##   script. Then, run this script.
+
+## Discuss:
+##
+## 1. Annotation language (regexps)
+##
+## 2. Talk about distribution planning
+##
+## 3. Talk about semantics and possible proofs
