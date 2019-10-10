@@ -52,6 +52,9 @@ for i, ast_object in enumerate(ast_objects):
     print(compiled_ast)
 
 
+## TODO: Change that with compiled_asts
+save_asts_json(ast_objects, json_filename + ".ir")
+    
 
 ##
 ## BIG TODO:

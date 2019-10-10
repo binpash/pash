@@ -29,39 +29,6 @@ def combine_pipe(ast_nodes):
             
     return [combined_nodes]
 
-
-## For now these checks are too simple. 
-##
-## Maybe we can move them to the check_if_ast_is_supported?
-def check_pipe(construct, arguments):
-    assert(len(arguments) == 2)
-    ## The pipe should have at least 2 children
-    assert(len(arguments[1]) >= 2)
-
-def check_command(construct, arguments):
-    assert(len(arguments) == 4)
-
-def check_and(construct, arguments):
-    assert(len(arguments) == 2)
-
-def check_or(construct, arguments):
-    assert(len(arguments) == 2)
-
-def check_semi(construct, arguments):
-    assert(len(arguments) == 2)
-
-def check_redir(construct, arguments):
-    assert(len(arguments) == 3)
-
-def check_subshell(construct, arguments):
-    assert(len(arguments) == 3)
-
-def check_background(construct, arguments):
-    assert(len(arguments) == 3)
-
-def check_defun(construct, arguments):
-    assert(len(arguments) == 3)
-
 def compile_arg_char(arg_char, fileIdGen):
     key, val = get_kv(arg_char)
     if (key == 'C'):
@@ -280,6 +247,46 @@ def replace_irs(ast):
     return
 
 
+
+
+
+
+##
+## Pattern matching for the AST
+##
+
+
+## For now these checks are too simple. 
+##
+## Maybe we can move them to the check_if_ast_is_supported?
+def check_pipe(construct, arguments):
+    assert(len(arguments) == 2)
+    ## The pipe should have at least 2 children
+    assert(len(arguments[1]) >= 2)
+
+def check_command(construct, arguments):
+    assert(len(arguments) == 4)
+
+def check_and(construct, arguments):
+    assert(len(arguments) == 2)
+
+def check_or(construct, arguments):
+    assert(len(arguments) == 2)
+
+def check_semi(construct, arguments):
+    assert(len(arguments) == 2)
+
+def check_redir(construct, arguments):
+    assert(len(arguments) == 3)
+
+def check_subshell(construct, arguments):
+    assert(len(arguments) == 3)
+
+def check_background(construct, arguments):
+    assert(len(arguments) == 3)
+
+def check_defun(construct, arguments):
+    assert(len(arguments) == 3)
 
 def get_case(constructor, cases):
     ##TODO: Throw a specific error, that indicates non-exhaustive
