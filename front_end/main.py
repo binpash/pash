@@ -34,6 +34,12 @@ json_filename = "../scripts/json/minimal.sh.json"
 # json_filename = "../scripts/json/maximal.sh.json"
 
 
+def from_ir_to_shell(ir_filename, new_shell_filename):
+    ## TODO: Execute the ocaml json_to_shell.native and save its
+    ## output in a file
+    return
+
+
 
 ## Translation process:
 ## 1. Parse json to an AST object
@@ -51,17 +57,21 @@ for i, ast_object in enumerate(ast_objects):
     print("Compiled AST:")
     print(compiled_ast)
 
+ir_filename = json_filename + ".ir"
 
 ## TODO: Change that with compiled_asts
-save_asts_json(ast_objects, json_filename + ".ir")
-    
+save_asts_json(ast_objects, ir_filename)
+
+new_shell_filename = json_filename + ".sh"
+
+from_ir_to_shell(ir_filename, new_shell_filename)
 
 ##
 ## BIG TODO:
 ##
 ## Complete an end-to-end prototype for the system
 ##
-## 1. Krataw to json tou paliou object se ena field tou IR
+## 1. (DONE) Krataw to json tou paliou object se ena field tou IR
 ##
 ## 2. Ftiaxnw mia sunarthsh return_IR, gia kathe shmeio sto compile pou epistrefei IR
 ##
@@ -74,10 +84,12 @@ save_asts_json(ast_objects, json_filename + ".ir")
 ##    pou exei se shell (Shmeiwnw oti kanonika ekei tha kalousame to
 ##    implementation tou Lazar)
 ##
-## 6. Kanw extend to ast_to_ir wste na kalei to ocaml serialize gia na
-##    xanagrafei shell apo to kainourgio AST
+## 6. (Done) Grafw ena serialize to json
 ##
-## 7. sto telos olwn autwn, prepei na uparxei ena arxeio me to neo
+## 7. (Done) Kanw extend to ast_to_ir wste na kalei to ocaml serialize
+##    gia na xanagrafei shell apo to kainourgio AST
+##
+## 8. sto telos olwn autwn, prepei na uparxei ena arxeio me to neo
 ##    script. To trexw.
 
 ## Note: It seems that in order for distribution and planning to
