@@ -1,0 +1,50 @@
+import json
+import re
+
+### --- From JSON --- ###
+
+## The json dumper in ocaml seems to print <, >, and parentheses
+## instead of {, }, [,]. Therefore we need to replace the characters
+## with the correct ones.
+def to_standard_json(string):
+    string = string.replace("<", "{")
+    string = string.replace(">", "}")
+    string = string.replace("(", "[")
+    string = string.replace(")", "]")
+
+    # After these replacements, single names are written like this:
+    # {"Name"} and the parser complains. We just need to remove the
+    # braces.
+    #
+    # Note: I have noticed that the names are always constructors that
+    # have no arguments, so they should all be letter characters.
+    #
+    # Warning: This is not robust at all, but will do for now
+    string = re.sub(r'\{\"([A-Za-z]+)\"\}', r'"\1"', string)
+    
+    return string
+
+## Returns the ast as a object
+def parse_json_line(line):
+    std_json_line = to_standard_json(line)        
+    # print(std_json_line)
+    ast_object = json.loads(std_json_line)
+    return ast_object
+
+## Returns a list of AST objects
+def parse_json_ast(json_filename):
+    with open(json_filename) as json_file:
+        lines = json_file.readlines()
+        ast_objects = [parse_json_line(line) for line in lines]
+        # for ast_object in ast_objects:
+            # print(json.dumps(ast_object, indent=2))
+            # print(ast_object)
+        return ast_objects
+
+### --- To JSON --- ###
+
+def serialize_ast_json(ast):
+    ## TODO: Serialize the ast to json, correcting the syntax as it was before.
+
+    ## TODO: Do we have to worry about tuples that were turned to lists?
+    return

@@ -1,45 +1,5 @@
-import json
-import re
 from ir import *
 from union_find import *
-
-## The json dumper in ocaml seems to print <, >, and parentheses
-## instead of {, }, [,]. Therefore we need to replace the characters
-## with the correct ones.
-def to_standard_json(string):
-    string = string.replace("<", "{")
-    string = string.replace(">", "}")
-    string = string.replace("(", "[")
-    string = string.replace(")", "]")
-
-    # After these replacements, single names are written like this:
-    # {"Name"} and the parser complains. We just need to remove the
-    # braces.
-    #
-    # Note: I have noticed that the names are always constructors that
-    # have no arguments, so they should all be letter characters.
-    #
-    # Warning: This is not robust at all, but will do for now
-    string = re.sub(r'\{\"([A-Za-z]+)\"\}', r'"\1"', string)
-    
-    return string
-
-## Returns the ast as a object
-def parse_json_line(line):
-    std_json_line = to_standard_json(line)        
-    # print(std_json_line)
-    ast_object = json.loads(std_json_line)
-    return ast_object
-
-## Returns a list of AST objects
-def parse_json_ast(json_filename):
-    with open(json_filename) as json_file:
-        lines = json_file.readlines()
-        ast_objects = [parse_json_line(line) for line in lines]
-        # for ast_object in ast_objects:
-            # print(json.dumps(ast_object, indent=2))
-            # print(ast_object)
-        return ast_objects
 
 ## Checks if the given ASTs are supported
 def check_if_asts_supported(ast_objects):
@@ -159,8 +119,13 @@ def compile_node(ast_node, fileIdGen):
             ##       optimistically distributes all the children of a
             ##       pipeline) the compiled_pipe_nodes should always
             ##       be one IR
-            compiled_ast = compiled_pipe_nodes[0]
+            compiled_ir = compiled_pipe_nodes[0]
+            ## Note: Save the old ast for the end-to-end prototype
+            compiled_ir.set_ast(ast_node)
+            compiled_ast = compiled_ir
         else:
+            ## Note: This should be unreachable with the current combine pipe
+            assert(False)
             compiled_ast = {construct : [arguments[0]] + [compiled_pipe_nodes]}
 
     elif (construct == 'Command'):
@@ -192,6 +157,7 @@ def compile_node(ast_node, fileIdGen):
                                        options=options)],
                               stdin = stdin_fid,
                               stdout = stdout_fid)
+            compiled_ast.set_ast(ast_node)
 
     elif (construct == 'And'):
         check_and(construct, arguments)
@@ -316,3 +282,117 @@ def compile_ast(ast_object, fileIdGen):
     compiled_ast = compile_node(ast_object, fileIdGen)
     return compiled_ast
 
+
+
+## Replaces IR subtrees with a command that calls them (more
+## precisely, a command that calls a python script to call them).
+##
+## TODO: For now this just replaces the IRs starting from the ourside
+## one first, but it should start from the bottom up to handle
+## recursive IRs.
+##
+## TODO: Optimization: This pass could be merged with the previous
+## translation one. I am not doing this now so that it remains
+## cleaner. If we find out that we might benefit from this
+## optimization, we can do it.
+##
+## TODO: Visual improvement: Can we abstract away the traverse of this
+## ast in a mpa function, so that we don't rewrite all the cases?
+def replace_irs(ast):
+
+
+
+
+def get_case(constructor, cases):
+    ##TODO: Throw a specific error, that indicates non-exhaustive
+    ##pattern match
+    return cases[constructor]
+
+## This function does the pattern match. It throws an error if the
+## pattern match is non-exhaustive, and it checks that the ast is
+## indeed well-formed.
+##
+## TODO: Throw an error that says that pattern match failed in
+## arguments, if arguments where malformed. To do this I should have
+## everything in a try-catch assertion errors. Actually I can probably
+## just inline all the check commands in the ast match function.
+def ast_match(cases):
+    # print("Compiling node: {}".format(ast_node))
+
+    construct, arguments = get_kv(ast_node)
+    case = get_case(construct, cases)
+    
+    if (construct == 'Pipe'):
+        check_pipe(construct, arguments)
+
+        background = arguments[0]
+        pipe_items = arguments[1]
+        result =  case(construct, background, pipe_items)
+
+    elif (construct == 'Command'):
+        check_command(construct, arguments)
+        
+        lineno = arguments[0]
+        assignments = arguments[1]
+        args = arguments[2]
+        redir_list = arguments[3]
+        result = case(construct, lineno, assignments, args, redir_list)
+        
+    elif (construct == 'And'):
+        check_and(construct, arguments)
+        
+        left_node = arguments[0]
+        right_node = arguments[1]
+        result = case(construct, left_node, right_node)
+
+    elif (construct == 'Or'):
+        check_or(construct, arguments)
+        
+        left_node = arguments[0]
+        right_node = arguments[1]
+        result = case(construct, left_node, right_node)
+        
+    elif (construct == 'Semi'):
+        check_semi(construct, arguments)
+        
+        left_node = arguments[0]
+        right_node = arguments[1]
+        result = case(construct, left_node, right_node)
+
+    elif (construct == 'Redir'):
+        check_redir(construct, arguments)
+
+        line_no = arguments[0]
+        node = arguments[1]
+        redir_list = arguments[2]
+        result = case(construct, line_no, node, redir_list)
+
+    elif (construct == 'Subshell'):
+        check_subshell(construct, arguments)
+
+        line_no = arguments[0]
+        node = arguments[1]
+        redir_list = arguments[2]
+        result = case(construct, line_no, node, redir_list)
+            
+    elif (construct == 'Background'):
+        check_background(construct, arguments)
+
+        line_no = arguments[0]
+        node = arguments[1]
+        redir_list = arguments[2]
+        result = case(construct, line_no, node, redir_list)
+
+    elif (construct == 'Defun'):
+        check_defun(construct, arguments)
+        
+        line_no = arguments[0]
+        name = arguments[1]
+        body = arguments[2]
+        result = case(construct, line_no, name, body)
+        
+    else:
+        raise TypeError("Unimplemented construct: {}".format(construct))
+
+    # print("Compiled node: {}".format(compiled_ast))
+    return result
