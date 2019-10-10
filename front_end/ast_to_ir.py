@@ -1,6 +1,8 @@
 from ir import *
 from union_find import *
 
+import pickle
+
 ## Checks if the given ASTs are supported
 def check_if_asts_supported(ast_objects):
     ## TODO: Implement
@@ -251,7 +253,7 @@ def compile_assignments(assignments, fileIdGen):
 def replace_irs(ast, irFileGen):
 
     if (isinstance(ast, IR)):
-        replaced_ast = serialize_ir(ast, irFileGen)
+        replaced_ast = replace_ir(ast, irFileGen)
     else:
     
         cases = {
@@ -276,9 +278,51 @@ def replace_irs(ast, irFileGen):
     
     return replaced_ast
 
-def serialize_ir(ast_node, irFileGen):
-    ## TODO: Check if the node is IR, and if so, serialize it
-    return ast_node
+## This function serializes an IR in a file, and in its place, it adds
+## a command that calls our distribution planner with the name of the
+## saved file.
+def replace_ir(ast_node, irFileGen):
+    ir_file_id = irFileGen.next_file_id()
+
+    ## TODO: Remember to not have the prefix hardocded :( In order to
+    ## do this properly, I have to set this directory up when
+    ## execution starts.
+
+    ## TODO: I probably have to generate random file names for the irs, so
+    ## that multiple executions of dish don't interfere.
+    ir_filename = ir_file_id.toFileName("/tmp/dish_temp_ir")
+    
+    ## Serialize the node in a file
+    with open(ir_filename, "wb") as ir_file:
+        pickle.dump(ast_node, ir_file)
+    
+    ## Replace it with a command that calls the distribution
+    ## planner with the name of the file.
+    replaced_node = make_command(ir_filename)
+    
+    return replaced_node
+
+## This function makes a command that calls the distribution planner
+## together with the name of the file containing an IR. Then the
+## distribution planner should read from this file and continue
+## execution.
+##
+## TODO: Make sure stuff are not hardcoded in here
+##
+## (MAYBE) TODO: The way I did it, is by calling the parser once, and seeing
+## what it returns. Maybe it would make sense to call the parser on
+## the fly to have a cleaner implementation here?
+def make_command(ir_filename):
+
+    ## TODO: Do we need to do anything with the lineno? If so, make
+    ## sure that I keep it in the IR, so that I can find it.
+    arguments = [string_to_argument("python3"),
+                 string_to_argument("distr_plan.py"),
+                 string_to_argument(ir_filename)]
+    lineno = 0
+    node = { 'Command' : [lineno, [], arguments, []] }
+    return node
+                 
 
 def replace_irs_and_or_semi(c, left, right, irFileGen):
     r_left = replace_irs(left, irFileGen)

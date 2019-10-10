@@ -65,6 +65,7 @@ fileIdGen = FileIdGen()
 ## This is ids for the remporary files that we will save the IRs in
 irFileGen = FileIdGen()
 
+final_asts = []
 for i, ast_object in enumerate(ast_objects):
     print("Compiling AST {}".format(i))
     print(ast_object)
@@ -75,11 +76,11 @@ for i, ast_object in enumerate(ast_objects):
     final_ast = replace_irs(compiled_ast, irFileGen)
     print("Final AST:")
     print(final_ast)
-
+    final_asts.append(final_ast)
     
 ir_filename = json_filename + ".ir"
 ## TODO: Change that with the final_asts
-save_asts_json(ast_objects, ir_filename)
+save_asts_json(final_asts, ir_filename)
 
 new_shell_filename = json_filename + ".sh"
 from_ir_to_shell(ir_filename, new_shell_filename)
@@ -91,12 +92,12 @@ from_ir_to_shell(ir_filename, new_shell_filename)
 ##
 ## 1. (DONE) Krataw to json tou paliou object se ena field tou IR
 ##
-## 2. Ftiaxnw mia sunarthsh return_IR, gia kathe shmeio sto compile pou epistrefei IR
+## 2. (DONE) Ftiaxnw mia sunarthsh return_IR, gia kathe shmeio sto compile pou epistrefei IR
 ##
-## 3. Ekei anti na epistrefw to IR, grafw mia serialize kai mia
+## 3. (DONE) Ekei anti na epistrefw to IR, grafw mia serialize kai mia
 ##    deserialize gia to IR kai to apothikeuw se ena arxeio
 ##
-## 4. Sth thesi tou epistrefw ena python3 kai to onoma tou arxeiou distr_planner.py
+## 4. (DONE) Sth thesi tou epistrefw ena python3 kai to onoma tou arxeiou distr_planner.py
 ##
 ## 5. Ftiaxnw ena trivial distrib planner pou apla trexei thn entolh
 ##    pou exei se shell (Shmeiwnw oti kanonika ekei tha kalousame to
