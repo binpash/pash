@@ -69,19 +69,30 @@ class FileIdGen:
     
 ## Question: Is this information adequate?
 ##
-## TODO: This is not really a command. It is a node in the IR. Rename
-## this class to NodeIR. Its fields should be an AST, stdin, stdout
-## (and other redirections possibly?).
+## TODO: What other information should a node of the IR contain?
+## (other redirections possibly?).
 ##
 ## (LATER) TODO: Replace all the file references in IR nodes with new
 ## Identifiers that we make. IN order to do this, one has to be able
 ## to find these file arguments (based on the analysis that we will
 ## do).
-class Command:
-    def __init__(self, command, stdin=None, stdout=None, options=None):
-        self.command = Arg(command)
+class Node:
+    def __init__(self, ast, stdin=None, stdout=None):
+        self.ast = ast
         self.stdin = stdin
         self.stdout = stdout
+        
+    def __repr__(self):
+        output = "Node: \"{}\" in:{} out:{}".format(
+            self.ast, self.stdin, self.stdout)
+        return output
+
+## Commands are specific Nodes that can be parallelized if they are
+## classified as stateless, etc...
+class Command(Node):
+    def __init__(self, ast, command, options, stdin=None, stdout=None):
+        super().__init__(ast, stdin, stdout)
+        self.command = Arg(command)
         self.options = [Arg(opt) for opt in options]
         
     def __repr__(self):

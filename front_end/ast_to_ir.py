@@ -93,6 +93,9 @@ def combine_pipe(ast_nodes):
     return [combined_nodes]
 
 def compile_node_command(construct, lineno, assignments, args, redir_list, fileIdGen):
+
+    ast_node = {construct : [lineno, assignments, args, redir_list]}
+    
     ## TODO: Do we need the line number?
 
     ## TODO: We probably also need to do something with the redirection list.
@@ -115,13 +118,14 @@ def compile_node_command(construct, lineno, assignments, args, redir_list, fileI
         ## Question: Should we return the command in an IR if one of
         ## its arguments is a command substitution? Meaning that we
         ## will have to wait for its command to execute first?
-        compiled_ast = IR([Command(command_name,
+        compiled_ast = IR([Command(ast_node,
+                                   command_name,
+                                   options,
                                    stdin = stdin_fid,
-                                   stdout = stdout_fid,
-                                   options=options)],
+                                   stdout = stdout_fid)],
                           stdin = stdin_fid,
                           stdout = stdout_fid)
-        compiled_ast.set_ast({construct : [lineno, assignments, args, redir_list]})
+        compiled_ast.set_ast(ast_node)
     
     return compiled_ast
 
