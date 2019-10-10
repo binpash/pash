@@ -79,41 +79,22 @@ for i, ast_object in enumerate(ast_objects):
     final_asts.append(final_ast)
     
 ir_filename = json_filename + ".ir"
-## TODO: Change that with the final_asts
 save_asts_json(final_asts, ir_filename)
 
 new_shell_filename = json_filename + ".sh"
 from_ir_to_shell(ir_filename, new_shell_filename)
 
 ##
-## BIG TODO:
-##
-## Complete an end-to-end prototype for the system
-##
-## 1. (DONE) Krataw to json tou paliou object se ena field tou IR
-##
-## 2. (DONE) Ftiaxnw mia sunarthsh return_IR, gia kathe shmeio sto compile pou epistrefei IR
-##
-## 3. (DONE) Ekei anti na epistrefw to IR, grafw mia serialize kai mia
-##    deserialize gia to IR kai to apothikeuw se ena arxeio
-##
-## 4. (DONE) Sth thesi tou epistrefw ena python3 kai to onoma tou arxeiou distr_planner.py
-##
-## 5. Ftiaxnw ena trivial distrib planner pou apla trexei thn entolh
-##    pou exei se shell (Shmeiwnw oti kanonika ekei tha kalousame to
-##    implementation tou Lazar)
-##
-## 6. (Done) Grafw ena serialize to json
-##
-## 7. (Done) Kanw extend to ast_to_ir wste na kalei to ocaml serialize
-##    gia na xanagrafei shell apo to kainourgio AST
-##
-## 8. sto telos olwn autwn, prepei na uparxei ena arxeio me to neo
-##    script. To trexw.
+## TODO: Make sure that the whole end-to-end prototype runs (calling
+## ocaml to parse, and make a trivial distribution planner that runs
+## runs the original ast.
+
+
 
 ## Note: It seems that in order for distribution and planning to
 ## happen correctly, the planner has to be invoked as late as possible
 ## during the shell execution.
+
 ##
 ## Ideally, we would like to execute part of the shell script
 ## normally, and every time we reach the IR, we would like to pass
@@ -128,25 +109,3 @@ from_ir_to_shell(ir_filename, new_shell_filename)
 ## in different nodes (after having received in its arguments
 ## locations of files etc).
 ##
-## TODO: (If we are following this plan)
-##
-## - Change compile_ast to save each internal IR to a temporary file
-##   (in some format) and then simply do a command to `python3
-##   distr_plan.py IR_file`. (Optimization: Think about what information
-##   from the shell state would help in distribution)
-##
-## - Implement a distr_plan.py file that reads an IR and a network
-##   configuration from two files, and then plans how to distribute
-##   the IR computation.
-##
-## - Extend the main.py to rewrite the AST in json, and call the
-##   libdash pretty printer, to actually produce a new shell
-##   script. Then, run this script.
-
-## Discuss:
-##
-## 1. Annotation language (regexps)
-##
-## 2. Talk about distribution planning
-##
-## 3. Talk about semantics and possible proofs
