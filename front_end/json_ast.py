@@ -24,6 +24,13 @@ def to_standard_json(string):
     
     return string
 
+def from_standard_json(string):
+    string = string.replace("{", "<")
+    string = string.replace("}", ">")
+    ## TODO: How should I handle tuples?
+
+    return string
+
 ## Returns the ast as a object
 def parse_json_line(line):
     std_json_line = to_standard_json(line)        
@@ -54,8 +61,8 @@ def serialize_asts_to_json(asts):
 
 def serialize_ast_json(ast):
     standard_json = json.dumps(ast)
-    ## TODO: Serialize the ast to json, correcting the syntax as it was before.
-
-    ## TODO: Do we have to worry about tuples that were turned to lists?
-    print("Output json:", standard_json)
-    return standard_json
+    ocaml_json = from_standard_json(standard_json)
+    ## TODO: It seems that it works without reverting all the changes
+    ## from standard_json. Is it correct?
+    print("Output json:", ocaml_json)
+    return ocaml_json
