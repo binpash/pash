@@ -56,8 +56,14 @@ class FileIdGen:
     
 ## Question: Is this information adequate?
 ##
-## Note: It seems that the command needs separate information for
-##       stdin, stdout (together with the IR())
+## TODO: This is not really a command. It is a node in the IR. Rename
+## this class to NodeIR. Its fields should be an AST, stdin, stdout
+## (and other redirections possibly?).
+##
+## (LATER) TODO: Replace all the file references in IR nodes with new
+## Identifiers that we make. IN order to do this, one has to be able
+## to find these file arguments (based on the analysis that we will
+## do).
 class Command:
     def __init__(self, command, stdin=None, stdout=None, options=None):
         self.command = Arg(command)

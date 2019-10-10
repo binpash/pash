@@ -6,64 +6,6 @@ def check_if_asts_supported(ast_objects):
     ## TODO: Implement
     return
 
-
-## This combines all the children of the Pipeline to an IR, even
-## though they might not be IRs themselves. This means that an IR
-## might contain mixed commands and ASTs. The ASTs can be
-## (conservatively) considered as stateful commands by default).
-def combine_pipe(ast_nodes):
-    ## Initialize the IR with the first node in the Pipe
-    if (isinstance(ast_nodes[0], IR)):
-        combined_nodes = ast_nodes[0]
-    else:
-        combined_nodes = IR([ast_nodes[0]])
-
-    ## Combine the rest of the nodes
-    for ast_node in ast_nodes[1:]:
-        if (isinstance(ast_node, IR)):
-            combined_nodes.pipe_append(ast_node)
-        else:
-            ## FIXME: This one will not work. The IR of an AST node
-            ##        doesn't have any stdin or stdout.
-            combined_nodes.pipe_append(IR([ast_node]))
-            
-    return [combined_nodes]
-
-def compile_arg_char(arg_char, fileIdGen):
-    key, val = get_kv(arg_char)
-    if (key == 'C'):
-        return arg_char
-    elif (key == 'B'):
-        ## TODO: I probably have to redirect the input of the compiled
-        ##       node (IR) to be closed, and the output to be
-        ##       redirected to some file that we will use to write to
-        ##       the command argument to complete the command
-        ##       substitution.
-        compiled_node = compile_node(val, fileIdGen)
-        return {key : compiled_node}
-    elif (key == 'Q'):
-        compiled_val = compile_command_argument(val, fileIdGen)
-        return {key : compiled_val}
-    else:
-        ## TODO: Complete this
-        return arg_char
-    
-def compile_command_argument(argument, fileIdGen):
-    compiled_argument = [compile_arg_char(char, fileIdGen) for char in argument]
-    return compiled_argument
-    
-def compile_command_arguments(arguments, fileIdGen):
-    compiled_arguments = [compile_command_argument(arg, fileIdGen) for arg in arguments]
-    return compiled_arguments
-
-## Compiles the value assigned to a variable using the command argument rules.
-## TODO: Is that the correct way to handle them?
-def compile_assignments(assignments, fileIdGen):
-    compiled_assignments = [[assignment[0], compile_command_argument(assignment[1], fileIdGen)]
-                            for assignment in assignments]
-    return compiled_assignments
-
-
 ##
 ## Compile AST -> Extended AST with IRs
 ##
@@ -126,16 +68,41 @@ def compile_node_pipe(construct, background, pipe_items, fileIdGen):
         compiled_ast = {construct : [arguments[0]] + [compiled_pipe_nodes]}
     return compiled_ast
 
+## This combines all the children of the Pipeline to an IR, even
+## though they might not be IRs themselves. This means that an IR
+## might contain mixed commands and ASTs. The ASTs can be
+## (conservatively) considered as stateful commands by default).
+def combine_pipe(ast_nodes):
+    ## Initialize the IR with the first node in the Pipe
+    if (isinstance(ast_nodes[0], IR)):
+        combined_nodes = ast_nodes[0]
+    else:
+        combined_nodes = IR([ast_nodes[0]])
+
+    ## Combine the rest of the nodes
+    for ast_node in ast_nodes[1:]:
+        if (isinstance(ast_node, IR)):
+            combined_nodes.pipe_append(ast_node)
+        else:
+            ## FIXME: This one will not work. The IR of an AST node
+            ##        doesn't have any stdin or stdout.
+            combined_nodes.pipe_append(IR([ast_node]))
+            
+    return [combined_nodes]
+
 def compile_node_command(construct, lineno, assignments, args, redir_list, fileIdGen):
     ## TODO: Do we need the line number?
-        
+
+    ## TODO: We probably also need to do something with the redirection list.
+    
+    compiled_assignments = compile_assignments(assignments, fileIdGen)
+    
     ## If there are no arguments, the command is just an
     ## assignment
     if(len(args) == 0):
         ## Just compile the assignments. Specifically compile the
         ## assigned values, because they might have command
         ## substitutions etc..
-        compiled_assignments = compile_assignments(assignments, fileIdGen)
         compiled_ast = {construct : [lineno] + [compiled_assignments] + [args, redir_list]}
     else:
         command_name = args[0]
@@ -226,11 +193,49 @@ def compile_node_defun(construct, lineno, name, body, fileIdGen):
     return compiled_ast
 
 
+def compile_arg_char(arg_char, fileIdGen):
+    key, val = get_kv(arg_char)
+    if (key == 'C'):
+        return arg_char
+    elif (key == 'B'):
+        ## TODO: I probably have to redirect the input of the compiled
+        ##       node (IR) to be closed, and the output to be
+        ##       redirected to some file that we will use to write to
+        ##       the command argument to complete the command
+        ##       substitution.
+        compiled_node = compile_node(val, fileIdGen)
+        return {key : compiled_node}
+    elif (key == 'Q'):
+        compiled_val = compile_command_argument(val, fileIdGen)
+        return {key : compiled_val}
+    else:
+        ## TODO: Complete this
+        return arg_char
+    
+def compile_command_argument(argument, fileIdGen):
+    compiled_argument = [compile_arg_char(char, fileIdGen) for char in argument]
+    return compiled_argument
+    
+def compile_command_arguments(arguments, fileIdGen):
+    compiled_arguments = [compile_command_argument(arg, fileIdGen) for arg in arguments]
+    return compiled_arguments
+
+## Compiles the value assigned to a variable using the command argument rules.
+## TODO: Is that the correct way to handle them?
+def compile_assignments(assignments, fileIdGen):
+    compiled_assignments = [[assignment[0], compile_command_argument(assignment[1], fileIdGen)]
+                            for assignment in assignments]
+    return compiled_assignments
+
 
 
 
 ## Replaces IR subtrees with a command that calls them (more
 ## precisely, a command that calls a python script to call them).
+##
+## Note: The traversal that replace_irs does, is exactly the same as
+## the one that is done by compile_node. Both of these functions
+## transform nodes of type t to something else.
 ##
 ## TODO: For now this just replaces the IRs starting from the ourside
 ## one first, but it should start from the bottom up to handle
@@ -243,14 +248,93 @@ def compile_node_defun(construct, lineno, name, body, fileIdGen):
 ##
 ## TODO: Visual improvement: Can we abstract away the traverse of this
 ## ast in a mpa function, so that we don't rewrite all the cases?
-def replace_irs(ast):
-    return
+def replace_irs(ast, irFileGen):
+
+    if (isinstance(ast, IR)):
+        replaced_ast = serialize_ir(ast, irFileGen)
+    else:
+    
+        cases = {
+            ## Note: We should never encounter a Pipe construct, since all
+            ## of them must have been become IRs
+            ##
+            ## "Pipe": (lambda c, b, i: {c : [b, i]}),
+            "Command": (lambda c, l, ass, args, r: replace_irs_command(c, l, ass, args, r, irFileGen)),
+            
+            "And" : (lambda c, l, r: replace_irs_and_or_semi(c, l, r, irFileGen)),
+            "Or" : (lambda c, l, r: replace_irs_and_or_semi(c, l, r, irFileGen)),
+            "Semi" : (lambda c, l, r: replace_irs_and_or_semi(c, l, r, irFileGen)),
+            
+            ## TODO: Complete these
+            # "Redir" : (lambda c, l, n, r: compile_node_redir(c, l, n, r, fileIdGen)),
+            # "Subshell" : (lambda c, l, n, r: compile_node_subshell(c, l, n, r, fileIdGen)),
+            # "Background" : (lambda c, l, n, r: compile_node_background(c, l, n, r, fileIdGen)),
+            # "Defun" : (lambda c, l, n, b: compile_node_defun(c, l, n, b, fileIdGen))
+        }
+        
+        replaced_ast = ast_match(ast, cases)
+    
+    return replaced_ast
+
+def serialize_ir(ast_node, irFileGen):
+    ## TODO: Check if the node is IR, and if so, serialize it
+    return ast_node
+
+def replace_irs_and_or_semi(c, left, right, irFileGen):
+    r_left = replace_irs(left, irFileGen)
+    r_right = replace_irs(right, irFileGen)
+    return {c : [r_left, r_right]}
+
+def replace_irs_command(c, lineno, assignments, args, redir_list, irFileGen):
+    ## TODO: I probably have to also handle the redir_list (applies to
+    ## compile_node_command too)
+
+    replaced_assignments = replace_irs_assignments(assignments, irFileGen)
+    if(len(args) == 0):
+        ## Note: The flow here is similar to compile
+        replaced_ast = {c : [lineno, replaced_assignments, args, redir_list]}
+    else:
+        command_name = args[0]
+        replaced_options = replace_irs_command_arguments(args[1:], irFileGen)
+        replaced_args = [command_name] + replaced_options
+        
+        replaced_ast = {c : [lineno, replaced_assignments, replaced_args, redir_list]}
+
+    return replaced_ast
+
+def replace_irs_arg_char(arg_char, irFileGen):
+    key, val = get_kv(arg_char)
+    if (key == 'C'):
+        return arg_char
+    elif (key == 'B'):
+        replaced_node = replace_irs(val, irFileGen)
+        return {key : replaced_node}
+    elif (key == 'Q'):
+        replaced_val = replace_irs_command_argument(val, irFileGen)
+        return {key : replaced_val}
+    else:
+        ## TODO: Complete this (as we have to do with the compile)
+        return arg_char
+    
+def replace_irs_command_argument(argument, irFileGen):
+    replaced_argument = [replace_irs_arg_char(char, irFileGen) for char in argument]
+    return replaced_argument
+    
+def replace_irs_command_arguments(arguments, irFileGen):
+    replaced_arguments = [replace_irs_command_argument(arg, irFileGen) for arg in arguments]
+    return replaced_arguments
+
+## This is similar to compile_assignments
+##
+## TODO: Is that the correct way to handle them? Question also applied
+## to compile_assignments.
+def replace_irs_assignments(assignments, irFileGen):
+    replaced_assignments = [[assignment[0], replace_irs_command_argument(assignment[1], irFileGen)]
+                            for assignment in assignments]
+    return replaced_assignments
 
 
-
-
-
-
+    
 ##
 ## Pattern matching for the AST
 ##

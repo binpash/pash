@@ -42,13 +42,28 @@ def from_ir_to_shell(ir_filename, new_shell_filename):
 
 
 ## Translation process:
+##
 ## 1. Parse json to an AST object
-## 2. Ensure that the AST is in our supported subset (TODO)
-## 3. Compile the AST to out intermediate representation
+##
+## 2. TODO: Ensure that the AST is in our supported subset (TODO)
+##
+## 3. Compile subtrees of the AST to out intermediate representation
+##
+## 4. Replace the IRs in the ASTs with calls to the distribution
+##    planner. Save the IRs in temporary files.
+##
+## 5. Translate the new AST back to shell syntax
+##
+## 6. Execute the new AST using a standard shell
 
 ast_objects = parse_json_ast(json_filename)
 check_if_asts_supported(ast_objects)
+
+## This is for the files in the IR
 fileIdGen = FileIdGen()
+
+## This is ids for the remporary files that we will save the IRs in
+irFileGen = FileIdGen()
 
 for i, ast_object in enumerate(ast_objects):
     print("Compiling AST {}".format(i))
@@ -57,13 +72,16 @@ for i, ast_object in enumerate(ast_objects):
     print("Compiled AST:")
     print(compiled_ast)
 
-ir_filename = json_filename + ".ir"
+    final_ast = replace_irs(compiled_ast, irFileGen)
+    print("Final AST:")
+    print(final_ast)
 
-## TODO: Change that with compiled_asts
+    
+ir_filename = json_filename + ".ir"
+## TODO: Change that with the final_asts
 save_asts_json(ast_objects, ir_filename)
 
 new_shell_filename = json_filename + ".sh"
-
 from_ir_to_shell(ir_filename, new_shell_filename)
 
 ##
