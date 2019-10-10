@@ -11,24 +11,38 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
-public class WorkerProcess {
+public class WorkerProcess implements Runnable {
     // if this is changed to threaded implementation remove keyword 'static'
-    private static RemoteExecutionData red;
+    private RemoteExecutionData red;
 
-    /*public WorkerProcess(RemoteExecutionData red) {
+    public WorkerProcess(RemoteExecutionData red) {
         this.red = red;
-    }*/
+    }
 
+    // This method will only be called in process mode
     public static void main(String[] args) {
-        red = deserializeArgs(args);
+        RemoteExecutionData rem = deserializeArgs(args);
+        WorkerProcess workerProcess = new WorkerProcess(rem);
+
+        // Will not be executed as a thread
+        workerProcess.run();
+    }
+
+    // This method is used both for the execution in threaded and in process mode
+    @Override
+    public void run() {
         try {
             Operator operator = red.getOperator();
+
+            InternalBuffer[] internalBuffers = new InternalBuffer[operator.getInputArity()];
+            Thread[] internalThreads = new Thread[operator.getInputArity()];
 
             if (operator.getOperatorType() != OperatorType.HDFS_OUTPUT &&
                     operator.getOperatorType() != OperatorType.SOCKETED_OUTPUT) {
@@ -50,6 +64,13 @@ public class WorkerProcess {
 
                     for (int i = 0; i < operator.getInputArity(); i++) {
                         final int inputChannelParameter = i;
+
+                        internalBuffers[i] = new InternalBuffer();
+                        internalThreads[i] = new Thread(new SocketToProcessThread(internalBuffers[i],
+                                inputChannelParameter,
+                                operator));
+                        internalThreads[i].start();
+
                         inputGateThreads.add(Executors.callable(() -> {// connect by socket with all of them
                             try (Socket inputDataSocket = inputDataServerSocket.accept();
                                  ObjectInputStream ois = new ObjectInputStream(inputDataSocket.getInputStream())) {
@@ -62,11 +83,7 @@ public class WorkerProcess {
                                         break;
                                     } else {
                                         data = (byte[]) received;
-
-                                        // invoking the operator's computation; after the computation, the data is sent via socket to next node
-                                        // if this is split operator the data splitting will be done inside an operator and the data will be
-                                        // outputted to the sockets that were created few lines before this
-                                        operator.next(inputChannelParameter, data);
+                                        internalBuffers[inputChannelParameter].write(data);
                                     }
                                 }
                             } catch (Exception ex) {
