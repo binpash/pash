@@ -43,8 +43,19 @@ def parse_json_ast(json_filename):
 
 ### --- To JSON --- ###
 
+def save_asts_json(asts, json_filename):
+    json_string = serialize_asts_to_json(asts)
+    with open(json_filename, 'w') as json_file:
+        json_file.write(json_string)
+
+def serialize_asts_to_json(asts):
+    serialized_asts = [serialize_ast_json(ast) for ast in asts]
+    return "\n".join(serialized_asts)
+
 def serialize_ast_json(ast):
+    standard_json = json.dumps(ast)
     ## TODO: Serialize the ast to json, correcting the syntax as it was before.
 
     ## TODO: Do we have to worry about tuples that were turned to lists?
-    return
+    print("Output json:", standard_json)
+    return standard_json
