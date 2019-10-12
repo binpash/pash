@@ -1,6 +1,11 @@
 import json
 import re
 
+from subprocess import run, PIPE
+
+## TODO: Don't hardcode this
+JSON_TO_SHELL_APP="../parser/json_to_shell.native"
+
 ### --- From JSON --- ###
 
 ## The json dumper in ocaml seems to print <, >, and parentheses
@@ -64,5 +69,17 @@ def serialize_ast_json(ast):
     ocaml_json = from_standard_json(standard_json)
     ## TODO: It seems that it works without reverting all the changes
     ## from standard_json. Is it correct?
-    print("Output json:", ocaml_json)
+    # print("Output json:", ocaml_json)
     return ocaml_json
+
+### --- AST to Shell --- ###
+
+
+def json_to_shell(json_string):
+    subproc = run(['../parser/json_to_shell.native'], stdout=PIPE, input=json_string, encoding='ascii')
+    return subproc.stdout
+
+def ast_to_shell(ast):
+    ast_json = serialize_ast_json(ast)
+    shell_string = json_to_shell(ast_json)
+    return shell_string
