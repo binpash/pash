@@ -7,7 +7,7 @@ let parse_args () =
   Arg.parse
     [("-v",Arg.Set verbose,"verbose mode")]
     (function | "-" -> input_src := None | f -> input_src := Some f)
-    "Final argument should be either a filename or - (for STDIN); only the last such argument is used"
+    "Final argument should be either a filename or empty (for STDIN); only the last such argument is used"
 
 let read_channel chan =
 let lines = ref [] in
