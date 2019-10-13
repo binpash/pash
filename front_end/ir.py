@@ -28,6 +28,15 @@ def format_arg_char(arg_char):
         ## TODO: Make this correct
         return key
 
+def string_to_argument(string):
+    return [char_to_arg_char(char) for char in string]
+
+## FIXME: This is certainly not complete. It is used to generate the
+## AST for the call to the distributed planner. It only handles simple
+## characters
+def char_to_arg_char(char):
+    return { 'C' : ord(char) }
+    
 ## Note: The NULL ident is considered to be the default unknown file id
 class FileId:
     def __init__(self, ident):
@@ -42,6 +51,10 @@ class FileId:
         # output = "#file{}".format(self.ident)
         return output
 
+    def toFileName(self, prefix):
+        output = "{}_file{}".format(prefix, Find(self).ident)
+        return output
+    
     def isNull(self):
         return self.ident == "NULL"
     
@@ -56,13 +69,30 @@ class FileIdGen:
     
 ## Question: Is this information adequate?
 ##
-## Note: It seems that the command needs separate information for
-##       stdin, stdout (together with the IR())
-class Command:
-    def __init__(self, command, stdin=None, stdout=None, options=None):
-        self.command = Arg(command)
+## TODO: What other information should a node of the IR contain?
+## (other redirections possibly?).
+##
+## (LATER) TODO: Replace all the file references in IR nodes with new
+## Identifiers that we make. IN order to do this, one has to be able
+## to find these file arguments (based on the analysis that we will
+## do).
+class Node:
+    def __init__(self, ast, stdin=None, stdout=None):
+        self.ast = ast
         self.stdin = stdin
         self.stdout = stdout
+        
+    def __repr__(self):
+        output = "Node: \"{}\" in:{} out:{}".format(
+            self.ast, self.stdin, self.stdout)
+        return output
+
+## Commands are specific Nodes that can be parallelized if they are
+## classified as stateless, etc...
+class Command(Node):
+    def __init__(self, ast, command, options, stdin=None, stdout=None):
+        super().__init__(ast, stdin, stdout)
+        self.command = Arg(command)
         self.options = [Arg(opt) for opt in options]
         
     def __repr__(self):
@@ -98,6 +128,9 @@ class IR:
         output = "(|-{} IR: {} {}-|)".format(self.stdin, self.nodes, self.stdout)
         return output
 
+    def set_ast(self, ast):
+        self.ast = ast
+    
     def pipe_append(self, other):
         assert(self.valid())
         assert(other.valid())
@@ -114,6 +147,10 @@ class IR:
         assert(not other.stdin.isNull())
         Union(self.stdout, other.stdin)
         self.stdout = other.stdout
+
+        ## Note: The ast is not extensible, and thus should be
+        ## invalidated if an operation happens on the IR
+        self.ast = None
             
     ## Note: We assume that no nodes is an adequate condition to check
     ##       emptiness.
