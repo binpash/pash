@@ -14,6 +14,7 @@ public class StatelessOperator extends Operator<Object, Object> {
     private Object processBuilder;
     private Object process;
     private boolean initialized = false;
+    private byte[] buffer = new byte[BUFFER_SIZE];
 
     // TODO: find out ideal packet length for TCP socket
     private static final int BUFFER_SIZE = 1024;
@@ -54,28 +55,30 @@ public class StatelessOperator extends Operator<Object, Object> {
 
         try {
             // passing the data to standard input of the process
+            boolean endReceived = false;
             if (data != null) {
                 OutputStream standardInput = ((Process) process).getOutputStream();
 
                 if (data instanceof SystemMessage.EndOfData) {
+                    endReceived = true;
                     standardInput.close();
                 } else {
                     // write to standard input of the process
                     standardInput.write((byte[]) data);
-                    return;
+                    //return;   -> NOT NEEDED WHEN THE PROCESS IS CONSIDERED AS PIPELINE
                 }
             }
 
             // getting the standard output of the process
             InputStream standardOutput = ((Process) process).getInputStream();
-            byte[] buffer = new byte[BUFFER_SIZE];
 
             // sending computed output to the next subscribed operator
-            while (standardOutput.read(buffer, 0, BUFFER_SIZE) != -1)
+            while (standardOutput.available() != 0 && standardOutput.read(buffer, 0, BUFFER_SIZE) != -1)
                 consumers[0].next(0, buffer);
 
             // send end of data signal
-            consumers[0].next(0, new SystemMessage.EndOfData());
+            if (endReceived || data == null)
+                consumers[0].next(0, new SystemMessage.EndOfData());
         } catch (Exception e) {
             e.printStackTrace();
         }
