@@ -26,6 +26,9 @@ def main():
     ## execute it in the starting shell (so that we have its state),
     ## or we should somehow pass the parent shell's state to the the
     ## distribution planner, and then the implementation environment.
+    ## In general, we probably have to find a way to pass around a
+    ## shell's state, as this will be essential for the distributed
+    ## setting too.
     
     ## Notes:
     ##
