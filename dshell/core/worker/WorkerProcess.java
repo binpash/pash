@@ -11,25 +11,28 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class WorkerProcess implements Runnable {
     // if this is changed to threaded implementation remove keyword 'static'
     private RemoteExecutionData red;
+    private int topologyID;
+    private volatile CountDownLatch socketBarrier;
 
-    public WorkerProcess(RemoteExecutionData red) {
+    public WorkerProcess(RemoteExecutionData red, CountDownLatch socketBarrier, int topologyID) {
         this.red = red;
+        this.topologyID = topologyID;
+        this.socketBarrier = socketBarrier;
     }
 
     // This method will only be called in process mode
     public static void main(String[] args) {
         RemoteExecutionData rem = deserializeArgs(args);
-        WorkerProcess workerProcess = new WorkerProcess(rem);
+        WorkerProcess workerProcess = new WorkerProcess(rem, null, Integer.parseInt(args[args.length - 1]));
 
         // Will not be executed as a thread
         workerProcess.run();
@@ -57,10 +60,12 @@ public class WorkerProcess implements Runnable {
             // do not wait for data in case that the operator is the first one to execute
             if (!red.isInitialOperator()) {
                 // all the operators that outputting to this one share the same port
+
                 try (ServerSocket inputDataServerSocket = new ServerSocket(red.getInputPort())) {
                     // receive data from all of them
                     ExecutorService inputThreadPool = Executors.newFixedThreadPool(operator.getInputArity());
                     List<Callable<Object>> inputGateThreads = new ArrayList<>(operator.getInputArity());
+                    CountDownLatch endOfSignalBarrier = new CountDownLatch(operator.getInputArity());
 
                     for (int i = 0; i < operator.getInputArity(); i++) {
                         final int inputChannelParameter = i;
@@ -69,35 +74,61 @@ public class WorkerProcess implements Runnable {
                         internalThreads[i] = new Thread(new SocketToProcessThread(internalBuffers[i],
                                 inputChannelParameter,
                                 operator));
+                        internalThreads[i].setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+                            @Override
+                            public void uncaughtException(Thread thread, Throwable throwable) {
+                                throw new WorkerException(throwable.getMessage(), topologyID);
+                            }
+                        });
                         internalThreads[i].start();
 
-                        inputGateThreads.add(Executors.callable(() -> {// connect by socket with all of them
+                        /*try (Socket inputDataSocket = inputDataServerSocket.accept();
+                             ObjectInputStream ois = new ObjectInputStream(inputDataSocket.getInputStream())) {
+                            while (true) {
+                                Object received = ois.readObject();
+
+                                if (received instanceof SystemMessage.EndOfData) {
+                                    break;
+                                } else {
+                                    operator.next(inputChannelParameter, received);
+                                }
+                            }
+                        }*/
+
+
+                        inputGateThreads.add(Executors.callable(() -> {
+                            // connect by socket with all of them
                             try (Socket inputDataSocket = inputDataServerSocket.accept();
                                  ObjectInputStream ois = new ObjectInputStream(inputDataSocket.getInputStream())) {
-                                byte[] data = null;
-
                                 while (true) {
                                     Object received = ois.readObject();
 
-                                    if (received instanceof SystemMessage.EndOfData) {
+                                    if (received instanceof SystemMessage.EndOfData)
                                         break;
-                                    } else {
-                                        data = (byte[]) received;
-                                        internalBuffers[inputChannelParameter].write(data);
-                                    }
+                                    else
+                                        internalBuffers[inputChannelParameter].write(received);
                                 }
                             } catch (Exception ex) {
                                 ex.printStackTrace();
+                                throw new WorkerException(ex.getMessage(), topologyID);
                             }
+
+                            endOfSignalBarrier.countDown();
                         }));
                     }
 
                     // wait for the listening threads to complete before proceeding any further
+                    /*if (red.isInitialOperator() == false)
+                        socketBarrier.countDown();*/
                     inputThreadPool.invokeAll(inputGateThreads);
+                    endOfSignalBarrier.await();
 
                     // all the threads have now finished outputting
                     for (int j = 0; j < operator.getInputArity(); j++)
                         operator.next(j, new SystemMessage.EndOfData());
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    throw new WorkerException(ex.getMessage(), topologyID);
                 }
             } else // this will only be called if operator is initial
                 operator.next(0, null);
@@ -123,6 +154,8 @@ public class WorkerProcess implements Runnable {
             } catch (Exception e) {
                 System.err.println("Error communicating with client whose submitted job was aborted.");
             }
+
+            throw new WorkerException(ex.getMessage(), topologyID);
         }
     }
 

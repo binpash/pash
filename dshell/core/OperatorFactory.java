@@ -51,6 +51,7 @@ public class OperatorFactory {
                     // here writeUnshared() is used because of the usage of the same buffer reference
                     // in other cause it wouldn't work on other side of the socket
                     outputStream.writeUnshared(data);
+                    outputStream.flush();
 
                     // close socket on signal
                     if (data instanceof SystemMessage.EndOfData)
@@ -67,10 +68,10 @@ public class OperatorFactory {
             }
 
             public void closeOutput() throws Exception {
-                if (socket != null) {
+                /*if (socket != null) {
                     outputStream.close();
                     socket.close();
-                }
+                }*/
             }
         };
     }

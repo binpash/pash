@@ -13,8 +13,8 @@ public class InternalBuffer {
 
     public InternalBuffer() {
         mutex = new Semaphore(1);
-        emptySlots = new Semaphore(BUFFER_CAPACITY);
-        fullSlots = new Semaphore(0);
+        emptySlots = new Semaphore(BUFFER_CAPACITY, true);
+        fullSlots = new Semaphore(0, true);
     }
 
     public void write(Object data) {

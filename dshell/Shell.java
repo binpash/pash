@@ -69,21 +69,18 @@ public class Shell {
         for (int i = 0; i < numberOfMeasurement; i++) {
             Graph graph = createGraph(bashCommand, writeToFile);
 
-            // NOTE: the time measurement here includes both the preparation and the execution time
-            // TODO: split topology preparation time from the distributed topology executionn time
-            long begin = System.currentTimeMillis();
-            graph.executeRemote(clientPort);
-            long end = System.currentTimeMillis();
+            // NOTE: the time measurement here includes only execution time; time taken for compilation is not included
+            long t = graph.executeRemote(clientPort);
 
             // JVM warmup
-            if (i > numberOfMeasurement / 10)
-                performanceMeasurement += end - begin;
+            if (i >= numberOfMeasurement / 10)
+                performanceMeasurement += t;
         }
         if (printMeasurement)
             System.out.println("Average time it took to compute the topology is: " + (performanceMeasurement) / (0.9 * numberOfMeasurement) + " ms");
 
         // TODO: remove after debugging done
-        byte[] b = DFileSystem.downloadFile(writeToFile);
-        System.out.println(new String(b));
+        //byte[] b = DFileSystem.downloadFile(writeToFile);
+        //System.out.println(new String(b));
     }
 }
