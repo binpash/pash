@@ -3,12 +3,9 @@ package dshell.core.nodes;
 import dshell.core.Operator;
 import dshell.core.OperatorType;
 import dshell.core.misc.SystemMessage;
-import dshell.core.misc.Utilities;
-import dshell.core.worker.RemoteExecutionData;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 
 public class StatelessOperator extends Operator<Object, Object> {
     private Object processBuilder;
@@ -32,7 +29,7 @@ public class StatelessOperator extends Operator<Object, Object> {
     }
 
     @Override
-    public void next(int inputChannel, Object data) {
+    public synchronized void next(int inputChannel, Object data) {
         if (!initialized) {
             try {
                 processBuilder = new ProcessBuilder(program, getArgumentsAsString());
@@ -61,26 +58,41 @@ public class StatelessOperator extends Operator<Object, Object> {
 
                 if (data instanceof SystemMessage.EndOfData) {
                     endReceived = true;
-                    standardInput.close();
+                    //standardInput.close();
                 } else {
                     // write to standard input of the process
                     standardInput.write((byte[]) data);
-                    //return;   -> NOT NEEDED WHEN THE PROCESS IS CONSIDERED AS PIPELINE
+                    standardInput.close();
+                    ;   //-> NOT NEEDED WHEN THE PROCESS IS CONSIDERED AS PIPELINE
                 }
+            }
+            else if (data instanceof SystemMessage.EndOfData)
+                endReceived = true;
+
+            if (endReceived) {
+                consumers[0].next(0, new SystemMessage.EndOfData());
+                ((Process) process).destroy();
+                return;
             }
 
             // getting the standard output of the process
             InputStream standardOutput = ((Process) process).getInputStream();
 
+            byte[] raw = standardOutput.readAllBytes();
+
             // sending computed output to the next subscribed operator
-            while (standardOutput.available() != 0 && standardOutput.read(buffer, 0, BUFFER_SIZE) != -1)
-                consumers[0].next(0, buffer);
+            consumers[0].next(0, raw);
+            /*while (standardOutput.available() != 0 && standardOutput.read(buffer, 0, BUFFER_SIZE) != -1)
+                consumers[0].next(0, buffer);*/
 
             // send end of data signal
-            if (endReceived || data == null)
+            if (data == null) {
                 consumers[0].next(0, new SystemMessage.EndOfData());
+                ((Process) process).destroy();
+            }
         } catch (Exception e) {
             e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -90,14 +102,5 @@ public class StatelessOperator extends Operator<Object, Object> {
         o.parallelizationHint = 1;
 
         return o;
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-
-        // waiting for process to finish and terminating it
-        ((Process) process).waitFor();
-        ((Process) process).destroy();
     }
 }

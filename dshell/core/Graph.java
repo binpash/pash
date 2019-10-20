@@ -31,7 +31,7 @@ public abstract class Graph {
         getOperator().next(0, null);
     }
 
-    public void executeRemote(int clientSocket) {
+    public long executeRemote(int clientSocket) {
         try {
             // uploading has to be done before the graph expansion
             // TODO: uncomment HDFS
@@ -40,7 +40,9 @@ public abstract class Graph {
             delegateWorkers();
 
             // block here until the computation has finished distributively
+            long start = System.currentTimeMillis();
             waitWhileNotFinished(clientSocket);
+            return System.currentTimeMillis() - start;
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         }

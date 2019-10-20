@@ -12,7 +12,7 @@ public class ShellInternal {
 
     public static void main(String[] args) {
         AtomicGraph cat = new AtomicGraph(new StatelessOperator(0, 1, "cat", new String[]{INPUT_FILE}));
-        AtomicGraph wc = new AtomicGraph(new StatelessOperator(1, 1, "wc", new String[]{"-m"}, 2));
+        AtomicGraph wc = new AtomicGraph(new StatelessOperator(1, 1, "wc", new String[]{"-m"}, 1));
         AtomicGraph hdfsPrinter = new AtomicGraph(OperatorFactory.createHDFSFilePrinter("output.txt"));
         SerialGraph graph = new SerialGraph(cat, wc, hdfsPrinter);
 
