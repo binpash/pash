@@ -80,6 +80,15 @@ class FileIdGen:
 ## Identifiers that we make. IN order to do this, one has to be able
 ## to find these file arguments (based on the analysis that we will
 ## do).
+##
+## A node represents an abstract program that our system can
+## distribute. At the moment, that is a program with one input and one
+## output stream. Input and output streams are shown as a list of
+## either options or standard channels (such as stdin, stdout,
+## stderr).
+##
+## Nodes also have a category, which shows whether they can be
+## parallelized on their input stream or not.
 class Node:
     def __init__(self, ast, in_stream=[], out_stream=[],
                  stdin=None, stdout=None, category="none"):
