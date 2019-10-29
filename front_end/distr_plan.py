@@ -58,10 +58,6 @@ def simpl_file_distribution_planner(graph):
     ## list, and that these are the ones which will be used to create
     ## the graph.
     
-    ## TODO: Make a graph API in the IR class. Make sure that the
-    ## incoming edges are numbered (in the beginning there should only
-    ## be one incoming edge for each node).
-
     ## TODO: Starting from the sources of the graph, if they are
     ## stateless, duplicate the command as many times as the number of
     ## identifiers in its in_stream. Then connect their outputs in
@@ -70,17 +66,57 @@ def simpl_file_distribution_planner(graph):
     ## Note: The above has to be done in a BFS fashion (starting from
     ## all sources simultaneously) so that we don't have to iterate to
     ## reach a fixpoint.
-    source_nodes = graph.source_nodes()
-    print("Source nodes")
-    print(source_nodes)
+    naive_parallelize_stateless_nodes_bfs(graph)
+    print("Parallelized graph:")
+    print(graph)
 
     ## The result of the above steps should be an expanded
     ## intermediate representation graph, that can be then mapped to
     ## real nodes.
 
-    
+def naive_parallelize_stateless_nodes_bfs(graph):
+    source_nodes = graph.source_nodes()
+    print("Source nodes:")
+    print(source_nodes)
 
-    
+    nodes = source_nodes
+    while (len(nodes) > 0):
+        curr = nodes.pop(0)
+
+        next_nodes = graph.get_next_nodes(curr)
+        nodes += next_nodes
+        ## If the command is stateless and has more than one inputs,
+        ## it can be parallelized
+        if (curr.category == "stateless" and len(curr.in_stream) > 0):
+            print("To parallelize:")
+            print(curr)
+            print("Next nodes:")
+            print(next_nodes)
+            ## TODO: Parallelize the stateless by finding the location
+            ## of its outgoing fid in each next node. Then, in its
+            ## place, generate as many files as the size of the
+            ## in_stream. Duplicate the current node as many times as
+            ## the input stream and give its output file identifiers
+            ## the generated fids in order.
+            ##
+            ## WARNING: In order for the above to not mess up
+            ## anything, there must be no other node that writes to
+            ## the same output as the curr node. Otherwise, the above
+            ## procedure will mess this up.
+            ##
+            ## TODO: Either make an assertion to catch any case that
+            ## doesn't satisfy the above assumption here, or extend
+            ## the intermediate representation and the above procedure
+            ## so that this assumption is lifted (either by not
+            ## parallelizing, or by properly handling this case)
+
+            ## TODO: In order to do this, I have to generate a
+            ## fileIdGen from a graph, that doesn't class with the
+            ## current graph fileIds.
+
+
+
+
     
     ## TODO: As an integration experiment make a distribution planner
     ## that just uses Greenberg's parser to output shell code from the

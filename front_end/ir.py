@@ -92,7 +92,14 @@ class FileId:
             self.set_resource(other_resource)
         elif (other_resource is None):
             Find(other).set_resource(my_resource)
-        
+
+    def find_fid_list(self, fids):
+        parent_fids = [Find(other_fid) for other_fid in fids]
+        try:
+            return parent_fids.index(Find(self))
+        except ValueError:
+            return None
+
     
 class FileIdGen:
     def __init__(self):
@@ -287,6 +294,14 @@ def find_command_category(command, options):
 ## descriptors of the IR, and in general any other local information
 ## that might be relevant.
 class IR:
+
+    ## IR Assumptions:
+    ##
+    ## - Each node has a list of incoming files in order of
+    ##   consumption.
+    ##
+    ## - If two nodes have the same file as output, then they both
+    ##   write to it concurrently.
     def __init__(self, nodes, stdin = None, stdout = None):
         self.nodes = nodes
         self.edges = {}
@@ -340,10 +355,19 @@ class IR:
         for incoming_fid in node.get_input_file_ids():
             for other_node in self.nodes:
                 ## Note: What if other_node == node?
-                if (Find(incoming_fid) in
-                    [Find(out_fid) for out_fid in other_node.get_output_file_ids()]):
+                if (not incoming_fid.find_fid_list(other_node.get_output_file_ids())
+                    is None):
                     return True
         return False
+
+    def get_next_nodes(self, node):
+        next_nodes = []
+        for outgoing_fid in node.get_output_file_ids():
+            for other_node in self.nodes:
+                ## Note: What if other_node == node?
+                if (not outgoing_fid.find_fid_list(other_node.get_input_file_ids()) is None):
+                    next_nodes.append(other_node)
+        return next_nodes
     
     ## Note: We assume that the lack of nodes is an adequate condition
     ##       to check emptiness.
