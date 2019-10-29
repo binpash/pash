@@ -118,11 +118,10 @@ def compile_node_command(construct, lineno, assignments, args, redir_list, fileI
         ## Question: Should we return the command in an IR if one of
         ## its arguments is a command substitution? Meaning that we
         ## will have to wait for its command to execute first?
-        compiled_ast = IR([Command(ast_node,
-                                   command_name,
-                                   options,
-                                   stdin = stdin_fid,
-                                   stdout = stdout_fid)],
+        command = create_command_assign_file_identifiers(ast_node, fileIdGen,
+                                                         command_name, options,
+                                                         stdin=stdin_fid, stdout=stdout_fid)
+        compiled_ast = IR([command],
                           stdin = stdin_fid,
                           stdout = stdout_fid)
         
