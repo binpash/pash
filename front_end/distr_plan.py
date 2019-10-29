@@ -59,7 +59,9 @@ def simpl_file_distribution_planner(graph):
     ## the graph.
 
     ## TODO: Before implementing this, I have to implement the changes
-    ## in the Node class, and in the ast_to_ir.
+    ## in the ir. More precisely, I have to make sure that all files
+    ## that are in inputs and outputs of nodes have an associated file
+    ## identifier.
     
     ## TODO: Make the graph from the IR. Make sure that the incoming
     ## edges are numbered (in the beginning there should only be one
