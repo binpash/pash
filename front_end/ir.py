@@ -66,6 +66,23 @@ class FileIdGen:
         fileId = FileId(self.next)
         self.next += 1
         return fileId
+
+## TODO: Add a input_stream and output_stream as fields in the Node
+## class. These should be lists of file identifiers.
+##
+## By default they are the stdin and the stdout of the node, and they
+## are only filled in for commands that we (or the developer) has
+## specified a list of input resources that also contains files in the
+## arguments.
+
+## TODO: Add a field that categorizes the command in stateless, pure,
+## or anything else.
+
+## TODO: Make sure that these are filled wherever Nodes are
+## initialized.
+##
+## Note: Now that we have in_stream, out_stream, stdin and stdout are
+## just there as metadata, and are not really used.
     
 ## Question: Is this information adequate?
 ##
