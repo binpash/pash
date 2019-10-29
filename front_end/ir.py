@@ -190,8 +190,11 @@ class Command(Node):
         prefix = "Command"
         if (self.category == "stateless"):
             prefix = "Stateless"
-        output = "{}: \"{}\" in:{} out:{} opts:{}".format(
-            prefix, self.command, self.stdin, self.stdout, self.options)
+        # output = "{}: \"{}\" in:{} out:{} opts:{}".format(
+        #     prefix, self.command, self.stdin, self.stdout, self.options)
+        output = "{}: \"{}\" in:{} out:{}".format(
+            prefix, self.command, self.get_input_file_ids(),
+            self.get_output_file_ids())
         return output
     
 def create_command_assign_file_identifiers(ast, fileIdGen, command, options, stdin=None, stdout=None):
