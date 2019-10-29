@@ -68,6 +68,9 @@ class FileId:
         ## more than one resource.
         assert(self.resource is None)
         self.resource = resource
+
+    def get_resource(self):
+        return self.resource
     
     def toFileName(self, prefix):
         output = "{}_file{}".format(prefix, Find(self).ident)
@@ -76,9 +79,20 @@ class FileId:
     def isNull(self):
         return self.ident == "NULL"
 
-     ## TODO: Remember to change the files that the identifiers point
-     ## to when doing Union. In order for this to be done, we need to
-     ## define a union as a method of FileId.
+    def union(self, other):
+        Union(self, other)
+        my_resource = self.get_resource()
+        other_resource = Find(other).get_resource()
+        ## It shouldn't be the case that both resources are not NULL
+        assert(my_resource is None or
+               other_resource is None or
+               my_resource == other_resource)
+
+        if (my_resource is None):
+            self.set_resource(other_resource)
+        elif (other_resource is None):
+            Find(other).set_resource(my_resource)
+        
     
 class FileIdGen:
     def __init__(self):
@@ -303,7 +317,7 @@ class IR:
         ##           both self and other are not empty.
         assert(not self.stdout.isNull())
         assert(not other.stdin.isNull())
-        Union(self.stdout, other.stdin)
+        self.stdout.union(other.stdin)
         self.stdout = other.stdout
         
         ## Note: The ast is not extensible, and thus should be

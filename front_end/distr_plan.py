@@ -57,11 +57,6 @@ def simpl_file_distribution_planner(graph):
     ## We assume that all nodes have an in_stream and an out_stream
     ## list, and that these are the ones which will be used to create
     ## the graph.
-
-    ## TODO: Before implementing this, I have to implement the changes
-    ## in the ir. More precisely, I have to make sure that all files
-    ## that are in inputs and outputs of nodes have an associated file
-    ## identifier.
     
     ## TODO: Make a graph API in the IR class. Make sure that the
     ## incoming edges are numbered (in the beginning there should only
