@@ -104,6 +104,23 @@ class Node:
             self.ast, self.stdin, self.stdout)
         return output
 
+    def get_input_file_ids(self):
+        return [self.get_input_file_id(input_chunk) for input_chunk in self.in_stream]  
+
+    def get_input_file_id(self, input_chunk):
+        if (input_chunk == "stdin"):
+            return self.stdin
+        elif (isinstance(input_chunk, tuple)
+              and len(input_chunk) == 2
+              and input_chunk[0] == "option"):
+            ## If an option is asked, this node must be a command.
+            assert(isinstance(self, Command))
+            return self.options[input_chunk[1]]
+        else:
+            ## TODO: Complete this
+            assert(false)
+    
+
 ## Commands are specific Nodes that can be parallelized if they are
 ## classified as stateless, etc...
 class Command(Node):
@@ -188,6 +205,7 @@ def find_command_category(command, options):
 class IR:
     def __init__(self, nodes, stdin = None, stdout = None):
         self.nodes = nodes
+        self.edges = {}
         if(stdin is None):
             self.stdin = FileId("NULL")
         else:
@@ -211,7 +229,7 @@ class IR:
         
         ## This combines the two IRs by adding all of the nodes
         ## together, and by union-ing the stdout of the first with the
-        ## stdout of the second.
+        ## stdin of the second.
         ##
         ## Question: What happens if one of them is NULL. This
         ##           shouldn't be the case after we check that
@@ -221,12 +239,33 @@ class IR:
         Union(self.stdout, other.stdin)
         self.stdout = other.stdout
 
+        ## TODO: Find the node of the first graph that has the self IR
+        ## output, and the node in the second graph that has the IR
+        ## input, and add an edge connecting them.
+        ##
+        ## self.add_edge(from_node, to_node)
+        
         ## Note: The ast is not extensible, and thus should be
         ## invalidated if an operation happens on the IR
         self.ast = None
-            
-    ## Note: We assume that no nodes is an adequate condition to check
-    ##       emptiness.
+
+    ## TODO: Make sure that references to from, and to work as
+    ## expected.
+    def add_edge(self, id, from_node, to_node):
+        self.edges[id] = (from_node, to_node)
+
+    ## Returns the sources of the IR (i.e. the nodes that has no
+    ## incoming edge)
+    def source_nodes(self):
+        sources = [node for node in self.nodes if not self.has_incoming_edge(node)]
+        return sources
+
+    ## This function returns whether a node has an incoming edge in an IR
+    def has_incoming_edge(self, node):
+        return any([fid in self.edges for fid in node.get_input_file_ids()])
+    
+    ## Note: We assume that the lack of nodes is an adequate condition
+    ##       to check emptiness.
     def empty(self):
         return (len(self.nodes) == 0)
 
@@ -236,4 +275,5 @@ class IR:
     def valid(self):
         return (len(self.nodes) > 0 and
                 not self.stdin.isNull() and
-                not self.stdin.isNull())
+                not self.stdout.isNull())
+

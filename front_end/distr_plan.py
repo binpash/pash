@@ -63,9 +63,9 @@ def simpl_file_distribution_planner(graph):
     ## that are in inputs and outputs of nodes have an associated file
     ## identifier.
     
-    ## TODO: Make the graph from the IR. Make sure that the incoming
-    ## edges are numbered (in the beginning there should only be one
-    ## incoming edge for each node)
+    ## TODO: Make a graph API in the IR class. Make sure that the
+    ## incoming edges are numbered (in the beginning there should only
+    ## be one incoming edge for each node).
 
     ## TODO: Starting from the sources of the graph, if they are
     ## stateless, duplicate the command as many times as the number of
@@ -75,6 +75,9 @@ def simpl_file_distribution_planner(graph):
     ## Note: The above has to be done in a BFS fashion (starting from
     ## all sources simultaneously) so that we don't have to iterate to
     ## reach a fixpoint.
+    source_nodes = graph.source_nodes()
+    print("Source nodes")
+    print(source_nodes)
 
     ## The result of the above steps should be an expanded
     ## intermediate representation graph, that can be then mapped to
