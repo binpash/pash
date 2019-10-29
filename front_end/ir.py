@@ -13,6 +13,10 @@ def get_kv(dic):
     assert(len(dic_items) == 1)
     return dic_items[0]
 
+def format_arg_chars(arg_chars):
+    chars = [format_arg_char(arg_char) for arg_char in arg_chars]
+    return "".join(chars)
+
 def format_arg_char(arg_char):
     key, val = get_kv(arg_char)
     if (key == 'C'):
@@ -21,7 +25,7 @@ def format_arg_char(arg_char):
         # The $() is just for illustration. This is backticks
         return '$({})'.format(val)
     elif (key == 'Q'):
-        return '"{}"'.format("".join([format_arg_char(c) for c in val]))
+        return '"{}"'.format(format_arg_chars(val))
     elif (key == 'V'):
         return '${}'.format(val[2])
     else:
@@ -66,23 +70,6 @@ class FileIdGen:
         fileId = FileId(self.next)
         self.next += 1
         return fileId
-
-## TODO: Add a input_stream and output_stream as fields in the Node
-## class. These should be lists of file identifiers.
-##
-## By default they are the stdin and the stdout of the node, and they
-## are only filled in for commands that we (or the developer) has
-## specified a list of input resources that also contains files in the
-## arguments.
-
-## TODO: Add a field that categorizes the command in stateless, pure,
-## or anything else.
-
-## TODO: Make sure that these are filled wherever Nodes are
-## initialized.
-##
-## Note: Now that we have in_stream, out_stream, stdin and stdout are
-## just there as metadata, and are not really used.
     
 ## Question: Is this information adequate?
 ##
@@ -94,10 +81,14 @@ class FileIdGen:
 ## to find these file arguments (based on the analysis that we will
 ## do).
 class Node:
-    def __init__(self, ast, stdin=None, stdout=None):
+    def __init__(self, ast, in_stream=[], out_stream=[],
+                 stdin=None, stdout=None, category="none"):
         self.ast = ast
+        self.in_stream = in_stream
+        self.out_stream = out_stream
         self.stdin = stdin
         self.stdout = stdout
+        self.category = category
         
     def __repr__(self):
         output = "Node: \"{}\" in:{} out:{}".format(
@@ -108,13 +99,23 @@ class Node:
 ## classified as stateless, etc...
 class Command(Node):
     def __init__(self, ast, command, options, stdin=None, stdout=None):
-        super().__init__(ast, stdin, stdout)
+        in_stream, out_stream = find_command_input_output(command, options, stdin, stdout)
+        ## TODO: The options that are part of the input and output
+        ## streams must be swapped with file identifiers. This means
+        ## that each file identifier must have a unique resource that
+        ## it points to.
+
+        category = find_command_category(command, options)
+        super().__init__(ast, in_stream, out_stream, stdin, stdout, category)
         self.command = Arg(command)
         self.options = [Arg(opt) for opt in options]
         
     def __repr__(self):
-        output = "Command: \"{}\" in:{} out:{} opts:{}".format(
-            self.command, self.stdin, self.stdout, self.options)
+        prefix = "Command"
+        if (self.category == "stateless"):
+            prefix = "Stateless"
+        output = "{}: \"{}\" in:{} out:{} opts:{}".format(
+            prefix, self.command, self.stdin, self.stdout, self.options)
         return output
 
 class Arg:
@@ -122,9 +123,55 @@ class Arg:
         self.arg_char_list = arg_char_list
 
     def __repr__(self):
-        chars = [format_arg_char(arg_char) for arg_char in self.arg_char_list]
-        return "".join(chars)
+        return format_arg_chars(self.arg_char_list)
+    
+## This function returns the input and output streams of a command.
+##
+## The input and output lists, contain tuples that refer to options:
+## e.g. ("option", 0) or "stdin", "stdout" when they refer to stdin or
+## stdout.
+##
+## At the moment it has just hardcoded knowledge of the inputs and
+## outputs of several commands.
+##
+## By default they are the stdin and the stdout of the node, and they
+## are only filled in for commands that we (or the developer) has
+## specified a list of input resources that also contains files in the
+## arguments.
+def find_command_input_output(command, options, stdin, stdout):
+    command_string = format_arg_chars(command)
+    # print("Command to categorize:", command_string)
 
+    assert(isinstance(command_string, str))
+
+    ## TODO: Make a proper search that returns the command outputs and
+    ## inputs. This is hardcoded and wrong
+    print(" -- Warning: Argument inputs and outputs for: {} are hardcoded and possibly wrong"
+          .format(command_string))
+    
+    if (command_string == "cat"):
+        input_stream = [("option", i) for i in range(len(options))]
+        return (input_stream, ["stdout"])
+    else:
+        return (["stdin"], ["stdout"])
+
+
+## This functions finds and returns a string representing the command category
+def find_command_category(command, options):
+    command_string = format_arg_chars(command)
+    # print("Command to categorize:", command_string)
+
+    assert(isinstance(command_string, str))
+
+    ## TODO: Make a proper search that returns the command category
+    print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
+    
+    if (command_string == "cat"):
+        return "stateless"
+    else:
+        return "none"
+
+    
     
 ## Note: This might need more information. E.g. all the file
 ## descriptors of the IR, and in general any other local information
