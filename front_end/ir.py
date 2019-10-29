@@ -42,6 +42,11 @@ def char_to_arg_char(char):
     return { 'C' : ord(char) }
     
 ## Note: The NULL ident is considered to be the default unknown file id
+##
+## TODO: WARNING: We have to make sure that a resource in our IR can
+## be uniquely determined given a relative or absolute path. Actually,
+## we need to make sure that expanding any variable/string in our IR,
+## will always return the same result.
 class FileId:
     def __init__(self, ident, resource=None):
         self.ident = ident
