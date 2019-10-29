@@ -43,24 +43,37 @@ def char_to_arg_char(char):
     
 ## Note: The NULL ident is considered to be the default unknown file id
 class FileId:
-    def __init__(self, ident):
+    def __init__(self, ident, resource=None):
         self.ident = ident
         ## Initialize the parent
         MakeSet(self)
+        self.resource=resource
 
     def __repr__(self):
         ## Note: Outputs the parent of the union and not the file id
         ##       itself.
-        output = "#file{}".format(Find(self).ident)
-        # output = "#file{}".format(self.ident)
+        if (self.resource is None):
+            output = "#file{}".format(Find(self).ident)
+        else:
+            output = "#file{}({})".format(Find(self).ident, self.resource.__repr__())
         return output
 
+    def set_resource(self, resource):
+        ## The resource cannot be reset. A pointer can never point to
+        ## more than one resource.
+        assert(self.resource is None)
+        self.resource = resource
+    
     def toFileName(self, prefix):
         output = "{}_file{}".format(prefix, Find(self).ident)
         return output
     
     def isNull(self):
         return self.ident == "NULL"
+
+     ## TODO: Remember to change the files that the identifiers point
+     ## to when doing Union. In order for this to be done, we need to
+     ## define a union as a method of FileId.
     
 class FileIdGen:
     def __init__(self):
@@ -91,7 +104,7 @@ class FileIdGen:
 ## parallelized on their input stream or not.
 class Node:
     def __init__(self, ast, in_stream=[], out_stream=[],
-                 stdin=None, stdout=None, category="none"):
+                 category="none", stdin=None, stdout=None):
         self.ast = ast
         self.in_stream = in_stream
         self.out_stream = out_stream
@@ -103,36 +116,54 @@ class Node:
         output = "Node: \"{}\" in:{} out:{}".format(
             self.ast, self.stdin, self.stdout)
         return output
-
+        
     def get_input_file_ids(self):
-        return [self.get_input_file_id(input_chunk) for input_chunk in self.in_stream]  
+        return [self.get_file_id(input_chunk) for input_chunk in self.in_stream]  
 
-    def get_input_file_id(self, input_chunk):
-        if (input_chunk == "stdin"):
+    def get_output_file_ids(self):
+        return [self.get_file_id(output_chunk) for output_chunk in self.out_stream]  
+    
+    ## TODO: Rename
+    def get_file_id(self, chunk):
+        if (chunk == "stdout"):
+            return self.stdout
+        elif (chunk == "stdin"):
             return self.stdin
-        elif (isinstance(input_chunk, tuple)
-              and len(input_chunk) == 2
-              and input_chunk[0] == "option"):
+        elif (isinstance(chunk, tuple)
+              and len(chunk) == 2
+              and chunk[0] == "option"):
             ## If an option is asked, this node must be a command.
             assert(isinstance(self, Command))
-            return self.options[input_chunk[1]]
+            return self.options[chunk[1]]
         else:
             ## TODO: Complete this
-            assert(false)
+            print(chunk)
+            assert(False)
+
+    ## TODO: Is there a way to abstract the behaviour of these two functions?
+    def set_file_id(self, chunk, value):
+        if (chunk == "stdout"):
+            self.stdout = value
+        elif (chunk == "stdin"):
+            self.stdin = value
+        elif (isinstance(chunk, tuple)
+              and len(chunk) == 2
+              and chunk[0] == "option"):
+            ## If an option is asked, this node must be a command.
+            assert(isinstance(self, Command))
+            self.options[chunk[1]] = value
+        else:
+            ## TODO: Complete this
+            print(chunk, value)
+            assert(False)
     
 
 ## Commands are specific Nodes that can be parallelized if they are
 ## classified as stateless, etc...
 class Command(Node):
-    def __init__(self, ast, command, options, stdin=None, stdout=None):
-        in_stream, out_stream = find_command_input_output(command, options, stdin, stdout)
-        ## TODO: The options that are part of the input and output
-        ## streams must be swapped with file identifiers. This means
-        ## that each file identifier must have a unique resource that
-        ## it points to.
-
-        category = find_command_category(command, options)
-        super().__init__(ast, in_stream, out_stream, stdin, stdout, category)
+    def __init__(self, ast, command, options, in_stream, out_stream,
+                 category, stdin=None, stdout=None):
+        super().__init__(ast, in_stream, out_stream, category, stdin, stdout)
         self.command = Arg(command)
         self.options = [Arg(opt) for opt in options]
         
@@ -143,6 +174,37 @@ class Command(Node):
         output = "{}: \"{}\" in:{} out:{} opts:{}".format(
             prefix, self.command, self.stdin, self.stdout, self.options)
         return output
+    
+def create_command_assign_file_identifiers(ast, fileIdGen, command, options, stdin=None, stdout=None):
+    in_stream, out_stream = find_command_input_output(command, options, stdin, stdout)
+    category = find_command_category(command, options)
+    command = Command(ast, command, options, in_stream, out_stream, category, stdin, stdout)
+
+    ## The options that are part of the input and output streams must
+    ## be swapped with file identifiers. This means that each file
+    ## identifier must have a unique resource that it points to.
+    for opt_or_ch in in_stream:
+        new_fid = replace_file_arg_with_id(opt_or_ch, command, fileIdGen)
+        command.set_file_id(opt_or_ch, new_fid)
+
+    for opt_or_ch in out_stream:
+        new_fid = replace_file_arg_with_id(opt_or_ch, command, fileIdGen)
+        command.set_file_id(opt_or_ch, new_fid)
+        
+    return command
+
+def replace_file_arg_with_id(opt_or_channel, command, fileIdGen):
+    fid = command.get_file_id(opt_or_channel)
+    ## If the file is not a FileId, then it is some argument. We
+    ## create a file identifier, and replace it with that, and
+    ## make sure that the file identifier points to the argument.
+    if (not isinstance(fid, FileId)):
+        real_fid = fileIdGen.next_file_id()
+        real_fid.set_resource(fid)
+        return real_fid
+    else:
+        return fid
+
 
 class Arg:
     def __init__(self, arg_char_list):
@@ -238,21 +300,10 @@ class IR:
         assert(not other.stdin.isNull())
         Union(self.stdout, other.stdin)
         self.stdout = other.stdout
-
-        ## TODO: Find the node of the first graph that has the self IR
-        ## output, and the node in the second graph that has the IR
-        ## input, and add an edge connecting them.
-        ##
-        ## self.add_edge(from_node, to_node)
         
         ## Note: The ast is not extensible, and thus should be
         ## invalidated if an operation happens on the IR
         self.ast = None
-
-    ## TODO: Make sure that references to from, and to work as
-    ## expected.
-    def add_edge(self, id, from_node, to_node):
-        self.edges[id] = (from_node, to_node)
 
     ## Returns the sources of the IR (i.e. the nodes that has no
     ## incoming edge)
@@ -261,8 +312,16 @@ class IR:
         return sources
 
     ## This function returns whether a node has an incoming edge in an IR
+    ##
+    ## WARNING: At the moment is is extremely naive and slow.
     def has_incoming_edge(self, node):
-        return any([fid in self.edges for fid in node.get_input_file_ids()])
+        for incoming_fid in node.get_input_file_ids():
+            for other_node in self.nodes:
+                ## Note: What if other_node == node?
+                if (Find(incoming_fid) in
+                    [Find(out_fid) for out_fid in other_node.get_output_file_ids()]):
+                    return True
+        return False
     
     ## Note: We assume that the lack of nodes is an adequate condition
     ##       to check emptiness.
