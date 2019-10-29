@@ -17,6 +17,70 @@ def main():
     shell_string = ast_to_shell(ir_node.ast)
     print(shell_string)
 
+    simpl_file_distribution_planner(ir_node)
+
+    
+    ## Notes:
+    ##
+    ## Each node in the graph has one input stream and one output
+    ## stream.
+    ##
+    ## However, the input (and the output) might be in several
+    ## different "locations". So the input (and output) can be
+    ## represented as a sequence of resources. These can be files,
+    ## urls, blocks of files in HDFS, etc.
+    ##
+    ## The distribution planner takes a graph, where the edges
+    ## arriving to a node are uniquely numbered depending on the
+    ## position that they have in the sequence of inputs to the
+    ## incoming node.
+    ##
+    ## The distribution planner also takes information about the
+    ## available computational resources, such as nodes in the system,
+    ## and their cores, etc.
+
+## This is a simplistic planner, that pushes the available
+## parallelization from the inputs in file stateless commands. The
+## planner starts from the sources of the graph, and pushes
+## file parallelization as far as possible.
+##
+## It returns a maximally expanded (regarding files) graph, that can
+## be scheduled depending on the available computational resources.
+def simpl_file_distribution_planner(graph):
+    print("Intermediate representation:")
+    print(graph)
+
+    ## We assume that the file identifiers that have been added in the
+    ## intermediate representation show the edges between different IR
+    ## nodes.
+    ##
+    ## We assume that all nodes have an in_stream and an out_stream
+    ## list, and that these are the ones which will be used to create
+    ## the graph.
+
+    ## TODO: Before implementing this, I have to implement the changes
+    ## in the Node class, and in the ast_to_ir.
+    
+    ## TODO: Make the graph from the IR. Make sure that the incoming
+    ## edges are numbered (in the beginning there should only be one
+    ## incoming edge for each node)
+
+    ## TODO: Starting from the sources of the graph, if they are
+    ## stateless, duplicate the command as many times as the number of
+    ## identifiers in its in_stream. Then connect their outputs in
+    ## order to next command.
+    ##
+    ## Note: The above has to be done in a BFS fashion (starting from
+    ## all sources simultaneously) so that we don't have to iterate to
+    ## reach a fixpoint.
+
+    ## The result of the above steps should be an expanded
+    ## intermediate representation graph, that can be then mapped to
+    ## real nodes.
+
+    
+
+    
     
     ## TODO: As an integration experiment make a distribution planner
     ## that just uses Greenberg's parser to output shell code from the
@@ -29,8 +93,12 @@ def main():
     ## In general, we probably have to find a way to pass around a
     ## shell's state, as this will be essential for the distributed
     ## setting too.
-    
-    ## Notes:
+    ##
+    ## Note: A way to do this is by using set > temp_file. Source:
+    ## https://arstechnica.com/civis/viewtopic.php?f=16&t=805521
+
+
+    ## Old Notes:
     ##
     ## A distribution planner that uses equations (like the ones we
     ## have described with ++) could be separated into three parts:

@@ -125,6 +125,14 @@ def compile_node_command(construct, lineno, assignments, args, redir_list, fileI
                                    stdout = stdout_fid)],
                           stdin = stdin_fid,
                           stdout = stdout_fid)
+
+        ## TODO: Check if command is in the list of known commands. If
+        ## so, we can define what is its input and output stream. For
+        ## now just hardcode it for several commands.
+
+        ## TODO: Check the category of the command. For now hardcode
+        ## it for several commands
+        
         compiled_ast.set_ast(ast_node)
     
     return compiled_ast
