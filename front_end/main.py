@@ -8,7 +8,8 @@ from json_ast import *
 #
 # json_filename = "../scripts/json/compile.sh.json"
 # json_filename = "../scripts/json/grep.sh.json"
-json_filename = "../scripts/json/minimal.sh.json"
+# json_filename = "../scripts/json/minimal.sh.json"
+json_filename = "../scripts/json/minimal2.sh.json"
 # json_filename = "../scripts/json/shortest-scripts.sh.json"
 # json_filename = "../scripts/json/spell.sh.json"
 # json_filename = "../scripts/json/topn.sh.json"
