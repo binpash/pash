@@ -291,10 +291,11 @@ def replace_ir(ast_node, irFileGen):
     ## TODO: Remember to not have the prefix hardocded :( In order to
     ## do this properly, I have to set this directory up when
     ## execution starts.
-
+    prefix = "/tmp/dish_temp_ir"
+    
     ## TODO: I probably have to generate random file names for the irs, so
     ## that multiple executions of dish don't interfere.
-    ir_filename = ir_file_id.toFileName("/tmp/dish_temp_ir")
+    ir_filename = ir_file_id.toFileName(prefix)
     
     ## Serialize the node in a file
     with open(ir_filename, "wb") as ir_file:
