@@ -257,7 +257,7 @@ public abstract class Graph {
                 SystemMessage.RemoteException ex = (SystemMessage.RemoteException) rx;
                 throw new RuntimeException("An error happened during the execution of operator '" + ex.getOperatorName() + "'.\n" + ex.getMessage());
             } else if (rx instanceof SystemMessage.ComputationFinished)
-                System.out.println("Graph has finished computing successfully. The output was written into the provided file.");
+                System.out.println("The topology has finished computing successfully. The output results are available to be used.");
         } finally {
             serverSocket.close();
         }

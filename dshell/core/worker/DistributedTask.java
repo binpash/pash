@@ -113,9 +113,9 @@ public class DistributedTask {
                             t.start();
                         }
 
-                        //workerServerSocketBarrier.await();
+                        workerServerSocketBarrier.await();
 
-                        Thread.sleep(100);
+                        //Thread.sleep(100);
                         newThread.start();
                     } else {
                         exceptionHandlingList.add(pipelineInitiator);
