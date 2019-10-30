@@ -1,38 +1,45 @@
 package dshell.core.worker;
 
-import java.util.ArrayDeque;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class InternalBuffer {
-    private final static int BUFFER_CAPACITY = 100;
+    private final static int BUFFER_CAPACITY = 1024;
 
-    private ArrayDeque<Object> buffer = new ArrayDeque<>(BUFFER_CAPACITY);
-    private Semaphore mutex, emptySlots, fullSlots;
+    private ArrayBlockingQueue<Object> buffer = new ArrayBlockingQueue<>(BUFFER_CAPACITY, true);
+    //private Semaphore mutex, emptySlots, fullSlots;
 
-    public InternalBuffer() {
+    /*public InternalBuffer() {
         mutex = new Semaphore(1);
         emptySlots = new Semaphore(BUFFER_CAPACITY, true);
         fullSlots = new Semaphore(0, true);
-    }
+    }*/
 
     public void write(Object data) {
-        emptySlots.acquireUninterruptibly();
+        try {
+            buffer.put(data);
+        } catch (Exception ex) {
+            // won't happen
+        }
+        /*emptySlots.acquireUninterruptibly();
         mutex.acquireUninterruptibly();
         buffer.add(data);
         mutex.release();
-        fullSlots.release();
+        fullSlots.release();*/
     }
 
     public Object read() {
-        Object d;
+        Object d = null;
+        try {
+            d = buffer.take();
+        } catch (Exception ex) {
+            // won't happen
+        }
 
-        fullSlots.acquireUninterruptibly();
+        /*fullSlots.acquireUninterruptibly();
         mutex.acquireUninterruptibly();
         d = buffer.poll();
         mutex.release();
-        emptySlots.release();
+        emptySlots.release();*/
 
         return d;
     }
