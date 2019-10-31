@@ -9,8 +9,8 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 public class DistributedTask {
-    private static String JAVA_PATH;            //= "/usr/lib/jvm/java-11-openjdk-amd64/bin/java";
-    private final static String WORKER_NODE;    //= "/home/cvetkovic/Desktop/dshell_executable/dshell.jar";
+    private static String JAVA_PATH = "/usr/lib/jvm/java-11-openjdk-amd64/bin/java";
+    private final static String WORKER_NODE = "/home/cvetkovic/Desktop/dshell_executable/dshell.jar";
 
     private static int workerID = 0;
     private static int addPortWith = 0;
@@ -19,8 +19,8 @@ public class DistributedTask {
     static {
         try {
             // TODO: fix JAVA_HOME
-            JAVA_PATH = "/usr/bin/java";                        // System.getenv("JAVA_HOME") + "/java";
-            WORKER_NODE = "/home/cvetkovic/dshell/dshell.jar";  //
+            //JAVA_PATH = "/usr/bin/java";                        // System.getenv("JAVA_HOME") + "/java";
+            //WORKER_NODE = "/home/cvetkovic/dshell/dshell.jar";  //
 
 
             /*File jarDir = new File(ClassLoader.getSystemClassLoader().getResource(".").getPath());

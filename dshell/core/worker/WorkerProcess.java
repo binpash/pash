@@ -80,10 +80,10 @@ public class WorkerProcess implements Runnable {
                         internalThreads[i].start();
 
                         inputGateThreads.add(Executors.callable(() -> {
-                            // connect by socket with all of them
-                            if (red.isInitialOperator() == false)
+                            // signal that thread has finished setup -> only for THREADED EXECUTION MODE
+                            if (red.isInitialOperator() == false && socketBarrier != null)
                                 socketBarrier.countDown();
-                            
+
                             try (Socket inputDataSocket = inputDataServerSocket.accept();
                                  ObjectInputStream ois = new ObjectInputStream(inputDataSocket.getInputStream())) {
                                 while (true) {
@@ -92,9 +92,9 @@ public class WorkerProcess implements Runnable {
                                     if (received instanceof SystemMessage.EndOfData)
                                         break;
                                     else {
-                                        //operator.next(inputChannelParameter, received);
+                                        operator.next(inputChannelParameter, received);
 
-                                        internalBuffers[inputChannelParameter].write(received);
+                                        //internalBuffers[inputChannelParameter].write(received);
                                     }
                                 }
                             } catch (Exception ex) {
@@ -121,7 +121,8 @@ public class WorkerProcess implements Runnable {
             } else // this will only be called if operator is initial
                 operator.next(0, null);
 
-            if (operator.getOperatorType() == OperatorType.HDFS_OUTPUT || operator.getOperatorType() == OperatorType.SOCKETED_OUTPUT) {
+            if (operator.getOperatorType() == OperatorType.HDFS_OUTPUT ||
+                    operator.getOperatorType() == OperatorType.SOCKETED_OUTPUT) {
 
                 // note: this operator is the last operator in the pipeline and therefore it sends signal back to client
                 // that the computation has been completed

@@ -4,7 +4,7 @@ import dshell.core.interfaces.Consumer;
 import dshell.core.misc.SystemMessage;
 
 public class SocketToProcessThread implements Runnable {
-    private InternalBuffer internalBuffer;
+    private volatile InternalBuffer internalBuffer;
     private int inputChannel;
     private Consumer nextOperator;
 

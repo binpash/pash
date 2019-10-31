@@ -5,7 +5,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class InternalBuffer {
     private final static int BUFFER_CAPACITY = 1024;
 
-    private ArrayBlockingQueue<Object> buffer = new ArrayBlockingQueue<>(BUFFER_CAPACITY, true);
+    private volatile ArrayBlockingQueue<Object> buffer = new ArrayBlockingQueue<>(BUFFER_CAPACITY, true);
     //private Semaphore mutex, emptySlots, fullSlots;
 
     /*public InternalBuffer() {
