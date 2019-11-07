@@ -13,22 +13,39 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
-public class WorkerProcess {
+public class WorkerProcess implements Runnable {
     // if this is changed to threaded implementation remove keyword 'static'
-    private static RemoteExecutionData red;
+    private RemoteExecutionData red;
+    private int topologyID;
+    private volatile CountDownLatch socketBarrier;
 
-    /*public WorkerProcess(RemoteExecutionData red) {
+    public WorkerProcess(RemoteExecutionData red, CountDownLatch socketBarrier, int topologyID) {
         this.red = red;
-    }*/
+        this.topologyID = topologyID;
+        this.socketBarrier = socketBarrier;
+    }
 
+    // This method will only be called in process mode
     public static void main(String[] args) {
-        red = deserializeArgs(args);
+        RemoteExecutionData rem = deserializeArgs(args);
+        WorkerProcess workerProcess = new WorkerProcess(rem, null, Integer.parseInt(args[args.length - 1]));
+
+        // Will not be executed as a thread
+        workerProcess.run();
+    }
+
+    // This method is used both for the execution in threaded and in process mode
+    @Override
+    public void run() {
         try {
             Operator operator = red.getOperator();
+
+            InternalBuffer[] internalBuffers = new InternalBuffer[operator.getInputArity()];
+            Thread[] internalThreads = new Thread[operator.getInputArity()];
 
             if (operator.getOperatorType() != OperatorType.HDFS_OUTPUT &&
                     operator.getOperatorType() != OperatorType.SOCKETED_OUTPUT) {
@@ -43,49 +60,69 @@ public class WorkerProcess {
             // do not wait for data in case that the operator is the first one to execute
             if (!red.isInitialOperator()) {
                 // all the operators that outputting to this one share the same port
+
                 try (ServerSocket inputDataServerSocket = new ServerSocket(red.getInputPort())) {
                     // receive data from all of them
                     ExecutorService inputThreadPool = Executors.newFixedThreadPool(operator.getInputArity());
                     List<Callable<Object>> inputGateThreads = new ArrayList<>(operator.getInputArity());
+                    CountDownLatch endOfSignalBarrier = new CountDownLatch(operator.getInputArity());
 
                     for (int i = 0; i < operator.getInputArity(); i++) {
                         final int inputChannelParameter = i;
-                        inputGateThreads.add(Executors.callable(() -> {// connect by socket with all of them
+
+                        internalBuffers[i] = new InternalBuffer();
+                        internalThreads[i] = new Thread(new SocketToProcessThread(internalBuffers[i],
+                                inputChannelParameter,
+                                operator));
+                        internalThreads[i].setUncaughtExceptionHandler((thread, throwable) -> {
+                            throw new WorkerException(throwable.getMessage(), topologyID);
+                        });
+                        internalThreads[i].start();
+
+                        inputGateThreads.add(Executors.callable(() -> {
+                            // signal that thread has finished setup -> only for THREADED EXECUTION MODE
+                            if (red.isInitialOperator() == false && socketBarrier != null)
+                                socketBarrier.countDown();
+
                             try (Socket inputDataSocket = inputDataServerSocket.accept();
                                  ObjectInputStream ois = new ObjectInputStream(inputDataSocket.getInputStream())) {
-                                byte[] data = null;
-
                                 while (true) {
                                     Object received = ois.readObject();
 
-                                    if (received instanceof SystemMessage.EndOfData) {
+                                    if (received instanceof SystemMessage.EndOfData)
                                         break;
-                                    } else {
-                                        data = (byte[]) received;
+                                    else {
+                                        operator.next(inputChannelParameter, received);
 
-                                        // invoking the operator's computation; after the computation, the data is sent via socket to next node
-                                        // if this is split operator the data splitting will be done inside an operator and the data will be
-                                        // outputted to the sockets that were created few lines before this
-                                        operator.next(inputChannelParameter, data);
+                                        //internalBuffers[inputChannelParameter].write(received);
                                     }
                                 }
                             } catch (Exception ex) {
                                 ex.printStackTrace();
+                                throw new WorkerException(ex.getMessage(), topologyID);
                             }
+
+                            endOfSignalBarrier.countDown();
                         }));
                     }
 
                     // wait for the listening threads to complete before proceeding any further
                     inputThreadPool.invokeAll(inputGateThreads);
+                    endOfSignalBarrier.await();
 
                     // all the threads have now finished outputting
                     for (int j = 0; j < operator.getInputArity(); j++)
                         operator.next(j, new SystemMessage.EndOfData());
+                } catch (Exception ex) {
+                    System.err.println(red.getInputPort());
+                    ex.printStackTrace();
+                    throw new WorkerException(ex.getMessage(), topologyID);
                 }
             } else // this will only be called if operator is initial
                 operator.next(0, null);
 
-            if (operator.getOperatorType() == OperatorType.HDFS_OUTPUT || operator.getOperatorType() == OperatorType.SOCKETED_OUTPUT) {
+            if (operator.getOperatorType() == OperatorType.HDFS_OUTPUT ||
+                    operator.getOperatorType() == OperatorType.SOCKETED_OUTPUT) {
 
                 // note: this operator is the last operator in the pipeline and therefore it sends signal back to client
                 // that the computation has been completed
@@ -106,6 +143,8 @@ public class WorkerProcess {
             } catch (Exception e) {
                 System.err.println("Error communicating with client whose submitted job was aborted.");
             }
+
+            throw new WorkerException(ex.getMessage(), topologyID);
         }
     }
 
