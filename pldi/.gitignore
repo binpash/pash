@@ -17,16 +17,3 @@
 revision.tex
 *.ent
 **/.idea
-*~
-*.dump
-
-## Ocaml
-*.cmi
-*.cmo
-*.cmx
-*.native
-*.byte
-*.o
-
-# local directory w/ related work
-./papers
