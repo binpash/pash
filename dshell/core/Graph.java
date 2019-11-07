@@ -31,7 +31,7 @@ public abstract class Graph {
         getOperator().next(0, null);
     }
 
-    public void executeRemote(int clientSocket) {
+    public long executeRemote(int clientSocket) {
         try {
             // uploading has to be done before the graph expansion
             // TODO: uncomment HDFS
@@ -40,7 +40,9 @@ public abstract class Graph {
             delegateWorkers();
 
             // block here until the computation has finished distributively
+            long start = System.currentTimeMillis();
             waitWhileNotFinished(clientSocket);
+            return System.currentTimeMillis() - start;
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         }
@@ -83,6 +85,7 @@ public abstract class Graph {
                     previous = replicas;
                 } else if (current.getParallelizationHint() > 1 && next.getParallelizationHint() > 1 && current.getParallelizationHint() != next.getParallelizationHint()) {
                     // TODO: solve this by adding merger and the splitter between 'current' and 'next'
+                    // maybe another way (??? SEMANTICS ???) would be to link everything with everything
                     // -------------------------------------------
                     throw new RuntimeException("Could not resolve this type of graph.");
                 } else if (current.getParallelizationHint() > 1 && next.getParallelizationHint() == 1) {
@@ -254,7 +257,7 @@ public abstract class Graph {
                 SystemMessage.RemoteException ex = (SystemMessage.RemoteException) rx;
                 throw new RuntimeException("An error happened during the execution of operator '" + ex.getOperatorName() + "'.\n" + ex.getMessage());
             } else if (rx instanceof SystemMessage.ComputationFinished)
-                System.out.println("Graph has finished computing successfully. The output was written into the provided file.");
+                System.out.println("The topology has finished computing successfully. The output results are available to be used.");
         } finally {
             serverSocket.close();
         }
