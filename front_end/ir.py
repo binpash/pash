@@ -279,14 +279,26 @@ class Command(Node):
         new_in_stream = [self.in_stream[new_in_stream_index]]
         new_out_stream = [self.out_stream[new_out_stream_index]]
 
+        if(new_in_stream[0] == "stdin"):
+            new_stdin = in_fid
+        else:
+            ## Question: Is that valid?
+            new_stdin = self.stdin
+
+        if(new_out_stream[0] == "stdout"):
+            new_stdout = out_fid
+        else:
+            ## Question: Is that valid?
+            new_stdout = self.stdout
+
         new_command = Command(None, # The ast is None
                               self.command,
                               self.options,
                               new_in_stream,
                               new_out_stream,
                               self.category,
-                              self.stdin,
-                              out_fid)
+                              new_stdin,
+                              new_stdout)
         ## Question: Is it valid setting stdin and stdout to the stdin
         ## and stdout of the current command?
         return new_command
@@ -374,8 +386,10 @@ def find_command_category(command, options):
 
     ## TODO: Make a proper search that returns the command category
     print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
-    
-    if (command_string == "cat"):
+
+    stateless = ["cat", "tr", "grep"]
+
+    if (command_string in stateless):
         return "stateless"
     else:
         return "none"
@@ -413,7 +427,7 @@ class IR:
             self.stdout = stdout
 
     def __repr__(self):
-        output = "(|-{} IR: {} {}-|)".format(self.stdin, self.nodes, self.stdout)
+        output = "(|-{} IR: {} {}-|)".format(self.stdin.flatten(), self.nodes, self.stdout.flatten())
         return output
 
     def set_ast(self, ast):
