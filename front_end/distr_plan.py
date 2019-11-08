@@ -76,8 +76,12 @@ def simpl_file_distribution_planner(graph):
 
 def naive_parallelize_stateless_nodes_bfs(graph):
     source_nodes = graph.source_nodes()
-    print("Source nodes:")
-    print(source_nodes)
+    # print("Source nodes:")
+    # print(source_nodes)
+
+    ## Generate a fileIdGen from a graph, that doesn't class with the
+    ## current graph fileIds.
+    fileIdGen = graph.get_file_id_gen()
 
     nodes = source_nodes
     while (len(nodes) > 0):
@@ -87,18 +91,42 @@ def naive_parallelize_stateless_nodes_bfs(graph):
         nodes += next_nodes
         ## If the command is stateless and has more than one inputs,
         ## it can be parallelized
-        if (curr.category == "stateless" and len(curr.in_stream) > 0):
-            print("To parallelize:")
-            print(curr)
-            print("Next nodes:")
-            print(next_nodes)
-            ## TODO: Parallelize the stateless by finding the location
-            ## of its outgoing fid in each next node. Then, in its
-            ## place, generate as many files as the size of the
-            ## in_stream. Duplicate the current node as many times as
-            ## the input stream and give its output file identifiers
-            ## the generated fids in order.
-            ##
+        input_file_ids = curr.get_flat_input_file_ids()
+        if (curr.category == "stateless" and len(input_file_ids) > 1):
+            # print("To parallelize:")
+            # print(curr)
+            # print("Next nodes:")
+            # print(next_nodes)
+
+            ## Question: What does it mean for a command to have more
+            ## than one next_node? Does it mean that it duplicates its
+            ## output to all of them? Or does it mean that it writes
+            ## some to the first and some to the second? Both are not
+            ## very symmetric, but I think I would prefer the first.
+            assert(len(next_nodes) == 1)
+            next_node = next_nodes[0]
+
+            ## We assume that every command has one output_file_id for
+            ## now. I am not sure if this must be lifted. This seems
+            ## to be connected to the one above.
+            out_edge_file_ids = curr.get_output_file_ids()
+            assert(len(out_edge_file_ids) == 1)
+            out_edge_file_id = out_edge_file_ids[0]
+
+            ## Add children to the output file (thus also changing the
+            ## input file of the next command to have children)
+            new_output_file_ids = [fileIdGen.next_file_id() for in_fid in input_file_ids]
+            out_edge_file_id.set_children(new_output_file_ids)
+
+            ## For each new input and output file id, make a new command
+            new_commands = curr.stateless_duplicate()
+            # print("New commands:")
+            # print(new_commands)
+
+            graph.remove_node(curr)
+            for new_com in new_commands:
+                graph.add_node(new_com)
+
             ## WARNING: In order for the above to not mess up
             ## anything, there must be no other node that writes to
             ## the same output as the curr node. Otherwise, the above
@@ -109,11 +137,6 @@ def naive_parallelize_stateless_nodes_bfs(graph):
             ## the intermediate representation and the above procedure
             ## so that this assumption is lifted (either by not
             ## parallelizing, or by properly handling this case)
-
-            ## TODO: In order to do this, I have to generate a
-            ## fileIdGen from a graph, that doesn't class with the
-            ## current graph fileIds.
-
 
 
 

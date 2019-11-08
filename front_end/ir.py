@@ -3,7 +3,7 @@ from union_find import *
 ### Utils
 
 ## TODO: Move to another file
-def flatten(l):
+def list_flatten(l):
     return [item for sublist in l for item in sublist]
 
 ## This function gets a key and a value from a dictionary that only
@@ -40,19 +40,27 @@ def string_to_argument(string):
 ## characters
 def char_to_arg_char(char):
     return { 'C' : ord(char) }
-    
+
 ## Note: The NULL ident is considered to be the default unknown file id
 ##
 ## TODO: WARNING: We have to make sure that a resource in our IR can
 ## be uniquely determined given a relative or absolute path. Actually,
 ## we need to make sure that expanding any variable/string in our IR,
 ## will always return the same result.
+##
+## WARNING: At the moment it is not clear what resources are saved in
+## the Find(self) and in self. This might create problems down the
+## road.
+##
+## TODO: When doing union, I have to really make both file ids point
+## to the same file.
 class FileId:
-    def __init__(self, ident, resource=None):
+    def __init__(self, ident, resource=None, children = []):
         self.ident = ident
         ## Initialize the parent
         MakeSet(self)
         self.resource=resource
+        self.children = children
 
     def __repr__(self):
         ## Note: Outputs the parent of the union and not the file id
@@ -71,11 +79,20 @@ class FileId:
 
     def get_resource(self):
         return self.resource
-    
+
+    ## TODO: We might need to reconstruct the parents from children,
+    ## so we might have to add a parent field in file ids.
+    def set_children(self, children):
+        assert(self.children == [])
+        self.children = children
+
+    def get_children(self):
+        return self.children
+
     def toFileName(self, prefix):
         output = "{}_file{}".format(prefix, Find(self).ident)
         return output
-    
+
     def isNull(self):
         return self.ident == "NULL"
 
@@ -100,16 +117,25 @@ class FileId:
         except ValueError:
             return None
 
-    
+    def get_ident(self):
+        return self.ident
+
+    def flatten(self):
+        if(len(self.get_children()) > 0):
+            return list_flatten([child.flatten() for child in self.get_children()])
+        else:
+            return [self]
+
+
 class FileIdGen:
-    def __init__(self):
-        self.next = 0
+    def __init__(self, next = 0):
+        self.next = next + 1
 
     def next_file_id(self):
         fileId = FileId(self.next)
         self.next += 1
         return fileId
-    
+
 ## Question: Is this information adequate?
 ##
 ## TODO: What other information should a node of the IR contain?
@@ -137,18 +163,26 @@ class Node:
         self.stdin = stdin
         self.stdout = stdout
         self.category = category
-        
+
     def __repr__(self):
         output = "Node: \"{}\" in:{} out:{}".format(
             self.ast, self.stdin, self.stdout)
         return output
-        
+
+    ## These two commands return the flattened fileId list. Meaning
+    ## that they return the children, if they exist.
+    def get_flat_input_file_ids(self):
+        return list_flatten([Find(file_id).flatten() for file_id in self.get_input_file_ids()])
+
+    def get_flat_output_file_ids(self):
+        return list_flatten([Find(file_id).flatten() for file_id in self.get_output_file_ids()])
+
     def get_input_file_ids(self):
-        return [self.get_file_id(input_chunk) for input_chunk in self.in_stream]  
+        return [self.get_file_id(input_chunk) for input_chunk in self.in_stream]
 
     def get_output_file_ids(self):
-        return [self.get_file_id(output_chunk) for output_chunk in self.out_stream]  
-    
+        return [self.get_file_id(output_chunk) for output_chunk in self.out_stream]
+
     ## TODO: Rename
     def get_file_id(self, chunk):
         if (chunk == "stdout"):
@@ -182,7 +216,23 @@ class Node:
             ## TODO: Complete this
             print(chunk, value)
             assert(False)
-    
+
+    def find_file_id_in_in_stream(self, fileId):
+        return self.find_file_id_in_stream(fileId, self.in_stream)
+
+    def find_file_id_in_out_stream(self, fileId):
+        return self.find_file_id_in_stream(fileId, self.out_stream)
+
+    def find_file_id_in_stream(self, file_id, stream):
+        index = 0
+        for chunk in stream:
+            chunk_file_id = Find(self.get_file_id(chunk))
+            flat_file_ids = chunk_file_id.flatten()
+            if(file_id in flat_file_ids):
+                return index
+            index += 1
+        return None
+
 
 ## Commands are specific Nodes that can be parallelized if they are
 ## classified as stateless, etc...
@@ -191,8 +241,13 @@ class Command(Node):
                  category, stdin=None, stdout=None):
         super().__init__(ast, in_stream, out_stream, category, stdin, stdout)
         self.command = Arg(command)
-        self.options = [Arg(opt) for opt in options]
-        
+        if(all([isinstance(opt, FileId) for opt in options])):
+            ## This is how commands are initialized when duplicating
+            self.options = options
+        else:
+            ## This is how commands are initialized in the AST
+            self.options = [Arg(opt) for opt in options]
+
     def __repr__(self):
         prefix = "Command"
         if (self.category == "stateless"):
@@ -200,10 +255,43 @@ class Command(Node):
         # output = "{}: \"{}\" in:{} out:{} opts:{}".format(
         #     prefix, self.command, self.stdin, self.stdout, self.options)
         output = "{}: \"{}\" in:{} out:{}".format(
-            prefix, self.command, self.get_input_file_ids(),
-            self.get_output_file_ids())
+            prefix, self.command, self.get_flat_input_file_ids(),
+            self.get_flat_output_file_ids())
         return output
-    
+
+    def stateless_duplicate(self):
+        assert(self.category == "stateless")
+        input_file_ids = self.get_flat_input_file_ids()
+        output_file_ids = self.get_flat_output_file_ids()
+
+        in_out_file_ids = zip(input_file_ids, output_file_ids)
+
+        new_commands = [self.make_duplicate_command(in_fid, out_fid) for in_fid, out_fid in in_out_file_ids]
+
+        return new_commands
+
+    def make_duplicate_command(self, in_fid, out_fid):
+
+        ## First find what does the new file identifier refer to
+        ## (stdin, or some argument)
+        new_in_stream_index = self.find_file_id_in_in_stream(in_fid)
+        new_out_stream_index = self.find_file_id_in_out_stream(out_fid)
+        new_in_stream = [self.in_stream[new_in_stream_index]]
+        new_out_stream = [self.out_stream[new_out_stream_index]]
+
+        new_command = Command(None, # The ast is None
+                              self.command,
+                              self.options,
+                              new_in_stream,
+                              new_out_stream,
+                              self.category,
+                              self.stdin,
+                              out_fid)
+        ## Question: Is it valid setting stdin and stdout to the stdin
+        ## and stdout of the current command?
+        return new_command
+
+
 def create_command_assign_file_identifiers(ast, fileIdGen, command, options, stdin=None, stdout=None):
     in_stream, out_stream = find_command_input_output(command, options, stdin, stdout)
     category = find_command_category(command, options)
@@ -237,7 +325,11 @@ def replace_file_arg_with_id(opt_or_channel, command, fileIdGen):
 
 class Arg:
     def __init__(self, arg_char_list):
-        self.arg_char_list = arg_char_list
+        if(isinstance(arg_char_list, Arg)):
+           ## TODO: We might need to copy here?
+           self.arg_char_list = arg_char_list.arg_char_list
+        else:
+           self.arg_char_list = arg_char_list
 
     def __repr__(self):
         return format_arg_chars(self.arg_char_list)
@@ -288,8 +380,14 @@ def find_command_category(command, options):
     else:
         return "none"
 
-    
-    
+
+## This function gets a file identifier and returns the maximum among
+## its, and its parents identifier (parent regarding Union Find)
+def get_larger_file_id_ident(file_id):
+    my_ident = file_id.get_ident()
+    find_ident = Find(file_id).get_ident()
+    return max(my_ident, find_ident)
+
 ## Note: This might need more information. E.g. all the file
 ## descriptors of the IR, and in general any other local information
 ## that might be relevant.
@@ -368,7 +466,26 @@ class IR:
                 if (not outgoing_fid.find_fid_list(other_node.get_input_file_ids()) is None):
                     next_nodes.append(other_node)
         return next_nodes
-    
+
+    ## This command gets all file identifiers of the graph, and
+    ## returns a fileId generator that won't clash with the existing
+    ## ones.
+    def get_file_id_gen(self):
+        max_id = 0
+        max_id = max(get_larger_file_id_ident(self.stdin), max_id)
+        max_id = max(get_larger_file_id_ident(self.stdout), max_id)
+        for node in self.nodes:
+            node_file_ids = node.get_input_file_ids() + node.get_output_file_ids()
+            for file_id in node_file_ids:
+                max_id = max(get_larger_file_id_ident(file_id), max_id)
+        return FileIdGen(max_id)
+
+    def remove_node(self, node):
+        self.nodes.remove(node)
+
+    def add_node(self, node):
+        self.nodes.append(node)
+        
     ## Note: We assume that the lack of nodes is an adequate condition
     ##       to check emptiness.
     def empty(self):
