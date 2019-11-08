@@ -103,8 +103,7 @@ def naive_parallelize_stateless_nodes_bfs(graph):
             ## output to all of them? Or does it mean that it writes
             ## some to the first and some to the second? Both are not
             ## very symmetric, but I think I would prefer the first.
-            assert(len(next_nodes) == 1)
-            next_node = next_nodes[0]
+            assert(len(next_nodes) <= 1)
 
             ## We assume that every command has one output_file_id for
             ## now. I am not sure if this must be lifted. This seems
