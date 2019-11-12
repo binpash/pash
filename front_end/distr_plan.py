@@ -19,7 +19,6 @@ def main():
 
     simpl_file_distribution_planner(ir_node)
 
-    
     ## Notes:
     ##
     ## Each node in the graph has one input stream and one output
@@ -57,9 +56,9 @@ def simpl_file_distribution_planner(graph):
     ## We assume that all nodes have an in_stream and an out_stream
     ## list, and that these are the ones which will be used to create
     ## the graph.
-    
-    ## TODO: Starting from the sources of the graph, if they are
-    ## stateless, duplicate the command as many times as the number of
+
+    ## Starting from the sources of the graph, if they are stateless,
+    ## duplicate the command as many times as the number of
     ## identifiers in its in_stream. Then connect their outputs in
     ## order to next command.
     ##
@@ -79,6 +78,10 @@ def naive_parallelize_stateless_nodes_bfs(graph):
     # print("Source nodes:")
     # print(source_nodes)
 
+    ## TODO: If the source nodes only have one file input, then we can
+    ## split it in partial files. In order to do that, we have to
+    ## implement partial files.
+    
     ## Generate a fileIdGen from a graph, that doesn't class with the
     ## current graph fileIds.
     fileIdGen = graph.get_file_id_gen()
@@ -139,7 +142,7 @@ def naive_parallelize_stateless_nodes_bfs(graph):
 
 
 
-    
+
     ## TODO: As an integration experiment make a distribution planner
     ## that just uses Greenberg's parser to output shell code from the
     ## original AST of the IR, and just execute that.
@@ -155,6 +158,25 @@ def naive_parallelize_stateless_nodes_bfs(graph):
     ## Note: A way to do this is by using set > temp_file. Source:
     ## https://arstechnica.com/civis/viewtopic.php?f=16&t=805521
 
+    ## TODO: We have to handle xargs in a special way. First of all,
+    ## in order to parallelize the command that xarg runs, we have to
+    ## do xargs -L 1 (or some other number) so that for every -L
+    ## lines, it calls a different instance of the command. Then it
+    ## will be parallelizable. In addition, we have to somehow
+    ## statically decide how much we will parallelize xarg, and how
+    ## many lines are going to be sent to each operator.
+
+    ## TODO: There is slight problem with *, and other expansions in
+    ## the shell. The normal shell semantics is to expand the strings
+    ## in a command that is in a pipeline after the different
+    ## subshells have been spawned. However, we would like to have all
+    ## strings expanded as much as possible, so that we can statically
+    ## make choices about how much to distribute each command.
+    ##
+    ## Maybe we should run expansions on our own, before calling the
+    ## distribution planner? Or in the distribution planner itself? It
+    ## seems that the distribution planner should be able to do some
+    ## expansion itself though
 
     ## Old Notes:
     ##
