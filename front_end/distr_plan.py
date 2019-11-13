@@ -78,13 +78,23 @@ def naive_parallelize_stateless_nodes_bfs(graph):
     # print("Source nodes:")
     # print(source_nodes)
 
-    ## TODO: If the source nodes only have one file input, then we can
-    ## split it in partial files. In order to do that, we have to
-    ## implement partial files.
-    
     ## Generate a fileIdGen from a graph, that doesn't class with the
     ## current graph fileIds.
     fileIdGen = graph.get_file_id_gen()
+
+    ## If the source nodes only have one file input, then split it in
+    ## partial files.
+
+    ## TODO: Make a proper decision instead of hardcoding splitting
+    ## to 100 lines
+    batch_size = 100
+    for source_node in source_nodes:
+        input_file_ids = source_node.get_flat_input_file_ids()
+        ## TODO: Also split when we have more than one input file
+        if(len(input_file_ids) == 1):
+            input_file_id = input_file_ids[0]
+            input_file_id.split_resource(2, batch_size, fileIdGen)
+
 
     nodes = source_nodes
     while (len(nodes) > 0):
