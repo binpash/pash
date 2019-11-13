@@ -7,21 +7,21 @@ from json_ast import *
 # pipes and commands
 #
 # json_filename = "../scripts/json/compile.sh.json" # PROBLEM - xargs
-# json_filename = "../scripts/json/grep.sh.json" # PROBLEM - single input file - will be fixed by partial files
+# json_filename = "../scripts/json/grep.sh.json" # OK - single input file
 # json_filename = "../scripts/json/grep2.sh.json" # OK - 2 input files
-json_filename = "../scripts/json/minimal.sh.json" # PROBLEM - single input file - will be fixed by partial files
+# json_filename = "../scripts/json/minimal.sh.json" # ISSUE - redirection of a file - have to be handled in the translation
 # json_filename = "../scripts/json/minimal2.sh.json" # OK - 2 input files
 # json_filename = "../scripts/json/shortest-scripts.sh.json" # PROBLEM - unexpanded *
-# json_filename = "../scripts/json/spell.sh.json" # PROBLEM - cat only has one argument: manpage.1 - will be fixed by partial files
-# json_filename = "../scripts/json/topn.sh.json" # PROBLEM - single input file - will be fixed by partial files
-# json_filename = "../scripts/json/wc.sh.json" # PROBLEM - single input file - will be fixed by partial files
-# json_filename = "../scripts/json/wf.sh.json" # PROBLEM - single input file - will be fixed by partial files
-# json_filename = "../scripts/json/ngrams.sh.json" # PROBLEM - single input file - will be fixed by partial files
+json_filename = "../scripts/json/spell.sh.json" # PROBLEM - sort and others
+# json_filename = "../scripts/json/topn.sh.json" # PROBLEM - sort and others
+# json_filename = "../scripts/json/wc.sh.json" # OK - single input file
+# json_filename = "../scripts/json/wf.sh.json" # PROBLEM - sort and others
+# json_filename = "../scripts/json/ngrams.sh.json" # PROBLEM - sort, tee, and others
 # json_filename = "../scripts/json/diff.sh.json" # PROBLEM - Function definition is not handled. Can this be solved?
 
 # The following contain And operators together with pipes and commands
 #
-# json_filename = "../scripts/json/old_ngrams.sh.json" # PROBLEM - single input file - will be fixed by partial files
+# json_filename = "../scripts/json/old_ngrams.sh.json" # ISSUE - redirection of a file - have to be handled in the translation
 
 
 # The following is interesting, since it contains command substitution

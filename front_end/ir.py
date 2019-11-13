@@ -41,6 +41,37 @@ def string_to_argument(string):
 def char_to_arg_char(char):
     return { 'C' : ord(char) }
 
+## TODO: Resources should probably be more elaborate than just a
+## string and a line range. They could be URLs, and possibly other things.
+class Resource:
+    def __init__(self, uri, range = [0, "inf"]):
+        self.uri = uri
+        self.range = range
+
+    def __repr__(self):
+        if self.range[0] == 0 and self.range[1] == "inf":
+            output = str(self.uri)
+        else:
+            output = "{}[{}:{}]".format(self.uri, self.range[0], self.range[1])
+        return output
+
+    ## This function splits a "splittable" resource (at the moment
+    ## only files are resources so they are all splittable)
+    def split_resource(self, times, batch_size):
+        assert(times > 0 and batch_size > 0)
+        init = self.range[0]
+        resources = [Resource(self.uri, [i * batch_size + init, (i+1) * batch_size + init])
+                     for i in range(times)]
+        ## Set the end to be equal to the old end
+        resources[-1].range[1] = self.range[1]
+        return resources
+
+## Creates a file id for a given resource
+def create_file_id_for_resource(resource, fileIdGen):
+    file_id = fileIdGen.next_file_id()
+    file_id.set_resource(resource)
+    return file_id
+
 ## Note: The NULL ident is considered to be the default unknown file id
 ##
 ## TODO: WARNING: We have to make sure that a resource in our IR can
@@ -88,6 +119,15 @@ class FileId:
 
     def get_children(self):
         return self.children
+
+    def split_resource(self, times, batch_size, fileIdGen):
+        ## This can only work if the file points to a resource
+        if(not self.resource is None):
+            resources = self.resource.split_resource(times, batch_size)
+            split_file_ids = [create_file_id_for_resource(resource, fileIdGen)
+                              for resource in resources]
+            self.set_children(split_file_ids)
+
 
     def toFileName(self, prefix):
         output = "{}_file{}".format(prefix, Find(self).ident)
@@ -279,7 +319,9 @@ class Command(Node):
         new_in_stream = [self.in_stream[new_in_stream_index]]
         new_out_stream = [self.out_stream[new_out_stream_index]]
 
-        if(new_in_stream[0] == "stdin"):
+        ## TODO: Simplify the code below
+        in_chunk = new_in_stream[0]
+        if(in_chunk == "stdin"):
             new_stdin = in_fid
         else:
             ## Question: Is that valid?
@@ -291,9 +333,17 @@ class Command(Node):
             ## Question: Is that valid?
             new_stdout = self.stdout
 
+        new_options = self.options.copy()
+        if(isinstance(in_chunk, tuple)
+           and len(in_chunk) == 2
+           and in_chunk[0] == "option"):
+            new_options[in_chunk[1]] = in_fid
+
+        ## TODO: I probably have to do the same with output options
+
         new_command = Command(None, # The ast is None
                               self.command,
-                              self.options,
+                              new_options,
                               new_in_stream,
                               new_out_stream,
                               self.category,
@@ -323,16 +373,14 @@ def create_command_assign_file_identifiers(ast, fileIdGen, command, options, std
     return command
 
 def replace_file_arg_with_id(opt_or_channel, command, fileIdGen):
-    fid = command.get_file_id(opt_or_channel)
+    fid_or_resource = command.get_file_id(opt_or_channel)
     ## If the file is not a FileId, then it is some argument. We
     ## create a file identifier, and replace it with that, and
     ## make sure that the file identifier points to the argument.
-    if (not isinstance(fid, FileId)):
-        real_fid = fileIdGen.next_file_id()
-        real_fid.set_resource(fid)
-        return real_fid
+    if (not isinstance(fid_or_resource, FileId)):
+        return create_file_id_for_resource(Resource(fid_or_resource), fileIdGen)
     else:
-        return fid
+        return fid_or_resource
 
 
 class Arg:
@@ -369,7 +417,7 @@ def find_command_input_output(command, options, stdin, stdout):
     ## inputs. This is hardcoded and wrong
     print(" -- Warning: Argument inputs and outputs for: {} are hardcoded and possibly wrong"
           .format(command_string))
-    
+
     if (command_string == "cat"):
         input_stream = [("option", i) for i in range(len(options))]
         return (input_stream, ["stdout"])
@@ -387,7 +435,8 @@ def find_command_category(command, options):
     ## TODO: Make a proper search that returns the command category
     print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
 
-    stateless = ["cat", "tr", "grep"]
+    stateless = ["cat", "tr", "grep",
+                 "wc"] # wc -m or -c is not stateless
 
     if (command_string in stateless):
         return "stateless"
