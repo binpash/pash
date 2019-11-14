@@ -66,11 +66,26 @@ class Resource:
         resources[-1].range[1] = self.range[1]
         return resources
 
+    ## This returns the length of the resource or None if it is
+    ## infinite.
+    def get_length(self):
+        if(self.range[1] == "inf"):
+            return None
+        else:
+            return (self.range[1] - self.range[0])
+
 ## Creates a file id for a given resource
 def create_file_id_for_resource(resource, fileIdGen):
-    file_id = fileIdGen.next_file_id()
+    file_id = create_split_file_id(resource.get_length(), fileIdGen)
     file_id.set_resource(resource)
     return file_id
+
+## Creates a file id that has a given maximum length
+def create_split_file_id(batch_size, fileIdGen):
+    file_id = fileIdGen.next_file_id()
+    file_id.set_max_length(batch_size)
+    return file_id
+
 
 ## Note: The NULL ident is considered to be the default unknown file id
 ##
@@ -86,18 +101,25 @@ def create_file_id_for_resource(resource, fileIdGen):
 ## TODO: When doing union, I have to really make both file ids point
 ## to the same file.
 class FileId:
-    def __init__(self, ident, resource=None, children = []):
+    def __init__(self, ident, resource=None, children = [], max_length = None):
         self.ident = ident
         ## Initialize the parent
         MakeSet(self)
         self.resource=resource
         self.children = children
+        ## Max length shows what is the maximum possible length that
+        ## this file shows to. Its use is mostly to split intermediate
+        ## streams.
+        self.max_length = max_length
 
     def __repr__(self):
         ## Note: Outputs the parent of the union and not the file id
         ##       itself.
         if (self.resource is None):
-            output = "#file{}".format(Find(self).ident)
+            if(self.max_length is None):
+                output = "#file{}".format(Find(self).ident)
+            else:
+                output = "#file{}[max:{}]".format(Find(self).ident, self.max_length)
         else:
             output = "#file{}({})".format(Find(self).ident, self.resource.__repr__())
         return output
@@ -121,13 +143,26 @@ class FileId:
         return self.children
 
     def split_resource(self, times, batch_size, fileIdGen):
-        ## This can only work if the file points to a resource
         if(not self.resource is None):
+            ## This works as expected if the file points to a resource
             resources = self.resource.split_resource(times, batch_size)
             split_file_ids = [create_file_id_for_resource(resource, fileIdGen)
                               for resource in resources]
             self.set_children(split_file_ids)
+        else:
+            ## If the file doesn't point to a resource (meaning that
+            ## it is an intermediate file), then we just restrict its
+            ## max length, and the implementation should know to only
+            ## pass so many lines in this file.
+            split_file_ids = [create_split_file_id(batch_size, fileIdGen)
+                              for i in range(times)]
+            split_file_ids[-1].set_max_length(None)
+            self.set_children(split_file_ids)
 
+    ## This must be used by the implementation to only transfer
+    ## max_length lines in this file.
+    def set_max_length(self, max_length):
+        self.max_length = max_length
 
     def toFileName(self, prefix):
         output = "{}_file{}".format(prefix, Find(self).ident)
@@ -393,7 +428,7 @@ class Arg:
 
     def __repr__(self):
         return format_arg_chars(self.arg_char_list)
-    
+
 ## This function returns the input and output streams of a command.
 ##
 ## The input and output lists, contain tuples that refer to options:
@@ -436,7 +471,8 @@ def find_command_category(command, options):
     print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
 
     stateless = ["cat", "tr", "grep",
-                 "wc"] # wc -m or -c is not stateless
+                 "wc", # wc -m or -c is not stateless
+                 "xargs"] # I am not sure if all xargs are stateless
 
     if (command_string in stateless):
         return "stateless"

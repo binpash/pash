@@ -2,6 +2,7 @@ import sys
 import pickle
 from ir import *
 from json_ast import *
+import jsonpickle
 
 ## This file receives the name of a file that holds an IR, reads the
 ## IR, read some configuration file with node information, and then
@@ -69,6 +70,10 @@ def simpl_file_distribution_planner(graph):
     print("Parallelized graph:")
     print(graph)
 
+    # Output the graph as json
+    # frozen = jsonpickle.encode(graph)
+    # print(frozen)
+
     ## The result of the above steps should be an expanded
     ## intermediate representation graph, that can be then mapped to
     ## real nodes.
@@ -102,25 +107,38 @@ def naive_parallelize_stateless_nodes_bfs(graph):
 
         next_nodes = graph.get_next_nodes(curr)
         nodes += next_nodes
+
+        ## Question: What does it mean for a command to have more
+        ## than one next_node? Does it mean that it duplicates its
+        ## output to all of them? Or does it mean that it writes
+        ## some to the first and some to the second? Both are not
+        ## very symmetric, but I think I would prefer the first.
+        assert(len(next_nodes) <= 1)
+
+
+        input_file_ids = curr.get_flat_input_file_ids()
+        if (curr.command.__repr__() == "xargs" and
+            len(input_file_ids) == 1):
+            ## We can split xargs input to several files, even if it
+            ## only has one input.
+
+            input_file_id = input_file_ids[0]
+            ## Split the file that xargs takes as input
+            ##
+            ## TODO: Remove hardcoded
+            input_file_id.split_resource(2, batch_size, fileIdGen)
+
         ## If the command is stateless and has more than one inputs,
         ## it can be parallelized
-        input_file_ids = curr.get_flat_input_file_ids()
         if (curr.category == "stateless" and len(input_file_ids) > 1):
             # print("To parallelize:")
             # print(curr)
             # print("Next nodes:")
             # print(next_nodes)
 
-            ## Question: What does it mean for a command to have more
-            ## than one next_node? Does it mean that it duplicates its
-            ## output to all of them? Or does it mean that it writes
-            ## some to the first and some to the second? Both are not
-            ## very symmetric, but I think I would prefer the first.
-            assert(len(next_nodes) <= 1)
-
             ## We assume that every command has one output_file_id for
             ## now. I am not sure if this must be lifted. This seems
-            ## to be connected to the one above.
+            ## to be connected to assertion regarding the next_nodes.
             out_edge_file_ids = curr.get_output_file_ids()
             assert(len(out_edge_file_ids) == 1)
             out_edge_file_id = out_edge_file_ids[0]
@@ -152,7 +170,6 @@ def naive_parallelize_stateless_nodes_bfs(graph):
 
 
 
-
     ## TODO: As an integration experiment make a distribution planner
     ## that just uses Greenberg's parser to output shell code from the
     ## original AST of the IR, and just execute that.
@@ -175,6 +192,9 @@ def naive_parallelize_stateless_nodes_bfs(graph):
     ## will be parallelizable. In addition, we have to somehow
     ## statically decide how much we will parallelize xarg, and how
     ## many lines are going to be sent to each operator.
+    ##
+    ## This can probably be solved if we allow partial files in files
+    ## without resources.
 
     ## TODO: There is slight problem with *, and other expansions in
     ## the shell. The normal shell semantics is to expand the strings
