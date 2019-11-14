@@ -72,7 +72,14 @@ def simpl_file_distribution_planner(graph):
 
     # Output the graph as json
     # frozen = jsonpickle.encode(graph)
-    # print(frozen)
+    # f = open("minimal2_ir.json", "w")
+    # f.write(frozen)
+    # f.close()
+
+    print(graph.serialize())
+    f = open("minimal3_ir", "w")
+    f.write(graph.serialize())
+    f.close()
 
     ## The result of the above steps should be an expanded
     ## intermediate representation graph, that can be then mapped to
