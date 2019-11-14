@@ -66,14 +66,18 @@ public class WorkerProcess implements Runnable {
                     ExecutorService inputThreadPool = Executors.newFixedThreadPool(operator.getInputArity());
                     List<Callable<Object>> inputGateThreads = new ArrayList<>(operator.getInputArity());
                     CountDownLatch endOfSignalBarrier = new CountDownLatch(operator.getInputArity());
+                    CountDownLatch[] internalBufferBarrier = new CountDownLatch[operator.getInputArity()];
 
                     for (int i = 0; i < operator.getInputArity(); i++) {
                         final int inputChannelParameter = i;
 
+                        internalBufferBarrier[i] = new CountDownLatch(1);
+
                         internalBuffers[i] = new InternalBuffer();
                         internalThreads[i] = new Thread(new SocketToProcessThread(internalBuffers[i],
                                 inputChannelParameter,
-                                operator));
+                                operator,
+                                internalBufferBarrier[i]));
                         internalThreads[i].setUncaughtExceptionHandler((thread, throwable) -> {
                             throw new WorkerException(throwable.getMessage(), topologyID);
                         });
@@ -86,12 +90,16 @@ public class WorkerProcess implements Runnable {
 
                             try (Socket inputDataSocket = inputDataServerSocket.accept();
                                  ObjectInputStream ois = new ObjectInputStream(inputDataSocket.getInputStream())) {
+
+                                internalBufferBarrier[inputChannelParameter].await();
+
                                 while (true) {
                                     Object received = ois.readObject();
 
-                                    if (received instanceof SystemMessage.EndOfData)
+                                    if (received instanceof SystemMessage.EndOfData) {
+                                        operator.next(inputChannelParameter, new SystemMessage.EndOfData());
                                         break;
-                                    else {
+                                    } else {
                                         operator.next(inputChannelParameter, received);
 
                                         //internalBuffers[inputChannelParameter].write(received);
@@ -110,9 +118,6 @@ public class WorkerProcess implements Runnable {
                     inputThreadPool.invokeAll(inputGateThreads);
                     endOfSignalBarrier.await();
 
-                    // all the threads have now finished outputting
-                    for (int j = 0; j < operator.getInputArity(); j++)
-                        operator.next(j, new SystemMessage.EndOfData());
                 } catch (Exception ex) {
                     System.err.println(red.getInputPort());
                     ex.printStackTrace();

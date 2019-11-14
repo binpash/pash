@@ -3,6 +3,7 @@ package dshell.core.nodes;
 import dshell.core.Operator;
 import dshell.core.OperatorType;
 import dshell.core.misc.SystemMessage;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,69 +31,82 @@ public class StatelessOperator extends Operator<Object, Object> {
 
     @Override
     public synchronized void next(int inputChannel, Object data) {
-        if (!initialized) {
-            try {
-                processBuilder = new ProcessBuilder(program, getArgumentsAsString());
+        try {
+            if (!initialized) {
+                processBuilder = new ProcessBuilder(ArrayUtils.addAll(new String[]{program}, commandLineArguments));
                 process = ((ProcessBuilder) processBuilder).start();
 
-                // if the following condition hold then either the program does not exists or the command line arguments
-                // were specified wrong
-                // NOTE: arguments passing syntax can here be different than it would be as if it was typed in raw linux terminal
-                if (!((Process) process).isAlive() && ((Process) process).exitValue() != 0)
-                    throw new RuntimeException("Execution of program '" + program + "' returned with exit value " + ((Process) process).exitValue() + ".");
-            } catch (Exception ex) {
-                throw new RuntimeException("Error creating process '" + program + "'.");
+                ((ProcessBuilder) processBuilder).redirectError(ProcessBuilder.Redirect.INHERIT);
+
+                if (process == null)
+                    throw new Exception();
+
+                initialized = true;
             }
 
-            if (process == null)
-                throw new RuntimeException("Child process was not created. Operator execution has been aborted.");
-
-            initialized = true;
-        }
-
-        try {
             // passing the data to standard input of the process
-            boolean endReceived = false;
+            /*boolean endReceived = false;
             if (data != null) {
                 OutputStream standardInput = ((Process) process).getOutputStream();
 
                 if (data instanceof SystemMessage.EndOfData) {
                     endReceived = true;
-                    //standardInput.close();
+                    standardInput.close();
                 } else {
                     // write to standard input of the process
                     standardInput.write((byte[]) data);
-                    standardInput.close();
-                    ;   //-> NOT NEEDED WHEN THE PROCESS IS CONSIDERED AS PIPELINE
+                    standardInput.flush();
+                    //return;   -> NOT NEEDED WHEN THE PROCESS IS CONSIDERED AS PIPELINE
                 }
-            }
-            else if (data instanceof SystemMessage.EndOfData)
+            } else {
                 endReceived = true;
-
-            if (endReceived) {
-                consumers[0].next(0, new SystemMessage.EndOfData());
-                ((Process) process).destroy();
-                return;
+                ((Process) process).getOutputStream().close();
             }
 
             // getting the standard output of the process
             InputStream standardOutput = ((Process) process).getInputStream();
 
-            byte[] raw = standardOutput.readAllBytes();
-
             // sending computed output to the next subscribed operator
-            consumers[0].next(0, raw);
-            /*while (standardOutput.available() != 0 && standardOutput.read(buffer, 0, BUFFER_SIZE) != -1)
-                consumers[0].next(0, buffer);*/
+            while (true) {
+                if (standardOutput.available() >= BUFFER_SIZE) {
+                    standardOutput.read(buffer, 0, BUFFER_SIZE);
+                    consumers[0].next(0, buffer);
+                } else if (standardOutput.available() > 0 && standardOutput.available() < BUFFER_SIZE) {
+                    byte[] temp = new byte[standardOutput.available()];
+                    standardOutput.read(temp, 0, temp.length);
+                    consumers[0].next(0, temp);
+                } else
+                    break;
+            }
 
             // send end of data signal
-            if (data == null) {
+            if (endReceived) {
                 consumers[0].next(0, new SystemMessage.EndOfData());
                 ((Process) process).destroy();
+            }*/
+
+
+
+            boolean endReceived = false;
+            if (data != null) {
+                OutputStream standardInput = ((Process) process).getOutputStream();
+
+                if (data instanceof SystemMessage.EndOfData) {
+                    standardInput.close();
+                    endReceived = true;
+                } else
+                    standardInput.write((byte[]) data);
+            } else
+                endReceived = true;
+
+            if (endReceived) {
+                byte[] standardOutput = ((Process) process).getInputStream().readAllBytes();
+                consumers[0].next(0, standardOutput);
+                consumers[0].next(0, new SystemMessage.EndOfData());
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e.getMessage());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new RuntimeException(ex.getMessage());
         }
     }
 
