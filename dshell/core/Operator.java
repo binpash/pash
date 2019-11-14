@@ -3,7 +3,6 @@ package dshell.core;
 import dshell.core.interfaces.Consumer;
 import dshell.core.interfaces.Producer;
 
-import java.io.Closeable;
 import java.io.Serializable;
 
 public abstract class Operator<A, B> implements Consumer<A>, Producer<B>, Serializable, Cloneable {
@@ -54,8 +53,12 @@ public abstract class Operator<A, B> implements Consumer<A>, Producer<B>, Serial
 
     public String getArgumentsAsString() {
         StringBuilder sb = new StringBuilder();
-        for (String s : commandLineArguments)
-            sb.append(s);
+        for (int i = 0; i < commandLineArguments.length; i++) {
+            sb.append(commandLineArguments[i]);
+
+            if (i != commandLineArguments.length - 1)
+                sb.append(" ");
+        }
 
         return sb.toString();
     }
