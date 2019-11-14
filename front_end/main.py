@@ -6,13 +6,13 @@ from json_ast import *
 # The following files just contain POSIX (no process substitution)
 # pipes and commands
 #
-# json_filename = "../scripts/json/compile.sh.json" # PROBLEM - xargs
+json_filename = "../scripts/json/compile.sh.json" # OK - xargs
 # json_filename = "../scripts/json/grep.sh.json" # OK - single input file
 # json_filename = "../scripts/json/grep2.sh.json" # OK - 2 input files
 # json_filename = "../scripts/json/minimal.sh.json" # ISSUE - redirection of a file - have to be handled in the translation
 # json_filename = "../scripts/json/minimal2.sh.json" # OK - 2 input files
 # json_filename = "../scripts/json/shortest-scripts.sh.json" # PROBLEM - unexpanded *
-json_filename = "../scripts/json/spell.sh.json" # PROBLEM - sort and others
+# json_filename = "../scripts/json/spell.sh.json" # PROBLEM - sort and others
 # json_filename = "../scripts/json/topn.sh.json" # PROBLEM - sort and others
 # json_filename = "../scripts/json/wc.sh.json" # OK - single input file
 # json_filename = "../scripts/json/wf.sh.json" # PROBLEM - sort and others
