@@ -15,7 +15,7 @@ public class StatelessOperator extends Operator<Object, Object> {
     private byte[] buffer = new byte[BUFFER_SIZE];
 
     // TODO: find out ideal packet length for TCP socket
-    private static final int BUFFER_SIZE = 1024;
+    private static final int BUFFER_SIZE = 4096;
 
     public StatelessOperator(int inputArity, int outputArity, String program) {
         this(inputArity, outputArity, program, null, 1);
@@ -45,7 +45,7 @@ public class StatelessOperator extends Operator<Object, Object> {
             }
 
             // passing the data to standard input of the process
-            /*boolean endReceived = false;
+            boolean endReceived = false;
             if (data != null) {
                 OutputStream standardInput = ((Process) process).getOutputStream();
 
@@ -68,41 +68,27 @@ public class StatelessOperator extends Operator<Object, Object> {
 
             // sending computed output to the next subscribed operator
             while (true) {
-                if (standardOutput.available() >= BUFFER_SIZE) {
+                int available = standardOutput.available();
+                byte[] toSend;
+
+                if (endReceived) {
+                    toSend = standardOutput.readAllBytes();
+                    consumers[0].next(0, toSend);
+                    break;
+                } else if (available >= BUFFER_SIZE) {
                     standardOutput.read(buffer, 0, BUFFER_SIZE);
                     consumers[0].next(0, buffer);
-                } else if (standardOutput.available() > 0 && standardOutput.available() < BUFFER_SIZE) {
-                    byte[] temp = new byte[standardOutput.available()];
-                    standardOutput.read(temp, 0, temp.length);
-                    consumers[0].next(0, temp);
-                } else
-                    break;
+                } else if (available > 0 && available < BUFFER_SIZE) {
+                    toSend = new byte[available];
+                    standardOutput.read(toSend, 0, toSend.length);
+                    consumers[0].next(0, toSend);
+                } else break;
             }
 
             // send end of data signal
             if (endReceived) {
                 consumers[0].next(0, new SystemMessage.EndOfData());
                 ((Process) process).destroy();
-            }*/
-
-
-
-            boolean endReceived = false;
-            if (data != null) {
-                OutputStream standardInput = ((Process) process).getOutputStream();
-
-                if (data instanceof SystemMessage.EndOfData) {
-                    standardInput.close();
-                    endReceived = true;
-                } else
-                    standardInput.write((byte[]) data);
-            } else
-                endReceived = true;
-
-            if (endReceived) {
-                byte[] standardOutput = ((Process) process).getInputStream().readAllBytes();
-                consumers[0].next(0, standardOutput);
-                consumers[0].next(0, new SystemMessage.EndOfData());
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -116,5 +102,25 @@ public class StatelessOperator extends Operator<Object, Object> {
         o.parallelizationHint = 1;
 
         return o;
+    }
+
+    private void sendWholeOutput(Object data) throws Exception {
+        boolean endReceived = false;
+        if (data != null) {
+            OutputStream standardInput = ((Process) process).getOutputStream();
+
+            if (data instanceof SystemMessage.EndOfData) {
+                standardInput.close();
+                endReceived = true;
+            } else
+                standardInput.write((byte[]) data);
+        } else
+            endReceived = true;
+
+        if (endReceived) {
+            byte[] standardOutput = ((Process) process).getInputStream().readAllBytes();
+            consumers[0].next(0, standardOutput);
+            consumers[0].next(0, new SystemMessage.EndOfData());
+        }
     }
 }

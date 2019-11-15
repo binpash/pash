@@ -97,12 +97,12 @@ public class WorkerProcess implements Runnable {
                                     Object received = ois.readObject();
 
                                     if (received instanceof SystemMessage.EndOfData) {
-                                        operator.next(inputChannelParameter, new SystemMessage.EndOfData());
+                                        //operator.next(inputChannelParameter, new SystemMessage.EndOfData());---------------> DEBUG PURPOSE ONLY
+                                        internalBuffers[inputChannelParameter].write(new SystemMessage.EndOfData());
                                         break;
                                     } else {
-                                        operator.next(inputChannelParameter, received);
-
-                                        //internalBuffers[inputChannelParameter].write(received);
+                                        //operator.next(inputChannelParameter, received); -----------------------------------> DEBUG PURPOSE ONLY
+                                        internalBuffers[inputChannelParameter].write(received);
                                     }
                                 }
                             } catch (Exception ex) {
