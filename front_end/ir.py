@@ -28,6 +28,8 @@ def format_arg_char(arg_char):
         return '"{}"'.format(format_arg_chars(val))
     elif (key == 'V'):
         return '${}'.format(val[2])
+    elif (key == 'E'):
+        return '\{}'.format(chr(val))
     else:
         ## TODO: Make this correct
         return key
@@ -122,6 +124,21 @@ class FileId:
                 output = "#file{}[max:{}]".format(Find(self).ident, self.max_length)
         else:
             output = "#file{}({})".format(Find(self).ident, self.resource.__repr__())
+        return output
+
+    def serialize(self):
+        if (self.resource is None):
+            if(self.max_length is None):
+                output = "#file{}".format(Find(self).ident)
+            else:
+                output = "#file{}[max:{}]".format(Find(self).ident, self.max_length)
+        else:
+            output = "{}".format(self.resource)
+        return output
+
+    def opt_serialize(self):
+        assert(not self.resource is None)
+        output = "{}".format(self.resource.uri)
         return output
 
     def set_resource(self, resource):
@@ -313,7 +330,7 @@ class Node:
 ## classified as stateless, etc...
 class Command(Node):
     def __init__(self, ast, command, options, in_stream, out_stream,
-                 category, stdin=None, stdout=None):
+                 opt_indices, category, stdin=None, stdout=None):
         super().__init__(ast, in_stream, out_stream, category, stdin, stdout)
         self.command = Arg(command)
         if(all([isinstance(opt, FileId) for opt in options])):
@@ -322,6 +339,7 @@ class Command(Node):
         else:
             ## This is how commands are initialized in the AST
             self.options = [Arg(opt) for opt in options]
+        self.opt_indices = opt_indices
 
     def __repr__(self):
         prefix = "Command"
@@ -332,6 +350,13 @@ class Command(Node):
         output = "{}: \"{}\" in:{} out:{}".format(
             prefix, self.command, self.get_flat_input_file_ids(),
             self.get_flat_output_file_ids())
+        return output
+
+    def serialize(self):
+        all_opt_indices = [o_i[1] for o_i in (self.opt_indices + self.in_stream) if isinstance(o_i, tuple)]
+        all_opt_indices.sort()
+        options_string = " ".join([self.options[opt_i].opt_serialize() for opt_i in all_opt_indices])
+        output = "{} {}".format(self.command, options_string)
         return output
 
     def stateless_duplicate(self):
@@ -381,6 +406,7 @@ class Command(Node):
                               new_options,
                               new_in_stream,
                               new_out_stream,
+                              self.opt_indices,
                               self.category,
                               new_stdin,
                               new_stdout)
@@ -390,9 +416,10 @@ class Command(Node):
 
 
 def create_command_assign_file_identifiers(ast, fileIdGen, command, options, stdin=None, stdout=None):
-    in_stream, out_stream = find_command_input_output(command, options, stdin, stdout)
+    in_stream, out_stream, opt_indices = find_command_input_output(command, options, stdin, stdout)
     category = find_command_category(command, options)
-    command = Command(ast, command, options, in_stream, out_stream, category, stdin, stdout)
+    command = Command(ast, command, options, in_stream, out_stream,
+                      opt_indices, category, stdin, stdout)
 
     ## The options that are part of the input and output streams must
     ## be swapped with file identifiers. This means that each file
@@ -429,6 +456,9 @@ class Arg:
     def __repr__(self):
         return format_arg_chars(self.arg_char_list)
 
+    def opt_serialize(self):
+        return self.__repr__()
+
 ## This function returns the input and output streams of a command.
 ##
 ## The input and output lists, contain tuples that refer to options:
@@ -455,9 +485,10 @@ def find_command_input_output(command, options, stdin, stdout):
 
     if (command_string == "cat"):
         input_stream = [("option", i) for i in range(len(options))]
-        return (input_stream, ["stdout"])
+        return (input_stream, ["stdout"], [])
     else:
-        return (["stdin"], ["stdout"])
+        opt_indices = [("option", i) for i in range(len(options))]
+        return (["stdin"], ["stdout"], opt_indices)
 
 
 ## This functions finds and returns a string representing the command category
@@ -513,6 +544,39 @@ class IR:
 
     def __repr__(self):
         output = "(|-{} IR: {} {}-|)".format(self.stdin.flatten(), self.nodes, self.stdout.flatten())
+        return output
+
+    def serialize(self):
+        output = "Nodes:\n"
+        all_file_ids = ""
+        for i, node in enumerate(self.nodes):
+            serialized_input_file_ids = " ".join([fid.serialize()
+                                                  for fid in node.get_flat_input_file_ids()])
+            serialized_output_file_ids = " ".join([fid.serialize()
+                                                   for fid in node.get_flat_output_file_ids()])
+            all_file_ids += serialized_input_file_ids + " "
+            all_file_ids += serialized_output_file_ids + " "
+            output += "{} in: {} out: {} command: {}\n".format(i, serialized_input_file_ids,
+                                                               serialized_output_file_ids,
+                                                               node.serialize())
+        output = "File ids:\n{}\n".format(all_file_ids) + output
+        return output
+
+    def serialize_as_JSON(self):
+        output = "nodes: {\n"# <-- FIXME confirm this should be single `}`
+        all_file_ids = ""
+        for i, node in enumerate(self.nodes):
+            serialized_input_file_ids = " ".join([fid.serialize()
+                                                  for fid in node.get_flat_input_file_ids()])
+            serialized_output_file_ids = " ".join([fid.serialize()
+                                                   for fid in node.get_flat_output_file_ids()])
+            all_file_ids += serialized_input_file_ids + " "
+            all_file_ids += serialized_output_file_ids + " "
+            output += "\"{}\": {{in: [{}], out: [{}], command: \"{}\" }}\n".format(i,
+                                                               ", ".join(serialized_input_file_ids),
+                                                               ", ".join(serialized_output_file_ids),
+                                                               node.serialize())
+        output = "{{ fids:\n[{}]\n,".format(", ".join(all_file_ids)) + output + "}" # <-- FIXME confirm this should be single `}`
         return output
 
     def set_ast(self, ast):
@@ -578,6 +642,8 @@ class IR:
             for file_id in node_file_ids:
                 max_id = max(get_larger_file_id_ident(file_id), max_id)
         return FileIdGen(max_id)
+
+    
 
     def remove_node(self, node):
         self.nodes.remove(node)
