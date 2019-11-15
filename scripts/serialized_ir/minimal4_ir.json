@@ -1,8 +1,8 @@
 { "fids":
-["$IN[0:100]", "#file10", "$IN[100:inf]", "#file11", "#file10", "#file12", "#file11", "#file13", "#file12", "#file14", "#file13", "#file15"]
+["#file10", "#file11", "#file10", "#file12", "#file11", "#file13", "#file12", "#file14", "#file13", "#file15"]
 ,"nodes": {
-"0": {"in": ["$IN[0:100]"], "out": ["#file10"], "command": "cat $IN" },
-"1": {"in": ["$IN[100:inf]"], "out": ["#file11"], "command": "cat $IN" },
+"0": {"in": [], "out": ["#file10"], "command": "cat $IN" },
+"1": {"in": [], "out": ["#file11"], "command": "cat $IN" },
 "2": {"in": ["#file10"], "out": ["#file12"], "command": "tr A-Z a-z" },
 "3": {"in": ["#file11"], "out": ["#file13"], "command": "tr A-Z a-z" },
 "4": {"in": ["#file12"], "out": ["#file14"], "command": "tr a-z A-Z" },
