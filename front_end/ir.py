@@ -563,20 +563,21 @@ class IR:
         return output
 
     def serialize_as_JSON(self):
-        output = "nodes: {\n"# <-- FIXME confirm this should be single `}`
+        output = '\"nodes\": {\n'# <-- FIXME confirm this should be single `}`
         all_file_ids = ""
         for i, node in enumerate(self.nodes):
-            serialized_input_file_ids = " ".join([fid.serialize()
-                                                  for fid in node.get_flat_input_file_ids()])
-            serialized_output_file_ids = " ".join([fid.serialize()
-                                                   for fid in node.get_flat_output_file_ids()])
-            all_file_ids += serialized_input_file_ids + " "
-            all_file_ids += serialized_output_file_ids + " "
-            output += "\"{}\": {{in: [{}], out: [{}], command: \"{}\" }}\n".format(i,
-                                                               ", ".join(serialized_input_file_ids),
-                                                               ", ".join(serialized_output_file_ids),
-                                                               node.serialize())
-        output = "{{ fids:\n[{}]\n,".format(", ".join(all_file_ids)) + output + "}" # <-- FIXME confirm this should be single `}`
+            serialized_input_file_ids = ", ".join(['\"{}\"'.format(fid.serialize())
+                                                   for fid in node.get_flat_input_file_ids()])
+            serialized_output_file_ids = ", ".join(['\"{}\"'.format(fid.serialize())
+                                                    for fid in node.get_flat_output_file_ids()])
+            all_file_ids += serialized_input_file_ids + ", "
+            all_file_ids += serialized_output_file_ids + ", "
+            output += "\"{}\": {{\"in\": [{}], \"out\": [{}], \"command\": \"{}\" }},\n".format(i,
+                                                                                   serialized_input_file_ids,
+                                                                                   serialized_output_file_ids,
+                                                                                   node.serialize())
+        all_file_ids = all_file_ids[:-2]
+        output = "{{ \"fids\":\n[{}]\n,".format(all_file_ids) + output[:-2] + "}}" # <-- FIXME confirm this should be single `}`
         return output
 
     def set_ast(self, ast):
