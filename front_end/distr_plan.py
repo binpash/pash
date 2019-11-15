@@ -77,8 +77,8 @@ def simpl_file_distribution_planner(graph):
     # f.close()
 
     print(graph.serialize())
-    f = open("minimal3_ir", "w")
-    f.write(graph.serialize())
+    f = open("serialized_ir", "w")
+    f.write(graph.serialize_as_JSON())
     f.close()
 
     ## The result of the above steps should be an expanded
