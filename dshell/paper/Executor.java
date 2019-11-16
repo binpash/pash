@@ -6,8 +6,10 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 public class Executor {
     private static final String FILE_NODES = "fids";
@@ -16,14 +18,17 @@ public class Executor {
     private static final String OUTPUT_FILES = "out";
     private static final String COMMAND = "command";
 
-    /*private static class Node {
-        String[] inputFiles;
-        String[] outputFiles;
-        String command;
-    }*/
+    private static List<ProcessBuilder> processBuilders = new ArrayList<>();
+    private static List<Process> processes = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         File jsonFile = new File(args[0]);
+        int iterations = 1;
+        long executionTime = 0;
+        if (args.length > 1)
+            iterations = Integer.parseInt(args[1]);
+
+
         StringBuilder jsonRaw = new StringBuilder();
 
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(jsonFile))) {
@@ -36,14 +41,6 @@ public class Executor {
         JSONArray files = rootElement.getJSONArray(FILE_NODES);
         JSONObject nodes = rootElement.getJSONObject(PIPE_NODES);
 
-        for (int i = 0; i < files.length(); i++) {
-            String file = files.getString(i);
-
-            remoteFIFOIfExists(file);
-            createFIFO(file);
-        }
-
-        //Map<Integer, Node> topology = new HashMap<>();
         Iterator<String> keys = nodes.keys();
         while (keys.hasNext()) {
             String key = keys.next();
@@ -60,33 +57,62 @@ public class Executor {
             for (int i = 0; i < rawOutput.length(); i++)
                 output.add(rawOutput.getString(i).substring(1));
 
-
             createNode(input, output, command);
         }
+
+        for (int x = 0; x < iterations; x++) {
+            for (int i = 0; i < files.length(); i++) {
+                String file = files.getString(i).substring(1);
+
+                remoteFIFOIfExists(file);
+                createFIFO(file);
+            }
+
+            long startTime = System.currentTimeMillis();
+            for (ProcessBuilder p : processBuilders)
+                processes.add(p.start());
+            for (Process p : processes)
+                p.waitFor();
+            long endTime = System.currentTimeMillis();
+
+            executionTime += endTime - startTime;
+        }
+
+        System.out.println("Script execution time is " + executionTime + " ms");
+        System.out.println("Script average execution time is " + executionTime / (double)iterations + " ms");
     }
 
     private static void createNode(List<String> inputFiles, List<String> outputFiles, String command) throws Exception {
-        List<String> args = compileArgumentList(inputFiles, outputFiles, command);
-        executeNonBlocking(args);
+        String[] args = compileArgumentList(inputFiles, outputFiles, command);
+        createProcessBuilder(args);
     }
 
-    private static List<String> compileArgumentList(List inputFiles, List outputFiles, String command) {
-        List<String> argumentsToPass = new ArrayList<>();
+    private static String[] compileArgumentList(List<String> inputFiles, List<String> outputFiles, String command) {
+        String[] argumentsToPass = new String[3];
+        StringBuilder script = new StringBuilder();
+
+        argumentsToPass[0] = "/bin/sh";
+        argumentsToPass[1] = "-c";
 
         if (inputFiles.size() != 0) {
-            argumentsToPass.add("cat");
-            argumentsToPass.addAll(inputFiles);
-            argumentsToPass.add("|");
+            script.append("cat ");
+            for (String s : inputFiles)
+                script.append(s + " ");
+            script.append("| ");
         }
 
-        argumentsToPass.addAll(splitCommand(command));
+        script.append(command.trim());
 
-        if (outputFiles.size() != 0) {
-            argumentsToPass.add("|");
-            argumentsToPass.add("tee");
-            argumentsToPass.addAll(outputFiles);
+        if (outputFiles.size() == 1) {
+            script.append(" > ");
+            script.append(outputFiles.get(0));
+        } else if (outputFiles.size() > 1) {
+            script.append(" | tee ");
+            for (String s : inputFiles)
+                script.append(s + " ");
         }
 
+        argumentsToPass[2] = script.toString().trim();
         return argumentsToPass;
     }
 
@@ -95,21 +121,7 @@ public class Executor {
     }
 
     private static void createFIFO(String file) throws Exception {
-        executeNonBlocking("mkfifo", file.substring(1));
-    }
-
-    private static void executeBlocking(String... command) throws Exception {
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        Process process = processBuilder.start();
-
-        process.waitFor();
-    }
-
-    private static void executeBlocking(List<String> command) throws Exception {
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        Process process = processBuilder.start();
-
-        process.waitFor();
+        executeNonBlocking("mkfifo", file);
     }
 
     private static void executeNonBlocking(String... command) throws Exception {
@@ -117,13 +129,8 @@ public class Executor {
         Process process = processBuilder.start();
     }
 
-    private static void executeNonBlocking(List<String>command) throws Exception {
+    private static void createProcessBuilder(String... command) throws Exception {
         ProcessBuilder processBuilder = new ProcessBuilder(command);
-        Process process = processBuilder.start();
-    }
-
-    private static List<String> splitCommand(String command) {
-        String[] t = command.split(" ");
-        return Arrays.asList(t);
+        processBuilders.add(processBuilder);
     }
 }
