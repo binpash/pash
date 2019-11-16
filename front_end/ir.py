@@ -346,6 +346,8 @@ class Command(Node):
         prefix = "Command"
         if (self.category == "stateless"):
             prefix = "Stateless"
+        elif (self.category == "pure"):
+            prefix = "Pure"
         # output = "{}: \"{}\" in:{} out:{} opts:{}".format(
         #     prefix, self.command, self.stdin, self.stdout, self.options)
         output = "{}: \"{}\" in:{} out:{}".format(
@@ -495,7 +497,7 @@ def find_command_input_output(command, options, stdin, stdout):
 ## This functions finds and returns a string representing the command category
 def find_command_category(command, options):
     command_string = format_arg_chars(command)
-    # print("Command to categorize:", command_string)
+    print("Command to categorize:", command_string)
 
     assert(isinstance(command_string, str))
 
@@ -506,11 +508,16 @@ def find_command_category(command, options):
                  "wc", # wc -m or -c is not stateless
                  "xargs"] # I am not sure if all xargs are stateless
 
+    pure = ["sort"]
+
     if (command_string in stateless):
         return "stateless"
+    elif (command_string in pure):
+        return "pure"
     else:
         return "none"
 
+## TODO: Make a proper splitter subclass of Node
 def make_split_file(in_fid, out_fid, batch_size):
     assert(len(out_fid.children) == 2)
     ## TODO: Call split_file recursively when we want to split a file
@@ -586,10 +593,10 @@ class IR:
         nodes = {}
         all_file_ids = []
         for i, node in enumerate(self.nodes):
-            input_pipes = ['\"{}\"'.format(fid.serialize())
+            input_pipes = [fid.serialize()
                            for fid in node.get_flat_input_file_ids()
                            if fid.resource is None]
-            output_pipes = ['\"{}\"'.format(fid.serialize())
+            output_pipes = [fid.serialize()
                             for fid in node.get_flat_output_file_ids()
                             if fid.resource is None]
             all_file_ids += input_pipes + output_pipes
@@ -601,8 +608,10 @@ class IR:
 
         output_json["fids"] = all_file_ids
         output_json["nodes"] = nodes
-        output_json["in"] = self.stdin.serialize()
-        output_json["out"] = self.stdout.serialize()
+        flat_stdin = list_flatten([Find(self.stdin).flatten()])
+        output_json["in"] = [fid.serialize() for fid in flat_stdin]
+        flat_stdout = list_flatten([Find(self.stdout).flatten()])
+        output_json["out"] = [fid.serialize() for fid in flat_stdout]
         output = json.dumps(output_json, sort_keys=True, indent=4)
         return output
 

@@ -1,56 +1,71 @@
 {
     "fids": [
-        "\"#file1\"",
-        "\"#file2\"",
-        "\"#file7\"",
-        "\"#file8\"",
-        "\"#file4\"",
-        "\"#file4\"",
-        "\"#file6\"",
-        "\"#file2\"",
-        "\"#file7\"",
-        "\"#file8\""
+        "#file1",
+        "#file2",
+        "#file10",
+        "#file11",
+        "#file6",
+        "#file2",
+        "#file7",
+        "#file8",
+        "#file7",
+        "#file10",
+        "#file8",
+        "#file11"
     ],
-    "in": "#file1",
+    "in": [
+        "#file1"
+    ],
     "nodes": {
         "0": {
             "command": "find . \"*.md\"",
             "in": [
-                "\"#file1\""
+                "#file1"
             ],
             "out": [
-                "\"#file2\""
+                "#file2"
             ]
         },
         "1": {
-            "command": "xargs mdc",
+            "command": "nc -l 80",
             "in": [
-                "\"#file7\"",
-                "\"#file8\""
+                "#file10",
+                "#file11"
             ],
             "out": [
-                "\"#file4\""
+                "#file6"
             ]
         },
         "2": {
-            "command": "nc -l 80",
+            "command": "split_file 100",
             "in": [
-                "\"#file4\""
+                "#file2"
             ],
             "out": [
-                "\"#file6\""
+                "#file7",
+                "#file8"
             ]
         },
         "3": {
-            "command": "split_file 100",
+            "command": "xargs mdc",
             "in": [
-                "\"#file2\""
+                "#file7"
             ],
             "out": [
-                "\"#file7\"",
-                "\"#file8\""
+                "#file10"
+            ]
+        },
+        "4": {
+            "command": "xargs mdc",
+            "in": [
+                "#file8"
+            ],
+            "out": [
+                "#file11"
             ]
         }
     },
-    "out": "#file6"
+    "out": [
+        "#file6"
+    ]
 }
