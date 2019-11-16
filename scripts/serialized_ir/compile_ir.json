@@ -1,0 +1,56 @@
+{
+    "fids": [
+        "\"#file1\"",
+        "\"#file2\"",
+        "\"#file7\"",
+        "\"#file8\"",
+        "\"#file4\"",
+        "\"#file4\"",
+        "\"#file6\"",
+        "\"#file2\"",
+        "\"#file7\"",
+        "\"#file8\""
+    ],
+    "in": "#file1",
+    "nodes": {
+        "0": {
+            "command": "find . \"*.md\"",
+            "in": [
+                "\"#file1\""
+            ],
+            "out": [
+                "\"#file2\""
+            ]
+        },
+        "1": {
+            "command": "xargs mdc",
+            "in": [
+                "\"#file7\"",
+                "\"#file8\""
+            ],
+            "out": [
+                "\"#file4\""
+            ]
+        },
+        "2": {
+            "command": "nc -l 80",
+            "in": [
+                "\"#file4\""
+            ],
+            "out": [
+                "\"#file6\""
+            ]
+        },
+        "3": {
+            "command": "split_file 100",
+            "in": [
+                "\"#file2\""
+            ],
+            "out": [
+                "\"#file7\"",
+                "\"#file8\""
+            ]
+        }
+    },
+    "out": "#file6"
+}

@@ -98,12 +98,14 @@ def naive_parallelize_stateless_nodes_bfs(graph):
     ## partial files.
 
     ## TODO: Make a proper decision instead of hardcoding splitting
-    ## to 100 lines
+    ## to 100 lines and only splitting for cat
     batch_size = 100
+    commands_to_split_input = ["cat"]
     for source_node in source_nodes:
         input_file_ids = source_node.get_flat_input_file_ids()
         ## TODO: Also split when we have more than one input file
-        if(len(input_file_ids) == 1):
+        if(len(input_file_ids) == 1 and
+           str(source_node.command) in commands_to_split_input):
             input_file_id = input_file_ids[0]
             input_file_id.split_resource(2, batch_size, fileIdGen)
 
@@ -124,16 +126,34 @@ def naive_parallelize_stateless_nodes_bfs(graph):
 
 
         input_file_ids = curr.get_flat_input_file_ids()
-        if (curr.command.__repr__() == "xargs" and
+        if (str(curr.command) == "xargs" and
             len(input_file_ids) == 1):
             ## We can split xargs input to several files, even if it
             ## only has one input.
 
-            input_file_id = input_file_ids[0]
-            ## Split the file that xargs takes as input
-            ##
             ## TODO: Remove hardcoded
-            input_file_id.split_resource(2, batch_size, fileIdGen)
+            times = 2
+
+            ## This will still be the output file id of the previous
+            ## node
+            input_file_id = input_file_ids[0]
+
+            ## Generate the split file ids
+            split_file_ids = [fileIdGen.next_file_id() for i in range(times)]
+
+            ## Generate a new file id that has all the split file ids
+            ## as children, in place of the current one
+            output_file_id = fileIdGen.next_file_id()
+            output_file_id.set_children(split_file_ids)
+
+            ## Set this new file id to be the input ot xargs.
+            curr.stdin = output_file_id
+
+            ## Add a new node that executes split_file and takes
+            ## the input_file_id as input, split_file_ids as output
+            ## and the batch_size as an argument
+            split_file_command = make_split_file(input_file_id, output_file_id, batch_size)
+            graph.add_node(split_file_command)
 
         ## If the command is stateless and has more than one inputs,
         ## it can be parallelized
@@ -218,6 +238,8 @@ def naive_parallelize_stateless_nodes_bfs(graph):
     ## TODO: There is a problem when given an unexpanded string. It
     ## might be many files, so spliting the file up in different
     ## pieces might be wrong.
+
+    ## BIG TODO: Extend the file class so that it supports tee etc.
 
     ## Old Notes:
     ##

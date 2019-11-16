@@ -511,6 +511,24 @@ def find_command_category(command, options):
     else:
         return "none"
 
+def make_split_file(in_fid, out_fid, batch_size):
+    assert(len(out_fid.children) == 2)
+    ## TODO: Call split_file recursively when we want to split a file
+    ## more than two times
+
+    ## TODO: I probably have to give the file names as options to the command to.
+    options = [string_to_argument(str(batch_size))]
+    opt_indices = [("option", i) for i in range(len(options))]
+    command = Command(None, # TODO: Make a proper AST
+                      string_to_argument("split_file"),
+                      options,
+                      ["stdin"],
+                      ["stdout"],
+                      opt_indices,
+                      None, # TODO: Category?
+                      in_fid,
+                      out_fid)
+    return command
 
 ## This function gets a file identifier and returns the maximum among
 ## its, and its parents identifier (parent regarding Union Find)
