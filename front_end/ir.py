@@ -1,4 +1,5 @@
 import copy
+import json
 from union_find import *
 ### Utils
 
@@ -29,7 +30,7 @@ def format_arg_char(arg_char):
     elif (key == 'V'):
         return '${}'.format(val[2])
     elif (key == 'E'):
-        return '\{}'.format(chr(val))
+        return '{}'.format(chr(val))
     else:
         ## TODO: Make this correct
         return key
@@ -584,6 +585,30 @@ class IR:
         output = "{{ \"fids\":\n[{}]\n,".format(serialized_all_file_ids) + output[:-2] + "}}"
         return output
 
+    def serialize_as_JSON2(self):
+        output_json = {}
+        nodes = {}
+        all_file_ids = []
+        for i, node in enumerate(self.nodes):
+            input_pipes = ['\"{}\"'.format(fid.serialize())
+                           for fid in node.get_flat_input_file_ids()
+                           if fid.resource is None]
+            output_pipes = ['\"{}\"'.format(fid.serialize())
+                            for fid in node.get_flat_output_file_ids()
+                            if fid.resource is None]
+            all_file_ids += input_pipes + output_pipes
+            node_json = {}
+            node_json["in"] = input_pipes
+            node_json["out"] = output_pipes
+            node_json["command"] = node.serialize()
+            nodes[str(i)] = node_json
+
+        output_json["fids"] = all_file_ids
+        output_json["nodes"] = nodes
+        output = json.dumps(output_json, sort_keys=True, indent=4)
+        return output
+
+    
     def set_ast(self, ast):
         self.ast = ast
     
