@@ -1,8 +1,57 @@
-{ "fids":
-["#file12", "#file13", "#file7", "#file10", "#file11", "#file10", "#file12", "#file11", "#file13"]
-,"nodes": {
-"0": {"in": ["#file12", "#file13"], "out": ["#file7"], "command": "sort " },
-"1": {"in": [], "out": ["#file10"], "command": "cat $IN" },
-"2": {"in": [], "out": ["#file11"], "command": "cat $IN" },
-"3": {"in": ["#file10"], "out": ["#file12"], "command": "tr A-Z a-z" },
-"4": {"in": ["#file11"], "out": ["#file13"], "command": "tr A-Z a-z" }}}
+{
+    "fids": [
+        "\"#file12\"",
+        "\"#file13\"",
+        "\"#file7\"",
+        "\"#file10\"",
+        "\"#file11\"",
+        "\"#file10\"",
+        "\"#file12\"",
+        "\"#file11\"",
+        "\"#file13\""
+    ],
+    "nodes": {
+        "0": {
+            "command": "sort ",
+            "in": [
+                "\"#file12\"",
+                "\"#file13\""
+            ],
+            "out": [
+                "\"#file7\""
+            ]
+        },
+        "1": {
+            "command": "cat $IN",
+            "in": [],
+            "out": [
+                "\"#file10\""
+            ]
+        },
+        "2": {
+            "command": "cat $IN",
+            "in": [],
+            "out": [
+                "\"#file11\""
+            ]
+        },
+        "3": {
+            "command": "tr A-Z a-z",
+            "in": [
+                "\"#file10\""
+            ],
+            "out": [
+                "\"#file12\""
+            ]
+        },
+        "4": {
+            "command": "tr A-Z a-z",
+            "in": [
+                "\"#file11\""
+            ],
+            "out": [
+                "\"#file13\""
+            ]
+        }
+    }
+}
