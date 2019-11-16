@@ -215,6 +215,10 @@ def naive_parallelize_stateless_nodes_bfs(graph):
     ## seems that the distribution planner should be able to do some
     ## expansion itself though
 
+    ## TODO: There is a problem when given an unexpanded string. It
+    ## might be many files, so spliting the file up in different
+    ## pieces might be wrong.
+
     ## Old Notes:
     ##
     ## A distribution planner that uses equations (like the ones we
