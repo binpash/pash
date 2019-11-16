@@ -563,28 +563,6 @@ class IR:
         output = "File ids:\n{}\n".format(all_file_ids) + output
         return output
 
-    def serialize_as_JSON(self):
-        output = '\"nodes\": {\n'
-        all_file_ids = []
-        for i, node in enumerate(self.nodes):
-            input_pipes = ['\"{}\"'.format(fid.serialize())
-                           for fid in node.get_flat_input_file_ids()
-                           if fid.resource is None]
-            output_pipes = ['\"{}\"'.format(fid.serialize())
-                            for fid in node.get_flat_output_file_ids()
-                            if fid.resource is None]
-            serialized_input_file_ids = ", ".join(input_pipes)
-            serialized_output_file_ids = ", ".join(output_pipes)
-            all_file_ids += input_pipes + output_pipes
-            output += "\"{}\": {{\"in\": [{}], \"out\": [{}], \"command\": \"{}\" }},\n".format(i,
-                                                                                   serialized_input_file_ids,
-                                                                                   serialized_output_file_ids,
-                                                                                   node.serialize())
-
-        serialized_all_file_ids = ", ".join(all_file_ids)
-        output = "{{ \"fids\":\n[{}]\n,".format(serialized_all_file_ids) + output[:-2] + "}}"
-        return output
-
     def serialize_as_JSON2(self):
         output_json = {}
         nodes = {}
@@ -605,6 +583,8 @@ class IR:
 
         output_json["fids"] = all_file_ids
         output_json["nodes"] = nodes
+        output_json["in"] = self.stdin.serialize()
+        output_json["out"] = self.stdout.serialize()
         output = json.dumps(output_json, sort_keys=True, indent=4)
         return output
 
