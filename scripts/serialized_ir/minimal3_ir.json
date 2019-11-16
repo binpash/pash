@@ -1,79 +1,107 @@
 {
     "fids": [
-        "\"#file16\"",
-        "\"#file17\"",
-        "\"#file9\"",
-        "\"#file12\"",
-        "\"#file13\"",
-        "\"#file12\"",
-        "\"#file14\"",
-        "\"#file13\"",
-        "\"#file15\"",
-        "\"#file14\"",
-        "\"#file16\"",
-        "\"#file15\"",
-        "\"#file17\""
+        "#file12",
+        "#file13",
+        "#file12",
+        "#file14",
+        "#file13",
+        "#file15",
+        "#file14",
+        "#file16",
+        "#file15",
+        "#file17",
+        "#file16",
+        "#file18",
+        "#file17",
+        "#file19",
+        "#file18",
+        "#file19",
+        "#file9"
+    ],
+    "in": [
+        "#file1"
     ],
     "nodes": {
         "0": {
-            "command": "sort ",
-            "in": [
-                "\"#file16\"",
-                "\"#file17\""
-            ],
+            "command": "cat $IN",
+            "in": [],
             "out": [
-                "\"#file9\""
+                "#file12"
             ]
         },
         "1": {
             "command": "cat $IN",
             "in": [],
             "out": [
-                "\"#file12\""
+                "#file13"
             ]
         },
         "2": {
-            "command": "cat $IN",
-            "in": [],
+            "command": "tr A-Z a-z",
+            "in": [
+                "#file12"
+            ],
             "out": [
-                "\"#file13\""
+                "#file14"
             ]
         },
         "3": {
             "command": "tr A-Z a-z",
             "in": [
-                "\"#file12\""
+                "#file13"
             ],
             "out": [
-                "\"#file14\""
+                "#file15"
             ]
         },
         "4": {
-            "command": "tr A-Z a-z",
+            "command": "grep \"\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4\"",
             "in": [
-                "\"#file13\""
+                "#file14"
             ],
             "out": [
-                "\"#file15\""
+                "#file16"
             ]
         },
         "5": {
             "command": "grep \"\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4\"",
             "in": [
-                "\"#file14\""
+                "#file15"
             ],
             "out": [
-                "\"#file16\""
+                "#file17"
             ]
         },
         "6": {
-            "command": "grep \"\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4\"",
+            "command": "sort ",
             "in": [
-                "\"#file15\""
+                "#file16"
             ],
             "out": [
-                "\"#file17\""
+                "#file18"
+            ]
+        },
+        "7": {
+            "command": "sort ",
+            "in": [
+                "#file17"
+            ],
+            "out": [
+                "#file19"
+            ]
+        },
+        "8": {
+            "command": "sort -m",
+            "in": [
+                "#file18",
+                "#file19"
+            ],
+            "out": [
+                "#file9"
             ]
         }
-    }
+    },
+    "out": [
+        "#file9"
+    ]
 }

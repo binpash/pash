@@ -1,57 +1,85 @@
 {
     "fids": [
-        "\"#file12\"",
-        "\"#file13\"",
-        "\"#file7\"",
-        "\"#file10\"",
-        "\"#file11\"",
-        "\"#file10\"",
-        "\"#file12\"",
-        "\"#file11\"",
-        "\"#file13\""
+        "#file10",
+        "#file11",
+        "#file10",
+        "#file12",
+        "#file11",
+        "#file13",
+        "#file12",
+        "#file14",
+        "#file13",
+        "#file15",
+        "#file14",
+        "#file15",
+        "#file7"
+    ],
+    "in": [
+        "#file1"
     ],
     "nodes": {
         "0": {
-            "command": "sort ",
-            "in": [
-                "\"#file12\"",
-                "\"#file13\""
-            ],
+            "command": "cat $IN",
+            "in": [],
             "out": [
-                "\"#file7\""
+                "#file10"
             ]
         },
         "1": {
             "command": "cat $IN",
             "in": [],
             "out": [
-                "\"#file10\""
+                "#file11"
             ]
         },
         "2": {
-            "command": "cat $IN",
-            "in": [],
+            "command": "tr A-Z a-z",
+            "in": [
+                "#file10"
+            ],
             "out": [
-                "\"#file11\""
+                "#file12"
             ]
         },
         "3": {
             "command": "tr A-Z a-z",
             "in": [
-                "\"#file10\""
+                "#file11"
             ],
             "out": [
-                "\"#file12\""
+                "#file13"
             ]
         },
         "4": {
-            "command": "tr A-Z a-z",
+            "command": "sort ",
             "in": [
-                "\"#file11\""
+                "#file12"
             ],
             "out": [
-                "\"#file13\""
+                "#file14"
+            ]
+        },
+        "5": {
+            "command": "sort ",
+            "in": [
+                "#file13"
+            ],
+            "out": [
+                "#file15"
+            ]
+        },
+        "6": {
+            "command": "sort -m",
+            "in": [
+                "#file14",
+                "#file15"
+            ],
+            "out": [
+                "#file7"
             ]
         }
-    }
+    },
+    "out": [
+        "#file7"
+    ]
 }
