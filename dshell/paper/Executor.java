@@ -7,16 +7,17 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
 public class Executor {
-    private static final String FILE_NODES = "fids";
+    private static final String FILE_IDENTIFIERS = "fids";
     private static final String PIPE_NODES = "nodes";
+    private static final String NODE_INPUT_FILES = "in";
+    private static final String NODE_OUTPUT_FILES = "out";
+    private static final String COMMAND = "command";
     private static final String INPUT_FILES = "in";
     private static final String OUTPUT_FILES = "out";
-    private static final String COMMAND = "command";
 
     private static List<ProcessBuilder> processBuilders = new ArrayList<>();
     private static List<Process> processes = new ArrayList<>();
@@ -28,7 +29,6 @@ public class Executor {
         if (args.length > 1)
             iterations = Integer.parseInt(args[1]);
 
-
         StringBuilder jsonRaw = new StringBuilder();
 
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(jsonFile))) {
@@ -38,16 +38,18 @@ public class Executor {
         }
 
         JSONObject rootElement = new JSONObject(jsonRaw.toString());
-        JSONArray files = rootElement.getJSONArray(FILE_NODES);
+        JSONArray files = rootElement.getJSONArray(FILE_IDENTIFIERS);
         JSONObject nodes = rootElement.getJSONObject(PIPE_NODES);
+        JSONArray inFiles = rootElement.getJSONArray(INPUT_FILES);
+        JSONArray outFiles = rootElement.getJSONArray(OUTPUT_FILES);
 
         Iterator<String> keys = nodes.keys();
         while (keys.hasNext()) {
             String key = keys.next();
             JSONObject object = nodes.getJSONObject(key);
 
-            JSONArray rawInput = object.getJSONArray(INPUT_FILES);
-            JSONArray rawOutput = object.getJSONArray(OUTPUT_FILES);
+            JSONArray rawInput = object.getJSONArray(NODE_INPUT_FILES);
+            JSONArray rawOutput = object.getJSONArray(NODE_OUTPUT_FILES);
             String command = object.getString(COMMAND);
 
             List<String> input = new ArrayList<>();
@@ -71,6 +73,13 @@ public class Executor {
             long startTime = System.currentTimeMillis();
             for (ProcessBuilder p : processBuilders)
                 processes.add(p.start());
+
+
+            for (int i = 0; i < outFiles.length(); i++) {
+                String fileToWait = outFiles.getString(i).substring(1);
+                executeBlocking(new String[]{"cat", fileToWait});
+            }
+
             for (Process p : processes)
                 p.waitFor();
             long endTime = System.currentTimeMillis();
@@ -79,7 +88,8 @@ public class Executor {
         }
 
         System.out.println("Script execution time is " + executionTime + " ms");
-        System.out.println("Script average execution time is " + executionTime / (double)iterations + " ms");
+        if (iterations > 1)
+            System.out.println("Script average execution time is " + executionTime / (double) iterations + " ms");
     }
 
     private static void createNode(List<String> inputFiles, List<String> outputFiles, String command) throws Exception {
@@ -132,5 +142,15 @@ public class Executor {
     private static void createProcessBuilder(String... command) throws Exception {
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         processBuilders.add(processBuilder);
+    }
+
+    private static void executeBlocking(String... command) throws Exception {
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        Process process = processBuilder.start();
+
+        byte[] data = process.getInputStream().readAllBytes();
+        System.out.println(new String(data));
+
+        process.waitFor();
     }
 }
