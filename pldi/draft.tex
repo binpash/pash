@@ -402,8 +402,9 @@ A \sys-enabled $p_1$ will run \ttt{tr} and \ttt{uniq} in completely parallel str
 The combination of automated transformations for program distribution with the ability to maintain correct non-distributed semantics results in several benefits.
 % \sys converts legacy shell pipelines into their distributed equivalents fully automatically, offering $100\times$ improvements in performance without a single line of additional code or annotation.
 First, shell users composing pipelines (or simply running legacy pipelines on massive datasets) can see scalability benefits without any manual effort---no need for \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}, or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
-Second, developers of new shell commands can use a concise a domain-specific language to express their distributability properties rather than using ad-hoc, command-specific flags such as {\tt -t},  \#threads, \ttt{-t}, \ttt{-p} \etc
+Second, developers of new shell commands can use a concise a domain-specific language to express their distributability properties rather than using ad-hoc, command-specific flags such as {\tt -t},  {\tt NUM\_THREADS}, \ttt{-t}, \ttt{-p} \etc
 Most importantly, \sys provides an architectural lesson for system designers---namely, that large-scale research efforts in the distributed- and operating-system literature to provide a \unix-like distributed equivalent~\cite{ousterhout1988sprite, mullender1990amoeba, pike1990plan9, barak1998mosix} would have been simplified by a thin (but sophisticated) rewriting shim like the one \sys provides.
+% Nice critique on parallel: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=597050#75
 
 % % Make Unix benefits explicit?
 % Indeed, the primary reason behind $p_1$'s succinctness is that the pipeline is a domain-specific language for describing operations over streams.
@@ -422,8 +423,8 @@ Most importantly, \sys provides an architectural lesson for system designers---n
 % The semantics is enough to capture powerful features such as stream branching and feedback constructs found in practice and in the system's evaluation.
 
 The paper is structured as follows.
-We first start with a background section outlining pipeline concepts~\sx{bg}.
-Sections \ref{classes}--\ref{recipes} highlight our key contributions:\footnote{
+It first starts with a background section outlining pipeline concepts and overviewing \sys~\sx{bg}.
+Sections \ref{classes}--\ref{recipes} highlight key contributions:\footnote{
   This is not precise, we'll need to wait until it matures a bit.
 }
 \begin{itemize}
@@ -439,8 +440,8 @@ Sections \ref{classes}--\ref{recipes} highlight our key contributions:\footnote{
 \end{itemize}
 
 \noindent
-\sys's evaluation~\sx{eval} uses a combination of one-liner micro-benchmarks that highlight certain features and three multi-line macro-benchmarks---a web crawling and indexing engine, a production genomics pipeline, and a large-scale weather analysis.
-We close with a discussion of related prior work~\sx{related} and possible future directions~\sx{discussion}.
+\sys's evaluation~\sx{eval} shows significant speedups on both parallel and distributed execution, using a combination of micro-bench\-marks---popular shell one-liners that highlight certain features---and multi-line macro-benchmarks---a web crawling and indexing engine, a genomics pipeline, and a popular weather analysis script.
+After a comparison with related prior work~\sx{related}, the paper closes with a discussion of related work and possible future directions~\sx{discussion}.
 
 \begin{figure*}[t]
 \centering
