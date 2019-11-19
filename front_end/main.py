@@ -3,40 +3,6 @@ from distr_plan import *
 from ir import *
 from json_ast import *
 
-# The following files just contain POSIX (no process substitution)
-# pipes and commands
-#
-# json_filename = "../scripts/json/compile.sh.json" # OK - xargs
-# json_filename = "../scripts/json/grep.sh.json" # OK - single input file
-# json_filename = "../scripts/json/grep2.sh.json" # OK - 2 input files
-# json_filename = "../scripts/json/minimal.sh.json" # ISSUE - redirection of a file - have to be handled in the translation
-# json_filename = "../scripts/json/minimal2.sh.json" # OK - 2 input files
-# json_filename = "../scripts/json/minimal3.sh.json" # OK - 1 input file
-# json_filename = "../scripts/json/minimal4.sh.json" # OK - 1 input file
-json_filename = "../scripts/json/minimal5.sh.json" # OK - 1 input file
-# json_filename = "../scripts/json/shortest-scripts.sh.json" # PROBLEM - unexpanded *
-# json_filename = "../scripts/json/spell.sh.json" # PROBLEM - sort and others
-# json_filename = "../scripts/json/topn.sh.json" # PROBLEM - sort and others
-# json_filename = "../scripts/json/wc.sh.json" # OK - single input file
-# json_filename = "../scripts/json/wf.sh.json" # PROBLEM - sort and others
-# json_filename = "../scripts/json/ngrams.sh.json" # PROBLEM - sort, tee, and others
-# json_filename = "../scripts/json/diff.sh.json" # PROBLEM - Function definition is not handled. Can this be solved?
-
-# The following contain And operators together with pipes and commands
-#
-# json_filename = "../scripts/json/old_ngrams.sh.json" # ISSUE - redirection of a file - have to be handled in the translation
-
-
-# The following is interesting, since it contains command substitution
-# (which is parsed as backticks in the Greenberg parser). The
-# backticks seem to mean that whatever is in the backticks will
-# execute first, and its output will become a string in place of the
-# backticks
-# json_filename = "../scripts/json/page-count.sh.json"
-
-# Unidentified
-#
-# json_filename = "../scripts/json/maximal.sh.json"
 
 
 def from_ir_to_shell(ir_filename, new_shell_filename):
@@ -45,54 +11,56 @@ def from_ir_to_shell(ir_filename, new_shell_filename):
     return
 
 
+def __main__():
+    ## Translation process:
+    ##
+    ## 1. Parse json to an AST object
+    ##
+    ## 2. TODO: Ensure that the AST is in our supported subset (TODO)
+    ##
+    ## 3. Compile subtrees of the AST to out intermediate representation
+    ##
+    ## 4. Replace the IRs in the ASTs with calls to the distribution
+    ##    planner. Save the IRs in temporary files.
+    ##
+    ## 5. Translate the new AST back to shell syntax
+    ##
+    ## 6. Execute the new AST using a standard shell
 
-## Translation process:
-##
-## 1. Parse json to an AST object
-##
-## 2. TODO: Ensure that the AST is in our supported subset (TODO)
-##
-## 3. Compile subtrees of the AST to out intermediate representation
-##
-## 4. Replace the IRs in the ASTs with calls to the distribution
-##    planner. Save the IRs in temporary files.
-##
-## 5. Translate the new AST back to shell syntax
-##
-## 6. Execute the new AST using a standard shell
+    json_filename = sys.argv[1]
 
-ast_objects = parse_json_ast(json_filename)
-check_if_asts_supported(ast_objects)
+    ast_objects = parse_json_ast(json_filename)
+    check_if_asts_supported(ast_objects)
 
-## This is for the files in the IR
-fileIdGen = FileIdGen()
+    ## This is for the files in the IR
+    fileIdGen = FileIdGen()
 
-## This is ids for the remporary files that we will save the IRs in
-irFileGen = FileIdGen()
+    ## This is ids for the remporary files that we will save the IRs in
+    irFileGen = FileIdGen()
 
-final_asts = []
-for i, ast_object in enumerate(ast_objects):
-    print("Compiling AST {}".format(i))
-    print(ast_object)
-    compiled_ast = compile_ast(ast_object, fileIdGen)
-    print("Compiled AST:")
-    print(compiled_ast)
+    final_asts = []
+    for i, ast_object in enumerate(ast_objects):
+        print("Compiling AST {}".format(i))
+        print(ast_object)
+        compiled_ast = compile_ast(ast_object, fileIdGen)
+        print("Compiled AST:")
+        print(compiled_ast)
 
-    final_ast = replace_irs(compiled_ast, irFileGen)
-    print("Final AST:")
-    print(final_ast)
-    final_asts.append(final_ast)
-    
-ir_filename = json_filename + ".ir"
-save_asts_json(final_asts, ir_filename)
+        final_ast = replace_irs(compiled_ast, irFileGen)
+        print("Final AST:")
+        print(final_ast)
+        final_asts.append(final_ast)
 
-new_shell_filename = json_filename + ".sh"
-from_ir_to_shell(ir_filename, new_shell_filename)
+    ir_filename = json_filename + ".ir"
+    save_asts_json(final_asts, ir_filename)
 
-##
-## TODO: Make sure that the whole end-to-end prototype runs (calling
-## ocaml to parse, and make a trivial distribution planner that runs
-## runs the original ast.
+    new_shell_filename = json_filename + ".sh"
+    from_ir_to_shell(ir_filename, new_shell_filename)
+
+    ##
+    ## TODO: Make sure that the whole end-to-end prototype runs (calling
+    ## ocaml to parse, and make a trivial distribution planner that runs
+    ## runs the original ast.
 
 
 

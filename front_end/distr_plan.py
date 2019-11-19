@@ -12,6 +12,8 @@ import jsonpickle
 def main():
     # print command line arguments
     ir_filename = sys.argv[1]
+    output_file = sys.argv[2]
+
     with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
 
@@ -40,7 +42,7 @@ def main():
     ## available computational resources, such as nodes in the system,
     ## and their cores, etc.
 
-    execute(distributed_graph.serialize_as_JSON())
+    execute(distributed_graph.serialize_as_JSON(), output_file)
 
 
 ## This is a simplistic planner, that pushes the available
