@@ -41,7 +41,7 @@ def execute(graph_json, output_file):
     for proc in processes:
         ret = proc.wait()
         if(not ret == 0):
-            print("Error!", proc, ret)
+            print("-- Error!", proc, ret)
 
     ## Kill pipes
     for fid in fids:
@@ -59,6 +59,7 @@ def remove_fifo_if_exists(pipe):
 
 def make_fifo(pipe):
     assert(pipe[0] == "#")
+    print ('mkfifo "{}"'.format(pipe))
     os.mkfifo(pipe)
 
 def execute_node(node, env):
