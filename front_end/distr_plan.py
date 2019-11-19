@@ -108,14 +108,14 @@ def naive_parallelize_stateless_nodes_bfs(graph):
     ## TODO: Make a proper decision instead of hardcoding splitting
     ## to 100 lines and only splitting for cat
     batch_size = 100
-    commands_to_split_input = ["cat"]
-    for source_node in source_nodes:
-        input_file_ids = source_node.get_flat_input_file_ids()
-        ## TODO: Also split when we have more than one input file
-        if(len(input_file_ids) == 1 and
-           str(source_node.command) in commands_to_split_input):
-            input_file_id = input_file_ids[0]
-            input_file_id.split_resource(2, batch_size, fileIdGen)
+    # commands_to_split_input = ["cat"]
+    # for source_node in source_nodes:
+    #     input_file_ids = source_node.get_flat_input_file_ids()
+    #     ## TODO: Also split when we have more than one input file
+    #     if(len(input_file_ids) == 1 and
+    #        str(source_node.command) in commands_to_split_input):
+    #         input_file_id = input_file_ids[0]
+    #         input_file_id.split_resource(2, batch_size, fileIdGen)
 
 
     nodes = source_nodes
