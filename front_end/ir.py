@@ -611,6 +611,7 @@ class IR:
             node_json["command"] = node.serialize()
             nodes[str(i)] = node_json
 
+        all_file_ids = list(set(all_file_ids))
         output_json["fids"] = all_file_ids
         output_json["nodes"] = nodes
         flat_stdin = list_flatten([Find(self.stdin).flatten()])
