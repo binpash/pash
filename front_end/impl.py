@@ -2,7 +2,7 @@ import os
 import time
 import subprocess
 
-def execute(graph_json):
+def execute(graph_json, output_file):
     ## TODO: Remove environment hardcoding
     env={"IN": "../scripts/input/i1G.txt"}
 
@@ -25,12 +25,15 @@ def execute(graph_json):
     ## Execute nodes
     processes = [execute_node(node, env) for node_id, node in nodes.items()]
 
+    ## Collect outputs
+    collect_output_args = ["cat"]
     for out_fid in out_fids:
-        print("Output:")
-        with open(out_fid) as f:
-            for line in f:
-                # print(line)
-                pass
+        collect_output_args.append('"{}"'.format(out_fid))
+    collect_output_args.append(">")
+    collect_output_args.append('"{}"'.format(output_file))
+    output_script = " ".join(collect_output_args)
+    out_p = subprocess.Popen(output_script, shell=True,
+                             executable="/bin/bash")
 
     ## Wait for all processes to die
     for proc in processes:
