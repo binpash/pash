@@ -20,6 +20,7 @@
 \usepackage{upquote}
 \usepackage{listings}
 \usepackage{amsmath}
+\usepackage{cleveref}
 
 \captionsetup[figure]{font=footnotesize,name={Fig.},labelfont={bf, footnotesize}}
 \captionsetup[table]{font=footnotesize,name={Tab.},labelfont={bf, footnotesize}, skip=2pt, aboveskip=2pt}
@@ -44,6 +45,7 @@
 \newcommand{\TODO}[1]{\hl{\textbf{TODO:} #1}\xspace}
 \newcommand{\todo}[1]{\hl{#1}\xspace}
 \newcommand{\nv}[1]{[{\color{cyan}#1 --- Nikos}]}
+\newcommand{\kk}[1]{[{\color{magenta}#1 --- KK}]}
 \newcommand{\review}[1]{{\color{red}#1}}
 
 \definecolor{editorGray}{rgb}{0.95, 0.95, 0.95}
@@ -508,6 +510,9 @@ The most powerful---and interesting, for \ttt{dish}---type of expansion is subsh
 
 \heading{Identifiers}
 
+\kk{We have to mention character vs line based parallelism somewhere,
+  and that we choose to see lines as the data quantum}
+
 The file-system is a common abstraction layer used for many other operations than just serving files (this will be become clearer when talking about file-system commands in \S\ref{bg:cmd}).
 as such, different identifiers many not resolve to actual files, but rather in-memory or OS-internal structures.
 
@@ -620,6 +625,258 @@ Even without these, the Unix pipeline language is powerful enough to capture com
 We can encode powerful
 
 \section{Dish Overview}
+
+
+\section{Extensibility}
+
+ULTRA DRAFTY:
+
+\kk{Text point: A problem that is specific to the shell is
+  extensibility.}
+
+The major characteristic that makes the shell popular and very useful
+is its extensibility, as also mentioned in \Cref{bg}. Commands change,
+get extended, and each user continuously installs more commands to use
+in their system.
+
+\kk{Text point: This restricts the space of solutions for distribution
+  of shell scripts}
+
+This means that any one-time solution is not satisfactory, since it
+would very easily become obsolete, or it would only handle a limited
+amount of shell scripts.
+
+\kk{Text point: The characteristics of a good solution}
+
+A solution that applies to shell programms should thus be extensible,
+in the sense that adding or changing a command, doesn't invalidate the
+assumptions that the tool makes. In our case, the information about
+the command categories. A developer of a new command, should be able
+to categorize it accordingly, and succinctly describe how the system
+can distribute a command.
+
+\kk{Solution: A lightweight language that can be used by a command
+  developer to categorize it for distribution.}
+
+We address this issue by designing a lightweight language whose
+purpose is to categorize a command, describes how it reads its input
+(meaning in what order), and how to distribute it (in case it is
+pure). \kk{I am not sure if the order in which a command reads its
+  input will be part of the language since many commands can be made
+  to read from one place (like stdin or their first argument). Even in
+  that case though, where the command only reads from one argument, we
+  have to make sure that there is a way for the user to pinpoint which
+  argument does a command read from.}
+
+\subsection{Categorization Language}
+
+\kk{Text point: Introduce problem: Most shell commands, belong to
+  different classes depending on their flags, arguments}
+
+Consider the command \texttt{cat} \kk{Maybe that is not he best
+  example. TODO: Find a good example of a simple command that is in
+  different classes depending on the arguments.}. When used without
+any flag it is stateless, etc...
+
+\kk{Text point: Our language must be able to categorize commands to
+  different classes according to their arguments.}
+
+\kk{We should have a crisp point about why we have this categorization
+  language, and why don't we just allow someone to write a function in
+  python for each command, that given the command and its arguments,
+  returns whether the command category. Possible arguments include,
+  the fact that this language is simpler to use, especially by non
+  experts that just run some script but have installed some commands
+  that are not ``supported''. Another possible argument is that we
+  could be able to reason about the constructs of the categorization
+  lagnauge, and that they will be easier to read and
+  understand. Another argument is that since these categorizations
+  should be shareable among users, it would be bad to execute
+  arbitrary python code, so using this language, expressivity is
+  limited. All of these arguments are a little bit weak though. Niko,
+  what do you think?}
+
+Sketch of the language:
+
+Some kind of lightweight annotation configuration language (like
+yaml), that contains a record for each command.
+
+A record contains a sequence of predicates => categories. Each
+predicate is a combination of not, or, and and the atomic predicates
+are the presence of a flag, or an equality that checks that the value
+of a flag is equal to something (because flags can also have
+values). The final predicate can be left empty, and it is trivially true.
+
+Interpreter:
+
+Given a command and the set of its arguments, the intepreter returns
+the command category. In does so by returning the category of the first
+predicate that matches.
+
+\kk{Would it be meaningful to give the syntaxx of the language
+  formally?}
+
+\kk{If we talk about the language it would be good to give some
+  statistics about how many commands (out of the ones that we have
+  classified) can be represented with one, two clauses etc. If we have
+  a different solution (like python function that given a command and
+  its arguments returns the category) then we could talk about how
+  many lines of code it took to categorize all the commands that we
+  did.}
+
+As described in distributability\ref{}, the abstract notion of a
+program that we have is programs with one input and one output
+stream. The command developer must be able to express the input
+argument of a commmand (or if it is the stdin).
+
+\kk{Question: Do we need to handle all commands (even the ones that
+  could have their input split in several different arguments? or can
+  we somehow easily make these ones just take their input from one
+  place (e.g. by adding a cat before them).}
+
+\kk{Possible solutions for this (if we have already turned commands
+  with more that one input to commands with one input): Have a
+  positional reference to the argument that is input (or ``stdin'' if
+  it is the stdin). Example: the last argument [-1] of grep is its
+  input.}
+
+\kk{It seems that even the arguments might depend on flags (e.g. grep
+  checks the current directory if asked recursively, or the stdin
+  otherwise), so maybe we should again have a sequence of predicates}
+
+
+\kk{Note: Since a categorization language will probably not be
+  complete (especially the one showing the input arguments) there
+  should be a backup mechanism, when the language is not expressive
+  enough, like a python function that categorizes the command, and
+  returns its input argument if it is stateless.}
+
+\subsection{Pure Commands}
+
+Even though stateless commands are a big percentage of all of them,
+there are a lot of useful and popular pure commands.
+
+As mentioned in distributability, pure commands can be broken down
+into different categories. We might be able to get ideas about this
+from this paper:
+\url{http://www.cs.toronto.edu/~azadeh/papers/pldi17-ex.pdf} and its
+continuation in PLDI 2019.
+
+Can we find a solution for the commands in coreutils?
+
+
+
+
+\section{Front End}
+
+
+We parse a shell script using a posix compliant parser that returns
+the ast.
+
+\kk{Text point: The AST Is not a very good data structure to
+  manipulate for distribution, so we translate it to a kind of a
+  dataflow graph.}
+
+\subsection{Distributable Subtrees}
+
+\kk{Text point: Problem: Not all parts of a shell script are
+  distributable, so we cannot arbitrarily distribute}
+
+Even though commands are split in categories, and several pipelines
+are distributable, not all parts of a shell script are stateless and
+several of them have effects that could affect the behaviour of a
+program after distribution.
+
+\kk{Solution: We have found that distributing subtrees of the shell
+  AST is safe. Can we have a semi-formal argument about that?}
+
+Mention all the different constructs that our front end handles, and
+why it is safe to add them to the distribution pipeline.
+
+\subsection{Intermediate Representation/Dataflow graph}
+
+Mention its constructs, and its semantics, and why it is a bit
+different that standard dataflow graphs (where usually incoming edges
+are either consumed with some arbitrary interleaving, or pair by
+pair).
+
+\kk{Text point: The main shell abstraction is files, which are batches
+  or streams of characters (or lines) where the order matters. So we
+  want a representation that captures order of inputs and outputs (and
+  ours does because its node in the graph has a sequence of inputs.}
+
+Explain that the intermediate representation represents workers that
+communicate through files, and that it captures parallelism both in
+the operator level, as well as data parallelism.
+
+\section{Distribution Planner}
+
+\kk{Maybe this should be merged with the one above, especially if it
+  talks about how distribution happens on the intermediate
+  representation.}
+
+\subsection{Scaling up the distributed computation/Vertically expanding the graph}
+
+The planner acts on the dataflow graph, by first expanding it ``as
+much as possible'' to expose parallelization opportunities. It uses
+knowledge about the inputs of each stateless and pure command.
+
+\kk{Explain the algorithm and how it pushes parallelization through
+  the graph, while preserving correctness.}
+
+\kk{Give an example}
+
+\subsection{Mapping operators to nodes}
+
+Explain the simple algorithm that we used to minimize intra node
+communication, that tries to map contiguous parts of the graph to the
+same node. We could do this by having an algorithm that minimizes the
+number of cuts or something.
+
+We don't try to make a proper planner, as there is a lot of work on
+operator placement etc. that we can borrow from.
+
+
+\subsection{Just in time planning}
+
+Important point: Shell is extremely dynamic. Because of this, a
+distributor cannot decide how to distribute a subexpression
+statically, by just reading the script, (as in many other systems like
+MapReduce, Spark, etc), since most of the information is not there
+before the script starts executing. Environment variables,
+unexpanded(unevaluated) strings \kk{Make sure that terminology is
+  consistent with Greenberg}, could all contain information that is
+valuable to make the distribution plan \kk{give an example}.
+
+
+Future work on this: calling the shell shtepper to only partially
+evaluate strings, just expand arguments, and not do any significant
+computation.
+
+
+\section{Limitations}
+
+\kk{This is not really a section on its own, but rather part of something else.}
+
+\begin{itemize}
+\item Fault Tolerance
+\item Distributed Planning: The planner at the moment is naive, and
+  there is a huge literature on operator placement of distributed
+  dataflow graphs that can be used to improve it.
+\item Support of shell constructs: At the moment we have been
+  conservative in the shell subsets that we handle, so that we don't
+  introduce any unsafe parallelism. The point of this work was not to
+  be able to handle a complete distributable subset of the shell, but
+  rather a significantly big part of it, to demonstrate that there can
+  be performance benefit from it.
+\item Support distributing different classes: At the moment we are
+  only dealing with stateless and pure commands, that is the ones that
+  are most popular but also can offer the biggest benefits from
+  parallelizing them. However, it would be interesting to explore the
+  distributability of the file system commands, by using a distributed
+  file system. THis would also require considerations about
+  replication, consistency, and failures.
+\end{itemize}
 
 \section{Related Work}
 
