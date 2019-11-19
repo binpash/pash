@@ -53,8 +53,8 @@ def main():
 ## It returns a maximally expanded (regarding files) graph, that can
 ## be scheduled depending on the available computational resources.
 def simpl_file_distribution_planner(graph):
-    print("Intermediate representation:")
-    print(graph)
+    # print("Intermediate representation:")
+    # print(graph)
 
     ## We assume that the file identifiers that have been added in the
     ## intermediate representation show the edges between different IR
@@ -73,8 +73,8 @@ def simpl_file_distribution_planner(graph):
     ## all sources simultaneously) so that we don't have to iterate to
     ## reach a fixpoint.
     naive_parallelize_stateless_nodes_bfs(graph)
-    print("Parallelized graph:")
-    print(graph)
+    # print("Parallelized graph:")
+    # print(graph)
 
     # Output the graph as json
     # frozen = jsonpickle.encode(graph)
@@ -82,7 +82,7 @@ def simpl_file_distribution_planner(graph):
     # f.write(frozen)
     # f.close()
 
-    print(graph.serialize())
+    # print(graph.serialize())
     f = open("serialized_ir", "w")
     f.write(graph.serialize_as_JSON_string())
     f.close()
@@ -248,16 +248,24 @@ def parallelize_pure_sort(curr, graph, fileIdGen):
     # print(new_commands)
 
     ## Create a merge sort command
+    ##
+    ## WARNING: Since the merge has to take the files as arguments, we
+    ## pass the pipe names as its arguments and nothing in stdin
     options = [string_to_argument("-m")]
+    # options = []
+    options += [string_to_argument(fid.pipe_name()) for fid in new_output_file_ids]
     opt_indices = [("option", i) for i in range(len(options))]
+    # in_stream = [("option", i + len(opt_indices)) for i in range(len(new_output_file_ids))]
+    in_stream = []
     merge_command = Command(None, # TODO: Make a proper AST
                             curr.command,
                             options,
-                            ["stdin"],
+                            in_stream,
                             ["stdout"],
                             opt_indices,
                             "pure",
-                            intermediate_output_file_id,
+                            # intermediate_output_file_id,
+                            [],
                             out_edge_file_id)
 
     graph.remove_node(curr)

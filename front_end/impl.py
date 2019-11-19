@@ -4,7 +4,7 @@ import subprocess
 
 def execute(graph_json, output_file):
     ## TODO: Remove environment hardcoding
-    env={"IN": "../scripts/input/i1G.txt"}
+    env={"IN": "../scripts/input/i1M.txt"}
 
     print("Execute:")
     # print(graph_json)
@@ -32,12 +32,16 @@ def execute(graph_json, output_file):
     collect_output_args.append(">")
     collect_output_args.append('"{}"'.format(output_file))
     output_script = " ".join(collect_output_args)
+    print("Collect output:")
+    print(output_script)
     out_p = subprocess.Popen(output_script, shell=True,
                              executable="/bin/bash")
 
     ## Wait for all processes to die
     for proc in processes:
-        proc.wait()
+        ret = proc.wait()
+        if(not ret == 0):
+            print("Error!", proc, ret)
 
     ## Kill pipes
     for fid in fids:
