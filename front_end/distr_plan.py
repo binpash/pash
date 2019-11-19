@@ -2,6 +2,7 @@ import sys
 import pickle
 from ir import *
 from json_ast import *
+from impl import execute
 import jsonpickle
 
 ## This file receives the name of a file that holds an IR, reads the
@@ -18,7 +19,7 @@ def main():
     shell_string = ast_to_shell(ir_node.ast)
     print(shell_string)
 
-    simpl_file_distribution_planner(ir_node)
+    distributed_graph = simpl_file_distribution_planner(ir_node)
 
     ## Notes:
     ##
@@ -38,6 +39,9 @@ def main():
     ## The distribution planner also takes information about the
     ## available computational resources, such as nodes in the system,
     ## and their cores, etc.
+
+    execute(distributed_graph.serialize_as_JSON())
+
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
@@ -78,12 +82,14 @@ def simpl_file_distribution_planner(graph):
 
     print(graph.serialize())
     f = open("serialized_ir", "w")
-    f.write(graph.serialize_as_JSON2())
+    f.write(graph.serialize_as_JSON_string())
     f.close()
 
     ## The result of the above steps should be an expanded
     ## intermediate representation graph, that can be then mapped to
     ## real nodes.
+    return graph
+
 
 def naive_parallelize_stateless_nodes_bfs(graph):
     source_nodes = graph.source_nodes()

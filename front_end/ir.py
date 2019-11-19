@@ -588,7 +588,7 @@ class IR:
         output = "File ids:\n{}\n".format(all_file_ids) + output
         return output
 
-    def serialize_as_JSON2(self):
+    def serialize_as_JSON(self):
         output_json = {}
         nodes = {}
         all_file_ids = []
@@ -612,10 +612,12 @@ class IR:
         output_json["in"] = [fid.serialize() for fid in flat_stdin]
         flat_stdout = list_flatten([Find(self.stdout).flatten()])
         output_json["out"] = [fid.serialize() for fid in flat_stdout]
-        output = json.dumps(output_json, sort_keys=True, indent=4)
-        return output
+        return output_json
 
-    
+    def serialize_as_JSON_string(self):
+        output_json = self.serialize_as_JSON()
+        return json.dumps(output_json, sort_keys=True, indent=4)
+
     def set_ast(self, ast):
         self.ast = ast
     
