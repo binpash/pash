@@ -142,6 +142,11 @@ class FileId:
         output = "{}".format(self.resource.uri)
         return output
 
+    def pipe_name(self):
+        assert(self.resource is None)
+        output = '"#file{}"'.format(self.ident)
+        return output
+
     def set_resource(self, resource):
         ## The resource cannot be reset. A pointer can never point to
         ## more than one resource.

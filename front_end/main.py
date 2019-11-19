@@ -11,7 +11,7 @@ def from_ir_to_shell(ir_filename, new_shell_filename):
     return
 
 
-def __main__():
+def main():
     ## Translation process:
     ##
     ## 1. Parse json to an AST object
@@ -40,15 +40,15 @@ def __main__():
 
     final_asts = []
     for i, ast_object in enumerate(ast_objects):
-        print("Compiling AST {}".format(i))
-        print(ast_object)
+        # print("Compiling AST {}".format(i))
+        # print(ast_object)
         compiled_ast = compile_ast(ast_object, fileIdGen)
-        print("Compiled AST:")
-        print(compiled_ast)
+        # print("Compiled AST:")
+        # print(compiled_ast)
 
         final_ast = replace_irs(compiled_ast, irFileGen)
-        print("Final AST:")
-        print(final_ast)
+        # print("Final AST:")
+        # print(final_ast)
         final_asts.append(final_ast)
 
     ir_filename = json_filename + ".ir"
@@ -82,3 +82,6 @@ def __main__():
 ## in different nodes (after having received in its arguments
 ## locations of files etc).
 ##
+
+if __name__ == "__main__":
+    main()
