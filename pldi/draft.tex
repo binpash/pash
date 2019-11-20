@@ -45,7 +45,7 @@
 \newcommand{\TODO}[1]{\hl{\textbf{TODO:} #1}\xspace}
 \newcommand{\todo}[1]{\hl{#1}\xspace}
 \newcommand{\nv}[1]{[{\color{cyan}#1 --- Nikos}]}
-\newcommand{\kk}[1]{[{\color{magenta}#1 --- KK}]}
+\newcommand{\kk}[1]{[{\color{magenta}#1 --- kk}]}
 \newcommand{\review}[1]{{\color{red}#1}}
 
 \definecolor{editorGray}{rgb}{0.95, 0.95, 0.95}
@@ -766,9 +766,125 @@ Can we find a solution for the commands in coreutils?
 
 
 
+\section{Intermediate Representation/Dataflow graph}
+
+In order to effectively apply optimizations and distribute a shell
+script, it first has to be translated to a manipulable
+representation. As mentioned in \ref{}, the two main abstractions of
+the shell, are files that contain data, and commands that communicate
+through these files. We propose a slight variation of the standard
+dataflow graph, that is commonly found in stream processing systems,
+as the representation of a distributed shell computation. The dataflow
+graph nodes represent commands, and the edges represent files.
+
+\kk{Before that I have to mention that the basic data type $D$ is a
+  line of characters.}
+
+\paragraph{Nodes - Commands}
+
+Nodes $f$ of the graph represent functions from one (possibly empty)
+input stream to an output stream $f : D^* \rightarrow D^*$.  This
+representation captures the majority of shell commands. The nodes $f$
+are monotonic, meaning that they cannot retract their output. More
+formally, if $f(x) = y$, then for any $x'$, there exists $y'$ such
+that $f(x.x') = y.y'$, where $.$ is standard concatenation and will be
+omitted from now on. An example of a node is the following command
+\kk{Does it need ref? Also maybe this example is too trivial and can
+  be removed.}:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+ grep ``foo''
+\end{lstlisting}
+
+\noindent
+This command takes a stream of lines from its standard input and
+returns a stream of lines on its standard output. An important
+observation though is that commands in the shell might read their
+input stream from a sequence of different sources. An illustrative
+example is the command \kk{Inline listing}cat which reads its input
+from a combination of files and its standard input.
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+ cat x - y
+\end{lstlisting}
+
+\kk{Should I reference that this example was takes from the cat
+  manpage?} The example above reads file \texttt{x} until it
+encounters the end of file, then reads from \texttt{stdin}, and then
+reads from \texttt{y}. In order to handle this particularity, nodes in
+the dataflow graph can have many incoming edges, that are clearly
+ordered in a sequence. Note that this comes in contrast with standard
+dataflow graph representations where multiple incoming edges either
+mean zipping the input to pairs, or arbitraliy interleaving the
+different inputs.
+
+
+\kk{A note about nodes and commands that can write and read from more
+  files that the ones in their streams}
+
+Note that nodes can read from more files than just the files of their
+stream (or respectively write to more files that their output stream),
+however these files are static (e.g. used for configuration or logging
+\kk{Would an example here help}) and do not represent streams of data,
+and therefore are not considered part of the dataflow graph. Because
+of the assumption in section Front End \ref{}, that each file exists
+only once in the dataflow graph, we can safely assume that reading and
+writing to these static files does not interfere with the distributed
+implementation, and doesn't alter the behaviour of the program.
+
+\paragraph{Edges - Files}
+
+\kk{Maybe edges has to be moved before nodes, so that we can define
+  the line data type}
+
+Edges in the dataflow graph represent files, the basic data
+abstraction of the shell. They are used as communication channels
+between nodes in the graph, and as the input or output of the whole
+graph. Edges are represented as possibly unbounded streams of type
+$D*$, where $D$ represents a line, that is a sequence of characters
+followed by \verb|\n| \kk{or EOF?}.
+
+\kk{The following paragraph falls in the trap of just explaining
+  without motivating}
+
+Edges could either refer to a specific named file in the file system,
+or just be FIFO pipes that used for interprocess communication \kk{Are
+  there any other file types, such as URLs, ...?}. Edges that refer to
+real files, contain their exact number of lines, while edges that are
+fifo pipes can have an upper bound on the number of lines that they
+will transfer through them, thus being bounded in size.
+
+\kk{Depending on which of the two paragraphs goes last (nodes/edges),
+  I have to explain there that the last incoming edge to a node must
+  be unbounded (if it doesn't point to a resource).}
+
+
+\kk{Text point: The main shell abstraction is files, which are
+  sequences of lines, where the order matters. So we want a
+  representation that captures order of inputs and outputs (and ours
+  does because its node in the graph has a sequence of inputs.}
+
+
+\paragraph{Merge and Split}
+
+\kk{Mergers and splitters, and how they are implemented using shell constructs (cat and head)}
+
+
+As we described above, a node could have many incoming edges 
+
+\kk{Section notes:}
+
+\kk{Files have an associated number of lines}
+
+\kk{Explain how the assumptions made in the front end give as correct
+  distribution}
+
+
 
 \section{Front End}
 
+\kk{Maybe this becomes a subsection either in the intermediate
+  representation or in the planner.}
 
 We parse a shell script using a posix compliant parser that returns
 the ast.
@@ -780,7 +896,8 @@ the ast.
 \subsection{Distributable Subtrees}
 
 \kk{Text point: Problem: Not all parts of a shell script are
-  distributable, so we cannot arbitrarily distribute}
+  distributable, so we cannot arbitrarily distribute. Here we have to
+  make our assumptions clear}
 
 Even though commands are split in categories, and several pipelines
 are distributable, not all parts of a shell script are stateless and
@@ -793,29 +910,20 @@ program after distribution.
 Mention all the different constructs that our front end handles, and
 why it is safe to add them to the distribution pipeline.
 
-\subsection{Intermediate Representation/Dataflow graph}
+\kk{The same file exists once in the substree. This is a conservative
+  assumption that ensures that no two commands write or read to the
+  same file concurrently.}
 
-Mention its constructs, and its semantics, and why it is a bit
-different that standard dataflow graphs (where usually incoming edges
-are either consumed with some arbitrary interleaving, or pair by
-pair).
+\kk{How can we make sure that nodes in the IR are deterministic. Do we
+  make some assumption that enforces this?}
 
-\kk{Text point: The main shell abstraction is files, which are batches
-  or streams of characters (or lines) where the order matters. So we
-  want a representation that captures order of inputs and outputs (and
-  ours does because its node in the graph has a sequence of inputs.}
-
-Explain that the intermediate representation represents workers that
-communicate through files, and that it captures parallelism both in
-the operator level, as well as data parallelism.
 
 \section{Distribution Planner}
 
-\kk{Maybe this should be merged with the one above, especially if it
-  talks about how distribution happens on the intermediate
-  representation.}
+\kk{Mention that different nodes can be safely executed independently,
+  and that this exposes operator level parallelism}
 
-\subsection{Scaling up the distributed computation/Vertically expanding the graph}
+\subsection{Scaling up the distributed computation/Vertically expanding the graph/Graph Transformations/ Equations}
 
 The planner acts on the dataflow graph, by first expanding it ``as
 much as possible'' to expose parallelization opportunities. It uses
@@ -827,6 +935,23 @@ knowledge about the inputs of each stateless and pure command.
 \kk{Give an example}
 
 \kk{Can we have a semi-formal argument here?}
+
+\kk{Explain how our graph transformations expose data parallelism as
+  operator level parallelism.}
+
+\kk{Different transformations to explain: Stateless, Pure, File
+  splits, XARGS. Mention as much as possible formally using the
+  definition of a node.}
+
+The following equation holds for any stateless command $f$.
+
+\[
+f(x.x') = f(x).f(x')
+\]
+
+This is the basis of all optimizations that the graph does, and allows
+for correct data parallelism.
+
 
 \subsection{Mapping operators to nodes}
 
@@ -878,6 +1003,7 @@ computation.
   distributability of the file system commands, by using a distributed
   file system. THis would also require considerations about
   replication, consistency, and failures.
+\item No cycles
 \end{itemize}
 
 \section{Related Work}
