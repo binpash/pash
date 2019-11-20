@@ -293,6 +293,7 @@ Experiments for complex pipelines show substantial speedups and the ability to o
 
 
 \section{Introduction}
+\label{intro}
 
 % 1. Shell scripting; pipelines, in particular, are a common abstraction for expressing filters
 % They are an easy way to , because they combine a set of assumptions that work well with Unix
@@ -344,12 +345,12 @@ Combining several features, \unix makes small tasks easy to express;
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.49\textwidth]{./figs/dish_spectrum.pdf}
+\includegraphics[width=0.49\textwidth]{./figs/dish_schematic.pdf}
 \caption{
-  \textbf{Cost of Manual Effort.}
-	\sys sits at the automation end of the spectrum, automatically distributing shell pipelines while maintaining their correctness. A more complete picture is presented in the related-work section~\sx{rt}.
+  \textbf{\sys high-level schematic.}
+	\sys XYZ
 }
-\label{fig:spectrum}
+\label{fig:schematic}
 \end{figure}
 
 
@@ -441,15 +442,15 @@ Sections \ref{classes}--\ref{recipes} highlight our key contributions:\footnote{
 \sys's evaluation~\sx{eval} uses a combination of one-liner micro-benchmarks that highlight certain features and three multi-line macro-benchmarks---a web crawling and indexing engine, a production genomics pipeline, and a large-scale weather analysis.
 We close with a discussion of related prior work~\sx{related} and possible future directions~\sx{discussion}.
 
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.49\textwidth]{./figs/dish_overview.pdf}
-\caption{
-  \textbf{Applying \sys to $p_1$.}
-}
-\label{fig:example}
-\end{figure*}
-
+% \begin{figure*}[t]
+% \centering
+% \includegraphics[width=0.49\textwidth]{./figs/dish_overview.pdf}
+% \caption{
+%   \textbf{Applying \sys to $p_1$.}
+% }
+% \label{fig:example}
+% \end{figure*}
+% 
 
 \section{Background}
 \label{bg}
@@ -473,6 +474,17 @@ Leveraging this interface, pipelines chain together commands by their standard s
 Pipeline chaining goes hand-in-hand with the Unix toolbox philosophy: 
   programs do one thing well, they work together, and they manipulate text streams as their universal interface.
 The next few paragraphs describe the details.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.49\textwidth]{./figs/dish_overview.pdf}
+\caption{
+  \textbf{\sys transformation overview.}
+	\sys XYZ
+}
+\label{fig:overview}
+\end{figure}
+
 
 
 \heading{Basics}
@@ -879,6 +891,21 @@ computation.
 \end{itemize}
 
 \section{Related Work}
+\label{related}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.49\textwidth]{./figs/dish_spectrum.pdf}
+\caption{
+  \textbf{Cost of Manual Effort.}
+	\sys sits at the automation end of the spectrum, automatically distributing shell pipelines while maintaining their correctness. A more complete picture is presented in the related-work section~\sx{rt}.
+}
+\label{fig:spectrum}
+\end{figure}
+
+
+\section{Conclusion}
+\label{discussion}
 
 \begin{acks}
   % Dumping people so that we don't forget
