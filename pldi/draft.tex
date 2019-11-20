@@ -21,6 +21,7 @@
 \usepackage{listings}
 \usepackage{amsmath}
 \usepackage{cleveref}
+\usepackage{wrapfig}
 
 \captionsetup[figure]{font=footnotesize,name={Fig.},labelfont={bf, footnotesize}}
 \captionsetup[table]{font=footnotesize,name={Tab.},labelfont={bf, footnotesize}, skip=2pt, aboveskip=2pt}
@@ -458,50 +459,48 @@ We close with a discussion of related prior work~\sx{related} and possible futur
 This section breaks down $p_1$ to presents important background on and challenges
 of shell scripting.
 
-\subsection{Unix Pipelines, Informally}
+\subsection{Unix Composition, Informally}
 \label{bg:pipelines}
 
-A pipeline is a mechanism for program composition that works by chaining together programs (or, \emph{commands}) using pipes.
-Behind the scenes, \unix facilitates program scheduling and communication synchronization.
-Intermediate programs run concurrently consuming input and producing output;
-  they can be developed in any programming language, as long as they conform to a common interface.
-This interface allows any combination of the following:
-  accepting input from the standard input stream (stdin),
-  generating output to the standard output stream (stdout), and
-  generating errors or diagnostics to the standard error stream (stderr)
-These standard streams are lines of characters, with a few special characters---for example, EOF is a special end-of-file character signaling the end of a stream.
-Leveraging this interface, pipelines chain together commands by their standard streams, such that the output stream of one command (stdout) is passed directly as input (stdin) to the next one.
+% A pipeline is a mechanism for program composition that works by chaining together programs (or, \emph{commands}) using pipes.
+\unix provides several ways for succinct program composition.
+Central among them is the \emph{pipe}, a primitive that passes the output of one program as input to the next.
+These programs produce output and consume input concurrently, and possibly at different rates, with the \unix kernel facilitating program scheduling and communication synchronization behind the scenes.
+Intermediate programs, termed commands, can also be developed in different programming languages, as long as they conform to a common interface.
+\begin{wrapfigure}{r}{0.06\textwidth}
+  \vspace{-12pt}
+  % \begin{center}
+    % \includegraphics[width=0.48\textwidth]{gull}
+    \includegraphics[width=0.06\textwidth]{./figs/dish_ex1.pdf}
+  % \end{center}
+  \vspace{-30pt}
+\end{wrapfigure}
+This interface exposes a stream of contiguous character lines.
+A few characters are special---for example, the newline (\textsc{NL}) character delineates an element of the stream, and the end-of-file (\textsc{EOF}) character signals the end of a stream.
+As part of this interface, each command has access to (any combination of) three \emph{standard} streams---input, output, and error.
+% the input stream (stdin), the output stream (stdout), and the generating errors or diagnostics to the standard error stream (stderr)
+% generating errors or diagnostics to the standard 
+% Leveraging this interface, pipelines chain together commands by their standard streams, such that the output stream of one command (stdout) is passed directly as input (stdin) to the next one.
 % TODO: \kk{We have to mention character vs line based parallelism somewhere, and that we choose to see lines as the data quantum}
 
-The operation of commands can be tuned by two mechanisms, namely command-line options and environment variables.
+Commands can be tuned by two mechanisms, namely command-line options and environment variables.
 Options control the execution of a program---\eg changing the \ttt{sort}ing order.
 The shell does not have any visibility into these options; 
   their parsing and evaluation is left entirely up to each command.
 Environment variables carry more general information about the surrounding system---\eg file search paths, system defaults, parsing switches \etc 
 They are organized in a map from names to values, both of which are strings, and can be evaluated at any point in the program---including as commands, flags, a shell feature termed parameter \emph{expansion}.
 
-A small but powerful set of features is concerned with stream manipulation.
-Some of these features are built into the shell;
-for example, given a file identifier, the stream redirection operator can direct stdout or stderr to the file ---of course, this can be a FIFO that is concurrently used as input by a different command.
-More interestingly, some commands allow splitting a single stream into multiple streams while others allow merging streams together (either one after the other, or fusing (zipping) them column-wise into a single stream.
-
-
-First, as described above, several commands can be redirected
-Second, 
-
-\ttt{xargs}
-\ttt{tee}
-
-In combination, these constructs are powerful enough to introduce circular streams. % or stream cycles?
-
-Explicit Redirection
-Implicit splitting and merging 
-This can be done through the file-system operators 
-
-
 % TODO: Talk about security primitives?
 Streams are a key feature of \unix, and go hand-in-hand with the file abstraction:
   files are simply persistent streams that can be manipulated by commands or pipelines.
+\begin{wrapfigure}{r}{0.15\textwidth}
+  \vspace{-15pt}
+  % \begin{center}
+    % \includegraphics[width=0.48\textwidth]{gull}
+    \includegraphics[width=0.15\textwidth]{./figs/dish_ex3.pdf}
+  % \end{center}
+  \vspace{-25pt}
+\end{wrapfigure}
 Reading a file or a set of files generates a stream; 
   similarly, streams can be trivially redirected to the file system---by appending with the file identifier.
 Files are named, in the sense that they correspond to a global identifier---for example \ttt{cat /x/y} returns the persistent stream associated with the identifier \ttt{/x/y}.
@@ -523,22 +522,39 @@ One example is the special \ttt{/proc} filesystem (procfs) that presents informa
 % (i) \ttt{/proc/PID/cmdline} contains the command that originally started the process,
 % (ii) \ttt{/proc/modules} contains a list of the kernel modules currently loaded, and
 % (iii) \ttt{/proc/PID/cwd} contains a symlink to the current working directory of the process.
-Similarly, \unix exposes file-system handles for various ephmeral structures, including standard streams.
+Similarly, \unix exposes file-system handles for various ephemeral structures, including standard streams.
+This bidirectional relationship between ephemeral streams and persistent names---the fact that streams can be named in the file-system and files can be converted to streams---is a key enabler of the runtime rebinding achieved during our transformations.
 
-The combination of file-system identifiers pointing to ephemeral streams and the stream redirection described above enable surprisingly expressive pipelines---for example:
+A small but powerful set of features is concerned with stream manipulation.
+Some of these features are built into the shell;
+  for example, given a file identifier, stream redirection operators can direct stdout or stderr to a file.
+\begin{wrapfigure}{r}{0.15\textwidth}
+  \vspace{-15pt}
+  % \begin{center}
+    % \includegraphics[width=0.48\textwidth]{gull}
+    \includegraphics[width=0.15\textwidth]{./figs/dish_ex3.pdf}
+  % \end{center}
+  \vspace{-25pt}
+\end{wrapfigure}
+As described before, the file can be a FIFO dubbing as input to another command.
+More interestingly, some commands allow splitting (resp. merging) a single stream (resp. many streams) into multiple streams (resp. a single stream);
+  stream merging can be achieved by appending one stream after the end of another or by fusing (zipping) streams column-wise into a single (fat) stream.
+% TODO: talk about \ttt{xargs}?
 
+% Explicit Redirection, Implicit splitting and merging, This can be done through the file-system operators 
+
+The combination of file-system identifiers pointing to ephemeral streams and the stream redirection described above enable surprisingly expressive pipelines. %---for example:
+The most interesting feature of these pipelines is the presence of cycles:
+  a pipeline segment processes some input, part of which is extracting the next input to process.
+One example use case, discussed in the evaluation section~\sx{eval} is a web crawler that feeds extracted URLs from the input stream back to the start of the pipeline.
 % These streams are created by the C library (glibc) at the start of program execution,
 % and new streams can be created to connect to files, sockets, pipes,
 
-This bidirectional relationship between ephemeral streams and persistent names---the fact that streams can be named in the file-system and files can be converted to streams---is a key enabler of the runtime rebinding achieved during our transformations.
-
-Apart from pipes, the \unix shell features several  other forms of program composition.
-Command substitution, enclosed in \ttt{\$()}, replaces the contents of the 
-Code block redirects { - }, 
-grouping command 
-single redirection to redirect the standard output of both commands in the
-this is analogous to an anonymous function, as it can be assigned to a variable and be manipulated as a subscript.
-A subshell enclosed in \ttt{()} is similar , but executes the block in a new sub-shell---avoiding polluting environment. % but incurring higher overhead.
+Apart from pipes, the \unix shell provides several other forms of program composition such as sequential (\ttt{;}) and parallel (\ttt{\&}) composition operators.
+Command substitution, expressed as \ttt{\$($c$)}, replaces the expression with the results of executing $c$.
+Code blocks, expressed as \ttt{\{$c_1; c_2$\}}, can redirect streams for the entire group of $c_1$ and $c_2$;
+  this is analogous to an anonymous function, which contains many statements and can possibly be assigned to a variable that can later be invoked with parameters.
+Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn a child shell, thus avoiding the pollution of their environment variable context. % but incurring higher overhead.
 
 
 % \begin{lstlisting}[
@@ -557,19 +573,21 @@ A subshell enclosed in \ttt{()} is similar , but executes the block in a new sub
 % $e$ ::= x | $v$ | ($x$ = $e$) $e$ | $e$($e$) | $e$[$e$] = $e$
 % \end{lstlisting}
 
-
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- cat /proc/ >                            (($$p_4$$))
-\end{lstlisting}
-
-
-
-
-
-% For Unix commands, the newline character is special; as such, Unix streams can be seen as lazy lists of strings---lines of text separated by the newline character.
-
-% Pipeline chaining goes hand-in-hand with the Unix toolbox philosophy: 
-%   programs do one thing well, they work together, and they manipulate text streams as their universal interface.
+% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+%  cat /proc/ >                            (($$p_4$$))
+% \end{lstlisting}
+% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+%  ls -l | wc -l                           (($$p_2$$))
+% \end{lstlisting}
+% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+%  cat * | wc -l > out.txt                 (($$p_3$$))
+% \end{lstlisting}
+% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+%  cat /proc/ >                            (($$p_5$$))
+% \end{lstlisting}
+% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+% { echo 1; echo 2; } > out.txt
+% \end{lstlisting}
 
 \begin{figure}[t]
 \centering
@@ -582,50 +600,11 @@ A subshell enclosed in \ttt{()} is similar , but executes the block in a new sub
 \end{figure}
 
 
-\heading{Basics}
-The standard shell syntax for pipelines a list of commands separated by vertical bars (``pipes'', in Unix terminology).
+% \heading{Generation}
+% Expansion---the key is that expansion and evaluation are handled by the shell at an earlier stage 
+% The most powerful---and interesting, for \ttt{dish}---type of expansion is subshell expansion, that allows replacing entire input streams 
 
-that are not interpreted by the shell, but are local to each command.
-
-Additional details augment this simple interface.
-Commands can be specified with options arguments
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.45\textwidth]{./figs/dish_ex1.pdf}
-\label{fig:example}
-\end{figure}
-
-
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- ls -l | wc -l                           (($$p_2$$))
-\end{lstlisting}
-
-\heading{Generation}
-Expansion---the key is that expansion and evaluation are handled by the shell at an earlier stage 
-The most powerful---and interesting, for \ttt{dish}---type of expansion is subshell expansion, that allows replacing entire input streams 
-
-
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- cat * | wc -l > out.txt                 (($$p_3$$))
-\end{lstlisting}
-
-\heading{Identifiers}
-
-
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- cat /proc/ >                            (($$p_5$$))
-\end{lstlisting}
-
-\heading{Composition}
-anonymous pipes
-
-Composition
-
-The shell provides several ways of grouping commands and manipulating their
-overall input and output channels 
-
-{ echo 1; echo 2; } > out.txt
+\subsection{Overview}
 
 \subsection{Comnands}
 \label{bg:cmd}
