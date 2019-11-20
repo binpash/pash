@@ -2,7 +2,7 @@ import os
 import time
 import subprocess
 
-def execute(graph_json, output_file):
+def execute(graph_json, output_dir):
     ## TODO: Remove environment hardcoding
     env={"IN": "../scripts/input/i1M.txt"}
 
@@ -18,6 +18,9 @@ def execute(graph_json, output_file):
 
     output_script_commands = []
 
+    ## Make the output directory if it doesn't exist
+    output_script_commands.append('mkdir -p {}'.format(output_dir))
+
     ## Setup pipes
     for fid in fids:
         # print(fid)
@@ -31,17 +34,19 @@ def execute(graph_json, output_file):
     output_script_commands += processes
 
     ## Collect outputs
-    collect_output_args = ["cat"]
-    for out_fid in out_fids:
-        collect_output_args.append('"{}"'.format(out_fid))
-    collect_output_args.append(">")
-    collect_output_args.append('"{}"'.format(output_file))
-    output_script = " ".join(collect_output_args)
+    # collect_output_args = ["cat"]
+    # for out_fid in out_fids:
+    #     collect_output_args.append('"{}"'.format(out_fid))
+    # collect_output_args.append(">")
+    # collect_output_args.append('"{}"'.format(output_file))
+    # output_script = " ".join(collect_output_args)
     # print("Collect output:")
     # print(output_script)
     # out_p = subprocess.Popen(output_script, shell=True,
     #                          executable="/bin/bash")
-    output_script_commands.append(output_script)
+    for i, out_fid in enumerate(out_fids):
+        output_com = 'cat "{}" > {}/{}'.format(out_fid, output_dir, i)
+        output_script_commands.append(output_com)
 
     ## Wait for all processes to die
     # for proc in processes:
