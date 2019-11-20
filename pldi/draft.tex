@@ -473,10 +473,33 @@ These standard streams are lines of characters, with a few special characters---
 Leveraging this interface, pipelines chain together commands by their standard streams, such that the output stream of one command (stdout) is passed directly as input (stdin) to the next one.
 % TODO: \kk{We have to mention character vs line based parallelism somewhere, and that we choose to see lines as the data quantum}
 
-Along with their implicit context---these standard streams and environment variables---commands can express
-Command flags (options)
+The operation of commands can be tuned by two mechanisms, namely command-line options and environment variables.
+Options control the execution of a program---\eg changing the \ttt{sort}ing order.
+The shell does not have any visibility into these options; 
+  their parsing and evaluation is left entirely up to each command.
+Environment variables carry more general information about the surrounding system---\eg file search paths, system defaults, parsing switches \etc 
+They are organized in a map from names to values, both of which are strings, and can be evaluated at any point in the program---including as commands, flags, a shell feature termed parameter \emph{expansion}.
 
-% TODO: Talk about security?
+A small but powerful set of features is concerned with stream manipulation.
+Some of these features are built into the shell;
+for example, given a file identifier, the stream redirection operator can direct stdout or stderr to the file ---of course, this can be a FIFO that is concurrently used as input by a different command.
+More interestingly, some commands allow splitting a single stream into multiple streams while others allow merging streams together (either one after the other, or fusing (zipping) them column-wise into a single stream.
+
+
+First, as described above, several commands can be redirected
+Second, 
+
+\ttt{xargs}
+\ttt{tee}
+
+In combination, these constructs are powerful enough to introduce circular streams. % or stream cycles?
+
+Explicit Redirection
+Implicit splitting and merging 
+This can be done through the file-system operators 
+
+
+% TODO: Talk about security primitives?
 Streams are a key feature of \unix, and go hand-in-hand with the file abstraction:
   files are simply persistent streams that can be manipulated by commands or pipelines.
 Reading a file or a set of files generates a stream; 
@@ -494,32 +517,45 @@ As a result, file-system identifiers part of a pipeline may resolve to in-memory
 % (b or c) special files, interfaces to device drivers or low-level abstractions, presented as ordinary files.
 
 Special files are particularly interesting because they are resolved to OS structures.
-One example is the proc filesystem (procfs), a special file-system that presents information about processes and other system information.
-This file-system enables a form of programmatic introspection, in which commands can inspect their directory or the flags passed to them.
+One example is the special \ttt{/proc} filesystem (procfs) that presents information about processes and the operating system, offering a feature analogous to programmatic introspection:
+  with \ttt{procfs} commands can inspect and alter their directory or the flags passed to them.
 % Here are a few examples:
 % (i) \ttt{/proc/PID/cmdline} contains the command that originally started the process,
 % (ii) \ttt{/proc/modules} contains a list of the kernel modules currently loaded, and
 % (iii) \ttt{/proc/PID/cwd} contains a symlink to the current working directory of the process.
-Similarly, \unix exposes file-system handles for various process-related information, include identifiers for ephmeral streams---\ie ones 
-OS-internal structures.
+Similarly, \unix exposes file-system handles for various ephmeral structures, including standard streams.
 
-There are 3 standard streams (stdin, stdout, stderr) created automatically for most Unix programs.
-These correspond to \ttt{/dev/fd/0}.
+The combination of file-system identifiers pointing to ephemeral streams and the stream redirection described above enable surprisingly expressive pipelines---for example:
+
 % These streams are created by the C library (glibc) at the start of program execution,
-and new streams can be created to connect to files, sockets, pipes,
+% and new streams can be created to connect to files, sockets, pipes,
 
-This isomorphism is bidirectional---
+This bidirectional relationship between ephemeral streams and persistent names---the fact that streams can be named in the file-system and files can be converted to streams---is a key enabler of the runtime rebinding achieved during our transformations.
 
----and a key enabler of the runtime rebinding achieved during our transformations.
-between file-system handles and ephmeral streams 
+Apart from pipes, the \unix shell features several  other forms of program composition.
+Command substitution, enclosed in \ttt{\$()}, replaces the contents of the 
+Code block redirects { - }, 
+grouping command 
+single redirection to redirect the standard output of both commands in the
+this is analogous to an anonymous function, as it can be assigned to a variable and be manipulated as a subscript.
+A subshell enclosed in \ttt{()} is similar , but executes the block in a new sub-shell---avoiding polluting environment. % but incurring higher overhead.
 
-Unix already specifies a few classes of files:
 
-Here are a few special files:
-  \ttt{proc} called 
-
-Technically, anonymous pipes show up as file identifiers in a hidden filesystem.
-Similarly, open files and other ephemeral identifiers 
+% \begin{lstlisting}[
+%   language=es,
+%   mathescape,
+%   float=t,
+%   belowskip=-5mm,
+%   label=core-pl,
+%   upquote=true,
+%   caption={
+%     \textbf{The core language of the POSIX shell.}
+%     The language used by ; file identifiers and expansion are not shown.
+%   }]
+% $p$ ::= $s\in{}String$ | $n\in{}Number$ | $b\in{}Bool$ | $\emptyset$
+% $v$ ::= $p$ | ($x$,$\ldots$) => {e} | {$s$:$v$,$\ldots$} | [$v$,$\ldots$]
+% $e$ ::= x | $v$ | ($x$ = $e$) $e$ | $e$($e$) | $e$[$e$] = $e$
+% \end{lstlisting}
 
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
@@ -576,20 +612,6 @@ The most powerful---and interesting, for \ttt{dish}---type of expansion is subsh
 
 \heading{Identifiers}
 
-
-\heading{Stream Manipulation}
-A small but powerful set of primitives are concerned with stream manipulation.
-First, as described above, several commands can be redirected
-Second, 
-
-\ttt{xargs}
-\ttt{tee}
-
-In combination, these constructs are powerful enough to introduce circular streams. % or stream cycles?
-
-Explicit Redirection
-Implicit splitting and merging 
-This can be done through the file-system operators 
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
  cat /proc/ >                            (($$p_5$$))
