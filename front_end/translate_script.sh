@@ -20,3 +20,4 @@ distr_script="${script_prefix}_distr.sh"
 ## TODO: This currently assumes that there is only one IR in the script
 python3 main.py $json &&
 python3 distr_plan.py /tmp/dish_temp_ir_file1 $distr_script $distr_output_dir
+cat $distr_script
