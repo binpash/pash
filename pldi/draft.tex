@@ -294,6 +294,10 @@ Experiments for complex pipelines show substantial speedups and the ability to o
 
 \section{Introduction}
 
+\kk{The title is too abstract and doesn't really hint that we
+  distribute shell code. Also we could consider capitalizing the name
+  as DiSh?}
+
 % 1. Shell scripting; pipelines, in particular, are a common abstraction for expressing filters
 % They are an easy way to , because they combine a set of assumptions that work well with Unix
 % They work great on a single machine, but are difficult to scale out
@@ -628,6 +632,7 @@ We can encode powerful
 
 
 \section{Extensibility}
+\label{ext}
 
 ULTRA DRAFTY:
 
@@ -767,6 +772,7 @@ Can we find a solution for the commands in coreutils?
 
 
 \section{Intermediate Representation/Dataflow graph}
+\label{ir}
 
 \kk{Try to be more formal in the section, by using the notation that
   is defined in the nodes paragraph.}
@@ -944,40 +950,133 @@ arbitrarily many different pipes.
 
 \section{Front End}
 
-\kk{Maybe this becomes a subsection either in the intermediate
-  representation or in the planner.}
+\kk{It might make sense to merge this section with the one below with
+  the name: From Shell to IR and back}
 
-We parse a shell script using a posix compliant parser that returns
-the ast.
+As mentioned in \Cref{ir}, in order to generate the distributed
+implementation of a shell script, \texttt{Dish} first translates it to
+a dataflow graph. However, there are several components in shell
+programs that cannot be arbitrarily parallelized without affecting the
+program behaviour.
 
-\kk{Text point: The AST Is not a very good data structure to
-  manipulate for distribution, so we translate it to a kind of a
-  dataflow graph.}
+\kk{Give examples of writing to environment variables, producing
+  irreversible side effects, the ; and \&\& operators.}
+
+In order to address this issue, we introduce the notion of
+distributable AST subtrees, and we design an analysis that given the
+shell script Abstract Syntax Tree identifies distributable AST
+subtrees and translates each one of them to a dataflow graph. The AST
+of the shell script is produced using a POSIX compliant parser
+\kk{Reference libdash github}.
 
 \subsection{Distributable Subtrees}
 
-\kk{Text point: Problem: Not all parts of a shell script are
-  distributable, so we cannot arbitrarily distribute. Here we have to
-  make our assumptions clear}
+\kk{The goal of this section is to convince the reader ``intuitively''
+  that we choose safe parts of a shell program to distribute. There is
+  no formal argument, but one should be able to intuitively believe
+  us.}
 
-Even though commands are split in categories, and several pipelines
-are distributable, not all parts of a shell script are stateless and
-several of them have effects that could affect the behaviour of a
-program after distribution.
+Consider the following example:
 
-\kk{Solution: We have found that distributing subtrees of the shell
-  AST is safe. Can we have a semi-formal argument about that?}
+\kk{Give an example of a shell script that cannot be distributed
+  completely, Possibly involving ; and writing to a variable.}
 
-Mention all the different constructs that our front end handles, and
-why it is safe to add them to the distribution pipeline.
+\kk{Intuitively explain what could be distributed and what not.}
 
-\kk{The same file exists once in the substree. This is a conservative
-  assumption that ensures that no two commands write or read to the
-  same file concurrently.}
+\kk{Our notion of distributable subtrees has two dimensions. First,
+  the state of the shell should be an invariant in a distributable
+  subtree. We cannot know this completely without evaluating, so we do
+  a conservative analysis. The second dimension is that there exists
+  at least one component that can be abstracted as a node of the
+  dataflow graph. This can be anything that includes a command.}
 
-\kk{How can we make sure that nodes in the IR are deterministic. Do we
-  make some assumption that enforces this?}
+%% Even though commands are split in categories, and several pipelines
+%% are distributable, not all parts of a shell script are stateless and
+%% several of them have effects that could affect the behaviour of a
+%% program after distribution.
 
+\kk{All of our assumptions and study are based on the POSIX
+  standard. Reference?}
+
+\kk{Not checked Assumption. A command doesn't write/read to arbitrary
+  files that are not mentioned in its arguments. This is necessary to
+  enforce that no two commands concurrently read/write from the same
+  file.}
+
+\kk{Not checked Assumption: No signals, traps, and sets at the
+  moment. At the moment we don't have a way to handle signals and
+  traps.}
+
+\kk{Partially checked Assumption. The same file exists once in the
+  substree. This is a conservative assumption that ensures that no two
+  commands write or read to the same file concurrently. We kind of
+  check it but not completely. We check that the expanded evaluated
+  files are not the same, but one could have part of a file in a
+  variable etc.}
+
+\kk{Checked assumption: How can we make sure that nodes in the IR are
+  deterministic. Do we make some assumption that enforces this? I
+  guess that commands that are nodes in the IR are all deterministic?
+  That is stateless and pure commands are deterministic.}
+
+\paragraph{analysis}
+
+The analysis is done in a DFS fashion on the AST. Distributable
+subtrees grow from the bottom up, until a construct that doesn't
+``allow'' them to go through is encountered.
+
+%% Mention all the different constructs that our front end handles, and
+%% intuitively mention why it is ``safe'' to add them to the distribution
+%% pipeline.
+
+Subtrees don't cross the following:
+
+\begin{itemize}
+\item Sequence, And,  or
+\item Function definitions
+\item Command Substitutions
+\item control flow: while, for, if, case: While these constructs can
+  be parallelized and there has been research on it, it is orthogonal
+  to our work, and can be incorporated as future work.
+\end{itemize}
+
+On the other hand: A distributable subtree starts whenever there is a
+pipe, or asynchronous list. If the subcomponents of the pipe or
+asynchronous list were already graphs, then we connect them to the
+bigger graph \kk{explain how we do pipe and asynchronous list}, and if
+they were not graphs, we make each subcomponent a node in the subtree,
+event though they are not commands. These nodes do not belong to any
+category, but still have stdin and stdout, and can be executed
+concurrently (as long as they satisfy the checked assumptions above),
+since they don't introduce new behaviours, they would still be
+executed concurrently when ran in the standard shell, producing
+possibly non-deterministic results with different interleavings.
+
+\kk{Explain how we merge two graphs when seeing a pipe}
+
+Whenever we see a subtree of the AST that is a command, we check the
+files that it writes to. If any of its arguments is a command
+substitution or contains anything that is evaluated\kk{make this more
+  precise}, its category is marked as sequential\kk{name?}. Otherwise
+we check its its category and its input output arguments (using the
+methods described in \Cref{ext}). The command is then initialized as
+the node of a singular graph, with the inputs and outputs of the graph
+being the ones of the node.
+
+
+\kk{Maybe mention the recursive case. I am not sure if that should be
+  here, or in the distribution planner. In any case, it should be
+  after we say that an IR is replaced with a call to the planner with
+  the IR saved in a file. The example is a command in a pipeline whose
+  first argument is a command substitution with a pipeline. Executing
+  the outside dataflow graph, would lead to the command to be executed
+  as part of this shell. However its first argument would have a call
+  to the planner itself, leading to another distributed implementation
+  running in parallel. The rest of the pipeline would wait for this to
+  end before it continues. Assuming that the files that both of these
+  graphs use are different, and that the above assumptions hold, there
+  should be no interference between the two graphs and they should be
+  able to run in parallel}
 
 \section{Distribution Planner}
 
@@ -1039,8 +1138,30 @@ valuable to make the distribution plan \kk{give an example}.
 
 Future work on this: calling the shell shtepper to only partially
 evaluate strings, just expand arguments, and not do any significant
-computation.
+computation. Even better, we could be calling the shtepper just after
+having parsed the ast, and decide on maximal distributable subtrees as
+late as possible in the process. This would be awesome.
 
+\section{Implementation}
+
+\kk{We should make sure to measure the time that it takes for the
+  whole process to run (parsing, translating, optimizing, planning)
+  together with the scripts. This will probably be negligible, but we
+  still have to mention it. }
+
+\kk{Also, we have to have one-two handcrafted examples that have more
+  than one pipeline, to show the execution time end to end, as this
+  cannot be shown with the one-pipeline examples since they only have
+  one graph, so no back and forth between shell and dish.}
+
+\kk{Furthermore it would be great to have one distributed example that
+  runs in more than one node (if we have time)}
+
+\kk{Also we have to make sure to measure with and without the final
+  cat of output file, so that we show that this is also negligible.}
+
+\kk{We have to make sure that we repeat that the results are the same
+  in all tests that we run. Corectness, blah blah ...}
 
 \section{Limitations}
 
@@ -1064,7 +1185,11 @@ computation.
   distributability of the file system commands, by using a distributed
   file system. THis would also require considerations about
   replication, consistency, and failures.
-\item No cycles
+\item No cycles (multiple commands writing and reading from the same file)
+\item Formal proof that the analysis indeed returns distributable
+  subtrees. Previously there was no formal semantics for shell, but
+  recent work (cite greenberg) allows us to make a formal proof that
+  the analysis is indeed sound.
 \end{itemize}
 
 \section{Related Work}
