@@ -768,17 +768,24 @@ Can we find a solution for the commands in coreutils?
 
 \section{Intermediate Representation/Dataflow graph}
 
+\kk{Try to be more formal in the section, by using the notation that
+  is defined in the nodes paragraph.}
+
 In order to effectively apply optimizations and distribute a shell
 script, it first has to be translated to a manipulable
 representation. As mentioned in \ref{}, the two main abstractions of
 the shell, are files that contain data, and commands that communicate
 through these files. We propose a slight variation of the standard
 dataflow graph, that is commonly found in stream processing systems,
-as the representation of a distributed shell computation. The dataflow
-graph nodes represent commands, and the edges represent files.
+as the representation of a distributed shell computation. The main
+benefit of the dataflow graph model is that it clearly exposes
+operator level parallelism, as different nodes can be independent
+processing workers. In our case each node represents a command, and
+each edge represents a file.
 
 \kk{Before that I have to mention that the basic data type $D$ is a
-  line of characters.}
+  line of characters. If we move the edges section before the nodes
+  that will be fine.}
 
 \paragraph{Nodes - Commands}
 
@@ -842,42 +849,96 @@ abstraction of the shell. They are used as communication channels
 between nodes in the graph, and as the input or output of the whole
 graph. Edges are represented as possibly unbounded streams of type
 $D*$, where $D$ represents a line, that is a sequence of characters
-followed by \verb|\n| \kk{or EOF?}.
+followed by \verb|\n| \kk{or EOF?}. They could either refer to a
+specific named file in the file system, or just be FIFO pipes that
+used for interprocess communication \kk{Are there any other file
+  types, such as URLs, ...?}.
 
-\kk{The following paragraph falls in the trap of just explaining
-  without motivating}
+\kk{Show an example pipe and its graph}.
 
-Edges could either refer to a specific named file in the file system,
-or just be FIFO pipes that used for interprocess communication \kk{Are
-  there any other file types, such as URLs, ...?}. Edges that refer to
-real files, contain their exact number of lines, while edges that are
-fifo pipes can have an upper bound on the number of lines that they
-will transfer through them, thus being bounded in size.
+In order to expose operator parallelism with the output of a command,
+files that don't point to a resource can have an upper bound on the
+lines that they can tranfer. The following example illustrates why
+this is essential.
 
-\kk{Depending on which of the two paragraphs goes last (nodes/edges),
-  I have to explain there that the last incoming edge to a node must
-  be unbounded (if it doesn't point to a resource).}
+\kk{An example of a command that has two outputs and one goes to one
+  command, while another output goes to a different one. Maybe only
+  show the graph here and not the command itself.}
+
+On the other hand, some forms of data parallelism can be exposed when
+knowing the size of the input files. As mentioned in \ref{} some pure
+commands (such as cat -n) only need line information to become
+stateless, and knowing the size of a file could allow the system to
+split it in different chunks that can be processed independently. To
+account for that, edges that refer to an input resource contain the
+number of lines of the file that they refer to. \kk{At the moment this
+  is not supported by our real system. The whole paragraph above can
+  go if we decide that it is not a good idea to talk about it now.}
+
+Finally, the edges that don't refer to a resource and do not start
+from a node in the graph represent the graph input, while the edges
+that don't refer to a resource and do not point to a node in the graph
+are its outputs.
+
+\kk{(Maybe) Depending on which of the two paragraphs goes last
+  (nodes/edges), I have to explain there that the last incoming edge
+  to a node must be unbounded (if it doesn't point to a resource). I
+  am actually not sure whether I should include this here.}
 
 
-\kk{Text point: The main shell abstraction is files, which are
-  sequences of lines, where the order matters. So we want a
-  representation that captures order of inputs and outputs (and ours
-  does because its node in the graph has a sequence of inputs.}
-
+\kk{(Maybe) It might be beneficial to mention that many inputs do not
+  represent the same thing as many outputs. These two notions are not
+  symmetric.}
 
 \paragraph{Merge and Split}
 
-\kk{Mergers and splitters, and how they are implemented using shell constructs (cat and head)}
+\kk{Mergers and splitters, and how they are implemented using shell
+  constructs (cat and head). This subsection might be a better fit in
+  some other section, maybe something related to the planner or the
+  implementation, as it is a very elegant way to implement splitters
+  and mergers while staying completely inside the shell programming
+  model.}
+
+It is common in the dataflow graph for a node to have many incoming
+edges, or many outgoing edges (when all but the last outgoing edges
+are bounded). However some nodes, might read their input from one file
+(e.g. stdin). In this case, the distributed implementation needs to
+concatenate input files, and split output files. Here is an example:
+
+\kk{Show an example graph! of cat | tr | sort. The command in the
+  middle must only take input from one file (maybe just stdin).}
+
+\kk{This transition needs to be stronger} Luckily, the shell offers
+primitives for file manipulations that can be used to implement a
+merger and a splitter. More concretely a merger can be implemented by
+a simple \verb|cat|. Given a set of input files \verb|in1, in2, ...|
+and an output file \verb|out|, a merger can be implemented as:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none]
+ cat $in1 $in2 ... > $out
+\end{lstlisting}
+
+\noindent
+On the other hand, given an input file \verb|in| that is a FIFO pipe,
+and two output files \verb|out1, out2| the first of which is bounded
+to \verb|N| lines, a 2-splitter can be implemented as:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none]
+ head -n $N $in > $out1 ; cat $in > $out2
+\end{lstlisting}
+
+\noindent
+Using the 2-splitter as a building block, a pipe can be split to
+arbitrarily many different pipes.
+
+\kk{Do I also need to include a splitter for normal files?}
 
 
-As we described above, a node could have many incoming edges 
+\kk{Intermediate Representation Section notes:}
 
-\kk{Section notes:}
-
-\kk{Files have an associated number of lines}
-
-\kk{Explain how the assumptions made in the front end give as correct
-  distribution}
+\kk{Explain how the assumptions made in the front end give as
+  correct/safe operator level parallelism. Maybe this must go in the
+  Front-end section.}
 
 
 
