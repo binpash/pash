@@ -461,19 +461,79 @@ of shell scripting.
 \subsection{Unix Pipelines, Informally}
 \label{bg:pipelines}
 
-Pipelines are a mechanism for program composition.
-Individual programs, specified as commands, conform to a common but general interface. 
-For now, this interface allows a combination of the following:
+A pipeline is a mechanism for program composition that works by chaining together programs (or, \emph{commands}) using pipes.
+Behind the scenes, \unix facilitates program scheduling and communication synchronization.
+Intermediate programs run concurrently consuming input and producing output;
+  they can be developed in any programming language, as long as they conform to a common interface.
+This interface allows any combination of the following:
   accepting input from the standard input stream (stdin),
   generating output to the standard output stream (stdout), and
   generating errors or diagnostics to the standard error stream (stderr)
-Standard streams are streams of characters with a few special characters---for example, EOF is a special end-of-file character signaling the end of the input stream.
+These standard streams are lines of characters, with a few special characters---for example, EOF is a special end-of-file character signaling the end of a stream.
+Leveraging this interface, pipelines chain together commands by their standard streams, such that the output stream of one command (stdout) is passed directly as input (stdin) to the next one.
+% TODO: \kk{We have to mention character vs line based parallelism somewhere, and that we choose to see lines as the data quantum}
+
+Along with their implicit context---these standard streams and environment variables---commands can express
+Command flags (options)
+
+% TODO: Talk about security?
+Streams are a key feature of \unix, and go hand-in-hand with the file abstraction:
+  files are simply persistent streams that can be manipulated by commands or pipelines.
+Reading a file or a set of files generates a stream; 
+  similarly, streams can be trivially redirected to the file system---by appending with the file identifier.
+Files are named, in the sense that they correspond to a global identifier---for example \ttt{cat /x/y} returns the persistent stream associated with the identifier \ttt{/x/y}.
+\unix exposes a few different types of files---\eg directories, symbolic links, named pipes (or FIFOs), and special character devices.
+As a result, file-system identifiers part of a pipeline may resolve to in-memory structures or pseudo-devices (\eg \ttt{/dev/urandom}).
+
+% At a high level, POSIX defines several file types:
+% (-) regular files, storing lines of text or binary data,
+% (d) directories, grouping together multiple other files,
+% (l) symbolic links, pointing to other files,
+% (p) named pipes or FIFOs, communication primitives that can be named and manipulated like files,
+% (s) domain sockets or DSes, full-duplex communication primitives that support passing file descriptors, and
+% (b or c) special files, interfaces to device drivers or low-level abstractions, presented as ordinary files.
+
+Special files are particularly interesting because they are resolved to OS structures.
+One example is the proc filesystem (procfs), a special file-system that presents information about processes and other system information.
+This file-system enables a form of programmatic introspection, in which commands can inspect their directory or the flags passed to them.
+% Here are a few examples:
+% (i) \ttt{/proc/PID/cmdline} contains the command that originally started the process,
+% (ii) \ttt{/proc/modules} contains a list of the kernel modules currently loaded, and
+% (iii) \ttt{/proc/PID/cwd} contains a symlink to the current working directory of the process.
+Similarly, \unix exposes file-system handles for various process-related information, include identifiers for ephmeral streams---\ie ones 
+OS-internal structures.
+
+There are 3 standard streams (stdin, stdout, stderr) created automatically for most Unix programs.
+These correspond to \ttt{/dev/fd/0}.
+% These streams are created by the C library (glibc) at the start of program execution,
+and new streams can be created to connect to files, sockets, pipes,
+
+This isomorphism is bidirectional---
+
+---and a key enabler of the runtime rebinding achieved during our transformations.
+between file-system handles and ephmeral streams 
+
+Unix already specifies a few classes of files:
+
+Here are a few special files:
+  \ttt{proc} called 
+
+Technically, anonymous pipes show up as file identifiers in a hidden filesystem.
+Similarly, open files and other ephemeral identifiers 
+
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+ cat /proc/ >                            (($$p_4$$))
+\end{lstlisting}
+
+
+
+
+
 % For Unix commands, the newline character is special; as such, Unix streams can be seen as lazy lists of strings---lines of text separated by the newline character.
 
-Leveraging this interface, pipelines chain together commands by their standard streams, such that the output stream of one command (stdout) is passed directly as input (stdin) to the next one.
-Pipeline chaining goes hand-in-hand with the Unix toolbox philosophy: 
-  programs do one thing well, they work together, and they manipulate text streams as their universal interface.
-The next few paragraphs describe the details.
+% Pipeline chaining goes hand-in-hand with the Unix toolbox philosophy: 
+%   programs do one thing well, they work together, and they manipulate text streams as their universal interface.
 
 \begin{figure}[t]
 \centering
@@ -484,7 +544,6 @@ The next few paragraphs describe the details.
 }
 \label{fig:overview}
 \end{figure}
-
 
 
 \heading{Basics}
@@ -507,11 +566,6 @@ Commands can be specified with options arguments
 \end{lstlisting}
 
 \heading{Generation}
-A central concept in pipelines---and Unix, in general---is the file system, which allows interfacing with persistent data.
-There are many commands that take as input a file identifier 
-Reading a file or a set of files generates a stream; 
-  similarly, streams can be trivially redirected to the file system---by appending with the file identifier.
-
 Expansion---the key is that expansion and evaluation are handled by the shell at an earlier stage 
 The most powerful---and interesting, for \ttt{dish}---type of expansion is subshell expansion, that allows replacing entire input streams 
 
@@ -522,56 +576,6 @@ The most powerful---and interesting, for \ttt{dish}---type of expansion is subsh
 
 \heading{Identifiers}
 
-\kk{We have to mention character vs line based parallelism somewhere,
-  and that we choose to see lines as the data quantum}
-
-The file-system is a common abstraction layer used for many other operations than just serving files (this will be become clearer when talking about file-system commands in \S\ref{bg:cmd}).
-as such, different identifiers many not resolve to actual files, but rather in-memory or OS-internal structures.
-
-At a high level, POSIX defines several file types:
-(-) regular files, storing lines of text or binary data,
-(d) directories, grouping together multiple other files,
-(l) symbolic links, pointing to other files,
-(p) named pipes or FIFOs, communication primitives that can be named and manipulated like files,
-(s) domain sockets or DSes, full-duplex communication primitives that support passing file descriptors, and
-(b or c) special files, interfaces to device drivers or low-level abstractions, presented as ordinary files.
-
-Most of these identifiers are manipulated by file-system commands---\eg \ttt{mkdir} for directories and \ttt{mkfifo} for FIFOs.
-FIFOs and DSes look like files but are streams.
-
-Special files are particularly interesting because they are resolved to OS structures.
-One set is pseudo-devices---device files that simply;
-For example /dev/urandom returns a stream of random characters and /dev/null accepts and discards all input written to it.
-Another set is proc filesystem (procfs), a special filesystem in Unix-like operating systems that presents information about processes and other system information.
-For example, /proc/PID/cmdline contains command that originally started the process and /proc/PID/cwd contains a symlink to the current working directory of the process.
-
-sysfs is a pseudo file system provided by the Linux kernel that exports information about various kernel subsystems, hardware devices, and 
-
-/modules, one of the most important files in /proc, containing a list of the kernel modules currently loaded . It gives some indication (not always entirely correct) of dependencies.
-/cpuinfo
-
-symbolic links, FIFO specials, 
-device files
-block special, character special, 
-and domain sockets.
-
-There are 3 standard streams (stdin, stdout, stderr) created automatically for most Unix programs.
-These correspond to \ttt{/dev/fd/0}.
-% These streams are created by the C library (glibc) at the start of program execution,
-and new streams can be created to connect to files, sockets, pipes,
-
-Unix already specifies a few classes of files:
-
-Here are a few special files:
-  \ttt{proc} called 
-
-Technically, anonymous pipes show up as file identifiers in a hidden filesystem.
-Similarly, open files and other ephemeral identifiers 
-
-
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- cat /proc/ >                            (($$p_4$$))
-\end{lstlisting}
 
 \heading{Stream Manipulation}
 A small but powerful set of primitives are concerned with stream manipulation.
