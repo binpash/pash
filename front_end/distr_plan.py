@@ -12,7 +12,8 @@ import jsonpickle
 def main():
     # print command line arguments
     ir_filename = sys.argv[1]
-    output_file = sys.argv[2]
+    output_script_name = sys.argv[2]
+    output_dir = sys.argv[3]
 
     with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
@@ -42,8 +43,9 @@ def main():
     ## available computational resources, such as nodes in the system,
     ## and their cores, etc.
 
-    execute(distributed_graph.serialize_as_JSON(), output_file)
-
+    output_script = execute(distributed_graph.serialize_as_JSON(), output_dir)
+    with open(output_script_name, "w") as output_script_file:
+        output_script_file.write(output_script)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
