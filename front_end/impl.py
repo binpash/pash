@@ -6,7 +6,7 @@ def execute(graph_json, output_dir):
     ## TODO: Remove environment hardcoding
     env={"IN": "../scripts/input/i1M.txt"}
 
-    print("Translate:")
+    # print("Translate:")
     # print(graph_json)
     fids = graph_json["fids"]
     in_fids = graph_json["in"]
