@@ -53,7 +53,8 @@ def execute(graph_json, output_dir):
     #     ret = proc.wait()
     #     if(not ret == 0):
     #         print("-- Error!", proc, ret)
-    output_script_commands.append('for job in `jobs -p` \ndo \n echo $job\n wait $job \ndone')
+    # output_script_commands.append('for job in `jobs -p` \ndo \n echo $job\n wait $job \ndone')
+    output_script_commands.append('wait')
     ## Kill pipes
     for fid in fids:
         # print(fid)
@@ -100,17 +101,10 @@ def node_to_script(node):
        command.split(" ")[0] == "split_file"):
         assert(len(inputs) == 1)
         batch_size = command.split(" ")[1]
-        script.append('{')
-        script.append('head -n {}'.format(batch_size))
-        script.append('"{}"'.format(inputs[0]))
-        script.append(">")
-        script.append('"{}"'.format(outputs[0]))
-        script.append(";")
-        script.append("cat")
-        script.append('"{}"'.format(inputs[0]))
-        script.append(">")
-        script.append('"{}"'.format(outputs[1]))
-        script.append('; }')
+        ## TODO: Implement a new split that either implements this as
+        ## a python script or writes to temporary files
+        # script += old_split(inputs, outputs, batch_size)
+        script += old_split(inputs, outputs, batch_size)
         # print(script)
         # print(node)
     else:
@@ -131,3 +125,18 @@ def node_to_script(node):
 
         # print("Script:", script)
     return " ".join(script)
+
+def old_split(inputs, outputs, batch_size):
+    script = []
+    script.append('{')
+    script.append('head -n {}'.format(batch_size))
+    script.append('"{}"'.format(inputs[0]))
+    script.append(">")
+    script.append('"{}"'.format(outputs[0]))
+    script.append(";")
+    script.append("cat")
+    script.append('"{}"'.format(inputs[0]))
+    script.append(">")
+    script.append('"{}"'.format(outputs[1]))
+    script.append('; }')
+    return script
