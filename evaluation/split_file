@@ -1,0 +1,4 @@
+#!/bin/bash
+size=$1
+out_pipe1=$2
+head -n $size > $out_pipe1 & cat $in_pipe
