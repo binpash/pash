@@ -304,7 +304,7 @@ Experiments for complex pipelines show substantial speedups and the ability to o
 % computation that is easily amenable to distribution.
 % 
 
-Distributed systems offer significant benefits over their centralized counterparts---for example, they can speed up expensive computations or process data that would not fit into any single machine.
+Distributed systems offer significant benefits over their centralized counterparts---for example, they can speed up expensive computations or can process data that would not fit into any single machine.
 % offer notable benefits over their centralized counterparts:
 %   using partitioning and replication, they can process and store data with increased throughput and fault-tolerance.
 % Yet, only a minority of developers, employed by the select few companies that deal with massive datasets, have the luxury of engineering software systems with distribution baked in from the start.
@@ -314,7 +314,7 @@ Whereas anyone can quickly stitch together a Bash script to compute on a single 
   % domain-experts routinely glue scripts together to process and share data. % without the help of a computing expert.
    scaling out to multiple ones requires expert labor around ``point'' solutions with expensive setups, restricted programming interfaces, and exorbitant composition costs~\cite{taurus:14, dios:13, andromeda:15, pywren:17, futuredata:18, nefele:18}.
 
-To understand this sharp contrast, consider calculating term frequencies over a set of input files:
+To understand this sharp contrast, consider a Bash pipeline calculating term frequencies over a set of inputs:
 
 % \begin{lstlisting}[language=sh,float=h,numbers=none]
 % cat doc.ms |                   # print input file
@@ -333,9 +333,9 @@ cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$[p_1]$$)
 \end{lstlisting}
 
 \noindent
-Program $p_1$ creates a character stream, breaks it into words, transliterates to lower-case, sorts to group duplicates, summarizes them with a counter, sorts them in descending order, picks the top five results and writes them to a file \ttt{out}.
+Program $p_1$ creates a character stream, breaks it into words, transliterates to lower-case, sorts to group duplicates, reduces duplicates to a counter, sorts counters in descending order, picks the top five results, and writes them to a file \ttt{out}.
 Combining several features, \unix makes small tasks easy to express;
-  for a user with \emph{one} computer and small input, this pipeline takes a few seconds to compose and execute~\cite{bentley1986literate}.
+  for a user with \emph{one} computer and small input size, this pipeline takes a few seconds to compose and execute~\cite{bentley1986literate}.
 % composition allows the composition of general primitives
 
 % Key insight 
@@ -360,11 +360,12 @@ Combining several features, \unix makes small tasks easy to express;
 % auto <-------------------------------------------------------------> manual
 %                      [rewrite (not write) cost]
 
-For a user with many computers and larger inputs, however, developing $p_1$'s distributed equivalent requires a significant effort.
+Unfortunately, developing $p_1$'s distributed equivalent requires a significant effort.
+% For a user with many computers and larger inputs, 
 % The scope of such rewrites, and therefore the cost of manual effort, can vary considerably.
-For simple pipelines that capture in restricted models of computation, this effort amounts to expressing the computation using the primitives provided by a big-data framework~\cite{mapreduce:08, ciel:11, spark:12, naiad:13} or domain-specific language~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp}---an unjustifiable cost for one-off pipelines that take a few minutes to compose (but are applied to large datasets).
-More complex pipelines, such as the ones presented in later sections, require full-fledged distributed programming language~\cite{erlang:96, lopes1997d, acute:05, mace:07, cloudhaskell:11, ScalaLoci:18}. %  or a distributed operating system---\eg Plan9's \ttt{rc} shell.
-In these cases, manual rewriting is expensive and can introduce new bugs, cascading changes, or divergence from legacy functionality.
+For simple pipelines, fitting into restricted models of computation, this effort amounts to expressing the computation using the primitives provided by a big-data framework~\cite{mapreduce:08, ciel:11, spark:12, naiad:13} or domain-specific language~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp}---an unjustifiable cost for one-off pipelines that take a few minutes to compose (but are applied to large datasets).
+More complex pipelines, such as the ones presented in later sections, would involve a full-fledged distributed programming language~\cite{erlang:96, lopes1997d, acute:05, mace:07, cloudhaskell:11, ScalaLoci:18}. %  or a distributed operating system---\eg Plan9's \ttt{rc} shell.
+In both cases, manual rewriting is expensive and can introduce new bugs, cascading changes, and divergence from legacy functionality.
 Could the generation and execution of $p_1$'s distributed version be fully and correctly automated?
 
 % Some (parts of) pipelines require only moderate effort, as they are 
@@ -397,14 +398,17 @@ Could the generation and execution of $p_1$'s distributed version be fully and c
 % If developers have already expressed their computation as a Unix pipeline, they should not have to manually rewrite the program in other environment---\eg Hadoop, Spark---to exploit distribution.
 
 
-The key insight behind \sys is that the language of the Unix shell already encodes stream processing, providing most of the information required for distributing a computation.
-\sys builds on this insight with a careful study of the scalability properties of shell primitives and its commands, paired with a novel rewriting scheme that identifies maximal pipeline sub-expressions that are candidates for scale-out.
-We term the result \emph{distribution-oblivious programming}---a series of techniques that fully automates program distribution while provably maintaining correct (non-distributed) semantics.
+To answer this question, this paper presents \sys, a shell \todo{preprocessor} that transforms shell pipelines into their distributed equivalents enabling \emph{distribution-oblivious programming}.
+The key insight behind \sys is that the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation.
+\sys builds on this insight with a careful study of the distributability properties of shell primitives and commands, a pipeline rewriting pass that identifies maximal sub-expressions as candidates for scale-out, and a late-bound command-prefixing scheme for deferring scheduling decisions to the distributed planner (\ie when runtime information is available).
+A \sys-enabled $p_1$ will run \ttt{tr} and \ttt{uniq} in completely parallel streams, use a mostly-parallel tree of \ttt{sort}s, run \ttt{head} in one of the streams, and (trivially) merge streams in \ttt{out}.
 
-Key benefits include the ability to scale legacy computations onto
-\sys converts legacy shell pipelines into their distributed equivalents fully automatically, offering $100\times$ improvements in performance without a single line of additional code or annotation.
-Most importantly, \sys provides an architectural lesson:
-  the current design shows that large-scale efforts in the distributed- and operating-system literature to provide a \unix-like distributed equivalent could have been simplified by a thin (but sophisticated) rewriting shim like the one \sys provides.
+The combination of automated transformations for program distribution with the ability to maintain correct non-distributed semantics results in several benefits.
+% \sys converts legacy shell pipelines into their distributed equivalents fully automatically, offering $100\times$ improvements in performance without a single line of additional code or annotation.
+First, shell users composing pipelines (or simply running legacy pipelines on massive datasets) can see scalability benefits without any manual effort---no need for \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}, or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
+Second, developers of new shell commands can use a concise a domain-specific language to express their distributability properties rather than using ad-hoc, command-specific flags such as {\tt -t},  {\tt NUM\_THREADS}, \ttt{-t}, \ttt{-p} \etc
+Most importantly, \sys provides an architectural lesson for system designers---namely, that large-scale research efforts in the distributed- and operating-system literature to provide a \unix-like distributed equivalent~\cite{ousterhout1988sprite, mullender1990amoeba, pike1990plan9, barak1998mosix} would have been simplified by a thin (but sophisticated) rewriting shim like the one \sys provides.
+% Nice critique on parallel: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=597050#75
 
 % % Make Unix benefits explicit?
 % Indeed, the primary reason behind $p_1$'s succinctness is that the pipeline is a domain-specific language for describing operations over streams.
@@ -423,8 +427,8 @@ Most importantly, \sys provides an architectural lesson:
 % The semantics is enough to capture powerful features such as stream branching and feedback constructs found in practice and in the system's evaluation.
 
 The paper is structured as follows.
-We first start with a background section outlining pipeline concepts~\sx{bg}.
-Sections \ref{classes}--\ref{recipes} highlight our key contributions:\footnote{
+It first starts with a background section outlining pipeline concepts and overviewing \sys~\sx{bg}.
+Sections \ref{classes}--\ref{recipes} highlight key contributions:\footnote{
   This is not precise, we'll need to wait until it matures a bit.
 }
 \begin{itemize}
@@ -440,8 +444,8 @@ Sections \ref{classes}--\ref{recipes} highlight our key contributions:\footnote{
 \end{itemize}
 
 \noindent
-\sys's evaluation~\sx{eval} uses a combination of one-liner micro-benchmarks that highlight certain features and three multi-line macro-benchmarks---a web crawling and indexing engine, a production genomics pipeline, and a large-scale weather analysis.
-We close with a discussion of related prior work~\sx{related} and possible future directions~\sx{discussion}.
+\sys's evaluation~\sx{eval} shows significant speedups on both parallel and distributed execution, using a combination of micro-bench\-marks---popular shell one-liners that highlight certain features---and multi-line macro-benchmarks---a web crawling and indexing engine, a genomics pipeline, and a popular weather analysis script.
+After a comparison with related prior work~\sx{related}, the paper closes with a discussion of related work and possible future directions~\sx{discussion}.
 
 % \begin{figure*}[t]
 % \centering
