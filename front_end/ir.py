@@ -367,6 +367,9 @@ class Command(Node):
         output = "{} {}".format(self.command, options_string)
         return output
 
+    def get_non_file_options(self):
+        return [self.options[i] for _, i in self.opt_indices]
+
     def stateless_duplicate(self):
         assert(self.category == "stateless")
         input_file_ids = self.get_flat_input_file_ids()
@@ -494,6 +497,8 @@ def find_command_input_output(command, options, stdin, stdout):
     if (command_string == "cat"):
         input_stream = [("option", i) for i in range(len(options))]
         return (input_stream, ["stdout"], [])
+    elif (command_string == "comm"):
+        return comm_input_output(options, stdin, stdout)
     else:
         opt_indices = [("option", i) for i in range(len(options))]
         return (["stdin"], ["stdout"], opt_indices)
@@ -509,18 +514,52 @@ def find_command_category(command, options):
     ## TODO: Make a proper search that returns the command category
     print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
 
-    stateless = ["cat", "tr", "grep",
-                 "wc", # wc -m or -c is not stateless
+    stateless = ["cat", "tr", "grep", "col"
+                 "groff", # not clear
+                 "sed", # not always
                  "xargs"] # I am not sure if all xargs are stateless
 
-    pure = ["sort"]
+    pure = ["sort", "wc", "uniq"]
 
     if (command_string in stateless):
         return "stateless"
     elif (command_string in pure):
         return "pure"
+    elif (command_string == "comm"):
+        return is_comm_pure(options)
     else:
         return "none"
+
+## TODO: This is clearly incomplete
+def is_comm_pure(options):
+    first_opt = format_arg_chars(options[0])
+    if(first_opt == "-13" or first_opt == "-23"):
+        return "stateless"
+    else:
+        return "none"
+
+def comm_input_output(options, stdin, stdout):
+    first_opt = format_arg_chars(options[0])
+    if(first_opt == "-13"):
+        input_opt = format_arg_chars(options[2])
+        if(input_opt == "-"):
+            in_stream = ["stdin"]
+            opt_indices = [("option", i) for i in range(len(options))]
+        else:
+            in_stream = [("option", 2)]
+            opt_indices = [("option", 0), ("option", 1)]
+        return (in_stream, ["stdout"], opt_indices)
+    elif (first_opt == "-23"):
+        input_opt = format_arg_chars(options[1])
+        if(input_opt == "-"):
+            in_stream = ["stdin"]
+            opt_indices = [("option", i) for i in range(len(options))]
+        else:
+            in_stream = [("option", 1)]
+            opt_indices = [("option", 0), ("option", 2)]
+        return (in_stream, ["stdout"], opt_indices)
+    else:
+        assert(false)
 
 ## TODO: Make a proper splitter subclass of Node
 def make_split_file(in_fid, out_fid, batch_size):
