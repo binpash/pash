@@ -22,6 +22,7 @@
 \usepackage{amsmath}
 \usepackage{cleveref}
 \usepackage{wrapfig}
+\usepackage{syntax}
 
 \captionsetup[figure]{font=footnotesize,name={Fig.},labelfont={bf, footnotesize}}
 \captionsetup[table]{font=footnotesize,name={Tab.},labelfont={bf, footnotesize}, skip=2pt, aboveskip=2pt}
@@ -350,7 +351,7 @@ Combining several features, \unix makes small tasks easy to express;
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.49\textwidth]{./figs/dish_schematic.pdf}
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_schematic.pdf}}
 \caption{
   \textbf{\sys high-level schematic.}
 	\sys XYZ
@@ -453,7 +454,7 @@ After a comparison with related prior work~\sx{related}, the paper closes with a
 
 % \begin{figure*}[t]
 % \centering
-% \includegraphics[width=0.49\textwidth]{./figs/dish_overview.pdf}
+% \includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_overview.pdf}}
 % \caption{
 %   \textbf{Applying \sys to $p_1$.}
 % }
@@ -479,7 +480,7 @@ Intermediate programs, termed commands, can also be developed in different progr
   \vspace{-12pt}
   % \begin{center}
     % \includegraphics[width=0.48\textwidth]{gull}
-    \includegraphics[width=0.06\textwidth]{./figs/dish_ex1.pdf}
+    \includegraphics[width=0.06\textwidth]{\detokenize{./figs/dish_ex1.pdf}}
   % \end{center}
   \vspace{-30pt}
 \end{wrapfigure}
@@ -505,7 +506,7 @@ Streams are a key feature of \unix, and go hand-in-hand with the file abstractio
   \vspace{-15pt}
   % \begin{center}
     % \includegraphics[width=0.48\textwidth]{gull}
-    \includegraphics[width=0.15\textwidth]{./figs/dish_ex3.pdf}
+    \includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_ex3.pdf}}
   % \end{center}
   \vspace{-25pt}
 \end{wrapfigure}
@@ -540,7 +541,7 @@ Some of these features are built into the shell;
   \vspace{-15pt}
   % \begin{center}
     % \includegraphics[width=0.48\textwidth]{gull}
-    \includegraphics[width=0.15\textwidth]{./figs/dish_ex3.pdf}
+    \includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_ex3.pdf}}
   % \end{center}
   \vspace{-25pt}
 \end{wrapfigure}
@@ -599,7 +600,7 @@ Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn 
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.49\textwidth]{./figs/dish_overview.pdf}
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_overview.pdf}}
 \caption{
   \textbf{\sys transformation overview.}
 	\sys XYZ
@@ -814,6 +815,55 @@ any flag it is stateless, etc...
   limited. All of these arguments are a little bit weak though. Niko,
   what do you think?}
 
+\kk{New sketch of the language}
+
+We assume that commands satisfy the standard that options and flags
+come first, and then file arguments. The language contains a record
+for each command name, together with a sequence of predicates that map
+to command categories and designation of input output.
+
+%% Can be tricked according to this:
+%% https://tex.stackexchange.com/questions/24886/which-package-can-be-used-to-write-bnf-grammars
+
+\begin{grammar}
+  <flag> ::= `-' <string>
+
+  <category> ::= `stateless' | `pure' | ...
+
+  <arg> ::= `arg[' <int> `]'
+
+  <input> ::= `stdin' | <arg>
+
+  <output> ::= `stdout' | <arg>
+
+  <flag-pred> ::= <flag>
+  \alt `value' <flag> = <string>
+  \alt `!' <flag-pred>
+  \alt <flag-pred> `or' <flag-pred>
+  \alt <flag-pred> `and' <flag-pred>
+
+  <assignment> ::= `(' <category>, <input>, <output> `)'
+
+  <predicate> ::= <flag-pred> `=>' <assignment>
+
+  <pred-list> ::= `|' <predicate> <pred-list>
+  \alt `|' `otherwise' `=>' <assignment>
+
+  <command> ::= <name> `:' <pred-list>
+
+\end{grammar}
+
+\kk{We don't need to designate the stderror, because we assume that it
+  is never the main output of a command and it will never be used by
+  the input of another command in the pipeline. If someone indeed
+  wants to do this, they can just use a redirect I think to get around
+  it.}
+
+\kk{Give an example of a flag that has value and how this could alter
+  category or input etc...}
+
+
+
 Sketch of the language:
 
 Some kind of lightweight annotation configuration language (like
@@ -1018,48 +1068,6 @@ are its outputs.
   represent the same thing as many outputs. These two notions are not
   symmetric.}
 
-\paragraph{Merge and Split}
-
-\kk{Mergers and splitters, and how they are implemented using shell
-  constructs (cat and head). This subsection might be a better fit in
-  some other section, maybe something related to the planner or the
-  implementation, as it is a very elegant way to implement splitters
-  and mergers while staying completely inside the shell programming
-  model.}
-
-It is common in the dataflow graph for a node to have many incoming
-edges, or many outgoing edges (when all but the last outgoing edges
-are bounded). However some nodes, might read their input from one file
-(e.g. stdin). In this case, the distributed implementation needs to
-concatenate input files, and split output files. Here is an example:
-
-\kk{Show an example graph! of cat | tr | sort. The command in the
-  middle must only take input from one file (maybe just stdin).}
-
-\kk{This transition needs to be stronger} Luckily, the shell offers
-primitives for file manipulations that can be used to implement a
-merger and a splitter. More concretely a merger can be implemented by
-a simple \verb|cat|. Given a set of input files \verb|in1, in2, ...|
-and an output file \verb|out|, a merger can be implemented as:
-
-\begin{lstlisting}[language=sh, float=h, numbers=none]
- cat $in1 $in2 ... > $out
-\end{lstlisting}
-
-\noindent
-On the other hand, given an input file \verb|in| that is a FIFO pipe,
-and two output files \verb|out1, out2| the first of which is bounded
-to \verb|N| lines, a 2-splitter can be implemented as:
-
-\begin{lstlisting}[language=sh, float=h, numbers=none]
- head -n $N $in > $out1 ; cat $in > $out2
-\end{lstlisting}
-
-\noindent
-Using the 2-splitter as a building block, a pipe can be split to
-arbitrarily many different pipes.
-
-\kk{Do I also need to include a splitter for normal files?}
 
 \section{Front End}
 
@@ -1070,31 +1078,145 @@ As mentioned in \Cref{ir}, in order to generate the distributed
 implementation of a shell script, \texttt{Dish} first translates it to
 a dataflow graph. However, there are several components in shell
 programs that cannot be arbitrarily parallelized without affecting the
-program behaviour.
+program behaviour, e.g. commands producing an irreversible effect, or
+commands connected with a \texttt{\&\&} operator. In addition, the
+fact that the shell is \todo{extremely dynamic}, further increases the
+challenge of correctly identifying what parts can be distributed.
 
-\kk{Give examples of writing to environment variables, producing
-  irreversible side effects, the ; and \&\& operators.}
+%% \kk{Give examples of writing to environment variables, producing
+%%   irreversible side effects, the ; and \&\& operators.}
 
 In order to address this issue, we introduce the notion of
-distributable AST subtrees, and we design an analysis that given the
-shell script Abstract Syntax Tree identifies distributable AST
-subtrees and translates each one of them to a dataflow graph. The AST
-of the shell script is produced using a POSIX compliant parser
-\kk{Reference libdash github}.
+distributable program regions, and we design an analysis that given the
+abstract syntax tree of a shell script identifies distributable
+regions and translates each of them to a dataflow graph. The
+AST of the shell script is produced using a POSIX compliant parser
+\kk{Reference libdash github. This reference should probably go to
+  evaluation}.
 
-\subsection{Distributable Subtrees}
+\subsection{Distributable Regions}
 
-\kk{The goal of this section is to convince the reader ``intuitively''
-  that we choose safe parts of a shell program to distribute. There is
-  no formal argument, but one should be able to intuitively believe
-  us.}
+\kk{I wanted this to be purely about the regions, and a next
+  subsection be about the analysis, but the separation line is very
+  blurry, so they are now in the same subsection.}
+
+\kk{The goal of this subsection is to explain that Dish does a safe
+  but effective analysis to identify which parts of the scripts to
+  parallelize.}
 
 Consider the following example:
 
-\kk{Give an example of a shell script that cannot be distributed
-  completely, Possibly involving ; and writing to a variable.}
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+  cat f1 f2 | grep ``foo'' > f3 &&
+  sort f3 #Replace
+\end{lstlisting}
 
-\kk{Intuitively explain what could be distributed and what not.}
+Notice that the structure of a shell program clearly identifies
+components that can be executed concurrently, and barriers that
+enforce synchronization. More precisely, \texttt{cat f1 f2} and
+\texttt{grep ``foo''} already execute concurrently in the standard
+shell, while \texttt{sort f3} waits for their completion before being
+executed. Both \texttt{cat f1 f2 | grep ``foo'' > f3} and \texttt{sort
+  f3} are maximal distributable regions, in the sense that they
+cannot be extended beyond \texttt{\&\&}.
+
+Concretely, a distributable region cannot permeate through the
+following shell constructs: ;, \&\&, \texttt{||}, function
+definitions, command substitutions, and control flow primitives. On
+the other hand, the pipe operator \texttt{|} and the parallel
+composition operator \& enable parallelization, and extend
+distributable regions. Essentially, distributed regions correspond to
+subsections of the program that would be executed by different shell
+processes.
+
+\kk{I don't know whether I should mention the following: While these
+  control flow constructs can be parallelized and there has been
+  research on it, it is orthogonal to our work, and can be
+  incorporated as future work.}
+
+Dish performs a depth first search pass on the AST of the given shell
+program, extending the distributable regions from the bottom
+up, translating their \todo{independent} components to dataflow graph
+nodes, until it reaches a barrier construct. Note that barrier
+constructs can be contained in a distributable subexpression, as a
+\todo{whole independent component}. An illustrative example follows:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+  (sort f1 > g1 && sort f2 > g2) &
+  sort -m g1 g2
+\end{lstlisting}
+
+In the above example\kk{Can we make example not floating?}, while
+\texttt{sort f1 > g1}, \texttt{sort f2 > g2}, and \texttt{sort -m g1
+  g2} are all in different distributable regions. The dataflow graph
+that corresponds to the \todo{large} region, has two nodes,
+\texttt{sort f1 > g1 \&\& sort f2 > g2} and \texttt{sort -m g1 g2}.
+
+The analysis algorithm also finds the category of each node that it
+adds to the dataflow graph, using the rules described in \ref{}. Some
+interesting cases of the analysis algorithm are shown in pseudocode
+below:
+
+\begin{lstlisting}[language=python, float=h]
+  def analysis(node):
+    ...
+    if(node.name == 'Pipe'):
+      return pipe_graphs([analysis(child)
+        for child in node.children])
+    elif(node.name == 'And'):
+      node.children = [analysis(child)
+        for child in node.children]
+      return node
+    elif(node.name == 'Command'):
+      if(not safe(node)):
+        return make_ir_node(node, 'unsafe')
+      else:
+        return make_ir_node(node,
+          find_category(node))
+    ...
+\end{lstlisting}
+
+\kk{Explain how the three above cases work, mentioning what does
+  pipe-graphs and safe do. The important point to get across is to
+  explain why we do the ``conservative checks'' in safe, and how they
+  preserve safety.}
+
+
+\paragraph{analysis}
+
+
+On the other hand: A distributable subtree starts whenever there is a
+pipe, or asynchronous list. If the subcomponents of the pipe or
+asynchronous list were already graphs, then we connect them to the
+bigger graph \kk{explain how we do pipe and asynchronous list}, and if
+they were not graphs, we make each subcomponent a node in the subtree,
+event though they are not commands. These nodes do not belong to any
+category, but still have stdin and stdout, and can be executed
+concurrently (as long as they satisfy the checked assumptions above),
+since they don't introduce new behaviours, they would still be
+executed concurrently when ran in the standard shell, producing
+possibly non-deterministic results with different interleavings.
+
+\kk{Explain how we merge two graphs when seeing a pipe}
+
+Whenever we see a subtree of the AST that is a command, we check the
+files that it writes to. If any of its arguments is a command
+substitution or contains anything that is evaluated\kk{make this more
+  precise}, its category is marked as sequential\kk{name?}. Otherwise
+we check its its category and its input output arguments (using the
+methods described in \Cref{ext}). The command is then initialized as
+the node of a singular graph, with the inputs and outputs of the graph
+being the ones of the node.
+
+
+\paragraph{Assumptions}
+
+\kk{Rephrase that paragraph, to mention the assumtpions that the front
+  end makes, and why they are not so unreasonable}
+
+There are some assumptions that we make in order to preserve the
+correctness of the computation under distributability optimizations.
+
 
 \kk{Our notion of distributable subtrees has two dimensions. First,
   the state of the shell should be an invariant in a distributable
@@ -1133,64 +1255,6 @@ Consider the following example:
   guess that commands that are nodes in the IR are all deterministic?
   That is stateless and pure commands are deterministic.}
 
-\paragraph{analysis}
-
-The analysis is done in a DFS fashion on the AST. Distributable
-subtrees grow from the bottom up, until a construct that doesn't
-``allow'' them to go through is encountered.
-
-%% Mention all the different constructs that our front end handles, and
-%% intuitively mention why it is ``safe'' to add them to the distribution
-%% pipeline.
-
-Subtrees don't cross the following:
-
-\begin{itemize}
-\item Sequence, And,  or
-\item Function definitions
-\item Command Substitutions
-\item control flow: while, for, if, case: While these constructs can
-  be parallelized and there has been research on it, it is orthogonal
-  to our work, and can be incorporated as future work.
-\end{itemize}
-
-On the other hand: A distributable subtree starts whenever there is a
-pipe, or asynchronous list. If the subcomponents of the pipe or
-asynchronous list were already graphs, then we connect them to the
-bigger graph \kk{explain how we do pipe and asynchronous list}, and if
-they were not graphs, we make each subcomponent a node in the subtree,
-event though they are not commands. These nodes do not belong to any
-category, but still have stdin and stdout, and can be executed
-concurrently (as long as they satisfy the checked assumptions above),
-since they don't introduce new behaviours, they would still be
-executed concurrently when ran in the standard shell, producing
-possibly non-deterministic results with different interleavings.
-
-\kk{Explain how we merge two graphs when seeing a pipe}
-
-Whenever we see a subtree of the AST that is a command, we check the
-files that it writes to. If any of its arguments is a command
-substitution or contains anything that is evaluated\kk{make this more
-  precise}, its category is marked as sequential\kk{name?}. Otherwise
-we check its its category and its input output arguments (using the
-methods described in \Cref{ext}). The command is then initialized as
-the node of a singular graph, with the inputs and outputs of the graph
-being the ones of the node.
-
-
-\kk{Maybe mention the recursive case. I am not sure if that should be
-  here, or in the distribution planner. In any case, it should be
-  after we say that an IR is replaced with a call to the planner with
-  the IR saved in a file. The example is a command in a pipeline whose
-  first argument is a command substitution with a pipeline. Executing
-  the outside dataflow graph, would lead to the command to be executed
-  as part of this shell. However its first argument would have a call
-  to the planner itself, leading to another distributed implementation
-  running in parallel. The rest of the pipeline would wait for this to
-  end before it continues. Assuming that the files that both of these
-  graphs use are different, and that the above assumptions hold, there
-  should be no interference between the two graphs and they should be
-  able to run in parallel}
 
 \section{Distribution Planner}
 
@@ -1218,6 +1282,10 @@ systems such as MapReduce\kk{cite} and Apache Spark\kk{cite}.
 
 \subsection{Graph transformations}
 
+\kk{This section could be moved to the intermediate representation,
+  leaving a small section about the iterative process of the planner
+  in the implementation/runtime section}
+
 In our case, this is achieved by iteratively applying graph
 transformations that preserve correctness, while exposing
 parallelization opportunities. We illustrate that with a motivating
@@ -1241,6 +1309,12 @@ respect to concatenation and the following equation holds.
 
 \kk{Complete this story with pure, after we have written the section
   about command categories.}
+
+\kk{Mention the assumptions that need to hold for the graph
+  transformations to be valid. Commands must be deterministic, they
+  must not do any other side effect (such as writing to other files,
+  sending signals, etc). However, these assumptions must already be
+  checked when the developer designates the categories.}
 
 \subsection{Planner Algorithm}
 
@@ -1294,6 +1368,50 @@ evaluate strings, just expand arguments, and not do any significant
 computation. Even better, we could be calling the shtepper just after
 having parsed the ast, and decide on maximal distributable subtrees as
 late as possible in the process. This would be awesome.
+
+\paragraph{Merge and Split}
+
+\kk{Mergers and splitters, and how they are implemented using shell
+  constructs (cat and head). This subsection might be a better fit in
+  some other section, maybe something related to the planner or the
+  implementation, as it is a very elegant way to implement splitters
+  and mergers while staying completely inside the shell programming
+  model.}
+
+It is common in the dataflow graph for a node to have many incoming
+edges, or many outgoing edges (when all but the last outgoing edges
+are bounded). However some nodes, might read their input from one file
+(e.g. stdin). In this case, the distributed implementation needs to
+concatenate input files, and split output files. Here is an example:
+
+\kk{Show an example graph! of cat | tr | sort. The command in the
+  middle must only take input from one file (maybe just stdin).}
+
+\kk{This transition needs to be stronger} Luckily, the shell offers
+primitives for file manipulations that can be used to implement a
+merger and a splitter. More concretely a merger can be implemented by
+a simple \verb|cat|. Given a set of input files \verb|in1, in2, ...|
+and an output file \verb|out|, a merger can be implemented as:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none]
+ cat $in1 $in2 ... > $out
+\end{lstlisting}
+
+\noindent
+On the other hand, given an input file \verb|in| that is a FIFO pipe,
+and two output files \verb|out1, out2| the first of which is bounded
+to \verb|N| lines, a 2-splitter can be implemented as:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none]
+ head -n $N $in > $out1 ; cat $in > $out2
+\end{lstlisting}
+
+\noindent
+Using the 2-splitter as a building block, a pipe can be split to
+arbitrarily many different pipes.
+
+\kk{Do I also need to include a splitter for normal files?}
+
 
 \section{Evaluation}
 
@@ -1370,7 +1488,7 @@ At a high-level, techniques for automatically distributing fall under a spectrum
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.49\textwidth]{./figs/dish_spectrum.pdf}
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_spectrum.pdf}}
 \caption{
   \textbf{Cost of Manual Effort.}
 	\sys sits at the automation end of the spectrum, automatically distributing shell pipelines while maintaining their correctness. A more complete picture is presented in the related-work section~\sx{rt}.
