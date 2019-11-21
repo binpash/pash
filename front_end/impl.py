@@ -106,9 +106,15 @@ def node_to_script(node):
     if(len(outputs) == 1):
         script.append(">")
         script.append('"{}"'.format(outputs[0]))
+    elif(len(outputs) == 2 and
+         command.split(" ")[0] == "split_file"):
+        script.append('"{}"'.format(outputs[0]))
+        script.append(">")
+        script.append('"{}"'.format(outputs[1]))
+        print(script)
+        print(node)
     else:
-    ## TODO: Implement split
-        assert(False)
+         assert(False)
 
     # print("Script:", script)
     return " ".join(script)

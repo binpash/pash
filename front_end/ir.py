@@ -514,7 +514,7 @@ def find_command_category(command, options):
     ## TODO: Make a proper search that returns the command category
     print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
 
-    stateless = ["cat", "tr", "grep", "col"
+    stateless = ["cat", "tr", "grep", "col",
                  "groff", # not clear
                  "sed", # not always
                  "xargs"] # I am not sure if all xargs are stateless
@@ -560,6 +560,28 @@ def comm_input_output(options, stdin, stdout):
         return (in_stream, ["stdout"], opt_indices)
     else:
         assert(false)
+
+def make_split_files(in_fid, out_fid, batch_size, fileIdGen):
+    assert(len(out_fid.children) >= 2)
+    split_commands = []
+    curr = in_fid
+    out_i = 0
+    while (out_i + 2 < len(out_fid.children)):
+        temp_fid = fileIdGen.next_file_id()
+        temp_out_fid = fileIdGen.next_file_id()
+        temp_out_fid.set_children([out_fid.children[out_i], temp_fid])
+        split_com = make_split_file(curr, temp_out_fid, batch_size)
+        split_commands.append(split_com)
+
+        curr = temp_fid
+        out_i += 1
+
+    ## The final 2 children of out_fid
+    final_out_fid = fileIdGen.next_file_id()
+    final_out_fid.set_children(out_fid.children[out_i:(out_i+2)])
+    split_com = make_split_file(curr, final_out_fid, batch_size)
+    split_commands.append(split_com)
+    return split_commands
 
 ## TODO: Make a proper splitter subclass of Node
 def make_split_file(in_fid, out_fid, batch_size):
