@@ -253,6 +253,7 @@ def parallelize_pure_sort(curr, graph, fileIdGen):
     ##
     ## WARNING: Since the merge has to take the files as arguments, we
     ## pass the pipe names as its arguments and nothing in stdin
+    old_options = curr.get_non_file_options()
     options = [string_to_argument("-m")]
     # options = []
     options += [string_to_argument(fid.pipe_name()) for fid in new_output_file_ids]
