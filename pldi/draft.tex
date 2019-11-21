@@ -1273,6 +1273,8 @@ operator placement etc. that we can borrow from.
 
 \subsection{Just in time planning}
 
+\kk{Rename this section to panner activators}
+
 \kk{This whole section for just in itme planning, is also relevant for
   the front end. If the front end is executed just in time, it would
   have more information, and maybe it could make a sound analysis.}
@@ -1349,6 +1351,21 @@ late as possible in the process. This would be awesome.
 \section{Related Work}
 \label{related}
 
+\kk{On our dataflow graph model: Our data flow graph model is
+  different than most distributed batch and stream processing systems,
+  since the shell is a hybrid between the two. Batch processing
+  systems have no notion of data order, and stream processing systems
+  usually have order, but none of these systems supports this notion
+  of reading from different sources in sequence. Our dataflow graph
+  model supports this by including information about incoming edge
+  order. Another benefit of our dataflow model, is that together with
+  the equations that hold on stateless and pure commands, data
+  parallelism is exposed in the graph as task parallelism. This allows
+  the unoptimized and optimized dataflow graph to have the same
+  unified representation, and doesn't lead to an ad-hoc optimization
+  of the dataflow graph as done in the other systems (the last bit is
+  too aggressive). }
+
 At a high-level, techniques for automatically distributing fall under a spectrum that ranges from fully automated (but potentially sub-optimal) distribution to fully manual (but, ideally, optimal) distribution (Fig.~\ref{fig:spectrum}).
 
 \begin{figure}[t]
@@ -1381,7 +1398,7 @@ However, they involve significant manual effort using the provided abstractions,
 Ignis and Mozart
 
 \heading{DSLs for Distribution}
-At the other end of the spectrum, distributed computing frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13, jetstream:14} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp, psync:16, dartagnan:18}
+At the other end of the spectrum, distributed computing frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13, jetstream:14} \kk{JetStream has a very different focus} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp, psync:16, dartagnan:18}
 simplify certain patterns, 
 but do not offer the flexibility of a full-fledged environment.
 % suffer from a similar lack of generality by making strong assumptions about the nature of the computation---for example, strongly-eventual commutative components that can proceed in parallel.
@@ -1393,11 +1410,11 @@ These tools simplify the expression of parallelism, but still require programmer
 Moreover, the insights behind these attempts are significantly different from ours, as they extract parallelism statically during compilation instead of dynamically during runtime.
 %Despite significant progress~\cite{}, it remains due to its need for complex program analysis and the unknown factors (such as input data range) during compilation.
 
+\kk{We need to cite DGSH}
 
 \section{Conclusion}
 \label{discussion}
 
-\kk{We need to cite DGSH}
 
 \begin{acks}
   % Dumping people so that we don't forget
