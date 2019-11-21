@@ -15,6 +15,12 @@ def main():
     output_script_name = sys.argv[2]
     output_dir = sys.argv[3]
 
+    ## The 4th argument is an optional fan_out
+    if (len(sys.argv) == 5):
+        fan_out = int(sys.argv[4])
+    else:
+        fan_out = 5
+
     with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
 
@@ -22,7 +28,7 @@ def main():
     shell_string = ast_to_shell(ir_node.ast)
     print(shell_string)
 
-    distributed_graph = simpl_file_distribution_planner(ir_node)
+    distributed_graph = simpl_file_distribution_planner(ir_node, fan_out)
 
     ## Notes:
     ##
@@ -54,7 +60,7 @@ def main():
 ##
 ## It returns a maximally expanded (regarding files) graph, that can
 ## be scheduled depending on the available computational resources.
-def simpl_file_distribution_planner(graph):
+def simpl_file_distribution_planner(graph, fan_out):
     # print("Intermediate representation:")
     # print(graph)
 
@@ -74,7 +80,7 @@ def simpl_file_distribution_planner(graph):
     ## Note: The above has to be done in a BFS fashion (starting from
     ## all sources simultaneously) so that we don't have to iterate to
     ## reach a fixpoint.
-    naive_parallelize_stateless_nodes_bfs(graph)
+    naive_parallelize_stateless_nodes_bfs(graph, fan_out)
     # print("Parallelized graph:")
     # print(graph)
 
@@ -95,7 +101,7 @@ def simpl_file_distribution_planner(graph):
     return graph
 
 
-def naive_parallelize_stateless_nodes_bfs(graph):
+def naive_parallelize_stateless_nodes_bfs(graph, fan_out):
     source_nodes = graph.source_nodes()
     # print("Source nodes:")
     # print(source_nodes)
@@ -135,26 +141,27 @@ def naive_parallelize_stateless_nodes_bfs(graph):
         assert(len(next_nodes) <= 1)
 
         ## TODO: Remove hardcoded
-        times = 2
-        graph = split_xargs_input(curr, graph, fileIdGen, times, batch_size)
+        graph = split_command_input(curr, graph, fileIdGen, fan_out, batch_size)
         graph = parallelize_stateless(curr, graph, fileIdGen)
         graph = parallelize_pure(curr, graph, fileIdGen)
 
 
-## Optimizes xargs by splitting its input
-def split_xargs_input(curr, graph, fileIdGen, times, batch_size):
+## Optimizes several commands by splitting its input
+def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
     input_file_ids = curr.get_flat_input_file_ids()
-    if (str(curr.command) == "xargs" and
-        len(input_file_ids) == 1):
-        ## We can split xargs input to several files, even if it
-        ## only has one input.
+    if (curr.category in ["stateless", "pure"] and
+        len(input_file_ids) == 1 and
+        curr.in_stream[0] == "stdin"):
+        ## We can split command input in several files, as long as the
+        ## input is not a file, and it makes sense to do so, if the
+        ## command is stateless or pure.
 
         ## This will still be the output file id of the previous
         ## node
         input_file_id = input_file_ids[0]
 
         ## Generate the split file ids
-        split_file_ids = [fileIdGen.next_file_id() for i in range(times)]
+        split_file_ids = [fileIdGen.next_file_id() for i in range(fan_out)]
 
         ## Generate a new file id that has all the split file ids
         ## as children, in place of the current one
@@ -167,8 +174,8 @@ def split_xargs_input(curr, graph, fileIdGen, times, batch_size):
         ## Add a new node that executes split_file and takes
         ## the input_file_id as input, split_file_ids as output
         ## and the batch_size as an argument
-        split_file_command = make_split_file(input_file_id, output_file_id, batch_size)
-        graph.add_node(split_file_command)
+        split_file_commands = make_split_files(input_file_id, output_file_id, batch_size, fileIdGen)
+        [graph.add_node(split_file_command) for split_file_command in split_file_commands]
 
     return graph
 
