@@ -1,0 +1,5 @@
+cat: ../scripts/input/i10M.txt: No such file or directory
+
+real	0m0.191s
+user	0m0.002s
+sys	0m0.190s
