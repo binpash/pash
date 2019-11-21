@@ -1071,6 +1071,9 @@ are its outputs.
 
 \section{Front End}
 
+\kk{The writing in this section is wandering around without a clear
+  purpose :( }
+
 \kk{It might make sense to merge this section with the one below with
   the name: From Shell to IR and back}
 
@@ -1087,18 +1090,18 @@ challenge of correctly identifying what parts can be distributed.
 %%   irreversible side effects, the ; and \&\& operators.}
 
 In order to address this issue, we introduce the notion of
-distributable program regions, and we design an analysis that given the
-abstract syntax tree of a shell script identifies distributable
-regions and translates each of them to a dataflow graph. The
-AST of the shell script is produced using a POSIX compliant parser
-\kk{Reference libdash github. This reference should probably go to
-  evaluation}.
+distributable program regions, and we design a translation pass that
+given the abstract syntax tree of a shell script identifies
+distributable regions and translates each of them to a dataflow
+graph. The AST of the shell script is produced using a POSIX compliant
+parser \kk{Reference libdash github. This las sentence should probably
+  go to evaluation}.
 
 \subsection{Distributable Regions}
 
-\kk{I wanted this to be purely about the regions, and a next
-  subsection be about the analysis, but the separation line is very
-  blurry, so they are now in the same subsection.}
+%% \kk{I wanted this to be purely about the regions, and a next
+%%   subsection be about the analysis, but the separation line is very
+%%   blurry, so they are now in the same subsection.}
 
 \kk{The goal of this subsection is to explain that Dish does a safe
   but effective analysis to identify which parts of the scripts to
@@ -1108,20 +1111,20 @@ Consider the following example:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
   cat f1 f2 | grep ``foo'' > f3 &&
-  sort f3 #Replace
+  sort f3 # Replace with sth better
 \end{lstlisting}
 
 Notice that the structure of a shell program clearly identifies
 components that can be executed concurrently, and barriers that
 enforce synchronization. More precisely, \texttt{cat f1 f2} and
-\texttt{grep ``foo''} already execute concurrently in the standard
-shell, while \texttt{sort f3} waits for their completion before being
-executed. Both \texttt{cat f1 f2 | grep ``foo'' > f3} and \texttt{sort
-  f3} are maximal distributable regions, in the sense that they
-cannot be extended beyond \texttt{\&\&}.
+\texttt{grep ``foo''} would already execute concurrently in the
+standard shell, while \texttt{sort f3} waits for their completion
+before being executed. Both \texttt{cat f1 f2 | grep ``foo'' > f3} and
+\texttt{sort f3} are maximal distributable regions, in the sense that
+they cannot be extended beyond \texttt{\&\&}.
 
 Concretely, a distributable region cannot permeate through the
-following shell constructs: ;, \&\&, \texttt{||}, function
+following barrier constructs: ;, \&\&, \texttt{||}, function
 definitions, command substitutions, and control flow primitives. On
 the other hand, the pipe operator \texttt{|} and the parallel
 composition operator \& enable parallelization, and extend
@@ -1134,12 +1137,14 @@ processes.
   research on it, it is orthogonal to our work, and can be
   incorporated as future work.}
 
+\subsection{Translation Pass}
+
 Dish performs a depth first search pass on the AST of the given shell
-program, extending the distributable regions from the bottom
-up, translating their \todo{independent} components to dataflow graph
-nodes, until it reaches a barrier construct. Note that barrier
-constructs can be contained in a distributable subexpression, as a
-\todo{whole independent component}. An illustrative example follows:
+program, extending the distributable regions from the bottom up,
+translating their independent components to dataflow graph
+nodes, until a barrier construct is reached. Note that barrier
+constructs can be contained in a dataflow graph, as long as they don't
+extend beyong a single node. An illustrative example follows:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
   (sort f1 > g1 && sort f2 > g2) &
@@ -1148,23 +1153,24 @@ constructs can be contained in a distributable subexpression, as a
 
 In the above example\kk{Can we make example not floating?}, while
 \texttt{sort f1 > g1}, \texttt{sort f2 > g2}, and \texttt{sort -m g1
-  g2} are all in different distributable regions. The dataflow graph
-that corresponds to the \todo{large} region, has two nodes,
-\texttt{sort f1 > g1 \&\& sort f2 > g2} and \texttt{sort -m g1 g2}.
+  g2} are all in different dataflow graphs. The dataflow graph that
+corresponds to the whole program, has two nodes, \texttt{sort f1 > g1
+  \&\& sort f2 > g2} and \texttt{sort -m g1 g2}.
 
-The analysis algorithm also finds the category of each node that it
-adds to the dataflow graph, using the rules described in \ref{}. Some
+In order to identify possible opportunities for parallelism, the
+translation pass also identifies the category of each node, together
+with its input and output, using the rules described in \ref{}. Some
 interesting cases of the analysis algorithm are shown in pseudocode
 below:
 
 \begin{lstlisting}[language=python, float=h]
-  def analysis(node):
+  def translate(node):
     ...
-    if(node.name == 'Pipe'):
-      return pipe_graphs([analysis(child)
+    elif(node.name == 'Pipe'):
+      return pipe_graphs([translate(child)
         for child in node.children])
     elif(node.name == 'And'):
-      node.children = [analysis(child)
+      node.children = [translate(child)
         for child in node.children]
       return node
     elif(node.name == 'Command'):
@@ -1176,84 +1182,77 @@ below:
     ...
 \end{lstlisting}
 
-\kk{Explain how the three above cases work, mentioning what does
-  pipe-graphs and safe do. The important point to get across is to
-  explain why we do the ``conservative checks'' in safe, and how they
-  preserve safety.}
+%% \kk{Explain how the three above cases work, mentioning what does
+%%   pipe-graphs and safe do. The important point to get across is to
+%%   explain why we do the ``conservative checks'' in safe, and how they
+%%   preserve safety.}
 
+Whenever the algorithm encounters a pipe node, it recursively
+translates its subcomponents, and then merges them in a dataflow graph
+by connecting the output of the first with the input of the second,
+\etc. Before the different dataflow graphs are connected, the
+algorithm checks that at most one node in the graph writes at every
+file, and at most one node reads from a file that another node writes
+to. This is important, in order to avoid inconsistent behaviour after
+distributing nodes in the dataflow graph \kk{Does this need an
+  example?}. Whenever the algorithm encounter an \texttt{\&\&} node,
+it recursively translates its subcomponents (similarly to the pipe
+node), but then doesn't merge them in a large dataflow graph. Finally,
+whenever the algorithm encounters a command, it first checks whether
+it is safe to possibly parallelize this command. A command is
+considered to be safe, if it does not make any modification to the
+shell state (e.g. changing the current directory, modifying
+environment variables), and if it does not read from a
+\todo{read-once} file, like a fifo pipe. \kk{Mention: Note that an
+  unsafe command can still be safely added to the dataflow graph as a
+  single node, since this doesn't introduce any new
+  behaviours. However it cannot be parallelized further than that.} If
+the command is considered safe, its category is identified and a node
+containing that command is created and added to a singleton dataflow
+graph.
 
-\paragraph{analysis}
-
-
-On the other hand: A distributable subtree starts whenever there is a
-pipe, or asynchronous list. If the subcomponents of the pipe or
-asynchronous list were already graphs, then we connect them to the
-bigger graph \kk{explain how we do pipe and asynchronous list}, and if
-they were not graphs, we make each subcomponent a node in the subtree,
-event though they are not commands. These nodes do not belong to any
-category, but still have stdin and stdout, and can be executed
-concurrently (as long as they satisfy the checked assumptions above),
-since they don't introduce new behaviours, they would still be
-executed concurrently when ran in the standard shell, producing
-possibly non-deterministic results with different interleavings.
-
-\kk{Explain how we merge two graphs when seeing a pipe}
-
-Whenever we see a subtree of the AST that is a command, we check the
-files that it writes to. If any of its arguments is a command
-substitution or contains anything that is evaluated\kk{make this more
-  precise}, its category is marked as sequential\kk{name?}. Otherwise
-we check its its category and its input output arguments (using the
-methods described in \Cref{ext}). The command is then initialized as
-the node of a singular graph, with the inputs and outputs of the graph
-being the ones of the node.
+It is important to note that due to the highly dynamic nature of the
+shell, the safety properties that were mentioned above cannot be
+soundly checked statically. For example in the first case, two
+unexpaned strings could refer to the same file, but the translation
+pass cannot infer that. Hence, in both cases, the checks were
+approximated using a \todo{best-effort} method. \kk{Maybe mention that
+  as future work, we want to tighly integrate with the shell shtepper
+  that will allow to maximally expand everything before making this
+  decision.}
 
 
 \paragraph{Assumptions}
 
-\kk{Rephrase that paragraph, to mention the assumtpions that the front
-  end makes, and why they are not so unreasonable}
+\kk{This paragraph is not extremely necessary. Maybe it can be moved
+  to limitations?}
 
-There are some assumptions that we make in order to preserve the
-correctness of the computation under distributability optimizations.
+There are two additional assumptions that have to be satisfied in
+order for the distributed implementation that is generated by Dish to
+have equivalent behaviour with the original implementation. First of
+all, there should be no external signals to the commands while they
+execute. At the moment Dish assumes no faults, and that communication
+always succeeds. This assumption can be lifted by extending Dish with
+a fault-tolerant runtime, \kk{blah blah}. Second, we assume that no
+command reads and writes to arbitrary files that are not mentioned in
+their arguments. This is a necessary assumption, since commands are
+considered as black boxes and the only information that can be
+inferred about them is through their arguments.
 
 
-\kk{Our notion of distributable subtrees has two dimensions. First,
-  the state of the shell should be an invariant in a distributable
-  subtree. We cannot know this completely without evaluating, so we do
-  a conservative analysis. The second dimension is that there exists
-  at least one component that can be abstracted as a node of the
-  dataflow graph. This can be anything that includes a command.}
+\kk{The following assumption should probably be mentioned in the
+  categories, since a command that is non-deterministic should not be
+  categorized to be neither stateless or pure. Assumption: How can we
+  make sure that nodes in the IR are deterministic. Do we make some
+  assumption that enforces this? I guess that commands that are nodes
+  in the IR are all deterministic?  That is stateless and pure
+  commands are deterministic.}
 
-%% Even though commands are split in categories, and several pipelines
-%% are distributable, not all parts of a shell script are stateless and
-%% several of them have effects that could affect the behaviour of a
-%% program after distribution.
 
-\kk{All of our assumptions and study are based on the POSIX
-  standard. Reference?}
 
-\kk{Not checked Assumption. A command doesn't write/read to arbitrary
-  files that are not mentioned in its arguments. This is necessary to
-  enforce that no two commands concurrently read/write from the same
-  file.}
+%% \kk{All of our assumptions and study are based on the POSIX
+%%   standard. Reference?}
 
-\kk{Not checked Assumption: No signals, traps, and sets at the
-  moment. At the moment we don't have a way to handle signals and
-  traps.}
-
-\kk{Partially checked Assumption. Only one reader and one writer to
-  each file, and no cycles. OLD MORE CONSERVATIVE ASSUMPTION: The same
-  file exists once in the substree. This is a conservative assumption
-  that ensures that no two commands write or read to the same file
-  concurrently. We kind of check it but not completely. We check that
-  the expanded evaluated files are not the same, but one could have
-  part of a file in a variable etc.}
-
-\kk{Checked assumption: How can we make sure that nodes in the IR are
-  deterministic. Do we make some assumption that enforces this? I
-  guess that commands that are nodes in the IR are all deterministic?
-  That is stateless and pure commands are deterministic.}
 
 
 \section{Distribution Planner}
