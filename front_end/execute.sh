@@ -10,6 +10,7 @@ comput_diff=$2
 env=$3
 
 json="/tmp/temp_script.json"
+output_script="/tmp/temp_distr_script.sh"
 seq_output="/tmp/seq_output"
 distr_output="/tmp/distr_output"
 
@@ -19,13 +20,14 @@ distr_output="/tmp/distr_output"
 echo "Script:"
 cat $script
 
-echo "Sequential:"
-time /bin/bash $script > $seq_output
+# echo "Sequential:"
+# time /bin/bash $script > $seq_output
 
 ## TODO: This currently assumes that there is only one IR in the script
 echo "Distributed:"
 python3 main.py $json &&
-time python3 distr_plan.py /tmp/dish_temp_ir_file1 $distr_output
+time python3 distr_plan.py /tmp/dish_temp_ir_file1 $output_script $distr_output
+# time /bin/bash $output_script
 
 if [ "$comput_diff" = true ] ; then
     echo "Computing output difference... This will take some time..."

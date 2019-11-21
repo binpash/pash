@@ -118,6 +118,13 @@ def compile_node_command(construct, lineno, assignments, args, redir_list, fileI
         ## Question: Should we return the command in an IR if one of
         ## its arguments is a command substitution? Meaning that we
         ## will have to wait for its command to execute first?
+        ##
+        ## ANSWER: Kind of. If a command has a command substitution or
+        ## anything that evaluates we should add it to the IR, but we
+        ## should also make sure that its category is set to the most
+        ## general one. That means that it can be executed
+        ## concurrently with other commands, but it cannot be
+        ## parallelized.
         command = create_command_assign_file_identifiers(ast_node, fileIdGen,
                                                          command_name, options,
                                                          stdin=stdin_fid, stdout=stdout_fid)
