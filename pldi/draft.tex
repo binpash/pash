@@ -403,9 +403,9 @@ Could the generation and execution of $p_1$'s distributed version be fully and c
 
 
 To answer this question, this paper presents \sys, a shell \todo{preprocessor} that transforms shell pipelines into their distributed equivalents enabling \emph{distribution-oblivious programming}.
-The key insight behind \sys is that the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation.
-\sys builds on this insight with a careful study of the distributability properties of shell primitives and commands, a pipeline rewriting pass that identifies maximal sub-expressions as candidates for scale-out, and a late-bound command-prefixing scheme for deferring scheduling decisions to the distributed planner (\ie when runtime information is available).
-A \sys-enabled $p_1$ will run \ttt{tr} and \ttt{uniq} in completely parallel streams, use a mostly-parallel tree of \ttt{sort}s, run \ttt{head} in one of the streams, and (trivially) merge streams in \ttt{out}.
+The key insight behind \sys is that the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation\kk{I am not sure whether stream processing provides information for distributing a computation on its own. Maybe we can say that the shell exposes operator level parallelism, and that this is the first step to distributing a computation}.
+\sys builds on this insight with a careful study of the distributability properties of shell primitives and commands, a pipeline rewriting pass that identifies \todo{maximal} sub-expressions as candidates for scale-out, and a late-bound command-prefixing scheme for deferring scheduling decisions to the distributed planner (\ie when runtime information is available).
+A \sys-enabled $p_1$ will run \ttt{tr} and \ttt{uniq} in completely parallel streams \kk{Isn't uniq pure? I am not sure how we can handle it}, use a mostly-parallel tree of \ttt{sort}s, run \ttt{head} in one of the streams, and (trivially) merge streams in \ttt{out}.
 
 The combination of automated transformations for program distribution with the ability to maintain correct non-distributed semantics results in several benefits.
 % \sys converts legacy shell pipelines into their distributed equivalents fully automatically, offering $100\times$ improvements in performance without a single line of additional code or annotation.
@@ -494,7 +494,7 @@ As part of this interface, each command has access to (any combination of) three
 Commands can be tuned by two mechanisms, namely command-line options and environment variables.
 Options control the execution of a program---\eg changing the \ttt{sort}ing order.
 The shell does not have any visibility into these options; 
-  their parsing and evaluation is left entirely up to each command.
+  their parsing and evaluation is left entirely up to each command \kk{A minor point: the shell does the expansion, and then hands it of to the command (I am saying that because evaluation might be confounded with expansion so we might want to clarify that)}.
 Environment variables carry more general information about the surrounding system---\eg file search paths, system defaults, parsing switches \etc 
 They are organized in a map from names to values, both of which are strings, and can be evaluated at any point in the program---including as commands, flags, a shell feature termed parameter \emph{expansion}.
 
@@ -616,9 +616,9 @@ Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn 
 
 As outlined earlier, the key insight behind \sys is that the shell already describes parallel computations over streams.
 Intuitively,
- (i) the parallel-composition operator exposes task parallelism,
+ (i) the parallel-composition operator exposes \todo{task} parallelism \kk{I have named that operator level parallelism, which one do we prefer?},
  (ii) commands such as \ttt{xargs} and \ttt{tee} expose data parallelism,
- (iii) the pipe operator enables both task and data parallelism, and
+ (iii) the pipe operator enables both task and data parallelism, and \kk{How does it enable data parallelism?}
  (iv)  other composition operators can be viewed as barrier candidates.
 To leverage these insights and correctly distribute a pipeline such as $p_1$, \sys must solve several challenges.
 
@@ -638,11 +638,13 @@ A command developer can only annotate the default behavior;
   if a new flag is added a few years later, and if that flag alters the command's class, only then a new annotation is needed.
 
 Given a set of commands composed together by the shell primitives, \sys's next challenge is to analyze it and identify candidate subexpressions for distribution.
-\sys addresses this challenge with a rewriting \todo{pass} that performs dataflow analysis identifying maximal distributability sub-expressions.
+\sys addresses this challenge with a rewriting \todo{pass} that performs dataflow analysis identifying \todo{maximal} distributable sub-expressions.
 It converts the AST to a dataflow graph, and runs...
 This analysis is not trivial, as many of the shell's dynamic features have to be taken into consideration---examples include shell expansion, environment variables, file input sizes, \etc
 
-Finally, given a distributed pipeline with runtime \todo{annotations}, \sys needs to schedule and execute it.
+\kk{On the dataflow graph, Dish iteratively performs graph transformations that expose data parallelism as task parallelism while preserving correctness.}
+
+Finally, given a distributed pipeline with runtime \todo{annotations}\kk{the runtime just gets a dataflow graph}, \sys needs to schedule and execute it.
 This amounts to solving a few challenges, achieved by \sys's runtime component, two of which stand out.
 First, \sys needs to wrap single-node commands with corrective runtime interposition based on their classes;
   this is achieved by thin wrappers for all the commands involved in the program, generated just-in-time using the distributability specification outlined earlier.
@@ -650,7 +652,7 @@ The reasoning behind wrappers being thin is to not interfere with legacy functio
 
 Second, \sys needs to fill-in planing details left blank by the rewriting pass.
 This is achieved with \emph{planner activators}, commands that yield (and pass their arguments) to the scheduler.
-From the point of view of the shell, activators are higher-order commands \'{a} la \ttt{xargs} and \ttt{time} that take other commands as arguments---a technique that achieves the latest possible binding, when critical runtime information is available.
+From the point of view of the shell, activators are higher-order commands \'{a} la \ttt{xargs} and \ttt{time} that take other commands as arguments---a technique that achieves the latest possible binding, when critical runtime information is available. \kk{I am not exactly sure I understand that :) }
 
 The next few sections discuss the details.
 They also outline other, less obvious challenges---such as the synchronization of environment variables, distributed file operation, \etc.
