@@ -1,4 +1,4 @@
-cat manpage.1               |  # other tricks
+cat $IN                     |  # other tricks
 groff -t -e -mandoc -Tascii |  # remove formatting commands
 col -bx |                      # remove backspaces / linefeeds
 tr A-Z a-z |                   # map upper to lower case
