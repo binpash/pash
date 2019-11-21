@@ -988,6 +988,8 @@ computation.
 \section{Related Work}
 \label{related}
 
+At a high-level, techniques for automatically distributing fall under a spectrum that ranges from fully automated (but potentially sub-optimal) distribution to fully manual (but, ideally, optimal) distribution (Fig.~\ref{fig:spectrum}).
+
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.49\textwidth]{./figs/dish_spectrum.pdf}
@@ -997,6 +999,38 @@ computation.
 }
 \label{fig:spectrum}
 \end{figure}
+
+% Nice intro: http://homepages.inf.ed.ac.uk/bfranke/Publications/pldi121-tournavitis.pdf
+\heading{Automated Parallelization and Distribution}
+There is a long history of automated parallelization starting from explicit \ttt{DOALL} and \ttt{DOACROSS} annotations~\cite{par1, par2} and continuing with compilers that attempt to automatically extract parallelism~\cite{padua1993polaris,hall1996maximizing}.
+These systems operate at a lower level than \sys (\eg that of instructions or loops instead of pipe boundaries) and typically do not exploit runtime information.
+
+% https://ecommons.cornell.edu/bitstream/handle/1813/6508/85-668.pdf?sequence=1
+% The growth of the web led to specialized frameworks for massively distributed computation~\cite{mapreduce:08, spark:10, naiad:13}.
+% While they Moreover, these systems take advantage of functional purity;
+%   for programs that are not data-intensive processing pipelines (\eg web servers), purely functional code is generally responsible for only a small fraction of the program runtime.
+A plethora of systems assist in the construction of distributed software.
+Distributed operating systems~\cite{rashid1981accent, walker1983locus, ousterhout1988sprite, mullender1990amoeba, pike1990plan9, rozier1991overview, dorward1997inferno, barak1998mosix, schwarzkopf2013dios, sacha2013osprey} and programming languages~\cite{erlang:96, acute:05, mace:07, cloudhaskell:11}
+% simplify many of the problems of distribution and
+provide a significant amount of automation. % but require development in a new system or language.  While they take care of all the distribution minutiae, 
+However, they involve significant manual effort using the provided abstractions, which are strongly coupled with the underlying operating or runtime system.
+\TODO{This has to be broken down into systems and PLs, coz systems are the most relevant/important class.}
+
+\heading{Annotation-based Distribution}
+Ignis and Mozart
+
+\heading{DSLs for Distribution}
+At the other end of the spectrum, distributed computing frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13, jetstream:14} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp, psync:16, dartagnan:18}
+simplify certain patterns, 
+but do not offer the flexibility of a full-fledged environment.
+% suffer from a similar lack of generality by making strong assumptions about the nature of the computation---for example, strongly-eventual commutative components that can proceed in parallel.
+Developing under these frameworks differs quite significantly from the development of normal (non-distributed) programs.
+
+More recent work focuses on extracting parallelism from domain-specific programming models~\cite{cilk5, streamIt, galois} and interactive parallelization tools~\cite{parascope, ipat}.
+These tools simplify the expression of parallelism, but still require programmers to get involved in discovering and exposing parallelism.
+%  actively involve the programmer in the detection and mapping of application parallelism, but still demand great effort from the user. 
+Moreover, the insights behind these attempts are significantly different from ours, as they extract parallelism statically during compilation instead of dynamically during runtime.
+%Despite significant progress~\cite{}, it remains due to its need for complex program analysis and the unknown factors (such as input data range) during compilation.
 
 
 \section{Conclusion}
