@@ -767,12 +767,19 @@ from this paper:
 \url{http://www.cs.toronto.edu/~azadeh/papers/pldi17-ex.pdf} and its
 continuation in PLDI 2019.
 
-Can we find a solution for the commands in coreutils?
+\kk{Can we find a solution for the commands in coreutils?}
+
+\kk{Important TODO: Find at least one more command that can be
+  executed like sort. Does wc work? If there is no pure command that
+  can be easily parallelized other than sort, this story is not very
+  nice.}
 
 
 
 \section{Intermediate Representation/Dataflow graph}
 \label{ir}
+
+\kk{Inline listing?}
 
 \kk{Try to be more formal in the section, by using the notation that
   is defined in the nodes paragraph.}
@@ -785,9 +792,11 @@ through these files. We propose a slight variation of the standard
 dataflow graph, that is commonly found in stream processing systems,
 as the representation of a distributed shell computation. The main
 benefit of the dataflow graph model is that it clearly exposes
-operator level parallelism, as different nodes can be independent
+operator level parallelism \kk{Is this a common term? Is there any
+  definitive citation for it?}, as different nodes can be independent
 processing workers. In our case each node represents a command, and
 each edge represents a file.
+
 
 \kk{Before that I have to mention that the basic data type $D$ is a
   line of characters. If we move the edges section before the nodes
@@ -1007,12 +1016,13 @@ Consider the following example:
   moment. At the moment we don't have a way to handle signals and
   traps.}
 
-\kk{Partially checked Assumption. The same file exists once in the
-  substree. This is a conservative assumption that ensures that no two
-  commands write or read to the same file concurrently. We kind of
-  check it but not completely. We check that the expanded evaluated
-  files are not the same, but one could have part of a file in a
-  variable etc.}
+\kk{Partially checked Assumption. Only one reader and one writer to
+  each file, and no cycles. OLD MORE CONSERVATIVE ASSUMPTION: The same
+  file exists once in the substree. This is a conservative assumption
+  that ensures that no two commands write or read to the same file
+  concurrently. We kind of check it but not completely. We check that
+  the expanded evaluated files are not the same, but one could have
+  part of a file in a variable etc.}
 
 \kk{Checked assumption: How can we make sure that nodes in the IR are
   deterministic. Do we make some assumption that enforces this? I
@@ -1080,40 +1090,73 @@ being the ones of the node.
 
 \section{Distribution Planner}
 
-\kk{Mention that different nodes can be safely executed independently,
-  and that this exposes operator level parallelism}
+\kk{I think that there is not enough content for the planner section
+  and it should probably just be called graph transformations. Then we
+  could have a small subsection at the end about how the planner
+  applies transformations iteratively starting from the source of the
+  graph and pushing them until the end.}
 
-\subsection{Scaling up the distributed computation/Vertically expanding the graph/Graph Transformations/ Equations}
+As mentioned in \Cref{ir}, the dataflow graph exposes operator level
+parallelism. Different nodes in the graph can be executed
+concurrently, communicating through the edges. Operator level
+parallelism is already exposed by the shell, by using pipes \texttt{|}
+and the background operator \texttt{\&}. Unfortunately, simple
+operator level parallelism leaves a lot to be desired, since scaling a
+computation requires manually introducing more operators.
 
-The planner acts on the dataflow graph, by first expanding it ``as
-much as possible'' to expose parallelization opportunities. It uses
-knowledge about the inputs of each stateless and pure command.
+In order to adequately utilize the available computational resources,
+a distributed implementation should exploit data parallelism. Data
+parallelism is based on the observation that some operations produce
+the same result when performed independently on subsets of the input
+data, merging the results afterwards. Data level parallelism is the
+basic optimization that is used by popular distributed processing
+systems such as MapReduce\kk{cite} and Apache Spark\kk{cite}.
 
-\kk{Explain the algorithm and how it pushes parallelization through
-  the graph, while preserving correctness.}
+\subsection{Graph transformations}
 
-\kk{Give an example}
+In our case, this is achieved by iteratively applying graph
+transformations that preserve correctness, while exposing
+parallelization opportunities. We illustrate that with a motivating
+example; consider the following program and its dataflow graph.
 
-\kk{Can we have a semi-formal argument here?}
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+ grep ``foo'' f1 f2 // Add its graph
+\end{lstlisting}
 
-\kk{Explain how our graph transformations expose data parallelism as
-  operator level parallelism.}
-
-\kk{Different transformations to explain: Stateless, Pure, File
-  splits, XARGS. Mention as much as possible formally using the
-  definition of a node.}
-
-The following equation holds for any stateless command $f$.
+\noindent
+In this example, \texttt{grep} is applied to files f1 and f2, and its
+result is sent to standard output. However, the result would be the
+same if we concatenated the results of \texttt{grep ``foo'' f1} and
+\texttt{grep ``foo'' f2}. This intuition can be generalized to all
+stateless commands, as they are all essentially ``linear'' with
+respect to concatenation and the following equation holds.
 
 \[
-f(x.x') = f(x).f(x')
+\forall f, \mathrm{stateless}(f) \implies f(x.x') = f(x).f(x')
 \]
 
-This is the basis of all optimizations that the graph does, and allows
-for correct data parallelism.
+\kk{Complete this story with pure, after we have written the section
+  about command categories.}
+
+\subsection{Planner Algorithm}
+
+The \texttt{Dish} planner extends the transformations that were
+described above with edge splits in order to allow for the above
+transformations to be performed. More precisely, it splits input files
+and graph edges into several chunks so that they can be processed in
+parallel by the next levels.
+
+\kk{Explain the greedy algorithm that our planner performs. It splits
+  input files, and then pushes parallelization through the graph,
+  starting from the source nodes.}
+
+\kk{Maybe give an example}
+
 
 
 \subsection{Mapping operators to nodes}
+
+\kk{I think we should actually remove this completely.}
 
 Explain the simple algorithm that we used to minimize intra node
 communication, that tries to map contiguous parts of the graph to the
@@ -1125,6 +1168,10 @@ operator placement etc. that we can borrow from.
 
 
 \subsection{Just in time planning}
+
+\kk{This whole section for just in itme planning, is also relevant for
+  the front end. If the front end is executed just in time, it would
+  have more information, and maybe it could make a sound analysis.}
 
 Important point: Shell is extremely dynamic. Because of this, a
 distributor cannot decide how to distribute a subexpression
@@ -1142,7 +1189,7 @@ computation. Even better, we could be calling the shtepper just after
 having parsed the ast, and decide on maximal distributable subtrees as
 late as possible in the process. This would be awesome.
 
-\section{Implementation}
+\section{Evaluation}
 
 \kk{We should make sure to measure the time that it takes for the
   whole process to run (parsing, translating, optimizing, planning)
@@ -1162,6 +1209,9 @@ late as possible in the process. This would be awesome.
 
 \kk{We have to make sure that we repeat that the results are the same
   in all tests that we run. Corectness, blah blah ...}
+
+\kk{We should have at least some pipelines that have a bad pure
+  command in them.}
 
 \section{Limitations}
 
@@ -1193,6 +1243,8 @@ late as possible in the process. This would be awesome.
 \end{itemize}
 
 \section{Related Work}
+
+\kk{We need to cite DGSH}
 
 \begin{acks}
   % Dumping people so that we don't forget
