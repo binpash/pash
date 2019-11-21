@@ -19,7 +19,7 @@ def main():
     if (len(sys.argv) == 5):
         fan_out = int(sys.argv[4])
     else:
-        fan_out = 5
+        fan_out = 2
 
     with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)

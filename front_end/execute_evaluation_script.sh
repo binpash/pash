@@ -17,8 +17,8 @@ export $(cut -d= -f1 $env_file)
 
 echo "Sequential:"
 cat $seq_script | grep -v "rm -f" | grep -v "mkfifo"
-{ time /bin/bash $seq_script > /tmp/seq_output ; } 2> "${results}${experiment}_seq.time"
+{ time /bin/bash $seq_script > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
 
 echo "Distributed:"
 cat $distr_script | grep -v "rm -f" | grep -v "mkfifo"
-{ time /bin/bash $distr_script ; } 2> "${results}${experiment}_distr.time"
+{ time /bin/bash $distr_script ; } 2> >(tee "${results}${experiment}_distr.time" >&2)
