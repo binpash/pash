@@ -269,7 +269,7 @@ def parallelize_pure_sort(curr, graph, fileIdGen):
     old_options = curr.get_non_file_options()
     ## TODO: Implement a proper version of parallel sort -m, instead
     ## of using the parallel flag.
-    options = [string_to_argument("-m"), string_to_argument("--parallel={}".format(len(input_file_ids)))]
+    options = [string_to_argument("-m"), string_to_argument("--parallel={}".format(len(input_file_ids)))] + old_options
     # options = []
     options += [string_to_argument(fid.pipe_name()) for fid in new_output_file_ids]
     opt_indices = [("option", i) for i in range(len(options))]
