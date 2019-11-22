@@ -1053,15 +1053,15 @@ interface to specify how to distribute a pure command.
 
 In order to effectively apply optimizations and distribute a shell
 script, it first has to be translated to a manipulable
-representation. As mentioned in \ref{}, the two main abstractions of
-the shell, are files that contain data, and commands that communicate
-through these files. We propose a slight variation of the standard
-dataflow graph model, that is commonly found in stream processing
-systems, as the representation of a distributed shell computation. The
-main benefit of the dataflow graph model is that it clearly exposes
-task parallelism, as different nodes can be independent processing
-workers. In our case each node represents a command, and each edge
-represents a file.
+representation. As mentioned in \Cref{bg:pipelines}, the two main
+abstractions of the shell, are files that contain data, and commands
+that communicate through these files. We propose a slight variation of
+the standard dataflow graph model, that is commonly found in stream
+processing systems, as the representation of a distributed shell
+computation. The main benefit of the dataflow graph model is that it
+clearly exposes task parallelism, as different nodes can be
+independent processing workers. In our case each node represents a
+command, and each edge represents a file.
 
 \subsection{Graph Components}
 
@@ -1075,8 +1075,7 @@ monotonic, meaning that they cannot retract their output. More
 formally, $\forall f, x, y, f(x) = y$, then for any $x'$, there exists
 $y'$ such that $f(x.x') = y.y'$, where $.$ is standard concatenation
 and will be omitted when obvious. An example of a node is the
-following command \kk{Does it need ref? Also maybe this example is too
-  trivial and can be removed.}:
+following command:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
  grep ``foo''
@@ -1129,7 +1128,7 @@ between nodes in the graph, and as the input or output of the whole
 graph. Edges are represented as possibly unbounded streams of type
 $D*$. They could either refer to a specific named file in the file
 system, or just be FIFO pipes that used for interprocess communication
-\TODO{Are there any other file types, such as URLs, ...?}.
+%% \TODO{Are there any other file types, such as URLs, ...?}.
 
 \TODO{Show an example pipe and its graph}.
 
@@ -1138,9 +1137,9 @@ files that don't point to a resource can have an upper bound on the
 lines that they can tranfer. The following example illustrates why
 this is essential.
 
-\TODO{Add an example of a command that has two outputs and one goes to
-  one command, while another output goes to a different one. Maybe
-  only show the graph here and not the command itself.}
+\TODO{Add an example of a command that has two outputs, one of which
+  goes to one command, while another goes to a different
+  command. Maybe only show the graph here and not the command itself.}
 
 
 \tr{On the other hand, some forms of data parallelism can be exposed
@@ -1191,28 +1190,32 @@ very important consequence of this is that we can iteratively apply
 optimizations that expose data parallelism, or even revert them when
 the resulting dataflow graph is too wide. This flexibility enables
 unified reasoning and implementation of the unoptimized and optimized
-version of the dataflow graph. \kk{This is exciting, and maybe it
-  should be moved up (or rephrased in the introduction)}
+version of the dataflow graph. \kk{This is interesting, and should be
+  moved up (or rephrased in the introduction)}
 
 Before describing the different types of parallelization
-optimizations, we formalize our intuition about stateless and pure
-commands.
+optimizations, we formalize the intuition about stateless and pure
+commands that was described in \Cref{cmd}.
 \nv{TODOs
   (i) highlight earlier the antithesis between the formalisms in this section and the informalities of the previous (me);
   (ii) try to add a proof \emph{sketch} pointing to these formalisms (to show their value), and we can point to the TR for the longer proof.
 }
- Recall the example \ref{} from section Categories
-\ref{}. This example shows the stateless command x being applied to
-...\kk{Complete this after we have an example}. Formally, a commmand
-$f$ is stateless if it is ``linear'' with respect to concatenation,
-i.e. the following equation holds:
+%
+As mentioned there, stateless commands operate independently on
+individual elements of the stream (characters, lines, or files)
+without maintaining any state. Some examples include \ttt{grep},
+\ttt{basename}, and \ttt{tr}. Formally, a commmand $f$ is stateless if
+it is ``linear'' with respect to concatenation, i.e. the following
+equation holds:
 
 \[
 \forall x, x', f(x.x') = f(x).f(x')
 \]
 
-Similarly, every pure command $f$ that can be written as a map $m$ and a
-reduce $r$ step satisfies the following:
+Similarly, it was mentioned that some pure commands (such as
+\ttt{sort} and \ttt{wc}) can be parallelized using divide-and-conquer
+techniques. More formally, there pure commands $f$ can be implemented
+as a map $m$ and a reduce $r$ function, satisfying the following:
 
 \[
 \forall x, x', f(x.x') = r(m(x).m(x'))
