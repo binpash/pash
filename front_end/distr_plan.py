@@ -16,15 +16,15 @@ def main():
     output_dir = sys.argv[3]
 
     ## The 4th argument is an optional fan_out
-    if (len(sys.argv) == 5):
+    if (len(sys.argv) >= 5):
         fan_out = int(sys.argv[4])
     else:
         fan_out = 2
 
-    if (len(sys.argv) == 6):
+    if (len(sys.argv) >= 6):
         batch_size = int(sys.argv[5])
     else:
-        batch_size = 10000
+        batch_size = 100000
 
     with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
