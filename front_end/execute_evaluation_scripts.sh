@@ -16,8 +16,6 @@
 ./execute_compile_evaluation_script.sh "minimal_grep_100" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "minimal_grep_200" $distr_output_dir 1 0
 
-# ./execute_compile_evaluation_script.sh "spell_1" 
-
 ## This has to be tuned (fan-out and batch size)
 ./execute_compile_evaluation_script.sh "topn_2" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "topn_4" $distr_output_dir 1 0
@@ -39,3 +37,10 @@
 ./execute_compile_evaluation_script.sh "grep_20" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "grep_50" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "grep_100" $distr_output_dir 1 0
+
+./execute_compile_evaluation_script.sh "spell_2" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "spell_4" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "spell_10" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "spell_20" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "spell_50" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "spell_100" $distr_output_dir 1 0
