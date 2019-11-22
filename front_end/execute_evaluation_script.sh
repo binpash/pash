@@ -11,7 +11,7 @@ seq_script="${prefix}_seq.sh"
 distr_script="${prefix}_distr.sh"
 
 echo "Environment:"
-cat $env_file
+# cat $env_file
 . $env_file
 export $(cut -d= -f1 $env_file)
 
