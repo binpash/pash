@@ -1,1 +1,1 @@
-IN=../scripts/input/i10M.txt
+IN=../scripts/input/i100M.txt
