@@ -28,7 +28,7 @@ def format_arg_char(arg_char):
     elif (key == 'Q'):
         return '"{}"'.format(format_arg_chars(val))
     elif (key == 'V'):
-        return '${}'.format(val[2])
+        return '${{{}}}'.format(val[2])
     elif (key == 'E'):
         return '{}'.format(chr(val))
     else:
@@ -517,6 +517,8 @@ def find_command_category(command, options):
     stateless = ["cat", "tr", "grep", "col",
                  "groff", # not clear
                  "sed", # not always
+                 "cut",
+                 "gunzip", # file stateless
                  "xargs"] # I am not sure if all xargs are stateless
 
     pure = ["sort", "wc", "uniq"]
