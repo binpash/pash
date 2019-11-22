@@ -26,6 +26,7 @@
 \usepackage{wrapfig}
 \usepackage{syntax}
 
+
 \captionsetup[figure]{font=footnotesize,name={Fig.},labelfont={bf, footnotesize}}
 \captionsetup[table]{font=footnotesize,name={Tab.},labelfont={bf, footnotesize}, skip=2pt, aboveskip=2pt}
 \captionsetup{font=footnotesize,labelfont={bf, footnotesize}, belowskip=2pt}
@@ -721,7 +722,7 @@ In return, \sys uses this DSL to tag commands in the standard libraries and gene
 Broadly, shell commands can be split into five major classes (summarized in Tab.~\ref{tab:classes}) with respect to their distribution characteristics, depending on how they interact with state.
 These classes are ordered in ascending difficulty of distribution:
   later classes require more effort.
-In this order, each class can be thought as a subset of the next one---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (without seeing any performance improvements).
+In this order, each class can be thought as a subset \kk{I am not sure this holds for all classes. I would propose saying that some classes are subsets, e.g....} of the next one---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (without seeing any performance improvements).
 
 \begin{table}[t]
 \center
@@ -973,8 +974,8 @@ a file argument. An example record for comm can be seen below:
 The semantics of the language is straightforward: given a command, the
 interpreter collects its options and then returns the assignment of
 the first predicate that is satisfied. The final predicate is always
-satisfied. For example the following two invocations of comm would be
-classified as follows:
+satisfied. For example the following two invocations of \ttt{comm}
+would be classified as follows:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
  comm -13 f1 f2 # => (stateless, f2, stdout)
@@ -1021,12 +1022,22 @@ classified as follows:
   what do you think?}
 
 
-\paragraph{Pure Commands}
+\heading{Pure Commands}
+%
+Together with the commands in \sta, that are always easy to
+parallelize, there also exists a subclass of commands in \pur that can
+be parallelized by separating them into a map and a reduce
+operation. In order to allow command developers to extend \sys with
+information about how to parallelize new pure commands, \sys offers an
+interface to specify how to distribute a pure command.
 
-\TODO{Complete this, giving example of sort and wc}
+\TODO{I am not sure a general interface is so easy to design. It needs
+  more though. It might be beneficial to just talk about sort and wc
+  here and how we implemented them and nothing more. Or maybe this
+  could then go to the implementation? Or maybe say that one can write
+  a python function that given a node of the graph, transforms it into
+  many. I am not sure what is best...}
 
-Even though stateless commands are a big percentage of all of them,
-there are a lot of useful and popular pure commands.
 
 % As mentioned in distributability, pure commands can be broken down
 % into different categories. We might be able to get ideas about this
@@ -1131,13 +1142,15 @@ this is essential.
   one command, while another output goes to a different one. Maybe
   only show the graph here and not the command itself.}
 
-On the other hand, some forms of data parallelism can be exposed when
-knowing the size of the input files. As mentioned in \ref{} some pure
-commands (such as cat -n) only need line information to become
-stateless, and knowing the size of a file could allow the system to
-split it in different chunks that can be processed independently. To
-account for that, edges that refer to an input resource contain the
-number of lines of the file that they refer to.
+
+\tr{On the other hand, some forms of data parallelism can be exposed
+  when knowing the size of the input files. As mentioned in \ref{}
+  some pure commands (such as cat -n) only need line information to
+  become stateless, and knowing the size of a file could allow the
+  system to split it in different chunks that can be processed
+  independently. To account for that, edges that refer to an input
+  resource contain the number of lines of the file that they refer
+  to.}
 
 Finally, the edges that don't refer to a resource and do not start
 from a node in the graph represent the graph input, while the edges
@@ -1556,6 +1569,72 @@ Generally, no special configuration was made in hardware or software beyond disa
 More detailed setup and experiments, including the scripts, is included in the accompanying (anonymized) online repository.
 
 \subsection{Microbenchmarks: Shell One-liners}
+
+\begin{figure*}[t]
+    \centering
+    %% \subcaptionbox{\label{eval:minimal_grep}}{
+    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
+    %% }
+    %% \subcaptionbox{\label{eval:grep}}{
+    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/grep_throughput_scaleup.pdf}}
+    %% }
+    %% \subcaptionbox{\label{eval:minimal_sort}}{
+    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_sort_throughput_scaleup.pdf}}
+    %% }
+    %% \subcaptionbox{\label{eval:topn}}{
+    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/topn_throughput_scaleup.pdf}}
+    %% }
+    %% \subcaptionbox{\label{eval:wf}}{
+    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/wf_throughput_scaleup.pdf}}
+    %% }
+    %% \subcaptionbox{\label{eval:spell}}{
+    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
+    %% }
+    %% \caption{a}
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
+        %% \caption{TODO}
+        %% \label{eval:minimal_grep}
+    \end{subfigure}%
+    ~
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{\detokenize{./figs/grep_throughput_scaleup.pdf}}
+        %% \caption{TODO}
+        %% \label{eval:grep}
+    \end{subfigure}%
+    ~
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{\detokenize{./figs/minimal_sort_throughput_scaleup.pdf}}
+        %% \caption{TODO}
+        %% \label{eval:minimal_sort}
+    \end{subfigure}%
+
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{\detokenize{./figs/topn_throughput_scaleup.pdf}}
+        %% \caption{TODO}
+        %% \label{eval:topn}
+    \end{subfigure}%
+    ~
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{\detokenize{./figs/wf_throughput_scaleup.pdf}}
+        %% \caption{TODO}
+        %% \label{eval:wf}
+    \end{subfigure}%
+    ~
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
+        %% \caption{TODO}
+        %% \label{eval:spell}
+    \end{subfigure}%
+    \caption{todo}
+    \label{fig:microbenchmarks}
+\end{figure*}
 
 \subsection{Macro-benchmark: Weather Analysis}
 
