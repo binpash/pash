@@ -257,16 +257,16 @@
   Distributed systems offer notable benefits over centralized ones.
   Reaping these benefits, however, requires programming in a way that makes distribution explicit---\eg via new programming languages, distributed frameworks, or source-level annotations.
   This paper presents \sys, a shell variant that automatically and correctly scales out distribution-oblivious shell pipelines. 
-  \sys's insight is that shell pipelines already express stream computations that can be automatically distributed.
-  To achieve this, \sys
-decomposes primitives into distributability classes,
-identifies high-distributability stages,
-applies rewriting rules for largest possible subprograms,
-and orchestrates the distributed program.
-Its runtime component provides orchestration and planning support during the execution of the program.
+  Its insight is that pipelines already express stream computations that can be automatically distributed.
+  To distribute them, \sys
+    decomposes primitives into distributability classes,
+    identifies high-distributability stages,
+    applies rewriting rules for largest possible subprograms,
+    and orchestrates the execution of the distributed program.
 Experiments for complex pipelines show substantial speedups and the ability to operate on large input datasets, all without any developer input.
 \end{abstract}
 
+% Its runtime component provides orchestration and planning support during the execution of the program.
 % These are from the abstract:
 %  with regards to the sequential program.
   % leveraging the insight that such programs already express stream computations, with their stages falling under a few, known distributability classes.
