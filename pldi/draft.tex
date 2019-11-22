@@ -67,6 +67,7 @@
 \newcommand{\nv}[1]{[{\color{cyan}#1 --- Nikos}]}
 \newcommand{\kk}[1]{[{\color{magenta}#1 --- kk}]}
 \newcommand{\review}[1]{{\color{red}#1}}
+\newcommand{\tr}[1]{} %% Text and comments for technical report
 
 \definecolor{editorGray}{rgb}{0.95, 0.95, 0.95}
 \definecolor{editorOcher}{rgb}{1, 0.5, 0} % #FF7F00 -> rgb(239, 169, 0)
@@ -618,7 +619,7 @@ Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn 
 \includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_overview.pdf}}
 \caption{
   \textbf{\sys transformation overview.}
-	\sys XYZ
+	\sys XYZ \todo{This is slightly cropped?}
 }
 \label{fig:overview}
 \end{figure}
@@ -785,81 +786,192 @@ Even if \sid commands are protected with transactions
 Finally, some commands have side-effects outside \sys---for example, by printing a file with \ttt{lpr} or restarting with \ttt{reboot}.
 Such commands are not distributable---they have to refer to a single location---and have to be guarded with pessimistic transaction control mechanism.
 
-\section{Extensibility}
+\subsection{Extensibility}
 \label{ext}
 
-Here is the type for \ttt{bwa}, a command that performs a Burrows-Wheeler transform over genomic data:
-% ( bwa ) :: ( Pure )  => { In \/ File* } -> { Out /\ Err }    -- default case
-%    | -h :: ( Sless ) => { Out }                              -- if needed
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-(bwa) :: (Pure) ($$\Rightarrow$$){In($$\lor$$)File*}($$\rightarrow$$){Out($$\land$$)Err}
-  |-h :: (Sless)($$\Rightarrow$$){Out}                              
-\end{lstlisting}
+%% Here is the type for \ttt{bwa}, a command that performs a Burrows-Wheeler transform over genomic data:
+%% % ( bwa ) :: ( Pure )  => { In \/ File* } -> { Out /\ Err }    -- default case
+%% %    | -h :: ( Sless ) => { Out }                              -- if needed
+%% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+%% (bwa) :: (Pure) ($$\Rightarrow$$){In($$\lor$$)File*}($$\rightarrow$$){Out($$\land$$)Err}
+%%   |-h :: (Sless)($$\Rightarrow$$){Out}                              
+%% \end{lstlisting}
 
-It states that the command defaults to the Pure class.
-It's operation can be thought as a transformation from input streams to output streams.
-It operates either on stdin or, if this doesn't exist, one or more files specified as arguments;
-% TODO: check actual man page for how to specify files
-  it writes to the output and error stream rather than a file.
-The \ttt{-h} flag moves \ttt{bwa} into the Stateless class;
-  its output is a constant function.
+%% It states that the command defaults to the Pure class.
+%% It's operation can be thought as a transformation from input streams to output streams.
+%% It operates either on stdin or, if this doesn't exist, one or more files specified as arguments;
+%% % TODO: check actual man page for how to specify files
+%%   it writes to the output and error stream rather than a file.
+%% The \ttt{-h} flag moves \ttt{bwa} into the Stateless class;
+%%   its output is a constant function.
 
+One of the major characteristics of the shell is its extensibility, as
+also mentioned in \Cref{bg}. Existing commands are modified and
+extended over time and users are free to install custom commands from
+a wide variety of sources.
+%% \kk{Text point: This restricts the space of solutions for
+%%   distribution of shell scripts}
+This means that any one-time solution for categorizing shell commands
+is not satisfactory, since it would very quickly become obsolete,
+being able to support a very limited amount of shell scripts.
 
-ULTRA DRAFTY:
-
-\kk{Text point: A problem that is specific to the shell is
-  extensibility.}
-
-The major characteristic that makes the shell popular and very useful
-is its extensibility, as also mentioned in \Cref{bg}. Commands change,
-get extended, and each user continuously installs more commands to use
-in their system.
-
-\kk{Text point: This restricts the space of solutions for distribution
-  of shell scripts}
-
-This means that any one-time solution is not satisfactory, since it
-would very easily become obsolete, or it would only handle a limited
-amount of shell scripts.
-
-\kk{Text point: The characteristics of a good solution}
+%% \kk{Text point: The characteristics of a good solution}
 
 A solution that applies to shell programms should thus be extensible,
 in the sense that adding or changing a command, doesn't invalidate the
-assumptions that the tool makes. In our case, the information about
-the command categories. A developer of a new command, should be able
-to categorize it accordingly, and succinctly describe how the system
-can distribute a command.
+existing information on command categories. A developer of a new
+command, should be able to categorize it accordingly, and succinctly
+express the information that the system needs in order to distribute
+it.
 
-\kk{Solution: A lightweight language that can be used by a command
-  developer to categorize it for distribution.}
+%% \kk{Solution: A lightweight language that can be used by a command
+%%   developer to categorize it for distribution.}
+
+\TODO{Make sure that before this point, we mention that our notion of
+  command has one input and one output. Concretely: the abstract
+  notion of a program that we have is programs with one input and one
+  output stream. The command developer must be able to express the
+  input argument of a commmand (or if it is the stdin).  }
 
 We address this issue by designing a lightweight language whose
-purpose is to categorize a command, describes how it reads its input
-(meaning in what order), and how to distribute it (in case it is
-pure).
+purpose is to categorize a command and describe the sequence of
+sources from which it reads its input.
 
-%% \kk{I am not sure if the order in which a command reads its
-%%   input will be part of the language since many commands can be made
-%%   to read from one place (like stdin or their first argument). Even in
-%%   that case though, where the command only reads from one argument, we
-%%   have to make sure that there is a way for the user to pinpoint which
-%%   argument does a command read from.}
+%% \subsection{Categorization Language}
 
-\subsection{Categorization Language}
+%% \kk{Text point: Introduce problem: Most shell commands, belong to
+%%   different classes depending on their flags, arguments}
 
-\kk{Text point: Introduce problem: Most shell commands, belong to
-  different classes depending on their flags, arguments}
+\TODO{Mention the point of these two paragraphs in the intro?}
 
-Consider the command \ttt{cat} \kk{Maybe that is not he best
-  example. TODO: Find a good example of a simple command that is in
-  different classes depending on the arguments.}. When used without
-any flag it is stateless, etc...
+Consider the command \ttt{comm}. It takes as input two files and
+implements some form of join. When invoked without any option, it
+produces three-column output. The first column contains lines that
+unique to the first file, the second column contains lines that are
+unique to the second file, and the last column contains lines that
+exist in both files. In the general case \ttt{comm} is pure, since it
+needs to wait until it reads both files completely before it can
+output its results.
 
-\kk{Text point: Our language must be able to categorize commands to
-  different classes according to their arguments.}
+However, \ttt{comm} can also be invoked using some options that
+supress the output of any combination of columns. More precisely, the
+option \ttt{-1} suppresses the first column of the output. Similarly,
+\ttt{-2} and \ttt{-3} supress the second and third column. Using both
+\ttt{-2} (or \ttt{-1}) and \ttt{-3}, the command becomes stateless
+regarding its first (resp. the second) file argument.
 
-\kk{We should have a crisp point about why we have this categorization
+In order to address this, we have designed a categorization language
+that is flexible enough to identify commands to different categories
+given their options. The complete language syntax can be seen in
+\Cref{fig:dsl}.
+
+%% Can be tweaked according to this:
+%% https://tex.stackexchange.com/questions/24886/which-package-can-be-used-to-write-bnf-grammars
+
+\begin{figure}
+  \centering
+  \begin{grammar}
+    <option> ::= `-' <string>
+
+    <category> ::= `stateless' | `pure' | ...
+
+    <maybe-int> ::= | <int>
+
+    <arg> ::= `args[' <int> `]'
+
+    <args> ::= <arg>
+    \alt `args[' <maybe-int> `:' <maybe-int> `]'
+
+    <input> ::= `stdin' | <args>
+
+    <inputs> ::= <input>
+    \alt <input> `,' <inputs>
+
+    <output> ::= `stdout' | <arg>
+
+    <option-pred> ::= <option>
+    \alt `value' <option> = <string>
+    \alt `not' <option-pred>
+    \alt <option-pred> `or' <option-pred>
+    \alt <option-pred> `and' <option-pred>
+
+    <assignment> ::= `(' <category>, `[' <inputs> `]' , <output> `)'
+
+    <predicate> ::= <option-pred> `=>' <assignment>
+
+    <pred-list> ::= `|' <predicate> <pred-list>
+    \alt `|' `otherwise' `=>' <assignment>
+
+    <command> ::= <name> `\{' <pred-list> `\}'
+
+    <command-list> ::= <command>
+    \alt <command> <command-list>
+  \end{grammar}
+  \caption{\todo{Categorization language}}
+  \label{fig:dsl}
+\end{figure}
+
+
+We assume that the arguments of a command can always be separated to
+options and file arguments (checking if they start with a
+\ttt{-}~\footnote{Note that the single character \ttt{-} is not an
+  option as it is most often used to designate that a command reads
+  from its standard input}). A file written in the language contains a
+record containing a mapping from predicates to assignments for each
+command. Predicates can be simple boolean formulas on the existence
+and the value of all options. Each assignment contains the command
+category, the sequence of its input sources, and its output
+source. Inputs to commands are a sequence of file arguments and its
+standard input. Similarly, the output is either its standard output or
+a file argument. An example record for comm can be seen below:
+
+\begin{lstlisting}[float=h, numbers=none]
+  comm {
+    | -1 and -3 =>
+      (stateless, [args[1]], stdout)
+    | -2 and -3 =>
+      (stateless, [args[0]], stdout)
+    | otherwise =>
+      (pure, [args[0]], stdout)
+  }
+\end{lstlisting}
+
+The semantics of the language is straightforward: given a command, the
+interpreter collects its options and then returns the assignment of
+the first predicate that is satisfied. The final predicate is always
+satisfied. For example the following two invocations of comm would be
+classified as follows:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+ comm -13 f1 f2 # => (stateless, f2, stdout)
+ comm f1 f2     # => (pure, f1, stdout)
+\end{lstlisting}
+
+
+
+\tr{We don't need to designate the stderror, because we assume that it
+  is never the main output of a command and it will never be used by
+  the input of another command in the pipeline. If someone indeed
+  wants to do this, they can just use a redirect I think to get around
+  it.}
+
+
+\tr{If we talk about the language it would be good to give some
+  statistics about how many commands (out of the ones that we have
+  classified) can be represented with one, two clauses etc. If we have
+  a different solution (like python function that given a command and
+  its arguments returns the category) then we could talk about how
+  many lines of code it took to categorize all the commands that we
+  did.}
+
+
+\tr{Note: Since a categorization language will probably not be
+  complete (especially the one showing the input arguments) there
+  should be a backup mechanism, when the language is not expressive
+  enough, like a python function that categorizes the command, and
+  returns its input argument if it is stateless.}
+
+\tr{(Maybe) We should have a crisp point about why we have this categorization
   language, and why don't we just allow someone to write a function in
   python for each command, that given the command and its arguments,
   returns whether the command category. Possible arguments include,
@@ -874,91 +986,10 @@ any flag it is stateless, etc...
   limited. All of these arguments are a little bit weak though. Niko,
   what do you think?}
 
-\kk{New sketch of the language}
 
-We assume that commands satisfy the standard that options and flags
-come first, and then file arguments. The language contains a record
-for each command name, together with a sequence of predicates that map
-to command categories and designation of input output.
+\paragraph{Pure Commands}
 
-A record contains a sequence of predicates => categories. Each
-predicate is a combination of not, or, and and the atomic predicates
-are the presence of a flag, or an equality that checks that the value
-of a flag is equal to something (because flags can also have
-values). The final predicate can be left empty, and it is trivially true.
-
-Pythonic range for several inputs/outputs
-
-%% Can be tweaked according to this:
-%% https://tex.stackexchange.com/questions/24886/which-package-can-be-used-to-write-bnf-grammars
-
-\begin{grammar}
-  <flag> ::= `-' <string>
-
-  <category> ::= `stateless' | `pure' | ...
-
-  <arg> ::= `arg[' <int> `]'
-
-  <input> ::= `stdin' | <arg>
-
-  <output> ::= `stdout' | <arg>
-
-  <flag-pred> ::= <flag>
-  \alt `value' <flag> = <string>
-  \alt `!' <flag-pred>
-  \alt <flag-pred> `or' <flag-pred>
-  \alt <flag-pred> `and' <flag-pred>
-
-  <assignment> ::= `(' <category>, <input>, <output> `)'
-
-  <predicate> ::= <flag-pred> `=>' <assignment>
-
-  <pred-list> ::= `|' <predicate> <pred-list>
-  \alt `|' `otherwise' `=>' <assignment>
-
-  <command> ::= <name> `:' <pred-list>
-
-\end{grammar}
-
-\kk{We don't need to designate the stderror, because we assume that it
-  is never the main output of a command and it will never be used by
-  the input of another command in the pipeline. If someone indeed
-  wants to do this, they can just use a redirect I think to get around
-  it.}
-
-\kk{Give an example of a flag that has value and how this could alter
-  category or input etc...}
-
-
-
-
-Interpreter:
-
-Given a command and the set of its arguments, the intepreter returns
-the command category. In does so by returning the category of the first
-predicate that matches.
-
-\kk{If we talk about the language it would be good to give some
-  statistics about how many commands (out of the ones that we have
-  classified) can be represented with one, two clauses etc. If we have
-  a different solution (like python function that given a command and
-  its arguments returns the category) then we could talk about how
-  many lines of code it took to categorize all the commands that we
-  did.}
-
-As described in distributability\ref{}, the abstract notion of a
-program that we have is programs with one input and one output
-stream. The command developer must be able to express the input
-argument of a commmand (or if it is the stdin).
-
-
-\kk{Note: Since a categorization language will probably not be
-  complete (especially the one showing the input arguments) there
-  should be a backup mechanism, when the language is not expressive
-  enough, like a python function that categorizes the command, and
-  returns its input argument if it is stateless.}
-
-\subsection{Pure Commands}
+\TODO{Complete this, giving example of sort and wc}
 
 Even though stateless commands are a big percentage of all of them,
 there are a lot of useful and popular pure commands.
@@ -969,13 +1000,7 @@ from this paper:
 \url{http://www.cs.toronto.edu/~azadeh/papers/pldi17-ex.pdf} and its
 continuation in PLDI 2019.
 
-\kk{Can we find a solution for the commands in coreutils?}
-
-\kk{Important TODO: Find at least one more command that can be
-  executed like sort. Does wc work? If there is no pure command that
-  can be easily parallelized other than sort, this story is not very
-  nice.}
-
+\tr{Can we find a solution for the commands in coreutils?}
 
 
 \section{Dataflow Graph Model}
@@ -1510,6 +1535,10 @@ More detailed setup and experiments, including the scripts, is included in the a
   unified representation, and doesn't lead to an ad-hoc optimization
   of the dataflow graph as done in the other systems (the last bit is
   too aggressive). }
+
+\TODO{We have to also cite the paper by Konstantinos, Caleb, Rajeev,
+  etc since they also try to do semantics preserving optimizations on
+  dataflow graphs}
 
 At a high-level, techniques for automatically distributing fall under a spectrum that ranges from fully automated (but potentially sub-optimal) distribution to fully manual (but, ideally, optimal) distribution (Fig.~\ref{fig:spectrum}).
 
