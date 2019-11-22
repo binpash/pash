@@ -18,8 +18,10 @@ def execute(graph_json, output_dir):
 
     output_script_commands = []
 
+    shared_memory_dir = '/dev/shm/dish'
     ## Make the output directory if it doesn't exist
     output_script_commands.append('mkdir -p {}'.format(output_dir))
+    output_script_commands.append('mkdir -p {}'.format(shared_memory_dir))
 
     ## Setup pipes
     for fid in fids:
@@ -30,7 +32,7 @@ def execute(graph_json, output_dir):
         output_script_commands.append(mkfifo_com)
 
     ## Execute nodes
-    processes = [execute_node(node, env) for node_id, node in nodes.items()]
+    processes = [execute_node(node, env, shared_memory_dir) for node_id, node in nodes.items()]
     output_script_commands += processes
 
     ## Collect outputs
@@ -53,13 +55,15 @@ def execute(graph_json, output_dir):
     #     ret = proc.wait()
     #     if(not ret == 0):
     #         print("-- Error!", proc, ret)
-    output_script_commands.append('for job in `jobs -p` \ndo \n echo $job\n wait $job \ndone')
+    # output_script_commands.append('for job in `jobs -p` \ndo \n echo $job\n wait $job \ndone')
+    output_script_commands.append('wait')
     ## Kill pipes
     for fid in fids:
         # print(fid)
         rm_com = remove_fifo_if_exists(fid)
         output_script_commands.append(rm_com)
 
+    output_script_commands.append('rm -rf "{}"'.format(shared_memory_dir))
     end_time = time.time()
 
     # print("Distributed translation execution time:", end_time - start_time)
@@ -78,16 +82,16 @@ def make_fifo(pipe):
     # os.mkfifo(pipe)
     return 'mkfifo "{}"'.format(pipe)
 
-def execute_node(node, env):
+def execute_node(node, env, shared_memory_dir):
     # print(node)
-    script = node_to_script(node)
+    script = node_to_script(node, shared_memory_dir)
     # print("{} &".format(script))
     # p = subprocess.Popen(script, shell=True,
     #                      executable="/bin/bash", env=env)
     # return p
     return "{} &".format(script)
 
-def node_to_script(node):
+def node_to_script(node, shared_memory_dir):
     # print(node)
 
     inputs = node["in"]
@@ -100,17 +104,13 @@ def node_to_script(node):
        command.split(" ")[0] == "split_file"):
         assert(len(inputs) == 1)
         batch_size = command.split(" ")[1]
-        script.append('{')
-        script.append('head -n {}'.format(batch_size))
-        script.append('"{}"'.format(inputs[0]))
-        script.append(">")
-        script.append('"{}"'.format(outputs[0]))
-        script.append(";")
-        script.append("cat")
-        script.append('"{}"'.format(inputs[0]))
-        script.append(">")
-        script.append('"{}"'.format(outputs[1]))
-        script.append('; }')
+        if (len(inputs) > 0):
+            script.append("cat")
+            for fid in inputs:
+                script.append('"{}"'.format(fid))
+            script.append("|")
+        script += new_split(outputs, batch_size, shared_memory_dir)
+        # script += old_split(inputs, outputs, batch_size)
         # print(script)
         # print(node)
     else:
@@ -131,3 +131,35 @@ def node_to_script(node):
 
         # print("Script:", script)
     return " ".join(script)
+
+def new_split(outputs, batch_size, shared_memory_dir):
+    script = []
+    shared_mem_file = '"{}/{}"'.format(shared_memory_dir, outputs[0])
+    script.append('tee >(')
+    script.append('head -n {}'.format(batch_size))
+    script.append('> {};'.format(shared_mem_file))
+    # script.append('dd of="{}" > /dev/null 2>&1'.format(outputs[1]))
+    script.append('dd of=/dev/null > /dev/null 2>&1 & cat {} > "{}")'.format(shared_mem_file, outputs[0]))
+    script.append('| (tail -n +{}'.format(int(batch_size)+1))
+    script.append('> "{}";'.format(outputs[1]))
+    script.append('dd of=/dev/null > /dev/null 2>&1)')
+    # script.append('"{}"'.format(outputs[1]))
+    # script.append('; }')
+    return script
+
+
+
+def old_split(inputs, outputs, batch_size):
+    script = []
+    script.append('{')
+    script.append('head -n {}'.format(batch_size))
+    script.append('"{}"'.format(inputs[0]))
+    script.append(">")
+    script.append('"{}"'.format(outputs[0]))
+    script.append(";")
+    script.append("cat")
+    script.append('"{}"'.format(inputs[0]))
+    script.append(">")
+    script.append('"{}"'.format(outputs[1]))
+    script.append('; }')
+    return script
