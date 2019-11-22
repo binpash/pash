@@ -253,28 +253,28 @@
 %% Note: \begin{abstract}...\end{abstract} environment must come
 %% before \maketitle command
 \begin{abstract}
-  \nv{placeholder}
   Distributed systems offer notable benefits over centralized ones.
-  Reaping these benefits, however, requires programming in a way that makes distribution explicit---\eg via new programming languages, distributed framework interfaces, or distribution annotations.
-% 
-%   \emph{Distribution-oblivious programming} is a new approach for..?
-  This paper presents \sys, a shell variant that automatically and correctly scales out distribution-oblivious shell pipelines. %  with regards to the sequential program.
-  % leveraging the insight that such programs already express stream computations, with their stages falling under a few, known distributability classes.
-  \sys's insight is that shell pipelines already express stream computations that can automatically distributed.
+  Reaping these benefits, however, requires programming in a way that makes distribution explicit---\eg via new programming languages, distributed frameworks, or source-level annotations.
+  This paper presents \sys, a shell variant that automatically and correctly scales out distribution-oblivious shell pipelines. 
+  \sys's insight is that shell pipelines already express stream computations that can be automatically distributed.
   To achieve this, \sys
-% a series of techniques for automatically 
 decomposes primitives into distributability classes,
 identifies high-distributability stages,
 applies rewriting rules for largest possible subprograms,
 and orchestrates the distributed program.
 Its runtime component provides orchestration and planning support during the execution of the program.
+Experiments for complex pipelines show substantial speedups and the ability to operate on large input datasets, all without any developer input.
+\end{abstract}
+
+% These are from the abstract:
+%  with regards to the sequential program.
+  % leveraging the insight that such programs already express stream computations, with their stages falling under a few, known distributability classes.
+% a series of techniques for automatically 
 % 
 % Key challenges include 
 % surprisingly expressive, 
 % maximally distributable subprograms
 % 
-Experiments for complex pipelines show substantial speedups and the ability to operate on large input datasets, all without any developer input.
-\end{abstract}
 
 
 %% 2012 ACM Computing Classification System (CSS) concepts
@@ -468,6 +468,8 @@ Sections \ref{classes}--\ref{recipes} highlight key contributions:\footnote{
 \noindent
 \sys's evaluation~\sx{eval} shows significant speedups on both parallel and distributed execution, using a combination of micro-bench\-marks---popular shell one-liners that highlight certain features---and multi-line macro-benchmarks---a web crawling and indexing engine, a genomics pipeline, and a popular weather analysis script.
 After a comparison with related prior work~\sx{related}, the paper closes with a discussion of related work and possible future directions~\sx{discussion}.
+
+% Additional material, in anonymized form, is available at~\href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.
 
 % \begin{figure*}[t]
 % \centering
@@ -777,20 +779,6 @@ Even if \sid commands are protected with transactions
 these benefits are even greater for read-only or read-mostly accesses.
 
 \heading{Irreversibly Side-effectful Commands}
-
-\subsection{The Shell Language}
-\label{bg:shell}
-
-\heading{Implicits}
-Expansion
-Implicits
-Context
-
-\heading{Language Constructs}
-
-Even without these, the Unix pipeline language is powerful enough to capture complex pipelines.
-
-We can encode powerful
 
 \section{Extensibility}
 \label{ext}
