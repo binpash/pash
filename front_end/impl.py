@@ -20,6 +20,7 @@ def execute(graph_json, output_dir):
 
     shared_memory_dir = '/dev/shm/dish'
     ## Make the output directory if it doesn't exist
+    output_script_commands.append('rm -rf {}'.format(output_dir))
     output_script_commands.append('mkdir -p {}'.format(output_dir))
     output_script_commands.append('mkdir -p {}'.format(shared_memory_dir))
 
