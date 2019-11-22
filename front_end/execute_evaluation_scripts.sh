@@ -32,3 +32,10 @@
 ./execute_compile_evaluation_script.sh "wf_20" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "wf_50" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "wf_100" $distr_output_dir 1 0
+
+./execute_compile_evaluation_script.sh "grep_2" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "grep_4" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "grep_10" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "grep_20" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "grep_50" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "grep_100" $distr_output_dir 1 0
