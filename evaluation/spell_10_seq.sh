@@ -1,4 +1,4 @@
-cat $IN                     |  # other tricks
+cat $IN $IN $IN $IN $IN $IN $IN $IN $IN $IN                   |  # other tricks
 # groff -t -e -mandoc -Tascii |  # remove formatting commands
 col -bx |                      # remove backspaces / linefeeds
 tr -cs A-Za-z '\n' |
