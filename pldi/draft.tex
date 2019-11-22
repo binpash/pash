@@ -1558,25 +1558,6 @@ More detailed setup and experiments, including the scripts, is included in the a
 \section{Related Work}
 \label{related}
 
-\kk{On our dataflow graph model: Our data flow graph model is
-  different than most distributed batch and stream processing systems,
-  since the shell is a hybrid between the two. Batch processing
-  systems have no notion of data order, and stream processing systems
-  usually have order, but none of these systems supports this notion
-  of reading from different sources in sequence. Our dataflow graph
-  model supports this by including information about incoming edge
-  order. Another benefit of our dataflow model, is that together with
-  the equations that hold on stateless and pure commands, data
-  parallelism is exposed in the graph as task parallelism. This allows
-  the unoptimized and optimized dataflow graph to have the same
-  unified representation, and doesn't lead to an ad-hoc optimization
-  of the dataflow graph as done in the other systems (the last bit is
-  too aggressive). }
-
-\TODO{We have to also cite the paper by Konstantinos, Caleb, Rajeev,
-  etc since they also try to do semantics preserving optimizations on
-  dataflow graphs}
-
 At a high-level, techniques for automatically distributing fall under a spectrum that ranges from fully automated (but potentially sub-optimal) distribution to fully manual (but, ideally, optimal) distribution (Fig.~\ref{fig:spectrum}).
 
 \begin{figure}[t]
@@ -1603,10 +1584,20 @@ Distributed operating systems~\cite{rashid1981accent, walker1983locus, ousterhou
 % simplify many of the problems of distribution and
 provide a significant amount of automation. % but require development in a new system or language.  While they take care of all the distribution minutiae, 
 However, they involve significant manual effort using the provided abstractions, which are strongly coupled with the underlying operating or runtime system.
-\TODO{This has to be broken down into systems and PLs, coz systems are the most relevant/important class.}
+% TODO: \TODO{This has to be broken down into systems and PLs, coz systems are the most relevant/important class.}
 
 \heading{Annotation-based Distribution}
-Ignis and Mozart
+Recent systems for light-touch distribution, Ignis~\cite{ignis:19} and Mozart~\cite{mozart:19}, give developers the ability to express through annotations;
+
+Both work on high-level, managed languages---server-side JavaScript for Ignis and Python for Mozart---that allow runtime transformations without affecting the broader environment under which a program executes.
+This is different 
+
+Annotations are used by ---complicated by the use of third-party libraries similar to \sys's extensions.
+\sys is designed to be used, so it is somewhat more heavy-weight than Ignis' declarative recipes or Mozart's split annotations, but geared toward the deveopers of these components---not the users composing them.
+As such..
+Their annotations language is not as principled as \sys's---and one that is critical in ensuring that the dataflow analyses preserves the semantics expected by the developer
+The side-effects present in the shell dwarf those of functional languages
+The shell is also more general.
 
 \heading{DSLs for Distribution}
 At the other end of the spectrum, distributed computing frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13, jetstream:14} \kk{JetStream has a very different focus} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp, psync:16, dartagnan:18}
@@ -1622,9 +1613,50 @@ Moreover, the insights behind these attempts are significantly different from ou
 %Despite significant progress~\cite{}, it remains due to its need for complex program analysis and the unknown factors (such as input data range) during compilation.
 
 \heading{Concurrent and Distributed Shells}
-Among other work, the Smoosh authors have argued that certain features of the shell are useful for concurrency~\cite{smoosh:18}.
-However, their work is 
+\nv{NV}
+Among other work, the Smoosh authors have argued that certain features of the shell are useful for concurrency~\cite{smoosh:18};
+Their work does not automatically parallelize pipelines, but rather argues that the shell language is itself an good DSL for concurrency;
+This argument is different from \sys, 
+an argument complementary to \sys's which automatically (and correcctly) parallelizes pipelines even when developers have---hence distribution-\emph{oblivious} shell scripting.
+
+Several shells add support for non-linear pipe topologies;
+  this 
+2dsh~\cite{}
+rc~\cite{}
+gsh~\cite{}
 dgsh~\cite{dagsh:17}.
+
+Commands for explicitly specifying parallelism such \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}, or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
+These commands require the user to express the program explicitely, work only with embarrasingly parallel (and short) programs;
+  \sys and scales out to large pipelines
+Often, these commands provide options to support very special cases\footnote{
+---a stark contradiction to the celebrated \unix philosophy.
+For example, \tti{parallel}, an official GNU project, flags such as \ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs}, that a \unix user would achieve with \ttt{head}, \ttt{sed}, and \ttt{xargs}; it also includes other programs that 
+with complex semantics, such as the ability transfer files between computers, separate text files, and parse CSV.
+
+
+\heading{Dataflow Graph Model}
+
+\nv{needs KM}
+On our dataflow graph model: Our data flow graph model is
+  different than most distributed batch and stream processing systems,
+  since the shell is a hybrid between the two. Batch processing
+  systems have no notion of data order, and stream processing systems
+  usually have order, but none of these systems supports this notion
+  of reading from different sources in sequence. Our dataflow graph
+  model supports this by including information about incoming edge
+  order. Another benefit of our dataflow model, is that together with
+  the equations that hold on stateless and pure commands, data
+  parallelism is exposed in the graph as task parallelism. This allows
+  the unoptimized and optimized dataflow graph to have the same
+  unified representation, and doesn't lead to an ad-hoc optimization
+  of the dataflow graph as done in the other systems (the last bit is
+  too aggressive).
+
+\TODO{We have to also cite the paper by Konstantinos, Caleb, Rajeev,
+  etc since they also try to do semantics preserving optimizations on
+  dataflow graphs}
+
 
 \section{Discussion}
 \label{discussion}
