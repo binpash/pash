@@ -1557,7 +1557,54 @@ More detailed setup and experiments, including the scripts, is included in the a
 
 \subsection{Microbenchmarks: Shell One-liners}
 
+\begin{table}[t]
+\center
+\footnotesize
+% \setlength\tabcolsep{3pt}
+\caption{
+  \footnotesize{
+    \textbf{Summary of Micro-benchmarks}.
+    Six micro-benchmarks used to evaluate \sys.
+  }
+}
+\begin{tabular*}{\columnwidth}{l @{\extracolsep{\fill}} lll}
+\toprule
+  Script                 ~&~ Structure                  & Input Size    & Seq.  Time \\
+\midrule
+  \tti{min-grep}         ~&~$2\times$\tsta              &               &            \\
+  \tti{min-sort}         ~&~~\tpur                      &               &            \\
+  \tti{top-n}            ~&~~\tpur                      &               &            \\
+  \tti{wf}               ~&~~\tpur                      &               &            \\
+  \tti{spell}            ~&~~\tpur                      &               &            \\
+  \tti{diff}             ~&~~\tpur                      &               &            \\
+\bottomrule
+\end{tabular*}
+\label{tab:eval}
+\end{table}
+
+
+We first apply \sys onto a collection of micro-benchmarks 
+
+The first benchmarks runs a grep over a series of complex, DFA
+(Fig.~\cite{})
+
 \subsection{Macro-benchmark: Weather Analysis}
+
+For \sys's first macro-benchmark, we use we
+from introductory chapter of Hadoop Definitive Guide~\cite[Chapter 2]{hadoop:15}
+This example is used as a data analysis Hadoop is well suited for, and combines the 
+There are several interesting aspects about this case.
+First, Hadoop is used 
+McIlroy would have probably expressed---our pipeline 
+14 stages long;
+
+The effort required to write this pipeline is astonishingly low:
+  it amounts to 240 characters 
+(Some effort is required to understand NCDC's weather format, but this is true for any program processing this dataset.)
+
+% /home/nikos/hadoop-3.2.1/bin/hdfs dfs -put /home/nikos/dish/scripts/max-temp 77.24s user 50.79s system 185% cpu 1:09.14 total
+% hadoop jar $HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-*.jar -input 719.26s user 63.88s system 155% cpu 8:22.47 total
+
 
 \subsection{Macro-benchmark: Web Crawling}
 
@@ -1568,16 +1615,6 @@ More detailed setup and experiments, including the scripts, is included in the a
 \label{related}
 
 At a high-level, techniques for automatically distributing fall under a spectrum that ranges from fully automated (but potentially sub-optimal) distribution to fully manual (but, ideally, optimal) distribution (Fig.~\ref{fig:spectrum}).
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_spectrum.pdf}}
-\caption{
-  \textbf{Cost of Manual Effort.}
-	\sys sits at the automation end of the spectrum, automatically distributing shell pipelines while maintaining their correctness. A more complete picture is presented in the related-work section~\sx{rt}.
-}
-\label{fig:spectrum}
-\end{figure}
 
 % Nice intro: http://homepages.inf.ed.ac.uk/bfranke/Publications/pldi121-tournavitis.pdf
 \heading{Automated Parallelization and Distribution}
@@ -1607,6 +1644,16 @@ As such..
 Their annotations language is not as principled as \sys's---and one that is critical in ensuring that the dataflow analyses preserves the semantics expected by the developer
 The side-effects present in the shell dwarf those of functional languages
 The shell is also more general.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_spectrum.pdf}}
+\caption{
+  \textbf{Cost of Manual Effort.}
+	\sys sits at the automation end of the spectrum, automatically distributing shell pipelines while maintaining their correctness. A more complete picture is presented in the related-work section~\sx{rt}.
+}
+\label{fig:spectrum}
+\end{figure}
 
 \heading{DSLs for Distribution}
 At the other end of the spectrum, distributed computing frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13, jetstream:14} \kk{JetStream has a very different focus} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp, psync:16, dartagnan:18}
