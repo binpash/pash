@@ -345,13 +345,13 @@ To understand this sharp contrast, consider a Bash pipeline calculating term fre
 % unique |                       # remove duplicate words
 % comm -13 /usr/share/dict -     # report words not in dictionary 
 % \end{lstlisting}
-
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+\smallskip
+\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
 cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$[p_1]$$)
   sort | uniq -c | sort -rn | head 5 > out
 \end{lstlisting}
-
-\noindent
+\smallskip
+% \noindent
 Program $p_1$ creates a character stream, breaks it into words, transliterates to lower-case, sorts to group duplicates, reduces duplicates to a counter, sorts counters in descending order, picks the top five results, and writes them to a file \ttt{out}.
 Combining several features, \unix makes small tasks easy to express;
   for a user with \emph{one} computer and small input size, this pipeline takes a few seconds to compose and execute~\cite{bentley1986literate}.
@@ -365,19 +365,16 @@ Combining several features, \unix makes small tasks easy to express;
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_schematic.pdf}}
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_overview.pdf}}
 \caption{
-  \textbf{\sys high-level schematic.}
-	\sys XYZ
+  \textbf{High-level schematic.}
+  \sys leverages distributability analysis for built-in commands and any developer extensions (left) to automatically transform shell scripts (mid) and orchestrates their
+  execution (right).
 }
+\vspace{-15pt}
 \label{fig:schematic}
 \end{figure}
 
-
-%      dish      ignis, mozart    hadoop, spark, ...      erlang, elixir
-%       \/           \   /             \     /                \   /
-% auto <-------------------------------------------------------------> manual
-%                      [rewrite (not write) cost]
 
 Unfortunately, developing $p_1$'s distributed equivalent requires a significant effort.
 % For a user with many computers and larger inputs, 
@@ -417,10 +414,15 @@ Could the generation and execution of $p_1$'s distributed version be fully and c
 % If developers have already expressed their computation as a Unix pipeline, they should not have to manually rewrite the program in other environment---\eg Hadoop, Spark---to exploit distribution.
 
 
-To answer this question, this paper presents \sys, a shell \todo{preprocessor} that transforms shell pipelines into their distributed equivalents enabling \emph{distribution-oblivious programming}.
-The key insight behind \sys is that the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation\kk{I am not sure whether stream processing provides information for distributing a computation on its own. Maybe we can say that the shell exposes operator level parallelism, and that this is the first step to distributing a computation}.
+To answer this question, this paper presents \sys, a shell \todo{preprocessor} that transforms shell pipelines into their distributed equivalents, enabling \emph{distribution-oblivious programming}.
+The key insight behind \sys is that the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation
+% FIXME \kk{I am not sure whether stream processing provides information for distributing a computation on its own. Maybe we can say that the shell exposes operator level parallelism, and that this is the first step to distributing a computation}.
 \sys builds on this insight with a careful study of the distributability properties of shell primitives and commands, a pipeline rewriting pass that identifies \todo{maximal} sub-expressions as candidates for scale-out, and a late-bound command-prefixing scheme for deferring scheduling decisions to the distributed planner (\ie when runtime information is available).
-A \sys-enabled $p_1$ will run \ttt{tr} and \ttt{uniq} in completely parallel streams \kk{Isn't uniq pure? I am not sure how we can handle it}, use a mostly-parallel tree of \ttt{sort}s, run \ttt{head} in one of the streams, and (trivially) merge streams in \ttt{out}.
+A \sys-enabled $p_1$ will run \ttt{tr}s in parallel streams,
+  use a mostly-parallel tree of \ttt{sort}s,
+  run \ttt{uniq} mostly in parallel,
+  \ttt{head} in one of the streams,
+  and (trivially) merge streams in \ttt{out}.
 
 The combination of automated transformations for program distribution with the ability to maintain correct non-distributed semantics results in several benefits.
 % \sys converts legacy shell pipelines into their distributed equivalents fully automatically, offering $100\times$ improvements in performance without a single line of additional code or annotation.
@@ -447,26 +449,28 @@ Most importantly, \sys provides an architectural lesson for system designers---n
 
 The paper is structured as follows.
 It first starts with a background section outlining pipeline concepts and overviewing \sys~\sx{bg}.
-Sections \ref{classes}--\ref{recipes} highlight key contributions:\footnote{
-  This is not precise, we'll need to wait until it matures a bit.
-}
+Sections \ref{distributability}--\ref{recipes} highlight key contributions:
 \begin{itemize}
 
   \item
-  \S\ref{classes} overviews \sys and introduces several scalability and distributability classes.
+  \S\ref{distributability} overviews \sys and introduces several scalability and distributability classes.
 
   \item
-  \S\ref{rewrite} presents a set of rewriting transformations for identifying maximal pipeline sub-expressions, candidates for scale-out.
+  \S\ref{ir} presents a set of rewriting transformations for identifying maximal pipeline sub-expressions, candidates for scale-out.
 
   \item
-  \S\ref{other} details other concerns, such as distributed state management and extensibility.
+  \S\ref{frontend} details other concerns, such as distributed state management and extensibility.
 \end{itemize}
 
 \noindent
-\sys's evaluation~\sx{eval} shows significant speedups on both parallel and distributed execution, using a combination of micro-bench\-marks---popular shell one-liners that highlight certain features---and multi-line macro-benchmarks---a web crawling and indexing engine, a genomics pipeline, and a popular weather analysis script.
+\sys's implementation~\sx{impl} evaluation~\sx{eval} show significant speedups on both parallel and distributed execution, using a combination of micro-bench\-marks---popular shell one-liners that highlight certain features---and multi-line macro-benchmarks---a web crawling and indexing engine, a genomics pipeline, and a popular weather analysis script.
 After a comparison with related prior work~\sx{related}, the paper closes with a discussion of related work and possible future directions~\sx{discussion}.
-
-% Additional material, in anonymized form, is available at~\href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.
+% \bigskip
+% \begin{quote}
+% \footnotesize
+Additional material, in anonymized form, is available at
+\href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.
+% \end{quote}
 
 % \begin{figure*}[t]
 % \centering
@@ -478,11 +482,10 @@ After a comparison with related prior work~\sx{related}, the paper closes with a
 % \end{figure*}
 % 
 
-\section{Background}
+\section{Background and Overview}
 \label{bg}
 
-This section breaks down $p_1$ to presents important background on and challenges
-of shell scripting.
+This section presents (i) important background on shell pipeline composition~\sx{bg:pipelines}, and (ii)) a high-level overview of \sys's design and implementation.
 
 \subsection{Unix Composition, Informally}
 \label{bg:pipelines}
@@ -492,42 +495,46 @@ of shell scripting.
 Central among them is the \emph{pipe}, a primitive that passes the output of one program as input to the next.
 These programs produce output and consume input concurrently, and possibly at different rates, with the \unix kernel facilitating program scheduling and communication synchronization behind the scenes.
 Intermediate programs, termed commands, can also be developed in different programming languages, as long as they conform to a common interface.
-\begin{wrapfigure}{r}{0.06\textwidth}
-  \vspace{-12pt}
-  % \begin{center}
-    % \includegraphics[width=0.48\textwidth]{gull}
-    \includegraphics[width=0.06\textwidth]{\detokenize{./figs/dish_ex1.pdf}}
-  % \end{center}
-  \vspace{-30pt}
-\end{wrapfigure}
+%\begin{wrapfigure}{r}{0.06\textwidth}
+%  \vspace{-12pt}
+%  % \begin{center}
+%    % \includegraphics[width=0.48\textwidth]{gull}
+%    \includegraphics[width=0.06\textwidth]{\detokenize{./figs/dish_ex1.pdf}}
+%  % \end{center}
+%  \vspace{-30pt}
+%\end{wrapfigure}
 This interface exposes a stream of contiguous character lines.
 A few characters are special---for example, the newline (\textsc{NL}) character delineates an element of the stream, and the end-of-file (\textsc{EOF}) character signals the end of a stream.
 As part of this interface, each command has access to (any combination of) three \emph{standard} streams---input, output, and error.
 % the input stream (stdin), the output stream (stdout), and the generating errors or diagnostics to the standard error stream (stderr)
 % generating errors or diagnostics to the standard 
 % Leveraging this interface, pipelines chain together commands by their standard streams, such that the output stream of one command (stdout) is passed directly as input (stdin) to the next one.
-
-Commands can be tuned by two mechanisms, namely command-line options and environment variables.
+\smallskip
+\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+  ls -l | wc -l                          [($$p_2$$)]
+\end{lstlisting}
+\smallskip
+Commands can be tuned by two mechanisms, namely com\-mand-line options and environment variables.
 Options control the execution of a program---\eg changing the \ttt{sort}ing order.
 The shell does not have any visibility into these options; 
-  their parsing and evaluation is left entirely up to each command \kk{A minor point: the shell does the expansion, and then hands it of to the command (I am saying that because evaluation might be confounded with expansion so we might want to clarify that)}.
+  after it expands special characters such as \ttt{~} and \ttt{*}, it leaves parsing and evaluation entirely up to every command.
 Environment variables carry more general information about the surrounding system---\eg file search paths, system defaults, parsing switches \etc 
 They are organized in a map from names to values, both of which are strings, and can be evaluated at any point in the program---including as commands, flags, a shell feature termed parameter \emph{expansion}.
 
 % TODO: Talk about security primitives?
 Streams are a key feature of \unix, and go hand-in-hand with the file abstraction:
   files are simply persistent streams that can be manipulated by commands or pipelines.
-\begin{wrapfigure}{r}{0.15\textwidth}
-  \vspace{-15pt}
-  % \begin{center}
-    % \includegraphics[width=0.48\textwidth]{gull}
-    \includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_ex3.pdf}}
-  % \end{center}
-  \vspace{-25pt}
-\end{wrapfigure}
+% \begin{wrapfigure}{r}{0.15\textwidth}
+%   \vspace{-15pt}
+%   % \begin{center}
+%     % \includegraphics[width=0.48\textwidth]{gull}
+%     \includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_ex3.pdf}}
+%   % \end{center}
+%   \vspace{-25pt}
+% \end{wrapfigure}
 Reading a file or a set of files generates a stream; 
   similarly, streams can be trivially redirected to the file system---by appending with the file identifier.
-Files are named, in the sense that they correspond to a global identifier---for example \ttt{cat /x/y} returns the persistent stream associated with the identifier \ttt{/x/y}.
+Files are named, in the sense that they correspond to a global identifier---for example, \ttt{/x/y} corresponds to a persistent stream.
 \unix exposes a few different types of files---\eg directories, symbolic links, named pipes (or FIFOs), and special character devices.
 As a result, file-system identifiers part of a pipeline may resolve to in-memory structures or pseudo-devices (\eg \ttt{/dev/urandom}).
 
@@ -538,7 +545,13 @@ As a result, file-system identifiers part of a pipeline may resolve to in-memory
 % (p) named pipes or FIFOs, communication primitives that can be named and manipulated like files,
 % (s) domain sockets or DSes, full-duplex communication primitives that support passing file descriptors, and
 % (b or c) special files, interfaces to device drivers or low-level abstractions, presented as ordinary files.
+\smallskip
+\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+  ls | sed 's/1/2/' | > out.t 2> err.t    [($$p_3$$)]
+\end{lstlisting}
+\smallskip
 
+\noindent
 Special files are particularly interesting because they are resolved to OS structures.
 One example is the special \ttt{/proc} filesystem (procfs) that presents information about processes and the operating system, offering a feature analogous to programmatic introspection:
   with \ttt{procfs} commands can inspect and alter their directory or the flags passed to them.
@@ -552,34 +565,48 @@ This bidirectional relationship between ephemeral streams and persistent names--
 A small but powerful set of features is concerned with stream manipulation.
 Some of these features are built into the shell;
   for example, given a file identifier, stream redirection operators can direct stdout or stderr to a file.
-\begin{wrapfigure}{r}{0.15\textwidth}
-  \vspace{-15pt}
-  % \begin{center}
-    % \includegraphics[width=0.48\textwidth]{gull}
-    \includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_ex3.pdf}}
-  % \end{center}
-  \vspace{-25pt}
-\end{wrapfigure}
+% \begin{wrapfigure}{r}{0.15\textwidth}
+%   \vspace{-15pt}
+%   % \begin{center}
+%     % \includegraphics[width=0.48\textwidth]{gull}
+%     \includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_ex3.pdf}}
+%   % \end{center}
+%   \vspace{-25pt}
+% \end{wrapfigure}
 As described before, the file can be a FIFO dubbing as input to another command.
 More interestingly, some commands allow splitting (resp. merging) a single stream (resp. many streams) into multiple streams (resp. a single stream);
   stream merging can be achieved by appending one stream after the end of another or by fusing (zipping) streams column-wise into a single (fat) stream.
 % TODO: talk about \ttt{xargs}?
 
-% Explicit Redirection, Implicit splitting and merging, This can be done through the file-system operators 
+\smallskip
+\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+  cat * | tee >(wc -l > l.t) | zip > a.z   [($$p_4$$)]
+\end{lstlisting}
+\smallskip
 
-The combination of file-system identifiers pointing to ephemeral streams and the stream redirection described above enable surprisingly expressive pipelines. %---for example:
+\noindent
+% Explicit Redirection, Implicit splitting and merging, This can be done through the file-system operators 
+The combination of ephemeral file-system identifiers and the stream redirection described above enable surprisingly expressive pipelines. %---for example:
 The most interesting feature of these pipelines is the presence of cycles:
   a pipeline segment processes some input, part of which is extracting the next input to process.
 One example use case, discussed in the evaluation section~\sx{eval} is a web crawler that feeds extracted URLs from the input stream back to the start of the pipeline.
 % These streams are created by the C library (glibc) at the start of program execution,
 % and new streams can be created to connect to files, sockets, pipes,
 
+\smallskip
+\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+  read | { calc | square; } >/dev/fd/0     [($$p_5$$)]
+\end{lstlisting}
+\smallskip
+
+\noindent
 Apart from pipes, the \unix shell provides several other forms of program composition such as sequential (\ttt{;}) and parallel (\ttt{\&}) composition operators.
 Command substitution, expressed as \ttt{\$($c$)}, replaces the expression with the results of executing $c$.
 Code blocks, expressed as \ttt{\{$c_1; c_2$\}}, can redirect streams for the entire group of $c_1$ and $c_2$;
   this is analogous to an anonymous function, which contains many statements and can possibly be assigned to a variable that can later be invoked with parameters.
 Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn a child shell, thus avoiding the pollution of their environment variable context. % but incurring higher overhead.
 
+\unix pipelines are surprisingly powerful, a feature that \sys exploits by re-targeting shell scripts during its rewriting passes that target shell.
 
 % \begin{lstlisting}[
 %   language=es,
@@ -601,12 +628,6 @@ Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn 
 %  cat /proc/ >                            (($$p_4$$))
 % \end{lstlisting}
 % \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-%  ls -l | wc -l                           (($$p_2$$))
-% \end{lstlisting}
-% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-%  cat * | wc -l > out.txt                 (($$p_3$$))
-% \end{lstlisting}
-% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
 %  cat /proc/ >                            (($$p_5$$))
 % \end{lstlisting}
 % \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
@@ -615,10 +636,11 @@ Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn 
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_overview.pdf}}
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_schematic.pdf}}
 \caption{
   \textbf{\sys transformation overview.}
-	\sys XYZ
+  Given a shell pipeline, \sys leverages command distributability to identify
+  high-distributability stages, rewrite them, and orchestrate their execution.
 }
 \label{fig:overview}
 \end{figure}
@@ -628,18 +650,20 @@ Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn 
 % Expansion---the key is that expansion and evaluation are handled by the shell at an earlier stage 
 % The most powerful---and interesting, for \ttt{dish}---type of expansion is subshell expansion, that allows replacing entire input streams 
 
-\subsection{Overview}
+\subsection{\sys Design Overview}
 
 As outlined earlier, the key insight behind \sys is that the shell already describes parallel computations over streams.
 Intuitively,
- (i) the parallel-composition operator exposes \todo{task} parallelism \kk{I have named that operator level parallelism, which one do we prefer?},
+ (i) the parallel-composition operator exposes \todo{task} parallelism
+% FIXME \kk{I have named that operator level parallelism, which one do we prefer?},
  (ii) commands such as \ttt{xargs} and \ttt{tee} expose data parallelism,
- (iii) the pipe operator enables both task and data parallelism, and \kk{How does it enable data parallelism?}
+ (iii) the pipe operator is candidate for both task and data parallelism, and
+% \kk{How does it enable data parallelism?} \nv{added "candidate", helps?}
  (iv)  other composition operators can be viewed as barrier candidates.
 To leverage these insights and correctly distribute a pipeline such as $p_1$, \sys must solve several challenges.
 
-Understanding the shell's primitives is not enough;
-  \sys has to understand the distribution characteristics of individual commands used to compose larger programs.
+% However, understanding the shell's primitives is not enough
+\sys needs to understand the distribution characteristics of individual commands used to compose larger programs~\sx{distributability}.
 This challenge can be broken down into two parts.
 First, there is a need to understand the commands already in the shell---that is, built-ins that come with any shell and support its core functions.
 One example is the set of commands defined by the \textsc{POSIX} standard~\cite{}.
@@ -653,24 +677,24 @@ Using this DSL, developers of commands (not users of the shell) can quickly and 
 A command developer can only annotate the default behavior;
   if a new flag is added a few years later, and if that flag alters the command's class, only then a new annotation is needed.
 
-Given a set of commands composed together by the shell primitives, \sys's next challenge is to analyze it and identify candidate subexpressions for distribution.
+Given a set of commands composed together by the shell primitives, \sys's next challenge is to analyze it and identify candidate subexpressions for distribution~\sx{ir}.
 \sys addresses this challenge with a rewriting \todo{pass} that performs dataflow analysis identifying \todo{maximal} distributable sub-expressions.
-It converts the AST to a dataflow graph, and runs...
-This analysis is not trivial, as many of the shell's dynamic features have to be taken into consideration---examples include shell expansion, environment variables, file input sizes, \etc
+It converts the AST to a dataflow graph, and iteratively performs graph transformations that expose data parallelism as task parallelism while preserving correctness.
+These transformations are complicated by the shell's pervasive use of dynamic features---\eg environment variables, file input sizes, \etc
 
-\kk{On the dataflow graph, Dish iteratively performs graph transformations that expose data parallelism as task parallelism while preserving correctness.}
-
-Finally, given a distributed pipeline with runtime \todo{annotations}\kk{the runtime just gets a dataflow graph}, \sys needs to schedule and execute it.
-This amounts to solving a few challenges, achieved by \sys's runtime component, two of which stand out.
+Finally, given a distributed pipeline as a dataflow graph, \sys needs to schedule and execute it.
+To achieve this, \sys's runtime component needs to solve several challenges~\sx{impl}.
 First, \sys needs to wrap single-node commands with corrective runtime interposition based on their classes;
   this is achieved by thin wrappers for all the commands involved in the program, generated just-in-time using the distributability specification outlined earlier.
 The reasoning behind wrappers being thin is to not interfere with legacy functionality---commands have many flags accumulated over long periods of time.
 
 Second, \sys needs to fill-in planing details left blank by the rewriting pass.
 This is achieved with \emph{planner activators}, commands that yield (and pass their arguments) to the scheduler.
-From the point of view of the shell, activators are higher-order commands \'{a} la \ttt{xargs} and \ttt{time} that take other commands as arguments---a technique that achieves the latest possible binding, when critical runtime information is available. \kk{I am not exactly sure I understand that :) }
+From the point of view of the shell, planner activators are expressed through a higher-order command---similar to \ttt{xargs} and \ttt{time}---that takes other commands as arguments.
+Planner activators achieves the latest possible binding, when critical runtime information is available.
+% FIXME \kk{I am not exactly sure I understand that :) } \nv{which part?}
 
-The next few sections discuss the details.
+The next few sections discuss \sys's design and implementation details.
 They also outline other, less obvious challenges---such as the synchronization of environment variables, distributed file operation, \etc.
 
 
@@ -686,7 +710,7 @@ It focuses on characteristics that are important for distribution, rather than a
 
 This section starts by defining these classes, paired with a distributability study of the commands found in standard libraries such as {\sc POSIX} and GNU Coreutils~\sx{cmd}.
 Building on this study, it presents a DSL that enables command classification by its developers~\sx{ext}.
-In return, \sys uses this DSL to tag commands in the standard libraries and generate their wrappers presented in later sections.
+In return, \sys uses this DSL to tag commands in the standard libraries and generate their wrappers, as presented in later sections.
 
 \subsection{Distributability of Standard Libraries}
 \label{cmd}
@@ -707,15 +731,15 @@ In this order, each class can be thought as a subset of the next one---\eg all s
     Broadly, \unix commands can be broken down into to five classes.
   }
 }
-\begin{tabular}{l @{\extracolsep{\fill}} llll}
+\begin{tabular}{l @{\extracolsep{\fill}} lll}
 \toprule
-Class                           &  Key    & Example Commands                            & Coreutils       & POSIX       \\
+Class                           &  Key    & Example Commands                            & Coreutils       \\ % & POSIX       \\
 \midrule
-Stateless                       & ~\tsta  & \tti{tr},   \tti{cat},    \tti{grep}        &  22 (21.1\%)     &           \\  % 22
-Pure                            & ~\tpur  & \tti{sort}, \tti{wc},     \tti{uniq}        &  21 (20.1\%)     &           \\  % 21
-(Distr.) File-System~           & ~\tdfs  & \tti{cp},   \tti{ln},     \tti{rm}          &  27 (25.9\%)     &           \\  % 27
-Side-effectful                  & ~\tsid  & \tti{env},  \tti{chroot}, \tti{whoami}      &  25 (24\%)       &           \\  % 25
-Irreversible                    & ~\tirr  & \tti{exit}, \tti{lpr},    \tti{reboot}      &  5  (0.4\%)      &           \\  % 5
+Stateless                       & ~\tsta  & \tti{tr},   \tti{cat},    \tti{grep}        &  22 (21.1\%)    \\ %  &           \\  % 22
+Pure                            & ~\tpur  & \tti{sort}, \tti{wc},     \tti{uniq}        &  21 (20.1\%)    \\ %  &           \\  % 21
+(Distr.) File-System~           & ~\tdfs  & \tti{cp},   \tti{ln},     \tti{rm}          &  27 (25.9\%)    \\ %  &           \\  % 27
+Side-effectful                  & ~\tsid  & \tti{env},  \tti{chroot}, \tti{whoami}      &  25 (24\%)      \\ %  &           \\  % 25
+Irreversible                    & ~\tirr  & \tti{exit}, \tti{lpr},    \tti{reboot}      &  5  (0.4\%)     \\ %  &           \\  % 5
 % \midrule
 % Shell PL Constructs             &                         &                  \\
 % \etc                            &                         &                  \\
@@ -785,7 +809,15 @@ Even if \sid commands are protected with transactions
 Finally, some commands have side-effects outside \sys---for example, by printing a file with \ttt{lpr} or restarting with \ttt{reboot}.
 Such commands are not distributable---they have to refer to a single location---and have to be guarded with pessimistic transaction control mechanism.
 
-\section{Extensibility}
+\heading{Discussion}
+As described earlier~\sx{bg}, shell commands change their operation based on command-line options.
+These options can actually change the class in which a command belongs.
+Consider two examples:
+  (i) \ttt{cat} is in \sta, but with \ttt{-n} it jumps into \pur because it has to keep track of a counter;
+  (ii) \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
+% TODO: closure?
+
+\subsection{Extensibility}
 \label{ext}
 
 Here is the type for \ttt{bwa}, a command that performs a Burrows-Wheeler transform over genomic data:
@@ -1146,7 +1178,13 @@ version of the dataflow graph. \kk{This is exciting, and maybe it
 
 Before describing the different types of parallelization
 optimizations, we formalize our intuition about stateless and pure
-commands. Recall the example \ref{} from section Categories
+commands.
+\nv{TODOs
+  (i) highlight earlier the antithesis between the formalisms in this section and the informalities of the previous (me);
+  (ii) try to add a few paragraphs / subsections on parallelization optimizations that make use of these formalisms (to show their value);
+  (iii) try to add a proof \emph{sketch} pointing to these formalisms (to show their value), and we can point to the TR for the longer proof.
+}
+ Recall the example \ref{} from section Categories
 \ref{}. This example shows the stateless command x being applied to
 ...\kk{Complete this after we have an example}. Formally, a commmand
 $f$ is stateless if it is ``linear'' with respect to concatenation,
@@ -1212,6 +1250,7 @@ to a file.
 
 
 \section{Front End}
+\label{frontend}
 
 \kk{The writing in this section is wandering around without a clear
   purpose :( }
@@ -1365,8 +1404,8 @@ approximated using a \todo{best-effort} method. \kk{Maybe mention that
 
 
 
-\section{Dish Implementation}
-
+\section{Implementation}
+\label{impl}
 \kk{I think that this section should be merged with the front end}
 
 
