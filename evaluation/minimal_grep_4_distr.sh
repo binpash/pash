@@ -1,28 +1,30 @@
+rm -rf /tmp/dish_output/
 mkdir -p /tmp/dish_output/
-rm -f "#file16"
-mkfifo "#file16"
-rm -f "#file18"
-mkfifo "#file18"
-rm -f "#file21"
-mkfifo "#file21"
-rm -f "#file20"
-mkfifo "#file20"
-rm -f "#file15"
-mkfifo "#file15"
-rm -f "#file12"
-mkfifo "#file12"
+mkdir -p /dev/shm/dish
 rm -f "#file13"
 mkfifo "#file13"
 rm -f "#file17"
 mkfifo "#file17"
-rm -f "#file22"
-mkfifo "#file22"
-rm -f "#file14"
-mkfifo "#file14"
-rm -f "#file11"
-mkfifo "#file11"
 rm -f "#file19"
 mkfifo "#file19"
+rm -f "#file14"
+mkfifo "#file14"
+rm -f "#file18"
+mkfifo "#file18"
+rm -f "#file20"
+mkfifo "#file20"
+rm -f "#file11"
+mkfifo "#file11"
+rm -f "#file22"
+mkfifo "#file22"
+rm -f "#file16"
+mkfifo "#file16"
+rm -f "#file15"
+mkfifo "#file15"
+rm -f "#file12"
+mkfifo "#file12"
+rm -f "#file21"
+mkfifo "#file21"
 cat $IN > "#file11" &
 cat $IN > "#file12" &
 cat $IN > "#file13" &
@@ -39,20 +41,17 @@ cat "#file19" > /tmp/dish_output//0 &
 cat "#file20" > /tmp/dish_output//1 &
 cat "#file21" > /tmp/dish_output//2 &
 cat "#file22" > /tmp/dish_output//3 &
-for job in `jobs -p` 
-do 
- echo $job
- wait $job 
-done
-rm -f "#file16"
-rm -f "#file18"
-rm -f "#file21"
-rm -f "#file20"
-rm -f "#file15"
-rm -f "#file12"
+wait
 rm -f "#file13"
 rm -f "#file17"
-rm -f "#file22"
-rm -f "#file14"
-rm -f "#file11"
 rm -f "#file19"
+rm -f "#file14"
+rm -f "#file18"
+rm -f "#file20"
+rm -f "#file11"
+rm -f "#file22"
+rm -f "#file16"
+rm -f "#file15"
+rm -f "#file12"
+rm -f "#file21"
+rm -rf "/dev/shm/dish"
