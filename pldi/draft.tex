@@ -1349,6 +1349,7 @@ having parsed the ast, and decide on maximal distributable subtrees as
 late as possible in the process. This would be awesome.
 
 \section{Evaluation}
+\label{eval}
 
 \kk{We should make sure to measure the time that it takes for the
   whole process to run (parsing, translating, optimizing, planning)
@@ -1371,6 +1372,32 @@ late as possible in the process. This would be awesome.
 
 \kk{We should have at least some pipelines that have a bad pure
   command in them.}
+
+At a high level, we are interested in understanding whether \sys can indeed scale pipelines out automatically and correctly.
+To achieve this, we use a combination of micro- and macro-benchmarks, most of which were collected from prior literature and online repositories.
+Micro-benchmarks~\sx{micro} are one-off, simple one-line pipelines that take a few seconds to write (usually interactively);
+  such pipelines are usually composed interactively to solve a task at hand, test a hypothesis, or ``smoke out bugs''~\cite{bentley1986literate}---but, with \sys, applied to very large data sets.
+These pipelines are taken from real, often striking~\cite{}, use cases and have the benefit of highlighting stress on a handful of stages, precisely due to their small size.
+
+Three complex macro-benchmarks (\S\ref{macro1}--\ref{macro3}) involve third-party commands and handle realistic workloads by today's standards.
+These scripts are about an order of magnitude larger than the micro-benchmarks, but this perceived lack of complexity is deceiving:
+  as shown below, if written in conventional languages, these pipelines would correspond to programs on the order of hundreds of lines of code.
+
+Several results are worth highlighting.
+First and foremost, programs see a significant speedup, often more $10\times$ over sequential execution  while returning identical results (on very large datasets).
+\sys's transformation and planning phase take around XX--XXms, negligible (XX\%) for short-running pipelines and virtually non-existent for long-running ones.
+As \sys rewrites to highly-optimized shell primitives rather than using a managed language runtime, it always has a COST~\cite{mcsherryscalability} of 2.
+Finally, \sys preserves the productivity of the shell:
+  in one case, the equivalent program for a small part of the pipeline requires over a 150 lines of code in combined Java and Bash to run distributed on top of Hadoop;
+  in another, the program expressed by the pipeline was the subject of a semester project in a graduate course on distributed systems~\cite{blinded} where student implementations ranged between 1--3\textbf{K} lines of code.
+
+Experiments were run on a \todo{network of five workstations} connected by 1Gbps links: 
+ one large machine (\wka) with 512GB of memory and 128 2.1GHz Intel Xeon E5-2683 cores, and 
+ \todo{four smaller machines (\wkq), each with 4GB of memory and two 3.33GHz Intel Core Duo E8600 processors}.
+For our software setup, we use SMP Debian 4.9.144-3.1 (2019-02-19), GNU Core-utils 8.30-3, GNU Bash 5.0.3(1)-release (x86\_64-pc-linux-gnu), Python 3.7.3, and OCaml 4.05.0.
+Generally, no special configuration was made in hardware or software beyond disabling hyper-threading. % ---specifically, the network protocol stack was left unoptimized.
+More detailed setup and experiments, including the scripts, is included in the accompanying (anonymized) online repository.
+
 
 \section{Limitations}
 
