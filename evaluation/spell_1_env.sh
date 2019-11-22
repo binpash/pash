@@ -1,2 +1,2 @@
 dict=/usr/share/dict/words
-IN=../scripts/input/i1M.txt
+IN=../scripts/input/i10M.txt
