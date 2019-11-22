@@ -643,6 +643,7 @@ Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn 
   Given a shell pipeline, \sys leverages command distributability to identify
   high-distributability stages, rewrite them, and orchestrate their execution.
 }
+\vspace{-15pt}
 \label{fig:overview}
 \end{figure}
 
@@ -679,11 +680,11 @@ A command developer can only annotate the default behavior;
   if a new flag is added a few years later, and if that flag alters the command's class, only then a new annotation is needed.
 
 Given a set of commands composed together by the shell primitives, \sys's next challenge is to analyze it and identify candidate subexpressions for distribution~\sx{ir}.
-\sys addresses this challenge with a rewriting \todo{pass} that performs dataflow analysis identifying \todo{maximal} distributable sub-expressions.
+\sys addresses this challenge with a series of rewriting passes that perform dataflow analysis for identifying \todo{maximal} distributable sub-expressions.
 It converts the AST to a dataflow graph, and iteratively performs graph transformations that expose data parallelism as task parallelism while preserving correctness.
 These transformations are complicated by the shell's pervasive use of dynamic features---\eg environment variables, file input sizes, \etc
 
-Finally, given a distributed pipeline as a dataflow graph, \sys needs to schedule and execute it.
+Finally, \sys needs to schedule and execute the distributed dataflow graph.
 To achieve this, \sys's runtime component needs to solve several challenges~\sx{impl}.
 First, \sys needs to wrap single-node commands with corrective runtime interposition based on their classes;
   this is achieved by thin wrappers for all the commands involved in the program, generated just-in-time using the distributability specification outlined earlier.
@@ -811,12 +812,15 @@ Finally, some commands have side-effects outside \sys---for example, by printing
 Such commands are not distributable---they have to refer to a single location---and have to be guarded with pessimistic transaction control mechanism.
 
 \heading{Discussion}
-As described earlier~\sx{bg}, shell commands change their operation based on command-line options.
-These options can actually change the class in which a command belongs.
-Consider two examples:
-  (i) \ttt{cat} is in \sta, but with \ttt{-n} it jumps into \pur because it has to keep track of a counter;
-  (ii) \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
-% TODO: closure?
+There are several technical details about \sys's design decisions worth noting.
+
+In terms of inputs, \sys supports commands with multiple input (resp. output) streams, by prepending (resp. appending) shell built-ins that merge input (resp. split output) streams~\sx{impl}.
+Thus, a command can be modelled as having one input and one output stream, a representation that is used throughout \sys including the extensibility DSL~\sx{ext}.
+
+Wanting to present the full picture for completeness purposes, the focus for the rest paper will be commands in \sta and \pur.
+Other commands are treated as  non-distributable for now~\sx{conclusion};
+  by building infrastructure to handle other classes, \sys would be able to (i) extract more parallelism and (ii) handle larger programs.
+Even with only these two classes, however, \sys supports highly useful pipelines that are more expressive than ones in popular frameworks such as Hadoop~\cite{mapreduce:08} and Spark~\cite{spark:12}~\sx{eval}.
 
 \subsection{Extensibility}
 \label{ext}
@@ -837,45 +841,34 @@ Consider two examples:
 %% The \ttt{-h} flag moves \ttt{bwa} into the Stateless class;
 %%   its output is a constant function.
 
-One of the major characteristics of the shell is its extensibility, as
-also mentioned in \Cref{bg}. Existing commands are modified and
-extended over time and users are free to install custom commands from
-a wide variety of sources.
+% FIXME: \nv{TODO: remember to bubble up(me)}
+An important characteristic of the \unix shell is its language-agnostic extensibility~\sx{bg}.
+Users composing pipelines are free to install custom commands available from various sources.
+Being general programs, commands are developed in a variety of languages and are extended over long periods of time.
 %% \kk{Text point: This restricts the space of solutions for
 %%   distribution of shell scripts}
-This means that any one-time solution for categorizing shell commands
-is not satisfactory, since it would very quickly become obsolete,
-being able to support a very limited amount of shell scripts.
-
+As a result, any static characterization of shell commands is unsatisfactory as it would quickly become obsolete, supporting only a small subset of commands.
+This poses a challenge to the developers of individual commands---how can they augment their commands to capture information critical to \sys without too much effort?
 %% \kk{Text point: The characteristics of a good solution}
 
-A solution that applies to shell programms should thus be extensible,
-in the sense that adding or changing a command, doesn't invalidate the
-existing information on command categories. A developer of a new
-command, should be able to categorize it accordingly, and succinctly
-express the information that the system needs in order to distribute
-it.
+To address additions and changes to the set of commands available to the shell, \sys provides command developers lightweight, domain-specific language (DSL).
+The DSL allows developers to express semantic information about a command's distributanility that is critical to \sys.
+This DSL can be used by the developers of new commands succinctly express this information, such the class of a command and the sequence of sources from which it reads its input.
+It is also used by developers that work on existing commands to extend or maintain them, to express additions or changes to the command's semantics.
 
-%% \kk{Solution: A lightweight language that can be used by a command
-%%   developer to categorize it for distribution.}
+\heading{Command-line Options}
+As described earlier~\sx{bg}, command-line options and environment variables can affect the operation of a command.
+Options are a particularly popular way to control a command, 
+  directly affecting a command's distributability classification.
+That is, commands are assigned to default classes, and commands can change the class in which a command belongs.
 
-\TODO{Make sure that before this point, we mention that our notion of
-  command has one input and one output. Concretely: the abstract
-  notion of a program that we have is programs with one input and one
-  output stream. The command developer must be able to express the
-  input argument of a commmand (or if it is the stdin).  }
+As simple examples, consider \ttt{cat} and \ttt{sort}.
+By default \ttt{cat} is in \sta, but with \ttt{-n} it jumps into \pur because it has to keep track of a counter.
+Conversely, \ttt{sort} defaults to \pur, but \ttt{with} \ttt{-h} it jumps into \sta.
+% TODO: closure?
 
-We address this issue by designing a lightweight language whose
-purpose is to categorize a command and describe the sequence of
-sources from which it reads its input.
 
-%% \subsection{Categorization Language}
-
-%% \kk{Text point: Introduce problem: Most shell commands, belong to
-%%   different classes depending on their flags, arguments}
-
-\TODO{Mention the point of these two paragraphs in the intro?}
-
+\heading{Command Inputs and Outputs}
 Consider the command \ttt{comm}. It takes as input two files and
 implements some form of join. When invoked without any option, it
 produces three-column output. The first column contains lines that
@@ -886,11 +879,13 @@ needs to wait until it reads both files completely before it can
 output its results.
 
 However, \ttt{comm} can also be invoked using some options that
-supress the output of any combination of columns. More precisely, the
+suppress the output of any combination of columns. More precisely, the
 option \ttt{-1} suppresses the first column of the output. Similarly,
 \ttt{-2} and \ttt{-3} supress the second and third column. Using both
 \ttt{-2} (or \ttt{-1}) and \ttt{-3}, the command becomes stateless
 regarding its first (resp. the second) file argument.
+
+% \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
 
 In order to address this, we have designed a categorization language
 that is flexible enough to identify commands to different categories
@@ -939,7 +934,12 @@ given their options. The complete language syntax can be seen in
     <command-list> ::= <command>
     \alt <command> <command-list>
   \end{grammar}
-  \caption{\todo{Categorization language}}
+  \caption{
+\textbf{Distributability description language.}
+\todo{The DSL attempts to capture important elements regarding the distributability aspects of various commands.}
+\vspace{-15pt}
+}
+
   \label{fig:dsl}
 \end{figure}
 
