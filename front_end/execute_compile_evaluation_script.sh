@@ -20,9 +20,9 @@ echo "Environment:"
 . $env_file
 export $(cut -d= -f1 $env_file)
 
-# echo "Sequential:"
-# cat $seq_script | grep -v "rm -f" | grep -v "mkfifo"
-# { time /bin/bash $seq_script > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
+echo "Sequential:"
+cat $seq_script | grep -v "rm -f" | grep -v "mkfifo"
+{ time /bin/bash $seq_script > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
 
 echo "Distributed:"
 { time ./translate_script.sh $prefix $distr_output_dir $fan_out $batch_size ; } 2> >(tee "${results}${experiment}_compile_distr.time" >&2)

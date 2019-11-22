@@ -28,7 +28,7 @@ def format_arg_char(arg_char):
     elif (key == 'Q'):
         return '"{}"'.format(format_arg_chars(val))
     elif (key == 'V'):
-        return '${}'.format(val[2])
+        return '${{{}}}'.format(val[2])
     elif (key == 'E'):
         return '{}'.format(chr(val))
     else:
