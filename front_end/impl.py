@@ -101,10 +101,13 @@ def node_to_script(node):
        command.split(" ")[0] == "split_file"):
         assert(len(inputs) == 1)
         batch_size = command.split(" ")[1]
-        ## TODO: Implement a new split that either implements this as
-        ## a python script or writes to temporary files
+        if (len(inputs) > 0):
+            script.append("cat")
+            for fid in inputs:
+                script.append('"{}"'.format(fid))
+            script.append("|")
+        script += new_split(outputs, batch_size)
         # script += old_split(inputs, outputs, batch_size)
-        script += old_split(inputs, outputs, batch_size)
         # print(script)
         # print(node)
     else:
@@ -125,6 +128,22 @@ def node_to_script(node):
 
         # print("Script:", script)
     return " ".join(script)
+
+def new_split(outputs, batch_size):
+    script = []
+    script.append('tee >(')
+    script.append('head -n {}'.format(batch_size))
+    script.append('> "{}";'.format(outputs[0]))
+    # script.append('dd of="{}" > /dev/null 2>&1'.format(outputs[1]))
+    script.append('dd of=/dev/null > /dev/null 2>&1)')
+    script.append('| (tail -n +{}'.format(int(batch_size)+1))
+    script.append('> "{}";'.format(outputs[1]))
+    script.append('dd of=/dev/null > /dev/null 2>&1)')
+    # script.append('"{}"'.format(outputs[1]))
+    # script.append('; }')
+    return script
+
+
 
 def old_split(inputs, outputs, batch_size):
     script = []
