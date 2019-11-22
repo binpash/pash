@@ -10,7 +10,7 @@ distr_output_dir=/tmp/dish_output/
 ./translate_script.sh "../evaluation/minimal_sort_50" $distr_output_dir
 ./translate_script.sh "../evaluation/minimal_sort_100" $distr_output_dir
 
-./translate_script.sh "../evaluation/minimal_grep_1" $distr_output_dir
+./translate_script.sh "../evaluation/minimal_grep_1" $distr_output_dir 1 0
 ./translate_script.sh "../evaluation/minimal_grep_2" $distr_output_dir
 ./translate_script.sh "../evaluation/minimal_grep_4" $distr_output_dir
 ./translate_script.sh "../evaluation/minimal_grep_10" $distr_output_dir
