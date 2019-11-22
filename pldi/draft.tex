@@ -35,11 +35,27 @@
 \newcommand{\heading}[1]{\vspace{4pt}\noindent\textbf{#1}\enspace}
 \newcommand{\ttt}[1]{\texttt{\small #1}}
 \newcommand{\ttiny}[1]{\texttt{\scriptsize #1}}
+\newcommand{\tti}[1]{\texttt{\scriptsize #1}}
 \newcommand{\spol}[1]{\scriptsize{\sc#1}}
 \newcommand{\pol}[1]{\texttt{\small {\color{purple}#1}}}
 \newcommand{\rf}[1]{\ref{#1}}
 \newcommand{\wka}{\ttt{a\textsubscript{1}}}
 \newcommand{\wkq}{\ttt{q\textsubscript{1-4}}}
+
+\newcommand{\cn}[1]{\mbox{\textcircled{\footnotesize #1}}}
+\newcommand{\tcn}[1]{\mbox{\textcircled{\scriptsize #1}}}
+
+\newcommand{\pur}{\cn{\textsc{P}}}
+\newcommand{\sta}{\cn{\textsc{S}}}
+\newcommand{\dfs}{\cn{\textsc{F}}}
+\newcommand{\sid}{\cn{\textsc{E}}}
+\newcommand{\irr}{\cn{\textsc{I}}}
+
+\newcommand{\tpur}{\tcn{\textsc{P}}}
+\newcommand{\tsta}{\tcn{\textsc{S}}}
+\newcommand{\tdfs}{\tcn{\textsc{F}}}
+\newcommand{\tsid}{\tcn{\textsc{E}}}
+\newcommand{\tirr}{\tcn{\textsc{I}}}
 
 % For comments
 \newcommand{\eat}[1]{}
@@ -489,7 +505,6 @@ As part of this interface, each command has access to (any combination of) three
 % the input stream (stdin), the output stream (stdout), and the generating errors or diagnostics to the standard error stream (stderr)
 % generating errors or diagnostics to the standard 
 % Leveraging this interface, pipelines chain together commands by their standard streams, such that the output stream of one command (stdout) is passed directly as input (stdin) to the next one.
-% TODO: \kk{We have to mention character vs line based parallelism somewhere, and that we choose to see lines as the data quantum}
 
 Commands can be tuned by two mechanisms, namely command-line options and environment variables.
 Options control the execution of a program---\eg changing the \ttt{sort}ing order.
@@ -657,31 +672,47 @@ They also outline other, less obvious challenges---such as the synchronization o
 
 
 \section{Distributability Classes}
+\label{distributability}
 
-\subsection{Comnands}
-\label{bg:cmd}
+To have any hope of distributing \unix pipelines, \sys first needs to understand the distribution characteristics of individual commands involved in them.
+This understanding is encoded in a command's \emph{distributability} class.
+Put informally, a distributability class representing the level of synchronization required by copies of a command executing concurrently.
+The class captures characteristics that are imprortant for distribution, rather than all the observable behavior of a command.
+\sys leans towards a few, coarse classes rather than many, detailed ones---after all, these classes should be easily understood by command developers.
+% Make the connections that this is like a type, that doesn't capture everything, but is good-enough
 
-% Sets vs. Classes
+The section starts with a distributability study of standard libraries commands, such as {\sc POSIX} and GNU Coreutils~\sx{cmd}.
+Building on this study, it presents a DSL for describing a command's distributability characteristics~\sx{ext}.
+In return, \sys uses this DSL to tag commands in the standard libraries and generate the transformations presented in later sections.
 
-\begin{table}[h]
+\subsection{Distributability of Standard Libraries}
+\label{cmd}
+
+% nv TODO: this is a hierarchy
+Broadly, shell commands can be split into five major classes with respect to their distribution characteristics, depending on how they interact with state.
+Tab.~\ref{tab:classes} summarizes the discussion;
+These classes are listed (and presented later) in ascending difficulty of distribution; later classes require further effort.
+In this order, each class can be thought as a subset of the next---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (without seeing any performance improvements).
+
+\begin{table}[t]
 \center
 \footnotesize
 \setlength\tabcolsep{3pt}
 \caption{
   \footnotesize{
     \textbf{Distributability Classes}.
-    Broadly, \unix commands can be broken down into to five classses.
+    Broadly, \unix commands can be broken down into to five classes.
   }
 }
-\begin{tabular}{l @{\extracolsep{\fill}} lll}
+\begin{tabular}{l @{\extracolsep{\fill}} llll}
 \toprule
-Class                           & Example Commands        & POSIX            & Core-utils\\
+Class                           &  Key    & Example Commands                            & Coreutils       & POSIX       \\
 \midrule
-Stateless                       &                         &                  &           \\
-Pure                            &                         &                  &           \\
-(Distr.) File-System            &                         &                  &           \\
-Side-effectful                  &                         &                  &           \\
-Irreversibly Side-effectful     &                         &                  &           \\
+Stateless                       & ~\tsta  & \tti{tr},   \tti{cat},    \tti{grep}        &  22 (21.1\%)     &           \\  % 22
+Pure                            & ~\tpur  & \tti{sort}, \tti{wc},     \tti{uniq}        &  21 (20.1\%)     &           \\  % 21
+(Distr.) File-System~           & ~\tdfs  & \tti{cp},   \tti{ln},     \tti{rm}          &  27 (25.9\%)     &           \\  % 27
+Side-effectful                  & ~\tsid  & \tti{env},  \tti{chroot}, \tti{whoami}      &  25 (24\%)       &           \\  % 25
+Irreversible                    & ~\tirr  & \tti{exit}, \tti{lpr},    \tti{restart}     &  5  (0.4\%)      &           \\  % 5
 % \midrule
 % Shell PL Constructs             &                         &                  \\
 % \etc                            &                         &                  \\
@@ -691,22 +722,59 @@ Irreversibly Side-effectful     &                         &                  &  
 \end{table}
 
 
-Define distributability 
-Explain distributability classes, based on how 
+% \heading{Preliminaries}
+% \heading{POSIX, GNU Core-utils, and beyond}
 
-\heading{Preliminaries}
+\heading{Stateless Commands}
+The first class contains stateless commands~\sta that operate on individual elements of the stream, without maintaining state across invocations.
+These are commands expressible as a purely functional map---\eg \ttt{basename} removes a path prefix from a string and \ttt{grep} filters out individual lines.
+At times, stateless commands may operate as functions that produce multiple elements---\eg when they insert a {\sc NL} token.
+Workloads that use only stateless commands are trivial to parallelize:
+  they do not require any synchronization to maintain correctness,
+  they do not need care planning on where to split.
+ % map :: (a -> b) -> [a] -> [b]
 
-\heading{POSIX, GNU Core-utils, and beyond}
+Many of these commands (about 1/3 of coreutils' \sta) are stateless \emph{within} an element (\eg \ttt{tr} transliterates characters, one at a time);
+  this could potentially allow further parallelization within a single line element.
+However, exactly because of their local, commands operating on individual characters are not particularly expensive computationally.
 
-\heading{Stateless}
+\heading{Pure Commands}
+The second class contains pure commands \pur.
+These commands respect functional purity, returning the same results for the same inputs;
+  however, they need to maintain internal state across the entire invocation.
 
-\heading{Pure}
+Pure commands often cannot operate in an online fashion, but need to block until the end of the stream.
+A typical example of this is \ttt{sort}, a command that cannot start before the last line of input has been consumed.
 
-\heading{File-system}
+Parallelizing these commands is slightly more challenging and depends on the command.
+Some commands have known divide-and-conquer equivalents.
 
-\heading{Side-effectful}
+Pure commands~ones that maintain 
+Distribution:
 
-\heading{Irreversably Side-effectful}
+\heading{File-system Commands}
+
+This is the largest class, as the file (and file-system) abstraction is so central to \unix.
+In fact, \unix proxies several file-unrelated operators through the file-system---for example, security in \unix is grafted upon the file-system: 
+
+(and all associated commands) are always
+And most of these commands seem control-plane operations that operate on identifiers~\sx{bg}---for example, renaming a file or changing group ownership.
+% TODO: mention that some commands fail to comply with the interface---for example, csplit could be split followed by a redirection to files.
+These are mostly distributable
+
+Distribution:
+
+\heading{Side-effectful Commands}
+Another large class of commands are ones that have side-effects to memory.
+Because of timesharing and multi-tasking (many users can operate multiple terminals on single \unix machine), a set of commands are devoted to accessing variables---environment variables, shell parsing flags, 
+The different formats have multiplied these commands
+
+Thankfully, the vast majority of these commands (a ratio of 21:4) only \emph{read} values;
+Even better,  usually read values that are not altered by user---\eg \ttt{date}, \ttt{uname}, and \ttt{finger} are all commands that interface with kernel- or hardware-generated information.
+Even if \sid commands are protected with transactions
+these benefits are even greater for read-only or read-mostly accesses.
+
+\heading{Irreversibly Side-effectful Commands}
 
 \subsection{The Shell Language}
 \label{bg:shell}
@@ -721,9 +789,6 @@ Context
 Even without these, the Unix pipeline language is powerful enough to capture complex pipelines.
 
 We can encode powerful
-
-\section{Dish Overview}
-
 
 \section{Extensibility}
 \label{ext}
