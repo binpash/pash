@@ -154,7 +154,8 @@ def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
     input_file_ids = curr.get_flat_input_file_ids()
     if (curr.category in ["stateless", "pure"] and
         len(input_file_ids) == 1 and
-        curr.in_stream[0] == "stdin"):
+        curr.in_stream[0] == "stdin" and
+        fan_out > 1):
         ## We can split command input in several files, as long as the
         ## input is not a file, and it makes sense to do so, if the
         ## command is stateless or pure.
