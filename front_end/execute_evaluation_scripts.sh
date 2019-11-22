@@ -19,6 +19,6 @@
 
 ./execute_evaluation_script.sh "spell_1" 
 
-./execute_evaluation_script.sh "topn_2" 
+./execute_evaluation_script.sh "topn_2" $distr_output_dir 2 200000
 
 ./execute_evaluation_script.sh "wf_2" 

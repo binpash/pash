@@ -21,6 +21,12 @@ distr_output_dir=/tmp/dish_output/
 
 ./translate_script.sh "../evaluation/spell_1" $distr_output_dir
 
-./translate_script.sh "../evaluation/topn_2" $distr_output_dir
+./translate_script.sh "../evaluation/topn_2" $distr_output_dir 2 200000
+./translate_script.sh "../evaluation/topn_4" $distr_output_dir 4 200000
+./translate_script.sh "../evaluation/topn_10" $distr_output_dir 10 200000
+./translate_script.sh "../evaluation/topn_20" $distr_output_dir 20 200000
+./translate_script.sh "../evaluation/topn_50" $distr_output_dir 50 200000
+./translate_script.sh "../evaluation/topn_100" $distr_output_dir 100 200000
+
 
 ./translate_script.sh "../evaluation/wf_2" $distr_output_dir
