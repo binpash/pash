@@ -1279,11 +1279,6 @@ to a file.
 
 \section{Implementation}
 \label{impl}
-% \kk{The writing in this section is wandering around without a clear
-%   purpose :( }
-% 
-% \kk{It might make sense to merge this section with the one below with
-%   the name: From Shell to IR and back}
 
 As mentioned in \Cref{ir}, in order to generate the distributed
 implementation of a shell script, \ttt{Dish} first translates it to
@@ -1297,23 +1292,18 @@ challenge of correctly identifying what parts can be distributed.
 %% \kk{Give examples of writing to environment variables, producing
 %%   irreversible side effects, the ; and \&\& operators.}
 
-In order to address this issue, we introduce the notion of
+In order to address this issue, we \todo{introduce} the notion of
 distributable program regions, and we design a translation pass that
 given the abstract syntax tree of a shell script identifies
 distributable regions and translates each of them to a dataflow
 graph. The AST of the shell script is produced using a POSIX compliant
-parser \kk{Reference libdash github. This las sentence should probably
-  go to evaluation}.
+parser~\cite{libdash}.
 
 \subsection{Distributable Regions}
 
-%% \kk{I wanted this to be purely about the regions, and a next
-%%   subsection be about the analysis, but the separation line is very
-%%   blurry, so they are now in the same subsection.}
-
-\kk{The goal of this subsection is to explain that Dish does a safe
-  but effective analysis to identify which parts of the scripts to
-  parallelize.}
+%% \kk{The goal of this subsection is to explain that Dish does a safe
+%%   but effective analysis to identify which parts of the scripts to
+%%   parallelize.}
 
 Consider the following example:
 
@@ -1322,25 +1312,25 @@ Consider the following example:
   sort f3 # Replace with sth better
 \end{lstlisting}
 
-Notice that the structure of a shell program clearly identifies
+\noindent
+Notice that the structure of a shell program can be used to identify
 components that can be executed concurrently, and barriers that
-enforce synchronization. More precisely, \ttt{cat f1 f2} and
-\ttt{grep ``foo''} would already execute concurrently in the
-standard shell, while \ttt{sort f3} waits for their completion
-before being executed. Both \ttt{cat f1 f2 | grep ``foo'' > f3} and
-\ttt{sort f3} are maximal distributable regions, in the sense that
-they cannot be extended beyond \ttt{\&\&}.
+enforce synchronization. More precisely, \ttt{cat f1 f2} and \ttt{grep
+  ``foo''} would already execute concurrently in the standard shell,
+while \ttt{sort f3} would wait for their completion before being
+executed. Both \ttt{cat f1 f2 | grep ``foo'' > f3} and \ttt{sort f3}
+are maximal distributable regions, in the sense that they cannot be
+extended beyond \ttt{\&\&}.
 
-Concretely, a distributable region cannot permeate through the
-following barrier constructs: ;, \&\&, \ttt{||}, function
-definitions, command substitutions, and control flow primitives. On
-the other hand, the pipe operator \ttt{|} and the parallel
-composition operator \& enable parallelization, and extend
-distributable regions. Essentially, distributed regions correspond to
-subsections of the program that would be executed by different shell
-processes.
+Concretely, a distributable region cannot permeate through barrier
+constructs (e.g. \ttt{;}, \ttt{\&\&}, and function definitions). On
+the other hand, the pipe operator \ttt{|} and the parallel composition
+operator \ttt{\&} enable parallelization, and extend distributable
+regions. Intuitively, distributed regions correspond to subsections of
+the program that would be allowed to execute concurrently by different
+processes in the POSIX standard~\cite{posix}.
 
-\kk{I don't know whether I should mention the following: While these
+\tr{I don't know whether I should mention the following: While these
   control flow constructs can be parallelized and there has been
   research on it, it is orthogonal to our work, and can be
   incorporated as future work.}
@@ -1351,7 +1341,7 @@ Dish performs a depth first search pass on the AST of the given shell
 program, extending the distributable regions from the bottom up,
 translating their independent components to dataflow graph
 nodes, until a barrier construct is reached. Note that barrier
-constructs can be contained in a dataflow graph, as long as they don't
+constructs can exist in a dataflow graph, as long as they don't
 extend beyong a single node. An illustrative example follows:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
@@ -1359,17 +1349,16 @@ extend beyong a single node. An illustrative example follows:
   sort -m g1 g2
 \end{lstlisting}
 
-In the above example\kk{Can we make example not floating?}, while
-\ttt{sort f1 > g1}, \ttt{sort f2 > g2}, and \ttt{sort -m g1
-  g2} are all in different dataflow graphs. The dataflow graph that
-corresponds to the whole program, has two nodes, \ttt{sort f1 > g1
-  \&\& sort f2 > g2} and \ttt{sort -m g1 g2}.
+In the above example, while \ttt{sort f1 > g1}, \ttt{sort f2 > g2},
+and \ttt{sort -m g1 g2} are all in different dataflow graphs, the
+dataflow graph that corresponds to the whole program, has two nodes,
+\ttt{sort f1 > g1 \&\& sort f2 > g2} and \ttt{sort -m g1 g2}.
 
 In order to identify possible opportunities for parallelism, the
 translation pass also identifies the category of each node, together
-with its input and output, using the rules described in \ref{}. Some
-interesting cases of the analysis algorithm are shown in pseudocode
-below:
+with its input and output, using records written by developers using
+the language that was described in \Cref{ext}. Some interesting cases
+of the analysis algorithm are shown in pseudocode below:
 
 \begin{lstlisting}[language=python, float=h]
   def translate(node):
@@ -1390,11 +1379,6 @@ below:
     ...
 \end{lstlisting}
 
-%% \kk{Explain how the three above cases work, mentioning what does
-%%   pipe-graphs and safe do. The important point to get across is to
-%%   explain why we do the ``conservative checks'' in safe, and how they
-%%   preserve safety.}
-
 Whenever the algorithm encounters a pipe node, it recursively
 translates its subcomponents, and then merges them in a dataflow graph
 by connecting the output of the first with the input of the second,
@@ -1402,34 +1386,27 @@ by connecting the output of the first with the input of the second,
 algorithm checks that at most one node in the graph writes at every
 file, and at most one node reads from a file that another node writes
 to. This is important, in order to avoid inconsistent behaviour after
-distributing nodes in the dataflow graph \kk{Does this need an
-  example?}. Whenever the algorithm encounter an \ttt{\&\&} node,
+distributing nodes in the dataflow graph (i.e. by introducing to
+concurrent reads and writes to the same file when
+parallelizing). Whenever the algorithm encounter an \ttt{\&\&} node,
 it recursively translates its subcomponents (similarly to the pipe
-node), but then doesn't merge them in a large dataflow graph. Finally,
-whenever the algorithm encounters a command, it first checks whether
-it is safe to possibly parallelize this command. A command is
-considered to be safe, if it does not make any modification to the
-shell state (e.g. changing the current directory, modifying
-environment variables), and if it does not read from a
-\todo{read-once} file, like a fifo pipe. \kk{Mention: Note that an
-  unsafe command can still be safely added to the dataflow graph as a
-  single node, since this doesn't introduce any new
-  behaviours. However it cannot be parallelized further than that.} If
-the command is considered safe, its category is identified and a node
-containing that command is created and added to a singleton dataflow
-graph.
+node), but then does not merge them in a large dataflow
+graph. Finally, whenever the algorithm encounters a command, it first
+checks whether it is safe to parallelize it. A command is considered
+to be safe, if it does not make any modification to the shell state
+(e.g. changing the current directory, modifying environment
+variables), and if it does not read from any \todo{read-once} file,
+like a fifo pipe. If the command is considered safe, its category is
+identified and a node containing that command is created and added to
+a singleton dataflow graph. If the command is considered unsafe, it is
+still added to the dataflow graph, but cannot be further parallelized
+by the optimizer.
 
-It is important to note that due to the highly dynamic nature of the
-shell, the safety properties that were mentioned above cannot be
+An important consideration is that due to the highly dynamic nature of
+the shell, the safety properties that are mentioned above cannot be
 soundly checked statically. For example in the first case, two
 unexpaned strings could refer to the same file, but the translation
-pass cannot infer that. Hence, in both cases, the checks were
-approximated using a \todo{best-effort} method. \kk{Maybe mention that
-  as future work, we want to tighly integrate with the shell shtepper
-  that will allow to maximally expand everything before making this
-  decision.}
-
-
+pass cannot infer that.
 
 \subsection{Dish Optimizer}
 
@@ -1755,7 +1732,7 @@ On our dataflow graph model: Our data flow graph model is
 This section reflects on \sys's design and implementation, touches on future work, and closes the paper.
 
 \heading{Limitations}
-Our is implementation is limited in many ways, so as to succeed in proving the key hypothesis---that scaling out shell pipelines can be automated and correct--- despite \sys being a research prototype.
+Our is implementation is limited in many ways, so as to succeed in proving the key hypothesis---that scaling out shell pipelines can be automated and correct\TODO{with respect to some assumptions}--- despite \sys being a research prototype.
 
 \sys does not adequately handle failures or network partitions in the general sense, which would include re-scheduling passes that were executing on failed replicas.
 Prior work on fault-tolerant distributed stream processing~\cite{} can be of significant aid here.
@@ -1763,17 +1740,29 @@ Prior work on fault-tolerant distributed stream processing~\cite{} can be of sig
 The logic of the planner is quite simplified, attempting only straightforward placement of tasks to nodes (and using a hard-coded, homogeneous node structure).
 Prior work on operator placement of distributed dataflow graphs~\cite{} can be used to improve it.
 
-\sys is conservative in the shell subsets that it handles, so that it doesn't introduce any unsafe parallelism.
-The point of this work was not to be able to handle a complete distributable
-subset of the shell, but rather use significant part of it to demonstrate
-performance benefits.
+\sys is conservative in the shell subsets that it handles, in order to
+not introduce unsafe behaviours. The point of this work was not to be
+able to handle a complete distributable subset of the shell, but
+rather use significant part of it to demonstrate performance benefits.
+
+Shell is highly dynamic, thus making it impossible to design sound
+meaningful analyses to determine distributable regions and maximal
+parallelization. In order to address this particularity, \sys could be
+tighly integrated with a posix compliant shell
+interpreter~\cite{smoosh:20} so that dynamic information can be
+acquired selectively to aid the analysis and optimization process.
+
 
 \heading{Future Work}
 % \label{limitation}
 % \item No cycles (multiple commands writing and reading from the same file)
-There are several worthwhile directions for future work.
-One direction would be a formal study of \sys and specifically a proof that the analysis~\sx{dataflow} does indeed return distributable subtrees.
-Recent work on formalizing the semantics of the POSIX shell~\cite{smoosh:20} make such an attempt possible.
+There are several worthwhile directions for future work.  One
+direction would be an extension of the distributability analysis of
+\sys, in order to guide it using dynamic information. This could
+enable a formal study of the analysis~\sx{impl} to show that it
+returns regions that are safe to distribute.  Recent work on
+formalizing the semantics of the POSIX shell~\cite{smoosh:20} make
+such an attempt possible.
 
 Another direction is to extend \sys to handle other classes outside \sta and \pur.
 These two classes enjoy a certain in quick, one-off pipelines and are the easiest to distribute, but 
