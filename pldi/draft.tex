@@ -460,11 +460,11 @@ Sections \ref{distributability}--\ref{recipes} highlight key contributions:
   \S\ref{ir} presents a set of rewriting transformations for identifying maximal pipeline sub-expressions, candidates for scale-out.
 
   \item
-  \S\ref{frontend} details other concerns, such as distributed state management and extensibility.
+  \S\ref{impl} details other concerns, such as distributed state management and extensibility.
 \end{itemize}
 
 \noindent
-\sys's implementation~\sx{impl} evaluation~\sx{eval} show significant speedups on both parallel and distributed execution, using a combination of micro-bench\-marks---popular shell one-liners that highlight certain features---and multi-line macro-benchmarks---a web crawling and indexing engine, a genomics pipeline, and a popular weather analysis script.
+\sys's evaluation~\sx{eval} shows significant speedups on both parallel and distributed execution, using a combination of micro-bench\-marks---popular shell one-liners that highlight certain features---and multi-line macro-benchmarks---a web crawling and indexing engine, a genomics pipeline, and a popular weather analysis script.
 After a comparison with related prior work~\sx{related}, the paper closes with a discussion of related work and possible future directions~\sx{discussion}.
 % \bigskip
 % \begin{quote}
@@ -867,31 +867,6 @@ By default \ttt{cat} is in \sta, but with \ttt{-n} it jumps into \pur because it
 Conversely, \ttt{sort} defaults to \pur, but \ttt{with} \ttt{-h} it jumps into \sta.
 % TODO: closure?
 
-
-\heading{Command Inputs and Outputs}
-Consider the command \ttt{comm}. It takes as input two files and
-implements some form of join. When invoked without any option, it
-produces three-column output. The first column contains lines that
-unique to the first file, the second column contains lines that are
-unique to the second file, and the last column contains lines that
-exist in both files. In the general case \ttt{comm} is pure, since it
-needs to wait until it reads both files completely before it can
-output its results.
-
-However, \ttt{comm} can also be invoked using some options that
-suppress the output of any combination of columns. More precisely, the
-option \ttt{-1} suppresses the first column of the output. Similarly,
-\ttt{-2} and \ttt{-3} supress the second and third column. Using both
-\ttt{-2} (or \ttt{-1}) and \ttt{-3}, the command becomes stateless
-regarding its first (resp. the second) file argument.
-
-% \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
-
-In order to address this, we have designed a categorization language
-that is flexible enough to identify commands to different categories
-given their options. The complete language syntax can be seen in
-\Cref{fig:dsl}.
-
 %% Can be tweaked according to this:
 %% https://tex.stackexchange.com/questions/24886/which-package-can-be-used-to-write-bnf-grammars
 
@@ -937,14 +912,37 @@ given their options. The complete language syntax can be seen in
   \caption{
 \textbf{Distributability description language.}
 \todo{The DSL attempts to capture important elements regarding the distributability aspects of various commands.}
-\vspace{-15pt}
+\vspace{-20pt}
 }
 
   \label{fig:dsl}
 \end{figure}
 
 
-We assume that the arguments of a command can always be separated to
+
+\heading{Command Inputs and Outputs}
+Consider the command \ttt{comm}. It takes as input two files and
+implements some form of join. When invoked without any option, it
+produces three-column output. The first column contains lines that
+unique to the first file, the second column contains lines that are
+unique to the second file, and the last column contains lines that
+exist in both files. In the general case \ttt{comm} is pure, since it
+needs to wait until it reads both files completely before it can
+output its results.
+
+However, \ttt{comm} can also be invoked using some options that
+suppress the output of any combination of columns. More precisely, the
+option \ttt{-1} suppresses the first column of the output. Similarly,
+\ttt{-2} and \ttt{-3} supress the second and third column. Using both
+\ttt{-2} (or \ttt{-1}) and \ttt{-3}, the command becomes stateless
+regarding its first (resp. the second) file argument.
+
+% \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
+
+\heading{Distributability DSL}
+\sys's distributability description DSL (Fig.~\ref{fig:dsl}) is designed to be able to classify a commands into multiple categories given their options.
+
+It assumes that the arguments of a command can always be separated to
 options and file arguments (checking if they start with a
 \ttt{-}~\footnote{Note that the single character \ttt{-} is not an
   option as it is most often used to designate that a command reads
@@ -1026,12 +1024,12 @@ classified as follows:
 Even though stateless commands are a big percentage of all of them,
 there are a lot of useful and popular pure commands.
 
-As mentioned in distributability, pure commands can be broken down
-into different categories. We might be able to get ideas about this
-from this paper:
-\url{http://www.cs.toronto.edu/~azadeh/papers/pldi17-ex.pdf} and its
-continuation in PLDI 2019.
-
+% As mentioned in distributability, pure commands can be broken down
+% into different categories. We might be able to get ideas about this
+% from this paper:
+% \url{http://www.cs.toronto.edu/~azadeh/papers/pldi17-ex.pdf} and its
+% continuation in PLDI 2019.
+% FIXME: \nv{Cite this paper?}
 \tr{Can we find a solution for the commands in coreutils?}
 
 
@@ -1254,14 +1252,13 @@ to a file.
 
 
 
-\section{Front End}
-\label{frontend}
-
-\kk{The writing in this section is wandering around without a clear
-  purpose :( }
-
-\kk{It might make sense to merge this section with the one below with
-  the name: From Shell to IR and back}
+\section{Implementation}
+\label{impl}
+% \kk{The writing in this section is wandering around without a clear
+%   purpose :( }
+% 
+% \kk{It might make sense to merge this section with the one below with
+%   the name: From Shell to IR and back}
 
 As mentioned in \Cref{ir}, in order to generate the distributed
 implementation of a shell script, \ttt{Dish} first translates it to
@@ -1409,12 +1406,7 @@ approximated using a \todo{best-effort} method. \kk{Maybe mention that
 
 
 
-\section{Implementation}
-\label{impl}
-\kk{I think that this section should be merged with the front end}
-
-
-\paragraph{Dish Optimizer}
+\subsection{Dish Optimizer}
 
 The \ttt{Dish} optimizer is given a dataflow graph representing a
 shell program and outputs an optimized dataflow graph, where data
@@ -1428,7 +1420,7 @@ edge splits, and then it performs maximal node splits. The final graph
 can then be implemented by spawning a process for each node, and
 redirecting the outputs according to the graph edges.
 
-\kk{Maybe give an example}
+\nv{Give example, extend}
 
 
 %% \subsection{Mapping operators to nodes}
@@ -1443,14 +1435,13 @@ redirecting the outputs according to the graph edges.
 %% We don't try to make a proper planner, as there is a lot of work on
 %% operator placement etc. that we can borrow from.
 
-\subsection{Just in time planning}
+\subsection{Planning Activators and Just-in-Time Planning}
 
-\TODO{Rename this section to planner activators and write it after I
-  discuss with Nikos.}
+\nv{Nikos working on this and next}
 
-\kk{This whole section for just in itme planning, is also relevant for
-  the front end. If the front end is executed just in time, it would
-  have more information, and maybe it could make a sound analysis.}
+% \kk{This whole section for just in itme planning, is also relevant for
+%   the front end. If the front end is executed just in time, it would
+%   have more information, and maybe it could make a sound analysis.}
 
 Important point: Shell is extremely dynamic. Because of this, a
 distributor cannot decide how to distribute a subexpression
@@ -1469,8 +1460,6 @@ having parsed the ast, and decide on maximal distributable subtrees as
 late as possible in the process. This would be awesome.
 
 \subsection{Merge and Split Implementation}
-
-\TODO{Niko, could you make this a bit stronger?}
 
 It is common in the dataflow graph for a node to have many incoming
 edges, or many outgoing edges (when all but the last outgoing edges
@@ -1509,27 +1498,28 @@ arbitrarily many different pipes.
 \section{Evaluation}
 \label{eval}
 
-\kk{We should make sure to measure the time that it takes for the
-  whole process to run (parsing, translating, optimizing, planning)
-  together with the scripts. This will probably be negligible, but we
-  still have to mention it. }
-
-\kk{Also, we have to have one-two handcrafted examples that have more
-  than one pipeline, to show the execution time end to end, as this
-  cannot be shown with the one-pipeline examples since they only have
-  one graph, so no back and forth between shell and dish.}
-
-\kk{Furthermore it would be great to have one distributed example that
-  runs in more than one node (if we have time)}
-
-\kk{Also we have to make sure to measure with and without the final
-  cat of output file, so that we show that this is also negligible.}
-
-\kk{We have to make sure that we repeat that the results are the same
-  in all tests that we run. Corectness, blah blah ...}
-
-\kk{We should have at least some pipelines that have a bad pure
-  command in them.}
+% FIXME
+% \kk{We should make sure to measure the time that it takes for the
+%   whole process to run (parsing, translating, optimizing, planning)
+%   together with the scripts. This will probably be negligible, but we
+%   still have to mention it. }
+% 
+% \kk{Also, we have to have one-two handcrafted examples that have more
+%   than one pipeline, to show the execution time end to end, as this
+%   cannot be shown with the one-pipeline examples since they only have
+%   one graph, so no back and forth between shell and dish.}
+% 
+% \kk{Furthermore it would be great to have one distributed example that
+%   runs in more than one node (if we have time)}
+% 
+% \kk{Also we have to make sure to measure with and without the final
+%   cat of output file, so that we show that this is also negligible.}
+% 
+% \kk{We have to make sure that we repeat that the results are the same
+%   in all tests that we run. Corectness, blah blah ...}
+% 
+% \kk{We should have at least some pipelines that have a bad pure
+%   command in them.}
 
 At a high level, we are interested in understanding whether \sys can indeed scale pipelines out automatically and correctly.
 To achieve this, we use a combination of micro- and macro-benchmarks, most of which were collected from prior literature and online repositories.
@@ -1555,6 +1545,14 @@ Experiments were run on a \todo{network of five workstations} connected by 1Gbps
 For our software setup, we use SMP Debian 4.9.144-3.1 (2019-02-19), GNU Core-utils 8.30-3, GNU Bash 5.0.3(1)-release (x86\_64-pc-linux-gnu), Python 3.7.3, and OCaml 4.05.0.
 Generally, no special configuration was made in hardware or software beyond disabling hyper-threading. % ---specifically, the network protocol stack was left unoptimized.
 More detailed setup and experiments, including the scripts, is included in the accompanying (anonymized) online repository.
+
+\subsection{Microbenchmarks: Shell One-liners}
+
+\subsection{Macro-benchmark: Weather Analysis}
+
+\subsection{Macro-benchmark: Web Crawling}
+
+\subsection{Macro-benchmark: Bioinformatics Transform}
 
 
 \section{Related Work}
