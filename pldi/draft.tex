@@ -837,19 +837,21 @@ can distribute a command.
 We address this issue by designing a lightweight language whose
 purpose is to categorize a command, describes how it reads its input
 (meaning in what order), and how to distribute it (in case it is
-pure). \kk{I am not sure if the order in which a command reads its
-  input will be part of the language since many commands can be made
-  to read from one place (like stdin or their first argument). Even in
-  that case though, where the command only reads from one argument, we
-  have to make sure that there is a way for the user to pinpoint which
-  argument does a command read from.}
+pure).
+
+%% \kk{I am not sure if the order in which a command reads its
+%%   input will be part of the language since many commands can be made
+%%   to read from one place (like stdin or their first argument). Even in
+%%   that case though, where the command only reads from one argument, we
+%%   have to make sure that there is a way for the user to pinpoint which
+%%   argument does a command read from.}
 
 \subsection{Categorization Language}
 
 \kk{Text point: Introduce problem: Most shell commands, belong to
   different classes depending on their flags, arguments}
 
-Consider the command \texttt{cat} \kk{Maybe that is not he best
+Consider the command \ttt{cat} \kk{Maybe that is not he best
   example. TODO: Find a good example of a simple command that is in
   different classes depending on the arguments.}. When used without
 any flag it is stateless, etc...
@@ -879,7 +881,15 @@ come first, and then file arguments. The language contains a record
 for each command name, together with a sequence of predicates that map
 to command categories and designation of input output.
 
-%% Can be tricked according to this:
+A record contains a sequence of predicates => categories. Each
+predicate is a combination of not, or, and and the atomic predicates
+are the presence of a flag, or an equality that checks that the value
+of a flag is equal to something (because flags can also have
+values). The final predicate can be left empty, and it is trivially true.
+
+Pythonic range for several inputs/outputs
+
+%% Can be tweaked according to this:
 %% https://tex.stackexchange.com/questions/24886/which-package-can-be-used-to-write-bnf-grammars
 
 \begin{grammar}
@@ -921,25 +931,12 @@ to command categories and designation of input output.
 
 
 
-Sketch of the language:
-
-Some kind of lightweight annotation configuration language (like
-yaml), that contains a record for each command.
-
-A record contains a sequence of predicates => categories. Each
-predicate is a combination of not, or, and and the atomic predicates
-are the presence of a flag, or an equality that checks that the value
-of a flag is equal to something (because flags can also have
-values). The final predicate can be left empty, and it is trivially true.
 
 Interpreter:
 
 Given a command and the set of its arguments, the intepreter returns
 the command category. In does so by returning the category of the first
 predicate that matches.
-
-\kk{Would it be meaningful to give the syntaxx of the language
-  formally?}
 
 \kk{If we talk about the language it would be good to give some
   statistics about how many commands (out of the ones that we have
@@ -953,21 +950,6 @@ As described in distributability\ref{}, the abstract notion of a
 program that we have is programs with one input and one output
 stream. The command developer must be able to express the input
 argument of a commmand (or if it is the stdin).
-
-\kk{Question: Do we need to handle all commands (even the ones that
-  could have their input split in several different arguments? or can
-  we somehow easily make these ones just take their input from one
-  place (e.g. by adding a cat before them).}
-
-\kk{Possible solutions for this (if we have already turned commands
-  with more that one input to commands with one input): Have a
-  positional reference to the argument that is input (or ``stdin'' if
-  it is the stdin). Example: the last argument [-1] of grep is its
-  input.}
-
-\kk{It seems that even the arguments might depend on flags (e.g. grep
-  checks the current directory if asked recursively, or the stdin
-  otherwise), so maybe we should again have a sequence of predicates}
 
 
 \kk{Note: Since a categorization language will probably not be
@@ -998,8 +980,6 @@ continuation in PLDI 2019.
 
 \section{Dataflow Graph Model}
 \label{ir}
-
-\TODO{Replace texttt with inline listings?}
 
 In order to effectively apply optimizations and distribute a shell
 script, it first has to be translated to a manipulable
@@ -1037,16 +1017,16 @@ This command takes a stream of lines from its standard input and
 returns a stream of lines on its standard output. An important
 observation is that commands in the shell might read their input
 stream from a sequence of different sources. An illustrative example
-is the command \texttt{cat} which reads its input from a combination
+is the command \ttt{cat} which reads its input from a combination
 of files and its standard input.
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
  cat x - y
 \end{lstlisting}
 
-The example above reads file \texttt{x} until it encounters the EOF
-character, then reads from \texttt{stdin}, and then reads from
-\texttt{y}. In order to handle this particularity, nodes in the
+The example above reads file \ttt{x} until it encounters the EOF
+character, then reads from \ttt{stdin}, and then reads from
+\ttt{y}. In order to handle this particularity, nodes in the
 dataflow graph can have many incoming edges, that are ordered in a
 sequence. Note that this does not correspond to standard dataflow
 graph representations where the semantics of multiple incoming edges
@@ -1116,8 +1096,8 @@ are its outputs.
 As mentioned above, the dataflow graph exposes task
 parallelism. Different nodes in the graph can be executed
 concurrently, communicating through the edges. Task level parallelism
-is already exposed by the shell, by using pipes \texttt{|} and the
-background operator \texttt{\&}. Unfortunately, simple task
+is already exposed by the shell, by using pipes \ttt{|} and the
+background operator \ttt{\&}. Unfortunately, simple task
 parallelism leaves a lot to be desired, since scaling a computation
 requires manually introducing more operators.
 
@@ -1220,11 +1200,11 @@ to a file.
   the name: From Shell to IR and back}
 
 As mentioned in \Cref{ir}, in order to generate the distributed
-implementation of a shell script, \texttt{Dish} first translates it to
+implementation of a shell script, \ttt{Dish} first translates it to
 a dataflow graph. However, there are several components in shell
 programs that cannot be arbitrarily parallelized without affecting the
 program behaviour, e.g. commands producing an irreversible effect, or
-commands connected with a \texttt{\&\&} operator. In addition, the
+commands connected with a \ttt{\&\&} operator. In addition, the
 fact that the shell is \todo{extremely dynamic}, further increases the
 challenge of correctly identifying what parts can be distributed.
 
@@ -1258,17 +1238,17 @@ Consider the following example:
 
 Notice that the structure of a shell program clearly identifies
 components that can be executed concurrently, and barriers that
-enforce synchronization. More precisely, \texttt{cat f1 f2} and
-\texttt{grep ``foo''} would already execute concurrently in the
-standard shell, while \texttt{sort f3} waits for their completion
-before being executed. Both \texttt{cat f1 f2 | grep ``foo'' > f3} and
-\texttt{sort f3} are maximal distributable regions, in the sense that
-they cannot be extended beyond \texttt{\&\&}.
+enforce synchronization. More precisely, \ttt{cat f1 f2} and
+\ttt{grep ``foo''} would already execute concurrently in the
+standard shell, while \ttt{sort f3} waits for their completion
+before being executed. Both \ttt{cat f1 f2 | grep ``foo'' > f3} and
+\ttt{sort f3} are maximal distributable regions, in the sense that
+they cannot be extended beyond \ttt{\&\&}.
 
 Concretely, a distributable region cannot permeate through the
-following barrier constructs: ;, \&\&, \texttt{||}, function
+following barrier constructs: ;, \&\&, \ttt{||}, function
 definitions, command substitutions, and control flow primitives. On
-the other hand, the pipe operator \texttt{|} and the parallel
+the other hand, the pipe operator \ttt{|} and the parallel
 composition operator \& enable parallelization, and extend
 distributable regions. Essentially, distributed regions correspond to
 subsections of the program that would be executed by different shell
@@ -1294,10 +1274,10 @@ extend beyong a single node. An illustrative example follows:
 \end{lstlisting}
 
 In the above example\kk{Can we make example not floating?}, while
-\texttt{sort f1 > g1}, \texttt{sort f2 > g2}, and \texttt{sort -m g1
+\ttt{sort f1 > g1}, \ttt{sort f2 > g2}, and \ttt{sort -m g1
   g2} are all in different dataflow graphs. The dataflow graph that
-corresponds to the whole program, has two nodes, \texttt{sort f1 > g1
-  \&\& sort f2 > g2} and \texttt{sort -m g1 g2}.
+corresponds to the whole program, has two nodes, \ttt{sort f1 > g1
+  \&\& sort f2 > g2} and \ttt{sort -m g1 g2}.
 
 In order to identify possible opportunities for parallelism, the
 translation pass also identifies the category of each node, together
@@ -1337,7 +1317,7 @@ algorithm checks that at most one node in the graph writes at every
 file, and at most one node reads from a file that another node writes
 to. This is important, in order to avoid inconsistent behaviour after
 distributing nodes in the dataflow graph \kk{Does this need an
-  example?}. Whenever the algorithm encounter an \texttt{\&\&} node,
+  example?}. Whenever the algorithm encounter an \ttt{\&\&} node,
 it recursively translates its subcomponents (similarly to the pipe
 node), but then doesn't merge them in a large dataflow graph. Finally,
 whenever the algorithm encounters a command, it first checks whether
@@ -1372,7 +1352,7 @@ approximated using a \todo{best-effort} method. \kk{Maybe mention that
 
 \paragraph{Dish Optimizer}
 
-The \texttt{Dish} optimizer is given a dataflow graph representing a
+The \ttt{Dish} optimizer is given a dataflow graph representing a
 shell program and outputs an optimized dataflow graph, where data
 parallelism opportunities have been exploited. More concretely, the
 optimizer starts by splitting input files in several chunks, given the
