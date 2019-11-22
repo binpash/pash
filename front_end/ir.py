@@ -517,6 +517,8 @@ def find_command_category(command, options):
     stateless = ["cat", "tr", "grep", "col",
                  "groff", # not clear
                  "sed", # not always
+                 "cut",
+                 "gunzip", # file stateless
                  "xargs"] # I am not sure if all xargs are stateless
 
     pure = ["sort", "wc", "uniq"]
