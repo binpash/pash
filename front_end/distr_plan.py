@@ -21,6 +21,11 @@ def main():
     else:
         fan_out = 2
 
+    if (len(sys.argv) == 6):
+        batch_size = int(sys.argv[5])
+    else:
+        batch_size = 10000
+
     with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
 
@@ -28,7 +33,7 @@ def main():
     shell_string = ast_to_shell(ir_node.ast)
     print(shell_string)
 
-    distributed_graph = simpl_file_distribution_planner(ir_node, fan_out)
+    distributed_graph = simpl_file_distribution_planner(ir_node, fan_out, batch_size)
 
     ## Notes:
     ##
@@ -60,7 +65,7 @@ def main():
 ##
 ## It returns a maximally expanded (regarding files) graph, that can
 ## be scheduled depending on the available computational resources.
-def simpl_file_distribution_planner(graph, fan_out):
+def simpl_file_distribution_planner(graph, fan_out, batch_size):
     # print("Intermediate representation:")
     # print(graph)
 
@@ -80,7 +85,7 @@ def simpl_file_distribution_planner(graph, fan_out):
     ## Note: The above has to be done in a BFS fashion (starting from
     ## all sources simultaneously) so that we don't have to iterate to
     ## reach a fixpoint.
-    naive_parallelize_stateless_nodes_bfs(graph, fan_out)
+    naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size)
     # print("Parallelized graph:")
     # print(graph)
 
@@ -101,7 +106,7 @@ def simpl_file_distribution_planner(graph, fan_out):
     return graph
 
 
-def naive_parallelize_stateless_nodes_bfs(graph, fan_out):
+def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     source_nodes = graph.source_nodes()
     # print("Source nodes:")
     # print(source_nodes)
@@ -113,9 +118,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out):
     ## If the source nodes only have one file input, then split it in
     ## partial files.
 
-    ## TODO: Make a proper decision instead of hardcoding splitting
-    ## to 100 lines and only splitting for cat
-    batch_size = 100
+
     # commands_to_split_input = ["cat"]
     # for source_node in source_nodes:
     #     input_file_ids = source_node.get_flat_input_file_ids()
@@ -230,6 +233,8 @@ def parallelize_pure(curr, graph, fileIdGen):
         ## Parallelize sort manually for now
         if(str(curr.command) == "sort"):
             graph = parallelize_pure_sort(curr, graph, fileIdGen)
+        # elif(str(curr.command) == "wc"):
+        #     graph = parallelize_pure_wc(curr, graph, fileIdGen)
 
     return graph
 
@@ -299,6 +304,65 @@ def sort_duplicate(curr, fileIdGen):
     new_commands = [curr.make_duplicate_command(in_fid, out_fid) for in_fid, out_fid in in_out_file_ids]
 
     return new_commands
+
+def parallelize_pure_wc(curr, graph, fileIdGen):
+    input_file_ids = curr.get_flat_input_file_ids()
+    assert(len(input_file_ids) > 1)
+
+    ## We assume that every command has one output_file_id for
+    ## now. I am not sure if this must be lifted. This seems
+    ## to be connected to assertion regarding the next_nodes.
+    out_edge_file_ids = curr.get_output_file_ids()
+    assert(len(out_edge_file_ids) == 1)
+    out_edge_file_id = out_edge_file_ids[0]
+
+    ## Add children to the output file (thus also changing the
+    ## input file of the next command to have children)
+    new_output_file_ids = [fileIdGen.next_file_id() for in_fid in input_file_ids]
+    intermediate_output_file_id = fileIdGen.next_file_id()
+    intermediate_output_file_id.set_children(new_output_file_ids)
+
+    curr.stdout = intermediate_output_file_id
+    ## For each new input and output file id, make a new command
+    new_commands = sort_duplicate(curr, fileIdGen)
+    # print("New commands:")
+    # print(new_commands)
+
+    ## Create a merge sort command
+    ##
+    ## WARNING: Since the merge has to take the files as arguments, we
+    ## pass the pipe names as its arguments and nothing in stdin
+    old_options = curr.get_non_file_options()
+    ## TODO: Implement a proper version of parallel sort -m, instead
+    ## of using the parallel flag.
+    options = [string_to_argument("-m"), string_to_argument("--parallel={}".format(len(input_file_ids)))]
+    # options = []
+    options += [string_to_argument(fid.pipe_name()) for fid in new_output_file_ids]
+    opt_indices = [("option", i) for i in range(len(options))]
+    # in_stream = [("option", i + len(opt_indices)) for i in range(len(new_output_file_ids))]
+    in_stream = []
+    merge_command = Command(None, # TODO: Make a proper AST
+                            curr.command,
+                            options,
+                            in_stream,
+                            ["stdout"],
+                            opt_indices,
+                            "pure",
+                            # intermediate_output_file_id,
+                            [],
+                            out_edge_file_id)
+
+    graph.remove_node(curr)
+    for new_com in new_commands:
+        graph.add_node(new_com)
+
+    graph.add_node(merge_command)
+
+    return graph
+
+# paste -d '+' <(cat * | wc | tr -s ' '  '\n' | tail -n +2) <(cat * | wc | tr -s ' '  '\n' | tail -n +2) | bc | tr -s '\n'  ' ' | sed 's/^/   /' | sed 's/$/\ /'
+
+
 
     ## TODO: In order to be able to execute it, we either have to
     ## execute it in the starting shell (so that we have its state),
