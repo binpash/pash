@@ -26,6 +26,7 @@
 \usepackage{wrapfig}
 \usepackage{syntax}
 
+
 \captionsetup[figure]{font=footnotesize,name={Fig.},labelfont={bf, footnotesize}}
 \captionsetup[table]{font=footnotesize,name={Tab.},labelfont={bf, footnotesize}, skip=2pt, aboveskip=2pt}
 \captionsetup{font=footnotesize,labelfont={bf, footnotesize}, belowskip=2pt}
@@ -67,6 +68,7 @@
 \newcommand{\nv}[1]{[{\color{cyan}#1 --- Nikos}]}
 \newcommand{\kk}[1]{[{\color{magenta}#1 --- kk}]}
 \newcommand{\review}[1]{{\color{red}#1}}
+\newcommand{\tr}[1]{} %% Text and comments for technical report
 
 \definecolor{editorGray}{rgb}{0.95, 0.95, 0.95}
 \definecolor{editorOcher}{rgb}{1, 0.5, 0} % #FF7F00 -> rgb(239, 169, 0)
@@ -345,13 +347,13 @@ To understand this sharp contrast, consider a Bash pipeline calculating term fre
 % unique |                       # remove duplicate words
 % comm -13 /usr/share/dict -     # report words not in dictionary 
 % \end{lstlisting}
-
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+\smallskip
+\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
 cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$[p_1]$$)
   sort | uniq -c | sort -rn | head 5 > out
 \end{lstlisting}
-
-\noindent
+\smallskip
+% \noindent
 Program $p_1$ creates a character stream, breaks it into words, transliterates to lower-case, sorts to group duplicates, reduces duplicates to a counter, sorts counters in descending order, picks the top five results, and writes them to a file \ttt{out}.
 Combining several features, \unix makes small tasks easy to express;
   for a user with \emph{one} computer and small input size, this pipeline takes a few seconds to compose and execute~\cite{bentley1986literate}.
@@ -365,19 +367,16 @@ Combining several features, \unix makes small tasks easy to express;
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_schematic.pdf}}
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_overview.pdf}}
 \caption{
-  \textbf{\sys high-level schematic.}
-	\sys XYZ
+  \textbf{High-level schematic.}
+  \sys leverages distributability analysis for built-in commands and any developer extensions (left) to automatically transform shell scripts (mid) and orchestrates their
+  execution (right).
 }
+\vspace{-15pt}
 \label{fig:schematic}
 \end{figure}
 
-
-%      dish      ignis, mozart    hadoop, spark, ...      erlang, elixir
-%       \/           \   /             \     /                \   /
-% auto <-------------------------------------------------------------> manual
-%                      [rewrite (not write) cost]
 
 Unfortunately, developing $p_1$'s distributed equivalent requires a significant effort.
 % For a user with many computers and larger inputs, 
@@ -417,10 +416,15 @@ Could the generation and execution of $p_1$'s distributed version be fully and c
 % If developers have already expressed their computation as a Unix pipeline, they should not have to manually rewrite the program in other environment---\eg Hadoop, Spark---to exploit distribution.
 
 
-To answer this question, this paper presents \sys, a shell \todo{preprocessor} that transforms shell pipelines into their distributed equivalents enabling \emph{distribution-oblivious programming}.
-The key insight behind \sys is that the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation\kk{I am not sure whether stream processing provides information for distributing a computation on its own. Maybe we can say that the shell exposes operator level parallelism, and that this is the first step to distributing a computation}.
+To answer this question, this paper presents \sys, a shell \todo{preprocessor} that transforms shell pipelines into their distributed equivalents, enabling \emph{distribution-oblivious programming}.
+The key insight behind \sys is that the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation
+% FIXME \kk{I am not sure whether stream processing provides information for distributing a computation on its own. Maybe we can say that the shell exposes operator level parallelism, and that this is the first step to distributing a computation}.
 \sys builds on this insight with a careful study of the distributability properties of shell primitives and commands, a pipeline rewriting pass that identifies \todo{maximal} sub-expressions as candidates for scale-out, and a late-bound command-prefixing scheme for deferring scheduling decisions to the distributed planner (\ie when runtime information is available).
-A \sys-enabled $p_1$ will run \ttt{tr} and \ttt{uniq} in completely parallel streams \kk{Isn't uniq pure? I am not sure how we can handle it}, use a mostly-parallel tree of \ttt{sort}s, run \ttt{head} in one of the streams, and (trivially) merge streams in \ttt{out}.
+A \sys-enabled $p_1$ will run \ttt{tr}s in parallel streams,
+  use a mostly-parallel tree of \ttt{sort}s,
+  run \ttt{uniq} mostly in parallel,
+  \ttt{head} in one of the streams,
+  and (trivially) merge streams in \ttt{out}.
 
 The combination of automated transformations for program distribution with the ability to maintain correct non-distributed semantics results in several benefits.
 % \sys converts legacy shell pipelines into their distributed equivalents fully automatically, offering $100\times$ improvements in performance without a single line of additional code or annotation.
@@ -447,26 +451,28 @@ Most importantly, \sys provides an architectural lesson for system designers---n
 
 The paper is structured as follows.
 It first starts with a background section outlining pipeline concepts and overviewing \sys~\sx{bg}.
-Sections \ref{classes}--\ref{recipes} highlight key contributions:\footnote{
-  This is not precise, we'll need to wait until it matures a bit.
-}
+Sections \ref{distributability}--\ref{recipes} highlight key contributions:
 \begin{itemize}
 
   \item
-  \S\ref{classes} overviews \sys and introduces several scalability and distributability classes.
+  \S\ref{distributability} overviews \sys and introduces several scalability and distributability classes.
 
   \item
-  \S\ref{rewrite} presents a set of rewriting transformations for identifying maximal pipeline sub-expressions, candidates for scale-out.
+  \S\ref{ir} presents a set of rewriting transformations for identifying maximal pipeline sub-expressions, candidates for scale-out.
 
   \item
-  \S\ref{other} details other concerns, such as distributed state management and extensibility.
+  \S\ref{impl} details other concerns, such as distributed state management and extensibility.
 \end{itemize}
 
 \noindent
 \sys's evaluation~\sx{eval} shows significant speedups on both parallel and distributed execution, using a combination of micro-bench\-marks---popular shell one-liners that highlight certain features---and multi-line macro-benchmarks---a web crawling and indexing engine, a genomics pipeline, and a popular weather analysis script.
 After a comparison with related prior work~\sx{related}, the paper closes with a discussion of related work and possible future directions~\sx{discussion}.
-
-% Additional material, in anonymized form, is available at~\href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.
+% \bigskip
+% \begin{quote}
+% \footnotesize
+Additional material, in anonymized form, is available at
+\href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.
+% \end{quote}
 
 % \begin{figure*}[t]
 % \centering
@@ -478,11 +484,10 @@ After a comparison with related prior work~\sx{related}, the paper closes with a
 % \end{figure*}
 % 
 
-\section{Background}
+\section{Background and Overview}
 \label{bg}
 
-This section breaks down $p_1$ to presents important background on and challenges
-of shell scripting.
+This section presents (i) important background on shell pipeline composition~\sx{bg:pipelines}, and (ii)) a high-level overview of \sys's design and implementation.
 
 \subsection{Unix Composition, Informally}
 \label{bg:pipelines}
@@ -492,42 +497,46 @@ of shell scripting.
 Central among them is the \emph{pipe}, a primitive that passes the output of one program as input to the next.
 These programs produce output and consume input concurrently, and possibly at different rates, with the \unix kernel facilitating program scheduling and communication synchronization behind the scenes.
 Intermediate programs, termed commands, can also be developed in different programming languages, as long as they conform to a common interface.
-\begin{wrapfigure}{r}{0.06\textwidth}
-  \vspace{-12pt}
-  % \begin{center}
-    % \includegraphics[width=0.48\textwidth]{gull}
-    \includegraphics[width=0.06\textwidth]{\detokenize{./figs/dish_ex1.pdf}}
-  % \end{center}
-  \vspace{-30pt}
-\end{wrapfigure}
+%\begin{wrapfigure}{r}{0.06\textwidth}
+%  \vspace{-12pt}
+%  % \begin{center}
+%    % \includegraphics[width=0.48\textwidth]{gull}
+%    \includegraphics[width=0.06\textwidth]{\detokenize{./figs/dish_ex1.pdf}}
+%  % \end{center}
+%  \vspace{-30pt}
+%\end{wrapfigure}
 This interface exposes a stream of contiguous character lines.
 A few characters are special---for example, the newline (\textsc{NL}) character delineates an element of the stream, and the end-of-file (\textsc{EOF}) character signals the end of a stream.
 As part of this interface, each command has access to (any combination of) three \emph{standard} streams---input, output, and error.
 % the input stream (stdin), the output stream (stdout), and the generating errors or diagnostics to the standard error stream (stderr)
 % generating errors or diagnostics to the standard 
 % Leveraging this interface, pipelines chain together commands by their standard streams, such that the output stream of one command (stdout) is passed directly as input (stdin) to the next one.
-
-Commands can be tuned by two mechanisms, namely command-line options and environment variables.
+\smallskip
+\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+  ls -l | wc -l                          [($$p_2$$)]
+\end{lstlisting}
+\smallskip
+Commands can be tuned by two mechanisms, namely com\-mand-line options and environment variables.
 Options control the execution of a program---\eg changing the \ttt{sort}ing order.
 The shell does not have any visibility into these options; 
-  their parsing and evaluation is left entirely up to each command \kk{A minor point: the shell does the expansion, and then hands it of to the command (I am saying that because evaluation might be confounded with expansion so we might want to clarify that)}.
+  after it expands special characters such as \ttt{~} and \ttt{*}, it leaves parsing and evaluation entirely up to every command.
 Environment variables carry more general information about the surrounding system---\eg file search paths, system defaults, parsing switches \etc 
 They are organized in a map from names to values, both of which are strings, and can be evaluated at any point in the program---including as commands, flags, a shell feature termed parameter \emph{expansion}.
 
 % TODO: Talk about security primitives?
 Streams are a key feature of \unix, and go hand-in-hand with the file abstraction:
   files are simply persistent streams that can be manipulated by commands or pipelines.
-\begin{wrapfigure}{r}{0.15\textwidth}
-  \vspace{-15pt}
-  % \begin{center}
-    % \includegraphics[width=0.48\textwidth]{gull}
-    \includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_ex3.pdf}}
-  % \end{center}
-  \vspace{-25pt}
-\end{wrapfigure}
+% \begin{wrapfigure}{r}{0.15\textwidth}
+%   \vspace{-15pt}
+%   % \begin{center}
+%     % \includegraphics[width=0.48\textwidth]{gull}
+%     \includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_ex3.pdf}}
+%   % \end{center}
+%   \vspace{-25pt}
+% \end{wrapfigure}
 Reading a file or a set of files generates a stream; 
   similarly, streams can be trivially redirected to the file system---by appending with the file identifier.
-Files are named, in the sense that they correspond to a global identifier---for example \ttt{cat /x/y} returns the persistent stream associated with the identifier \ttt{/x/y}.
+Files are named, in the sense that they correspond to a global identifier---for example, \ttt{/x/y} corresponds to a persistent stream.
 \unix exposes a few different types of files---\eg directories, symbolic links, named pipes (or FIFOs), and special character devices.
 As a result, file-system identifiers part of a pipeline may resolve to in-memory structures or pseudo-devices (\eg \ttt{/dev/urandom}).
 
@@ -538,7 +547,13 @@ As a result, file-system identifiers part of a pipeline may resolve to in-memory
 % (p) named pipes or FIFOs, communication primitives that can be named and manipulated like files,
 % (s) domain sockets or DSes, full-duplex communication primitives that support passing file descriptors, and
 % (b or c) special files, interfaces to device drivers or low-level abstractions, presented as ordinary files.
+\smallskip
+\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+  ls | sed 's/1/2/' | > out.t 2> err.t    [($$p_3$$)]
+\end{lstlisting}
+\smallskip
 
+\noindent
 Special files are particularly interesting because they are resolved to OS structures.
 One example is the special \ttt{/proc} filesystem (procfs) that presents information about processes and the operating system, offering a feature analogous to programmatic introspection:
   with \ttt{procfs} commands can inspect and alter their directory or the flags passed to them.
@@ -552,34 +567,48 @@ This bidirectional relationship between ephemeral streams and persistent names--
 A small but powerful set of features is concerned with stream manipulation.
 Some of these features are built into the shell;
   for example, given a file identifier, stream redirection operators can direct stdout or stderr to a file.
-\begin{wrapfigure}{r}{0.15\textwidth}
-  \vspace{-15pt}
-  % \begin{center}
-    % \includegraphics[width=0.48\textwidth]{gull}
-    \includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_ex3.pdf}}
-  % \end{center}
-  \vspace{-25pt}
-\end{wrapfigure}
+% \begin{wrapfigure}{r}{0.15\textwidth}
+%   \vspace{-15pt}
+%   % \begin{center}
+%     % \includegraphics[width=0.48\textwidth]{gull}
+%     \includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_ex3.pdf}}
+%   % \end{center}
+%   \vspace{-25pt}
+% \end{wrapfigure}
 As described before, the file can be a FIFO dubbing as input to another command.
 More interestingly, some commands allow splitting (resp. merging) a single stream (resp. many streams) into multiple streams (resp. a single stream);
   stream merging can be achieved by appending one stream after the end of another or by fusing (zipping) streams column-wise into a single (fat) stream.
 % TODO: talk about \ttt{xargs}?
 
-% Explicit Redirection, Implicit splitting and merging, This can be done through the file-system operators 
+\smallskip
+\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+  cat * | tee >(wc -l > l.t) | zip > a.z   [($$p_4$$)]
+\end{lstlisting}
+\smallskip
 
-The combination of file-system identifiers pointing to ephemeral streams and the stream redirection described above enable surprisingly expressive pipelines. %---for example:
+\noindent
+% Explicit Redirection, Implicit splitting and merging, This can be done through the file-system operators 
+The combination of ephemeral file-system identifiers and the stream redirection described above enable surprisingly expressive pipelines. %---for example:
 The most interesting feature of these pipelines is the presence of cycles:
   a pipeline segment processes some input, part of which is extracting the next input to process.
 One example use case, discussed in the evaluation section~\sx{eval} is a web crawler that feeds extracted URLs from the input stream back to the start of the pipeline.
 % These streams are created by the C library (glibc) at the start of program execution,
 % and new streams can be created to connect to files, sockets, pipes,
 
+\smallskip
+\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+  read | { calc | square; } >/dev/fd/0     [($$p_5$$)]
+\end{lstlisting}
+\smallskip
+
+\noindent
 Apart from pipes, the \unix shell provides several other forms of program composition such as sequential (\ttt{;}) and parallel (\ttt{\&}) composition operators.
 Command substitution, expressed as \ttt{\$($c$)}, replaces the expression with the results of executing $c$.
 Code blocks, expressed as \ttt{\{$c_1; c_2$\}}, can redirect streams for the entire group of $c_1$ and $c_2$;
   this is analogous to an anonymous function, which contains many statements and can possibly be assigned to a variable that can later be invoked with parameters.
 Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn a child shell, thus avoiding the pollution of their environment variable context. % but incurring higher overhead.
 
+\unix pipelines are surprisingly powerful, a feature that \sys exploits by re-targeting shell scripts during its rewriting passes that target shell.
 
 % \begin{lstlisting}[
 %   language=es,
@@ -601,12 +630,6 @@ Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn 
 %  cat /proc/ >                            (($$p_4$$))
 % \end{lstlisting}
 % \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-%  ls -l | wc -l                           (($$p_2$$))
-% \end{lstlisting}
-% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-%  cat * | wc -l > out.txt                 (($$p_3$$))
-% \end{lstlisting}
-% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
 %  cat /proc/ >                            (($$p_5$$))
 % \end{lstlisting}
 % \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
@@ -615,11 +638,13 @@ Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn 
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_overview.pdf}}
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_schematic.pdf}}
 \caption{
   \textbf{\sys transformation overview.}
-	\sys XYZ
+  Given a shell pipeline, \sys leverages command distributability to identify
+  high-distributability stages, rewrite them, and orchestrate their execution.
 }
+\vspace{-15pt}
 \label{fig:overview}
 \end{figure}
 
@@ -628,18 +653,20 @@ Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn 
 % Expansion---the key is that expansion and evaluation are handled by the shell at an earlier stage 
 % The most powerful---and interesting, for \ttt{dish}---type of expansion is subshell expansion, that allows replacing entire input streams 
 
-\subsection{Overview}
+\subsection{\sys Design Overview}
 
 As outlined earlier, the key insight behind \sys is that the shell already describes parallel computations over streams.
 Intuitively,
- (i) the parallel-composition operator exposes \todo{task} parallelism \kk{I have named that operator level parallelism, which one do we prefer?},
+ (i) the parallel-composition operator exposes \todo{task} parallelism
+% FIXME \kk{I have named that operator level parallelism, which one do we prefer?},
  (ii) commands such as \ttt{xargs} and \ttt{tee} expose data parallelism,
- (iii) the pipe operator enables both task and data parallelism, and \kk{How does it enable data parallelism?}
+ (iii) the pipe operator is candidate for both task and data parallelism, and
+% \kk{How does it enable data parallelism?} \nv{added "candidate", helps?}
  (iv)  other composition operators can be viewed as barrier candidates.
 To leverage these insights and correctly distribute a pipeline such as $p_1$, \sys must solve several challenges.
 
-Understanding the shell's primitives is not enough;
-  \sys has to understand the distribution characteristics of individual commands used to compose larger programs.
+% However, understanding the shell's primitives is not enough
+\sys needs to understand the distribution characteristics of individual commands used to compose larger programs~\sx{distributability}.
 This challenge can be broken down into two parts.
 First, there is a need to understand the commands already in the shell---that is, built-ins that come with any shell and support its core functions.
 One example is the set of commands defined by the \textsc{POSIX} standard~\cite{}.
@@ -653,24 +680,24 @@ Using this DSL, developers of commands (not users of the shell) can quickly and 
 A command developer can only annotate the default behavior;
   if a new flag is added a few years later, and if that flag alters the command's class, only then a new annotation is needed.
 
-Given a set of commands composed together by the shell primitives, \sys's next challenge is to analyze it and identify candidate subexpressions for distribution.
-\sys addresses this challenge with a rewriting \todo{pass} that performs dataflow analysis identifying \todo{maximal} distributable sub-expressions.
-It converts the AST to a dataflow graph, and runs...
-This analysis is not trivial, as many of the shell's dynamic features have to be taken into consideration---examples include shell expansion, environment variables, file input sizes, \etc
+Given a set of commands composed together by the shell primitives, \sys's next challenge is to analyze it and identify candidate subexpressions for distribution~\sx{ir}.
+\sys addresses this challenge with a series of rewriting passes that perform dataflow analysis for identifying \todo{maximal} distributable sub-expressions.
+It converts the AST to a dataflow graph, and iteratively performs graph transformations that expose data parallelism as task parallelism while preserving correctness.
+These transformations are complicated by the shell's pervasive use of dynamic features---\eg environment variables, file input sizes, \etc
 
-\kk{On the dataflow graph, Dish iteratively performs graph transformations that expose data parallelism as task parallelism while preserving correctness.}
-
-Finally, given a distributed pipeline with runtime \todo{annotations}\kk{the runtime just gets a dataflow graph}, \sys needs to schedule and execute it.
-This amounts to solving a few challenges, achieved by \sys's runtime component, two of which stand out.
+Finally, \sys needs to schedule and execute the distributed dataflow graph.
+To achieve this, \sys's runtime component needs to solve several challenges~\sx{impl}.
 First, \sys needs to wrap single-node commands with corrective runtime interposition based on their classes;
   this is achieved by thin wrappers for all the commands involved in the program, generated just-in-time using the distributability specification outlined earlier.
 The reasoning behind wrappers being thin is to not interfere with legacy functionality---commands have many flags accumulated over long periods of time.
 
 Second, \sys needs to fill-in planing details left blank by the rewriting pass.
 This is achieved with \emph{planner activators}, commands that yield (and pass their arguments) to the scheduler.
-From the point of view of the shell, activators are higher-order commands \'{a} la \ttt{xargs} and \ttt{time} that take other commands as arguments---a technique that achieves the latest possible binding, when critical runtime information is available. \kk{I am not exactly sure I understand that :) }
+From the point of view of the shell, planner activators are expressed through a higher-order command---similar to \ttt{xargs} and \ttt{time}---that takes other commands as arguments.
+Planner activators achieves the latest possible binding, when critical runtime information is available.
+% FIXME \kk{I am not exactly sure I understand that :) } \nv{which part?}
 
-The next few sections discuss the details.
+The next few sections discuss \sys's design and implementation details.
 They also outline other, less obvious challenges---such as the synchronization of environment variables, distributed file operation, \etc.
 
 
@@ -686,7 +713,7 @@ It focuses on characteristics that are important for distribution, rather than a
 
 This section starts by defining these classes, paired with a distributability study of the commands found in standard libraries such as {\sc POSIX} and GNU Coreutils~\sx{cmd}.
 Building on this study, it presents a DSL that enables command classification by its developers~\sx{ext}.
-In return, \sys uses this DSL to tag commands in the standard libraries and generate their wrappers presented in later sections.
+In return, \sys uses this DSL to tag commands in the standard libraries and generate their wrappers, as presented in later sections.
 
 \subsection{Distributability of Standard Libraries}
 \label{cmd}
@@ -695,7 +722,7 @@ In return, \sys uses this DSL to tag commands in the standard libraries and gene
 Broadly, shell commands can be split into five major classes (summarized in Tab.~\ref{tab:classes}) with respect to their distribution characteristics, depending on how they interact with state.
 These classes are ordered in ascending difficulty of distribution:
   later classes require more effort.
-In this order, each class can be thought as a subset of the next one---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (without seeing any performance improvements).
+In this order, each class can be thought as a subset \kk{I am not sure this holds for all classes. I would propose saying that some classes are subsets, e.g....} of the next one---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (without seeing any performance improvements).
 
 \begin{table}[t]
 \center
@@ -707,15 +734,15 @@ In this order, each class can be thought as a subset of the next one---\eg all s
     Broadly, \unix commands can be broken down into to five classes.
   }
 }
-\begin{tabular}{l @{\extracolsep{\fill}} llll}
+\begin{tabular}{l @{\extracolsep{\fill}} lll}
 \toprule
-Class                           &  Key    & Example Commands                            & Coreutils       & POSIX       \\
+Class                           &  Key    & Example Commands                            & Coreutils       \\ % & POSIX       \\
 \midrule
-Stateless                       & ~\tsta  & \tti{tr},   \tti{cat},    \tti{grep}        &  22 (21.1\%)     &           \\  % 22
-Pure                            & ~\tpur  & \tti{sort}, \tti{wc},     \tti{uniq}        &  21 (20.1\%)     &           \\  % 21
-(Distr.) File-System~           & ~\tdfs  & \tti{cp},   \tti{ln},     \tti{rm}          &  27 (25.9\%)     &           \\  % 27
-Side-effectful                  & ~\tsid  & \tti{env},  \tti{chroot}, \tti{whoami}      &  25 (24\%)       &           \\  % 25
-Irreversible                    & ~\tirr  & \tti{exit}, \tti{lpr},    \tti{reboot}      &  5  (0.4\%)      &           \\  % 5
+Stateless                       & ~\tsta  & \tti{tr},   \tti{cat},    \tti{grep}        &  22 (21.1\%)    \\ %  &           \\  % 22
+Pure                            & ~\tpur  & \tti{sort}, \tti{wc},     \tti{uniq}        &  21 (20.1\%)    \\ %  &           \\  % 21
+(Distr.) File-System~           & ~\tdfs  & \tti{cp},   \tti{ln},     \tti{rm}          &  27 (25.9\%)    \\ %  &           \\  % 27
+Side-effectful                  & ~\tsid  & \tti{env},  \tti{chroot}, \tti{whoami}      &  25 (24\%)      \\ %  &           \\  % 25
+Irreversible                    & ~\tirr  & \tti{exit}, \tti{lpr},    \tti{reboot}      &  5  (0.4\%)     \\ %  &           \\  % 5
 % \midrule
 % Shell PL Constructs             &                         &                  \\
 % \etc                            &                         &                  \\
@@ -746,11 +773,11 @@ These commands respect functional purity, returning the same results for the sam
 The details of this state and its propagation during piecewise element processing affects their distributability characteristics.
 
 Some commands are easy to parallelize, because they maintain trivial state and are commutative---\eg \ttt{wc}, which simply maintains a counter.
-Others, such as \ttt{sha1sum}, maintain more complex state that is not applied commutatively.
+Others, such as \ttt{sha1sum}, maintain more complex state that has to be updated in a sequential fashion.
 
 Often these commands do not operate in an online fashion, but need to block until the end of a stream---a typical example of this is \ttt{sort}, which cannot start before the last line of input has been consumed.
 Non-streaming constraints affect task parallelism, but not data parallelism:
-  \ttt{sort} can be parallelized significantly using divide-and-conquer techniques.
+  \ttt{sort} can be parallelized significantly using divide-and-conquer techniques, that is implementing it as a map and a reduce function.
 
 \heading{File-system Commands}
 The third class contains commands that access the file-system~\dfs.
@@ -785,81 +812,201 @@ Even if \sid commands are protected with transactions
 Finally, some commands have side-effects outside \sys---for example, by printing a file with \ttt{lpr} or restarting with \ttt{reboot}.
 Such commands are not distributable---they have to refer to a single location---and have to be guarded with pessimistic transaction control mechanism.
 
-\section{Extensibility}
+\heading{Discussion}
+There are several technical details about \sys's design decisions worth noting.
+
+In terms of inputs, \sys supports commands with multiple input (resp. output) streams, by prepending (resp. appending) shell built-ins that merge input (resp. split output) streams~\sx{impl}.
+Thus, a command can be modelled as having one input and one output stream, a representation that is used throughout \sys including the extensibility DSL~\sx{ext}.
+
+Wanting to present the full picture for completeness purposes, the focus for the rest paper will be commands in \sta and \pur.
+Other commands are treated as  non-distributable for now~\sx{conclusion};
+  by building infrastructure to handle other classes, \sys would be able to (i) extract more parallelism and (ii) handle larger programs.
+Even with only these two classes, however, \sys supports highly useful pipelines that are more expressive than ones in popular frameworks such as Hadoop~\cite{mapreduce:08} and Spark~\cite{spark:12}~\sx{eval}.
+
+\subsection{Extensibility}
 \label{ext}
 
-Here is the type for \ttt{bwa}, a command that performs a Burrows-Wheeler transform over genomic data:
-% ( bwa ) :: ( Pure )  => { In \/ File* } -> { Out /\ Err }    -- default case
-%    | -h :: ( Sless ) => { Out }                              -- if needed
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-(bwa) :: (Pure) ($$\Rightarrow$$){In($$\lor$$)File*}($$\rightarrow$$){Out($$\land$$)Err}
-  |-h :: (Sless)($$\Rightarrow$$){Out}                              
+%% Here is the type for \ttt{bwa}, a command that performs a Burrows-Wheeler transform over genomic data:
+%% % ( bwa ) :: ( Pure )  => { In \/ File* } -> { Out /\ Err }    -- default case
+%% %    | -h :: ( Sless ) => { Out }                              -- if needed
+%% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+%% (bwa) :: (Pure) ($$\Rightarrow$$){In($$\lor$$)File*}($$\rightarrow$$){Out($$\land$$)Err}
+%%   |-h :: (Sless)($$\Rightarrow$$){Out}                              
+%% \end{lstlisting}
+
+%% It states that the command defaults to the Pure class.
+%% It's operation can be thought as a transformation from input streams to output streams.
+%% It operates either on stdin or, if this doesn't exist, one or more files specified as arguments;
+%% % TODO: check actual man page for how to specify files
+%%   it writes to the output and error stream rather than a file.
+%% The \ttt{-h} flag moves \ttt{bwa} into the Stateless class;
+%%   its output is a constant function.
+
+% FIXME: \nv{TODO: remember to bubble up(me)}
+An important characteristic of the \unix shell is its language-agnostic extensibility~\sx{bg}.
+Users composing pipelines are free to install custom commands available from various sources.
+Being general programs, commands are developed in a variety of languages and are extended over long periods of time.
+%% \kk{Text point: This restricts the space of solutions for
+%%   distribution of shell scripts}
+As a result, any static characterization of shell commands is unsatisfactory as it would quickly become obsolete, supporting only a small subset of commands.
+This poses a challenge to the developers of individual commands---how can they augment their commands to capture information critical to \sys without too much effort?
+%% \kk{Text point: The characteristics of a good solution}
+
+To address additions and changes to the set of commands available to the shell, \sys provides command developers a lightweight, domain-specific language (DSL).
+The DSL allows developers to express semantic information about a command's distributanility that is critical to \sys.
+This DSL can be used by the developers of new commands to succinctly express this information, such the class of a command and the sequence of sources from which it reads its input.
+It could also be used by developers that extend or maintain existing commands, to express additions or changes to the command's implementation or interface.
+
+\heading{Command-line Options}
+As described earlier~\sx{bg}, command-line options and environment variables can affect the operation of a command.
+Options are a particularly popular way to control a command, 
+  directly affecting a command's distributability classification.
+That is, commands are assigned to default classes, and options can change the class in which they belong.
+
+As simple examples, consider \ttt{cat} and \ttt{sort}.
+By default \ttt{cat} is in \sta, but with \ttt{-n} it jumps into \pur because it has to keep track of a counter.
+Conversely, \ttt{sort} defaults to \pur, but \ttt{with} \ttt{-h} it jumps into \sta.
+% TODO: closure?
+
+%% Can be tweaked according to this:
+%% https://tex.stackexchange.com/questions/24886/which-package-can-be-used-to-write-bnf-grammars
+
+\begin{figure}
+  \centering
+  \begin{grammar}
+    <option> ::= `-' <string>
+
+    <category> ::= `stateless' | `pure' | ...
+
+    <maybe-int> ::= | <int>
+
+    <arg> ::= `args[' <int> `]'
+
+    <args> ::= <arg>
+    \alt `args[' <maybe-int> `:' <maybe-int> `]'
+
+    <input> ::= `stdin' | <args>
+
+    <inputs> ::= <input>
+    \alt <input> `,' <inputs>
+
+    <output> ::= `stdout' | <arg>
+
+    <option-pred> ::= <option>
+    \alt `value' <option> = <string>
+    \alt `not' <option-pred>
+    \alt <option-pred> `or' <option-pred>
+    \alt <option-pred> `and' <option-pred>
+
+    <assignment> ::= `(' <category>, `[' <inputs> `]' , <output> `)'
+
+    <predicate> ::= <option-pred> `=>' <assignment>
+
+    <pred-list> ::= `|' <predicate> <pred-list>
+    \alt `|' `otherwise' `=>' <assignment>
+
+    <command> ::= <name> `\{' <pred-list> `\}'
+
+    <command-list> ::= <command>
+    \alt <command> <command-list>
+  \end{grammar}
+  \caption{
+\textbf{Distributability description language.}
+The DSL captures important information regarding the distributability of a command.
+\vspace{-20pt}
+}
+
+  \label{fig:dsl}
+\end{figure}
+
+
+
+\heading{Command Inputs and Outputs}
+%
+Consider the command \ttt{comm}. It takes as input two files and
+performs a join operation. When invoked without any option, it
+produces three-column output. The first column contains lines that
+unique to the first file, the second column contains lines that are
+unique to the second file, and the last column contains lines that
+exist in both files. In the general case \ttt{comm} is in \pur, since
+it needs to wait until it reads both files completely before it can
+output its results.
+
+However, \ttt{comm} can also be invoked using some options that
+suppress the output of any combination of columns. More precisely, the
+option \ttt{-1} suppresses the first column of the output. Similarly,
+\ttt{-2} and \ttt{-3} supress the second and third column. Using both
+\ttt{-2} (or \ttt{-1}) and \ttt{-3}, the command becomes \sta
+regarding its first (resp. the second) file argument.
+
+% \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
+
+\heading{Distributability DSL}
+%
+\sys's distributability description DSL (Fig.~\ref{fig:dsl}) is
+designed to be able to classify a commands into multiple categories
+given their options.
+
+It assumes that the arguments of a command can always be separated to
+options and file arguments (checking if they start with a
+\ttt{-}~\footnote{Note that the single character \ttt{-} is not an
+  option as it is most often used to designate that a command reads
+  from its standard input}). A file written in the language contains a
+record containing a mapping from predicates to assignments for each
+command. Predicates can be simple boolean formulas on the existence
+and the value of any option. Each assignment contains the command
+category, the sequence of its input sources, and its output
+source. Inputs to commands are a sequence of file arguments and its
+standard input. Similarly, the output is either its standard output or
+a file argument. An example record for comm can be seen below:
+
+\begin{lstlisting}[float=h, numbers=none]
+  comm {
+    | -1 and -3 =>
+      (stateless, [args[1]], stdout)
+    | -2 and -3 =>
+      (stateless, [args[0]], stdout)
+    | otherwise =>
+      (pure, [args[0]], stdout)
+  }
 \end{lstlisting}
 
-It states that the command defaults to the Pure class.
-It's operation can be thought as a transformation from input streams to output streams.
-It operates either on stdin or, if this doesn't exist, one or more files specified as arguments;
-% TODO: check actual man page for how to specify files
-  it writes to the output and error stream rather than a file.
-The \ttt{-h} flag moves \ttt{bwa} into the Stateless class;
-  its output is a constant function.
+The semantics of the language is straightforward: given a command, the
+interpreter collects its options and then returns the assignment of
+the first predicate that is satisfied. The final predicate is always
+satisfied. For example the following two invocations of \ttt{comm}
+would be classified as follows:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+ comm -13 f1 f2 # => (stateless, f2, stdout)
+ comm f1 f2     # => (pure, f1, stdout)
+\end{lstlisting}
 
 
-ULTRA DRAFTY:
 
-\kk{Text point: A problem that is specific to the shell is
-  extensibility.}
+\tr{We don't need to designate the stderror, because we assume that it
+  is never the main output of a command and it will never be used by
+  the input of another command in the pipeline. If someone indeed
+  wants to do this, they can just use a redirect I think to get around
+  it.}
 
-The major characteristic that makes the shell popular and very useful
-is its extensibility, as also mentioned in \Cref{bg}. Commands change,
-get extended, and each user continuously installs more commands to use
-in their system.
 
-\kk{Text point: This restricts the space of solutions for distribution
-  of shell scripts}
+\tr{If we talk about the language it would be good to give some
+  statistics about how many commands (out of the ones that we have
+  classified) can be represented with one, two clauses etc. If we have
+  a different solution (like python function that given a command and
+  its arguments returns the category) then we could talk about how
+  many lines of code it took to categorize all the commands that we
+  did.}
 
-This means that any one-time solution is not satisfactory, since it
-would very easily become obsolete, or it would only handle a limited
-amount of shell scripts.
 
-\kk{Text point: The characteristics of a good solution}
+\tr{Note: Since a categorization language will probably not be
+  complete (especially the one showing the input arguments) there
+  should be a backup mechanism, when the language is not expressive
+  enough, like a python function that categorizes the command, and
+  returns its input argument if it is stateless.}
 
-A solution that applies to shell programms should thus be extensible,
-in the sense that adding or changing a command, doesn't invalidate the
-assumptions that the tool makes. In our case, the information about
-the command categories. A developer of a new command, should be able
-to categorize it accordingly, and succinctly describe how the system
-can distribute a command.
-
-\kk{Solution: A lightweight language that can be used by a command
-  developer to categorize it for distribution.}
-
-We address this issue by designing a lightweight language whose
-purpose is to categorize a command, describes how it reads its input
-(meaning in what order), and how to distribute it (in case it is
-pure).
-
-%% \kk{I am not sure if the order in which a command reads its
-%%   input will be part of the language since many commands can be made
-%%   to read from one place (like stdin or their first argument). Even in
-%%   that case though, where the command only reads from one argument, we
-%%   have to make sure that there is a way for the user to pinpoint which
-%%   argument does a command read from.}
-
-\subsection{Categorization Language}
-
-\kk{Text point: Introduce problem: Most shell commands, belong to
-  different classes depending on their flags, arguments}
-
-Consider the command \ttt{cat} \kk{Maybe that is not he best
-  example. TODO: Find a good example of a simple command that is in
-  different classes depending on the arguments.}. When used without
-any flag it is stateless, etc...
-
-\kk{Text point: Our language must be able to categorize commands to
-  different classes according to their arguments.}
-
-\kk{We should have a crisp point about why we have this categorization
+\tr{(Maybe) We should have a crisp point about why we have this categorization
   language, and why don't we just allow someone to write a function in
   python for each command, that given the command and its arguments,
   returns whether the command category. Possible arguments include,
@@ -874,108 +1021,31 @@ any flag it is stateless, etc...
   limited. All of these arguments are a little bit weak though. Niko,
   what do you think?}
 
-\kk{New sketch of the language}
 
-We assume that commands satisfy the standard that options and flags
-come first, and then file arguments. The language contains a record
-for each command name, together with a sequence of predicates that map
-to command categories and designation of input output.
+\heading{Pure Commands}
+%
+Together with the commands in \sta, that are always easy to
+parallelize, there also exists a subclass of commands in \pur that can
+be parallelized by separating them into a map and a reduce
+operation. In order to allow command developers to extend \sys with
+information about how to parallelize new pure commands, \sys offers an
+interface to specify how to distribute a pure command.
 
-A record contains a sequence of predicates => categories. Each
-predicate is a combination of not, or, and and the atomic predicates
-are the presence of a flag, or an equality that checks that the value
-of a flag is equal to something (because flags can also have
-values). The final predicate can be left empty, and it is trivially true.
-
-Pythonic range for several inputs/outputs
-
-%% Can be tweaked according to this:
-%% https://tex.stackexchange.com/questions/24886/which-package-can-be-used-to-write-bnf-grammars
-
-\begin{grammar}
-  <flag> ::= `-' <string>
-
-  <category> ::= `stateless' | `pure' | ...
-
-  <arg> ::= `arg[' <int> `]'
-
-  <input> ::= `stdin' | <arg>
-
-  <output> ::= `stdout' | <arg>
-
-  <flag-pred> ::= <flag>
-  \alt `value' <flag> = <string>
-  \alt `!' <flag-pred>
-  \alt <flag-pred> `or' <flag-pred>
-  \alt <flag-pred> `and' <flag-pred>
-
-  <assignment> ::= `(' <category>, <input>, <output> `)'
-
-  <predicate> ::= <flag-pred> `=>' <assignment>
-
-  <pred-list> ::= `|' <predicate> <pred-list>
-  \alt `|' `otherwise' `=>' <assignment>
-
-  <command> ::= <name> `:' <pred-list>
-
-\end{grammar}
-
-\kk{We don't need to designate the stderror, because we assume that it
-  is never the main output of a command and it will never be used by
-  the input of another command in the pipeline. If someone indeed
-  wants to do this, they can just use a redirect I think to get around
-  it.}
-
-\kk{Give an example of a flag that has value and how this could alter
-  category or input etc...}
+\TODO{I am not sure a general interface is so easy to design. It needs
+  more though. It might be beneficial to just talk about sort and wc
+  here and how we implemented them and nothing more. Or maybe this
+  could then go to the implementation? Or maybe say that one can write
+  a python function that given a node of the graph, transforms it into
+  many. I am not sure what is best...}
 
 
-
-
-Interpreter:
-
-Given a command and the set of its arguments, the intepreter returns
-the command category. In does so by returning the category of the first
-predicate that matches.
-
-\kk{If we talk about the language it would be good to give some
-  statistics about how many commands (out of the ones that we have
-  classified) can be represented with one, two clauses etc. If we have
-  a different solution (like python function that given a command and
-  its arguments returns the category) then we could talk about how
-  many lines of code it took to categorize all the commands that we
-  did.}
-
-As described in distributability\ref{}, the abstract notion of a
-program that we have is programs with one input and one output
-stream. The command developer must be able to express the input
-argument of a commmand (or if it is the stdin).
-
-
-\kk{Note: Since a categorization language will probably not be
-  complete (especially the one showing the input arguments) there
-  should be a backup mechanism, when the language is not expressive
-  enough, like a python function that categorizes the command, and
-  returns its input argument if it is stateless.}
-
-\subsection{Pure Commands}
-
-Even though stateless commands are a big percentage of all of them,
-there are a lot of useful and popular pure commands.
-
-As mentioned in distributability, pure commands can be broken down
-into different categories. We might be able to get ideas about this
-from this paper:
-\url{http://www.cs.toronto.edu/~azadeh/papers/pldi17-ex.pdf} and its
-continuation in PLDI 2019.
-
-\kk{Can we find a solution for the commands in coreutils?}
-
-\kk{Important TODO: Find at least one more command that can be
-  executed like sort. Does wc work? If there is no pure command that
-  can be easily parallelized other than sort, this story is not very
-  nice.}
-
+% As mentioned in distributability, pure commands can be broken down
+% into different categories. We might be able to get ideas about this
+% from this paper:
+% \url{http://www.cs.toronto.edu/~azadeh/papers/pldi17-ex.pdf} and its
+% continuation in PLDI 2019.
+% FIXME: \nv{Cite this paper?}
+\tr{Can we find a solution for the commands in coreutils?}
 
 
 \section{Dataflow Graph Model}
@@ -983,15 +1053,15 @@ continuation in PLDI 2019.
 
 In order to effectively apply optimizations and distribute a shell
 script, it first has to be translated to a manipulable
-representation. As mentioned in \ref{}, the two main abstractions of
-the shell, are files that contain data, and commands that communicate
-through these files. We propose a slight variation of the standard
-dataflow graph model, that is commonly found in stream processing
-systems, as the representation of a distributed shell computation. The
-main benefit of the dataflow graph model is that it clearly exposes
-task parallelism, as different nodes can be independent processing
-workers. In our case each node represents a command, and each edge
-represents a file.
+representation. As mentioned in \Cref{bg:pipelines}, the two main
+abstractions of the shell, are files that contain data, and commands
+that communicate through these files. We propose a slight variation of
+the standard dataflow graph model, that is commonly found in stream
+processing systems, as the representation of a distributed shell
+computation. The main benefit of the dataflow graph model is that it
+clearly exposes task parallelism, as different nodes can be
+independent processing workers. In our case each node represents a
+command, and each edge represents a file.
 
 \subsection{Graph Components}
 
@@ -1005,8 +1075,7 @@ monotonic, meaning that they cannot retract their output. More
 formally, $\forall f, x, y, f(x) = y$, then for any $x'$, there exists
 $y'$ such that $f(x.x') = y.y'$, where $.$ is standard concatenation
 and will be omitted when obvious. An example of a node is the
-following command \kk{Does it need ref? Also maybe this example is too
-  trivial and can be removed.}:
+following command:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
  grep ``foo''
@@ -1059,7 +1128,7 @@ between nodes in the graph, and as the input or output of the whole
 graph. Edges are represented as possibly unbounded streams of type
 $D*$. They could either refer to a specific named file in the file
 system, or just be FIFO pipes that used for interprocess communication
-\TODO{Are there any other file types, such as URLs, ...?}.
+%% \TODO{Are there any other file types, such as URLs, ...?}.
 
 \TODO{Show an example pipe and its graph}.
 
@@ -1068,17 +1137,19 @@ files that don't point to a resource can have an upper bound on the
 lines that they can tranfer. The following example illustrates why
 this is essential.
 
-\TODO{Add an example of a command that has two outputs and one goes to
-  one command, while another output goes to a different one. Maybe
-  only show the graph here and not the command itself.}
+\TODO{Add an example of a command that has two outputs, one of which
+  goes to one command, while another goes to a different
+  command. Maybe only show the graph here and not the command itself.}
 
-On the other hand, some forms of data parallelism can be exposed when
-knowing the size of the input files. As mentioned in \ref{} some pure
-commands (such as cat -n) only need line information to become
-stateless, and knowing the size of a file could allow the system to
-split it in different chunks that can be processed independently. To
-account for that, edges that refer to an input resource contain the
-number of lines of the file that they refer to.
+
+\tr{On the other hand, some forms of data parallelism can be exposed
+  when knowing the size of the input files. As mentioned in \ref{}
+  some pure commands (such as cat -n) only need line information to
+  become stateless, and knowing the size of a file could allow the
+  system to split it in different chunks that can be processed
+  independently. To account for that, edges that refer to an input
+  resource contain the number of lines of the file that they refer
+  to.}
 
 Finally, the edges that don't refer to a resource and do not start
 from a node in the graph represent the graph input, while the edges
@@ -1107,12 +1178,10 @@ parallelism is based on the observation that some operations produce
 the same result when performed independently on subsets of the input
 data, merging the results afterwards. This is the basic optimization
 that is used by popular distributed processing systems such as
-MapReduce\kk{cite} and Apache Spark\kk{cite}. \todo{Unfortunately, the
-  dataflow graph model of most of these systems is not expressive
-  enough to represent data parallelism, so the distributed generations
-  that they generate, can not be represented in their dataflow model.}
-\kk{This last sentence is extremely important and we should make it
-  shine.}
+MapReduce\kk{cite} and Apache Spark\kk{cite}.Unfortunately, the
+dataflow graph model of most of these systems is not expressive enough
+to represent data parallelism, so the distributed implementations that
+they perform do not preserve the semantics of their dataflow model.
 
 In contrast, our dataflow model inherently supports the data
 parallelism that is found in shell programs. More precisely, data
@@ -1121,38 +1190,61 @@ very important consequence of this is that we can iteratively apply
 optimizations that expose data parallelism, or even revert them when
 the resulting dataflow graph is too wide. This flexibility enables
 unified reasoning and implementation of the unoptimized and optimized
-version of the dataflow graph. \kk{This is exciting, and maybe it
-  should be moved up (or rephrased in the introduction)}
+version of the dataflow graph. \kk{This is interesting, and should be
+  moved up (or rephrased in the introduction)}
 
 Before describing the different types of parallelization
-optimizations, we formalize our intuition about stateless and pure
-commands. Recall the example \ref{} from section Categories
-\ref{}. This example shows the stateless command x being applied to
-...\kk{Complete this after we have an example}. Formally, a commmand
-$f$ is stateless if it is ``linear'' with respect to concatenation,
-i.e. the following equation holds:
+optimizations, we formalize the intuition about stateless and pure
+commands that was described in \Cref{cmd}.
+\nv{TODOs
+  (i) highlight earlier the antithesis between the formalisms in this section and the informalities of the previous (me);
+  (ii) try to add a proof \emph{sketch} pointing to these formalisms (to show their value), and we can point to the TR for the longer proof.
+}
+%
+As mentioned there, stateless commands operate independently on
+individual elements of the stream (characters, lines, or files)
+without maintaining any state. Some examples include \ttt{grep},
+\ttt{basename}, and \ttt{tr}. Formally, a commmand $f$ is stateless if
+it is ``linear'' with respect to concatenation, i.e. the following
+equation holds:
 
 \[
 \forall x, x', f(x.x') = f(x).f(x')
 \]
 
-Similarly, every pure command $f$ that can be written as a map $m$ and a
-reduce $r$ step satisfies the following:
+Similarly, it was mentioned that some pure commands (such as
+\ttt{sort} and \ttt{wc}) can be parallelized using divide-and-conquer
+techniques. More formally, there pure commands $f$ can be implemented
+as a map $m$ and a reduce $r$ function, satisfying the following:
 
 \[
 \forall x, x', f(x.x') = r(m(x).m(x'))
 \]
 
-Based on these equations, we can define a maximal node split operation
-on a stateless node $v$ with $n$ input ordered edges and an output
-edge to node $v'$, to replace $v$ with $n$ new nodes, giving each one
-of them one of the incoming edges of $v$, and routing them in order to
-point to $v'$. The maximal node split operation can similarly extended
-for pure nodes.
+\heading{Parallelization Transformations}
+%
+Based on these equations, we can define a maximal \emph{node split
+  operation} on a stateless node $v$ with $n$ input ordered edges and
+an output edge to node $v'$, to replace $v$ with $n$ new nodes, giving
+each one of them one of the incoming edges of $v$, and routing them in
+order to point to $v'$. Since each incoming edge represents a stream
+of data $x_i : D^*$, and the only behaviour of a dataflow graph is its
+output, this optimization $ v(x_1.x_2...x_n) \Rightarrow
+v(x_1).v(x_2)...v(x_n)$ can be shown to preserve the behaviour of the
+graph. Furthermore, it can be straightforwardly extended to pure
+commands that can be implemented by a map-reduce pair $(m, r)$ as $
+v(x_1.x_2...x_n) \Rightarrow r(m(x_1).m(x_2)...m(x_n))$.
 
-\kk{If there is time I can work out a formal definition and a proof
+\tr{Remember to mention the assumptions that need to hold for the
+  graph transformations to be valid in the Command categories
+  section. Commands must be deterministic, they must not do any other
+  side effect (such as writing to other files, sending signals,
+  etc). However, these assumptions must already be checked when the
+  developer designates the categories.}
+
+\tr{If there is time I can work out a formal definition and a proof
   sketch why this transformation preserves the output of the dataflow
-  graph}.
+  graph.}
 
 %% \begin{definition}
 %% Given a dataflow graph $G = (V, E, O)$, where $V$ is a set of nodes
@@ -1182,22 +1274,11 @@ valid node in the graph must always be unbounded if it does not refer
 to a file.
 
 
-\kk{Remember to mention the assumptions that need to hold for the
-  graph transformations to be valid in the Command categories
-  section. Commands must be deterministic, they must not do any other
-  side effect (such as writing to other files, sending signals,
-  etc). However, these assumptions must already be checked when the
-  developer designates the categories.}
 
 
 
-\section{Front End}
-
-\kk{The writing in this section is wandering around without a clear
-  purpose :( }
-
-\kk{It might make sense to merge this section with the one below with
-  the name: From Shell to IR and back}
+\section{Implementation}
+\label{impl}
 
 As mentioned in \Cref{ir}, in order to generate the distributed
 implementation of a shell script, \ttt{Dish} first translates it to
@@ -1211,23 +1292,18 @@ challenge of correctly identifying what parts can be distributed.
 %% \kk{Give examples of writing to environment variables, producing
 %%   irreversible side effects, the ; and \&\& operators.}
 
-In order to address this issue, we introduce the notion of
+In order to address this issue, we \todo{introduce} the notion of
 distributable program regions, and we design a translation pass that
 given the abstract syntax tree of a shell script identifies
 distributable regions and translates each of them to a dataflow
 graph. The AST of the shell script is produced using a POSIX compliant
-parser \kk{Reference libdash github. This las sentence should probably
-  go to evaluation}.
+parser~\cite{libdash}.
 
 \subsection{Distributable Regions}
 
-%% \kk{I wanted this to be purely about the regions, and a next
-%%   subsection be about the analysis, but the separation line is very
-%%   blurry, so they are now in the same subsection.}
-
-\kk{The goal of this subsection is to explain that Dish does a safe
-  but effective analysis to identify which parts of the scripts to
-  parallelize.}
+%% \kk{The goal of this subsection is to explain that Dish does a safe
+%%   but effective analysis to identify which parts of the scripts to
+%%   parallelize.}
 
 Consider the following example:
 
@@ -1236,25 +1312,25 @@ Consider the following example:
   sort f3 # Replace with sth better
 \end{lstlisting}
 
-Notice that the structure of a shell program clearly identifies
+\noindent
+Notice that the structure of a shell program can be used to identify
 components that can be executed concurrently, and barriers that
-enforce synchronization. More precisely, \ttt{cat f1 f2} and
-\ttt{grep ``foo''} would already execute concurrently in the
-standard shell, while \ttt{sort f3} waits for their completion
-before being executed. Both \ttt{cat f1 f2 | grep ``foo'' > f3} and
-\ttt{sort f3} are maximal distributable regions, in the sense that
-they cannot be extended beyond \ttt{\&\&}.
+enforce synchronization. More precisely, \ttt{cat f1 f2} and \ttt{grep
+  ``foo''} would already execute concurrently in the standard shell,
+while \ttt{sort f3} would wait for their completion before being
+executed. Both \ttt{cat f1 f2 | grep ``foo'' > f3} and \ttt{sort f3}
+are maximal distributable regions, in the sense that they cannot be
+extended beyond \ttt{\&\&}.
 
-Concretely, a distributable region cannot permeate through the
-following barrier constructs: ;, \&\&, \ttt{||}, function
-definitions, command substitutions, and control flow primitives. On
-the other hand, the pipe operator \ttt{|} and the parallel
-composition operator \& enable parallelization, and extend
-distributable regions. Essentially, distributed regions correspond to
-subsections of the program that would be executed by different shell
-processes.
+Concretely, a distributable region cannot permeate through barrier
+constructs (e.g. \ttt{;}, \ttt{\&\&}, and function definitions). On
+the other hand, the pipe operator \ttt{|} and the parallel composition
+operator \ttt{\&} enable parallelization, and extend distributable
+regions. Intuitively, distributed regions correspond to subsections of
+the program that would be allowed to execute concurrently by different
+processes in the POSIX standard~\cite{posix}.
 
-\kk{I don't know whether I should mention the following: While these
+\tr{I don't know whether I should mention the following: While these
   control flow constructs can be parallelized and there has been
   research on it, it is orthogonal to our work, and can be
   incorporated as future work.}
@@ -1265,7 +1341,7 @@ Dish performs a depth first search pass on the AST of the given shell
 program, extending the distributable regions from the bottom up,
 translating their independent components to dataflow graph
 nodes, until a barrier construct is reached. Note that barrier
-constructs can be contained in a dataflow graph, as long as they don't
+constructs can exist in a dataflow graph, as long as they don't
 extend beyong a single node. An illustrative example follows:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
@@ -1273,17 +1349,16 @@ extend beyong a single node. An illustrative example follows:
   sort -m g1 g2
 \end{lstlisting}
 
-In the above example\kk{Can we make example not floating?}, while
-\ttt{sort f1 > g1}, \ttt{sort f2 > g2}, and \ttt{sort -m g1
-  g2} are all in different dataflow graphs. The dataflow graph that
-corresponds to the whole program, has two nodes, \ttt{sort f1 > g1
-  \&\& sort f2 > g2} and \ttt{sort -m g1 g2}.
+In the above example, while \ttt{sort f1 > g1}, \ttt{sort f2 > g2},
+and \ttt{sort -m g1 g2} are all in different dataflow graphs, the
+dataflow graph that corresponds to the whole program, has two nodes,
+\ttt{sort f1 > g1 \&\& sort f2 > g2} and \ttt{sort -m g1 g2}.
 
 In order to identify possible opportunities for parallelism, the
 translation pass also identifies the category of each node, together
-with its input and output, using the rules described in \ref{}. Some
-interesting cases of the analysis algorithm are shown in pseudocode
-below:
+with its input and output, using records written by developers using
+the language that was described in \Cref{ext}. Some interesting cases
+of the analysis algorithm are shown in pseudocode below:
 
 \begin{lstlisting}[language=python, float=h]
   def translate(node):
@@ -1304,11 +1379,6 @@ below:
     ...
 \end{lstlisting}
 
-%% \kk{Explain how the three above cases work, mentioning what does
-%%   pipe-graphs and safe do. The important point to get across is to
-%%   explain why we do the ``conservative checks'' in safe, and how they
-%%   preserve safety.}
-
 Whenever the algorithm encounters a pipe node, it recursively
 translates its subcomponents, and then merges them in a dataflow graph
 by connecting the output of the first with the input of the second,
@@ -1316,41 +1386,29 @@ by connecting the output of the first with the input of the second,
 algorithm checks that at most one node in the graph writes at every
 file, and at most one node reads from a file that another node writes
 to. This is important, in order to avoid inconsistent behaviour after
-distributing nodes in the dataflow graph \kk{Does this need an
-  example?}. Whenever the algorithm encounter an \ttt{\&\&} node,
+distributing nodes in the dataflow graph (i.e. by introducing to
+concurrent reads and writes to the same file when
+parallelizing). Whenever the algorithm encounter an \ttt{\&\&} node,
 it recursively translates its subcomponents (similarly to the pipe
-node), but then doesn't merge them in a large dataflow graph. Finally,
-whenever the algorithm encounters a command, it first checks whether
-it is safe to possibly parallelize this command. A command is
-considered to be safe, if it does not make any modification to the
-shell state (e.g. changing the current directory, modifying
-environment variables), and if it does not read from a
-\todo{read-once} file, like a fifo pipe. \kk{Mention: Note that an
-  unsafe command can still be safely added to the dataflow graph as a
-  single node, since this doesn't introduce any new
-  behaviours. However it cannot be parallelized further than that.} If
-the command is considered safe, its category is identified and a node
-containing that command is created and added to a singleton dataflow
-graph.
+node), but then does not merge them in a large dataflow
+graph. Finally, whenever the algorithm encounters a command, it first
+checks whether it is safe to parallelize it. A command is considered
+to be safe, if it does not make any modification to the shell state
+(e.g. changing the current directory, modifying environment
+variables), and if it does not read from any \todo{read-once} file,
+like a fifo pipe. If the command is considered safe, its category is
+identified and a node containing that command is created and added to
+a singleton dataflow graph. If the command is considered unsafe, it is
+still added to the dataflow graph, but cannot be further parallelized
+by the optimizer.
 
-It is important to note that due to the highly dynamic nature of the
-shell, the safety properties that were mentioned above cannot be
+An important consideration is that due to the highly dynamic nature of
+the shell, the safety properties that are mentioned above cannot be
 soundly checked statically. For example in the first case, two
 unexpaned strings could refer to the same file, but the translation
-pass cannot infer that. Hence, in both cases, the checks were
-approximated using a \todo{best-effort} method. \kk{Maybe mention that
-  as future work, we want to tighly integrate with the shell shtepper
-  that will allow to maximally expand everything before making this
-  decision.}
+pass cannot infer that.
 
-
-
-\section{Dish Implementation}
-
-\kk{I think that this section should be merged with the front end}
-
-
-\paragraph{Dish Optimizer}
+\subsection{Dish Optimizer}
 
 The \ttt{Dish} optimizer is given a dataflow graph representing a
 shell program and outputs an optimized dataflow graph, where data
@@ -1364,7 +1422,7 @@ edge splits, and then it performs maximal node splits. The final graph
 can then be implemented by spawning a process for each node, and
 redirecting the outputs according to the graph edges.
 
-\kk{Maybe give an example}
+\nv{Give example, extend}
 
 
 %% \subsection{Mapping operators to nodes}
@@ -1379,14 +1437,13 @@ redirecting the outputs according to the graph edges.
 %% We don't try to make a proper planner, as there is a lot of work on
 %% operator placement etc. that we can borrow from.
 
-\subsection{Just in time planning}
+\subsection{Planning Activators and Just-in-Time Planning}
 
-\TODO{Rename this section to planner activators and write it after I
-  discuss with Nikos.}
+\nv{Nikos working on this and next}
 
-\kk{This whole section for just in itme planning, is also relevant for
-  the front end. If the front end is executed just in time, it would
-  have more information, and maybe it could make a sound analysis.}
+% \kk{This whole section for just in itme planning, is also relevant for
+%   the front end. If the front end is executed just in time, it would
+%   have more information, and maybe it could make a sound analysis.}
 
 Important point: Shell is extremely dynamic. Because of this, a
 distributor cannot decide how to distribute a subexpression
@@ -1405,8 +1462,6 @@ having parsed the ast, and decide on maximal distributable subtrees as
 late as possible in the process. This would be awesome.
 
 \subsection{Merge and Split Implementation}
-
-\TODO{Niko, could you make this a bit stronger?}
 
 It is common in the dataflow graph for a node to have many incoming
 edges, or many outgoing edges (when all but the last outgoing edges
@@ -1445,27 +1500,28 @@ arbitrarily many different pipes.
 \section{Evaluation}
 \label{eval}
 
-\kk{We should make sure to measure the time that it takes for the
-  whole process to run (parsing, translating, optimizing, planning)
-  together with the scripts. This will probably be negligible, but we
-  still have to mention it. }
-
-\kk{Also, we have to have one-two handcrafted examples that have more
-  than one pipeline, to show the execution time end to end, as this
-  cannot be shown with the one-pipeline examples since they only have
-  one graph, so no back and forth between shell and dish.}
-
-\kk{Furthermore it would be great to have one distributed example that
-  runs in more than one node (if we have time)}
-
-\kk{Also we have to make sure to measure with and without the final
-  cat of output file, so that we show that this is also negligible.}
-
-\kk{We have to make sure that we repeat that the results are the same
-  in all tests that we run. Corectness, blah blah ...}
-
-\kk{We should have at least some pipelines that have a bad pure
-  command in them.}
+% FIXME
+% \kk{We should make sure to measure the time that it takes for the
+%   whole process to run (parsing, translating, optimizing, planning)
+%   together with the scripts. This will probably be negligible, but we
+%   still have to mention it. }
+% 
+% \kk{Also, we have to have one-two handcrafted examples that have more
+%   than one pipeline, to show the execution time end to end, as this
+%   cannot be shown with the one-pipeline examples since they only have
+%   one graph, so no back and forth between shell and dish.}
+% 
+% \kk{Furthermore it would be great to have one distributed example that
+%   runs in more than one node (if we have time)}
+% 
+% \kk{Also we have to make sure to measure with and without the final
+%   cat of output file, so that we show that this is also negligible.}
+% 
+% \kk{We have to make sure that we repeat that the results are the same
+%   in all tests that we run. Corectness, blah blah ...}
+% 
+% \kk{We should have at least some pipelines that have a bad pure
+%   command in them.}
 
 At a high level, we are interested in understanding whether \sys can indeed scale pipelines out automatically and correctly.
 To achieve this, we use a combination of micro- and macro-benchmarks, most of which were collected from prior literature and online repositories.
@@ -1492,36 +1548,132 @@ For our software setup, we use SMP Debian 4.9.144-3.1 (2019-02-19), GNU Core-uti
 Generally, no special configuration was made in hardware or software beyond disabling hyper-threading. % ---specifically, the network protocol stack was left unoptimized.
 More detailed setup and experiments, including the scripts, is included in the accompanying (anonymized) online repository.
 
+\subsection{Microbenchmarks: Shell One-liners}
+
+\begin{table}[t]
+\center
+\footnotesize
+% \setlength\tabcolsep{3pt}
+\caption{
+  \footnotesize{
+    \textbf{Summary of Micro-benchmarks}.
+    Six micro-benchmarks used to evaluate \sys.
+  }
+}
+\begin{tabular*}{\columnwidth}{l @{\extracolsep{\fill}} lll}
+\toprule
+  Script                 ~&~ Structure                  & Input Size    & Seq.  Time \\
+\midrule
+  \tti{min-grep}         ~&~$2\times$\tsta              &               &            \\
+  \tti{min-sort}         ~&~~\tpur                      &               &            \\
+  \tti{top-n}            ~&~~\tpur                      &               &            \\
+  \tti{wf}               ~&~~\tpur                      &               &            \\
+  \tti{spell}            ~&~~\tpur                      &               &            \\
+  \tti{diff}             ~&~~\tpur                      &               &            \\
+\bottomrule
+\end{tabular*}
+\label{tab:eval}
+\end{table}
+
+
+We first apply \sys onto a collection of micro-benchmarks 
+
+The first benchmarks runs a grep over a series of complex, DFA
+(Fig.~\cite{})
+
+\begin{figure*}[t]
+    \centering
+    %% \subcaptionbox{\label{eval:minimal_grep}}{
+    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
+    %% }
+    %% \subcaptionbox{\label{eval:grep}}{
+    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/grep_throughput_scaleup.pdf}}
+    %% }
+    %% \subcaptionbox{\label{eval:minimal_sort}}{
+    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_sort_throughput_scaleup.pdf}}
+    %% }
+    %% \subcaptionbox{\label{eval:topn}}{
+    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/topn_throughput_scaleup.pdf}}
+    %% }
+    %% \subcaptionbox{\label{eval:wf}}{
+    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/wf_throughput_scaleup.pdf}}
+    %% }
+    %% \subcaptionbox{\label{eval:spell}}{
+    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
+    %% }
+    %% \caption{a}
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
+        %% \caption{TODO}
+        %% \label{eval:minimal_grep}
+    \end{subfigure}%
+    ~
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{\detokenize{./figs/grep_throughput_scaleup.pdf}}
+        %% \caption{TODO}
+        %% \label{eval:grep}
+    \end{subfigure}%
+    ~
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{\detokenize{./figs/minimal_sort_throughput_scaleup.pdf}}
+        %% \caption{TODO}
+        %% \label{eval:minimal_sort}
+    \end{subfigure}%
+
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{\detokenize{./figs/topn_throughput_scaleup.pdf}}
+        %% \caption{TODO}
+        %% \label{eval:topn}
+    \end{subfigure}%
+    ~
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{\detokenize{./figs/wf_throughput_scaleup.pdf}}
+        %% \caption{TODO}
+        %% \label{eval:wf}
+    \end{subfigure}%
+    ~
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
+        %% \caption{TODO}
+        %% \label{eval:spell}
+    \end{subfigure}%
+    \caption{todo}
+    \label{fig:microbenchmarks}
+\end{figure*}
+
+\subsection{Macro-benchmark: Weather Analysis}
+
+For \sys's first macro-benchmark, we use we
+from introductory chapter of Hadoop Definitive Guide~\cite[Chapter 2]{hadoop:15}
+This example is used as a data analysis Hadoop is well suited for, and combines the 
+There are several interesting aspects about this case.
+First, Hadoop is used 
+McIlroy would have probably expressed---our pipeline 
+14 stages long;
+
+The effort required to write this pipeline is astonishingly low:
+  it amounts to 240 characters 
+(Some effort is required to understand NCDC's weather format, but this is true for any program processing this dataset.)
+
+% /home/nikos/hadoop-3.2.1/bin/hdfs dfs -put /home/nikos/dish/scripts/max-temp 77.24s user 50.79s system 185% cpu 1:09.14 total
+% hadoop jar $HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-*.jar -input 719.26s user 63.88s system 155% cpu 8:22.47 total
+
+
+\subsection{Macro-benchmark: Web Crawling}
+
+\subsection{Macro-benchmark: Bioinformatics Transform}
+
 
 \section{Related Work}
 \label{related}
 
-\kk{On our dataflow graph model: Our data flow graph model is
-  different than most distributed batch and stream processing systems,
-  since the shell is a hybrid between the two. Batch processing
-  systems have no notion of data order, and stream processing systems
-  usually have order, but none of these systems supports this notion
-  of reading from different sources in sequence. Our dataflow graph
-  model supports this by including information about incoming edge
-  order. Another benefit of our dataflow model, is that together with
-  the equations that hold on stateless and pure commands, data
-  parallelism is exposed in the graph as task parallelism. This allows
-  the unoptimized and optimized dataflow graph to have the same
-  unified representation, and doesn't lead to an ad-hoc optimization
-  of the dataflow graph as done in the other systems (the last bit is
-  too aggressive). }
-
 At a high-level, techniques for automatically distributing fall under a spectrum that ranges from fully automated (but potentially sub-optimal) distribution to fully manual (but, ideally, optimal) distribution (Fig.~\ref{fig:spectrum}).
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_spectrum.pdf}}
-\caption{
-  \textbf{Cost of Manual Effort.}
-	\sys sits at the automation end of the spectrum, automatically distributing shell pipelines while maintaining their correctness. A more complete picture is presented in the related-work section~\sx{rt}.
-}
-\label{fig:spectrum}
-\end{figure}
 
 % Nice intro: http://homepages.inf.ed.ac.uk/bfranke/Publications/pldi121-tournavitis.pdf
 \heading{Automated Parallelization and Distribution}
@@ -1537,10 +1689,30 @@ Distributed operating systems~\cite{rashid1981accent, walker1983locus, ousterhou
 % simplify many of the problems of distribution and
 provide a significant amount of automation. % but require development in a new system or language.  While they take care of all the distribution minutiae, 
 However, they involve significant manual effort using the provided abstractions, which are strongly coupled with the underlying operating or runtime system.
-\TODO{This has to be broken down into systems and PLs, coz systems are the most relevant/important class.}
+% TODO: \TODO{This has to be broken down into systems and PLs, coz systems are the most relevant/important class.}
 
 \heading{Annotation-based Distribution}
-Ignis and Mozart
+Recent systems for light-touch distribution, Ignis~\cite{ignis:19} and Mozart~\cite{mozart:19}, give developers the ability to express through annotations;
+
+Both work on high-level, managed languages---server-side JavaScript for Ignis and Python for Mozart---that allow runtime transformations without affecting the broader environment under which a program executes.
+This is different 
+
+Annotations are used by ---complicated by the use of third-party libraries similar to \sys's extensions.
+\sys is designed to be used, so it is somewhat more heavy-weight than Ignis' declarative recipes or Mozart's split annotations, but geared toward the deveopers of these components---not the users composing them.
+As such..
+Their annotations language is not as principled as \sys's---and one that is critical in ensuring that the dataflow analyses preserves the semantics expected by the developer
+The side-effects present in the shell dwarf those of functional languages
+The shell is also more general.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_spectrum.pdf}}
+\caption{
+  \textbf{Cost of Manual Effort.}
+	\sys sits at the automation end of the spectrum, automatically distributing shell pipelines while maintaining their correctness. A more complete picture is presented in the related-work section~\sx{rt}.
+}
+\label{fig:spectrum}
+\end{figure}
 
 \heading{DSLs for Distribution}
 At the other end of the spectrum, distributed computing frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13, jetstream:14} \kk{JetStream has a very different focus} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp, psync:16, dartagnan:18}
@@ -1556,9 +1728,50 @@ Moreover, the insights behind these attempts are significantly different from ou
 %Despite significant progress~\cite{}, it remains due to its need for complex program analysis and the unknown factors (such as input data range) during compilation.
 
 \heading{Concurrent and Distributed Shells}
-Among other work, the Smoosh authors have argued that certain features of the shell are useful for concurrency~\cite{smoosh:18}.
-However, their work is 
+\nv{NV}
+Among other work, the Smoosh authors have argued that certain features of the shell are useful for concurrency~\cite{smoosh:18};
+Their work does not automatically parallelize pipelines, but rather argues that the shell language is itself an good DSL for concurrency;
+This argument is different from \sys, 
+an argument complementary to \sys's which automatically (and correcctly) parallelizes pipelines even when developers have---hence distribution-\emph{oblivious} shell scripting.
+
+Several shells add support for non-linear pipe topologies;
+  this 
+2dsh~\cite{}
+rc~\cite{}
+gsh~\cite{}
 dgsh~\cite{dagsh:17}.
+
+Commands for explicitly specifying parallelism such \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}, or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
+These commands require the user to express the program explicitely, work only with embarrasingly parallel (and short) programs;
+  \sys and scales out to large pipelines
+Often, these commands provide options to support very special cases
+---a stark contradiction to the celebrated \unix philosophy.
+For example, \tti{parallel}, an official GNU project, flags such as \ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs}, that a \unix user would achieve with \ttt{head}, \ttt{sed}, and \ttt{xargs}; it also includes other programs that 
+with complex semantics, such as the ability transfer files between computers, separate text files, and parse CSV.
+
+
+\heading{Dataflow Graph Model}
+
+\nv{needs KM}
+On our dataflow graph model: Our data flow graph model is
+  different than most distributed batch and stream processing systems,
+  since the shell is a hybrid between the two. Batch processing
+  systems have no notion of data order, and stream processing systems
+  usually have order, but none of these systems supports this notion
+  of reading from different sources in sequence. Our dataflow graph
+  model supports this by including information about incoming edge
+  order. Another benefit of our dataflow model, is that together with
+  the equations that hold on stateless and pure commands, data
+  parallelism is exposed in the graph as task parallelism. This allows
+  the unoptimized and optimized dataflow graph to have the same
+  unified representation, and doesn't lead to an ad-hoc optimization
+  of the dataflow graph as done in the other systems (the last bit is
+  too aggressive).
+
+\TODO{We have to also cite the paper by Konstantinos, Caleb, Rajeev,
+  etc since they also try to do semantics preserving optimizations on
+  dataflow graphs}
+
 
 \section{Discussion}
 \label{discussion}
@@ -1566,7 +1779,7 @@ dgsh~\cite{dagsh:17}.
 This section reflects on \sys's design and implementation, touches on future work, and closes the paper.
 
 \heading{Limitations}
-Our is implementation is limited in many ways, so as to succeed in proving the key hypothesis---that scaling out shell pipelines can be automated and correct--- despite \sys being a research prototype.
+Our is implementation is limited in many ways, so as to succeed in proving the key hypothesis---that scaling out shell pipelines can be automated and correct\TODO{with respect to some assumptions}--- despite \sys being a research prototype.
 
 \sys does not adequately handle failures or network partitions in the general sense, which would include re-scheduling passes that were executing on failed replicas.
 Prior work on fault-tolerant distributed stream processing~\cite{} can be of significant aid here.
@@ -1574,17 +1787,29 @@ Prior work on fault-tolerant distributed stream processing~\cite{} can be of sig
 The logic of the planner is quite simplified, attempting only straightforward placement of tasks to nodes (and using a hard-coded, homogeneous node structure).
 Prior work on operator placement of distributed dataflow graphs~\cite{} can be used to improve it.
 
-\sys is conservative in the shell subsets that it handles, so that it doesn't introduce any unsafe parallelism.
-The point of this work was not to be able to handle a complete distributable
-subset of the shell, but rather use significant part of it to demonstrate
-performance benefits.
+\sys is conservative in the shell subsets that it handles, in order to
+not introduce unsafe behaviours. The point of this work was not to be
+able to handle a complete distributable subset of the shell, but
+rather use significant part of it to demonstrate performance benefits.
+
+Shell is highly dynamic, thus making it impossible to design sound
+meaningful analyses to determine distributable regions and maximal
+parallelization. In order to address this particularity, \sys could be
+tighly integrated with a posix compliant shell
+interpreter~\cite{smoosh:20} so that dynamic information can be
+acquired selectively to aid the analysis and optimization process.
+
 
 \heading{Future Work}
 % \label{limitation}
 % \item No cycles (multiple commands writing and reading from the same file)
-There are several worthwhile directions for future work.
-One direction would be a formal study of \sys and specifically a proof that the analysis~\sx{dataflow} does indeed return distributable subtrees.
-Recent work on formalizing the semantics of the POSIX shell~\cite{smoosh:20} make such an attempt possible.
+There are several worthwhile directions for future work.  One
+direction would be an extension of the distributability analysis of
+\sys, in order to guide it using dynamic information. This could
+enable a formal study of the analysis~\sx{impl} to show that it
+returns regions that are safe to distribute.  Recent work on
+formalizing the semantics of the POSIX shell~\cite{smoosh:20} make
+such an attempt possible.
 
 Another direction is to extend \sys to handle other classes outside \sta and \pur.
 These two classes enjoy a certain in quick, one-off pipelines and are the easiest to distribute, but 
