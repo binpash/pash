@@ -772,11 +772,11 @@ These commands respect functional purity, returning the same results for the sam
 The details of this state and its propagation during piecewise element processing affects their distributability characteristics.
 
 Some commands are easy to parallelize, because they maintain trivial state and are commutative---\eg \ttt{wc}, which simply maintains a counter.
-Others, such as \ttt{sha1sum}, maintain more complex state that is not applied commutatively.
+Others, such as \ttt{sha1sum}, maintain more complex state that has to be updated in a sequential fashion.
 
 Often these commands do not operate in an online fashion, but need to block until the end of a stream---a typical example of this is \ttt{sort}, which cannot start before the last line of input has been consumed.
 Non-streaming constraints affect task parallelism, but not data parallelism:
-  \ttt{sort} can be parallelized significantly using divide-and-conquer techniques.
+  \ttt{sort} can be parallelized significantly using divide-and-conquer techniques, that is implementing it as a map and a reduce function.
 
 \heading{File-system Commands}
 The third class contains commands that access the file-system~\dfs.
@@ -1166,12 +1166,10 @@ parallelism is based on the observation that some operations produce
 the same result when performed independently on subsets of the input
 data, merging the results afterwards. This is the basic optimization
 that is used by popular distributed processing systems such as
-MapReduce\kk{cite} and Apache Spark\kk{cite}. \todo{Unfortunately, the
-  dataflow graph model of most of these systems is not expressive
-  enough to represent data parallelism, so the distributed generations
-  that they generate, can not be represented in their dataflow model.}
-\kk{This last sentence is extremely important and we should make it
-  shine.}
+MapReduce\kk{cite} and Apache Spark\kk{cite}.Unfortunately, the
+dataflow graph model of most of these systems is not expressive enough
+to represent data parallelism, so the distributed implementations that
+they perform do not preserve the semantics of their dataflow model.
 
 In contrast, our dataflow model inherently supports the data
 parallelism that is found in shell programs. More precisely, data
@@ -1188,8 +1186,7 @@ optimizations, we formalize our intuition about stateless and pure
 commands.
 \nv{TODOs
   (i) highlight earlier the antithesis between the formalisms in this section and the informalities of the previous (me);
-  (ii) try to add a few paragraphs / subsections on parallelization optimizations that make use of these formalisms (to show their value);
-  (iii) try to add a proof \emph{sketch} pointing to these formalisms (to show their value), and we can point to the TR for the longer proof.
+  (ii) try to add a proof \emph{sketch} pointing to these formalisms (to show their value), and we can point to the TR for the longer proof.
 }
  Recall the example \ref{} from section Categories
 \ref{}. This example shows the stateless command x being applied to
@@ -1208,16 +1205,30 @@ reduce $r$ step satisfies the following:
 \forall x, x', f(x.x') = r(m(x).m(x'))
 \]
 
-Based on these equations, we can define a maximal node split operation
-on a stateless node $v$ with $n$ input ordered edges and an output
-edge to node $v'$, to replace $v$ with $n$ new nodes, giving each one
-of them one of the incoming edges of $v$, and routing them in order to
-point to $v'$. The maximal node split operation can similarly extended
-for pure nodes.
+\heading{Parallelization Transformations}
+%
+Based on these equations, we can define a maximal \emph{node split
+  operation} on a stateless node $v$ with $n$ input ordered edges and
+an output edge to node $v'$, to replace $v$ with $n$ new nodes, giving
+each one of them one of the incoming edges of $v$, and routing them in
+order to point to $v'$. Since each incoming edge represents a stream
+of data $x_i : D^*$, and the only behaviour of a dataflow graph is its
+output, this optimization $ v(x_1.x_2...x_n) \Rightarrow
+v(x_1).v(x_2)...v(x_n)$ can be shown to preserve the behaviour of the
+graph. Furthermore, it can be straightforwardly extended to pure
+commands that can be implemented by a map-reduce pair $(m, r)$ as $
+v(x_1.x_2...x_n) \Rightarrow r(m(x_1).m(x_2)...m(x_n))$.
 
-\kk{If there is time I can work out a formal definition and a proof
+\tr{Remember to mention the assumptions that need to hold for the
+  graph transformations to be valid in the Command categories
+  section. Commands must be deterministic, they must not do any other
+  side effect (such as writing to other files, sending signals,
+  etc). However, these assumptions must already be checked when the
+  developer designates the categories.}
+
+\tr{If there is time I can work out a formal definition and a proof
   sketch why this transformation preserves the output of the dataflow
-  graph}.
+  graph.}
 
 %% \begin{definition}
 %% Given a dataflow graph $G = (V, E, O)$, where $V$ is a set of nodes
@@ -1247,12 +1258,6 @@ valid node in the graph must always be unbounded if it does not refer
 to a file.
 
 
-\kk{Remember to mention the assumptions that need to hold for the
-  graph transformations to be valid in the Command categories
-  section. Commands must be deterministic, they must not do any other
-  side effect (such as writing to other files, sending signals,
-  etc). However, these assumptions must already be checked when the
-  developer designates the categories.}
 
 
 
