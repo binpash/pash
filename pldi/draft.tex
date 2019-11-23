@@ -1122,13 +1122,17 @@ system, or just be FIFO pipes that used for interprocess communication
 %% \end{center}
 
 
-In order to expose data parallelism from the output of a command,
-files that don't point to a resource can have an upper bound on the
-lines that they can tranfer. This can be useful to utilize avaliable
+In order to expose data parallelism from the output of a command, files that
+don't point to a resource can have
+\begin{wrapfigure}[3]{r}{0.20\columnwidth}
+\vspace{-7pt}
+  \includegraphics[width=0.20\columnwidth]{\detokenize{./figs/dish_g2.pdf}}
+\vspace{-20pt}
+\end{wrapfigure}
+an upper bound on the lines that they can transfer. This can be useful to utilize available
 parallelism after encountering a command that cannot be parallelized
-(e.g. \ttt{sha1sum}). The following example illustrates this scenario.
+(\eg \ttt{sha1sum}). The schematic on the right illustrates this scenario.
 
-\includegraphics[width=0.40\columnwidth]{\detokenize{./figs/dish_g2.pdf}}
 
 \tr{On the other hand, some forms of data parallelism can be exposed
   when knowing the size of the input files. As mentioned in \ref{}
