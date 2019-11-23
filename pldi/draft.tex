@@ -1656,7 +1656,7 @@ arbitrarily many different pipes.
   \tti{spell}            ~&~~$4\times\tsta, 3\times\tpur$ & 1000      &   8m 13.42s   &  37 \qquad 257\qquad  2417    & comparisons (\tti{comm})                          \\
 % https://github.com/andromeda/sdsh/blob/master/scripts/diff.sh
   \tr{\tti{diff}             ~&~~$4\times\tsta, 3\times\tpur$ & \todo{X}  &               &   X \qquad  X \qquad          & shuffling and non-distributable \tti{diff}ing     \\}
-  \tti{shortest-scripts} ~&~~$5\times\tsta, 2\times\tpur$ & 8.6       &   2m 50.03s   &  61 \qquad 253\qquad  2413    & \todo{x}                          \\
+  \tti{shortest-scripts} ~&~~$5\times\tsta, 2\times\tpur$ & 8.6       &   2m 50.03s   &  61 \qquad 253\qquad  2413    & extensive file-system operation   \\
 \bottomrule
 \end{tabular*}
 \label{tab:eval}
@@ -1670,8 +1670,8 @@ Micro-bench\-marks~\sx{micro} are one-off, simple one-line pipelines that take a
 These pipelines are taken from real use cases (often from the literature~\cite{bentley1985spelling}), and, precisely due to their small size, have the benefit of highlighting stress on a handful of stages.
 
 The complex macro-benchmark (\S\ref{macro1}) is designed to handle realistic workloads by today's standards.
-It is about an order of magnitude larger than the micro-benchmarks, but this perceived lack of complexity is deceiving:
-  as shown below, if written in conventional languages, this pipeline would correspond to a program on the order of hundreds of lines of code.
+It is about an order of magnitude larger than the micro-benchmarks, but its perceived lack of complexity is deceiving:
+  as shown if written in a conventional language, it correspond to a program on the order of hundreds of lines of code.
 
 Several results are worth highlighting.
 First and foremost, programs see a significant speedup, often more $10\times$ over sequential execution  while returning identical results (on very large datasets).
@@ -1780,16 +1780,18 @@ As there is no parallelism, it can be viewed as the initial cost corresponding t
 This change in size does not necessarily translate to observed runtime, as most of this size gain comes from the setup and teardown of FIFOs responsible for interprocess (IPC) communication.
 FIFOs are simply pipes made, the in-kernel buffering and synchronization mechanisms are the same, leading to non-observable changes in runtime performance.
 
-In terms of benchmarks, \ttt{grep} is a short script centered around an expensive \sta command.
+In terms of benchmarks, \ttt{grep} is a short script centered around an expensive \sta command;
 % a DFA-based regular expression matching phase;
   while \ttt{grep} defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
 The \ttt{sort} pipeline is equally short, but its central operation is a command in \pur.
 The next two benchmarks, \ttt{wf} and \ttt{top-n}, are based on McIlroy's now classic word-counting program~\cite{bentley1986literate};
   they use sorting, rather than tabulation, to identify high-frequency terms in a corpus.
-\tr{The \ttt{bi-gram} pipeline calculates n-grams of base two;
-  it makes clever use of \ttt{tail} to shift a stream by one word and \ttt{paste} to fuse (zip) two streams together.}
+% \tr{The \ttt{bi-gram} pipeline calculates n-grams of base two;
+%   it makes clever use of \ttt{tail} to shift a stream by one word and \ttt{paste} to fuse (zip) two streams together.}
 The next pipeline is based on the original \ttt{spell} program developed by Johnson~\cite{bentley1985spelling}---another \unix classic:
   after some preprocessing, it makes clever use of \ttt{comm} to report words not in the dictionary.
+Finally, \ttt{shortest-scripts} is a pipeline~\cite[pg. 7]{taylor2004wicked}that identifies the 15 shortest shell scripts in the user's \ttt{PATH};
+   interestingly, it uses \ttt{file} utility and a higher-order \ttt{wc}.
 
 % TODO \nv{Need to change terminology in plots---files should be (attempted) parallelism, name benchmark, cat should be merge.}
 Fig.~\ref{fig:microbenchmarks} presents the speedup gained by \sys as a function of the level of parallelism (1--200).
@@ -1991,25 +1993,25 @@ intricacy, previous work is not straightforwardly applicable.
 This section reflects on \sys's design and implementation, touches on future work, and closes the paper.
 
 \heading{Limitations}
-Our is implementation is limited in many ways, so as to succeed in proving the key hypothesis---that scaling out shell pipelines can be automated and correct\TODO{with respect to some assumptions}--- despite \sys being a research prototype.
+Our implementation is limited in many ways, so as to succeed in proving the key hypothesis---that scaling out shell pipelines can be automated and correct with respect to some assumptions.
 
 \sys does not adequately handle failures or network partitions in the general sense, which would include re-scheduling passes that were executing on failed replicas.
-Prior work on fault-tolerant distributed stream processing~\cite{} can be of significant aid here.
+Prior work on fault-tolerant distributed stream processing can be of significant aid here.
 
 The logic of the planner is quite simplified, attempting only straightforward placement of tasks to nodes (and using a hard-coded, homogeneous node structure).
-Prior work on operator placement of distributed dataflow graphs~\cite{} can be used to improve it.
+Prior work on operator placement of distributed dataflow graphs can be used to build a more sophisticated planner.
 
 \sys is conservative in the shell subsets that it handles, in order to
-not introduce unsafe behaviours. The point of this work was not to be
+avoid introducing unsafe behaviours. The point of this work was not to be
 able to handle a complete distributable subset of the shell, but
-rather use significant part of it to demonstrate performance benefits.
+rather to use significant part of it to demonstrate performance benefits.
 
-Shell is highly dynamic, thus making it impossible to design sound
-meaningful analyses to determine distributable regions and maximal
-parallelization. In order to address this particularity, \sys could be
-tighly integrated with a posix compliant shell
-interpreter~\cite{smoosh:20} so that dynamic information can be
-acquired selectively to aid the analysis and optimization process.
+% Shell is highly dynamic, thus making it impossible to design sound
+% meaningful analyses to determine distributable regions and maximal
+% parallelization. In order to address this particularity, \sys could be
+% tighly integrated with a posix compliant shell
+% interpreter~\cite{smoosh:20} so that dynamic information can be
+% acquired selectively to aid the analysis and optimization process.
 
 
 \heading{Future Work}
@@ -2024,7 +2026,7 @@ formalizing the semantics of the POSIX shell~\cite{smoosh:20} make
 such an attempt possible.
 
 Another direction is to extend \sys to handle other classes outside \sta and \pur.
-These two classes enjoy a certain in quick, one-off pipelines and are the easiest to distribute, but 
+These two classes enjoy a certain popularity with quick, one-off pipelines and are the easiest to distribute, but 
 it would be interesting to expand to \dfs (with the use of a distributed file-system) and \sid (with the use of transactional protocols).
 This direction would naturally introduce considerations about replication, consistency, and failure recovery.
 
