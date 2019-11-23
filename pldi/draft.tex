@@ -393,9 +393,10 @@ In both cases, manual rewriting is expensive and can introduce new bugs, cascadi
 Could the generation and execution of $p_1$'s distributed version be fully and correctly automated?
 
 To answer this question, this paper presents \sys, a shell \todo{preprocessor} that transforms shell pipelines into their distributed equivalents, enabling \emph{distribution-oblivious programming}.
-The key insight behind \sys is that the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation
+The key insight behind \sys is that a large part of the shell language can be encoded using a dataflow graph model, providing structure to distribute computations.
+%% \kk{Replaced that: the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation. }
 % FIXME \kk{I am not sure whether stream processing provides information for distributing a computation on its own. Maybe we can say that the shell exposes operator level parallelism, and that this is the first step to distributing a computation}.
-\sys builds on this insight with a careful study of the distributability properties of shell primitives and commands, a pipeline rewriting pass that identifies \todo{maximal} sub-expressions as candidates for scale-out, and a late-bound command-prefixing scheme for deferring scheduling decisions to the distributed planner (\ie when runtime information is available).
+\sys builds on this insight with a careful study of the distributability properties of shell primitives and commands, a definition of a dataflow graph model that is suitable for the shell, a set of parallelization optimizations that preserve the behaviour of the graph, and a late-bound command-prefixing scheme for deferring scheduling decisions to the distributed planner (\ie when runtime information is available).
 A \sys-enabled $p_1$ will run \ttt{tr}s in parallel streams,
   use a mostly-parallel tree of \ttt{sort}s,
   run \ttt{uniq} mostly in parallel,
@@ -414,16 +415,18 @@ Most importantly, \sys provides an architectural lesson for system designers---n
 % Key elements of \unix are the ability to compose programs written in different languages, the abstraction of a file system as a set of resident streams, a small but extensible library of commands, and the ability to resolve names within a global context.
 % Under the hood, the \unix kernel buffers results, synchronizes processing stages, and generally orchestrates the computation.
 
-The paper is structured as follows.
-It first starts with a background section outlining pipeline concepts and overviewing \sys~\sx{bg}.
-Sections \ref{distributability}--\ref{recipes} highlight key contributions:
+The paper is structured as follows.  It first starts with a background
+section outlining pipeline concepts and overviewing \sys~\sx{bg}.
+Sections \ref{distributability}--\ref{recipes} highlight key
+contributions: \TODO{Change the 1st and the 3rd to reflect the new
+  section layout. I already changed the second.}
 \begin{itemize}
 
   \item
   \S\ref{distributability} overviews \sys and introduces several scalability and distributability classes.
 
   \item
-  \S\ref{ir} presents a set of rewriting transformations for identifying maximal pipeline sub-expressions, candidates for scale-out.
+  \S\ref{ir} presents a dataflow graph model that can encode shell programs, and a set of parallelization transformations that preserve its semantics.
 
   \item
   \S\ref{impl} details other concerns, such as distributed state management and extensibility.
@@ -687,7 +690,7 @@ In return, \sys uses this DSL to tag commands in the standard libraries and gene
 Broadly, shell commands can be split into five major classes (summarized in Tab.~\ref{tab:classes}) with respect to their distribution characteristics, depending on how they interact with state.
 These classes are ordered in ascending difficulty of distribution:
   later classes require more effort.
-In this order, each class can be thought as a subset \kk{I am not sure this holds for all classes. I would propose saying that some classes are subsets, e.g....} of the next one---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (without seeing any performance improvements).
+In this order, each class can be thought as a subset of the next one---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (without seeing any performance improvements).
 
 \begin{table}[t]
 \center
@@ -987,16 +990,18 @@ would be classified as follows:
   what do you think?}
 
 
-\heading{Pure Commands}
+%% \heading{Pure Commands}
 %
+\noindent
 Together with the commands in \sta, that are always easy to
 parallelize, there also exists a subclass of commands in \pur that can
 be parallelized by separating them into a map and a reduce
 operation. In order to allow command developers to extend \sys with
-information about how to parallelize new pure commands, \sys offers an
-interface to specify how to distribute a pure command.
+information about how to parallelize new pure commands, \sys offers a
+programmatic interface to specify how to distribute a pure command.
 
-\TODO{I am not sure a general interface is so easy to design. It needs
+
+\tr{I am not sure a general interface is so easy to design. It needs
   more though. It might be beneficial to just talk about sort and wc
   here and how we implemented them and nothing more. Or maybe this
   could then go to the implementation? Or maybe say that one can write
@@ -1071,19 +1076,18 @@ sequence. Note that this does not correspond to standard dataflow
 graph representations where the semantics of multiple incoming edges
 is either zipping the inputs in pairs, or arbitraliy interleaving them.
 
-\TODO{Is the following paragraph best suited here? It describes an
-  assumption that we make about commands, to guarantee the validity of
-  our transformations. The assumption is needed due to the limitation
-  of the programming model of one input one output per command.}
+%% \TODO{Is the following paragraph best suited here? It describes an
+%%   assumption that we make about commands, to guarantee the validity of
+%%   our transformations. The assumption is needed due to the limitation
+%%   of the programming model of one input one output per command.}
 
 Note that nodes can read from more files than just the files of their
 stream (or respectively write to more files that their output stream),
-however these files are static (e.g. used for configuration or logging
-\kk{Would an example here help}) and do not represent streams of data,
-and therefore are not considered part of the dataflow graph. We assume
-that these static files can only be accessed by one node, thus
-ensuring that they do not interfere with the distributed
-implementation.
+however these files are static (e.g. used for configuration or
+logging) and do not represent streams of data, and therefore are not
+considered part of the dataflow graph. We assume that these static
+files can only be accessed by one node, thus ensuring that they do not
+interfere with the distributed implementation.
 %% Because of the assumption in section Front End \ref{}, that each file
 %% exists only once in the dataflow graph, we can safely assume that
 %% reading and writing to these static files does not interfere with the
@@ -1100,33 +1104,31 @@ $D\kstar$. They could either refer to a specific named file in the file
 system, or just be FIFO pipes that used for interprocess communication
 %% \TODO{Are there any other file types, such as URLs, ...?}.
 
-\TODO{Show an example pipe and its graph}.
+%% \TODO{Show an example pipe and its graph}.
 
-\begin{center}
-\small
-\begin{tikzpicture}[node distance=2.25cm, ->]
-\node (S) {};
-\node (A) [draw, right of=S, node distance=1.75cm] {node 1};
-\node (B) [draw, right of=A] {node 2};
-\node (C) [draw, right of=B] {node 3};
-\node (E) [right of=C, node distance=1.75cm] {};
-\path (S) edge node[above] {input} (A);
-\path (A) edge node[above] {stream} (B);
-\path (B) edge node[above] {stream} (C);
-\path (C) edge node[above] {output} (E);
-\end{tikzpicture}
-\end{center}
+%% \begin{center}
+%% \small
+%% \begin{tikzpicture}[node distance=2.25cm, ->]
+%% \node (S) {};
+%% \node (A) [draw, right of=S, node distance=1.75cm] {node 1};
+%% \node (B) [draw, right of=A] {node 2};
+%% \node (C) [draw, right of=B] {node 3};
+%% \node (E) [right of=C, node distance=1.75cm] {};
+%% \path (S) edge node[above] {input} (A);
+%% \path (A) edge node[above] {stream} (B);
+%% \path (B) edge node[above] {stream} (C);
+%% \path (C) edge node[above] {output} (E);
+%% \end{tikzpicture}
+%% \end{center}
 
 
 In order to expose data parallelism from the output of a command,
 files that don't point to a resource can have an upper bound on the
-lines that they can tranfer. The following example illustrates why
-this is essential.
+lines that they can tranfer. This can be useful to utilize avaliable
+parallelism after encountering a command that cannot be parallelized
+(e.g. \ttt{sha1sum}). The following example illustrates this scenario.
 
-\TODO{Add an example of a command that has two outputs, one of which
-  goes to one command, while another goes to a different
-  command. Maybe only show the graph here and not the command itself.}
-
+\includegraphics[width=0.40\columnwidth]{\detokenize{./figs/dish_g2.pdf}}
 
 \tr{On the other hand, some forms of data parallelism can be exposed
   when knowing the size of the input files. As mentioned in \ref{}
@@ -1142,83 +1144,82 @@ from a node in the graph represent the graph input, while the edges
 that don't refer to a resource and do not point to a node in the graph
 are its outputs.
 
-\kk{(Maybe) It might be beneficial to mention that many inputs do not
-  represent the same thing as many outputs. These two notions are not
-  symmetric.}
+%% \kk{(Maybe) It might be beneficial to mention that many inputs do not
+%%   represent the same thing as many outputs. These two notions are not
+%%   symmetric.}
   
-\begin{figure*}
-\centering
-\begin{tikzpicture}[->, >=to, auto, node distance=1cm, semithick, transform shape, inner sep=2pt]
-%
-\small
-%
-\node (M1) {};
-\node (M2) [draw, right of=M1, node distance=2cm] {Map};
-\node (M3) [draw, right of=M2, node distance=3cm] {GroupBy(Reduce)};
-\node (M4) [right of=M3, node distance=3cm] {};
-%
-\path (M1) edge node {input} (M2);
-\path (M2) edge node {stream} (M3);
-\path (M3) edge node {output} (M4);
-\end{tikzpicture}
-\end{figure*}
+%% \begin{figure*}
+%% \centering
+%% \begin{tikzpicture}[->, >=to, auto, node distance=1cm, semithick, transform shape, inner sep=2pt]
+%% %
+%% \small
+%% %
+%% \node (M1) {};
+%% \node (M2) [draw, right of=M1, node distance=2cm] {Map};
+%% \node (M3) [draw, right of=M2, node distance=3cm] {GroupBy(Reduce)};
+%% \node (M4) [right of=M3, node distance=3cm] {};
+%% %
+%% \path (M1) edge node {input} (M2);
+%% \path (M2) edge node {stream} (M3);
+%% \path (M3) edge node {output} (M4);
+%% \end{tikzpicture}
+%% \end{figure*}
 
-\begin{figure*}
-\newcommand{\Split}{\text{Split}}
-\newcommand{\Merge}{\text{Merge}}
-\newcommand{\Map}{\text{Map}}
-\newcommand{\GroupBy}{\text{GroupBy}}
-\newcommand{\Reduce}{\text{Reduce}}
-\centering
-\begin{tikzpicture}[->, >=to, auto, node distance=0.6cm, semithick, transform shape, inner sep=1.75pt]
-%
-\footnotesize
-%
-\node (M1) {};
-\node (M2) [draw, right of=M1, node distance=1.3cm] {$\Split$};
-\node (M3) [right of=M2, node distance=1.5cm] {};
-\node (M4) [right of=M3, node distance=2.5cm] {};
-\node (M5) [draw, right of=M4, node distance=2.2cm] {$\Merge$};
-\node (M6) [draw, right of=M5, node distance=3.8cm] {$\GroupBy(K_2,\Reduce)$};
-\node (M7) [draw, right of=M6, node distance=3cm] {$\Merge_K$};
-\node (M8) [right of=M7, node distance=2cm] {};
-%
-\node (T3) [draw, above of=M3] {$\Map$};
-\node (T4) [draw, above of=M4] {$\Split_K$};
-\node (T5) [draw, above of=M5] {$\Merge$};
-\node (T6) [draw, above of=M6] {$\GroupBy(K_1,\Reduce)$};
-%
-\node (B3) [draw, below of=M3] {$\Map$};
-\node (B4) [draw, below of=M4] {$\Split_K$};
-\node (B5) [draw, below of=M5] {$\Merge$};
-\node (B6) [draw, below of=M6] {$\GroupBy(K_3,\Reduce)$};
-%
-\path (M1) edge node {$A$} (M2);
-\path (M2) edge[bend left=10] node {$A$} (T3);
-\path (M2) edge[bend right=10] node[swap] {$A$} (B3);
-\path (M5) edge node {$K_2 \times B$} (M6);
-\path (M6) edge (M7);
-\path (M7) edge node {$K \times B$} (M8);
-%
-\path (T3) edge node {$K \times B$} (T4);
-\path (T4) edge (T5);
-\path (T4) edge (M5);
-\path (T4.330) edge[bend right=10] (B5.170);
-\path (T5) edge node {$K_1 \times B$} (T6);
-\path (T6) edge[bend left=10] node {$K_1 \times B$} (M7);
-%
-\path (B3) edge node {$K \times B$} (B4);
-\path (B4) edge (B5);
-\path (B4) edge (M5);
-\path (B4.30) edge[bend left=10] (T5.190);
-\path (B5) edge node {$K_3 \times B$} (B6);
-\path (B6) edge[bend right=10] node[swap] {$K_3 \times B$} (M7);
-%
-\end{tikzpicture}
-\caption{Distributed implementation of the map-reduce pipeline $\Map \gg \GroupBy(K,\Reduce)$.}
-\label{fig:mapReduce}
-\end{figure*}
-
+%% \begin{figure*}
+%% \newcommand{\Split}{\text{Split}}
+%% \newcommand{\Merge}{\text{Merge}}
+%% \newcommand{\Map}{\text{Map}}
+%% \newcommand{\GroupBy}{\text{GroupBy}}
+%% \newcommand{\Reduce}{\text{Reduce}}
+%% \centering
+%% \begin{tikzpicture}[->, >=to, auto, node distance=0.6cm, semithick, transform shape, inner sep=1.75pt]
+%% %
+%% \footnotesize
+%% %
+%% \node (M1) {};
+%% \node (M2) [draw, right of=M1, node distance=1.3cm] {$\Split$};
+%% \node (M3) [right of=M2, node distance=1.5cm] {};
+%% \node (M4) [right of=M3, node distance=2.5cm] {};
+%% \node (M5) [draw, right of=M4, node distance=2.2cm] {$\Merge$};
+%% \node (M6) [draw, right of=M5, node distance=3.8cm] {$\GroupBy(K_2,\Reduce)$};
+%% \node (M7) [draw, right of=M6, node distance=3cm] {$\Merge_K$};
+%% \node (M8) [right of=M7, node distance=2cm] {};
+%% %
+%% \node (T3) [draw, above of=M3] {$\Map$};
+%% \node (T4) [draw, above of=M4] {$\Split_K$};
+%% \node (T5) [draw, above of=M5] {$\Merge$};
+%% \node (T6) [draw, above of=M6] {$\GroupBy(K_1,\Reduce)$};
+%% %
+%% \node (B3) [draw, below of=M3] {$\Map$};
+%% \node (B4) [draw, below of=M4] {$\Split_K$};
+%% \node (B5) [draw, below of=M5] {$\Merge$};
+%% \node (B6) [draw, below of=M6] {$\GroupBy(K_3,\Reduce)$};
+%% %
+%% \path (M1) edge node {$A$} (M2);
+%% \path (M2) edge[bend left=10] node {$A$} (T3);
+%% \path (M2) edge[bend right=10] node[swap] {$A$} (B3);
+%% \path (M5) edge node {$K_2 \times B$} (M6);
+%% \path (M6) edge (M7);
+%% \path (M7) edge node {$K \times B$} (M8);
+%% %
+%% \path (T3) edge node {$K \times B$} (T4);
+%% \path (T4) edge (T5);
+%% \path (T4) edge (M5);
+%% \path (T4.330) edge[bend right=10] (B5.170);
+%% \path (T5) edge node {$K_1 \times B$} (T6);
+%% \path (T6) edge[bend left=10] node {$K_1 \times B$} (M7);
+%% %
+%% \path (B3) edge node {$K \times B$} (B4);
+%% \path (B4) edge (B5);
+%% \path (B4) edge (M5);
+%% \path (B4.30) edge[bend left=10] (T5.190);
+%% \path (B5) edge node {$K_3 \times B$} (B6);
+%% \path (B6) edge[bend right=10] node[swap] {$K_3 \times B$} (M7);
+%% %
+%% \end{tikzpicture}
+%% \caption{Distributed implementation of the map-reduce pipeline $\Map \gg \GroupBy(K,\Reduce)$.}
+%% \label{fig:mapReduce}
+%% \end{figure*}
 
 
 \subsection{Graph transformations}
@@ -1226,39 +1227,39 @@ are its outputs.
 
 As mentioned above, the dataflow graph exposes task
 parallelism. Different nodes in the graph can be executed
-concurrently, communicating through the edges. Task level parallelism
-is already exposed by the shell, by using pipes \ttt{|} and the
-background operator \ttt{\&}. Unfortunately, simple task
-parallelism leaves a lot to be desired, since scaling a computation
-requires manually introducing more operators.
+concurrently, communicating through the edges.
+%% Task level parallelism is already exposed by the shell, by using
+%% pipes \ttt{|} and the background operator \ttt{\&}.
+Unfortunately, simple task parallelism leaves a lot to be desired,
+since scaling a computation requires manually introducing more
+operators.
 
 In order to adequately utilize the available computational resources,
 a distributed implementation should exploit data parallelism. Data
 parallelism is based on the observation that some operations produce
 the same result when performed independently on subsets of the input
-data, merging the results afterwards. This is the basic optimization
-that is used by popular distributed processing systems such as
-MapReduce \cite{DG2004MR} and Apache Spark \cite{spark:12}. Unfortunately, the
-dataflow graph model of most of these systems is not expressive enough
-to represent data parallelism \km{not sure this is true}, so the distributed implementations that
-they perform do not preserve the semantics of their dataflow model.
+data, merging the results afterwards. Exploiting data parallelism is
+one of the major reasons that popular distributed stream processing
+systems (such as MapReduce \cite{DG2004MR} and Apache Spark
+\cite{spark:12}) achieve significant performance. Unfortunately, the
+optimizations in many of these systems do not preserve the dataflow
+model semantics, blurring the lines between specification,
+optimization, and implementation.
 
 In contrast, our dataflow model inherently supports the data
 parallelism that is found in shell programs. More precisely, data
 parallelism can be easily exposed as task parallelism in our model. A
 very important consequence of this is that we can iteratively apply
 optimizations that expose data parallelism, or even revert them when
-the resulting dataflow graph is too wide. This flexibility enables
-unified reasoning and implementation of the unoptimized and optimized
-version of the dataflow graph. \kk{This is interesting, and should be
-  moved up (or rephrased in the introduction)}
+the resulting dataflow graph is too wide. This flexibility unifies the
+unoptimized and optimized versions of a computation, enabling thinking
+about them with the same conceptual tools.
 
 Before describing the different types of parallelization
 optimizations, we formalize the intuition about stateless and pure
 commands that was described in \Cref{cmd}.
 \nv{TODOs
-  (i) highlight earlier the antithesis between the formalisms in this section and the informalities of the previous (me);
-  (ii) try to add a proof \emph{sketch} pointing to these formalisms (to show their value), and we can point to the TR for the longer proof.
+  (i) highlight earlier the antithesis between the formalisms in this section and the informalities of the previous (me)
 }
 %
 As mentioned there, stateless commands operate independently on
@@ -1272,7 +1273,11 @@ equation holds:
 \forall x, x', f(x.x') = f(x).f(x')
 \]
 
-\km{This is a nice characterization, which I think is true in most settings. There is a caveat though: You can have stateless programs that emit output when they start (before they consume the stream) and/or when they consume the EOF symbol. In this case I am not sure the equation above holds.}
+\tr{This is a nice characterization, which I think is true in most
+  settings. There is a caveat though: You can have stateless programs
+  that emit output when they start (before they consume the stream)
+  and/or when they consume the EOF symbol. In this case I am not sure
+  the equation above holds.}
 
 Similarly, it was mentioned that some pure commands (such as
 \ttt{sort} and \ttt{wc}) can be parallelized using divide-and-conquer
@@ -1348,13 +1353,13 @@ a dataflow graph. However, there are several components in shell
 programs that cannot be arbitrarily parallelized without affecting the
 program behaviour, e.g. commands producing an irreversible effect, or
 commands connected with a \ttt{\&\&} operator. In addition, the
-fact that the shell is \todo{extremely dynamic}, further increases the
+fact that the shell is highly dynamic, further increases the
 challenge of correctly identifying what parts can be distributed.
 
 %% \kk{Give examples of writing to environment variables, producing
 %%   irreversible side effects, the ; and \&\& operators.}
 
-In order to address this issue, we \todo{introduce} the notion of
+In order to address this issue, we introduce the notion of
 distributable program regions, and we design a translation pass that
 given the abstract syntax tree of a shell script identifies
 distributable regions and translates each of them to a dataflow
@@ -1457,8 +1462,8 @@ graph. Finally, whenever the algorithm encounters a command, it first
 checks whether it is safe to parallelize it. A command is considered
 to be safe, if it does not make any modification to the shell state
 (e.g. changing the current directory, modifying environment
-variables), and if it does not read from any \todo{read-once} file,
-like a fifo pipe. If the command is considered safe, its category is
+variables), and if it does not read from any read-once file
+(e.g. pipe). If the command is considered safe, its category is
 identified and a node containing that command is created and added to
 a singleton dataflow graph. If the command is considered unsafe, it is
 still added to the dataflow graph, but cannot be further parallelized
@@ -1482,10 +1487,39 @@ that were described in \Cref{ir:transformations}. If the incoming
 edges of the node are less than the desirable graph width, it performs
 edge splits, and then it performs maximal node splits. The final graph
 can then be implemented by spawning a process for each node, and
-redirecting the outputs according to the graph edges.
+redirecting the outputs according to the graph edges. An example
+transformation can be seen in \Cref{fig:optimizer-transformation}.
 
-\nv{Give example, extend}
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.70\columnwidth]{\detokenize{./figs/dish_g1.pdf}}
+\caption{
+  \textbf{Example graph transformation.}
+  The optimizer splits a stateless node to utilize
+  available data parallelism.
+}
+\vspace{-15pt}
+\label{fig:optimizer-transformation}
+\end{figure}
 
+The optimizer also applies custom transformations on several commands
+to further improve performance. Two notable examples are the
+transformations on \ttt{sort} and \ttt{wc}. Occurences of \ttt{sort}
+that have more than one input are tranformed to \ttt{sort} commands on
+each input, followed by a \ttt{sort -m}, to produce the final sorted
+result. The transformation on occurences of \ttt{wc} that have more
+than input \ttt{i1, t2} is illustrated below as a shell script:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+  paste -d '+' \
+   <(wc i1 | tr -s ' ' '\n' | tail -n +2) \
+   <(wc i2 | tr -s ' ' '\n' | tail -n +2) |
+   bc | tr -s '\n' ' ' |
+   sed 's/^/   /' | sed 's/$/\ /'
+\end{lstlisting}
+
+The above script takes the outputs produced by two \ttt{wc} commands
+and aggregates them accordingly.
 
 %% \subsection{Mapping operators to nodes}
 
@@ -1530,11 +1564,11 @@ edges, or many outgoing edges (when all but the last outgoing edges
 are bounded). However some nodes, might only read their input from one
 source (e.g. stdin). In this case, the distributed implementation
 needs to concatenate input files (or conversely split output
-files). Here is an example:
-
-\kk{Show an example graph! of cat | tr | sort. The command in the
-  middle must only take input from one file (maybe just stdin).}
-
+files).
+%
+%% \tr{Show an example graph! of cat | tr | sort. The command in the
+%%   middle must only take input from one file (maybe just stdin).}
+%
 We address this issue using primitive shell constructs for file
 manipulation. More concretely a merger can be implemented by a simple
 \verb|cat|. Given a set of input files \verb|in1, in2, ...| and an
@@ -1545,14 +1579,18 @@ output file \verb|out|, a merger can be implemented as:
 \end{lstlisting}
 
 \noindent
-\TODO{Change that with the new splitter}
 On the other hand, given an input file \verb|in| that is a FIFO pipe,
 and two output files \verb|out1, out2| the first of which is bounded
 to \verb|N| lines, a 2-splitter can be implemented as:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none]
- head -n $N $in > $out1 ; cat $in > $out2
+  tee >(head -n $N > $temp1;
+        dd of=/dev/null > /dev/null 2>&1 &
+        cat $temp1 > $out1) |
+       (tail -n +${N+1} > $out2;
+        dd of=/dev/null > /dev/null 2>&1)
 \end{lstlisting}
+ %% head -n $N $in > $out1 ; cat $in > $out2
 
 \noindent
 Using the 2-splitter as a building block, a pipe can be split to
@@ -1648,34 +1686,6 @@ More detailed setup and experiments, including the scripts, is included in the a
 
 \subsection{Microbenchmarks: Shell One-liners}
 
-Tab.~\ref{tab:eval} summarizes the collection of micro-benchmarks used to evaluate \sys.
-Benchmark names (col. 1) correspond to the names on the plots (Fig.~\ref{fig:microbenchmarks}).
-% The centralized pipelines read files of various sizes from disk and write to disk.
-
-Input sizes and times (col. 2, 3) summarize the longest sequential execution (200 files in Fig.~\ref{fig:microbenchmarks}).
-Script sizes report on the \sys's rewritten output for three different distribution sizes---$1\times$, 10$\times$, and $100\times$.
-
-The size of the script grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
-The first number alone is interesting, as it captures \sys's output for the sequential script.
-As there is no parallelism, it can be viewed as the initial cost corresponding to using \sys.
-% this is the size of 
-This change in size does not necessarily translate to observed runtime, as most of this size gain comes from the setup and teardown of FIFOs responsible for interprocess (IPC) communication.
-FIFOs are simply pipes made, the in-kernel buffering and synchronization mechanisms are the same, leading to non-observable changes in runtime performance.
-
-In terms of benchmarks, \ttt{grep} is a short script centered around an expensive \sta command.
-% a DFA-based regular expression matching phase;
-  while \ttt{grep} defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
-The \ttt{sort} pipeline is equally short, but its central operation is a command in \pur.
-The next two benchmarks, \ttt{wf} and \ttt{top-n}, are based on McIlroy's now classic word-counting program~\cite{bentley1986literate};
-  they use sorting, rather than tabulation, to identify high-frequency terms in a corpus.
-The \ttt{bi-gram} pipeline calculates n-grams of base two;
-  it makes clever use of \ttt{tail} to shift a stream by one word and \ttt{paste} to fuse (zip) two streams together.
-\ttt{spell} is based on 
-spell program~\cite{bentley1985spelling} 
-The next pipeline is based on the original \ttt{spell} program developed by Johnson~\cite{bentley1985spelling}---another \unix classic:
-  after some preprocessing, it makes clever use of \ttt{comm} to report words not in the dictionary.
-
-Generally, the planning 
 
 \begin{figure*}[t]
     \centering
@@ -1707,7 +1717,7 @@ Generally, the planning
     ~
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{\detokenize{./figs/grep_throughput_scaleup.pdf}}
+        \includegraphics[width=\textwidth]{\detokenize{./figs/spell_throughput_scaleup.pdf}}
         %% \caption{TODO}
         %% \label{eval:grep}
     \end{subfigure}%
@@ -1735,13 +1745,63 @@ Generally, the planning
     ~
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
+        \includegraphics[width=\textwidth]{\detokenize{./figs/shortest_scripts_throughput_scaleup.pdf}}
         %% \caption{TODO}
         %% \label{eval:spell}
     \end{subfigure}%
-    \caption{todo}
+    \caption{
+      \textbf{Speedup achieved by \sys as a function of the level of parallelism (1--200).} 
+      Three different configurations per benchmark:
+      (i) distributed, focusing only on the distributed execution,
+      (ii) +compile, adding \sys' pre-processing overheads, and
+      (iii) +cat, adding a final merger step.
+    }
+    \vspace{-15pt}
     \label{fig:microbenchmarks}
 \end{figure*}
+
+Tab.~\ref{tab:eval} summarizes the collection of micro-benchmarks used to evaluate \sys.
+Benchmark names (col. 1) correspond to the names on the plots (Fig.~\ref{fig:microbenchmarks}).
+% The centralized pipelines read files of various sizes from disk and write to disk.
+
+Input sizes and times (col. 2, 3) summarize the longest sequential execution (200 files in Fig.~\ref{fig:microbenchmarks}).
+Script sizes report on the \sys's rewritten output for three different distribution sizes---$1\times$, 10$\times$, and $100\times$.
+
+The size of a script (col. 5) grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
+The first number alone is interesting, as it captures \sys's output for the sequential script.
+As there is no parallelism, it can be viewed as the initial cost corresponding to using \sys.
+% this is the size of 
+This change in size does not necessarily translate to observed runtime, as most of this size gain comes from the setup and teardown of FIFOs responsible for interprocess (IPC) communication.
+FIFOs are simply pipes made, the in-kernel buffering and synchronization mechanisms are the same, leading to non-observable changes in runtime performance.
+
+In terms of benchmarks, \ttt{grep} is a short script centered around an expensive \sta command.
+% a DFA-based regular expression matching phase;
+  while \ttt{grep} defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
+The \ttt{sort} pipeline is equally short, but its central operation is a command in \pur.
+The next two benchmarks, \ttt{wf} and \ttt{top-n}, are based on McIlroy's now classic word-counting program~\cite{bentley1986literate};
+  they use sorting, rather than tabulation, to identify high-frequency terms in a corpus.
+The \ttt{bi-gram} pipeline calculates n-grams of base two;
+  it makes clever use of \ttt{tail} to shift a stream by one word and \ttt{paste} to fuse (zip) two streams together.
+The next pipeline is based on the original \ttt{spell} program developed by Johnson~\cite{bentley1985spelling}---another \unix classic:
+  after some preprocessing, it makes clever use of \ttt{comm} to report words not in the dictionary.
+
+% TODO \nv{Need to change terminology in plots---files should be (attempted) parallelism, name benchmark, cat should be merge.}
+Fig.~\ref{fig:microbenchmarks} presents the speedup gained by \sys as a function of the level of parallelism (1--200).
+% we experiment with a $200\times$ level of parallelism to see potential overheads
+Each one of these plots reports on three different configurations:
+  (i) distributed, which captures only the runtime of the distributed computation,
+  (ii) compile + distributed, which adds the \sys' analysis and generation overhead, and
+  (iii) cat + compile + distributed, which adds a final merger  gathering the results at the end of the pipeline.
+The results show significant speedups, ranging between \todo{7--70$\times$}, depending on the distributability characteristics of individual pipelines.
+
+Interestingly, the overhead from \sys's analysis and generation phases remains collectively below 1s even for the high-scalability cases.
+We decided to push \sys's limits of these phases by synthesizing an artificial 1000-stage pipeline---a carefully-constructed, worst-case workload that is nowhere near the ones observed in practice (\S\ref{macro1}--\ref{macro3}).
+We find the resulting times quite acceptable:
+  \todo{8.23s} for parsing the script, 
+  \todo{3.22s} for analysis, and 
+  \todo{X.XXs} for rewriting the results of the analysis.
+
+
 
 \subsection{Macro-benchmark: Weather Analysis}
 \label{macro1}
