@@ -24,10 +24,10 @@ cat "$temp_dir/p2.txt" |
 
 distr_output_dir=/tmp/distr_output
 
-./execute_compile_evaluation_script.sh "p3b_1" $distr_output_dir 1 0
+# ./execute_compile_evaluation_script.sh "p3b_1" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "p3b_2" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "p3b_10" $distr_output_dir 1 0
-./execute_compile_evaluation_script.sh "p3b4_1" $distr_output_dir 1 0
+# ./execute_compile_evaluation_script.sh "p3b4_1" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "p3b4_2" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "p3b4_10" $distr_output_dir 1 0
 
