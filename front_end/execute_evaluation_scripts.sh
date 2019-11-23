@@ -52,3 +52,10 @@ distr_output_dir=/tmp/distr_output
 ./execute_compile_evaluation_script.sh "shortest_scripts_20" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "shortest_scripts_50" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "shortest_scripts_100" $distr_output_dir 1 0
+
+./execute_compile_evaluation_script.sh "micro_1000_2" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "micro_1000_4" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "micro_1000_10" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "micro_1000_20" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "micro_1000_50" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "micro_1000_100" $distr_output_dir 1 0
