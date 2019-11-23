@@ -392,36 +392,6 @@ More complex pipelines, such as the ones presented in later sections, would invo
 In both cases, manual rewriting is expensive and can introduce new bugs, cascading changes, and divergence from legacy functionality.
 Could the generation and execution of $p_1$'s distributed version be fully and correctly automated?
 
-% Some (parts of) pipelines require only moderate effort, as they are 
-% For some pipelines, this effort is merely moderate, as 
-%  can be expressed in domain-specific frameworks---for example, Hadoop and Spark provide a few purely functional primitives that 
-%   ---still requiring rewriting the program in a different (\eg Scala for Spark).
-% 
-% This effort is moderate if the program expressed by these pipelines fits into a domain-specific framework.
-% At times, such pipelines
-% As long as the program fits into the model this is only moderately difficult;
-% 
-% For many legacy pipelines  
-%  has to choose between three options, all of which require significant manual effort.
-% The most invasive is to rewrite the entire program in a distributed programming language
-% The most popular is to leverage 
-% 
-% Use a distributed programming language, even higher rewrites
-% Or use some form of annotations 
-% 
-%  this requires rewriting portions of the program in a new language and use operations
-% 
-% 
-% In the simplest case, annotations
-% 
-% Often, they only focus on a few parts of the system---for example, upgrading to a distributed storage layer.
-% More rarely, companies rewrite entire systems (\eg Twitter's Ruby-to-Scala rewrite~\cite{twitter}), a process that is notoriously difficult under schedule constraints and competitive pressures~\cite{rewrite1, rewrite2}.
-%  especially since software today makes extensive use of third-party modules~\cite{breakapp:plos:2017}.
-% 
-
-% If developers have already expressed their computation as a Unix pipeline, they should not have to manually rewrite the program in other environment---\eg Hadoop, Spark---to exploit distribution.
-
-
 To answer this question, this paper presents \sys, a shell \todo{preprocessor} that transforms shell pipelines into their distributed equivalents, enabling \emph{distribution-oblivious programming}.
 The key insight behind \sys is that the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation
 % FIXME \kk{I am not sure whether stream processing provides information for distributing a computation on its own. Maybe we can say that the shell exposes operator level parallelism, and that this is the first step to distributing a computation}.
@@ -443,17 +413,6 @@ Most importantly, \sys provides an architectural lesson for system designers---n
 % Indeed, the primary reason behind $p_1$'s succinctness is that the pipeline is a domain-specific language for describing operations over streams.
 % Key elements of \unix are the ability to compose programs written in different languages, the abstraction of a file system as a set of resident streams, a small but extensible library of commands, and the ability to resolve names within a global context.
 % Under the hood, the \unix kernel buffers results, synchronizes processing stages, and generally orchestrates the computation.
-
-% Primitives 
-% \sys enables \emph{distribution-oblivious programming}: 
-%   multi-order of magnitude speedups with correctness guarantees and without any developer effort.
-% 
-% The a series of transformations that 
-% Second, we are using describing composition . For this, we are restricting the study to a subset of the POSIX shell--
-% 
-% Local operations and identifiers have to be carefully translated to distributed ones, a translation that depends on the types of the operations and associated identifiers.
-% 
-% The semantics is enough to capture powerful features such as stream branching and feedback constructs found in practice and in the system's evaluation.
 
 The paper is structured as follows.
 It first starts with a background section outlining pipeline concepts and overviewing \sys~\sx{bg}.
@@ -1186,6 +1145,80 @@ are its outputs.
 \kk{(Maybe) It might be beneficial to mention that many inputs do not
   represent the same thing as many outputs. These two notions are not
   symmetric.}
+  
+\begin{figure*}
+\centering
+\begin{tikzpicture}[->, >=to, auto, node distance=1cm, semithick, transform shape, inner sep=2pt]
+%
+\small
+%
+\node (M1) {};
+\node (M2) [draw, right of=M1, node distance=2cm] {Map};
+\node (M3) [draw, right of=M2, node distance=3cm] {GroupBy(Reduce)};
+\node (M4) [right of=M3, node distance=3cm] {};
+%
+\path (M1) edge node {input} (M2);
+\path (M2) edge node {stream} (M3);
+\path (M3) edge node {output} (M4);
+\end{tikzpicture}
+\end{figure*}
+
+\begin{figure*}
+\newcommand{\Split}{\text{Split}}
+\newcommand{\Merge}{\text{Merge}}
+\newcommand{\Map}{\text{Map}}
+\newcommand{\GroupBy}{\text{GroupBy}}
+\newcommand{\Reduce}{\text{Reduce}}
+\centering
+\begin{tikzpicture}[->, >=to, auto, node distance=0.6cm, semithick, transform shape, inner sep=1.75pt]
+%
+\footnotesize
+%
+\node (M1) {};
+\node (M2) [draw, right of=M1, node distance=1.3cm] {$\Split$};
+\node (M3) [right of=M2, node distance=1.5cm] {};
+\node (M4) [right of=M3, node distance=2.5cm] {};
+\node (M5) [draw, right of=M4, node distance=2.2cm] {$\Merge$};
+\node (M6) [draw, right of=M5, node distance=3.8cm] {$\GroupBy(K_2,\Reduce)$};
+\node (M7) [draw, right of=M6, node distance=3cm] {$\Merge_K$};
+\node (M8) [right of=M7, node distance=2cm] {};
+%
+\node (T3) [draw, above of=M3] {$\Map$};
+\node (T4) [draw, above of=M4] {$\Split_K$};
+\node (T5) [draw, above of=M5] {$\Merge$};
+\node (T6) [draw, above of=M6] {$\GroupBy(K_1,\Reduce)$};
+%
+\node (B3) [draw, below of=M3] {$\Map$};
+\node (B4) [draw, below of=M4] {$\Split_K$};
+\node (B5) [draw, below of=M5] {$\Merge$};
+\node (B6) [draw, below of=M6] {$\GroupBy(K_3,\Reduce)$};
+%
+\path (M1) edge node {$A$} (M2);
+\path (M2) edge[bend left=10] node {$A$} (T3);
+\path (M2) edge[bend right=10] node[swap] {$A$} (B3);
+\path (M5) edge node {$K_2 \times B$} (M6);
+\path (M6) edge (M7);
+\path (M7) edge node {$K \times B$} (M8);
+%
+\path (T3) edge node {$K \times B$} (T4);
+\path (T4) edge (T5);
+\path (T4) edge (M5);
+\path (T4.330) edge[bend right=10] (B5.170);
+\path (T5) edge node {$K_1 \times B$} (T6);
+\path (T6) edge[bend left=10] node {$K_1 \times B$} (M7);
+%
+\path (B3) edge node {$K \times B$} (B4);
+\path (B4) edge (B5);
+\path (B4) edge (M5);
+\path (B4.30) edge[bend left=10] (T5.190);
+\path (B5) edge node {$K_3 \times B$} (B6);
+\path (B6) edge[bend right=10] node[swap] {$K_3 \times B$} (M7);
+%
+\end{tikzpicture}
+\caption{Distributed implementation of the map-reduce pipeline $\Map \gg \GroupBy(K,\Reduce)$.}
+\label{fig:mapReduce}
+\end{figure*}
+
 
 
 \subsection{Graph transformations}
@@ -1205,7 +1238,7 @@ parallelism is based on the observation that some operations produce
 the same result when performed independently on subsets of the input
 data, merging the results afterwards. This is the basic optimization
 that is used by popular distributed processing systems such as
-MapReduce \cite{DG2004MR} and Apache Spark\cite{spark:12}. Unfortunately, the
+MapReduce \cite{DG2004MR} and Apache Spark \cite{spark:12}. Unfortunately, the
 dataflow graph model of most of these systems is not expressive enough
 to represent data parallelism \km{not sure this is true}, so the distributed implementations that
 they perform do not preserve the semantics of their dataflow model.
@@ -1238,6 +1271,8 @@ equation holds:
 \[
 \forall x, x', f(x.x') = f(x).f(x')
 \]
+
+\km{This is a nice characterization, which I think is true in most settings. There is a caveat though: You can have stateless programs that emit output when they start (before they consume the stream) and/or when they consume the EOF symbol. In this case I am not sure the equation above holds.}
 
 Similarly, it was mentioned that some pure commands (such as
 \ttt{sort} and \ttt{wc}) can be parallelized using divide-and-conquer
@@ -1550,6 +1585,40 @@ arbitrarily many different pipes.
 % \kk{We should have at least some pipelines that have a bad pure
 %   command in them.}
 
+\begin{table*}[t]
+\center
+\footnotesize
+% \setlength\tabcolsep{3pt}
+\caption{
+  \footnotesize{
+    \textbf{Summary of Micro-benchmarks}.
+    The micro-benchmarks are small pipelines (\ie ones developed on-the-fly) drawn from various sources and applied to large datasets.
+  }
+}
+\begin{tabular*}{\textwidth}{l @{\extracolsep{\fill}} llllll}
+\toprule
+  Script                 ~&~ Structure                    & Input (MB)& Time (Seq)    & Script Size (LoC)             & Highlights                                        \\
+\midrule
+% https://github.com/andromeda/sdsh/blob/master/scripts/grep.sh
+  \tti{min-grep}         ~&~$3\times$\tsta                &           &               &   17\qquad 134\qquad  1304    & complex NFA regex                                 \\
+% https://github.com/andromeda/sdsh/blob/master/scripts/minimal5.sh
+  \tti{min-sort}         ~&~~$\tsta, \tpur$               &           &               &   X \qquad 129\qquad  1209    & \tti{sort}ing                                     \\
+% https://github.com/andromeda/sdsh/blob/master/scripts/topn.sh
+  \tti{wf}               ~&~~$3\times\tsta, 3\times\tpur$ &           &               &   X \qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
+% https://github.com/andromeda/sdsh/blob/master/scripts/topn.sh
+  \tti{top-n}            ~&~~$2\times\tsta, 4\times\tpur$ &           &               &   X \qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
+% https://github.com/andromeda/sdsh/blob/master/scripts/ngrams.sh
+  \tti{bi-gram}          ~&~~$2\times\tsta, 4\times\tpur$ &           &               &   X \qquad  X \qquad          & stream shifting and merging                       \\
+% https://github.com/andromeda/sdsh/blob/master/scripts/spell.sh
+  \tti{spell}            ~&~~$4\times\tsta, 3\times\tpur$ &           &               &  37 \qquad 257\qquad  2417    & comparisons (\tti{comm})                          \\
+% https://github.com/andromeda/sdsh/blob/master/scripts/diff.sh
+  \tti{diff}             ~&~~$4\times\tsta, 3\times\tpur$ &           &               &   X \qquad  X \qquad          & shuffling and non-distributable \tti{diff}ing     \\
+\bottomrule
+\end{tabular*}
+\label{tab:eval}
+\end{table*}
+
+
 At a high level, we are interested in understanding whether \sys can indeed scale pipelines out automatically and correctly.
 To achieve this, we use a combination of micro- and macro-benchmarks, most of which were collected from prior literature and online repositories.
 Micro-benchmarks~\sx{micro} are one-off, simple one-line pipelines that take a few seconds to write (usually interactively);
@@ -1568,53 +1637,45 @@ Finally, \sys preserves the productivity of the shell:
   in one case, the equivalent program for a small part of the pipeline requires over a 150 lines of code in combined Java and Bash to run distributed on top of Hadoop;
   in another, the program expressed by the pipeline was the subject of a semester project in a graduate course on distributed systems~\cite{blinded} where student implementations ranged between 1--3\textbf{K} lines of code.
 
-Experiments were run on a \todo{network of five workstations} connected by 1Gbps links: 
- one large machine (\wka) with 512GB of memory and 128 2.1GHz Intel Xeon E5-2683 cores, and 
- \todo{four smaller machines (\wkq), each with 4GB of memory and two 3.33GHz Intel Core Duo E8600 processors}.
+Experiments were run on a %\todo{network of five workstations} connected by 1Gbps links: 
+ machine with 512GB of memory and 128 2.1GHz Intel Xeon E5-2683 cores.
+%\todo{four smaller machines (\wkq), each with 4GB of memory and two 3.33GHz Intel Core Duo E8600 processors}.
 For our software setup, we use SMP Debian 4.9.144-3.1 (2019-02-19), GNU Core-utils 8.30-3, GNU Bash 5.0.3(1)-release (x86\_64-pc-linux-gnu), Python 3.7.3, and OCaml 4.05.0.
 Generally, no special configuration was made in hardware or software beyond disabling hyper-threading. % ---specifically, the network protocol stack was left unoptimized.
+All pipelines are set to (initially) read from and (finally) write to the file-system (except as otherwise stated).
+Whenever \ttt{curl} is part of a pipeline, it fetches data from a different physical host on the same network connected by 1Gbps links.
 More detailed setup and experiments, including the scripts, is included in the accompanying (anonymized) online repository.
 
 \subsection{Microbenchmarks: Shell One-liners}
 
-\begin{table}[t]
-\center
-\footnotesize
-% \setlength\tabcolsep{3pt}
-\caption{
-  \footnotesize{
-    \textbf{Summary of Micro-benchmarks}.
-    Six micro-benchmarks used to evaluate \sys.
-  }
-}
-\begin{tabular*}{\columnwidth}{l @{\extracolsep{\fill}} lll}
-\toprule
-  Script                 ~&~ Structure                  & Input Size    & Seq.  Time \\
-\midrule
-  \tti{min-grep}         ~&~$2\times$\tsta              &               &            \\
-  \tti{min-sort}         ~&~~\tpur                      &               &            \\
-  \tti{top-n}            ~&~~\tpur                      &               &            \\
-  \tti{wf}               ~&~~\tpur                      &               &            \\
-  \tti{spell}            ~&~~\tpur                      &               &            \\
-  \tti{diff}             ~&~~\tpur                      &               &            \\
-\bottomrule
-\end{tabular*}
-\label{tab:eval}
-\end{table}
+Tab.~\ref{tab:eval} summarizes the collection of micro-benchmarks used to evaluate \sys.
+Benchmark names (col. 1) correspond to the names on the plots (Fig.~\ref{fig:microbenchmarks}).
+% The centralized pipelines read files of various sizes from disk and write to disk.
 
+Input sizes and times (col. 2, 3) summarize the longest sequential execution (200 files in Fig.~\ref{fig:microbenchmarks}).
+Script sizes report on the \sys's rewritten output for three different distribution sizes---$1\times$, 10$\times$, and $100\times$.
 
-We first apply \sys onto a collection of micro-benchmarks 
+The size of the script grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
+The first number alone is interesting, as it captures \sys's output for the sequential script.
+As there is no parallelism, it can be viewed as the initial cost corresponding to using \sys.
+% this is the size of 
+This change in size does not necessarily translate to observed runtime, as most of this size gain comes from the setup and teardown of FIFOs responsible for interprocess (IPC) communication.
+FIFOs are simply pipes made, the in-kernel buffering and synchronization mechanisms are the same, leading to non-observable changes in runtime performance.
 
-Spell program~\cite{bentley1985spelling}
+In terms of benchmarks, \ttt{grep} is a short script centered around an expensive \sta command.
+% a DFA-based regular expression matching phase;
+  while \ttt{grep} defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
+The \ttt{sort} pipeline is equally short, but its central operation is a command in \pur.
+The next two benchmarks, \ttt{wf} and \ttt{top-n}, are based on McIlroy's now classic word-counting program~\cite{bentley1986literate};
+  they use sorting, rather than tabulation, to identify high-frequency terms in a corpus.
+The \ttt{bi-gram} pipeline calculates n-grams of base two;
+  it makes clever use of \ttt{tail} to shift a stream by one word and \ttt{paste} to fuse (zip) two streams together.
+\ttt{spell} is based on 
+spell program~\cite{bentley1985spelling} 
+The next pipeline is based on the original \ttt{spell} program developed by Johnson~\cite{bentley1985spelling}---another \unix classic:
+  after some preprocessing, it makes clever use of \ttt{comm} to report words not in the dictionary.
 
-\ttt{wf}
-Word-count~\cite{bentley1986literate}
-
-\ttt{top-n}
-
-
-The first benchmarks runs a grep over a series of complex, DFA
-(Fig.~\cite{})
+Generally, the planning 
 
 \begin{figure*}[t]
     \centering
@@ -1777,7 +1838,7 @@ The shell is also more general.
 \end{figure}
 
 \heading{DSLs for Distribution}
-At the other end of the spectrum, distributed computing frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13, jetstream:14} \kk{JetStream has a very different focus} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp, psync:16, dartagnan:18}
+At the other end of the spectrum, distributed computing frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp, psync:16, dartagnan:18}
 simplify certain patterns, 
 but do not offer the flexibility of a full-fledged environment.
 % suffer from a similar lack of generality by making strong assumptions about the nature of the computation---for example, strongly-eventual commutative components that can proceed in parallel.
