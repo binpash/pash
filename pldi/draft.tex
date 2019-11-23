@@ -1535,17 +1535,21 @@ Finally, \sys preserves the productivity of the shell:
   in one case, the equivalent program for a small part of the pipeline requires over a 150 lines of code in combined Java and Bash to run distributed on top of Hadoop;
   in another, the program expressed by the pipeline was the subject of a semester project in a graduate course on distributed systems~\cite{blinded} where student implementations ranged between 1--3\textbf{K} lines of code.
 
-Experiments were run on a \todo{network of five workstations} connected by 1Gbps links: 
- one large machine (\wka) with 512GB of memory and 128 2.1GHz Intel Xeon E5-2683 cores, and 
- \todo{four smaller machines (\wkq), each with 4GB of memory and two 3.33GHz Intel Core Duo E8600 processors}.
+Experiments were run on a %\todo{network of five workstations} connected by 1Gbps links: 
+ machine with 512GB of memory and 128 2.1GHz Intel Xeon E5-2683 cores.
+%\todo{four smaller machines (\wkq), each with 4GB of memory and two 3.33GHz Intel Core Duo E8600 processors}.
 For our software setup, we use SMP Debian 4.9.144-3.1 (2019-02-19), GNU Core-utils 8.30-3, GNU Bash 5.0.3(1)-release (x86\_64-pc-linux-gnu), Python 3.7.3, and OCaml 4.05.0.
 Generally, no special configuration was made in hardware or software beyond disabling hyper-threading. % ---specifically, the network protocol stack was left unoptimized.
+All pipelines are set to (initially) read from and (finally) write to the file-system (except as otherwise stated).
+Whenever \ttt{curl} is part of a pipeline, it fetches data from a different physical host on the same network connected by 1Gbps links.
 More detailed setup and experiments, including the scripts, is included in the accompanying (anonymized) online repository.
 
 \subsection{Microbenchmarks: Shell One-liners}
 
 Tab.~\ref{tab:eval} summarizes the collection of micro-benchmarks used to evaluate \sys.
 Benchmark names (col. 1) correspond to the names on the plots (Fig.~\ref{fig:microbenchmarks}).
+% The centralized pipelines read files of various sizes from disk and write to disk.
+
 Input sizes and times (col. 2, 3) summarize the longest sequential execution (200 files in Fig.~\ref{fig:microbenchmarks}).
 Script sizes report on the \sys's rewritten output for three different distribution sizes---$1\times$, 10$\times$, and $100\times$.
 
@@ -1553,25 +1557,23 @@ The size of the script grows due to the resulting complexity of coordinating amo
 The first number alone is interesting, as it captures \sys's output for the sequential script.
 As there is no parallelism, it can be viewed as the initial cost corresponding to using \sys.
 % this is the size of 
-This change in size does not necessarily translate to observed runtime, as most of this size gain comes from the setup and teardown of FIFOs responsible for interprocess (IPC) communication---and FIFOs 
-are simply pipes made, the in-kernel buffering and synchronization mechanisms are the same, leading to non-observable changes in runtime performance.
+This change in size does not necessarily translate to observed runtime, as most of this size gain comes from the setup and teardown of FIFOs responsible for interprocess (IPC) communication.
+FIFOs are simply pipes made, the in-kernel buffering and synchronization mechanisms are the same, leading to non-observable changes in runtime performance.
 
-All pipelines are set to read and write from the filesystem; 
-  \sys 
-The centralized pipelines read files of various sizes from disk and write to disk.
+In terms of benchmarks, \ttt{grep} is a short script centered around an expensive \sta command.
+% a DFA-based regular expression matching phase;
+  while \ttt{grep} defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
+The \ttt{sort} pipeline is equally short, but its central operation is a command in \pur.
+The next two benchmarks, \ttt{wf} and \ttt{top-n}, are based on McIlroy's now classic word-counting program~\cite{bentley1986literate};
+  they use sorting, rather than tabulation, to identify high-frequency terms in a corpus.
+The \ttt{bi-gram} pipeline calculates n-grams of base two;
+  it makes clever use of \ttt{tail} to shift a stream by one word and \ttt{paste} to fuse (zip) two streams together.
+\ttt{spell} is based on 
+spell program~\cite{bentley1985spelling} 
+The next pipeline is based on the original \ttt{spell} program developed by Johnson~\cite{bentley1985spelling}---another \unix classic:
+  after some preprocessing, it makes clever use of \ttt{comm} to report words not in the dictionary.
 
-Spell program~\cite{bentley1985spelling}
-
-Cannot be represented using the Thompson NFA, backtracking
-
-\ttt{wf}
-Word-count~\cite{bentley1986literate}
-
-\ttt{top-n}
-
-
-The first benchmarks runs a grep over a series of complex, DFA
-(Fig.~\cite{})
+Generally, the planning 
 
 \begin{figure*}[t]
     \centering
