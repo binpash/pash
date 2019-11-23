@@ -1642,19 +1642,19 @@ arbitrarily many different pipes.
   Script                 ~&~ Structure                    & Input (MB)& Time (Seq)    & Script Size (LoC)             & Highlights                                        \\
 \midrule
 % https://github.com/andromeda/sdsh/blob/master/scripts/grep.sh
-  \tti{min-grep}         ~&~$3\times$\tsta                &           &               &   17\qquad 134\qquad  1304    & complex NFA regex                                 \\
+  \tti{min-grep}         ~&~$3\times$\tsta                & 1000      &  78m 36.77s   &   30\qquad 134\qquad  1304    & complex NFA regex                                 \\
 % https://github.com/andromeda/sdsh/blob/master/scripts/minimal5.sh
-  \tti{min-sort}         ~&~~$\tsta, \tpur$               &           &               &   X \qquad 129\qquad  1209    & \tti{sort}ing                                     \\
+  \tti{min-sort}         ~&~~$\tsta, \tpur$               & 10000     &  23m 19.85s   &   33\qquad 129\qquad  1209    & \tti{sort}ing                                     \\
 % https://github.com/andromeda/sdsh/blob/master/scripts/topn.sh
-  \tti{wf}               ~&~~$3\times\tsta, 3\times\tpur$ &           &               &   X \qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
+  \tti{wf}               ~&~~$3\times\tsta, 3\times\tpur$ & 1000      &   2m 11.18s   &   53\qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
 % https://github.com/andromeda/sdsh/blob/master/scripts/topn.sh
-  \tti{top-n}            ~&~~$2\times\tsta, 4\times\tpur$ &           &               &   X \qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
+  \tti{top-n}            ~&~~$2\times\tsta, 4\times\tpur$ & 1000      &   6m 53.55s   &   53\qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
 % https://github.com/andromeda/sdsh/blob/master/scripts/ngrams.sh
-  \tti{bi-gram}          ~&~~$2\times\tsta, 4\times\tpur$ &           &               &   X \qquad  X \qquad          & stream shifting and merging                       \\
+  \tti{bi-gram}          ~&~~$2\times\tsta, 4\times\tpur$ & \todo{X}  &               &   X \qquad  X \qquad          & stream shifting and merging                       \\
 % https://github.com/andromeda/sdsh/blob/master/scripts/spell.sh
-  \tti{spell}            ~&~~$4\times\tsta, 3\times\tpur$ &           &               &  37 \qquad 257\qquad  2417    & comparisons (\tti{comm})                          \\
+  \tti{spell}            ~&~~$4\times\tsta, 3\times\tpur$ & 1000      &   8m 13.42s   &  37 \qquad 257\qquad  2417    & comparisons (\tti{comm})                          \\
 % https://github.com/andromeda/sdsh/blob/master/scripts/diff.sh
-  \tti{diff}             ~&~~$4\times\tsta, 3\times\tpur$ &           &               &   X \qquad  X \qquad          & shuffling and non-distributable \tti{diff}ing     \\
+  \tti{diff}             ~&~~$4\times\tsta, 3\times\tpur$ & \todo{X}  &               &   X \qquad  X \qquad          & shuffling and non-distributable \tti{diff}ing     \\
 \bottomrule
 \end{tabular*}
 \label{tab:eval}
@@ -1769,7 +1769,7 @@ Benchmark names (col. 1) correspond to the names on the plots (Fig.~\ref{fig:mic
 % The centralized pipelines read files of various sizes from disk and write to disk.
 
 Input sizes and times (col. 2, 3) summarize the longest sequential execution (200 files in Fig.~\ref{fig:microbenchmarks}).
-Script sizes report on the \sys's rewritten output for three different distribution sizes---$1\times$, 10$\times$, and $100\times$.
+Script sizes report on the \sys's rewritten output for three different distribution sizes---$2\times$, 10$\times$, and $100\times$.
 
 The size of a script (col. 5) grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
 The first number alone is interesting, as it captures \sys's output for the sequential script.
