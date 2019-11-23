@@ -423,13 +423,14 @@ contributions: \TODO{Change the 1st and the 3rd to reflect the new
 \begin{itemize}
 
   \item
-  \S\ref{distributability} overviews \sys and introduces several scalability and distributability classes.
+  \S\ref{distributability} describes several scalability and distributability classes and introduces the distributability characterization language.
 
   \item
   \S\ref{ir} presents a dataflow graph model that can encode shell programs, and a set of parallelization transformations that preserve its semantics.
 
   \item
-  \S\ref{impl} details other concerns, such as distributed state management and extensibility.
+    \S\ref{impl} describes the \sys implementation and addresses several challenges related to the translation and orchestration of shell programs.
+    %% details other concerns, such as distributed state management and extensibility. 
 \end{itemize}
 
 \noindent
@@ -625,7 +626,7 @@ Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn 
 
 As outlined earlier, the key insight behind \sys is that the shell already describes parallel computations over streams.
 Intuitively,
- (i) the parallel-composition operator exposes \todo{task} parallelism
+ (i) the parallel-composition operator exposes task parallelism
 % FIXME \kk{I have named that operator level parallelism, which one do we prefer?},
  (ii) commands such as \ttt{xargs} and \ttt{tee} expose data parallelism,
  (iii) the pipe operator is candidate for both task and data parallelism, and
@@ -637,7 +638,7 @@ To leverage these insights and correctly distribute a pipeline such as $p_1$, \s
 \sys needs to understand the distribution characteristics of individual commands used to compose larger programs~\sx{distributability}.
 This challenge can be broken down into two parts.
 First, there is a need to understand the commands already in the shell---that is, built-ins that come with any shell and support its core functions.
-One example is the set of commands defined by the \textsc{POSIX} standard~\cite{}.
+One example is the set of commands defined by the \textsc{POSIX} standard~\cite{posix}.
 \sys addresses this part by a careful study of a group of commands, identifying a small but clear set of well-understood distributability classes.
 This set is already useful enough to allow the composition of practical pipelines~\sx{eval}.
 
@@ -649,7 +650,7 @@ A command developer can only annotate the default behavior;
   if a new flag is added a few years later, and if that flag alters the command's class, only then a new annotation is needed.
 
 Given a set of commands composed together by the shell primitives, \sys's next challenge is to analyze it and identify candidate subexpressions for distribution~\sx{ir}.
-\sys addresses this challenge with a series of rewriting passes that perform dataflow analysis for identifying \todo{maximal} distributable sub-expressions.
+\sys addresses this challenge with a series of rewriting passes that perform dataflow analysis for identifying  distributable regions.
 It converts the AST to a dataflow graph, and iteratively performs graph transformations that expose data parallelism as task parallelism while preserving correctness.
 These transformations are complicated by the shell's pervasive use of dynamic features---\eg environment variables, file input sizes, \etc
 
@@ -787,7 +788,7 @@ In terms of inputs, \sys supports commands with multiple input (resp. output) st
 Thus, a command can be modelled as having one input and one output stream, a representation that is used throughout \sys including the extensibility DSL~\sx{ext}.
 
 Wanting to present the full picture for completeness purposes, the focus for the rest paper will be commands in \sta and \pur.
-Other commands are treated as  non-distributable for now~\sx{conclusion};
+Other commands are treated as  non-distributable for now~\sx{discussion};
   by building infrastructure to handle other classes, \sys would be able to (i) extract more parallelism and (ii) handle larger programs.
 Even with only these two classes, however, \sys supports highly useful pipelines that are more expressive than ones in popular frameworks such as Hadoop~\cite{mapreduce:08} and Spark~\cite{spark:12}~\sx{eval}.
 
