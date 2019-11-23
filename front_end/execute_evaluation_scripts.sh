@@ -45,3 +45,10 @@ distr_output_dir=/tmp/distr_output
 ./execute_compile_evaluation_script.sh "spell_20" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "spell_50" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "spell_100" $distr_output_dir 1 0
+
+./execute_compile_evaluation_script.sh "shortest_scripts_2" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "shortest_scripts_4" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "shortest_scripts_10" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "shortest_scripts_20" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "shortest_scripts_50" $distr_output_dir 1 0
+./execute_compile_evaluation_script.sh "shortest_scripts_100" $distr_output_dir 1 0
