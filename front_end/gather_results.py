@@ -29,11 +29,11 @@ experiments = ["minimal_grep",
                # "spell",
                "shortest_scripts"]
 
-pretty_names = {"minimal_grep" : "min-grep",
-                "minimal_sort" : "min-sort",
+pretty_names = {"minimal_grep" : "grep",
+                "minimal_sort" : "sort",
                 "wf" : "wf",
                 "topn" : "top-n",
-                "grep" : "grep",
+                "grep" : "grep-old",
                 "bigram" : "bi-gram",
                 "spell" : "spell",
                 "shortest_scripts" : "shortest-scripts"}
