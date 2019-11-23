@@ -1959,33 +1959,36 @@ Moreover, the insights behind these attempts are significantly different from ou
 %   na ginoun formally proven claims gia to equivalence preservation twn
 %   optimizations etc.}
 
-\heading{Dataflow Graph Model}
+\heading{Correct Distribution of Dataflow Graphs}
+%
+The dataflow graph is a prevalent programming model in several areas
+of data processing, as it is used by several batch~\cite{mapreduce:08,
+  spark:12} and stream processing systems~\cite{murray2013naiad,
+  carbone2015flink}. Despite its popularity, it has been noted that
+most systems perform optimizations that do not preserve its semantics,
+introducing subtle erroneous behaviours. Recent work~\cite{HSSGG2014,
+  SHGW2015, MSAIT2019} is trying to address this issue, by restricting
+optimizations to only be performed in cases where correctness would be
+preserved. Our work draws inspiration from these attempts, as we are
+also interested in optimizations that exploit parallelization but
+preserve the semantics of the underlying model. However, our proposed
+dataflow model is different from these other works, as nodes in our
+model read from their inputs \emph{in sequence}. Due to this
+intricacy, previous work is not straightforwardly applicable.
 
-\nv{needs KM}
-On our dataflow graph model: Our data flow graph model is
-  different than most distributed batch and stream processing systems,
-  since the shell is a hybrid between the two. Batch processing
-  systems have no notion of data order, and stream processing systems
-  usually have order, but none of these systems supports this notion
-  of reading from different sources in sequence. Our dataflow graph
-  model supports this by including information about incoming edge
-  order. Another benefit of our dataflow model, is that together with
-  the equations that hold on stateless and pure commands, data
-  parallelism is exposed in the graph as task parallelism. This allows
-  the unoptimized and optimized dataflow graph to have the same
-  unified representation, and doesn't lead to an ad-hoc optimization
-  of the dataflow graph as done in the other systems (the last bit is
-  too aggressive).
-
-%% \TODO{We have to also cite the paper by Konstantinos, Caleb, Rajeev,
-%%   etc since they also try to do semantics preserving optimizations on
-%%   dataflow graphs}
-
-\km{Some very early references on the dataflow model of computation (maybe there are relevant?): \cite{KM1966, D1974Dataflow, K1974KPN, KMacQ1977}}
+%% \cite{HSSGG2014, SHGW2015} discuss optimizing transformations, but
+%% their correctness is established using informal arguments based on
+%% operational intution.
   
-\cite{HSSGG2014, SHGW2015} discuss optimizing transformations, but their correctness is established using informal arguments based on operational intution.
+%% The paper \cite{MSAIT2019} proposes a denotational semantic framework
+%% for stream processing where the data streams are seen as partial
+%% orders, and establishes the soundness of some common parallelizing
+%% transformations on dataflow graphs.
+
+%% \km{Some very early references on the dataflow model of computation
+%% (maybe there are relevant?): \cite{KM1966, D1974Dataflow, K1974KPN,
+%% KMacQ1977}}
   
-The paper \cite{MSAIT2019} proposes a denotational semantic framework for stream processing where the data streams are seen as partial orders, and establishes the soundness of some common parallelizing transformations on dataflow graphs.
 
 
 \section{Discussion}
