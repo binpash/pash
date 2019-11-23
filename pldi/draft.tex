@@ -1842,10 +1842,20 @@ A large pipeline resulted in a couple of
 An interesting lesson here was that there are multiple
 First, longer pipelines can be written in multiple ways
 It is worth noting
-These are 
+These are
+
 
 % /home/nikos/hadoop-3.2.1/bin/hdfs dfs -put /home/nikos/dish/scripts/max-temp 77.24s user 50.79s system 185% cpu 1:09.14 total
 % hadoop jar $HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-*.jar -input 719.26s user 63.88s system 155% cpu 8:22.47 total
+
+% Dish p3 + p4 me platos pipeline 2 => real 4m30.554s (perilambanei download twn gz kai to processing)
+% Dish p3 + p4 me platos pipeline 10 => real 1m7.183s
+
+% Dish p3 me platos pipeline 2 => real	3m47.470s (perilambanei download twn gz kai save sto file system)
+% Dish p3 me platos pipeline 10 => real	1m38.945s
+
+
+
 
 \subsection{Macro-benchmark: Bioinformatics Transform}
 \label{macro3}
