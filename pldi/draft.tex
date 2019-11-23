@@ -1527,7 +1527,7 @@ At a high level, we are interested in understanding whether \sys can indeed scal
 To achieve this, we use a combination of micro- and macro-benchmarks, most of which were collected from prior literature and online repositories.
 Micro-benchmarks~\sx{micro} are one-off, simple one-line pipelines that take a few seconds to write (usually interactively);
   such pipelines are usually composed interactively to solve a task at hand, test a hypothesis, or ``smoke out bugs''~\cite{bentley1986literate}---but, with \sys, applied to very large data sets.
-These pipelines are taken from real, often striking~\cite{}, use cases and have the benefit of highlighting stress on a handful of stages, precisely due to their small size.
+These pipelines are taken from real use cases (often from the literature~\cite{bentley1985spelling, bentley1985spelling}), and, precisely due to their small size, have the benefit of highlighting stress on a handful of stages.
 
 Three complex macro-benchmarks (\S\ref{macro1}--\ref{macro3}) involve third-party commands and handle realistic workloads by today's standards.
 These scripts are about an order of magnitude larger than the micro-benchmarks, but this perceived lack of complexity is deceiving:
@@ -1577,6 +1577,14 @@ More detailed setup and experiments, including the scripts, is included in the a
 
 
 We first apply \sys onto a collection of micro-benchmarks 
+
+Spell program~\cite{bentley1985spelling}
+
+\ttt{wf}
+Word-count~\cite{bentley1986literate}
+
+\ttt{top-n}
+
 
 The first benchmarks runs a grep over a series of complex, DFA
 (Fig.~\cite{})
@@ -1648,6 +1656,7 @@ The first benchmarks runs a grep over a series of complex, DFA
 \end{figure*}
 
 \subsection{Macro-benchmark: Weather Analysis}
+\label{macro1}
 
 For \sys's first macro-benchmark, we use we
 from introductory chapter of Hadoop Definitive Guide~\cite[Chapter 2]{hadoop:15}
@@ -1661,14 +1670,40 @@ The effort required to write this pipeline is astonishingly low:
   it amounts to 240 characters 
 (Some effort is required to understand NCDC's weather format, but this is true for any program processing this dataset.)
 
+The pipeline starts with a few stages in \sta  that generate URLs;
+  these URLs point to index files, each one of which contains pointers 
+The stream of index files is analyzed (4 stages) to extract the URLs of the compressed data files.
+It is then passed again through a download command
+After downloading and uncompressing these files, the stream is analyzed to extract the maximum temperature.
+
+A less obvious lesson from this case was that  
+First, large, complex pipelines enable significant freedom in how to express some stages.
+Several stages in the original program are compressed into a single \ttt{awk} script;
+  unfortunately, \ttt{awk} is too general to have a helpful distributability signature.
+For example, the \ttt{sort} command at the end is an expensive version of extracting the maximum element;
+  this could have been expressed with a simple \ttt{awk} script that only keeps track of the max.
+
+The Hadoop program 
+Hadoop 3.2.1
+openjdk 11.0.5
+ruby 2.5.5p157
+
+few different ways to write some phases, 
+  for example, 
+A large pipeline resulted in a couple of 
+An interesting lesson here was that there are multiple
+First, longer pipelines can be written in multiple ways
+It is worth noting
+These are 
+
 % /home/nikos/hadoop-3.2.1/bin/hdfs dfs -put /home/nikos/dish/scripts/max-temp 77.24s user 50.79s system 185% cpu 1:09.14 total
 % hadoop jar $HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-*.jar -input 719.26s user 63.88s system 155% cpu 8:22.47 total
 
+\subsection{Macro-benchmark: Bioinformatics Transform}
+\label{macro3}
 
 \subsection{Macro-benchmark: Web Crawling}
-
-\subsection{Macro-benchmark: Bioinformatics Transform}
-
+\label{macro2}
 
 \section{Related Work}
 \label{related}
