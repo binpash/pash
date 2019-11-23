@@ -415,7 +415,7 @@ Most importantly, \sys provides an architectural lesson for system designers---n
 % Key elements of \unix are the ability to compose programs written in different languages, the abstraction of a file system as a set of resident streams, a small but extensible library of commands, and the ability to resolve names within a global context.
 % Under the hood, the \unix kernel buffers results, synchronizes processing stages, and generally orchestrates the computation.
 
-The paper is structured as follows.  It first starts with a background
+The paper is structured as follows.  It starts with a background
 section outlining pipeline concepts and overviewing \sys~\sx{bg}.
 Sections \ref{distributability}--\ref{impl} highlight key
 contributions:
@@ -1812,7 +1812,7 @@ We find the resulting times quite acceptable: given two input arguments in the b
 \label{macro1}
 
 To understand \sys better under a realistic workload, we use a large pipeline inspired by the introductory program of Hadoop's Definitive Guide~\cite[Chapter 2]{hadoop:15}.
-At a high level, the goal is to process multi-year weather data from NCDC to identify the temperature over the past several years.
+At a high level, the goal is to process multi-year weather data from NCDC to identify the maximum temperature over the past several years.
 The original task, as presented in the book, can be thought of comprising three sub-tasks:
   download weather data from NCDC (shell), convert them to a format that is Hadoop-friendly (shell), and process them to identify the maximum temperature (Hadoop).
 Only the last of these tasks is the real focus of the chapter, demonstrate the benefits of using distributed analytics system such as Hadoop.
@@ -1842,7 +1842,7 @@ For the same amount of parallelism, \sys takes 4m30.554s---but this includes dow
 % Dish p3 me platos pipeline 2 => real	3m47.470s (perilambanei download twn gz kai save sto file system)
 % Dish p3 me platos pipeline 10 => real	1m38.945s
 
-A less obvious take-away from this case was that large, complex pipelines enable significant freedom in how to express their stages.
+A less obvious take-away from this case is that large, complex pipelines enable significant freedom in how to express their stages.
 Several stages in the original shell program (taken from the book) are expressed as a single \ttt{awk} script;
   unfortunately, \ttt{awk} is too general to have a meaningful distributability signature.
 A much simpler pipeline that builds on built-in \unix primitives is trivially distributable, 
