@@ -1115,7 +1115,7 @@ is either zipping the inputs in pairs, or arbitraliy interleaving them.
 \TODO{Is the following paragraph best suited here? It describes an
   assumption that we make about commands, to guarantee the validity of
   our transformations. The assumption is needed due to the limitation
-  of the programming model of one input one output per command.}
+  of the programming model of one input one output per command.}pldi
 
 Note that nodes can read from more files than just the files of their
 stream (or respectively write to more files that their output stream),
@@ -1205,7 +1205,7 @@ parallelism is based on the observation that some operations produce
 the same result when performed independently on subsets of the input
 data, merging the results afterwards. This is the basic optimization
 that is used by popular distributed processing systems such as
-MapReduce \cite{DG2004MR} and Apache Spark\cite{spark:12}. Unfortunately, the
+MapReduce \cite{DG2004MR} and Apache Spark \cite{spark:12}. Unfortunately, the
 dataflow graph model of most of these systems is not expressive enough
 to represent data parallelism \km{not sure this is true}, so the distributed implementations that
 they perform do not preserve the semantics of their dataflow model.
@@ -1238,6 +1238,8 @@ equation holds:
 \[
 \forall x, x', f(x.x') = f(x).f(x')
 \]
+
+\km{This is a nice characterization, which I think is true in most settings. There is a caveat though: You can have stateless programs that emit output when they start (before they consume the stream) and/or when they consume the EOF symbol. In this case I am not sure the equation above holds.}
 
 Similarly, it was mentioned that some pure commands (such as
 \ttt{sort} and \ttt{wc}) can be parallelized using divide-and-conquer
