@@ -1643,19 +1643,20 @@ arbitrarily many different pipes.
   Script                 ~&~ Structure                    & Input (MB)& Time (Seq)    & Script Size (LoC)             & Highlights                                        \\
 \midrule
 % https://github.com/andromeda/sdsh/blob/master/scripts/grep.sh
-  \tti{min-grep}         ~&~$3\times$\tsta                & 1000      &  78m 36.77s   &   30\qquad 134\qquad  1304    & complex NFA regex                                 \\
+  \tti{grep}         ~&~$3\times$\tsta                & 1000      &  78m 36.77s   &   30\qquad 134\qquad  1304    & complex NFA regex                                 \\
 % https://github.com/andromeda/sdsh/blob/master/scripts/minimal5.sh
-  \tti{min-sort}         ~&~~$\tsta, \tpur$               & 10000     &  23m 19.85s   &   33\qquad 129\qquad  1209    & \tti{sort}ing                                     \\
+  \tti{sort}         ~&~~$\tsta, \tpur$               & 10000     &  23m 19.85s   &   33\qquad 129\qquad  1209    & \tti{sort}ing                                     \\
 % https://github.com/andromeda/sdsh/blob/master/scripts/topn.sh
   \tti{wf}               ~&~~$3\times\tsta, 3\times\tpur$ & 1000      &   2m 11.18s   &   53\qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
 % https://github.com/andromeda/sdsh/blob/master/scripts/topn.sh
   \tti{top-n}            ~&~~$2\times\tsta, 4\times\tpur$ & 1000      &   6m 53.55s   &   53\qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
 % https://github.com/andromeda/sdsh/blob/master/scripts/ngrams.sh
-  \tti{bi-gram}          ~&~~$2\times\tsta, 4\times\tpur$ & \todo{X}  &               &   X \qquad  X \qquad          & stream shifting and merging                       \\
+  \tr{\tti{bi-gram}          ~&~~$2\times\tsta, 4\times\tpur$ & \todo{X}  &               &   X \qquad  X \qquad          & stream shifting and merging                       \\}
 % https://github.com/andromeda/sdsh/blob/master/scripts/spell.sh
   \tti{spell}            ~&~~$4\times\tsta, 3\times\tpur$ & 1000      &   8m 13.42s   &  37 \qquad 257\qquad  2417    & comparisons (\tti{comm})                          \\
 % https://github.com/andromeda/sdsh/blob/master/scripts/diff.sh
-  \tti{diff}             ~&~~$4\times\tsta, 3\times\tpur$ & \todo{X}  &               &   X \qquad  X \qquad          & shuffling and non-distributable \tti{diff}ing     \\
+  \tr{\tti{diff}             ~&~~$4\times\tsta, 3\times\tpur$ & \todo{X}  &               &   X \qquad  X \qquad          & shuffling and non-distributable \tti{diff}ing     \\}
+  \tti{shortest-scripts} ~&~~$5\times\tsta, 2\times\tpur$ & 8.6       &   2m 50.03s   &  61 \qquad 253\qquad  2413    & \todo{x}                          \\
 \bottomrule
 \end{tabular*}
 \label{tab:eval}
@@ -1663,22 +1664,22 @@ arbitrarily many different pipes.
 
 
 At a high level, we are interested in understanding whether \sys can indeed scale pipelines out automatically and correctly.
-To achieve this, we use a combination of micro- and macro-benchmarks, most of which were collected from prior literature and online repositories.
-Micro-benchmarks~\sx{micro} are one-off, simple one-line pipelines that take a few seconds to write (usually interactively);
+To achieve this, we use a combination of micro-benchmarks and one macro-benchmark, most of which were collected from prior literature and online repositories.
+Micro-benchmarks~\sx{micro} are one-off, simple one-line pipelines that take a few seconds to write;
   such pipelines are usually composed interactively to solve a task at hand, test a hypothesis, or ``smoke out bugs''~\cite{bentley1986literate}---but, with \sys, applied to very large data sets.
-These pipelines are taken from real use cases (often from the literature~\cite{bentley1985spelling, bentley1985spelling}), and, precisely due to their small size, have the benefit of highlighting stress on a handful of stages.
+These pipelines are taken from real use cases (often from the literature~\cite{bentley1985spelling}), and, precisely due to their small size, have the benefit of highlighting stress on a handful of stages.
 
-Three complex macro-benchmarks (\S\ref{macro1}--\ref{macro3}) involve third-party commands and handle realistic workloads by today's standards.
-These scripts are about an order of magnitude larger than the micro-benchmarks, but this perceived lack of complexity is deceiving:
-  as shown below, if written in conventional languages, these pipelines would correspond to programs on the order of hundreds of lines of code.
+The complex macro-benchmark (\S\ref{macro1}) is designed to handle realistic workloads by today's standards.
+It is about an order of magnitude larger than the micro-benchmarks, but this perceived lack of complexity is deceiving:
+  as shown below, if written in conventional languages, this pipeline would correspond to a program on the order of hundreds of lines of code.
 
 Several results are worth highlighting.
 First and foremost, programs see a significant speedup, often more $10\times$ over sequential execution  while returning identical results (on very large datasets).
-\sys's transformation and planning phase take around XX--XXms, negligible (XX\%) for short-running pipelines and virtually non-existent for long-running ones.
+\sys's transformation and planning phase take around 50--300ms, negligible ($<$5\%) for short-running pipelines and virtually non-existent for long-running ones.
 As \sys rewrites to highly-optimized shell primitives rather than using a managed language runtime, it always has a COST~\cite{mcsherryscalability} of 2.
 Finally, \sys preserves the productivity of the shell:
-  in one case, the equivalent program for a small part of the pipeline requires over a 150 lines of code in combined Java and Bash to run distributed on top of Hadoop;
-  in another, the program expressed by the pipeline was the subject of a semester project in a graduate course on distributed systems~\cite{blinded} where student implementations ranged between 1--3\textbf{K} lines of code.
+  the equivalent program for a small part of the macro-benchmark pipeline requires over a 150 lines of code in combined Java and Bash to run distributed on top of Hadoop.
+  %% in another, the program expressed by the pipeline was the subject of a semester project in a graduate course on distributed systems~\cite{blinded} where student implementations ranged between 1--3\textbf{K} lines of code.
 
 Experiments were run on a %\todo{network of five workstations} connected by 1Gbps links: 
  machine with 512GB of memory and 128 2.1GHz Intel Xeon E5-2683 cores.
@@ -1690,7 +1691,7 @@ Whenever \ttt{curl} is part of a pipeline, it fetches data from a different phys
 More detailed setup and experiments, including the scripts, is included in the accompanying (anonymized) online repository.
 
 \subsection{Microbenchmarks: Shell One-liners}
-
+\label{micro}
 
 \begin{figure*}[t]
     \centering
@@ -1785,8 +1786,8 @@ In terms of benchmarks, \ttt{grep} is a short script centered around an expensiv
 The \ttt{sort} pipeline is equally short, but its central operation is a command in \pur.
 The next two benchmarks, \ttt{wf} and \ttt{top-n}, are based on McIlroy's now classic word-counting program~\cite{bentley1986literate};
   they use sorting, rather than tabulation, to identify high-frequency terms in a corpus.
-The \ttt{bi-gram} pipeline calculates n-grams of base two;
-  it makes clever use of \ttt{tail} to shift a stream by one word and \ttt{paste} to fuse (zip) two streams together.
+\tr{The \ttt{bi-gram} pipeline calculates n-grams of base two;
+  it makes clever use of \ttt{tail} to shift a stream by one word and \ttt{paste} to fuse (zip) two streams together.}
 The next pipeline is based on the original \ttt{spell} program developed by Johnson~\cite{bentley1985spelling}---another \unix classic:
   after some preprocessing, it makes clever use of \ttt{comm} to report words not in the dictionary.
 
@@ -1797,7 +1798,7 @@ Each one of these plots reports on three different configurations:
   (i) distributed, which captures only the runtime of the distributed computation,
   (ii) compile + distributed, which adds the \sys' analysis and generation overhead, and
   (iii) cat + compile + distributed, which adds a final merger  gathering the results at the end of the pipeline.
-The results show significant speedups, ranging between \todo{7--70$\times$}, depending on the distributability characteristics of individual pipelines.
+The results show significant speedups, ranging between 4--70$\times$, depending on the distributability characteristics of individual pipelines.
 
 Interestingly, the overhead from \sys's analysis and generation phases remains collectively below 1s even for the high-scalability cases.
 We decided to push \sys's limits of these phases by synthesizing an artificial 1000-stage pipeline---a carefully-constructed, worst-case workload that is nowhere near the ones observed in practice (\S\ref{macro1}--\ref{macro3}).
