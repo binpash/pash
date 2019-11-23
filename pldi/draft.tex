@@ -1870,7 +1870,37 @@ These are
 \section{Related Work}
 \label{related}
 
-At a high-level, techniques for automatically distributing fall under a spectrum that ranges from fully automated (but potentially sub-optimal) distribution to fully manual (but, ideally, optimal) distribution (Fig.~\ref{fig:spectrum}).
+At a high level, techniques for automatically distributing fall under a spectrum that ranges from fully automated (but potentially sub-optimal) distribution to fully manual (but, ideally, optimal) distribution (Fig.~\ref{fig:spectrum}).
+
+\heading{Distributed Operating Systems and Shells}
+A plethora of systems assist in the construction of distributed software.
+Distributed operating systems~\cite{ousterhout1988sprite, mullender1990amoeba, pike1990plan9, barak1998mosix} and programming languages~\cite{erlang:96, acute:05, mace:07, cloudhaskell:11}
+hide many distribution problems, as long as a program uses the provided abstractions---which are strongly coupled to the underlying operating or runtime system.
+% simplify many of the problems of distribution and
+
+Several packages expose commands for specifying parallelism on modern \unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}. %  or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
+Different from \sys, their effectiveness is predicated upon explicit invocation and is limited to embarrassingly parallel (and short) programs.
+Often, these commands provide options to support an array of special sub-cases---a stark contradiction to the celebrated \unix philosophy.
+For example, \tti{parallel}, an official GNU project, contains flags such as \ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs}, that a \unix user would achieve with \ttt{head}, \ttt{sed}, and \ttt{xargs}; it also includes other programs with complex semantics, such as the ability transfer files between computers, separate text files, and parse CSV.
+\sys embraces the \unix philosophy and simply attempts to rewrite pipelines more efficiently.
+
+Several shells~\cite{duff1990rc, mcdonald1988support, dagsh:17} add primitives for non-linear pipe topologies---some of which target distribution.
+Here too, however, developers are expected to manually rewrite scripts to exploit these primitives.
+
+Recently, the Smoosh authors have argued that certain shell features are useful for concurrency~\cite{smoosh:18}.
+Their argument is somewhat antithetical to \sys, % but rather that the shell language is itself an good DSL for concurrency;
+  which argues for automatically (and correcctly) parallelizing pipelines when users have not expressed parallelism explicitly---hence distribution-\emph{oblivious} shell scripting.
+
+
+\heading{Cluster Computing}
+Modern analytics frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp} go a step further in terms of automation.
+By providing a few carefully-designed primitives, they 
+Due to the specialization of these primitives, however, these systems suffer from a lack of generality ;
+% and they still require developers to compose their work using the pipelines
+
+They also support a single class of distributability, arguing that is enough 
+by making strong assumptions about the nature of the computation---for example, strongly-eventual commutative components that can proceed in parallel.
+Developing under these frameworks differs quite significantly from the development of normal (non-distributed) programs.
 
 % Nice intro: http://homepages.inf.ed.ac.uk/bfranke/Publications/pldi121-tournavitis.pdf
 \heading{Automated Parallelization and Distribution}
@@ -1881,13 +1911,6 @@ These systems operate at a lower level than \sys (\eg that of instructions or lo
 % The growth of the web led to specialized frameworks for massively distributed computation~\cite{mapreduce:08, spark:10, naiad:13}.
 % While they Moreover, these systems take advantage of functional purity;
 %   for programs that are not data-intensive processing pipelines (\eg web servers), purely functional code is generally responsible for only a small fraction of the program runtime.
-A plethora of systems assist in the construction of distributed software.
-Distributed operating systems~\cite{rashid1981accent, walker1983locus, ousterhout1988sprite, mullender1990amoeba, pike1990plan9, rozier1991overview, dorward1997inferno, barak1998mosix, schwarzkopf2013dios, sacha2013osprey} and programming languages~\cite{erlang:96, acute:05, mace:07, cloudhaskell:11}
-% simplify many of the problems of distribution and
-provide a significant amount of automation. % but require development in a new system or language.  While they take care of all the distribution minutiae, 
-However, they involve significant manual effort using the provided abstractions, which are strongly coupled with the underlying operating or runtime system.
-% TODO: \TODO{This has to be broken down into systems and PLs, coz systems are the most relevant/important class.}
-
 \heading{Annotation-based Distribution}
 Recent systems for light-touch distribution, Ignis~\cite{ignis:19} and Mozart~\cite{mozart:19}, give developers the ability to express through annotations;
 
@@ -1905,46 +1928,18 @@ The shell is also more general.
 \centering
 \includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_spectrum.pdf}}
 \caption{
-  \textbf{Cost of Manual Effort.}
-	\sys sits at the automation end of the spectrum, automatically distributing shell pipelines while maintaining their correctness. A more complete picture is presented in the related-work section~\sx{rt}.
+  \textbf{Manual--automated distribution spectrum.}
+	\sys sits at the automation end of the spectrum, automatically distributing shell pipelines while maintaining their correctness.
 }
 \label{fig:spectrum}
 \end{figure}
 
-\heading{DSLs for Distribution}
-At the other end of the spectrum, distributed computing frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp, psync:16, dartagnan:18}
-simplify certain patterns, 
-but do not offer the flexibility of a full-fledged environment.
-% suffer from a similar lack of generality by making strong assumptions about the nature of the computation---for example, strongly-eventual commutative components that can proceed in parallel.
-Developing under these frameworks differs quite significantly from the development of normal (non-distributed) programs.
 
 More recent work focuses on extracting parallelism from domain-specific programming models~\cite{cilk5, streamIt, galois} and interactive parallelization tools~\cite{parascope, ipat}.
 These tools simplify the expression of parallelism, but still require programmers to get involved in discovering and exposing parallelism.
 %  actively involve the programmer in the detection and mapping of application parallelism, but still demand great effort from the user. 
 Moreover, the insights behind these attempts are significantly different from ours, as they extract parallelism statically during compilation instead of dynamically during runtime.
 %Despite significant progress~\cite{}, it remains due to its need for complex program analysis and the unknown factors (such as input data range) during compilation.
-
-\heading{Concurrent and Distributed Shells}
-\nv{NV}
-Among other work, the Smoosh authors have argued that certain features of the shell are useful for concurrency~\cite{smoosh:18};
-Their work does not automatically parallelize pipelines, but rather argues that the shell language is itself an good DSL for concurrency;
-This argument is different from \sys, 
-an argument complementary to \sys's which automatically (and correcctly) parallelizes pipelines even when developers have---hence distribution-\emph{oblivious} shell scripting.
-
-Several shells add support for non-linear pipe topologies;
-  this 
-2dsh~\cite{}
-rc~\cite{}
-gsh~\cite{}
-dgsh~\cite{dagsh:17}.
-
-Commands for explicitly specifying parallelism such \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}, or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
-These commands require the user to express the program explicitely, work only with embarrasingly parallel (and short) programs;
-  \sys and scales out to large pipelines
-Often, these commands provide options to support very special cases
----a stark contradiction to the celebrated \unix philosophy.
-For example, \tti{parallel}, an official GNU project, flags such as \ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs}, that a \unix user would achieve with \ttt{head}, \ttt{sed}, and \ttt{xargs}; it also includes other programs that 
-with complex semantics, such as the ability transfer files between computers, separate text files, and parse CSV.
 
 \kk{exoume ena semantic model to opoio mporei na xrhsimopoiithei gia
   na ginoun formally proven claims gia to equivalence preservation twn
