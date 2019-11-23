@@ -71,6 +71,8 @@
 \newcommand{\review}[1]{{\color{red}#1}}
 \newcommand{\tr}[1]{} %% Text and comments for technical report
 
+\newcommand{\kstar}{^{\textstyle *}}
+
 \definecolor{editorGray}{rgb}{0.95, 0.95, 0.95}
 \definecolor{editorOcher}{rgb}{1, 0.5, 0} % #FF7F00 -> rgb(239, 169, 0)
 \definecolor{editorGreen}{rgb}{0, 0.5, 0} % #007C00 -> rgb(0, 124, 0)
@@ -1069,7 +1071,7 @@ command, and each edge represents a file.
 \paragraph{Nodes - Commands}
 
 Nodes $f$ of the graph represent functions from one (possibly empty)
-input stream to an output stream $f : D^* \rightarrow D^*$. $D$
+input stream to an output stream $f : D\kstar \to D\kstar$. $D$
 represents the basic data type of a line of characters. This
 representation captures the majority of shell commands. The nodes are
 monotonic, meaning that they cannot retract their output. More
