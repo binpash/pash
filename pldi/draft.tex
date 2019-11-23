@@ -26,6 +26,8 @@
 \usepackage{wrapfig}
 \usepackage{syntax}
 
+\usepackage{tikz}
+\usetikzlibrary{arrows,automata,shapes.misc,shapes.geometric,positioning}
 
 \captionsetup[figure]{font=footnotesize,name={Fig.},labelfont={bf, footnotesize}}
 \captionsetup[table]{font=footnotesize,name={Tab.},labelfont={bf, footnotesize}, skip=2pt, aboveskip=2pt}
@@ -70,6 +72,9 @@
 \newcommand{\km}[1]{[{\color{blue}#1 --- km}]}
 \newcommand{\review}[1]{{\color{red}#1}}
 \newcommand{\tr}[1]{} %% Text and comments for technical report
+
+\newcommand{\kstar}{^{\textstyle *}}
+\newcommand{\eps}{\varepsilon}
 
 \definecolor{editorGray}{rgb}{0.95, 0.95, 0.95}
 \definecolor{editorOcher}{rgb}{1, 0.5, 0} % #FF7F00 -> rgb(239, 169, 0)
@@ -1027,15 +1032,20 @@ command, and each edge represents a file.
 
 \paragraph{Nodes - Commands}
 
-Nodes $f$ of the graph represent functions from one (possibly empty)
-input stream to an output stream $f : D^* \rightarrow D^*$. $D$
+For a set $D$, we write $D\kstar$ to denote the set of all finite
+words over $D$. For words $x, y \in D\kstar$, we write $x \cdot y$
+or $xy$ to denote their concatenation. We write $\eps$ for the empty
+word. We say that $x$ is a \emph{prefix} of $y$, and we write $x \leq y$, if there is a word $z$ such that $y = xz$. It is easy to see that $\leq$ is a partial order, and it is often referred to as the \emph{prefix order}.
+
+A node $f$ of the graph represents a function from one (possibly empty)
+input stream to an output stream $f : D\kstar \to D\kstar$, where $D$
 represents the basic data type of a line of characters. This
-representation captures the majority of shell commands. The nodes are
-monotonic, meaning that they cannot retract their output. More
-formally, $\forall f, x, y, f(x) = y$, then for any $x'$, there exists
-$y'$ such that $f(x.x') = y.y'$, where $.$ is standard concatenation
-and will be omitted when obvious. An example of a node is the
-following command:
+representation captures the majority of shell commands. We require that
+the function $f$ is monotone w.r.t.\ the prefix order. This captures
+the idea that a node cannot retract output after it has been emitted.
+%More formally, $\forall f, x, y, f(x) = y$, then for any $x'$, there exists $y'$ such that $f(x.x') = y.y'$, where $.$ is standard
+%concatenation and will be omitted when obvious.
+An example of a node is the following command:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
  grep ``foo''
@@ -1086,11 +1096,27 @@ Edges in the dataflow graph represent files, the basic data
 abstraction of the shell. They are used as communication channels
 between nodes in the graph, and as the input or output of the whole
 graph. Edges are represented as possibly unbounded streams of type
-$D*$. They could either refer to a specific named file in the file
+$D\kstar$. They could either refer to a specific named file in the file
 system, or just be FIFO pipes that used for interprocess communication
 %% \TODO{Are there any other file types, such as URLs, ...?}.
 
 \TODO{Show an example pipe and its graph}.
+
+\begin{center}
+\small
+\begin{tikzpicture}[node distance=2.25cm, ->]
+\node (S) {};
+\node (A) [draw, right of=S, node distance=1.75cm] {node 1};
+\node (B) [draw, right of=A] {node 2};
+\node (C) [draw, right of=B] {node 3};
+\node (E) [right of=C, node distance=1.75cm] {};
+\path (S) edge node[above] {input} (A);
+\path (A) edge node[above] {stream} (B);
+\path (B) edge node[above] {stream} (C);
+\path (C) edge node[above] {output} (E);
+\end{tikzpicture}
+\end{center}
+
 
 In order to expose data parallelism from the output of a command,
 files that don't point to a resource can have an upper bound on the
@@ -1119,6 +1145,80 @@ are its outputs.
 \kk{(Maybe) It might be beneficial to mention that many inputs do not
   represent the same thing as many outputs. These two notions are not
   symmetric.}
+  
+\begin{figure*}
+\centering
+\begin{tikzpicture}[->, >=to, auto, node distance=1cm, semithick, transform shape, inner sep=2pt]
+%
+\small
+%
+\node (M1) {};
+\node (M2) [draw, right of=M1, node distance=2cm] {Map};
+\node (M3) [draw, right of=M2, node distance=3cm] {GroupBy(Reduce)};
+\node (M4) [right of=M3, node distance=3cm] {};
+%
+\path (M1) edge node {input} (M2);
+\path (M2) edge node {stream} (M3);
+\path (M3) edge node {output} (M4);
+\end{tikzpicture}
+\end{figure*}
+
+\begin{figure*}
+\newcommand{\Split}{\text{Split}}
+\newcommand{\Merge}{\text{Merge}}
+\newcommand{\Map}{\text{Map}}
+\newcommand{\GroupBy}{\text{GroupBy}}
+\newcommand{\Reduce}{\text{Reduce}}
+\centering
+\begin{tikzpicture}[->, >=to, auto, node distance=0.6cm, semithick, transform shape, inner sep=1.75pt]
+%
+\footnotesize
+%
+\node (M1) {};
+\node (M2) [draw, right of=M1, node distance=1.3cm] {$\Split$};
+\node (M3) [right of=M2, node distance=1.5cm] {};
+\node (M4) [right of=M3, node distance=2.5cm] {};
+\node (M5) [draw, right of=M4, node distance=2.2cm] {$\Merge$};
+\node (M6) [draw, right of=M5, node distance=3.8cm] {$\GroupBy(K_2,\Reduce)$};
+\node (M7) [draw, right of=M6, node distance=3cm] {$\Merge_K$};
+\node (M8) [right of=M7, node distance=2cm] {};
+%
+\node (T3) [draw, above of=M3] {$\Map$};
+\node (T4) [draw, above of=M4] {$\Split_K$};
+\node (T5) [draw, above of=M5] {$\Merge$};
+\node (T6) [draw, above of=M6] {$\GroupBy(K_1,\Reduce)$};
+%
+\node (B3) [draw, below of=M3] {$\Map$};
+\node (B4) [draw, below of=M4] {$\Split_K$};
+\node (B5) [draw, below of=M5] {$\Merge$};
+\node (B6) [draw, below of=M6] {$\GroupBy(K_3,\Reduce)$};
+%
+\path (M1) edge node {$A$} (M2);
+\path (M2) edge[bend left=10] node {$A$} (T3);
+\path (M2) edge[bend right=10] node[swap] {$A$} (B3);
+\path (M5) edge node {$K_2 \times B$} (M6);
+\path (M6) edge (M7);
+\path (M7) edge node {$K \times B$} (M8);
+%
+\path (T3) edge node {$K \times B$} (T4);
+\path (T4) edge (T5);
+\path (T4) edge (M5);
+\path (T4.330) edge[bend right=10] (B5.170);
+\path (T5) edge node {$K_1 \times B$} (T6);
+\path (T6) edge[bend left=10] node {$K_1 \times B$} (M7);
+%
+\path (B3) edge node {$K \times B$} (B4);
+\path (B4) edge (B5);
+\path (B4) edge (M5);
+\path (B4.30) edge[bend left=10] (T5.190);
+\path (B5) edge node {$K_3 \times B$} (B6);
+\path (B6) edge[bend right=10] node[swap] {$K_3 \times B$} (M7);
+%
+\end{tikzpicture}
+\caption{Distributed implementation of the map-reduce pipeline $\Map \gg \GroupBy(K,\Reduce)$.}
+\label{fig:mapReduce}
+\end{figure*}
+
 
 
 \subsection{Graph transformations}
@@ -1138,9 +1238,9 @@ parallelism is based on the observation that some operations produce
 the same result when performed independently on subsets of the input
 data, merging the results afterwards. This is the basic optimization
 that is used by popular distributed processing systems such as
-MapReduce\kk{cite} and Apache Spark\kk{cite}.Unfortunately, the
+MapReduce \cite{DG2004MR} and Apache Spark \cite{spark:12}. Unfortunately, the
 dataflow graph model of most of these systems is not expressive enough
-to represent data parallelism, so the distributed implementations that
+to represent data parallelism \km{not sure this is true}, so the distributed implementations that
 they perform do not preserve the semantics of their dataflow model.
 
 In contrast, our dataflow model inherently supports the data
@@ -1171,6 +1271,8 @@ equation holds:
 \[
 \forall x, x', f(x.x') = f(x).f(x')
 \]
+
+\km{This is a nice characterization, which I think is true in most settings. There is a caveat though: You can have stateless programs that emit output when they start (before they consume the stream) and/or when they consume the EOF symbol. In this case I am not sure the equation above holds.}
 
 Similarly, it was mentioned that some pure commands (such as
 \ttt{sort} and \ttt{wc}) can be parallelized using divide-and-conquer
@@ -1792,6 +1894,12 @@ On our dataflow graph model: Our data flow graph model is
 \TODO{We have to also cite the paper by Konstantinos, Caleb, Rajeev,
   etc since they also try to do semantics preserving optimizations on
   dataflow graphs}
+
+\km{Some very early references on the dataflow model of computation (maybe there are relevant?): \cite{KM1966, D1974Dataflow, K1974KPN, KMacQ1977}}
+  
+\cite{HSSGG2014, SHGW2015} discuss optimizing transformations, but their correctness is established using informal arguments based on operational intution.
+  
+The paper \cite{MSAIT2019} proposes a denotational semantic framework for stream processing where the data streams are seen as partial orders, and establishes the soundness of some common parallelizing transformations on dataflow graphs.
 
 
 \section{Discussion}

@@ -25,7 +25,8 @@ experiments = ["minimal_grep",
                "minimal_sort",
                "topn",
                "wf",
-               "grep"]
+               "grep",
+               "spell"]
 
 def get_experiment_files(experiment, results_dir):
     files = [f for f in os.listdir(results_dir) if f.startswith(experiment)]
