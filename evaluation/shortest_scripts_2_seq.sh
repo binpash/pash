@@ -4,4 +4,4 @@
 # +p.95 multiple sed
 # +p.XX crawler
 
-cat ./input/cmds10x.txt | xargs file | grep "shell script" | cut -d: -f1 | xargs wc -l | sort -n | head -15
+cat $IN $IN | xargs file | grep "shell script" | cut -d: -f1 | xargs wc -l | sort -n | head -15

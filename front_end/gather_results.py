@@ -3,9 +3,9 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-SMALL_SIZE = 14
-MEDIUM_SIZE = 16
-BIGGER_SIZE = 18
+SMALL_SIZE = 16
+MEDIUM_SIZE = 18
+BIGGER_SIZE = 20
 
 plt.rc('font', size=MEDIUM_SIZE)          # controls default text sizes
 plt.rc('axes', titlesize=BIGGER_SIZE)     # fontsize of the axes title
@@ -26,7 +26,8 @@ experiments = ["minimal_grep",
                "topn",
                "wf",
                "grep",
-               "spell"]
+               "spell",
+               "shortest_scripts"]
 
 def get_experiment_files(experiment, results_dir):
     files = [f for f in os.listdir(results_dir) if f.startswith(experiment)]
@@ -65,21 +66,23 @@ def collect_scaleup_times(experiment, results_dir):
 
     ## Plot speedup
     ax.set_ylabel('Speedup')
-    ax.set_xlabel('Number of files')
+    ax.set_xlabel('Level of Parallelism')
     distr_speedup = [seq_numbers[i] / t for i, t in enumerate(distr_numbers)]
     compile_distr_speedup = [seq_numbers[i] / (t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
     total_distr_speedup = [seq_numbers[i] / (t + compile_numbers[i] + cat_numbers[i]) for i, t in enumerate(distr_numbers)]
     # ax.plot(all_scaleup_numbers, seq_numbers, '-o', linewidth=0.5, label='Sequential')
     # ax.plot(all_scaleup_numbers, distr_numbers, '-o', linewidth=0.5, label='Distributed')
     ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, label='Distributed')
-    ax.plot(all_scaleup_numbers, compile_distr_speedup, '-*', linewidth=0.5, label='Compile + Distributed')
-    ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='Cat + Compile + Distributed')
+    ax.plot(all_scaleup_numbers, compile_distr_speedup, '-*', linewidth=0.5, label='+ Compile')
+    ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
     # ax.plot(all_scaleup_numbers, all_scaleup_numbers, '-', color='tab:gray', linewidth=0.5, label='Ideal')
 
 
     # plt.yscale("log")
-    plt.xticks(all_scaleup_numbers)
-    plt.legend()
+    plt.xticks(all_scaleup_numbers[1:])
+    plt.legend(loc='lower right')
+    plt.title(experiment)
+
 
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "{}_throughput_scaleup.pdf".format(experiment)))
