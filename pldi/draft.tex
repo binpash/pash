@@ -1124,13 +1124,11 @@ system, or just be FIFO pipes that used for interprocess communication
 
 In order to expose data parallelism from the output of a command,
 files that don't point to a resource can have an upper bound on the
-lines that they can tranfer. The following example illustrates why
-this is essential.
+lines that they can tranfer. This can be useful to utilize avaliable
+parallelism after encountering a command that cannot be parallelized
+(e.g. \ttt{sha1sum}). The following example illustrates this scenario.
 
-\TODO{Add an example of a command that has two outputs, one of which
-  goes to one command, while another goes to a different
-  command. Maybe only show the graph here and not the command itself.}
-
+\includegraphics[width=0.40\columnwidth]{\detokenize{./figs/dish_g2.pdf}}
 
 \tr{On the other hand, some forms of data parallelism can be exposed
   when knowing the size of the input files. As mentioned in \ref{}
@@ -1223,19 +1221,6 @@ are its outputs.
 %% \label{fig:mapReduce}
 %% \end{figure*}
 
-% \begin{figure}[t]
-% \centering
-\includegraphics[width=0.25\textwidth]{\detokenize{./figs/dish_g1.pdf}}
-
-\includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_g2.pdf}}
-% \caption{
-%   \textbf{\sys transformation overview.}
-%   Given a shell pipeline, \sys leverages command distributability to identify
-%   high-distributability stages, rewrite them, and orchestrate their execution.
-% }
-% \vspace{-15pt}
-% \label{fig:overview}
-% \end{figure}
 
 \subsection{Graph transformations}
 \label{ir:transformations}
@@ -1502,11 +1487,39 @@ that were described in \Cref{ir:transformations}. If the incoming
 edges of the node are less than the desirable graph width, it performs
 edge splits, and then it performs maximal node splits. The final graph
 can then be implemented by spawning a process for each node, and
-redirecting the outputs according to the graph edges.
+redirecting the outputs according to the graph edges. An example
+transformation can be seen in \Cref{fig:optimizer-transformation}.
 
-\nv{Give example, extend}
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.70\columnwidth]{\detokenize{./figs/dish_g1.pdf}}
+\caption{
+  \textbf{Example graph transformation.}
+  The optimizer splits a stateless node to utilize
+  available data parallelism.
+}
+\vspace{-15pt}
+\label{fig:optimizer-transformation}
+\end{figure}
 
-\kk{Mention sort, wc}
+The optimizer also applies custom transformations on several commands
+to further improve performance. Two notable examples are the
+transformations on \ttt{sort} and \ttt{wc}. Occurences of \ttt{sort}
+that have more than one input are tranformed to \ttt{sort} commands on
+each input, followed by a \ttt{sort -m}, to produce the final sorted
+result. The transformation on occurences of \ttt{wc} that have more
+than input \ttt{i1, t2} is illustrated below as a shell script:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+  paste -d '+' \
+   <(wc i1 | tr -s ' ' '\n' | tail -n +2) \
+   <(wc i2 | tr -s ' ' '\n' | tail -n +2) |
+   bc | tr -s '\n' ' ' |
+   sed 's/^/   /' | sed 's/$/\ /'
+\end{lstlisting}
+
+The above script takes the outputs produced by two \ttt{wc} commands
+and aggregates them accordingly.
 
 %% \subsection{Mapping operators to nodes}
 
@@ -1551,11 +1564,11 @@ edges, or many outgoing edges (when all but the last outgoing edges
 are bounded). However some nodes, might only read their input from one
 source (e.g. stdin). In this case, the distributed implementation
 needs to concatenate input files (or conversely split output
-files). Here is an example:
-
-\kk{Show an example graph! of cat | tr | sort. The command in the
-  middle must only take input from one file (maybe just stdin).}
-
+files).
+%
+%% \tr{Show an example graph! of cat | tr | sort. The command in the
+%%   middle must only take input from one file (maybe just stdin).}
+%
 We address this issue using primitive shell constructs for file
 manipulation. More concretely a merger can be implemented by a simple
 \verb|cat|. Given a set of input files \verb|in1, in2, ...| and an
