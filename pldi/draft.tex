@@ -1796,10 +1796,8 @@ The results show significant speedups, ranging between \todo{7--70$\times$}, dep
 
 Interestingly, the overhead from \sys's analysis and generation phases remains collectively below 1s even for the high-scalability cases.
 We decided to push \sys's limits of these phases by synthesizing an artificial 1000-stage pipeline---a carefully-constructed, worst-case workload that is nowhere near the ones observed in practice (\S\ref{macro1}--\ref{macro3}).
-We find the resulting times quite acceptable:
-  \todo{8.23s} for parsing the script, 
-  \todo{3.22s} for analysis, and 
-  \todo{X.XXs} for rewriting the results of the analysis.
+We find the resulting times quite acceptable: given two input arguments in the beginning of this pipeline, \sys takes 8.23s for parsing the script and 3.22s for analysis and for optimizing. If we also push the limit of input arguments to 100, \sys takes 5 minutes and 8 seconds to perform the analysis, producing an output dataflow graph that has 100 thousand edges, in a file that is almost 11MB.
+
 
 
 
