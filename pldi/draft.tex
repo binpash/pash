@@ -1686,34 +1686,6 @@ More detailed setup and experiments, including the scripts, is included in the a
 
 \subsection{Microbenchmarks: Shell One-liners}
 
-Tab.~\ref{tab:eval} summarizes the collection of micro-benchmarks used to evaluate \sys.
-Benchmark names (col. 1) correspond to the names on the plots (Fig.~\ref{fig:microbenchmarks}).
-% The centralized pipelines read files of various sizes from disk and write to disk.
-
-Input sizes and times (col. 2, 3) summarize the longest sequential execution (200 files in Fig.~\ref{fig:microbenchmarks}).
-Script sizes report on the \sys's rewritten output for three different distribution sizes---$1\times$, 10$\times$, and $100\times$.
-
-The size of the script grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
-The first number alone is interesting, as it captures \sys's output for the sequential script.
-As there is no parallelism, it can be viewed as the initial cost corresponding to using \sys.
-% this is the size of 
-This change in size does not necessarily translate to observed runtime, as most of this size gain comes from the setup and teardown of FIFOs responsible for interprocess (IPC) communication.
-FIFOs are simply pipes made, the in-kernel buffering and synchronization mechanisms are the same, leading to non-observable changes in runtime performance.
-
-In terms of benchmarks, \ttt{grep} is a short script centered around an expensive \sta command.
-% a DFA-based regular expression matching phase;
-  while \ttt{grep} defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
-The \ttt{sort} pipeline is equally short, but its central operation is a command in \pur.
-The next two benchmarks, \ttt{wf} and \ttt{top-n}, are based on McIlroy's now classic word-counting program~\cite{bentley1986literate};
-  they use sorting, rather than tabulation, to identify high-frequency terms in a corpus.
-The \ttt{bi-gram} pipeline calculates n-grams of base two;
-  it makes clever use of \ttt{tail} to shift a stream by one word and \ttt{paste} to fuse (zip) two streams together.
-\ttt{spell} is based on 
-spell program~\cite{bentley1985spelling} 
-The next pipeline is based on the original \ttt{spell} program developed by Johnson~\cite{bentley1985spelling}---another \unix classic:
-  after some preprocessing, it makes clever use of \ttt{comm} to report words not in the dictionary.
-
-Generally, the planning 
 
 \begin{figure*}[t]
     \centering
@@ -1777,9 +1749,59 @@ Generally, the planning
         %% \caption{TODO}
         %% \label{eval:spell}
     \end{subfigure}%
-    \caption{todo}
+    \caption{
+      \textbf{Speedup achieved by \sys as a function of the level of parallelism (1--200).} 
+      Three different configurations per benchmark:
+      (i) distributed, focusing only on the distributed execution,
+      (ii) +compile, adding \sys' pre-processing overheads, and
+      (iii) +cat, adding a final merger step.
+    }
+    \vspace{-15pt}
     \label{fig:microbenchmarks}
 \end{figure*}
+
+Tab.~\ref{tab:eval} summarizes the collection of micro-benchmarks used to evaluate \sys.
+Benchmark names (col. 1) correspond to the names on the plots (Fig.~\ref{fig:microbenchmarks}).
+% The centralized pipelines read files of various sizes from disk and write to disk.
+
+Input sizes and times (col. 2, 3) summarize the longest sequential execution (200 files in Fig.~\ref{fig:microbenchmarks}).
+Script sizes report on the \sys's rewritten output for three different distribution sizes---$1\times$, 10$\times$, and $100\times$.
+
+The size of a script (col. 5) grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
+The first number alone is interesting, as it captures \sys's output for the sequential script.
+As there is no parallelism, it can be viewed as the initial cost corresponding to using \sys.
+% this is the size of 
+This change in size does not necessarily translate to observed runtime, as most of this size gain comes from the setup and teardown of FIFOs responsible for interprocess (IPC) communication.
+FIFOs are simply pipes made, the in-kernel buffering and synchronization mechanisms are the same, leading to non-observable changes in runtime performance.
+
+In terms of benchmarks, \ttt{grep} is a short script centered around an expensive \sta command.
+% a DFA-based regular expression matching phase;
+  while \ttt{grep} defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
+The \ttt{sort} pipeline is equally short, but its central operation is a command in \pur.
+The next two benchmarks, \ttt{wf} and \ttt{top-n}, are based on McIlroy's now classic word-counting program~\cite{bentley1986literate};
+  they use sorting, rather than tabulation, to identify high-frequency terms in a corpus.
+The \ttt{bi-gram} pipeline calculates n-grams of base two;
+  it makes clever use of \ttt{tail} to shift a stream by one word and \ttt{paste} to fuse (zip) two streams together.
+The next pipeline is based on the original \ttt{spell} program developed by Johnson~\cite{bentley1985spelling}---another \unix classic:
+  after some preprocessing, it makes clever use of \ttt{comm} to report words not in the dictionary.
+
+% TODO \nv{Need to change terminology in plots---files should be (attempted) parallelism, name benchmark, cat should be merge.}
+Fig.~\ref{fig:microbenchmarks} presents the speedup gained by \sys as a function of the level of parallelism (1--200).
+% we experiment with a $200\times$ level of parallelism to see potential overheads
+Each one of these plots reports on three different configurations:
+  (i) distributed, which captures only the runtime of the distributed computation,
+  (ii) compile + distributed, which adds the \sys' analysis and generation overhead, and
+  (iii) cat + compile + distributed, which adds a final merger  gathering the results at the end of the pipeline.
+The results show significant speedups, ranging between \todo{7--70$\times$}, depending on the distributability characteristics of individual pipelines.
+
+Interestingly, the overhead from \sys's analysis and generation phases remains collectively below 1s even for the high-scalability cases.
+We decided to push \sys's limits of these phases by synthesizing an artificial 1000-stage pipeline---a carefully-constructed, worst-case workload that is nowhere near the ones observed in practice (\S\ref{macro1}--\ref{macro3}).
+We find the resulting times quite acceptable:
+  \todo{8.23s} for parsing the script, 
+  \todo{3.22s} for analysis, and 
+  \todo{X.XXs} for rewriting the results of the analysis.
+
+
 
 \subsection{Macro-benchmark: Weather Analysis}
 \label{macro1}
