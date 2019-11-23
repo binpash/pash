@@ -392,7 +392,7 @@ More complex pipelines, such as the ones presented in later sections, would invo
 In both cases, manual rewriting is expensive and can introduce new bugs, cascading changes, and divergence from legacy functionality.
 Could the generation and execution of $p_1$'s distributed version be fully and correctly automated?
 
-To answer this question, this paper presents \sys, a shell \todo{preprocessor} that transforms shell pipelines into their distributed equivalents, enabling \emph{distribution-oblivious programming}.
+To answer this question, this paper presents \sys, a shell variant that transforms traditional shell pipelines into their distributed equivalents, enabling \emph{distribution-oblivious programming}.
 The key insight behind \sys is that a large part of the shell language can be encoded using a dataflow graph model, providing structure to distribute computations.
 %% \kk{Replaced that: the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation. }
 % FIXME \kk{I am not sure whether stream processing provides information for distributing a computation on its own. Maybe we can say that the shell exposes operator level parallelism, and that this is the first step to distributing a computation}.
@@ -417,9 +417,8 @@ Most importantly, \sys provides an architectural lesson for system designers---n
 
 The paper is structured as follows.  It first starts with a background
 section outlining pipeline concepts and overviewing \sys~\sx{bg}.
-Sections \ref{distributability}--\ref{recipes} highlight key
-contributions: \TODO{Change the 1st and the 3rd to reflect the new
-  section layout. I already changed the second.}
+Sections \ref{distributability}--\ref{impl} highlight key
+contributions:
 \begin{itemize}
 
   \item
@@ -456,7 +455,7 @@ Additional material, in anonymized form, is available at
 \section{Background and Overview}
 \label{bg}
 
-This section presents (i) important background on shell pipeline composition~\sx{bg:pipelines}, and (ii)) a high-level overview of \sys's design and implementation.
+This section presents (i) important background on shell pipeline composition~\sx{bg:pipelines}, and (ii) a high-level overview of \sys's design and implementation.
 
 \subsection{Unix Composition, Informally}
 \label{bg:pipelines}
@@ -1263,9 +1262,9 @@ about them with the same conceptual tools.
 Before describing the different types of parallelization
 optimizations, we formalize the intuition about stateless and pure
 commands that was described in \Cref{cmd}.
-\nv{TODOs
-  (i) highlight earlier the antithesis between the formalisms in this section and the informalities of the previous (me)
-}
+%% \nv{TODOs
+%%   (i) highlight earlier the antithesis between the formalisms in this section and the informalities of the previous (me)
+%% }
 %
 As mentioned there, stateless commands operate independently on
 individual elements of the stream (characters, lines, or files)
@@ -1991,12 +1990,12 @@ intricacy, previous work is not straightforwardly applicable.
 \section{Discussion}
 \label{discussion}
 
-This section reflects on \sys's design and implementation, touches on future work, and closes the paper.
+This section reflects on \sys's design and implementation, touches on future work, and concludes the paper.
 
 \heading{Limitations}
 Our implementation is limited in many ways, so as to succeed in proving the key hypothesis---that scaling out shell pipelines can be automated and correct with respect to some assumptions.
 
-\sys does not adequately handle failures or network partitions in the general sense, which would include re-scheduling passes that were executing on failed replicas.
+\sys does not adequately handle failures or network partitions in the general sense, which would require re-scheduling passes on failed replicas.
 Prior work on fault-tolerant distributed stream processing can be of significant aid here.
 
 The logic of the planner is quite simplified, attempting only straightforward placement of tasks to nodes (and using a hard-coded, homogeneous node structure).
@@ -2045,8 +2044,8 @@ This direction would naturally introduce considerations about replication, consi
 
 \heading{Conclusion}
 This paper presented \sys, a shell variant that automatically and correctly scales out distribution-oblivious shell pipelines. 
-\sys's insight is that shell pipelines already express stream computations that can be automatically distributed.
-To achieve this, \sys
+\sys's insight is that shell pipelines already express streaming computations that can be automatically distributed.
+To achieve its goal, \sys
   decomposes primitives into distributability classes,
   identifies high-distributability stages,
   applies rewriting rules for largest possible subprograms,
@@ -2072,13 +2071,13 @@ Experiments with complex pipelines show substantial speedups and the ability to 
 \bibliography{./bib}
 
 
-%% Appendix
-\appendix
-\section{Scripts used in the evaluation}
+%% %% Appendix
+%% \appendix
+%% \section{Scripts used in the evaluation}
 
-This appendix contains the source code of the scripts used in the evaluation of
-the \sys. They are part of the codebase (released as open source with the camera
-ready), and are provided here only to aid the reviewers.
+%% This appendix contains the source code of the scripts used in the evaluation of
+%% the \sys. They are part of the codebase (released as open source with the camera
+%% ready), and are provided here only to aid the reviewers.
 
 
 \end{document}
