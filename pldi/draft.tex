@@ -1199,9 +1199,9 @@ parallelism is based on the observation that some operations produce
 the same result when performed independently on subsets of the input
 data, merging the results afterwards. This is the basic optimization
 that is used by popular distributed processing systems such as
-MapReduce\kk{cite} and Apache Spark\kk{cite}.Unfortunately, the
+MapReduce \cite{DG2004MR} and Apache Spark\cite{spark:12}. Unfortunately, the
 dataflow graph model of most of these systems is not expressive enough
-to represent data parallelism, so the distributed implementations that
+to represent data parallelism \km{not sure this is true}, so the distributed implementations that
 they perform do not preserve the semantics of their dataflow model.
 
 In contrast, our dataflow model inherently supports the data
