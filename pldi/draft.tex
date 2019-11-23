@@ -1186,6 +1186,80 @@ are its outputs.
 \kk{(Maybe) It might be beneficial to mention that many inputs do not
   represent the same thing as many outputs. These two notions are not
   symmetric.}
+  
+\begin{figure*}
+\centering
+\begin{tikzpicture}[->, >=to, auto, node distance=1cm, semithick, transform shape, inner sep=2pt]
+%
+\small
+%
+\node (M1) {};
+\node (M2) [draw, right of=M1, node distance=2cm] {Map};
+\node (M3) [draw, right of=M2, node distance=3cm] {GroupBy(Reduce)};
+\node (M4) [right of=M3, node distance=3cm] {};
+%
+\path (M1) edge node {input} (M2);
+\path (M2) edge node {stream} (M3);
+\path (M3) edge node {output} (M4);
+\end{tikzpicture}
+\end{figure*}
+
+\begin{figure*}
+\newcommand{\Split}{\text{Split}}
+\newcommand{\Merge}{\text{Merge}}
+\newcommand{\Map}{\text{Map}}
+\newcommand{\GroupBy}{\text{GroupBy}}
+\newcommand{\Reduce}{\text{Reduce}}
+\centering
+\begin{tikzpicture}[->, >=to, auto, node distance=0.6cm, semithick, transform shape, inner sep=1.75pt]
+%
+\footnotesize
+%
+\node (M1) {};
+\node (M2) [draw, right of=M1, node distance=1.3cm] {$\Split$};
+\node (M3) [right of=M2, node distance=1.5cm] {};
+\node (M4) [right of=M3, node distance=2.5cm] {};
+\node (M5) [draw, right of=M4, node distance=2.2cm] {$\Merge$};
+\node (M6) [draw, right of=M5, node distance=3.8cm] {$\GroupBy(K_2,\Reduce)$};
+\node (M7) [draw, right of=M6, node distance=3cm] {$\Merge_K$};
+\node (M8) [right of=M7, node distance=2cm] {};
+%
+\node (T3) [draw, above of=M3] {$\Map$};
+\node (T4) [draw, above of=M4] {$\Split_K$};
+\node (T5) [draw, above of=M5] {$\Merge$};
+\node (T6) [draw, above of=M6] {$\GroupBy(K_1,\Reduce)$};
+%
+\node (B3) [draw, below of=M3] {$\Map$};
+\node (B4) [draw, below of=M4] {$\Split_K$};
+\node (B5) [draw, below of=M5] {$\Merge$};
+\node (B6) [draw, below of=M6] {$\GroupBy(K_3,\Reduce)$};
+%
+\path (M1) edge node {$A$} (M2);
+\path (M2) edge[bend left=10] node {$A$} (T3);
+\path (M2) edge[bend right=10] node[swap] {$A$} (B3);
+\path (M5) edge node {$K_2 \times B$} (M6);
+\path (M6) edge (M7);
+\path (M7) edge node {$K \times B$} (M8);
+%
+\path (T3) edge node {$K \times B$} (T4);
+\path (T4) edge (T5);
+\path (T4) edge (M5);
+\path (T4.330) edge[bend right=10] (B5.170);
+\path (T5) edge node {$K_1 \times B$} (T6);
+\path (T6) edge[bend left=10] node {$K_1 \times B$} (M7);
+%
+\path (B3) edge node {$K \times B$} (B4);
+\path (B4) edge (B5);
+\path (B4) edge (M5);
+\path (B4.30) edge[bend left=10] (T5.190);
+\path (B5) edge node {$K_3 \times B$} (B6);
+\path (B6) edge[bend right=10] node[swap] {$K_3 \times B$} (M7);
+%
+\end{tikzpicture}
+\caption{Distributed implementation of the map-reduce pipeline $\Map \gg \GroupBy(K,\Reduce)$.}
+\label{fig:mapReduce}
+\end{figure*}
+
 
 
 \subsection{Graph transformations}
