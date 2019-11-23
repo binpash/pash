@@ -1245,7 +1245,7 @@ parallelism is based on the observation that some operations produce
 the same result when performed independently on subsets of the input
 data, merging the results afterwards. Exploiting data parallelism is
 one of the major reasons that popular distributed stream processing
-systems (such as MapReduce \cite{DG2004MR} and Apache Spark
+systems (such as MapReduce \cite{mapreduce:08} and Apache Spark
 \cite{spark:12}) achieve significant performance. Unfortunately, the
 optimizations in many of these systems do not preserve the dataflow
 model semantics, blurring the lines between specification,
@@ -1538,30 +1538,30 @@ and aggregates them accordingly.
 %% We don't try to make a proper planner, as there is a lot of work on
 %% operator placement etc. that we can borrow from.
 
-\subsection{Planning Activators and Just-in-Time Planning}
-
-\nv{Nikos working on this and next}
-
-% \kk{This whole section for just in itme planning, is also relevant for
-%   the front end. If the front end is executed just in time, it would
-%   have more information, and maybe it could make a sound analysis.}
-
-Important point: Shell is extremely dynamic. Because of this, a
-distributor cannot decide how to distribute a subexpression
-statically, by just reading the script, (as in many other systems like
-MapReduce, Spark, etc), since most of the information is not there
-before the script starts executing. Environment variables,
-unexpanded(unevaluated) strings \kk{Make sure that terminology is
-  consistent with Greenberg}, could all contain information that is
-valuable to make the distribution plan \kk{give an example}.
-
-
-Future work on this: calling the shell shtepper to only partially
-evaluate strings, just expand arguments, and not do any significant
-computation. Even better, we could be calling the shtepper just after
-having parsed the ast, and decide on maximal distributable subtrees as
-late as possible in the process. This would be awesome.
-
+% \subsection{Planning Activators and Just-in-Time Planning}
+% 
+% \nv{Nikos working on this and next}
+% 
+% % \kk{This whole section for just in itme planning, is also relevant for
+% %   the front end. If the front end is executed just in time, it would
+% %   have more information, and maybe it could make a sound analysis.}
+% 
+% Important point: Shell is extremely dynamic. Because of this, a
+% distributor cannot decide how to distribute a subexpression
+% statically, by just reading the script, (as in many other systems like
+% MapReduce, Spark, etc), since most of the information is not there
+% before the script starts executing. Environment variables,
+% unexpanded(unevaluated) strings \kk{Make sure that terminology is
+%   consistent with Greenberg}, could all contain information that is
+% valuable to make the distribution plan \kk{give an example}.
+% 
+% 
+% Future work on this: calling the shell shtepper to only partially
+% evaluate strings, just expand arguments, and not do any significant
+% computation. Even better, we could be calling the shtepper just after
+% having parsed the ast, and decide on maximal distributable subtrees as
+% late as possible in the process. This would be awesome.
+% 
 \subsection{Merge and Split Implementation}
 
 It is common in the dataflow graph for a node to have many incoming
@@ -1812,13 +1812,17 @@ We find the resulting times quite acceptable: given two input arguments in the b
 \subsection{Macro-benchmark: Weather Analysis}
 \label{macro1}
 
-For \sys's first macro-benchmark, we use we
-from introductory chapter of Hadoop Definitive Guide~\cite[Chapter 2]{hadoop:15}
-This example is used as a data analysis Hadoop is well suited for, and combines the 
-There are several interesting aspects about this case.
-First, Hadoop is used 
-McIlroy would have probably expressed---our pipeline 
-14 stages long;
+To understand \sys better under a realistic workload, we use a large pipeline inspired by the introductory program of Hadoop's Definitive Guide~\cite[Chapter 2]{hadoop:15}.
+At a high level,
+
+The original task can be thought of comprising three sub-tasks:
+  download weather data from NCDC (shell), convert them to a format that is Hadoop-friendly (shell), and process them to identify the maximum temperature (Hadoop).
+
+---only one of which is the focus of the chapter
+
+It is presented to demonstrate the benefits of Hadoop is well suited to tackle.
+
+The Java program required for this 
 
 The effort required to write this pipeline is astonishingly low:
   it amounts to 240 characters 
