@@ -26,8 +26,17 @@ experiments = ["minimal_grep",
                "topn",
                "wf",
                "grep",
-               "spell",
+               # "spell",
                "shortest_scripts"]
+
+pretty_names = {"minimal_grep" : "min-grep",
+                "minimal_sort" : "min-sort",
+                "wf" : "wf",
+                "topn" : "top-n",
+                "grep" : "grep",
+                "bigram" : "bi-gram",
+                "spell" : "spell",
+                "shortest_scripts" : "shortest-scripts"}
 
 def get_experiment_files(experiment, results_dir):
     files = [f for f in os.listdir(results_dir) if f.startswith(experiment)]
@@ -81,7 +90,7 @@ def collect_scaleup_times(experiment, results_dir):
     # plt.yscale("log")
     plt.xticks(all_scaleup_numbers[1:])
     plt.legend(loc='lower right')
-    plt.title(experiment)
+    plt.title(pretty_names[experiment])
 
 
     plt.tight_layout()
