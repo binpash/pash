@@ -1993,12 +1993,12 @@ intricacy, previous work is not straightforwardly applicable.
 \section{Discussion}
 \label{discussion}
 
-This section reflects on \sys's design and implementation, touches on future work, and closes the paper.
+This section reflects on \sys's design and implementation, touches on future work, and concludes the paper.
 
 \heading{Limitations}
 Our implementation is limited in many ways, so as to succeed in proving the key hypothesis---that scaling out shell pipelines can be automated and correct with respect to some assumptions.
 
-\sys does not adequately handle failures or network partitions in the general sense, which would include re-scheduling passes that were executing on failed replicas.
+\sys does not adequately handle failures or network partitions in the general sense, which would require re-scheduling passes on failed replicas.
 Prior work on fault-tolerant distributed stream processing can be of significant aid here.
 
 The logic of the planner is quite simplified, attempting only straightforward placement of tasks to nodes (and using a hard-coded, homogeneous node structure).
@@ -2047,8 +2047,8 @@ This direction would naturally introduce considerations about replication, consi
 
 \heading{Conclusion}
 This paper presented \sys, a shell variant that automatically and correctly scales out distribution-oblivious shell pipelines. 
-\sys's insight is that shell pipelines already express stream computations that can be automatically distributed.
-To achieve this, \sys
+\sys's insight is that shell pipelines already express streaming computations that can be automatically distributed.
+To achieve its goal, \sys
   decomposes primitives into distributability classes,
   identifies high-distributability stages,
   applies rewriting rules for largest possible subprograms,
