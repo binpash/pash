@@ -387,36 +387,6 @@ More complex pipelines, such as the ones presented in later sections, would invo
 In both cases, manual rewriting is expensive and can introduce new bugs, cascading changes, and divergence from legacy functionality.
 Could the generation and execution of $p_1$'s distributed version be fully and correctly automated?
 
-% Some (parts of) pipelines require only moderate effort, as they are 
-% For some pipelines, this effort is merely moderate, as 
-%  can be expressed in domain-specific frameworks---for example, Hadoop and Spark provide a few purely functional primitives that 
-%   ---still requiring rewriting the program in a different (\eg Scala for Spark).
-% 
-% This effort is moderate if the program expressed by these pipelines fits into a domain-specific framework.
-% At times, such pipelines
-% As long as the program fits into the model this is only moderately difficult;
-% 
-% For many legacy pipelines  
-%  has to choose between three options, all of which require significant manual effort.
-% The most invasive is to rewrite the entire program in a distributed programming language
-% The most popular is to leverage 
-% 
-% Use a distributed programming language, even higher rewrites
-% Or use some form of annotations 
-% 
-%  this requires rewriting portions of the program in a new language and use operations
-% 
-% 
-% In the simplest case, annotations
-% 
-% Often, they only focus on a few parts of the system---for example, upgrading to a distributed storage layer.
-% More rarely, companies rewrite entire systems (\eg Twitter's Ruby-to-Scala rewrite~\cite{twitter}), a process that is notoriously difficult under schedule constraints and competitive pressures~\cite{rewrite1, rewrite2}.
-%  especially since software today makes extensive use of third-party modules~\cite{breakapp:plos:2017}.
-% 
-
-% If developers have already expressed their computation as a Unix pipeline, they should not have to manually rewrite the program in other environment---\eg Hadoop, Spark---to exploit distribution.
-
-
 To answer this question, this paper presents \sys, a shell \todo{preprocessor} that transforms shell pipelines into their distributed equivalents, enabling \emph{distribution-oblivious programming}.
 The key insight behind \sys is that the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation
 % FIXME \kk{I am not sure whether stream processing provides information for distributing a computation on its own. Maybe we can say that the shell exposes operator level parallelism, and that this is the first step to distributing a computation}.
@@ -438,17 +408,6 @@ Most importantly, \sys provides an architectural lesson for system designers---n
 % Indeed, the primary reason behind $p_1$'s succinctness is that the pipeline is a domain-specific language for describing operations over streams.
 % Key elements of \unix are the ability to compose programs written in different languages, the abstraction of a file system as a set of resident streams, a small but extensible library of commands, and the ability to resolve names within a global context.
 % Under the hood, the \unix kernel buffers results, synchronizes processing stages, and generally orchestrates the computation.
-
-% Primitives 
-% \sys enables \emph{distribution-oblivious programming}: 
-%   multi-order of magnitude speedups with correctness guarantees and without any developer effort.
-% 
-% The a series of transformations that 
-% Second, we are using describing composition . For this, we are restricting the study to a subset of the POSIX shell--
-% 
-% Local operations and identifiers have to be carefully translated to distributed ones, a translation that depends on the types of the operations and associated identifiers.
-% 
-% The semantics is enough to capture powerful features such as stream branching and feedback constructs found in practice and in the system's evaluation.
 
 The paper is structured as follows.
 It first starts with a background section outlining pipeline concepts and overviewing \sys~\sx{bg}.
@@ -1524,6 +1483,40 @@ arbitrarily many different pipes.
 % \kk{We should have at least some pipelines that have a bad pure
 %   command in them.}
 
+\begin{table*}[t]
+\center
+\footnotesize
+% \setlength\tabcolsep{3pt}
+\caption{
+  \footnotesize{
+    \textbf{Summary of Micro-benchmarks}.
+    The micro-benchmarks are small pipelines (\ie ones developed on-the-fly) drawn from various sources and applied to large datasets.
+  }
+}
+\begin{tabular*}{\textwidth}{l @{\extracolsep{\fill}} llllll}
+\toprule
+  Script                 ~&~ Structure                    & Input (MB)& Time (Seq)    & Script Size (LoC)             & Highlights                                        \\
+\midrule
+% https://github.com/andromeda/sdsh/blob/master/scripts/grep.sh
+  \tti{min-grep}         ~&~$3\times$\tsta                &           &               &   17\qquad 134\qquad  1304    & complex NFA regex                                 \\
+% https://github.com/andromeda/sdsh/blob/master/scripts/minimal5.sh
+  \tti{min-sort}         ~&~~$\tsta, \tpur$               &           &               &   X \qquad 129\qquad  1209    & \tti{sort}ing                                     \\
+% https://github.com/andromeda/sdsh/blob/master/scripts/topn.sh
+  \tti{wf}               ~&~~$3\times\tsta, 3\times\tpur$ &           &               &   X \qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
+% https://github.com/andromeda/sdsh/blob/master/scripts/topn.sh
+  \tti{top-n}            ~&~~$2\times\tsta, 4\times\tpur$ &           &               &   X \qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
+% https://github.com/andromeda/sdsh/blob/master/scripts/ngrams.sh
+  \tti{bi-gram}          ~&~~$2\times\tsta, 4\times\tpur$ &           &               &   X \qquad  X \qquad          & stream shifting and merging                       \\
+% https://github.com/andromeda/sdsh/blob/master/scripts/spell.sh
+  \tti{spell}            ~&~~$4\times\tsta, 3\times\tpur$ &           &               &  37 \qquad 257\qquad  2417    & comparisons (\tti{comm})                          \\
+% https://github.com/andromeda/sdsh/blob/master/scripts/diff.sh
+  \tti{diff}             ~&~~$4\times\tsta, 3\times\tpur$ &           &               &   X \qquad  X \qquad          & shuffling and non-distributable \tti{diff}ing     \\
+\bottomrule
+\end{tabular*}
+\label{tab:eval}
+\end{table*}
+
+
 At a high level, we are interested in understanding whether \sys can indeed scale pipelines out automatically and correctly.
 To achieve this, we use a combination of micro- and macro-benchmarks, most of which were collected from prior literature and online repositories.
 Micro-benchmarks~\sx{micro} are one-off, simple one-line pipelines that take a few seconds to write (usually interactively);
@@ -1551,35 +1544,25 @@ More detailed setup and experiments, including the scripts, is included in the a
 
 \subsection{Microbenchmarks: Shell One-liners}
 
-\begin{table}[t]
-\center
-\footnotesize
-% \setlength\tabcolsep{3pt}
-\caption{
-  \footnotesize{
-    \textbf{Summary of Micro-benchmarks}.
-    Six micro-benchmarks used to evaluate \sys.
-  }
-}
-\begin{tabular*}{\columnwidth}{l @{\extracolsep{\fill}} lll}
-\toprule
-  Script                 ~&~ Structure                  & Input Size    & Seq.  Time \\
-\midrule
-  \tti{min-grep}         ~&~$2\times$\tsta              &               &            \\
-  \tti{min-sort}         ~&~~\tpur                      &               &            \\
-  \tti{top-n}            ~&~~\tpur                      &               &            \\
-  \tti{wf}               ~&~~\tpur                      &               &            \\
-  \tti{spell}            ~&~~\tpur                      &               &            \\
-  \tti{diff}             ~&~~\tpur                      &               &            \\
-\bottomrule
-\end{tabular*}
-\label{tab:eval}
-\end{table}
+Tab.~\ref{tab:eval} summarizes the collection of micro-benchmarks used to evaluate \sys.
+Benchmark names (col. 1) correspond to the names on the plots (Fig.~\ref{fig:microbenchmarks}).
+Input sizes and times (col. 2, 3) summarize the longest sequential execution (200 files in Fig.~\ref{fig:microbenchmarks}).
+Script sizes report on the \sys's rewritten output for three different distribution sizes---$1\times$, 10$\times$, and $100\times$.
 
+The size of the script grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
+The first number alone is interesting, as it captures \sys's output for the sequential script.
+As there is no parallelism, it can be viewed as the initial cost corresponding to using \sys.
+% this is the size of 
+This change in size does not necessarily translate to observed runtime, as most of this size gain comes from the setup and teardown of FIFOs responsible for interprocess (IPC) communication---and FIFOs 
+are simply pipes made, the in-kernel buffering and synchronization mechanisms are the same, leading to non-observable changes in runtime performance.
 
-We first apply \sys onto a collection of micro-benchmarks 
+All pipelines are set to read and write from the filesystem; 
+  \sys 
+The centralized pipelines read files of various sizes from disk and write to disk.
 
 Spell program~\cite{bentley1985spelling}
+
+Cannot be represented using the Thompson NFA, backtracking
 
 \ttt{wf}
 Word-count~\cite{bentley1986literate}
@@ -1751,7 +1734,7 @@ The shell is also more general.
 \end{figure}
 
 \heading{DSLs for Distribution}
-At the other end of the spectrum, distributed computing frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13, jetstream:14} \kk{JetStream has a very different focus} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp, psync:16, dartagnan:18}
+At the other end of the spectrum, distributed computing frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp, psync:16, dartagnan:18}
 simplify certain patterns, 
 but do not offer the flexibility of a full-fledged environment.
 % suffer from a similar lack of generality by making strong assumptions about the nature of the computation---for example, strongly-eventual commutative components that can proceed in parallel.
