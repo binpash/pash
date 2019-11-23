@@ -1862,7 +1862,9 @@ These are
 \section{Related Work}
 \label{related}
 
-At a high level, techniques for automatically distributing fall under a spectrum that ranges from fully automated (but potentially sub-optimal) distribution to fully manual (but, ideally, optimal) distribution (Fig.~\ref{fig:spectrum}).
+At a high level, techniques for re-writing programs to exploit distribution fall under a wide spectrum that ranges from
+  fully manual (but, ideally, optimal) to 
+  fully automated (but potentially sub-optimal) distribution   (Fig.~\ref{fig:spectrum}).
 
 \heading{Distributed Operating Systems and Shells}
 A plethora of systems assist in the construction of distributed software.
@@ -1873,11 +1875,11 @@ hide many distribution problems, as long as a program uses the provided abstract
 Several packages expose commands for specifying parallelism on modern \unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}. %  or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
 Different from \sys, their effectiveness is predicated upon explicit invocation and is limited to embarrassingly parallel (and short) programs.
 Often, these commands provide options to support an array of special sub-cases---a stark contradiction to the celebrated \unix philosophy.
-For example, \tti{parallel}, an official GNU project, contains flags such as \ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs}, that a \unix user would achieve with \ttt{head}, \ttt{sed}, and \ttt{xargs}; it also includes other programs with complex semantics, such as the ability transfer files between computers, separate text files, and parse CSV.
+For example, \ttt{parallel} contains flags such as \ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs}, that a \unix user can achieve using \ttt{head}, \ttt{sed}, and \ttt{xargs}; it also includes other programs with complex semantics, such as the ability transfer files between computers, separate text files, and parse CSV.
 \sys embraces the \unix philosophy and simply attempts to rewrite pipelines more efficiently.
 
 Several shells~\cite{duff1990rc, mcdonald1988support, dagsh:17} add primitives for non-linear pipe topologies---some of which target distribution.
-Here too, however, developers are expected to manually rewrite scripts to exploit these primitives.
+Here too, however, developers are expected to manually rewrite scripts to exploit these new primitives.
 
 Recently, the Smoosh authors have argued that certain shell features are useful for concurrency~\cite{smoosh:18}.
 Their argument is somewhat antithetical to \sys, % but rather that the shell language is itself an good DSL for concurrency;
@@ -1885,36 +1887,56 @@ Their argument is somewhat antithetical to \sys, % but rather that the shell lan
 
 
 \heading{Cluster Computing}
-Modern analytics frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp} go a step further in terms of automation.
-By providing a few carefully-designed primitives, they 
-Due to the specialization of these primitives, however, these systems suffer from a lack of generality ;
-% and they still require developers to compose their work using the pipelines
+Modern analytics frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp} go a step further in terms of automation by providing a few carefully-designed primitives.
+These primitives make strong assumptions about the nature of the computation---\eg strongly-eventual commutative functions that can proceed in parallel.
+By targeting specific classes of computation (\emph{viz.} \sys's distributability), they render distributed computation efficiently.
 
-They also support a single class of distributability, arguing that is enough 
-by making strong assumptions about the nature of the computation---for example, strongly-eventual commutative components that can proceed in parallel.
-Developing under these frameworks differs quite significantly from the development of normal (non-distributed) programs.
+% Lack of generality, no formal guaratees, their setup and is too tedious 
+\sys chooses a more general approach:
+  it does not require users to set up a new framework for every new class of computation they need to execute, nor to rewrite different parts of their computation using the specific abstractions provided by each framework they use.
+It also takes a more principled approach: by developing the semantic model outlined earlier, it can guarantee that transformations are correct with respect to the sequential program.
+
+% % Although still a research prototype, \sys's setup and deployment is simpler.
+% It also does not require these specialized frameworks, manually (re)write , and 
+% Different from \sys, however, 
+% Due to the specialization of these primitives, however, these systems suffer from a lack of generality ;
+% % and they still require developers to compose their work using the pipelines
+% Developing under these frameworks differs quite significantly from the development of normal (non-distributed) programs.
+
+
+\heading{Annotation-based Distribution}
+Recent systems on light-touch distribution, such as Ignis~\cite{ignis:19} and Mozart~\cite{mozart:19}, are more general than cluster-computing frameworks.
+They also lower (but not entirely eliminate) developer effort by automating most of the rewriting process.
+Both work on high-level, managed languages---server-side JavaScript for Ignis and Python for Mozart---that allow runtime transformations without affecting the broader environment under which a program executes.
+For the critical points where user input is required, they provide a high-level declarative DSL with varying (but limited) degrees of expressive power.
+% Annotations are used by ---complicated by the use of third-party libraries similar to \sys's extensions.
+Unfortunately, a challenge with this approach is that users composing applications by using third-party libraries do not understand their distributability details well-enough to annotate them.
+
+\sys occupies a different point in the design space, by removing any work from composers and adding a small load to developers.
+% More specifically, it is designed to be used automatically by composers,
+Its DSL is designed to be more heavy-weight than Ignis' declarative recipes or Mozart's split annotations, but geared towards the developers of these components---not the users composing them.
+
+% It also provides a more principled approach than both of these systems.
+% Their annotations language is not as principled as \sys's---and one that is critical in ensuring that the dataflow analyses preserves the semantics expected by the developer
+% The side-effects present in the shell dwarf those of functional languages
+
 
 % Nice intro: http://homepages.inf.ed.ac.uk/bfranke/Publications/pldi121-tournavitis.pdf
-\heading{Automated Parallelization and Distribution}
-There is a long history of automated parallelization starting from explicit \ttt{DOALL} and \ttt{DOACROSS} annotations~\cite{par1, par2} and continuing with compilers that attempt to automatically extract parallelism~\cite{padua1993polaris,hall1996maximizing}.
+\heading{Low-level Parallelization}
+Instruction-level parallelization has a longer history, starting from explicit \ttt{DOALL} and \ttt{DOACROSS} annotations~\cite{par1, par2} and continuing with compilers that attempt to automatically extract parallelism~\cite{padua1993polaris,hall1996maximizing}.
 These systems operate at a lower level than \sys (\eg that of instructions or loops instead of pipe boundaries) and typically do not exploit runtime information.
+
+More recent work focuses on extracting parallelism from domain-specific programming models~\cite{cilk5, streamIt, galois} and interactive parallelization tools~\cite{parascope, ipat}.
+These tools simplify the expression of parallelism, but still require programmers to get involved in discovering and exposing parallelism.
+%  actively involve the programmer in the detection and mapping of application parallelism, but still demand great effort from the user. 
+Moreover, the insights behind these attempts are significantly different from ours, as they extract parallelism statically during compilation instead of dynamically during runtime.
+%Despite significant progress~\cite{}, it remains due to its need for complex program analysis and the unknown factors (such as input data range) during compilation.
+
 
 % https://ecommons.cornell.edu/bitstream/handle/1813/6508/85-668.pdf?sequence=1
 % The growth of the web led to specialized frameworks for massively distributed computation~\cite{mapreduce:08, spark:10, naiad:13}.
 % While they Moreover, these systems take advantage of functional purity;
 %   for programs that are not data-intensive processing pipelines (\eg web servers), purely functional code is generally responsible for only a small fraction of the program runtime.
-\heading{Annotation-based Distribution}
-Recent systems for light-touch distribution, Ignis~\cite{ignis:19} and Mozart~\cite{mozart:19}, give developers the ability to express through annotations;
-
-Both work on high-level, managed languages---server-side JavaScript for Ignis and Python for Mozart---that allow runtime transformations without affecting the broader environment under which a program executes.
-This is different 
-
-Annotations are used by ---complicated by the use of third-party libraries similar to \sys's extensions.
-\sys is designed to be used, so it is somewhat more heavy-weight than Ignis' declarative recipes or Mozart's split annotations, but geared toward the deveopers of these components---not the users composing them.
-As such..
-Their annotations language is not as principled as \sys's---and one that is critical in ensuring that the dataflow analyses preserves the semantics expected by the developer
-The side-effects present in the shell dwarf those of functional languages
-The shell is also more general.
 
 \begin{figure}[t]
 \centering
@@ -1926,12 +1948,6 @@ The shell is also more general.
 \label{fig:spectrum}
 \end{figure}
 
-
-More recent work focuses on extracting parallelism from domain-specific programming models~\cite{cilk5, streamIt, galois} and interactive parallelization tools~\cite{parascope, ipat}.
-These tools simplify the expression of parallelism, but still require programmers to get involved in discovering and exposing parallelism.
-%  actively involve the programmer in the detection and mapping of application parallelism, but still demand great effort from the user. 
-Moreover, the insights behind these attempts are significantly different from ours, as they extract parallelism statically during compilation instead of dynamically during runtime.
-%Despite significant progress~\cite{}, it remains due to its need for complex program analysis and the unknown factors (such as input data range) during compilation.
 
 \kk{exoume ena semantic model to opoio mporei na xrhsimopoiithei gia
   na ginoun formally proven claims gia to equivalence preservation twn
