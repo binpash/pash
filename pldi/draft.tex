@@ -74,6 +74,7 @@
 \newcommand{\tr}[1]{} %% Text and comments for technical report
 
 \newcommand{\kstar}{^{\textstyle *}}
+\newcommand{\eps}{\varepsilon}
 
 \definecolor{editorGray}{rgb}{0.95, 0.95, 0.95}
 \definecolor{editorOcher}{rgb}{1, 0.5, 0} % #FF7F00 -> rgb(239, 169, 0)
@@ -1072,15 +1073,20 @@ command, and each edge represents a file.
 
 \paragraph{Nodes - Commands}
 
-Nodes $f$ of the graph represent functions from one (possibly empty)
-input stream to an output stream $f : D\kstar \to D\kstar$. $D$
+For a set $D$, we write $D\kstar$ to denote the set of all finite
+words over $D$. For words $x, y \in D\kstar$, we write $x \cdot y$
+or $xy$ to denote their concatenation. We write $\eps$ for the empty
+word. We say that $x$ is a \emph{prefix} of $y$, and we write $x \leq y$, if there is a word $z$ such that $y = xz$. It is easy to see that $\leq$ is a partial order, and it is often referred to as the \emph{prefix order}.
+
+A node $f$ of the graph represents a function from one (possibly empty)
+input stream to an output stream $f : D\kstar \to D\kstar$, where $D$
 represents the basic data type of a line of characters. This
-representation captures the majority of shell commands. The nodes are
-monotonic, meaning that they cannot retract their output. More
-formally, $\forall f, x, y, f(x) = y$, then for any $x'$, there exists
-$y'$ such that $f(x.x') = y.y'$, where $.$ is standard concatenation
-and will be omitted when obvious. An example of a node is the
-following command:
+representation captures the majority of shell commands. We require that
+the function $f$ is monotone w.r.t.\ the prefix order. This captures
+the idea that a node cannot retract output after it has been emitted.
+%More formally, $\forall f, x, y, f(x) = y$, then for any $x'$, there exists $y'$ such that $f(x.x') = y.y'$, where $.$ is standard
+%concatenation and will be omitted when obvious.
+An example of a node is the following command:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
  grep ``foo''
