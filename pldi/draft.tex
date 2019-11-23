@@ -26,6 +26,8 @@
 \usepackage{wrapfig}
 \usepackage{syntax}
 
+\usepackage{tikz}
+\usetikzlibrary{arrows,automata,shapes.misc,shapes.geometric,positioning}
 
 \captionsetup[figure]{font=footnotesize,name={Fig.},labelfont={bf, footnotesize}}
 \captionsetup[table]{font=footnotesize,name={Tab.},labelfont={bf, footnotesize}, skip=2pt, aboveskip=2pt}
@@ -1129,11 +1131,27 @@ Edges in the dataflow graph represent files, the basic data
 abstraction of the shell. They are used as communication channels
 between nodes in the graph, and as the input or output of the whole
 graph. Edges are represented as possibly unbounded streams of type
-$D*$. They could either refer to a specific named file in the file
+$D\kstar$. They could either refer to a specific named file in the file
 system, or just be FIFO pipes that used for interprocess communication
 %% \TODO{Are there any other file types, such as URLs, ...?}.
 
 \TODO{Show an example pipe and its graph}.
+
+\begin{center}
+\small
+\begin{tikzpicture}[node distance=2.25cm, ->]
+\node (S) {};
+\node (A) [draw, right of=S, node distance=1.75cm] {node 1};
+\node (B) [draw, right of=A] {node 2};
+\node (C) [draw, right of=B] {node 3};
+\node (E) [right of=C, node distance=1.75cm] {};
+\path (S) edge node[above] {input} (A);
+\path (A) edge node[above] {stream} (B);
+\path (B) edge node[above] {stream} (C);
+\path (C) edge node[above] {output} (E);
+\end{tikzpicture}
+\end{center}
+
 
 In order to expose data parallelism from the output of a command,
 files that don't point to a resource can have an upper bound on the
