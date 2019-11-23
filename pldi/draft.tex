@@ -1579,14 +1579,18 @@ output file \verb|out|, a merger can be implemented as:
 \end{lstlisting}
 
 \noindent
-\TODO{Change that with the new splitter}
 On the other hand, given an input file \verb|in| that is a FIFO pipe,
 and two output files \verb|out1, out2| the first of which is bounded
 to \verb|N| lines, a 2-splitter can be implemented as:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none]
- head -n $N $in > $out1 ; cat $in > $out2
+  tee >(head -n $N > $temp1;
+        dd of=/dev/null > /dev/null 2>&1 &
+        cat $temp1 > $out1) |
+       (tail -n +${N+1} > $out2;
+        dd of=/dev/null > /dev/null 2>&1)
 \end{lstlisting}
+ %% head -n $N $in > $out1 ; cat $in > $out2
 
 \noindent
 Using the 2-splitter as a building block, a pipe can be split to
