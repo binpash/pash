@@ -1,5 +1,6 @@
 #!/bin/bash
 
+distr_output_dir=/tmp/distr_output
 
 ./execute_compile_evaluation_script.sh "minimal_sort_2" $distr_output_dir 1 0
 ./execute_compile_evaluation_script.sh "minimal_sort_4" $distr_output_dir 1 0
