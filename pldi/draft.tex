@@ -355,7 +355,7 @@ To understand this sharp contrast, consider a Bash pipeline calculating term fre
 % \end{lstlisting}
 \smallskip
 \begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
-cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$[p_1]$$)
+cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$(p_1)$$)
   sort | uniq -c | sort -rn | head 5 > out
 \end{lstlisting}
 \smallskip
@@ -826,7 +826,7 @@ This DSL can be used by the developers of new commands to succinctly express thi
 It could also be used by developers that extend or maintain existing commands, to express additions or changes to the command's implementation or interface.
 
 \heading{Command-line Options}
-As described earlier~\sx{bg}, command-line options and environment variables can affect the operation of a command.
+As described earlier~\sx{bg}, com\-mand-line options and environment variables can affect the operation of a command.
 Options are a particularly popular way to control a command, 
   directly affecting a command's distributability classification.
 That is, commands are assigned to default classes, and options can change the class in which they belong.
@@ -1663,18 +1663,18 @@ arbitrarily many different pipes.
 
 
 At a high level, we are interested in understanding whether \sys can indeed scale pipelines out automatically and correctly.
-To achieve this, we use a combination of micro-benchmarks and one macro-benchmark, most of which were collected from prior literature and online repositories.
+To achieve this, we use a combination of micro-bench\-marks and one macro-bench\-mark, most of which were collected from prior literature and online repositories.
 Micro-bench\-marks~\sx{micro} are one-off, simple one-line pipelines that take a few seconds to write;
   such pipelines are usually composed interactively to solve a task at hand, test a hypothesis, or ``smoke out bugs''~\cite{bentley1986literate}---but, with \sys, applied to very large data sets.
 These pipelines are taken from real use cases (often from the literature~\cite{bentley1985spelling}), and, precisely due to their small size, have the benefit of highlighting stress on a handful of stages.
 
 The complex macro-benchmark (\S\ref{macro1}) is designed to handle realistic workloads by today's standards.
 It is about an order of magnitude larger than the micro-benchmarks, but its perceived lack of complexity is deceiving:
-  as shown if written in a conventional language, it correspond to a program on the order of hundreds of lines of code.
+  as shown, if written in a conventional language, it correspond to a program on the order of hundreds of lines of code.
 
 Several results are worth highlighting.
 First and foremost, programs see a significant speedup, often more $10\times$ over sequential execution  while returning identical results (on very large datasets).
-\sys's transformation and planning phase take around 50--300ms, negligible ($<$5\%) for short-running pipelines and virtually non-existent for long-running ones.
+\sys's transformation and planning phase take around 50--300ms, negligible ($<$2\%) for short-running pipelines and virtually non-existent for long-running ones.
 As \sys rewrites to highly-optimized shell primitives rather than using a managed language runtime, it always has a COST~\cite{mcsherryscalability} of 2.
 Finally, \sys preserves the productivity of the shell:
   the equivalent program for a small part of the macro-benchmark pipeline requires over a 150 lines of code in combined Java and Bash to run distributed on top of Hadoop.
@@ -1828,9 +1828,9 @@ The effort required to write this pipeline is astonishingly low:\footnote{
   Some effort is required to understand NCDC's weather format, but this is true for any program processing this dataset.
 }
   it amounts to 14 stages and, when expressed as a single line, only 240 characters.
-The Hadoop program, expressed in Java and only capturing the 4 last stages, is about 117 lines of Java code---not accounting for code moving input and output in and out of HDFS.
+The Hadoop program, expressed in Java and only capturing the 4 last stages, is about 137 lines of Java code---not accounting for code moving input and output in and out of HDFS.
 
-In terms of execution time, with two Hadoop datanodes running on Hadoop 3.2.1 and Openjdk 11.0.5 without any replication (\ie fault-tolerance), the Hadoop program takes 6m22s for data processing and 1:09 for moving the dataset to HDFS.
+In terms of execution time, with two Hadoop datanodes running on Hadoop 3.2.1 and Openjdk 11.0.5 without any replication (\ie fault-tolerance), the Hadoop program takes 6m22s for data processing and 1m09s for moving the dataset to HDFS.
 For the same amount of parallelism, \sys takes 4m30.554s---but this includes downloading and uncompressing the data files.
 
 % /home/nikos/hadoop-3.2.1/bin/hdfs dfs -put /home/nikos/dish/scripts/max-temp 77.24s user 50.79s system 185% cpu 1:09.14 total
@@ -1845,8 +1845,7 @@ For the same amount of parallelism, \sys takes 4m30.554s---but this includes dow
 A less obvious take-away from this case is that large, complex pipelines enable significant freedom in how to express their stages.
 Several stages in the original shell program (taken from the book) are expressed as a single \ttt{awk} script;
   unfortunately, \ttt{awk} is too general to have a meaningful distributability signature.
-A much simpler pipeline that builds on built-in \unix primitives is trivially distributable, 
-  but might not perform as well in the centralized case.
+A much simpler pipeline that builds on basic \unix primitives might be out-performed by specialized programs on a single node, but turns out to be  trivially scalable to multiple nodes.
 % For example, the \ttt{sort} command at the end is an expensive version of extracting the maximum element;
 %   this could have been expressed with a simple \ttt{awk} script that only keeps track of the max.
 
