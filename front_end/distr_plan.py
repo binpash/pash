@@ -111,7 +111,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     # print("Source nodes:")
     # print(source_nodes)
 
-    ## Generate a fileIdGen from a graph, that doesn't class with the
+    ## Generate a fileIdGen from a graph, that doesn't clash with the
     ## current graph fileIds.
     fileIdGen = graph.get_file_id_gen()
 
@@ -360,8 +360,6 @@ def parallelize_pure_wc(curr, graph, fileIdGen):
     graph.add_node(merge_command)
 
     return graph
-
-# paste -d '+' <(cat * | wc | tr -s ' '  '\n' | tail -n +2) <(cat * | wc | tr -s ' '  '\n' | tail -n +2) | bc | tr -s '\n'  ' ' | sed 's/^/   /' | sed 's/$/\ /'
 
 
 
