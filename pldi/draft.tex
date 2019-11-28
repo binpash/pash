@@ -931,7 +931,7 @@ and the value of any option. Each assignment contains the command
 category, the sequence of its input sources, and its output
 source. Inputs to commands are a sequence of file arguments and its
 standard input. Similarly, the output is either its standard output or
-a file argument. An example record for comm can be seen below:
+a file argument. An example record for \ttt{comm} can be seen below:
 
 \begin{lstlisting}[float=h, numbers=none]
   comm {
@@ -957,29 +957,29 @@ would be classified as follows:
 
 
 
-\tr{We don't need to designate the stderror, because we assume that it
+\tr{\kk{We don't need to designate the stderror, because we assume that it
   is never the main output of a command and it will never be used by
   the input of another command in the pipeline. If someone indeed
   wants to do this, they can just use a redirect I think to get around
-  it.}
+  it.}}
 
 
-\tr{If we talk about the language it would be good to give some
+\tr{\kk{If we talk about the language it would be good to give some
   statistics about how many commands (out of the ones that we have
   classified) can be represented with one, two clauses etc. If we have
   a different solution (like python function that given a command and
   its arguments returns the category) then we could talk about how
   many lines of code it took to categorize all the commands that we
-  did.}
+  did.}}
 
 
-\tr{Note: Since a categorization language will probably not be
+\tr{\kk{Note: Since a categorization language will probably not be
   complete (especially the one showing the input arguments) there
   should be a backup mechanism, when the language is not expressive
   enough, like a python function that categorizes the command, and
-  returns its input argument if it is stateless.}
+  returns its input argument if it is stateless.}}
 
-\tr{(Maybe) We should have a crisp point about why we have this categorization
+\tr{\kk{(Maybe) We should have a crisp point about why we have this categorization
   language, and why don't we just allow someone to write a function in
   python for each command, that given the command and its arguments,
   returns whether the command category. Possible arguments include,
@@ -992,26 +992,30 @@ would be classified as follows:
   should be shareable among users, it would be bad to execute
   arbitrary python code, so using this language, expressivity is
   limited. All of these arguments are a little bit weak though. Niko,
-  what do you think?}
+  what do you think?}}
 
 
 %% \heading{Pure Commands}
 %
 \noindent
-Together with the commands in \sta, that are always easy to
-parallelize, there also exists a subclass of commands in \pur that can
-be parallelized by separating them into a map and a reduce
-operation. In order to allow command developers to extend \sys with
-information about how to parallelize new pure commands, \sys offers a
-programmatic interface to specify how to distribute a pure command.
+In addition to the commands in \sta that can be parallelized in a
+straightforward way, there also exists a subclass of commands in \pur
+that can be parallelized using divide-and-conquer techniques (as
+mentioned in \cref{cmd}). In order to support the parallelization of
+arbitrary commands in this category, \sys allows command developers to
+provide a custom map and reduce step for these commands, where the map
+is in \sta and the reduce in \pur, and their composition produces the
+same output with the initial command. \sys can then replace occurences
+of these commands with their map and reduce parts, enabling their
+parallelization.
 
 
-\tr{I am not sure a general interface is so easy to design. It needs
+\tr{\kk{I am not sure a general interface is so easy to design. It needs
   more though. It might be beneficial to just talk about sort and wc
   here and how we implemented them and nothing more. Or maybe this
   could then go to the implementation? Or maybe say that one can write
   a python function that given a node of the graph, transforms it into
-  many. I am not sure what is best...}
+  many. I am not sure what is best...}}
 
 
 % As mentioned in distributability, pure commands can be broken down
@@ -1026,19 +1030,67 @@ programmatic interface to specify how to distribute a pure command.
 \section{Dataflow Graph Model}
 \label{ir}
 
+\kk{Move some variation of that to intro/overview:
+
+In the core of \sys there is a dataflow graph model that is inspired
+by the ones that are used in popular distributed stream processing
+systems (such as MapReduce \cite{mapreduce:08} and Apache Spark
+\cite{spark:12}). These systems exploit data parallelism by
+parallelizing nodes of the dataflow graph. Unfortunately, the
+optimizations in many of these systems do not preserve the dataflow
+model semantics, blurring the lines between specification,
+optimization, and implementation. In contrast, our dataflow model
+inherently supports the data parallelism that is found in shell
+programs. More precisely, data parallelism can be easily exposed as
+task parallelism in our model. We exploit that by developing a set of
+parallelization-exposing optimizations that preserve the dataflow
+model semantics, and can be represented as graph transformations. The
+\sys optimizer then applies these transformations in an iterative way,
+optimizing the program to exploit the available computational
+resources.
+
+%% The standard dataflow graph exposes task parallelism. Different nodes
+%% in the graph can be executed concurrently, communicating through the
+%% edges.
+%% Task level parallelism is already exposed by the shell, by using
+%% pipes \ttt{|} and the background operator \ttt{\&}.
+%% Unfortunately, simple task parallelism leaves a lot to be desired,
+%% since scaling a computation requires manually introducing more
+%% operators.
+
+%% In order to adequately utilize the available computational resources,
+%% a distributed implementation should exploit data parallelism. Data
+%% parallelism is based on the observation that some operations produce
+%% the same result when performed independently on subsets of the input
+%% data, merging the results afterwards. Exploiting data parallelism is
+%% one of the major reasons that popular distributed stream processing
+%% systems (such as MapReduce \cite{mapreduce:08} and Apache Spark
+%% \cite{spark:12}) achieve significant performance. 
+
+%% A very important consequence of this is that we can iteratively apply
+%% optimizations that expose data parallelism, or even revert them when
+%% the resulting dataflow graph is too wide. This flexibility unifies the
+%% unoptimized and optimized versions of a computation, enabling thinking
+%% about them with the same conceptual tools.
+}
+
 In order to effectively apply optimizations and distribute a shell
-script, it first has to be translated to a manipulable
-representation. As mentioned in \Cref{bg:pipelines}, the two main
-abstractions of the shell, are files that contain data, and commands
-that communicate through these files. We propose a slight variation of
-the standard dataflow graph model, that is commonly found in stream
-processing systems, as the representation of a distributed shell
-computation. The main benefit of the dataflow graph model is that it
-clearly exposes task parallelism, as different nodes can be
-independent processing workers. In our case each node represents a
-command, and each edge represents a file.
+script, it first has to be translated to a manipulable representation.
+In \Cref{graph-components} we propose a slight variation of the
+standard dataflow graph model as a candidate intermediate
+representation. The main benefit of our model is that it exposes both
+task and data parallelism. In \Cref{ir:transformations} we define a
+set of optimizations that expose and exploit data parallelism of
+commands in \sta and \pur as semantics-preserving graph
+transformations.
 
 \subsection{Graph Components}
+\label{graph-components}
+
+As mentioned in \Cref{bg:pipelines}, the two main abstractions of the
+shell are files that contain data, and commands that communicate
+through these files. Based on that, we define nodes in our graph model
+to represent commands, and edges to represent files.
 
 \paragraph{Nodes - Commands}
 
@@ -1234,36 +1286,6 @@ are its outputs.
 \subsection{Graph transformations}
 \label{ir:transformations}
 
-As mentioned above, the dataflow graph exposes task
-parallelism. Different nodes in the graph can be executed
-concurrently, communicating through the edges.
-%% Task level parallelism is already exposed by the shell, by using
-%% pipes \ttt{|} and the background operator \ttt{\&}.
-Unfortunately, simple task parallelism leaves a lot to be desired,
-since scaling a computation requires manually introducing more
-operators.
-
-In order to adequately utilize the available computational resources,
-a distributed implementation should exploit data parallelism. Data
-parallelism is based on the observation that some operations produce
-the same result when performed independently on subsets of the input
-data, merging the results afterwards. Exploiting data parallelism is
-one of the major reasons that popular distributed stream processing
-systems (such as MapReduce \cite{mapreduce:08} and Apache Spark
-\cite{spark:12}) achieve significant performance. Unfortunately, the
-optimizations in many of these systems do not preserve the dataflow
-model semantics, blurring the lines between specification,
-optimization, and implementation.
-
-In contrast, our dataflow model inherently supports the data
-parallelism that is found in shell programs. More precisely, data
-parallelism can be easily exposed as task parallelism in our model. A
-very important consequence of this is that we can iteratively apply
-optimizations that expose data parallelism, or even revert them when
-the resulting dataflow graph is too wide. This flexibility unifies the
-unoptimized and optimized versions of a computation, enabling thinking
-about them with the same conceptual tools.
-
 Before describing the different types of parallelization
 optimizations, we formalize the intuition about stateless and pure
 commands that was described in \Cref{cmd}.
@@ -1282,20 +1304,31 @@ equation holds:
 \forall x, x', f(x.x') = f(x).f(x')
 \]
 
-\tr{This is a nice characterization, which I think is true in most
-  settings. There is a caveat though: You can have stateless programs
-  that emit output when they start (before they consume the stream)
-  and/or when they consume the EOF symbol. In this case I am not sure
-  the equation above holds.}
+%% This is a nice characterization, which I think is true in most
+%% settings. There is a caveat though: You can have stateless programs
+%% that emit output when they start (before they consume the stream)
+%% and/or when they consume the EOF symbol. In this case I am not sure
+%% the equation above holds.
 
-Similarly, it was mentioned that some pure commands (such as
-\ttt{sort} and \ttt{wc}) can be parallelized using divide-and-conquer
-techniques. More formally, there pure commands $f$ can be implemented
-as a map $m$ and a reduce $r$ function, satisfying the following:
+\noindent
+This means that we get the same output by applying a command $f$ to a
+concatenation of two inputs $x, x'$, or by concatenating the result
+produced by the application of $f$ to these inputs
+separately. Similarly, it was mentioned that some pure commands (such
+as \ttt{sort} and \ttt{wc}) can be parallelized using
+divide-and-conquer techniques. More formally, there pure commands $f$
+can be implemented as a map $m$ and a reduce $r$ function, satisfying
+the following:
 
 \[
 \forall x, x', f(x.x') = r(m(x).m(x'))
 \]
+
+\noindent
+Similarly to the above, this means that we get the same output by
+applying $f$ to a concatenation of two inputs $x, x'$, or by applying
+the reduce function $r$ to the concatenation of the outputs produced
+by applying map $m$ to each of these inputs.
 
 \heading{Parallelization Transformations}
 %
@@ -1356,14 +1389,24 @@ to a file.
 \section{Implementation}
 \label{impl}
 
+In this section, we describe challenges related to the implementation
+of \sys. More concretely, in \Cref{front-end} we describe how the \sys
+front-end translates a shell script to the dataflow graph that was
+defined in \Cref{ir}, and in \Cref{optimizer}, we describe how the
+\sys optimizer distributes and implements a given dataflow graph.
+
+\subsection{Front End}
+\label{front-end}
+
 As mentioned in \Cref{ir}, in order to generate the distributed
-implementation of a shell script, \ttt{Dish} first translates it to
-a dataflow graph. However, there are several components in shell
+implementation of a shell script, \ttt{Dish} first translates it to a
+dataflow graph. However, there are several components in shell
 programs that cannot be arbitrarily parallelized without affecting the
-program behaviour, e.g. commands producing an irreversible effect, or
-commands connected with a \ttt{\&\&} operator. In addition, the
-fact that the shell is highly dynamic, further increases the
-challenge of correctly identifying what parts can be distributed.
+program behaviour, e.g. commands connected with a \ttt{\&\&}
+operator. In addition, the fact that the shell is highly dynamic,
+further increases the challenge of correctly identifying what parts
+can be distributed, e.g. by not being able to know what file does an
+unexpanded command argument refer to.
 
 %% \kk{Give examples of writing to environment variables, producing
 %%   irreversible side effects, the ; and \&\& operators.}
@@ -1375,12 +1418,12 @@ distributable regions and translates each of them to a dataflow
 graph. The AST of the shell script is produced using a POSIX compliant
 parser~\cite{libdash}.
 
-\subsection{Distributable Regions}
-
+\heading{Distributable Regions}
+%
 %% \kk{The goal of this subsection is to explain that Dish does a safe
 %%   but effective analysis to identify which parts of the scripts to
 %%   parallelize.}
-
+%
 Consider the following example:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
@@ -1404,37 +1447,37 @@ the other hand, the pipe operator \ttt{|} and the parallel composition
 operator \ttt{\&} enable parallelization, and extend distributable
 regions. Intuitively, distributed regions correspond to subsections of
 the program that would be allowed to execute concurrently by different
-processes in the POSIX standard~\cite{posix}.
+processes in the POSIX standard~\cite{posix}. Consider the following
+illustrative example:
 
 \tr{I don't know whether I should mention the following: While these
   control flow constructs can be parallelized and there has been
   research on it, it is orthogonal to our work, and can be
   incorporated as future work.}
 
-\subsection{Translation Pass}
-
-Dish performs a depth first search pass on the AST of the given shell
-program, extending the distributable regions from the bottom up,
-translating their independent components to dataflow graph
-nodes, until a barrier construct is reached. Note that barrier
-constructs can exist in a dataflow graph, as long as they don't
-extend beyong a single node. An illustrative example follows:
-
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-  (sort f1 > g1 && sort f2 > g2) &
-  sort -m g1 g2
+  (tr ... f1 > g1 && tr ... f2 >> g1) &
+  grep ``foo'' g1
 \end{lstlisting}
 
-In the above example, while \ttt{sort f1 > g1}, \ttt{sort f2 > g2},
-and \ttt{sort -m g1 g2} are all in different dataflow graphs, the
-dataflow graph that corresponds to the whole program, has two nodes,
-\ttt{sort f1 > g1 \&\& sort f2 > g2} and \ttt{sort -m g1 g2}.
+In the above example, while \ttt{tr ... f1 > g1}, \ttt{tr ... f2 >>
+  g1}, and \ttt{grep ``foo'' g1} are all in different dataflow graphs,
+the dataflow graph that corresponds to the whole program, has two
+nodes, \ttt{tr ... f1 > g1 \&\& tr ... f2 >> g1} and \ttt{grep ``foo''
+  g1}.
 
-In order to identify possible opportunities for parallelism, the
-translation pass also identifies the category of each node, together
-with its input and output, using records written by developers using
-the language that was described in \Cref{ext}. Some interesting cases
-of the analysis algorithm are shown in pseudocode below:
+
+\heading{Translation Pass}
+%
+Dish performs a depth first search pass on the AST of the given shell
+program, extending the distributable regions from the bottom up,
+translating their independent components to dataflow graph nodes,
+until a barrier construct is reached. In order to identify possible
+opportunities for parallelism, the translation pass also identifies
+the category of each node, together with its input and output, using
+records written by developers using the language that was described in
+\Cref{ext}. Some interesting cases of the analysis algorithm are shown
+in pseudocode below:
 
 \begin{lstlisting}[language=python, float=h]
   def translate(node):
@@ -1484,7 +1527,8 @@ soundly checked statically. For example in the first case, two
 unexpaned strings could refer to the same file, but the translation
 pass cannot infer that.
 
-\subsection{Dish Optimizer}
+\subsection{Optimizer}
+\label{optimizer}
 
 The \ttt{Dish} optimizer is given a dataflow graph representing a
 shell program and outputs an optimized dataflow graph, where data
@@ -1565,9 +1609,10 @@ and aggregates them accordingly.
 % computation. Even better, we could be calling the shtepper just after
 % having parsed the ast, and decide on maximal distributable subtrees as
 % late as possible in the process. This would be awesome.
-% 
-\subsection{Merge and Split Implementation}
+%
 
+\heading{Merge and Split Implementation}
+%
 It is common in the dataflow graph for a node to have many incoming
 edges, or many outgoing edges (when all but the last outgoing edges
 are bounded). However some nodes, might only read their input from one
