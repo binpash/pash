@@ -1274,22 +1274,25 @@ edges that do not refer to a resource and do not point to a node in the graph ar
 %% \end{figure*}
 
 
-\subsection{Graph transformations}
+\subsection{Graph Transformations}
 \label{ir:transformations}
 
 Before describing the different types of parallelization
 optimizations, we formalize the intuition about stateless and pure
-commands that was described in \Cref{cmd}.
+commands that was described earlier~\sx{cmd}.
 %% \nv{TODOs
 %%   (i) highlight earlier the antithesis between the formalisms in this section and the informalities of the previous (me)
 %% }
 %
-As mentioned there, stateless commands operate independently on
+
+As mentioned there, stateless commands such as \ttt{tr} operate independently on
 individual elements of the stream (characters, lines, or files)
-without maintaining any state. Some examples include \ttt{grep},
-\ttt{basename}, and \ttt{tr}. Formally, a commmand $f$ is stateless if
-it is ``linear'' with respect to concatenation, i.e. the following
-equation holds:
+without maintaining any state.
+% Some examples include \ttt{grep}, \ttt{basename}, and \ttt{tr}.
+Formally, a command $f$ is stateless if
+it is ``linear'' with respect to concatenation, \ie 
+% the following equation holds:
+satisfying the following equation:
 
 \[
 \forall x, x', f(x.x') = f(x).f(x')
@@ -1302,21 +1305,23 @@ equation holds:
 %% the equation above holds.
 
 \noindent
-This means that we get the same output by applying a command $f$ to a
-concatenation of two inputs $x, x'$, or by concatenating the result
+This means that one gets the same output by applying a command $f$ to a
+concatenation of two inputs $x, x'$ as by concatenating the result
 produced by the application of $f$ to these inputs
-separately. Similarly, it was mentioned that some pure commands (such
+separately.
+
+Similarly, it was mentioned that some pure commands (such
 as \ttt{sort} and \ttt{wc}) can be parallelized using
-divide-and-conquer techniques. More formally, there pure commands $f$
-can be implemented as a map $m$ and a reduce $r$ function, satisfying
-the following:
+divide-and-conquer techniques. More formally, these pure commands $f$
+can be implemented as a combination of functions map $m$ and reduce $r$, satisfying
+the following equation:
 
 \[
 \forall x, x', f(x.x') = r(m(x).m(x'))
 \]
 
 \noindent
-Similarly to the above, this means that we get the same output by
+Similarly to the earlier equation, this means that we get the same output by
 applying $f$ to a concatenation of two inputs $x, x'$, or by applying
 the reduce function $r$ to the concatenation of the outputs produced
 by applying map $m$ to each of these inputs.
@@ -1365,110 +1370,83 @@ v(x_1.x_2...x_n) \Rightarrow r(m(x_1).m(x_2)...m(x_n))$.
 %% \end{lemma}
 
 In addition to node splits, we can also perform edge splits in order
-to increase the number of incoming edges for some nodes to expose
-possible data parallelism. If the edge refers to a real file, then the
-edge split represents splitting the real file in chunks, while in
-cases where the edge connects two nodes, it is split to several edges
+to increase the number of incoming edges for some nodes to further expose
+possible data parallelism. In cases where the edge refers to a real file, the
+edge split represents splitting the real file in chunks. In
+cases where the edge connects two nodes, the split effectively refers to several edges
 with a bounded number of lines. Note that the final output edge of a
 valid node in the graph must always be unbounded if it does not refer
 to a file.
 
-
-
-
-
 \section{Implementation}
 \label{impl}
 
-In this section, we describe challenges related to the implementation
-of \sys. More concretely, in \Cref{front-end} we describe how the \sys
-front-end translates a shell script to the dataflow graph that was
-defined in \Cref{ir}, and in \Cref{optimizer}, we describe how the
-\sys optimizer distributes and implements a given dataflow graph.
+This section describes challenges related to the implementation of \sys. 
+It starts by describing how the \sys front-end translates a shell script to the dataflow graph model defined in \S\ref{ir}, by applying transformation on distributable regions~\sx{front-end}.
+It closes with the \sys planner, which  optimizes, distributes, and orchestrates the execution of a given dataflow graph~\sx{optimizer}.
 
 \subsection{Front End}
 \label{front-end}
 
-As mentioned in \Cref{ir}, in order to generate the distributed
-implementation of a shell script, \ttt{Dish} first translates it to a
-dataflow graph. However, there are several components in shell
-programs that cannot be arbitrarily parallelized without affecting the
-program behaviour, e.g. commands connected with a \ttt{\&\&}
-operator. In addition, the fact that the shell is highly dynamic,
-further increases the challenge of correctly identifying what parts
-can be distributed, e.g. by not being able to know what file does an
-unexpanded command argument refer to.
+As mentioned in \Cref{ir}, in order to generate the distributed implementation of a shell script, \sys translates it to a dataflow graph.
+However, there are several components in shell programs that cannot be arbitrarily parallelized without affecting the program behaviour---\eg commands connected with a \ttt{\&\&} operator~\sx{bg}.
+The fact that the shell is highly dynamic compounds the challenge---\eg by not knowing what files does an unexpanded command argument refer to.
+% of correctly identifying what parts can be distributed, e.g.
 
 %% \kk{Give examples of writing to environment variables, producing
 %%   irreversible side effects, the ; and \&\& operators.}
 
-In order to address this issue, we introduce the notion of
-distributable program regions, and we design a translation pass that
-given the abstract syntax tree of a shell script identifies
-distributable regions and translates each of them to a dataflow
-graph. The AST of the shell script is produced using a POSIX compliant
-parser~\cite{libdash}.
+To address this issue, we introduce the notion of distributable program regions and a translation pass for converting them to a dataflow graph.
+The translation pass identifies distributable regions and translates each of them to a dataflow graph, provided the abstract syntax tree (AST) of a shell script.
+The AST is produced by \ttt{LibDash}, a POSIX compliant parser~\cite{libdash}.
 
-\heading{Distributable Regions}
+\paragraph{Distributable Regions}
 %
 %% \kk{The goal of this subsection is to explain that Dish does a safe
 %%   but effective analysis to identify which parts of the scripts to
 %%   parallelize.}
 %
+Distributable regions are (ideally, maximal) program sub-expressions that can be parallelized safely with respect to their sequential execution.
+The structure of a shell program can be used to identify components that can be executed concurrently and barriers that are natural points for enforcing synchronization.
 Consider the following example:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-  cat f1 f2 | grep ``foo'' > f3 &&
-  sort f3 # Replace with sth better
+  cat f1 f2 | grep ``foo'' > f3 && sort f3 
 \end{lstlisting}
+% # Replace sort with sth better
 
 \noindent
-Notice that the structure of a shell program can be used to identify
-components that can be executed concurrently, and barriers that
-enforce synchronization. More precisely, \ttt{cat f1 f2} and \ttt{grep
-  ``foo''} would already execute concurrently in the standard shell,
-while \ttt{sort f3} would wait for their completion before being
-executed. Both \ttt{cat f1 f2 | grep ``foo'' > f3} and \ttt{sort f3}
-are maximal distributable regions, in the sense that they cannot be
-extended beyond \ttt{\&\&}.
+The commands \ttt{cat f1 f2} and \ttt{grep ``foo''} would already execute concurrently in the standard shell, while \ttt{sort f3} would wait for their completion before executing.
+Both \ttt{cat f1 f2 | grep ``foo'' > f3} and \ttt{sort f3} are distributable regions---maximal sub-expressions that cannot be extended beyond \ttt{\&\&}.
 
-Concretely, a distributable region cannot permeate through barrier
-constructs (e.g. \ttt{;}, \ttt{\&\&}, and function definitions). On
-the other hand, the pipe operator \ttt{|} and the parallel composition
-operator \ttt{\&} enable parallelization, and extend distributable
-regions. Intuitively, distributed regions correspond to subsections of
-the program that would be allowed to execute concurrently by different
-processes in the POSIX standard~\cite{posix}. Consider the following
-illustrative example:
+Intuitively, distributed regions correspond to subsections of the program that would be allowed to execute concurrently by different processes in the POSIX standard~\cite{posix}.
+The pipe operator \ttt{|} and the parallel composition operator \ttt{\&} enable parallelization, and extend distributable regions.
+Conversely, the \ttt{;} sequential composition operator, the \ttt{\&\&} logical operator, and function definitions represent barrier constructs that do not allow distributable regions to permeate through.
 
-\tr{I don't know whether I should mention the following: While these
-  control flow constructs can be parallelized and there has been
-  research on it, it is orthogonal to our work, and can be
-  incorporated as future work.}
+% \tr{I don't know whether I should mention the following: While these
+%   control flow constructs can be parallelized and there has been
+%   research on it, it is orthogonal to our work, and can be
+%   incorporated as future work.}
+% 
+% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+%   (tr ... f1 > g1 && tr ... f2 >> g1) &
+%   grep ``foo'' g1
+% \end{lstlisting}
+% 
+% In the above example, while \ttt{tr ... f1 > g1}, \ttt{tr ... f2 >>
+%   g1}, and \ttt{grep ``foo'' g1} are all in different dataflow graphs,
+% the dataflow graph that corresponds to the whole program, has two
+% nodes, \ttt{tr ... f1 > g1 \&\& tr ... f2 >> g1} and \ttt{grep ``foo''
+%   g1}.
+% 
 
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-  (tr ... f1 > g1 && tr ... f2 >> g1) &
-  grep ``foo'' g1
-\end{lstlisting}
+\paragraph{Translation Pass}
+\sys performs a depth-first search pass on the AST of the given shell program.
+During this pass, it greedily extends the distributable regions from the bottom up, translating their independent components to dataflow graph nodes until a barrier construct is reached.
+To identify possible opportunities for parallelism, the translation pass also extracts the category of each node together with its input and output pairs.
+To perform this extraction, it uses the command name to index into a key-value map with values that are expressed in the DSL for distributability characterization~\sx{ext}.
 
-In the above example, while \ttt{tr ... f1 > g1}, \ttt{tr ... f2 >>
-  g1}, and \ttt{grep ``foo'' g1} are all in different dataflow graphs,
-the dataflow graph that corresponds to the whole program, has two
-nodes, \ttt{tr ... f1 > g1 \&\& tr ... f2 >> g1} and \ttt{grep ``foo''
-  g1}.
-
-
-\heading{Translation Pass}
-%
-Dish performs a depth first search pass on the AST of the given shell
-program, extending the distributable regions from the bottom up,
-translating their independent components to dataflow graph nodes,
-until a barrier construct is reached. In order to identify possible
-opportunities for parallelism, the translation pass also identifies
-the category of each node, together with its input and output, using
-records written by developers using the language that was described in
-\Cref{ext}. Some interesting cases of the analysis algorithm are shown
-in pseudocode below:
+A few illustrative cases of the analysis algorithm are shown in pseudocode below:
 
 \begin{lstlisting}[language=python, float=h]
   def translate(node):
@@ -1489,41 +1467,40 @@ in pseudocode below:
     ...
 \end{lstlisting}
 
-Whenever the algorithm encounters a pipe node, it recursively
-translates its subcomponents, and then merges them in a dataflow graph
-by connecting the output of the first with the input of the second,
-\etc. Before the different dataflow graphs are connected, the
+Whenever the algorithm encounters a distributable node, it recursively
+translates its subcomponents.
+It then merges them in a dataflow (sub-)graph, connecting the output of the first with the input of the second
+% what first and second? we didn't say anything about first and second
+Before the different dataflow graphs are connected, the
 algorithm checks that at most one node in the graph writes at every
-file, and at most one node reads from a file that another node writes
+file, and that at most one node reads from a file that another node writes
 to. This is important, in order to avoid inconsistent behaviour after
-distributing nodes in the dataflow graph (i.e. by introducing to
+distributing nodes in the dataflow graph (\ie by introducing to
 concurrent reads and writes to the same file when
-parallelizing). Whenever the algorithm encounter an \ttt{\&\&} node,
-it recursively translates its subcomponents (similarly to the pipe
-node), but then does not merge them in a large dataflow
-graph. Finally, whenever the algorithm encounters a command, it first
+parallelizing).
+
+Whenever the algorithm encounters a barrier node,
+it recursively translates its subcomponents, similarly to the distributable
+case.
+However, different from the distributable case, it does not merge them in a large dataflow graph.
+
+Finally, whenever the algorithm encounters a command, it first
 checks whether it is safe to parallelize it. A command is considered
-to be safe, if it does not make any modification to the shell state
-(e.g. changing the current directory, modifying environment
-variables), and if it does not read from any read-once file
-(e.g. pipe). If the command is considered safe, its category is
-identified and a node containing that command is created and added to
-a singleton dataflow graph. If the command is considered unsafe, it is
-still added to the dataflow graph, but cannot be further parallelized
-by the optimizer.
+safe for parallelization if (i) it belongs to the \sta or \pur distributability classes, and (ii) does not read from a read-once file (such as a pipe containing configuration data) as parallelization would break this. % why couldn't we replicate this?
+If the command is safe, \sys creates a node containing that command  and adds it to a singleton dataflow graph.
+If the command is unsafe, it is still added to the dataflow graph, but is not further parallelized by the optimizer.
 
 An important consideration is that due to the highly dynamic nature of
 the shell, the safety properties that are mentioned above cannot be
-soundly checked statically. For example in the first case, two
-unexpaned strings could refer to the same file, but the translation
-pass cannot infer that.
+soundly checked statically.
+For safety purposes, \sys takes a conservative approach where it does not parallelize nodes without complete information.
+For example, the translation pass cannot infer that two un-expand strings do not refer to the same file identifier, and as a result does not parallelize this sub-expression.
 
 \subsection{Optimizer}
 \label{optimizer}
 
-The \ttt{Dish} optimizer is given a dataflow graph representing a
-shell program and outputs an optimized dataflow graph, where data
-parallelism opportunities have been exploited. More concretely, the
+Given a dataflow graph representing a shell program, the \sys optimizer outputs an optimized dataflow graph in which data parallelism opportunities have been exploited.
+More concretely, the
 optimizer starts by splitting input files in several chunks, given the
 desirable output dataflow graph width. It then starts from the source
 nodes of the graph, iteratively performing the graph transformations
@@ -1546,13 +1523,14 @@ transformation can be seen in \Cref{fig:optimizer-transformation}.
 \label{fig:optimizer-transformation}
 \end{figure}
 
-The optimizer also applies custom transformations on several commands
-to further improve performance. Two notable examples are the
+The optimizer also applies custom transformations on several commands in \pur
+to further improve their performance. Two notable examples are the
 transformations on \ttt{sort} and \ttt{wc}. Occurences of \ttt{sort}
 that have more than one input are tranformed to \ttt{sort} commands on
 each input, followed by a \ttt{sort -m}, to produce the final sorted
 result. The transformation on occurences of \ttt{wc} that have more
 than input \ttt{i1, t2} is illustrated below as a shell script:
+% \nv{do not understand i1, t2}
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
   paste -d '+' \
@@ -1605,7 +1583,7 @@ and aggregates them accordingly.
 \heading{Merge and Split Implementation}
 %
 It is common in the dataflow graph for a node to have many incoming
-edges, or many outgoing edges (when all but the last outgoing edges
+edges or many outgoing edges (when all but the last outgoing edges
 are bounded). However some nodes, might only read their input from one
 source (e.g. stdin). In this case, the distributed implementation
 needs to concatenate input files (or conversely split output
@@ -1615,18 +1593,18 @@ files).
 %%   middle must only take input from one file (maybe just stdin).}
 %
 We address this issue using primitive shell constructs for file
-manipulation. More concretely a merger can be implemented by a simple
-\verb|cat|. Given a set of input files \verb|in1, in2, ...| and an
-output file \verb|out|, a merger can be implemented as:
+manipulation. More concretely a merger can be implemented by means of a simple
+\ttt{cat}. Given a set of input files \ttt{in1, in2, ...} and an
+output file \ttt{out}, a merger can be implemented as:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none]
  cat $in1 $in2 ... > $out
 \end{lstlisting}
 
 \noindent
-On the other hand, given an input file \verb|in| that is a FIFO pipe,
-and two output files \verb|out1, out2| the first of which is bounded
-to \verb|N| lines, a 2-splitter can be implemented as:
+On the other hand, given an input file \ttt{in} that is a FIFO pipe,
+and two output files \ttt{out1, out2} the first of which is bounded
+to \ttt{|N} lines, a 2-splitter can be implemented as:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none]
   tee >(head -n $N > $temp1;
