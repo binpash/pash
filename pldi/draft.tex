@@ -353,12 +353,12 @@ To understand this sharp contrast, consider a Bash pipeline calculating term fre
 % unique |                       # remove duplicate words
 % comm -13 /usr/share/dict -     # report words not in dictionary 
 % \end{lstlisting}
-\smallskip
-\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+% \smallskip
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
 cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$[p_1]$$)
   sort | uniq -c | sort -rn | head 5 > out
 \end{lstlisting}
-\smallskip
+% \smallskip
 % \noindent
 Program $p_1$ creates a character stream, breaks it into words, transliterates to lower-case, sorts to group duplicates, reduces duplicates to a counter, sorts counters in descending order, picks the top five results, and writes them to a file \ttt{out}.
 Combining several features, \unix makes small tasks easy to express;
@@ -479,11 +479,13 @@ As part of this interface, each command has access to (any combination of) three
 % the input stream (stdin), the output stream (stdout), and the generating errors or diagnostics to the standard error stream (stderr)
 % generating errors or diagnostics to the standard 
 % Leveraging this interface, pipelines chain together commands by their standard streams, such that the output stream of one command (stdout) is passed directly as input (stdin) to the next one.
-\smallskip
-\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+% \smallskip
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
   ls -l | wc -l                          [($$p_2$$)]
 \end{lstlisting}
-\smallskip
+% \smallskip
+
 Commands can be tuned by two mechanisms, namely com\-mand-line options and environment variables.
 Options control the execution of a program---\eg changing the \ttt{sort}ing order.
 The shell does not have any visibility into these options; 
@@ -515,11 +517,12 @@ As a result, file-system identifiers part of a pipeline may resolve to in-memory
 % (p) named pipes or FIFOs, communication primitives that can be named and manipulated like files,
 % (s) domain sockets or DSes, full-duplex communication primitives that support passing file descriptors, and
 % (b or c) special files, interfaces to device drivers or low-level abstractions, presented as ordinary files.
-\smallskip
-\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+% \smallskip
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
   ls | sed 's/1/2/' | > out.t 2> err.t    [($$p_3$$)]
 \end{lstlisting}
-\smallskip
+%\smallskip
 
 \noindent
 Special files are particularly interesting because they are resolved to OS structures.
@@ -548,11 +551,11 @@ More interestingly, some commands allow splitting (resp. merging) a single strea
   stream merging can be achieved by appending one stream after the end of another or by fusing (zipping) streams column-wise into a single (fat) stream.
 % TODO: talk about \ttt{xargs}?
 
-\smallskip
-\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+% \smallskip
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
   cat * | tee >(wc -l > l.t) | zip > a.z   [($$p_4$$)]
 \end{lstlisting}
-\smallskip
+% \smallskip
 
 \noindent
 % Explicit Redirection, Implicit splitting and merging, This can be done through the file-system operators 
@@ -563,11 +566,11 @@ One example use case, discussed in the evaluation section~\sx{eval} is a web cra
 % These streams are created by the C library (glibc) at the start of program execution,
 % and new streams can be created to connect to files, sockets, pipes,
 
-\smallskip
-\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+% \smallskip
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
   read | { calc | square; } >/dev/fd/0     [($$p_5$$)]
 \end{lstlisting}
-\smallskip
+% \smallskip
 
 \noindent
 Apart from pipes, the \unix shell provides several other forms of program composition such as sequential (\ttt{;}) and parallel (\ttt{\&}) composition operators.
@@ -1030,24 +1033,14 @@ parallelization.
 \section{Dataflow Graph Model}
 \label{ir}
 
-\kk{Move some variation of that to intro/overview:
-
-In the core of \sys there is a dataflow graph model that is inspired
-by the ones that are used in popular distributed stream processing
-systems (such as MapReduce \cite{mapreduce:08} and Apache Spark
-\cite{spark:12}). These systems exploit data parallelism by
-parallelizing nodes of the dataflow graph. Unfortunately, the
-optimizations in many of these systems do not preserve the dataflow
-model semantics, blurring the lines between specification,
-optimization, and implementation. In contrast, our dataflow model
-inherently supports the data parallelism that is found in shell
-programs. More precisely, data parallelism can be easily exposed as
-task parallelism in our model. We exploit that by developing a set of
-parallelization-exposing optimizations that preserve the dataflow
-model semantics, and can be represented as graph transformations. The
-\sys optimizer then applies these transformations in an iterative way,
-optimizing the program to exploit the available computational
-resources.
+The core of \sys is a dataflow graph model, inspired by the ones used in popular distributed stream processing systems~\sx{related}.
+% such as MapReduce \cite{mapreduce:08} and Apache Spark \cite{spark:12}).
+These systems introduce data parallelism by parallelizing nodes of the dataflow graph.
+Unfortunately, % their optimizations in many of these systems 
+ they often do not preserve the model's semantics, blurring the lines between specification, optimization, and implementation.
+In contrast, \sys's dataflow model inherently supports the data parallelism found in shell pipelines.
+More specifically, it develops a set of parallelization-exposing optimizations represented as semantics-preserving graph transformations, effectively exposing data parallelism as task parallelism.
+The \sys optimizer then applies these transformations in an iterative way, optimizing the program to exploit the available computational resources.
 
 %% The standard dataflow graph exposes task parallelism. Different nodes
 %% in the graph can be executed concurrently, communicating through the
@@ -1072,32 +1065,25 @@ resources.
 %% the resulting dataflow graph is too wide. This flexibility unifies the
 %% unoptimized and optimized versions of a computation, enabling thinking
 %% about them with the same conceptual tools.
-}
 
-In order to effectively apply optimizations and distribute a shell
-script, it first has to be translated to a manipulable representation.
-In \Cref{graph-components} we propose a slight variation of the
-standard dataflow graph model as a candidate intermediate
-representation. The main benefit of our model is that it exposes both
-task and data parallelism. In \Cref{ir:transformations} we define a
-set of optimizations that expose and exploit data parallelism of
-commands in \sta and \pur as semantics-preserving graph
-transformations.
+In order to effectively apply optimizations and distribute a shell script, \sys first translates it to a manipulable representation.
+\sys first introduces a variant of the standard dataflow graph model as a candidate intermediate representation~\sx{graph-components}.
+The main benefit of this model is that it exposes both task and data parallelism.
+It then defines a set of optimizations that expose and exploit the data parallelism of commands in \sta and \pur as semantics-preserving graph transformations~\sx{ir:transformations}.
 
 \subsection{Graph Components}
 \label{graph-components}
 
-As mentioned in \Cref{bg:pipelines}, the two main abstractions of the
-shell are files that contain data, and commands that communicate
-through these files. Based on that, we define nodes in our graph model
-to represent commands, and edges to represent files.
+As mentioned earlier~\sx{bg:pipelines}, the two main abstractions of the
+shell are (i) files (or pipes, \emph{viz.} correspondence between files and pipes in \S\ref{bg:pipelines}) that contain data, and (ii) commands that communicate
+through these files. Based on that, \sys's graph model defines nodes to represent commands and edges to represent files.
 
-\paragraph{Nodes - Commands}
+\paragraph{Nodes---Commands}
 
 For a set $D$, we write $D\kstar$ to denote the set of all finite
 words over $D$. For words $x, y \in D\kstar$, we write $x \cdot y$
 or $xy$ to denote their concatenation. We write $\eps$ for the empty
-word. We say that $x$ is a \emph{prefix} of $y$, and we write $x \leq y$, if there is a word $z$ such that $y = xz$. It is easy to see that $\leq$ is a partial order, and it is often referred to as the \emph{prefix order}.
+word. We say that $x$ is a \emph{prefix} of $y$, and we write $x \leq y$, if there is a word $z$ such that $y = xz$. It is easy to see that $\leq$ is a partial order, often called the \emph{prefix order}.
 
 A node $f$ of the graph represents a function from one (possibly empty)
 input stream to an output stream $f : D\kstar \to D\kstar$, where $D$
@@ -1115,34 +1101,40 @@ An example of a node is the following command:
 
 \noindent
 This command takes a stream of lines from its standard input and
-returns a stream of lines on its standard output. An important
-observation is that commands in the shell might read their input
+returns a stream of lines on its standard output.
+
+An important
+observation is that commands might read their input
 stream from a sequence of different sources. An illustrative example
-is the command \ttt{cat} which reads its input from a combination
-of files and its standard input.
+is the command \ttt{cat}, which reads its input from a combination
+of files and its standard input:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
  cat x - y
 \end{lstlisting}
 
-The example above reads file \ttt{x} until it encounters the EOF
-character, then reads from \ttt{stdin}, and then reads from
-\ttt{y}. In order to handle this particularity, nodes in the
-dataflow graph can have many incoming edges, that are ordered in a
-sequence. Note that this does not correspond to standard dataflow
+\noindent
+In the example above, \ttt{cat} reads file \ttt{x} until it encounters the EOF
+character, then reads from \ttt{stdin} until in encounters EOF, and finally reads from
+\ttt{y}.
+
+In order to handle this particularity, nodes in the
+dataflow graph can have many incoming edges, that are \emph{ordered} in a
+sequence. This is different from standard dataflow
 graph representations where the semantics of multiple incoming edges
-is either zipping the inputs in pairs, or arbitraliy interleaving them.
+is either zipping the inputs into pairs, or interleaving them arbitrarily.
 
 %% \TODO{Is the following paragraph best suited here? It describes an
 %%   assumption that we make about commands, to guarantee the validity of
 %%   our transformations. The assumption is needed due to the limitation
 %%   of the programming model of one input one output per command.}
 
-Note that nodes can read from more files than just the files of their
-stream (or respectively write to more files that their output stream),
-however these files are static (e.g. used for configuration or
+Nodes may read from more files than just the files of their
+input stream (resp. write to more files than their output stream).
+However, these files are static (\eg used for configuration or
 logging) and do not represent streams of data, and therefore are not
-considered part of the dataflow graph. We assume that these static
+considered part of the dataflow graph.
+For now, we assume that these static
 files can only be accessed by one node, thus ensuring that they do not
 interfere with the distributed implementation.
 %% Because of the assumption in section Front End \ref{}, that each file
@@ -1151,14 +1143,14 @@ interfere with the distributed implementation.
 %% distributed implementation, and doesn't alter the behaviour of the
 %% program.
 
-\paragraph{Edges - Files}
+\paragraph{Edges---Files}
 
 Edges in the dataflow graph represent files, the basic data
 abstraction of the shell. They are used as communication channels
 between nodes in the graph, and as the input or output of the whole
 graph. Edges are represented as possibly unbounded streams of type
 $D\kstar$. They could either refer to a specific named file in the file
-system, or just be FIFO pipes that used for interprocess communication
+system, or just be FIFO pipes used for interprocess communication
 %% \TODO{Are there any other file types, such as URLs, ...?}.
 
 %% \TODO{Show an example pipe and its graph}.
@@ -1180,13 +1172,13 @@ system, or just be FIFO pipes that used for interprocess communication
 
 
 In order to expose data parallelism from the output of a command, files that
-don't point to a resource can have
+do not point to a resource can have
 \begin{wrapfigure}[3]{r}{0.20\columnwidth}
 \vspace{-7pt}
   \includegraphics[width=0.20\columnwidth]{\detokenize{./figs/dish_g2.pdf}}
 \vspace{-20pt}
 \end{wrapfigure}
-an upper bound on the lines that they can transfer. This can be useful to utilize available
+an upper bound on the lines that they can transfer. This helps utilize available
 parallelism after encountering a command that cannot be parallelized
 (\eg \ttt{sha1sum}). The schematic on the right illustrates this scenario.
 
@@ -1200,10 +1192,9 @@ parallelism after encountering a command that cannot be parallelized
   resource contain the number of lines of the file that they refer
   to.}
 
-Finally, the edges that don't refer to a resource and do not start
-from a node in the graph represent the graph input, while the edges
-that don't refer to a resource and do not point to a node in the graph
-are its outputs.
+Finally, edges that do not refer to a resource and do not start
+from a node in the graph represent the graph input;
+edges that do not refer to a resource and do not point to a node in the graph are its outputs.
 
 %% \kk{(Maybe) It might be beneficial to mention that many inputs do not
 %%   represent the same thing as many outputs. These two notions are not
