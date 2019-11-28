@@ -25,7 +25,7 @@ json_filename="../scripts/json/minimal5.sh.json" # OK - 1 input file
 
 
 # The following is interesting, since it contains command substitution
-# (which is parsed as backticks in the Greenberg parser). The
+# (which is parsed as backticks in the libdash parser). The
 # backticks seem to mean that whatever is in the backticks will
 # execute first, and its output will become a string in place of the
 # backticks
