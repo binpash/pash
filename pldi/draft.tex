@@ -10,7 +10,7 @@
 %% For final camera-ready submission, w/ required CCS and ACM Reference
 %\documentclass[sigplan]{acmart}\settopmatter{}
 
-\acmSubmissionID{248}
+% \acmSubmissionID{248}
 
 \usepackage{enumitem}
 \usepackage{booktabs}
@@ -264,14 +264,14 @@
 \begin{abstract}
   Distributed systems offer notable benefits over centralized ones.
   Reaping these benefits, however, requires programming in a way that makes distribution explicit---\eg via new programming languages, distributed frameworks, or source-level annotations.
-  This paper presents \sys, a shell variant that automatically and correctly scales out distribution-oblivious shell pipelines. 
+  This paper presents \sys, a shell variant that automatically and correctly scales out \unix shell pipelines. 
   Its insight is that pipelines already express stream computations that can be automatically distributed.
   To distribute them, \sys
     decomposes primitives into distributability classes,
     identifies high-distributability stages,
     applies rewriting rules for largest possible subprograms,
-    and orchestrates the execution of the distributed program.
-Experiments for complex pipelines show substantial speedups and the ability to operate on large input datasets, all without any developer input.
+    and orchestrates their execution.
+Experiments with complex pipelines show substantial speedups and the ability to operate on large input datasets, all without any developer input.
 \end{abstract}
 
 % Its runtime component provides orchestration and planning support during the execution of the program.
@@ -340,7 +340,7 @@ Despite these benefits, their development remains different from and significant
 Whereas anyone can quickly stitch together a Bash script to compute on a single computer, 
   % domain-experts routinely glue scripts together to process and share data. % without the help of a computing expert.
    scaling out to multiple ones requires expert labor around ``point'' solutions with expensive setups, restricted programming interfaces, and exorbitant composition costs~\cite{taurus:14, dios:13, andromeda:15, pywren:17, futuredata:18, nefele:18}.
-
+% 
 To understand this sharp contrast, consider a Bash pipeline calculating term frequencies over a set of inputs:
 
 % \begin{lstlisting}[language=sh,float=h,numbers=none]
@@ -355,14 +355,14 @@ To understand this sharp contrast, consider a Bash pipeline calculating term fre
 % \end{lstlisting}
 % \smallskip
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$[p_1]$$)
+cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$(p_1)$$)
   sort | uniq -c | sort -rn | head 5 > out
 \end{lstlisting}
 % \smallskip
 % \noindent
 Program $p_1$ creates a character stream, breaks it into words, transliterates to lower-case, sorts to group duplicates, reduces duplicates to a counter, sorts counters in descending order, picks the top five results, and writes them to a file \ttt{out}.
 Combining several features, \unix makes small tasks easy to express;
-  for a user with \emph{one} computer and small input size, this pipeline takes a few seconds to compose and execute~\cite{bentley1986literate}.
+  for a user with \emph{one} computer and a small input size, this pipeline takes a few seconds to compose and execute~\cite{bentley1986literate}.
 % composition allows the composition of general primitives
 
 % Key insight 
@@ -379,35 +379,35 @@ Combining several features, \unix makes small tasks easy to express;
   \sys leverages distributability analysis for built-in commands and any developer extensions (left) to automatically transform shell scripts (mid) and orchestrates their
   execution (right).
 }
-\vspace{-15pt}
+\vspace{-30pt}
 \label{fig:schematic}
 \end{figure}
 
 
-Unfortunately, developing $p_1$'s distributed equivalent requires a significant effort.
+Unfortunately, developing $p_1$'s distributed equivalent requires significant effort.
 % For a user with many computers and larger inputs, 
 % The scope of such rewrites, and therefore the cost of manual effort, can vary considerably.
-For simple pipelines, fitting into restricted models of computation, this effort amounts to expressing the computation using the primitives provided by a big-data framework~\cite{mapreduce:08, ciel:11, spark:12, naiad:13} or domain-specific language~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp}---an unjustifiable cost for one-off pipelines that take a few minutes to compose (but are applied to large datasets).
+For simple pipelines, fitting into restricted models of computation, this effort amounts to expressing the computation using the primitives provided by a big-data framework~\cite{mapreduce:08, ciel:11, spark:12, naiad:13} or domain-specific language~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp}---an unjustifiable cost for small, one-off pipelines that take a few minutes to compose (but are applied to large datasets).
 More complex pipelines, such as the ones presented in later sections, would involve a full-fledged distributed programming language~\cite{erlang:96, lopes1997d, acute:05, mace:07, cloudhaskell:11, ScalaLoci:18}. %  or a distributed operating system---\eg Plan9's \ttt{rc} shell.
 In both cases, manual rewriting is expensive and can introduce new bugs, cascading changes, and divergence from legacy functionality.
 Could the generation and execution of $p_1$'s distributed version be fully and correctly automated?
 
-To answer this question, this paper presents \sys, a shell variant that transforms traditional shell pipelines into their distributed equivalents, enabling \emph{distribution-oblivious programming}.
-The key insight behind \sys is that a large part of the shell language can be encoded using a dataflow graph model, providing structure to distribute computations.
+To answer this question we develop \sys, a shell variant that transforms traditional \unix pipelines into their distributed equivalents, enabling \emph{distribution-oblivious programming}.
+The key insight behind \sys is that a large part of the shell language can be encoded in a distributed dataflow graph model, providing structure to distribute computations.
 %% \kk{Replaced that: the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation. }
 % FIXME \kk{I am not sure whether stream processing provides information for distributing a computation on its own. Maybe we can say that the shell exposes operator level parallelism, and that this is the first step to distributing a computation}.
 \sys builds on this insight with a careful study of the distributability properties of shell primitives and commands, a definition of a dataflow graph model that is suitable for the shell, a set of parallelization optimizations that preserve the behaviour of the graph, and a late-bound command-prefixing scheme for deferring scheduling decisions to the distributed planner (\ie when runtime information is available).
-A \sys-enabled $p_1$ will run \ttt{tr}s in parallel streams,
+A \sys-enabled $p_1$ will run \ttt{tr}s on parallel streams,
   use a mostly-parallel tree of \ttt{sort}s,
   run \ttt{uniq} mostly in parallel,
-  \ttt{head} in one of the streams,
+  execute \ttt{head} in one of the streams,
   and (trivially) merge streams in \ttt{out}.
 
 The combination of automated transformations for program distribution with the ability to maintain correct non-distributed semantics results in several benefits.
 % \sys converts legacy shell pipelines into their distributed equivalents fully automatically, offering $100\times$ improvements in performance without a single line of additional code or annotation.
 First, shell users composing pipelines (or simply running legacy pipelines on massive datasets) can see scalability benefits without any manual effort---no need for \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}, or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
-Second, developers of new shell commands can use a concise a domain-specific language to express their distributability properties rather than using ad-hoc, command-specific flags such as {\tt -t},  {\tt NUM\_THREADS}, \ttt{-t}, \ttt{-p} \etc
-Most importantly, \sys provides an architectural lesson for system designers---namely, that large-scale research efforts in the distributed- and operating-system literature to provide a \unix-like distributed equivalent~\cite{ousterhout1988sprite, mullender1990amoeba, pike1990plan9, barak1998mosix} would have been simplified by a thin (but sophisticated) rewriting shim like the one \sys provides.
+Second, developers of new shell commands can use a lightweight domain-specific language to express their distributability properties rather than ad-hoc, command-specific flags such as {\tt -t},  {\tt NUM\_THREADS}, \ttt{-t}, \ttt{-p} \etc
+Most importantly, \sys provides an architectural lesson for system designers---namely, that large-scale efforts in the distributed- and operating-system literature to provide a \unix-like distributed equivalent~\cite{ousterhout1988sprite, mullender1990amoeba, pike1990plan9, barak1998mosix} would have been simplified by a thin (but sophisticated) rewriting shim like the one \sys provides.
 % Nice critique on parallel: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=597050#75
 
 % % Make Unix benefits explicit?
@@ -415,25 +415,25 @@ Most importantly, \sys provides an architectural lesson for system designers---n
 % Key elements of \unix are the ability to compose programs written in different languages, the abstraction of a file system as a set of resident streams, a small but extensible library of commands, and the ability to resolve names within a global context.
 % Under the hood, the \unix kernel buffers results, synchronizes processing stages, and generally orchestrates the computation.
 
-The paper is structured as follows.  It starts with a background
-section outlining pipeline concepts and overviewing \sys~\sx{bg}.
+The paper is structured as follows.
+It starts by introducing the necessary background on shell scripting and overviewing \sys~\sx{bg}.
 Sections \ref{distributability}--\ref{impl} highlight key
 contributions:
 \begin{itemize}
 
   \item
-  \S\ref{distributability} describes several scalability and distributability classes and introduces the distributability characterization language.
+  \S\ref{distributability} studies several distributability classes and introduces the distributability characterization language.
 
   \item
-  \S\ref{ir} presents a dataflow graph model that can encode shell programs, and a set of parallelization transformations that preserve its semantics.
+  \S\ref{ir} presents a dataflow graph model for encoding shell pipelines, and a set of parallelization transformations that preserve the semantics of the sequential program.
 
   \item
-    \S\ref{impl} describes the \sys implementation and addresses several challenges related to the translation and orchestration of shell programs.
+    \S\ref{impl} describes the \sys implementation and addresses several challenges related to the translation and orchestration of distributed shell programs.
     %% details other concerns, such as distributed state management and extensibility. 
 \end{itemize}
 
 \noindent
-\sys's evaluation~\sx{eval} shows significant speedups on both parallel and distributed execution, using a combination of micro-bench\-marks---popular shell one-liners that highlight certain features---and a multi-line macro-benchmark---a popular weather analysis script.
+\sys's evaluation~\sx{eval} shows significant speedups (4--10$\times$) for parallel execution using a combination of real pipelines. %micro-bench\-marks %---popular shell one-liners that highlight certain features---and a multi-line macro-benchmark---a popular weather analysis script.
 After a comparison with related prior work~\sx{related}, the paper closes with a discussion of limitations and possible future directions~\sx{discussion}.
 % \bigskip
 % \begin{quote}
@@ -455,7 +455,7 @@ Additional material, in anonymized form, is available at
 \section{Background and Overview}
 \label{bg}
 
-This section presents (i) important background on shell pipeline composition~\sx{bg:pipelines}, and (ii) a high-level overview of \sys's design and implementation.
+This section presents (i) important background on shell pipeline composition~\sx{bg:pipelines}, and (ii) a high-level overview of \sys's design and implementation~\sx{bg:overview}.
 
 \subsection{Unix Composition, Informally}
 \label{bg:pipelines}
@@ -463,8 +463,8 @@ This section presents (i) important background on shell pipeline composition~\sx
 % A pipeline is a mechanism for program composition that works by chaining together programs (or, \emph{commands}) using pipes.
 \unix provides several ways for succinct program composition.
 Central among them is the \emph{pipe}, a primitive that passes the output of one program as input to the next.
-These programs produce output and consume input concurrently, and possibly at different rates, with the \unix kernel facilitating program scheduling and communication synchronization behind the scenes.
-Intermediate programs, termed commands, can also be developed in different programming languages, as long as they conform to a common interface.
+These programs produce output and consume input concurrently and possibly at different rates, with the \unix kernel facilitating program scheduling and communication synchronization behind the scenes.
+Intermediate programs, termed \emph{commands}, can also be developed in different programming languages, as long as they conform to a common interface.
 %\begin{wrapfigure}{r}{0.06\textwidth}
 %  \vspace{-12pt}
 %  % \begin{center}
@@ -482,20 +482,20 @@ As part of this interface, each command has access to (any combination of) three
 % \smallskip
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-  ls -l | wc -l                          [($$p_2$$)]
+  ls -l | wc -l                          ($$(p_2)$$)
 \end{lstlisting}
 % \smallskip
 
-Commands can be tuned by two mechanisms, namely com\-mand-line options and environment variables.
+Commands can be tuned by two mechanisms: com\-mand-line options and environment variables.
 Options control the execution of a program---\eg changing the \ttt{sort}ing order.
 The shell does not have any visibility into these options; 
-  after it expands special characters such as \ttt{~} and \ttt{*}, it leaves parsing and evaluation entirely up to every command.
-Environment variables carry more general information about the surrounding system---\eg file search paths, system defaults, parsing switches \etc 
-They are organized in a map from names to values, both of which are strings, and can be evaluated at any point in the program---including as commands, flags, a shell feature termed parameter \emph{expansion}.
+  after it expands special characters such as \ttt{\textasciitilde{}} and \ttt{*}, it leaves parsing and evaluation entirely up to every command.
+Environment variables carry more general information about the surrounding system---\eg search paths, system defaults, parsing switches \etc 
+They are organized as a map from names to values, both of which are strings, and can be evaluated at any point in the program---\eg as commands, flags, or inputs. % a shell feature termed parameter \emph{expansion}.
 
 % TODO: Talk about security primitives?
-Streams are a key feature of \unix, and go hand-in-hand with the file abstraction:
-  files are simply persistent streams that can be manipulated by commands or pipelines.
+Streams are a key abstraction in \unix, and go hand-in-hand with another \unix abstraction: \emph{files}.
+Files are persistent streams that can be manipulated by individual commands or pipelines:
 % \begin{wrapfigure}{r}{0.15\textwidth}
 %   \vspace{-15pt}
 %   % \begin{center}
@@ -504,10 +504,11 @@ Streams are a key feature of \unix, and go hand-in-hand with the file abstractio
 %   % \end{center}
 %   \vspace{-25pt}
 % \end{wrapfigure}
-Reading a file or a set of files generates a stream; 
-  similarly, streams can be trivially redirected to the file system---by appending with the file identifier.
-Files are named, in the sense that they correspond to a global identifier---for example, \ttt{/x/y} corresponds to a persistent stream.
-\unix exposes a few different types of files---\eg directories, symbolic links, named pipes (or FIFOs), and special character devices.
+  reading a (set of) file(s) generates a stream; 
+  conversely, redirecting to a file identifier generates a file.
+% streams can be trivially redirected to the file system---by appending with the file identifier.
+Files are named, corresponding to global identifiers---\eg \ttt{/x/y} corresponds to a persistent stream at the location \ttt{/y} in \ttt{/x}.
+\unix exposes a few different types of files---\eg directories, symbolic links, and named pipes (or FIFOs). % , and special-character devices.
 As a result, file-system identifiers part of a pipeline may resolve to in-memory structures or pseudo-devices (\eg \ttt{/dev/urandom}).
 
 % At a high level, POSIX defines several file types:
@@ -520,12 +521,12 @@ As a result, file-system identifiers part of a pipeline may resolve to in-memory
 % \smallskip
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-  ls | sed 's/1/2/' | > out.t 2> err.t    [($$p_3$$)]
+  ls | sed 's/1/2/' | > out.t 2> err.t    ($$(p_3)$$)
 \end{lstlisting}
 %\smallskip
 
 \noindent
-Special files are particularly interesting because they are resolved to OS structures.
+Special files are particularly interesting because they resolve to OS structures.
 One example is the special \ttt{/proc} filesystem (procfs) that presents information about processes and the operating system, offering a feature analogous to programmatic introspection:
   with \ttt{procfs} commands can inspect and alter their directory or the flags passed to them.
 % Here are a few examples:
@@ -533,11 +534,12 @@ One example is the special \ttt{/proc} filesystem (procfs) that presents informa
 % (ii) \ttt{/proc/modules} contains a list of the kernel modules currently loaded, and
 % (iii) \ttt{/proc/PID/cwd} contains a symlink to the current working directory of the process.
 Similarly, \unix exposes file-system handles for various ephemeral structures, including standard streams.
-This bidirectional relationship between ephemeral streams and persistent names---the fact that streams can be named in the file-system and files can be converted to streams---is a key enabler of the runtime rebinding achieved during our transformations.
+This bidirectional relationship between ephemeral streams and persistent names---the fact that streams can be named in the file-system and files can be converted to streams---enables the runtime wrapping and rebinding achieved during \sys's transformations.
+% TODO: compatibility
 
 A small but powerful set of features is concerned with stream manipulation.
 Some of these features are built into the shell;
-  for example, given a file identifier, stream redirection operators can direct stdout or stderr to a file.
+  for example, given a file identifier, stream redirection operators can direct stdout or stderr to a file---which itself can be a FIFO dubbing as input to another command.
 % \begin{wrapfigure}{r}{0.15\textwidth}
 %   \vspace{-15pt}
 %   % \begin{center}
@@ -546,14 +548,13 @@ Some of these features are built into the shell;
 %   % \end{center}
 %   \vspace{-25pt}
 % \end{wrapfigure}
-As described before, the file can be a FIFO dubbing as input to another command.
 More interestingly, some commands allow splitting (resp. merging) a single stream (resp. many streams) into multiple streams (resp. a single stream);
   stream merging can be achieved by appending one stream after the end of another or by fusing (zipping) streams column-wise into a single (fat) stream.
 % TODO: talk about \ttt{xargs}?
 
 % \smallskip
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-  cat * | tee >(wc -l > l.t) | zip > a.z   [($$p_4$$)]
+  cat * | tee >(wc -l > l.t) | zip > a.z   ($$(p_4)$$)
 \end{lstlisting}
 % \smallskip
 
@@ -568,7 +569,7 @@ One example use case, discussed in the evaluation section~\sx{eval} is a web cra
 
 % \smallskip
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-  read | { calc | square; } >/dev/fd/0     [($$p_5$$)]
+  read | { calc | square; } >/dev/fd/0     ($$(p_5)$$)
 \end{lstlisting}
 % \smallskip
 
@@ -579,7 +580,8 @@ Code blocks, expressed as \ttt{\{$c_1; c_2$\}}, can redirect streams for the ent
   this is analogous to an anonymous function, which contains many statements and can possibly be assigned to a variable that can later be invoked with parameters.
 Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn a child shell, thus avoiding the pollution of their environment variable context. % but incurring higher overhead.
 
-\unix pipelines are surprisingly powerful, a feature that \sys exploits by re-targeting shell scripts during its rewriting passes that target shell.
+To conclude, \unix pipelines are surprisingly powerful.
+This power is exploited directly by \sys's rewriting passes which re-target the shell rather than an implementation in Java or Go.
 
 % \begin{lstlisting}[
 %   language=es,
@@ -625,65 +627,68 @@ Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn 
 % The most powerful---and interesting, for \ttt{dish}---type of expansion is subshell expansion, that allows replacing entire input streams 
 
 \subsection{\sys Design Overview}
+\label{bg:overview}
 
 As outlined earlier, the key insight behind \sys is that the shell already describes parallel computations over streams.
 Intuitively,
  (i) the parallel-composition operator exposes task parallelism
 % FIXME \kk{I have named that operator level parallelism, which one do we prefer?},
  (ii) commands such as \ttt{xargs} and \ttt{tee} expose data parallelism,
- (iii) the pipe operator is candidate for both task and data parallelism, and
+ (iii) the pipe operator is a candidate for both task and data parallelism, and
 % \kk{How does it enable data parallelism?} \nv{added "candidate", helps?}
  (iv)  other composition operators can be viewed as barrier candidates.
 To leverage these insights and correctly distribute a pipeline such as $p_1$, \sys must solve several challenges.
 
 % However, understanding the shell's primitives is not enough
-\sys needs to understand the distribution characteristics of individual commands used to compose larger programs~\sx{distributability}.
+First, \sys needs to understand the distribution characteristics of individual commands used to compose larger programs~\sx{distributability}.
 This challenge can be broken down into two parts.
-First, there is a need to understand the commands already in the shell---that is, built-ins that come with any shell and support its core functions.
+First, understand standard commands part of the shell---that is, built-ins that come with any shell and support its core functions.
 One example is the set of commands defined by the \textsc{POSIX} standard~\cite{posix}.
-\sys addresses this part by a careful study of a group of commands, identifying a small but clear set of well-understood distributability classes.
-This set is already useful enough to allow the composition of practical pipelines~\sx{eval}.
+\sys addresses this part by a careful study of a group of commands, identifying a small but clear set of well-understood distributability classes~\sx{cmd}.
+This group is already useful-enough to allow the composition of practical pipelines~\sx{micro}.
 
-The second part is expressing such characteristics extensions that fall outside the built-in set, allowing new commands to leverage \sys's power.
-Commands are arbitrary programs, but still conform to the shell's pipeline interface.
-To solve this part, \sys leverages the prior study to define a small but expressive domain-specific language (DSL) for describing a command's key properties with respect to its distributability.
-Using this DSL, developers of commands (not users of the shell) can quickly and easily capture the class of the command.
-A command developer can only annotate the default behavior;
-  if a new flag is added a few years later, and if that flag alters the command's class, only then a new annotation is needed.
+The second part is understanding the characteristics of commands that fall outside the built-in set, allowing new commands to leverage \sys's power.
+New commands are arbitrary programs, but still need to conform to the shell's pipeline interface.
+To solve this part, \sys leverages the aforementioned study~\sx{cmd} to define a small but expressive domain-specific language (DSL) for describing a command's key properties with respect to its distributability.
+This DSL is aimed towards developers of commands (not users of the shell), who can quickly and easily capture the distributability of the commands they are developing.
+% We haven't introduced the notion of flags
+% A command developer can only annotate the default behavior;
+%   if a new flag is added a few years later, and if that flag alters the command's class, only then a new annotation is needed.
 
-Given a set of commands composed together by the shell primitives, \sys's next challenge is to analyze it and identify candidate subexpressions for distribution~\sx{ir}.
-\sys addresses this challenge with a series of rewriting passes that perform dataflow analysis for identifying  distributable regions.
-It converts the AST to a dataflow graph, and iteratively performs graph transformations that expose data parallelism as task parallelism while preserving correctness.
+Given a pipeline of commands and their distributability characteristics, \sys's next challenge is to analyze it and identify candidate subexpressions for distribution~\sx{ir}.
+It addresses this challenge with a series of rewriting passes that perform dataflow analysis to identify distributable regions.
+It converts the AST to a dataflow graph, and iteratively performs graph transformations that expose data parallelism as task parallelism, while preserving the pipeline's correctness.
 These transformations are complicated by the shell's pervasive use of dynamic features---\eg environment variables, file input sizes, \etc
 
-Finally, \sys needs to schedule and execute the distributed dataflow graph.
-To achieve this, \sys's runtime component needs to solve several challenges~\sx{impl}.
-First, \sys needs to wrap single-node commands with corrective runtime interposition based on their classes;
-  this is achieved by thin wrappers for all the commands involved in the program, generated just-in-time using the distributability specification outlined earlier.
-The reasoning behind wrappers being thin is to not interfere with legacy functionality---commands have many flags accumulated over long periods of time.
+To schedule and execute the resulting distributed dataflow graph, \sys needs to solve several challenges~\sx{impl}.
+First, it needs to wrap single-node commands with corrective runtime interposition based on their classes.
+This is achieved by thin wrappers that wrap all the commands involved in the program, generated using the distributability specification described earlier.
+Thin wrappers avoid interference with legacy functionality, as \unix commands contain non-obvious logic and flags added over extended periods of time.
 
 Second, \sys needs to fill-in planing details left blank by the rewriting pass.
-This is achieved with \emph{planner activators}, commands that yield (and pass their arguments) to the scheduler.
-From the point of view of the shell, planner activators are expressed through a higher-order command---similar to \ttt{xargs} and \ttt{time}---that takes other commands as arguments.
-Planner activators achieves the latest possible binding, when critical runtime information is available.
+This is achieved by \emph{planner activators}, shell expressions that yield (and pass their arguments) back to the planner.
+They are inserted by the planner and evaluated purely for their side-effects (\ie yielding to the scheduler) rather than their return value (which is empty, not affecting pipelines).
+They make clever use of shell features such as expansion to achieve the latest possible binding, when critical runtime information becomes available.
+% From the point of view of the shell, planner activators are expressed through a higher-order command---similar to \ttt{xargs} and \ttt{time}---that takes other commands as arguments.
+
 % FIXME \kk{I am not exactly sure I understand that :) } \nv{which part?}
 
-The next few sections discuss \sys's design and implementation details.
-They also outline other, less obvious challenges---such as the synchronization of environment variables, distributed file operation, \etc.
+The next few sections (\S\ref{distributability}--\ref{impl}) discuss \sys's design and implementation details.
+% They also outline other, less obvious challenges---such as the synchronization of environment variables, distributed file operation, \etc.
 
 
 \section{Distributability Classes}
 \label{distributability}
 
-To have any hope of distributing \unix pipelines, \sys first needs to understand the distribution characteristics of their intermediate commands.
+To have any hope of distributing pipelines, \sys first needs to understand the distribution characteristics of their individual commands.
 This understanding is encoded in a command's \emph{distributability} class.
-Informally, a distributability class represents the level of synchronization required by copies of a command executing in parallel.
-It focuses on characteristics that are important for distribution, rather than all the observable behavior of a command.
-\sys leans towards a few coarse classes rather than many detailed ones---among other reasons, to simplify their use by command developers.
+Informally, a distributability class represents the level of synchronization required by copies of a command that execute in parallel.
+It focuses on capturing characteristics that are important for distribution, rather than the entire the observable behavior of a command.
+\sys leans towards having a few coarse classes rather than many detailed ones---among other reasons, to simplify their understanding and use by command developers.
 % Make the connections that this is like a type, that doesn't capture everything, but is good-enough
 
-This section starts by defining these classes, paired with a distributability study of the commands found in standard libraries such as {\sc POSIX} and GNU Coreutils~\sx{cmd}.
-Building on this study, it presents a DSL that enables command classification by its developers~\sx{ext}.
+This section starts by defining these classes, along with a distributability study of the commands found in standard libraries such as {\sc POSIX} and GNU Coreutils~\sx{cmd}.
+Building on this study, it develops a DSL that enables command classification by its developers~\sx{ext}.
 In return, \sys uses this DSL to tag commands in the standard libraries and generate their wrappers, as presented in later sections.
 
 \subsection{Distributability of Standard Libraries}
@@ -693,7 +698,7 @@ In return, \sys uses this DSL to tag commands in the standard libraries and gene
 Broadly, shell commands can be split into five major classes (summarized in Tab.~\ref{tab:classes}) with respect to their distribution characteristics, depending on how they interact with state.
 These classes are ordered in ascending difficulty of distribution:
   later classes require more effort.
-In this order, each class can be thought as a subset of the next one---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (without seeing any performance improvements).
+In this order, some classes can be thought as subsets of the next---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (without seeing any performance improvements).
 
 \begin{table}[t]
 \center
@@ -728,42 +733,43 @@ Irreversible                    & ~\tirr  & \tti{exit}, \tti{lpr},    \tti{reboo
 
 \heading{Stateless Commands}
 The first class contains stateless commands~\sta that operate on individual elements of the stream, without maintaining state across invocations.
-These are commands that can be expressed as a purely functional map---\eg \ttt{basename} removes a path prefix from a string and \ttt{grep} filters out individual lines.
-At times, stateless commands may operate as functions that produce multiple elements---\eg when they insert a {\sc NL} token.
+These are commands that can be expressed as a purely functional $map$ or $filter$---\eg \ttt{basename} removes a path prefix from a string and \ttt{grep} filters out individual lines.
+At times, stateless commands may operate as functions that produce multiple elements---\eg when they insert an {\sc NL} token.
 Workloads that use only stateless commands are trivial to parallelize:
-  they do not require any synchronization to maintain correctness, nor caution about where to split.
+  they do not require any synchronization to maintain correctness, nor caution about where to be split.
  % map :: (a -> b) -> [a] -> [b]
 
-Many of these commands (about 1/3 of coreutils' \sta) are stateless \emph{within} an element (\eg \ttt{tr} transliterates characters, one at a time).
-This property could allow further parallelization within a single line element, a feature that might seem of limited use because these commands are not particularly expensive computationally precisely due to their narrow focus.
-However, it is useful for cases with very large stream elements (long lines) such the \ttt{.fastq} format used in bioinformatics pipelines.
+Many of these commands (about 1/3 of coreutils' \sta) are stateless \emph{within} an element (\eg \ttt{tr} transliterates characters within a line, one at a time).
+This property allows further parallelization, a feature that might seem of limited use as these commands are computationally inexpensive, precisely due to their narrow focus.
+However, it turns to be  useful for cases with very large stream elements (long lines) such the \ttt{.fastq} format used in bioinformatics pipelines.  % TODO pointer to 6.3
 
 \heading{Pure Commands}
 The second class contains pure commands \pur.
-These commands respect functional purity, returning the same results for the same inputs, but maintain internal state across their entire pass.
-The details of this state and its propagation during piecewise element processing affects their distributability characteristics.
+These commands respect functional purity---re\-turn\-ing the same results for the same inputs---but maintain internal state across their entire pass.
+The details of this state and its propagation during piecewise element processing affect their distributability characteristics.
 
 Some commands are easy to parallelize, because they maintain trivial state and are commutative---\eg \ttt{wc}, which simply maintains a counter.
 Others, such as \ttt{sha1sum}, maintain more complex state that has to be updated in a sequential fashion.
 
-Often these commands do not operate in an online fashion, but need to block until the end of a stream---a typical example of this is \ttt{sort}, which cannot start before the last line of input has been consumed.
-Non-streaming constraints affect task parallelism, but not data parallelism:
-  \ttt{sort} can be parallelized significantly using divide-and-conquer techniques, that is implementing it as a map and a reduce function.
+Often these commands do not operate in an online fashion, but need to block until the end of a stream.
+A typical example of this is \ttt{sort}, which cannot start emitting results before the last input element has been consumed.
+Such constraints affect task parallelism, but not data parallelism:
+  \ttt{sort} can be parallelized significantly using divide-and-conquer techniques---that is, by encoding it as a combination of a $map$ and a $reduce$ function.
 
 \heading{File-system Commands}
 The third class contains commands that access the file-system~\dfs.
 This is the largest class, as the file (and file-system) abstraction is central to the \unix design and philosophy~\cite{unix}.
-In fact, \unix uses the file-system as a proxy to several file-unrelated operations---\eg access control and device driving is grafted upon the file-system.
+In fact, \unix uses the file-system as a proxy to several file-unrelated operations---\eg access control and device driving. % is grafted upon the file-system.
 
 % TODO: mention that some commands fail to comply with the interface---for example, csplit could be split followed by a redirection to files.
 Commands in \dfs are distributable for many reasons, as evidenced by a long history of distributed \unix file-system clones~\cite{catalogue}.
-Some of these offer the semantics of the \unix file-system---hierarchies, protection bits---and a POSIX virtualization layer that enables support for the commands in \dfs.
-The vast majority of these commands are control-plane operations that act on identifiers~\sx{bg}---for example, \ttt{touch} for creating a file or \ttt{chgrp} for changing group ownership.
+Some of these offer the semantics of the \unix file-system---hierarchies, protection bits---and a POSIX virtualization layer that enables support for all the commands in \dfs.
+The vast majority of these commands are control-plane operations that act on identifiers~\sx{bg}---\eg \ttt{touch} for creating a file or \ttt{chgrp} for changing group ownership.
 % these operate by changing an inode
 Data-plane operations on files go explicitly through stream-redirection operations~\sx{bg}.
 Operations using different identifiers pose no problems;
-  operations sharing a single identifier might have problems---but these risks exist even in the non-distributed case.
-While such pathological cases are possible, they are rare enough---and have been rare enough since \unix's inception~\cite[\S3.6]{unix}).
+  operations sharing a single identifier might introduce problems---but these risks exist even in the non-distributed case.
+Such pathological cases are indeed possible, but are rare enough to not pose a concern---and have been, since \unix's inception~\cite[\S3.6]{unix}.
 
 % \unix itself does not offer any guarantees when a file is accessed concurrently on a single computer.
 
@@ -772,29 +778,28 @@ Another large class of commands are ones that have side-effects to memory~\sid.
 Because of timesharing and multi-tasking---\ie the fact that many users can operate multiple terminals on single \unix machine---a subset of these commands are devoted to accessing and sharing memory such as environment variables and shell parsing flags.
 
 A command in \sid will require some form of concurrency control to distribute property.
-However, because its side-effects stay within the distributed \unix environment, they can be manipulated using---including optimistic and multi-versioning schemes that can roll-back side-effects.
+However, because its side-effects stay within the distributed \unix environment, they can be manipulated using a transactional control mechanism---including optimistic and multi-versioning schemes that have the ability to roll-back side-effects.
 
-The vast majority of these commands (a ratio of 21:4) only \emph{read} values, and usually values that are never affected by the user.
+The vast majority of these commands (a ratio of 21:4) only \emph{read} values, and usually values that are never written by user code.
 For example, \ttt{date}, \ttt{uname}, and \ttt{finger} are all commands that interface with kernel- or hardware-generated information that is not writable by user-space scripts.
-Even if \sid commands are protected with transactions
-  these benefits are even greater for read-only or read-mostly accesses.
+The benefits of a scalable transactional scheme are even greater when the workload features only or mostly read accesses.
 
 \heading{Irreversibly Side-effectful Commands}
-Finally, some commands have side-effects outside \sys---for example, by printing a file with \ttt{lpr} or restarting with \ttt{reboot}.
-Such commands are not distributable---they have to refer to a single location---and have to be guarded with pessimistic transaction control mechanism.
+Finally, a few commands (about 0.4\%) have side-effects outside \unix---\eg by printing a file with \ttt{lpr} or restarting with \ttt{reboot}.
+Such commands are not distributable---they often have to refer to a single location---and have to be guarded with pessimistic transaction control mechanism that locks these resources.
 
 \heading{Discussion}
-There are several technical details about \sys's design decisions worth noting.
+There are a few technical details about \sys's design decisions worth noting.
 
 In terms of inputs, \sys supports commands with multiple input (resp. output) streams, by prepending (resp. appending) shell built-ins that merge input (resp. split output) streams~\sx{impl}.
 Thus, a command can be modelled as having one input and one output stream, a representation that is used throughout \sys including the extensibility DSL~\sx{ext}.
 
-Wanting to present the full picture for completeness purposes, the focus for the rest paper will be commands in \sta and \pur.
-Other commands are treated as  non-distributable for now~\sx{discussion};
-  by building infrastructure to handle other classes, \sys would be able to (i) extract more parallelism and (ii) handle larger programs.
-Even with only these two classes, however, \sys supports highly useful pipelines that are more expressive than ones in popular frameworks such as Hadoop~\cite{mapreduce:08} and Spark~\cite{spark:12}~\sx{eval}.
+The focus for the rest paper will be commands in \sta and \pur.
+\sys currently treats other commands as non-distributable~\sx{discussion}.
+In future work, by building infrastructure to handle other classes, \sys will be able to (i) extract more parallelism and (ii) handle larger programs.
+Even with only these two classes, however, \sys distributes highly useful pipelines that are strictly more expressive than programs written in popular frameworks such as Hadoop~\cite{mapreduce:08} and Spark~\cite{spark:12}~\sx{eval}.
 
-\subsection{Extensibility}
+\subsection{Distributability Extensibility}
 \label{ext}
 
 %% Here is the type for \ttt{bwa}, a command that performs a Burrows-Wheeler transform over genomic data:
@@ -830,7 +835,7 @@ It can be used by the developers of new commands to succinctly express this info
 It can also be used by maintainers extending or maintain existing commands, to express additions or changes to the command's implementation or interface.
 
 \heading{Command-line Options}
-As described earlier~\sx{bg}, command-line options and environment variables can affect the operation of a command.
+As described earlier~\sx{bg}, com\-mand-line options and environment variables can affect the operation of a command.
 Options are a particularly popular way to control a command, 
   directly affecting a command's distributability classification.
 That is, commands are assigned to default classes, and options can change the class in which they belong.
@@ -1694,7 +1699,7 @@ It is about an order of magnitude larger than the micro-benchmarks, but its perc
 
 Several results are worth highlighting.
 First, programs see a significant speedup, often more $10\times$ over sequential execution  while returning identical results (on very large datasets).
-\sys's transformation and planning phase take around 50--300ms, negligible ($<$5\%) for short-running pipelines and virtually non-existent for long-running ones.
+\sys's transformation and planning phase take around 50--300ms, negligible ($<$2\%) for short-running pipelines and virtually non-existent for long-running ones.
 As \sys rewrites to highly-optimized shell primitives rather than using a managed language runtime, it always has a COST~\cite{mcsherryscalability} of 2.
 Finally, \sys preserves the productivity of the shell:
   the equivalent program for a small part of the macro-benchmark pipeline requires over a 150 lines of code in combined Java and Bash to run distributed on top of Hadoop.
@@ -1850,9 +1855,9 @@ The effort required to write this pipeline is astonishingly low:\footnote{
   Some effort is required to understand NCDC's weather format, but this is true for any program processing this dataset.
 }
   it amounts to 14 stages and, when expressed as a single line, only 240 characters.
-The Hadoop program, expressed in Java and only capturing the 4 last stages, is about 117 lines of Java code---not accounting for code moving input and output in and out of HDFS.
+The Hadoop program, expressed in Java and only capturing the 4 last stages, is about 137 lines of Java code---not accounting for code moving input and output in and out of HDFS.
 
-In terms of execution time, with two Hadoop datanodes running on Hadoop 3.2.1 and Openjdk 11.0.5 without any replication (\ie fault-tolerance), the Hadoop program takes 6m22s for data processing and 1:09 for moving the dataset to HDFS.
+In terms of execution time, with two Hadoop datanodes running on Hadoop 3.2.1 and Openjdk 11.0.5 without any replication (\ie fault-tolerance), the Hadoop program takes 6m22s for data processing and 1m09s for moving the dataset to HDFS.
 For the same amount of parallelism, \sys takes 4m30.554s---but this includes downloading and uncompressing the data files.
 
 % /home/nikos/hadoop-3.2.1/bin/hdfs dfs -put /home/nikos/dish/scripts/max-temp 77.24s user 50.79s system 185% cpu 1:09.14 total
@@ -1867,8 +1872,7 @@ For the same amount of parallelism, \sys takes 4m30.554s---but this includes dow
 A less obvious take-away from this case is that large, complex pipelines enable significant freedom in how to express their stages.
 Several stages in the original shell program (taken from the book) are expressed as a single \ttt{awk} script;
   unfortunately, \ttt{awk} is too general to have a meaningful distributability signature.
-A simpler pipeline that builds on built-in \unix primitives is trivially distributable, 
-  but might not perform as well in the centralized case.
+A simpler pipeline that builds on built-in \unix primitives might be outperformed by specialized programs on a single node, but turns out to be  trivially scalable to multiple nodes.
 % For example, the \ttt{sort} command at the end is an expensive version of extracting the maximum element;
 %   this could have been expressed with a simple \ttt{awk} script that only keeps track of the max.
 
