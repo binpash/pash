@@ -816,14 +816,15 @@ Users composing pipelines are free to install custom commands available from var
 Being general programs, commands are developed in a variety of languages and are extended over long periods of time.
 %% \kk{Text point: This restricts the space of solutions for
 %%   distribution of shell scripts}
-As a result, any static characterization of shell commands is unsatisfactory as it would quickly become obsolete, supporting only a small subset of commands.
+As a result, any static characterization of shell commands is unsatisfactory and would quickly become obsolete, supporting only a small subset of the commands needed in practice.
 This poses a challenge to the developers of individual commands---how can they augment their commands to capture information critical to \sys without too much effort?
 %% \kk{Text point: The characteristics of a good solution}
 
-To address additions and changes to the set of commands available to the shell, \sys provides command developers a lightweight, domain-specific language (DSL).
-The DSL allows developers to express semantic information about a command's distributanility that is critical to \sys.
-This DSL can be used by the developers of new commands to succinctly express this information, such the class of a command and the sequence of sources from which it reads its input.
-It could also be used by developers that extend or maintain existing commands, to express additions or changes to the command's implementation or interface.
+To address % additions and changes to the set of commands available to the shell,
+  this challenge, \sys arms command developers with a lightweight, domain-specific language (DSL).
+The DSL allows developers to express semantic information about a command's distributability that is critical to \sys.
+It can be used by the developers of new commands to succinctly express this information, such the class of a command and the sequence of sources from which it reads its input.
+It can also be used by maintainers extending or maintain existing commands, to express additions or changes to the command's implementation or interface.
 
 \heading{Command-line Options}
 As described earlier~\sx{bg}, command-line options and environment variables can affect the operation of a command.
@@ -833,7 +834,7 @@ That is, commands are assigned to default classes, and options can change the cl
 
 As simple examples, consider \ttt{cat} and \ttt{sort}.
 By default \ttt{cat} is in \sta, but with \ttt{-n} it jumps into \pur because it has to keep track of a counter.
-Conversely, \ttt{sort} defaults to \pur, but \ttt{with} \ttt{-h} it jumps into \sta.
+Conversely, \ttt{sort} defaults to \pur, but \ttt{with} \ttt{-h} it jumps into \sta because it generates a static stream regardless of other input.
 % TODO: closure?
 
 %% Can be tweaked according to this:
@@ -890,11 +891,15 @@ The DSL captures important information regarding the distributability of a comma
 
 
 \heading{Command Inputs and Outputs}
-%
-Consider the command \ttt{comm}. It takes as input two files and
+A second concern captured by the DSL is the order of inputs and outputs.
+Commands generally read multiple input streams (and, at cases, write to multiple output streams).
+The invariants between inputs and outputs must be maintained over the distributed execution of the program.
+% but these maintain different invariants, enabling very different distributability characteristics.
+
+Consider the command \ttt{comm} that takes as input two files and
 performs a join operation. When invoked without any option, it
-produces three-column output. The first column contains lines that
-unique to the first file, the second column contains lines that are
+produces a three-column output. The first column contains lines that
+are unique to the first file, the second column contains lines that are
 unique to the second file, and the last column contains lines that
 exist in both files. In the general case \ttt{comm} is in \pur, since
 it needs to wait until it reads both files completely before it can
@@ -904,7 +909,7 @@ However, \ttt{comm} can also be invoked using some options that
 suppress the output of any combination of columns. More precisely, the
 option \ttt{-1} suppresses the first column of the output. Similarly,
 \ttt{-2} and \ttt{-3} supress the second and third column. Using both
-\ttt{-2} (or \ttt{-1}) and \ttt{-3}, the command becomes \sta
+\ttt{-2} (or \ttt{-1}) and \ttt{-3}, the command jumps to \sta
 regarding its first (resp. the second) file argument.
 
 % \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
@@ -912,21 +917,21 @@ regarding its first (resp. the second) file argument.
 \heading{Distributability DSL}
 %
 \sys's distributability description DSL (Fig.~\ref{fig:dsl}) is
-designed to be able to classify a commands into multiple categories
+designed to classify commands into multiple categories
 given their options.
 
 It assumes that the arguments of a command can always be separated to
 options and file arguments (checking if they start with a
 \ttt{-}~\footnote{Note that the single character \ttt{-} is not an
   option as it is most often used to designate that a command reads
-  from its standard input}). A file written in the language contains a
+  from its standard input}). A file written in the DSL contains a
 record containing a mapping from predicates to assignments for each
 command. Predicates can be simple boolean formulas on the existence
 and the value of any option. Each assignment contains the command
 category, the sequence of its input sources, and its output
-source. Inputs to commands are a sequence of file arguments and its
+source. Inputs to commands are a sequence of file identifiers and its
 standard input. Similarly, the output is either its standard output or
-a file argument. An example record for \ttt{comm} can be seen below:
+a file identifier. An example record for \ttt{comm} can be seen below:
 
 \begin{lstlisting}[float=h, numbers=none]
   comm {
@@ -998,9 +1003,9 @@ straightforward way, there also exists a subclass of commands in \pur
 that can be parallelized using divide-and-conquer techniques (as
 mentioned in \cref{cmd}). In order to support the parallelization of
 arbitrary commands in this category, \sys allows command developers to
-provide a custom map and reduce step for these commands, where the map
+provide custom map and reduce steps for them, where the map
 is in \sta and the reduce in \pur, and their composition produces the
-same output with the initial command. \sys can then replace occurences
+same output with the initial command. \sys can then replace occurrences
 of these commands with their map and reduce parts, enabling their
 parallelization.
 
