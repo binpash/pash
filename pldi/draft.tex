@@ -379,7 +379,7 @@ Combining several features, \unix makes small tasks easy to express;
   \sys leverages distributability analysis for built-in commands and any developer extensions (left) to automatically transform shell scripts (mid) and orchestrates their
   execution (right).
 }
-\vspace{-30pt}
+\vspace{-10pt}
 \label{fig:schematic}
 \end{figure}
 
@@ -622,7 +622,7 @@ This power is exploited directly by \sys's rewriting passes which re-target the 
 \end{figure}
 
 
-% \heading{Generation}
+% \paragraph{Generation}
 % Expansion---the key is that expansion and evaluation are handled by the shell at an earlier stage 
 % The most powerful---and interesting, for \ttt{dish}---type of expansion is subshell expansion, that allows replacing entire input streams 
 
@@ -728,10 +728,10 @@ Irreversible                    & ~\tirr  & \tti{exit}, \tti{lpr},    \tti{reboo
 \end{table}
 
 
-% \heading{Preliminaries}
-% \heading{POSIX, GNU Core-utils, and beyond}
+% \paragraph{Preliminaries}
+% \paragraph{POSIX, GNU Core-utils, and beyond}
 
-\heading{Stateless Commands}
+\paragraph{Stateless Commands}
 The first class contains stateless commands~\sta that operate on individual elements of the stream, without maintaining state across invocations.
 These are commands that can be expressed as a purely functional $map$ or $filter$---\eg \ttt{basename} removes a path prefix from a string and \ttt{grep} filters out individual lines.
 At times, stateless commands may operate as functions that produce multiple elements---\eg when they insert an {\sc NL} token.
@@ -743,7 +743,7 @@ Many of these commands (about 1/3 of coreutils' \sta) are stateless \emph{within
 This property allows further parallelization, a feature that might seem of limited use as these commands are computationally inexpensive, precisely due to their narrow focus.
 However, it turns to be  useful for cases with very large stream elements (long lines) such the \ttt{.fastq} format used in bioinformatics pipelines.  % TODO pointer to 6.3
 
-\heading{Pure Commands}
+\paragraph{Pure Commands}
 The second class contains pure commands \pur.
 These commands respect functional purity---re\-turn\-ing the same results for the same inputs---but maintain internal state across their entire pass.
 The details of this state and its propagation during piecewise element processing affect their distributability characteristics.
@@ -756,7 +756,7 @@ A typical example of this is \ttt{sort}, which cannot start emitting results bef
 Such constraints affect task parallelism, but not data parallelism:
   \ttt{sort} can be parallelized significantly using divide-and-conquer techniques---that is, by encoding it as a combination of a $map$ and a $reduce$ function.
 
-\heading{File-system Commands}
+\paragraph{File-system Commands}
 The third class contains commands that access the file-system~\dfs.
 This is the largest class, as the file (and file-system) abstraction is central to the \unix design and philosophy~\cite{unix}.
 In fact, \unix uses the file-system as a proxy to several file-unrelated operations---\eg access control and device driving. % is grafted upon the file-system.
@@ -773,7 +773,7 @@ Such pathological cases are indeed possible, but are rare enough to not pose a c
 
 % \unix itself does not offer any guarantees when a file is accessed concurrently on a single computer.
 
-\heading{Side-effectful Commands}
+\paragraph{Side-effectful Commands}
 Another large class of commands are ones that have side-effects to memory~\sid.
 Because of timesharing and multi-tasking---\ie the fact that many users can operate multiple terminals on single \unix machine---a subset of these commands are devoted to accessing and sharing memory such as environment variables and shell parsing flags.
 
@@ -784,11 +784,11 @@ The vast majority of these commands (a ratio of 21:4) only \emph{read} values, a
 For example, \ttt{date}, \ttt{uname}, and \ttt{finger} are all commands that interface with kernel- or hardware-generated information that is not writable by user-space scripts.
 The benefits of a scalable transactional scheme are even greater when the workload features only or mostly read accesses.
 
-\heading{Irreversibly Side-effectful Commands}
+\paragraph{Irreversibly Side-effectful Commands}
 Finally, a few commands (about 0.4\%) have side-effects outside \unix---\eg by printing a file with \ttt{lpr} or restarting with \ttt{reboot}.
 Such commands are not distributable---they often have to refer to a single location---and have to be guarded with pessimistic transaction control mechanism that locks these resources.
 
-\heading{Discussion}
+\paragraph{Discussion}
 There are a few technical details about \sys's design decisions worth noting.
 
 In terms of inputs, \sys supports commands with multiple input (resp. output) streams, by prepending (resp. appending) shell built-ins that merge input (resp. split output) streams~\sx{impl}.
@@ -824,7 +824,7 @@ Users composing pipelines are free to install custom commands available from var
 Being general programs, commands are developed in a variety of languages and are extended over long periods of time.
 %% \kk{Text point: This restricts the space of solutions for
 %%   distribution of shell scripts}
-As a result, any static characterization of shell commands is unsatisfactory and would quickly become obsolete, supporting only a small subset of the commands needed in practice.
+As a result, any static characterization of shell commands would bs unsatisfactory and would quickly become obsolete, supporting only a small subset of the commands needed in practice.
 This poses a challenge to the developers of individual commands---how can they augment their commands to capture information critical to \sys without too much effort?
 %% \kk{Text point: The characteristics of a good solution}
 
@@ -834,7 +834,7 @@ The DSL allows developers to express semantic information about a command's dist
 It can be used by the developers of new commands to succinctly express this information, such the class of a command and the sequence of sources from which it reads its input.
 It can also be used by maintainers extending or maintain existing commands, to express additions or changes to the command's implementation or interface.
 
-\heading{Command-line Options}
+\paragraph{Command-line Options}
 As described earlier~\sx{bg}, com\-mand-line options and environment variables can affect the operation of a command.
 Options are a particularly popular way to control a command, 
   directly affecting a command's distributability classification.
@@ -898,7 +898,7 @@ The DSL captures important information regarding the distributability of a comma
 
 
 
-\heading{Command Inputs and Outputs}
+\paragraph{Command Inputs and Outputs}
 A second concern captured by the DSL is the order of inputs and outputs.
 Commands generally read multiple input streams (and, at cases, write to multiple output streams).
 The invariants between inputs and outputs must be maintained over the distributed execution of the program.
@@ -922,9 +922,8 @@ regarding its first (resp. the second) file argument.
 
 % \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
 
-\heading{Distributability DSL}
-%
-\sys's distributability description DSL (Fig.~\ref{fig:dsl}) is
+\paragraph{Distributability DSL}
+The DSL for distributability description (Fig.~\ref{fig:dsl}) is
 designed to classify commands into multiple categories
 given their options.
 
@@ -1003,7 +1002,7 @@ would be classified as follows:
   what do you think?}}
 
 
-%% \heading{Pure Commands}
+%% \paragraph{Pure Commands}
 %
 \noindent
 In addition to the commands in \sta that can be parallelized in a
@@ -1331,7 +1330,7 @@ applying $f$ to a concatenation of two inputs $x, x'$, or by applying
 the reduce function $r$ to the concatenation of the outputs produced
 by applying map $m$ to each of these inputs.
 
-\heading{Parallelization Transformations}
+\paragraph{Parallelization Transformations}
 %
 Based on these equations, we can define a maximal \emph{node split
   operation} on a stateless node $v$ with $n$ input ordered edges and
@@ -1446,7 +1445,7 @@ Conversely, the \ttt{;} sequential composition operator, the \ttt{\&\&} logical 
 % 
 
 \paragraph{Translation Pass}
-\sys performs a depth-first search pass on the AST of the given shell program.
+The \sys front-end performs a depth-first search pass on the AST of the given shell program.
 During this pass, it greedily extends the distributable regions from the bottom up, translating their independent components to dataflow graph nodes until a barrier construct is reached.
 To identify possible opportunities for parallelism, the translation pass also extracts the category of each node together with its input and output pairs.
 To perform this extraction, it uses the command name to index into a key-value map with values that are expressed in the DSL for distributability characterization~\sx{ext}.
@@ -1585,7 +1584,7 @@ and aggregates them accordingly.
 % late as possible in the process. This would be awesome.
 %
 
-\heading{Merge and Split Implementation}
+\paragraph{Merge and Split Implementation}
 %
 It is common in the dataflow graph for a node to have many incoming
 edges or many outgoing edges (when all but the last outgoing edges
@@ -1896,7 +1895,7 @@ At a high level, techniques for re-writing programs to exploit distribution fall
 A significant concern with approaches that require input from developers is correctness:
   developers---often neither experts in distributed systems nor educated on the internals of the code they depend on---can easily break the semantics of centralized programs, especially when these depend on existing code (such as libraries or shell commands).
 
-\heading{Distributed Operating Systems and Shells}
+\paragraph{Distributed Operating Systems and Shells}
 A plethora of systems assist in the construction of distributed software.
 Distributed operating systems~\cite{ousterhout1988sprite, mullender1990amoeba, pike1990plan9, barak1998mosix} and programming languages~\cite{erlang:96, acute:05, mace:07, cloudhaskell:11}
 hide many distribution problems, as long as a program uses the provided abstractions---which are strongly coupled to the underlying operating or runtime system.
@@ -1916,7 +1915,7 @@ Their argument is somewhat antithetical to \sys, % but rather that the shell lan
   which argues for automatically (and correcctly) parallelizing pipelines when users have not expressed parallelism explicitly---hence distribution-\emph{oblivious} shell scripting.
 
 
-\heading{Cluster Computing}
+\paragraph{Cluster Computing}
 Modern analytics frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp} go a step further in terms of automation by providing a few carefully-designed primitives.
 These primitives make strong assumptions about the nature of the computation---\eg strongly-eventual commutative functions that can proceed in parallel.
 By targeting specific classes of computation (\emph{viz.} \sys's distributability), they render distributed computation efficiently.
@@ -1934,7 +1933,7 @@ It also takes a more principled approach: by developing the semantic model outli
 % Developing under these frameworks differs quite significantly from the development of normal (non-distributed) programs.
 
 
-\heading{Annotation-based Distribution}
+\paragraph{Annotation-based Distribution}
 Recent systems on light-touch distribution, such as Ignis~\cite{ignis:19} and Mozart~\cite{mozart:19}, are more general than cluster-computing frameworks.
 They also lower (but not entirely eliminate) developer effort by automating most of the rewriting process.
 % Both work on high-level, managed languages---server-side JavaScript for Ignis and Python for Mozart---that allow runtime transformations without affecting the broader environment under which a program executes.
@@ -1952,7 +1951,7 @@ Its DSL is designed to be more heavy-weight than Ignis' declarative recipes or M
 
 
 % Nice intro: http://homepages.inf.ed.ac.uk/bfranke/Publications/pldi121-tournavitis.pdf
-\heading{Low-level Parallelization}
+\paragraph{Low-level Parallelization}
 Instruction-level parallelization has a longer history, starting from explicit \ttt{DOALL} and \ttt{DOACROSS} annotations~\cite{par1, par2} and continuing with compilers that attempt to automatically extract parallelism~\cite{padua1993polaris,hall1996maximizing}.
 These systems operate at a lower level than \sys (\eg that of instructions or loops instead of pipe boundaries) and typically do not exploit runtime information.
 
@@ -1984,7 +1983,7 @@ Moreover, the insights behind these attempts are significantly different from ou
 %   na ginoun formally proven claims gia to equivalence preservation twn
 %   optimizations etc.}
 
-\heading{Correct Distribution of Dataflow Graphs}
+\paragraph{Correct Distribution of Dataflow Graphs}
 %
 The dataflow graph is a prevalent model in several areas
 of data processing, as it is used by several batch-~\cite{mapreduce:08,
@@ -2021,7 +2020,7 @@ intricacy, previous work is not straightforwardly applicable.
 
 This section reflects on \sys's design and implementation, touches on future work, and concludes the paper.
 
-\heading{Limitations}
+\paragraph{Limitations}
 Our implementation is limited in many ways, so as to succeed in proving the key hypothesis---that scaling out shell pipelines can be automated and correct with respect to some assumptions.
 
 \sys does not adequately handle failures or network partitions in the general sense, which would require re-scheduling passes on failed replicas.
@@ -2043,7 +2042,7 @@ rather to use significant part of it to demonstrate performance benefits.
 % acquired selectively to aid the analysis and optimization process.
 
 
-\heading{Future Work}
+\paragraph{Future Work}
 % \label{limitation}
 % \item No cycles (multiple commands writing and reading from the same file)
 There are several worthwhile directions for future work.  One
@@ -2071,7 +2070,7 @@ This direction would naturally introduce considerations about replication, consi
 % considered as black boxes and the only information that can be
 % inferred about them is through their arguments.
 
-\heading{Conclusion}
+\paragraph{Conclusion}
 This paper presented \sys, a shell variant that automatically and correctly scales out distribution-oblivious shell pipelines. 
 \sys's insight is that shell pipelines already express streaming computations that can be automatically distributed.
 To achieve its goal, \sys
