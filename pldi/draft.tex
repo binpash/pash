@@ -1519,7 +1519,7 @@ transformation can be seen in \Cref{fig:optimizer-transformation}.
   The optimizer splits a stateless node to utilize
   available data parallelism.
 }
-\vspace{-15pt}
+\vspace{-10pt}
 \label{fig:optimizer-transformation}
 \end{figure}
 
@@ -1682,17 +1682,18 @@ arbitrarily many different pipes.
 
 
 At a high level, we are interested in understanding whether \sys can indeed scale pipelines out automatically and correctly.
-To achieve this, we use a combination of micro-benchmarks and one macro-benchmark, most of which were collected from prior literature and online repositories.
-Micro-bench\-marks~\sx{micro} are one-off, simple one-line pipelines that take a few seconds to write;
+To achieve this, we use six micro-benchmarks and one macro-benchmark, collected primarily from prior literature.
+
+Micro-bench\-marks~\sx{micro} are one-off, simple one-liners that take a few seconds to write;
   such pipelines are usually composed interactively to solve a task at hand, test a hypothesis, or ``smoke out bugs''~\cite{bentley1986literate}---but, with \sys, applied to very large data sets.
-These pipelines are taken from real use cases (often from the literature~\cite{bentley1985spelling}), and, precisely due to their small size, have the benefit of highlighting stress on a handful of stages.
+These pipelines are taken from real use cases~\cite{bentley1985spelling, bentley1986literate, taylor2004wicked} and, precisely due to their small size, highlight stress on a handful of stages.
 
 The complex macro-benchmark (\S\ref{macro1}) is designed to handle realistic workloads by today's standards.
 It is about an order of magnitude larger than the micro-benchmarks, but its perceived lack of complexity is deceiving:
-  as shown if written in a conventional language, it correspond to a program on the order of hundreds of lines of code.
+  as shown, if written in a conventional language it would correspond to a program on the order of hundreds of lines of code.
 
 Several results are worth highlighting.
-First and foremost, programs see a significant speedup, often more $10\times$ over sequential execution  while returning identical results (on very large datasets).
+First, programs see a significant speedup, often more $10\times$ over sequential execution  while returning identical results (on very large datasets).
 \sys's transformation and planning phase take around 50--300ms, negligible ($<$5\%) for short-running pipelines and virtually non-existent for long-running ones.
 As \sys rewrites to highly-optimized shell primitives rather than using a managed language runtime, it always has a COST~\cite{mcsherryscalability} of 2.
 Finally, \sys preserves the productivity of the shell:
@@ -1700,9 +1701,9 @@ Finally, \sys preserves the productivity of the shell:
   %% in another, the program expressed by the pipeline was the subject of a semester project in a graduate course on distributed systems~\cite{blinded} where student implementations ranged between 1--3\textbf{K} lines of code.
 
 Experiments were run on a %\todo{network of five workstations} connected by 1Gbps links: 
- machine with 512GB of memory and 128 2.1GHz Intel Xeon E5-2683 cores.
+ machine with 512GB of memory and 128 $\times$ 2.1GHz Intel Xeon E5-2683 cores.
 %\todo{four smaller machines (\wkq), each with 4GB of memory and two 3.33GHz Intel Core Duo E8600 processors}.
-For our software setup, we use SMP Debian 4.9.144-3.1 (2019-02-19), GNU Core-utils 8.30-3, GNU Bash 5.0.3(1)-release (x86\_64-pc-linux-gnu), Python 3.7.3, and OCaml 4.05.0.
+For our software setup, we use Debian 4.9.144-3.1, GNU Core-utils 8.30-3, GNU Bash 5.0.3(1)-, Python 3.7.3, and OCaml 4.05.0.
 Generally, no special configuration was made in hardware or software beyond disabling hyper-threading. % ---specifically, the network protocol stack was left unoptimized.
 All pipelines are set to (initially) read from and (finally) write to the file-system (except as otherwise stated).
 Whenever \ttt{curl} is part of a pipeline, it fetches data from a different physical host on the same network connected by 1Gbps links.
@@ -1778,29 +1779,29 @@ More detailed setup and experiments, including the scripts, is included in the a
       Three different configurations per benchmark:
       (i) distributed, focusing only on the distributed execution,
       (ii) +compile, adding \sys' pre-processing overheads, and
-      (iii) +cat, adding a final merger step.
+      (iii) +merge, adding a final merger step.
     }
     \vspace{-15pt}
     \label{fig:microbenchmarks}
 \end{figure*}
 
 Tab.~\ref{tab:eval} summarizes the collection of micro-benchmarks used to evaluate \sys.
-Benchmark names (col. 1) correspond to the names on the plots (Fig.~\ref{fig:microbenchmarks}).
+Benchmark names (col. 1) correspond to the names on the plots (Fig.~\ref{fig:microbenchmarks}), and structure (col. 2) summarizes the different classes of commands used in the script.
 % The centralized pipelines read files of various sizes from disk and write to disk.
+Input sizes and times (col. 3, 4) summarize the characteristics of the largest sequential executions. % (200 files in Fig.~\ref{fig:microbenchmarks}).
 
-Input sizes and times (col. 2, 3) summarize the longest sequential execution (200 files in Fig.~\ref{fig:microbenchmarks}).
-Script sizes report on the \sys's rewritten output for three different distribution sizes---$2\times$, 10$\times$, and $100\times$.
-
-The size of a script (col. 5) grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
+Script sizes (col. 5) report on \sys's rewritten output for three different distribution sizes---$1\times$, 10$\times$, and $100\times$.
+Size grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
 The first number alone is interesting, as it captures \sys's output for the sequential script.
-As there is no parallelism, it can be viewed as the initial cost corresponding to using \sys.
+As there is no parallelism involved, it highlights the initial (bare minimum) cost corresponding to using \sys.
 % this is the size of 
-This change in size does not necessarily translate to observed runtime, as most of this size gain comes from the setup and teardown of FIFOs responsible for interprocess (IPC) communication.
-FIFOs are simply pipes made, the in-kernel buffering and synchronization mechanisms are the same, leading to non-observable changes in runtime performance.
+This change in size does not necessarily translate to observed runtime, as most of the size increase comes from the setup and teardown of FIFOs responsible for interprocess (IPC) communication.
+FIFOs are simply pipes made explicit;
+  the performance characteristics, including in-kernel buffering and synchronization mechanisms, are identical between the two.
 
 In terms of benchmarks, \ttt{grep} is a short script centered around an expensive \sta command;
 % a DFA-based regular expression matching phase;
-  while \ttt{grep} defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
+  while the \unix \ttt{grep} command defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
 The \ttt{sort} pipeline is equally short, but its central operation is a command in \pur.
 The next two benchmarks, \ttt{wf} and \ttt{top-n}, are based on McIlroy's now classic word-counting program~\cite{bentley1986literate};
   they use sorting, rather than tabulation, to identify high-frequency terms in a corpus.
@@ -1809,20 +1810,22 @@ The next two benchmarks, \ttt{wf} and \ttt{top-n}, are based on McIlroy's now cl
 The next pipeline is based on the original \ttt{spell} program developed by Johnson~\cite{bentley1985spelling}---another \unix classic:
   after some preprocessing, it makes clever use of \ttt{comm} to report words not in the dictionary.
 Finally, \ttt{shortest-scripts} is a pipeline~\cite[pg. 7]{taylor2004wicked}that identifies the 15 shortest shell scripts in the user's \ttt{PATH};
-   interestingly, it uses \ttt{file} utility and a higher-order \ttt{wc}.
+   interestingly, it uses the \ttt{file} utility and a higher-order \ttt{wc} via \ttt{xargs}.
 
 % TODO \nv{Need to change terminology in plots---files should be (attempted) parallelism, name benchmark, cat should be merge.}
-Fig.~\ref{fig:microbenchmarks} presents the speedup gained by \sys as a function of the level of parallelism (1--200).
+Fig.~\ref{fig:microbenchmarks} presents the speedup gained by \sys as a function of the level of parallelism (1--200$\times$).
 % we experiment with a $200\times$ level of parallelism to see potential overheads
 Each one of these plots reports on three different configurations:
   (i) distributed, which captures only the runtime of the distributed computation,
-  (ii) compile + distributed, which adds the \sys' analysis and generation overhead, and
-  (iii) cat + compile + distributed, which adds a final merger  gathering the results at the end of the pipeline.
+  (ii) +compile, which adds the \sys' analysis and generation overhead, and
+  (iii) +merge, which adds a final merger  gathering the results at the end of the pipeline.
+Parallelism of 200$\times$ was explicitly chosen to show the \sys-internal overheads on suboptimal configurations;
+  \sys itself would never attempt a factor that is above the number of available compute nodes.
 The results show significant speedups, ranging between 4--70$\times$, depending on the distributability characteristics of individual pipelines.
 
 Interestingly, the overhead from \sys's analysis and generation phases remains collectively below 1s even for the high-scalability cases.
-We decided to push \sys's limits of these phases by synthesizing an artificial 1000-stage pipeline---a carefully-constructed, worst-case workload that is nowhere near the ones observed in practice (\S\ref{macro1}--\ref{macro3}).
-We find the resulting times quite acceptable: given two input arguments in the beginning of this pipeline, \sys takes 8.23s for parsing the script and 3.22s for analysis and for optimizing. If we also push the limit of input arguments to 100, \sys takes 5 minutes and 8 seconds to perform the analysis, producing an output dataflow graph that has 100 thousand edges, in a file that is almost 11MB.
+We decided to push \sys's limits of these phases by synthesizing an artificial 1000-stage pipeline---a carefully-constructed, worst-case workload that is nowhere near the ones observed in practice. % (\S\ref{macro1}--\ref{macro3}).
+We find the resulting times quite acceptable: given two input arguments in the beginning of this pipeline, \sys takes 8.23s for parsing the script and 3.22s for analysis and optimization. Pushing the input file arguments to 100, \sys's runtime jumps to 5 minutes and 8 seconds to perform the analysis, producing an output dataflow graph that has more than 100 thousand edges in a file of about 11MB.
 
 
 
@@ -1830,17 +1833,17 @@ We find the resulting times quite acceptable: given two input arguments in the b
 \subsection{Macro-benchmark: Weather Analysis}
 \label{macro1}
 
-To understand \sys better under a realistic workload, we use a large pipeline inspired by the introductory program of Hadoop's Definitive Guide~\cite[Chapter 2]{hadoop:15}.
+To understand \sys better under a realistic workload, we use a large pipeline inspired by the introductory chapter of Hadoop's Definitive Guide~\cite[Chapter 2]{hadoop:15}.
 At a high level, the goal is to process multi-year weather data from NCDC to identify the maximum temperature over the past several years.
 The original task, as presented in the book, can be thought of comprising three sub-tasks:
   download weather data from NCDC (shell), convert them to a format that is Hadoop-friendly (shell), and process them to identify the maximum temperature (Hadoop).
-Only the last of these tasks is the real focus of the chapter, demonstrate the benefits of using distributed analytics system such as Hadoop.
-
+Only the last of these tasks is the real focus of the chapter, demonstrating the benefits of using distributed analytics system such as Hadoop.
 For \sys, we consider the full pipeline that implements all three sub-tasks---from fetching data to outputting the maximum temperature.
+
 The pipeline starts with a few stages in \sta  that generate URLs;
   these URLs point to index files, each one of which contains pointers to compressed data files.
-The stream of index files is then analyzed (4 stages) to extract the URLs of the data files, passed again through the command for downloading data.
-After downloading and uncompressing these files, the stream is analyzed to extract the maximum temperature (another 4 stages).
+The stream of index files is then analyzed (4 stages) to extract the URLs of the data files, passed again through the command to download the data.
+After download and un-compression, the stream is analyzed to extract the maximum temperature (another 4 stages).
 
 % The first interesting result 
 The effort required to write this pipeline is astonishingly low:\footnote{
@@ -1864,7 +1867,7 @@ For the same amount of parallelism, \sys takes 4m30.554s---but this includes dow
 A less obvious take-away from this case is that large, complex pipelines enable significant freedom in how to express their stages.
 Several stages in the original shell program (taken from the book) are expressed as a single \ttt{awk} script;
   unfortunately, \ttt{awk} is too general to have a meaningful distributability signature.
-A much simpler pipeline that builds on built-in \unix primitives is trivially distributable, 
+A simpler pipeline that builds on built-in \unix primitives is trivially distributable, 
   but might not perform as well in the centralized case.
 % For example, the \ttt{sort} command at the end is an expensive version of extracting the maximum element;
 %   this could have been expressed with a simple \ttt{awk} script that only keeps track of the max.
@@ -1886,6 +1889,8 @@ A much simpler pipeline that builds on built-in \unix primitives is trivially di
 At a high level, techniques for re-writing programs to exploit distribution fall under a wide spectrum that ranges from
   fully manual (but, ideally, optimal) to 
   fully automated (but potentially sub-optimal) distribution   (Fig.~\ref{fig:spectrum}).
+A significant concern with approaches that require input from developers is correctness:
+  developers---often neither experts in distributed systems nor educated on the internals of the code they depend on---can easily break the semantics of centralized programs, especially when these depend on existing code (such as libraries or shell commands).
 
 \heading{Distributed Operating Systems and Shells}
 A plethora of systems assist in the construction of distributed software.
@@ -1894,7 +1899,7 @@ hide many distribution problems, as long as a program uses the provided abstract
 % simplify many of the problems of distribution and
 
 Several packages expose commands for specifying parallelism on modern \unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}. %  or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
-Different from \sys, their effectiveness is predicated upon explicit invocation and is limited to embarrassingly parallel (and short) programs.
+Different from \sys, their effectiveness is predicated upon explicit and careful invocation and is limited to embarrassingly parallel (and short) programs.
 Often, these commands provide options to support an array of special sub-cases---a stark contradiction to the celebrated \unix philosophy.
 For example, \ttt{parallel} contains flags such as \ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs}, that a \unix user can achieve using \ttt{head}, \ttt{sed}, and \ttt{xargs}; it also includes other programs with complex semantics, such as the ability transfer files between computers, separate text files, and parse CSV.
 \sys embraces the \unix philosophy and simply attempts to rewrite pipelines more efficiently.
@@ -1902,7 +1907,7 @@ For example, \ttt{parallel} contains flags such as \ttt{--skip-first-line}, \ttt
 Several shells~\cite{duff1990rc, mcdonald1988support, dagsh:17} add primitives for non-linear pipe topologies---some of which target distribution.
 Here too, however, developers are expected to manually rewrite scripts to exploit these new primitives.
 
-Recently, the Smoosh authors have argued that certain shell features are useful for concurrency~\cite{smoosh:18}.
+Recently, the Smoosh authors have argued that certain shell features are useful for making concurrency explicit~\cite{smoosh:18}.
 Their argument is somewhat antithetical to \sys, % but rather that the shell language is itself an good DSL for concurrency;
   which argues for automatically (and correcctly) parallelizing pipelines when users have not expressed parallelism explicitly---hence distribution-\emph{oblivious} shell scripting.
 
@@ -1928,7 +1933,7 @@ It also takes a more principled approach: by developing the semantic model outli
 \heading{Annotation-based Distribution}
 Recent systems on light-touch distribution, such as Ignis~\cite{ignis:19} and Mozart~\cite{mozart:19}, are more general than cluster-computing frameworks.
 They also lower (but not entirely eliminate) developer effort by automating most of the rewriting process.
-Both work on high-level, managed languages---server-side JavaScript for Ignis and Python for Mozart---that allow runtime transformations without affecting the broader environment under which a program executes.
+% Both work on high-level, managed languages---server-side JavaScript for Ignis and Python for Mozart---that allow runtime transformations without affecting the broader environment under which a program executes.
 For the critical points where user input is required, they provide a high-level declarative DSL with varying (but limited) degrees of expressive power.
 % Annotations are used by ---complicated by the use of third-party libraries similar to \sys's extensions.
 Unfortunately, a challenge with this approach is that users composing applications by using third-party libraries do not understand their distributability details well-enough to annotate them.
@@ -1966,6 +1971,7 @@ Moreover, the insights behind these attempts are significantly different from ou
   \textbf{Manual--automated distribution spectrum.}
 	\sys sits at the automation end of the spectrum, automatically distributing shell pipelines while maintaining their correctness.
 }
+\vspace{-15pt}
 \label{fig:spectrum}
 \end{figure}
 
@@ -1976,15 +1982,15 @@ Moreover, the insights behind these attempts are significantly different from ou
 
 \heading{Correct Distribution of Dataflow Graphs}
 %
-The dataflow graph is a prevalent programming model in several areas
-of data processing, as it is used by several batch~\cite{mapreduce:08,
-  spark:12} and stream processing systems~\cite{murray2013naiad,
-  carbone2015flink}. Despite its popularity, it has been noted that
+The dataflow graph is a prevalent model in several areas
+of data processing, as it is used by several batch-~\cite{mapreduce:08,
+  spark:12} and stream-processing systems~\cite{murray2013naiad,
+  carbone2015flink}. Despite its popularity, 
 most systems perform optimizations that do not preserve its semantics,
 introducing subtle erroneous behaviours. Recent work~\cite{HSSGG2014,
-  SHGW2015, MSAIT2019} is trying to address this issue, by restricting
-optimizations to only be performed in cases where correctness would be
-preserved. Our work draws inspiration from these attempts, as we are
+  SHGW2015, MSAIT2019} attempts to address this issue by performing
+optimizations only in cases where correctness is
+preserved. \sys draws inspiration from these efforts, as we are
 also interested in optimizations that exploit parallelization but
 preserve the semantics of the underlying model. However, our proposed
 dataflow model is different from these other works, as nodes in our
