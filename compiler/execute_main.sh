@@ -35,4 +35,4 @@ json_filename="../scripts/json/minimal5.sh.json" # OK - 1 input file
 #
 # json_filename="../scripts/json/maximal.sh.json"
 
-python3 main.py $json_filename
+python3 dish.py $json_filename

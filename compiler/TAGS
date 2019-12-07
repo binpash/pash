@@ -1,0 +1,166 @@
+
+ir.py,2609
+def list_flatten(7,90
+def get_kv(12,250
+def format_arg_chars(17,358
+def format_arg_char(21,484
+def string_to_argument(38,980
+def char_to_arg_char(44,1222
+class Resource:Resource49,1422
+    def __init__(50,1438
+    def __repr__(54,1538
+    def split_resource(63,1899
+    def get_length(74,2362
+def create_file_id_for_resource(81,2556
+def create_split_file_id(87,2787
+class FileId:FileId106,3501
+    def __init__(107,3515
+    def __repr__(118,3939
+    def serialize(130,4420
+    def opt_serialize(140,4770
+    def pipe_name(145,4912
+    def set_resource(150,5046
+    def get_resource(156,5261
+    def set_children(161,5447
+    def get_children(165,5555
+    def split_resource(168,5613
+    def set_max_length(187,6636
+    def toFileName(190,6716
+    def isNull(194,6835
+    def union(197,6894
+    def find_fid_list(211,7408
+    def get_ident(218,7619
+    def flatten(221,7671
+class FileIdGen:FileIdGen228,7862
+    def __init__(229,7879
+    def next_file_id(232,7943
+class Node:Node255,8804
+    def __init__(256,8816
+    def __repr__(265,9118
+    def get_flat_input_file_ids(272,9386
+    def get_flat_output_file_ids(275,9522
+    def get_input_file_ids(278,9660
+    def get_output_file_ids(281,9776
+    def get_file_id(285,9916
+    def set_file_id(302,10524
+    def find_file_id_in_in_stream(318,11071
+    def find_file_id_in_out_stream(321,11188
+    def find_file_id_in_stream(324,11307
+class Command(337,11738
+    def __init__(338,11759
+    def __repr__(350,12349
+    def serialize(363,12865
+    def get_non_file_options(370,13216
+    def stateless_duplicate(373,13315
+    def make_duplicate_command(384,13713
+def create_command_assign_file_identifiers(429,15365
+def replace_file_arg_with_id(448,16293
+class Arg:Arg459,16785
+    def __init__(460,16796
+    def __repr__(467,17048
+    def opt_serialize(470,17125
+def find_command_input_output(486,17734
+def find_command_category(508,18641
+def is_comm_pure(536,19556
+def comm_input_output(543,19738
+def make_split_files(566,20616
+def make_split_file(589,21465
+def get_larger_file_id_ident(610,22354
+class IR:IR618,22666
+    def __init__(627,22898
+    def __repr__(639,23238
+    def serialize(643,23387
+    def serialize_as_JSON(659,24309
+    def serialize_as_JSON_string(686,25472
+    def set_ast(690,25625
+    def pipe_append(693,25681
+    def source_nodes(716,26574
+    def has_incoming_edge(723,26853
+    def get_next_nodes(732,27211
+    def get_file_id_gen(744,27739
+    def remove_node(756,28193
+    def add_node(759,28259
+    def empty(764,28434
+    def valid(770,28657
+
+union_find.py,55
+def MakeSet(13,488
+def Union(17,541
+def Find(28,875
+
+impl.py,178
+def execute(5,41
+def remove_fifo_if_exists(73,2428
+def make_fifo(80,2622
+def execute_node(86,2772
+def node_to_script(95,3082
+def new_split(136,4236
+def old_split(153,4944
+
+ast_to_ir.py,1112
+def check_if_asts_supported(7,100
+def compile_ast(23,613
+def compile_node(27,733
+def compile_node_pipe(49,1799
+def combine_pipe(77,3185
+def compile_node_command(95,3798
+def compile_node_and_or_semi(139,5741
+def compile_node_redir(144,5981
+def compile_node_subshell(156,6400
+def compile_node_background(174,7030
+def compile_node_defun(193,7735
+def compile_arg_char(209,8328
+def compile_command_argument(228,9050
+def compile_command_arguments(232,9216
+def compile_assignments(238,9517
+def replace_irs(264,10586
+def replace_ir(295,11959
+def make_command(327,13188
+def replace_irs_and_or_semi(339,13606
+def replace_irs_command(344,13784
+def replace_irs_arg_char(361,14496
+def replace_irs_command_argument(375,14965
+def replace_irs_command_arguments(379,15139
+def replace_irs_assignments(387,15463
+def check_pipe(402,15858
+def check_command(407,16012
+def check_and(410,16086
+def check_or(413,16156
+def check_semi(416,16225
+def check_redir(419,16296
+def check_subshell(422,16368
+def check_background(425,16443
+def check_defun(428,16520
+def get_case(431,16592
+def ast_match(444,17170
+
+json_ast.py,266
+def to_standard_json(14,325
+def from_standard_json(32,954
+def parse_json_line(40,1154
+def parse_json_ast(47,1358
+def save_asts_json(58,1718
+def serialize_asts_to_json(63,1892
+def serialize_ast_json(67,2029
+def json_to_shell(78,2351
+def ast_to_shell(82,2514
+
+main.py,46
+def from_ir_to_shell(11,147
+def main(17,304
+
+distr_plan.py,316
+def main(12,290
+def simpl_file_distribution_planner(68,2278
+def naive_parallelize_stateless_nodes_bfs(109,3695
+def split_command_input(153,5352
+def parallelize_stateless(186,6743
+def parallelize_pure(229,8607
+def parallelize_pure_sort(242,9142
+def sort_duplicate(298,11498
+def parallelize_pure_wc(309,11873
+
+gather_results.py,92
+def get_experiment_files(41,1245
+def read_time(45,1450
+def collect_scaleup_times(60,1961
