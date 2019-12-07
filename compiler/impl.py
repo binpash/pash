@@ -2,7 +2,20 @@ import os
 import time
 import subprocess
 
-def execute(graph_json, output_dir):
+def execute(graph_json, output_dir, output_script_name, output_optimized):
+    output_script = shell_backend(graph_json, output_dir)
+
+    ## Output the optimized shell script for inspection
+    if(output_optimized):
+        with open(output_script_name, "w") as output_script_file:
+            output_script_file.write(output_script)
+
+    ## TODO: Handle stdout, stderr, errors
+    exec_obj = subprocess.run(output_script, shell=True)
+    exec_obj.check_returncode()
+
+
+def shell_backend(graph_json, output_dir):
     ## TODO: Remove environment hardcoding
     env={"IN": "../scripts/input/i1M.txt"}
 
