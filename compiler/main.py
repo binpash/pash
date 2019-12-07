@@ -1,9 +1,12 @@
+import os
+import subprocess
+
 from ast_to_ir import *
 from distr_plan import *
 from ir import *
 from json_ast import *
 
-
+PARSER_VAR = "DISH_PARSER"
 
 def from_ir_to_shell(ir_filename, new_shell_filename):
     ## TODO: Execute the ocaml json_to_shell.native and save its
@@ -27,9 +30,17 @@ def main():
     ##
     ## 6. Execute the new AST using a standard shell
 
-    json_filename = sys.argv[1]
+    input_script_path = sys.argv[1]
+    parser_binary = os.environ[PARSER_VAR]
 
-    ast_objects = parse_json_ast(json_filename)
+    ## Execute the POSIX shell parser that returns the AST in JSON
+    parser_output = subprocess.run([parser_binary, input_script_path], capture_output=True, text=True)
+    parser_output.check_returncode()
+
+    json_ast_string = parser_output.stdout
+
+    # ast_objects = parse_json_ast(json_filename)
+    ast_objects = parse_json_ast_string(json_ast_string)
     check_if_asts_supported(ast_objects)
 
     ## This is for the files in the IR
@@ -51,10 +62,11 @@ def main():
         # print(final_ast)
         final_asts.append(final_ast)
 
-    ir_filename = json_filename + ".ir"
+    ## TODO: The following lines are currently useless, since we just
+    ## execute the first dataflow in each script manually
+    ir_filename = input_script_path + ".ir"
     save_asts_json(final_asts, ir_filename)
-
-    new_shell_filename = json_filename + ".sh"
+    new_shell_filename = input_script_path + "_compiled.sh"
     from_ir_to_shell(ir_filename, new_shell_filename)
 
     ##
