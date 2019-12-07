@@ -412,24 +412,5 @@ def parallelize_pure_wc(curr, graph, fileIdGen):
 
     ## BIG TODO: Extend the file class so that it supports tee etc.
 
-    ## Old Notes:
-    ##
-    ## A distribution planner that uses equations (like the ones we
-    ## have described with ++) could be separated into three parts:
-    ##
-    ## 1. Use the equations exhaustively (or until some bound) to
-    ##    expose any possible parallelism and distribution. This
-    ##    requires that applying equations has a normal form, either
-    ##    because they can only be applied a finite number of times,
-    ##    or because we have a normal form for equations that can be
-    ##    applied an infinite amount of times, that is succinct.
-    ##
-    ## 2. Assign each node of the IR to a physical node in the system.
-    ##
-    ## 3. Reapply the equalities (the other way around) so that
-    ##    operations on the same node can be merged together to
-    ##    improve performance.
-        
 if __name__ == "__main__":
     main()
-    
