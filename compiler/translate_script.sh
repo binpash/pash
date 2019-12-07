@@ -26,6 +26,5 @@ seq_script="${script_prefix}_seq.sh"
 distr_script="${script_prefix}_distr.sh"
 
 ## TODO: This currently assumes that there is only one IR in the script
-python3 main.py $seq_script &&
-python3 distr_plan.py /tmp/dish_temp_ir_file1 $distr_script $distr_output_dir $fan_out $batch_size
+python3 main.py $seq_script $distr_script &&
 cat $distr_script
