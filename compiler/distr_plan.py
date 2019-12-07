@@ -1,9 +1,11 @@
 import sys
 import pickle
+import subprocess
+import jsonpickle
+
 from ir import *
 from json_ast import *
 from impl import execute
-import jsonpickle
 
 ## This file receives the name of a file that holds an IR, reads the
 ## IR, read some configuration file with node information, and then
@@ -26,10 +28,10 @@ def main():
     else:
         batch_size = 100000
 
-    optimize_script(ir_filename, output_script_name, output_dir, fan_out, batch_size)
+    optimize_script(ir_filename, output_script_name, output_dir, True, fan_out, batch_size)
 
 
-def optimize_script(ir_filename, output_script_name, output_dir, fan_out, batch_size):
+def optimize_script(ir_filename, output_script_name, output_dir, output_optimized, fan_out, batch_size):
 
     ## TODO: Read output_dir, fan_out, and batch_size from a config file
 
@@ -62,10 +64,8 @@ def optimize_script(ir_filename, output_script_name, output_dir, fan_out, batch_
     ## available computational resources, such as nodes in the system,
     ## and their cores, etc.
 
-    output_script = execute(distributed_graph.serialize_as_JSON(), output_dir)
-    with open(output_script_name, "w") as output_script_file:
-        output_script_file.write(output_script)
-
+    ## Call the backend that executes the optimized dataflow graph
+    execute(distributed_graph.serialize_as_JSON(), output_dir, output_script_name, output_optimized)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The

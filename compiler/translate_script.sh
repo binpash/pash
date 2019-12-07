@@ -26,5 +26,5 @@ seq_script="${script_prefix}_seq.sh"
 distr_script="${script_prefix}_distr.sh"
 
 ## TODO: This currently assumes that there is only one IR in the script
-python3 main.py $seq_script $distr_script &&
+python3 main.py --output_optimized $seq_script $distr_script &&
 cat $distr_script

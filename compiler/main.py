@@ -68,7 +68,7 @@ def main():
 
     ## Execute the compiled version of the input script
     if(not args.compile_only):
-        execute_script(new_shell_filename, args.output)
+        execute_script(new_shell_filename, args.output, args.output_optimized)
 
 ## Note: It seems that in order for distribution and planning to
 ## happen correctly, the planner has to be invoked as late as possible
@@ -85,17 +85,19 @@ def parse_args():
     parser.add_argument("output", help="the path of the compiled shell script")
     parser.add_argument("--compile_only", help="only compile the input script and not execute it",
                         action="store_true")
+    parser.add_argument("--output_optimized", help="output the optimized shell script that was produced by the planner for inspection",
+                        action="store_true")
     args = parser.parse_args()
     return args
 
 ## TODO: Extend this to properly execute the compiled script
-def execute_script(compiled_script_filename, output_script_path):
+def execute_script(compiled_script_filename, output_script_path, output_optimized):
     ## For now, just execute the first dataflow graph in the script
     ir_filename = "/tmp/dish_temp_ir_file1"
-    output_dir = "/tmp/"
+    output_dir = "/tmp/distr_output/"
     fan_out = 4
     batch_size = 100
-    optimize_script(ir_filename, output_script_path, output_dir, fan_out, batch_size)
+    optimize_script(ir_filename, output_script_path, output_dir, output_optimized, fan_out, batch_size)
 
 ##
 ## Ideally, we would like to execute part of the shell script
