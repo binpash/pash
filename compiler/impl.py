@@ -67,6 +67,8 @@ def execute(graph_json, output_dir):
     output_script_commands.append('rm -rf "{}"'.format(shared_memory_dir))
     end_time = time.time()
 
+    ## TODO: Cat all outputs together if a specific flag is given
+
     # print("Distributed translation execution time:", end_time - start_time)
     return "\n".join(output_script_commands)
 

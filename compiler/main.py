@@ -1,5 +1,6 @@
 import os
 import subprocess
+import argparse
 
 from ast_to_ir import *
 from distr_plan import *
@@ -7,12 +8,6 @@ from ir import *
 from json_ast import *
 
 PARSER_VAR = "DISH_PARSER"
-
-def from_ir_to_shell(ir_filename, new_shell_filename):
-    ## TODO: Execute the ocaml json_to_shell.native and save its
-    ## output in a file
-    return
-
 
 def main():
     ## Translation process:
@@ -30,7 +25,9 @@ def main():
     ##
     ## 6. Execute the new AST using a standard shell
 
-    input_script_path = sys.argv[1]
+    args = parse_args()
+
+    input_script_path = args.input
     parser_binary = os.environ[PARSER_VAR]
 
     ## Execute the POSIX shell parser that returns the AST in JSON
@@ -69,16 +66,36 @@ def main():
     new_shell_filename = input_script_path + "_compiled.sh"
     from_ir_to_shell(ir_filename, new_shell_filename)
 
-    ##
-    ## TODO: Make sure that the whole end-to-end prototype runs (calling
-    ## ocaml to parse, and make a trivial distribution planner that runs
-    ## runs the original ast.
-
-
+    ## Execute the compiled version of the input script
+    if(not args.compile_only):
+        execute_script(new_shell_filename, args.output)
 
 ## Note: It seems that in order for distribution and planning to
 ## happen correctly, the planner has to be invoked as late as possible
 ## during the shell execution.
+
+def from_ir_to_shell(ir_filename, new_shell_filename):
+    ## TODO: Execute the ocaml json_to_shell.native and save its
+    ## output in a file
+    return
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input", help="the script to be compiled and executed")
+    parser.add_argument("output", help="the path of the compiled shell script")
+    parser.add_argument("--compile_only", help="only compile the input script and not execute it",
+                        action="store_true")
+    args = parser.parse_args()
+    return args
+
+## TODO: Extend this to properly execute the compiled script
+def execute_script(compiled_script_filename, output_script_path):
+    ## For now, just execute the first dataflow graph in the script
+    ir_filename = "/tmp/dish_temp_ir_file1"
+    output_dir = "/tmp/"
+    fan_out = 4
+    batch_size = 100
+    optimize_script(ir_filename, output_script_path, output_dir, fan_out, batch_size)
 
 ##
 ## Ideally, we would like to execute part of the shell script

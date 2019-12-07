@@ -26,6 +26,14 @@ def main():
     else:
         batch_size = 100000
 
+    optimize_script(ir_filename, output_script_name, output_dir, fan_out, batch_size)
+
+
+def optimize_script(ir_filename, output_script_name, output_dir, fan_out, batch_size):
+
+    ## TODO: Read output_dir, fan_out, and batch_size from a config file
+
+
     with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
 
@@ -57,6 +65,7 @@ def main():
     output_script = execute(distributed_graph.serialize_as_JSON(), output_dir)
     with open(output_script_name, "w") as output_script_file:
         output_script_file.write(output_script)
+
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
