@@ -1,0 +1,62 @@
+- Dish distributability classes
+  - Currently this is done with manual analysis (I assume),
+  would it be feasible to infer these? The core advantage would
+  be to do this for new commands (i.e. effectively synthesizing
+  the DSL-based distributability specification)
+  - For example:
+    - Given inputs and expected outputs, could we distribute
+    (e.g. split inputs, split outputs) and characterize behavior
+    - Given a pre-defined set of reduce operations, we could perhaps
+    identify applications that would allow behavior to match
+    sequential (e.g. sort -m for multiple outputs of sort)
+  - Done offline, and done once
+
+
+- Data being distributed:
+  - Dish assumes data is always dynamic, but we could imagine
+  that for some cases a lot of the data may be static (at start
+  of pipeline), e.g. plain text file "databases"
+    - Dish could (offline) create typical database structures to help:
+      - indices
+      - pre-compute common partitions (e.g. by date/timestamp for time series)
+
+
+- Rewrites:
+  - How many are there?
+  - In DBs (and most rewrite systems) order of optimizations matters
+  and can expose different opportunities. How is this done currently?
+  Is there a deterministic set of rewrites?
+
+  * Would be interesting to explore: 1) random rewrites (see possible low/upper
+  bounds on speedup), 2) potentially learn to apply rewrites?
+
+  * Random rewrites could be paired with multi-version execution:
+    - Take whichever terminates first
+
+
+- Completely unrelated (but could be interesting):
+  - I would argue many (particularly domain experts) don't know
+  unix well, but *do* know languages like Python well. If I have a program
+  written in Python, could we find/synthesize unix pipeline?
+    - We could use the (sequential)
+    python program to produce input/output pairs,
+    synthesize a unix pipeline on that and then apply dish
+
+  - Perhaps a less ambitious effort would be to translate SQL queries
+  to unix (there we have limited set of well understood operators,
+  can map query to relational algebra operations and then
+  map one (or multiple ops) to unix)
+    - This is pretty cool though, because there are already existing
+    tools/techniques to go from NL to SQL (that kind of work), so
+    this would allow NL to Dish as well
+
+
+
+In terms of easiest to hardest (I think):
+  - random rewrites
+    - random rewrites + multi-version execution
+    - learned rewrites (sequence of rewrites are actions, state is current rewritten dataflow graph, reward is speedup)
+  - Dish-SQL (translate SQL to unix and apply dish)
+  - Dish-DB structures
+  - Dish "inferring" distributability class for new operator
+  - Dish-Python (perhaps overly ambitious and unclear if a real benefit)
