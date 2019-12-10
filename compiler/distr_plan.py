@@ -2,6 +2,7 @@ import sys
 import pickle
 import subprocess
 import jsonpickle
+import yaml
 
 from ir import *
 from json_ast import *
@@ -11,39 +12,36 @@ from impl import execute
 ## IR, read some configuration file with node information, and then
 ## should make a distribution plan for it.
 
+config = {}
+
+def load_config():
+    global config
+
+    ## TODO allow this to be passed as an argument
+    config_file_path = 'config.yaml'
+    with open(config_file_path) as config_file:
+        config = yaml.load(config_file, Loader=yaml.FullLoader)
+
+    if not config:
+        raise Exception('No valid configuration could be loaded from {}'.format(config_file_path))
+
 def main():
-    # print command line arguments
-    ir_filename = sys.argv[1]
-    output_script_name = sys.argv[2]
-    output_dir = sys.argv[3]
+    load_config()
+    optimize_script()
 
-    ## The 4th argument is an optional fan_out
-    if (len(sys.argv) >= 5):
-        fan_out = int(sys.argv[4])
-    else:
-        fan_out = 2
+def optimize_script():
+    global config
+    if not config:
+        load_config()
 
-    if (len(sys.argv) >= 6):
-        batch_size = int(sys.argv[5])
-    else:
-        batch_size = 100000
-
-    optimize_script(ir_filename, output_script_name, output_dir, True, fan_out, batch_size)
-
-
-def optimize_script(ir_filename, output_script_name, output_dir, output_optimized, fan_out, batch_size):
-
-    ## TODO: Read output_dir, fan_out, and batch_size from a config file
-
-
-    with open(ir_filename, "rb") as ir_file:
+    with open(config['ir_filename'], "rb") as ir_file:
         ir_node = pickle.load(ir_file)
 
-    print("Retrieving IR: {} ...".format(ir_filename))
+    print("Retrieving IR: {} ...".format(config['ir_filename']))
     shell_string = ast_to_shell(ir_node.ast)
     print(shell_string)
 
-    distributed_graph = simpl_file_distribution_planner(ir_node, fan_out, batch_size)
+    distributed_graph = simpl_file_distribution_planner(ir_node, config['fan_out'], config['batch_size'])
 
     ## Notes:
     ##
@@ -65,7 +63,7 @@ def optimize_script(ir_filename, output_script_name, output_dir, output_optimize
     ## and their cores, etc.
 
     ## Call the backend that executes the optimized dataflow graph
-    execute(distributed_graph.serialize_as_JSON(), output_dir, output_script_name, output_optimized)
+    execute(distributed_graph.serialize_as_JSON(), config['output_dir'], config['output_script_name'], config['output_optimized'])
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
