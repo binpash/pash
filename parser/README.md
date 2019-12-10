@@ -6,6 +6,9 @@ parser and outputs the AST in JSON format using atdgen.
 In order for this to work, one has to install the libdash (as
 explained in its README) and then run `make` here.
 
+After `make` succeeds you have to assign the `DISH_PARSER` environment
+variable to the path to `parse_to_json.native`.
+
 To run the parser, one can run:
 
 ```sh

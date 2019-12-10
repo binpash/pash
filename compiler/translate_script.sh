@@ -25,13 +25,6 @@ json="/tmp/temp_script.json"
 seq_script="${script_prefix}_seq.sh"
 distr_script="${script_prefix}_distr.sh"
 
-## First parse the script_to_json
-../parser/parse_to_json.native $seq_script > $json
-
-# echo "Translate:"
-# cat $seq_script
-
 ## TODO: This currently assumes that there is only one IR in the script
-python3 main.py $json &&
-python3 distr_plan.py /tmp/dish_temp_ir_file1 $distr_script $distr_output_dir $fan_out $batch_size
+python3 dish.py --output_optimized $seq_script $distr_script &&
 cat $distr_script

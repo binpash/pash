@@ -38,20 +38,23 @@ def from_standard_json(string):
 
 ## Returns the ast as a object
 def parse_json_line(line):
-    std_json_line = to_standard_json(line)        
+    std_json_line = to_standard_json(line)
     # print(std_json_line)
     ast_object = json.loads(std_json_line)
     return ast_object
 
+def parse_json_ast_string(json_string):
+    stripped_json_string = json_string.strip()
+    lines = stripped_json_string.split("\n")
+    ast_objects = [parse_json_line(line) for line in lines]
+    return ast_objects
+
+
 ## Returns a list of AST objects
 def parse_json_ast(json_filename):
     with open(json_filename) as json_file:
-        lines = json_file.readlines()
-        ast_objects = [parse_json_line(line) for line in lines]
-        # for ast_object in ast_objects:
-            # print(json.dumps(ast_object, indent=2))
-            # print(ast_object)
-        return ast_objects
+        file_string = json_file.read()
+        return parse_json_ast_string(file_string)
 
 ### --- To JSON --- ###
 
