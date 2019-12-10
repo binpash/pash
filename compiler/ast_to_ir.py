@@ -3,11 +3,6 @@ from union_find import *
 
 import pickle
 
-## Checks if the given ASTs are supported
-def check_if_asts_supported(ast_objects):
-    ## TODO: Implement
-    return
-
 ##
 ## Compile AST -> Extended AST with IRs
 ##

@@ -1,9 +1,11 @@
 import sys
 import pickle
+import subprocess
+import jsonpickle
+
 from ir import *
 from json_ast import *
 from impl import execute
-import jsonpickle
 
 ## This file receives the name of a file that holds an IR, reads the
 ## IR, read some configuration file with node information, and then
@@ -25,6 +27,14 @@ def main():
         batch_size = int(sys.argv[5])
     else:
         batch_size = 100000
+
+    optimize_script(ir_filename, output_script_name, output_dir, True, fan_out, batch_size)
+
+
+def optimize_script(ir_filename, output_script_name, output_dir, output_optimized, fan_out, batch_size):
+
+    ## TODO: Read output_dir, fan_out, and batch_size from a config file
+
 
     with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
@@ -54,9 +64,8 @@ def main():
     ## available computational resources, such as nodes in the system,
     ## and their cores, etc.
 
-    output_script = execute(distributed_graph.serialize_as_JSON(), output_dir)
-    with open(output_script_name, "w") as output_script_file:
-        output_script_file.write(output_script)
+    ## Call the backend that executes the optimized dataflow graph
+    execute(distributed_graph.serialize_as_JSON(), output_dir, output_script_name, output_optimized)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
@@ -403,24 +412,5 @@ def parallelize_pure_wc(curr, graph, fileIdGen):
 
     ## BIG TODO: Extend the file class so that it supports tee etc.
 
-    ## Old Notes:
-    ##
-    ## A distribution planner that uses equations (like the ones we
-    ## have described with ++) could be separated into three parts:
-    ##
-    ## 1. Use the equations exhaustively (or until some bound) to
-    ##    expose any possible parallelism and distribution. This
-    ##    requires that applying equations has a normal form, either
-    ##    because they can only be applied a finite number of times,
-    ##    or because we have a normal form for equations that can be
-    ##    applied an infinite amount of times, that is succinct.
-    ##
-    ## 2. Assign each node of the IR to a physical node in the system.
-    ##
-    ## 3. Reapply the equalities (the other way around) so that
-    ##    operations on the same node can be merged together to
-    ##    improve performance.
-        
 if __name__ == "__main__":
     main()
-    

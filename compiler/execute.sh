@@ -25,7 +25,7 @@ cat $script
 
 ## TODO: This currently assumes that there is only one IR in the script
 echo "Distributed:"
-python3 main.py $json &&
+python3 dish.py $json &&
 time python3 distr_plan.py /tmp/dish_temp_ir_file1 $output_script $distr_output
 # time /bin/bash $output_script
 
