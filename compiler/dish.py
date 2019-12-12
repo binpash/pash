@@ -84,11 +84,7 @@ def compile_asts(ast_objects):
 ## TODO: Extend this to properly execute the compiled script
 def execute_script(compiled_script_filename, output_script_path, output_optimized):
     ## For now, just execute the first dataflow graph in the script
-    ir_filename = "/tmp/dish_temp_ir_file1"
-    output_dir = "/tmp/distr_output/"
-    fan_out = 4
-    batch_size = 100
-    optimize_script(ir_filename, output_script_path, output_dir, output_optimized, fan_out, batch_size)
+    optimize_script()
 
 if __name__ == "__main__":
     main()
