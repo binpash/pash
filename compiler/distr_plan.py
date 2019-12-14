@@ -221,9 +221,9 @@ def parallelize_command(curr, graph, fileIdGen):
             intermediate_output_file_id.set_children(new_output_file_ids)
             curr.stdout = intermediate_output_file_id
 
-            ## TODO: Generalize this part to not only work for sort
-            ## For each new input and output file id, make a new command
-            merge_command = create_sort_merge_command(curr, new_output_file_ids, out_edge_file_id)
+            ## Make a merge command that joins the results of all the
+            ## duplicated commands
+            merge_command = create_merge_command(curr, new_output_file_ids, out_edge_file_id)
             graph.add_node(merge_command)
         else:
             print("Unreachable code reached :(")
@@ -251,6 +251,13 @@ def parallelize_command(curr, graph, fileIdGen):
 
         return graph
 
+## Creates a merge command for all pure commands that can be
+## parallelized using a map and a reduce/merge step
+def create_merge_command(curr, new_output_file_ids, out_edge_file_id):
+    if(str(curr.command) == "sort"):
+        return create_sort_merge_command(curr, new_output_file_ids, out_edge_file_id)
+    else:
+        assert(False)
 
 ## TODO: This must be generated using some file information
 ##
@@ -281,62 +288,6 @@ def create_sort_merge_command(curr, new_output_file_ids, out_edge_file_id):
                             [],
                             out_edge_file_id)
     return merge_command
-
-def parallelize_pure_wc(curr, graph, fileIdGen):
-    input_file_ids = curr.get_flat_input_file_ids()
-    assert(len(input_file_ids) > 1)
-
-    ## We assume that every command has one output_file_id for
-    ## now. I am not sure if this must be lifted. This seems
-    ## to be connected to assertion regarding the next_nodes.
-    out_edge_file_ids = curr.get_output_file_ids()
-    assert(len(out_edge_file_ids) == 1)
-    out_edge_file_id = out_edge_file_ids[0]
-
-    ## Add children to the output file (thus also changing the
-    ## input file of the next command to have children)
-    new_output_file_ids = [fileIdGen.next_file_id() for in_fid in input_file_ids]
-    intermediate_output_file_id = fileIdGen.next_file_id()
-    intermediate_output_file_id.set_children(new_output_file_ids)
-
-    curr.stdout = intermediate_output_file_id
-    ## For each new input and output file id, make a new command
-    new_commands = sort_duplicate(curr, fileIdGen)
-    # print("New commands:")
-    # print(new_commands)
-
-    ## Create a merge sort command
-    ##
-    ## WARNING: Since the merge has to take the files as arguments, we
-    ## pass the pipe names as its arguments and nothing in stdin
-    old_options = curr.get_non_file_options()
-    ## TODO: Implement a proper version of parallel sort -m, instead
-    ## of using the parallel flag.
-    options = [string_to_argument("-m"), string_to_argument("--parallel={}".format(len(input_file_ids)))]
-    # options = []
-    options += [string_to_argument(fid.pipe_name()) for fid in new_output_file_ids]
-    opt_indices = [("option", i) for i in range(len(options))]
-    # in_stream = [("option", i + len(opt_indices)) for i in range(len(new_output_file_ids))]
-    in_stream = []
-    merge_command = Command(None, # TODO: Make a proper AST
-                            curr.command,
-                            options,
-                            in_stream,
-                            ["stdout"],
-                            opt_indices,
-                            "pure",
-                            # intermediate_output_file_id,
-                            [],
-                            out_edge_file_id)
-
-    graph.remove_node(curr)
-    for new_com in new_commands:
-        graph.add_node(new_com)
-
-    graph.add_node(merge_command)
-
-    return graph
-
 
 
     ## TODO: In order to be able to execute it, we either have to
