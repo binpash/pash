@@ -290,9 +290,7 @@ def replace_irs(ast, irFileGen):
 def replace_ir(ast_node, irFileGen):
     ir_file_id = irFileGen.next_file_id()
 
-    ## TODO: Remember to not have the prefix hardocded :( In order to
-    ## do this properly, I have to set this directory up when
-    ## execution starts.
+    ## TODO: READ THIS FROM A CONFIG FILE
     prefix = "/tmp/dish_temp_ir"
     
     ## TODO: I probably have to generate random file names for the irs, so
@@ -323,6 +321,7 @@ def make_command(ir_filename):
 
     ## TODO: Do we need to do anything with the lineno? If so, make
     ## sure that I keep it in the IR, so that I can find it.
+    ## TODO: READ THESE FROM A CONFIG FILE
     arguments = [string_to_argument("python3"),
                  string_to_argument("distr_plan.py"),
                  string_to_argument(ir_filename)]
