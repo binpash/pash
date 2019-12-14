@@ -48,58 +48,7 @@ def optimize_script():
     shell_string = ast_to_shell(ir_node.ast)
     print(shell_string)
 
-    distributed_graph = simpl_file_distribution_planner(ir_node, config['fan_out'], config['batch_size'])
-
-    ## Notes:
-    ##
-    ## Each node in the graph has one input stream and one output
-    ## stream.
-    ##
-    ## However, the input (and the output) might be in several
-    ## different "locations". So the input (and output) can be
-    ## represented as a sequence of resources. These can be files,
-    ## urls, blocks of files in HDFS, etc.
-    ##
-    ## The distribution planner takes a graph, where the edges
-    ## arriving to a node are uniquely numbered depending on the
-    ## position that they have in the sequence of inputs to the
-    ## incoming node.
-    ##
-    ## The distribution planner also takes information about the
-    ## available computational resources, such as nodes in the system,
-    ## and their cores, etc.
-
-    ## Call the backend that executes the optimized dataflow graph
-    execute(distributed_graph.serialize_as_JSON(), config['output_dir'], config['output_script_name'], config['output_optimized'])
-
-## This is a simplistic planner, that pushes the available
-## parallelization from the inputs in file stateless commands. The
-## planner starts from the sources of the graph, and pushes
-## file parallelization as far as possible.
-##
-## It returns a maximally expanded (regarding files) graph, that can
-## be scheduled depending on the available computational resources.
-def simpl_file_distribution_planner(graph, fan_out, batch_size):
-    # print("Intermediate representation:")
-    # print(graph)
-
-    ## We assume that the file identifiers that have been added in the
-    ## intermediate representation show the edges between different IR
-    ## nodes.
-    ##
-    ## We assume that all nodes have an in_stream and an out_stream
-    ## list, and that these are the ones which will be used to create
-    ## the graph.
-
-    ## Starting from the sources of the graph, if they are stateless,
-    ## duplicate the command as many times as the number of
-    ## identifiers in its in_stream. Then connect their outputs in
-    ## order to next command.
-    ##
-    ## Note: The above has to be done in a BFS fashion (starting from
-    ## all sources simultaneously) so that we don't have to iterate to
-    ## reach a fixpoint.
-    naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size)
+    distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config['fan_out'], config['batch_size'])
     # print("Parallelized graph:")
     # print(graph)
 
@@ -114,12 +63,24 @@ def simpl_file_distribution_planner(graph, fan_out, batch_size):
     # f.write(graph.serialize_as_JSON_string())
     # f.close()
 
-    ## The result of the above steps should be an expanded
-    ## intermediate representation graph, that can be then mapped to
-    ## real nodes.
-    return graph
+    ## Call the backend that executes the optimized dataflow graph
+    execute(distributed_graph.serialize_as_JSON(), config['output_dir'], config['output_script_name'], config['output_optimized'])
 
+## This is a simplistic planner, that pushes the available
+## parallelization from the inputs in file stateless commands. The
+## planner starts from the sources of the graph, and pushes
+## file parallelization as far as possible.
+##
+## It returns a maximally expanded (regarding files) graph, that can
+## be scheduled depending on the available computational resources.
 
+## We assume that the file identifiers that have been added in the
+## intermediate representation show the edges between different IR
+## nodes.
+##
+## We assume that all nodes have an in_stream and an out_stream
+## list, and that these are the ones which will be used to create
+## the graph.
 def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     source_nodes = graph.source_nodes()
     # print("Source nodes:")
@@ -142,6 +103,10 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     #         input_file_id = input_file_ids[0]
     #         input_file_id.split_resource(2, batch_size, fileIdGen)
 
+    ## Starting from the sources of the graph, if they are stateless,
+    ## duplicate the command as many times as the number of
+    ## identifiers in its in_stream. Then connect their outputs in
+    ## order to next command.
     nodes = source_nodes
     while (len(nodes) > 0):
         curr = nodes.pop(0)
