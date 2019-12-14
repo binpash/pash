@@ -381,6 +381,13 @@ class Command(Node):
 
         return new_commands
 
+    def is_pure_parallelizable(self):
+
+        ## TODO: Read from some file that contains information about
+        ## commands instead of hardcoding
+        parallelizable_pure = ["sort"]
+        return (self.category == "pure" and str(self.command) in parallelizable_pure)
+
     def make_duplicate_command(self, in_fid, out_fid):
 
         ## First find what does the new file identifier refer to
