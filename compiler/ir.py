@@ -371,7 +371,7 @@ class Command(Node):
         return [self.options[i] for _, i in self.opt_indices]
 
     def stateless_duplicate(self):
-        assert(self.category == "stateless")
+        assert(self.category == "stateless" or self.is_pure_parallelizable())
         input_file_ids = self.get_flat_input_file_ids()
         output_file_ids = self.get_flat_output_file_ids()
 
