@@ -194,6 +194,12 @@ class FileId:
     def isNull(self):
         return self.ident == "NULL"
 
+    ## TODO: This union-find structure is very brittle. It could break
+    ## very easily and it is difficult to reason about the
+    ## files. Replace this with some other structure. Maybe a map that
+    ## keeps the unifications of file identifiers. Make sure that when
+    ## uniting two files, their children and resources are modified
+    ## accordingly.
     def union(self, other):
         Union(self, other)
         my_resource = self.get_resource()

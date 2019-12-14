@@ -124,6 +124,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
         ## TODO: Remove hardcoded
         graph = split_command_input(curr, graph, fileIdGen, fan_out, batch_size)
         graph = parallelize_command(curr, graph, fileIdGen)
+    return graph
 
 ## Optimizes several commands by splitting its input
 def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
