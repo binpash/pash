@@ -214,23 +214,29 @@ def parallelize_command(curr, graph, fileIdGen):
 
         if(curr.category == "stateless"):
             out_edge_file_id.set_children(new_output_file_ids)
-
-            ## For each new input and output file id, make a new command
-            new_commands = curr.stateless_duplicate()
         elif(curr.is_pure_parallelizable()):
+            ## If the command is pure, there is need for a merging
+            ## command to be added at the end.
             intermediate_output_file_id = fileIdGen.next_file_id()
             intermediate_output_file_id.set_children(new_output_file_ids)
             curr.stdout = intermediate_output_file_id
 
             ## TODO: Generalize this part to not only work for sort
             ## For each new input and output file id, make a new command
-            new_commands = sort_duplicate(curr, fileIdGen)
             merge_command = create_sort_merge_command(curr, new_output_file_ids, out_edge_file_id)
             graph.add_node(merge_command)
         else:
             print("Unreachable code reached :(")
             assert(False)
             ## This should be unreachable
+
+        ## For each new input and output file id, make a new command
+        new_commands = curr.stateless_duplicate()
+        graph.remove_node(curr)
+        # print("New commands:")
+        # print(new_commands)
+        for new_com in new_commands:
+            graph.add_node(new_com)
 
         ## WARNING: In order for the above to not mess up
         ## anything, there must be no other node that writes to
@@ -243,28 +249,12 @@ def parallelize_command(curr, graph, fileIdGen):
         ## so that this assumption is lifted (either by not
         ## parallelizing, or by properly handling this case)
 
-        graph.remove_node(curr)
-        # print("New commands:")
-        # print(new_commands)
-        for new_com in new_commands:
-            graph.add_node(new_com)
-
         return graph
 
 
-## TODO: Find a better place to have this and the function below.
-def sort_duplicate(curr, fileIdGen):
-    assert(str(curr.command) == "sort")
-    input_file_ids = curr.get_flat_input_file_ids()
-    output_file_ids = curr.get_flat_output_file_ids()
-
-    in_out_file_ids = zip(input_file_ids, output_file_ids)
-
-    new_commands = [curr.make_duplicate_command(in_fid, out_fid) for in_fid, out_fid in in_out_file_ids]
-
-    return new_commands
-
 ## TODO: This must be generated using some file information
+##
+## TODO: Find a better place to put this function
 def create_sort_merge_command(curr, new_output_file_ids, out_edge_file_id):
     ## Create a merge sort command
     ##
