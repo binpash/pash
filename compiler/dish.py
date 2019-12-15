@@ -8,6 +8,7 @@ from ir import *
 from json_ast import *
 
 PARSER_VAR = "DISH_PARSER"
+DISH_TOP_VAR = "DISH_TOP"
 
 def main():
     ## Parse arguments
