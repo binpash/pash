@@ -4,8 +4,6 @@
 ## environment
 experiment=$1
 distr_output_dir=$2
-fan_out=$3
-batch_size=$4
 
 directory="${DISH_TOP}/tests/test_scripts/"
 prefix="${directory}${experiment}"
@@ -26,7 +24,7 @@ cat $seq_script | grep -v "rm -f" | grep -v "mkfifo"
 /bin/bash $seq_script > $seq_output
 
 echo "Distributed:"
-$DISH_TOP/compiler/translate_script.sh $seq_script $distr_script $distr_output_dir $fan_out $batch_size
+$DISH_TOP/compiler/translate_script.sh $seq_script $distr_script
 cat $distr_output_dir/* > $distr_output
 
 echo "Computing output difference... This will take some time..."
