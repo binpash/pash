@@ -9,4 +9,5 @@ The repository contains:
 * [parser](./parser): The parser uses the `libdash` POSIX-compliant parser and `atdgen` to convert scripts to JSON-encoded ASTs.
 * [pldi](./pldi): The paper submitted to PLDI 2020.
 * [runtime](./runtime): A JVM-based runtime for Dish.
-
+* [scripts](./scripts): Auxiliary scripts
+* [tests](./tests): Contains a set of tests to check that everything works
