@@ -35,11 +35,7 @@ def load_config():
 
     config = dish_config[CONFIG_KEY]
 
-def main():
-    load_config()
-    optimize_script()
-
-def optimize_script():
+def optimize_script(output_script_path):
     global config
     if not config:
         load_config()
@@ -67,7 +63,7 @@ def optimize_script():
     # f.close()
 
     ## Call the backend that executes the optimized dataflow graph
-    execute(distributed_graph.serialize_as_JSON(), config['output_dir'], config['output_script_name'], config['output_optimized'])
+    execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'])
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
@@ -298,6 +294,3 @@ def create_sort_merge_command(curr, new_output_file_ids, out_edge_file_id):
     ## pieces might be wrong.
 
     ## BIG TODO: Extend the file class so that it supports tee etc.
-
-if __name__ == "__main__":
-    main()
