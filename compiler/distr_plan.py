@@ -1,3 +1,4 @@
+import os
 import sys
 import pickle
 import subprocess
@@ -12,6 +13,8 @@ from impl import execute
 ## IR, read some configuration file with node information, and then
 ## should make a distribution plan for it.
 
+DISH_TOP_VAR = "DISH_TOP"
+
 config = {}
 
 def load_config():
@@ -19,8 +22,8 @@ def load_config():
     dish_config = {}
     CONFIG_KEY = 'distr_planner'
 
-    ## TODO allow this to be passed as an argument
-    config_file_path = 'config.yaml'
+    ## TODO: allow this to be passed as an argument
+    config_file_path = '{}/compiler/config.yaml'.format(os.environ[DISH_TOP_VAR])
     with open(config_file_path) as config_file:
         dish_config = yaml.load(config_file, Loader=yaml.FullLoader)
 
