@@ -1,0 +1,6 @@
+distr_planner:
+    ir_filename: /tmp/dish_temp_ir_file1
+    output_dir: /tmp/distr_output
+    fan_out: 2
+    batch_size: 10000
+    output_optimized: true
