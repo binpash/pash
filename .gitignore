@@ -32,3 +32,8 @@ revision.tex
 ./papers
 pldi/draft.synctex.gz
 pldi/draft.synctex.gz(busy)
+
+*.class
+papers
+
+notes.txt

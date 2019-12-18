@@ -1,0 +1,53 @@
+[nv] Key points
+-- emph (non-obvious) benefits of DSL
+-- bubble up multiple benefits (axes) of background
+   section---introduce shell language for readers who are unfamiliar,
+   show key shell elements that our target-lang leverages, outline
+   key challenges, and describe what's supported
+-- complete eval!
+
+High level summary/points:
++ Nifty!
+- I suspect people will want to see more benchmarks, especially macrobenchmarks. Probably the #1 improvement to focus on, even more so than extensions to handle broader classes of scripts.
+- Introduction of terminology might need some polishing; the abstract uses terms like "primitives", "stages", and "largest possible subprograms" but the reader doesn't know what those mean yet!
+- What's the advantage of a using a DSL over e.g. regular Python code? (Apart from the cynical "because PLDI wants a PL somewhere"). As I understand it, distributability is determined solely by looking at command line name + arguments, correct?
+
+Detailed notes:
+
+Lines 90-93 are very cool, I sort of wish this point could be emphasized more somehow!
+Line 104 lists "-t" twice.
+Line 136: using "ways" here is a bit awkward; maybe switch to "means" ?
+Line 142: Why specify "intermediate"?
+Line 145: I thought streams operated on bytes not lines! :-)
+Line 152: I sort of expected examples to illustrate preceding paragraphs/sentences. P2 seems out of place here.
+Line 159: "entirely up to every command" is a bit awkward.
+Line 154-164: seems like maybe this is getting too weedy for this early in the paper?
+Line 171-176: Likewise, this half of the paragraph seems too detailed/low-level for where it is in the paper. (The first half of the para seems to be the right level of detail.)
+Line 175: "file system identifiers part of a pipeline" ... huh??
+Line 187-191: OK, so this is seems to be the motivation for the details presented earlier, but there's still a big hole in the reader's head (at least this reader's head ;-)) concerning how those details get used by Dish. I think this half-page or so of material would be better off simplified & summarized. In section 2, after giving baseline coverage of files & streams, just say that Dish makes use of the tools Unix provides to convert between streams and files, and give a forward pointer to the section that explains the details.
+Lines 192-201: as above!
+Line 196: "dubbing" ? "doubling"?
+Line 205: Ya, this is getting back to important stuff!
+Lines 238-241: could be deleted without losing much I think...
+Line 245: This might be clearer if it's phrased as "can be viewed as parallel computations" rather than "describe(s) parallel computations" -- as I understand it, your point is to urge a shift in the reader's viewpoint, rather than describing/characterizing the established viewpoint.
+Lines 247-248: inconsistent separators between list elements! none followed by comma
+Line 251: I think if this sentence is going to call out p1 specifically (rather than some broader class of programs) it ought to do so more deliberately, to make the reader understand why. My guess is that the idea is something along the lines of "Even to correctly handle a simple pipeline such as p1---to say nothing of more sophisticated examples!---Dish must solve several challenges". But maybe you had something different in mind?
+Line 256: "understand standard commands part of the shell" - awkward!
+Line 262: no need to hyphenate "useful enough"
+Line 317-ish: I know they're on the next page, but I think an example class might still be useful earlier!
+Line 466: "bs" -> be
+Line 577: Terminology nit: What's meant here by "assignment"?
+Line 591: An example would be useful here!
+Line 717: Does it matter whether r() operates on concatenated results or if it takes 2 separate arguments? For example, implementing mergesort (with r=merge) seems easier if the intermediate results aren't concatenated. Either way, an example might be nice.
+LIne 717, again: I'm also confused about how this is going to work for "wc". The left side of the equation suggests arbitrary splits are possible, but what about splitting in the middle of a word? Consider "foo/bar" (with / denoting the split point), which will be 1 word at each call to m(). The m() function might include whether the left & right inputs were space-padded or not, so "foo/bar" would be combined back down to 1 word whereas "foo/ bar" would be 2 words, but then maybe this would mis-count "foo / bar" as 3 words??... Example definitions for m and r would be useful :-)
+Line 727-ish: a diagram akin to that on 686-687 might be useful here.
+Line 864: "un-expand"
+Line 866: example maybe?
+Line 875: can delete "that were"
+Line 897: I think t2 should be i2?
+Lines 908-935: is this example carrying its weight, space-wise? This seems better suited for an appendix than the main text.
+Line 1148: should capitalize the last three letters in "OpenJDK".
+Line 1151:  This should REALLY have a comparison to plain Bash as well. What's the COST? :-)
+Line 1198: missing "to" after "ability"
+Line 1233: missing "do" after "but"
+line 547: "supress" needs another p
