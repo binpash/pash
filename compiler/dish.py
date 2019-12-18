@@ -8,6 +8,7 @@ from ir import *
 from json_ast import *
 
 PARSER_VAR = "DISH_PARSER"
+DISH_TOP_VAR = "DISH_TOP"
 
 def main():
     ## Parse arguments
@@ -28,6 +29,7 @@ def main():
 
     ## TODO: The following lines are currently useless, since we just
     ## execute the first dataflow in each script manually
+    ## TODO: Don't hardcode the .ir file name
     ## 4. TODO: Translate the new AST back to shell syntax
     ir_filename = input_script_path + ".ir"
     save_asts_json(compiled_asts, ir_filename)
@@ -84,11 +86,7 @@ def compile_asts(ast_objects):
 ## TODO: Extend this to properly execute the compiled script
 def execute_script(compiled_script_filename, output_script_path, output_optimized):
     ## For now, just execute the first dataflow graph in the script
-    ir_filename = "/tmp/dish_temp_ir_file1"
-    output_dir = "/tmp/distr_output/"
-    fan_out = 4
-    batch_size = 100
-    optimize_script(ir_filename, output_script_path, output_dir, output_optimized, fan_out, batch_size)
+    optimize_script(output_script_path)
 
 if __name__ == "__main__":
     main()
