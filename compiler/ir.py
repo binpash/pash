@@ -1,11 +1,9 @@
 import copy
 import json
 from union_find import *
-### Utils
+from util import *
 
-## TODO: Move to another file
-def list_flatten(l):
-    return [item for sublist in l for item in sublist]
+### Utils
 
 ## This function gets a key and a value from a dictionary that only
 ## has one key
@@ -194,6 +192,12 @@ class FileId:
     def isNull(self):
         return self.ident == "NULL"
 
+    ## TODO: This union-find structure is very brittle. It could break
+    ## very easily and it is difficult to reason about the
+    ## files. Replace this with some other structure. Maybe a map that
+    ## keeps the unifications of file identifiers. Make sure that when
+    ## uniting two files, their children and resources are modified
+    ## accordingly.
     def union(self, other):
         Union(self, other)
         my_resource = self.get_resource()
@@ -220,7 +224,7 @@ class FileId:
 
     def flatten(self):
         if(len(self.get_children()) > 0):
-            return list_flatten([child.flatten() for child in self.get_children()])
+            return flatten_list([child.flatten() for child in self.get_children()])
         else:
             return [self]
 
@@ -270,10 +274,10 @@ class Node:
     ## These two commands return the flattened fileId list. Meaning
     ## that they return the children, if they exist.
     def get_flat_input_file_ids(self):
-        return list_flatten([Find(file_id).flatten() for file_id in self.get_input_file_ids()])
+        return flatten_list([Find(file_id).flatten() for file_id in self.get_input_file_ids()])
 
     def get_flat_output_file_ids(self):
-        return list_flatten([Find(file_id).flatten() for file_id in self.get_output_file_ids()])
+        return flatten_list([Find(file_id).flatten() for file_id in self.get_output_file_ids()])
 
     def get_input_file_ids(self):
         return [self.get_file_id(input_chunk) for input_chunk in self.in_stream]
@@ -371,7 +375,7 @@ class Command(Node):
         return [self.options[i] for _, i in self.opt_indices]
 
     def stateless_duplicate(self):
-        assert(self.category == "stateless")
+        assert(self.category == "stateless" or self.is_pure_parallelizable())
         input_file_ids = self.get_flat_input_file_ids()
         output_file_ids = self.get_flat_output_file_ids()
 
@@ -380,6 +384,13 @@ class Command(Node):
         new_commands = [self.make_duplicate_command(in_fid, out_fid) for in_fid, out_fid in in_out_file_ids]
 
         return new_commands
+
+    def is_pure_parallelizable(self):
+
+        ## TODO: Read from some file that contains information about
+        ## commands instead of hardcoding
+        parallelizable_pure = ["sort"]
+        return (self.category == "pure" and str(self.command) in parallelizable_pure)
 
     def make_duplicate_command(self, in_fid, out_fid):
 
@@ -442,7 +453,7 @@ def create_command_assign_file_identifiers(ast, fileIdGen, command, options, std
     for opt_or_ch in out_stream:
         new_fid = replace_file_arg_with_id(opt_or_ch, command, fileIdGen)
         command.set_file_id(opt_or_ch, new_fid)
-        
+
     return command
 
 def replace_file_arg_with_id(opt_or_channel, command, fileIdGen):
@@ -677,9 +688,9 @@ class IR:
         all_file_ids = list(set(all_file_ids))
         output_json["fids"] = all_file_ids
         output_json["nodes"] = nodes
-        flat_stdin = list_flatten([Find(self.stdin).flatten()])
+        flat_stdin = flatten_list([Find(self.stdin).flatten()])
         output_json["in"] = [fid.serialize() for fid in flat_stdin]
-        flat_stdout = list_flatten([Find(self.stdout).flatten()])
+        flat_stdout = flatten_list([Find(self.stdout).flatten()])
         output_json["out"] = [fid.serialize() for fid in flat_stdout]
         return output_json
 
@@ -689,12 +700,12 @@ class IR:
 
     def set_ast(self, ast):
         self.ast = ast
-    
+
     def pipe_append(self, other):
         assert(self.valid())
         assert(other.valid())
         self.nodes += other.nodes
-        
+
         ## This combines the two IRs by adding all of the nodes
         ## together, and by union-ing the stdout of the first with the
         ## stdin of the second.
@@ -706,7 +717,7 @@ class IR:
         assert(not other.stdin.isNull())
         self.stdout.union(other.stdin)
         self.stdout = other.stdout
-        
+
         ## Note: The ast is not extensible, and thus should be
         ## invalidated if an operation happens on the IR
         self.ast = None
@@ -751,14 +762,14 @@ class IR:
                 max_id = max(get_larger_file_id_ident(file_id), max_id)
         return FileIdGen(max_id)
 
-    
+
 
     def remove_node(self, node):
         self.nodes.remove(node)
 
     def add_node(self, node):
         self.nodes.append(node)
-        
+
     ## Note: We assume that the lack of nodes is an adequate condition
     ##       to check emptiness.
     def empty(self):

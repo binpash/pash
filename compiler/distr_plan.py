@@ -1,7 +1,9 @@
+import os
 import sys
 import pickle
 import subprocess
 import jsonpickle
+import yaml
 
 from ir import *
 from json_ast import *
@@ -11,90 +13,41 @@ from impl import execute
 ## IR, read some configuration file with node information, and then
 ## should make a distribution plan for it.
 
-def main():
-    # print command line arguments
-    ir_filename = sys.argv[1]
-    output_script_name = sys.argv[2]
-    output_dir = sys.argv[3]
+DISH_TOP_VAR = "DISH_TOP"
 
-    ## The 4th argument is an optional fan_out
-    if (len(sys.argv) >= 5):
-        fan_out = int(sys.argv[4])
-    else:
-        fan_out = 2
+config = {}
 
-    if (len(sys.argv) >= 6):
-        batch_size = int(sys.argv[5])
-    else:
-        batch_size = 100000
+def load_config():
+    global config
+    dish_config = {}
+    CONFIG_KEY = 'distr_planner'
 
-    optimize_script(ir_filename, output_script_name, output_dir, True, fan_out, batch_size)
+    ## TODO: allow this to be passed as an argument
+    config_file_path = '{}/compiler/config.yaml'.format(os.environ[DISH_TOP_VAR])
+    with open(config_file_path) as config_file:
+        dish_config = yaml.load(config_file, Loader=yaml.FullLoader)
 
+    if not dish_config:
+        raise Exception('No valid configuration could be loaded from {}'.format(config_file_path))
 
-def optimize_script(ir_filename, output_script_name, output_dir, output_optimized, fan_out, batch_size):
+    if CONFIG_KEY not in dish_config:
+        raise Exception('Missing `{}` config in {}'.format(CONFIG_KEY, config_file_path))
 
-    ## TODO: Read output_dir, fan_out, and batch_size from a config file
+    config = dish_config[CONFIG_KEY]
 
+def optimize_script(output_script_path):
+    global config
+    if not config:
+        load_config()
 
-    with open(ir_filename, "rb") as ir_file:
+    with open(config['ir_filename'], "rb") as ir_file:
         ir_node = pickle.load(ir_file)
 
-    print("Retrieving IR: {} ...".format(ir_filename))
+    print("Retrieving IR: {} ...".format(config['ir_filename']))
     shell_string = ast_to_shell(ir_node.ast)
     print(shell_string)
 
-    distributed_graph = simpl_file_distribution_planner(ir_node, fan_out, batch_size)
-
-    ## Notes:
-    ##
-    ## Each node in the graph has one input stream and one output
-    ## stream.
-    ##
-    ## However, the input (and the output) might be in several
-    ## different "locations". So the input (and output) can be
-    ## represented as a sequence of resources. These can be files,
-    ## urls, blocks of files in HDFS, etc.
-    ##
-    ## The distribution planner takes a graph, where the edges
-    ## arriving to a node are uniquely numbered depending on the
-    ## position that they have in the sequence of inputs to the
-    ## incoming node.
-    ##
-    ## The distribution planner also takes information about the
-    ## available computational resources, such as nodes in the system,
-    ## and their cores, etc.
-
-    ## Call the backend that executes the optimized dataflow graph
-    execute(distributed_graph.serialize_as_JSON(), output_dir, output_script_name, output_optimized)
-
-## This is a simplistic planner, that pushes the available
-## parallelization from the inputs in file stateless commands. The
-## planner starts from the sources of the graph, and pushes
-## file parallelization as far as possible.
-##
-## It returns a maximally expanded (regarding files) graph, that can
-## be scheduled depending on the available computational resources.
-def simpl_file_distribution_planner(graph, fan_out, batch_size):
-    # print("Intermediate representation:")
-    # print(graph)
-
-    ## We assume that the file identifiers that have been added in the
-    ## intermediate representation show the edges between different IR
-    ## nodes.
-    ##
-    ## We assume that all nodes have an in_stream and an out_stream
-    ## list, and that these are the ones which will be used to create
-    ## the graph.
-
-    ## Starting from the sources of the graph, if they are stateless,
-    ## duplicate the command as many times as the number of
-    ## identifiers in its in_stream. Then connect their outputs in
-    ## order to next command.
-    ##
-    ## Note: The above has to be done in a BFS fashion (starting from
-    ## all sources simultaneously) so that we don't have to iterate to
-    ## reach a fixpoint.
-    naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size)
+    distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config['fan_out'], config['batch_size'])
     # print("Parallelized graph:")
     # print(graph)
 
@@ -105,16 +58,28 @@ def simpl_file_distribution_planner(graph, fan_out, batch_size):
     # f.close()
 
     # print(graph.serialize())
-    f = open("serialized_ir", "w")
-    f.write(graph.serialize_as_JSON_string())
-    f.close()
+    # f = open("serialized_ir", "w")
+    # f.write(graph.serialize_as_JSON_string())
+    # f.close()
 
-    ## The result of the above steps should be an expanded
-    ## intermediate representation graph, that can be then mapped to
-    ## real nodes.
-    return graph
+    ## Call the backend that executes the optimized dataflow graph
+    execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'])
 
+## This is a simplistic planner, that pushes the available
+## parallelization from the inputs in file stateless commands. The
+## planner starts from the sources of the graph, and pushes
+## file parallelization as far as possible.
+##
+## It returns a maximally expanded (regarding files) graph, that can
+## be scheduled depending on the available computational resources.
 
+## We assume that the file identifiers that have been added in the
+## intermediate representation show the edges between different IR
+## nodes.
+##
+## We assume that all nodes have an in_stream and an out_stream
+## list, and that these are the ones which will be used to create
+## the graph.
 def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     source_nodes = graph.source_nodes()
     # print("Source nodes:")
@@ -137,7 +102,10 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     #         input_file_id = input_file_ids[0]
     #         input_file_id.split_resource(2, batch_size, fileIdGen)
 
-
+    ## Starting from the sources of the graph, if they are stateless,
+    ## duplicate the command as many times as the number of
+    ## identifiers in its in_stream. Then connect their outputs in
+    ## order to next command.
     nodes = source_nodes
     while (len(nodes) > 0):
         curr = nodes.pop(0)
@@ -154,9 +122,8 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
 
         ## TODO: Remove hardcoded
         graph = split_command_input(curr, graph, fileIdGen, fan_out, batch_size)
-        graph = parallelize_stateless(curr, graph, fileIdGen)
-        graph = parallelize_pure(curr, graph, fileIdGen)
-
+        graph = parallelize_command(curr, graph, fileIdGen)
+    return graph
 
 ## Optimizes several commands by splitting its input
 def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
@@ -192,15 +159,12 @@ def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
 
     return graph
 
-def parallelize_stateless(curr, graph, fileIdGen):
-    ## If the command is stateless and has more than one inputs,
-    ## it can be parallelized
+def parallelize_command(curr, graph, fileIdGen):
+    ## If the command is stateless or pure parallelizable and has more
+    ## than one inputs, it can be parallelized.
     input_file_ids = curr.get_flat_input_file_ids()
-    if (curr.category == "stateless" and len(input_file_ids) > 1):
-        # print("To parallelize:")
-        # print(curr)
-        # print("Next nodes:")
-        # print(next_nodes)
+    if ((curr.category == "stateless" or curr.is_pure_parallelizable())
+        and len(input_file_ids) > 1):
 
         ## We assume that every command has one output_file_id for
         ## now. I am not sure if this must be lifted. This seems
@@ -212,14 +176,30 @@ def parallelize_stateless(curr, graph, fileIdGen):
         ## Add children to the output file (thus also changing the
         ## input file of the next command to have children)
         new_output_file_ids = [fileIdGen.next_file_id() for in_fid in input_file_ids]
-        out_edge_file_id.set_children(new_output_file_ids)
+
+        if(curr.category == "stateless"):
+            out_edge_file_id.set_children(new_output_file_ids)
+        elif(curr.is_pure_parallelizable()):
+            ## If the command is pure, there is need for a merging
+            ## command to be added at the end.
+            intermediate_output_file_id = fileIdGen.next_file_id()
+            intermediate_output_file_id.set_children(new_output_file_ids)
+            curr.stdout = intermediate_output_file_id
+
+            ## Make a merge command that joins the results of all the
+            ## duplicated commands
+            merge_command = create_merge_command(curr, new_output_file_ids, out_edge_file_id)
+            graph.add_node(merge_command)
+        else:
+            print("Unreachable code reached :(")
+            assert(False)
+            ## This should be unreachable
 
         ## For each new input and output file id, make a new command
         new_commands = curr.stateless_duplicate()
+        graph.remove_node(curr)
         # print("New commands:")
         # print(new_commands)
-
-        graph.remove_node(curr)
         for new_com in new_commands:
             graph.add_node(new_com)
 
@@ -233,49 +213,27 @@ def parallelize_stateless(curr, graph, fileIdGen):
         ## the intermediate representation and the above procedure
         ## so that this assumption is lifted (either by not
         ## parallelizing, or by properly handling this case)
-    return graph
 
-def parallelize_pure(curr, graph, fileIdGen):
-    ## If the command is stateless and has more than one inputs,
-    ## it can be parallelized
-    input_file_ids = curr.get_flat_input_file_ids()
-    if (curr.category == "pure" and len(input_file_ids) > 1):
-        ## Parallelize sort manually for now
-        if(str(curr.command) == "sort"):
-            graph = parallelize_pure_sort(curr, graph, fileIdGen)
-        # elif(str(curr.command) == "wc"):
-        #     graph = parallelize_pure_wc(curr, graph, fileIdGen)
+        return graph
 
-    return graph
+## Creates a merge command for all pure commands that can be
+## parallelized using a map and a reduce/merge step
+def create_merge_command(curr, new_output_file_ids, out_edge_file_id):
+    if(str(curr.command) == "sort"):
+        return create_sort_merge_command(curr, new_output_file_ids, out_edge_file_id)
+    else:
+        assert(False)
 
-def parallelize_pure_sort(curr, graph, fileIdGen):
-    input_file_ids = curr.get_flat_input_file_ids()
-    assert(len(input_file_ids) > 1)
-
-    ## We assume that every command has one output_file_id for
-    ## now. I am not sure if this must be lifted. This seems
-    ## to be connected to assertion regarding the next_nodes.
-    out_edge_file_ids = curr.get_output_file_ids()
-    assert(len(out_edge_file_ids) == 1)
-    out_edge_file_id = out_edge_file_ids[0]
-
-    ## Add children to the output file (thus also changing the
-    ## input file of the next command to have children)
-    new_output_file_ids = [fileIdGen.next_file_id() for in_fid in input_file_ids]
-    intermediate_output_file_id = fileIdGen.next_file_id()
-    intermediate_output_file_id.set_children(new_output_file_ids)
-
-    curr.stdout = intermediate_output_file_id
-    ## For each new input and output file id, make a new command
-    new_commands = sort_duplicate(curr, fileIdGen)
-    # print("New commands:")
-    # print(new_commands)
-
+## TODO: This must be generated using some file information
+##
+## TODO: Find a better place to put this function
+def create_sort_merge_command(curr, new_output_file_ids, out_edge_file_id):
     ## Create a merge sort command
     ##
     ## WARNING: Since the merge has to take the files as arguments, we
     ## pass the pipe names as its arguments and nothing in stdin
     old_options = curr.get_non_file_options()
+    input_file_ids = curr.get_flat_input_file_ids()
     ## TODO: Implement a proper version of parallel sort -m, instead
     ## of using the parallel flag.
     options = [string_to_argument("-m"), string_to_argument("--parallel={}".format(len(input_file_ids)))] + old_options
@@ -294,82 +252,7 @@ def parallelize_pure_sort(curr, graph, fileIdGen):
                             # intermediate_output_file_id,
                             [],
                             out_edge_file_id)
-
-    graph.remove_node(curr)
-    for new_com in new_commands:
-        graph.add_node(new_com)
-
-    graph.add_node(merge_command)
-
-    return graph
-
-## TODO: Find a better place to have this
-def sort_duplicate(curr, fileIdGen):
-    assert(str(curr.command) == "sort")
-    input_file_ids = curr.get_flat_input_file_ids()
-    output_file_ids = curr.get_flat_output_file_ids()
-
-    in_out_file_ids = zip(input_file_ids, output_file_ids)
-
-    new_commands = [curr.make_duplicate_command(in_fid, out_fid) for in_fid, out_fid in in_out_file_ids]
-
-    return new_commands
-
-def parallelize_pure_wc(curr, graph, fileIdGen):
-    input_file_ids = curr.get_flat_input_file_ids()
-    assert(len(input_file_ids) > 1)
-
-    ## We assume that every command has one output_file_id for
-    ## now. I am not sure if this must be lifted. This seems
-    ## to be connected to assertion regarding the next_nodes.
-    out_edge_file_ids = curr.get_output_file_ids()
-    assert(len(out_edge_file_ids) == 1)
-    out_edge_file_id = out_edge_file_ids[0]
-
-    ## Add children to the output file (thus also changing the
-    ## input file of the next command to have children)
-    new_output_file_ids = [fileIdGen.next_file_id() for in_fid in input_file_ids]
-    intermediate_output_file_id = fileIdGen.next_file_id()
-    intermediate_output_file_id.set_children(new_output_file_ids)
-
-    curr.stdout = intermediate_output_file_id
-    ## For each new input and output file id, make a new command
-    new_commands = sort_duplicate(curr, fileIdGen)
-    # print("New commands:")
-    # print(new_commands)
-
-    ## Create a merge sort command
-    ##
-    ## WARNING: Since the merge has to take the files as arguments, we
-    ## pass the pipe names as its arguments and nothing in stdin
-    old_options = curr.get_non_file_options()
-    ## TODO: Implement a proper version of parallel sort -m, instead
-    ## of using the parallel flag.
-    options = [string_to_argument("-m"), string_to_argument("--parallel={}".format(len(input_file_ids)))]
-    # options = []
-    options += [string_to_argument(fid.pipe_name()) for fid in new_output_file_ids]
-    opt_indices = [("option", i) for i in range(len(options))]
-    # in_stream = [("option", i + len(opt_indices)) for i in range(len(new_output_file_ids))]
-    in_stream = []
-    merge_command = Command(None, # TODO: Make a proper AST
-                            curr.command,
-                            options,
-                            in_stream,
-                            ["stdout"],
-                            opt_indices,
-                            "pure",
-                            # intermediate_output_file_id,
-                            [],
-                            out_edge_file_id)
-
-    graph.remove_node(curr)
-    for new_com in new_commands:
-        graph.add_node(new_com)
-
-    graph.add_node(merge_command)
-
-    return graph
-
+    return merge_command
 
 
     ## TODO: In order to be able to execute it, we either have to
@@ -411,6 +294,3 @@ def parallelize_pure_wc(curr, graph, fileIdGen):
     ## pieces might be wrong.
 
     ## BIG TODO: Extend the file class so that it supports tee etc.
-
-if __name__ == "__main__":
-    main()
