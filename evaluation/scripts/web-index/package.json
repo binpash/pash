@@ -1,0 +1,14 @@
+{
+  "name": "web-index",
+  "version": "1.0.0",
+  "description": "",
+  "main": "grep-url.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "natural": "^0.6.3"
+  }
+}
