@@ -1,3 +1,12 @@
+#!/bin/bash
+
+# Spell-check one or more man-pages
+# (TODO: could use markdown pages?)
+# 
+# TODO: `groff is an interesting "pure", whose wrapper only needs split input
+# TODO: files carefully.
+
+# Data: http://ndr.md/data/dummy/ronn.1
 # dict depends on the system
 dict=/usr/share/dict/words
 
