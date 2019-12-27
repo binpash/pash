@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Compatibility test, contains most of the features we'll need
+
 # Cute intro to brackets, for anyone interested
 # https://www.assertnotmagic.com/2018/06/20/bash-brackets-quick-reference/
 
