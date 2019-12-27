@@ -1,5 +1,7 @@
 #!/bin/bash
-# Find all N-Grams (for N==2, bigrams)
+
+# Find all 2-grams in a piece of text
+
 alias gen='head -n 2 ./input/input.txt'
 # alias gen='cat ./input/input.txt'
 mkfifo s2
