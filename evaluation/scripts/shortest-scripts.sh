@@ -1,7 +1,43 @@
 #!/bin/bash
-# A bash script for finding the shortest scripts 
-# From "Wicked Cool Shell Scripts", 2nd Ed., pg. 7
-# +p.95 multiple sed
-# +p.XX crawler
 
-cat ./input/cmds10x.txt | xargs file | grep "shell script" | cut -d: -f1 | xargs wc -l | sort -n | head -15
+# A bash script for finding the 10 longest scripts 
+# (TODO: `group_by` script type?)
+
+# From "Wicked Cool Shell Scripts", 2nd Ed., pg. 7
+
+# Data:
+# Assumes a full list of commands
+#
+# # simple, from a single dir:
+# echo "$(
+#   ls /usr/bin/*
+# )" > all_cmds.txt
+# 
+# # Or more complicated, from $PATH:
+#
+# echo "$(
+#   case "$PATH" in
+#     (*[!:]:) PATH="$PATH:" ;;
+#   esac
+#   
+#   set -f; IFS=:
+#   for dir in $PATH; do
+#     set +f
+#     [ -z "$dir" ] && dir="."
+#     for file in "$dir"/*; do
+#       if [ -x "$file" ] && ! [ -d "$file" ]; then
+#         printf '%s = %s\n' "${file##*/}" "$file"
+#       fi
+#     done
+#   done
+# )" > ./input/allcmds.txt
+
+INPUT="./input/cmds10x.txt"
+
+cat $INPUT |
+  xargs file |
+  grep "shell script" |
+  cut -d: -f1 |
+  xargs wc -l |
+  sort -rn |
+  head -n 25
