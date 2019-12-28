@@ -1,6 +1,35 @@
+## Summary of Results
+
+This table is for keeping track of `Dish` results, and blocking aspects when `Dish` can't execute something.
+
+| Pipeline              | 1x     | 100x    | Notes    |
+| --------------------- | ------ | ------- | -------- |
+| [genome-diff.sh]      |        |         |          |         
+| [compile.sh]          |        |         |          |     
+| [diff.sh]             |        |         |          |  
+| [set-diff.sh]         |        |         |          |      
+| [genquality.sh]       |        |         |          |        
+| [grep.sh]             |        |         |          |  
+| [maximal.sh]          |        |         |          |     
+| [merge-wc.sh]         |        |         |          |      
+| [minimal.sh]          |        |         |          |     
+| [bigrams.sh]          |        |         |          |     
+| [old_bigrams.sh]      |        |         |          |         
+| [page-count.sh]       |        |         |          |        
+| [tailprogs.sh]        |        |         |          |       
+| [sieve.sh]            |        |         |          |   
+| [spell.sh]            |        |         |          |   
+| [symtab-sha.sh]       |        |         |          |        
+| [topn.sh]             |        |         |          |  
+| [wc.sh]               |        |         |          |
+| [wf.sh]               |        |         |          |
+
+
+## Pipeline Details
+
 This directory contains a few example pipelines:
 
-* [bacterial-variants.sh]: Find differences between two genome sequences---a a paired Illumina sequencing read  (FASTQ files)  and an  assembled  reference genome  from GenBank  (e.g., Pasteurella multocida).
+* [genome-diff.sh]: Find differences between two genome sequences---a a paired Illumina sequencing read  (FASTQ files)  and an  assembled  reference genome  from GenBank  (e.g., Pasteurella multocida).
 * [compile.sh]: Find markdown files  in the current directory tree, compile  them to HTML, and serve them over the network.
 * [diff.sh]: Compare two shuffled-and-sorted streams, element by element.
 * [set-diff.sh]: Show the set-difference between two streams (i.e., elements in the first that are not in the second).
@@ -12,7 +41,7 @@ This directory contains a few example pipelines:
 * [bigrams.sh]: Identify all bigrams in an input text.
 * [old_bigrams.sh]: Identify all bigrams in an input text (using interm. files).
 * [page-count.sh]: Determine how many pages are in a folder of OpenOffice documents.
-* [shortest-scripts.sh]: Find the 25 longest shell scripts in the system.
+* [tailsprogs.sh]: Find the 25 longest programs/shell scripts in the system.
 * [sieve.sh]: Sieve of Eratosthenes for finding all prime numbers up to a limit.
 * [spell.sh]: Spell-check one or more man-pages.
 * [symtab-sha.sh]: Extract and hash an executable's symbol, useful for building and signing an SGX enclave
@@ -27,9 +56,10 @@ These files are candidates for removal:
 * minimal3.sh
 * minimal4.sh
 * minimal5.sh
-* pretty_print_json.sh* -- pipe to `jq .`?
+* pretty_print_json.sh* -- move to a `/tools` dir or simply pipe to `jq .`?
+* call_distrib_planner_example.sh -- move to a `/tools` dir?
 
-call_distrib_planner_example.sh
+## Setup Details
 
 ```sh
 # Install dependencies for some tools
