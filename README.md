@@ -21,6 +21,8 @@ Minor things left out by the PLDI submission:
 
 Additions for OSDI:
 
+* Implement, and possibley extend the DSL---and ensure it works with existing commands
+
 * POSIX Compliance: scripts have to be able to run with any POSIX script, even if they do not speed up much of it. That is, there shouldn't be a POSIX script that fails, only ones that do not see any performance improvements.
 
 * Environment variables: in the distributed execution, add the ability to synchronize environment variables (and other environment context) across nodes. This requires defining a bit more precisely what makes sense to distribute (e.g., PIDs and machine names cannot be distributed, and Dish should be careful with `/proc/fs`).
