@@ -6,14 +6,15 @@
 # Require
 # Data: /usr/lib/libz3.so
 
-INPUT=/usr/lib/libz3.so
+IN=/usr/lib/libz3.so
+OUT=./output/out.txt
 
-readelf -x .symtab $INPUT |
+readelf -x .symtab $IN |
   tail -n +3 |
-  head -n -1 | # next three implement `awk '{print $2$3$4$5}'`
+  head -n -1 |                # next three implement `awk '{print $2$3$4$5}'`
   sed 's/^[[:space:]]*//' | 
   cut -d ' ' -f2-5 |
   tr -d ' ' |
   tr -d "\n" |
   xxd -r -p |
-  sha256sum
+  sha256sum > $OUT

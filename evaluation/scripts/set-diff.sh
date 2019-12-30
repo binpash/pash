@@ -7,4 +7,8 @@
 p="../../stats/c_stats/"
 A=${1:-${p}posix.txt}
 B=${2:-${p}coreutils.txt}
-comm -3 <(cut -d ' ' -f 1 $A | sort ) <( cut -d ' ' -f 1 $B | sort)
+
+IN=./input/i1G.txt
+OUT=./output/out.txt
+
+comm -3 <(cut -d ' ' -f 1 $IN | sort ) <( cut -d ' ' -f 1 $IN | sort) > $OUT
