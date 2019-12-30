@@ -2,5 +2,8 @@
 
 # Count all words in a stream.
 
-INPUT=./input/i1G.txt
-cat $INPUT | wc -w 
+IN=./input/i1G.txt
+OUT=./output/out.txt
+
+cat $IN |
+  wc -w > $OUT

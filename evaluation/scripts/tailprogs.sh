@@ -32,12 +32,15 @@
 #   done
 # )" > ./input/allcmds.txt
 
-INPUT="./input/cmds10x.txt"
+IN=./input/cmds10x.txt
+OUT=./output/out.txt
 
-cat $INPUT |
+ls /usr/bin/* > $IN
+
+cat $IN |
   xargs file |
   grep "shell script" |
   cut -d: -f1 |
   xargs wc -l |
   sort -rn |
-  head -n 25
+  head -n 25 > $OUT
