@@ -2,29 +2,29 @@
 
 This table is for keeping track of `Dish` results, and blocking aspects when `Dish` can't execute something distributed. All input is provided in [./input](./input) (possibly requires executing `./input/fetch.sh`). 
 
-| Pipeline              | 1x                                                  | 100x    | Notes                                         |
-| --------------------- | --------------------------------------------------- | ------- | --------------------------------------------- |
-| [genome-diff.sh]      | 101.98s user 4.88s system 114% cpu 1:32.99 total    |         |                                               |
-| [diff.sh]             | 452.90s user 85.40s system 234% cpu 3:49.10 total   |         |                                               |
-| [set-diff.sh]         | 305.81s user 3.35s system 204% cpu 2:31.26 total    |         |                                               |
-| [genquality.sh]       | 7.03s user 2.30s system 148% cpu 6.305 total        |         |                                               |
-| [search.sh]           | 4825.71s user 5.93s system 99% cpu 1:20:33.88 total |         |                                               |
-| [bigrams.sh]          | 738.01s user 34.73s system 107% cpu 11:59.99 total  |         |                                               |
-| [trigrams.sh]         | 971.30s user 60.17s system 111% cpu 15:29.22 total  |         |                                               |
-| [page-count.sh]       | 0.21s user 0.03s system 107% cpu 0.228 total        |         |                                               |
-| [tailprogs.sh]        | 1.53s user 0.34s system 103% cpu 1.816 total        |         |                                               |
-| [spell.sh]            | 0.74s user 0.07s system 176% cpu 0.462 total        |         |                                               |
-| [symtab-sha.sh]       | 0.43s user 0.21s system 362% cpu 0.177 total        |         |                                               |
-| [topn.sh]             | 422.06s user 12.94s system 105% cpu 6:53.29 total   |         |                                               |
-| [wc.sh]               | 14.07s user 5.54s system 137% cpu 14.289 total      |         |                                               |
-| [wf.sh]               | 129.66s user 10.00s system 106% cpu 2:10.59 total   |         |                                               |
-| [longest-man.sh]      | 0.09s user 0.14s system 150% cpu 0.151 total        |         |                                               |
-|                       |                                                     |         |                                               |
-| [compile.sh]          | 18.02s user 0.50s system 100% cpu 18.489 total      |         | Does not make sense to parallelize            |
-| [sieve.sh]            | 12.41s user 8.78s system 68% cpu 30.816 total       |         | Not a pipeline                                |
-| [maximal.sh]          |                                                     |         | Only for compatibility testing                |
-| [merge-wc.sh]         |                                                     |         | Tool                                          |
-| [old_bigrams.sh]      |                                                     |         | Do we need it?                                |
+| Pipeline                         | 1x                                  | 100x    | Notes                                         |
+| -------------------------------- | ----------------------------------- | ------- | --------------------------------------------- |
+| [genome-diff.sh](genome-diff.sh) | 101.98s, 4.88s, 114% — _1:32.99_    |         |                                               |
+| [diff.sh](diff.sh)               | 452.90s, 85.40s, 234% — _3:49.10_   |         |                                               |
+| [set-diff.sh](set-diff.sh)       | 305.81s, 3.35s, 204% — _2:31.26_    |         |                                               |
+| [genquality.sh](genquality.sh)   | 7.03s, 2.30s, 148% — _6.305_        |         |                                               |
+| [search.sh](search.sh)           | 4825.71s, 5.93s, 99% — _1:20:33.88_ |         |                                               |
+| [bigrams.sh](bigrams.sh)         | 738.01s, 34.73s, 107% — _11:59.99_  |         |                                               |
+| [trigrams.sh](trigrams.sh)       | 971.30s, 60.17s, 111% — _15:29.22_  |         |                                               |
+| [page-count.sh](page-count.sh)   | 0.21s, 0.03s, 107% — _0.228_        |         |                                               |
+| [tailprogs.sh](tailprogs.sh)     | 1.53s, 0.34s, 103% — _1.816_        |         |                                               |
+| [spell.sh](spell.sh)             | 0.74s, 0.07s, 176% — _0.462_        |         |                                               |
+| [symtab-sha.sh](symtab-sha.sh)   | 0.43s, 0.21s, 362% — _0.177_        |         |                                               |
+| [topn.sh](topn.sh)               | 422.06s, 12.94s, 105% — _6:53.29_   |         |                                               |
+| [wc.sh](wc.sh)                   | 14.07s, 5.54s, 137% — _14.289_      |         |                                               |
+| [wf.sh](wf.sh)                   | 129.66s, 10.00s, 106% — _2:10.59_   |         |                                               |
+| [longest-man.sh](longest-man.sh) | 0.09s, 0.14s, 150% — _0.151_        |         |                                               |
+|                                  |                                     |         |                                               |
+| [compile.sh](compile.sh)         | 18.02s, 0.50s, 100% — _18.489_      |         | Does not make sense to parallelize            |
+| [sieve.sh](sieve.sh)             | 12.41s, 8.78s, 68% — _30.816_       |         | Not a pipeline                                |
+| [maximal.sh](maximal.sh)         |                                     |         | Only for compatibility testing                |
+| [merge-wc.sh](merge-wc.sh)       |                                     |         | Tool                                          |
+| [old_bigrams.sh](old_bigrams.sh) |                                     |         | Do we need it?                                |
 
 All scripts write to `./output/out.txt` (but could be made to read from and write to `/dev/shm/out.txt`).
 
@@ -41,26 +41,26 @@ done
 
 This directory contains a few example pipelines:
 
-* [genome-diff.sh]: Find differences between two genome sequences---a a paired Illumina sequencing read  (FASTQ files)  and an  assembled  reference genome  from GenBank  (e.g., Pasteurella multocida).
-* [compile.sh]: Find markdown files  in the current directory tree, compile  them to HTML, and serve them over the network.
-* [diff.sh]: Compare two shuffled-and-sorted streams, element by element.
-* [set-diff.sh]: Show the set-difference between two streams (i.e., elements in the first that are not in the second).
-* [genquality.sh]: Identify the primary reasons why GenBank rejects genome assemblies.
-* [search.sh]: Substring search of a complex string, using backtracking (equivalent of "Hello, World!" Program).
-* [maximal.sh]: A script for testing parsing compatibility.
-* [merge-wc.sh]: (**should move to a `./lib/wrappers`?**)
-* [bigrams.sh]: Identify all bigrams in an input text.
-* [bigrams.sh]: Identify all trigrams in an input text.
-* [old_bigrams.sh]: Identify all bigrams in an input text (using interm. files).
-* [page-count.sh]: Determine how many pages are in a folder of OpenOffice documents.
-* [tailsprogs.sh]: Find the 25 longest programs/shell scripts in the system.
-* [sieve.sh]: Sieve of Eratosthenes for finding all prime numbers up to a limit.
-* [spell.sh]: Spell-check one or more man-pages.
-* [symtab-sha.sh]: Extract and hash an executable's symbol, useful for building and signing an SGX enclave
-* [topn.sh]: Identify top 10 most frequent terms in an input text stream.
-* [wc.sh]: Count all words in a stream.
-* [wf.sh]: Report on the word-frequencies of distinct terms in an input text stream.
-* [longest-man.sh]: Reports on the longest manual pages found in the system.
+* [genome-diff.sh](genome-diff.sh): Find differences between two genome sequences---a a paired Illumina sequencing read  (FASTQ files)  and an  assembled  reference genome  from GenBank  (e.g., Pasteurella multocida).
+* [compile.sh](compile.sh): Find markdown files  in the current directory tree, compile  them to HTML, and serve them over the network.
+* [diff.sh](diff.sh): Compare two shuffled-and-sorted streams, element by element.
+* [set-diff.sh](set-diff.sh): Show the set-difference between two streams (i.e., elements in the first that are not in the second).
+* [genquality.sh](genquality.sh): Identify the primary reasons why GenBank rejects genome assemblies.
+* [search.sh](search.sh): Substring search of a complex string, using backtracking (equivalent of "Hello, World!" Program).
+* [maximal.sh](maximal.sh): A script for testing parsing compatibility.
+* [merge-wc.sh](merge-wc.sh): (**should move to a `./lib/wrappers`?**)
+* [bigrams.sh](bigrams.sh): Identify all bigrams in an input text.
+* [bigrams.sh](bigrams.sh): Identify all trigrams in an input text.
+* [old_bigrams.sh](old_bigrams.sh): Identify all bigrams in an input text (using interm. files).
+* [page-count.sh](page-count.sh): Determine how many pages are in a folder of OpenOffice documents.
+* [tailsprogs.sh](tailsprogs.sh): Find the 25 longest programs/shell scripts in the system.
+* [sieve.sh](sieve.sh): Sieve of Eratosthenes for finding all prime numbers up to a limit.
+* [spell.sh](spell.sh): Spell-check one or more man-pages.
+* [symtab-sha.sh](symtab-sha.sh): Extract and hash an executable's symbol, useful for building and signing an SGX enclave
+* [topn.sh](topn.sh): Identify top 10 most frequent terms in an input text stream.
+* [wc.sh](wc.sh): Count all words in a stream.
+* [wf.sh](wf.sh): Report on the word-frequencies of distinct terms in an input text stream.
+* [longest-man.sh](longest-man.sh): Reports on the longest manual pages found in the system.
 
 These files are candidates for removal:
 
