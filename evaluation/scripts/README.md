@@ -2,7 +2,7 @@
 
 This table is for keeping track of `Dish` results, and blocking aspects when `Dish` can't execute something distributed. All input is provided in [./input](./input) (possibly requires executing `./input/fetch.sh`). 
 
-| Pipeline                         | 1x                                  | 100x    | Notes                                         |
+| Pipeline                         | 1×                                  | 100×    | Notes                                         |
 | -------------------------------- | ----------------------------------- | ------- | --------------------------------------------- |
 | [genome-diff.sh](genome-diff.sh) | 101.98s, 4.88s, 114% — _1:32.99_    |         |                                               |
 | [diff.sh](diff.sh)               | 452.90s, 85.40s, 234% — _3:49.10_   |         |                                               |
