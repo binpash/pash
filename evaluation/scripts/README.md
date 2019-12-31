@@ -9,8 +9,8 @@ This table is for keeping track of `Dish` results, and blocking aspects when `Di
 | [set-diff.sh]         | 305.81s user 3.35s system 204% cpu 2:31.26 total    |         |                                               |
 | [genquality.sh]       | 7.03s user 2.30s system 148% cpu 6.305 total        |         |                                               |
 | [search.sh]           | 4825.71s user 5.93s system 99% cpu 1:20:33.88 total |         |                                               |
-| [bigrams.sh]          |                                                     |         |                                               |
-| [trigrams.sh]         |                                                     |         |                                               |
+| [bigrams.sh]          | 738.01s user 34.73s system 107% cpu 11:59.99 total  |         |                                               |
+| [trigrams.sh]         | 971.30s user 60.17s system 111% cpu 15:29.22 total  |         |                                               |
 | [page-count.sh]       | 0.21s user 0.03s system 107% cpu 0.228 total        |         |                                               |
 | [tailprogs.sh]        | 1.53s user 0.34s system 103% cpu 1.816 total        |         |                                               |
 | [spell.sh]            | 0.74s user 0.07s system 176% cpu 0.462 total        |         |                                               |
@@ -27,6 +27,15 @@ This table is for keeping track of `Dish` results, and blocking aspects when `Di
 | [old_bigrams.sh]      |                                                     |         | Do we need it?                                |
 
 All scripts write to `./output/out.txt` (but could be made to read from and write to `/dev/shm/out.txt`).
+
+To run and time all scripts, execute:
+
+```sh
+./input/fetch.sh
+for f in *.sh; do
+  time ./$f
+done
+```
 
 ## Pipeline Details
 

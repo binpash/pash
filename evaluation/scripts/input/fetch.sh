@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -e
+# or call the script with its absolute name
+cd $(dirname $0)
+
 curl 'http://ndr.md/data/dummy/i1M.txt' > i1M.txt
 curl 'http://ndr.md/data/dummy/i1G.txt' > i1G.txt
 wget http://ndr.md/data/bio/R1.fastq.gz
