@@ -7,18 +7,23 @@
 # TODO: files carefully.
 
 # Data: http://ndr.md/data/dummy/ronn.1
-# dict depends on the system
-dict=/usr/share/dict/words
+# dict depends on the system (and has to be sorted), so we assume it exists
+dict=./input/dict.txt
 
-cat manpage.1               |  # other tricks
+# mercurial page
+IN=/usr/share/man/man1/hg.1.gz
+OUT=./output/out.txt
+
+cat $IN |
+gunzip |                       # other tricks
 groff -t -e -mandoc -Tascii |  # remove formatting commands
 # prepare filename | 
 col -bx |                      # remove backspaces / linefeeds
 tr A-Z a-z |                   # map upper to lower case
 tr -d '[:punct:]' |            # remove punctuation
 sort |                         # put words in alphabetical order
-unique |                       # remove duplicate words
-comm -13 $dict -               # report words not in dictionary 
+uniq |                         # remove duplicate words
+comm -13 $dict - > $OUT        # report words not in dictionary 
 
 # The 2nd `tr` is also an example  of writing a stage in multiple ways
 # some trivially parallelizable (tr), others not so much (awk)

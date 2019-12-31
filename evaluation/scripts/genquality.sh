@@ -8,9 +8,10 @@
 # Require: csvkit
 # Data: http://ndr.md/data/bio/genbank.txt
 
-GEN_BANK="genbank.txt"
+IN=./input/genbank.txt
+OUT=./output/out.txt
 
-cat $GEN_BANK |
+cat $IN |
   csvcut -t -K 1 -c 'excluded_from_refseq' |
   tail -n +2 | tr ";" "\n" |
   sed -e 's/^ //' -e 's/ $//' |
@@ -19,55 +20,56 @@ cat $GEN_BANK |
   uniq -c |
   sort -nr |
   head -n 10 |
-  nl
+  nl > $OUT
 
-# Strains with Complete Genome
-cat assembly_summary.tsv \
-    | csvtk grep -t -f assembly_level -i -p "Complete Genome"  \
-    | wc -l
-
-# Most sequenced species with Complete Genome
-cat assembly_summary.tsv \
-    | csvtk grep -t -f assembly_level -i -p "Complete Genome"  \
-    | csvtk cut -t -f organism_name \
-    | cut -d ' ' -f 1,2 \
-    | csvtk freq -t -n -r | head -n 20 | csvtk pretty -t
-
-# Number of species, by organism name
-
-# Filter by species (organism_name)
-cat assembly_summary.tsv \
-    | csvtk grep -t -f organism_name -i -r -p "Mycobacterium tuberculosis" \
-    | csvtk grep -t -f assembly_level -i -p "Complete Genome"  \
-    > mt.tsv
-
-# Filter (complete genome) by species_taxid
-cat assembly_summary.tsv \
-    | csvtk grep -t -f species_taxid -p 239935,1280 \
-    | csvtk grep -t -f assembly_level -i -p "Complete Genome" \
-    > bytaxid.tsv
-
-# Download genome sequence and annotation files
-cat mt.tsv | csvtk cut -t -f ftp_path | sed 1d \
-    | rush -v prefix='{}/{%}' \
-        ' \
-            wget -c {prefix}_genomic.fna.gz; \
-            wget -c {prefix}_genomic.gbff.gz; \
-            wget -c {prefix}_genomic.gff.gz; \
-            wget -c {prefix}_cds_from_genomic.fna.gz \
-            wget -c {prefix}_protein.faa.gz; \
-        ' \
-        -j 10 -c -C download.rush
-
-#Get GenBank assembly summary file
-wget ftp://ftp.ncbi.nlm.nih.gov/genomes/genbank/assembly_summary_genbank.txt
-
-#Get all lines that have "Mycobacter", if 12th field is "Complete Genome", print the 20th field (url to file).
-#But the actual filename ends _genomic.fna.gz so include that too..
-grep Mycobacter assembly_summary_genbank.txt \
-    | awk 'BEGIN{FS="\t"}{if($12=="Complete Genome"){print $20}}' \
-    | awk 'BEGIN{OFS=FS="/"}{print $0,$NF"_genomic.fna.gz"}' \
-    > urls.txt
-
-#Now you can go through your urls file
-IFS=$'\n'; for NEXT in $(cat urls.txt); do wget "$NEXT"; done
+# More bio pipelines for 
+# # Strains with Complete Genome
+# cat assembly_summary.tsv \
+#     | csvtk grep -t -f assembly_level -i -p "Complete Genome"  \
+#     | wc -l
+# 
+# # Most sequenced species with Complete Genome
+# cat assembly_summary.tsv \
+#     | csvtk grep -t -f assembly_level -i -p "Complete Genome"  \
+#     | csvtk cut -t -f organism_name \
+#     | cut -d ' ' -f 1,2 \
+#     | csvtk freq -t -n -r | head -n 20 | csvtk pretty -t
+# 
+# # Number of species, by organism name
+# 
+# # Filter by species (organism_name)
+# cat assembly_summary.tsv \
+#     | csvtk grep -t -f organism_name -i -r -p "Mycobacterium tuberculosis" \
+#     | csvtk grep -t -f assembly_level -i -p "Complete Genome"  \
+#     > mt.tsv
+# 
+# # Filter (complete genome) by species_taxid
+# cat assembly_summary.tsv \
+#     | csvtk grep -t -f species_taxid -p 239935,1280 \
+#     | csvtk grep -t -f assembly_level -i -p "Complete Genome" \
+#     > bytaxid.tsv
+# 
+# # Download genome sequence and annotation files
+# cat mt.tsv | csvtk cut -t -f ftp_path | sed 1d \
+#     | rush -v prefix='{}/{%}' \
+#         ' \
+#             wget -c {prefix}_genomic.fna.gz; \
+#             wget -c {prefix}_genomic.gbff.gz; \
+#             wget -c {prefix}_genomic.gff.gz; \
+#             wget -c {prefix}_cds_from_genomic.fna.gz \
+#             wget -c {prefix}_protein.faa.gz; \
+#         ' \
+#         -j 10 -c -C download.rush
+# 
+# #Get GenBank assembly summary file
+# wget ftp://ftp.ncbi.nlm.nih.gov/genomes/genbank/assembly_summary_genbank.txt
+# 
+# #Get all lines that have "Mycobacter", if 12th field is "Complete Genome", print the 20th field (url to file).
+# #But the actual filename ends _genomic.fna.gz so include that too..
+# grep Mycobacter assembly_summary_genbank.txt \
+#     | awk 'BEGIN{FS="\t"}{if($12=="Complete Genome"){print $20}}' \
+#     | awk 'BEGIN{OFS=FS="/"}{print $0,$NF"_genomic.fna.gz"}' \
+#     > urls.txt
+# 
+# #Now you can go through your urls file
+# IFS=$'\n'; for NEXT in $(cat urls.txt); do wget "$NEXT"; done

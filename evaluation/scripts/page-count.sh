@@ -9,9 +9,12 @@
 # More data:
 #   https://arxiv.org/help/bulk_data
 
-echo "$(exiftool *.pdf |
+IN=./input/large.pdf
+OUT=./output/out.txt
+
+echo "$(exiftool $IN |
     grep Page-count |
     cut -d ":" -f2 |
     tr '\n' '+')""0" |
   bc |
-  sed 's/^/\n/'
+  sed 's/^/\n/' > $OUT
