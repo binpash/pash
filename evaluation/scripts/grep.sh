@@ -5,7 +5,10 @@
 
 # Data: ./input/i1G.txt
 
-cat ./input/i1G.txt |
-  grep '[a-zA-Z0-9]\+@[a-zA-Z0-9]\+\.[a-z]\{2,\}' 
+IN=./input/i1G.txt
+OUT=./output/out.txt
+
+cat $IN |
+  grep '[a-zA-Z0-9]\+@[a-zA-Z0-9]\+\.[a-z]\{2,\}' > $OUT
 
 
