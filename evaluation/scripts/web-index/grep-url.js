@@ -1,4 +1,5 @@
-#!env node
+#!/usr/bin/env node
+// TODO: use node's URL to parse and emit a URL in normal form
 // URL validation as a stream transformer
 //
 // Contains code by Diego Perini, as compared in  
@@ -84,8 +85,16 @@ var rl = readline.createInterface({
 rl.on('line', function (line) {
   let r = line.match(nregex());
   if (r) {
-    console.log(r.join('\n'));
+    for (let i = 0; i < r.length; i++) {
+      //console.error(i);// (r[i]);
+      console.log(r[i]);
+    };
+  } else {
+    console.log("pizza");
   }
+//  if (r) {
+//    console.log(r.join('\n'));
+//  }
 });
 
 // console.log('foo http://github.com bar //google.com'.match(nregex()));
