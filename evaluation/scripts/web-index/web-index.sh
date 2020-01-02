@@ -1,13 +1,9 @@
 #!/bin/bash
 
-## FIXME: convert locahost to the server running wiki
-# Requires: pandoc, node, python
+# Requires avoiding buffering lines
+# http://mywiki.wooledge.org/BashFAQ/009
 
-#read from a local url file
-# gen() { head -n 1 ./urls.txt; }
-# mkfifo s1 s2 s3
-# xargs -n 1 curl -s |
-# rm s1 s2 s3
+# Requires: pandoc, node, python
 
 # iconv is stateless
 # ```bash
@@ -15,10 +11,7 @@
 # iconv -c -t ascii//TRANSLIT
 # ```
 
-# N.b.: this has to be in one line, and works only in GNU grep (for -P)
-# grep -Po '\b(([\w-]+://?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))'
-         # '([a-zA-Z][a-zA-Z0-9]*)://([^ /]+)(/?[^ ]*)|([^ @]+)@([^ @]+)'
-
+PROXY=$([ "$(hostname)" == "deathstar" ] && echo "gamma.ndr.md" || echo "localhost")
 SEEN="./seen.txt";
 SOURCE="./seed.txt";
 i=0
@@ -26,40 +19,45 @@ i=0
 rm s1 s2
 mkfifo s1 s2
 
+echo $PROXY
 # Download page and clone stream as s1, s2
 # curl http://example.com/2.txt --connect-to '::158.130.4.114:8080'
-cat $SOURCE |
-  grep -v '^#' |
-  sed 's/^https/http/' |
-    xargs curl --connect-to "::localhost:8080"  |
+tail -f $SOURCE |
+grep --line-buffered -v '^#' |
+sed -u 's/^https/http/' |
+head -n 2 |
+xargs -n 1 curl -s --connect-to "::${PROXY}:8080"  |
 # {
 #   # this lambda is only for hitting multiple servers to increase throughput
 #   read url;
 #   hosts=(localhost) # Can add more servers (gamma.ndr.md delta.ndr.md)
 #   sleep 1;
 #   echo $url >&2;
-#   xargs curl -s  --connect-to "::${hosts[$((i++ % 2))]}:8080" 
+#   curl -s  --connect-to "::${hosts[$((i++ % 2))]}:8080" 
 # } |
 # grep -in dish | # To test if it hits our local HTTP server
 # head -n 1 |
   tee s1 >/dev/null &
 
+echo "https://en.wikipedia.org" >> $SOURCE &
+
 # # s1---URL manipulation: Get all URLs, diff with SEEN, and write back to SOURCE and SEEN
 # FIXME: sort won't work here because it's gonna wait indefinitely---but { read v; echo $v | comm .. } should work
-cat s1;
+cat s1 |
 ./grep-url.js |
-grep -Eoi '<a [^>]+>' | 
-grep -Eo 'href="[^\"]+"' | 
-grep -Eo '(http|https)://[^/"]+' |
-grep '^http' | wc -l |
+# grep -Eoi '<a [^>]+>' | 
+# grep -Eo 'href="[^\"]+"' | 
+# grep -Eo '(http|https)://[^/"]+' |
+grep '^http' |
 # tr 'x' 'x' # | tee -a $SOURCE >> $SEEN # maybe could do >>
 # {
 #   read v;
 #   echo "-->  $v" >&2;
-#   echo $v; # | comm -23 <(cat $SEEN | sort) -;
+#   echo $v; | comm -23 <(cat $SEEN | sort) -;
 # } |
-# grep -v '^#' |
-# tr 'x' 'x' # | tee -a $SOURCE >> $SEEN # maybe could do >>
+grep -v '^#' |
+tr 'x' 'x' | tee -a $SOURCE >> $SEEN
+
 
 # 
 # # s2---NLP manipulation:  get text
