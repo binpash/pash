@@ -4,7 +4,7 @@
 
 # For default data, it uses the current set 
 
-p="../../stats/c_stats/"
+p="../../distributability/c_stats/"
 A=${1:-${p}posix.txt}
 B=${2:-${p}coreutils.txt}
 
