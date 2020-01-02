@@ -4,6 +4,7 @@
 # http://mywiki.wooledge.org/BashFAQ/009
 
 # Requires: pandoc, node, python
+# run `npm install` to install packages
 
 # iconv is stateless
 # ```bash
@@ -47,7 +48,7 @@ xargs -0 -n 1 -d '\n' curl --connect-to "::${PROXY}:8080"  |
 #   echo $url >&2;
 #   curl -s  --connect-to "::${hosts[$((i++ % 2))]}:8080" 
 # } |
-  tee s1 >/dev/null &
+  tee -a s1 -a s2 >/dev/null &
 
 echo "http://en.wikipedia.org" >> $SOURCE &
 
@@ -76,15 +77,46 @@ grep --line-buffered -v '^#' |
 sed -u 's/^https/http/' |
 # # tr 'x' 'x' |
 # Note the append on SEEN and write on SOURCE
-tee -a $SEEN -a $SOURCE > /dev/null
+tee -a $SEEN -a $SOURCE > /dev/null &
 
-#  # s2---NLP manipulation:  get text
-#  cat s2 | pandoc --from html --to plain | tr -cs A-Za-z '\n' | tr A-Z a-z | grep -vwFf stopwords.txt | ./stem-words.js # stem-to-roots
-#  tee 
-#    >(tee shifted |  tail +2 | paste shifted - | sort | uniq -c | sort -rn >> 2grams.txt) # 2-grams
-#    >(tee shifted |  tail +3 | paste shifted - | sort | uniq -c | sort -rn >> 3grams.txt) # 3-grams
-#    >(tee shifted |  tail +4 | paste shifted - | sort | uniq -c | sort -rn >> 4grams.txt) # 4-grams
-#   | sort | uniq -c | sort -rn >> 1grams.txt # 1-gram frequencies
-#  
-#  # lynx -dump -stdin
-#  rm s1 s2
+rm shift1 shift2 shift3
+mkfifo shift1 shift2 shift3
+# s2---NLP manipulation:  get text
+cat s2 |
+  pandoc --from html --to plain --quiet |
+  tr -cs A-Za-z '\n' |
+  tr A-Z a-z |
+  iconv -c -t ascii//TRANSLIT |
+  grep -vwFf stopwords.txt |
+  ./stem-words.js | # stem-to-roots
+  tee >( # 2-grams
+    tr -cs A-Za-z '\n' |
+    tr A-Z a-z |
+    tee shift1 |
+    tail +2 |
+    paste shift1 - |
+    sort |
+    uniq -c |
+    sort -rn >> 2-grams.txt
+  ) >( # 3-grams
+    tr -cs A-Za-z '\n' |
+    tr A-Z a-z |
+    tee shift2 |
+    tail +2 |
+    paste shift2 - |
+    tee shift3 |
+    cut -f 1 |
+    tail +3 |
+    paste shift3 - |
+    sort |
+    uniq -c |
+    sort -rn >> 3-grams.txt
+  ) >( # 1-grams (i.e., frequencies)
+    sort |
+    uniq -c |
+    sort -rn >> 1-grams.txt
+  ) &
+
+wait
+# lynx -dump -stdin
+# rm s1 s2
