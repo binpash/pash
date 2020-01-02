@@ -11,6 +11,12 @@
 # iconv -c -t ascii//TRANSLIT
 # ```
 
+cat  >seed.txt <<EOM
+# Do not start this experiment without redirecting **all** HTTP 
+# requests to one of our servers.
+https://en.wikipedia.org
+EOM
+
 PROXY=$([ "$(hostname)" == "deathstar" ] && echo "gamma.ndr.md" || echo "localhost")
 SEEN="./seen.txt";
 SOURCE="./seed.txt";
