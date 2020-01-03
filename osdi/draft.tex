@@ -287,6 +287,73 @@
 
 \maketitle
 
+\section{Introduction}
+\label{intro}
+
+Distributed systems offer significant benefits over their centralized counterparts---for example, they can speed up expensive computations or can process data that would not fit into any single machine.
+Despite these benefits, their development remains different from and significantly more difficult than their centralized counterparts.
+Whereas anyone can quickly stitch together a Bash script to compute on a single computer, 
+  % domain-experts routinely glue scripts together to process and share data. % without the help of a computing expert.
+   scaling out to multiple ones requires expert labor around ``point'' solutions with expensive setups, restricted programming interfaces, and exorbitant composition costs~\cite{taurus:14, dios:13, andromeda:15, pywren:17, futuredata:18, nefele:18}.
+% 
+To understand this sharp contrast, consider a Bash pipeline calculating term frequencies over a set of inputs:
+
+
+Contributions:
+
+* 
+Extends beyond linear pipelines to full programs 
+that comply with the POSIX shell specification; while \sys does not optimize
+everything---it certainly cannot---, it does 
+
+* Planner activations, the ability to call 
+
+* A standard library of semantics-aware wrappers for 
+
+* Augment data flows to allow performance optimizations and fault-tolerance
+
+\section{Background}
+\label{bg}
+
+To understand the limitations of pipelines and the opportunities for
+parallelization, consider the following pipeline
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+find . -name '*.sh' | xargs cat | wc -l > out.t
+\end{lstlisting}
+
+Unfortunately, this pipeline meshes the results from `cat` leading to a single
+count from all files. What the developer actually intended was the following:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+$(
+for f in $(find . -name '*.sh'); do
+ cat ${f} | wc -l
+done
+) > out.t
+\end{lstlisting}
+
+This remains trivial to parallelize, as none of the loop-internal steps depends
+on the input, so loop iterations can run in parallel.
+
+Similar for
+  * enclaves 
+  * sieve
+  * mapping max temperatures to years, etc.
+
+Different from prior systems, \sys's goal is to ensure correctness first and
+then improve performance.
+
+\section{Evaluation}
+
+\subsection{POSIX test-suite}
+
+\subsection{Pipelines and scripts}
+
+\subsection{Other pipelines}
+
+Rewrite pipelines expressed in other languages / scripts
+
 \paragraph{Conclusion}
 \begin{acks}
   % Dumping people so that we don't forget
