@@ -23,8 +23,6 @@ This table is for keeping track of `Dish` results, and blocking aspects when `Di
 | [compile.sh](compile.sh)         | 18.02s, 0.50s, 100% — _18.489_      |         | Does not make sense to parallelize            |
 | [sieve.sh](sieve.sh)             | 12.41s, 8.78s, 68% — _30.816_       |         | Not a pipeline                                |
 | [maximal.sh](maximal.sh)         |                                     |         | Only for compatibility testing                |
-| [merge-wc.sh](merge-wc.sh)       |                                     |         | Tool                                          |
-| [old_bigrams.sh](old_bigrams.sh) |                                     |         | Do we need it?                                |
 
 All scripts write to `./output/out.txt` (but could be made to read from and write to `/dev/shm/out.txt`).
 
@@ -61,16 +59,6 @@ This directory contains a few example pipelines:
 * [wc.sh](wc.sh): Count all words in a stream.
 * [wf.sh](wf.sh): Report on the word-frequencies of distinct terms in an input text stream.
 * [longest-man.sh](longest-man.sh): Reports on the longest manual pages found in the system.
-
-These files are candidates for removal:
-
-* grep2.sh 
-* minimal2.sh
-* minimal3.sh
-* minimal4.sh
-* minimal5.sh
-* pretty_print_json.sh* -- move to a `/tools` dir or simply pipe to `jq .`?
-* call_distrib_planner_example.sh -- move to a `/tools` dir?
 
 ## Setup Details
 
