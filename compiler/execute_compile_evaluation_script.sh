@@ -4,8 +4,9 @@
 ## distributed, and an environment
 experiment=$1
 
-directory="../evaluation/"
-results="${directory}results/"
+eval_directory="../evaluation/"
+directory="${eval_directory}/intermediary/"
+results="${eval_directory}results/"
 prefix="${directory}${experiment}"
 env_file="${prefix}_env.sh"
 seq_script="${prefix}_seq.sh"
