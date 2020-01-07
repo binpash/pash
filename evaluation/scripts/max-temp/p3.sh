@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sed 's;^;http://ndr.md/noaa/2005/;'
+sed 's;^;http://ndr.md/data/noaa/2005/;'
