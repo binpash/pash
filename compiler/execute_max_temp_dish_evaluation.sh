@@ -28,11 +28,15 @@ cat $p2_out | /bin/bash $p3 > $p3_out
 cat $p3_out | /bin/bash $p4 > $p4_out
 cat $p4_out | /bin/bash $p5 > $p5_out
 
+echo "Sequential pipeline has been executed successfully."
+
 ## Split the intermediate output files for all scripts
 split -n 2 -d $p3_out ${p3_out}_2_
 split -n 10 -d $p3_out ${p3_out}_10_
 split -n 2 -d $p4_out ${p4_out}_2_
 split -n 10 -d $p4_out ${p4_out}_10_
+
+echo "Intermediate files have been successfully produced."
 
 ## Setup the _env files of the experiments accordingly
 echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p4_1_env.sh
@@ -46,11 +50,11 @@ echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p5_10_env.sh
 ## TODO: Rename the input file names in the scripts to match those 
 
 # ./execute_compile_evaluation_script.sh "p4_1"
-./execute_compile_evaluation_script.sh "p4_2"
-./execute_compile_evaluation_script.sh "p4_10"
+# ./execute_compile_evaluation_script.sh "p4_2"
+# ./execute_compile_evaluation_script.sh "p4_10"
 # ./execute_compile_evaluation_script.sh "p5_1"
-./execute_compile_evaluation_script.sh "p5_2"
-./execute_compile_evaluation_script.sh "p5_10"
+# ./execute_compile_evaluation_script.sh "p5_2"
+# ./execute_compile_evaluation_script.sh "p5_10"
 
 
 ## (Maybe) TODO: Create the intermediary seq, distr scripts
