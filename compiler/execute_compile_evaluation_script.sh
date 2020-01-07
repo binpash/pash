@@ -22,7 +22,7 @@ cat $seq_script | grep -v "rm -f" | grep -v "mkfifo"
 { time /bin/bash $seq_script > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
 
 echo "Distributed:"
-{ time ./translate_script.sh $seq_script $distr_script ; } 2> >(tee "${results}${experiment}_compile_distr.time" >&2)
+{ time ./translate_script.sh $seq_script $distr_script ; } 2> >(tee "${results}${experiment}_distr.time" >&2)
 
 ## Obsolete as dish.py executes output script
 # { time /bin/bash $distr_script ; } 2> >(tee "${results}${experiment}_distr.time" >&2)
