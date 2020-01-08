@@ -21,13 +21,13 @@ results_dir="${eval_dir}/results/"
 ## Make the temporary output dir
 mkdir -p $output_dir
 
-time { /bin/bash $p1 > $p1_out ; } 2> >(tee "${results_dir}/p1_seq.time" >&2)
-time { cat $p1_out | /bin/bash $p2 > $p2_out ; } 2> >(tee "${results_dir}/p2_seq.time" >&2)
+{ time ( /bin/bash $p1 > $p1_out ) ; } 2> >(tee "${results_dir}/p1_seq.time" >&2)
+{ time ( cat $p1_out | /bin/bash $p2 > $p2_out ) ; } 2> >(tee "${results_dir}/p2_seq.time" >&2)
 
 ## TODO: p3 is currently only working for 2005
-time { cat $p2_out | /bin/bash $p3 > $p3_out ; } 2> >(tee "${results_dir}/p3_seq.time" >&2)
-time { cat $p3_out | /bin/bash $p4 > $p4_out ; } 2> >(tee "${results_dir}/p4_seq.time" >&2)
-time { cat $p4_out | /bin/bash $p5 > $p5_out ; } 2> >(tee "${results_dir}/p5_seq.time" >&2)
+{ time ( cat $p2_out | /bin/bash $p3 > $p3_out ) ; } 2> >(tee "${results_dir}/p3_seq.time" >&2)
+{ time ( cat $p3_out | /bin/bash $p4 > $p4_out ) ; } 2> >(tee "${results_dir}/p4_seq.time" >&2)
+{ time ( cat $p4_out | /bin/bash $p5 > $p5_out ) ; } 2> >(tee "${results_dir}/p5_seq.time" >&2)
 
 echo "Sequential pipeline has been executed successfully."
 
