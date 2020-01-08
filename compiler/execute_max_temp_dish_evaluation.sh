@@ -33,10 +33,10 @@ time { cat $p4_out | /bin/bash $p5 > $p5_out } 2> >(tee "${results_dir}/p5_seq.t
 echo "Sequential pipeline has been executed successfully."
 
 ## Split the intermediate output files for all scripts
-split -n 2 -d $p3_out ${p3_out}_2_
-split -n 10 -d $p3_out ${p3_out}_10_
-split -n 2 -d $p4_out ${p4_out}_2_
-split -n 10 -d $p4_out ${p4_out}_10_
+split -n l/2 -d $p3_out ${p3_out}_2_
+split -n l/10 -d $p3_out ${p3_out}_10_
+split -n l/2 -d $p4_out ${p4_out}_2_
+split -n l/10 -d $p4_out ${p4_out}_10_
 
 echo "Intermediate files have been successfully produced."
 
