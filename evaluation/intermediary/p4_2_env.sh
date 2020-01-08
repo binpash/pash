@@ -1,1 +1,1 @@
-IN_DIR=../front_end/temp/
+IN_DIR=/tmp/max-temp-output/
