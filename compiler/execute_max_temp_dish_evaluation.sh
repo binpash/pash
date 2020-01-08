@@ -21,22 +21,21 @@ results_dir="${eval_dir}/results/"
 ## Make the temporary output dir
 mkdir -p $output_dir
 
-# TODO: Maybe time p1, p2?
-time { /bin/bash $p1 > $p1_out } 2> >(tee "${results_dir}/p1_seq.time" >&2)
-time { cat $p1_out | /bin/bash $p2 > $p2_out } 2> >(tee "${results_dir}/p2_seq.time" >&2)
+{ time ( /bin/bash $p1 > $p1_out ) ; } 2> >(tee "${results_dir}/p1_seq.time" >&2)
+{ time ( cat $p1_out | /bin/bash $p2 > $p2_out ) ; } 2> >(tee "${results_dir}/p2_seq.time" >&2)
 
 ## TODO: p3 is currently only working for 2005
-time { cat $p2_out | /bin/bash $p3 > $p3_out } 2> >(tee "${results_dir}/p3_seq.time" >&2)
-time { cat $p3_out | /bin/bash $p4 > $p4_out } 2> >(tee "${results_dir}/p4_seq.time" >&2)
-time { cat $p4_out | /bin/bash $p5 > $p5_out } 2> >(tee "${results_dir}/p5_seq.time" >&2)
+{ time ( cat $p2_out | /bin/bash $p3 > $p3_out ) ; } 2> >(tee "${results_dir}/p3_seq.time" >&2)
+{ time ( cat $p3_out | /bin/bash $p4 > $p4_out ) ; } 2> >(tee "${results_dir}/p4_seq.time" >&2)
+{ time ( cat $p4_out | /bin/bash $p5 > $p5_out ) ; } 2> >(tee "${results_dir}/p5_seq.time" >&2)
 
 echo "Sequential pipeline has been executed successfully."
 
 ## Split the intermediate output files for all scripts
-split -n 2 -d $p3_out ${p3_out}_2_
-split -n 10 -d $p3_out ${p3_out}_10_
-split -n 2 -d $p4_out ${p4_out}_2_
-split -n 10 -d $p4_out ${p4_out}_10_
+split -n l/2 -d $p3_out ${p3_out}_2_
+split -n l/10 -d $p3_out ${p3_out}_10_
+split -n l/2 -d $p4_out ${p4_out}_2_
+split -n l/10 -d $p4_out ${p4_out}_10_
 
 echo "Intermediate files have been successfully produced."
 
@@ -54,7 +53,3 @@ echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p5_10_env.sh
 ./execute_compile_evaluation_script.sh "p5_1"
 ./execute_compile_evaluation_script.sh "p5_2"
 ./execute_compile_evaluation_script.sh "p5_10"
-
-
-## (Maybe) TODO: Create the intermediary seq, distr scripts
-
