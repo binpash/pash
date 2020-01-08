@@ -47,7 +47,9 @@ def optimize_script(output_script_path):
     shell_string = ast_to_shell(ir_node.ast)
     print(shell_string)
 
+    print(ir_node)
     distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config['fan_out'], config['batch_size'])
+    print(distributed_graph)
     # print("Parallelized graph:")
     # print(graph)
 
@@ -214,7 +216,7 @@ def parallelize_command(curr, graph, fileIdGen):
         ## so that this assumption is lifted (either by not
         ## parallelizing, or by properly handling this case)
 
-        return graph
+    return graph
 
 ## Creates a merge command for all pure commands that can be
 ## parallelized using a map and a reduce/merge step
