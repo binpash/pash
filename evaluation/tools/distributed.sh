@@ -1,15 +1,14 @@
 #!/bin/bash
 
 # Schematic for distributing computations
+# To try server client:
 
-A="158.130.4.119"  #TOBLIND
-B="158.130.4.113"  #TOBLIND
-C="158.130.4.114"  #TOBLIND
-D="158.130.4.120"  #TOBLIND
-DSTAR="158.130.4.212" #TOBLIND
-
-cat $IN | grep -v "onetwo" | tr '[:lower:]' '[:upper:]' > $OUT
-
+./client.js local 'ls'
+./client.js local | jq .
+./client.js local 'sleep 5; echo "yo"'
+./client.js local | jq .
+sleep 5
+./client.js local | jq .
 
 # The format is as follows:
 # cat FIFOs > $OUT &
