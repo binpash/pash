@@ -335,7 +335,6 @@ class Node:
             index += 1
         return None
 
-
 ## Commands are specific Nodes that can be parallelized if they are
 ## classified as stateless, etc...
 class Command(Node):
@@ -435,6 +434,26 @@ class Command(Node):
         ## Question: Is it valid setting stdin and stdout to the stdin
         ## and stdout of the current command?
         return new_command
+
+## These are the generalized map and reduce nodes for the
+## `tee s2 | tail +2 | paste s2 -` function. At some point,
+## these should be parsed from some configuration file, but for now
+## we have them hardcoded for commands that we are interested in.
+class BigramGMap(Command):
+    def __init__(self, map_file_ids):
+        command = string_to_argument("bigram_aux_map")
+        options = input_file_ids
+        in_stream = [("option", 0)]
+        out_stream = [("option", 1)]
+        ## At the moment only the $OUT variable is considered out
+        ## stream, even though the auxiliary streams are also outputs.
+        ##
+        ## TODO: When we generalize the model to have arbitrary
+        ## outputs we can have them also be outputs.
+        opt_indices = [("option", 2), ("option", 3)]
+        category = "stateless"
+        super().__init__(None, command, options, in_stream, out_stream,
+                         opt_indices, category)
 
 
 def create_command_assign_file_identifiers(ast, fileIdGen, command, options, stdin=None, stdout=None):

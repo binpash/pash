@@ -54,7 +54,7 @@ bigram_aux_reduce()
     OUT=$7
     AUX_HEAD_OUT=$8
     AUX_TAIL_OUT=$9
-    
+
     mkfifo intermediate
 
     cat $AUX_HEAD1 > $AUX_HEAD_OUT &
