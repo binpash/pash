@@ -219,12 +219,6 @@ def parallelize_command(curr, graph, fileIdGen):
 
     return graph
 
-## TODO: Extend the merge creation process to work with a quasi-binary
-## tree, instead of just one step.
-
-## TODO: Make the sort and bigram_aux map/reduce commands as subtypes
-## of command
-
 ## Creates a merge command for all pure commands that can be
 ## parallelized using a map and a reduce/merge step
 def create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
@@ -238,33 +232,10 @@ def create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen
 ## TODO: Find a better place to put this function
 def create_sort_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
 
-    tree = create_reduce_tree(SortGReduce, [[fid] for fid in new_output_file_ids], out_edge_file_id, fileIdGen)
-    print(tree)
-    # ## Create a merge sort command
-    # ##
-    # ## WARNING: Since the merge has to take the files as arguments, we
-    # ## pass the pipe names as its arguments and nothing in stdin
-    # old_options = curr.get_non_file_options()
-    # input_file_ids = curr.get_flat_input_file_ids()
-    # ## TODO: Implement a proper version of parallel sort -m, instead
-    # ## of using the parallel flag.
-    # options = [string_to_argument("-m"), string_to_argument("--parallel={}".format(len(input_file_ids)))] + old_options
-    # # options = []
-    # options += [string_to_argument(fid.pipe_name()) for fid in new_output_file_ids]
-    # opt_indices = [("option", i) for i in range(len(options))]
-    # # in_stream = [("option", i + len(opt_indices)) for i in range(len(new_output_file_ids))]
-    # in_stream = []
-    # merge_command = Command(None, # TODO: Make a proper AST
-    #                         curr.command,
-    #                         options,
-    #                         in_stream,
-    #                         ["stdout"],
-    #                         opt_indices,
-    #                         "pure",
-    #                         # intermediate_output_file_id,
-    #                         [],
-    #                         out_edge_file_id)
-    # return [merge_command]
+    ## Create a merge sort command
+    sort_input_file_ids = [[fid] for fid in new_output_file_ids]
+    tree = create_reduce_tree(SortGReduce, sort_input_file_ids, out_edge_file_id, fileIdGen)
+    # print(tree)
     return tree
 
 ## This function creates the reduce tree. Both input and output file
