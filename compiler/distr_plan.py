@@ -35,7 +35,7 @@ def load_config():
 
     config = dish_config[CONFIG_KEY]
 
-def optimize_script(output_script_path):
+def optimize_script(output_script_path, compile_optimize_only):
     global config
     if not config:
         load_config()
@@ -65,7 +65,7 @@ def optimize_script(output_script_path):
     # f.close()
 
     ## Call the backend that executes the optimized dataflow graph
-    execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'])
+    execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'], compile_optimize_only)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
@@ -111,7 +111,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     nodes = source_nodes
     while (len(nodes) > 0):
         curr = nodes.pop(0)
-
+        print("Current command:", curr)
         next_nodes = graph.get_next_nodes(curr)
         nodes += next_nodes
 
@@ -217,6 +217,12 @@ def parallelize_command(curr, graph, fileIdGen):
         ## parallelizing, or by properly handling this case)
 
     return graph
+
+## TODO: Extend the merge creation process to work with a quasi-binary
+## tree, instead of just one step.
+
+## TODO: Make the sort and bigram_aux map/reduce commands as subtypes
+## of command
 
 ## Creates a merge command for all pure commands that can be
 ## parallelized using a map and a reduce/merge step

@@ -2,7 +2,7 @@ import os
 import time
 import subprocess
 
-def execute(graph_json, output_dir, output_script_name, output_optimized):
+def execute(graph_json, output_dir, output_script_name, output_optimized, compile_optimize_only):
     output_script = shell_backend(graph_json, output_dir)
 
     ## Output the optimized shell script for inspection
@@ -10,9 +10,10 @@ def execute(graph_json, output_dir, output_script_name, output_optimized):
         with open(output_script_name, "w") as output_script_file:
             output_script_file.write(output_script)
 
-    ## TODO: Handle stdout, stderr, errors
-    exec_obj = subprocess.run(output_script, shell=True)
-    exec_obj.check_returncode()
+    if(not compile_optimize_only):
+        ## TODO: Handle stdout, stderr, errors
+        exec_obj = subprocess.run(output_script, shell=True)
+        exec_obj.check_returncode()
 
 
 def shell_backend(graph_json, output_dir):
