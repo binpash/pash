@@ -143,6 +143,8 @@ def node_to_script(node, shared_memory_dir):
         if(len(outputs) == 1):
             script.append(">")
             script.append('"{}"'.format(outputs[0]))
+        elif(len(outputs) == 0):
+            pass
         else:
             assert(False)
 
