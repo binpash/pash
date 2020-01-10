@@ -36,6 +36,15 @@ def format_arg_char(arg_char):
 def string_to_argument(string):
     return [char_to_arg_char(char) for char in string]
 
+def make_argument(option):
+    if(isinstance(option, FileId)):
+        ## This is how commands are initialized when duplicating
+        return option
+    else:
+        ## This is how commands are initialized in the AST
+        return Arg(option)
+
+
 ## FIXME: This is certainly not complete. It is used to generate the
 ## AST for the call to the distributed planner. It only handles simple
 ## characters
@@ -335,6 +344,7 @@ class Node:
             index += 1
         return None
 
+
 ## Commands are specific Nodes that can be parallelized if they are
 ## classified as stateless, etc...
 class Command(Node):
@@ -342,12 +352,7 @@ class Command(Node):
                  opt_indices, category, stdin=None, stdout=None):
         super().__init__(ast, in_stream, out_stream, category, stdin, stdout)
         self.command = Arg(command)
-        if(all([isinstance(opt, FileId) for opt in options])):
-            ## This is how commands are initialized when duplicating
-            self.options = options
-        else:
-            ## This is how commands are initialized in the AST
-            self.options = [Arg(opt) for opt in options]
+        self.options = [make_argument(opt) for opt in options]
         self.opt_indices = opt_indices
 
     def __repr__(self):
@@ -440,9 +445,9 @@ class Command(Node):
 ## these should be parsed from some configuration file, but for now
 ## we have them hardcoded for commands that we are interested in.
 class BigramGMap(Command):
-    def __init__(self, map_file_ids):
+    def __init__(self, file_ids):
         command = string_to_argument("bigram_aux_map")
-        options = input_file_ids
+        options = file_ids
         in_stream = [("option", 0)]
         out_stream = [("option", 1)]
         ## At the moment only the $OUT variable is considered out
@@ -455,6 +460,23 @@ class BigramGMap(Command):
         super().__init__(None, command, options, in_stream, out_stream,
                          opt_indices, category)
 
+class SortGReduce(Command):
+    def __init__(self, file_ids):
+        command = string_to_argument("sort")
+        input_file_ids = file_ids[:-1]
+        output_file_id = file_ids[-1]
+        input_file_id_opts = [string_to_argument(fid.pipe_name()) for fid in input_file_ids]
+        options = [string_to_argument("-m")] + input_file_id_opts
+        in_stream = []
+        out_stream = ["stdout"]
+        ## At the moment none of the $IN1, $IN2 are considered inputs
+        ##
+        ## TODO: When we generalize the model to have arbitrary
+        ## inputs we can have them also be inputs.
+        opt_indices = [("option", 0), ("option", 1), ("option", 2)]
+        category = "pure"
+        super().__init__(None, command, options, in_stream, out_stream,
+                         opt_indices, category, stdout=output_file_id)
 
 def create_command_assign_file_identifiers(ast, fileIdGen, command, options, stdin=None, stdout=None):
     in_stream, out_stream, opt_indices = find_command_input_output(command, options, stdin, stdout)
