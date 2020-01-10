@@ -1,0 +1,67 @@
+rm -rf /tmp/distr_output
+mkdir -p /tmp/distr_output
+mkdir -p /dev/shm/dish
+rm -f "#file18"
+mkfifo "#file18"
+rm -f "#file13"
+mkfifo "#file13"
+rm -f "#file26"
+mkfifo "#file26"
+rm -f "#file20"
+mkfifo "#file20"
+rm -f "#file21"
+mkfifo "#file21"
+rm -f "#file22"
+mkfifo "#file22"
+rm -f "#file2"
+mkfifo "#file2"
+rm -f "#file15"
+mkfifo "#file15"
+rm -f "#file14"
+mkfifo "#file14"
+rm -f "#file23"
+mkfifo "#file23"
+rm -f "#file29"
+mkfifo "#file29"
+rm -f "#file30"
+mkfifo "#file30"
+rm -f "#file27"
+mkfifo "#file27"
+rm -f "#file11"
+mkfifo "#file11"
+rm -f "#file9"
+mkfifo "#file9"
+rm -f "#file19"
+mkfifo "#file19"
+cat ${IN} > "#file2" &
+cat "#file20" "#file21" | bigrams_aux  > "#file9" &
+cat "#file29" "#file30" | uniq  > "#file13" &
+cat "#file2" | tee >( head -n 10000 > "/dev/shm/dish/#file14"; dd of=/dev/null > /dev/null 2>&1 & cat "/dev/shm/dish/#file14" > "#file14") | (tail -n +10001 > "#file15"; dd of=/dev/null > /dev/null 2>&1) &
+cat "#file14" | tr -cs A-Za-z "\n" > "#file18" &
+cat "#file15" | tr -cs A-Za-z "\n" > "#file19" &
+cat "#file18" | tr A-Z a-z > "#file20" &
+cat "#file19" | tr A-Z a-z > "#file21" &
+cat "#file9" | tee >( head -n 10000 > "/dev/shm/dish/#file22"; dd of=/dev/null > /dev/null 2>&1 & cat "/dev/shm/dish/#file22" > "#file22") | (tail -n +10001 > "#file23"; dd of=/dev/null > /dev/null 2>&1) &
+sort -m --parallel=2 "#file26" "#file27" > "#file11" &
+cat "#file22" | sort  > "#file26" &
+cat "#file23" | sort  > "#file27" &
+cat "#file11" | tee >( head -n 10000 > "/dev/shm/dish/#file29"; dd of=/dev/null > /dev/null 2>&1 & cat "/dev/shm/dish/#file29" > "#file29") | (tail -n +10001 > "#file30"; dd of=/dev/null > /dev/null 2>&1) &
+cat "#file13" > /tmp/distr_output/0 &
+wait
+rm -f "#file18"
+rm -f "#file13"
+rm -f "#file26"
+rm -f "#file20"
+rm -f "#file21"
+rm -f "#file22"
+rm -f "#file2"
+rm -f "#file15"
+rm -f "#file14"
+rm -f "#file23"
+rm -f "#file29"
+rm -f "#file30"
+rm -f "#file27"
+rm -f "#file11"
+rm -f "#file9"
+rm -f "#file19"
+rm -rf "/dev/shm/dish"
