@@ -175,18 +175,17 @@ def parallelize_command(curr, graph, fileIdGen):
         assert(len(out_edge_file_ids) == 1)
         out_edge_file_id = out_edge_file_ids[0]
 
-        ## Add children to the output file (thus also changing the
-        ## input file of the next command to have children)
-        new_output_file_ids = [fileIdGen.next_file_id() for in_fid in input_file_ids]
-
         if(curr.category == "stateless"):
+            ## Add children to the output file (thus also changing the
+            ## input file of the next command to have children)
+            new_output_file_ids = [fileIdGen.next_file_id() for in_fid in input_file_ids]
+            ## TODO: Move this in stateless duplicate
             out_edge_file_id.set_children(new_output_file_ids)
         elif(curr.is_pure_parallelizable()):
-            ## If the command is pure, there is need for a merging
-            ## command to be added at the end.
-            intermediate_output_file_id = fileIdGen.next_file_id()
-            intermediate_output_file_id.set_children(new_output_file_ids)
-            curr.stdout = intermediate_output_file_id
+
+            ## Get the output files after performing map on all the
+            ## input files
+            new_output_file_ids = curr.pure_get_map_output_files(input_file_ids, fileIdGen)
 
             ## Make a merge command that joins the results of all the
             ## duplicated commands
@@ -198,8 +197,11 @@ def parallelize_command(curr, graph, fileIdGen):
             assert(False)
             ## This should be unreachable
 
+        ## TODO: Extend this to work for pure with auxiliary state too
+        ## (e.g. bigram_aux)
+
         ## For each new input and output file id, make a new command
-        new_commands = curr.stateless_duplicate()
+        new_commands = curr.duplicate(new_output_file_ids, fileIdGen)
         graph.remove_node(curr)
         # print("New commands:")
         # print(new_commands)
@@ -224,17 +226,25 @@ def parallelize_command(curr, graph, fileIdGen):
 def create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
     if(str(curr.command) == "sort"):
         return create_sort_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
+    elif(str(curr.command) == "bigrams_aux"):
+        return create_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
     else:
         assert(False)
 
-## TODO: This must be generated using some file information
+## TODO: These must be generated using some file information
 ##
-## TODO: Find a better place to put this function
+## TODO: Find a better place to put these functions
 def create_sort_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
-
     ## Create a merge sort command
-    sort_input_file_ids = [[fid] for fid in new_output_file_ids]
+    sort_input_file_ids = [fids for fids in new_output_file_ids]
     tree = create_reduce_tree(SortGReduce, sort_input_file_ids, out_edge_file_id, fileIdGen)
+    # print(tree)
+    return tree
+
+def create_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
+    ## Create a merge sort command
+    sort_input_file_ids = [fids for fids in new_output_file_ids]
+    tree = create_reduce_tree(BigramGReduce, sort_input_file_ids, out_edge_file_id, fileIdGen)
     # print(tree)
     return tree
 

@@ -19,7 +19,7 @@ OUT=./output/out.txt
 #     rm s2
 # }
 
-cat $IN |
+cat $IN $IN $IN |
 # head -n 2 |
   tr -cs A-Za-z '\n' |
   tr A-Z a-z |
