@@ -175,30 +175,18 @@ def parallelize_command(curr, graph, fileIdGen):
         assert(len(out_edge_file_ids) == 1)
         out_edge_file_id = out_edge_file_ids[0]
 
-        if(curr.category == "stateless"):
-            ## Add children to the output file (thus also changing the
-            ## input file of the next command to have children)
-            new_output_file_ids = [fileIdGen.next_file_id() for in_fid in input_file_ids]
-            ## TODO: Move this in stateless duplicate
-            out_edge_file_id.set_children(new_output_file_ids)
-        elif(curr.is_pure_parallelizable()):
+        ## Get the file names of the outputs of the map commands. This
+        ## differs if the command is stateless, pure that can be
+        ## written as a map and a reduce, and a pure that can be
+        ## written as a generalized map and reduce.
+        new_output_file_ids = curr.get_map_output_files(input_file_ids, fileIdGen)
 
-            ## Get the output files after performing map on all the
-            ## input files
-            new_output_file_ids = curr.pure_get_map_output_files(input_file_ids, fileIdGen)
-
-            ## Make a merge command that joins the results of all the
-            ## duplicated commands
+        ## Make a merge command that joins the results of all the
+        ## duplicated commands
+        if(curr.is_pure_parallelizable()):
             merge_commands = create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
             for merge_command in merge_commands:
                 graph.add_node(merge_command)
-        else:
-            print("Unreachable code reached :(")
-            assert(False)
-            ## This should be unreachable
-
-        ## TODO: Extend this to work for pure with auxiliary state too
-        ## (e.g. bigram_aux)
 
         ## For each new input and output file id, make a new command
         new_commands = curr.duplicate(new_output_file_ids, fileIdGen)

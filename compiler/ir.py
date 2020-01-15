@@ -382,8 +382,23 @@ class Command(Node):
     def get_non_file_options(self):
         return [self.options[i] for _, i in self.opt_indices]
 
+    ## Get the file names of the outputs of the map commands. This
+    ## differs if the command is stateless, pure that can be
+    ## written as a map and a reduce, and a pure that can be
+    ## written as a generalized map and reduce.
+    def get_map_output_files(self, input_file_ids, fileIdGen):
+        assert(self.category == "stateless" or self.is_pure_parallelizable())
+        if(self.category == "stateless"):
+            return [fileIdGen.next_file_id() for in_fid in input_file_ids]
+        elif(self.is_pure_parallelizable()):
+            return self.pure_get_map_output_files(input_file_ids, fileIdGen)
+        else:
+            print("Unreachable code reached :(")
+            assert(False)
+            ## This should be unreachable
+
     def pure_get_map_output_files(self, input_file_ids, fileIdGen):
-        assert(self.category == "pure")
+        assert(self.is_pure_parallelizable())
         if(str(self.command) == "sort"):
             new_output_file_ids = [[fileIdGen.next_file_id()] for in_fid in input_file_ids]
         elif(str(self.command) == "bigrams_aux"):
@@ -398,7 +413,7 @@ class Command(Node):
     def duplicate(self, new_output_file_ids, fileIdGen):
         assert(self.category == "stateless" or self.is_pure_parallelizable())
         if(self.category == "stateless"):
-            return self.stateless_duplicate()
+            return self.stateless_duplicate(new_output_file_ids)
         elif(self.is_pure_parallelizable()):
             return self.pure_duplicate(new_output_file_ids, fileIdGen)
         else:
@@ -406,10 +421,19 @@ class Command(Node):
             assert(False)
             ## This should be unreachable
 
-    def stateless_duplicate(self):
+    def stateless_duplicate(self, output_file_ids):
         assert(self.category == "stateless")
+
+        ## Attach the new output files as children of the node's
+        ## output, because make_duplicate command requires that. Also,
+        ## by doing that, the input of the next command now also has
+        ## children (due to unification).
+        out_edge_file_ids = self.get_output_file_ids()
+        assert(len(out_edge_file_ids) == 1)
+        out_edge_file_id = out_edge_file_ids[0]
+        out_edge_file_id.set_children(output_file_ids)
+
         input_file_ids = self.get_flat_input_file_ids()
-        output_file_ids = self.get_flat_output_file_ids()
 
         in_out_file_ids = zip(input_file_ids, output_file_ids)
 
