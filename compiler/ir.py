@@ -144,14 +144,17 @@ class FileId:
             output = "{}".format(self.resource)
         return output
 
+    ## Serialize as an option for the JSON serialization when sent to
+    ## the backend. This is needed as options can either be files or
+    ## arguments, and in each case there needs to be a different
+    ## serialization procedure.
     def opt_serialize(self):
-        assert(not self.resource is None)
-        output = "{}".format(self.resource.uri)
-        return output
+        return '"{}"'.format(self.serialize())
 
+    ## TODO: Maybe this can be merged with serialize
     def pipe_name(self):
         assert(self.resource is None)
-        output = '"#file{}"'.format(self.ident)
+        output = '"#file{}"'.format(Find(self).ident)
         return output
 
     def set_resource(self, resource):
@@ -369,7 +372,8 @@ class Command(Node):
         return output
 
     def serialize(self):
-        all_opt_indices = [o_i[1] for o_i in (self.opt_indices + self.in_stream) if isinstance(o_i, tuple)]
+        all_opt_indices = [o_i[1] for o_i in (self.opt_indices + self.in_stream + self.out_stream)
+                           if isinstance(o_i, tuple)]
         all_opt_indices.sort()
         options_string = " ".join([self.options[opt_i].opt_serialize() for opt_i in all_opt_indices])
         output = "{} {}".format(self.command, options_string)
@@ -803,6 +807,9 @@ class IR:
         nodes = {}
         all_file_ids = []
         for i, node in enumerate(self.nodes):
+
+            ## Gather all pipe names so that they are generated in the
+            ## backend.
             input_pipes = [fid.serialize()
                            for fid in node.get_flat_input_file_ids()
                            if fid.resource is None]
@@ -810,9 +817,22 @@ class IR:
                             for fid in node.get_flat_output_file_ids()
                             if fid.resource is None]
             all_file_ids += input_pipes + output_pipes
+
+            ## Find the stdin and stdout files of nodes so that the
+            ## backend can make the necessary redirections.
+            if ("stdin" in node.in_stream):
+                stdin_input_pipes = Find(node.stdin).flatten()
+            else:
+                stdin_input_pipes = []
+
+            if ("stdout" in node.out_stream):
+                stdout_output_pipes = Find(node.stdout).flatten()
+            else:
+                stdout_output_pipes = []
+
             node_json = {}
-            node_json["in"] = input_pipes
-            node_json["out"] = output_pipes
+            node_json["in"] = stdin_input_pipes
+            node_json["out"] = stdout_output_pipes
             node_json["command"] = node.serialize()
             nodes[str(i)] = node_json
 

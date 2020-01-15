@@ -257,7 +257,6 @@ def create_reduce_tree(init_func, input_file_ids, output_file_id, fileIdGen):
         tree += new_level
     ## Get the main output file identifier from the reduce and union
     ## it with the wanted output file identifier
-    print(curr_file_ids, output_file_id)
     curr_file_ids[0][0].union(output_file_id)
     return tree
 
