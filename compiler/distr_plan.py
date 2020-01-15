@@ -236,15 +236,13 @@ def create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen
 ## TODO: Find a better place to put these functions
 def create_sort_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
     ## Create a merge sort command
-    sort_input_file_ids = [fids for fids in new_output_file_ids]
-    tree = create_reduce_tree(SortGReduce, sort_input_file_ids, out_edge_file_id, fileIdGen)
+    tree = create_reduce_tree(SortGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
     # print(tree)
     return tree
 
 def create_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
-    ## Create a merge sort command
-    sort_input_file_ids = [fids for fids in new_output_file_ids]
-    tree = create_reduce_tree(BigramGReduce, sort_input_file_ids, out_edge_file_id, fileIdGen)
+    ## Create a merge bigram command
+    tree = create_reduce_tree(BigramGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
     # print(tree)
     return tree
 
@@ -259,6 +257,7 @@ def create_reduce_tree(init_func, input_file_ids, output_file_id, fileIdGen):
         tree += new_level
     ## Get the main output file identifier from the reduce and union
     ## it with the wanted output file identifier
+    print(curr_file_ids, output_file_id)
     curr_file_ids[0][0].union(output_file_id)
     return tree
 
