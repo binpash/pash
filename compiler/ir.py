@@ -523,6 +523,9 @@ class BigramGReduce(Command):
         ## get rid of this hack, where inputs, outputs are just
         ## written as options.
         in_stream = []
+        ## WARNING: This cannot be changes to be empty, because then
+        ## it would not be correctly unified in the backend with the
+        ## input of its downstream node.
         out_stream = [("option", 6)]
         ## TODO: When we generalize the model to have arbitrary
         ## outputs we can have them also be outputs.
