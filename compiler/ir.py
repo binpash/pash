@@ -378,8 +378,32 @@ class Command(Node):
     def get_non_file_options(self):
         return [self.options[i] for _, i in self.opt_indices]
 
-    def stateless_duplicate(self):
+    def pure_get_map_output_files(self, input_file_ids, fileIdGen):
+        assert(self.category == "pure")
+        if(str(self.command) == "sort"):
+            new_output_file_ids = [[fileIdGen.next_file_id()] for in_fid in input_file_ids]
+        elif(str(self.command) == "bigrams_aux"):
+            new_output_file_ids = [[fileIdGen.next_file_id() for i in range(BigramGMap.num_outputs)]
+                                   for in_fid in input_file_ids]
+        else:
+            print("Unreachable code reached :(")
+            assert(False)
+            ## This should be unreachable
+        return new_output_file_ids
+
+    def duplicate(self, new_output_file_ids, fileIdGen):
         assert(self.category == "stateless" or self.is_pure_parallelizable())
+        if(self.category == "stateless"):
+            return self.stateless_duplicate()
+        elif(self.is_pure_parallelizable()):
+            return self.pure_duplicate(new_output_file_ids, fileIdGen)
+        else:
+            print("Unreachable code reached :(")
+            assert(False)
+            ## This should be unreachable
+
+    def stateless_duplicate(self):
+        assert(self.category == "stateless")
         input_file_ids = self.get_flat_input_file_ids()
         output_file_ids = self.get_flat_output_file_ids()
 
@@ -393,8 +417,37 @@ class Command(Node):
 
         ## TODO: Read from some file that contains information about
         ## commands instead of hardcoding
-        parallelizable_pure = ["sort"]
+        parallelizable_pure = ["sort", "bigrams_aux"]
         return (self.category == "pure" and str(self.command) in parallelizable_pure)
+
+    def pure_duplicate(self, output_file_ids, fileIdGen):
+        assert(self.is_pure_parallelizable())
+        input_file_ids = self.get_flat_input_file_ids()
+
+        in_out_file_ids = zip(input_file_ids, output_file_ids)
+
+        ## This is the category of all commands that don't need a
+        ## special generalized map
+        if(str(self.command) == "sort"):
+
+            ## make_duplicate_command duplicates a node based on its
+            ## output file ids, so we first need to assign them.
+            intermediate_output_file_id = fileIdGen.next_file_id()
+            new_output_file_ids = [fids[0] for fids in output_file_ids]
+            intermediate_output_file_id.set_children(new_output_file_ids)
+            self.stdout = intermediate_output_file_id
+
+            new_commands = [self.make_duplicate_command(in_fid, out_fids[0])
+                            for in_fid, out_fids in in_out_file_ids]
+        elif(str(self.command) == "bigrams_aux"):
+            new_commands = [BigramGMap([in_fid] + out_fids)
+                            for in_fid, out_fids in in_out_file_ids]
+        else:
+            print("Unreachable code reached :(")
+            assert(False)
+            ## This should be unreachable
+        return new_commands
+
 
     def make_duplicate_command(self, in_fid, out_fid):
 
@@ -445,18 +498,36 @@ class Command(Node):
 ## these should be parsed from some configuration file, but for now
 ## we have them hardcoded for commands that we are interested in.
 class BigramGMap(Command):
+    num_outputs = 3
     def __init__(self, file_ids):
         command = string_to_argument("bigram_aux_map")
-        options = file_ids
-        in_stream = [("option", 0)]
-        out_stream = [("option", 1)]
-        ## At the moment only the $OUT variable is considered out
-        ## stream, even though the auxiliary streams are also outputs.
-        ##
+        options = [string_to_argument(fid.pipe_name()) for fid in file_ids]
+        ## TODO: Generalize the model to arbitrarily many outputs to
+        ## get rid of this hack, where inputs, outputs are just
+        ## written as options.
+        in_stream = []
+        out_stream = []
         ## TODO: When we generalize the model to have arbitrary
         ## outputs we can have them also be outputs.
-        opt_indices = [("option", 2), ("option", 3)]
+        opt_indices = [("option", 0), ("option", 1), ("option", 2), ("option", 3)]
         category = "stateless"
+        super().__init__(None, command, options, in_stream, out_stream,
+                         opt_indices, category)
+
+## TODO: Complete
+class BigramGReduce(Command):
+    def __init__(self, file_ids):
+        command = string_to_argument("bigram_aux_reduce")
+        options = [string_to_argument(fid.pipe_name()) for fid in file_ids]
+        ## TODO: Generalize the model to arbitrarily many outputs to
+        ## get rid of this hack, where inputs, outputs are just
+        ## written as options.
+        in_stream = []
+        out_stream = []
+        ## TODO: When we generalize the model to have arbitrary
+        ## outputs we can have them also be outputs.
+        opt_indices = [("option", i) for i in range(0,9)]
+        category = "pure"
         super().__init__(None, command, options, in_stream, out_stream,
                          opt_indices, category)
 
@@ -467,6 +538,10 @@ class SortGReduce(Command):
         output_file_id = file_ids[-1]
         input_file_id_opts = [string_to_argument(fid.pipe_name()) for fid in input_file_ids]
         options = [string_to_argument("-m")] + input_file_id_opts
+        ## Question: Can putting an empty input stream be a problem?
+        ## If we do that, then this node will be a source in the
+        ## dataflow graph. Ideally we want to generalize to arbitrary
+        ## inputs. This also applies to the one above.
         in_stream = []
         out_stream = ["stdout"]
         ## At the moment none of the $IN1, $IN2 are considered inputs
@@ -573,7 +648,7 @@ def find_command_category(command, options):
                  "gunzip", # file stateless
                  "xargs"] # I am not sure if all xargs are stateless
 
-    pure = ["sort", "wc", "uniq"]
+    pure = ["sort", "wc", "uniq", "bigrams_aux"]
 
     if (command_string in stateless):
         return "stateless"
