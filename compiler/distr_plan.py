@@ -223,15 +223,11 @@ def create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen
 ##
 ## TODO: Find a better place to put these functions
 def create_sort_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
-    ## Create a merge sort command
     tree = create_reduce_tree(SortGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
-    # print(tree)
     return tree
 
 def create_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
-    ## Create a merge bigram command
     tree = create_reduce_tree(BigramGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
-    # print(tree)
     return tree
 
 ## This function creates the reduce tree. Both input and output file
