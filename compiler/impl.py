@@ -12,7 +12,7 @@ def execute(graph_json, output_dir, output_script_name, output_optimized, compil
 
     if(not compile_optimize_only):
         ## TODO: Handle stdout, stderr, errors
-        exec_obj = subprocess.run(output_script, shell=True)
+        exec_obj = subprocess.run(output_script, shell=True, executable="/bin/bash")
         exec_obj.check_returncode()
 
 
