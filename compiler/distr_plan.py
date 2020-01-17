@@ -216,6 +216,8 @@ def create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen
         return create_sort_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
     elif(str(curr.command) == "bigrams_aux"):
         return create_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
+    elif(str(curr.command) == "alt_bigrams_aux"):
+        return create_alt_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
     else:
         assert(False)
 
@@ -228,6 +230,10 @@ def create_sort_merge_commands(curr, new_output_file_ids, out_edge_file_id, file
 
 def create_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
     tree = create_reduce_tree(BigramGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
+    return tree
+
+def create_alt_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
+    tree = create_reduce_tree(AltBigramGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
     return tree
 
 ## This function creates the reduce tree. Both input and output file
