@@ -3,6 +3,18 @@ import json
 from union_find import *
 from util import *
 
+### TODO: Move this somewhere else
+stateless_commands = ["cat", "tr", "grep", "col",
+                      "groff", # not clear
+                      "sed", # not always
+                      "cut",
+                      "gunzip", # file stateless
+                      "xargs"] # I am not sure if all xargs are stateless
+
+pure_commands = ["sort", "wc", "uniq", "bigrams_aux", "alt_bigrams_aux"]
+parallelizable_pure_commands = ["sort", "bigrams_aux", "alt_bigrams_aux"]
+
+
 ### Utils
 
 ## This function gets a key and a value from a dictionary that only
@@ -404,6 +416,8 @@ class Command(Node):
         elif(str(self.command) == "bigrams_aux"):
             new_output_file_ids = [[fileIdGen.next_file_id() for i in range(BigramGMap.num_outputs)]
                                    for in_fid in input_file_ids]
+        elif(str(self.command) == "alt_bigrams_aux"):
+            new_output_file_ids = [[fileIdGen.next_file_id()] for in_fid in input_file_ids]
         else:
             print("Unreachable code reached :(")
             assert(False)
@@ -445,8 +459,7 @@ class Command(Node):
 
         ## TODO: Read from some file that contains information about
         ## commands instead of hardcoding
-        parallelizable_pure = ["sort", "bigrams_aux"]
-        return (self.category == "pure" and str(self.command) in parallelizable_pure)
+        return (self.category == "pure" and str(self.command) in parallelizable_pure_commands)
 
     def pure_duplicate(self, output_file_ids, fileIdGen):
         assert(self.is_pure_parallelizable())
@@ -454,9 +467,11 @@ class Command(Node):
 
         in_out_file_ids = zip(input_file_ids, output_file_ids)
 
+        simple_map_pure_commands = ["sort",
+                                    "alt_bigrams_aux"]
         ## This is the category of all commands that don't need a
         ## special generalized map
-        if(str(self.command) == "sort"):
+        if(str(self.command) in simple_map_pure_commands):
 
             ## make_duplicate_command duplicates a node based on its
             ## output file ids, so we first need to assign them.
@@ -542,7 +557,6 @@ class BigramGMap(Command):
         super().__init__(None, command, options, in_stream, out_stream,
                          opt_indices, category)
 
-## TODO: Complete
 class BigramGReduce(Command):
     def __init__(self, file_ids):
         command = string_to_argument("bigram_aux_reduce")
@@ -573,6 +587,38 @@ class BigramGReduce(Command):
                 opt = fid
             options.append(opt)
         return options
+
+class AltBigramGReduce(Command):
+    def __init__(self, file_ids):
+        command = string_to_argument("alt_bigram_aux_reduce")
+        options = self.make_options(file_ids)
+        ## TODO: Generalize the model to arbitrarily many outputs to
+        ## get rid of this hack, where inputs, outputs are just
+        ## written as options.
+        in_stream = []
+        ## WARNING: This cannot be changes to be empty, because then
+        ## it would not be correctly unified in the backend with the
+        ## input of its downstream node.
+        out_stream = [("option", 2)]
+        ## TODO: When we generalize the model to have arbitrary
+        ## outputs we can have them also be outputs.
+        opt_indices = [("option", 0), ("option", 1)]
+        category = "pure"
+        super().__init__(None, command, options, in_stream, out_stream,
+                         opt_indices, category)
+
+    ## TODO: Make this atrocity prettier
+    def make_options(self, file_ids):
+        options = []
+        for i in range(0, 3):
+            fid = file_ids[i]
+            if(not i == 2):
+                opt = string_to_argument(fid.pipe_name())
+            else:
+                opt = fid
+            options.append(opt)
+        return options
+
 
 class SortGReduce(Command):
     def __init__(self, file_ids):
@@ -684,18 +730,10 @@ def find_command_category(command, options):
     ## TODO: Make a proper search that returns the command category
     print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
 
-    stateless = ["cat", "tr", "grep", "col",
-                 "groff", # not clear
-                 "sed", # not always
-                 "cut",
-                 "gunzip", # file stateless
-                 "xargs"] # I am not sure if all xargs are stateless
 
-    pure = ["sort", "wc", "uniq", "bigrams_aux"]
-
-    if (command_string in stateless):
+    if (command_string in stateless_commands):
         return "stateless"
-    elif (command_string in pure):
+    elif (command_string in pure_commands):
         return "pure"
     elif (command_string == "comm"):
         return is_comm_pure(options)
