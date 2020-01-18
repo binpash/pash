@@ -9,6 +9,7 @@ directory="${eval_directory}/intermediary/"
 results="${eval_directory}results/"
 prefix="${directory}${experiment}"
 env_file="${prefix}_env.sh"
+funs_file="${prefix}_funs.sh"
 seq_script="${prefix}_seq.sh"
 distr_script="${prefix}_distr.sh"
 
@@ -16,6 +17,11 @@ echo "Environment:"
 # cat $env_file
 . $env_file
 export $(cut -d= -f1 $env_file)
+
+## Export necessary functions
+if [ -f $funs_file ]; then
+    source $funs_file
+fi
 
 echo "Sequential:"
 cat $seq_script | grep -v "rm -f" | grep -v "mkfifo"

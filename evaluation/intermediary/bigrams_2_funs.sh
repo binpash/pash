@@ -1,13 +1,13 @@
 #!/bin/bash
 
-## By making tee | tail | paste its own function, we can implement it
-## as a pure command separated into a generalized map and a
-## reduce. Following the ParSynt work, a generalized map also keeps
-## some auxiliary variables (in our case streams) to enable parallelization.
-
-##
-## Map
-##
+bigrams_aux()
+{
+    ( mkfifo s2 > /dev/null ) ;
+    tee s2 |
+        tail +2 |
+        paste s2 -
+    rm s2
+}
 
 bigram_aux_map()
 {
@@ -19,7 +19,7 @@ bigram_aux_map()
     s2=$(mktemp -u)
     aux1=$(mktemp -u)
     aux2=$(mktemp -u)
-    
+
     mkfifo $s2
     mkfifo $aux1
     mkfifo $aux2
@@ -31,9 +31,7 @@ bigram_aux_map()
     ## The goal of this is to write the first line of $IN in the $AUX_HEAD
     ## stream and the last line of $IN in $AUX_TAIL
 
-    ## TODO: I am not sure if using head/tail like this works or breaks
-    ## the pipes
-    cat $aux1 | ( head -n 1 > $AUX_HEAD; dd of=/dev/null > /dev/null 2>&1 ) &
+    cat $aux1 | ( head -n 1 > $AUX_HEAD; $DISH_TOP/evaluation/tools/drain_stream.sh ) &
     tail -n 1 $aux2 > $AUX_TAIL &
 
     wait
@@ -42,10 +40,6 @@ bigram_aux_map()
     rm $aux1
     rm $aux2
 }
-
-##
-## Reduce:
-##
 
 bigram_aux_reduce()
 {
@@ -60,7 +54,7 @@ bigram_aux_reduce()
     AUX_TAIL_OUT=$9
 
     temp=$(mktemp -u)
-    
+
     mkfifo $temp
 
     cat $AUX_HEAD1 > $AUX_HEAD_OUT &
@@ -73,4 +67,6 @@ bigram_aux_reduce()
     rm $temp
 }
 
-##VTODO: Deplete the aux outputs of the last reduce
+export -f bigrams_aux
+export -f bigram_aux_map
+export -f bigram_aux_reduce
