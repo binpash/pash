@@ -38,7 +38,7 @@ def main():
 
     ## 5. Execute the compiled version of the input script
     if(not args.compile_only):
-        execute_script(new_shell_filename, args.output, args.output_optimized)
+        execute_script(new_shell_filename, args.output, args.output_optimized, args.compile_optimize_only)
 
 def from_ir_to_shell(ir_filename, new_shell_filename):
     ## TODO: Execute the ocaml json_to_shell.native and save its
@@ -50,6 +50,8 @@ def parse_args():
     parser.add_argument("input", help="the script to be compiled and executed")
     parser.add_argument("output", help="the path of the compiled shell script")
     parser.add_argument("--compile_only", help="only compile the input script and not execute it",
+                        action="store_true")
+    parser.add_argument("--compile_optimize_only", help="only compile and optimize the input script and not execute it",
                         action="store_true")
     parser.add_argument("--output_optimized", help="output the optimized shell script that was produced by the planner for inspection",
                         action="store_true")
@@ -84,9 +86,9 @@ def compile_asts(ast_objects):
     return final_asts
 
 ## TODO: Extend this to properly execute the compiled script
-def execute_script(compiled_script_filename, output_script_path, output_optimized):
+def execute_script(compiled_script_filename, output_script_path, output_optimized, compile_optimize_only):
     ## For now, just execute the first dataflow graph in the script
-    optimize_script(output_script_path)
+    optimize_script(output_script_path, compile_optimize_only)
 
 if __name__ == "__main__":
     main()
