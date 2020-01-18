@@ -3,7 +3,6 @@
 bigrams_aux()
 {
     ( mkfifo s2 > /dev/null ) ;
-    ## I am not sure if this reads the stdin of the function
     tee s2 |
         tail +2 |
         paste s2 -
@@ -32,8 +31,6 @@ bigram_aux_map()
     ## The goal of this is to write the first line of $IN in the $AUX_HEAD
     ## stream and the last line of $IN in $AUX_TAIL
 
-    ## TODO: I am not sure if using head/tail like this works or breaks
-    ## the pipes
     cat $aux1 | ( head -n 1 > $AUX_HEAD; dd of=/dev/null > /dev/null 2>&1 ) &
     tail -n 1 $aux2 > $AUX_TAIL &
 
@@ -57,7 +54,7 @@ bigram_aux_reduce()
     AUX_TAIL_OUT=$9
 
     temp=$(mktemp -u)
-    
+
     mkfifo $temp
 
     cat $AUX_HEAD1 > $AUX_HEAD_OUT &
