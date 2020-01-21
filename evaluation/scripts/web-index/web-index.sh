@@ -26,20 +26,23 @@ SEEN="./seen.txt";
 SOURCE="./seed.txt";
 i=0
 
-rm s1 s2
-mkfifo s1 s2
-
+rm s1 s2 drainbuf
+mkfifo s1 s2 drainbuf
 echo $PROXY
+
+# TODO (nv): I have a feeling this creates duplicates
+cat drainbuf |
+  tee /dev/null >&2 & 
 
 # to enable line buffering: stdbuf -oL
 tail -f $SOURCE |
 # removes buffering
-tee >(tee /dev/null >&2) |
+tee drainbuf |
 grep --line-buffered -v '^#' |
 sed -u 's/^https/http/' |
 head -n 2 |
 # to debug curl, remove `-s`
-xargs -0 -n 1 -d '\n' curl --connect-to "::${PROXY}:8080"  |
+xargs -0 -n 1 -d '\n' curl -s --connect-to "::${PROXY}:8080"  |
 # {
 #   # this lambda is only for hitting multiple servers to increase throughput
 #   read url;
@@ -79,17 +82,15 @@ sed -u 's/^https/http/' |
 # Note the append on SEEN and write on SOURCE
 tee -a $SEEN -a $SOURCE > /dev/null &
 
-rm shift1 shift2 shift3
-mkfifo shift1 shift2 shift3
-# s2---NLP manipulation:  get text
-cat s2 |
-  pandoc --from html --to plain --quiet |
-  tr -cs A-Za-z '\n' |
-  tr A-Z a-z |
-  iconv -c -t ascii//TRANSLIT |
-  grep -vwFf stopwords.txt |
-  ./stem-words.js | # stem-to-roots
-  tee >( # 2-grams
+rm shift{1,2,3} {1,2,3}grams
+mkfifo shift{1,2,3} {1,2,3}grams
+
+cat '1grams' |
+    sort |
+    uniq -c |
+    sort -rn >> 1-grams.txt &
+
+cat '2grams' |
     tr -cs A-Za-z '\n' |
     tr A-Z a-z |
     tee shift1 |
@@ -97,8 +98,9 @@ cat s2 |
     paste shift1 - |
     sort |
     uniq -c |
-    sort -rn >> 2-grams.txt
-  ) >( # 3-grams
+    sort -rn >> 2-grams.txt &
+
+cat '3grams' |
     tr -cs A-Za-z '\n' |
     tr A-Z a-z |
     tee shift2 |
@@ -110,12 +112,17 @@ cat s2 |
     paste shift3 - |
     sort |
     uniq -c |
-    sort -rn >> 3-grams.txt
-  ) >( # 1-grams (i.e., frequencies)
-    sort |
-    uniq -c |
-    sort -rn >> 1-grams.txt
-  ) &
+    sort -rn >> 3-grams.txt &
+
+# s2---NLP manipulation:  get text
+cat s2 |
+  pandoc --from html --to plain --quiet |
+  tr -cs A-Za-z '\n' |
+  tr A-Z a-z |
+  iconv -c -t ascii//TRANSLIT |
+  grep -vwFf stopwords.txt |
+  ./stem-words.js | # stem-to-roots
+  tee '3grams' '2grams' '1grams' > /dev/null &
 
 wait
 # lynx -dump -stdin
