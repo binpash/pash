@@ -25,6 +25,7 @@ def to_standard_json(string):
     # have no arguments, so they should all be letter characters.
     #
     # Warning: This is not robust at all, but will do for now
+    # TODO (nv): is it possible to change this on the OCaml side?
     string = re.sub(r'\{\"([A-Za-z]+)\"\}', r'"\1"', string)
     
     return string

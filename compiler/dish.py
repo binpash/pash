@@ -7,8 +7,9 @@ from distr_plan import *
 from ir import *
 from json_ast import *
 
-PARSER_VAR = "DISH_PARSER"
-DISH_TOP_VAR = "DISH_TOP"
+GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
+DISH_TOP = os.environ['DISH_TOP'] or subprocess.run(GIT_TOP_CMD, capture_output=True, text=True).stdout
+PARSER_VAR = "DISH_PARSER" # TODO (nv): could pick from DISH_TOP
 
 def main():
     ## Parse arguments
