@@ -11,4 +11,4 @@ B=${2:-${p}coreutils.txt}
 IN=./input/i1G.txt
 OUT=./output/out.txt
 
-comm -3 <(cut -d ' ' -f 1 $IN | sort ) <( cut -d ' ' -f 1 $IN | sort) > $OUT
+comm -23 <(cut -d ' ' -f 1 $IN | sort ) <( cut -d ' ' -f 1 $IN | sort) > $OUT
