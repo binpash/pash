@@ -35,7 +35,7 @@ def load_config():
 
     config = dish_config[CONFIG_KEY]
 
-def optimize_script(output_script_path):
+def optimize_script(output_script_path, compile_optimize_only):
     global config
     if not config:
         load_config()
@@ -65,7 +65,7 @@ def optimize_script(output_script_path):
     # f.close()
 
     ## Call the backend that executes the optimized dataflow graph
-    execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'])
+    execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'], compile_optimize_only)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
@@ -175,30 +175,21 @@ def parallelize_command(curr, graph, fileIdGen):
         assert(len(out_edge_file_ids) == 1)
         out_edge_file_id = out_edge_file_ids[0]
 
-        ## Add children to the output file (thus also changing the
-        ## input file of the next command to have children)
-        new_output_file_ids = [fileIdGen.next_file_id() for in_fid in input_file_ids]
+        ## Get the file names of the outputs of the map commands. This
+        ## differs if the command is stateless, pure that can be
+        ## written as a map and a reduce, and a pure that can be
+        ## written as a generalized map and reduce.
+        new_output_file_ids = curr.get_map_output_files(input_file_ids, fileIdGen)
 
-        if(curr.category == "stateless"):
-            out_edge_file_id.set_children(new_output_file_ids)
-        elif(curr.is_pure_parallelizable()):
-            ## If the command is pure, there is need for a merging
-            ## command to be added at the end.
-            intermediate_output_file_id = fileIdGen.next_file_id()
-            intermediate_output_file_id.set_children(new_output_file_ids)
-            curr.stdout = intermediate_output_file_id
-
-            ## Make a merge command that joins the results of all the
-            ## duplicated commands
-            merge_command = create_merge_command(curr, new_output_file_ids, out_edge_file_id)
-            graph.add_node(merge_command)
-        else:
-            print("Unreachable code reached :(")
-            assert(False)
-            ## This should be unreachable
+        ## Make a merge command that joins the results of all the
+        ## duplicated commands
+        if(curr.is_pure_parallelizable()):
+            merge_commands = create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
+            for merge_command in merge_commands:
+                graph.add_node(merge_command)
 
         ## For each new input and output file id, make a new command
-        new_commands = curr.stateless_duplicate()
+        new_commands = curr.duplicate(new_output_file_ids, fileIdGen)
         graph.remove_node(curr)
         # print("New commands:")
         # print(new_commands)
@@ -220,42 +211,68 @@ def parallelize_command(curr, graph, fileIdGen):
 
 ## Creates a merge command for all pure commands that can be
 ## parallelized using a map and a reduce/merge step
-def create_merge_command(curr, new_output_file_ids, out_edge_file_id):
+def create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
     if(str(curr.command) == "sort"):
-        return create_sort_merge_command(curr, new_output_file_ids, out_edge_file_id)
+        return create_sort_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
+    elif(str(curr.command) == "bigrams_aux"):
+        return create_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
+    elif(str(curr.command) == "alt_bigrams_aux"):
+        return create_alt_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
     else:
         assert(False)
 
-## TODO: This must be generated using some file information
+## TODO: These must be generated using some file information
 ##
-## TODO: Find a better place to put this function
-def create_sort_merge_command(curr, new_output_file_ids, out_edge_file_id):
-    ## Create a merge sort command
-    ##
-    ## WARNING: Since the merge has to take the files as arguments, we
-    ## pass the pipe names as its arguments and nothing in stdin
-    old_options = curr.get_non_file_options()
-    input_file_ids = curr.get_flat_input_file_ids()
-    ## TODO: Implement a proper version of parallel sort -m, instead
-    ## of using the parallel flag.
-    options = [string_to_argument("-m"), string_to_argument("--parallel={}".format(len(input_file_ids)))] + old_options
-    # options = []
-    options += [string_to_argument(fid.pipe_name()) for fid in new_output_file_ids]
-    opt_indices = [("option", i) for i in range(len(options))]
-    # in_stream = [("option", i + len(opt_indices)) for i in range(len(new_output_file_ids))]
-    in_stream = []
-    merge_command = Command(None, # TODO: Make a proper AST
-                            curr.command,
-                            options,
-                            in_stream,
-                            ["stdout"],
-                            opt_indices,
-                            "pure",
-                            # intermediate_output_file_id,
-                            [],
-                            out_edge_file_id)
-    return merge_command
+## TODO: Find a better place to put these functions
+def create_sort_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
+    tree = create_reduce_tree(SortGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
+    return tree
 
+def create_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
+    tree = create_reduce_tree(BigramGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
+    return tree
+
+def create_alt_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
+    tree = create_reduce_tree(AltBigramGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
+    return tree
+
+## This function creates the reduce tree. Both input and output file
+## ids must be lists of lists, as the input file ids and the output
+## file ids might contain auxiliary files.
+def create_reduce_tree(init_func, input_file_ids, output_file_id, fileIdGen):
+    tree = []
+    curr_file_ids = input_file_ids
+    while(len(curr_file_ids) > 1):
+        new_level, curr_file_ids = create_reduce_tree_level(init_func, curr_file_ids, fileIdGen)
+        tree += new_level
+    ## Get the main output file identifier from the reduce and union
+    ## it with the wanted output file identifier
+    curr_file_ids[0][0].union(output_file_id)
+    return tree
+
+
+## This function creates a level of the reduce tree. Both input and
+## output file ids must be lists of lists, as the input file ids and
+## the output file ids might contain auxiliary files.
+def create_reduce_tree_level(init_func, input_file_ids, fileIdGen):
+    if(len(input_file_ids) % 2 == 0):
+        output_file_ids = []
+        even_input_file_ids = input_file_ids
+    else:
+        output_file_ids = [input_file_ids[0]]
+        even_input_file_ids = input_file_ids[1:]
+
+    level = []
+    for i in range(0, len(even_input_file_ids), 2):
+        new_out_file_ids = [fileIdGen.next_file_id() for _ in input_file_ids[i]]
+        output_file_ids.append(new_out_file_ids)
+        new_node = create_reduce_node(init_func, even_input_file_ids[i:i+2], new_out_file_ids)
+        level.append(new_node)
+    return (level, output_file_ids)
+
+## This function creates one node of the reduce tree
+def create_reduce_node(init_func, input_file_ids, output_file_ids):
+    return init_func(flatten_list(input_file_ids) + output_file_ids)
 
     ## TODO: In order to be able to execute it, we either have to
     ## execute it in the starting shell (so that we have its state),

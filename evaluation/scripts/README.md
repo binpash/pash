@@ -2,27 +2,27 @@
 
 This table is for keeping track of `Dish` results, and blocking aspects when `Dish` can't execute something distributed. All input is provided in [./input](./input) (possibly requires executing `./input/fetch.sh`). 
 
-| Pipeline                         | 1×                                  | 100×    | Notes                                         |
-| -------------------------------- | ----------------------------------- | ------- | --------------------------------------------- |
-| [genome-diff.sh](genome-diff.sh) | 101.98s, 4.88s, 114% — _1:32.99_    |         |                                               |
-| [diff.sh](diff.sh)               | 452.90s, 85.40s, 234% — _3:49.10_   |         |                                               |
-| [set-diff.sh](set-diff.sh)       | 305.81s, 3.35s, 204% — _2:31.26_    |         |                                               |
-| [genquality.sh](genquality.sh)   | 7.03s, 2.30s, 148% — _6.305_        |         |                                               |
-| [search.sh](search.sh)           | 4825.71s, 5.93s, 99% — _1:20:33.88_ |         |                                               |
-| [bigrams.sh](bigrams.sh)         | 738.01s, 34.73s, 107% — _11:59.99_  |         |                                               |
-| [trigrams.sh](trigrams.sh)       | 971.30s, 60.17s, 111% — _15:29.22_  |         |                                               |
-| [page-count.sh](page-count.sh)   | 0.21s, 0.03s, 107% — _0.228_        |         |                                               |
-| [tailprogs.sh](tailprogs.sh)     | 1.53s, 0.34s, 103% — _1.816_        |         |                                               |
-| [spell.sh](spell.sh)             | 0.74s, 0.07s, 176% — _0.462_        |         |                                               |
-| [symtab-sha.sh](symtab-sha.sh)   | 0.43s, 0.21s, 362% — _0.177_        |         |                                               |
-| [topn.sh](topn.sh)               | 422.06s, 12.94s, 105% — _6:53.29_   |         |                                               |
-| [wc.sh](wc.sh)                   | 14.07s, 5.54s, 137% — _14.289_      |         |                                               |
-| [wf.sh](wf.sh)                   | 129.66s, 10.00s, 106% — _2:10.59_   |         |                                               |
-| [longest-man.sh](longest-man.sh) | 0.09s, 0.14s, 150% — _0.151_        |         |                                               |
-|                                  |                                     |         |                                               |
-| [compile.sh](compile.sh)         | 18.02s, 0.50s, 100% — _18.489_      |         | Does not make sense to parallelize            |
-| [sieve.sh](sieve.sh)             | 12.41s, 8.78s, 68% — _30.816_       |         | Not a pipeline                                |
-| [maximal.sh](maximal.sh)         |                                     |         | Only for compatibility testing                |
+| Pipeline                         | 1×                                  | 100×    | Notes                                           |
+| -------------------------------- | ----------------------------------- | ------- | ----------------------------------------------- |
+| [genome-diff.sh](genome-diff.sh) | 101.98s, 4.88s, 114% — _1:32.99_    |         | minimap, samltools, bcftools categories unknown |
+| [diff.sh](diff.sh)               | 452.90s, 85.40s, 234% — _3:49.10_   |         | shuf not stateless, diff non parallelizable     |
+| [set-diff.sh](set-diff.sh)       | 305.81s, 3.35s, 204% — _2:31.26_    |         | OK (except for POSIX compliance)                |
+| [genquality.sh](genquality.sh)   | 7.03s, 2.30s, 148% — _6.305_        |         | csvcut category unknown                         |
+| [search.sh](search.sh)           | 4825.71s, 5.93s, 99% — _1:20:33.88_ |         | OK                                              |
+| [bigrams.sh](bigrams.sh)         | 738.01s, 34.73s, 107% — _11:59.99_  |         | OK                                              |
+| [trigrams.sh](trigrams.sh)       | 971.30s, 60.17s, 111% — _15:29.22_  |         | OK                                              |
+| [page-count.sh](page-count.sh)   | 0.21s, 0.03s, 107% — _0.228_        |         | exiftool, bc category inknown                   |
+| [tailprogs.sh](tailprogs.sh)     | 1.53s, 0.34s, 103% — _1.816_        |         | OK                                              |
+| [spell.sh](spell.sh)             | 0.74s, 0.07s, 176% — _0.462_        |         | OK                                              |
+| [symtab-sha.sh](symtab-sha.sh)   | 0.43s, 0.21s, 362% — _0.177_        |         | readelf, xxd, categories unknown                |
+| [topn.sh](topn.sh)               | 422.06s, 12.94s, 105% — _6:53.29_   |         | OK                                              |
+| [wc.sh](wc.sh)                   | 14.07s, 5.54s, 137% — _14.289_      |         | OK                                              |
+| [wf.sh](wf.sh)                   | 129.66s, 10.00s, 106% — _2:10.59_   |         | OK                                              |
+| [longest-man.sh](longest-man.sh) | 0.09s, 0.14s, 150% — _0.151_        |         | du category unknown                             |
+|                                  |                                     |         |                                                 |
+| [compile.sh](compile.sh)         | 18.02s, 0.50s, 100% — _18.489_      |         | Does not make sense to parallelize              |
+| [sieve.sh](sieve.sh)             | 12.41s, 8.78s, 68% — _30.816_       |         | Not a pipeline                                  |
+| [maximal.sh](maximal.sh)         |                                     |         | Only for compatibility testing                  |
 
 All scripts write to `./output/out.txt` (but could be made to read from and write to `/dev/shm/out.txt`).
 
