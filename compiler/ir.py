@@ -17,12 +17,9 @@ parallelizable_pure_commands = ["sort", "bigrams_aux", "alt_bigrams_aux"]
 
 ### Utils
 
-## This function gets a key and a value from a dictionary that only
-## has one key
+## This function gets a key and a value from the ast json format
 def get_kv(dic):
-    dic_items = list(dic.items())
-    assert(len(dic_items) == 1)
-    return dic_items[0]
+    return (dic[0], dic[1])
 
 def format_arg_chars(arg_chars):
     chars = [format_arg_char(arg_char) for arg_char in arg_chars]
@@ -61,7 +58,7 @@ def make_argument(option):
 ## AST for the call to the distributed planner. It only handles simple
 ## characters
 def char_to_arg_char(char):
-    return { 'C' : ord(char) }
+    return ['C' , ord(char)]
 
 ## TODO: Resources should probably be more elaborate than just a
 ## string and a line range. They could be URLs, and possibly other things.

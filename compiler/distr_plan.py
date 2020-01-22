@@ -52,6 +52,9 @@ def optimize_script(output_script_path, compile_optimize_only):
         ir_node = pickle.load(ir_file)
 
     print("Retrieving IR: {} ...".format(config['ir_filename']))
+
+    ## FIXME: This crashes at the moment, because the json ocaml
+    ## parser gets confused with its input.
     shell_string = ast_to_shell(ir_node.ast)
     print(shell_string)
 
