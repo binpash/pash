@@ -8,8 +8,13 @@ from ir import *
 from json_ast import *
 
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
-DISH_TOP = os.environ['DISH_TOP'] or subprocess.run(GIT_TOP_CMD, capture_output=True, text=True).stdout
-PARSER_VAR = "DISH_PARSER" # TODO (nv): could pick from DISH_TOP
+if 'DISH_TOP' in os.environ:
+    DISH_TOP = os.environ['DISH_TOP']
+else:
+    DISH_TOP = subprocess.run(GIT_TOP_CMD, capture_output=True,
+            text=True).stdout.rstrip()
+    
+PARSER_BINARY = os.path.join(DISH_TOP, "parser/parse_to_json.native")
 
 def main():
     ## Parse arguments
@@ -17,8 +22,7 @@ def main():
 
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
     input_script_path = args.input
-    parser_binary = os.environ[PARSER_VAR]
-    parser_output = subprocess.run([parser_binary, input_script_path], capture_output=True, text=True)
+    parser_output = subprocess.run([PARSER_BINARY, input_script_path], capture_output=True, text=True)
     parser_output.check_returncode()
     json_ast_string = parser_output.stdout
 
