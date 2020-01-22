@@ -13,7 +13,15 @@ from impl import execute
 ## IR, read some configuration file with node information, and then
 ## should make a distribution plan for it.
 
-DISH_TOP_VAR = "DISH_TOP"
+GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
+if 'DISH_TOP' in os.environ:
+    DISH_TOP = os.environ['DISH_TOP']
+else:
+    DISH_TOP = subprocess.run(GIT_TOP_CMD, capture_output=True,
+            text=True).stdout.rstrip()
+    
+PARSER_BINARY = os.path.join(DISH_TOP, "parser/parse_to_json.native")
+
 
 config = {}
 
@@ -23,7 +31,7 @@ def load_config():
     CONFIG_KEY = 'distr_planner'
 
     ## TODO: allow this to be passed as an argument
-    config_file_path = '{}/compiler/config.yaml'.format(os.environ[DISH_TOP_VAR])
+    config_file_path = '{}/compiler/config.yaml'.format(DISH_TOP)
     with open(config_file_path) as config_file:
         dish_config = yaml.load(config_file, Loader=yaml.FullLoader)
 
