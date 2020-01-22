@@ -184,6 +184,9 @@ class FileId:
         assert(self.children == [])
         self.children = children
 
+    def unset_children(self):
+        self.children = []
+
     def get_children(self):
         return self.children
 
@@ -424,18 +427,18 @@ class Command(Node):
             ## This should be unreachable
         return new_output_file_ids
 
-    def duplicate(self, new_output_file_ids, fileIdGen):
+    def duplicate(self, input_file_ids, new_output_file_ids, fileIdGen):
         assert(self.category == "stateless" or self.is_pure_parallelizable())
         if(self.category == "stateless"):
-            return self.stateless_duplicate(new_output_file_ids)
+            return self.stateless_duplicate(input_file_ids, new_output_file_ids)
         elif(self.is_pure_parallelizable()):
-            return self.pure_duplicate(new_output_file_ids, fileIdGen)
+            return self.pure_duplicate(input_file_ids, new_output_file_ids, fileIdGen)
         else:
             print("Unreachable code reached :(")
             assert(False)
             ## This should be unreachable
 
-    def stateless_duplicate(self, output_file_ids):
+    def stateless_duplicate(self, input_file_ids, output_file_ids):
         assert(self.category == "stateless")
 
         ## Attach the new output files as children of the node's
@@ -445,15 +448,24 @@ class Command(Node):
         out_edge_file_ids = self.get_output_file_ids()
         assert(len(out_edge_file_ids) == 1)
         out_edge_file_id = out_edge_file_ids[0]
+        ## TODO: At the moment the next line is needed by
+        ## make_duplicate_command. Find a way to remove it.
         out_edge_file_id.set_children(output_file_ids)
 
-        input_file_ids = self.get_flat_input_file_ids()
+        ## Make a new cat command to add after the current command.
+        new_cat = Cat(output_file_ids, out_edge_file_id)
 
         in_out_file_ids = zip(input_file_ids, output_file_ids)
 
-        new_commands = [self.make_duplicate_command(in_fid, out_fid) for in_fid, out_fid in in_out_file_ids]
+        new_commands = [self.find_in_out_and_make_duplicate_command(in_fid, out_fid)
+                        for in_fid, out_fid in in_out_file_ids]
 
-        return new_commands
+        ## TODO: This is here to counteract with the one
+        ## above. Normally, we would have to keep the old list
+        ## somehwere. Eventually this line should be completely
+        ## removed.
+        out_edge_file_id.unset_children()
+        return new_commands + [new_cat]
 
     def is_pure_parallelizable(self):
 
@@ -461,9 +473,8 @@ class Command(Node):
         ## commands instead of hardcoding
         return (self.category == "pure" and str(self.command) in parallelizable_pure_commands)
 
-    def pure_duplicate(self, output_file_ids, fileIdGen):
+    def pure_duplicate(self, input_file_ids, output_file_ids, fileIdGen):
         assert(self.is_pure_parallelizable())
-        input_file_ids = self.get_flat_input_file_ids()
 
         in_out_file_ids = zip(input_file_ids, output_file_ids)
 
@@ -480,7 +491,7 @@ class Command(Node):
             intermediate_output_file_id.set_children(new_output_file_ids)
             self.stdout = intermediate_output_file_id
 
-            new_commands = [self.make_duplicate_command(in_fid, out_fids[0])
+            new_commands = [self.find_in_out_and_make_duplicate_command(in_fid, out_fids[0])
                             for in_fid, out_fids in in_out_file_ids]
         elif(str(self.command) == "bigrams_aux"):
             new_commands = [BigramGMap([in_fid] + out_fids)
@@ -492,24 +503,28 @@ class Command(Node):
         return new_commands
 
 
-    def make_duplicate_command(self, in_fid, out_fid):
+    ## TODO: This has to change, to not search for the inputs in the
+    ## in_stream
+    def find_in_out_and_make_duplicate_command(self, in_fid, out_fid):
 
         ## First find what does the new file identifier refer to
         ## (stdin, or some argument)
         new_in_stream_index = self.find_file_id_in_in_stream(in_fid)
         new_out_stream_index = self.find_file_id_in_out_stream(out_fid)
-        new_in_stream = [self.in_stream[new_in_stream_index]]
-        new_out_stream = [self.out_stream[new_out_stream_index]]
+        new_input_location = self.in_stream[new_in_stream_index]
+        new_output_location = self.out_stream[new_out_stream_index]
+        return self.make_duplicate_command(in_fid, out_fid, new_input_location, new_output_location)
 
+    def make_duplicate_command(self, in_fid, out_fid, new_input_location, new_output_location):
         ## TODO: Simplify the code below
-        in_chunk = new_in_stream[0]
+        in_chunk = new_input_location
         if(in_chunk == "stdin"):
             new_stdin = in_fid
         else:
             ## Question: Is that valid?
             new_stdin = self.stdin
 
-        if(new_out_stream[0] == "stdout"):
+        if(new_output_location == "stdout"):
             new_stdout = out_fid
         else:
             ## Question: Is that valid?
@@ -521,6 +536,8 @@ class Command(Node):
            and in_chunk[0] == "option"):
             new_options[in_chunk[1]] = in_fid
 
+        new_in_stream = [new_input_location]
+        new_out_stream = [new_output_location]
         ## TODO: I probably have to do the same with output options
 
         new_command = Command(None, # The ast is None
@@ -543,17 +560,18 @@ class Command(Node):
 
 ## (Maybe) Extend this to also take flags as part of its input.
 class Cat(Command):
-    def __init__(self, file_ids):
+    def __init__(self, input_file_ids, output_file_id):
         command = string_to_argument("cat")
-        options = file_ids
-        in_stream = [("option", i)  for i in range(len(file_ids))]
+        options = input_file_ids
+        in_stream = [("option", i)  for i in range(len(input_file_ids))]
         out_stream = ["stdout"]
+        stdout = output_file_id
         opt_indices = []
         category = "stateless"
         ## TODO: Fill the AST
         ast = None
         super().__init__(ast, command, options, in_stream, out_stream,
-                         opt_indices, category)
+                         opt_indices, category, stdout=stdout)
 
 ## These are the generalized map and reduce nodes for the
 ## `tee s2 | tail +2 | paste s2 -` function. At some point,
@@ -662,6 +680,8 @@ class SortGReduce(Command):
                          opt_indices, category, stdout=output_file_id)
 
 
+## TODO: For commands that have a specific node (like cat) make their
+## specialized versions.
 def create_command_assign_file_identifiers(ast, fileIdGen, command, options, stdin=None, stdout=None):
     in_stream, out_stream, opt_indices = find_command_input_output(command, options, stdin, stdout)
     category = find_command_category(command, options)
