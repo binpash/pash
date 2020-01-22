@@ -1,6 +1,6 @@
 PARSER=parse_to_json
 JSON_TO_SHELL=json_to_shell
-AST_I=../libdash/ocaml/ast.mli
+AST_I=./libdash/ocaml/ast.mli
 
 .PHONY : all test dependencies libdash clean
 
