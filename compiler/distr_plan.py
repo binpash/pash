@@ -132,6 +132,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
 
         ## TODO: Remove hardcoded
         graph = split_command_input(curr, graph, fileIdGen, fan_out, batch_size)
+        graph = parallelize_cat(curr, graph, fileIdGen)
         graph = parallelize_command(curr, graph, fileIdGen)
     return graph
 
@@ -169,10 +170,34 @@ def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
 
     return graph
 
+## If the current command is a cat, and is followed by a node that
+## is either stateless or pure parallelizable, commute the cat
+## after the node.
+def parallelize_cat(curr, graph, fileIdGen):
+    if(isinstance(curr, Cat)):
+        next_nodes = graph.get_next_nodes(curr)
+
+        ## Cat can only have one output
+        assert(len(next_nodes) <= 1)
+        if(len(next_nodes) == 1):
+            next_node = next_nodes[0]
+
+            ## TODO: Find the location of cat's output in the next
+            ## node's input and then call make_duplicate_command.
+            # new_in_stream_index = self.find_file_id_in_in_stream(in_fid)
+            # new_out_stream_index = self.find_file_id_in_out_stream(out_fid)
+            # new_input_location = self.in_stream[new_in_stream_index]
+            # new_output_location = self.out_stream[new_out_stream_index]
+            # return self.make_duplicate_command(in_fid, out_fid, new_input_location, new_output_location)
+    return graph
+
 def parallelize_command(curr, graph, fileIdGen):
+    input_file_ids = curr.get_flat_input_file_ids()
+    return parallelize_command_inputs(curr, input_file_ids, graph, fileIdGen)
+
+def parallelize_command_inputs(curr, input_file_ids, graph, fileIdGen):
     ## If the command is stateless or pure parallelizable and has more
     ## than one inputs, it can be parallelized.
-    input_file_ids = curr.get_flat_input_file_ids()
     if ((curr.category == "stateless" or curr.is_pure_parallelizable())
         and len(input_file_ids) > 1):
 
@@ -197,7 +222,7 @@ def parallelize_command(curr, graph, fileIdGen):
                 graph.add_node(merge_command)
 
         ## For each new input and output file id, make a new command
-        new_commands = curr.duplicate(new_output_file_ids, fileIdGen)
+        new_commands = curr.duplicate(input_file_ids, new_output_file_ids, fileIdGen)
         graph.remove_node(curr)
         # print("New commands:")
         # print(new_commands)
