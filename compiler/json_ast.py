@@ -12,21 +12,22 @@ JSON_TO_SHELL_APP="../parser/json_to_shell.native"
 ## instead of {, }, [,]. Therefore we need to replace the characters
 ## with the correct ones.
 def to_standard_json(string):
-    string = string.replace("<", "{")
-    string = string.replace(">", "}")
-    string = string.replace("(", "[")
-    string = string.replace(")", "]")
+    # FIXME: This function is not needed anymore
+    # string = string.replace("<", "{")
+    # string = string.replace(">", "}")
+    # string = string.replace("(", "[")
+    # string = string.replace(")", "]")
 
-    # After these replacements, single names are written like this:
-    # {"Name"} and the parser complains. We just need to remove the
-    # braces.
-    #
-    # Note: I have noticed that the names are always constructors that
-    # have no arguments, so they should all be letter characters.
-    #
-    # Warning: This is not robust at all, but will do for now
-    # TODO (nv): is it possible to change this on the OCaml side?
-    string = re.sub(r'\{\"([A-Za-z]+)\"\}', r'"\1"', string)
+    # # After these replacements, single names are written like this:
+    # # {"Name"} and the parser complains. We just need to remove the
+    # # braces.
+    # #
+    # # Note: I have noticed that the names are always constructors that
+    # # have no arguments, so they should all be letter characters.
+    # #
+    # # Warning: This is not robust at all, but will do for now
+    # # TODO (nv): is it possible to change this on the OCaml side?
+    # string = re.sub(r'\{\"([A-Za-z]+)\"\}', r'"\1"', string)
     
     return string
 
