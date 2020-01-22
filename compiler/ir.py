@@ -21,6 +21,9 @@ parallelizable_pure_commands = ["sort", "bigrams_aux", "alt_bigrams_aux"]
 def get_kv(dic):
     return (dic[0], dic[1])
 
+def make_kv(key, val):
+    return [key, val]
+
 def format_arg_chars(arg_chars):
     chars = [format_arg_char(arg_char) for arg_char in arg_chars]
     return "".join(chars)

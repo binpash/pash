@@ -37,8 +37,6 @@ def serialize_asts_to_json(asts):
     serialized_asts = [serialize_ast_json(ast) for ast in asts]
     return "\n".join(serialized_asts)
 
-## FIXME: This is not working properly. json_to_shell produces a fata
-## error.
 def serialize_ast_json(ast):
     standard_json = json.dumps(ast)
     return standard_json
