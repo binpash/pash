@@ -536,6 +536,25 @@ class Command(Node):
         ## and stdout of the current command?
         return new_command
 
+###
+### This part of the file contains special nodes. Either ones that
+### will be later parsed by the DSL, or core nodes like cat, tee, etc.
+###
+
+## (Maybe) Extend this to also take flags as part of its input.
+class Cat(Command):
+    def __init__(self, file_ids):
+        command = string_to_argument("cat")
+        options = file_ids
+        in_stream = [("option", i)  for i in range(len(file_ids))]
+        out_stream = ["stdout"]
+        opt_indices = []
+        category = "stateless"
+        ## TODO: Fill the AST
+        ast = None
+        super().__init__(ast, command, options, in_stream, out_stream,
+                         opt_indices, category)
+
 ## These are the generalized map and reduce nodes for the
 ## `tee s2 | tail +2 | paste s2 -` function. At some point,
 ## these should be parsed from some configuration file, but for now
@@ -642,6 +661,7 @@ class SortGReduce(Command):
         super().__init__(None, command, options, in_stream, out_stream,
                          opt_indices, category, stdout=output_file_id)
 
+
 def create_command_assign_file_identifiers(ast, fileIdGen, command, options, stdin=None, stdout=None):
     in_stream, out_stream, opt_indices = find_command_input_output(command, options, stdin, stdout)
     category = find_command_category(command, options)
@@ -685,6 +705,9 @@ class Arg:
 
     def opt_serialize(self):
         return self.__repr__()
+
+## TODO: Make dictionary that holds command information (category,
+## inputs-outputs, etc...)
 
 ## This function returns the input and output streams of a command.
 ##
