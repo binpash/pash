@@ -430,18 +430,18 @@ class Command(Node):
             ## This should be unreachable
         return new_output_file_ids
 
-    def duplicate(self, input_file_ids, new_output_file_ids, fileIdGen):
+    def duplicate(self, old_input_file_id, new_input_file_ids, new_output_file_ids, fileIdGen):
         assert(self.category == "stateless" or self.is_pure_parallelizable())
         if(self.category == "stateless"):
-            return self.stateless_duplicate(input_file_ids, new_output_file_ids)
+            return self.stateless_duplicate(old_input_file_id, new_input_file_ids, new_output_file_ids)
         elif(self.is_pure_parallelizable()):
-            return self.pure_duplicate(input_file_ids, new_output_file_ids, fileIdGen)
+            return self.pure_duplicate(old_input_file_id, new_input_file_ids, new_output_file_ids, fileIdGen)
         else:
             print("Unreachable code reached :(")
             assert(False)
             ## This should be unreachable
 
-    def stateless_duplicate(self, input_file_ids, output_file_ids):
+    def stateless_duplicate(self, old_input_file_id, input_file_ids, output_file_ids):
         assert(self.category == "stateless")
 
         ## Attach the new output files as children of the node's
@@ -456,11 +456,11 @@ class Command(Node):
         out_edge_file_id.set_children(output_file_ids)
 
         ## Make a new cat command to add after the current command.
-        new_cat = Cat(output_file_ids, out_edge_file_id)
+        new_cat = make_cat_node(output_file_ids, out_edge_file_id)
 
         in_out_file_ids = zip(input_file_ids, output_file_ids)
 
-        new_commands = [self.find_in_out_and_make_duplicate_command(in_fid, out_fid)
+        new_commands = [self.find_in_out_and_make_duplicate_command(old_input_file_id, in_fid, out_fid)
                         for in_fid, out_fid in in_out_file_ids]
 
         ## TODO: This is here to counteract with the one
@@ -476,7 +476,7 @@ class Command(Node):
         ## commands instead of hardcoding
         return (self.category == "pure" and str(self.command) in parallelizable_pure_commands)
 
-    def pure_duplicate(self, input_file_ids, output_file_ids, fileIdGen):
+    def pure_duplicate(self, old_input_file_id, input_file_ids, output_file_ids, fileIdGen):
         assert(self.is_pure_parallelizable())
 
         in_out_file_ids = zip(input_file_ids, output_file_ids)
@@ -494,7 +494,7 @@ class Command(Node):
             intermediate_output_file_id.set_children(new_output_file_ids)
             self.stdout = intermediate_output_file_id
 
-            new_commands = [self.find_in_out_and_make_duplicate_command(in_fid, out_fids[0])
+            new_commands = [self.find_in_out_and_make_duplicate_command(old_input_file_id, in_fid, out_fids[0])
                             for in_fid, out_fids in in_out_file_ids]
         elif(str(self.command) == "bigrams_aux"):
             new_commands = [BigramGMap([in_fid] + out_fids)
@@ -508,11 +508,11 @@ class Command(Node):
 
     ## TODO: This has to change, to not search for the inputs in the
     ## in_stream
-    def find_in_out_and_make_duplicate_command(self, in_fid, out_fid):
+    def find_in_out_and_make_duplicate_command(self, old_input_file_id, in_fid, out_fid):
 
         ## First find what does the new file identifier refer to
         ## (stdin, or some argument)
-        new_in_stream_index = self.find_file_id_in_in_stream(in_fid)
+        new_in_stream_index = self.find_file_id_in_in_stream(old_input_file_id)
         new_out_stream_index = self.find_file_id_in_out_stream(out_fid)
         new_input_location = self.in_stream[new_in_stream_index]
         new_output_location = self.out_stream[new_out_stream_index]
@@ -563,18 +563,23 @@ class Command(Node):
 
 ## (Maybe) Extend this to also take flags as part of its input.
 class Cat(Command):
-    def __init__(self, input_file_ids, output_file_id):
-        command = string_to_argument("cat")
-        options = input_file_ids
-        in_stream = [("option", i)  for i in range(len(input_file_ids))]
-        out_stream = ["stdout"]
-        stdout = output_file_id
-        opt_indices = []
-        category = "stateless"
-        ## TODO: Fill the AST
-        ast = None
+    def __init__(self, ast, command, options, in_stream, out_stream,
+                 opt_indices, category, stdin=None, stdout=None):
         super().__init__(ast, command, options, in_stream, out_stream,
-                         opt_indices, category, stdout=stdout)
+                         opt_indices, category, stdin=stdin, stdout=stdout)
+
+def make_cat_node(input_file_ids, output_file_id):
+    command = string_to_argument("cat")
+    options = input_file_ids
+    in_stream = [("option", i)  for i in range(len(input_file_ids))]
+    out_stream = ["stdout"]
+    stdout = output_file_id
+    opt_indices = []
+    category = "stateless"
+    ## TODO: Fill the AST
+    ast = None
+    return Command(ast, command, options, in_stream, out_stream,
+                   opt_indices, category, stdout=stdout)
 
 ## These are the generalized map and reduce nodes for the
 ## `tee s2 | tail +2 | paste s2 -` function. At some point,
@@ -683,13 +688,16 @@ class SortGReduce(Command):
                          opt_indices, category, stdout=output_file_id)
 
 
-## TODO: For commands that have a specific node (like cat) make their
-## specialized versions.
 def create_command_assign_file_identifiers(ast, fileIdGen, command, options, stdin=None, stdout=None):
     in_stream, out_stream, opt_indices = find_command_input_output(command, options, stdin, stdout)
     category = find_command_category(command, options)
-    command = Command(ast, command, options, in_stream, out_stream,
+    ## TODO: Maybe compile command instead of just formatting it.
+    if(format_arg_chars(command) == "cat"):
+        command = Cat(ast, command, options, in_stream, out_stream,
                       opt_indices, category, stdin, stdout)
+    else:
+        command = Command(ast, command, options, in_stream, out_stream,
+                          opt_indices, category, stdin, stdout)
 
     ## The options that are part of the input and output streams must
     ## be swapped with file identifiers. This means that each file
