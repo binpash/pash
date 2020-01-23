@@ -189,8 +189,12 @@ def parallelize_cat(curr, graph, fileIdGen):
             cat_output_file_id = cat_output_file_ids[0]
             graph, new_outputs = parallelize_command(next_node, cat_input_file_ids,
                                                      cat_output_file_id, graph, fileIdGen)
-            
-            
+
+            ## TODO: I have to change the inputs of cat to be the
+            ## outputs of the new node (if they are many e.g. in case
+            ## of stateless) and the output to be the one old output
+            ## of the old command
+
     return graph
 
 def parallelize_command(curr, new_input_file_ids, old_input_file_id, graph, fileIdGen):
