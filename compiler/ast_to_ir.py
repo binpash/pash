@@ -56,13 +56,13 @@ def compile_node_pipe(construct, background, pipe_items, fileIdGen):
         ##       be one IR
         compiled_ir = compiled_pipe_nodes[0]
         ## Note: Save the old ast for the end-to-end prototype
-        ast_node = {construct : [background, pipe_items]}
+        ast_node = make_kv(construct, [background, pipe_items])
         compiled_ir.set_ast(ast_node)
         compiled_ast = compiled_ir
     else:
         ## Note: This should be unreachable with the current combine pipe
         assert(False)
-        compiled_ast = {construct : [arguments[0]] + [compiled_pipe_nodes]}
+        compiled_ast = make_kv(construct, [arguments[0]] + [compiled_pipe_nodes])
     return compiled_ast
 
 ## This combines all the children of the Pipeline to an IR, even
@@ -89,7 +89,7 @@ def combine_pipe(ast_nodes):
 
 def compile_node_command(construct, lineno, assignments, args, redir_list, fileIdGen):
 
-    ast_node = {construct : [lineno, assignments, args, redir_list]}
+    ast_node = make_kv(construct, [lineno, assignments, args, redir_list])
     
     ## TODO: Do we need the line number?
 
@@ -103,7 +103,7 @@ def compile_node_command(construct, lineno, assignments, args, redir_list, fileI
         ## Just compile the assignments. Specifically compile the
         ## assigned values, because they might have command
         ## substitutions etc..
-        compiled_ast = {construct : [lineno] + [compiled_assignments] + [args, redir_list]}
+        compiled_ast = make_kv(construct, [lineno] + [compiled_assignments] + [args, redir_list])
     else:
         command_name = args[0]
         options = compile_command_arguments(args[1:], fileIdGen)
@@ -132,8 +132,8 @@ def compile_node_command(construct, lineno, assignments, args, redir_list, fileI
     return compiled_ast
 
 def compile_node_and_or_semi(construct, left_node, right_node, fileIdGen):
-    compiled_ast = {construct : [compile_node(left_node, fileIdGen),
-                                 compile_node(right_node, fileIdGen)]}
+    compiled_ast = make_kv(construct, [compile_node(left_node, fileIdGen),
+                                       compile_node(right_node, fileIdGen)])
     return compiled_ast
 
 def compile_node_redir(construct, lineno, node, redir_list, fileIdGen):
@@ -144,7 +144,7 @@ def compile_node_redir(construct, lineno, node, redir_list, fileIdGen):
         ##       the IR accordingly
         compiled_ast = compiled_node
     else:
-        compiled_ast = {construct : [lineno, compiled_node, redir_list]}
+        compiled_ast = make_kv(construct, [lineno, compiled_node, redir_list])
 
     return compiled_ast
 
@@ -162,7 +162,7 @@ def compile_node_subshell(construct, lineno, node, redir_list, fileIdGen):
         ##       the IR accordingly
         compiled_ast = compiled_node
     else:
-        compiled_ast = {construct : [lineno, compiled_node, redir_list]}
+        compiled_ast = make_kv(construct, [lineno, compiled_node, redir_list])
 
     return compiled_ast
 
@@ -197,7 +197,7 @@ def compile_node_defun(construct, lineno, name, body, fileIdGen):
     ## TODO: Investigate whether it is fine to just compile the
     ##       body of functions.
     compiled_body = compile_node(body, fileIdGen)
-    compiled_ast = {construct : [lineno, name, compiled_body]}
+    compiled_ast = make_kv(construct, [lineno, name, compiled_body])
     return compiled_ast
 
 
@@ -212,10 +212,10 @@ def compile_arg_char(arg_char, fileIdGen):
         ##       the command argument to complete the command
         ##       substitution.
         compiled_node = compile_node(val, fileIdGen)
-        return {key : compiled_node}
+        return [key, compiled_node]
     elif (key == 'Q'):
         compiled_val = compile_command_argument(val, fileIdGen)
-        return {key : compiled_val}
+        return [key, compiled_val]
     else:
         ## TODO: Complete this
         return arg_char
@@ -326,14 +326,14 @@ def make_command(ir_filename):
                  string_to_argument("distr_plan.py"),
                  string_to_argument(ir_filename)]
     lineno = 0
-    node = { 'Command' : [lineno, [], arguments, []] }
+    node = make_kv('Command', [lineno, [], arguments, []])
     return node
                  
 
 def replace_irs_and_or_semi(c, left, right, irFileGen):
     r_left = replace_irs(left, irFileGen)
     r_right = replace_irs(right, irFileGen)
-    return {c : [r_left, r_right]}
+    return make_kv(c, [r_left, r_right])
 
 def replace_irs_command(c, lineno, assignments, args, redir_list, irFileGen):
     ## TODO: I probably have to also handle the redir_list (applies to
@@ -342,13 +342,13 @@ def replace_irs_command(c, lineno, assignments, args, redir_list, irFileGen):
     replaced_assignments = replace_irs_assignments(assignments, irFileGen)
     if(len(args) == 0):
         ## Note: The flow here is similar to compile
-        replaced_ast = {c : [lineno, replaced_assignments, args, redir_list]}
+        replaced_ast = make_kv(c, [lineno, replaced_assignments, args, redir_list])
     else:
         command_name = args[0]
         replaced_options = replace_irs_command_arguments(args[1:], irFileGen)
         replaced_args = [command_name] + replaced_options
         
-        replaced_ast = {c : [lineno, replaced_assignments, replaced_args, redir_list]}
+        replaced_ast = make_kv(c, [lineno, replaced_assignments, replaced_args, redir_list])
 
     return replaced_ast
 
@@ -358,10 +358,10 @@ def replace_irs_arg_char(arg_char, irFileGen):
         return arg_char
     elif (key == 'B'):
         replaced_node = replace_irs(val, irFileGen)
-        return {key : replaced_node}
+        return make_kv(key, replaced_node)
     elif (key == 'Q'):
         replaced_val = replace_irs_command_argument(val, irFileGen)
-        return {key : replaced_val}
+        return make_kv(key, replaced_val)
     else:
         ## TODO: Complete this (as we have to do with the compile)
         return arg_char

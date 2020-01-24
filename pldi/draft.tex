@@ -187,6 +187,8 @@
 
 %% Title information
 \title{Dish: Distribution-oblivious Shell Scripting}         %% [Short Title] is optional;
+%% \title{Extensible data processing in the shell}
+
 % \titlenote{with title note}             %% \titlenote is optional;
 %                                         %% can be repeated if necessary;
 %                                         %% contents suppressed with 'anonymous'
@@ -194,6 +196,7 @@
 % \subtitlenote{with subtitle note}       %% \subtitlenote is optional;
                                         %% can be repeated if necessary;
                                         %% contents suppressed with 'anonymous'
+
 
 
 %% Author information
@@ -322,6 +325,8 @@ Experiments with complex pipelines show substantial speedups and the ability to 
 
 \section{Introduction}
 \label{intro}
+
+\kk{After discussion on Wednesday Jan 8: Modify the narrative of this paper to talk about data processing in the Shell. Make this the main focus of the paper. This simplifies the narrative and allows us to not talk about late planner activation as well as environment variables. It also justifies why we only deal with pure and stateless. Note that this is a very expressive model, as shown by our benchmark suite. Note: Rememeber to clearly describe the subset of the shell that we handle. To be more precise the compositional operator of the shell that we can handle.}
 
 % 1. Shell scripting; pipelines, in particular, are a common abstraction for expressing filters
 % They are an easy way to , because they combine a set of assumptions that work well with Unix

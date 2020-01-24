@@ -5,12 +5,16 @@ The repository contains:
 * [compiler](./compiler): Dish's data-flow model and associated optimization passes.
 * [distributability](./distributability/): Distributability analysis used to inform the DSL characterizing commands.
 * [evaluation](./evaluation): shell pipelines and example [scripts](./evaluation/scripts) used for the evaluation.
-* [libdash](./libdash): Git submodule pointing to the `libdash` POSIX-compliant parser.
 * [parser](./parser): The parser uses the `libdash` POSIX-compliant parser and `atdgen` to convert scripts to JSON-encoded ASTs.
 * [pldi](./pldi): The paper submitted to PLDI 2020.
 * [runtime](./runtime): A JVM-based runtime for Dish.
 * [scripts](./scripts): Auxiliary scripts
 * [tests](./tests): Contains a set of tests to check that everything works
+
+# High level Overview
+
+Figure containing high level overview of the Dish workflow:
+https://docs.google.com/drawings/d/15f3JKa-xF7_yyumX2YGyOWOFmZO_KBog1QC1PQr_LJw/edit
 
 # Some TODOs
 
@@ -20,6 +24,8 @@ Minor things left out by the PLDI submission:
 * Report single-node performance results for all macro-benchmarks
 
 Additions for OSDI:
+
+* Implement, and possibley extend the DSL---and ensure it works with existing commands
 
 * POSIX Compliance: scripts have to be able to run with any POSIX script, even if they do not speed up much of it. That is, there shouldn't be a POSIX script that fails, only ones that do not see any performance improvements.
 

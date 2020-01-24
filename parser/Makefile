@@ -1,8 +1,8 @@
 PARSER=parse_to_json
 JSON_TO_SHELL=json_to_shell
-AST_I=../libdash/ocaml/ast.mli
+AST_I=./libdash/ocaml/ast.mli
 
-.PHONY : all test dependencies clean
+.PHONY : all test dependencies libdash clean
 
 all : $(PARSER).native $(PARSER).byte $(JSON_TO_SHELL).native $(JSON_TO_SHELL).byte
 	@echo "Add this to your env: DISH_PARSER=${PWD}/$(PARSER).native"
@@ -38,7 +38,13 @@ clean :
 	rm -f *.o *.cmo *.cmi *.cmx $(PARSER).native $(PARSER).byte \
 	$(JSON_TO_SHELL).native $(JSON_TO_SHELL).byte test.err
 
-dependencies:
+libdash:
+	git submodule init
+	git submodule update
+	cd libdash && ./autogen.sh && ./configure && make && sudo make install
+	cd libdash/ocaml && make && make install
+
+dependencies: libdash
 	opam install ctypes.0.11.5
 	opam install ctypes-foreign
 	opam install atdgen
