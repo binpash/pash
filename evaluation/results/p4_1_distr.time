@@ -1,0 +1,52 @@
+/bin/sh: 19: Syntax error: "(" unexpected
+Traceback (most recent call last):
+  File "/home/nikos/dish/compiler/dish.py", line 92, in <module>
+    main()
+  File "/home/nikos/dish/compiler/dish.py", line 41, in main
+    execute_script(new_shell_filename, args.output, args.output_optimized)
+  File "/home/nikos/dish/compiler/dish.py", line 89, in execute_script
+    optimize_script(output_script_path)
+  File "/home/nikos/dish/compiler/distr_plan.py", line 68, in optimize_script
+    execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'])
+  File "/home/nikos/dish/compiler/impl.py", line 15, in execute
+    exec_obj.check_returncode()
+  File "/usr/local/lib/python3.8/subprocess.py", line 444, in check_returncode
+    raise CalledProcessError(self.returncode, self.args, self.stdout,
+subprocess.CalledProcessError: Command 'rm -rf /tmp/distr_output
+mkdir -p /tmp/distr_output
+mkdir -p /dev/shm/dish
+rm -f "#file9"
+mkfifo "#file9"
+rm -f "#file15"
+mkfifo "#file15"
+rm -f "#file13"
+mkfifo "#file13"
+rm -f "#file2"
+mkfifo "#file2"
+rm -f "#file8"
+mkfifo "#file8"
+rm -f "#file12"
+mkfifo "#file12"
+rm -f "#file14"
+mkfifo "#file14"
+cat "${IN_DIR}/p3.out" > "#file2" &
+cat "#file2" | tee >( head -n 10000 > "/dev/shm/dish/#file8"; dd of=/dev/null > /dev/null 2>&1 & cat "/dev/shm/dish/#file8" > "#file8") | (tail -n +10001 > "#file9"; dd of=/dev/null > /dev/null 2>&1) &
+cat "#file8" | xargs -n1 curl -s > "#file12" &
+cat "#file9" | xargs -n1 curl -s > "#file13" &
+cat "#file12" | gunzip  > "#file14" &
+cat "#file13" | gunzip  > "#file15" &
+cat "#file14" > /tmp/distr_output/0 &
+cat "#file15" > /tmp/distr_output/1 &
+wait
+rm -f "#file9"
+rm -f "#file15"
+rm -f "#file13"
+rm -f "#file2"
+rm -f "#file8"
+rm -f "#file12"
+rm -f "#file14"
+rm -rf "/dev/shm/dish"' returned non-zero exit status 2.
+
+real	0m0.206s
+user	0m0.184s
+sys	0m0.029s

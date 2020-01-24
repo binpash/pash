@@ -3,14 +3,26 @@ import json
 from union_find import *
 from util import *
 
+### TODO: Move this somewhere else
+stateless_commands = ["cat", "tr", "grep", "col",
+                      "groff", # not clear
+                      "sed", # not always
+                      "cut",
+                      "gunzip", # file stateless
+                      "xargs"] # I am not sure if all xargs are stateless
+
+pure_commands = ["sort", "wc", "uniq", "bigrams_aux", "alt_bigrams_aux"]
+parallelizable_pure_commands = ["sort", "bigrams_aux", "alt_bigrams_aux"]
+
+
 ### Utils
 
-## This function gets a key and a value from a dictionary that only
-## has one key
+## This function gets a key and a value from the ast json format
 def get_kv(dic):
-    dic_items = list(dic.items())
-    assert(len(dic_items) == 1)
-    return dic_items[0]
+    return (dic[0], dic[1])
+
+def make_kv(key, val):
+    return [key, val]
 
 def format_arg_chars(arg_chars):
     chars = [format_arg_char(arg_char) for arg_char in arg_chars]
@@ -36,11 +48,20 @@ def format_arg_char(arg_char):
 def string_to_argument(string):
     return [char_to_arg_char(char) for char in string]
 
+def make_argument(option):
+    if(isinstance(option, FileId)):
+        ## This is how commands are initialized when duplicating
+        return option
+    else:
+        ## This is how commands are initialized in the AST
+        return Arg(option)
+
+
 ## FIXME: This is certainly not complete. It is used to generate the
 ## AST for the call to the distributed planner. It only handles simple
 ## characters
 def char_to_arg_char(char):
-    return { 'C' : ord(char) }
+    return ['C' , ord(char)]
 
 ## TODO: Resources should probably be more elaborate than just a
 ## string and a line range. They could be URLs, and possibly other things.
@@ -135,14 +156,17 @@ class FileId:
             output = "{}".format(self.resource)
         return output
 
+    ## Serialize as an option for the JSON serialization when sent to
+    ## the backend. This is needed as options can either be files or
+    ## arguments, and in each case there needs to be a different
+    ## serialization procedure.
     def opt_serialize(self):
-        assert(not self.resource is None)
-        output = "{}".format(self.resource.uri)
-        return output
+        return '"{}"'.format(self.serialize())
 
+    ## TODO: Maybe this can be merged with serialize
     def pipe_name(self):
         assert(self.resource is None)
-        output = '"#file{}"'.format(self.ident)
+        output = '"#file{}"'.format(Find(self).ident)
         return output
 
     def set_resource(self, resource):
@@ -343,12 +367,7 @@ class Command(Node):
                  opt_indices, category, stdin=None, stdout=None):
         super().__init__(ast, in_stream, out_stream, category, stdin, stdout)
         self.command = Arg(command)
-        if(all([isinstance(opt, FileId) for opt in options])):
-            ## This is how commands are initialized when duplicating
-            self.options = options
-        else:
-            ## This is how commands are initialized in the AST
-            self.options = [Arg(opt) for opt in options]
+        self.options = [make_argument(opt) for opt in options]
         self.opt_indices = opt_indices
 
     def __repr__(self):
@@ -365,7 +384,8 @@ class Command(Node):
         return output
 
     def serialize(self):
-        all_opt_indices = [o_i[1] for o_i in (self.opt_indices + self.in_stream) if isinstance(o_i, tuple)]
+        all_opt_indices = [o_i[1] for o_i in (self.opt_indices + self.in_stream + self.out_stream)
+                           if isinstance(o_i, tuple)]
         all_opt_indices.sort()
         options_string = " ".join([self.options[opt_i].opt_serialize() for opt_i in all_opt_indices])
         output = "{} {}".format(self.command, options_string)
@@ -374,10 +394,60 @@ class Command(Node):
     def get_non_file_options(self):
         return [self.options[i] for _, i in self.opt_indices]
 
-    def stateless_duplicate(self):
+    ## Get the file names of the outputs of the map commands. This
+    ## differs if the command is stateless, pure that can be
+    ## written as a map and a reduce, and a pure that can be
+    ## written as a generalized map and reduce.
+    def get_map_output_files(self, input_file_ids, fileIdGen):
         assert(self.category == "stateless" or self.is_pure_parallelizable())
+        if(self.category == "stateless"):
+            return [fileIdGen.next_file_id() for in_fid in input_file_ids]
+        elif(self.is_pure_parallelizable()):
+            return self.pure_get_map_output_files(input_file_ids, fileIdGen)
+        else:
+            print("Unreachable code reached :(")
+            assert(False)
+            ## This should be unreachable
+
+    def pure_get_map_output_files(self, input_file_ids, fileIdGen):
+        assert(self.is_pure_parallelizable())
+        if(str(self.command) == "sort"):
+            new_output_file_ids = [[fileIdGen.next_file_id()] for in_fid in input_file_ids]
+        elif(str(self.command) == "bigrams_aux"):
+            new_output_file_ids = [[fileIdGen.next_file_id() for i in range(BigramGMap.num_outputs)]
+                                   for in_fid in input_file_ids]
+        elif(str(self.command) == "alt_bigrams_aux"):
+            new_output_file_ids = [[fileIdGen.next_file_id()] for in_fid in input_file_ids]
+        else:
+            print("Unreachable code reached :(")
+            assert(False)
+            ## This should be unreachable
+        return new_output_file_ids
+
+    def duplicate(self, new_output_file_ids, fileIdGen):
+        assert(self.category == "stateless" or self.is_pure_parallelizable())
+        if(self.category == "stateless"):
+            return self.stateless_duplicate(new_output_file_ids)
+        elif(self.is_pure_parallelizable()):
+            return self.pure_duplicate(new_output_file_ids, fileIdGen)
+        else:
+            print("Unreachable code reached :(")
+            assert(False)
+            ## This should be unreachable
+
+    def stateless_duplicate(self, output_file_ids):
+        assert(self.category == "stateless")
+
+        ## Attach the new output files as children of the node's
+        ## output, because make_duplicate command requires that. Also,
+        ## by doing that, the input of the next command now also has
+        ## children (due to unification).
+        out_edge_file_ids = self.get_output_file_ids()
+        assert(len(out_edge_file_ids) == 1)
+        out_edge_file_id = out_edge_file_ids[0]
+        out_edge_file_id.set_children(output_file_ids)
+
         input_file_ids = self.get_flat_input_file_ids()
-        output_file_ids = self.get_flat_output_file_ids()
 
         in_out_file_ids = zip(input_file_ids, output_file_ids)
 
@@ -389,8 +459,38 @@ class Command(Node):
 
         ## TODO: Read from some file that contains information about
         ## commands instead of hardcoding
-        parallelizable_pure = ["sort"]
-        return (self.category == "pure" and str(self.command) in parallelizable_pure)
+        return (self.category == "pure" and str(self.command) in parallelizable_pure_commands)
+
+    def pure_duplicate(self, output_file_ids, fileIdGen):
+        assert(self.is_pure_parallelizable())
+        input_file_ids = self.get_flat_input_file_ids()
+
+        in_out_file_ids = zip(input_file_ids, output_file_ids)
+
+        simple_map_pure_commands = ["sort",
+                                    "alt_bigrams_aux"]
+        ## This is the category of all commands that don't need a
+        ## special generalized map
+        if(str(self.command) in simple_map_pure_commands):
+
+            ## make_duplicate_command duplicates a node based on its
+            ## output file ids, so we first need to assign them.
+            intermediate_output_file_id = fileIdGen.next_file_id()
+            new_output_file_ids = [fids[0] for fids in output_file_ids]
+            intermediate_output_file_id.set_children(new_output_file_ids)
+            self.stdout = intermediate_output_file_id
+
+            new_commands = [self.make_duplicate_command(in_fid, out_fids[0])
+                            for in_fid, out_fids in in_out_file_ids]
+        elif(str(self.command) == "bigrams_aux"):
+            new_commands = [BigramGMap([in_fid] + out_fids)
+                            for in_fid, out_fids in in_out_file_ids]
+        else:
+            print("Unreachable code reached :(")
+            assert(False)
+            ## This should be unreachable
+        return new_commands
+
 
     def make_duplicate_command(self, in_fid, out_fid):
 
@@ -435,6 +535,131 @@ class Command(Node):
         ## Question: Is it valid setting stdin and stdout to the stdin
         ## and stdout of the current command?
         return new_command
+
+###
+### This part of the file contains special nodes. Either ones that
+### will be later parsed by the DSL, or core nodes like cat, tee, etc.
+###
+
+## (Maybe) Extend this to also take flags as part of its input.
+class Cat(Command):
+    def __init__(self, file_ids):
+        command = string_to_argument("cat")
+        options = file_ids
+        in_stream = [("option", i)  for i in range(len(file_ids))]
+        out_stream = ["stdout"]
+        opt_indices = []
+        category = "stateless"
+        ## TODO: Fill the AST
+        ast = None
+        super().__init__(ast, command, options, in_stream, out_stream,
+                         opt_indices, category)
+
+## These are the generalized map and reduce nodes for the
+## `tee s2 | tail +2 | paste s2 -` function. At some point,
+## these should be parsed from some configuration file, but for now
+## we have them hardcoded for commands that we are interested in.
+class BigramGMap(Command):
+    num_outputs = 3
+    def __init__(self, file_ids):
+        command = string_to_argument("bigram_aux_map")
+        options = [string_to_argument(fid.pipe_name()) for fid in file_ids]
+        ## TODO: Generalize the model to arbitrarily many outputs to
+        ## get rid of this hack, where inputs, outputs are just
+        ## written as options.
+        in_stream = []
+        out_stream = []
+        ## TODO: When we generalize the model to have arbitrary
+        ## outputs we can have them also be outputs.
+        opt_indices = [("option", 0), ("option", 1), ("option", 2), ("option", 3)]
+        category = "stateless"
+        super().__init__(None, command, options, in_stream, out_stream,
+                         opt_indices, category)
+
+class BigramGReduce(Command):
+    def __init__(self, file_ids):
+        command = string_to_argument("bigram_aux_reduce")
+        options = self.make_options(file_ids)
+        ## TODO: Generalize the model to arbitrarily many outputs to
+        ## get rid of this hack, where inputs, outputs are just
+        ## written as options.
+        in_stream = []
+        ## WARNING: This cannot be changes to be empty, because then
+        ## it would not be correctly unified in the backend with the
+        ## input of its downstream node.
+        out_stream = [("option", 6)]
+        ## TODO: When we generalize the model to have arbitrary
+        ## outputs we can have them also be outputs.
+        opt_indices = [("option", i) for i in range(0,9) if not i == 6]
+        category = "pure"
+        super().__init__(None, command, options, in_stream, out_stream,
+                         opt_indices, category)
+
+    ## TODO: Make this atrocity prettier
+    def make_options(self, file_ids):
+        options = []
+        for i in range(0, 9):
+            fid = file_ids[i]
+            if(not i == 6):
+                opt = string_to_argument(fid.pipe_name())
+            else:
+                opt = fid
+            options.append(opt)
+        return options
+
+class AltBigramGReduce(Command):
+    def __init__(self, file_ids):
+        command = string_to_argument("alt_bigram_aux_reduce")
+        options = self.make_options(file_ids)
+        ## TODO: Generalize the model to arbitrarily many outputs to
+        ## get rid of this hack, where inputs, outputs are just
+        ## written as options.
+        in_stream = []
+        ## WARNING: This cannot be changes to be empty, because then
+        ## it would not be correctly unified in the backend with the
+        ## input of its downstream node.
+        out_stream = [("option", 2)]
+        ## TODO: When we generalize the model to have arbitrary
+        ## outputs we can have them also be outputs.
+        opt_indices = [("option", 0), ("option", 1)]
+        category = "pure"
+        super().__init__(None, command, options, in_stream, out_stream,
+                         opt_indices, category)
+
+    ## TODO: Make this atrocity prettier
+    def make_options(self, file_ids):
+        options = []
+        for i in range(0, 3):
+            fid = file_ids[i]
+            if(not i == 2):
+                opt = string_to_argument(fid.pipe_name())
+            else:
+                opt = fid
+            options.append(opt)
+        return options
+
+
+class SortGReduce(Command):
+    def __init__(self, file_ids):
+        command = string_to_argument("sort")
+        input_file_ids = file_ids[:-1]
+        output_file_id = file_ids[-1]
+        input_file_id_opts = [string_to_argument(fid.pipe_name()) for fid in input_file_ids]
+        options = [string_to_argument("-m")] + input_file_id_opts
+        ## Question: Can putting an empty input stream be a problem?
+        ## If we do that, then this node will be a source in the
+        ## dataflow graph. Ideally we want to generalize to arbitrary
+        ## inputs. This also applies to the one above.
+        in_stream = []
+        out_stream = ["stdout"]
+        ## At the moment none of the $IN1, $IN2 are considered inputs
+        ##
+        ## TODO: When we generalize the model to have arbitrary
+        ## inputs we can have them also be inputs.
+        opt_indices = [("option", 0), ("option", 1), ("option", 2)]
+        category = "pure"
+        super().__init__(None, command, options, in_stream, out_stream,
+                         opt_indices, category, stdout=output_file_id)
 
 
 def create_command_assign_file_identifiers(ast, fileIdGen, command, options, stdin=None, stdout=None):
@@ -481,6 +706,9 @@ class Arg:
     def opt_serialize(self):
         return self.__repr__()
 
+## TODO: Make dictionary that holds command information (category,
+## inputs-outputs, etc...)
+
 ## This function returns the input and output streams of a command.
 ##
 ## The input and output lists, contain tuples that refer to options:
@@ -525,18 +753,10 @@ def find_command_category(command, options):
     ## TODO: Make a proper search that returns the command category
     print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
 
-    stateless = ["cat", "tr", "grep", "col",
-                 "groff", # not clear
-                 "sed", # not always
-                 "cut",
-                 "gunzip", # file stateless
-                 "xargs"] # I am not sure if all xargs are stateless
 
-    pure = ["sort", "wc", "uniq"]
-
-    if (command_string in stateless):
+    if (command_string in stateless_commands):
         return "stateless"
-    elif (command_string in pure):
+    elif (command_string in pure_commands):
         return "pure"
     elif (command_string == "comm"):
         return is_comm_pure(options)
@@ -672,6 +892,9 @@ class IR:
         nodes = {}
         all_file_ids = []
         for i, node in enumerate(self.nodes):
+
+            ## Gather all pipe names so that they are generated in the
+            ## backend.
             input_pipes = [fid.serialize()
                            for fid in node.get_flat_input_file_ids()
                            if fid.resource is None]
@@ -679,9 +902,22 @@ class IR:
                             for fid in node.get_flat_output_file_ids()
                             if fid.resource is None]
             all_file_ids += input_pipes + output_pipes
+
+            ## Find the stdin and stdout files of nodes so that the
+            ## backend can make the necessary redirections.
+            if ("stdin" in node.in_stream):
+                stdin_input_pipes = Find(node.stdin).flatten()
+            else:
+                stdin_input_pipes = []
+
+            if ("stdout" in node.out_stream):
+                stdout_output_pipes = Find(node.stdout).flatten()
+            else:
+                stdout_output_pipes = []
+
             node_json = {}
-            node_json["in"] = input_pipes
-            node_json["out"] = output_pipes
+            node_json["in"] = stdin_input_pipes
+            node_json["out"] = stdout_output_pipes
             node_json["command"] = node.serialize()
             nodes[str(i)] = node_json
 

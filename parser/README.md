@@ -3,8 +3,12 @@
 The parser in this directory uses the mgree/libdash posix compliant
 parser and outputs the AST in JSON format using atdgen.
 
-In order for this to work, one has to install the libdash (as
-explained in its README) and then run `make` here.
+In order to install, one has to execute `make dependencies &&
+make`. The first command makes libdash and sets up all the ocaml
+dependencies.
+
+Alternatively, one can install libdash (as explained in its README)
+and then run `make` here.
 
 After `make` succeeds you have to assign the `DISH_PARSER` environment
 variable to the path to `parse_to_json.native`.
@@ -17,14 +21,10 @@ To run the parser, one can run:
 
 The following process was followed to make the parser output the ast to json.
 
-1. I specified the AST definition in `ast_atd.atd`.
-
-2. I ran `atdgen -j ast_atd.atd` which produced the `ast_atd_j.ml` file.
-
-3. I then copied it to `ast_json.ml` (without the `char` definition).
-
-4. I also had to make a small adjustment in the `ast.ml`, `ast.mli` files in `libdash/ocaml`.
+* specify the AST definition in `ast_atd.atd`.
+* ran `atdgen -j -j-std ast_atd.atd` to produce `ast_atd_j.ml`.
+* copy it to `ast_json.ml` (removing the `char` definition).
+* also make a small adjustment in the `ast.ml`, `ast.mli` files in `libdash/ocaml`. (?nv)
 
 This procedure is not automated, and in case the AST definition in
-libdash changes, this process has to be done again. However, this
-should be enough for our purpose now.
+libdash changes, this process has to be done again.
