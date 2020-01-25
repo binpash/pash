@@ -20,14 +20,15 @@ mkdir -p $output_dir
 
 cp "$input_dir/index_h_100.txt" $p1_out
 
-{ time ( /bin/bash $p2 > $p2_out ) ; } 2> >(tee "${results_dir}/p2_seq.time" >&2)
-{ time ( cat $p2_out | /bin/bash $p3 > $p3_out ) ; } 2> >(tee "${results_dir}/p3_seq.time" >&2)
+{ time ( cat $p1_out | /bin/bash $p2 > $p2_out ) ; } 2> >(tee "${results_dir}/p2_seq.time" >&2)
 
 echo "Sequential pipeline has been executed successfully."
 
 ## Split the intermediate output files for all scripts
 split -n l/2 -d $p1_out ${p1_out}_2_
 split -n l/10 -d $p1_out ${p1_out}_10_
+split -n l/2 -d $p2_out ${p2_out}_2_
+split -n l/10 -d $p2_out ${p2_out}_10_
 
 echo "Intermediate files have been successfully produced."
 
@@ -42,5 +43,5 @@ cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p2_10
 
 ./execute_compile_evaluation_script.sh "web-index_p2_1"
 
-
+## TODO: Fill in the rest of p2 and p3 here
 
