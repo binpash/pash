@@ -8,14 +8,20 @@ p2="${directory}/p2.sh"
 output_dir="/tmp/web-index-output/"
 p1_out="${output_dir}/p1.out"
 p2_out="${output_dir}/p2.out"
+p3_out="${output_dir}/p3.out"
 
 intermediary_dir="${eval_dir}/intermediary/"
 results_dir="${eval_dir}/results/"
 
+input_dir="${HOME}/wikipedia/"
+
 ## Make the temporary output dir
 mkdir -p $output_dir
 
-{ time ( /bin/bash $p1 > $p1_out ) ; } 2> >(tee "${results_dir}/p1_seq.time" >&2)
+cp "$input_dir/index_h_100.txt" $p1_out
+
+{ time ( /bin/bash $p2 > $p2_out ) ; } 2> >(tee "${results_dir}/p2_seq.time" >&2)
+{ time ( cat $p2_out | /bin/bash $p3 > $p3_out ) ; } 2> >(tee "${results_dir}/p3_seq.time" >&2)
 
 echo "Sequential pipeline has been executed successfully."
 
@@ -26,16 +32,15 @@ split -n l/10 -d $p1_out ${p1_out}_10_
 echo "Intermediate files have been successfully produced."
 
 ## Setup the _env files of the experiments accordingly
-echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p2_1_env.sh
-echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p2_2_env.sh
-echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p2_10_env.sh
+echo "IN_DIR=${output_dir}" > ${intermediary_dir}/web-index_p2_1_env.sh
+echo "WIKI=${input_dir}" >> ${intermediary_dir}/web-index_p2_1_env.sh
+echo "WEB_INDEX_DIR=${directory}" >> ${intermediary_dir}/web-index_p2_1_env.sh
+cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p2_2_env.sh
+cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p2_10_env.sh
 
 ## Setup the fifo pipes needed in the example.
 
-rm shift{1,2,3} {1,2,3}grams
-mkfifo shift{1,2,3} {1,2,3}grams
-
-./execute_compile_evaluation_script.sh "p2_1"
+./execute_compile_evaluation_script.sh "web-index_p2_1"
 
 
 
