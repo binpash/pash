@@ -54,5 +54,5 @@ wi_trigram_aux_reduce()
 
 export -f wi_bigrams_aux
 export -f wi_bigram_aux_reduce
-export -f tri_bigrams_aux
-export -f tri_bigram_aux_reduce
+export -f wi_trigrams_aux
+export -f wi_trigram_aux_reduce
