@@ -18,7 +18,7 @@ input_dir="${HOME}/wikipedia/"
 ## Make the temporary output dir
 mkdir -p $output_dir
 
-cp "$input_dir/index_h_100.txt" $p1_out
+cp "$input_dir/index_h_1000.txt" $p1_out
 
 { time ( cat $p1_out | /bin/bash $p2 > $p2_out ) ; } 2> >(tee "${results_dir}/web-index_p2_seq.time" >&2)
 
@@ -64,7 +64,9 @@ cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p3_3
 
 ## Setup the fifo pipes needed in the example.
 
-## Note: This takes about 7 seconds for 100! urls
+## Note: The sequential p2 stage takes about 7 seconds for 100! urls
+##       This means that for the whole wikipedia (1mil urls) it will take about
+##       20+ hours to complete.
 # ./execute_compile_evaluation_script.sh "web-index_p2_1"
 ./execute_compile_evaluation_script.sh "web-index_p2_2"
 ./execute_compile_evaluation_script.sh "web-index_p2_10"
