@@ -38,10 +38,15 @@ echo "WIKI=${input_dir}" >> ${intermediary_dir}/web-index_p2_1_env.sh
 echo "WEB_INDEX_DIR=${directory}" >> ${intermediary_dir}/web-index_p2_1_env.sh
 cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p2_2_env.sh
 cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p2_10_env.sh
+cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p2_2_funs.sh
+cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p2_10_funs.sh
 
 ## Setup the fifo pipes needed in the example.
 
+## Note: This takes about 7 seconds for 100! urls
 ./execute_compile_evaluation_script.sh "web-index_p2_1"
+./execute_compile_evaluation_script.sh "web-index_p2_2"
+./execute_compile_evaluation_script.sh "web-index_p2_10"
 
 ## TODO: Fill in the rest of p2 and p3 here
 
