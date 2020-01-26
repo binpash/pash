@@ -20,7 +20,7 @@ mkdir -p $output_dir
 
 cp "$input_dir/index_h_100.txt" $p1_out
 
-{ time ( cat $p1_out | /bin/bash $p2 > $p2_out ) ; } 2> >(tee "${results_dir}/p2_seq.time" >&2)
+{ time ( cat $p1_out | /bin/bash $p2 > $p2_out ) ; } 2> >(tee "${results_dir}/web-index_p2_seq.time" >&2)
 
 echo "Sequential pipeline has been executed successfully."
 
@@ -44,7 +44,7 @@ cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p2_1
 ## Setup the fifo pipes needed in the example.
 
 ## Note: This takes about 7 seconds for 100! urls
-./execute_compile_evaluation_script.sh "web-index_p2_1"
+# ./execute_compile_evaluation_script.sh "web-index_p2_1"
 ./execute_compile_evaluation_script.sh "web-index_p2_2"
 ./execute_compile_evaluation_script.sh "web-index_p2_10"
 
