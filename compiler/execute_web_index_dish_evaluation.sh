@@ -41,6 +41,27 @@ cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p2_10
 cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p2_2_funs.sh
 cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p2_10_funs.sh
 
+cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p3_1gram_1_env.sh
+cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p3_1gram_2_env.sh
+cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p3_1gram_10_env.sh
+cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p3_1gram_1_funs.sh
+cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p3_1gram_2_funs.sh
+cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p3_1gram_10_funs.sh
+
+cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p3_2gram_1_env.sh
+cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p3_2gram_2_env.sh
+cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p3_2gram_10_env.sh
+cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p3_2gram_1_funs.sh
+cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p3_2gram_2_funs.sh
+cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p3_2gram_10_funs.sh
+
+cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p3_3gram_1_env.sh
+cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p3_3gram_2_env.sh
+cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_p3_3gram_10_env.sh
+cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p3_3gram_1_funs.sh
+cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p3_3gram_2_funs.sh
+cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p3_3gram_10_funs.sh
+
 ## Setup the fifo pipes needed in the example.
 
 ## Note: This takes about 7 seconds for 100! urls
@@ -48,5 +69,14 @@ cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_p2_1
 ./execute_compile_evaluation_script.sh "web-index_p2_2"
 ./execute_compile_evaluation_script.sh "web-index_p2_10"
 
-## TODO: Fill in the rest of p2 and p3 here
+./execute_compile_evaluation_script.sh "web-index_p3_1gram_1"
+./execute_compile_evaluation_script.sh "web-index_p3_1gram_2"
+./execute_compile_evaluation_script.sh "web-index_p3_1gram_10"
 
+./execute_compile_evaluation_script.sh "web-index_p3_2gram_1"
+./execute_compile_evaluation_script.sh "web-index_p3_2gram_2"
+./execute_compile_evaluation_script.sh "web-index_p3_2gram_10"
+
+./execute_compile_evaluation_script.sh "web-index_p3_3gram_1"
+./execute_compile_evaluation_script.sh "web-index_p3_3gram_2"
+./execute_compile_evaluation_script.sh "web-index_p3_3gram_10"
