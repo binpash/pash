@@ -48,21 +48,11 @@ ir_cases = {
 
 
 def compile_ast(ast_object, fileIdGen):
-    ast_node = AstNode(ast_object)
-    compiled_ast = compile_node(ast_node, fileIdGen)
-    return compiled_ast
+    return compile_node(ast_object, fileIdGen)
 
-def compile_node(ast_node, fileIdGen):
-    # print("Compiling node: {}".format(ast_node))
-
-    ## TODO: Can this become less verbose? (e.g. skip the lambda)
-
+def compile_node(ast_object, fileIdGen):
     global compile_cases
-    compiled_ast = ast_match(ast_node, compile_cases, fileIdGen)
-
-    # print("Compiled node: {}".format(compiled_ast))
-    return compiled_ast
-
+    return ast_match(ast_object, compile_cases, fileIdGen)
 
 def compile_node_pipe(ast_node, fileIdGen):
     ## Note: Background indicates when the pipe should be run in the background.
@@ -382,9 +372,8 @@ def check_if_ast_is_supported(construct, arguments, **kwargs):
     return
     # construct.
 
-def ast_match(ast_node, cases, fileIdGen):
-    # print("Compiling node: {}".format(ast_node))
-
+def ast_match(ast_object, cases, fileIdGen):
+    ast_node = AstNode(ast_object)
     if ast_node.construct is Command.PIPE:
         ast_node.check(children_count = lambda : len(ast_node.items) >= 2)
 
