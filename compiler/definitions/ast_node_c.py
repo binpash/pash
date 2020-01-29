@@ -1,6 +1,6 @@
 from enum import Enum
 
-class Command(Enum):
+class AstNodeConstructor(Enum):
     PIPE = 'Pipe'
     COMMAND = 'Command'
     AND = 'And'
