@@ -1,7 +1,7 @@
 from ir import *
 from union_find import *
 from definitions.ast_node import *
-from definitions.commands import *
+from definitions.ast_node_c import *
 
 import pickle
 
@@ -374,7 +374,7 @@ def check_if_ast_is_supported(construct, arguments, **kwargs):
 
 def ast_match(ast_object, cases, fileIdGen):
     ast_node = AstNode(ast_object)
-    if ast_node.construct is Command.PIPE:
+    if ast_node.construct is AstNodeConstructor.PIPE:
         ast_node.check(children_count = lambda : len(ast_node.items) >= 2)
 
     return cases[ast_node.construct.value](fileIdGen)(ast_node)
