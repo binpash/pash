@@ -11,6 +11,11 @@ The repository contains:
 * [scripts](./scripts): Auxiliary scripts
 * [tests](./tests): Contains a set of tests to check that everything works
 
+# High level Overview
+
+Figure containing high level overview of the Dish workflow:
+https://docs.google.com/drawings/d/15f3JKa-xF7_yyumX2YGyOWOFmZO_KBog1QC1PQr_LJw/edit
+
 # Some TODOs
 
 Minor things left out by the PLDI submission:

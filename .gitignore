@@ -37,3 +37,6 @@ pldi/draft.synctex.gz(busy)
 papers
 
 notes.txt
+
+# python
+**/__pycache__/*

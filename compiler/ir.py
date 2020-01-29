@@ -9,6 +9,9 @@ stateless_commands = ["cat", "tr", "grep", "col",
                       "sed", # not always
                       "cut",
                       "gunzip", # file stateless
+                      "iconv",
+                      "pandoc", # html-block parallel
+                      "stem-words.js",
                       "xargs"] # I am not sure if all xargs are stateless
 
 pure_commands = ["sort", "wc", "uniq", "bigrams_aux", "alt_bigrams_aux"]
@@ -785,7 +788,9 @@ def find_command_category(command, options):
     print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
 
 
-    if (command_string in stateless_commands):
+    ## TODO: Make this cleaner and more canonical
+    if (command_string in stateless_commands or
+            command_string.split("/")[-1] in stateless_commands):
         return "stateless"
     elif (command_string in pure_commands):
         return "pure"
