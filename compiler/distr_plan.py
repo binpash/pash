@@ -120,15 +120,8 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     while (len(workset) > 0):
         curr = workset.pop(0)
 
-        ## TODO: The workset is not augmented correctly as the nodes
-        ## added to the next nodes could be deleted from
-        ## parallelization. For example, cat -> tr, would add the tr,
-        ## but then would delete it from the graph, so wrong nodes
-        ## would be investigated for optimization
         next_nodes = graph.get_next_nodes(curr)
         workset += next_nodes
-        print("Curr:", curr)
-        print("Next nodes:", next_nodes)
 
         ## Question: What does it mean for a command to have more
         ## than one next_node? Does it mean that it duplicates its
@@ -139,8 +132,18 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
 
         ## TODO: Remove hardcoded
         graph = split_command_input(curr, graph, fileIdGen, fan_out, batch_size)
-        graph = parallelize_cat(curr, graph, fileIdGen)
-        # graph = parallelize_command(curr, graph, fileIdGen)
+        graph, new_nodes = parallelize_cat(curr, graph, fileIdGen)
+
+        ## Add new nodes to the workset depending on the optimization.
+        ##
+        ## WARNING: There is an assumption here that if there are new
+        ## nodes there was an optimization that happened and these new
+        ## nodes should ALL be added to the workset. Even if that is
+        ## correct, that is certainly non-optimal.
+        ##
+        ## TODO: Fix that
+        if(len(new_nodes) > 0):
+            workset += new_nodes
     return graph
 
 ## Optimizes several commands by splitting its input
@@ -181,6 +184,7 @@ def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
 ## is either stateless or pure parallelizable, commute the cat
 ## after the node.
 def parallelize_cat(curr, graph, fileIdGen):
+    new_nodes_for_workset = []
     if(isinstance(curr, Cat)):
         next_nodes = graph.get_next_nodes(curr)
 
@@ -194,21 +198,22 @@ def parallelize_cat(curr, graph, fileIdGen):
             cat_output_file_ids = curr.get_output_file_ids()
             assert(len(cat_output_file_ids) == 1)
             cat_output_file_id = cat_output_file_ids[0]
-            graph, new_outputs = parallelize_command(next_node, cat_input_file_ids,
-                                                     cat_output_file_id, graph, fileIdGen)
+            graph, new_nodes = parallelize_command(next_node, cat_input_file_ids,
+                                                   cat_output_file_id, graph, fileIdGen)
+            new_nodes_for_workset += new_nodes
 
-            ## If there are no new outputs, it means that no
+            ## If there are no new nodes, it means that no
             ## parallelization happened. If there were, we should
             ## delete the original cat.
-            if(len(new_outputs) > 0):
+            if(len(new_nodes) > 0):
                 graph.remove_node(curr)
 
-    return graph
+    return graph, new_nodes_for_workset
 
 def parallelize_command(curr, new_input_file_ids, old_input_file_id, graph, fileIdGen):
     ## If the next command is stateless or pure parallelizable and has more
     ## than one inputs, it can be parallelized.
-    new_outputs = []
+    new_nodes = []
     if ((curr.category == "stateless" or curr.is_pure_parallelizable())
         and len(new_input_file_ids) > 1):
 
@@ -234,20 +239,14 @@ def parallelize_command(curr, new_input_file_ids, old_input_file_id, graph, file
                                                    node_out_file_id, fileIdGen)
             for merge_command in merge_commands:
                 graph.add_node(merge_command)
-            new_outputs = [node_out_file_id]
+            new_nodes += merge_commands
 
         ## For each new input and output file id, make a new command
         new_commands = curr.duplicate(old_input_file_id, new_input_file_ids,
                                       new_output_file_ids, fileIdGen)
 
 
-        ## If new_outputs is empty, it means that the command was not
-        ## map-reduce parallelizable. WARNING: This is an implicit
-        ## dependency, that can be certainly be coded in a more clear
-        ## fashion.
-        assert(len(new_outputs) <= 1)
-        if(len(new_outputs) == 0):
-            new_outputs = new_output_file_ids
+        new_nodes += new_commands
 
         # print("New commands:")
         # print(new_commands)
@@ -265,7 +264,7 @@ def parallelize_command(curr, new_input_file_ids, old_input_file_id, graph, file
         ## the intermediate representation and the above procedure
         ## so that this assumption is lifted (either by not
         ## parallelizing, or by properly handling this case)
-    return graph, new_outputs
+    return graph, new_nodes
 
 
 # def parallelize_command(curr, graph, fileIdGen):
