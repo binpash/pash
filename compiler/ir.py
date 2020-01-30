@@ -140,16 +140,19 @@ class FileId:
     def __repr__(self):
         ## Note: Outputs the parent of the union and not the file id
         ##       itself.
-        if (self.resource is None):
-            if(self.max_length is None):
-                output = "#file{}".format(Find(self).ident)
-            else:
-                output = "#file{}[max:{}]".format(Find(self).ident, self.max_length)
-        else:
-            output = "#file{}({})".format(Find(self).ident, self.resource.__repr__())
-        return output
+        return self.serialize()
+        # print("Repr File id:", self.ident, Find(self).ident, self.resource, self.children)
+        # if (self.resource is None):
+        #     if(self.max_length is None):
+        #         output = "#file{}".format(Find(self).ident)
+        #     else:
+        #         output = "#file{}[max:{}]".format(Find(self).ident, self.max_length)
+        # else:
+        #     output = "#file{}({})".format(Find(self).ident, self.resource.__repr__())
+        # return output
 
     def serialize(self):
+        # print("File id:", self.ident, Find(self).ident, self.resource, self.children)
         if (self.resource is None):
             if(self.max_length is None):
                 output = "#file{}".format(Find(self).ident)
@@ -581,8 +584,8 @@ def make_cat_node(input_file_ids, output_file_id):
     category = "stateless"
     ## TODO: Fill the AST
     ast = None
-    return Command(ast, command, options, in_stream, out_stream,
-                   opt_indices, category, stdout=stdout)
+    return Cat(ast, command, options, in_stream, out_stream,
+               opt_indices, category, stdout=stdout)
 
 ## These are the generalized map and reduce nodes for the
 ## `tee s2 | tail +2 | paste s2 -` function. At some point,
@@ -951,6 +954,8 @@ class IR:
             else:
                 stdout_output_pipes = []
 
+            ## TODO: Check if leaving the stdin and stdout pipes could
+            ## lead to any problem.
             node_json = {}
             node_json["in"] = stdin_input_pipes
             node_json["out"] = stdout_output_pipes
