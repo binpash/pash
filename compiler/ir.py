@@ -1,25 +1,33 @@
 import copy
 import json
+import yaml
+import os
+
 from union_find import *
 from util import *
 
-### TODO: Move this somewhere else
-stateless_commands = ["cat", "tr", "grep", "col",
-                      "groff", # not clear
-                      "sed", # not always
-                      "cut",
-                      "gunzip", # file stateless
-                      "iconv",
-                      "pandoc", # html-block parallel
-                      "stem-words.js",
-                      "xargs"] # I am not sure if all xargs are stateless
+GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
+if 'DISH_TOP' in os.environ:
+    DISH_TOP = os.environ['DISH_TOP']
+else:
+    DISH_TOP = subprocess.run(GIT_TOP_CMD, capture_output=True,
+            text=True).stdout.rstrip()
 
-pure_commands = ["sort", "wc", "uniq", "bigrams_aux", "alt_bigrams_aux"]
-parallelizable_pure_commands = ["sort", "bigrams_aux", "alt_bigrams_aux"]
+# TODO load command class file path from config
+command_classes_file_path = '{}/compiler/command-classes.yaml'.format(DISH_TOP)
+command_classes = {}
+with open(command_classes_file_path) as command_classes_file:
+    command_classes = yaml.load(command_classes_file, Loader=yaml.FullLoader)
 
+if not command_classes:
+    raise Exception('Failed to load description of command classes from {}'.format(command_classes_file_path))
+
+get_command_from_definition = lambda x: x['command'] if 'command' in x else ''
+stateless_commands = command_classes['stateless'] if 'stateless' in command_classes else {}
+pure_commands = command_classes['pure'] if 'pure' in command_classes else {}
+parallelizable_pure_commands = command_classes['parallelizable_pure'] if 'parallelizable_pure' in command_classes else {}
 
 ### Utils
-
 ## This function gets a key and a value from the ast json format
 def get_kv(dic):
     return (dic[0], dic[1])
@@ -441,10 +449,7 @@ class Command(Node):
         return new_commands + [new_cat]
 
     def is_pure_parallelizable(self):
-
-        ## TODO: Read from some file that contains information about
-        ## commands instead of hardcoding
-        return (self.category == "pure" and str(self.command) in parallelizable_pure_commands)
+        return (self.category == "pure" and str(self.command) in list(map(get_command_from_definition, parallelizable_pure_commands)))
 
     def pure_duplicate(self, old_input_file_id, input_file_ids, output_file_ids, fileIdGen):
         assert(self.is_pure_parallelizable())
@@ -744,17 +749,18 @@ def find_command_category(command, options):
     ## TODO: Make a proper search that returns the command category
     print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
 
+    # NOTE order of class declaration in definition file is important, as it
+    # dictates class precedence in the following search
+    for command_class, commands in command_classes.items():
+        command_list = list(map(get_command_from_definition, commands))
 
-    ## TODO: Make this cleaner and more canonical
-    if (command_string in stateless_commands or
-            command_string.split("/")[-1] in stateless_commands):
-        return "stateless"
-    elif (command_string in pure_commands):
-        return "pure"
-    elif (command_string == "comm"):
+        if command_string or command_string.split("/")[-1] in command_list:
+            return command_class
+
+    if command_string == 'comm':
         return is_comm_pure(options)
-    else:
-        return "none"
+
+    return 'none'
 
 ## TODO: This is clearly incomplete
 def is_comm_pure(options):
