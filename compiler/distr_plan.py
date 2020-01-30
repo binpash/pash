@@ -146,6 +146,11 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
             workset += new_nodes
     return graph
 
+
+## TODO: Instead of setting children, we have to use the new way of
+## having a cat command before the node so that we enable
+## optimizations.
+
 ## Optimizes several commands by splitting its input
 def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
     input_file_ids = curr.get_flat_input_file_ids()
