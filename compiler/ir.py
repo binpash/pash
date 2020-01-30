@@ -22,12 +22,21 @@ with open(command_classes_file_path) as command_classes_file:
 if not command_classes:
     raise Exception('Failed to load description of command classes from {}'.format(command_classes_file_path))
 
-get_command_from_definition = lambda x: x['command'] if 'command' in x else ''
 stateless_commands = command_classes['stateless'] if 'stateless' in command_classes else {}
 pure_commands = command_classes['pure'] if 'pure' in command_classes else {}
 parallelizable_pure_commands = command_classes['parallelizable_pure'] if 'parallelizable_pure' in command_classes else {}
 
+
+
 ### Utils
+
+def get_command_from_definition(command_definition):
+    if 'command' in command_definition:
+        return command_definition['command']
+
+    print('Possible issue with definition file: Missing command in command definition {}'.format(command_definition))
+    return ''
+
 ## This function gets a key and a value from the ast json format
 def get_kv(dic):
     return (dic[0], dic[1])
