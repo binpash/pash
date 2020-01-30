@@ -190,9 +190,10 @@ class FileId:
         assert(self.children == [])
         self.children = children
 
-    ## TODO: These children functions should be removed after the
-    ## model changes. There are no children, just many inputs or
-    ## outputs, and how each command interprets them depends on it.
+    ## TODO: DO NOT FORGET: These children functions should be removed
+    ## after the model changes. There are no children, just many
+    ## inputs or outputs, and how each command interprets them depends
+    ## on it.
     def unset_children(self):
         self.children = []
 
