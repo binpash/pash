@@ -267,58 +267,6 @@ def parallelize_command(curr, new_input_file_ids, old_input_file_id, graph, file
     return graph, new_nodes
 
 
-# def parallelize_command(curr, graph, fileIdGen):
-#     input_file_ids = curr.get_flat_input_file_ids()
-#     return parallelize_command_inputs(curr, input_file_ids, graph, fileIdGen)
-
-# ## TODO: Delete this completely after I am done
-# def parallelize_command_inputs(curr, input_file_ids, graph, fileIdGen):
-#     ## If the command is stateless or pure parallelizable and has more
-#     ## than one inputs, it can be parallelized.
-#     if ((curr.category == "stateless" or curr.is_pure_parallelizable())
-#         and len(input_file_ids) > 1):
-
-#         ## We assume that every command has one output_file_id for
-#         ## now. I am not sure if this must be lifted. This seems
-#         ## to be connected to assertion regarding the next_nodes.
-#         out_edge_file_ids = curr.get_output_file_ids()
-#         assert(len(out_edge_file_ids) == 1)
-#         out_edge_file_id = out_edge_file_ids[0]
-
-#         ## Get the file names of the outputs of the map commands. This
-#         ## differs if the command is stateless, pure that can be
-#         ## written as a map and a reduce, and a pure that can be
-#         ## written as a generalized map and reduce.
-#         new_output_file_ids = curr.get_map_output_files(input_file_ids, fileIdGen)
-
-#         ## Make a merge command that joins the results of all the
-#         ## duplicated commands
-#         if(curr.is_pure_parallelizable()):
-#             merge_commands = create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
-#             for merge_command in merge_commands:
-#                 graph.add_node(merge_command)
-
-#         ## For each new input and output file id, make a new command
-#         new_commands = curr.duplicate(input_file_ids, new_output_file_ids, fileIdGen)
-#         graph.remove_node(curr)
-#         # print("New commands:")
-#         # print(new_commands)
-#         for new_com in new_commands:
-#             graph.add_node(new_com)
-
-#         ## WARNING: In order for the above to not mess up
-#         ## anything, there must be no other node that writes to
-#         ## the same output as the curr node. Otherwise, the above
-#         ## procedure will mess this up.
-#         ##
-#         ## TODO: Either make an assertion to catch any case that
-#         ## doesn't satisfy the above assumption here, or extend
-#         ## the intermediate representation and the above procedure
-#         ## so that this assumption is lifted (either by not
-#         ## parallelizing, or by properly handling this case)
-
-#     return graph
-
 ## Creates a merge command for all pure commands that can be
 ## parallelized using a map and a reduce/merge step
 def create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
