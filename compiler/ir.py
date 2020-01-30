@@ -990,6 +990,18 @@ class IR:
                     next_nodes.append(other_node)
         return next_nodes
 
+    def get_previous_nodes_and_edges(self, node):
+        previous_nodes = []
+        for incoming_fid in node.get_input_file_ids():
+            for other_node in self.nodes:
+                ## Note: What if other_node == node?
+                if (not incoming_fid.find_fid_list(other_node.get_output_file_ids()) is None):
+                    previous_nodes.append((other_node, incoming_fid))
+        return previous_nodes
+
+    def get_previous_nodes(self, node):
+        return [node for node, edge in self.get_previous_nodes_and_edges(node)]
+
     ## This command gets all file identifiers of the graph, and
     ## returns a fileId generator that won't clash with the existing
     ## ones.
