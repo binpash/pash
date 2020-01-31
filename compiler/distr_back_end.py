@@ -5,8 +5,7 @@ from ir import *
 
 def distr_execute(graph, output_dir, output_script_name, output_optimized, compile_optimize_only, distributed_nodes):
 
-    number_nodes = len(distributed_nodes)
-    output_script = shell_backend(graph, output_dir, number_nodes)
+    output_script = shell_backend(graph, output_dir, distributed_nodes)
 
     ## Output the optimized shell script for inspection
     if(output_optimized):
@@ -31,7 +30,7 @@ def map_graph_to_physical_nodes(graph, number_nodes):
     distributed_graphs = []
     curr_graph_nodes = []
 
-    ## TODO: Do the DFS. The DFS returns distributed graphs.
+    ## The DFS returns distributed graphs.
     ## 1. Given the input fids we can find the source nodes of the graph
     ## 2. We keep a working stack of the node identifiers and every new node
     ##    that we visit, we add it to the current physical node.
@@ -44,7 +43,7 @@ def map_graph_to_physical_nodes(graph, number_nodes):
     ## as it contains reduce nodes too. This won't be a correctness
     ## problem though, as all of the nodes will be assigned to some
     ## physical one.
-    print(work_stack)
+    # print(work_stack)
     while (len(work_stack) > 0):
         curr = work_stack.pop(0)
         next_nodes = graph.get_next_nodes(curr)
@@ -59,8 +58,8 @@ def map_graph_to_physical_nodes(graph, number_nodes):
             curr_graph_nodes.append(curr)
 
         if(hasattr(curr, 'physical_node')):
-            ## TODO: Stop and close the distributed graph for
-            ## curr_physical_node.  The final nodes are all being put
+            ## Stop and close the distributed graph for
+            ## curr_physical_node. The final nodes are all being put
             ## into the central (last) node.
             if(curr_physical_node + 1 < number_nodes and len(curr_graph_nodes) > 0):
                 curr_physical_node += 1
@@ -85,21 +84,11 @@ def map_graph_to_physical_nodes(graph, number_nodes):
 
     return distributed_graphs, remote_channels
 
-
-def shell_backend(graph, output_dir, number_nodes):
-    print("Translate:")
-    print(graph)
-    # fids = graph_json["fids"]
-    # in_fids = graph_json["in"]
-    # out_fids = graph_json["out"]
-    # nodes = graph_json["nodes"]
-
-    distributed_graphs, remote_channels = map_graph_to_physical_nodes(graph, number_nodes)
-    print(distributed_graphs)
-    print(remote_channels)
-    exit(0)
-
-    start_time = time.time()
+def json_graph_to_sh(graph_json, output_dir, remote_channels, distributed_nodes):
+    fids = graph_json["fids"]
+    in_fids = graph_json["in"]
+    out_fids = graph_json["out"]
+    nodes = graph_json["nodes"]
 
     output_script_commands = []
 
@@ -118,30 +107,15 @@ def shell_backend(graph, output_dir, number_nodes):
         output_script_commands.append(mkfifo_com)
 
     ## Execute nodes
-    processes = [execute_node(node, env, shared_memory_dir) for node_id, node in nodes.items()]
+    processes = [execute_node(node, shared_memory_dir) for node_id, node in nodes.items()]
     output_script_commands += processes
 
     ## Collect outputs
-    # collect_output_args = ["cat"]
-    # for out_fid in out_fids:
-    #     collect_output_args.append('"{}"'.format(out_fid))
-    # collect_output_args.append(">")
-    # collect_output_args.append('"{}"'.format(output_file))
-    # output_script = " ".join(collect_output_args)
-    # print("Collect output:")
-    # print(output_script)
-    # out_p = subprocess.Popen(output_script, shell=True,
-    #                          executable="/bin/bash")
     for i, out_fid in enumerate(out_fids):
         output_com = 'cat "{}" > {}/{} &'.format(out_fid, output_dir, i)
         output_script_commands.append(output_com)
 
     ## Wait for all processes to die
-    # for proc in processes:
-    #     ret = proc.wait()
-    #     if(not ret == 0):
-    #         print("-- Error!", proc, ret)
-    # output_script_commands.append('for job in `jobs -p` \ndo \n echo $job\n wait $job \ndone')
     output_script_commands.append('wait')
     ## Kill pipes
     for fid in fids:
@@ -150,12 +124,34 @@ def shell_backend(graph, output_dir, number_nodes):
         output_script_commands.append(rm_com)
 
     output_script_commands.append('rm -rf "{}"'.format(shared_memory_dir))
-    end_time = time.time()
 
     ## TODO: Cat all outputs together if a specific flag is given
 
-    # print("Distributed translation execution time:", end_time - start_time)
     return "\n".join(output_script_commands)
+
+def shell_backend(graph, output_dir, distributed_nodes):
+    print("Translate:")
+    print(graph)
+
+    start_time = time.time()
+
+    number_nodes = len(distributed_nodes)
+    distributed_graphs, remote_channels = map_graph_to_physical_nodes(graph, number_nodes)
+    distributed_graphs_json = [dgraph.serialize_as_JSON() for dgraph in distributed_graphs]
+    print(distributed_graphs_json)
+    print(remote_channels)
+    sh_scripts = [json_graph_to_sh(graph_json, output_dir, remote_channels, distributed_nodes)
+                  for graph_json in distributed_graphs_json]
+    for i, sh_script in enumerate(sh_scripts):
+        print("Node:", i, ", ip:", distributed_nodes[i])
+        print(sh_script)
+    exit(0)
+
+    end_time = time.time()
+
+
+    # print("Distributed translation execution time:", end_time - start_time)
+    return sh_scripts
 
 def remove_fifo_if_exists(pipe):
     assert(pipe[0] == "#")
@@ -170,13 +166,9 @@ def make_fifo(pipe):
     # os.mkfifo(pipe)
     return 'mkfifo "{}"'.format(pipe)
 
-def execute_node(node, env, shared_memory_dir):
+def execute_node(node, shared_memory_dir):
     # print(node)
     script = node_to_script(node, shared_memory_dir)
-    # print("{} &".format(script))
-    # p = subprocess.Popen(script, shell=True,
-    #                      executable="/bin/bash", env=env)
-    # return p
     return "{} &".format(script)
 
 def node_to_script(node, shared_memory_dir):
