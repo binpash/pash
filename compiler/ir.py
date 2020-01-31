@@ -825,46 +825,41 @@ def comm_input_output(options, stdin, stdout):
     else:
         assert(false)
 
-def make_split_files(in_fid, out_fid, batch_size, fileIdGen):
-    assert(len(out_fid.children) >= 2)
+def make_split_files(in_fid, out_fids, batch_size, fileIdGen):
+    assert(len(out_fids) >= 2)
     split_commands = []
     curr = in_fid
     out_i = 0
-    while (out_i + 2 < len(out_fid.children)):
+    while (out_i + 2 < len(out_fids)):
         temp_fid = fileIdGen.next_file_id()
-        temp_out_fid = fileIdGen.next_file_id()
-        temp_out_fid.set_children([out_fid.children[out_i], temp_fid])
-        split_com = make_split_file(curr, temp_out_fid, batch_size)
+        split_com = make_split_file(curr, [out_fids[out_i], temp_fid], batch_size)
         split_commands.append(split_com)
 
         curr = temp_fid
         out_i += 1
 
     ## The final 2 children of out_fid
-    final_out_fid = fileIdGen.next_file_id()
-    final_out_fid.set_children(out_fid.children[out_i:(out_i+2)])
-    split_com = make_split_file(curr, final_out_fid, batch_size)
+    split_com = make_split_file(curr, out_fids[out_i:(out_i+2)], batch_size)
     split_commands.append(split_com)
     return split_commands
 
 ## TODO: Make a proper splitter subclass of Node
-def make_split_file(in_fid, out_fid, batch_size):
-    assert(len(out_fid.children) == 2)
+def make_split_file(in_fid, out_fids, batch_size):
+    assert(len(out_fids) == 2)
     ## TODO: Call split_file recursively when we want to split a file
     ## more than two times
 
     ## TODO: I probably have to give the file names as options to the command to.
-    options = [string_to_argument(str(batch_size))]
-    opt_indices = [("option", i) for i in range(len(options))]
+    options = [string_to_argument(str(batch_size))] + out_fids
+    opt_indices = [("option", 0)]
     command = Command(None, # TODO: Make a proper AST
                       string_to_argument("split_file"),
                       options,
                       ["stdin"],
-                      ["stdout"],
+                      [("option", 1), ("option", 2)],
                       opt_indices,
                       None, # TODO: Category?
-                      in_fid,
-                      out_fid)
+                      in_fid)
     return command
 
 ## This function gets a file identifier and returns the maximum among
