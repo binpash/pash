@@ -1,6 +1,7 @@
 import os
 import time
 import subprocess
+from ir import *
 
 def distr_execute(graph, output_dir, output_script_name, output_optimized, compile_optimize_only, distributed_nodes):
 
@@ -28,6 +29,7 @@ def map_graph_to_physical_nodes(graph, number_nodes):
     ## This will be a list of graphs, one for each physical node. Graphs are in
     ## the exact same format as the initial graph.
     distributed_graphs = []
+    curr_graph_nodes = []
 
     ## TODO: Do the DFS. The DFS returns distributed graphs.
     ## 1. Given the input fids we can find the source nodes of the graph
@@ -52,28 +54,36 @@ def map_graph_to_physical_nodes(graph, number_nodes):
         ## If the node is a sink of the graph, then we have to stop,
         ## so we fix its physical node to trigger the creation of the
         ## distributed graph.
-        if(len(next_nodes) == 0):
+        if(len(next_nodes) == 0 and not hasattr(curr, 'physical_node')):
             curr.physical_node = curr_physical_node
+            curr_graph_nodes.append(curr)
 
         if(hasattr(curr, 'physical_node')):
             ## TODO: Stop and close the distributed graph for
             ## curr_physical_node.  The final nodes are all being put
             ## into the central (last) node.
-            if(curr_physical_node + 1 < number_nodes):
+            if(curr_physical_node + 1 < number_nodes and len(curr_graph_nodes) > 0):
                 curr_physical_node += 1
-                input_nodes_and_edges = graph.get_previous_nodes_and_edges(curr)
-                new_remote_channels = [(edge, node.physical_node, curr.physical_node)
-                                       for node, edge in input_nodes_and_edges
-                                       if not node.physical_node == curr.physical_node]
-                remote_channels += new_remote_channels
+                curr_graph = IR(curr_graph_nodes)
+                distributed_graphs.append(curr_graph)
+                curr_graph_nodes = []
+
+            input_nodes_and_edges = graph.get_previous_nodes_and_edges(curr)
+            new_remote_channels = [(edge, node.physical_node, curr.physical_node)
+                                   for node, edge in input_nodes_and_edges
+                                   if hasattr(node, 'physical_node') and
+                                   not node.physical_node == curr.physical_node]
+            remote_channels += new_remote_channels
         else:
             curr.physical_node = curr_physical_node
+            curr_graph_nodes.append(curr)
 
-        print("Physical:", curr, curr.physical_node)
+        # print("Physical:", curr, curr.physical_node)
 
-    print(remote_channels)
+    ## Remove duplicates
+    remote_channels = list(set(remote_channels))
 
-    return distributed_graphs
+    return distributed_graphs, remote_channels
 
 
 def shell_backend(graph, output_dir, number_nodes):
@@ -84,7 +94,9 @@ def shell_backend(graph, output_dir, number_nodes):
     # out_fids = graph_json["out"]
     # nodes = graph_json["nodes"]
 
-    distributed_graphs = map_graph_to_physical_nodes(graph, number_nodes)
+    distributed_graphs, remote_channels = map_graph_to_physical_nodes(graph, number_nodes)
+    print(distributed_graphs)
+    print(remote_channels)
     exit(0)
 
     start_time = time.time()
