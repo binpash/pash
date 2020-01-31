@@ -5,17 +5,19 @@ from ir import *
 
 def distr_execute(graph, output_dir, output_script_name, output_optimized, compile_optimize_only, distributed_nodes):
 
-    output_script = shell_backend(graph, output_dir, distributed_nodes)
+    output_scripts = shell_backend(graph, output_dir, distributed_nodes)
 
-    ## Output the optimized shell script for inspection
-    if(output_optimized):
-        with open(output_script_name, "w") as output_script_file:
-            output_script_file.write(output_script)
+    ## TODO: Do something with the output_scripts
 
-    if(not compile_optimize_only):
-        ## TODO: Handle stdout, stderr, errors
-        exec_obj = subprocess.run(output_script, shell=True, executable="/bin/bash")
-        exec_obj.check_returncode()
+    # ## Output the optimized shell script for inspection
+    # if(output_optimized):
+    #     with open(output_script_name, "w") as output_script_file:
+    #         output_script_file.write(output_script)
+
+    # if(not compile_optimize_only):
+    #     ## TODO: Handle stdout, stderr, errors
+    #     exec_obj = subprocess.run(output_script, shell=True, executable="/bin/bash")
+    #     exec_obj.check_returncode()
 
 
 def map_graph_to_physical_nodes(graph, number_nodes):
@@ -29,6 +31,8 @@ def map_graph_to_physical_nodes(graph, number_nodes):
     ## the exact same format as the initial graph.
     distributed_graphs = []
     curr_graph_nodes = []
+    curr_graph_inputs = []
+    curr_graph_outputs = []
 
     ## The DFS returns distributed graphs.
     ## 1. Given the input fids we can find the source nodes of the graph
@@ -56,6 +60,11 @@ def map_graph_to_physical_nodes(graph, number_nodes):
         if(len(next_nodes) == 0 and not hasattr(curr, 'physical_node')):
             curr.physical_node = curr_physical_node
             curr_graph_nodes.append(curr)
+            ## Since this is the last node, its output is also the
+            ## output of the current graph
+            curr_graph_outputs += curr.get_flat_output_file_ids()
+            if(len(curr_graph_inputs) == 0):
+                curr_graph_inputs += curr.get_flat_input_file_ids()
 
         if(hasattr(curr, 'physical_node')):
             ## Stop and close the distributed graph for
@@ -64,8 +73,11 @@ def map_graph_to_physical_nodes(graph, number_nodes):
             if(curr_physical_node + 1 < number_nodes and len(curr_graph_nodes) > 0):
                 curr_physical_node += 1
                 curr_graph = IR(curr_graph_nodes)
-                distributed_graphs.append(curr_graph)
+                distributed_graphs.append((curr_graph, curr_graph_inputs, curr_graph_outputs))
                 curr_graph_nodes = []
+                curr_graph_inputs = []
+                curr_graph_outputs = []
+
 
             input_nodes_and_edges = graph.get_previous_nodes_and_edges(curr)
             new_remote_channels = [(edge, node.physical_node, curr.physical_node)
@@ -76,6 +88,8 @@ def map_graph_to_physical_nodes(graph, number_nodes):
         else:
             curr.physical_node = curr_physical_node
             curr_graph_nodes.append(curr)
+            if(len(curr_graph_inputs) == 0):
+                curr_graph_inputs += curr.get_flat_input_file_ids()
 
         # print("Physical:", curr, curr.physical_node)
 
@@ -84,8 +98,13 @@ def map_graph_to_physical_nodes(graph, number_nodes):
 
     return distributed_graphs, remote_channels
 
-def json_graph_to_sh(graph_json, output_dir, remote_channels, distributed_nodes):
+def json_graph_to_sh(graph_json, graph_inputs, graph_outputs, output_dir, remote_channels, distributed_nodes):
     fids = graph_json["fids"]
+
+    print("Graph inputs:", graph_inputs)
+    print("Graph outputs:", graph_outputs)
+
+    ## TODO: Replcae those with graph_inputs, graph_outputs
     in_fids = graph_json["in"]
     out_fids = graph_json["out"]
     nodes = graph_json["nodes"]
@@ -110,7 +129,8 @@ def json_graph_to_sh(graph_json, output_dir, remote_channels, distributed_nodes)
     processes = [execute_node(node, shared_memory_dir) for node_id, node in nodes.items()]
     output_script_commands += processes
 
-    ## Collect outputs
+    ## TODO: Instead of collecting outputs with cat, we need to send
+    ## them back to the central node
     for i, out_fid in enumerate(out_fids):
         output_com = 'cat "{}" > {}/{} &'.format(out_fid, output_dir, i)
         output_script_commands.append(output_com)
@@ -125,27 +145,24 @@ def json_graph_to_sh(graph_json, output_dir, remote_channels, distributed_nodes)
 
     output_script_commands.append('rm -rf "{}"'.format(shared_memory_dir))
 
-    ## TODO: Cat all outputs together if a specific flag is given
-
     return "\n".join(output_script_commands)
 
 def shell_backend(graph, output_dir, distributed_nodes):
-    print("Translate:")
-    print(graph)
+    # print("Translate:")
+    # print(graph)
 
     start_time = time.time()
 
     number_nodes = len(distributed_nodes)
     distributed_graphs, remote_channels = map_graph_to_physical_nodes(graph, number_nodes)
-    distributed_graphs_json = [dgraph.serialize_as_JSON() for dgraph in distributed_graphs]
+    distributed_graphs_json = [(dgraph.serialize_as_JSON(), g_ins, g_outs) for dgraph, g_ins, g_outs in distributed_graphs]
     print(distributed_graphs_json)
     print(remote_channels)
-    sh_scripts = [json_graph_to_sh(graph_json, output_dir, remote_channels, distributed_nodes)
-                  for graph_json in distributed_graphs_json]
+    sh_scripts = [json_graph_to_sh(graph_json, g_ins, g_outs, output_dir, remote_channels, distributed_nodes)
+                  for graph_json, g_ins, g_outs in distributed_graphs_json]
     for i, sh_script in enumerate(sh_scripts):
         print("Node:", i, ", ip:", distributed_nodes[i])
         print(sh_script)
-    exit(0)
 
     end_time = time.time()
 
