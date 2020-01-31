@@ -869,10 +869,9 @@ def make_split_file(in_fid, out_fid, batch_size):
 
 ## This function gets a file identifier and returns the maximum among
 ## its, and its parents identifier (parent regarding Union Find)
-def get_larger_file_id_ident(file_id):
-    my_ident = file_id.get_ident()
-    find_ident = Find(file_id).get_ident()
-    return max(my_ident, find_ident)
+def get_larger_file_id_ident(file_ids):
+    return max([max(fid.get_ident(), Find(fid).get_ident())
+                for fid in file_ids])
 
 ## Note: This might need more information. E.g. all the file
 ## descriptors of the IR, and in general any other local information
@@ -886,20 +885,13 @@ class IR:
     ##
     ## - If two nodes have the same file as output, then they both
     ##   write to it concurrently.
-    def __init__(self, nodes, stdin = None, stdout = None):
+    def __init__(self, nodes, stdin = [], stdout = []):
         self.nodes = nodes
-        self.edges = {}
-        if(stdin is None):
-            self.stdin = FileId("NULL")
-        else:
-            self.stdin = stdin
-        if(stdout is None):
-            self.stdout = FileId("NULL")
-        else:
-            self.stdout = stdout
+        self.stdin = stdin
+        self.stdout = stdout
 
     def __repr__(self):
-        output = "(|-{} IR: {} {}-|)".format(self.stdin.flatten(), self.nodes, self.stdout.flatten())
+        output = "(|-{} IR: {} {}-|)".format(self.stdin, self.nodes, self.stdout)
         return output
 
     def serialize(self):
@@ -957,9 +949,9 @@ class IR:
         all_file_ids = list(set(all_file_ids))
         output_json["fids"] = all_file_ids
         output_json["nodes"] = nodes
-        flat_stdin = flatten_list([Find(self.stdin).flatten()])
+        flat_stdin = [Find(fid) for fid in self.stdin]
         output_json["in"] = [fid.serialize() for fid in flat_stdin]
-        flat_stdout = flatten_list([Find(self.stdout).flatten()])
+        flat_stdout = [Find(fid) for fid in self.stdout]
         output_json["out"] = [fid.serialize() for fid in flat_stdout]
         return output_json
 
@@ -982,9 +974,9 @@ class IR:
         ## Question: What happens if one of them is NULL. This
         ##           shouldn't be the case after we check that
         ##           both self and other are not empty.
-        assert(not self.stdout.isNull())
-        assert(not other.stdin.isNull())
-        self.stdout.union(other.stdin)
+        assert(len(self.stdout) == 1)
+        assert(len(self.stdin) == 1)
+        self.stdout[0].union(other.stdin[0])
         self.stdout = other.stdout
 
         ## Note: The ast is not extensible, and thus should be
@@ -1028,7 +1020,7 @@ class IR:
         for node in self.nodes:
             node_file_ids = node.get_input_file_ids() + node.get_output_file_ids()
             for file_id in node_file_ids:
-                max_id = max(get_larger_file_id_ident(file_id), max_id)
+                max_id = max(get_larger_file_id_ident([file_id]), max_id)
         return FileIdGen(max_id)
 
 
@@ -1049,6 +1041,6 @@ class IR:
     ## file identifiers.
     def valid(self):
         return (len(self.nodes) > 0 and
-                not self.stdin.isNull() and
-                not self.stdout.isNull())
+                len(self.stdin) > 0 and
+                len(self.stdout) > 0)
 
