@@ -153,6 +153,8 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
 
 ## Optimizes several commands by splitting its input
 def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
+    ## TODO: Fix this to only split input only if there is only one
+    ## input before the cat before that command.
     input_file_ids = curr.get_flat_input_file_ids()
     if (curr.category in ["stateless", "pure"] and
         len(input_file_ids) == 1 and
@@ -175,12 +177,15 @@ def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
         output_file_id.set_children(split_file_ids)
 
         ## Set this new file id to be the input ot xargs.
+
+        ## TODO: Set the input file ids correctly. We have to create a
+        ## Cat before the command so that it has many inputs.
         curr.stdin = output_file_id
 
         ## Add a new node that executes split_file and takes
         ## the input_file_id as input, split_file_ids as output
         ## and the batch_size as an argument
-        split_file_commands = make_split_files(input_file_id, output_file_id, batch_size, fileIdGen)
+        split_file_commands = make_split_files(input_file_id, split_file_ids, batch_size, fileIdGen)
         [graph.add_node(split_file_command) for split_file_command in split_file_commands]
 
     return graph
