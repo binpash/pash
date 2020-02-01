@@ -291,12 +291,6 @@ class Node:
 
     ## These two commands return the flattened fileId list. Meaning
     ## that they return the children, if they exist.
-    def get_flat_input_file_ids(self):
-        return self.get_input_file_ids()
-
-    def get_flat_output_file_ids(self):
-        return self.get_output_file_ids()
-
     def get_input_file_ids(self):
         return [self.get_file_id(input_chunk) for input_chunk in self.in_stream]
 
@@ -372,8 +366,8 @@ class Command(Node):
         # output = "{}: \"{}\" in:{} out:{} opts:{}".format(
         #     prefix, self.command, self.stdin, self.stdout, self.options)
         output = "{}: \"{}\" in:{} out:{}".format(
-            prefix, self.command, self.get_flat_input_file_ids(),
-            self.get_flat_output_file_ids())
+            prefix, self.command, self.get_input_file_ids(),
+            self.get_output_file_ids())
         return output
 
     def serialize(self):
@@ -864,9 +858,9 @@ class IR:
         all_file_ids = ""
         for i, node in enumerate(self.nodes):
             serialized_input_file_ids = " ".join([fid.serialize()
-                                                  for fid in node.get_flat_input_file_ids()])
+                                                  for fid in node.get_input_file_ids()])
             serialized_output_file_ids = " ".join([fid.serialize()
-                                                   for fid in node.get_flat_output_file_ids()])
+                                                   for fid in node.get_output_file_ids()])
             all_file_ids += serialized_input_file_ids + " "
             all_file_ids += serialized_output_file_ids + " "
             output += "{} in: {} out: {} command: {}\n".format(i, serialized_input_file_ids,
@@ -884,10 +878,10 @@ class IR:
             ## Gather all pipe names so that they are generated in the
             ## backend.
             input_pipes = [fid.serialize()
-                           for fid in node.get_flat_input_file_ids()
+                           for fid in node.get_input_file_ids()
                            if fid.resource is None]
             output_pipes = [fid.serialize()
-                            for fid in node.get_flat_output_file_ids()
+                            for fid in node.get_output_file_ids()
                             if fid.resource is None]
             all_file_ids += input_pipes + output_pipes
 
