@@ -126,12 +126,11 @@ def create_split_file_id(batch_size, fileIdGen):
 ## TODO: When doing union, I have to really make both file ids point
 ## to the same file.
 class FileId:
-    def __init__(self, ident, resource=None, children = [], max_length = None):
+    def __init__(self, ident, resource=None, max_length = None):
         self.ident = ident
         ## Initialize the parent
         MakeSet(self)
         self.resource=resource
-        self.children = children
         ## Max length shows what is the maximum possible length that
         ## this file shows to. Its use is mostly to split intermediate
         ## streams.
@@ -141,18 +140,9 @@ class FileId:
         ## Note: Outputs the parent of the union and not the file id
         ##       itself.
         return self.serialize()
-        # print("Repr File id:", self.ident, Find(self).ident, self.resource, self.children)
-        # if (self.resource is None):
-        #     if(self.max_length is None):
-        #         output = "#file{}".format(Find(self).ident)
-        #     else:
-        #         output = "#file{}[max:{}]".format(Find(self).ident, self.max_length)
-        # else:
-        #     output = "#file{}({})".format(Find(self).ident, self.resource.__repr__())
-        # return output
 
     def serialize(self):
-        # print("File id:", self.ident, Find(self).ident, self.resource, self.children)
+        # print("File id:", self.ident, Find(self).ident, self.resource)
         if (self.resource is None):
             if(self.max_length is None):
                 output = "#file{}".format(Find(self).ident)
@@ -184,38 +174,36 @@ class FileId:
     def get_resource(self):
         return self.resource
 
-    ## TODO: We might need to reconstruct the parents from children,
-    ## so we might have to add a parent field in file ids.
-    def set_children(self, children):
-        assert(self.children == [])
-        self.children = children
+    ## WARNING: These functions are obsolete and are there from the
+    ## old model where many inputs where represented as children
+    ## inputs to an input file. With the new model, file identifiers
+    ## have no children,
+    # def set_children(self, children):
+    #     assert(self.children == [])
+    #     self.children = children
 
-    ## TODO: DO NOT FORGET: These children functions should be removed
-    ## after the model changes. There are no children, just many
-    ## inputs or outputs, and how each command interprets them depends
-    ## on it.
-    def unset_children(self):
-        self.children = []
+    # def unset_children(self):
+    #     self.children = []
 
-    def get_children(self):
-        return self.children
+    # def get_children(self):
+    #     return self.children
 
-    def split_resource(self, times, batch_size, fileIdGen):
-        if(not self.resource is None):
-            ## This works as expected if the file points to a resource
-            resources = self.resource.split_resource(times, batch_size)
-            split_file_ids = [create_file_id_for_resource(resource, fileIdGen)
-                              for resource in resources]
-            self.set_children(split_file_ids)
-        else:
-            ## If the file doesn't point to a resource (meaning that
-            ## it is an intermediate file), then we just restrict its
-            ## max length, and the implementation should know to only
-            ## pass so many lines in this file.
-            split_file_ids = [create_split_file_id(batch_size, fileIdGen)
-                              for i in range(times)]
-            split_file_ids[-1].set_max_length(None)
-            self.set_children(split_file_ids)
+    # def split_resource(self, times, batch_size, fileIdGen):
+    #     if(not self.resource is None):
+    #         ## This works as expected if the file points to a resource
+    #         resources = self.resource.split_resource(times, batch_size)
+    #         split_file_ids = [create_file_id_for_resource(resource, fileIdGen)
+    #                           for resource in resources]
+    #         self.set_children(split_file_ids)
+    #     else:
+    #         ## If the file doesn't point to a resource (meaning that
+    #         ## it is an intermediate file), then we just restrict its
+    #         ## max length, and the implementation should know to only
+    #         ## pass so many lines in this file.
+    #         split_file_ids = [create_split_file_id(batch_size, fileIdGen)
+    #                           for i in range(times)]
+    #         split_file_ids[-1].set_max_length(None)
+    #         self.set_children(split_file_ids)
 
     ## This must be used by the implementation to only transfer
     ## max_length lines in this file.
@@ -233,8 +221,7 @@ class FileId:
     ## very easily and it is difficult to reason about the
     ## files. Replace this with some other structure. Maybe a map that
     ## keeps the unifications of file identifiers. Make sure that when
-    ## uniting two files, their children and resources are modified
-    ## accordingly.
+    ## uniting two files, their resources are modified accordingly.
     def union(self, other):
         Union(self, other)
         my_resource = self.get_resource()
@@ -258,12 +245,6 @@ class FileId:
 
     def get_ident(self):
         return self.ident
-
-    def flatten(self):
-        if(len(self.get_children()) > 0):
-            return flatten_list([child.flatten() for child in self.get_children()])
-        else:
-            return [self]
 
 
 class FileIdGen:
@@ -311,10 +292,10 @@ class Node:
     ## These two commands return the flattened fileId list. Meaning
     ## that they return the children, if they exist.
     def get_flat_input_file_ids(self):
-        return flatten_list([Find(file_id).flatten() for file_id in self.get_input_file_ids()])
+        return self.get_input_file_ids()
 
     def get_flat_output_file_ids(self):
-        return flatten_list([Find(file_id).flatten() for file_id in self.get_output_file_ids()])
+        return self.get_output_file_ids()
 
     def get_input_file_ids(self):
         return [self.get_file_id(input_chunk) for input_chunk in self.in_stream]
@@ -366,8 +347,7 @@ class Node:
         index = 0
         for chunk in stream:
             chunk_file_id = Find(self.get_file_id(chunk))
-            flat_file_ids = chunk_file_id.flatten()
-            if(file_id in flat_file_ids):
+            if(Find(file_id) == chunk_file_id):
                 return index
             index += 1
         return None
@@ -451,10 +431,6 @@ class Command(Node):
     def stateless_duplicate(self, old_input_file_id, input_file_ids, output_file_ids):
         assert(self.category == "stateless")
 
-        ## Attach the new output files as children of the node's
-        ## output, because make_duplicate command requires that. Also,
-        ## by doing that, the input of the next command now also has
-        ## children (due to unification).
         out_edge_file_ids = self.get_output_file_ids()
         assert(len(out_edge_file_ids) == 1)
         out_edge_file_id = out_edge_file_ids[0]
@@ -918,12 +894,12 @@ class IR:
             ## Find the stdin and stdout files of nodes so that the
             ## backend can make the necessary redirections.
             if ("stdin" in node.in_stream):
-                stdin_input_pipes = Find(node.stdin).flatten()
+                stdin_input_pipes = [Find(node.stdin)]
             else:
                 stdin_input_pipes = []
 
             if ("stdout" in node.out_stream):
-                stdout_output_pipes = Find(node.stdout).flatten()
+                stdout_output_pipes = [Find(node.stdout)]
             else:
                 stdout_output_pipes = []
 
