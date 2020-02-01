@@ -3,7 +3,7 @@ cat "$IN_DIR/p1.out_10_00" "$IN_DIR/p1.out_10_01" "$IN_DIR/p1.out_10_02" "$IN_DI
   sed "s#^#$WIKI#" |
   xargs cat |
   iconv -c -t ascii//TRANSLIT |
-  pandoc --from html --to plain --quiet |
+  pandoc +RTS -K50000000 -RTS --from html --to plain --quiet |
   tr -cs A-Za-z '\n' |
   tr A-Z a-z |
   grep -vwFf $WEB_INDEX_DIR/stopwords.txt |

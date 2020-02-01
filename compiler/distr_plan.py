@@ -8,6 +8,7 @@ import yaml
 from ir import *
 from json_ast import *
 from impl import execute
+from distr_back_end import distr_execute
 
 ## This file receives the name of a file that holds an IR, reads the
 ## IR, read some configuration file with node information, and then
@@ -73,7 +74,10 @@ def optimize_script(output_script_path, compile_optimize_only):
     # f.close()
 
     ## Call the backend that executes the optimized dataflow graph
-    execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'], compile_optimize_only)
+    if(config['distr_backend']):
+        distr_execute(distributed_graph, config['output_dir'], output_script_path, config['output_optimized'], compile_optimize_only, config['nodes'])
+    else:
+        execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'], compile_optimize_only)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
