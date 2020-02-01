@@ -105,7 +105,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
 
     # commands_to_split_input = ["cat"]
     # for source_node in source_nodes:
-    #     input_file_ids = source_node.get_flat_input_file_ids()
+    #     input_file_ids = source_node.get_input_file_ids()
     #     ## TODO: Also split when we have more than one input file
     #     if(len(input_file_ids) == 1 and
     #        str(source_node.command) in commands_to_split_input):
@@ -178,15 +178,15 @@ def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
         previous_node = previous_nodes[0]
         if(not isinstance(previous_node, Cat) or
            (isinstance(previous_node, Cat) and
-            len(previous_node.get_flat_input_file_ids()) == 1)):
+            len(previous_node.get_input_file_ids()) == 1)):
 
             if(not isinstance(previous_node, Cat)):
-                input_file_ids = curr.get_flat_input_file_ids()
+                input_file_ids = curr.get_input_file_ids()
                 assert(len(input_file_ids) == 1)
                 input_file_id = input_file_ids[0]
             else:
                 ## If the previous node is a cat, we need its input
-                input_file_ids = previous_node.get_flat_input_file_ids()
+                input_file_ids = previous_node.get_input_file_ids()
                 assert(len(input_file_ids) == 1)
                 input_file_id = input_file_ids[0]
 
@@ -214,7 +214,7 @@ def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
                 curr.set_file_id(chunk, new_input_file_id)
             else:
                 ## Change the current node's input with the new_input
-                curr_input_file_ids = curr.get_flat_input_file_ids()
+                curr_input_file_ids = curr.get_input_file_ids()
                 assert(len(curr_input_file_ids) == 1)
                 curr_input_file_id = curr_input_file_ids[0]
                 chunk = curr.find_file_id_in_in_stream(curr_input_file_id)
@@ -236,7 +236,7 @@ def parallelize_cat(curr, graph, fileIdGen):
             next_node = next_nodes[0]
 
             ## Get cat inputs and output
-            cat_input_file_ids = curr.get_flat_input_file_ids()
+            cat_input_file_ids = curr.get_input_file_ids()
             cat_output_file_ids = curr.get_output_file_ids()
             assert(len(cat_output_file_ids) == 1)
             cat_output_file_id = cat_output_file_ids[0]
