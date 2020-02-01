@@ -128,10 +128,18 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
         ## output to all of them? Or does it mean that it writes
         ## some to the first and some to the second? Both are not
         ## very symmetric, but I think I would prefer the first.
-        assert(len(next_nodes) <= 1)
+        # print(curr, next_nodes)
+        # assert(len(next_nodes) <= 1)
 
+        ## If the current command is a split file, then we will
+        ## recursively add a huge amount of splits, as several nodes
+        ## are revisited due to the suboptimal adding of all new nodes
+        ## to the workset.
+        ##
         ## TODO: Remove hardcoded
-        graph = split_command_input(curr, graph, fileIdGen, fan_out, batch_size)
+        if(not str(curr.command) == "split_file"):
+            for next_node in next_nodes:
+                graph = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size)
         graph, new_nodes = parallelize_cat(curr, graph, fileIdGen)
 
         ## Add new nodes to the workset depending on the optimization.
@@ -144,6 +152,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
         ## TODO: Fix that
         if(len(new_nodes) > 0):
             workset += new_nodes
+
     return graph
 
 
@@ -153,41 +162,64 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
 
 ## Optimizes several commands by splitting its input
 def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
-    ## TODO: Fix this to only split input only if there is only one
-    ## input before the cat before that command.
-    input_file_ids = curr.get_flat_input_file_ids()
+    ## At the moment this only works for nodes that have one
+    ## input. TODO: Extend it to work for nodes that have more than
+    ## one input.
+    ##
+    ## TODO: Change the test to check if curr is instance of Cat and
+    ## not check its name.
+    previous_nodes = graph.get_previous_nodes(curr)
     if (curr.category in ["stateless", "pure"] and
-        len(input_file_ids) == 1 and
-        curr.in_stream[0] == "stdin" and
+        not str(curr.command) == "cat" and
+        len(previous_nodes) == 1 and
         fan_out > 1):
-        ## We can split command input in several files, as long as the
-        ## input is not a file, and it makes sense to do so, if the
-        ## command is stateless or pure.
+        ## If the previous command is either a cat with one input, or
+        ## if it something else
+        previous_node = previous_nodes[0]
+        if(not isinstance(previous_node, Cat) or
+           (isinstance(previous_node, Cat) and
+            len(previous_node.get_flat_input_file_ids()) == 1)):
 
-        ## This will still be the output file id of the previous
-        ## node
-        input_file_id = input_file_ids[0]
+            if(not isinstance(previous_node, Cat)):
+                input_file_ids = curr.get_flat_input_file_ids()
+                assert(len(input_file_ids) == 1)
+                input_file_id = input_file_ids[0]
+            else:
+                ## If the previous node is a cat, we need its input
+                input_file_ids = previous_node.get_flat_input_file_ids()
+                assert(len(input_file_ids) == 1)
+                input_file_id = input_file_ids[0]
 
-        ## Generate the split file ids
-        split_file_ids = [fileIdGen.next_file_id() for i in range(fan_out)]
+            ## First we have to make the split file commands.
+            split_file_commands, output_fids = make_split_files(input_file_id, fan_out,
+                                                                batch_size, fileIdGen)
+            [graph.add_node(split_file_command) for split_file_command in split_file_commands]
 
-        ## Generate a new file id that has all the split file ids
-        ## as children, in place of the current one
-        output_file_id = fileIdGen.next_file_id()
-        output_file_id.set_children(split_file_ids)
+            ## With the split file commands in place and their output
+            ## fids (and this commands new input ids, we have to
+            ## create a new Cat node (or modify the existing one) to
+            ## have these as inputs, and connect its output to our
+            ## input.
 
-        ## Set this new file id to be the input ot xargs.
+            ## Generate a new file id for the input of the current
+            ## command.
+            new_input_file_id = fileIdGen.next_file_id()
+            new_cat = make_cat_node(output_fids, new_input_file_id)
+            graph.add_node(new_cat)
 
-        ## TODO: Set the input file ids correctly. We have to create a
-        ## Cat before the command so that it has many inputs.
-        curr.stdin = output_file_id
-
-        ## Add a new node that executes split_file and takes
-        ## the input_file_id as input, split_file_ids as output
-        ## and the batch_size as an argument
-        split_file_commands = make_split_files(input_file_id, split_file_ids, batch_size, fileIdGen)
-        [graph.add_node(split_file_command) for split_file_command in split_file_commands]
-
+            if(not isinstance(previous_node, Cat)):
+                ## Change the current node's input with the new_input
+                index = curr.find_file_id_in_in_stream(input_file_id)
+                chunk = curr.in_stream[index]
+                curr.set_file_id(chunk, new_input_file_id)
+            else:
+                ## Change the current node's input with the new_input
+                curr_input_file_ids = curr.get_flat_input_file_ids()
+                assert(len(curr_input_file_ids) == 1)
+                curr_input_file_id = curr_input_file_ids[0]
+                chunk = curr.find_file_id_in_in_stream(curr_input_file_id)
+                curr.set_file_id(chunk, new_input_file_id)
+                graph.remove_node(previous_node)
     return graph
 
 ## If the current command is a cat, and is followed by a node that

@@ -825,8 +825,10 @@ def comm_input_output(options, stdin, stdout):
     else:
         assert(false)
 
-def make_split_files(in_fid, out_fids, batch_size, fileIdGen):
-    assert(len(out_fids) >= 2)
+def make_split_files(in_fid, fan_out, batch_size, fileIdGen):
+    assert(fan_out > 1)
+    ## Generate the split file ids
+    out_fids = [fileIdGen.next_file_id() for i in range(fan_out)]
     split_commands = []
     curr = in_fid
     out_i = 0
@@ -841,7 +843,7 @@ def make_split_files(in_fid, out_fids, batch_size, fileIdGen):
     ## The final 2 children of out_fid
     split_com = make_split_file(curr, out_fids[out_i:(out_i+2)], batch_size)
     split_commands.append(split_com)
-    return split_commands
+    return split_commands, out_fids
 
 ## TODO: Make a proper splitter subclass of Node
 def make_split_file(in_fid, out_fids, batch_size):
@@ -1004,6 +1006,15 @@ class IR:
                 if (not outgoing_fid.find_fid_list(other_node.get_input_file_ids()) is None):
                     next_nodes.append(other_node)
         return next_nodes
+
+    def get_previous_nodes(self, node):
+        previous_nodes = []
+        for incoming_fid in node.get_input_file_ids():
+            for other_node in self.nodes:
+                ## Note: What if other_node == node?
+                if (not incoming_fid.find_fid_list(other_node.get_output_file_ids()) is None):
+                    previous_nodes.append(other_node)
+        return previous_nodes
 
     ## This command gets all file identifiers of the graph, and
     ## returns a fileId generator that won't clash with the existing
