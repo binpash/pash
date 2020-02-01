@@ -1,7 +1,7 @@
   sed "s#^#$HOME/wikipedia/#" |
   xargs cat |
   iconv -c -t ascii//TRANSLIT |
-  pandoc --from html --to plain --quiet |
+  pandoc +RTS -K50000000 -RTS --from html --to plain --quiet |
   tr -cs A-Za-z '\n' |
   tr A-Z a-z |
   grep -vwFf ../evaluation/scripts/web-index/stopwords.txt |
