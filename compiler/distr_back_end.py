@@ -32,9 +32,9 @@ def map_graph_to_physical_nodes(graph, number_nodes):
     ## This will be a list of graphs, one for each physical node. Graphs are in
     ## the exact same format as the initial graph.
     distributed_graphs = []
-    curr_graph_nodes = []
-    curr_graph_inputs = []
-    curr_graph_outputs = []
+    graph_nodes = [[] for i in range(number_nodes)]
+    graph_inputs = [[] for i in range(number_nodes)]
+    graph_outputs = [[] for i in range(number_nodes)]
 
     ## The DFS returns distributed graphs.
     ## 1. Given the input fids we can find the source nodes of the graph
@@ -43,14 +43,17 @@ def map_graph_to_physical_nodes(graph, number_nodes):
     ## 3. Whenever we encounter a node of the graph that is already assigned to 
     ##    a physical node we stop, and complete the graph for the current node.
     curr_physical_node = 0
-    # work_stack = []
-    work_stack = graph.source_nodes()
+    work_stack = []
 
-    # ## Assign all the source nodes in the master node (the last one)
-    # ## so that input files are sent to the remote nodes
-    # for source_node in graph.source_nodes():
-    #     next_nodes = graph.get_next_nodes(source_node)
-    #     work_stack = next_nodes + work_stack
+    ## Assign all the source nodes in the master node (the last one)
+    ## so that input files are sent to the remote nodes
+    default_node = number_nodes - 1
+    for source_node in graph.source_nodes():
+        next_nodes = graph.get_next_nodes(source_node)
+        work_stack = next_nodes + work_stack
+        source_node.physical_node = default_node
+        graph_nodes[default_node].append(source_node)
+        graph_inputs[default_node] += source_node.get_flat_input_file_ids()
 
 
     ## WARNING: At the moment the work stack is not exactly correct,
@@ -69,39 +72,41 @@ def map_graph_to_physical_nodes(graph, number_nodes):
         ## distributed graph.
         if(len(next_nodes) == 0 and not hasattr(curr, 'physical_node')):
             curr.physical_node = curr_physical_node
-            curr_graph_nodes.append(curr)
+            graph_nodes[curr_physical_node].append(curr)
             ## Since this is the last node, its output is also the
             ## output of the current graph
-            curr_graph_outputs += curr.get_flat_output_file_ids()
-            if(len(curr_graph_inputs) == 0):
-                curr_graph_inputs += curr.get_flat_input_file_ids()
+            graph_outputs[curr_physical_node] += curr.get_flat_output_file_ids()
+            if(len(graph_inputs[curr_physical_node]) == 0):
+                graph_inputs[curr_physical_node] += curr.get_flat_input_file_ids()
 
         if(hasattr(curr, 'physical_node')):
             ## Stop and close the distributed graph for
             ## curr_physical_node. The final nodes are all being put
             ## into the central (last) node.
-            if(curr_physical_node + 1 < number_nodes and len(curr_graph_nodes) > 0):
+            if(curr_physical_node + 1 < number_nodes and len(graph_nodes[curr_physical_node]) > 0):
+                curr_graph = IR(graph_nodes[curr_physical_node])
+                distributed_graphs.append((curr_graph, graph_inputs[curr_physical_node],
+                                           graph_outputs[curr_physical_node]))
                 curr_physical_node += 1
-                curr_graph = IR(curr_graph_nodes)
-                distributed_graphs.append((curr_graph, curr_graph_inputs, curr_graph_outputs))
-                curr_graph_nodes = []
-                curr_graph_inputs = []
-                curr_graph_outputs = []
-
-
-            input_nodes_and_edges = graph.get_previous_nodes_and_edges(curr)
-            new_remote_channels = [(edge, node.physical_node, curr.physical_node)
-                                   for node, edge in input_nodes_and_edges
-                                   if hasattr(node, 'physical_node') and
-                                   not node.physical_node == curr.physical_node]
-            remote_channels += new_remote_channels
         else:
             curr.physical_node = curr_physical_node
-            curr_graph_nodes.append(curr)
-            if(len(curr_graph_inputs) == 0):
-                curr_graph_inputs += curr.get_flat_input_file_ids()
+            graph_nodes[curr_physical_node].append(curr)
+            if(len(graph_inputs[curr_physical_node]) == 0):
+                graph_inputs[curr_physical_node] += curr.get_flat_input_file_ids()
+
+        input_nodes_and_edges = graph.get_previous_nodes_and_edges(curr)
+        new_remote_channels = [(edge, node.physical_node, curr.physical_node)
+                               for node, edge in input_nodes_and_edges
+                               if hasattr(node, 'physical_node') and
+                               not node.physical_node == curr.physical_node]
+        remote_channels += new_remote_channels
 
         # print("Physical:", curr, curr.physical_node)
+
+    ## Make the final graph
+    curr_graph = IR(graph_nodes[curr_physical_node])
+    distributed_graphs.append((curr_graph, graph_inputs[curr_physical_node],
+                               graph_outputs[curr_physical_node]))
 
     ## Remove duplicates
     remote_channels = list(set(remote_channels))
@@ -187,6 +192,7 @@ def shell_backend(graph, output_dir, distributed_nodes):
     distributed_graphs_json = [(dgraph.serialize_as_JSON(), g_ins, g_outs)
                                for dgraph, g_ins, g_outs in distributed_graphs]
     print(distributed_graphs_json)
+    print(remote_channels)
     remote_connections = make_remote_connections(remote_channels, distributed_nodes)
     print(remote_connections)
     ## TODO: Distributed nodes might be unneccesary in this call
@@ -270,7 +276,7 @@ def establish_remote_connections(remote_channels):
             for remote_channel in remote_channels]
 
 def establish_remote_connection(remote_channel):
-    print(remote_channel)
+    # print(remote_channel)
     if remote_channel[0] == 'send':
         return 'cat {} | nc {} {} &'.format(remote_channel[1], remote_channel[2], remote_channel[3])
     else:
