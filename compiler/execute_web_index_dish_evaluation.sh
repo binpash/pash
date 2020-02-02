@@ -18,7 +18,7 @@ input_dir="${HOME}/wikipedia/"
 ## Make the temporary output dir
 mkdir -p $output_dir
 
-cp "$input_dir/index_h_10000.txt" $p1_out
+cp "$input_dir/index_h_50000.txt" $p1_out
 
 { time ( cat $p1_out | /bin/bash $p2 > $p2_out ) ; } 2> >(tee "${results_dir}/web-index_p2_seq.time" >&2)
 
