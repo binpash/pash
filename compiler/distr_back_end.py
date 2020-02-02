@@ -2,19 +2,22 @@ import os
 import time
 import subprocess
 from ir import *
+from util import *
 
 START_LISTEN_PORT = 5555
 
-def distr_execute(graph, output_dir, output_script_name, output_optimized, compile_optimize_only, distributed_nodes):
+def distr_execute(graph, output_dir, output_script_prefix, output_optimized, compile_optimize_only, distributed_nodes):
 
     output_scripts = shell_backend(graph, output_dir, distributed_nodes)
 
     ## TODO: Do something with the output_scripts
 
-    # ## Output the optimized shell script for inspection
-    # if(output_optimized):
-    #     with open(output_script_name, "w") as output_script_file:
-    #         output_script_file.write(output_script)
+    ## Output the optimized shell script for inspection
+    if(output_optimized):
+        for i, output_script in enumerate(output_scripts):
+            output_script_name = '{}_{}'.format(output_script_prefix, i)
+            with open(output_script_name, "w") as output_script_file:
+                output_script_file.write(output_script)
 
     # if(not compile_optimize_only):
     #     ## TODO: Handle stdout, stderr, errors
@@ -113,11 +116,10 @@ def map_graph_to_physical_nodes(graph, number_nodes):
 
     return distributed_graphs, remote_channels
 
-def json_graph_to_sh(graph_json, graph_inputs, graph_outputs, output_dir, remote_channels, distributed_nodes):
+def json_graph_to_sh(graph_json, graph_outputs, output_dir, remote_channels, distributed_nodes):
     fids = graph_json["fids"]
 
-    print("Graph inputs:", graph_inputs)
-    print("Graph outputs:", graph_outputs)
+    # print("Graph outputs:", graph_outputs)
 
     ## TODO: Replcae those with graph_inputs, graph_outputs
     in_fids = graph_json["in"]
@@ -144,13 +146,13 @@ def json_graph_to_sh(graph_json, graph_inputs, graph_outputs, output_dir, remote
     processes = [execute_node(node, shared_memory_dir) for node_id, node in nodes.items()]
     output_script_commands += processes
 
-    ## Make connections with remote nodes
+    ## Make connections with remote nodes. This also makes the
+    ## necessary output connections.
     remote_connections = establish_remote_connections(remote_channels)
     output_script_commands += remote_connections
 
-    ## TODO: Instead of collecting outputs with cat, we need to send
-    ## them back to the central node
-    for i, out_fid in enumerate(out_fids):
+    ## This only happens in the central node, which collects its outputs.
+    for i, out_fid in enumerate(graph_outputs):
         output_com = 'cat "{}" > {}/{} &'.format(out_fid, output_dir, i)
         output_script_commands.append(output_com)
 
@@ -166,10 +168,20 @@ def json_graph_to_sh(graph_json, graph_inputs, graph_outputs, output_dir, remote
 
     return "\n".join(output_script_commands)
 
-def make_remote_connections(remote_channels, distributed_nodes):
+def make_remote_connections(remote_channels, distributed_graphs, distributed_nodes):
     global START_LISTEN_PORT
     port_counters = [START_LISTEN_PORT for i in range(len(distributed_nodes))]
     node_inputs_outputs = [[] for i in range(len(distributed_nodes))]
+
+    ## The graph outputs must all be sent to the final node (if not
+    ## already there)
+    graph_outputs = [dg_out for dg, dg_in, dg_out in distributed_graphs]
+    default_node = len(distributed_nodes) - 1
+
+    for i, dg_outs in enumerate(graph_outputs):
+        # print("Graph output:", i, dg_outs)
+        for g_out in dg_outs:
+            remote_channels.append((g_out, i, default_node))
 
     for file_name, from_node, to_node in remote_channels:
         # print(file_name, from_node, to_node)
@@ -178,6 +190,7 @@ def make_remote_connections(remote_channels, distributed_nodes):
         port_counters[to_node] += 1
         node_inputs_outputs[from_node].append(("send", file_name, ip_address, to_port))
         node_inputs_outputs[to_node].append(("receive", file_name, to_port))
+
 
     return node_inputs_outputs
 
@@ -193,10 +206,12 @@ def shell_backend(graph, output_dir, distributed_nodes):
                                for dgraph, g_ins, g_outs in distributed_graphs]
     print(distributed_graphs_json)
     print(remote_channels)
-    remote_connections = make_remote_connections(remote_channels, distributed_nodes)
+    remote_connections = make_remote_connections(remote_channels, distributed_graphs_json, distributed_nodes)
     print(remote_connections)
+    outputs = [[] for i in range(number_nodes)]
+    outputs[-1] = flatten_list([g_out for g, g_in, g_out in distributed_graphs])
     ## TODO: Distributed nodes might be unneccesary in this call
-    sh_scripts = [json_graph_to_sh(g[0], g[1], g[2], output_dir,
+    sh_scripts = [json_graph_to_sh(g[0], outputs[i], output_dir,
                                    remote_connections[i], distributed_nodes)
                   for i, g in enumerate(distributed_graphs_json)]
     for i, sh_script in enumerate(sh_scripts):
@@ -278,9 +293,9 @@ def establish_remote_connections(remote_channels):
 def establish_remote_connection(remote_channel):
     # print(remote_channel)
     if remote_channel[0] == 'send':
-        return 'cat {} | nc {} {} &'.format(remote_channel[1], remote_channel[2], remote_channel[3])
+        return 'cat "{}" | nc {} {} &'.format(remote_channel[1], remote_channel[2], remote_channel[3])
     else:
-        return 'nc -l -p {} > {} &'.format(remote_channel[2], remote_channel[1])
+        return 'nc -l -p {} > "{}" &'.format(remote_channel[2], remote_channel[1])
 
 def new_split(outputs, batch_size, shared_memory_dir):
     script = []
