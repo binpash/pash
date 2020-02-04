@@ -960,23 +960,26 @@ class IR:
                     return True
         return False
 
-    def get_next_nodes(self, node):
-        next_nodes = []
+    def get_next_nodes_and_edges(self, node):
+        next_nodes_and_edges = []
         for outgoing_fid in node.get_output_file_ids():
             for other_node in self.nodes:
                 ## Note: What if other_node == node?
                 if (not outgoing_fid.find_fid_list(other_node.get_input_file_ids()) is None):
-                    next_nodes.append(other_node)
-        return next_nodes
+                    next_nodes_and_edges.append((other_node, outgoing_fid))
+        return next_nodes_and_edges
+
+    def get_next_nodes(self, node):
+        return [node for node, edge in self.get_next_nodes_and_edges(node)]
 
     def get_previous_nodes_and_edges(self, node):
-        previous_nodes = []
+        previous_nodes_and_edges = []
         for incoming_fid in node.get_input_file_ids():
             for other_node in self.nodes:
                 ## Note: What if other_node == node?
                 if (not incoming_fid.find_fid_list(other_node.get_output_file_ids()) is None):
-                    previous_nodes.append((other_node, incoming_fid))
-        return previous_nodes
+                    previous_nodes_and_edges.append((other_node, incoming_fid))
+        return previous_nodes_and_edges
 
     def get_previous_nodes(self, node):
         return [node for node, edge in self.get_previous_nodes_and_edges(node)]
