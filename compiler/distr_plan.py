@@ -232,18 +232,17 @@ def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
 def parallelize_cat(curr, graph, fileIdGen):
     new_nodes_for_workset = []
     if(isinstance(curr, Cat)):
-        next_nodes = graph.get_next_nodes(curr)
+        next_nodes_and_edges = graph.get_next_nodes_and_edges(curr)
 
         ## Cat can only have one output
-        assert(len(next_nodes) <= 1)
-        if(len(next_nodes) == 1):
-            next_node = next_nodes[0]
+        assert(len(next_nodes_and_edges) <= 1)
+        if(len(next_nodes_and_edges) == 1):
+            next_node = next_nodes_and_edges[0][0]
 
-            ## Get cat inputs and output
+            ## Get cat inputs and output. Note that there is only one
+            ## output.
             cat_input_file_ids = curr.get_input_file_ids()
-            cat_output_file_ids = curr.get_output_file_ids()
-            assert(len(cat_output_file_ids) == 1)
-            cat_output_file_id = cat_output_file_ids[0]
+            cat_output_file_id = next_nodes_and_edges[0][1]
             graph, new_nodes = parallelize_command(next_node, cat_input_file_ids,
                                                    cat_output_file_id, graph, fileIdGen)
             new_nodes_for_workset += new_nodes
