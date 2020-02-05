@@ -27,7 +27,6 @@ def shell_backend(graph_json, output_dir):
     out_fids = graph_json["out"]
     nodes = graph_json["nodes"]
 
-
     start_time = time.time()
 
     output_script_commands = []

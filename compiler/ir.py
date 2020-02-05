@@ -126,12 +126,11 @@ def create_split_file_id(batch_size, fileIdGen):
 ## TODO: When doing union, I have to really make both file ids point
 ## to the same file.
 class FileId:
-    def __init__(self, ident, resource=None, children = [], max_length = None):
+    def __init__(self, ident, resource=None, max_length = None):
         self.ident = ident
         ## Initialize the parent
         MakeSet(self)
         self.resource=resource
-        self.children = children
         ## Max length shows what is the maximum possible length that
         ## this file shows to. Its use is mostly to split intermediate
         ## streams.
@@ -140,16 +139,10 @@ class FileId:
     def __repr__(self):
         ## Note: Outputs the parent of the union and not the file id
         ##       itself.
-        if (self.resource is None):
-            if(self.max_length is None):
-                output = "#file{}".format(Find(self).ident)
-            else:
-                output = "#file{}[max:{}]".format(Find(self).ident, self.max_length)
-        else:
-            output = "#file{}({})".format(Find(self).ident, self.resource.__repr__())
-        return output
+        return self.serialize()
 
     def serialize(self):
+        # print("File id:", self.ident, Find(self).ident, self.resource)
         if (self.resource is None):
             if(self.max_length is None):
                 output = "#file{}".format(Find(self).ident)
@@ -181,31 +174,36 @@ class FileId:
     def get_resource(self):
         return self.resource
 
-    ## TODO: We might need to reconstruct the parents from children,
-    ## so we might have to add a parent field in file ids.
-    def set_children(self, children):
-        assert(self.children == [])
-        self.children = children
+    ## WARNING: These functions are obsolete and are there from the
+    ## old model where many inputs where represented as children
+    ## inputs to an input file. With the new model, file identifiers
+    ## have no children,
+    # def set_children(self, children):
+    #     assert(self.children == [])
+    #     self.children = children
 
-    def get_children(self):
-        return self.children
+    # def unset_children(self):
+    #     self.children = []
 
-    def split_resource(self, times, batch_size, fileIdGen):
-        if(not self.resource is None):
-            ## This works as expected if the file points to a resource
-            resources = self.resource.split_resource(times, batch_size)
-            split_file_ids = [create_file_id_for_resource(resource, fileIdGen)
-                              for resource in resources]
-            self.set_children(split_file_ids)
-        else:
-            ## If the file doesn't point to a resource (meaning that
-            ## it is an intermediate file), then we just restrict its
-            ## max length, and the implementation should know to only
-            ## pass so many lines in this file.
-            split_file_ids = [create_split_file_id(batch_size, fileIdGen)
-                              for i in range(times)]
-            split_file_ids[-1].set_max_length(None)
-            self.set_children(split_file_ids)
+    # def get_children(self):
+    #     return self.children
+
+    # def split_resource(self, times, batch_size, fileIdGen):
+    #     if(not self.resource is None):
+    #         ## This works as expected if the file points to a resource
+    #         resources = self.resource.split_resource(times, batch_size)
+    #         split_file_ids = [create_file_id_for_resource(resource, fileIdGen)
+    #                           for resource in resources]
+    #         self.set_children(split_file_ids)
+    #     else:
+    #         ## If the file doesn't point to a resource (meaning that
+    #         ## it is an intermediate file), then we just restrict its
+    #         ## max length, and the implementation should know to only
+    #         ## pass so many lines in this file.
+    #         split_file_ids = [create_split_file_id(batch_size, fileIdGen)
+    #                           for i in range(times)]
+    #         split_file_ids[-1].set_max_length(None)
+    #         self.set_children(split_file_ids)
 
     ## This must be used by the implementation to only transfer
     ## max_length lines in this file.
@@ -223,8 +221,7 @@ class FileId:
     ## very easily and it is difficult to reason about the
     ## files. Replace this with some other structure. Maybe a map that
     ## keeps the unifications of file identifiers. Make sure that when
-    ## uniting two files, their children and resources are modified
-    ## accordingly.
+    ## uniting two files, their resources are modified accordingly.
     def union(self, other):
         Union(self, other)
         my_resource = self.get_resource()
@@ -248,12 +245,6 @@ class FileId:
 
     def get_ident(self):
         return self.ident
-
-    def flatten(self):
-        if(len(self.get_children()) > 0):
-            return flatten_list([child.flatten() for child in self.get_children()])
-        else:
-            return [self]
 
 
 class FileIdGen:
@@ -300,12 +291,6 @@ class Node:
 
     ## These two commands return the flattened fileId list. Meaning
     ## that they return the children, if they exist.
-    def get_flat_input_file_ids(self):
-        return flatten_list([Find(file_id).flatten() for file_id in self.get_input_file_ids()])
-
-    def get_flat_output_file_ids(self):
-        return flatten_list([Find(file_id).flatten() for file_id in self.get_output_file_ids()])
-
     def get_input_file_ids(self):
         return [self.get_file_id(input_chunk) for input_chunk in self.in_stream]
 
@@ -356,8 +341,7 @@ class Node:
         index = 0
         for chunk in stream:
             chunk_file_id = Find(self.get_file_id(chunk))
-            flat_file_ids = chunk_file_id.flatten()
-            if(file_id in flat_file_ids):
+            if(Find(file_id) == chunk_file_id):
                 return index
             index += 1
         return None
@@ -382,8 +366,8 @@ class Command(Node):
         # output = "{}: \"{}\" in:{} out:{} opts:{}".format(
         #     prefix, self.command, self.stdin, self.stdout, self.options)
         output = "{}: \"{}\" in:{} out:{}".format(
-            prefix, self.command, self.get_flat_input_file_ids(),
-            self.get_flat_output_file_ids())
+            prefix, self.command, self.get_input_file_ids(),
+            self.get_output_file_ids())
         return output
 
     def serialize(self):
@@ -427,36 +411,34 @@ class Command(Node):
             ## This should be unreachable
         return new_output_file_ids
 
-    def duplicate(self, new_output_file_ids, fileIdGen):
+    def duplicate(self, old_input_file_id, new_input_file_ids, new_output_file_ids, fileIdGen):
         assert(self.category == "stateless" or self.is_pure_parallelizable())
         if(self.category == "stateless"):
-            return self.stateless_duplicate(new_output_file_ids)
+            return self.stateless_duplicate(old_input_file_id, new_input_file_ids, new_output_file_ids)
         elif(self.is_pure_parallelizable()):
-            return self.pure_duplicate(new_output_file_ids, fileIdGen)
+            return self.pure_duplicate(old_input_file_id, new_input_file_ids, new_output_file_ids, fileIdGen)
         else:
             print("Unreachable code reached :(")
             assert(False)
             ## This should be unreachable
 
-    def stateless_duplicate(self, output_file_ids):
+    def stateless_duplicate(self, old_input_file_id, input_file_ids, output_file_ids):
         assert(self.category == "stateless")
 
-        ## Attach the new output files as children of the node's
-        ## output, because make_duplicate command requires that. Also,
-        ## by doing that, the input of the next command now also has
-        ## children (due to unification).
         out_edge_file_ids = self.get_output_file_ids()
         assert(len(out_edge_file_ids) == 1)
         out_edge_file_id = out_edge_file_ids[0]
-        out_edge_file_id.set_children(output_file_ids)
 
-        input_file_ids = self.get_flat_input_file_ids()
+        ## Make a new cat command to add after the current command.
+        new_cat = make_cat_node(output_file_ids, out_edge_file_id)
 
         in_out_file_ids = zip(input_file_ids, output_file_ids)
 
-        new_commands = [self.make_duplicate_command(in_fid, out_fid) for in_fid, out_fid in in_out_file_ids]
+        new_commands = [self.find_in_out_and_make_duplicate_command(old_input_file_id, in_fid,
+                                                                    out_edge_file_id, out_fid)
+                        for in_fid, out_fid in in_out_file_ids]
 
-        return new_commands
+        return new_commands + [new_cat]
 
     def is_pure_parallelizable(self):
 
@@ -464,9 +446,8 @@ class Command(Node):
         ## commands instead of hardcoding
         return (self.category == "pure" and str(self.command) in parallelizable_pure_commands)
 
-    def pure_duplicate(self, output_file_ids, fileIdGen):
+    def pure_duplicate(self, old_input_file_id, input_file_ids, output_file_ids, fileIdGen):
         assert(self.is_pure_parallelizable())
-        input_file_ids = self.get_flat_input_file_ids()
 
         in_out_file_ids = zip(input_file_ids, output_file_ids)
 
@@ -478,12 +459,11 @@ class Command(Node):
 
             ## make_duplicate_command duplicates a node based on its
             ## output file ids, so we first need to assign them.
-            intermediate_output_file_id = fileIdGen.next_file_id()
             new_output_file_ids = [fids[0] for fids in output_file_ids]
-            intermediate_output_file_id.set_children(new_output_file_ids)
-            self.stdout = intermediate_output_file_id
 
-            new_commands = [self.make_duplicate_command(in_fid, out_fids[0])
+            ## TODO: Remove the intermediate output file id, as it is not really needed
+            new_commands = [self.find_in_out_and_make_duplicate_command(old_input_file_id, in_fid,
+                                                                        self.stdout, out_fids[0])
                             for in_fid, out_fids in in_out_file_ids]
         elif(str(self.command) == "bigrams_aux"):
             new_commands = [BigramGMap([in_fid] + out_fids)
@@ -495,24 +475,28 @@ class Command(Node):
         return new_commands
 
 
-    def make_duplicate_command(self, in_fid, out_fid):
+    ## TODO: This has to change, to not search for the inputs in the
+    ## in_stream
+    def find_in_out_and_make_duplicate_command(self, old_input_file_id, in_fid, old_output_file_id, out_fid):
 
         ## First find what does the new file identifier refer to
         ## (stdin, or some argument)
-        new_in_stream_index = self.find_file_id_in_in_stream(in_fid)
-        new_out_stream_index = self.find_file_id_in_out_stream(out_fid)
-        new_in_stream = [self.in_stream[new_in_stream_index]]
-        new_out_stream = [self.out_stream[new_out_stream_index]]
+        new_in_stream_index = self.find_file_id_in_in_stream(old_input_file_id)
+        new_out_stream_index = self.find_file_id_in_out_stream(old_output_file_id)
+        new_input_location = self.in_stream[new_in_stream_index]
+        new_output_location = self.out_stream[new_out_stream_index]
+        return self.make_duplicate_command(in_fid, out_fid, new_input_location, new_output_location)
 
+    def make_duplicate_command(self, in_fid, out_fid, new_input_location, new_output_location):
         ## TODO: Simplify the code below
-        in_chunk = new_in_stream[0]
+        in_chunk = new_input_location
         if(in_chunk == "stdin"):
             new_stdin = in_fid
         else:
             ## Question: Is that valid?
             new_stdin = self.stdin
 
-        if(new_out_stream[0] == "stdout"):
+        if(new_output_location == "stdout"):
             new_stdout = out_fid
         else:
             ## Question: Is that valid?
@@ -524,6 +508,8 @@ class Command(Node):
            and in_chunk[0] == "option"):
             new_options[in_chunk[1]] = in_fid
 
+        new_in_stream = [new_input_location]
+        new_out_stream = [new_output_location]
         ## TODO: I probably have to do the same with output options
 
         new_command = Command(None, # The ast is None
@@ -546,17 +532,23 @@ class Command(Node):
 
 ## (Maybe) Extend this to also take flags as part of its input.
 class Cat(Command):
-    def __init__(self, file_ids):
-        command = string_to_argument("cat")
-        options = file_ids
-        in_stream = [("option", i)  for i in range(len(file_ids))]
-        out_stream = ["stdout"]
-        opt_indices = []
-        category = "stateless"
-        ## TODO: Fill the AST
-        ast = None
+    def __init__(self, ast, command, options, in_stream, out_stream,
+                 opt_indices, category, stdin=None, stdout=None):
         super().__init__(ast, command, options, in_stream, out_stream,
-                         opt_indices, category)
+                         opt_indices, category, stdin=stdin, stdout=stdout)
+
+def make_cat_node(input_file_ids, output_file_id):
+    command = string_to_argument("cat")
+    options = input_file_ids
+    in_stream = [("option", i)  for i in range(len(input_file_ids))]
+    out_stream = ["stdout"]
+    stdout = output_file_id
+    opt_indices = []
+    category = "stateless"
+    ## TODO: Fill the AST
+    ast = None
+    return Cat(ast, command, options, in_stream, out_stream,
+               opt_indices, category, stdout=stdout)
 
 ## These are the generalized map and reduce nodes for the
 ## `tee s2 | tail +2 | paste s2 -` function. At some point,
@@ -647,18 +639,9 @@ class SortGReduce(Command):
         command = string_to_argument("sort")
         input_file_ids = file_ids[:-1]
         output_file_id = file_ids[-1]
-        input_file_id_opts = [string_to_argument(fid.pipe_name()) for fid in input_file_ids]
         options = [string_to_argument("-m")] + input_file_ids
-        ## Question: Can putting an empty input stream be a problem?
-        ## If we do that, then this node will be a source in the
-        ## dataflow graph. Ideally we want to generalize to arbitrary
-        ## inputs. This also applies to the one above.
         in_stream = [("option", 1), ("option", 2)]
         out_stream = ["stdout"]
-        ## At the moment none of the $IN1, $IN2 are considered inputs
-        ##
-        ## TODO: When we generalize the model to have arbitrary
-        ## inputs we can have them also be inputs.
         opt_indices = [("option", 0)]
         category = "pure"
         super().__init__(None, command, options, in_stream, out_stream,
@@ -668,8 +651,13 @@ class SortGReduce(Command):
 def create_command_assign_file_identifiers(ast, fileIdGen, command, options, stdin=None, stdout=None):
     in_stream, out_stream, opt_indices = find_command_input_output(command, options, stdin, stdout)
     category = find_command_category(command, options)
-    command = Command(ast, command, options, in_stream, out_stream,
+    ## TODO: Maybe compile command instead of just formatting it.
+    if(format_arg_chars(command) == "cat"):
+        command = Cat(ast, command, options, in_stream, out_stream,
                       opt_indices, category, stdin, stdout)
+    else:
+        command = Command(ast, command, options, in_stream, out_stream,
+                          opt_indices, category, stdin, stdout)
 
     ## The options that are part of the input and output streams must
     ## be swapped with file identifiers. This means that each file
@@ -799,54 +787,50 @@ def comm_input_output(options, stdin, stdout):
     else:
         assert(false)
 
-def make_split_files(in_fid, out_fid, batch_size, fileIdGen):
-    assert(len(out_fid.children) >= 2)
+def make_split_files(in_fid, fan_out, batch_size, fileIdGen):
+    assert(fan_out > 1)
+    ## Generate the split file ids
+    out_fids = [fileIdGen.next_file_id() for i in range(fan_out)]
     split_commands = []
     curr = in_fid
     out_i = 0
-    while (out_i + 2 < len(out_fid.children)):
+    while (out_i + 2 < len(out_fids)):
         temp_fid = fileIdGen.next_file_id()
-        temp_out_fid = fileIdGen.next_file_id()
-        temp_out_fid.set_children([out_fid.children[out_i], temp_fid])
-        split_com = make_split_file(curr, temp_out_fid, batch_size)
+        split_com = make_split_file(curr, [out_fids[out_i], temp_fid], batch_size)
         split_commands.append(split_com)
 
         curr = temp_fid
         out_i += 1
 
     ## The final 2 children of out_fid
-    final_out_fid = fileIdGen.next_file_id()
-    final_out_fid.set_children(out_fid.children[out_i:(out_i+2)])
-    split_com = make_split_file(curr, final_out_fid, batch_size)
+    split_com = make_split_file(curr, out_fids[out_i:(out_i+2)], batch_size)
     split_commands.append(split_com)
-    return split_commands
+    return split_commands, out_fids
 
 ## TODO: Make a proper splitter subclass of Node
-def make_split_file(in_fid, out_fid, batch_size):
-    assert(len(out_fid.children) == 2)
+def make_split_file(in_fid, out_fids, batch_size):
+    assert(len(out_fids) == 2)
     ## TODO: Call split_file recursively when we want to split a file
     ## more than two times
 
     ## TODO: I probably have to give the file names as options to the command to.
-    options = [string_to_argument(str(batch_size))]
-    opt_indices = [("option", i) for i in range(len(options))]
+    options = [string_to_argument(str(batch_size))] + out_fids
+    opt_indices = [("option", 0)]
     command = Command(None, # TODO: Make a proper AST
                       string_to_argument("split_file"),
                       options,
                       ["stdin"],
-                      ["stdout"],
+                      [("option", 1), ("option", 2)],
                       opt_indices,
                       None, # TODO: Category?
-                      in_fid,
-                      out_fid)
+                      in_fid)
     return command
 
 ## This function gets a file identifier and returns the maximum among
 ## its, and its parents identifier (parent regarding Union Find)
-def get_larger_file_id_ident(file_id):
-    my_ident = file_id.get_ident()
-    find_ident = Find(file_id).get_ident()
-    return max(my_ident, find_ident)
+def get_larger_file_id_ident(file_ids):
+    return max([max(fid.get_ident(), Find(fid).get_ident())
+                for fid in file_ids])
 
 ## Note: This might need more information. E.g. all the file
 ## descriptors of the IR, and in general any other local information
@@ -860,20 +844,13 @@ class IR:
     ##
     ## - If two nodes have the same file as output, then they both
     ##   write to it concurrently.
-    def __init__(self, nodes, stdin = None, stdout = None):
+    def __init__(self, nodes, stdin = [], stdout = []):
         self.nodes = nodes
-        self.edges = {}
-        if(stdin is None):
-            self.stdin = FileId("NULL")
-        else:
-            self.stdin = stdin
-        if(stdout is None):
-            self.stdout = FileId("NULL")
-        else:
-            self.stdout = stdout
+        self.stdin = stdin
+        self.stdout = stdout
 
     def __repr__(self):
-        output = "(|-{} IR: {} {}-|)".format(self.stdin.flatten(), self.nodes, self.stdout.flatten())
+        output = "(|-{} IR: {} {}-|)".format(self.stdin, self.nodes, self.stdout)
         return output
 
     def serialize(self):
@@ -881,9 +858,9 @@ class IR:
         all_file_ids = ""
         for i, node in enumerate(self.nodes):
             serialized_input_file_ids = " ".join([fid.serialize()
-                                                  for fid in node.get_flat_input_file_ids()])
+                                                  for fid in node.get_input_file_ids()])
             serialized_output_file_ids = " ".join([fid.serialize()
-                                                   for fid in node.get_flat_output_file_ids()])
+                                                   for fid in node.get_output_file_ids()])
             all_file_ids += serialized_input_file_ids + " "
             all_file_ids += serialized_output_file_ids + " "
             output += "{} in: {} out: {} command: {}\n".format(i, serialized_input_file_ids,
@@ -901,25 +878,27 @@ class IR:
             ## Gather all pipe names so that they are generated in the
             ## backend.
             input_pipes = [fid.serialize()
-                           for fid in node.get_flat_input_file_ids()
+                           for fid in node.get_input_file_ids()
                            if fid.resource is None]
             output_pipes = [fid.serialize()
-                            for fid in node.get_flat_output_file_ids()
+                            for fid in node.get_output_file_ids()
                             if fid.resource is None]
             all_file_ids += input_pipes + output_pipes
 
             ## Find the stdin and stdout files of nodes so that the
             ## backend can make the necessary redirections.
             if ("stdin" in node.in_stream):
-                stdin_input_pipes = Find(node.stdin).flatten()
+                stdin_input_pipes = [Find(node.stdin)]
             else:
                 stdin_input_pipes = []
 
             if ("stdout" in node.out_stream):
-                stdout_output_pipes = Find(node.stdout).flatten()
+                stdout_output_pipes = [Find(node.stdout)]
             else:
                 stdout_output_pipes = []
 
+            ## TODO: Check if leaving the stdin and stdout pipes could
+            ## lead to any problem.
             node_json = {}
             node_json["in"] = stdin_input_pipes
             node_json["out"] = stdout_output_pipes
@@ -929,9 +908,9 @@ class IR:
         all_file_ids = list(set(all_file_ids))
         output_json["fids"] = all_file_ids
         output_json["nodes"] = nodes
-        flat_stdin = flatten_list([Find(self.stdin).flatten()])
+        flat_stdin = [Find(fid) for fid in self.stdin]
         output_json["in"] = [fid.serialize() for fid in flat_stdin]
-        flat_stdout = flatten_list([Find(self.stdout).flatten()])
+        flat_stdout = [Find(fid) for fid in self.stdout]
         output_json["out"] = [fid.serialize() for fid in flat_stdout]
         return output_json
 
@@ -954,9 +933,9 @@ class IR:
         ## Question: What happens if one of them is NULL. This
         ##           shouldn't be the case after we check that
         ##           both self and other are not empty.
-        assert(not self.stdout.isNull())
-        assert(not other.stdin.isNull())
-        self.stdout.union(other.stdin)
+        assert(len(self.stdout) == 1)
+        assert(len(self.stdin) == 1)
+        self.stdout[0].union(other.stdin[0])
         self.stdout = other.stdout
 
         ## Note: The ast is not extensible, and thus should be
@@ -981,23 +960,26 @@ class IR:
                     return True
         return False
 
-    def get_next_nodes(self, node):
-        next_nodes = []
+    def get_next_nodes_and_edges(self, node):
+        next_nodes_and_edges = []
         for outgoing_fid in node.get_output_file_ids():
             for other_node in self.nodes:
                 ## Note: What if other_node == node?
                 if (not outgoing_fid.find_fid_list(other_node.get_input_file_ids()) is None):
-                    next_nodes.append(other_node)
-        return next_nodes
+                    next_nodes_and_edges.append((other_node, outgoing_fid))
+        return next_nodes_and_edges
+
+    def get_next_nodes(self, node):
+        return [node for node, edge in self.get_next_nodes_and_edges(node)]
 
     def get_previous_nodes_and_edges(self, node):
-        previous_nodes = []
+        previous_nodes_and_edges = []
         for incoming_fid in node.get_input_file_ids():
             for other_node in self.nodes:
                 ## Note: What if other_node == node?
                 if (not incoming_fid.find_fid_list(other_node.get_output_file_ids()) is None):
-                    previous_nodes.append((other_node, incoming_fid))
-        return previous_nodes
+                    previous_nodes_and_edges.append((other_node, incoming_fid))
+        return previous_nodes_and_edges
 
     def get_previous_nodes(self, node):
         return [node for node, edge in self.get_previous_nodes_and_edges(node)]
@@ -1012,7 +994,7 @@ class IR:
         for node in self.nodes:
             node_file_ids = node.get_input_file_ids() + node.get_output_file_ids()
             for file_id in node_file_ids:
-                max_id = max(get_larger_file_id_ident(file_id), max_id)
+                max_id = max(get_larger_file_id_ident([file_id]), max_id)
         return FileIdGen(max_id)
 
 
@@ -1033,6 +1015,6 @@ class IR:
     ## file identifiers.
     def valid(self):
         return (len(self.nodes) > 0 and
-                not self.stdin.isNull() and
-                not self.stdout.isNull())
+                len(self.stdin) > 0 and
+                len(self.stdout) > 0)
 
