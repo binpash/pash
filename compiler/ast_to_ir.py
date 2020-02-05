@@ -140,8 +140,8 @@ def compile_node_command(ast_node, fileIdGen):
                                                          command_name, options,
                                                          stdin=stdin_fid, stdout=stdout_fid)
         compiled_ast = IR([command],
-                          stdin = stdin_fid,
-                          stdout = stdout_fid)
+                          stdin = [stdin_fid],
+                          stdout = [stdout_fid])
 
         compiled_ast.set_ast(old_ast_node)
 
