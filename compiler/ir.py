@@ -3,9 +3,15 @@ import json
 import yaml
 import os
 
+from definitions.ir.arg import *
+from definitions.ir.node import *
+from definitions.ir.command import *
+
 from union_find import *
+from ir_utils import *
 from util import *
 
+# TODO get all this from context
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'DISH_TOP' in os.environ:
     DISH_TOP = os.environ['DISH_TOP']
@@ -26,8 +32,6 @@ stateless_commands = command_classes['stateless'] if 'stateless' in command_clas
 pure_commands = command_classes['pure'] if 'pure' in command_classes else {}
 parallelizable_pure_commands = command_classes['parallelizable_pure'] if 'parallelizable_pure' in command_classes else {}
 
-
-
 ### Utils
 
 def get_command_from_definition(command_definition):
@@ -36,52 +40,6 @@ def get_command_from_definition(command_definition):
 
     print('Possible issue with definition file: Missing command in command definition {}'.format(command_definition))
     return ''
-
-## This function gets a key and a value from the ast json format
-def get_kv(dic):
-    return (dic[0], dic[1])
-
-def make_kv(key, val):
-    return [key, val]
-
-def format_arg_chars(arg_chars):
-    chars = [format_arg_char(arg_char) for arg_char in arg_chars]
-    return "".join(chars)
-
-def format_arg_char(arg_char):
-    key, val = get_kv(arg_char)
-    if (key == 'C'):
-        return str(chr(val))
-    elif (key == 'B'):
-        # The $() is just for illustration. This is backticks
-        return '$({})'.format(val)
-    elif (key == 'Q'):
-        return '"{}"'.format(format_arg_chars(val))
-    elif (key == 'V'):
-        return '${{{}}}'.format(val[2])
-    elif (key == 'E'):
-        return '{}'.format(chr(val))
-    else:
-        ## TODO: Make this correct
-        return key
-
-def string_to_argument(string):
-    return [char_to_arg_char(char) for char in string]
-
-def make_argument(option):
-    if(isinstance(option, FileId)):
-        ## This is how commands are initialized when duplicating
-        return option
-    else:
-        ## This is how commands are initialized in the AST
-        return Arg(option)
-
-
-## FIXME: This is certainly not complete. It is used to generate the
-## AST for the call to the distributed planner. It only handles simple
-## characters
-def char_to_arg_char(char):
-    return ['C' , ord(char)]
 
 ## TODO: Resources should probably be more elaborate than just a
 ## string and a line range. They could be URLs, and possibly other things.
@@ -127,7 +85,6 @@ def create_split_file_id(batch_size, fileIdGen):
     file_id = fileIdGen.next_file_id()
     file_id.set_max_length(batch_size)
     return file_id
-
 
 ## Note: The NULL ident is considered to be the default unknown file id
 ##
@@ -545,24 +502,6 @@ class Command(Node):
 ###
 
 ## (Maybe) Extend this to also take flags as part of its input.
-class Cat(Command):
-    def __init__(self, ast, command, options, in_stream, out_stream,
-                 opt_indices, category, stdin=None, stdout=None):
-        super().__init__(ast, command, options, in_stream, out_stream,
-                         opt_indices, category, stdin=stdin, stdout=stdout)
-
-def make_cat_node(input_file_ids, output_file_id):
-    command = string_to_argument("cat")
-    options = input_file_ids
-    in_stream = [("option", i)  for i in range(len(input_file_ids))]
-    out_stream = ["stdout"]
-    stdout = output_file_id
-    opt_indices = []
-    category = "stateless"
-    ## TODO: Fill the AST
-    ast = None
-    return Cat(ast, command, options, in_stream, out_stream,
-               opt_indices, category, stdout=stdout)
 
 ## These are the generalized map and reduce nodes for the
 ## `tee s2 | tail +2 | paste s2 -` function. At some point,
@@ -696,20 +635,6 @@ def replace_file_arg_with_id(opt_or_channel, command, fileIdGen):
     else:
         return fid_or_resource
 
-
-class Arg:
-    def __init__(self, arg_char_list):
-        if(isinstance(arg_char_list, Arg)):
-           ## TODO: We might need to copy here?
-           self.arg_char_list = arg_char_list.arg_char_list
-        else:
-           self.arg_char_list = arg_char_list
-
-    def __repr__(self):
-        return format_arg_chars(self.arg_char_list)
-
-    def opt_serialize(self):
-        return self.__repr__()
 
 ## TODO: Make dictionary that holds command information (category,
 ## inputs-outputs, etc...)
