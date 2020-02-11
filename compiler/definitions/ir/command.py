@@ -23,8 +23,8 @@ class Command(Node):
         # output = "{}: \"{}\" in:{} out:{} opts:{}".format(
         #     prefix, self.command, self.stdin, self.stdout, self.options)
         output = "{}: \"{}\" in:{} out:{}".format(
-            prefix, self.command, self.get_flat_input_file_ids(),
-            self.get_flat_output_file_ids())
+            prefix, self.command, self.get_input_file_ids(),
+            self.get_output_file_ids())
         return output
 
     def serialize(self):
@@ -82,30 +82,18 @@ class Command(Node):
     def stateless_duplicate(self, old_input_file_id, input_file_ids, output_file_ids):
         assert(self.category == "stateless")
 
-        ## Attach the new output files as children of the node's
-        ## output, because make_duplicate command requires that. Also,
-        ## by doing that, the input of the next command now also has
-        ## children (due to unification).
         out_edge_file_ids = self.get_output_file_ids()
         assert(len(out_edge_file_ids) == 1)
         out_edge_file_id = out_edge_file_ids[0]
-        ## TODO: At the moment the next line is needed by
-        ## make_duplicate_command. Find a way to remove it.
-        out_edge_file_id.set_children(output_file_ids)
 
         ## Make a new cat command to add after the current command.
         new_cat = make_cat_node(output_file_ids, out_edge_file_id)
 
         in_out_file_ids = zip(input_file_ids, output_file_ids)
 
-        new_commands = [self.find_in_out_and_make_duplicate_command(old_input_file_id, in_fid, out_fid)
-                        for in_fid, out_fid in in_out_file_ids]
+        new_commands = [self.find_in_out_and_make_duplicate_command(old_input_file_id, in_fid,
+            out_edge_file_id, out_fid) for in_fid, out_fid in in_out_file_ids]
 
-        ## TODO: This is here to counteract with the one
-        ## above. Normally, we would have to keep the old list
-        ## somehwere. Eventually this line should be completely
-        ## removed.
-        out_edge_file_id.unset_children()
         return new_commands + [new_cat]
 
     def is_pure_parallelizable(self):
@@ -124,13 +112,10 @@ class Command(Node):
 
             ## make_duplicate_command duplicates a node based on its
             ## output file ids, so we first need to assign them.
-            intermediate_output_file_id = fileIdGen.next_file_id()
             new_output_file_ids = [fids[0] for fids in output_file_ids]
-            intermediate_output_file_id.set_children(new_output_file_ids)
-            self.stdout = intermediate_output_file_id
 
-            new_commands = [self.find_in_out_and_make_duplicate_command(old_input_file_id, in_fid, out_fids[0])
-                            for in_fid, out_fids in in_out_file_ids]
+            new_commands = [self.find_in_out_and_make_duplicate_command(old_input_file_id, in_fid,
+                self.stdout, out_fids[0]) for in_fid, out_fids in in_out_file_ids]
         elif(str(self.command) == "bigrams_aux"):
             new_commands = [BigramGMap([in_fid] + out_fids)
                             for in_fid, out_fids in in_out_file_ids]
@@ -143,12 +128,13 @@ class Command(Node):
 
     ## TODO: This has to change, to not search for the inputs in the
     ## in_stream
-    def find_in_out_and_make_duplicate_command(self, old_input_file_id, in_fid, out_fid):
+    def find_in_out_and_make_duplicate_command(self, old_input_file_id, in_fid,
+            old_output_file_id, out_fid):
 
         ## First find what does the new file identifier refer to
         ## (stdin, or some argument)
         new_in_stream_index = self.find_file_id_in_in_stream(old_input_file_id)
-        new_out_stream_index = self.find_file_id_in_out_stream(out_fid)
+        new_out_stream_index = self.find_file_id_in_out_stream(old_output_file_id)
         new_input_location = self.in_stream[new_in_stream_index]
         new_output_location = self.out_stream[new_out_stream_index]
         return self.make_duplicate_command(in_fid, out_fid, new_input_location, new_output_location)

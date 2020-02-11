@@ -15,12 +15,11 @@ from util import *
 ## TODO: When doing union, I have to really make both file ids point
 ## to the same file.
 class FileId:
-    def __init__(self, ident, resource=None, children = [], max_length = None):
+    def __init__(self, ident, resource=None, max_length = None):
         self.ident = ident
         ## Initialize the parent
         MakeSet(self)
         self.resource=resource
-        self.children = children
         ## Max length shows what is the maximum possible length that
         ## this file shows to. Its use is mostly to split intermediate
         ## streams.
@@ -30,15 +29,6 @@ class FileId:
         ## Note: Outputs the parent of the union and not the file id
         ##       itself.
         return self.serialize()
-        # print("Repr File id:", self.ident, Find(self).ident, self.resource, self.children)
-        # if (self.resource is None):
-        #     if(self.max_length is None):
-        #         output = "#file{}".format(Find(self).ident)
-        #     else:
-        #         output = "#file{}[max:{}]".format(Find(self).ident, self.max_length)
-        # else:
-        #     output = "#file{}({})".format(Find(self).ident, self.resource.__repr__())
-        # return output
 
     def serialize(self):
         # print("File id:", self.ident, Find(self).ident, self.resource, self.children)
@@ -72,39 +62,6 @@ class FileId:
 
     def get_resource(self):
         return self.resource
-
-    ## TODO: We might need to reconstruct the parents from children,
-    ## so we might have to add a parent field in file ids.
-    def set_children(self, children):
-        assert(self.children == [])
-        self.children = children
-
-    ## TODO: DO NOT FORGET: These children functions should be removed
-    ## after the model changes. There are no children, just many
-    ## inputs or outputs, and how each command interprets them depends
-    ## on it.
-    def unset_children(self):
-        self.children = []
-
-    def get_children(self):
-        return self.children
-
-    def split_resource(self, times, batch_size, fileIdGen):
-        if(not self.resource is None):
-            ## This works as expected if the file points to a resource
-            resources = self.resource.split_resource(times, batch_size)
-            split_file_ids = [create_file_id_for_resource(resource, fileIdGen)
-                              for resource in resources]
-            self.set_children(split_file_ids)
-        else:
-            ## If the file doesn't point to a resource (meaning that
-            ## it is an intermediate file), then we just restrict its
-            ## max length, and the implementation should know to only
-            ## pass so many lines in this file.
-            split_file_ids = [create_split_file_id(batch_size, fileIdGen)
-                              for i in range(times)]
-            split_file_ids[-1].set_max_length(None)
-            self.set_children(split_file_ids)
 
     ## This must be used by the implementation to only transfer
     ## max_length lines in this file.
