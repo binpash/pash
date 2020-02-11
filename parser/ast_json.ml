@@ -56,7 +56,7 @@ and t = Ast.t =
 
 
 let write__7 = (
-  Atdgen_runtime.Oj_run.write_option (
+  Atdgen_runtime.Oj_run.write_std_option (
     Yojson.Safe.write_string
   )
 )
@@ -127,8 +127,8 @@ let char_of_string s =
 let write_dup_type : _ -> dup_type -> _ = (
   fun ob x ->
     match x with
-      | ToFD -> Bi_outbuf.add_string ob "<\"ToFD\">"
-      | FromFD -> Bi_outbuf.add_string ob "<\"FromFD\">"
+      | ToFD -> Bi_outbuf.add_string ob "\"ToFD\""
+      | FromFD -> Bi_outbuf.add_string ob "\"FromFD\""
 )
 let string_of_dup_type ?(len = 1024) x =
   let ob = Bi_outbuf.create len in
@@ -171,8 +171,8 @@ let dup_type_of_string s =
 let write_heredoc_type : _ -> heredoc_type -> _ = (
   fun ob x ->
     match x with
-      | Here -> Bi_outbuf.add_string ob "<\"Here\">"
-      | XHere -> Bi_outbuf.add_string ob "<\"XHere\">"
+      | Here -> Bi_outbuf.add_string ob "\"Here\""
+      | XHere -> Bi_outbuf.add_string ob "\"XHere\""
 )
 let string_of_heredoc_type ?(len = 1024) x =
   let ob = Bi_outbuf.create len in
@@ -227,11 +227,11 @@ let linno_of_string s =
 let write_redir_type : _ -> redir_type -> _ = (
   fun ob x ->
     match x with
-      | To -> Bi_outbuf.add_string ob "<\"To\">"
-      | Clobber -> Bi_outbuf.add_string ob "<\"Clobber\">"
-      | From -> Bi_outbuf.add_string ob "<\"From\">"
-      | FromTo -> Bi_outbuf.add_string ob "<\"FromTo\">"
-      | Append -> Bi_outbuf.add_string ob "<\"Append\">"
+      | To -> Bi_outbuf.add_string ob "\"To\""
+      | Clobber -> Bi_outbuf.add_string ob "\"Clobber\""
+      | From -> Bi_outbuf.add_string ob "\"From\""
+      | FromTo -> Bi_outbuf.add_string ob "\"FromTo\""
+      | Append -> Bi_outbuf.add_string ob "\"Append\""
 )
 let string_of_redir_type ?(len = 1024) x =
   let ob = Bi_outbuf.create len in
@@ -292,16 +292,16 @@ let redir_type_of_string s =
 let write_var_type : _ -> var_type -> _ = (
   fun ob x ->
     match x with
-      | Normal -> Bi_outbuf.add_string ob "<\"Normal\">"
-      | Minus -> Bi_outbuf.add_string ob "<\"Minus\">"
-      | Plus -> Bi_outbuf.add_string ob "<\"Plus\">"
-      | Question -> Bi_outbuf.add_string ob "<\"Question\">"
-      | Assign -> Bi_outbuf.add_string ob "<\"Assign\">"
-      | TrimR -> Bi_outbuf.add_string ob "<\"TrimR\">"
-      | TrimRMax -> Bi_outbuf.add_string ob "<\"TrimRMax\">"
-      | TrimL -> Bi_outbuf.add_string ob "<\"TrimL\">"
-      | TrimLMax -> Bi_outbuf.add_string ob "<\"TrimLMax\">"
-      | Length -> Bi_outbuf.add_string ob "<\"Length\">"
+      | Normal -> Bi_outbuf.add_string ob "\"Normal\""
+      | Minus -> Bi_outbuf.add_string ob "\"Minus\""
+      | Plus -> Bi_outbuf.add_string ob "\"Plus\""
+      | Question -> Bi_outbuf.add_string ob "\"Question\""
+      | Assign -> Bi_outbuf.add_string ob "\"Assign\""
+      | TrimR -> Bi_outbuf.add_string ob "\"TrimR\""
+      | TrimRMax -> Bi_outbuf.add_string ob "\"TrimRMax\""
+      | TrimL -> Bi_outbuf.add_string ob "\"TrimL\""
+      | TrimLMax -> Bi_outbuf.add_string ob "\"TrimLMax\""
+      | Length -> Bi_outbuf.add_string ob "\"Length\""
 )
 let string_of_var_type ?(len = 1024) x =
   let ob = Bi_outbuf.create len in
@@ -454,34 +454,34 @@ and write_arg_char : _ -> arg_char -> _ = (
   fun ob x ->
     match x with
       | C x ->
-        Bi_outbuf.add_string ob "<\"C\":";
+        Bi_outbuf.add_string ob "[\"C\",";
         (
           write_char
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | E x ->
-        Bi_outbuf.add_string ob "<\"E\":";
+        Bi_outbuf.add_string ob "[\"E\",";
         (
           write_char
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | T x ->
-        Bi_outbuf.add_string ob "<\"T\":";
+        Bi_outbuf.add_string ob "[\"T\",";
         (
           write__7
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | A x ->
-        Bi_outbuf.add_string ob "<\"A\":";
+        Bi_outbuf.add_string ob "[\"A\",";
         (
           write_arg
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | V x ->
-        Bi_outbuf.add_string ob "<\"V\":";
+        Bi_outbuf.add_string ob "[\"V\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _, _, _ = x in
             (
               write_var_type
@@ -505,21 +505,21 @@ and write_arg_char : _ -> arg_char -> _ = (
               write_arg
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | Q x ->
-        Bi_outbuf.add_string ob "<\"Q\":";
+        Bi_outbuf.add_string ob "[\"Q\",";
         (
           write_arg
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | B x ->
-        Bi_outbuf.add_string ob "<\"B\":";
+        Bi_outbuf.add_string ob "[\"B\",";
         (
           write_t
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
 )
 and string_of_arg_char ?(len = 1024) x =
   let ob = Bi_outbuf.create len in
@@ -534,7 +534,7 @@ and string_of_args ?(len = 1024) x =
   Bi_outbuf.contents ob
 and write_assign = (
   fun ob x ->
-    Bi_outbuf.add_char ob '(';
+    Bi_outbuf.add_char ob '[';
     (let x, _ = x in
     (
       Yojson.Safe.write_string
@@ -546,7 +546,7 @@ and write_assign = (
       write_arg
     ) ob x
     );
-    Bi_outbuf.add_char ob ')';
+    Bi_outbuf.add_char ob ']';
 )
 and string_of_assign ?(len = 1024) x =
   let ob = Bi_outbuf.create len in
@@ -584,10 +584,10 @@ and write_redirection : _ -> redirection -> _ = (
   fun ob x ->
     match x with
       | File x ->
-        Bi_outbuf.add_string ob "<\"File\":";
+        Bi_outbuf.add_string ob "[\"File\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _, _ = x in
             (
               write_redir_type
@@ -605,14 +605,14 @@ and write_redirection : _ -> redirection -> _ = (
               write_arg
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | Dup x ->
-        Bi_outbuf.add_string ob "<\"Dup\":";
+        Bi_outbuf.add_string ob "[\"Dup\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _, _ = x in
             (
               write_dup_type
@@ -630,14 +630,14 @@ and write_redirection : _ -> redirection -> _ = (
               write_arg
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | Heredoc x ->
-        Bi_outbuf.add_string ob "<\"Heredoc\":";
+        Bi_outbuf.add_string ob "[\"Heredoc\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _, _ = x in
             (
               write_heredoc_type
@@ -655,9 +655,9 @@ and write_redirection : _ -> redirection -> _ = (
               write_arg
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
 )
 and string_of_redirection ?(len = 1024) x =
   let ob = Bi_outbuf.create len in
@@ -667,10 +667,10 @@ and write_t : _ -> t -> _ = (
   fun ob x ->
     match x with
       | Command x ->
-        Bi_outbuf.add_string ob "<\"Command\":";
+        Bi_outbuf.add_string ob "[\"Command\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _, _, _ = x in
             (
               write_linno
@@ -694,14 +694,14 @@ and write_t : _ -> t -> _ = (
               write__2
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | Pipe x ->
-        Bi_outbuf.add_string ob "<\"Pipe\":";
+        Bi_outbuf.add_string ob "[\"Pipe\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _ = x in
             (
               Yojson.Safe.write_bool
@@ -713,14 +713,14 @@ and write_t : _ -> t -> _ = (
               write__3
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | Redir x ->
-        Bi_outbuf.add_string ob "<\"Redir\":";
+        Bi_outbuf.add_string ob "[\"Redir\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _, _ = x in
             (
               write_linno
@@ -738,14 +738,14 @@ and write_t : _ -> t -> _ = (
               write__2
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | Background x ->
-        Bi_outbuf.add_string ob "<\"Background\":";
+        Bi_outbuf.add_string ob "[\"Background\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _, _ = x in
             (
               write_linno
@@ -763,14 +763,14 @@ and write_t : _ -> t -> _ = (
               write__2
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | Subshell x ->
-        Bi_outbuf.add_string ob "<\"Subshell\":";
+        Bi_outbuf.add_string ob "[\"Subshell\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _, _ = x in
             (
               write_linno
@@ -788,14 +788,14 @@ and write_t : _ -> t -> _ = (
               write__2
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | And x ->
-        Bi_outbuf.add_string ob "<\"And\":";
+        Bi_outbuf.add_string ob "[\"And\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _ = x in
             (
               write_t
@@ -807,14 +807,14 @@ and write_t : _ -> t -> _ = (
               write_t
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | Or x ->
-        Bi_outbuf.add_string ob "<\"Or\":";
+        Bi_outbuf.add_string ob "[\"Or\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _ = x in
             (
               write_t
@@ -826,20 +826,20 @@ and write_t : _ -> t -> _ = (
               write_t
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | Not x ->
-        Bi_outbuf.add_string ob "<\"Not\":";
+        Bi_outbuf.add_string ob "[\"Not\",";
         (
           write_t
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | Semi x ->
-        Bi_outbuf.add_string ob "<\"Semi\":";
+        Bi_outbuf.add_string ob "[\"Semi\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _ = x in
             (
               write_t
@@ -851,14 +851,14 @@ and write_t : _ -> t -> _ = (
               write_t
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | If x ->
-        Bi_outbuf.add_string ob "<\"If\":";
+        Bi_outbuf.add_string ob "[\"If\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _, _ = x in
             (
               write_t
@@ -876,14 +876,14 @@ and write_t : _ -> t -> _ = (
               write_t
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | While x ->
-        Bi_outbuf.add_string ob "<\"While\":";
+        Bi_outbuf.add_string ob "[\"While\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _ = x in
             (
               write_t
@@ -895,14 +895,14 @@ and write_t : _ -> t -> _ = (
               write_t
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | For x ->
-        Bi_outbuf.add_string ob "<\"For\":";
+        Bi_outbuf.add_string ob "[\"For\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _, _, _ = x in
             (
               write_linno
@@ -926,14 +926,14 @@ and write_t : _ -> t -> _ = (
               Yojson.Safe.write_string
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | Case x ->
-        Bi_outbuf.add_string ob "<\"Case\":";
+        Bi_outbuf.add_string ob "[\"Case\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _, _ = x in
             (
               write_linno
@@ -951,14 +951,14 @@ and write_t : _ -> t -> _ = (
               write__4
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
       | Defun x ->
-        Bi_outbuf.add_string ob "<\"Defun\":";
+        Bi_outbuf.add_string ob "[\"Defun\",";
         (
           fun ob x ->
-            Bi_outbuf.add_char ob '(';
+            Bi_outbuf.add_char ob '[';
             (let x, _, _ = x in
             (
               write_linno
@@ -976,9 +976,9 @@ and write_t : _ -> t -> _ = (
               write_t
             ) ob x
             );
-            Bi_outbuf.add_char ob ')';
+            Bi_outbuf.add_char ob ']';
         ) ob x;
-        Bi_outbuf.add_char ob '>'
+        Bi_outbuf.add_char ob ']'
 )
 and string_of_t ?(len = 1024) x =
   let ob = Bi_outbuf.create len in

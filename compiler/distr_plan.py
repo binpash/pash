@@ -8,12 +8,21 @@ import yaml
 from ir import *
 from json_ast import *
 from impl import execute
+from distr_back_end import distr_execute
 
 ## This file receives the name of a file that holds an IR, reads the
 ## IR, read some configuration file with node information, and then
 ## should make a distribution plan for it.
 
-DISH_TOP_VAR = "DISH_TOP"
+GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
+if 'DISH_TOP' in os.environ:
+    DISH_TOP = os.environ['DISH_TOP']
+else:
+    DISH_TOP = subprocess.run(GIT_TOP_CMD, capture_output=True,
+            text=True).stdout.rstrip()
+    
+PARSER_BINARY = os.path.join(DISH_TOP, "parser/parse_to_json.native")
+
 
 config = {}
 
@@ -23,7 +32,7 @@ def load_config():
     CONFIG_KEY = 'distr_planner'
 
     ## TODO: allow this to be passed as an argument
-    config_file_path = '{}/compiler/config.yaml'.format(os.environ[DISH_TOP_VAR])
+    config_file_path = '{}/compiler/config.yaml'.format(DISH_TOP)
     with open(config_file_path) as config_file:
         dish_config = yaml.load(config_file, Loader=yaml.FullLoader)
 
@@ -35,7 +44,7 @@ def load_config():
 
     config = dish_config[CONFIG_KEY]
 
-def optimize_script(output_script_path):
+def optimize_script(output_script_path, compile_optimize_only):
     global config
     if not config:
         load_config()
@@ -65,7 +74,10 @@ def optimize_script(output_script_path):
     # f.close()
 
     ## Call the backend that executes the optimized dataflow graph
-    execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'])
+    if(config['distr_backend']):
+        distr_execute(distributed_graph, config['output_dir'], output_script_path, config['output_optimized'], compile_optimize_only, config['nodes'])
+    else:
+        execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'], compile_optimize_only)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
@@ -97,7 +109,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
 
     # commands_to_split_input = ["cat"]
     # for source_node in source_nodes:
-    #     input_file_ids = source_node.get_flat_input_file_ids()
+    #     input_file_ids = source_node.get_input_file_ids()
     #     ## TODO: Also split when we have more than one input file
     #     if(len(input_file_ids) == 1 and
     #        str(source_node.command) in commands_to_split_input):
@@ -108,100 +120,182 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     ## duplicate the command as many times as the number of
     ## identifiers in its in_stream. Then connect their outputs in
     ## order to next command.
-    nodes = source_nodes
-    while (len(nodes) > 0):
-        curr = nodes.pop(0)
+    workset= source_nodes
+    while (len(workset) > 0):
+        curr = workset.pop(0)
 
         next_nodes = graph.get_next_nodes(curr)
-        nodes += next_nodes
+        workset += next_nodes
 
         ## Question: What does it mean for a command to have more
         ## than one next_node? Does it mean that it duplicates its
         ## output to all of them? Or does it mean that it writes
         ## some to the first and some to the second? Both are not
         ## very symmetric, but I think I would prefer the first.
-        assert(len(next_nodes) <= 1)
+        # print(curr, next_nodes)
+        # assert(len(next_nodes) <= 1)
 
+        ## If the current command is a split file, then we will
+        ## recursively add a huge amount of splits, as several nodes
+        ## are revisited due to the suboptimal adding of all new nodes
+        ## to the workset.
+        ##
         ## TODO: Remove hardcoded
-        graph = split_command_input(curr, graph, fileIdGen, fan_out, batch_size)
-        graph = parallelize_command(curr, graph, fileIdGen)
+        if(not str(curr.command) == "split_file"):
+            for next_node in next_nodes:
+                graph = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size)
+        graph, new_nodes = parallelize_cat(curr, graph, fileIdGen)
+
+        ## Add new nodes to the workset depending on the optimization.
+        ##
+        ## WARNING: There is an assumption here that if there are new
+        ## nodes there was an optimization that happened and these new
+        ## nodes should ALL be added to the workset. Even if that is
+        ## correct, that is certainly non-optimal.
+        ##
+        ## TODO: Fix that
+        if(len(new_nodes) > 0):
+            workset += new_nodes
+
     return graph
+
+
+## TODO: Instead of setting children, we have to use the new way of
+## having a cat command before the node so that we enable
+## optimizations.
 
 ## Optimizes several commands by splitting its input
 def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
-    input_file_ids = curr.get_flat_input_file_ids()
+    ## At the moment this only works for nodes that have one
+    ## input. TODO: Extend it to work for nodes that have more than
+    ## one input.
+    ##
+    ## TODO: Change the test to check if curr is instance of Cat and
+    ## not check its name.
+    previous_nodes = graph.get_previous_nodes(curr)
     if (curr.category in ["stateless", "pure"] and
-        len(input_file_ids) == 1 and
-        curr.in_stream[0] == "stdin" and
+        not str(curr.command) == "cat" and
+        len(previous_nodes) == 1 and
         fan_out > 1):
-        ## We can split command input in several files, as long as the
-        ## input is not a file, and it makes sense to do so, if the
-        ## command is stateless or pure.
+        ## If the previous command is either a cat with one input, or
+        ## if it something else
+        previous_node = previous_nodes[0]
+        if(not isinstance(previous_node, Cat) or
+           (isinstance(previous_node, Cat) and
+            len(previous_node.get_input_file_ids()) == 1)):
 
-        ## This will still be the output file id of the previous
-        ## node
-        input_file_id = input_file_ids[0]
+            if(not isinstance(previous_node, Cat)):
+                input_file_ids = curr.get_input_file_ids()
+                assert(len(input_file_ids) == 1)
+                input_file_id = input_file_ids[0]
+            else:
+                ## If the previous node is a cat, we need its input
+                input_file_ids = previous_node.get_input_file_ids()
+                assert(len(input_file_ids) == 1)
+                input_file_id = input_file_ids[0]
 
-        ## Generate the split file ids
-        split_file_ids = [fileIdGen.next_file_id() for i in range(fan_out)]
+            ## First we have to make the split file commands.
+            split_file_commands, output_fids = make_split_files(input_file_id, fan_out,
+                                                                batch_size, fileIdGen)
+            [graph.add_node(split_file_command) for split_file_command in split_file_commands]
 
-        ## Generate a new file id that has all the split file ids
-        ## as children, in place of the current one
-        output_file_id = fileIdGen.next_file_id()
-        output_file_id.set_children(split_file_ids)
+            ## With the split file commands in place and their output
+            ## fids (and this commands new input ids, we have to
+            ## create a new Cat node (or modify the existing one) to
+            ## have these as inputs, and connect its output to our
+            ## input.
 
-        ## Set this new file id to be the input ot xargs.
-        curr.stdin = output_file_id
+            ## Generate a new file id for the input of the current
+            ## command.
+            new_input_file_id = fileIdGen.next_file_id()
+            new_cat = make_cat_node(output_fids, new_input_file_id)
+            graph.add_node(new_cat)
 
-        ## Add a new node that executes split_file and takes
-        ## the input_file_id as input, split_file_ids as output
-        ## and the batch_size as an argument
-        split_file_commands = make_split_files(input_file_id, output_file_id, batch_size, fileIdGen)
-        [graph.add_node(split_file_command) for split_file_command in split_file_commands]
-
+            if(not isinstance(previous_node, Cat)):
+                ## Change the current node's input with the new_input
+                index = curr.find_file_id_in_in_stream(input_file_id)
+                chunk = curr.in_stream[index]
+                curr.set_file_id(chunk, new_input_file_id)
+            else:
+                ## Change the current node's input with the new_input
+                curr_input_file_ids = curr.get_input_file_ids()
+                assert(len(curr_input_file_ids) == 1)
+                curr_input_file_id = curr_input_file_ids[0]
+                chunk = curr.find_file_id_in_in_stream(curr_input_file_id)
+                curr.set_file_id(chunk, new_input_file_id)
+                graph.remove_node(previous_node)
     return graph
 
-def parallelize_command(curr, graph, fileIdGen):
-    ## If the command is stateless or pure parallelizable and has more
+## If the current command is a cat, and is followed by a node that
+## is either stateless or pure parallelizable, commute the cat
+## after the node.
+def parallelize_cat(curr, graph, fileIdGen):
+    new_nodes_for_workset = []
+    if(isinstance(curr, Cat)):
+        next_nodes_and_edges = graph.get_next_nodes_and_edges(curr)
+
+        ## Cat can only have one output
+        assert(len(next_nodes_and_edges) <= 1)
+        if(len(next_nodes_and_edges) == 1):
+            next_node = next_nodes_and_edges[0][0]
+
+            ## Get cat inputs and output. Note that there is only one
+            ## output.
+            cat_input_file_ids = curr.get_input_file_ids()
+            cat_output_file_id = next_nodes_and_edges[0][1]
+            graph, new_nodes = parallelize_command(next_node, cat_input_file_ids,
+                                                   cat_output_file_id, graph, fileIdGen)
+            new_nodes_for_workset += new_nodes
+
+            ## If there are no new nodes, it means that no
+            ## parallelization happened. If there were, we should
+            ## delete the original cat.
+            if(len(new_nodes) > 0):
+                graph.remove_node(curr)
+
+    return graph, new_nodes_for_workset
+
+def parallelize_command(curr, new_input_file_ids, old_input_file_id, graph, fileIdGen):
+    ## If the next command is stateless or pure parallelizable and has more
     ## than one inputs, it can be parallelized.
-    input_file_ids = curr.get_flat_input_file_ids()
+    new_nodes = []
     if ((curr.category == "stateless" or curr.is_pure_parallelizable())
-        and len(input_file_ids) > 1):
+        and len(new_input_file_ids) > 1):
 
-        ## We assume that every command has one output_file_id for
-        ## now. I am not sure if this must be lifted. This seems
-        ## to be connected to assertion regarding the next_nodes.
-        out_edge_file_ids = curr.get_output_file_ids()
-        assert(len(out_edge_file_ids) == 1)
-        out_edge_file_id = out_edge_file_ids[0]
+        ## We assume that every stateless and pure command has
+        ## one output_file_id for now.
+        ##
+        ## TODO: Check if this can be lifted. This seems to be
+        ## connected to assertion regarding the next_nodes.
+        node_out_file_ids = curr.get_output_file_ids()
+        assert(len(node_out_file_ids) == 1)
+        node_out_file_id = node_out_file_ids[0]
 
-        ## Add children to the output file (thus also changing the
-        ## input file of the next command to have children)
-        new_output_file_ids = [fileIdGen.next_file_id() for in_fid in input_file_ids]
+        ## Get the file names of the outputs of the map commands. This
+        ## differs if the command is stateless, pure that can be
+        ## written as a map and a reduce, and a pure that can be
+        ## written as a generalized map and reduce.
+        new_output_file_ids = curr.get_map_output_files(new_input_file_ids, fileIdGen)
 
-        if(curr.category == "stateless"):
-            out_edge_file_id.set_children(new_output_file_ids)
-        elif(curr.is_pure_parallelizable()):
-            ## If the command is pure, there is need for a merging
-            ## command to be added at the end.
-            intermediate_output_file_id = fileIdGen.next_file_id()
-            intermediate_output_file_id.set_children(new_output_file_ids)
-            curr.stdout = intermediate_output_file_id
-
-            ## Make a merge command that joins the results of all the
-            ## duplicated commands
-            merge_command = create_merge_command(curr, new_output_file_ids, out_edge_file_id)
-            graph.add_node(merge_command)
-        else:
-            print("Unreachable code reached :(")
-            assert(False)
-            ## This should be unreachable
+        ## Make a merge command that joins the results of all the
+        ## duplicated commands
+        if(curr.is_pure_parallelizable()):
+            merge_commands = create_merge_commands(curr, new_output_file_ids,
+                                                   node_out_file_id, fileIdGen)
+            for merge_command in merge_commands:
+                graph.add_node(merge_command)
+            new_nodes += merge_commands
 
         ## For each new input and output file id, make a new command
-        new_commands = curr.stateless_duplicate()
-        graph.remove_node(curr)
+        new_commands = curr.duplicate(old_input_file_id, new_input_file_ids,
+                                      new_output_file_ids, fileIdGen)
+
+
+        new_nodes += new_commands
+
         # print("New commands:")
         # print(new_commands)
+        graph.remove_node(curr)
         for new_com in new_commands:
             graph.add_node(new_com)
 
@@ -215,47 +309,73 @@ def parallelize_command(curr, graph, fileIdGen):
         ## the intermediate representation and the above procedure
         ## so that this assumption is lifted (either by not
         ## parallelizing, or by properly handling this case)
+    return graph, new_nodes
 
-    return graph
 
 ## Creates a merge command for all pure commands that can be
 ## parallelized using a map and a reduce/merge step
-def create_merge_command(curr, new_output_file_ids, out_edge_file_id):
+def create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
     if(str(curr.command) == "sort"):
-        return create_sort_merge_command(curr, new_output_file_ids, out_edge_file_id)
+        return create_sort_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
+    elif(str(curr.command) == "bigrams_aux"):
+        return create_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
+    elif(str(curr.command) == "alt_bigrams_aux"):
+        return create_alt_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
     else:
         assert(False)
 
-## TODO: This must be generated using some file information
+## TODO: These must be generated using some file information
 ##
-## TODO: Find a better place to put this function
-def create_sort_merge_command(curr, new_output_file_ids, out_edge_file_id):
-    ## Create a merge sort command
-    ##
-    ## WARNING: Since the merge has to take the files as arguments, we
-    ## pass the pipe names as its arguments and nothing in stdin
-    old_options = curr.get_non_file_options()
-    input_file_ids = curr.get_flat_input_file_ids()
-    ## TODO: Implement a proper version of parallel sort -m, instead
-    ## of using the parallel flag.
-    options = [string_to_argument("-m"), string_to_argument("--parallel={}".format(len(input_file_ids)))] + old_options
-    # options = []
-    options += [string_to_argument(fid.pipe_name()) for fid in new_output_file_ids]
-    opt_indices = [("option", i) for i in range(len(options))]
-    # in_stream = [("option", i + len(opt_indices)) for i in range(len(new_output_file_ids))]
-    in_stream = []
-    merge_command = Command(None, # TODO: Make a proper AST
-                            curr.command,
-                            options,
-                            in_stream,
-                            ["stdout"],
-                            opt_indices,
-                            "pure",
-                            # intermediate_output_file_id,
-                            [],
-                            out_edge_file_id)
-    return merge_command
+## TODO: Find a better place to put these functions
+def create_sort_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
+    tree = create_reduce_tree(SortGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
+    return tree
 
+def create_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
+    tree = create_reduce_tree(BigramGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
+    return tree
+
+def create_alt_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
+    tree = create_reduce_tree(AltBigramGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
+    return tree
+
+## This function creates the reduce tree. Both input and output file
+## ids must be lists of lists, as the input file ids and the output
+## file ids might contain auxiliary files.
+def create_reduce_tree(init_func, input_file_ids, output_file_id, fileIdGen):
+    tree = []
+    curr_file_ids = input_file_ids
+    while(len(curr_file_ids) > 1):
+        new_level, curr_file_ids = create_reduce_tree_level(init_func, curr_file_ids, fileIdGen)
+        tree += new_level
+    ## Get the main output file identifier from the reduce and union
+    ## it with the wanted output file identifier
+    curr_file_ids[0][0].union(output_file_id)
+    return tree
+
+
+## This function creates a level of the reduce tree. Both input and
+## output file ids must be lists of lists, as the input file ids and
+## the output file ids might contain auxiliary files.
+def create_reduce_tree_level(init_func, input_file_ids, fileIdGen):
+    if(len(input_file_ids) % 2 == 0):
+        output_file_ids = []
+        even_input_file_ids = input_file_ids
+    else:
+        output_file_ids = [input_file_ids[0]]
+        even_input_file_ids = input_file_ids[1:]
+
+    level = []
+    for i in range(0, len(even_input_file_ids), 2):
+        new_out_file_ids = [fileIdGen.next_file_id() for _ in input_file_ids[i]]
+        output_file_ids.append(new_out_file_ids)
+        new_node = create_reduce_node(init_func, even_input_file_ids[i:i+2], new_out_file_ids)
+        level.append(new_node)
+    return (level, output_file_ids)
+
+## This function creates one node of the reduce tree
+def create_reduce_node(init_func, input_file_ids, output_file_ids):
+    return init_func(flatten_list(input_file_ids) + output_file_ids)
 
     ## TODO: In order to be able to execute it, we either have to
     ## execute it in the starting shell (so that we have its state),

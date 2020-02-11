@@ -1,3 +1,11 @@
-## This is a utility command that will be injected by the planner to split pipes
-size=100
-head -n $size $in_pipe > $out_pipe1 & cat $in_pipe > $out_pipe2
+$BATCH_SIZE=$1
+$VIRTUAL_DIR=$2
+$OUTPUT1=$3
+$OUTPUT2=$4
+
+tee >(
+    head -n $BATCH_SIZE > "${VIRTUAL_DIR}/${OUTPUT1}";
+    $DISH_TOP/evaluation/tools/drain_stream.sh &
+    cat "${VIRTUAL_DIR}/${OUTPUT1}" > "${OUTPUT1}") |
+    ( tail -n $((BATCH_SIZE+1)) > "${OUTPUT2}";
+      $DISH_TOP/evaluation/tools/drain_stream.sh)
