@@ -36,12 +36,6 @@ class Node:
 
     ## These two commands return the flattened fileId list. Meaning
     ## that they return the children, if they exist.
-    def get_flat_input_file_ids(self):
-        return flatten_list([Find(file_id).flatten() for file_id in self.get_input_file_ids()])
-
-    def get_flat_output_file_ids(self):
-        return flatten_list([Find(file_id).flatten() for file_id in self.get_output_file_ids()])
-
     def get_input_file_ids(self):
         return [self.get_file_id(input_chunk) for input_chunk in self.in_stream]
 
@@ -81,10 +75,7 @@ class Node:
         index = 0
         for chunk in stream:
             chunk_file_id = Find(self.get_file_id(chunk))
-            flat_file_ids = chunk_file_id.flatten()
-            if(file_id in flat_file_ids):
+            if(Find(file_id) == chunk_file_id):
                 return index
             index += 1
         return None
-
-
