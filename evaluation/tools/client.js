@@ -1,5 +1,6 @@
 #!env node
 const http = require('http');
+const fs = require('fs');
 
 const workers = {
   "local": {ip: "127.0.0.1", port: 6000},
@@ -75,10 +76,10 @@ let checkDishToken = () => {
 }
 
 let checkArgs = (args) => {
-  if (args.length == 3 && /help/.test(args[2])) {
+  if (args.length === 3 && /help/.test(args[2])) {
     printAndExit(help);
   }
-  if (args.length == 3 && !workers[args[2]]) {
+  if (args.length === 3 && !workers[args[2]]) {
     printAndExit(`${args[2]} does not exist in workers!`);
   }
 }
@@ -90,7 +91,12 @@ if (process.argv.length < 3) {
   let w = workers[process.argv[2]]
   get(process.argv[2], console.log)
 } else {
-  let program = process.argv[3]
+  let program;
+  if (process.argv[3] === "-f") {
+    program = fs.readFileSync(process.argv[4], 'utf-8');
+  } else {
+    program = process.argv[3]
+  }
   if (program.indexOf('\'')) {
     //FIXME Confirm it does not matter
     console.error('WARNING, program includes single quotes that might mess things up');
