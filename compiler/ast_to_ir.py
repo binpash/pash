@@ -303,7 +303,7 @@ def make_command(ir_filename):
     ## TODO: Do we need to do anything with the line_number? If so, make
     ## sure that I keep it in the IR, so that I can find it.
     ## TODO: READ THESE FROM A CONFIG FILE
-    arguments = [string_to_argument("python3"),
+    arguments = [string_to_argument("python3.8"),
                  string_to_argument("distr_plan.py"),
                  string_to_argument(ir_filename)]
     line_number = 0
