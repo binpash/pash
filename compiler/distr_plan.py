@@ -1,4 +1,5 @@
 import os
+import argparse
 import sys
 import pickle
 import subprocess
@@ -44,15 +45,35 @@ def load_config():
 
     config = dish_config[CONFIG_KEY]
 
-def optimize_script(output_script_path, compile_optimize_only):
+## There are two ways to enter the distributed planner, either by
+## calling dish (which straight away calls the distributed planner),
+## or by calling the distributed planner with the name of an ir file
+## to execute.
+def main():
+    ## Parse arguments
+    args = parse_args()
+
+    ## Call the main procedure
+    optimize_script(args.input_ir, args.compile_optimize_only)
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input_ir", help="the file containing the dataflow graph to be optimized and executed")
+    parser.add_argument("--compile_optimize_only", help="only compile and optimize the input script and not execute it",
+                        action="store_true")
+    args = parser.parse_args()
+    return args
+
+def optimize_script(ir_filename, compile_optimize_only):
+    print(ir_filename, compile_optimize_only)
     global config
     if not config:
         load_config()
 
-    with open(config['ir_filename'], "rb") as ir_file:
+    with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
 
-    print("Retrieving IR: {} ...".format(config['ir_filename']))
+    print("Retrieving IR: {} ...".format(ir_filename))
     shell_string = ast_to_shell(ir_node.ast)
     print(shell_string)
 
@@ -74,6 +95,7 @@ def optimize_script(output_script_path, compile_optimize_only):
     # f.close()
 
     ## Call the backend that executes the optimized dataflow graph
+    output_script_path = config['optimized_script_filename']
     if(config['distr_backend']):
         distr_execute(distributed_graph, config['output_dir'], output_script_path, config['output_optimized'], compile_optimize_only, config['nodes'])
     else:
@@ -416,3 +438,6 @@ def create_reduce_node(init_func, input_file_ids, output_file_ids):
     ## pieces might be wrong.
 
     ## BIG TODO: Extend the file class so that it supports tee etc.
+
+if __name__ == "__main__":
+    main()

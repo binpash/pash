@@ -35,7 +35,8 @@ def main():
     ## using dish, but rather call the compiled file that calls the
     ## distributed planner (maybe through dish.py)
     ##
-    ## TODO: Don't hardcode the .ir file name
+    ## TODO: Replace the hardcoded _compiled with the one given in the
+    ## arguments.
     ##
     ## 4. Translate the new AST back to shell syntax
     input_script_wo_extension, input_script_extension = os.path.splitext(input_script_path)
@@ -103,7 +104,8 @@ def compile_asts(ast_objects):
 ## TODO: Extend this to properly execute the compiled script
 def execute_script(compiled_script_filename, output_script_path, output_optimized, compile_optimize_only):
     ## For now, just execute the first dataflow graph in the script
-    optimize_script(output_script_path, compile_optimize_only)
+    ir_filename = "/tmp/dish_temp_ir_file1"
+    optimize_script(ir_filename, compile_optimize_only)
 
 if __name__ == "__main__":
     main()
