@@ -42,12 +42,11 @@ def main():
     input_script_wo_extension, input_script_extension = os.path.splitext(input_script_path)
     ir_filename = input_script_wo_extension + ".ir"
     save_asts_json(compiled_asts, ir_filename)
-    new_shell_filename = input_script_wo_extension + "_compiled.sh"
-    from_ir_to_shell(ir_filename, new_shell_filename)
+    from_ir_to_shell(ir_filename, args.output)
 
     ## 5. Execute the compiled version of the input script
     if(not args.compile_only):
-        execute_script(new_shell_filename, args.output, args.output_optimized, args.compile_optimize_only)
+        execute_script(args.output, args.output_optimized, args.compile_optimize_only)
 
 def parse_shell(input_script_path):
     parser_output = subprocess.run([PARSER_BINARY, input_script_path], capture_output=True, text=True)
@@ -101,11 +100,9 @@ def compile_asts(ast_objects):
         final_asts.append(final_ast)
     return final_asts
 
-## TODO: Extend this to properly execute the compiled script
-def execute_script(compiled_script_filename, output_script_path, output_optimized, compile_optimize_only):
-    ## For now, just execute the first dataflow graph in the script
-    ir_filename = "/tmp/dish_temp_ir_file1"
-    optimize_script(ir_filename, compile_optimize_only)
+def execute_script(compiled_script_filename, output_optimized, compile_optimize_only):
+    exec_obj = subprocess.run(["/bin/bash", compiled_script_filename])
+    exec_obj.check_returncode()
 
 if __name__ == "__main__":
     main()
