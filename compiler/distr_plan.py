@@ -59,13 +59,13 @@ def main():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("input_ir", help="the file containing the dataflow graph to be optimized and executed")
-    parser.add_argument("--compile_optimize_only", help="only compile and optimize the input script and not execute it",
+    parser.add_argument("--compile_optimize_only",
+                        help="only compile and optimize the input script and not execute it",
                         action="store_true")
     args = parser.parse_args()
     return args
 
 def optimize_script(ir_filename, compile_optimize_only):
-    print(ir_filename, compile_optimize_only)
     global config
     if not config:
         load_config()
@@ -99,6 +99,7 @@ def optimize_script(ir_filename, compile_optimize_only):
     if(config['distr_backend']):
         distr_execute(distributed_graph, config['output_dir'], output_script_path, config['output_optimized'], compile_optimize_only, config['nodes'])
     else:
+        print("Hi")
         execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'], compile_optimize_only)
 
 ## This is a simplistic planner, that pushes the available
