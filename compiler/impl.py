@@ -8,6 +8,8 @@ def execute(graph_json, output_dir, output_script_name, output_optimized, compil
     ## Output the optimized shell script for inspection
     if(output_optimized):
         with open(output_script_name, "w") as output_script_file:
+            print("Optimized script:")
+            print(output_script)
             output_script_file.write(output_script)
 
     if(not compile_optimize_only):
