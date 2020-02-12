@@ -1,5 +1,5 @@
 distr_planner:
-    ir_filename: /tmp/dish_temp_ir_file1
+    optimized_script_filename: /tmp/optimized_script.sh
     output_dir: /tmp/distr_output
     fan_out: 1
     batch_size: 10000
