@@ -83,24 +83,14 @@ def optimize_script(ir_filename, compile_optimize_only):
     # print("Parallelized graph:")
     # print(graph)
 
-    # Output the graph as json
-    # frozen = jsonpickle.encode(graph)
-    # f = open("minimal2_ir.json", "w")
-    # f.write(frozen)
-    # f.close()
-
-    # print(graph.serialize())
-    # f = open("serialized_ir", "w")
-    # f.write(graph.serialize_as_JSON_string())
-    # f.close()
-
     ## Call the backend that executes the optimized dataflow graph
     output_script_path = config['optimized_script_filename']
     if(config['distr_backend']):
-        distr_execute(distributed_graph, config['output_dir'], output_script_path, config['output_optimized'], compile_optimize_only, config['nodes'])
+        distr_execute(distributed_graph, config['output_dir'], output_script_path,
+                      config['output_optimized'], compile_optimize_only, config['nodes'])
     else:
-        print("Hi")
-        execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'], compile_optimize_only)
+        execute(distributed_graph.serialize_as_JSON(), config['output_dir'],
+                output_script_path, config['output_optimized'], compile_optimize_only)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
