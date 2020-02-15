@@ -19,9 +19,6 @@ def execute(graph_json, output_dir, output_script_name, output_optimized, compil
 
 
 def shell_backend(graph_json, output_dir):
-    ## TODO: Remove environment hardcoding
-    env={"IN": "../scripts/input/i1M.txt"}
-
     # print("Translate:")
     # print(graph_json)
     fids = graph_json["fids"]
@@ -46,7 +43,7 @@ def shell_backend(graph_json, output_dir):
     output_script_commands.append(mkfifo_com)
 
     ## Execute nodes
-    processes = [execute_node(node, env, shared_memory_dir) for node_id, node in nodes.items()]
+    processes = [execute_node(node, shared_memory_dir) for node_id, node in nodes.items()]
     output_script_commands += processes
 
     ## Collect outputs
@@ -94,13 +91,8 @@ def make_fifos(fids):
         assert(fid[0] == "#")
     return 'mkfifo {}'.format(" ".join(['"{}"'.format(fid) for fid in fids]))
 
-def execute_node(node, env, shared_memory_dir):
-    # print(node)
+def execute_node(node, shared_memory_dir):
     script = node_to_script(node, shared_memory_dir)
-    # print("{} &".format(script))
-    # p = subprocess.Popen(script, shell=True,
-    #                      executable="/bin/bash", env=env)
-    # return p
     return "{} &".format(script)
 
 def node_to_script(node, shared_memory_dir):
