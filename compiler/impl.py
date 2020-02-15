@@ -38,12 +38,10 @@ def shell_backend(graph_json, output_dir):
     output_script_commands.append('mkdir -p {}'.format(shared_memory_dir))
 
     ## Setup pipes
-    for fid in fids:
-        # print(fid)
-        rm_com = remove_fifo_if_exists(fid)
-        mkfifo_com = make_fifo(fid)
-        output_script_commands.append(rm_com)
-        output_script_commands.append(mkfifo_com)
+    rm_com = remove_fifos(fids)
+    mkfifo_com = make_fifos(fids)
+    output_script_commands.append(rm_com)
+    output_script_commands.append(mkfifo_com)
 
     ## Execute nodes
     processes = [execute_node(node, env, shared_memory_dir) for node_id, node in nodes.items()]
@@ -71,11 +69,10 @@ def shell_backend(graph_json, output_dir):
     #         print("-- Error!", proc, ret)
     # output_script_commands.append('for job in `jobs -p` \ndo \n echo $job\n wait $job \ndone')
     output_script_commands.append('wait')
+
     ## Kill pipes
-    for fid in fids:
-        # print(fid)
-        rm_com = remove_fifo_if_exists(fid)
-        output_script_commands.append(rm_com)
+    final_rm_com = remove_fifos(fids)
+    output_script_commands.append(rm_com)
 
     output_script_commands.append('rm -rf "{}"'.format(shared_memory_dir))
     end_time = time.time()
@@ -85,18 +82,15 @@ def shell_backend(graph_json, output_dir):
     # print("Distributed translation execution time:", end_time - start_time)
     return "\n".join(output_script_commands)
 
-def remove_fifo_if_exists(pipe):
-    assert(pipe[0] == "#")
-    # print('rm -f "{}"'.format(pipe))
-    # if os.path.exists(pipe):
-    #     os.remove(pipe)
-    return 'rm -f "{}"'.format(pipe)
+def remove_fifos(fids):
+    for fid in fids:
+        assert(fid[0] == "#")
+    return 'rm -f {}'.format(" ".join(['"{}"'.format(fid) for fid in fids]))
 
-def make_fifo(pipe):
-    assert(pipe[0] == "#")
-    # print ('mkfifo "{}"'.format(pipe))
-    # os.mkfifo(pipe)
-    return 'mkfifo "{}"'.format(pipe)
+def make_fifos(fids):
+    for fid in fids:
+        assert(fid[0] == "#")
+    return 'mkfifo {}'.format(" ".join(['"{}"'.format(fid) for fid in fids]))
 
 def execute_node(node, env, shared_memory_dir):
     # print(node)
