@@ -5,6 +5,9 @@ from definitions.ast_node_c import *
 
 import pickle
 
+PYTHON_VERSION = "python3.8"
+PLANNER_EXECUTABLE = "distr_plan.py"
+
 ##
 ## Compile AST -> Extended AST with IRs
 ##
@@ -313,9 +316,8 @@ def make_command(ir_filename):
 
     ## TODO: Do we need to do anything with the line_number? If so, make
     ## sure that I keep it in the IR, so that I can find it.
-    ## TODO: READ THESE FROM A CONFIG FILE
-    arguments = [string_to_argument("python3.8"),
-                 string_to_argument("distr_plan.py"),
+    arguments = [string_to_argument(PYTHON_VERSION),
+                 string_to_argument(PLANNER_EXECUTABLE),
                  string_to_argument(ir_filename)]
     line_number = 0
     node = make_kv('Command', [line_number, [], arguments, []])
