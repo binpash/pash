@@ -4,46 +4,12 @@ import sys
 import pickle
 import subprocess
 import jsonpickle
-import yaml
 
 from ir import *
 from json_ast import *
 from impl import execute
 from distr_back_end import distr_execute
-
-## This file receives the name of a file that holds an IR, reads the
-## IR, read some configuration file with node information, and then
-## should make a distribution plan for it.
-
-GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
-if 'DISH_TOP' in os.environ:
-    DISH_TOP = os.environ['DISH_TOP']
-else:
-    DISH_TOP = subprocess.run(GIT_TOP_CMD, capture_output=True,
-            text=True).stdout.rstrip()
-    
-PARSER_BINARY = os.path.join(DISH_TOP, "parser/parse_to_json.native")
-
-
-config = {}
-
-def load_config():
-    global config
-    dish_config = {}
-    CONFIG_KEY = 'distr_planner'
-
-    ## TODO: allow this to be passed as an argument
-    config_file_path = '{}/compiler/config.yaml'.format(DISH_TOP)
-    with open(config_file_path) as config_file:
-        dish_config = yaml.load(config_file, Loader=yaml.FullLoader)
-
-    if not dish_config:
-        raise Exception('No valid configuration could be loaded from {}'.format(config_file_path))
-
-    if CONFIG_KEY not in dish_config:
-        raise Exception('Missing `{}` config in {}'.format(CONFIG_KEY, config_file_path))
-
-    config = dish_config[CONFIG_KEY]
+import config
 
 ## There are two ways to enter the distributed planner, either by
 ## calling dish (which straight away calls the distributed planner),
@@ -66,9 +32,8 @@ def parse_args():
     return args
 
 def optimize_script(ir_filename, compile_optimize_only):
-    global config
-    if not config:
-        load_config()
+    if not config.config:
+        config.load_config()
 
     with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
@@ -78,19 +43,19 @@ def optimize_script(ir_filename, compile_optimize_only):
     print(shell_string)
 
     print(ir_node)
-    distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config['fan_out'], config['batch_size'])
+    distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config.config['fan_out'], config.config['batch_size'])
     print(distributed_graph)
     # print("Parallelized graph:")
     # print(graph)
 
     ## Call the backend that executes the optimized dataflow graph
-    output_script_path = config['optimized_script_filename']
-    if(config['distr_backend']):
-        distr_execute(distributed_graph, config['output_dir'], output_script_path,
-                      config['output_optimized'], compile_optimize_only, config['nodes'])
+    output_script_path = config.config['optimized_script_filename']
+    if(config.config['distr_backend']):
+        distr_execute(distributed_graph, config.config['output_dir'], output_script_path,
+                      config.config['output_optimized'], compile_optimize_only, config.config['nodes'])
     else:
-        execute(distributed_graph.serialize_as_JSON(), config['output_dir'],
-                output_script_path, config['output_optimized'], compile_optimize_only)
+        execute(distributed_graph.serialize_as_JSON(), config.config['output_dir'],
+                output_script_path, config.config['output_optimized'], compile_optimize_only)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
