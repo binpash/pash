@@ -1,87 +1,67 @@
 import os
+import argparse
 import sys
 import pickle
 import subprocess
 import jsonpickle
-import yaml
 
 from ir import *
 from json_ast import *
 from impl import execute
 from distr_back_end import distr_execute
+import config
 
 from definitions.ir.nodes.alt_bigram_g_reduce import *
 from definitions.ir.nodes.bigram_g_map import *
 from definitions.ir.nodes.bigram_g_reduce import *
 from definitions.ir.nodes.sort_g_reduce import *
 
-## This file receives the name of a file that holds an IR, reads the
-## IR, read some configuration file with node information, and then
-## should make a distribution plan for it.
 
-GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
-if 'DISH_TOP' in os.environ:
-    DISH_TOP = os.environ['DISH_TOP']
-else:
-    DISH_TOP = subprocess.run(GIT_TOP_CMD, capture_output=True,
-            text=True).stdout.rstrip()
+## There are two ways to enter the distributed planner, either by
+## calling dish (which straight away calls the distributed planner),
+## or by calling the distributed planner with the name of an ir file
+## to execute.
+def main():
+    ## Parse arguments
+    args = parse_args()
 
-PARSER_BINARY = os.path.join(DISH_TOP, "parser/parse_to_json.native")
+    ## Call the main procedure
+    optimize_script(args.input_ir, args.compile_optimize_only)
 
-config = {}
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input_ir", help="the file containing the dataflow graph to be optimized and executed")
+    parser.add_argument("--compile_optimize_only",
+                        help="only compile and optimize the input script and not execute it",
+                        action="store_true")
+    args = parser.parse_args()
+    return args
 
-def load_config():
-    global config
-    dish_config = {}
-    CONFIG_KEY = 'distr_planner'
+def optimize_script(ir_filename, compile_optimize_only):
+    if not config.config:
+        config.load_config()
 
-    ## TODO: allow this to be passed as an argument
-    config_file_path = '{}/compiler/config.yaml'.format(DISH_TOP)
-    with open(config_file_path) as config_file:
-        dish_config = yaml.load(config_file, Loader=yaml.FullLoader)
-
-    if not dish_config:
-        raise Exception('No valid configuration could be loaded from {}'.format(config_file_path))
-
-    if CONFIG_KEY not in dish_config:
-        raise Exception('Missing `{}` config in {}'.format(CONFIG_KEY, config_file_path))
-
-    config = dish_config[CONFIG_KEY]
-
-def optimize_script(output_script_path, compile_optimize_only):
-    global config
-    if not config:
-        load_config()
-
-    with open(config['ir_filename'], "rb") as ir_file:
+    with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
 
-    print("Retrieving IR: {} ...".format(config['ir_filename']))
+    print("Retrieving IR: {} ...".format(ir_filename))
     shell_string = ast_to_shell(ir_node.ast)
     print(shell_string)
 
     print(ir_node)
-    distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config['fan_out'], config['batch_size'])
+    distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config.config['fan_out'], config.config['batch_size'])
     print(distributed_graph)
     # print("Parallelized graph:")
     # print(graph)
 
-    # Output the graph as json
-    # frozen = jsonpickle.encode(graph)
-    # f = open("minimal2_ir.json", "w")
-    # f.write(frozen)
-    # f.close()
-
-    # print(graph.serialize())
-    # f = open("serialized_ir", "w")
-    # f.write(graph.serialize_as_JSON_string())
-    # f.close()
-
     ## Call the backend that executes the optimized dataflow graph
-    if(config['distr_backend']):
-        distr_execute(distributed_graph, config['output_dir'], output_script_path, config['output_optimized'], compile_optimize_only, config['nodes'])
+    output_script_path = config.config['optimized_script_filename']
+    if(config.config['distr_backend']):
+        distr_execute(distributed_graph, config.config['output_dir'], output_script_path,
+                      config.config['output_optimized'], compile_optimize_only, config.config['nodes'])
     else:
-        execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'], compile_optimize_only)
+        execute(distributed_graph.serialize_as_JSON(), config.config['output_dir'],
+                output_script_path, config.config['output_optimized'], compile_optimize_only)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
@@ -475,3 +455,6 @@ def create_reduce_node(init_func, input_file_ids, output_file_ids):
     ## pieces might be wrong.
 
     ## BIG TODO: Extend the file class so that it supports tee etc.
+
+if __name__ == "__main__":
+    main()
