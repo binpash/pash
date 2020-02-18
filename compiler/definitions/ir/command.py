@@ -3,6 +3,7 @@ from definitions.ir.arg import *
 from definitions.ir.file_id import *
 
 from ir_utils import *
+import config
 
 ## Commands are specific Nodes that can be parallelized if they are
 ## classified as stateless, etc...
@@ -70,7 +71,8 @@ class Command(Node):
 
     def is_pure_parallelizable(self):
         return (self.category == "pure"
-                and str(self.command) in list(map(get_command_from_definition, parallelizable_pure_commands)))
+                and str(self.command) in list(map(get_command_from_definition,
+                                                  config.parallelizable_pure_commands)))
 
     ## TODO: This has to change, to not search for the inputs in the
     ## in_stream
