@@ -11,6 +11,12 @@ from impl import execute
 from distr_back_end import distr_execute
 import config
 
+from definitions.ir.nodes.alt_bigram_g_reduce import *
+from definitions.ir.nodes.bigram_g_map import *
+from definitions.ir.nodes.bigram_g_reduce import *
+from definitions.ir.nodes.sort_g_reduce import *
+
+
 ## There are two ways to enter the distributed planner, either by
 ## calling dish (which straight away calls the distributed planner),
 ## or by calling the distributed planner with the name of an ir file
@@ -265,7 +271,7 @@ def parallelize_command(curr, new_input_file_ids, old_input_file_id, graph, file
             new_nodes += merge_commands
 
         ## For each new input and output file id, make a new command
-        new_commands = curr.duplicate(old_input_file_id, new_input_file_ids,
+        new_commands = duplicate(curr, old_input_file_id, new_input_file_ids,
                                       new_output_file_ids, fileIdGen)
 
 
@@ -289,6 +295,61 @@ def parallelize_command(curr, new_input_file_ids, old_input_file_id, graph, file
         ## parallelizing, or by properly handling this case)
     return graph, new_nodes
 
+def duplicate(command_node, old_input_file_id, new_input_file_ids, new_output_file_ids, fileIdGen):
+    assert(command_node.category == "stateless" or command_node.is_pure_parallelizable())
+    if (command_node.category == "stateless"):
+        return stateless_duplicate(command_node, old_input_file_id, new_input_file_ids, new_output_file_ids)
+    elif (command_node.is_pure_parallelizable()):
+        return pure_duplicate(command_node, old_input_file_id, new_input_file_ids, new_output_file_ids, fileIdGen)
+
+    ## This should be unreachable
+    print("Unreachable code reached :(")
+    assert(False)
+
+def stateless_duplicate(command_node, old_input_file_id, input_file_ids, output_file_ids):
+    assert(command_node.category == "stateless")
+
+    out_edge_file_ids = command_node.get_output_file_ids()
+    assert(len(out_edge_file_ids) == 1)
+    out_edge_file_id = out_edge_file_ids[0]
+
+    ## Make a new cat command to add after the current command.
+    new_cat = make_cat_node(output_file_ids, out_edge_file_id)
+
+    in_out_file_ids = zip(input_file_ids, output_file_ids)
+
+    new_commands = [command_node.find_in_out_and_make_duplicate_command(old_input_file_id, in_fid,
+        out_edge_file_id, out_fid) for in_fid, out_fid in in_out_file_ids]
+
+    return new_commands + [new_cat]
+
+def pure_duplicate(command_node, old_input_file_id, input_file_ids, output_file_ids, fileIdGen):
+    assert(command_node.is_pure_parallelizable())
+
+    in_out_file_ids = zip(input_file_ids, output_file_ids)
+
+    simple_map_pure_commands = ["sort",
+                                "alt_bigrams_aux"]
+
+    ## This is the category of all commands that don't need a
+    ## special generalized map
+    if(str(command_node.command) in simple_map_pure_commands):
+
+        ## make_duplicate_command duplicates a node based on its
+        ## output file ids, so we first need to assign them.
+        new_output_file_ids = [fids[0] for fids in output_file_ids]
+
+        new_commands = [command_node.find_in_out_and_make_duplicate_command(old_input_file_id, in_fid,
+            command_node.stdout, out_fids[0]) for in_fid, out_fids in in_out_file_ids]
+    elif(str(command_node.command) == "bigrams_aux"):
+        new_commands = [BigramGMap([in_fid] + out_fids)
+                        for in_fid, out_fids in in_out_file_ids]
+    else:
+        ## This should be unreachable
+        print("Unreachable code reached :(")
+        assert(False)
+
+    return new_commands
 
 ## Creates a merge command for all pure commands that can be
 ## parallelized using a map and a reduce/merge step
