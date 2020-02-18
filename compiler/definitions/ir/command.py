@@ -69,7 +69,8 @@ class Command(Node):
         return new_output_file_ids
 
     def is_pure_parallelizable(self):
-        return (self.category == "pure" and str(self.command) in list(map(get_command_from_definition, parallelizable_pure_commands)))
+        return (self.category == "pure"
+                and str(self.command) in list(map(get_command_from_definition, parallelizable_pure_commands)))
 
     ## TODO: This has to change, to not search for the inputs in the
     ## in_stream
