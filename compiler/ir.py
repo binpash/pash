@@ -1,103 +1,47 @@
 import copy
 import json
+import yaml
+import os
+
+from definitions.ir.arg import *
+from definitions.ir.node import *
+from definitions.ir.command import *
+from definitions.ir.resource import *
+from definitions.ir.nodes.cat import *
+
 from union_find import *
+from ir_utils import *
 from util import *
 
-### TODO: Move this somewhere else
-stateless_commands = ["cat", "tr", "grep", "col",
-                      "groff", # not clear
-                      "sed", # not always
-                      "cut",
-                      "gunzip", # file stateless
-                      "iconv",
-                      "pandoc", # html-block parallel
-                      "stem-words.js",
-                      "xargs"] # I am not sure if all xargs are stateless
+# TODO get all this from context
+GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
+if 'DISH_TOP' in os.environ:
+    DISH_TOP = os.environ['DISH_TOP']
+else:
+    DISH_TOP = subprocess.run(GIT_TOP_CMD, capture_output=True,
+            text=True).stdout.rstrip()
 
-pure_commands = ["sort", "wc", "uniq", "bigrams_aux", "alt_bigrams_aux"]
-parallelizable_pure_commands = ["sort", "bigrams_aux", "alt_bigrams_aux"]
+# TODO load command class file path from config
+command_classes_file_path = '{}/compiler/command-classes.yaml'.format(DISH_TOP)
+command_classes = {}
+with open(command_classes_file_path) as command_classes_file:
+    command_classes = yaml.load(command_classes_file, Loader=yaml.FullLoader)
 
+if not command_classes:
+    raise Exception('Failed to load description of command classes from {}'.format(command_classes_file_path))
+
+stateless_commands = command_classes['stateless'] if 'stateless' in command_classes else {}
+pure_commands = command_classes['pure'] if 'pure' in command_classes else {}
+parallelizable_pure_commands = command_classes['parallelizable_pure'] if 'parallelizable_pure' in command_classes else {}
 
 ### Utils
 
-## This function gets a key and a value from the ast json format
-def get_kv(dic):
-    return (dic[0], dic[1])
+def get_command_from_definition(command_definition):
+    if 'command' in command_definition:
+        return command_definition['command']
 
-def make_kv(key, val):
-    return [key, val]
-
-def format_arg_chars(arg_chars):
-    chars = [format_arg_char(arg_char) for arg_char in arg_chars]
-    return "".join(chars)
-
-def format_arg_char(arg_char):
-    key, val = get_kv(arg_char)
-    if (key == 'C'):
-        return str(chr(val))
-    elif (key == 'B'):
-        # The $() is just for illustration. This is backticks
-        return '$({})'.format(val)
-    elif (key == 'Q'):
-        return '"{}"'.format(format_arg_chars(val))
-    elif (key == 'V'):
-        return '${{{}}}'.format(val[2])
-    elif (key == 'E'):
-        return '{}'.format(chr(val))
-    else:
-        ## TODO: Make this correct
-        return key
-
-def string_to_argument(string):
-    return [char_to_arg_char(char) for char in string]
-
-def make_argument(option):
-    if(isinstance(option, FileId)):
-        ## This is how commands are initialized when duplicating
-        return option
-    else:
-        ## This is how commands are initialized in the AST
-        return Arg(option)
-
-
-## FIXME: This is certainly not complete. It is used to generate the
-## AST for the call to the distributed planner. It only handles simple
-## characters
-def char_to_arg_char(char):
-    return ['C' , ord(char)]
-
-## TODO: Resources should probably be more elaborate than just a
-## string and a line range. They could be URLs, and possibly other things.
-class Resource:
-    def __init__(self, uri, range = [0, "inf"]):
-        self.uri = uri
-        self.range = range
-
-    def __repr__(self):
-        if self.range[0] == 0 and self.range[1] == "inf":
-            output = str(self.uri)
-        else:
-            output = "{}[{}:{}]".format(self.uri, self.range[0], self.range[1])
-        return output
-
-    ## This function splits a "splittable" resource (at the moment
-    ## only files are resources so they are all splittable)
-    def split_resource(self, times, batch_size):
-        assert(times > 0 and batch_size > 0)
-        init = self.range[0]
-        resources = [Resource(self.uri, [i * batch_size + init, (i+1) * batch_size + init])
-                     for i in range(times)]
-        ## Set the end to be equal to the old end
-        resources[-1].range[1] = self.range[1]
-        return resources
-
-    ## This returns the length of the resource or None if it is
-    ## infinite.
-    def get_length(self):
-        if(self.range[1] == "inf"):
-            return None
-        else:
-            return (self.range[1] - self.range[0])
+    print('Possible issue with definition file: Missing command in command definition {}'.format(command_definition))
+    return ''
 
 ## Creates a file id for a given resource
 def create_file_id_for_resource(resource, fileIdGen):
@@ -111,142 +55,6 @@ def create_split_file_id(batch_size, fileIdGen):
     file_id.set_max_length(batch_size)
     return file_id
 
-
-## Note: The NULL ident is considered to be the default unknown file id
-##
-## TODO: WARNING: We have to make sure that a resource in our IR can
-## be uniquely determined given a relative or absolute path. Actually,
-## we need to make sure that expanding any variable/string in our IR,
-## will always return the same result.
-##
-## WARNING: At the moment it is not clear what resources are saved in
-## the Find(self) and in self. This might create problems down the
-## road.
-##
-## TODO: When doing union, I have to really make both file ids point
-## to the same file.
-class FileId:
-    def __init__(self, ident, resource=None, max_length = None):
-        self.ident = ident
-        ## Initialize the parent
-        MakeSet(self)
-        self.resource=resource
-        ## Max length shows what is the maximum possible length that
-        ## this file shows to. Its use is mostly to split intermediate
-        ## streams.
-        self.max_length = max_length
-
-    def __repr__(self):
-        ## Note: Outputs the parent of the union and not the file id
-        ##       itself.
-        return self.serialize()
-
-    def serialize(self):
-        # print("File id:", self.ident, Find(self).ident, self.resource)
-        if (self.resource is None):
-            if(self.max_length is None):
-                output = "#file{}".format(Find(self).ident)
-            else:
-                output = "#file{}[max:{}]".format(Find(self).ident, self.max_length)
-        else:
-            output = "{}".format(self.resource)
-        return output
-
-    ## Serialize as an option for the JSON serialization when sent to
-    ## the backend. This is needed as options can either be files or
-    ## arguments, and in each case there needs to be a different
-    ## serialization procedure.
-    def opt_serialize(self):
-        return '"{}"'.format(self.serialize())
-
-    ## TODO: Maybe this can be merged with serialize
-    def pipe_name(self):
-        assert(self.resource is None)
-        output = '"#file{}"'.format(Find(self).ident)
-        return output
-
-    def set_resource(self, resource):
-        ## The resource cannot be reset. A pointer can never point to
-        ## more than one resource.
-        assert(self.resource is None)
-        self.resource = resource
-
-    def get_resource(self):
-        return self.resource
-
-    ## WARNING: These functions are obsolete and are there from the
-    ## old model where many inputs where represented as children
-    ## inputs to an input file. With the new model, file identifiers
-    ## have no children,
-    # def set_children(self, children):
-    #     assert(self.children == [])
-    #     self.children = children
-
-    # def unset_children(self):
-    #     self.children = []
-
-    # def get_children(self):
-    #     return self.children
-
-    # def split_resource(self, times, batch_size, fileIdGen):
-    #     if(not self.resource is None):
-    #         ## This works as expected if the file points to a resource
-    #         resources = self.resource.split_resource(times, batch_size)
-    #         split_file_ids = [create_file_id_for_resource(resource, fileIdGen)
-    #                           for resource in resources]
-    #         self.set_children(split_file_ids)
-    #     else:
-    #         ## If the file doesn't point to a resource (meaning that
-    #         ## it is an intermediate file), then we just restrict its
-    #         ## max length, and the implementation should know to only
-    #         ## pass so many lines in this file.
-    #         split_file_ids = [create_split_file_id(batch_size, fileIdGen)
-    #                           for i in range(times)]
-    #         split_file_ids[-1].set_max_length(None)
-    #         self.set_children(split_file_ids)
-
-    ## This must be used by the implementation to only transfer
-    ## max_length lines in this file.
-    def set_max_length(self, max_length):
-        self.max_length = max_length
-
-    def toFileName(self, prefix):
-        output = "{}_file{}".format(prefix, Find(self).ident)
-        return output
-
-    def isNull(self):
-        return self.ident == "NULL"
-
-    ## TODO: This union-find structure is very brittle. It could break
-    ## very easily and it is difficult to reason about the
-    ## files. Replace this with some other structure. Maybe a map that
-    ## keeps the unifications of file identifiers. Make sure that when
-    ## uniting two files, their resources are modified accordingly.
-    def union(self, other):
-        Union(self, other)
-        my_resource = self.get_resource()
-        other_resource = Find(other).get_resource()
-        ## It shouldn't be the case that both resources are not NULL
-        assert(my_resource is None or
-               other_resource is None or
-               my_resource == other_resource)
-
-        if (my_resource is None):
-            self.set_resource(other_resource)
-        elif (other_resource is None):
-            Find(other).set_resource(my_resource)
-
-    def find_fid_list(self, fids):
-        parent_fids = [Find(other_fid) for other_fid in fids]
-        try:
-            return parent_fids.index(Find(self))
-        except ValueError:
-            return None
-
-    def get_ident(self):
-        return self.ident
-
-
 class FileIdGen:
     def __init__(self, next = 0):
         self.next = next + 1
@@ -255,398 +63,6 @@ class FileIdGen:
         fileId = FileId(self.next)
         self.next += 1
         return fileId
-
-## Question: Is this information adequate?
-##
-## TODO: What other information should a node of the IR contain?
-## (other redirections possibly?).
-##
-## (LATER) TODO: Replace all the file references in IR nodes with new
-## Identifiers that we make. IN order to do this, one has to be able
-## to find these file arguments (based on the analysis that we will
-## do).
-##
-## A node represents an abstract program that our system can
-## distribute. At the moment, that is a program with one input and one
-## output stream. Input and output streams are shown as a list of
-## either options or standard channels (such as stdin, stdout,
-## stderr).
-##
-## Nodes also have a category, which shows whether they can be
-## parallelized on their input stream or not.
-class Node:
-    def __init__(self, ast, in_stream=[], out_stream=[],
-                 category="none", stdin=None, stdout=None):
-        self.ast = ast
-        self.in_stream = in_stream
-        self.out_stream = out_stream
-        self.stdin = stdin
-        self.stdout = stdout
-        self.category = category
-
-    def __repr__(self):
-        output = "Node: \"{}\" in:{} out:{}".format(
-            self.ast, self.stdin, self.stdout)
-        return output
-
-    ## These two commands return the flattened fileId list. Meaning
-    ## that they return the children, if they exist.
-    def get_input_file_ids(self):
-        return [self.get_file_id(input_chunk) for input_chunk in self.in_stream]
-
-    def get_output_file_ids(self):
-        return [self.get_file_id(output_chunk) for output_chunk in self.out_stream]
-
-    ## TODO: Rename
-    def get_file_id(self, chunk):
-        if (chunk == "stdout"):
-            return self.stdout
-        elif (chunk == "stdin"):
-            return self.stdin
-        elif (isinstance(chunk, tuple)
-              and len(chunk) == 2
-              and chunk[0] == "option"):
-            ## If an option is asked, this node must be a command.
-            assert(isinstance(self, Command))
-            return self.options[chunk[1]]
-        else:
-            ## TODO: Complete this
-            print(chunk)
-            assert(False)
-
-    ## TODO: Is there a way to abstract the behaviour of these two functions?
-    def set_file_id(self, chunk, value):
-        if (chunk == "stdout"):
-            self.stdout = value
-        elif (chunk == "stdin"):
-            self.stdin = value
-        elif (isinstance(chunk, tuple)
-              and len(chunk) == 2
-              and chunk[0] == "option"):
-            ## If an option is asked, this node must be a command.
-            assert(isinstance(self, Command))
-            self.options[chunk[1]] = value
-        else:
-            ## TODO: Complete this
-            print(chunk, value)
-            assert(False)
-
-    def find_file_id_in_in_stream(self, fileId):
-        return self.find_file_id_in_stream(fileId, self.in_stream)
-
-    def find_file_id_in_out_stream(self, fileId):
-        return self.find_file_id_in_stream(fileId, self.out_stream)
-
-    def find_file_id_in_stream(self, file_id, stream):
-        index = 0
-        for chunk in stream:
-            chunk_file_id = Find(self.get_file_id(chunk))
-            if(Find(file_id) == chunk_file_id):
-                return index
-            index += 1
-        return None
-
-
-## Commands are specific Nodes that can be parallelized if they are
-## classified as stateless, etc...
-class Command(Node):
-    def __init__(self, ast, command, options, in_stream, out_stream,
-                 opt_indices, category, stdin=None, stdout=None):
-        super().__init__(ast, in_stream, out_stream, category, stdin, stdout)
-        self.command = Arg(command)
-        self.options = [make_argument(opt) for opt in options]
-        self.opt_indices = opt_indices
-
-    def __repr__(self):
-        prefix = "Command"
-        if (self.category == "stateless"):
-            prefix = "Stateless"
-        elif (self.category == "pure"):
-            prefix = "Pure"
-        # output = "{}: \"{}\" in:{} out:{} opts:{}".format(
-        #     prefix, self.command, self.stdin, self.stdout, self.options)
-        output = "{}: \"{}\" in:{} out:{}".format(
-            prefix, self.command, self.get_input_file_ids(),
-            self.get_output_file_ids())
-        return output
-
-    def serialize(self):
-        all_opt_indices = [o_i[1] for o_i in (self.opt_indices + self.in_stream + self.out_stream)
-                           if isinstance(o_i, tuple)]
-        all_opt_indices.sort()
-        options_string = " ".join([self.options[opt_i].opt_serialize() for opt_i in all_opt_indices])
-        output = "{} {}".format(self.command, options_string)
-        return output
-
-    def get_non_file_options(self):
-        return [self.options[i] for _, i in self.opt_indices]
-
-    ## Get the file names of the outputs of the map commands. This
-    ## differs if the command is stateless, pure that can be
-    ## written as a map and a reduce, and a pure that can be
-    ## written as a generalized map and reduce.
-    def get_map_output_files(self, input_file_ids, fileIdGen):
-        assert(self.category == "stateless" or self.is_pure_parallelizable())
-        if(self.category == "stateless"):
-            return [fileIdGen.next_file_id() for in_fid in input_file_ids]
-        elif(self.is_pure_parallelizable()):
-            return self.pure_get_map_output_files(input_file_ids, fileIdGen)
-        else:
-            print("Unreachable code reached :(")
-            assert(False)
-            ## This should be unreachable
-
-    def pure_get_map_output_files(self, input_file_ids, fileIdGen):
-        assert(self.is_pure_parallelizable())
-        if(str(self.command) == "sort"):
-            new_output_file_ids = [[fileIdGen.next_file_id()] for in_fid in input_file_ids]
-        elif(str(self.command) == "bigrams_aux"):
-            new_output_file_ids = [[fileIdGen.next_file_id() for i in range(BigramGMap.num_outputs)]
-                                   for in_fid in input_file_ids]
-        elif(str(self.command) == "alt_bigrams_aux"):
-            new_output_file_ids = [[fileIdGen.next_file_id()] for in_fid in input_file_ids]
-        else:
-            print("Unreachable code reached :(")
-            assert(False)
-            ## This should be unreachable
-        return new_output_file_ids
-
-    def duplicate(self, old_input_file_id, new_input_file_ids, new_output_file_ids, fileIdGen):
-        assert(self.category == "stateless" or self.is_pure_parallelizable())
-        if(self.category == "stateless"):
-            return self.stateless_duplicate(old_input_file_id, new_input_file_ids, new_output_file_ids)
-        elif(self.is_pure_parallelizable()):
-            return self.pure_duplicate(old_input_file_id, new_input_file_ids, new_output_file_ids, fileIdGen)
-        else:
-            print("Unreachable code reached :(")
-            assert(False)
-            ## This should be unreachable
-
-    def stateless_duplicate(self, old_input_file_id, input_file_ids, output_file_ids):
-        assert(self.category == "stateless")
-
-        out_edge_file_ids = self.get_output_file_ids()
-        assert(len(out_edge_file_ids) == 1)
-        out_edge_file_id = out_edge_file_ids[0]
-
-        ## Make a new cat command to add after the current command.
-        new_cat = make_cat_node(output_file_ids, out_edge_file_id)
-
-        in_out_file_ids = zip(input_file_ids, output_file_ids)
-
-        new_commands = [self.find_in_out_and_make_duplicate_command(old_input_file_id, in_fid,
-                                                                    out_edge_file_id, out_fid)
-                        for in_fid, out_fid in in_out_file_ids]
-
-        return new_commands + [new_cat]
-
-    def is_pure_parallelizable(self):
-
-        ## TODO: Read from some file that contains information about
-        ## commands instead of hardcoding
-        return (self.category == "pure" and str(self.command) in parallelizable_pure_commands)
-
-    def pure_duplicate(self, old_input_file_id, input_file_ids, output_file_ids, fileIdGen):
-        assert(self.is_pure_parallelizable())
-
-        in_out_file_ids = zip(input_file_ids, output_file_ids)
-
-        simple_map_pure_commands = ["sort",
-                                    "alt_bigrams_aux"]
-        ## This is the category of all commands that don't need a
-        ## special generalized map
-        if(str(self.command) in simple_map_pure_commands):
-
-            ## make_duplicate_command duplicates a node based on its
-            ## output file ids, so we first need to assign them.
-            new_output_file_ids = [fids[0] for fids in output_file_ids]
-
-            ## TODO: Remove the intermediate output file id, as it is not really needed
-            new_commands = [self.find_in_out_and_make_duplicate_command(old_input_file_id, in_fid,
-                                                                        self.stdout, out_fids[0])
-                            for in_fid, out_fids in in_out_file_ids]
-        elif(str(self.command) == "bigrams_aux"):
-            new_commands = [BigramGMap([in_fid] + out_fids)
-                            for in_fid, out_fids in in_out_file_ids]
-        else:
-            print("Unreachable code reached :(")
-            assert(False)
-            ## This should be unreachable
-        return new_commands
-
-
-    ## TODO: This has to change, to not search for the inputs in the
-    ## in_stream
-    def find_in_out_and_make_duplicate_command(self, old_input_file_id, in_fid, old_output_file_id, out_fid):
-
-        ## First find what does the new file identifier refer to
-        ## (stdin, or some argument)
-        new_in_stream_index = self.find_file_id_in_in_stream(old_input_file_id)
-        new_out_stream_index = self.find_file_id_in_out_stream(old_output_file_id)
-        new_input_location = self.in_stream[new_in_stream_index]
-        new_output_location = self.out_stream[new_out_stream_index]
-        return self.make_duplicate_command(in_fid, out_fid, new_input_location, new_output_location)
-
-    def make_duplicate_command(self, in_fid, out_fid, new_input_location, new_output_location):
-        ## TODO: Simplify the code below
-        in_chunk = new_input_location
-        if(in_chunk == "stdin"):
-            new_stdin = in_fid
-        else:
-            ## Question: Is that valid?
-            new_stdin = self.stdin
-
-        if(new_output_location == "stdout"):
-            new_stdout = out_fid
-        else:
-            ## Question: Is that valid?
-            new_stdout = self.stdout
-
-        new_options = self.options.copy()
-        if(isinstance(in_chunk, tuple)
-           and len(in_chunk) == 2
-           and in_chunk[0] == "option"):
-            new_options[in_chunk[1]] = in_fid
-
-        new_in_stream = [new_input_location]
-        new_out_stream = [new_output_location]
-        ## TODO: I probably have to do the same with output options
-
-        new_command = Command(None, # The ast is None
-                              self.command,
-                              new_options,
-                              new_in_stream,
-                              new_out_stream,
-                              self.opt_indices,
-                              self.category,
-                              new_stdin,
-                              new_stdout)
-        ## Question: Is it valid setting stdin and stdout to the stdin
-        ## and stdout of the current command?
-        return new_command
-
-###
-### This part of the file contains special nodes. Either ones that
-### will be later parsed by the DSL, or core nodes like cat, tee, etc.
-###
-
-## (Maybe) Extend this to also take flags as part of its input.
-class Cat(Command):
-    def __init__(self, ast, command, options, in_stream, out_stream,
-                 opt_indices, category, stdin=None, stdout=None):
-        super().__init__(ast, command, options, in_stream, out_stream,
-                         opt_indices, category, stdin=stdin, stdout=stdout)
-
-def make_cat_node(input_file_ids, output_file_id):
-    command = string_to_argument("cat")
-    options = input_file_ids
-    in_stream = [("option", i)  for i in range(len(input_file_ids))]
-    out_stream = ["stdout"]
-    stdout = output_file_id
-    opt_indices = []
-    category = "stateless"
-    ## TODO: Fill the AST
-    ast = None
-    return Cat(ast, command, options, in_stream, out_stream,
-               opt_indices, category, stdout=stdout)
-
-## These are the generalized map and reduce nodes for the
-## `tee s2 | tail +2 | paste s2 -` function. At some point,
-## these should be parsed from some configuration file, but for now
-## we have them hardcoded for commands that we are interested in.
-class BigramGMap(Command):
-    num_outputs = 3
-    def __init__(self, file_ids):
-        command = string_to_argument("bigram_aux_map")
-        options = [string_to_argument(fid.pipe_name()) for fid in file_ids]
-        ## TODO: Generalize the model to arbitrarily many outputs to
-        ## get rid of this hack, where inputs, outputs are just
-        ## written as options.
-        in_stream = []
-        out_stream = []
-        ## TODO: When we generalize the model to have arbitrary
-        ## outputs we can have them also be outputs.
-        opt_indices = [("option", 0), ("option", 1), ("option", 2), ("option", 3)]
-        category = "stateless"
-        super().__init__(None, command, options, in_stream, out_stream,
-                         opt_indices, category)
-
-class BigramGReduce(Command):
-    def __init__(self, file_ids):
-        command = string_to_argument("bigram_aux_reduce")
-        options = self.make_options(file_ids)
-        ## TODO: Generalize the model to arbitrarily many outputs to
-        ## get rid of this hack, where inputs, outputs are just
-        ## written as options.
-        in_stream = []
-        ## WARNING: This cannot be changes to be empty, because then
-        ## it would not be correctly unified in the backend with the
-        ## input of its downstream node.
-        out_stream = [("option", 6)]
-        ## TODO: When we generalize the model to have arbitrary
-        ## outputs we can have them also be outputs.
-        opt_indices = [("option", i) for i in range(0,9) if not i == 6]
-        category = "pure"
-        super().__init__(None, command, options, in_stream, out_stream,
-                         opt_indices, category)
-
-    ## TODO: Make this atrocity prettier
-    def make_options(self, file_ids):
-        options = []
-        for i in range(0, 9):
-            fid = file_ids[i]
-            if(not i == 6):
-                opt = string_to_argument(fid.pipe_name())
-            else:
-                opt = fid
-            options.append(opt)
-        return options
-
-class AltBigramGReduce(Command):
-    def __init__(self, file_ids):
-        command = string_to_argument("alt_bigram_aux_reduce")
-        options = self.make_options(file_ids)
-        ## TODO: Generalize the model to arbitrarily many outputs to
-        ## get rid of this hack, where inputs, outputs are just
-        ## written as options.
-        in_stream = []
-        ## WARNING: This cannot be changes to be empty, because then
-        ## it would not be correctly unified in the backend with the
-        ## input of its downstream node.
-        out_stream = [("option", 2)]
-        ## TODO: When we generalize the model to have arbitrary
-        ## outputs we can have them also be outputs.
-        opt_indices = [("option", 0), ("option", 1)]
-        category = "pure"
-        super().__init__(None, command, options, in_stream, out_stream,
-                         opt_indices, category)
-
-    ## TODO: Make this atrocity prettier
-    def make_options(self, file_ids):
-        options = []
-        for i in range(0, 3):
-            fid = file_ids[i]
-            if(not i == 2):
-                opt = string_to_argument(fid.pipe_name())
-            else:
-                opt = fid
-            options.append(opt)
-        return options
-
-
-class SortGReduce(Command):
-    def __init__(self, file_ids):
-        command = string_to_argument("sort")
-        input_file_ids = file_ids[:-1]
-        output_file_id = file_ids[-1]
-        options = [string_to_argument("-m")] + input_file_ids
-        in_stream = [("option", 1), ("option", 2)]
-        out_stream = ["stdout"]
-        opt_indices = [("option", 0)]
-        category = "pure"
-        super().__init__(None, command, options, in_stream, out_stream,
-                         opt_indices, category, stdout=output_file_id)
-
 
 def create_command_assign_file_identifiers(ast, fileIdGen, command, options, stdin=None, stdout=None):
     in_stream, out_stream, opt_indices = find_command_input_output(command, options, stdin, stdout)
@@ -682,20 +98,6 @@ def replace_file_arg_with_id(opt_or_channel, command, fileIdGen):
     else:
         return fid_or_resource
 
-
-class Arg:
-    def __init__(self, arg_char_list):
-        if(isinstance(arg_char_list, Arg)):
-           ## TODO: We might need to copy here?
-           self.arg_char_list = arg_char_list.arg_char_list
-        else:
-           self.arg_char_list = arg_char_list
-
-    def __repr__(self):
-        return format_arg_chars(self.arg_char_list)
-
-    def opt_serialize(self):
-        return self.__repr__()
 
 ## TODO: Make dictionary that holds command information (category,
 ## inputs-outputs, etc...)
@@ -744,17 +146,18 @@ def find_command_category(command, options):
     ## TODO: Make a proper search that returns the command category
     print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
 
+    # NOTE order of class declaration in definition file is important, as it
+    # dictates class precedence in the following search
+    for command_class, commands in command_classes.items():
+        command_list = list(map(get_command_from_definition, commands))
 
-    ## TODO: Make this cleaner and more canonical
-    if (command_string in stateless_commands or
-            command_string.split("/")[-1] in stateless_commands):
-        return "stateless"
-    elif (command_string in pure_commands):
-        return "pure"
-    elif (command_string == "comm"):
+        if command_string or command_string.split("/")[-1] in command_list:
+            return command_class
+
+    if command_string == 'comm':
         return is_comm_pure(options)
-    else:
-        return "none"
+
+    return 'none'
 
 ## TODO: This is clearly incomplete
 def is_comm_pure(options):
