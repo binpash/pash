@@ -13,6 +13,8 @@ from union_find import *
 from ir_utils import *
 from util import *
 
+import config
+
 # TODO get all this from context
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'DISH_TOP' in os.environ:
@@ -127,7 +129,7 @@ def find_command_category(command, options):
 
     # NOTE order of class declaration in definition file is important, as it
     # dictates class precedence in the following search
-    for command_class, commands in command_classes.items():
+    for command_class, commands in config.command_classes.items():
         command_list = list(map(get_command_from_definition, commands))
 
         if (command_string in command_list
