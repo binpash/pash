@@ -3,10 +3,6 @@ from union_find import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
 
-from definitions.ir.nodes.alt_bigram_g_reduce import *
-from definitions.ir.nodes.bigram_g_map import *
-from definitions.ir.nodes.bigram_g_reduce import *
-from definitions.ir.nodes.sort_g_reduce import *
 
 import pickle
 
