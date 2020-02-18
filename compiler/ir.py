@@ -7,6 +7,7 @@ from definitions.ir.arg import *
 from definitions.ir.node import *
 from definitions.ir.command import *
 from definitions.ir.resource import *
+from definitions.ir.nodes.cat import *
 
 from union_find import *
 from ir_utils import *
