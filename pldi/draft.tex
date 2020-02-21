@@ -358,7 +358,8 @@ Experiments with complex pipelines show substantial speedups and the ability to 
 \item To benefit from parallelism, the current options are
   extreme. Either very fine-grained and low level (parallelism using
   fine-grained C libraries) for maximum performance, or very coarse
-  grained and bulky where one has to use a proper big-data framework.
+  grained and bulky where one has to use a proper big-data
+  framework. (Can we fit the shell ones here (gnu-parallel, etc))
 \item The common thing is that one needs to rewrite big part of their
   application, often requiring expertise and redesigning its
   architecture, in order to get benefits that in the end might not
@@ -368,6 +369,7 @@ Experiments with complex pipelines show substantial speedups and the ability to 
   that a large subset of the shell language can be encoded in a
   dataflow graph model, a flexible representation that allows for
   parallelization optimizations.
+\item Contributions:
 \item Study of the shell primitives, identification of
   families/classes of commands that share
   distributability/parallelization properties, and a classification of
@@ -1094,65 +1096,55 @@ parallelization.
 \section{Dataflow Graph Model}
 \label{ir}
 
-The core of \sys is a dataflow graph model, inspired by the ones used in popular distributed stream processing systems~\sx{related}.
-% such as MapReduce \cite{mapreduce:08} and Apache Spark \cite{spark:12}).
-These systems introduce data parallelism by parallelizing nodes of the dataflow graph.
-Unfortunately, % their optimizations in many of these systems 
- they often do not preserve the model's semantics, blurring the lines between specification, optimization, and implementation.
-In contrast, \sys's dataflow model inherently supports the data parallelism found in shell pipelines.
-More specifically, it develops a set of parallelization-exposing optimizations represented as semantics-preserving graph transformations, effectively exposing data parallelism as task parallelism.
-The \sys optimizer then applies these transformations in an iterative way, optimizing the program to exploit the available computational resources.
+The core of \sys is a dataflow graph model, inspired by the ones used
+in popular distributed stream processing systems~\sx{related}. The
+dataflow model can express a large subset of Shell programs and
+inherently supports the data parallelism found in shell pipelines by
+exposing it as task parallelism. More preciely, we have developed a
+set of parallelization-exposing optimizations represented as
+semantics-preserving graph transformations. These transformations can
+then be applied in an iterative way, optimizing the program to utilize
+available computational resources.
 
-%% The standard dataflow graph exposes task parallelism. Different nodes
-%% in the graph can be executed concurrently, communicating through the
-%% edges.
-%% Task level parallelism is already exposed by the shell, by using
-%% pipes \ttt{|} and the background operator \ttt{\&}.
-%% Unfortunately, simple task parallelism leaves a lot to be desired,
-%% since scaling a computation requires manually introducing more
-%% operators.
+%% In order to effectively apply optimizations and distribute a shell
+%% script, \sys first translates it to a manipulable representation.
 
-%% In order to adequately utilize the available computational resources,
-%% a distributed implementation should exploit data parallelism. Data
-%% parallelism is based on the observation that some operations produce
-%% the same result when performed independently on subsets of the input
-%% data, merging the results afterwards. Exploiting data parallelism is
-%% one of the major reasons that popular distributed stream processing
-%% systems (such as MapReduce \cite{mapreduce:08} and Apache Spark
-%% \cite{spark:12}) achieve significant performance. 
-
-%% A very important consequence of this is that we can iteratively apply
-%% optimizations that expose data parallelism, or even revert them when
-%% the resulting dataflow graph is too wide. This flexibility unifies the
-%% unoptimized and optimized versions of a computation, enabling thinking
-%% about them with the same conceptual tools.
-
-In order to effectively apply optimizations and distribute a shell script, \sys first translates it to a manipulable representation.
-\sys first introduces a variant of the standard dataflow graph model as a candidate intermediate representation~\sx{graph-components}.
-The main benefit of this model is that it exposes both task and data parallelism.
-It then defines a set of optimizations that expose and exploit the data parallelism of commands in \sta and \pur as semantics-preserving graph transformations~\sx{ir:transformations}.
+\kk{It might be beneficial to do a full pass over this section
+  describing the new model (where a node that has many sequential
+  inputs is always prepended with a cat node.}
 
 \subsection{Graph Components}
 \label{graph-components}
 
-As mentioned earlier~\sx{bg:pipelines}, the two main abstractions of the
-shell are (i) files (or pipes, \emph{viz.} correspondence between files and pipes in \S\ref{bg:pipelines}) that contain data, and (ii) commands that communicate
-through these files. Based on that, \sys's graph model defines nodes to represent commands and edges to represent files.
+As mentioned earlier~\sx{bg:pipelines}, the two main abstractions of
+the shell are (i) files (or pipes, \emph{viz.} correspondence between
+files and pipes in \S\ref{bg:pipelines}) that contain data, and (ii)
+commands that communicate through these files. Based on that, \sys's
+graph model defines nodes to represent commands and edges to represent
+files.
 
 \paragraph{Nodes---Commands}
 
 For a set $D$, we write $D\kstar$ to denote the set of all finite
-words over $D$. For words $x, y \in D\kstar$, we write $x \cdot y$
-or $xy$ to denote their concatenation. We write $\eps$ for the empty
-word. We say that $x$ is a \emph{prefix} of $y$, and we write $x \leq y$, if there is a word $z$ such that $y = xz$. It is easy to see that $\leq$ is a partial order, often called the \emph{prefix order}.
+words over $D$. For words $x, y \in D\kstar$, we write $x \cdot y$ or
+$xy$ to denote their concatenation. We write $\eps$ for the empty
+word. We say that $x$ is a \emph{prefix} of $y$, and we write $x \leq
+y$, if there is a word $z$ such that $y = xz$. It is easy to see that
+$\leq$ is a partial order, often called the \emph{prefix order}.
 
-A node $f$ of the graph represents a function from one (possibly empty)
-input stream to an output stream $f : D\kstar \to D\kstar$, where $D$
-represents the basic data type of a line of characters. This
-representation captures the majority of shell commands. We require that
-the function $f$ is monotone w.r.t.\ the prefix order. This captures
-the idea that a node cannot retract output after it has been emitted.
-%More formally, $\forall f, x, y, f(x) = y$, then for any $x'$, there exists $y'$ such that $f(x.x') = y.y'$, where $.$ is standard
+A node $f$ of the graph represents a function from one (possibly
+empty) input stream to an output stream $f : D\kstar \to D\kstar$,
+where $D$ represents the basic data type of a line of characters
+\kk{We have to extend this to more general nodes. It has to be from
+  many inputs to many outputs. The commands that we optimize at the
+  moment are the ones that can be rewritten to take one stream input
+  to one stream output, and then some other inputs and outputs that
+  are considered static.}. This representation captures the majority
+of shell commands. We require that the function $f$ is monotone
+w.r.t.\ the prefix order. This captures the idea that a node cannot
+retract output after it has been emitted.
+%More formally, $\forall f, x, y, f(x) = y$, then for any $x'$, there
+%exists $y'$ such that $f(x.x') = y.y'$, where $.$ is standard
 %concatenation and will be omitted when obvious.
 An example of a node is the following command:
 
@@ -1430,6 +1422,9 @@ v(x_1.x_2...x_n) \Rightarrow r(m(x_1).m(x_2)...m(x_n))$.
 %% tofill
 %% \end{lemma}
 
+\kk{I think that we should probably add the ``new'' split optimization
+  (and maybe any others that we develop until then) here.}
+
 In addition to node splits, we can also perform edge splits in order
 to increase the number of incoming edges for some nodes to further expose
 possible data parallelism. In cases where the edge refers to a real file, the
@@ -1553,9 +1548,17 @@ If the command is unsafe, it is still added to the dataflow graph, but is not fu
 
 An important consideration is that due to the highly dynamic nature of
 the shell, the safety properties that are mentioned above cannot be
-soundly checked statically.
-For safety purposes, \sys takes a conservative approach where it does not parallelize nodes without complete information.
-For example, the translation pass cannot infer that two un-expand strings do not refer to the same file identifier, and as a result does not parallelize this sub-expression.
+soundly checked statically.  For safety purposes, \sys takes a
+conservative approach where it does not parallelize nodes without
+complete information.  For example, the translation pass cannot infer
+that two un-expand strings do not refer to the same file identifier,
+and as a result does not parallelize this sub-expression.
+
+\kk{Ideally we would want to talk here about the as-late-as possible
+  dish translation that allows us to be safe despite the Shell's
+  dynamic nature. I think that this is a great point about the
+  work. Maybe we should also focus on implementing it before the OSDI
+  deadline.}
 
 \subsection{Optimizer}
 \label{optimizer}
@@ -1946,41 +1949,76 @@ A simpler pipeline that builds on built-in \unix primitives might be outperforme
 \section{Related Work}
 \label{related}
 
-At a high level, techniques for re-writing programs to exploit distribution fall under a wide spectrum that ranges from
-  fully manual (but, ideally, optimal) to 
-  fully automated (but potentially sub-optimal) distribution   (Fig.~\ref{fig:spectrum}).
-A significant concern with approaches that require input from developers is correctness:
-  developers---often neither experts in distributed systems nor educated on the internals of the code they depend on---can easily break the semantics of centralized programs, especially when these depend on existing code (such as libraries or shell commands).
+At a high level, techniques for re-writing programs to exploit
+distribution fall under a wide spectrum that ranges from fully manual
+(but, ideally, optimal) to fully automated (but potentially
+sub-optimal) distribution (Fig.~\ref{fig:spectrum}).  A significant
+concern with approaches that require input from developers is
+correctness: developers---often neither experts in distributed systems
+nor educated on the internals of the code they depend on---can easily
+break the semantics of centralized programs, especially when these
+depend on existing code (such as libraries or shell commands).
 
 \paragraph{Distributed Operating Systems and Shells}
-A plethora of systems assist in the construction of distributed software.
-Distributed operating systems~\cite{ousterhout1988sprite, mullender1990amoeba, pike1990plan9, barak1998mosix} and programming languages~\cite{erlang:96, acute:05, mace:07, cloudhaskell:11}
-hide many distribution problems, as long as a program uses the provided abstractions---which are strongly coupled to the underlying operating or runtime system.
+A plethora of systems assist in the construction of distributed
+software.  Distributed operating systems~\cite{ousterhout1988sprite,
+  mullender1990amoeba, pike1990plan9, barak1998mosix} and programming
+languages~\cite{erlang:96, acute:05, mace:07, cloudhaskell:11} hide
+many distribution problems, as long as a program uses the provided
+abstractions---which are strongly coupled to the underlying operating
+or runtime system.
 % simplify many of the problems of distribution and
 
-Several packages expose commands for specifying parallelism on modern \unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}. %  or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
-Different from \sys, their effectiveness is predicated upon explicit and careful invocation and is limited to embarrassingly parallel (and short) programs.
-Often, these commands provide options to support an array of special sub-cases---a stark contradiction to the celebrated \unix philosophy.
-For example, \ttt{parallel} contains flags such as \ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs}, that a \unix user can achieve using \ttt{head}, \ttt{sed}, and \ttt{xargs}; it also includes other programs with complex semantics, such as the ability transfer files between computers, separate text files, and parse CSV.
-\sys embraces the \unix philosophy and simply attempts to rewrite pipelines more efficiently.
+Several packages expose commands for specifying parallelism on modern
+\unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun},
+\textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU}
+\ttt{parallel}~\cite{Tange2011a}. % or any manual
+rewriting~\cite{mapreduce:08, ciel:11, spark:12}.  Different from
+\sys, their effectiveness is predicated upon explicit and careful
+invocation and is limited to embarrassingly parallel (and short)
+programs.  Often, these commands provide options to support an array
+of special sub-cases---a stark contradiction to the celebrated \unix
+philosophy.  For example, \ttt{parallel} contains flags such as
+\ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs}, that a \unix
+user can achieve using \ttt{head}, \ttt{sed}, and \ttt{xargs}; it also
+includes other programs with complex semantics, such as the ability
+transfer files between computers, separate text files, and parse CSV.
+\sys embraces the \unix philosophy and simply attempts to rewrite
+pipelines more efficiently.
 
-Several shells~\cite{duff1990rc, mcdonald1988support, dagsh:17} add primitives for non-linear pipe topologies---some of which target distribution.
-Here too, however, developers are expected to manually rewrite scripts to exploit these new primitives.
+Several shells~\cite{duff1990rc, mcdonald1988support, dagsh:17} add
+primitives for non-linear pipe topologies---some of which target
+distribution.  Here too, however, developers are expected to manually
+rewrite scripts to exploit these new primitives.
 
-Recently, the Smoosh authors have argued that certain shell features are useful for making concurrency explicit~\cite{smoosh:18}.
-Their argument is somewhat antithetical to \sys, % but rather that the shell language is itself an good DSL for concurrency;
-  which argues for automatically (and correcctly) parallelizing pipelines when users have not expressed parallelism explicitly---hence distribution-\emph{oblivious} shell scripting.
+Recently, the Smoosh authors have argued that certain shell features
+are useful for making concurrency explicit~\cite{smoosh:18}.  Their
+argument is somewhat antithetical to \sys, % but rather that the shell
+language is itself an good DSL for concurrency; which argues for
+automatically (and correcctly) parallelizing pipelines when users have
+not expressed parallelism explicitly---hence
+distribution-\emph{oblivious} shell scripting.
 
 
 \paragraph{Cluster Computing}
-Modern analytics frameworks~\cite{mapreduce:08, ciel:11, spark:12, naiad:13} and domain-specific languages~\cite{alvaro2011consistency, distal:13, meiklejohn2015lasp} go a step further in terms of automation by providing a few carefully-designed primitives.
-These primitives make strong assumptions about the nature of the computation---\eg strongly-eventual commutative functions that can proceed in parallel.
-By targeting specific classes of computation (\emph{viz.} \sys's distributability), they render distributed computation efficiently.
+Modern analytics frameworks~\cite{mapreduce:08, ciel:11, spark:12,
+  naiad:13} and domain-specific languages~\cite{alvaro2011consistency,
+  distal:13, meiklejohn2015lasp} go a step further in terms of
+automation by providing a few carefully-designed primitives.  These
+primitives make strong assumptions about the nature of the
+computation---\eg strongly-eventual commutative functions that can
+proceed in parallel.  By targeting specific classes of computation
+(\emph{viz.} \sys's distributability), they render distributed
+computation efficiently.
 
 % Lack of generality, no formal guaratees, their setup and is too tedious 
-\sys chooses a more general approach:
-  it does not require users to set up a new framework for every new class of computation they need to execute, nor to rewrite different parts of their computation using the specific abstractions provided by each framework they use.
-It also takes a more principled approach: by developing the semantic model outlined earlier, it can guarantee that transformations are correct with respect to the sequential program.
+\sys chooses a more general approach: it does not require users to set
+up a new framework for every new class of computation they need to
+execute, nor to rewrite different parts of their computation using the
+specific abstractions provided by each framework they use.  It also
+takes a more principled approach: by developing the semantic model
+outlined earlier, it can guarantee that transformations are correct
+with respect to the sequential program.
 
 % % Although still a research prototype, \sys's setup and deployment is simpler.
 % It also does not require these specialized frameworks, manually (re)write , and 
@@ -1991,12 +2029,20 @@ It also takes a more principled approach: by developing the semantic model outli
 
 
 \paragraph{Annotation-based Distribution}
-Recent systems on light-touch distribution, such as Ignis~\cite{ignis:19} and Mozart~\cite{mozart:19}, are more general than cluster-computing frameworks.
-They also lower (but not entirely eliminate) developer effort by automating most of the rewriting process.
+Recent systems on light-touch distribution, such as
+Ignis~\cite{ignis:19} and Mozart~\cite{mozart:19}, are more general
+than cluster-computing frameworks.  They also lower (but not entirely
+eliminate) developer effort by automating most of the rewriting
+process.
 % Both work on high-level, managed languages---server-side JavaScript for Ignis and Python for Mozart---that allow runtime transformations without affecting the broader environment under which a program executes.
-For the critical points where user input is required, they provide a high-level declarative DSL with varying (but limited) degrees of expressive power.
-% Annotations are used by ---complicated by the use of third-party libraries similar to \sys's extensions.
-Unfortunately, a challenge with this approach is that users composing applications by using third-party libraries do not understand their distributability details well-enough to annotate them.
+For the critical points where user input is required, they provide a
+high-level declarative DSL with varying (but limited) degrees of
+expressive power.
+% Annotations are used by ---complicated by the use of third-party
+% libraries similar to \sys's extensions.
+Unfortunately, a challenge with this approach is that users composing
+applications by using third-party libraries do not understand their
+distributability details well-enough to annotate them.
 
 \sys occupies a different point in the design space, by removing any work from composers and adding a small load to developers.
 % More specifically, it is designed to be used automatically by composers,
@@ -2009,11 +2055,19 @@ Its DSL is designed to be more heavy-weight than Ignis' declarative recipes or M
 
 % Nice intro: http://homepages.inf.ed.ac.uk/bfranke/Publications/pldi121-tournavitis.pdf
 \paragraph{Low-level Parallelization}
-Instruction-level parallelization has a longer history, starting from explicit \ttt{DOALL} and \ttt{DOACROSS} annotations~\cite{par1, par2} and continuing with compilers that attempt to automatically extract parallelism~\cite{padua1993polaris,hall1996maximizing}.
-These systems operate at a lower level than \sys (\eg that of instructions or loops instead of pipe boundaries) and typically do not exploit runtime information.
+Instruction-level parallelization has a longer history, starting from
+explicit \ttt{DOALL} and \ttt{DOACROSS} annotations~\cite{par1, par2}
+and continuing with compilers that attempt to automatically extract
+parallelism~\cite{padua1993polaris,hall1996maximizing}.  These systems
+operate at a lower level than \sys (\eg that of instructions or loops
+instead of pipe boundaries) and typically do not exploit runtime
+information.
 
-More recent work focuses on extracting parallelism from domain-specific programming models~\cite{cilk5, streamIt, galois} and interactive parallelization tools~\cite{parascope, ipat}.
-These tools simplify the expression of parallelism, but still require programmers to get involved in discovering and exposing parallelism.
+More recent work focuses on extracting parallelism from
+domain-specific programming models~\cite{cilk5, streamIt, galois} and
+interactive parallelization tools~\cite{parascope, ipat}.  These tools
+simplify the expression of parallelism, but still require programmers
+to get involved in discovering and exposing parallelism.
 %  actively involve the programmer in the detection and mapping of application parallelism, but still demand great effort from the user. 
 Moreover, the insights behind these attempts are significantly different from ours, as they extract parallelism statically during compilation instead of dynamically during runtime.
 %Despite significant progress~\cite{}, it remains due to its need for complex program analysis and the unknown factors (such as input data range) during compilation.
@@ -2042,20 +2096,30 @@ Moreover, the insights behind these attempts are significantly different from ou
 
 \paragraph{Correct Distribution of Dataflow Graphs}
 %
-The dataflow graph is a prevalent model in several areas
-of data processing, as it is used by several batch-~\cite{mapreduce:08,
+The dataflow graph is a prevalent model in several areas of data
+processing, as it is used by several batch-~\cite{mapreduce:08,
   spark:12} and stream-processing systems~\cite{murray2013naiad,
-  carbone2015flink}. Despite its popularity, 
-most systems perform optimizations that do not preserve its semantics,
-introducing subtle erroneous behaviours. Recent work~\cite{HSSGG2014,
-  SHGW2015, MSAIT2019} attempts to address this issue by performing
-optimizations only in cases where correctness is
-preserved. \sys draws inspiration from these efforts, as we are
-also interested in optimizations that exploit parallelization but
-preserve the semantics of the underlying model. However, our proposed
-dataflow model is different from these other works, as nodes in our
-model read from their inputs \emph{in sequence}. Due to this
-intricacy, previous work is not straightforwardly applicable.
+  carbone2015flink}. Despite its popularity, most systems perform
+optimizations that do not preserve its semantics, introducing subtle
+erroneous behaviours. Recent work~\cite{HSSGG2014, SHGW2015,
+  MSAIT2019} attempts to address this issue by performing
+optimizations only in cases where correctness is preserved. \sys draws
+inspiration from these efforts, as we are also interested in
+optimizations that exploit parallelization but preserve the semantics
+of the underlying model. However, our proposed dataflow model is
+different from these other works, as nodes in our model read from
+their inputs \emph{in sequence}. Due to this intricacy, previous work
+is not straightforwardly applicable.
+
+%% Possible points to add: These systems introduce data parallelism by
+%% parallelizing nodes of the dataflow graph.  Unfortunately, they
+%% often do not preserve the model's semantics, blurring the lines
+%% between specification, optimization, and implementation.  In
+%% contrast, \sys's dataflow model inherently supports the data
+%% parallelism found in shell pipelines.  More specifically, it
+%% develops a set of parallelization-exposing optimizations
+%% represented as semantics-preserving graph transformations,
+%% effectively exposing data parallelism as task parallelism.
 
 %% \cite{HSSGG2014, SHGW2015} discuss optimizing transformations, but
 %% their correctness is established using informal arguments based on
