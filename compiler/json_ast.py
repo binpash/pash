@@ -1,10 +1,18 @@
 import json
+import os
 import re
 
 from subprocess import run, PIPE
 
-## TODO: Don't hardcode this
-JSON_TO_SHELL_APP="../parser/json_to_shell.native"
+GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
+if 'DISH_TOP' in os.environ:
+    DISH_TOP = os.environ['DISH_TOP']
+else:
+    DISH_TOP = subprocess.run(GIT_TOP_CMD, capture_output=True,
+            text=True).stdout.rstrip()
+
+SHELL_TO_JSON = os.path.join(DISH_TOP, "parser/parse_to_json.native")
+JSON_TO_SHELL= os.path.join(DISH_TOP, "parser/json_to_shell.native")
 
 ### --- From JSON --- ###
 
@@ -45,7 +53,7 @@ def serialize_ast_json(ast):
 
 
 def json_to_shell(json_string):
-    subproc = run([JSON_TO_SHELL_APP], stdout=PIPE, input=json_string, encoding='ascii')
+    subproc = run([JSON_TO_SHELL], stdout=PIPE, input=json_string, encoding='ascii')
     return subproc.stdout
 
 def ast_to_shell(ast):
