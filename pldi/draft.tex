@@ -1,5 +1,7 @@
 %% For double-blind review submission, w/o CCS and ACM Reference (max submission space)
-\documentclass[sigplan,10pt,review,anonymous]{acmart}
+% Limit: 25 pages
+% https://icfp20.sigplan.org/track/icfp-2020-papers#Call-for-Papers
+\documentclass[acmsmall,10pt,review,anonymous]{acmart}
 \settopmatter{printfolios=false,printccs=false,printacmref=false}
 %% For double-blind review submission, w/ CCS and ACM Reference
 %\documentclass[sigplan,review,anonymous]{acmart}\settopmatter{printfolios=true}
@@ -325,6 +327,25 @@ Experiments with complex pipelines show substantial speedups and the ability to 
 
 \section{Introduction}
 \label{intro}
+
+\nv{I don't think the intro needs any serious rewrite, apart from deleting any
+notion of distribution and highlighting parallel processing.
+
+Key tasks, in rough order of importance:
+  (i) change title and intro to avoid distribution
+  (ii) cleanup and rewrite sections 4, 5: introduce our high-level figure, talk
+  about things in order, add ordering in graphs, generally refine and beautify
+  as much as possible.
+  (iii) tighten section 2, everything in there has to be related to some part of
+  the story---make the connection explicit
+  (iv) Pump up evaluation: could we add 3 more micro-benchmarks? could we add
+  1--2 more macro-benchmarks?
+  (v) since this is IFCP, could we add some simple semantics and derivation
+  rules? we should certainly be able to describe some of the optimizations as
+  congruence rules.
+  (vi) complete the related work with some operating-systems literature.
+}
+  
 
 \kk{After discussion on Wednesday Jan 8: Modify the narrative of this
   paper to talk about data processing in the Shell. Make this the main
