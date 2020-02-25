@@ -48,3 +48,4 @@ dependencies: libdash
 	opam install ctypes.0.11.5
 	opam install ctypes-foreign
 	opam install atdgen
+	opam install dum
