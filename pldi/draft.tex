@@ -328,7 +328,59 @@ Experiments with complex pipelines show substantial speedups and the ability to 
 \section{Introduction}
 \label{intro}
 
-\kk{After discussion on Wednesday Jan 8: Modify the narrative of this paper to talk about data processing in the Shell. Make this the main focus of the paper. This simplifies the narrative and allows us to not talk about late planner activation as well as environment variables. It also justifies why we only deal with pure and stateless. Note that this is a very expressive model, as shown by our benchmark suite. Note: Rememeber to clearly describe the subset of the shell that we handle. To be more precise the compositional operator of the shell that we can handle.}
+\kk{After discussion on Wednesday Jan 8: Modify the narrative of this
+  paper to talk about data processing in the Shell. Make this the main
+  focus of the paper. This simplifies the narrative and allows us to
+  not talk about late planner activation as well as environment
+  variables. It also justifies why we only deal with pure and
+  stateless. Note that this is a very expressive model, as shown by
+  our benchmark suite. Note: Rememeber to clearly describe the subset
+  of the shell that we handle. To be more precise the compositional
+  operator of the shell that we can handle.}
+
+\kk{New intro sketch:}
+
+\kk{Note: A point that we need to establish and convince the readers
+  about is that the Shell IS used already for data-processing, and
+  that we are not just proposing it as an alternative to other
+  systems. We do not propose migrating to shell scripts if you already
+  have a parallel/efficient solution. I am not sure if that needs a
+  specific paragraph of its own at the start of the
+  introduction. Like: ``Consider the following bash script that does
+  some simple data processing... Examples like that exists in several
+  domains/applications (examples, cite).''}
+
+\begin{itemize}
+\item Why is parallelism important (especially in the context of data
+  processing). Significant performance benefits as most computer
+  systems today have multiple processors that are under utilized
+\item (Similarly to how it is now) unfortunately, it is quite hard
+  reaping these benefits in contrast to sequential data
+  processing. [Show Bash pipeline].
+\item To benefit from parallelism, the current options are
+  extreme. Either very fine-grained and low level (parallelism using
+  fine-grained C libraries) for maximum performance, or very coarse
+  grained and bulky where one has to use a proper big-data framework.
+\item The common thing is that one needs to rewrite big part of their
+  application, often requiring expertise and redesigning its
+  architecture, in order to get benefits that in the end might not
+  explain the cost.
+\item To address this issue, we propose Dish, a thin layer that
+  automatically! parallelizes a given shell script. Key insight is
+  that a large subset of the shell language can be encoded in a
+  dataflow graph model, a flexible representation that allows for
+  parallelization optimizations.
+\item Study of the shell primitives, identification of
+  families/classes of commands that share
+  distributability/parallelization properties, and a classification of
+  coreutils/POSIX commands in these distributability properties.
+\item Dataflow graph model that is suitable for the shell
+\item A set of optimizations on this model that can be thought of as
+  rewriting rules on the dataflow graph, that are sound and exploit
+  parallelism.
+\end{itemize}
+
+\kk{End of new intro sketch}
 
 % 1. Shell scripting; pipelines, in particular, are a common abstraction for expressing filters
 % They are an easy way to , because they combine a set of assumptions that work well with Unix

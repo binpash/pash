@@ -3,7 +3,11 @@ from union_find import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
 
+
 import pickle
+
+PYTHON_VERSION = "python3.8"
+PLANNER_EXECUTABLE = "distr_plan.py"
 
 ##
 ## Compile AST -> Extended AST with IRs
@@ -18,15 +22,24 @@ import pickle
 ## without knowing about previous or later subtrees that can be
 ## distributed. Is that reasonable?
 compile_cases = {
-        "Pipe": (lambda fileIdGen: lambda ast_node: compile_node_pipe(ast_node, fileIdGen)),
-        "Command": (lambda fileIdGen: lambda ast_node: compile_node_command(ast_node, fileIdGen)),
-        "And": (lambda fileIdGen: lambda ast_node: compile_node_and_or_semi(ast_node, fileIdGen)),
-        "Or": (lambda fileIdGen: lambda ast_node: compile_node_and_or_semi(ast_node, fileIdGen)),
-        "Semi": (lambda fileIdGen: lambda ast_node: compile_node_and_or_semi(ast_node, fileIdGen)),
-        "Redir": (lambda fileIdGen: lambda ast_node: compile_node_redir_subshell(ast_node, fileIdGen)),
-        "Subshell": (lambda fileIdGen: lambda ast_node: compile_node_redir_subshell(ast_node, fileIdGen)),
-        "Background": (lambda fileIdGen: lambda ast_node: compile_node_background(ast_node, fileIdGen)),
-        "Defun": (lambda fileIdGen: lambda ast_node: compile_node_defun(ast_node, fileIdGen))
+        "Pipe": (lambda fileIdGen, config:
+                 lambda ast_node: compile_node_pipe(ast_node, fileIdGen, config)),
+        "Command": (lambda fileIdGen, config:
+                    lambda ast_node: compile_node_command(ast_node, fileIdGen, config)),
+        "And": (lambda fileIdGen, config:
+                lambda ast_node: compile_node_and_or_semi(ast_node, fileIdGen, config)),
+        "Or": (lambda fileIdGen, config:
+               lambda ast_node: compile_node_and_or_semi(ast_node, fileIdGen, config)),
+        "Semi": (lambda fileIdGen, config:
+                 lambda ast_node: compile_node_and_or_semi(ast_node, fileIdGen, config)),
+        "Redir": (lambda fileIdGen, config:
+                  lambda ast_node: compile_node_redir_subshell(ast_node, fileIdGen, config)),
+        "Subshell": (lambda fileIdGen, config:
+                     lambda ast_node: compile_node_redir_subshell(ast_node, fileIdGen, config)),
+        "Background": (lambda fileIdGen, config:
+                       lambda ast_node: compile_node_background(ast_node, fileIdGen, config)),
+        "Defun": (lambda fileIdGen, config:
+                  lambda ast_node: compile_node_defun(ast_node, fileIdGen, config))
         }
 
 ir_cases = {
@@ -34,10 +47,14 @@ ir_cases = {
         ## of them must have been become IRs
         ##
         ## "Pipe": (lambda c, b, i: {c : [b, i]}),
-        "Command":   (lambda irFileGen: lambda c, l, ass, args, r: replace_irs_command(c, l, ass, args, r, irFileGen)),
-        "And" :      (lambda irFileGen: lambda c, l, r: replace_irs_and_or_semi(c, l, r, irFileGen)),
-        "Or" :       (lambda irFileGen: lambda c, l, r: replace_irs_and_or_semi(c, l, r, irFileGen)),
-        "Semi" :     (lambda irFileGen: lambda c, l, r: replace_irs_and_or_semi(c, l, r, irFileGen)),
+        "Command":   (lambda irFileGen, config:
+                      lambda c, l, ass, args, r: replace_irs_command(c, l, ass, args, r, irFileGen, config)),
+        "And" :      (lambda irFileGen, config:
+                      lambda c, l, r: replace_irs_and_or_semi(c, l, r, irFileGen, config)),
+        "Or" :       (lambda irFileGen, config:
+                      lambda c, l, r: replace_irs_and_or_semi(c, l, r, irFileGen, config)),
+        "Semi" :     (lambda irFileGen, config:
+                      lambda c, l, r: replace_irs_and_or_semi(c, l, r, irFileGen, config)),
 
         ## TODO: Complete these
         # "Redir" : (lambda c, l, n, r: compile_node_redir(c, l, n, r, fileIdGen)),
@@ -47,20 +64,20 @@ ir_cases = {
         }
 
 
-def compile_ast(ast_object, fileIdGen):
-    return compile_node(ast_object, fileIdGen)
+def compile_ast(ast_object, fileIdGen, config):
+    return compile_node(ast_object, fileIdGen, config)
 
-def compile_node(ast_object, fileIdGen):
+def compile_node(ast_object, fileIdGen, config):
     global compile_cases
-    return ast_match(ast_object, compile_cases, fileIdGen)
+    return ast_match(ast_object, compile_cases, fileIdGen, config)
 
-def compile_node_pipe(ast_node, fileIdGen):
+def compile_node_pipe(ast_node, fileIdGen, config):
     ## Note: Background indicates when the pipe should be run in the background.
     ##
     ## TODO: Investigate whether we can optimize more by running
     ##       the background pipes in a distributed fashion.
-    compiled_pipe_nodes = combine_pipe([compile_node(pipe_item, fileIdGen)
-                                            for pipe_item in ast_node.items])
+    compiled_pipe_nodes = combine_pipe([compile_node(pipe_item, fileIdGen, config)
+                                        for pipe_item in ast_node.items])
 
     if (len(compiled_pipe_nodes) == 1):
         ## Note: When calling combine_pipe_nodes (which
@@ -100,7 +117,7 @@ def combine_pipe(ast_nodes):
 
     return [combined_nodes]
 
-def compile_node_command(ast_node, fileIdGen):
+def compile_node_command(ast_node, fileIdGen, config):
     construct_str = ast_node.construct.value
     old_ast_node = make_kv(construct_str, [ast_node.line_number,
         ast_node.assignments, ast_node.arguments, ast_node.redir_list])
@@ -109,7 +126,7 @@ def compile_node_command(ast_node, fileIdGen):
 
     ## TODO: We probably also need to do something with the redirection list.
 
-    compiled_assignments = compile_assignments(ast_node.assignments, fileIdGen)
+    compiled_assignments = compile_assignments(ast_node.assignments, fileIdGen, config)
 
     ## If there are no arguments, the command is just an
     ## assignment
@@ -122,7 +139,7 @@ def compile_node_command(ast_node, fileIdGen):
     else:
         arguments = ast_node.arguments
         command_name = arguments[0]
-        options = compile_command_arguments(arguments[1:], fileIdGen)
+        options = compile_command_arguments(arguments[1:], fileIdGen, config)
 
         stdin_fid = fileIdGen.next_file_id()
         stdout_fid = fileIdGen.next_file_id()
@@ -147,14 +164,14 @@ def compile_node_command(ast_node, fileIdGen):
 
     return compiled_ast
 
-def compile_node_and_or_semi(ast_node, fileIdGen):
+def compile_node_and_or_semi(ast_node, fileIdGen, config):
     compiled_ast = make_kv(ast_node.construct.value,
-            [compile_node(ast_node.left_operand, fileIdGen),
-                compile_node(ast_node.right_operand, fileIdGen)])
+            [compile_node(ast_node.left_operand, fileIdGen, config),
+             compile_node(ast_node.right_operand, fileIdGen, config)])
     return compiled_ast
 
-def compile_node_redir_subshell(ast_node, fileIdGen):
-    compiled_node = compile_node(ast_node.node, fileIdGen)
+def compile_node_redir_subshell(ast_node, fileIdGen, config):
+    compiled_node = compile_node(ast_node.node, fileIdGen, config)
 
     if (isinstance(compiled_node, IR)):
         ## TODO: I should use the redir list to redirect the files of
@@ -166,8 +183,8 @@ def compile_node_redir_subshell(ast_node, fileIdGen):
 
     return compiled_ast
 
-def compile_node_background(ast_node, fileIdGen):
-    compiled_node = compile_node(ast_node.node, fileIdGen)
+def compile_node_background(ast_node, fileIdGen, config):
+    compiled_node = compile_node(ast_node.node, fileIdGen, config)
 
     ## TODO: I should use the redir list to redirect the files of
     ##       the IR accordingly
@@ -185,7 +202,7 @@ def compile_node_background(ast_node, fileIdGen):
 
     return compiled_ast
 
-def compile_node_defun(ast_node, fileIdGen):
+def compile_node_defun(ast_node, fileIdGen, config):
     ## It is not clear how we should handle functions.
     ##
     ## - Should we transform their body to IR?
@@ -196,11 +213,11 @@ def compile_node_defun(ast_node, fileIdGen):
 
     ## TODO: Investigate whether it is fine to just compile the
     ##       body of functions.
-    compiled_body = compile_node(ast_node.body, fileIdGen)
+    compiled_body = compile_node(ast_node.body, fileIdGen, config)
     return make_kv(construct, [ast_node.line_number, ast_node.name, compiled_body])
 
 
-def compile_arg_char(arg_char, fileIdGen):
+def compile_arg_char(arg_char, fileIdGen, config):
     key, val = get_kv(arg_char)
     if (key == 'C'):
         return arg_char
@@ -210,27 +227,27 @@ def compile_arg_char(arg_char, fileIdGen):
         ##       redirected to some file that we will use to write to
         ##       the command argument to complete the command
         ##       substitution.
-        compiled_node = compile_node(val, fileIdGen)
+        compiled_node = compile_node(val, fileIdGen, config)
         return [key, compiled_node]
     elif (key == 'Q'):
-        compiled_val = compile_command_argument(val, fileIdGen)
+        compiled_val = compile_command_argument(val, fileIdGen, config)
         return [key, compiled_val]
     else:
         ## TODO: Complete this
         return arg_char
 
-def compile_command_argument(argument, fileIdGen):
-    compiled_argument = [compile_arg_char(char, fileIdGen) for char in argument]
+def compile_command_argument(argument, fileIdGen, config):
+    compiled_argument = [compile_arg_char(char, fileIdGen, config) for char in argument]
     return compiled_argument
 
-def compile_command_arguments(arguments, fileIdGen):
-    compiled_arguments = [compile_command_argument(arg, fileIdGen) for arg in arguments]
+def compile_command_arguments(arguments, fileIdGen, config):
+    compiled_arguments = [compile_command_argument(arg, fileIdGen, config) for arg in arguments]
     return compiled_arguments
 
 ## Compiles the value assigned to a variable using the command argument rules.
 ## TODO: Is that the correct way to handle them?
-def compile_assignments(assignments, fileIdGen):
-    compiled_assignments = [[assignment[0], compile_command_argument(assignment[1], fileIdGen)]
+def compile_assignments(assignments, fileIdGen, config):
+    compiled_assignments = [[assignment[0], compile_command_argument(assignment[1], fileIdGen, config)]
                             for assignment in assignments]
     return compiled_assignments
 
@@ -255,28 +272,26 @@ def compile_assignments(assignments, fileIdGen):
 ##
 ## TODO: Visual improvement: Can we abstract away the traverse of this
 ## ast in a mpa function, so that we don't rewrite all the cases?
-def replace_irs(ast, irFileGen):
+def replace_irs(ast, irFileGen, config):
 
     if (isinstance(ast, IR)):
-        replaced_ast = replace_ir(ast, irFileGen)
+        replaced_ast = replace_ir(ast, irFileGen, config)
     else:
         global ir_cases
-        replaced_ast = ast_match(ast, ir_cases)
+        replaced_ast = ast_match(ast, ir_cases, irFileGen, config)
 
     return replaced_ast
 
 ## This function serializes an IR in a file, and in its place, it adds
 ## a command that calls our distribution planner with the name of the
 ## saved file.
-def replace_ir(ast_node, irFileGen):
+def replace_ir(ast_node, irFileGen, config):
     ir_file_id = irFileGen.next_file_id()
 
-    ## TODO: READ THIS FROM A CONFIG FILE
-    prefix = "/tmp/dish_temp_ir"
-
+    temp_ir_directory_prefix = config['temp_ir_prefix']
     ## TODO: I probably have to generate random file names for the irs, so
     ## that multiple executions of dish don't interfere.
-    ir_filename = ir_file_id.toFileName(prefix)
+    ir_filename = ir_file_id.toFileName(temp_ir_directory_prefix)
 
     ## Serialize the node in a file
     with open(ir_filename, "wb") as ir_file:
@@ -302,65 +317,64 @@ def make_command(ir_filename):
 
     ## TODO: Do we need to do anything with the line_number? If so, make
     ## sure that I keep it in the IR, so that I can find it.
-    ## TODO: READ THESE FROM A CONFIG FILE
-    arguments = [string_to_argument("python3"),
-                 string_to_argument("distr_plan.py"),
+    arguments = [string_to_argument(PYTHON_VERSION),
+                 string_to_argument(PLANNER_EXECUTABLE),
                  string_to_argument(ir_filename)]
     line_number = 0
     node = make_kv('Command', [line_number, [], arguments, []])
     return node
 
 
-def replace_irs_and_or_semi(c, left, right, irFileGen):
-    r_left = replace_irs(left, irFileGen)
-    r_right = replace_irs(right, irFileGen)
+def replace_irs_and_or_semi(c, left, right, irFileGen, config):
+    r_left = replace_irs(left, irFileGen, config)
+    r_right = replace_irs(right, irFileGen, config)
     return make_kv(c, [r_left, r_right])
 
-def replace_irs_command(c, line_number, assignments, args, redir_list, irFileGen):
+def replace_irs_command(c, line_number, assignments, args, redir_list, irFileGen, config):
     ## TODO: I probably have to also handle the redir_list (applies to
     ## compile_node_command too)
 
-    replaced_assignments = replace_irs_assignments(assignments, irFileGen)
+    replaced_assignments = replace_irs_assignments(assignments, irFileGen, config)
     if(len(args) == 0):
         ## Note: The flow here is similar to compile
         replaced_ast = make_kv(c, [line_number, replaced_assignments, args, redir_list])
     else:
         command_name = args[0]
-        replaced_options = replace_irs_command_arguments(args[1:], irFileGen)
+        replaced_options = replace_irs_command_arguments(args[1:], irFileGen, config)
         replaced_args = [command_name] + replaced_options
 
         replaced_ast = make_kv(c, [line_number, replaced_assignments, replaced_args, redir_list])
 
     return replaced_ast
 
-def replace_irs_arg_char(arg_char, irFileGen):
+def replace_irs_arg_char(arg_char, irFileGen, config):
     key, val = get_kv(arg_char)
     if (key == 'C'):
         return arg_char
     elif (key == 'B'):
-        replaced_node = replace_irs(val, irFileGen)
+        replaced_node = replace_irs(val, irFileGen, config)
         return make_kv(key, replaced_node)
     elif (key == 'Q'):
-        replaced_val = replace_irs_command_argument(val, irFileGen)
+        replaced_val = replace_irs_command_argument(val, irFileGen, config)
         return make_kv(key, replaced_val)
     else:
         ## TODO: Complete this (as we have to do with the compile)
         return arg_char
 
-def replace_irs_command_argument(argument, irFileGen):
-    replaced_argument = [replace_irs_arg_char(char, irFileGen) for char in argument]
+def replace_irs_command_argument(argument, irFileGen, config):
+    replaced_argument = [replace_irs_arg_char(char, irFileGen, config) for char in argument]
     return replaced_argument
 
-def replace_irs_command_arguments(arguments, irFileGen):
-    replaced_arguments = [replace_irs_command_argument(arg, irFileGen) for arg in arguments]
+def replace_irs_command_arguments(arguments, irFileGen, config):
+    replaced_arguments = [replace_irs_command_argument(arg, irFileGen, config) for arg in arguments]
     return replaced_arguments
 
 ## This is similar to compile_assignments
 ##
 ## TODO: Is that the correct way to handle them? Question also applied
 ## to compile_assignments.
-def replace_irs_assignments(assignments, irFileGen):
-    replaced_assignments = [[assignment[0], replace_irs_command_argument(assignment[1], irFileGen)]
+def replace_irs_assignments(assignments, irFileGen, config):
+    replaced_assignments = [[assignment[0], replace_irs_command_argument(assignment[1], irFileGen, config)]
                             for assignment in assignments]
     return replaced_assignments
 
@@ -372,9 +386,9 @@ def check_if_ast_is_supported(construct, arguments, **kwargs):
     return
     # construct.
 
-def ast_match(ast_object, cases, fileIdGen):
+def ast_match(ast_object, cases, fileIdGen, config):
     ast_node = AstNode(ast_object)
     if ast_node.construct is AstNodeConstructor.PIPE:
         ast_node.check(children_count = lambda : len(ast_node.items) >= 2)
 
-    return cases[ast_node.construct.value](fileIdGen)(ast_node)
+    return cases[ast_node.construct.value](fileIdGen, config)(ast_node)
