@@ -15,13 +15,13 @@ PRINTER_BINARY = os.path.join(DISH_TOP, "parser/json_to_shell.native")
 
 config = {}
 
-def load_config():
+def load_config(config_file_path=False):
     global config
     dish_config = {}
     CONFIG_KEY = 'distr_planner'
 
-    ## TODO: allow this to be passed as an argument
-    config_file_path = '{}/compiler/config.yaml'.format(DISH_TOP)
+    if not config_file_path:
+      config_file_path = '{}/compiler/config.yaml'.format(DISH_TOP)
     with open(config_file_path) as config_file:
         dish_config = yaml.load(config_file, Loader=yaml.FullLoader)
 
