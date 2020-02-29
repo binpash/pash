@@ -1314,25 +1314,20 @@ certain optimizations on the graph.
 \subsection{Graph Transformations}
 \label{ir:transformations}
 
-\kk{I have to mention that in order for the transformations to happen,
-  we transform all commands that read some of their inputs in sequence
-  to commands that read from one input but are preceded by a cat.}
-
-
-\kk{Move this assumption in the transformation: Nodes may read from
-  more files than just the files of their input stream (resp. write to
-  more files than their output stream).  However, these files are
-  static (\eg used for configuration or logging) and do not represent
-  streams of data, and therefore are not considered part of the
-  dataflow graph.  For now, we assume that these static files can only
-  be accessed by one node, thus ensuring that they do not interfere
-  with the distributed implementation.
-%% Because of the assumption in section Front End \ref{}, that each file
-%% exists only once in the dataflow graph, we can safely assume that
-%% reading and writing to these static files does not interfere with the
-%% distributed implementation, and doesn't alter the behaviour of the
-%% program.
-}
+%% \kk{Move this assumption in the transformation: Nodes may read from
+%%   more files than just the files of their input stream (resp. write to
+%%   more files than their output stream).  However, these files are
+%%   static (\eg used for configuration or logging) and do not represent
+%%   streams of data, and therefore are not considered part of the
+%%   dataflow graph.  For now, we assume that these static files can only
+%%   be accessed by one node, thus ensuring that they do not interfere
+%%   with the distributed implementation.
+%% %% Because of the assumption in section Front End \ref{}, that each file
+%% %% exists only once in the dataflow graph, we can safely assume that
+%% %% reading and writing to these static files does not interfere with the
+%% %% distributed implementation, and doesn't alter the behaviour of the
+%% %% program.
+%% }
 
 Having a dataflow graph representation allows us to define
 parallelization optimizations as graph transformations. Before
@@ -1345,11 +1340,13 @@ formally, we parallelize commands that can be represented with
 functions of type $f : D\kstar \times [D\kstar] \to D\kstar$, where
 the first argument represents the concatenation of the inputs that are
 consumed one at a time and the second argument represents the static
-inputs. Most stateless and pure commands fall in this category
-\kk{Maybe have an argument here that we show in the evaluation that
-  handling these commands is adequate for a big variety of data
-  processing scripts, from several microbenchmarks to some
-  large-realistic macrobenchmarks}.
+inputs. When translating a command that consumes its input streams one
+at a time, a \ttt{cat} node is introduced before it to concatenate the
+streams and its output is transferred to the command input. \kk{Maybe
+  have an argument here that we show in the evaluation that handling
+  these commands is adequate for a big variety of data processing
+  scripts (and most stateless and pure commands), from several
+  microbenchmarks to some large-realistic macrobenchmarks.}.
 %% \nv{TODOs
 %%   (i) highlight earlier the antithesis between the formalisms in this section and the informalities of the previous (me)
 %% }
@@ -1397,17 +1394,39 @@ by applying map $m$ to each of these inputs.
 
 \paragraph{Parallelization Transformations}
 %
-Based on these equations, we can define a maximal \emph{node split
-  operation} on a stateless node $v$ with $n$ input ordered edges and
-an output edge to node $v'$, to replace $v$ with $n$ new nodes, giving
-each one of them one of the incoming edges of $v$, and routing them in
-order to point to $v'$. Since each incoming edge represents a stream
-of data $x_i : D^*$, and the only behaviour of a dataflow graph is its
-output, this optimization $ v(x_1.x_2...x_n) \Rightarrow
-v(x_1).v(x_2)...v(x_n)$ can be shown to preserve the behaviour of the
+Based on these equations, we can define a \emph{node parallelization
+  transformation} on a stateless node $v$ that is preceded by a
+\ttt{cat} with $n$ input streams and is followed by a node $v'$. The
+transformation replaces $v$ with $n$ new nodes, routing each of the
+$n$ input streams to one of them, and commutes the \ttt{cat} node
+after them to concatenate their outputs and transfer them to
+$v'$. Since each incoming edge represents a stream of data $x_i :
+D^*$, and the only behaviour of a dataflow graph is its output, this
+optimization $ v(x_1.x_2...x_n, s) \Rightarrow v(x_1, s).v(x_2,
+s)...v(x_n, s)$ can be shown to preserve the behaviour of the
 graph. Furthermore, it can be straightforwardly extended to pure
 commands that can be implemented by a map-reduce pair $(m, r)$ as $
-v(x_1.x_2...x_n) \Rightarrow r(m(x_1).m(x_2)...m(x_n))$.
+v(x_1.x_2...x_n, s) \Rightarrow r(m(x_1, s).m(x_2, s)...m(x_n, s),
+s)$. A visual representation of this transformation can be seen in
+\Cref{fig:parallelization-transformation}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.60\columnwidth]{\detokenize{./figs/dish_g1.pdf}}
+\caption{
+  \textbf{Stateless parallelization transformation.}
+  The \texttt{cat} node is commuted with the stateless node
+  to utilize available data parallelism.
+  \TODO{Correct this diagram to show the cat node before
+    the node and then the cat node after the stateless
+    command after the optimization. Cat node should be
+    different than a circle. Maybe like an ``and'' node
+    in binary circuits?}
+}
+\vspace{-10pt}
+\label{fig:parallelization-transformation}
+\end{figure}
+
 
 \tr{Remember to mention the assumptions that need to hold for the
   graph transformations to be valid in the Command categories
@@ -1438,10 +1457,9 @@ v(x_1.x_2...x_n) \Rightarrow r(m(x_1).m(x_2)...m(x_n))$.
 %% tofill
 %% \end{lemma}
 
-\kk{We should move FIgure 4 here}
-
-\kk{I think that we should probably add the ``new'' split optimization
-  (and maybe any others that we develop until then) here.}
+\kk{I think that we should probably rewrite this paragraph with the
+  ``new'' split optimization (and maybe any others that we develop
+  until then) here.}
 
 In addition to node splits, we can also perform edge splits in order
 to increase the number of incoming edges for some nodes to further expose
@@ -1595,20 +1613,7 @@ that were described in \Cref{ir:transformations}. If the incoming
 edges of the node are less than the desirable graph width, it performs
 edge splits, and then it performs maximal node splits. The final graph
 can then be implemented by spawning a process for each node, and
-redirecting the outputs according to the graph edges. An example
-transformation can be seen in \Cref{fig:optimizer-transformation}.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.40\columnwidth]{\detokenize{./figs/dish_g1.pdf}}
-\caption{
-  \textbf{Example graph transformation.}
-  The optimizer splits a stateless node to utilize
-  available data parallelism.
-}
-\vspace{-10pt}
-\label{fig:optimizer-transformation}
-\end{figure}
+redirecting the outputs according to the graph edges.
 
 The optimizer also applies custom transformations on several commands in \pur
 to further improve their performance. Two notable examples are the
