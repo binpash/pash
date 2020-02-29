@@ -1097,21 +1097,18 @@ parallelization.
 \label{ir}
 
 The core of \sys is a dataflow graph model, inspired by the ones used
-in popular distributed stream processing systems~\sx{related}. The
-dataflow model can express a large subset of Shell programs and
-inherently supports the data parallelism found in shell pipelines by
-exposing it as task parallelism. More preciely, we have developed a
-set of parallelization-exposing optimizations represented as
+in popular distributed stream processing systems~\sx{related} \kk{Is
+  this reference here necessary?}. The dataflow model can express a
+large subset of Shell programs and inherently supports the data
+parallelism found in shell pipelines by exposing it as task
+parallelism. More preciely, we have developed a set of
+parallelization-exposing optimizations represented as
 semantics-preserving graph transformations. These transformations can
 then be applied in an iterative way, optimizing the program to utilize
 available computational resources.
 
 %% In order to effectively apply optimizations and distribute a shell
 %% script, \sys first translates it to a manipulable representation.
-
-\kk{It might be beneficial to do a full pass over this section
-  describing the new model (where a node that has many sequential
-  inputs is always prepended with a cat node.}
 
 \subsection{Graph Components}
 \label{graph-components}
@@ -1123,88 +1120,23 @@ commands that communicate through these files. Based on that, \sys's
 graph model defines nodes to represent commands and edges to represent
 files.
 
-\paragraph{Nodes---Commands}
-
-For a set $D$, we write $D\kstar$ to denote the set of all finite
-words over $D$. For words $x, y \in D\kstar$, we write $x \cdot y$ or
-$xy$ to denote their concatenation. We write $\eps$ for the empty
-word. We say that $x$ is a \emph{prefix} of $y$, and we write $x \leq
-y$, if there is a word $z$ such that $y = xz$. It is easy to see that
-$\leq$ is a partial order, often called the \emph{prefix order}.
-
-A node $f$ of the graph represents a function from one (possibly
-empty) input stream to an output stream $f : D\kstar \to D\kstar$,
-where $D$ represents the basic data type of a line of characters
-\kk{We have to extend this to more general nodes. It has to be from
-  many inputs to many outputs. The commands that we optimize at the
-  moment are the ones that can be rewritten to take one stream input
-  to one stream output, and then some other inputs and outputs that
-  are considered static.}. This representation captures the majority
-of shell commands. We require that the function $f$ is monotone
-w.r.t.\ the prefix order. This captures the idea that a node cannot
-retract output after it has been emitted.
-%More formally, $\forall f, x, y, f(x) = y$, then for any $x'$, there
-%exists $y'$ such that $f(x.x') = y.y'$, where $.$ is standard
-%concatenation and will be omitted when obvious.
-An example of a node is the following command:
-
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- grep ``foo''
-\end{lstlisting}
-
-\noindent
-This command takes a stream of lines from its standard input and
-returns a stream of lines on its standard output.
-
-An important
-observation is that commands might read their input
-stream from a sequence of different sources. An illustrative example
-is the command \ttt{cat}, which reads its input from a combination
-of files and its standard input:
-
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- cat x - y
-\end{lstlisting}
-
-\noindent
-In the example above, \ttt{cat} reads file \ttt{x} until it encounters the EOF
-character, then reads from \ttt{stdin} until in encounters EOF, and finally reads from
-\ttt{y}.
-
-In order to handle this particularity, nodes in the
-dataflow graph can have many incoming edges, that are \emph{ordered} in a
-sequence. This is different from standard dataflow
-graph representations where the semantics of multiple incoming edges
-is either zipping the inputs into pairs, or interleaving them arbitrarily.
-
-%% \TODO{Is the following paragraph best suited here? It describes an
-%%   assumption that we make about commands, to guarantee the validity of
-%%   our transformations. The assumption is needed due to the limitation
-%%   of the programming model of one input one output per command.}
-
-Nodes may read from more files than just the files of their
-input stream (resp. write to more files than their output stream).
-However, these files are static (\eg used for configuration or
-logging) and do not represent streams of data, and therefore are not
-considered part of the dataflow graph.
-For now, we assume that these static
-files can only be accessed by one node, thus ensuring that they do not
-interfere with the distributed implementation.
-%% Because of the assumption in section Front End \ref{}, that each file
-%% exists only once in the dataflow graph, we can safely assume that
-%% reading and writing to these static files does not interfere with the
-%% distributed implementation, and doesn't alter the behaviour of the
-%% program.
-
 \paragraph{Edges---Files}
+
+Before describing the graph edges, we introduce basic notation that
+will be useful later on.  For a set $D$, we write $D\kstar$ to denote
+the set of all finite words over $D$. For words $x, y \in D\kstar$, we
+write $x \cdot y$ or $xy$ to denote their concatenation. We write
+$\eps$ for the empty word. We say that $x$ is a \emph{prefix} of $y$,
+and we write $x \leq y$, if there is a word $z$ such that $y = xz$. It
+is easy to see that $\leq$ is a partial order, often called the
+\emph{prefix order}.
 
 Edges in the dataflow graph represent files, the basic data
 abstraction of the shell. They are used as communication channels
 between nodes in the graph, and as the input or output of the whole
 graph. Edges are represented as possibly unbounded streams of type
 $D\kstar$. They could either refer to a specific named file in the file
-system, or just be FIFO pipes used for interprocess communication
-%% \TODO{Are there any other file types, such as URLs, ...?}.
+system, or just be FIFO pipes used for interprocess communication.
 
 %% \TODO{Show an example pipe and its graph}.
 
@@ -1223,17 +1155,19 @@ system, or just be FIFO pipes used for interprocess communication
 %% \end{tikzpicture}
 %% \end{center}
 
+%% \kk{I think we should delete this since the node and not the edge
+%%   chooses how to write to its output files.}
 
-In order to expose data parallelism from the output of a command, files that
-do not point to a resource can have
-\begin{wrapfigure}[3]{r}{0.20\columnwidth}
-\vspace{-7pt}
-  \includegraphics[width=0.20\columnwidth]{\detokenize{./figs/dish_g2.pdf}}
-\vspace{-20pt}
-\end{wrapfigure}
-an upper bound on the lines that they can transfer. This helps utilize available
-parallelism after encountering a command that cannot be parallelized
-(\eg \ttt{sha1sum}). The schematic on the right illustrates this scenario.
+%% In order to expose data parallelism from the output of a command,
+%% files that do not point to a resource can have
+%% \begin{wrapfigure}[3]{r}{0.20\columnwidth}
+%% \vspace{-7pt}
+%%   \includegraphics[width=0.20\columnwidth]{\detokenize{./figs/dish_g2.pdf}}
+%% \vspace{-20pt}
+%% \end{wrapfigure}
+%% an upper bound on the lines that they can transfer. This helps utilize available
+%% parallelism after encountering a command that cannot be parallelized
+%% (\eg \ttt{sha1sum}). The schematic on the right illustrates this scenario.
 
 
 \tr{On the other hand, some forms of data parallelism can be exposed
@@ -1249,10 +1183,60 @@ Finally, edges that do not refer to a resource and do not start
 from a node in the graph represent the graph input;
 edges that do not refer to a resource and do not point to a node in the graph are its outputs.
 
-%% \kk{(Maybe) It might be beneficial to mention that many inputs do not
-%%   represent the same thing as many outputs. These two notions are not
-%%   symmetric.}
-  
+
+\paragraph{Nodes---Commands}
+
+A node $f$ of the graph represents a function from a (possibly empty)
+list of input streams to a list of output streams $f : [D\kstar] \to
+[D\kstar]$, where $D$ represents the basic data type of a line of
+characters. This representation captures the majority of shell
+commands. We require that the function $f$ is monotone w.r.t.\ a
+lifting of the prefix order for a sequence of inputs \kk{Formalize
+this lifting if essential for later development}. This captures the
+  idea that a node cannot retract output after it has been emitted.
+%More formally, $\forall f, x, y, f(x) = y$, then for any $x'$, there
+%exists $y'$ such that $f(x.x') = y.y'$, where $.$ is standard
+%concatenation and will be omitted when obvious.
+An example of a node with one input and one output stream is the
+following command:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+ grep ``foo''
+\end{lstlisting}
+
+\noindent
+This command takes a stream of lines from its standard input and
+returns a stream of lines on its standard output.
+
+An important observation is that even though commands might read their
+input from several input streams, the order in which they read is not
+always arbitrary. An illustrative example is the command \ttt{cat},
+which consumes its input one stream at a time:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+ cat x - y
+\end{lstlisting}
+
+\noindent
+In the example above, \ttt{cat} reads file \ttt{x} until it encounters
+the EOF character, then reads from \ttt{stdin} until in encounters
+EOF, and finally reads from \ttt{y}. Other commands that read their
+inputs one file at a time include \ttt{grep} and \ttt{tr}. Knowing the
+order in which a node consumes its input is necessary to enable
+certain optimizations on the graph.
+
+%% \kk{Some could read in sequence (like cat), some in lockstep (like
+%%   zip), some read some files statically and the rest as streams (like
+%%   comm), some read arbitrarily.}
+
+
+\kk{I need to mention that there are nodes that we know more
+  properties of. For example cat, tee, zip, etc... and these are
+  handled specially because of their very important and special
+  properties.}
+
+
+
 %% \begin{figure*}
 %% \centering
 %% \begin{tikzpicture}[->, >=to, auto, node distance=1cm, semithick, transform shape, inner sep=2pt]
@@ -1329,6 +1313,33 @@ edges that do not refer to a resource and do not point to a node in the graph ar
 
 \subsection{Graph Transformations}
 \label{ir:transformations}
+
+\kk{I have to mention that in order for the transformations to happen,
+  we transform all commands that read some of their inputs in sequence
+  to commands that read from one input but are preceded by a cat.}
+
+\kk{I have to mention that all stateless and pure commands fall into
+  the category of commands that have one input stream (and possibly
+  several input static files) and one output stream (and no(?!?)
+  output static files?). These commands are the bulk of
+  data-processing in the shell, and these are the ones that we handle
+  in our system.}
+
+\kk{Move this assumption in the transformation}
+Nodes may read from more files than just the files of their
+input stream (resp. write to more files than their output stream).
+However, these files are static (\eg used for configuration or
+logging) and do not represent streams of data, and therefore are not
+considered part of the dataflow graph.
+For now, we assume that these static
+files can only be accessed by one node, thus ensuring that they do not
+interfere with the distributed implementation.
+%% Because of the assumption in section Front End \ref{}, that each file
+%% exists only once in the dataflow graph, we can safely assume that
+%% reading and writing to these static files does not interfere with the
+%% distributed implementation, and doesn't alter the behaviour of the
+%% program.
+
 
 Before describing the different types of parallelization
 optimizations, we formalize the intuition about stateless and pure
@@ -1421,6 +1432,8 @@ v(x_1.x_2...x_n) \Rightarrow r(m(x_1).m(x_2)...m(x_n))$.
 %% \begin{lemma}
 %% tofill
 %% \end{lemma}
+
+\kk{We should move FIgure 4 here}
 
 \kk{I think that we should probably add the ``new'' split optimization
   (and maybe any others that we develop until then) here.}
@@ -1562,6 +1575,11 @@ and as a result does not parallelize this sub-expression.
 
 \subsection{Optimizer}
 \label{optimizer}
+
+\kk{This subsection has to only talk about the cool shell constructs
+  that are added and about optimizations that are not in the dataflow
+  graph (like file splitting), and the implementation of split, the
+  pure merges , etc...}
 
 Given a dataflow graph representing a shell program, the \sys optimizer outputs an optimized dataflow graph in which data parallelism opportunities have been exploited.
 More concretely, the
