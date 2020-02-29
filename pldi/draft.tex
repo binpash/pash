@@ -1318,48 +1318,53 @@ certain optimizations on the graph.
   we transform all commands that read some of their inputs in sequence
   to commands that read from one input but are preceded by a cat.}
 
-\kk{I have to mention that all stateless and pure commands fall into
-  the category of commands that have one input stream (and possibly
-  several input static files) and one output stream (and no(?!?)
-  output static files?). These commands are the bulk of
-  data-processing in the shell, and these are the ones that we handle
-  in our system.}
 
-\kk{Move this assumption in the transformation}
-Nodes may read from more files than just the files of their
-input stream (resp. write to more files than their output stream).
-However, these files are static (\eg used for configuration or
-logging) and do not represent streams of data, and therefore are not
-considered part of the dataflow graph.
-For now, we assume that these static
-files can only be accessed by one node, thus ensuring that they do not
-interfere with the distributed implementation.
+\kk{Move this assumption in the transformation: Nodes may read from
+  more files than just the files of their input stream (resp. write to
+  more files than their output stream).  However, these files are
+  static (\eg used for configuration or logging) and do not represent
+  streams of data, and therefore are not considered part of the
+  dataflow graph.  For now, we assume that these static files can only
+  be accessed by one node, thus ensuring that they do not interfere
+  with the distributed implementation.
 %% Because of the assumption in section Front End \ref{}, that each file
 %% exists only once in the dataflow graph, we can safely assume that
 %% reading and writing to these static files does not interfere with the
 %% distributed implementation, and doesn't alter the behaviour of the
 %% program.
+}
 
-
-Before describing the different types of parallelization
-optimizations, we formalize the intuition about stateless and pure
-commands that was described earlier~\sx{cmd}.
+Having a dataflow graph representation allows us to define
+parallelization optimizations as graph transformations. Before
+describing the different types of optimizations, we formalize the
+intuition about stateless and pure commands that was described
+earlier~\sx{cmd}. We focus on parallelizing commands that produce one
+output and consume their inputs one at a time, with the possible
+exception of static input files that are used for configuration. More
+formally, we parallelize commands that can be represented with
+functions of type $f : D\kstar \times [D\kstar] \to D\kstar$, where
+the first argument represents the concatenation of the inputs that are
+consumed one at a time and the second argument represents the static
+inputs. Most stateless and pure commands fall in this category
+\kk{Maybe have an argument here that we show in the evaluation that
+  handling these commands is adequate for a big variety of data
+  processing scripts, from several microbenchmarks to some
+  large-realistic macrobenchmarks}.
 %% \nv{TODOs
 %%   (i) highlight earlier the antithesis between the formalisms in this section and the informalities of the previous (me)
 %% }
-%
 
-As mentioned there, stateless commands such as \ttt{tr} operate independently on
-individual elements of the stream (characters, lines, or files)
-without maintaining any state.
-% Some examples include \ttt{grep}, \ttt{basename}, and \ttt{tr}.
-Formally, a command $f$ is stateless if
-it is ``linear'' with respect to concatenation, \ie 
-% the following equation holds:
-satisfying the following equation:
+
+As mentioned in \Cref{cmd}, stateless commands such as \ttt{tr} operate
+independently on individual elements of the stream (characters, lines,
+or files) without maintaining any state. In this work, we consider
+lines as the data quantum, so commands that are file-stateless are not
+considered stateless. Formally, a command $f$ is stateless if it is
+``linear'' with respect to concatenation, \ie satisfying the following
+equation:
 
 \[
-\forall x, x', f(x.x') = f(x).f(x')
+\forall x, x', s, f(x.x', s) = f(x, s).f(x', s)
 \]
 
 %% This is a nice characterization, which I think is true in most
@@ -1381,7 +1386,7 @@ can be implemented as a combination of functions map $m$ and reduce $r$, satisfy
 the following equation:
 
 \[
-\forall x, x', f(x.x') = r(m(x).m(x'))
+\forall x, x', s, f(x.x', s) = r(m(x, s).m(x', s), s)
 \]
 
 \noindent
