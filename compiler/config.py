@@ -37,7 +37,7 @@ def load_config(config_file_path=False):
     if CONFIG_KEY not in dish_config:
         raise Exception('Missing `{}` config in {}'.format(CONFIG_KEY, config_file_path))
 
-    config = dish_config[CONFIG_KEY]
+    config = dish_config
 
 ## These are arguments that are common to dish and distr_plan.py
 def add_common_arguments(parser):
