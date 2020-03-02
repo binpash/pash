@@ -371,7 +371,7 @@ def replace_irs(ast, irFileGen, config):
 def replace_ir(ast_node, irFileGen, config):
     ir_file_id = irFileGen.next_file_id()
 
-    temp_ir_directory_prefix = config['temp_ir_prefix']
+    temp_ir_directory_prefix = config['distr_planner']['temp_ir_prefix']
     ## TODO: I probably have to generate random file names for the irs, so
     ## that multiple executions of dish don't interfere.
     ir_filename = ir_file_id.toFileName(temp_ir_directory_prefix)
