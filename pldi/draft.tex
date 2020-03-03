@@ -513,7 +513,9 @@ contributions:
   \S\ref{ir} presents a dataflow graph model for encoding shell pipelines, and a set of parallelization transformations that preserve the semantics of the sequential program.
 
   \item
-    \S\ref{impl} describes the \sys implementation and addresses several challenges related to the translation and orchestration of distributed shell programs.
+    \S\ref{impl} describes the \sys implementation and addresses
+    several challenges related to the translation and optimization of
+    shell programs.
     %% details other concerns, such as distributed state management and extensibility. 
 \end{itemize}
 
@@ -1499,34 +1501,53 @@ to a file.
 \section{Implementation}
 \label{impl}
 
-This section describes challenges related to the implementation of \sys. 
-It starts by describing how the \sys front-end translates a shell script to the dataflow graph model defined in \S\ref{ir}, by applying transformation on distributable regions~\sx{front-end}.
-It closes with the \sys planner, which  optimizes, distributes, and orchestrates the execution of a given dataflow graph~\sx{optimizer}.
+This section describes challenges related to the implementation of
+\sys. It starts by describing how the \sys front-end translates a
+shell script to the dataflow graph model defined in \S\ref{ir}, by
+applying transformation on parallelizable regions~\sx{front-end}.  It
+closes with the \sys optimizer, which optimizes the dataflow graph
+exposing data-parallelism, and outputs an optimized
+parallel script~\sx{optimizer}.
 
 \subsection{Front End}
 \label{front-end}
 
-As mentioned in \Cref{ir}, in order to generate the distributed implementation of a shell script, \sys translates it to a dataflow graph.
-However, there are several components in shell programs that cannot be arbitrarily parallelized without affecting the program behaviour---\eg commands connected with a \ttt{\&\&} operator~\sx{bg}.
-The fact that the shell is highly dynamic compounds the challenge---\eg by not knowing what files does an unexpanded command argument refer to.
+As mentioned in \Cref{ir}, in order to optimize a shell script, \sys
+translates it to a dataflow graph.  However, there are several
+components in shell programs that cannot be arbitrarily parallelized
+without affecting the program behaviour---\eg commands connected with
+a \ttt{\&\&} operator~\sx{bg}. In addition, the shell's highly dynamic
+nature compounds the challenge---\eg by not knowing what files does an
+unexpanded command argument refer to.
 % of correctly identifying what parts can be distributed, e.g.
 
 %% \kk{Give examples of writing to environment variables, producing
 %%   irreversible side effects, the ; and \&\& operators.}
 
-To address this issue, we introduce the notion of distributable program regions and a translation pass for converting them to a dataflow graph.
-The translation pass identifies distributable regions and translates each of them to a dataflow graph, provided the abstract syntax tree (AST) of a shell script.
-The AST is produced by \ttt{LibDash}, a POSIX compliant parser~\cite{libdash}.
+To address the first issue, we introduce the notion of parallelizable
+program regions and a translation pass for converting them to a
+dataflow graph. To address the second issue, we limit dynamic
+components by deferring translation as late as possible using a
+wrapping scheme.
 
-\paragraph{Distributable Regions}
+%% The translation pass identifies distributable regions and
+%% translates each of them to a dataflow graph, provided the abstract
+%% syntax tree (AST) of a shell script.  The AST is produced by
+%% \ttt{LibDash}, a POSIX compliant parser~\cite{libdash}.
+
+\paragraph{Parallelizable Regions}
 %
 %% \kk{The goal of this subsection is to explain that Dish does a safe
 %%   but effective analysis to identify which parts of the scripts to
 %%   parallelize.}
 %
-Distributable regions are (ideally, maximal) program sub-expressions that can be parallelized safely with respect to their sequential execution.
-The structure of a shell program can be used to identify components that can be executed concurrently and barriers that are natural points for enforcing synchronization.
-Consider the following example:
+Parallelizable regions are program sub-expressions that can be
+parallelized safely without altering the total program behaviour.
+%% respect to their sequential execution.
+The search for these regions can be guided by the structure of shells
+programs, which inherently contains information about components that
+can be executed independently and barriers that are natural points for
+enforcing synchronization. Consider the following example:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
   cat f1 f2 | grep ``foo'' > f3 && sort f3 
@@ -1534,12 +1555,22 @@ Consider the following example:
 % # Replace sort with sth better
 
 \noindent
-The commands \ttt{cat f1 f2} and \ttt{grep ``foo''} would already execute concurrently in the standard shell, while \ttt{sort f3} would wait for their completion before executing.
-Both \ttt{cat f1 f2 | grep ``foo'' > f3} and \ttt{sort f3} are distributable regions---maximal sub-expressions that cannot be extended beyond \ttt{\&\&}.
+The commands \ttt{cat f1 f2} and \ttt{grep ``foo''} would execute as
+independent processes in the standard shell, while \ttt{sort f3} would
+wait for their completion before executing.  Both \ttt{cat f1 f2 |
+  grep ``foo'' > f3} and \ttt{sort f3} are therefore parallelizable
+regions, regions that cannot be extended beyond \ttt{\&\&}---even
+better, they are maximal.
 
-Intuitively, distributed regions correspond to subsections of the program that would be allowed to execute concurrently by different processes in the POSIX standard~\cite{posix}.
-The pipe operator \ttt{|} and the parallel composition operator \ttt{\&} enable parallelization, and extend distributable regions.
-Conversely, the \ttt{;} sequential composition operator, the \ttt{\&\&} logical operator, and function definitions represent barrier constructs that do not allow distributable regions to permeate through.
+Intuitively, parallelizable regions correspond to sub-expressions of
+the program that would be allowed to execute independently by
+different processes in the POSIX standard~\cite{posix}. Larger
+parallelizable regions can be composed from smaller ones using the
+pipe operator \ttt{|} and the parallel composition operator \ttt{\&}.
+Conversely, the \ttt{;} sequential composition operator, the
+\ttt{\&\&} logical operator, and function definitions represent
+barrier constructs that do not allow parallelizable regions to
+permeate through.
 
 % \tr{I don't know whether I should mention the following: While these
 %   control flow constructs can be parallelized and there has been
@@ -1559,10 +1590,23 @@ Conversely, the \ttt{;} sequential composition operator, the \ttt{\&\&} logical 
 % 
 
 \paragraph{Translation Pass}
-The \sys front-end performs a depth-first search pass on the AST of the given shell program.
-During this pass, it greedily extends the distributable regions from the bottom up, translating their independent components to dataflow graph nodes until a barrier construct is reached.
-To identify possible opportunities for parallelism, the translation pass also extracts the category of each node together with its input and output pairs.
-To perform this extraction, it uses the command name to index into a key-value map with values that are expressed in the DSL for distributability characterization~\sx{ext}.
+
+\kk{It might be a good idea to change this subsection based on the new
+  as-late-as-possible architecture where everything is wrapped and
+  translated at the final moment. Ideally, this would become the main
+  point of this subsection, as the translation algorithm is kind of
+  redundant when having the distributable regions too.}
+
+The \sys front-end performs a depth-first search pass on the AST of
+the given shell program.  During this pass, it greedily extends the
+distributable regions from the bottom up, translating their
+independent components to dataflow graph nodes until a barrier
+construct is reached.  To identify possible opportunities for
+parallelism, the translation pass also extracts the category of each
+node together with its input and output pairs.  To perform this
+extraction, it uses the command name to index into a key-value map
+with values that are expressed in the DSL for distributability
+characterization~\sx{ext}.
 
 A few illustrative cases of the analysis algorithm are shown in pseudocode below:
 
