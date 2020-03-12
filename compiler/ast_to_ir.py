@@ -48,13 +48,13 @@ ir_cases = {
         ##
         ## "Pipe": (lambda c, b, i: {c : [b, i]}),
         "Command":   (lambda irFileGen, config:
-                      lambda c, l, ass, args, r: replace_irs_command(c, l, ass, args, r, irFileGen, config)),
+                      lambda ast_node: replace_irs_command(ast_node, irFileGen, config)),
         "And" :      (lambda irFileGen, config:
-                      lambda c, l, r: replace_irs_and_or_semi(c, l, r, irFileGen, config)),
+                      lambda ast_node: replace_irs_and_or_semi(ast_node, irFileGen, config)),
         "Or" :       (lambda irFileGen, config:
-                      lambda c, l, r: replace_irs_and_or_semi(c, l, r, irFileGen, config)),
+                      lambda ast_node: replace_irs_and_or_semi(ast_node, irFileGen, config)),
         "Semi" :     (lambda irFileGen, config:
-                      lambda c, l, r: replace_irs_and_or_semi(c, l, r, irFileGen, config)),
+                      lambda ast_node: replace_irs_and_or_semi(ast_node, irFileGen, config)),
 
         ## TODO: Complete these
         # "Redir" : (lambda c, l, n, r: compile_node_redir(c, l, n, r, fileIdGen)),
@@ -325,14 +325,19 @@ def make_command(ir_filename):
     return node
 
 
-def replace_irs_and_or_semi(c, left, right, irFileGen, config):
-    r_left = replace_irs(left, irFileGen, config)
-    r_right = replace_irs(right, irFileGen, config)
+def replace_irs_and_or_semi(ast_node, irFileGen, config):
+    r_left = replace_irs(ast_node.left_operand, irFileGen, config)
+    r_right = replace_irs(ast_node.right_operand, irFileGen, config)
     return make_kv(c, [r_left, r_right])
 
-def replace_irs_command(c, line_number, assignments, args, redir_list, irFileGen, config):
+def replace_irs_command(ast_node, irFileGen, config):
     ## TODO: I probably have to also handle the redir_list (applies to
     ## compile_node_command too)
+    c = ast_node.construct.value
+    line_number = ast_node.line_number
+    assignments = ast_node.assignments
+    args = ast_node.arguments
+    redir_list = ast_node.redir_list
 
     replaced_assignments = replace_irs_assignments(assignments, irFileGen, config)
     if(len(args) == 0):
@@ -384,7 +389,6 @@ def replace_irs_assignments(assignments, irFileGen, config):
 
 def check_if_ast_is_supported(construct, arguments, **kwargs):
     return
-    # construct.
 
 def ast_match(ast_object, cases, fileIdGen, config):
     ast_node = AstNode(ast_object)
