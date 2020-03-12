@@ -1674,6 +1674,9 @@ and as a result does not parallelize this sub-expression.
   graph (like file splitting), and the implementation of split, the
   pure merges , etc...}
 
+\kk{Maybe guide all of this by showing an example of an output shell
+  script?}
+
 Given a dataflow graph representing a shell program, the \sys optimizer outputs an optimized dataflow graph in which data parallelism opportunities have been exploited.
 More concretely, the
 optimizer starts by splitting input files in several chunks, given the
