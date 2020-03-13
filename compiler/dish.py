@@ -38,7 +38,9 @@ def main():
 
 def parse_shell(input_script_path):
     parser_output = subprocess.run([config.PARSER_BINARY, input_script_path], capture_output=True, text=True)
-    parser_output.check_returncode()
+    if(not parser_output.returncode == 0):
+        print(parser_output.stderr)
+        parser_output.check_returncode()
     return parser_output.stdout
 
 def from_ir_to_shell(ir_filename, new_shell_filename):
