@@ -14,28 +14,26 @@ class AstNode:
         if self.construct is AstNodeConstructor.PIPE:
             self.is_background = args[0]
             self.items = args[1]
-
         elif self.construct is AstNodeConstructor.COMMAND:
             self.line_number = args[0]
             self.assignments = args[1]
             self.arguments = args[2]
             self.redir_list = args[3]
             return
-
-        elif self.construct is AstNodeConstructor.AND or AstNodeConstructor.OR or AstNodeConstructor.SEMI:
+        elif self.construct in [AstNodeConstructor.AND, AstNodeConstructor.OR, AstNodeConstructor.SEMI]:
             self.left_operand = args[0]
             self.right_operand = args[1]
-
-        elif self.construct is AstNodeConstructor.REDIR or AstNodeConstructor.SUBSHELL or AstNodeConstructor.BACKGROUND:
+        elif self.construct in [AstNodeConstructor.REDIR, AstNodeConstructor.SUBSHELL, AstNodeConstructor.BACKGROUND]:
             self.line_number = args[0]
             # TODO maybe pick a better name?
             self.node = args[1]
             self.redir_list = args[2]
-
         elif self.construct is AstNodeConstructor.DEFUN:
             self.line_number = args[0]
             self.name = args[1]
             self.body = args[2]
+        else:
+            raise ValueError()
 
     def check(self, **kwargs):
         # user-supplied custom checks
