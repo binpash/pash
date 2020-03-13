@@ -10,3 +10,4 @@ class AstNodeConstructor(Enum):
     SUBSHELL = 'Subshell'
     BACKGROUND = 'Background'
     DEFUN = 'Defun'
+    FOR = 'For'
