@@ -32,6 +32,11 @@ class AstNode:
             self.line_number = args[0]
             self.name = args[1]
             self.body = args[2]
+        elif self.construct is AstNodeConstructor.FOR:
+            self.line_number = args[0]
+            self.argument = args[1]
+            self.body = args[2]
+            self.variable = args[3]
         else:
             raise ValueError()
 

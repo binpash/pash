@@ -39,7 +39,9 @@ compile_cases = {
         "Background": (lambda fileIdGen, config:
                        lambda ast_node: compile_node_background(ast_node, fileIdGen, config)),
         "Defun": (lambda fileIdGen, config:
-                  lambda ast_node: compile_node_defun(ast_node, fileIdGen, config))
+                  lambda ast_node: compile_node_defun(ast_node, fileIdGen, config)),
+        "For": (lambda fileIdGen, config:
+                  lambda ast_node: compile_node_for(ast_node, fileIdGen, config))
         }
 
 ir_cases = {
@@ -60,7 +62,9 @@ ir_cases = {
         # "Redir" : (lambda c, l, n, r: compile_node_redir(c, l, n, r, fileIdGen)),
         # "Subshell" : (lambda c, l, n, r: compile_node_subshell(c, l, n, r, fileIdGen)),
         # "Background" : (lambda c, l, n, r: compile_node_background(c, l, n, r, fileIdGen)),
-        # "Defun" : (lambda c, l, n, b: compile_node_defun(c, l, n, b, fileIdGen))
+        # "Defun" : (lambda c, l, n, b: compile_node_defun(c, l, n, b, fileIdGen)),
+        "For" :      (lambda irFileGen, config:
+                      lambda ast_node: replace_irs_for(ast_node, irFileGen, config)),
         }
 
 
@@ -216,6 +220,14 @@ def compile_node_defun(ast_node, fileIdGen, config):
     compiled_body = compile_node(ast_node.body, fileIdGen, config)
     return make_kv(construct, [ast_node.line_number, ast_node.name, compiled_body])
 
+def compile_node_for(ast_node, fileIdGen, config):
+    compiled_ast = make_kv(ast_node.construct.value,
+                           [ast_node.line_number,
+                            compile_command_argument(ast_node.argument, fileIdGen, config),
+                            compile_node(ast_node.body, fileIdGen, config),
+                            ast_node.variable])
+    return compiled_ast
+
 
 def compile_arg_char(arg_char, fileIdGen, config):
     key, val = get_kv(arg_char)
@@ -328,7 +340,7 @@ def make_command(ir_filename):
 def replace_irs_and_or_semi(ast_node, irFileGen, config):
     r_left = replace_irs(ast_node.left_operand, irFileGen, config)
     r_right = replace_irs(ast_node.right_operand, irFileGen, config)
-    return make_kv(c, [r_left, r_right])
+    return make_kv(ast_node.construct.value, [r_left, r_right])
 
 def replace_irs_command(ast_node, irFileGen, config):
     ## TODO: I probably have to also handle the redir_list (applies to
@@ -351,6 +363,15 @@ def replace_irs_command(ast_node, irFileGen, config):
         replaced_ast = make_kv(c, [line_number, replaced_assignments, replaced_args, redir_list])
 
     return replaced_ast
+
+def replace_irs_for(ast_node, irFileGen, config):
+    replaced_ast = make_kv(ast_node.construct.value,
+                           [ast_node.line_number,
+                            replace_irs_command_argument(ast_node.argument, irFileGen, config),
+                            replace_irs(ast_node.body, irFileGen, config),
+                            ast_node.variable])
+    return replaced_ast
+
 
 def replace_irs_arg_char(arg_char, irFileGen, config):
     key, val = get_kv(arg_char)
