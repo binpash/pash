@@ -221,6 +221,8 @@ def compile_node_defun(ast_node, fileIdGen, config):
     return make_kv(construct, [ast_node.line_number, ast_node.name, compiled_body])
 
 def compile_node_for(ast_node, fileIdGen, config):
+    ## TODO: Investigate what kind of check could we do to make a for
+    ## loop parallel
     compiled_ast = make_kv(ast_node.construct.value,
                            [ast_node.line_number,
                             compile_command_argument(ast_node.argument, fileIdGen, config),
@@ -365,6 +367,8 @@ def replace_irs_command(ast_node, irFileGen, config):
     return replaced_ast
 
 def replace_irs_for(ast_node, irFileGen, config):
+    ## Question: Is it a problem if we replace the same IR? Could
+    ## there be changes between loops that are not reflected?
     replaced_ast = make_kv(ast_node.construct.value,
                            [ast_node.line_number,
                             replace_irs_command_argument(ast_node.argument, irFileGen, config),
