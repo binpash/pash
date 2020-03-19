@@ -349,6 +349,14 @@ Key tasks, in rough order of importance:
   rules? we should certainly be able to describe some of the optimizations as
   congruence rules.
   (vi) complete the related work with some operating-systems literature.
+  --------
+%   Need to highlight the use of ad-hoc flags
+%   Need to highlight use cases / goals:
+%     still POSIX compliant, you can replace /bin/bash with /bin/dish and see
+%     \emph{some} performance improvements, even if we can't handle all cases
+%     today--that is, dish enables a platform for further research.
+%     
+%  Talk about order-aware dataflow analysis?
 }
   
 
@@ -487,6 +495,12 @@ A \sys-enabled $p_1$ will run \ttt{tr}s on parallel streams,
   run \ttt{uniq} mostly in parallel,
   execute \ttt{head} in one of the streams,
   and (trivially) merge streams in \ttt{out}.
+
+% Developers of commands
+% Developers of pipelines
+% Language unifies both---no need for `-t` `-p`
+% POSIX:
+  % https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html
 
 The combination of automated transformations for program distribution with the ability to maintain correct non-distributed semantics results in several benefits.
 % \sys converts legacy shell pipelines into their distributed equivalents fully automatically, offering $100\times$ improvements in performance without a single line of additional code or annotation.
