@@ -192,7 +192,8 @@
 \begin{document}
 
 %% Title information
-\title{Dish: Distribution-oblivious Shell Scripting}         %% [Short Title] is optional;
+%% \title{Dish: Distribution-oblivious Shell Scripting}         %% [Short Title] is optional;
+\title{DPSh: Automated Data-Parallel Processing in the Shell}         %% [Short Title] is optional;
 %% \title{Extensible data processing in the shell}
 
 % \titlenote{with title note}             %% \titlenote is optional;
@@ -333,6 +334,120 @@ Experiments with complex pipelines show substantial speedups and the ability to 
 \section{Introduction}
 \label{intro}
 
+
+%% \kk{After discussion on Wednesday Jan 8: Modify the narrative of
+%%   this paper to talk about data processing in the Shell. Make this
+%%   the main focus of the paper. This simplifies the narrative and
+%%   allows us to not talk about late planner activation as well as
+%%   environment variables. It also justifies why we only deal with
+%%   pure and stateless. Note that this is a very expressive model, as
+%%   shown by our benchmark suite. Note: Rememeber to clearly describe
+%%   the subset of the shell that we handle. To be more precise the
+%%   compositional operator of the shell that we can handle.}
+
+%% \kk{Note: A point that we need to establish early on and convince
+%%   the readers about is that the Shell IS used already for
+%%   data-processing, and that we are not just proposing it as an
+%%   alternative to other systems. We do not propose migrating to
+%%   shell scripts if you already have a parallel/efficient
+%%   solution. I am not sure if that needs a specific paragraph of its
+%%   own at the start of the introduction. Like: ``Consider the
+%%   following bash script that does some simple data
+%%   processing... Examples like that exists in several
+%%   domains/applications (examples, cite).''}
+
+
+%% \kk{Decide if we will mainly focus on scripts or pipelines and
+%%   choose wordings appropriately.}
+%
+Consider the following data processing Shell script.
+%% \kk{We might want to have a more complex script here.}
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$(p_1)$$)
+  sort | uniq -c | sort -rn | head 5 > out
+\end{lstlisting}
+
+\noindent
+Scripts like the one above are commonly used for orchestrating
+data-processing workflows; connecting system commands with custom
+tools to perform complex tasks.
+%% \kk{Do we need to mention domains where that happens?}
+Even though shell pipelines are designed to exploit task parallelism,
+they completely ignore available data-parallelism. For small input
+sizes this isn't a problem since scripts take less than a second to
+execute, but as data sizes increase, failing to utilize the underlying
+parallel computational resources is a significant bottleneck.
+
+To address this concern, a Shell \emph{user} could resort to several
+different solutions (e.g. gnuparallel, tsc, flags in individual
+commands etc...) that offer some form of parallelism. However these
+solutions are too ad-hoc (each having a disparate parallelism model),
+too limited (they only apply to specific use-cases), and too
+coarse-grained. \kk{Tone the previous claims down and back them up.}
+At the same time, a \emph{developer} of Shell commands could rewrite
+her commands using low level tools (e.g. Raftlib, openMP, etc) to
+improve utilization and performance. Manual rewriting is expensive and
+can introduce new bugs, cascading changes, and divergence from legacy
+functionality.
+
+To address this issue for both \emph{users} and \emph{developers}, we
+propose \sys, a tool that automatically exploits available
+data-parallelism in a given shell script. The key insight behind \sys
+is that a large subset of the Shell language can be encoded as a
+dataflow graph, a flexible representation that allows for
+parallelization optimizations. \sys builds on this insight with a
+careful study of the parallelizability properties of shell primitives
+and commands, a definition of a dataflow graph model that is suitable
+for the shell, a set of parallelization optimizations that preserve
+the behaviour of the graph, and a late-bound command-prefixing scheme
+for deferring optimizations as late-as-possible (\ie when runtime
+information is available). \kk{Maybe elaborate some more on the
+  contributions in this paragraph.}  A \sys-enabled $p_1$ will run
+\ttt{tr}s on parallel streams, use a mostly-parallel tree of
+\ttt{sort}s, run \ttt{uniq} mostly in parallel, execute \ttt{head} in
+one of the streams, and (trivially) merge streams in \ttt{out}. The
+only requirement to support a new command is that its developer adds a
+lightweight annotation to describe its parallelizability properties.
+
+The paper is structured as follows. It starts by introducing the
+necessary background on shell scripting and overviewing \sys~\sx{bg}.
+Sections \ref{distributability}--\ref{impl} highlight key
+contributions:
+\begin{itemize}
+  \item
+  \S\ref{distributability} studies the parallelizability properties of
+  a large class of Shell commands (coreutils) and introduces an
+  lightweight annotation language for commands that could be executed
+  in a data-parallel manner. \kk{Mention that we did this for all
+    coreutils.}
+
+  \item
+  \S\ref{ir} presents a dataflow graph model for encoding shell
+  scripts, and a set of parallelization transformations that preserve
+  the semantics of the sequential program.
+
+  \item
+  \S\ref{impl} describes the \sys implementation and addresses several
+  challenges related to the translation and optimization of shell
+  programs. \kk{Rewrite that when we know for sure what the section
+    contains.}
+
+\end{itemize}
+
+\noindent
+\sys's evaluation~\sx{eval} shows significant speedups (4--10$\times$)
+for parallel execution using a combination of real pipelines.
+%micro-bench\-marks %---popular shell one-liners that highlight
+%certain features---and a multi-line macro-benchmark---a popular
+%weather analysis script.
+After a comparison with related prior work~\sx{related}, the paper
+closes with a discussion of limitations and possible future
+directions~\sx{discussion}.
+%% Additional material, in anonymized form, is available at
+%% \href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.
+
+
 \nv{I don't think the intro needs any serious rewrite, apart from deleting any
 notion of distribution and highlighting parallel processing.
 
@@ -355,66 +470,46 @@ Key tasks, in rough order of importance:
 %     still POSIX compliant, you can replace /bin/bash with /bin/dish and see
 %     \emph{some} performance improvements, even if we can't handle all cases
 %     today--that is, dish enables a platform for further research.
-%     
+%
 %  Talk about order-aware dataflow analysis?
 }
-  
 
-\kk{After discussion on Wednesday Jan 8: Modify the narrative of this
-  paper to talk about data processing in the Shell. Make this the main
-  focus of the paper. This simplifies the narrative and allows us to
-  not talk about late planner activation as well as environment
-  variables. It also justifies why we only deal with pure and
-  stateless. Note that this is a very expressive model, as shown by
-  our benchmark suite. Note: Rememeber to clearly describe the subset
-  of the shell that we handle. To be more precise the compositional
-  operator of the shell that we can handle.}
 
-\kk{New intro sketch:}
-
-\kk{Note: A point that we need to establish and convince the readers
-  about is that the Shell IS used already for data-processing, and
-  that we are not just proposing it as an alternative to other
-  systems. We do not propose migrating to shell scripts if you already
-  have a parallel/efficient solution. I am not sure if that needs a
-  specific paragraph of its own at the start of the
-  introduction. Like: ``Consider the following bash script that does
-  some simple data processing... Examples like that exists in several
-  domains/applications (examples, cite).''}
-
-\begin{itemize}
-\item Why is parallelism important (especially in the context of data
-  processing). Significant performance benefits as most computer
-  systems today have multiple processors that are under utilized
-\item (Similarly to how it is now) unfortunately, it is quite hard
-  reaping these benefits in contrast to sequential data
-  processing. [Show Bash pipeline].
-\item To benefit from parallelism, the current options are
-  extreme. Either very fine-grained and low level (parallelism using
-  fine-grained C libraries) for maximum performance, or very coarse
-  grained and bulky where one has to use a proper big-data
-  framework. (Can we fit the shell ones here (gnu-parallel, etc))
-\item The common thing is that one needs to rewrite big part of their
-  application, often requiring expertise and redesigning its
-  architecture, in order to get benefits that in the end might not
-  explain the cost.
-\item To address this issue, we propose Dish, a thin layer that
-  automatically! parallelizes a given shell script. Key insight is
-  that a large subset of the shell language can be encoded in a
-  dataflow graph model, a flexible representation that allows for
-  parallelization optimizations.
-\item Contributions:
-\item Study of the shell primitives, identification of
-  families/classes of commands that share
-  distributability/parallelization properties, and a classification of
-  coreutils/POSIX commands in these distributability properties.
-\item Dataflow graph model that is suitable for the shell
-\item A set of optimizations on this model that can be thought of as
-  rewriting rules on the dataflow graph, that are sound and exploit
-  parallelism.
-\end{itemize}
-
-\kk{End of new intro sketch}
+%% \kk{Begin of new intro sketch}
+%% \begin{itemize}
+%% \item Why is parallelism important (especially in the context of data
+%%   processing). Significant performance benefits as most computer
+%%   systems today have multiple processors that are under utilized
+%% \item (Similarly to how it is now) unfortunately, it is quite hard
+%%   reaping these benefits in contrast to sequential data
+%%   processing. [Show Bash pipeline].
+%% \item To benefit from parallelism, the current options are
+%%   extreme. Either very fine-grained and low level (parallelism using
+%%   fine-grained C libraries) for maximum performance, or very coarse
+%%   grained and bulky where one has to use a proper big-data
+%%   framework. (Can we fit the shell ones here (gnu-parallel, etc))
+%% \item The common thing is that one needs to rewrite big part of their
+%%   application, often requiring expertise and redesigning its
+%%   architecture, in order to get benefits that in the end might not
+%%   explain the cost.
+%% \item To address this issue, we propose Dish, a thin layer that
+%%   automatically! parallelizes a given shell script. Key insight is
+%%   that a large subset of the shell language can be encoded in a
+%%   dataflow graph model, a flexible representation that allows for
+%%   parallelization optimizations.
+%% \end{itemize}
+%% Contributions:
+%% \begin{itemize}
+%% \item Study of the shell primitives, identification of
+%%   families/classes of commands that share
+%%   distributability/parallelization properties, and a classification of
+%%   coreutils/POSIX commands in these distributability properties.
+%% \item Dataflow graph model that is suitable for the shell
+%% \item A set of optimizations on this model that can be thought of as
+%%   rewriting rules on the dataflow graph, that are sound and exploit
+%%   parallelism.
+%% \end{itemize}
+%% \kk{End of new intro sketch}
 
 % 1. Shell scripting; pipelines, in particular, are a common abstraction for expressing filters
 % They are an easy way to , because they combine a set of assumptions that work well with Unix
@@ -424,134 +519,134 @@ Key tasks, in rough order of importance:
 % computation that is easily amenable to distribution.
 % 
 
-Distributed systems offer significant benefits over their centralized counterparts---for example, they can speed up expensive computations or can process data that would not fit into any single machine.
-% offer notable benefits over their centralized counterparts:
-%   using partitioning and replication, they can process and store data with increased throughput and fault-tolerance.
-% Yet, only a minority of developers, employed by the select few companies that deal with massive datasets, have the luxury of engineering software systems with distribution baked in from the start.
-% The remaining majority starts by developing and deploying software in a centralized manner---that is, \emph{until} there is a significant change of requirements, such as a load increase.
-Despite these benefits, their development remains different from and significantly more difficult than their centralized counterparts.
-Whereas anyone can quickly stitch together a Bash script to compute on a single computer, 
-  % domain-experts routinely glue scripts together to process and share data. % without the help of a computing expert.
-   scaling out to multiple ones requires expert labor around ``point'' solutions with expensive setups, restricted programming interfaces, and exorbitant composition costs~\cite{taurus:14, dios:13, andromeda:15, pywren:17, futuredata:18, nefele:18}.
-% 
-To understand this sharp contrast, consider a Bash pipeline calculating term frequencies over a set of inputs:
+%% Distributed systems offer significant benefits over their centralized counterparts---for example, they can speed up expensive computations or can process data that would not fit into any single machine.
+%% % offer notable benefits over their centralized counterparts:
+%% %   using partitioning and replication, they can process and store data with increased throughput and fault-tolerance.
+%% % Yet, only a minority of developers, employed by the select few companies that deal with massive datasets, have the luxury of engineering software systems with distribution baked in from the start.
+%% % The remaining majority starts by developing and deploying software in a centralized manner---that is, \emph{until} there is a significant change of requirements, such as a load increase.
+%% Despite these benefits, their development remains different from and significantly more difficult than their centralized counterparts.
+%% Whereas anyone can quickly stitch together a Bash script to compute on a single computer, 
+%%   % domain-experts routinely glue scripts together to process and share data. % without the help of a computing expert.
+%%    scaling out to multiple ones requires expert labor around ``point'' solutions with expensive setups, restricted programming interfaces, and exorbitant composition costs~\cite{taurus:14, dios:13, andromeda:15, pywren:17, futuredata:18, nefele:18}.
+%% % 
+%% To understand this sharp contrast, consider a Bash pipeline calculating term frequencies over a set of inputs:
 
-% \begin{lstlisting}[language=sh,float=h,numbers=none]
-% cat doc.ms |                   # print input file
-% groff -t -e -mandoc -Tascii |  # remove formatting
-% col -bx |                      # remove backspaces 
-% tr A-Z a-z |                   # convert to lower case
-% tr -d '[:punct:]' |            # remove punctuation
-% sort |                         # put words in alphabetical order
-% unique |                       # remove duplicate words
-% comm -13 /usr/share/dict -     # report words not in dictionary 
-% \end{lstlisting}
-% \smallskip
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$(p_1)$$)
-  sort | uniq -c | sort -rn | head 5 > out
-\end{lstlisting}
-% \smallskip
-% \noindent
-Program $p_1$ creates a character stream, breaks it into words, transliterates to lower-case, sorts to group duplicates, reduces duplicates to a counter, sorts counters in descending order, picks the top five results, and writes them to a file \ttt{out}.
-Combining several features, \unix makes small tasks easy to express;
-  for a user with \emph{one} computer and a small input size, this pipeline takes a few seconds to compose and execute~\cite{bentley1986literate}.
-% composition allows the composition of general primitives
+%% % \begin{lstlisting}[language=sh,float=h,numbers=none]
+%% % cat doc.ms |                   # print input file
+%% % groff -t -e -mandoc -Tascii |  # remove formatting
+%% % col -bx |                      # remove backspaces 
+%% % tr A-Z a-z |                   # convert to lower case
+%% % tr -d '[:punct:]' |            # remove punctuation
+%% % sort |                         # put words in alphabetical order
+%% % unique |                       # remove duplicate words
+%% % comm -13 /usr/share/dict -     # report words not in dictionary 
+%% % \end{lstlisting}
+%% % \smallskip
+%% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+%% cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$(p_1)$$)
+%%   sort | uniq -c | sort -rn | head 5 > out
+%% \end{lstlisting}
+%% % \smallskip
+%% % \noindent
+%% Program $p_1$ creates a character stream, breaks it into words, transliterates to lower-case, sorts to group duplicates, reduces duplicates to a counter, sorts counters in descending order, picks the top five results, and writes them to a file \ttt{out}.
+%% Combining several features, \unix makes small tasks easy to express;
+%%   for a user with \emph{one} computer and a small input size, this pipeline takes a few seconds to compose and execute~\cite{bentley1986literate}.
+%% % composition allows the composition of general primitives
 
-% Key insight 
-% % The garden-hose philosophy is similar to Haskell 
-% This pipeline takes an input file (line 1), removes 
-% * do not need to use specialized frameworks for composition---instead, as long as they conform to the shell, individual primitives can be written in any programming language.
-% * do not need to rewrite ---
+%% % Key insight 
+%% % % The garden-hose philosophy is similar to Haskell 
+%% % This pipeline takes an input file (line 1), removes 
+%% % * do not need to use specialized frameworks for composition---instead, as long as they conform to the shell, individual primitives can be written in any programming language.
+%% % * do not need to rewrite ---
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_overview.pdf}}
-\caption{
-  \textbf{High-level schematic.}
-  \sys leverages distributability analysis for built-in commands and any developer extensions (left) to automatically transform shell scripts (mid) and orchestrates their
-  execution (right).
-}
-\vspace{-10pt}
-\label{fig:schematic}
-\end{figure}
+%% \begin{figure}[t]
+%% \centering
+%% \includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_overview.pdf}}
+%% \caption{
+%%   \textbf{High-level schematic.}
+%%   \sys leverages distributability analysis for built-in commands and any developer extensions (left) to automatically transform shell scripts (mid) and orchestrates their
+%%   execution (right).
+%% }
+%% \vspace{-10pt}
+%% \label{fig:schematic}
+%% \end{figure}
 
 
-Unfortunately, developing $p_1$'s distributed equivalent requires significant effort.
-% For a user with many computers and larger inputs, 
-% The scope of such rewrites, and therefore the cost of manual effort, can vary considerably.
-For simple pipelines, fitting into restricted models of computation, this effort amounts to expressing the computation using the primitives provided by a big-data framework~\cite{mapreduce:08, ciel:11, spark:12, naiad:13} or domain-specific language~\cite{alvaro2011consistency,distal:13,meiklejohn2015lasp}---an unjustifiable cost for small, one-off pipelines that take a few minutes to compose (but are applied to large datasets).
-More complex pipelines, such as the ones presented in later sections, would involve a full-fledged distributed programming language~\cite{erlang:96, lopes1997d, acute:05, mace:07, cloudhaskell:11, ScalaLoci:18}. %  or a distributed operating system---\eg Plan9's \ttt{rc} shell.
-In both cases, manual rewriting is expensive and can introduce new bugs, cascading changes, and divergence from legacy functionality.
-Could the generation and execution of $p_1$'s distributed version be fully and correctly automated?
+%% Unfortunately, developing $p_1$'s distributed equivalent requires significant effort.
+%% % For a user with many computers and larger inputs, 
+%% % The scope of such rewrites, and therefore the cost of manual effort, can vary considerably.
+%% For simple pipelines, fitting into restricted models of computation, this effort amounts to expressing the computation using the primitives provided by a big-data framework~\cite{mapreduce:08, ciel:11, spark:12, naiad:13} or domain-specific language~\cite{alvaro2011consistency,distal:13,meiklejohn2015lasp}---an unjustifiable cost for small, one-off pipelines that take a few minutes to compose (but are applied to large datasets).
+%% More complex pipelines, such as the ones presented in later sections, would involve a full-fledged distributed programming language~\cite{erlang:96, lopes1997d, acute:05, mace:07, cloudhaskell:11, ScalaLoci:18}. %  or a distributed operating system---\eg Plan9's \ttt{rc} shell.
+%% In both cases, manual rewriting is expensive and can introduce new bugs, cascading changes, and divergence from legacy functionality.
+%% Could the generation and execution of $p_1$'s distributed version be fully and correctly automated?
 
-To answer this question we develop \sys, a shell variant that transforms traditional \unix pipelines into their distributed equivalents, enabling \emph{distribution-oblivious programming}.
-The key insight behind \sys is that a large part of the shell language can be encoded in a distributed dataflow graph model, providing structure to distribute computations.
-%% \kk{Replaced that: the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation. }
-% FIXME \kk{I am not sure whether stream processing provides information for distributing a computation on its own. Maybe we can say that the shell exposes operator level parallelism, and that this is the first step to distributing a computation}.
-\sys builds on this insight with a careful study of the distributability properties of shell primitives and commands, a definition of a dataflow graph model that is suitable for the shell, a set of parallelization optimizations that preserve the behaviour of the graph, and a late-bound command-prefixing scheme for deferring scheduling decisions to the distributed planner (\ie when runtime information is available).
-A \sys-enabled $p_1$ will run \ttt{tr}s on parallel streams,
-  use a mostly-parallel tree of \ttt{sort}s,
-  run \ttt{uniq} mostly in parallel,
-  execute \ttt{head} in one of the streams,
-  and (trivially) merge streams in \ttt{out}.
+%% To answer this question we develop \sys, a shell variant that transforms traditional \unix pipelines into their distributed equivalents, enabling \emph{distribution-oblivious programming}.
+%% The key insight behind \sys is that a large part of the shell language can be encoded in a distributed dataflow graph model, providing structure to distribute computations.
+%% %% \kk{Replaced that: the language of the Unix shell already encodes stream processing, providing most of the information required to distribute a computation. }
+%% % FIXME \kk{I am not sure whether stream processing provides information for distributing a computation on its own. Maybe we can say that the shell exposes operator level parallelism, and that this is the first step to distributing a computation}.
+%% \sys builds on this insight with a careful study of the distributability properties of shell primitives and commands, a definition of a dataflow graph model that is suitable for the shell, a set of parallelization optimizations that preserve the behaviour of the graph, and a late-bound command-prefixing scheme for deferring scheduling decisions to the distributed planner (\ie when runtime information is available).
+%% A \sys-enabled $p_1$ will run \ttt{tr}s on parallel streams,
+%%   use a mostly-parallel tree of \ttt{sort}s,
+%%   run \ttt{uniq} mostly in parallel,
+%%   execute \ttt{head} in one of the streams,
+%%   and (trivially) merge streams in \ttt{out}.
 
-% Developers of commands
-% Developers of pipelines
-% Language unifies both---no need for `-t` `-p`
-% POSIX:
-  % https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html
+%% % Developers of commands
+%% % Developers of pipelines
+%% % Language unifies both---no need for `-t` `-p`
+%% % POSIX:
+%%   % https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html
 
-The combination of automated transformations for program distribution with the ability to maintain correct non-distributed semantics results in several benefits.
-% \sys converts legacy shell pipelines into their distributed equivalents fully automatically, offering $100\times$ improvements in performance without a single line of additional code or annotation.
-First, shell users composing pipelines (or simply running legacy pipelines on massive datasets) can see scalability benefits without any manual effort---no need for \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}, or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
-Second, developers of new shell commands can use a lightweight domain-specific language to express their distributability properties rather than ad-hoc, command-specific flags such as {\tt -t},  {\tt NUM\_THREADS}, \ttt{-t}, \ttt{-p} \etc
-Most importantly, \sys provides an architectural lesson for system designers---namely, that large-scale efforts in the distributed- and operating-system literature to provide a \unix-like distributed equivalent~\cite{ousterhout1988sprite, mullender1990amoeba, pike1990plan9, barak1998mosix} would have been simplified by a thin (but sophisticated) rewriting shim like the one \sys provides.
-% Nice critique on parallel: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=597050#75
+%% The combination of automated transformations for program distribution with the ability to maintain correct non-distributed semantics results in several benefits.
+%% % \sys converts legacy shell pipelines into their distributed equivalents fully automatically, offering $100\times$ improvements in performance without a single line of additional code or annotation.
+%% First, shell users composing pipelines (or simply running legacy pipelines on massive datasets) can see scalability benefits without any manual effort---no need for \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}, or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
+%% Second, developers of new shell commands can use a lightweight domain-specific language to express their distributability properties rather than ad-hoc, command-specific flags such as {\tt -t},  {\tt NUM\_THREADS}, \ttt{-t}, \ttt{-p} \etc
+%% Most importantly, \sys provides an architectural lesson for system designers---namely, that large-scale efforts in the distributed- and operating-system literature to provide a \unix-like distributed equivalent~\cite{ousterhout1988sprite, mullender1990amoeba, pike1990plan9, barak1998mosix} would have been simplified by a thin (but sophisticated) rewriting shim like the one \sys provides.
+%% % Nice critique on parallel: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=597050#75
 
-% % Make Unix benefits explicit?
-% Indeed, the primary reason behind $p_1$'s succinctness is that the pipeline is a domain-specific language for describing operations over streams.
-% Key elements of \unix are the ability to compose programs written in different languages, the abstraction of a file system as a set of resident streams, a small but extensible library of commands, and the ability to resolve names within a global context.
-% Under the hood, the \unix kernel buffers results, synchronizes processing stages, and generally orchestrates the computation.
+%% % % Make Unix benefits explicit?
+%% % Indeed, the primary reason behind $p_1$'s succinctness is that the pipeline is a domain-specific language for describing operations over streams.
+%% % Key elements of \unix are the ability to compose programs written in different languages, the abstraction of a file system as a set of resident streams, a small but extensible library of commands, and the ability to resolve names within a global context.
+%% % Under the hood, the \unix kernel buffers results, synchronizes processing stages, and generally orchestrates the computation.
 
-The paper is structured as follows.
-It starts by introducing the necessary background on shell scripting and overviewing \sys~\sx{bg}.
-Sections \ref{distributability}--\ref{impl} highlight key
-contributions:
-\begin{itemize}
+%% The paper is structured as follows.
+%% It starts by introducing the necessary background on shell scripting and overviewing \sys~\sx{bg}.
+%% Sections \ref{distributability}--\ref{impl} highlight key
+%% contributions:
+%% \begin{itemize}
 
-  \item
-  \S\ref{distributability} studies several distributability classes and introduces the distributability characterization language.
+%%   \item
+%%   \S\ref{distributability} studies several distributability classes and introduces the distributability characterization language.
 
-  \item
-  \S\ref{ir} presents a dataflow graph model for encoding shell pipelines, and a set of parallelization transformations that preserve the semantics of the sequential program.
+%%   \item
+%%   \S\ref{ir} presents a dataflow graph model for encoding shell pipelines, and a set of parallelization transformations that preserve the semantics of the sequential program.
 
-  \item
-    \S\ref{impl} describes the \sys implementation and addresses
-    several challenges related to the translation and optimization of
-    shell programs.
-    %% details other concerns, such as distributed state management and extensibility. 
-\end{itemize}
+%%   \item
+%%     \S\ref{impl} describes the \sys implementation and addresses
+%%     several challenges related to the translation and optimization of
+%%     shell programs.
+%%     %% details other concerns, such as distributed state management and extensibility. 
+%% \end{itemize}
 
-\noindent
-\sys's evaluation~\sx{eval} shows significant speedups (4--10$\times$) for parallel execution using a combination of real pipelines. %micro-bench\-marks %---popular shell one-liners that highlight certain features---and a multi-line macro-benchmark---a popular weather analysis script.
-After a comparison with related prior work~\sx{related}, the paper closes with a discussion of limitations and possible future directions~\sx{discussion}.
-% \bigskip
-% \begin{quote}
-% \footnotesize
-Additional material, in anonymized form, is available at
-\href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.
-% \end{quote}
+%% \noindent
+%% \sys's evaluation~\sx{eval} shows significant speedups (4--10$\times$) for parallel execution using a combination of real pipelines. %micro-bench\-marks %---popular shell one-liners that highlight certain features---and a multi-line macro-benchmark---a popular weather analysis script.
+%% After a comparison with related prior work~\sx{related}, the paper closes with a discussion of limitations and possible future directions~\sx{discussion}.
+%% % \bigskip
+%% % \begin{quote}
+%% % \footnotesize
+%% Additional material, in anonymized form, is available at
+%% \href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.
+%% % \end{quote}
 
-% \begin{figure*}[t]
-% \centering
-% \includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_overview.pdf}}
-% \caption{
-%   \textbf{Applying \sys to $p_1$.}
-% }
-% \label{fig:example}
-% \end{figure*}
-% 
+%% % \begin{figure*}[t]
+%% % \centering
+%% % \includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_overview.pdf}}
+%% % \caption{
+%% %   \textbf{Applying \sys to $p_1$.}
+%% % }
+%% % \label{fig:example}
+%% % \end{figure*}
+%% % 
 
 \section{Background and Overview}
 \label{bg}
