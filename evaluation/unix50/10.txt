@@ -1,0 +1,71 @@
+Year	Name	Gender	Citizenship	Second Citizenship	Born	Affiliation at the time of the award
+2018	Yoshua Bengio	Male	Canada	 	1964	University of Montreal, Canada, Mila (Quebec's Artificial Intelligence Institute) and IVADO (the Institute for Data Valorization)
+2018	Geoffrey Hinton	Male	Canada	 	1947	Google, Vector Institute and University of Toronto, Canada
+2018	Yann LeCun	Male	France	 	1960	New York University, USA, and Facebook
+2017	John Leroy Hennessy	Male	United States	 	1952	Stanford University, USA
+2017	David Andrew Patterson	Male	United States	 	1947	University of California, Berkeley, USA
+2016	Tim Berners-Lee	Male	United Kingdom	 	1955	Massachusetts Institute of Technology (MIT), University of Oxford
+2015	Bailey Whitfield "Whit" Diffie	Male	United States	 	1944	Stanford University
+2015	Martin Edward Hellman	Male	United States	 	1945	Stanford University
+2014	Michael Ralph Stonebraker	Male	United States	 	1943	MIT (Massachusetts Institute of Technology)
+2013	Leslie Lamport	Male	United States	 	1941	Microsoft Research
+2012	Shafi Goldwasser	Female	United States	Israel	1958	MIT (Massachusetts Institute of Technology), Weizmann Institute of Science
+2012	Silvio Micali	Male	Italy	 	1954	MIT (Massachusetts Institute of Technology)
+2011	Judea Pearl	Male	United States	Israel	1936	UCLA (University of California Los Angeles)
+2010	Leslie Gabriel Valiant	Male	United Kingdom	 	1949	Harvard University
+2009	Charles P. Thacker	Male	United States	 	1943	Microsoft Research
+2008	Barbara Liskov	Female	United States	 	1939	MIT (Massachusetts Institute of Technology)
+2007	Joseph Sifakis	Male	France	 	1946	CNRS (Centre national de la recherche scientifique)
+2007	Ernest Allen Emerson	Male	United States	 	1954	University of Texas
+2007	Edmund Melson Clarke	Male	United States	 	1945	Carnegie Mellon University
+2006	Frances E. "Fran" Allen	Female	United States	 	1933	IBM Fellow Emerita
+2005	Peter Naur	Male	Denmark	 	1928	Copenhagen University
+2004	Robert E. Kahn	Male	United States	 	1938	CNRI (Corporation for National Research Initiatives)
+2004	Vinton Gray Cerf	Male	United States	 	1943	MCI Communications Corp
+2003	Alan Curtis Kay	Male	United States	 	1940	Hewlett Packard Senior Fellow
+2002	Ronald Linn Rivest	Male	United States	 	1947	MIT (Massachusetts Institute of Technology)
+2002	Leonard M. Adleman	Male	United States	 	1945	University of Southern California
+2002	Adi	Shamir Male	Israel	 	1952	Weizmann Institute of Science
+2001	Kristen Nygaard	Male	Norway	 	1926	University of Oslo
+2001	Ole-Johan Dahl	Male	Norway	 	1931	University of Oslo
+2000	Andrew Chi-Chih Yao	Male	China	 	1946	Princeton University
+1999	Frederick P. Brooks	Male	United States	 	1931	University of North Carolina
+1998	James Nicholas "Jim" Gray	Male	United States	 	1944	Microsoft Research
+1997	Douglas C. Engelbart	Male	United States	 	1925	SRI International
+1996	Amir Pnueli	Male	Israel	 	1941	Weizmann Institute of Science
+1995	Manuel Blum	Male	Venezuela	 	1938	Carnegie-Mellon University
+1994	Raj Reddy	Male	India	 	1937	Carnegie-Mellon University
+1994	Edward Albert Feigenbaum	Male	United States	 	1936	Stanford University
+1993	Richard Edwin Stearns	Male	United States	 	1936	University at Albany
+1993	Juris Hartmanis	Male	United States	 	1928	Cornell University
+1992	Butler W. Lampson	Male	United States	 	1943	Digital Equipment Corporation
+1991	Robin Milner	Male	United Kingdom	 	1934	Edinburgh University
+1990	Fernando José Corbató	Male	United States	 	1926	MIT (Massachusetts Institute of Technology)
+1989	William Morton Kahan	Male	Canada	 	1933	University of California
+1988	Ivan Edward Sutherland	Male	United States	 	1938	Sutherland, Sproull and Associates
+1987	John Cocke	Male	United States	 	1925	IBM
+1986	John E. Hopcroft	Male	United States	 	1939	Cornell University
+1986	Robert Endre Tarjan	Male	United States	 	1948	Princeton University
+1985	Richard M. Karp	Male	United States	 	1935	University of California
+1984	Niklaus Wirth	Male	Switzerland	 	1934	Eidgenössische Technische Hochschule (Swiss Federal Institute of Technology)
+1983	Dennis MacAlistair Ritchie	Male	United States	 	1941	Bell Telephone Laboratories
+1983	Kenneth Lane Thompson	Male	United States	 	1943	Bell Telephone Laboratories
+1982	Stephen Arthur Cook	Male	United States	 	1939	University of Toronto
+1981	Edgar F. "Ted" Codd	Male	United Kingdom	 	1923	IBM Almaden Research Center
+1980	Charles Antony Richard Hoare	Male	United Kingdom	 	1934	University of Oxford
+1979	Kenneth E. Iverson	Male	Canada	 	1920	IBM Research
+1978	Robert W Floyd	Male	United States	 	1936	Stanford University
+1977	John Warner Backus	Male	United States	 	1924	IBM Research
+1976	Michael Oser Rabin	Male	Israel	 	1931	Hebrew University
+1976	Dana Stewart Scott	Male	United States	 	1932	University of Oxford
+1975	Allen Newell	Male	United States	 	1927	Carnegie-Mellon University
+1975	Herbert Alexander Simon	Male	United States	 	1916	Carnegie-Mellon University
+1974	Donald Ervin Knuth	Male	United States	 	1938	Stanford University
+1973	Charles W. Bachman	Male	United States	 	1924	General Electric
+1972	Edsger Wybe Dijkstra	Male	Netherlands	 	1930	Eindhoven University of Technology
+1971	John McCarthy	Male	United States	 	1927	MIT (Massachusetts Institute of Technology)
+1970	James Hardy Wilkinson	Male	United Kingdom	 	1919	National Physical Laboratory (NPL)
+1969	Marvin Lee Minsky	Male	United States	 	1927	MIT (Massachusetts Institute of Technology)
+1968	Richard Wesley Hamming	Male	United States	 	1915	Bell Telephone Laboratories
+1967	Maurice Vincent Wilkes	Male	United Kingdom	 	1913	University of Cambridge
+1966	Alan Jay Perlis	Male	United States	 	1922	Yale University

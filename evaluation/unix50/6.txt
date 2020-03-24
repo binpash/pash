@@ -1,0 +1,16 @@
+Callisto 1.236
+Earth 9.807
+Europa 1.316
+Ganymede 1.428
+Io 1.797
+Jupiter 24.790 
+Mars 3.700
+Mercury 3.700
+Moon 1.625
+Neptune 11.150
+Pluto 0.620
+Saturn 10.445
+Titan 1.354
+Triton 0.782
+Uranus 8.690
+Venus 8.872  
