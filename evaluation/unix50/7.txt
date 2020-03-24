@@ -1,0 +1,9 @@
+UNICS (Version Zero)	PDP-7	Summer	1969
+Fifth Edition UNIX	PDP-11/40	June	1974
+Sixth Edition UNIX	PDP-11/45	May	1975
+Seventh Edition UNIX	PDP-11/70	January	1979
+Research UNIX 8	VAX-11/780		1981
+AT&T UNIX System III	PDP-11/70	Fall	1982
+AT&T UNIX System V	PDP-11/70		1983
+AT&T UNIX System V	3b2/400		1984
+2.11 BSD	PDP-11/70	January	1991

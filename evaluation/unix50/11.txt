@@ -1,0 +1,32 @@
+2019	DAVID TSE	“For seminal contributions to wireless network information theory and wireless network systems.”
+2018	ERDAL ARIKAN	“For contributions to information and communications theory, especially the discovery of polar codes and polarization techniques.”
+2017	SHLOMO SHAMAI	“For fundamental contributions to information theory and wireless communications.”
+2016	ABBAS EL GAMAL	“For contributions to network multi-user information theory and for wide ranging impact on programmable circuit architectures.”
+2015	IMRE CSISZAR	“For contributions to information theory, informationtheoretic security, and statistics.”
+2014	THOMAS RICHARDSON and RÜDIGER URBANKE	“For fundamental contributions to coding theory, iterative information processing, and applications.”
+2013	ROBERT CALDERBANK	“For fundamental contributions to coding theory that impacted voice-band modems and wireless communication.”
+2012	MICHAEL G. LUBY and AMIN SHOKROLLAHI	“For the conception, development, and analysis of practical rateless codes.”
+2011	TOBY BERGER	“For contributions to Information Theory, including source coding and its applications.”
+2010	WHITFIELD DIFFIE and MARTIN HELLMAN and RALPH MERKLE	“For the invention of public key cryptography and its application to secure communications.”
+2009	PETER FRANASZEK	“For pioneering contributions to the theory and practice of constrained channel coding.”
+2008	SERGIO VERDU	“For fundamental contributions to information theory and the development of multiuser detection.”
+2007	ABRAHAM LEMPEL	“For pioneering work in data compression especially the Lempel-Ziv algorithm.”
+2006	VLADIMIR I. LEVENSHTEIN	“For contributions to the theory of error-correcting codes and information theory, including the Levenshtein distance.”
+2005	NEIL J.A. SLOANE	"For contributions to coding theory and its applications to communications, computer science, mathematics and statistics."
+2004	JACK K. WOLF	“For fundamental contributions to the theory and practice of information transmission and storage.”
+2003	CLAUDE BERROU and ALAIN GLAVIEUX	“For the invention of turbo codes, which have revolutionized digital communications.”
+2002	PETER ELIAS	"For fundamental and pioneering contributions to information theory and its applications."
+2001	A.G. (SANDY) FRASER	"For pioneering contributions to the architecture of communication networks through the development of virtual circuit switching technology."
+2000	SOLOMON W. GOLOMB	“For fundamental contributions to the theory of shift register sequences and their applications in digital communications."
+1999	DAVID A. HUFFMAN	"For design procedures of minimum redundancy (Huffman) codes and asynchronous sequential circuits, and contributions to analysis of visual imagery."
+1998	DAVID D. CLARK	"For leadership and major contributions to the architecture of the Internet as a universal information medium"
+1997	THOMAS M. COVER	"For fundamental contributions to information and communication theory, statistics and pattern recognition."
+1996	MARK S. PINSKER	"For outstanding contributions to information theory, statistical estimation and coding theory."
+1995	JACOB ZIV	"For contributions to information theory, and the theory and practice of data compression."
+1994	GOTTFRIED UNGERBOECK	"For the development and application of trellis modulation to digital communications."
+1993	JORMA J. RISSANEN	"For fundamental contributions to information theory, statistical inference, control theory, and the theory of complexity."
+1992	LOTFI A. ZADEH	"For seminal contributions to information science and systems, including the conceptualization of fuzzy sets."
+1991	ELWYN R. BERLEKAMP	"For profound contributions to the theory and application of error-correcting codes."
+1990	DENNIS M. RITCHIE and KENNETH L. THOMPSON	"For the origination of the UNIX operating system and the C programming language."
+1989	IRVING S. REED	"For contributions to multiple error-correcting codes, digital computer design, and automatic detection and processing of signals in noise."
+1988	RICHARD W. HAMMING	"For exceptional and pioneering contributions to information sciences and systems, and for inspiring generations of researchers in these fields."

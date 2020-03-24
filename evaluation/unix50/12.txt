@@ -1,0 +1,8 @@
+turn left
+turn left
+move forward
+turn right
+turn right
+move forward
+turn left
+move forward

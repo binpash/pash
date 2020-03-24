@@ -1,3 +1,7 @@
+#!/bin/bash
+
+# run it by piping output to /dev/null
+
 # scripts from https://unixgame.io/
 # https://github.com/psinghbh/softsec.github.io
 # input files https://github.com/psinghbh/softsec.github.io/tree/master/ctf/unixgame.io/challenges
@@ -86,7 +90,7 @@ cat 9.3.txt | cut -c 1-2 | tr -d '\n'
 cat 9.4.txt | fmt -w1 | grep '"' | sed 4d | cut -d '"' -f 2 | tr -d '\n'
 
 # 9.5: backwards running clock, in a backwards poem
-cat 9.5 > /dev/null
+cat 9.5.txt > /dev/null
 
 # 9.6: Follow the directions for grep
 cat 9.6.txt | fmt -w1 | grep '[A-Z]' | sed 1d | sed 3d | sed 3d | tr '[a-z]' '\n' | grep '[A-Z]' | sed 3d | tr -c '[A-Z]' '\n' | tr -d '\n'
@@ -113,5 +117,9 @@ cat 10.txt| grep Ritchie | cut -f2,5 | fmt -w1 | cut -c1 | tr '[A-Z]' '[a-z]' | 
 # 11.1: year Ritchie and Thompson receive the Hamming medal
 cat 11.txt | grep 'UNIX' | cut -f 1
 
-# 11.2:  most repeated first name in the list?
+# 11.2: most repeated first name in the list?
 cat 11.txt | cut -f 2 | cut -d ' ' -f 1 | sort | uniq -c | sort -nr | head -n 1 | fmt -w1 | sed 1d
+
+# 12.1: transform this list of instructions such that if the snake follows the
+#       new instructions top to bottom, it ends on the location of the apple.
+cat 12.txt > /dev/null
