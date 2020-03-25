@@ -68,6 +68,7 @@ cat 8.txt | fmt -w1 | grep 1969 | wc -l
 
 # 8.2: find Bell Labs location where Dennis Ritchie had his office
 #      (nv: added last awk, could be `trim`)
+#      (kk: I think that this should be done with just one grep that matches an address)
 cat 8.txt | grep 'Bell' | awk 'length <= 45' | cut -d ',' -f 2 | awk '{$1=$1};1'
 
 # 8.3: find names of the four people most involved with unix
