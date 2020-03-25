@@ -51,6 +51,8 @@ cat 5.txt | grep 'print' | cut -d '"' -f 2 | cut -c 1-12
 # 6.1: order the bodies by how easy it would be to land on them in Thompson's
 #      Space Travel game when playing at the highest simulation scale
 cat 6.txt | awk '{print $2, $0}' | sort -nr | cut -d ' ' -f 2
+# paste 6.txt 6.txt | tr '\t' ' ' | tr -s ' ' | cut -d ' ' -f 2,3 | sort -nr | cut -d ' ' -f 2
+# cat 6.txt | sort -nr -k 2 | cut -d ' ' -f 1
 
 # 7.1: identify number of AT&T unix versions
 cat 7.txt | cut -f 1 | grep 'AT&T' | wc -l
