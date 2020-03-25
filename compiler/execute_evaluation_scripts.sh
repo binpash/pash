@@ -29,6 +29,14 @@ microbenchmarks=(
     alt_bigrams          # Not so true (as many steps are combined for better MapReduce)
 
     ## TODO: Add some more for OSDI
+    wc                   # Extremely simple
+    # diff                 # TODO: Handle that
+    # set-diff             # TODO: Handle that
+    # page-count           # TODO: Change it so that it is one pipeline and it has many files
+    # sieve                # Nice to show posix compliance
+    # genquality           # TODO: Nice big pipeline. Handle this
+    # genome-diff          # TODO: Nice big pipeline. Handle this
+    # symtab               # Probably no benefit (since it runs some sequential pure function)
 )
 
 ## Note: Maybe we need to tune the configuration (fan-out, batch-size)
