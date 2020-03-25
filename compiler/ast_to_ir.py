@@ -67,6 +67,51 @@ ir_cases = {
                       lambda ast_node: replace_irs_for(ast_node, irFileGen, config)),
         }
 
+def compile_asts(ast_objects, fileIdGen, config):
+    compiled_asts = []
+    acc_ir = None
+    for i, ast_object in enumerate(ast_objects):
+        print("Compiling AST {}".format(i))
+        print(ast_object)
+
+        ## Compile subtrees of the AST to out intermediate representation
+        compiled_ast = compile_ast(ast_object, fileIdGen, config)
+
+        # print("Compiled AST:")
+        # print(compiled_ast)
+
+        ## If the accumulator contains an IR (meaning that the
+        ## previous commands where run in background), union it with
+        ## the current returned ast.
+        if (not acc_ir is None):
+
+            if (isinstance(compiled_ast, IR)):
+                acc_ir.union(compiled_ast)
+            else:
+                ## FIXME: This one will not work. The IR of an AST node
+                ##        doesn't have any stdin or stdout.
+                acc_ir.union(IR([compiled_ast]))
+
+            ## If the current compiled ast not in background (and so
+            ## the union isn't in background too), stop accumulating
+            if (not acc_ir.is_in_background()):
+                compiled_asts.append(acc_ir)
+                acc_ir = None
+        else:
+            ## If the compiled ast is in background, start
+            ## accumulating it
+            if (isinstance(compiled_ast, IR)
+                and compiled_ast.is_in_background()):
+                acc_ir = compiled_ast
+            else:
+                compiled_asts.append(compiled_ast)
+
+    ## The final accumulator
+    if (not acc_ir is None):
+        compiled_asts.append(acc_ir)
+
+    return compiled_asts
+
 
 def compile_ast(ast_object, fileIdGen, config):
     return compile_node(ast_object, fileIdGen, config)
@@ -76,10 +121,6 @@ def compile_node(ast_object, fileIdGen, config):
     return ast_match(ast_object, compile_cases, fileIdGen, config)
 
 def compile_node_pipe(ast_node, fileIdGen, config):
-    ## Note: Background indicates when the pipe should be run in the background.
-    ##
-    ## TODO: Investigate whether we can optimize more by running
-    ##       the background pipes in a distributed fashion.
     compiled_pipe_nodes = combine_pipe([compile_node(pipe_item, fileIdGen, config)
                                         for pipe_item in ast_node.items])
 
@@ -92,6 +133,11 @@ def compile_node_pipe(ast_node, fileIdGen, config):
         ## Note: Save the old ast for the end-to-end prototype
         old_ast_node = make_kv(ast_node.construct.value, [ast_node.is_background, ast_node.items])
         compiled_ir.set_ast(old_ast_node)
+        ## Set the IR background so that it can be parallelized with
+        ## the next command if the pipeline was run in background
+        compiled_ir.set_background(ast_node.is_background)
+        ## TODO: If the pipeline is in background, I also have to
+        ## redirect its stdin, stdout
         compiled_ast = compiled_ir
     else:
         ## Note: This should be unreachable with the current combine pipe
@@ -108,6 +154,8 @@ def combine_pipe(ast_nodes):
     if (isinstance(ast_nodes[0], IR)):
         combined_nodes = ast_nodes[0]
     else:
+        ## FIXME: This one will not work. The IR of an AST node
+        ##        doesn't have any stdin or stdout.
         combined_nodes = IR([ast_nodes[0]])
 
     ## Combine the rest of the nodes
@@ -194,6 +242,7 @@ def compile_node_background(ast_node, fileIdGen, config):
     ##       the IR accordingly
     if (isinstance(compiled_node, IR)):
         ## TODO: Redirect the stdout, stdin accordingly
+        compiled_node.set_background(True)
         compiled_ast = compiled_node
     else:
         ## Note: It seems that background nodes can be added in

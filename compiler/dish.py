@@ -24,7 +24,7 @@ def main():
     ast_objects = parse_json_ast_string(json_ast_string)
 
     ## 3. Compile ASTs to our intermediate representation
-    compiled_asts = compile_asts(ast_objects, config.config)
+    compiled_asts = compile_replace_asts(ast_objects, config.config)
 
     ## 4. Translate the new AST back to shell syntax
     input_script_wo_extension, input_script_extension = os.path.splitext(input_script_path)
@@ -63,7 +63,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def compile_asts(ast_objects, config):
+def compile_replace_asts(ast_objects, config):
     ## This is for the files in the IR
     fileIdGen = FileIdGen()
 
@@ -71,22 +71,20 @@ def compile_asts(ast_objects, config):
     irFileGen = FileIdGen()
 
     final_asts = []
-    for i, ast_object in enumerate(ast_objects):
-        # print("Compiling AST {}".format(i))
-        # print(ast_object)
 
-        ## Compile subtrees of the AST to out intermediate representation
-        compiled_ast = compile_ast(ast_object, fileIdGen, config)
+    ## Compile the asts
+    compiled_asts = compile_asts(ast_objects, fileIdGen, config)
 
-        # print("Compiled AST:")
-        # print(compiled_ast)
+    for i, compiled_ast in enumerate(compiled_asts):
+        print("Replacing AST {}".format(i))
+        print(compiled_ast)
 
         ## Replace the IRs in the ASTs with calls to the distribution
         ## planner. Save the IRs in temporary files.
         final_ast = replace_irs(compiled_ast, irFileGen, config)
 
-        # print("Final AST:")
-        # print(final_ast)
+        print("Final AST:")
+        print(final_ast)
         final_asts.append(final_ast)
     return final_asts
 
