@@ -16,14 +16,19 @@ n_inputs=(
 )
 
 microbenchmarks=(
-    minimal_sort
-    minimal_grep
-    topn
-    wf
     grep
-    spell
-    shortest_scripts
-    micro_1000
+    minimal_sort
+    minimal_grep         # PLDI
+    topn                 # PLDI
+    wf                   # PLDI
+    spell                # PLDI
+    shortest_scripts     # PLDI
+    micro_1000           # PLDI
+
+    # bigrams              # TODO: Fix bug. Run with good split.
+    alt_bigrams          # Not so true (as many steps are combined for better MapReduce)
+
+    ## TODO: Add some more for OSDI
 )
 
 ## Note: Maybe we need to tune the configuration (fan-out, batch-size)
