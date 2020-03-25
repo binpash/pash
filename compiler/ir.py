@@ -229,10 +229,11 @@ class IR:
     ##
     ## - If two nodes have the same file as output, then they both
     ##   write to it concurrently.
-    def __init__(self, nodes, stdin = [], stdout = []):
+    def __init__(self, nodes, stdin = [], stdout = [], background = False):
         self.nodes = nodes
         self.stdin = stdin
         self.stdout = stdout
+        self.background = background
 
     def __repr__(self):
         output = "(|-{} IR: {} {}-|)".format(self.stdin, self.nodes, self.stdout)
@@ -306,6 +307,12 @@ class IR:
     def set_ast(self, ast):
         self.ast = ast
 
+    def set_background(self, background):
+        self.background = background
+
+    def is_in_background(self):
+        return self.background
+
     def pipe_append(self, other):
         assert(self.valid())
         assert(other.valid())
@@ -326,6 +333,30 @@ class IR:
         ## Note: The ast is not extensible, and thus should be
         ## invalidated if an operation happens on the IR
         self.ast = None
+
+    def union(self, other):
+        assert(self.valid())
+        assert(other.valid())
+        self.nodes += other.nodes
+
+        ## This combines two IRs where at least the first one is in
+        ## background. This means that the stdin, stdout are those of
+        ## the second (or None if both are in background). Also if
+        ## both are in background, their union is also in background.
+
+        ## TODO: Handle stdin, stdout, and general redirections
+
+        ## TODO: Handle connections of common files (pipes, etc)
+        assert(False)
+
+        ## If one of them is not in the background, then the whole
+        ## thing isn't.
+        self.set_background(self.is_in_background() and other.is_in_background())
+
+        ## Note: The ast is not extensible, and thus should be
+        ## invalidated if an operation happens on the IR
+        self.ast = None
+
 
     ## Returns the sources of the IR (i.e. the nodes that has no
     ## incoming edge)
