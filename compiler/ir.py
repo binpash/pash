@@ -36,7 +36,8 @@ class FileIdGen:
         self.next += 1
         return fileId
 
-def create_command_assign_file_identifiers(ast, fileIdGen, command, options, stdin=None, stdout=None):
+def create_command_assign_file_identifiers(ast, fileIdGen, command, options,
+                                           stdin=None, stdout=None, redirections=[]):
     in_stream, out_stream, opt_indices = find_command_input_output(command, options, stdin, stdout)
     category = find_command_category(command, options)
     ## TODO: Maybe compile command instead of just formatting it.
@@ -45,7 +46,7 @@ def create_command_assign_file_identifiers(ast, fileIdGen, command, options, std
                       opt_indices, category, stdin, stdout)
     else:
         command = Command(ast, command, options, in_stream, out_stream,
-                          opt_indices, category, stdin, stdout)
+                          opt_indices, category, stdin, stdout, redirections)
 
     ## The options that are part of the input and output streams must
     ## be swapped with file identifiers. This means that each file
