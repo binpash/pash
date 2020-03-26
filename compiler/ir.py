@@ -365,9 +365,32 @@ class IR:
         self.ast = None
 
         ## TODO: Handle connections of common files (pipes, etc)
+        self.combine_common_files()
+
+
+    ## Combines (unions) files that refer to the same resource.
+    ##
+    ## WARNING: This assumes that comparing file names statically
+    ## (syntactically) for equality, implies semantic
+    ## equality. However this is not true. There are cases where
+    ## different identifiers could refer to the same file.
+    ##
+    ## Q: Are there also cases where a same name (let's say a
+    ## variable) could point to different files in different parts of
+    ## the IR? Maybe it can be true if a command is run with
+    ## variable assignments)
+    def combine_common_files(self):
+
+        ## For now we just unify a file if it exists exactly twice,
+        ## once at the input of a node and once at the output of
+        ## another node. If a file exists in several input locations,
+        ## we don't unify it. Also if a file exists in more than 1
+        ## input and 1 output (or more than 1 output in general) we
+        ## signal an error.
+
+        ## TODO: Perform the unification
+        print(self)
         assert(False)
-
-
 
     ## Returns the sources of the IR (i.e. the nodes that has no
     ## incoming edge)
