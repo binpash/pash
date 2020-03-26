@@ -310,6 +310,12 @@ class IR:
     def set_background(self, background):
         self.background = background
 
+        if (background):
+            ## Since the IR is in the background, we don't have access to
+            ## its stdin, stdout anymore
+            self.stdin = []
+            self.stdout = []
+
     def is_in_background(self):
         return self.background
 
@@ -337,6 +343,7 @@ class IR:
     def union(self, other):
         assert(self.valid())
         assert(other.valid())
+        assert(self.is_in_background())
         self.nodes += other.nodes
 
         ## This combines two IRs where at least the first one is in
@@ -344,18 +351,22 @@ class IR:
         ## the second (or None if both are in background). Also if
         ## both are in background, their union is also in background.
 
-        ## TODO: Handle stdin, stdout, and general redirections
-
-        ## TODO: Handle connections of common files (pipes, etc)
-        assert(False)
+        ## TODO: Handle any redirections
 
         ## If one of them is not in the background, then the whole
         ## thing isn't.
-        self.set_background(self.is_in_background() and other.is_in_background())
+        if (not other.is_in_background()):
+            self.set_background(other.is_in_background())
+            self.stdin = other.stdin
+            self.stdout = other.stdout
 
         ## Note: The ast is not extensible, and thus should be
         ## invalidated if an operation happens on the IR
         self.ast = None
+
+        ## TODO: Handle connections of common files (pipes, etc)
+        assert(False)
+
 
 
     ## Returns the sources of the IR (i.e. the nodes that has no
@@ -431,6 +442,10 @@ class IR:
     ## file identifiers.
     def valid(self):
         return (len(self.nodes) > 0 and
-                len(self.stdin) > 0 and
-                len(self.stdout) > 0)
+                ((self.is_in_background()
+                  and len(self.stdin) == 0
+                  and len(self.stdout) == 0)
+                 or (not self.is_in_background()
+                     and len(self.stdin) > 0
+                     and len(self.stdout) > 0)))
 
