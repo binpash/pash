@@ -104,6 +104,8 @@ def find_command_input_output(command, options, stdin, stdout):
         return (input_stream, ["stdout"], [])
     elif (command_string == "comm"):
         return comm_input_output(options, stdin, stdout)
+    elif (command_string == "diff"):
+        return diff_input_output(options, stdin, stdout)
     else:
         opt_indices = [("option", i) for i in range(len(options))]
         return (["stdin"], ["stdout"], opt_indices)
@@ -163,6 +165,17 @@ def comm_input_output(options, stdin, stdout):
         return (in_stream, ["stdout"], opt_indices)
     else:
         assert(false)
+
+## WARNING: This is not complete!! It doesn't handle - for stdin, or
+## directories, etc...
+##
+## TODO: Make this complete
+def diff_input_output(options, stdin, stdout):
+    in_stream = [("option", i) for i, option in enumerate(options)
+                 if not format_arg_chars(option).startswith('-')]
+    opt_indices = [("option", i) for i, option in enumerate(options)
+                   if format_arg_chars(option).startswith('-')]
+    return (in_stream, ["stdout"], opt_indices)
 
 def make_split_files(in_fid, fan_out, batch_size, fileIdGen):
     assert(fan_out > 1)
@@ -380,9 +393,26 @@ class IR:
         ## input and 1 output (or more than 1 output in general) we
         ## signal an error.
 
-        ## TODO: Perform the unification
-        print(self)
-        assert(False)
+        ## TODO: (Maybe) Signal an error if an output is an output in
+        ## more than one node
+
+        ## For all inputs of all nodes, check if they are the output
+        ## of exactly one other node.
+        for node in self.nodes:
+            in_stream_with_resources = [file_in for file_in in node.get_input_file_ids()
+                                        if file_in.has_resource()]
+            for file_in in in_stream_with_resources:
+                in_resource = file_in.get_resource()
+                number_of_out_resources = 0
+                for node2 in self.nodes:
+                    out_stream_with_resources = [file_out for file_out in node.get_output_file_ids()
+                                                 if file_out.has_resource()]
+                    for file_out in out_stream_with_resources:
+                        if (in_resource == out_resource):
+                            number_of_out_resources += 1
+                            file_in.union(file_out)
+                assert(number_of_out_resources <= 1)
+
 
     ## Returns the sources of the IR (i.e. the nodes that has no
     ## incoming edge)

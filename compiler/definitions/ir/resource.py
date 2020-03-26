@@ -12,6 +12,13 @@ class Resource:
             output = "{}[{}:{}]".format(self.uri, self.range[0], self.range[1])
         return output
 
+    def __eq__(self, other):
+        if isinstance(other, Resource):
+            assert(self.range == [0, "inf"])
+            assert(other.range == [0, "inf"])
+            return self.uri == other.uri
+        return False
+
     ## This function splits a "splittable" resource (at the moment
     ## only files are resources so they are all splittable)
     def split_resource(self, times, batch_size):

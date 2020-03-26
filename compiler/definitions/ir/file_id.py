@@ -63,6 +63,9 @@ class FileId:
     def get_resource(self):
         return self.resource
 
+    def has_resource(self):
+        return (not self.resource is None)
+
     ## This must be used by the implementation to only transfer
     ## max_length lines in this file.
     def set_max_length(self, max_length):
