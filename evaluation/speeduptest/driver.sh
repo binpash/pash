@@ -5,14 +5,18 @@
 set -e
 
 CPUs=${1:-$(nproc)}
-IN=${IN:-../scripts/input/10M.txt}
-OUT=${OUT:-./out.txt}
+IN=${IN:-../scripts/input/100M.txt}
+OUT1=${OUT:-./out1.txt}
+OUT2=${OUT:-./out2.txt}
 SEQ=${2:-"./seq-grep"}
 
 # divide by number of chunks in AWK
+echo dividing input to $CPUs chunks
 total_size=$(wc -l $IN | awk -F " " '{print $1}') 
 chunk_size=$((total_size / CPUs))
 split -l $chunk_size $IN dish-chunk-
+
+find .  -maxdepth 1 -type p -delete
 
 echo '#!/bin/bash' > dish-execute.sh
 chmod +x ./dish-execute.sh
@@ -21,24 +25,36 @@ echo "#seq script: time (cat $IN | $SEQ > $OUT)" >> dish-execute.sh
 
 # echo "set -x" >> dish-execute.sh
 
+echo creating $CPUs FIFOs
 counter=0
 for chunk in dish-chunk-*; do
-  echo "mkfifo dish-fifo-$((counter++))" >> dish-execute.sh
+  # echo "mkfifo dish-fifo-$((counter++))" >> dish-execute.sh
+  mkfifo dish-fifo-$((counter++))
 done
 
 counter=0
 for chunk in dish-chunk-*; do
-  echo "cat $chunk | $SEQ > dish-fifo-$((counter++)) &" >> dish-execute.sh
+  echo "cat $chunk | $SEQ >> dish-fifo-$((counter++)) &" >> dish-execute.sh
 done
 
 #FIXME: bash doesn't expand `*` in _numberic_ order (1, 10, 2..) affecting cat
-echo cat 'dish-fifo-* >' $OUT >> dish-execute.sh 
+echo cat 'dish-fifo-* >>' $OUT2 >> dish-execute.sh 
+# echo 'wait' >> dish-execute.sh 
 
-echo "# Delete all pipes" >> dish-execute.sh
-counter=0
-for chunk in dish-chunk-*; do
-  echo "find .  -maxdepth 1 -type p -delete -name 'dish-fifo-$((counter++))'" >> dish-execute.sh
-done
+echo Timing: Sequential
+time (cat $IN | $SEQ > $OUT1)
 
-time (cat $IN | $SEQ > $OUT)
+echo Timing: Parallel
 time ./dish-execute.sh
+
+# diff $OUT1 $OUT2 | head
+
+echo Timing scripts
+echo "# Delete all pipes" >> dish-execute.sh
+find .  -maxdepth 1 -type p -delete
+# counter=0
+#for chunk in dish-chunk-*; do
+  # echo "find .  -maxdepth 1 -type p -delete -name 'dish-fifo-$((counter++))'" >> dish-execute.sh
+  # find .  -maxdepth 1 -type p -delete -name dish-fifo-$((counter++))
+# done
+
