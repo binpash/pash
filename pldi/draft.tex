@@ -1610,6 +1610,11 @@ to a file.
 \section{Implementation}
 \label{impl}
 
+\TODO{Talk about the importance of eagerness and why we need to
+  enforce it to get benefits. Discuss the necessity of having files as
+  buffers and how we addressed the issue of cat's lazy consumption of
+  its inputs.}
+
 This section describes challenges related to the implementation of
 \sys. It starts by describing how the \sys front-end translates a
 shell script to the dataflow graph model defined in \S\ref{ir}, by
