@@ -2,7 +2,7 @@
 
 # Word frequencies:
 
-IN=./input/i1G.txt
+IN=./input/1G.txt
 OUT=./output/out.txt
 
 cat $IN |

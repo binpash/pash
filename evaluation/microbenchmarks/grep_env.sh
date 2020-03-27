@@ -1,1 +1,1 @@
-IN=../evaluation/scripts/input/i1G.txt
+IN=../evaluation/scripts/input/1G.txt

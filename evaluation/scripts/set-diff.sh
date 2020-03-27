@@ -8,7 +8,7 @@ p="../../distributability/c_stats/"
 A=${1:-${p}posix.txt}
 B=${2:-${p}coreutils.txt}
 
-IN=./input/i1G.txt
+IN=./input/1G.txt
 OUT=./output/out.txt
 
 comm -23 <(cut -d ' ' -f 1 $IN | sort ) <( cut -d ' ' -f 1 $IN | sort) > $OUT

@@ -3,7 +3,7 @@
 # A somewhat suboptimal way of calculating 3-grams.
 # Part of the intention is to highlight overheads of tagging each stream element
 
-IN=./input/i1G.txt
+IN=./input/1G.txt
 OUT=./output/out.txt
 
 mkfifo s2 s3
