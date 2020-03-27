@@ -4,7 +4,7 @@
 
 # Data: ./input/input.txt
 
-IN=./input/i1G.txt
+IN=./input/1G.txt
 OUT=./output/out.txt
 
 # https://crashingdaily.wordpress.com/2008/03/06/diff-two-stdout-streams/

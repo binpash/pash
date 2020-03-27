@@ -1,1 +1,1 @@
-IN=test_inputs/i1M.txt
+IN=test_inputs/1M.txt

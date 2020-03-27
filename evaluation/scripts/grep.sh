@@ -3,9 +3,9 @@
 # Substring search  of  a complex  string, using  backtracking  (a superset  of
 # Thompson's high-perf NFA used in GNU)
 
-# Data: ./input/i1G.txt
+# Data: ./input/1G.txt
 
-IN=./input/i1G.txt
+IN=./input/1G.txt
 OUT=./output/out.txt
 
 cat $IN |

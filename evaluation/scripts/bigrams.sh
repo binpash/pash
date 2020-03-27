@@ -3,7 +3,7 @@
 # Find all 2-grams in a piece of text
 # FIXME: does not calculate frequencies
 
-IN=./input/i1G.txt
+IN=./input/1G.txt
 OUT=./output/out.txt
 
 mkfifo s2

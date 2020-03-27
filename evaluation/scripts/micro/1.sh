@@ -1,3 +1,3 @@
-cat ../input/i1M.txt |
+cat ../input/1M.txt |
 tr " " " " |
 tr " " " " > out.txt
