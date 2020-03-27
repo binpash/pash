@@ -1,3 +1,3 @@
-SLOW='[a-zA-Z0-9]\+@[a-zA-Z0-9]\+\.[a-z]\{2,\}\|a'
-FAST='eBook'
-grep $SLOW
+# grep 'computer' # Fast
+# grep '[a-zA-Z0-9]\+@[a-zA-Z0-9]\+\.[a-z]\{2,\}' # slower
+grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' # slowest
