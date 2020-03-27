@@ -176,9 +176,9 @@ def compile_node_command(ast_node, fileIdGen, config):
 
     ## TODO: Do we need the line number?
 
-    ## TODO: We probably also need to do something with the redirection list.
-
+    ## Compile assignments and redirection list
     compiled_assignments = compile_assignments(ast_node.assignments, fileIdGen, config)
+    compiled_redirections = compile_redirections(ast_node.redir_list, fileIdGen, config)
 
     ## If there are no arguments, the command is just an
     ## assignment
@@ -187,7 +187,7 @@ def compile_node_command(ast_node, fileIdGen, config):
         ## assigned values, because they might have command
         ## substitutions etc..
         compiled_ast = make_kv(construct_str, [ast_node.line_number] +
-                [compiled_assignments] + [ast_node.arguments, ast_node.redir_list])
+                               [compiled_assignments] + [ast_node.arguments, compiled_redirections])
     else:
         arguments = ast_node.arguments
         command_name = arguments[0]
@@ -207,12 +207,21 @@ def compile_node_command(ast_node, fileIdGen, config):
         ## parallelized.
         command = create_command_assign_file_identifiers(old_ast_node, fileIdGen,
                                                          command_name, options,
-                                                         stdin=stdin_fid, stdout=stdout_fid)
-        compiled_ast = IR([command],
-                          stdin = [stdin_fid],
-                          stdout = [stdout_fid])
+                                                         stdin=stdin_fid, stdout=stdout_fid,
+                                                         redirections=compiled_redirections)
 
-        compiled_ast.set_ast(old_ast_node)
+        ## Don't put the command in an IR if it is creates some effect
+        ## (not stateless or pure)
+        if (command.category in ["stateless", "pure"]):
+            compiled_ast = IR([command],
+                              stdin = [stdin_fid],
+                              stdout = [stdout_fid])
+            compiled_ast.set_ast(old_ast_node)
+        else:
+            compiled_arguments = compile_command_arguments(arguments, fileIdGen, config)
+            compiled_ast = make_kv(construct_str,
+                                   [ast_node.line_number, compiled_assignments,
+                                    compiled_arguments, compiled_redirections])
 
     return compiled_ast
 
@@ -314,6 +323,17 @@ def compile_assignments(assignments, fileIdGen, config):
                             for assignment in assignments]
     return compiled_assignments
 
+def compile_redirection(redirection, fileIdGen, config):
+    redir_type = redirection[0]
+    redir_subtype = redirection[1][0]
+    stream_id = redirection[1][1]
+    file_arg = compile_command_argument(redirection[1][2], fileIdGen, config)
+    return [redir_type, [redir_subtype, stream_id, file_arg]]
+
+def compile_redirections(redirections, fileIdGen, config):
+    compiled_redirections = [compile_redirection(redirection, fileIdGen, config)
+                             for redirection in redirections]
+    return compiled_redirections
 
 
 

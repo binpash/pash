@@ -1,6 +1,7 @@
 from definitions.ir.node import *
 from definitions.ir.arg import *
 from definitions.ir.file_id import *
+from definitions.ir.redirection import *
 
 from ir_utils import *
 import config
@@ -9,11 +10,12 @@ import config
 ## classified as stateless, etc...
 class Command(Node):
     def __init__(self, ast, command, options, in_stream, out_stream,
-                 opt_indices, category, stdin=None, stdout=None):
+                 opt_indices, category, stdin=None, stdout=None, redirections=[]):
         super().__init__(ast, in_stream, out_stream, category, stdin, stdout)
         self.command = Arg(command)
         self.options = [opt if isinstance(opt, FileId) else Arg(opt) for opt in options]
         self.opt_indices = opt_indices
+        self.apply_redirections(redirections)
 
     def __repr__(self):
         prefix = "Command"
@@ -35,6 +37,26 @@ class Command(Node):
         options_string = " ".join([self.options[opt_i].opt_serialize() for opt_i in all_opt_indices])
         output = "{} {}".format(self.command, options_string)
         return output
+
+    ## This function applies redirections.
+    ##
+    ## WARNING: For now it only works with 'To' redirections for
+    ## stdout, and it applies them by adding a resource to the stdout
+    ## of the command. It also keeps them for possible future usage.
+    ##
+    ## TODO: Properly handle all redirections. This requires a nice
+    ## abstraction. Maybe the best way would be to keep them around
+    ## and always recompute inputs/outputs when needed by following
+    ## the redirections.
+    def apply_redirections(self, redirections):
+        ## Save the redirections for possible debugging
+        self.redirections = [Redirection(redirection) for redirection in redirections]
+
+        for redirection in self.redirections:
+            ## Handle To redirections that have to do with stdout
+            if (redirection.is_to_file() and redirection.is_for_stdout()):
+                print(redirection)
+                self.stdout.set_resource(redirection.file_arg)
 
     def get_non_file_options(self):
         return [self.options[i] for _, i in self.opt_indices]
