@@ -22,7 +22,7 @@ output_funs = os.path.join(output_dir, '{}_{}_funs.sh'.format(name_of_script, nu
 with open(input_script) as file:
     input_script_data = file.read()
 
-output_script_data = input_script_data.replace(' $IN', ' $IN' * number_of_inputs, 1)
+output_script_data = input_script_data.replace(' $IN', ' $IN' * number_of_inputs)
 
 with open(output_script, "w") as file:
     file.write(output_script_data)
