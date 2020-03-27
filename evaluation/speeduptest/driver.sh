@@ -4,6 +4,16 @@
 
 set -e
 
+if [[ $(uname) == 'Darwin' ]]; then
+  DIFF_STAT="wc -l"
+  OUT_DIR=./
+else
+  DIFF_STAT="diffstat"
+  OUT_DIR=/dev/shm/
+fi
+
+PRE="dish"
+CREATE="touch" # or mkfifo
 CPUs=${1:-$(nproc)}
 IN=${IN:-../scripts/input/100M.txt}
 OUT1=${OUT:-./out1.txt}
@@ -25,36 +35,52 @@ echo "#seq script: time (cat $IN | $SEQ > $OUT)" >> dish-execute.sh
 
 # echo "set -x" >> dish-execute.sh
 
-echo creating $CPUs FIFOs
+echo creating $CPUs channels
 counter=0
 for chunk in dish-chunk-*; do
-  # echo "mkfifo dish-fifo-$((counter++))" >> dish-execute.sh
-  mkfifo dish-fifo-$((counter++))
+  # echo "mkfifo dish-channel-$((counter++))" >> dish-execute.sh
+  $CREATE dish-channel-$((counter++))
 done
 
 counter=0
 for chunk in dish-chunk-*; do
-  echo "cat $chunk | $SEQ >> dish-fifo-$((counter++)) &" >> dish-execute.sh
+  if [[ $CREATE == 'touch' ]]; then
+    # echo 'Channel is persistent file, using `>` to create it'
+    echo "cat $chunk | $SEQ > dish-channel-$((counter++)) &" >> dish-execute.sh
+  else
+    # echo 'Channel is FIFO, using `>>` to append to it'
+    echo "cat $chunk | $SEQ >> dish-channel-$((counter++)) &" >> dish-execute.sh
+  fi
 done
 
-#FIXME: bash doesn't expand `*` in _numberic_ order (1, 10, 2..) affecting cat
-echo cat 'dish-fifo-* >>' $OUT2 >> dish-execute.sh 
-# echo 'wait' >> dish-execute.sh 
+# #FIXME: bash doesn't expand `*` in _numberic_ order (1, 10, 2..) affecting cat
+# echo cat 'dish-channel-* >>' $OUT2 >> dish-execute.sh 
+# # echo 'wait' >> dish-execute.sh 
 
-echo Timing: Sequential
+echo 'wait' >> dish-execute.sh 
+
+counter=0
+args=""
+for chunk in dish-chunk-*; do
+  args="$args dish-channel-$((counter++))"
+done
+echo cat $args '>' $OUT2 >> dish-execute.sh 
+
+echo Sequential Timing:
 time (cat $IN | $SEQ > $OUT1)
 
-echo Timing: Parallel
+echo Parallel Timing: 
 time ./dish-execute.sh
 
-# diff $OUT1 $OUT2 | head
+echo Result Diff:
+diff $OUT1 $OUT2 | $DIFF_STAT
 
-echo Timing scripts
-echo "# Delete all pipes" >> dish-execute.sh
-find .  -maxdepth 1 -type p -delete
+echo "# Delete all channels" >> dish-execute.sh
+# find .  -maxdepth 1 -type p -delete
+rm dish-channel-*
 # counter=0
 #for chunk in dish-chunk-*; do
-  # echo "find .  -maxdepth 1 -type p -delete -name 'dish-fifo-$((counter++))'" >> dish-execute.sh
-  # find .  -maxdepth 1 -type p -delete -name dish-fifo-$((counter++))
+  # echo "find .  -maxdepth 1 -type p -delete -name 'dish-channel-$((counter++))'" >> dish-execute.sh
+  # find .  -maxdepth 1 -type p -delete -name dish-channel-$((counter++))
 # done
 
