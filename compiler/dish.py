@@ -38,7 +38,7 @@ def main():
 
 def parse_shell(input_script_path):
     parser_output = subprocess.run([config.PARSER_BINARY, input_script_path], capture_output=True, text=True)
-    if(not parser_output.returncode == 0):
+    if (not parser_output.returncode == 0):
         print(parser_output.stderr)
         parser_output.check_returncode()
     return parser_output.stdout
