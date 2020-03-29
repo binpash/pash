@@ -20,7 +20,6 @@ def parse_json_ast_string(json_string):
     ast_objects = [parse_json_line(line) for line in lines]
     return ast_objects
 
-
 ## Returns a list of AST objects
 def parse_json_ast(json_filename):
     with open(json_filename) as json_file:

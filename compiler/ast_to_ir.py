@@ -75,7 +75,7 @@ def compile_asts(ast_objects, fileIdGen, config):
         print(ast_object)
 
         ## Compile subtrees of the AST to out intermediate representation
-        compiled_ast = compile_ast(ast_object, fileIdGen, config)
+        compiled_ast = compile_node(ast_object, fileIdGen, config)
 
         # print("Compiled AST:")
         # print(compiled_ast)
@@ -112,9 +112,6 @@ def compile_asts(ast_objects, fileIdGen, config):
 
     return compiled_asts
 
-
-def compile_ast(ast_object, fileIdGen, config):
-    return compile_node(ast_object, fileIdGen, config)
 
 def compile_node(ast_object, fileIdGen, config):
     global compile_cases
