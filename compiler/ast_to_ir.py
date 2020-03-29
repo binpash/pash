@@ -71,8 +71,8 @@ def compile_asts(ast_objects, fileIdGen, config):
     compiled_asts = []
     acc_ir = None
     for i, ast_object in enumerate(ast_objects):
-        print("Compiling AST {}".format(i))
-        print(ast_object)
+        # print("Compiling AST {}".format(i))
+        # print(ast_object)
 
         ## Compile subtrees of the AST to out intermediate representation
         compiled_ast = compile_node(ast_object, fileIdGen, config)
