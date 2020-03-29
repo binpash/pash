@@ -76,15 +76,15 @@ def compile_replace_asts(ast_objects, config):
     compiled_asts = compile_asts(ast_objects, fileIdGen, config)
 
     for i, compiled_ast in enumerate(compiled_asts):
-        print("Replacing AST {}".format(i))
-        print(compiled_ast)
+        # print("Replacing AST {}".format(i))
+        # print(compiled_ast)
 
         ## Replace the IRs in the ASTs with calls to the distribution
         ## planner. Save the IRs in temporary files.
         final_ast = replace_irs(compiled_ast, irFileGen, config)
 
-        print("Final AST:")
-        print(final_ast)
+        # print("Final AST:")
+        # print(final_ast)
         final_asts.append(final_ast)
     return final_asts
 

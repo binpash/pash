@@ -46,13 +46,11 @@ def optimize_script(ir_filename, compile_optimize_only):
 
     print("Retrieving IR: {} ...".format(ir_filename))
     shell_string = ast_to_shell(ir_node.ast)
-    print(shell_string)
+    # print(shell_string)
 
-    print(ir_node)
+    # print(ir_node)
     distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config.config['fan_out'], config.config['batch_size'])
-    print(distributed_graph)
-    # print("Parallelized graph:")
-    # print(graph)
+    # print(distributed_graph)
 
     ## Call the backend that executes the optimized dataflow graph
     output_script_path = config.config['optimized_script_filename']
