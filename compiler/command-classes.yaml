@@ -18,6 +18,7 @@ pure:
     - command: bigrams_aux
     - command: alt_bigrams_aux
     - command: diff
+    - command: head
 parallelizable_pure:
     - command: sort
     - command: bigrams_aux
