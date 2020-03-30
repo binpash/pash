@@ -26,7 +26,7 @@ if [ -f $funs_file ]; then
 fi
 
 echo "Sequential:"
-cat $seq_script | grep -v "rm -f" | grep -v "mkfifo"
+cat $seq_script
 { time /bin/bash $seq_script > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
 
 echo "Distributed:"
