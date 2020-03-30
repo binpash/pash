@@ -35,7 +35,7 @@ def main():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("input_ir", help="the file containing the dataflow graph to be optimized and executed")
-    config.add_common_arguments(parser)
+    system_config.add_common_arguments(parser)
     args = parser.parse_args()
     return args
 
