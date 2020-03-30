@@ -1119,9 +1119,11 @@ regarding its first (resp. the second) file argument.
 % \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
 
 \paragraph{Distributability DSL}
-The DSL for distributability description (Fig.~\ref{fig:dsl}) is
-designed to classify commands into multiple categories
-given their options.
+The DSL for distributability description (Fig.~\ref{fig:dsl} \kk{I
+  think that the language definition should be in a technical report,
+  and here we should only give intuition and the \ttt{comm} example})
+is designed to classify commands into multiple categories given their
+options.
 
 It assumes that the arguments of a command can always be separated to
 options and file arguments (checking if they start with a
@@ -1206,11 +1208,12 @@ straightforward way, there also exists a subclass of commands in \pur
 that can be parallelized using divide-and-conquer techniques (as
 mentioned in \cref{cmd}). In order to support the parallelization of
 arbitrary commands in this category, \sys allows command developers to
-provide custom map and reduce steps for them, where the map
-is in \sta and the reduce in \pur, and their composition produces the
-same output with the initial command. \sys can then replace occurrences
-of these commands with their map and reduce parts, enabling their
-parallelization.
+provide custom map and reduce steps for them, where the map is in \sta
+and the reduce in \pur, and their composition produces the same output
+with the initial command. \sys can then replace occurrences of these
+commands with their map and reduce parts, enabling their
+parallelization. \TODO{Mention that we have done this for several pure
+  commands in coreutils, providing the foundation}
 
 
 \tr{\kk{I am not sure a general interface is so easy to design. It needs
