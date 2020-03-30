@@ -6,7 +6,7 @@
 # This would work with coreutils.
 # shuf() { awk 'BEGIN {srand(); OFMT="%.17f"} {print rand(), $0}' "$@" | sort -k1,1n | cut -d ' ' -f2-; }
 
-# mkfifo s1 s2
+mkfifo s1 s2
 
 cat $IN |
   # shuf |
