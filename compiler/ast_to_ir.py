@@ -71,8 +71,8 @@ def compile_asts(ast_objects, fileIdGen, config):
     compiled_asts = []
     acc_ir = None
     for i, ast_object in enumerate(ast_objects):
-        print("Compiling AST {}".format(i))
-        print(ast_object)
+        # print("Compiling AST {}".format(i))
+        # print(ast_object)
 
         ## Compile subtrees of the AST to out intermediate representation
         compiled_ast = compile_node(ast_object, fileIdGen, config)
@@ -88,13 +88,18 @@ def compile_asts(ast_objects, fileIdGen, config):
             if (isinstance(compiled_ast, IR)):
                 acc_ir.union(compiled_ast)
             else:
-                ## FIXME: This one will not work. The IR of an AST node
-                ##        doesn't have any stdin or stdout.
-                acc_ir.union(IR([compiled_ast]))
+                ## TODO: Make this union the compiled_ast with the
+                ## accumulated IR, since the user wanted to run these
+                ## commands in parallel (Is that correct?)
+                # acc_ir.union(IR([compiled_ast]))
+                compiled_asts.append(acc_ir)
+                acc_it = None
+                compiled_asts.append(compiled_ast)
 
             ## If the current compiled ast not in background (and so
             ## the union isn't in background too), stop accumulating
-            if (not acc_ir.is_in_background()):
+            if (not acc_ir is None
+                and not acc_ir.is_in_background()):
                 compiled_asts.append(acc_ir)
                 acc_ir = None
         else:

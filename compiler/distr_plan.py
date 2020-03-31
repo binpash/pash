@@ -41,18 +41,21 @@ def optimize_script(ir_filename, compile_optimize_only):
     if not config.config:
         config.load_config()
 
+    print("Retrieving IR: {} ...".format(ir_filename))
     with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
 
-    print("Retrieving IR: {} ...".format(ir_filename))
-    shell_string = ast_to_shell(ir_node.ast)
-    print(shell_string)
+    ## TODO: This is supposed to print the old ast for debugging
+    ## purposes, however, the ast of a union of two IRs is sometimes
+    ## None (because there were multiple unioned IRs). Fix this to not
+    ## crash when the AST is null
+    # shell_string = ast_to_shell(ir_node.ast)
+    # print(shell_string)
 
-    print(ir_node)
-    distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config.config['fan_out'], config.config['batch_size'])
-    print(distributed_graph)
-    # print("Parallelized graph:")
-    # print(graph)
+    # print(ir_node)
+    distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config.config['fan_out'],
+                                                              config.config['batch_size'])
+    # print(distributed_graph)
 
     ## Call the backend that executes the optimized dataflow graph
     output_script_path = config.config['optimized_script_filename']
@@ -367,15 +370,18 @@ def create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen
 ##
 ## TODO: Find a better place to put these functions
 def create_sort_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
-    tree = create_reduce_tree(SortGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
+    tree = create_reduce_tree(lambda file_ids: SortGReduce(curr, file_ids),
+                              new_output_file_ids, out_edge_file_id, fileIdGen)
     return tree
 
 def create_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
-    tree = create_reduce_tree(BigramGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
+    tree = create_reduce_tree(lambda file_ids: BigramGReduce(curr, file_ids),
+                              new_output_file_ids, out_edge_file_id, fileIdGen)
     return tree
 
 def create_alt_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
-    tree = create_reduce_tree(AltBigramGReduce, new_output_file_ids, out_edge_file_id, fileIdGen)
+    tree = create_reduce_tree(lambda file_ids: AltBigramGReduce(curr, file_ids),
+                              new_output_file_ids, out_edge_file_id, fileIdGen)
     return tree
 
 ## This function creates the reduce tree. Both input and output file
