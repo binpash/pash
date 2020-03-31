@@ -23,7 +23,7 @@
        __typeof__ (b) _b = (b); \
      _a < _b ? _a : _b; })
 
-#define READ_WRITE_BUFFER_SIZE 2048
+#define READ_WRITE_BUFFER_SIZE 128 * 1024
 
 int safe_open3(const char *pathname, int flags, mode_t mode) {
     int fd = open(pathname, flags, mode);
