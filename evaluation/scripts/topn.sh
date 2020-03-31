@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Identify top 10 terms in an input
+# Edit: replaced `sed ${N}q` with `head -n$N`
 
 N=10
 IN=./input/1G.txt
@@ -12,5 +13,5 @@ cat $IN |
   sort |
   uniq -c |
   sort -rn |
-  sed ${N}q > $OUT
+  head -n$N > $OUT
 
