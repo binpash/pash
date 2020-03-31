@@ -151,19 +151,9 @@ void EagerLoop(char* input, char* output, char* intermediate) {
             }
         }
         if (FD_ISSET(outputFd, &writeFds)) {
-            // 1. There is something in our intermediateBuffer. We
-            // then write this to the output.
-            if (outputBytesWritten < outputBytesRead) {
-                ssize_t newBytesWritten =
-                    writeOutput(outputFd, outputBuf, outputBytesRead - outputBytesWritten);
-                if (newBytesWritten == 0) {
-                    printf("Output is done!\n");
-                    doneWriting = 1;
-                    break;
-                }
-                outputBytesWritten += newBytesWritten;
-            } else if (outputBytesRead == outputBytesWritten) {
-                // 2. The intermediate buffer is empty but there is
+            // If there is nothing in our intermediate buffer, we have to fill it.
+            if (outputBytesRead == outputBytesWritten) {
+                // 1. The intermediate buffer is empty but there is
                 // something to read in the intermediate file. We then
                 // read from the intermediate file and write to the
                 // output.
@@ -177,17 +167,9 @@ void EagerLoop(char* input, char* output, char* intermediate) {
                         printf("Error: Didn't read from intermediate file!\n");
                         exit(1);
                     }
-
-                    // TODO: Refactor that with the one above
-                    outputBytesWritten =
-                        writeOutput(outputFd, outputBuf, outputBytesRead);
-                    if (outputBytesWritten == 0) {
-                        printf("Output is done!\n");
-                        doneWriting = 1;
-                        break;
-                    }
+                    outputBytesWritten = 0;
                 }
-                // 3. There is nothing to read in the intermediate
+                // 2. There is nothing to read in the intermediate
                 // file. We then have to block read from the input until
                 // it gives us something.
                 else {
@@ -197,10 +179,17 @@ void EagerLoop(char* input, char* output, char* intermediate) {
                         break;
                     }
                 }
-            } else {
-                printf("Unreachable!\n");
-                exit(1);
             }
+
+            // Now the intermediate buffer certainly has data
+            ssize_t newBytesWritten =
+                writeOutput(outputFd, outputBuf, outputBytesRead - outputBytesWritten);
+            if (newBytesWritten == 0) {
+                printf("Output is done!\n");
+                doneWriting = 1;
+                break;
+            }
+            outputBytesWritten += newBytesWritten;
         }
     }
 
@@ -226,46 +215,41 @@ void EagerLoop(char* input, char* output, char* intermediate) {
 
         // TODO: This is copied from above. Can we refactor?
         if (FD_ISSET(outputFd, &writeFds)) {
-            // 1. There is something in our intermediateBuffer. We
-            // then write this to the output.
-            if (bufferBytesToOutput > 0) {
-                ssize_t newBytesWritten =
-                    writeOutput(outputFd, outputBuf, bufferBytesToOutput);
-                if (newBytesWritten == 0) {
-                    printf("Output is done!\n");
-                    doneWriting = 1;
-                    break;
-                }
-                outputBytesWritten += newBytesWritten;
-            } else if (intermediateFileBytesToOutput) {
-                // 2. The intermediate buffer is empty but there is
+            // If there is nothing in our intermediate buffer, we have to fill it.
+            if (outputBytesRead == outputBytesWritten) {
+                // The intermediate buffer is empty but there is
                 // something to read in the intermediate file. We then
                 // read from the intermediate file and write to the
                 // output.
-                outputBytesRead =
-                    read(intermediateReader, outputBuf,
-                         MIN(intermediateFileBytesToOutput, sizeof(intermediateReader)));
-                if (outputBytesRead < 0) {
-                    printf("Error: Didn't read from intermediate file!\n");
-                    exit(1);
+                if (intermediateFileBytesToOutput > 0) {
+                    outputBytesRead =
+                        read(intermediateReader, outputBuf,
+                             MIN(intermediateFileBytesToOutput, sizeof(intermediateReader)));
+                    if (outputBytesRead < 0) {
+                        printf("Error: Didn't read from intermediate file!\n");
+                        exit(1);
+                    }
+                    outputBytesWritten = 0;
                 }
-
-                outputBytesWritten =
-                    writeOutput(outputFd, outputBuf, outputBytesRead);
-                if (outputBytesWritten == 0) {
-                    printf("Output is done!\n");
-                    doneWriting = 1;
-                    break;
-                }
-            } else {
-                printf("Unreachable!\n");
-                exit(1);
             }
-            bufferBytesToOutput = outputBytesRead - outputBytesWritten;
-            intermediateFileBytesToOutput =
-                lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
-            totalBytesToOutput = bufferBytesToOutput + intermediateFileBytesToOutput;
+
+            // Now the intermediate buffer certainly has data
+            ssize_t newBytesWritten =
+                writeOutput(outputFd, outputBuf, outputBytesRead - outputBytesWritten);
+            if (newBytesWritten == 0) {
+                printf("Output is done!\n");
+                doneWriting = 1;
+                break;
+            }
+            outputBytesWritten += newBytesWritten;
+        } else {
+            printf("Unreachable!\n");
+            exit(1);
         }
+        bufferBytesToOutput = outputBytesRead - outputBytesWritten;
+        intermediateFileBytesToOutput =
+            lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
+        totalBytesToOutput = bufferBytesToOutput + intermediateFileBytesToOutput;
     }
     close(outputFd);
     close(intermediateReader);
