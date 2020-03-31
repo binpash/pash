@@ -13,4 +13,4 @@ wait
 
 rm s1 s2
 
-# diff -s $IN test_out.txt
+diff -s $IN test_out.txt
