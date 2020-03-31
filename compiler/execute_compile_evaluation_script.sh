@@ -4,6 +4,8 @@
 ## distributed, and an environment
 experiment=$1
 
+DISH_TOP=${DISH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+
 eval_directory="../evaluation/"
 directory="${eval_directory}/intermediary/"
 results="${eval_directory}results/"
@@ -24,17 +26,11 @@ if [ -f $funs_file ]; then
 fi
 
 echo "Sequential:"
-cat $seq_script | grep -v "rm -f" | grep -v "mkfifo"
+cat $seq_script
 { time /bin/bash $seq_script > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
 
 echo "Distributed:"
-{ time ./translate_script.sh $seq_script $distr_script ; } 2> >(tee "${results}${experiment}_distr.time" >&2)
-
-## Obsolete as dish.py executes output script
-# { time /bin/bash $distr_script ; } 2> >(tee "${results}${experiment}_distr.time" >&2)
-## TODO: Move in impl.py and add a flag in main that enables/disables
-## concatenating the output files
-# { time ./cat_output_files.sh $distr_output_dir > /tmp/distr_output_complete ; } 2> >(tee "${results}${experiment}_cat_distr.time" >&2)
+{ time python3.8 $DISH_TOP/compiler/dish.py --output_optimized $seq_script $distr_script ; } 2> >(tee "${results}${experiment}_distr.time" >&2)
 
 
 

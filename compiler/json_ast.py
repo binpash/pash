@@ -45,10 +45,12 @@ def serialize_ast_json(ast):
 
 
 def json_to_shell(json_string):
-    subproc = run([config.PRINTER_BINARY], stdout=PIPE, input=json_string, encoding='ascii')
+    subproc = run([config.PRINTER_BINARY], stdout=PIPE, input=json_string,
+                  encoding='ascii', check=True)
     return subproc.stdout
 
 def ast_to_shell(ast):
     ast_json = serialize_ast_json(ast)
+    print(ast_json)
     shell_string = json_to_shell(ast_json)
     return shell_string
