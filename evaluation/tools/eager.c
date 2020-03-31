@@ -23,7 +23,7 @@
        __typeof__ (b) _b = (b); \
      _a < _b ? _a : _b; })
 
-#define READ_WRITE_BUFFER_SIZE 256
+#define READ_WRITE_BUFFER_SIZE 2048
 
 int safe_open3(const char *pathname, int flags, mode_t mode) {
     int fd = open(pathname, flags, mode);
@@ -119,7 +119,6 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     int outputFd = try_open_output(output);
     while(outputFd < 0) {
         if (readInputWriteToFile(inputFd, intermediateWriter) == 0) {
-            // TODO: Handle this case
             printf("Input was done before even output was opened\n");
             doneReading = 1;
         }
@@ -146,10 +145,9 @@ void EagerLoop(char* input, char* output, char* intermediate) {
         // memory in this intermediate buffer.
         if (FD_ISSET(inputFd, &readFds)) {
             if (readInputWriteToFile(inputFd, intermediateWriter) == 0) {
-                // TODO: Optimize this by breaking when reading is done.
-                /* doneReading = 1; */
-                /* printf("Input is done!\n"); */
-                /* break; */
+                doneReading = 1;
+                printf("Input is done!\n");
+                break;
             }
         }
         if (FD_ISSET(outputFd, &writeFds)) {
@@ -218,11 +216,56 @@ void EagerLoop(char* input, char* output, char* intermediate) {
         lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
     ssize_t totalBytesToOutput = bufferBytesToOutput + intermediateFileBytesToOutput;
     while(!doneWriting && totalBytesToOutput > 0) {
-        // TODO
-        printf("Left in output buffer: %ld\n", bufferBytesToOutput);
-        printf("Left in intermediate file: %ld\n", intermediateFileBytesToOutput);
-        printf("Complete that!\n");
-        exit(1);
+        fd_set writeFds;
+
+        FD_ZERO(&writeFds); // Clear FD set for select
+        FD_SET(outputFd, &writeFds);
+
+        // TODO: Is there another way to write here? Optimize this
+        select(outputFd + 1, NULL, &writeFds, NULL, NULL);
+
+        // TODO: This is copied from above. Can we refactor?
+        if (FD_ISSET(outputFd, &writeFds)) {
+            // 1. There is something in our intermediateBuffer. We
+            // then write this to the output.
+            if (bufferBytesToOutput > 0) {
+                ssize_t newBytesWritten =
+                    writeOutput(outputFd, outputBuf, bufferBytesToOutput);
+                if (newBytesWritten == 0) {
+                    printf("Output is done!\n");
+                    doneWriting = 1;
+                    break;
+                }
+                outputBytesWritten += newBytesWritten;
+            } else if (intermediateFileBytesToOutput) {
+                // 2. The intermediate buffer is empty but there is
+                // something to read in the intermediate file. We then
+                // read from the intermediate file and write to the
+                // output.
+                outputBytesRead =
+                    read(intermediateReader, outputBuf,
+                         MIN(intermediateFileBytesToOutput, sizeof(intermediateReader)));
+                if (outputBytesRead < 0) {
+                    printf("Error: Didn't read from intermediate file!\n");
+                    exit(1);
+                }
+
+                outputBytesWritten =
+                    writeOutput(outputFd, outputBuf, outputBytesRead);
+                if (outputBytesWritten == 0) {
+                    printf("Output is done!\n");
+                    doneWriting = 1;
+                    break;
+                }
+            } else {
+                printf("Unreachable!\n");
+                exit(1);
+            }
+            bufferBytesToOutput = outputBytesRead - outputBytesWritten;
+            intermediateFileBytesToOutput =
+                lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
+            totalBytesToOutput = bufferBytesToOutput + intermediateFileBytesToOutput;
+        }
     }
     close(outputFd);
     close(intermediateReader);
