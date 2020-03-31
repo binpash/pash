@@ -204,6 +204,8 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     ssize_t intermediateFileBytesToOutput =
         lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
     ssize_t totalBytesToOutput = bufferBytesToOutput + intermediateFileBytesToOutput;
+    // TODO: Is there a way to optimize this by just copying the rest
+    // of the input in the output at once (e.g. by using cat)?
     while(!doneWriting && totalBytesToOutput > 0) {
         fd_set writeFds;
 
@@ -211,6 +213,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
         FD_SET(outputFd, &writeFds);
 
         // TODO: Is there another way to write here? Optimize this
+        // without select
         select(outputFd + 1, NULL, &writeFds, NULL, NULL);
 
         // TODO: This is copied from above. Can we refactor?
@@ -250,6 +253,14 @@ void EagerLoop(char* input, char* output, char* intermediate) {
         intermediateFileBytesToOutput =
             lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
         totalBytesToOutput = bufferBytesToOutput + intermediateFileBytesToOutput;
+    }
+
+    // TODO: We have to handle the case where reading is not done but
+    // writing is. In that case, we would like to draw all the input
+    // to /dev/null (e.g. if our producer is tee).
+    if(!doneReading) {
+        printf("Error: Reading was not done when writing was!\n");
+        exit(1);
     }
     close(outputFd);
     close(intermediateReader);
