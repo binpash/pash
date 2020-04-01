@@ -15,6 +15,17 @@
 /* #include <sys/types.h> */
 /* #include <unistd.h> */
 
+#ifndef __DEBUG__
+#define __DEBUG__
+
+#ifdef DEBUG
+#define debug(fmt, ...) printf(fmt, ##__VA_ARGS__)
+#else
+#define debug(fmt, ...) ((void)0)
+#endif
+
+#endif
+
 #define MAX(a,b) \
    ({ __typeof__ (a) _a = (a); \
        __typeof__ (b) _b = (b); \
@@ -102,10 +113,10 @@ int emptyBuffer(int outputFd, const char* outputBuf, ssize_t* outputBytesRead, s
     while(*outputBytesRead - *outputBytesWritten > 0) {
         newBytesWritten = writeOutput(outputFd, outputBuf, *outputBytesRead - *outputBytesWritten);
         if (newBytesWritten == 0) {
-            printf("Output is done!\n");
+            debug("Output is done!\n");
             break;
         } else if (newBytesWritten < *outputBytesRead - *outputBytesWritten) {
-            printf("didn't write everything\n");
+            debug("didn't write everything\n");
         }
         *outputBytesWritten += newBytesWritten;
     }
@@ -171,9 +182,9 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     // It is fine for the input to block, since when we ask for it we
     // don't have anything in the intermediate file or buffer.
     int inputFd = safe_open(input, O_RDONLY);
-    printf("opened input file %s\n", input);
+    debug("opened input file %s\n", input);
 
-    printf("will open outputFile from %s \n", output);
+    debug("will open outputFile from %s \n", output);
     int outputFd = try_open_output(output);
     while(outputFd < 0) {
         if (readInputWriteToFile(inputFd, intermediateWriter) == 0) {
@@ -184,7 +195,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     }
 
     gettimeofday(&ts2, NULL);
-    printf("Reading before the output was opened took %lu us\n",
+    debug("Reading before the output was opened took %lu us\n",
            (ts2.tv_sec - ts1.tv_sec) * 1000000 + ts2.tv_usec - ts1.tv_usec);
 
     // TODO: Optimize this loop by using sendfile
@@ -209,7 +220,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
         if (FD_ISSET(inputFd, &readFds)) {
             if (readInputWriteToFile(inputFd, intermediateWriter) == 0) {
                 doneReading = 1;
-                printf("Input is done!\n");
+                debug("Input is done!\n");
                 break;
             }
         }
@@ -229,7 +240,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
                 if (intermediateFileDiff == 0) {
                     if (readInputWriteToFile(inputFd, intermediateWriter) == 0) {
                         doneReading = 1;
-                        printf("Input is done!\n");
+                        debug("Input is done!\n");
                         break;
                     }
                     intermediateFileDiff =
@@ -251,7 +262,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
             ssize_t newBytesWritten =
                 writeOutput(outputFd, outputBuf, outputBytesRead - outputBytesWritten);
             if (newBytesWritten == 0) {
-                printf("We tried to write %ld, but output is done!\n", outputBytesRead - outputBytesWritten);
+                debug("We tried to write %ld, but output is done!\n", outputBytesRead - outputBytesWritten);
                 doneWriting = 1;
                 break;
             }
@@ -260,7 +271,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     }
 
     gettimeofday(&ts3, NULL);
-    printf("Select loop took %lu us\n",
+    debug("Select loop took %lu us\n",
            (ts3.tv_sec - ts2.tv_sec) * 1000000 + ts3.tv_usec - ts2.tv_usec);
 
     // If reading is done, close its file descriptor.
@@ -289,7 +300,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
             printf("ERROR: %s, when outputing!\n", strerror(errno));
             exit(1);
         }
-    } while (0 < res && res < intermediateFileBytesToOutput);
+    } while (0 != res && res < intermediateFileBytesToOutput);
 
     if (res == 0) {
         // TODO: This might happen if output is a `head` or sth. I am
@@ -298,7 +309,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     }
 
     gettimeofday(&ts4, NULL);
-    printf("Finishing up writing the intermediate file took %lu us\n",
+    debug("Finishing up writing the intermediate file took %lu us\n",
            (ts4.tv_sec - ts3.tv_sec) * 1000000 + ts4.tv_usec - ts3.tv_usec);
 
 
