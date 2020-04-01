@@ -24,7 +24,7 @@
        __typeof__ (b) _b = (b); \
      _a < _b ? _a : _b; })
 
-#define READ_WRITE_BUFFER_SIZE 128 * 1024
+#define READ_WRITE_BUFFER_SIZE 1 * 1024
 
 int safe_open3(const char *pathname, int flags, mode_t mode) {
     int fd = open(pathname, flags, mode);
@@ -95,6 +95,23 @@ int writeOutput(int outputFd, const char* outputBuf, ssize_t bytesToWrite) {
     return bytesWritten;
 }
 
+// Returns 0 if output was done or a positive number otherwise
+int emptyBuffer(int outputFd, const char* outputBuf, ssize_t* outputBytesRead, ssize_t* outputBytesWritten) {
+    ssize_t newBytesWritten = 1;
+    while(*outputBytesRead - *outputBytesWritten > 0) {
+        newBytesWritten = writeOutput(outputFd, outputBuf, *outputBytesRead - *outputBytesWritten);
+        if (newBytesWritten == 0) {
+            printf("Output is done!\n");
+            break;
+        } else if (newBytesWritten < *outputBytesRead - *outputBytesWritten) {
+            printf("didn't write everything\n");
+        }
+        *outputBytesWritten += newBytesWritten;
+    }
+    return newBytesWritten;
+}
+
+/* int outputRestIntermediateFile(int outputFd, const char* outputBuf) */
 
 // WARNING: It is important to make sure that no operation (open, read,
 // write).
@@ -130,7 +147,8 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     }
 
     gettimeofday(&ts2, NULL);
-    printf("took %lu us\n", (ts2.tv_sec - ts1.tv_sec) * 1000000 + ts2.tv_usec - ts1.tv_usec);
+    printf("Reading before the output was opened took %lu us\n",
+           (ts2.tv_sec - ts1.tv_sec) * 1000000 + ts2.tv_usec - ts1.tv_usec);
 
     while (!doneReading && !doneWriting) {
         fd_set readFds;
@@ -201,11 +219,17 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     }
 
     gettimeofday(&ts3, NULL);
-    printf("took %lu us\n", (ts3.tv_sec - ts2.tv_sec) * 1000000 + ts3.tv_usec - ts2.tv_usec); 
+    printf("Select loop took %lu us\n",
+           (ts3.tv_sec - ts2.tv_sec) * 1000000 + ts3.tv_usec - ts2.tv_usec);
 
     // If reading is done, close its file descriptor.
     if (doneReading) {
         close(inputFd);
+    }
+
+    // Output the intermediate buffer
+    if (emptyBuffer(outputFd, outputBuf, &outputBytesRead, &outputBytesWritten) == 0) {
+        doneWriting = 1;
     }
 
     // If writing is not done and there are things left in the buffer
@@ -217,41 +241,37 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     // TODO: Is there a way to optimize this by just copying the rest
     // of the input in the output at once (e.g. by using cat)?
     while(!doneWriting && totalBytesToOutput > 0) {
-        // If there is nothing in our intermediate buffer, we have to fill it.
-        if (outputBytesRead == outputBytesWritten) {
-            // The intermediate buffer is empty but there is
-            // something to read in the intermediate file. We then
-            // read from the intermediate file and write to the
-            // output.
-            if (intermediateFileBytesToOutput > 0) {
-                outputBytesRead =
-                    read(intermediateReader, outputBuf,
-                         MIN(intermediateFileBytesToOutput, sizeof(intermediateReader)));
-                if (outputBytesRead < 0) {
-                    printf("Error: Didn't read from intermediate file!\n");
-                    exit(1);
-                }
-                outputBytesWritten = 0;
+
+        // Fill the intermediate buffer
+        if (intermediateFileBytesToOutput > 0) {
+            outputBytesRead =
+                read(intermediateReader, outputBuf,
+                     MIN(intermediateFileBytesToOutput, sizeof(intermediateReader)));
+            if (outputBytesRead < 0) {
+                printf("Error: Didn't read from intermediate file!\n");
+                exit(1);
             }
+            outputBytesWritten = 0;
         }
 
-        // Now the intermediate buffer certainly has data
-        ssize_t newBytesWritten =
-            writeOutput(outputFd, outputBuf, outputBytesRead - outputBytesWritten);
-        if (newBytesWritten == 0) {
-            printf("Output is done!\n");
+        // Empty the intermediate buffer
+        if (emptyBuffer(outputFd, outputBuf, &outputBytesRead, &outputBytesWritten) == 0) {
             doneWriting = 1;
             break;
         }
-        outputBytesWritten += newBytesWritten;
+
         bufferBytesToOutput = outputBytesRead - outputBytesWritten;
         intermediateFileBytesToOutput =
             lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
         totalBytesToOutput = bufferBytesToOutput + intermediateFileBytesToOutput;
     }
 
+    /* #include <sys/sendfile.h> */
+    /*    ssize_t sendfile(int out_fd, int in_fd, off_t *offset, size_t count); */
+
     gettimeofday(&ts4, NULL);
-    printf("took %lu us\n", (ts4.tv_sec - ts3.tv_sec) * 1000000 + ts4.tv_usec - ts3.tv_usec);
+    printf("Finishing up writing the intermediate file took %lu us\n",
+           (ts4.tv_sec - ts3.tv_sec) * 1000000 + ts4.tv_usec - ts3.tv_usec);
 
 
     // TODO: We have to handle the case where reading is not done but
