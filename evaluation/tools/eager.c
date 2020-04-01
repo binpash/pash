@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <sys/select.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 /* /\* According to earlier standards *\/ */
 /* #include <sys/time.h> */
@@ -105,6 +106,9 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     ssize_t outputBytesWritten = 0;
     char outputBuf[READ_WRITE_BUFFER_SIZE];
 
+    struct timeval ts1, ts2, ts3, ts4;
+    gettimeofday(&ts1, NULL);
+
     // Open the intermediate file for both reading and writing
     // TODO: Think of using O_TMPFILE
     int intermediateWriter = safe_open3(intermediate, O_CREAT | O_WRONLY, S_IRWXU);
@@ -124,6 +128,9 @@ void EagerLoop(char* input, char* output, char* intermediate) {
         }
         outputFd = try_open_output(output);
     }
+
+    gettimeofday(&ts2, NULL);
+    printf("took %lu us\n", (ts2.tv_sec - ts1.tv_sec) * 1000000 + ts2.tv_usec - ts1.tv_usec);
 
     while (!doneReading && !doneWriting) {
         fd_set readFds;
@@ -193,6 +200,9 @@ void EagerLoop(char* input, char* output, char* intermediate) {
         }
     }
 
+    gettimeofday(&ts3, NULL);
+    printf("took %lu us\n", (ts3.tv_sec - ts2.tv_sec) * 1000000 + ts3.tv_usec - ts2.tv_usec); 
+
     // If reading is done, close its file descriptor.
     if (doneReading) {
         close(inputFd);
@@ -254,6 +264,10 @@ void EagerLoop(char* input, char* output, char* intermediate) {
             lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
         totalBytesToOutput = bufferBytesToOutput + intermediateFileBytesToOutput;
     }
+
+    gettimeofday(&ts4, NULL);
+    printf("took %lu us\n", (ts4.tv_sec - ts3.tv_sec) * 1000000 + ts4.tv_usec - ts3.tv_usec);
+
 
     // TODO: We have to handle the case where reading is not done but
     // writing is. In that case, we would like to draw all the input
