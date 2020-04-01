@@ -58,11 +58,9 @@ int safe_open(const char *pathname, int flags) {
 int try_open_output(const char *pathname) {
     int outputFd = open(pathname, O_WRONLY | O_NONBLOCK);
     if (outputFd < 0) {
-        if (errno == ENXIO) {
-            // This means that noone has opened the output file for
-            // reading, in that case we can read some of our input.
-            /* printf("Noone has opened the output file for reading\n"); */
-        } else {
+        // ENXIO means that noone has opened the output file for
+        // reading, in that case we can read some of our input.
+        if (errno != ENXIO) {
             printf("could not open output file(s)\n");
             exit(1);
         }
