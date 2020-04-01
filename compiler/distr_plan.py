@@ -433,6 +433,7 @@ def add_eager_nodes(graph):
     # print("Source nodes:")
     # print(source_nodes)
 
+    eager_exec_path = config.config['eager_executable_path']
     ## Generate a fileIdGen from a graph, that doesn't clash with the
     ## current graph fileIds.
     fileIdGen = graph.get_file_id_gen()
@@ -455,7 +456,8 @@ def add_eager_nodes(graph):
                 intermediate_file_ids = [intermediateFileIdGen.next_file_id() for _ in curr_input_file_ids]
 
                 file_ids = list(zip(curr_input_file_ids, new_input_file_ids, intermediate_file_ids))
-                eager_nodes = [make_eager_node(old_file_id, new_file_id, intermediate_file_id)
+                eager_nodes = [make_eager_node(old_file_id, new_file_id,
+                                               intermediate_file_id, eager_exec_path)
                                for old_file_id, new_file_id, intermediate_file_id in file_ids]
 
                 for eager_node in eager_nodes:
