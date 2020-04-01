@@ -168,9 +168,6 @@ void EagerLoop(char* input, char* output, char* intermediate) {
 
     int doneReading = 0;
     int doneWriting = 0;
-    ssize_t outputBytesRead = 0;
-    ssize_t outputBytesWritten = 0;
-    char outputBuf[READ_WRITE_BUFFER_SIZE];
 
     struct timeval ts1, ts2, ts3, ts4;
     gettimeofday(&ts1, NULL);
@@ -226,63 +223,38 @@ void EagerLoop(char* input, char* output, char* intermediate) {
             }
         }
         if (FD_ISSET(outputFd, &writeFds)) {
-            // If there is nothing in our intermediate buffer, we have to fill it.
-            if (outputBytesRead == outputBytesWritten) {
-                // 1. The intermediate buffer is empty but there is
-                // something to read in the intermediate file. We then
-                // read from the intermediate file and write to the
-                // output.
-                int intermediateFileDiff =
+            // There is something to read in the intermediate file. We
+            // then read from the intermediate file and write to the
+            // output.
+            int intermediateFileDiff =
+                lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
+
+            // There is nothing to read in the intermediate file. We
+            // then have to block read from the input until it gives
+            // us something.
+            if (intermediateFileDiff == 0) {
+                if (readInputWriteToFile(inputFd, intermediateWriter) == 0) {
+                    doneReading = 1;
+                    debug("Input is done!\n");
+                    break;
+                }
+                intermediateFileDiff =
                     lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
-
-                // 2. There is nothing to read in the intermediate
-                // file. We then have to block read from the input until
-                // it gives us something.
-                if (intermediateFileDiff == 0) {
-                    if (readInputWriteToFile(inputFd, intermediateWriter) == 0) {
-                        doneReading = 1;
-                        debug("Input is done!\n");
-                        break;
-                    }
-                    intermediateFileDiff =
-                        lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
-                }
-
-                // Here we know that the intermediate file has something.
-                assert(intermediateFileDiff > 0);
-
-                // Alternative 1
-                outputBytesRead =
-                    read(intermediateReader, outputBuf,
-                         MIN(intermediateFileDiff, sizeof(outputBuf)));
-                if (outputBytesRead <= 0) {
-                    printf("Error: Didn't read from intermediate file!\n");
-                    exit(1);
-                }
-                outputBytesWritten = 0;
-
-                /* // Alternative 2 */
-                /* ssize_t intermediateFileBytesToOutput; */
-                /* ssize_t res; */
-                /* intermediateFileBytesToOutput = */
-                /*     lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR); */
-                /* res = sendfile(outputFd, intermediateReader, 0, intermediateFileBytesToOutput); */
-                /* if (res < 0 && errno != EAGAIN) { */
-                /*     printf("ERROR: %s, when outputing!\n", strerror(errno)); */
-                /*     exit(1); */
-                /* } */
             }
 
-            // Now the intermediate buffer certainly has data
-            assert(outputBytesRead - outputBytesWritten > 0);
-            ssize_t newBytesWritten =
-                writeOutput(outputFd, outputBuf, outputBytesRead - outputBytesWritten);
-            if (newBytesWritten == 0) {
-                debug("We tried to write %ld, but output is done!\n", outputBytesRead - outputBytesWritten);
+            // Here we know that the intermediate file has something.
+            assert(intermediateFileDiff > 0);
+            // Using sendfile instead of an output buffer
+            ssize_t res;
+            res = sendfile(outputFd, intermediateReader, 0, intermediateFileDiff);
+            if (res < 0 && errno != EAGAIN) {
+                printf("ERROR: %s, when outputing!\n", strerror(errno));
+                exit(1);
+            } else if (res == 0) {
+                debug("We tried to write %d, but output is done!\n", intermediateFileDiff);
                 doneWriting = 1;
                 break;
             }
-            outputBytesWritten += newBytesWritten;
         }
     }
 
@@ -293,11 +265,6 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     // If reading is done, close its file descriptor.
     if (doneReading) {
         close(inputFd);
-    }
-
-    // Output the intermediate buffer
-    if (emptyBuffer(outputFd, outputBuf, &outputBytesRead, &outputBytesWritten) == 0) {
-        doneWriting = 1;
     }
 
     // Alternative 1: Output the rest of the intermediate file
