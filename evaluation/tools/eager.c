@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +16,8 @@
 /* #include <sys/time.h> */
 /* #include <sys/types.h> */
 /* #include <unistd.h> */
+
+#define READ_WRITE_BUFFER_SIZE 2 * 1024
 
 #ifndef __DEBUG__
 #define __DEBUG__
@@ -37,7 +40,6 @@
        __typeof__ (b) _b = (b); \
      _a < _b ? _a : _b; })
 
-#define READ_WRITE_BUFFER_SIZE 1 * 1024
 
 int safe_open3(const char *pathname, int flags, mode_t mode) {
     int fd = open(pathname, flags, mode);
@@ -71,6 +73,15 @@ int try_open_output(const char *pathname) {
 // Returns the number of bytes read, or 0 if the input was done.
 int readInputWriteToFile(int inputFd, int intermediateWriter) {
 
+    ssize_t res = splice(inputFd, 0, intermediateWriter, 0, READ_WRITE_BUFFER_SIZE, 0);
+    if (res < 0) {
+        printf("Error: Couldn't read from input!\n");
+        exit(1);
+    }
+    return res;
+}
+
+int bufferedReadInputWriteToFile(int inputFd, int intermediateWriter) {
     // TODO: Maybe allocate that buffer as a static or global to not
     // allocate it in the stack several times.
     ssize_t inputBytesRead = 0;
@@ -294,7 +305,6 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     gettimeofday(&ts4, NULL);
     debug("Finishing up writing the intermediate file took %lu us\n",
            (ts4.tv_sec - ts3.tv_sec) * 1000000 + ts4.tv_usec - ts3.tv_usec);
-
 
     // TODO: We have to handle the case where reading is not done but
     // writing is. In that case, we would like to draw all the input
