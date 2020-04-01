@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -248,17 +249,32 @@ void EagerLoop(char* input, char* output, char* intermediate) {
                 }
 
                 // Here we know that the intermediate file has something.
+                assert(intermediateFileDiff > 0);
+
+                // Alternative 1
                 outputBytesRead =
                     read(intermediateReader, outputBuf,
-                         MIN(intermediateFileDiff, sizeof(intermediateReader)));
+                         MIN(intermediateFileDiff, sizeof(outputBuf)));
                 if (outputBytesRead <= 0) {
                     printf("Error: Didn't read from intermediate file!\n");
                     exit(1);
                 }
                 outputBytesWritten = 0;
+
+                /* // Alternative 2 */
+                /* ssize_t intermediateFileBytesToOutput; */
+                /* ssize_t res; */
+                /* intermediateFileBytesToOutput = */
+                /*     lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR); */
+                /* res = sendfile(outputFd, intermediateReader, 0, intermediateFileBytesToOutput); */
+                /* if (res < 0 && errno != EAGAIN) { */
+                /*     printf("ERROR: %s, when outputing!\n", strerror(errno)); */
+                /*     exit(1); */
+                /* } */
             }
 
             // Now the intermediate buffer certainly has data
+            assert(outputBytesRead - outputBytesWritten > 0);
             ssize_t newBytesWritten =
                 writeOutput(outputFd, outputBuf, outputBytesRead - outputBytesWritten);
             if (newBytesWritten == 0) {
