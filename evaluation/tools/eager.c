@@ -45,7 +45,7 @@ int try_open_output(const char *pathname) {
         if (errno == ENXIO) {
             // This means that noone has opened the output file for
             // reading, in that case we can read some of our input.
-            printf("Noone has opened the output file for reading\n");
+            /* printf("Noone has opened the output file for reading\n"); */
         } else {
             printf("could not open output file(s)\n");
             exit(1);
