@@ -8,6 +8,7 @@
 #include <sys/select.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <sys/sendfile.h>
 
 /* /\* According to earlier standards *\/ */
 /* #include <sys/time.h> */
@@ -268,12 +269,20 @@ void EagerLoop(char* input, char* output, char* intermediate) {
         doneWriting = 1;
     }
 
-    // Output the rest of the intermediate file
-    outputRestIntermediateFile(outputFd, intermediateWriter, intermediateReader,
-                               outputBuf, &doneWriting);
+    // Alternative 1: Output the rest of the intermediate file
+    /* outputRestIntermediateFile(outputFd, intermediateWriter, intermediateReader, */
+    /*                            outputBuf, &doneWriting); */
 
-    /* #include <sys/sendfile.h> */
-    /*    ssize_t sendfile(int out_fd, int in_fd, off_t *offset, size_t count); */
+    // Alternative 2: Output the rest of the file using sendfile
+    ssize_t intermediateFileBytesToOutput;
+    ssize_t res;
+    do {
+        intermediateFileBytesToOutput =
+            lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
+        res = sendfile(outputFd, intermediateReader, 0, intermediateFileBytesToOutput);
+    } while (res != intermediateFileBytesToOutput);
+
+    // TODO: Should we check whether the output stopped receiving?
 
     gettimeofday(&ts4, NULL);
     printf("Finishing up writing the intermediate file took %lu us\n",
