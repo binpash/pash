@@ -177,7 +177,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     int outputFd = try_open_output(output);
     while(outputFd < 0) {
         if (readInputWriteToFile(inputFd, intermediateWriter) == 0) {
-            printf("Input was done before even output was opened\n");
+            /* printf("Input was done before even output was opened\n"); */
             doneReading = 1;
         }
         outputFd = try_open_output(output);
@@ -187,6 +187,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     printf("Reading before the output was opened took %lu us\n",
            (ts2.tv_sec - ts1.tv_sec) * 1000000 + ts2.tv_usec - ts1.tv_usec);
 
+    // TODO: Optimize this loop by using sendfile
     while (!doneReading && !doneWriting) {
         fd_set readFds;
         fd_set writeFds;
@@ -273,16 +274,25 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     /* outputRestIntermediateFile(outputFd, intermediateWriter, intermediateReader, */
     /*                            outputBuf, &doneWriting); */
 
-    // Alternative 2: Output the rest of the file using sendfile
+    // (Faster) Alternative 2: Output the rest of the file using sendfile
+    // TODO: Put that in a function
     ssize_t intermediateFileBytesToOutput;
     ssize_t res;
     do {
         intermediateFileBytesToOutput =
             lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
         res = sendfile(outputFd, intermediateReader, 0, intermediateFileBytesToOutput);
-    } while (res != intermediateFileBytesToOutput);
+        if (res < 0 && errno != EAGAIN) {
+            printf("ERROR: %s, when outputing!\n", strerror(errno));
+            exit(1);
+        }
+    } while (0 < res && res < intermediateFileBytesToOutput);
 
-    // TODO: Should we check whether the output stopped receiving?
+    if (res == 0) {
+        // TODO: This might happen if output is a `head` or sth. I am
+        // not sure what should we do in that case.
+        doneWriting = 0;
+    }
 
     gettimeofday(&ts4, NULL);
     printf("Finishing up writing the intermediate file took %lu us\n",
