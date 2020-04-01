@@ -3,7 +3,7 @@
 mkfifo s1 s2
 
 # IN=test_in.txt
-IN=../scripts/input/10M.txt
+IN=../scripts/input/1G.txt
 
 cat $IN > s1 &
 cat s2 > test_out.txt &
