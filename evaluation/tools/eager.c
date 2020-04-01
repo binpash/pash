@@ -222,33 +222,36 @@ void EagerLoop(char* input, char* output, char* intermediate) {
                 // output.
                 int intermediateFileDiff =
                     lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
-                if (intermediateFileDiff > 0) {
-                    outputBytesRead =
-                        read(intermediateReader, outputBuf,
-                             MIN(intermediateFileDiff, sizeof(intermediateReader)));
-                    if (outputBytesRead < 0) {
-                        printf("Error: Didn't read from intermediate file!\n");
-                        exit(1);
-                    }
-                    outputBytesWritten = 0;
-                }
+
                 // 2. There is nothing to read in the intermediate
                 // file. We then have to block read from the input until
                 // it gives us something.
-                else {
+                if (intermediateFileDiff == 0) {
                     if (readInputWriteToFile(inputFd, intermediateWriter) == 0) {
                         doneReading = 1;
                         printf("Input is done!\n");
                         break;
                     }
+                    intermediateFileDiff =
+                        lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
                 }
+
+                // Here we know that the intermediate file has something.
+                outputBytesRead =
+                    read(intermediateReader, outputBuf,
+                         MIN(intermediateFileDiff, sizeof(intermediateReader)));
+                if (outputBytesRead <= 0) {
+                    printf("Error: Didn't read from intermediate file!\n");
+                    exit(1);
+                }
+                outputBytesWritten = 0;
             }
 
             // Now the intermediate buffer certainly has data
             ssize_t newBytesWritten =
                 writeOutput(outputFd, outputBuf, outputBytesRead - outputBytesWritten);
             if (newBytesWritten == 0) {
-                printf("Output is done!\n");
+                printf("We tried to write %ld, but output is done!\n", outputBytesRead - outputBytesWritten);
                 doneWriting = 1;
                 break;
             }
@@ -291,7 +294,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     if (res == 0) {
         // TODO: This might happen if output is a `head` or sth. I am
         // not sure what should we do in that case.
-        doneWriting = 0;
+        doneWriting = 1;
     }
 
     gettimeofday(&ts4, NULL);
