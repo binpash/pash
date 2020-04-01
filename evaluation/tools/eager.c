@@ -111,7 +111,43 @@ int emptyBuffer(int outputFd, const char* outputBuf, ssize_t* outputBytesRead, s
     return newBytesWritten;
 }
 
-/* int outputRestIntermediateFile(int outputFd, const char* outputBuf) */
+void outputRestIntermediateFile(int outputFd, int intermediateWriter, int intermediateReader,
+                                char* outputBuf, int* doneWriting) {
+
+    ssize_t outputBytesRead = 0;
+    ssize_t outputBytesWritten = 0;
+    // If writing is not done and there are things left in the buffer
+    // or file, empty the buffer and intermediate files
+    ssize_t intermediateFileBytesToOutput =
+        lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
+    // TODO: Is there a way to optimize this by just copying the rest
+    // of the input in the output at once (e.g. by using cat)?
+    while(!(*doneWriting) && intermediateFileBytesToOutput > 0) {
+
+        // Fill the intermediate buffer
+        if (intermediateFileBytesToOutput > 0) {
+            outputBytesRead =
+                read(intermediateReader, outputBuf,
+                     MIN(intermediateFileBytesToOutput, sizeof(intermediateReader)));
+            if (outputBytesRead < 0) {
+                printf("Error: Didn't read from intermediate file!\n");
+                exit(1);
+            }
+            outputBytesWritten = 0;
+        }
+
+        // Empty the intermediate buffer
+        if (emptyBuffer(outputFd, outputBuf, &outputBytesRead, &outputBytesWritten) == 0) {
+            *doneWriting = 1;
+            break;
+        }
+
+        intermediateFileBytesToOutput =
+            lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
+    }
+
+    return;
+}
 
 // WARNING: It is important to make sure that no operation (open, read,
 // write).
@@ -232,39 +268,9 @@ void EagerLoop(char* input, char* output, char* intermediate) {
         doneWriting = 1;
     }
 
-    // If writing is not done and there are things left in the buffer
-    // or file, empty the buffer and intermediate files
-    ssize_t bufferBytesToOutput = outputBytesRead - outputBytesWritten;
-    ssize_t intermediateFileBytesToOutput =
-        lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
-    ssize_t totalBytesToOutput = bufferBytesToOutput + intermediateFileBytesToOutput;
-    // TODO: Is there a way to optimize this by just copying the rest
-    // of the input in the output at once (e.g. by using cat)?
-    while(!doneWriting && totalBytesToOutput > 0) {
-
-        // Fill the intermediate buffer
-        if (intermediateFileBytesToOutput > 0) {
-            outputBytesRead =
-                read(intermediateReader, outputBuf,
-                     MIN(intermediateFileBytesToOutput, sizeof(intermediateReader)));
-            if (outputBytesRead < 0) {
-                printf("Error: Didn't read from intermediate file!\n");
-                exit(1);
-            }
-            outputBytesWritten = 0;
-        }
-
-        // Empty the intermediate buffer
-        if (emptyBuffer(outputFd, outputBuf, &outputBytesRead, &outputBytesWritten) == 0) {
-            doneWriting = 1;
-            break;
-        }
-
-        bufferBytesToOutput = outputBytesRead - outputBytesWritten;
-        intermediateFileBytesToOutput =
-            lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
-        totalBytesToOutput = bufferBytesToOutput + intermediateFileBytesToOutput;
-    }
+    // Output the rest of the intermediate file
+    outputRestIntermediateFile(outputFd, intermediateWriter, intermediateReader,
+                               outputBuf, &doneWriting);
 
     /* #include <sys/sendfile.h> */
     /*    ssize_t sendfile(int out_fd, int in_fd, off_t *offset, size_t count); */
