@@ -1,178 +1,8 @@
-#define _GNU_SOURCE
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <sys/select.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/sendfile.h>
-
-/* /\* According to earlier standards *\/ */
-/* #include <sys/time.h> */
-/* #include <sys/types.h> */
-/* #include <unistd.h> */
+#include "eager_lib.h"
 
 #define READ_WRITE_BUFFER_SIZE 2 * 1024
 
-#ifndef __DEBUG__
-#define __DEBUG__
-
-#ifdef DEBUG
-#define debug(fmt, ...) printf(fmt, ##__VA_ARGS__)
-#else
-#define debug(fmt, ...) ((void)0)
-#endif
-
-#endif
-
-#define MAX(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a > _b ? _a : _b; })
-
-#define MIN(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a < _b ? _a : _b; })
-
-
-int safe_open3(const char *pathname, int flags, mode_t mode) {
-    int fd = open(pathname, flags, mode);
-    if (fd < 0) {
-        printf("could not open file%s\n", pathname);
-        exit(1);
-    }
-    return fd;
-}
-
-int safe_open(const char *pathname, int flags) {
-    // The mode will be ignored anyway
-    return safe_open3(pathname, flags, S_IRWXU);
-}
-
-int try_open_output(const char *pathname) {
-    int outputFd = open(pathname, O_WRONLY | O_NONBLOCK);
-    if (outputFd < 0) {
-        // ENXIO means that noone has opened the output file for
-        // reading, in that case we can read some of our input.
-        if (errno != ENXIO) {
-            printf("could not open output file(s)\n");
-            exit(1);
-        }
-    }
-    return outputFd;
-}
-
-// Returns the number of bytes read, or 0 if the input was done.
-int readInputWriteToFile(int inputFd, int intermediateWriter) {
-
-    ssize_t res = splice(inputFd, 0, intermediateWriter, 0, READ_WRITE_BUFFER_SIZE, 0);
-    if (res < 0) {
-        printf("Error: Couldn't read from input!\n");
-        exit(1);
-    }
-    return res;
-}
-
-int bufferedReadInputWriteToFile(int inputFd, int intermediateWriter) {
-    // TODO: Maybe allocate that buffer as a static or global to not
-    // allocate it in the stack several times.
-    ssize_t inputBytesRead = 0;
-    ssize_t inputBytesWritten = 0;
-    char inputBuf[READ_WRITE_BUFFER_SIZE];
-
-    inputBytesRead = read(inputFd, inputBuf, sizeof(inputBuf));
-    if (inputBytesRead < 0) {
-        printf("Error: Couldn't read from input!\n");
-        exit(1);
-    }
-    if (inputBytesRead == 0) {
-        /* printf("Input is done!\n"); */
-        return 0;
-    }
-    /* printf("Read %ld bytes from input\n", inputBytesRead); */
-
-    inputBytesWritten = write(intermediateWriter, inputBuf, inputBytesRead);
-    // TODO: I probably have to gracefully handle this case
-    if (inputBytesWritten != inputBytesRead) {
-        printf("Error: Didn't write all bytes to intermediate file!\n");
-        exit(1);
-    }
-    return inputBytesRead;
-}
-
-// Returns the number of bytes written or 0 if the output is done
-int writeOutput(int outputFd, const char* outputBuf, ssize_t bytesToWrite) {
-    ssize_t bytesWritten =
-        write(outputFd, outputBuf, bytesToWrite);
-    if (bytesWritten < 0) {
-        printf("Error: Couldn't write to output!\n");
-        exit(1);
-    }
-    return bytesWritten;
-}
-
-// Returns 0 if output was done or a positive number otherwise
-int emptyBuffer(int outputFd, const char* outputBuf, ssize_t* outputBytesRead, ssize_t* outputBytesWritten) {
-    ssize_t newBytesWritten = 1;
-    while(*outputBytesRead - *outputBytesWritten > 0) {
-        newBytesWritten = writeOutput(outputFd, outputBuf, *outputBytesRead - *outputBytesWritten);
-        if (newBytesWritten == 0) {
-            debug("Output is done!\n");
-            break;
-        } else if (newBytesWritten < *outputBytesRead - *outputBytesWritten) {
-            debug("didn't write everything\n");
-        }
-        *outputBytesWritten += newBytesWritten;
-    }
-    return newBytesWritten;
-}
-
-void outputRestIntermediateFile(int outputFd, int intermediateWriter, int intermediateReader,
-                                char* outputBuf, int* doneWriting) {
-
-    ssize_t outputBytesRead = 0;
-    ssize_t outputBytesWritten = 0;
-    // If writing is not done and there are things left in the buffer
-    // or file, empty the buffer and intermediate files
-    ssize_t intermediateFileBytesToOutput =
-        lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
-    // TODO: Is there a way to optimize this by just copying the rest
-    // of the input in the output at once (e.g. by using cat)?
-    while(!(*doneWriting) && intermediateFileBytesToOutput > 0) {
-
-        // Fill the intermediate buffer
-        if (intermediateFileBytesToOutput > 0) {
-            outputBytesRead =
-                read(intermediateReader, outputBuf,
-                     MIN(intermediateFileBytesToOutput, sizeof(intermediateReader)));
-            if (outputBytesRead < 0) {
-                printf("Error: Didn't read from intermediate file!\n");
-                exit(1);
-            }
-            outputBytesWritten = 0;
-        }
-
-        // Empty the intermediate buffer
-        if (emptyBuffer(outputFd, outputBuf, &outputBytesRead, &outputBytesWritten) == 0) {
-            *doneWriting = 1;
-            break;
-        }
-
-        intermediateFileBytesToOutput =
-            lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
-    }
-
-    return;
-}
-
-// WARNING: It is important to make sure that no operation (open, read,
-// write).
 void EagerLoop(char* input, char* output, char* intermediate) {
 
     int doneReading = 0;
@@ -194,7 +24,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     debug("will open outputFile from %s \n", output);
     int outputFd = try_open_output(output);
     while(outputFd < 0) {
-        if (readInputWriteToFile(inputFd, intermediateWriter) == 0) {
+        if (readInputWriteToFile(inputFd, intermediateWriter, READ_WRITE_BUFFER_SIZE) == 0) {
             /* printf("Input was done before even output was opened\n"); */
             doneReading = 1;
         }
@@ -205,7 +35,6 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     debug("Reading before the output was opened took %lu us\n",
            (ts2.tv_sec - ts1.tv_sec) * 1000000 + ts2.tv_usec - ts1.tv_usec);
 
-    // TODO: Optimize this loop by using sendfile
     while (!doneReading && !doneWriting) {
         fd_set readFds;
         fd_set writeFds;
@@ -225,7 +54,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
         // it was possible once since this would help not accumulate
         // memory in this intermediate buffer.
         if (FD_ISSET(inputFd, &readFds)) {
-            if (readInputWriteToFile(inputFd, intermediateWriter) == 0) {
+            if (readInputWriteToFile(inputFd, intermediateWriter, READ_WRITE_BUFFER_SIZE) == 0) {
                 doneReading = 1;
                 debug("Input is done!\n");
                 break;
@@ -242,7 +71,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
             // then have to block read from the input until it gives
             // us something.
             if (intermediateFileDiff == 0) {
-                if (readInputWriteToFile(inputFd, intermediateWriter) == 0) {
+                if (readInputWriteToFile(inputFd, intermediateWriter, READ_WRITE_BUFFER_SIZE) == 0) {
                     doneReading = 1;
                     debug("Input is done!\n");
                     break;
@@ -253,17 +82,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
 
             // Here we know that the intermediate file has something.
             assert(intermediateFileDiff > 0);
-            // Using sendfile instead of an output buffer
-            ssize_t res;
-            res = sendfile(outputFd, intermediateReader, 0, intermediateFileDiff);
-            if (res < 0 && errno != EAGAIN) {
-                printf("ERROR: %s, when outputing!\n", strerror(errno));
-                exit(1);
-            } else if (res == 0) {
-                debug("We tried to write %d, but output is done!\n", intermediateFileDiff);
-                doneWriting = 1;
-                break;
-            }
+            safeWriteOutput(outputFd, intermediateReader, intermediateFileDiff, &doneWriting);
         }
     }
 
@@ -276,29 +95,8 @@ void EagerLoop(char* input, char* output, char* intermediate) {
         close(inputFd);
     }
 
-    // Alternative 1: Output the rest of the intermediate file
-    /* outputRestIntermediateFile(outputFd, intermediateWriter, intermediateReader, */
-    /*                            outputBuf, &doneWriting); */
-
-    // (Faster) Alternative 2: Output the rest of the file using sendfile
-    // TODO: Put that in a function
-    ssize_t intermediateFileBytesToOutput;
-    ssize_t res;
-    do {
-        intermediateFileBytesToOutput =
-            lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
-        res = sendfile(outputFd, intermediateReader, 0, intermediateFileBytesToOutput);
-        if (res < 0 && errno != EAGAIN) {
-            printf("ERROR: %s, when outputing!\n", strerror(errno));
-            exit(1);
-        }
-    } while (0 != res && res < intermediateFileBytesToOutput);
-
-    if (res == 0) {
-        // TODO: This might happen if output is a `head` or sth. I am
-        // not sure what should we do in that case.
-        doneWriting = 1;
-    }
+    // Output the rest of the intermediate file
+    outputRestIntermediateFile(outputFd, intermediateWriter, intermediateReader, &doneWriting);
 
     gettimeofday(&ts4, NULL);
     debug("Finishing up writing the intermediate file took %lu us\n",

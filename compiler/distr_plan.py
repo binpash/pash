@@ -437,7 +437,7 @@ def add_eager_nodes(graph):
     ## Generate a fileIdGen from a graph, that doesn't clash with the
     ## current graph fileIds.
     fileIdGen = graph.get_file_id_gen()
-    intermediateFileIdGen = FileIdGen(0, config.config['eager_intermediate_dir'])
+    intermediateFileIdGen = FileIdGen(0, config.config['eager_intermediate_prefix'])
 
     ## Get the next nodes
     workset = [node for source_node in source_nodes for node in graph.get_next_nodes(source_node)]
