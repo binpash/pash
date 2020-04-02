@@ -133,8 +133,8 @@ int emptyBuffer(int outputFd, const char* outputBuf, ssize_t* outputBytesRead, s
     return newBytesWritten;
 }
 
-void outputRestIntermediateFile(int outputFd, int intermediateWriter, int intermediateReader,
-                                char* outputBuf, int* doneWriting) {
+void bufferedOutputRestIntermediateFile(int outputFd, int intermediateWriter, int intermediateReader,
+                                        char* outputBuf, int* doneWriting) {
 
     ssize_t outputBytesRead = 0;
     ssize_t outputBytesWritten = 0;
@@ -171,8 +171,34 @@ void outputRestIntermediateFile(int outputFd, int intermediateWriter, int interm
     return;
 }
 
-// WARNING: It is important to make sure that no operation (open, read,
-// write).
+ssize_t safeWriteOutput(int outputFd, int intermediateReader,
+                        int intermediateFileDiff, int* doneWriting) {
+    ssize_t res;
+    res = sendfile(outputFd, intermediateReader, 0, intermediateFileDiff);
+    if (res < 0 && errno != EAGAIN) {
+        printf("ERROR: %s, when outputing!\n", strerror(errno));
+        exit(1);
+    } else if (res == 0) {
+        debug("We tried to write %d, but output is done!\n", intermediateFileDiff);
+        *doneWriting = 1;
+    }
+    return res;
+}
+
+void outputRestIntermediateFile(int outputFd, int intermediateWriter,
+                                int intermediateReader, int* doneWriting) {
+    ssize_t finalOffset = lseek(intermediateWriter, 0, SEEK_CUR);
+    ssize_t intermediateFileBytesToOutput;
+    ssize_t res;
+    do {
+        intermediateFileBytesToOutput =
+             finalOffset - lseek(intermediateReader, 0, SEEK_CUR);
+        res = safeWriteOutput(outputFd, intermediateReader, intermediateFileBytesToOutput, doneWriting);
+    } while (!(*doneWriting) && res < intermediateFileBytesToOutput);
+
+    return;
+}
+
 void EagerLoop(char* input, char* output, char* intermediate) {
 
     int doneReading = 0;
@@ -205,7 +231,6 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     debug("Reading before the output was opened took %lu us\n",
            (ts2.tv_sec - ts1.tv_sec) * 1000000 + ts2.tv_usec - ts1.tv_usec);
 
-    // TODO: Optimize this loop by using sendfile
     while (!doneReading && !doneWriting) {
         fd_set readFds;
         fd_set writeFds;
@@ -253,17 +278,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
 
             // Here we know that the intermediate file has something.
             assert(intermediateFileDiff > 0);
-            // Using sendfile instead of an output buffer
-            ssize_t res;
-            res = sendfile(outputFd, intermediateReader, 0, intermediateFileDiff);
-            if (res < 0 && errno != EAGAIN) {
-                printf("ERROR: %s, when outputing!\n", strerror(errno));
-                exit(1);
-            } else if (res == 0) {
-                debug("We tried to write %d, but output is done!\n", intermediateFileDiff);
-                doneWriting = 1;
-                break;
-            }
+            safeWriteOutput(outputFd, intermediateReader, intermediateFileDiff, &doneWriting);
         }
     }
 
@@ -276,29 +291,8 @@ void EagerLoop(char* input, char* output, char* intermediate) {
         close(inputFd);
     }
 
-    // Alternative 1: Output the rest of the intermediate file
-    /* outputRestIntermediateFile(outputFd, intermediateWriter, intermediateReader, */
-    /*                            outputBuf, &doneWriting); */
-
-    // (Faster) Alternative 2: Output the rest of the file using sendfile
-    // TODO: Put that in a function
-    ssize_t intermediateFileBytesToOutput;
-    ssize_t res;
-    do {
-        intermediateFileBytesToOutput =
-            lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
-        res = sendfile(outputFd, intermediateReader, 0, intermediateFileBytesToOutput);
-        if (res < 0 && errno != EAGAIN) {
-            printf("ERROR: %s, when outputing!\n", strerror(errno));
-            exit(1);
-        }
-    } while (0 != res && res < intermediateFileBytesToOutput);
-
-    if (res == 0) {
-        // TODO: This might happen if output is a `head` or sth. I am
-        // not sure what should we do in that case.
-        doneWriting = 1;
-    }
+    // Output the rest of the intermediate file
+    outputRestIntermediateFile(outputFd, intermediateWriter, intermediateReader, &doneWriting);
 
     gettimeofday(&ts4, NULL);
     debug("Finishing up writing the intermediate file took %lu us\n",
