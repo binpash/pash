@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/home/nikos/dish/compiler/dish.py", line 99, in <module>
+    main()
+  File "/home/nikos/dish/compiler/dish.py", line 26, in main
+    parser_output.check_returncode()
+  File "/usr/local/lib/python3.8/subprocess.py", line 444, in check_returncode
+    raise CalledProcessError(self.returncode, self.args, self.stdout,
+subprocess.CalledProcessError: Command '['/home/nikos/dish/parser/parse_to_json.native', '../evaluation//intermediary/web-index_p2_1gram_10_seq.sh']' died with <Signals.SIGSEGV: 11>.
+
+real	0m0.152s
+user	0m0.112s
+sys	0m0.044s

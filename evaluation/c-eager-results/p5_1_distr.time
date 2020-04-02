@@ -1,0 +1,67 @@
+/bin/sh: 28: Syntax error: "(" unexpected
+Traceback (most recent call last):
+  File "/home/nikos/dish/compiler/dish.py", line 92, in <module>
+    main()
+  File "/home/nikos/dish/compiler/dish.py", line 41, in main
+    execute_script(new_shell_filename, args.output, args.output_optimized)
+  File "/home/nikos/dish/compiler/dish.py", line 89, in execute_script
+    optimize_script(output_script_path)
+  File "/home/nikos/dish/compiler/distr_plan.py", line 68, in optimize_script
+    execute(distributed_graph.serialize_as_JSON(), config['output_dir'], output_script_path, config['output_optimized'])
+  File "/home/nikos/dish/compiler/impl.py", line 15, in execute
+    exec_obj.check_returncode()
+  File "/usr/local/lib/python3.8/subprocess.py", line 444, in check_returncode
+    raise CalledProcessError(self.returncode, self.args, self.stdout,
+subprocess.CalledProcessError: Command 'rm -rf /tmp/distr_output
+mkdir -p /tmp/distr_output
+mkdir -p /dev/shm/dish
+rm -f "#file18"
+mkfifo "#file18"
+rm -f "#file12"
+mkfifo "#file12"
+rm -f "#file13"
+mkfifo "#file13"
+rm -f "#file9"
+mkfifo "#file9"
+rm -f "#file11"
+mkfifo "#file11"
+rm -f "#file17"
+mkfifo "#file17"
+rm -f "#file16"
+mkfifo "#file16"
+rm -f "#file19"
+mkfifo "#file19"
+rm -f "#file20"
+mkfifo "#file20"
+rm -f "#file21"
+mkfifo "#file21"
+rm -f "#file2"
+mkfifo "#file2"
+cat "${IN_DIR}/p4.out" > "#file2" &
+cat "#file9" | head -n1 > "#file11" &
+cat "#file2" | tee >( head -n 10000 > "/dev/shm/dish/#file12"; dd of=/dev/null > /dev/null 2>&1 & cat "/dev/shm/dish/#file12" > "#file12") | (tail -n +10001 > "#file13"; dd of=/dev/null > /dev/null 2>&1) &
+cat "#file12" | cut -c 89-92 > "#file16" &
+cat "#file13" | cut -c 89-92 > "#file17" &
+cat "#file16" | grep -v 999 > "#file18" &
+cat "#file17" | grep -v 999 > "#file19" &
+sort -m --parallel=2 -rn "#file20" "#file21" > "#file9" &
+cat "#file18" | sort -rn > "#file20" &
+cat "#file19" | sort -rn > "#file21" &
+cat "#file11" > /tmp/distr_output/0 &
+wait
+rm -f "#file18"
+rm -f "#file12"
+rm -f "#file13"
+rm -f "#file9"
+rm -f "#file11"
+rm -f "#file17"
+rm -f "#file16"
+rm -f "#file19"
+rm -f "#file20"
+rm -f "#file21"
+rm -f "#file2"
+rm -rf "/dev/shm/dish"' returned non-zero exit status 2.
+
+real	0m6.091s
+user	0m0.200s
+sys	0m4.947s

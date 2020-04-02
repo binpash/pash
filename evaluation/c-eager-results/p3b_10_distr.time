@@ -1,0 +1,16 @@
+
+gzip: stdin: decompression OK, trailing garbage ignored
+
+gzip: stdin: decompression OK, trailing garbage ignored
+
+gzip: stdin: decompression OK, trailing garbage ignored
+
+gzip: stdin: decompression OK, trailing garbage ignored
+
+gzip: stdin: decompression OK, trailing garbage ignored
+
+gzip: stdin: decompression OK, trailing garbage ignored
+
+real	1m38.945s
+user	5m38.100s
+sys	3m25.676s

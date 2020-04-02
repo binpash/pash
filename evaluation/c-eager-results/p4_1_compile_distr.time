@@ -1,0 +1,5 @@
+./translate_script.sh: line 7: python3.8: command not found
+
+real	0m0.005s
+user	0m0.003s
+sys	0m0.004s
