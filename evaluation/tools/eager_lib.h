@@ -34,11 +34,11 @@
      _a < _b ? _a : _b; })
 
 
-int safe_open3(const char *pathname, int flags, mode_t mode);
+int safeOpen3(const char *pathname, int flags, mode_t mode);
 
-int safe_open(const char *pathname, int flags);
+int safeOpen(const char *pathname, int flags);
 
-int try_open_output(const char *pathname);
+int tryOpenOutput(const char *pathname);
 
 int readInputWriteToFile(int inputFd, int intermediateWriter, int bufferSize);
 

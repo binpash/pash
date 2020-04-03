@@ -1,6 +1,6 @@
 #include "eager_lib.h"
 
-int safe_open3(const char *pathname, int flags, mode_t mode) {
+int safeOpen3(const char *pathname, int flags, mode_t mode) {
     int fd = open(pathname, flags, mode);
     if (fd < 0) {
         printf("could not open file%s\n", pathname);
@@ -9,12 +9,12 @@ int safe_open3(const char *pathname, int flags, mode_t mode) {
     return fd;
 }
 
-int safe_open(const char *pathname, int flags) {
+int safeOpen(const char *pathname, int flags) {
     // The mode will be ignored anyway
-    return safe_open3(pathname, flags, S_IRWXU);
+    return safeOpen3(pathname, flags, S_IRWXU);
 }
 
-int try_open_output(const char *pathname) {
+int tryOpenOutput(const char *pathname) {
     int outputFd = open(pathname, O_WRONLY | O_NONBLOCK);
     if (outputFd < 0) {
         // ENXIO means that noone has opened the output file for

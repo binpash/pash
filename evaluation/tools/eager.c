@@ -13,22 +13,22 @@ void EagerLoop(char* input, char* output, char* intermediate) {
 
     // Open the intermediate file for both reading and writing
     // TODO: Think of using O_TMPFILE
-    int intermediateWriter = safe_open3(intermediate, O_CREAT | O_WRONLY, S_IRWXU);
-    int intermediateReader = safe_open(intermediate, O_RDONLY);
+    int intermediateWriter = safeOpen3(intermediate, O_CREAT | O_WRONLY, S_IRWXU);
+    int intermediateReader = safeOpen(intermediate, O_RDONLY);
 
     // It is fine for the input to block, since when we ask for it we
     // don't have anything in the intermediate file or buffer.
-    int inputFd = safe_open(input, O_RDONLY);
+    int inputFd = safeOpen(input, O_RDONLY);
     debug("opened input file %s\n", input);
 
     debug("will open outputFile from %s \n", output);
-    int outputFd = try_open_output(output);
+    int outputFd = tryOpenOutput(output);
     while(outputFd < 0) {
         if (readInputWriteToFile(inputFd, intermediateWriter, READ_WRITE_BUFFER_SIZE) == 0) {
             /* printf("Input was done before even output was opened\n"); */
             doneReading = 1;
         }
-        outputFd = try_open_output(output);
+        outputFd = tryOpenOutput(output);
     }
 
     gettimeofday(&ts2, NULL);
