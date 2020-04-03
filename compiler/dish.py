@@ -11,6 +11,7 @@ import config
 def main():
     ## Parse arguments
     args = parse_args()
+    config.dish_args = args
 
     # global config
     if not config.config:

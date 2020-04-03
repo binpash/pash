@@ -17,6 +17,7 @@ PYTHON_VERSION = "python3.8"
 PLANNER_EXECUTABLE = os.path.join(DISH_TOP, "compiler/distr_plan.py")
 
 config = {}
+dish_args = None
 
 def load_config(config_file_path=False):
     global config
