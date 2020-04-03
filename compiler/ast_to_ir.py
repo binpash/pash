@@ -391,8 +391,6 @@ def replace_ir(ast_node, irFileGen, config):
 ## distribution planner should read from this file and continue
 ## execution.
 ##
-## TODO: Make sure stuff are not hardcoded in here
-##
 ## (MAYBE) TODO: The way I did it, is by calling the parser once, and seeing
 ## what it returns. Maybe it would make sense to call the parser on
 ## the fly to have a cleaner implementation here?
@@ -403,6 +401,15 @@ def make_command(ir_filename):
     arguments = [string_to_argument(config.PYTHON_VERSION),
                  string_to_argument(config.PLANNER_EXECUTABLE),
                  string_to_argument(ir_filename)]
+    ## Pass a relevant argument to the planner
+    ##
+    ## TODO: We should have a cleaner way of passing relevant
+    ## arguments to the planner. Maybe unify argument parsing of both
+    ## dish.py and distr_plan.py in config and pass all of the
+    ## arguments to the planner.
+    if (config.dish_args.compile_optimize_only):
+        arguments.append(string_to_argument("--compile_optimize_only"))
+
     line_number = 0
     node = make_kv('Command', [line_number, [], arguments, []])
     return node
