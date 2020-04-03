@@ -2,12 +2,10 @@ from ir import *
 from union_find import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
-
+import config
 
 import pickle
 
-PYTHON_VERSION = "python3.8"
-PLANNER_EXECUTABLE = "distr_plan.py"
 
 ##
 ## Compile AST -> Extended AST with IRs
@@ -402,8 +400,8 @@ def make_command(ir_filename):
 
     ## TODO: Do we need to do anything with the line_number? If so, make
     ## sure that I keep it in the IR, so that I can find it.
-    arguments = [string_to_argument(PYTHON_VERSION),
-                 string_to_argument(PLANNER_EXECUTABLE),
+    arguments = [string_to_argument(config.PYTHON_VERSION),
+                 string_to_argument(config.PLANNER_EXECUTABLE),
                  string_to_argument(ir_filename)]
     line_number = 0
     node = make_kv('Command', [line_number, [], arguments, []])
