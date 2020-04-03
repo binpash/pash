@@ -30,7 +30,7 @@ cat $seq_script
 { time /bin/bash $seq_script > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
 
 echo "Distributed:"
-{ time python3.8 $DISH_TOP/compiler/dish.py --output_optimized $seq_script $distr_script ; } 2> >(tee "${results}${experiment}_distr.time" >&2)
+{ time python3.8 $DISH_TOP/compiler/dish.py --output_optimized --output_time $seq_script $distr_script ; } 2> >(tee "${results}${experiment}_distr.time" >&2)
 
 
 

@@ -1,8 +1,12 @@
 import os
 import time
 import subprocess
+from datetime import datetime
+from util import *
 
-def execute(graph_json, output_dir, output_script_name, output_optimized, compile_optimize_only):
+def execute(graph_json, output_dir, output_script_name, output_optimized, args):
+    backend_start_time = datetime.now()
+
     output_script = shell_backend(graph_json, output_dir)
 
     ## Output the optimized shell script for inspection
@@ -12,10 +16,19 @@ def execute(graph_json, output_dir, output_script_name, output_optimized, compil
             print(output_script)
             output_script_file.write(output_script)
 
-    if(not compile_optimize_only):
+    backend_end_time = datetime.now()
+    print_time_delta("Backend", backend_start_time, backend_end_time, args)
+
+    if(not args.compile_optimize_only):
+        execution_start_time = datetime.now()
+
         ## TODO: Handle stdout, stderr, errors
         exec_obj = subprocess.run(output_script, shell=True, executable="/bin/bash")
         exec_obj.check_returncode()
+
+        execution_end_time = datetime.now()
+        print_time_delta("Execution", execution_start_time, execution_end_time, args)
+
 
 
 def shell_backend(graph_json, output_dir):

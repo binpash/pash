@@ -4,11 +4,13 @@ import sys
 import pickle
 import subprocess
 import jsonpickle
+from datetime import datetime
 
 from ir import *
 from json_ast import *
 from impl import execute
 from distr_back_end import distr_execute
+from util import *
 import config
 
 from definitions.ir.nodes.alt_bigram_g_reduce import *
@@ -26,7 +28,7 @@ def main():
     args = parse_args()
 
     ## Call the main procedure
-    optimize_script(args.input_ir, args.compile_optimize_only)
+    optimize_script(args.input_ir, args)
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -34,10 +36,13 @@ def parse_args():
     parser.add_argument("--compile_optimize_only",
                         help="only compile and optimize the input script and not execute it",
                         action="store_true")
+    parser.add_argument("--output_time", help="output the the time it took for every step in stderr",
+                        action="store_true")
     args = parser.parse_args()
     return args
 
-def optimize_script(ir_filename, compile_optimize_only):
+def optimize_script(ir_filename, args):
+    optimization_start_time = datetime.now()
     if not config.config:
         config.load_config()
 
@@ -59,14 +64,17 @@ def optimize_script(ir_filename, compile_optimize_only):
     eager_distributed_graph = add_eager_nodes(distributed_graph)
     # print(distributed_graph)
 
+    optimization_end_time = datetime.now()
+    print_time_delta("Optimization", optimization_start_time, optimization_end_time, args)
+
     ## Call the backend that executes the optimized dataflow graph
     output_script_path = config.config['optimized_script_filename']
     if(config.config['distr_backend']):
         distr_execute(eager_distributed_graph, config.config['output_dir'], output_script_path,
-                      config.config['output_optimized'], compile_optimize_only, config.config['nodes'])
+                      config.config['output_optimized'], args.compile_optimize_only, config.config['nodes'])
     else:
         execute(eager_distributed_graph.serialize_as_JSON(), config.config['output_dir'],
-                output_script_path, config.config['output_optimized'], compile_optimize_only)
+                output_script_path, config.config['output_optimized'], args)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
