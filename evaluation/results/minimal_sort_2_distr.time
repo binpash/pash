@@ -1,6 +1,4 @@
-cat: ../scripts/input/i100M.txt: No such file or directory
-cat: ../scripts/input/i100M.txt: No such file or directory
 
-real	0m0.017s
-user	0m0.023s
-sys	0m0.003s
+real	0m13.835s
+user	0m25.419s
+sys	0m5.983s
