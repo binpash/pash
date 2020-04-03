@@ -409,6 +409,8 @@ def make_command(ir_filename):
     ## arguments to the planner.
     if (config.dish_args.compile_optimize_only):
         arguments.append(string_to_argument("--compile_optimize_only"))
+    if (config.dish_args.output_time):
+        arguments.append(string_to_argument("--output_time"))
 
     line_number = 0
     node = make_kv('Command', [line_number, [], arguments, []])

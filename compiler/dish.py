@@ -1,14 +1,17 @@
 import os
 import subprocess
 import argparse
+from datetime import datetime
 
 from ast_to_ir import *
 from distr_plan import *
 from ir import *
 from json_ast import *
+from util import *
 import config
 
 def main():
+    compilation_start_time = datetime.now()
     ## Parse arguments
     args = parse_args()
     config.dish_args = args
@@ -32,6 +35,9 @@ def main():
     ir_filename = input_script_wo_extension + ".ir"
     save_asts_json(compiled_asts, ir_filename)
     from_ir_to_shell(ir_filename, args.output)
+
+    compilation_end_time = datetime.now()
+    print_time_delta("Compilation", compilation_start_time, compilation_end_time, args)
 
     ## 5. Execute the compiled version of the input script
     if(not args.compile_only):
@@ -60,6 +66,8 @@ def parse_args():
     parser.add_argument("--compile_optimize_only", help="only compile and optimize the input script and not execute it",
                         action="store_true")
     parser.add_argument("--output_optimized", help="output the optimized shell script that was produced by the planner for inspection",
+                        action="store_true")
+    parser.add_argument("--output_time", help="output the the time it took for every step in stderr",
                         action="store_true")
     args = parser.parse_args()
     return args
