@@ -15,7 +15,7 @@ from definitions.ir.nodes.alt_bigram_g_reduce import *
 from definitions.ir.nodes.bigram_g_map import *
 from definitions.ir.nodes.bigram_g_reduce import *
 from definitions.ir.nodes.sort_g_reduce import *
-
+from definitions.ir.nodes.eager import *
 
 ## There are two ways to enter the distributed planner, either by
 ## calling dish (which straight away calls the distributed planner),
@@ -55,15 +55,17 @@ def optimize_script(ir_filename, compile_optimize_only):
     # print(ir_node)
     distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config.config['fan_out'],
                                                               config.config['batch_size'])
+
+    eager_distributed_graph = add_eager_nodes(distributed_graph)
     # print(distributed_graph)
 
     ## Call the backend that executes the optimized dataflow graph
     output_script_path = config.config['optimized_script_filename']
     if(config.config['distr_backend']):
-        distr_execute(distributed_graph, config.config['output_dir'], output_script_path,
+        distr_execute(eager_distributed_graph, config.config['output_dir'], output_script_path,
                       config.config['output_optimized'], compile_optimize_only, config.config['nodes'])
     else:
-        execute(distributed_graph.serialize_as_JSON(), config.config['output_dir'],
+        execute(eager_distributed_graph.serialize_as_JSON(), config.config['output_dir'],
                 output_script_path, config.config['output_optimized'], compile_optimize_only)
 
 ## This is a simplistic planner, that pushes the available
@@ -421,6 +423,59 @@ def create_reduce_tree_level(init_func, input_file_ids, fileIdGen):
 ## This function creates one node of the reduce tree
 def create_reduce_node(init_func, input_file_ids, output_file_ids):
     return init_func(flatten_list(input_file_ids) + output_file_ids)
+
+
+
+## This function adds eager nodes wherever the width of graph is
+## becoming smaller.
+def add_eager_nodes(graph):
+    source_nodes = graph.source_nodes()
+    # print("Source nodes:")
+    # print(source_nodes)
+
+    eager_exec_path = config.config['eager_executable_path']
+    ## Generate a fileIdGen from a graph, that doesn't clash with the
+    ## current graph fileIds.
+    fileIdGen = graph.get_file_id_gen()
+    intermediateFileIdGen = FileIdGen(0, config.config['eager_intermediate_prefix'])
+
+    ## Get the next nodes
+    workset = [node for source_node in source_nodes for node in graph.get_next_nodes(source_node)]
+    visited = set()
+    while (len(workset) > 0):
+        curr = workset.pop(0)
+        if (not curr in visited):
+            visited.add(curr)
+            next_nodes = graph.get_next_nodes(curr)
+            workset += next_nodes
+
+            ## Add eager nodes if the node has more than one input
+            curr_input_file_ids = curr.get_input_file_ids()
+            if (len(curr_input_file_ids) > 1):
+                new_input_file_ids = [fileIdGen.next_file_id() for _ in curr_input_file_ids]
+                intermediate_file_ids = [intermediateFileIdGen.next_file_id() for _ in curr_input_file_ids]
+
+                file_ids = list(zip(curr_input_file_ids, new_input_file_ids, intermediate_file_ids))
+                eager_nodes = [make_eager_node(old_file_id, new_file_id,
+                                               intermediate_file_id, eager_exec_path)
+                               for old_file_id, new_file_id, intermediate_file_id in file_ids]
+
+                for eager_node in eager_nodes:
+                    graph.add_node(eager_node)
+
+                ## Update input file ids
+                for curr_input_file_id, new_input_file_id, _ in file_ids:
+                    chunk_i = curr.find_file_id_in_in_stream(curr_input_file_id)
+                    chunk = curr.in_stream[chunk_i]
+                    curr.set_file_id(chunk, new_input_file_id)
+
+
+    return graph
+
+
+
+
+
 
     ## TODO: In order to be able to execute it, we either have to
     ## execute it in the starting shell (so that we have its state),

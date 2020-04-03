@@ -28,11 +28,12 @@ def create_split_file_id(batch_size, fileIdGen):
     return file_id
 
 class FileIdGen:
-    def __init__(self, next = 0):
+    def __init__(self, next = 0, prefix = ""):
         self.next = next + 1
+        self.prefix = prefix
 
     def next_file_id(self):
-        fileId = FileId(self.next)
+        fileId = FileId(self.next, self.prefix)
         self.next += 1
         return fileId
 
