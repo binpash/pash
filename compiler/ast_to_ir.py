@@ -2,12 +2,10 @@ from ir import *
 from union_find import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
-
+import config
 
 import pickle
 
-PYTHON_VERSION = "python3.8"
-PLANNER_EXECUTABLE = "distr_plan.py"
 
 ##
 ## Compile AST -> Extended AST with IRs
@@ -393,8 +391,6 @@ def replace_ir(ast_node, irFileGen, config):
 ## distribution planner should read from this file and continue
 ## execution.
 ##
-## TODO: Make sure stuff are not hardcoded in here
-##
 ## (MAYBE) TODO: The way I did it, is by calling the parser once, and seeing
 ## what it returns. Maybe it would make sense to call the parser on
 ## the fly to have a cleaner implementation here?
@@ -402,9 +398,20 @@ def make_command(ir_filename):
 
     ## TODO: Do we need to do anything with the line_number? If so, make
     ## sure that I keep it in the IR, so that I can find it.
-    arguments = [string_to_argument(PYTHON_VERSION),
-                 string_to_argument(PLANNER_EXECUTABLE),
+    arguments = [string_to_argument(config.PYTHON_VERSION),
+                 string_to_argument(config.PLANNER_EXECUTABLE),
                  string_to_argument(ir_filename)]
+    ## Pass a relevant argument to the planner
+    ##
+    ## TODO: We should have a cleaner way of passing relevant
+    ## arguments to the planner. Maybe unify argument parsing of both
+    ## dish.py and distr_plan.py in config and pass all of the
+    ## arguments to the planner.
+    if (config.dish_args.compile_optimize_only):
+        arguments.append(string_to_argument("--compile_optimize_only"))
+    if (config.dish_args.output_time):
+        arguments.append(string_to_argument("--output_time"))
+
     line_number = 0
     node = make_kv('Command', [line_number, [], arguments, []])
     return node

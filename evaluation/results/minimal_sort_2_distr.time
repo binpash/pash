@@ -1,6 +1,8 @@
-cat: ../scripts/input/i100M.txt: No such file or directory
-cat: ../scripts/input/i100M.txt: No such file or directory
+Optimization time: 2.817  ms
+Backend time: 0.33  ms
+Execution time: 13543.664  ms
+Compilation time: 18.781  ms
 
-real	0m0.017s
-user	0m0.023s
-sys	0m0.003s
+real	0m13.915s
+user	0m25.407s
+sys	0m5.978s

@@ -1,4 +1,10 @@
+eager: eager.c:255: EagerLoop: Assertion `intermediateFileDiff > 0' failed.
+/bin/bash: line 606: 12650 Aborted                 ../evaluation/tools/eager "#file511" "#file690" "/tmp/eager_intermediate_#file177"
+Optimization time: 40632.215  ms
+Backend time: 11.308  ms
+Execution time: 125827.459  ms
+Compilation time: 22.753  ms
 
-real	0m29.801s
-user	2m18.000s
-sys	0m26.564s
+real	2m46.862s
+user	50m10.682s
+sys	70m29.392s
