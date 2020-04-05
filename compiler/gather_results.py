@@ -25,7 +25,7 @@ experiments = ["minimal_grep",
                "minimal_sort",
                "topn",
                "wf",
-               "grep"
+               "grep",
                "spell",
                "shortest_scripts"]
 
