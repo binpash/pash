@@ -13,7 +13,11 @@ else:
 PARSER_BINARY = os.path.join(DISH_TOP, "parser/parse_to_json.native")
 PRINTER_BINARY = os.path.join(DISH_TOP, "parser/json_to_shell.native")
 
+PYTHON_VERSION = "python3.8"
+PLANNER_EXECUTABLE = os.path.join(DISH_TOP, "compiler/distr_plan.py")
+
 config = {}
+dish_args = None
 
 def load_config(config_file_path=False):
     global config

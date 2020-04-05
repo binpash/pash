@@ -1,4 +1,8 @@
+Optimization time: 885.5  ms
+Backend time: 1.657  ms
+Execution time: 123091.687  ms
+Compilation time: 19.456  ms
 
-real	0m14.924s
-user	1m27.612s
-sys	0m4.548s
+real	2m4.358s
+user	19m55.227s
+sys	8m33.720s

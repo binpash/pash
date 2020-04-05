@@ -15,8 +15,9 @@ from util import *
 ## TODO: When doing union, I have to really make both file ids point
 ## to the same file.
 class FileId:
-    def __init__(self, ident, resource=None, max_length = None):
+    def __init__(self, ident, prefix="", resource=None, max_length = None):
         self.ident = ident
+        self.prefix = prefix
         ## Initialize the parent
         MakeSet(self)
         self.resource=resource
@@ -34,9 +35,9 @@ class FileId:
         # print("File id:", self.ident, Find(self).ident, self.resource, self.children)
         if (self.resource is None):
             if(self.max_length is None):
-                output = "#file{}".format(Find(self).ident)
+                output = "{}#file{}".format(self.prefix, Find(self).ident)
             else:
-                output = "#file{}[max:{}]".format(Find(self).ident, self.max_length)
+                output = "{}#file{}[max:{}]".format(self.prefix, Find(self).ident, self.max_length)
         else:
             output = "{}".format(self.resource)
         return output

@@ -25,8 +25,8 @@ experiments = ["minimal_grep",
                "minimal_sort",
                "topn",
                "wf",
-               "grep",
-               # "spell",
+               "grep"
+               "spell",
                "shortest_scripts"]
 
 pretty_names = {"minimal_grep" : "grep",
@@ -42,7 +42,7 @@ def get_experiment_files(experiment, results_dir):
     files = [f for f in os.listdir(results_dir) if f.startswith(experiment)]
     return [int(f.split(experiment + "_")[1].split("_")[0]) for f in files]
 
-def read_time(filename):
+def read_total_time(filename):
     try:
         time = 0
         f = open(filename)
@@ -57,6 +57,38 @@ def read_time(filename):
         print("!! WARNING: Filename:", filename, "not found!!!")
         return 0
 
+def read_distr_execution_time(filename):
+    try:
+        f = open(filename)
+        times = []
+        for line in f:
+            if(line.startswith("Execution time")):
+                milliseconds = line.split(": ")[1].split(" ")[0]
+                times.append(float(milliseconds))
+        f.close()
+        return sum(times)
+    except:
+        print("!! WARNING: Filename:", filename, "not found!!!")
+        return 0
+
+def read_distr_total_compilation_time(filename):
+    try:
+        f = open(filename)
+        times = []
+        for line in f:
+            if(line.startswith("Compilation time")
+               or line.startswith("Optimization time")
+               or line.startswith("Backend time")):
+                milliseconds = line.split(": ")[1].split(" ")[0]
+                times.append(float(milliseconds))
+        f.close()
+        print(times)
+        return sum(times)
+    except:
+        print("!! WARNING: Filename:", filename, "not found!!!")
+        return 0
+
+
 def collect_scaleup_times(experiment, results_dir):
     print(experiment)
 
@@ -64,10 +96,15 @@ def collect_scaleup_times(experiment, results_dir):
     all_scaleup_numbers.sort()
     all_scaleup_numbers = [i for i in all_scaleup_numbers if i > 1]
     prefix = '{}/{}_'.format(results_dir, experiment)
-    seq_numbers = [read_time('{}{}_seq.time'.format(prefix, n)) for n in all_scaleup_numbers]
-    distr_numbers = [read_time('{}{}_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
-    cat_numbers = [read_time('{}{}_cat_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
-    compile_numbers = [read_time('{}{}_compile_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
+    seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, n))
+                   for n in all_scaleup_numbers]
+    distr_numbers = [read_distr_execution_time('{}{}_distr.time'.format(prefix, n))
+                     for n in all_scaleup_numbers]
+    compile_numbers = [read_distr_total_compilation_time('{}{}_distr.time'.format(prefix, n))
+                       for n in all_scaleup_numbers]
+    # distr_numbers = [read_time('{}{}_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
+    # cat_numbers = [read_time('{}{}_cat_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
+    # compile_numbers = [read_time('{}{}_compile_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
     print(all_scaleup_numbers)
     print(seq_numbers)
     print(distr_numbers)
@@ -78,12 +115,12 @@ def collect_scaleup_times(experiment, results_dir):
     ax.set_xlabel('Level of Parallelism')
     distr_speedup = [seq_numbers[i] / t for i, t in enumerate(distr_numbers)]
     compile_distr_speedup = [seq_numbers[i] / (t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
-    total_distr_speedup = [seq_numbers[i] / (t + compile_numbers[i] + cat_numbers[i]) for i, t in enumerate(distr_numbers)]
+    # total_distr_speedup = [seq_numbers[i] / (t + compile_numbers[i] + cat_numbers[i]) for i, t in enumerate(distr_numbers)]
     # ax.plot(all_scaleup_numbers, seq_numbers, '-o', linewidth=0.5, label='Sequential')
     # ax.plot(all_scaleup_numbers, distr_numbers, '-o', linewidth=0.5, label='Distributed')
-    ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, label='Distributed')
+    ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, label='Parallel')
     ax.plot(all_scaleup_numbers, compile_distr_speedup, '-*', linewidth=0.5, label='+ Compile')
-    ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
+    # ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
     # ax.plot(all_scaleup_numbers, all_scaleup_numbers, '-', color='tab:gray', linewidth=0.5, label='Ideal')
 
 
