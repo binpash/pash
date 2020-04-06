@@ -193,7 +193,7 @@
 
 %% Title information
 %% \title{Dish: Distribution-oblivious Shell Scripting}         %% [Short Title] is optional;
-\title{DPSh: Automated Data-Parallel Processing in the Shell}         %% [Short Title] is optional;
+\title{\sys: Automated Data-Parallel Shell Processing}         %% [Short Title] is optional;
 %% \title{Extensible data processing in the shell}
 
 % \titlenote{with title note}             %% \titlenote is optional;
@@ -203,8 +203,6 @@
 % \subtitlenote{with subtitle note}       %% \subtitlenote is optional;
                                         %% can be repeated if necessary;
                                         %% contents suppressed with 'anonymous'
-
-
 
 %% Author information
 %% Contents and number of authors suppressed with 'anonymous'.
@@ -263,7 +261,7 @@
 
 \newcommand{\cf}[1]{(\emph{Cf}.\S\ref{#1})}
 \newcommand{\sx}[1]{(\S\ref{#1})}
-\newcommand{\sys}{{\scshape Dish}\xspace}
+\newcommand{\sys}{{\scshape Pash}\xspace}
 \newcommand{\unix}{{\scshape Unix}\xspace}
 
 \setlist{noitemsep,leftmargin=10pt,topsep=2pt,parsep=2pt,partopsep=2pt}
@@ -448,23 +446,32 @@ directions~\sx{discussion}.
 %% \href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.
 
 
-\nv{I don't think the intro needs any serious rewrite, apart from deleting any
-notion of distribution and highlighting parallel processing.
+% TODO: Important to have a small script that highlights
+\nv{
+(i) different classes of commands
+(ii) challenge of shell expansion order
+(iii) segments that are parallelized by \sys (with provable correctness)
+(iv) segments that are \emph{not} parallelized by \sys (otherwise they can lead to
+incorrectness)
+}
 
-Key tasks, in rough order of importance:
-  (i) change title and intro to avoid distribution
-  (ii) cleanup and rewrite sections 4, 5: introduce our high-level figure, talk
-  about things in order, add ordering in graphs, generally refine and beautify
-  as much as possible.
-  (iii) tighten section 2, everything in there has to be related to some part of
-  the story---make the connection explicit
-  (iv) Pump up evaluation: could we add 3 more micro-benchmarks? could we add
-  1--2 more macro-benchmarks?
-  (v) since this is IFCP, could we add some simple semantics and derivation
-  rules? we should certainly be able to describe some of the optimizations as
-  congruence rules.
-  (vi) complete the related work with some operating-systems literature.
-  --------
+% \nv{I don't think the intro needs any serious rewrite, apart from deleting any
+% notion of distribution and highlighting parallel processing.
+% 
+% Key tasks, in rough order of importance:
+%   (i) change title and intro to avoid distribution
+%   (ii) cleanup and rewrite sections 4, 5: introduce our high-level figure, talk
+%   about things in order, add ordering in graphs, generally refine and beautify
+%   as much as possible.
+%   (iii) tighten section 2, everything in there has to be related to some part of
+%   the story---make the connection explicit
+%   (iv) Pump up evaluation: could we add 3 more micro-benchmarks? could we add
+%   1--2 more macro-benchmarks?
+%   (v) since this is IFCP, could we add some simple semantics and derivation
+%   rules? we should certainly be able to describe some of the optimizations as
+%   congruence rules.
+%   (vi) complete the related work with some operating-systems literature.
+%   --------
 %   Need to highlight the use of ad-hoc flags
 %   Need to highlight use cases / goals:
 %     still POSIX compliant, you can replace /bin/bash with /bin/dish and see
@@ -472,7 +479,7 @@ Key tasks, in rough order of importance:
 %     today--that is, dish enables a platform for further research.
 %
 %  Talk about order-aware dataflow analysis?
-}
+% }
 
 
 %% \kk{Begin of new intro sketch}
