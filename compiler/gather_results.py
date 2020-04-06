@@ -27,7 +27,8 @@ experiments = ["minimal_grep",
                "wf",
                "grep",
                "spell",
-               "shortest_scripts"]
+               "shortest_scripts",
+               "diff"]
 
 pretty_names = {"minimal_grep" : "grep",
                 "minimal_sort" : "sort",
@@ -36,7 +37,8 @@ pretty_names = {"minimal_grep" : "grep",
                 "grep" : "grep-old",
                 "bigram" : "bi-gram",
                 "spell" : "spell",
-                "shortest_scripts" : "shortest-scripts"}
+                "shortest_scripts" : "shortest-scripts",
+                "diff" : "diff"}
 
 def get_experiment_files(experiment, results_dir):
     files = [f for f in os.listdir(results_dir) if f.startswith(experiment)]
