@@ -17,15 +17,15 @@ IN5=5.txt
 IN6=6.txt
 IN7=7.txt
 IN8=8.txt
-IN9_1=9.1.txt
-IN9_2=9.2.txt
-IN9_3=9.3.txt
-IN9_4=9.4.txt
-IN9_5=9.5.txt
-IN9_6=9.6.txt
-IN9_7=9.7.txt
-IN9_8=9.8.txt
-IN9_9=9.9.txt
+IN91=9.1.txt
+IN92=9.2.txt
+IN93=9.3.txt
+IN94=9.4.txt
+IN95=9.5.txt
+IN96=9.6.txt
+IN97=9.7.txt
+IN98=9.8.txt
+IN99=9.9.txt
 IN10=10.txt
 IN11=11.txt
 IN12=12.txt
@@ -102,31 +102,31 @@ cat $IN8 | fmt -w1 | tr -c '[a-z][A-Z]' '\n' | sort | awk 'length >= 16'
 cat $IN8 > /dev/null
 
 # 9.1: extract the word PORT
-cat $IN9_1 | fmt -w1 | grep '[A-Z]' | tr '[a-z]' '\n' | grep '[A-Z]' | tr -d '\n' | cut -c 1-4
+cat $IN91 | fmt -w1 | grep '[A-Z]' | tr '[a-z]' '\n' | grep '[A-Z]' | tr -d '\n' | cut -c 1-4
 
 # 9.2: extract the word BELL
-cat $IN9_2 | cut -c 1-1 | tr -d '\n'
+cat $IN92 | cut -c 1-1 | tr -d '\n'
 
 # 9.3: animal that used to decorate the Unix room
-cat $IN9_3 | cut -c 1-2 | tr -d '\n'
+cat $IN93 | cut -c 1-2 | tr -d '\n'
 
 # 9.4: four corners with E centered, for an "X" configuration
-cat $IN9_4 | fmt -w1 | grep '"' | sed 4d | cut -d '"' -f 2 | tr -d '\n'
+cat $IN94 | fmt -w1 | grep '"' | sed 4d | cut -d '"' -f 2 | tr -d '\n'
 
 # 9.5: backwards running clock, in a backwards poem
-cat $IN9_5 > /dev/null
+cat $IN95 > /dev/null
 
 # 9.6: Follow the directions for grep
-cat $IN9_6 | fmt -w1 | grep '[A-Z]' | sed 1d | sed 3d | sed 3d | tr '[a-z]' '\n' | grep '[A-Z]' | sed 3d | tr -c '[A-Z]' '\n' | tr -d '\n'
+cat $IN96 | fmt -w1 | grep '[A-Z]' | sed 1d | sed 3d | sed 3d | tr '[a-z]' '\n' | grep '[A-Z]' | sed 3d | tr -c '[A-Z]' '\n' | tr -d '\n'
 
 # 9.7: Four corners
-cat $IN9_7 | sed 2d | sed 2d | fmt -w1 | grep '[A-Z]' | tr -c '[A-Z]' '\n' | tr -d '\n'
+cat $IN97 | sed 2d | sed 2d | fmt -w1 | grep '[A-Z]' | tr -c '[A-Z]' '\n' | tr -d '\n'
 
 # 9.8: TELE-communications
-cat $IN9_8 | tr -c '[a-z][A-Z]' '\n' | grep '[A-Z]' | sed 1d | sed 2d | sed 3d | sed 4d | tr -c '[A-Z]' '\n' | tr -d '\n'
+cat $IN98 | tr -c '[a-z][A-Z]' '\n' | grep '[A-Z]' | sed 1d | sed 2d | sed 3d | sed 4d | tr -c '[A-Z]' '\n' | tr -d '\n'
 
 # 9.9: 
-cat $IN9_9 | tr -c '[a-z][A-Z]' '\n' | grep '[A-Z]' | sed 1d | sed 1d | sed 2d | sed 3d | sed 5d | tr -c '[A-Z]' '\n' | tr -d '\n'
+cat $IN99 | tr -c '[a-z][A-Z]' '\n' | grep '[A-Z]' | sed 1d | sed 1d | sed 2d | sed 3d | sed 5d | tr -c '[A-Z]' '\n' | tr -d '\n'
 
 # 10.1: count Turing award recipients while working at Bell Labs
 cat $IN10 | sed 1d | grep 'Bell' | cut -f 2 | wc -l
