@@ -93,8 +93,10 @@ cat $IN8 | tr -s ' ' '\n' | grep 1969 | wc -l
 # #      (kk: This also has an issue with double-quotes)
 # cat $IN8 | grep 'Bell' | awk 'length <= 45' | cut -d ',' -f 2 | awk '{$1=$1};1'
 
-# 8.3: find names of the four people most involved with unix
-cat $IN8 | grep '(' | cut -d '(' -f 2 | cut -d ')' -f 1 | head -n 1
+# # 8.3: find names of the four people most involved with unix
+# #      kk: There is a problem with the parallel version of this.
+# #         Eager never stops since it can't open its output file. TODO: Find a way to solve this.
+# cat $IN8 | grep '(' | cut -d '(' -f 2 | cut -d ')' -f 1 | head -n 1
 
 # 8.4: find longest words without hyphens (seems wrong) --- kk: This doesn't find the longest
 cat $IN8 | tr -c '[a-z][A-Z]' '\n' | sort | awk 'length >= 16'
@@ -126,7 +128,7 @@ cat $IN97 | sed 2d | sed 2d | tr -c '[A-Z]' '\n' | tr -d '\n'
 # 9.8: TELE-communications
 cat $IN98 | tr -c '[a-z][A-Z]' '\n' | grep '[A-Z]' | sed 1d | sed 2d | sed 3d | sed 4d | tr -c '[A-Z]' '\n' | tr -d '\n'
 
-# 9.9: 
+# 9.9:
 cat $IN99 | tr -c '[a-z][A-Z]' '\n' | grep '[A-Z]' | sed 1d | sed 1d | sed 2d | sed 3d | sed 5d | tr -c '[A-Z]' '\n' | tr -d '\n'
 
 # 10.1: count Turing award recipients while working at Bell Labs
@@ -135,7 +137,7 @@ cat $IN10 | sed 1d | grep 'Bell' | cut -f 2 | wc -l
 # 10.2: list Turing award recipients while working at Bell Labs
 cat $IN10 | sed 1d | grep 'Bell' | cut -f 2
 
-# 10.3: extract Ritchie's username 
+# 10.3: extract Ritchie's username
 cat $IN10| grep Ritchie | cut -f2,5 | tr ' ' '\n' | cut -c1 | tr '[A-Z]' '[a-z]' | tr -d '\n'
 # cat $IN10 | grep 'Bell' | cut -f 2 | head -n 1 | fmt -w1 | cut -c 1-1 | tr -d '\n' | tr '[A-Z]' '[a-z]'
 
