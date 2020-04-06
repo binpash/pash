@@ -3,12 +3,13 @@
 ## We assume that each evaluation script has a sequential, a
 ## distributed, and an environment
 experiment=$1
+results_subdir=$2
 
 DISH_TOP=${DISH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 
 eval_directory="../evaluation/"
 directory="${eval_directory}/intermediary/"
-results="${eval_directory}results/"
+results="${eval_directory}results/${results_subdir}/"
 prefix="${directory}${experiment}"
 env_file="${prefix}_env.sh"
 funs_file="${prefix}_funs.sh"
