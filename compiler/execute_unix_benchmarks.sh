@@ -5,6 +5,7 @@ unix50_intermediary="${unix50_dir}/intermediary/"
 intermediary_dir="../evaluation/intermediary/"
 results_subdir="unix50"
 
+rm -r $unix50_intermediary
 mkdir -p $unix50_intermediary
 mkdir -p $intermediary_dir
 mkdir -p "../evaluation/results/${results_subdir}/"
@@ -34,6 +35,6 @@ for unix50_pipeline in $(ls ${unix50_intermediary} | grep -v "_env" | cut -f 1 -
                 $unix50_intermediary $unix50_pipeline $n_in $intermediary_dir
 
         ## Execute the intermediary script
-        ./execute_compile_evaluation_script.sh "${unix50_pipeline}_${n_in}" "${results_subdir}"
+        ./execute_compile_evaluation_script.sh "${unix50_pipeline}_${n_in}" "${results_subdir}" > /dev/null
     done
 done
