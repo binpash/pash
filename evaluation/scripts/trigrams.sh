@@ -10,6 +10,7 @@ mkfifo s2 s3
 
 cat $IN |
 # head -n 2 |
+  sed 's/[^a-zA-Z0-9]/ /g' |
   tr -cs A-Za-z '\n' |
   tr A-Z a-z |
   tee s2 |
