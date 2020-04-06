@@ -1,6 +1,6 @@
 import sys
 import os
-from shutil import copyfile
+import re
 
 unix50_dir = sys.argv[1]
 intermediaries_dir = sys.argv[2]
@@ -19,7 +19,8 @@ with open(unix50_script) as file:
 ## Generate bigger inputs
 unix50_script_lines = unix50_script_data.split("\n")
 input_lines = [line for line in unix50_script_lines if line.startswith("IN")]
-input_file_names = [line.split("=")[1] for line in input_lines]
+input_file_name_assignments = {line.split("=")[0] : line.split("=")[1] for line in input_lines}
+input_file_names = input_file_name_assignments.values()
 
 for input_file in input_file_names:
     input_file_path = os.path.join(unix50_dir, input_file)
@@ -30,5 +31,26 @@ for input_file in input_file_names:
     with open(generated_input_file_path, "w") as file:
         file.write(input_file_data * input_size_increase)
 
+## Extract each pipeline of unix50
+unix50_pipelines = [line for line in unix50_script_lines if line.startswith("cat ")]
+p = re.compile('ab*')
 
-## TODO: Extract each pipeline of unix50
+for i, unix50_pipeline in enumerate(unix50_pipelines):
+
+    ## Find the input's name
+    input_name = re.search('IN[0-9]+', unix50_pipeline).group(0)
+    unix50_normalized_pipeline = re.sub('IN[0-9]+', 'IN', unix50_pipeline)
+
+    ## Generate the script
+    pipeline_file_path = os.path.join(intermediaries_dir, "unix50_pipeline_{}.sh".format(i))
+    with open(pipeline_file_path, "w") as file:
+        file.write(unix50_normalized_pipeline + "\n")
+
+    ## And its environment
+    pipeline_env_file_path = os.path.join(intermediaries_dir, "unix50_pipeline_{}_env.sh".format(i))
+
+    input_file_assignment_path = os.path.join(generated_inputs_dir, input_file_name_assignments[input_name])
+    environment_data = "IN={}\n".format(input_file_assignment_path)
+    print(environment_data)
+    with open(pipeline_env_file_path, "w") as file:
+        file.write(environment_data)
