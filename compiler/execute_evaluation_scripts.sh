@@ -31,7 +31,7 @@ microbenchmarks=(
     ## TODO: Add some more for OSDI
     # wc                   # Extremely simple
     diff                 # TODO: Optimize diff
-    # set-diff             # TODO: Handle that
+    # set-diff             # TODO: Handle redirection after reduce
     # page-count           # TODO: Change it so that it is one pipeline and it has many files
     # sieve                # Nice to show posix compliance
     # genquality           # TODO: Nice big pipeline. Handle this
