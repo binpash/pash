@@ -1869,6 +1869,24 @@ and aggregates them accordingly.
 % late as possible in the process. This would be awesome.
 %
 
+\begin{figure}[t]
+\centering
+% https://docs.google.com/drawings/d/13Zx3a9bWi1RvpOgNCSiXirp9UOte-XuaJQBi_lmmPMc/edit
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_eager.pdf}}
+\caption{
+  \textbf{Eager primitive.}
+  Describe three problems:
+    (i) FIFOs alone cannot solve it as they’re blocking;
+    (ii) intermediary files alone lose data, as the consumer reaches EOF before the producer; and
+    (iii) writing to files + wait does not allow trask-based parallelism.
+  Eager is an elegant solution that solves the problem while remaining within
+  the model. Describe.
+}
+\vspace{-15pt}
+\label{fig:eager}
+\end{figure}
+
+
 \paragraph{Merge and Split Implementation}
 %
 It is common in the dataflow graph for a node to have many incoming
@@ -2069,6 +2087,7 @@ More detailed setup and experiments, including the scripts, is included in the a
       (i) distributed, focusing only on the distributed execution,
       (ii) +compile, adding \sys' pre-processing overheads, and
       (iii) +merge, adding a final merger step.
+      \nv{Candidate values, based on the HW we have 2, 4, 8, 16, 32, 64. Also, maybe it makes sense to show log x-axis?}
     }
     \vspace{-15pt}
     \label{fig:microbenchmarks}
