@@ -122,14 +122,18 @@ cat $IN95 > /dev/null
 # 9.6: Follow the directions for grep
 cat $IN96 | tr ' ' '\n' | grep '[A-Z]' | sed 1d | sed 3d | sed 3d | tr '[a-z]' '\n' | grep '[A-Z]' | sed 3d | tr -c '[A-Z]' '\n' | tr -d '\n'
 
-# 9.7: Four corners --- kk: Niko can we make this more general?
+# 9.7: Four corners
 cat $IN97 | sed 2d | sed 2d | tr -c '[A-Z]' '\n' | tr -d '\n'
 
 # 9.8: TELE-communications
 cat $IN98 | tr -c '[a-z][A-Z]' '\n' | grep '[A-Z]' | sed 1d | sed 2d | sed 3d | sed 4d | tr -c '[A-Z]' '\n' | tr -d '\n'
+# kk: A better way to implement this (since it want the final capital letter of each line)
+cat $IN98 | tr -cd '[A-Z]\n' | grep -o ".$" | tr -d '\n'
 
 # 9.9:
 cat $IN99 | tr -c '[a-z][A-Z]' '\n' | grep '[A-Z]' | sed 1d | sed 1d | sed 2d | sed 3d | sed 5d | tr -c '[A-Z]' '\n' | tr -d '\n'
+# kk: Similarly a better way to implement this (based on the above is
+cat $IN99 | tr -cd '[A-Z]\n' | grep -o "..$" | tr -d '\n'
 
 # 10.1: count Turing award recipients while working at Bell Labs
 cat $IN10 | sed 1d | grep 'Bell' | cut -f 2 | wc -l

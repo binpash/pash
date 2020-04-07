@@ -2185,6 +2185,21 @@ was the test input from unix50 multiplied \todo{10000} times. The
 speedup of each pipeline separately is shown in \todo{ref}. The
 average\todo{/median} speedup is \todo{X}.
 
+%% Bad result descriptions:
+%%  2. Contains just a head -n 2, and then a cut.
+%%  5. Very fast (small input). Sequential time is 0m0.103s (If we increase the input we will show speedup)
+%%  18. TODO: Implement
+%%  20. Four corners (not parallelizable). So performance is reasonable
+%%      (atm it doesn't return the correct result for multiplied input though)
+%%  21. Last capital character of each line. Their solution is not general (and it is not parallelizable).
+%%      Also, the input is very small. Changing it to a more general one and
+%%      increasing input size leads to speedup. TODO: Run with large input
+%%  22. Exactly the same problem as the above.
+%%  24. (Not sure: It seems that the computation is trivial)
+%%  32. TODO: Implement
+
+%% WARNING: Remember to fix `sed` and not have it be stateless in general.
+
 All pipelines that perform poorly (\todo{enumerate them}) contain
 non-parallelizable commands. An illustrative example is pipeline
 \todo{X}, which is shown here:
