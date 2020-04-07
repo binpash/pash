@@ -1869,6 +1869,39 @@ and aggregates them accordingly.
 % late as possible in the process. This would be awesome.
 %
 
+\subsection{Implementation Nuggets}
+
+\TODO{Problem: Cat (and other commands that have multiple inputs) is
+  not eager. Illustration: Show a parallel pipeline having a cat that
+  gathers input somewhere (and a sort merge maybe). The way pipes
+  work, this graph will essentially evaluate almost completely
+  sequentially. Maybe go through the steps that cat asks for the first
+  line of its first input until ithe first input is done and then goes
+  to the second. This leads to processor under-utilization. Solution:
+  We add eager nodes that eagerly consume all their input (even if
+  their output does not ask for it). Eager nodes are themselves part
+  of the dataflow graph (and model) and essentially perform an
+  identity function. This makes all processors as utilized as possible
+  and for CPU heavy tasks it leads to speedup. For IO heavy (and CPU
+  light) tasks it has some overhead. We evaluate eager in section X
+  (We should also say something about a CPU light task).}
+
+\TODO{(This problem is a nice followup for the one above) Problem:
+  Dataflow graph termination. Illustration: Show the example of head
+  deadlock and explain that this is inherent behaviour in the shell.
+  (Solution: emptying pipelines or terminating processes) In order for
+  things to terminate gracefully, dish wraps all commands in order to
+  always consume all of their input by sending it down to
+  /dev/null. Warning: This means that all commands in the pipeline
+  must terminate if all of their output is consumed. We evaluate the
+  overhead of emptying all outputs in section X.}
+
+\TODO{Problem: Pipeline width shrinks after parallel pure
+  commands. Solution: Split node that resplits its input to multiple
+  files in sequence (to preserve the model semantics). We should
+  probably evaluate that too.}
+
+
 \paragraph{Merge and Split Implementation}
 %
 It is common in the dataflow graph for a node to have many incoming
@@ -1911,6 +1944,15 @@ arbitrarily many different pipes.
 
 \section{Evaluation}
 \label{eval}
+
+\TODO{Notes on Unix50. We got the Unix50 solutions as is and we ran
+  them. These are the numbers. By changing fmt -w1 to tr (or by adding
+  it appropriately to the DSL) and by changing some occurences of awk
+  to ..., the speedup in these cases goes to...}
+
+\TODO{Remember to mention that deathstar has 128 threads but 64
+  cores. So it is reasonable for the speedup to not go further in cpu
+  heavy pipelines.}
 
 % FIXME
 % \kk{We should make sure to measure the time that it takes for the
