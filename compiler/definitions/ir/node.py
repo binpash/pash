@@ -42,6 +42,12 @@ class Node:
     def get_output_file_ids(self):
         return [self.get_file_id(output_chunk) for output_chunk in self.out_stream]
 
+    def get_number_of_inputs(self):
+        return len(self.in_stream)
+
+    def get_number_of_output(self):
+        return len(self.out_stream)
+
     ## TODO: Rename
     def get_file_id(self, chunk):
         if (chunk == "stdout"):
