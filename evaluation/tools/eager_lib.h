@@ -38,7 +38,11 @@ int safeOpen3(const char *pathname, int flags, mode_t mode);
 
 int safeOpen(const char *pathname, int flags);
 
+void fdSetBlocking(int fd, int blocking);
+
 int tryOpenOutput(const char *pathname);
+
+int blockOpenOutput(const char *pathname);
 
 int readInputWriteToFile(int inputFd, int intermediateWriter, int bufferSize);
 
