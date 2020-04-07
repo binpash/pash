@@ -1,8 +1,9 @@
-Optimization time: 2.835  ms
-Backend time: 46.158  ms
-Execution time: 6300.478  ms
-Compilation time: 19.025  ms
+cat: write error: No space left on device
+Optimization time: 2.79  ms
+Backend time: 42.33  ms
+Execution time: 41429.968  ms
+Compilation time: 107.358  ms
 
-real	0m6.714s
-user	0m0.375s
-sys	0m7.939s
+real	0m41.929s
+user	0m0.844s
+sys	0m51.102s

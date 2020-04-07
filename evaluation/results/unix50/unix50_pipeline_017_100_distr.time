@@ -1,8 +1,16 @@
-Optimization time: 18941.242  ms
-Backend time: 4.555  ms
-Execution time: 309307.466  ms
-Compilation time: 20.137  ms
+eager: eager.c:255: EagerLoop: Assertion `intermediateFileDiff > 0' failed.
+eager: eager.c:255: EagerLoop: Assertion `intermediateFileDiff > 0' failed.
+eager: eager.c:255: EagerLoop: Assertion `intermediateFileDiff > 0' failed.
+eager: eager.c:255: EagerLoop: Assertion `intermediateFileDiff > 0' failed.
+/bin/bash: line 504: 48575 Aborted                 ../evaluation/tools/eager "#file406" "#file585" "/tmp/eager_intermediate_#file178"
+/bin/bash: line 504: 48589 Aborted                 ../evaluation/tools/eager "#file397" "#file599" "/tmp/eager_intermediate_#file192"
+/bin/bash: line 504: 48592 Aborted                 ../evaluation/tools/eager "#file400" "#file602" "/tmp/eager_intermediate_#file195"
+/bin/bash: line 504: 48594 Aborted                 ../evaluation/tools/eager "#file403" "#file604" "/tmp/eager_intermediate_#file197"
+Optimization time: 18699.989  ms
+Backend time: 4.547  ms
+Execution time: 4228362.815  ms
+Compilation time: 19.736  ms
 
-real	5m28.643s
-user	76m2.316s
-sys	36m15.156s
+real	70m47.462s
+user	942m22.541s
+sys	1704m14.983s
