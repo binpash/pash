@@ -29,7 +29,8 @@ for input_file in input_file_names:
         input_file_data = file.read()
 
     with open(generated_input_file_path, "w") as file:
-        file.write(input_file_data * input_size_increase)
+        for _ in range(input_size_increase):
+            file.write(input_file_data)
 
 ## Extract each pipeline of unix50
 unix50_pipelines = [line for line in unix50_script_lines if line.startswith("cat ")]
