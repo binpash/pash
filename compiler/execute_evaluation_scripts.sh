@@ -3,6 +3,7 @@
 microbenchmarks_dir="../evaluation/microbenchmarks/"
 intermediary_dir="../evaluation/intermediary/"
 
+rm /tmp/eager*
 mkdir -p $intermediary_dir
 
 n_inputs=(
