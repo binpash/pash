@@ -153,7 +153,7 @@ def aggregate_unix50_results(all_results, scaleup_numbers):
     avg_distr_results = [[] for _ in scaleup_numbers]
     for pipeline in all_results:
         pipeline_distr_results = pipeline[0]
-        print(pipeline_distr_results)
+        # print(pipeline_distr_results)
         for i in range(len(scaleup_numbers)):
             avg_distr_results[i].append(pipeline_distr_results[i])
 
@@ -174,22 +174,41 @@ def collect_unix50_scaleup_times(unix50_results_dir):
                                                          unix50_results_dir,
                                                          scaleup_numbers)
                    for pipeline_number in pipeline_numbers]
-    print(all_results)
+    # print(all_results)
+
+    ## Plot individual speedups
+    parallelism = 20
+    individual_results = [distr_exec_speedup[scaleup_numbers.index(parallelism)]
+                          for distr_exec_speedup, _ in all_results]
+    print("Unix50 individual speedups for {} parallelism:".format(parallelism), individual_results)
+
+    fig, ax = plt.subplots()
+    ## Plot speedup
+    ax.set_ylabel('Speedup')
+    ax.set_xlabel('Pipeline')
+    plt.bar(range(len(individual_results)), individual_results, align='center')
+    plt.yscale("log")
+    plt.yticks([0, 0.5, 1.0, 5, 10, 20])
+    plt.ylim((0, 20))
+    # plt.legend(loc='lower right')
+    plt.title("Unix50 Individual Speedups")
+    plt.tight_layout()
+    plt.savefig(os.path.join('../evaluation/plots', "unix50_individual_speedups_{}.pdf".format(parallelism)))
 
     avg_results = aggregate_unix50_results(all_results, scaleup_numbers)
+    print("Unix50 average speedup:", avg_results)
+
+    ## Plot average speedup
     fig, ax = plt.subplots()
 
     ## Plot speedup
     ax.set_ylabel('Speedup')
     ax.set_xlabel('Level of Parallelism')
     ax.plot(scaleup_numbers, avg_results, '-o', linewidth=0.5, label='Parallel')
-
     # plt.yscale("log")
     plt.xticks(scaleup_numbers)
     plt.legend(loc='lower right')
     plt.title("Unix50 Throughput")
-
-
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "unix50_throughput_scaleup.pdf"))
 
