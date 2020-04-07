@@ -1910,8 +1910,10 @@ and aggregates them accordingly.
   things to terminate gracefully, dish wraps all commands in order to
   always consume all of their input by sending it down to
   /dev/null. Warning: This means that all commands in the pipeline
-  must terminate if all of their output is consumed. We evaluate the
-  overhead of emptying all outputs in section X.}
+  must terminate gracefully if all of their output is consumed (if a
+  process dies unexpectedly, noone will consume its input. We leave
+  addressing that and other monitoring questions for future work). We
+  evaluate the overhead of emptying all outputs in section X.}
 
 \TODO{Problem: Pipeline width shrinks after parallel pure
   commands. Solution: Split node that resplits its input to multiple
