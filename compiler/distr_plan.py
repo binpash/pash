@@ -1,3 +1,4 @@
+import cProfile
 import os
 import argparse
 import sys
@@ -46,13 +47,9 @@ def optimize_script(ir_filename, args):
     if not config.config:
         config.load_config()
 
-    retrieval_start_time = datetime.now()
     print("Retrieving IR: {} ...".format(ir_filename))
     with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
-
-    retrieval_end_time = datetime.now()
-    print_time_delta("IR Retrieval", retrieval_start_time, retrieval_end_time, args)
 
     ## TODO: This is supposed to print the old ast for debugging
     ## purposes, however, the ast of a union of two IRs is sometimes
@@ -62,8 +59,10 @@ def optimize_script(ir_filename, args):
     # print(shell_string)
 
     # print(ir_node)
+    # with cProfile.Profile() as pr:
     distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config.config['fan_out'],
                                                               config.config['batch_size'])
+    # pr.print_stats()
 
     eager_distributed_graph = add_eager_nodes(distributed_graph)
     # print(distributed_graph)
@@ -147,7 +146,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
             ## TODO: Remove hardcoded
             if(not str(curr.command) == "split_file"):
                 for next_node in next_nodes:
-                    graph = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size)
+                    graph = split_command_input(next_node, curr, graph, fileIdGen, fan_out, batch_size)
             graph, new_nodes = parallelize_cat(curr, graph, fileIdGen)
 
             ## Add new nodes to the workset depending on the optimization.
@@ -169,21 +168,20 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
 ## optimizations.
 
 ## Optimizes several commands by splitting its input
-def split_command_input(curr, graph, fileIdGen, fan_out, batch_size):
+def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, batch_size):
     ## At the moment this only works for nodes that have one
     ## input. TODO: Extend it to work for nodes that have more than
     ## one input.
     ##
     ## TODO: Change the test to check if curr is instance of Cat and
     ## not check its name.
-    previous_nodes = graph.get_previous_nodes(curr)
+    number_of_previous_nodes = curr.get_number_of_inputs()
     if (curr.category in ["stateless", "pure"] and
         not str(curr.command) == "cat" and
-        len(previous_nodes) == 1 and
+        number_of_previous_nodes == 1 and
         fan_out > 1):
         ## If the previous command is either a cat with one input, or
         ## if it something else
-        previous_node = previous_nodes[0]
         if(not isinstance(previous_node, Cat) or
            (isinstance(previous_node, Cat) and
             len(previous_node.get_input_file_ids()) == 1)):
