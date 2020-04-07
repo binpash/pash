@@ -46,9 +46,13 @@ def optimize_script(ir_filename, args):
     if not config.config:
         config.load_config()
 
+    retrieval_start_time = datetime.now()
     print("Retrieving IR: {} ...".format(ir_filename))
     with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
+
+    retrieval_end_time = datetime.now()
+    print_time_delta("IR Retrieval", retrieval_start_time, retrieval_end_time, args)
 
     ## TODO: This is supposed to print the old ast for debugging
     ## purposes, however, the ast of a union of two IRs is sometimes
@@ -118,41 +122,44 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     ## identifiers in its in_stream. Then connect their outputs in
     ## order to next command.
     workset= source_nodes
+    visited = set()
     while (len(workset) > 0):
+
         curr = workset.pop(0)
+        if(not curr in visited):
+            visited.add(curr)
+            next_nodes = graph.get_next_nodes(curr)
+            workset += next_nodes
 
-        next_nodes = graph.get_next_nodes(curr)
-        workset += next_nodes
+            ## Question: What does it mean for a command to have more
+            ## than one next_node? Does it mean that it duplicates its
+            ## output to all of them? Or does it mean that it writes
+            ## some to the first and some to the second? Both are not
+            ## very symmetric, but I think I would prefer the first.
+            # print(curr, next_nodes)
+            # assert(len(next_nodes) <= 1)
 
-        ## Question: What does it mean for a command to have more
-        ## than one next_node? Does it mean that it duplicates its
-        ## output to all of them? Or does it mean that it writes
-        ## some to the first and some to the second? Both are not
-        ## very symmetric, but I think I would prefer the first.
-        # print(curr, next_nodes)
-        # assert(len(next_nodes) <= 1)
+            ## If the current command is a split file, then we will
+            ## recursively add a huge amount of splits, as several nodes
+            ## are revisited due to the suboptimal adding of all new nodes
+            ## to the workset.
+            ##
+            ## TODO: Remove hardcoded
+            if(not str(curr.command) == "split_file"):
+                for next_node in next_nodes:
+                    graph = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size)
+            graph, new_nodes = parallelize_cat(curr, graph, fileIdGen)
 
-        ## If the current command is a split file, then we will
-        ## recursively add a huge amount of splits, as several nodes
-        ## are revisited due to the suboptimal adding of all new nodes
-        ## to the workset.
-        ##
-        ## TODO: Remove hardcoded
-        if(not str(curr.command) == "split_file"):
-            for next_node in next_nodes:
-                graph = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size)
-        graph, new_nodes = parallelize_cat(curr, graph, fileIdGen)
-
-        ## Add new nodes to the workset depending on the optimization.
-        ##
-        ## WARNING: There is an assumption here that if there are new
-        ## nodes there was an optimization that happened and these new
-        ## nodes should ALL be added to the workset. Even if that is
-        ## correct, that is certainly non-optimal.
-        ##
-        ## TODO: Fix that
-        if(len(new_nodes) > 0):
-            workset += new_nodes
+            ## Add new nodes to the workset depending on the optimization.
+            ##
+            ## WARNING: There is an assumption here that if there are new
+            ## nodes there was an optimization that happened and these new
+            ## nodes should ALL be added to the workset. Even if that is
+            ## correct, that is certainly non-optimal.
+            ##
+            ## TODO: Fix that
+            if(len(new_nodes) > 0):
+                workset += new_nodes
 
     return graph
 
