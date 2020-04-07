@@ -23,7 +23,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
 
     debug("will open outputFile from %s \n", output);
     int outputFd = tryOpenOutput(output);
-    while(outputFd < 0) {
+    while(outputFd < 0 && !doneReading) {
         if (readInputWriteToFile(inputFd, intermediateWriter, READ_WRITE_BUFFER_SIZE) == 0) {
             /* printf("Input was done before even output was opened\n"); */
             doneReading = 1;
@@ -34,6 +34,11 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     gettimeofday(&ts2, NULL);
     debug("Reading before the output was opened took %lu us\n",
            (ts2.tv_sec - ts1.tv_sec) * 1000000 + ts2.tv_usec - ts1.tv_usec);
+
+    if (doneReading) {
+        debug("will block to open outputFile from %s \n", output);
+        outputFd = blockOpenOutput(output);
+    }
 
     while (!doneReading && !doneWriting) {
         fd_set readFds;
@@ -94,6 +99,9 @@ void EagerLoop(char* input, char* output, char* intermediate) {
     if (doneReading) {
         close(inputFd);
     }
+
+    // Set the output file to blocking so that writing to it doesn't lead to a busy loop
+    fdSetBlocking(outputFd, 1);
 
     // Output the rest of the intermediate file
     outputRestIntermediateFile(outputFd, intermediateWriter, intermediateReader, &doneWriting);

@@ -14,6 +14,36 @@ int safeOpen(const char *pathname, int flags) {
     return safeOpen3(pathname, flags, S_IRWXU);
 }
 
+
+/**
+ * Copied from: http://code.activestate.com/recipes/577384-setting-a-file-descriptor-to-blocking-or-non-block/
+ * Set a file descriptor to blocking or non-blocking mode.
+ *
+ * @param fd The file descriptor
+ * @param blocking 0:non-blocking mode, 1:blocking mode
+ *
+ **/
+void fdSetBlocking(int fd, int blocking) {
+    /* Save the current flags */
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags == -1) {
+        printf("could not get file descriptor %d flags\n", fd);
+        exit(1);
+    }
+
+    if (blocking) {
+        flags &= ~O_NONBLOCK;
+    } else {
+        flags |= O_NONBLOCK;
+    }
+    int res = fcntl(fd, F_SETFL, flags);
+    if (res == -1) {
+        printf("could not set file descriptor %d to blocking\n", fd);
+        exit(1);
+    }
+    return;
+}
+
 int tryOpenOutput(const char *pathname) {
     int outputFd = open(pathname, O_WRONLY | O_NONBLOCK);
     if (outputFd < 0) {
@@ -24,6 +54,16 @@ int tryOpenOutput(const char *pathname) {
             exit(1);
         }
     }
+    return outputFd;
+}
+
+int blockOpenOutput(const char *pathname) {
+    int outputFd = open(pathname, O_WRONLY);
+    if (outputFd < 0) {
+        printf("could not open output file: %s\n", pathname);
+        exit(1);
+    }
+    fdSetBlocking(outputFd, 0);
     return outputFd;
 }
 

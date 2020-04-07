@@ -42,15 +42,14 @@ for i, unix50_pipeline in enumerate(unix50_pipelines):
     unix50_normalized_pipeline = re.sub('IN[0-9]+', 'IN', unix50_pipeline)
 
     ## Generate the script
-    pipeline_file_path = os.path.join(intermediaries_dir, "unix50_pipeline_{}.sh".format(i))
+    pipeline_file_path = os.path.join(intermediaries_dir, "unix50_pipeline_{0:03d}.sh".format(i))
     with open(pipeline_file_path, "w") as file:
         file.write(unix50_normalized_pipeline + "\n")
 
     ## And its environment
-    pipeline_env_file_path = os.path.join(intermediaries_dir, "unix50_pipeline_{}_env.sh".format(i))
+    pipeline_env_file_path = os.path.join(intermediaries_dir, "unix50_pipeline_{0:03d}_env.sh".format(i))
 
     input_file_assignment_path = os.path.join(generated_inputs_dir, input_file_name_assignments[input_name])
     environment_data = "IN={}\n".format(input_file_assignment_path)
-    print(environment_data)
     with open(pipeline_env_file_path, "w") as file:
         file.write(environment_data)
