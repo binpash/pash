@@ -20,6 +20,7 @@ plt.rcParams['font.family'] = 'STIXGeneral'
 
 
 RESULTS = "../evaluation/results/"
+UNIX50_RESULTS = "../evaluation/results/unix50/"
 
 experiments = ["minimal_grep",
                "minimal_sort",
@@ -84,12 +85,33 @@ def read_distr_total_compilation_time(filename):
                 milliseconds = line.split(": ")[1].split(" ")[0]
                 times.append(float(milliseconds))
         f.close()
-        print(times)
+        # print(times)
         return sum(times)
     except:
         print("!! WARNING: Filename:", filename, "not found!!!")
         return 0
 
+def collect_experiment_scaleup_times(prefix, scaleup_numbers):
+    seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, n))
+                   for n in scaleup_numbers]
+    distr_numbers = [read_distr_execution_time('{}{}_distr.time'.format(prefix, n))
+                     for n in scaleup_numbers]
+    compile_numbers = [read_distr_total_compilation_time('{}{}_distr.time'.format(prefix, n))
+                       for n in scaleup_numbers]
+    # distr_numbers = [read_time('{}{}_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
+    # cat_numbers = [read_time('{}{}_cat_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
+    # compile_numbers = [read_time('{}{}_compile_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
+    return (seq_numbers, distr_numbers, compile_numbers)
+
+def collect_experiment_speedups(prefix, scaleup_numbers):
+    seq_numbers, distr_numbers, compile_numbers = collect_experiment_scaleup_times(prefix, scaleup_numbers)
+    # print(scaleup_numbers)
+    # print(seq_numbers)
+    # print(distr_numbers)
+    # print(compile_numbers)
+    distr_speedup = [seq_numbers[i] / t for i, t in enumerate(distr_numbers)]
+    compile_distr_speedup = [seq_numbers[i] / (t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
+    return (distr_speedup, compile_distr_speedup)
 
 def collect_scaleup_times(experiment, results_dir):
     print(experiment)
@@ -98,25 +120,13 @@ def collect_scaleup_times(experiment, results_dir):
     all_scaleup_numbers.sort()
     all_scaleup_numbers = [i for i in all_scaleup_numbers if i > 1]
     prefix = '{}/{}_'.format(results_dir, experiment)
-    seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, n))
-                   for n in all_scaleup_numbers]
-    distr_numbers = [read_distr_execution_time('{}{}_distr.time'.format(prefix, n))
-                     for n in all_scaleup_numbers]
-    compile_numbers = [read_distr_total_compilation_time('{}{}_distr.time'.format(prefix, n))
-                       for n in all_scaleup_numbers]
-    # distr_numbers = [read_time('{}{}_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
-    # cat_numbers = [read_time('{}{}_cat_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
-    # compile_numbers = [read_time('{}{}_compile_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
-    print(all_scaleup_numbers)
-    print(seq_numbers)
-    print(distr_numbers)
+    distr_speedup, compile_distr_speedup = collect_experiment_speedups(prefix, all_scaleup_numbers)
+
     fig, ax = plt.subplots()
 
     ## Plot speedup
     ax.set_ylabel('Speedup')
     ax.set_xlabel('Level of Parallelism')
-    distr_speedup = [seq_numbers[i] / t for i, t in enumerate(distr_numbers)]
-    compile_distr_speedup = [seq_numbers[i] / (t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
     # total_distr_speedup = [seq_numbers[i] / (t + compile_numbers[i] + cat_numbers[i]) for i, t in enumerate(distr_numbers)]
     # ax.plot(all_scaleup_numbers, seq_numbers, '-o', linewidth=0.5, label='Sequential')
     # ax.plot(all_scaleup_numbers, distr_numbers, '-o', linewidth=0.5, label='Distributed')
@@ -135,5 +145,56 @@ def collect_scaleup_times(experiment, results_dir):
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "{}_throughput_scaleup.pdf".format(experiment)))
 
+def collect_unix50_pipeline_scaleup_times(pipeline_number, unix50_results_dir, scaleup_numbers):
+    prefix = '{}/unix50_pipeline_{}_'.format(unix50_results_dir, pipeline_number)
+    return collect_experiment_speedups(prefix, scaleup_numbers)
+
+def aggregate_unix50_results(all_results, scaleup_numbers):
+    avg_distr_results = [[] for _ in scaleup_numbers]
+    for pipeline in all_results:
+        pipeline_distr_results = pipeline[0]
+        print(pipeline_distr_results)
+        for i in range(len(scaleup_numbers)):
+            avg_distr_results[i].append(pipeline_distr_results[i])
+
+    for i in range(len(pipeline_distr_results)):
+        avg_distr_results[i] = sum(avg_distr_results[i]) / len(avg_distr_results[i])
+
+    return avg_distr_results
+
+def collect_unix50_scaleup_times(unix50_results_dir):
+    files = [f for f in os.listdir(unix50_results_dir)]
+    # print(files)
+    pipeline_numbers = sorted(list(set([f.split('_')[2] for f in files])))
+    # print(pipeline_numbers)
+
+    scaleup_numbers = [2, 4, 10, 20, 50]
+
+    all_results = [collect_unix50_pipeline_scaleup_times(pipeline_number,
+                                                         unix50_results_dir,
+                                                         scaleup_numbers)
+                   for pipeline_number in pipeline_numbers]
+    print(all_results)
+
+    avg_results = aggregate_unix50_results(all_results, scaleup_numbers)
+    fig, ax = plt.subplots()
+
+    ## Plot speedup
+    ax.set_ylabel('Speedup')
+    ax.set_xlabel('Level of Parallelism')
+    ax.plot(scaleup_numbers, avg_results, '-o', linewidth=0.5, label='Parallel')
+
+    # plt.yscale("log")
+    plt.xticks(scaleup_numbers)
+    plt.legend(loc='lower right')
+    plt.title("Unix50 Throughput")
+
+
+    plt.tight_layout()
+    plt.savefig(os.path.join('../evaluation/plots', "unix50_throughput_scaleup.pdf"))
+
+
 for experiment in experiments:
     collect_scaleup_times(experiment, RESULTS)
+
+collect_unix50_scaleup_times(UNIX50_RESULTS)
