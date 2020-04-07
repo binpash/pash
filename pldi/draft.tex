@@ -1963,11 +1963,6 @@ arbitrarily many different pipes.
 \section{Evaluation}
 \label{eval}
 
-\TODO{Notes on Unix50. We got the Unix50 solutions as is and we ran
-  them. These are the numbers. By changing fmt -w1 to tr (or by adding
-  it appropriately to the DSL) and by changing some occurences of awk
-  to ..., the speedup in these cases goes to...}
-
 \TODO{Remember to mention that deathstar has 128 threads but 64
   cores. So it is reasonable for the speedup to not go further in cpu
   heavy pipelines.}
@@ -2178,7 +2173,37 @@ We decided to push \sys's limits of these phases by synthesizing an artificial 1
 We find the resulting times quite acceptable: given two input arguments in the beginning of this pipeline, \sys takes 8.23s for parsing the script and 3.22s for analysis and optimization. Pushing the input file arguments to 100, \sys's runtime jumps to 5 minutes and 8 seconds to perform the analysis, producing an output dataflow graph that has more than 100 thousand edges in a file of about 11MB.
 
 
+\subsection{Unix50}
+\label{unix50}
 
+The goal of this subsection is to evaluate \sys on an existing set of
+unix pipelines found in the wild. \todo{Motivate why unix50 is a nice
+  set of pipelines.} We took the solutions for the unix50 from
+\todo{Ref} and we executed them \emph{without any modification} with
+\sys's parallelism set to \todo{X}. The input given to the pipelines
+was the test input from unix50 multiplied \todo{10000} times. The
+speedup of each pipeline separately is shown in \todo{ref}. The
+average\todo{/median} speedup is \todo{X}.
+
+All pipelines that perform poorly (\todo{enumerate them}) contain
+non-parallelizable commands. An illustrative example is pipeline
+\todo{X}, which is shown here:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none]
+  TODO
+\end{lstlisting}
+
+Notice in the above the use of (awk, fmt, or something else). We
+noticed that these occured in other pipelines too. By changing them to
+\todo{X}, the average speedup of these pipelines improved to \todo{x}
+and the new total average speedup is \todo{X}.
+
+
+\subsection{Comparison}
+
+\todo{Include comparison with Niko's speeduptest, with gnu-parallel,
+  with sort -parallel (and possibly other commands that have parallel
+  flags), and finally with Raftlib.}
 
 \subsection{Macro-benchmark: Weather Analysis}
 \label{macro1}
@@ -2203,7 +2228,7 @@ The effort required to write this pipeline is astonishingly low:\footnote{
 The Hadoop program, expressed in Java and only capturing the 4 last stages, is about 137 lines of Java code---not accounting for code moving input and output in and out of HDFS.
 
 In terms of execution time, with two Hadoop datanodes running on Hadoop 3.2.1 and Openjdk 11.0.5 without any replication (\ie fault-tolerance), the Hadoop program takes 6m22s for data processing and 1m09s for moving the dataset to HDFS.
-For the same amount of parallelism, \sys takes 4m30.554s---but this includes downloading and uncompressing the data files.
+For the same amount of parallelism, \sys takes 4m30.554s---but this includes downloading and uncompressing the data files. \kk{I think it is fine keeping the Hadoop evaluation here, since this macrobenchmark was taken from a Hadoop book.}
 
 % /home/nikos/hadoop-3.2.1/bin/hdfs dfs -put /home/nikos/dish/scripts/max-temp 77.24s user 50.79s system 185% cpu 1:09.14 total
 % hadoop jar $HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-*.jar -input 719.26s user 63.88s system 155% cpu 8:22.47 total
