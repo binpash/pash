@@ -38,6 +38,8 @@ int safeOpen3(const char *pathname, int flags, mode_t mode);
 
 int safeOpen(const char *pathname, int flags);
 
+off_t safeLseek(int fd);
+
 void fdSetBlocking(int fd, int blocking);
 
 int tryOpenOutput(const char *pathname);
