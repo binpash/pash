@@ -183,11 +183,11 @@ void bufferedOutputRestIntermediateFile(int outputFd, int intermediateWriter, in
 }
 
 ssize_t safeWriteOutput(int outputFd, int intermediateReader,
-                        int intermediateFileDiff, int* doneWriting) {
+                        off_t intermediateFileDiff, int* doneWriting) {
     ssize_t res;
     res = sendfile(outputFd, intermediateReader, 0, intermediateFileDiff);
     if (res < 0 && errno != EAGAIN) {
-        printf("ERROR: %s, when outputing!\n", strerror(errno));
+        printf("ERROR: %s, when outputing %ld bytes!\n", strerror(errno), intermediateFileDiff);
         exit(1);
     } else if (res == 0) {
         debug("We tried to write %d, but output is done!\n", intermediateFileDiff);
@@ -198,8 +198,8 @@ ssize_t safeWriteOutput(int outputFd, int intermediateReader,
 
 void outputRestIntermediateFile(int outputFd, int intermediateWriter,
                                 int intermediateReader, int* doneWriting) {
-    ssize_t finalOffset = safeLseek(intermediateWriter);
-    ssize_t intermediateFileBytesToOutput;
+    off_t finalOffset = safeLseek(intermediateWriter);
+    off_t intermediateFileBytesToOutput;
     ssize_t res;
     do {
         intermediateFileBytesToOutput =
