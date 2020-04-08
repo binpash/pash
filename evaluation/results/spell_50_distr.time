@@ -1,9 +1,8 @@
-comm: ../scripts/input/sorted_words: No such file or directory
-Optimization time: 16350.596  ms
-Backend time: 212.671  ms
-Execution time: 11007.849  ms
-Compilation time: 73.085  ms
+Optimization time: 1689.738  ms
+Backend time: 6.74  ms
+Execution time: 27728.093  ms
+Compilation time: 20.659  ms
 
-real	0m28.019s
-user	6m44.966s
-sys	3m13.845s
+real	0m29.816s
+user	7m9.317s
+sys	2m57.920s

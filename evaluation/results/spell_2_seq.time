@@ -1,5 +1,4 @@
-comm: ../scripts/input/sorted_words: No such file or directory
 
-real	0m9.330s
-user	0m9.780s
-sys	0m2.764s
+real	0m9.179s
+user	0m10.244s
+sys	0m2.691s
