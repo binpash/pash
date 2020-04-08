@@ -58,7 +58,7 @@ int readInputWriteToFile(int inputFd, int intermediateWriter, int bufferSize);
 /*                                         char* outputBuf, int* doneWriting); */
 
 ssize_t safeWriteOutput(int outputFd, int intermediateReader,
-                        int intermediateFileDiff, int* doneWriting);
+                        off_t intermediateFileDiff, int* doneWriting);
 
 void outputRestIntermediateFile(int outputFd, int intermediateWriter,
                                 int intermediateReader, int* doneWriting);
