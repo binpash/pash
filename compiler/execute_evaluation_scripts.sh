@@ -3,7 +3,8 @@
 microbenchmarks_dir="../evaluation/microbenchmarks/"
 intermediary_dir="../evaluation/intermediary/"
 
-rm /tmp/eager*
+echo "Deleting eager intermediate files..."
+rm -f /tmp/eager*
 mkdir -p $intermediary_dir
 
 n_inputs=(
@@ -51,5 +52,6 @@ for microbenchmark in "${microbenchmarks[@]}"; do
 
         ## Execute the intermediary script
         ./execute_compile_evaluation_script.sh "${microbenchmark}_${n_in}"
+        rm -f /tmp/eager*
     done
 done
