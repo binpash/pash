@@ -69,8 +69,8 @@ void EagerLoop(char* input, char* output, char* intermediate) {
             // There is something to read in the intermediate file. We
             // then read from the intermediate file and write to the
             // output.
-            int intermediateFileDiff =
-                lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
+            off_t intermediateFileDiff =
+                safeLseek(intermediateWriter) - safeLseek(intermediateReader);
 
             // There is nothing to read in the intermediate file. We
             // then have to block read from the input until it gives
@@ -82,7 +82,7 @@ void EagerLoop(char* input, char* output, char* intermediate) {
                     break;
                 }
                 intermediateFileDiff =
-                    lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
+                    safeLseek(intermediateWriter) - safeLseek(intermediateReader);
             }
 
             // Here we know that the intermediate file has something.

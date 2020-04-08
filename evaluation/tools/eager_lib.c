@@ -14,6 +14,14 @@ int safeOpen(const char *pathname, int flags) {
     return safeOpen3(pathname, flags, S_IRWXU);
 }
 
+off_t safeLseek(int fd) {
+    off_t offset = lseek(fd, 0, SEEK_CUR);
+    if (offset < 0) {
+        printf("ERROR: %s, when lseek-ing!\n", strerror(errno));
+        exit(1);
+    }
+    return offset;
+}
 
 /**
  * Copied from: http://code.activestate.com/recipes/577384-setting-a-file-descriptor-to-blocking-or-non-block/
@@ -77,6 +85,7 @@ int readInputWriteToFile(int inputFd, int intermediateWriter, int bufferSize) {
     }
     return res;
 }
+
 
 int bufferedReadInputWriteToFile(int inputFd, int intermediateWriter, int bufferSize) {
     // TODO: Maybe allocate that buffer as a static or global to not
@@ -143,7 +152,7 @@ void bufferedOutputRestIntermediateFile(int outputFd, int intermediateWriter, in
     // If writing is not done and there are things left in the buffer
     // or file, empty the buffer and intermediate files
     ssize_t intermediateFileBytesToOutput =
-        lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
+        safeLseek(intermediateWriter) - safeLseek(intermediateReader);
     // TODO: Is there a way to optimize this by just copying the rest
     // of the input in the output at once (e.g. by using cat)?
     while(!(*doneWriting) && intermediateFileBytesToOutput > 0) {
@@ -167,7 +176,7 @@ void bufferedOutputRestIntermediateFile(int outputFd, int intermediateWriter, in
         }
 
         intermediateFileBytesToOutput =
-            lseek(intermediateWriter, 0, SEEK_CUR) - lseek(intermediateReader, 0, SEEK_CUR);
+            safeLseek(intermediateWriter) - safeLseek(intermediateReader);
     }
 
     return;
@@ -189,12 +198,12 @@ ssize_t safeWriteOutput(int outputFd, int intermediateReader,
 
 void outputRestIntermediateFile(int outputFd, int intermediateWriter,
                                 int intermediateReader, int* doneWriting) {
-    ssize_t finalOffset = lseek(intermediateWriter, 0, SEEK_CUR);
+    ssize_t finalOffset = safeLseek(intermediateWriter);
     ssize_t intermediateFileBytesToOutput;
     ssize_t res;
     do {
         intermediateFileBytesToOutput =
-             finalOffset - lseek(intermediateReader, 0, SEEK_CUR);
+             finalOffset - safeLseek(intermediateReader);
         res = safeWriteOutput(outputFd, intermediateReader, intermediateFileBytesToOutput, doneWriting);
     } while (!(*doneWriting) && res < intermediateFileBytesToOutput);
 
