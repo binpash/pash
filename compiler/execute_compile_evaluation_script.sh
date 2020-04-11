@@ -1,5 +1,16 @@
 #!/bin/bash
 
+execute_seq_flag=0
+
+while getopts 's' opt; do
+    case $opt in
+        s) execute_seq_flag=1 ;;
+        *) echo 'Error in command line parsing' >&2
+           exit 1
+    esac
+done
+shift "$(( OPTIND - 1 ))"
+
 ## We assume that each evaluation script has a sequential, a
 ## distributed, and an environment
 experiment=$1
@@ -26,9 +37,13 @@ if [ -f $funs_file ]; then
     source $funs_file
 fi
 
-echo "Sequential:"
-cat $seq_script
-{ time /bin/bash $seq_script > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
+if [ "$execute_seq_flag" -eq 1 ]; then
+    echo "Sequential:"
+    cat $seq_script
+    { time /bin/bash $seq_script > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
+else
+    echo "Not executing sequential..."
+fi
 
 echo "Distributed:"
 { time python3.8 $DISH_TOP/compiler/dish.py --output_optimized --output_time $seq_script $distr_script ; } 2> >(tee "${results}${experiment}_distr.time" >&2)

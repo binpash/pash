@@ -8,7 +8,7 @@ rm -f /tmp/eager*
 mkdir -p $intermediary_dir
 
 n_inputs=(
-    1
+    # 1
     2
     4
     10
@@ -44,6 +44,8 @@ microbenchmarks=(
 ## Note: Maybe we need to tune the configuration (fan-out, batch-size)
 ##       before some specific benchmarks
 for microbenchmark in "${microbenchmarks[@]}"; do
+    # Execute the sequential script on the first run only
+    exec_seq="-s"
     for n_in in "${n_inputs[@]}"; do
 
         ## Generate the intermediary script
@@ -51,7 +53,10 @@ for microbenchmark in "${microbenchmarks[@]}"; do
                 $microbenchmarks_dir $microbenchmark $n_in $intermediary_dir
 
         ## Execute the intermediary script
-        ./execute_compile_evaluation_script.sh "${microbenchmark}_${n_in}"
+        ./execute_compile_evaluation_script.sh $exec_seq "${microbenchmark}_${n_in}"
         rm -f /tmp/eager*
+
+        # Only execute the sequential once
+        exec_seq=""
     done
 done
