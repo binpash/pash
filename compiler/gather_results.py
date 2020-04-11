@@ -113,8 +113,10 @@ def read_distr_total_compilation_time(filename):
         return 0
 
 def collect_experiment_scaleup_times(prefix, scaleup_numbers):
-    seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, n))
-                   for n in scaleup_numbers]
+    ## Since we have the same input size in all cases, only use the
+    ## one sequential execution for the sequential time
+    seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, scaleup_numbers[0]))
+                   for _ in scaleup_numbers]
     distr_numbers = [read_distr_execution_time('{}{}_distr.time'.format(prefix, n))
                      for n in scaleup_numbers]
     compile_numbers = [read_distr_total_compilation_time('{}{}_distr.time'.format(prefix, n))
