@@ -1,1 +1,1 @@
-IN=../evaluation/scripts/input/all_cmds_x10.txt
+IN=../evaluation/scripts/input/all_cmds_x1000.txt
