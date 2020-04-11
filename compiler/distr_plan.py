@@ -411,7 +411,14 @@ def create_reduce_tree(init_func, input_file_ids, output_file_id, fileIdGen):
     ## Get the main output file identifier from the reduce and union
     ## it with the wanted output file identifier
     curr_file_ids[0][0].union(output_file_id)
-    return tree
+
+    ## Drain the final auxiliary outputs
+    final_auxiliary_outputs = curr_file_ids[0][1:]
+    drain_file_id = fileIdGen.next_file_id()
+    drain_file_id.set_resource('/dev/null')
+    drain_cat_commands = [make_cat_node([final_auxiliary_output], drain_file_id)
+                          for final_auxiliary_output in final_auxiliary_outputs]
+    return (tree + drain_cat_commands)
 
 
 ## This function creates a level of the reduce tree. Both input and
