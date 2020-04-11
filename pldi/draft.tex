@@ -1990,6 +1990,7 @@ arbitrarily many different pipes.
 % \kk{We should have at least some pipelines that have a bad pure
 %   command in them.}
 
+
 \begin{table*}[t]
 \center
 \footnotesize
@@ -2000,27 +2001,28 @@ arbitrarily many different pipes.
     The micro-benchmarks are small pipelines (\ie ones developed on-the-fly) drawn from various sources and applied to large datasets.
   }
 }
-\begin{tabular*}{\textwidth}{l @{\extracolsep{\fill}} llllll}
-\toprule
-  Script                 ~&~ Structure                    & Input (MB)& Time (Seq)    & Script Size (LoC)             & Highlights                                        \\
-\midrule
-% https://github.com/andromeda/sdsh/blob/master/scripts/grep.sh
-  \tti{grep}         ~&~$3\times$\tsta                & 1000      &  78m 36.77s   &   30\qquad 134\qquad  1304    & complex NFA regex                                 \\
-% https://github.com/andromeda/sdsh/blob/master/scripts/minimal5.sh
-  \tti{sort}         ~&~~$\tsta, \tpur$               & 10000     &  23m 19.85s   &   33\qquad 129\qquad  1209    & \tti{sort}ing                                     \\
-% https://github.com/andromeda/sdsh/blob/master/scripts/topn.sh
-  \tti{wf}               ~&~~$3\times\tsta, 3\times\tpur$ & 1000      &   2m 11.18s   &   53\qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
-% https://github.com/andromeda/sdsh/blob/master/scripts/topn.sh
-  \tti{top-n}            ~&~~$2\times\tsta, 4\times\tpur$ & 1000      &   6m 53.55s   &   53\qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
-% https://github.com/andromeda/sdsh/blob/master/scripts/ngrams.sh
-  \tr{\tti{bi-gram}          ~&~~$2\times\tsta, 4\times\tpur$ & \todo{X}  &               &   X \qquad  X \qquad          & stream shifting and merging                       \\}
-% https://github.com/andromeda/sdsh/blob/master/scripts/spell.sh
-  \tti{spell}            ~&~~$4\times\tsta, 3\times\tpur$ & 1000      &   8m 13.42s   &  37 \qquad 257\qquad  2417    & comparisons (\tti{comm})                          \\
-% https://github.com/andromeda/sdsh/blob/master/scripts/diff.sh
-  \tr{\tti{diff}             ~&~~$4\times\tsta, 3\times\tpur$ & \todo{X}  &               &   X \qquad  X \qquad          & shuffling and non-distributable \tti{diff}ing     \\}
-  \tti{shortest-scripts} ~&~~$5\times\tsta, 2\times\tpur$ & 8.6       &   2m 50.03s   &  61 \qquad 253\qquad  2413    & extensive file-system operation   \\
-\bottomrule
-\end{tabular*}
+%% \begin{tabular*}{\textwidth}{l @{\extracolsep{\fill}} llllll}
+%% \toprule
+%%   Script                 ~&~ Structure                    & Input (MB)& Time (Seq)    & Script Size (LoC)             & Highlights                                        \\
+%% \midrule
+%% % https://github.com/andromeda/sdsh/blob/master/scripts/grep.sh
+%%   \tti{grep}         ~&~$3\times$\tsta                & 1000      &  78m 36.77s   &   30\qquad 134\qquad  1304    & complex NFA regex                                 \\
+%% % https://github.com/andromeda/sdsh/blob/master/scripts/minimal5.sh
+%%   \tti{sort}         ~&~~$\tsta, \tpur$               & 10000     &  23m 19.85s   &   33\qquad 129\qquad  1209    & \tti{sort}ing                                     \\
+%% % https://github.com/andromeda/sdsh/blob/master/scripts/topn.sh
+%%   \tti{wf}               ~&~~$3\times\tsta, 3\times\tpur$ & 1000      &   2m 11.18s   &   53\qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
+%% % https://github.com/andromeda/sdsh/blob/master/scripts/topn.sh
+%%   \tti{top-n}            ~&~~$2\times\tsta, 4\times\tpur$ & 1000      &   6m 53.55s   &   53\qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
+%% % https://github.com/andromeda/sdsh/blob/master/scripts/ngrams.sh
+%%   \tr{\tti{bi-gram}          ~&~~$2\times\tsta, 4\times\tpur$ & \todo{X}  &               &   X \qquad  X \qquad          & stream shifting and merging                       \\}
+%% % https://github.com/andromeda/sdsh/blob/master/scripts/spell.sh
+%%   \tti{spell}            ~&~~$4\times\tsta, 3\times\tpur$ & 1000      &   8m 13.42s   &  37 \qquad 257\qquad  2417    & comparisons (\tti{comm})                          \\
+%% % https://github.com/andromeda/sdsh/blob/master/scripts/diff.sh
+%%   \tr{\tti{diff}             ~&~~$4\times\tsta, 3\times\tpur$ & \todo{X}  &               &   X \qquad  X \qquad          & shuffling and non-distributable \tti{diff}ing     \\}
+%%   \tti{shortest-scripts} ~&~~$5\times\tsta, 2\times\tpur$ & 8.6       &   2m 50.03s   &  61 \qquad 253\qquad  2413    & extensive file-system operation   \\
+%% \bottomrule
+%% \end{tabular*}
+\input{microbenchmarks-table}
 \label{tab:eval}
 \end{table*}
 

@@ -19,6 +19,7 @@ plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['font.family'] = 'STIXGeneral'
 
 
+MICROBENCHMARKS = "../evaluation/microbenchmarks/"
 RESULTS = "../evaluation/results/"
 UNIX50_RESULTS = "../evaluation/results/unix50/"
 
@@ -35,11 +36,31 @@ pretty_names = {"minimal_grep" : "grep",
                 "minimal_sort" : "sort",
                 "wf" : "wf",
                 "topn" : "top-n",
-                "grep" : "grep-old",
+                "grep" : "grep-light",
                 "bigram" : "bi-gram",
                 "spell" : "spell",
                 "shortest_scripts" : "shortest-scripts",
                 "diff" : "diff"}
+
+structures = {"minimal_grep" : "$3\\times$\\tsta",
+              "minimal_sort" : "$\\tsta, \\tpur$",
+              "wf" : "$3\\times\\tsta, 3\\times\\tpur$",
+              "topn" : "$2\\times\\tsta, 4\\times\\tpur$",
+              "grep" : "$3\\times$\\tsta",
+              "bigram" : "\\todo{TODO}",
+              "spell" : "$4\\times\\tsta, 3\\times\\tpur$",
+              "shortest_scripts" : "$5\\times\\tsta, 2\\times\\tpur$",
+              "diff" : "\\todo{TODO}"}
+
+highlights = {"minimal_grep" : "complex NFA regex",
+              "minimal_sort" : "\\tti{sort}ing",
+              "wf" : "double \\tti{sort}, \\tti{uniq} reduction",
+              "topn" : "double \\tti{sort}, \\tti{uniq} reduction",
+              "grep" : "$3\\times$\\tsta",
+              "bigram" : "stream shifting and merging",
+              "spell" : "comparisons (\\tti{comm})",
+              "shortest_scripts" : "\\todo{extensive file-system operation}",
+              "diff" : "non-parallelizable \\tti{diff}ing"}
 
 def get_experiment_files(experiment, results_dir):
     files = [f for f in os.listdir(results_dir) if f.startswith(experiment)]
@@ -145,6 +166,83 @@ def collect_scaleup_times(experiment, results_dir):
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "{}_throughput_scaleup.pdf".format(experiment)))
 
+# \bottomrule
+# \end{tabular*}
+# \label{tab:eval}
+# \end{table*}
+
+def collect_input_size(experiment):
+    env_file = os.path.join(MICROBENCHMARKS, '{}_env.sh'.format(experiment))
+    with open(env_file) as file:
+        input_file_names = [line.rstrip().split("=")[1] for line in file.readlines() if line.startswith("IN")]
+        assert(len(input_file_names) == 1)
+        input_file_name = input_file_names[0]
+    # print(input_file_name)
+    try:
+        input_size = os.stat(input_file_name).st_size
+    except:
+        input_size = 0
+    return input_size
+
+def generate_table_header():
+    header = []
+    header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} lllllll}']
+    header += ['\\toprule']
+    header += ['Script ~&~ Structure & Input(\\todo{20})&'
+               'Seq Time(\\todo{20}) & Script Size(\\todo{20, 100}) &'
+               'Compile Time (\\todo{20, 100}) & Highlights \\\\']
+    header += ['\\midrule']
+    return "\n".join(header)
+
+def generate_table_footer():
+    footer = []
+    footer += ['\\bottomrule']
+    footer += ['\\end{tabular*}']
+    return "\n".join(footer)
+
+def generate_experiment_line(experiment):
+    line = []
+    line += ['\\tti{{{}}}'.format(pretty_names[experiment]), '~&~']
+    line += [structures[experiment], '&']
+
+    ## Collect and output the input size
+    input_size = collect_input_size(experiment)
+    input_size_mb = input_size // 1000000
+    input_size_mb_20 = input_size_mb * 20
+    line += ['{}~MB'.format(input_size_mb_20), '&']
+
+    ## Collect and output the sequential time for the experiment
+    scaleup_numbers = [20, 100]
+    experiment_results_prefix = '{}/{}_'.format(RESULTS, experiment)
+    seq_times, _, compile_times = collect_experiment_scaleup_times(experiment_results_prefix, scaleup_numbers)
+    assert(len(seq_times) == 2)
+    seq_time_seconds = seq_times[0] / 1000
+    line += ['{:.2f}~s'.format(seq_time_seconds), '&']
+    line += ['\\todo{\\#Commands}', '&']
+
+    ## Collect and output compile times
+    compile_time_20_milliseconds = compile_times[0]
+    compile_time_100_milliseconds = compile_times[1]
+    line += ['{:.2f}~ms\\qquad {:.2f}~ms'.format(compile_time_20_milliseconds,
+                                                 compile_time_100_milliseconds), '&']
+    line += [highlights[experiment], '\\\\']
+    return " ".join(line)
+
+
+def generate_tex_table(experiments):
+    header = generate_table_header()
+    lines = []
+    for experiment in experiments:
+        line = generate_experiment_line(experiment)
+        # print(line)
+        lines.append(line)
+    data = "\n".join(lines)
+    footer = generate_table_footer()
+    table_tex = "\n".join([header, data, footer])
+    tex_filename = os.path.join('../evaluation/plots', 'microbenchmarks-table.tex')
+    with open(tex_filename, 'w') as file:
+        file.write(table_tex)
+
 def collect_unix50_pipeline_scaleup_times(pipeline_number, unix50_results_dir, scaleup_numbers):
     prefix = '{}/unix50_pipeline_{}_'.format(unix50_results_dir, pipeline_number)
     return collect_experiment_speedups(prefix, scaleup_numbers)
@@ -215,7 +313,12 @@ def collect_unix50_scaleup_times(unix50_results_dir):
     plt.savefig(os.path.join('../evaluation/plots', "unix50_throughput_scaleup.pdf"))
 
 
-for experiment in experiments:
-    collect_scaleup_times(experiment, RESULTS)
+# ## Plot microbenchmarks
+# for experiment in experiments:
+#     collect_scaleup_times(experiment, RESULTS)
 
-collect_unix50_scaleup_times(UNIX50_RESULTS)
+## Generate Tex table for microbenchmarks
+generate_tex_table(experiments)
+
+# ## Plot Unix50
+# collect_unix50_scaleup_times(UNIX50_RESULTS)
