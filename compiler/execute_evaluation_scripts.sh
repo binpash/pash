@@ -49,6 +49,7 @@ for microbenchmark in "${microbenchmarks[@]}"; do
     for n_in in "${n_inputs[@]}"; do
 
         ## Generate the intermediary script
+        echo "Generating input and intermediary scripts... be patient..."
         python3 generate_microbenchmark_intermediary_scripts.py \
                 $microbenchmarks_dir $microbenchmark $n_in $intermediary_dir
 
