@@ -10,7 +10,6 @@
 *.out
 *.pdf
 *.run.xml
-*.tex
 *.bcf
 *.sty
 .#*
