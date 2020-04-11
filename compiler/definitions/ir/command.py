@@ -81,7 +81,8 @@ class Command(Node):
         if(str(self.command) == "sort"):
             new_output_file_ids = [[fileIdGen.next_file_id()] for in_fid in input_file_ids]
         elif(str(self.command) == "bigrams_aux"):
-            new_output_file_ids = [[fileIdGen.next_file_id() for i in range(BigramGMap.num_outputs)]
+            new_output_file_ids = [[fileIdGen.next_file_id()
+                                    for i in range(config.bigram_g_map_num_outputs)]
                                    for in_fid in input_file_ids]
         elif(str(self.command) == "alt_bigrams_aux"):
             new_output_file_ids = [[fileIdGen.next_file_id()] for in_fid in input_file_ids]
