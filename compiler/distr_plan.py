@@ -34,11 +34,7 @@ def main():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("input_ir", help="the file containing the dataflow graph to be optimized and executed")
-    parser.add_argument("--compile_optimize_only",
-                        help="only compile and optimize the input script and not execute it",
-                        action="store_true")
-    parser.add_argument("--output_time", help="output the the time it took for every step in stderr",
-                        action="store_true")
+    config.add_common_arguments(parser)
     args = parser.parse_args()
     return args
 
@@ -74,10 +70,10 @@ def optimize_script(ir_filename, args):
     output_script_path = config.config['optimized_script_filename']
     if(config.config['distr_backend']):
         distr_execute(eager_distributed_graph, config.config['output_dir'], output_script_path,
-                      config.config['output_optimized'], args.compile_optimize_only, config.config['nodes'])
+                      args.output_optimized, args.compile_optimize_only, config.config['nodes'])
     else:
         execute(eager_distributed_graph.serialize_as_JSON(), config.config['output_dir'],
-                output_script_path, config.config['output_optimized'], args)
+                output_script_path, args.output_optimized, args)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
