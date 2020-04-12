@@ -2,8 +2,8 @@ from definitions.ir.command import *
 
 class AltBigramGReduce(Command):
     def __init__(self, old_command, file_ids):
-        assert(str(old_command.command) == "alt_bigram_aux_reduce")
-        command = old_command.command
+        assert(str(old_command.command) == "alt_bigrams_aux")
+        command = string_to_argument("alt_bigram_aux_reduce")
         options = self.make_options(file_ids)
         ## TODO: Generalize the model to arbitrarily many outputs to
         ## get rid of this hack, where inputs, outputs are just

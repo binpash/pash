@@ -62,6 +62,13 @@ highlights = {"minimal_grep" : "complex NFA regex",
               "shortest_scripts" : "\\todo{extensive file-system operation}",
               "diff" : "non-parallelizable \\tti{diff}ing"}
 
+input_filename_sizes = {"1G": "1~GB",
+                        "10G": "10~GB",
+                        "100G": "100~GB",
+                        "1M": "1~MB",
+                        "10M": "10~MB",
+                        "100M": "100~MB"}
+
 def get_experiment_files(experiment, results_dir):
     files = [f for f in os.listdir(results_dir) if f.startswith(experiment)]
     return [int(f.split(experiment + "_")[1].split("_")[0]) for f in files]
@@ -113,8 +120,10 @@ def read_distr_total_compilation_time(filename):
         return 0
 
 def collect_experiment_scaleup_times(prefix, scaleup_numbers):
-    seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, n))
-                   for n in scaleup_numbers]
+    ## Since we have the same input size in all cases, only use the
+    ## one sequential execution for the sequential time
+    seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, scaleup_numbers[0]))
+                   for _ in scaleup_numbers]
     distr_numbers = [read_distr_execution_time('{}{}_distr.time'.format(prefix, n))
                      for n in scaleup_numbers]
     compile_numbers = [read_distr_total_compilation_time('{}{}_distr.time'.format(prefix, n))
@@ -166,10 +175,14 @@ def collect_scaleup_times(experiment, results_dir):
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "{}_throughput_scaleup.pdf".format(experiment)))
 
-# \bottomrule
-# \end{tabular*}
-# \label{tab:eval}
-# \end{table*}
+
+def collect_format_input_size(experiment):
+    raw_size = collect_input_size(experiment)
+    try:
+        result = input_filename_sizes[raw_size]
+    except:
+        result = "\\todo{UNKNOWN}"
+    return result
 
 def collect_input_size(experiment):
     env_file = os.path.join(MICROBENCHMARKS, '{}_env.sh'.format(experiment))
@@ -178,18 +191,19 @@ def collect_input_size(experiment):
         assert(len(input_file_names) == 1)
         input_file_name = input_file_names[0]
     # print(input_file_name)
-    try:
-        input_size = os.stat(input_file_name).st_size
-    except:
-        input_size = 0
-    return input_size
+    # try:
+    #     input_size = os.stat(input_file_name).st_size
+    # except:
+    #     input_size = 0
+    clean_name = input_file_name.split('/')[-1].split('.')[0]
+    return clean_name
 
 def generate_table_header():
     header = []
     header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} lllllll}']
     header += ['\\toprule']
-    header += ['Script ~&~ Structure & Input(\\todo{20})&'
-               'Seq Time(\\todo{20}) & Script Size(\\todo{20, 100}) &'
+    header += ['Script ~&~ Structure & Input &'
+               'Seq Time & Script Size(\\todo{20, 100}) &'
                'Compile Time (\\todo{20, 100}) & Highlights \\\\']
     header += ['\\midrule']
     return "\n".join(header)
@@ -206,23 +220,21 @@ def generate_experiment_line(experiment):
     line += [structures[experiment], '&']
 
     ## Collect and output the input size
-    input_size = collect_input_size(experiment)
-    input_size_mb = input_size // 1000000
-    input_size_mb_20 = input_size_mb * 20
-    line += ['{}~MB'.format(input_size_mb_20), '&']
+    input_size = collect_format_input_size(experiment)
+    line += [input_size, '&']
 
     ## Collect and output the sequential time for the experiment
-    scaleup_numbers = [20, 100]
+    scaleup_numbers = [2, 20, 100]
     experiment_results_prefix = '{}/{}_'.format(RESULTS, experiment)
     seq_times, _, compile_times = collect_experiment_scaleup_times(experiment_results_prefix, scaleup_numbers)
-    assert(len(seq_times) == 2)
+    assert(len(seq_times) == 3)
     seq_time_seconds = seq_times[0] / 1000
     line += ['{:.2f}~s'.format(seq_time_seconds), '&']
     line += ['\\todo{\\#Commands}', '&']
 
     ## Collect and output compile times
-    compile_time_20_milliseconds = compile_times[0]
-    compile_time_100_milliseconds = compile_times[1]
+    compile_time_20_milliseconds = compile_times[1]
+    compile_time_100_milliseconds = compile_times[2]
     line += ['{:.2f}~ms\\qquad {:.2f}~ms'.format(compile_time_20_milliseconds,
                                                  compile_time_100_milliseconds), '&']
     line += [highlights[experiment], '\\\\']
