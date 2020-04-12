@@ -18,27 +18,28 @@ n_inputs=(
 )
 
 microbenchmarks=(
-    grep
-    minimal_sort
+    grep                 # PLDI
+    minimal_sort         # PLDI
     minimal_grep         # PLDI
     topn                 # PLDI
     wf                   # PLDI
     spell                # PLDI
     shortest_scripts     # PLDI
-    micro_1000           # PLDI
+    # micro_1000           # PLDI
 
     # bigrams              # TODO: Fix bug. Run with good split.
     alt_bigrams          # Not so true (as many steps are combined for better MapReduce)
+    diff                 # TODO: Optimize diff
+    set-diff             # TODO: Handle redirection after reduce
 
     ## TODO: Add some more for OSDI
     # wc                   # Extremely simple
-    diff                 # TODO: Optimize diff
-    # set-diff             # TODO: Handle redirection after reduce
     # page-count           # TODO: Change it so that it is one pipeline and it has many files
     # sieve                # Nice to show posix compliance
     # genquality           # TODO: Nice big pipeline. Handle this
     # genome-diff          # TODO: Nice big pipeline. Handle this
     # symtab               # Probably no benefit (since it runs some sequential pure function)
+    # for_loop_simple      # Probably not for OSDI
 )
 
 ## Note: Maybe we need to tune the configuration (fan-out, batch-size)
