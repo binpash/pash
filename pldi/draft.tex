@@ -2132,6 +2132,12 @@ More detailed setup and experiments, including the scripts, is included in the a
     \label{fig:microbenchmarks}
 \end{figure*}
 
+\kk{Hypothesis on results. Dish gives a great speedup if one step of
+  the pipeline is what takes the most time. If the pipeline is long
+  with many computation heavy tasks, task based parallelism gets you
+  part of the way there, so we can't expect Dish to give performance
+  benefits equal to the amount of parallelism that we give it.}
+
 Tab.~\ref{tab:eval} summarizes the collection of micro-benchmarks used to evaluate \sys.
 Benchmark names (col. 1) correspond to the names on the plots (Fig.~\ref{fig:microbenchmarks}), and structure (col. 2) summarizes the different classes of commands used in the script.
 % The centralized pipelines read files of various sizes from disk and write to disk.
