@@ -325,12 +325,12 @@ def collect_unix50_scaleup_times(unix50_results_dir):
     plt.savefig(os.path.join('../evaluation/plots', "unix50_throughput_scaleup.pdf"))
 
 
-# ## Plot microbenchmarks
-# for experiment in experiments:
-#     collect_scaleup_times(experiment, RESULTS)
+## Plot microbenchmarks
+for experiment in experiments:
+    collect_scaleup_times(experiment, RESULTS)
 
 ## Generate Tex table for microbenchmarks
 generate_tex_table(experiments)
 
-# ## Plot Unix50
-# collect_unix50_scaleup_times(UNIX50_RESULTS)
+## Plot Unix50
+collect_unix50_scaleup_times(UNIX50_RESULTS)
