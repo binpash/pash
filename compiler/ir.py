@@ -448,11 +448,17 @@ class IR:
     def get_previous_nodes_and_edges(self, node):
         previous_nodes_and_edges = []
         for incoming_fid in node.get_input_file_ids():
-            for other_node in self.nodes:
-                ## Note: What if other_node == node?
-                if (not incoming_fid.find_fid_list(other_node.get_output_file_ids()) is None):
-                    previous_nodes_and_edges.append((other_node, incoming_fid))
+            previous_node = self.get_fids_previous_node_and_edge(incoming_fid)
+            if (not previous_node is None):
+                previous_nodes_and_edges.append((previous_node, incoming_fid))
         return previous_nodes_and_edges
+
+    def get_fids_previous_node_and_edge(self, fid):
+        for other_node in self.nodes:
+            ## Note: What if other_node == node?
+            if (not fid.find_fid_list(other_node.get_output_file_ids()) is None):
+                return other_node
+        return None
 
     def get_previous_nodes(self, node):
         return [node for node, edge in self.get_previous_nodes_and_edges(node)]

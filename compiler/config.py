@@ -50,3 +50,6 @@ if not command_classes:
 stateless_commands = command_classes['stateless'] if 'stateless' in command_classes else {}
 pure_commands = command_classes['pure'] if 'pure' in command_classes else {}
 parallelizable_pure_commands = command_classes['parallelizable_pure'] if 'parallelizable_pure' in command_classes else {}
+
+## TODO: Move these to a configuration file
+bigram_g_map_num_outputs = 3

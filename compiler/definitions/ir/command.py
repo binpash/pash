@@ -15,7 +15,8 @@ class Command(Node):
         self.command = Arg(command)
         self.options = [opt if isinstance(opt, FileId) else Arg(opt) for opt in options]
         self.opt_indices = opt_indices
-        self.apply_redirections(redirections)
+        self.redirections = [Redirection(redirection) for redirection in redirections]
+        self.apply_redirections()
 
     def __repr__(self):
         prefix = "Command"
@@ -48,10 +49,7 @@ class Command(Node):
     ## abstraction. Maybe the best way would be to keep them around
     ## and always recompute inputs/outputs when needed by following
     ## the redirections.
-    def apply_redirections(self, redirections):
-        ## Save the redirections for possible debugging
-        self.redirections = [Redirection(redirection) for redirection in redirections]
-
+    def apply_redirections(self):
         for redirection in self.redirections:
             ## Handle To redirections that have to do with stdout
             if (redirection.is_to_file() and redirection.is_for_stdout()):
@@ -81,7 +79,8 @@ class Command(Node):
         if(str(self.command) == "sort"):
             new_output_file_ids = [[fileIdGen.next_file_id()] for in_fid in input_file_ids]
         elif(str(self.command) == "bigrams_aux"):
-            new_output_file_ids = [[fileIdGen.next_file_id() for i in range(BigramGMap.num_outputs)]
+            new_output_file_ids = [[fileIdGen.next_file_id()
+                                    for i in range(config.bigram_g_map_num_outputs)]
                                    for in_fid in input_file_ids]
         elif(str(self.command) == "alt_bigrams_aux"):
             new_output_file_ids = [[fileIdGen.next_file_id()] for in_fid in input_file_ids]
