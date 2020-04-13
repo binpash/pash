@@ -6,7 +6,6 @@ distr_planner:
     output_dir: /tmp/distr_output
     fan_out: 1
     batch_size: 10000
-    output_optimized: true
     distr_backend: false
     nodes:
       - "127.0.0.1"

@@ -30,14 +30,16 @@ experiments = ["minimal_grep",
                "grep",
                "spell",
                "shortest_scripts",
-               "diff"]
+               "diff",
+               "alt_bigrams"]
 
 pretty_names = {"minimal_grep" : "grep",
                 "minimal_sort" : "sort",
                 "wf" : "wf",
                 "topn" : "top-n",
                 "grep" : "grep-light",
-                "bigram" : "bi-gram",
+                "bigram" : "bi-grams",
+                "alt_bigrams" : "optimized bi-grams",
                 "spell" : "spell",
                 "shortest_scripts" : "shortest-scripts",
                 "diff" : "diff"}
@@ -48,6 +50,7 @@ structures = {"minimal_grep" : "$3\\times$\\tsta",
               "topn" : "$2\\times\\tsta, 4\\times\\tpur$",
               "grep" : "$3\\times$\\tsta",
               "bigram" : "\\todo{TODO}",
+              "alt_bigrams" : "$3\\times$\\tsta, \\tpur",
               "spell" : "$4\\times\\tsta, 3\\times\\tpur$",
               "shortest_scripts" : "$5\\times\\tsta, 2\\times\\tpur$",
               "diff" : "\\todo{TODO}"}
@@ -58,6 +61,7 @@ highlights = {"minimal_grep" : "complex NFA regex",
               "topn" : "double \\tti{sort}, \\tti{uniq} reduction",
               "grep" : "$3\\times$\\tsta",
               "bigram" : "stream shifting and merging",
+              "alt_bigrams" : "optimized version of bigrams",
               "spell" : "comparisons (\\tti{comm})",
               "shortest_scripts" : "\\todo{extensive file-system operation}",
               "diff" : "non-parallelizable \\tti{diff}ing"}
@@ -198,6 +202,26 @@ def collect_input_size(experiment):
     clean_name = input_file_name.split('/')[-1].split('.')[0]
     return clean_name
 
+def format_time_seconds(time_milliseconds):
+    time_seconds = time_milliseconds / 1000
+    time_minutes = int(time_seconds // 60)
+    time_only_seconds = time_seconds % 60
+    if(time_minutes > 0):
+        formatted_time = '{}m{:.3f}s'.format(time_minutes, time_only_seconds)
+    else:
+        formatted_time = '{:.3f}s'.format(time_seconds)
+    return formatted_time
+
+def format_time_milliseconds(time_milliseconds):
+    time_seconds = int(time_milliseconds // 1000)
+    time_only_milliseconds = time_milliseconds % 1000
+    if(time_seconds > 0):
+        formatted_time = '{}s{:.3f}ms'.format(time_seconds, time_only_milliseconds)
+    else:
+        formatted_time = '{:.3f}ms'.format(time_milliseconds)
+    return formatted_time
+
+
 def generate_table_header():
     header = []
     header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} lllllll}']
@@ -228,15 +252,16 @@ def generate_experiment_line(experiment):
     experiment_results_prefix = '{}/{}_'.format(RESULTS, experiment)
     seq_times, _, compile_times = collect_experiment_scaleup_times(experiment_results_prefix, scaleup_numbers)
     assert(len(seq_times) == 3)
-    seq_time_seconds = seq_times[0] / 1000
-    line += ['{:.2f}~s'.format(seq_time_seconds), '&']
+    seq_time_seconds = format_time_seconds(seq_times[0])
+    # seq_time_seconds = seq_times[0] / 1000
+    line += [seq_time_seconds, '&']
     line += ['\\todo{\\#Commands}', '&']
 
     ## Collect and output compile times
     compile_time_20_milliseconds = compile_times[1]
     compile_time_100_milliseconds = compile_times[2]
-    line += ['{:.2f}~ms\\qquad {:.2f}~ms'.format(compile_time_20_milliseconds,
-                                                 compile_time_100_milliseconds), '&']
+    line += ['{}\\qquad {}'.format(format_time_seconds(compile_time_20_milliseconds),
+                                   format_time_seconds(compile_time_100_milliseconds)), '&']
     line += [highlights[experiment], '\\\\']
     return " ".join(line)
 

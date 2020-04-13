@@ -63,12 +63,7 @@ def parse_args():
     parser.add_argument("output", help="the path of the compiled shell script")
     parser.add_argument("--compile_only", help="only compile the input script and not execute it",
                         action="store_true")
-    parser.add_argument("--compile_optimize_only", help="only compile and optimize the input script and not execute it",
-                        action="store_true")
-    parser.add_argument("--output_optimized", help="output the optimized shell script that was produced by the planner for inspection",
-                        action="store_true")
-    parser.add_argument("--output_time", help="output the the time it took for every step in stderr",
-                        action="store_true")
+    config.add_common_arguments(parser)
     args = parser.parse_args()
     return args
 

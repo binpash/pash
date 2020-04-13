@@ -2,6 +2,8 @@ import os
 import subprocess
 import yaml
 
+from ir_utils import *
+
 ## Global
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'DISH_TOP' in os.environ:
@@ -37,6 +39,28 @@ def load_config(config_file_path=False):
 
     config = dish_config[CONFIG_KEY]
 
+## These are arguments that are common to dish and distr_plan.py
+def add_common_arguments(parser):
+    parser.add_argument("--compile_optimize_only",
+                        help="only compile and optimize the input script and not execute it",
+                        action="store_true")
+    parser.add_argument("--output_time", help="output the the time it took for every step in stderr",
+                        action="store_true")
+    parser.add_argument("--output_optimized",
+                        help="output the optimized shell script that"
+                        "was produced by the planner for inspection",
+                        action="store_true")
+    return
+
+def pass_common_arguments(dish_arguments):
+    arguments = []
+    if (dish_arguments.compile_optimize_only):
+        arguments.append(string_to_argument("--compile_optimize_only"))
+    if (dish_arguments.output_time):
+        arguments.append(string_to_argument("--output_time"))
+    if (dish_arguments.output_optimized):
+        arguments.append(string_to_argument("--output_optimized"))
+    return arguments
 
 # TODO load command class file path from config
 command_classes_file_path = '{}/compiler/command-classes.yaml'.format(DISH_TOP)
