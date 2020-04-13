@@ -154,9 +154,10 @@ def collect_experiment_speedups(prefix, scaleup_numbers):
 def collect_scaleup_times(experiment, results_dir):
     print(experiment)
 
-    all_scaleup_numbers = list(set(get_experiment_files(experiment, results_dir)))
-    all_scaleup_numbers.sort()
-    all_scaleup_numbers = [i for i in all_scaleup_numbers if i > 1]
+    # all_scaleup_numbers = list(set(get_experiment_files(experiment, results_dir)))
+    # all_scaleup_numbers.sort()
+    # all_scaleup_numbers = [i for i in all_scaleup_numbers if i > 1]
+    all_scaleup_numbers = [2, 4, 8, 16, 32, 64, 96, 128]
     prefix = '{}/{}_'.format(results_dir, experiment)
     distr_speedup, compile_distr_speedup = collect_experiment_speedups(prefix, all_scaleup_numbers)
 
@@ -231,8 +232,8 @@ def generate_table_header():
     header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} lllllll}']
     header += ['\\toprule']
     header += ['Script ~&~ Structure & Input &'
-               'Seq Time & Script Size(\\todo{20, 100}) &'
-               'Compile Time (\\todo{20, 100}) & Highlights \\\\']
+               'Seq Time & Script Size(\\todo{16, 128}) &'
+               'Compile Time (\\todo{16, 128}) & Highlights \\\\']
     header += ['\\midrule']
     return "\n".join(header)
 
@@ -252,7 +253,7 @@ def generate_experiment_line(experiment):
     line += [input_size, '&']
 
     ## Collect and output the sequential time for the experiment
-    scaleup_numbers = [2, 20, 100]
+    scaleup_numbers = [2, 16, 128]
     experiment_results_prefix = '{}/{}_'.format(RESULTS, experiment)
     seq_times, _, compile_times = collect_experiment_scaleup_times(experiment_results_prefix, scaleup_numbers)
     assert(len(seq_times) == 3)
@@ -262,10 +263,10 @@ def generate_experiment_line(experiment):
     line += ['\\todo{\\#Commands}', '&']
 
     ## Collect and output compile times
-    compile_time_20_milliseconds = compile_times[1]
-    compile_time_100_milliseconds = compile_times[2]
-    line += ['{}\\qquad {}'.format(format_time_seconds(compile_time_20_milliseconds),
-                                   format_time_seconds(compile_time_100_milliseconds)), '&']
+    compile_time_16_milliseconds = compile_times[1]
+    compile_time_128_milliseconds = compile_times[2]
+    line += ['{}\\qquad {}'.format(format_time_seconds(compile_time_16_milliseconds),
+                                   format_time_seconds(compile_time_128_milliseconds)), '&']
     line += [highlights[experiment], '\\\\']
     return " ".join(line)
 

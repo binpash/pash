@@ -1,16 +1,16 @@
 \begin{tabular*}{\textwidth}{l @{\extracolsep{\fill}} lllllll}
 \toprule
-Script ~&~ Structure & Input &Seq Time & Script Size(\todo{20, 100}) &Compile Time (\todo{20, 100}) & Highlights \\
+Script ~&~ Structure & Input &Seq Time & Script Size(\todo{16, 128}) &Compile Time (\todo{16, 128}) & Highlights \\
 \midrule
-\tti{grep} ~&~ $3\times$\tsta & 1~GB & 80m9.607s & \todo{\#Commands} & 0.063s\qquad 0.966s & complex NFA regex \\
-\tti{sort} ~&~ $\tsta, \tpur$ & 10~GB & 23m49.044s & \todo{\#Commands} & 0.201s\qquad 2.006s & \tti{sort}ing \\
-\tti{top-n} ~&~ $2\times\tsta, 4\times\tpur$ & 10~GB & 72m53.786s & \todo{\#Commands} & 0.170s\qquad 3.341s & double \tti{sort}, \tti{uniq} reduction \\
-\tti{wf} ~&~ $3\times\tsta, 3\times\tpur$ & 10~GB & 22m31.907s & \todo{\#Commands} & 0.165s\qquad 3.325s & double \tti{sort}, \tti{uniq} reduction \\
-\tti{grep-light} ~&~ $3\times$\tsta & 100~GB & 1m38.212s & \todo{\#Commands} & 0.035s\qquad 0.356s & $3\times$\tsta \\
-\tti{spell} ~&~ $4\times\tsta, 3\times\tpur$ & 1~GB & 8m1.131s & \todo{\#Commands} & 0.311s\qquad 6.655s & comparisons (\tti{comm}) \\
-\tti{shortest-scripts} ~&~ $5\times\tsta, 2\times\tpur$ & \todo{UNKNOWN} & 28m26.746s & \todo{\#Commands} & 0.305s\qquad 6.729s & \todo{extensive file-system operation} \\
-\tti{diff} ~&~ \todo{TODO} & 10~GB & 26m50.085s & \todo{\#Commands} & 0.312s\qquad 4.569s & non-parallelizable \tti{diff}ing \\
-\tti{optimized bi-grams} ~&~ $3\times$\tsta, \tpur & 10~GB & 123m54.946s & \todo{\#Commands} & 0.136s\qquad 2.674s & optimized version of bigrams \\
-\tti{set-diff} ~&~ $5\times\tsta, 2\times\tpur$ & 10~GB & 51m34.784s & \todo{\#Commands} & 0.367s\qquad 8.237s & two pipelines merging to a \tti{comm} \\
+\tti{grep} ~&~ $3\times$\tsta & 1~GB & 80m9.607s & \todo{\#Commands} & 0.051s\qquad 1.551s & complex NFA regex \\
+\tti{sort} ~&~ $\tsta, \tpur$ & 10~GB & 23m49.044s & \todo{\#Commands} & 0.129s\qquad 3.362s & \tti{sort}ing \\
+\tti{top-n} ~&~ $2\times\tsta, 4\times\tpur$ & 10~GB & 72m53.786s & \todo{\#Commands} & 0.121s\qquad 5.346s & double \tti{sort}, \tti{uniq} reduction \\
+\tti{wf} ~&~ $3\times\tsta, 3\times\tpur$ & 10~GB & 22m31.907s & \todo{\#Commands} & 0.121s\qquad 5.378s & double \tti{sort}, \tti{uniq} reduction \\
+\tti{grep-light} ~&~ $3\times$\tsta & 100~GB & 1m38.212s & \todo{\#Commands} & 0.031s\qquad 0.577s & $3\times$\tsta \\
+\tti{spell} ~&~ $4\times\tsta, 3\times\tpur$ & 1~GB & 8m1.131s & \todo{\#Commands} & 0.211s\qquad 10.907s & comparisons (\tti{comm}) \\
+\tti{shortest-scripts} ~&~ $5\times\tsta, 2\times\tpur$ & \todo{UNKNOWN} & 28m26.746s & \todo{\#Commands} & 0.211s\qquad 10.755s & \todo{extensive file-system operation} \\
+\tti{diff} ~&~ \todo{TODO} & 10~GB & 26m50.085s & \todo{\#Commands} & 0.204s\qquad 7.222s & non-parallelizable \tti{diff}ing \\
+\tti{optimized bi-grams} ~&~ $3\times$\tsta, \tpur & 10~GB & 123m54.946s & \todo{\#Commands} & 0.098s\qquad 4.410s & optimized version of bigrams \\
+\tti{set-diff} ~&~ $5\times\tsta, 2\times\tpur$ & 10~GB & 51m34.784s & \todo{\#Commands} & 0.249s\qquad 12.590s & two pipelines merging to a \tti{comm} \\
 \bottomrule
 \end{tabular*}
