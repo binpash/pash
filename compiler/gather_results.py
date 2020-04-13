@@ -129,13 +129,12 @@ def read_distr_total_compilation_time(filename):
 
 def check_output_diff_correctness_for_experiment(filename):
     try:
-        f = open(filename)
-        for line in f:
-            if(line.startswith("Files ")
-               and line.rstrip().endswith("are identical")):
-                return True
-        f.close()
-        return False
+        with open(filename) as f:
+            for line in f:
+                if(line.startswith("Files ")
+                   and line.rstrip().endswith("are identical")):
+                    return True
+            return False
     except:
         print("!! WARNING: Filename:", filename, "not found!!!")
         return False
