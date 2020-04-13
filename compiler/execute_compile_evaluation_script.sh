@@ -50,5 +50,5 @@ echo "Distributed:"
 
 
 echo "Checking for equivalence..."
-diff -s /tmp/seq_output /tmp/distr_output/0 | tee "${results}${experiment}_distr.time"
+diff -s /tmp/seq_output /tmp/distr_output/0 | tee -a "${results}${experiment}_distr.time"
 
