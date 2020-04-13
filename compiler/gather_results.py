@@ -127,6 +127,19 @@ def read_distr_total_compilation_time(filename):
         print("!! WARNING: Filename:", filename, "not found!!!")
         return 0
 
+def check_output_diff_correctness_for_experiment(filename):
+    try:
+        f = open(filename)
+        for line in f:
+            if(line.startswith("Files ")
+               and line.rstrip().endswith("are identical")):
+                return True
+        f.close()
+        return False
+    except:
+        print("!! WARNING: Filename:", filename, "not found!!!")
+        return False
+
 def collect_experiment_scaleup_times(prefix, scaleup_numbers):
     ## Since we have the same input size in all cases, only use the
     ## one sequential execution for the sequential time
@@ -151,6 +164,11 @@ def collect_experiment_speedups(prefix, scaleup_numbers):
     compile_distr_speedup = [seq_numbers[i] / (t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
     return (distr_speedup, compile_distr_speedup)
 
+def check_output_diff_correctness(prefix, scaleup_numbers):
+    wrong_diffs = [n for n in scaleup_numbers
+                   if not check_output_diff_correctness_for_experiment('{}{}_distr.time'.format(prefix, n))]
+    return wrong_diffs
+
 def collect_scaleup_times(experiment, results_dir):
     print(experiment)
 
@@ -160,6 +178,9 @@ def collect_scaleup_times(experiment, results_dir):
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64, 96, 128]
     prefix = '{}/{}_'.format(results_dir, experiment)
     distr_speedup, compile_distr_speedup = collect_experiment_speedups(prefix, all_scaleup_numbers)
+
+    output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
+    formatted_output_diff = 'Output for {} -- {} parallel is wrong'.format(experiment, output_diff)
 
     fig, ax = plt.subplots()
 
@@ -184,6 +205,7 @@ def collect_scaleup_times(experiment, results_dir):
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "{}_throughput_scaleup.pdf".format(experiment)))
 
+    return formatted_output_diff
 
 def collect_format_input_size(experiment):
     raw_size = collect_input_size(experiment)
@@ -356,11 +378,15 @@ def collect_unix50_scaleup_times(unix50_results_dir):
 
 
 ## Plot microbenchmarks
+diff_results = []
 for experiment in experiments:
-    collect_scaleup_times(experiment, RESULTS)
+    not_equal_results = collect_scaleup_times(experiment, RESULTS)
+    diff_results.append(' !! -- WARNING -- !! {}'.format(not_equal_results))
 
 ## Generate Tex table for microbenchmarks
 generate_tex_table(experiments)
 
 ## Plot Unix50
 collect_unix50_scaleup_times(UNIX50_RESULTS)
+
+print("\n".join(diff_results))
