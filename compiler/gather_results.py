@@ -31,7 +31,8 @@ experiments = ["minimal_grep",
                "spell",
                "shortest_scripts",
                "diff",
-               "alt_bigrams"]
+               "alt_bigrams",
+               "set-diff"]
 
 pretty_names = {"minimal_grep" : "grep",
                 "minimal_sort" : "sort",
@@ -42,7 +43,8 @@ pretty_names = {"minimal_grep" : "grep",
                 "alt_bigrams" : "optimized bi-grams",
                 "spell" : "spell",
                 "shortest_scripts" : "shortest-scripts",
-                "diff" : "diff"}
+                "diff" : "diff",
+                "set-diff" : "set-diff"}
 
 structures = {"minimal_grep" : "$3\\times$\\tsta",
               "minimal_sort" : "$\\tsta, \\tpur$",
@@ -53,7 +55,8 @@ structures = {"minimal_grep" : "$3\\times$\\tsta",
               "alt_bigrams" : "$3\\times$\\tsta, \\tpur",
               "spell" : "$4\\times\\tsta, 3\\times\\tpur$",
               "shortest_scripts" : "$5\\times\\tsta, 2\\times\\tpur$",
-              "diff" : "\\todo{TODO}"}
+              "diff" : "\\todo{TODO}",
+              "set-diff" : "$5\\times\\tsta, 2\\times\\tpur$"}
 
 highlights = {"minimal_grep" : "complex NFA regex",
               "minimal_sort" : "\\tti{sort}ing",
@@ -64,7 +67,8 @@ highlights = {"minimal_grep" : "complex NFA regex",
               "alt_bigrams" : "optimized version of bigrams",
               "spell" : "comparisons (\\tti{comm})",
               "shortest_scripts" : "\\todo{extensive file-system operation}",
-              "diff" : "non-parallelizable \\tti{diff}ing"}
+              "diff" : "non-parallelizable \\tti{diff}ing",
+              "set-diff" : "two pipelines merging to a \\tti{comm}"}
 
 input_filename_sizes = {"1G": "1~GB",
                         "10G": "10~GB",
