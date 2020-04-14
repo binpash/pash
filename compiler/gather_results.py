@@ -153,6 +153,13 @@ def collect_experiment_scaleup_times(prefix, scaleup_numbers):
     # compile_numbers = [read_time('{}{}_compile_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
     return (seq_numbers, distr_numbers, compile_numbers)
 
+def collect_experiment_no_eager_times(prefix, scaleup_numbers):
+    no_eager_distr_numbers = [read_distr_execution_time('{}{}_distr_no_eager.time'.format(prefix, n))
+                              for n in scaleup_numbers]
+    no_eager_compile_numbers = [read_distr_total_compilation_time('{}{}_distr_no_eager.time'.format(prefix, n))
+                                for n in scaleup_numbers]
+    return (no_eager_distr_numbers, no_eager_compile_numbers)
+
 def collect_experiment_speedups(prefix, scaleup_numbers):
     seq_numbers, distr_numbers, compile_numbers = collect_experiment_scaleup_times(prefix, scaleup_numbers)
     # print(scaleup_numbers)
@@ -162,6 +169,14 @@ def collect_experiment_speedups(prefix, scaleup_numbers):
     distr_speedup = [seq_numbers[i] / t for i, t in enumerate(distr_numbers)]
     compile_distr_speedup = [seq_numbers[i] / (t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
     return (distr_speedup, compile_distr_speedup)
+
+def collect_experiment_no_eager_speedups(prefix, scaleup_numbers):
+    seq_numbers, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
+    no_eager_distr_numbers, no_eager_compile_numbers = collect_experiment_no_eager_times(prefix, scaleup_numbers)
+    no_eager_distr_speedup = [seq_numbers[i] / t for i, t in enumerate(no_eager_distr_numbers)]
+    no_eager_compile_distr_speedup = [seq_numbers[i] / (t + no_eager_compile_numbers[i])
+                                      for i, t in enumerate(no_eager_distr_numbers)]
+    return (no_eager_distr_speedup, no_eager_compile_distr_speedup)
 
 def check_output_diff_correctness(prefix, scaleup_numbers):
     wrong_diffs = [n for n in scaleup_numbers
@@ -179,7 +194,6 @@ def collect_scaleup_times(experiment, results_dir):
     distr_speedup, compile_distr_speedup = collect_experiment_speedups(prefix, all_scaleup_numbers)
 
     output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
-    formatted_output_diff = 'Output for {} -- {} parallel is wrong'.format(experiment, output_diff)
 
     fig, ax = plt.subplots()
 
@@ -191,6 +205,13 @@ def collect_scaleup_times(experiment, results_dir):
     # ax.plot(all_scaleup_numbers, distr_numbers, '-o', linewidth=0.5, label='Distributed')
     ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, label='Parallel')
     ax.plot(all_scaleup_numbers, compile_distr_speedup, '-*', linewidth=0.5, label='+ Compile')
+
+    ## Add the no eager times if they exist
+    try:
+        no_eager_distr_speedup, no_eager_compile_distr_speedup = collect_experiment_no_eager_speedups(prefix, all_scaleup_numbers)
+        ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='No Eager')
+    except:
+        pass
     # ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
     # ax.plot(all_scaleup_numbers, all_scaleup_numbers, '-', color='tab:gray', linewidth=0.5, label='Ideal')
 
@@ -204,7 +225,7 @@ def collect_scaleup_times(experiment, results_dir):
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "{}_throughput_scaleup.pdf".format(experiment)))
 
-    return formatted_output_diff
+    return output_diff
 
 def collect_format_input_size(experiment):
     raw_size = collect_input_size(experiment)
@@ -379,8 +400,10 @@ def collect_unix50_scaleup_times(unix50_results_dir):
 ## Plot microbenchmarks
 diff_results = []
 for experiment in experiments:
-    not_equal_results = collect_scaleup_times(experiment, RESULTS)
-    diff_results.append(' !! -- WARNING -- !! {}'.format(not_equal_results))
+    output_diff = collect_scaleup_times(experiment, RESULTS)
+    if(len(output_diff) > 0):
+        formatted_output_diff = 'Output for {} -- {} parallel is wrong'.format(experiment, output_diff)
+        diff_results.append(' !! -- WARNING -- !! {}'.format(formatted_output_diff))
 
 ## Generate Tex table for microbenchmarks
 generate_tex_table(experiments)
