@@ -59,9 +59,14 @@ def optimize_script(ir_filename, args):
     distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config.config['fan_out'],
                                                               config.config['batch_size'])
     # pr.print_stats()
-
-    eager_distributed_graph = add_eager_nodes(distributed_graph)
     # print(distributed_graph)
+
+    if(not args.no_eager):
+        eager_distributed_graph = add_eager_nodes(distributed_graph)
+    else:
+        eager_distributed_graph = distributed_graph
+
+    # print(eager_distributed_graph)
 
     optimization_end_time = datetime.now()
     print_time_delta("Optimization", optimization_start_time, optimization_end_time, args)

@@ -50,6 +50,9 @@ def add_common_arguments(parser):
                         help="output the optimized shell script that"
                         "was produced by the planner for inspection",
                         action="store_true")
+    parser.add_argument("--no_eager",
+                        help="disable eager nodes before merging nodes",
+                        action="store_true")
     return
 
 def pass_common_arguments(dish_arguments):
@@ -60,6 +63,8 @@ def pass_common_arguments(dish_arguments):
         arguments.append(string_to_argument("--output_time"))
     if (dish_arguments.output_optimized):
         arguments.append(string_to_argument("--output_optimized"))
+    if (dish_arguments.no_eager):
+        arguments.append(string_to_argument("--no_eager"))
     return arguments
 
 # TODO load command class file path from config

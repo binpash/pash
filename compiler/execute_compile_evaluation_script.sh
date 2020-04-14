@@ -1,10 +1,12 @@
 #!/bin/bash
 
 execute_seq_flag=0
+eager_flag=0
 
-while getopts 's' opt; do
+while getopts 'se' opt; do
     case $opt in
         s) execute_seq_flag=1 ;;
+        e) eager_flag=1 ;;
         *) echo 'Error in command line parsing' >&2
            exit 1
     esac
@@ -45,10 +47,20 @@ else
     echo "Not executing sequential..."
 fi
 
-echo "Distributed:"
-{ time python3.8 $DISH_TOP/compiler/dish.py --output_optimized --output_time $seq_script $distr_script ; } 2> >(tee "${results}${experiment}_distr.time" >&2)
+
+if [ "$eager_flag" -eq 1 ]; then
+    echo "Distributed:"
+    eager_opt=""
+    distr_result_filename="${results}${experiment}_distr.time"
+else
+    echo "Distributed without eager:"
+    eager_opt="--no_eager"
+    distr_result_filename="${results}${experiment}_distr_no_eager.time"
+fi
+
+{ time python3.8 $DISH_TOP/compiler/dish.py --output_optimized $eager_opt --output_time $seq_script $distr_script ; } 2> >(tee "${distr_result_filename}" >&2)
 
 
 echo "Checking for equivalence..."
-diff -s /tmp/seq_output /tmp/distr_output/0 | tee -a "${results}${experiment}_distr.time"
+diff -s /tmp/seq_output /tmp/distr_output/0 | tee -a "${distr_result_filename}"
 
