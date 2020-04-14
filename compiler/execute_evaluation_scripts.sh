@@ -34,7 +34,7 @@ microbenchmarks=(
     # micro_1000           # PLDI
 
     # bigrams              # TODO: Fix bug. Run with good split.
-    alt_bigrams          # Not so true (as many steps are combined for better MapReduce)
+    alt_bigrams          # Optimized version of Bigrams
     diff                 # TODO: Optimize diff
     set-diff             # TODO: Handle redirection after reduce
 
@@ -60,9 +60,12 @@ for microbenchmark in "${microbenchmarks[@]}"; do
         python3 generate_microbenchmark_intermediary_scripts.py \
                 $microbenchmarks_dir $microbenchmark $n_in $intermediary_dir
 
-        ## Execute the intermediary script
-        ./execute_compile_evaluation_script.sh $exec_seq "${microbenchmark}_${n_in}"
+        ## Execute the intermediary script with eager
+        ./execute_compile_evaluation_script.sh $exec_seq -e "${microbenchmark}_${n_in}"
         rm -f /tmp/eager*
+
+        ## Execute the intermediary script without eager
+        ./execute_compile_evaluation_script.sh $exec_seq "${microbenchmark}_${n_in}"
 
         # Only execute the sequential once
         exec_seq=""
