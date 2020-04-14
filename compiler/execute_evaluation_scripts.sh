@@ -64,10 +64,10 @@ for microbenchmark in "${microbenchmarks[@]}"; do
         ./execute_compile_evaluation_script.sh $exec_seq -e "${microbenchmark}_${n_in}"
         rm -f /tmp/eager*
 
-        ## Execute the intermediary script without eager
-        ./execute_compile_evaluation_script.sh $exec_seq "${microbenchmark}_${n_in}"
-
         # Only execute the sequential once
         exec_seq=""
+
+        ## Execute the intermediary script without eager
+        ./execute_compile_evaluation_script.sh $exec_seq "${microbenchmark}_${n_in}"
     done
 done
