@@ -2038,10 +2038,10 @@ arbitrarily many different pipes.
   resorted to making a proper generic eager node that can be put
   anywhere in the graph and that eagerly consumes its input. The above
   results show the improvement with it. Rerun them with eager only
-  before cat in the no eager cases to showcase the above
-  results. (Maybe) we need to mention that eager has disk usage
-  overhead that is linear to the size of the pipeline and the size of
-  the input.}
+  before cat in the no eager cases so that the minimal-grep example is
+  the same with and without our eager node. (Maybe) we need to mention
+  that eager has disk usage overhead that is linear to the size of the
+  pipeline and the size of the input.}
 
 
 At a high level, we are interested in understanding whether \sys can indeed scale pipelines out automatically and correctly.
