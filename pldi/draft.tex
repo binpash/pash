@@ -1901,7 +1901,9 @@ and aggregates them accordingly.
   identity function. This makes all processors as utilized as possible
   and for CPU heavy tasks it leads to speedup. For IO heavy (and CPU
   light) tasks it has some overhead. We evaluate eager in section X
-  (We should also say something about a CPU light task).}
+  (We should also say something about a CPU light task). A good thing
+  is that they work for all possible commands with almost no overhead,
+  without having to make each specific command eager.}
 
 \TODO{(This problem is a nice followup for the one above) Problem:
   Dataflow graph termination. Illustration: Show the example of head
