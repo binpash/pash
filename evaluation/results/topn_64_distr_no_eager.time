@@ -1,0 +1,9 @@
+Optimization time: 415.116  ms
+Backend time: 4.638  ms
+Execution time: 2207625.823  ms
+Compilation time: 21.22  ms
+
+real	36m48.430s
+user	140m15.326s
+sys	9m51.172s
+Files /tmp/seq_output and /tmp/distr_output/0 are identical
