@@ -2028,6 +2028,21 @@ arbitrarily many different pipes.
 \label{tab:eval}
 \end{table*}
 
+\kk{Maximum scaleup for both diff and set-diff is around half because
+  they already have two sorts running in parallel (as diff, and comm
+  take two inputs).}
+
+\TODO{Explain the plots with eager/no-eager as follows. Say that we
+  initially decided to only make an eager version of cat (to allow for
+  parallelism). However, we saw that results are still not good, so we
+  resorted to making a proper generic eager node that can be put
+  anywhere in the graph and that eagerly consumes its input. The above
+  results show the improvement with it. Rerun them with eager only
+  before cat in the no eager cases to showcase the above
+  results. (Maybe) we need to mention that eager has disk usage
+  overhead that is linear to the size of the pipeline and the size of
+  the input.}
+
 
 At a high level, we are interested in understanding whether \sys can indeed scale pipelines out automatically and correctly.
 To achieve this, we use six micro-benchmarks and one macro-benchmark, collected primarily from prior literature.
