@@ -17,8 +17,11 @@ shift "$(( OPTIND - 1 ))"
 
 ## We assume that each evaluation script has a sequential, a
 ## distributed, and an environment
-experiment=$1
-results_subdir=$2
+microbenchmark=$1
+n_in=$2
+results_subdir=$3
+
+experiment="${microbenchmark}_${n_in}"
 
 DISH_TOP=${DISH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 
@@ -30,6 +33,8 @@ env_file="${prefix}_env.sh"
 funs_file="${prefix}_funs.sh"
 seq_script="${prefix}_seq.sh"
 distr_script="${prefix}_distr.sh"
+
+seq_output="${directory}/${microbenchmark}_seq_output"
 
 echo "Environment:"
 # cat $env_file
@@ -44,7 +49,7 @@ fi
 if [ "$execute_seq_flag" -eq 1 ]; then
     echo "Sequential:"
     cat $seq_script
-    { time /bin/bash $seq_script > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
+    { time /bin/bash $seq_script > $seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
 else
     echo "Not executing sequential..."
 fi
@@ -74,5 +79,5 @@ fi
 cat /tmp/backup-config.yaml > config.yaml
 
 echo "Checking for equivalence..."
-diff -s /tmp/seq_output /tmp/distr_output/0 | tee -a "${distr_result_filename}"
+diff -s $seq_output /tmp/distr_output/0 | tee -a "${distr_result_filename}"
 
