@@ -1,0 +1,9 @@
+Optimization time: 7.475  ms
+Backend time: 0.461  ms
+Execution time: 1826318.723  ms
+Compilation time: 18.738  ms
+
+real	30m26.702s
+user	122m1.660s
+sys	5m53.290s
+Files ../evaluation//intermediary//alt_bigrams_seq_output and /tmp/distr_output/0 are identical

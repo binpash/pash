@@ -1,0 +1,9 @@
+Optimization time: 6229.1  ms
+Backend time: 15.747  ms
+Execution time: 141574.963  ms
+Compilation time: 23.319  ms
+
+real	2m28.238s
+user	16m53.107s
+sys	4m42.597s
+Files ../evaluation//intermediary//spell_seq_output and /tmp/distr_output/0 are identical
