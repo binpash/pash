@@ -1,0 +1,9 @@
+Optimization time: 10327.993  ms
+Backend time: 22.08  ms
+Execution time: 57227.224  ms
+Compilation time: 23.258  ms
+
+real	1m8.003s
+user	95m1.218s
+sys	18m47.277s
+Files ../evaluation//intermediary//shortest_scripts_seq_output and /tmp/distr_output/0 are identical
