@@ -156,9 +156,13 @@ def collect_experiment_scaleup_times(prefix, scaleup_numbers):
 def collect_experiment_no_eager_times(prefix, scaleup_numbers):
     no_eager_distr_numbers = [read_distr_execution_time('{}{}_distr_no_eager.time'.format(prefix, n))
                               for n in scaleup_numbers]
-    no_eager_compile_numbers = [read_distr_total_compilation_time('{}{}_distr_no_eager.time'.format(prefix, n))
-                                for n in scaleup_numbers]
-    return (no_eager_distr_numbers, no_eager_compile_numbers)
+    # no_eager_compile_numbers = [read_distr_total_compilation_time('{}{}_distr_no_eager.time'.format(prefix, n))
+    #                             for n in scaleup_numbers]
+    no_task_par_eager_distr_numbers = [read_distr_execution_time('{}{}_distr_no_task_par_eager.time'.format(prefix, n))
+                                       for n in scaleup_numbers]
+    # no_eager_compile_numbers = [read_distr_total_compilation_time('{}{}_distr_no_eager.time'.format(prefix, n))
+    #                             for n in scaleup_numbers]
+    return (no_eager_distr_numbers, no_task_par_eager_distr_numbers)
 
 def collect_experiment_speedups(prefix, scaleup_numbers):
     seq_numbers, distr_numbers, compile_numbers = collect_experiment_scaleup_times(prefix, scaleup_numbers)
@@ -172,16 +176,23 @@ def collect_experiment_speedups(prefix, scaleup_numbers):
 
 def collect_experiment_no_eager_speedups(prefix, scaleup_numbers):
     seq_numbers, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
-    no_eager_distr_numbers, no_eager_compile_numbers = collect_experiment_no_eager_times(prefix, scaleup_numbers)
-    no_eager_distr_speedup = [seq_numbers[i] / t for i, t in enumerate(no_eager_distr_numbers)]
-    no_eager_compile_distr_speedup = [seq_numbers[i] / (t + no_eager_compile_numbers[i])
-                                      for i, t in enumerate(no_eager_distr_numbers)]
-    return (no_eager_distr_speedup, no_eager_compile_distr_speedup)
+    no_eager_distr_numbers, no_task_par_eager_distr_numbers = collect_experiment_no_eager_times(prefix, scaleup_numbers)
+    no_eager_distr_speedup = [seq_numbers[i] / t
+                              for i, t in enumerate(no_eager_distr_numbers)]
+    # no_eager_compile_distr_speedup = [seq_numbers[i] / (t + no_eager_compile_numbers[i])
+    #                                   for i, t in enumerate(no_eager_distr_numbers)]
+    no_task_par_eager_distr_speedup = [seq_numbers[i] / t
+                                       for i, t in enumerate(no_task_par_eager_distr_numbers)]
+    return (no_eager_distr_speedup, no_task_par_eager_distr_speedup)
 
 def check_output_diff_correctness(prefix, scaleup_numbers):
     wrong_diffs = [n for n in scaleup_numbers
                    if not check_output_diff_correctness_for_experiment('{}{}_distr.time'.format(prefix, n))]
-    return wrong_diffs
+    wrong_diffs_no_eager = [n for n in scaleup_numbers
+                   if not check_output_diff_correctness_for_experiment('{}{}_distr_no_eager.time'.format(prefix, n))]
+    wrong_diffs_no_task_par_eager = [n for n in scaleup_numbers
+                   if not check_output_diff_correctness_for_experiment('{}{}_distr_no_task_par_eager.time'.format(prefix, n))]
+    return (wrong_diffs, wrong_diffs_no_eager, wrong_diffs_no_task_par_eager)
 
 def collect_scaleup_times(experiment, results_dir):
     print(experiment)
@@ -204,12 +215,13 @@ def collect_scaleup_times(experiment, results_dir):
     # ax.plot(all_scaleup_numbers, seq_numbers, '-o', linewidth=0.5, label='Sequential')
     # ax.plot(all_scaleup_numbers, distr_numbers, '-o', linewidth=0.5, label='Distributed')
     ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, label='Parallel')
-    ax.plot(all_scaleup_numbers, compile_distr_speedup, '-*', linewidth=0.5, label='+ Compile')
+    # ax.plot(all_scaleup_numbers, compile_distr_speedup, '-*', linewidth=0.5, label='+ Compile')
 
     ## Add the no eager times if they exist
     try:
-        no_eager_distr_speedup, no_eager_compile_distr_speedup = collect_experiment_no_eager_speedups(prefix, all_scaleup_numbers)
+        no_eager_distr_speedup, no_task_par_eager_distr_speedup = collect_experiment_no_eager_speedups(prefix, all_scaleup_numbers)
         ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='No Eager')
+        ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Blocking Eager')
     except:
         pass
     # ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
@@ -397,13 +409,20 @@ def collect_unix50_scaleup_times(unix50_results_dir):
     plt.savefig(os.path.join('../evaluation/plots', "unix50_throughput_scaleup.pdf"))
 
 
+def format_wrong_output(output_diff, experiment, mode):
+    if(len(output_diff) > 0):
+        formatted_output_diff = 'Output for {} -- {} {} is wrong'.format(experiment, output_diff, mode)
+        return [' !! -- WARNING -- !! {}'.format(formatted_output_diff)]
+    else:
+        return []
+
 ## Plot microbenchmarks
 diff_results = []
 for experiment in experiments:
     output_diff = collect_scaleup_times(experiment, RESULTS)
-    if(len(output_diff) > 0):
-        formatted_output_diff = 'Output for {} -- {} parallel is wrong'.format(experiment, output_diff)
-        diff_results.append(' !! -- WARNING -- !! {}'.format(formatted_output_diff))
+    diff_results += format_wrong_output(output_diff[0], experiment, "parallel")
+    diff_results += format_wrong_output(output_diff[1], experiment, "parallel no-eager")
+    diff_results += format_wrong_output(output_diff[2], experiment, "parallel no-task-par-eager")
 
 ## Generate Tex table for microbenchmarks
 generate_tex_table(experiments)
