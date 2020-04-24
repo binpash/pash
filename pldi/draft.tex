@@ -1575,12 +1575,15 @@ s)$. A visual representation of this transformation can be seen in
 \end{figure}
 
 
-\tr{Remember to mention the assumptions that need to hold for the
+\kk{Remember to mention the assumptions that need to hold for the
   graph transformations to be valid in the Command categories
   section. Commands must be deterministic, they must not do any other
   side effect (such as writing to other files, sending signals,
   etc). However, these assumptions must already be checked when the
-  developer designates the categories.}
+  developer designates the categories. Commands are assumed to always
+  terminate gracefully. \sys changes the termination behaviour of
+  commands as a sequential command that would exit prematurely might
+  not exit completely if parallelized.}
 
 \tr{If there is time I can work out a formal definition and a proof
   sketch why this transformation preserves the output of the dataflow
