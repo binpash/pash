@@ -2,7 +2,8 @@ distr_planner:
     optimized_script_filename: /tmp/optimized_script.sh
     temp_ir_prefix: /tmp/dish_temp_ir
     eager_intermediate_prefix: /tmp/eager_intermediate_
-    eager_executable_path: ../evaluation/tools/eager
+    eager_executable_path: evaluation/tools/eager
+    drain_stream_executable_path: evaluation/tools/drain_stream.sh
     output_dir: /tmp/distr_output
     fan_out: 1
     batch_size: 10000
