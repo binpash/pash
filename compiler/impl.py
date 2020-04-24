@@ -3,6 +3,7 @@ import time
 import subprocess
 from datetime import datetime
 from util import *
+import config
 
 def execute(graph_json, output_dir, output_script_name, output_optimized, args):
     backend_start_time = datetime.now()
@@ -138,7 +139,12 @@ def node_to_script(node, shared_memory_dir):
                 script.append('"{}"'.format(fid))
             script.append("|")
 
+        ## Add the command together with a drain stream
+        script.append("(")
         script += command.split(" ")
+        script.append(";")
+        script += drain_stream()
+        script.append(")")
 
         if(len(outputs) == 1):
             script.append(">")
@@ -166,7 +172,9 @@ def new_split(outputs, batch_size, shared_memory_dir):
     # script.append('; }')
     return script
 
-
+def drain_stream():
+    script = '{}/{}'.format(config.DISH_TOP, config.config["drain_stream_executable_path"])
+    return [script]
 
 def old_split(inputs, outputs, batch_size):
     script = []
