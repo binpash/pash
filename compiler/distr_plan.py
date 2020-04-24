@@ -43,7 +43,8 @@ def optimize_script(ir_filename, args):
     if not config.config:
         config.load_config()
 
-    print("Retrieving IR: {} ...".format(ir_filename))
+    print("Retrieving IR: {} ... ".format(ir_filename), end='')
+    print("Done!")
     with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
 
