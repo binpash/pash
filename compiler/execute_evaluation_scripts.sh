@@ -38,6 +38,9 @@ microbenchmarks=(
     diff                 # TODO: Optimize diff
     set-diff             # TODO: Handle redirection after reduce
 
+    ## Tests
+    # deadlock_test          # Test to check deadlock prevention using drain_stream
+
     ## TODO: Add some more for OSDI
     # wc                   # Extremely simple
     # page-count           # TODO: Change it so that it is one pipeline and it has many files
