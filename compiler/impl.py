@@ -118,19 +118,12 @@ def node_to_script(node, shared_memory_dir):
 
     script = []
     ## Split file
-    if(len(outputs) == 2 and
-       command.split(" ")[0] == "split_file"):
+    if(command.split(" ")[0] == "split_file"):
         assert(len(inputs) == 1)
         batch_size = command.split(" ")[1]
-        if (len(inputs) > 0):
-            script.append("cat")
-            for fid in inputs:
-                script.append('"{}"'.format(fid))
-            script.append("|")
-        script += new_split(outputs, batch_size, shared_memory_dir)
-        # script += old_split(inputs, outputs, batch_size)
-        # print(script)
-        # print(node)
+        split_outputs = command.split(" ")[2:4]
+        split_string = new_split(inputs[0], split_outputs, batch_size)
+        script.append(split_string)
     else:
         ## All the other nodes
         if (len(inputs) > 0):
@@ -157,23 +150,12 @@ def node_to_script(node, shared_memory_dir):
         # print("Script:", script)
     return " ".join(script)
 
-def new_split(outputs, batch_size, shared_memory_dir):
-    script = []
-    shared_mem_file = '"{}/{}"'.format(shared_memory_dir, outputs[0])
-    script.append('tee >(')
-    script.append('head -n {}'.format(batch_size))
-    script.append('> {};'.format(shared_mem_file))
-    # script.append('dd of="{}" > /dev/null 2>&1'.format(outputs[1]))
-    script.append('dd of=/dev/null > /dev/null 2>&1 & cat {} > "{}")'.format(shared_mem_file, outputs[0]))
-    script.append('| (tail -n +{}'.format(int(batch_size)+1))
-    script.append('> "{}";'.format(outputs[1]))
-    script.append('dd of=/dev/null > /dev/null 2>&1)')
-    # script.append('"{}"'.format(outputs[1]))
-    # script.append('; }')
-    return script
+def new_split(input_file, outputs, batch_size):
+    split_bin = '{}/{}'.format(config.DISH_TOP, config.config['runtime']['split_binary'])
+    return '{} "{}" {} {} {}'.format(split_bin, input_file, outputs[0], outputs[1], batch_size)
 
 def drain_stream():
-    script = '{}/{}'.format(config.DISH_TOP, config.config["drain_stream_executable_path"])
+    script = '{}/{}'.format(config.DISH_TOP, config.config['distr_planner']['drain_stream_executable_path'])
     return [script]
 
 def old_split(inputs, outputs, batch_size):
