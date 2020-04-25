@@ -67,6 +67,8 @@ def optimize_script(ir_filename, args):
     else:
         eager_distributed_graph = distributed_graph
 
+    ## Print statistics of output nodes
+    print_graph_statistics(eager_distributed_graph)
     # print(eager_distributed_graph)
 
     optimization_end_time = datetime.now()
@@ -80,6 +82,16 @@ def optimize_script(ir_filename, args):
     else:
         execute(eager_distributed_graph.serialize_as_JSON(), config.config['output_dir'],
                 output_script_path, args.output_optimized, args)
+
+
+def print_graph_statistics(graph):
+    total_nodes = graph.nodes
+    cat_nodes = [node for node in total_nodes if isinstance(node, Cat)]
+    eager_nodes = [node for node in total_nodes if isinstance(node, Eager)]
+    print("Total nodes after optimization:", len(total_nodes), file=sys.stderr)
+    print(" -- out of which:", file=sys.stderr)
+    print("Cat nodes:", len(cat_nodes), file=sys.stderr)
+    print("Eager nodes:", len(eager_nodes), file=sys.stderr)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
