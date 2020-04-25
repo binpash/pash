@@ -466,7 +466,7 @@ def add_eager_nodes(graph):
     # print("Source nodes:")
     # print(source_nodes)
 
-    eager_exec_path = '{}/{}'.format(config.DISH_TOP, config.config['eager_executable_path'])
+    eager_exec_path = '{}/{}'.format(system_config.DISH_TOP, config['eager_executable_path'])
     ## Generate a fileIdGen from a graph, that doesn't clash with the
     ## current graph fileIds.
     fileIdGen = graph.get_file_id_gen()
