@@ -155,7 +155,7 @@ def new_split(input_file, outputs, batch_size):
     return '{} "{}" {} {} {}'.format(split_bin, input_file, outputs[0], outputs[1], batch_size)
 
 def drain_stream():
-    script = '{}/{}'.format(config.DISH_TOP, config.config["drain_stream_executable_path"])
+    script = '{}/{}'.format(config.DISH_TOP, config.config['distr_planner']['drain_stream_executable_path'])
     return [script]
 
 def old_split(inputs, outputs, batch_size):
