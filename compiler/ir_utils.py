@@ -24,7 +24,19 @@ def format_arg_char(arg_char):
     elif (key == 'V'):
         return '${{{}}}'.format(val[2])
     elif (key == 'E'):
-        return '{}'.format(chr(val))
+        ## TODO: This is not right. I think the main reason for the
+        ## problems is the differences between bash and the posix
+        ## standard.
+        # print(" -- escape-debug -- ", val, chr(val))
+        non_escape_chars = [92, # \
+                            61, # =
+                            91, # [
+                            93, # ]
+                            45] # -
+        if(val in non_escape_chars):
+            return '{}'.format(chr(val))
+        else:
+            return '\{}'.format(chr(val))
     else:
         ## TODO: Make this correct
         return key
