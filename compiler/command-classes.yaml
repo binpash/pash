@@ -21,6 +21,7 @@ pure:
     - command: head
     - command: tail
     - command: awk
+    - command: fmt
 parallelizable_pure:
     - command: sort
     - command: bigrams_aux

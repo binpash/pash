@@ -291,7 +291,8 @@ def compile_node_for(ast_node, fileIdGen, config):
 
 def compile_arg_char(arg_char, fileIdGen, config):
     key, val = get_kv(arg_char)
-    if (key == 'C'):
+    if (key in ['C',   # Single character
+                'E']): # Escape
         return arg_char
     elif (key == 'B'):
         ## TODO: I probably have to redirect the input of the compiled
