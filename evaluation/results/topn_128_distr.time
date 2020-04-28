@@ -1,9 +1,9 @@
-Optimization time: 5349.348  ms
-Backend time: 16.619  ms
-Execution time: 455164.471  ms
-Compilation time: 24.261  ms
+Optimization time: 5378.625  ms
+Backend time: 24.629  ms
+Execution time: 457538.344  ms
+Compilation time: 23.441  ms
 
-real	7m40.942s
-user	176m38.782s
-sys	69m35.497s
-Files /tmp/seq_output and /tmp/distr_output/0 are identical
+real	7m43.359s
+user	176m0.469s
+sys	68m57.988s
+Files ../evaluation//intermediary//topn_seq_output and /tmp/distr_output/0 are identical

@@ -1,9 +1,9 @@
-Optimization time: 416.293  ms
-Backend time: 4.012  ms
-Execution time: 750003.229  ms
-Compilation time: 21.65  ms
+Optimization time: 400.044  ms
+Backend time: 7.038  ms
+Execution time: 752217.139  ms
+Compilation time: 20.752  ms
 
-real	12m30.812s
-user	40m21.566s
-sys	10m3.718s
-Files /tmp/seq_output and /tmp/distr_output/0 are identical
+real	12m33.009s
+user	40m24.085s
+sys	10m2.803s
+Files ../evaluation//intermediary//wf_seq_output and /tmp/distr_output/0 are identical

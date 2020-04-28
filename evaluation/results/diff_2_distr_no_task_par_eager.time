@@ -1,9 +1,9 @@
-Optimization time: 5.701  ms
-Backend time: 0.453  ms
-Execution time: 1163880.444  ms
-Compilation time: 19.237  ms
+Optimization time: 5.682  ms
+Backend time: 88.564  ms
+Execution time: 1159101.524  ms
+Compilation time: 94.836  ms
 
-real	19m24.267s
-user	45m19.632s
-sys	8m13.067s
+real	19m19.654s
+user	44m27.560s
+sys	8m44.894s
 Files ../evaluation//intermediary//diff_seq_output and /tmp/distr_output/0 are identical
