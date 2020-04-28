@@ -9,6 +9,7 @@ from definitions.ir.command import *
 from definitions.ir.resource import *
 from definitions.ir.nodes.cat import *
 
+from command_categories import *
 from union_find import *
 from ir_utils import *
 from util import *
@@ -72,111 +73,6 @@ def replace_file_arg_with_id(opt_or_channel, command, fileIdGen):
     else:
         return fid_or_resource
 
-
-## TODO: Make dictionary that holds command information (category,
-## inputs-outputs, etc...)
-
-## This function returns the input and output streams of a command.
-##
-## The input and output lists, contain tuples that refer to options:
-## e.g. ("option", 0) or "stdin", "stdout" when they refer to stdin or
-## stdout.
-##
-## At the moment it has just hardcoded knowledge of the inputs and
-## outputs of several commands.
-##
-## By default they are the stdin and the stdout of the node, and they
-## are only filled in for commands that we (or the developer) has
-## specified a list of input resources that also contains files in the
-## arguments.
-def find_command_input_output(command, options, stdin, stdout):
-    command_string = format_arg_chars(command)
-    # print("Command to categorize:", command_string)
-
-    assert(isinstance(command_string, str))
-
-    ## TODO: Make a proper search that returns the command outputs and
-    ## inputs. This is hardcoded and wrong
-    print(" -- Warning: Argument inputs and outputs for: {} are hardcoded and possibly wrong"
-          .format(command_string))
-
-    if (command_string == "cat"):
-        input_stream = [("option", i) for i in range(len(options))]
-        return (input_stream, ["stdout"], [])
-    elif (command_string == "comm"):
-        return comm_input_output(options, stdin, stdout)
-    elif (command_string == "diff"):
-        return diff_input_output(options, stdin, stdout)
-    else:
-        opt_indices = [("option", i) for i in range(len(options))]
-        return (["stdin"], ["stdout"], opt_indices)
-
-
-## This functions finds and returns a string representing the command category
-def find_command_category(command, options):
-    command_string = format_arg_chars(command)
-    print("Command to categorize:", command_string)
-
-    assert(isinstance(command_string, str))
-
-    ## TODO: Make a proper search that returns the command category
-    print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
-
-    # NOTE order of class declaration in definition file is important, as it
-    # dictates class precedence in the following search
-    for command_class, commands in config.command_classes.items():
-        command_list = list(map(get_command_from_definition, commands))
-
-        if (command_string in command_list
-            or command_string.split("/")[-1] in command_list):
-            return command_class
-
-    if command_string == 'comm':
-        return is_comm_pure(options)
-
-    return 'none'
-
-## TODO: This is clearly incomplete
-def is_comm_pure(options):
-    first_opt = format_arg_chars(options[0])
-    if(first_opt == "-13" or first_opt == "-23"):
-        return "stateless"
-    else:
-        return "none"
-
-def comm_input_output(options, stdin, stdout):
-    first_opt = format_arg_chars(options[0])
-    if(first_opt == "-13"):
-        input_opt = format_arg_chars(options[2])
-        if(input_opt == "-"):
-            in_stream = ["stdin"]
-            opt_indices = [("option", i) for i in range(len(options))]
-        else:
-            in_stream = [("option", 2)]
-            opt_indices = [("option", 0), ("option", 1)]
-        return (in_stream, ["stdout"], opt_indices)
-    elif (first_opt == "-23"):
-        input_opt = format_arg_chars(options[1])
-        if(input_opt == "-"):
-            in_stream = ["stdin"]
-            opt_indices = [("option", i) for i in range(len(options))]
-        else:
-            in_stream = [("option", 1)]
-            opt_indices = [("option", 0), ("option", 2)]
-        return (in_stream, ["stdout"], opt_indices)
-    else:
-        assert(false)
-
-## WARNING: This is not complete!! It doesn't handle - for stdin, or
-## directories, etc...
-##
-## TODO: Make this complete
-def diff_input_output(options, stdin, stdout):
-    in_stream = [("option", i) for i, option in enumerate(options)
-                 if not format_arg_chars(option).startswith('-')]
-    opt_indices = [("option", i) for i, option in enumerate(options)
-                   if format_arg_chars(option).startswith('-')]
-    return (in_stream, ["stdout"], opt_indices)
 
 def make_split_files(in_fid, fan_out, batch_size, fileIdGen):
     assert(fan_out > 1)

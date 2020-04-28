@@ -12,7 +12,7 @@ from json_ast import *
 from impl import execute
 from distr_back_end import distr_execute
 from util import *
-import config
+import config as system_config
 
 from definitions.ir.nodes.alt_bigram_g_reduce import *
 from definitions.ir.nodes.bigram_g_map import *
@@ -20,6 +20,7 @@ from definitions.ir.nodes.bigram_g_reduce import *
 from definitions.ir.nodes.sort_g_reduce import *
 from definitions.ir.nodes.eager import *
 
+config = {}
 ## There are two ways to enter the distributed planner, either by
 ## calling dish (which straight away calls the distributed planner),
 ## or by calling the distributed planner with the name of an ir file
@@ -34,19 +35,23 @@ def main():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("input_ir", help="the file containing the dataflow graph to be optimized and executed")
-    config.add_common_arguments(parser)
+    system_config.add_common_arguments(parser)
     args = parser.parse_args()
     return args
 
 def optimize_script(ir_filename, args):
-    optimization_start_time = datetime.now()
-    if not config.config:
-        config.load_config()
+    global config
+    if not system_config.config:
+        system_config.load_config()
+
+    config = system_config.config['distr_planner']
 
     print("Retrieving IR: {} ... ".format(ir_filename), end='')
-    print("Done!")
     with open(ir_filename, "rb") as ir_file:
         ir_node = pickle.load(ir_file)
+    print("Done!")
+
+    optimization_start_time = datetime.now()
 
     ## TODO: This is supposed to print the old ast for debugging
     ## purposes, however, the ast of a union of two IRs is sometimes
@@ -57,8 +62,8 @@ def optimize_script(ir_filename, args):
 
     # print(ir_node)
     # with cProfile.Profile() as pr:
-    distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config.config['fan_out'],
-                                                              config.config['batch_size'])
+    distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config['fan_out'],
+                                                              config['batch_size'])
     # pr.print_stats()
     # print(distributed_graph)
 
@@ -67,19 +72,31 @@ def optimize_script(ir_filename, args):
     else:
         eager_distributed_graph = distributed_graph
 
+    ## Print statistics of output nodes
+    print_graph_statistics(eager_distributed_graph)
     # print(eager_distributed_graph)
 
     optimization_end_time = datetime.now()
     print_time_delta("Optimization", optimization_start_time, optimization_end_time, args)
 
     ## Call the backend that executes the optimized dataflow graph
-    output_script_path = config.config['optimized_script_filename']
-    if(config.config['distr_backend']):
-        distr_execute(eager_distributed_graph, config.config['output_dir'], output_script_path,
-                      args.output_optimized, args.compile_optimize_only, config.config['nodes'])
+    output_script_path = config['optimized_script_filename']
+    if(config['distr_backend']):
+        distr_execute(eager_distributed_graph, config['output_dir'], output_script_path,
+                      args.output_optimized, args.compile_optimize_only, config['nodes'])
     else:
-        execute(eager_distributed_graph.serialize_as_JSON(), config.config['output_dir'],
+        execute(eager_distributed_graph.serialize_as_JSON(), config['output_dir'],
                 output_script_path, args.output_optimized, args)
+
+
+def print_graph_statistics(graph):
+    total_nodes = graph.nodes
+    cat_nodes = [node for node in total_nodes if isinstance(node, Cat)]
+    eager_nodes = [node for node in total_nodes if isinstance(node, Eager)]
+    print("Total nodes after optimization:", len(total_nodes), file=sys.stderr)
+    print(" -- out of which:", file=sys.stderr)
+    print("Cat nodes:", len(cat_nodes), file=sys.stderr)
+    print("Eager nodes:", len(eager_nodes), file=sys.stderr)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
@@ -461,11 +478,11 @@ def add_eager_nodes(graph):
     # print("Source nodes:")
     # print(source_nodes)
 
-    eager_exec_path = '{}/{}'.format(config.DISH_TOP, config.config['eager_executable_path'])
+    eager_exec_path = '{}/{}'.format(system_config.DISH_TOP, config['eager_executable_path'])
     ## Generate a fileIdGen from a graph, that doesn't clash with the
     ## current graph fileIds.
     fileIdGen = graph.get_file_id_gen()
-    intermediateFileIdGen = FileIdGen(0, config.config['eager_intermediate_prefix'])
+    intermediateFileIdGen = FileIdGen(0, config['eager_intermediate_prefix'])
 
     ## Get the next nodes
     workset = [node for source_node in source_nodes for node in graph.get_next_nodes(source_node)]
