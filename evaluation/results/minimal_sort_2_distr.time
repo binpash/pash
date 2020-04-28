@@ -1,9 +1,9 @@
-Optimization time: 2.166  ms
-Backend time: 0.396  ms
-Execution time: 717726.439  ms
-Compilation time: 18.193  ms
+Optimization time: 2.191  ms
+Backend time: 0.431  ms
+Execution time: 720013.837  ms
+Compilation time: 18.304  ms
 
-real	11m58.117s
-user	21m15.816s
-sys	3m36.992s
-Files /tmp/seq_output and /tmp/distr_output/0 are identical
+real	12m0.400s
+user	21m9.491s
+sys	3m38.091s
+Files ../evaluation//intermediary//minimal_sort_seq_output and /tmp/distr_output/0 are identical

@@ -1,9 +1,9 @@
-Optimization time: 29.539  ms
-Backend time: 0.891  ms
-Execution time: 286733.723  ms
-Compilation time: 18.917  ms
+Optimization time: 29.777  ms
+Backend time: 1.008  ms
+Execution time: 271717.323  ms
+Compilation time: 18.818  ms
 
-real	4m47.138s
-user	72m0.394s
-sys	0m37.752s
+real	4m32.120s
+user	71m25.255s
+sys	0m36.896s
 Files ../evaluation//intermediary//minimal_grep_seq_output and /tmp/distr_output/0 are identical

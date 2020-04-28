@@ -1,9 +1,24 @@
-Optimization time: 7534.084  ms
-Backend time: 21.19  ms
-Execution time: 513163.034  ms
-Compilation time: 36.927  ms
+Optimization time: 7610.636  ms
+Backend time: 28.356  ms
+Traceback (most recent call last):
+  File "/home/nikos/dish/compiler/distr_plan.py", line 549, in <module>
+    main()
+  File "/home/nikos/dish/compiler/distr_plan.py", line 32, in main
+    optimize_script(args.input_ir, args)
+  File "/home/nikos/dish/compiler/distr_plan.py", line 81, in optimize_script
+    execute(eager_distributed_graph.serialize_as_JSON(), config.config['output_dir'],
+  File "/home/nikos/dish/compiler/impl.py", line 27, in execute
+    exec_obj = subprocess.run(output_script, shell=True, executable="/bin/bash")
+  File "/usr/local/lib/python3.8/subprocess.py", line 489, in run
+    with Popen(*popenargs, **kwargs) as process:
+  File "/usr/local/lib/python3.8/subprocess.py", line 854, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "/usr/local/lib/python3.8/subprocess.py", line 1702, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+OSError: [Errno 7] Argument list too long: '/bin/bash'
+Compilation time: 33.4  ms
 
-real	8m41.160s
-user	101m20.780s
-sys	6m19.278s
+real	0m8.090s
+user	0m8.009s
+sys	0m0.068s
 Files ../evaluation//intermediary//set-diff_seq_output and /tmp/distr_output/0 are identical
