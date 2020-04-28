@@ -61,7 +61,7 @@ def default_input_output(options, stdin, stdout):
 ## Custom category functions for specific commands
 ##
 
-## TODO: This is clearly incomplete
+## TODO: All of these are possibly non-complete
 def is_comm_pure(options):
     first_opt = format_arg_chars(options[0])
     if(first_opt == "-13" or first_opt == "-23"):
@@ -69,6 +69,21 @@ def is_comm_pure(options):
     else:
         return "none"
 
+def is_tr_pure(options):
+    first_opt = format_arg_chars(options[0])
+    if(first_opt.startswith("-")
+       and "d" in first_opt):
+        return "pure"
+    else:
+        return "stateless"
+
+def is_sed_pure(options):
+    first_opt = format_arg_chars(options[0])
+    if(not first_opt.startswith("-")
+       and "d" in first_opt):
+        return "pure"
+    else:
+        return "stateless"
 
 ##
 ## Dictionaries with the custom functions
@@ -81,7 +96,9 @@ custom_command_input_outputs = {
 }
 
 custom_command_categories = {
-    "comm" : is_comm_pure
+    "comm" : is_comm_pure,
+    "tr"   : is_tr_pure,
+    "sed"  : is_sed_pure,
 }
 
 
@@ -108,10 +125,11 @@ def find_command_input_output(command, options, stdin, stdout):
 
     ## TODO: Make a proper search that returns the command outputs and
     ## inputs. This is hardcoded and wrong
-    print(" -- Warning: Argument inputs and outputs for: {} are hardcoded and possibly wrong"
-          .format(command_string))
+    # print(" -- Warning: Argument inputs and outputs for: {} are hardcoded and possibly wrong"
+    #       .format(command_string))
 
     if (command_string in custom_command_input_outputs):
+        print(" -- Warning: Overriding standard inputs-outputs for:", command_string)
         custom_io_fun = custom_command_input_outputs[command_string]
         return custom_io_fun(options, stdin, stdout)
     else:
@@ -128,7 +146,13 @@ def find_command_category(command, options):
     assert(isinstance(command_string, str))
 
     ## TODO: Make a proper search that returns the command category
-    print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
+    # print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
+
+    ## Override standard categories
+    if (command_string in custom_command_categories):
+        print(" -- Warning: Overriding standard category for:", command_string)
+        custom_category_fun = custom_command_categories[command_string]
+        return custom_category_fun(options)
 
     # NOTE order of class declaration in definition file is important, as it
     # dictates class precedence in the following search
@@ -138,11 +162,6 @@ def find_command_category(command, options):
         if (command_string in command_list
             or command_string.split("/")[-1] in command_list):
             return command_class
-
-    ## Override standard categories
-    if (command_string in custom_command_categories):
-        custom_category_fun = custom_command_categories[command_string]
-        return custom_category_fun(options)
 
     return('none')
 
