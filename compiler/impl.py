@@ -96,14 +96,24 @@ def shell_backend(graph_json, output_dir):
     return "\n".join(output_script_commands)
 
 def remove_fifos(fids):
+    ## We remove one fifo at a time because the big benchmarks crash
+    ## with "too many arguments" error
+    rms = []
     for fid in fids:
         assert(fid[0] == "#")
-    return 'rm -f {}'.format(" ".join(['"{}"'.format(fid) for fid in fids]))
+        rms.append('rm -f "{}"'.format(fid))
+    return "\n".join(rms)
+    # return 'rm -f {}'.format(" ".join(['"{}"'.format(fid) for fid in fids]))
 
 def make_fifos(fids):
+    ## We make one fifo at a time because the big benchmarks crash
+    ## with "too many arguments" error
+    mkfifos = []
     for fid in fids:
         assert(fid[0] == "#")
-    return 'mkfifo {}'.format(" ".join(['"{}"'.format(fid) for fid in fids]))
+        mkfifos.append('mkfifo "{}"'.format(fid))
+    return "\n".join(mkfifos)
+    # return 'mkfifo {}'.format(" ".join(['"{}"'.format(fid) for fid in fids]))
 
 def execute_node(node, shared_memory_dir):
     script = node_to_script(node, shared_memory_dir)
