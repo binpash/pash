@@ -1,0 +1,13 @@
+Total nodes after optimization: 55
+ -- out of which:
+Cat nodes: 1
+Eager nodes: 16
+Optimization time: 41.674  ms
+Backend time: 1.08  ms
+Execution time: 316.816  ms
+Compilation time: 18.894  ms
+
+real	0m0.737s
+user	0m2.474s
+sys	0m0.683s
+Files ../evaluation//intermediary//unix50_pipeline_027_seq_output and /tmp/distr_output/0 are identical
