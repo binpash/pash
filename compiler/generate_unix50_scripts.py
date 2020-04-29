@@ -6,6 +6,8 @@ unix50_dir = sys.argv[1]
 intermediaries_dir = sys.argv[2]
 input_size_increase = int(sys.argv[3])
 
+MAXIMUM_INPUT_SIZE = 1000000000 # 1 GB
+
 ## Make the generated inputs dir
 generated_inputs_dir = os.path.join(unix50_dir, "inputs")
 if not os.path.exists(generated_inputs_dir):
@@ -28,8 +30,11 @@ for input_file in input_file_names:
     with open(input_file_path) as file:
         input_file_data = file.read()
 
+    # print("Input:", input_file_path, "size:", len(input_file_data))
+    # print("Increased size:", input_size_increase * len(input_file_data))
+    num_iterations = min(input_size_increase, MAXIMUM_INPUT_SIZE // len(input_file_data))
     with open(generated_input_file_path, "w") as file:
-        for _ in range(input_size_increase):
+        for _ in range(num_iterations):
             file.write(input_file_data)
 
 ## Extract each pipeline of unix50
