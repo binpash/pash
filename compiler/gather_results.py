@@ -77,6 +77,13 @@ input_filename_sizes = {"1G": "1~GB",
                         "10M": "10~MB",
                         "100M": "100~MB"}
 
+def safe_zero_div(a, b):
+    if(b == 0):
+        print("WARNING: Division by zero")
+        return 0
+    else:
+        return a / b
+
 def get_experiment_files(experiment, results_dir):
     files = [f for f in os.listdir(results_dir) if f.startswith(experiment)]
     return [int(f.split(experiment + "_")[1].split("_")[0]) for f in files]
@@ -170,18 +177,18 @@ def collect_experiment_speedups(prefix, scaleup_numbers):
     # print(seq_numbers)
     # print(distr_numbers)
     # print(compile_numbers)
-    distr_speedup = [seq_numbers[i] / t for i, t in enumerate(distr_numbers)]
-    compile_distr_speedup = [seq_numbers[i] / (t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
+    distr_speedup = [safe_zero_div(seq_numbers[i], t) for i, t in enumerate(distr_numbers)]
+    compile_distr_speedup = [safe_zero_div(seq_numbers[i], t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
     return (distr_speedup, compile_distr_speedup)
 
 def collect_experiment_no_eager_speedups(prefix, scaleup_numbers):
     seq_numbers, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
     no_eager_distr_numbers, no_task_par_eager_distr_numbers = collect_experiment_no_eager_times(prefix, scaleup_numbers)
-    no_eager_distr_speedup = [seq_numbers[i] / t
+    no_eager_distr_speedup = [safe_zero_div(seq_numbers[i], t)
                               for i, t in enumerate(no_eager_distr_numbers)]
     # no_eager_compile_distr_speedup = [seq_numbers[i] / (t + no_eager_compile_numbers[i])
     #                                   for i, t in enumerate(no_eager_distr_numbers)]
-    no_task_par_eager_distr_speedup = [seq_numbers[i] / t
+    no_task_par_eager_distr_speedup = [safe_zero_div(seq_numbers[i], t)
                                        for i, t in enumerate(no_task_par_eager_distr_numbers)]
     return (no_eager_distr_speedup, no_task_par_eager_distr_speedup)
 
@@ -362,7 +369,7 @@ def collect_unix50_scaleup_times(unix50_results_dir):
     pipeline_numbers = sorted(list(set([f.split('_')[2] for f in files])))
     # print(pipeline_numbers)
 
-    scaleup_numbers = [2, 4, 10, 20, 50]
+    scaleup_numbers = [2, 16, 32]
 
     all_results = [collect_unix50_pipeline_scaleup_times(pipeline_number,
                                                          unix50_results_dir,
@@ -371,7 +378,7 @@ def collect_unix50_scaleup_times(unix50_results_dir):
     # print(all_results)
 
     ## Plot individual speedups
-    parallelism = 20
+    parallelism = 16
     individual_results = [distr_exec_speedup[scaleup_numbers.index(parallelism)]
                           for distr_exec_speedup, _ in all_results]
     print("Unix50 individual speedups for {} parallelism:".format(parallelism), individual_results)
