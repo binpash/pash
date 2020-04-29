@@ -19,8 +19,8 @@ n_inputs=(
     2
     # 4
     # 8
-    # 16
-    # 32
+    16
+    32
     # 64
 )
 
@@ -32,13 +32,15 @@ for unix50_pipeline in $(ls ${unix50_intermediary} | grep -v "_env" | cut -f 1 -
     for n_in in "${n_inputs[@]}"; do
 
         ## Generate the intermediary script
+        echo "Generating input and intermediary scripts... be patient..."
         python3 generate_microbenchmark_intermediary_scripts.py \
                 $unix50_intermediary $unix50_pipeline $n_in $intermediary_dir
 
         ## Execute the intermediary script
         ./execute_compile_evaluation_script.sh $exec_seq -e "${unix50_pipeline}" "${n_in}" "${results_subdir}"  > /dev/null
+        rm -f /tmp/eager*
+
         # Only execute the sequential once
         exec_seq=""
-
     done
 done
