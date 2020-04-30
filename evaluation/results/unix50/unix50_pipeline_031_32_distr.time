@@ -1,13 +1,119 @@
+kill: (52438): No such process
+kill: (52440): No such process
+kill: (52442): No such process
+kill: (52444): No such process
+kill: (52446): No such process
+kill: (52448): No such process
+kill: (52450): No such process
+kill: (52452): No such process
+kill: (52456): No such process
+kill: (52458): No such process
+kill: (52460): No such process
+kill: (52462): No such process
+kill: (52464): No such process
+kill: (52466): No such process
+kill: (52468): No such process
+kill: (52470): No such process
+kill: (52471): No such process
+kill: (52472): No such process
+kill: (52473): No such process
+kill: (52474): No such process
+kill: (52476): No such process
+kill: (52478): No such process
+kill: (52480): No such process
+kill: (52482): No such process
+kill: (52487): No such process
+kill: (52490): No such process
+kill: (52492): No such process
+kill: (52493): No such process
+kill: (52494): No such process
+kill: (52496): No such process
+kill: (52497): No such process
+kill: (52499): No such process
+kill: (52500): No such process
+kill: (52501): No such process
+kill: (52502): No such process
+kill: (52503): No such process
+kill: (52504): No such process
+kill: (52505): No such process
+kill: (52506): No such process
+kill: (52507): No such process
+kill: (52508): No such process
+kill: (52511): No such process
+kill: (52512): No such process
+kill: (52513): No such process
+kill: (52514): No such process
+kill: (52515): No such process
+kill: (52516): No such process
+kill: (52517): No such process
+kill: (52518): No such process
+kill: (52519): No such process
+kill: (52520): No such process
+kill: (52521): No such process
+kill: (52522): No such process
+kill: (52523): No such process
+kill: (52524): No such process
+kill: (52525): No such process
+kill: (52526): No such process
+kill: (52527): No such process
+kill: (52528): No such process
+kill: (52529): No such process
+kill: (52530): No such process
+kill: (52531): No such process
+kill: (52532): No such process
+kill: (52533): No such process
+kill: (52534): No such process
+kill: (52535): No such process
+kill: (52536): No such process
+kill: (52537): No such process
+kill: (52538): No such process
+kill: (52539): No such process
+kill: (52540): No such process
+kill: (52541): No such process
+kill: (52542): No such process
+kill: (52543): No such process
+kill: (52544): No such process
+kill: (52545): No such process
+kill: (52546): No such process
+kill: (52547): No such process
+kill: (52548): No such process
+kill: (52549): No such process
+kill: (52550): No such process
+kill: (52551): No such process
+kill: (52552): No such process
+kill: (52553): No such process
+kill: (52554): No such process
+kill: (52555): No such process
+kill: (52556): No such process
+kill: (52557): No such process
+kill: (52558): No such process
+kill: (52559): No such process
+kill: (52560): No such process
+kill: (52561): No such process
+kill: (52562): No such process
+kill: (52563): No such process
+kill: (52564): No such process
+kill: (52565): No such process
+kill: (52566): No such process
+kill: (52567): No such process
+kill: (52568): No such process
+kill: (52569): No such process
+kill: (52570): No such process
+kill: (52571): No such process
+kill: (52572): No such process
+kill: (52607): No such process
+kill: (52608): No such process
+kill: (52609): No such process
 Total nodes after optimization: 102
  -- out of which:
 Cat nodes: 1
 Eager nodes: 32
-Optimization time: 124.069  ms
-Backend time: 1.799  ms
-Execution time: 478.325  ms
-Compilation time: 19.096  ms
+Optimization time: 122.007  ms
+Backend time: 1.717  ms
+Execution time: 1531.338  ms
+Compilation time: 19.407  ms
 
-real	0m0.985s
-user	0m3.207s
-sys	0m13.533s
+real	0m2.033s
+user	0m4.093s
+sys	0m14.196s
 Files ../evaluation//intermediary//unix50_pipeline_031_seq_output and /tmp/distr_output/0 are identical
