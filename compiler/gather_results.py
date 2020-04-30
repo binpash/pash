@@ -403,6 +403,7 @@ def collect_unix50_scaleup_times(unix50_results_dir):
 
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
     ax2.set_ylabel('Sequential Time (s)', color=seq_time_color)
+    ax2.set_yscale("log")
     ax2.bar(ind+w, absolute_seq_times_s, width=2*w, align='center', color=seq_time_color)
     ax2.tick_params(axis='y', labelcolor=seq_time_color)
     # plt.yscale("log")
