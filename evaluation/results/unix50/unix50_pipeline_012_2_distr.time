@@ -1,8 +1,16 @@
-Optimization time: 2.332  ms
-Backend time: 0.295  ms
-Execution time: 248.028  ms
-Compilation time: 18.196  ms
+kill: (35807): No such process
+kill: (35808): No such process
+kill: (35809): No such process
+Total nodes after optimization: 9
+ -- out of which:
+Cat nodes: 1
+Eager nodes: 2
+Optimization time: 2.915  ms
+Backend time: 0.359  ms
+Execution time: 1844.839  ms
+Compilation time: 17.857  ms
 
-real	0m0.615s
-user	0m0.766s
-sys	0m0.196s
+real	0m2.219s
+user	0m5.733s
+sys	0m4.657s
+Files ../evaluation//intermediary//unix50_pipeline_012_seq_output and /tmp/distr_output/0 are identical

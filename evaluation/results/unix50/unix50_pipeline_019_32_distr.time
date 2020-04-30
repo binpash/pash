@@ -1,13 +1,178 @@
+kill: (42671): No such process
+kill: (42673): No such process
+kill: (42675): No such process
+kill: (42677): No such process
+kill: (42679): No such process
+kill: (42681): No such process
+kill: (42683): No such process
+kill: (42685): No such process
+kill: (42687): No such process
+kill: (42689): No such process
+kill: (42691): No such process
+kill: (42693): No such process
+kill: (42695): No such process
+kill: (42697): No such process
+kill: (42699): No such process
+kill: (42701): No such process
+kill: (42703): No such process
+kill: (42705): No such process
+kill: (42707): No such process
+kill: (42709): No such process
+kill: (42711): No such process
+kill: (42713): No such process
+kill: (42715): No such process
+kill: (42716): No such process
+kill: (42717): No such process
+kill: (42719): No such process
+kill: (42720): No such process
+kill: (42721): No such process
+kill: (42722): No such process
+kill: (42723): No such process
+kill: (42724): No such process
+kill: (42725): No such process
+kill: (42726): No such process
+kill: (42727): No such process
+kill: (42728): No such process
+kill: (42729): No such process
+kill: (42730): No such process
+kill: (42731): No such process
+kill: (42734): No such process
+kill: (42735): No such process
+kill: (42736): No such process
+kill: (42737): No such process
+kill: (42738): No such process
+kill: (42739): No such process
+kill: (42740): No such process
+kill: (42741): No such process
+kill: (42742): No such process
+kill: (42743): No such process
+kill: (42744): No such process
+kill: (42745): No such process
+kill: (42746): No such process
+kill: (42747): No such process
+kill: (42748): No such process
+kill: (42749): No such process
+kill: (42750): No such process
+kill: (42751): No such process
+kill: (42752): No such process
+kill: (42753): No such process
+kill: (42754): No such process
+kill: (42755): No such process
+kill: (42756): No such process
+kill: (42757): No such process
+kill: (42758): No such process
+kill: (42759): No such process
+kill: (42760): No such process
+kill: (42761): No such process
+kill: (42762): No such process
+kill: (42763): No such process
+kill: (42764): No such process
+kill: (42765): No such process
+kill: (42766): No such process
+kill: (42767): No such process
+kill: (42768): No such process
+kill: (42769): No such process
+kill: (42770): No such process
+kill: (42771): No such process
+kill: (42772): No such process
+kill: (42773): No such process
+kill: (42774): No such process
+kill: (42775): No such process
+kill: (42776): No such process
+kill: (42777): No such process
+kill: (42778): No such process
+kill: (42779): No such process
+kill: (42780): No such process
+kill: (42781): No such process
+kill: (42782): No such process
+kill: (42783): No such process
+kill: (42784): No such process
+kill: (42785): No such process
+kill: (42786): No such process
+kill: (42787): No such process
+kill: (42788): No such process
+kill: (42789): No such process
+kill: (42790): No such process
+kill: (42791): No such process
+kill: (42792): No such process
+kill: (42793): No such process
+kill: (42794): No such process
+kill: (42795): No such process
+kill: (42798): No such process
+kill: (42799): No such process
+kill: (42800): No such process
+kill: (42801): No such process
+kill: (42802): No such process
+kill: (42803): No such process
+kill: (42804): No such process
+kill: (42805): No such process
+kill: (42806): No such process
+kill: (42807): No such process
+kill: (42808): No such process
+kill: (42809): No such process
+kill: (42810): No such process
+kill: (42811): No such process
+kill: (42812): No such process
+kill: (42813): No such process
+kill: (42814): No such process
+kill: (42815): No such process
+kill: (42816): No such process
+kill: (42817): No such process
+kill: (42818): No such process
+kill: (42819): No such process
+kill: (42820): No such process
+kill: (42821): No such process
+kill: (42822): No such process
+kill: (42823): No such process
+kill: (42824): No such process
+kill: (42825): No such process
+kill: (42826): No such process
+kill: (42827): No such process
+kill: (42828): No such process
+kill: (42829): No such process
+kill: (42830): No such process
+kill: (42831): No such process
+kill: (42832): No such process
+kill: (42833): No such process
+kill: (42834): No such process
+kill: (42835): No such process
+kill: (42836): No such process
+kill: (42837): No such process
+kill: (42838): No such process
+kill: (42839): No such process
+kill: (42840): No such process
+kill: (42841): No such process
+kill: (42842): No such process
+kill: (42843): No such process
+kill: (42844): No such process
+kill: (42845): No such process
+kill: (42846): No such process
+kill: (42847): No such process
+kill: (42848): No such process
+kill: (42849): No such process
+kill: (42850): No such process
+kill: (42851): No such process
+kill: (42852): No such process
+kill: (42853): No such process
+kill: (42854): No such process
+kill: (42855): No such process
+kill: (42856): No such process
+kill: (42857): No such process
+kill: (42858): No such process
+kill: (42859): No such process
+kill: (42894): No such process
+kill: (42895): No such process
+kill: (42896): No such process
 Total nodes after optimization: 130
  -- out of which:
 Cat nodes: 1
 Eager nodes: 32
-Optimization time: 209.28  ms
-Backend time: 2.221  ms
-Execution time: 4836.755  ms
-Compilation time: 18.169  ms
+Optimization time: 210.122  ms
+Backend time: 1.979  ms
+Execution time: 2327.835  ms
+Compilation time: 19.863  ms
 
-real	0m5.431s
-user	0m45.156s
-sys	5m11.675s
+real	0m2.941s
+user	0m8.878s
+sys	0m46.149s
 Files ../evaluation//intermediary//unix50_pipeline_019_seq_output and /tmp/distr_output/0 are identical
