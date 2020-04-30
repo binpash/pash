@@ -3,8 +3,9 @@ mkfifo s1 s2
 ## This way of fixing the problem suffers from some issues.
 ##
 ## - First of all, gathering the children after the end of the graph
-##   seems to gather more than just the alive nodes. This could be
-##   solved by gathering all pids incrementally.
+##   seems to gather more than just the alive nodes. This could lead
+##   to killing some random pid in the system. This could potentially
+##   be solved by gathering all pids incrementally.
 ##
 ## - In addition, this way of getting the last pid does not work if
 ##   there is more than one output. (This is never the case in our

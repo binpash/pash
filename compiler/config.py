@@ -53,6 +53,12 @@ def add_common_arguments(parser):
     parser.add_argument("--no_eager",
                         help="disable eager nodes before merging nodes",
                         action="store_true")
+    parser.add_argument("--clean_up_graph",
+                        help="clean up the parallel dataflow graphs when the final node dies",
+                        action="store_true")
+    parser.add_argument("--drain_streams",
+                        help="drain up all streams instead of letting them hang (this is an alternative to --clean_up_graph",
+                        action="store_true")
     return
 
 def pass_common_arguments(dish_arguments):
@@ -65,6 +71,10 @@ def pass_common_arguments(dish_arguments):
         arguments.append(string_to_argument("--output_optimized"))
     if (dish_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
+    if (dish_arguments.clean_up_graph):
+        arguments.append(string_to_argument("--clean_up_graph"))
+    if (dish_arguments.drain_streams):
+        arguments.append(string_to_argument("--drain_streams"))
     return arguments
 
 # TODO load command class file path from config
