@@ -9,9 +9,10 @@ class Redirection():
         self.stream_id = redirection[1][1]
         self.file_arg = Arg(redirection[1][2])
 
+        # print(redirection)
         ## TODO: Support all redirections
-        assert(self.redir_type == 'File')
-        assert(self.redir_subtype == 'To')
+        # assert(self.redir_type == 'File')
+        # assert(self.redir_subtype == 'To')
 
     def __repr__(self):
         return '({}, {}, {}, {})'.format(self.redir_type,
