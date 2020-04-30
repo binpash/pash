@@ -8,7 +8,7 @@ import config
 def execute(graph_json, output_dir, output_script_name, output_optimized, args):
     backend_start_time = datetime.now()
 
-    output_script = shell_backend(graph_json, output_dir)
+    output_script = shell_backend(graph_json, output_dir, args)
 
     ## Output the optimized shell script for inspection
     if(output_optimized):
@@ -32,7 +32,9 @@ def execute(graph_json, output_dir, output_script_name, output_optimized, args):
 
 
 
-def shell_backend(graph_json, output_dir):
+def shell_backend(graph_json, output_dir, args):
+    clean_up_graph = args.clean_up_graph
+    drain_streams = args.drain_streams
     # print("Translate:")
     # print(graph_json)
     fids = graph_json["fids"]
@@ -57,7 +59,7 @@ def shell_backend(graph_json, output_dir):
     output_script_commands.append(mkfifo_com)
 
     ## Execute nodes
-    processes = [execute_node(node, shared_memory_dir) for node_id, node in nodes.items()]
+    processes = [execute_node(node, shared_memory_dir, drain_streams) for node_id, node in nodes.items()]
     output_script_commands += processes
 
     ## Collect outputs
@@ -75,13 +77,15 @@ def shell_backend(graph_json, output_dir):
         output_com = 'cat "{}" > {}/{} &'.format(out_fid, output_dir, i)
         output_script_commands.append(output_com)
 
-    ## Wait for all processes to die
-    # for proc in processes:
-    #     ret = proc.wait()
-    #     if(not ret == 0):
-    #         print("-- Error!", proc, ret)
-    # output_script_commands.append('for job in `jobs -p` \ndo \n echo $job\n wait $job \ndone')
-    output_script_commands.append('wait')
+    ## If the option to clean up the graph is enabled, we should only
+    ## wait on the final pid and kill the rest using SIGPIPE.
+    if (clean_up_graph):
+        output_script_commands.append('wait $!')
+        output_script_commands.append("ps --ppid $$ | awk '{print $1}'"
+                                      " | grep -E '[0-9]' | xargs -n 1 kill -SIGPIPE")
+    else:
+        ## Otherwise we just wait for all processes to die.
+        output_script_commands.append('wait')
 
     ## Kill pipes
     final_rm_com = remove_fifos(fids)
@@ -115,11 +119,11 @@ def make_fifos(fids):
     return "\n".join(mkfifos)
     # return 'mkfifo {}'.format(" ".join(['"{}"'.format(fid) for fid in fids]))
 
-def execute_node(node, shared_memory_dir):
-    script = node_to_script(node, shared_memory_dir)
+def execute_node(node, shared_memory_dir, drain_streams):
+    script = node_to_script(node, shared_memory_dir, drain_streams)
     return "{} &".format(script)
 
-def node_to_script(node, shared_memory_dir):
+def node_to_script(node, shared_memory_dir, drain_streams):
     # print(node)
 
     inputs = node["in"]
@@ -143,11 +147,14 @@ def node_to_script(node, shared_memory_dir):
             script.append("|")
 
         ## Add the command together with a drain stream
-        script.append("(")
-        script += command.split(" ")
-        script.append(";")
-        script += drain_stream()
-        script.append(")")
+        if (drain_streams):
+            script.append("(")
+            script += command.split(" ")
+            script.append(";")
+            script += drain_stream()
+            script.append(")")
+        else:
+            script += command.split(" ")
 
         if(len(outputs) == 1):
             script.append(">")
