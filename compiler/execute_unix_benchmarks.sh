@@ -11,16 +11,16 @@ mkdir -p $intermediary_dir
 mkdir -p "../evaluation/results/${results_subdir}/"
 
 ## Make inputs larger and generate scripts and their envs
-input_size_increase=10
+input_size_increase=100000000
 python3 generate_unix50_scripts.py $unix50_dir $unix50_intermediary $input_size_increase
 
 n_inputs=(
     # 1
     2
-    # 4
-    # 8
+    4
+    8
     16
-    32
+    # 32
     # 64
 )
 
