@@ -18,8 +18,10 @@ n_inputs=(
 
 name=distrotest
 
+## TODO: Fix redirections to be passed into dish
+
 # Execute the sequential script on the first run only
-exec_seq=""
+exec_seq="-s"
 for n_in in "${n_inputs[@]}"; do
 
     ## Generate the intermediary script
