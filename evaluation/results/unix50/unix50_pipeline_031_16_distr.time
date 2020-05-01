@@ -1,0 +1,61 @@
+kill: (106281): No such process
+kill: (106283): No such process
+kill: (106285): No such process
+kill: (106287): No such process
+kill: (106289): No such process
+kill: (106291): No such process
+kill: (106293): No such process
+kill: (106295): No such process
+kill: (106297): No such process
+kill: (106299): No such process
+kill: (106301): No such process
+kill: (106303): No such process
+kill: (106305): No such process
+kill: (106307): No such process
+kill: (106309): No such process
+kill: (106312): No such process
+kill: (106313): No such process
+kill: (106314): No such process
+kill: (106315): No such process
+kill: (106316): No such process
+kill: (106317): No such process
+kill: (106318): No such process
+kill: (106319): No such process
+kill: (106320): No such process
+kill: (106321): No such process
+kill: (106322): No such process
+kill: (106323): No such process
+kill: (106324): No such process
+kill: (106325): No such process
+kill: (106326): No such process
+kill: (106327): No such process
+kill: (106328): No such process
+kill: (106329): No such process
+kill: (106330): No such process
+kill: (106331): No such process
+kill: (106332): No such process
+kill: (106333): No such process
+kill: (106334): No such process
+kill: (106335): No such process
+kill: (106336): No such process
+kill: (106337): No such process
+kill: (106338): No such process
+kill: (106339): No such process
+kill: (106340): No such process
+kill: (106341): No such process
+kill: (106360): No such process
+kill: (106361): No such process
+kill: (106362): No such process
+Total nodes after optimization: 54
+ -- out of which:
+Cat nodes: 1
+Eager nodes: 16
+Optimization time: 41.585  ms
+Backend time: 0.949  ms
+Execution time: 809.064  ms
+Compilation time: 18.502  ms
+
+real	0m1.240s
+user	0m2.546s
+sys	0m3.158s
+Files ../evaluation//intermediary//unix50_pipeline_031_seq_output and /tmp/distr_output/0 are identical

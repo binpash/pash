@@ -19,20 +19,36 @@ bigram_aux_map()
     s2=$(mktemp -u)
     aux1=$(mktemp -u)
     aux2=$(mktemp -u)
+    temp=$(mktemp -u)
 
     mkfifo $s2
     mkfifo $aux1
     mkfifo $aux2
-    cat $IN |
-        tee $s2 $aux1 $aux2 |
-        tail +2 |
-        paste $s2 - > $OUT &
 
-    ## The goal of this is to write the first line of $IN in the $AUX_HEAD
-    ## stream and the last line of $IN in $AUX_TAIL
+    ## New way of doing it using an intermediate file. This is slow
+    ## but doesn't deadlock
+    cat $IN > $temp
 
-    cat $aux1 | ( head -n 1 > $AUX_HEAD; $DISH_TOP/evaluation/tools/drain_stream.sh ) &
-    tail -n 1 $aux2 > $AUX_TAIL &
+    cat $temp | head -n 1 > $AUX_HEAD &
+    cat $temp | tail -n 1 > $AUX_TAIL &
+    cat $temp | tail +2 | paste $temp - > $OUT &
+
+    # ## Old way of doing it
+    # cat $IN |
+    #     tee $s2 $aux1 $aux2 |
+    #     tail +2 |
+    #     paste $s2 - > $OUT &
+
+    # ## The goal of this is to write the first line of $IN in the $AUX_HEAD
+    # ## stream and the last line of $IN in $AUX_TAIL
+
+    # cat $aux1 | ( head -n 1 > $AUX_HEAD; $DISH_TOP/evaluation/tools/drain_stream.sh ) &
+    # # while IFS= read -r line
+    # # do
+    # #     old_line=$line
+    # # done < $aux2
+    # # echo "$old_line" > $AUX_TAIL
+    # ( tail -n 1 $aux2 > $AUX_TAIL; $DISH_TOP/evaluation/tools/drain_stream.sh ) &
 
     wait
 

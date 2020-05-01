@@ -53,8 +53,10 @@ class Command(Node):
         for redirection in self.redirections:
             ## Handle To redirections that have to do with stdout
             if (redirection.is_to_file() and redirection.is_for_stdout()):
-                print(redirection)
+                # print(redirection)
                 self.stdout.set_resource(redirection.file_arg)
+            else:
+                print("Warning -- Unhandled redirection:", redirection)
 
     def get_non_file_options(self):
         return [self.options[i] for _, i in self.opt_indices]

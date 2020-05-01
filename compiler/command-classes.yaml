@@ -11,6 +11,7 @@ stateless:
     - command: pandoc # html-block parallel
     - command: stem-words.js
     - command: xargs # unclear if all xargs are stateless
+    - command: distrotest_loop
 pure:
     - command: sort
     - command: wc

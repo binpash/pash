@@ -11,15 +11,15 @@ mkdir -p $intermediary_dir
 mkdir -p "../evaluation/results/${results_subdir}/"
 
 ## Make inputs larger and generate scripts and their envs
-input_size_increase=10
+input_size_increase=100000000
 python3 generate_unix50_scripts.py $unix50_dir $unix50_intermediary $input_size_increase
 
 n_inputs=(
     # 1
     2
-    # 4
-    # 8
-    # 16
+    4
+    8
+    16
     # 32
     # 64
 )
@@ -32,13 +32,15 @@ for unix50_pipeline in $(ls ${unix50_intermediary} | grep -v "_env" | cut -f 1 -
     for n_in in "${n_inputs[@]}"; do
 
         ## Generate the intermediary script
+        echo "Generating input and intermediary scripts... be patient..."
         python3 generate_microbenchmark_intermediary_scripts.py \
                 $unix50_intermediary $unix50_pipeline $n_in $intermediary_dir
 
         ## Execute the intermediary script
         ./execute_compile_evaluation_script.sh $exec_seq -e "${unix50_pipeline}" "${n_in}" "${results_subdir}"  > /dev/null
+        rm -f /tmp/eager*
+
         # Only execute the sequential once
         exec_seq=""
-
     done
 done

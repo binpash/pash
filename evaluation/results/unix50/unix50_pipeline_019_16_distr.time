@@ -1,0 +1,91 @@
+kill: (94705): No such process
+kill: (94707): No such process
+kill: (94709): No such process
+kill: (94711): No such process
+kill: (94713): No such process
+kill: (94715): No such process
+kill: (94717): No such process
+kill: (94719): No such process
+kill: (94721): No such process
+kill: (94723): No such process
+kill: (94725): No such process
+kill: (94727): No such process
+kill: (94729): No such process
+kill: (94731): No such process
+kill: (94733): No such process
+kill: (94736): No such process
+kill: (94737): No such process
+kill: (94738): No such process
+kill: (94739): No such process
+kill: (94740): No such process
+kill: (94741): No such process
+kill: (94742): No such process
+kill: (94743): No such process
+kill: (94744): No such process
+kill: (94745): No such process
+kill: (94746): No such process
+kill: (94747): No such process
+kill: (94748): No such process
+kill: (94749): No such process
+kill: (94750): No such process
+kill: (94751): No such process
+kill: (94752): No such process
+kill: (94753): No such process
+kill: (94754): No such process
+kill: (94755): No such process
+kill: (94756): No such process
+kill: (94757): No such process
+kill: (94758): No such process
+kill: (94759): No such process
+kill: (94760): No such process
+kill: (94761): No such process
+kill: (94762): No such process
+kill: (94763): No such process
+kill: (94764): No such process
+kill: (94765): No such process
+kill: (94768): No such process
+kill: (94769): No such process
+kill: (94770): No such process
+kill: (94771): No such process
+kill: (94772): No such process
+kill: (94773): No such process
+kill: (94774): No such process
+kill: (94775): No such process
+kill: (94776): No such process
+kill: (94777): No such process
+kill: (94778): No such process
+kill: (94779): No such process
+kill: (94780): No such process
+kill: (94781): No such process
+kill: (94782): No such process
+kill: (94783): No such process
+kill: (94784): No such process
+kill: (94785): No such process
+kill: (94786): No such process
+kill: (94787): No such process
+kill: (94788): No such process
+kill: (94789): No such process
+kill: (94790): No such process
+kill: (94791): No such process
+kill: (94792): No such process
+kill: (94793): No such process
+kill: (94794): No such process
+kill: (94795): No such process
+kill: (94796): No such process
+kill: (94797): No such process
+kill: (94816): No such process
+kill: (94817): No such process
+kill: (94818): No such process
+Total nodes after optimization: 66
+ -- out of which:
+Cat nodes: 1
+Eager nodes: 16
+Optimization time: 59.702  ms
+Backend time: 1.085  ms
+Execution time: 1015.238  ms
+Compilation time: 19.125  ms
+
+real	0m1.462s
+user	0m2.968s
+sys	0m6.187s
+Files ../evaluation//intermediary//unix50_pipeline_019_seq_output and /tmp/distr_output/0 are identical
