@@ -22,5 +22,5 @@ for n_in in "${n_inputs[@]}"; do
     seq_script="${eval_directory}scripts/sort.sh"
 
     echo "Executing sort with parallel flag for parallelism: ${n_in}"
-    { time /bin/bash $seq_script ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
+    { time /bin/bash $seq_script "${n_in}"; } 2> >(tee "${results}${experiment}_seq.time" >&2)
 done
