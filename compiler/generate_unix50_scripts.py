@@ -6,7 +6,7 @@ unix50_dir = sys.argv[1]
 intermediaries_dir = sys.argv[2]
 input_size_increase = int(sys.argv[3])
 
-MAXIMUM_INPUT_SIZE = 1000000000 # 1 GB
+MAXIMUM_INPUT_SIZE = 10000000000 # 10 GB
 
 ## Make the generated inputs dir
 generated_inputs_dir = os.path.join(unix50_dir, "inputs")
