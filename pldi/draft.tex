@@ -2229,7 +2229,21 @@ speedup of each pipeline separately is shown in
 \Cref{fig:unix50-individual}. The average\todo{/median} speedup is
 \todo{5.24}.
 
-%% The current average speedup includes unimplemented and small input pipelines.
+
+%% Breakdown of not ideal speedups in 8, 16 parallelism
+
+%% Head: 2, 19, 31
+%% Sort-bottleneck: 1, 3, 15, 16, 20, 33
+%% Non-parallelizable completely: 13 (awk-solved), 18 (awk), 24, 25, 26, 29, 30
+%% Cheap (non cpu intensive -- constant costs grow): 0, 4, 5, 6, 7, 8, 12, 14
+%% Long (task-based parallelism in sequential and context switches): 7, 8, 9, 10, 11, 12, 14, 21, 27, 28
+
+\kk{Out of all benchmarks, we have talked about the head and the
+  non-parallelizable ones in the paper. Maybe we also want to talk
+  about the long and the cheap ones. Also we might want to talk and
+  find out more about the sort bottleneck.}
+
+
 
 %% (OLD) Bad result descriptions:
 %%  2. Contains just a head -n 2, and then a cut.
@@ -2243,8 +2257,6 @@ speedup of each pipeline separately is shown in
 %%  22. Exactly the same problem as the above.
 %%  24. (Not sure: It seems that the computation is trivial)
 %%  32. TODO: Implement
-
-%% WARNING: Remember to fix `sed` and not have it be stateless in general.
 
 \begin{figure}[t]
   \centering

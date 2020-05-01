@@ -365,22 +365,8 @@ def aggregate_unix50_results(all_results, scaleup_numbers):
 
     return avg_distr_results
 
-def collect_unix50_scaleup_times(unix50_results_dir):
-    files = [f for f in os.listdir(unix50_results_dir)]
-    # print(files)
-    pipeline_numbers = sorted(list(set([f.split('_')[2] for f in files])))
-    # print(pipeline_numbers)
-
-    scaleup_numbers = [2, 16, 32]
-
-    all_results = [collect_unix50_pipeline_scaleup_times(pipeline_number,
-                                                         unix50_results_dir,
-                                                         scaleup_numbers)
-                   for pipeline_number in pipeline_numbers]
-    # print(all_results)
-
+def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     ## Plot individual speedups
-    parallelism = 16
     individual_results = [distr_exec_speedup[scaleup_numbers.index(parallelism)]
                           for distr_exec_speedup, _ in all_results]
     absolute_seq_times_s = [absolute_seq[scaleup_numbers.index(parallelism)] / 1000
@@ -413,6 +399,24 @@ def collect_unix50_scaleup_times(unix50_results_dir):
     plt.title("Unix50 Individual Speedups")
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "unix50_individual_speedups_{}.pdf".format(parallelism)))
+
+def collect_unix50_scaleup_times(unix50_results_dir):
+    files = [f for f in os.listdir(unix50_results_dir)]
+    # print(files)
+    pipeline_numbers = sorted(list(set([f.split('_')[2] for f in files])))
+    # print(pipeline_numbers)
+
+    scaleup_numbers = [2, 4, 8, 16]
+
+    all_results = [collect_unix50_pipeline_scaleup_times(pipeline_number,
+                                                         unix50_results_dir,
+                                                         scaleup_numbers)
+                   for pipeline_number in pipeline_numbers]
+    # print(all_results)
+
+    for parallelism in scaleup_numbers:
+        make_unix50_bar_chart(all_results, scaleup_numbers, parallelism)
+
 
     avg_results = aggregate_unix50_results(all_results, scaleup_numbers)
     print("Unix50 average speedup:", avg_results)
