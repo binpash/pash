@@ -2112,15 +2112,15 @@ Finally, \sys preserves the productivity of the shell:
   %% in another, the program expressed by the pipeline was the subject of a semester project in a graduate course on distributed systems~\cite{blinded} where student implementations ranged between 1--3\textbf{K} lines of code.
 
 Experiments were run on a %\todo{network of five workstations} connected by 1Gbps links: 
- machine with 512GB of memory and 128 $\times$ 2.1GHz Intel Xeon E5-2683 cores.
+  machine with 512GB of memory and 128 virtual (64 physical) $\times$ 2.1GHz Intel Xeon E5-2683 cores.
 %\todo{four smaller machines (\wkq), each with 4GB of memory and two 3.33GHz Intel Core Duo E8600 processors}.
 For our software setup, we use Debian 4.9.144-3.1, GNU Core-utils 8.30-3, GNU Bash 5.0.3(1)-, Python 3.7.3, and OCaml 4.05.0.
-Generally, no special configuration was made in hardware or software beyond disabling hyper-threading. % ---specifically, the network protocol stack was left unoptimized.
+Generally, no special configuration was made in hardware or software.
 All pipelines are set to (initially) read from and (finally) write to the file-system (except as otherwise stated).
 Whenever \ttt{curl} is part of a pipeline, it fetches data from a different physical host on the same network connected by 1Gbps links.
-More detailed setup and experiments, including the scripts, is included in the accompanying (anonymized) online repository.
+A more detailed description of the setup and experiments, including reproducible scripts, is included in the accompanying (anonymized) online repository.
 
-\subsection{Microbenchmarks: Shell One-liners}
+\subsection{Shell One-liners}
 \label{micro}
 
 \begin{figure*}[t]
@@ -2255,18 +2255,30 @@ Parallelism of 200$\times$ was explicitly chosen to show the \sys-internal overh
   \sys itself would never attempt a factor that is above the number of available compute nodes.
 The results show significant speedups, ranging between 4--70$\times$, depending on the distributability characteristics of individual pipelines.
 
-Interestingly, the overhead from \sys's analysis and generation phases remains collectively below 1s even for the high-scalability cases.
-We decided to push \sys's limits of these phases by synthesizing an artificial 1000-stage pipeline---a carefully-constructed, worst-case workload that is nowhere near the ones observed in practice. % (\S\ref{macro1}--\ref{macro3}).
-We find the resulting times quite acceptable: given two input arguments in the beginning of this pipeline, \sys takes 8.23s for parsing the script and 3.22s for analysis and optimization. Pushing the input file arguments to 100, \sys's runtime jumps to 5 minutes and 8 seconds to perform the analysis, producing an output dataflow graph that has more than 100 thousand edges in a file of about 11MB.
-
-
-\subsection{Unix50}
+\subsection{Unix50 from Bell Labs}
 \label{unix50}
 
-The goal of this subsection is to evaluate \sys on an existing set of
-unix pipelines found in the wild. \todo{Motivate why unix50 is a nice
+\heading{Workload}
+The goal of this subsection is to evaluate \sys on an existing set of \unix pipelines found in the wild.
+In a recent event celebrating \unix's 50-year legacy, Bell Labs created a set of challenges 
+
+solving challenges by
+
+ability to compose larger programs in versatile ways from smaller utility programs
+summarized by McIllroy's Unix philosophy memo.
+
+The ability to compose larger programs in versatile ways from smaller utility programs was a hallmark of the \unix design, and the game's levels are designed to stress that.
+
+
+This section reports on programs that were run unaltered---highlighting 
+These are pipelines that were run verbatim
+In cases where an obvious fix improves the pipeline's performance, we report on both \sys's original speedup and the one achieved by applying the fix.
+
+\todo{Motivate why unix50 is a nice
   set of pipelines.} We took the solutions for the unix50 from
 \todo{Ref} and we executed them \emph{without any modification} with
+
+\heading{Setup}
 \sys's parallelism set to \todo{16}. The input given to the pipelines
 was the test input from unix50 multiplied to reach \todo{10GBs}. The
 speedup of each pipeline separately is shown in
@@ -2352,13 +2364,7 @@ benefits. Finally, an important point that is reinforced from this
 experiment is that \sys doesn't lead to slowdown, even in cases where
 parallelism is not possible.
 
-\subsection{Comparison}
-
-\todo{Include comparison with Niko's speeduptest, with gnu-parallel,
-  with sort -parallel (and possibly other commands that have parallel
-  flags), and finally with Raftlib.}
-
-\subsection{Macro-benchmark: Weather Analysis}
+\subsection{Use Case: NOAA Weather Analysis}
 \label{macro1}
 
 To understand \sys better under a realistic workload, we use a large pipeline inspired by the introductory chapter of Hadoop's Definitive Guide~\cite[Chapter 2]{hadoop:15}.
@@ -2408,7 +2414,60 @@ A simpler pipeline that builds on built-in \unix primitives might be outperforme
 % It is worth noting
 % These are
 % 
+\subsection{Use Case: Wikipedia Web Indexing}
+\label{macro1}
 
+\subsection{Use Case: Docker Container Orchestration}
+\label{macro1}
+
+\subsection{Further Micro-benchmarks}
+
+The previous several subsections show substantial speedups without any developer effort on a variety of smaller and larger shell programs.
+In this section, we are interested in zooming into \sys's limits and how they compare with perceived upper bounds.
+These upper bounds are calculated through a variety of means which, while requiring vastly more developer effort than \sys, they are expected to yield significantly better performance.
+
+\heading{Parallelization Command}
+We compare \sys to \ttt{parallel}~\cite{Tange2011a}, a GNU utility for running other commands in parallel.
+In the first experiment, we leverage \ttt{parallel}'s \ttt{--jobs} flag and redirect input from a file to 
+Sequential execution takes \todo{XX}s, and \sys's parallel execution takes \todo{XX}s (speedup: \todo{XX}\%).
+We note that this pipeline is harsh for \sys, in that most of the overhead comes from a single command, masking \sys's improvements in other parts of the pipeline.
+
+% % https://github.com/marcelm/cutadapt/issues/157
+% \begin{lstlisting}[language=sh, numbers=none]
+% 	uniq | sort | parallel cutadapt-fastqc
+% \end{lstlisting}
+% % -S server01,server02 
+% % -u -j24 --env PATH,PYTHONPATH,cutadapt_parallel
+% % --workdir $PWD cutadapt_parallel {}
+
+There are a few possible ways one might attempt to use GNU \ttt{parallel} to parallelize this program, which compared to \sys lead to a combination of smaller performance improvements, incorrect execution with respect to the sequential program, and higher rewriting effort.
+Assuming a user knows that the bottleneck comes from the \ttt{XX} stage, they could attempt to use \ttt{parallel} there leading to a runtime of \todo{XX}s (speedup: \todo{XX}\%)---worse than surprisingly worse than.
+
+Alternatively, a user could (incorrectly) sprinkle \ttt{parallel} across the entire program.
+This is a common strategy as GNU \ttt{parallel} allows feeding an entire script for parallelization via \ttt{stdin}. 
+Doing this leads to \todo{XXX}\% performance improvements but severely incorrect results with respect to the sequential execution---a \ttt{diff} that averages about \todo{XX--XX} lines.
+\sys's conservative program transformations will not attempt parallelizing program sections that contain commands with unclear \todo{parallelizability} properties.
+	% or commands whose inputs depend on earlier outputs.
+GNU \ttt{parallel} is oblivious to command semantics, risking breaking program semantics as in this case.
+
+\heading{Manual Parallelization}
+In an attempt to highlight how a user might attempt to manually parallelize individual commands using the abstractions provided by the POSIX shell.
+The benefits depend on several factors, such as whether a command is I/O- or CPU-bound or whether but since 
+
+Merging is provided as Python programs
+
+\heading{Streaming Framework}
+In a different attempt to identify how far \sys is from ideal performance, we start from programs already written in a high-performance parallel framework and rewrite as shell programs.
+Raftlib~\cite{} is a C++ library enabling streaming and dataflow parallelism without the fault-tolerance overheads of distributed systems.
+We rewrite three Raftlib benchmarks---\ttt{wordcount}, \ttt{XX}, and \ttt{XX}---as shell scripts.
+% These benchmarks were relatively easy found relatively easy to port and match many of the workloads one would expect to see in the shell as shell pipelines.
+
+\heading{Graph Transformations}
+In the benchmarks, the overhead from \sys's analysis and generation phases remains collectively below $1s$ even for the high-scalability cases.
+We decided to push \sys's limits by constructing an artificial 1000-stage pipeline---a worst-case workload that is nowhere near the ones observed in practice.
+We find the resulting times quite acceptable:
+  given two input arguments in the beginning of this pipeline, \sys takes $8.23s$ for parsing the script and $3.22s$ for analysis and optimization.
+Pushing parallelization factor to $100\times$, \sys's runtime jumps to 5 minutes and 8 seconds to perform the analysis, producing an output dataflow graph that has more than 100 thousand edges in a file of about 11MB.
 
 \section{Related Work}
 \label{related}
