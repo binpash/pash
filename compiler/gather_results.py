@@ -181,6 +181,13 @@ def collect_experiment_speedups(prefix, scaleup_numbers):
     compile_distr_speedup = [safe_zero_div(seq_numbers[i], t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
     return (distr_speedup, compile_distr_speedup)
 
+def collect_baseline_experiment_speedups(prefix, scaleup_numbers):
+    seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, n))
+                   for n in scaleup_numbers]
+    speedup = [safe_zero_div(seq_numbers[0], t) for t in seq_numbers]
+    return speedup
+
+
 def collect_experiment_no_eager_speedups(prefix, scaleup_numbers):
     seq_numbers, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
     no_eager_distr_numbers, no_task_par_eager_distr_numbers = collect_experiment_no_eager_times(prefix, scaleup_numbers)
@@ -245,6 +252,34 @@ def collect_scaleup_times(experiment, results_dir):
     plt.savefig(os.path.join('../evaluation/plots', "{}_throughput_scaleup.pdf".format(experiment)))
 
     return output_diff
+
+def plot_sort_with_baseline(results_dir):
+
+    all_scaleup_numbers = [2, 4, 8, 16, 32, 64, 96, 128]
+    sort_prefix = '{}/minimal_sort_'.format(results_dir)
+    baseline_sort_prefix = '{}/baseline_sort/baseline_sort_'.format(results_dir)
+    sort_distr_speedup, _ = collect_experiment_speedups(sort_prefix, all_scaleup_numbers)
+    baseline_sort_distr_speedup = collect_baseline_experiment_speedups(baseline_sort_prefix,
+                                                                       [1] + all_scaleup_numbers)
+
+    # output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
+
+    fig, ax = plt.subplots()
+
+    ## Plot speedup
+    ax.set_ylabel('Speedup')
+    ax.set_xlabel('Level of Parallelism')
+    ax.plot(all_scaleup_numbers, sort_distr_speedup, '-o', linewidth=0.5, label='Pash')
+    ax.plot(all_scaleup_numbers, baseline_sort_distr_speedup[1:], '-p', linewidth=0.5, label='sort --parallel')
+
+    plt.xticks(all_scaleup_numbers[1:])
+    plt.legend(loc='lower right')
+    plt.title(pretty_names[experiment])
+
+
+    plt.tight_layout()
+    plt.savefig(os.path.join('../evaluation/plots', "sort_baseline_comparison_scaleup.pdf"))
+
 
 def collect_format_input_size(experiment):
     raw_size = collect_input_size(experiment)
@@ -456,5 +491,8 @@ generate_tex_table(experiments)
 
 ## Plot Unix50
 collect_unix50_scaleup_times(UNIX50_RESULTS)
+
+## Plot sort against sort with parallel-flag
+plot_sort_with_baseline(RESULTS)
 
 print("\n".join(diff_results))
