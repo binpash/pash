@@ -274,7 +274,7 @@ def plot_sort_with_baseline(results_dir):
 
     plt.xticks(all_scaleup_numbers[1:])
     plt.legend(loc='lower right')
-    plt.title(pretty_names[experiment])
+    plt.title("Comparison with sort --parallel")
 
 
     plt.tight_layout()
