@@ -55,14 +55,14 @@ structures = {"minimal_grep" : "$3\\times$\\tsta",
               "alt_bigrams" : "$3\\times$\\tsta, \\tpur",
               "spell" : "$4\\times\\tsta, 3\\times\\tpur$",
               "shortest_scripts" : "$5\\times\\tsta, 2\\times\\tpur$",
-              "diff" : "\\todo{TODO}",
+              "diff" : "$2\\times\\tsta, 3\\times\\tpur$",
               "set-diff" : "$5\\times\\tsta, 2\\times\\tpur$"}
 
 highlights = {"minimal_grep" : "complex NFA regex",
               "minimal_sort" : "\\tti{sort}ing",
               "wf" : "double \\tti{sort}, \\tti{uniq} reduction",
               "topn" : "double \\tti{sort}, \\tti{uniq} reduction",
-              "grep" : "$3\\times$\\tsta",
+              "grep" : "\todo{light computation}",
               "bigram" : "stream shifting and merging",
               "alt_bigrams" : "optimized version of bigrams",
               "spell" : "comparisons (\\tti{comm})",
@@ -256,7 +256,7 @@ def collect_scaleup_times(experiment, results_dir):
 def plot_sort_with_baseline(results_dir):
 
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64, 96, 128]
-    sort_prefix = '{}/minimal_sort_'.format(results_dir)
+    sort_prefix = '{}/sort_'.format(results_dir)
     baseline_sort_prefix = '{}/baseline_sort/baseline_sort_'.format(results_dir)
     sort_distr_speedup, _ = collect_experiment_speedups(sort_prefix, all_scaleup_numbers)
     baseline_sort_distr_speedup = collect_baseline_experiment_speedups(baseline_sort_prefix,
@@ -270,6 +270,14 @@ def plot_sort_with_baseline(results_dir):
     ax.set_ylabel('Speedup')
     ax.set_xlabel('Level of Parallelism')
     ax.plot(all_scaleup_numbers, sort_distr_speedup, '-o', linewidth=0.5, label='Pash')
+    ## Add the no eager times if they exist
+    try:
+        no_eager_distr_speedup, no_task_par_eager_distr_speedup = collect_experiment_no_eager_speedups(sort_prefix, all_scaleup_numbers)
+        ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='Pash - No Eager')
+        # ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Pash - Blocking Eager')
+    except:
+        pass
+
     ax.plot(all_scaleup_numbers, baseline_sort_distr_speedup[1:], '-p', linewidth=0.5, label='sort --parallel')
 
     plt.xticks(all_scaleup_numbers[1:])
