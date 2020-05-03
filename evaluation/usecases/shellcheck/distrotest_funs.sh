@@ -17,7 +17,7 @@ distrotest_loop()
         printf 'pulled. ' # >&3
 
         tmp=$(mktemp -d) || die "Can't make temp dir"
-        cp -r . "$tmp/" || die "Can't populate test dir"
+        cp -r "${SHELLCHECK_DIR}" "$tmp/" || die "Can't populate test dir"
         printf 'Result: ' # >&3
         < /dev/null docker run -v "$tmp:/mnt" "$distro" sh -c "
         $setup

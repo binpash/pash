@@ -32,7 +32,8 @@ def format_arg_char(arg_char):
                             61, # =
                             91, # [
                             93, # ]
-                            45] # -
+                            45, # -
+                            42] # *
         if(val in non_escape_chars):
             return '{}'.format(chr(val))
         else:
