@@ -1875,25 +1875,12 @@ and aggregates them accordingly.
 %
 
 
-\begin{figure}[t]
-\centering
-% https://docs.google.com/drawings/d/13Zx3a9bWi1RvpOgNCSiXirp9UOte-XuaJQBi_lmmPMc/edit
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_eager.pdf}}
-\caption{
-  \textbf{Eager primitive.}
-  Describe three problems:
-    (i) FIFOs alone cannot solve it as they’re blocking;
-    (ii) intermediary files alone lose data, as the consumer reaches EOF before the producer; and
-    (iii) writing to files + wait does not allow trask-based parallelism.
-  Eager is an elegant solution that solves the problem while remaining within
-  the model. Describe.
-}
-\vspace{-15pt}
-\label{fig:eager}
-\end{figure}
-
 \subsection{Implementation Nuggets}
 
+
+\heading{Overcoming Laziness}
+
+\noindent
 \TODO{Problem: Cat (and other commands that have multiple inputs) is
   not eager. Illustration: Show a parallel pipeline having a cat that
   gathers input somewhere (and a sort merge maybe). The way pipes
@@ -1911,63 +1898,91 @@ and aggregates them accordingly.
   is that they work for all possible commands with almost no overhead,
   without having to make each specific command eager.}
 
-\TODO{(This problem is a nice followup for the one above) Problem:
-  Dataflow graph termination. Illustration: Show the example of head
-  deadlock and explain that this is inherent behaviour in the shell.
-  (Solution: emptying pipelines or terminating processes) In order for
-  things to terminate gracefully, dish wraps all commands in order to
-  always consume all of their input by sending it down to
-  /dev/null. Warning: This means that all commands in the pipeline
-  must terminate gracefully if all of their output is consumed (if a
-  process dies unexpectedly, noone will consume its input. We leave
-  addressing that and other monitoring questions for future work). We
-  evaluate the overhead of emptying all outputs in section X.}
+\begin{figure}[t]
+\centering
+% https://docs.google.com/drawings/d/13Zx3a9bWi1RvpOgNCSiXirp9UOte-XuaJQBi_lmmPMc/edit
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_eager.pdf}}
+\caption{
+  \textbf{Eager primitive.}
+  Describe three problems:
+    (i) FIFOs alone cannot solve it as they’re blocking;
+    (ii) intermediary files alone lose data, as the consumer reaches EOF before the producer; and
+    (iii) writing to files + wait does not allow trask-based parallelism.
+  Eager is an elegant solution that solves the problem while remaining within
+  the model. Describe.
+}
+\vspace{-15pt}
+\label{fig:eager}
+\end{figure}
 
-\TODO{Problem: Pipeline width shrinks after parallel pure
-  commands. Solution: Split node that resplits its input to multiple
-  files in sequence (to preserve the model semantics). We should
-  probably evaluate that too.}
 
-\paragraph{Merge and Split Implementation}
-%
-It is common in the dataflow graph for a node to have many incoming
-edges or many outgoing edges (when all but the last outgoing edges
-are bounded). However some nodes, might only read their input from one
-source (e.g. stdin). In this case, the distributed implementation
-needs to concatenate input files (or conversely split output
-files).
+\heading{Readjusting Graph Width}
+
+\noindent
+\TODO{Problem: Pipeline width shrinks after pure commands. Solution:
+  Split node that resplits its input to multiple files in sequence (to
+  preserve the model semantics).}
+
+
+%% Old and obsolete
+
+%% \noindent
+%% It is common in the dataflow graph for a node to have many incoming
+%% edges or many outgoing edges (when all but the last outgoing edges
+%% are bounded). However some nodes, might only read their input from one
+%% source (e.g. stdin). In this case, the distributed implementation
+%% needs to concatenate input files (or conversely split output
+%% files).
 %
 %% \tr{Show an example graph! of cat | tr | sort. The command in the
 %%   middle must only take input from one file (maybe just stdin).}
 %
-We address this issue using primitive shell constructs for file
-manipulation. More concretely a merger can be implemented by means of a simple
-\ttt{cat}. Given a set of input files \ttt{in1, in2, ...} and an
-output file \ttt{out}, a merger can be implemented as:
+%% We address this issue using primitive shell constructs for file
+%% manipulation. More concretely a merger can be implemented by means of a simple
+%% \ttt{cat}. Given a set of input files \ttt{in1, in2, ...} and an
+%% output file \ttt{out}, a merger can be implemented as:
 
-\begin{lstlisting}[language=sh, numbers=none]
- cat $in1 $in2 ... > $out
-\end{lstlisting}
+%% \begin{lstlisting}[language=sh, numbers=none]
+%%  cat $in1 $in2 ... > $out
+%% \end{lstlisting}
 
-\noindent
-On the other hand, given an input file \ttt{in} that is a FIFO pipe,
-and two output files \ttt{out1, out2} the first of which is bounded
-to \ttt{|N} lines, a 2-splitter can be implemented as:
+%% \noindent
+%% On the other hand, given an input file \ttt{in} that is a FIFO pipe,
+%% and two output files \ttt{out1, out2} the first of which is bounded
+%% to \ttt{|N} lines, a 2-splitter can be implemented as:
 
-\begin{lstlisting}[language=sh, numbers=none]
-  tee >(head -n $N > $temp1;
-        dd of=/dev/null > /dev/null 2>&1 &
-        cat $temp1 > $out1) |
-       (tail -n +${N+1} > $out2;
-        dd of=/dev/null > /dev/null 2>&1)
-\end{lstlisting}
+%% \begin{lstlisting}[language=sh, numbers=none]
+%%   tee >(head -n $N > $temp1;
+%%         dd of=/dev/null > /dev/null 2>&1 &
+%%         cat $temp1 > $out1) |
+%%        (tail -n +${N+1} > $out2;
+%%         dd of=/dev/null > /dev/null 2>&1)
+%% \end{lstlisting}
  %% head -n $N $in > $out1 ; cat $in > $out2
 
-\noindent
-Using the 2-splitter as a building block, a pipe can be split to
-arbitrarily many different pipes.
+%% \noindent
+%% Using the 2-splitter as a building block, a pipe can be split to
+%% arbitrarily many different pipes.
+
+\TODO{Talk about eagerness in split and how we needed to add eager
+  nodes to n-1 outputs.}
+
+
 
 \heading{Dangling FIFOs and Zombie Producers}
+
+%% \TODO{(This problem is a nice followup for the one above) Problem:
+%%   Dataflow graph termination. Illustration: Show the example of head
+%%   deadlock and explain that this is inherent behaviour in the shell.
+%%   (Solution: emptying pipelines or terminating processes) In order for
+%%   things to terminate gracefully, dish wraps all commands in order to
+%%   always consume all of their input by sending it down to
+%%   /dev/null. Warning: This means that all commands in the pipeline
+%%   must terminate gracefully if all of their output is consumed (if a
+%%   process dies unexpectedly, noone will consume its input. We leave
+%%   addressing that and other monitoring questions for future work). We
+%%   evaluate the overhead of emptying all outputs in section X.}
+
 % \nv{I think all of these titles should be the problem/challenge, not the solution}
 % A process writing to a pipe needs to be notified when its consumer exits early before consuming all its output.
 Under normal operation, a producer commonly exits after it has produced and sent all of its output to a pipe.
@@ -1994,11 +2009,14 @@ As a result, the second \ttt{cat} never receives a \ttt{PIPE} signal that its co
 This, in turn, leaves the second \ttt{cat} unable to make process, both (i) blocked unable to write output, and (ii) unaware that its consumer has exited.
 Coupled with \ttt{wait} at the end, the entire snippet reaches a deadlock.
 
-To solve this problem, \sys emits cleanup logic that operates from the end of the pipeline and towards its start.
-The emitted code first gathers the ID of the last process and passes it as a parameter to \ttt{wait}; 
-  this causes \ttt{wait} to block only on the last consumer of the pipeline.
-Right after \ttt{wait}, \sys inserts a routine that delivers \ttt{PIPE} signals to any remaining processes upstream.
-This epilogue is repeated for every \todo{merge/join} point in the transformed pipeline.
+To solve this problem, \sys emits cleanup logic that operates from the
+end of the pipeline and towards its start.  The emitted code first
+gathers the IDs of the output processes and passes them as parameters
+to \ttt{wait}; this causes \ttt{wait} to block only on the output
+producers of the dataflow graph.  Right after \ttt{wait}, \sys inserts
+a routine that delivers \ttt{PIPE} signals to any remaining processes
+upstream.  This epilogue is repeated for every \todo{merge/join} point
+in the transformed pipeline \kk{I don't understand the final sentence}.
 % Earlier: need to define split (fork?) and merge (join?) points; this should be "up to next merge point upstream"
 
 % not receiving an out-of-band signal about that.
