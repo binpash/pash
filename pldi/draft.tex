@@ -2014,6 +2014,12 @@ upstream.  This epilogue is repeated for every \todo{merge/join} point
 in the transformed pipeline \kk{I don't understand the final sentence}.
 % Earlier: need to define split (fork?) and merge (join?) points; this should be "up to next merge point upstream"
 
+\kk{We have to remember to say that for this to work, all nodes in the
+  graph must always open their outputs! If not, then this technique
+  doesn't work, and we have to monitor if any node dies to do
+  something with it. At the moment we ensure that by doing that in our
+  nodes, and by assuming that all nodes that we handle do that.}
+
 % not receiving an out-of-band signal about that.
 % never terminating, but 
 % never terminate while the entire pipeline is waiting for 
