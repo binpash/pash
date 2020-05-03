@@ -3,10 +3,14 @@
 bigrams_aux()
 {
     ( mkfifo s2 > /dev/null ) ;
+    ( mkfifo s3 > /dev/null ) ;
+
+    sed '$d' s2 > s3 &
     tee s2 |
         tail +2 |
-        paste s2 -
+        paste s3 -
     rm s2
+    rm s3
 }
 
 bigram_aux_map()
@@ -19,19 +23,22 @@ bigram_aux_map()
     s2=$(mktemp -u)
     aux1=$(mktemp -u)
     aux2=$(mktemp -u)
+    aux3=$(mktemp -u)
     temp=$(mktemp -u)
 
     mkfifo $s2
     mkfifo $aux1
     mkfifo $aux2
+    mkfifo $aux3
 
     ## New way of doing it using an intermediate file. This is slow
     ## but doesn't deadlock
     cat $IN > $temp
 
+    sed '$d' $temp > $aux3 &
     cat $temp | head -n 1 > $AUX_HEAD &
     cat $temp | tail -n 1 > $AUX_TAIL &
-    cat $temp | tail +2 | paste $temp - > $OUT &
+    cat $temp | tail +2 | paste $aux3 - > $OUT &
 
     # ## Old way of doing it
     # cat $IN |
@@ -52,9 +59,11 @@ bigram_aux_map()
 
     wait
 
+    rm $temp
     rm $s2
     rm $aux1
     rm $aux2
+    rm $aux3
 }
 
 bigram_aux_reduce()
