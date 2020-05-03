@@ -34,3 +34,19 @@ for n_in in "${n_inputs[@]}"; do
     echo "Executing sort with parallel flag for parallelism: ${n_in}"
     { time /bin/bash $exec_script "${n_in}" > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
 done
+
+for n_in in "${n_inputs[@]}"; do
+    experiment="baseline_sort_opt_${n_in}"
+    exec_script="${intermediary_dir}sort-opt_${n_in}_seq.sh"
+    env_file="${intermediary_dir}sort-opt_${n_in}_env.sh"
+
+    echo "Generating input and intermediary scripts... be patient..."
+    python3 generate_microbenchmark_intermediary_scripts.py \
+            $script_dir "sort-opt" $n_in $intermediary_dir
+
+    . $env_file
+    export $(cut -d= -f1 $env_file)
+
+    echo "Executing sort with parallel flag for parallelism: ${n_in}"
+    { time /bin/bash $exec_script "${n_in}" > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
+done
