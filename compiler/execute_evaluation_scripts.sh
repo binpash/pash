@@ -33,7 +33,7 @@ microbenchmarks=(
     shortest_scripts     # PLDI
     # micro_1000           # PLDI
 
-    # bigrams              # TODO: Fix bug. Run with good split.
+    bigrams              # TODO: Fix bug. Run with good split.
     alt_bigrams          # Optimized version of Bigrams
     diff                 # TODO: Optimize diff
     set-diff             # TODO: Handle redirection after reduce
@@ -42,7 +42,7 @@ microbenchmarks=(
 
     ## Tests
     # deadlock_test          # Test to check deadlock prevention using drain_stream
-    double_sort            # Checks maximum peformance gains from split
+    # double_sort            # Checks maximum peformance gains from split
 
     ## TODO: Add some more for OSDI
     # wc                   # Extremely simple

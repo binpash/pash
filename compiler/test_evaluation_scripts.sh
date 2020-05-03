@@ -23,7 +23,7 @@ microbenchmarks=(
     spell                # PLDI
     shortest_scripts     # PLDI
 
-    # bigrams              # TODO: Fix bug. Run with good split.
+    bigrams              # TODO: Fix bug. Run with good split.
     alt_bigrams          # Optimized version of Bigrams
     diff                 # TODO: Optimize diff
     set-diff             # TODO: Handle redirection after reduce
