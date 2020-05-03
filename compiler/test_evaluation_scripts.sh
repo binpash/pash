@@ -32,6 +32,7 @@ microbenchmarks=(
 
     ## Tests
     deadlock_test        # Test to check deadlock prevention using drain_stream
+    double_sort          # Checks maximum peformance gains from split
     # for_loop_simple      # BUG: Output is not the same since it is overwritten
 )
 
