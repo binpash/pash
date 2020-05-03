@@ -20,13 +20,14 @@ shift "$(( OPTIND - 1 ))"
 microbenchmark=$1
 n_in=$2
 results_subdir=$3
+intermediary_prefix=$4
 
 experiment="${microbenchmark}_${n_in}"
 
 DISH_TOP=${DISH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 
 eval_directory="../evaluation/"
-directory="${eval_directory}/intermediary/"
+directory="${eval_directory}/${4}intermediary/"
 results="${eval_directory}results/${results_subdir}/"
 prefix="${directory}${experiment}"
 env_file="${prefix}_env.sh"
