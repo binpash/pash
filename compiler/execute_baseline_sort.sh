@@ -21,6 +21,7 @@ n_inputs=(
 
 for n_in in "${n_inputs[@]}"; do
     experiment="baseline_sort_${n_in}"
+    echo "$experiment"
     exec_script="${intermediary_dir}sort_${n_in}_seq.sh"
     env_file="${intermediary_dir}sort_${n_in}_env.sh"
 
@@ -37,6 +38,7 @@ done
 
 for n_in in "${n_inputs[@]}"; do
     experiment="baseline_sort_opt_${n_in}"
+    echo "$experiment"
     exec_script="${intermediary_dir}sort-opt_${n_in}_seq.sh"
     env_file="${intermediary_dir}sort-opt_${n_in}_env.sh"
 
