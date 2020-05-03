@@ -11,6 +11,15 @@ The repository contains:
 * [scripts](./scripts): Auxiliary scripts
 * [tests](./tests): Contains a set of tests to check that everything works
 
+# Tests
+
+To execute the current tests (which are all the one-liners) simply run the following:
+
+```sh
+cd compiler
+./test_evaluation_scripts.sh
+```
+
 # High level Overview
 
 Figure containing high level overview of the Dish workflow:
