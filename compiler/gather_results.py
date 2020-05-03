@@ -75,7 +75,8 @@ input_filename_sizes = {"1G": "1~GB",
                         "100G": "100~GB",
                         "1M": "1~MB",
                         "10M": "10~MB",
-                        "100M": "100~MB"}
+                        "100M": "100~MB",
+                        "all_cmds_x1000": "85~MB"}
 
 def safe_zero_div(a, b):
     if(b == 0):
