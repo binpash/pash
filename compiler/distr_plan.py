@@ -144,7 +144,11 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     while (len(workset) > 0):
 
         curr = workset.pop(0)
-        if(not curr in visited):
+        ## Node must not be in visited, but must also be in the graph
+        ## (because it might have been deleted after some
+        ## optimization).
+        if(not curr in visited
+           and curr in graph.nodes):
             visited.add(curr)
             next_nodes = graph.get_next_nodes(curr)
             workset += next_nodes
@@ -157,16 +161,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
             # print(curr, next_nodes)
             # assert(len(next_nodes) <= 1)
 
-            ## If the current command is a split file, then we will
-            ## recursively add a huge amount of splits, as several nodes
-            ## are revisited due to the suboptimal adding of all new nodes
-            ## to the workset.
-            ##
-            ## TODO: Remove hardcoded
-            if(not str(curr.command) == "split_file"):
-                for next_node in next_nodes:
-                    graph = split_command_input(next_node, curr, graph, fileIdGen, fan_out, batch_size)
-            graph, new_nodes = parallelize_cat(curr, graph, fileIdGen)
+            graph, new_nodes = parallelize_cat(curr, graph, fileIdGen, fan_out, batch_size)
 
             ## Add new nodes to the workset depending on the optimization.
             ##
@@ -177,6 +172,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
             ##
             ## TODO: Fix that
             if(len(new_nodes) > 0):
+                # print("New nodes:", new_nodes)
                 workset += new_nodes
 
     return graph
@@ -195,10 +191,13 @@ def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, batch_si
     ## TODO: Change the test to check if curr is instance of Cat and
     ## not check its name.
     number_of_previous_nodes = curr.get_number_of_inputs()
-    if (curr.category in ["stateless", "pure"] and
-        not str(curr.command) == "cat" and
-        number_of_previous_nodes == 1 and
-        fan_out > 1):
+    assert(curr.category == "stateless" or curr.is_pure_parallelizable())
+    # curr.category in ["stateless", "pure"] and
+
+    new_cat = None
+    if (not isinstance(curr, Cat)
+        and number_of_previous_nodes == 1
+        and fan_out > 1):
         ## If the previous command is either a cat with one input, or
         ## if it something else
         if(not isinstance(previous_node, Cat) or
@@ -245,43 +244,64 @@ def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, batch_si
                 chunk = curr.find_file_id_in_in_stream(curr_input_file_id)
                 curr.set_file_id(chunk, new_input_file_id)
                 graph.remove_node(previous_node)
-    return graph
+    return (graph, new_cat)
 
 ## If the current command is a cat, and is followed by a node that
 ## is either stateless or pure parallelizable, commute the cat
 ## after the node.
-def parallelize_cat(curr, graph, fileIdGen):
+def parallelize_cat(curr, graph, fileIdGen, fan_out, batch_size):
     new_nodes_for_workset = []
-    if(isinstance(curr, Cat)):
-        next_nodes_and_edges = graph.get_next_nodes_and_edges(curr)
 
-        ## Cat can only have one output
-        assert(len(next_nodes_and_edges) <= 1)
-        if(len(next_nodes_and_edges) == 1):
-            next_node = next_nodes_and_edges[0][0]
+    ## Get next nodes in the graph
+    next_nodes_and_edges = graph.get_next_nodes_and_edges(curr)
 
-            ## Get cat inputs and output. Note that there is only one
-            ## output.
-            cat_input_file_ids = curr.get_input_file_ids()
-            cat_output_file_id = next_nodes_and_edges[0][1]
-            graph, new_nodes = parallelize_command(next_node, cat_input_file_ids,
-                                                   cat_output_file_id, graph, fileIdGen)
-            new_nodes_for_workset += new_nodes
+    ## If there is only one node afterwards (meaning that we reached a
+    ## thin part of the graph), we need to try to parallelize
+    if(len(next_nodes_and_edges) == 1):
+        next_node = next_nodes_and_edges[0][0]
 
-            ## If there are no new nodes, it means that no
-            ## parallelization happened. If there were, we should
-            ## delete the original cat.
-            if(len(new_nodes) > 0):
-                graph.remove_node(curr)
+        ## If the next node can be parallelized, then we should try to
+        ## parallelize
+        if(next_node.category == "stateless" or next_node.is_pure_parallelizable()):
+
+            ## If the current node is not a cat, it means that we need
+            ## to generate a cat using a split
+            if(not isinstance(curr, Cat)):
+                graph, new_cat = split_command_input(next_node, curr, graph, fileIdGen, fan_out, batch_size)
+                if(not new_cat is None):
+                    curr = new_cat
+                    next_nodes_and_edges = graph.get_next_nodes_and_edges(curr)
+                    assert(len(next_nodes_and_edges) == 1)
+                    next_node = next_nodes_and_edges[0][0]
+
+            ## If curr is cat, it means that split suceeded, or it was
+            ## already a cat. In any case, we can proceed with the
+            ## parallelization
+            if(isinstance(curr, Cat)):
+
+                ## Get cat inputs and output. Note that there is only one
+                ## output.
+                cat_input_file_ids = curr.get_input_file_ids()
+                cat_output_file_id = next_nodes_and_edges[0][1]
+                graph, new_nodes = parallelize_command(next_node, cat_input_file_ids,
+                                                       cat_output_file_id, graph, fileIdGen)
+                new_nodes_for_workset += new_nodes
+
+                ## If there are no new nodes, it means that no
+                ## parallelization happened. If there were, we should
+                ## delete the original cat.
+                if(len(new_nodes) > 0):
+                    graph.remove_node(curr)
 
     return graph, new_nodes_for_workset
 
+
 def parallelize_command(curr, new_input_file_ids, old_input_file_id, graph, fileIdGen):
+    assert(curr.category == "stateless" or curr.is_pure_parallelizable())
     ## If the next command is stateless or pure parallelizable and has more
     ## than one inputs, it can be parallelized.
     new_nodes = []
-    if ((curr.category == "stateless" or curr.is_pure_parallelizable())
-        and len(new_input_file_ids) > 1):
+    if (len(new_input_file_ids) > 1):
 
         ## We assume that every stateless and pure command has
         ## one output_file_id for now.
