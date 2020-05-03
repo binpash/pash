@@ -540,7 +540,6 @@ def add_eager_nodes(graph):
             if (str(curr.command) == "split_file"):
                 curr_output_file_ids = curr.get_output_file_ids()
                 output_file_ids_to_eager = curr_output_file_ids[:-1]
-                print(output_file_ids_to_eager)
 
                 new_output_file_ids = [fileIdGen.next_file_id()
                                        for _ in output_file_ids_to_eager]
