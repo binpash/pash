@@ -2265,7 +2265,7 @@ The results show significant speedups, ranging between 4--70$\times$, depending 
 The goal of this subsection is to evaluate \sys on an existing set of \unix pipelines found in the wild.
 
 \heading{Programs}
-In a recent event celebrating \unix's 50-year legacy, Bell Labs created a set of challenges 
+In a recent event celebrating \unix's 50-year legacy, Bell Labs created a set of challenges~\cite{unix50}.
 
 solving challenges by
 
@@ -2484,12 +2484,13 @@ In this section, we are interested in zooming into \sys's limits and how they co
 These upper bounds are calculated through a variety of means which, while requiring vastly more developer effort than \sys, they are expected to yield significantly better performance.
 
 \heading{Parallelization Command}
-We compare \sys to \ttt{parallel}~\cite{Tange2011a}, a GNU utility for running other commands in parallel.
+We compare \sys to \ttt{parallel} (v.20160422), a GNU utility for running other commands in parallel~\cite{Tange2011a}.
 In the first experiment, we leverage \ttt{parallel}'s \ttt{--jobs} flag and redirect input from a file to 
 Sequential execution takes \todo{XX}s, and \sys's parallel execution takes \todo{XX}s (speedup: \todo{XX}\%).
 We note that this pipeline is harsh for \sys, in that most of the overhead comes from a single command, masking \sys's improvements in other parts of the pipeline.
 
 % % https://github.com/marcelm/cutadapt/issues/157
+% % https://www.biostars.org/p/123237/
 % \begin{lstlisting}[language=sh, numbers=none]
 % 	uniq | sort | parallel cutadapt-fastqc
 % \end{lstlisting}
