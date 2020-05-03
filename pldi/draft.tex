@@ -2048,8 +2048,8 @@ This epilogue is repeated for every \todo{merge/join} point in the transformed p
 % \setlength\tabcolsep{3pt}
 \caption{
   \footnotesize{
-    \textbf{Summary of Micro-benchmarks}.
-    The micro-benchmarks are small pipelines (\ie ones developed on-the-fly) drawn from various sources and applied to large datasets.
+    \textbf{Summary of shell one-liners}.
+    The shell one-liners are small pipelines (\ie ones developed on-the-fly) drawn from various sources and applied to large datasets.
   }
 }
 %% \begin{tabular*}{\textwidth}{l @{\extracolsep{\fill}} llllll}
@@ -2252,11 +2252,33 @@ Parallelism of 200$\times$ was explicitly chosen to show the \sys-internal overh
 The results show significant speedups, ranging between 4--70$\times$, depending on the distributability characteristics of individual pipelines.
 
 \heading{Discussion}
-\kk{Hypothesis on results. Dish gives a great speedup if one step of
-  the pipeline is what takes the most time. If the pipeline is long
-  with many computation heavy tasks, task based parallelism gets you
-  part of the way there, so we can't expect Dish to give performance
-  benefits equal to the amount of parallelism that we give it.}
+\kk{Below follows an important point about why scalability is more
+  than great in the beginning and then gets worse.}
+An interesting point is that \sys seems to achieve almost linear
+speedup with small parallelism configurations. The reason why this
+happens is not so straightforward though. \sys manages that because it
+exploits task-based parallelism by having different processes to do
+the \todo{map} and the \todo{reduce} phase. Due to task-based
+parallelism in the generated dataflow graphs, \sys essentially ``uses
+more parallelism'' than the given configuration. This can be seen in
+all pipelines that are not completely stateless. For example, in the
+\ttt{minimal\_sort} one-liner, \sys configured to have 8 parallelism
+spawns 37 nodes (8 \ttt{tr} nodes, 8 \ttt{sort} nodes, 7 \ttt{sort -m}
+nodes, and 14 \ttt{eager} nodes. This indicates that \sys achieves
+optimal performance (without unnecessary process spawns and context
+switches) in pipelines that contain pure commands by configuring it
+with a smaller parallelism than the capabilities of the underlying
+system -- in our case 16-32 for a 64 physical core system. This is
+also the case if the input pipeline is very long and so there is
+already task-based parallelism even in the sequential execution
+(several of the Unix50 pipelines fall in this category).
+
+\kk{Hypothesis on a scalability upper bound. Dish gives a great
+  speedup if one step of the pipeline is what takes the most time. If
+  the pipeline is long with many computation heavy tasks, task based
+  parallelism gets you part of the way there, so we can't expect Dish
+  to give performance benefits equal to the amount of parallelism that
+  we give it.}
 
 
 \subsection{Unix50 from Bell Labs}
@@ -2483,7 +2505,46 @@ The previous several subsections show substantial speedups without any developer
 In this section, we are interested in zooming into \sys's limits and how they compare with perceived upper bounds.
 These upper bounds are calculated through a variety of means which, while requiring vastly more developer effort than \sys, they are expected to yield significantly better performance.
 
-\heading{Parallelization Command}
+\heading{\ttt{sort --parallel}}
+We compare a single \todo{GNU} \ttt{sort} optimized by \sys with the
+same \ttt{sort} with the \ttt{--parallel} flag set. The results are
+shown in \Cref{fig:sort-parallel-comparison}. There are a couple
+important points to note. First of all, \sys without the \ttt{eager}
+optimization enabled performs comparably with \ttt{sort
+  --parallel}. On the other hand, enabling the \ttt{eager}
+optimization allows \sys to perform much better (almost \todo{2}
+times) than \ttt{sort} with the \ttt{--parallel} flag. That is because
+\sys with the \ttt{eager} optimization enabled essentially uses
+intermediate buffers (on disk) between the merge phases. On the other
+hand, \ttt{sort --parallel} sorts the input trying to minimize
+additional memory (so doesn't allocate intermediate buffers). \kk{If
+  we want, we can add here numbers where we allow sort --parallel to
+  use additional ram for intermediate buffers (using the -S flag).} Of
+course, it would be possible to manually create a longer pipeline and
+use intermediate buffers to speed this up, but this defeats the
+purpose of having a simple solution.
+
+Finally, based on the comparison with \ttt{sort --parallel} it seems
+that the scaleup limit that \sys reaches with sort is \todo{inherent
+  and cannot be overpassed} \kk{We have to find a way to argue for the
+  previous statement}. Because of that, all pipelines and scripts that
+contain \ttt{sort} in our evaluation (several one-liners and unix50)
+have this upper bound on scalability. \kk{Maybe move this paragraph in
+  the one-liners section.}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{\detokenize{./figs/sort_baseline_comparison_scaleup.pdf}}
+  \caption{ \textbf{Comparison with \ttt{sort --parallel}.}
+  }
+  \vspace{-15pt}
+  \label{fig:sort-parallel-comparison}
+\end{figure}
+
+\kk{There is a weird thing in the results. That the sequential one
+  with --parallel=1 takes more than the \sys sequential one.}
+
+\heading{GNU Parallel}
 We compare \sys to \ttt{parallel} (v.20160422), a GNU utility for running other commands in parallel~\cite{Tange2011a}.
 In the first experiment, we leverage \ttt{parallel}'s \ttt{--jobs} flag and redirect input from a file to 
 Sequential execution takes \todo{XX}s, and \sys's parallel execution takes \todo{XX}s (speedup: \todo{XX}\%).

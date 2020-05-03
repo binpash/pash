@@ -1,6 +1,8 @@
 #!/bin/bash
 
 eval_directory="../evaluation/"
+intermediary_dir="../evaluation/intermediary/"
+script_dir="${eval_directory}scripts/"
 results="${eval_directory}results/baseline_sort/"
 
 mkdir -p $results
@@ -19,8 +21,16 @@ n_inputs=(
 
 for n_in in "${n_inputs[@]}"; do
     experiment="baseline_sort_${n_in}"
-    seq_script="${eval_directory}scripts/sort.sh"
+    exec_script="${intermediary_dir}sort_${n_in}_seq.sh"
+    env_file="${intermediary_dir}sort_${n_in}_env.sh"
+
+    echo "Generating input and intermediary scripts... be patient..."
+    python3 generate_microbenchmark_intermediary_scripts.py \
+            $script_dir "sort" $n_in $intermediary_dir
+
+    . $env_file
+    export $(cut -d= -f1 $env_file)
 
     echo "Executing sort with parallel flag for parallelism: ${n_in}"
-    { time /bin/bash $seq_script "${n_in}"; } 2> >(tee "${results}${experiment}_seq.time" >&2)
+    { time /bin/bash $exec_script "${n_in}" > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
 done
