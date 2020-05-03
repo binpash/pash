@@ -38,10 +38,11 @@ microbenchmarks=(
     diff                 # TODO: Optimize diff
     set-diff             # TODO: Handle redirection after reduce
 
-    sort                 # For comparison with sort --parallel
+    # sort                 # For comparison with sort --parallel
 
     ## Tests
     # deadlock_test          # Test to check deadlock prevention using drain_stream
+    # double_sort            # Checks maximum peformance gains from split
 
     ## TODO: Add some more for OSDI
     # wc                   # Extremely simple

@@ -1625,11 +1625,6 @@ to a file.
 \section{Implementation}
 \label{impl}
 
-\TODO{Talk about the importance of eagerness and why we need to
-  enforce it to get benefits. Discuss the necessity of having files as
-  buffers and how we addressed the issue of cat's lazy consumption of
-  its inputs.}
-
 This section describes challenges related to the implementation of
 \sys. It starts by describing how the \sys front-end translates a
 shell script to the dataflow graph model defined in \S\ref{ir}, by
@@ -1789,11 +1784,11 @@ complete information.  For example, the translation pass cannot infer
 that two un-expand strings do not refer to the same file identifier,
 and as a result does not parallelize this sub-expression.
 
-\kk{Ideally we would want to talk here about the as-late-as possible
-  dish translation that allows us to be safe despite the Shell's
-  dynamic nature. I think that this is a great point about the
-  work. Maybe we should also focus on implementing it before the OSDI
-  deadline.}
+%% \kk{Ideally we would want to talk here about the as-late-as possible
+%%   dish translation that allows us to be safe despite the Shell's
+%%   dynamic nature. I think that this is a great point about the
+%%   work. Maybe we should also focus on implementing it before the OSDI
+%%   deadline.}
 
 \subsection{Optimizer}
 \label{optimizer}
@@ -1875,25 +1870,12 @@ and aggregates them accordingly.
 %
 
 
-\begin{figure}[t]
-\centering
-% https://docs.google.com/drawings/d/13Zx3a9bWi1RvpOgNCSiXirp9UOte-XuaJQBi_lmmPMc/edit
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_eager.pdf}}
-\caption{
-  \textbf{Eager primitive.}
-  Describe three problems:
-    (i) FIFOs alone cannot solve it as they’re blocking;
-    (ii) intermediary files alone lose data, as the consumer reaches EOF before the producer; and
-    (iii) writing to files + wait does not allow trask-based parallelism.
-  Eager is an elegant solution that solves the problem while remaining within
-  the model. Describe.
-}
-\vspace{-15pt}
-\label{fig:eager}
-\end{figure}
-
 \subsection{Implementation Nuggets}
 
+
+\heading{Overcoming Laziness}
+
+\noindent
 \TODO{Problem: Cat (and other commands that have multiple inputs) is
   not eager. Illustration: Show a parallel pipeline having a cat that
   gathers input somewhere (and a sort merge maybe). The way pipes
@@ -1911,63 +1893,91 @@ and aggregates them accordingly.
   is that they work for all possible commands with almost no overhead,
   without having to make each specific command eager.}
 
-\TODO{(This problem is a nice followup for the one above) Problem:
-  Dataflow graph termination. Illustration: Show the example of head
-  deadlock and explain that this is inherent behaviour in the shell.
-  (Solution: emptying pipelines or terminating processes) In order for
-  things to terminate gracefully, dish wraps all commands in order to
-  always consume all of their input by sending it down to
-  /dev/null. Warning: This means that all commands in the pipeline
-  must terminate gracefully if all of their output is consumed (if a
-  process dies unexpectedly, noone will consume its input. We leave
-  addressing that and other monitoring questions for future work). We
-  evaluate the overhead of emptying all outputs in section X.}
+\begin{figure}[t]
+\centering
+% https://docs.google.com/drawings/d/13Zx3a9bWi1RvpOgNCSiXirp9UOte-XuaJQBi_lmmPMc/edit
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_eager.pdf}}
+\caption{
+  \textbf{Eager primitive.}
+  Describe three problems:
+    (i) FIFOs alone cannot solve it as they’re blocking;
+    (ii) intermediary files alone lose data, as the consumer reaches EOF before the producer; and
+    (iii) writing to files + wait does not allow trask-based parallelism.
+  Eager is an elegant solution that solves the problem while remaining within
+  the model. Describe.
+}
+\vspace{-15pt}
+\label{fig:eager}
+\end{figure}
 
-\TODO{Problem: Pipeline width shrinks after parallel pure
-  commands. Solution: Split node that resplits its input to multiple
-  files in sequence (to preserve the model semantics). We should
-  probably evaluate that too.}
 
-\paragraph{Merge and Split Implementation}
-%
-It is common in the dataflow graph for a node to have many incoming
-edges or many outgoing edges (when all but the last outgoing edges
-are bounded). However some nodes, might only read their input from one
-source (e.g. stdin). In this case, the distributed implementation
-needs to concatenate input files (or conversely split output
-files).
+\heading{Readjusting Graph Width}
+
+\noindent
+\TODO{Problem: Pipeline width shrinks after pure commands. Solution:
+  Split node that resplits its input to multiple files in sequence (to
+  preserve the model semantics).}
+
+
+%% Old and obsolete
+
+%% \noindent
+%% It is common in the dataflow graph for a node to have many incoming
+%% edges or many outgoing edges (when all but the last outgoing edges
+%% are bounded). However some nodes, might only read their input from one
+%% source (e.g. stdin). In this case, the distributed implementation
+%% needs to concatenate input files (or conversely split output
+%% files).
 %
 %% \tr{Show an example graph! of cat | tr | sort. The command in the
 %%   middle must only take input from one file (maybe just stdin).}
 %
-We address this issue using primitive shell constructs for file
-manipulation. More concretely a merger can be implemented by means of a simple
-\ttt{cat}. Given a set of input files \ttt{in1, in2, ...} and an
-output file \ttt{out}, a merger can be implemented as:
+%% We address this issue using primitive shell constructs for file
+%% manipulation. More concretely a merger can be implemented by means of a simple
+%% \ttt{cat}. Given a set of input files \ttt{in1, in2, ...} and an
+%% output file \ttt{out}, a merger can be implemented as:
 
-\begin{lstlisting}[language=sh, numbers=none]
- cat $in1 $in2 ... > $out
-\end{lstlisting}
+%% \begin{lstlisting}[language=sh, numbers=none]
+%%  cat $in1 $in2 ... > $out
+%% \end{lstlisting}
 
-\noindent
-On the other hand, given an input file \ttt{in} that is a FIFO pipe,
-and two output files \ttt{out1, out2} the first of which is bounded
-to \ttt{|N} lines, a 2-splitter can be implemented as:
+%% \noindent
+%% On the other hand, given an input file \ttt{in} that is a FIFO pipe,
+%% and two output files \ttt{out1, out2} the first of which is bounded
+%% to \ttt{|N} lines, a 2-splitter can be implemented as:
 
-\begin{lstlisting}[language=sh, numbers=none]
-  tee >(head -n $N > $temp1;
-        dd of=/dev/null > /dev/null 2>&1 &
-        cat $temp1 > $out1) |
-       (tail -n +${N+1} > $out2;
-        dd of=/dev/null > /dev/null 2>&1)
-\end{lstlisting}
+%% \begin{lstlisting}[language=sh, numbers=none]
+%%   tee >(head -n $N > $temp1;
+%%         dd of=/dev/null > /dev/null 2>&1 &
+%%         cat $temp1 > $out1) |
+%%        (tail -n +${N+1} > $out2;
+%%         dd of=/dev/null > /dev/null 2>&1)
+%% \end{lstlisting}
  %% head -n $N $in > $out1 ; cat $in > $out2
 
-\noindent
-Using the 2-splitter as a building block, a pipe can be split to
-arbitrarily many different pipes.
+%% \noindent
+%% Using the 2-splitter as a building block, a pipe can be split to
+%% arbitrarily many different pipes.
+
+\TODO{Talk about eagerness in split and how we needed to add eager
+  nodes to n-1 outputs.}
+
+
 
 \heading{Dangling FIFOs and Zombie Producers}
+
+%% \TODO{(This problem is a nice followup for the one above) Problem:
+%%   Dataflow graph termination. Illustration: Show the example of head
+%%   deadlock and explain that this is inherent behaviour in the shell.
+%%   (Solution: emptying pipelines or terminating processes) In order for
+%%   things to terminate gracefully, dish wraps all commands in order to
+%%   always consume all of their input by sending it down to
+%%   /dev/null. Warning: This means that all commands in the pipeline
+%%   must terminate gracefully if all of their output is consumed (if a
+%%   process dies unexpectedly, noone will consume its input. We leave
+%%   addressing that and other monitoring questions for future work). We
+%%   evaluate the overhead of emptying all outputs in section X.}
+
 % \nv{I think all of these titles should be the problem/challenge, not the solution}
 % A process writing to a pipe needs to be notified when its consumer exits early before consuming all its output.
 Under normal operation, a producer commonly exits after it has produced and sent all of its output to a pipe.
@@ -1994,11 +2004,14 @@ As a result, the second \ttt{cat} never receives a \ttt{PIPE} signal that its co
 This, in turn, leaves the second \ttt{cat} unable to make process, both (i) blocked unable to write output, and (ii) unaware that its consumer has exited.
 Coupled with \ttt{wait} at the end, the entire snippet reaches a deadlock.
 
-To solve this problem, \sys emits cleanup logic that operates from the end of the pipeline and towards its start.
-The emitted code first gathers the ID of the last process and passes it as a parameter to \ttt{wait}; 
-  this causes \ttt{wait} to block only on the last consumer of the pipeline.
-Right after \ttt{wait}, \sys inserts a routine that delivers \ttt{PIPE} signals to any remaining processes upstream.
-This epilogue is repeated for every \todo{merge/join} point in the transformed pipeline.
+To solve this problem, \sys emits cleanup logic that operates from the
+end of the pipeline and towards its start.  The emitted code first
+gathers the IDs of the output processes and passes them as parameters
+to \ttt{wait}; this causes \ttt{wait} to block only on the output
+producers of the dataflow graph.  Right after \ttt{wait}, \sys inserts
+a routine that delivers \ttt{PIPE} signals to any remaining processes
+upstream.  This epilogue is repeated for every \todo{merge/join} point
+in the transformed pipeline \kk{I don't understand the final sentence}.
 % Earlier: need to define split (fork?) and merge (join?) points; this should be "up to next merge point upstream"
 
 % not receiving an out-of-band signal about that.
@@ -2081,16 +2094,18 @@ This epilogue is repeated for every \todo{merge/join} point in the transformed p
   they already have two sorts running in parallel (as diff, and comm
   take two inputs).}
 
-\TODO{Explain the plots with eager/no-eager as follows. Say that we
-  initially decided to only make an eager version of cat (to allow for
-  parallelism). However, we saw that results are still not good, so we
-  resorted to making a proper generic eager node that can be put
-  anywhere in the graph and that eagerly consumes its input. The above
-  results show the improvement with it. Rerun them with eager only
-  before cat in the no eager cases so that the minimal-grep example is
-  the same with and without our eager node. (Maybe) we need to mention
-  that eager has disk usage overhead that is linear to the size of the
-  pipeline and the size of the input.}
+%% \TODO{Explain the plots with eager/no-eager as follows. Say that we
+%%   initially decided to only make an eager version of cat (to allow for
+%%   parallelism). However, we saw that results are still not good, so we
+%%   resorted to making a proper generic eager node that can be put
+%%   anywhere in the graph and that eagerly consumes its input. The above
+%%   results show the improvement with it. Rerun them with eager only
+%%   before cat in the no eager cases so that the minimal-grep example is
+%%   the same with and without our eager node.}
+
+\TODO{(Maybe) we need to mention that eager has disk usage overhead
+  that is linear to the size of the pipeline and the size of the
+  input.}
 
 
 At a high level, we are interested in understanding whether \sys can indeed scale pipelines out automatically and correctly.
@@ -2121,8 +2136,10 @@ All pipelines are set to (initially) read from and (finally) write to the file-s
 Whenever \ttt{curl} is part of a pipeline, it fetches data from a different physical host on the same network connected by 1Gbps links.
 A more detailed description of the setup and experiments, including reproducible scripts, is included in the accompanying (anonymized) online repository.
 
-\subsection{Classic \unix One-liners}
+\subsection{Common \unix One-liners}
 \label{ours}
+
+The goal of this subsection is to evaluate \sys on popular, common, or classic \unix pipeline patterns.
 
 \begin{figure*}[t]
     \centering
@@ -2287,31 +2304,21 @@ already task-based parallelism even in the sequential execution
 The goal of this subsection is to evaluate \sys on an existing set of \unix pipelines found in the wild.
 
 \heading{Programs}
-In a recent event celebrating \unix's 50-year legacy, Bell Labs created a set of challenges~\cite{unix50}.
-
-solving challenges by
-
-ability to compose larger programs in versatile ways from smaller utility programs
-summarized by McIllroy's Unix philosophy memo.
-
-The ability to compose larger programs in versatile ways from smaller utility programs was a hallmark of the \unix design, and the game's levels are designed to stress that.
-
-
-This section reports on programs that were run unaltered---highlighting 
-These are pipelines that were run verbatim
+In a recent event celebrating \unix's 50-year legacy, Bell Labs created a set of \todo{37} challenges~\cite{unix50} solvable by means of composing \unix pipelines.
+By scanning GitHub, we were able to find a set of shell programs that solve all-but-one problems~\cite{}.
+We consider this a good set of benchmarks because 
+(i) the problems were designed to to highlight the \unix philosophy~\cite{} (rather than having a single command that solves the problem) and make extensive use of \unix built-ins with a plethora of flags, and (ii) the solutions were written by non-experts (contrary to the \S\ref{ours}) and were executed by \sys unmodified---stressing patterns that we, \sys's authors, did not necessarily anticipate.
 In cases where an obvious fix improves the pipeline's performance, we report on both \sys's original speedup and the one achieved by applying the fix.
+% TODO: talk about correct wrt developer intentions vs. correct wrt problem definition
 
-\todo{Motivate why unix50 is a nice
-  set of pipelines.} We took the solutions for the unix50 from
-\todo{Ref} and we executed them \emph{without any modification} with
+% The ability to compose larger programs in versatile ways from smaller utility programs was a hallmark of the \unix design, and the game's levels are designed to stress that.
+% These challenges were specifically designed to highlight the \unix's philosophy, its 
+% ability to compose larger programs in versatile ways from smaller utility programs summarized by McIllroy's Unix philosophy memo.
 
 \TODO{An important point that needs to be made clear is that these are
   taken from the wild unmodified. And that Pash never leads to
   slowdown (except for the trivial head cases, where the slowdown is
   neligible).}
-
-the problems are well designed to highlight the \unix philosophy.
-pipelines were found out in the wild and are not necessarily written in a particularly 
 
 \heading{Results}
 \sys's parallelism set to \todo{16}. The input given to the pipelines
@@ -2505,7 +2512,7 @@ The previous several subsections show substantial speedups without any developer
 In this section, we are interested in zooming into \sys's limits and how they compare with perceived upper bounds.
 These upper bounds are calculated through a variety of means which, while requiring vastly more developer effort than \sys, they are expected to yield significantly better performance.
 
-\heading{\ttt{sort --parallel}}
+\heading{Parallel Sort}
 We compare a single \todo{GNU} \ttt{sort} optimized by \sys with the
 same \ttt{sort} with the \ttt{--parallel} flag set. The results are
 shown in \Cref{fig:sort-parallel-comparison}. There are a couple
@@ -2548,7 +2555,7 @@ have this upper bound on scalability. \kk{Maybe move this paragraph in
 We compare \sys to \ttt{parallel} (v.20160422), a GNU utility for running other commands in parallel~\cite{Tange2011a}.
 In the first experiment, we leverage \ttt{parallel}'s \ttt{--jobs} flag and redirect input from a file to 
 Sequential execution takes \todo{XX}s, and \sys's parallel execution takes \todo{XX}s (speedup: \todo{XX}\%).
-We note that this pipeline is harsh for \sys, in that most of the overhead comes from a single command, masking \sys's improvements in other parts of the pipeline.
+We note that this pipeline is harsh for \sys, in that most of the overhead comes from a single command---masking \sys's improvements in other parts of the pipeline.
 
 % % https://github.com/marcelm/cutadapt/issues/157
 % % https://www.biostars.org/p/123237/
@@ -2559,21 +2566,22 @@ We note that this pipeline is harsh for \sys, in that most of the overhead comes
 % % -u -j24 --env PATH,PYTHONPATH,cutadapt_parallel
 % % --workdir $PWD cutadapt_parallel {}
 
-There are a few possible ways one might attempt to use GNU \ttt{parallel} to parallelize this program, which compared to \sys lead to a combination of smaller performance improvements, incorrect execution with respect to the sequential program, and higher rewriting effort.
-Assuming a user knows that the bottleneck comes from the \ttt{XX} stage, they could attempt to use \ttt{parallel} there leading to a runtime of \todo{XX}s (speedup: \todo{XX}\%)---worse than surprisingly worse than.
+There are a few possible ways one might attempt to use GNU \ttt{parallel} to parallelize this program.
+Assuming a user knows that the bottleneck comes from the \ttt{XX} stage, they could attempt to use \ttt{parallel} there.
+This leads to a runtime of \todo{XX}s (speedup: \todo{XX}\%).
 
-Alternatively, a user could (incorrectly) sprinkle \ttt{parallel} across the entire program.
-This is a common strategy as GNU \ttt{parallel} allows feeding an entire script for parallelization via \ttt{stdin}. 
+Alternatively, a user could (incorrectly) sprinkle \ttt{parallel} across the entire program;
+  this is a common strategy simplified by \ttt{parallel}'s \ttt{stdin} redirection feature.
 Doing this leads to \todo{XXX}\% performance improvements but severely incorrect results with respect to the sequential execution---a \ttt{diff} that averages about \todo{XX--XX} lines.
 \sys's conservative program transformations will not attempt parallelizing program sections that contain commands with unclear \todo{parallelizability} properties.
 	% or commands whose inputs depend on earlier outputs.
 GNU \ttt{parallel} is oblivious to command semantics, risking breaking program semantics as in this case.
 
-\heading{Manual Parallelization}
-In an attempt to highlight how a user might attempt to manually parallelize individual commands using the abstractions provided by the POSIX shell.
-The benefits depend on several factors, such as whether a command is I/O- or CPU-bound or whether but since 
+% Parallel is a great program for its target audience.
 
-Merging is provided as Python programs
+\heading{Manual Parallelization}
+Alternatively, a user might attempt to manually parallelize individual commands by using the abstractions provided by the POSIX shell.
+The benefits depend on several factors, such as whether a command is I/O- or CPU-bound.
 
 \heading{Streaming Framework}
 In a different attempt to identify how far \sys is from ideal performance, we start from programs already written in a high-performance parallel framework and rewrite as shell programs.
@@ -2589,8 +2597,9 @@ We find the resulting times quite acceptable:
 Pushing parallelization factor to $100\times$, \sys's runtime jumps to 5 minutes and 8 seconds to perform the analysis, producing an output dataflow graph that has more than 100 thousand edges in a file of about 11MB.
 
 \heading{Take-away}
-\sys will choose not to improve performance rather than breaking correctness; as a result, it does not always improve performance.
-In highly-parallel benchmarks, it can lead to performance that is comparable to highly specialized streaming frameworks---at a fraction of the cost in terms of manual development.
+\sys does not improve performance when running the risk of breaking correctness. % This should go in the intro
+% Compared to \sys, \ttt{parallel} can lead to a combination of smaller performance improvements, incorrect execution with respect to the sequential program, and higher rewriting effort.
+In highly-parallel benchmarks, \sys can lead to performance that is comparable to highly specialized streaming frameworks---at a fraction of the cost in terms of manual development.
 
 \section{Related Work}
 \label{related}
