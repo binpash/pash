@@ -2121,8 +2121,10 @@ All pipelines are set to (initially) read from and (finally) write to the file-s
 Whenever \ttt{curl} is part of a pipeline, it fetches data from a different physical host on the same network connected by 1Gbps links.
 A more detailed description of the setup and experiments, including reproducible scripts, is included in the accompanying (anonymized) online repository.
 
-\subsection{Classic \unix One-liners}
+\subsection{Common \unix One-liners}
 \label{ours}
+
+The goal of this subsection is to evaluate \sys on popular, common, or classic \unix pipeline patterns.
 
 \begin{figure*}[t]
     \centering
@@ -2287,31 +2289,21 @@ already task-based parallelism even in the sequential execution
 The goal of this subsection is to evaluate \sys on an existing set of \unix pipelines found in the wild.
 
 \heading{Programs}
-In a recent event celebrating \unix's 50-year legacy, Bell Labs created a set of challenges~\cite{unix50}.
-
-solving challenges by
-
-ability to compose larger programs in versatile ways from smaller utility programs
-summarized by McIllroy's Unix philosophy memo.
-
-The ability to compose larger programs in versatile ways from smaller utility programs was a hallmark of the \unix design, and the game's levels are designed to stress that.
-
-
-This section reports on programs that were run unaltered---highlighting 
-These are pipelines that were run verbatim
+In a recent event celebrating \unix's 50-year legacy, Bell Labs created a set of \todo{37} challenges~\cite{unix50} solvable by means of composing \unix pipelines.
+By scanning GitHub, we were able to find a set of shell programs that solve all-but-one problems~\cite{}.
+We consider this a good set of benchmarks because 
+(i) the problems were designed to to highlight the \unix philosophy~\cite{} (rather than having a single command that solves the problem) and make extensive use of \unix built-ins with a plethora of flags, and (ii) the solutions were written by non-experts (contrary to the \S\ref{ours}) and were executed by \sys unmodified---stressing patterns that we, \sys's authors, did not necessarily anticipate.
 In cases where an obvious fix improves the pipeline's performance, we report on both \sys's original speedup and the one achieved by applying the fix.
+% TODO: talk about correct wrt developer intentions vs. correct wrt problem definition
 
-\todo{Motivate why unix50 is a nice
-  set of pipelines.} We took the solutions for the unix50 from
-\todo{Ref} and we executed them \emph{without any modification} with
+% The ability to compose larger programs in versatile ways from smaller utility programs was a hallmark of the \unix design, and the game's levels are designed to stress that.
+% These challenges were specifically designed to highlight the \unix's philosophy, its 
+% ability to compose larger programs in versatile ways from smaller utility programs summarized by McIllroy's Unix philosophy memo.
 
 \TODO{An important point that needs to be made clear is that these are
   taken from the wild unmodified. And that Pash never leads to
   slowdown (except for the trivial head cases, where the slowdown is
   neligible).}
-
-the problems are well designed to highlight the \unix philosophy.
-pipelines were found out in the wild and are not necessarily written in a particularly 
 
 \heading{Results}
 \sys's parallelism set to \todo{16}. The input given to the pipelines
@@ -2505,7 +2497,7 @@ The previous several subsections show substantial speedups without any developer
 In this section, we are interested in zooming into \sys's limits and how they compare with perceived upper bounds.
 These upper bounds are calculated through a variety of means which, while requiring vastly more developer effort than \sys, they are expected to yield significantly better performance.
 
-\heading{\ttt{sort --parallel}}
+\heading{Parallel Sort}
 We compare a single \todo{GNU} \ttt{sort} optimized by \sys with the
 same \ttt{sort} with the \ttt{--parallel} flag set. The results are
 shown in \Cref{fig:sort-parallel-comparison}. There are a couple
@@ -2548,7 +2540,7 @@ have this upper bound on scalability. \kk{Maybe move this paragraph in
 We compare \sys to \ttt{parallel} (v.20160422), a GNU utility for running other commands in parallel~\cite{Tange2011a}.
 In the first experiment, we leverage \ttt{parallel}'s \ttt{--jobs} flag and redirect input from a file to 
 Sequential execution takes \todo{XX}s, and \sys's parallel execution takes \todo{XX}s (speedup: \todo{XX}\%).
-We note that this pipeline is harsh for \sys, in that most of the overhead comes from a single command, masking \sys's improvements in other parts of the pipeline.
+We note that this pipeline is harsh for \sys, in that most of the overhead comes from a single command---masking \sys's improvements in other parts of the pipeline.
 
 % % https://github.com/marcelm/cutadapt/issues/157
 % % https://www.biostars.org/p/123237/
@@ -2559,21 +2551,22 @@ We note that this pipeline is harsh for \sys, in that most of the overhead comes
 % % -u -j24 --env PATH,PYTHONPATH,cutadapt_parallel
 % % --workdir $PWD cutadapt_parallel {}
 
-There are a few possible ways one might attempt to use GNU \ttt{parallel} to parallelize this program, which compared to \sys lead to a combination of smaller performance improvements, incorrect execution with respect to the sequential program, and higher rewriting effort.
-Assuming a user knows that the bottleneck comes from the \ttt{XX} stage, they could attempt to use \ttt{parallel} there leading to a runtime of \todo{XX}s (speedup: \todo{XX}\%)---worse than surprisingly worse than.
+There are a few possible ways one might attempt to use GNU \ttt{parallel} to parallelize this program.
+Assuming a user knows that the bottleneck comes from the \ttt{XX} stage, they could attempt to use \ttt{parallel} there.
+This leads to a runtime of \todo{XX}s (speedup: \todo{XX}\%).
 
-Alternatively, a user could (incorrectly) sprinkle \ttt{parallel} across the entire program.
-This is a common strategy as GNU \ttt{parallel} allows feeding an entire script for parallelization via \ttt{stdin}. 
+Alternatively, a user could (incorrectly) sprinkle \ttt{parallel} across the entire program;
+  this is a common strategy simplified by \ttt{parallel}'s \ttt{stdin} redirection feature.
 Doing this leads to \todo{XXX}\% performance improvements but severely incorrect results with respect to the sequential execution---a \ttt{diff} that averages about \todo{XX--XX} lines.
 \sys's conservative program transformations will not attempt parallelizing program sections that contain commands with unclear \todo{parallelizability} properties.
 	% or commands whose inputs depend on earlier outputs.
 GNU \ttt{parallel} is oblivious to command semantics, risking breaking program semantics as in this case.
 
-\heading{Manual Parallelization}
-In an attempt to highlight how a user might attempt to manually parallelize individual commands using the abstractions provided by the POSIX shell.
-The benefits depend on several factors, such as whether a command is I/O- or CPU-bound or whether but since 
+% Parallel is a great program for its target audience.
 
-Merging is provided as Python programs
+\heading{Manual Parallelization}
+Alternatively, a user might attempt to manually parallelize individual commands by using the abstractions provided by the POSIX shell.
+The benefits depend on several factors, such as whether a command is I/O- or CPU-bound.
 
 \heading{Streaming Framework}
 In a different attempt to identify how far \sys is from ideal performance, we start from programs already written in a high-performance parallel framework and rewrite as shell programs.
@@ -2589,8 +2582,9 @@ We find the resulting times quite acceptable:
 Pushing parallelization factor to $100\times$, \sys's runtime jumps to 5 minutes and 8 seconds to perform the analysis, producing an output dataflow graph that has more than 100 thousand edges in a file of about 11MB.
 
 \heading{Take-away}
-\sys will choose not to improve performance rather than breaking correctness; as a result, it does not always improve performance.
-In highly-parallel benchmarks, it can lead to performance that is comparable to highly specialized streaming frameworks---at a fraction of the cost in terms of manual development.
+\sys does not improve performance when running the risk of breaking correctness. % This should go in the intro
+% Compared to \sys, \ttt{parallel} can lead to a combination of smaller performance improvements, incorrect execution with respect to the sequential program, and higher rewriting effort.
+In highly-parallel benchmarks, \sys can lead to performance that is comparable to highly specialized streaming frameworks---at a fraction of the cost in terms of manual development.
 
 \section{Related Work}
 \label{related}
