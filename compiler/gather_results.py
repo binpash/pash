@@ -182,10 +182,10 @@ def collect_experiment_speedups(prefix, scaleup_numbers):
     compile_distr_speedup = [safe_zero_div(seq_numbers[i], t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
     return (distr_speedup, compile_distr_speedup)
 
-def collect_baseline_experiment_speedups(prefix, scaleup_numbers):
+def collect_baseline_experiment_speedups(prefix, scaleup_numbers, base_seq):
     seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, n))
                    for n in scaleup_numbers]
-    speedup = [safe_zero_div(seq_numbers[0], t) for t in seq_numbers]
+    speedup = [safe_zero_div(base_seq, t) for t in seq_numbers]
     return speedup
 
 
@@ -259,9 +259,18 @@ def plot_sort_with_baseline(results_dir):
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64, 96, 128]
     sort_prefix = '{}/sort_'.format(results_dir)
     baseline_sort_prefix = '{}/baseline_sort/baseline_sort_'.format(results_dir)
-    sort_distr_speedup, _ = collect_experiment_speedups(sort_prefix, all_scaleup_numbers)
+    baseline_sort_opt_prefix = '{}/baseline_sort/baseline_sort_opt_'.format(results_dir)
+
+    ## Collect all sort numbers
+    seq_numbers, distr_numbers, _ = collect_experiment_scaleup_times(sort_prefix, all_scaleup_numbers)
+    sort_distr_speedup = [safe_zero_div(seq_numbers[i], t) for i, t in enumerate(distr_numbers)]
+    # sort_distr_speedup, _ = collect_experiment_speedups(sort_prefix, all_scaleup_numbers)
     baseline_sort_distr_speedup = collect_baseline_experiment_speedups(baseline_sort_prefix,
-                                                                       [1] + all_scaleup_numbers)
+                                                                       [1] + all_scaleup_numbers,
+                                                                       seq_numbers[0])
+    baseline_sort_opt_distr_speedup = collect_baseline_experiment_speedups(baseline_sort_opt_prefix,
+                                                                           [1] + all_scaleup_numbers,
+                                                                           seq_numbers[0])
 
     # output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
 
@@ -280,6 +289,8 @@ def plot_sort_with_baseline(results_dir):
         pass
 
     ax.plot(all_scaleup_numbers, baseline_sort_distr_speedup[1:], '-p', linewidth=0.5, label='sort --parallel')
+    ax.plot(all_scaleup_numbers, baseline_sort_opt_distr_speedup[1:], '-', linewidth=0.5, label='sort --parallel -S 30%')
+
 
     plt.xticks(all_scaleup_numbers[1:])
     plt.legend(loc='lower right')
