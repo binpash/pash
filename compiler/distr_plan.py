@@ -534,6 +534,34 @@ def add_eager_nodes(graph):
                     chunk = curr.in_stream[chunk_i]
                     curr.set_file_id(chunk, new_input_file_id)
 
+            ## TODO: Make sure that we don't add duplicate eager nodes
+
+            ## TODO: Refactor this and the above as they are very symmetric
+            if (str(curr.command) == "split_file"):
+                curr_output_file_ids = curr.get_output_file_ids()
+                output_file_ids_to_eager = curr_output_file_ids[:-1]
+                print(output_file_ids_to_eager)
+
+                new_output_file_ids = [fileIdGen.next_file_id()
+                                       for _ in output_file_ids_to_eager]
+                intermediate_file_ids = [intermediateFileIdGen.next_file_id()
+                                         for _ in output_file_ids_to_eager]
+
+                file_ids = list(zip(output_file_ids_to_eager, new_output_file_ids, intermediate_file_ids))
+                eager_nodes = [make_eager_node(new_file_id, old_file_id,
+                                               intermediate_file_id, eager_exec_path)
+                               for old_file_id, new_file_id, intermediate_file_id in file_ids]
+
+                for eager_node in eager_nodes:
+                    graph.add_node(eager_node)
+
+                ## Update input file ids
+                for curr_output_file_id, new_output_file_id, _ in file_ids:
+                    chunk_i = curr.find_file_id_in_out_stream(curr_output_file_id)
+                    chunk = curr.out_stream[chunk_i]
+                    curr.set_file_id(chunk, new_output_file_id)
+
+
 
     return graph
 
