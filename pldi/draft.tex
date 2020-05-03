@@ -1625,11 +1625,6 @@ to a file.
 \section{Implementation}
 \label{impl}
 
-\TODO{Talk about the importance of eagerness and why we need to
-  enforce it to get benefits. Discuss the necessity of having files as
-  buffers and how we addressed the issue of cat's lazy consumption of
-  its inputs.}
-
 This section describes challenges related to the implementation of
 \sys. It starts by describing how the \sys front-end translates a
 shell script to the dataflow graph model defined in \S\ref{ir}, by
@@ -1789,11 +1784,11 @@ complete information.  For example, the translation pass cannot infer
 that two un-expand strings do not refer to the same file identifier,
 and as a result does not parallelize this sub-expression.
 
-\kk{Ideally we would want to talk here about the as-late-as possible
-  dish translation that allows us to be safe despite the Shell's
-  dynamic nature. I think that this is a great point about the
-  work. Maybe we should also focus on implementing it before the OSDI
-  deadline.}
+%% \kk{Ideally we would want to talk here about the as-late-as possible
+%%   dish translation that allows us to be safe despite the Shell's
+%%   dynamic nature. I think that this is a great point about the
+%%   work. Maybe we should also focus on implementing it before the OSDI
+%%   deadline.}
 
 \subsection{Optimizer}
 \label{optimizer}
@@ -2099,16 +2094,18 @@ in the transformed pipeline \kk{I don't understand the final sentence}.
   they already have two sorts running in parallel (as diff, and comm
   take two inputs).}
 
-\TODO{Explain the plots with eager/no-eager as follows. Say that we
-  initially decided to only make an eager version of cat (to allow for
-  parallelism). However, we saw that results are still not good, so we
-  resorted to making a proper generic eager node that can be put
-  anywhere in the graph and that eagerly consumes its input. The above
-  results show the improvement with it. Rerun them with eager only
-  before cat in the no eager cases so that the minimal-grep example is
-  the same with and without our eager node. (Maybe) we need to mention
-  that eager has disk usage overhead that is linear to the size of the
-  pipeline and the size of the input.}
+%% \TODO{Explain the plots with eager/no-eager as follows. Say that we
+%%   initially decided to only make an eager version of cat (to allow for
+%%   parallelism). However, we saw that results are still not good, so we
+%%   resorted to making a proper generic eager node that can be put
+%%   anywhere in the graph and that eagerly consumes its input. The above
+%%   results show the improvement with it. Rerun them with eager only
+%%   before cat in the no eager cases so that the minimal-grep example is
+%%   the same with and without our eager node.}
+
+\TODO{(Maybe) we need to mention that eager has disk usage overhead
+  that is linear to the size of the pipeline and the size of the
+  input.}
 
 
 At a high level, we are interested in understanding whether \sys can indeed scale pipelines out automatically and correctly.
