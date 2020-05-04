@@ -47,9 +47,7 @@ echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p5_1_env.sh
 echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p5_2_env.sh
 echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p5_10_env.sh
 
-./execute_compile_evaluation_script.sh "p4_1"
-./execute_compile_evaluation_script.sh "p4_2"
-./execute_compile_evaluation_script.sh "p4_10"
-./execute_compile_evaluation_script.sh "p5_1"
-./execute_compile_evaluation_script.sh "p5_2"
-./execute_compile_evaluation_script.sh "p5_10"
+./execute_compile_evaluation_script.sh -s -e "p4" "2"
+./execute_compile_evaluation_script.sh -e "p4" "10"
+./execute_compile_evaluation_script.sh -s -e "p5" "2"
+./execute_compile_evaluation_script.sh -e "p5" "10"
