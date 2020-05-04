@@ -1,0 +1,6 @@
+environment: line 3: docker: command not found
+Can't pull debian:stable
+
+real	0m0.037s
+user	0m0.013s
+sys	0m0.004s
