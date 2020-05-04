@@ -1,4 +1,17 @@
+kill: (70023): No such process
+kill: (70037): No such process
+kill: (70038): No such process
+kill: (70039): No such process
+Total nodes after optimization: 10
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 2
+Optimization time: 4.141  ms
+Backend time: 38.608  ms
+Execution time: 83067.393  ms
+Compilation time: 62.628  ms
 
-real	1m17.519s
-user	3m11.366s
-sys	1m35.185s
+real	1m23.523s
+user	3m15.092s
+sys	1m10.213s
+Files ../evaluation//intermediary//p5_seq_output and /tmp/distr_output/0 are identical
