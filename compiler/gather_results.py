@@ -2,6 +2,7 @@ import sys
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import statistics
 
 SMALL_SIZE = 16
 MEDIUM_SIZE = 18
@@ -215,7 +216,7 @@ def collect_scaleup_times(experiment, results_dir):
     # all_scaleup_numbers = list(set(get_experiment_files(experiment, results_dir)))
     # all_scaleup_numbers.sort()
     # all_scaleup_numbers = [i for i in all_scaleup_numbers if i > 1]
-    all_scaleup_numbers = [2, 4, 8, 16, 32, 64, 96, 128]
+    all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
     prefix = '{}/{}_'.format(results_dir, experiment)
     distr_speedup, compile_distr_speedup = collect_experiment_speedups(prefix, all_scaleup_numbers)
 
@@ -250,13 +251,13 @@ def collect_scaleup_times(experiment, results_dir):
 
 
     plt.tight_layout()
-    plt.savefig(os.path.join('../evaluation/plots', "{}_throughput_scaleup.pdf".format(experiment)))
+    plt.savefig(os.path.join('../evaluation/plots', "{}_throughput_scaleup.pdf".format(experiment)),bbox_inches='tight')
 
     return output_diff
 
 def plot_sort_with_baseline(results_dir):
 
-    all_scaleup_numbers = [2, 4, 8, 16, 32, 64, 96, 128]
+    all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
     sort_prefix = '{}/sort_'.format(results_dir)
     baseline_sort_prefix = '{}/baseline_sort/baseline_sort_'.format(results_dir)
     baseline_sort_opt_prefix = '{}/baseline_sort/baseline_sort_opt_'.format(results_dir)
@@ -266,11 +267,12 @@ def plot_sort_with_baseline(results_dir):
     sort_distr_speedup = [safe_zero_div(seq_numbers[i], t) for i, t in enumerate(distr_numbers)]
     # sort_distr_speedup, _ = collect_experiment_speedups(sort_prefix, all_scaleup_numbers)
     baseline_sort_distr_speedup = collect_baseline_experiment_speedups(baseline_sort_prefix,
-                                                                       [1] + all_scaleup_numbers,
+                                                                       [1] + [num*2
+                                                                              for num in all_scaleup_numbers],
                                                                        seq_numbers[0])
-    baseline_sort_opt_distr_speedup = collect_baseline_experiment_speedups(baseline_sort_opt_prefix,
-                                                                           [1] + all_scaleup_numbers,
-                                                                           seq_numbers[0])
+    # baseline_sort_opt_distr_speedup = collect_baseline_experiment_speedups(baseline_sort_opt_prefix,
+    #                                                                        [1] + all_scaleup_numbers[1:],
+    #                                                                        seq_numbers[0])
 
     # output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
 
@@ -289,7 +291,7 @@ def plot_sort_with_baseline(results_dir):
         pass
 
     ax.plot(all_scaleup_numbers, baseline_sort_distr_speedup[1:], '-p', linewidth=0.5, label='sort --parallel')
-    ax.plot(all_scaleup_numbers, baseline_sort_opt_distr_speedup[1:], '-', linewidth=0.5, label='sort --parallel -S 30%')
+    # ax.plot(all_scaleup_numbers, baseline_sort_opt_distr_speedup[1:], '-', linewidth=0.5, label='sort --parallel -S 30%')
 
 
     plt.xticks(all_scaleup_numbers[1:])
@@ -298,7 +300,7 @@ def plot_sort_with_baseline(results_dir):
 
 
     plt.tight_layout()
-    plt.savefig(os.path.join('../evaluation/plots', "sort_baseline_comparison_scaleup.pdf"))
+    plt.savefig(os.path.join('../evaluation/plots', "sort_baseline_comparison_scaleup.pdf"),bbox_inches='tight')
 
 
 def collect_format_input_size(experiment):
@@ -348,8 +350,8 @@ def generate_table_header():
     header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} lllllll}']
     header += ['\\toprule']
     header += ['Script ~&~ Structure & Input &'
-               'Seq Time & Script Size(\\todo{16, 128}) &'
-               'Compile Time (\\todo{16, 128}) & Highlights \\\\']
+               'Seq Time & Script Size(16, 64) &'
+               'Compile Time (16, 64) & Highlights \\\\']
     header += ['\\midrule']
     return "\n".join(header)
 
@@ -369,7 +371,7 @@ def generate_experiment_line(experiment):
     line += [input_size, '&']
 
     ## Collect and output the sequential time for the experiment
-    scaleup_numbers = [2, 16, 128]
+    scaleup_numbers = [2, 16, 64]
     experiment_results_prefix = '{}/{}_'.format(RESULTS, experiment)
     seq_times, _, compile_times = collect_experiment_scaleup_times(experiment_results_prefix, scaleup_numbers)
     assert(len(seq_times) == 3)
@@ -380,9 +382,9 @@ def generate_experiment_line(experiment):
 
     ## Collect and output compile times
     compile_time_16_milliseconds = compile_times[1]
-    compile_time_128_milliseconds = compile_times[2]
+    compile_time_64_milliseconds = compile_times[2]
     line += ['{}\\qquad {}'.format(format_time_seconds(compile_time_16_milliseconds),
-                                   format_time_seconds(compile_time_128_milliseconds)), '&']
+                                   format_time_seconds(compile_time_64_milliseconds)), '&']
     line += [highlights[experiment], '\\\\']
     return " ".join(line)
 
@@ -427,6 +429,15 @@ def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     absolute_seq_times_s = [absolute_seq[scaleup_numbers.index(parallelism)] / 1000
                             for _, absolute_seq in all_results]
     print("Unix50 individual speedups for {} parallelism:".format(parallelism), individual_results)
+    mean = sum(individual_results) / len(individual_results)
+    median = statistics.median(individual_results)
+    geo_mean = np.log(individual_results).sum() / len(individual_results)
+    weighted_res = [i*a for i, a in zip(individual_results, absolute_seq_times_s)]
+    weighted_avg = sum(weighted_res) / sum(absolute_seq_times_s)
+    print("  Mean:", mean)
+    print("  Median:", median)
+    print("  Geometric Mean:", geo_mean)
+    print("  Weighted Average:", weighted_avg)
 
     w = 0.2
     ind = np.arange(len(individual_results))
@@ -434,6 +445,9 @@ def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     seq_time_color = 'tab:red'
 
     fig, ax1 = plt.subplots()
+    # print(fig.get_size_inches())
+    fig.set_size_inches(6.4, 3.6)
+
     ## Plot speedup
     ax1.set_ylabel('Speedup', color=speedup_color)
     ax1.set_xlabel('Pipeline')
@@ -453,7 +467,7 @@ def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     # plt.legend(loc='lower right')
     plt.title("Unix50 Individual Speedups")
     plt.tight_layout()
-    plt.savefig(os.path.join('../evaluation/plots', "unix50_individual_speedups_{}.pdf".format(parallelism)))
+    plt.savefig(os.path.join('../evaluation/plots', "unix50_individual_speedups_{}.pdf".format(parallelism)),bbox_inches='tight')
 
 def collect_unix50_scaleup_times(unix50_results_dir):
     files = [f for f in os.listdir(unix50_results_dir)]
@@ -488,7 +502,7 @@ def collect_unix50_scaleup_times(unix50_results_dir):
     plt.legend(loc='lower right')
     plt.title("Unix50 Throughput")
     plt.tight_layout()
-    plt.savefig(os.path.join('../evaluation/plots', "unix50_throughput_scaleup.pdf"))
+    plt.savefig(os.path.join('../evaluation/plots', "unix50_throughput_scaleup.pdf"),bbox_inches='tight')
 
 
 def format_wrong_output(output_diff, experiment, mode):
