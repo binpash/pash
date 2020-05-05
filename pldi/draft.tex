@@ -194,7 +194,7 @@
 
 %% Title information
 %% \title{Dish: Distribution-oblivious Shell Scripting}         %% [Short Title] is optional;
-\title{\sys: Automated Data-Parallel Shell Processing}         %% [Short Title] is optional;
+\title{\sys: Light-touch Data-Parallel Shell Processing}         %% [Short Title] is optional;
 %% \title{Extensible data processing in the shell}
 
 % \titlenote{with title note}             %% \titlenote is optional;
@@ -216,7 +216,10 @@
 %% extraction tools.
 
 %% Author with single affiliation.
-\author{First1 Last1}
+\author{
+  Anonymous Author(s)
+  \normalsize{Additional Anonymized Material: \href{https://github.com/u-3/dish}{https://github.com/u-3/dish}.}
+}
 %% \authornote{with author1 note}          %% \authornote is optional;
 %%                                         %% can be repeated if necessary
 %% \orcid{nnnn-nnnn-nnnn-nnnn}             %% \orcid is optional
@@ -233,7 +236,7 @@
 %% \email{first1.last1@inst1.edu}          %% \email is recommended
 
 %% Author with two affiliations and emails.
-\author{First2 Last2}
+% \author{First2 Last2}
 %% \authornote{with author2 note}          %% \authornote is optional;
 %%                                         %% can be repeated if necessary
 %% \orcid{nnnn-nnnn-nnnn-nnnn}             %% \orcid is optional
@@ -333,7 +336,8 @@ Experiments with complex pipelines show substantial speedups and the ability to 
 \section{Introduction}
 \label{intro}
 
-\TODO{Drop the automated from the title maybe?}
+% \TODO{Drop the automated from the title maybe?}
+% \nv{Updates}
 
 %% \kk{After discussion on Wednesday Jan 8: Modify the narrative of
 %%   this paper to talk about data processing in the Shell. Make this
@@ -2300,6 +2304,16 @@ already task-based parallelism even in the sequential execution
   to give performance benefits equal to the amount of parallelism that
   we give it.}
 
+We attribute the small drop above $96\times$ in \ttt{spell} \ttt{sort} \ttt{wf}
+and \ttt{bi-grams} to a combination of hyperthreading (128 virtual vs. 64
+physical CPUs) \todo{the fixed width on \ttt{sort}}.
+% I say "we attribute" because it's a way to say something without being certain
+% FIXME: We need to take linear benchmarks on deathstar and livestar to see
+% where it starts dropping
+% not explain scope the results appropriately
+% rinard
+
+\heading{Take-aways}
 
 \subsection{Unix50 from Bell Labs}
 \label{unix50}
@@ -2332,7 +2346,7 @@ speedup of each pipeline separately is shown in
 
 \heading{Discussion}
 
-\heading{Take-away}
+\heading{Take-aways}
 \sys leads to significant performance improvements in completely unmodified \unix pipelines found out in the wild.
 Small tweaks can yield further improvements, showing that \sys-awareness and scripting expertise can improve results.
 
@@ -2462,7 +2476,7 @@ A simpler (but longer) pipeline that leverages on \unix built-ins might be outpe
 % For example, the \ttt{sort} command at the end is an expensive version of extracting the maximum element;
 %   this could have been expressed with a simple \ttt{awk} script that only keeps track of the max.
 
-\heading{Take-away}
+\heading{Take-aways}
 Multi-line Java Program parallel program decomposed in two phases---a highly parallel map phase and a sequential reduce phase---corresponds to a much smaller shell script with
 
 % few different ways to write some phases, 
@@ -2491,7 +2505,7 @@ The complexity of this pipeline makes end-to-end measurements difficult, so we m
 
 \heading{Discussion}
 
-\heading{Take-away}
+\heading{Take-aways}
 
 \subsection{Use Case: Container Orchestration}
 \label{macro3}
@@ -2506,7 +2520,7 @@ It also combines commands from other classes outside \sta and \pur---more promin
 
 \heading{Results}
 
-\heading{Take-away}
+\heading{Take-aways}
 
 \subsection{Further Micro-benchmarks}
 \label{micro}
@@ -2599,7 +2613,7 @@ We find the resulting times quite acceptable:
   given two input arguments in the beginning of this pipeline, \sys takes $8.23s$ for parsing the script and $3.22s$ for analysis and optimization.
 Pushing parallelization factor to $100\times$, \sys's runtime jumps to 5 minutes and 8 seconds to perform the analysis, producing an output dataflow graph that has more than 100 thousand edges in a file of about 11MB.
 
-\heading{Take-away}
+\heading{Take-aways}
 \sys does not improve performance when running the risk of breaking correctness. % This should go in the intro
 % Compared to \sys, \ttt{parallel} can lead to a combination of smaller performance improvements, incorrect execution with respect to the sequential program, and higher rewriting effort.
 In highly-parallel benchmarks, \sys can lead to performance that is comparable to highly specialized streaming frameworks---at a fraction of the cost in terms of manual development.
