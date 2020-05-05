@@ -1,0 +1,15 @@
+kill: (61100): No such process
+kill: (61101): No such process
+kill: (61102): No such process
+Total nodes after optimization: 38
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 14
+Optimization time: 20.771  ms
+Backend time: 0.788  ms
+Execution time: 848306.256  ms
+Compilation time: 17.792  ms
+
+real	14m8.703s
+user	33m1.904s
+sys	9m49.025s

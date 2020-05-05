@@ -80,7 +80,8 @@ def is_tr_pure(options):
 def is_sed_pure(options):
     first_opt = format_arg_chars(options[0])
     if(not first_opt.startswith("-")
-       and "d" in first_opt):
+       and ("d" in first_opt
+            or "q" in first_opt)):
         return "pure"
     else:
         return "stateless"
