@@ -2,6 +2,7 @@ import sys
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import statistics
 
 SMALL_SIZE = 16
 MEDIUM_SIZE = 18
@@ -428,6 +429,15 @@ def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     absolute_seq_times_s = [absolute_seq[scaleup_numbers.index(parallelism)] / 1000
                             for _, absolute_seq in all_results]
     print("Unix50 individual speedups for {} parallelism:".format(parallelism), individual_results)
+    mean = sum(individual_results) / len(individual_results)
+    median = statistics.median(individual_results)
+    geo_mean = np.log(individual_results).sum() / len(individual_results)
+    weighted_res = [i*a for i, a in zip(individual_results, absolute_seq_times_s)]
+    weighted_avg = sum(weighted_res) / sum(absolute_seq_times_s)
+    print("  Mean:", mean)
+    print("  Median:", median)
+    print("  Geometric Mean:", geo_mean)
+    print("  Weighted Average:", weighted_avg)
 
     w = 0.2
     ind = np.arange(len(individual_results))
