@@ -2229,11 +2229,12 @@ The goal of this subsection is to evaluate \sys on popular, common, or classic \
     \end{subfigure}%
     \caption{
       \textbf{Speedup achieved by \sys as a function of the level of parallelism (1--100).} 
-      Three different configurations per benchmark:
-      (i) parallel, focusing only on the parallel execution,
-      (ii) +compile, adding \sys' pre-processing overheads, and
-      (iii) \kk{Add with , without eager and split here}.
-      \nv{Candidate values, based on the HW we have 2, 4, 8, 16, 32, 64. Also, maybe it makes sense to show log x-axis?}
+      Four different configurations per benchmark:
+      (i) \todo{Parallel}, showing the performance of \sys with both eager and split optimizations enabled,
+      (ii) \todo{No Split}, showing the performance of \sys with split disabled,
+      (iii) \todo{No Eager}, showing the performance of \sys with split and eager disabled,
+      (iv) \todo{Blocking Eager}, showing the performance of \sys with split disabled and the naive blocking eager enabled,
+      \nv{Maybe it makes sense to show log x-axis?}
     }
     \vspace{-15pt}
     \label{fig:microbenchmarks}
@@ -2323,35 +2324,60 @@ physical CPUs) \todo{the fixed width on} \ttt{sort}.
 
 The goal of this subsection is to evaluate \sys on an existing set of \unix pipelines found in the wild.
 
-\heading{Programs}
-In a recent event celebrating \unix's 50-year legacy, Bell Labs created a set of \todo{37} challenges~\cite{unix50} solvable by means of composing \unix pipelines.
-By scanning GitHub, we were able to find a set of shell programs that solve all-but-one problems~\cite{}.
-We consider this a good set of benchmarks because 
-(i) the problems were designed to to highlight the \unix philosophy~\cite{} (rather than having a single command that solves the problem) and make extensive use of \unix built-ins with a plethora of flags, and (ii) the solutions were written by non-experts (contrary to the \S\ref{ours}) and were executed by \sys unmodified---stressing patterns that we, \sys's authors, did not necessarily anticipate.
-In cases where an obvious fix improves the pipeline's performance, we report on both \sys's original speedup and the one achieved by applying the fix.
+\heading{Programs} In a recent event celebrating \unix's 50-year
+legacy, Bell Labs created a set of \todo{36} challenges~\cite{unix50}
+solvable by means of composing \unix pipelines.  By scanning GitHub,
+we were able to find a set of shell programs that solve
+\todo{all-but-three} problems~\cite{}.  We consider this a good set of
+benchmarks because (i) the problems were designed to to highlight the
+\unix philosophy~\cite{} (rather than having a single command that
+solves the problem) and make extensive use of \unix built-ins with a
+plethora of flags, and (ii) the solutions were written by non-experts
+(contrary to the \S\ref{ours}) and were executed by \sys
+unmodified---stressing patterns that we, \sys's authors, did not
+necessarily anticipate \kk{I would change that to ``stressing a
+  variety of patterns'' since it doesn't really matter if we
+  anticipated them (especially since we can address any issues and
+  then re-run them).} .  In cases where an obvious fix improves the
+pipeline's performance, we report on both \sys's original speedup and
+the one achieved by applying the fix.
 % TODO: talk about correct wrt developer intentions vs. correct wrt problem definition
 
 % The ability to compose larger programs in versatile ways from smaller utility programs was a hallmark of the \unix design, and the game's levels are designed to stress that.
 % These challenges were specifically designed to highlight the \unix's philosophy, its 
 % ability to compose larger programs in versatile ways from smaller utility programs summarized by McIllroy's Unix philosophy memo.
 
-\TODO{An important point that needs to be made clear is that these are
-  taken from the wild unmodified. And that Pash never leads to
-  slowdown (except for the trivial head cases, where the slowdown is
-  neligible).}
+%% \TODO{An important point that needs to be made clear is that these are
+%%   taken from the wild unmodified. And that Pash never leads to
+%%   slowdown (except for the trivial head cases, where the slowdown is
+%%   neligible).}
 
-\heading{Results}
-\sys's parallelism set to \todo{16}. The input given to the pipelines
-was the test input from unix50 multiplied to reach \todo{10GBs}. The
-speedup of each pipeline separately is shown in
+\heading{Results} \sys's parallelism set to 16. The input given to the
+pipelines was the test input from unix50 multiplied to reach
+10GBs. The speedup of each pipeline separately is shown in
 \Cref{fig:unix50-individual}. The average\todo{/median} speedup is
-\todo{$5.24\times$} and the \todo{geometric mean is $XX\times$}.
+$5.49$/\todo{$6.07\times$}, the \todo{geometric mean is $1.08\times$},
+and the \todo{weighted average (with the absolute times as weights) is
+  $5.75\times$}.
+
+%% Mean: 5.499164686559543
+%% Median: 6.075774436154179
+%% Geometric Mean: 1.0798740409683736
+%% Weighted Average: 5.752406752503295
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{\detokenize{./figs/unix50_individual_speedups_16.pdf}}
+  \caption{
+	  \textbf{Speedup (left axis) and over sequential execution (right axis) for all Unix50 pipelines.}
+		Parallelism is 16$\times$ on 10GB of input data~\cf{unix50}.
+  }
+  \vspace{-15pt}
+  \label{fig:unix50-individual}
+\end{figure}
+
 
 \heading{Discussion}
-
-\heading{Take-aways}
-\sys leads to significant performance improvements in completely unmodified \unix pipelines found out in the wild.
-Small tweaks can yield further improvements, showing that \sys-awareness and scripting expertise can improve results.
 
 %% Breakdown of not ideal speedups in 8, 16 parallelism
 
@@ -2361,11 +2387,10 @@ Small tweaks can yield further improvements, showing that \sys-awareness and scr
 %% Cheap (non cpu intensive -- constant costs grow): 0, 4, 5, 6, 7, 8, 12, 14
 %% Long (task-based parallelism in sequential and context switches): 7, 8, 9, 10, 11, 12, 14, 21, 27, 28
 
-\kk{Out of all benchmarks, we have talked about the head and the
-  non-parallelizable ones in the paper. Maybe we also want to talk
-  about the long and the cheap ones. Also we might want to talk and
-  find out more about the sort bottleneck.}
-
+%% \kk{Out of all benchmarks, we have talked about the head and the
+%%   non-parallelizable ones in the paper. Maybe we also want to talk
+%%   about the long and the cheap ones. Also we might want to talk and
+%%   find out more about the sort bottleneck.}
 
 
 %% (OLD) Bad result descriptions:
@@ -2381,33 +2406,21 @@ Small tweaks can yield further improvements, showing that \sys-awareness and scr
 %%  24. (Not sure: It seems that the computation is trivial)
 %%  32. TODO: Implement
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\columnwidth]{\detokenize{./figs/unix50_individual_speedups_16.pdf}}
-  \caption{
-	  \textbf{Speedup (left axis) and over sequential execution (right axis) for all Unix50 pipelines.}
-		Parallelism is \todo{16$\times$} on \todo{10GB} of input data~\cf{unix50}.
-		\nv{Can decrease height and increase width substantially?}
-    %% \todo{Scale the 0-1 region of the yaxis as much as the 1-20.}
-  }
-  \vspace{-15pt}
-  \label{fig:unix50-individual}
-\end{figure}
-
 \sys achieves speedup in all pipelines except for 2, 19, and 31. These
 pipelines include a \ttt{head} and only process one line of the
 input. This can be seen by their sequential execution time which is in
 the order of 10 milliseconds. The slowdown is due to constant costs of
-setting up the pipes and spawning many processes. In all three of
-these cases the execution time with \sys is in the order of \todo{X
-  ms}. For pipelines 13, 24, 25, 26, 29, and 30, \sys performs the
-same as the sequential implementation. This is because these pipelines
-contain non-parallelizable commands, such as \ttt{awk}, \ttt{sed} with
-option \ttt{d}, and \ttt{tr} with option \ttt{-d}. An illustrative
-example is pipeline 13, which is shown here:
+setting up the pipes and spawning processes. In all three of these
+cases the execution time with \sys is in the order of 1 second. For
+pipelines 13, 24, 25, 26, 29, and 30, \sys performs the same as the
+sequential implementation. This is because these pipelines contain
+commands that can not be parallelized in general, such as \ttt{awk},
+\ttt{sed} with option \ttt{d}, and \ttt{tr} with option \ttt{-d}. An
+illustrative example is pipeline 13, which is shown here:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none]
-  cat $IN | awk "{print \$2, \$0}" | sort -nr | cut -d ' ' -f 2
+  cat $IN | awk "{print \$2, \$0}" |
+      sort -nr | cut -d ' ' -f 2
 \end{lstlisting}
 
 \kk{Rephrase that to sound more meaningful and surprising.}  Notice
@@ -2423,12 +2436,40 @@ By executing this version of the pipeline with \sys, we achieve
 \todo{X} speedup. This indicates that just a little awaresess of
 command parallelizability can go a long way, and that the effort that
 a \sys user needs to spend is often negligible to achieve
-benefits. Finally, an important point that is reinforced from this
-experiment is that \sys doesn't lead to slowdown, even in cases where
-parallelism is not possible.
+benefits.
+
+Finally, for the rest of the pipelines \sys speedup is \todo{capped}
+because of a combination of the following reasons: (i) they contain
+pure commands that are parallelizable but don't scale linearly, such
+as \ttt{sort} (e.g. pipelines 0, 1, 3, 15, 16, 18, 20, 27, 28, 33),
+(ii) they are deep pipelines that already exploit task-based
+parallelism (e.g. pipelines 7, 8, 9, 10, 11, 12, 14, 27, 28), and
+(iii) they are not cpu-intensive, leading to \todo{larger IO and
+  constant costs} (e.g. pipelines 4, 5, 6, 7, 8, 12, 14, 22, 23).
+
+%% Sort-bottleneck: 1, 3, 15, 16, 20, 33
+%% Non-parallelizable completely: 13 (awk-solved), 18 (awk), 24, 25, 26, 29, 30
+%% Cheap (non cpu intensive -- constant costs grow): 0, 4, 5, 6, 7, 8, 12, 14, 22, 23
+%% Long (task-based parallelism in sequential and context switches): 7, 8, 9, 10, 11, 12, 14, 21, 27, 28
+
+%% Finally, an important point that is reinforced from this
+%% experiment is that \sys doesn't lead to slowdown, even in cases where
+%% parallelism is not possible.
+
+
+
+\heading{Take-aways} \sys leads to significant performance
+improvements in completely unmodified \unix pipelines found out in the
+wild. Small tweaks can yield further improvements, showing that
+\sys-awareness and scripting expertise can improve
+results. Furthermore, it doesn't cause slowdown in any non-trivial
+computation, even in cases where parallelism is not possible.
 
 \subsection{Use Case: NOAA Weather Analysis}
 \label{macro1}
+
+\kk{Maybe use phoenix for that one? Since it has a MapReduce interface
+  but it runs on multicore?}
 
 To understand \sys better under a realistic workload, we use a large pipeline inspired by the introductory chapter of Hadoop's Definitive Guide~\cite[Chapter 2]{hadoop:15}.
 
