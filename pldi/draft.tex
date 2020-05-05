@@ -2528,30 +2528,47 @@ It also combines commands from other classes outside \sta and \pur---more promin
 \subsection{Further Micro-benchmarks}
 \label{micro}
 
+\kk{I think the scoping of this should change to be both
+  micro-benchmarks and comparison with existing work. Especially since
+  we will have some form of comparison with Raftlib and phoenix. I
+  guess this section is trying to establish \sys limits by comparing
+  it with similar (but not identical) work.}
+
 The previous several subsections show substantial speedups without any developer effort on a variety of smaller and larger shell programs.
 In this section, we are interested in zooming into \sys's limits and how they compare with perceived upper bounds.
 These upper bounds are calculated through a variety of means which, while requiring vastly more developer effort than \sys, they are expected to yield significantly better performance.
 
 \heading{Parallel Sort}
-We compare a single \todo{GNU} \ttt{sort} optimized by \sys with the
-same \ttt{sort} with the \ttt{--parallel} flag set. The results are
-shown in \Cref{fig:sort-parallel-comparison}. There are a couple
-important points to note. First of all, \sys without the \ttt{eager}
-optimization enabled performs comparably with \ttt{sort
-  --parallel}. On the other hand, enabling the \ttt{eager}
-optimization allows \sys to perform much better (almost \todo{2}
-times) than \ttt{sort} with the \ttt{--parallel} flag. That is because
-\sys with the \ttt{eager} optimization enabled essentially uses
-intermediate buffers (on disk) between the merge phases. On the other
-hand, \ttt{sort --parallel} sorts the input trying to minimize
-additional memory (so doesn't allocate intermediate buffers). \kk{If
-  we want, we can add here numbers where we allow sort --parallel to
-  use additional ram for intermediate buffers (using the -S flag).} Of
-course, it would be possible to manually create a longer pipeline and
-use intermediate buffers to speed this up, but this defeats the
-purpose of having a simple solution.
+%% \kk{Explain what is the purpose of the
+%%   microbenchmark. We want to establish that \sys scalability is as
+%%   good as it could be.}
+We first compare a single GNU \ttt{sort} optimized by \sys with the
+same \ttt{sort} with the \ttt{-{}-parallel} flag set. Even though the
+\ttt{-{}-parallel} flag is not a general parallelism solution, this
+comparison serves to establish a baseline for \sys's performance. The
+results are shown in \Cref{fig:sort-parallel-comparison}. Note that
+for \ttt{sort -{}-parallel} parallelism is set to double the number
+set of \sys (i.e. the final point is for \ttt{-{}-parallelism=128})
+since \sys also spawns separate processes for sorting and for
+merging. There are a couple important points to note.
 
-Finally, based on the comparison with \ttt{sort --parallel} it seems
+First of all, \sys without the \ttt{eager} optimization enabled
+performs comparably with \ttt{sort -{}-parallel}. On the other hand,
+enabling the \ttt{eager} optimization allows \sys to perform much
+better ($\sim 2$ times) than \ttt{sort} with the \ttt{-{}-parallel}
+flag. That is because \sys with the \ttt{eager} optimization enabled
+essentially uses intermediate buffers (on disk) between the merge
+phases.
+%% On the other hand, \ttt{sort --parallel} sorts the input trying to
+%% minimize additional memory (so doesn't allocate intermediate
+%% buffers).
+%% %% \kk{If we want, we can add here numbers where we allow sort --parallel
+%% %%   to use additional ram for intermediate buffers (using the -S flag).}
+%% Of course, it would be possible to manually create a longer pipeline
+%% and use intermediate buffers to speed this up, but this defeats the
+%% purpose of having a simple solution.
+
+Second, based on the comparison with \ttt{sort --parallel} it seems
 that the scaleup limit that \sys reaches with sort is \todo{inherent
   and cannot be overpassed} \kk{We have to find a way to argue for the
   previous statement}. Because of that, all pipelines and scripts that
@@ -2559,17 +2576,23 @@ contain \ttt{sort} in our evaluation (several one-liners and unix50)
 have this upper bound on scalability. \kk{Maybe move this paragraph in
   the one-liners section.}
 
+Finally, this comparison showcases the benefit that \sys provides to
+command developers. Instead of implementing a custom flag that enables
+parallelism for a command, a simple specification of the command
+parallelizability allows \sys to scale it similarly to a handcrafted
+implementation with almost no effort.
+
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{\detokenize{./figs/sort_baseline_comparison_scaleup.pdf}}
-  \caption{ \textbf{Comparison with \ttt{sort --parallel}.}
+  \caption{ \textbf{Comparison with \ttt{sort -{}-parallel}.}
   }
   \vspace{-15pt}
   \label{fig:sort-parallel-comparison}
 \end{figure}
 
-\kk{There is a weird thing in the results. That the sequential one
-  with --parallel=1 takes more than the \sys sequential one.}
+%% \kk{There is a weird thing in the results. That the sequential one
+%%   with --parallel=1 takes more than the \sys sequential one.}
 
 \heading{GNU Parallel}
 We compare \sys to \ttt{parallel} (v.20160422), a GNU utility for running other commands in parallel~\cite{Tange2011a}.
