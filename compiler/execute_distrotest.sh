@@ -24,6 +24,9 @@ name=distrotest
 exec_seq="-s"
 for n_in in "${n_inputs[@]}"; do
 
+    python3 generate_microbenchmark_intermediary_scripts.py \
+            $usecase_dir $name $n_in $intermediary_dir
+
     ## Generate the intermediary script
     cp "${usecase_dir}/${name}.sh" "${intermediary_dir}/${name}_${n_in}_seq.sh"
     cp "${usecase_dir}/${name}_env.sh" "${intermediary_dir}/${name}_${n_in}_env.sh"

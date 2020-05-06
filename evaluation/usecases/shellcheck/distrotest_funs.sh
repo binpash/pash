@@ -21,7 +21,7 @@ distrotest_loop()
         printf 'Result: ' # >&3
         < /dev/null docker run -v "$tmp:/mnt" "$distro" sh -c "
         $setup
-        cd /mnt || exit 1
+        cd /mnt/shellcheck || exit 1
         test/buildtest
         "
         ret=$?
