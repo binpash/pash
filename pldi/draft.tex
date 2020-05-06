@@ -217,8 +217,8 @@
 
 %% Author with single affiliation.
 \author{
-  Anonymous Author(s)
-  \normalsize{Additional Anonymized Material: \href{https://github.com/u-3/dish}{https://github.com/u-3/dish}.}
+  Anonymous Author(s)\\
+  \normalsize{Additional Anonymized Material: \href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.}
 }
 %% \authornote{with author1 note}          %% \authornote is optional;
 %%                                         %% can be repeated if necessary
@@ -364,102 +364,129 @@ Experiments with complex pipelines show substantial speedups and the ability to 
 %% \kk{Decide if we will mainly focus on scripts or pipelines and
 %%   choose wordings appropriately.}
 %
-Consider the following data processing Shell script.
-%% \kk{We might want to have a more complex script here.}
+% Consider the following data processing Shell script.
+% %% \kk{We might want to have a more complex script here.}
+% 
+% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+% cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$(p_1)$$)
+%   sort | uniq -c | sort -rn | head 5 > out
+% \end{lstlisting}
+% 
+% \noindent
+% great sentence -- keep
+% Scripts like the one above are commonly used for orchestrating data-processing workflows; connecting system commands with custom tools to perform complex tasks.
+% %% \kk{Do we need to mention domains where that happens?}
+% Even though shell pipelines are designed to exploit task parallelism, they completely ignore available data-parallelism.
+% % Too low-level descriptions of the problem, maybe keep it high level?
+% For small input sizes this isn't a problem since scripts take less than a second to execute, but as data sizes increase, failing to utilize the underlying parallel computational resources is a significant bottleneck.
 
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-cat * | tr -cs A-Za-z\n | tr A-Z a-z |    ($$(p_1)$$)
-  sort | uniq -c | sort -rn | head 5 > out
-\end{lstlisting}
+The \unix shell is an environment---often interactive---for composing scripts written in a plethora of programming languages.
+This language agnosticism, coupled with \unix's toolbox philosophy~\cite{mcIlroymemo}, makes the shell the primary choice for specifying succinct and simple pipelines that target data processing, system orchestration, and other automation tasks.
+% Pipe-centric shell commands are parallel (and to some extent, functional) programs that can natively enjoy significant parallelism on a multicore machine.
+Unfortunately, parallelizing such pipelines requires significant effort and is shared unevenly between two different groups (or roles) of a programmer. % it's more like personas or "wearing hats"
 
-\noindent
-Scripts like the one above are commonly used for orchestrating
-data-processing workflows; connecting system commands with custom
-tools to perform complex tasks.
-%% \kk{Do we need to mention domains where that happens?}
-Even though shell pipelines are designed to exploit task parallelism,
-they completely ignore available data-parallelism. For small input
-sizes this isn't a problem since scripts take less than a second to
-execute, but as data sizes increase, failing to utilize the underlying
-parallel computational resources is a significant bottleneck.
+The first group is \emph{command developers} responsible for developing individual commands such as \ttt{sort}, \ttt{uniq}, and \ttt{jq}.
+These developers usually work in a single---often low-level---programming language and manually incorporate parallelism through means available in their chosen language, whenever this is possible. %  by the problem and language.
+% the language and abstractions they are using focused at a particular task 
+% also: target a small problem but aim at high reusability 
+As they have no visibility into the command's uses, they expose a plethora of ad-hoc command-specific flags such as \ttt{-t}~\cite{}, \ttt{--parallel}~\cite{}, \ttt{-p}, \ttt{CPUs}, and \ttt{NUM\_THREADS}.
 
-To address this concern, a Shell \emph{user} could resort to several
-different solutions (e.g. gnuparallel, tsc, flags in individual
-commands etc...) that offer some form of parallelism. However these
-solutions are too ad-hoc (each having a disparate parallelism model),
-too limited (they only apply to specific use-cases), and too
-coarse-grained. \kk{Tone the previous claims down and back them up.}
-At the same time, a \emph{developer} of Shell commands could rewrite
-her commands using low level tools (e.g. Raftlib, openMP, etc) to
-improve utilization and performance. Manual rewriting is expensive and
-can introduce new bugs, cascading changes, and divergence from legacy
-functionality.
+The second group is \emph{command users}, composing scripts out of individual commands.
+% Unfortunately, users do not operate in a single language
+As their programs combine a variety of commands written in many languages, they are left with only a few manual options for achieving parallelism:
+% use the composition abstractions of the \unix shell, 
+% and are often prototypical in nature---focusing on quickly prototyping a solution for the task at hand rather building an optimal solution to a recurring pattern.
+% short lived, changing quickly
+either coarse-grained tools such as \eg GNU \ttt{parallel}~\cite{Tange2011a}, \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, or manual parallelism POSIX shell primitives and 
+% (ii) ad-hoc flags provided by command developers and mentioned above.
 
-To address this issue for both \emph{users} and \emph{developers}, we
-propose \sys, a tool that automatically exploits available
-data-parallelism in a given shell script. The key insight behind \sys
-is that a large subset of the Shell language can be encoded as a
-dataflow graph, a flexible representation that allows for
-parallelization optimizations. \sys builds on this insight with a
-careful study of the parallelizability properties of shell primitives
-and commands, a definition of a dataflow graph model that is suitable
-for the shell, a set of parallelization optimizations that preserve
-the behaviour of the graph, and a late-bound command-prefixing scheme
-for deferring optimizations as late-as-possible (\ie when runtime
-information is available). \kk{Maybe elaborate some more on the
-  contributions in this paragraph.}  A \sys-enabled $p_1$ will run
-\ttt{tr}s on parallel streams, use a mostly-parallel tree of
-\ttt{sort}s, run \ttt{uniq} mostly in parallel, execute \ttt{head} in
-one of the streams, and (trivially) merge streams in \ttt{out}. The
-only requirement to support a new command is that its developer adds a
-lightweight annotation to describe its parallelizability properties.
+Their last resort is 
+and writing the program from scratch
+Manual rewriting is expensive and can introduce new bugs, cascading changes, and divergence from legacy functionality---but also foregoes all the productivity benefits of the original script.
+% The fact that a programmer often belongs to both groups at the same time---as composed scripts can themselves form a command used in other scrips---compounds the challenge.
+Often, these users are domain experts lacking a deep understanding of parallel systems---in desperate need of automation when it comes to parallelization.
 
-The paper is structured as follows. It starts by introducing the
-necessary background on shell scripting and overviewing \sys~\sx{bg}.
-Sections \ref{distributability}--\ref{impl} highlight key
-contributions:
+This paper presents a solution targeting the second class of programmers, command users, 
+\sys can automate 
+
+
+A system that is aware of the \unix philosophy, its key abstractions, and offers automated POSIX-aware parallelization as long as 
+These lightweight annotations can be expressed by developers 
+can be expressed 
+This is paired with parallelizability study that informed the design of the system and its annotation interface, and led to the parallelizability semantics for POSIX and GNU coreutils---a large class of commands that serves as the standard library.
+
+%% First, shell users composing pipelines (or simply running legacy pipelines on massive datasets) can see scalability benefits without any manual effort---no need for \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}, or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
+
+To address this challenge, we develop \sys, a system for transforming POSIX shell scripts to their parallel equivalents.
+\sys packs several ideas around the insight that a large subset of the Shell language can be represented as a dataflow graph, enabling for parallelization optimizations.
+First, a careful study of the parallelizability properties of shell primitives and commands.
+\sys addresses the challenge by offering command developers a unified set of abstractions for describing the parallelizability characteristics of their commands.
+Using lightweight annotations akin to type signatures, \sys can automate the parallelization of entire POSIX scripts without any input from their user.
+hand-in-hand with the parallelizability study:
+  the study informed the annotation language and was used to annotate the entire
+  for all 
+---a set of annotations that \sys already offers for 
+for the standard library
+  akin to the standard library
+  the annotation language is informed by the study, but also the study is 
+XX to a type signature, these annotations describe 
+
+Second, \sys defines a dataflow graph model that is suitable for the semantics of the POSIX shell and proposes a set of parallelization optimizations that preserve the behavior of the dataflow graph.
+(one sentence for the model)
+(one sentence for the optimizations)
+The result of the compilation is still a POSIX-compliant script that manages parallelism explicitly;
+  POSIX compliance means 
+it does not depend on a managed runtime 
+
+Third, \sys packs a runtime component 
+A small library of highly-optimized data combiners allows 
+This is paired with a
+it comes with a few runtime primitives for eager data splitting and merging that address several practical issues ranging from deadlocks, performance bottlenecks;
+  these primitives were developed from uncovering several pathological situations, on many of which we report.
+
+We perform an extensive evaluation of \sys using 
+  (i) a series of benchmarks, ranging from classic scripts found in the \unix literature to modern data-processing pipelines;
+  (ii) three large and complex use cases, ranging from temperature analysis to web crawling and indexing; and
+  (iii) a series of micro-benchmarks inspired by (and comparing with) possible alternatives.
+The results demonstrate significant advantages in correctness, manual effort, and performance---with \sys's transformations offering an order-of-magnitude performance improvements aided further by \sys's optimized runtime components.
+Improvements on the performance of individual commands depend on several factors such as the script's execution time, the pipeline depth and the parallelizability class under which commands fall.
+
+%                                           a tool that automatically exploits available data-parallelism in a given shell script.
+
+The paper is structured as follows.
+It starts by introducing the necessary background on shell scripting and overviewing \sys~\sx{bg}.
+Sections \ref{distributability}--\ref{impl} highlight key contributions:
 \begin{itemize}
   \item
-  \S\ref{distributability} studies the parallelizability properties of
-  a large class of Shell commands (coreutils) and introduces an
-  lightweight annotation language for commands that could be executed
-  in a data-parallel manner. \kk{Mention that we did this for all
-    coreutils.}
+  \S\ref{distributability}
+    studies the parallelizability properties of a large class of Shell commands and introduces a lightweight annotation language for commands that can be executed in a data-parallel manner.
 
   \item
-  \S\ref{ir} presents a dataflow graph model for encoding shell
-  scripts, and a set of safe parallelization transformations that
-  preserve the semantics of the sequential program.
+  \S\ref{ir} presents a dataflow graph model for encoding shell scripts, and a set of parallelization transformations that focus on preserving the semantics of the sequential program.
 
   \item
-  \S\ref{impl} describes the \sys implementation and addresses several
-  challenges related to the translation and optimization of shell
-  programs. \kk{Rewrite that when we know for sure what the section
-    contains.}
+  \S\ref{impl} describes the \sys implementation and addresses several challenges related to the translation and optimization of shell programs.
+% \kk{Rewrite that when we know for sure what the section contains.}
 
 \end{itemize}
 
 \noindent
-\sys's evaluation~\sx{eval} shows significant speedups (4--10$\times$)
-for parallel execution using a combination of real pipelines.
+After \sys's evaluation~\sx{eval} and  comparison with related work~\sx{related}, the paper closes with a discussion of limitations and possible future directions~\sx{discussion}.
 %micro-bench\-marks %---popular shell one-liners that highlight
 %certain features---and a multi-line macro-benchmark---a popular
 %weather analysis script.
-After a comparison with related prior work~\sx{related}, the paper
-closes with a discussion of limitations and possible future
-directions~\sx{discussion}.
 %% Additional material, in anonymized form, is available at
 %% \href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.
 
 
-% TODO: Important to have a small script that highlights
-\nv{
-(i) different classes of commands
-(ii) challenge of shell expansion order
-(iii) segments that are parallelized by \sys (with provable correctness)
-(iv) segments that are \emph{not} parallelized by \sys (otherwise they can lead to
-incorrectness)
-}
+% % TODO: Important to have a small script that highlights
+% \nv{
+% (i) different classes of commands
+% (ii) challenge of shell expansion order
+% (iii) segments that are parallelized by \sys (with provable correctness)
+% (iv) segments that are \emph{not} parallelized by \sys (otherwise they can lead to
+% incorrectness)
+% }
 
 % \nv{I don't think the intro needs any serious rewrite, apart from deleting any
 % notion of distribution and highlighting parallel processing.
@@ -2453,12 +2480,12 @@ The effort required to write this pipeline is astonishingly low:\footnote{
 The Hadoop program, expressed in Java and only capturing the \emph{four} last stages, amounts to 137 lines of Java code---not accounting for commands moving data in and out of HDFS.
 
 As this is benchmark is taken directly from the Hadoop book, it is worth reporting on its execution time.
-The comparison is not unreasonable as both systems
-  (i) favor message-passing rather than shared memory,
+While the setup is not typical of Hadoop, the comparison between the two systems is not unreasonable:  % we took several steps to make the comparison fair:
+  (i) both Hadoop and Spark favor message-passing rather than shared memory,
 	(ii) Hadoop has no fault-tolerance for master and worker nodes (\ie both systems do not replicate data),
-	(iii) the task at hand was presumably chosen by the book author as one that matches Hadoop's capabilities, and 
-	(iv) the Hadoop program is written as a single program tailored for this task---with ample opportunity for optimization from the compiler and runtime system---rather than a series of loosely coupled programs that each written to handle many other cases.
-\todo{The original pipeline executes in XXs}.
+	(iii) the task at hand is a good fit for  Hadoop,
+	(iv) the Hadoop program is written as a single program tailored for this task---with ample opportunity for optimization from the compiler and runtime system---rather than a series of loosely coupled programs each written to handle many other cases.
+\todo{The original pipeline executes in XXs---long enough to amortize Hadoop's 0.5--0.9s startup costs.}
 With two Hadoop 3.2.1 (Openjdk 11.0.5) data-nodes, the Hadoop program takes 6m22s for data processing and 1m09s for moving the dataset to HDFS.
 For the same amount of parallelism, \sys takes 4m30.554s---this includes downloading and uncompressing the data files which, as described earlier, is not expressible in the Hadoop equivalent.
 
