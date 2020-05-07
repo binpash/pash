@@ -1,0 +1,354 @@
+execve("./execute_evaluation_scripts.sh", ["./execute_evaluation_scripts.sh"], 0x7ffdfd551e10 /* 76 vars */) = 0
+brk(NULL)                               = 0x5624474ab000
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/haswell/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/haswell/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "haswell/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "haswell/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/usr/local/lib/tls/haswell/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/tls/haswell/x86_64", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/usr/local/lib/tls/haswell/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/tls/haswell", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/usr/local/lib/tls/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/tls/x86_64", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/usr/local/lib/tls/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/tls", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/usr/local/lib/haswell/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/haswell/x86_64", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/usr/local/lib/haswell/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/haswell", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/usr/local/lib/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/x86_64", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/usr/local/lib/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+openat(AT_FDCWD, "/opt/jmf/JMF-2.1.1e/lib/tls/haswell/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/jmf/JMF-2.1.1e/lib/tls/haswell/x86_64", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/jmf/JMF-2.1.1e/lib/tls/haswell/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/jmf/JMF-2.1.1e/lib/tls/haswell", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/jmf/JMF-2.1.1e/lib/tls/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/jmf/JMF-2.1.1e/lib/tls/x86_64", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/jmf/JMF-2.1.1e/lib/tls/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/jmf/JMF-2.1.1e/lib/tls", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/jmf/JMF-2.1.1e/lib/haswell/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/jmf/JMF-2.1.1e/lib/haswell/x86_64", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/jmf/JMF-2.1.1e/lib/haswell/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/jmf/JMF-2.1.1e/lib/haswell", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/jmf/JMF-2.1.1e/lib/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/jmf/JMF-2.1.1e/lib/x86_64", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/jmf/JMF-2.1.1e/lib/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/jmf/JMF-2.1.1e/lib", 0x7ffffe7d69a0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=105391, ...}) = 0
+mmap(NULL, 105391, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7faed6836000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\220\311\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0644, st_size=170784, ...}) = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7faed6834000
+mmap(NULL, 2267936, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7faed63ff000
+mprotect(0x7faed6424000, 2097152, PROT_NONE) = 0
+mmap(0x7faed6624000, 20480, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x25000) = 0x7faed6624000
+close(3)                                = 0
+openat(AT_FDCWD, "tls/haswell/x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/haswell/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "haswell/x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "haswell/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/usr/local/lib/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0P\16\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0644, st_size=14560, ...}) = 0
+mmap(NULL, 2109712, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7faed61fb000
+mprotect(0x7faed61fe000, 2093056, PROT_NONE) = 0
+mmap(0x7faed63fd000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x2000) = 0x7faed63fd000
+close(3)                                = 0
+openat(AT_FDCWD, "tls/haswell/x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/haswell/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "haswell/x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "haswell/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/usr/local/lib/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\260\34\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2030544, ...}) = 0
+mmap(NULL, 4131552, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7faed5e0a000
+mprotect(0x7faed5ff1000, 2097152, PROT_NONE) = 0
+mmap(0x7faed61f1000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1e7000) = 0x7faed61f1000
+mmap(0x7faed61f7000, 15072, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7faed61f7000
+close(3)                                = 0
+mmap(NULL, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7faed6831000
+arch_prctl(ARCH_SET_FS, 0x7faed6831740) = 0
+mprotect(0x7faed61f1000, 16384, PROT_READ) = 0
+mprotect(0x7faed63fd000, 4096, PROT_READ) = 0
+mprotect(0x7faed6624000, 16384, PROT_READ) = 0
+mprotect(0x562446c55000, 16384, PROT_READ) = 0
+mprotect(0x7faed6850000, 4096, PROT_READ) = 0
+munmap(0x7faed6836000, 105391)          = 0
+openat(AT_FDCWD, "/dev/tty", O_RDWR|O_NONBLOCK) = 3
+close(3)                                = 0
+brk(NULL)                               = 0x5624474ab000
+brk(0x5624474cc000)                     = 0x5624474cc000
+openat(AT_FDCWD, "/usr/lib/locale/locale-archive", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=10281936, ...}) = 0
+mmap(NULL, 10281936, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7faed543b000
+close(3)                                = 0
+getuid()                                = 1000
+getgid()                                = 1000
+geteuid()                               = 1000
+getegid()                               = 1000
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+ioctl(-1, TIOCGPGRP, 0x7ffffe7d71a4)    = -1 EBADF (Bad file descriptor)
+sysinfo({uptime=51530, loads=[9184, 16512, 22496], totalram=16523440128, freeram=6344183808, sharedram=1017671680, bufferram=440848384, totalswap=2147479552, freeswap=2147479552, procs=1467, totalhigh=0, freehigh=0, mem_unit=1}) = 0
+rt_sigaction(SIGCHLD, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGCHLD, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7faed5e48f20}, 8) = 0
+rt_sigaction(SIGINT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGINT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+rt_sigaction(SIGQUIT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGQUIT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+rt_sigaction(SIGTSTP, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGTSTP, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+rt_sigaction(SIGTTIN, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGTTIN, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+rt_sigaction(SIGTTOU, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGTTOU, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigaction(SIGQUIT, {sa_handler=SIG_IGN, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+uname({sysname="Linux", nodename="konstantinos-x1", ...}) = 0
+stat("/home/konstantinos/Desktop/University/research/code/sdsh/compiler", {st_mode=S_IFDIR|0755, st_size=12288, ...}) = 0
+stat(".", {st_mode=S_IFDIR|0755, st_size=12288, ...}) = 0
+stat("/home", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat("/home/konstantinos", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat("/home/konstantinos/Desktop", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat("/home/konstantinos/Desktop/University", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat("/home/konstantinos/Desktop/University/research", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat("/home/konstantinos/Desktop/University/research/code", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat("/home/konstantinos/Desktop/University/research/code/sdsh", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat("/home/konstantinos/Desktop/University/research/code/sdsh/compiler", {st_mode=S_IFDIR|0755, st_size=12288, ...}) = 0
+stat("/home/konstantinos/Desktop/University/research/code", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+getpid()                                = 6533
+openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/gconv/gconv-modules.cache", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=26376, ...}) = 0
+mmap(NULL, 26376, PROT_READ, MAP_SHARED, 3, 0) = 0x7faed6849000
+close(3)                                = 0
+getppid()                               = 6531
+getpid()                                = 6533
+getpgrp()                               = 6531
+ioctl(2, TIOCGPGRP, [6531])             = 0
+rt_sigaction(SIGCHLD, {sa_handler=0x5624469a9790, sa_mask=[], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7faed5e48f20}, 8) = 0
+prlimit64(0, RLIMIT_NPROC, NULL, {rlim_cur=62584, rlim_max=62584}) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+openat(AT_FDCWD, "./execute_evaluation_scripts.sh", O_RDONLY) = 3
+stat("./execute_evaluation_scripts.sh", {st_mode=S_IFREG|0755, st_size=2594, ...}) = 0
+ioctl(3, TCGETS, 0x7ffffe7d7130)        = -1 ENOTTY (Inappropriate ioctl for device)
+lseek(3, 0, SEEK_CUR)                   = 0
+read(3, "#!/bin/bash\n\nmicrobenchmarks_dir"..., 80) = 80
+lseek(3, 0, SEEK_SET)                   = 0
+prlimit64(0, RLIMIT_NOFILE, NULL, {rlim_cur=1024, rlim_max=4*1024}) = 0
+fcntl(255, F_GETFD)                     = -1 EBADF (Bad file descriptor)
+dup2(3, 255)                            = 255
+close(3)                                = 0
+fcntl(255, F_SETFD, FD_CLOEXEC)         = 0
+fcntl(255, F_GETFL)                     = 0x8000 (flags O_RDONLY|O_LARGEFILE)
+fstat(255, {st_mode=S_IFREG|0755, st_size=2594, ...}) = 0
+lseek(255, 0, SEEK_CUR)                 = 0
+read(255, "#!/bin/bash\n\nmicrobenchmarks_dir"..., 2594) = 2594
+fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 0), ...}) = 0
+write(1, "Deleting eager intermediate file"..., 37) = 37
+openat(AT_FDCWD, "/tmp/", O_RDONLY|O_NONBLOCK|O_CLOEXEC|O_DIRECTORY) = 3
+fstat(3, {st_mode=S_IFDIR|S_ISVTX|0777, st_size=45056, ...}) = 0
+getdents(3, /* 38 entries */, 32768)    = 1984
+getdents(3, /* 0 entries */, 32768)     = 0
+close(3)                                = 0
+stat(".", {st_mode=S_IFDIR|0755, st_size=12288, ...}) = 0
+stat("/home/konstantinos/.opam/4.09.0/bin/rm", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/opt/maven/bin/rm", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/opt/leiningen/rm", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/anaconda2/bin/rm", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/anaconda2/bin/rm", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/.cabal/bin/rm", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/.opam/4.09.0/bin/rm", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/.local/bin/rm", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/usr/local/sbin/rm", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/usr/local/bin/rm", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/usr/sbin/rm", 0x7ffffe7d6dc0)    = -1 ENOENT (No such file or directory)
+stat("/usr/bin/rm", 0x7ffffe7d6dc0)     = -1 ENOENT (No such file or directory)
+stat("/sbin/rm", 0x7ffffe7d6dc0)        = -1 ENOENT (No such file or directory)
+stat("/bin/rm", {st_mode=S_IFREG|0755, st_size=63704, ...}) = 0
+stat("/bin/rm", {st_mode=S_IFREG|0755, st_size=63704, ...}) = 0
+geteuid()                               = 1000
+getegid()                               = 1000
+getuid()                                = 1000
+getgid()                                = 1000
+access("/bin/rm", X_OK)                 = 0
+stat("/bin/rm", {st_mode=S_IFREG|0755, st_size=63704, ...}) = 0
+geteuid()                               = 1000
+getegid()                               = 1000
+getuid()                                = 1000
+getgid()                                = 1000
+access("/bin/rm", R_OK)                 = 0
+stat("/bin/rm", {st_mode=S_IFREG|0755, st_size=63704, ...}) = 0
+stat("/bin/rm", {st_mode=S_IFREG|0755, st_size=63704, ...}) = 0
+geteuid()                               = 1000
+getegid()                               = 1000
+getuid()                                = 1000
+getgid()                                = 1000
+access("/bin/rm", X_OK)                 = 0
+stat("/bin/rm", {st_mode=S_IFREG|0755, st_size=63704, ...}) = 0
+geteuid()                               = 1000
+getegid()                               = 1000
+getuid()                                = 1000
+getgid()                                = 1000
+access("/bin/rm", R_OK)                 = 0
+rt_sigprocmask(SIG_BLOCK, [INT CHLD], [], 8) = 0
+lseek(255, -2418, SEEK_CUR)             = 176
+clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7faed6831a10) = 6534
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigaction(SIGINT, {sa_handler=0x5624469a6160, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+wait4(-1, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0, NULL) = 6534
+rt_sigaction(SIGINT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=0x5624469a6160, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+--- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=6534, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---
+wait4(-1, 0x7ffffe7d6810, WNOHANG, NULL) = -1 ECHILD (No child processes)
+rt_sigreturn({mask=[]})                 = 0
+read(255, "mkdir -p $intermediary_dir\n\nn_in"..., 2594) = 2418
+stat(".", {st_mode=S_IFDIR|0755, st_size=12288, ...}) = 0
+stat("/home/konstantinos/.opam/4.09.0/bin/mkdir", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/opt/maven/bin/mkdir", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/opt/leiningen/mkdir", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/anaconda2/bin/mkdir", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/anaconda2/bin/mkdir", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/.cabal/bin/mkdir", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/.opam/4.09.0/bin/mkdir", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/.local/bin/mkdir", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/usr/local/sbin/mkdir", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/usr/local/bin/mkdir", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/usr/sbin/mkdir", 0x7ffffe7d6dc0) = -1 ENOENT (No such file or directory)
+stat("/usr/bin/mkdir", 0x7ffffe7d6dc0)  = -1 ENOENT (No such file or directory)
+stat("/sbin/mkdir", 0x7ffffe7d6dc0)     = -1 ENOENT (No such file or directory)
+stat("/bin/mkdir", {st_mode=S_IFREG|0755, st_size=80056, ...}) = 0
+stat("/bin/mkdir", {st_mode=S_IFREG|0755, st_size=80056, ...}) = 0
+geteuid()                               = 1000
+getegid()                               = 1000
+getuid()                                = 1000
+getgid()                                = 1000
+access("/bin/mkdir", X_OK)              = 0
+stat("/bin/mkdir", {st_mode=S_IFREG|0755, st_size=80056, ...}) = 0
+geteuid()                               = 1000
+getegid()                               = 1000
+getuid()                                = 1000
+getgid()                                = 1000
+access("/bin/mkdir", R_OK)              = 0
+stat("/bin/mkdir", {st_mode=S_IFREG|0755, st_size=80056, ...}) = 0
+stat("/bin/mkdir", {st_mode=S_IFREG|0755, st_size=80056, ...}) = 0
+geteuid()                               = 1000
+getegid()                               = 1000
+getuid()                                = 1000
+getgid()                                = 1000
+access("/bin/mkdir", X_OK)              = 0
+stat("/bin/mkdir", {st_mode=S_IFREG|0755, st_size=80056, ...}) = 0
+geteuid()                               = 1000
+getegid()                               = 1000
+getuid()                                = 1000
+getgid()                                = 1000
+access("/bin/mkdir", R_OK)              = 0
+rt_sigprocmask(SIG_BLOCK, [INT CHLD], [], 8) = 0
+lseek(255, -2391, SEEK_CUR)             = 203
+clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7faed6831a10) = 6535
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigaction(SIGINT, {sa_handler=0x5624469a6160, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+wait4(-1, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0, NULL) = 6535
+rt_sigaction(SIGINT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=0x5624469a6160, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+--- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=6535, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---
+wait4(-1, 0x7ffffe7d6810, WNOHANG, NULL) = -1 ECHILD (No child processes)
+rt_sigreturn({mask=[]})                 = 0
+read(255, "\nn_inputs=(\n    # 1\n    2\n    # "..., 2594) = 2391
+write(1, "Generating input and intermediar"..., 59) = 59
+stat(".", {st_mode=S_IFDIR|0755, st_size=12288, ...}) = 0
+stat("/home/konstantinos/.opam/4.09.0/bin/python3", 0x7ffffe7d6700) = -1 ENOENT (No such file or directory)
+stat("/opt/maven/bin/python3", 0x7ffffe7d6700) = -1 ENOENT (No such file or directory)
+stat("/opt/leiningen/python3", 0x7ffffe7d6700) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/anaconda2/bin/python3", 0x7ffffe7d6700) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/anaconda2/bin/python3", 0x7ffffe7d6700) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/.cabal/bin/python3", 0x7ffffe7d6700) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/.opam/4.09.0/bin/python3", 0x7ffffe7d6700) = -1 ENOENT (No such file or directory)
+stat("/home/konstantinos/.local/bin/python3", 0x7ffffe7d6700) = -1 ENOENT (No such file or directory)
+stat("/usr/local/sbin/python3", 0x7ffffe7d6700) = -1 ENOENT (No such file or directory)
+stat("/usr/local/bin/python3", 0x7ffffe7d6700) = -1 ENOENT (No such file or directory)
+stat("/usr/sbin/python3", 0x7ffffe7d6700) = -1 ENOENT (No such file or directory)
+stat("/usr/bin/python3", {st_mode=S_IFREG|0755, st_size=4526456, ...}) = 0
+stat("/usr/bin/python3", {st_mode=S_IFREG|0755, st_size=4526456, ...}) = 0
+geteuid()                               = 1000
+getegid()                               = 1000
+getuid()                                = 1000
+getgid()                                = 1000
+access("/usr/bin/python3", X_OK)        = 0
+stat("/usr/bin/python3", {st_mode=S_IFREG|0755, st_size=4526456, ...}) = 0
+geteuid()                               = 1000
+getegid()                               = 1000
+getuid()                                = 1000
+getgid()                                = 1000
+access("/usr/bin/python3", R_OK)        = 0
+stat("/usr/bin/python3", {st_mode=S_IFREG|0755, st_size=4526456, ...}) = 0
+stat("/usr/bin/python3", {st_mode=S_IFREG|0755, st_size=4526456, ...}) = 0
+geteuid()                               = 1000
+getegid()                               = 1000
+getuid()                                = 1000
+getgid()                                = 1000
+access("/usr/bin/python3", X_OK)        = 0
+stat("/usr/bin/python3", {st_mode=S_IFREG|0755, st_size=4526456, ...}) = 0
+geteuid()                               = 1000
+getegid()                               = 1000
+getuid()                                = 1000
+getgid()                                = 1000
+access("/usr/bin/python3", R_OK)        = 0
+rt_sigprocmask(SIG_BLOCK, [INT CHLD], [], 8) = 0
+clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7faed6831a10) = 6536
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigaction(SIGINT, {sa_handler=0x5624469a6160, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+wait4(-1, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0, NULL) = 6536
+rt_sigaction(SIGINT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=0x5624469a6160, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+--- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=6536, si_uid=1000, si_status=0, si_utime=4, si_stime=0} ---
+wait4(-1, 0x7ffffe7d6150, WNOHANG, NULL) = -1 ECHILD (No child processes)
+rt_sigreturn({mask=[]})                 = 0
+rt_sigprocmask(SIG_BLOCK, [INT CHLD], [], 8) = 0
+clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7faed6831a10) = 6538
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigaction(SIGINT, {sa_handler=0x5624469a6160, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+wait4(-1, 0x7ffffe7d6930, 0, NULL)      = ? ERESTARTSYS (To be restarted if SA_RESTART is set)
+--- SIGINT {si_signo=SIGINT, si_code=SI_KERNEL} ---
+rt_sigreturn({mask=[CHLD]})             = -1 EINTR (Interrupted system call)
+wait4(-1, [{WIFSIGNALED(s) && WTERMSIG(s) == SIGINT}], 0, NULL) = 6538
+rt_sigaction(SIGINT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=0x5624469a6160, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+rt_sigaction(SIGINT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7faed5e48f20}, 8) = 0
+getpid()                                = 6533
+kill(6533, SIGINT)                      = 0
+--- SIGINT {si_signo=SIGINT, si_code=SI_USER, si_pid=6533, si_uid=1000} ---
++++ killed by SIGINT +++

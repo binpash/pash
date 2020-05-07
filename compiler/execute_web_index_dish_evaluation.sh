@@ -18,8 +18,8 @@ input_dir="${HOME}/wikipedia/"
 ## Make the temporary output dir
 mkdir -p $output_dir
 
-# cp "$input_dir/index_h_50000.txt" $p1_out
-cp "$input_dir/index_h_1000.txt" $p1_out
+cp "$input_dir/index_h_100000.txt" $p1_out
+# cp "$input_dir/index_h_1000.txt" $p1_out
 
 
 { time ( cat $p1_out | /bin/bash $p2 > $p2_out ) ; } 2> >(tee "${results_dir}/web-index_p2_seq.time" >&2)
@@ -67,6 +67,10 @@ echo "WEB_INDEX_DIR=${directory}" >> ${intermediary_dir}/web-index_p2_1_env.sh
 cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_full_2_env.sh
 cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_full_2_funs.sh
 
+cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_full_10_env.sh
+cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_full_10_funs.sh
+
+
 ## Setup the fifo pipes needed in the example.
 
 ## Note: The sequential p2 stage takes about 7 seconds for 100! urls
@@ -85,3 +89,4 @@ cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_full
 # ./execute_compile_evaluation_script.sh -e "web-index_p3_3gram" "10"
 
 ./execute_compile_evaluation_script.sh -e -s "web-index_full" "2"
+./execute_compile_evaluation_script.sh -e "web-index_full" "10"
