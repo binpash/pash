@@ -2534,20 +2534,49 @@ Multi-line Java Program parallel program decomposed in two phases---a highly par
 \subsection{Use Case: Wikipedia Web Indexing}
 \label{macro2}
 
-As a second realistic workload, we use a large pipeline for downloading and processing the web, comprised of stages collected from various repositories.
+As a second realistic workload, we use a large pipeline for
+downloading and processing the web, comprised of stages collected from
+various repositories.
 
-\heading{Program}
-At a high level, the pipeline is comprised of two distinct components that coarsely correspond to a front- and a back-end communicating via \unix pipes.
-The front-end downloads pages and extracts their URLs from their source, feeding back \todo{to} the start of the pipeline;
-  the back-end applies natural-language processing---\eg trigrams, character conversion, term frequencies---to index the incoming pages.
-The pipeline contains a total of 52 stages (18 for the font-end and 34 for the back-end), with written in multiple languages---for example, its \ttt{url-extract}ion utility is written in JavaScript whereas its \ttt{word-stem}ming utility is in Python.
-\sys can still operate on them as their parallelizability properties---\sta for \ttt{url-extract} and \ttt{word-stem}---can be described by its DSL.
+\heading{Program} At a high level, the pipeline is comprised of two
+distinct components that coarsely correspond to a front- and a
+back-end communicating via \unix pipes.  The front-end downloads pages
+and extracts their URLs from their source, feeding back \todo{to} the
+start of the pipeline; the back-end extracts the text from the html
+pages and then applies natural-language processing---\eg trigrams,
+character conversion, term frequencies---to index the incoming pages.
+The pipeline contains a total of 52 stages (18 for the font-end and 34
+for the back-end) written in multiple languages---for example,
+its \ttt{url-extract}ion utility is written in JavaScript whereas its
+\ttt{word-stem}ming utility is in Python.  \sys can still operate on
+them as their parallelizability properties---\sta for
+\ttt{url-extract} and \ttt{word-stem}---can be described by its DSL.
 
-\heading{Results}
-To simplify execution (and avoid hitting Wikipedia), we have saved a recent version of Wikipedia to a server within the network and to redirect all \ttt{curl} requests there.
-The complexity of this pipeline makes end-to-end measurements difficult, so we measure the improvements on the three components individually and then report the differences 
+\heading{Results} To simplify execution (and avoid hitting Wikipedia),
+we have saved a recent version of Wikipedia to a server within the
+network and to redirect all \ttt{curl} requests there.  The complexity
+of this pipeline makes end-to-end measurements difficult, so we
+measure the improvements on the two components components individually
+and then report the differences. With parallelism set to \todo{2/16}
+the execution time achieved by \sys is \todo{X} for the front-end and
+\todo{Y} for the back-end, while the original execution time is
+\todo{X} for the front-end and \todo{Y'} for the back-end. \kk{If the
+  front-end takes a lot of time (compared to the back-end), we might
+  better not report it with the premise that it is a feedback cycle
+  that cannot be parallelized by \sys.}
 
 \heading{Discussion}
+
+Since the front-end contains a feedback cycle, \sys \todo{doesn't
+  parallelize it}, and in both cases it takes \todo{X seconds} to
+complete. However, \sys parallelizes the back-end and achieves a
+speedup of \todo{X} with parallelism set to \todo{2/16}. Several
+stages of the pipeline are \sta (such as the \ttt{word-stem} script
+and the text extraction) and that allows \sys to achieve benefits by
+exposing data parallelism. Note that the back-end part of the script
+contains 34 stages executing in parallel, so the sequential version
+\todo{already benefits from task-based parallelism} \kk{not totally
+  true}.
 
 \heading{Take-aways}
 
