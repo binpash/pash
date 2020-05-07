@@ -10,14 +10,14 @@ cat "$IN_DIR/p1.out_2_00" "$IN_DIR/p1.out_2_01" |
   tr A-Z a-z |
   grep -vwFf $WEB_INDEX_DIR/stopwords.txt |
   $WEB_INDEX_DIR/stem-words.js |
-  tee '3grams' '2grams' '1grams' > /dev/null &
+  tee 3grams 2grams 1grams > /dev/null &
 
-cat '1grams' |
+cat 1grams |
     sort |
     uniq -c |
     sort -rn >> 1-grams.txt &
 
-cat '2grams' |
+cat 2grams |
     tr -cs A-Za-z '\n' |
     tr A-Z a-z |
     bigrams_aux |
@@ -25,7 +25,7 @@ cat '2grams' |
     uniq -c |
     sort -rn >> 2-grams.txt &
 
-cat '3grams' |
+cat 3grams |
     tr -cs A-Za-z '\n' |
     tr A-Z a-z |
     trigrams_aux
