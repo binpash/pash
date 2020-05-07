@@ -28,9 +28,9 @@ echo "Sequential pipeline has been executed successfully."
 
 ## Split the intermediate output files for all scripts
 split -n l/2 -d $p1_out ${p1_out}_2_
-split -n l/10 -d $p1_out ${p1_out}_10_
+split -n l/16 -d $p1_out ${p1_out}_16_
 split -n l/2 -d $p2_out ${p2_out}_2_
-split -n l/10 -d $p2_out ${p2_out}_10_
+split -n l/16 -d $p2_out ${p2_out}_16_
 
 echo "Intermediate files have been successfully produced."
 
@@ -67,8 +67,8 @@ echo "WEB_INDEX_DIR=${directory}" >> ${intermediary_dir}/web-index_p2_1_env.sh
 cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_full_2_env.sh
 cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_full_2_funs.sh
 
-cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_full_10_env.sh
-cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_full_10_funs.sh
+cp ${intermediary_dir}/web-index_p2_1_env.sh ${intermediary_dir}/web-index_full_16_env.sh
+cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_full_16_funs.sh
 
 
 ## Setup the fifo pipes needed in the example.
@@ -89,4 +89,4 @@ cp ${intermediary_dir}/web-index_p2_1_funs.sh ${intermediary_dir}/web-index_full
 # ./execute_compile_evaluation_script.sh -e "web-index_p3_3gram" "10"
 
 ./execute_compile_evaluation_script.sh -e -s "web-index_full" "2"
-./execute_compile_evaluation_script.sh -e "web-index_full" "10"
+./execute_compile_evaluation_script.sh -e "web-index_full" "16"
