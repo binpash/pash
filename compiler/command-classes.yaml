@@ -12,6 +12,7 @@ stateless:
     - command: stem-words.js
     - command: xargs # unclear if all xargs are stateless
     - command: distrotest_loop
+    - command: extract_text
 pure:
     - command: sort
     - command: wc

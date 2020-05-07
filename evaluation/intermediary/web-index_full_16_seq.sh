@@ -1,9 +1,8 @@
 mkfifo {1,2,3}grams
 
-
 cat "$IN_DIR/p1.out_16_00" "$IN_DIR/p1.out_16_01" "$IN_DIR/p1.out_16_02" "$IN_DIR/p1.out_16_03" "$IN_DIR/p1.out_16_04" "$IN_DIR/p1.out_16_05" "$IN_DIR/p1.out_16_06" "$IN_DIR/p1.out_16_07" "$IN_DIR/p1.out_16_08" "$IN_DIR/p1.out_16_09" "$IN_DIR/p1.out_16_10" "$IN_DIR/p1.out_16_11" "$IN_DIR/p1.out_16_12" "$IN_DIR/p1.out_16_13" "$IN_DIR/p1.out_16_14" "$IN_DIR/p1.out_16_15"|
   sed "s#^#$WIKI#" |
-  xargs -L 1 extract_text |
+  extract_text |
   tr -cs A-Za-z '\n' |
   tr A-Z a-z |
   grep -vwFf $WEB_INDEX_DIR/stopwords.txt |
