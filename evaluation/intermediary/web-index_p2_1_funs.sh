@@ -102,14 +102,17 @@ trigrams_aux()
 
     mkfifo $s1 $s2 $s3 $s4
 
-    sed '$d' $s1 > $s2 &
-    tee $s1 |
+    # sed '$d' $s1 > $s2 &
+    # sed '$d' $s3 > $s4 &
+    tee $s2 |
         tail +2 |
         paste $s2 - |
         tee $s3 |
         cut -f 1 |
-        tail +2 |
-        paste $s4 -
+        tail +3 |
+        paste $s3 - |
+        sed '$d' |
+        sed '$d'
 
     rm $s1 $s2 $s3 $s4
 }
