@@ -2,15 +2,13 @@
 
 bigrams_aux()
 {
-    ( mkfifo s2 > /dev/null ) ;
-    ( mkfifo s3 > /dev/null ) ;
-
-    sed '$d' s2 > s3 &
-    tee s2 |
+    s2=$(mktemp -u)
+    mkfifo $s2
+    tee $s2 |
         tail +2 |
-        paste s3 -
-    rm s2
-    rm s3
+        paste $s2 - |
+        sed '$d'
+    rm $s2
 }
 
 bigram_aux_map()
