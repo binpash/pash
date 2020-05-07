@@ -117,18 +117,30 @@ trigrams_aux()
     rm $s1 $s2 $s3 $s4
 }
 
-extract_text()
+extract_line()
 {
     cat $1 |
         iconv -c -t ascii//TRANSLIT |
         pandoc +RTS -K64m -RTS --from html --to plain --quiet
 }
 
+extract_text()
+{
+    while read -r line
+    do
+        cat $line |
+            iconv -c -t ascii//TRANSLIT |
+            pandoc +RTS -K64m -RTS --from html --to plain --quiet
+    done
+}
+
+
 export -f bigrams_aux
 export -f bigram_aux_map
 export -f bigram_aux_reduce
 
 export -f trigrams_aux
+export -f extract_line
 export -f extract_text
 
 ## FIXME: This is not exactly correct, as it misses the last and first
