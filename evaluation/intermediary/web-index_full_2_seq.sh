@@ -15,7 +15,7 @@ cat "$IN_DIR/p1.out_2_00" "$IN_DIR/p1.out_2_01" |
 cat 1grams |
     sort |
     uniq -c |
-    sort -rn >> 1-grams.txt &
+    sort -rn > 1-grams.txt &
 
 cat 2grams |
     tr -cs A-Za-z '\n' |
@@ -23,14 +23,14 @@ cat 2grams |
     bigrams_aux |
     sort |
     uniq -c |
-    sort -rn >> 2-grams.txt &
+    sort -rn > 2-grams.txt &
 
 cat 3grams |
     tr -cs A-Za-z '\n' |
     tr A-Z a-z |
-    trigrams_aux
+    trigrams_aux |
     sort |
     uniq -c |
-    sort -rn >> 3-grams.txt
+    sort -rn # >> 3-grams.txt
 
 rm {1,2,3}grams
