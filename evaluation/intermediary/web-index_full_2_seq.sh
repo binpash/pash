@@ -1,4 +1,4 @@
-mkfifo shift{1,2,3} {1,2,3}grams
+mkfifo {1,2,3}grams
 
 
 cat "$IN_DIR/p1.out_2_00" "$IN_DIR/p1.out_2_01" |
@@ -20,9 +20,7 @@ cat '1grams' |
 cat '2grams' |
     tr -cs A-Za-z '\n' |
     tr A-Z a-z |
-    tee shift1 |
-    tail +2 |
-    paste shift1 - |
+    bigrams_aux |
     sort |
     uniq -c |
     sort -rn >> 2-grams.txt &
@@ -30,15 +28,9 @@ cat '2grams' |
 cat '3grams' |
     tr -cs A-Za-z '\n' |
     tr A-Z a-z |
-    tee shift2 |
-    tail +2 |
-    paste shift2 - |
-    tee shift3 |
-    cut -f 1 |
-    tail +3 |
-    paste shift3 - |
+    trigrams_aux
     sort |
     uniq -c |
-    sort -rn >> 3-grams.txt 
+    sort -rn >> 3-grams.txt
 
-rm shift{1,2,3} {1,2,3}grams
+rm {1,2,3}grams
