@@ -1,16 +1,16 @@
-kill: (83138): No such process
-kill: (83139): No such process
-kill: (83140): No such process
-Total nodes after optimization: 164
+kill: (70588): No such process
+kill: (70589): No such process
+kill: (70590): No such process
+Total nodes after optimization: 132
  -- out of which:
 Cat nodes: 4
 Eager nodes: 16
-Optimization time: 1500.078  ms
-Backend time: 3.338  ms
-Execution time: 70301.176  ms
-Compilation time: 30.758  ms
+Optimization time: 399.549  ms
+Backend time: 2.776  ms
+Execution time: 90348.488  ms
+Compilation time: 29.794  ms
 
-real	1m12.212s
-user	11m59.328s
-sys	2m11.412s
+real	1m31.148s
+user	16m21.385s
+sys	4m34.406s
 Files ../evaluation//intermediary//web-index_full_seq_output and /tmp/distr_output/0 are identical
