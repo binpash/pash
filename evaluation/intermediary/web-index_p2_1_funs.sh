@@ -117,11 +117,19 @@ trigrams_aux()
     rm $s1 $s2 $s3 $s4
 }
 
+extract_text()
+{
+    cat $1 |
+        iconv -c -t ascii//TRANSLIT |
+        pandoc +RTS -K64m -RTS --from html --to plain --quiet
+}
+
 export -f bigrams_aux
 export -f bigram_aux_map
 export -f bigram_aux_reduce
 
 export -f trigrams_aux
+export -f extract_text
 
 ## FIXME: This is not exactly correct, as it misses the last and first
 ## lines of the separated files, but it will work as a first pass.
