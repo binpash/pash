@@ -12,17 +12,20 @@ stateless:
     - command: stem-words.js
     - command: xargs # unclear if all xargs are stateless
     - command: distrotest_loop
+    - command: extract_text
 pure:
     - command: sort
     - command: wc
     - command: uniq
     - command: bigrams_aux
+    - command: trigrams_aux
     - command: alt_bigrams_aux
     - command: diff
     - command: head
     - command: tail
     - command: awk
     - command: fmt
+    - command: tee
 parallelizable_pure:
     - command: sort
     - command: bigrams_aux

@@ -25,9 +25,11 @@ exec_seq="-s"
 for n_in in "${n_inputs[@]}"; do
 
     ## Generate the intermediary script
-    cp "${usecase_dir}/${name}.sh" "${intermediary_dir}/${name}_${n_in}_seq.sh"
-    cp "${usecase_dir}/${name}_env.sh" "${intermediary_dir}/${name}_${n_in}_env.sh"
-    cp "${usecase_dir}/${name}_funs.sh" "${intermediary_dir}/${name}_${n_in}_funs.sh"
+    # cp "${usecase_dir}/${name}.sh" "${intermediary_dir}/${name}_${n_in}_seq.sh"
+    # cp "${usecase_dir}/${name}_env.sh" "${intermediary_dir}/${name}_${n_in}_env.sh"
+    # cp "${usecase_dir}/${name}_funs.sh" "${intermediary_dir}/${name}_${n_in}_funs.sh"
+    python3 generate_microbenchmark_intermediary_scripts.py \
+            $usecase_dir $name $n_in $intermediary_dir
 
     ## Execute the intermediary script with eager
     ./execute_compile_evaluation_script.sh $exec_seq -e "${name}" "${n_in}"
