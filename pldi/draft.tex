@@ -46,7 +46,7 @@
 \newcommand{\vs}{{\em vs.} }
 \newcommand{\cmpn}{compartmentalization} 
 \newcommand{\heading}[1]{\vspace{4pt}\noindent\textbf{#1}\enspace}
-\newcommand{\ttt}[1]{\texttt{\small #1}}
+\newcommand{\ttt}[1]{\texttt{#1}}
 \newcommand{\ttiny}[1]{\texttt{\scriptsize #1}}
 \newcommand{\tti}[1]{\texttt{\scriptsize #1}}
 \newcommand{\spol}[1]{\scriptsize{\sc#1}}
@@ -390,15 +390,15 @@ These developers usually work in a single programming language, leveraging its a
 As they have no visibility into the command's uses, they expose a plethora of ad-hoc command-specific flags such as \ttt{-t}, \ttt{-}\ttt{-parallel}, \ttt{-p}, and \ttt{-j} % , \ttt{CPUs}, and \ttt{NUM\_THREADS}~\cite{}.
 \cite{pasetto2011comparative, mcilroy1993engineering, stallman1991gnu}.
 
-The second group is \emph{command users}, who use POSIX shell constructs to combine multiple such commands from many languages into their scripts and are thus left with only a few options for incorporating parallelism (see~\S\ref{related}).
+The second group is \emph{shell users}, who use POSIX shell constructs to combine multiple such commands from many languages into their scripts and are thus left with only a few options for incorporating parallelism (see~\S\ref{related}).
 % If versed into parallelism, 
 % Users versed in computing can apply 
 % these tools are command-unaware thus at risk of breaking program semantics,
 % require manual changes to the code to make parallelism explicit,
 % at times leverage command flags like the ones mentioned earlier---but each command 
 % oblivious? agnostic?  
-One option is manual tools such GNU \ttt{parallel}~\cite{Tange2011a}, \ttt{tsc}~\cite{}, \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm};
-  these options are either command-unaware thus at risk of breaking program semantics, or too coarse-grained thus applying at the level of entire scripts rather than individual components.
+One option is manual tools such GNU \ttt{parallel}~\cite{Tange2011a}, \ttt{ts}~\cite{tsp}, \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm};
+  these tools are either command-unaware thus at risk of breaking program semantics, or too coarse-grained thus applying at the level of entire scripts rather than individual components.
 % Tools will attempt to parallelize anything 
 % use the composition abstractions of the \unix shell, 
 % and are often prototypical in nature---focusing on quickly prototyping a solution for the task at hand rather building an optimal solution to a recurring pattern.
@@ -411,27 +411,27 @@ Another option is the shell's concurrency primitives (\eg \ttt{\&}, \ttt{wait}, 
 And all these options assume a good understanding of parallelism;
   users whose domain of expertise falls outside computing---routinely writing shell scripts to accomplish their tasks---are left without options.% automation when it comes to parallelization.
 
-To address this challenge, we develop \sys, a shell transforming POSIX shell scripts to their parallel equivalents.
+To address this challenge, we develop \sys, a shell parallelizing POSIX shell scripts. % to their parallel equivalents.
 % \sys offers both classes of users in the second group such much-needed automation.
 \sys benefits both programmer groups mentioned earlier, with a particular emphasis on users.
 Command developers are provided a set of abstractions, akin to lightweight type annotations, for expressing the parallelizability properties of their commands:
   rather than providing a command's full observable behavior, these annotations focus primarily on their interaction with state.
-Command users are provided full automation:
-  \sys extracts latent parallelism from scripts as long as it understands their parallelizability properties.
+Shell users, on the other hand, are provided full automation:
+  \sys extracts parallelism latent in their scripts by analyzing their parallelizability properties. % of their fragments.
 % benefiting scripting experts and non-experts alike by offering automated POSIX-aware parallelization of shell-scripts as long as command developers
-Its transformations are conservative, in that they do not attempt to parallelize fragments that lack sufficient information---\ie at worst, \sys will not improve performance rather than risking breakage.
+\sys's transformations are conservative, in that they do not attempt to parallelize fragments that lack sufficient information---\ie at worst, \sys will simply not improve performance, rather than risking breakage.
 
-To address cold-start issues, \sys comes with a library of parallelizability semantics for POSIX and GNU commands.
-These large classes of commands serve as the shell's standard library and are used pervasively. % in scripts found out in the wild.
-The study that led to the characterization of these commands also informed \sys's annotation language and transformation infrastructure.\footnote{
-  In fact, the scope of our study is somewhat broader as it also incorporates frequently used commands that fall outside GNU Coreutils and POSIX such as \ttt{curl} and \ttt{pandoc}.
+To address cold-start issues, \sys comes with a library of parallelizability semantics for commands in POSIX and GNU Coreutils.
+These large classes of commands serve as the shell's standard library, expected to be found pervasively. % in scripts found out in the wild.
+The study that led to their characterization also informed \sys's annotation and transformation components.\footnote{
+  In fact, the scope of the study is broader, incorporating also commands outside POSIX and GNU Coreutils such as \ttt{curl} and \ttt{pandoc}.
 }
 
-The parallelization study and transformations are paired with \sys's runtime component aware of the \unix philosophy and its key abstractions.
+These components are finally paired with \sys's runtime component.
 % \sys's runtime  component additional packs
 % Aside from these two components, \sys packs a runtime component that serves dual purpose:
-This component packs a small library of highly-optimized data combiners as well as high-performance primitives for eager data splitting and merging.
-It addresses several practical challenges such as task parallelism, deadlocks, and performance bottlenecks, and was developed by uncovering several pathological situations, on many of which we report.
+Aware of the \unix philosophy and abstractions, it packs a small library of highly-optimized data combiners as well as high-performance primitives for eager data splitting and merging.
+These address several practical challenges such as task parallelism, deadlocks, and performance bottlenecks, and were developed by uncovering several pathological situations, on many of which we report.
 
 
 %% First, shell users composing pipelines (or simply running legacy pipelines on massive datasets) can see scalability benefits without any manual effort---no need for \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}, or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
@@ -477,19 +477,19 @@ Sections \ref{distributability}--\ref{impl} highlight key contributions:
 \begin{itemize}
   \item
   \S\ref{distributability}
-    studies the parallelizability properties of a large class of Shell commands and introduces a lightweight annotation language for commands that can be executed in a data-parallel manner.
+    studies the parallelizability properties of a large class of shell commands and introduces a lightweight annotation language for commands that can be executed in a data-parallel manner.
 
   \item
   \S\ref{ir} presents a dataflow graph model for encoding shell scripts, and a set of parallelization transformations that focus on preserving the semantics of the sequential program.
 
   \item
-  \S\ref{impl} describes the \sys implementation and addresses several challenges related to the translation and optimization of shell programs.
+  \S\ref{impl} describes \sys's implementation, discussing several challenges related to \sys's translation, optimization, and runtime phases.
 % \kk{Rewrite that when we know for sure what the section contains.}
 
 \end{itemize}
 
 \noindent
-After \sys's evaluation~\sx{eval} and  comparison with related work~\sx{related}, the paper closes with a discussion of limitations and possible future directions~\sx{discussion}.
+After \sys's evaluation~\sx{eval} and  comparison with related work~\sx{related}, the paper closes with a discussion of \sys's limitations and possible future directions~\sx{discussion}.
 %micro-bench\-marks %---popular shell one-liners that highlight
 %certain features---and a multi-line macro-benchmark---a popular
 %weather analysis script.
