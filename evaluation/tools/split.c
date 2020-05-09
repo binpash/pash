@@ -75,6 +75,10 @@ void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned in
     fputs(inputBuffer, outputFile);
   }
 
+  // need to exhaust our output files list
+  while (outputFile) {
+    NextFile(&outputFile, outputFileNames, numOutputFiles);
+  }
 
   PRINTDBG("%s: Done splitting input %s, will clean up\n", __func__, input);
   fclose(inputFile);
