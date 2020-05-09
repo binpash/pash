@@ -419,7 +419,7 @@ Command developers are provided a set of abstractions, akin to lightweight type 
 Shell users, on the other hand, are provided full automation:
   \sys extracts parallelism latent in their scripts by analyzing their parallelizability properties. % of their fragments.
 % benefiting scripting experts and non-experts alike by offering automated POSIX-aware parallelization of shell-scripts as long as command developers
-\sys's transformations are conservative, in that they do not attempt to parallelize fragments that lack sufficient information---\ie at worst, \sys will simply not improve performance, rather than risking breakage.
+\sys's transformations are conservative, in that they do not attempt to parallelize fragments that lack sufficient information---\ie at worst, \sys will choose to not improve performance rather than risking breakage.
 
 To address cold-start issues, \sys comes with a library of parallelizability semantics for commands in POSIX and GNU Coreutils.
 These large classes of commands serve as the shell's standard library, expected to be found pervasively. % in scripts found out in the wild.
@@ -2515,6 +2515,7 @@ computation, even in cases where parallelism is not possible.
 
 \kk{Maybe use phoenix for that one? Since it has a MapReduce interface
   but it runs on multicore?}
+\nv{Phoenix (i) is shared-memory, and (ii) would require re-writing the entire program in C++, which defeats the purpose of comparing with an existing program. Phoenix might be OK for micro-benchmarks however.}
 
 To understand \sys better under a realistic workload, we use a large pipeline inspired by the introductory chapter of Hadoop's Definitive Guide~\cite[Chapter 2]{hadoop:15}.
 
