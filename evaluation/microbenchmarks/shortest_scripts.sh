@@ -4,4 +4,4 @@
 # +p.95 multiple sed
 # +p.XX crawler
 
-cat $IN | xargs file | grep "shell script" | cut -d: -f1 | xargs wc -l | sort -n | head -15
+cat $IN | xargs file | grep "shell script" | cut -d: -f1 | xargs -L 1 wc -l | grep -v '^0$' | sort -n | head -15
