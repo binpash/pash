@@ -12,7 +12,7 @@
 #define PRINTDBG(fmt, ...)
 #endif
 
-void NextFile(FILE** currentFile, char* outputFileNames[], unsigned int numOutputFiles) {
+unsigned int NextFile(FILE** currentFile, char* outputFileNames[], unsigned int numOutputFiles) {
   static int current = -1;
 
   if (!currentFile) {
@@ -20,16 +20,18 @@ void NextFile(FILE** currentFile, char* outputFileNames[], unsigned int numOutpu
     exit(1);
   }
 
+  if (++current >= numOutputFiles) {
+    return numOutputFiles;
+  }
+
+  // the order of the ifs here means that NextFile will close all files but the last one,
+  // which the caller will be responsible for.
   if (*currentFile) {
     if (current >= 0) {
-      PRINTDBG("%s: Will close %s output file\n", __func__, outputFileNames[current]);
+      PRINTDBG("%s: Will close %s output file\n", __func__, outputFileNames[current - 1]);
     }
     fclose(*currentFile);
     *currentFile = NULL;
-  }
-
-  if (++current == numOutputFiles) {
-    return;
   }
 
   PRINTDBG("%s: Will open %s output file\n", __func__, outputFileNames[current]);
@@ -41,6 +43,8 @@ void NextFile(FILE** currentFile, char* outputFileNames[], unsigned int numOutpu
 
   PRINTDBG("%s: Successfully opened %s output file\n", __func__, outputFileNames[current]);
   *currentFile = nextFile;
+
+  return current;
 }
 
 void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned int numOutputFiles) {
@@ -67,22 +71,18 @@ void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned in
     if (++readLines == batchSize) {
       readLines = 0;
       NextFile(&outputFile, outputFileNames, numOutputFiles);
-      if (!outputFile) {
-        PRINTDBG("%s: Ran out of output files\n", __func__);
-        break;
-      }
-      PRINTDBG("%s: successfully opened next output file\n", __func__);
     }
     fputs(inputBuffer, outputFile);
   }
 
   // need to exhaust our output files list
-  while (outputFile) {
-    NextFile(&outputFile, outputFileNames, numOutputFiles);
+  while (NextFile(&outputFile, outputFileNames, numOutputFiles) < numOutputFiles) {
   }
 
   PRINTDBG("%s: Done splitting input %s, will clean up\n", __func__, input);
   fclose(inputFile);
+  // need to close the last output file
+  fclose(outputFile);
   free(inputBuffer);
 }
 
