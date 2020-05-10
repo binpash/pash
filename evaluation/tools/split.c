@@ -20,11 +20,12 @@ void NextFile(FILE** currentFile, char* outputFileNames[], unsigned int numOutpu
     exit(1);
   }
 
-  if ((*currentFile)) {
+  if (*currentFile) {
     if (current >= 0) {
       PRINTDBG("%s: Will close %s output file\n", __func__, outputFileNames[current]);
     }
     fclose(*currentFile);
+    *currentFile = NULL;
   }
 
   if (++current == numOutputFiles) {
