@@ -135,7 +135,7 @@ def node_to_script(node, shared_memory_dir, drain_streams):
     if(command.split(" ")[0] == "split_file"):
         assert(len(inputs) == 1)
         batch_size = command.split(" ")[1]
-        split_outputs = command.split(" ")[2:4]
+        split_outputs = command.split(" ")[2:]
         split_string = new_split(inputs[0], split_outputs, batch_size)
         script.append(split_string)
     else:
@@ -169,7 +169,8 @@ def node_to_script(node, shared_memory_dir, drain_streams):
 
 def new_split(input_file, outputs, batch_size):
     split_bin = '{}/{}'.format(config.DISH_TOP, config.config['runtime']['split_binary'])
-    return '{} "{}" {} {} {}'.format(split_bin, input_file, outputs[0], outputs[1], batch_size)
+    command_no_outputs = '{} "{}" {}'.format(split_bin, input_file, batch_size)
+    return ' '.join([command_no_outputs] + outputs)
 
 def drain_stream():
     script = '{}/{}'.format(config.DISH_TOP, config.config['distr_planner']['drain_stream_executable_path'])
