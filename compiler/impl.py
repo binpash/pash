@@ -135,7 +135,7 @@ def node_to_script(node, shared_memory_dir, drain_streams):
     if(command.split(" ")[0] == "split_file"):
         assert(len(inputs) == 1)
         batch_size = command.split(" ")[1]
-        split_outputs = command.split(" ")[2:4]
+        split_outputs = command.split(" ")[2:]
         split_string = new_split(inputs[0], split_outputs, batch_size)
         script.append(split_string)
     else:
