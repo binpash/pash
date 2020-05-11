@@ -1390,47 +1390,61 @@ enabling their parallelization. \todo{We have defined these primitives
 \section{Dataflow Graph Model}
 \label{ir}
 
-The core of \sys is a dataflow graph model, inspired by the ones used
-in popular distributed stream processing systems~\sx{related} \kk{Is
-  this reference here necessary?}. The dataflow model can express a
-large subset of Shell programs and inherently supports the data
-parallelism found in shell pipelines by exposing it as task
-parallelism. More preciely, we have developed a set of
-parallelization-exposing optimizations represented as
-semantics-preserving graph transformations. These transformations can
-then be applied in an iterative way, optimizing the program to utilize
-available computational resources.
+The core of \sys is a dataflow graph model that is expressive enough
+to support a large subset of shell programs. A fundamental difference
+with other dataflow graph models is that in \sys's model contains
+information about the order in which a node reads its inputs. This
+enables a set of graph transformations that expose data parallelism as
+task parallelism. These transformations can then be applied in an
+iterative way, optimizing the program to utilize available
+computational resources.
+
+
+%% The core of \sys is a dataflow graph model, inspired by the ones used
+%% in popular distributed stream processing systems~\sx{related} \kk{Is
+%%   this reference here necessary?}. The dataflow model can express a
+%% large subset of Shell programs and inherently supports the data
+%% parallelism found in shell pipelines by exposing it as task
+%% parallelism. More preciely, we have developed a set of
+%% parallelization-exposing optimizations represented as
+%% semantics-preserving graph transformations. These transformations can
+%% then be applied in an iterative way, optimizing the program to utilize
+%% available computational resources.
 
 %% In order to effectively apply optimizations and distribute a shell
 %% script, \sys first translates it to a manipulable representation.
 
-\subsection{Graph Components}
+\subsection{Definitions}
 \label{graph-components}
 
-As mentioned earlier~\sx{bg:pipelines}, the two main abstractions of
-the shell are (i) files (or pipes, \emph{viz.} correspondence between
-files and pipes in \S\ref{bg:pipelines}) that contain data, and (ii)
-commands that communicate through these files. Based on that, \sys's
-graph model defines nodes to represent commands and edges to represent
-files.
+The two main shell abstractions are (i) files (or pipes, \emph{viz.}
+correspondence between files and pipes in \S\ref{bg:pipelines}) that
+contain data, and (ii) commands that communicate through these
+files. Based on that, in \sys's graph model nodes represent commands
+and edges represent files.
 
-\paragraph{Edges---Files}
+We first introduce basic notation that will be useful later on.  For a
+set $D$, we write $D\kstar$ to denote the set of all finite words over
+$D$. For words $x, y \in D\kstar$, we write $x \cdot y$ or $xy$ to
+denote their concatenation. We write $\eps$ for the empty word. We say
+that $x$ is a \emph{prefix} of $y$, and we write $x \leq y$, if there
+is a word $z$ such that $y = xz$. The $\leq$ order is reflexive,
+antisymmetric, and transitive (i.e. is a partial order) and is often
+called the \emph{prefix order}.
 
-Before describing the graph edges, we introduce basic notation that
-will be useful later on.  For a set $D$, we write $D\kstar$ to denote
-the set of all finite words over $D$. For words $x, y \in D\kstar$, we
-write $x \cdot y$ or $xy$ to denote their concatenation. We write
-$\eps$ for the empty word. We say that $x$ is a \emph{prefix} of $y$,
-and we write $x \leq y$, if there is a word $z$ such that $y = xz$. It
-is easy to see that $\leq$ is a partial order, often called the
-\emph{prefix order}.
+
+\paragraph{Edges -- Files}
 
 Edges in the dataflow graph represent files, the basic data
 abstraction of the shell. They are used as communication channels
 between nodes in the graph, and as the input or output of the whole
 graph. Edges are represented as possibly unbounded streams of type
-$D\kstar$. They could either refer to a specific named file in the file
-system, or just be FIFO pipes used for interprocess communication.
+$D\kstar$. Edges can either refer to named files or FIFO pipes used
+for interprocess communication. Edges that do not start from a node in
+the graph represent the graph input; edges that do not point to a node
+in the graph are its outputs.
+
+
 
 %% \TODO{Show an example pipe and its graph}.
 
@@ -1449,36 +1463,17 @@ system, or just be FIFO pipes used for interprocess communication.
 %% \end{tikzpicture}
 %% \end{center}
 
-%% \kk{I think we should delete this since the node and not the edge
-%%   chooses how to write to its output files.}
-
-%% In order to expose data parallelism from the output of a command,
-%% files that do not point to a resource can have
-%% \begin{wrapfigure}[3]{r}{0.20\columnwidth}
-%% \vspace{-7pt}
-%%   \includegraphics[width=0.20\columnwidth]{\detokenize{./figs/dish_g2.pdf}}
-%% \vspace{-20pt}
-%% \end{wrapfigure}
-%% an upper bound on the lines that they can transfer. This helps utilize available
-%% parallelism after encountering a command that cannot be parallelized
-%% (\eg \ttt{sha1sum}). The schematic on the right illustrates this scenario.
+%% \tr{On the other hand, some forms of data parallelism can be exposed
+%%   when knowing the size of the input files. As mentioned in \ref{}
+%%   some pure commands (such as cat -n) only need line information to
+%%   become stateless, and knowing the size of a file could allow the
+%%   system to split it in different chunks that can be processed
+%%   independently. To account for that, edges that refer to an input
+%%   resource contain the number of lines of the file that they refer
+%%   to.}
 
 
-\tr{On the other hand, some forms of data parallelism can be exposed
-  when knowing the size of the input files. As mentioned in \ref{}
-  some pure commands (such as cat -n) only need line information to
-  become stateless, and knowing the size of a file could allow the
-  system to split it in different chunks that can be processed
-  independently. To account for that, edges that refer to an input
-  resource contain the number of lines of the file that they refer
-  to.}
-
-Finally, edges that do not refer to a resource and do not start
-from a node in the graph represent the graph input;
-edges that do not refer to a resource and do not point to a node in the graph are its outputs.
-
-
-\paragraph{Nodes---Commands}
+\paragraph{Nodes -- Commands}
 
 A node $f$ of the graph represents a function from a (possibly empty)
 list of input streams to a list of output streams $f : [D\kstar] \to
@@ -1486,49 +1481,68 @@ list of input streams to a list of output streams $f : [D\kstar] \to
 characters. This representation captures the majority of shell
 commands. We require that the function $f$ is monotone w.r.t.\ a
 lifting of the prefix order for a sequence of inputs \kk{Formalize
-this lifting if essential for later development}. This captures the
-  idea that a node cannot retract output after it has been emitted.
-%More formally, $\forall f, x, y, f(x) = y$, then for any $x'$, there
-%exists $y'$ such that $f(x.x') = y.y'$, where $.$ is standard
-%concatenation and will be omitted when obvious.
-An example of a node with one input and one output stream is the
-following command:
+  this lifting if essential for later development}.
+%% More formally, $\forall f, x, y, f(x) = y$, then for any $x'$, there
+%% exists $y'$ such that $f(x.x') = y.y'$, where $.$ is standard
+%% concatenation and will be omitted when obvious.
+This captures the idea that a node cannot retract output that it has
+already produced.
 
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- grep ``foo''
-\end{lstlisting}
+\paragraph{\todo{One-input-output} Commands}
 
-\noindent
-This command takes a stream of lines from its standard input and
-returns a stream of lines on its standard output.
+\kk{Find a better name.} \todo{One-input-output} commands \todo{are
+  special commands} that consume their inputs one at a time, with the
+possible exception of static input files, and produce one output
+file. These commands can be represented as functions of type $f :
+D\kstar \times [D\kstar] \to D\kstar$, where the first argument
+represents the concatenation of the inputs that are consumed one at a
+time and the second argument represents the static inputs. The
+quintessential example of \todo{one-input-output} commands is
+\ttt{cat}, that consumes its inputs one at a time, producing their
+concatenation as output.
+%% A \todo{large subset} of shell commands fall in this category
 
-An important observation is that even though commands might read their
-input from several input streams, the order in which they read is not
-always arbitrary. An illustrative example is the command \ttt{cat},
-which consumes its input one stream at a time:
 
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- cat x - y
-\end{lstlisting}
+\kk{Maybe give an example of a script and its dataflow graph.}
 
-\noindent
-In the example above, \ttt{cat} reads file \ttt{x} until it encounters
-the EOF character, then reads from \ttt{stdin} until in encounters
-EOF, and finally reads from \ttt{y}. Other commands that read their
-inputs one file at a time include \ttt{grep} and \ttt{tr}. Knowing the
-order in which a node consumes its input is necessary to enable
-certain optimizations on the graph.
+
+%% An example of a node with one input and one output stream is the
+%% following command:
+
+%% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+%%  grep ``foo''
+%% \end{lstlisting}
+
+%% \noindent
+%% This command takes a stream of lines from its standard input and
+%% returns a stream of lines on its standard output.
+
+%% An important observation is that even though commands might read their
+%% input from several input streams, the order in which they read is not
+%% always arbitrary. An illustrative example is the command \ttt{cat},
+%% which consumes its input one stream at a time:
+
+%% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+%%  cat x - y
+%% \end{lstlisting}
+
+%% \noindent
+%% In the example above, \ttt{cat} reads file \ttt{x} until it encounters
+%% the EOF character, then reads from \ttt{stdin} until in encounters
+%% EOF, and finally reads from \ttt{y}. Other commands that read their
+%% inputs one file at a time include \ttt{grep} and \ttt{tr}. Knowing the
+%% order in which a node consumes its input is necessary to enable
+%% certain optimizations on the graph.
 
 %% \kk{Some could read in sequence (like cat), some in lockstep (like
 %%   zip), some read some files statically and the rest as streams (like
 %%   comm), some read arbitrarily.}
 
 
-\kk{I need to mention that there are nodes that we know more
-  properties of. For example cat, tee, zip, etc... and these are
-  handled specially because of their very important and special
-  properties.}
-
+%% \kk{I need to mention that there are nodes that we know more
+%%   properties of. For example cat, tee, zip, etc... and these are
+%%   handled specially because of their very important and special
+%%   properties.}
 
 
 %% \begin{figure*}
@@ -1627,24 +1641,16 @@ Having a dataflow graph representation allows us to define
 parallelization optimizations as graph transformations. Before
 describing the different types of optimizations, we formalize the
 intuition about stateless and pure commands that was described
-earlier~\sx{cmd}. We focus on parallelizing commands that produce one
-output and consume their inputs one at a time, with the possible
-exception of static input files that are used for configuration. More
-formally, we parallelize commands that can be represented with
-functions of type $f : D\kstar \times [D\kstar] \to D\kstar$, where
-the first argument represents the concatenation of the inputs that are
-consumed one at a time and the second argument represents the static
-inputs. When translating a command that consumes its input streams one
-at a time, a \ttt{cat} node is introduced before it to concatenate the
-streams and its output is transferred to the command input. \kk{Maybe
-  have an argument here that we show in the evaluation that handling
-  these commands is adequate for a big variety of data processing
-  scripts (and most stateless and pure commands), from several
-  microbenchmarks to some large-realistic macrobenchmarks.}.
+earlier~\sx{cmd}.
 %% \nv{TODOs
 %%   (i) highlight earlier the antithesis between the formalisms in this section and the informalities of the previous (me)
 %% }
 
+\kk{Maybe
+  have an argument here that we show in the evaluation that handling
+  these commands is adequate for a big variety of data processing
+  scripts (and most stateless and pure commands), from several
+  microbenchmarks to some large-realistic macrobenchmarks.}.
 
 As mentioned in \Cref{cmd}, stateless commands such as \ttt{tr} operate
 independently on individual elements of the stream (characters, lines,
