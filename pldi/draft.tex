@@ -934,6 +934,8 @@ The next few sections (\S\ref{distributability}--\ref{impl}) discuss \sys's desi
 \section{Distributability Classes}
 \label{distributability}
 
+\TODO{Change naming to parallelizability}
+
 To have any hope of distributing pipelines, \sys first needs to understand the distribution characteristics of their individual commands.
 This understanding is encoded in a command's \emph{distributability} class.
 Informally, a distributability class represents the level of synchronization required by copies of a command that execute in parallel.
@@ -1053,7 +1055,7 @@ The focus for the rest paper will be commands in \sta and \pur.
 In future work, by building infrastructure to handle other classes, \sys will be able to (i) extract more parallelism and (ii) handle larger programs.
 Even with only these two classes, however, \sys distributes highly useful pipelines that are strictly more expressive than programs written in popular frameworks such as Hadoop~\cite{mapreduce:08} and Spark~\cite{spark:12}~\sx{eval}.
 
-\subsection{Distributability Extensibility}
+\subsection{Extensibility}
 \label{ext}
 
 %% Here is the type for \ttt{bwa}, a command that performs a Burrows-Wheeler transform over genomic data:
@@ -1073,35 +1075,72 @@ Even with only these two classes, however, \sys distributes highly useful pipeli
 %%   its output is a constant function.
 
 % FIXME: \nv{TODO: remember to bubble up(me)}
-An important characteristic of the \unix shell is its language-agnostic extensibility~\sx{bg}.
-Users composing pipelines are free to install custom commands available from various sources.
-Being general programs, commands are developed in a variety of languages and are extended over long periods of time.
+An important characteristic of the \unix shell is its
+language-agnostic extensibility~\sx{bg}.  Users composing pipelines
+are free to install custom commands available from various sources.
+Being general programs, commands are developed in a variety of
+languages and are extended over long periods of time.
 %% \kk{Text point: This restricts the space of solutions for
 %%   distribution of shell scripts}
-As a result, any static characterization of shell commands would bs unsatisfactory and would quickly become obsolete, supporting only a small subset of the commands needed in practice.
-This poses a challenge to the developers of individual commands---how can they augment their commands to capture information critical to \sys without too much effort?
+As a result, any static characterization of shell commands would bs
+unsatisfactory and would quickly become obsolete, supporting only a
+small subset of the commands needed in practice.  This poses a
+challenge to the developers of individual commands---how can they
+augment their commands to capture information critical to \sys without
+too much effort?
 %% \kk{Text point: The characteristics of a good solution}
 
-To address % additions and changes to the set of commands available to the shell,
-  this challenge, \sys arms command developers with a lightweight, domain-specific language (DSL).
-The DSL allows developers to express semantic information about a command's distributability that is critical to \sys.
-It can be used by the developers of new commands to succinctly express this information, such the class of a command and the sequence of sources from which it reads its input.
-It can also be used by maintainers extending or maintain existing commands, to express additions or changes to the command's implementation or interface.
+To address this challenge, \sys arms command developers with a
+lightweight, parallelizability annotation language (\todo{PAL}) that
+allows devevelopers to express semantic information about a command's
+parallelizability.  The PAL can be used by both developers of new
+commands, as well as maintainers of existing commands that can express
+additions or changes to the command's implmentation or
+interface. \todo{The two main challenges that PAL has to address is
+  supporting commands with mutiple inputs and outputs, and handle
+  command-line options.}
+
+\paragraph{Command Inputs and Outputs}
+
+Together with a command's parallelizability class (i.e. \sta, \pur,
+etc), \sys needs to know certain information about a command's inputs
+and outputs in order to construct a dataflow graph. More precisely,
+given a command and its arguments, \sys needs to know its inputs and
+outputs to connect commands in the dataflow graph with edges, as well
+as the order in which a command consumes its input; this is important
+for \sys to know how to order parallel instances of a command after it
+has performed any \todo{optimizations}. Consider the example of
+\ttt{grep "foo" f1 f2}, which can be parallelized as follows if we
+know that \ttt{grep} first reads from \ttt{f1} and then from \ttt{f2}.
+
+\begin{lstlisting}[float=h, numbers=none]
+  mkfifo t1 t2
+  grep "foo" f1 > t1 &
+  grep "foo" f2 > t2 &
+  cat t1 t2
+\end{lstlisting}
 
 \paragraph{Command-line Options}
-As described earlier~\sx{bg}, com\-mand-line options and environment variables can affect the operation of a command.
-Options are a particularly popular way to control a command, 
-  directly affecting a command's distributability classification.
-That is, commands are assigned to default classes, and options can change the class in which they belong.
+As described earlier~\sx{bg}, com\-mand-line options and environment
+variables can affect the operation of a command.  Options are a
+particularly popular way to control a command, directly affecting a
+command's parallelizability classification.  That is, commands are
+assigned to default classes, and options can change the class in which
+they belong.  As a simple example, consider \ttt{cat}.  By default
+\ttt{cat} is in \sta, but with \ttt{-n} it jumps into \pur because it
+has to keep track of a counter and output the line number with each line.
 
-As simple examples, consider \ttt{cat} and \ttt{sort}.
-By default \ttt{cat} is in \sta, but with \ttt{-n} it jumps into \pur because it has to keep track of a counter.
-Conversely, \ttt{sort} defaults to \pur, but \ttt{with} \ttt{-h} it jumps into \sta because it generates a static stream regardless of other input.
+%% As simple examples, consider \ttt{cat} and \ttt{sort}.
+%% By default \ttt{cat} is in \sta, but with \ttt{-n} it jumps into \pur because it has to keep track of a counter.
+%% Conversely, \ttt{sort} defaults to \pur, but \ttt{with} \ttt{-h} it jumps into \sta because it generates a static stream regardless of other input.
 % TODO: closure?
+
+%% This is actually wrong. sort -h is not stateless since if called several times it produces the same output many times.
 
 %% Can be tweaked according to this:
 %% https://tex.stackexchange.com/questions/24886/which-package-can-be-used-to-write-bnf-grammars
 
+\tr{
 \begin{figure}
   \centering
   \begin{grammar}
@@ -1146,77 +1185,133 @@ Conversely, \ttt{sort} defaults to \pur, but \ttt{with} \ttt{-h} it jumps into \
 The DSL captures important information regarding the distributability of a command.
 \vspace{-10pt}
 }
-
   \label{fig:dsl}
 \end{figure}
+}
 
 
+%% \paragraph{Command Inputs and Outputs}
+%% A second concern captured by the AL is the order of inputs and outputs.
+%% Commands generally read multiple input streams (and, at cases, write to multiple output streams).
+%% The invariants between inputs and outputs must be maintained over the distributed execution of the program.
+%% % but these maintain different invariants, enabling very different distributability characteristics.
 
-\paragraph{Command Inputs and Outputs}
-A second concern captured by the DSL is the order of inputs and outputs.
-Commands generally read multiple input streams (and, at cases, write to multiple output streams).
-The invariants between inputs and outputs must be maintained over the distributed execution of the program.
-% but these maintain different invariants, enabling very different distributability characteristics.
+%% Consider the command \ttt{comm} that takes as input two files and
+%% performs a join operation. When invoked without any option, it
+%% produces a three-column output. The first column contains lines that
+%% are unique to the first file, the second column contains lines that are
+%% unique to the second file, and the last column contains lines that
+%% exist in both files. In the general case \ttt{comm} is in \pur, since
+%% it needs to wait until it reads both files completely before it can
+%% output its results.
 
-Consider the command \ttt{comm} that takes as input two files and
-performs a join operation. When invoked without any option, it
-produces a three-column output. The first column contains lines that
-are unique to the first file, the second column contains lines that are
-unique to the second file, and the last column contains lines that
-exist in both files. In the general case \ttt{comm} is in \pur, since
-it needs to wait until it reads both files completely before it can
-output its results.
-
-However, \ttt{comm} can also be invoked using some options that
-suppress the output of any combination of columns. More precisely, the
-option \ttt{-1} suppresses the first column of the output. Similarly,
-\ttt{-2} and \ttt{-3} supress the second and third column. Using both
-\ttt{-2} (or \ttt{-1}) and \ttt{-3}, the command jumps to \sta
-regarding its first (resp. the second) file argument.
+%% However, \ttt{comm} can also be invoked using some options that
+%% suppress the output of any combination of columns. More precisely, the
+%% option \ttt{-1} suppresses the first column of the output. Similarly,
+%% \ttt{-2} and \ttt{-3} supress the second and third column. Using both
+%% \ttt{-2} (or \ttt{-1}) and \ttt{-3}, the command jumps to \sta
+%% regarding its first (resp. the second) file argument.
 
 % \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
 
-\paragraph{Distributability DSL}
-The DSL for distributability description (Fig.~\ref{fig:dsl} \kk{I
-  think that the language definition should be in a technical report,
-  and here we should only give intuition and the \ttt{comm} example})
-is designed to classify commands into multiple categories given their
-options.
+\paragraph{Parallelizability Annotation Language}
 
-It assumes that the arguments of a command can always be separated to
-options and file arguments (checking if they start with a
-\ttt{-}~\footnote{Note that the single character \ttt{-} is not an
-  option as it is most often used to designate that a command reads
-  from its standard input}). A file written in the DSL contains a
-record containing a mapping from predicates to assignments for each
-command. Predicates can be simple boolean formulas on the existence
-and the value of any option. Each assignment contains the command
-category, the sequence of its input sources, and its output
-source. Inputs to commands are a sequence of file identifiers and its
-standard input. Similarly, the output is either its standard output or
-a file identifier. An example record for \ttt{comm} can be seen below:
-
-\begin{lstlisting}[float=h, numbers=none]
+To illustrate how the proposed PAL addresses the above challenges, we
+will follow the example of the annotation record for \ttt{comm}, a
+command that performs a ``join'' on its two inputs. When \ttt{comm} is
+invoked without any option, it produces a three-column output. The
+first column contains lines that are unique to the first file, the
+second column contains lines that are unique to the second file, and
+the last column contains lines that exist in both files. A user can
+invoke \ttt{comm} with options \ttt{-1}, \ttt{-2}, or \ttt{-3} to
+suppress some of its output columns.
+%
+\begin{lstlisting}[float=h, numbers=none,caption={PAL record for \ttt{comm}},label={lst:pal-record-comm}]
   comm {
     | -1 and -3 =>
-      (stateless, [args[1]], stdout)
+      (stateless, [args[1]], [stdout])
     | -2 and -3 =>
-      (stateless, [args[0]], stdout)
+      (stateless, [args[0]], [stdout])
     | otherwise =>
-      (pure, [args[0]], stdout)
+      (pure, [args[0], args[1]], [stdout])
   }
 \end{lstlisting}
 
-The semantics of the language is straightforward: given a command, the
-interpreter collects its options and then returns the assignment of
-the first predicate that is satisfied. The final predicate is always
-satisfied. For example the following two invocations of \ttt{comm}
-would be classified as follows:
+The PAL annotation record for \ttt{comm} is shown in
+\cref{lst:pal-record-comm}. A record contains a set of clauses, each
+one identified by a predicate on the commands options. Each clause
+maps to an assignment for the command, indicating its class and the
+sequence of its inputs and outputs. \todo{PAL assumes} that arguments
+of a command can be separated to options and file arguments (checking
+if they start with a \ttt{-}~\footnote{Note that the single character
+  \ttt{-} is not an option as it is most often used to designate that
+  a command reads from its standard input}).
 
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
- comm -13 f1 f2 # => (stateless, f2, stdout)
- comm f1 f2     # => (pure, f1, stdout)
-\end{lstlisting}
+In the record for \ttt{comm} the first two clauses describe \ttt{comm}
+invocations with options \ttt{-1} (or \ttt{-2}) and \ttt{-3}. In the
+first case, since the first and third columns are suppressed,
+\ttt{comm} can be considered \sta by regarding its first file argument
+a static ``configuration'' input. \kk{Does this need more
+  explanation?} The general case (that includes \ttt{comm} invocations
+without any options) is captured by the third clause. There,
+\ttt{comm} is classified as \pur, since it needs to wait until it
+reads both files completely before it can output its results. Its
+inputs are its first and second arguments (excluding the options), and
+its output is produced in \ttt{stdout}.
+
+%%  This case is described in the third clause of the annotation
+%% record, where \ttt{comm} is classified as \pur, since it needs to wait
+%% until it reads both files completely before it can output its
+%% results. Its inputs are its first and second arguments (excluding the
+%% options), and its output is produced in \ttt{stdout}.
+
+%% The first and second clauses describe the case when \ttt{comm} is
+%% invoked with options \ttt{-1} (or \ttt{-2}) and \ttt{-3}. In this
+%% case, since the first and third columns are suppressed, \ttt{comm} can
+%% be considered \sta by regarding its first file argument a static
+%% ``configuration'' input. \kk{Does this need more explanation?}
+
+\tr{The complete syntax of the PAL is shown in (Fig.~\ref{fig:dsl})}
+%% \kk{I
+%%   think that the language definition should be in a technical report,
+%%   and here we should only give intuition and the \ttt{comm} example}
+%% is designed to classify commands into multiple categories given their
+%% options.
+
+%% It assumes that the arguments of a command can always be separated to
+%% options and file arguments (checking if they start with a
+%% \ttt{-}~\footnote{Note that the single character \ttt{-} is not an
+%%   option as it is most often used to designate that a command reads
+%%   from its standard input}). A file written in the DSL contains a
+%% record containing a mapping from predicates to assignments for each
+%% command. Predicates can be simple boolean formulas on the existence
+%% and the value of any option. Each assignment contains the command
+%% category, the sequence of its input sources, and its output
+%% source. Inputs to commands are a sequence of file identifiers and its
+%% standard input. Similarly, the output is either its standard output or
+%% a file identifier. An example record for \ttt{comm} can be seen below:
+
+%% \begin{lstlisting}[float=h, numbers=none]
+%%   comm {
+%%     | -1 and -3 =>
+%%       (stateless, [args[1]], stdout)
+%%     | -2 and -3 =>
+%%       (stateless, [args[0]], stdout)
+%%     | otherwise =>
+%%       (pure, [args[0]], stdout)
+%%   }
+%% \end{lstlisting}
+
+%% The semantics of the language is straightforward: given a command, the
+%% interpreter collects its options and then returns the assignment of
+%% the first predicate that is satisfied. The final predicate is always
+%% satisfied. For example the following two invocations of \ttt{comm}
+%% would be classified as follows:
+
+%% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+%%  comm -13 f1 f2 # => (stateless, f2, stdout)
+%%  comm f1 f2     # => (pure, f1, stdout)
+%% \end{lstlisting}
 
 
 
@@ -1258,20 +1353,21 @@ would be classified as follows:
   what do you think?}}
 
 
-%% \paragraph{Pure Commands}
-%
-\noindent
+\paragraph{Parallelizable Pure Commands}
+
 In addition to the commands in \sta that can be parallelized in a
 straightforward way, there also exists a subclass of commands in \pur
 that can be parallelized using divide-and-conquer techniques (as
-mentioned in \cref{cmd}). In order to support the parallelization of
-arbitrary commands in this category, \sys allows command developers to
-provide custom map and reduce steps for them, where the map is in \sta
-and the reduce in \pur, and their composition produces the same output
-with the initial command. \sys can then replace occurrences of these
-commands with their map and reduce parts, enabling their
-parallelization. \TODO{Mention that we have done this for several pure
-  commands in coreutils, providing the foundation}
+mentioned in \cref{cmd}). \kk{Maybe show an example of map-reduce for
+  sort or wc. Either here or in \cref{cmd}.} In order to support the
+parallelization of arbitrary commands in this category, \sys allows
+command developers to provide custom map and reduce steps for them,
+where the map is in \sta and the reduce in \pur, and their composition
+produces the same output with the initial command. \sys can then
+replace occurrences of these commands with their map and reduce parts,
+enabling their parallelization. \todo{We have defined these primitives
+  for most of the parallelizable pure commands in coreutils, providing
+  a foundation for this effort.}
 
 
 \tr{\kk{I am not sure a general interface is so easy to design. It needs
