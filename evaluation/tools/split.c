@@ -12,23 +12,56 @@
 #define PRINTDBG(fmt, ...)
 #endif
 
-void SplitInput(char* input, char* output1, char* output2, int batchSize) {
-  PRINTDBG("will split input\n");
+unsigned int NextFile(FILE** currentFile, char* outputFileNames[], unsigned int numOutputFiles) {
+  static int current = -1;
+
+  if (!currentFile) {
+    PRINTDBG("%s: Invalid file pointer, aborting\n", __func__);
+    exit(1);
+  }
+
+  if (++current >= numOutputFiles) {
+    return numOutputFiles;
+  }
+
+  // the order of the ifs here means that NextFile will close all files but the last one,
+  // which the caller will be responsible for.
+  if (*currentFile) {
+    if (current >= 0) {
+      PRINTDBG("%s: Will close %s output file\n", __func__, outputFileNames[current - 1]);
+    }
+    fclose(*currentFile);
+    *currentFile = NULL;
+  }
+
+  PRINTDBG("%s: Will open %s output file\n", __func__, outputFileNames[current]);
+  FILE* nextFile = fopen(outputFileNames[current], "w");
+  if (!nextFile) {
+    perror(LOC);
+    exit(1);
+  }
+
+  PRINTDBG("%s: Successfully opened %s output file\n", __func__, outputFileNames[current]);
+  *currentFile = nextFile;
+
+  return current;
+}
+
+void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned int numOutputFiles) {
+  PRINTDBG("%s: will split input\n", __func__);
+  FILE* outputFile = NULL;
+  NextFile(&outputFile, outputFileNames, numOutputFiles);
+  if (!outputFile) {
+    PRINTDBG("%s: No output file in list, quitting\n", __func__);
+    return;
+  }
+
   FILE* inputFile = fopen(input, "r");
   if (!inputFile) {
     perror(LOC);
     exit(1);
   }
-  PRINTDBG("opened input file %s\n", input);
-
-  PRINTDBG("will open outputFile1 from %s \n", output1);
-  FILE* outputFile1 = fopen(output1, "w");
-  if (!outputFile1) {
-    perror(LOC);
-    exit(1);
-  }
-  PRINTDBG("opened output file %s\n", output1);
-  FILE* outputFile = outputFile1;
+  PRINTDBG("%s: Opened input file %s\n", __func__, input);
 
   char* inputBuffer = NULL;
   unsigned int readLines = 0;
@@ -36,29 +69,29 @@ void SplitInput(char* input, char* output1, char* output2, int batchSize) {
   size_t len = 0;
   while (getline(&inputBuffer, &len, inputFile) > 0) {
     if (++readLines == batchSize) {
-      fclose(outputFile);
-      if (!(outputFile = fopen(output2, "w"))) {
-        perror(LOC);
-        exit(1);
-      }
-      PRINTDBG("successfully opened second output file %s\n", output2);
+      readLines = 0;
+      NextFile(&outputFile, outputFileNames, numOutputFiles);
     }
     fputs(inputBuffer, outputFile);
   }
 
+  // need to exhaust our output files list
+  while (NextFile(&outputFile, outputFileNames, numOutputFiles) < numOutputFiles) {
+  }
 
-  PRINTDBG("done reading, will close all open files from %s, %s, %s\n", input, output1, output2);
+  PRINTDBG("%s: Done splitting input %s, will clean up\n", __func__, input);
   fclose(inputFile);
+  // need to close the last output file
   fclose(outputFile);
   free(inputBuffer);
 }
 
 int main(int argc, char* argv[]) {
   // arg#1 -> input file name
-  // arg#2 -> output file name 1
-  // arg#3 -> output file name 2
-  // arg#4 -> batch_size
-  if (argc < 5) {
+  // arg#2 -> batch_size
+  // args#3... -> output file names
+  if (argc < 4) {
+    // TODO print usage string
     fprintf(stderr, "missing input!\n");
     exit(1);
   }
@@ -66,15 +99,16 @@ int main(int argc, char* argv[]) {
   char* inputFileName = calloc(strlen(argv[1]) + 1, sizeof(char));
   strcpy(inputFileName, argv[1]);
 
-  char* outputFileName1 = calloc(strlen(argv[2]) + 1, sizeof(char));
-  strcpy(outputFileName1, argv[2]);
-  char* outputFileName2 = calloc(strlen(argv[3]) + 1, sizeof(char));
-  strcpy(outputFileName2, argv[3]);
+  int batchSize = atoi(argv[2]);
 
-  int batchSize = atoi(argv[4]);
+  char** outputFileNames = (char **) malloc((argc - 3) * sizeof(char *));
+  for (int i = 3; i < argc; i++) {
+    outputFileNames[i - 3] = calloc(strlen(argv[i]) + 1, sizeof(char));
+    strcpy(outputFileNames[i - 3], argv[i]);
+  }
 
-  SplitInput(inputFileName, outputFileName1, outputFileName2, batchSize);
+  SplitInput(inputFileName, batchSize, outputFileNames, argc - 3);
 
-  PRINTDBG("SplitInput is done, whatever that's worth\n");
+  PRINTDBG("SplitInput is done\n");
   return 0;
 }

@@ -78,36 +78,20 @@ def make_split_files(in_fid, fan_out, batch_size, fileIdGen):
     assert(fan_out > 1)
     ## Generate the split file ids
     out_fids = [fileIdGen.next_file_id() for i in range(fan_out)]
-    split_commands = []
-    curr = in_fid
-    out_i = 0
-    while (out_i + 2 < len(out_fids)):
-        temp_fid = fileIdGen.next_file_id()
-        split_com = make_split_file(curr, [out_fids[out_i], temp_fid], batch_size)
-        split_commands.append(split_com)
-
-        curr = temp_fid
-        out_i += 1
-
-    ## The final 2 children of out_fid
-    split_com = make_split_file(curr, out_fids[out_i:(out_i+2)], batch_size)
-    split_commands.append(split_com)
-    return split_commands, out_fids
+    split_com = make_split_file(in_fid, out_fids, batch_size)
+    return [split_com], out_fids
 
 ## TODO: Make a proper splitter subclass of Node
 def make_split_file(in_fid, out_fids, batch_size):
-    assert(len(out_fids) == 2)
-    ## TODO: Call split_file recursively when we want to split a file
-    ## more than two times
-
     ## TODO: I probably have to give the file names as options to the command to.
     options = [string_to_argument(str(batch_size))] + out_fids
     opt_indices = [("option", 0)]
+    stdout_indices = [("option", i+1) for i in range(len(out_fids))]
     command = Command(None, # TODO: Make a proper AST
                       string_to_argument("split_file"),
                       options,
                       ["stdin"],
-                      [("option", 1), ("option", 2)],
+                      stdout_indices,
                       opt_indices,
                       None, # TODO: Category?
                       in_fid)
