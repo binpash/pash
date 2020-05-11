@@ -411,7 +411,8 @@ Another option is using the shell's concurrency primitives (\eg \ttt{\&}, \ttt{w
 And\todo{/To top it off} all these options assume a good understanding of parallelism;
   users whose domain of expertise falls outside computing---\todo{routinely} writing shell scripts to accomplish their tasks---are left without options.% automation when it comes to parallelization.
 
-To address this challenge, we develop \sys, a shell parallelizing\todo{/that parallelizes} POSIX shell scripts. % to their parallel equivalents.
+To address this challenge, we develop \sys, a shell parallelizing\todo{/that parallelizes} POSIX shell scripts.
+\kk{Mention that it outputs shell scripts.} % to their parallel equivalents.
 % \sys offers both classes of users in the second group such much-needed automation.
 \sys benefits both programmer groups mentioned earlier, with a particular emphasis on users.
 Command developers are provided a set of abstractions, akin to lightweight type annotations, for expressing the parallelizability properties of their commands:
@@ -883,6 +884,8 @@ This power is exploited directly by \sys's rewriting passes which re-target the 
 \subsection{\sys Design Overview}
 \label{bg:overview}
 
+\kk{Here we should reiterate on the fact that \sys takes a script and outputs a script.}
+
 As outlined earlier, the key insight behind \sys is that the shell already describes parallel computations over streams.
 Intuitively,
  (i) the parallel-composition operator exposes task parallelism
@@ -1122,7 +1125,7 @@ has performed any \todo{optimizations}. Consider the example of
 \ttt{grep "foo" f1 f2}, which can be parallelized as follows if we
 know that \ttt{grep} first reads from \ttt{f1} and then from \ttt{f2}.
 
-\begin{lstlisting}[float=h, numbers=none]
+\begin{lstlisting}[language=sh, numbers=none]
   mkfifo t1 t2
   grep "foo" f1 > t1 &
   grep "foo" f2 > t2 &
@@ -1779,10 +1782,12 @@ s)$. A visual representation of this transformation can be seen in
 %% tofill
 %% \end{lemma}
 
-\kk{Maybe say something about the rest of the transformations: (i)
-  changing a command with multiple inputs to a cat followed by the
-  command, (ii) Adding an identity node in the place of two edges, and
-  (iii) adding a split after a command.}
+\kk{I think we should say something about the rest of the
+  transformations: (i) changing a command with multiple inputs to a
+  cat followed by the command to enable the previous optimization,
+  (ii) adding a split node after a command (without saying anything
+  about its implementation for now, and (iii) Adding an identity node
+  in the place of an edge.}
 
 %% \kk{I think that we should probably rewrite this paragraph with the
 %%   ``new'' split optimization (and maybe any others that we develop
@@ -1804,9 +1809,9 @@ This section describes challenges related to the implementation of
 \sys. It starts by describing how the \sys front-end translates a
 shell script to the dataflow graph model defined in \S\ref{ir}, by
 applying transformation on parallelizable regions~\sx{front-end}.  It
-closes with the \sys optimizer, which optimizes the dataflow graph
-exposing data-parallelism, and outputs an optimized
-parallel script~\sx{optimizer}.
+closes with the \sys runtime\todo{/backend} and the technical
+challenges that were addressed to achieve performance
+benefits~\sx{optimizer}.
 
 \subsection{Front End}
 \label{front-end}
@@ -1965,47 +1970,25 @@ and as a result does not parallelize this sub-expression.
 %%   work. Maybe we should also focus on implementing it before the OSDI
 %%   deadline.}
 
-\subsection{Optimizer}
+\subsection{Runtime/Back End}
 \label{optimizer}
-
-\kk{This subsection has to only talk about the cool shell constructs
-  that are added and about optimizations that are not in the dataflow
-  graph (like file splitting), and the implementation of split, the
-  pure merges , etc...}
 
 \kk{Maybe guide all of this by showing an example of an output shell
   script?}
 
-Given a dataflow graph representing a shell program, the \sys optimizer outputs an optimized dataflow graph in which data parallelism opportunities have been exploited.
-More concretely, the
+Given a dataflow graph representing a shell program, the \sys
+optimizer outputs an optimized dataflow graph in which data
+parallelism opportunities have been exploited.  More concretely, the
 optimizer starts by splitting input files in several chunks, given the
 desirable output dataflow graph width. It then starts from the source
 nodes of the graph, iteratively performing the graph transformations
-that were described in \Cref{ir:transformations}. If the incoming
-edges of the node are less than the desirable graph width, it performs
-edge splits, and then it performs maximal node splits. The final graph
-can then be implemented by spawning a process for each node, and
-redirecting the outputs according to the graph edges.
-
-The optimizer also applies custom transformations on several commands in \pur
-to further improve their performance. Two notable examples are the
-transformations on \ttt{sort} and \ttt{wc}. Occurences of \ttt{sort}
-that have more than one input are tranformed to \ttt{sort} commands on
-each input, followed by a \ttt{sort -m}, to produce the final sorted
-result. The transformation on occurences of \ttt{wc} that have more
-than input \ttt{i1, t2} is illustrated below as a shell script:
-% \nv{do not understand i1, t2}
-
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-  paste -d '+' \
-   <(wc i1 | tr -s ' ' '\n' | tail -n +2) \
-   <(wc i2 | tr -s ' ' '\n' | tail -n +2) |
-   bc | tr -s '\n' ' ' |
-   sed 's/^/   /' | sed 's/$/\ /'
-\end{lstlisting}
-
-The above script takes the outputs produced by two \ttt{wc} commands
-and aggregates them accordingly.
+that were described in \Cref{ir:transformations}.
+%% If the incoming edges of the node are less than the desirable graph
+%% width, it performs edge splits, and then it performs maximal node
+%% splits.
+The final graph can then be implemented by spawning a process for each
+node, and redirecting the inputs and outputs according to the graph
+edges.
 
 %% \subsection{Mapping operators to nodes}
 
@@ -2045,7 +2028,7 @@ and aggregates them accordingly.
 %
 
 
-\subsection{Implementation Nuggets}
+%% \subsection{Implementation Nuggets}
 
 
 \heading{Overcoming Laziness}
@@ -2155,10 +2138,13 @@ and aggregates them accordingly.
 
 % \nv{I think all of these titles should be the problem/challenge, not the solution}
 % A process writing to a pipe needs to be notified when its consumer exits early before consuming all its output.
-Under normal operation, a producer commonly exits after it has produced and sent all of its output to a pipe.
+Under normal operation, a producer exits after it has produced and
+sent all of its output to a pipe\todo{/its output channel}.
 % \ttt{SIGPIPE} 
-However, if its consumer exits early, the producer needs to be notified so that it stops appending to the stream. % ---so that it avoids unnecessary work and buffering challenges in the kernel.
-
+However, if its consumer exits early, the producer needs to be
+notified so that it stops \todo{appending to the stream/trying to push
+  data to its output channel}.
+% ---so that it avoids unnecessary work and buffering challenges in the kernel.
 In \unix, this is achieved by an out-of-band error mechanism:
   the operating system will deliver a \ttt{PIPE} signal to the producer, notifying it that the pipe's consumer has exited.
 This is different from errors for other system calls return an error and unusual compared to non-\unix systems\footnote{
@@ -2166,9 +2152,10 @@ This is different from errors for other system calls return an error and unusual
 }
 primarily because pipes and pipelines are at the heart of its philosophy.
 % write errors are communicated differently 
-Unfortunately though, if a pipe has not been opened for writing yet---which is possible for named pipes---\unix cannot signal this condition.
-Consider the following emitted code from \sys's earlier versions:
+Unfortunately though, if a pipe has not been opened for writing yet---which is possible for named pipes\kk{I think that it is also possible for anonymous, e.g. \ttt{cat f1 - | head -n 1}}---\unix cannot signal this condition.
+Consider the following emitted code from \sys's earlier versions:\kk{Proposed alternative: ``Consider the following shell script:''}
 \begin{lstlisting}[language=sh, numbers=none]
+  mkfifo fifo1 fifo2
   cat file-chunk1.txt > fifo1 &
   cat file-chunk2.txt > fifo2 &
   cat fifo1 fifo2 | head -n 1 & wait
@@ -2204,6 +2191,33 @@ in the transformed pipeline \kk{I don't understand the final sentence}.
 % down the process tree; (ii) incorporate (a simple) cleanup logic for not leaving dangling processes and
 % intermediary files; (iii) generate a correct exit code, depending on its
 % execution. All of this can be easily generated by the compiler.
+
+\paragraph{Pure Fold Function Implementations}
+
+\kk{Maybe say something about some of the pure fold functions that we
+  implemented. Interesting examples include sort and wc.}
+
+%% The optimizer also applies custom transformations on several commands in \pur
+%% to further improve their performance. Two notable examples are the
+%% transformations on \ttt{sort} and \ttt{wc}. Occurences of \ttt{sort}
+%% that have more than one input are tranformed to \ttt{sort} commands on
+%% each input, followed by a \ttt{sort -m}, to produce the final sorted
+%% result. The transformation on occurences of \ttt{wc} that have more
+%% than input \ttt{i1, t2} is illustrated below as a shell script:
+%% % \nv{do not understand i1, t2}
+
+%% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+%%   paste -d '+' \
+%%    <(wc i1 | tr -s ' ' '\n' | tail -n +2) \
+%%    <(wc i2 | tr -s ' ' '\n' | tail -n +2) |
+%%    bc | tr -s '\n' ' ' |
+%%    sed 's/^/   /' | sed 's/$/\ /'
+%% \end{lstlisting}
+
+%% The above script takes the outputs produced by two \ttt{wc} commands
+%% and aggregates them accordingly.
+
+
 
 \section{Evaluation}
 \label{eval}
