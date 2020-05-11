@@ -420,7 +420,7 @@ Command developers are provided a set of abstractions, akin to lightweight type 
 Shell users, on the other hand, are provided full automation:
   \sys extracts parallelism latent in their scripts by analyzing their parallelizability properties. % of their fragments.
 % benefiting scripting experts and non-experts alike by offering automated POSIX-aware parallelization of shell-scripts as long as command developers
-\sys's transformations are conservative, in that they do not attempt to parallelize fragments that lack sufficient information---\ie at worst, \sys will choose to not improve performance rather than risking breakage.
+\sys's transformations are conservative, in that they do not attempt to parallelize fragments that lack sufficient information---\ie at worst, \sys will choose to not improve performance rather than risking breakage. \kk{Should we mention that we only show this empirically?}
 
 To address cold-start issues, \sys comes with a library of parallelizability semantics for commands in POSIX and GNU Coreutils.
 These large classes of commands serve as the shell's standard library, expected to be found pervasively. % in scripts found out in the wild.
@@ -885,6 +885,11 @@ This power is exploited directly by \sys's rewriting passes which re-target the 
 \label{bg:overview}
 
 \kk{Here we should reiterate on the fact that \sys takes a script and outputs a script.}
+
+\kk{Make sure for the running script to contain more than just a
+  pipeline, so that it is clear that \sys turns a script into the same
+  script with DFGs in place of ``parallelizable-regions'' (which are
+  usually pipelines).}
 
 As outlined earlier, the key insight behind \sys is that the shell already describes parallel computations over streams.
 Intuitively,
@@ -1820,19 +1825,22 @@ As mentioned in \Cref{ir}, in order to optimize a shell script, \sys
 translates it to a dataflow graph.  However, there are several
 components in shell programs that cannot be arbitrarily parallelized
 without affecting the program behaviour---\eg commands connected with
-a \ttt{\&\&} operator~\sx{bg}. In addition, the shell's highly dynamic
-nature compounds the challenge---\eg by not knowing what files does an
-unexpanded command argument refer to.
-% of correctly identifying what parts can be distributed, e.g.
+a \ttt{\&\&} operator~\sx{bg}.
+%% In addition, the shell's highly dynamic
+%% nature compounds the challenge---\eg by not knowing what files does an
+%% unexpanded command argument refer to.
+To address this issue, we introduce the notion of parallelizable
+program regions and a translation pass for converting them to dataflow
+dataflow graphs.
 
 %% \kk{Give examples of writing to environment variables, producing
 %%   irreversible side effects, the ; and \&\& operators.}
 
-To address the first issue, we introduce the notion of parallelizable
-program regions and a translation pass for converting them to a
-dataflow graph. To address the second issue, we limit dynamic
-components by deferring translation as late as possible using a
-wrapping scheme.
+%% To address the first issue, we introduce the notion of parallelizable
+%% program regions and a translation pass for converting them to a
+%% dataflow graph. To address the second issue, we limit dynamic
+%% components by deferring translation as late as possible using a
+%% wrapping scheme.
 
 %% The translation pass identifies distributable regions and
 %% translates each of them to a dataflow graph, provided the abstract
@@ -1854,15 +1862,15 @@ can be executed independently and barriers that are natural points for
 enforcing synchronization. Consider the following example:
 
 \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-  cat f1 f2 | grep ``foo'' > f3 && sort f3 
+  cat f1 f2 | grep "foo" > f3 && sort f3 
 \end{lstlisting}
 % # Replace sort with sth better
 
 \noindent
-The commands \ttt{cat f1 f2} and \ttt{grep ``foo''} would execute as
+The commands \ttt{cat f1 f2} and \ttt{grep "foo"} would execute as
 independent processes in the standard shell, while \ttt{sort f3} would
 wait for their completion before executing.  Both \ttt{cat f1 f2 |
-  grep ``foo'' > f3} and \ttt{sort f3} are therefore parallelizable
+  grep "foo" > f3} and \ttt{sort f3} are therefore parallelizable
 regions, regions that cannot be extended beyond \ttt{\&\&}---even
 better, they are maximal.
 
@@ -1871,8 +1879,8 @@ the program that would be allowed to execute independently by
 different processes in the POSIX standard~\cite{posix}. Larger
 parallelizable regions can be composed from smaller ones using the
 pipe operator \ttt{|} and the parallel composition operator \ttt{\&}.
-Conversely, the \ttt{;} sequential composition operator, the
-\ttt{\&\&} logical operator, and function definitions represent
+Conversely, all other operators, such as the \ttt{;} sequential
+composition operator, the \ttt{\&\&} logical operator represent
 barrier constructs that do not allow parallelizable regions to
 permeate through.
 
@@ -1895,74 +1903,97 @@ permeate through.
 
 \paragraph{Translation Pass}
 
-\kk{It might be a good idea to change this subsection based on the new
-  as-late-as-possible architecture where everything is wrapped and
-  translated at the final moment. Ideally, this would become the main
-  point of this subsection, as the translation algorithm is kind of
-  redundant when having the distributable regions too.}
+%% \kk{It might be a good idea to change this subsection based on the new
+%%   as-late-as-possible architecture where everything is wrapped and
+%%   translated at the final moment. Ideally, this would become the main
+%%   point of this subsection, as the translation algorithm is kind of
+%%   redundant when having the distributable regions too.}
 
 The \sys front-end performs a depth-first search pass on the AST of
-the given shell program.  During this pass, it greedily extends the
-distributable regions from the bottom up, translating their
+the given shell program.  During this pass, it extends the
+parallelizable regions from the bottom up, translating their
 independent components to dataflow graph nodes until a barrier
-construct is reached.  To identify possible opportunities for
-parallelism, the translation pass also extracts the category of each
-node together with its input and output pairs.  To perform this
-extraction, it uses the command name to index into a key-value map
-with values that are expressed in the DSL for distributability
-characterization~\sx{ext}.
+construct is reached. All subtrees that are not translated to dataflow
+graphs are kept as they are. The output of the translation pass is the
+original AST where parallelizable regions have been replaced with
+dataflow graphs and a call to \sys's runtime.
 
-A few illustrative cases of the analysis algorithm are shown in pseudocode below:
+To identify possible opportunities for parallelism, the translation
+pass extracts the parallelizability class of each command together
+with its inputs and outputs. It achieves that by searching all
+available PAL~\sx{ext} records for each command and resorts to
+conservative defaults if a record for the command is not found. If the
+command is \sta or parallelizable \pur, the translation pass initiates
+a parallelizable region that is propagated up the tree.
 
-\begin{lstlisting}[language=python, float=h]
-  def translate(node):
-    ...
-    elif(node.name == 'Pipe'):
-      return pipe_graphs([translate(child)
-        for child in node.children])
-    elif(node.name == 'And'):
-      node.children = [translate(child)
-        for child in node.children]
-      return node
-    elif(node.name == 'Command'):
-      if(not safe(node)):
-        return make_ir_node(node, 'unsafe')
-      else:
-        return make_ir_node(node,
-          find_category(node))
-    ...
-\end{lstlisting}
+%% Finally, whenever the algorithm encounters a command, it first
+%% checks whether it is safe to parallelize it. A command is considered
+%% safe for parallelization if (i) it belongs to the \sta or \pur distributability classes, and (ii) does not read from a read-once file (such as a pipe containing configuration data) as parallelization would break this. % why couldn't we replicate this?
+%% If the command is safe, \sys creates a node containing that command  and adds it to a singleton dataflow graph.
+%% If the command is unsafe, it is still added to the dataflow graph, but is not further parallelized by the optimizer.
 
-Whenever the algorithm encounters a distributable node, it recursively
-translates its subcomponents.
-It then merges them in a dataflow (sub-)graph, connecting the output of the first with the input of the second
-% what first and second? we didn't say anything about first and second
-Before the different dataflow graphs are connected, the
-algorithm checks that at most one node in the graph writes at every
-file, and that at most one node reads from a file that another node writes
-to. This is important, in order to avoid inconsistent behaviour after
-distributing nodes in the dataflow graph (\ie by introducing to
-concurrent reads and writes to the same file when
-parallelizing).
 
-Whenever the algorithm encounters a barrier node,
-it recursively translates its subcomponents, similarly to the distributable
-case.
-However, different from the distributable case, it does not merge them in a large dataflow graph.
+%% A few illustrative cases of the analysis algorithm are shown in pseudocode below:
 
-Finally, whenever the algorithm encounters a command, it first
-checks whether it is safe to parallelize it. A command is considered
-safe for parallelization if (i) it belongs to the \sta or \pur distributability classes, and (ii) does not read from a read-once file (such as a pipe containing configuration data) as parallelization would break this. % why couldn't we replicate this?
-If the command is safe, \sys creates a node containing that command  and adds it to a singleton dataflow graph.
-If the command is unsafe, it is still added to the dataflow graph, but is not further parallelized by the optimizer.
+%% \begin{lstlisting}[language=python, float=h]
+%%   def translate(node):
+%%     ...
+%%     elif(node.name == 'Pipe'):
+%%       return pipe_graphs([translate(child)
+%%         for child in node.children])
+%%     elif(node.name == 'And'):
+%%       node.children = [translate(child)
+%%         for child in node.children]
+%%       return node
+%%     elif(node.name == 'Command'):
+%%       if(not safe(node)):
+%%         return make_ir_node(node, 'unsafe')
+%%       else:
+%%         return make_ir_node(node,
+%%           find_category(node))
+%%     ...
+%% \end{lstlisting}
+
+%% Whenever the algorithm encounters a distributable node, it recursively
+%% translates its subcomponents.
+%% It then merges them in a dataflow (sub-)graph, connecting the output of the first with the input of the second
+%% % what first and second? we didn't say anything about first and second
+%% Before the different dataflow graphs are connected, the
+%% algorithm checks that at most one node in the graph writes at every
+%% file, and that at most one node reads from a file that another node writes
+%% to. This is important, in order to avoid inconsistent behaviour after
+%% distributing nodes in the dataflow graph (\ie by introducing to
+%% concurrent reads and writes to the same file when
+%% parallelizing).
+
+%% Whenever the algorithm encounters a barrier node,
+%% it recursively translates its subcomponents, similarly to the distributable
+%% case.
+%% However, different from the distributable case, it does not merge them in a large dataflow graph.
+
+%% Finally, whenever the algorithm encounters a command, it first
+%% checks whether it is safe to parallelize it. A command is considered
+%% safe for parallelization if (i) it belongs to the \sta or \pur distributability classes, and (ii) does not read from a read-once file (such as a pipe containing configuration data) as parallelization would break this. % why couldn't we replicate this?
+%% If the command is safe, \sys creates a node containing that command  and adds it to a singleton dataflow graph.
+%% If the command is unsafe, it is still added to the dataflow graph, but is not further parallelized by the optimizer.
 
 An important consideration is that due to the highly dynamic nature of
-the shell, the safety properties that are mentioned above cannot be
-soundly checked statically.  For safety purposes, \sys takes a
-conservative approach where it does not parallelize nodes without
-complete information.  For example, the translation pass cannot infer
-that two un-expand strings do not refer to the same file identifier,
+the shell, there is information (such as the values of environment
+variables) that are not known to \sys at the time of translation.
+%% to the the safety properties that are mentioned above cannot be
+%% soundly checked statically.
+For safety purposes, \sys takes a conservative approach where it does
+not parallelize nodes without complete information.  For example, the
+translation pass cannot infer that an environment variable that is
+given as an argument to a command is not a flag that changes its
+parallelizability class,
+%% two un-expand strings do not refer to the same file identifier,
 and as a result does not parallelize this sub-expression.
+
+\kk{Can we say anything more about the safety considerations? That (i)
+  the translation pass ``checks'' that no nodes write/read or
+  write/write to the same file (is that necessary?), that (ii) a
+  command should not read from a read-once file. (is that necessary?)}
 
 %% \kk{Ideally we would want to talk here about the as-late-as possible
 %%   dish translation that allows us to be safe despite the Shell's
@@ -1973,8 +2004,8 @@ and as a result does not parallelize this sub-expression.
 \subsection{Runtime/Back End}
 \label{optimizer}
 
-\kk{Maybe guide all of this by showing an example of an output shell
-  script?}
+%% \kk{Maybe guide all of this by showing an example of an output shell
+%%   script?}
 
 Given a dataflow graph representing a shell program, the \sys
 optimizer outputs an optimized dataflow graph in which data
@@ -2225,6 +2256,9 @@ in the transformed pipeline \kk{I don't understand the final sentence}.
 \TODO{Remember to mention that deathstar has 128 threads but 64
   cores. So it is reasonable for the speedup to not go further in cpu
   heavy pipelines.}
+
+\TODO{Should we mention that we empirically show that pash produces
+  correct code?}
 
 % FIXME
 % \kk{We should make sure to measure the time that it takes for the
