@@ -1,9 +1,16 @@
-Optimization time: 3264.391  ms
-Backend time: 21.645  ms
-Execution time: 190025.486  ms
-Compilation time: 22.685  ms
+kill: (121494): No such process
+kill: (121495): No such process
+kill: (121496): No such process
+Total nodes after optimization: 637
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 254
+Optimization time: 4242.301  ms
+Backend time: 17.149  ms
+Execution time: 200976.932  ms
+Compilation time: 20.682  ms
 
-real	3m13.718s
-user	50m51.886s
-sys	99m14.594s
+real	3m25.646s
+user	51m7.652s
+sys	98m5.843s
 Files ../evaluation//intermediary//minimal_sort_seq_output and /tmp/distr_output/0 are identical
