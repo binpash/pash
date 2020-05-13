@@ -3,12 +3,14 @@
 execute_seq_flag=0
 eager_flag=0
 no_task_par_eager_flag=0
+split_flag=0
 
-while getopts 'sen' opt; do
+while getopts 'senp' opt; do
     case $opt in
         s) execute_seq_flag=1 ;;
         e) eager_flag=1 ;;
         n) no_task_par_eager_flag=1 ;;
+        p) split_flag=1 ;;
         *) echo 'Error in command line parsing' >&2
            exit 1
     esac
@@ -58,7 +60,37 @@ fi
 ## Save the configuration to restore it afterwards
 cat config.yaml > /tmp/backup-config.yaml
 
-if [ "$eager_flag" -eq 1 ]; then
+if [ "$split_flag" -eq 1 ]; then
+    echo "Distributed with split:"
+    eager_opt=""
+    distr_result_filename="${results}${experiment}_distr_split.time"
+    sed -i "s#fan_out: [0-9]\+#fan_out: ${n_in}#" config.yaml
+    if [ "${microbenchmark}" == "bigrams" ]; then
+        ## These are the total lines for 10G input
+        total_lines=2000000000
+        (( batch_size=total_lines / n_in ))
+        sed -i "s#batch_size: [0-9]\+#batch_size: ${batch_size}#" config.yaml
+    elif [ "${microbenchmark}" == "spell" ]; then
+        ## These are the total lines for 1G input
+        total_lines=200000000
+        (( batch_size=total_lines / n_in ))
+        sed -i "s#batch_size: [0-9]\+#batch_size: ${batch_size}#" config.yaml
+    elif [ "${microbenchmark}" == "set-diff" ]; then
+        ## These are the total lines for 10G input
+        total_lines=200000000
+        (( batch_size=total_lines / n_in ))
+        sed -i "s#batch_size: [0-9]\+#batch_size: ${batch_size}#" config.yaml
+    elif [ "${microbenchmark}" == "double_sort" ]; then
+        ## These are the total lines for 10G input
+        total_lines=200000000
+        total_lines=200000
+        (( batch_size=total_lines / n_in ))
+        sed -i "s#batch_size: [0-9]\+#batch_size: ${batch_size}#" config.yaml
+    else
+        echo "No reason to split on one-liner: ${microbenchmark}"
+        exit
+    fi
+elif [ "$eager_flag" -eq 1 ]; then
     echo "Distributed:"
     eager_opt=""
     distr_result_filename="${results}${experiment}_distr.time"

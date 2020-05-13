@@ -15,8 +15,8 @@ n_inputs=(
     16
     32
     64
-    96
-    128
+    # 96
+    # 128
     # 10
     # 20
     # 50
@@ -42,7 +42,7 @@ microbenchmarks=(
 
     ## Tests
     # deadlock_test          # Test to check deadlock prevention using drain_stream
-    # double_sort            # Checks maximum peformance gains from split
+    double_sort            # Checks maximum peformance gains from split
 
     ## TODO: Add some more for OSDI
     # wc                   # Extremely simple
@@ -57,7 +57,7 @@ microbenchmarks=(
 ## Note: Maybe we need to tune the configuration (fan-out, batch-size)
 ##       before some specific benchmarks
 for microbenchmark in "${microbenchmarks[@]}"; do
-    # Execute the sequential script on the first run only
+    ## Execute the sequential script on the first run only
     exec_seq="-s"
     for n_in in "${n_inputs[@]}"; do
 
@@ -70,11 +70,14 @@ for microbenchmark in "${microbenchmarks[@]}"; do
         ./execute_compile_evaluation_script.sh $exec_seq -e "${microbenchmark}" "${n_in}"
         rm -f /tmp/eager*
 
-        # Only execute the sequential once
+        ## Only execute the sequential once
         exec_seq=""
 
-        ## Execute the intermediary script without eager
-        ./execute_compile_evaluation_script.sh $exec_seq "${microbenchmark}" "${n_in}"
+        ## Execute the intermediary script without eager (only if the
+        ## microbenchmark is not grep or minimal grep).
+        if [ "${microbenchmark}" != "grep" ]  && [ "${microbenchmark}" != "minimal_grep" ]; then
+           ./execute_compile_evaluation_script.sh $exec_seq "${microbenchmark}" "${n_in}"
+        fi
 
         ## Execute the intermediary script with the naive eager
         ./execute_compile_evaluation_script.sh $exec_seq -n "${microbenchmark}" "${n_in}"
