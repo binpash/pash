@@ -1,9 +1,16 @@
-Optimization time: 412.579  ms
-Backend time: 7.199  ms
-Execution time: 2196148.362  ms
-Compilation time: 21.876  ms
+kill: (36722): No such process
+kill: (36723): No such process
+kill: (36724): No such process
+Total nodes after optimization: 258
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 0
+Optimization time: 786.357  ms
+Backend time: 5.676  ms
+Execution time: 2212299.077  ms
+Compilation time: 20.549  ms
 
-real	36m36.956s
-user	140m32.145s
-sys	9m52.043s
+real	36m53.480s
+user	141m10.916s
+sys	10m29.858s
 Files ../evaluation//intermediary//topn_seq_output and /tmp/distr_output/0 are identical
