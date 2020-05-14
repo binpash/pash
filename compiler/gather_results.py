@@ -238,7 +238,7 @@ def collect_scaleup_times(experiment, results_dir):
         split_distr_speedup = collect_distr_experiment_speedup(prefix,
                                                                'distr_split.time',
                                                                all_scaleup_numbers)
-        ax.plot(all_scaleup_numbers, split_distr_speedup, '-D', linewidth=0.5, label='Parallel + Split')
+        ax.plot(all_scaleup_numbers, split_distr_speedup, '-D', color='tab:red', linewidth=0.5, label='Parallel + Split')
     except ValueError:
         pass
 
