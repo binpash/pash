@@ -163,13 +163,13 @@ def collect_experiment_scaleup_times(prefix, scaleup_numbers):
                        for n in scaleup_numbers]
     return (seq_numbers, distr_numbers, compile_numbers)
 
-def collect_experiment_no_eager_times(prefix, scaleup_numbers):
-    no_eager_distr_numbers = collect_distr_experiment_execution_times(prefix, 'distr_no_eager.time',
-                                                                      scaleup_numbers)
-    no_task_par_eager_distr_numbers = collect_distr_experiment_execution_times(prefix,
-                                                                               'distr_no_task_par_eager.time',
-                                                                               scaleup_numbers)
-    return (no_eager_distr_numbers, no_task_par_eager_distr_numbers)
+# def collect_experiment_no_eager_times(prefix, scaleup_numbers):
+#     no_eager_distr_numbers = collect_distr_experiment_execution_times(prefix, 'distr_no_eager.time',
+#                                                                       scaleup_numbers)
+#     no_task_par_eager_distr_numbers = collect_distr_experiment_execution_times(prefix,
+#                                                                                'distr_no_task_par_eager.time',
+#                                                                                scaleup_numbers)
+#     return (no_eager_distr_numbers, no_task_par_eager_distr_numbers)
 
 def collect_experiment_speedups(prefix, scaleup_numbers):
     seq_numbers, distr_numbers, compile_numbers = collect_experiment_scaleup_times(prefix, scaleup_numbers)
@@ -188,16 +188,22 @@ def collect_baseline_experiment_speedups(prefix, scaleup_numbers, base_seq):
     return speedup
 
 
-def collect_experiment_no_eager_speedups(prefix, scaleup_numbers):
+# def collect_experiment_no_eager_speedups(prefix, scaleup_numbers):
+#     seq_numbers, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
+#     no_eager_distr_numbers, no_task_par_eager_distr_numbers = collect_experiment_no_eager_times(prefix, scaleup_numbers)
+#     no_eager_distr_speedup = [safe_zero_div(seq_numbers[i], t)
+#                               for i, t in enumerate(no_eager_distr_numbers)]
+#     # no_eager_compile_distr_speedup = [seq_numbers[i] / (t + no_eager_compile_numbers[i])
+#     #                                   for i, t in enumerate(no_eager_distr_numbers)]
+#     no_task_par_eager_distr_speedup = [safe_zero_div(seq_numbers[i], t)
+#                                        for i, t in enumerate(no_task_par_eager_distr_numbers)]
+#     return (no_eager_distr_speedup, no_task_par_eager_distr_speedup)
+
+def collect_distr_experiment_speedup(prefix, suffix, scaleup_numbers):
     seq_numbers, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
-    no_eager_distr_numbers, no_task_par_eager_distr_numbers = collect_experiment_no_eager_times(prefix, scaleup_numbers)
-    no_eager_distr_speedup = [safe_zero_div(seq_numbers[i], t)
-                              for i, t in enumerate(no_eager_distr_numbers)]
-    # no_eager_compile_distr_speedup = [seq_numbers[i] / (t + no_eager_compile_numbers[i])
-    #                                   for i, t in enumerate(no_eager_distr_numbers)]
-    no_task_par_eager_distr_speedup = [safe_zero_div(seq_numbers[i], t)
-                                       for i, t in enumerate(no_task_par_eager_distr_numbers)]
-    return (no_eager_distr_speedup, no_task_par_eager_distr_speedup)
+    distr_numbers = collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers)
+    distr_speedup = [safe_zero_div(seq_numbers[i], t) for i, t in enumerate(distr_numbers)]
+    return distr_speedup
 
 def check_output_diff_correctness(prefix, scaleup_numbers):
     wrong_diffs = [n for n in scaleup_numbers
@@ -233,9 +239,18 @@ def collect_scaleup_times(experiment, results_dir):
 
     ## Add the no eager times if they exist
     try:
-        no_eager_distr_speedup, no_task_par_eager_distr_speedup = collect_experiment_no_eager_speedups(prefix, all_scaleup_numbers)
-        ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='No Eager')
+        no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                                            'distr_no_task_par_eager.time',
+                                                                            all_scaleup_numbers)
         ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Blocking Eager')
+    except:
+        pass
+
+    try:
+        no_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                                   'distr_no_eager.time',
+                                                                   all_scaleup_numbers)
+        ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='No Eager')
     except:
         pass
     # ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
@@ -281,10 +296,19 @@ def plot_sort_with_baseline(results_dir):
     ax.set_xlabel('Level of Parallelism')
     ax.plot(all_scaleup_numbers, sort_distr_speedup, '-o', linewidth=0.5, label='Pash')
     ## Add the no eager times if they exist
+    # try:
+    #     no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
+    #                                                                         'distr_no_task_par_eager.time',
+    #                                                                         all_scaleup_numbers)
+    #     ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Pash - Blocking Eager')
+    # except:
+    #     pass
+
     try:
-        no_eager_distr_speedup, no_task_par_eager_distr_speedup = collect_experiment_no_eager_speedups(sort_prefix, all_scaleup_numbers)
+        no_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                                   'distr_no_eager.time',
+                                                                   all_scaleup_numbers)
         ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='Pash - No Eager')
-        # ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Pash - Blocking Eager')
     except:
         pass
 
