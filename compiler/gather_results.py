@@ -114,10 +114,12 @@ def read_distr_execution_time(filename):
                 milliseconds = line.split(": ")[1].split(" ")[0]
                 times.append(float(milliseconds))
         f.close()
+        if(len(times) == 0):
+            raise ValueError
         return sum(times)
     except:
         print("!! WARNING: Filename:", filename, "not found!!!")
-        return 0
+        raise ValueError
 
 def read_distr_total_compilation_time(filename):
     try:
@@ -231,11 +233,17 @@ def collect_scaleup_times(experiment, results_dir):
     ## Plot speedup
     ax.set_ylabel('Speedup')
     ax.set_xlabel('Level of Parallelism')
-    # total_distr_speedup = [seq_numbers[i] / (t + compile_numbers[i] + cat_numbers[i]) for i, t in enumerate(distr_numbers)]
-    # ax.plot(all_scaleup_numbers, seq_numbers, '-o', linewidth=0.5, label='Sequential')
-    # ax.plot(all_scaleup_numbers, distr_numbers, '-o', linewidth=0.5, label='Distributed')
+
+    try:
+        split_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                               'distr_split.time',
+                                                               all_scaleup_numbers)
+        ax.plot(all_scaleup_numbers, split_distr_speedup, '-D', linewidth=0.5, label='Parallel + Split')
+    except ValueError:
+        pass
+
+
     ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, label='Parallel')
-    # ax.plot(all_scaleup_numbers, compile_distr_speedup, '-*', linewidth=0.5, label='+ Compile')
 
     ## Add the no eager times if they exist
     try:
@@ -243,7 +251,7 @@ def collect_scaleup_times(experiment, results_dir):
                                                                             'distr_no_task_par_eager.time',
                                                                             all_scaleup_numbers)
         ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Blocking Eager')
-    except:
+    except ValueError:
         pass
 
     try:
@@ -251,7 +259,7 @@ def collect_scaleup_times(experiment, results_dir):
                                                                    'distr_no_eager.time',
                                                                    all_scaleup_numbers)
         ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='No Eager')
-    except:
+    except ValueError:
         pass
     # ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
     # ax.plot(all_scaleup_numbers, all_scaleup_numbers, '-', color='tab:gray', linewidth=0.5, label='Ideal')
@@ -297,19 +305,19 @@ def plot_sort_with_baseline(results_dir):
     ax.plot(all_scaleup_numbers, sort_distr_speedup, '-o', linewidth=0.5, label='Pash')
     ## Add the no eager times if they exist
     # try:
-    #     no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
+    #     no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(sort_prefix,
     #                                                                         'distr_no_task_par_eager.time',
     #                                                                         all_scaleup_numbers)
     #     ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Pash - Blocking Eager')
-    # except:
+    # except ValueError:
     #     pass
 
     try:
-        no_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
+        no_eager_distr_speedup = collect_distr_experiment_speedup(sort_prefix,
                                                                    'distr_no_eager.time',
                                                                    all_scaleup_numbers)
         ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='Pash - No Eager')
-    except:
+    except ValueError:
         pass
 
     ax.plot(all_scaleup_numbers, baseline_sort_distr_speedup[1:], '-p', linewidth=0.5, label='sort --parallel')
