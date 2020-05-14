@@ -83,11 +83,12 @@ if [ "$split_flag" -eq 1 ]; then
     elif [ "${microbenchmark}" == "double_sort" ]; then
         ## These are the total lines for 10G input
         total_lines=200000000
-        total_lines=200000
+        ## total_lines=200000
         (( batch_size=total_lines / n_in ))
         sed -i "s#batch_size: [0-9]\+#batch_size: ${batch_size}#" config.yaml
     else
         echo "No reason to split on one-liner: ${microbenchmark}"
+        cat /tmp/backup-config.yaml > config.yaml
         exit
     fi
 elif [ "$eager_flag" -eq 1 ]; then
