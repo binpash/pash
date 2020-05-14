@@ -148,29 +148,27 @@ def check_output_diff_correctness_for_experiment(filename):
         print("!! WARNING: Filename:", filename, "not found!!!")
         return False
 
+def collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers):
+    numbers = [read_distr_execution_time('{}{}_{}'.format(prefix, n, suffix))
+               for n in scaleup_numbers]
+    return numbers
+
 def collect_experiment_scaleup_times(prefix, scaleup_numbers):
     ## Since we have the same input size in all cases, only use the
     ## one sequential execution for the sequential time
     seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, scaleup_numbers[0]))
                    for _ in scaleup_numbers]
-    distr_numbers = [read_distr_execution_time('{}{}_distr.time'.format(prefix, n))
-                     for n in scaleup_numbers]
+    distr_numbers = collect_distr_experiment_execution_times(prefix, 'distr.time', scaleup_numbers)
     compile_numbers = [read_distr_total_compilation_time('{}{}_distr.time'.format(prefix, n))
                        for n in scaleup_numbers]
-    # distr_numbers = [read_time('{}{}_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
-    # cat_numbers = [read_time('{}{}_cat_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
-    # compile_numbers = [read_time('{}{}_compile_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
     return (seq_numbers, distr_numbers, compile_numbers)
 
 def collect_experiment_no_eager_times(prefix, scaleup_numbers):
-    no_eager_distr_numbers = [read_distr_execution_time('{}{}_distr_no_eager.time'.format(prefix, n))
-                              for n in scaleup_numbers]
-    # no_eager_compile_numbers = [read_distr_total_compilation_time('{}{}_distr_no_eager.time'.format(prefix, n))
-    #                             for n in scaleup_numbers]
-    no_task_par_eager_distr_numbers = [read_distr_execution_time('{}{}_distr_no_task_par_eager.time'.format(prefix, n))
-                                       for n in scaleup_numbers]
-    # no_eager_compile_numbers = [read_distr_total_compilation_time('{}{}_distr_no_eager.time'.format(prefix, n))
-    #                             for n in scaleup_numbers]
+    no_eager_distr_numbers = collect_distr_experiment_execution_times(prefix, 'distr_no_eager.time',
+                                                                      scaleup_numbers)
+    no_task_par_eager_distr_numbers = collect_distr_experiment_execution_times(prefix,
+                                                                               'distr_no_task_par_eager.time',
+                                                                               scaleup_numbers)
     return (no_eager_distr_numbers, no_task_par_eager_distr_numbers)
 
 def collect_experiment_speedups(prefix, scaleup_numbers):
