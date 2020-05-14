@@ -138,6 +138,18 @@ def read_distr_total_compilation_time(filename):
         print("!! WARNING: Filename:", filename, "not found!!!")
         return 0
 
+def read_distr_command_number(filename):
+    try:
+        with open(filename) as f:
+            for line in f:
+                if(line.startswith("Total nodes after optimization:")):
+                    number_of_commands = int(line.split(": ")[1])
+                    return number_of_commands
+            return "\\todo{X}"
+    except:
+        print("!! WARNING: Filename:", filename, "not found!!!")
+        return "\\todo{X}"
+
 def check_output_diff_correctness_for_experiment(filename):
     try:
         with open(filename) as f:
@@ -165,20 +177,8 @@ def collect_experiment_scaleup_times(prefix, scaleup_numbers):
                        for n in scaleup_numbers]
     return (seq_numbers, distr_numbers, compile_numbers)
 
-# def collect_experiment_no_eager_times(prefix, scaleup_numbers):
-#     no_eager_distr_numbers = collect_distr_experiment_execution_times(prefix, 'distr_no_eager.time',
-#                                                                       scaleup_numbers)
-#     no_task_par_eager_distr_numbers = collect_distr_experiment_execution_times(prefix,
-#                                                                                'distr_no_task_par_eager.time',
-#                                                                                scaleup_numbers)
-#     return (no_eager_distr_numbers, no_task_par_eager_distr_numbers)
-
 def collect_experiment_speedups(prefix, scaleup_numbers):
     seq_numbers, distr_numbers, compile_numbers = collect_experiment_scaleup_times(prefix, scaleup_numbers)
-    # print(scaleup_numbers)
-    # print(seq_numbers)
-    # print(distr_numbers)
-    # print(compile_numbers)
     distr_speedup = [safe_zero_div(seq_numbers[i], t) for i, t in enumerate(distr_numbers)]
     compile_distr_speedup = [safe_zero_div(seq_numbers[i], t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
     return (distr_speedup, compile_distr_speedup)
@@ -189,23 +189,16 @@ def collect_baseline_experiment_speedups(prefix, scaleup_numbers, base_seq):
     speedup = [safe_zero_div(base_seq, t) for t in seq_numbers]
     return speedup
 
-
-# def collect_experiment_no_eager_speedups(prefix, scaleup_numbers):
-#     seq_numbers, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
-#     no_eager_distr_numbers, no_task_par_eager_distr_numbers = collect_experiment_no_eager_times(prefix, scaleup_numbers)
-#     no_eager_distr_speedup = [safe_zero_div(seq_numbers[i], t)
-#                               for i, t in enumerate(no_eager_distr_numbers)]
-#     # no_eager_compile_distr_speedup = [seq_numbers[i] / (t + no_eager_compile_numbers[i])
-#     #                                   for i, t in enumerate(no_eager_distr_numbers)]
-#     no_task_par_eager_distr_speedup = [safe_zero_div(seq_numbers[i], t)
-#                                        for i, t in enumerate(no_task_par_eager_distr_numbers)]
-#     return (no_eager_distr_speedup, no_task_par_eager_distr_speedup)
-
 def collect_distr_experiment_speedup(prefix, suffix, scaleup_numbers):
     seq_numbers, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
     distr_numbers = collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers)
     distr_speedup = [safe_zero_div(seq_numbers[i], t) for i, t in enumerate(distr_numbers)]
     return distr_speedup
+
+def collect_experiment_command_number(prefix, suffix, scaleup_numbers):
+    command_numbers = [read_distr_command_number('{}{}_{}'.format(prefix, n, suffix))
+                       for n in scaleup_numbers]
+    return command_numbers
 
 def check_output_diff_correctness(prefix, scaleup_numbers):
     wrong_diffs = [n for n in scaleup_numbers
@@ -380,7 +373,7 @@ def generate_table_header():
     header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} lllllll}']
     header += ['\\toprule']
     header += ['Script ~&~ Structure & Input &'
-               'Seq Time & Script Size(16, 64) &'
+               'Seq Time & \\#Nodes(16, 64) &'
                'Compile Time (16, 64) & Highlights \\\\']
     header += ['\\midrule']
     return "\n".join(header)
@@ -408,7 +401,10 @@ def generate_experiment_line(experiment):
     seq_time_seconds = format_time_seconds(seq_times[0])
     # seq_time_seconds = seq_times[0] / 1000
     line += [seq_time_seconds, '&']
-    line += ['\\todo{\\#Commands}', '&']
+
+    commands_16, commands_64 = collect_experiment_command_number(experiment_results_prefix,
+                                                                 'distr.time', [16, 64])
+    line += ['{}\\qquad {}'.format(commands_16, commands_64), '&']
 
     ## Collect and output compile times
     compile_time_16_milliseconds = compile_times[1]
