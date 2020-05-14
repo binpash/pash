@@ -1,9 +1,16 @@
-Optimization time: 390.418  ms
-Backend time: 5.698  ms
-Execution time: 75293.511  ms
-Compilation time: 19.251  ms
+kill: (16220): No such process
+kill: (16221): No such process
+kill: (16222): No such process
+Total nodes after optimization: 193
+ -- out of which:
+Cat nodes: 1
+Eager nodes: 64
+Optimization time: 489.086  ms
+Backend time: 5.405  ms
+Execution time: 78169.09  ms
+Compilation time: 19.717  ms
 
-real	1m16.075s
-user	75m37.106s
-sys	0m23.232s
+real	1m19.053s
+user	75m57.421s
+sys	0m25.411s
 Files ../evaluation//intermediary//minimal_grep_seq_output and /tmp/distr_output/0 are identical
