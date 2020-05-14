@@ -1,9 +1,16 @@
-Optimization time: 4.787  ms
-Backend time: 0.508  ms
-Execution time: 243117.663  ms
-Compilation time: 19.236  ms
+kill: (54007): No such process
+kill: (54008): No such process
+kill: (54009): No such process
+Total nodes after optimization: 11
+ -- out of which:
+Cat nodes: 1
+Eager nodes: 0
+Optimization time: 3.591  ms
+Backend time: 0.442  ms
+Execution time: 427274.221  ms
+Compilation time: 18.935  ms
 
-real	4m3.493s
-user	9m34.206s
-sys	3m2.762s
+real	7m7.651s
+user	8m56.647s
+sys	2m57.809s
 Files ../evaluation//intermediary//spell_seq_output and /tmp/distr_output/0 are identical
