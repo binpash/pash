@@ -59,6 +59,9 @@ def add_common_arguments(parser):
     parser.add_argument("--drain_streams",
                         help="drain up all streams instead of letting them hang (this is an alternative to --clean_up_graph",
                         action="store_true")
+    parser.add_argument("--auto_split",
+                        help="uses a no-task-parallelism split that automatically calculates batch size",
+                        action="store_true")
     return
 
 def pass_common_arguments(dish_arguments):
@@ -75,6 +78,8 @@ def pass_common_arguments(dish_arguments):
         arguments.append(string_to_argument("--clean_up_graph"))
     if (dish_arguments.drain_streams):
         arguments.append(string_to_argument("--drain_streams"))
+    if (dish_arguments.auto_split):
+        arguments.append(string_to_argument("--auto_split"))
     return arguments
 
 # TODO load command class file path from config
