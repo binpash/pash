@@ -1,9 +1,16 @@
-Optimization time: 7.571  ms
-Backend time: 0.507  ms
-Execution time: 1824394.133  ms
-Compilation time: 18.217  ms
+kill: (87783): No such process
+kill: (87784): No such process
+kill: (87785): No such process
+Total nodes after optimization: 15
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 0
+Optimization time: 8.426  ms
+Backend time: 0.494  ms
+Execution time: 549083.356  ms
+Compilation time: 18.292  ms
 
-real	30m24.776s
-user	122m3.106s
-sys	5m54.658s
+real	9m9.468s
+user	37m51.904s
+sys	2m54.932s
 Files ../evaluation//intermediary//alt_bigrams_seq_output and /tmp/distr_output/0 are identical
