@@ -78,11 +78,12 @@ if [ "$split_flag" -eq 1 ]; then
         total_lines=200000000
         (( batch_size=total_lines / n_in ))
         sed -i "s#batch_size: [0-9]\+#batch_size: ${batch_size}#" config.yaml
-    elif [ "${microbenchmark}" == "set-diff" ]; then
-        ## These are the total lines for 10G input
-        total_lines=200000000
-        (( batch_size=total_lines / n_in ))
-        sed -i "s#batch_size: [0-9]\+#batch_size: ${batch_size}#" config.yaml
+    # At the moment set-diff cannot be split because of the issue
+    # elif [ "${microbenchmark}" == "set-diff" ]; then
+    #     ## These are the total lines for 10G input
+    #     total_lines=200000000
+    #     (( batch_size=total_lines / n_in ))
+    #     sed -i "s#batch_size: [0-9]\+#batch_size: ${batch_size}#" config.yaml
     elif [ "${microbenchmark}" == "double_sort" ]; then
         ## These are the total lines for 10G input
         total_lines=200000000
@@ -100,7 +101,7 @@ elif [ "$auto_split_flag" -eq 1 ]; then
     auto_split_opt="--auto_split"
     distr_result_filename="${results}${experiment}_distr_auto_split.time"
     sed -i "s#fan_out: [0-9]\+#fan_out: ${n_in}#" config.yaml
-    if [ "${microbenchmark}" != "bigrams" ] && [ "${microbenchmark}" != "spell" ] && [ "${microbenchmark}" != "set-diff" ] && [ "${microbenchmark}" != "double_sort" ]; then
+    if [ "${microbenchmark}" != "bigrams" ] && [ "${microbenchmark}" != "spell" ]  && [ "${microbenchmark}" != "double_sort" ]; then
         echo "No reason to split on one-liner: ${microbenchmark}"
         cat /tmp/backup-config.yaml > config.yaml
         exit
