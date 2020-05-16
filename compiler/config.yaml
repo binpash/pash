@@ -1,5 +1,6 @@
 runtime:
     split_binary: evaluation/tools/split
+    auto_split_binary: evaluation/tools/auto-split.sh
 distr_planner:
     optimized_script_filename: /tmp/optimized_script.sh
     temp_ir_prefix: /tmp/dish_temp_ir

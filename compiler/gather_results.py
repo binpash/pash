@@ -114,10 +114,12 @@ def read_distr_execution_time(filename):
                 milliseconds = line.split(": ")[1].split(" ")[0]
                 times.append(float(milliseconds))
         f.close()
+        if(len(times) == 0):
+            raise ValueError
         return sum(times)
     except:
         print("!! WARNING: Filename:", filename, "not found!!!")
-        return 0
+        raise ValueError
 
 def read_distr_total_compilation_time(filename):
     try:
@@ -136,6 +138,18 @@ def read_distr_total_compilation_time(filename):
         print("!! WARNING: Filename:", filename, "not found!!!")
         return 0
 
+def read_distr_command_number(filename):
+    try:
+        with open(filename) as f:
+            for line in f:
+                if(line.startswith("Total nodes after optimization:")):
+                    number_of_commands = int(line.split(": ")[1])
+                    return number_of_commands
+            return "\\todo{X}"
+    except:
+        print("!! WARNING: Filename:", filename, "not found!!!")
+        return "\\todo{X}"
+
 def check_output_diff_correctness_for_experiment(filename):
     try:
         with open(filename) as f:
@@ -148,37 +162,23 @@ def check_output_diff_correctness_for_experiment(filename):
         print("!! WARNING: Filename:", filename, "not found!!!")
         return False
 
+def collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers):
+    numbers = [read_distr_execution_time('{}{}_{}'.format(prefix, n, suffix))
+               for n in scaleup_numbers]
+    return numbers
+
 def collect_experiment_scaleup_times(prefix, scaleup_numbers):
     ## Since we have the same input size in all cases, only use the
     ## one sequential execution for the sequential time
     seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, scaleup_numbers[0]))
                    for _ in scaleup_numbers]
-    distr_numbers = [read_distr_execution_time('{}{}_distr.time'.format(prefix, n))
-                     for n in scaleup_numbers]
+    distr_numbers = collect_distr_experiment_execution_times(prefix, 'distr.time', scaleup_numbers)
     compile_numbers = [read_distr_total_compilation_time('{}{}_distr.time'.format(prefix, n))
                        for n in scaleup_numbers]
-    # distr_numbers = [read_time('{}{}_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
-    # cat_numbers = [read_time('{}{}_cat_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
-    # compile_numbers = [read_time('{}{}_compile_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
     return (seq_numbers, distr_numbers, compile_numbers)
-
-def collect_experiment_no_eager_times(prefix, scaleup_numbers):
-    no_eager_distr_numbers = [read_distr_execution_time('{}{}_distr_no_eager.time'.format(prefix, n))
-                              for n in scaleup_numbers]
-    # no_eager_compile_numbers = [read_distr_total_compilation_time('{}{}_distr_no_eager.time'.format(prefix, n))
-    #                             for n in scaleup_numbers]
-    no_task_par_eager_distr_numbers = [read_distr_execution_time('{}{}_distr_no_task_par_eager.time'.format(prefix, n))
-                                       for n in scaleup_numbers]
-    # no_eager_compile_numbers = [read_distr_total_compilation_time('{}{}_distr_no_eager.time'.format(prefix, n))
-    #                             for n in scaleup_numbers]
-    return (no_eager_distr_numbers, no_task_par_eager_distr_numbers)
 
 def collect_experiment_speedups(prefix, scaleup_numbers):
     seq_numbers, distr_numbers, compile_numbers = collect_experiment_scaleup_times(prefix, scaleup_numbers)
-    # print(scaleup_numbers)
-    # print(seq_numbers)
-    # print(distr_numbers)
-    # print(compile_numbers)
     distr_speedup = [safe_zero_div(seq_numbers[i], t) for i, t in enumerate(distr_numbers)]
     compile_distr_speedup = [safe_zero_div(seq_numbers[i], t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
     return (distr_speedup, compile_distr_speedup)
@@ -189,17 +189,16 @@ def collect_baseline_experiment_speedups(prefix, scaleup_numbers, base_seq):
     speedup = [safe_zero_div(base_seq, t) for t in seq_numbers]
     return speedup
 
-
-def collect_experiment_no_eager_speedups(prefix, scaleup_numbers):
+def collect_distr_experiment_speedup(prefix, suffix, scaleup_numbers):
     seq_numbers, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
-    no_eager_distr_numbers, no_task_par_eager_distr_numbers = collect_experiment_no_eager_times(prefix, scaleup_numbers)
-    no_eager_distr_speedup = [safe_zero_div(seq_numbers[i], t)
-                              for i, t in enumerate(no_eager_distr_numbers)]
-    # no_eager_compile_distr_speedup = [seq_numbers[i] / (t + no_eager_compile_numbers[i])
-    #                                   for i, t in enumerate(no_eager_distr_numbers)]
-    no_task_par_eager_distr_speedup = [safe_zero_div(seq_numbers[i], t)
-                                       for i, t in enumerate(no_task_par_eager_distr_numbers)]
-    return (no_eager_distr_speedup, no_task_par_eager_distr_speedup)
+    distr_numbers = collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers)
+    distr_speedup = [safe_zero_div(seq_numbers[i], t) for i, t in enumerate(distr_numbers)]
+    return distr_speedup
+
+def collect_experiment_command_number(prefix, suffix, scaleup_numbers):
+    command_numbers = [read_distr_command_number('{}{}_{}'.format(prefix, n, suffix))
+                       for n in scaleup_numbers]
+    return command_numbers
 
 def check_output_diff_correctness(prefix, scaleup_numbers):
     wrong_diffs = [n for n in scaleup_numbers
@@ -227,18 +226,33 @@ def collect_scaleup_times(experiment, results_dir):
     ## Plot speedup
     ax.set_ylabel('Speedup')
     ax.set_xlabel('Level of Parallelism')
-    # total_distr_speedup = [seq_numbers[i] / (t + compile_numbers[i] + cat_numbers[i]) for i, t in enumerate(distr_numbers)]
-    # ax.plot(all_scaleup_numbers, seq_numbers, '-o', linewidth=0.5, label='Sequential')
-    # ax.plot(all_scaleup_numbers, distr_numbers, '-o', linewidth=0.5, label='Distributed')
+
+    try:
+        split_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                               'distr_split.time',
+                                                               all_scaleup_numbers)
+        ax.plot(all_scaleup_numbers, split_distr_speedup, '-D', color='tab:red', linewidth=0.5, label='Parallel + Split')
+    except ValueError:
+        pass
+
+
     ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, label='Parallel')
-    # ax.plot(all_scaleup_numbers, compile_distr_speedup, '-*', linewidth=0.5, label='+ Compile')
 
     ## Add the no eager times if they exist
     try:
-        no_eager_distr_speedup, no_task_par_eager_distr_speedup = collect_experiment_no_eager_speedups(prefix, all_scaleup_numbers)
-        ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='No Eager')
+        no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                                            'distr_no_task_par_eager.time',
+                                                                            all_scaleup_numbers)
         ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Blocking Eager')
-    except:
+    except ValueError:
+        pass
+
+    try:
+        no_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                                   'distr_no_eager.time',
+                                                                   all_scaleup_numbers)
+        ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='No Eager')
+    except ValueError:
         pass
     # ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
     # ax.plot(all_scaleup_numbers, all_scaleup_numbers, '-', color='tab:gray', linewidth=0.5, label='Ideal')
@@ -283,11 +297,20 @@ def plot_sort_with_baseline(results_dir):
     ax.set_xlabel('Level of Parallelism')
     ax.plot(all_scaleup_numbers, sort_distr_speedup, '-o', linewidth=0.5, label='Pash')
     ## Add the no eager times if they exist
+    # try:
+    #     no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(sort_prefix,
+    #                                                                         'distr_no_task_par_eager.time',
+    #                                                                         all_scaleup_numbers)
+    #     ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Pash - Blocking Eager')
+    # except ValueError:
+    #     pass
+
     try:
-        no_eager_distr_speedup, no_task_par_eager_distr_speedup = collect_experiment_no_eager_speedups(sort_prefix, all_scaleup_numbers)
+        no_eager_distr_speedup = collect_distr_experiment_speedup(sort_prefix,
+                                                                   'distr_no_eager.time',
+                                                                   all_scaleup_numbers)
         ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='Pash - No Eager')
-        # ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Pash - Blocking Eager')
-    except:
+    except ValueError:
         pass
 
     ax.plot(all_scaleup_numbers, baseline_sort_distr_speedup[1:], '-p', linewidth=0.5, label='sort --parallel')
@@ -350,7 +373,7 @@ def generate_table_header():
     header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} lllllll}']
     header += ['\\toprule']
     header += ['Script ~&~ Structure & Input &'
-               'Seq Time & Script Size(16, 64) &'
+               'Seq Time & \\#Nodes(16, 64) &'
                'Compile Time (16, 64) & Highlights \\\\']
     header += ['\\midrule']
     return "\n".join(header)
@@ -378,7 +401,10 @@ def generate_experiment_line(experiment):
     seq_time_seconds = format_time_seconds(seq_times[0])
     # seq_time_seconds = seq_times[0] / 1000
     line += [seq_time_seconds, '&']
-    line += ['\\todo{\\#Commands}', '&']
+
+    commands_16, commands_64 = collect_experiment_command_number(experiment_results_prefix,
+                                                                 'distr.time', [16, 64])
+    line += ['{}\\qquad {}'.format(commands_16, commands_64), '&']
 
     ## Collect and output compile times
     compile_time_16_milliseconds = compile_times[1]
