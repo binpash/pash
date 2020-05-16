@@ -1,0 +1,16 @@
+kill: (81093): No such process
+kill: (81094): No such process
+kill: (81095): No such process
+Total nodes after optimization: 377
+ -- out of which:
+Cat nodes: 2
+Eager nodes: 183
+Optimization time: 1106.443  ms
+Backend time: 9.441  ms
+Execution time: 290810.167  ms
+Compilation time: 18.505  ms
+
+real	4m52.332s
+user	50m37.001s
+sys	27m59.998s
+Files ../evaluation//intermediary//bigrams_seq_output and /tmp/distr_output/0 are identical
