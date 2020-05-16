@@ -497,6 +497,7 @@ After \sys's evaluation~\sx{eval} and  comparison with related work~\sx{related}
 %% Additional material, in anonymized form, is available at
 %% \href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.
 
+\kk{Should we mention anywhere that we will open-source it or is it irrelevant?}
 
 % % TODO: Important to have a small script that highlights
 % \nv{
@@ -2451,17 +2452,24 @@ The goal of this subsection is to evaluate \sys on popular, common, or classic \
     \caption{
       \textbf{Speedup achieved by \sys as a function of the level of parallelism (1--100).} 
       Four different configurations per benchmark:
-      (i) \todo{Parallel}, showing the performance of \sys with both eager and split optimizations enabled,
-      (ii) \todo{No Split}, showing the performance of \sys with split disabled,
+      (i) \todo{Parallel + Split}, showing the performance of \sys with both eager and split optimizations enabled,
+      (ii) \todo{Parallel}, showing the performance of \sys with eager enabled and split disabled,
       (iii) \todo{No Eager}, showing the performance of \sys with split and eager disabled,
       (iv) \todo{Blocking Eager}, showing the performance of \sys with split disabled and the naive blocking eager enabled,
       \nv{Maybe it makes sense to show log x-axis?}
+      \kk{How can we also fit two more plots (sort-sort and diff) here? Maybe we can fit one by getting rid of sort (since it also shown in the sort--parallel one). Otherwise we could separate the ``split'' plots from the ones that don't have split.}
     }
     \vspace{-15pt}
     \label{fig:microbenchmarks}
 \end{figure*}
 
 \heading{Programs}
+
+\kk{How can we include a result for grep-light?  This is the IO
+  intensive CPU-light grep. \sys has no speedup but also no slowdown
+  (even if it IO heavy). Should we just mention that in text in
+  passing?}
+
 Tab.~\ref{tab:eval} summarizes the collection of micro-benchmarks used to evaluate \sys.
 Benchmark names (col. 1) correspond to the names on the plots (Fig.~\ref{fig:microbenchmarks}), and structure (col. 2) summarizes the different classes of commands used in the script.
 % The centralized pipelines read files of various sizes from disk and write to disk.
