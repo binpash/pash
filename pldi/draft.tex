@@ -2470,6 +2470,9 @@ The goal of this subsection is to evaluate \sys on popular, common, or classic \
   (even if it IO heavy). Should we just mention that in text in
   passing?}
 
+\kk{Remember to mention that for spell and bigrams we dont show other
+  parallel because they are all close to 1 (no speedup).}
+
 Tab.~\ref{tab:eval} summarizes the collection of micro-benchmarks used to evaluate \sys.
 Benchmark names (col. 1) correspond to the names on the plots (Fig.~\ref{fig:microbenchmarks}), and structure (col. 2) summarizes the different classes of commands used in the script.
 % The centralized pipelines read files of various sizes from disk and write to disk.
@@ -2537,7 +2540,14 @@ already task-based parallelism even in the sequential execution
   to give performance benefits equal to the amount of parallelism that
   we give it.}
 
-\TODO{Briefly discuss the performance drop as we increase parallelism in some one-liners (sort-sort, bi-grams).The reason has to do with context switching. More precisely, sort-sort 32 has 314 nodes (and 54m sys time) and sort-sort 64 has 634 nodes (and 90m! sys time). On the other hand opt-bigrams 64 has 255 nodes and the sys time stays the same so I think that it might have to do with the fact that constant costs rise a lot (since opt-bigrams 32 takes just 1 minute).}
+\TODO{Briefly discuss the performance drop as we increase parallelism
+  in some one-liners (sort-sort, bi-grams).The reason has to do with
+  context switching. More precisely, sort-sort 32 has 314 nodes (and
+  54m sys time) and sort-sort 64 has 634 nodes (and 90m! sys time). On
+  the other hand opt-bigrams 64 has 255 nodes and the sys time stays
+  the same so I think that it might have to do with the fact that
+  constant costs rise a lot (since opt-bigrams 32 takes just 1
+  minute).}
 
 We attribute the small drop above $96\times$ in \ttt{spell} \ttt{sort} \ttt{wf}
 and \ttt{bi-grams} to a combination of hyperthreading (128 virtual vs. 64
