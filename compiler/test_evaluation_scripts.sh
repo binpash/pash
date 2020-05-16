@@ -54,6 +54,9 @@ for microbenchmark in "${microbenchmarks[@]}"; do
         exec_seq=""
 
         ## Execute the intermediary script without eager
+        ./execute_compile_evaluation_script.sh $exec_seq -a "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
+
+        ## Execute the intermediary script without eager
         ./execute_compile_evaluation_script.sh $exec_seq "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
 
         ## Execute the intermediary script with the naive eager
