@@ -72,6 +72,10 @@ for microbenchmark in "${microbenchmarks[@]}"; do
 
         ## Only execute the sequential once
         exec_seq=""
+        
+        ## Execute the intermediary script with split
+        ./execute_compile_evaluation_script.sh $exec_seq -p "${microbenchmark}" "${n_in}"
+        rm -f /tmp/eager*
 
         ## Execute the intermediary script without eager (only if the
         ## microbenchmark is not grep or minimal grep).
