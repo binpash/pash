@@ -32,46 +32,54 @@ experiments = ["minimal_grep",
                "spell",
                "shortest_scripts",
                "diff",
+               "bigrams",
                "alt_bigrams",
-               "set-diff"]
+               "set-diff",
+               "double_sort"]
 
 pretty_names = {"minimal_grep" : "grep",
                 "minimal_sort" : "sort",
                 "wf" : "wf",
                 "topn" : "top-n",
                 "grep" : "grep-light",
-                "bigram" : "bi-grams",
+                "bigrams" : "bi-grams",
                 "alt_bigrams" : "optimized bi-grams",
                 "spell" : "spell",
                 "shortest_scripts" : "shortest-scripts",
                 "diff" : "diff",
-                "set-diff" : "set-diff"}
+                "set-diff" : "set-diff",
+                "double_sort" : "sort-sort"}
 
-structures = {"minimal_grep" : "$3\\times$\\tsta",
+structures = {"minimal_grep" : "$3\\times\\tsta$",
               "minimal_sort" : "$\\tsta, \\tpur$",
               "wf" : "$3\\times\\tsta, 3\\times\\tpur$",
               "topn" : "$2\\times\\tsta, 4\\times\\tpur$",
-              "grep" : "$3\\times$\\tsta",
-              "bigram" : "\\todo{TODO}",
-              "alt_bigrams" : "$3\\times$\\tsta, \\tpur",
+              "grep" : "$3\\times\\tsta$",
+              "bigrams" : "$3\\times\\tsta, 3\\times\\tpur$",
+              "alt_bigrams" : "$3\\times\\tsta, \\tpur$",
               "spell" : "$4\\times\\tsta, 3\\times\\tpur$",
               "shortest_scripts" : "$5\\times\\tsta, 2\\times\\tpur$",
               "diff" : "$2\\times\\tsta, 3\\times\\tpur$",
-              "set-diff" : "$5\\times\\tsta, 2\\times\\tpur$"}
+              "set-diff" : "$5\\times\\tsta, 2\\times\\tpur$",
+              "double_sort" : "$\\tsta, 2\\times\\tpur$"}
 
 highlights = {"minimal_grep" : "complex NFA regex",
               "minimal_sort" : "\\tti{sort}ing",
               "wf" : "double \\tti{sort}, \\tti{uniq} reduction",
               "topn" : "double \\tti{sort}, \\tti{uniq} reduction",
-              "grep" : "\todo{light computation}",
-              "bigram" : "stream shifting and merging",
+              "grep" : "\\todo{light computation}",
+              "bigrams" : "stream shifting and merging",
               "alt_bigrams" : "optimized version of bigrams",
               "spell" : "comparisons (\\tti{comm})",
               "shortest_scripts" : "\\todo{extensive file-system operation}",
               "diff" : "non-parallelizable \\tti{diff}ing",
-              "set-diff" : "two pipelines merging to a \\tti{comm}"}
+              "set-diff" : "two pipelines merging to a \\tti{comm}",
+              "double_sort" : "parallelizable \\tpur after \\tpur"}
+
+custom_scaleup_plots = {"set-diff" : ["eager", "blocking-eager", "no-eager"]}
 
 input_filename_sizes = {"1G": "1~GB",
+                        "3G": "3~GB",
                         "10G": "10~GB",
                         "100G": "100~GB",
                         "1M": "1~MB",
@@ -227,33 +235,43 @@ def collect_scaleup_times(experiment, results_dir):
     ax.set_ylabel('Speedup')
     ax.set_xlabel('Level of Parallelism')
 
-    try:
-        split_distr_speedup = collect_distr_experiment_speedup(prefix,
-                                                               'distr_split.time',
-                                                               all_scaleup_numbers)
-        ax.plot(all_scaleup_numbers, split_distr_speedup, '-D', color='tab:red', linewidth=0.5, label='Parallel + Split')
-    except ValueError:
-        pass
+    if(not (experiment in custom_scaleup_plots) or
+       (experiment in custom_scaleup_plots and
+        "split" in custom_scaleup_plots[experiment])):
+        try:
+            split_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                                   'distr_split.time',
+                                                                   all_scaleup_numbers)
+            ax.plot(all_scaleup_numbers, split_distr_speedup, '-D', color='tab:red', linewidth=0.5, label='Parallel + Split')
+        except ValueError:
+            pass
 
-
-    ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, label='Parallel')
+    if(not (experiment in custom_scaleup_plots) or
+       (experiment in custom_scaleup_plots and
+        "eager" in custom_scaleup_plots[experiment])):
+        ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, label='Parallel')
 
     ## Add the no eager times if they exist
-    try:
-        no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
-                                                                            'distr_no_task_par_eager.time',
-                                                                            all_scaleup_numbers)
-        ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Blocking Eager')
-    except ValueError:
-        pass
-
-    try:
-        no_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
-                                                                   'distr_no_eager.time',
-                                                                   all_scaleup_numbers)
-        ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='No Eager')
-    except ValueError:
-        pass
+    if(not (experiment in custom_scaleup_plots) or
+       (experiment in custom_scaleup_plots and
+        "blocking-eager" in custom_scaleup_plots[experiment])):
+        try:
+            no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                                               'distr_no_task_par_eager.time',
+                                                                               all_scaleup_numbers)
+            ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Blocking Eager')
+        except ValueError:
+            pass
+    if(not (experiment in custom_scaleup_plots) or
+       (experiment in custom_scaleup_plots and
+        "no-eager" in custom_scaleup_plots[experiment])):
+        try:
+            no_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                                      'distr_no_eager.time',
+                                                                      all_scaleup_numbers)
+            ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='No Eager')
+        except ValueError:
+            pass
     # ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
     # ax.plot(all_scaleup_numbers, all_scaleup_numbers, '-', color='tab:gray', linewidth=0.5, label='Ideal')
 
@@ -537,6 +555,19 @@ def format_wrong_output(output_diff, experiment, mode):
         return [' !! -- WARNING -- !! {}'.format(formatted_output_diff)]
     else:
         return []
+
+## Set the fonts to be larger
+SMALL_SIZE = 22
+MEDIUM_SIZE = 24
+BIGGER_SIZE = 30
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=MEDIUM_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 ## Plot microbenchmarks
 diff_results = []
