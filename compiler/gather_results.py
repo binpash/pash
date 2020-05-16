@@ -76,7 +76,10 @@ highlights = {"minimal_grep" : "complex NFA regex",
               "set-diff" : "two pipelines merging to a \\tti{comm}",
               "double_sort" : "parallelizable \\tpur after \\tpur"}
 
-custom_scaleup_plots = {"set-diff" : ["eager", "blocking-eager", "no-eager"]}
+custom_scaleup_plots = {"set-diff" : ["eager", "blocking-eager", "no-eager"],
+                        "spell" : ["split", "eager"],
+                        "bigrams" : ["split", "eager"]}
+
 
 input_filename_sizes = {"1G": "1~GB",
                         "3G": "3~GB",
@@ -234,6 +237,12 @@ def collect_scaleup_times(experiment, results_dir):
     ## Plot speedup
     ax.set_ylabel('Speedup')
     ax.set_xlabel('Level of Parallelism')
+
+    ## In the bigrams experiment we want to also have the alt_bigrams plot
+    if(experiment == "bigrams"):
+        opt_prefix = '{}/{}_'.format(results_dir, "alt_bigrams")
+        opt_distr_speedup, _ = collect_experiment_speedups(opt_prefix, all_scaleup_numbers)
+        ax.plot(all_scaleup_numbers, opt_distr_speedup, '-P', color='magenta', linewidth=0.5, label='Opt. Parallel')
 
     if(not (experiment in custom_scaleup_plots) or
        (experiment in custom_scaleup_plots and
