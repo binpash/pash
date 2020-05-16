@@ -1,16 +1,16 @@
-kill: (67122): No such process
-kill: (67123): No such process
-kill: (67124): No such process
+kill: (64721): No such process
+kill: (64722): No such process
+kill: (64723): No such process
 Total nodes after optimization: 769
  -- out of which:
 Cat nodes: 2
 Eager nodes: 380
-Optimization time: 4470.55  ms
-Backend time: 19.469  ms
-Execution time: 67121.425  ms
-Compilation time: 20.662  ms
+Optimization time: 4465.357  ms
+Backend time: 21.854  ms
+Execution time: 183579.418  ms
+Compilation time: 20.624  ms
 
-real	1m12.034s
-user	12m46.603s
-sys	4m47.107s
+real	3m8.489s
+user	38m13.903s
+sys	14m52.887s
 Files ../evaluation//intermediary//spell_seq_output and /tmp/distr_output/0 are identical
