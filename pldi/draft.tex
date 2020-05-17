@@ -393,7 +393,9 @@ These developers usually work in a single programming language, leveraging its a
 As they have no visibility into the command's uses, they expose a plethora of ad-hoc command-specific flags such as \ttt{-t}, \ttt{-}\ttt{-parallel}, \ttt{-p}, and \ttt{-j} % , \ttt{CPUs}, and \ttt{NUM\_THREADS}~\cite{}.
 \cite{pasetto2011comparative, mcilroy1993engineering, stallman1991gnu}.
 
-The second group is \emph{shell users}, who use POSIX shell constructs to combine multiple such commands from many languages into their scripts and are thus left with only a few options for incorporating parallelism (see~\S\ref{related}). \kk{I don't really like the reference to such a later section. Can we remove it?}
+The second group is \emph{shell users}, who use POSIX shell constructs to combine multiple such commands from many languages into their scripts and are thus left with only a few options for incorporating parallelism.
+% \kk{I don't really like the reference to such a later section. Can we remove it?}
+% \nv{We have to say this is not just ``an opinion'', but that we give a scientific treatment/full coverage in the related work section. How far away should the sections be so that you're comfortable referencing to?}
 % If versed into parallelism, 
 % Users versed in computing can apply 
 % these tools are command-unaware thus at risk of breaking program semantics,
@@ -401,21 +403,23 @@ The second group is \emph{shell users}, who use POSIX shell constructs to combin
 % at times leverage command flags like the ones mentioned earlier---but each command 
 % oblivious? agnostic?  
 One option is manual tools such GNU \ttt{parallel}~\cite{Tange2011a}, \ttt{ts}~\cite{tsp}, \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm};
-  these tools are either command-unaware thus at risk of breaking program semantics, or too coarse-grained \kk{i.e. only being capable to exploit parallelism in the level of entire scripts} thus applying at the level of entire scripts rather than individual components.
+  these tools are either command-unaware thus at risk of breaking program semantics, or too coarse-grained thus only being capable to exploit parallelism at the level of entire scripts rather than individual components.
 % Tools will attempt to parallelize anything 
 % use the composition abstractions of the \unix shell, 
 % and are often prototypical in nature---focusing on quickly prototyping a solution for the task at hand rather building an optimal solution to a recurring pattern.
 % short lived, changing quickly
 % (ii) ad-hoc flags provided by command developers and mentioned above.
-Another option is using the shell's concurrency primitives (\eg \ttt{\&}, \ttt{wait}, \ttt{for}) \kk{Is \ttt{for} a concurrency primitive?} % for explicit parallelism, 
- that come at a cost of manual effort to carefully split inputs, manually rewrite scripts, and explicitly orchestrate execution---an expensive and error-prone process.
+Another option is to use shell primitives such as \ttt{\&}, \ttt{wait}, \ttt{for} to explicitly induce concurrency;
+ these come at a cost of manual effort to split inputs, rewrite scripts, and orchestrate execution---an expensive and error-prone process.
 % re-writing of the entire script from scratch; unfortunately, this process is expensive and can introduce new bugs, cascading changes, and divergence from legacy functionality---but also foregoes all the productivity benefits of the original script.
 % The fact that a programmer often belongs to both groups at the same time---as composed scripts can themselves form a command used in other scrips---compounds the challenge.
-And\todo{/To top it off} all these options assume a good understanding of parallelism;
-  users whose domain of expertise falls outside computing---\todo{routinely} writing shell scripts to accomplish their tasks---are left without options.% automation when it comes to parallelization.
+To top it off, all these options assume a good understanding of parallelism;
+  users whose domain of expertise falls outside computing---routinely writing shell scripts to accomplish their tasks---are left without options (see~\S\ref{related} for a full discussion).
+% \nv{I still don't like ``for a full discussion''---raises too many expectations, and we don't have that much more to say}
 
-To address this challenge, we develop \sys, a shell parallelizing\todo{/that parallelizes} POSIX shell scripts.
-\kk{Mention that it outputs shell scripts.} % to their parallel equivalents.
+To address this challenge, we develop \sys, a shell that parallelizes POSIX shell scripts.
+% \kk{Mention that it outputs shell scripts.}
+% \nv{I think the ``how'' it solves it should come later, we're still trying to convince them we solve it (see next sentences in this paragraph)
 % \sys offers both classes of users in the second group such much-needed automation.
 \sys benefits both programmer groups mentioned earlier, with a particular emphasis on users.
 Command developers are provided a set of abstractions, akin to lightweight type annotations, for expressing the parallelizability properties of their commands:
@@ -423,7 +427,9 @@ Command developers are provided a set of abstractions, akin to lightweight type 
 Shell users, on the other hand, are provided full automation:
   \sys extracts parallelism latent in their scripts by analyzing their parallelizability properties. % of their fragments.
 % benefiting scripting experts and non-experts alike by offering automated POSIX-aware parallelization of shell-scripts as long as command developers
-\sys's transformations are conservative, in that they do not attempt to parallelize fragments that lack sufficient information---\ie at worst, \sys will choose to not improve performance rather than risking breakage. \kk{Should we mention that we only show this empirically?}
+\sys's transformations are conservative, in that they do not attempt to parallelize fragments that lack sufficient information---\ie at worst, \sys will choose to not improve performance rather than risking breakage.
+% \kk{Should we mention that we only show this empirically?}
+% \nv{I don't think so; I don't think this is the right point to talk about our evaluation, we just state our intention/high-level principles.}
 
 To address cold-start issues, \sys comes with a library of parallelizability semantics for commands in POSIX and GNU Coreutils.
 These large classes of commands serve as the shell's standard library, expected to be found pervasively. % in scripts found out in the wild.
@@ -434,8 +440,9 @@ The study that led to their characterization also informed \sys's annotation and
 These components are finally paired with \sys's runtime component.
 % \sys's runtime  component additional packs
 % Aside from these two components, \sys packs a runtime component that serves dual purpose:
-Aware of the \unix philosophy and abstractions, it packs a small library of highly-optimized data combiners\todo{/combinators} as well as high-performance primitives for eager data splitting and merging.
-These address several practical challenges such as task parallelism, deadlocks, and performance bottlenecks\kk{I like the flow of this sentence but I am not sure it makes a lot of sense to name these challenges here.}, and were developed by uncovering several pathological situations, on many of which we report.
+Aware of the \unix philosophy and abstractions, it packs a small library of highly-optimized data combinators as well as high-performance primitives for eager data splitting and merging.
+These address several practical challenges % such as task parallelism, deadlocks, and performance bottlenecks,
+  and were developed by uncovering several pathological situations, on many of which we report.
 
 
 %% First, shell users composing pipelines (or simply running legacy pipelines on massive datasets) can see scalability benefits without any manual effort---no need for \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}, or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
@@ -471,7 +478,8 @@ We evaluate \sys using
   (ii) three large and complex use cases, covering temperature analysis, web crawling and indexing, and container orchestration; and
   (iii) a series of targeted micro-benchmarks inspired by (and comparing with) possible alternatives.
 The results demonstrate significant advantages in correctness, manual effort, and performance---with \sys's transformations offering an order-of-magnitude performance improvements aided further by \sys's optimized runtime components. \kk{I would remove the ``aided further...'' part.}
-Naturally, improvements on individual commands depend on several factors such as the script's execution time, the pipeline depth, and the parallelizability class under which a command falls. \kk{Do we need to mention this last sentence here? Without context it is pretty difficult for anyone to get something out of it.}
+Naturally, these improvements depend on several factors such as the script's execution time, the pipeline depth, and the parallelizability class under which a command falls. 
+%\kk{Do we need to mention this last sentence here? Without context it is pretty difficult for anyone to get something out of it.}
 
 %                                           a tool that automatically exploits available data-parallelism in a given shell script.
 
@@ -481,13 +489,13 @@ Sections \ref{distributability}--\ref{impl} highlight key contributions:
 \begin{itemize}
   \item
   \S\ref{distributability}
-    studies the parallelizability properties of a large class of shell commands and introduces a lightweight annotation language for commands that can be executed in a data-parallel manner.
+    studies the parallelizability of a large set of shell commands and introduces a lightweight annotation language for commands that can be executed in a data-parallel manner.
 
   \item
   \S\ref{ir} presents a dataflow graph model for encoding shell scripts, and a set of parallelization transformations that focus on preserving the semantics of the sequential program.
 
   \item
-  \S\ref{impl} describes \sys's implementation, discussing several challenges related to \sys's translation, optimization, and runtime phases.
+  \S\ref{impl} details \sys's implementation, discussing several challenges related to \sys's translation, optimization, and runtime phases.
 % \kk{Rewrite that when we know for sure what the section contains.}
 
 \end{itemize}
