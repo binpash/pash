@@ -69,13 +69,13 @@ if [ "$split_flag" -eq 1 ]; then
     distr_result_filename="${results}${experiment}_distr_split.time"
     sed -i "s#fan_out: [0-9]\+#fan_out: ${n_in}#" config.yaml
     if [ "${microbenchmark}" == "bigrams" ]; then
-        ## These are the total lines for 10G input
-        total_lines=2000000000
+        ## total_lines=2000000000 # 10G input
+        total_lines=600000000  # 3G input
         (( batch_size=total_lines / n_in ))
         sed -i "s#batch_size: [0-9]\+#batch_size: ${batch_size}#" config.yaml
     elif [ "${microbenchmark}" == "spell" ]; then
-        ## These are the total lines for 1G input
-        total_lines=200000000
+        ## total_lines=200000000 # 1G input
+        total_lines=600000000 # 3G input
         (( batch_size=total_lines / n_in ))
         sed -i "s#batch_size: [0-9]\+#batch_size: ${batch_size}#" config.yaml
     # At the moment set-diff cannot be split because of the issue
