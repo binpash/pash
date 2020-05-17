@@ -2452,7 +2452,8 @@ The goal of this subsection is to evaluate \sys on popular, common, or classic \
     \caption{
       \textbf{Speedup achieved by \sys as a function of the level of parallelism (1--100).} 
       Four different configurations per benchmark:
-      (i) \todo{Parallel + Split}, showing the performance of \sys with both eager and split optimizations enabled,
+      (i) \todo{Par + Split}, showing the performance of \sys with both eager and split optimizations enabled,
+      (ii) \todo{Par + B. Split}, showing the performance of \sys with eager and the \todo{batch-size annotated} split optimizations enabled,
       (ii) \todo{Parallel}, showing the performance of \sys with eager enabled and split disabled,
       (iii) \todo{No Eager}, showing the performance of \sys with split and eager disabled,
       (iv) \todo{Blocking Eager}, showing the performance of \sys with split disabled and the naive blocking eager enabled,
@@ -2548,6 +2549,10 @@ already task-based parallelism even in the sequential execution
   the same so I think that it might have to do with the fact that
   constant costs rise a lot (since opt-bigrams 32 takes just 1
   minute).}
+
+\kk{It is visible that the automatic split is slightly worse than the
+  manual one in most cases (because it doesn't utilize task-based
+  parallelism).}
 
 We attribute the small drop above $96\times$ in \ttt{spell} \ttt{sort} \ttt{wf}
 and \ttt{bi-grams} to a combination of hyperthreading (128 virtual vs. 64
