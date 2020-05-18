@@ -337,8 +337,6 @@ Experiments with complex pipelines show substantial speedups and the ability to 
 \section{Introduction}
 \label{intro}
 
-\nv{Add note about breadth of commands and the impossibility of our goal.}
-% https://nextbreakpoint.com/posts/article-compile-code-with-docker.html
 
 % \TODO{Drop the automated from the title maybe?}
 % \nv{Updates}
@@ -503,13 +501,8 @@ Sections \ref{parallelizability}--\ref{impl} highlight key contributions:
 
 \noindent
 After \sys's evaluation~\sx{eval} and  comparison with related work~\sx{related}, the paper closes with a discussion of \sys's limitations and possible future directions~\sx{discussion}.
-%micro-bench\-marks %---popular shell one-liners that highlight
-%certain features---and a multi-line macro-benchmark---a popular
-%weather analysis script.
-%% Additional material, in anonymized form, is available at
-%% \href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.
 
-\kk{Should we mention anywhere that we will open-source it or is it irrelevant?}
+\sys's source code will be open-sourced with the camera-ready version of the paper, and is provided in anonymized form at \href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.
 
 % % TODO: Important to have a small script that highlights
 % \nv{
@@ -875,23 +868,23 @@ The next few sections (\S\ref{parallelizability}--\ref{impl}) discuss the detail
 \section{Parallelizability Classes}
 \label{parallelizability}
 
-To have any hope of distributing pipelines, \sys first needs to understand the distribution characteristics of their individual commands.
-This understanding is encoded in a command's \emph{parallelizability} class.
-Informally, a parallelizability class represents the level of synchronization required by copies of a command that execute in parallel.
-It focuses on capturing characteristics that are important for distribution, rather than the entire the observable behavior of a command.
+To have any hope of parallelizing scripts, \sys first needs to understand the parallelization characteristics of the commands they use.
+This information is encoded in a command's \emph{parallelizability class}.
+Intuitively, a parallelizability class represents the level of synchronization required by copies of a command that execute in parallel.
+It focuses on capturing characteristics that are important for a command's parallel execution, rather than the command's full observable behavior.
 \sys leans towards having a few coarse classes rather than many detailed ones---among other reasons, to simplify their understanding and use by command developers.
 % Make the connections that this is like a type, that doesn't capture everything, but is good-enough
 
-This section starts by defining these classes, along with a parallelizability study of the commands found in standard libraries such as {\sc POSIX} and GNU Coreutils~\sx{cmd}.
-Building on this study, it develops a DSL that enables command classification by its developers~\sx{ext}.
-In return, \sys uses this DSL to tag commands in the standard libraries and generate their wrappers, as presented in later sections.
+This section starts by defining these classes, along with a parallelizability study of the commands in {\sc POSIX} and GNU Coreutils~\sx{cmd}.
+Building on this study, it develops a lightweight annotation language that enables command classification by its developers~\sx{ext}.
+\sys in turn uses this language to annotate POSIX and GNU commands and generate their wrappers, as presented in later sections.
 
 \subsection{Parallelizability of Standard Libraries}
 \label{cmd}
 
 % nv TODO: this is a hierarchy
-Broadly, shell commands can be split into five major classes (summarized in Tab.~\ref{tab:classes}) with respect to their distribution characteristics, depending on how they interact with state.
-These classes are ordered in ascending difficulty of distribution:
+Broadly, shell commands can be split into five major classes (summarized in Tab.~\ref{tab:classes}) with respect to their parallelization characteristics, depending on how they interact with state.
+These classes are ordered in ascending difficulty of parallelization:
   later classes require more effort.
 In this order, some classes can be thought as subsets of the next---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (without seeing any performance improvements).
 
@@ -902,23 +895,23 @@ In this order, some classes can be thought as subsets of the next---\eg all stat
 \caption{
   \footnotesize{
     \textbf{Parallelizability Classes}.
-    Broadly, \unix commands can be broken down into to five classes.
+    Broadly, \unix commands can be broken down into to \todo{three} classes according to their parallelizability properties.
   }
 }
-\begin{tabular}{l @{\extracolsep{\fill}} lll}
+\begin{tabular*}{\columnwidth}{l @{\extracolsep{\fill}} llll}
 \toprule
-Class                           &  Key    & Example Commands                            & Coreutils       \\ % & POSIX       \\
+Class            &  Key    & Example Commands                            & Coreutils       & POSIX       \\
 \midrule
-Stateless                       & ~\tsta  & \tti{tr},   \tti{cat},    \tti{grep}        &  22 (21.1\%)    \\ %  &           \\  % 22
-Pure                            & ~\tpur  & \tti{sort}, \tti{wc},     \tti{uniq}        &  21 (20.1\%)    \\ %  &           \\  % 21
-(Distr.) File-System~           & ~\tdfs  & \tti{cp},   \tti{ln},     \tti{rm}          &  27 (25.9\%)    \\ %  &           \\  % 27
-Side-effectful                  & ~\tsid  & \tti{env},  \tti{chroot}, \tti{whoami}      &  25 (24\%)      \\ %  &           \\  % 25
-Irreversible                    & ~\tirr  & \tti{exit}, \tti{lpr},    \tti{reboot}      &  5  (0.4\%)     \\ %  &           \\  % 5
+Stateless        & ~\tsta  & \tti{tr},   \tti{cat},    \tti{grep}        &  22 (21.1\%)    & 22 (21.1\%)          \\  % 22
+Pure             & ~\tpur  & \tti{sort}, \tti{wc},     \tti{uniq}        &  21 (20.1\%)    & 21 (20.1\%)          \\  % 21
+% File-System~     & ~\tdfs  & \tti{cp},   \tti{ln},     \tti{rm}          &  27 (25.9\%)    & 27 (25.9\%)          \\  % 27
+Side-effectful   & ~\tsid  & \tti{env},  \tti{cp}, \tti{whoami}          &  57 (58.8\%)      & 57 (58.8\%)            \\  % 25
+% Irreversible     & ~\tirr  & \tti{exit}, \tti{lpr},    \tti{reboot}      &  5  (0.4\%)     & 5  (0.4\%)           \\  % 5
 % \midrule
 % Shell PL Constructs             &                         &                  \\
 % \etc                            &                         &                  \\
 \bottomrule
-\end{tabular}
+\end{tabular*}
 \label{tab:classes}
 \end{table}
 
@@ -927,15 +920,15 @@ Irreversible                    & ~\tirr  & \tti{exit}, \tti{lpr},    \tti{reboo
 % \heading{POSIX, GNU Core-utils, and beyond}
 
 \heading{Stateless Commands}
-The first class contains stateless commands~\sta that operate on individual elements of the stream, without maintaining state across invocations.
-These are commands that can be expressed as a purely functional $map$ or $filter$---\eg \ttt{basename} removes a path prefix from a string and \ttt{grep} filters out individual lines.
-At times, stateless commands may operate as functions that produce multiple elements---\eg when they insert an {\sc NL} token.
+The first class, ~\sta, contains commands that operate on individual elements of a data stream, without maintaining state across invocations.
+These are commands that can be expressed as a purely functional $map$ or $filter$---\eg \ttt{grep} filters out individual lines and \ttt{basename} removes a path prefix from a string.
+Stateless commands may produce multiple elements---\eg \ttt{tr} may insert {\sc NL} tokens---but when they receive empty input they return empty output.
 Workloads that use only stateless commands are trivial to parallelize:
-  they do not require any synchronization to maintain correctness, nor caution about where to be split.
+  they do not require any synchronization to maintain correctness, nor caution about where to split inputs.
  % map :: (a -> b) -> [a] -> [b]
 
-Many of these commands (about 1/3 of coreutils' \sta) are stateless \emph{within} an element (\eg \ttt{tr} transliterates characters within a line, one at a time).
-This property allows further parallelization, a feature that might seem of limited use as these commands are computationally inexpensive, precisely due to their narrow focus.
+Many of these commands (about 1/3 of \sta) are stateless \emph{within} a stream element---\eg\ttt{tr} transliterates characters within a line, one at a time---enabling further parallelization by splitting individual lines.
+This feature may seem of limited use, as these commands are computationally inexpensive, precisely due to their narrow focus.
 However, it turns to be  useful for cases with very large stream elements (long lines) such the \ttt{.fastq} format used in bioinformatics pipelines.  % TODO pointer to 6.3
 
 \kk{Do we want to get in more detail about requirements? Commands must
@@ -945,25 +938,25 @@ However, it turns to be  useful for cases with very large stream elements (long 
   gracefully. \sys changes the termination behaviour of commands as a
   sequential command that would exit prematurely might not exit
   completely if parallelized.}
-
+\nv{Can we please do this in 4? The difference in size between \S3 and \S4 is
+concerning.. }
 
 \heading{Pure Commands}
-The second class contains pure commands \pur.
-These commands respect functional purity---re\-turn\-ing the same results for the same inputs---but maintain internal state across their entire pass.
-The details of this state and its propagation during piecewise element processing affect their parallelizability characteristics.
-
-Some commands are easy to parallelize, because they maintain trivial state and are commutative---\eg \ttt{wc}, which simply maintains a counter.
-Others, such as \ttt{sha1sum}, maintain more complex state that has to be updated in a sequential fashion.
+The second class,~ \pur, contains commands that respect functional purity---\ie same outputs for same inputs---but maintain internal state across their entire pass.
+The details of this state and its propagation during element processing affect their parallelizability characteristics.
+Some commands are easy to parallelize, because they maintain trivial state and are commutative---\eg \ttt{wc} simply maintains a counter.
+Other commands such as \ttt{sort}, maintain more complex invariants that have to be taken into account when merging partial results.
+Commands such as \ttt{sha1sum} maintain even more complex state that has to be updated sequentially.
 
 Often these commands do not operate in an online fashion, but need to block until the end of a stream.
 A typical example of this is \ttt{sort}, which cannot start emitting results before the last input element has been consumed.
-Such constraints affect task parallelism, but not data parallelism:
-  \ttt{sort} can be parallelized significantly using divide-and-conquer techniques---that is, by encoding it as a combination of a $map$ and a $fold$ function.
+\todo{Such constraints affect task parallelism, but not data parallelism}:
+  \ttt{sort} can be parallelized significantly using divide-and-conquer techniques---\ie by encoding it as a group of (parallel) $map$ functions followed by a $fold$ that merges the results.
 
 \heading{File-system Commands}
 The third class contains commands that access the file-system~\dfs.
-This is the largest class, as the file (and file-system) abstraction is central to the \unix design and philosophy~\cite{unix}.
-In fact, \unix uses the file-system as a proxy to several file-unrelated operations---\eg access control and device driving. % is grafted upon the file-system.
+This is the largest class, because the file (and file-system) abstraction is central to the \unix design and philosophy~\cite{unix}.
+In fact, \unix uses the file-system as a proxy to several file-unrelated operations such as access control and device driving. % is grafted upon the file-system.
 
 % TODO: mention that some commands fail to comply with the interface---for example, csplit could be split followed by a redirection to files.
 Commands in \dfs are distributable for many reasons, as evidenced by a long history of distributed \unix file-system clones~\cite{catalogue}.
@@ -992,19 +985,24 @@ The benefits of a scalable transactional scheme are even greater when the worklo
 Finally, a few commands (about 0.4\%) have side-effects outside \unix---\eg by printing a file with \ttt{lpr} or restarting with \ttt{reboot}.
 Such commands are not distributable---they often have to refer to a single location---and have to be guarded with pessimistic transaction control mechanism that locks these resources.
 
-\heading{Discussion}
-There are a few technical details about \sys's design decisions worth noting.
+% \heading{Discussion}
+% There are a few technical details about \sys's design decisions worth noting.
 
-In terms of inputs, \sys supports commands with multiple input (resp. output) streams, by prepending (resp. appending) shell built-ins that merge input (resp. split output) streams~\sx{impl}.
-Thus, a command can be modelled as having one input and one output stream, a representation that is used throughout \sys including the extensibility DSL~\sx{ext}.
-
-The focus for the rest paper will be commands in \sta and \pur.
-\sys currently treats other commands as non-distributable~\sx{discussion}.
-In future work, by building infrastructure to handle other classes, \sys will be able to (i) extract more parallelism and (ii) handle larger programs.
-Even with only these two classes, however, \sys distributes highly useful pipelines that are strictly more expressive than programs written in popular frameworks such as Hadoop~\cite{mapreduce:08} and Spark~\cite{spark:12}~\sx{eval}.
+% %\nv{I took this out because it tooks about \sys's design/implementation that goes far afield}
+% In terms of inputs, \sys supports commands with multiple input (resp. output) streams, by prepending (resp. appending) shell built-ins that merge input (resp. split output) streams~\sx{impl}.
+% Thus, a command can be modelled as having one input and one output stream, a representation that is used throughout \sys including the extensibility DSL~\sx{ext}.
+% 
+% %\nv{I took this out because there are no more classes now}
+% The focus for the rest paper will be commands in \sta and \pur.
+% \sys currently treats other commands as non-distributable~\sx{discussion}.
+% In future work, by building infrastructure to handle other classes, \sys will be able to (i) extract more parallelism and (ii) handle larger programs.
+% Even with only these two classes, however, \sys distributes highly useful pipelines that are strictly more expressive than programs written in popular frameworks such as Hadoop~\cite{mapreduce:08} and Spark~\cite{spark:12}~\sx{eval}.
 
 \subsection{Extensibility}
 \label{ext}
+
+\nv{Add note about breadth of commands and the impossibility of our task.}
+% https://nextbreakpoint.com/posts/article-compile-code-with-docker.html
 
 %% Here is the type for \ttt{bwa}, a command that performs a Burrows-Wheeler transform over genomic data:
 %% % ( bwa ) :: ( Pure )  => { In \/ File* } -> { Out /\ Err }    -- default case
