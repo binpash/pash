@@ -32,13 +32,14 @@
 \usepackage{cleveref}
 \usepackage{wrapfig}
 \usepackage{syntax}
+\usepackage{caption}
 
 \usepackage{tikz}
 \usetikzlibrary{arrows,automata,shapes.misc,shapes.geometric,positioning}
 
-%% \captionsetup[figure]{font=footnotesize,name={Fig.},labelfont={bf, footnotesize}}
-%% \captionsetup[table]{font=footnotesize,name={Tab.},labelfont={bf, footnotesize}, skip=2pt, aboveskip=2pt}
-%% \captionsetup{font=footnotesize,labelfont={bf, footnotesize}, belowskip=2pt}
+\captionsetup[figure]{font=footnotesize,name={Fig.},labelfont={bf, footnotesize}}
+\captionsetup[table]{font=footnotesize,name={Tab.},labelfont={bf, footnotesize}, skip=2pt, aboveskip=2pt}
+\captionsetup{font=footnotesize,labelfont={bf, footnotesize}, belowskip=2pt}
 
 \newcommand{\eg}{{\em e.g.}, }
 \newcommand{\ie}{{\em i.e.}, }
@@ -721,167 +722,101 @@ After \sys's evaluation~\sx{eval} and  comparison with related work~\sx{related}
 \section{Background and Overview}
 \label{bg}
 
-This section presents (i) important background on shell pipeline composition~\sx{bg:pipelines}, and (ii) a high-level overview of \sys's design and implementation~\sx{bg:overview}.
+This section first reviews shell scripting through a small example~\sx{bg:pipelines}, which it then uses to present an overview of \sys's design and implementation~\sx{bg:overview}.
 
-\subsection{Unix Composition, Informally}
+\subsection{Running Example: Weather Analysis}
 \label{bg:pipelines}
 
-% A pipeline is a mechanism for program composition that works by chaining together programs (or, \emph{commands}) using pipes.
-\unix provides several ways for succinct program composition.
-Central among them is the \emph{pipe}, a primitive that passes the output of one program as input to the next.
-These programs produce output and consume input concurrently and possibly at different rates, with the \unix kernel facilitating program scheduling and communication synchronization behind the scenes.
-Intermediate programs, termed \emph{commands}, can also be developed in different programming languages, as long as they conform to a common interface.
-%\begin{wrapfigure}{r}{0.06\textwidth}
-%  \vspace{-12pt}
-%  % \begin{center}
-%    % \includegraphics[width=0.48\textwidth]{gull}
-%    \includegraphics[width=0.06\textwidth]{\detokenize{./figs/dish_ex1.pdf}}
-%  % \end{center}
-%  \vspace{-30pt}
-%\end{wrapfigure}
-This interface exposes a stream of contiguous character lines.
-A few characters are special---for example, the newline (\textsc{NL}) character delineates an element of the stream, and the end-of-file (\textsc{EOF}) character signals the end of a stream.
-As part of this interface, each command has access to (any combination of) three \emph{standard} streams---input, output, and error.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_example.pdf}}
+\caption{
+  \textbf{Calculating maximum temperatures per year.}
+  The script downloads daily temperatures recorded across the U.S. for the years 1920--2020 and extracts the maximum for every year.
+}
+\vspace{-15pt}
+\label{fig:example}
+\end{figure}
+
+% In the ongoing debate on climate change,
+Suppose a \todo{climate scientist}    % looking for a non-CS expert---journalist might be too low
+  wants to get a quick sense of the changes in maximum temperature over the past century.
+As the National Oceanic and Atmospheric Administration (NOAA) has made historic temperature data publicly available~\cite{noaa}, 
+  answering this question is only a matter of a simple data-processing pipeline.
+
+The shell script in Fig.~\ref{fig:example} starts by pulling the yearly index files and filtering out URLs that are not part of the compressed dataset.
+It then downloads and decompresses each file in the remaining set, extracts the values that indicate the temperature, and filters out bogus inputs marked as \ttt{999}.
+It then calculates the maximum yearly temperature by sorting the values and picking the top element.
+Finally, it matches each maximum value with the appropriate year in order to print the result.
+% 
+The effort required to write this pipeline is astonishingly low:\footnote{
+  Some effort is required to understand NCDC's weather format, but this is true for any program processing this dataset.
+}
+  its data-processing core amounts to 12 stages and, when expressed as a single line, only 165 characters long.
+To enable such a succinct program composition, \unix incorporates several features.
+
+\heading{\unix Features}
+An important \unix feature are pipes (\ttt{|}), introducing task-parallel program composition over character streams.
+These streams are contiguous character lines separated by newline character (\textsc{NL}), which delineate individual stream elements.
+For example, the first \ttt{grep} is given lines that contain file identifiers, of which it only outputs lines that contain \ttt{gz}, which are in turn consumed by \ttt{tr}.
+% As part of this interface, each command has access to (any combination of) three \emph{standard} streams---input, output, and error.
+A special end-of-file (\textsc{EOF}) condition marks the end of a stream.
+
+Another important feature is synchronization, as different pipeline stages process data concurrently and possibly at different rates.
+For example, the second \ttt{curl} produces output at a significantly slower pace than the \ttt{grep} commands before and after it.
+The \unix kernel facilitates scheduling, communication, synchronization behind the scenes.
+
+Command flags, used pervasively in \unix, are configuration options that the command's developer has decided to expose to its users, to give command users significant freedom in their execution.
+For example, by omitting  \ttt{sort}'s \ttt{r} flag that enables reverse sorting, the user can easily get the minimum temperature.
+The shell does not have any visibility into these flags; 
+  after it expands special characters such as \ttt{\textasciitilde{}} and \ttt{*}, it leaves parsing and evaluation entirely up to commands.
+
+Finally, \unix provides composition environment for commands written in any language.
+Many the commands used in practice come built into the system---\eg commands defined by the POSIX standard or ones part of the GNU Coreutils---whereas others are available as add-ons.
+The fact that commands are developed in a variety of languages---including shell scripts---provides users with a significant flexibility.
+For example, one could replace the call to \ttt{sort} and \ttt{head} with one to \ttt{./avg.py} to get an average or a standard deviation rather than a maximum.
+The pipeline would still work, as long \ttt{./avg.py} conforms to the interface outlined earlier.
+% Shell scripting allows incremental development through refinement
+
 % the input stream (stdin), the output stream (stdout), and the generating errors or diagnostics to the standard error stream (stderr)
 % generating errors or diagnostics to the standard 
 % Leveraging this interface, pipelines chain together commands by their standard streams, such that the output stream of one command (stdout) is passed directly as input (stdin) to the next one.
 % \smallskip
 
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-  ls -l | wc -l                          ($$(p_2)$$)
-\end{lstlisting}
-% \smallskip
 
-Commands can be tuned by two mechanisms: com\-mand-line options and environment variables.
-Options control the execution of a program---\eg changing the \ttt{sort}ing order.
-The shell does not have any visibility into these options; 
-  after it expands special characters such as \ttt{\textasciitilde{}} and \ttt{*}, it leaves parsing and evaluation entirely up to every command.
-Environment variables carry more general information about the surrounding system---\eg search paths, system defaults, parsing switches \etc 
-They are organized as a map from names to values, both of which are strings, and can be evaluated at any point in the program---\eg as commands, flags, or inputs. % a shell feature termed parameter \emph{expansion}.
+% ---available publicly online via NCDC's NOAA~\cite{}---to obtain the maximum temperature per year.
 
-% TODO: Talk about security primitives?
-Streams are a key abstraction in \unix, and go hand-in-hand with another \unix abstraction: \emph{files}.
-Files are persistent streams that can be manipulated by individual commands or pipelines:
-% \begin{wrapfigure}{r}{0.15\textwidth}
-%   \vspace{-15pt}
-%   % \begin{center}
-%     % \includegraphics[width=0.48\textwidth]{gull}
-%     \includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_ex3.pdf}}
-%   % \end{center}
-%   \vspace{-25pt}
-% \end{wrapfigure}
-  reading a (set of) file(s) generates a stream; 
-  conversely, redirecting to a file identifier generates a file.
-% streams can be trivially redirected to the file system---by appending with the file identifier.
-Files are named, corresponding to global identifiers---\eg \ttt{/x/y} corresponds to a persistent stream at the location \ttt{/y} in \ttt{/x}.
-\unix exposes a few different types of files---\eg directories, symbolic links, and named pipes (or FIFOs). % , and special-character devices.
-As a result, file-system identifiers part of a pipeline may resolve to in-memory structures or pseudo-devices (\eg \ttt{/dev/urandom}).
+\heading{Parallelization Challenges}
+While these features aid developer economy through powerful program composition, they complicate shell script parallelization which even for simple scripts such as the one in Fig.~\ref{fig:example} face several challenges.
+% \footnote{
+%   Alternatives for automated parallelization were outlined in the introduction~\sx{intro} and are surveyed in the related work section~\sx{related}.
+% }
 
-% At a high level, POSIX defines several file types:
-% (-) regular files, storing lines of text or binary data,
-% (d) directories, grouping together multiple other files,
-% (l) symbolic links, pointing to other files,
-% (p) named pipes or FIFOs, communication primitives that can be named and manipulated like files,
-% (s) domain sockets or DSes, full-duplex communication primitives that support passing file descriptors, and
-% (b or c) special files, interfaces to device drivers or low-level abstractions, presented as ordinary files.
-% \smallskip
+One obvious challenge is due to the language of the shell, which has been developed through a long history of additions.
+Different parts of a script, exploiting different language constructs, are amenable to different levels of parallelization---if at all.
+% Some constructs, such as the parallel composition operator \ttt{\&} ; many others such as the sequential composition operator (\ttt{;}) are clearly sequential; yet others, such as the loop constructs are more difficult to categorize.
+For example, Fig.~\ref{fig:example} assignment to \ttt{base}, connected with the rest of the script by the sequential composition operator (\ttt{;}), cannot be interleaved with the rest of the script.
 
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-  ls | sed 's/1/2/' | > out.t 2> err.t    ($$(p_3)$$)
-\end{lstlisting}
-%\smallskip
+Another challenge is due to the multitude of available commands;
+  each command that is part of a script may require very different treatment.
+For example, \ttt{grep} can proceed in parallel on each stream without any coordination, \ttt{head} requires light coordination, and \ttt{sort} requires significant coordination across streams.
+Worse even, the same command may be used with different flags---\eg % \ttt{-d" " -f9} for the first
+  Fig.~\ref{fig:example}'s \ttt{cut} is called twice with two different sets of flags.
+When a single flag can affect the functionality of a command in non-trivial ways, deciding how to parallelize becomes significantly more difficult.
 
-\noindent
-Special files are particularly interesting because they resolve to OS structures.
-One example is the special \ttt{/proc} filesystem (procfs) that presents information about processes and the operating system, offering a feature analogous to programmatic introspection:
-  with \ttt{procfs} commands can inspect and alter their directory or the flags passed to them.
-% Here are a few examples:
-% (i) \ttt{/proc/PID/cmdline} contains the command that originally started the process,
-% (ii) \ttt{/proc/modules} contains a list of the kernel modules currently loaded, and
-% (iii) \ttt{/proc/PID/cwd} contains a symlink to the current working directory of the process.
-Similarly, \unix exposes file-system handles for various ephemeral structures, including standard streams.
-This bidirectional relationship between ephemeral streams and persistent names---the fact that streams can be named in the file-system and files can be converted to streams---enables the runtime wrapping and rebinding achieved during \sys's transformations.
-% TODO: compatibility
+Yet another challenge is that different phases operate on different output sizes thus allowing different parallelization widths.
+Even if Fig.~\ref{fig:example}'s script was aiming on, say, only six years of data, the first \ttt{curl} would still output hundreds of lines for each year.
+Naive, coarse-grained parallelization can miss such opportunities.
 
-A small but powerful set of features is concerned with stream manipulation.
-Some of these features are built into the shell;
-  for example, given a file identifier, stream redirection operators can direct stdout or stderr to a file---which itself can be a FIFO dubbing as input to another command.
-% \begin{wrapfigure}{r}{0.15\textwidth}
-%   \vspace{-15pt}
-%   % \begin{center}
-%     % \includegraphics[width=0.48\textwidth]{gull}
-%     \includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_ex3.pdf}}
-%   % \end{center}
-%   \vspace{-25pt}
-% \end{wrapfigure}
-More interestingly, some commands allow splitting (resp. merging) a single stream (resp. many streams) into multiple streams (resp. a single stream);
-  stream merging can be achieved by appending one stream after the end of another or by fusing (zipping) streams column-wise into a single (fat) stream.
-% TODO: talk about \ttt{xargs}?
-
-% \smallskip
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-  cat * | tee >(wc -l > l.t) | zip > a.z   ($$(p_4)$$)
-\end{lstlisting}
-% \smallskip
-
-\noindent
-% Explicit Redirection, Implicit splitting and merging, This can be done through the file-system operators 
-The combination of ephemeral file-system identifiers and the stream redirection described above enable surprisingly expressive pipelines. %---for example:
-The most interesting feature of these pipelines is the presence of cycles:
-  a pipeline segment processes some input, part of which is extracting the next input to process.
-One example use case, discussed in the evaluation section~\sx{eval} is a web crawler that feeds extracted URLs from the input stream back to the start of the pipeline.
-% These streams are created by the C library (glibc) at the start of program execution,
-% and new streams can be created to connect to files, sockets, pipes,
-
-% \smallskip
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-  read | { calc | square; } >/dev/fd/0     ($$(p_5)$$)
-\end{lstlisting}
-% \smallskip
-
-\noindent
-Apart from pipes, the \unix shell provides several other forms of program composition such as sequential (\ttt{;}) and parallel (\ttt{\&}) composition operators.
-Command substitution, expressed as \ttt{\$($c$)}, replaces the expression with the results of executing $c$.
-Code blocks, expressed as \ttt{\{$c_1; c_2$\}}, can redirect streams for the entire group of $c_1$ and $c_2$;
-  this is analogous to an anonymous function, which contains many statements and can possibly be assigned to a variable that can later be invoked with parameters.
-Subshells, enclosed in \ttt{($c_1; c_2$)}, are similar to code blocks but spawn a child shell, thus avoiding the pollution of their environment variable context. % but incurring higher overhead.
-
-To conclude, \unix pipelines are surprisingly powerful.
-This power is exploited directly by \sys's rewriting passes which re-target the shell rather than an implementation in Java or Go.
-
-% \begin{lstlisting}[
-%   language=es,
-%   mathescape,
-%   float=t,
-%   belowskip=-5mm,
-%   label=core-pl,
-%   upquote=true,
-%   caption={
-%     \textbf{The core language of the POSIX shell.}
-%     The language used by ; file identifiers and expansion are not shown.
-%   }]
-% $p$ ::= $s\in{}String$ | $n\in{}Number$ | $b\in{}Bool$ | $\emptyset$
-% $v$ ::= $p$ | ($x$,$\ldots$) => {e} | {$s$:$v$,$\ldots$} | [$v$,$\ldots$]
-% $e$ ::= x | $v$ | ($x$ = $e$) $e$ | $e$($e$) | $e$[$e$] = $e$
-% \end{lstlisting}
-
-% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-%  cat /proc/ >                            (($$p_4$$))
-% \end{lstlisting}
-% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-%  cat /proc/ >                            (($$p_5$$))
-% \end{lstlisting}
-% \begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
-% { echo 1; echo 2; } > out.txt
-% \end{lstlisting}
+% \nv{Are these all the challenges we want to highlight?}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_schematic.pdf}}
 \caption{
   \textbf{\sys transformation overview.}
-  Given a shell pipeline, \sys leverages command distributability to identify
-  high-distributability stages, rewrite them, and orchestrate their execution.
+  Given a shell pipeline, \sys leverages command parallelizability to identify
+  high-parallelizability stages, rewrite them, and orchestrate their execution.
 }
 \vspace{-15pt}
 \label{fig:overview}
@@ -895,12 +830,9 @@ This power is exploited directly by \sys's rewriting passes which re-target the 
 \subsection{\sys Design Overview}
 \label{bg:overview}
 
-\kk{Here we should reiterate on the fact that \sys takes a script and outputs a script.}
-
-\kk{Make sure for the running script to contain more than just a
-  pipeline, so that it is clear that \sys turns a script into the same
-  script with DFGs in place of ``parallelizable-regions'' (which are
-  usually pipelines).}
+At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and outputs another shell script.
+The new script may incorporate parallelism, and handed off to the user's original shell interpreter---\eg \ttt{bash} or \ttt{zsh}---for execution.
+To discover and enable parallel execution, \sys analyzes individual program fragments, addressing the aforementioned challenges.
 
 As outlined earlier, the key insight behind \sys is that the shell already describes parallel computations over streams.
 Intuitively,
