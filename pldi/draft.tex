@@ -830,85 +830,49 @@ Naive, coarse-grained parallelization can miss such opportunities.
 \subsection{\sys Design Overview}
 \label{bg:overview}
 
-At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and outputs another shell script.
-The new script may incorporate parallelism, and handed off to the user's original shell interpreter---\eg \ttt{bash} or \ttt{zsh}---for execution.
-To discover and enable parallel execution, \sys analyzes individual program fragments, addressing the aforementioned challenges.
+At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and outputs a new POSIX shell script.
+The new script may incorporate parallelism, and is handed off to the user's original shell interpreter---\eg \ttt{bash} or \ttt{zsh}---for execution.
+To discover and enable parallel execution, \sys analyzes individual program fragments, addressing the challenges mentioned earlier.
 
-The key insight behind the analysis is that, intuitively, the POSIX language amounts to a few constructs that indicate different levels of candidacy for pararllelization.
-For example,
- (i) the parallel-composition operator exposes task parallelism,
- (ii) commands such as \ttt{xargs} and \ttt{tee} expose data parallelism,
- (iii) the pipe operator is a candidate for both task and data parallelism, and
- (iv)  other composition operators can be viewed as barrier candidates.
+\sys first needs to understand the POSIX constructs used to compose larger programs, indicating indicate different levels of candidacy for pararllelization.
+To achieve this, \sys breaks POSIX constructs into a few broad classes:
+ (i) the parallel-composition operator (\ttt{\&}) exposes task parallelism,
+ (ii) special commands such as \ttt{xargs} and \ttt{tee} expose data parallelism,
+ (iii) the pipe operator (\ttt{|}) is a candidate for both task and data parallelism, and
+ (iv)  other composition operators such as \ttt{\&\&}, \ttt{||}, and \ttt{;} are barrier candidates.
 
-Second, \sys needs to understand the parallelization characteristics of individual commands used to compose larger programs~\sx{parallelizability}.
-This challenge can be broken down into two parts.
-First, understand standard commands part of the shell---that is, built-ins that come with any shell and support its core functions.
-One example is the set of commands defined by the \textsc{POSIX} standard~\cite{posix}.
-\sys addresses this part by a careful study of a group of commands, identifying a small but clear set of well-understood parallelizability classes~\sx{cmd}.
-This group is already useful-enough to allow the composition of practical pipelines~\sx{micro}.
-
-
-
-
-
-
-will have several fragments that explicitely execute in parallel, as long as \sys was able to identify and extract parallelism latent in the original script.
-
-By parsing the script of Fig.~\ref{fig:example}, 
-
-\sys will first identify a series of commands 
-
-For now, different \ttt{for} branches can proceed in parallel as all the information is available.
-However, if the 
-In cases where \sys does not have enough information in place, it will not attempt parallelizing the script.
-
-
-
-\kk{Here we should reiterate on the fact that \sys takes a script and outputs a script.}
-
-\kk{Make sure for the running script to contain more than just a
-  pipeline, so that it is clear that \sys turns a script into the same
-  script with DFGs in place of ``parallelizable-regions'' (which are
-  usually pipelines).}
-
-As outlined earlier, the key insight behind \sys is that the shell already describes parallel computations over streams.
-
-% However, understanding the shell's primitives is not enough
-The second part is understanding the characteristics of commands that fall outside the built-in set, allowing new commands to leverage \sys's power.
-New commands are arbitrary programs, but still need to conform to the shell's pipeline interface.
-To solve this part, \sys leverages the aforementioned study~\sx{cmd} to define a small but expressive domain-specific language (DSL) for describing a command's key properties with respect to its parallelizability.
-This DSL is aimed towards developers of commands (not users of the shell), who can quickly and easily capture the parallelizability of the commands they are developing.
+Second, \sys needs to understand the parallelization characteristics of individual commands used to compose larger programs---a two-fold challenge.
+To understand standard commands available in any shell, \sys groups POSIX and GNU commands into a small but clear set of well-understood parallelizability classes;
+  these commands are already useful-enough to allow the composition of useful shell programs operating in practice.
+To understanding the characteristics of commands that fall outside the built-in set, allowing new commands to leverage \sys's power, \sys leverages this study to define an annotation language for describing a command's key properties with respect to its parallelizability.
+Such light annotations are aimed towards command developers (rather than users), who can quickly and easily capture the properties of the commands they are developing.
 % We haven't introduced the notion of flags
 % A command developer can only annotate the default behavior;
 %   if a new flag is added a few years later, and if that flag alters the command's class, only then a new annotation is needed.
 
-Given a pipeline of commands and their parallelizability characteristics, \sys's next challenge is to analyze it and identify candidate subexpressions for distribution~\sx{ir}.
-It addresses this challenge with a series of rewriting passes that perform dataflow analysis to identify distributable regions.
-It converts the AST to a dataflow graph, and iteratively performs graph transformations that expose data parallelism as task parallelism, while preserving the pipeline's correctness.
-These transformations are complicated by the shell's pervasive use of dynamic features---\eg environment variables, file input sizes, \etc
+% Given a pipeline of commands and their parallelizability characteristics, \sys's next challenge is 
+% \sys achieves this through a series of rewriting passes that perform dataflow analysis to identify distributable regions.
+% It converts the AST to a dataflow graph, and iteratively performs graph transformations that expose data parallelism as task parallelism, while preserving the pipeline's correctness.
 
-To schedule and execute the resulting distributed dataflow graph, \sys needs to solve several challenges~\sx{impl}.
-First, it needs to wrap single-node commands with corrective runtime interposition based on their classes.
-This is achieved by thin wrappers that wrap all the commands involved in the program, generated using the parallelizability specification described earlier.
-Thin wrappers avoid interference with legacy functionality, as \unix commands contain non-obvious logic and flags added over extended periods of time.
+Provided information about the shell constructs and individual commands and their flags, \sys needs to analyze the given script and identify program fragments that are candidates for parallelization.
+To achieve this, it converts the script into a data-flow graph (DFG) model.
+% Second, \sys defines a dataflow graph model that is suitable for the semantics of the POSIX shell and proposes a set of parallelization optimizations that preserve the behavior of the dataflow graph.
+This is a flexible representation that allows a series of parallelization transformations to convert the graph into its parallel equivalent, in which DFGs indicate the parallelizable regions.
+Further transformations compile the DFG back to a parallel script that uses POSIX shell constructs to guide parallelism explicitly---while aiming at preserving the semantics of the sequential program.
 
-Second, \sys needs to fill-in planing details left blank by the rewriting pass.
-This is achieved by \emph{planner activators}, shell expressions that yield (and pass their arguments) back to the planner.
-They are inserted by the planner and evaluated purely for their side-effects (\ie yielding to the scheduler) rather than their return value (which is empty, not affecting pipelines).
-They make clever use of shell features such as expansion to achieve the latest possible binding, when critical runtime information becomes available.
-% From the point of view of the shell, planner activators are expressed through a higher-order command---similar to \ttt{xargs} and \ttt{time}---that takes other commands as arguments.
+Finally, \sys needs to provide correct, high-performance combinators for certain classes commands, and be proactive about (addressing) several practical challenges related to quirks of the \unix environment.
+In terms of combiners, \sys offers a set of linkable components for stream splitting and merging;
+  these commands live in the \ttt{PATH} and are addressable by name, which means they can be used like (and by) any other commands.
+Practical challenges---related to task parallelism, deadlock prevention, and runtime performance---are addressed through a series of constructs that \sys provides.
 
-% FIXME \kk{I am not exactly sure I understand that :) } \nv{which part?}
+Returning to the script of Fig.~\ref{fig:example}...\nv{I think we should show fragments of the resulting script}
 
-The next few sections (\S\ref{parallelizability}--\ref{impl}) discuss \sys's design and implementation details.
+The next few sections (\S\ref{parallelizability}--\ref{impl}) discuss the details.
 % They also outline other, less obvious challenges---such as the synchronization of environment variables, distributed file operation, \etc.
 
 
 \section{Parallelizability Classes}
 \label{parallelizability}
-
-\TODO{Change naming to parallelizability}
 
 To have any hope of distributing pipelines, \sys first needs to understand the distribution characteristics of their individual commands.
 This understanding is encoded in a command's \emph{parallelizability} class.
