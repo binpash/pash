@@ -834,40 +834,63 @@ At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\
 The new script may incorporate parallelism, and handed off to the user's original shell interpreter---\eg \ttt{bash} or \ttt{zsh}---for execution.
 To discover and enable parallel execution, \sys analyzes individual program fragments, addressing the aforementioned challenges.
 
-As outlined earlier, the key insight behind \sys is that the shell already describes parallel computations over streams.
-Intuitively,
- (i) the parallel-composition operator exposes task parallelism
-% FIXME \kk{I have named that operator level parallelism, which one do we prefer?},
+The key insight behind the analysis is that, intuitively, the POSIX language amounts to a few constructs that indicate different levels of candidacy for pararllelization.
+For example,
+ (i) the parallel-composition operator exposes task parallelism,
  (ii) commands such as \ttt{xargs} and \ttt{tee} expose data parallelism,
  (iii) the pipe operator is a candidate for both task and data parallelism, and
-% \kk{How does it enable data parallelism?} \nv{added "candidate", helps?}
  (iv)  other composition operators can be viewed as barrier candidates.
-To leverage these insights and correctly distribute a pipeline such as $p_1$, \sys must solve several challenges.
 
-% However, understanding the shell's primitives is not enough
-First, \sys needs to understand the distribution characteristics of individual commands used to compose larger programs~\sx{distributability}.
+Second, \sys needs to understand the parallelization characteristics of individual commands used to compose larger programs~\sx{parallelizability}.
 This challenge can be broken down into two parts.
 First, understand standard commands part of the shell---that is, built-ins that come with any shell and support its core functions.
 One example is the set of commands defined by the \textsc{POSIX} standard~\cite{posix}.
-\sys addresses this part by a careful study of a group of commands, identifying a small but clear set of well-understood distributability classes~\sx{cmd}.
+\sys addresses this part by a careful study of a group of commands, identifying a small but clear set of well-understood parallelizability classes~\sx{cmd}.
 This group is already useful-enough to allow the composition of practical pipelines~\sx{micro}.
 
+
+
+
+
+
+will have several fragments that explicitely execute in parallel, as long as \sys was able to identify and extract parallelism latent in the original script.
+
+By parsing the script of Fig.~\ref{fig:example}, 
+
+\sys will first identify a series of commands 
+
+For now, different \ttt{for} branches can proceed in parallel as all the information is available.
+However, if the 
+In cases where \sys does not have enough information in place, it will not attempt parallelizing the script.
+
+
+
+\kk{Here we should reiterate on the fact that \sys takes a script and outputs a script.}
+
+\kk{Make sure for the running script to contain more than just a
+  pipeline, so that it is clear that \sys turns a script into the same
+  script with DFGs in place of ``parallelizable-regions'' (which are
+  usually pipelines).}
+
+As outlined earlier, the key insight behind \sys is that the shell already describes parallel computations over streams.
+
+% However, understanding the shell's primitives is not enough
 The second part is understanding the characteristics of commands that fall outside the built-in set, allowing new commands to leverage \sys's power.
 New commands are arbitrary programs, but still need to conform to the shell's pipeline interface.
-To solve this part, \sys leverages the aforementioned study~\sx{cmd} to define a small but expressive domain-specific language (DSL) for describing a command's key properties with respect to its distributability.
-This DSL is aimed towards developers of commands (not users of the shell), who can quickly and easily capture the distributability of the commands they are developing.
+To solve this part, \sys leverages the aforementioned study~\sx{cmd} to define a small but expressive domain-specific language (DSL) for describing a command's key properties with respect to its parallelizability.
+This DSL is aimed towards developers of commands (not users of the shell), who can quickly and easily capture the parallelizability of the commands they are developing.
 % We haven't introduced the notion of flags
 % A command developer can only annotate the default behavior;
 %   if a new flag is added a few years later, and if that flag alters the command's class, only then a new annotation is needed.
 
-Given a pipeline of commands and their distributability characteristics, \sys's next challenge is to analyze it and identify candidate subexpressions for distribution~\sx{ir}.
+Given a pipeline of commands and their parallelizability characteristics, \sys's next challenge is to analyze it and identify candidate subexpressions for distribution~\sx{ir}.
 It addresses this challenge with a series of rewriting passes that perform dataflow analysis to identify distributable regions.
 It converts the AST to a dataflow graph, and iteratively performs graph transformations that expose data parallelism as task parallelism, while preserving the pipeline's correctness.
 These transformations are complicated by the shell's pervasive use of dynamic features---\eg environment variables, file input sizes, \etc
 
 To schedule and execute the resulting distributed dataflow graph, \sys needs to solve several challenges~\sx{impl}.
 First, it needs to wrap single-node commands with corrective runtime interposition based on their classes.
-This is achieved by thin wrappers that wrap all the commands involved in the program, generated using the distributability specification described earlier.
+This is achieved by thin wrappers that wrap all the commands involved in the program, generated using the parallelizability specification described earlier.
 Thin wrappers avoid interference with legacy functionality, as \unix commands contain non-obvious logic and flags added over extended periods of time.
 
 Second, \sys needs to fill-in planing details left blank by the rewriting pass.
@@ -2630,30 +2653,23 @@ computation, even in cases where parallelism is not possible.
 \subsection{Use Case: NOAA Weather Analysis}
 \label{macro1}
 
-\kk{Maybe use phoenix for that one? Since it has a MapReduce interface
-  but it runs on multicore?}
-\nv{Phoenix (i) is shared-memory, and (ii) would require re-writing the entire program in C++, which defeats the purpose of comparing with an existing program. Phoenix might be OK for micro-benchmarks however.}
-
-To understand \sys better under a realistic workload, we use a large pipeline inspired by the introductory chapter of Hadoop's Definitive Guide~\cite[Chapter 2]{hadoop:15}.
+To understand \sys better under a realistic workload, we turn our attention to the Fig.~\ref{fig:example}'s script~\sx{bg}.
 
 \heading{Program}
-At a high level, the program processes multi-year weather data from NCDC to identify the maximum temperature over the past several years.
-The original task, as presented in the book, can be thought of comprising three sub-tasks:
+The full version of this program is inspired by the introductory chapter of Hadoop's Definitive Guide~\cite[Chapter 2]{hadoop:15}, where it is used as an example of a realistic mid-scale analytics pipeline.
+
+The original task, as presented in the book, is comprised of three sub-tasks:
   download weather data from NCDC (shell), convert them to a format that is Hadoop-friendly (shell), and process them to identify the maximum temperature (Hadoop).
-Only the last of these tasks is the real focus of the chapter, demonstrating the benefits of using distributed analytics system such as Hadoop.
+Only the last of these tasks is the real focus of the book, demonstrating the benefits of using distributed framework such as Hadoop.
 For \sys, we consider the full pipeline that implements all three sub-tasks---from fetching data to outputting the maximum temperature.
 
-The pipeline starts with a few stages in \sta  that generate URLs;
-  these URLs point to index files, each one of which contains pointers to compressed data files.
-The stream of index files is then analyzed (4 stages) to extract the URLs of the data files, passed again through the command to download the data.
-After download and un-compression, the stream is analyzed to extract the maximum temperature (another 4 stages).
+The full program used for our evaluation is slightly different than the one presented in Fig.~\ref{fig:example}, consisting of 14 stages and totalling 240 characters.
+We full program expresses the \ttt{for} loop as its first pipeline stage and uses \ttt{xargs} to 
+The program presented in Fig.~\ref{fig:example} is simplified only for clarity of exposition.
 
 \heading{Results}
 % The first interesting result 
-The effort required to write this pipeline is astonishingly low:\footnote{
-  Some effort is required to understand NCDC's weather format, but this is true for any program processing this dataset.
-}
-  it amounts to 14 stages and, when expressed as a single line, only 240 characters.
+\TODO{Some results}
 The Hadoop program, expressed in Java and only capturing the \emph{four} last stages, amounts to 137 lines of Java code---not accounting for commands moving data in and out of HDFS.
 
 As this is benchmark is taken directly from the Hadoop book, it is worth reporting on its execution time.
