@@ -1,9 +1,16 @@
-Optimization time: 225.518  ms
-Backend time: 3.298  ms
-Execution time: 389081.869  ms
-Compilation time: 22.582  ms
+kill: (128358): No such process
+kill: (128359): No such process
+kill: (128360): No such process
+Total nodes after optimization: 155
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 60
+Optimization time: 283.603  ms
+Backend time: 2.596  ms
+Execution time: 390810.685  ms
+Compilation time: 22.709  ms
 
-real	6m29.691s
-user	66m24.718s
-sys	3m58.823s
+real	6m31.491s
+user	66m26.480s
+sys	4m15.304s
 Files ../evaluation//intermediary//set-diff_seq_output and /tmp/distr_output/0 are identical

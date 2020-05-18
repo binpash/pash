@@ -1,9 +1,16 @@
-Optimization time: 62.762  ms
-Backend time: 1.932  ms
-Execution time: 118609.425  ms
-Compilation time: 19.333  ms
+kill: (63891): No such process
+kill: (63893): No such process
+kill: (63894): No such process
+Total nodes after optimization: 112
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 0
+Optimization time: 139.983  ms
+Backend time: 2.309  ms
+Execution time: 128837.766  ms
+Compilation time: 19.855  ms
 
-real	1m59.047s
-user	26m30.743s
-sys	4m53.120s
+real	2m9.359s
+user	32m12.209s
+sys	22m0.808s
 Files ../evaluation//intermediary//shortest_scripts_seq_output and /tmp/distr_output/0 are identical

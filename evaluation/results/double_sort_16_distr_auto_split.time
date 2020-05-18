@@ -1,0 +1,16 @@
+kill: (121796): No such process
+kill: (121797): No such process
+kill: (121798): No such process
+Total nodes after optimization: 154
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 75
+Optimization time: 208.191  ms
+Backend time: 30.772  ms
+Execution time: 417768.154  ms
+Compilation time: 53.695  ms
+
+real	6m58.430s
+user	37m2.214s
+sys	26m36.464s
+Files ../evaluation//intermediary//double_sort_seq_output and /tmp/distr_output/0 are identical
