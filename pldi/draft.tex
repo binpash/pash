@@ -78,9 +78,9 @@
 \newcommand{\TODO}[1]{\hl{\textbf{TODO:} #1}\xspace}
 \newcommand{\todo}[1]{\hl{#1}\xspace}
 \newcommand{\fixme}[1]{[{\color{red}#1}]}
-\newcommand{\nv}[1]{[{\color{cyan}#1 --- nv}]}
-\newcommand{\kk}[1]{[{\color{magenta}#1 --- kk}]}
-\newcommand{\km}[1]{[{\color{blue}#1 --- km}]}
+\newcommand{\nv}[1]{[{\color{cyan}nv: #1}]}
+\newcommand{\kk}[1]{[{\color{magenta}kk: #1}]}
+\newcommand{\km}[1]{[{\color{blue}km: #1}]}
 \newcommand{\review}[1]{{\color{red}#1}}
 \newcommand{\tr}[1]{} %% Text and comments for technical report
 
@@ -119,7 +119,7 @@
 
 \lstset{ %
   backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
-  basicstyle=\small\ttfamily,  % the size of the fonts that are used for the code
+  basicstyle=\normalsize\ttfamily,  % the size of the fonts that are used for the code
   upquote=true,
   captionpos=b,                    % sets the caption-position to bottom
 % frame=B,                    % adds a frame around the code
@@ -897,7 +897,7 @@ In this order, some classes can be thought as subsets of the next---\eg all stat
 \caption{
   \footnotesize{
     \textbf{Parallelizability Classes}.
-    Broadly, \unix commands can be broken down into to \todo{three} classes according to their parallelizability properties.
+    Broadly, \unix commands can be broken down into to \todo{four} classes according to their parallelizability properties.
   }
 }
 \begin{tabular*}{\columnwidth}{l @{\extracolsep{\fill}} llll}
@@ -949,19 +949,24 @@ The details of this state and its propagation during element processing affect t
 Some commands are easy to parallelize, because they maintain trivial state and are commutative---\eg \ttt{wc} simply maintains a counter.
 Other commands such as \ttt{sort}, maintain more complex invariants that have to be taken into account when merging partial results.
 
-% \begin{figure}[t]
-% \centering
-% \includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_classes.pdf}}
-% \caption{
-%   \textbf{\sys's parallelizability classes.}
-% }
-% \label{fig:example}
-% \end{figure}
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.20\textwidth]{\detokenize{./figs/dish_classes.pdf}}
+\caption{
+  \textbf{Hierarchy of parallelizability classes.}
+  Parallelizability classes form a hierarchy from the easiest to parallelize (left) to the most difficult (right).
+  \nv{The figure is incorrect---it's actually a lattice.}
+}
+\vspace{-15pt}
+\label{fig:example}
+\end{figure}
 
 Often these commands do not operate in an online fashion, but need to block until the end of a stream.
 A typical example of this is \ttt{sort}, which cannot start emitting results before the last input element has been consumed.
 \todo{Such constraints affect task parallelism, but not data parallelism}:
   \ttt{sort} can be parallelized significantly using divide-and-conquer techniques---\ie by encoding it as a group of (parallel) $map$ functions followed by a $fold$ that merges the results.
+
+\kk{Maybe show an example of map-fold for sort or wc}
 
 \heading{Non-parallelizable Pure Commands}
 The third class, \npu, contains commands that, while purely functional, cannot be parallelized.
@@ -976,7 +981,7 @@ For example, a web crawler involving hash generation for comparing individual pa
 The last class, \sid, are commands that have side-effects across the system---for example, updating environment variables, interacting with the filesystem, and accessing the network.
 Such commands are not parallelizable without finer-grained concurrency control mechanisms that can detect side-effects across the system.
 
-This is the largest class because the file and file-system abstractions are central to the \unix design and philosophy~\cite{unix}.
+This is the largest class because it includes commands related to the file-system---a central abstractions to the \unix design and philosophy~\cite{unix}.
 In fact, \unix uses the file-system as a proxy to several file-unrelated operations such as access control and device driving. % is grafted upon the file-system.
 
 \nv{
@@ -998,10 +1003,10 @@ In fact, \unix uses the file-system as a proxy to several file-unrelated operati
 % In future work, by building infrastructure to handle other classes, \sys will be able to (i) extract more parallelism and (ii) handle larger programs.
 % Even with only these two classes, however, \sys distributes highly useful pipelines that are strictly more expressive than programs written in popular frameworks such as Hadoop~\cite{mapreduce:08} and Spark~\cite{spark:12}~\sx{eval}.
 
-\subsection{Extensibility}
+\subsection{Extensibility Annotations}
 \label{ext}
 
-\nv{Note command breadth and the impossibility of our task.}
+\nv{Note command breadth/impossibility of our task.}
 % https://nextbreakpoint.com/posts/article-compile-code-with-docker.html
 
 %% Here is the type for \ttt{bwa}, a command that performs a Burrows-Wheeler transform over genomic data:
@@ -1020,44 +1025,42 @@ In fact, \unix uses the file-system as a proxy to several file-unrelated operati
 %% The \ttt{-h} flag moves \ttt{bwa} into the Stateless class;
 %%   its output is a constant function.
 
-% FIXME: \nv{TODO: remember to bubble up(me)}
-An important characteristic of the \unix shell is its
-language-agnostic extensibility~\sx{bg}.  Users composing pipelines
-are free to install custom commands available from various sources.
-Being general programs, commands are developed in a variety of
-languages and are extended over long periods of time.
-%% \kk{Text point: This restricts the space of solutions for
-%%   distribution of shell scripts}
-As a result, any static characterization of shell commands would bs
-unsatisfactory and would quickly become obsolete, supporting only a
-small subset of the commands needed in practice.  This poses a
-challenge to the developers of individual commands---how can they
-augment their commands to capture information critical to \sys without
-too much effort?
-%% \kk{Text point: The characteristics of a good solution}
+% % FIXME: \nv{TODO: remember to bubble up(me)}
+% An important characteristic of the \unix shell is its
+% language-agnostic extensibility~\sx{bg}.  Users composing pipelines
+% are free to install custom commands available from various sources.
+% Being general programs, commands are developed in a variety of
+% languages and are extended over long periods of time.
+% %% \kk{Text point: This restricts the space of solutions for
+% %%   distribution of shell scripts}
+% As a result, any static characterization of shell commands would bs
+% unsatisfactory and would quickly become obsolete, supporting only a
+% small subset of the commands needed in practice.  This poses a
+% challenge to the developers of individual commands---how can they
+% augment their commands to capture information critical to \sys without
+% too much effort?
+% %% \kk{Text point: The characteristics of a good solution}
 
-To address this challenge, \sys arms command developers with a
-lightweight, parallelizability annotation language (\todo{PAL}) that
-allows devevelopers to express semantic information about a command's
-parallelizability.  The PAL can be used by both developers of new
-commands, as well as maintainers of existing commands that can express
-additions or changes to the command's implmentation or
-interface. \todo{The two main challenges that PAL has to address is
-  supporting commands with mutiple inputs and outputs, and handle
-  command-line options.}
+To address the challenge of language-agnostic extensibility~\sx{bg}, \sys allows communicating several key details about command parallelizability through lightweight annotations.
+These annotations can be used by both developers of new commands---which includes users developing their own scripts---as well as developers maintaining existing commands.
+The latter can express additions or changes to the command's implmentation or interface, important as commands are maintained or extended over long periods of time.
 
-\heading{Command Inputs and Outputs}
+\heading{Key Concerns}
+\sys's annotations focused on three crucial concerns:
+  (i) a command's parallelizability class,
+  (ii) for commands that support multiple inputs, the characteristics of input consumption, and
+  (iii) for commands with multiple flags (options), the handling of \todo{competing sets} of flags.
+As the first concern was discussed extensively in the previous section, we now focus on the latter two.\footnote{
+  \nv{Note to self: until now we have been talking only about parallelizability, and now we introduce two concerns that haven't been mentioned before.}
+}
 
-Together with a command's parallelizability class (i.e. \sta, \pur,
-etc), \sys needs to know certain information about a command's inputs
-and outputs in order to construct a dataflow graph. More precisely,
-given a command and its arguments, \sys needs to know its inputs and
-outputs to connect commands in the dataflow graph with edges, as well
-as the order in which a command consumes its input; this is important
-for \sys to know how to order parallel instances of a command after it
-has performed any \todo{optimizations}. Consider the example of
-\ttt{grep "foo" f1 f2}, which can be parallelized as follows if we
-know that \ttt{grep} first reads from \ttt{f1} and then from \ttt{f2}.
+To be able to accurately construct the DFG representation, \sys needs to know certain information about a command's inputs and outputs.
+There are couple of reasons for this.
+One reason is due to \sys's DFG representation, which connects commands with each other;
+  to perform this connection correctly \sys needs to know the outputs of a command to correctly connect them with the inputs of the next.
+A second reason is due to ordering:
+  as some commands consume their inputs in a certain order, this order needs to be maintained in the parallel version of the program.
+For example, consider the parallel version of the expression \ttt{grep "foo" f1 f2}:
 
 \begin{lstlisting}[language=sh, numbers=none]
   mkfifo t1 t2
@@ -1066,15 +1069,15 @@ know that \ttt{grep} first reads from \ttt{f1} and then from \ttt{f2}.
   cat t1 t2
 \end{lstlisting}
 
-\heading{Command-line Options}
-As described earlier~\sx{bg}, com\-mand-line options and environment
-variables can affect the operation of a command.  Options are a
-particularly popular way to control a command, directly affecting a
-command's parallelizability classification.  That is, commands are
-assigned to default classes, and options can change the class in which
-they belong.  As a simple example, consider \ttt{cat}.  By default
-\ttt{cat} is in \sta, but with \ttt{-n} it jumps into \pur because it
-has to keep track of a counter and output the line number with each line.
+\noindent
+This is correct only because \sys knows that \ttt{grep} in the sequential program reads from \ttt{f1} first and from \ttt{f2} second.
+
+Command flags (options) are a particularly popular way to control a command's execution, directly affecting its parallelizability classification.
+Commands are thus assigned a default parallelizability class, which is then refined by the set of flags the command uses.
+For example, \ttt{cat} defaults to \sta, but with \ttt{-n} it jumps into \pur because it has to keep track of a counter and print it along with each line.
+
+As parallelizability classes form a hierarchy from most parallelizable to least parallelizable~\sx{cmd}, a command is classified by the class of its least parallelizable flag.
+For example, if a custom \ttt{trace-sort} command is invoked with flags \ttt{r}, \ttt{n}, and \ttt{k2} that are in \pur and a flag \ttt{d} that writes debugging output to a file, it ends up in \sta.
 
 %% As simple examples, consider \ttt{cat} and \ttt{sort}.
 %% By default \ttt{cat} is in \sta, but with \ttt{-n} it jumps into \pur because it has to keep track of a counter.
@@ -1082,58 +1085,10 @@ has to keep track of a counter and output the line number with each line.
 % TODO: closure?
 
 %% This is actually wrong. sort -h is not stateless since if called several times it produces the same output many times.
+%% nv: the above does not mean it is not stateless; if apply `map` multiple times on an input I will get combined results.
 
 %% Can be tweaked according to this:
 %% https://tex.stackexchange.com/questions/24886/which-package-can-be-used-to-write-bnf-grammars
-
-\tr{
-\begin{figure}
-  \centering
-  \begin{grammar}
-    <option> ::= `-' <string>
-
-    <category> ::= `stateless' | `pure' | ...
-
-    <maybe-int> ::= | <int>
-
-    <arg> ::= `args[' <int> `]'
-
-    <args> ::= <arg>
-    \alt `args[' <maybe-int> `:' <maybe-int> `]'
-
-    <input> ::= `stdin' | <args>
-
-    <inputs> ::= <input>
-    \alt <input> `,' <inputs>
-
-    <output> ::= `stdout' | <arg>
-
-    <option-pred> ::= <option>
-    \alt `value' <option> = <string>
-    \alt `not' <option-pred>
-    \alt <option-pred> `or' <option-pred>
-    \alt <option-pred> `and' <option-pred>
-
-    <assignment> ::= `(' <category>, `[' <inputs> `]' , <output> `)'
-
-    <predicate> ::= <option-pred> `=>' <assignment>
-
-    <pred-list> ::= `|' <predicate> <pred-list>
-    \alt `|' `otherwise' `=>' <assignment>
-
-    <command> ::= <name> `\{' <pred-list> `\}'
-
-    <command-list> ::= <command>
-    \alt <command> <command-list>
-  \end{grammar}
-  \caption{
-\textbf{Parallelizability description language.}
-The DSL captures important information regarding the parallelizability of a command.
-\vspace{-10pt}
-}
-  \label{fig:dsl}
-\end{figure}
-}
 
 
 %% \heading{Command Inputs and Outputs}
@@ -1160,50 +1115,43 @@ The DSL captures important information regarding the parallelizability of a comm
 
 % \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
 
-\heading{Parallelizability Annotation Language}
+\heading{Example Annotations}
+A record contains a set of clauses, each one identified by a predicate on the commands options.
+Each clause maps to an assignment for the command, indicating its class and the sequence of its inputs and outputs.
+Annotations treat flag arguments differently from file arguments, by checking if they start with a \ttt{-}.
+% \footnote{
+%   Note that the single character \ttt{-} is not an option as it is most often used to designate that a command reads from its standard input.
+%   \nv{
+%     There are options of of the form --f "x; y", and BSD options do not take \ttt{-} (like \ttt{ps aux}).
+%     I am also not sure how important this last sentence is, as it did not answer a question I had---I expected arguments to be anything: if soneome wants to put ``pizza'' the DSL should not disallow it.
+%   }
+% }
+The grammar of the language for specifying annotations is shown in Appendix~\ref{alg}.
 
-To illustrate how the proposed PAL addresses the above challenges, we
-will follow the example of the annotation record for \ttt{comm}, a
-command that performs a ``join'' on its two inputs. When \ttt{comm} is
-invoked without any option, it produces a three-column output. The
-first column contains lines that are unique to the first file, the
-second column contains lines that are unique to the second file, and
-the last column contains lines that exist in both files. A user can
-invoke \ttt{comm} with options \ttt{-1}, \ttt{-2}, or \ttt{-3} to
-suppress some of its output columns.
+For example, consider \ttt{comm}---a command that performs a join-like operation on its two inputs to identify common elements.
+When \ttt{comm} is invoked without any flags, it produces a three-column output:
+  the first column contains lines that are unique to the first input, the second column contains lines that are unique to the second input, and the last column contains lines that exist in both inputs.
+A user can invoke \ttt{comm} with any combination of flags \ttt{-1}, \ttt{-2}, or \ttt{-3} to suppress the corresponding output columns.
+Its annotation record is shown below:
 %
-\begin{lstlisting}[float=h, numbers=none,caption={PAL record for \ttt{comm}},label={lst:pal-record-comm}]
-  comm {
-    | -1 and -3 =>
-      (stateless, [args[1]], [stdout])
-    | -2 and -3 =>
-      (stateless, [args[0]], [stdout])
-    | otherwise =>
-      (pure, [args[0], args[1]], [stdout])
-  }
+\begin{lstlisting}[language=sh, numbers=none]
+comm {
+  | -1 /\ -3 =>
+    (stateless, [args[1]], [stdout])
+  | -2 /\ -3 =>
+    (stateless, [args[0]], [stdout])
+  | _  =>
+    (pure, [args[0], args[1]], [stdout])
+}
 \end{lstlisting}
 
-The PAL annotation record for \ttt{comm} is shown in
-\cref{lst:pal-record-comm}. A record contains a set of clauses, each
-one identified by a predicate on the commands options. Each clause
-maps to an assignment for the command, indicating its class and the
-sequence of its inputs and outputs. \todo{PAL assumes} that arguments
-of a command can be separated to options and file arguments (checking
-if they start with a \ttt{-}~\footnote{Note that the single character
-  \ttt{-} is not an option as it is most often used to designate that
-  a command reads from its standard input}).
-
-In the record for \ttt{comm} the first two clauses describe \ttt{comm}
-invocations with options \ttt{-1} (or \ttt{-2}) and \ttt{-3}. In the
-first case, since the first and third columns are suppressed,
-\ttt{comm} can be considered \sta by regarding its first file argument
-a static ``configuration'' input. \kk{Does this need more
-  explanation?} The general case (that includes \ttt{comm} invocations
-without any options) is captured by the third clause. There,
-\ttt{comm} is classified as \pur, since it needs to wait until it
-reads both files completely before it can output its results. Its
-inputs are its first and second arguments (excluding the options), and
-its output is produced in \ttt{stdout}.
+\noindent
+The first two clauses describe \ttt{comm} invocations with options \ttt{-1} (or \ttt{-2}) and \ttt{-3}.
+In the first case, since the first and third columns are suppressed, \ttt{comm} can be considered in \sta by regarding its first file argument as a static ``configuration'' input;
+  this input accompanies every replicated instance of the command executing in parallel.
+The general case, which includes \ttt{comm} invocations without any options, is captured by the third clause.
+There, \ttt{comm} is classified as \pur, since it needs to wait until it reads both files completely before it can output its results.
+Its inputs are its first and second file arguments (\ie excluding any options), and its output is produced in \ttt{stdout}.
 
 %%  This case is described in the third clause of the annotation
 %% record, where \ttt{comm} is classified as \pur, since it needs to wait
@@ -1217,9 +1165,6 @@ its output is produced in \ttt{stdout}.
 %% be considered \sta by regarding its first file argument a static
 %% ``configuration'' input. \kk{Does this need more explanation?}
 
-\kk{We could add the grammar of PAL in an appendix if we want}
-
-\tr{The complete syntax of the PAL is shown in (Fig.~\ref{fig:dsl})}
 %% \kk{I
 %%   think that the language definition should be in a technical report,
 %%   and here we should only give intuition and the \ttt{comm} example}
@@ -1301,21 +1246,19 @@ its output is produced in \ttt{stdout}.
   what do you think?}}
 
 
-\heading{Parallelizable Pure Commands}
+\heading{Providing Combinators}
+For most commands, the annotations are enough to allow parallelization: 
+  commands either fall under \sta, having straightforward combiners, or fall under a subset of \pur that can be parallelized using divide-and-conquer techniques~\sx{cmd}.
+Unfortunately, there are commands with less trivial tactics---after all, \unix commands are Turing-complete programs and failing to plan for this generality would inhibit \sys's usefulness.
 
-In addition to the commands in \sta that can be parallelized in a
-straightforward way, there also exists a subclass of commands in \pur
-that can be parallelized using divide-and-conquer techniques (as
-mentioned in \cref{cmd}). \kk{Maybe show an example of map-fold for
-  sort or wc. Either here or in \cref{cmd}.} In order to support the
-parallelization of arbitrary commands in this category, \sys allows
-command developers to provide custom map and fold steps for them,
-where the map is in \sta and the fold in \pur, and their composition
-produces the same output with the initial command. \sys can then
-replace occurrences of these commands with their map and fold parts,
-enabling their parallelization. \todo{We have defined these primitives
-  for most of the parallelizable pure commands in coreutils, providing
-  a foundation for this effort.}
+To support the parallelization of arbitrary commands in \pur, \sys allows command developers to provide custom $map$ and $fold$ functions.
+In line with \unix philosophy, these functions can be written in any language as long as they conform to a few invariants:
+  (i) $map$ in \sta and $fold$ is in \pur,
+  (ii) $map$ can consume (or extend) the output of the original command and  $fold$ can consume (and combine) the results of multiple $map$ invocations, and
+  (iii) their composition produces the same output with the original command.
+If these invariants are met, after DFG analysis~\sx{ir} \sys can replace occurrences of these commands with their $map$ and $fold$ equivalents, enabling their parallelization.
+
+\sys defines the combiners for most of the POSIX and Coreutils commands in \pur, which operate as both \sys's standard library and exemplar for community attempts to tackle other commands.
 
 
 \tr{\kk{I am not sure a general interface is so easy to design. It needs
@@ -3152,9 +3095,62 @@ Experiments with complex pipelines show substantial speedups and the ability to 
 %% \end{acks}
 
 
+
 %% Bibliography
 \bibliography{./bib}
 
+\appendix
+
+\newpage
+
+\section{Annotation Language Grammar}
+\label{alg}
+
+% \begin{figure}
+%   \centering
+%   \begin{grammar}
+%     <option> ::= `-' <string>
+% 
+%     <category> ::= `stateless' | `pure' | ...
+% 
+%     <maybe-int> ::= | <int>
+% 
+%     <arg> ::= `args[' <int> `]'
+% 
+%     <args> ::= <arg>
+%     \alt `args[' <maybe-int> `:' <maybe-int> `]'
+% 
+%     <input> ::= `stdin' | <args>
+% 
+%     <inputs> ::= <input>
+%     \alt <input> `,' <inputs>
+% 
+%     <output> ::= `stdout' | <arg>
+% 
+%     <option-pred> ::= <option>
+%     \alt `value' <option> = <string>
+%     \alt `not' <option-pred>
+%     \alt <option-pred> `or' <option-pred>
+%     \alt <option-pred> `and' <option-pred>
+% 
+%     <assignment> ::= `(' <category>, `[' <inputs> `]' , <output> `)'
+% 
+%     <predicate> ::= <option-pred> `=>' <assignment>
+% 
+%     <pred-list> ::= `|' <predicate> <pred-list>
+%     \alt `|' `otherwise' `=>' <assignment>
+% 
+%     <command> ::= <name> `\{' <pred-list> `\}'
+% 
+%     <command-list> ::= <command>
+%     \alt <command> <command-list>
+%   \end{grammar}
+%   \caption{
+%   \textbf{Parallelizability description language.}
+%     The DSL captures important information regarding the parallelizability of a command.
+%   }
+%   \label{fig:dsl}
+% \end{figure}
 
 %% %% Appendix
 %% \appendix
