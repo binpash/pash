@@ -1369,7 +1369,7 @@ in the graph are its outputs.
 A node $f$ of the graph represents a function from a (possibly empty)
 list of input streams to a list of output streams $f : [D\kstar] \to
 [D\kstar]$, where $D$ represents the basic data type of a line of
-characters. This representation captures the majority of shell
+characters. \km{Is the number of input/output streams variable? If $m$ is the number of input streams, is the number of output streams a function of $m$? If this the case, then it is not captured by this type. Maybe it would help to show a couple of example operators together with the types of their denotations. A graphical representation (as in Fig.~\ref{fig:parallelization-transformation} would also be nice.} This representation captures the majority of shell
 commands. We require that the function $f$ is monotone w.r.t.\ a
 lifting of the prefix order for a sequence of inputs \kk{Formalize
   this lifting if essential for later development}.
@@ -1387,7 +1387,7 @@ possible exception of static input files, and produce one output
 file. These commands can be represented as functions of type $f :
 D\kstar \times [D\kstar] \to D\kstar$, where the first argument
 represents the concatenation of the inputs that are consumed one at a
-time and the second argument represents the static inputs. The
+time and the second argument represents the static inputs. \km{Again, a graphical presentation of these operators would be useful. Maybe with a way to distinguish between between streaming inputs and static inputs? Btw, this distinction is not completely clear to me at this point. Clearly, not all programs that we can write are streaming (monotone).} The
 quintessential example of \todo{one-input-output} commands is
 \ttt{cat}, that consumes its inputs one at a time, producing their
 concatenation as output. We focus on these commands because a large
@@ -1561,10 +1561,10 @@ work, we consider lines as the data quantum, so only commands that are
 stateless regarding lines (or any finer granularity such as
 characters) are considered stateless. Formally, a
 \todo{one-input-output} command $f$ is stateless if it is ``linear''
-with respect to concatenation, \ie satisfying the following equation:
+with respect to concatenation \km{It commutes with the operation of concatenation. This is the definition of (semigroup) homomorphism. I am not sure that linearity is an appropriate term.}, \ie satisfying the following equation:
 
 \[
-\forall x, x', s, f(x.x', s) = f(x, s).f(x', s)
+\forall x, x', s, f(x \cdot x', s) = f(x, s) \cdot f(x', s)
 \]
 
 %% This is a nice characterization, which I think is true in most
@@ -1584,14 +1584,14 @@ pure commands $f$ can be implemented as a combination of functions map
 $m$ and an associative fold $f'$, satisfying the following equation:
 
 \[
-\forall x, x', s, f(x.x', s) = f'(m(x, s).m(x', s), s)
+\forall x, x', s, f(x \cdot x', s) = f'(m(x, s) \cdot m(x', s), s)
 \]
 
 \noindent
 This means that we get the same output by applying $f$ to a
 concatenation of two inputs $x, x'$, or by applying the fold
 function $f'$ to the concatenation of the outputs produced by applying
-map $m$ to each of these inputs.
+map $m$ to each of these inputs. \km{We had also discussed here the case of operators that can be described as associative and commutative functions on the data (e.g., sum). In this case the parallelization has the flavor of data parallelism: one can split the input stream in an arbitrary way (e.g., randomly or using some other load-balancing scheme) and merge the outputs. For the more broad class of associative operations (e.g., sort), the formulation of this paragraph makes perfect sense. I just want to mention that this feels a lot more like \textbf{batching} than map-reduce-like data parallelization.}
 
 \heading{Parallelization Transformations}
 %
@@ -1603,13 +1603,9 @@ $n$ input streams to one of them, and commutes the \ttt{cat} node
 after them to concatenate their outputs and transfer them to
 $v'$. Since each incoming edge represents a stream of data $x_i :
 D^*$, and the only behaviour of a dataflow graph is its output, this
-optimization $ v(x_1.x_2...x_n, s) \Rightarrow v(x_1, s).v(x_2,
-s)...v(x_n, s)$ can be shown to preserve the behaviour of the
-graph. Furthermore, it can be straightforwardly extended to pure
+optimization $v(x_1 \cdot x_2 \cdots x_n, s) \Rightarrow v(x_1, s) \cdot v(x_2, s) \cdots v(x_n, s)$ can be shown to preserve the behavior of the graph. Furthermore, it can be straightforwardly extended to pure
 commands that can be implemented by a map-fold pair $(m, r)$ as $
-v(x_1.x_2...x_n, s) \Rightarrow r(m(x_1, s).m(x_2, s)...m(x_n, s),
-s)$. A visual representation of this transformation can be seen in
-\Cref{fig:parallelization-transformation}.
+v(x_1 \cdot x_2 \cdots x_n, s) \Rightarrow r(m(x_1, s) \cdot m(x_2, s) \cdots m(x_n, s), s)$. A visual representation of this transformation can be seen in \Cref{fig:parallelization-transformation}.
 
 \begin{figure}[t]
 \centering
