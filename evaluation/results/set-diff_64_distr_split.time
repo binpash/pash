@@ -1,0 +1,16 @@
+kill: (9356): No such process
+kill: (9357): No such process
+kill: (9358): No such process
+Total nodes after optimization: 635
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 252
+Optimization time: 4336.824  ms
+Backend time: 17.387  ms
+Execution time: 206813.909  ms
+Compilation time: 30.035  ms
+
+real	3m31.594s
+user	100m8.351s
+sys	9m49.760s
+Files ../evaluation//intermediary//set-diff_seq_output and /tmp/distr_output/0 are identical

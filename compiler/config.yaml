@@ -1,5 +1,6 @@
 runtime:
     split_binary: evaluation/tools/split
+    auto_split_binary: evaluation/tools/auto-split.sh
 distr_planner:
     optimized_script_filename: /tmp/optimized_script.sh
     temp_ir_prefix: /tmp/dish_temp_ir
@@ -8,7 +9,7 @@ distr_planner:
     drain_stream_executable_path: evaluation/tools/drain_stream.sh
     output_dir: /tmp/distr_output
     fan_out: 1
-    batch_size: 10000
+    batch_size: 1000
     distr_backend: false
     nodes:
       - "127.0.0.1"

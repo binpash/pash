@@ -35,6 +35,7 @@ def execute(graph_json, output_dir, output_script_name, output_optimized, args):
 def shell_backend(graph_json, output_dir, args):
     clean_up_graph = args.clean_up_graph
     drain_streams = args.drain_streams
+    auto_split = args.auto_split
     # print("Translate:")
     # print(graph_json)
     fids = graph_json["fids"]
@@ -59,7 +60,8 @@ def shell_backend(graph_json, output_dir, args):
     output_script_commands.append(mkfifo_com)
 
     ## Execute nodes
-    processes = [execute_node(node, shared_memory_dir, drain_streams) for node_id, node in nodes.items()]
+    processes = [execute_node(node, shared_memory_dir, drain_streams, auto_split)
+                 for node_id, node in nodes.items()]
     output_script_commands += processes
 
     ## Collect outputs
@@ -119,11 +121,11 @@ def make_fifos(fids):
     return "\n".join(mkfifos)
     # return 'mkfifo {}'.format(" ".join(['"{}"'.format(fid) for fid in fids]))
 
-def execute_node(node, shared_memory_dir, drain_streams):
-    script = node_to_script(node, shared_memory_dir, drain_streams)
+def execute_node(node, shared_memory_dir, drain_streams, auto_split):
+    script = node_to_script(node, shared_memory_dir, drain_streams, auto_split)
     return "{} &".format(script)
 
-def node_to_script(node, shared_memory_dir, drain_streams):
+def node_to_script(node, shared_memory_dir, drain_streams, auto_split):
     # print(node)
 
     inputs = node["in"]
@@ -136,7 +138,7 @@ def node_to_script(node, shared_memory_dir, drain_streams):
         assert(len(inputs) == 1)
         batch_size = command.split(" ")[1]
         split_outputs = command.split(" ")[2:]
-        split_string = new_split(inputs[0], split_outputs, batch_size)
+        split_string = new_split(inputs[0], split_outputs, batch_size, auto_split)
         script.append(split_string)
     else:
         ## All the other nodes
@@ -167,9 +169,13 @@ def node_to_script(node, shared_memory_dir, drain_streams):
         # print("Script:", script)
     return " ".join(script)
 
-def new_split(input_file, outputs, batch_size):
-    split_bin = '{}/{}'.format(config.DISH_TOP, config.config['runtime']['split_binary'])
-    command_no_outputs = '{} "{}" {}'.format(split_bin, input_file, batch_size)
+def new_split(input_file, outputs, batch_size, auto_split):
+    if(auto_split):
+        auto_split_bin = '{}/{}'.format(config.DISH_TOP, config.config['runtime']['auto_split_binary'])
+        command_no_outputs = '{} "{}"'.format(auto_split_bin, input_file, batch_size)
+    else:
+        split_bin = '{}/{}'.format(config.DISH_TOP, config.config['runtime']['split_binary'])
+        command_no_outputs = '{} "{}" {}'.format(split_bin, input_file, batch_size)
     return ' '.join([command_no_outputs] + outputs)
 
 def drain_stream():

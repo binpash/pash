@@ -32,46 +32,57 @@ experiments = ["minimal_grep",
                "spell",
                "shortest_scripts",
                "diff",
+               "bigrams",
                "alt_bigrams",
-               "set-diff"]
+               "set-diff",
+               "double_sort"]
 
 pretty_names = {"minimal_grep" : "grep",
                 "minimal_sort" : "sort",
                 "wf" : "wf",
                 "topn" : "top-n",
                 "grep" : "grep-light",
-                "bigram" : "bi-grams",
+                "bigrams" : "bi-grams",
                 "alt_bigrams" : "optimized bi-grams",
                 "spell" : "spell",
                 "shortest_scripts" : "shortest-scripts",
                 "diff" : "diff",
-                "set-diff" : "set-diff"}
+                "set-diff" : "set-diff",
+                "double_sort" : "sort-sort"}
 
-structures = {"minimal_grep" : "$3\\times$\\tsta",
+structures = {"minimal_grep" : "$3\\times\\tsta$",
               "minimal_sort" : "$\\tsta, \\tpur$",
               "wf" : "$3\\times\\tsta, 3\\times\\tpur$",
               "topn" : "$2\\times\\tsta, 4\\times\\tpur$",
-              "grep" : "$3\\times$\\tsta",
-              "bigram" : "\\todo{TODO}",
-              "alt_bigrams" : "$3\\times$\\tsta, \\tpur",
+              "grep" : "$3\\times\\tsta$",
+              "bigrams" : "$3\\times\\tsta, 3\\times\\tpur$",
+              "alt_bigrams" : "$3\\times\\tsta, \\tpur$",
               "spell" : "$4\\times\\tsta, 3\\times\\tpur$",
               "shortest_scripts" : "$5\\times\\tsta, 2\\times\\tpur$",
               "diff" : "$2\\times\\tsta, 3\\times\\tpur$",
-              "set-diff" : "$5\\times\\tsta, 2\\times\\tpur$"}
+              "set-diff" : "$5\\times\\tsta, 2\\times\\tpur$",
+              "double_sort" : "$\\tsta, 2\\times\\tpur$"}
 
 highlights = {"minimal_grep" : "complex NFA regex",
               "minimal_sort" : "\\tti{sort}ing",
               "wf" : "double \\tti{sort}, \\tti{uniq} reduction",
               "topn" : "double \\tti{sort}, \\tti{uniq} reduction",
-              "grep" : "\todo{light computation}",
-              "bigram" : "stream shifting and merging",
+              "grep" : "\\todo{light computation}",
+              "bigrams" : "stream shifting and merging",
               "alt_bigrams" : "optimized version of bigrams",
               "spell" : "comparisons (\\tti{comm})",
               "shortest_scripts" : "\\todo{extensive file-system operation}",
               "diff" : "non-parallelizable \\tti{diff}ing",
-              "set-diff" : "two pipelines merging to a \\tti{comm}"}
+              "set-diff" : "two pipelines merging to a \\tti{comm}",
+              "double_sort" : "parallelizable \\tpur after \\tpur"}
+
+custom_scaleup_plots = {"set-diff" : ["eager", "blocking-eager", "no-eager"],
+                        "spell" : ["split", "eager"],
+                        "bigrams" : ["split", "eager"]}
+
 
 input_filename_sizes = {"1G": "1~GB",
+                        "3G": "3~GB",
                         "10G": "10~GB",
                         "100G": "100~GB",
                         "1M": "1~MB",
@@ -114,10 +125,12 @@ def read_distr_execution_time(filename):
                 milliseconds = line.split(": ")[1].split(" ")[0]
                 times.append(float(milliseconds))
         f.close()
+        if(len(times) == 0):
+            raise ValueError
         return sum(times)
     except:
         print("!! WARNING: Filename:", filename, "not found!!!")
-        return 0
+        raise ValueError
 
 def read_distr_total_compilation_time(filename):
     try:
@@ -136,6 +149,18 @@ def read_distr_total_compilation_time(filename):
         print("!! WARNING: Filename:", filename, "not found!!!")
         return 0
 
+def read_distr_command_number(filename):
+    try:
+        with open(filename) as f:
+            for line in f:
+                if(line.startswith("Total nodes after optimization:")):
+                    number_of_commands = int(line.split(": ")[1])
+                    return number_of_commands
+            return "\\todo{X}"
+    except:
+        print("!! WARNING: Filename:", filename, "not found!!!")
+        return "\\todo{X}"
+
 def check_output_diff_correctness_for_experiment(filename):
     try:
         with open(filename) as f:
@@ -148,37 +173,23 @@ def check_output_diff_correctness_for_experiment(filename):
         print("!! WARNING: Filename:", filename, "not found!!!")
         return False
 
+def collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers):
+    numbers = [read_distr_execution_time('{}{}_{}'.format(prefix, n, suffix))
+               for n in scaleup_numbers]
+    return numbers
+
 def collect_experiment_scaleup_times(prefix, scaleup_numbers):
     ## Since we have the same input size in all cases, only use the
     ## one sequential execution for the sequential time
     seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, scaleup_numbers[0]))
                    for _ in scaleup_numbers]
-    distr_numbers = [read_distr_execution_time('{}{}_distr.time'.format(prefix, n))
-                     for n in scaleup_numbers]
+    distr_numbers = collect_distr_experiment_execution_times(prefix, 'distr.time', scaleup_numbers)
     compile_numbers = [read_distr_total_compilation_time('{}{}_distr.time'.format(prefix, n))
                        for n in scaleup_numbers]
-    # distr_numbers = [read_time('{}{}_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
-    # cat_numbers = [read_time('{}{}_cat_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
-    # compile_numbers = [read_time('{}{}_compile_distr.time'.format(prefix, n)) for n in all_scaleup_numbers]
     return (seq_numbers, distr_numbers, compile_numbers)
-
-def collect_experiment_no_eager_times(prefix, scaleup_numbers):
-    no_eager_distr_numbers = [read_distr_execution_time('{}{}_distr_no_eager.time'.format(prefix, n))
-                              for n in scaleup_numbers]
-    # no_eager_compile_numbers = [read_distr_total_compilation_time('{}{}_distr_no_eager.time'.format(prefix, n))
-    #                             for n in scaleup_numbers]
-    no_task_par_eager_distr_numbers = [read_distr_execution_time('{}{}_distr_no_task_par_eager.time'.format(prefix, n))
-                                       for n in scaleup_numbers]
-    # no_eager_compile_numbers = [read_distr_total_compilation_time('{}{}_distr_no_eager.time'.format(prefix, n))
-    #                             for n in scaleup_numbers]
-    return (no_eager_distr_numbers, no_task_par_eager_distr_numbers)
 
 def collect_experiment_speedups(prefix, scaleup_numbers):
     seq_numbers, distr_numbers, compile_numbers = collect_experiment_scaleup_times(prefix, scaleup_numbers)
-    # print(scaleup_numbers)
-    # print(seq_numbers)
-    # print(distr_numbers)
-    # print(compile_numbers)
     distr_speedup = [safe_zero_div(seq_numbers[i], t) for i, t in enumerate(distr_numbers)]
     compile_distr_speedup = [safe_zero_div(seq_numbers[i], t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
     return (distr_speedup, compile_distr_speedup)
@@ -189,17 +200,16 @@ def collect_baseline_experiment_speedups(prefix, scaleup_numbers, base_seq):
     speedup = [safe_zero_div(base_seq, t) for t in seq_numbers]
     return speedup
 
-
-def collect_experiment_no_eager_speedups(prefix, scaleup_numbers):
+def collect_distr_experiment_speedup(prefix, suffix, scaleup_numbers):
     seq_numbers, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
-    no_eager_distr_numbers, no_task_par_eager_distr_numbers = collect_experiment_no_eager_times(prefix, scaleup_numbers)
-    no_eager_distr_speedup = [safe_zero_div(seq_numbers[i], t)
-                              for i, t in enumerate(no_eager_distr_numbers)]
-    # no_eager_compile_distr_speedup = [seq_numbers[i] / (t + no_eager_compile_numbers[i])
-    #                                   for i, t in enumerate(no_eager_distr_numbers)]
-    no_task_par_eager_distr_speedup = [safe_zero_div(seq_numbers[i], t)
-                                       for i, t in enumerate(no_task_par_eager_distr_numbers)]
-    return (no_eager_distr_speedup, no_task_par_eager_distr_speedup)
+    distr_numbers = collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers)
+    distr_speedup = [safe_zero_div(seq_numbers[i], t) for i, t in enumerate(distr_numbers)]
+    return distr_speedup
+
+def collect_experiment_command_number(prefix, suffix, scaleup_numbers):
+    command_numbers = [read_distr_command_number('{}{}_{}'.format(prefix, n, suffix))
+                       for n in scaleup_numbers]
+    return command_numbers
 
 def check_output_diff_correctness(prefix, scaleup_numbers):
     wrong_diffs = [n for n in scaleup_numbers
@@ -227,19 +237,54 @@ def collect_scaleup_times(experiment, results_dir):
     ## Plot speedup
     ax.set_ylabel('Speedup')
     ax.set_xlabel('Level of Parallelism')
-    # total_distr_speedup = [seq_numbers[i] / (t + compile_numbers[i] + cat_numbers[i]) for i, t in enumerate(distr_numbers)]
-    # ax.plot(all_scaleup_numbers, seq_numbers, '-o', linewidth=0.5, label='Sequential')
-    # ax.plot(all_scaleup_numbers, distr_numbers, '-o', linewidth=0.5, label='Distributed')
-    ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, label='Parallel')
-    # ax.plot(all_scaleup_numbers, compile_distr_speedup, '-*', linewidth=0.5, label='+ Compile')
+
+    ## In the bigrams experiment we want to also have the alt_bigrams plot
+    if(experiment == "bigrams"):
+        opt_prefix = '{}/{}_'.format(results_dir, "alt_bigrams")
+        opt_distr_speedup, _ = collect_experiment_speedups(opt_prefix, all_scaleup_numbers)
+        ax.plot(all_scaleup_numbers, opt_distr_speedup, '-P', color='magenta', linewidth=0.5, label='Opt. Parallel')
+
+    if(not (experiment in custom_scaleup_plots) or
+       (experiment in custom_scaleup_plots and
+        "split" in custom_scaleup_plots[experiment])):
+        try:
+            auto_split_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                                        'distr_auto_split.time',
+                                                                        all_scaleup_numbers)
+            ax.plot(all_scaleup_numbers, auto_split_distr_speedup, '-D', color='tab:red', linewidth=0.5, label='Par + Split')
+            split_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                                   'distr_split.time',
+                                                                   all_scaleup_numbers)
+            ax.plot(all_scaleup_numbers, split_distr_speedup, '-h', color='brown', linewidth=0.5, label='Par + B. Split')
+        except ValueError:
+            pass
+
+    if(not (experiment in custom_scaleup_plots) or
+       (experiment in custom_scaleup_plots and
+        "eager" in custom_scaleup_plots[experiment])):
+        ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, label='Parallel')
 
     ## Add the no eager times if they exist
-    try:
-        no_eager_distr_speedup, no_task_par_eager_distr_speedup = collect_experiment_no_eager_speedups(prefix, all_scaleup_numbers)
-        ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='No Eager')
-        ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Blocking Eager')
-    except:
-        pass
+    if(not (experiment in custom_scaleup_plots) or
+       (experiment in custom_scaleup_plots and
+        "blocking-eager" in custom_scaleup_plots[experiment])):
+        try:
+            no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                                               'distr_no_task_par_eager.time',
+                                                                               all_scaleup_numbers)
+            ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Blocking Eager')
+        except ValueError:
+            pass
+    if(not (experiment in custom_scaleup_plots) or
+       (experiment in custom_scaleup_plots and
+        "no-eager" in custom_scaleup_plots[experiment])):
+        try:
+            no_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                                      'distr_no_eager.time',
+                                                                      all_scaleup_numbers)
+            ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='No Eager')
+        except ValueError:
+            pass
     # ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
     # ax.plot(all_scaleup_numbers, all_scaleup_numbers, '-', color='tab:gray', linewidth=0.5, label='Ideal')
 
@@ -283,11 +328,20 @@ def plot_sort_with_baseline(results_dir):
     ax.set_xlabel('Level of Parallelism')
     ax.plot(all_scaleup_numbers, sort_distr_speedup, '-o', linewidth=0.5, label='Pash')
     ## Add the no eager times if they exist
+    # try:
+    #     no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(sort_prefix,
+    #                                                                         'distr_no_task_par_eager.time',
+    #                                                                         all_scaleup_numbers)
+    #     ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Pash - Blocking Eager')
+    # except ValueError:
+    #     pass
+
     try:
-        no_eager_distr_speedup, no_task_par_eager_distr_speedup = collect_experiment_no_eager_speedups(sort_prefix, all_scaleup_numbers)
+        no_eager_distr_speedup = collect_distr_experiment_speedup(sort_prefix,
+                                                                   'distr_no_eager.time',
+                                                                   all_scaleup_numbers)
         ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='Pash - No Eager')
-        # ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Pash - Blocking Eager')
-    except:
+    except ValueError:
         pass
 
     ax.plot(all_scaleup_numbers, baseline_sort_distr_speedup[1:], '-p', linewidth=0.5, label='sort --parallel')
@@ -350,7 +404,7 @@ def generate_table_header():
     header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} lllllll}']
     header += ['\\toprule']
     header += ['Script ~&~ Structure & Input &'
-               'Seq Time & Script Size(16, 64) &'
+               'Seq Time & \\#Nodes(16, 64) &'
                'Compile Time (16, 64) & Highlights \\\\']
     header += ['\\midrule']
     return "\n".join(header)
@@ -378,7 +432,10 @@ def generate_experiment_line(experiment):
     seq_time_seconds = format_time_seconds(seq_times[0])
     # seq_time_seconds = seq_times[0] / 1000
     line += [seq_time_seconds, '&']
-    line += ['\\todo{\\#Commands}', '&']
+
+    commands_16, commands_64 = collect_experiment_command_number(experiment_results_prefix,
+                                                                 'distr.time', [16, 64])
+    line += ['{}\\qquad {}'.format(commands_16, commands_64), '&']
 
     ## Collect and output compile times
     compile_time_16_milliseconds = compile_times[1]
@@ -511,6 +568,19 @@ def format_wrong_output(output_diff, experiment, mode):
         return [' !! -- WARNING -- !! {}'.format(formatted_output_diff)]
     else:
         return []
+
+## Set the fonts to be larger
+SMALL_SIZE = 22
+MEDIUM_SIZE = 24
+BIGGER_SIZE = 30
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=MEDIUM_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 ## Plot microbenchmarks
 diff_results = []

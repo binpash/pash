@@ -1,9 +1,16 @@
-Optimization time: 5.069  ms
-Backend time: 0.484  ms
-Execution time: 741127.701  ms
-Compilation time: 18.85  ms
+kill: (39835): No such process
+kill: (39836): No such process
+kill: (39837): No such process
+Total nodes after optimization: 12
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 2
+Optimization time: 5.153  ms
+Backend time: 0.461  ms
+Execution time: 742156.283  ms
+Compilation time: 18.953  ms
 
-real	12m21.505s
-user	23m20.744s
-sys	4m3.915s
+real	12m22.537s
+user	23m20.486s
+sys	4m6.889s
 Files ../evaluation//intermediary//wf_seq_output and /tmp/distr_output/0 are identical
