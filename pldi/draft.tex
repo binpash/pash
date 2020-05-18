@@ -59,17 +59,19 @@
 \newcommand{\cn}[1]{\mbox{\textcircled{\footnotesize #1}}}
 \newcommand{\tcn}[1]{\mbox{\textcircled{\scriptsize #1}}}
 
-\newcommand{\pur}{\cn{\textsc{P}}\xspace}
 \newcommand{\sta}{\cn{\textsc{S}}\xspace}
-\newcommand{\dfs}{\cn{\textsc{F}}\xspace}
+\newcommand{\pur}{\cn{\textsc{P}}\xspace}
+\newcommand{\npu}{\cn{\textsc{N}}\xspace}
 \newcommand{\sid}{\cn{\textsc{E}}\xspace}
+\newcommand{\dfs}{\cn{\textsc{F}}\xspace}
 \newcommand{\irr}{\cn{\textsc{I}}\xspace}
 
-\newcommand{\tpur}{\tcn{\textsc{P}}\xspace}
 \newcommand{\tsta}{\tcn{\textsc{S}}\xspace}
-\newcommand{\tdfs}{\tcn{\textsc{F}}\xspace}
+\newcommand{\tpur}{\tcn{\textsc{P}}\xspace}
+\newcommand{\tnpu}{\tcn{\textsc{N}}\xspace}
 \newcommand{\tsid}{\tcn{\textsc{E}}\xspace}
 \newcommand{\tirr}{\tcn{\textsc{I}}\xspace}
+\newcommand{\tdfs}{\tcn{\textsc{F}}\xspace}
 
 % For comments
 \newcommand{\eat}[1]{}
@@ -900,12 +902,12 @@ In this order, some classes can be thought as subsets of the next---\eg all stat
 }
 \begin{tabular*}{\columnwidth}{l @{\extracolsep{\fill}} llll}
 \toprule
-Class            &  Key    & Example Commands                            & Coreutils       & POSIX       \\
+Class                    &  Key    & Examples                                    & Coreutils              & POSIX       \\
 \midrule
-Stateless        & ~\tsta  & \tti{tr},   \tti{cat},    \tti{grep}        &  22 (21.1\%)    & 22 (21.1\%)          \\  % 22
-Pure             & ~\tpur  & \tti{sort}, \tti{wc},     \tti{uniq}        &  21 (20.1\%)    & 21 (20.1\%)          \\  % 21
-% File-System~     & ~\tdfs  & \tti{cp},   \tti{ln},     \tti{rm}          &  27 (25.9\%)    & 27 (25.9\%)          \\  % 27
-Side-effectful   & ~\tsid  & \tti{env},  \tti{cp}, \tti{whoami}          &  57 (58.8\%)      & 57 (58.8\%)            \\  % 25
+Stateless                & ~\tsta  & \tti{tr},   \tti{cat},    \tti{grep}        &  22 (21.1\%)           & 22 (21.1\%)          \\  % 22
+Parallelizable Pure      & ~\tpur  & \tti{sort}, \tti{wc},     \tti{uniq}        &  \todo{21 (20.1\%)}    & 21 (20.1\%)          \\  % 21
+Non-parallelizable Pure  & ~\tnpu  & \tti{sha1sum}                               &  \todo{27 (25.9\%)}    & 27 (25.9\%)          \\  % 27
+Side-effectful           & ~\tsid  & \tti{env},  \tti{cp}, \tti{whoami}          &  57 (58.8\%)           & 57 (58.8\%)            \\  % 25
 % Irreversible     & ~\tirr  & \tti{exit}, \tti{lpr},    \tti{reboot}      &  5  (0.4\%)     & 5  (0.4\%)           \\  % 5
 % \midrule
 % Shell PL Constructs             &                         &                  \\
@@ -920,7 +922,7 @@ Side-effectful   & ~\tsid  & \tti{env},  \tti{cp}, \tti{whoami}          &  57 (
 % \heading{POSIX, GNU Core-utils, and beyond}
 
 \heading{Stateless Commands}
-The first class, ~\sta, contains commands that operate on individual elements of a data stream, without maintaining state across invocations.
+The first class, \sta, contains commands that operate on individual elements of a data stream, without maintaining state across invocations.
 These are commands that can be expressed as a purely functional $map$ or $filter$---\eg \ttt{grep} filters out individual lines and \ttt{basename} removes a path prefix from a string.
 Stateless commands may produce multiple elements---\eg \ttt{tr} may insert {\sc NL} tokens---but when they receive empty input they return empty output.
 Workloads that use only stateless commands are trivial to parallelize:
@@ -941,49 +943,47 @@ However, it turns to be  useful for cases with very large stream elements (long 
 \nv{Can we please do this in 4? The difference in size between \S3 and \S4 is
 concerning.. }
 
-\heading{Pure Commands}
-The second class,~ \pur, contains commands that respect functional purity---\ie same outputs for same inputs---but maintain internal state across their entire pass.
+\heading{Parallelizable Pure Commands}
+The second class, \pur, contains commands that respect functional purity---\ie same outputs for same inputs---but maintain internal state across their entire pass.
 The details of this state and its propagation during element processing affect their parallelizability characteristics.
 Some commands are easy to parallelize, because they maintain trivial state and are commutative---\eg \ttt{wc} simply maintains a counter.
 Other commands such as \ttt{sort}, maintain more complex invariants that have to be taken into account when merging partial results.
-Commands such as \ttt{sha1sum} maintain even more complex state that has to be updated sequentially.
+
+% \begin{figure}[t]
+% \centering
+% \includegraphics[width=0.15\textwidth]{\detokenize{./figs/dish_classes.pdf}}
+% \caption{
+%   \textbf{\sys's parallelizability classes.}
+% }
+% \label{fig:example}
+% \end{figure}
 
 Often these commands do not operate in an online fashion, but need to block until the end of a stream.
 A typical example of this is \ttt{sort}, which cannot start emitting results before the last input element has been consumed.
 \todo{Such constraints affect task parallelism, but not data parallelism}:
   \ttt{sort} can be parallelized significantly using divide-and-conquer techniques---\ie by encoding it as a group of (parallel) $map$ functions followed by a $fold$ that merges the results.
 
-\heading{File-system Commands}
-The third class contains commands that access the file-system~\dfs.
-This is the largest class, because the file (and file-system) abstraction is central to the \unix design and philosophy~\cite{unix}.
-In fact, \unix uses the file-system as a proxy to several file-unrelated operations such as access control and device driving. % is grafted upon the file-system.
+\heading{Non-parallelizable Pure Commands}
+The third class, \npu, contains commands that, while purely functional, cannot be parallelized.
+This is because their internal state depends on prior state in the same pass in non-trivial ways. % should we say something about state machines?
+For example, hashing commands such as \ttt{sha1sum} maintain complex state that has to be updated sequentially.
+If parallelized on a single input, each \todo{stage} would need to repeat the work of all the previous stage foregoing any parallelism benefits.
 
-% TODO: mention that some commands fail to comply with the interface---for example, csplit could be split followed by a redirection to files.
-Commands in \dfs are distributable for many reasons, as evidenced by a long history of distributed \unix file-system clones~\cite{catalogue}.
-Some of these offer the semantics of the \unix file-system---hierarchies, protection bits---and a POSIX virtualization layer that enables support for all the commands in \dfs.
-The vast majority of these commands are control-plane operations that act on identifiers~\sx{bg}---\eg \ttt{touch} for creating a file or \ttt{chgrp} for changing group ownership.
-% these operate by changing an inode
-Data-plane operations on files go explicitly through stream-redirection operations~\sx{bg}.
-Operations using different identifiers pose no problems;
-  operations sharing a single identifier might introduce problems---but these risks exist even in the non-distributed case.
-Such pathological cases are indeed possible, but are rare enough to not pose a concern---and have been, since \unix's inception~\cite[\S3.6]{unix}.
-
-% \unix itself does not offer any guarantees when a file is accessed concurrently on a single computer.
+It is worth noting that while these commands are not parallelizable for a single input, they are still parallelizable across different inputs.
+For example, a web crawler involving hash generation for comparing individual pages would allow \ttt{sha1sum} to proceed in parallel for different pages.
 
 \heading{Side-effectful Commands}
-Another large class of commands are ones that have side-effects to memory~\sid.
-Because of timesharing and multi-tasking---\ie the fact that many users can operate multiple terminals on single \unix machine---a subset of these commands are devoted to accessing and sharing memory such as environment variables and shell parsing flags.
+The last class, \sid, are commands that have side-effects across the system---for example, updating environment variables, interacting with the filesystem, and accessing the network.
+Such commands are not parallelizable without finer-grained concurrency control mechanisms that can detect side-effects across the system.
 
-A command in \sid will require some form of concurrency control to distribute property.
-However, because its side-effects stay within the distributed \unix environment, they can be manipulated using a transactional control mechanism---including optimistic and multi-versioning schemes that have the ability to roll-back side-effects.
+This is the largest class because the file and file-system abstractions are central to the \unix design and philosophy~\cite{unix}.
+In fact, \unix uses the file-system as a proxy to several file-unrelated operations such as access control and device driving. % is grafted upon the file-system.
 
-The vast majority of these commands (a ratio of 21:4) only \emph{read} values, and usually values that are never written by user code.
-For example, \ttt{date}, \ttt{uname}, and \ttt{finger} are all commands that interface with kernel- or hardware-generated information that is not writable by user-space scripts.
-The benefits of a scalable transactional scheme are even greater when the workload features only or mostly read accesses.
-
-\heading{Irreversibly Side-effectful Commands}
-Finally, a few commands (about 0.4\%) have side-effects outside \unix---\eg by printing a file with \ttt{lpr} or restarting with \ttt{reboot}.
-Such commands are not distributable---they often have to refer to a single location---and have to be guarded with pessimistic transaction control mechanism that locks these resources.
+\nv{
+  A significant part of these commands (a ratio of 21:4) only \emph{read} values, and usually values that are never written by user code.
+  For example, \ttt{date}, \ttt{uname}, and \ttt{finger} are all commands that interface with kernel- or hardware-generated information that is not writable by user-space scripts.
+  Why aren't these parallelizable?
+}
 
 % \heading{Discussion}
 % There are a few technical details about \sys's design decisions worth noting.
@@ -1001,7 +1001,7 @@ Such commands are not distributable---they often have to refer to a single locat
 \subsection{Extensibility}
 \label{ext}
 
-\nv{Add note about breadth of commands and the impossibility of our task.}
+\nv{Note command breadth and the impossibility of our task.}
 % https://nextbreakpoint.com/posts/article-compile-code-with-docker.html
 
 %% Here is the type for \ttt{bwa}, a command that performs a Burrows-Wheeler transform over genomic data:
