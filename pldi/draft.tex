@@ -221,7 +221,7 @@
 %% Author with single affiliation.
 \author{
   Anonymous Author(s)\\
-  \normalsize{Additional Anonymized Material: \href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.}
+  \normalsize{Additional Anonymized Material: \href{https://git.io/JfEgr}{https://git.io/JfEgr}.}
 }
 %% \authornote{with author1 note}          %% \authornote is optional;
 %%                                         %% can be repeated if necessary
@@ -504,7 +504,7 @@ Sections \ref{parallelizability}--\ref{impl} highlight key contributions:
 \noindent
 After \sys's evaluation~\sx{eval} and  comparison with related work~\sx{related}, the paper closes with a discussion of \sys's limitations and possible future directions~\sx{discussion}.
 
-\sys's source code will be open-sourced with the camera-ready version of the paper, and is provided in anonymized form at \href{https://git.io/Je6Nk}{https://git.io/Je6Nk}.
+\sys's source code will be open-sourced with the camera-ready version of the paper, and is provided in anonymized form at \href{https://git.io/JfEgr}{https://git.io/JfEgr}.
 
 % % TODO: Important to have a small script that highlights
 % \nv{
@@ -2828,76 +2828,61 @@ In highly-parallel benchmarks, \sys can lead to performance that is comparable t
 \section{Related Work}
 \label{related}
 
-At a high level, techniques for re-writing programs to exploit
-distribution fall under a wide spectrum that ranges from fully manual
-(but, ideally, optimal) to fully automated (but potentially
-sub-optimal) distribution (Fig.~\ref{fig:spectrum}).  A significant
-concern with approaches that require input from developers is
-correctness: developers---often neither experts in distributed systems
-nor educated on the internals of the code they depend on---can easily
-break the semantics of centralized programs, especially when these
-depend on existing code (such as libraries or shell commands).
+At a high level, techniques for re-writing programs to exploit parallelism fall under a wide spectrum that ranges from fully manual (but, ideally, optimal or more general) to fully automated (but potentially sub-optimal or specialized).
+A significant concern with approaches that require user input is correctness:
+   users---often neither experts in parallelism nor educated on the internals of the code they depend on---can easily break the semantics of sequential programs, especially when these depend on existing code (such as is the case with shell commands).
 
-\heading{Distributed Operating Systems and Shells}
-A plethora of systems assist in the construction of distributed
-software.  Distributed operating systems~\cite{ousterhout1988sprite,
-  mullender1990amoeba, pike1990plan9, barak1998mosix} and programming
-languages~\cite{erlang:96, acute:05, mace:07, cloudhaskell:11} hide
-many distribution problems, as long as a program uses the provided
-abstractions---which are strongly coupled to the underlying operating
-or runtime system.
+\heading{Parallel Shell Scripting}
+Several utilities expose commands for specifying parallelism on modern \unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}.
+Different from \sys, their effectiveness is predicated upon explicit and careful invocation and is limited to embarrassingly parallel (and short) programs.
+Often, these commands provide options to support an array of special sub-cases---a stark contradiction to the celebrated \unix philosophy.
+For example, \ttt{parallel} contains flags such as \ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs}, that a \unix user can achieve using \ttt{head}, \ttt{sed}, and \ttt{xargs};
+   it also introduces (and depends on) other programs with complex semantics, such as the ability transfer files between computers, separate text files, and parse CSV.
+\sys embraces the \unix philosophy and simply attempts to rewrite pipelines more efficiently with minimal user effort---if any.
+
+Several shells~\cite{duff1990rc, mcdonald1988support, dagsh:17} add primitives for non-linear pipe topologies---some of which target parallelism.
+Here too, however, users are expected to manually rewrite scripts to exploit these new primitives, contrary to \sys.
+
+Recently, the Smoosh authors have argued that certain shell features are useful for making concurrency explicit~\cite{smoosh:18}.
+Their argument is somewhat antithetical to \sys, which argues that users should experience mostly automated (and correct) parallelization---hence \emph{light-touch} parallel scripting.
+
+
+% Nice intro: http://homepages.inf.ed.ac.uk/bfranke/Publications/pldi121-tournavitis.pdf
+\heading{Low-level Parallelization}
+Instruction-level parallelization has a long history, starting from explicit \ttt{DOALL} and \ttt{DOACROSS} annotations~\cite{par1, par2} and continuing with compilers that attempt to automatically extract parallelism~\cite{padua1993polaris,hall1996maximizing}.
+These systems operate at a lower level than \sys (\eg that of instructions or loops rather than the boundaries of programs that are part of a script), operating in a single target environment, and typically do not exploit high-level annotations.
+
+More recent work focuses on extracting parallelism from domain-specific programming models~\cite{cilk5, streamIt, galois} and interactive parallelization tools~\cite{parascope, ipat}.
+These tools simplify the expression of parallelism, but still require users to get involved in discovering and exposing parallelism.
+% Moreover, the insights behind these attempts are significantly different from \sys's, as they extract parallelism statically during compilation instead of dynamically during runtime.
+%Despite significant progress~\cite{}, it remains due to its need for complex program analysis and the unknown factors (such as input data range) during compilation.
+
+\heading{Correct Parallelization of Dataflow Graphs}
+The DFG is a prevalent model in several areas of data processing (including batch-~\cite{mapreduce:08, spark:12} and stream-processing ~\cite{murray2013naiad, carbone2015flink} systems).
+Despite its popularity, most systems perform optimizations that do not preserve its semantics, introducing subtle erroneous behaviours.
+Recent work~\cite{HSSGG2014, SHGW2015, MSAIT2019} attempts to address this issue by performing optimizations only in cases where correctness is preserved.
+\sys draws inspiration from these efforts, as it attempts transformations that maintain the program's correctness with respect to the sequential execution.
+
+\sys's proposed DFG model is diverges from prior works, as nodes it captures order.
+This is due to the intricacies of the \unix model---its streams, its argument processing, and concatenation operators all maintain ordering.
+% As a result, previous work is not directly applicable.
+
+\heading{Parallel Userspace Environments}
+By focusing on simplifying the development of distributed programs, a plethora of environments assist in the construction of parallel software.
+Such systems~\cite{ousterhout1988sprite, mullender1990amoeba, pike1990plan9, barak1998mosix} or languages~\cite{erlang:96, acute:05, mace:07, cloudhaskell:11} hide many of the challenges of dealing with concurrency.
+They do so as long as a program leverages the provided abstractions---which are strongly coupled to the underlying operating or runtime system.
+A notable example is Plan9's \ttt{rc} shell that provided an interface for the construction of general programs.
+Unfortunately these environments are not backward-compatible with the \unix shell, and often focus primarily on hiding the existence of a network---providing the illusion of a single-system image---rather than automatically accelerating scripts through parallel processing.
 % simplify many of the problems of distribution and
 
-Several packages expose commands for specifying parallelism on modern
-\unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun},
-\textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU}
-\ttt{parallel}~\cite{Tange2011a}. % or any manual
-rewriting~\cite{mapreduce:08, ciel:11, spark:12}.  Different from
-\sys, their effectiveness is predicated upon explicit and careful
-invocation and is limited to embarrassingly parallel (and short)
-programs.  Often, these commands provide options to support an array
-of special sub-cases---a stark contradiction to the celebrated \unix
-philosophy.  For example, \ttt{parallel} contains flags such as
-\ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs}, that a \unix
-user can achieve using \ttt{head}, \ttt{sed}, and \ttt{xargs}; it also
-includes other programs with complex semantics, such as the ability
-transfer files between computers, separate text files, and parse CSV.
-\sys embraces the \unix philosophy and simply attempts to rewrite
-pipelines more efficiently.
-
-Several shells~\cite{duff1990rc, mcdonald1988support, dagsh:17} add
-primitives for non-linear pipe topologies---some of which target
-distribution.  Here too, however, developers are expected to manually
-rewrite scripts to exploit these new primitives.
-
-Recently, the Smoosh authors have argued that certain shell features
-are useful for making concurrency explicit~\cite{smoosh:18}.  Their
-argument is somewhat antithetical to \sys, % but rather that the shell
-language is itself an good DSL for concurrency; which argues for
-automatically (and correcctly) parallelizing pipelines when users have
-not expressed parallelism explicitly---hence
-distribution-\emph{oblivious} shell scripting.
-
-
 \heading{Cluster Computing}
-Modern analytics frameworks~\cite{mapreduce:08, ciel:11, spark:12,
-  naiad:13} and domain-specific languages~\cite{alvaro2011consistency,
-  distal:13, meiklejohn2015lasp} go a step further in terms of
-automation by providing a few carefully-designed primitives.  These
-primitives make strong assumptions about the nature of the
-computation---\eg strongly-eventual commutative functions that can
-proceed in parallel.  By targeting specific classes of computation
-(\emph{viz.} \sys's parallelizability), they render distributed
-computation efficiently.
+Several frameworks such as Phoenix~\cite{} and Raftlib~\cite{} offer full automation as long as their use leverages special primitives---\eg map-reduce-style primitives for Phoenix.
+These primitives make strong assumptions about the nature of the computation---\eg strongly-eventual commutative functions that can proceed in parallel.
+By targeting specific classes of computation (\emph{viz.} \sys's parallelizability), they can significantly optimize for their target domains.
 
 % Lack of generality, no formal guaratees, their setup and is too tedious 
-\sys chooses a more general approach: it does not require users to set
-up a new framework for every new class of computation they need to
-execute, nor to rewrite different parts of their computation using the
-specific abstractions provided by each framework they use.  It also
-takes a more principled approach: by developing the semantic model
-outlined earlier, it can guarantee that transformations are correct
-with respect to the sequential program.
+\sys chooses a more general approach: it does not require users to set up a new framework for every new class of computation they need to execute, nor to rewrite different parts of their computation using the specific abstractions provided by each framework they use.
+It also takes a more principled approach: by developing the semantic model outlined earlier, it can focus on transformations that are correct with respect to the sequential program.
 
 % % Although still a research prototype, \sys's setup and deployment is simpler.
 % It also does not require these specialized frameworks, manually (re)write , and 
@@ -2906,50 +2891,28 @@ with respect to the sequential program.
 % % and they still require developers to compose their work using the pipelines
 % Developing under these frameworks differs quite significantly from the development of normal (non-distributed) programs.
 
-
-\heading{Annotation-based Distribution}
-Recent systems on light-touch distribution, such as
-Ignis~\cite{ignis:19} and Mozart~\cite{mozart:19}, are more general
-than cluster-computing frameworks.  They also lower (but not entirely
-eliminate) developer effort by automating most of the rewriting
-process.
-% Both work on high-level, managed languages---server-side JavaScript for Ignis and Python for Mozart---that allow runtime transformations without affecting the broader environment under which a program executes.
-For the critical points where user input is required, they provide a
-high-level declarative DSL with varying (but limited) degrees of
-expressive power.
-% Annotations are used by ---complicated by the use of third-party
-% libraries similar to \sys's extensions.
-Unfortunately, a challenge with this approach is that users composing
-applications by using third-party libraries do not understand their
-parallelizability details well-enough to annotate them.
-
-\sys occupies a different point in the design space, by removing any work from composers and adding a small load to developers.
-% More specifically, it is designed to be used automatically by composers,
-Its DSL is designed to be more heavy-weight than Ignis' declarative recipes or Mozart's split annotations, but geared towards the developers of these components---not the users composing them.
+% \heading{Annotation-based Transformations}
+% \sys inspiration from recent systems such as Ignis~\cite{ignis:19} and Mozart~\cite{mozart:19} which, as long as a developer has provided a few high-level annotations, they take care of automating scale-out.
+% % Both work on high-level, managed languages---server-side JavaScript for Ignis and Python for Mozart---that allow runtime transformations without affecting the broader environment under which a program executes.
+% These systems works on single-language, single-runtime environments 
+% 
+% For the critical points where user input is required, they provide a
+% high-level declarative DSL with varying (but limited) degrees of
+% expressive power.
+% % Annotations are used by ---complicated by the use of third-party
+% % libraries similar to \sys's extensions.
+% Unfortunately, a challenge with this approach is that users composing
+% applications by using third-party libraries do not understand their
+% parallelizability details well-enough to annotate them.
+% 
+% \sys occupies a different point in the design space, by removing any work from composers and adding a small load to developers.
+% % More specifically, it is designed to be used automatically by composers,
+% Its DSL is designed to be more heavy-weight than Ignis' declarative recipes or Mozart's split annotations, but geared towards the developers of these components---not the users composing them.
 
 % It also provides a more principled approach than both of these systems.
 % Their annotations language is not as principled as \sys's---and one that is critical in ensuring that the dataflow analyses preserves the semantics expected by the developer
 % The side-effects present in the shell dwarf those of functional languages
 
-
-% Nice intro: http://homepages.inf.ed.ac.uk/bfranke/Publications/pldi121-tournavitis.pdf
-\heading{Low-level Parallelization}
-Instruction-level parallelization has a longer history, starting from
-explicit \ttt{DOALL} and \ttt{DOACROSS} annotations~\cite{par1, par2}
-and continuing with compilers that attempt to automatically extract
-parallelism~\cite{padua1993polaris,hall1996maximizing}.  These systems
-operate at a lower level than \sys (\eg that of instructions or loops
-instead of pipe boundaries) and typically do not exploit runtime
-information.
-
-More recent work focuses on extracting parallelism from
-domain-specific programming models~\cite{cilk5, streamIt, galois} and
-interactive parallelization tools~\cite{parascope, ipat}.  These tools
-simplify the expression of parallelism, but still require programmers
-to get involved in discovering and exposing parallelism.
-%  actively involve the programmer in the detection and mapping of application parallelism, but still demand great effort from the user. 
-Moreover, the insights behind these attempts are significantly different from ours, as they extract parallelism statically during compilation instead of dynamically during runtime.
-%Despite significant progress~\cite{}, it remains due to its need for complex program analysis and the unknown factors (such as input data range) during compilation.
 
 
 % https://ecommons.cornell.edu/bitstream/handle/1813/6508/85-668.pdf?sequence=1
@@ -2957,38 +2920,21 @@ Moreover, the insights behind these attempts are significantly different from ou
 % While they Moreover, these systems take advantage of functional purity;
 %   for programs that are not data-intensive processing pipelines (\eg web servers), purely functional code is generally responsible for only a small fraction of the program runtime.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_spectrum.pdf}}
-\caption{
-  \textbf{Manual--automated distribution spectrum.}
-	\sys sits at the automation end of the spectrum, automatically distributing shell pipelines while maintaining their correctness.
-}
-\vspace{-15pt}
-\label{fig:spectrum}
-\end{figure}
-
+% \begin{figure}[t]
+% \centering
+% \includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_spectrum.pdf}}
+% \caption{
+%   \textbf{Manual--automated distribution spectrum.}
+% 	\sys sits at the automation end of the spectrum, automatically distributing shell pipelines while maintaining their correctness.
+% }
+% \vspace{-15pt}
+% \label{fig:spectrum}
+% \end{figure}
+% 
 
 % \kk{exoume ena semantic model to opoio mporei na xrhsimopoiithei gia
 %   na ginoun formally proven claims gia to equivalence preservation twn
 %   optimizations etc.}
-
-\heading{Correct Distribution of Dataflow Graphs}
-%
-The dataflow graph is a prevalent model in several areas of data
-processing, as it is used by several batch-~\cite{mapreduce:08,
-  spark:12} and stream-processing systems~\cite{murray2013naiad,
-  carbone2015flink}. Despite its popularity, most systems perform
-optimizations that do not preserve its semantics, introducing subtle
-erroneous behaviours. Recent work~\cite{HSSGG2014, SHGW2015,
-  MSAIT2019} attempts to address this issue by performing
-optimizations only in cases where correctness is preserved. \sys draws
-inspiration from these efforts, as we are also interested in
-optimizations that exploit parallelization but preserve the semantics
-of the underlying model. However, our proposed dataflow model is
-different from these other works, as nodes in our model read from
-their inputs \emph{in sequence}. Due to this intricacy, previous work
-is not straightforwardly applicable.
 
 %% Possible points to add: These systems introduce data parallelism by
 %% parallelizing nodes of the dataflow graph.  Unfortunately, they
@@ -3015,49 +2961,66 @@ is not straightforwardly applicable.
   
 
 
-\section{Discussion}
+\section{Discussion \& Conclusion}
 \label{discussion}
 
-This section reflects on \sys's design and implementation, touches on future work, and concludes the paper.
+This paper presented \sys, a shell variant that parallelizes shell programs mostly automatically.
+\sys's insight is that shell pipelines already express streaming computations that can be automatically distributed.
+To achieve its goal, \sys
+  decomposes primitives into parallelizability classes,
+  identifies high-parallelizability stages,
+  applies a series of transformations according to a DFG model,
+  and orchestrates the execution of the parallel program.
+% Its runtime component provides orchestration and planning support during the execution of the program.
 
-\heading{Limitations}
-Our implementation is limited in many ways, so as to succeed in proving the key hypothesis---that scaling out shell pipelines can be automated and correct with respect to some assumptions.
+\sys's current limitations revolve around shell expansion.
+Currently, \sys does not attempt to parallelize program fragments for which variables have not been expanded.
+Without substantial effort, \sys could be modified to at least suggest expansion of these fragments so that developers provide concrete values.
+More significant effort would be required however to fully exploit latent parallelism in fragments that have not been expanding.
+This effort would require tying \sys with the shell interpretation rather than having it as a compilation pass and is left for future work.
 
-\sys does not adequately handle failures or network partitions in the general sense, which would require re-scheduling passes on failed replicas.
-Prior work on fault-tolerant distributed stream processing can be of significant aid here.
-
-The logic of the planner is quite simplified, attempting only straightforward placement of tasks to nodes (and using a hard-coded, homogeneous node structure).
-Prior work on operator placement of distributed dataflow graphs can be used to build a more sophisticated planner.
-
-\sys is conservative in the shell subsets that it handles, in order to
-avoid introducing unsafe behaviours. The point of this work was not to be
-able to handle a complete distributable subset of the shell, but
-rather to use significant part of it to demonstrate performance benefits.
-
-% Shell is highly dynamic, thus making it impossible to design sound
-% meaningful analyses to determine distributable regions and maximal
-% parallelization. In order to address this particularity, \sys could be
-% tighly integrated with a posix compliant shell
-% interpreter~\cite{smoosh:20} so that dynamic information can be
-% acquired selectively to aid the analysis and optimization process.
+Despite limitation related to expansions, \sys can lead to significant benefits for shell users.
+Experiments with real programs show substantial speedups and the ability to operate on large input datasets, all minimal or zero developer effort.
 
 
-\heading{Future Work}
-% \label{limitation}
-% \item No cycles (multiple commands writing and reading from the same file)
-There are several worthwhile directions for future work.  One
-direction would be an extension of the parallelizability analysis of
-\sys, in order to guide it using dynamic information. This could
-enable a formal study of the analysis~\sx{impl} to show that it
-returns regions that are safe to distribute.  Recent work on
-formalizing the semantics of the POSIX shell~\cite{smoosh:20} make
-such an attempt possible.
-
-Another direction is to extend \sys to handle other classes outside \sta and \pur.
-These two classes enjoy a certain popularity with quick, one-off pipelines and are the easiest to distribute, but 
-it would be interesting to expand to \dfs (with the use of a distributed file-system) and \sid (with the use of transactional protocols).
-This direction would naturally introduce considerations about replication, consistency, and failure recovery.
-
+% \heading{Limitations}
+% Our implementation is limited in many ways, so as to succeed in proving the key hypothesis---that scaling out shell pipelines can be automated and correct with respect to some assumptions.
+% 
+% \sys does not adequately handle failures or network partitions in the general sense, which would require re-scheduling passes on failed replicas.
+% Prior work on fault-tolerant distributed stream processing can be of significant aid here.
+% 
+% The logic of the planner is quite simplified, attempting only straightforward placement of tasks to nodes (and using a hard-coded, homogeneous node structure).
+% Prior work on operator placement of distributed dataflow graphs can be used to build a more sophisticated planner.
+% 
+% \sys is conservative in the shell subsets that it handles, in order to
+% avoid introducing unsafe behaviours. The point of this work was not to be
+% able to handle a complete distributable subset of the shell, but
+% rather to use significant part of it to demonstrate performance benefits.
+% 
+% % Shell is highly dynamic, thus making it impossible to design sound
+% % meaningful analyses to determine distributable regions and maximal
+% % parallelization. In order to address this particularity, \sys could be
+% % tighly integrated with a posix compliant shell
+% % interpreter~\cite{smoosh:20} so that dynamic information can be
+% % acquired selectively to aid the analysis and optimization process.
+% 
+% 
+% \heading{Future Work}
+% % \label{limitation}
+% % \item No cycles (multiple commands writing and reading from the same file)
+% There are several worthwhile directions for future work.  One
+% direction would be an extension of the parallelizability analysis of
+% \sys, in order to guide it using dynamic information. This could
+% enable a formal study of the analysis~\sx{impl} to show that it
+% returns regions that are safe to distribute.  Recent work on
+% formalizing the semantics of the POSIX shell~\cite{smoosh:20} make
+% such an attempt possible.
+% 
+% Another direction is to extend \sys to handle other classes outside \sta and \pur.
+% These two classes enjoy a certain popularity with quick, one-off pipelines and are the easiest to distribute, but 
+% it would be interesting to expand to \dfs (with the use of a distributed file-system) and \sid (with the use of transactional protocols).
+% This direction would naturally introduce considerations about replication, consistency, and failure recovery.
+% 
 % There are two additional assumptions that have to be satisfied in
 % order for the distributed implementation that is generated by Dish to
 % have equivalent behaviour with the original implementation. First of
@@ -3069,17 +3032,6 @@ This direction would naturally introduce considerations about replication, consi
 % their arguments. This is a necessary assumption, since commands are
 % considered as black boxes and the only information that can be
 % inferred about them is through their arguments.
-
-\heading{Conclusion}
-This paper presented \sys, a shell variant that automatically and correctly scales out distribution-oblivious shell pipelines. 
-\sys's insight is that shell pipelines already express streaming computations that can be automatically distributed.
-To achieve its goal, \sys
-  decomposes primitives into parallelizability classes,
-  identifies high-parallelizability stages,
-  applies rewriting rules for largest possible subprograms,
-  and orchestrates the execution of the distributed program.
-% Its runtime component provides orchestration and planning support during the execution of the program.
-Experiments with complex pipelines show substantial speedups and the ability to operate on large input datasets, all without any developer input.
 
 %% \begin{acks}
   % Dumping people so that we don't forget
@@ -3094,63 +3046,60 @@ Experiments with complex pipelines show substantial speedups and the ability to 
   %% National Science Foundation.
 %% \end{acks}
 
-
-
-%% Bibliography
-\bibliography{./bib}
-
 \appendix
-
-\newpage
 
 \section{Annotation Language Grammar}
 \label{alg}
 
-% \begin{figure}
-%   \centering
-%   \begin{grammar}
-%     <option> ::= `-' <string>
-% 
-%     <category> ::= `stateless' | `pure' | ...
-% 
-%     <maybe-int> ::= | <int>
-% 
-%     <arg> ::= `args[' <int> `]'
-% 
-%     <args> ::= <arg>
-%     \alt `args[' <maybe-int> `:' <maybe-int> `]'
-% 
-%     <input> ::= `stdin' | <args>
-% 
-%     <inputs> ::= <input>
-%     \alt <input> `,' <inputs>
-% 
-%     <output> ::= `stdout' | <arg>
-% 
-%     <option-pred> ::= <option>
-%     \alt `value' <option> = <string>
-%     \alt `not' <option-pred>
-%     \alt <option-pred> `or' <option-pred>
-%     \alt <option-pred> `and' <option-pred>
-% 
-%     <assignment> ::= `(' <category>, `[' <inputs> `]' , <output> `)'
-% 
-%     <predicate> ::= <option-pred> `=>' <assignment>
-% 
-%     <pred-list> ::= `|' <predicate> <pred-list>
-%     \alt `|' `otherwise' `=>' <assignment>
-% 
-%     <command> ::= <name> `\{' <pred-list> `\}'
-% 
-%     <command-list> ::= <command>
-%     \alt <command> <command-list>
-%   \end{grammar}
-%   \caption{
-%   \textbf{Parallelizability description language.}
-%     The DSL captures important information regarding the parallelizability of a command.
-%   }
-%   \label{fig:dsl}
-% \end{figure}
+\begin{figure}
+  \centering
+  \begin{grammar}
+    <option> ::= `-' <string>
+
+    <category> ::= `stateless' | `pure' | ...
+
+    <maybe-int> ::= | <int>
+
+    <arg> ::= `args[' <int> `]'
+
+    <args> ::= <arg>
+    \alt `args[' <maybe-int> `:' <maybe-int> `]'
+
+    <input> ::= `stdin' | <args>
+
+    <inputs> ::= <input>
+    \alt <input> `,' <inputs>
+
+    <output> ::= `stdout' | <arg>
+
+    <option-pred> ::= <option>
+    \alt `value' <option> = <string>
+    \alt `not' <option-pred>
+    \alt <option-pred> `or' <option-pred>
+    \alt <option-pred> `and' <option-pred>
+
+    <assignment> ::= `(' <category>, `[' <inputs> `]' , <output> `)'
+
+    <predicate> ::= <option-pred> `=>' <assignment>
+
+    <pred-list> ::= `|' <predicate> <pred-list>
+    \alt `|' `otherwise' `=>' <assignment>
+
+    <command> ::= <name> `\{' <pred-list> `\}'
+
+    <command-list> ::= <command>
+    \alt <command> <command-list>
+  \end{grammar}
+  \caption{
+  \textbf{Parallelizability description language.}
+    The DSL captures important information regarding the parallelizability of a command.
+  }
+  \label{fig:dsl}
+\end{figure}
+
+
+%% Bibliography
+\bibliography{./bib}
 
 %% %% Appendix
 %% \appendix
