@@ -2104,11 +2104,26 @@ solution in \Cref{fig:eager}.
 
 \heading{Split node implementation}
 
+As described in \Cref{ir:transformations}, \sys transformations
+inserts \ttt{split} nodes to expose parallelism in cases where a
+parallelizable node only has one input. The \sys \todo{backend} offers
+two options for implementing this split node, to satisfy the inherent
+tension between task-based parallelism and knowledge of the number of
+lines in the \ttt{split} input. In the general case, the number of
+lines of a specific edge is not known a-priori (due to commands that
+remove or add new lines), and so \sys provides an automatic split that
+first counts the number of lines, and then splits its input to the
+desired number of outputs. If however, the user knows the number of
+lines at the split insertion edge, they can provide it to \sys, that
+then uses it to \ttt{split} without having to block and read its whole
+input first. \sys also inserts eager relay nodes after all but the
+last output of split in order to address the laziness issue that was
+described before.
 
-\noindent
-\TODO{Problem: Pipeline width shrinks after pure commands. Solution:
-  Split node that resplits its input to multiple files in sequence (to
-  preserve the model semantics).}
+%% \noindent
+%% \TODO{Problem: Pipeline width shrinks after pure commands. Solution:
+%%   Split node that resplits its input to multiple files in sequence (to
+%%   preserve the model semantics).}
 
 
 %% Old and obsolete
