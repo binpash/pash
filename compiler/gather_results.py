@@ -220,29 +220,28 @@ def check_output_diff_correctness(prefix, scaleup_numbers):
                    if not check_output_diff_correctness_for_experiment('{}{}_distr_no_task_par_eager.time'.format(prefix, n))]
     return (wrong_diffs, wrong_diffs_no_eager, wrong_diffs_no_task_par_eager)
 
-def collect_scaleup_times(experiment, results_dir):
+
+def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, ax):
     print(experiment)
 
     # all_scaleup_numbers = list(set(get_experiment_files(experiment, results_dir)))
     # all_scaleup_numbers.sort()
     # all_scaleup_numbers = [i for i in all_scaleup_numbers if i > 1]
-    all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
     prefix = '{}/{}_'.format(results_dir, experiment)
     distr_speedup, compile_distr_speedup = collect_experiment_speedups(prefix, all_scaleup_numbers)
 
     output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
 
-    fig, ax = plt.subplots()
-
-    ## Plot speedup
-    ax.set_ylabel('Speedup')
-    ax.set_xlabel('Level of Parallelism')
+    maximum_y = 0
+    lines = []
 
     ## In the bigrams experiment we want to also have the alt_bigrams plot
     if(experiment == "bigrams"):
         opt_prefix = '{}/{}_'.format(results_dir, "alt_bigrams")
         opt_distr_speedup, _ = collect_experiment_speedups(opt_prefix, all_scaleup_numbers)
-        ax.plot(all_scaleup_numbers, opt_distr_speedup, '-P', color='magenta', linewidth=0.5, label='Opt. Parallel')
+        line, = ax.plot(all_scaleup_numbers, opt_distr_speedup, '-P', color='magenta', linewidth=0.5, label='Opt. Parallel')
+        maximum_y = max(maximum_y, max(opt_distr_speedup))
+        lines.append(line)
 
     if(not (experiment in custom_scaleup_plots) or
        (experiment in custom_scaleup_plots and
@@ -251,18 +250,24 @@ def collect_scaleup_times(experiment, results_dir):
             auto_split_distr_speedup = collect_distr_experiment_speedup(prefix,
                                                                         'distr_auto_split.time',
                                                                         all_scaleup_numbers)
-            ax.plot(all_scaleup_numbers, auto_split_distr_speedup, '-D', color='tab:red', linewidth=0.5, label='Par + Split')
+            line, = ax.plot(all_scaleup_numbers, auto_split_distr_speedup, '-D', color='tab:red', linewidth=0.5, label='Par + Split')
+            lines.append(line)
             split_distr_speedup = collect_distr_experiment_speedup(prefix,
                                                                    'distr_split.time',
                                                                    all_scaleup_numbers)
-            ax.plot(all_scaleup_numbers, split_distr_speedup, '-h', color='brown', linewidth=0.5, label='Par + B. Split')
+            line, = ax.plot(all_scaleup_numbers, split_distr_speedup, '-h', color='brown', linewidth=0.5, label='Par + B. Split')
+            lines.append(line)
+            maximum_y = max(maximum_y, max(auto_split_distr_speedup))
+            maximum_y = max(maximum_y, max(split_distr_speedup))
         except ValueError:
             pass
 
     if(not (experiment in custom_scaleup_plots) or
        (experiment in custom_scaleup_plots and
         "eager" in custom_scaleup_plots[experiment])):
-        ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, label='Parallel')
+        line, = ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, label='Parallel')
+        lines.append(line)
+        maximum_y = max(maximum_y, max(distr_speedup))
 
     ## Add the no eager times if they exist
     if(not (experiment in custom_scaleup_plots) or
@@ -272,7 +277,9 @@ def collect_scaleup_times(experiment, results_dir):
             no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
                                                                                'distr_no_task_par_eager.time',
                                                                                all_scaleup_numbers)
-            ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Blocking Eager')
+            line, = ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Blocking Eager')
+            lines.append(line)
+            maximum_y = max(maximum_y, max(no_task_par_eager_distr_speedup))
         except ValueError:
             pass
     if(not (experiment in custom_scaleup_plots) or
@@ -282,12 +289,31 @@ def collect_scaleup_times(experiment, results_dir):
             no_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
                                                                       'distr_no_eager.time',
                                                                       all_scaleup_numbers)
-            ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='No Eager')
+            line, = ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='No Eager')
+            lines.append(line)
+            maximum_y = max(maximum_y, max(no_eager_distr_speedup))
         except ValueError:
             pass
+
+    ## Set the ylim
+    ax.set_ylim(top=maximum_y*1.15)
+
+    return output_diff, lines
+
+
+def collect_scaleup_times(experiment, results_dir):
+
+
+    fig, ax = plt.subplots()
+
+    ## Plot speedup
+    ax.set_ylabel('Speedup')
+    ax.set_xlabel('Level of Parallelism')
+
     # ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
     # ax.plot(all_scaleup_numbers, all_scaleup_numbers, '-', color='tab:gray', linewidth=0.5, label='Ideal')
-
+    all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
+    output_diff, _ = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, ax)
 
     # plt.yscale("log")
     plt.xticks(all_scaleup_numbers[1:])
@@ -562,6 +588,64 @@ def collect_unix50_scaleup_times(unix50_results_dir):
     plt.savefig(os.path.join('../evaluation/plots', "unix50_throughput_scaleup.pdf"),bbox_inches='tight')
 
 
+def plot_one_liners_tiling(results_dir):
+
+    all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
+    experiments = ["minimal_grep",
+                   "minimal_sort",
+                   "topn",
+                   "wf",
+                   "spell",
+                   "diff",
+                   "bigrams",
+                   "set-diff",
+                   "double_sort",
+                   "shortest_scripts"]
+
+    confs = ["Opt. Parallel",
+             "Par. + Split",
+             "Par. + B. Split",
+             "Parallel",
+             "Blocking Eager",
+             "No Eager"]
+
+    fig = plt.figure()
+    gs = fig.add_gridspec(2, 5, hspace=0)
+    # fig.suptitle('')
+
+    total_lines = []
+    ## Plot microbenchmarks
+    for i, experiment in enumerate(experiments):
+        ax = fig.add_subplot(gs[i])
+        _, lines = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, ax)
+        if(experiment == "bigrams"):
+            total_lines += lines
+        elif(experiment == "shortest_scripts"):
+            total_lines += lines[1:]
+        ax.set_xticks(all_scaleup_numbers[1:])
+        ax.text(.5,.91,pretty_names[experiment],
+        horizontalalignment='center',
+        transform=ax.transAxes)
+        # ax.set_yticks([])
+        fig.add_subplot(ax)
+
+
+    axs = fig.get_axes()
+    for ax in axs:
+        if(ax.is_first_col()):
+            ax.set_ylabel('Speedup')
+        if(ax.is_last_row()):
+            ax.set_xlabel('Level of Parallelism')
+        # ax.label_outer()
+
+    plt.legend(total_lines, confs, loc='lower right', fontsize=16)
+    # plt.title(pretty_names[experiment])
+
+    fig.set_size_inches(26, 7.5)
+    plt.tight_layout()
+    plt.savefig(os.path.join('../evaluation/plots', "tiling_throughput_scaleup.pdf"),bbox_inches='tight')
+
+
 def format_wrong_output(output_diff, experiment, mode):
     if(len(output_diff) > 0):
         formatted_output_diff = 'Output for {} -- {} {} is wrong'.format(experiment, output_diff, mode)
@@ -582,13 +666,15 @@ plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
-## Plot microbenchmarks
+# Plot microbenchmarks
 diff_results = []
 for experiment in experiments:
     output_diff = collect_scaleup_times(experiment, RESULTS)
     diff_results += format_wrong_output(output_diff[0], experiment, "parallel")
     diff_results += format_wrong_output(output_diff[1], experiment, "parallel no-eager")
     diff_results += format_wrong_output(output_diff[2], experiment, "parallel no-task-par-eager")
+
+plot_one_liners_tiling(RESULTS)
 
 ## Generate Tex table for microbenchmarks
 generate_tex_table(experiments)
