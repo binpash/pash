@@ -268,7 +268,7 @@
 
 \newcommand{\cf}[1]{(\emph{Cf}.\S\ref{#1})}
 \newcommand{\sx}[1]{(\S\ref{#1})}
-\newcommand{\sys}{{\scshape Pash}\xspace}
+\newcommand{\sys}{{\scshape PaSh}\xspace}
 \newcommand{\unix}{{\scshape Unix}\xspace}
 
 \setlist{noitemsep,leftmargin=10pt,topsep=2pt,parsep=2pt,partopsep=2pt}
@@ -312,16 +312,13 @@
 %% Note: \begin{abstract}...\end{abstract} environment must come
 %% before \maketitle command
 \begin{abstract}
-  Distributed systems offer notable benefits over centralized ones.
-  Reaping these benefits, however, requires programming in a way that makes distribution explicit---\eg via new programming languages, distributed frameworks, or source-level annotations.
-  This paper presents \sys, a shell variant that automatically and correctly scales out \unix shell pipelines. 
-  Its insight is that pipelines already express stream computations that can be automatically distributed.
-  To distribute them, \sys
-    decomposes primitives into parallelizability classes,
-    identifies high-parallelizability stages,
-    applies rewriting rules for largest possible subprograms,
-    and orchestrates their execution.
-Experiments with complex pipelines show substantial speedups and the ability to operate on large input datasets, all without any developer input.
+  This paper presents \sys, a shell aimed at parallelizing POSIX shell scripts through a combination of program transformations and runtime primitives.
+  Given a script, \sys converts it to a data-flow graph, performs a series of analyses that aim at exposing parallelism while preserving its sequential semantics, and then converts it back to a script that uses POSIX constructs to explicitly guide parallelism.
+A set of lightweight annotations allow command developers to express key parallelizability properties of their commands.
+An accompanying pararllelizability study of commands in POSIX and GNU Coreutils, two large and commonly used groups, 
+informs \sys's annotation language and result in its equivalent of a data-parallel standard library.
+Finally, \sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
+\sys's extensive evaluation, combining several classic and modern Unix scripts, shows significant benefits across several axes—with order-of-maginute performance improvements stemming from the combination of its program transformations and runtime primitives.
 \end{abstract}
 
 % Its runtime component provides orchestration and planning support during the execution of the program.
@@ -478,7 +475,7 @@ We evaluate \sys using
   (i) a series of benchmarks, ranging from classic one-liners found in the \unix literature to modern data-processing pipelines;
   (ii) three large and complex use cases, covering temperature analysis, web crawling and indexing, and container orchestration; and
   (iii) a series of targeted micro-benchmarks inspired by (and comparing with) possible alternatives.
-The results demonstrate significant advantages in correctness, manual effort, and performance
+The results demonstrate significant advantages in \todo{correctness}, \todo{manual effort}, and performance
  ---with \sys offering an order-of-maginute performance improvements due to its transformations and optimized runtime.
 %% ---with \sys's transformations offering an order-of-magnitude performance improvements aided further by \sys's optimized runtime components.
 Naturally, these improvements depend on several factors such as the script's execution time, the pipeline depth, and the parallelizability class under which a command falls. 
