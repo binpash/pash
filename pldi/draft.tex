@@ -418,7 +418,7 @@ To top it off, all these options assume a good understanding of parallelism;
   users whose domain of expertise falls outside computing---routinely writing shell scripts to accomplish their tasks---are left without options (see~\S\ref{related} for a full discussion).
 % \nv{I still don't like ``for a full discussion''---raises too many expectations, and we don't have that much more to say}
 
-To address this challenge, we develop \sys, a shell that parallelizes POSIX shell scripts.
+To address this challenge, we develop \sys, a shell that parallelizes POSIX shell scripts. \kk{We need to mention data-parallelism earlier. We don't focus on general parallelization but rather data-parallelism (performing operations on disjoint partitions of the input and then merging the results. WE need to give a brief idea about that early on so that we don't create false ideas.}
 % \kk{Mention that it outputs shell scripts.}
 % \nv{I think the ``how'' it solves it should come later, we're still trying to convince them we solve it (see next sentences in this paragraph)
 % \sys offers both classes of users in the second group such much-needed automation.
@@ -478,7 +478,9 @@ We evaluate \sys using
   (i) a series of benchmarks, ranging from classic one-liners found in the \unix literature to modern data-processing pipelines;
   (ii) three large and complex use cases, covering temperature analysis, web crawling and indexing, and container orchestration; and
   (iii) a series of targeted micro-benchmarks inspired by (and comparing with) possible alternatives.
-The results demonstrate significant advantages in correctness, manual effort, and performance---with \sys's transformations offering an order-of-magnitude performance improvements aided further by \sys's optimized runtime components. \kk{I would remove the ``aided further...'' part.}
+The results demonstrate significant advantages in correctness, manual effort, and performance
+ ---with \sys offering an order-of-maginute performance improvements due to its transformations and optimized runtime.
+%% ---with \sys's transformations offering an order-of-magnitude performance improvements aided further by \sys's optimized runtime components.
 Naturally, these improvements depend on several factors such as the script's execution time, the pipeline depth, and the parallelizability class under which a command falls. 
 %\kk{Do we need to mention this last sentence here? Without context it is pretty difficult for anyone to get something out of it.}
 
@@ -735,7 +737,7 @@ This section first reviews shell scripting through a small example~\sx{bg:pipeli
 \end{figure}
 
 % In the ongoing debate on climate change,
-Suppose a \todo{climate scientist}    % looking for a non-CS expert---journalist might be too low
+Suppose a \todo{environmental scientist/engineer}    % looking for a non-CS expert---journalist might be too low
   wants to get a quick sense of the changes in maximum temperature over the past century.
 As the National Oceanic and Atmospheric Administration (NOAA) has made historic temperature data publicly available~\cite{noaa}, 
   answering this question is only a matter of a simple data-processing pipeline.
@@ -752,7 +754,11 @@ The effort required to write this pipeline is astonishingly low:\footnote{
 To enable such a succinct program composition, \unix incorporates several features.
 
 \heading{\unix Features}
-An important \unix feature are pipes (\ttt{|}), introducing task-parallel program composition over character streams.
+Composition in \unix is primarily achieved through pipes (\ttt{|}), a
+construct that allows for task-parallel execution of two commands by
+connecting them with a character stream.
+%% An important \unix feature are pipes (\ttt{|}), introducing
+%% task-parallel program composition over character streams.
 These streams are contiguous character lines separated by newline character (\textsc{NL}), which delineate individual stream elements.
 For example, the first \ttt{grep} is given lines that contain file identifiers, of which it only outputs lines that contain \ttt{gz}, which are in turn consumed by \ttt{tr}.
 % As part of this interface, each command has access to (any combination of) three \emph{standard} streams---input, output, and error.
@@ -760,15 +766,15 @@ A special end-of-file (\textsc{EOF}) condition marks the end of a stream.
 
 Another important feature is synchronization, as different pipeline stages process data concurrently and possibly at different rates.
 For example, the second \ttt{curl} produces output at a significantly slower pace than the \ttt{grep} commands before and after it.
-The \unix kernel facilitates scheduling, communication, synchronization behind the scenes.
+The \unix kernel facilitates scheduling, communication, and synchronization behind the scenes.
 
 Command flags, used pervasively in \unix, are configuration options that the command's developer has decided to expose to its users, to give command users significant freedom in their execution.
 For example, by omitting  \ttt{sort}'s \ttt{r} flag that enables reverse sorting, the user can easily get the minimum temperature.
 The shell does not have any visibility into these flags; 
   after it expands special characters such as \ttt{\textasciitilde{}} and \ttt{*}, it leaves parsing and evaluation entirely up to commands.
 
-Finally, \unix provides composition environment for commands written in any language.
-Many the commands used in practice come built into the system---\eg commands defined by the POSIX standard or ones part of the GNU Coreutils---whereas others are available as add-ons.
+Finally, \unix provides an environment in which commands written in any language can be composed.
+Many of the commands used in practice come built into the system---\eg commands defined by the POSIX standard or ones part of the GNU Coreutils---whereas others are available as add-ons.
 The fact that commands are developed in a variety of languages---including shell scripts---provides users with a significant flexibility.
 For example, one could replace the call to \ttt{sort} and \ttt{head} with one to \ttt{./avg.py} to get an average or a standard deviation rather than a maximum.
 The pipeline would still work, as long \ttt{./avg.py} conforms to the interface outlined earlier.
@@ -797,7 +803,7 @@ Another challenge is due to the multitude of available commands;
   each command that is part of a script may require very different treatment.
 For example, \ttt{grep} can proceed in parallel on each stream without any coordination, \ttt{head} requires light coordination, and \ttt{sort} requires significant coordination across streams.
 Worse even, the same command may be used with different flags---\eg % \ttt{-d" " -f9} for the first
-  Fig.~\ref{fig:example}'s \ttt{cut} is called twice with two different sets of flags.
+  Fig.~\ref{fig:example}'s \ttt{cut} is called twice with two different sets of flags\kk{I propose dropping the last sentence for this ``---making correct treatment even more difficult''}.
 When a single flag can affect the functionality of a command in non-trivial ways, deciding how to parallelize becomes significantly more difficult.
 
 Yet another challenge is that different phases operate on different output sizes thus allowing different parallelization widths.
@@ -805,6 +811,38 @@ Even if Fig.~\ref{fig:example}'s script was aiming on, say, only six years of da
 Naive, coarse-grained parallelization can miss such opportunities.
 
 % \nv{Are these all the challenges we want to highlight?}
+
+
+\kk{There are two ways to go here: either mention the challenges that a user would face to manually parallelize a script (that have already been mentioned in the introducion), or mention the challenges that automatic parallelization---this paper---has to address. I think that we should focus on the second.}
+
+The first and greatest challenge is the gargantuan number of available
+commands that can be used to construct a shell script. In contrast to
+restricted programming frameworks that are amenable to parallelization
+by supporting a few carefully designed operators (see MapReduce,
+Spark, etc) shell scripts can contain commands that can have arbitrary
+behaviours.  In order to parallelize such a script, each of command
+requires special treatment as to not introduce non-determinism or
+erroneous behaviours. For example, \ttt{grep} can be performed on
+different partitions of its input in parallel without any
+coordination, \ttt{head} requires light coordination, and \ttt{sort}
+requires significant coordination.  To make matters worse, the same
+command may be used with different flags---\eg % \ttt{-d" " -f9} for
+the first Fig.~\ref{fig:example}'s \ttt{cut} is called twice with two
+different sets of flags---that could potentially alter its behaviour,
+making correct treatment even more difficult. A good solution should
+handle several commands but should also be extensible, in the sense
+that newly added or modified commands don't require modifications in
+the solution itself. \kk{The solution to this challenge is already written in the third paragraph of the design overview.}
+
+Another issue is that all commands are black boxes. Therefore it is
+impossible to perform any kind of analysis on the code of the command
+to identify possible parallelization. Therefore a good solution should
+parallelize in a coarse-enough granularity that doesn't require
+opening up commands.
+
+Finally, shell scripts contain several constructs that enforce sequential execution. For example, Fig.~\ref{fig:example} assignment to \ttt{base}, connected with the rest of the script by the sequential composition operator (\ttt{;}), has to be completed before the rest of the script starts executing. \kk{The solution is
+  written in the fourth paragraph of the design solution.}
+
 
 \begin{figure}[t]
 \centering
@@ -828,7 +866,9 @@ Naive, coarse-grained parallelization can miss such opportunities.
 
 At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and outputs a new POSIX shell script.
 The new script may incorporate parallelism, and is handed off to the user's original shell interpreter---\eg \ttt{bash} or \ttt{zsh}---for execution.
-To discover and enable parallel execution, \sys analyzes individual program fragments, addressing the challenges mentioned earlier.
+To \todo{discover and enable/expose and exploit} data-parallelism in a given shell script,
+%% parallel execution,
+\sys analyzes individual program fragments, addressing the challenges mentioned earlier.
 
 \sys first needs to understand the POSIX constructs used to compose larger programs, indicating indicate different levels of candidacy for pararllelization.
 To achieve this, \sys breaks POSIX constructs into a few broad classes:
@@ -841,7 +881,7 @@ Second, \sys needs to understand the parallelization characteristics of individu
 To understand standard commands available in any shell, \sys groups POSIX and GNU commands into a small but clear set of well-understood parallelizability classes;
   these commands are already useful-enough to allow the composition of useful shell programs operating in practice.
 To understanding the characteristics of commands that fall outside the built-in set, allowing new commands to leverage \sys's power, \sys leverages this study to define an annotation language for describing a command's key properties with respect to its parallelizability.
-Such light annotations are aimed towards command developers (rather than users), who can quickly and easily capture the properties of the commands they are developing.
+Such light annotations \kk{have to be written once per command (and not once per script) and} are aimed towards command developers (rather than users), who can quickly and easily capture the properties of the commands they are developing.
 % We haven't introduced the notion of flags
 % A command developer can only annotate the default behavior;
 %   if a new flag is added a few years later, and if that flag alters the command's class, only then a new annotation is needed.
@@ -851,12 +891,13 @@ Such light annotations are aimed towards command developers (rather than users),
 % It converts the AST to a dataflow graph, and iteratively performs graph transformations that expose data parallelism as task parallelism, while preserving the pipeline's correctness.
 
 Provided information about the shell constructs and individual commands and their flags, \sys needs to analyze the given script and identify program fragments that are candidates for parallelization.
-To achieve this, it converts the script into a data-flow graph (DFG) model.
+To achieve this, it converts sections of the script that are amenable to parallelization into a data-flow graph (DFG) representation.
 % Second, \sys defines a dataflow graph model that is suitable for the semantics of the POSIX shell and proposes a set of parallelization optimizations that preserve the behavior of the dataflow graph.
-This is a flexible representation that allows a series of parallelization transformations to convert the graph into its parallel equivalent, in which DFGs indicate the parallelizable regions.
+This is a flexible representation that enables a series of local transformations that expose data-parallelism, converting the graph into its parallel equivalent.
+%% , in which DFGs indicate the parallelizable regions.
 Further transformations compile the DFG back to a parallel script that uses POSIX shell constructs to guide parallelism explicitly---while aiming at preserving the semantics of the sequential program.
 
-Finally, \sys needs to provide correct, high-performance combinators for certain classes commands, and be proactive about (addressing) several practical challenges related to quirks of the \unix environment.
+Finally, \sys needs to provide correct, high-performance combiners for certain classes commands, and be proactive about (addressing) several practical challenges related to quirks of the \unix environment.
 In terms of combiners, \sys offers a set of linkable components for stream splitting and merging;
   these commands live in the \ttt{PATH} and are addressable by name, which means they can be used like (and by) any other commands.
 Practical challenges---related to task parallelism, deadlock prevention, and runtime performance---are addressed through a series of constructs that \sys provides.
@@ -870,8 +911,12 @@ The next few sections (\S\ref{parallelizability}--\ref{impl}) discuss the detail
 \section{Parallelizability Classes}
 \label{parallelizability}
 
-To have any hope of parallelizing scripts, \sys first needs to understand the parallelization characteristics of the commands they use.
-This information is encoded in a command's \emph{parallelizability class}.
+To have any hope of parallelizing scripts, \sys first needs to understand the parallelization characteristics of the commands they contain.
+As mentioned before \sys focuses on parallelizing data-parallel
+commands, i.e. commands that can process their input in parallel, and
+encodes their characteristics by assigning them to
+\emph{parallelizability classes}.
+%% This information is encoded in a command's \emph{parallelizability class}.
 Intuitively, a parallelizability class represents the level of synchronization required by copies of a command that execute in parallel.
 It focuses on capturing characteristics that are important for a command's parallel execution, rather than the command's full observable behavior.
 \sys leans towards having a few coarse classes rather than many detailed ones---among other reasons, to simplify their understanding and use by command developers.
@@ -884,8 +929,11 @@ Building on this study, it develops a lightweight annotation language that enabl
 \subsection{Parallelizability of Standard Libraries}
 \label{cmd}
 
+\kk{Mention that commands change classes depending on their arguments and that we only write here (and in the table) the class of commands with no flags. Then the discussion about flags in the language part makes sense.}
+
 % nv TODO: this is a hierarchy
-Broadly, shell commands can be split into five major classes (summarized in Tab.~\ref{tab:classes}) with respect to their parallelization characteristics, depending on how they interact with state.
+Broadly, shell commands can be split into four major classes (summarized in Tab.~\ref{tab:classes}) with respect to their parallelization characteristics, depending on what kind of state they need when processing their input.
+%% how they interact with state.
 These classes are ordered in ascending difficulty of parallelization:
   later classes require more effort.
 In this order, some classes can be thought as subsets of the next---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (without seeing any performance improvements).
@@ -922,26 +970,17 @@ Side-effectful           & ~\tsid  & \tti{env},  \tti{cp}, \tti{whoami}         
 % \heading{POSIX, GNU Core-utils, and beyond}
 
 \heading{Stateless Commands}
-The first class, \sta, contains commands that operate on individual elements of a data stream, without maintaining state across invocations.
+The first class, \sta, contains commands that operate on individual \todo{lines/elements}~\footnote{\todo{the choice of line as the data-quantum is deliberate, since they strike a nice balance between very coarse grained separation (files) and very fine-grained ones (individual characters). We might need to mention that in the introduction of 3.1}} of their input, without maintaining state across invocations.
 These are commands that can be expressed as a purely functional $map$ or $filter$---\eg \ttt{grep} filters out individual lines and \ttt{basename} removes a path prefix from a string.
 Stateless commands may produce multiple elements---\eg \ttt{tr} may insert {\sc NL} tokens---but when they receive empty input they return empty output.
 Workloads that use only stateless commands are trivial to parallelize:
   they do not require any synchronization to maintain correctness, nor caution about where to split inputs.
  % map :: (a -> b) -> [a] -> [b]
 
-Many of these commands (about 1/3 of \sta) are stateless \emph{within} a stream element---\eg\ttt{tr} transliterates characters within a line, one at a time---enabling further parallelization by splitting individual lines.
+\kk{Proposed insertion: The choice of where how to separate data elements would change the allocation of commands in parallelization classes---} Many of these commands (about 1/3 of \sta) are stateless \emph{within} a stream element---\eg\ttt{tr} transliterates characters within a line, one at a time---enabling further parallelization by splitting individual lines.
 This feature may seem of limited use, as these commands are computationally inexpensive, precisely due to their narrow focus.
 However, it turns to be  useful for cases with very large stream elements (long lines) such the \ttt{.fastq} format used in bioinformatics pipelines.  % TODO pointer to 6.3
 
-\kk{Do we want to get in more detail about requirements? Commands must
-  be deterministic, they must not do any other side effect (sending
-  signals, etc). These assumptions must be checked when the developer
-  designates the categories. Commands are assumed to always terminate
-  gracefully. \sys changes the termination behaviour of commands as a
-  sequential command that would exit prematurely might not exit
-  completely if parallelized.}
-\nv{Can we please do this in 4? The difference in size between \S3 and \S4 is
-concerning.. }
 
 \heading{Parallelizable Pure Commands}
 The second class, \pur, contains commands that respect functional purity---\ie same outputs for same inputs---but maintain internal state across their entire pass.
@@ -972,13 +1011,13 @@ A typical example of this is \ttt{sort}, which cannot start emitting results bef
 The third class, \npu, contains commands that, while purely functional, cannot be parallelized.
 This is because their internal state depends on prior state in the same pass in non-trivial ways. % should we say something about state machines?
 For example, hashing commands such as \ttt{sha1sum} maintain complex state that has to be updated sequentially.
-If parallelized on a single input, each \todo{stage} would need to repeat the work of all the previous stage foregoing any parallelism benefits.
+If parallelized on a single input, each \todo{stage} would need to wait on the results of all the previous stage foregoing any parallelism benefits.
 
 It is worth noting that while these commands are not parallelizable for a single input, they are still parallelizable across different inputs.
 For example, a web crawler involving hash generation for comparing individual pages would allow \ttt{sha1sum} to proceed in parallel for different pages.
 
 \heading{Side-effectful Commands}
-The last class, \sid, are commands that have side-effects across the system---for example, updating environment variables, interacting with the filesystem, and accessing the network.
+The last class, \sid, are commands that have side-effects across the system---for example, updating environment variables, interacting with the filesystem, and accessing the network. \kk{Or commands that do not produce output consuming lines of their input---thus not being amenable to data-parallelism.}
 Such commands are not parallelizable without finer-grained concurrency control mechanisms that can detect side-effects across the system.
 
 This is the largest class because it includes commands related to the file-system---a central abstractions to the \unix design and philosophy~\cite{unix}.
@@ -1393,6 +1432,13 @@ quintessential example of \todo{one-input-output} commands is
 concatenation as output. We focus on these commands because a large
 subset of \sta and \pur commands fall in this category.
 
+\kk{Do we want to get in more detail about requirements? Commands must
+  be deterministic, they must not do any other side effect (sending
+  signals, etc). These assumptions must be checked when the developer
+  designates the categories. Commands are assumed to always terminate
+  gracefully. \sys changes the termination behaviour of commands as a
+  sequential command that would exit prematurely might not exit
+  completely if parallelized.}
 
 \kk{Maybe give an example of a script and its dataflow graph.}
 
