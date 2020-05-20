@@ -2787,7 +2787,13 @@ phases.
 %% Of course, it would be possible to manually create a longer pipeline
 %% and use intermediate buffers to speed this up, but this defeats the
 %% purpose of having a simple solution.
-
+\begin{wrapfigure}{r}{0.25\textwidth}
+  \begin{center}
+    \includegraphics[width=0.25\textwidth]{\detokenize{./figs/sort_baseline_comparison_scaleup.pdf}}
+  \end{center}
+%   \vspace{-15pt}
+% \caption{ \textbf{Comparison with \ttt{sort -{}-parallel}.} }
+\end{wrapfigure}
 Second, based on the comparison with \ttt{sort --parallel} it seems
 that the scaleup limit that \sys reaches with sort is \todo{inherent
   and cannot be overpassed} \kk{We have to find a way to argue for the
@@ -2801,15 +2807,6 @@ command developers. Instead of implementing a custom flag that enables
 parallelism for a command, a simple specification of the command
 parallelizability allows \sys to scale it similarly to a handcrafted
 implementation with almost no effort.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\columnwidth]{\detokenize{./figs/sort_baseline_comparison_scaleup.pdf}}
-  \caption{ \textbf{Comparison with \ttt{sort -{}-parallel}.}
-  }
-  \vspace{-15pt}
-  \label{fig:sort-parallel-comparison}
-\end{figure}
 
 %% \kk{There is a weird thing in the results. That the sequential one
 %%   with --parallel=1 takes more than the \sys sequential one.}
