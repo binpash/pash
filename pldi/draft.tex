@@ -2390,94 +2390,115 @@ The goal of this subsection is to evaluate \sys on popular, common, or classic \
 
 \begin{figure*}[t]
     \centering
-    %% \subcaptionbox{\label{eval:minimal_grep}}{
-    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
-    %% }
-    %% \subcaptionbox{\label{eval:grep}}{
-    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/grep_throughput_scaleup.pdf}}
-    %% }
-    %% \subcaptionbox{\label{eval:minimal_sort}}{
-    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_sort_throughput_scaleup.pdf}}
-    %% }
-    %% \subcaptionbox{\label{eval:topn}}{
-    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/topn_throughput_scaleup.pdf}}
-    %% }
-    %% \subcaptionbox{\label{eval:wf}}{
-    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/wf_throughput_scaleup.pdf}}
-    %% }
-    %% \subcaptionbox{\label{eval:spell}}{
-    %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
-    %% }
-    %% \caption{a}
-    \begin{subfigure}[b]{0.24\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
-        %% \caption{TODO}
-        %% \label{eval:minimal_grep}
-    \end{subfigure}%
-    ~
-    \begin{subfigure}[b]{0.24\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{\detokenize{./figs/spell_throughput_scaleup.pdf}}
-        %% \caption{TODO}
-        %% \label{eval:grep}
-    \end{subfigure}%
-    ~
-    \begin{subfigure}[b]{0.24\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{\detokenize{./figs/minimal_sort_throughput_scaleup.pdf}}
-        %% \caption{TODO}
-        %% \label{eval:minimal_sort}
-    \end{subfigure}%
-    ~
-    \begin{subfigure}[b]{0.24\textwidth}
-      \centering
-      \includegraphics[width=\textwidth]{\detokenize{./figs/set-diff_throughput_scaleup.pdf}}
-        %% \caption{TODO}
-        %% \label{eval:minimal_sort}
-    \end{subfigure}%
-
-    \begin{subfigure}[b]{0.24\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{\detokenize{./figs/topn_throughput_scaleup.pdf}}
-        %% \caption{TODO}
-        %% \label{eval:topn}
-    \end{subfigure}%
-    ~
-    \begin{subfigure}[b]{0.24\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{\detokenize{./figs/wf_throughput_scaleup.pdf}}
-        %% \caption{TODO}
-        %% \label{eval:wf}
-    \end{subfigure}%
-    ~
-    \begin{subfigure}[b]{0.24\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{\detokenize{./figs/shortest_scripts_throughput_scaleup.pdf}}
-        %% \caption{TODO}
-        %% \label{eval:spell}
-    \end{subfigure}%
-    ~
-    \begin{subfigure}[b]{0.24\textwidth}
-      \centering
-      \includegraphics[width=\textwidth]{\detokenize{./figs/bigrams_throughput_scaleup.pdf}}
-        %% \caption{TODO}
-        %% \label{eval:minimal_sort}
-    \end{subfigure}%
+    \includegraphics[width=\textwidth]{\detokenize{./figs/tiling_throughput_scaleup.pdf}}
     \caption{
       \textbf{Speedup achieved by \sys as a function of the level of parallelism (1--100).} 
       Four different configurations per benchmark:
       (i) \todo{Par + Split}, showing the performance of \sys with both eager and split optimizations enabled,
       (ii) \todo{Par + B. Split}, showing the performance of \sys with eager and the \todo{batch-size annotated} split optimizations enabled,
-      (ii) \todo{Parallel}, showing the performance of \sys with eager enabled and split disabled,
-      (iii) \todo{No Eager}, showing the performance of \sys with split and eager disabled,
-      (iv) \todo{Blocking Eager}, showing the performance of \sys with split disabled and the naive blocking eager enabled,
+      (iii) \todo{Parallel}, showing the performance of \sys with eager enabled and split disabled,
+      (iv) \todo{No Eager}, showing the performance of \sys with split and eager disabled,
+      (v) \todo{Blocking Eager}, showing the performance of \sys with split disabled and the naive blocking eager enabled,
+      (vi) \todo{Opt. Parallel}, showing the performance of an optimized version of \ttt{bigrams}.
       \nv{Maybe it makes sense to show log x-axis?}
       \kk{How can we also fit two more plots (sort-sort and diff) here? Maybe we can fit one by getting rid of sort (since it also shown in the sort--parallel one). Otherwise we could separate the ``split'' plots from the ones that don't have split.}
     }
     \vspace{-15pt}
     \label{fig:microbenchmarks}
 \end{figure*}
+
+%% \begin{figure*}[t]
+%%     \centering
+%%     %% \subcaptionbox{\label{eval:minimal_grep}}{
+%%     %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
+%%     %% }
+%%     %% \subcaptionbox{\label{eval:grep}}{
+%%     %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/grep_throughput_scaleup.pdf}}
+%%     %% }
+%%     %% \subcaptionbox{\label{eval:minimal_sort}}{
+%%     %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_sort_throughput_scaleup.pdf}}
+%%     %% }
+%%     %% \subcaptionbox{\label{eval:topn}}{
+%%     %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/topn_throughput_scaleup.pdf}}
+%%     %% }
+%%     %% \subcaptionbox{\label{eval:wf}}{
+%%     %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/wf_throughput_scaleup.pdf}}
+%%     %% }
+%%     %% \subcaptionbox{\label{eval:spell}}{
+%%     %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
+%%     %% }
+%%     %% \caption{a}
+%%     \begin{subfigure}[b]{0.24\textwidth}
+%%         \centering
+%%         \includegraphics[width=\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
+%%         %% \caption{TODO}
+%%         %% \label{eval:minimal_grep}
+%%     \end{subfigure}%
+%%     ~
+%%     \begin{subfigure}[b]{0.24\textwidth}
+%%         \centering
+%%         \includegraphics[width=\textwidth]{\detokenize{./figs/spell_throughput_scaleup.pdf}}
+%%         %% \caption{TODO}
+%%         %% \label{eval:grep}
+%%     \end{subfigure}%
+%%     ~
+%%     \begin{subfigure}[b]{0.24\textwidth}
+%%         \centering
+%%         \includegraphics[width=\textwidth]{\detokenize{./figs/minimal_sort_throughput_scaleup.pdf}}
+%%         %% \caption{TODO}
+%%         %% \label{eval:minimal_sort}
+%%     \end{subfigure}%
+%%     ~
+%%     \begin{subfigure}[b]{0.24\textwidth}
+%%       \centering
+%%       \includegraphics[width=\textwidth]{\detokenize{./figs/set-diff_throughput_scaleup.pdf}}
+%%         %% \caption{TODO}
+%%         %% \label{eval:minimal_sort}
+%%     \end{subfigure}%
+
+%%     \begin{subfigure}[b]{0.24\textwidth}
+%%         \centering
+%%         \includegraphics[width=\textwidth]{\detokenize{./figs/topn_throughput_scaleup.pdf}}
+%%         %% \caption{TODO}
+%%         %% \label{eval:topn}
+%%     \end{subfigure}%
+%%     ~
+%%     \begin{subfigure}[b]{0.24\textwidth}
+%%         \centering
+%%         \includegraphics[width=\textwidth]{\detokenize{./figs/wf_throughput_scaleup.pdf}}
+%%         %% \caption{TODO}
+%%         %% \label{eval:wf}
+%%     \end{subfigure}%
+%%     ~
+%%     \begin{subfigure}[b]{0.24\textwidth}
+%%         \centering
+%%         \includegraphics[width=\textwidth]{\detokenize{./figs/shortest_scripts_throughput_scaleup.pdf}}
+%%         %% \caption{TODO}
+%%         %% \label{eval:spell}
+%%     \end{subfigure}%
+%%     ~
+%%     \begin{subfigure}[b]{0.24\textwidth}
+%%       \centering
+%%       \includegraphics[width=\textwidth]{\detokenize{./figs/bigrams_throughput_scaleup.pdf}}
+%%         %% \caption{TODO}
+%%         %% \label{eval:minimal_sort}
+%%     \end{subfigure}%
+%%     \caption{
+%%       \textbf{Speedup achieved by \sys as a function of the level of parallelism (1--100).} 
+%%       Four different configurations per benchmark:
+%%       (i) \todo{Par + Split}, showing the performance of \sys with both eager and split optimizations enabled,
+%%       (ii) \todo{Par + B. Split}, showing the performance of \sys with eager and the \todo{batch-size annotated} split optimizations enabled,
+%%       (ii) \todo{Parallel}, showing the performance of \sys with eager enabled and split disabled,
+%%       (iii) \todo{No Eager}, showing the performance of \sys with split and eager disabled,
+%%       (iv) \todo{Blocking Eager}, showing the performance of \sys with split disabled and the naive blocking eager enabled,
+%%       \nv{Maybe it makes sense to show log x-axis?}
+%%       \kk{How can we also fit two more plots (sort-sort and diff) here? Maybe we can fit one by getting rid of sort (since it also shown in the sort--parallel one). Otherwise we could separate the ``split'' plots from the ones that don't have split.}
+%%     }
+%%     \vspace{-15pt}
+%%     \label{fig:microbenchmarks}
+%% \end{figure*}
+
+
 
 \heading{Programs}
 
