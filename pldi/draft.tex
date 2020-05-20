@@ -1973,19 +1973,27 @@ and as a result does not parallelize this sub-expression.
 %% \kk{Maybe guide all of this by showing an example of an output shell
 %%   script?}
 
-Given a dataflow graph representing a shell program, the \sys
-optimizer outputs an optimized dataflow graph in which data
-parallelism opportunities have been exploited.  More concretely, the
-optimizer starts by splitting input files in several chunks, given the
-desirable output dataflow graph width. It then starts from the source
-nodes of the graph, iteratively performing the graph transformations
-that were described in \Cref{ir:transformations}.
-%% If the incoming edges of the node are less than the desirable graph
-%% width, it performs edge splits, and then it performs maximal node
-%% splits.
-The final graph can then be implemented by spawning a process for each
-node, and redirecting the inputs and outputs according to the graph
-edges.
+After translating the parallelizable regions of the input script to
+dataflow graphs and optimizing these graphs using the transformations
+described in \Cref{ir:transformations}, \sys implements the graph by
+translating it back to a shell script. In this section we describe how
+\sys achieves that, and several technical challenges that it addresses.
+
+
+%% Given a dataflow graph representing a shell program, the \sys
+%% optimizer outputs an optimized dataflow graph in which data
+%% parallelism opportunities have been exploited.  More concretely, the
+%% optimizer starts by splitting input files in several chunks, given the
+%% desirable output dataflow graph width. It then starts from the source
+%% nodes of the graph, iteratively performing the graph transformations
+%% that were described in \Cref{ir:transformations}.
+%% %% If the incoming edges of the node are less than the desirable graph
+%% %% width, it performs edge splits, and then it performs maximal node
+%% %% splits.
+%% The final graph can then be implemented by spawning a process for each
+%% node, and redirecting the inputs and outputs according to the graph
+%% edges. In this section, we describe several technical challenges that
+%% we addressed.
 
 %% \subsection{Mapping operators to nodes}
 
@@ -2030,23 +2038,51 @@ edges.
 
 \heading{Overcoming Laziness}
 
-\noindent
-\TODO{Problem: Cat (and other commands that have multiple inputs) is
-  not eager. Illustration: Show a parallel pipeline having a cat that
-  gathers input somewhere (and a sort merge maybe). The way pipes
-  work, this graph will essentially evaluate almost completely
-  sequentially. Maybe go through the steps that cat asks for the first
-  line of its first input until ithe first input is done and then goes
-  to the second. This leads to processor under-utilization. Solution:
-  We add eager nodes that eagerly consume all their input (even if
-  their output does not ask for it). Eager nodes are themselves part
-  of the dataflow graph (and model) and essentially perform an
-  identity function. This makes all processors as utilized as possible
-  and for CPU heavy tasks it leads to speedup. For IO heavy (and CPU
-  light) tasks it has some overhead. We evaluate eager in section X
-  (We should also say something about a CPU light task). A good thing
-  is that they work for all possible commands with almost no overhead,
-  without having to make each specific command eager.}
+The shell is uniquely lazy, in the sense that most commands and pipes
+consume their inputs only when they are ready to process more. This
+allows the underlying system to be able to support concurrently
+executing many more commands than the processing threads of the
+underlying system, by scheduling them concurrently, allowing them to
+have progress one at a time. This design decision however, severely
+restricts parallelism since nodes are often blocked when their
+consumers are processing their input. Consider as an example the
+following script:
+
+\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+  mkfifo t1 t2
+  grep "foo" > t1 & grep "foo" > t2 &
+  cat t1 t2
+\end{lstlisting}
+
+The \ttt{cat} command will only try to consume input from \ttt{t2}
+when it is done reading from \ttt{t1}. This means that the second
+\ttt{grep} will block without processing any input until the first
+\ttt{grep} is done processing. Instead of addressing this issue for
+specific commands, \sys inserts and instants several eager \ttt{relay}
+nodes in critical points of the pipeline as seen in
+\Cref{fig:eager}. These nodes force their producers to produce output
+and not block, while also preserving the existing task-based
+parallelism---that would not be preserved say with the \todo{third}
+solution in \Cref{fig:eager}.
+
+
+
+%% \TODO{Problem: Cat (and other commands that have multiple inputs) is
+%%   not eager. Illustration: Show a parallel pipeline having a cat that
+%%   gathers input somewhere (and a sort merge maybe). The way pipes
+%%   work, this graph will essentially evaluate almost completely
+%%   sequentially. Maybe go through the steps that cat asks for the first
+%%   line of its first input until ithe first input is done and then goes
+%%   to the second. This leads to processor under-utilization. Solution:
+%%   We add eager nodes that eagerly consume all their input (even if
+%%   their output does not ask for it). Eager nodes are themselves part
+%%   of the dataflow graph (and model) and essentially perform an
+%%   identity function. This makes all processors as utilized as possible
+%%   and for CPU heavy tasks it leads to speedup. For IO heavy (and CPU
+%%   light) tasks it has some overhead. We evaluate eager in section X
+%%   (We should also say something about a CPU light task). A good thing
+%%   is that they work for all possible commands with almost no overhead,
+%%   without having to make each specific command eager.}
 
 \begin{figure}[t]
 \centering
@@ -2059,14 +2095,15 @@ edges.
     (ii) intermediary files alone lose data, as the consumer reaches EOF before the producer; and
     (iii) writing to files + wait does not allow trask-based parallelism.
   Eager is an elegant solution that solves the problem while remaining within
-  the model. Describe.
+  the model. Describe. \TODO{Combine this figure with the above code maybe.}
 }
 \vspace{-15pt}
 \label{fig:eager}
 \end{figure}
 
 
-\heading{Readjusting Graph Width}
+\heading{Split node implementation}
+
 
 \noindent
 \TODO{Problem: Pipeline width shrinks after pure commands. Solution:
