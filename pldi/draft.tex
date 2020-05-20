@@ -1403,41 +1403,71 @@ in the graph are its outputs.
 \heading{Nodes -- Commands}
 
 A node $f$ of the graph represents a function from a (possibly empty)
-list of input streams to a list of output streams $f : [D\kstar] \to
-[D\kstar]$, where $D$ represents the basic data type of a line of
-characters. \km{Is the number of input/output streams variable? If $m$ is the number of input streams, is the number of output streams a function of $m$? If this the case, then it is not captured by this type. Maybe it would help to show a couple of example operators together with the types of their denotations. A graphical representation (as in Fig.~\ref{fig:parallelization-transformation} would also be nice.} This representation captures the majority of shell
-commands. We require that the function $f$ is monotone w.r.t.\ a
-lifting of the prefix order for a sequence of inputs \kk{Formalize
-  this lifting if essential for later development}.
+list of inputs
+%% streams
+to a list of outputs
+%% streams
+$f : [D\kstar] \to [D\kstar]$, where $D$ represents the basic data
+type of a line of characters.
+%% \km{Is the number of input/output
+%%   streams variable? If $m$ is the number of input streams, is the
+%%   number of output streams a function of $m$? If this the case, then
+%%   it is not captured by this type. Maybe it would help to show a
+%%   couple of example operators together with the types of their
+%%   denotations. A graphical representation (as in
+%%   Fig.~\ref{fig:parallelization-transformation} would also be nice.}
+%% \kk{Is there a reason to restrict the number of outputs to be a
+%%   function of the number of inputs? I think that we don't need such a
+%%   restriction, therefore the above type should be fine.}
+This representation captures \todo{the majority/all} of commands in
+the \tsta, \tpur, \tnpu. Note that these functions should only produce
+output in the form of files and not perform any other side effect,
+such as sending signals.  We require that the function $f$ is monotone
+w.r.t.\ a lifting of the prefix order for a sequence of inputs
+%% \kk{Formalize
+%%   this lifting if essential for later development}.
 %% More formally, $\forall f, x, y, f(x) = y$, then for any $x'$, there
 %% exists $y'$ such that $f(x.x') = y.y'$, where $.$ is standard
 %% concatenation and will be omitted when obvious.
 This captures the idea that a node cannot retract output that it has
 already produced.
 
-\heading{\todo{One-input-output} Commands}
+\heading{\todo{Streaming} Commands}
 
-\kk{Find a better name.} \todo{One-input-output} commands \todo{are
-  special commands} that consume their inputs one at a time, with the
-possible exception of static input files, and produce one output
-file. These commands can be represented as functions of type $f :
-D\kstar \times [D\kstar] \to D\kstar$, where the first argument
-represents the concatenation of the inputs that are consumed one at a
-time and the second argument represents the static inputs. \km{Again, a graphical presentation of these operators would be useful. Maybe with a way to distinguish between between streaming inputs and static inputs? Btw, this distinction is not completely clear to me at this point. Clearly, not all programs that we can write are streaming (monotone).} The
-quintessential example of \todo{one-input-output} commands is
-\ttt{cat}, that consumes its inputs one at a time, producing their
-concatenation as output. We focus on these commands because a large
-subset of \sta and \pur commands fall in this category.
+\todo{Streaming} commands consume their inputs sequentially and one
+element at a time, with the possible exception of static input files,
+and produce one output file. The quintessential example of
+\todo{streaming} commands is \ttt{cat}, that consumes its inputs in
+order, producing their concatenation as output. A more interesting
+example is \ttt{comm -23 f1 f2}, which has \ttt{f2} as its static
+input (it needs to read it completely before consuming anything from
+\ttt{f1} and then consumes \ttt{f1} one element at a time. These
+commands can be represented as functions of type $f : D\kstar \times
+[D\kstar] \to D\kstar$, where the first argument represents the
+concatenation of the inputs that are consumed one at a time and the
+second argument represents the static inputs.
+%% \km{Again, a graphical
+%%   presentation of these operators would be useful. Maybe with a way to
+%%   distinguish between between streaming inputs and static inputs? Btw,
+%%   this distinction is not completely clear to me at this
+%%   point. Clearly, not all programs that we can write are streaming
+%%   (monotone).} \kk{Do you mean that there are shell scripts that are
+%%   non monotone? That is true but we are assuming monotone nodes. Do I
+%%   miss something?}
+We focus on these commands because a large subset of \sta and \pur
+commands fall in this category.
 
-\kk{Do we want to get in more detail about requirements? Commands must
-  be deterministic, they must not do any other side effect (sending
-  signals, etc). These assumptions must be checked when the developer
-  designates the categories. Commands are assumed to always terminate
-  gracefully. \sys changes the termination behaviour of commands as a
-  sequential command that would exit prematurely might not exit
-  completely if parallelized.}
+%% \kk{Do we want to get in more detail about requirements? Commands must
+%%   be deterministic, they must not do any other side effect (sending
+%%   signals, etc). These assumptions must be checked when the developer
+%%   designates the categories. Commands are assumed to always terminate
+%%   gracefully. \sys changes the termination behaviour of commands as a
+%%   sequential command that would exit prematurely might not exit
+%%   completely if parallelized.}
 
-\kk{Maybe give an example of a script and its dataflow graph.}
+%% \kk{If we have time and space we could give an example of a script
+%%   together with its dataflow graph to give more intuition about nodes
+%%   and streaming commands.}
 
 
 %% An example of a node with one input and one output stream is the
@@ -1581,7 +1611,7 @@ Before describing the different types of optimizations, we formalize
 the intuition about stateless and pure commands that was described
 earlier~\sx{cmd}.
 
-%% We focus on \todo{one-input-output} commands (as defined in
+%% We focus on \todo{streaming} commands (as defined in
 %% \cref{graph-components}) that constitute a large subset of shell
 %% commands.
 
@@ -1603,8 +1633,10 @@ operate independently on individual elements of the stream
 work, we consider lines as the data quantum, so only commands that are
 stateless regarding lines (or any finer granularity such as
 characters) are considered stateless. Formally, a
-\todo{one-input-output} command $f$ is stateless if it is ``linear''
-with respect to concatenation \km{It commutes with the operation of concatenation. This is the definition of (semigroup) homomorphism. I am not sure that linearity is an appropriate term.}, \ie satisfying the following equation:
+\todo{streaming} command $f$ is stateless if it commutes with
+the operation of concatenation, \ie it is a semigroup homomorphism:
+%% with respect to concatenation \km{It commutes with the operation of concatenation. This is the definition of (semigroup) homomorphism. I am not sure that linearity is an appropriate term.}
+%% , \ie satisfying the following equation:
 
 \[
 \forall x, x', s, f(x \cdot x', s) = f(x, s) \cdot f(x', s)
@@ -1632,9 +1664,22 @@ $m$ and an associative fold $f'$, satisfying the following equation:
 
 \noindent
 This means that we get the same output by applying $f$ to a
-concatenation of two inputs $x, x'$, or by applying the fold
-function $f'$ to the concatenation of the outputs produced by applying
-map $m$ to each of these inputs. \km{We had also discussed here the case of operators that can be described as associative and commutative functions on the data (e.g., sum). In this case the parallelization has the flavor of data parallelism: one can split the input stream in an arbitrary way (e.g., randomly or using some other load-balancing scheme) and merge the outputs. For the more broad class of associative operations (e.g., sort), the formulation of this paragraph makes perfect sense. I just want to mention that this feels a lot more like \textbf{batching} than map-reduce-like data parallelization.}
+concatenation of two inputs $x, x'$, or by applying the fold function
+$f'$ to the concatenation of the outputs produced by applying map $m$
+to each of these inputs.
+%% \km{We had also discussed here the case of
+%%   operators that can be described as associative and commutative
+%%   functions on the data (e.g., sum). In this case the parallelization
+%%   has the flavor of data parallelism: one can split the input stream
+%%   in an arbitrary way (e.g., randomly or using some other
+%%   load-balancing scheme) and merge the outputs. For the more broad
+%%   class of associative operations (e.g., sort), the formulation of
+%%   this paragraph makes perfect sense. I just want to mention that this
+%%   feels a lot more like \textbf{batching} than map-reduce-like data
+%%   parallelization.} \kk{Thanks, I think you are right. Batching is a
+%%   better name for it. In the end we didn't handle
+%%   commutative-associative function (that are more like map-reduce) and
+%%   so we changes the name to map-fold to not imply commutativity.}
 
 \heading{Parallelization Transformations}
 %
@@ -1646,9 +1691,14 @@ $n$ input streams to one of them, and commutes the \ttt{cat} node
 after them to concatenate their outputs and transfer them to
 $v'$. Since each incoming edge represents a stream of data $x_i :
 D^*$, and the only behaviour of a dataflow graph is its output, this
-optimization $v(x_1 \cdot x_2 \cdots x_n, s) \Rightarrow v(x_1, s) \cdot v(x_2, s) \cdots v(x_n, s)$ can be shown to preserve the behavior of the graph. Furthermore, it can be straightforwardly extended to pure
-commands that can be implemented by a map-fold pair $(m, r)$ as $
-v(x_1 \cdot x_2 \cdots x_n, s) \Rightarrow r(m(x_1, s) \cdot m(x_2, s) \cdots m(x_n, s), s)$. A visual representation of this transformation can be seen in \Cref{fig:parallelization-transformation}.
+optimization $v(x_1 \cdot x_2 \cdots x_n, s) \Rightarrow v(x_1, s)
+\cdot v(x_2, s) \cdots v(x_n, s)$ can be shown to preserve the
+behavior of the graph. Furthermore, it can be straightforwardly
+extended to pure commands that can be implemented by a map-fold pair
+$(m, r)$ as $ v(x_1 \cdot x_2 \cdots x_n, s) \Rightarrow r(m(x_1, s)
+\cdot m(x_2, s) \cdots m(x_n, s), s)$. \todo{A visual representation
+  of this transformation can be seen in}
+\Cref{fig:parallelization-transformation}.
 
 \begin{figure}[t]
 \centering
@@ -1667,6 +1717,28 @@ v(x_1 \cdot x_2 \cdots x_n, s) \Rightarrow r(m(x_1, s) \cdot m(x_2, s) \cdots m(
 \label{fig:parallelization-transformation}
 \end{figure}
 
+\heading{Auxiliary Transformations}
+
+In addition to the above, we also define a set of auxiliary
+transformations that are shown in
+\Cref{fig:auxiliary-transformations}.  The first two enable the
+parallelization transformations by inserting \ttt{cat} nodes, either
+by using them to concatenate many inputs of one command, or by first
+adding a \ttt{split} node that splits the input in batches. The final
+one inserts a relay that performs the identity transformation on its
+input. Relay nodes can be useful for monitoring and debugging, as well
+as for performance improvements, as we will see in \Cref{optimizer}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{\detokenize{./figs/auxiliary-transformations.png}}
+\caption{
+  \textbf{Auxiliary transformations.}
+  \todo{Add all three of the auxiliary transformations.}
+}
+\vspace{-10pt}
+\label{fig:auxiliary-transformations}
+\end{figure}
 
 %% \kk{Remember to mention the assumptions that need to hold for the
 %%   graph transformations to be valid in the Command categories
@@ -1700,25 +1772,6 @@ v(x_1 \cdot x_2 \cdots x_n, s) \Rightarrow r(m(x_1, s) \cdot m(x_2, s) \cdots m(
 %% tofill
 %% \end{lemma}
 
-\kk{I think we should say something about the rest of the
-  transformations: (i) changing a command with multiple inputs to a
-  cat followed by the command to enable the previous optimization,
-  (ii) adding a split node after a command (without saying anything
-  about its implementation for now, and (iii) Adding an identity node
-  in the place of an edge.}
-
-%% \kk{I think that we should probably rewrite this paragraph with the
-%%   ``new'' split optimization (and maybe any others that we develop
-%%   until then) here.}
-
-%% In addition to node splits, we can also perform edge splits in order
-%% to increase the number of incoming edges for some nodes to further expose
-%% possible data parallelism. In cases where the edge refers to a real file, the
-%% edge split represents splitting the real file in chunks. In
-%% cases where the edge connects two nodes, the split effectively refers to several edges
-%% with a bounded number of lines. Note that the final output edge of a
-%% valid node in the graph must always be unbounded if it does not refer
-%% to a file.
 
 \section{Implementation}
 \label{impl}
@@ -2397,7 +2450,7 @@ This change in size does not necessarily translate to observed runtime, as most 
 FIFOs are simply pipes made explicit;
   the performance characteristics, including in-kernel buffering and synchronization mechanisms, are identical between the two.
 
-In more detail, \ttt{grep} is a short script centered around an expensive \sta command;
+In more detail, \ttt{grep} is a short script centered around an expensive \tsta command;
 % a DFA-based regular expression matching phase;
   while the \unix \ttt{grep} command defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
 The \ttt{sort} pipeline is equally short, but its central operation is a command in \pur.
@@ -3082,6 +3135,10 @@ Experiments with real programs show substantial speedups and the ability to oper
   %% National Science Foundation.
 %% \end{acks}
 
+%% Bibliography
+\bibliography{./bib}
+
+
 \appendix
 
 \section{Annotation Language Grammar}
@@ -3132,10 +3189,6 @@ Experiments with real programs show substantial speedups and the ability to oper
   }
   \label{fig:dsl}
 \end{figure}
-
-
-%% Bibliography
-\bibliography{./bib}
 
 %% %% Appendix
 %% \appendix
