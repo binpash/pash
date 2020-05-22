@@ -1304,17 +1304,13 @@ If these invariants are met, after DFG analysis~\sx{ir} \sys can replace occurre
 \section{Dataflow Graph Model}
 \label{ir}
 
-The core of \sys is a dataflow graph model that is expressive enough
-to support a large subset of shell programs. A fundamental difference
-with other dataflow graph models is that in \sys's model contains
-information about the order in which a node reads its inputs. This
-enables a set of graph transformations that expose data parallelism as
-task parallelism. These transformations can then be applied in an
-iterative way, optimizing the program to utilize available
-computational resources.
+The core of \sys is a dataflow graph (DFG) model that is expressive enough to support a large subset of shell programs.\nv{Immediate Q: How Large? Which programs are not supported? Why?}
+A fundamental difference with other DFG models is that it contains information about the order in which a node reads its inputs.
+This enables a set of graph transformations that expose data parallelism as task parallelism.\nv{What does this mean? What if they are fundamentally different in the reivewer's mind? Example?}
+These transformations can then be applied in an iterative way, optimizing the program to utilize available computational resources.
 
 
-%% The core of \sys is a dataflow graph model, inspired by the ones used
+%% The core of \sys is a DFG model, inspired by the ones used
 %% in popular distributed stream processing systems~\sx{related} \kk{Is
 %%   this reference here necessary?}. The dataflow model can express a
 %% large subset of Shell programs and inherently supports the data
@@ -1331,32 +1327,28 @@ computational resources.
 \subsection{Definitions}
 \label{graph-components}
 
-The two main shell abstractions are (i) files (or pipes, \emph{viz.}
-correspondence between files and pipes in \S\ref{bg:pipelines}) that
-contain data, and (ii) commands that communicate through these
-files. Based on that, in \sys's graph model nodes represent commands
-and edges represent files.
+The two main shell abstractions are
+  (i) files (or pipes, \emph{viz.} correspondence between files and pipes in \S\ref{bg:pipelines}\nv{Not in this version. Should we call them "streams"?}) that contain data, and
+  (ii) commands that communicate through these files.
+\nv{quick solution: change all files to streams and make the equivalence explicit here}
+\sys's DFG model represents commands as nodes and \todo{streams} as edges.
 
-We first introduce basic notation that will be useful later on.  For a
-set $D$, we write $D\kstar$ to denote the set of all finite words over
-$D$. For words $x, y \in D\kstar$, we write $x \cdot y$ or $xy$ to
-denote their concatenation. We write $\eps$ for the empty word. We say
-that $x$ is a \emph{prefix} of $y$, and we write $x \leq y$, if there
-is a word $z$ such that $y = xz$. The $\leq$ order is reflexive,
-antisymmetric, and transitive (i.e. is a partial order) and is often
-called the \emph{prefix order}.
+We first introduce basic notation used throughput this section.
+For a set $D$, we write $D\kstar$ to denote the set of all finite words over $D$.
+For words $x, y \in D\kstar$, we write $x \cdot y$ or $xy$ to denote their concatenation.
+We write $\eps$ for the empty word.
+We say that $x$ is a \emph{prefix} of $y$, and we write $x \leq y$, if there is a word $z$ such that $y = xz$.
+The $\leq$ order is reflexive, antisymmetric, and transitive (\ie is a partial order) and is often called the \emph{prefix order}.
 
 
-\heading{Edges -- Files}
-
-Edges in the dataflow graph represent files, the basic data
-abstraction of the shell. They are used as communication channels
-between nodes in the graph, and as the input or output of the whole
-graph. Edges are represented as possibly unbounded streams of type
-$D\kstar$. Edges can either refer to named files or FIFO pipes used
-for interprocess communication. Edges that do not start from a node in
-the graph represent the graph input; edges that do not point to a node
-in the graph are its outputs.
+\heading{Edges---Streams}
+Edges in the DFG represent streams, the basic data abstraction of the shell.
+They are used as communication channels between nodes in the graph, and as the input or output of the entire graph.
+Edges are represented as possibly unbounded streams of type $D\kstar$.
+Edges can either refer to named files or FIFO pipes used for interprocess communication.
+Edges that do not start from a node in the graph represent the graph input;
+  edges that do not point to a node in the graph are its outputs.
+\nv{OK This distinction is explained in this par; I would put this earlier}
 
 
 
@@ -1387,8 +1379,7 @@ in the graph are its outputs.
 %%   to.}
 
 
-\heading{Nodes -- Commands}
-
+\heading{Nodes---Commands}
 A node $f$ of the graph represents a function from a (possibly empty)
 list of inputs
 %% streams
@@ -1406,11 +1397,11 @@ type of a line of characters.
 %% \kk{Is there a reason to restrict the number of outputs to be a
 %%   function of the number of inputs? I think that we don't need such a
 %%   restriction, therefore the above type should be fine.}
-This representation captures \todo{the majority/all} of commands in
-the \tsta, \tpur, \tnpu. Note that these functions should only produce
+This representation captures all the commands in
+the \tsta, \tpur, and \tnpu. Note that these functions should only produce
 output in the form of files and not perform any other side effect,
 such as sending signals.  We require that the function $f$ is monotone
-w.r.t.\ a lifting of the prefix order for a sequence of inputs
+with respect to a lifting of the prefix order for a sequence of inputs
 %% \kk{Formalize
 %%   this lifting if essential for later development}.
 %% More formally, $\forall f, x, y, f(x) = y$, then for any $x'$, there
@@ -1420,8 +1411,7 @@ This captures the idea that a node cannot retract output that it has
 already produced.
 
 \heading{\todo{Streaming} Commands}
-
-\todo{Streaming} commands consume their inputs sequentially and one
+These commands consume their inputs sequentially and one
 element at a time, with the possible exception of static input files,
 and produce one output file. The quintessential example of
 \todo{streaming} commands is \ttt{cat}, that consumes its inputs in
@@ -1443,6 +1433,7 @@ second argument represents the static inputs.
 %%   miss something?}
 We focus on these commands because a large subset of \sta and \pur
 commands fall in this category.
+\nv{Based on the intro of 4 or 4.1 I did not expect streaming. I understand edges and nodes, but how do streaming commands fit into the picture? the answer might be the last sentence which should be first---reviewer: why am I reading what I'm reading?:P}
 
 %% \kk{Do we want to get in more detail about requirements? Commands must
 %%   be deterministic, they must not do any other side effect (sending
@@ -1453,7 +1444,7 @@ commands fall in this category.
 %%   completely if parallelized.}
 
 %% \kk{If we have time and space we could give an example of a script
-%%   together with its dataflow graph to give more intuition about nodes
+%%   together with its DFG to give more intuition about nodes
 %%   and streaming commands.}
 
 
@@ -1578,24 +1569,24 @@ commands fall in this category.
 %%   more files than their output stream).  However, these files are
 %%   static (\eg used for configuration or logging) and do not represent
 %%   streams of data, and therefore are not considered part of the
-%%   dataflow graph.  For now, we assume that these static files can only
+%%   DFG.  For now, we assume that these static files can only
 %%   be accessed by one node, thus ensuring that they do not interfere
 %%   with the distributed implementation.
 %% %% Because of the assumption in section Front End \ref{}, that each file
-%% %% exists only once in the dataflow graph, we can safely assume that
+%% %% exists only once in the DFG, we can safely assume that
 %% %% reading and writing to these static files does not interfere with the
 %% %% distributed implementation, and doesn't alter the behaviour of the
 %% %% program.
 %% }
 
-We have defined a set of semantics-preserving graph transformations
+\sys defines a set of semantics-preserving graph transformations
 that act as parallelization-exposing optimizations. Both the domain
-and range of these transformations is a graph in our dataflow model
+and range of these transformations is a graph in our DFG model
 and therefore they can be composed arbitrarily and in any order.
-%% Having a dataflow graph representation allows us to define
+%% Having a DFG representation allows us to define
 %% parallelization optimizations as graph transformations.
 Before describing the different types of optimizations, we formalize
-the intuition about stateless and pure commands that was described
+the intuition behind classes \sta and \pur described informally
 earlier~\sx{cmd}.
 
 %% We focus on \todo{streaming} commands (as defined in
@@ -1613,7 +1604,6 @@ earlier~\sx{cmd}.
 %%   microbenchmarks to some large-realistic macrobenchmarks.}.
 
 \heading{Stateless and Parallelizable Pure Commands}
-
 As mentioned in \Cref{cmd}, stateless commands such as \ttt{tr}
 operate independently on individual elements of the stream
 (characters, lines, or files) without maintaining any state. In this
@@ -1642,7 +1632,7 @@ $x, x'$ separately, and concatenating the outputs.
 
 Similarly, some pure commands (such as \ttt{sort} and \ttt{wc}) can be
 parallelized using divide-and-conquer techniques. More formally, these
-pure commands $f$ can be implemented as a combination of functions map
+pure commands $f$ can be implemented as a combination of a function map
 $m$ and an associative fold $f'$, satisfying the following equation:
 
 \[
@@ -1651,9 +1641,9 @@ $m$ and an associative fold $f'$, satisfying the following equation:
 
 \noindent
 This means that we get the same output by applying $f$ to a
-concatenation of two inputs $x, x'$, or by applying the fold function
+concatenation of two inputs $x, x'$ as by applying the fold function
 $f'$ to the concatenation of the outputs produced by applying map $m$
-to each of these inputs.
+to each of $x$ and $x'$.
 %% \km{We had also discussed here the case of
 %%   operators that can be described as associative and commutative
 %%   functions on the data (e.g., sum). In this case the parallelization
@@ -1669,23 +1659,22 @@ to each of these inputs.
 %%   so we changes the name to map-fold to not imply commutativity.}
 
 \heading{Parallelization Transformations}
-%
 Based on these equations, we can define a \emph{node parallelization
   transformation} on a stateless node $v$ that is preceded by a
-\ttt{cat} with $n$ input streams and is followed by a node $v'$. The
+\ttt{cat} with $n$ input streams and is followed by a node $v'$ (Fig.~\ref{fig:parallelization-transformation}). The
 transformation replaces $v$ with $n$ new nodes, routing each of the
 $n$ input streams to one of them, and commutes the \ttt{cat} node
 after them to concatenate their outputs and transfer them to
 $v'$. Since each incoming edge represents a stream of data $x_i :
-D^*$, and the only behaviour of a dataflow graph is its output, this
+D^*$, and the only behaviour of a DFG is its output, this
 optimization $v(x_1 \cdot x_2 \cdots x_n, s) \Rightarrow v(x_1, s)
 \cdot v(x_2, s) \cdots v(x_n, s)$ can be shown to preserve the
-behavior of the graph. Furthermore, it can be straightforwardly
-extended to pure commands that can be implemented by a map-fold pair
+behavior of the graph. 
+
+This transformation can extended straightforwardly to pure commands implemented by a map-fold pair
 $(m, r)$ as $ v(x_1 \cdot x_2 \cdots x_n, s) \Rightarrow r(m(x_1, s)
-\cdot m(x_2, s) \cdots m(x_n, s), s)$. \todo{A visual representation
-  of this transformation can be seen in}
-\Cref{fig:parallelization-transformation}.
+\cdot m(x_2, s) \cdots m(x_n, s), s)$.
+% \todo{It is shown in Fig.}\ref{fig:parallelization-transformation}.
 
 \begin{figure}[t]
 \centering
@@ -1705,16 +1694,14 @@ $(m, r)$ as $ v(x_1 \cdot x_2 \cdots x_n, s) \Rightarrow r(m(x_1, s)
 \end{figure}
 
 \heading{Auxiliary Transformations}
-
-In addition to the above, we also define a set of auxiliary
-transformations that are shown in
-\Cref{fig:auxiliary-transformations}.  The first two enable the
-parallelization transformations by inserting \ttt{cat} nodes, either
+\todo{We} also define a set of auxiliary transformations that are shown in
+\Cref{fig:auxiliary-transformations}.  The first two \nv{Name them?} enable the
+parallelization transformations by inserting \ttt{cat} nodes,\footnote{\nv{This is minor, but for the model maybe name them concatenation nodes or ++? rather than \ttt{cat}}} either
 by using them to concatenate many inputs of one command, or by first
 adding a \ttt{split} node that splits the input in batches. The final
 one inserts a relay that performs the identity transformation on its
 input. Relay nodes can be useful for monitoring and debugging, as well
-as for performance improvements, as we will see in \Cref{optimizer}.
+as for performance improvements~\sx{optimizer}.
 
 \begin{figure}[t]
 \centering
