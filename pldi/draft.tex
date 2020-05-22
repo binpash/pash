@@ -2118,6 +2118,24 @@ For the latter, it can be configured to avoid reading all its input, thus exploi
 %% Using the 2-splitter as a building block, a pipe can be split to
 %% arbitrarily many different pipes.
 
+\begin{table*}[t]
+\center
+\footnotesize
+% \setlength\tabcolsep{3pt}
+\caption{
+  \footnotesize{
+    \textbf{Summary of shell one-liners}.
+    Small pipelines (\ie ones usually developed on-the-fly) drawn from various sources and applied to large datasets.
+    % Names correspond to the speedup plots (Fig.~\ref{fig:microbenchmarks}).
+    Structure summarizes the different classes of commands used in the script.
+    Input and seq. time report on the input size fed to the script and the timing of its sequential execution.
+    Nodes and compile time report on \sys's resulting \todo{AST} size and compilation time for two indicative parallelization configurations.
+    % Highlights notes a few key features of each script.
+  }
+}
+\input{microbenchmarks-table}
+\label{tab:eval}
+\end{table*}
 
 
 \heading{Dangling FIFOs and Zombie Producers}
@@ -2228,18 +2246,16 @@ The combiners iterate over the provided stream descriptors, \ie they work with m
 %% The above script takes the outputs produced by two \ttt{wc} commands
 %% and aggregates them accordingly.
 
-
-
 \section{Evaluation}
 \label{eval}
 
-\TODO{Remember to mention that deathstar has 128 threads but 64
-  cores. So it is reasonable for the speedup to not go further in cpu
-  heavy pipelines.}
-
-\TODO{Should we mention that we empirically show that pash produces
-  correct code?}
-
+%> \TODO{Remember to mention that deathstar has 128 threads but 64
+%>   cores. So it is reasonable for the speedup to not go further in cpu
+%>   heavy pipelines.}
+%> 
+%> \TODO{Should we mention that we empirically show that pash produces
+%>   correct code?}
+%> 
 % FIXME
 % \kk{We should make sure to measure the time that it takes for the
 %   whole process to run (parsing, translating, optimizing, planning)
@@ -2264,44 +2280,9 @@ The combiners iterate over the provided stream descriptors, \ie they work with m
 %   command in them.}
 
 
-\begin{table*}[t]
-\center
-\footnotesize
-% \setlength\tabcolsep{3pt}
-\caption{
-  \footnotesize{
-    \textbf{Summary of shell one-liners}.
-    The shell one-liners are small pipelines (\ie ones developed on-the-fly) drawn from various sources and applied to large datasets.
-  }
-}
-%% \begin{tabular*}{\textwidth}{l @{\extracolsep{\fill}} llllll}
-%% \toprule
-%%   Script                 ~&~ Structure                    & Input (MB)& Time (Seq)    & Script Size (LoC)             & Highlights                                        \\
-%% \midrule
-%% % https://github.com/andromeda/sdsh/blob/master/scripts/grep.sh
-%%   \tti{grep}         ~&~$3\times$\tsta                & 1000      &  78m 36.77s   &   30\qquad 134\qquad  1304    & complex NFA regex                                 \\
-%% % https://github.com/andromeda/sdsh/blob/master/scripts/minimal5.sh
-%%   \tti{sort}         ~&~~$\tsta, \tpur$               & 10000     &  23m 19.85s   &   33\qquad 129\qquad  1209    & \tti{sort}ing                                     \\
-%% % https://github.com/andromeda/sdsh/blob/master/scripts/topn.sh
-%%   \tti{wf}               ~&~~$3\times\tsta, 3\times\tpur$ & 1000      &   2m 11.18s   &   53\qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
-%% % https://github.com/andromeda/sdsh/blob/master/scripts/topn.sh
-%%   \tti{top-n}            ~&~~$2\times\tsta, 4\times\tpur$ & 1000      &   6m 53.55s   &   53\qquad 181\qquad  1621    & double \tti{sort}, \tti{uniq} reduction           \\
-%% % https://github.com/andromeda/sdsh/blob/master/scripts/ngrams.sh
-%%   \tr{\tti{bi-gram}          ~&~~$2\times\tsta, 4\times\tpur$ & \todo{X}  &               &   X \qquad  X \qquad          & stream shifting and merging                       \\}
-%% % https://github.com/andromeda/sdsh/blob/master/scripts/spell.sh
-%%   \tti{spell}            ~&~~$4\times\tsta, 3\times\tpur$ & 1000      &   8m 13.42s   &  37 \qquad 257\qquad  2417    & comparisons (\tti{comm})                          \\
-%% % https://github.com/andromeda/sdsh/blob/master/scripts/diff.sh
-%%   \tr{\tti{diff}             ~&~~$4\times\tsta, 3\times\tpur$ & \todo{X}  &               &   X \qquad  X \qquad          & shuffling and non-distributable \tti{diff}ing     \\}
-%%   \tti{shortest-scripts} ~&~~$5\times\tsta, 2\times\tpur$ & 8.6       &   2m 50.03s   &  61 \qquad 253\qquad  2413    & extensive file-system operation   \\
-%% \bottomrule
-%% \end{tabular*}
-\input{microbenchmarks-table}
-\label{tab:eval}
-\end{table*}
-
-\kk{Maximum scaleup for both diff and set-diff is around half because
-  they already have two sorts running in parallel (as diff, and comm
-  take two inputs).}
+%>\kk{Maximum scaleup for both diff and set-diff is around half because
+%>  they already have two sorts running in parallel (as diff, and comm
+%>  take two inputs).}
 
 %% \TODO{Explain the plots with eager/no-eager as follows. Say that we
 %%   initially decided to only make an eager version of cat (to allow for
@@ -2312,43 +2293,41 @@ The combiners iterate over the provided stream descriptors, \ie they work with m
 %%   before cat in the no eager cases so that the minimal-grep example is
 %%   the same with and without our eager node.}
 
-\TODO{(Maybe) we need to mention that eager has disk usage overhead
-  that is linear to the size of the pipeline and the size of the
-  input.}
+%> \TODO{(Maybe) we need to mention that eager has disk usage overhead that is linear to the size of the pipeline and the size of the input.}
 
 
-At a high level, we are interested in understanding whether \sys can indeed scale pipelines out automatically and correctly.
-To achieve this, we use six micro-benchmarks and one macro-benchmark, collected primarily from prior literature.
+At a high level, we are interested in understanding whether \sys can indeed scale shell scripts out automatically and correctly.
+To answer this question, we use several scripts collected out from the wild, along with a few micro-benchmarks for targeted comparisons.
 
-Micro-bench\-marks~\sx{ours} are one-off, simple one-liners that take a few seconds to write;
-  such pipelines are usually composed interactively to solve a task at hand, test a hypothesis, or ``smoke out bugs''~\cite{bentley1986literate}---but, with \sys, applied to very large data sets.
-These pipelines are taken from real use cases~\cite{bentley1985spelling, bentley1986literate, taylor2004wicked} and, precisely due to their small size, highlight stress on a handful of stages.
+% Micro-bench\-marks~\sx{ours} are one-off, simple one-liners that take a few seconds to write;
+%   such pipelines are usually composed interactively to solve a task at hand, test a hypothesis, or ``smoke out bugs''~\cite{bentley1986literate}---but, with \sys, applied to very large data sets.
+% These pipelines are taken from real use cases~\cite{bentley1985spelling, bentley1986literate, taylor2004wicked} and, precisely due to their small size, highlight stress on a handful of stages.
+% The complex macro-benchmark (\S\ref{macro1}) is designed to handle realistic workloads by today's standards.
+% It is about an order of magnitude larger than the micro-benchmarks, but its perceived lack of complexity is deceiving:
+%   as shown, if written in a conventional language it would correspond to a program on the order of hundreds of lines of code.
 
-The complex macro-benchmark (\S\ref{macro1}) is designed to handle realistic workloads by today's standards.
-It is about an order of magnitude larger than the micro-benchmarks, but its perceived lack of complexity is deceiving:
-  as shown, if written in a conventional language it would correspond to a program on the order of hundreds of lines of code.
-
-Several results are worth highlighting.
-First, programs see a significant speedup, often more $10\times$ over sequential execution  while returning identical results (on very large datasets).
+\heading{Highlights}
+\fixme{
+Scripts see a significant speedup, often up to $10\times$ over sequential execution while returning identical results (on very large datasets).
 \sys's transformation and planning phase take around 50--300ms, negligible ($<$2\%) for short-running pipelines and virtually non-existent for long-running ones.
 As \sys rewrites to highly-optimized shell primitives rather than using a managed language runtime, it always has a COST~\cite{mcsherryscalability} of 2.
 Finally, \sys preserves the productivity of the shell:
   the equivalent program for a small part of the macro-benchmark pipeline requires over a 150 lines of code in combined Java and Bash to run distributed on top of Hadoop.
+}
   %% in another, the program expressed by the pipeline was the subject of a semester project in a graduate course on distributed systems~\cite{blinded} where student implementations ranged between 1--3\textbf{K} lines of code.
 
-Experiments were run on a %\todo{network of five workstations} connected by 1Gbps links: 
-  machine with 512GB of memory and 128 virtual (64 physical) $\times$ 2.1GHz Intel Xeon E5-2683 cores.
-%\todo{four smaller machines (\wkq), each with 4GB of memory and two 3.33GHz Intel Core Duo E8600 processors}.
-For our software setup, we use Debian 4.9.144-3.1, GNU Core-utils 8.30-3, GNU Bash 5.0.3(1)-, Python 3.7.3, and OCaml 4.05.0.
-Generally, no special configuration was made in hardware or software.
-All pipelines are set to (initially) read from and (finally) write to the file-system (except as otherwise stated).
-Whenever \ttt{curl} is part of a pipeline, it fetches data from a different physical host on the same network connected by 1Gbps links.
-A more detailed description of the setup and experiments, including reproducible scripts, is included in the accompanying (anonymized) online repository.
+\heading{Setup}
+Measurements were taken on a machine with 512GB of memory and 64 physical $\times$ 2.1GHz Intel Xeon E5-2683 cores running Debian 4.9.144-3.1, GNU Core-utils 8.30-3, GNU Bash 5.0.3(1)-, Python 3.7.3, and OCaml 4.05.0.
+No special configuration was made in hardware or software.
+Except as otherwise noted,
+  (i) all pipelines are set to (initially) read from and (finally) write to the file-system,
+  (ii) \ttt{curl} fetches data from a different physical host on the same network connected by 1Gbps links.
+% A more detailed description of the setup and experiments, including reproducible scripts, is included in the accompanying (anonymized) online repository.
 
 \subsection{Common \unix One-liners}
 \label{ours}
 
-The goal of this subsection is to evaluate \sys on popular, common, or classic \unix pipeline patterns.
+The goal of this subsection is to evaluate \sys on popular, common, or classic \unix pipeline patterns~\cite{bentley1985spelling, bentley1986literate, taylor2004wicked}.
 
 \begin{figure*}[t]
     \centering
@@ -2369,146 +2348,45 @@ The goal of this subsection is to evaluate \sys on popular, common, or classic \
     \label{fig:microbenchmarks}
 \end{figure*}
 
-%% \begin{figure*}[t]
-%%     \centering
-%%     %% \subcaptionbox{\label{eval:minimal_grep}}{
-%%     %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
-%%     %% }
-%%     %% \subcaptionbox{\label{eval:grep}}{
-%%     %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/grep_throughput_scaleup.pdf}}
-%%     %% }
-%%     %% \subcaptionbox{\label{eval:minimal_sort}}{
-%%     %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_sort_throughput_scaleup.pdf}}
-%%     %% }
-%%     %% \subcaptionbox{\label{eval:topn}}{
-%%     %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/topn_throughput_scaleup.pdf}}
-%%     %% }
-%%     %% \subcaptionbox{\label{eval:wf}}{
-%%     %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/wf_throughput_scaleup.pdf}}
-%%     %% }
-%%     %% \subcaptionbox{\label{eval:spell}}{
-%%     %%     \includegraphics[width=0.32\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
-%%     %% }
-%%     %% \caption{a}
-%%     \begin{subfigure}[b]{0.24\textwidth}
-%%         \centering
-%%         \includegraphics[width=\textwidth]{\detokenize{./figs/minimal_grep_throughput_scaleup.pdf}}
-%%         %% \caption{TODO}
-%%         %% \label{eval:minimal_grep}
-%%     \end{subfigure}%
-%%     ~
-%%     \begin{subfigure}[b]{0.24\textwidth}
-%%         \centering
-%%         \includegraphics[width=\textwidth]{\detokenize{./figs/spell_throughput_scaleup.pdf}}
-%%         %% \caption{TODO}
-%%         %% \label{eval:grep}
-%%     \end{subfigure}%
-%%     ~
-%%     \begin{subfigure}[b]{0.24\textwidth}
-%%         \centering
-%%         \includegraphics[width=\textwidth]{\detokenize{./figs/minimal_sort_throughput_scaleup.pdf}}
-%%         %% \caption{TODO}
-%%         %% \label{eval:minimal_sort}
-%%     \end{subfigure}%
-%%     ~
-%%     \begin{subfigure}[b]{0.24\textwidth}
-%%       \centering
-%%       \includegraphics[width=\textwidth]{\detokenize{./figs/set-diff_throughput_scaleup.pdf}}
-%%         %% \caption{TODO}
-%%         %% \label{eval:minimal_sort}
-%%     \end{subfigure}%
-
-%%     \begin{subfigure}[b]{0.24\textwidth}
-%%         \centering
-%%         \includegraphics[width=\textwidth]{\detokenize{./figs/topn_throughput_scaleup.pdf}}
-%%         %% \caption{TODO}
-%%         %% \label{eval:topn}
-%%     \end{subfigure}%
-%%     ~
-%%     \begin{subfigure}[b]{0.24\textwidth}
-%%         \centering
-%%         \includegraphics[width=\textwidth]{\detokenize{./figs/wf_throughput_scaleup.pdf}}
-%%         %% \caption{TODO}
-%%         %% \label{eval:wf}
-%%     \end{subfigure}%
-%%     ~
-%%     \begin{subfigure}[b]{0.24\textwidth}
-%%         \centering
-%%         \includegraphics[width=\textwidth]{\detokenize{./figs/shortest_scripts_throughput_scaleup.pdf}}
-%%         %% \caption{TODO}
-%%         %% \label{eval:spell}
-%%     \end{subfigure}%
-%%     ~
-%%     \begin{subfigure}[b]{0.24\textwidth}
-%%       \centering
-%%       \includegraphics[width=\textwidth]{\detokenize{./figs/bigrams_throughput_scaleup.pdf}}
-%%         %% \caption{TODO}
-%%         %% \label{eval:minimal_sort}
-%%     \end{subfigure}%
-%%     \caption{
-%%       \textbf{Speedup achieved by \sys as a function of the level of parallelism (1--100).} 
-%%       Four different configurations per benchmark:
-%%       (i) \todo{Par + Split}, showing the performance of \sys with both eager and split optimizations enabled,
-%%       (ii) \todo{Par + B. Split}, showing the performance of \sys with eager and the \todo{batch-size annotated} split optimizations enabled,
-%%       (ii) \todo{Parallel}, showing the performance of \sys with eager enabled and split disabled,
-%%       (iii) \todo{No Eager}, showing the performance of \sys with split and eager disabled,
-%%       (iv) \todo{Blocking Eager}, showing the performance of \sys with split disabled and the naive blocking eager enabled,
-%%       \nv{Maybe it makes sense to show log x-axis?}
-%%       \kk{How can we also fit two more plots (sort-sort and diff) here? Maybe we can fit one by getting rid of sort (since it also shown in the sort--parallel one). Otherwise we could separate the ``split'' plots from the ones that don't have split.}
-%%     }
-%%     \vspace{-15pt}
-%%     \label{fig:microbenchmarks}
-%% \end{figure*}
-
-
-
 \heading{Programs}
-
-\kk{How can we include a result for grep-light?  This is the IO
-  intensive CPU-light grep. \sys has no speedup but also no slowdown
-  (even if it IO heavy). Should we just mention that in text in
-  passing?}
-
-\kk{Remember to mention that for spell and bigrams we dont show other
-  parallel because they are all close to 1 (no speedup).}
-
-Tab.~\ref{tab:eval} summarizes the collection of micro-benchmarks used to evaluate \sys.
-Benchmark names (col. 1) correspond to the names on the plots (Fig.~\ref{fig:microbenchmarks}), and structure (col. 2) summarizes the different classes of commands used in the script.
-% The centralized pipelines read files of various sizes from disk and write to disk.
-Input sizes and times (col. 3, 4) summarize the characteristics of the largest sequential executions. % (200 files in Fig.~\ref{fig:microbenchmarks}).
-Script sizes (col. 5) report on \sys's rewritten output for three different distribution sizes---$1\times$, 10$\times$, and $100\times$.
-Size grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
-The first number alone is interesting, as it captures \sys's output for the sequential script.
-As there is no parallelism involved, it highlights the initial (bare minimum) cost corresponding to using \sys.
-% this is the size of 
-This change in size does not necessarily translate to observed runtime, as most of the size increase comes from the setup and teardown of FIFOs responsible for interprocess (IPC) communication.
-FIFOs are simply pipes made explicit;
-  the performance characteristics, including in-kernel buffering and synchronization mechanisms, are identical between the two.
-
-In more detail, \ttt{grep} is a short script centered around an expensive \tsta command;
+%>\kk{How can we include a result for grep-light?  This is the IO
+%>  intensive CPU-light grep. \sys has no speedup but also no slowdown
+%>  (even if it IO heavy). Should we just mention that in text in
+%>  passing?}
+%>
+%>\kk{Remember to mention that for spell and bigrams we dont show other
+%>  parallel because they are all close to 1 (no speedup).}
+Tab.~\ref{tab:eval} summarizes the collection of programs shown in Fig.~\ref{fig:microbenchmarks}, which in turn reports on their performance characteristics.
+Grep and Grep-light are in \sta, with the former centered around an expensive DFA-based backtracking expression.
 % a DFA-based regular expression matching phase;
-  while the \unix \ttt{grep} command defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
-The \ttt{sort} pipeline is equally short, but its central operation is a command in \pur.
-The next two benchmarks, \ttt{wf} and \ttt{top-n}, are based on McIlroy's now classic word-counting program~\cite{bentley1986literate};
+ % while the \unix \ttt{grep} command defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
+Sort is a short script centered around a \pur command.
+Wf and Top-n are based on McIlroy's classic word-counting program~\cite{bentley1986literate};
   they use sorting, rather than tabulation, to identify high-frequency terms in a corpus.
 % \tr{The \ttt{bi-gram} pipeline calculates n-grams of base two;
 %   it makes clever use of \ttt{tail} to shift a stream by one word and \ttt{paste} to fuse (zip) two streams together.}
-The next pipeline is based on the original \ttt{spell} program developed by Johnson~\cite{bentley1985spelling}---another \unix classic:
-  after some preprocessing, it makes clever use of \ttt{comm} to report words not in the dictionary.
-Finally, \ttt{shortest-scripts} is a pipeline~\cite[pg. 7]{taylor2004wicked}that identifies the 15 shortest shell scripts in the user's \ttt{PATH};
-   interestingly, it uses the \ttt{file} utility and a higher-order \ttt{wc} via \ttt{xargs}.
+Spell, based on the original \ttt{spell} developed by Johnson~\cite{bentley1985spelling}, is another \unix classic:
+  after some preprocessing, it makes clever use of \ttt{comm} to report words not in a dictionary.
+Shortest-scripts extracts the 15 shortest scripts in the user's \ttt{PATH}, using the \ttt{file} utility and a higher-order \ttt{wc} via \ttt{xargs}~\cite[pg. 7]{taylor2004wicked}.
+Diff and Set-diff compare streams via a \ttt{diff} (in \npu, non-parallelizable) and \ttt{comm} (in \pur), respectively.
+Sort-sort uses consecutive \pur commands without interleaving them with a \pur that has the effect of significantly condensing the input size (\eg \ttt{uniq}).
+The two \ttt{bi-grams} replicate and shift a stream by one entry to calculate bigrams over the input; the \ttt{optimized} version \todo{has a difference}.
 
-\heading{Performance}
+\heading{Results}
 % TODO \nv{Need to change terminology in plots---files should be (attempted) parallelism, name benchmark, cat should be merge.}
-Fig.~\ref{fig:microbenchmarks} presents the speedup gained by \sys as a function of the level of parallelism (1--200$\times$).
+Fig.~\ref{fig:microbenchmarks} presents the speedup gained by \sys as a function of the level of parallelism (2--64$\times$).
 % we experiment with a $200\times$ level of parallelism to see potential overheads
-Each one of these plots reports on three different configurations:
-  (i) distributed, which captures only the runtime of the distributed computation,
-  (ii) +compile, which adds the \sys' analysis and generation overhead, and
-  (iii) +merge, which adds a final merger  gathering the results at the end of the pipeline.
-Parallelism of 200$\times$ was explicitly chosen to show the \sys-internal overheads on suboptimal configurations;
-  \sys itself would never attempt a factor that is above the number of available compute nodes.
-The results show significant speedups, ranging between 4--70$\times$, depending on the parallelizability characteristics of individual pipelines.
+
+In Tab.~\ref{tab:eval} contains two benchmarks that are not shown in Fig.~\ref{fig:microbenchmarks}, as they are artificial modifications intended to highlight \sys-internal characteristics and not lead to a speedup.
+  \todo{highlight 2--3 results on things that were not shown in Fig.7}
+%   size grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
+% The first number alone is interesting, as it captures \sys's output for the sequential script.
+% As there is no parallelism involved, it highlights the initial (bare minimum) cost corresponding to using \sys.
+% % this is the size of 
+% This change in size does not necessarily translate to observed runtime, as most of the size increase comes from the setup and teardown of FIFOs responsible for interprocess (IPC) communication.
+% FIFOs are simply pipes made explicit;
+%   the performance characteristics, including in-kernel buffering and synchronization mechanisms, are identical between the two.
+
 
 \heading{Discussion}
 \kk{Below follows an important point about why scalability is more
@@ -2562,6 +2440,8 @@ physical CPUs) \todo{the fixed width on} \ttt{sort}.
 % rinard
 
 \heading{Take-aways}
+\sys achieves significant speedups that range between 4--60$\times$ depending on the parallelizability characteristics of the commands used.
+\sys's runtime constructs offer significant improvements over the baseline speedup achieved by \sys's core transformations.
 
 \subsection{Unix50 from Bell Labs}
 \label{unix50}
@@ -2611,9 +2491,10 @@ and the \todo{weighted average (with the absolute times as weights) is
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\columnwidth]{\detokenize{./figs/unix50_individual_speedups_16.pdf}}
+  \includegraphics[width=0.80\columnwidth]{\detokenize{./figs/unix50_individual_speedups_16.pdf}}
   \caption{
-	  \textbf{Speedup (left axis) and over sequential execution (right axis) for all Unix50 pipelines.}
+	  \textbf{Unix50 scripts.}
+    Speedup (left axis) over sequential execution (right axis) for Unix50 scripts.
 		Parallelism is 16$\times$ on 10GB of input data~\cf{unix50}.
   }
   \vspace{-15pt}
