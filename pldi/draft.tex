@@ -77,7 +77,7 @@
 \newcommand{\eat}[1]{}
 \newcommand{\TODO}[1]{\hl{\textbf{TODO:} #1}\xspace}
 \newcommand{\todo}[1]{\hl{#1}\xspace}
-\newcommand{\fixme}[1]{[{\color{red}#1}]}
+\newcommand{\fixme}[1]{{\color{red}#1}}
 \newcommand{\nv}[1]{[{\color{cyan}nv: #1}]}
 \newcommand{\kk}[1]{[{\color{magenta}kk: #1}]}
 \newcommand{\km}[1]{[{\color{blue}km: #1}]}
@@ -415,11 +415,14 @@ To top it off, all these options assume a good understanding of parallelism;
   users whose domain of expertise falls outside computing---routinely writing shell scripts to accomplish their tasks---are left without options (see~\S\ref{related} for a full discussion).
 % \nv{I still don't like ``for a full discussion''---raises too many expectations, and we don't have that much more to say}
 
-To address this challenge, we develop \sys, a shell that parallelizes POSIX shell scripts. \kk{We need to mention data-parallelism earlier. We don't focus on general parallelization but rather data-parallelism (performing operations on disjoint partitions of the input and then merging the results. WE need to give a brief idea about that early on so that we don't create false ideas.}
+To address this challenge, we develop \sys, a shell that extracts data-parallelism from POSIX shell scripts.
+% \kk{We need to mention data-parallelism earlier. We don't focus on general parallelization but rather data-parallelism (performing operations on disjoint partitions of the input and then merging the results. WE need to give a brief idea about that early on so that we don't create false ideas.}
+% \nv{First attempt here. I am trying to get a copy out ASAP, we can refine this later}
 % \kk{Mention that it outputs shell scripts.}
 % \nv{I think the ``how'' it solves it should come later, we're still trying to convince them we solve it (see next sentences in this paragraph)
 % \sys offers both classes of users in the second group such much-needed automation.
-\sys benefits both programmer groups mentioned earlier, with a particular emphasis on users.
+\sys benefits both programmer groups, % mentioned earlier, 
+  with a particular emphasis on users.
 Command developers are provided a set of abstractions, akin to lightweight type annotations, for expressing the parallelizability properties of their commands:
   rather than providing a command's full observable behavior, these annotations focus primarily on their interaction with state.
 Shell users, on the other hand, are provided full automation:
