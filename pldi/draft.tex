@@ -2296,8 +2296,7 @@ The combiners iterate over the provided stream descriptors, \ie they work with m
 %> \TODO{(Maybe) we need to mention that eager has disk usage overhead that is linear to the size of the pipeline and the size of the input.}
 
 
-At a high level, we are interested in understanding whether \sys can indeed scale shell scripts out automatically and correctly.
-To answer this question, we use several scripts collected out from the wild, along with a few micro-benchmarks for targeted comparisons.
+This section reports on whether \sys can indeed scale shell scripts out automatically and correctly, using several scripts collected out from the wild along with a few micro-benchmarks for targeted comparisons.
 
 % Micro-bench\-marks~\sx{ours} are one-off, simple one-liners that take a few seconds to write;
 %   such pipelines are usually composed interactively to solve a task at hand, test a hypothesis, or ``smoke out bugs''~\cite{bentley1986literate}---but, with \sys, applied to very large data sets.
@@ -2317,8 +2316,7 @@ Finally, \sys preserves the productivity of the shell:
   %% in another, the program expressed by the pipeline was the subject of a semester project in a graduate course on distributed systems~\cite{blinded} where student implementations ranged between 1--3\textbf{K} lines of code.
 
 \heading{Setup}
-Measurements were taken on a machine with 512GB of memory and 64 physical $\times$ 2.1GHz Intel Xeon E5-2683 cores running Debian 4.9.144-3.1, GNU Core-utils 8.30-3, GNU Bash 5.0.3(1)-, Python 3.7.3, and OCaml 4.05.0.
-No special configuration was made in hardware or software.
+\sys was run on 512GB of memory and 64 physical $\times$ 2.1GHz Intel Xeon E5-2683 cores, Debian 4.9.144-3.1, GNU Core-utils 8.30-3, GNU Bash 5.0.3(1)-, Python 3.7.3, and OCaml 4.05.0---without any special configuration in hardware or software.
 Except as otherwise noted,
   (i) all pipelines are set to (initially) read from and (finally) write to the file-system,
   (ii) \ttt{curl} fetches data from a different physical host on the same network connected by 1Gbps links.
@@ -2389,55 +2387,33 @@ In Tab.~\ref{tab:eval} contains two benchmarks that are not shown in Fig.~\ref{f
 
 
 \heading{Discussion}
-\kk{Below follows an important point about why scalability is more
-  than great in the beginning and then gets worse.}
-An interesting point is that \sys seems to achieve almost linear
-speedup with small parallelism configurations. The reason why this
-happens is not so straightforward though. \sys manages that because it
-exploits task-based parallelism by having different processes to do
-the \todo{map} and the \todo{reduce} phase. Due to task-based
-parallelism in the generated dataflow graphs, \sys essentially ``uses
-more parallelism'' than the given configuration. This can be seen in
-all pipelines that are not completely stateless. For example, in the
-\ttt{minimal\_sort} one-liner, \sys configured to have 8 parallelism
-spawns 37 nodes (8 \ttt{tr} nodes, 8 \ttt{sort} nodes, 7 \ttt{sort -m}
-nodes, and 14 \ttt{eager} nodes. This indicates that \sys achieves
-optimal performance (without unnecessary process spawns and context
-switches) in pipelines that contain pure commands by configuring it
-with a smaller parallelism than the capabilities of the underlying
-system -- in our case 16-32 for a 64 physical core system. This is
-also the case if the input pipeline is very long and so there is
-already task-based parallelism even in the sequential execution
-(several of the Unix50 pipelines fall in this category).
+\sys seems to achieve near-linear speedup on low-parallelism configurations.
+This is due to a high degree of task-based parallelism from distinct \emph{map} and \emph{fold} processes, which results in a longer tree of task-parallel stages.
+This is seen in all that include components in \pur.
+For example, Sort in $8\times$ spawns 37 nodes:
+  8 \ttt{tr} nodes, 8 \ttt{sort} nodes, 7 \ttt{sort -m} nodes, and 14 \ttt{relay} nodes.
+In effect, \sys hits the maximum number of parallel processes (and thus achieves optimal performance, \ie one without unnecessary process spawns and context switches) 
+significantly earlier than the purported parallelism---$16-32\times$ for a 64-core system.
 
-\kk{Hypothesis on a scalability upper bound. Dish gives a great
-  speedup if one step of the pipeline is what takes the most time. If
-  the pipeline is long with many computation heavy tasks, task based
-  parallelism gets you part of the way there, so we can't expect Dish
-  to give performance benefits equal to the amount of parallelism that
-  we give it.}
-
-\TODO{Briefly discuss the performance drop as we increase parallelism
-  in some one-liners (sort-sort, bi-grams).The reason has to do with
-  context switching. More precisely, sort-sort 32 has 314 nodes (and
-  54m sys time) and sort-sort 64 has 634 nodes (and 90m! sys time). On
-  the other hand opt-bigrams 64 has 255 nodes and the sys time stays
+Thus, asking for parallelism beyond that point results in worse speedup, due to other overheads that start dominating as no further speedup is available.
+Sort-sort with $32\times$ has 314 nodes (and 54m sys time) and with $64\times$ has 634 nodes (and 90m! sys time).
+ On the other hand opt-bigrams 64 has 255 nodes and the sys time stays
   the same so I think that it might have to do with the fact that
   constant costs rise a lot (since opt-bigrams 32 takes just 1
-  minute).}
+  minute).
 
-\kk{It is visible that the automatic split is slightly worse than the
-  manual one in most cases (because it doesn't utilize task-based
-  parallelism).}
+%> \kk{It is visible that the automatic split is slightly worse than the
+%>   manual one in most cases (because it doesn't utilize task-based
+%>   parallelism).}
 
-We attribute the small drop above $96\times$ in \ttt{spell} \ttt{sort} \ttt{wf}
-and \ttt{bi-grams} to a combination of hyperthreading (128 virtual vs. 64
-physical CPUs) \todo{the fixed width on} \ttt{sort}.
-% I say "we attribute" because it's a way to say something without being certain
-% FIXME: We need to take linear benchmarks on deathstar and livestar to see
-% where it starts dropping
-% not explain scope the results appropriately
-% rinard
+
+%> This is also the case if the input pipeline is very long and so there is already task-based parallelism even in the sequential execution (several of the Unix50 pipelines fall in this category).
+%> \kk{Hypothesis on a scalability upper bound. Dish gives a great
+%>   speedup if one step of the pipeline is what takes the most time. If
+%>   the pipeline is long with many computation heavy tasks, task based
+%>   parallelism gets you part of the way there, so we can't expect Dish
+%>   to give performance benefits equal to the amount of parallelism that
+%>   we give it.}
 
 \heading{Take-aways}
 \sys achieves significant speedups that range between 4--60$\times$ depending on the parallelizability characteristics of the commands used.
@@ -2448,23 +2424,19 @@ physical CPUs) \todo{the fixed width on} \ttt{sort}.
 
 The goal of this subsection is to evaluate \sys on an existing set of \unix pipelines found in the wild.
 
-\heading{Programs} In a recent event celebrating \unix's 50-year
-legacy, Bell Labs created a set of \todo{36} challenges~\cite{unix50}
-solvable by means of composing \unix pipelines.  By scanning GitHub,
-we were able to find a set of shell programs that solve
-\todo{all-but-three} problems~\cite{}.  We consider this a good set of
-benchmarks because (i) the problems were designed to to highlight the
-\unix philosophy~\cite{} (rather than having a single command that
-solves the problem) and make extensive use of \unix built-ins with a
-plethora of flags, and (ii) the solutions were written by non-experts
-(contrary to the \S\ref{ours}) and were executed by \sys
-unmodified---stressing patterns that we, \sys's authors, did not
-necessarily anticipate \kk{I would change that to ``stressing a
-  variety of patterns'' since it doesn't really matter if we
-  anticipated them (especially since we can address any issues and
-  then re-run them).} .  In cases where an obvious fix improves the
-pipeline's performance, we report on both \sys's original speedup and
-the one achieved by applying the fix.
+\heading{Programs}
+In a recent celebration of \unix's 50-year legacy, Bell Labs created 37 challenges~\cite{unix50} solvable by means of composing \unix pipelines.
+We found unofficial solutions to all-but-three problems on GitHub~\cite{unix50sol}, expressed as pipelines with 2--12 stages (avg.: 5.58).
+We consider this a good set of benchmarks because
+  (i) the problems were designed to highlight the \unix modular philosophy~\cite{mcilroy1978unix} and make extensive use of built-ins with a variety of flags, and
+  (ii) the solutions were written by non-experts (contrary to \S\ref{ours}).
+% ---stressing a patterns that we, \sys's authors, did not
+% necessarily anticipate \kk{I would change that to ``stressing a
+%   variety of patterns'' since it doesn't really matter if we
+%   anticipated them (especially since we can address any issues and
+%   then re-run them).} . 
+\sys executes each pipeline as-is; 
+  if an obvious fix improves performance, we report the speedup of both versions. %  original and modified. %  pipeline.
 % TODO: talk about correct wrt developer intentions vs. correct wrt problem definition
 
 % The ability to compose larger programs in versatile ways from smaller utility programs was a hallmark of the \unix design, and the game's levels are designed to stress that.
@@ -2475,14 +2447,13 @@ the one achieved by applying the fix.
 %%   taken from the wild unmodified. And that Pash never leads to
 %%   slowdown (except for the trivial head cases, where the slowdown is
 %%   neligible).}
+\heading{Results}
+\sys's parallelism was set to $16\times$, as many of these pipelines are relatively long (\S\ref{ours}, Discussion).
+Their input was generated by multiplying the original Unix50 input several times to reach 10GB.
+Fig~\ref{fig:unix50-individual} shows the speedup (left) over the sequential runtime (right) for all 34 pipelines.
+The average speedup is $5.49$ ($6.07\times$), and the weighted average (with the absolute times as weights) is $5.75\times$.
+ % the \todo{geometric mean is $1.08\times$},
 
-\heading{Results} \sys's parallelism set to 16. The input given to the
-pipelines was the test input from unix50 multiplied to reach
-10GBs. The speedup of each pipeline separately is shown in
-\Cref{fig:unix50-individual}. The average\todo{/median} speedup is
-$5.49$/\todo{$6.07\times$}, the \todo{geometric mean is $1.08\times$},
-and the \todo{weighted average (with the absolute times as weights) is
-  $5.75\times$}.
 
 %% Mean: 5.499164686559543
 %% Median: 6.075774436154179
@@ -2503,9 +2474,55 @@ and the \todo{weighted average (with the absolute times as weights) is
 
 
 \heading{Discussion}
+Most pipelines see significant acceleration---except 13, 24, 25, 26, 29, and 30 that see no speedup and 2, 19, and 31 that see a slowdown.
+Ones in the first group contain stages that cannot be parallelized in general---\eg \ttt{awk}, \ttt{sed} \ttt{-d}, and \ttt{tr} \ttt{-d}.
+However, by applying trivial changes
+that change some of these commands with their equivalents in \sta---\eg, replacing a general \ttt{awk} with more specialized \ttt{cut} that achieves the same effect---\sys 
+can identify and exploit parallelism:
+  for, say, \todo{13} this leads  to \todo{XX}$\times$ speedup.
+This is a common pattern we witnessed elsewhere too~\sx{macro1}.
+
+Ones in the second group contain a \ttt{head}, thus always processing only one line and executing within $10ms$ regardless of the full input.
+\sys's slowdown is due to constant setup costs---\eg pipes, processes---but remains within $1s$.
+
+For pipelines  \sys performs the same as the sequential implementation.
+
+% illustrative example is pipeline 13, which is shown here:
+% 
+% \begin{lstlisting}[language=sh, float=h, numbers=none]
+%   cat $IN | awk "{print \$2, \$0}" |
+%       sort -nr | cut -d ' ' -f 2
+% \end{lstlisting}
+% 
+% \kk{Rephrase that to sound more meaningful and surprising.}  Notice
+% that \ttt{awk} is just used to permute two of the columns of the input
+% to enable sorting. One could write this pipeline in a different way,
+% by directly sorting on the second column:
+% 
+% \begin{lstlisting}[language=sh, float=h, numbers=none]
+%   cat $IN6 | sort -nr -k 2 | cut -d ' ' -f 1
+% \end{lstlisting}
+
+
+Finally, for the rest of the pipelines \sys speedup is \todo{capped}
+because of a combination of the following reasons: (i) they contain
+pure commands that are parallelizable but don't scale linearly, such
+as \ttt{sort} (e.g. pipelines 0, 1, 3, 15, 16, 18, 20, 27, 28, 33),
+(ii) they are deep pipelines that already exploit task-based
+parallelism (e.g. pipelines 7, 8, 9, 10, 11, 12, 14, 27, 28), and
+(iii) they are not cpu-intensive, leading to \todo{larger IO and
+  constant costs} (e.g. pipelines 4, 5, 6, 7, 8, 12, 14, 22, 23).
+
+%% Sort-bottleneck: 1, 3, 15, 16, 20, 33
+%% Non-parallelizable completely: 13 (awk-solved), 18 (awk), 24, 25, 26, 29, 30
+%% Cheap (non cpu intensive -- constant costs grow): 0, 4, 5, 6, 7, 8, 12, 14, 22, 23
+%% Long (task-based parallelism in sequential and context switches): 7, 8, 9, 10, 11, 12, 14, 21, 27, 28
+
+%% Finally, an important point that is reinforced from this
+%% experiment is that \sys doesn't lead to slowdown, even in cases where
+%% parallelism is not possible.
 
 %% Breakdown of not ideal speedups in 8, 16 parallelism
-
 %% Head: 2, 19, 31
 %% Sort-bottleneck: 1, 3, 15, 16, 20, 33
 %% Non-parallelizable completely: 13 (awk-solved), 18 (awk), 24, 25, 26, 29, 30
@@ -2530,56 +2547,6 @@ and the \todo{weighted average (with the absolute times as weights) is
 %%  22. Exactly the same problem as the above.
 %%  24. (Not sure: It seems that the computation is trivial)
 %%  32. TODO: Implement
-
-\sys achieves speedup in all pipelines except for 2, 19, and 31. These
-pipelines include a \ttt{head} and only process one line of the
-input. This can be seen by their sequential execution time which is in
-the order of 10 milliseconds. The slowdown is due to constant costs of
-setting up the pipes and spawning processes. In all three of these
-cases the execution time with \sys is in the order of 1 second. For
-pipelines 13, 24, 25, 26, 29, and 30, \sys performs the same as the
-sequential implementation. This is because these pipelines contain
-commands that can not be parallelized in general, such as \ttt{awk},
-\ttt{sed} with option \ttt{d}, and \ttt{tr} with option \ttt{-d}. An
-illustrative example is pipeline 13, which is shown here:
-
-\begin{lstlisting}[language=sh, float=h, numbers=none]
-  cat $IN | awk "{print \$2, \$0}" |
-      sort -nr | cut -d ' ' -f 2
-\end{lstlisting}
-
-\kk{Rephrase that to sound more meaningful and surprising.}  Notice
-that \ttt{awk} is just used to permute two of the columns of the input
-to enable sorting. One could write this pipeline in a different way,
-by directly sorting on the second column:
-
-\begin{lstlisting}[language=sh, float=h, numbers=none]
-  cat $IN6 | sort -nr -k 2 | cut -d ' ' -f 1
-\end{lstlisting}
-
-By executing this version of the pipeline with \sys, we achieve
-\todo{X} speedup. This indicates that just a little awaresess of
-command parallelizability can go a long way, and that the effort that
-a \sys user needs to spend is often negligible to achieve
-benefits.
-
-Finally, for the rest of the pipelines \sys speedup is \todo{capped}
-because of a combination of the following reasons: (i) they contain
-pure commands that are parallelizable but don't scale linearly, such
-as \ttt{sort} (e.g. pipelines 0, 1, 3, 15, 16, 18, 20, 27, 28, 33),
-(ii) they are deep pipelines that already exploit task-based
-parallelism (e.g. pipelines 7, 8, 9, 10, 11, 12, 14, 27, 28), and
-(iii) they are not cpu-intensive, leading to \todo{larger IO and
-  constant costs} (e.g. pipelines 4, 5, 6, 7, 8, 12, 14, 22, 23).
-
-%% Sort-bottleneck: 1, 3, 15, 16, 20, 33
-%% Non-parallelizable completely: 13 (awk-solved), 18 (awk), 24, 25, 26, 29, 30
-%% Cheap (non cpu intensive -- constant costs grow): 0, 4, 5, 6, 7, 8, 12, 14, 22, 23
-%% Long (task-based parallelism in sequential and context switches): 7, 8, 9, 10, 11, 12, 14, 21, 27, 28
-
-%% Finally, an important point that is reinforced from this
-%% experiment is that \sys doesn't lead to slowdown, even in cases where
-%% parallelism is not possible.
 
 
 
