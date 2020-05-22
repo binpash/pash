@@ -3262,6 +3262,9 @@ Experiments with real programs show substantial speedups and the ability to oper
 \section{Annotation Language Grammar}
 \label{alg}
 
+\Cref{fig:dsl} shows the complete grammar of the parallelizability
+annotation language.
+
 \begin{figure}
   \centering
   \begin{grammar}
@@ -3283,13 +3286,16 @@ Experiments with real programs show substantial speedups and the ability to oper
 
     <output> ::= `stdout' | <arg>
 
+    <outputs> ::= <output>
+    \alt <output> `,' <outputs>
+
     <option-pred> ::= <option>
     \alt `value' <option> = <string>
     \alt `not' <option-pred>
     \alt <option-pred> `or' <option-pred>
     \alt <option-pred> `and' <option-pred>
 
-    <assignment> ::= `(' <category>, `[' <inputs> `]' , <output> `)'
+    <assignment> ::= `(' <category>, `[' <inputs> `]' `,' `[' <output> `]' `)'
 
     <predicate> ::= <option-pred> `=>' <assignment>
 
