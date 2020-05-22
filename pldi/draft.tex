@@ -475,8 +475,8 @@ We evaluate \sys using
   (i) a series of benchmarks, ranging from classic one-liners found in the \unix literature to modern data-processing pipelines;
   (ii) three large and complex use cases, covering temperature analysis, web crawling and indexing, and container orchestration; and
   (iii) a series of targeted micro-benchmarks inspired by (and comparing with) possible alternatives.
-The results demonstrate significant advantages in \todo{correctness}, \todo{manual effort}, and performance
- ---with \sys offering an order-of-maginute performance improvements due to its transformations and optimized runtime.
+The results demonstrate significant advantages in \todo{correctness},
+\todo{manual effort}, and performance---with \sys offering an order-of-magnitude performance improvements due to its transformations and optimized runtime.
 %% ---with \sys's transformations offering an order-of-magnitude performance improvements aided further by \sys's optimized runtime components.
 Naturally, these improvements depend on several factors such as the script's execution time, the pipeline depth, and the parallelizability class under which a command falls. 
 %\kk{Do we need to mention this last sentence here? Without context it is pretty difficult for anyone to get something out of it.}
@@ -501,9 +501,10 @@ Sections \ref{parallelizability}--\ref{impl} highlight key contributions:
 \end{itemize}
 
 \noindent
-After \sys's evaluation~\sx{eval} and  comparison with related work~\sx{related}, the paper closes with a discussion of \sys's limitations and possible future directions~\sx{discussion}.
+After \sys's evaluation~\sx{eval} and  comparison with related work~\sx{related}, the paper closes with a discussion of \sys's limitations and possible future directions~\sx{discussion}.  
 
-\sys's source code will be open-sourced with the camera-ready version of the paper, and is provided in anonymized form at \href{https://git.io/JfEgr}{https://git.io/JfEgr}.
+% nv: took this out because it's wasting 6 lines of text (because of section titles hitting the column divide---classic problem of section 2)
+% \sys's source code will be open-sourced with the camera-ready version of the paper, and is provided in anonymized form at \href{https://git.io/JfEgr}{https://git.io/JfEgr}.
 
 % % TODO: Important to have a small script that highlights
 % \nv{
@@ -717,7 +718,8 @@ After \sys's evaluation~\sx{eval} and  comparison with related work~\sx{related}
 \section{Background and Overview}
 \label{bg}
 
-This section first reviews shell scripting through a small example~\sx{bg:pipelines}, which it then uses to present an overview of \sys's design and implementation~\sx{bg:overview}.
+This section reviews shell scripting through an example~\sx{bg:pipelines}, which it then uses to present 
+parallelization challenges~\sx{bg:challenges} and how they are addressed by \sys~\sx{bg:overview}.
 
 \subsection{Running Example: Weather Analysis}
 \label{bg:pipelines}
@@ -734,8 +736,8 @@ This section first reviews shell scripting through a small example~\sx{bg:pipeli
 \end{figure}
 
 % In the ongoing debate on climate change,
-Suppose a \todo{environmental scientist/engineer}    % looking for a non-CS expert---journalist might be too low
-  wants to get a quick sense of the changes in maximum temperature over the past century.
+Suppose a environmental scientist    % looking for a non-CS expert---journalist might be too low
+  wants to get a quick sense of the trends in the maximum temperature over the past century.
 As the National Oceanic and Atmospheric Administration (NOAA) has made historic temperature data publicly available~\cite{noaa}, 
   answering this question is only a matter of a simple data-processing pipeline.
 
@@ -770,8 +772,8 @@ For example, by omitting  \ttt{sort}'s \ttt{r} flag that enables reverse sorting
 The shell does not have any visibility into these flags; 
   after it expands special characters such as \ttt{\textasciitilde{}} and \ttt{*}, it leaves parsing and evaluation entirely up to commands.
 
-Finally, \unix provides an environment in which commands written in any language can be composed.
-Many of the commands used in practice come built into the system---\eg commands defined by the POSIX standard or ones part of the GNU Coreutils---whereas others are available as add-ons.
+Finally, \unix provides an environment for composing commands written in any language.
+Many of the commands used in practice come with the system---\eg commands defined by the POSIX standard or ones part of the GNU Coreutils---whereas others are available as add-ons.
 The fact that commands are developed in a variety of languages---including shell scripts---provides users with a significant flexibility.
 For example, one could replace the call to \ttt{sort} and \ttt{head} with one to \ttt{./avg.py} to get an average or a standard deviation rather than a maximum.
 The pipeline would still work, as long \ttt{./avg.py} conforms to the interface outlined earlier.
@@ -785,61 +787,39 @@ The pipeline would still work, as long \ttt{./avg.py} conforms to the interface 
 
 % ---available publicly online via NCDC's NOAA~\cite{}---to obtain the maximum temperature per year.
 
-\heading{Parallelization Challenges}
+\subsection{Parallelization Challenges}
+\label{bg:challenges}
+
 While these features aid developer economy through powerful program composition, they complicate shell script parallelization which even for simple scripts such as the one in Fig.~\ref{fig:example} face several challenges.
 % \footnote{
 %   Alternatives for automated parallelization were outlined in the introduction~\sx{intro} and are surveyed in the related work section~\sx{related}.
 % }
 
-One obvious challenge is due to the language of the shell, which has been developed through a long history of additions.
-Different parts of a script, exploiting different language constructs, are amenable to different levels of parallelization---if at all.
-% Some constructs, such as the parallel composition operator \ttt{\&} ; many others such as the sequential composition operator (\ttt{;}) are clearly sequential; yet others, such as the loop constructs are more difficult to categorize.
-For example, Fig.~\ref{fig:example} assignment to \ttt{base}, connected with the rest of the script by the sequential composition operator (\ttt{;}), cannot be interleaved with the rest of the script.
+\heading{Commands} % : Unbounded \& Mysterious}
+The first challenge is the nature and variety of shell commands.
+In contrast to restricted programming frameworks, amenable to parallelization by supporting a few carefully designed primitives~\cite{streamit:02, brook:04, mapreduce:08, spark:12}, shell scripts contain commands that can have arbitrary behaviors.
+For Fig.~\ref{fig:example}, each of command requires special treatment as to not introduce non-determinism or incorrectness:
+  \ttt{grep} requires no coordination, \ttt{head} requires light coordination, and \ttt{sort} requires significant coordination.
+These behaviors are further concealed by the fact that commands are black boxes implemented in a variety of programming languages and models.
+Worse even, the same command may be used with different flags---\eg Fig.~\ref{fig:example}'s \ttt{cut} is called twice with two different sets of flags---that could potentially alter its behaviour. % , making correct treatment even more difficult. % nv: we already said impossible so more difficult doesn't add much!
 
-Another challenge is due to the multitude of available commands;
-  each command that is part of a script may require very different treatment.
-For example, \ttt{grep} can proceed in parallel on each stream without any coordination, \ttt{head} requires light coordination, and \ttt{sort} requires significant coordination across streams.
-Worse even, the same command may be used with different flags---\eg % \ttt{-d" " -f9} for the first
-  Fig.~\ref{fig:example}'s \ttt{cut} is called twice with two different sets of flags\kk{I propose dropping the last sentence for this ``---making correct treatment even more difficult''}.
-When a single flag can affect the functionality of a command in non-trivial ways, deciding how to parallelize becomes significantly more difficult.
+% A good solution should handle several commands but should also be extensible, in the sense that newly added or modified commands don't require modifications in the solution itself.
+% TODO: Leave this for the solution
 
-Yet another challenge is that different phases operate on different output sizes thus allowing different parallelization widths.
-Even if Fig.~\ref{fig:example}'s script was aiming on, say, only six years of data, the first \ttt{curl} would still output hundreds of lines for each year.
-Naive, coarse-grained parallelization can miss such opportunities.
+\heading{Scripts} % 
+Another challenge is due to the language of the shell, which % has been developed through a long history of additions.
+  contains constructs with different parallelizability semantics. % that enforce sequential execution.
+For example, Fig.~\ref{fig:example} assignment to \ttt{base}, connected with the rest of the script by the sequential composition operator (\ttt{;}), has to be completed before the rest of the script starts executing.
+Moreover, depending on the construct, different fragments operate on different output sizes thus allowing different parallelization widths.
+For example, even if Fig.~\ref{fig:example}'s script was aiming on only six years of data, the first \ttt{curl} would still output hundreds of lines for each year;
+  naive, coarse-grained parallelization will miss such opportunities.
+Any attempt for automating parallelization needs to be aware of the shell semantics and induce as much parallelism as it can get but without breaking semantics.
 
-% \nv{Are these all the challenges we want to highlight?}
-
-
-\kk{There are two ways to go here: either mention the challenges that a user would face to manually parallelize a script (that have already been mentioned in the introducion), or mention the challenges that automatic parallelization---this paper---has to address. I think that we should focus on the second.}
-
-The first and greatest challenge is the gargantuan number of available
-commands that can be used to construct a shell script. In contrast to
-restricted programming frameworks that are amenable to parallelization
-by supporting a few carefully designed operators (see MapReduce,
-Spark, etc) shell scripts can contain commands that can have arbitrary
-behaviours.  In order to parallelize such a script, each of command
-requires special treatment as to not introduce non-determinism or
-erroneous behaviours. For example, \ttt{grep} can be performed on
-different partitions of its input in parallel without any
-coordination, \ttt{head} requires light coordination, and \ttt{sort}
-requires significant coordination.  To make matters worse, the same
-command may be used with different flags---\eg % \ttt{-d" " -f9} for
-the first Fig.~\ref{fig:example}'s \ttt{cut} is called twice with two
-different sets of flags---that could potentially alter its behaviour,
-making correct treatment even more difficult. A good solution should
-handle several commands but should also be extensible, in the sense
-that newly added or modified commands don't require modifications in
-the solution itself. \kk{The solution to this challenge is already written in the third paragraph of the design overview.}
-
-Another issue is that all commands are black boxes. Therefore it is
-impossible to perform any kind of analysis on the code of the command
-to identify possible parallelization. Therefore a good solution should
-parallelize in a coarse-enough granularity that doesn't require
-opening up commands.
-
-Finally, shell scripts contain several constructs that enforce sequential execution. For example, Fig.~\ref{fig:example} assignment to \ttt{base}, connected with the rest of the script by the sequential composition operator (\ttt{;}), has to be completed before the rest of the script starts executing. \kk{The solution is
-  written in the fourth paragraph of the design solution.}
-
+\heading{Implementation} % 
+A final challenge has to do with practical issues.
+Developing correct, high-performance combiners for certain classes of commands such as \ttt{sort} and \ttt{uniq} is non trivial.
+Moreover, the \unix environment has its set of quirks % about opening streams, deadling with FIFOs,
+  and any attempt at parallelization will have to take care of these challenges---related to task parallelism, deadlock prevention, and runtime performance.
 
 \begin{figure}[t]
 \centering
@@ -848,6 +828,7 @@ Finally, shell scripts contain several constructs that enforce sequential execut
   \textbf{\sys transformation overview.}
   Given a shell pipeline, \sys leverages command parallelizability to identify
   high-parallelizability stages, rewrite them, and orchestrate their execution.
+  \todo{reference in txt/decide}.
 }
 \vspace{-15pt}
 \label{fig:overview}
@@ -863,22 +844,18 @@ Finally, shell scripts contain several constructs that enforce sequential execut
 
 At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and outputs a new POSIX shell script.
 The new script may incorporate parallelism, and is handed off to the user's original shell interpreter---\eg \ttt{bash} or \ttt{zsh}---for execution.
-To \todo{discover and enable/expose and exploit} data-parallelism in a given shell script,
+To expose and exploit data-parallelism in a given shell script,
 %% parallel execution,
 \sys analyzes individual program fragments, addressing the challenges mentioned earlier.
 
-\sys first needs to understand the POSIX constructs used to compose larger programs, indicating indicate different levels of candidacy for pararllelization.
-To achieve this, \sys breaks POSIX constructs into a few broad classes:
- (i) the parallel-composition operator (\ttt{\&}) exposes task parallelism,
- (ii) special commands such as \ttt{xargs} and \ttt{tee} expose data parallelism,
- (iii) the pipe operator (\ttt{|}) is a candidate for both task and data parallelism, and
- (iv)  other composition operators such as \ttt{\&\&}, \ttt{||}, and \ttt{;} are barrier candidates.
-
-Second, \sys needs to understand the parallelization characteristics of individual commands used to compose larger programs---a two-fold challenge.
+\heading{Commands: Parallelizability Classes}
+% \sys needs to understand the parallelization characteristics of individual commands used to compose larger programs---a two-fold challenge.
 To understand standard commands available in any shell, \sys groups POSIX and GNU commands into a small but clear set of well-understood parallelizability classes;
   these commands are already useful-enough to allow the composition of useful shell programs operating in practice.
-To understanding the characteristics of commands that fall outside the built-in set, allowing new commands to leverage \sys's power, \sys leverages this study to define an annotation language for describing a command's key properties with respect to its parallelizability.
-Such light annotations \kk{have to be written once per command (and not once per script) and} are aimed towards command developers (rather than users), who can quickly and easily capture the properties of the commands they are developing.
+To understand the characteristics of commands that fall outside this standard set and allow them to leverage its transformations,
+  \sys defines an annotation language for describing a command's % key properties with respect to its 
+  parallelizability.
+Such light annotations are expressed once per command (not once per script) and are aimed towards command developers (rather than users), who can quickly and easily capture the properties of the commands they develop.
 % We haven't introduced the notion of flags
 % A command developer can only annotate the default behavior;
 %   if a new flag is added a few years later, and if that flag alters the command's class, only then a new annotation is needed.
