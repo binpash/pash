@@ -903,14 +903,13 @@ The next few sections (\S\ref{parallelizability}--\ref{impl}) discuss the detail
 \section{Parallelizability Classes}
 \label{parallelizability}
 
-To have any hope of parallelizing scripts, \sys first needs to understand the parallelization characteristics of the commands they contain.
-As mentioned before \sys focuses on parallelizing data-parallel
-commands, i.e. commands that can process their input in parallel, and
-encodes their characteristics by assigning them to
+% To have any hope of parallelizing scripts, \sys first needs to understand the parallelization characteristics of the commands they contain.
+\sys aims at parallelizing data-parallel commands, \ie commands that can process their input in parallel, and encodes their characteristics by assigning them to
 \emph{parallelizability classes}.
 %% This information is encoded in a command's \emph{parallelizability class}.
-Intuitively, a parallelizability class represents the level of synchronization required by copies of a command that execute in parallel.
-It focuses on capturing characteristics that are important for a command's parallel execution, rather than the command's full observable behavior.
+% Intuitively, a parallelizability 
+A class represents the level of synchronization required by copies of a command executing in parallel.
+It captures characteristics that are important for a command's parallel execution, rather than the command's full observable behavior.
 \sys leans towards having a few coarse classes rather than many detailed ones---among other reasons, to simplify their understanding and use by command developers.
 % Make the connections that this is like a type, that doesn't capture everything, but is good-enough
 
@@ -921,14 +920,11 @@ Building on this study, it develops a lightweight annotation language that enabl
 \subsection{Parallelizability of Standard Libraries}
 \label{cmd}
 
-\kk{Mention that commands change classes depending on their arguments and that we only write here (and in the table) the class of commands with no flags. Then the discussion about flags in the language part makes sense.}
-
-% nv TODO: this is a hierarchy
-Broadly, shell commands can be split into four major classes (summarized in Tab.~\ref{tab:classes}) with respect to their parallelization characteristics, depending on what kind of state they need when processing their input.
+Broadly, shell commands can be split into four major classes (Tab.~\ref{tab:classes}) with respect to their parallelization characteristics, depending on what kind of state they need when processing their input.
 %% how they interact with state.
-These classes are ordered in ascending difficulty of parallelization:
-  later classes require more effort.
-In this order, some classes can be thought as subsets of the next---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (without seeing any performance improvements).
+These classes are ordered in ascending difficulty (or impossibility) of parallelization.
+In this order, some classes can be thought as subsets of the next---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (without gaining any performance improvements).
+Although commands can change classes depending on their arguments, we focus on no-flag defaults for now.
 
 \begin{table}[t]
 \center
@@ -962,16 +958,17 @@ Side-effectful           & ~\tsid  & \tti{env},  \tti{cp}, \tti{whoami}         
 % \heading{POSIX, GNU Core-utils, and beyond}
 
 \heading{Stateless Commands}
-The first class, \sta, contains commands that operate on individual \todo{lines/elements}~\footnote{\todo{the choice of line as the data-quantum is deliberate, since they strike a nice balance between very coarse grained separation (files) and very fine-grained ones (individual characters). We might need to mention that in the introduction of 3.1}} of their input, without maintaining state across invocations.
+The first class, \sta, contains commands that operate on individual line elements of their input, without maintaining state across invocations.
 These are commands that can be expressed as a purely functional $map$ or $filter$---\eg \ttt{grep} filters out individual lines and \ttt{basename} removes a path prefix from a string.
 Stateless commands may produce multiple elements---\eg \ttt{tr} may insert {\sc NL} tokens---but when they receive empty input they return empty output.
 Workloads that use only stateless commands are trivial to parallelize:
   they do not require any synchronization to maintain correctness, nor caution about where to split inputs.
  % map :: (a -> b) -> [a] -> [b]
 
-\kk{Proposed insertion: The choice of where how to separate data elements would change the allocation of commands in parallelization classes---} Many of these commands (about 1/3 of \sta) are stateless \emph{within} a stream element---\eg\ttt{tr} transliterates characters within a line, one at a time---enabling further parallelization by splitting individual lines.
+The choice of line as the data element strikes a convenient balance between coarse-grained (files) and fine-grained separation (characters) while staying in line with \unix's core abstractions.
+This choice can affect the allocation of commands in \sta, as many of its commands (about 1/3) are stateless \emph{within} a stream element---\eg\ttt{tr} transliterates characters within a line, one at a time---enabling further parallelization by splitting individual lines.
 This feature may seem of limited use, as these commands are computationally inexpensive, precisely due to their narrow focus.
-However, it turns to be  useful for cases with very large stream elements (long lines) such the \ttt{.fastq} format used in bioinformatics pipelines.  % TODO pointer to 6.3
+However, it turns out to be  useful for cases with very large stream elements (\ie long lines) such the \ttt{.fastq} format used in bioinformatics pipelines.  % TODO pointer to 6.3
 
 
 \heading{Parallelizable Pure Commands}
@@ -979,25 +976,26 @@ The second class, \pur, contains commands that respect functional purity---\ie s
 The details of this state and its propagation during element processing affect their parallelizability characteristics.
 Some commands are easy to parallelize, because they maintain trivial state and are commutative---\eg \ttt{wc} simply maintains a counter.
 Other commands such as \ttt{sort}, maintain more complex invariants that have to be taken into account when merging partial results.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.20\textwidth]{\detokenize{./figs/dish_classes.pdf}}
-\caption{
-  \textbf{Hierarchy of parallelizability classes.}
-  Parallelizability classes form a hierarchy from the easiest to parallelize (left) to the most difficult (right).
-  \nv{The figure is incorrect---it's actually a lattice.}
-}
-\vspace{-15pt}
-\label{fig:example}
-\end{figure}
+% 
+% \begin{figure}[t]
+% \centering
+% \includegraphics[width=0.20\textwidth]{\detokenize{./figs/dish_classes.pdf}}
+% \caption{
+%   \textbf{Hierarchy of parallelizability classes.}
+%   Parallelizability classes form a hierarchy from the easiest to parallelize (left) to the most difficult (right).
+%   \nv{The figure is incorrect---it's actually a lattice.}
+% }
+% \vspace{-15pt}
+% \label{fig:hierarchy}
+% \end{figure}
 
 Often these commands do not operate in an online fashion, but need to block until the end of a stream.
 A typical example of this is \ttt{sort}, which cannot start emitting results before the last input element has been consumed.
 \todo{Such constraints affect task parallelism, but not data parallelism}:
   \ttt{sort} can be parallelized significantly using divide-and-conquer techniques---\ie by encoding it as a group of (parallel) $map$ functions followed by a $fold$ that merges the results.
 
-\kk{Maybe show an example of map-fold for sort or wc}
+% \kk{Maybe show an example of map-fold for sort or wc}
+% \nv{We agreed to put it end of §5}
 
 \heading{Non-parallelizable Pure Commands}
 The third class, \npu, contains commands that, while purely functional, cannot be parallelized.
@@ -1009,17 +1007,15 @@ It is worth noting that while these commands are not parallelizable for a single
 For example, a web crawler involving hash generation for comparing individual pages would allow \ttt{sha1sum} to proceed in parallel for different pages.
 
 \heading{Side-effectful Commands}
-The last class, \sid, are commands that have side-effects across the system---for example, updating environment variables, interacting with the filesystem, and accessing the network. \kk{Or commands that do not produce output consuming lines of their input---thus not being amenable to data-parallelism.}
+The last class, \sid, are commands that have side-effects across the system---for example, updating environment variables, interacting with the filesystem, and accessing the network.
 Such commands are not parallelizable without finer-grained concurrency control mechanisms that can detect side-effects across the system.
 
-This is the largest class because it includes commands related to the file-system---a central abstractions to the \unix design and philosophy~\cite{unix}.
+This is the largest class, for two reasons.
+First, it includes commands related to the file-system---a central abstractions to the \unix design and philosophy~\cite{unix}.
 In fact, \unix uses the file-system as a proxy to several file-unrelated operations such as access control and device driving. % is grafted upon the file-system.
-
-\nv{
-  A significant part of these commands (a ratio of 21:4) only \emph{read} values, and usually values that are never written by user code.
-  For example, \ttt{date}, \ttt{uname}, and \ttt{finger} are all commands that interface with kernel- or hardware-generated information that is not writable by user-space scripts.
-  Why aren't these parallelizable?
-}
+Second, it contains commands that do not consume input or do not produce output---and thus are not amenable to data-parallelism.
+For example, \ttt{date}, \ttt{uname}, and \ttt{finger} are all commands that interface with kernel- or hardware-generated information that
+  %A significant part of these commands (a ratio of 21:4) only \emph{read} values, and usually values that are never written by user code.
 
 % \heading{Discussion}
 % There are a few technical details about \sys's design decisions worth noting.
@@ -1037,7 +1033,7 @@ In fact, \unix uses the file-system as a proxy to several file-unrelated operati
 \subsection{Extensibility Annotations}
 \label{ext}
 
-\nv{Note command breadth/impossibility of our task.}
+% TODO: \nv{Note command breadth/impossibility of our task.}
 % https://nextbreakpoint.com/posts/article-compile-code-with-docker.html
 
 %% Here is the type for \ttt{bwa}, a command that performs a Burrows-Wheeler transform over genomic data:
@@ -1081,9 +1077,7 @@ The latter can express additions or changes to the command's implmentation or in
   (i) a command's parallelizability class,
   (ii) for commands that support multiple inputs, the characteristics of input consumption, and
   (iii) for commands with multiple flags (options), the handling of \todo{competing sets} of flags.
-As the first concern was discussed extensively in the previous section, we now focus on the latter two.\footnote{
-  \nv{Note to self: until now we have been talking only about parallelizability, and now we introduce two concerns that haven't been mentioned before.}
-}
+As the first concern was discussed extensively in the previous section, we now focus on the latter two.
 
 To be able to accurately construct the DFG representation, \sys needs to know certain information about a command's inputs and outputs.
 There are couple of reasons for this.
@@ -1147,7 +1141,7 @@ For example, if a custom \ttt{trace-sort} command is invoked with flags \ttt{r},
 % \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
 
 \heading{Example Annotations}
-A record contains a set of clauses, each one identified by a predicate on the commands options.
+An annotation record contains a set of clauses, each one identified by a predicate on the command options.
 Each clause maps to an assignment for the command, indicating its class and the sequence of its inputs and outputs.
 Annotations treat flag arguments differently from file arguments, by checking if they start with a \ttt{-}.
 % \footnote{
@@ -1157,9 +1151,9 @@ Annotations treat flag arguments differently from file arguments, by checking if
 %     I am also not sure how important this last sentence is, as it did not answer a question I had---I expected arguments to be anything: if soneome wants to put ``pizza'' the DSL should not disallow it.
 %   }
 % }
-The grammar of the language for specifying annotations is shown in Appendix~\ref{alg}.
+The annotation grammar is shown in Appendix~\ref{alg}.
 
-For example, consider \ttt{comm}---a command that performs a join-like operation on its two inputs to identify common elements.
+For example, consider \ttt{comm}, which performs a join-like operation on its two inputs to identify common elements.
 When \ttt{comm} is invoked without any flags, it produces a three-column output:
   the first column contains lines that are unique to the first input, the second column contains lines that are unique to the second input, and the last column contains lines that exist in both inputs.
 A user can invoke \ttt{comm} with any combination of flags \ttt{-1}, \ttt{-2}, or \ttt{-3} to suppress the corresponding output columns.
@@ -1167,12 +1161,9 @@ Its annotation record is shown below:
 %
 \begin{lstlisting}[language=sh, numbers=none]
 comm {
-  | -1 /\ -3 =>
-    (stateless, [args[1]], [stdout])
-  | -2 /\ -3 =>
-    (stateless, [args[0]], [stdout])
-  | _  =>
-    (pure, [args[0], args[1]], [stdout])
+| -1 /\ -3 => (S, [arg[1]], [stdout])
+| -2 /\ -3 => (S, [arg[0]], [stdout])
+| _  => (P, [arg[0], arg[1]], [stdout])
 }
 \end{lstlisting}
 
@@ -1181,7 +1172,8 @@ The first two clauses describe \ttt{comm} invocations with options \ttt{-1} (or 
 In the first case, since the first and third columns are suppressed, \ttt{comm} can be considered in \sta by regarding its first file argument as a static ``configuration'' input;
   this input accompanies every replicated instance of the command executing in parallel.
 The general case, which includes \ttt{comm} invocations without any options, is captured by the third clause.
-There, \ttt{comm} is classified as \pur, since it needs to wait until it reads both files completely before it can output its results.
+There, \ttt{comm} is classified as \pur as it needs to % wait until it 
+  read both inputs completely before it can output its results.
 Its inputs are its first and second file arguments (\ie excluding any options), and its output is produced in \ttt{stdout}.
 
 %%  This case is described in the third clause of the annotation
@@ -1279,15 +1271,15 @@ Its inputs are its first and second file arguments (\ie excluding any options), 
 
 \heading{Providing Combinators}
 For most commands, the annotations are enough to allow parallelization: 
-  commands either fall under \sta, having straightforward combiners, or fall under a subset of \pur that can be parallelized using divide-and-conquer techniques~\sx{cmd}.
-Unfortunately, there are commands with less trivial tactics---after all, \unix commands are Turing-complete programs and failing to plan for this generality would inhibit \sys's usefulness.
+  commands either fall under \sta, having straightforward combiners, or fall under a subset of \pur that can be parallelized using divide-and-conquer techniques~\sx{optimizer}.
+Unfortunately, there are commands that require less obvious tactics---after all, \unix commands are Turing-complete programs and failing to plan for this generality would inhibit \sys's usefulness.
 
-To support the parallelization of arbitrary commands in \pur, \sys allows command developers to provide custom $map$ and $fold$ functions.
-In line with \unix philosophy, these functions can be written in any language as long as they conform to a few invariants:
-  (i) $map$ in \sta and $fold$ is in \pur,
-  (ii) $map$ can consume (or extend) the output of the original command and  $fold$ can consume (and combine) the results of multiple $map$ invocations, and
+To support the parallelization of arbitrary commands in \pur, \sys allows supplying custom \emph{map} and \emph{fold} functions.
+In line with the \unix philosophy, these functions can be written in any language as long as they conform to a few invariants:
+  (i) \emph{map} is in \sta and \emph{fold} is in \pur,
+  (ii) \emph{map} can consume (or extend) the output of the original command and  \emph{fold} can consume (and combine) the results of multiple \emph{map} invocations, and
   (iii) their composition produces the same output with the original command.
-If these invariants are met, after DFG analysis~\sx{ir} \sys can replace occurrences of these commands with their $map$ and $fold$ equivalents, enabling their parallelization.
+If these invariants are met, after DFG analysis~\sx{ir} \sys can replace occurrences of these commands with their \emph{map} and \emph{fold} equivalents, enabling their parallelization.
 
 \sys defines the combiners for most of the POSIX and Coreutils commands in \pur, which operate as both \sys's standard library and exemplar for community attempts to tackle other commands.
 
