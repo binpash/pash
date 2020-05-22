@@ -1678,18 +1678,14 @@ $(m, r)$ as $ v(x_1 \cdot x_2 \cdots x_n, s) \Rightarrow r(m(x_1, s)
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{\detokenize{./figs/transformation-sketch.png}}
+\includegraphics[width=\columnwidth]{\detokenize{./figs/dish_cat.pdf}}
+\vspace{-28pt}
 \caption{
   \textbf{Stateless parallelization transformation.}
-  The \texttt{cat} node is commuted with the stateless node
-  to utilize available data parallelism.
-  \TODO{Correct this diagram to show the cat node before
-    the node and then the cat node after the stateless
-    command after the optimization. Cat node should be
-    different than a circle. Maybe like an ``and'' node
-    in binary circuits?}
+  The \texttt{cat} node is commuted with the stateless node to utilize available data parallelism.
+  \nv{Should graph be \emph{directed}?}
 }
-\vspace{-10pt}
+\vspace{-15pt}
 \label{fig:parallelization-transformation}
 \end{figure}
 
