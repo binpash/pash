@@ -602,12 +602,12 @@ def plot_one_liners_tiling(results_dir):
                    "double_sort",
                    "shortest_scripts"]
 
-    confs = ["Opt. Parallel",
-             "Par. + Split",
+    confs = ["Par. + Split",
              "Par. + B. Split",
              "Parallel",
              "Blocking Eager",
-             "No Eager"]
+             "No Eager",
+             "Opt. Parallel"]
 
     fig = plt.figure()
     gs = fig.add_gridspec(2, 5, hspace=0)
@@ -618,10 +618,10 @@ def plot_one_liners_tiling(results_dir):
     for i, experiment in enumerate(experiments):
         ax = fig.add_subplot(gs[i])
         _, lines = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, ax)
-        if(experiment == "bigrams"):
-            total_lines += lines
-        elif(experiment == "shortest_scripts"):
-            total_lines += lines[1:]
+        if(experiment == "double_sort"):
+            total_lines = lines + total_lines
+        elif(experiment == "bigrams"):
+            total_lines += [lines[0]]
         ax.set_xticks(all_scaleup_numbers[1:])
         ax.text(.5,.91,pretty_names[experiment],
         horizontalalignment='center',

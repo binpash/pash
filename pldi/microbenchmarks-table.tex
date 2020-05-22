@@ -6,7 +6,7 @@ Script ~&~ Structure & Input &Seq Time & \#Nodes(16, 64) &Compile Time (16, 64) 
 \tti{sort} ~&~ $\tsta, \tpur$ & 10~GB & 21m46.807s & 77\qquad 317 & 0.090s\qquad 1.083s & \tti{sort}ing \\
 \tti{top-n} ~&~ $2\times\tsta, 4\times\tpur$ & 10~GB & 78m45.872s & 96\qquad 384 & 0.145s\qquad 1.790s & double \tti{sort}, \tti{uniq} reduction \\
 \tti{wf} ~&~ $3\times\tsta, 3\times\tpur$ & 10~GB & 22m30.048s & 96\qquad 384 & 0.147s\qquad 1.809s & double \tti{sort}, \tti{uniq} reduction \\
-\tti{grep-light} ~&~ $3\times\tsta$ & 100~GB & 1m38.212s & \todo{X}\qquad \todo{X} & 0.031s\qquad 0.163s & \todo{light computation} \\
+\tti{grep-light} ~&~ $3\times\tsta$ & 100~GB & 1m38.212s & 49\qquad 193 & 0.031s\qquad 0.163s & \todo{light computation} \\
 \tti{spell} ~&~ $4\times\tsta, 3\times\tpur$ & 3~GB & 25m7.560s & 69\qquad 261 & 0.104s\qquad 1.038s & comparisons (\tti{comm}) \\
 \tti{shortest-scripts} ~&~ $5\times\tsta, 2\times\tpur$ & 85~MB & 28m45.900s & 142\qquad 574 & 0.328s\qquad 4.657s & \todo{extensive file-system operation} \\
 \tti{diff} ~&~ $2\times\tsta, 3\times\tpur$ & 10~GB & 25m49.097s & 125\qquad 509 & 0.186s\qquad 2.341s & non-parallelizable \tti{diff}ing \\
