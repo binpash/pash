@@ -1729,11 +1729,11 @@ as for performance improvements~\sx{optimizer}.
   graph.}
 
 %% \begin{definition}
-%% Given a dataflow graph $G = (V, E, O)$, where $V$ is a set of nodes
+%% Given a DFG $G = (V, E, O)$, where $V$ is a set of nodes
 %% representing commands, $E$ is a set of edges representing files, and
 %% $O$ is a function from $V \cup v_{out}$ to a total order of incoming
 %% edges. $v_{out}$ represents a concatenation of all the outputs of the
-%% dataflow graph. We represent the total order for a node $v$ as
+%% DFG. We represent the total order for a node $v$ as
 %% $<_v$. Given a node a node $v$
 %% with input edges $ie = \{ i_1 = (v_{i_1}, v, 1), i_2, ..., i_n =
 %% (v_{i_n}, v, n) \}$ and output edge $o = (v, v_o, a)$, we define a
@@ -1747,33 +1747,21 @@ as for performance improvements~\sx{optimizer}.
 %% \end{lemma}
 
 
-\section{From scripts to graphs and back again}
+\section{From Scripts to Graphs and Back Again}
 \label{impl}
 
-\kk{Less fun section title: Implementation}
-
-This section describes challenges related to the implementation of
-\sys. It starts by describing how the \sys front-end translates a
-shell script to the dataflow graph model defined in \S\ref{ir} by
-identifying and transforming parallelizable regions~\sx{front-end}. It
-closes with the \sys runtime\todo{/backend} and the technical
-challenges that were addressed to achieve performance
-benefits~\sx{optimizer}.
+This section describes \sys's implementation.
+It first details how \sys's front-end translates a shell script to the DFG model defined in \S\ref{ir} by identifying and transforming parallelizable regions~\sx{front-end}.
+It then describes \sys's runtime\todo{/backend} and the technical challenges addressed to achieve performance benefits~\sx{optimizer}.
 
 \subsection{Front End}
 \label{front-end}
 
-As mentioned in \Cref{ir}, in order to optimize a shell script, \sys
-translates it to a dataflow graph.  However, there are several
-components in shell programs that cannot be arbitrarily parallelized
-without affecting the program behaviour---\eg commands connected with
-a \ttt{\&\&} operator~\sx{bg}.
+To optimize a shell script, \sys translates it to a DFG~\sx{ir}.
+As there are several program fragments that cannot be parallelized---\eg commands connected with \ttt{\&\&}~\S\ref{bg}---\sys introduce the notion of \emph{parallelizable program regions} and a translation pass for converting them to DFGs.
 %% In addition, the shell's highly dynamic
 %% nature compounds the challenge---\eg by not knowing what files does an
 %% unexpanded command argument refer to.
-To address this issue, we introduce the notion of parallelizable
-program regions and a translation pass for converting them to dataflow
-graphs.
 
 %% \kk{Give examples of writing to environment variables, producing
 %%   irreversible side effects, the ; and \&\& operators.}
@@ -1795,13 +1783,12 @@ graphs.
 %%   but effective analysis to identify which parts of the scripts to
 %%   parallelize.}
 %
-Parallelizable regions are program sub-expressions that can be
-parallelized safely without altering the total program behaviour.
+Parallelizable regions are program sub-expressions that can be parallelized safely, \ie without breaking the program.
 %% respect to their sequential execution.
-The search for these regions can be guided by the structure of shells
-programs, which inherently contains information about components that
-can be executed independently, and barriers that are natural points for
-enforcing synchronization. Consider the following example:
+The search for these regions is guided by the shell language and the structure of a particular program.
+These contain information about two types of components:
+  fragments that can be executed independently and barriers that are natural synchronization points. % for enforcing synchronization.
+Consider this script:
 
 \begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
   cat f1 f2 | grep "foo" > f3 && sort f3 
@@ -1809,20 +1796,15 @@ enforcing synchronization. Consider the following example:
 % # Replace sort with sth better
 
 \noindent
-The commands \ttt{cat f1 f2} and \ttt{grep "foo"} would execute as
-independent processes in the standard shell, while \ttt{sort f3} would
-wait for their completion before executing.  Both \ttt{cat f1 f2 |
-  grep "foo" > f3} and \ttt{sort f3} are therefore parallelizable
-regions, regions that cannot be extended beyond \ttt{\&\&}---even
-better, they are maximal.
+The \ttt{cat} and \ttt{grep} commands execute independently (and concurrently) in the standard shell, but \ttt{sort} waits for their completion prior to start.
+Both \ttt{cat f1 f2 | grep "foo" > f3} and \ttt{sort f3} are thus parallelizable regions, each not extending beyond \ttt{\&\&}---\ie more precisely, they are maximal.
 
 Intuitively, parallelizable regions correspond to sub-expressions of
 the program that would be allowed to execute independently by
 different processes in the POSIX standard~\cite{posix}. Larger
 parallelizable regions can be composed from smaller ones using the
-pipe operator \ttt{|} and the parallel composition operator \ttt{\&}.
-Conversely, all other operators, such as the \ttt{;} sequential
-composition operator and the \ttt{\&\&} logical operator, represent
+pipe operator (\ttt{|}) and the parallel-composition operator (\ttt{\&}).
+Conversely, all other operators, such as the sequential composition operator (\ttt{;}) and the logical operators (\ttt{\&\&}, \ttt{||}), represent
 barrier constructs that do not allow parallelizable regions to
 permeate through.
 
@@ -1853,18 +1835,17 @@ permeate through.
 %
 The \sys front-end performs a depth-first search pass on the AST of
 the given shell program.  During this pass, it extends the
-parallelizable regions from the bottom up, translating their
-independent components to dataflow graph nodes until a barrier
-construct is reached. All subtrees that are not translated to dataflow
-graphs are kept as they are. The output of the translation pass is the
+parallelizable regions bottom-up, translating their
+independent components to DFG nodes until a barrier
+construct is reached. All subtrees not translatable to DFGs are kept as they are. The output of the translation pass is the
 original AST where parallelizable regions have been replaced with
-dataflow graphs and a call to \sys's runtime.
+DFGs and a call to \sys's runtime.
 
-To identify possible opportunities for parallelism, the translation
+To identify opportunities for parallelism, the translation
 pass extracts the parallelizability class of each command together
-with its inputs and outputs. It achieves that by searching all
-available PAL~\sx{ext} records for each command and resorts to
-conservative defaults if a record for the command is not found. If the
+with its inputs and outputs.  To achieve this for each command,
+it searches all available annotation~\sx{ext} and resorts to
+conservative defaults if no record is found. If the
 command is \sta or parallelizable \pur, the translation pass initiates
 a parallelizable region that is propagated up the tree.
 
@@ -2186,29 +2167,24 @@ laziness issue that was described before.
 %
 % \nv{I think all of these titles should be the problem/challenge, not the solution}
 % A process writing to a pipe needs to be notified when its consumer exits early before consuming all its output.
-Under normal operation, a command exits after it has produced and
-sent all of its output to
-%% a pipe
-its output channel.
-% \ttt{SIGPIPE} 
-However, if its output is a pipe and the pipe reader exits early, the
-command needs to be notified so that it stops writing to it.
-%% \todo{appending to the stream/trying to push data to its output
-%%   channel}.
-% ---so that it avoids unnecessary work and buffering challenges in the kernel.
+Under normal operation, a command exits after it has produced and sent all of its output to its output channel.
+However, if its output is a pipe and the pipe reader exits early, the command is notified to stop writing early.
 In \unix, this is achieved by an out-of-band error mechanism: the
 operating system will deliver a \ttt{PIPE} signal to the producer,
 notifying it that the pipe's consumer has exited.  This is different
 from errors for other system calls
 %% return an error
 and unusual compared to non-\unix systems\footnote{For example,
-  Windows indicate errors for \ttt{WriteFile} using its return
+  Windows indicates errors for \ttt{WriteFile} using its return
   code---similar to \ttt{DeleteFile} and other Win32 functions.}
 primarily because pipes and pipelines are at the heart of its
 philosophy.
 % write errors are communicated differently 
-Unfortunately though, if a pipe has not been opened for writing yet---which is possible for named pipes\kk{I think that it is also possible for anonymous, e.g. \ttt{cat f1 - | head -n 1}}---\unix cannot signal this condition.
-Consider the following emitted code from \sys's earlier versions:
+Unfortunately though, if a pipe has not been opened for writing yet---which is possible for named pipes---\unix cannot signal this condition.
+% \kk{I think that it is also possible for anonymous, e.g. \ttt{cat f1 - | head -n 1}}
+% \nv{TODO! Will think about this later}
+Consider the following script:
+% emitted code from \sys's earlier versions:
 %% \kk{Proposed alternative: ``Consider the following shell script:''}
 \begin{lstlisting}[language=sh, numbers=none]
   mkfifo fifo1 fifo2
@@ -2217,13 +2193,10 @@ Consider the following emitted code from \sys's earlier versions:
   cat fifo1 fifo2 | head -n 1 & wait
 \end{lstlisting}
 \noindent
-In the code above, \ttt{head} exits early causing the last \ttt{cat}
-to exit before opening \ttt{fifo2}.  As a result, the second \ttt{cat}
-never receives a \ttt{PIPE} signal that its consumer exited---after
-all, \ttt{fifo2} never even had a consumer.  This, in turn, leaves the
-second \ttt{cat} unable to make progress, both (i) blocked unable to
-write output, and (ii) unaware that its consumer has exited.  Coupled
-with \ttt{wait} at the end, the entire snippet reaches a deadlock.
+In the code above, \ttt{head} exits early causing the last \ttt{cat} to exit before opening \ttt{fifo2}.
+As a result, the second \ttt{cat} never receives a \ttt{PIPE} signal that its consumer exited---after all, \ttt{fifo2} never even had a consumer.
+This, in turn, leaves it unable to make progress, as it is is both blocked and unaware of its consumer exiting.
+Coupled with \ttt{wait} at the end, the entire snippet reaches a deadlock.
 
 To solve this problem, \sys emits cleanup logic that operates from the
 end of the pipeline and towards its start.  The emitted code first
@@ -2256,14 +2229,15 @@ upstream.
 % execution. All of this can be easily generated by the compiler.
 
 \heading{Pure Fold Function Implementations}
-
-As mentioned in \Cref{parallelizability}, commands in \tpur can be
-parallelized using a map stage and a \todo{fold} stage. We have
-implemented these stages for several commands in \tpur to enable \sys
-to parallelize them. Some interesting examples are \ttt{sort}, which
-can be parallelized simply by using \ttt{sort} as a map and \ttt{sort
-  -m} as \todo{fold}, and \todo{wc} \TODO{Niko, can you complete
-  that with wc or any other interesting example?}
+Commands in \tpur can be parallelized using a \emph{map} and a \emph{fold} stage~\sx{parallelizability}.
+\sys implements \emph{fold} for several commands in \tpur to enable parallelization.
+A few interesting examples include \emph{fold} functions for
+  (i) \ttt{sort}, which amounts to the merge phase of a merge-sort (and on GNU systems is implemented as \ttt{sort -m}),
+  (ii) \ttt{uniq} and \ttt{uniq -c}, which need to check conditions at the boundary of their streams,
+  (iii) \ttt{tac}, which consumes stream descriptors in the reverse order, and 
+  (iv) \ttt{wc}, which adds inputs with an arbitrary number of elements (\eg \ttt{wc -lw} or \ttt{wc -lwc} \etc).
+The combiners iterate over the provided stream descriptors, \ie they work with more than two inputs, and apply pure functions at the boundaries of input streams (with the exception of \ttt{sort} that has to interleave inputs).
+% An important concern has been to maintain whitespace separation while 
 
 %% The optimizer also applies custom transformations on several commands in \pur
 %% to further improve their performance. Two notable examples are the
