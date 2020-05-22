@@ -101,7 +101,7 @@ elif [ "$auto_split_flag" -eq 1 ]; then
     auto_split_opt="--auto_split"
     distr_result_filename="${results}${experiment}_distr_auto_split.time"
     sed -i "s#fan_out: [0-9]\+#fan_out: ${n_in}#" config.yaml
-    if [ "${microbenchmark}" != "bigrams" ] && [ "${microbenchmark}" != "spell" ]  && [ "${microbenchmark}" != "double_sort" ]; then
+    if [ "${microbenchmark}" != "bigrams" ] && [ "${microbenchmark}" != "spell" ] && [ "${microbenchmark}" != "double_sort" ] && [ "${microbenchmark}" != "max_temp_p123" ]; then
         echo "No reason to split on one-liner: ${microbenchmark}"
         cat /tmp/backup-config.yaml > config.yaml
         exit

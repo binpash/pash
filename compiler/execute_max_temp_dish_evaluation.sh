@@ -51,3 +51,7 @@ echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p5_10_env.sh
 ./execute_compile_evaluation_script.sh -e "p4" "10"
 ./execute_compile_evaluation_script.sh -s -e "p5" "2"
 ./execute_compile_evaluation_script.sh -e "p5" "10"
+
+## Executing the first 3 stages with dish
+./execute_compile_evaluation_script.sh -s -a "max_temp_p123" "2"
+./execute_compile_evaluation_script.sh -a "max_temp_p123" "10"
