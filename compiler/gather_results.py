@@ -610,7 +610,7 @@ def plot_one_liners_tiling(results_dir):
              "Opt. Parallel"]
 
     fig = plt.figure()
-    gs = fig.add_gridspec(2, 5, hspace=0)
+    gs = fig.add_gridspec(2, 5, hspace=0.05)
     # fig.suptitle('')
 
     total_lines = []
@@ -636,12 +636,14 @@ def plot_one_liners_tiling(results_dir):
             ax.set_ylabel('Speedup')
         if(ax.is_last_row()):
             ax.set_xlabel('Level of Parallelism')
+        if(ax.is_first_row()):
+            ax.set_xticklabels([])
         # ax.label_outer()
 
     plt.legend(total_lines, confs, loc='lower right', fontsize=16)
     # plt.title(pretty_names[experiment])
 
-    fig.set_size_inches(26, 7.5)
+    fig.set_size_inches(27, 8.2)
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "tiling_throughput_scaleup.pdf"),bbox_inches='tight')
 
