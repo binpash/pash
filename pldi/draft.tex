@@ -1313,17 +1313,18 @@ Its inputs are its first and second file arguments (\ie excluding any options), 
   what do you think?}}
 
 
-\heading{Providing Combinators}
-For most commands, the annotations are enough to allow parallelization: 
-  commands either fall under \sta, having straightforward combiners, or fall under a subset of \pur that can be parallelized using divide-and-conquer techniques~\sx{optimizer}.
-Unfortunately, there are commands that require less obvious tactics---after all, \unix commands are Turing-complete programs and failing to plan for this generality would inhibit \sys's usefulness.
-
-To support the parallelization of arbitrary commands in \pur, \sys allows supplying custom \emph{map} and \emph{fold} functions.
+\heading{Providing \todo{Aggregators}}
+For commands in \sta, the annotations are enough to enable parallelization: they are applied to partitions of their input in parallel, and their outputs are simply concatenated.
+%% commands either fall under \sta, having straightforward aggregators, or fall under a subset of \pur that can be parallelized using divide-and-conquer techniques~\sx{optimizer}. \kk{pure commands are what we have to provide aggregators for, so this is not totally valid.}
+%% Unfortunately, there are commands that
+%% require less obvious tactics---after all, \unix commands are Turing-complete programs and failing to plan for this generality would inhibit \sys's usefulness. \kk{I would propose deleting this last sentence. we have already separated commands into classes, so this sentence makes it seem like the classes don't help at all.}
+%
+To support the parallelization of arbitrary commands in \pur, \sys allows supplying custom \emph{map} and \emph{aggregate} functions.
 In line with the \unix philosophy, these functions can be written in any language as long as they conform to a few invariants:
-  (i) \emph{map} is in \sta and \emph{fold} is in \pur,
-  (ii) \emph{map} can consume (or extend) the output of the original command and  \emph{fold} can consume (and combine) the results of multiple \emph{map} invocations, and
+  (i) \emph{map} is in \sta and \emph{aggregate} is in \pur,
+  (ii) \emph{map} can consume (or extend) the output of the original command and  \emph{aggregate} can consume (and combine) the results of multiple \emph{map} invocations, and
   (iii) their composition produces the same output with the original command.
-If these invariants are met, after DFG analysis~\sx{ir} \sys can replace occurrences of these commands with their \emph{map} and \emph{fold} equivalents, enabling their parallelization.
+If these invariants are met, after DFG analysis~\sx{ir} \sys can replace occurrences of these commands with their \emph{map} and \emph{aggregate} equivalents, enabling their parallelization.
 
 \sys defines the combiners for most of the POSIX and Coreutils commands in \pur, which operate as both \sys's standard library and exemplar for community attempts to tackle other commands.
 
@@ -1348,10 +1349,22 @@ If these invariants are met, after DFG analysis~\sx{ir} \sys can replace occurre
 \section{Dataflow Graph Model}
 \label{ir}
 
-The core of \sys is a dataflow graph (DFG) model that is expressive enough to support a large subset of shell programs.\nv{Immediate Q: How Large? Which programs are not supported? Why?}
-A fundamental difference with other DFG models is that it contains information about the order in which a node reads its inputs.
-This enables a set of graph transformations that expose data parallelism as task parallelism.\nv{What does this mean? What if they are fundamentally different in the reivewer's mind? Example?}
-These transformations can then be applied in an iterative way, optimizing the program to utilize available computational resources.
+The core of \sys is an abstract dataflow graph (DFG) model that is used as the intermediate representation on which \sys performs optimizations.
+%% representation that is expressive enough to model data parallelism in shell programs.
+%% support a large subset of shell programs.\nv{Immediate Q: How Large? Which programs are not supported? Why?}
+\sys first lifts sections of the input script to the DFG
+representation, it performs transformations to expose parallelism, and
+then instantiates each DFG back to a parallel shell script.  A
+fundamental difference with other DFG models is that it encodes the
+order in which a node reads its inputs, which in turn enables a set of
+graph transformations that can be iteratively applied to expose
+parallelization opportunities for \tsta and \tpur commands.
+%% data parallelism as task parallelism.\nv{What does this mean? What if they are fundamentally different in the reivewer's mind? Example?}
+%% These transformations can then be applied in an iterative way, optimizing the program to utilize available computational resources. 
+In \Cref{graph-components} we define the DFG model and describe the
+correspondence with shell scripts, and in \Cref{ir:transformations} we
+describe the graph transformations and \todo{give intuition about their
+correctness}.
 
 
 %% The core of \sys is a DFG model, inspired by the ones used
@@ -1372,10 +1385,10 @@ These transformations can then be applied in an iterative way, optimizing the pr
 \label{graph-components}
 
 The two main shell abstractions are
-  (i) files (or pipes, \emph{viz.} correspondence between files and pipes in \S\ref{bg:pipelines}\nv{Not in this version. Should we call them "streams"?}) that contain data, and
-  (ii) commands that communicate through these files.
-\nv{quick solution: change all files to streams and make the equivalence explicit here}
-\sys's DFG model represents commands as nodes and \todo{streams} as edges.
+  (i) streams, i.e. files or pipes, that contain data, and
+  (ii) commands that communicate through these streams.
+%% \nv{quick solution: change all files to streams and make the equivalence explicit here}
+\sys's DFG model represents commands as nodes and streams as edges.
 
 We first introduce basic notation used throughput this section.
 For a set $D$, we write $D\kstar$ to denote the set of all finite words over $D$.
@@ -1677,16 +1690,16 @@ $x, x'$ separately, and concatenating the outputs.
 Similarly, some pure commands (such as \ttt{sort} and \ttt{wc}) can be
 parallelized using divide-and-conquer techniques. More formally, these
 pure commands $f$ can be implemented as a combination of a function map
-$m$ and an associative fold $f'$, satisfying the following equation:
+$m$ and an associative aggregate $agg$, satisfying the following equation:
 
 \[
-\forall x, x', s, f(x \cdot x', s) = f'(m(x, s) \cdot m(x', s), s)
+\forall x, x', s, f(x \cdot x', s) = agg(m(x, s) \cdot m(x', s), s)
 \]
 
 \noindent
 This means that we get the same output by applying $f$ to a
-concatenation of two inputs $x, x'$ as by applying the fold function
-$f'$ to the concatenation of the outputs produced by applying map $m$
+concatenation of two inputs $x, x'$ as by applying the aggregation function
+$agg$ to the concatenation of the outputs produced by applying map $m$
 to each of $x$ and $x'$.
 %% \km{We had also discussed here the case of
 %%   operators that can be described as associative and commutative
@@ -1715,9 +1728,10 @@ optimization $v(x_1 \cdot x_2 \cdots x_n, s) \Rightarrow v(x_1, s)
 \cdot v(x_2, s) \cdots v(x_n, s)$ can be shown to preserve the
 behavior of the graph. 
 
-This transformation can extended straightforwardly to pure commands implemented by a map-fold pair
-$(m, r)$ as $ v(x_1 \cdot x_2 \cdots x_n, s) \Rightarrow r(m(x_1, s)
-\cdot m(x_2, s) \cdots m(x_n, s), s)$.
+This transformation can extended straightforwardly to pure commands
+implemented by a map-aggregate pair $(m, agg)$ as $ v(x_1 \cdot x_2
+\cdots x_n, s) \Rightarrow agg(m(x_1, s) \cdot m(x_2, s) \cdots m(x_n,
+s), s)$.
 % \todo{It is shown in Fig.}\ref{fig:parallelization-transformation}.
 
 \begin{figure}[t]
