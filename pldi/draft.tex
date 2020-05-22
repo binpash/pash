@@ -1773,13 +1773,15 @@ as for performance improvements, as we will see in \Cref{optimizer}.
 %% \end{lemma}
 
 
-\section{Implementation}
+\section{From scripts to graphs and back again}
 \label{impl}
+
+\kk{Less fun section title: Implementation}
 
 This section describes challenges related to the implementation of
 \sys. It starts by describing how the \sys front-end translates a
-shell script to the dataflow graph model defined in \S\ref{ir}, by
-applying transformation on parallelizable regions~\sx{front-end}.  It
+shell script to the dataflow graph model defined in \S\ref{ir} by
+identifying and transforming parallelizable regions~\sx{front-end}. It
 closes with the \sys runtime\todo{/backend} and the technical
 challenges that were addressed to achieve performance
 benefits~\sx{optimizer}.
@@ -1797,7 +1799,7 @@ a \ttt{\&\&} operator~\sx{bg}.
 %% unexpanded command argument refer to.
 To address this issue, we introduce the notion of parallelizable
 program regions and a translation pass for converting them to dataflow
-dataflow graphs.
+graphs.
 
 %% \kk{Give examples of writing to environment variables, producing
 %%   irreversible side effects, the ; and \&\& operators.}
@@ -1824,10 +1826,10 @@ parallelized safely without altering the total program behaviour.
 %% respect to their sequential execution.
 The search for these regions can be guided by the structure of shells
 programs, which inherently contains information about components that
-can be executed independently and barriers that are natural points for
+can be executed independently, and barriers that are natural points for
 enforcing synchronization. Consider the following example:
 
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
   cat f1 f2 | grep "foo" > f3 && sort f3 
 \end{lstlisting}
 % # Replace sort with sth better
@@ -1846,7 +1848,7 @@ different processes in the POSIX standard~\cite{posix}. Larger
 parallelizable regions can be composed from smaller ones using the
 pipe operator \ttt{|} and the parallel composition operator \ttt{\&}.
 Conversely, all other operators, such as the \ttt{;} sequential
-composition operator, the \ttt{\&\&} logical operator represent
+composition operator and the \ttt{\&\&} logical operator, represent
 barrier constructs that do not allow parallelizable regions to
 permeate through.
 
@@ -1868,13 +1870,13 @@ permeate through.
 % 
 
 \heading{Translation Pass}
-
+%
 %% \kk{It might be a good idea to change this subsection based on the new
 %%   as-late-as-possible architecture where everything is wrapped and
 %%   translated at the final moment. Ideally, this would become the main
 %%   point of this subsection, as the translation algorithm is kind of
 %%   redundant when having the distributable regions too.}
-
+%
 The \sys front-end performs a depth-first search pass on the AST of
 the given shell program.  During this pass, it extends the
 parallelizable regions from the bottom up, translating their
@@ -1954,12 +1956,12 @@ translation pass cannot infer that an environment variable that is
 given as an argument to a command is not a flag that changes its
 parallelizability class,
 %% two un-expand strings do not refer to the same file identifier,
-and as a result does not parallelize this sub-expression.
+and as a result does not parallelize such sub-expressions.
 
-\kk{Can we say anything more about the safety considerations? That (i)
-  the translation pass ``checks'' that no nodes write/read or
-  write/write to the same file (is that necessary?), that (ii) a
-  command should not read from a read-once file. (is that necessary?)}
+%% \kk{Can we say anything more about the safety considerations? That (i)
+%%   the translation pass ``checks'' that no nodes write/read or
+%%   write/write to the same file (is that necessary?), that (ii) a
+%%   command should not read from a read-once file. (is that necessary?)}
 
 %% \kk{Ideally we would want to talk here about the as-late-as possible
 %%   dish translation that allows us to be safe despite the Shell's
@@ -1975,9 +1977,16 @@ and as a result does not parallelize this sub-expression.
 
 After translating the parallelizable regions of the input script to
 dataflow graphs and optimizing these graphs using the transformations
-described in \Cref{ir:transformations}, \sys implements the graph by
-translating it back to a shell script. In this section we describe how
-\sys achieves that, and several technical challenges that it addresses.
+described in \Cref{ir:transformations}, \sys implements each graph by
+translating it back to a shell script. Nodes of the graph are
+instantiated with their respective commands, and edges are
+instantiated as named pipes. In this section, we describe several
+technical challenges that \sys addresses to efficiently perform this
+transformation, as well as the implementations of the custom \sys
+nodes that are added by the auxiliary transformations.
+%% it instantiates the \todo{custom} split and relay nodes as highly
+%% optimized commands to improve In this section we describe how \sys
+%% achieves that, and several technical challenges that it addresses.
 
 
 %% Given a dataflow graph representing a shell program, the \sys
@@ -2037,33 +2046,41 @@ translating it back to a shell script. In this section we describe how
 
 
 \heading{Overcoming Laziness}
-
+%
+%
 The shell is uniquely lazy, in the sense that most commands and pipes
 consume their inputs only when they are ready to process more. This
-allows the underlying system to be able to support concurrently
-executing many more commands than the processing threads of the
-underlying system, by scheduling them concurrently, allowing them to
-have progress one at a time. This design decision however, severely
-restricts parallelism since nodes are often blocked when their
-consumers are processing their input. Consider as an example the
-following script:
+allows the underlying system to concurrently execute more commands
+than the available processing threads,
+%% support concurrently executing many more commands than the
+%% processing threads of the underlying system,
+%% by scheduling them concurrently, allowing them to
+%% have progress one at a time.
+by interleaving their executions. This design decision however,
+severely restricts parallelism since nodes are often blocked when
+their consumers are not requesting any input. Consider as an example
+the following script:
 
-\begin{lstlisting}[language=sh, float=h, numbers=none, escapeinside={($}{$)}]
+\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
   mkfifo t1 t2
   grep "foo" > t1 & grep "foo" > t2 &
   cat t1 t2
 \end{lstlisting}
 
+\noindent
 The \ttt{cat} command will only try to consume input from \ttt{t2}
 when it is done reading from \ttt{t1}. This means that the second
 \ttt{grep} will block without processing any input until the first
 \ttt{grep} is done processing. Instead of addressing this issue for
-specific commands, \sys inserts and instants several eager \ttt{relay}
-nodes in critical points of the pipeline as seen in
-\Cref{fig:eager}. These nodes force their producers to produce output
-and not block, while also preserving the existing task-based
-parallelism---that would not be preserved say with the \todo{third}
-solution in \Cref{fig:eager}.
+each command separately, \sys inserts and instantiates eager
+\ttt{relay} nodes in critical points of the pipeline as seen in
+\Cref{fig:eager}. These nodes eagerly consume their input, forcing
+their upstream nodes to produce output when possible,
+%% force their producers to
+%% produce output and not block,
+while also preserving the existing task-based parallelism---that would
+not be preserved say with the \todo{third} solution in
+\Cref{fig:eager}.
 
 
 
@@ -2103,22 +2120,33 @@ solution in \Cref{fig:eager}.
 
 
 \heading{Split node implementation}
-
-As described in \Cref{ir:transformations}, \sys transformations
-inserts \ttt{split} nodes to expose parallelism in cases where a
-parallelizable node only has one input. The \sys \todo{backend} offers
-two options for implementing this split node, to satisfy the inherent
-tension between task-based parallelism and knowledge of the number of
-lines in the \ttt{split} input. In the general case, the number of
-lines of a specific edge is not known a-priori (due to commands that
-remove or add new lines), and so \sys provides an automatic split that
-first counts the number of lines, and then splits its input to the
+%
+As described in \Cref{ir:transformations}, \sys's optimizer inserts
+\ttt{split} nodes to expose parallelism in cases where a
+parallelizable node only has one input. In order for the split to be
+effective in exposing parallelism, it needs to split its input equally
+in its outputs, but the size of its input can not be known
+a-priori. To satisfy this inherent tension, \sys supports two split
+implementations, a general one that can be used if the script contains
+commands that could add or remove lines, and an optimized one that can
+be used if the size of the split input is known before the script
+executes.
+%% The \sys \todo{backend} support two split node implementations, to
+%% satisfy the inherent tension between the split efficiency and
+%% task-based parallelism.
+In the general case, since the number of lines of a specific edge is
+not known, \sys provides an automatic split that first consumes its
+complete input, counts its lines, and then splits it equally to the
 desired number of outputs. If however, the user knows the number of
-lines at the split insertion edge, they can provide it to \sys, that
-then uses it to \ttt{split} without having to block and read its whole
-input first. \sys also inserts eager relay nodes after all but the
-last output of split in order to address the laziness issue that was
-described before.
+lines at the split insertion edge, they can configure \sys to split
+without having to read its whole input, therefore exploiting available
+task-based parallelism. Finally, \sys also inserts eager relay nodes
+after all but the last output of split in order to address the
+laziness issue that was described before.
+
+%% \TODO{Talk about eagerness in split and how we needed to add eager
+%%   nodes to n-1 outputs.}
+
 
 %% \noindent
 %% \TODO{Problem: Pipeline width shrinks after pure commands. Solution:
@@ -2166,13 +2194,10 @@ described before.
 %% Using the 2-splitter as a building block, a pipe can be split to
 %% arbitrarily many different pipes.
 
-\TODO{Talk about eagerness in split and how we needed to add eager
-  nodes to n-1 outputs.}
-
 
 
 \heading{Dangling FIFOs and Zombie Producers}
-
+%
 %% \TODO{(This problem is a nice followup for the one above) Problem:
 %%   Dataflow graph termination. Illustration: Show the example of head
 %%   deadlock and explain that this is inherent behaviour in the shell.
@@ -2184,25 +2209,33 @@ described before.
 %%   process dies unexpectedly, noone will consume its input. We leave
 %%   addressing that and other monitoring questions for future work). We
 %%   evaluate the overhead of emptying all outputs in section X.}
-
+%
 % \nv{I think all of these titles should be the problem/challenge, not the solution}
 % A process writing to a pipe needs to be notified when its consumer exits early before consuming all its output.
-Under normal operation, a producer exits after it has produced and
-sent all of its output to a pipe\todo{/its output channel}.
+Under normal operation, a command exits after it has produced and
+sent all of its output to
+%% a pipe
+its output channel.
 % \ttt{SIGPIPE} 
-However, if its consumer exits early, the producer needs to be
-notified so that it stops \todo{appending to the stream/trying to push
-  data to its output channel}.
+However, if its output is a pipe and the pipe reader exits early, the
+command needs to be notified so that it stops writing to it.
+%% \todo{appending to the stream/trying to push data to its output
+%%   channel}.
 % ---so that it avoids unnecessary work and buffering challenges in the kernel.
-In \unix, this is achieved by an out-of-band error mechanism:
-  the operating system will deliver a \ttt{PIPE} signal to the producer, notifying it that the pipe's consumer has exited.
-This is different from errors for other system calls return an error and unusual compared to non-\unix systems\footnote{
-  For example, Windows indicate errors for \ttt{WriteFile} by its return code---similar to \ttt{DeleteFile} and other Win32 functions.
-}
-primarily because pipes and pipelines are at the heart of its philosophy.
+In \unix, this is achieved by an out-of-band error mechanism: the
+operating system will deliver a \ttt{PIPE} signal to the producer,
+notifying it that the pipe's consumer has exited.  This is different
+from errors for other system calls
+%% return an error
+and unusual compared to non-\unix systems\footnote{For example,
+  Windows indicate errors for \ttt{WriteFile} using its return
+  code---similar to \ttt{DeleteFile} and other Win32 functions.}
+primarily because pipes and pipelines are at the heart of its
+philosophy.
 % write errors are communicated differently 
 Unfortunately though, if a pipe has not been opened for writing yet---which is possible for named pipes\kk{I think that it is also possible for anonymous, e.g. \ttt{cat f1 - | head -n 1}}---\unix cannot signal this condition.
-Consider the following emitted code from \sys's earlier versions:\kk{Proposed alternative: ``Consider the following shell script:''}
+Consider the following emitted code from \sys's earlier versions:
+%% \kk{Proposed alternative: ``Consider the following shell script:''}
 \begin{lstlisting}[language=sh, numbers=none]
   mkfifo fifo1 fifo2
   cat file-chunk1.txt > fifo1 &
@@ -2210,10 +2243,13 @@ Consider the following emitted code from \sys's earlier versions:\kk{Proposed al
   cat fifo1 fifo2 | head -n 1 & wait
 \end{lstlisting}
 \noindent
-In the code above, \ttt{head} exits early causing the last \ttt{cat} to exit before opening \ttt{fifo2}.
-As a result, the second \ttt{cat} never receives a \ttt{PIPE} signal that its consumer exited---after all, \ttt{fifo2} never even had a consumer.
-This, in turn, leaves the second \ttt{cat} unable to make process, both (i) blocked unable to write output, and (ii) unaware that its consumer has exited.
-Coupled with \ttt{wait} at the end, the entire snippet reaches a deadlock.
+In the code above, \ttt{head} exits early causing the last \ttt{cat}
+to exit before opening \ttt{fifo2}.  As a result, the second \ttt{cat}
+never receives a \ttt{PIPE} signal that its consumer exited---after
+all, \ttt{fifo2} never even had a consumer.  This, in turn, leaves the
+second \ttt{cat} unable to make progress, both (i) blocked unable to
+write output, and (ii) unaware that its consumer has exited.  Coupled
+with \ttt{wait} at the end, the entire snippet reaches a deadlock.
 
 To solve this problem, \sys emits cleanup logic that operates from the
 end of the pipeline and towards its start.  The emitted code first
@@ -2221,15 +2257,19 @@ gathers the IDs of the output processes and passes them as parameters
 to \ttt{wait}; this causes \ttt{wait} to block only on the output
 producers of the dataflow graph.  Right after \ttt{wait}, \sys inserts
 a routine that delivers \ttt{PIPE} signals to any remaining processes
-upstream.  This epilogue is repeated for every \todo{merge/join} point
-in the transformed pipeline \kk{I don't understand the final sentence}.
+upstream.
+%% This epilogue is repeated for every \todo{merge/join} point
+%% in the transformed pipeline \kk{I don't understand the final sentence}.
 % Earlier: need to define split (fork?) and merge (join?) points; this should be "up to next merge point upstream"
 
-\kk{We have to remember to say that for this to work, all nodes in the
-  graph must always open their outputs! If not, then this technique
-  doesn't work, and we have to monitor if any node dies to do
-  something with it. At the moment we ensure that by doing that in our
-  nodes, and by assuming that all nodes that we handle do that.}
+%% \kk{We have to remember to say that for this to work, all nodes in the
+%%   graph must always open their outputs! If not, then this technique
+%%   doesn't work, and we have to monitor if any node dies to do
+%%   something with it. At the moment we ensure that by doing that in our
+%%   nodes, and by assuming that all nodes that we handle do that. This
+%%   is not really a problem, because all of our commands have one
+%%   output, which if they dont open this would cause problems in the
+%%   sequential script too.}
 
 % not receiving an out-of-band signal about that.
 % never terminating, but 
@@ -2243,8 +2283,13 @@ in the transformed pipeline \kk{I don't understand the final sentence}.
 
 \heading{Pure Fold Function Implementations}
 
-\kk{Maybe say something about some of the pure fold functions that we
-  implemented. Interesting examples include sort and wc.}
+As mentioned in \Cref{parallelizability}, commands in \tpur can be
+parallelized using a map stage and a \todo{fold} stage. We have
+implemented these stages for several commands in \tpur to enable \sys
+to parallelize them. Some interesting examples are \ttt{sort}, which
+can be parallelized simply by using \ttt{sort} as a map and \ttt{sort
+  -m} as \todo{fold}, and \todo{wc} \TODO{Niko, can you complete
+  that with wc or any other interesting example?}
 
 %% The optimizer also applies custom transformations on several commands in \pur
 %% to further improve their performance. Two notable examples are the
