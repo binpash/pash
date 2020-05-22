@@ -26,6 +26,7 @@ pure:
     - command: awk
     - command: fmt
     - command: tee
+    - command: seq
 parallelizable_pure:
     - command: sort
     - command: bigrams_aux
