@@ -1,16 +1,16 @@
-kill: (42927): No such process
-kill: (42928): No such process
-kill: (42929): No such process
+kill: (38192): No such process
+kill: (38193): No such process
+kill: (38194): No such process
 Total nodes after optimization: 7
  -- out of which:
 Cat nodes: 1
 Eager nodes: 2
-Optimization time: 2.128  ms
-Backend time: 0.41  ms
-Execution time: 216580.459  ms
-Compilation time: 17.467  ms
+Optimization time: 2.071  ms
+Backend time: 5.749  ms
+Execution time: 1149743.066  ms
+Compilation time: 645.616  ms
 
-real	3m36.954s
-user	5m34.217s
-sys	7m7.152s
+real	19m11.919s
+user	23m5.614s
+sys	29m17.842s
 Files ../evaluation//intermediary//p4_seq_output and /tmp/distr_output/0 are identical
