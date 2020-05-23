@@ -476,10 +476,15 @@ These address several practical challenges % such as task parallelism, deadlocks
 
 We evaluate \sys using
   (i) a series of benchmarks, ranging from classic one-liners found in the \unix literature to modern data-processing pipelines;
-  (ii) three large and complex use cases, covering temperature analysis, web crawling and indexing, and container orchestration; and
-  (iii) a series of targeted micro-benchmarks inspired by (and comparing with) possible alternatives.
-The results demonstrate significant advantages in \todo{correctness},
-\todo{manual effort}, and performance---with \sys offering an order-of-magnitude performance improvements due to its transformations and optimized runtime.
+(ii) two large and complex use cases, covering temperature analysis, and web
+%% crawling and
+indexing;
+%% , and container orchestration;
+and (iii) a series of targeted micro-benchmarks inspired by (and
+comparing with) possible alternatives.  The results demonstrate
+significant advantages in \todo{correctness}, \todo{manual effort},
+and performance---with \sys offering an order-of-magnitude performance
+improvements due to its transformations and optimized runtime.
 %% ---with \sys's transformations offering an order-of-magnitude performance improvements aided further by \sys's optimized runtime components.
 Naturally, these improvements depend on several factors such as the script's execution time, the pipeline depth, and the parallelizability class under which a command falls. 
 %\kk{Do we need to mention this last sentence here? Without context it is pretty difficult for anyone to get something out of it.}
@@ -1361,8 +1366,7 @@ parallelization opportunities for \tsta and \tpur commands.
 %% These transformations can then be applied in an iterative way, optimizing the program to utilize available computational resources. 
 In \Cref{graph-components} we define the DFG model and describe the
 correspondence with shell scripts, and in \Cref{ir:transformations} we
-describe the graph transformations and \todo{give intuition about their
-correctness}.
+describe the graph transformations that \sys performs.
 
 
 %% The core of \sys is a DFG model, inspired by the ones used
