@@ -1,4 +1,5 @@
 import sys
+import math
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -43,7 +44,7 @@ pretty_names = {"minimal_grep" : "grep",
                 "topn" : "top-n",
                 "grep" : "grep-light",
                 "bigrams" : "bi-grams",
-                "alt_bigrams" : "optimized bi-grams",
+                "alt_bigrams" : "bi-grams-opt",
                 "spell" : "spell",
                 "shortest_scripts" : "shortest-scripts",
                 "diff" : "diff",
@@ -67,11 +68,11 @@ highlights = {"minimal_grep" : "complex NFA regex",
               "minimal_sort" : "\\tti{sort}ing",
               "wf" : "double \\tti{sort}, \\tti{uniq} reduction",
               "topn" : "double \\tti{sort}, \\tti{uniq} reduction",
-              "grep" : "\\todo{light computation}",
+              "grep" : "IO-intensive, computation-light",
               "bigrams" : "stream shifting and merging",
               "alt_bigrams" : "optimized version of bigrams",
               "spell" : "comparisons (\\tti{comm})",
-              "shortest_scripts" : "\\todo{extensive file-system operation}",
+              "shortest_scripts" : "long \\tsta pipeline ending with \\tpur",
               "diff" : "non-parallelizable \\tti{diff}ing",
               "set-diff" : "two pipelines merging to a \\tti{comm}",
               "double_sort" : "parallelizable \\tpur after \\tpur"}
@@ -234,6 +235,7 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, a
 
     maximum_y = 0
     lines = []
+    best_result = distr_speedup
 
     ## In the bigrams experiment we want to also have the alt_bigrams plot
     if(experiment == "bigrams"):
@@ -259,6 +261,7 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, a
             lines.append(line)
             maximum_y = max(maximum_y, max(auto_split_distr_speedup))
             maximum_y = max(maximum_y, max(split_distr_speedup))
+            best_result = split_distr_speedup
         except ValueError:
             pass
 
@@ -298,7 +301,7 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, a
     ## Set the ylim
     ax.set_ylim(top=maximum_y*1.15)
 
-    return output_diff, lines
+    return output_diff, lines, best_result
 
 
 def collect_scaleup_times(experiment, results_dir):
@@ -313,7 +316,7 @@ def collect_scaleup_times(experiment, results_dir):
     # ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
     # ax.plot(all_scaleup_numbers, all_scaleup_numbers, '-', color='tab:gray', linewidth=0.5, label='Ideal')
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
-    output_diff, _ = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, ax)
+    output_diff, _, _ = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, ax)
 
     # plt.yscale("log")
     plt.xticks(all_scaleup_numbers[1:])
@@ -376,7 +379,7 @@ def plot_sort_with_baseline(results_dir):
 
     plt.xticks(all_scaleup_numbers[1:])
     plt.legend(loc='lower right')
-    plt.title("Comparison with sort --parallel")
+    # plt.title("Comparison with sort --parallel")
 
 
     plt.tight_layout()
@@ -427,11 +430,11 @@ def format_time_milliseconds(time_milliseconds):
 
 def generate_table_header():
     header = []
-    header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} lllllll}']
+    header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} lllllllll}']
     header += ['\\toprule']
     header += ['Script ~&~ Structure & Input &'
-               'Seq Time & \\#Nodes(16, 64) &'
-               'Compile Time (16, 64) & Highlights \\\\']
+               'Seq. Time & \\multicolumn{2}{l}{\\#Nodes(16, 64)} &'
+               '\\multicolumn{2}{l}{Compile Time (16, 64)} & Highlights \\\\']
     header += ['\\midrule']
     return "\n".join(header)
 
@@ -443,7 +446,7 @@ def generate_table_footer():
 
 def generate_experiment_line(experiment):
     line = []
-    line += ['\\tti{{{}}}'.format(pretty_names[experiment]), '~&~']
+    line += [pretty_names[experiment], '~&~']
     line += [structures[experiment], '&']
 
     ## Collect and output the input size
@@ -461,12 +464,12 @@ def generate_experiment_line(experiment):
 
     commands_16, commands_64 = collect_experiment_command_number(experiment_results_prefix,
                                                                  'distr.time', [16, 64])
-    line += ['{}\\qquad {}'.format(commands_16, commands_64), '&']
+    line += ['{} & {}'.format(commands_16, commands_64), '&']
 
     ## Collect and output compile times
     compile_time_16_milliseconds = compile_times[1]
     compile_time_64_milliseconds = compile_times[2]
-    line += ['{}\\qquad {}'.format(format_time_seconds(compile_time_16_milliseconds),
+    line += ['{} & {}'.format(format_time_seconds(compile_time_16_milliseconds),
                                    format_time_seconds(compile_time_64_milliseconds)), '&']
     line += [highlights[experiment], '\\\\']
     return " ".join(line)
@@ -514,7 +517,7 @@ def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     print("Unix50 individual speedups for {} parallelism:".format(parallelism), individual_results)
     mean = sum(individual_results) / len(individual_results)
     median = statistics.median(individual_results)
-    geo_mean = np.log(individual_results).sum() / len(individual_results)
+    geo_mean = math.exp(np.log(individual_results).sum() / len(individual_results))
     weighted_res = [i*a for i, a in zip(individual_results, absolute_seq_times_s)]
     weighted_avg = sum(weighted_res) / sum(absolute_seq_times_s)
     print("  Mean:", mean)
@@ -529,12 +532,12 @@ def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
 
     fig, ax1 = plt.subplots()
     # print(fig.get_size_inches())
-    fig.set_size_inches(6.4, 3.6)
+    fig.set_size_inches(10, 4)
 
     ## Plot speedup
     ax1.set_ylabel('Speedup', color=speedup_color)
     ax1.set_xlabel('Pipeline')
-    plt.xlim(-1, len(individual_results) + 1)
+    plt.xlim(-1, len(individual_results))
     plt.hlines([1], -1, len(individual_results) + 1, linewidth=0.8)
     ax1.bar(ind-w, individual_results, width=2*w, align='center', color=speedup_color)
     ax1.tick_params(axis='y', labelcolor=speedup_color)
@@ -548,7 +551,7 @@ def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     # plt.yticks(range(1, 18, 2))
     # plt.ylim((0.1, 20))
     # plt.legend(loc='lower right')
-    plt.title("Unix50 Individual Speedups")
+    # plt.title("Unix50 Individual Speedups")
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "unix50_individual_speedups_{}.pdf".format(parallelism)),bbox_inches='tight')
 
@@ -610,14 +613,15 @@ def plot_one_liners_tiling(results_dir):
              "Opt. Parallel"]
 
     fig = plt.figure()
-    gs = fig.add_gridspec(2, 5, hspace=0)
+    gs = fig.add_gridspec(2, 5, hspace=0.05)
     # fig.suptitle('')
 
     total_lines = []
+    averages = [[] for _ in all_scaleup_numbers]
     ## Plot microbenchmarks
     for i, experiment in enumerate(experiments):
         ax = fig.add_subplot(gs[i])
-        _, lines = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, ax)
+        _, lines, best_result = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, ax)
         if(experiment == "double_sort"):
             total_lines = lines + total_lines
         elif(experiment == "bigrams"):
@@ -629,6 +633,10 @@ def plot_one_liners_tiling(results_dir):
         # ax.set_yticks([])
         fig.add_subplot(ax)
 
+        ## Update averages
+        for i, res in enumerate(best_result):
+            averages[i].append(res)
+
 
     axs = fig.get_axes()
     for ax in axs:
@@ -636,14 +644,24 @@ def plot_one_liners_tiling(results_dir):
             ax.set_ylabel('Speedup')
         if(ax.is_last_row()):
             ax.set_xlabel('Level of Parallelism')
+        if(ax.is_first_row()):
+            ax.set_xticklabels([])
         # ax.label_outer()
 
     plt.legend(total_lines, confs, loc='lower right', fontsize=16)
     # plt.title(pretty_names[experiment])
 
-    fig.set_size_inches(26, 7.5)
+    fig.set_size_inches(27, 8.2)
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "tiling_throughput_scaleup.pdf"),bbox_inches='tight')
+
+    ## Print average, geo-mean
+    one_liner_averages = [sum(res)/len(res) for res in averages]
+    geo_means = [math.exp(np.log(res).sum() / len(res))
+                 for res in averages]
+    print("One-liners Aggregated results:")
+    print(" |-- Averages:", one_liner_averages)
+    print(" |-- Geometric Means:", geo_means)
 
 
 def format_wrong_output(output_diff, experiment, mode):
