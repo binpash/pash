@@ -2410,7 +2410,6 @@ The goal of this subsection is to evaluate \sys on popular, common, or classic \
       (v) \todo{Blocking Eager}, showing the performance of \sys with split disabled and the naive blocking eager enabled,
       (vi) \todo{Opt. Parallel}, showing the performance of an optimized version of \ttt{bigrams}.
       \nv{Maybe it makes sense to show log x-axis?}
-      \kk{How can we also fit two more plots (sort-sort and diff) here? Maybe we can fit one by getting rid of sort (since it also shown in the sort--parallel one). Otherwise we could separate the ``split'' plots from the ones that don't have split.}
     }
     \vspace{-15pt}
     \label{fig:microbenchmarks}
@@ -2627,15 +2626,23 @@ Only the last of these tasks is the real focus of the book, % demonstrating the 
 % The version used in the evaluation is slightly different than the one presented in Fig.~\ref{fig:example} (14 stages and totalling 240 characters), simplified only for clarity of exposition, in that it expresses the \ttt{for} loop as a first stage followed by \ttt{xargs}.
 
 \heading{Results}
-The original pipeline executes in \todo{XXs} on \todo{XX}GB of input data.
-Applying \sys with \todo{XX}$\times$ parallelism leads to (XX speedup).
-Naturally, different phases benefit differently from parallelization: \todo{part 1, 2, 3, 4}
+The complete
+%% original
+shell pipeline executes in 44m2s for five years of weather data (which
+amounts to 82GB).  Applying \sys with 2/10$\times$ parallelism leads
+to (1.86/2.44$\times$ speedup).  Naturally, different phases benefit
+differently from parallelization: downloading, extracting, and
+preparing data benefits from 1.77/1.99$\times$ speedup (compared to
+original 33m58s), while computing the maximum temperature benefits
+from 2.30/10.79$\times$ speedup (original 10m4s). \todo{For an
+  explanation of why speedup is more than the amount of parallelism}
+  see Discussion-\sx{ours}.
 
 It is worth reporting Hadoop's (3.2.1, Oracle JDK1.8.0\_255) execution time for the curious reader (see Discussion for fairness), which takes \todo{6m22s} (sequential) and \todo{4m30.554s} ($\times$\todo{XX}-parallel).
 This amounts to \todo{XX}$\times$ speedup versus \todo{XX}$\times$ for \sys's equivalent (part 4).
 % ---this includes downloading and uncompressing the data files which, as described earlier, is not expressible in the Hadoop equivalent.
 
-In terms of program size, the Hadoop program amounts to 137 Java LoC as opposed to \todo{XX} shell LoC for \sys's \todo{part 4}.
+In terms of program size, the Hadoop program amounts to 137 Java LoC as opposed to a pipeline of \todo{5} shell commands for the same computation.
 
 
 % /home/nikos/hadoop-3.2.1/bin/hdfs dfs -put /home/nikos/dish/scripts/max-temp 77.24s user 50.79s system 185% cpu 1:09.14 total
@@ -2661,6 +2668,9 @@ In terms of execution fairness, both systems are message-passing rather than sha
 Additionally, the Java program is written as a monolith tailored for this task---with ample opportunity for optimization from the compiler and runtime system---rather than a series of loosely coupled programs each written to handle many other cases; and the task at hand is an ideal fit for MapReduce system such as Hadoop.
 Finally, execution time is long enough (\todo{XXh})to amortize Hadoop's startup costs.
 % FIXME OSDI mention tabulation vs. sorting
+
+\kk{Should we mention that we serve the weather data in the local network}
+
 
 \heading{Take-aways}
 A multi-line parallel program specialized for the task at hand corresponds to a much smaller shell script with comparable performance (on a comparable setup).
