@@ -1741,7 +1741,6 @@ s), s)$.
 \caption{
   \textbf{Stateless parallelization transformation.}
   The \texttt{cat} node is commuted with the stateless node to utilize available data parallelism.
-  \nv{Should graph be \emph{directed}?}
 }
 \vspace{-15pt}
 \label{fig:parallelization-transformation}
@@ -3053,60 +3052,60 @@ Experiments with real programs show substantial speedups and the ability to oper
 
 \appendix
 
-\section{Annotation Language Grammar}
-\label{alg}
-
-\Cref{fig:dsl} shows the complete grammar of the parallelizability
-annotation language.
-
-\begin{figure}
-  \centering
-  \begin{grammar}
-    <option> ::= `-' <string>
-
-    <category> ::= `stateless' | `pure' | ...
-
-    <maybe-int> ::= | <int>
-
-    <arg> ::= `args[' <int> `]'
-
-    <args> ::= <arg>
-    \alt `args[' <maybe-int> `:' <maybe-int> `]'
-
-    <input> ::= `stdin' | <args>
-
-    <inputs> ::= <input>
-    \alt <input> `,' <inputs>
-
-    <output> ::= `stdout' | <arg>
-
-    <outputs> ::= <output>
-    \alt <output> `,' <outputs>
-
-    <option-pred> ::= <option>
-    \alt `value' <option> = <string>
-    \alt `not' <option-pred>
-    \alt <option-pred> `or' <option-pred>
-    \alt <option-pred> `and' <option-pred>
-
-    <assignment> ::= `(' <category>, `[' <inputs> `]' `,' `[' <output> `]' `)'
-
-    <predicate> ::= <option-pred> `=>' <assignment>
-
-    <pred-list> ::= `|' <predicate> <pred-list>
-    \alt `|' `otherwise' `=>' <assignment>
-
-    <command> ::= <name> `\{' <pred-list> `\}'
-
-    <command-list> ::= <command>
-    \alt <command> <command-list>
-  \end{grammar}
-  \caption{
-  \textbf{Parallelizability description language.}
-    The DSL captures important information regarding the parallelizability of a command.
-  }
-  \label{fig:dsl}
-\end{figure}
+% \section{Annotation Language Grammar}
+% \label{alg}
+% 
+% \Cref{fig:dsl} shows the complete grammar of the parallelizability
+% annotation language.
+% 
+% \begin{figure}
+%   \centering
+%   \begin{grammar}
+%     <option> ::= `-' <string>
+% 
+%     <category> ::= `stateless' | `pure' | ...
+% 
+%     <maybe-int> ::= | <int>
+% 
+%     <arg> ::= `args[' <int> `]'
+% 
+%     <args> ::= <arg>
+%     \alt `args[' <maybe-int> `:' <maybe-int> `]'
+% 
+%     <input> ::= `stdin' | <args>
+% 
+%     <inputs> ::= <input>
+%     \alt <input> `,' <inputs>
+% 
+%     <output> ::= `stdout' | <arg>
+% 
+%     <outputs> ::= <output>
+%     \alt <output> `,' <outputs>
+% 
+%     <option-pred> ::= <option>
+%     \alt `value' <option> = <string>
+%     \alt `not' <option-pred>
+%     \alt <option-pred> `or' <option-pred>
+%     \alt <option-pred> `and' <option-pred>
+% 
+%     <assignment> ::= `(' <category>, `[' <inputs> `]' `,' `[' <output> `]' `)'
+% 
+%     <predicate> ::= <option-pred> `=>' <assignment>
+% 
+%     <pred-list> ::= `|' <predicate> <pred-list>
+%     \alt `|' `otherwise' `=>' <assignment>
+% 
+%     <command> ::= <name> `\{' <pred-list> `\}'
+% 
+%     <command-list> ::= <command>
+%     \alt <command> <command-list>
+%   \end{grammar}
+%   \caption{
+%   \textbf{Parallelizability description language.}
+%     The DSL captures important information regarding the parallelizability of a command.
+%   }
+%   \label{fig:dsl}
+% \end{figure}
 
 %% %% Appendix
 %% \appendix
