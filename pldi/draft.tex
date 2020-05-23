@@ -2199,7 +2199,7 @@ For the latter, it can be configured to avoid reading all its input, thus exploi
     % Names correspond to the speedup plots (Fig.~\ref{fig:microbenchmarks}).
     Structure summarizes the different classes of commands used in the script.
     Input and seq. time report on the input size fed to the script and the timing of its sequential execution.
-    Nodes and compile time report on \sys's resulting \todo{AST} size and compilation time for two indicative parallelization configurations.
+    Nodes and compile time report on \sys's resulting DFG size and compilation time for two indicative parallelization configurations.
     % Highlights notes a few key features of each script.
   }
 }
@@ -2438,15 +2438,15 @@ Spell, based on the original \ttt{spell} developed by Johnson~\cite{bentley1985s
 Shortest-scripts extracts the 15 shortest scripts in the user's \ttt{PATH}, using the \ttt{file} utility and a higher-order \ttt{wc} via \ttt{xargs}~\cite[pg. 7]{taylor2004wicked}.
 Diff and Set-diff compare streams via a \ttt{diff} (in \npu, non-parallelizable) and \ttt{comm} (in \pur), respectively.
 Sort-sort uses consecutive \pur commands without interleaving them with a \pur that has the effect of significantly condensing the input size (\eg \ttt{uniq}).
-The two \ttt{bi-grams} replicate and shift a stream by one entry to calculate bigrams over the input; the \ttt{optimized} version \todo{has a difference}.
+Finally, the two \ttt{bi-grams} replicate and shift a stream by one entry to calculate bigrams over the input; \ttt{bi-grams-opt} is an optimized version where shift, \ttt{sort}, \ttt{uniq}, have been merged to one command to use a more efficient aggregator.
 
 \heading{Results}
 % TODO \nv{Need to change terminology in plots---files should be (attempted) parallelism, name benchmark, cat should be merge.}
-Fig.~\ref{fig:microbenchmarks} presents the speedup gained by \sys as a function of the level of parallelism (2--64$\times$).
+Fig.~\ref{fig:microbenchmarks} presents the speedup gained by \sys as a function of the level of parallelism (2--64$\times$). \todo{The average speedups of all one-liners per level of parallelism are 1.97, 3.5, 5.78, 8.83, 10.96, 13.47, and the geometric means are 1.92, 3.39, 5.48, 7.94, 8.86, 8.51.}
+
 % we experiment with a $200\times$ level of parallelism to see potential overheads
 
-In Tab.~\ref{tab:eval} contains two benchmarks that are not shown in Fig.~\ref{fig:microbenchmarks}, as they are artificial modifications intended to highlight \sys-internal characteristics and not lead to a speedup.
-  \todo{highlight 2--3 results on things that were not shown in Fig.7}
+Tab.~\ref{tab:eval} contains grep-light, a benchmarks that is not shown in Fig.~\ref{fig:microbenchmarks} since it was designed to show that \sys doesn't slow down IO-intensive scripts. On the contrary, \sys achieves a 1.5-2.5$\times$ speedup for grep-light. In addition, \Cref{tab:eval} shows that \sys compilation times are negligible ($<5s$) for all one-liners.
 %   size grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
 % The first number alone is interesting, as it captures \sys's output for the sequential script.
 % As there is no parallelism involved, it highlights the initial (bare minimum) cost corresponding to using \sys.
@@ -2464,7 +2464,7 @@ For example, Sort in $8\times$ spawns 37 nodes:
 In effect, \sys hits the maximum number of parallel processes (and thus achieves optimal performance, \ie one without unnecessary process spawns and context switches) 
 significantly earlier than the purported parallelism---$16-32\times$ for a 64-core system.
 Asking for parallelism beyond that point degrades speedup, as overheads still increase but no further parallelism is available.
-Sort-sort with $32\times$ has 314 nodes (sys: 54m) and with $64\times$ has 634 nodes (sys: 90m).
+Sort-sort with $32\times$ has 314 nodes \todo{(sys: 54m)} and with $64\times$ has 634 nodes \todo{(sys: 90m)}.
 % 
 %  On the other hand opt-bigrams 64 has 255 nodes and the sys time stays
 %   the same so I think that it might have to do with the fact that
@@ -2534,7 +2534,7 @@ Most pipelines see significant acceleration, except 13, 24, 25, 26, 29, 30 that 
 The first group contain commands which \sys cannot parallelize---\eg \ttt{awk}, \ttt{sed} \ttt{-d}, and \ttt{tr} \ttt{-d}.
 Some of them use general interpreters when they could be using a specialized equivalent tailored to the task at hand, the typical example being \ttt{awk} vs \ttt{cut}.
 By applying only the replacements which to us experts felt more natural, we also give \sys the opportunity to identify and exploit parallelism---a common pattern we witnessed~\sx{macro1}.
-For example, after this change, \todo{13} sees a \todo{XX}$\times$ speedup.
+For example, after this change, 13 sees a 8.1$\times$ speedup.
 
 The second group contains \ttt{head}, thus practically processing only one line (regardless of the full input) and completing within $10ms$.
 \sys's slowdown is due to constant setup costs of pipes and processes but execution still remains under $1s$.
@@ -2603,7 +2603,7 @@ Furthermore, \sys does not decelerate non-trivial computations, even when parall
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.80\columnwidth]{\detokenize{./figs/unix50_individual_speedups_16.pdf}}
+  \includegraphics[width=\columnwidth]{\detokenize{./figs/unix50_individual_speedups_16.pdf}}
   \caption{
 	  \textbf{Unix50 scripts.}
     Speedup (left axis) over sequential execution (right axis) for Unix50 scripts.
@@ -2687,12 +2687,12 @@ The first downloads pages and extracts their URLs from their source, feeding bac
  the second extracts the text from HTML and applies natural-language processing---\eg trigrams, character conversion, term frequencies---to index it.
 Collectively, they contains a total of 52 stages (first: 18; second: 34) written in multiple languages---\eg
 its \ttt{url-extract}ion utility is written in JavaScript whereas its \ttt{word-stem}ming utility is in Python.
-\sys can still operate on them as their parallelizability properties---\sta for \ttt{url-extract} and \ttt{word-stem}---can be trivially described by annotations.
+\sys can still operate on them as their parallelizability properties---\sta for \ttt{url-extract} and \ttt{word-stem}---can be trivially described by annotations. \kk{Mention the input. 1/100 of the whole Wikipedia downloaded in a local directory.}
 
 \heading{Results}
 % To simplify execution (and avoid Wikipedia), we have saved a recent Wikipedia version on a server within the network and to redirect all \ttt{curl} requests there.
 \sys can operate on the entire program, but as its complexity makes end-to-end measurements difficult we report on the two components components individually.
-With parallelism set to \todo{2/16} the execution time achieved by \sys is \todo{X} for the front-end and \todo{Y} for the back-end, while the original execution time is \todo{X} for the front-end and \todo{Y'} for the back-end.
+With parallelism set to 2/16 the execution time achieved by \sys is \todo{X} for the front-end and 97m/15m for the back-end, while the original execution time is \todo{X} for the front-end and 191m for the back-end.
 
 %> \kk{If the front-end takes a lot of time (compared to the back-end), we might better not report it with the premise that it is a feedback cycle that cannot be parallelized by \sys.}
 
@@ -2700,13 +2700,12 @@ With parallelism set to \todo{2/16} the execution time achieved by \sys is \todo
 Since the front-end contains a feedback cycle, \sys \todo{doesn't
   parallelize it}, and in both cases it takes \todo{X seconds} to
 complete. However, \sys parallelizes the back-end and achieves a
-speedup of \todo{X} with parallelism set to \todo{2/16}. Several
+speedup of 1.97/12.7x with parallelism set to 2/16. Several
 stages of the pipeline are \sta (such as the \ttt{word-stem} script
 and the text extraction) and that allows \sys to achieve benefits by
 exposing data parallelism. Note that the back-end part of the script
 contains 34 stages executing in parallel, so the sequential version
-\todo{already benefits from task-based parallelism} \kk{not totally
-  true}.
+already benefits from task-based parallelism.
 
 \heading{Take-aways}
 
