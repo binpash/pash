@@ -475,21 +475,17 @@ These address several practical challenges % such as task parallelism, deadlocks
 %   these primitives were developed from uncovering several pathological situations, on many of which we report.
 
 We evaluate \sys using
-  (i) a series of benchmarks, ranging from classic one-liners found in the \unix literature to modern data-processing pipelines;
-(ii) two large and complex use cases, covering temperature analysis, and web
-%% crawling and
-indexing;
+  (i) a series of benchmarks, ranging from classic \unix one-liners to modern data-processing pipelines;
+  (ii) two large and complex use cases for temperature analysis and web indexing;
 %% , and container orchestration;
-and (iii) a series of targeted micro-benchmarks inspired by (and
+and 
+  (iii) a series of targeted micro-benchmarks inspired by (and
 comparing with) possible alternatives.  The results demonstrate
 significant advantages in \todo{correctness}, \todo{manual effort},
 and performance---with \sys offering an order-of-magnitude performance
 improvements due to its transformations and optimized runtime.
 %% ---with \sys's transformations offering an order-of-magnitude performance improvements aided further by \sys's optimized runtime components.
-Naturally, these improvements depend on several factors such as the script's execution time, the pipeline depth, and the parallelizability class under which a command falls. 
-%\kk{Do we need to mention this last sentence here? Without context it is pretty difficult for anyone to get something out of it.}
-
-%                                           a tool that automatically exploits available data-parallelism in a given shell script.
+Improvements depend on several factors such as the script's execution time, the pipeline depth, and the parallelizability classes in which its commands fall. 
 
 The paper is structured as follows.
 It starts by introducing the necessary background on shell scripting and overviewing \sys~\sx{bg}.
@@ -503,7 +499,7 @@ Sections \ref{parallelizability}--\ref{impl} highlight key contributions:
   \S\ref{ir} presents a dataflow graph model for encoding shell scripts, and a set of parallelization transformations that focus on preserving the semantics of the sequential program.
 
   \item
-  \S\ref{impl} details \sys's implementation, discussing several challenges related to \sys's translation, optimization, and runtime phases.
+  \S\ref{impl} details \sys's implementation, discussing several challenges related to \sys's translation, optimization, and runtime components.
 % \kk{Rewrite that when we know for sure what the section contains.}
 
 \end{itemize}
@@ -732,17 +728,6 @@ parallelization challenges~\sx{bg:challenges} and how they are addressed by \sys
 \subsection{Running Example: Weather Analysis}
 \label{bg:pipelines}
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_example.pdf}}
-\caption{
-  \textbf{Calculating maximum temperatures per year.}
-  The script downloads daily temperatures recorded across the U.S. for the years 1920--2020 and extracts the maximum for every year. \kk{Make this to be for 10 years only so that the point in the second challenge holds}
-}
-\vspace{-15pt}
-\label{fig:example}
-\end{figure}
-
 % In the ongoing debate on climate change,
 Suppose a environmental scientist    % looking for a non-CS expert---journalist might be too low
   wants to get a quick sense of the trends in the maximum temperature over the past century.
@@ -774,6 +759,18 @@ A special end-of-file (\textsc{EOF}) condition marks the end of a stream.
 Another important feature is synchronization, as different pipeline stages process data concurrently and possibly at different rates.
 For example, the second \ttt{curl} produces output at a significantly slower pace than the \ttt{grep} commands before and after it.
 The \unix kernel facilitates scheduling, communication, and synchronization behind the scenes.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_example.pdf}}
+\caption{
+  \textbf{Calculating maximum temperatures per year.}
+  The script downloads daily temperatures recorded across the U.S. for the years 2015--2020 and extracts the maximum for every year.
+}
+\vspace{-15pt}
+\label{fig:example}
+\end{figure}
+
 
 Command flags, used pervasively in \unix, are configuration options that the command's developer has decided to expose to its users, to give command users significant freedom in their execution.
 For example, by omitting  \ttt{sort}'s \ttt{r} flag that enables reverse sorting, the user can easily get the minimum temperature.
@@ -872,26 +869,17 @@ parallelized.
 \subsection{\sys Design Overview}
 \label{bg:overview}
 
-At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and outputs a new POSIX shell script.
-The new script may incorporate parallelism, and is handed off to the user's original shell interpreter---\eg \ttt{bash} or \ttt{zsh}---for execution.
-To expose and exploit data-parallelism in a given shell script,
+At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and outputs a new script.
+The new script may incorporate parallelism, and is handed off to the user's original shell interpreter % ---\eg \ttt{bash} or \ttt{zsh}---
+  for execution.
+To expose and exploit data-parallelism, % in a given shell script,
 %% parallel execution,
 \sys analyzes individual program fragments, addressing the challenges mentioned earlier.
 
-\heading{Commands: Parallelizability Classes}
-% \sys needs to understand the parallelization characteristics of individual commands used to compose larger programs---a two-fold challenge.
-To understand standard commands available in any shell, \sys groups POSIX and GNU commands into a small but
-%% clear set of well-understood
-\todo{well-defined} set of
-parallelizability classes, which are \todo{useful-enough} to guide the parallelization of simple shell programs.
-%% classes that are useful on their own 
-%%   these classes are already useful-enough to allow the composition of useful shell programs operating in practice.
-To incorporate
-%% To understand the characteristics of
-commands that fall outside of this standard set and allow them to leverage \sys's transformations,
-  we define an annotation language for describing a command's % key properties with respect to its 
-  parallelizability characteristics.
-Such light annotations are expressed once per command (not once per script) and are aimed towards command developers (rather than users), who can quickly and easily capture the properties of the commands they develop.
+\heading{Commands}
+To understand standard commands available in any shell, \sys groups POSIX and GNU commands into a small but well-defined set of \emph{parallelizability classes}, useful-enough for parallelizing practical programs.
+To allow commands that fall outside this standard set to leverage its transformations, \sys defines a light \emph{annotation language}.
+Annotations focus on describing a command's parallelizability characteristics rather than its full observable behavior, are expressed once per command rather than once per script, and are aimed towards command developers rather than its users, so that they can quickly and easily capture the characteristics of the commands they develop.
 % We haven't introduced the notion of flags
 % A command developer can only annotate the default behavior;
 %   if a new flag is added a few years later, and if that flag alters the command's class, only then a new annotation is needed.
@@ -900,32 +888,29 @@ Such light annotations are expressed once per command (not once per script) and 
 % \sys achieves this through a series of rewriting passes that perform dataflow analysis to identify distributable regions.
 % It converts the AST to a dataflow graph, and iteratively performs graph transformations that expose data parallelism as task parallelism, while preserving the pipeline's correctness.
 
-\heading{Scripts: Dataflow Graphs}
-%
-To address the synchronization restrictions in shell scripts, \sys
-first analyzes a script to identify \emph{parallelizable regions} that
-can be safely executed in the context of parallelism. \sys uses the
-structure of shell scripts to identify parallelization candidates:
-constructs such as \ttt{\&} and \ttt{|} expose task parallelism, while
-\ttt{\&\&} and \ttt{||} enforce synchronization.
+\heading{Scripts}
+To address the synchronization restrictions in shell scripts, \sys first analyzes a script to identify \emph{parallelizable regions} \todo{that can be safely executed in parallel}.
+\sys uses the structure of shell scripts to identify parallelization candidates:
+  some constructs \eg \ttt{\&} and \ttt{|} expose task parallelism; others \eg \ttt{\&\&} and \ttt{||} enforce synchronization.
 % \sys first needs to understand the POSIX constructs used to compose larger programs, indicating different levels of candidacy for pararllelization.
 %% To assign a candidacy for parallelization, \sys breaks POSIX constructs into a few broad classes:
 %%  (i) the parallel-composition operator (\ttt{\&}) exposes task parallelism,
 %%  (ii) special commands such as \ttt{xargs} and \ttt{tee} expose data parallelism,
 %%  (iii) the pipe operator (\ttt{|}) is a candidate for both task and data parallelism, and
 %%  (iv)  other composition operators such as \ttt{\&\&}, \ttt{||}, and \ttt{;} are barrier candidates.
-Since the shell representation only exposes coarse grained parallelization opportunities, \sys then converts each parallelizable region to a dataflow graph.
+% Since the shell representation only exposes coarse grained parallelization opportunities, 
+\sys then converts each parallelizable region to a \emph{dataflow graph} (DGF), 
 %% Provided information commands and POSIX constructs, \sys needs to analyze the given script and identify program fragments that are candidates for parallelization.
 %% To achieve this, it converts sections of the script that are amenable to parallelization into a data-flow graph (DFG) representation.
 % Second, \sys defines a dataflow graph model that is suitable for the semantics of the POSIX shell and proposes a set of parallelization optimizations that preserve the behavior of the dataflow graph.
-This is a flexible representation that enables a series of local transformations that expose data-parallelism, converting the graph into its parallel equivalent.
+  a flexible representation that enables a series of local transformations that expose data parallelism, converting the graph into its parallel equivalent.
 %% , in which DFGs indicate the parallelizable regions.
-Further transformations compile the DFG back to a parallel script that uses POSIX shell constructs to guide parallelism explicitly---while aiming at preserving the semantics of the sequential program.
+Further transformations compile the DFG back to a parallel script that uses POSIX shell constructs to guide parallelism explicitly, while aiming at preserving the semantics of the sequential program.
 
-\heading{Implementation: Efficient Primitives}
+\heading{Implementation}
 \sys addresses several practical challenges through a set of constructs it provides---\eg a set of
 %% linkable
-independent components that can be used to compose individual commands.
+composable components used to \todo{wrap} individual stages.
 %% for stream splitting and merging.
 It also provides a small library of efficient data-aggregators for a large set of parallelizable commands.
 %% For the vast majority of commands in one of the parallelizable classes, it also provides  a small library of pure fold function implementations.
