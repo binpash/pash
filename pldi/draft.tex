@@ -33,6 +33,7 @@
 \usepackage{wrapfig}
 \usepackage{syntax}
 \usepackage{caption}
+\usepackage{picins}
 
 \usepackage{tikz}
 \usetikzlibrary{arrows,automata,shapes.misc,shapes.geometric,positioning}
@@ -2593,6 +2594,8 @@ For the rest, \sys's speedup is \todo{capped} due to a combination of reasons:
   small tweaks can yield further improvements, showing that \sys-awareness and scripting expertise can improve results.
 Furthermore, \sys does not decelerate non-trivial computations, even when parallelism is impossible.
 
+%% Very nice take-aways!
+
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{\detokenize{./figs/unix50_individual_speedups_16.pdf}}
@@ -2630,23 +2633,20 @@ For a discussion of why speedup is higher than the amount of parallelism, see \S
 %> This amounts to \todo{XX}$\times$ speedup versus \todo{XX}$\times$ for \sys's equivalent (part 4).
 %> % ---this includes downloading and uncompressing the data files which, as described earlier, is not expressible in the Hadoop equivalent.
 
-In terms of program size, the Hadoop program amounts to 137 Java LoC as opposed to a pipeline of \todo{5} shell commands for the same computation.
+In terms of program size, the Hadoop program amounts to 137 Java LoC as opposed to a pipeline of \todo{5} shell commands for the same computation. \kk{Is it worth leaving this sentence in here?}
+%% kk: I think now that we removed Hadoop, it is not so important. In
+%% the end of the day, we don't want to convince people that they
+%% should use shell for all their needs.
 
 
 % /home/nikos/hadoop-3.2.1/bin/hdfs dfs -put /home/nikos/dish/scripts/max-temp 77.24s user 50.79s system 185% cpu 1:09.14 total
 % hadoop jar $HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-*.jar -input 719.26s user 63.88s system 155% cpu 8:22.47 total
 
-% Dish p3 + p4 me platos pipeline 2 => real 4m30.554s (perilambanei download twn gz kai to processing)
-% Dish p3 + p4 me platos pipeline 10 => real 1m7.183s
-
-% Dish p3 me platos pipeline 2 => real	3m47.470s (perilambanei download twn gz kai save sto file system)
-% Dish p3 me platos pipeline 10 => real	1m38.945s
-
 \heading{Discussion}
 Similar to Unix50~\sx{unix50}, we found that large pipelines enable significant freedom in terms of expressiveness.
 A few stages of the original script were expressed in a single \ttt{awk};
 % unfortunately, \ttt{awk} is too general to have a single meaningful \todo{parallelizability} signature.
-  a simpler (but longer) pipeline that leverages on \unix built-ins % might be outperformed by a specialized programs on a single node, but
+  a simpler (but longer) pipeline that leverages \unix built-ins % might be outperformed by a specialized programs on a single node, but
   turns out to be trivially parallelizable.
 % For example, the \ttt{sort} command at the end is an expensive version of extracting the maximum element;
 %   this could have been expressed with a simple \ttt{awk} script that only keeps track of the max.
@@ -2662,9 +2662,16 @@ A few stages of the original script were expressed in a single \ttt{awk};
 
 
 \heading{Take-aways}
-\sys can be applied to \todo{larger} % real/realistic? implies that prior benchmarks were not  
-  programs with modern input sides to offer significant acceleration.
-\todo{These programs correspond to much larger programs in other languages, a small fraction of which is automatically parallelizable with conventional systems.}
+\sys can be applied to programs of significant size and input
+%% \todo{larger} % real/realistic? implies that prior benchmarks were not  
+%% programs
+%% with modern input sides
+to offer significant acceleration.
+A broader %% and more-ambitious
+take-away is that \sys is able to exploit the until now unharnessed parallelization opportunities of inter-program scripts that are used widely to download, extract, and clean data.
+%% \todo{These programs correspond to much larger programs in other languages, a small fraction of which is automatically parallelizable with conventional systems.}
+
+%% \kk{I feel that in order to make any ``bigger'' conclusion we need to at least mention some Hadoop results. Otherwise it feels that any argument doesn't stand. A reviewer could say that }
 
 % few different ways to write some phases, 
 %   for example, 
@@ -2681,15 +2688,15 @@ As a second realistic workload, we use a large web-indexing script composed from
 
 \heading{Program}
 Coarsely, the pipeline amounts to two distinct components communicating via \unix pipes.
-The first downloads pages and extracts their URLs from their source, feeding back \todo{to} the start of the pipeline;
- the second extracts the text from HTML and applies natural-language processing---\eg trigrams, character conversion, term frequencies---to index it.
+The \todo{first} downloads pages and extracts their URLs from their source, feeding back \todo{to} the start of the pipeline;
+ the second extracts the text from HTML and applies natural-language processing analyses---\eg trigrams, character conversion, term frequencies---to index it.
 Collectively, they contain a total of 52 stages (first: 18; second: 34) written in multiple programming languages.
 
 \heading{Results}
 % To simplify execution (and avoid Wikipedia), we have saved a recent Wikipedia version on a server within the network and to redirect all \ttt{curl} requests there.
-As the first component of the pipeline contains a cycle (URLs$\rightarrow$HTML$\rightarrow$URLs), \sys's conservative transformations do not attempt to parallelize it.
+As the \todo{first} component of the pipeline contains a cycle (URLs$\rightarrow$HTML$\rightarrow$URLs), \sys's conservative transformations do not attempt to parallelize it.
 The second component, applied to 1\% of Wikipedia (1.3GB), takes 191 minutes.
-With 2/16$\times$-parallelism, \sys brings it down to 97m/15m ($1.97/12.7\times$) with the majority of the speedup coming from the HTML-to-text conversion. % which uses \ttt{pandoc}, a utility written in Haskell.
+With 2/16$\times$-parallelism, \sys brings it down to 97m/15m ($1.97/12.7\times$) with the majority of the speedup coming from parallelizing the HTML-to-text conversion. % which uses \ttt{pandoc}, a utility written in Haskell.
 
 %> \kk{If the front-end takes a lot of time (compared to the back-end), we might better not report it with the premise that it is a feedback cycle that cannot be parallelized by \sys.}
 
@@ -2701,8 +2708,8 @@ It also uses several utilities not part of the standard POSIX/GNU set---\eg its 
 Several other stages are in \sta allowing \sys to achieve benefits by exposing data parallelism.
 
 \heading{Take-aways}
-\sys operates programs with annotated commands outside the POSIX/GNU command subsets and leads to notable speedups even when the original program features significant task-based parallelism.
-\sys's conservative transformations do not risk breaking correctness, thus do not improve the first component.
+\sys operates on programs with annotated commands outside the POSIX/GNU command subsets and leads to notable speedups even when the original program features significant task-based parallelism.
+\sys's conservative transformations do not risk breaking correctness, \todo{thus do not improve the first component.}
 
 % \subsection{Use Case: Container Orchestration}
 % \label{macro3}
@@ -2729,20 +2736,28 @@ Several other stages are in \sta allowing \sys to achieve benefits by exposing d
 %>   it with similar (but not identical) work.}
 
 This section attempts to characterize \sys's limits by comparing it with similar alternatives.
-As there are no prior systems that directly comparable to \sys, we draw comparisons with a series of specialized ones that excel within smaller fragments of \sys's proposed domain.
+As there are no prior systems directly comparable to \sys, we draw comparisons with a series of specialized ones that excel within smaller fragments of \sys's proposed domain.
 
+\pichskip{15pt}% Horizontal gap between picture and text
+\parpic[r][t]{%
+  \begin{minipage}{40mm}
+    \includegraphics[width=\linewidth]{\detokenize{./figs/sort_baseline_comparison_scaleup.pdf}}%
+    %% \captionof{figure}{This is a tiger.}
+  \end{minipage}
+}
 \heading{Parallel Sort}
 %% \kk{Explain what is the purpose of the
 %%   microbenchmark. We want to establish that \sys scalability is as
 %%   good as it could be.}
 We first compare a single GNU \ttt{sort} optimized by \sys ($S_{PaSh}$) versus the same \ttt{sort} with the 
-\begin{wrapfigure}{r}{0.25\textwidth}
-  \begin{center}
-    \includegraphics[width=0.25\textwidth]{\detokenize{./figs/sort_baseline_comparison_scaleup.pdf}}
-  \end{center}
-%   \vspace{-15pt}
-% \caption{ \textbf{Comparison with \ttt{sort -{}-parallel}.} }
-\end{wrapfigure}
+%% \begin{wrapfigure}[10]{r}{0.25\textwidth}
+%%   \centering
+%%   %% \begin{center}
+%%     \includegraphics[width=0.25\textwidth]{\detokenize{./figs/sort_baseline_comparison_scaleup.pdf}}
+%%   %% \end{center}
+%% %   \vspace{-15pt}
+%% % \caption{ \textbf{Comparison with \ttt{sort -{}-parallel}.} }
+%% \end{wrapfigure}
 \ttt{-{}-parallel} flag set ($S_{GNU}$), shown on the side.
 % The results are shown on the side-figure below.
 While \ttt{-{}-parallel} is not a general solution, the comparison serves to establish a baseline for \sys.
@@ -2752,7 +2767,7 @@ to account for \sys's additional merge processes.
 
 A few points are worth noting.
 $S_{PaSh}$ without \ttt{eager} performs comparably to $S_{GNU}$ and \ttt{eager}  outperforms $S_{GNU}$ ($\sim2\times$).
-This is \ttt{eager} adds intermediate buffers %(on disk)
+This is because \ttt{eager} adds intermediate buffers %(on disk)
   between merge phases.
 %% On the other hand, \ttt{sort --parallel} sorts the input trying to
 %% minimize additional memory (so doesn't allocate intermediate
@@ -2811,7 +2826,8 @@ We decided to push \sys's limits by constructing an artificial 1000-stage pipeli
 We find the resulting times quite acceptable:
   given two input arguments in the beginning of this pipeline, \sys takes $8.23s$ for parsing the script and $3.22s$ for analysis and optimization.
 Pushing parallelization factor to $100\times$, \sys's runtime jumps to 5 minutes and 8 seconds to perform the analysis, producing an output dataflow graph that has more than 100 thousand edges in a file of about 11MB.
-
+\kk{I propose removing this subsection. 5 minutes is too much time for compilation and this happens atm because of a pathological scenario. The compilation should never take more than a second.}
+  
 % \heading{Take-aways}
 % \sys does not improve performance when running the risk of breaking correctness. % This should go in the intro
 % % Compared to \sys, \ttt{parallel} can lead to a combination of smaller performance improvements, incorrect execution with respect to the sequential program, and higher rewriting effort.
@@ -2820,16 +2836,23 @@ Pushing parallelization factor to $100\times$, \sys's runtime jumps to 5 minutes
 \section{Related Work}
 \label{related}
 
-Techniques for re-writing programs to exploit parallelism fall under a wide spectrum that ranges from fully manual (but, ideally, optimal or more general) to fully automated (but potentially sub-optimal or specialized).
-Following the distinction between \emph{users} and \emph{developers} established earlier~\sx{intro}, we note correctness trade-offs associated with approaches that require user input for the discussion below:
-   users---often neither experts in parallelism nor educated on the internals of the code they depend on---can easily break the correctness of sequential programs, especially when these depend on existing code (such as is the case with shell commands).
+Existing techniques for exploiting parallelism are not directly comparable to \sys, either because they requiresignificantly more \emph{user} effort (see \sx{intro} for distinction between users and developers); or are too specialized, targeting narrow domains or custom programming abstractions.
+%% Techniques for re-writing programs to exploit parallelism fall under a wide spectrum that ranges from fully manual (but, ideally, optimal or more general) to fully automated (but potentially sub-optimal or specialized).
+%% \kk{It is not very clear what the following sentence tries to achieve.}
+%% Following the distinction between \emph{users} and \emph{developers} established earlier~\sx{intro}, we note correctness trade-offs associated with approaches that require user input for the discussion below:
+%%    users---often neither experts in parallelism nor educated on the internals of the code they depend on---can easily break the correctness of sequential programs, especially when these depend on existing code (such as is the case with shell commands). 
 
 \heading{Parallel Shell Scripting}
-Utilities exposing parallelism on modern \unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}---are predicated upon explicit and careful user invocation and are limited to embarrassingly parallel (and short) programs.
-Often these commands provide options to support an array of special sub-cases---a stark contradiction to the celebrated \unix philosophy.
-For example, \ttt{parallel} contains flags such as \ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs} (which a \unix user can achieve using \ttt{head}, \ttt{sed}, and \ttt{xargs})
-  and introduces (and depends on) other programs with complex semantics, such as ones for SQL querying and CSV parsing.
-\sys embraces the \unix philosophy, simply attempting to rewrite scripts more efficiently with minimal user effort.
+Utilities exposing parallelism on modern \unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}---are predicated upon explicit and careful user invocation: users have to navigate through a vast array of different configurations, flags, and modes of invocation to achieve parallelization without jeopardizing correctness. %% I like the part about the unix philosophy, but I want to really make it a side claim. The main claim, and the reason why we don't compare against all of these solutions, is that they require user effort and they cannot just be given a script to parallelize.
+%%
+%% and are limited to embarrassingly parallel (and short) programs.
+%% Often these commands provide options to support an array of special sub-cases---a stark contradiction to the celebrated \unix philosophy.
+For example, \ttt{parallel} contains flags such as \ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs},
+%% (which a \unix user can achieve using \ttt{head}, \ttt{sed}, and \ttt{xargs})
+%% kk: I think that mentioning that they can be written using UNIX commands doesn't make the point stronger.
+and introduces (and depends on) other programs with complex semantics, such as ones for SQL querying and CSV parsing.
+In contrast, \sys manages to parallelize large scripts correctly with minimal user effort.
+%% embraces the \unix philosophy, simply attempting to rewrite scripts more efficiently with minimal user effort.
 
 Several shells~\cite{duff1990rc, mcdonald1988support, dagsh:17} add primitives for non-linear pipe topologies---some of which target parallelism.
 Here too, however, users are expected to manually rewrite scripts to exploit these new primitives, contrary to \sys.
@@ -2871,8 +2894,10 @@ By targeting specific classes of computation (\emph{viz.} \sys's parallelizabili
 % Lack of generality, no formal guaratees, their setup and is too tedious 
 \sys chooses a more general approach:
    it does not require setting up a new framework for each new class of computation used, nor rewriting different parts of the computation using a different set abstractions provided by each framework.
-It also takes a more principled approach:
-  by developing the semantic model outlined earlier, it can focus on transformations that are correct with respect to the sequential program.
+%% It also takes a more principled approach: by developing the
+%%   semantic model outlined earlier, it can focus on transformations
+%%   that are correct with respect to the sequential program.
+%% \kk{the other approaches are also principled and possibly event more correct.}
 
 % % Although still a research prototype, \sys's setup and deployment is simpler.
 % It also does not require these specialized frameworks, manually (re)write , and 
