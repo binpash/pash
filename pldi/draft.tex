@@ -796,27 +796,37 @@ The pipeline would still work, as long \ttt{./avg.py} conforms to the interface 
 \label{bg:challenges}
 
 While these features aid developer economy through powerful program
-composition, they complicate shell script parallelization; which even
+composition, they complicate shell script parallelization, which even
 for simple scripts such as the one in Fig.~\ref{fig:example} faces
 several challenges.
 % \footnote{
 %   Alternatives for automated parallelization were outlined in the introduction~\sx{intro} and are surveyed in the related work section~\sx{related}.
 % }
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_overview.pdf}}
+\caption{
+  \textbf{\sys overview.}
+  A high-level schematic outline of \sys. %  and how this maps on the structure of this paper.
+}
+\vspace{-15pt}
+\label{fig:overview}
+\end{figure}
+
+
 \heading{Commands} % : Unbounded \& Mysterious}
-The first challenge is the nature and variety of shell commands.
-In contrast to restricted programming frameworks that enable
-%% amenable to
-parallelization by supporting a few carefully-designed primitives~\cite{streamit:02, brook:04, mapreduce:08, spark:12}, shell scripts contain black-box commands that are written in a variety of programming languages and models and can have arbitrary behaviors.
-Therefore, each of them requires special treatment in order to be parallelized.
-For example, in Fig.~\ref{fig:example}
-%% each command requires special treatment as to not introduce non-determinism or incorrectness:
-\ttt{grep} can be parallelized simply by partitioning the lines of its input, while \ttt{sort} would require sorting each input partition and then merging the results.
+In contrast to restricted programming frameworks that enable parallelization by supporting a few carefully-designed primitives~\cite{streamit:02, brook:04, mapreduce:08, spark:12}, the \unix shell provides a unprecedented number and variety of composable commands.
+% Due to their varying nature, 
+% As each command may exercise arbitrary behaviors,
+To be parallelized, each command may require special analysis and treatment---in Fig.~\ref{fig:example}, \ttt{grep}'s results can be combined by simple concatenation, while \ttt{sort}'s results would require careful merging.
+Automating such an analysis is infeasible, as individual commands are black boxes written in a variety of programming languages and models.
 %% \ttt{grep} requires no coordination, \ttt{head} requires light coordination, and \ttt{sort} requires significant coordination.
 %% These behaviors are further concealed by the fact that commands are black boxes implemented in a variety of programming languages and models.
-Worse even, the same command may be used with different flags---\eg Fig.~\ref{fig:example}'s \ttt{cut} is called twice with two different sets of flags---that could potentially alter its behaviour. % , making correct treatment even more difficult. % nv: we already said impossible so more difficult doesn't add much!
+Manual analysis is also challenging, due to the sheer number of commands and their many flags which affect their behaviour---\eg Fig.~\ref{fig:example}'s \ttt{cut} is called twice with two different sets of flags.
+ % , making correct treatment even more difficult. % nv: we already said impossible so more difficult doesn't add much!
 
-\kk{I tried to rephrase the above a little, but I can't get it just right. There are two parts to this argument. First, the fact that commands are arbitrary (and not known) requires that each of them has special treatment. However, the huge number of them, and the fact that flags change their behaviour even more makes an analysis of all commands a very difficult task.}
+% \kk{I tried to rephrase the above a little, but I can't get it just right. There are two parts to this argument. First, the fact that commands are arbitrary (and not known) requires that each of them has special treatment. However, the huge number of them, and the fact that flags change their behaviour even more makes an analysis of all commands a very difficult task.}
 
 % A good solution should handle several commands but should also be extensible, in the sense that newly added or modified commands don't require modifications in the solution itself.
 % TODO: Leave this for the solution
@@ -835,32 +845,16 @@ For example, even if Fig.~\ref{fig:example}'s script was aiming on only six year
 Any attempt for automating parallelization needs to be aware of the shell semantics and induce as much parallelism as it can get but without breaking semantics.
 
 \heading{Implementation} %
-%
-A final challenge has to do with practical issues, as even manual
-parallelization of a given shell script is far from
-trivial. Parallelizing a script without reimplementing all of its
-commands, requires primitives to compose existing commands to achieve
-parallelization. Designing correct and efficient compositions is
-particularly challenging in the context of \unix, and requires
-addressing issues related to scheduling, synchronization, and deadlock
-prevention. Moreover, specific commands (such as \ttt{sort} and
-\ttt{uniq}) require specialized data aggregators to be correctly
-parallelized.
+Independently of the semantics of individual commands and the language of the shell, the \unix environment has its set of quirks.
+Thus, any manual attempt to orchestrate paralllel execution will have to take care of several challenges related to task parallelism, deadlock prevention, and runtime performance.
+Forked processes piping their combined results to Fig.~\ref{fig:example}'s \ttt{head} might not receive a \ttt{PIPE} signal if \ttt{head} exits prior to opening all pipes.
+% A final challenge has to do with practical issues, as even manual parallelization of a given shell script is far from trivial.
+% Parallelizing a script without reimplementing all of its commands, requires primitives to compose existing commands to achieve parallelization.
+%  Designing correct and efficient compositions is particularly challenging in the context of \unix, and requires addressing issues related to scheduling, synchronization, and deadlock prevention. 
+Moreover, to be correctly parallelized, specific commands such as \ttt{sort} and \ttt{uniq} require specialized data aggregators.
 %% Developing correct, high-performance combiners for certain classes of commands such as \ttt{sort} and \ttt{uniq} is non trivial.
 %% Moreover, the \unix environment has its set of quirks % about opening streams, deadling with FIFOs,
 %%   and any attempt at parallelization will have to take care of these challenges---related to task parallelism, deadlock prevention, and runtime performance.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_overview.pdf}}
-\caption{
-  \textbf{\sys overview.}
-  A high-level schematic outline of \sys, and how this maps on the structure of this paper.
-}
-\vspace{-15pt}
-\label{fig:overview}
-\end{figure}
-
 
 % \heading{Generation}
 % Expansion---the key is that expansion and evaluation are handled by the shell at an earlier stage 
@@ -889,7 +883,7 @@ Annotations focus on describing a command's parallelizability characteristics ra
 % It converts the AST to a dataflow graph, and iteratively performs graph transformations that expose data parallelism as task parallelism, while preserving the pipeline's correctness.
 
 \heading{Scripts}
-To address the synchronization restrictions in shell scripts, \sys first analyzes a script to identify \emph{parallelizable regions} \todo{that can be safely executed in parallel}.
+To address the synchronization restrictions in scripts, \sys first analyzes a script to identify \emph{parallelizable regions} that contain commands that are candidates for parallelization.
 \sys uses the structure of shell scripts to identify parallelization candidates:
   some constructs \eg \ttt{\&} and \ttt{|} expose task parallelism; others \eg \ttt{\&\&} and \ttt{||} enforce synchronization.
 % \sys first needs to understand the POSIX constructs used to compose larger programs, indicating different levels of candidacy for pararllelization.
@@ -905,12 +899,12 @@ To address the synchronization restrictions in shell scripts, \sys first analyze
 % Second, \sys defines a dataflow graph model that is suitable for the semantics of the POSIX shell and proposes a set of parallelization optimizations that preserve the behavior of the dataflow graph.
   a flexible representation that enables a series of local transformations that expose data parallelism, converting the graph into its parallel equivalent.
 %% , in which DFGs indicate the parallelizable regions.
-Further transformations compile the DFG back to a parallel script that uses POSIX shell constructs to guide parallelism explicitly, while aiming at preserving the semantics of the sequential program.
+Further transformations compile the DFG back to a parallel script, which uses POSIX shell constructs to guide parallelism explicitly while aiming at preserving the semantics of the sequential program.
 
 \heading{Implementation}
 \sys addresses several practical challenges through a set of constructs it provides---\eg a set of
 %% linkable
-composable components used to \todo{wrap} individual stages.
+modular components used to compose individual commands.
 %% for stream splitting and merging.
 It also provides a small library of efficient data-aggregators for a large set of parallelizable commands.
 %% For the vast majority of commands in one of the parallelizable classes, it also provides  a small library of pure fold function implementations.
