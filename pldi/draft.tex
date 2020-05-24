@@ -824,7 +824,7 @@ To be parallelized, each command may require special analysis and treatment---in
 Automating such an analysis is infeasible, as individual commands are black boxes written in a variety of programming languages and models.
 %% \ttt{grep} requires no coordination, \ttt{head} requires light coordination, and \ttt{sort} requires significant coordination.
 %% These behaviors are further concealed by the fact that commands are black boxes implemented in a variety of programming languages and models.
-Manual analysis is also challenging, due to the sheer number of commands and their many flags which affect their behaviour---\eg Fig.~\ref{fig:example}'s \ttt{cut} is called twice with two different sets of flags.
+Manual analysis is also challenging, due to the sheer number of commands, and the many flags that affect their behaviour---\eg Fig.~\ref{fig:example}'s \ttt{cut} is called twice with two different sets of flags.
  % , making correct treatment even more difficult. % nv: we already said impossible so more difficult doesn't add much!
 
 % \kk{I tried to rephrase the above a little, but I can't get it just right. There are two parts to this argument. First, the fact that commands are arbitrary (and not known) requires that each of them has special treatment. However, the huge number of them, and the fact that flags change their behaviour even more makes an analysis of all commands a very difficult task.}
@@ -833,26 +833,26 @@ Manual analysis is also challenging, due to the sheer number of commands and the
 % TODO: Leave this for the solution
 
 \heading{Scripts} % Restrictive \& Coarse-grained}
-Another challenge is due to the language of the shell, which
+Another challenge is the programming language of the POSIX shell. % of the shell, which is both restrictive and coarse-grained.
 % has been developed through a long history of additions.
-is both restrictive and coarse-grained.
-First, it contains constructs that enforce sequential execution; in the example in \cref{fig:example}, the sequential composition operator \ttt{;} enforces that the assignment to \ttt{base} is completed before the rest of the script starts executing.
-Moreover, the structure of shell scripts only exposes very coarsed-grained forms of parallelism (usually in the form of task parallelism using the \ttt{\&} and \ttt{|} constructs).
+First, it contains constructs that enforce sequential execution;
+   Fig.\ref{fig:example}'s sequential composition operator (\ttt{;}) means that the assignment to \ttt{base} is completed before the rest starts executing.
+Moreover, the language semantics only exposes limited task-based parallelism in the form of \ttt{\&}, \ttt{for}, and \ttt{|} constructs.
 %%   contains constructs with different parallelizability semantics. % that enforce sequential execution.
 %% For example, Fig.~\ref{fig:example} assignment to \ttt{base}, connected with the rest of the script by the sequential composition operator (\ttt{;}), has to be completed before the rest of the script starts executing.
 %% Moreover, depending on the construct, different fragments operate on different output sizes thus allowing different parallelization widths.
-For example, even if Fig.~\ref{fig:example}'s script was aiming on only six years of data, the first \ttt{curl} would still output hundreds of lines for each year;
-  naive, coarse-grained parallelization will miss such opportunities.
-Any attempt for automating parallelization needs to be aware of the shell semantics and induce as much parallelism as it can get but without breaking semantics.
+For example, even though Fig.~\ref{fig:example}'s \ttt{for} focuses only on five years of data, \ttt{curl} still outputs thousands of lines per year;
+  naive parallelization of each loop iteration will miss such opportunities.
+Any attempt to automate parallelization should be aware of the shell semantics and induce as much parallelism as it can without breaking semantics.
 
 \heading{Implementation} %
 Independently of the semantics of individual commands and the language of the shell, the \unix environment has its set of quirks.
-Thus, any manual attempt to orchestrate paralllel execution will have to take care of several challenges related to task parallelism, deadlock prevention, and runtime performance.
-Forked processes piping their combined results to Fig.~\ref{fig:example}'s \ttt{head} might not receive a \ttt{PIPE} signal if \ttt{head} exits prior to opening all pipes.
+Thus, any attempt to orchestrate paralllel execution will have to take care of several challenges related to task parallelism, deadlock prevention, and runtime performance.
+For example, forked processes piping their combined results to Fig.~\ref{fig:example}'s \ttt{head} might not receive a \ttt{PIPE} signal if \ttt{head} exits prior to opening all pipes.
 % A final challenge has to do with practical issues, as even manual parallelization of a given shell script is far from trivial.
 % Parallelizing a script without reimplementing all of its commands, requires primitives to compose existing commands to achieve parallelization.
 %  Designing correct and efficient compositions is particularly challenging in the context of \unix, and requires addressing issues related to scheduling, synchronization, and deadlock prevention. 
-Moreover, to be correctly parallelized, specific commands such as \ttt{sort} and \ttt{uniq} require specialized data aggregators.
+Moreover, specific commands such as \ttt{sort} and \ttt{uniq} require specialized data aggregators, to be correctly parallelized.
 %% Developing correct, high-performance combiners for certain classes of commands such as \ttt{sort} and \ttt{uniq} is non trivial.
 %% Moreover, the \unix environment has its set of quirks % about opening streams, deadling with FIFOs,
 %%   and any attempt at parallelization will have to take care of these challenges---related to task parallelism, deadlock prevention, and runtime performance.
@@ -872,9 +872,10 @@ To expose and exploit data-parallelism, % in a given shell script,
 \sys analyzes individual program fragments, addressing the challenges mentioned earlier.
 
 \heading{Commands}
-To understand standard commands available in any shell, \sys groups POSIX and GNU commands into a small but well-defined set of \emph{parallelizability classes}, useful-enough for parallelizing practical programs.
-To allow commands that fall outside this standard set to leverage its transformations, \sys defines a light \emph{annotation language}.
-Annotations focus on describing a command's parallelizability characteristics rather than its full observable behavior, are expressed once per command rather than once per script, and are aimed towards command developers rather than its users, so that they can quickly and easily capture the characteristics of the commands they develop.
+To understand standard commands available in any shell, \sys groups POSIX and GNU commands into a small but well-defined set of \emph{parallelizability classes}.
+Rather than describing a command's full observable behavior, these classes focus on information that is important for data parallelism.
+To allow commands that fall outside of the standard set to leverage its transformations, \sys defines a light \emph{annotation language} for describing a command's parallelizability class.
+Annotations are expressed once per command rather than once per script and are aimed towards command developers rather than its users, so that they can quickly and easily capture the characteristics of the commands they develop.
 % We haven't introduced the notion of flags
 % A command developer can only annotate the default behavior;
 %   if a new flag is added a few years later, and if that flag alters the command's class, only then a new annotation is needed.
@@ -884,9 +885,9 @@ Annotations focus on describing a command's parallelizability characteristics ra
 % It converts the AST to a dataflow graph, and iteratively performs graph transformations that expose data parallelism as task parallelism, while preserving the pipeline's correctness.
 
 \heading{Scripts}
-To address the synchronization restrictions in scripts, \sys first analyzes a script to identify \emph{parallelizable regions} that contain commands that are candidates for parallelization.
-\sys uses the structure of shell scripts to identify parallelization candidates:
-  some constructs \eg \ttt{\&} and \ttt{|} expose task parallelism; others \eg \ttt{\&\&} and \ttt{||} enforce synchronization.
+To maintain sequential semantics, \sys first analyzes a script to identify \emph{parallelizable regions} that contain commands that are candidates for parallelization.
+This analysis is guided by the script structure: % to identify parallelization candidates:
+  some constructs (\eg \ttt{\&}, \ttt{|}) expose task parallelism; others (\eg \ttt{\&\&}, \ttt{||}) enforce synchronization.
 % \sys first needs to understand the POSIX constructs used to compose larger programs, indicating different levels of candidacy for pararllelization.
 %% To assign a candidacy for parallelization, \sys breaks POSIX constructs into a few broad classes:
 %%  (i) the parallel-composition operator (\ttt{\&}) exposes task parallelism,
@@ -898,9 +899,9 @@ To address the synchronization restrictions in scripts, \sys first analyzes a sc
 %% Provided information commands and POSIX constructs, \sys needs to analyze the given script and identify program fragments that are candidates for parallelization.
 %% To achieve this, it converts sections of the script that are amenable to parallelization into a data-flow graph (DFG) representation.
 % Second, \sys defines a dataflow graph model that is suitable for the semantics of the POSIX shell and proposes a set of parallelization optimizations that preserve the behavior of the dataflow graph.
-  a flexible representation that enables a series of local transformations that expose data parallelism, converting the graph into its parallel equivalent.
+  a flexible representation that enables a series of local transformations to expose data parallelism, converting the graph into its parallel equivalent.
 %% , in which DFGs indicate the parallelizable regions.
-Further transformations compile the DFG back to a parallel script, which uses POSIX shell constructs to guide parallelism explicitly while aiming at preserving the semantics of the sequential program.
+Further transformations compile the DFG back to a shell script that uses POSIX constructs to guide parallelism explicitly while aiming at preserving the semantics of the sequential program.
 
 \heading{Implementation}
 \sys addresses several practical challenges through a set of constructs it provides---\eg a set of
@@ -2663,6 +2664,15 @@ A few stages of the original script were expressed in a single \ttt{awk};
 to offer significant acceleration.
 A broader %% and more-ambitious
 take-away is that \sys is able to exploit the until now unharnessed parallelization opportunities of inter-program scripts that are used widely to download, extract, and clean data.
+
+untapped potential 
+that is 
+exploitble
+
+does not fall within purely compute-intensive targets that are the focus of conventional parallelization techniques.
+
+% that falls outside the usual focus 
+
 %% \todo{These programs correspond to much larger programs in other languages, a small fraction of which is automatically parallelizable with conventional systems.}
 
 %% \kk{I feel that in order to make any ``bigger'' conclusion we need to at least mention some Hadoop results. Otherwise it feels that any argument doesn't stand. A reviewer could say that }
@@ -2837,7 +2847,8 @@ Existing techniques for exploiting parallelism are not directly comparable to \s
 %%    users---often neither experts in parallelism nor educated on the internals of the code they depend on---can easily break the correctness of sequential programs, especially when these depend on existing code (such as is the case with shell commands). 
 
 \heading{Parallel Shell Scripting}
-Utilities exposing parallelism on modern \unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}---are predicated upon explicit and careful user invocation: users have to navigate through a vast array of different configurations, flags, and modes of invocation to achieve parallelization without jeopardizing correctness. %% I like the part about the unix philosophy, but I want to really make it a side claim. The main claim, and the reason why we don't compare against all of these solutions, is that they require user effort and they cannot just be given a script to parallelize.
+Utilities exposing parallelism on modern \unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}---are limited to embarrassingly parallel (and short) programs and are predicated upon explicit and careful user invocation:
+  users have to navigate through a vast array of different configurations, flags, and modes of invocation to achieve parallelization without jeopardizing correctness. %% I like the part about the unix philosophy, but I want to really make it a side claim. The main claim, and the reason why we don't compare against all of these solutions, is that they require user effort and they cannot just be given a script to parallelize.
 %%
 %% and are limited to embarrassingly parallel (and short) programs.
 %% Often these commands provide options to support an array of special sub-cases---a stark contradiction to the celebrated \unix philosophy.
