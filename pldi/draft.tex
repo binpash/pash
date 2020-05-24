@@ -2429,9 +2429,9 @@ We evaluate \sys under multiple configurations on popular, common, or classic \u
       Different configurations per benchmark:
       (i) Par+Split: \ttt{eager} and general \ttt{split} enabled,
       (ii) Par+B.Split: \ttt{eager} and input-aware \ttt{split} enabled,
-      (iii) Parallel: \ttt{eager} and \ttt{split} disabled,
-      (iv) No Eager: only \ttt{split} enabled,
-      (v) Blocking Eager, only \todo{naive blocking} \ttt{eager} enabled (no \ttt{split},
+      (iii) Parallel: \ttt{eager} enabled (no \ttt{split}),
+      (v) Blocking Eager, only blocking \ttt{eager} enabled (no \ttt{split}),
+      (iv) No Eager: both \ttt{eager} and \ttt{split} disabled,
       (vi) Opt. Parallel, an optimized version of \ttt{bigrams}~\cf{ours}.
       Only relevant configurations are shown---\eg \ttt{grep} and \ttt{sort} do not benefit from \ttt{split}; \ttt{spell} and \ttt{bi-grams} do not see benefits without \ttt{split}.
       % TODO: WHY?
