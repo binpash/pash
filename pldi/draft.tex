@@ -1825,7 +1825,7 @@ improvements~\sx{optimizer}.
 
 This section describes \sys's implementation.
 It first details how \sys's front-end translates a shell script to the DFG model defined in \S\ref{ir} by identifying and transforming parallelizable regions~\sx{front-end}.
-It then describes \sys's runtime\todo{/backend} and the technical challenges addressed to achieve performance benefits~\sx{optimizer}.
+It then describes \sys's back-end, responsible for generating the parallel script, and the technical challenges addressed to achieve performance benefits~\sx{optimizer}.
 
 \subsection{Front End}
 \label{front-end}
@@ -1993,10 +1993,10 @@ It will not attempt to parallelize sub-expressions in which the translation pass
 %% \kk{Maybe guide all of this by showing an example of an output shell
 %%   script?}
 
-After translating the parallelizable regions of the input script to DFGs and applying optimization passes using the transformations described earlier~\sx{ir:transformations},
-  \sys translated all DFGs back to a shell script.
+After translating the parallelizable regions of the input script to DFGs and applying optimization passes~\sx{ir:transformations},
+  \sys translates all DFGs back into a shell script.
 Nodes of the graph are instantiated with the commands and flags they represent, and edges are instantiated as named pipes.
-This section describes several technical challenges that \sys addresses to efficiently perform this transformation, as well as the implementations of the custom \sys nodes that are added by the auxiliary transformations.
+This section describes technical challenges related to execution of the resulting script and how they are addressed by \sys's custom primitives.
 %% it instantiates the \todo{custom} split and relay nodes as highly
 %% optimized commands to improve In this section we describe how \sys
 %% achieves that, and several technical challenges that it addresses.
@@ -2800,8 +2800,8 @@ We note that this pipeline is harsh for \sys, in that most of the overhead comes
 % % --workdir $PWD cutadapt_parallel {}
 
 There are a few possible ways one might attempt to use GNU \ttt{parallel} on this program.
-They could apply \ttt{parallel} to \todo{XX}---assuming they know that it is the bottleneck---bringing execution time down to \todo{XX}s (speedup: \todo{XX}$\times$).
-Alternatively, they could (incorrectly) sprinkle \ttt{parallel} across the entire program, a common strategy simplified by \ttt{parallel}'s \ttt{stdin} redirection feature.
+They could use it on the \todo{XX} stage, assuming they know it is a bottleneck, bringing execution down to \todo{XX}s (\todo{XX}$\times$ speedup).
+Alternatively, they could (incorrectly) sprinkle \ttt{parallel} across the entire program---a strategy simplified by \ttt{parallel}'s \ttt{stdin} redirection feature.
 This would lead to \todo{XXX}\% performance improvements but severely incorrect results with respect to the sequential execution---a \ttt{diff} that averages about \todo{XX--XX} lines.
 \sys's conservative program transformations will not attempt parallelizing program sections that contain commands with unclear \todo{parallelizability} properties.
 	% or commands whose inputs depend on earlier outputs.
@@ -2834,61 +2834,59 @@ Pushing parallelization factor to $100\times$, \sys's runtime jumps to 5 minutes
 \section{Related Work}
 \label{related}
 
-At a high level, techniques for re-writing programs to exploit parallelism fall under a wide spectrum that ranges from fully manual (but, ideally, optimal or more general) to fully automated (but potentially sub-optimal or specialized).
-A significant concern with approaches that require user input is correctness:
-   users---often neither experts in parallelism nor educated on the internals of the code they depend on---can easily break the semantics of sequential programs, especially when these depend on existing code (such as is the case with shell commands).
+Techniques for re-writing programs to exploit parallelism fall under a wide spectrum that ranges from fully manual (but, ideally, optimal or more general) to fully automated (but potentially sub-optimal or specialized).
+Following the distinction between \emph{users} and \emph{developers} established earlier~\sx{intro}, we note correctness trade-offs associated with approaches that require user input for the discussion below:
+   users---often neither experts in parallelism nor educated on the internals of the code they depend on---can easily break the correctness of sequential programs, especially when these depend on existing code (such as is the case with shell commands).
 
 \heading{Parallel Shell Scripting}
-Several utilities expose commands for specifying parallelism on modern \unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}.
-Different from \sys, their effectiveness is predicated upon explicit and careful invocation and is limited to embarrassingly parallel (and short) programs.
-Often, these commands provide options to support an array of special sub-cases---a stark contradiction to the celebrated \unix philosophy.
-For example, \ttt{parallel} contains flags such as \ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs}, that a \unix user can achieve using \ttt{head}, \ttt{sed}, and \ttt{xargs};
-   it also introduces (and depends on) other programs with complex semantics, such as the ability transfer files between computers, separate text files, and parse CSV.
-\sys embraces the \unix philosophy and simply attempts to rewrite pipelines more efficiently with minimal user effort---if any.
+Utilities exposing parallelism on modern \unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}---are predicated upon explicit and careful user invocation and are limited to embarrassingly parallel (and short) programs.
+Often these commands provide options to support an array of special sub-cases---a stark contradiction to the celebrated \unix philosophy.
+For example, \ttt{parallel} contains flags such as \ttt{--skip-first-line}, \ttt{-trim}, and \ttt{--xargs} (which a \unix user can achieve using \ttt{head}, \ttt{sed}, and \ttt{xargs})
+  and introduces (and depends on) other programs with complex semantics, such as ones for SQL querying and CSV parsing.
+\sys embraces the \unix philosophy, simply attempting to rewrite scripts more efficiently with minimal user effort.
 
 Several shells~\cite{duff1990rc, mcdonald1988support, dagsh:17} add primitives for non-linear pipe topologies---some of which target parallelism.
 Here too, however, users are expected to manually rewrite scripts to exploit these new primitives, contrary to \sys.
 
-Recently, the Smoosh authors have argued that certain shell features are useful for making concurrency explicit~\cite{smoosh:18}.
-Their argument is somewhat antithetical to \sys, which argues that users should experience mostly automated (and correct) parallelization---hence \emph{light-touch} parallel scripting.
+Recently, Smoosh~\cite{smoosh:18} argued for making concurrency explicit via shell constructs.
+The argument is somewhat antithetical to \sys's, which argues for mostly automated (and correct) parallelization---hence \emph{light-touch} parallel scripting.
 
 
 % Nice intro: http://homepages.inf.ed.ac.uk/bfranke/Publications/pldi121-tournavitis.pdf
 \heading{Low-level Parallelization}
 Instruction-level parallelization has a long history, starting from explicit \ttt{DOALL} and \ttt{DOACROSS} annotations~\cite{par1, par2} and continuing with compilers that attempt to automatically extract parallelism~\cite{padua1993polaris,hall1996maximizing}.
-These systems operate at a lower level than \sys (\eg that of instructions or loops rather than the boundaries of programs that are part of a script), operating in a single target environment, and typically do not exploit high-level annotations.
+These systems operate at a lower level than \sys (\eg that of instructions or loops rather than the boundaries of programs that are part of a script), within a single-language or single-target environments, and require source modifications.
 
 More recent work focuses on extracting parallelism from domain-specific programming models~\cite{cilk5, streamIt, galois} and interactive parallelization tools~\cite{parascope, ipat}.
-These tools simplify the expression of parallelism, but still require users to get involved in discovering and exposing parallelism.
+These tools simplify the expression of parallelism, but still require significant user involvement in discovering and exposing parallelism.
 % Moreover, the insights behind these attempts are significantly different from \sys's, as they extract parallelism statically during compilation instead of dynamically during runtime.
 %Despite significant progress~\cite{}, it remains due to its need for complex program analysis and the unknown factors (such as input data range) during compilation.
 
 \heading{Correct Parallelization of Dataflow Graphs}
-The DFG is a prevalent model in several areas of data processing (including batch-~\cite{mapreduce:08, spark:12} and stream-processing ~\cite{murray2013naiad, carbone2015flink} systems).
-Despite its popularity, most systems perform optimizations that do not preserve its semantics, introducing subtle erroneous behaviours.
+The DFG is a prevalent model in several areas of data processing (including batch-~\cite{mapreduce:08, spark:12} and stream-processing ~\cite{murray2013naiad, carbone2015flink}).
+Despite its popularity, most systems perform optimizations that do not preserve semantics, introducing subtle erroneous behaviours.
 Recent work~\cite{HSSGG2014, SHGW2015, MSAIT2019} attempts to address this issue by performing optimizations only in cases where correctness is preserved.
 \sys draws inspiration from these efforts, as it attempts transformations that maintain the program's correctness with respect to the sequential execution.
-
-\sys's proposed DFG model is diverges from prior works, as nodes it captures order.
-This is due to the intricacies of the \unix model---its streams, its argument processing, and concatenation operators all maintain ordering.
+Its  DFG model, however, is different and captures ordering constraints.
+This is due to the intricacies of the \unix model---\eg streams, argument processing, and concatenation operators.
 % As a result, previous work is not directly applicable.
 
 \heading{Parallel Userspace Environments}
-By focusing on simplifying the development of distributed programs, a plethora of environments assist in the construction of parallel software.
-Such systems~\cite{ousterhout1988sprite, mullender1990amoeba, pike1990plan9, barak1998mosix} or languages~\cite{erlang:96, acute:05, mace:07, cloudhaskell:11} hide many of the challenges of dealing with concurrency.
-They do so as long as a program leverages the provided abstractions---which are strongly coupled to the underlying operating or runtime system.
-A notable example is Plan9's \ttt{rc} shell that provided an interface for the construction of general programs.
-Unfortunately these environments are not backward-compatible with the \unix shell, and often focus primarily on hiding the existence of a network---providing the illusion of a single-system image---rather than automatically accelerating scripts through parallel processing.
+By focusing on simplifying the development of distributed programs, a plethora of environments inadvertently assist in the construction of parallel software.
+Such systems~\cite{ousterhout1988sprite, mullender1990amoeba, pike1990plan9, barak1998mosix} or languages~\cite{erlang:96, acute:05, mace:07, cloudhaskell:11} hide many of the challenges of dealing with concurrency as long as developers leverage the provided abstractions---which are strongly coupled to the underlying operating or runtime system.
+% A notable example is Plan9's \ttt{rc} shell that provide an interface for the construction of general programs.
+Even shell-oriented efforts such as Plan9's \ttt{rc} are not backward-compatible with the \unix shell, and often focus primarily on hiding the existence of a network rather than automating parallel processing.
 % simplify many of the problems of distribution and
 
-\heading{Cluster Computing}
-Several frameworks such as Phoenix~\cite{} and Raftlib~\cite{} offer full automation as long as their use leverages special primitives---\eg map-reduce-style primitives for Phoenix.
+\heading{Parallel Frameworks}
+Several frameworks~\cite{streamit:02, brook:04, phoenix:11, raftlib:17} offer fully automated parallelism as long as special primitives are used---\eg map-reduce-style primitives for Phoenix~\cite{phoenix:11}.
 These primitives make strong assumptions about the nature of the computation---\eg strongly-eventual commutative functions that can proceed in parallel.
-By targeting specific classes of computation (\emph{viz.} \sys's parallelizability), they can significantly optimize for their target domains.
-
+By targeting specific classes of computation (\emph{viz.} \sys's parallelizability), they are significantly optimized for their target domains.
 % Lack of generality, no formal guaratees, their setup and is too tedious 
-\sys chooses a more general approach: it does not require users to set up a new framework for every new class of computation they need to execute, nor to rewrite different parts of their computation using the specific abstractions provided by each framework they use.
-It also takes a more principled approach: by developing the semantic model outlined earlier, it can focus on transformations that are correct with respect to the sequential program.
+\sys chooses a more general approach:
+   it does not require setting up a new framework for each new class of computation used, nor rewriting different parts of the computation using a different set abstractions provided by each framework.
+It also takes a more principled approach:
+  by developing the semantic model outlined earlier, it can focus on transformations that are correct with respect to the sequential program.
 
 % % Although still a research prototype, \sys's setup and deployment is simpler.
 % It also does not require these specialized frameworks, manually (re)write , and 
@@ -2967,7 +2965,7 @@ It also takes a more principled approach: by developing the semantic model outli
   
 
 
-\section{Discussion \& Conclusion}
+\section{Conclusion}
 \label{discussion}
 
 This paper presented \sys, a shell variant that parallelizes shell programs mostly automatically.
@@ -2976,17 +2974,18 @@ To achieve its goal, \sys
   decomposes primitives into parallelizability classes,
   identifies high-parallelizability stages,
   applies a series of transformations according to a DFG model,
-  and orchestrates the execution of the parallel program.
+  and orchestrates the execution of the resulting parallel program.
+%
 % Its runtime component provides orchestration and planning support during the execution of the program.
-
-\sys's current limitations revolve around shell expansion.
-Currently, \sys does not attempt to parallelize program fragments for which variables have not been expanded.
-Without substantial effort, \sys could be modified to at least suggest expansion of these fragments so that developers provide concrete values.
-More significant effort would be required however to fully exploit latent parallelism in fragments that have not been expanding.
-This effort would require tying \sys with the shell interpretation rather than having it as a compilation pass and is left for future work.
-
-Despite limitation related to expansions, \sys can lead to significant benefits for shell users.
-Experiments with real programs show substantial speedups and the ability to operate on large input datasets, all minimal or zero developer effort.
+% \sys's current limitations revolve around shell expansion.
+% Currently, \sys does not attempt to parallelize program fragments for which variables have not been expanded.
+% Without substantial effort, \sys could be modified to at least suggest expansion of these fragments so that developers provide concrete values.
+% More significant effort would be required however to fully exploit latent parallelism in fragments that have not been expanding.
+% This effort would require tying \sys with the shell interpretation rather than having it as a compilation pass and is left for future work.
+%
+% Despite limitation related to expansions,
+  \sys can lead to significant benefits for shell users.
+Experiments with real programs show substantial speedups and the ability to operate on large input datasets, all with minimal or zero user effort.
 
 
 % \heading{Limitations}
