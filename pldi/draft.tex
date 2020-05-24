@@ -2362,11 +2362,13 @@ This section reports on whether \sys can indeed scale shell scripts out automati
 
 \heading{Highlights}
 \fixme{
-Scripts see a significant speedup, often up to $10\times$ over sequential execution while returning identical results (on very large datasets).
-\sys's transformation and planning phase take around 50--300ms, negligible ($<$2\%) for short-running pipelines and virtually non-existent for long-running ones.
-As \sys rewrites to highly-optimized shell primitives rather than using a managed language runtime, it always has a COST~\cite{mcsherryscalability} of 2.
-Finally, \sys preserves the productivity of the shell:
-  the equivalent program for a small part of the macro-benchmark pipeline requires over a 150 lines of code in combined Java and Bash to run distributed on top of Hadoop.
+Scripts from various sources and workloads see a significant speedup---almost linear in embarrassingly parallel cases---over sequential execution while returning identical results (on non-trivial datasets). The effort to reap this benefits is minimal; only sometimes requiring minimal annotations for \todo{custom} commands. \sys highly-optimized primitives (\sx{optimizer}) offer performance benefits even against manually implemented alternatives (such as GNU sort, and GNU parallel).
+\sys's compilation process takes $<$5s for all scripts; negligible time compared to any non trivial program execution. Finally, the \todo{two} larger use cases show that housekeeping tasks (such as data downloading. extracting, and preprocessing), that are often implemented using shell scripts and \todo{left without treatment} by specialized parallelization frameworks: (i) sometimes take comparable time to the execution of the ``main'' computation, and (ii) can be equally parallelized by \sys offering significant performance benefits.
+%% transformation and planning phase take around 50--300ms, negligible ($<$2\%) for short-running pipelines and virtually non-existent for long-running ones.
+%% As \sys rewrites to highly-optimized shell primitives rather than using a managed language runtime, it always has a COST~\cite{mcsherryscalability} of 2.
+%% Finally, \sys preserves the productivity of the shell:
+%% the equivalent program for a small part of the macro-benchmark pipeline requires over a 150 lines of code in combined Java and Bash to run distributed on top of Hadoop.
+\kk{What is that about the COST?}
 }
   %% in another, the program expressed by the pipeline was the subject of a semester project in a graduate course on distributed systems~\cite{blinded} where student implementations ranged between 1--3\textbf{K} lines of code.
 
