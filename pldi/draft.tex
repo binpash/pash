@@ -2430,7 +2430,7 @@ We evaluate \sys under multiple configurations on popular, common, or classic \u
     \centering
     \includegraphics[width=\textwidth]{\detokenize{./figs/tiling_throughput_scaleup.pdf}}
     \caption{
-      \textbf{\sys's speedup for 2--6$\times$-parallelism.} 
+      \textbf{\sys's speedup for 2--64$\times$-parallelism.}
       Different configurations per benchmark:
       (i) Par+Split: \ttt{eager} and general \ttt{split} enabled,
       (ii) Par+B.Split: \ttt{eager} and input-aware \ttt{split} enabled,
@@ -2473,7 +2473,7 @@ Finally, the two Bi-grams replicate and shift a stream by one entry to calculate
 % TODO \nv{Need to change terminology in plots---files should be (attempted) parallelism, name benchmark, cat should be merge.}
 Fig.~\ref{fig:microbenchmarks} presents \sys's speedup as a function of parallelism (2--64$\times$).
 (Bi-grams-opt is shown as the \ttt{opt} line in Fig.~\ref{fig:microbenchmarks}'s Bi-grams.)
-Average speedups for \{2, 4, 8, 16, 32, 64\}$\times$-parallelism are 1.97, 3.5, 5.78, 8.83, 10.96, and 13.47, respectively.
+Average speedups of the best \sys configuration, \ie \ttt{eager} enabled with \ttt{split} when it provides benefit, for \{2, 4, 8, 16, 32, 64\}$\times$-parallelism are 1.97, 3.5, 5.78, 8.83, 10.96, and 13.47, respectively.
 % and the geometric means are 1.92, 3.39, 5.48, 7.94, 8.86, 8.51.}
 
 % we experiment with a $200\times$ level of parallelism to see potential overheads
@@ -2504,7 +2504,8 @@ Asking for parallelism beyond that point degrades speedup, as overheads still in
 %   the same so I think that it might have to do with the fact that
 %   constant costs rise a lot (since opt-bigrams 32 takes just 1
 %   minute).
-An additional conclusion is that \sys's modular eager-relay significantly improves performance over the other alternatives (blocking eager or no eager, \S\ref{optimizer}).
+
+No Eager and Blocking Eager depict configurations without \sys's \ttt{eager} optimization and without \ttt{split}. These configurations perform worse than \sys with \ttt{eager} in all cases (except for a negligible difference in shortest-scripts) for the reasons described in \Cref{optimizer}. Adding \ttt{split} on top of that (Par + Split, Par + B. Split) further improves speedup for some scripts that have \tpur or \tnpu commands, and for the rest it does not affect performance. Finally, the optimized bi-grams script achieves significantly more benefits from \sys than its unoptimized counterpart, showing that familiarity with \sys's parallelizability classes goes a long way in terms of performance.
 
 %> \kk{It is visible that the automatic split is slightly worse than the
 %>   manual one in most cases (because it doesn't utilize task-based
