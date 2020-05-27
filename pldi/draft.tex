@@ -2421,12 +2421,14 @@ Except as otherwise noted,
 % A more detailed description of the setup and experiments, including reproducible scripts, is included in the accompanying (anonymized) online repository.
 
 \heading{A Note on the Parallelism Factor}
-\nv{
-The discussion of the benchmarks often refers to the parallelism factor 
-This is not necessarily the resulting parallelism achieved by \sys, which typically is above the level configured by the user.
-This is because for each process (node in the graph), \sys creates multiple processes---aggregators, splitters, relays \etc
-Some times the results give the impression of superlinear parallelism, but this has a simple explanation.
-}
+%
+The discussion of the results often mentions the parallelism factor, which refers to the \sys \emph{parallelism configuration} rather than the resulting parallelization. In fact, for small parallelism configurations \sys often achieves higher parallelization due to the creation of multiple processes---aggregators, splitters, relays \etc
+%% \nv{
+
+%% This is not necessarily the resulting parallelism achieved by \sys, which typically is above the level configured by the user.
+%% This is because for each process (node in the graph), \sys creates multiple processes---aggregators, splitters, relays \etc
+%% Some times the results give the impression of superlinear parallelism, but this has a simple explanation.
+%% }
 
 \subsection{Common \unix One-liners}
 \label{ours}
