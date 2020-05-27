@@ -969,13 +969,13 @@ Commands can change classes depending on their flags,% we focus on no-flag defau
   }
 }
 \begin{tabular*}{\columnwidth}{l @{\extracolsep{\fill}} llll}
-\toprule % 28 + 9 + 13 + 105
+\toprule
 Class                    &  Key    & Examples                                    & Coreutils              & POSIX       \\
 \midrule
-Stateless                & ~\tsta  & \tti{tr},   \tti{cat},    \tti{grep}        &  22 (21.1\%)           & 28 (18\%)          \\  % 22
-Parallelizable Pure      & ~\tpur  & \tti{sort}, \tti{wc},     \tti{uniq}        &  8 (7.6\%)}            & 9  (5\%)          \\  % 21
-Non-parallelizable Pure  & ~\tnpu  & \tti{sha1sum}                               &  13 (12.4\%)}          & 13 (8.3\%)          \\  % 27
-Side-effectful           & ~\tsid  & \tti{env},  \tti{cp}, \tti{whoami}          &  57 (58.8\%)           & 105(67.8\%)            \\  % 25
+Stateless                & ~\tsta  & \tti{tr},   \tti{cat},    \tti{grep}        &  22 (21.1\%)           & 28 (18\%)        \\  % 22
+Parallelizable Pure      & ~\tpur  & \tti{sort}, \tti{wc},     \tti{uniq}        &  8 (7.6\%)            & 9  (5\%)          \\  % 21
+Non-parallelizable Pure  & ~\tnpu  & \tti{sha1sum}                               &  13 (12.4\%)          & 13 (8.3\%)       \\  % 27
+Side-effectful           & ~\tsid  & \tti{env},  \tti{cp}, \tti{whoami}          &  57 (58.8\%)           & 105(67.8\%)          \\  % 25
 % Irreversible     & ~\tirr  & \tti{exit}, \tti{lpr},    \tti{reboot}      &  5  (0.4\%)     & 5  (0.4\%)           \\  % 5
 % \midrule
 % Shell PL Constructs             &                         &                  \\
