@@ -965,17 +965,17 @@ Commands can change classes depending on their flags,% we focus on no-flag defau
 \caption{
   \footnotesize{
     \textbf{Parallelizability Classes}.
-    Broadly, \unix commands can be broken down into to \todo{four} classes according to their parallelizability properties.
+    Broadly, \unix commands can be broken down into to four classes according to their parallelizability properties.
   }
 }
 \begin{tabular*}{\columnwidth}{l @{\extracolsep{\fill}} llll}
-\toprule
+\toprule % 28 + 9 + 13 + 105
 Class                    &  Key    & Examples                                    & Coreutils              & POSIX       \\
 \midrule
-Stateless                & ~\tsta  & \tti{tr},   \tti{cat},    \tti{grep}        &  22 (21.1\%)           & 22 (21.1\%)          \\  % 22
-Parallelizable Pure      & ~\tpur  & \tti{sort}, \tti{wc},     \tti{uniq}        &  \todo{21 (20.1\%)}    & 21 (20.1\%)          \\  % 21
-Non-parallelizable Pure  & ~\tnpu  & \tti{sha1sum}                               &  \todo{27 (25.9\%)}    & 27 (25.9\%)          \\  % 27
-Side-effectful           & ~\tsid  & \tti{env},  \tti{cp}, \tti{whoami}          &  57 (58.8\%)           & 57 (58.8\%)            \\  % 25
+Stateless                & ~\tsta  & \tti{tr},   \tti{cat},    \tti{grep}        &  22 (21.1\%)           & 28 (18\%)          \\  % 22
+Parallelizable Pure      & ~\tpur  & \tti{sort}, \tti{wc},     \tti{uniq}        &  8 (7.6\%)}            & 9  (5\%)          \\  % 21
+Non-parallelizable Pure  & ~\tnpu  & \tti{sha1sum}                               &  13 (12.4\%)}          & 13 (8.3\%)          \\  % 27
+Side-effectful           & ~\tsid  & \tti{env},  \tti{cp}, \tti{whoami}          &  57 (58.8\%)           & 105(67.8\%)            \\  % 25
 % Irreversible     & ~\tirr  & \tti{exit}, \tti{lpr},    \tti{reboot}      &  5  (0.4\%)     & 5  (0.4\%)           \\  % 5
 % \midrule
 % Shell PL Constructs             &                         &                  \\
@@ -2841,7 +2841,8 @@ Finally, the comparison also shows \sys's benefits to command developers:
 \heading{GNU Parallel}
 We compare \sys to GNU \ttt{parallel} (v.20160422), a GNU utility for running other commands in parallel~\cite{Tange2011a}, on a small bio-informatics script.
 % Using its \ttt{--jobs} flag, we  redirect input from a file to 
-Sequential execution takes \todo{XX}s \vs \sys's \todo{XX}s (\todo{XX}$\times$).
+% 554 / 330 
+Sequential execution takes 554.8s \vs \sys's 128.5s (4.3$\times$).
 We note that this pipeline is harsh for \sys, in that most of the overhead comes from a single command---masking \sys's improvements in other parts of the pipeline.
 
 % % https://github.com/marcelm/cutadapt/issues/157
@@ -2854,10 +2855,10 @@ We note that this pipeline is harsh for \sys, in that most of the overhead comes
 % % --workdir $PWD cutadapt_parallel {}
 
 There are a few possible ways one might attempt to use GNU \ttt{parallel} on this program.
-They could use it on the \todo{XX} stage, assuming they know it is a bottleneck, bringing execution down to \todo{XX}s (\todo{XX}$\times$ speedup).
+They could use it on the 8th stage, assuming they know it is a bottleneck, bringing execution down to 304.4s ($1.8\times$ speedup).
 Alternatively, they could (incorrectly) sprinkle \ttt{parallel} across the entire program---a strategy simplified by \ttt{parallel}'s \ttt{stdin} redirection feature.
-This would lead to \todo{XXX}\% performance improvements but severely incorrect results with respect to the sequential execution---a \ttt{diff} that averages about \todo{XX--XX} lines.
-\sys's conservative program transformations will not attempt parallelizing program sections that contain commands with unclear \todo{parallelizability} properties.
+This would lead to 3.2$\times$ performance improvements but severely incorrect results with respect to the sequential execution---with 92\% of the output showing a difference between sequential and parallel execution.
+\sys's conservative program transformations will not attempt parallelizing program sections that contain commands with unclear parallelizability properties.
 	% or commands whose inputs depend on earlier outputs.
 % GNU \ttt{parallel} is oblivious to command semantics, risking breaking program semantics as in this case.
 
