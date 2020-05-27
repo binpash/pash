@@ -218,7 +218,7 @@
 %% appropriate command.
 %% Many elements are not rendered, but should be provided for metadata
 %% extraction tools.
-https://git.io/JfEgr
+%https://git.io/JfEgr
 %% Author with single affiliation.
 \author{
   Anonymous Author(s)\\
@@ -425,9 +425,9 @@ To address this challenge, we develop \sys, a shell that extracts data-paralleli
 % \sys offers both classes of users in the second group such much-needed automation.
 \sys benefits both programmer groups, % mentioned earlier, 
   with a particular emphasis on users.
-Command developers are provided a set of abstractions, akin to lightweight type annotations, for expressing the parallelizability properties of their commands:
+Command developers are provided with a set of abstractions, akin to lightweight type annotations, for expressing the parallelizability properties of their commands:
   rather than providing a command's full observable behavior, these annotations focus primarily on their interaction with state.
-Shell users, on the other hand, are provided full automation:
+Shell users, on the other hand, are provided with full automation:
   \sys extracts parallelism latent in their scripts by analyzing their parallelizability properties. % of their fragments.
 % benefiting scripting experts and non-experts alike by offering automated POSIX-aware parallelization of shell-scripts as long as command developers
 \sys's transformations are conservative, in that they do not attempt to parallelize fragments that lack sufficient information---\ie at worst, \sys will choose to not improve performance rather than risking breakage.
@@ -856,7 +856,7 @@ For example, forked processes piping their combined results to Fig.~\ref{fig:exa
 % A final challenge has to do with practical issues, as even manual parallelization of a given shell script is far from trivial.
 % Parallelizing a script without reimplementing all of its commands, requires primitives to compose existing commands to achieve parallelization.
 %  Designing correct and efficient compositions is particularly challenging in the context of \unix, and requires addressing issues related to scheduling, synchronization, and deadlock prevention. 
-Moreover, several commands such as \ttt{sort} and \ttt{uniq} require specialized data aggregators so as to be correctly parallelized.
+Moreover, several commands such as \ttt{sort} and \ttt{uniq} require specialized data aggregators in order to be correctly parallelized.
 %% Developing correct, high-performance combiners for certain classes of commands such as \ttt{sort} and \ttt{uniq} is non trivial.
 %% Moreover, the \unix environment has its set of quirks % about opening streams, deadling with FIFOs,
 %%   and any attempt at parallelization will have to take care of these challenges---related to task parallelism, deadlock prevention, and runtime performance.
@@ -871,7 +871,7 @@ Moreover, several commands such as \ttt{sort} and \ttt{uniq} require specialized
 At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and outputs a new script.
 The new script may incorporate parallelism, and is handed off to the user's original shell interpreter % ---\eg \ttt{bash} or \ttt{zsh}---
   for execution.
-To expose and exploit data-parallelism, % in a given shell script,
+To expose and exploit data parallelism, % in a given shell script,
 %% parallel execution,
 \sys analyzes individual program fragments, addressing the challenges mentioned earlier.
 
