@@ -218,7 +218,6 @@
 %% appropriate command.
 %% Many elements are not rendered, but should be provided for metadata
 %% extraction tools.
-% https://git.io/JfEgr
 %% Author with single affiliation.
 \author{
   Anonymous Author(s)\\
@@ -425,9 +424,9 @@ To address this challenge, we develop \sys, a shell that extracts data-paralleli
 % \sys offers both classes of users in the second group such much-needed automation.
 \sys benefits both programmer groups, % mentioned earlier, 
   with a particular emphasis on users.
-Command developers are provided a set of abstractions, akin to lightweight type annotations, for expressing the parallelizability properties of their commands:
+Command developers are provided with a set of abstractions, akin to lightweight type annotations, for expressing the parallelizability properties of their commands:
   rather than providing a command's full observable behavior, these annotations focus primarily on their interaction with state.
-Shell users, on the other hand, are provided full automation:
+Shell users, on the other hand, are provided with full automation:
   \sys extracts parallelism latent in their scripts by analyzing their parallelizability properties. % of their fragments.
 % benefiting scripting experts and non-experts alike by offering automated POSIX-aware parallelization of shell-scripts as long as command developers
 \sys's transformations are conservative, in that they do not attempt to parallelize fragments that lack sufficient information---\ie at worst, \sys will choose to not improve performance rather than risking breakage.
@@ -856,7 +855,7 @@ For example, forked processes piping their combined results to Fig.~\ref{fig:exa
 % A final challenge has to do with practical issues, as even manual parallelization of a given shell script is far from trivial.
 % Parallelizing a script without reimplementing all of its commands, requires primitives to compose existing commands to achieve parallelization.
 %  Designing correct and efficient compositions is particularly challenging in the context of \unix, and requires addressing issues related to scheduling, synchronization, and deadlock prevention. 
-Moreover, several commands such as \ttt{sort} and \ttt{uniq} require specialized data aggregators so as to be correctly parallelized.
+Moreover, several commands such as \ttt{sort} and \ttt{uniq} require specialized data aggregators in order to be correctly parallelized.
 %% Developing correct, high-performance combiners for certain classes of commands such as \ttt{sort} and \ttt{uniq} is non trivial.
 %% Moreover, the \unix environment has its set of quirks % about opening streams, deadling with FIFOs,
 %%   and any attempt at parallelization will have to take care of these challenges---related to task parallelism, deadlock prevention, and runtime performance.
@@ -871,7 +870,7 @@ Moreover, several commands such as \ttt{sort} and \ttt{uniq} require specialized
 At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and outputs a new script.
 The new script may incorporate parallelism, and is handed off to the user's original shell interpreter % ---\eg \ttt{bash} or \ttt{zsh}---
   for execution.
-To expose and exploit data-parallelism, % in a given shell script,
+To expose and exploit data parallelism, % in a given shell script,
 %% parallel execution,
 \sys analyzes individual program fragments, addressing the challenges mentioned earlier.
 
@@ -2438,7 +2437,7 @@ We evaluate \sys under multiple configurations on popular, common, or classic \u
     \centering
     \includegraphics[width=\textwidth]{\detokenize{./figs/tiling_throughput_scaleup.pdf}}
     \caption{
-      \textbf{\sys's speedup for 2--6$\times$-parallelism.} 
+      \textbf{\sys's speedup for 2--64$\times$-parallelism.}
       Different configurations per benchmark:
       (i) Par+Split: \ttt{eager} and general \ttt{split} enabled,
       (ii) Par+B.Split: \ttt{eager} and input-aware \ttt{split} enabled,
@@ -2481,7 +2480,7 @@ Finally, the two Bi-grams replicate and shift a stream by one entry to calculate
 % TODO \nv{Need to change terminology in plots---files should be (attempted) parallelism, name benchmark, cat should be merge.}
 Fig.~\ref{fig:microbenchmarks} presents \sys's speedup as a function of parallelism (2--64$\times$).
 (Bi-grams-opt is shown as the \ttt{opt} line in Fig.~\ref{fig:microbenchmarks}'s Bi-grams.)
-Average speedups for \{2, 4, 8, 16, 32, 64\}$\times$-parallelism are 1.97, 3.5, 5.78, 8.83, 10.96, and 13.47, respectively.
+Average speedups of the best \sys configuration, \ie \ttt{eager} enabled with \ttt{split} when it provides benefit, for \{2, 4, 8, 16, 32, 64\}$\times$-parallelism are 1.97, 3.5, 5.78, 8.83, 10.96, and 13.47, respectively.
 % and the geometric means are 1.92, 3.39, 5.48, 7.94, 8.86, 8.51.}
 
 % we experiment with a $200\times$ level of parallelism to see potential overheads
@@ -2512,7 +2511,8 @@ Asking for parallelism beyond that point degrades speedup, as overheads still in
 %   the same so I think that it might have to do with the fact that
 %   constant costs rise a lot (since opt-bigrams 32 takes just 1
 %   minute).
-An additional conclusion is that \sys's modular eager-relay significantly improves performance over the other alternatives (blocking eager or no eager, \S\ref{optimizer}).
+
+No Eager and Blocking Eager depict configurations without \sys's \ttt{eager} optimization and without \ttt{split}. These configurations perform worse than \sys with \ttt{eager} in all cases (except for a negligible difference in shortest-scripts) for the reasons described in \Cref{optimizer}. Adding \ttt{split} on top of that (Par + Split, Par + B. Split) further improves speedup for some scripts that have \tpur or \tnpu commands, and for the rest it does not affect performance. Finally, the optimized bi-grams script achieves significantly more benefits from \sys than its unoptimized counterpart, showing that familiarity with \sys's parallelizability classes goes a long way in terms of performance.
 
 %> \kk{It is visible that the automatic split is slightly worse than the
 %>   manual one in most cases (because it doesn't utilize task-based
