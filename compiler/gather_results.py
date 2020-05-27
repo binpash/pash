@@ -462,8 +462,11 @@ def generate_experiment_line(experiment):
     # seq_time_seconds = seq_times[0] / 1000
     line += [seq_time_seconds, '&']
 
+    suffix='distr.time'
+    if(experiment in ["spell", "bigrams", "double_sort"]):
+        suffix='distr_auto_split.time'
     commands_16, commands_64 = collect_experiment_command_number(experiment_results_prefix,
-                                                                 'distr.time', [16, 64])
+                                                                suffix, [16, 64])
     line += ['{} & {}'.format(commands_16, commands_64), '&']
 
     ## Collect and output compile times
