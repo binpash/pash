@@ -194,6 +194,13 @@
 \usepackage{subcaption} %% For complex figures with subfigures/subcaptions
                         %% http://ctan.org/pkg/subcaption
 
+\newcommand\blfootnote[1]{%
+  \begingroup
+  \renewcommand\thefootnote{}\footnote{#1}%
+  \addtocounter{footnote}{-1}%
+  \endgroup
+}
+
 \begin{document}
 
 %% Title information
@@ -220,10 +227,13 @@
 %% extraction tools.
 %% Author with single affiliation.
 \author{
-  Anonymous Author(s)\\
-  \normalsize{Additional Anonymized Material: \href{https://git.io/JfwSq}{https://git.io/JfwSq}.}
+% Anonymous Author(s)\\
+% \normalsize{Additional Anonymized Material: \href{https://git.io/JfwSq}{https://git.io/JfwSq}.}
+  {\rm \normalsize Nikos Vasilakis$^{*}$\qquad Konstantinos Kallas$^{*\dagger}$\qquad  Konstantinos Mamouras$^{\circ}$ }\\
+  {\rm \normalsize Achilleas Benetopoulos$^{\diamond}$ \qquad Lazar Cvetkovich$^{\ddagger}$ }\\
+  {\small MIT, CSAIL \quad $^{\dagger}$University of Pennsylvania \quad $^{\circ}$Rice University \quad $^{\diamond}$Unaffiliated \quad $^{\ddagger}$University of Belgrade}
 }
-%% \authornote{with author1 note}          %% \authornote is optional;
+% \authornote{$^{*}$Equal contribution.}     %% \authornote is optional;
 %%                                         %% can be repeated if necessary
 %% \orcid{nnnn-nnnn-nnnn-nnnn}             %% \orcid is optional
 %% \affiliation{
@@ -381,6 +391,7 @@ Finally, \sys's \unix-aware runtime primitives address several practical issues 
 % % Too low-level descriptions of the problem, maybe keep it high level?
 % For small input sizes this isn't a problem since scripts take less than a second to execute, but as data sizes increase, failing to utilize the underlying parallel computational resources is a significant bottleneck.
 
+\blfootnote{$^{*}$Equal contribution.}
 The \unix shell is an environment---often interactive---for composing scripts written in a plethora of programming languages.
 This language-agnosticism, coupled with \unix's toolbox philosophy~\cite{mcilroy1978unix}, makes the shell the primary choice for specifying succinct and simple pipelines for data processing, system orchestration, and other automation tasks.
 % Pipe-centric shell commands are parallel (and to some extent, functional) programs that can natively enjoy significant parallelism on a multicore machine.
@@ -887,6 +898,18 @@ Annotations are expressed once per command rather than once per script and are a
 % \sys achieves this through a series of rewriting passes that perform dataflow analysis to identify distributable regions.
 % It converts the AST to a dataflow graph, and iteratively performs graph transformations that expose data parallelism as task parallelism, while preserving the pipeline's correctness.
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_example2.pdf}}
+\caption{
+  \textbf{\sys's $2\times$-parallel output for fragment of Fig.~\ref{fig:example}.}
+  \sys orchestrates the script's parallel execution through named pipes, parallel operators and careful placement of combiners.
+}
+\vspace{-15pt}
+\label{fig:example2}
+\end{figure}
+
+
 \heading{Scripts}
 To maintain sequential semantics, \sys first analyzes a script to identify \emph{parallelizable regions} that contain commands that are candidates for parallelization.
 This analysis is guided by the script structure: % to identify parallelization candidates:
@@ -918,17 +941,6 @@ All these commands live in the \ttt{PATH} and are addressable by name, which mea
 
 Fig~\ref{fig:example2} shows a fragment of \sys's output for the script in Fig.~\ref{fig:example}.
 The next few sections (\S\ref{parallelizability}--\ref{impl}) discuss the details.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_example2.pdf}}
-\caption{
-  \textbf{\sys's $2\times$-parallel output for fragment of Fig.~\ref{fig:example}.}
-  \sys orchestrates the script's parallel execution through named pipes, parallel operators and careful placement of combiners.
-}
-\vspace{-15pt}
-\label{fig:example2}
-\end{figure}
 
 
 \section{Parallelizability Classes}
@@ -1319,7 +1331,7 @@ In line with the \unix philosophy, these functions can be written in any languag
   (iii) their composition produces the same output as the original command.
 If these invariants are met, after DFG analysis~\sx{ir} \sys can replace occurrences of these commands with their \emph{map} and \emph{aggregate} equivalents, enabling their full parallelization.
 
-\sys defines aggregators for many \pur POSIX and GNU commands, which operate as both \sys's standard library and an exemplar for community attempts to tackle other commands.
+\sys defines aggregators for many POSIX and GNU commands in \pur, dubbing as both its standard library and an exemplar for community efforts tackling other commands.
 
 
 \tr{\kk{I am not sure a general interface is so easy to design. It needs
@@ -1630,6 +1642,19 @@ one at a time and the second argument represents the static inputs.
 %% %% program.
 %% }
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{\detokenize{./figs/dish_cat.pdf}}
+\vspace{-28pt}
+\caption{
+  \textbf{Stateless parallelization transformation.}
+  The \texttt{cat} node is commuted with the stateless node to utilize available data parallelism.
+}
+\vspace{-15pt}
+\label{fig:parallelization-transformation}
+\end{figure}
+
+
 \sys defines a set of semantics-preserving graph transformations
 that act as parallelization-exposing optimizations. Both the domain
 and range of these transformations is a graph in \sys's DFG model
@@ -1707,18 +1732,6 @@ to each of $x$ and $x'$.
 %%   better name for it. In the end we didn't handle
 %%   commutative-associative function (that are more like map-reduce) and
 %%   so we changes the name to map-fold to not imply commutativity.}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{\detokenize{./figs/dish_cat.pdf}}
-\vspace{-28pt}
-\caption{
-  \textbf{Stateless parallelization transformation.}
-  The \texttt{cat} node is commuted with the stateless node to utilize available data parallelism.
-}
-\vspace{-15pt}
-\label{fig:parallelization-transformation}
-\end{figure}
 
 
 \heading{Parallelization Transformations}
@@ -2860,7 +2873,7 @@ There are a few possible ways one might attempt to use GNU \ttt{parallel} on thi
 They could use it on the 8th stage, assuming they know it is a bottleneck, bringing execution down to 304.4s ($1.8\times$ speedup).
 Alternatively, they could (incorrectly) sprinkle \ttt{parallel} across the entire program---a strategy simplified by \ttt{parallel}'s \ttt{stdin} redirection feature.
 This would lead to 3.2$\times$ performance improvements but severely incorrect results with respect to the sequential execution---with 92\% of the output showing a difference between sequential and parallel execution.
-\sys's conservative program transformations will not attempt parallelizing program sections that contain commands with unclear parallelizability properties.
+\sys's conservative program transformations will not operate on fragments with unclear parallelizability properties.
 	% or commands whose inputs depend on earlier outputs.
 % GNU \ttt{parallel} is oblivious to command semantics, risking breaking program semantics as in this case.
 
@@ -3032,7 +3045,6 @@ By targeting specific classes of computation (\emph{viz.} \sys's parallelizabili
 %% KMacQ1977}}
   
 
-
 \section{Conclusion}
 \label{discussion}
 
@@ -3106,22 +3118,26 @@ Experiments with real programs show substantial speedups and the ability to oper
 % considered as black boxes and the only information that can be
 % inferred about them is through their arguments.
 
-%% \begin{acks}
-  % Dumping people so that we don't forget
-  % 
-  %% This material is based upon work supported by the
-  %% \grantsponsor{GS100000001}{National Science
-  %%   Foundation}{http://dx.doi.org/10.13039/100000001} under Grant
-  %% No.~\grantnum{GS100000001}{nnnnnnn} and Grant
-  %% No.~\grantnum{GS100000001}{mmmmmmm}.  Any opinions, findings, and
-  %% conclusions or recommendations expressed in this material are those
-  %% of the author and do not necessarily reflect the views of the
-  %% National Science Foundation.
-%% \end{acks}
+\subsection*{Acknowledgements}
+% Dumping people so that we don't forget
+We want to thank 
+  Andr\'e DeHon,
+  Ben Karel,
+  Jean-S\'ebastien L\'egar\'e, and 
+  Nick Roessler.
+This material is based upon work supported by DARPA contract no. HR00112020013 (ALRSCC) and NSF award CCF 1763514.
+%% \grantsponsor{GS100000001}{National Science
+%%   Foundation}{http://dx.doi.org/10.13039/100000001} under Grant
+%% No.~\grantnum{GS100000001}{nnnnnnn} and Grant
+%% No.~\grantnum{GS100000001}{mmmmmmm}.  Any opinions, findings, and
+%% conclusions or recommendations expressed in this material are those
+%% of the author and do not necessarily reflect the views of the
+%% National Science Foundation.
 
 %% Bibliography
+{\small
 \bibliography{./bib}
-
+}
 
 \appendix
 
