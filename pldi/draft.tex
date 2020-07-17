@@ -1,7 +1,8 @@
 %% OSDI -- 12 pages limit
 \documentclass[letterpaper,twocolumn,10pt]{article}
-\usepackage{usenix2019_v3}
+\pdfoutput=1 % for arxiv
 
+\usepackage{usenix2019_v3}
 
 %% For double-blind review submission, w/o CCS and ACM Reference (max submission space)
 % Limit: 25 pages
@@ -322,13 +323,13 @@
 %% Note: \begin{abstract}...\end{abstract} environment must come
 %% before \maketitle command
 \begin{abstract}
-  This paper presents \sys, a shell aimed at parallelizing POSIX shell scripts through a combination of program transformations and runtime primitives.
-  Given a script, \sys converts it to a data-flow graph, performs a series of analyses that aim at exposing parallelism while preserving its sequential semantics, and then converts dataflow graph back into a script that uses POSIX constructs to explicitly guide parallelism.
+This paper presents \sys, a shell aimed at parallelizing POSIX shell scripts through a combination of program transformations and runtime primitives.
+Given a script, \sys converts it to a data-flow graph, performs a series of analyses that aim at exposing parallelism while preserving its sequential semantics, and then converts dataflow graph back into a script that uses POSIX constructs to explicitly guide parallelism.
 A set of lightweight annotations allow command developers to express key parallelizability properties about their commands.
-An accompanying parallelizability study of POSIX and GNU commands , two large and commonly used groups, 
+An accompanying parallelizability study of POSIX and GNU commands, two large and commonly used groups, 
 informs \sys's annotation language and results in its equivalent of a data-parallel standard library.
 Finally, \sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
-\sys's extensive evaluation, combining several classic and modern Unix scripts, shows significant benefits across several axes—with order-of-magnitude performance improvements stemming from the combination of its program transformations and runtime primitives.
+\sys's extensive evaluation, combining several classic and modern Unix scripts, shows significant benefits across several axes---with order-of-magnitude performance improvements stemming from the combination of its program transformations and runtime primitives.
 \end{abstract}
 
 % Its runtime component provides orchestration and planning support during the execution of the program.
