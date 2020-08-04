@@ -24,6 +24,8 @@ plt.rcParams['font.family'] = 'STIXGeneral'
 MICROBENCHMARKS = "../evaluation/microbenchmarks/"
 RESULTS = "../evaluation/results/"
 UNIX50_RESULTS = "../evaluation/results/unix50/"
+COARSE_UNIX50_RESULTS = "../evaluation/results/unix50-naive/"
+
 
 experiments = ["minimal_grep",
                "minimal_sort",
@@ -223,7 +225,10 @@ def collect_baseline_experiment_speedups(prefix, scaleup_numbers, base_seq):
     return speedup
 
 def collect_distr_experiment_speedup(prefix, suffix, scaleup_numbers):
-    seq_numbers, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
+    # TODO: If this messed things up change it back
+    # seq_numbers, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
+    seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, scaleup_numbers[0]))
+                   for _ in scaleup_numbers]
     distr_numbers = collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers)
     distr_speedup = [safe_zero_div(seq_numbers[i], t) for i, t in enumerate(distr_numbers)]
     return distr_speedup
@@ -557,6 +562,17 @@ def collect_unix50_pipeline_scaleup_times(pipeline_number, unix50_results_dir, s
     absolute_seq_times, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
     return (distr_speedups, absolute_seq_times)
 
+def collect_unix50_pipeline_coarse_scaleup_times(pipeline_number, unix50_results_dir, scaleup_numbers):
+    prefix = '{}/unix50_pipeline_{}_'.format(unix50_results_dir, pipeline_number)
+    # distr_speedups, _ = collect_experiment_speedups(prefix, scaleup_numbers)
+    no_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                              'distr_no_eager.time',
+                                                              scaleup_numbers)
+    absolute_seq_times = [read_total_time('{}{}_seq.time'.format(prefix, scaleup_numbers[0]))
+                          for _ in scaleup_numbers]
+    return (no_eager_distr_speedup, absolute_seq_times)
+
+
 def aggregate_unix50_results(all_results, scaleup_numbers):
     avg_distr_results = [[] for _ in scaleup_numbers]
     for pipeline in all_results:
@@ -571,6 +587,53 @@ def aggregate_unix50_results(all_results, scaleup_numbers):
     return avg_distr_results
 
 def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
+    ## Plot individual speedups
+    individual_results = [distr_exec_speedup[scaleup_numbers.index(parallelism)]
+                          for distr_exec_speedup, _ in all_results]
+    absolute_seq_times_s = [absolute_seq[scaleup_numbers.index(parallelism)] / 1000
+                            for _, absolute_seq in all_results]
+    print("Unix50 individual speedups for {} parallelism:".format(parallelism), individual_results)
+    mean = sum(individual_results) / len(individual_results)
+    median = statistics.median(individual_results)
+    geo_mean = math.exp(np.log(individual_results).sum() / len(individual_results))
+    weighted_res = [i*a for i, a in zip(individual_results, absolute_seq_times_s)]
+    weighted_avg = sum(weighted_res) / sum(absolute_seq_times_s)
+    print("  Mean:", mean)
+    print("  Median:", median)
+    print("  Geometric Mean:", geo_mean)
+    print("  Weighted Average:", weighted_avg)
+
+    w = 0.2
+    ind = np.arange(len(individual_results))
+    speedup_color = 'tab:blue'
+    seq_time_color = 'tab:red'
+
+    fig, ax1 = plt.subplots()
+    # print(fig.get_size_inches())
+    fig.set_size_inches(12, 6)
+
+    ## Plot speedup
+    ax1.set_ylabel('Speedup', color=speedup_color)
+    ax1.set_xlabel('Pipeline')
+    plt.xlim(-1, len(individual_results))
+    plt.hlines([1], -1, len(individual_results) + 1, linewidth=0.8)
+    ax1.bar(ind-w, individual_results, width=2*w, align='center', color=speedup_color)
+    ax1.tick_params(axis='y', labelcolor=speedup_color)
+
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    ax2.set_ylabel('Sequential Time (s)', color=seq_time_color)
+    ax2.set_yscale("log")
+    ax2.bar(ind+w, absolute_seq_times_s, width=2*w, align='center', color=seq_time_color)
+    ax2.tick_params(axis='y', labelcolor=seq_time_color)
+    # plt.yscale("log")
+    # plt.yticks(range(1, 18, 2))
+    # plt.ylim((0.1, 20))
+    # plt.legend(loc='lower right')
+    # plt.title("Unix50 Individual Speedups")
+    plt.tight_layout()
+    plt.savefig(os.path.join('../evaluation/plots', "unix50_individual_speedups_{}.pdf".format(parallelism)),bbox_inches='tight')
+
+def make_coarse_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     ## Plot individual speedups
     individual_results = [distr_exec_speedup[scaleup_numbers.index(parallelism)]
                           for distr_exec_speedup, _ in all_results]
@@ -615,7 +678,8 @@ def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     # plt.legend(loc='lower right')
     # plt.title("Unix50 Individual Speedups")
     plt.tight_layout()
-    plt.savefig(os.path.join('../evaluation/plots', "unix50_individual_speedups_{}.pdf".format(parallelism)),bbox_inches='tight')
+    plt.savefig(os.path.join('../evaluation/plots', "unix50_coarse_individual_speedups_{}.pdf".format(parallelism)),bbox_inches='tight')
+
 
 def collect_unix50_scaleup_times(unix50_results_dir):
     files = [f for f in os.listdir(unix50_results_dir)]
@@ -651,6 +715,41 @@ def collect_unix50_scaleup_times(unix50_results_dir):
     plt.title("Unix50 Throughput")
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "unix50_throughput_scaleup.pdf"),bbox_inches='tight')
+
+def collect_unix50_coarse_scaleup_times(unix50_results_dir):
+    files = [f for f in os.listdir(unix50_results_dir)]
+    # print(files)
+    pipeline_numbers = sorted(list(set([f.split('_')[2] for f in files])))
+    # print(pipeline_numbers)
+
+    scaleup_numbers = [16]
+
+    all_results = [collect_unix50_pipeline_scaleup_times(pipeline_number,
+                                                         unix50_results_dir,
+                                                         scaleup_numbers)
+                   for pipeline_number in pipeline_numbers]
+    # print(all_results)
+
+    for parallelism in scaleup_numbers:
+        make_coarse_unix50_bar_chart(all_results, scaleup_numbers, parallelism)
+
+
+    avg_results = aggregate_unix50_results(all_results, scaleup_numbers)
+    print("Unix50 average speedup:", avg_results)
+
+    ## Plot average speedup
+    fig, ax = plt.subplots()
+
+    ## Plot speedup
+    ax.set_ylabel('Speedup')
+    ax.set_xlabel('Level of Parallelism')
+    ax.plot(scaleup_numbers, avg_results, '-o', linewidth=0.5, label='Parallel')
+    # plt.yscale("log")
+    plt.xticks(scaleup_numbers)
+    plt.legend(loc='lower right')
+    plt.title("Unix50 Throughput")
+    plt.tight_layout()
+    plt.savefig(os.path.join('../evaluation/plots', "unix50_coarse_throughput_scaleup.pdf"),bbox_inches='tight')
 
 
 def plot_one_liners_tiling(results_dir):
@@ -833,6 +932,8 @@ generate_tex_coarse_table(coarse_experiments)
 
 ## Plot Unix50
 collect_unix50_scaleup_times(UNIX50_RESULTS)
+collect_unix50_coarse_scaleup_times(UNIX50_RESULTS)
+
 
 ## Plot sort against sort with parallel-flag
 plot_sort_with_baseline(RESULTS)
