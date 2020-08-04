@@ -32,7 +32,10 @@ Writing a review for this paper was somewhat challenging as there's no clear com
 
 * I found Section 3.2 and 4.2 difficult to read. After some reflection, I believe that Section 3.2 was difficult to read as the text doesn't quite explain why the authors made decisions around extensibility as they did. For instance, I expect that PaSh maintains a state machine where it tracks which command is being executed and what flags are passed so it appropriately track the "parallelizability" of the operation -- this isn't mentioned in the text.
 
-* I believe that I found Section 4.2 difficult to read as I had to brush up on graph transformations. I'm unsure how the authors can further simplify or explain the points here, but I wished to bring it up. That said, please don't drop this narrative as I think it is useful to include in the paper.
+> * I believe that I found Section 4.2 difficult to read as I had to brush up on graph transformations. I'm unsure how the authors can further simplify or explain the points here, but I wished to bring it up. That said, please don't drop this narrative as I think it is useful to include in the paper.
+
+kk: Thanks, we will try to extend the paper with some more intuition
+of the transformations
 
 Comments for author
 -------------------
@@ -97,11 +100,17 @@ applies them to a practical solution.
 
 Significant Weaknesses
 ----------------------
-The complexity of annotating commands is under-evaluated. Since the
-usefulness of PaSh hinges on how straight-forward it is to incorporate
-commands for parallelization, a more thorough analysis, ideally
-quantitatively (complexity of annotations, person-time it took to
-develop annotations for Coreutils and POSIX), would be insightful.
+> The complexity of annotating commands is under-evaluated. Since the
+> usefulness of PaSh hinges on how straight-forward it is to incorporate
+> commands for parallelization, a more thorough analysis, ideally
+> quantitatively (complexity of annotations, person-time it took to
+> develop annotations for Coreutils and POSIX), would be insightful.
+
+kk: Can we give a concrete number of the time it took to do the study
+nikos? Also mention that this is a one-time effort. And the fact that
+we have done it means that noone needs to do it for POSIX + COreutils
+commands.
+
 
 Comments for author
 -------------------
@@ -120,14 +129,24 @@ this paper. However, I think PaSh's thorough application of these
 techniques to the domain of POSIX shell scripts and UNIX commands is
 interesting and new.
 
-You did a very thorough analysis of all the factors that affect the
-parallelizability of UNIX commands. You found that command line
-arguments can change the parallelization behavior of commands and
-potentially put them in another class. However, I wonder if the
-analysis if complete. For example, could the behavior of commands not
-be influenced by the setting of environment variables or in
-configuration files? I did not find these mentioned in the
-parallelizability study.
+> You did a very thorough analysis of all the factors that affect the
+> parallelizability of UNIX commands. You found that command line
+> arguments can change the parallelization behavior of commands and
+> potentially put them in another class. However, I wonder if the
+> analysis if complete. For example, could the behavior of commands not
+> be influenced by the setting of environment variables or in
+> configuration files? I did not find these mentioned in the
+> parallelizability study.
+
+kk: It is true that the there are commands the behaviour of which can
+change based on environment variables (and configuration files) (TODO:
+Add example). However, since they didn't appear in our ... we
+simplified the annotations to not have to deal with them. A point to
+mention is that the language is not theoretically complete, and
+neither did we aim for that, since the set of all shell commands is
+unbounded/set of all behaviours is rather big with long tails. However
+it is practically complete for the commands that we encountered in our
+study.
 
 References:
 
@@ -206,25 +225,37 @@ would have thought to do that, (b) I never would have expected it to
 work, and (c) shell scripts probably have the highest surface
 area/lowest bar for adoption of	all of the data-parallel frameworks.
 
-The paper is well written and clear.  Technically, it thoroughly
-describes the conceptual steps needed to map posix shell scripts into
-a DFG.  The clarity of presentation is such that none of the technical
-steps stand out as surprising, and at each point it is very easy to
-see how (and why) the specific choice was made. And you've managed to
-do this for shell scripts!  The one major thing that is missing for me
-is the secret sauce.  Where is the core technical novelty?  Or does it
-lie simply in the realization that you understand DFG well enough to
-be able to apply it to the shell environment?
+> The paper is well written and clear.  Technically, it thoroughly
+> describes the conceptual steps needed to map posix shell scripts into
+> a DFG.  The clarity of presentation is such that none of the technical
+> steps stand out as surprising, and at each point it is very easy to
+> see how (and why) the specific choice was made. And you've managed to
+> do this for shell scripts!  The one major thing that is missing for me
+> is the secret sauce.  Where is the core technical novelty?  Or does it
+> lie simply in the realization that you understand DFG well enough to
+> be able to apply it to the shell environment?
 
-I would like to see a bit more treatment of how the DFG relates to
-that of large distributed parallel processing frameworks (e.g., the
-MapReduce lineage).
+kk: I think that the core technical novelty (which is obvious in
+retrospect) is that a lot of shell commands have very nice properties,
+and can be translated to (and from) a clean DFG abstraction, so that a
+small set of transformations is applied to extract parallelism.
 
-One piece notably missing from the presentation is the overall
-complexity of the annotations required to make PaSh work.  The
-language (as shown in the appendix) is small, but it is not clear how
-difficult it is to annotate commands correclty, or the performance
-impact of being overly conservative in writing the annotations.
+> I would like to see a bit more treatment of how the DFG relates to
+> that of large distributed parallel processing frameworks (e.g., the
+> MapReduce lineage).
+
+kk: TODO: Add a discussion to the DFG of Map REduce lineage and all
+
+> One piece notably missing from the presentation is the overall
+> complexity of the annotations required to make PaSh work.  The
+> language (as shown in the appendix) is small, but it is not clear how
+> difficult it is to annotate commands correclty, or the performance
+> impact of being overly conservative in writing the annotations.
+
+kk: Auto prepei na to kanoume address sto geniko point. Oloi exoun
+thema me auto. The language is not meant to be used by shell script
+writers, alla apo command developers. Opote theorisame oti einai ok na
+einai ligo pio diskolo na graftei.
 
 nit:  the final sentence of the paper cuts off in the middle.
 
@@ -293,13 +324,19 @@ split is the best for all. The reason why we don't show it for
 e.g. grep, is that it has the exact same performance as the parallel
 (as it doesn't add any splits).
 
-> The paper promises insights by studying the Unix50 scripts, but there are no tables or results which explore the nature of these scripts, nor any insight about them. 
+> The paper promises insights by studying the Unix50 scripts, but there are no tables or results which explore the nature of these scripts, nor any insight about them.
 
-kk: Not sure how to respond to that
+kk: Not sure how to respond to that. Maybe he means that he was expecting insight from the study of Unix50 scripts as the coreutils POSIX study
 
-Many script inputs are small, in fact, the Unix50 scripts were in many cases made artificially bigger (10 GB) to be able to show speedups. The only thing we learn from section 6.2 is that parallelism in some cases improves the performance of these scripts.
+> Many script inputs are small, in fact, the Unix50 scripts were in many cases made artificially bigger (10 GB) to be able to show speedups. The only thing we learn from section 6.2 is that parallelism in some cases improves the performance of these scripts.
+
+TODO
 
 The general approach of annotating methods with their parallelism properties and using compiler transformations to create DAG parallelism is well known, although the application of this approach to shell commands is a new application.
+
+kk: It is true that DAG parallelism and compiler transformations has been
+a solution in other works but the Shell has its own challenges which
+we address in this paper.
 
 Compiler Optimizations for Scalable Parallel systems, Pande and Agrawal (Ed), 2001,   See Section V, Ch. 18. 
 Automatic generation of DAG parallelism, Cytron et al. 1989.
@@ -362,15 +399,55 @@ The most novel contribution in the paper appears to be the annotation record lan
 ## TODO: Make the DSL
 ```
 
-Since this DSL is one of the main stated contributions of the paper, the apparent fact that it didn't exist at the time of writing is a red flag. It would be genuinely interesting to understand the design of the DSL after it has been fully designed, since the space of shell command inputs is highly unstructured with a long tail of different styles, and designing a language to represent all of these styles is a real challenge. It would also be interesting to see how you define the aggregation functions for "parallelizable pure" commands 
+> Since this DSL is one of the main stated contributions of the paper, the apparent fact that it didn't exist at the time of writing is a red flag. It would be genuinely interesting to understand the design of the DSL after it has been fully designed, since the space of shell command inputs is highly unstructured with a long tail of different styles, and designing a language to represent all of these styles is a real challenge. It would also be interesting to see how you define the aggregation functions for "parallelizable pure" commands 
 
-The strategy for extracting parallelism in PaSh is very conservative. For example, I was a little surprised to see `cp` consigned to the "side-effectful" category without any further discussion. Did you encounter scripts where `cp` (or `mv`) was applied to perform a side effect that was "local" or "private" to a parallel activity, e.g. by operating on temporary files or in a temporary directory? Is there some way you could capture this pattern in PaSh, e.g. by modeling the state of the file system in your annotation language? It seems like such a feature would be useful to deal with external programs that do not use stdout (or write to a named argument file) for their output. 
+kk: We can mention here how we write parallelizable pure commands for
+the ones we have. We can give the real shell code (and say that we can
+actually do this outside of the shell too).
 
-The other aspect I would like to understand is how you translate potentially data-parallel `for` loops in the input script. The example in Figure 1 has a loop over years that seems like a natural candidate for parallelization, but it is not clear how or whether PaSh will attempt to execute the individual iterations in parallel (before combining the output in order). Are there any further restrictions if the loop bounds are given as arguments at runtime (or computed values), instead of in the compilation pass? On a related note, in Table 2, it was not obvious that increasing the degree of parallelism would increase the number of nodes in the graph and have such a dramatic impact on compile time: did you consider using an abstraction in the dataflow graph to represent variable amounts of fan-in and fan-out?
+kk: We don't claim completeness of the language because it is a
+"impossible(there is a word I am looking for, like illusion)"
+task. The goal was to capture all commands that we
+studied. POSIX/coreutils. ALso the DSL exists, and was used to
+classify the commands. The fact that we haven't implemented a parser
+doesn't mean that it doesn't exist.
 
-There are a few policy questions that are unevaluated in the paper. For example, using the `relay` node unwisely could exhaust memory, and it wasn't clear how much buffering it performs. (Would a similar outcome be achievable by changing the size of the system pipe buffer? Could you design a better version of `mkfifo` that supports finer-grained configuration here?) Also, did you investigate allowing different static parallelism factors for different parts of the graph, or creating a scheduler that dynamically adjusts the amount of parallelism in different parts of the graph (which might require a different dataflow representation for parallelism)? Finally, how do you propagate size information between nodes so that you can use the optimized implementation of `split` (e.g. is this part of the annotation record DSL)?
+kk: The comment is obsolete, 
 
-Usually I would applaud precision in a systems paper, but description of the dataflow graph model in Section 4 mostly provides details that are mostly irrelevant. I expect that most readers will be familiar with the basic concepts of I/O streams in a modern operating system, and have probably written a few shell scripts in their time, so it's unclear what additional value is obtained from the automata-theory-style definitions for a stream of characters. Similarly, the formal definition of statelessness in terms of a semigroup homomorphism is fine, but not terribly informative. Even with the precision, there seemed to be a disconnect between $D^*$ as a set of *finite* words, and the possibility that an input stream can be unbounded. The description of the aggregation function $agg$ as taking the *concatenation* of two mapped inputs seemed incorrect in the case of `sort`, since the merging version of `sort` definitely does not concatenate its separate inputs. If you developed the formal definitions further - say, into a proof, or a formal semantics - there might be more value here, but it seemed like a poor use of space. 
+> The strategy for extracting parallelism in PaSh is very conservative. For example, I was a little surprised to see `cp` consigned to the "side-effectful" category without any further discussion. Did you encounter scripts where `cp` (or `mv`) was applied to perform a side effect that was "local" or "private" to a parallel activity, e.g. by operating on temporary files or in a temporary directory? Is there some way you could capture this pattern in PaSh, e.g. by modeling the state of the file system in your annotation language? It seems like such a feature would be useful to deal with external programs that do not use stdout (or write to a named argument file) for their output. 
+
+kk: The problem with cp is different (what is it?)
+
+kk: Yes pash is conservative by design, in order to not break scripts.
+
+> The other aspect I would like to understand is how you translate potentially data-parallel `for` loops in the input script. The example in Figure 1 has a loop over years that seems like a natural candidate for parallelization, but it is not clear how or whether PaSh will attempt to execute the individual iterations in parallel (before combining the output in order). Are there any further restrictions if the loop bounds are given as arguments at runtime (or computed values), instead of in the compilation pass? On a related note, in Table 2, it was not obvious that increasing the degree of parallelism would increase the number of nodes in the graph and have such a dramatic impact on compile time: did you consider using an abstraction in the dataflow graph to represent variable amounts of fan-in and fan-out?
+
+kk: What about `for` loops? Do we say in the paper that we parallelize those? If so how? 
+
+kk: Compilation time does increase but is still pretty low (a few
+seconds for a huge script) and so we leave improving it further as
+future work (when this arises as a bottleneck). In addition, the fact
+that we end up with a shell script (which has a lot of benefits, like
+inspectability, the fact that we don't need to reimplement a shell
+interpreter etc, requires that the final dataflow graph will be pretty
+big.
+
+> There are a few policy questions that are unevaluated in the paper. For example, using the `relay` node unwisely could exhaust memory, and it wasn't clear how much buffering it performs. (Would a similar outcome be achievable by changing the size of the system pipe buffer? Could you design a better version of `mkfifo` that supports finer-grained configuration here?) Also, did you investigate allowing different static parallelism factors for different parts of the graph, or creating a scheduler that dynamically adjusts the amount of parallelism in different parts of the graph (which might require a different dataflow representation for parallelism)? Finally, how do you propagate size information between nodes so that you can use the optimized implementation of `split` (e.g. is this part of the annotation record DSL)?
+
+kk: Regarding the propagation of split size, in the automatic version
+there is no need for annotation (auto.split), in the manual one (which
+achieves slightly better performance) the user has to annotate each
+command of the pipeline themselves (how can we say that without
+sounding like a hack).
+
+> Usually I would applaud precision in a systems paper, but description of the dataflow graph model in Section 4 mostly provides details that are mostly irrelevant. I expect that most readers will be familiar with the basic concepts of I/O streams in a modern operating system, and have probably written a few shell scripts in their time, so it's unclear what additional value is obtained from the automata-theory-style definitions for a stream of characters. Similarly, the formal definition of statelessness in terms of a semigroup homomorphism is fine, but not terribly informative. Even with the precision, there seemed to be a disconnect between $D^*$ as a set of *finite* words, and the possibility that an input stream can be unbounded. The description of the aggregation function $agg$ as taking the *concatenation* of two mapped inputs seemed incorrect in the case of `sort`, since the merging version of `sort` definitely does not concatenate its separate inputs. If you developed the formal definitions further - say, into a proof, or a formal semantics - there might be more value here, but it seemed like a poor use of space. 
+
+kk: The formal development in chapter 4 serves to establish a formal
+model of the pash transformations and optimizations. Formally proving
+that these are correct is a significant amount of work that is left
+for the future.
+
+kk: Address the issue about sort
 
 There are a few more style nits as well:
 * Compounding the impression that the paper was rushed, the conclusions end mid-sentence at the end of page 12.
@@ -440,9 +517,11 @@ is more likely to see an unintuitive, un-debuggable mess.
 
 S3.1: I'm not sure `finger` is a good example these days. How about `ps` or `uptime`?
 
-S3.2: as a purely practical matter, where are the annotations for a command
-stored? There must be an extra metadata file, or something like it -- where do
-you put it?
+> S3.2: as a purely practical matter, where are the annotations for a command
+> stored? There must be an extra metadata file, or something like it -- where do
+> you put it?
+
+kk: Annotations are stored and read in a pash specific directory.
 
 S5.1: the definition of parallelisable regions means that many of the throwaway
 shell scripts I write would not be parallelisable, because (for ease of
@@ -471,9 +550,12 @@ line-by-line versus all-at-a-time input and record splitting) are avoided. See:
 https://devblogs.microsoft.com/powershell/powershell-foreach-object-parallel-feature/
 https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_pipelines
 
-The conclusion was cut off mid-sentence. I'm guessing this is why the submission
-appears to have been flattened to bitmaps which broke my usual reviewing
-workflow, as well as all the internal links. Please avoid that in the future.
+> The conclusion was cut off mid-sentence. I'm guessing this is why the submission
+> appears to have been flattened to bitmaps which broke my usual reviewing
+> workflow, as well as all the internal links. Please avoid that in the future.
+
+kk: this was actually done by the chairs because we realized
+post-deadline (that we missed a half sentence over the page limit)
 
 Novelty
 -------
