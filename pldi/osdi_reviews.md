@@ -106,10 +106,14 @@ Significant Weaknesses
 > quantitatively (complexity of annotations, person-time it took to
 > develop annotations for Coreutils and POSIX), would be insightful.
 
-kk: Can we give a concrete number of the time it took to do the study
-nikos? Also mention that this is a one-time effort. And the fact that
-we have done it means that noone needs to do it for POSIX + COreutils
-commands.
+kk: Thank you for this suggestion. We will add concrete quantitative
+results (if the reviewers agree) for the camera ready version of the
+paper (maybe give examples: average number of cases, number of groups
+that a command belongs in).
+
+(Maybe) Also reclarify/remention that this is a one-time effort per
+command. And the fact that we have done it means that noone needs to
+do it for POSIX + COreutils commands.
 
 
 Comments for author
@@ -499,8 +503,11 @@ very problem setting) are novel, and the results obtained are impressive.
 
 Significant Weaknesses
 ----------------------
-Niche applicability: do users actually write shell scripts any more? If they do,
-do they consist of complex data-processing pipelines?
+
+> Niche applicability: do users actually write shell scripts any more? If they do,
+> do they consist of complex data-processing pipelines?
+
+kk: Can we find/provide an example?
 
 Comments for author
 -------------------
