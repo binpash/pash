@@ -1,0 +1,33 @@
+{
+    "command": "grep",
+    "cases":
+    [
+        {
+            "predicate":
+            {
+                "operator": "args-empty"
+            },
+            "class": "stateless",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        },
+        {
+            "predicate":
+            {
+                "operator": "or",
+                "operands": ["-r",
+                             "--recursive",
+                             "-R",
+                             "--dereference-recursive"]
+            },
+            "class": "side-effects",
+            "comment": "In this case this reads directories and that is why we conservatively assume it is side-effectful. It is possible that this could be made more precise to be stateless."
+        },
+        {
+            "predicate": "default",
+            "class": "stateless",
+            "inputs": ["args[:]"],
+            "outputs": ["stdout"]
+        }
+    ]
+}
