@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import yaml
@@ -19,6 +20,7 @@ PYTHON_VERSION = "python3.8"
 PLANNER_EXECUTABLE = os.path.join(DISH_TOP, "compiler/distr_plan.py")
 
 config = {}
+annotations = []
 dish_args = None
 
 def load_config(config_file_path=False):
@@ -81,6 +83,31 @@ def pass_common_arguments(dish_arguments):
     if (dish_arguments.auto_split):
         arguments.append(string_to_argument("--auto_split"))
     return arguments
+
+##
+## Load annotation files
+##
+
+def load_annotation_file(abs_annotation_filename):
+    with open(abs_annotation_filename) as annotation_file:
+        try:
+            annotation = json.load(annotation_file)
+            return annotation
+        except json.JSONDecodeError:
+            print("WARNING: Could not parse annotation for file:", abs_annotation_filename)
+            return {}
+
+def load_annotation_files(annotation_dir):
+    global annotations
+    if(not os.path.isabs(annotation_dir)):
+        annotation_dir = os.path.join(DISH_TOP, annotation_dir)
+
+    for (dirpath, dirnames, filenames) in os.walk(annotation_dir):
+        json_filenames = [os.path.join(dirpath, filename) for filename in filenames
+                          if filename.endswith(".json")]
+        curr_annotations = [load_annotation_file(filename) for filename in json_filenames]
+        annotations += curr_annotations
+
 
 # TODO load command class file path from config
 command_classes_file_path = '{}/compiler/command-classes.yaml'.format(DISH_TOP)
