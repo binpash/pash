@@ -20,6 +20,9 @@ def main():
     if not config.config:
         config.load_config()
 
+    ## Load annotations
+    config.load_annotation_files(config.config['distr_planner']['annotations_dir'])
+
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
     input_script_path = args.input
     json_ast_string = parse_shell(input_script_path)

@@ -1,3 +1,4 @@
+from annotations import *
 from ir_utils import *
 
 import config
@@ -120,21 +121,24 @@ def find_command_input_output(command, options, stdin, stdout):
     global custom_command_input_outputs
 
     command_string = format_arg_chars(command)
-    # print("Command to categorizefind:", command_string)
+    # print("Command to categorize:", command_string)
 
     assert(isinstance(command_string, str))
-
-    ## TODO: Make a proper search that returns the command outputs and
-    ## inputs. This is hardcoded and wrong
-    # print(" -- Warning: Argument inputs and outputs for: {} are hardcoded and possibly wrong"
-    #       .format(command_string))
 
     if (command_string in custom_command_input_outputs):
         print(" -- Warning: Overriding standard inputs-outputs for:", command_string)
         custom_io_fun = custom_command_input_outputs[command_string]
         return custom_io_fun(options, stdin, stdout)
-    else:
-        return default_input_output(options, stdin, stdout)
+
+    ## Find the inputs-outputs of the command in the annotation files (if it exists)
+    command_io_from_annotation = get_command_io_from_annotations(command_string,
+                                                                 options,
+                                                                 config.annotations)
+    if (command_io_from_annotation):
+        # print("inputs-outputs found for:", command_string)
+        return command_io_from_annotation
+
+    return default_input_output(options, stdin, stdout)
 
 
 ## This functions finds and returns a string representing the command category
@@ -146,14 +150,19 @@ def find_command_category(command, options):
 
     assert(isinstance(command_string, str))
 
-    ## TODO: Make a proper search that returns the command category
-    # print(" -- Warning: Category for: {} is hardcoded and possibly wrong".format(command_string))
-
     ## Override standard categories
     if (command_string in custom_command_categories):
         print(" -- Warning: Overriding standard category for:", command_string)
         custom_category_fun = custom_command_categories[command_string]
         return custom_category_fun(options)
+
+    ## Find the class of the command in the annotation files (if it exists)
+    command_class_from_annotation = get_command_class_from_annotations(command_string,
+                                                                       options,
+                                                                       config.annotations)
+    if (command_class_from_annotation):
+        # print("annotation found for:", command_string)
+        return command_class_from_annotation
 
     # NOTE order of class declaration in definition file is important, as it
     # dictates class precedence in the following search
