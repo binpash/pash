@@ -32,14 +32,44 @@ def get_command_from_annotation(command, options, annotation):
     return case
 
 def find_annotation_case(options, cases):
+    for case in cases:
+        if(predicate_satisfied(options, case['predicate'])):
+            return case
+
+    ## Unreachable
+    assert(False)
+
+def predicate_satisfied(options, predicate):
+    if(predicate == 'default'):
+        return True
+
+    func = interpret_predicate(predicate)
+    return func(options)
+
+def interpret_predicate(predicate):
+    # print(predicate)
+    operator = predicate['operator']
+    operands = []
+    try:
+        operands = predicate['operands']
+    except:
+        pass
+    if(operator == 'len_args_eq'):
+        return lambda options: len_args(operands[0], options)
+
+    ## TODO: Fill in the rest
+    return lambda x: False
+
+
+##
+## Helper functions for predicate interpretation
+##
+
+def len_args(desired_length, options):
     formated_options = [format_arg_chars(opt) for opt in options]
-    print(formated_options)
-    print(cases)
+    # print(formated_options)
 
-    ## TODO: Fill in the case
-
-    ## By default return the last case
-    default_case = cases[-1]
-    assert(default_case['predicate'] == 'default')
-    return default_case
-
+    ## filter out the options (starting with `-`)
+    args = [opt for opt in formated_options
+            if not opt.startswith("-")]
+    return (len(args) == desired_length)

@@ -5,8 +5,10 @@
         {
             "predicate":
             {
-                "operator": "args-empty"
+                "operator": "len_args_eq",
+                "operands": [1]
             },
+            "comment": "This doesn't work if the pattern is given with the -e, -f flags",
             "class": "stateless",
             "inputs": ["stdin"],
             "outputs": ["stdout"]
