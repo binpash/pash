@@ -1,0 +1,12 @@
+{
+    "command": "cat",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "stateless",
+            "inputs": ["args[:]"],
+            "outputs": ["stdout"]
+        }
+    ]
+}
