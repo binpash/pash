@@ -5,7 +5,7 @@
         {
             "predicate":
             {
-                "operator": "or",
+                "operator": "exists",
                 "operands": ["-d",
                              "--delete"]
             },

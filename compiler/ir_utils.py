@@ -1,6 +1,25 @@
 ### Utils
 
-## TODO: This might need to become more general
+##
+## Separate the option from the non-option command arguments
+##
+
+def option_args(options):
+    option_args_inds = option_args_indices(options)
+    args = [option for option, i in option_args_inds]
+    return args
+
+def option_args_indices(options):
+    non_option_indices = [i for _, i in non_option_args_indices(options)]
+    non_option_indices_set = set(non_option_indices)
+
+    ## Find the option args by finding the complement of the
+    ## non-option args
+    formated_options = [format_arg_chars(opt) for opt in options]
+    option_args = [(option, i) for i, option in enumerate(formated_options)
+                   if not i in non_option_indices_set]
+    return option_args
+
 def non_option_args(options):
     non_option_args_inds = non_option_args_indices(options)
     args = [option for option, i in non_option_args_inds]
@@ -10,9 +29,11 @@ def non_option_args_indices(options):
     formated_options = [format_arg_chars(opt) for opt in options]
     # print(formated_options)
 
+    ## TODO: This might need to become more general
     args = [(option, i) for i, option in enumerate(formated_options)
             if not option.startswith("-")]
     return args
+
 
 
 def get_command_from_definition(command_definition):
