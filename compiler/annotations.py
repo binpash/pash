@@ -103,9 +103,11 @@ def interpret_predicate(predicate):
         pass
     if(operator == 'len_args_eq'):
         return lambda options: len_args(operands[0], options)
+    elif(operator == 'exists'):
+        return lambda options: exists_operator(operands, options)
 
     ## TODO: Fill in the rest
-    return lambda x: False
+    return lambda x: print("Uninterpreted operator:", operator); False
 
 
 ##
@@ -115,3 +117,13 @@ def interpret_predicate(predicate):
 def len_args(desired_length, options):
     args = non_option_args(options)
     return (len(args) == desired_length)
+
+def exists_operator(operands, options):
+    desired_options_set = set(operands)
+    opt_args = option_args(options)
+    print(desired_options_set)
+    print(opt_args)
+    for opt in opt_args:
+        if(opt in desired_options_set):
+            return True
+    return False

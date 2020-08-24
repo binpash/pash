@@ -16,7 +16,7 @@
         {
             "predicate":
             {
-                "operator": "or",
+                "operator": "exists",
                 "operands": ["-r",
                              "--recursive",
                              "-R",
