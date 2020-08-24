@@ -64,14 +64,6 @@ def is_comm_pure(options):
     else:
         return "none"
 
-def is_tr_pure(options):
-    first_opt = format_arg_chars(options[0])
-    if(first_opt.startswith("-")
-       and "d" in first_opt):
-        return "pure"
-    else:
-        return "stateless"
-
 def is_sed_pure(options):
     first_opt = format_arg_chars(options[0])
     if(not first_opt.startswith("-")
@@ -92,7 +84,6 @@ custom_command_input_outputs = {
 
 custom_command_categories = {
     "comm" : is_comm_pure,
-    "tr"   : is_tr_pure,
     "sed"  : is_sed_pure,
 }
 
