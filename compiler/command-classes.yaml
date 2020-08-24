@@ -1,5 +1,4 @@
 stateless:
-    - command: cat
     - command: tr
     - command: col
     - command: groff # not clear
