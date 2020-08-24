@@ -118,12 +118,12 @@ def len_args(desired_length, options):
     args = non_option_args(options)
     return (len(args) == desired_length)
 
-def exists_operator(operands, options):
-    desired_options_set = set(operands)
-    opt_args = option_args(options)
-    print(desired_options_set)
-    print(opt_args)
-    for opt in opt_args:
-        if(opt in desired_options_set):
-            return True
-    return False
+def exists_operator(desired_options, options):
+    opt_args_set = set(option_args(options))
+    existence = map(lambda opt: opt in opt_args_set, desired_options)
+    return any(existence)
+
+def all_operator(desired_options, options):
+    opt_args_set = set(option_args(options))
+    existence = map(lambda opt: opt in opt_args_set, desired_options)
+    return all(existence)
