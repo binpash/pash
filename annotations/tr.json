@@ -1,0 +1,24 @@
+{
+    "command": "tr",
+    "cases":
+    [
+        {
+            "predicate":
+            {
+                "operator": "or",
+                "operands": ["-d",
+                             "--delete"]
+            },
+            "class": "pure",
+            "comment": "Not sure if this should be pure or stateless",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        },
+        {
+            "predicate": "default",
+            "class": "stateless",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        }
+    ]
+}
