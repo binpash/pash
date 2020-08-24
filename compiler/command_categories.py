@@ -13,28 +13,6 @@ import config
 ## Custom input output functions for specific commands
 ##
 
-def comm_input_output(options, stdin, stdout):
-    first_opt = format_arg_chars(options[0])
-    if(first_opt == "-13"):
-        input_opt = format_arg_chars(options[2])
-        if(input_opt == "-"):
-            in_stream = ["stdin"]
-            opt_indices = [("option", i) for i in range(len(options))]
-        else:
-            in_stream = [("option", 2)]
-            opt_indices = [("option", 0), ("option", 1)]
-        return (in_stream, ["stdout"], opt_indices)
-    elif (first_opt == "-23"):
-        input_opt = format_arg_chars(options[1])
-        if(input_opt == "-"):
-            in_stream = ["stdin"]
-            opt_indices = [("option", i) for i in range(len(options))]
-        else:
-            in_stream = [("option", 1)]
-            opt_indices = [("option", 0), ("option", 2)]
-        return (in_stream, ["stdout"], opt_indices)
-    else:
-        assert(false)
 
 ## WARNING: This is not complete!! It doesn't handle - for stdin, or
 ## directories, etc...
@@ -71,7 +49,6 @@ def is_sed_pure(options):
 ##
 
 custom_command_input_outputs = {
-    "comm" : comm_input_output,
     "diff" : diff_input_output
 }
 
