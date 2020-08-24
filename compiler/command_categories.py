@@ -13,10 +13,6 @@ import config
 ## Custom input output functions for specific commands
 ##
 
-def cat_input_output(options, stdin, stdout):
-    input_stream = [("option", i) for i in range(len(options))]
-    return (input_stream, ["stdout"], [])
-
 def comm_input_output(options, stdin, stdout):
     first_opt = format_arg_chars(options[0])
     if(first_opt == "-13"):
@@ -90,7 +86,6 @@ def is_sed_pure(options):
 ##
 
 custom_command_input_outputs = {
-    "cat"  : cat_input_output,
     "comm" : comm_input_output,
     "diff" : diff_input_output
 }
