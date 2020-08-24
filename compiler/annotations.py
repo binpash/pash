@@ -105,6 +105,10 @@ def interpret_predicate(predicate):
         return lambda options: len_args(operands[0], options)
     elif(operator == 'exists'):
         return lambda options: exists_operator(operands, options)
+    elif(operator == 'all'):
+        return lambda options: all_operator(operands, options)
+    elif(operator == 'or'):
+        return lambda options: or_operator(operands, options)
 
     ## TODO: Fill in the rest
     return lambda x: print("Uninterpreted operator:", operator); False
@@ -127,3 +131,7 @@ def all_operator(desired_options, options):
     opt_args_set = set(option_args(options))
     existence = map(lambda opt: opt in opt_args_set, desired_options)
     return all(existence)
+
+def or_operator(operands, options):
+    operand_predicates = map(lambda op: interpret_predicate(op)(options), operands)
+    return any(operand_predicates)

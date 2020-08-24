@@ -57,13 +57,6 @@ def default_input_output(options, stdin, stdout):
 ##
 
 ## TODO: All of these are possibly non-complete
-def is_comm_pure(options):
-    first_opt = format_arg_chars(options[0])
-    if(first_opt == "-13" or first_opt == "-23"):
-        return "stateless"
-    else:
-        return "none"
-
 def is_sed_pure(options):
     first_opt = format_arg_chars(options[0])
     if(not first_opt.startswith("-")
@@ -83,7 +76,6 @@ custom_command_input_outputs = {
 }
 
 custom_command_categories = {
-    "comm" : is_comm_pure,
     "sed"  : is_sed_pure,
 }
 
