@@ -4,10 +4,57 @@ from ir_utils import *
 def get_command_io_from_annotations(command, options, annotations):
     command_ann = get_command_from_annotations(command, options, annotations)
     if(command_ann):
-        ## TODO: Interpret those
         inputs = command_ann['inputs']
         outputs = command_ann['outputs']
-        return None
+        extracted_inputs = interpret_io_list(inputs, options)
+        extracted_outputs = interpret_io_list(outputs, options)
+        option_indices = rest_options(extracted_inputs, extracted_outputs, options)
+        return (extracted_inputs, extracted_outputs, option_indices)
+
+def rest_options(inputs, outputs, options):
+    input_output_indices = [io[1] for io in inputs + outputs
+                            if isinstance(io, tuple)]
+    io_indices_set = set(input_output_indices)
+    all_indices = [("option", i) for i in range(len(options))
+                   if not i in io_indices_set]
+    return all_indices
+
+def interpret_io_list(files, options):
+    io_files = []
+    for io in files:
+        io_files += interpret_io(io, options)
+    return io_files
+
+def interpret_io(io, options):
+    if(io == "stdin"):
+        return ["stdin"]
+    elif(io == "stdout"):
+        return ["stdout"]
+    else:
+        assert(io.startswith("args"))
+        indices = io.split("[")[1].split("]")[0]
+
+        ## Single index
+        if(not ":" in indices):
+            ## TODO: Complete
+            assert(False)
+        else:
+            start_i_str, end_i_str = indices.split(":")
+
+            args_indices = non_option_args_indices(options)
+
+            start_i = 0
+            if(not start_i_str == ""):
+                start_i = int(start_i_str)
+
+            end_i = len(args_indices)
+            if(not end_i_str == ""):
+                end_i = int(end_i_str)
+
+            io_list = []
+            for _, i in args_indices[start_i:end_i]:
+                io_list.append(("option", i))
+            return io_list
 
 def get_command_class_from_annotations(command, options, annotations):
     command_ann = get_command_from_annotations(command, options, annotations)
@@ -66,10 +113,5 @@ def interpret_predicate(predicate):
 ##
 
 def len_args(desired_length, options):
-    formated_options = [format_arg_chars(opt) for opt in options]
-    # print(formated_options)
-
-    ## filter out the options (starting with `-`)
-    args = [opt for opt in formated_options
-            if not opt.startswith("-")]
+    args = non_option_args(options)
     return (len(args) == desired_length)

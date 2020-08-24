@@ -9,8 +9,6 @@ import config
 ### by a parser of the command classification DSL.
 ###
 
-## TODO: Make the DSL
-
 ##
 ## Custom input output functions for specific commands
 ##
@@ -135,7 +133,8 @@ def find_command_input_output(command, options, stdin, stdout):
                                                                  options,
                                                                  config.annotations)
     if (command_io_from_annotation):
-        # print("inputs-outputs found for:", command_string)
+        print("inputs-outputs found for:", command_string)
+        print("|--", command_io_from_annotation)
         return command_io_from_annotation
 
     return default_input_output(options, stdin, stdout)
@@ -161,7 +160,7 @@ def find_command_category(command, options):
                                                                        options,
                                                                        config.annotations)
     if (command_class_from_annotation):
-        # print("annotation found for:", command_string)
+        print("class:", command_class_from_annotation, "found for:", command_string)
         return command_class_from_annotation
 
     # NOTE order of class declaration in definition file is important, as it

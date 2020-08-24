@@ -1,5 +1,20 @@
 ### Utils
 
+## TODO: This might need to become more general
+def non_option_args(options):
+    non_option_args_inds = non_option_args_indices(options)
+    args = [option for option, i in non_option_args_inds]
+    return args
+
+def non_option_args_indices(options):
+    formated_options = [format_arg_chars(opt) for opt in options]
+    # print(formated_options)
+
+    args = [(option, i) for i, option in enumerate(formated_options)
+            if not option.startswith("-")]
+    return args
+
+
 def get_command_from_definition(command_definition):
     if 'command' in command_definition:
         return command_definition['command']
