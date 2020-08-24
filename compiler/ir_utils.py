@@ -30,8 +30,11 @@ def non_option_args_indices(options):
     # print(formated_options)
 
     ## TODO: This might need to become more general
+    ##
+    ## WARNING: Handling `-` as stdin should not be done for all
+    ## commands but only for those that have the stdin-hyphen option.
     args = [(option, i) for i, option in enumerate(formated_options)
-            if not option.startswith("-")]
+            if not option.startswith("-") or option == "-"]
     return args
 
 

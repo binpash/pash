@@ -6,8 +6,11 @@ def get_command_io_from_annotations(command, options, annotations):
     if(command_ann):
         inputs = command_ann['inputs']
         outputs = command_ann['outputs']
-        extracted_inputs = interpret_io_list(inputs, options)
-        extracted_outputs = interpret_io_list(outputs, options)
+        ann_options = []
+        if('options' in command_ann):
+            ann_options = command_ann['options']
+        extracted_inputs = interpret_io_list(inputs, options, ann_options)
+        extracted_outputs = interpret_io_list(outputs, options, ann_options)
         option_indices = rest_options(extracted_inputs, extracted_outputs, options)
         return (extracted_inputs, extracted_outputs, option_indices)
 
@@ -19,13 +22,13 @@ def rest_options(inputs, outputs, options):
                    if not i in io_indices_set]
     return all_indices
 
-def interpret_io_list(files, options):
+def interpret_io_list(files, options, ann_options):
     io_files = []
     for io in files:
-        io_files += interpret_io(io, options)
+        io_files += interpret_io(io, options, ann_options)
     return io_files
 
-def interpret_io(io, options):
+def interpret_io(io, options, ann_options):
     if(io == "stdin"):
         return ["stdin"]
     elif(io == "stdout"):
@@ -34,14 +37,17 @@ def interpret_io(io, options):
         assert(io.startswith("args"))
         indices = io.split("[")[1].split("]")[0]
 
+        print(io, options)
+
+        ## Find the file arguments (and their indices)
+        args_indices = non_option_args_indices(options)
+
         ## Single index
         if(not ":" in indices):
-            ## TODO: Complete
-            assert(False)
+            index = int(indices)
+            io_list = [("option", args_indices[index][1])]
         else:
             start_i_str, end_i_str = indices.split(":")
-
-            args_indices = non_option_args_indices(options)
 
             start_i = 0
             if(not start_i_str == ""):
@@ -54,7 +60,23 @@ def interpret_io(io, options):
             io_list = []
             for _, i in args_indices[start_i:end_i]:
                 io_list.append(("option", i))
-            return io_list
+
+        ## If the command has the "stdin-hyphen" option turned on,
+        ## then it means that `-` should be interpreted as stdin
+        if('stdin-hyphen' in ann_options):
+            io_list = [handle_stdin_hyphen(io, options) for io in io_list]
+        return io_list
+
+def handle_stdin_hyphen(io, options):
+    if(isinstance(io, tuple)):
+        option = options[io[1]]
+
+        ## TODO: For absolute completeness, not being able to
+        ## interpret the argument to `-` means that it should also
+        ## bump up the command class (or not be translated to the DFG).
+        if(format_arg_chars(option) == '-'):
+            return "stdin"
+    return io
 
 def get_command_class_from_annotations(command, options, annotations):
     command_ann = get_command_from_annotations(command, options, annotations)
