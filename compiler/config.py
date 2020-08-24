@@ -92,10 +92,10 @@ def load_annotation_file(abs_annotation_filename):
     with open(abs_annotation_filename) as annotation_file:
         try:
             annotation = json.load(annotation_file)
-            return annotation
+            return [annotation]
         except json.JSONDecodeError:
             print("WARNING: Could not parse annotation for file:", abs_annotation_filename)
-            return {}
+            return []
 
 def load_annotation_files(annotation_dir):
     global annotations
@@ -105,7 +105,7 @@ def load_annotation_files(annotation_dir):
     for (dirpath, dirnames, filenames) in os.walk(annotation_dir):
         json_filenames = [os.path.join(dirpath, filename) for filename in filenames
                           if filename.endswith(".json")]
-        curr_annotations = [load_annotation_file(filename) for filename in json_filenames]
+        curr_annotations = [ann for filename in json_filenames for ann in load_annotation_file(filename) ]
         annotations += curr_annotations
 
 
