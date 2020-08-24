@@ -93,8 +93,9 @@ def load_annotation_file(abs_annotation_filename):
         try:
             annotation = json.load(annotation_file)
             return [annotation]
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as err:
             print("WARNING: Could not parse annotation for file:", abs_annotation_filename)
+            print("|-- {}".format(err))
             return []
 
 def load_annotation_files(annotation_dir):
