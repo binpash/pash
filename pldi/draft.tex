@@ -1,8 +1,25 @@
 %% OSDI -- 12 pages limit
-\documentclass[letterpaper,twocolumn,10pt]{article}
-\pdfoutput=1 % for arxiv
+%% \documentclass[letterpaper,twocolumn,10pt]{article}
+%% \pdfoutput=1 % for arxiv
+%% \usepackage{usenix2019_v3}
 
-\usepackage{usenix2019_v3}
+%% EuroSys 2021 -- 12 pages limit
+\documentclass[sigplan,review,anonymous]{acmart}
+\acmSubmissionID{TBD}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+
+%% EuroSys rules: Submissions may have at most 12 pages of technical
+%% content, including all text, figures, tables, appendices,
+%% etc. Bibliographic references are not included in the 12-page
+%% limit. Use A4 or US letter paper size, with all text and figures
+%% fitting inside a 178 x 229 mm (7 x 9 in) block centered on the
+%% page, using two columns separated by ≥8 mm (0.33″) of
+%% whitespace. Use ≥10-point font (typeface Times Roman, Linux
+%% Libertine, etc.) on ≥12-point (single-spaced) leading. Graphs and
+%% figures should be readable when printed in grayscale, without
+%% magnification. All pages should be numbered. Authors are encouraged
+%% to hyperlink their references.
+
 
 %% For double-blind review submission, w/o CCS and ACM Reference (max submission space)
 % Limit: 25 pages
@@ -202,8 +219,6 @@
   \endgroup
 }
 
-\begin{document}
-
 %% Title information
 %% \title{Dish: Distribution-oblivious Shell Scripting}         %% [Short Title] is optional;
 \title{\sys: Light-touch Data-Parallel Shell Processing}         %% [Short Title] is optional;
@@ -227,14 +242,35 @@
 %% Many elements are not rendered, but should be provided for metadata
 %% extraction tools.
 %% Author with single affiliation.
-\author{
-% Anonymous Author(s)\\
-% \normalsize{Additional Anonymized Material: \href{https://git.io/JfwSq}{https://git.io/JfwSq}.}
-  {\rm \normalsize Nikos Vasilakis$^{*}$\qquad Konstantinos Kallas$^{*\dagger}$\qquad  Konstantinos Mamouras$^{\circ}$ }\\
-  {\rm \normalsize Achilleas Benetopoulos$^{\diamond}$ \qquad Lazar Cvetkovich$^{\ddagger}$ }\\
-  {\small MIT, CSAIL \quad $^{\dagger}$University of Pennsylvania \quad $^{\circ}$Rice University \quad $^{\diamond}$Unaffiliated \quad $^{\ddagger}$University of Belgrade}
-}
-% \authornote{$^{*}$Equal contribution.}     %% \authornote is optional;
+
+
+%% \author{
+%% % Anonymous Author(s)\\
+%% % \normalsize{Additional Anonymized Material: \href{https://git.io/JfwSq}{https://git.io/JfwSq}.}
+%%   {\rm \normalsize Nikos Vasilakis$^{*}$\qquad Konstantinos Kallas$^{*\dagger}$\qquad  Konstantinos Mamouras$^{\circ}$ }\\
+%%   {\rm \normalsize Achilleas Benetopoulos$^{\diamond}$ \qquad Lazar Cvetkovich$^{\ddagger}$ }\\
+%%   {\small MIT, CSAIL \quad $^{\dagger}$University of Pennsylvania \quad $^{\circ}$Rice University \quad $^{\diamond}$Unaffiliated \quad $^{\ddagger}$University of Belgrade}
+%% }
+
+%% \author{Nikos Vasilakis}
+%% \authornote{The two marked authors contributed equally to the paper.}
+%% \affiliation{MIT}
+
+%% \author{Konstantinos Kallas}
+%% \authornotemark[1]
+%% \affiliation{University of Pennsylvania}
+
+%% \author{Konstantinos Mamouras}
+%% \affiliation{Rice University}
+
+%% \author{Achilleas Benetopoulos}
+%% \affiliation{Unaffiliated}
+
+%% \author{Lazar Cvetkovich}
+%% \affiliation{University of Belgrade}
+
+%% \authornote{$^{*}$Equal contribution.}     %% \authornote is optional;
+
 %%                                         %% can be repeated if necessary
 %% \orcid{nnnn-nnnn-nnnn-nnnn}             %% \orcid is optional
 %% \affiliation{
@@ -285,6 +321,8 @@
 \setlist{noitemsep,leftmargin=10pt,topsep=2pt,parsep=2pt,partopsep=2pt}
 
 
+\begin{document}
+
 
 %% 2012 ACM Computing Classification System (CSS) concepts
 %% Generate at 'http://dl.acm.org/ccs/ccs.cfm'.
@@ -312,13 +350,6 @@
 %% comma separated list
 % \keywords{keyword1, keyword2, keyword3}  %% \keywords are mandatory in final camera-ready submission
 
-
-%% \maketitle
-%% Note: \maketitle command must come after title commands, author
-%% commands, abstract environment, Computing Classification System
-%% environment and commands, and keywords command.
-\maketitle
-
 %% Abstract
 %% Note: \begin{abstract}...\end{abstract} environment must come
 %% before \maketitle command
@@ -331,6 +362,13 @@ informs \sys's annotation language and results in its equivalent of a data-paral
 Finally, \sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
 \sys's extensive evaluation, combining several classic and modern Unix scripts, shows significant benefits across several axes---with order-of-magnitude performance improvements stemming from the combination of its program transformations and runtime primitives.
 \end{abstract}
+
+
+%% \maketitle
+%% Note: \maketitle command must come after title commands, author
+%% commands, abstract environment, Computing Classification System
+%% environment and commands, and keywords command.
+\maketitle
 
 % Its runtime component provides orchestration and planning support during the execution of the program.
 % These are from the abstract:
@@ -392,7 +430,7 @@ Finally, \sys's \unix-aware runtime primitives address several practical issues 
 % % Too low-level descriptions of the problem, maybe keep it high level?
 % For small input sizes this isn't a problem since scripts take less than a second to execute, but as data sizes increase, failing to utilize the underlying parallel computational resources is a significant bottleneck.
 
-\blfootnote{$^{*}$Equal contribution.}
+%% \blfootnote{$^{*}$Equal contribution.}
 The \unix shell is an environment---often interactive---for composing scripts written in a plethora of programming languages.
 This language-agnosticism, coupled with \unix's toolbox philosophy~\cite{mcilroy1978unix}, makes the shell the primary choice for specifying succinct and simple pipelines for data processing, system orchestration, and other automation tasks.
 % Pipe-centric shell commands are parallel (and to some extent, functional) programs that can natively enjoy significant parallelism on a multicore machine.
