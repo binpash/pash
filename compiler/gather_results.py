@@ -51,17 +51,17 @@ coarse_experiments = ["minimal_grep",
                       "shortest_scripts"]
 
 
-pretty_names = {"minimal_grep" : "grep",
+pretty_names = {"minimal_grep" : "nfa-regex",
                 "minimal_sort" : "sort",
                 "wf" : "wf",
                 "topn" : "top-n",
-                "grep" : "grep-light",
+                "grep" : "filter",
                 "bigrams" : "bi-grams",
                 "alt_bigrams" : "bi-grams-opt",
                 "spell" : "spell",
                 "shortest_scripts" : "shortest-scripts",
-                "diff" : "diff",
-                "set-diff" : "set-diff",
+                "diff" : "difference",
+                "set-diff" : "set-difference",
                 "double_sort" : "sort-sort"}
 
 structures = {"minimal_grep" : "$3\\times\\tsta$",
@@ -473,7 +473,7 @@ def format_time_milliseconds(time_milliseconds):
 
 def generate_table_header(full=True):
     header = []
-    header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} lllll}']
+    header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} llllllll}']
     header += ['\\toprule']
     if(not full):
         header += ['Script ~&~ Structure & Input &'
