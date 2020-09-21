@@ -1,0 +1,29 @@
+{
+    "command": "head",
+    "cases":
+    [
+        {
+            "predicate":
+            {
+                "operator": "and",
+                "operands":
+                [
+                    {
+                        "operator": "exists",
+                        "operands": ["-n"]
+                    }
+                ]
+            },
+            "class": "pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+			"comments": "Has to keep internal counter for the number of reached line."
+        }
+        {
+            "predicate": "default",
+            "class": "stateless",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        }
+    ]
+}
