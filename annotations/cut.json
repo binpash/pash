@@ -1,0 +1,33 @@
+{
+    "command": "cut",
+    "cases":
+    [
+        {
+            "predicate":
+            {
+                "operator": "and",
+                "operands":
+                [
+                    {
+                        "operator": "exists",
+                        "operands": ["-d"]
+                    },
+                    {
+                        "operator": "exists",
+                        "operands": ["-f"]
+                    }
+                ]
+            },
+            "class": "pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+			"comments": "Has to keep internal table of fields, and cannot output to stdout unless the whole line is read."
+        }
+        {
+            "predicate": "default",
+            "class": "stateless",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        }
+    ]
+}
