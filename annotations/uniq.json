@@ -1,15 +1,14 @@
 {
-    "command": "sort",
+    "command": "uniq",
     "cases":
     [
         {
             "predicate":
             {
-                "operator": "exists",
-                "operands": ["-r"]
+                "operator": "all",
+                "operands": ["-c"]
             },
             "class": "pure",
-            "comment": "Reverse sort",
             "inputs": ["stdin"],
             "outputs": ["stdout"]
         },
