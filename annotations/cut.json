@@ -9,12 +9,12 @@
                 "operands":
                 [
                     {
-                        "operator": "exists",
-                        "operands": ["-d"]
+                        "operator": "all",
+                        "operands": ["-d", "--delimiter"]
                     },
                     {
-                        "operator": "exists",
-                        "operands": ["-f"]
+                        "operator": "all",
+                        "operands": ["-f", "--fields"]
                     }
                 ]
             },

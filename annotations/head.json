@@ -9,15 +9,18 @@
                 "operands":
                 [
                     {
-                        "operator": "exists",
+                        "operator": "all",
                         "operands": ["-n"]
-                    }
+                    },
+					{
+						"operator": "all",
+						"operands": []
+					}
                 ]
             },
-            "class": "pure",
+            "class": "stateless",
             "inputs": ["stdin"],
-            "outputs": ["stdout"],
-			"comments": "Has to keep internal counter for the number of reached line."
+            "outputs": ["stdout"]
         }
         {
             "predicate": "default",

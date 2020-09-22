@@ -1,0 +1,17 @@
+{
+    "command": "sort",
+    "cases":
+    [
+        {
+            "predicate":
+            {
+                "operator": "all",
+                "operands": ["-l"]
+            },
+            "class": "pure",
+            "comment": "Count lines",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        }
+    ]
+}
