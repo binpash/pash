@@ -21,7 +21,7 @@
             "class": "pure",
             "inputs": ["stdin"],
             "outputs": ["stdout"],
-			"comments": "Has to keep internal table of fields, and cannot output to stdout unless the whole line is read."
+			"comments": "Stateless in all cases with exception in case where newline is a delimiter."
         },
         {
             "predicate": "default",
