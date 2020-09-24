@@ -3,17 +3,6 @@
     "cases":
     [
         {
-            "predicate":
-            {
-                "operator": "exists",
-                "operands": ["-r"]
-            },
-            "class": "pure",
-            "comment": "Reverse sort",
-            "inputs": ["stdin"],
-            "outputs": ["stdout"]
-        },
-        {
             "predicate": "default",
             "class": "pure",
             "inputs": ["stdin"],
