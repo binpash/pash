@@ -3,16 +3,6 @@
     "cases":
     [
         {
-            "predicate":
-            {
-                "operator": "all",
-                "operands": ["-c"]
-            },
-            "class": "pure",
-            "inputs": ["stdin"],
-            "outputs": ["stdout"]
-        },
-        {
             "predicate": "default",
             "class": "pure",
             "inputs": ["stdin"],

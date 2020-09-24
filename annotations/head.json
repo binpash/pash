@@ -3,28 +3,8 @@
     "cases":
     [
         {
-            "predicate":
-            {
-                "operator": "and",
-                "operands":
-                [
-                    {
-                        "operator": "all",
-                        "operands": ["-n"]
-                    },
-					{
-						"operator": "all",
-						"operands": []
-					}
-                ]
-            },
-            "class": "stateless",
-            "inputs": ["stdin"],
-            "outputs": ["stdout"]
-        }
-        {
             "predicate": "default",
-            "class": "stateless",
+            "class": "pure",
             "inputs": ["stdin"],
             "outputs": ["stdout"]
         }

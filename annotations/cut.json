@@ -9,11 +9,11 @@
                 "operands":
                 [
                     {
-                        "operator": "all",
-                        "operands": ["-d", "--delimiter"]
+                        "operator": "val_opt_eq",
+                        "operands": ["-d", "--delimiter", "\n"]
                     },
                     {
-                        "operator": "all",
+                        "operator": "exists",
                         "operands": ["-f", "--fields"]
                     }
                 ]
@@ -22,7 +22,7 @@
             "inputs": ["stdin"],
             "outputs": ["stdout"],
 			"comments": "Has to keep internal table of fields, and cannot output to stdout unless the whole line is read."
-        }
+        },
         {
             "predicate": "default",
             "class": "stateless",
