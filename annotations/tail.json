@@ -1,5 +1,5 @@
 {
-    "command": "sort",
+    "command": "tail",
     "cases":
     [
         {
