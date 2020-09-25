@@ -3,8 +3,18 @@
     "cases":
     [
         {
-            "predicate": "default",
+            "predicate":
+            {
+                "operator": "exists",
+                "operands": ["-w1"]
+            },
             "class": "stateless",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        },
+        {
+            "predicate": "default",
+            "class": "pure",
             "inputs": ["stdin"],
             "outputs": ["stdout"]
         }
