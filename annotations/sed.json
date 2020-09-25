@@ -1,0 +1,13 @@
+{
+    "command": "sed",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+			"comment": "Conservative approach."
+        }
+    ]
+}
