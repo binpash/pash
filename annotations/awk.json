@@ -1,0 +1,13 @@
+{
+    "command": "awk",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "side-effectful",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+			"comment": "Conservative approach."
+        }
+    ]
+}
