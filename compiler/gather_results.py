@@ -595,8 +595,12 @@ def aggregate_unix50_results(all_results, scaleup_numbers):
 
 def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
 
-    ## TODO: Sort by speedup
+    ## Sort by speedup
     all_results.sort(key=lambda x: x[0][scaleup_numbers.index(parallelism)], reverse=True)
+    ## Filter small exec times.
+    all_results = [res for res in all_results
+                   if (res[1][scaleup_numbers.index(parallelism)] / 1000) > 0.1]
+
     ## Plot individual speedups
     individual_results = [distr_exec_speedup[scaleup_numbers.index(parallelism)]
                           for distr_exec_speedup, _ in all_results]
@@ -636,6 +640,7 @@ def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
 
     ax1.set_ylabel('Sequential Time (s)', color=seq_time_color)
     ax1.set_yscale("log")
+    ax1.set_ylim([5, 6000])
     ax1.bar(ind+w, absolute_seq_times_s, width=2*w, align='center', color=seq_time_color)
     ax1.tick_params(axis='y', labelcolor=seq_time_color)
 
