@@ -263,14 +263,16 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
     lines = []
     best_result = distr_speedup
 
-    ## In the bigrams experiment we want to also have the alt_bigrams plot
-    if(experiment == "bigrams" and not ("mini-split" in custom_scaleup_plots[experiment])):
-        opt_prefix = '{}/{}_'.format(results_dir, "alt_bigrams")
-        opt_distr_speedup, _ = collect_experiment_speedups(opt_prefix, all_scaleup_numbers)
-        line, = ax.plot(all_scaleup_numbers, opt_distr_speedup, '-P', color='magenta', linewidth=0.5, label='Opt. Parallel')
-        maximum_y = max(maximum_y, max(opt_distr_speedup))
-        lines.append(line)
+    ## Obsolete
+    # ## In the bigrams experiment we want to also have the alt_bigrams plot
+    # if(experiment == "bigrams" and not ("mini-split" in custom_scaleup_plots[experiment])):
+    #     opt_prefix = '{}/{}_'.format(results_dir, "alt_bigrams")
+    #     opt_distr_speedup, _ = collect_experiment_speedups(opt_prefix, all_scaleup_numbers)
+    #     line, = ax.plot(all_scaleup_numbers, opt_distr_speedup, '-P', color='magenta', linewidth=0.5, label='Opt. Parallel')
+    #     maximum_y = max(maximum_y, max(opt_distr_speedup))
+    #     lines.append(line)
 
+    split_exists = False
     if(not (experiment in custom_scaleup_plots) or
        (experiment in custom_scaleup_plots and
         "split" in custom_scaleup_plots[experiment])):
@@ -278,16 +280,17 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
             auto_split_distr_speedup = collect_distr_experiment_speedup(prefix,
                                                                         'distr_auto_split.time',
                                                                         all_scaleup_numbers)
-            line, = ax.plot(all_scaleup_numbers, auto_split_distr_speedup, '-D', color='tab:red', linewidth=0.5, label='Par + Split')
+            line, = ax.plot(all_scaleup_numbers, auto_split_distr_speedup, '-D', color='tab:blue', linewidth=0.5, label='Par + Split')
             lines.append(line)
-            split_distr_speedup = collect_distr_experiment_speedup(prefix,
-                                                                   'distr_split.time',
-                                                                   all_scaleup_numbers)
-            line, = ax.plot(all_scaleup_numbers, split_distr_speedup, '-h', color='brown', linewidth=0.5, label='Par + B. Split')
-            lines.append(line)
+            # split_distr_speedup = collect_distr_experiment_speedup(prefix,
+            #                                                        'distr_split.time',
+            #                                                        all_scaleup_numbers)
+            # line, = ax.plot(all_scaleup_numbers, split_distr_speedup, '-h', color='brown', linewidth=0.5, label='Par + B. Split')
+            # lines.append(line)
             maximum_y = max(maximum_y, max(auto_split_distr_speedup))
-            maximum_y = max(maximum_y, max(split_distr_speedup))
-            best_result = split_distr_speedup
+            # maximum_y = max(maximum_y, max(split_distr_speedup))
+            best_result = auto_split_distr_speedup
+            split_exists = True
         except ValueError:
             pass
 
@@ -308,7 +311,11 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
     if(not (experiment in custom_scaleup_plots) or
        (experiment in custom_scaleup_plots and
         "eager" in custom_scaleup_plots[experiment])):
-        line, = ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, label='Parallel')
+        if(not split_exists):
+            line_color = 'tab:blue'
+        else:
+            line_color = 'tab:red'
+        line, = ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, color=line_color, label='Parallel')
         lines.append(line)
         maximum_y = max(maximum_y, max(distr_speedup))
 
@@ -320,7 +327,7 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
             no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
                                                                                'distr_no_task_par_eager.time',
                                                                                all_scaleup_numbers)
-            line, = ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Blocking Eager')
+            line, = ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, color='orange', label='Blocking Eager')
             lines.append(line)
             maximum_y = max(maximum_y, max(no_task_par_eager_distr_speedup))
         except ValueError:
@@ -332,7 +339,7 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
             no_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
                                                                       'distr_no_eager.time',
                                                                       all_scaleup_numbers)
-            line, = ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='No Eager')
+            line, = ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, color='green', label='No Eager')
             lines.append(line)
             maximum_y = max(maximum_y, max(no_eager_distr_speedup))
             if((experiment in custom_scaleup_plots and
@@ -781,12 +788,10 @@ def plot_one_liners_tiling(results_dir):
                    "double_sort",
                    "shortest_scripts"]
 
-    confs = ["Par. + Split",
-             "Par. + B. Split",
-             "Parallel",
+    confs = ["PaSh",
+             "PaSh w/o split",
              "Blocking Eager",
-             "No Eager",
-             "Opt. Parallel"]
+             "No Eager"]
 
     fig = plt.figure()
     gs = fig.add_gridspec(2, 5, hspace=0.05)
@@ -800,8 +805,8 @@ def plot_one_liners_tiling(results_dir):
         _, lines, best_result = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, custom_scaleup_plots, ax)
         if(experiment == "double_sort"):
             total_lines = lines + total_lines
-        elif(experiment == "bigrams"):
-            total_lines += [lines[0]]
+        # elif(experiment == "bigrams"):
+        #     total_lines += [lines[0]]
         ax.set_xticks(all_scaleup_numbers[1:])
         ax.text(.5,.91,pretty_names[experiment],
         horizontalalignment='center',
