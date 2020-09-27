@@ -2176,17 +2176,17 @@ Eager \ttt{relay} nodes (d) address the challenge while remaining within the \sy
 \sys's optimizer inserts \ttt{split} nodes to expose parallelism when parallelizable nodes only have one input~\sx{ir:transformations}.
 For \ttt{split} to be effective, it needs to disperse its input uniformly across its outputs.
 This requires the input size to be known beforehand, which is not always the case.
-
-To solve this, % satisfy the tension between efficiency and \todo{knowledge},  % blanking on the right word here
-  \sys supports two \ttt{split} implementations:
-  (i) a general one that can be used with commands that could add or remove lines, and
-  (ii) an optimized one that can be used if the input size is known before its execution.
+To address this, \sys provides a \ttt{split} implementations that first
+consumes its complete input, counts its lines, 
+and then splits it uniformly across the desired number of outputs. 
+% This \ttt{split} can
+% be used with any commands that add or remove lines in their output streams.
+  % (i) a general one that can be used with commands that could add or remove lines, and
+  % (ii) an optimized one that can be used if the input size is known before its execution.
 %% The \sys \todo{backend} support two split node implementations, to
 %% satisfy the inherent tension between the split efficiency and
 %% task-based parallelism.
-In the former case, \ttt{split} first consumes its complete input, counts its lines, and then splits it uniformly across the desired number of outputs.
-In the latter case, it can be configured to avoid reading all its input, thus exploiting available task-based parallelism.
-
+% In the latter case, it can be configured to avoid reading all its input, thus exploiting available task-based parallelism.
 \sys also inserts eager \ttt{relay} nodes after all \ttt{split} outputs (except the last one) to address laziness concerns.
 
 %% \TODO{Talk about eagerness in split and how we needed to add eager
