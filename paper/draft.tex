@@ -4,9 +4,10 @@
 %% \usepackage{usenix2019_v3}
 
 %% EuroSys 2021 -- 12 pages limit
-\documentclass[sigplan,review,anonymous]{acmart}
-\acmSubmissionID{TBD}
+\documentclass[sigplan, review, screen, anonymous]{acmart}
+\acmSubmissionID{49}
 \renewcommand\footnotetextcopyrightpermission[1]{}
+\settopmatter{printfolios=false,printccs=false,printacmref=false}
 
 %% EuroSys rules: Submissions may have at most 12 pages of technical
 %% content, including all text, figures, tables, appendices,
@@ -20,22 +21,6 @@
 %% magnification. All pages should be numbered. Authors are encouraged
 %% to hyperlink their references.
 
-
-%% For double-blind review submission, w/o CCS and ACM Reference (max submission space)
-% Limit: 25 pages
-% https://icfp20.sigplan.org/track/icfp-2020-papers#Call-for-Papers
-%% \documentclass[acmsmall,10pt,review,anonymous]{acmart}
-%% \settopmatter{printfolios=false,printccs=false,printacmref=false}
-%% For double-blind review submission, w/ CCS and ACM Reference
-%\documentclass[sigplan,review,anonymous]{acmart}\settopmatter{printfolios=true}
-%% For single-blind review submission, w/o CCS and ACM Reference (max submission space)
-%\documentclass[sigplan,review]{acmart}\settopmatter{printfolios=true,printccs=false,printacmref=false}
-%% For single-blind review submission, w/ CCS and ACM Reference
-%\documentclass[sigplan,review]{acmart}\settopmatter{printfolios=true}
-%% For final camera-ready submission, w/ required CCS and ACM Reference
-%\documentclass[sigplan]{acmart}\settopmatter{}
-
-% \acmSubmissionID{248}
 
 \usepackage{enumitem}
 \usepackage{booktabs}
@@ -2712,6 +2697,7 @@ Furthermore, \sys does not decelerate non-trivial computations, even when parall
     Speedup (left axis) over sequential execution (right axis) for Unix50 scripts.
     Parallelism is 16$\times$ on 10GB of input data~\cf{unix50}.
     \todo{Pipelines are sorted in descending speedup order. The solid line indicates the average speedup $\times5.49$ and the dotted line indicates 1.}
+    \nv{Idea: scripts that only take over 0.01s?}
   }
   \vspace{-15pt}
   \label{fig:unix50-individual}
@@ -2971,6 +2957,7 @@ Here too, however, users are expected to manually rewrite scripts to exploit the
 Recently, Smoosh~\cite{smoosh:18} argued for making concurrency explicit via shell constructs.
 The argument is dissimilar from \sys's, which argues for mostly automated (and correct) parallelization---hence \emph{light-touch} parallel scripting.
 
+\todo{Concurrent to our work, POSH is a framework that accelerates shell applications with I/O-heavy components. XXX}
 
 % Nice intro: http://homepages.inf.ed.ac.uk/bfranke/Publications/pldi121-tournavitis.pdf
 \heading{Low-level Parallelization}
@@ -3159,14 +3146,15 @@ Experiments with real programs show substantial speedups and the ability to oper
 % considered as black boxes and the only information that can be
 % inferred about them is through their arguments.
 
-\subsection*{Acknowledgements}
-% Dumping people so that we don't forget
-We want to thank 
-  Andr\'e DeHon,
-  Ben Karel,
-  Jean-S\'ebastien L\'egar\'e, and 
-  Nick Roessler.
-This material is based upon work supported by DARPA contract no. HR00112020013 (ALRSCC) and NSF award CCF 1763514.
+% \subsection*{Acknowledgements}
+% % Dumping people so that we don't forget
+% We want to thank 
+%   Andr\'e DeHon,
+%   Ben Karel,
+%   Jean-S\'ebastien L\'egar\'e, and 
+%   Nick Roessler.
+% This material is based upon work supported by DARPA contract no. HR00112020013 (ALRSCC) and NSF award CCF 1763514.
+
 %% \grantsponsor{GS100000001}{National Science
 %%   Foundation}{http://dx.doi.org/10.13039/100000001} under Grant
 %% No.~\grantnum{GS100000001}{nnnnnnn} and Grant
