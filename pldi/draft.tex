@@ -2493,12 +2493,12 @@ We evaluate \sys under multiple configurations on popular, common, or classic \u
     \caption{
       \textbf{\sys's speedup for 2--64$\times$-parallelism.}
       Different configurations per benchmark:
-      (i) Par+Split: \ttt{eager} and general \ttt{split} enabled,
-      (ii) Par+B.Split: \ttt{eager} and input-aware \ttt{split} enabled,
-      (iii) Parallel: \ttt{eager} enabled (no \ttt{split}),
-      (v) Blocking Eager, only blocking \ttt{eager} enabled (no \ttt{split}),
-      (iv) No Eager: both \ttt{eager} and \ttt{split} disabled,
-      (vi) Opt. Parallel, an optimized version of \ttt{bigrams}~\cf{ours}.
+      (i) PaSh: the complete implementation with \ttt{eager} and \ttt{split} enabled,
+      % (ii) Par+B.Split: \ttt{eager} and input-aware \ttt{split} enabled,
+      (ii) PaSh w/o split: \ttt{eager} enabled (no \ttt{split}),
+      (iii) \todo{Blocking Eager}, only blocking \ttt{eager} enabled (no \ttt{split}),
+      (iv) \todo{No Eager}: both \ttt{eager} and \ttt{split} disabled.
+      % (vi) Opt. Parallel, an optimized version of \ttt{bigrams}~\cf{ours}.
       Only relevant configurations are shown---\eg \ttt{grep} and \ttt{sort} do not benefit from \ttt{split}; \ttt{spell} and \ttt{bi-grams} do not see benefits without \ttt{split}.
       % TODO: WHY?
     }
@@ -2533,9 +2533,10 @@ Finally, the two Bi-grams replicate and shift a stream by one entry to calculate
 \heading{Results}
 % TODO \nv{Need to change terminology in plots---files should be (attempted) parallelism, name benchmark, cat should be merge.}
 Fig.~\ref{fig:microbenchmarks} presents \sys's speedup as a function of parallelism (2--64$\times$).
-(Bi-grams-opt is shown as the \ttt{opt} line in Fig.~\ref{fig:microbenchmarks}'s Bi-grams.)
-Average speedups of the best \sys configuration, \ie \ttt{eager} enabled with \ttt{split} when it provides benefit, for \{2, 4, 8, 16, 32, 64\}$\times$-parallelism are 1.97, 3.5, 5.78, 8.83, 10.96, and 13.47, respectively.
+% (Bi-grams-opt is shown as the \ttt{opt} line in Fig.~\ref{fig:microbenchmarks}'s Bi-grams.)
+Average speedups of the best \sys configuration, \ie \ttt{eager} enabled with \ttt{split} when it provides benefit, for \{2, 4, 8, 16, 32, 64\}$\times$-parallelism are \todo{1.97, 3.5, 5.78, 8.83, 10.96, and 13.47}, respectively.
 % and the geometric means are 1.92, 3.39, 5.48, 7.94, 8.86, 8.51.}
+\kk{For the one-liners where split doesn't provide any benefit (or overhead) we don't show the PaSh w/o split line.}
 
 % we experiment with a $200\times$ level of parallelism to see potential overheads
 Tab.~\ref{tab:eval} shows that \sys's compilation time is negligible. % ($<5s$)
@@ -2565,7 +2566,7 @@ Asking for parallelism beyond that point degrades speedup, as overheads still in
 %   the same so I think that it might have to do with the fact that
 %   constant costs rise a lot (since opt-bigrams 32 takes just 1
 %   minute).
-
+\kk{Mention bigrams-opt result now that it is removed from the plot.}
 No Eager and Blocking Eager depict configurations without \sys's \ttt{eager} optimization and without \ttt{split}. As described in \Cref{optimizer}, these configurations perform worse than \sys with \ttt{eager} in all cases (except for a negligible difference in shortest-scripts). Adding \ttt{split} on top of that (Par + Split, Par + B. Split) further improves speedup for some scripts that have \tpur or \tnpu commands, and for the rest it does not affect performance. Finally, the optimized bi-grams script achieves significantly more benefits from \sys than its unoptimized counterpart, showing that familiarity with \sys's parallelizability classes could go a long way in terms of performance.
 
 %> \kk{It is visible that the automatic split is slightly worse than the
