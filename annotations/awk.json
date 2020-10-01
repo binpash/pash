@@ -4,10 +4,9 @@
     [
         {
             "predicate": "default",
-            "class": "side-effectful",
+            "class": "pure",
             "inputs": ["stdin"],
-            "outputs": ["stdout"],
-			"comment": "Conservative approach."
+            "outputs": ["stdout"]
         }
     ]
 }
