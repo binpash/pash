@@ -7,7 +7,8 @@
             "class": "side-effectful",
             "inputs": ["stdin"],
             "outputs": ["stdout"],
-			"comment": "Conservative approach."
+            "options": ["resolve_at_runtime"],
+			"comment": "In most conservative category. Resolve the arguments at runtime recursively and overwrite the class."
         }
     ]
 }
