@@ -6,8 +6,7 @@
             "predicate": "default",
             "class": "pure",
             "inputs": ["stdin"],
-            "outputs": ["stdout"],
-            "options": ["stdin-hyphen"]
+            "outputs": ["stdout"]
         }
     ]
 }
