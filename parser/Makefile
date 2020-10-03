@@ -44,7 +44,7 @@ libdash:
 	cd libdash && ./autogen.sh && ./configure && make && sudo make install
 	cd libdash/ocaml && make && make install
 
-dependencies: libdash
+opam-dependencies: 
 	opam install ctypes.0.11.5
 	opam install ctypes-foreign
 	opam install atdgen

@@ -3,9 +3,7 @@
 The parser in this directory uses the mgree/libdash posix compliant
 parser and outputs the AST in JSON format using atdgen.
 
-In order to install, one has to execute `make dependencies &&
-make`. The first command makes libdash and sets up all the ocaml
-dependencies.
+In order to install, one has to execute `make opam-dependencies && make libdash && make`. The first command makes libdash and sets up all the ocaml dependencies.
 
 Alternatively, one can install libdash (as explained in its README)
 and then run `make` here.
