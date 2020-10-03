@@ -87,6 +87,7 @@
 \newcommand{\km}[1]{[{\color{blue}km: #1}]}
 \newcommand{\review}[1]{{\color{red}#1}}
 \newcommand{\tr}[1]{} %% Text and comments for technical report
+\newcommand{\str}{{\color{red}\textbf{\ttt{*}}}}
 
 \newcommand{\kstar}{^{\textstyle *}}
 \newcommand{\eps}{\varepsilon}
@@ -1222,13 +1223,17 @@ Annotations treat flag arguments differently from file arguments, by checking if
 %     I am also not sure how important this last sentence is, as it did not answer a question I had---I expected arguments to be anything: if soneome wants to put ``pizza'' the DSL should not disallow it.
 %   }
 % }
-The complete annotation grammar is shown in Appendix~\ref{alg}.
+The complete annotation grammar is shown in Appendix~\ref{alg}. \str
+% \kk{EuroSys doesn't allow appendix. I think we should just remove the grammar.}
+% \kk{We should mention somewhere that we used the language to annotate N commands.} 
+% \kk{Mention that some commands, such as xargs are handled internally due to their particularities.}
 
 For example, consider \ttt{comm}, which performs a join-like operation on its two inputs to identify common elements.
 When \ttt{comm} is invoked without any flags, it produces a three-column output:
   the first column contains lines that are unique to the first input, the second column contains lines that are unique to the second input, and the last column contains lines that exist in both inputs.
 A user can invoke \ttt{comm} with any combination of flags \ttt{-1}, \ttt{-2}, or \ttt{-3} to suppress the corresponding output column(s).
-Its annotation record is shown below:
+Its annotation record is shown below:\str
+% \kk{Update with an excerpt from `comm`.}
 %
 \begin{lstlisting}[language=sh, numbers=none]
 comm {
