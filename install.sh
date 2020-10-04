@@ -31,6 +31,10 @@ cd evaluation/tools/
 make
 cd ../../
 
+# Install python3.8 dependencies
+python3.8 -m pip install jsonpickle
+python3.8 -m pip install -U PyYAML
+
 # Generate inputs
 echo "Generating input files"
 echo "TODO: Running gen.sh currently doesn't work."
