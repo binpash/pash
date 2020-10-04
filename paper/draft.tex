@@ -343,14 +343,14 @@
 This paper presents \sys, a system aimed at parallelizing POSIX shell scripts through a combination of program transformations and runtime primitives.
 % a source-to-source shell compiler and associated runtime library
 Given a script, \sys converts it to a data-flow graph, performs a series of analyses that aim at exposing parallelism while preserving its sequential semantics, and then converts the data-flow graph back into a script that uses POSIX constructs to explicitly guide parallelism.
-%% \kk{Sys converts a script into several data-flow graphs. Does precision matter here? Should we be super explicit about what it does?}
+%% \kk{eurosys: Sys converts a script into several data-flow graphs. Does precision matter here? Should we be super explicit about what it does?}
 A lightweight annotation language allow command developers to express key parallelizability properties about their commands.
 An accompanying parallelizability study of POSIX and GNU commands, two large and commonly used groups, 
 informs \sys's annotation language and guides the development of a data-parallel standard library.
-% \kk{Can we extend this to say that PaSh automatically uses constructs from this library? Otherwise it sounds like the user has to use it to make their scripts parallel.}
+% \kk{eurosys: Can we extend this to say that PaSh automatically uses constructs from this library? Otherwise it sounds like the user has to use it to make their scripts parallel.}
 Finally, \sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
 \sys's extensive evaluation, combining several classic and modern Unix scripts, shows significant benefits across several axes---with order-of-magnitude performance improvements stemming from the combination of its program transformations and runtime primitives.
-% \kk{What are the several axes? We only show speedup. I would propose renaming to significant benefits in execution time.}
+% \kk{eurosys: What are the several axes? We only show speedup. I would propose renaming to significant benefits in execution time.}
 \end{abstract}
 
 
@@ -425,6 +425,7 @@ The \unix shell is an environment---often interactive---for composing scripts wr
 This language-agnosticism, coupled with \unix's toolbox philosophy~\cite{mcilroy1978unix}, makes the shell the primary choice for specifying succinct and simple pipelines for data processing, system orchestration, and other automation tasks.
 % Pipe-centric shell commands are parallel (and to some extent, functional) programs that can natively enjoy significant parallelism on a multicore machine.
 Unfortunately, parallelizing such pipelines requires significant effort shared between two different programmer groups. % it's more like roles personas or "wearing hats"
+% \kk{eurosys: There is a small inconsistency between the abstract and this first paragraph, since we talked about scripts but now we talk about pipelines. I would suggest replacing "such pipelines" with "scripts with such pipelines", or just talking about scripts in the first paragraph (removing the word pipelines completely).}
 
 The first group is \emph{command developers}, responsible for implementing individual commands such as \ttt{sort}, \ttt{uniq}, and \ttt{jq}.
 These developers usually work in a single programming language, leveraging its abstractions to provide parallelism whenever possible.
@@ -449,14 +450,16 @@ One option is manual tools such as GNU \ttt{parallel}~\cite{Tange2011a}, \ttt{ts
 % (ii) ad-hoc flags provided by command developers and mentioned above.
 Another option is to use shell primitives (such as \ttt{\&}, \ttt{wait}, \ttt{for}) to explicitly induce parallelism;
  these come at a cost of manual effort to split inputs, rewrite scripts, and orchestrate execution---an expensive and error-prone process.
+%  \kk{eurosys: it is not immediately obvious how to use `for` to achieve parallelism. Maybe we can remove it and just leave & and `wait`.}
 % re-writing of the entire script from scratch; unfortunately, this process is expensive and can introduce new bugs, cascading changes, and divergence from legacy functionality---but also foregoes all the productivity benefits of the original script.
 % The fact that a programmer often belongs to both groups at the same time---as composed scripts can themselves form a command used in other scrips---compounds the challenge.
 To top it off, all these options assume a good understanding of parallelism;
-  users whose domain of expertise falls outside computing---routinely writing shell scripts to accomplish their tasks---are left without options.
+  users whose domain of expertise falls outside computing---from hobbyists to data analysts---are left without options.
+% \kk{eurosys: instead of routinely writing shell scripts to accomplish their tasks, I would prefer to focus on the fact that non-computing users are a large subset of all the shell users.}
 %  (see~\S\ref{related} for a full discussion).
 % \nv{I still don't like ``for a full discussion''---raises too many expectations, and we don't have that much more to say}
 
-To address this challenge, we develop \sys, a shell that extracts data-parallelism from POSIX shell scripts.
+To address this challenge, we develop \sys, a system that extracts data-parallelism from POSIX shell scripts.
 % \kk{We need to mention data-parallelism earlier. We don't focus on general parallelization but rather data-parallelism (performing operations on disjoint partitions of the input and then merging the results. WE need to give a brief idea about that early on so that we don't create false ideas.}
 % \nv{First attempt here. I am trying to get a copy out ASAP, we can refine this later}
 % \kk{Mention that it outputs shell scripts.}
@@ -464,22 +467,26 @@ To address this challenge, we develop \sys, a shell that extracts data-paralleli
 % \sys offers both classes of users in the second group such much-needed automation.
 \sys benefits both programmer groups, % mentioned earlier, 
   with a particular emphasis on users.
-Command developers are provided with a set of abstractions, akin to lightweight type annotations, for expressing the parallelizability properties of their commands:
+Command developers are armed with a set of abstractions, akin to lightweight type annotations, for expressing the parallelizability properties of their commands:
   rather than providing a command's full observable behavior, these annotations focus primarily on their interaction with state.
 Shell users, on the other hand, are provided with full automation:
-  \sys extracts parallelism latent in their scripts by analyzing their parallelizability properties. % of their fragments.
+\sys  analyzes their scripts and extracts latent parallelism.
+% \sys extracts parallelism latent in their scripts by analyzing their parallelizability properties. % of their fragments.
+% \kk{eurosys: I replaced the above to avoid saying that it analyzes parallelizability properties since it feels kinda redundant.}
 % benefiting scripting experts and non-experts alike by offering automated POSIX-aware parallelization of shell-scripts as long as command developers
 \sys's transformations are conservative, in that they do not attempt to parallelize fragments that lack sufficient information---\ie at worst, \sys will choose to not improve performance rather than risking breakage.
 % \kk{Should we mention that we only show this empirically?}
 % \nv{I don't think so; I don't think this is the right point to talk about our evaluation, we just state our intention/high-level principles.}
 
 To address cold-start issues, \sys comes with a library of parallelizability semantics for commands in POSIX and GNU Coreutils.
+% \kk{eurosys: Suggestion: library of annotations, annotation library, annotation thesaurus for \several/ commands in POSIX and GNU... I find the term parallelizability semantics confusing.}
 These large classes of commands serve as the shell's standard library, expected to be used pervasively. % in scripts found out in the wild.
 The study that led to their characterization also informed \sys's annotation and transformation components.\footnote{
-  In fact, the scope of the study is broader, incorporating also commands outside POSIX and GNU Coreutils such as \ttt{curl} and \ttt{pandoc}.
+  In fact, the scope of the study is broader, also incorporating commands outside POSIX and GNU Coreutils such as \ttt{curl} and \ttt{pandoc}.
 }
 
 These two components are finally paired with \sys's runtime component.
+% \kk{eurosys: It is not totally clear what the phrase: "These two components" refers to. Maybe we can say that everything is tied together by \sys's runtime component?}
 % \sys's runtime  component additional packs
 % Aside from these two components, \sys packs a runtime component that serves dual purpose:
 Aware of the \unix philosophy and abstractions, it packs a small library of highly-optimized data aggregators as well as high-performance primitives for eager data splitting and merging.
@@ -526,7 +533,9 @@ significant advantages in correctness, manual effort,
 and performance---with an order-of-magnitude performance
 improvement due to \sys's transformations and runtime primitives.
 %% ---with \sys's transformations offering an order-of-magnitude performance improvements aided further by \sys's optimized runtime components.
-Improvements depend on several factors such as the execution time, the pipeline depth, and the parallelizability classes in which its commands fall. 
+Improvements depend on several factors such as the initial script execution time, the pipeline depth, and the parallelizability properties of its commands.
+% \kk{eurosys: the pipeline depth seems to specific to pipelines. What we actually want to say is "how much parallelism did the initial script achieve (due to & and |). However I think that it is fine mentioning only two factors, "execution time, and the parallelizability properties of its commands."}
+% \kk{eurosys: I removed parallelizability classes since we haven't introduced them until now.} 
 
 The paper is structured as follows.
 It starts by introducing the necessary background on shell scripting and overviewing \sys~\sx{bg}.
@@ -537,10 +546,12 @@ Sections \ref{parallelizability}--\ref{impl} highlight key contributions:
     studies the parallelizability of shell commands, and introduces a lightweight annotation language for commands that are executable in a data-parallel manner.
 
   \item
-  \S\ref{ir} presents a dataflow model and associated parallelization transformations that focus on preserving the semantics of the sequential shell program.
+  \S\ref{ir} presents a dataflow model and associated transformations that expose data parallelism while preserving the semantics of the sequential program.
+  % \kk{eurosys: I changed it since the transformations do no "focus" on preserving correctness. and associated transformations that expose data parallelism while preserving the semantics of the sequential program. }
 
   \item
   \S\ref{impl} details \sys's implementation, discussing several challenges related to \sys's translation, optimization, and runtime components and their solutions.
+  % \kk{eurosys: suggestion: details \sys's runtime component, discussing several challenges related to correctness and performance as well as their solutions. The reason is that we don't talk about translation anymore and optimization is a bit too general.}
 % \kk{Rewrite that when we know for sure what the section contains.}
 
 \end{itemize}
