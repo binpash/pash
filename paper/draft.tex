@@ -1450,7 +1450,8 @@ Consider this fragment:
 
 \noindent
 The \ttt{cat} and \ttt{grep} commands execute independently (and concurrently) in the standard shell, but \ttt{sort} waits for their completion prior to start.
-Both \ttt{cat f1 f2 | grep "foo" > f3} and \ttt{sort f3} are thus parallelizable regions, each not extending beyond \ttt{\&\&}---more precisely, they are maximal.
+Both \ttt{cat f1 f2 | grep "foo" > f3} and \ttt{sort f3} are thus parallelizable regions, each not extending beyond \ttt{\&\&}.
+% ---more precisely, they are maximal.
 
 Intuitively, parallelizable regions correspond to sub-expressions of
 the program that would be allowed to execute independently by
@@ -1459,7 +1460,7 @@ parallelizable regions can be composed from smaller ones using the
 pipe operator (\ttt{|}) and the parallel-composition operator (\ttt{\&}).
 Conversely, all other operators, such as the sequential composition operator (\ttt{;}) and the logical operators (\ttt{\&\&}, \ttt{||}), represent
 barrier constructs that do not allow parallelizable regions to
-permeate through.
+permeate through.\nv{I will make this more precise---this paragraph is almost the same as overview}
 
 % \tr{I don't know whether I should mention the following: While these
 %   control flow constructs can be parallelized and there has been
@@ -2106,29 +2107,30 @@ The shell's evaluation strategy is unusually lazy, in that most commands and she
 %% by scheduling them concurrently, allowing them to
 %% have progress one at a time.
 Such laziness inhibits opportunities for parallelism, as commands are often blocked when their consumers are not requesting any input.
-Consider the following script:
+Consider the following fragment:
 
 \begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
-  mkfifo t1 t2
-  grep "foo" > t1 & grep "foo" > t2 &
-  cat t1 t2
+ mkfifo t1 t2
+ grep "foo" in1 > t1 & 
+ grep "foo" in2 > t2 &
+ cat t1 t2
 \end{lstlisting}
 
 \noindent
-The \ttt{cat} command will try to consume input from \ttt{t2} after it completes reading from \ttt{t1}.
+The \ttt{cat} command will consume input from \ttt{t2} only after it completes reading from \ttt{t1}.
 As a result, the second \ttt{grep} will remain blocked until the first \ttt{grep} completes (Fig. \ref{fig:eager}a). % processing.
 
 % replacing FIFOs with files is
-One might be tempted to replace FIFOs with files, a central \unix abstraction, simulating pipes of arbitrary buffering (Fig. \ref{fig:eager}b).
+To solve this, one might be tempted to replace FIFOs with files, a central \unix abstraction, simulating pipes of arbitrary buffering (Fig. \ref{fig:eager}b).
 Aside from severe performance implications, naive replacement can lead to subtle race conditions as a consumer might reach {\sc EOF} before a producer.
 Alternatively, consumers could wait for producers to complete before opening the file for reading (Fig. \ref{fig:eager}c);
-however, this would insert artificial barriers impeding task-based parallelism and wasting disk.
+  however, this would insert artificial barriers impeding task-based parallelism and wasting disk resources---that is, this allows data parallelism at the expense of task parallelism.
 % \unix does not provide an easy way out.
 
 To address this challenge,
 % Instead of addressing this issue for each command separately, % nv: how could this be possible?
   \sys inserts and instantiates eager \ttt{relay} nodes at these points (Fig.~\ref{fig:eager}d). % nv: not sure what critical meant
-These nodes feature tight multi-threaded loops that consume input eagerly while attempting to push, forcing upstream nodes to produce output when possible while also preserving task-based parallelism.
+These nodes feature tight multi-threaded loops that consume input eagerly while attempting to push data to the output stream, forcing upstream nodes to produce output when possible while also preserving task-based parallelism.
 % nv: Removed below because I don't think it adds much
 % We compare \sys's eager implementation with the alternatives from \cref{fig:eager} in \Cref{ours}.
 
@@ -2153,13 +2155,13 @@ These nodes feature tight multi-threaded loops that consume input eagerly while 
 \begin{figure}[t]
 \centering
 % https://docs.google.com/drawings/d/13Zx3a9bWi1RvpOgNCSiXirp9UOte-XuaJQBi_lmmPMc/edit
-\includegraphics[width=0.48\textwidth]{\detokenize{./figs/dish_eager.pdf}}
+\includegraphics[width=0.48\textwidth]{\detokenize{./figs/pash_eager.pdf}}
 \caption{
   \textbf{Eager primitive.}
   Addressing intermediary laziness is challenging:
     (a) FIFOs are blocking;
     (b) files alone introduce race conditions between producer/consumer;
-    (c) files \ttt{wait} inhibit task-based parallelism.
+    (c) files + \ttt{wait} inhibit task parallelism.
 Eager \ttt{relay} nodes (d) address the challenge while remaining within the \sys model.
 % Describe. \TODO{Combine this figure with the above code maybe.}
 }
@@ -2336,12 +2338,12 @@ upstream.
 \heading{Aggregator Implementations}
 Commands in \tpur can be parallelized using a \emph{map} and an \emph{aggregate} stage~\sx{parallelizability}.
 \sys implements \emph{aggregate} for several commands in \tpur to enable parallelization.
-A few interesting examples include \emph{aggregate} functions for
+A few interesting examples are \emph{aggregate} functions for
   (i) \ttt{sort}, which amounts to the merge phase of a merge-sort (and on GNU systems is implemented as \ttt{sort -m}),
   (ii) \ttt{uniq} and \ttt{uniq -c}, which need to check conditions at the boundary of their input streams,
   (iii) \ttt{tac}, which consumes stream descriptors in reverse order, and 
   (iv) \ttt{wc}, which adds inputs with an arbitrary number of elements (\eg \ttt{wc -lw} or \ttt{wc -lwc} \etc).
-The combiners iterate over the provided stream descriptors, \ie they work with more than two inputs, and apply pure functions at the boundaries of input streams (with the exception of \ttt{sort} that has to interleave inputs).
+The \emph{aggregate} functions iterate over the provided stream descriptors, \ie they work with more than two inputs, and apply pure functions at the boundaries of input streams (with the exception of \ttt{sort} that has to interleave inputs).
 % An important concern has been to maintain whitespace separation while 
 
 %% The optimizer also applies custom transformations on several commands in \pur
@@ -2368,6 +2370,20 @@ The combiners iterate over the provided stream descriptors, \ie they work with m
 
 \section{Evaluation}
 \label{eval}
+
+\begin{figure}[t]
+\centering
+% https://docs.google.com/drawings/d/13Zx3a9bWi1RvpOgNCSiXirp9UOte-XuaJQBi_lmmPMc/edit
+\includegraphics[width=0.4\textwidth]{\detokenize{./figs/pash_lattice.pdf}}
+\caption{
+  \textbf{Lattice of evaluation setup, based on runtime primitives.}
+  \todo{Explain further}
+% Describe. \TODO{Combine this figure with the above code maybe.}
+}
+\vspace{-15pt}
+\label{fig:lattice}
+\end{figure}
+
 
 %> \TODO{Remember to mention that deathstar has 128 threads but 64
 %>   cores. So it is reasonable for the speedup to not go further in cpu
@@ -2436,7 +2452,7 @@ In two large cases, tasks such as data download, extraction, and preprocessing--
 The vast majority requires no effort other than invoking \sys;
   the annotation for the remaining 6 commands ($<3\%$) amounts to a single record.
 % 
-In terms of correctness, \sys's results over multi-GB inputs are identical to the sequential for all benchmarks.
+In terms of correctness, \sys's results over multi-GB, \todo{XXX-line} inputs are identical to the sequential for all benchmarks.
 Scripts feature ample opportunities for breaking semantics, which \sys avoids.
 %% In one case, \sys avoids transforming a cycle (\ie a fragment whose input and output identifiers are the same).
 %in another, it preserves the semantics that another parallelization command breaks.
