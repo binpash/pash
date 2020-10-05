@@ -627,35 +627,41 @@ def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
     # print(fig.get_size_inches())
-    fig.set_size_inches(12, 6)
+    fig.set_size_inches(14, 6)
 
     ## Plot line at 1
     plt.xlim(-1, len(individual_results))
 
     ## Plot speedup
     ax2.set_ylabel('Speedup', color=speedup_color)
-    ax2.set_xlabel('Pipeline')
     ax2.bar(ind-w, individual_results, width=2*w, align='center', color=speedup_color)
     ax2.tick_params(axis='y', labelcolor=speedup_color)
 
     ax1.set_ylabel('Sequential Time (s)', color=seq_time_color)
     ax1.set_yscale("log")
     ax1.set_ylim([5, 6000])
+    ax1.set_xlabel('Script Index')
     ax1.bar(ind+w, absolute_seq_times_s, width=2*w, align='center', color=seq_time_color)
     ax1.tick_params(axis='y', labelcolor=seq_time_color)
 
     ## Plot average line
     ax2.hlines([1], -1, len(individual_results) + 1, linewidth=0.8, linestyles="dotted")
-    ax2.hlines([mean], -1, len(individual_results) + 1, linewidth=1.2)
+    # ax2.hlines([mean], -1, len(individual_results) + 1, linewidth=1.2)
+    mean_xs = range(-1, len(individual_results) + 1)
+    ax2.plot(mean_xs, [mean for _ in mean_xs], linewidth=1.2, label='Mean Speedup')
 
     ax1.yaxis.tick_right()
     ax1.yaxis.set_label_position("right")
     ax2.yaxis.tick_left()
     ax2.yaxis.set_label_position("left")
+    old_ticks = ax2.get_yticks()
+    # print(old_ticks)
+    ax2.set_yticks([1] + old_ticks[:-1])
     # plt.yscale("log")
     # plt.yticks(range(1, 18, 2))
     # plt.ylim((0.1, 20))
-    # plt.legend(loc='lower right')
+    ax2.legend()
+    # ax2.grid()
     # plt.title("Unix50 Individual Speedups")
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "unix50_individual_speedups_{}.pdf".format(parallelism)),bbox_inches='tight')
