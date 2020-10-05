@@ -453,18 +453,34 @@ To top it off, all these options assume a good understanding of parallelism;
 %  (see~\S\ref{related} for a full discussion).
 % \nv{I still don't like ``for a full discussion''---raises too many expectations, and we don't have that much more to say}
 
-To address this challenge, we develop \sys, a shell that extracts data-parallelism from POSIX shell scripts.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.49\textwidth]{\detokenize{./figs/pash_overview.pdf}}
+\caption{
+  \textbf{\sys overview and correspondence to sections.}
+  \sys identifies potentially parallelizable regions~\sx{bg}, 
+  converts them to a dataflow graph~\sx{graph-components}, applies iterative
+  transformations~\sx{ir:transformations} based on the parallelizability properties (\S\ref{cmd}, \S\ref{ext}) 
+  of the commands used in these regions, and finally emits a parallel script
+  that uses custom primitives~\sx{optimizer}.
+}
+\vspace{-15pt}
+\label{fig:overview}
+\end{figure}
+
+
+To address this challenge, we develop a system called \sys and outlined in Fig.~\ref{fig:overview} for parallelizing POSIX shell scripts.
 % \kk{We need to mention data-parallelism earlier. We don't focus on general parallelization but rather data-parallelism (performing operations on disjoint partitions of the input and then merging the results. WE need to give a brief idea about that early on so that we don't create false ideas.}
 % \nv{First attempt here. I am trying to get a copy out ASAP, we can refine this later}
 % \kk{Mention that it outputs shell scripts.}
 % \nv{I think the ``how'' it solves it should come later, we're still trying to convince them we solve it (see next sentences in this paragraph)
 % \sys offers both classes of users in the second group such much-needed automation.
 \sys benefits both programmer groups, % mentioned earlier, 
-  with a particular emphasis on users.
-Command developers are provided with a set of abstractions, akin to lightweight type annotations, for expressing the parallelizability properties of their commands:
-  rather than providing a command's full observable behavior, these annotations focus primarily on their interaction with state.
+  with emphasis on users.
+Command developers are given a set of abstractions, akin to lightweight type annotations, for expressing the parallelizability properties of their commands:
+  rather than expressing a command's full observable behavior, these annotations focus primarily on its interaction with state.
 Shell users, on the other hand, are provided with full automation:
-  \sys extracts parallelism latent in their scripts by analyzing their parallelizability properties. % of their fragments.
+  \sys extracts parallelism latent in a script by analyzing its parallelizability properties. % of their fragments.
 % benefiting scripting experts and non-experts alike by offering automated POSIX-aware parallelization of shell-scripts as long as command developers
 \sys's transformations are conservative, in that they do not attempt to parallelize fragments that lack sufficient information---\ie at worst, \sys will choose to not improve performance rather than risking breakage.
 % \kk{Should we mention that we only show this empirically?}
@@ -472,9 +488,10 @@ Shell users, on the other hand, are provided with full automation:
 
 To address cold-start issues, \sys comes with a library of parallelizability semantics for commands in POSIX and GNU Coreutils.
 These large classes of commands serve as the shell's standard library, expected to be used pervasively. % in scripts found out in the wild.
-The study that led to their characterization also informed \sys's annotation and transformation components.\footnote{
-  In fact, the scope of the study is broader, incorporating also commands outside POSIX and GNU Coreutils such as \ttt{curl} and \ttt{pandoc}.
-}
+The study that led to their characterization also informed \sys's annotation and transformation components.
+% \footnote{
+%   In fact, the scope of the study is broader, incorporating also commands outside POSIX and Coreutils such as \ttt{builtin}s, \ttt{curl} and \ttt{pandoc}.
+% }
 
 These two components are finally paired with \sys's runtime component.
 % \sys's runtime  component additional packs
@@ -512,6 +529,7 @@ These address many practical challenges % such as task parallelism, deadlocks, a
 % it comes with a few runtime primitives for eager data splitting and merging that address several practical issues ranging from deadlocks, performance bottlenecks;
 %   these primitives were developed from uncovering several pathological situations, on many of which we report.
 
+
 We evaluate \sys using
   (i) a series of benchmarks, ranging from classic \unix one-liners to modern data-processing scripts;
   (ii) two large and complex use cases for temperature analysis and web indexing;
@@ -520,10 +538,10 @@ and
   (iii) a series of micro-benchmarks inspired by (and
 comparing with) possible alternatives.  The results show
 significant advantages in correctness, manual effort,
-and performance---with an order-of-magnitude performance
-improvement due to \sys's transformations and runtime primitives.
+and performance---with 
+speedups $X-X\times$ due to \sys's transformations and $Y-Y\times$ due to \sys's runtime primitives.
 %% ---with \sys's transformations offering an order-of-magnitude performance improvements aided further by \sys's optimized runtime components.
-Improvements depend on several factors such as the execution time, the pipeline depth, and the parallelizability classes in which its commands fall. 
+Improvements depend on several factors such as execution time, pipeline depth, and the parallelizability classes in which commands fall. 
 
 The paper is structured as follows.
 It starts by introducing the necessary background on shell scripting and overviewing \sys~\sx{bg}.
@@ -537,8 +555,7 @@ Sections \ref{parallelizability}--\ref{impl} highlight key contributions:
   \S\ref{ir} presents a dataflow model and associated parallelization transformations that focus on preserving the semantics of the sequential shell program.
 
   \item
-  \S\ref{impl} details \sys's implementation, discussing several challenges related to \sys's translation, optimization, and runtime components and their solutions.
-% \kk{Rewrite that when we know for sure what the section contains.}
+  \S\ref{impl} details \sys's library of runtime primitives, discussing the correctness and performance challenges it addresses.
 
 \end{itemize}
 
@@ -777,9 +794,10 @@ It then downloads and decompresses each file in the remaining set, extracts the 
 It then calculates the maximum yearly temperature by sorting the values and picking the top element.
 Finally, it matches each maximum value with the appropriate year in order to print the result.
 % 
-The effort expensed writing this script is low:\footnote{
-  Some effort is required to understand NOAA's weather format, but this is true for any program processing any dataset.
-}
+The effort expensed writing this script is low:
+% \footnote{
+%   Some effort is required to understand NOAA's weather format, but this is true for any program processing any dataset.
+% }
   its data-processing core amounts to 12 stages and, when expressed as a single line, is only 165 characters long.
 % Its succinctness is deceiving---
 This program is no toy:
@@ -787,13 +805,14 @@ This program is no toy:
 To enable such a succinct program composition, \unix incorporates several features.
 
 \heading{\unix Features}
-Composition in \unix is primarily achieved through pipes (\ttt{|}), a
+Composition in \unix is primarily achieved with pipes (\ttt{|}), a
 construct that allows for task-parallel execution of two commands by
 connecting them through a character stream.
 %% An important \unix feature are pipes (\ttt{|}), introducing
 %% task-parallel program composition over character streams.
 This stream is comprised of contiguous character lines separated by newline characters (\textsc{NL}) delineating individual stream elements.
-For example, the first \ttt{grep} is given lines that contain file identifiers, of which it only outputs lines that contain \ttt{gz}, which are in turn consumed by \ttt{tr}.
+For example, Fig~\ref{fig:example}'s first \ttt{grep} outputs (file-name) elements containing \ttt{gz}, which are then consumed by \ttt{tr}.
+% is given lines containing file identifiers and outputs ones that contain \ttt{gz}, 
 % As part of this interface, each command has access to (any combination of) three \emph{standard} streams---input, output, and error.
 A special end-of-file (\textsc{EOF}) condition marks the end of a stream.
 
@@ -821,8 +840,7 @@ The shell does not have any visibility into these flags;
 Finally, \unix provides an environment for composing commands written in any language.
 Many of these commands come with the system---\eg ones defined by the POSIX standard or ones part of the GNU Coreutils---whereas others are available as add-ons.
 The fact that commands are developed in a variety of languages---including shell scripts---provides users with significant flexibility.
-For example, one could replace the call to \ttt{sort} and \ttt{head} with one to \ttt{./avg.py} to get the average or standard deviation rather than the maximum.
-The pipeline will still work, as long as \ttt{./avg.py} conforms to the interface outlined earlier.
+For example, one could replace \ttt{sort} and \ttt{head} with \ttt{./avg.py} to get the average rather than the maximum---the pipeline still works, as long as \ttt{./avg.py} conforms to the interface outlined earlier.
 % Shell scripting allows incremental development through refinement
 
 % the input stream (stdin), the output stream (stdout), and the generating errors or diagnostics to the standard error stream (stderr)
@@ -841,21 +859,6 @@ several challenges.
 % \footnote{
 %   Alternatives for automated parallelization were outlined in the introduction~\sx{intro} and are surveyed in the related work section~\sx{related}.
 % }
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_overview.pdf}}
-\caption{
-  \textbf{\sys overview and correspondence to sections.}
-  \sys identifies potentially parallelizable regions~\sx{bg}, 
-  converts them to a dataflow graph~\sx{graph-components}, applies iterative
-  transformations~\sx{ir:transformations} based on the parallelizability properties (\S\ref{cmd}, \S\ref{ext}) 
-  of the commands used in these regions, and finally emits a parallel script
-  that uses custom primitives~\sx{optimizer}.
-}
-\vspace{-15pt}
-\label{fig:overview}
-\end{figure}
 
 \heading{Commands} % : Unbounded \& Mysterious}
 In contrast to restricted programming frameworks that enable parallelization by supporting a few carefully-designed primitives~\cite{streamit:02, brook:04, mapreduce:08, spark:12}, the \unix shell provides an unprecedented number and variety of composable commands.
@@ -888,8 +891,8 @@ Even though Fig.~\ref{fig:example}'s \ttt{for} focuses only on five years of dat
 Any attempt to automate parallelization should be aware of the POSIX shell language and induce as much parallelism as it can without breaking semantics.
 
 \heading{Implementation} %
-Independently of the semantics of individual commands and the shell language, the \unix environment has its own set of quirks.
-Thus, any attempt to orchestrate parallel execution will have to take care of several challenges related to task parallelism, deadlock prevention, and runtime performance.
+On top of command and shell semantics, the \unix environment has its own set of quirks.
+Any attempt to orchestrate parallel execution will hit challenges related to task parallelism, deadlock prevention, and runtime performance.
 For example, forked processes piping their combined results to Fig.~\ref{fig:example}'s \ttt{head} might not receive a \ttt{PIPE} signal if \ttt{head} exits prior to opening all pipes.
 % A final challenge has to do with practical issues, as even manual parallelization of a given shell script is far from trivial.
 % Parallelizing a script without reimplementing all of its commands, requires primitives to compose existing commands to achieve parallelization.
@@ -913,8 +916,8 @@ To expose and exploit data parallelism, % in a given shell script,
 %% parallel execution,
 \sys analyzes individual program fragments, addressing the challenges mentioned earlier.
 
-\sys's source-to-source compiler translates the script to a dataflow graph (DFG) model~\sx{ir} by identifying and transforming special regions termed \emph{parallelizable regions} and explained below. % nv idea: let's call them may-par regions
-It then runs a series of iterative analyses and transformations within these regions that aim at pushing parallelism as far as possible without risking of breaking semantics.
+\sys's source-to-source compiler translates the script to a dataflow graph (DFG) model~\sx{ir} by identifying and transforming special regions termed \emph{parallelizable regions} explained below. % nv idea: let's call them may-par regions
+It then runs a series of iterative analyses and transformations within these regions aimed at pushing parallelism as far as possible without risking breaking semantics.
 Finally, the compiler converts the DFG back into a shell script, replacing nodes with instantiated commands or primitives taken from its runtime library~\sx{optimizer}.
 % , and the technical challenges addressed to achieve performance benefits
 
