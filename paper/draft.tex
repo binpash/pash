@@ -53,7 +53,8 @@
 \newcommand{\vs}{{\em vs.} }
 \newcommand{\cmpn}{compartmentalization} 
 \newcommand{\heading}[1]{\vspace{4pt}\noindent\textbf{#1}\enspace}
-\newcommand{\ttt}[1]{\texttt{#1}}
+% \newcommand{\ttt}[1]{\texttt{#1}}
+\newcommand{\ttt}[1]{\mintinline{bash}{#1}}
 \newcommand{\ttiny}[1]{\texttt{\scriptsize #1}}
 \newcommand{\tti}[1]{\texttt{\scriptsize #1}}
 \newcommand{\spol}[1]{\scriptsize{\sc#1}}
@@ -447,7 +448,7 @@ One option is manual tools such as GNU \ttt{parallel}~\cite{Tange2011a}, \ttt{ts
 % and are often prototypical in nature---focusing on quickly prototyping a solution for the task at hand rather building an optimal solution to a recurring pattern.
 % short lived, changing quickly
 % (ii) ad-hoc flags provided by command developers and mentioned above.
-Another option is to use shell primitives (such as \ttt{\&}, \ttt{wait}) to explicitly induce parallelism;
+Another option is to use shell primitives (such as \ttt{&}, \ttt{wait}) to explicitly induce parallelism;
  these come at a cost of manual effort to split inputs, rewrite scripts, and orchestrate execution---an expensive and error-prone process.
 % re-writing of the entire script from scratch; unfortunately, this process is expensive and can introduce new bugs, cascading changes, and divergence from legacy functionality---but also foregoes all the productivity benefits of the original script.
 % The fact that a programmer often belongs to both groups at the same time---as composed scripts can themselves form a command used in other scrips---compounds the challenge.
@@ -828,7 +829,7 @@ The \unix kernel facilitates scheduling, communication, and synchronization behi
 \includegraphics[width=0.47\textwidth]{\detokenize{./figs/dish_example.pdf}}
 \caption{
   \textbf{Calculating maximum temperatures per year.}
-  The script downloads daily temperatures recorded across the U.S. for the years 2015--2020 and extracts the maximum for every year.
+  The script downloads daily temperatures recorded across the U.S. for the years 2015--2020 and extracts the maximum for every year. \kk{Make minted.}
 }
 \vspace{-15pt}
 \label{fig:example}
@@ -884,7 +885,7 @@ Another challenge is due to the language of the POSIX shell. % of the shell, whi
 % has been developed through a long history of additions.
 First, it contains constructs that enforce sequential execution:
    Fig.\ref{fig:example}'s sequential composition operator (\ttt{;}) means that the assignment to \ttt{base} is completed before everything else.
-Moreover, the language semantics only exposes limited task-based parallelism in the form of constructs such as \ttt{\&}. % and \ttt{|} 
+Moreover, the language semantics only exposes limited task-based parallelism in the form of constructs such as \ttt{&}. % and \ttt{|} 
 % NV: is this really task parallelism? (to be clear: I'm only considering removing "task-based".
 %%   contains constructs with different parallelizability semantics. % that enforce sequential execution.
 %% For example, Fig.~\ref{fig:example} assignment to \ttt{base}, connected with the rest of the script by the sequential composition operator (\ttt{;}), has to be completed before the rest of the script starts executing.
@@ -974,7 +975,7 @@ wait $! && ./dash_get_pids | xargs -n 1 kill -SIGPIPE
 \heading{Scripts}
 To maintain sequential semantics, \sys first analyzes a script to identify \emph{parallelizable regions} that contain commands that are candidates for parallelization.
 This analysis is guided by the script structure: % to identify parallelization candidates:
-  some constructs (\eg \ttt{\&}, \ttt{|}) expose task parallelism; others (\eg \ttt{\&\&}, \ttt{||}) enforce synchronization.
+  some constructs (\eg \ttt{&}, \ttt{|}) expose task parallelism; others (\eg \ttt{&&}, \ttt{||}) enforce synchronization.
 % \sys first needs to understand the POSIX constructs used to compose larger programs, indicating different levels of candidacy for pararllelization.
 %% To assign a candidacy for parallelization, \sys breaks POSIX constructs into a few broad classes:
 %%  (i) the parallel-composition operator (\ttt{\&}) exposes task parallelism,
@@ -1451,7 +1452,7 @@ In line with the \unix philosophy, these functions can be written in any languag
 \section{Dataflow Graph Model}
 \label{ir}
 
-\sys's core is an abstract dataflow graph (DFG) model that is used as the intermediate representation on which \sys performs optimizations.
+\sys's core is an abstract dataflow graph (DFG) model that is used as the intermediate representation on which \sys performs parallelization-exposing transformations.
 %% representation that is expressive enough to model data parallelism in shell programs.
 %% support a large subset of shell programs.\nv{Immediate Q: How Large? Which programs are not supported? Why?}
 \sys first lifts sections of the input script to the DFG
@@ -1469,7 +1470,7 @@ We start with the script-to-DFG tranlation~\sx{dataflow-regions},
   the DFG-to-script translation~\sx{backend}.
 
 
-\subsection{Font-end: From Shell Scripts to DFGs}
+\subsection{Front-end: From Shell Scripts to DFGs}
 \label{dataflow-regions}
 
 % To optimize a script, \sys translates it to a DFG~\sx{ir}.
@@ -1497,8 +1498,8 @@ We start with the script-to-DFG tranlation~\sx{dataflow-regions},
 %%   but effective analysis to identify which parts of the scripts to
 %%   parallelize.}
 
-\heading{Parallelizable Reions}
-The DFG model and associated transformations are applied only to program sub-ex\-pres\-sions that \sys deems \emph{may} (but not must) be safely parallelizable---\ie ones that would not break sequential semantics, as long as the commands involved in these regions fall under the right classes.
+\heading{Dataflow Regions}
+The DFG model and associated transformations are applied only to program sub-ex\-pres\-sions that \sys deems would be safe to parallelizable---\ie ones that would not break sequential semantics, as long as the commands involved in these regions fall under the right classes.
 %% respect to their sequential execution.
 The search for these regions is guided by the shell language and the structure of a particular program.
 These contain information about (i) fragments that can be executed independently, and (ii) barriers that are natural synchronization points. % for enforcing synchronization.
@@ -1514,17 +1515,17 @@ Consider this fragment:
 
 \noindent
 The \ttt{cat} and \ttt{grep} commands execute independently (and concurrently) in the standard shell, but \ttt{sort} waits for their completion prior to start.
-Both \ttt{cat f1 f2 | grep "foo" > f3} and \ttt{sort f3} are thus parallelizable regions, each not extending beyond \ttt{\&\&}.\footnote{
-  Can we make the commands \ttt{cmd1}, \ttt{cmd2}, \etc to ensure the readers understand this is driven by structure and not commands?}
+Both \ttt{cat f1 f2 | grep "foo" > f3} and \ttt{sort f3} are thus dataflow regions, each not extending beyond \ttt{&&}.\footnote{
+  Can we make the commands \ttt{cmd1}, \ttt{cmd2}, \etc to ensure the readers understand this is driven by structure and not commands? \kk{Commands do matter a bit though. If a command is sideeffectful we don't know how to connect it in the dataflow graph and thus \sys would not parallelize it (as is written later in the translation pass).}}
 % ---more precisely, they are maximal.
 
-Intuitively, parallelizable regions correspond to sub-expressions of
+Intuitively, dataflow regions correspond to sub-expressions of
 the program that would be allowed to execute independently by
 different processes in the POSIX standard~\cite{posix}. Larger
-parallelizable regions can be composed from smaller ones using the
-pipe operator (\ttt{|}) and the parallel-composition operator (\ttt{\&}).
-Conversely, all other operators, including sequential composition (\ttt{;}) and logical operators (\ttt{\&\&}, \ttt{||}), represent
-barrier constructs that do not allow parallelizable regions to expand beyond them.
+dataflow regions can be composed from smaller ones using the
+pipe operator (\ttt{|}) and the parallel-composition operator (\ttt{&}).
+Conversely, all other operators, including sequential composition (\ttt{;}) and logical operators (\ttt{&&}, \ttt{||}), represent
+barrier constructs that do not allow dataflow regions to expand beyond them.
 
 % \tr{I don't know whether I should mention the following: While these
 %   control flow constructs can be parallelized and there has been
@@ -1553,15 +1554,15 @@ barrier constructs that do not allow parallelizable regions to expand beyond the
 %
 \sys's front-end performs a depth-first search on the AST of
 the given shell program.  During this pass, it extends the
-parallelizable regions bottom-up, translating their
+dataflow regions bottom-up, translating their
 independent components to DFG nodes until a barrier
 construct is reached. All AST subtrees not translatable to DFGs are kept as they are. The output of the translation pass is the
-original AST where parallelizable regions have been replaced with
+original AST where dataflow regions have been replaced with
 DFGs and calls to \sys's runtime primitives~\sx{optimizer}.
 
 To identify opportunities for parallelization, the translation pass extracts each command's  parallelizability class together with its inputs and outputs.
 To achieve this for each command, it searches all its available annotations~\sx{ext} and resorts to conservative defaults if none is found.
-If the command is in \sta or \pur, the translation pass initiates a parallelizable region that is propagated up the tree.
+If the command is in \sta or \pur, the translation pass initiates a dataflow region that is propagated up the tree.
 
 %% Finally, whenever the algorithm encounters a command, it first
 %% checks whether it is safe to parallelize it. A command is considered
@@ -2040,7 +2041,7 @@ improvements~\sx{optimizer}.
 \subsection{Backend: From DFGs to Shell Scripts}
 \label{backend}
 
-After translating the parallelizable regions of the input script to DFGs and applying optimization passes~\sx{ir:transformations},
+After translating the dataflow regions of the input script to DFGs and applying optimization passes~\sx{ir:transformations},
   \sys translates all DFGs back into a shell script.
 Nodes of the graph are instantiated with the commands and flags they represent, and edges are instantiated as named pipes.
 A prologue in the script creates the necessary intermediate pipes, and a \ttt{trap} call takes care of cleaning things up in cases where the script aborts.
@@ -2963,10 +2964,10 @@ We first compare a single GNU \ttt{sort} optimized by \sys ($S_{PaSh}$) versus t
 %% %   \vspace{-15pt}
 %% % \caption{ \textbf{Comparison with \ttt{sort -{}-parallel}.} }
 %% \end{wrapfigure}
-\ttt{-{}-parallel} flag set ($S_{GNU}$). % , shown on the side.
+\ttt{--parallel} flag set ($S_{GNU}$). % , shown on the side.
 % The results are shown on the side-figure below.
-While \ttt{-{}-parallel} is not a general solution, the comparison serves to establish a baseline for \sys.
-$S_{GNU}$'s parallelism is configured to $2\times$ that of $S_{PaSh}$'s (\ie the rightmost plot point for $S_{GNU}$ is for \ttt{-{}-parallelism=127}), 
+While \ttt{--parallel} is not a general solution, the comparison serves to establish a baseline for \sys.
+$S_{GNU}$'s parallelism is configured to $2\times$ that of $S_{PaSh}$'s (\ie the rightmost plot point for $S_{GNU}$ is for \ttt{--parallelism=127}), 
 to account for \sys's additional merge processes.
 % and as such we note that the measurements are harsh for \sys.
 
