@@ -930,6 +930,8 @@ Finally, \sys converts these DFGs back to a shell script augmented with \sys-pro
 The script is handed off to the user's original shell interpreter for execution.
 \sys addresses the aforementioned challenges~\sx{bg:challenges} as below.
 
+\TODO{Add pointers}
+
 \heading{Commands}
 To understand standard commands available in any shell, \sys groups POSIX and GNU commands into a small but well-defined set of \emph{parallelizability classes}.
 Rather than describing a command's full observable behavior, these classes focus on information that is important for data parallelism.
@@ -1410,51 +1412,50 @@ If these invariants are met, after DFG analysis~\sx{ir} \sys can replace occurre
 representation, it performs transformations to expose parallelism, and
 then instantiates each DFG back to a parallel shell script.  A
 fundamental difference with other DFG models is that \sys's DFG encodes the
-order in which a node reads its inputs, which in turn enables a set of
+order in which a node reads its input streams (not just the order of input elements per stream), which in turn enables a set of
 graph transformations that can be iteratively applied to expose
 parallelization opportunities for \tsta and \tpur commands.
 %% data parallelism as task parallelism.\nv{What does this mean? What if they are fundamentally different in the reivewer's mind? Example?}
 %% These transformations can then be applied in an iterative way, optimizing the program to utilize available computational resources. 
-In \Cref{graph-components} we define the DFG model and describe the
-correspondence with shell scripts, and in \Cref{ir:transformations} we
-describe the graph transformations that \sys performs.
+We start with the script-to-DFG tranlation~\sx{dataflow-regions}, 
+  then define the DFG model and describe the correspondence with shell scripts~\sx{graph-components},
+  discuss the transformations that \sys performs~\sx{ir:transformations}, and close with
+  the DFG-to-script translation~\sx{backend}.
 
 
-\subsection{Parallelizable Regions}
+\subsection{Font-end: From Shell Scripts to DFGs}
 \label{dataflow-regions}
-The dataflow model and associated transformations are applied only to parallelizable regions.
-% 
+
 % To optimize a script, \sys translates it to a DFG~\sx{ir}.
 % As there are several program fragments that cannot be parallelized---\eg commands connected with \ttt{\&\&}, ~\S\ref{bg}---\sys introduces the notion of \emph{parallelizable program regions} and a translation pass for converting them to DFGs.
 % 
 %% In addition, the shell's highly dynamic
 %% nature compounds the challenge---\eg by not knowing what files does an
 %% unexpanded command argument refer to.
-
+% 
 %% \kk{Give examples of writing to environment variables, producing
 %%   irreversible side effects, the ; and \&\& operators.}
-
 %% To address the first issue, we introduce the notion of parallelizable
 %% program regions and a translation pass for converting them to a
 %% dataflow graph. To address the second issue, we limit dynamic
 %% components by deferring translation as late as possible using a
 %% wrapping scheme.
-
+% 
 %% The translation pass identifies distributable regions and
 %% translates each of them to a dataflow graph, provided the abstract
 %% syntax tree (AST) of a shell script.  The AST is produced by
 %% \ttt{LibDash}, a POSIX compliant parser~\cite{libdash}.
-
+% 
 %
 %% \kk{The goal of this subsection is to explain that Dish does a safe
 %%   but effective analysis to identify which parts of the scripts to
 %%   parallelize.}
-%
-Parallelizable regions are program sub-expressions that \sys deems may be parallelizable safely, \ie without breaking the program, based on the shell constructs they use.
+
+\heading{Parallelizable Reions}
+The DFG model and associated transformations are applied only to program sub-ex\-pres\-sions that \sys deems \emph{may} (but not must) be safely parallelizable---\ie ones that would not break sequential semantics, as long as the commands involved in these regions fall under the right classes.
 %% respect to their sequential execution.
 The search for these regions is guided by the shell language and the structure of a particular program.
-These contain information about two types of components:
-  fragments that can be executed independently and barriers that are natural synchronization points. % for enforcing synchronization.
+These contain information about (i) fragments that can be executed independently, and (ii) barriers that are natural synchronization points. % for enforcing synchronization.
 Consider this fragment:
 
 \begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
@@ -1464,7 +1465,8 @@ Consider this fragment:
 
 \noindent
 The \ttt{cat} and \ttt{grep} commands execute independently (and concurrently) in the standard shell, but \ttt{sort} waits for their completion prior to start.
-Both \ttt{cat f1 f2 | grep "foo" > f3} and \ttt{sort f3} are thus parallelizable regions, each not extending beyond \ttt{\&\&}.
+Both \ttt{cat f1 f2 | grep "foo" > f3} and \ttt{sort f3} are thus parallelizable regions, each not extending beyond \ttt{\&\&}.\footnote{
+  Can we make the commands \ttt{cmd1}, \ttt{cmd2}, \etc to ensure the readers understand this is driven by structure and not commands?}
 % ---more precisely, they are maximal.
 
 Intuitively, parallelizable regions correspond to sub-expressions of
@@ -1472,9 +1474,8 @@ the program that would be allowed to execute independently by
 different processes in the POSIX standard~\cite{posix}. Larger
 parallelizable regions can be composed from smaller ones using the
 pipe operator (\ttt{|}) and the parallel-composition operator (\ttt{\&}).
-Conversely, all other operators, such as the sequential composition operator (\ttt{;}) and the logical operators (\ttt{\&\&}, \ttt{||}), represent
-barrier constructs that do not allow parallelizable regions to
-permeate through.\nv{I will make this more precise---this paragraph is almost the same as overview}
+Conversely, all other operators, including sequential composition (\ttt{;}) and logical operators (\ttt{\&\&}, \ttt{||}), represent
+barrier constructs that do not allow parallelizable regions to expand beyond them.
 
 % \tr{I don't know whether I should mention the following: While these
 %   control flow constructs can be parallelized and there has been
@@ -1505,7 +1506,7 @@ permeate through.\nv{I will make this more precise---this paragraph is almost th
 the given shell program.  During this pass, it extends the
 parallelizable regions bottom-up, translating their
 independent components to DFG nodes until a barrier
-construct is reached. All subtrees not translatable to DFGs are kept as they are. The output of the translation pass is the
+construct is reached. All AST subtrees not translatable to DFGs are kept as they are. The output of the translation pass is the
 original AST where parallelizable regions have been replaced with
 DFGs and calls to \sys's runtime primitives~\sx{optimizer}.
 
@@ -1601,7 +1602,7 @@ It will not attempt to parallelize sub-expressions in which the translation pass
 %% In order to effectively apply optimizations and distribute a shell
 %% script, \sys first translates it to a manipulable representation.
 
-\subsection{Definitions}
+\subsection{DFG Definitions}
 \label{graph-components}
 
 The two main shell abstractions are
@@ -1610,7 +1611,7 @@ The two main shell abstractions are
 %% \nv{quick solution: change all files to streams and make the equivalence explicit here}
 \sys's DFG model represents commands as nodes and streams as edges.
 
-We first introduce basic notation used in this section.
+We first introduce the notation used in this section.
 For a set $D$, we write $D\kstar$ to denote the set of all finite words over $D$.
 For words $x, y \in D\kstar$, we write $x \cdot y$ or $xy$ to denote their concatenation.
 We write $\eps$ for the empty word.
@@ -1987,6 +1988,15 @@ performs the identity transformation. Relay nodes can be useful for
 monitoring and debugging, as well as for performance
 improvements~\sx{optimizer}.
 
+\subsection{Backend: From DFGs to Shell Scripts}
+\label{backend}
+
+After translating the parallelizable regions of the input script to DFGs and applying optimization passes~\sx{ir:transformations},
+  \sys translates all DFGs back into a shell script.
+Nodes of the graph are instantiated with the commands and flags they represent, and edges are instantiated as named pipes.
+A prologue in the script creates the necessary intermediate pipes, and a \ttt{trap} call takes care of cleaning things up in cases where the script aborts.
+The script makes use of \sys-provided primitives available in the system \ttt{PATH} and described next.
+
 %% The first two
 %% \nv{Name them?}  enable the parallelization transformations by
 %% inserting \ttt{cat} nodes,\footnote{\nv{This is minor, but for the
@@ -2048,9 +2058,6 @@ improvements~\sx{optimizer}.
 %% \kk{Maybe guide all of this by showing an example of an output shell
 %%   script?}
 
-After translating the parallelizable regions of the input script to DFGs and applying optimization passes~\sx{ir:transformations},
-  \sys translates all DFGs back into a shell script.
-Nodes of the graph are instantiated with the commands and flags they represent, and edges are instantiated as named pipes.
 This section describes technical challenges related to execution of the resulting script and how they are addressed by \sys's custom primitives.
 %% it instantiates the \todo{custom} split and relay nodes as highly
 %% optimized commands to improve In this section we describe how \sys
