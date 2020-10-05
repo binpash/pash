@@ -1205,9 +1205,7 @@ For example, consider the data-parallel version of \ttt{grep "foo" f1 f2}:
 % \end{lstlisting}
 \begin{minted}[fontsize=\footnotesize]{bash}
   mkfifo t1 t2
-  grep "foo" f1 > t1 &
-  grep "foo" f2 > t2 &
-  cat t1 t2
+  grep "foo" f1 > t1 & grep "foo" f2 > t2 & cat t1 t2
 \end{minted}
 
 \noindent
@@ -1408,6 +1406,12 @@ As the first and third columns are suppressed, \ttt{comm} can be categorized in 
   limited. All of these arguments are a little bit weak though. Niko,
   what do you think?}}
 
+\heading{Complete Annotation Language}
+%
+The complete annotation language contains 6 operators (one of which supports regural expressions), and we used it to specify the annotation records for \todo{X} commands---an effort that took about \todo{N} hours. An important point is that annotation records can be conservative by default to not jeopardize correctness, but can be incrementally refined to capture parallelizability when using combinations of flags. Our language is extensible with more operators (as long as the user defines an interpreter for them) and also supports writing arbitrary python code for commands whose properties are difficult to capture, such as the higher order \ttt{xargs} whose parallelizability class depends on the class of the command that it invokes.
+% \str
+% \kk{Mention that some commands, such as xargs are handled internally due to their particularities.}
+
 
 \heading{Custom Aggregators}
 For commands in \sta, the annotations are enough to enable parallelization:
@@ -1421,14 +1425,9 @@ In line with the \unix philosophy, these functions can be written in any languag
   (i) \emph{map} is in \sta and \emph{aggregate} is in \pur,
   (ii) \emph{map} can consume (or extend) the output of the original command and  \emph{aggregate} can consume (and combine) the results of multiple \emph{map} invocations, and
   (iii) their composition produces the same output as the original command.
-If these invariants are met, after DFG analysis~\sx{ir} \sys can replace occurrences of these commands with their \emph{map} and \emph{aggregate} equivalents, enabling their full parallelization.
-
-\heading{Annotation Effort}
-%
+\sys can use the \emph{map} and \emph{aggregate} functions in its graph transformations~\sx{ir} to further expose parallelism.
+% If these invariants are met, after DFG analysis~\sx{ir} \sys can replace occurrences of these commands with their \emph{map} and \emph{aggregate} equivalents, enabling their full parallelization.
 \sys defines aggregators for many POSIX and GNU commands in \pur, dubbing as both its standard library and an exemplar for community efforts tackling other commands.
-\str
-% \kk{We should mention somewhere that we used the language to annotate N commands.} 
-% \kk{Mention that some commands, such as xargs are handled internally due to their particularities.}
 
 
 
@@ -3279,62 +3278,62 @@ Experiments with real programs show substantial speedups and the ability to oper
 \bibliography{./bib}
 }
 
-\appendix
+% \appendix
 
-\section{Annotation Language Grammar}
-\label{alg}
+% \section{Annotation Language Grammar}
+% \label{alg}
 
-\Cref{fig:dsl} shows the complete grammar of the parallelizability
-annotation language.
+% \Cref{fig:dsl} shows the complete grammar of the parallelizability
+% annotation language.
 
-\begin{figure}
-  \centering
-  \begin{grammar}
-    <option> ::= `-' <string>
+% \begin{figure}
+%   \centering
+%   \begin{grammar}
+%     <option> ::= `-' <string>
 
-    <category> ::= `stateless' | `pure' | ...
+%     <category> ::= `stateless' | `pure' | ...
 
-    <maybe-int> ::= | <int>
+%     <maybe-int> ::= | <int>
 
-    <arg> ::= `args[' <int> `]'
+%     <arg> ::= `args[' <int> `]'
 
-    <args> ::= <arg>
-    \alt `args[' <maybe-int> `:' <maybe-int> `]'
+%     <args> ::= <arg>
+%     \alt `args[' <maybe-int> `:' <maybe-int> `]'
 
-    <input> ::= `stdin' | <args>
+%     <input> ::= `stdin' | <args>
 
-    <inputs> ::= <input>
-    \alt <input> `,' <inputs>
+%     <inputs> ::= <input>
+%     \alt <input> `,' <inputs>
 
-    <output> ::= `stdout' | <arg>
+%     <output> ::= `stdout' | <arg>
 
-    <outputs> ::= <output>
-    \alt <output> `,' <outputs>
+%     <outputs> ::= <output>
+%     \alt <output> `,' <outputs>
 
-    <option-pred> ::= <option>
-    \alt `value' <option> = <string>
-    \alt `not' <option-pred>
-    \alt <option-pred> `or' <option-pred>
-    \alt <option-pred> `and' <option-pred>
+%     <option-pred> ::= <option>
+%     \alt `value' <option> = <string>
+%     \alt `not' <option-pred>
+%     \alt <option-pred> `or' <option-pred>
+%     \alt <option-pred> `and' <option-pred>
 
-    <assignment> ::= `(' <category>, `[' <inputs> `]' `,' `[' <output> `]' `)'
+%     <assignment> ::= `(' <category>, `[' <inputs> `]' `,' `[' <output> `]' `)'
 
-    <predicate> ::= <option-pred> `=>' <assignment>
+%     <predicate> ::= <option-pred> `=>' <assignment>
 
-    <pred-list> ::= `|' <predicate> <pred-list>
-    \alt `|' `otherwise' `=>' <assignment>
+%     <pred-list> ::= `|' <predicate> <pred-list>
+%     \alt `|' `otherwise' `=>' <assignment>
 
-    <command> ::= <name> `\{' <pred-list> `\}'
+%     <command> ::= <name> `\{' <pred-list> `\}'
 
-    <command-list> ::= <command>
-    \alt <command> <command-list>
-  \end{grammar}
-  \caption{
-  \textbf{Parallelizability description language.}
-    The DSL captures important information regarding the parallelizability of a command.
-  }
-  \label{fig:dsl}
-\end{figure}
+%     <command-list> ::= <command>
+%     \alt <command> <command-list>
+%   \end{grammar}
+%   \caption{
+%   \textbf{Parallelizability description language.}
+%     The DSL captures important information regarding the parallelizability of a command.
+%   }
+%   \label{fig:dsl}
+% \end{figure}
 
 %% %% Appendix
 %% \appendix
