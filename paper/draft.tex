@@ -38,6 +38,8 @@
 \usepackage{caption}
 \usepackage{picins}
 
+\usepackage{minted} % for code listings
+
 \usepackage{tikz}
 \usetikzlibrary{arrows,automata,shapes.misc,shapes.geometric,positioning}
 
@@ -459,7 +461,7 @@ To top it off, all these options assume a good understanding of parallelism;
 \includegraphics[width=0.49\textwidth]{\detokenize{./figs/pash_overview.pdf}}
 \caption{
   \textbf{\sys overview and correspondence to sections.}
-  \sys identifies potentially parallelizable regions~\sx{bg}, 
+  \sys identifies dataflow regions~\sx{}, 
   converts them to a dataflow graph~\sx{graph-components}, applies iterative
   transformations~\sx{ir:transformations} based on the parallelizability properties (\S\ref{cmd}, \S\ref{ext}) 
   of the commands used in these regions, and finally emits a parallel script
@@ -947,7 +949,19 @@ Annotations are expressed once per command rather than once per script and aim t
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_example2.pdf}}
+% \includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_example2.pdf}}
+\begin{minted}[fontsize=\footnotesize]{bash}
+mkfifo $t{0,1...}
+curl $base/$y > $t0 & cat $t0 | split $t1 $t2 &
+cat $t1 | xargs -n1 curl -s >$t3 & 
+cat $t2 | xargs -n1 curl -s >$t4 &
+...
+cat $t9 | sort -rn > $t11 & cat $t10 | sort -rn > $t12 &
+cat $t11 | eager > $t13 & cat $t12 | eager > $t14 &
+sort -m -rn $t13 $t14 > $t15 &
+cat $t15 | head -n1 > $out1 &
+wait $! && ./dash_get_pids | xargs -n 1 kill -SIGPIPE
+\end{minted}
 \caption{
   \textbf{\sys's $2\times$-parallel output for fragment of Fig.~\ref{fig:example}.}
   \sys orchestrates the script's parallel execution through named pipes, parallel operators and careful placement of combiners.
@@ -996,10 +1010,12 @@ All these commands live in the \ttt{PATH} and are addressable by name, which mea
 % To have any hope of parallelizing scripts, \sys first needs to understand the parallelization characteristics of the commands they contain.
 \sys aims at parallelizing data-parallel commands, \ie ones that can process their input in parallel, encoding their characteristics by assigning them to
 \emph{parallelizability classes}.
+% \kk{eurosys: I have two small concerns about this sentence but I don't know how to fix them. First, there is a redundancy "parallelizing data-parallel". Second and most important, I would like this sentence to say that \sys exploits latent data parallelism in commands, but not that it parallelizes data parallel commands. The reason is that I would like to make sure that no reviewer thinks that all we do is parallelizing each command on its own (as some OSDI reviewer thought).}
 %% This information is encoded in a command's \emph{parallelizability class}.
 % Intuitively, a parallelizability 
 A class represents the level of synchronization required by copies of a command executing in parallel, 
   capturing only characteristics that are important for its parallel execution. % , rather than the command's full observable behavior.
+% \kk{eurosys: This sentence doesn't add much, especially given that we haven't talked about synchronization.}
 \sys leans towards having a few coarse classes rather than many detailed ones---among other reasons, to simplify their understanding and use by command developers.
 % Make the connections that this is like a type, that doesn't capture everything, but is good-enough
 
@@ -1014,8 +1030,9 @@ Broadly speaking, shell commands can be split into four major classes with respe
 %% how they interact with state.
 These classes are ordered in ascending difficulty (or impossibility) of parallelization.
 In this order, some classes can be thought as subsets of the next---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (but foregoing any performance improvements).
-Commands can change classes depending on their flags,% we focus on no-flag defaults for now and 
-  which are discussed later~\sx{ext}.
+Commands can change classes depending on their flags,
+% we focus on no-flag defaults for now and 
+which are discussed later~\sx{ext}.
 
 \begin{table}[t]
 \center
@@ -1162,6 +1179,7 @@ For example, \ttt{date}, \ttt{uname}, and \ttt{finger} are all commands interfac
 To address the challenge of language-agnostic extensibility~\sx{bg}, \sys allows communicating several key details about command parallelizability through lightweight annotations.
 These annotations can be used by both developers of new commands---including users developing their own scripts---as well as developers maintaining existing commands.
 The latter can express additions or changes to the command's implementation or interface, important as commands are maintained or extended over long periods of time.
+% \kk{eurosys: I have some concerns about the above sentence. First, I don't want to say that users developing their own scripts can use the annotation language because this goes against what we mentioned in the intro. Second, the last sentence is too prominent the way it is written now. I would prefer just saying that the annotations are aimed for command developers who can create an annotation when they develop a new command, or when a command's interface changes---which is important since commands are maintained and extended over long periods of time.}
 
 \heading{Key Concerns}
 \sys's annotations focus on four crucial concerns:
@@ -1177,14 +1195,20 @@ One reason is due to \sys's DFG representation, which connects commands with eac
   to perform this connection correctly \sys needs to know the outputs of a command to correctly connect them with the inputs of the next.
 A second reason is due to ordering:
   as some commands consume their inputs in a certain order, this order needs to be maintained in the parallel version of the program.
-For example, consider the parallel version of the expression \ttt{grep "foo" f1 f2}:
+For example, consider the data-parallel version of \ttt{grep "foo" f1 f2}:
 
-\begin{lstlisting}[language=sh, numbers=none]
+% \begin{lstlisting}[language=sh, numbers=none]
+%   mkfifo t1 t2
+%   grep "foo" f1 > t1 &
+%   grep "foo" f2 > t2 &
+%   cat t1 t2
+% \end{lstlisting}
+\begin{minted}[fontsize=\footnotesize]{bash}
   mkfifo t1 t2
   grep "foo" f1 > t1 &
   grep "foo" f2 > t2 &
   cat t1 t2
-\end{lstlisting}
+\end{minted}
 
 \noindent
 This is correct only because \sys knows that \ttt{grep} in the sequential program reads first from \ttt{f1} and then from \ttt{f2}.
@@ -1193,8 +1217,9 @@ Command flags (options) are a particularly popular way to control a command's ex
 Commands are thus assigned a default parallelizability class, which is then refined by the set of flags the command uses.
 For example, \ttt{cat} defaults to \sta, but with \ttt{-n} it jumps into \pur because it has to keep track of a counter and print it along with each line.
 
-As parallelizability classes form a hierarchy from most parallelizable to least parallelizable~\sx{cmd}, a command is classified by the class of its least parallelizable flag.
-For example, if a custom \ttt{trace-sort} command is invoked with flags \ttt{r}, \ttt{n}, and \ttt{k2} that are in \pur and a flag \ttt{d} in \sid that writes debugging output to a file, it ends up in \sid.
+% As parallelizability classes form a hierarchy from most parallelizable to least parallelizable~\sx{cmd}, a command is classified by the class of its least parallelizable flag.
+% For example, if a custom \ttt{trace-sort} command is invoked with flags \ttt{r}, \ttt{n}, and \ttt{k2} that are in \pur and a flag \ttt{d} in \sid that writes debugging output to a file, it ends up in \sid.
+% \kk{eurosys: I removed this paragraph because it is only a simplistic description of how flags are handled.}
 
 %% As simple examples, consider \ttt{cat} and \ttt{sort}.
 %% By default \ttt{cat} is in \sta, but with \ttt{-n} it jumps into \pur because it has to keep track of a counter.
@@ -1233,11 +1258,11 @@ For example, if a custom \ttt{trace-sort} command is invoked with flags \ttt{r},
 % \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
 
 \heading{Example Annotations}
-The parallelizability properties of each command are written in an annotation record that
+The parallelizability properties of each command are specified in an annotation record (a JSON object) that
 %% An annotation record
 contains a set of clauses, each one identified by a predicate on the command options.
 Each clause maps to an assignment for the command, indicating its class and the sequence of its inputs and outputs.
-Annotations treat flag arguments differently from file arguments, by checking if they start with a \ttt{-}.
+% Annotations treat flag arguments differently from file arguments, by checking if they start with a \ttt{-}.
 % \footnote{
 %   Note that the single character \ttt{-} is not an option as it is most often used to designate that a command reads from its standard input.
 %   \nv{
@@ -1245,35 +1270,51 @@ Annotations treat flag arguments differently from file arguments, by checking if
 %     I am also not sure how important this last sentence is, as it did not answer a question I had---I expected arguments to be anything: if soneome wants to put ``pizza'' the DSL should not disallow it.
 %   }
 % }
-The complete annotation grammar is shown in Appendix~\ref{alg}. \str
+% The complete annotation grammar is shown in Appendix~\ref{alg}. \str
 % \kk{EuroSys doesn't allow appendix. I think we should just remove the grammar.}
-% \kk{We should mention somewhere that we used the language to annotate N commands.} 
-% \kk{Mention that some commands, such as xargs are handled internally due to their particularities.}
 
 For example, consider \ttt{comm}, which performs a join-like operation on its two inputs to identify common elements.
 When \ttt{comm} is invoked without any flags, it produces a three-column output:
   the first column contains lines that are unique to the first input, the second column contains lines that are unique to the second input, and the last column contains lines that exist in both inputs.
 A user can invoke \ttt{comm} with any combination of flags \ttt{-1}, \ttt{-2}, or \ttt{-3} to suppress the corresponding output column(s).
-Its annotation record is shown below:\str
-% \kk{Update with an excerpt from `comm`.}
+The first clause from its annotation record is shown below:
 %
-\begin{lstlisting}[language=sh, numbers=none]
-comm {
-| -1 /\ -3 => (S, [arg[1]], [stdout])
-| -2 /\ -3 => (S, [arg[0]], [stdout])
-| _  => (P, [arg[0], arg[1]], [stdout])
-}
-\end{lstlisting}
+\begin{minted}[fontsize=\footnotesize]{json-object}
+  "predicate":
+    { 
+      "operator": "all",
+      "operands": ["-1", "-3"] 
+    },    
+  "class": "stateless",
+  "inputs": ["args[1]"],
+  "outputs": ["stdout"],
+  "options": ["stdin-hyphen"]
+\end{minted}
+% \begin{lstlisting}[language=json, numbers=none]
+%   "predicate":
+%     { 
+%       "operator": "all",
+%       "operands": ["-1", "-3"] 
+%     },    
+%   "class": "stateless",
+%   "inputs": ["args[1]"],
+%   "outputs": ["stdout"],
+%   "options": ["stdin-hyphen"]
+% \end{lstlisting}
+% comm {
+% | -1 /\ -3 => (S, [arg[1]], [stdout])
+% | -2 /\ -3 => (S, [arg[0]], [stdout])
+% | _  => (P, [arg[0], arg[1]], [stdout])
+% }
 
 \noindent
-The first two clauses describe \ttt{comm} invocations with options \ttt{-1} (or \ttt{-2}) and \ttt{-3}.
-As the first (second) and third columns are suppressed, \ttt{comm} can be considered in \sta by regarding its first file argument as a static ``configuration'' input;
+As the first and third columns are suppressed, \ttt{comm} can be categorized in \sta by regarding its first file argument as a static ``configuration'' input;
 % NV: I don't think this is correct, because the small input might be the other argument;  you could even have `comm - -`
-  this input accompanies every replicated instance of the command executing in parallel.
-The third clause is the general case, which includes \ttt{comm} invocations without any options, and is captured by the third clause.
-There, \ttt{comm} is classified as \pur as it needs to % wait until it 
-  read both inputs completely before it can output its results.
-Its inputs are its first and second file arguments (\ie excluding any options), and its output is produced in \ttt{stdout}.
+  this input accompanies every replicated instance of the command executing in parallel. The second clause is symmetric to the first with respect to the second input, and the third clause, which is the general case classifies \ttt{comm} as \pur as it needs to read both inputs completely before outputing its results. The option \ttt{stdin-hyphen} indicates that \ttt{-} represents standard input if given as a file argument.
+% The third clause is the general case, which includes \ttt{comm} invocations without any options, and is captured by the third clause.
+% There, \ttt{comm} is classified as \pur as it needs to % wait until it 
+%   read both inputs completely before it can output its results.
+% Its inputs are its first and second file arguments (\ie excluding any options), and its output is produced in \ttt{stdout}.
 
 %%  This case is described in the third clause of the annotation
 %% record, where \ttt{comm} is classified as \pur, since it needs to wait
@@ -1382,7 +1423,13 @@ In line with the \unix philosophy, these functions can be written in any languag
   (iii) their composition produces the same output as the original command.
 If these invariants are met, after DFG analysis~\sx{ir} \sys can replace occurrences of these commands with their \emph{map} and \emph{aggregate} equivalents, enabling their full parallelization.
 
+\heading{Annotation Effort}
+%
 \sys defines aggregators for many POSIX and GNU commands in \pur, dubbing as both its standard library and an exemplar for community efforts tackling other commands.
+\str
+% \kk{We should mention somewhere that we used the language to annotate N commands.} 
+% \kk{Mention that some commands, such as xargs are handled internally due to their particularities.}
+
 
 
 \tr{\kk{I am not sure a general interface is so easy to design. It needs
