@@ -16,3 +16,5 @@
 revision.tex
 *.ent
 **/.idea
+
+_minted-draft

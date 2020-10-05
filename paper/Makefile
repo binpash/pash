@@ -22,10 +22,10 @@ all: once
 	inkscape --export-pdf=$@ $<
 
 once:
-	pdflatex draft.tex
+	pdflatex -shell-escape draft.tex
 	bibtex draft
-	pdflatex draft.tex
-	pdflatex draft.tex
+	pdflatex -shell-escape draft.tex
+	pdflatex -shell-escape draft.tex
 
 %.blg: $(GENPDFS) $(BIBFILES)
 	pdflatex $*.tex
