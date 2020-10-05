@@ -1505,9 +1505,12 @@ The search for these regions is guided by the shell language and the structure o
 These contain information about (i) fragments that can be executed independently, and (ii) barriers that are natural synchronization points. % for enforcing synchronization.
 Consider this fragment:
 
-\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+% \begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+%  cat f1 f2 | grep "foo" > f3 && sort f3 
+% \end{lstlisting}
+\begin{minted}[fontsize=\footnotesize]{bash}
  cat f1 f2 | grep "foo" > f3 && sort f3 
-\end{lstlisting}
+\end{minted}
 % # Replace sort with sth better
 
 \noindent
@@ -2177,12 +2180,18 @@ The shell's evaluation strategy is unusually lazy, in that most commands and she
 Such laziness inhibits opportunities for parallelism, as commands are often blocked when their consumers are not requesting any input.
 Consider the following fragment:
 
-\begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+% \begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
+%  mkfifo t1 t2
+%  grep "foo" in1 > t1 & 
+%  grep "foo" in2 > t2 &
+%  cat t1 t2
+% \end{lstlisting}
+\begin{minted}[fontsize=\footnotesize]{bash}
  mkfifo t1 t2
  grep "foo" in1 > t1 & 
  grep "foo" in2 > t2 &
  cat t1 t2
-\end{lstlisting}
+\end{minted}
 
 \noindent
 The \ttt{cat} command will consume input from \ttt{t2} only after it completes reading from \ttt{t1}.
@@ -2361,12 +2370,18 @@ Unfortunately though, if a pipe has not been opened for writing yet
 Consider the following script:
 % emitted code from \sys's earlier versions:
 %% \kk{Proposed alternative: ``Consider the following shell script:''}
-\begin{lstlisting}[language=sh, numbers=none]
+% \begin{lstlisting}[language=sh, numbers=none]
+%   mkfifo fifo1 fifo2
+%   cat file-chunk1.txt > fifo1 &
+%   cat file-chunk2.txt > fifo2 &
+%   cat fifo1 fifo2 | head -n 1 & wait
+% \end{lstlisting}
+\begin{minted}[fontsize=\footnotesize]{bash}
   mkfifo fifo1 fifo2
   cat file-chunk1.txt > fifo1 &
   cat file-chunk2.txt > fifo2 &
   cat fifo1 fifo2 | head -n 1 & wait
-\end{lstlisting}
+\end{minted}
 \noindent
 In the code above, \ttt{head} exits early causing the last \ttt{cat} to exit before opening \ttt{fifo2}.
 As a result, the second \ttt{cat} never receives a \ttt{PIPE} signal that its consumer exited---after all, \ttt{fifo2} never even had a consumer.
