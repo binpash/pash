@@ -826,7 +826,16 @@ The \unix kernel facilitates scheduling, communication, and synchronization behi
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.47\textwidth]{\detokenize{./figs/dish_example.pdf}}
+\begin{minted}[fontsize=\footnotesize]{bash}
+base="ftp://ftp.ncdc.noaa.gov/pub/data/noaa";
+for y in {2015..2020}; do
+ curl $base/$y | grep gz | tr -s" " | cut -d" " -f9 |
+ sed "s;^;$base/$y/;" | xargs -n 1 curl -s | gunzip |
+ cut -c 89-92 | grep -iv 999 | sort -rn | head -n 1 |
+ sed "s/^/Maximum temperature for $y is: /"
+done
+\end{minted}
+% \includegraphics[width=0.47\textwidth]{\detokenize{./figs/dish_example.pdf}}
 \caption{
   \textbf{Calculating maximum temperatures per year.}
   The script downloads daily temperatures recorded across the U.S. for the years 2015--2020 and extracts the maximum for every year. \kk{Make minted.}
