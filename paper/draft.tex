@@ -2058,6 +2058,7 @@ After translating the dataflow regions of the input script to DFGs and applying 
   \sys translates all DFGs back into a shell script.
 Nodes of the graph are instantiated with the commands and flags they represent, and edges are instantiated as named pipes.
 A prologue in the script creates the necessary intermediate pipes, and a \ttt{trap} call takes care of cleaning things up in cases where the script aborts.
+% \kk{What does this "trap" refer to?}
 % The script makes use of \sys-provided primitives available in the system \ttt{PATH} and described next.
 % \kk{I removed this, since we describe them just below.}
 
@@ -2111,7 +2112,7 @@ A prologue in the script creates the necessary intermediate pipes, and a \ttt{tr
 %% \end{lemma}
 
 
-\section{Runtime Library}
+\section{Runtime}
 % FIXME two labels here
 \label{impl}
 \label{optimizer}
@@ -2119,7 +2120,7 @@ A prologue in the script creates the necessary intermediate pipes, and a \ttt{tr
 %% \kk{Maybe guide all of this by showing an example of an output shell
 %%   script?}
 
-This section describes technical challenges related to execution of the resulting script and how they are addressed by \sys's custom primitives.
+This section describes technical challenges related to execution of the resulting script and how they are addressed by \sys's runtime and custom primitives.
 %% it instantiates the \todo{custom} split and relay nodes as highly
 %% optimized commands to improve In this section we describe how \sys
 %% achieves that, and several technical challenges that it addresses.
@@ -2182,13 +2183,14 @@ This section describes technical challenges related to execution of the resultin
 
 
 \heading{Overcoming Laziness}
+% \kk{eurosys: Maybe we can call this section pull vs push, and rephrase the terminology to explain the problem as "execution is bounded by the speed in which commands pull their inputs, leading to underutilization". Using eager we get rid of this bound prefetch the inputs of the next command.}
 The shell's evaluation strategy is unusually lazy, in that most commands and shell constructs consume their inputs only when they are ready to process more.
 % This allows \unix to multiplex the executing commands efficiently by interleaving their executions. 
 %% support concurrently executing many more commands than the
 %% processing threads of the underlying system,
 %% by scheduling them concurrently, allowing them to
 %% have progress one at a time.
-Such laziness inhibits opportunities for parallelism, as commands are often blocked when their consumers are not requesting any input.
+Such laziness leads to CPU underutilization, as commands are often blocked when their consumers are not requesting any input.
 Consider the following fragment:
 
 % \begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
@@ -2199,9 +2201,7 @@ Consider the following fragment:
 % \end{lstlisting}
 \begin{minted}[fontsize=\footnotesize]{bash}
  mkfifo t1 t2
- grep "foo" in1 > t1 & 
- grep "foo" in2 > t2 &
- cat t1 t2
+ grep "foo" in1 > t1 & grep "foo" in2 > t2 & cat t1 t2
 \end{minted}
 
 \noindent
@@ -2389,8 +2389,7 @@ Consider the following script:
 % \end{lstlisting}
 \begin{minted}[fontsize=\footnotesize]{bash}
   mkfifo fifo1 fifo2
-  cat file-chunk1.txt > fifo1 &
-  cat file-chunk2.txt > fifo2 &
+  cat in1 > fifo1 & cat in2 > fifo2 &
   cat fifo1 fifo2 | head -n 1 & wait
 \end{minted}
 \noindent
