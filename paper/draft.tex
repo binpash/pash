@@ -1508,7 +1508,8 @@ We start with the script-to-DFG tranlation~\sx{dataflow-regions},
 %%   parallelize.}
 
 \heading{Dataflow Regions}
-The DFG model and associated transformations are applied only to program sub-ex\-pres\-sions that \sys deems would be safe to parallelizable---\ie ones that would not break sequential semantics, as long as the commands involved in these regions fall under the right classes.
+In order to apply the graph transformations that expose data parallelism, \sys first has to identify program sub-expressions that can be safely transformed to a dataflow graph, \ie sub-expressions that do not impose any scheduling or synchronization (e.g. by using \ttt{;}) and take a set of files as inputs and produce a set of files as outputs.
+% The DFG model and associated transformations are applied only to program sub-ex\-pres\-sions that \sys deems would be safe to parallelizable---\ie ones that would not break sequential semantics, as long as the commands involved in these regions fall under the right classes.
 %% respect to their sequential execution.
 The search for these regions is guided by the shell language and the structure of a particular program.
 These contain information about (i) fragments that can be executed independently, and (ii) barriers that are natural synchronization points. % for enforcing synchronization.
@@ -1525,7 +1526,9 @@ Consider this fragment:
 \noindent
 The \ttt{cat} and \ttt{grep} commands execute independently (and concurrently) in the standard shell, but \ttt{sort} waits for their completion prior to start.
 Both \ttt{cat f1 f2 | grep "foo" > f3} and \ttt{sort f3} are thus dataflow regions, each not extending beyond \ttt{&&}.\footnote{
-  Can we make the commands \ttt{cmd1}, \ttt{cmd2}, \etc to ensure the readers understand this is driven by structure and not commands? \kk{Commands do matter a bit though. If a command is sideeffectful we don't know how to connect it in the dataflow graph and thus \sys would not parallelize it (as is written later in the translation pass).}}
+  Can we make the commands \ttt{cmd1}, \ttt{cmd2}, \etc to ensure the readers understand this is driven by structure and not commands? 
+  % \kk{Commands do matter a bit though. If a command is sideeffectful we don't know how to connect it in the dataflow graph and thus \sys would not parallelize it (as is written later in the translation pass).} 
+  \kk{As we discussed we can add a small figure that shows the script, the AST, and the DFG.}}
 % ---more precisely, they are maximal.
 
 Intuitively, dataflow regions correspond to sub-expressions of
@@ -1567,11 +1570,13 @@ dataflow regions bottom-up, translating their
 independent components to DFG nodes until a barrier
 construct is reached. All AST subtrees not translatable to DFGs are kept as they are. The output of the translation pass is the
 original AST where dataflow regions have been replaced with
-DFGs and calls to \sys's runtime primitives~\sx{optimizer}.
+DFGs. 
+% and calls to \sys's runtime primitives~\sx{optimizer}.
+% \kk{eurosys: I removed this since it is slightly inaccurate and readers don't know what the primitives are at that point.}
 
 To identify opportunities for parallelization, the translation pass extracts each command's  parallelizability class together with its inputs and outputs.
 To achieve this for each command, it searches all its available annotations~\sx{ext} and resorts to conservative defaults if none is found.
-If the command is in \sta or \pur, the translation pass initiates a dataflow region that is propagated up the tree.
+If the command is in \sta, \pur, or \npu, the translation pass initiates a dataflow region that is propagated up the tree.
 
 %% Finally, whenever the algorithm encounters a command, it first
 %% checks whether it is safe to parallelize it. A command is considered
@@ -1669,8 +1674,7 @@ The two main shell abstractions are
   (ii) commands that communicate through these streams.
 %% \nv{quick solution: change all files to streams and make the equivalence explicit here}
 \sys's DFG model represents commands as nodes and streams as edges.
-
-We first introduce the notation used in this section.
+We now introduce the notation used in throughout this section.
 For a set $D$, we write $D\kstar$ to denote the set of all finite words over $D$.
 For words $x, y \in D\kstar$, we write $x \cdot y$ or $xy$ to denote their concatenation.
 We write $\eps$ for the empty word.
@@ -2047,14 +2051,15 @@ performs the identity transformation. Relay nodes can be useful for
 monitoring and debugging, as well as for performance
 improvements~\sx{optimizer}.
 
-\subsection{Backend: From DFGs to Shell Scripts}
+\subsection{Backend: From DFGs to a Parallel Shell Script}
 \label{backend}
 
-After translating the dataflow regions of the input script to DFGs and applying optimization passes~\sx{ir:transformations},
+After translating the dataflow regions of the input script to DFGs and applying the transformations~\sx{ir:transformations},
   \sys translates all DFGs back into a shell script.
 Nodes of the graph are instantiated with the commands and flags they represent, and edges are instantiated as named pipes.
 A prologue in the script creates the necessary intermediate pipes, and a \ttt{trap} call takes care of cleaning things up in cases where the script aborts.
-The script makes use of \sys-provided primitives available in the system \ttt{PATH} and described next.
+% The script makes use of \sys-provided primitives available in the system \ttt{PATH} and described next.
+% \kk{I removed this, since we describe them just below.}
 
 %% The first two
 %% \nv{Name them?}  enable the parallelization transformations by
@@ -2086,9 +2091,6 @@ The script makes use of \sys-provided primitives available in the system \ttt{PA
 %%   commands as a sequential command that would exit prematurely might
 %%   not exit completely if parallelized.}
 
-\tr{If there is time I can work out a formal definition and a proof
-  sketch why this transformation preserves the output of the dataflow
-  graph.}
 
 %% \begin{definition}
 %% Given a DFG $G = (V, E, O)$, where $V$ is a set of nodes
