@@ -1110,7 +1110,7 @@ Other commands, such as \ttt{sort}, maintain more complex invariants that have t
 Often these commands do not operate in an online fashion, but need to block until the end of a stream.
 A typical example of this is \ttt{sort}, which cannot start emitting results before the last input element has been consumed.
 Such constraints affect task parallelism, but not data parallelism:
-  \ttt{sort} can be parallelized significantly using divide-and-conquer techniques---\ie by encoding it as a group of (parallel) $map$ functions followed by a $fold$ that merges the results.
+  \ttt{sort} can be parallelized significantly using divide-and-conquer techniques---\ie by encoding it as a group of (parallel) $map$ functions followed by an $aggregate$ that merges the results.
 
 % \kk{Maybe show an example of map-fold for sort or wc}
 % \nv{We agreed to put it end of §5}
@@ -1192,12 +1192,12 @@ The latter can express additions or changes to the command's implementation or i
 % \kk{eurosys: I have some concerns about the above sentence. First, I don't want to say that users developing their own scripts can use the annotation language because this goes against what we mentioned in the intro. Second, the last sentence is too prominent the way it is written now. I would prefer just saying that the annotations are aimed for command developers who can create an annotation when they develop a new command, or when a command's interface changes---which is important since commands are maintained and extended over long periods of time.}
 
 \heading{Key Concerns}
-\sys's annotations focus on four crucial concerns:
+\sys's annotations focus on three crucial concerns:
   (i) a command's parallelizability class,
-  (ii) a command's inputs and outputs,
-  (ii) for commands that support multiple inputs, the characteristics of input consumption, and
-  (iii) for commands with multiple flags (options), the handling of competing sets of flags.
-As the first concern was discussed extensively in the previous section, we now focus on the latter three.
+  (ii) a command's inputs and outputs, and the characteristics of input consumption, and
+  % (ii) for commands that support multiple inputs, the characteristics of input consumption, and
+  (iii) how do flags affect a command's class, inputs, and outputs.
+As the first concern was discussed extensively in the previous section, we now focus on the latter two.
 
 To be able to accurately construct the DFG representation, \sys needs to know certain details about a command's inputs and outputs.
 There are a few reasons for this.
@@ -1222,7 +1222,7 @@ For example, consider the data-parallel version of \ttt{grep "foo" f1 f2}:
 This is correct only because \sys knows that \ttt{grep} in the sequential program reads first from \ttt{f1} and then from \ttt{f2}.
 
 Command flags (options) are a particularly popular way to control a command's execution, directly affecting its parallelizability classification.
-Commands are thus assigned a default parallelizability class, which is then refined by the set of flags the command uses.
+Commands are thus assigned a default parallelizability class, which should then be refined by the set of flags the command uses.
 For example, \ttt{cat} defaults to \sta, but with \ttt{-n} it jumps into \pur because it has to keep track of a counter and print it along with each line.
 
 % As parallelizability classes form a hierarchy from most parallelizable to least parallelizable~\sx{cmd}, a command is classified by the class of its least parallelizable flag.
@@ -1266,10 +1266,10 @@ For example, \ttt{cat} defaults to \sta, but with \ttt{-n} it jumps into \pur be
 % \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
 
 \heading{Example Annotations}
-The parallelizability properties of each command are specified in an annotation record (a JSON object) that
-%% An annotation record
-contains a set of clauses, each one identified by a predicate on the command options.
-Each clause maps to an assignment for the command, indicating its class and the sequence of its inputs and outputs.
+The parallelizability properties of each command are specified in an annotation record that contains several components, each addressing one of the key concerns.
+On the top level, each annotation record contains a set of clauses, each one identified by a predicate on the command arguments (Concern (iii)). 
+Each clause contains an assignment for the command, indicating its class (Concern (i)), and the sequence of its inputs and outputs (Concern (ii)).
+%  (a JSON object) that
 % Annotations treat flag arguments differently from file arguments, by checking if they start with a \ttt{-}.
 % \footnote{
 %   Note that the single character \ttt{-} is not an option as it is most often used to designate that a command reads from its standard input.
@@ -1418,7 +1418,7 @@ As the first and third columns are suppressed, \ttt{comm} can be categorized in 
 
 \heading{Complete Annotation Language}
 %
-The complete annotation language contains 6 operators (one of which supports regural expressions), and we used it to specify the annotation records for \todo{X} commands---an effort that took about \todo{N} hours. An important point is that annotation records can be conservative by default to not jeopardize correctness, but can be incrementally refined to capture parallelizability when using combinations of flags. Our language is extensible with more operators (as long as the user defines an interpreter for them) and also supports writing arbitrary python code for commands whose properties are difficult to capture, such as the higher order \ttt{xargs} whose parallelizability class depends on the class of the command that it invokes.
+The complete annotation language contains 6 operators (one of which supports regural expressions), and we used it to specify the annotation records for \todo{X} commands totalling \todo{Y} lines of JSON---an effort that took about \todo{N} hours. An important point is that annotation records can be conservative by default to not jeopardize correctness, but can be incrementally refined to capture parallelizability when using increasingly complex combinations of flags. Our language is extensible with more operators (as long as the user defines an interpreter for them) and also supports writing arbitrary python code for commands whose properties are difficult to capture, such as the higher order \ttt{xargs} whose parallelizability class depends on the class of the command that it invokes.
 % \str
 % \kk{Mention that some commands, such as xargs are handled internally due to their particularities.}
 
