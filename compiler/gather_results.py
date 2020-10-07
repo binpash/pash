@@ -332,6 +332,7 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
             maximum_y = max(maximum_y, max(no_task_par_eager_distr_speedup))
         except ValueError:
             pass
+    no_eager_distr_speedup = None
     if(not (experiment in custom_scaleup_plots) or
        (experiment in custom_scaleup_plots and
         "no-eager" in custom_scaleup_plots[experiment])):
@@ -351,7 +352,10 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
     ## Set the ylim
     ax.set_ylim(top=maximum_y*1.15)
 
-    return output_diff, lines, best_result
+    # Return the no-eager speedup
+    if(no_eager_distr_speedup is None):
+        no_eager_distr_speedup = distr_speedup
+    return output_diff, lines, best_result, no_eager_distr_speedup
 
 
 def collect_scaleup_times(experiment, results_dir):
@@ -366,7 +370,7 @@ def collect_scaleup_times(experiment, results_dir):
     # ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
     # ax.plot(all_scaleup_numbers, all_scaleup_numbers, '-', color='tab:gray', linewidth=0.5, label='Ideal')
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
-    output_diff, _, _ = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, custom_scaleup_plots, ax)
+    output_diff, _, _, _ = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, custom_scaleup_plots, ax)
 
     # plt.yscale("log")
     plt.xticks(all_scaleup_numbers[1:])
@@ -816,10 +820,11 @@ def plot_one_liners_tiling(results_dir):
 
     total_lines = []
     averages = [[] for _ in all_scaleup_numbers]
+    no_eager_averages = [[] for _ in all_scaleup_numbers]
     ## Plot microbenchmarks
     for i, experiment in enumerate(experiments):
         ax = fig.add_subplot(gs[i])
-        _, lines, best_result = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, custom_scaleup_plots, ax)
+        _, lines, best_result, no_eager_result = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, custom_scaleup_plots, ax)
         if(experiment == "double_sort"):
             total_lines = lines + total_lines
         # elif(experiment == "bigrams"):
@@ -834,6 +839,8 @@ def plot_one_liners_tiling(results_dir):
         ## Update averages
         for i, res in enumerate(best_result):
             averages[i].append(res)
+        for i, res in enumerate(no_eager_result):
+            no_eager_averages[i].append(res)
 
 
     axs = fig.get_axes()
@@ -855,10 +862,12 @@ def plot_one_liners_tiling(results_dir):
 
     ## Print average, geo-mean
     one_liner_averages = [sum(res)/len(res) for res in averages]
+    all_no_eager_averages = [sum(res)/len(res) for res in no_eager_averages]
     geo_means = [math.exp(np.log(res).sum() / len(res))
                  for res in averages]
     print("One-liners Aggregated results:")
     print(" |-- Averages:", one_liner_averages)
+    print(" |-- No Eager Averages:", all_no_eager_averages)
     print(" |-- Geometric Means:", geo_means)
 
 def plot_less_one_liners_tiling(results_dir):
@@ -885,7 +894,7 @@ def plot_less_one_liners_tiling(results_dir):
     ## Plot microbenchmarks
     for i, experiment in enumerate(experiments):
         ax = fig.add_subplot(gs[i])
-        _, lines, best_result = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, coarse_custom_scaleup_plots, ax)
+        _, lines, best_result, _ = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, coarse_custom_scaleup_plots, ax)
         if(experiment == "double_sort"):
             total_lines = lines + total_lines
         elif(experiment == "bigrams"):
