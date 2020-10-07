@@ -2546,6 +2546,8 @@ This section reports on whether \sys can indeed scale shell scripts out automati
 \heading{Highlights}
 \sys accelerates ($1.92-61.1\times$) all scripts ($>50$, with $>200$ commands).
 \kk{Add speedup separated: (i) transformations, (ii) runtime primitives.}
+% Averages: [1.955223776839714, 3.478591807121036, 5.721328556478535, 8.604380509595906, 10.666921423438112, 13.246864076708423]
+% No Eager Averages: [1.6327834370824543, 2.5481043878162444, 3.8623841529643173, 5.931851620007484, 7.466566647963421, 9.35752032439642]
 % From the rest, only two see a slowdown, only because \sys's setup ($\sim1s$) is higher than their runtime ($\sim0.4s$).
 \sys's optimized primitives offer benefits even against manually parallelized scripts. % (such as GNU sort, and GNU parallel).
 % \sys's compilation pass is negligible (avg. $<1s$). %  for non trivial program execution.
