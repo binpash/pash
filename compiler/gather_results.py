@@ -596,16 +596,22 @@ def aggregate_unix50_results(all_results, scaleup_numbers):
 def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
 
     ## Sort by speedup
-    all_results.sort(key=lambda x: x[0][scaleup_numbers.index(parallelism)], reverse=True)
+    sorted_indices = sorted(range(len(all_results)), key=lambda x:all_results[x][0][scaleup_numbers.index(parallelism)], reverse=True)
+    sorted_all_results = sorted(all_results, key=lambda x: x[0][scaleup_numbers.index(parallelism)], reverse=True)
+    print("Unix50 Par: {} Sorted Indices:".format(parallelism))
+    print("|------------------------") 
+    indices_map = sorted([(v,i) for i, v in enumerate(sorted_indices)], key=lambda x: x[0])
+    print("\n".join(["Old: {}, New: {}".format(v,i) for v, i in indices_map]))
+    print("|------------------------") 
     ## Filter small exec times.
-    all_results = [res for res in all_results
-                   if (res[1][scaleup_numbers.index(parallelism)] / 1000) > 0.1]
+    sorted_all_results = [res for res in sorted_all_results
+                          if (res[1][scaleup_numbers.index(parallelism)] / 1000) > 0.1]
 
     ## Plot individual speedups
     individual_results = [distr_exec_speedup[scaleup_numbers.index(parallelism)]
-                          for distr_exec_speedup, _ in all_results]
+                          for distr_exec_speedup, _ in sorted_all_results]
     absolute_seq_times_s = [absolute_seq[scaleup_numbers.index(parallelism)] / 1000
-                            for _, absolute_seq in all_results]
+                            for _, absolute_seq in sorted_all_results]
     print("Unix50 individual speedups for {} parallelism:".format(parallelism), individual_results)
     mean = sum(individual_results) / len(individual_results)
     median = statistics.median(individual_results)
