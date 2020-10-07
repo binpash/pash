@@ -2545,7 +2545,7 @@ In two large cases, tasks such as data download, extraction, and preprocessing--
 The vast majority requires no effort other than invoking \sys;
   the annotation for the remaining 6 commands ($<3\%$) amounts to a single record.
 % 
-In terms of correctness, \sys's results over multi-GB, \todo{XXX-line} inputs are identical to the sequential for all benchmarks.
+In terms of correctness, \sys's results over multi-GB, \todo{XXX-line}, inputs are identical to the sequential for all benchmarks.
 Scripts feature ample opportunities for breaking semantics, which \sys avoids.
 %% In one case, \sys avoids transforming a cycle (\ie a fragment whose input and output identifiers are the same).
 %in another, it preserves the semantics that another parallelization command breaks.
@@ -2577,9 +2577,13 @@ Except as otherwise noted,
   (ii) \ttt{curl} fetches data from a different physical host on the same network connected by 1Gbps links.
 % A more detailed description of the setup and experiments, including reproducible scripts, is included in the accompanying (anonymized) online repository.
 
-\heading{A Note on the Parallelism Factor}
+\heading{Parallelism}
 %
-The discussion of the results often mentions the parallelism factor, which refers to the \sys \emph{parallelism configuration} rather than the resulting parallelization. In fact, for small parallelism configurations \sys often achieves higher parallelization due to the creation of multiple processes---aggregators, splitters, relays \etc
+All of the experiments are run on the same machine and we configure the level of parallelism using \sys's \ttt{--parallel=N} flag that determines how many times will \sys apply its transformations---determining the ``width'' of the parallel script. The value of this flag, \ttt{N} is what is shown in the x-axis of \Cref{fig:microbenchmarks} and what we refer to as \emph{parallelism} throughout this section. Note that we cannot control the initial parallelism of a script (e.g. a command could spawn 10 processes), and therefore parallel scripts produced by \sys often reach maximum parallelization benefits with a value of \ttt{N} that is smaller than the physical cores of the system (in our case 64).
+
+% \heading{A Note on the Parallelism Factor}
+% %
+% The discussion of the results often mentions the parallelism factor, which refers to the \sys \emph{parallelism configuration} rather than the resulting parallelization. In fact, for small parallelism configurations \sys often achieves higher parallelization due to the creation of multiple processes---aggregators, splitters, relays \etc
 %% \nv{
 
 %% This is not necessarily the resulting parallelism achieved by \sys, which typically is above the level configured by the user.
@@ -2596,7 +2600,7 @@ We evaluate \sys under multiple configurations on popular, common, or classic \u
     \centering
     \includegraphics[width=\textwidth]{\detokenize{./figs/tiling_throughput_scaleup.pdf}}
     \caption{
-      \textbf{\sys's speedup for 2--64$\times$-parallelism.}
+      \textbf{\sys's speedup for 2--64$\times$-parallelism (\S\ref{eval}, Parallelism).}
       Different configurations per benchmark:
       (i) PaSh: the complete implementation with \ttt{eager} and \ttt{split} enabled,
       % (ii) Par+B.Split: \ttt{eager} and input-aware \ttt{split} enabled,
@@ -2604,7 +2608,7 @@ We evaluate \sys under multiple configurations on popular, common, or classic \u
       (iii) \todo{Blocking Eager}, only blocking \ttt{eager} enabled (no \ttt{split}),
       (iv) \todo{No Eager}: both \ttt{eager} and \ttt{split} disabled.
       % (vi) Opt. Parallel, an optimized version of \ttt{bigrams}~\cf{ours}.
-      Only relevant configurations are shown---\eg \ttt{grep} and \ttt{sort} do not benefit from \ttt{split}; \ttt{spell} and \ttt{bi-grams} do not see benefits without \ttt{split}.
+      % Only relevant configurations are shown---\eg \ttt{grep} and \ttt{sort} do not benefit from \ttt{split}; \ttt{spell} and \ttt{bi-grams} do not see benefits without \ttt{split}.
       % TODO: WHY?
     }
     \vspace{-15pt}
@@ -2639,15 +2643,15 @@ Finally, the two Bi-grams replicate and shift a stream by one entry to calculate
 % TODO \nv{Need to change terminology in plots---files should be (attempted) parallelism, name benchmark, cat should be merge.}
 Fig.~\ref{fig:microbenchmarks} presents \sys's speedup as a function of parallelism (2--64$\times$).
 % (Bi-grams-opt is shown as the \ttt{opt} line in Fig.~\ref{fig:microbenchmarks}'s Bi-grams.)
-Average speedups of the best \sys configuration, \ie \ttt{eager} enabled with \ttt{split} when it provides benefit, for \{2, 4, 8, 16, 32, 64\}$\times$-parallelism are \todo{1.97, 3.5, 5.78, 8.83, 10.96, and 13.47}, respectively.
+Average speedups of the optimized \sys, \ie \ttt{eager} and \ttt{split} enabled, for \{2, 4, 8, 16, 32, 64\}$\times$-parallelism are \todo{1.97, 3.5, 5.78, 8.83, 10.96, and 13.47}, respectively.
 % and the geometric means are 1.92, 3.39, 5.48, 7.94, 8.86, 8.51.}
-\kk{For the one-liners where split doesn't provide any benefit (or overhead) we don't show the PaSh w/o split line.}
-
+% \kk{For the one-liners where split doesn't provide any benefit (or overhead) we don't show the PaSh w/o split line.}
+%
 % we experiment with a $200\times$ level of parallelism to see potential overheads
 Tab.~\ref{tab:eval} shows that \sys's compilation time is negligible. % ($<5s$)
-It also contains Grep-light (not in Fig.~\ref{fig:microbenchmarks}), designed to show that \sys does not slow down IO-intensive scripts;
-  on the contrary, \sys achieves a 1.5-2.5$\times$ speedup for Grep-light. 
-\sys achieves a COST~\cite{mcsherryscalability} of 2 for all benchmarks.
+It also contains filter and bigrams-opt (not in Fig.~\ref{fig:microbenchmarks}). The first (filter) is used to evaluate \sys's impact on IO-intensive scripts (\sys achieves a 1.5-2.5$\times$ speedup). The second (bigrams-opt) is an optimized version of bigrams where we grouped 5 commands into one \tpur command thas has a more efficient $map$ and $aggregate$ implementation. \sys achieves up to x30 speedup for this script (significantly higher than what is achieved for the standard bigrams Fig.\ref{fig:microbenchmarks}).
+\sys achieves a COST~\cite{mcsherryscalability} of 2 for all benchmarks.\str
+% \kk{Do we want to talk about cost without mentioning it further?}
 %   size grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
 % The first number alone is interesting, as it captures \sys's output for the sequential script.
 % As there is no parallelism involved, it highlights the initial (bare minimum) cost corresponding to using \sys.
@@ -2658,21 +2662,24 @@ It also contains Grep-light (not in Fig.~\ref{fig:microbenchmarks}), designed to
 
 
 \heading{Discussion}
-\sys achieves near-linear speedup on low-parallelism configurations.
-This is due to a high degree (deep trees) of task parallelism from \sys's multiple constructs---\eg \emph{aggregations} and \ttt{relay}s---evident in all plots that contain \pur stages.
+%
+As discussed in (\S\ref{eval}, Parallelism) \sys does not have any control over the input script parallelism, and therefore it often achieves the maximum possible speedup, \ie without unnecessary process spawns and context switches, earlier than the purported parallelism---$16-32\times$ for a 64-core system. This is also due to the fact that \sys also adds its runtime primitives (\ttt{split} and \ttt{eager}), further increasing process spawns.\str
+% \kk{Can we somehow turn this point around and make it seems good/fine. That here we report this parallelism, but in the real system, it tries to do a best effort guess of parallelism based on the size of the input script.}
+% \sys achieves near-linear speedup on low-parallelism configurations.
+% This is due to a high degree (deep trees) of task parallelism from \sys's multiple constructs---\eg \emph{aggregations} and \ttt{relay}s---evident in all plots that contain \pur stages.
 %% \kk{Ben's point: task parallelism is mentioned here for the first time. Since \sys exposes data parallelism as task parallelism, we might want to mention that somewhere earlier in the paper}
 For example, Sort in $8\times$ spawns 37 nodes:
   8 \ttt{tr} nodes, 8 \ttt{sort} nodes, 7 \emph{aggregation} nodes, and 14 \ttt{relay} nodes.
-In effect, \sys hits the maximum number of parallel processes (and thus achieves optimal performance, \ie one without unnecessary process spawns and context switches) 
-significantly earlier than the purported parallelism---$16-32\times$ for a 64-core system.
-Asking for parallelism beyond that point degrades speedup, as overheads still increase but no further parallelism is available---as is the case, \eg  with Sort-sort for $32\times$ and $64\times$ which has 314 and 634 nodes, respectively.
+% In effect, \sys hits the maximum number of parallel processes (and thus achieves optimal performance, \ie one without unnecessary process spawns and context switches) 
+% significantly earlier than the purported parallelism---$16-32\times$ for a 64-core system.
+% Asking for parallelism beyond that point degrades speedup, as overheads still increase but no further parallelism is available---as is the case, \eg  with Sort-sort for $32\times$ and $64\times$ which has 314 and 634 nodes, respectively.
 % 
 %  On the other hand opt-bigrams 64 has 255 nodes and the sys time stays
 %   the same so I think that it might have to do with the fact that
 %   constant costs rise a lot (since opt-bigrams 32 takes just 1
 %   minute).
-\kk{Mention bigrams-opt result now that it is removed from the plot.}
-No Eager and Blocking Eager depict configurations without \sys's \ttt{eager} optimization and without \ttt{split}. As described in \Cref{optimizer}, these configurations perform worse than \sys with \ttt{eager} in all cases (except for a negligible difference in shortest-scripts). Adding \ttt{split} on top of that (Par + Split, Par + B. Split) further improves speedup for some scripts that have \tpur or \tnpu commands, and for the rest it does not affect performance. Finally, the optimized bi-grams script achieves significantly more benefits from \sys than its unoptimized counterpart, showing that familiarity with \sys's parallelizability classes could go a long way in terms of performance.
+% \kk{Mention bigrams-opt result now that it is removed from the plot.}
+\todo{No Eager} and \todo{Blocking Eager} depict configurations without \sys's \ttt{eager} optimization and without \ttt{split}. As described in \Cref{optimizer}, these eager implementations perform worse than \sys's optimized relay \ttt{eager} in all cases (except for a negligible difference in shortest-scripts). The benefits of \ttt{split} are also eveident for scripts that have \tpur or \tnpu commands, and for the rest it does not negatively affect performance. 
 
 %> \kk{It is visible that the automatic split is slightly worse than the
 %>   manual one in most cases (because it doesn't utilize task-based
