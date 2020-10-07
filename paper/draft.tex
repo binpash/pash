@@ -462,7 +462,7 @@ To top it off, all these options assume a good understanding of parallelism;
 \includegraphics[width=0.49\textwidth]{\detokenize{./figs/pash_overview.pdf}}
 \caption{
   \textbf{\sys overview and correspondence to sections.}
-  \sys identifies dataflow regions~\sx{}, 
+  \sys identifies dataflow regions~\sx{dataflow-regions}, 
   converts them to a dataflow graph~\sx{graph-components}, applies iterative
   transformations~\sx{ir:transformations} based on the parallelizability properties (\S\ref{cmd}, \S\ref{ext}) 
   of the commands used in these regions, and finally emits a parallel script
@@ -838,7 +838,7 @@ done
 % \includegraphics[width=0.47\textwidth]{\detokenize{./figs/dish_example.pdf}}
 \caption{
   \textbf{Calculating maximum temperatures per year.}
-  The script downloads daily temperatures recorded across the U.S. for the years 2015--2020 and extracts the maximum for every year. \kk{Make minted.}
+  The script downloads daily temperatures recorded across the U.S. for the years 2015--2020 and extracts the maximum for every year.
 }
 \vspace{-15pt}
 \label{fig:example}
