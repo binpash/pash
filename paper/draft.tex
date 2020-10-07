@@ -848,7 +848,7 @@ done
 Command flags, used pervasively in \unix, are configuration options that the command's developer has decided to expose to its users to improve the command's general applicability.
 For example, by omitting  \ttt{sort}'s \ttt{-r} flag that enables reverse sorting, the user can easily get the minimum temperature.
 The shell does not have any visibility into these flags; 
-  after it expands special characters such as \ttt{\textasciitilde{}} and \ttt{*}, it leaves parsing and evaluation entirely up to individual commands.
+  after it expands special characters such as \ttt{~} and \ttt{*}, it leaves parsing and evaluation entirely up to individual commands.
 
 Finally, \unix provides an environment for composing commands written in any language.
 Many of these commands come with the system---\eg ones defined by the POSIX standard or ones part of the GNU Coreutils---whereas others are available as add-ons.
@@ -2536,8 +2536,9 @@ This section reports on whether \sys can indeed scale shell scripts out automati
 %   as shown, if written in a conventional language it would correspond to a program on the order of hundreds of lines of code.
 
 \heading{Highlights}
-\sys accelerates ($1.92-61.1\times$) almost all scripts ($>50$, with $>200$ commands).
-From the rest, only two see a slowdown, only because \sys's setup ($\sim1s$) is higher than their runtime ($\sim0.4s$).
+\sys accelerates ($1.92-61.1\times$) all scripts ($>50$, with $>200$ commands).
+\kk{Add speedup separated: (i) transformations, (ii) runtime primitives.}
+% From the rest, only two see a slowdown, only because \sys's setup ($\sim1s$) is higher than their runtime ($\sim0.4s$).
 \sys's optimized primitives offer benefits even against manually parallelized scripts. % (such as GNU sort, and GNU parallel).
 % \sys's compilation pass is negligible (avg. $<1s$). %  for non trivial program execution.
 In two large cases, tasks such as data download, extraction, and preprocessing---often implemented using shell scripts and outside the focus of specialized parallelization frameworks---take comparable time to the execution of the main computation, and can be significantly accelerated by \sys.
