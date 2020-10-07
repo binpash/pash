@@ -2535,8 +2535,9 @@ This section reports on whether \sys can indeed scale shell scripts out automati
 %   as shown, if written in a conventional language it would correspond to a program on the order of hundreds of lines of code.
 
 \heading{Highlights}
-\sys accelerates ($1.92-61.1\times$) almost all scripts ($>50$, with $>200$ commands).
-From the rest, only two see a slowdown, only because \sys's setup ($\sim1s$) is higher than their runtime ($\sim0.4s$).
+\sys accelerates ($1.92-61.1\times$) all scripts ($>50$, with $>200$ commands).
+\kk{Add speedup separated: (i) transformations, (ii) runtime primitives.}
+% From the rest, only two see a slowdown, only because \sys's setup ($\sim1s$) is higher than their runtime ($\sim0.4s$).
 \sys's optimized primitives offer benefits even against manually parallelized scripts. % (such as GNU sort, and GNU parallel).
 % \sys's compilation pass is negligible (avg. $<1s$). %  for non trivial program execution.
 In two large cases, tasks such as data download, extraction, and preprocessing---often implemented using shell scripts and outside the focus of specialized parallelization frameworks---take comparable time to the execution of the main computation, and can be significantly accelerated by \sys.
