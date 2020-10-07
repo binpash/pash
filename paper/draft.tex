@@ -39,6 +39,14 @@
 \usepackage{picins}
 
 \usepackage{minted} % for code listings
+% \usemintedstyle{xcode}
+% ----- For red boxes ------
+\usepackage{etoolbox}
+\makeatletter
+\AtBeginEnvironment{minted}{\dontdofcolorbox}
+\def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
+\makeatother
+% --------------------------
 
 \usepackage{tikz}
 \usetikzlibrary{arrows,automata,shapes.misc,shapes.geometric,positioning}
@@ -54,7 +62,7 @@
 \newcommand{\cmpn}{compartmentalization} 
 \newcommand{\heading}[1]{\vspace{4pt}\noindent\textbf{#1}\enspace}
 % \newcommand{\ttt}[1]{\texttt{#1}}
-\newcommand{\ttt}[1]{\mintinline{bash}{#1}}
+\newcommand{\ttt}[1]{\mintinline[fontsize=\small]{bash}{#1}}
 \newcommand{\ttiny}[1]{\texttt{\scriptsize #1}}
 \newcommand{\tti}[1]{\texttt{\scriptsize #1}}
 \newcommand{\spol}[1]{\scriptsize{\sc#1}}
