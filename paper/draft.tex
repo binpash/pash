@@ -968,13 +968,14 @@ cat $t2 | xargs -n1 curl -s >$t4 &
 ...
 cat $t9 | sort -rn > $t11 & cat $t10 | sort -rn > $t12 &
 cat $t11 | eager > $t13 & cat $t12 | eager > $t14 &
-sort -m -rn $t13 $t14 > $t15 &
+sort-merge -rn $t13 $t14 > $t15 &
 cat $t15 | head -n1 > $out1 &
-wait $! && ./dash_get_pids | xargs -n 1 kill -SIGPIPE
+wait $! && ./pash_get_pids | xargs -n 1 kill -SIGPIPE
 \end{minted}
 \caption{
   \textbf{\sys's $2\times$-parallel output for fragment of Fig.~\ref{fig:example}.}
   \sys orchestrates the script's parallel execution through named pipes, parallel operators and careful placement of combiners.
+  \nv{Added \ttt{sort-merge}, can we sprinke more \sys primitives?}
 }
 \vspace{-15pt}
 \label{fig:example2}
