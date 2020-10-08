@@ -2592,10 +2592,10 @@ Two complex scripts with 15~\sx{macro1} and 34~\sx{macro2} commands in multiple 
 % In terms of manual effort,
 
 Using \sys's standard library of annotations for POSIX and GNU commands~\sx{parallelizability}, the vast majority of programs ($>50$, with $>200$ commands) require no effort to parallelize other than invoking \sys;
-  only 6  ($<3\%$) commands, outside this library, needed a single-record annotation.
+  only 6 ($<3\%$) commands, outside this library, needed a single-record annotation~\sx{macro2}.
 
-In terms of correctness, \sys's results on multi-GB inputs are always identical to the sequential.
-Scripts feature ample opportunities for breaking semantics, which \sys avoids.
+In terms of correctness, \sys's results on multi-GB inputs are identical to the sequential ones.
+Scripts feature ample opportunities for breaking semantics~\sx{micro}, which \sys avoids.
 %% In one case, \sys avoids transforming a cycle (\ie a fragment whose input and output identifiers are the same).
 %in another, it preserves the semantics that another parallelization command breaks.
 
@@ -2940,9 +2940,9 @@ Furthermore, \sys does not decelerate non-trivial computations, even when parall
 We now turn our attention to Fig.~\ref{fig:example}'s script~\sx{bg}.
 
 \heading{Program}
-This program is inspired by Hadoop's Definitive Guide~\cite[Chapter 2]{hadoop:15}, where it exemplifies a realistic analytics pipeline comprising three sub-tasks:
-  fetch data from NOAA (shell), convert them to a Hadoop-friendly format (shell), and calculate the maximum temperature (Hadoop).
-While the book focuses only on the last one, \sys parallelizes the entire pipeline.
+This program is inspired by Hadoop's Definitive Guide~\cite[\S2]{hadoop:15}, where it exemplifies a realistic analytics pipeline comprising 3 stages:
+  fetch NOAA data (shell), convert them to a Hadoop-friendly format (shell), and calculate the maximum temperature (Hadoop).
+While the book focuses only on the last stage, \sys parallelizes the entire pipeline.
 % Only the last one is the real focus of the book, % demonstrating the benefits of using distributed framework such as Hadoop.
 %   whereas we consider the entire pipeline. % ---from fetching data to outputting the maximum temperature.
 % The version used in the evaluation is slightly different than the one presented in Fig.~\ref{fig:example} (14 stages and totalling 240 characters), simplified only for clarity of exposition, in that it expresses the \ttt{for} loop as a first stage followed by \ttt{xargs}.
@@ -2975,7 +2975,7 @@ A few stages of the original script were expressed in a single \ttt{awk};
 
 \heading{Take-aways}
 \sys can be applied to programs of notable size \todo{and complexity} to offer significant acceleration.
-A broader take-away is that \sys is also able to extract parallelism from fragments that are not purely compute-intensive regions, \ie the usual focus of conventional parallelization systems.  
+A broader take-away is that \sys is also able to extract parallelism from fragments that are not purely compute-intensive, \ie the usual focus of conventional parallelization systems.  
 
 %% \todo{These programs correspond to much larger programs in other languages, a small fraction of which is automatically parallelizable with conventional systems.}
 
@@ -3038,7 +3038,7 @@ Several other stages are in \sta allowing \sys to achieve benefits by exposing d
 %>   it with similar (but not identical) work.}
 
 % This section attempts to compare \sys with best-of-breed alternatives for particular taks.
-As there are no prior systems directly comparable to \sys, this section draws comparisons with two specialized cases that excel within smaller fragments of \sys's proposed domain.
+As there are no prior systems directly comparable to \sys, we now draw comparisons with two specialized cases that excel within smaller fragments of \sys's proposed domain.
 
 \pichskip{15pt}% Horizontal gap between picture and text
 \parpic[r][t]{%
@@ -3051,7 +3051,7 @@ As there are no prior systems directly comparable to \sys, this section draws co
 %% \kk{Explain what is the purpose of the
 %%   microbenchmark. We want to establish that \sys scalability is as
 %%   good as it could be.}
-We first compare a single GNU \ttt{sort} parallelized by \sys ($S_{PaSh}$) \vs the same \ttt{sort} with the 
+We first compare a GNU \ttt{sort} parallelized by \sys ($S_{PaSh}$) \vs the same \ttt{sort} with the 
 %% \begin{wrapfigure}[10]{r}{0.25\textwidth}
 %%   \centering
 %%   %% \begin{center}
@@ -3091,7 +3091,7 @@ Finally, the comparison also shows \sys's benefits to command developers:
 We compare \sys to \ttt{parallel} (v.20160422), a GNU utility for running other commands in parallel~\cite{Tange2011a}, on a small bio-informatics script.
 % Using its \ttt{--jobs} flag, we  redirect input from a file to 
 % 554 / 330 
-Sequential execution takes 554.8s \vs \sys's 128.5s (4.3$\times$), with most of the overhead coming from \todo{a single command}.
+Sequential execution takes 554.8s \vs \sys's 128.5s (4.3$\times$), with most of the overhead coming from a single command---\ttt{cutadapt}.
 
 % % https://github.com/marcelm/cutadapt/issues/157
 % % https://www.biostars.org/p/123237/
