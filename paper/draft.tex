@@ -2904,11 +2904,12 @@ Only the last one is the real focus of the book, % demonstrating the benefits of
 
 \heading{Results}
 The complete pipeline executes in 44m2s for five years (82GB) of data.
-\sys with 2/10$\times$ parallelism leads to 1.86/2.44$\times$ speedup, with different phases seeing different benefits:
-  1.77/1.99$\times$ (vs. 33m58s) for all the pre-processing and 
-  2.30/10.79$\times$ speedup (vs. 10m4s) for computing the max.
-The reason why speedup is higher than parallelism is explained at the beginning of \S\ref{eval} (Parallelism).\footnote{
+\sys with \todo{10$\times$ parallelism} leads to \todo{2.44$\times$} speedup, with different phases seeing different benefits:
+  \todo{1.99$\times$} (vs. 33m58s) for all the pre-processing and 
+  \todo{10.79$\times$} speedup (vs. 10m4s) for computing the max.
+\todo{The reason why speedup is higher than parallelism} is explained at the beginning of \S\ref{eval} (Parallelism).\footnote{
   \nv{Can we avoid this by not showing the $2\times$? Why show $2\times$?} % <--- Eurosys
+  \kk{This will probably not be the case if we run for x16}
 }
 
 %> It is worth reporting Hadoop's (3.2.1, Oracle JDK1.8.0\_255) execution time for the curious reader (see below for fairness), which takes \todo{6m22s} (sequential) and \todo{4m30.554s} ($\times$\todo{XX}-parallel).
@@ -2922,10 +2923,7 @@ The reason why speedup is higher than parallelism is explained at the beginning 
 Similar to Unix50~\sx{unix50}, we found that large pipelines enable significant freedom in terms of expressiveness.
 A few stages of the original script were expressed in a single \ttt{awk};
 % unfortunately, \ttt{awk} is too general to have a single meaningful \todo{parallelizability} signature.
-  a simpler (but longer) pipeline that leverages \unix built-ins % might be outperformed by a specialized programs on a single node, but
-  turns out to be trivially parallelizable.
-% For example, the \ttt{sort} command at the end is an expensive version of extracting the maximum element;
-%   this could have been expressed with a simple \ttt{awk} script that only keeps track of the max.
+  a simpler (but longer) pipeline that leverages \unix built-ins turns out to be trivially parallelizable.
 
 %> In terms of execution fairness, both systems are message-passing rather than shared-memory, and Hadoop's setup is atypical to improve fairness:
 %>   it operates on non-HDFS file-system and has replication disabled.
@@ -2933,32 +2931,15 @@ A few stages of the original script were expressed in a single \ttt{awk};
 %> Finally, execution time is long enough (\todo{XXh})to amortize Hadoop's startup costs.
 %> % FIXME OSDI mention tabulation vs. sorting
 
-% \kk{Should we mention that we serve the weather data in the local network}
-% \nv{It's in the setup}
-
 
 \heading{Take-aways}
-\sys can be applied to programs of notable size and input
-%% \todo{larger} % real/realistic? implies that prior benchmarks were not  
-%% programs
-%% with modern input sides
-to offer significant acceleration.
+\sys can be applied to programs of notable size and input to offer significant acceleration.
 A broader take-away is that \sys is also able to extract parallelism from fragments that are not purely compute-intensive regions, \ie the usual focus of conventional parallelization systems.  
-
-% that falls outside the usual focus 
 
 %% \todo{These programs correspond to much larger programs in other languages, a small fraction of which is automatically parallelizable with conventional systems.}
 
 %% \kk{I feel that in order to make any ``bigger'' conclusion we need to at least mention some Hadoop results. Otherwise it feels that any argument doesn't stand. A reviewer could say that }
 
-% few different ways to write some phases, 
-%   for example, 
-% A large pipeline resulted in a couple of 
-% An interesting lesson here was that there are multiple
-% First, longer pipelines can be written in multiple ways
-% It is worth noting
-% These are
-% 
 \subsection{Use Case: Wikipedia Web Indexing}
 \label{macro2}
 
@@ -2977,7 +2958,7 @@ It totals 34 commands written in multiple programming languages.
 % To simplify execution (and avoid Wikipedia), we have saved a recent Wikipedia version on a server within the network and to redirect all \ttt{curl} requests there.
 %% As the \todo{first} component contains a cycle (URLs $\rightarrow$ HTML $\rightarrow$ URLs), \sys's conservative transformations do not attempt to parallelize it.
 The original script takes 191min to execute on 1\% of Wikipedia (1.3GB).
-With 2/16$\times$-parallelism, \sys brings it down to 97/15min ($1.97/12.7\times$), with the majority of the speedup coming from the HTML-to-text conversion. % which uses \ttt{pandoc}, a utility written in Haskell.
+With 16$\times$\todo{-parallelism}, \sys brings it down to 15min ($12.7\times$), with the majority of the speedup coming from the HTML-to-text conversion. % which uses \ttt{pandoc}, a utility written in Haskell.
 
 %> \kk{If the front-end takes a lot of time (compared to the back-end), we might better not report it with the premise that it is a feedback cycle that cannot be parallelized by \sys.}
 
@@ -2990,7 +2971,6 @@ Several other stages are in \sta allowing \sys to achieve benefits by exposing d
 
 \heading{Take-aways}
 \sys operates on programs with annotated commands outside the POSIX/GNU subsets and leads to notable speedups even when the original program features significant task-based parallelism.
-%% \sys does not risk breaking semantics, thus does not improve the first component. % this will not change
 
 % \subsection{Use Case: Container Orchestration}
 % \label{macro3}
@@ -3042,7 +3022,7 @@ We first compare a single GNU \ttt{sort} parallelized by \sys ($S_{PaSh}$) versu
 \ttt{--parallel} flag set ($S_{GNU}$). % , shown on the side.
 % The results are shown on the side-figure below.
 While \ttt{--parallel} is not a general solution, the comparison serves to establish a baseline for \sys.
-$S_{GNU}$'s parallelism is configured to $2\times$ that of $S_{PaSh}$'s (\ie the rightmost plot point for $S_{GNU}$ is for \ttt{--parallelism=127}), 
+$S_{GNU}$'s parallelism is configured to $2\times$ that of \todo{$S_{PaSh}$'s} \ttt{--width} (\ie the rightmost plot point for $S_{GNU}$ is for \ttt{--parallelism=128}), 
 to account for \sys's additional runtime processes.
 % and as such we note that the measurements are harsh for \sys.
 
@@ -3061,7 +3041,7 @@ $S_{PaSh}$ without \ttt{eager} performs comparably to $S_{GNU}$, and with \ttt{e
 $S_{GNU}$ indicates that \ttt{sort}'s scalability is inherently limited (\ie due to \ttt{sort} and not \sys);
   this is why all scripts that contain \ttt{sort} (\eg \S\ref{ours}--\ref{macro2}) do not go above $8\times$.
 Finally, the comparison also shows \sys's benefits to command developers:
-  a low-effort parallelizability annotation achieves better scalability than a custom flag (and underlying parallel implementation) added by developers.
+  a low-effort parallelizability annotation achieves better scalability than a custom flag (and underlying parallel implementation) manually added by developers.
 
 %% \kk{There is a weird thing in the results. That the sequential one
 %%   with --parallel=1 takes more than the \sys sequential one.}
@@ -3083,7 +3063,7 @@ We note that this pipeline is harsh for \sys, in that most of the overhead comes
 % % --workdir $PWD cutadapt_parallel {}
 
 There are a few possible ways one might attempt to use GNU \ttt{parallel} on this program.
-They could use it on the 8th stage, assuming they know it is a bottleneck, bringing execution down to 304.4s ($1.8\times$ speedup).
+They could use it on the bottleneck stage, assuming they are can deduce that, bringing execution down to 304.4s ($1.8\times$ speedup).
 Alternatively, they could (incorrectly) sprinkle \ttt{parallel} across the entire program---a strategy simplified by \ttt{parallel}'s \ttt{stdin} redirection feature.
 This would lead to 3.2$\times$ performance improvements but severely incorrect results with respect to the sequential execution---with 92\% of the output showing a difference between sequential and parallel execution.
 \sys's conservative program transformations are not applied in program fragments with unclear parallelizability properties.
