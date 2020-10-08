@@ -2575,7 +2575,7 @@ Two complex scripts with 15~\sx{macro1} and 34~\sx{macro2} commands in multiple 
 % In terms of manual effort,
 
 Using \sys's standard library of annotations for POSIX and GNU commands~\sx{parallelizability}, the vast majority of programs ($>50$, with $>200$ commands) require no effort to parallelize other than invoking \sys;
-  only 6 commands outside these classes ($<3\%$) needed a single-record annotation.
+  only 6  ($<3\%$) commands, outside this library, needed a single-record annotation.
 
 In terms of correctness, \sys's results on multi-GB inputs are always identical to the sequential.
 Scripts feature ample opportunities for breaking semantics, which \sys avoids.
@@ -2610,11 +2610,8 @@ Except as otherwise noted,
 % A more detailed description of the setup and experiments, including reproducible scripts, is included in the accompanying (anonymized) online repository.
 
 \heading{Parallelism}
-%
-% All experiments are run on the same machine and 
-% \nv{Eurosys: This /\ is described above}
-The level of parallelism is configured using \sys's \ttt{--parallel=N}, a flag that determines the number of times that \sys applies its transformations---determining the ``width'' of the parallel script.
-The value  of \ttt{N} is shown as the x-axis of Fig.\ref{fig:microbenchmarks}, called \emph{parallelism} throughout this section.
+The level of parallelism is configured using \sys's \ttt{--width=N}, a flag that determines the number of times that \sys applies its transformations and the resulting width of the data-parallel DFG.
+% The value  of \ttt{N} is shown as the x-axis of Fig.\ref{fig:microbenchmarks}. 
 We cannot control the initial parallelism of a script (\eg a command could spawn 10 processes), and thus parallel scripts produced by \sys often reach maximum parallelization benefits with a value of \ttt{N} that is smaller than the physical cores of the hardware setup (in our case 64).
 
 % \heading{A Note on the Parallelism Factor}
@@ -2630,20 +2627,43 @@ We cannot control the initial parallelism of a script (\eg a command could spawn
 \subsection{Common \unix One-liners}
 \label{ours}
 
-We evaluate \sys under multiple configurations on popular, common, or classic \unix pipeline patterns~\cite{bentley1985spelling, bentley1986literate, taylor2004wicked}.
-% \nv{Eurosys: goal of experiment: decouple compiler from runtime, and talk about all overheads}
+We evaluate \sys on popular, common, or classic \unix pipeline patterns~\cite{bentley1985spelling, bentley1986literate, taylor2004wicked}.
+The goal is to evaluate
+  (i) the performance benefits stemming from \sys's  DFG transformations alone, including how \ttt{--width} affects speedup, 
+  (ii) performance benefits stemming from \sys's runtime primitives, showing results for several configurations of the runtime lattice (Fig.~\ref{fig:lattice}).
 
 \begin{figure*}[t]
     \centering
     \includegraphics[width=\textwidth]{\detokenize{./figs/tiling_throughput_scaleup.pdf}}
     \caption{
-      \textbf{\sys's speedup for 2--64$\times$-parallelism (\S\ref{eval}, Parallelism).}
+      \textbf{\sys's speedup for \ttt{width=} 2--64.}
       Different configurations per benchmark:
       (i) PaSh: the complete implementation with \ttiny{eager} and \ttiny{split} enabled,
       % (ii) Par+B.Split: \ttt{eager} and input-aware \ttt{split} enabled,
       (ii) PaSh w/o split: \ttiny{eager} enabled (no \ttiny{split}),
       (iii) \todo{Blocking Eager}, only blocking \ttiny{eager} enabled (no \ttiny{split}),
       (iv) \todo{No Eager}: both \ttiny{eager} and \ttiny{split} disabled.
+  For some pairs of configurations, \sys produces identical parallel scripts and thus only one is shown.
+%   Two types of pairs where x y z coincide
+%   - \sys adds no split, whenever whenever the DFG width is constant for the entire pipeline. In these cases the blue line is identical to the red line, which not shown.
+%    Conversely, whenever both blue and red lines are shown, split nodes are needed due to changes in the pipeline width and result in performance improvements.
+% 
+%   - without split, the script is sequential (spell, bigrams)
+% Early on they have a pure or no parallelizable pure
+% and thus introduce an aggregator resulting in width of 1 right after, and requires a split.
+% Thus, any configuration that does not has \ttt{split} is practically sequential beyond that point---\ie No Eager, Blocking Eager, and \sys w/o Split see no speedup.
+% 
+% Blocking eager: data parallelism, but no task parallelism
+% No eager: blocking FIFO does not allow pushing -> underutilize CPU
+% 
+% The reason why Blocking Eager is usually slower than No Eager is due to \ttt{agg}regators that read multiple input streams at the same time---such \ttt{sort -m}.
+% 
+% Sort-sort possibly shows the full spectrum:
+%   (iii) \sys's \ttt{eager} offers benefits despite the lack of \ttt{split} because it fully parallelizes the first \ttt{sort} while maintaining task parallelism
+%   (iv) \sys gets full benefits because \ttt{split}ting allows parallelizing the second \ttt{sort} too.
+
+  % Configurations where the parallel script produced is identical to an existing configuration are not shown.
+  
       % (vi) Opt. Parallel, an optimized version of \ttt{bigrams}~\cf{ours}.
       % Only relevant configurations are shown---\eg \ttt{grep} and \ttt{sort} do not benefit from \ttt{split}; \ttt{spell} and \ttt{bi-grams} do not see benefits without \ttt{split}.
       % TODO: WHY?
@@ -2662,7 +2682,7 @@ We evaluate \sys under multiple configurations on popular, common, or classic \u
 %>  parallel because they are all close to 1 (no speedup).}
 Tab.~\ref{tab:eval} summarizes the first collection of programs.
 %  shown in Fig.~\ref{fig:microbenchmarks}, which in turn reports on their performance characteristics.
-Grep and Grep-light are in \sta, with the former centered around an expensive DFA-based backtracking expression.
+NFA-Regex and Filter are in \sta, with the former centered around an expensive \todo{NFA-based} backtracking expression and the latter being an IO-intensive script.
 % a DFA-based regular expression matching phase;
  % while the \unix \ttt{grep} command defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
 Sort is a short script centered around a \pur command.
@@ -2675,23 +2695,19 @@ Spell, based on the original \ttt{spell} developed by Johnson~\cite{bentley1985s
 Shortest-scripts extracts the 15 shortest scripts in the user's \ttt{PATH}, using the \ttt{file} utility and a higher-order \ttt{wc} via \ttt{xargs}~\cite[pg. 7]{taylor2004wicked}.
 Diff and Set-diff compare streams via a \ttt{diff} (in \npu, non-parallelizable) and \ttt{comm} (in \pur), respectively.
 Sort-sort uses consecutive \pur commands without interleaving them with commands that condense their input size (\eg \ttt{uniq}).
-Finally, the two Bi-grams replicate and shift a stream by one entry to calculate bigrams, but Bi-gram-opt's shift, \ttt{sort}, and \ttt{uniq} are merged to one command to use a more efficient aggregator.
+Finally, the two Bi-grams replicate and shift a stream by one entry to calculate bigrams, but Bi-gram-opt's groups 5 commands into one \pur command that has a more efficient $map$ and $aggregate$ implementation.
 
 \heading{Results}
 % TODO \nv{Need to change terminology in plots---files should be (attempted) parallelism, name benchmark, cat should be merge.}
-Fig.~\ref{fig:microbenchmarks} presents \sys's speedup as a function of parallelism (2--64$\times$).
+Fig.~\ref{fig:microbenchmarks} presents \sys's speedup as a function of \ttt{width=}2--64.
 % (Bi-grams-opt is shown as the \ttt{opt} line in Fig.~\ref{fig:microbenchmarks}'s Bi-grams.)
-Average speedups of the optimized \sys, \ie \ttt{eager} and \ttt{split} enabled, for \{2, 4, 8, 16, 32, 64\}$\times$-parallelism are \todo{1.97, 3.5, 5.78, 8.83, 10.96, and 13.47}, respectively.
+Average speedups of the optimized \sys, \ie \ttt{eager} and \ttt{split} enabled, for \ttt{width=}\{2, 4, 8, 16, 32, 64\} are \todo{1.97, 3.5, 5.78, 8.83, 10.96, and 13.47}, respectively.
+Average speedups for No Eager, \ie only \sys' transformations without its runtime support, are 1.63, 2.54, 3.86, 5.93 7.46 9.35$\times$.
 % and the geometric means are 1.92, 3.39, 5.48, 7.94, 8.86, 8.51.}
 % \kk{For the one-liners where split doesn't provide any benefit (or overhead) we don't show the PaSh w/o split line.}
-
 % we experiment with a $200\times$ level of parallelism to see potential overheads
 Tab.~\ref{tab:eval} shows that \sys's compilation time is negligible. % ($<5s$)
-It also contains Filter and Bigrams-opt (not in Fig.~\ref{fig:microbenchmarks}).
-Filter is used to evaluate \sys's impact on IO-intensive scripts (\sys achieves a 1.5--2.5$\times$ speedup).
-Bigrams-opt is an optimized version of Bigrams that groups 5 commands into one \pur command and thus has a more efficient $map$ and $aggregate$ implementation.
-\sys achieves up to $30\times$ speedup for this script (significantly higher than what is achieved for the standard Bigrams Fig.\ref{fig:microbenchmarks}).
-% \nv{Eurosys: I think this should be part of a "do custom aggregators help?" question, not the main results}.
+Filter and Bigrams-opt are not in Fig.~\ref{fig:microbenchmarks}, for which \sys achieves a speedup 1.5--2.5$\times$ and $30\times$.
 \sys achieves a COST~\cite{mcsherryscalability} of 2 for all benchmarks.
 %   size grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
 % The first number alone is interesting, as it captures \sys's output for the sequential script.
@@ -2703,7 +2719,13 @@ Bigrams-opt is an optimized version of Bigrams that groups 5 commands into one \
 
 
 \heading{Discussion}
-%
+% TODO: Add
+% * for scripts only with commands in \sta, we get linear speedup.
+% * eager is better than no eager and blocking eager for all scripts
+% * A \ttt{split} benefits scripts with \tpur or \tnpu commands, but does not negatively affect the rest.
+% * \ttt{width}
+% * why blocking is less than no eager
+% ( standard vs non-standard Bigrams Fig.\ref{fig:microbenchmarks}).
 \todo{These results explain a detail before getting the main points across: A is better than B, C is worse except G}
 As discussed earlier (\S\ref{eval}, Parallelism), \sys does not have control over the input script's parallelism.
 Thus, it often achieves the maximum possible speedup, \ie without unnecessary process spawns and context switches, earlier than the purported parallelism---$16-32\times$ for a 64-core system.
@@ -2725,7 +2747,6 @@ For example, Sort in $8\times$ spawns 37 nodes:
 % \kk{Mention bigrams-opt result now that it is removed from the plot.}
 \todo{No Eager} and \todo{Blocking Eager} depict configurations without \sys's \ttt{eager} optimization and without \ttt{split}.
 As described in Fig.\ref{optimizer}, these eager implementations perform worse than \sys's optimized \ttt{eager} relay in all cases (except for a negligible difference in Shortest-Scripts).
-A \ttt{split} benefits scripts with \tpur or \tnpu commands, but does not negatively affect the rest.
 
 %> \kk{It is visible that the automatic split is slightly worse than the
 %>   manual one in most cases (because it doesn't utilize task-based
