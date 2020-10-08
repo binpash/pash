@@ -2790,7 +2790,7 @@ Its runtime constructs improve over the baseline speedup achieved by its transfo
 \subsection{Unix50 from Bell Labs}
 \label{unix50}
 
-We now evaluate \sys on an existing set of \unix pipelines found in the wild.
+We now turn to a set of \unix pipelines found out in the wild.
 
 \heading{Programs}
 In a recent celebration of \unix's 50-year legacy, Bell Labs created 37 challenges~\cite{unix50} solvable by \unix pipelines.
@@ -2802,7 +2802,9 @@ They make extensive use of standard commands under a variety of flags, and appea
 %   variety of patterns'' since it doesn't really matter if we
 %   anticipated them (especially since we can address any issues and
 %   then re-run them).} . 
-\sys executes each pipeline as-is, without any modification.
+\sys executes each pipeline as-is, without any modification.\footnote{
+  \nv{Do we need this?}
+}
   % if an obvious fix improves performance, we report the speedup of both versions. %  original and modified. %  pipeline.
 
 % The ability to compose larger programs in versatile ways from smaller utility programs was a hallmark of the \unix design, and the game's levels are designed to stress that.
@@ -2810,11 +2812,11 @@ They make extensive use of standard commands under a variety of flags, and appea
 % ability to compose larger programs in versatile ways from smaller utility programs summarized by McIllroy's Unix philosophy memo.
 
 \heading{Results}
-\sys's \ttt{width} is set to 16 and pipelines are given 10GB inputs.
-Fig.~\ref{fig:unix50-individual} shows the speedup (left) over the sequential runtime (right) for 31 pipelines.
-We do not include three pipelines that take less than 0.1 seconds to execute because they only output the first line of their input using \ttt{head}.
-We use the pipeline index to refer to them in both plots and discussion.
-Average speedup is \todo{$6.02\times$}, median is $6.48\times$, and weighted average (with the absolute times as weights) is $5.75\times$.
+Fig.~\ref{fig:unix50-individual} shows the speedup (left) over the sequential runtime (right) for 31 pipelines, with \ttt{width=}16 and 10GB inputs.
+It does not include 3 pipelines that execute in under $0.1s$ by using \ttt{head} to output the first line of input.
+The script index refers to the challenge level, in both the plots and the discussion.
+Average speedup is \todo{$6.02\times$}, % median is $6.48\times$, 
+  and weighted average (with the absolute times as weights) is $5.75\times$.
  % the \todo{geometric mean is $1.08\times$},
 
   % Mean: 6.028795730618471
@@ -2823,15 +2825,14 @@ Average speedup is \todo{$6.02\times$}, median is $6.48\times$, and weighted ave
   % Weighted Average: 5.752417060139914
 
 \heading{Discussion}
-Most pipelines see significant acceleration, except 25-30
+Most pipelines see significant speedup, except \#25-30
   % \todo{13, 24, 25, 26, 29, 30} 
-  that see no speedup. 
+  that see no speedup because they contain general commands that \sys cannot parallelize without risking breakage---\eg \ttt{awk} and \ttt{sed} \ttt{-d}. % and \ttt{tr} \ttt{-d}.
   % and \todo{2, 19, 31} that see a slowdown.
-These pipelines often contain general commands that \sys cannot parallelize without risking breakage---\eg \ttt{awk} and \ttt{sed} \ttt{-d}. % and \ttt{tr} \ttt{-d}.
 % Note however, that some of the pipelines contain more general commands that cannot be parallelized since they were not written with that goal in mind;
 %   a common example is the use of \ttt{awk} for reordering or removing columns of the input.
 %% Some of them use general interpreters when they could be using a specialized equivalent tailored to the task at hand, the typical example being \ttt{awk} vs \ttt{cut}.
-A \unix expert would notice that some of these uses could be replaced with \unix-specific commands---\eg replacing \ttt{awk "{print \$2, \$0}" | sort -nr} just used to sort on the second field with a single \ttt{sort -nr -k 2} in the 26th pipeline.
+A \unix expert would notice that some of them can be replaced with \unix-specific commands---\eg \ttt{awk "{print \$2, \$0}" | sort -nr}, used to sort on the second field can be replaced with a single \ttt{sort -nr -k 2} (\#26).
   % \todo{13th} 
 The limited expressiveness of these commands can be exploited by \sys---in this specific case, achieving 8.1$\times$ speedup (\vs the original 1.01$\times$).
 %% , attempting only such obvious (to us, experts) replacements, \sys extracts further parallelism---\eg 13 sees a 8.1$\times$ speedup.
@@ -2859,16 +2860,16 @@ The limited expressiveness of these commands can be exploited by \sys---in this 
 
 For the rest, \sys's speedup is capped due to a combination of reasons:
   (i) they contain pure commands that are parallelizable but don't scale linearly, such as \ttt{sort} 
-  (\# 5, 6, 7, 8, 9, 19, 20, 21, 23, 24), 
+  (\#5, 6, 7, 8, 9, 19, 20, 21, 23, 24), 
   % 24, 9, 7, 6, 8, 23, 20, 19, 21, 5
   % \todo{(0, 1, 3, 15, 16, 18, 20, 27, 28, 33)},
-  (ii) they are deep pipelines that already exploit task-based parallelism
-  (\# 4, 10, 11, 13, 15, 17, 19, 21, 22),
+  (ii) they are deep pipelines that already exploit task parallelism
+  (\#4, 10, 11, 13, 15, 17, 19, 21, 22),
   % 17, 4, 13, 15, 10, 22, 11, 19, 21,
   % \todo{(7, 8, 9, 10, 11, 12, 14, 27, 28,)} 
 or 
-  (iii) they are not CPU-intensive, resulting in pronounced IO and constant costs 
-  (\# 3, 4, 11, 12, 14, 16, 17, 18, 22).
+  (iii) they are not CPU-intensive, resulting in pronounced I/O and constant costs 
+  (\#3, 4, 11, 12, 14, 16, 17, 18, 22).
   % 14, 3, 16, 17, 4, 22, 11, 12, 18
   % \todo{(4, 5, 6, 7, 8, 12, 14, 22, 23)}.
 
