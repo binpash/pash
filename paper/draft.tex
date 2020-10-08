@@ -385,9 +385,6 @@ Finally, \sys's \unix-aware runtime primitives address several practical issues 
 \label{intro}
 
 
-% \TODO{Drop the automated from the title maybe?}
-% \nv{Updates}
-
 %% \kk{After discussion on Wednesday Jan 8: Modify the narrative of
 %%   this paper to talk about data processing in the Shell. Make this
 %%   the main focus of the paper. This simplifies the narrative and
@@ -428,6 +425,9 @@ Finally, \sys's \unix-aware runtime primitives address several practical issues 
 % Even though shell pipelines are designed to exploit task parallelism, they completely ignore available data-parallelism.
 % % Too low-level descriptions of the problem, maybe keep it high level?
 % For small input sizes this isn't a problem since scripts take less than a second to execute, but as data sizes increase, failing to utilize the underlying parallel computational resources is a significant bottleneck.
+
+\nv{Make sure we use \ttt{width} everywhere}
+\nv{Decide on parallelizable regions}
 
 %% \blfootnote{$^{*}$Equal contribution.}
 The \unix shell is an environment---often interactive---for composing scripts written in a plethora of programming languages.
@@ -541,6 +541,23 @@ These address many practical challenges % such as task parallelism, deadlocks, a
 % it comes with a few runtime primitives for eager data splitting and merging that address several practical issues ranging from deadlocks, performance bottlenecks;
 %   these primitives were developed from uncovering several pathological situations, on many of which we report.
 
+% TODO: keep only points necessary for the punchline 
+% In the vast majority of scripts (49/54), \sys achieves significant speedups \todo{(average for width=16)}, and for the rest 5 slowdown is insignificant (worst case 0.89x).
+% For the temperature analysis script (which is taken from a Hadoop case study), \sys not only 
+% contains pre-processing that takes X time and Y main processing (Hadoop focus).
+% \sys accelerates the entire pipeline by , including the fragment that is outside the focus of conventional parallelization systems.
+% accelerates the CPU-intensive part that is parallelized by Hadoop, but also for the preprocessing part which takes even more time than what the other part takes.
+% XX--YY speedups in the vast majority of scripts, ones taken from the wild 
+% 1. Sentence about transformations vs runtime primitives
+% 2. Unix 50? 
+% 3. point about Hadoop expressing a fraction of the pipeline and speedup
+% \sys achieves higher speedup than \ttt{sort --parallel} that involved hand-tuned parallel implementation by command developers.
+% correctness of GNU parallel
+% PaSh can be applied to programs of notable
+% size and input to offer significant acceleration. A broader
+% take-away is that PaSh is also able to extract parallelism from
+% fragments that are not purely compute-intensive regions, i.e.,
+% the usual focus of conventional parallelization systems.
 
 We evaluate \sys using
   (i) a series of benchmarks, ranging from classic \unix one-liners to modern data-processing scripts;
@@ -2494,7 +2511,6 @@ The \emph{aggregate} functions iterate over the provided stream descriptors, \ie
   \textbf{Runtime setup lattice.}
   Parallel No Eager and Blocking Eager improve over sequential, but are not directly comparable.
   Eager adds \sys's optimized \ttiny{eager} relay, and \sys uses all primitives in \S\ref{optimizer} (Fig.~\ref{fig:microbenchmarks}).
-% Describe. \TODO{Combine this figure with the above code maybe.}
 }
 \vspace{-15pt}
 \label{fig:lattice}
@@ -2548,7 +2564,7 @@ The \emph{aggregate} functions iterate over the provided stream descriptors, \ie
 %> \TODO{(Maybe) we need to mention that eager has disk usage overhead that is linear to the size of the pipeline and the size of the input.}
 
 
-This section reports on whether \sys can indeed scale shell scripts out automatically and correctly, using several scripts collected out from the wild along with a few micro-benchmarks for targeted comparisons.
+This section reports on whether \sys can indeed offer performance benefits automatically and correctly using several scripts collected out from the wild along with a few micro-benchmarks for targeted comparisons.
 
 % Micro-bench\-marks~\sx{ours} are one-off, simple one-liners that take a few seconds to write;
 %   such pipelines are usually composed interactively to solve a task at hand, test a hypothesis, or ``smoke out bugs''~\cite{bentley1986literate}---but, with \sys, applied to very large data sets.
@@ -2558,14 +2574,15 @@ This section reports on whether \sys can indeed scale shell scripts out automati
 %   as shown, if written in a conventional language it would correspond to a program on the order of hundreds of lines of code.
 
 \heading{Highlights}
-\sys accelerates ($1.92-61.1\times$) \todo{49/54} scripts, whereas for the rest 5 the parallel execution time is close to the sequential (0.89, 0.91, 0.94, 099, 1.01$\times$).
-In this paragraph we summarize results for \ttt{--width=16}, but the rest of our evaluation section reports on varying \ttt{width}s.
-For a subset of our benchmarks~\sx{ours}, we decouple the performance benefits stemming from \sys's DFG transformations alone from the ones stemming from its runtime primitives:
-  the compiler's average speedup is \todo{$9.3\times$}, jumping to \todo{$13.2\times$} when runtime optimizations are used.
-A different subset ($30$ benchmarks) see an average speedup of $6.02\times$~\sx{unix50}.
+In this paragraph we summarize results for \ttt{--width=16}, but \sys's evaluation reports on varying \ttt{width}s.
+Overall, \sys accelerates 49/54 scripts by \todo{1.92--61.1}$\times$; % Eurosys: results for 16!!
+  for the rest, the parallel performance is comparable to the sequential (0.89, 0.91, 0.94, 099, 1.01$\times$).
+For a subset of our benchmarks~\sx{ours}, we decouple the speedup due \sys's DFG transformations alone from the one due to its runtime primitives:
+  the former averages \todo{$9.3\times$}, jumping to \todo{$13.2\times$} due to the latter.
+A different subset ($30$ benchmarks) sees average speedups of $6.02\times$~\sx{unix50}.
 % , depending on the classed of commands involved
 Two complex scripts with 15~\sx{macro1} and 34~\sx{macro2} commands in multiple languages see speedups of $2.44\times$ and $12.7\times$.
-\sys outperforms \ttt{sort --parallel} by a significant margin, and offers small performance benefits over GNU \ttt{parallel}, which returns incorrect results in one configuration~\sx{micro}.
+\sys significantly outperforms \ttt{sort --parallel}, which involves hand-tuning by its command developers, and performs better than GNU \ttt{parallel}, which returns incorrect results if used without care~\sx{micro}.
 % Averages: [1.955223776839714, 3.478591807121036, 5.721328556478535, 8.604380509595906, 10.666921423438112, 13.246864076708423]
 % No Eager Averages: [1.6327834370824543, 2.5481043878162444, 3.8623841529643173, 5.931851620007484, 7.466566647963421, 9.35752032439642]
 % From the rest, only two see a slowdown, only because \sys's setup ($\sim1s$) is higher than their runtime ($\sim0.4s$).
@@ -2575,7 +2592,7 @@ Two complex scripts with 15~\sx{macro1} and 34~\sx{macro2} commands in multiple 
 % In terms of manual effort,
 
 Using \sys's standard library of annotations for POSIX and GNU commands~\sx{parallelizability}, the vast majority of programs ($>50$, with $>200$ commands) require no effort to parallelize other than invoking \sys;
-  only 6 commands outside these classes ($<3\%$) needed a single-record annotation.
+  only 6  ($<3\%$) commands, outside this library, needed a single-record annotation.
 
 In terms of correctness, \sys's results on multi-GB inputs are always identical to the sequential.
 Scripts feature ample opportunities for breaking semantics, which \sys avoids.
@@ -2610,12 +2627,9 @@ Except as otherwise noted,
 % A more detailed description of the setup and experiments, including reproducible scripts, is included in the accompanying (anonymized) online repository.
 
 \heading{Parallelism}
-%
-% All experiments are run on the same machine and 
-% \nv{Eurosys: This /\ is described above}
-The level of parallelism is configured using \sys's \ttt{--parallel=N}, a flag that determines the number of times that \sys applies its transformations---determining the ``width'' of the parallel script.
-The value  of \ttt{N} is shown as the x-axis of Fig.\ref{fig:microbenchmarks}, called \emph{parallelism} throughout this section.
-We cannot control the initial parallelism of a script (\eg a command could spawn 10 processes), and thus parallel scripts produced by \sys often reach maximum parallelization benefits with a value of \ttt{N} that is smaller than the physical cores of the hardware setup (in our case 64).
+The level of parallelism is configured using \sys's \ttt{--width=W}, a flag that determines the number of times that \sys applies its transformations and the resulting width of the data-parallel DFG.
+% The value  of \ttt{N} is shown as the x-axis of Fig.\ref{fig:microbenchmarks}. 
+\sys does not control a script's initial parallelism (\eg a command could spawn 10 processes), and thus the resulting scripts often reach maximum parallelization benefits with a value of \ttt{W} smaller than the physical cores of our hardware setup (in our case 64).
 
 % \heading{A Note on the Parallelism Factor}
 % %
@@ -2630,24 +2644,24 @@ We cannot control the initial parallelism of a script (\eg a command could spawn
 \subsection{Common \unix One-liners}
 \label{ours}
 
-We evaluate \sys under multiple configurations on popular, common, or classic \unix pipeline patterns~\cite{bentley1985spelling, bentley1986literate, taylor2004wicked}.
-% \nv{Eurosys: goal of experiment: decouple compiler from runtime, and talk about all overheads}
+We evaluate \sys on popular, common, or classic \unix pipeline patterns~\cite{bentley1985spelling, bentley1986literate, taylor2004wicked}.
+The goal is to evaluate performance benefits due to \sys's  
+  (i) DFG transformations alone, including how \ttt{--width} affects speedup, 
+  (ii) runtime primitives, showing results for several configurations of the runtime lattice (Fig.~\ref{fig:lattice}).
 
 \begin{figure*}[t]
     \centering
     \includegraphics[width=\textwidth]{\detokenize{./figs/tiling_throughput_scaleup.pdf}}
     \caption{
-      \textbf{\sys's speedup for 2--64$\times$-parallelism (\S\ref{eval}, Parallelism).}
+      \textbf{\sys's speedup for \ttt{width=} 2--64.}
       Different configurations per benchmark:
       (i) PaSh: the complete implementation with \ttiny{eager} and \ttiny{split} enabled,
       % (ii) Par+B.Split: \ttt{eager} and input-aware \ttt{split} enabled,
       (ii) PaSh w/o split: \ttiny{eager} enabled (no \ttiny{split}),
       (iii) \todo{Blocking Eager}, only blocking \ttiny{eager} enabled (no \ttiny{split}),
       (iv) \todo{No Eager}: both \ttiny{eager} and \ttiny{split} disabled.
-      % (vi) Opt. Parallel, an optimized version of \ttt{bigrams}~\cf{ours}.
-      % Only relevant configurations are shown---\eg \ttt{grep} and \ttt{sort} do not benefit from \ttt{split}; \ttt{spell} and \ttt{bi-grams} do not see benefits without \ttt{split}.
-      % TODO: WHY?
-    }
+  For some pairs of configurations, \sys produces identical parallel scripts and thus only one is shown.
+}
     \vspace{-15pt}
     \label{fig:microbenchmarks}
 \end{figure*}
@@ -2662,7 +2676,7 @@ We evaluate \sys under multiple configurations on popular, common, or classic \u
 %>  parallel because they are all close to 1 (no speedup).}
 Tab.~\ref{tab:eval} summarizes the first collection of programs.
 %  shown in Fig.~\ref{fig:microbenchmarks}, which in turn reports on their performance characteristics.
-Grep and Grep-light are in \sta, with the former centered around an expensive DFA-based backtracking expression.
+NFA-Regex and Filter are in \sta, with the former centered around an expensive \todo{NFA-based} backtracking expression and the latter being an IO-intensive script.
 % a DFA-based regular expression matching phase;
  % while the \unix \ttt{grep} command defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
 Sort is a short script centered around a \pur command.
@@ -2675,23 +2689,19 @@ Spell, based on the original \ttt{spell} developed by Johnson~\cite{bentley1985s
 Shortest-scripts extracts the 15 shortest scripts in the user's \ttt{PATH}, using the \ttt{file} utility and a higher-order \ttt{wc} via \ttt{xargs}~\cite[pg. 7]{taylor2004wicked}.
 Diff and Set-diff compare streams via a \ttt{diff} (in \npu, non-parallelizable) and \ttt{comm} (in \pur), respectively.
 Sort-sort uses consecutive \pur commands without interleaving them with commands that condense their input size (\eg \ttt{uniq}).
-Finally, the two Bi-grams replicate and shift a stream by one entry to calculate bigrams, but Bi-gram-opt's shift, \ttt{sort}, and \ttt{uniq} are merged to one command to use a more efficient aggregator.
+Finally, the two Bi-grams replicate and shift a stream by one entry to calculate bigrams, but Bi-gram-opt's groups 5 commands into one \pur command that has a more efficient $map$ and $aggregate$ implementation.
 
 \heading{Results}
 % TODO \nv{Need to change terminology in plots---files should be (attempted) parallelism, name benchmark, cat should be merge.}
-Fig.~\ref{fig:microbenchmarks} presents \sys's speedup as a function of parallelism (2--64$\times$).
+Fig.~\ref{fig:microbenchmarks} presents \sys's speedup as a function of \ttt{width=}2--64.
 % (Bi-grams-opt is shown as the \ttt{opt} line in Fig.~\ref{fig:microbenchmarks}'s Bi-grams.)
-Average speedups of the optimized \sys, \ie \ttt{eager} and \ttt{split} enabled, for \{2, 4, 8, 16, 32, 64\}$\times$-parallelism are \todo{1.97, 3.5, 5.78, 8.83, 10.96, and 13.47}, respectively.
+Average speedups of the optimized \sys, \ie \ttt{eager} and \ttt{split} enabled, for \ttt{width=}\{2, 4, 8, 16, 32, 64\} are \todo{1.97, 3.5, 5.78, 8.83, 10.96, and 13.47}, respectively.
+Average speedups for No Eager, \ie only \sys' transformations without its runtime support, are 1.63, 2.54, 3.86, 5.93 7.46 9.35$\times$.
 % and the geometric means are 1.92, 3.39, 5.48, 7.94, 8.86, 8.51.}
 % \kk{For the one-liners where split doesn't provide any benefit (or overhead) we don't show the PaSh w/o split line.}
-
 % we experiment with a $200\times$ level of parallelism to see potential overheads
 Tab.~\ref{tab:eval} shows that \sys's compilation time is negligible. % ($<5s$)
-It also contains Filter and Bigrams-opt (not in Fig.~\ref{fig:microbenchmarks}).
-Filter is used to evaluate \sys's impact on IO-intensive scripts (\sys achieves a 1.5--2.5$\times$ speedup).
-Bigrams-opt is an optimized version of Bigrams that groups 5 commands into one \pur command and thus has a more efficient $map$ and $aggregate$ implementation.
-\sys achieves up to $30\times$ speedup for this script (significantly higher than what is achieved for the standard Bigrams Fig.\ref{fig:microbenchmarks}).
-% \nv{Eurosys: I think this should be part of a "do custom aggregators help?" question, not the main results}.
+Filter and Bigrams-opt are not in Fig.~\ref{fig:microbenchmarks}, for which \sys achieves a speedup 1.5--2.5$\times$ and $30\times$.
 \sys achieves a COST~\cite{mcsherryscalability} of 2 for all benchmarks.
 %   size grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
 % The first number alone is interesting, as it captures \sys's output for the sequential script.
@@ -2702,8 +2712,39 @@ Bigrams-opt is an optimized version of Bigrams that groups 5 commands into one \
 %   the performance characteristics, including in-kernel buffering and synchronization mechanisms, are identical between the two.
 
 
+%   Two types of pairs where x y z coincide
+%   - \sys adds no split, whenever whenever the DFG width is constant for the entire pipeline. In these cases the blue line is identical to the red line, which not shown.
+%    Conversely, whenever both blue and red lines are shown, split nodes are needed due to changes in the pipeline width and result in performance improvements.
+% 
+%   - without split, the script is sequential (spell, bigrams)
+% Early on they have a pure or no parallelizable pure
+% and thus introduce an aggregator resulting in width of 1 right after, and requires a split.
+% Thus, any configuration that does not has \ttt{split} is practically sequential beyond that point---\ie No Eager, Blocking Eager, and \sys w/o Split see no speedup.
+% 
+% Blocking eager: data parallelism, but no task parallelism
+% No eager: blocking FIFO does not allow pushing -> underutilize CPU
+% 
+% The reason why Blocking Eager is usually slower than No Eager is due to \ttt{agg}regators that read multiple input streams at the same time---such \ttt{sort -m}.
+% 
+% Sort-sort possibly shows the full spectrum:
+%   (iii) \sys's \ttt{eager} offers benefits despite the lack of \ttt{split} because it fully parallelizes the first \ttt{sort} while maintaining task parallelism
+%   (iv) \sys gets full benefits because \ttt{split}ting allows parallelizing the second \ttt{sort} too.
+
+  % Configurations where the parallel script produced is identical to an existing configuration are not shown.
+  
+      % (vi) Opt. Parallel, an optimized version of \ttt{bigrams}~\cf{ours}.
+      % Only relevant configurations are shown---\eg \ttt{grep} and \ttt{sort} do not benefit from \ttt{split}; \ttt{spell} and \ttt{bi-grams} do not see benefits without \ttt{split}.
+      % TODO: WHY?
+
+
 \heading{Discussion}
-%
+% TODO: Add
+% * for scripts only with commands in \sta, we get linear speedup.
+% * eager is better than no eager and blocking eager for all scripts
+% * A \ttt{split} benefits scripts with \tpur or \tnpu commands, but does not negatively affect the rest.
+% * \ttt{width}
+% * why blocking is less than no eager
+% ( standard vs non-standard Bigrams Fig.\ref{fig:microbenchmarks}).
 \todo{These results explain a detail before getting the main points across: A is better than B, C is worse except G}
 As discussed earlier (\S\ref{eval}, Parallelism), \sys does not have control over the input script's parallelism.
 Thus, it often achieves the maximum possible speedup, \ie without unnecessary process spawns and context switches, earlier than the purported parallelism---$16-32\times$ for a 64-core system.
@@ -2725,7 +2766,6 @@ For example, Sort in $8\times$ spawns 37 nodes:
 % \kk{Mention bigrams-opt result now that it is removed from the plot.}
 \todo{No Eager} and \todo{Blocking Eager} depict configurations without \sys's \ttt{eager} optimization and without \ttt{split}.
 As described in Fig.\ref{optimizer}, these eager implementations perform worse than \sys's optimized \ttt{eager} relay in all cases (except for a negligible difference in Shortest-Scripts).
-A \ttt{split} benefits scripts with \tpur or \tnpu commands, but does not negatively affect the rest.
 
 %> \kk{It is visible that the automatic split is slightly worse than the
 %>   manual one in most cases (because it doesn't utilize task-based
@@ -2747,11 +2787,10 @@ Its runtime constructs improve over the baseline speedup achieved by its transfo
 \subsection{Unix50 from Bell Labs}
 \label{unix50}
 
-We now evaluate \sys on an existing set of \unix pipelines found in the wild and \todo{written by non-experts}.
-% \kk{OSDI reviewer asked how do you know if they are non-experts.}
+We now evaluate \sys on an existing set of \unix pipelines found in the wild.
 
 \heading{Programs}
-In a recent celebration of \unix's 50-year legacy, Bell Labs created 37 challenges~\cite{unix50} solvable by means of composing \unix pipelines.
+In a recent celebration of \unix's 50-year legacy, Bell Labs created 37 challenges~\cite{unix50} solvable by \unix pipelines.
 The problems were designed to highlight \unix's modular philosophy~\cite{mcilroy1978unix}.
 We found unofficial solutions to all-but-three problems on GitHub~\cite{unix50sol}, expressed as pipelines with 2--12 stages (avg.: 5.58).
 They make extensive use of standard commands under a variety of flags, and appear to be written by non-experts (contrary to \S\ref{ours}, they often use sub-optimal or non-\unix-y constructs).
@@ -2768,14 +2807,12 @@ They make extensive use of standard commands under a variety of flags, and appea
 % ability to compose larger programs in versatile ways from smaller utility programs summarized by McIllroy's Unix philosophy memo.
 
 \heading{Results}
-\sys's parallelism is set to $16\times$, as many of these pipelines are relatively long (\S\ref{eval}, Parallelism).
-Their input was generated by \todo{multiplying their original input several times, enough to reach 10GB.}
-% \kk{eurosys: One OSDI reviewer didn't like how this is phrased. Can we change that?}
-Fig.~\ref{fig:unix50-individual} shows the speedup (left) over the sequential runtime (right) for all \todo{30} pipelines. We use the pipeline index to refer to them in both plots and discussion.
-%% (\nv{Pipelines are referred by number, in both the plot and the discussion below.})
+\sys's \ttt{width} is set to 16 and pipelines are given 10GB inputs.
+Fig.~\ref{fig:unix50-individual} shows the speedup (left) over the sequential runtime (right) for 31 pipelines.
+We do not include three pipelines that take less than 0.1 seconds to execute because they only output the first line of their input using \ttt{head}.
+We use the pipeline index to refer to them in both plots and discussion.
 Average speedup is \todo{$6.02\times$}, median is $6.48\times$, and weighted average (with the absolute times as weights) is $5.75\times$.
  % the \todo{geometric mean is $1.08\times$},
-We do not include three pipelines that take less than 0.1 seconds to execute because they only output the first line of their input using \ttt{head}.
 
   % Mean: 6.028795730618471
   % Median: 6.48837000168888
@@ -2787,12 +2824,13 @@ Most pipelines see significant acceleration, except 25-30
   % \todo{13, 24, 25, 26, 29, 30} 
   that see no speedup. 
   % and \todo{2, 19, 31} that see a slowdown.
-These pipelines contain commands which \sys cannot parallelize without risking breakage---\eg \ttt{awk} and \ttt{sed} \ttt{-d}. % and \ttt{tr} \ttt{-d}.
-Note however, that some of the pipelines contain more general commands that cannot be parallelized since they were not written with that goal in mind; a common example is the use of \ttt{awk} for reordering or removing columns of the input.
+These pipelines often contain general commands that \sys cannot parallelize without risking breakage---\eg \ttt{awk} and \ttt{sed} \ttt{-d}. % and \ttt{tr} \ttt{-d}.
+% Note however, that some of the pipelines contain more general commands that cannot be parallelized since they were not written with that goal in mind;
+%   a common example is the use of \ttt{awk} for reordering or removing columns of the input.
 %% Some of them use general interpreters when they could be using a specialized equivalent tailored to the task at hand, the typical example being \ttt{awk} vs \ttt{cut}.
-In particular, replacing an \ttt{awk} that was just used to sort on the second field \ttt{awk "{print \$2, \$0}" | sort -nr} with a single \ttt{sort -nr -k 2} in the 
+A \unix expert would notice that some of these uses could be replaced with \unix-specific commands---\eg replacing \ttt{awk "{print \$2, \$0}" | sort -nr} just used to sort on the second field with a single \ttt{sort -nr -k 2} in the 26th pipeline.
   % \todo{13th} 
-  26th pipeline allows \sys to achieve 8.1$\times$ speedup (in contrast to the original 1.01$\times$).
+The limited expressiveness of these commands can be exploited by \sys---in this specific case, achieving 8.1$\times$ speedup (\vs the original 1.01$\times$).
 %% , attempting only such obvious (to us, experts) replacements, \sys extracts further parallelism---\eg 13 sees a 8.1$\times$ speedup.
 % ---a common pattern we witnessed~\sx{macro1}.
 
@@ -2818,16 +2856,16 @@ In particular, replacing an \ttt{awk} that was just used to sort on the second f
 
 For the rest, \sys's speedup is capped due to a combination of reasons:
   (i) they contain pure commands that are parallelizable but don't scale linearly, such as \ttt{sort} 
-  5, 6, 7, 8, 9, 19, 20, 21, 23, 24,
+  (\# 5, 6, 7, 8, 9, 19, 20, 21, 23, 24), 
   % 24, 9, 7, 6, 8, 23, 20, 19, 21, 5
   % \todo{(0, 1, 3, 15, 16, 18, 20, 27, 28, 33)},
-  (ii) some are deep pipelines that already exploit task-based parallelism 
-  4, 10, 11, 13, 15, 17, 19, 21, 22,
+  (ii) they are deep pipelines that already exploit task-based parallelism
+  (\# 4, 10, 11, 13, 15, 17, 19, 21, 22),
   % 17, 4, 13, 15, 10, 22, 11, 19, 21,
   % \todo{(7, 8, 9, 10, 11, 12, 14, 27, 28,)} 
-  and
+or 
   (iii) they are not CPU-intensive, resulting in pronounced IO and constant costs 
-  3, 4, 11, 12, 14, 16, 17, 18, 22.
+  (\# 3, 4, 11, 12, 14, 16, 17, 18, 22).
   % 14, 3, 16, 17, 4, 22, 11, 12, 18
   % \todo{(4, 5, 6, 7, 8, 12, 14, 22, 23)}.
 
@@ -2900,19 +2938,16 @@ We now turn our attention to Fig.~\ref{fig:example}'s script~\sx{bg}.
 \heading{Program}
 This program is inspired by Hadoop's Definitive Guide~\cite[Chapter 2]{hadoop:15}, where it exemplifies a realistic analytics pipeline comprising three sub-tasks:
   fetch data from NOAA (shell), convert them to a Hadoop-friendly format (shell), and calculate the maximum temperature (Hadoop).
-Only the last one is the real focus of the book, % demonstrating the benefits of using distributed framework such as Hadoop.
-  whereas we consider the entire pipeline. % ---from fetching data to outputting the maximum temperature.
+While the book focuses only on the last one, \sys parallelizes the entire pipeline.
+% Only the last one is the real focus of the book, % demonstrating the benefits of using distributed framework such as Hadoop.
+%   whereas we consider the entire pipeline. % ---from fetching data to outputting the maximum temperature.
 % The version used in the evaluation is slightly different than the one presented in Fig.~\ref{fig:example} (14 stages and totalling 240 characters), simplified only for clarity of exposition, in that it expresses the \ttt{for} loop as a first stage followed by \ttt{xargs}.
 
 \heading{Results}
 The complete pipeline executes in 44m2s for five years (82GB) of data.
-\sys with \todo{10$\times$ parallelism} leads to \todo{2.44$\times$} speedup, with different phases seeing different benefits:
+\sys with \ttt{width=}16 leads to \todo{2.44$\times$} speedup, with different phases seeing different benefits:
   \todo{1.99$\times$} (vs. 33m58s) for all the pre-processing and 
   \todo{10.79$\times$} speedup (vs. 10m4s) for computing the max.
-\todo{The reason why speedup is higher than parallelism} is explained at the beginning of \S\ref{eval} (Parallelism).\footnote{
-  \nv{Can we avoid this by not showing the $2\times$? Why show $2\times$?} % <--- Eurosys
-  \kk{This will probably not be the case if we run for x16}
-}
 
 %> It is worth reporting Hadoop's (3.2.1, Oracle JDK1.8.0\_255) execution time for the curious reader (see below for fairness), which takes \todo{6m22s} (sequential) and \todo{4m30.554s} ($\times$\todo{XX}-parallel).
 %> This amounts to \todo{XX}$\times$ speedup versus \todo{XX}$\times$ for \sys's equivalent (part 4).
@@ -2935,7 +2970,7 @@ A few stages of the original script were expressed in a single \ttt{awk};
 
 
 \heading{Take-aways}
-\sys can be applied to programs of notable size and input to offer significant acceleration.
+\sys can be applied to programs of notable size \todo{and complexity} to offer significant acceleration.
 A broader take-away is that \sys is also able to extract parallelism from fragments that are not purely compute-intensive regions, \ie the usual focus of conventional parallelization systems.  
 
 %% \todo{These programs correspond to much larger programs in other languages, a small fraction of which is automatically parallelizable with conventional systems.}
@@ -2960,7 +2995,7 @@ It totals 34 commands written in multiple programming languages.
 % To simplify execution (and avoid Wikipedia), we have saved a recent Wikipedia version on a server within the network and to redirect all \ttt{curl} requests there.
 %% As the \todo{first} component contains a cycle (URLs $\rightarrow$ HTML $\rightarrow$ URLs), \sys's conservative transformations do not attempt to parallelize it.
 The original script takes 191min to execute on 1\% of Wikipedia (1.3GB).
-With 16$\times$\todo{-parallelism}, \sys brings it down to 15min ($12.7\times$), with the majority of the speedup coming from the HTML-to-text conversion. % which uses \ttt{pandoc}, a utility written in Haskell.
+With \ttt{width=}16, \sys brings it down to 15min ($12.7\times$), with the majority of the speedup coming from the HTML-to-text conversion. % which uses \ttt{pandoc}, a utility written in Haskell.
 
 %> \kk{If the front-end takes a lot of time (compared to the back-end), we might better not report it with the premise that it is a feedback cycle that cannot be parallelized by \sys.}
 
@@ -2972,7 +3007,7 @@ It also uses several utilities not part of the standard POSIX/GNU set---\eg its 
 Several other stages are in \sta allowing \sys to achieve benefits by exposing data parallelism.
 
 \heading{Take-aways}
-\sys operates on programs with annotated commands outside the POSIX/GNU subsets and leads to notable speedups even when the original program features significant task-based parallelism.
+\sys operates on programs with (annotated) commands outside the POSIX/GNU subsets and leads to notable speedups, even when the original program features significant task-based parallelism.
 
 % \subsection{Use Case: Container Orchestration}
 % \label{macro3}
@@ -2998,8 +3033,8 @@ Several other stages are in \sta allowing \sys to achieve benefits by exposing d
 %>   guess this section is trying to establish \sys limits by comparing
 %>   it with similar (but not identical) work.}
 
-This section attempts to characterize \sys's limits by comparing it with similar alternatives.
-As there are no prior systems directly comparable to \sys, we draw comparisons with a series of specialized ones that excel within smaller fragments of \sys's proposed domain.
+% This section attempts to compare \sys with best-of-breed alternatives for particular taks.
+As there are no prior systems directly comparable to \sys, this section draws comparisons with two specialized cases that excel within smaller fragments of \sys's proposed domain.
 
 \pichskip{15pt}% Horizontal gap between picture and text
 \parpic[r][t]{%
@@ -3012,7 +3047,7 @@ As there are no prior systems directly comparable to \sys, we draw comparisons w
 %% \kk{Explain what is the purpose of the
 %%   microbenchmark. We want to establish that \sys scalability is as
 %%   good as it could be.}
-We first compare a single GNU \ttt{sort} parallelized by \sys ($S_{PaSh}$) versus the same \ttt{sort} with the 
+We first compare a single GNU \ttt{sort} parallelized by \sys ($S_{PaSh}$) \vs the same \ttt{sort} with the 
 %% \begin{wrapfigure}[10]{r}{0.25\textwidth}
 %%   \centering
 %%   %% \begin{center}
@@ -3041,7 +3076,7 @@ $S_{PaSh}$ without \ttt{eager} performs comparably to $S_{GNU}$, and with \ttt{e
 %% and use intermediate buffers to speed this up, but this defeats the
 %% purpose of having a simple solution.
 $S_{GNU}$ indicates that \ttt{sort}'s scalability is inherently limited (\ie due to \ttt{sort} and not \sys);
-  this is why all scripts that contain \ttt{sort} (\eg \S\ref{ours}--\ref{macro2}) do not go above $8\times$.
+  this is why all scripts that contain \ttt{sort} (\eg \S\ref{ours}--\ref{macro2}) are capped at $8\times$ speedup.
 Finally, the comparison also shows \sys's benefits to command developers:
   a low-effort parallelizability annotation achieves better scalability than a custom flag (and underlying parallel implementation) manually added by developers.
 
@@ -3052,8 +3087,7 @@ Finally, the comparison also shows \sys's benefits to command developers:
 We compare \sys to \ttt{parallel} (v.20160422), a GNU utility for running other commands in parallel~\cite{Tange2011a}, on a small bio-informatics script.
 % Using its \ttt{--jobs} flag, we  redirect input from a file to 
 % 554 / 330 
-Sequential execution takes 554.8s \vs \sys's 128.5s (4.3$\times$).
-We note that this pipeline is harsh for \sys, in that most of the overhead comes from a single command---masking \sys's improvements in other parts of the pipeline.
+Sequential execution takes 554.8s \vs \sys's 128.5s (4.3$\times$), with most of the overhead coming from \todo{a single command}.
 
 % % https://github.com/marcelm/cutadapt/issues/157
 % % https://www.biostars.org/p/123237/
@@ -3064,10 +3098,11 @@ We note that this pipeline is harsh for \sys, in that most of the overhead comes
 % % -u -j24 --env PATH,PYTHONPATH,cutadapt_parallel
 % % --workdir $PWD cutadapt_parallel {}
 
-There are a few possible ways one might attempt to use GNU \ttt{parallel} on this program.
-They could use it on the bottleneck stage, assuming they are can deduce that, bringing execution down to 304.4s ($1.8\times$ speedup).
-Alternatively, they could (incorrectly) sprinkle \ttt{parallel} across the entire program---a strategy simplified by \ttt{parallel}'s \ttt{stdin} redirection feature.
-This would lead to 3.2$\times$ performance improvements but severely incorrect results with respect to the sequential execution---with 92\% of the output showing a difference between sequential and parallel execution.
+There are a few possible ways users might attempt to use GNU \ttt{parallel} on this program.
+They could use it on the bottleneck stage, assuming they can deduce it, bringing execution down to 304.4s ($1.8\times$ speedup).
+Alternatively, they could (incorrectly) sprinkle \ttt{parallel} across the entire program.
+% ---a strategy simplified by \ttt{parallel}'s \ttt{stdin} redirection feature.
+This would lead to 3.2$\times$ performance improvements but incorrect results with respect to the sequential execution---with 92\% of the output showing a difference between sequential and parallel execution.
 \sys's conservative program transformations are not applied in program fragments with unclear parallelizability properties.
 	% or commands whose inputs depend on earlier outputs.
 % GNU \ttt{parallel} is oblivious to command semantics, risking breaking program semantics as in this case.
