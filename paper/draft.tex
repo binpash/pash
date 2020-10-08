@@ -1,4 +1,4 @@
-%% OSDI -- 12 pages limit
+% TODO Add Ignis and Mozart
 %% \documentclass[letterpaper,twocolumn,10pt]{article}
 %% \pdfoutput=1 % for arxiv
 %% \usepackage{usenix2019_v3}
@@ -63,7 +63,7 @@
 \newcommand{\heading}[1]{\vspace{4pt}\noindent\textbf{#1}\enspace}
 % \newcommand{\ttt}[1]{\texttt{#1}}
 \newcommand{\ttt}[1]{\mintinline[fontsize=\small]{bash}{#1}}
-\newcommand{\ttiny}[1]{\texttt{\scriptsize #1}}
+\newcommand{\ttiny}[1]{\mintinline[fontsize=\footnotesize]{bash}{#1}}
 \newcommand{\tti}[1]{\texttt{\scriptsize #1}}
 \newcommand{\spol}[1]{\scriptsize{\sc#1}}
 \newcommand{\pol}[1]{\texttt{\small {\color{purple}#1}}}
@@ -983,7 +983,6 @@ wait $! && ./pash_get_pids | xargs -n 1 kill -SIGPIPE
 \caption{
   \textbf{\sys's $2\times$-parallel output for fragment of Fig.~\ref{fig:example}.}
   \sys orchestrates the script's parallel execution through named pipes, parallel operators and careful placement of combiners.
-  \nv{Added \ttt{sort-merge}, can we sprinke more \sys primitives?}
 }
 \vspace{-15pt}
 \label{fig:example2}
@@ -1032,9 +1031,8 @@ All these commands live in the \ttt{PATH} and are addressable by name, which mea
 % \kk{eurosys: I have two small concerns about this sentence but I don't know how to fix them. First, there is a redundancy "parallelizing data-parallel". Second and most important, I would like this sentence to say that \sys exploits latent data parallelism in commands, but not that it parallelizes data parallel commands. The reason is that I would like to make sure that no reviewer thinks that all we do is parallelizing each command on its own (as some OSDI reviewer thought).}
 %% This information is encoded in a command's \emph{parallelizability class}.
 % Intuitively, a parallelizability 
-A class represents the level of synchronization required by copies of a command executing in parallel, 
-  capturing only characteristics that are important for its parallel execution. % , rather than the command's full observable behavior.
-% \kk{eurosys: This sentence doesn't add much, especially given that we haven't talked about synchronization.}
+% A class represents the level of synchronization required by copies of a command executing in parallel, 
+%   capturing only characteristics that are important for its parallel execution. % , rather than the command's full observable behavior.
 \sys leans towards having a few coarse classes rather than many detailed ones---among other reasons, to simplify their understanding and use by command developers.
 % Make the connections that this is like a type, that doesn't capture everything, but is good-enough
 
@@ -1201,12 +1199,12 @@ The latter can express additions or changes to the command's implementation or i
 % \kk{eurosys: I have some concerns about the above sentence. First, I don't want to say that users developing their own scripts can use the annotation language because this goes against what we mentioned in the intro. Second, the last sentence is too prominent the way it is written now. I would prefer just saying that the annotations are aimed for command developers who can create an annotation when they develop a new command, or when a command's interface changes---which is important since commands are maintained and extended over long periods of time.}
 
 \heading{Key Concerns}
-\sys's annotations focus on three crucial concerns:
-  (i) a command's parallelizability class,
-  (ii) a command's inputs and outputs, and the characteristics of input consumption, and
+\sys's annotations focus on three crucial concerns about a command:
+  (i) its parallelizability class,
+  (ii) its inputs and outputs, and the characteristics of its input consumption, and
   % (ii) for commands that support multiple inputs, the characteristics of input consumption, and
-  (iii) how do flags affect a command's class, inputs, and outputs.
-As the first concern was discussed extensively in the previous section, we now focus on the latter two.
+  (iii) how flags affect its class, inputs, and outputs.
+The first concern was discussed extensively in the previous section; we now turn to the latter two.
 
 To be able to accurately construct the DFG representation, \sys needs to know certain details about a command's inputs and outputs.
 There are a few reasons for this.
@@ -1236,7 +1234,6 @@ For example, \ttt{cat} defaults to \sta, but with \ttt{-n} it jumps into \pur be
 
 % As parallelizability classes form a hierarchy from most parallelizable to least parallelizable~\sx{cmd}, a command is classified by the class of its least parallelizable flag.
 % For example, if a custom \ttt{trace-sort} command is invoked with flags \ttt{r}, \ttt{n}, and \ttt{k2} that are in \pur and a flag \ttt{d} in \sid that writes debugging output to a file, it ends up in \sid.
-% \kk{eurosys: I removed this paragraph because it is only a simplistic description of how flags are handled.}
 
 %% As simple examples, consider \ttt{cat} and \ttt{sort}.
 %% By default \ttt{cat} is in \sta, but with \ttt{-n} it jumps into \pur because it has to keep track of a counter.
@@ -1288,7 +1285,6 @@ Each clause contains an assignment for the command, indicating its class (Concer
 %   }
 % }
 % The complete annotation grammar is shown in Appendix~\ref{alg}. \str
-% \kk{EuroSys doesn't allow appendix. I think we should just remove the grammar.}
 
 For example, consider \ttt{comm}, which performs a join-like operation on its two inputs to identify common elements.
 When \ttt{comm} is invoked without any flags, it produces a three-column output:
@@ -1398,7 +1394,7 @@ As the first and third columns are suppressed, \ttt{comm} can be categorized in 
 \tr{\kk{If we talk about the language it would be good to give some
   statistics about how many commands (out of the ones that we have
   classified) can be represented with one, two clauses etc. If we have
-  a different solution (like python function that given a command and
+  a different solution (like Python function that given a command and
   its arguments returns the category) then we could talk about how
   many lines of code it took to categorize all the commands that we
   did.}}
@@ -1407,12 +1403,12 @@ As the first and third columns are suppressed, \ttt{comm} can be categorized in 
 \tr{\kk{Note: Since a categorization language will probably not be
   complete (especially the one showing the input arguments) there
   should be a backup mechanism, when the language is not expressive
-  enough, like a python function that categorizes the command, and
+  enough, like a Python function that categorizes the command, and
   returns its input argument if it is stateless.}}
 
 \tr{\kk{(Maybe) We should have a crisp point about why we have this categorization
   language, and why don't we just allow someone to write a function in
-  python for each command, that given the command and its arguments,
+  Python for each command, that given the command and its arguments,
   returns whether the command category. Possible arguments include,
   the fact that this language is simpler to use, especially by non
   experts that just run some script but have installed some commands
@@ -1421,13 +1417,16 @@ As the first and third columns are suppressed, \ttt{comm} can be categorized in 
   lagnauge, and that they will be easier to read and
   understand. Another argument is that since these categorizations
   should be shareable among users, it would be bad to execute
-  arbitrary python code, so using this language, expressivity is
+  arbitrary Python code, so using this language, expressivity is
   limited. All of these arguments are a little bit weak though. Niko,
   what do you think?}}
 
 \heading{Complete Annotation Language}
-%
-The complete annotation language contains 6 operators (one of which supports regural expressions), and we used it to specify the annotation records for \todo{X} commands totalling \todo{Y} lines of JSON---an effort that took about \todo{N} hours. An important point is that annotation records can be conservative by default to not jeopardize correctness, but can be incrementally refined to capture parallelizability when using increasingly complex combinations of flags. Our language is extensible with more operators (as long as the user defines an interpreter for them) and also supports writing arbitrary python code for commands whose properties are difficult to capture, such as the higher order \ttt{xargs} whose parallelizability class depends on the class of the command that it invokes.
+The complete annotation language contains 6 operators, one of which supports regural expressions.
+It was used to annotate 47 commands, totalling 708 lines of JSON---an effort that took about 2--3 hours.
+Annotation records are by default conservative so as to not jeopardize correctness, but can be incrementally refined to capture parallelizability when using increasingly complex combinations of flags.
+The language is extensible with more operators (as long as the \todo{user} defines an \todo{interpreter} for them);
+  it also supports writing arbitrary Python code for commands whose properties are difficult to capture---\eg higher order \ttt{xargs}, whose parallelizability class depends on the class of the first-order command that it invokes.
 % \str
 % \kk{Mention that some commands, such as xargs are handled internally due to their particularities.}
 
@@ -1454,7 +1453,7 @@ In line with the \unix philosophy, these functions can be written in any languag
   more though. It might be beneficial to just talk about sort and wc
   here and how we implemented them and nothing more. Or maybe this
   could then go to the implementation? Or maybe say that one can write
-  a python function that given a node of the graph, transforms it into
+  a Python function that given a node of the graph, transforms it into
   many. I am not sure what is best...}}
 
 
@@ -1486,6 +1485,18 @@ We start with the script-to-DFG tranlation~\sx{dataflow-regions},
   then define the DFG model and describe the correspondence with shell scripts~\sx{graph-components},
   discuss the transformations that \sys performs~\sx{ir:transformations}, and close with
   the DFG-to-script translation~\sx{backend}.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{\detokenize{./figs/pash_dfg.pdf}}
+  \vspace{-25pt}
+  \caption{
+    \textbf{From Shell script AST to DFGs.}
+    The AST on the left has two parallelizable regions, each not extending beyond \ttiny{&&}~\cf{dataflow-regions}.
+  }
+  \vspace{-15pt}
+  \label{fig:ast-dfg}
+\end{figure}
 
 
 \subsection{Front-end: From Shell Scripts to DFGs}
@@ -1533,13 +1544,10 @@ Consider this fragment:
 % # Replace sort with sth better
 
 \noindent
-The \ttt{cat} and \ttt{grep} commands execute independently (and concurrently) in the standard shell, but \ttt{sort} waits for their completion prior to start.
-Both \ttt{cat f1 f2 | grep "foo" > f3} and \ttt{sort f3} are thus dataflow regions, each not extending beyond \ttt{&&}.\footnote{
-  Can we make the commands \ttt{cmd1}, \ttt{cmd2}, \etc to ensure the readers understand this is driven by structure and not commands? 
-  % \kk{Commands do matter a bit though. If a command is sideeffectful we don't know how to connect it in the dataflow graph and thus \sys would not parallelize it (as is written later in the translation pass).} 
-  \kk{As we discussed we can add a small figure that shows the script, the AST, and the DFG.}}
-% ---more precisely, they are maximal.
-
+The \ttt{cat} and \ttt{grep} commands execute independently (and concurrently)
+in the standard shell, but \ttt{sort} waits for their completion prior to start
+(Fig.~\ref{fig:ast-dfg}).
+% 
 Intuitively, dataflow regions correspond to sub-expressions of
 the program that would be allowed to execute independently by
 different processes in the POSIX standard~\cite{posix}. Larger
@@ -1581,7 +1589,6 @@ construct is reached. All AST subtrees not translatable to DFGs are kept as they
 original AST where dataflow regions have been replaced with
 DFGs. 
 % and calls to \sys's runtime primitives~\sx{optimizer}.
-% \kk{eurosys: I removed this since it is slightly inaccurate and readers don't know what the primitives are at that point.}
 
 To identify opportunities for parallelization, the translation pass extracts each command's  parallelizability class together with its inputs and outputs.
 To achieve this for each command, it searches all its available annotations~\sx{ext} and resorts to conservative defaults if none is found.
@@ -1643,7 +1650,7 @@ Examples of such information includes the values of environment variables, strin
 %% to the the safety properties that are mentioned above cannot be
 %% soundly checked statically.
 For safety purposes, \sys takes a conservative approach avoiding parallelization of such nodes with incomplete information.
-It will not attempt to parallelize sub-expressions in which the translation pass cannot infer that, for example, an environment variable passed as an argument to a command does not change its parallelizability class.
+It will not attempt to parallelize sub-expressions in which the translation pass cannot infer that, \eg  an environment variable passed as an argument to a command does not change its parallelizability class.
 
 %% \kk{Can we say anything more about the safety considerations? That (i)
 %%   the translation pass ``checks'' that no nodes write/read or
@@ -1680,7 +1687,7 @@ It will not attempt to parallelize sub-expressions in which the translation pass
 
 The two main shell abstractions are
   (i) streams, \ie files or pipes, that contain data, and
-  (ii) commands that communicate through these streams.
+  (ii) commands, communicating through streams.
 %% \nv{quick solution: change all files to streams and make the equivalence explicit here}
 \sys's DFG model represents commands as nodes and streams as edges.
 We now introduce the notation used in throughout this section.
@@ -1937,7 +1944,7 @@ one at a time and the second argument represents the static inputs.
 \vspace{-28pt}
 \caption{
   \textbf{Stateless parallelization transformation.}
-  The \texttt{cat} node is commuted with the stateless node to utilize available data parallelism.
+  The \ttiny{cat} node is commuted with the stateless node to utilize available data parallelism.
 }
 \vspace{-15pt}
 \label{fig:parallelization-transformation}
@@ -1969,9 +1976,9 @@ earlier~\sx{cmd}.
 %%   microbenchmarks to some large-realistic macrobenchmarks.}.
 
 \heading{Stateless and Parallelizable Pure Commands}
-As previously noted~\sx{cmd}, stateless commands such as \ttt{tr}
+Stateless commands such as \ttt{tr}
 operate independently on individual elements of the stream
-(characters, lines, or files) without maintaining any state. In this
+(characters, lines, or files) without maintaining any state~\sx{cmd}. In this
 work, we consider lines as the data quantum, thus we consider stateless only commands that are
 stateless with respect to lines (or any finer granularity such as
 characters). Formally, a streaming command $f$ is stateless if it commutes with
@@ -2063,13 +2070,14 @@ improvements~\sx{optimizer}.
 \subsection{Backend: From DFGs to a Parallel Shell Script}
 \label{backend}
 
-After translating the dataflow regions of the input script to DFGs and applying the transformations~\sx{ir:transformations},
-  \sys translates all DFGs back into a shell script.
+After % translating the dataflow regions of the input script to DFGs and 
+  applying transformations~\sx{ir:transformations}, \sys translates all DFGs back into a shell script.
 Nodes of the graph are instantiated with the commands and flags they represent, and edges are instantiated as named pipes.
-A prologue in the script creates the necessary intermediate pipes, and a \ttt{trap} call takes care of cleaning things up in cases where the script aborts.
+A prologue in the script creates the necessary intermediate pipes, and a \ttt{trap} call takes care of cleaning up when the script aborts.
 % \kk{What does this "trap" refer to?}
 % The script makes use of \sys-provided primitives available in the system \ttt{PATH} and described next.
 % \kk{I removed this, since we describe them just below.}
+% \nv{Eurosys: Exactly, I had the last sentence as a segway connecting the two sections. There is not connection in the first paragraph of 5!}
 
 %% The first two
 %% \nv{Name them?}  enable the parallelization transformations by
@@ -2085,7 +2093,7 @@ A prologue in the script creates the necessary intermediate pipes, and a \ttt{tr
 \includegraphics[width=\columnwidth]{\detokenize{./figs/dish_aux.pdf}}
 \caption{
   \textbf{Auxiliary transformations.}
-  These augment the DFG with \ttt{cat}, \ttt{split}, and \ttt{relay} nodes.
+  These augment the DFG with \ttiny{cat}, \ttiny{split}, and \ttiny{relay} nodes.
 }
 \vspace{-10pt}
 \label{fig:auxiliary-transformations}
@@ -2258,8 +2266,8 @@ These nodes feature tight multi-threaded loops that consume input eagerly while 
   Addressing intermediary laziness is challenging:
     (a) FIFOs are blocking;
     (b) files alone introduce race conditions between producer/consumer;
-    (c) files + \ttt{wait} inhibit task parallelism.
-Eager \ttt{relay} nodes (d) address the challenge while remaining within the \sys model.
+    (c) files + \ttiny{wait} inhibit task parallelism.
+Eager \ttiny{relay} nodes (d) address the challenge while remaining within the \sys model.
 % Describe. \TODO{Combine this figure with the above code maybe.}
 }
 \vspace{-15pt}
@@ -2345,7 +2353,7 @@ and then splits it uniformly across the desired number of outputs.
     % Names correspond to the speedup plots (Fig.~\ref{fig:microbenchmarks}).
     Structure summarizes the different classes of commands used in the script.
     Input and seq. time report on the input size fed to the script and the timing of its sequential execution.
-    Nodes and compile time report on \sys's resulting DFG size (which is equal to the number of resulting processes and includes aggregators, eager, and split nodes) and compilation time for two indicative parallelization configurations.
+    Nodes and compile time report on \sys's resulting DFG size (which is equal to the number of resulting processes and includes \ttiny{agg}regators, \ttiny{eager}, and \ttiny{split} nodes) and compilation time for two indicative parallelization configurations.
     % Highlights notes a few key features of each script.
   }
 }
@@ -2478,8 +2486,9 @@ The \emph{aggregate} functions iterate over the provided stream descriptors, \ie
 % https://docs.google.com/drawings/d/13Zx3a9bWi1RvpOgNCSiXirp9UOte-XuaJQBi_lmmPMc/edit
 \includegraphics[width=0.4\textwidth]{\detokenize{./figs/pash_lattice.pdf}}
 \caption{
-  \textbf{Lattice of evaluation setup, based on runtime primitives.}
-  \todo{Explain further}
+  \textbf{Runtime setup lattice.}
+  Parallel No Eager and Blocking Eager improve over sequential, but are not directly comparable.
+  Eager adds \sys's optimized \ttiny{eager} relay, and \sys uses all primitives in \S\ref{optimizer} (Fig.~\ref{fig:microbenchmarks}).
 % Describe. \TODO{Combine this figure with the above code maybe.}
 }
 \vspace{-15pt}
@@ -2544,20 +2553,29 @@ This section reports on whether \sys can indeed scale shell scripts out automati
 %   as shown, if written in a conventional language it would correspond to a program on the order of hundreds of lines of code.
 
 \heading{Highlights}
-\sys accelerates ($1.92-61.1\times$) all scripts ($>50$, with $>200$ commands).
-\kk{Add speedup separated: (i) transformations, (ii) runtime primitives.}
+\sys accelerates ($1.92-61.1\times$) all scripts.\footnote{
+  \nv{But this is not true; ``the vast majority''? maybe put 51/54 scripts?}.
+}
+For some of our benchmarks~\sx{ours}, we decouple the performance benefits stemming from \sys's compiler alone from the ones stemming from \sys's runtime primitives:
+  the compiler's average speedup seen is $9.3\times$, jumping to $13.2\times$ when runtime optimizations are used.
+In a different set of $30$ benchmarks parallelized $16\times$\footnote{
+  \nv{Immediate question: why use $64\times$ in one and $16\times$ in another?}
+}
+ see an average speedup of $6\times$, depending on the class of piecewise commands~\sx{unix50}.
+Two complex scripts with 15~\sx{macro1} and 34~\sx{macro2} commands in multiple languages see $2.44\times$ and $12.7\times$ speedup on $16\times$-parallel configuration.
+\sys outperforms \ttt{sort --parallel} by a significant margin, and offers small performance benefits over GNU \ttt{parallel}, which returns incorrect results in one configuration~\sx{micro}.
 % Averages: [1.955223776839714, 3.478591807121036, 5.721328556478535, 8.604380509595906, 10.666921423438112, 13.246864076708423]
 % No Eager Averages: [1.6327834370824543, 2.5481043878162444, 3.8623841529643173, 5.931851620007484, 7.466566647963421, 9.35752032439642]
 % From the rest, only two see a slowdown, only because \sys's setup ($\sim1s$) is higher than their runtime ($\sim0.4s$).
-\sys's optimized primitives offer benefits even against manually parallelized scripts. % (such as GNU sort, and GNU parallel).
+% \sys's optimized primitives offer benefits even against manually parallelized scripts. % (such as GNU sort, and GNU parallel).
 % \sys's compilation pass is negligible (avg. $<1s$). %  for non trivial program execution.
-In two large cases, tasks such as data download, extraction, and preprocessing---often implemented using shell scripts and outside the focus of specialized parallelization frameworks---take comparable time to the execution of the main computation, and can be significantly accelerated by \sys.
+% In two large cases, tasks such as data download, extraction, and preprocessing---often implemented using shell scripts and outside the focus of specialized parallelization frameworks---take comparable time to the execution of the main computation, and can be significantly accelerated by \sys.
 % In terms of manual effort,
 
-The vast majority requires no effort other than invoking \sys;
-  the annotation for the remaining 6 commands ($<3\%$) amounts to a single record.
+The vast majority of programs ($>50$, with $>200$ commands) require no effort to parallelize other than invoking \sys;
+  only 6 commands ($<3\%$) needed a single-record annotation.
 % 
-In terms of correctness, \sys's results over multi-GB, \todo{XXX-line}, inputs are identical to the sequential for all benchmarks.
+In terms of correctness, \sys's results over multi-GB  inputs are identical to the sequential for all benchmarks.
 Scripts feature ample opportunities for breaking semantics, which \sys avoids.
 %% In one case, \sys avoids transforming a cycle (\ie a fragment whose input and output identifiers are the same).
 %in another, it preserves the semantics that another parallelization command breaks.
@@ -2591,7 +2609,11 @@ Except as otherwise noted,
 
 \heading{Parallelism}
 %
-All of the experiments are run on the same machine and we configure the level of parallelism using \sys's \ttt{--parallel=N} flag that determines how many times will \sys apply its transformations---determining the ``width'' of the parallel script. The value of this flag, \ttt{N} is what is shown in the x-axis of \Cref{fig:microbenchmarks} and what we refer to as \emph{parallelism} throughout this section. Note that we cannot control the initial parallelism of a script (e.g. a command could spawn 10 processes), and therefore parallel scripts produced by \sys often reach maximum parallelization benefits with a value of \ttt{N} that is smaller than the physical cores of the system (in our case 64).
+% All experiments are run on the same machine and 
+% \nv{Eurosys: This /\ is described above}
+The level of parallelism is configured using \sys's \ttt{--parallel=N}, a flag that determines the number of times that \sys applies its transformations---determining the ``width'' of the parallel script.
+The value  of \ttt{N} is shown as the x-axis of Fig.\ref{fig:microbenchmarks}, called \emph{parallelism} throughout this section.
+We cannot control the initial parallelism of a script (\eg a command could spawn 10 processes), and thus parallel scripts produced by \sys often reach maximum parallelization benefits with a value of \ttt{N} that is smaller than the physical cores of the hardware setup (in our case 64).
 
 % \heading{A Note on the Parallelism Factor}
 % %
@@ -2607,6 +2629,7 @@ All of the experiments are run on the same machine and we configure the level of
 \label{ours}
 
 We evaluate \sys under multiple configurations on popular, common, or classic \unix pipeline patterns~\cite{bentley1985spelling, bentley1986literate, taylor2004wicked}.
+% \nv{Eurosys: goal of experiment: decouple compiler from runtime, and talk about all overheads}
 
 \begin{figure*}[t]
     \centering
@@ -2614,11 +2637,11 @@ We evaluate \sys under multiple configurations on popular, common, or classic \u
     \caption{
       \textbf{\sys's speedup for 2--64$\times$-parallelism (\S\ref{eval}, Parallelism).}
       Different configurations per benchmark:
-      (i) PaSh: the complete implementation with \ttt{eager} and \ttt{split} enabled,
+      (i) PaSh: the complete implementation with \ttiny{eager} and \ttiny{split} enabled,
       % (ii) Par+B.Split: \ttt{eager} and input-aware \ttt{split} enabled,
-      (ii) PaSh w/o split: \ttt{eager} enabled (no \ttt{split}),
-      (iii) \todo{Blocking Eager}, only blocking \ttt{eager} enabled (no \ttt{split}),
-      (iv) \todo{No Eager}: both \ttt{eager} and \ttt{split} disabled.
+      (ii) PaSh w/o split: \ttiny{eager} enabled (no \ttiny{split}),
+      (iii) \todo{Blocking Eager}, only blocking \ttiny{eager} enabled (no \ttiny{split}),
+      (iv) \todo{No Eager}: both \ttiny{eager} and \ttiny{split} disabled.
       % (vi) Opt. Parallel, an optimized version of \ttt{bigrams}~\cf{ours}.
       % Only relevant configurations are shown---\eg \ttt{grep} and \ttt{sort} do not benefit from \ttt{split}; \ttt{spell} and \ttt{bi-grams} do not see benefits without \ttt{split}.
       % TODO: WHY?
@@ -2635,7 +2658,8 @@ We evaluate \sys under multiple configurations on popular, common, or classic \u
 %>
 %>\kk{Remember to mention that for spell and bigrams we dont show other
 %>  parallel because they are all close to 1 (no speedup).}
-Tab.~\ref{tab:eval} summarizes the collection of programs shown in Fig.~\ref{fig:microbenchmarks}, which in turn reports on their performance characteristics.
+Tab.~\ref{tab:eval} summarizes the first collection of programs.
+%  shown in Fig.~\ref{fig:microbenchmarks}, which in turn reports on their performance characteristics.
 Grep and Grep-light are in \sta, with the former centered around an expensive DFA-based backtracking expression.
 % a DFA-based regular expression matching phase;
  % while the \unix \ttt{grep} command defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
@@ -2658,12 +2682,15 @@ Fig.~\ref{fig:microbenchmarks} presents \sys's speedup as a function of parallel
 Average speedups of the optimized \sys, \ie \ttt{eager} and \ttt{split} enabled, for \{2, 4, 8, 16, 32, 64\}$\times$-parallelism are \todo{1.97, 3.5, 5.78, 8.83, 10.96, and 13.47}, respectively.
 % and the geometric means are 1.92, 3.39, 5.48, 7.94, 8.86, 8.51.}
 % \kk{For the one-liners where split doesn't provide any benefit (or overhead) we don't show the PaSh w/o split line.}
-%
+
 % we experiment with a $200\times$ level of parallelism to see potential overheads
 Tab.~\ref{tab:eval} shows that \sys's compilation time is negligible. % ($<5s$)
-It also contains filter and bigrams-opt (not in Fig.~\ref{fig:microbenchmarks}). The first (filter) is used to evaluate \sys's impact on IO-intensive scripts (\sys achieves a 1.5-2.5$\times$ speedup). The second (bigrams-opt) is an optimized version of bigrams where we grouped 5 commands into one \tpur command thas has a more efficient $map$ and $aggregate$ implementation. \sys achieves up to x30 speedup for this script (significantly higher than what is achieved for the standard bigrams Fig.\ref{fig:microbenchmarks}).
-\sys achieves a COST~\cite{mcsherryscalability} of 2 for all benchmarks.\str
-% \kk{Do we want to talk about cost without mentioning it further?}
+It also contains Filter and Bigrams-opt (not in Fig.~\ref{fig:microbenchmarks}).
+Filter is used to evaluate \sys's impact on IO-intensive scripts (\sys achieves a 1.5--2.5$\times$ speedup).
+Bigrams-opt is an optimized version of Bigrams that groups 5 commands into one \pur command and thus has a more efficient $map$ and $aggregate$ implementation.
+\sys achieves up to $30\times$ speedup for this script (significantly higher than what is achieved for the standard Bigrams Fig.\ref{fig:microbenchmarks}).
+% \nv{Eurosys: I think this should be part of a "do custom aggregators help?" question, not the main results}.
+\sys achieves a COST~\cite{mcsherryscalability} of 2 for all benchmarks.
 %   size grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
 % The first number alone is interesting, as it captures \sys's output for the sequential script.
 % As there is no parallelism involved, it highlights the initial (bare minimum) cost corresponding to using \sys.
@@ -2675,8 +2702,11 @@ It also contains filter and bigrams-opt (not in Fig.~\ref{fig:microbenchmarks}).
 
 \heading{Discussion}
 %
-As discussed in (\S\ref{eval}, Parallelism) \sys does not have any control over the input script parallelism, and therefore it often achieves the maximum possible speedup, \ie without unnecessary process spawns and context switches, earlier than the purported parallelism---$16-32\times$ for a 64-core system. This is also due to the fact that \sys also adds its runtime primitives (\ttt{split} and \ttt{eager}), further increasing process spawns.\str
-% \kk{Can we somehow turn this point around and make it seems good/fine. That here we report this parallelism, but in the real system, it tries to do a best effort guess of parallelism based on the size of the input script.}
+\todo{These results explain a detail before getting the main points across: A is better than B, C is worse except G}
+As discussed earlier (\S\ref{eval}, Parallelism), \sys does not have control over the input script's parallelism.
+Thus, it often achieves the maximum possible speedup, \ie without unnecessary process spawns and context switches, earlier than the purported parallelism---$16-32\times$ for a 64-core system.
+This is also due to the fact that \sys also adds its runtime primitives (\ttt{split} and \ttt{eager}), further increasing process spawns.
+% \kk{eurosys: Can we somehow turn this point around and make it seems good/fine. That here we report this parallelism, but in the real system, it tries to do a best effort guess of parallelism based on the size of the input script.}
 % \sys achieves near-linear speedup on low-parallelism configurations.
 % This is due to a high degree (deep trees) of task parallelism from \sys's multiple constructs---\eg \emph{aggregations} and \ttt{relay}s---evident in all plots that contain \pur stages.
 %% \kk{Ben's point: task parallelism is mentioned here for the first time. Since \sys exposes data parallelism as task parallelism, we might want to mention that somewhere earlier in the paper}
@@ -2691,7 +2721,9 @@ For example, Sort in $8\times$ spawns 37 nodes:
 %   constant costs rise a lot (since opt-bigrams 32 takes just 1
 %   minute).
 % \kk{Mention bigrams-opt result now that it is removed from the plot.}
-\todo{No Eager} and \todo{Blocking Eager} depict configurations without \sys's \ttt{eager} optimization and without \ttt{split}. As described in \Cref{optimizer}, these eager implementations perform worse than \sys's optimized relay \ttt{eager} in all cases (except for a negligible difference in shortest-scripts). The benefits of \ttt{split} are also eveident for scripts that have \tpur or \tnpu commands, and for the rest it does not negatively affect performance. 
+\todo{No Eager} and \todo{Blocking Eager} depict configurations without \sys's \ttt{eager} optimization and without \ttt{split}.
+As described in Fig.\ref{optimizer}, these eager implementations perform worse than \sys's optimized \ttt{eager} relay in all cases (except for a negligible difference in Shortest-Scripts).
+A \ttt{split} benefits scripts with \tpur or \tnpu commands, but does not negatively affect the rest.
 
 %> \kk{It is visible that the automatic split is slightly worse than the
 %>   manual one in most cases (because it doesn't utilize task-based
@@ -2717,11 +2749,9 @@ We now evaluate \sys on an existing set of \unix pipelines found in the wild and
 
 \heading{Programs}
 In a recent celebration of \unix's 50-year legacy, Bell Labs created 37 challenges~\cite{unix50} solvable by means of composing \unix pipelines.
+The problems were designed to highlight \unix's modular philosophy~\cite{mcilroy1978unix}.
 We found unofficial solutions to all-but-three problems on GitHub~\cite{unix50sol}, expressed as pipelines with 2--12 stages (avg.: 5.58).
-We consider this a good set of benchmarks because
-  (i) the problems were designed to highlight \unix's modular philosophy~\cite{mcilroy1978unix}, 
-  (ii) they make extensive use of standard commands under a variety of flags, and
-  (iii) the solutions were written by non-experts (contrary to \S\ref{ours}).
+They make extensive use of standard commands under a variety of flags, and appear to be written by non-experts (contrary to \S\ref{ours}, they often use sub-optimal or non-\unix-y constructs).
 % ---stressing a patterns that we, \sys's authors, did not
 % necessarily anticipate \kk{I would change that to ``stressing a
 %   variety of patterns'' since it doesn't really matter if we
@@ -2737,7 +2767,7 @@ We consider this a good set of benchmarks because
 \heading{Results}
 \sys's parallelism is set to $16\times$, as many of these pipelines are relatively long (\S\ref{eval}, Parallelism).
 Their input was generated by multiplying their original input several times, enough to reach 10GB.
-Fig.~\ref{fig:unix50-individual} shows the speedup (left) over the sequential runtime (right) for all 34 pipelines. We use the pipeline index to refer to them in both plots and discussion.
+Fig.~\ref{fig:unix50-individual} shows the speedup (left) over the sequential runtime (right) for all \todo{30} pipelines. We use the pipeline index to refer to them in both plots and discussion.
 %% (\nv{Pipelines are referred by number, in both the plot and the discussion below.})
 Average speedup is \todo{$6.02\times$}, median is $6.48\times$, and weighted average (with the absolute times as weights) is $5.75\times$.
  % the \todo{geometric mean is $1.08\times$},
@@ -2875,7 +2905,9 @@ The complete pipeline executes in 44m2s for five years (82GB) of data.
 \sys with 2/10$\times$ parallelism leads to 1.86/2.44$\times$ speedup, with different phases seeing different benefits:
   1.77/1.99$\times$ (vs. 33m58s) for all the pre-processing and 
   2.30/10.79$\times$ speedup (vs. 10m4s) for computing the max.
-The reason why speedup is higher than parallelism is also also explained in the Discussion of \S\ref{ours}.
+The reason why speedup is higher than parallelism is explained at the beginning of \S\ref{eval} (Parallelism).\footnote{
+  \nv{Can we avoid this by not showing the $2\times$? Why show $2\times$?} % <--- Eurosys
+}
 
 %> It is worth reporting Hadoop's (3.2.1, Oracle JDK1.8.0\_255) execution time for the curious reader (see below for fairness), which takes \todo{6m22s} (sequential) and \todo{4m30.554s} ($\times$\todo{XX}-parallel).
 %> This amounts to \todo{XX}$\times$ speedup versus \todo{XX}$\times$ for \sys's equivalent (part 4).
@@ -2936,9 +2968,8 @@ This script reads a file containing Wikipedia URLs, downloads the pages,
 %% The \todo{first} downloads pages and extracts their URLs from their source, feeding back \todo{to} the start of the pipeline;
 %% the second
 extracts the text from HTML, and applies natural-language processing---\eg trigrams, character conversion, term frequencies---to index it.
-In total, it contains 34 commands
+It totals 34 commands written in multiple programming languages.
 %% Collectively, they contain a total of 52 stages (first: 18; second: 34)
-written in multiple programming languages.
 
 \heading{Results}
 % To simplify execution (and avoid Wikipedia), we have saved a recent Wikipedia version on a server within the network and to redirect all \ttt{curl} requests there.
@@ -3034,7 +3065,7 @@ Finally, the comparison also shows \sys's benefits to command developers:
 %%   with --parallel=1 takes more than the \sys sequential one.}
 
 \heading{GNU Parallel}
-We compare \sys to GNU \ttt{parallel} (v.20160422), a GNU utility for running other commands in parallel~\cite{Tange2011a}, on a small bio-informatics script.
+We compare \sys to \ttt{parallel} (v.20160422), a GNU utility for running other commands in parallel~\cite{Tange2011a}, on a small bio-informatics script.
 % Using its \ttt{--jobs} flag, we  redirect input from a file to 
 % 554 / 330 
 Sequential execution takes 554.8s \vs \sys's 128.5s (4.3$\times$).
@@ -3092,7 +3123,8 @@ Existing techniques for exploiting parallelism are not directly comparable to \s
 %%    users---often neither experts in parallelism nor educated on the internals of the code they depend on---can easily break the correctness of sequential programs, especially when these depend on existing code (such as is the case with shell commands). 
 
 \heading{Parallel Shell Scripting}
-Utilities exposing parallelism on modern \unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}---are limited to embarrassingly parallel (and short) programs and are predicated upon explicit and careful user invocation:
+Utilities exposing parallelism on modern \unix{}es---\eg \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, % \textsc{GNU} 
+  \ttt{parallel}~\cite{Tange2011a}---are limited to embarrassingly parallel (and short) programs and are predicated upon explicit and careful user invocation:
   users have to navigate through a vast array of different configurations, flags, and modes of invocation to achieve parallelization without jeopardizing correctness. %% I like the part about the unix philosophy, but I want to really make it a side claim. The main claim, and the reason why we don't compare against all of these solutions, is that they require user effort and they cannot just be given a script to parallelize.
 %%
 %% and are limited to embarrassingly parallel (and short) programs.
@@ -3110,7 +3142,9 @@ Here too, however, users are expected to manually rewrite scripts to exploit the
 Recently, Smoosh~\cite{smoosh:18} argued for making concurrency explicit via shell constructs.
 The argument is dissimilar from \sys's, which argues for mostly automated (and correct) parallelization---hence \emph{light-touch} parallel scripting.
 
-\todo{Concurrent to our work, POSH is a framework that accelerates shell applications with I/O-heavy components. XXX}
+Concurrent to our work, POSH~\cite{raghavan2020posh} is a framework for running shell scripts over remote storage by offloading the I/O-intensive portions to proxy servers closer to the data.
+POSH focuses on colocating distributed operation, and introduces a novel scheduling algorithm. 
+\sys instead attempts non-distributed parallelism, is location-agnostic, and focuses on correctness through its dataflow transformations.
 
 % Nice intro: http://homepages.inf.ed.ac.uk/bfranke/Publications/pldi121-tournavitis.pdf
 \heading{Low-level Parallelization}
@@ -3229,14 +3263,15 @@ By targeting specific classes of computation (\emph{viz.} \sys's parallelizabili
 \section{Conclusion}
 \label{discussion}
 
-This paper presented \sys, a shell variant that parallelizes shell programs mostly automatically.
-\sys's insight is that shell pipelines already express streaming computations that can be automatically distributed.
-To achieve its goal, \sys
-  decomposes primitives into parallelizability classes,
-  identifies high-parallelizability stages,
-  applies a series of transformations according to a DFG model,
-  and orchestrates the execution of the resulting parallel program.
-%
+This paper presented \sys, a system allowing shell users to parallelize shell programs mostly automatically.
+% a source-to-source shell compiler and associated runtime library
+\sys can be thought as a parallelizing source-to-source compiler coupled with a runtime component.
+The compiler operates by converting parallelizable regions into dataflow graphs and then applying iterative transformations based on the characteristics of commands in these regions.
+Characteristics are known by the  use of classification and annotations (for certain classes), which \sys offers for commands in POSIX and Coreutils used frequently.
+\sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
+Applying \sys to classic and modern \unix scripts shows significant speedups---in one set of benchmarks, the compiler's average speedup is $9.3\times$, jumping to $13.2\times$ due to runtime optimizations.
+\sys is open source and available for download at \ttt{blinded}.
+
 % Its runtime component provides orchestration and planning support during the execution of the program.
 % \sys's current limitations revolve around shell expansion.
 % Currently, \sys does not attempt to parallelize program fragments for which variables have not been expanded.
@@ -3245,8 +3280,9 @@ To achieve its goal, \sys
 % This effort would require tying \sys with the shell interpretation rather than having it as a compilation pass and is left for future work.
 %
 % Despite limitation related to expansions,
-  \sys can lead to significant benefits for shell users.
-Experiments with real programs show substantial speedups and the ability to operate on large input datasets, all with minimal or zero user effort.
+%   \sys can lead to significant benefits for shell users.
+% Experiments with real programs show substantial speedups and the ability to operate on large input datasets, all with minimal or zero user effort.
+
 
 
 % \heading{Limitations}
