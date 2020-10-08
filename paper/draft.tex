@@ -948,7 +948,7 @@ Moreover, several commands such as \ttt{sort} and \ttt{uniq} require specialized
 \subsection{\sys Design Overview}
 \label{bg:overview}
 
-At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and \todo{a parameter} \ttt{--width} and outputs a new script, a fragment of which is shown in Fig.~\ref{fig:example2}.
+At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and a parameter \ttt{--width} and outputs a new script, a fragment of which is shown in Fig.~\ref{fig:example2}.
 % concurrent version
 % To expose and exploit data parallelism, % in a given shell script,
 % %% parallel execution,
@@ -962,7 +962,7 @@ At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\
 %   by identifying and transforming special regions termed \emph{parallelizable regions} and explained below. % nv idea: let's call them may-par regions
 % \kk{eurosys: I suggest to replace the above sentence with the one below. There are a couple reasons. First I don't like the term source-to-source compiler because this sentence only describes the shell-graph compilation pass. Second, I would like to have some intuition about what there regions are (rather than deferring explanation for later). Third each region is tranformed to a DFG and not the whole script.}
 \sys first identifies sections of the script that lack synchronization and scheduling constraints and converts them to dataflow graphs (DFGs).
-It then performs a series of DFG transformations aimed at exposing parallelism without breaking semantics, \todo{up to the desired graph} \ttt{width}.
+It then performs a series of DFG transformations that expose parallelism without breaking semantics, by expanding the DFG to the desired \ttt{width}.
 . % ~\sx{ir:transformations}.
 Finally, \sys converts these DFGs back to a shell script augmented with \sys-provided commands. % ~\sx{optimizer}.
 The script is handed off to the user's original shell interpreter for execution.
@@ -1491,7 +1491,7 @@ In line with the \unix philosophy, these functions can be written in any languag
 %% representation that is expressive enough to model data parallelism in shell programs.
 %% support a large subset of shell programs.\nv{Immediate Q: How Large? Which programs are not supported? Why?}
 \sys first lifts sections of the input script to the DFG
-representation, it performs transformations to expose parallelism, and
+representation, it performs transformations to expose parallelism (up to the desired \ttt{--width}), and
 then instantiates each DFG back to a parallel shell script.  A
 fundamental difference with other DFG models is that \sys's DFG encodes the
 order in which a node reads its input streams (not just the order of input elements per stream), which in turn enables a set of
@@ -2375,7 +2375,7 @@ and then splits it uniformly across the desired number of outputs.
     % Names correspond to the speedup plots (Fig.~\ref{fig:microbenchmarks}).
     Structure summarizes the different classes of commands used in the script.
     Input and seq. time report on the input size fed to the script and the timing of its sequential execution.
-    Nodes and compile time report on \sys's resulting DFG size (which is equal to the number of resulting processes and includes \ttiny{agg}regators, \ttiny{eager}, and \ttiny{split} nodes) and compilation time for two indicative parallelization configurations.
+    Nodes and compile time report on \sys's resulting DFG size (which is equal to the number of resulting processes and includes \ttiny{agg}regators, \ttiny{eager}, and \ttiny{split} nodes) and compilation time for two indicative \ttiny{--width}s.
     % Highlights notes a few key features of each script.
   }
 }
