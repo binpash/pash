@@ -1111,7 +1111,7 @@ Workloads that use only stateless commands are trivial to parallelize:
 The choice of line as the data element strikes a convenient balance between coarse-grained (files) and fine-grained (characters) separation while staying in line with \unix's core abstractions.
 This choice can affect the allocation of commands in \sta, as many of its commands (about 1/3) are stateless \emph{within} a stream element---\eg\ttt{tr} transliterates characters within a line, one at a time---enabling further parallelization by splitting individual lines.
 This feature may seem of limited use, as these commands are computationally inexpensive, precisely due to their narrow focus.
-However, it turns out to be  useful for cases with very large stream elements (\ie long lines) such the \ttt{.fastq} format used in bioinformatics pipelines.  % TODO pointer to 6.3
+However, it turns out to be  useful for cases with very large stream elements (\ie long lines) such the \ttt{.fastq} format used in bioinformatics.
 
 
 \heading{Parallelizable Pure Commands}
@@ -1308,19 +1308,23 @@ For example, consider \ttt{comm}, which performs a join-like operation on its tw
 When \ttt{comm} is invoked without any flags, it produces a three-column output:
   the first column contains lines that are unique to the first input, the second column contains lines that are unique to the second input, and the last column contains lines that exist in both inputs.
 A user can invoke \ttt{comm} with any combination of flags \ttt{-1}, \ttt{-2}, or \ttt{-3} to suppress the corresponding output column(s).
-The first clause from its annotation record is shown below:
+% The first clause from its annotation record is shown below:
+Its annotation record is shown on the left:
 %
-\begin{minted}[fontsize=\footnotesize]{json-object}
-  "predicate":
-    { 
-      "operator": "all",
-      "operands": ["-1", "-3"] 
-    },    
-  "class": "stateless",
-  "inputs": ["args[1]"],
-  "outputs": ["stdout"],
-  "options": ["stdin-hyphen"]
-\end{minted}
+% \begin{minted}[fontsize=\footnotesize]{json-object}
+%   "predicate":
+%     { 
+%       "operator": "all",
+%       "operands": ["-1", "-3"] 
+%     },    
+%   "class": "stateless",
+%   "inputs": ["args[1]"],
+%   "outputs": ["stdout"],
+%   "options": ["stdin-hyphen"]
+% \end{minted}
+
+\hspace*{-0.3cm}\includegraphics[width=\columnwidth]{\detokenize{./figs/pash_annotation.pdf}}
+
 % \begin{lstlisting}[language=json, numbers=none]
 %   "predicate":
 %     { 
@@ -1443,7 +1447,7 @@ As the first and third columns are suppressed, \ttt{comm} can be categorized in 
 The complete annotation language contains 6 operators, one of which supports regural expressions.
 It was used to annotate 47 commands, totalling 708 lines of JSON---an effort that took about 2--3 hours.
 Annotation records are by default conservative so as to not jeopardize correctness, but can be incrementally refined to capture parallelizability when using increasingly complex combinations of flags.
-The language is extensible with more operators (as long as the \todo{user} defines an \todo{interpreter} for them);
+The language is extensible with more operators (as long as the developer defines their semantics);
   it also supports writing arbitrary Python code for commands whose properties are difficult to capture---\eg higher order \ttt{xargs}, whose parallelizability class depends on the class of the first-order command that it invokes.
 % \str
 % \kk{Mention that some commands, such as xargs are handled internally due to their particularities.}
