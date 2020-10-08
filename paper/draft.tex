@@ -1511,7 +1511,6 @@ We start with the script-to-DFG tranlation~\sx{dataflow-regions},
   \caption{
     \textbf{From Shell script AST to DFGs.}
     The AST on the left has two dataflow regions, each not extending beyond \ttiny{&&}~\cf{dataflow-regions}.
-    \nv{DFG2 reads from f2, grep writes to f3}
   }
   \vspace{-15pt}
   \label{fig:ast-dfg}
@@ -2922,8 +2921,8 @@ Furthermore, \sys does not decelerate non-trivial computations, even when parall
 	  \textbf{Unix50 scripts.}
     Speedup (left axis) over sequential execution (right axis) for Unix50 scripts.
     Parallelism is 16$\times$ on 10GB of input data~\cf{unix50}.
-    Pipelines are sorted in descending speedup order.\str
-    % \kk{Add speedup by primitives and transformations in bar-chart.}
+    Pipelines are sorted in descending speedup order. % \str
+    % \kk{FUTURE: Add speedup by primitives and transformations in bar-chart.}
     % The solid line indicates the average speedup $\times5.49$ and the dotted line indicates 1.
     % \nv{Idea: scripts that only take over 0.01s?}
     % \kk{Now that we removed the small ones, sequential time does not add a lot to this plot. Maybe we can just show speedups?}
@@ -3166,7 +3165,7 @@ Recently, Smoosh~\cite{smoosh:18} argued for making concurrency explicit via she
 The argument is dissimilar from \sys's, which argues for mostly automated (and correct) parallelization---hence \emph{light-touch} parallel scripting.
 
 Concurrent to our work, POSH~\cite{raghavan2020posh} is a framework for running shell scripts over remote storage by offloading the I/O-intensive portions to proxy servers closer to the data.
-POSH focuses on colocating distributed operation, and introduces a novel scheduling algorithm. 
+POSH focuses on co-locating distributed operation, and introduces a novel scheduling algorithm. 
 \sys instead focuses on the parallelization of CPU-intensive scripts, by transforming them to DFGs, applying transformations, and then transforming them back to parallel schell scripts augmented with \sys's runtime primitives to be executed on a standard shell.
 %  non-distributed parallelism, is location-agnostic, and focuses on correctness through its dataflow transformations.
 
@@ -3212,7 +3211,7 @@ By targeting specific classes of computation (\emph{viz.} \sys's parallelizabili
 
 % \kk{Mention something about Nebula (as an OSDI reviewer asked for.)}
 
-Dryad~\cite{isard2007dryad} is a distributed system for dataflow graphs. Dryad offers a scripting language, Nebula, that allows using shell commands such as \ttt{grep} or \ttt{sed} in place of individual dataflow nodes. The main difference with \sys is that in Dryad the programmer needs to explicitly express the data flow graph, which is then executed in a distributed fashion, whereas Pash automatically parallelizes a given shell script by producing a parallel script that runs on an unmodified shell of choice.
+Dryad~\cite{isard2007dryad} is a distributed system for dataflow graphs. Dryad offers a scripting language, Nebula, that allows using shell commands such as \ttt{grep} or \ttt{sed} in place of individual dataflow nodes. The main difference with \sys is that in Dryad the programmer needs to explicitly express the dataflow graph, which is then executed in a distributed fashion, whereas Pash automatically parallelizes a given shell script by producing a parallel script that runs on an unmodified shell of choice.
 
 
 % % Although still a research prototype, \sys's setup and deployment is simpler.
