@@ -63,7 +63,7 @@
 \newcommand{\heading}[1]{\vspace{4pt}\noindent\textbf{#1}\enspace}
 % \newcommand{\ttt}[1]{\texttt{#1}}
 \newcommand{\ttt}[1]{\mintinline[fontsize=\small]{bash}{#1}}
-\newcommand{\ttiny}[1]{\texttt{\scriptsize #1}}
+\newcommand{\ttiny}[1]{\mintinline[fontsize=\footnotesize]{bash}{#1}}
 \newcommand{\tti}[1]{\texttt{\scriptsize #1}}
 \newcommand{\spol}[1]{\scriptsize{\sc#1}}
 \newcommand{\pol}[1]{\texttt{\small {\color{purple}#1}}}
@@ -983,7 +983,6 @@ wait $! && ./pash_get_pids | xargs -n 1 kill -SIGPIPE
 \caption{
   \textbf{\sys's $2\times$-parallel output for fragment of Fig.~\ref{fig:example}.}
   \sys orchestrates the script's parallel execution through named pipes, parallel operators and careful placement of combiners.
-  \nv{Added \ttt{sort-merge}, can we sprinke more \sys primitives?}
 }
 \vspace{-15pt}
 \label{fig:example2}
@@ -1484,6 +1483,18 @@ We start with the script-to-DFG tranlation~\sx{dataflow-regions},
   discuss the transformations that \sys performs~\sx{ir:transformations}, and close with
   the DFG-to-script translation~\sx{backend}.
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{\detokenize{./figs/pash_dfg.pdf}}
+  \vspace{-25pt}
+  \caption{
+    \textbf{From Shell script AST to DFGs.}
+    The AST on the left has two parallelizable regions, each not extending beyond \ttiny{&&}~\cf{dataflow-regions}.
+  }
+  \vspace{-15pt}
+  \label{fig:ast-dfg}
+\end{figure}
+
 
 \subsection{Front-end: From Shell Scripts to DFGs}
 \label{dataflow-regions}
@@ -1530,13 +1541,10 @@ Consider this fragment:
 % # Replace sort with sth better
 
 \noindent
-The \ttt{cat} and \ttt{grep} commands execute independently (and concurrently) in the standard shell, but \ttt{sort} waits for their completion prior to start.
-Both \ttt{cat f1 f2 | grep "foo" > f3} and \ttt{sort f3} are thus dataflow regions, each not extending beyond \ttt{&&}.\footnote{
-  Can we make the commands \ttt{cmd1}, \ttt{cmd2}, \etc to ensure the readers understand this is driven by structure and not commands? 
-  % \kk{Commands do matter a bit though. If a command is sideeffectful we don't know how to connect it in the dataflow graph and thus \sys would not parallelize it (as is written later in the translation pass).} 
-  \kk{As we discussed we can add a small figure that shows the script, the AST, and the DFG.}}
-% ---more precisely, they are maximal.
-
+The \ttt{cat} and \ttt{grep} commands execute independently (and concurrently)
+in the standard shell, but \ttt{sort} waits for their completion prior to start
+(Fig.~\ref{fig:ast-dfg}).
+% 
 Intuitively, dataflow regions correspond to sub-expressions of
 the program that would be allowed to execute independently by
 different processes in the POSIX standard~\cite{posix}. Larger
@@ -1639,7 +1647,7 @@ Examples of such information includes the values of environment variables, strin
 %% to the the safety properties that are mentioned above cannot be
 %% soundly checked statically.
 For safety purposes, \sys takes a conservative approach avoiding parallelization of such nodes with incomplete information.
-It will not attempt to parallelize sub-expressions in which the translation pass cannot infer that, for example, an environment variable passed as an argument to a command does not change its parallelizability class.
+It will not attempt to parallelize sub-expressions in which the translation pass cannot infer that, \eg  an environment variable passed as an argument to a command does not change its parallelizability class.
 
 %% \kk{Can we say anything more about the safety considerations? That (i)
 %%   the translation pass ``checks'' that no nodes write/read or
@@ -1676,7 +1684,7 @@ It will not attempt to parallelize sub-expressions in which the translation pass
 
 The two main shell abstractions are
   (i) streams, \ie files or pipes, that contain data, and
-  (ii) commands that communicate through these streams.
+  (ii) commands, communicating through streams.
 %% \nv{quick solution: change all files to streams and make the equivalence explicit here}
 \sys's DFG model represents commands as nodes and streams as edges.
 We now introduce the notation used in throughout this section.
@@ -1933,7 +1941,7 @@ one at a time and the second argument represents the static inputs.
 \vspace{-28pt}
 \caption{
   \textbf{Stateless parallelization transformation.}
-  The \texttt{cat} node is commuted with the stateless node to utilize available data parallelism.
+  The \ttiny{cat} node is commuted with the stateless node to utilize available data parallelism.
 }
 \vspace{-15pt}
 \label{fig:parallelization-transformation}
@@ -2081,7 +2089,7 @@ A prologue in the script creates the necessary intermediate pipes, and a \ttt{tr
 \includegraphics[width=\columnwidth]{\detokenize{./figs/dish_aux.pdf}}
 \caption{
   \textbf{Auxiliary transformations.}
-  These augment the DFG with \ttt{cat}, \ttt{split}, and \ttt{relay} nodes.
+  These augment the DFG with \ttiny{cat}, \ttiny{split}, and \ttiny{relay} nodes.
 }
 \vspace{-10pt}
 \label{fig:auxiliary-transformations}
@@ -2254,8 +2262,8 @@ These nodes feature tight multi-threaded loops that consume input eagerly while 
   Addressing intermediary laziness is challenging:
     (a) FIFOs are blocking;
     (b) files alone introduce race conditions between producer/consumer;
-    (c) files + \ttt{wait} inhibit task parallelism.
-Eager \ttt{relay} nodes (d) address the challenge while remaining within the \sys model.
+    (c) files + \ttiny{wait} inhibit task parallelism.
+Eager \ttiny{relay} nodes (d) address the challenge while remaining within the \sys model.
 % Describe. \TODO{Combine this figure with the above code maybe.}
 }
 \vspace{-15pt}
@@ -2341,7 +2349,7 @@ and then splits it uniformly across the desired number of outputs.
     % Names correspond to the speedup plots (Fig.~\ref{fig:microbenchmarks}).
     Structure summarizes the different classes of commands used in the script.
     Input and seq. time report on the input size fed to the script and the timing of its sequential execution.
-    Nodes and compile time report on \sys's resulting DFG size (which is equal to the number of resulting processes and includes aggregators, eager, and split nodes) and compilation time for two indicative parallelization configurations.
+    Nodes and compile time report on \sys's resulting DFG size (which is equal to the number of resulting processes and includes \ttiny{agg}regators, \ttiny{eager}, and \ttiny{split} nodes) and compilation time for two indicative parallelization configurations.
     % Highlights notes a few key features of each script.
   }
 }
@@ -2474,8 +2482,9 @@ The \emph{aggregate} functions iterate over the provided stream descriptors, \ie
 % https://docs.google.com/drawings/d/13Zx3a9bWi1RvpOgNCSiXirp9UOte-XuaJQBi_lmmPMc/edit
 \includegraphics[width=0.4\textwidth]{\detokenize{./figs/pash_lattice.pdf}}
 \caption{
-  \textbf{Lattice of evaluation setup, based on runtime primitives.}
-  \todo{Explain further}
+  \textbf{Runtime setup lattice.}
+  Parallel No Eager and Blocking Eager improve over sequential, but are not directly comparable.
+  Eager adds \sys's optimized \ttiny{eager} relay, and \sys uses all primitives in \S\ref{optimizer} (Fig.~\ref{fig:microbenchmarks}).
 % Describe. \TODO{Combine this figure with the above code maybe.}
 }
 \vspace{-15pt}
@@ -2610,11 +2619,11 @@ We evaluate \sys under multiple configurations on popular, common, or classic \u
     \caption{
       \textbf{\sys's speedup for 2--64$\times$-parallelism (\S\ref{eval}, Parallelism).}
       Different configurations per benchmark:
-      (i) PaSh: the complete implementation with \ttt{eager} and \ttt{split} enabled,
+      (i) PaSh: the complete implementation with \ttiny{eager} and \ttiny{split} enabled,
       % (ii) Par+B.Split: \ttt{eager} and input-aware \ttt{split} enabled,
-      (ii) PaSh w/o split: \ttt{eager} enabled (no \ttt{split}),
-      (iii) \todo{Blocking Eager}, only blocking \ttt{eager} enabled (no \ttt{split}),
-      (iv) \todo{No Eager}: both \ttt{eager} and \ttt{split} disabled.
+      (ii) PaSh w/o split: \ttiny{eager} enabled (no \ttiny{split}),
+      (iii) \todo{Blocking Eager}, only blocking \ttiny{eager} enabled (no \ttiny{split}),
+      (iv) \todo{No Eager}: both \ttiny{eager} and \ttiny{split} disabled.
       % (vi) Opt. Parallel, an optimized version of \ttt{bigrams}~\cf{ours}.
       % Only relevant configurations are shown---\eg \ttt{grep} and \ttt{sort} do not benefit from \ttt{split}; \ttt{spell} and \ttt{bi-grams} do not see benefits without \ttt{split}.
       % TODO: WHY?
