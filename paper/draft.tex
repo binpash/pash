@@ -3161,11 +3161,10 @@ Here too, however, users are expected to manually rewrite scripts to exploit the
 Recently, Smoosh~\cite{smoosh:18} argued for making concurrency explicit via shell constructs.
 The argument is dissimilar from \sys's, which argues for mostly automated (and correct) parallelization---hence \emph{light-touch} parallel scripting.
 
-\kk{Mention something about Nebula (as an OSDI reviewer asked for.)}
-
 Concurrent to our work, POSH~\cite{raghavan2020posh} is a framework for running shell scripts over remote storage by offloading the I/O-intensive portions to proxy servers closer to the data.
 POSH focuses on colocating distributed operation, and introduces a novel scheduling algorithm. 
-\sys instead attempts non-distributed parallelism, is location-agnostic, and focuses on correctness through its dataflow transformations.
+\sys instead focuses on the parallelization of CPU-intensive scripts, by transforming them to DFGs, applying transformations, and then transforming them back to parallel schell scripts augmented with \sys's runtime primitives to be executed on a standard shell.
+%  non-distributed parallelism, is location-agnostic, and focuses on correctness through its dataflow transformations.
 
 % Nice intro: http://homepages.inf.ed.ac.uk/bfranke/Publications/pldi121-tournavitis.pdf
 \heading{Low-level Parallelization}
@@ -3183,7 +3182,9 @@ Despite its popularity, most systems perform optimizations that do not preserve 
 Recent work~\cite{HSSGG2014, SHGW2015, MSAIT2019} attempts to address this issue by performing optimizations only in cases where correctness is preserved.
 \sys draws inspiration from these efforts, as it attempts transformations that maintain the program's correctness with respect to the sequential execution.
 Its  DFG model, however, is different and captures ordering constraints.
-This is due to the intricacies of the \unix model---\eg streams, argument processing, and concatenation operators.
+This is due to the intricacies of the \unix model---\eg streams, argument processing, and concatenation operators.\str
+% \kk{eurosys: I could see this being deleted in need of space.}
+
 % As a result, previous work is not directly applicable.
 
 \heading{Parallel Userspace Environments}
@@ -3204,6 +3205,11 @@ By targeting specific classes of computation (\emph{viz.} \sys's parallelizabili
 %%   semantic model outlined earlier, it can focus on transformations
 %%   that are correct with respect to the sequential program.
 %% \kk{the other approaches are also principled and possibly event more correct.}
+
+% \kk{Mention something about Nebula (as an OSDI reviewer asked for.)}
+
+Dryad~\cite{isard2007dryad} is a distributed system for dataflow graphs. Dryad offers a scripting language, Nebula, that allows using shell commands such as \ttt{grep} or \ttt{sed} in place of individual dataflow nodes. The main difference with \sys is that in Dryad the programmer needs to explicitly express the data flow graph, which is then executed in a distributed fashion, whereas Pash automatically parallelizes a given shell script by producing a parallel script that runs on an unmodified shell of choice.
+
 
 % % Although still a research prototype, \sys's setup and deployment is simpler.
 % It also does not require these specialized frameworks, manually (re)write , and 
