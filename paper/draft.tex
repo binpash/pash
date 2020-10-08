@@ -931,7 +931,7 @@ Moreover, several commands such as \ttt{sort} and \ttt{uniq} require specialized
 \subsection{\sys Design Overview}
 \label{bg:overview}
 
-At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and outputs a new script, a fragment of which is shown in Fig.~\ref{fig:example2}.
+At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and \todo{a parameter} \ttt{--width} and outputs a new script, a fragment of which is shown in Fig.~\ref{fig:example2}.
 % concurrent version
 % To expose and exploit data parallelism, % in a given shell script,
 % %% parallel execution,
@@ -945,7 +945,8 @@ At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\
 %   by identifying and transforming special regions termed \emph{parallelizable regions} and explained below. % nv idea: let's call them may-par regions
 % \kk{eurosys: I suggest to replace the above sentence with the one below. There are a couple reasons. First I don't like the term source-to-source compiler because this sentence only describes the shell-graph compilation pass. Second, I would like to have some intuition about what there regions are (rather than deferring explanation for later). Third each region is tranformed to a DFG and not the whole script.}
 \sys first identifies sections of the script that lack synchronization and scheduling constraints and converts them to dataflow graphs (DFGs).
-It then performs a series of DFG transformations aimed at exposing parallelism without breaking semantics. % ~\sx{ir:transformations}.
+It then performs a series of DFG transformations aimed at exposing parallelism without breaking semantics, \todo{up to the desired graph} \ttt{width}.
+. % ~\sx{ir:transformations}.
 Finally, \sys converts these DFGs back to a shell script augmented with \sys-provided commands. % ~\sx{optimizer}.
 The script is handed off to the user's original shell interpreter for execution.
 \sys addresses the aforementioned challenges~\sx{bg:challenges} as below.
@@ -990,9 +991,9 @@ wait $! && ./pash_get_pids | xargs -n 1 kill -SIGPIPE
 
 
 \heading{Scripts}
-To maintain sequential semantics, \sys first analyzes a script to identify \emph{parallelizable regions} that contain commands that are candidates for parallelization.
+To maintain sequential semantics, \sys first analyzes a script to identify \emph{parallelizable regions} containing commands that are candidates for parallelization.
 This analysis is guided by the script structure: % to identify parallelization candidates:
-  some constructs (\eg \ttt{&}, \ttt{|}) expose task parallelism; others (\eg \ttt{&&}, \ttt{||}) enforce synchronization.
+  some constructs expose task parallelism; others enforce synchronization.
 % \sys first needs to understand the POSIX constructs used to compose larger programs, indicating different levels of candidacy for pararllelization.
 %% To assign a candidacy for parallelization, \sys breaks POSIX constructs into a few broad classes:
 %%  (i) the parallel-composition operator (\ttt{\&}) exposes task parallelism,
@@ -1493,6 +1494,7 @@ We start with the script-to-DFG tranlation~\sx{dataflow-regions},
   \caption{
     \textbf{From Shell script AST to DFGs.}
     The AST on the left has two dataflow regions, each not extending beyond \ttiny{&&}~\cf{dataflow-regions}.
+    \nv{DFG2 reads from f2, grep writes to f3}
   }
   \vspace{-15pt}
   \label{fig:ast-dfg}
@@ -2066,6 +2068,9 @@ the node. Transformation $t_3$ inserts a relay node that
 performs the identity transformation. Relay nodes can be useful for
 monitoring and debugging, as well as for performance
 improvements~\sx{optimizer}.
+The additional relay nodes inserted by the auxiliary transformations affect the resulting % (task) 
+  parallelism.
+
 
 \subsection{Backend: From DFGs to a Parallel Shell Script}
 \label{backend}
@@ -2553,16 +2558,13 @@ This section reports on whether \sys can indeed scale shell scripts out automati
 %   as shown, if written in a conventional language it would correspond to a program on the order of hundreds of lines of code.
 
 \heading{Highlights}
-\sys accelerates ($1.92-61.1\times$) all scripts.\footnote{
-  \nv{But this is not true; ``the vast majority''? maybe put 51/54 scripts?}.
-}
-For some of our benchmarks~\sx{ours}, we decouple the performance benefits stemming from \sys's compiler alone from the ones stemming from \sys's runtime primitives:
-  the compiler's average speedup seen is $9.3\times$, jumping to $13.2\times$ when runtime optimizations are used.
-In a different set of $30$ benchmarks parallelized $16\times$\footnote{
-  \nv{Immediate question: why use $64\times$ in one and $16\times$ in another?}
-}
- see an average speedup of $6\times$, depending on the class of piecewise commands~\sx{unix50}.
-Two complex scripts with 15~\sx{macro1} and 34~\sx{macro2} commands in multiple languages see $2.44\times$ and $12.7\times$ speedup on $16\times$-parallel configuration.
+\sys accelerates ($1.92-61.1\times$) \todo{49/54} scripts, whereas for the rest 5 the parallel execution time is close to the sequential (0.89, 0.91, 0.94, 099, 1.01$\times$).
+In this paragraph we summarize results for \ttt{--width=16}, but the rest of our evaluation section reports on varying \ttt{width}s.
+For a subset of our benchmarks~\sx{ours}, we decouple the performance benefits stemming from \sys's DFG transformations alone from the ones stemming from its runtime primitives:
+  the compiler's average speedup is \todo{$9.3\times$}, jumping to \todo{$13.2\times$} when runtime optimizations are used.
+A different subset ($30$ benchmarks) see an average speedup of $6.02\times$~\sx{unix50}.
+% , depending on the classed of commands involved
+Two complex scripts with 15~\sx{macro1} and 34~\sx{macro2} commands in multiple languages see speedups of $2.44\times$ and $12.7\times$.
 \sys outperforms \ttt{sort --parallel} by a significant margin, and offers small performance benefits over GNU \ttt{parallel}, which returns incorrect results in one configuration~\sx{micro}.
 % Averages: [1.955223776839714, 3.478591807121036, 5.721328556478535, 8.604380509595906, 10.666921423438112, 13.246864076708423]
 % No Eager Averages: [1.6327834370824543, 2.5481043878162444, 3.8623841529643173, 5.931851620007484, 7.466566647963421, 9.35752032439642]
@@ -2572,10 +2574,10 @@ Two complex scripts with 15~\sx{macro1} and 34~\sx{macro2} commands in multiple 
 % In two large cases, tasks such as data download, extraction, and preprocessing---often implemented using shell scripts and outside the focus of specialized parallelization frameworks---take comparable time to the execution of the main computation, and can be significantly accelerated by \sys.
 % In terms of manual effort,
 
-The vast majority of programs ($>50$, with $>200$ commands) require no effort to parallelize other than invoking \sys;
-  only 6 commands ($<3\%$) needed a single-record annotation.
-% 
-In terms of correctness, \sys's results over multi-GB  inputs are identical to the sequential for all benchmarks.
+Using \sys's standard library of annotations for POSIX and GNU commands~\sx{parallelizability}, the vast majority of programs ($>50$, with $>200$ commands) require no effort to parallelize other than invoking \sys;
+  only 6 commands outside these classes ($<3\%$) needed a single-record annotation.
+
+In terms of correctness, \sys's results on multi-GB inputs are always identical to the sequential.
 Scripts feature ample opportunities for breaking semantics, which \sys avoids.
 %% In one case, \sys avoids transforming a cycle (\ie a fragment whose input and output identifiers are the same).
 %in another, it preserves the semantics that another parallelization command breaks.
