@@ -562,9 +562,16 @@ We evaluate \sys using
 and 
   (iii) a series of micro-benchmarks inspired by (and comparing with) possible alternatives.
 The vast majority (47/52) of scripts---all unmodified---see significant speedups.
-Indicatively, applied to 10 programs with parallelism \ttt{--width=64}, \sys achieves 9.35$\times$ due to program transformations alone and 13.24$\times$ when coupled with its runtime primitives.
+Indicatively, applied to 10 representative \unix one-liners,
+%  with \ttt{--width=64}, 
+ \sys achieves 9.35$\times$ due to program transformations alone and 13.24$\times$ when coupled with its runtime primitives.
+% \kk{eurosys: Readers don't know what --width is here so it might make sense to not mention it.}
 % \sys performs better than \ttt{sort --parallel}, a hand-tuned parallel implementation, and GNU parallel, which returns incorrect results if used without care.
-In another case of \ttt{--width=16}, \sys successfully accelerates a large program by 2.44$\times$---extracting 10.79$\times$ from the portion of the program that traditionally falls outside the focus of conventional parallelization systems.
+When applied to a large program used for temperature analysis, 
+  \sys successfully accelerates it by 2.52$\times$---
+  parallelizing both the computation as well as the preprocessing fragment (downloading, extracting, and cleaning the data) which traditionally falls outside of the focus of conventional parallelization systems even though it takes $75\%$ of the whole program's execution time.
+  % extracting 12.31$\times$ from the portion of the program that traditionally falls outside the focus of conventional parallelization systems.
+  % \kk{\sys parallelizes the computation by 12.31 and not the preprocessing. It parallelizes the preprocessing by 2.}
 
 % For the temperature analysis script (which is taken from a Hadoop case study), \sys not only 
 % contains pre-processing that takes X time and Y main processing (Hadoop focus).
