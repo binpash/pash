@@ -357,7 +357,7 @@ A lightweight annotation language allows command developers to express key paral
 An accompanying parallelizability study of POSIX and GNU commands---two large and commonly used groups---guides the annotation language and optimized aggregator library that \sys uses.
 % \kk{eurosys: Can we extend this to say that PaSh automatically uses constructs from this library? Otherwise it sounds like the user has to use it to make their scripts parallel.}
 Finally, \sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
-\sys's extensive evaluation over 44 unmodified \unix scripts shows significant speedups ($0.98$--$61.1\times$, avg: $6.7\times$) stemming from the combination of its program transformations and runtime primitives.
+\sys's extensive evaluation over 44 unmodified \unix scripts shows significant speedups ($0.89$--$61.1\times$, avg: $6.7\times$) stemming from the combination of its program transformations and runtime primitives.
 % The vast majority (39/44) of scripts---all unmodified---see significant speedups (average over all is $6.7\times$, up to $61\times$).
 \end{abstract}
 
@@ -555,18 +555,18 @@ These address many practical challenges % such as task parallelism, deadlocks, a
 % fragments that are not purely compute-intensive regions, i.e.,
 % the usual focus of conventional parallelization systems.
 
-We evaluate \sys 44 unmodified scripts including:
+We evaluate \sys on 44 unmodified scripts including:
   (i) a series of benchmarks, ranging from classic \unix one-liners to modern data-processing scripts;
   (ii) two large and complex use cases for temperature analysis and web indexing;
 %% , and container orchestration;
 and 
   (iii) two micro-benchmarks inspired by (and comparing with) possible alternatives.
-Speedups range between 0.98--61.1$\times$ (avg: $6.7\times$), with the 39 out of 44 scripts seeing non-trivial speedups. 
-\sys's runtime primitives add to the base speedup extracted by \sys's program transformations---\eg 13.24$\times$ over a base 9.35$\times$ average for 10 representative \unix one-liners.
+Speedups range between 0.89--61.1$\times$ (avg: $6.7\times$), with the 39 out of 44 scripts seeing non-trivial speedups. 
+\sys's runtime primitives add to the base speedup extracted by \sys's program transformations---\eg 8.83$\times$ over a base 5.93$\times$ average for 10 representative \unix one-liners.
 %  with \ttt{--width=64}, 
 % \kk{eurosys: Readers don't know what --width is here so it might make sense to not mention it.}
 % \sys performs better than \ttt{sort --parallel}, a hand-tuned parallel implementation, and GNU parallel, which returns incorrect results if used without care.
-\sys accelerates a large program for temperature analysis by 2.52$\times$, parallelizing both the computation and the preprocessing fragment (\ie data download, extraction, and cleanup), which traditionally falls outside of the focus of conventional parallelization systems---even though it takes $75\%$ of the total execution time.
+\sys accelerates a large program for temperature analysis by 2.52$\times$, parallelizing both the computation (12.31$\times$) and the preprocessing (2.04$\times$) fragment (\ie data download, extraction, and cleanup), which traditionally falls outside of the focus of conventional parallelization systems---even though it takes $75\%$ of the total execution time.
   % extracting 12.31$\times$ from the portion of the program that traditionally falls outside the focus of conventional parallelization systems.
   % \kk{\sys parallelizes the computation by 12.31 and not the preprocessing. It parallelizes the preprocessing by 2.}
 
@@ -1005,8 +1005,8 @@ Annotations are expressed once per command rather than once per script and aim t
 \begin{minted}[fontsize=\footnotesize,escapeinside=()]{bash}
 mkfifo $t{0,1...}
 curl $base/$y > $t0 & cat $t0 | split $t1 $t2 &
-cat $t1 | xargs -n1 curl -s >$t3 & 
-cat $t2 | xargs -n1 curl -s >$t4 &
+cat $t1 | grep gz > $t3 & 
+cat $t2 | grep gz > $t4 &
 ...
 cat $t9 | sort -rn > $t11 & cat $t10 | sort -rn > $t12 &
 cat $t11 | eager > $t13 & cat $t12 | eager > $t14 &
