@@ -968,12 +968,10 @@ Finally, \sys converts these DFGs back to a shell script augmented with \sys-pro
 The script is handed off to the user's original shell interpreter for execution.
 \sys addresses the aforementioned challenges~\sx{bg:challenges} as below.
 
-\TODO{Add pointers}
-
 \heading{Commands}
-To understand standard commands available in any shell, \sys groups POSIX and GNU commands into a small but well-defined set of \emph{parallelizability classes}.
+To understand standard commands available in any shell, \sys groups POSIX and GNU commands into a small but well-defined set of \emph{parallelizability classes}~\sx{cmd}.
 Rather than describing a command's full observable behavior, these classes focus on information that is important for data parallelism.
-To allow other commands to use its transformations, \sys defines a light \emph{annotation language} for describing a command's parallelizability class.
+To allow other commands to use its transformations, \sys defines a light \emph{annotation language} for describing a command's parallelizability class~\sx{ext}.
 Annotations are expressed once per command rather than once per script and aim towards command developers rather than its users, so that they can quickly and easily capture the characteristics of the commands they develop.
 % We haven't introduced the notion of flags
 % A command developer can only annotate the default behavior;
@@ -1008,7 +1006,7 @@ wait $! && ./pash_get_pids | xargs -n 1 kill -SIGPIPE
 
 
 \heading{Scripts}
-To maintain sequential semantics, \sys first analyzes a script to identify \emph{parallelizable regions} containing commands that are candidates for parallelization.
+To maintain sequential semantics, \sys first analyzes a script to identify \emph{parallelizable regions} containing commands that are candidates for parallelization~\sx{dataflow-regions}.
 This analysis is guided by the script structure: % to identify parallelization candidates:
   some constructs expose task parallelism; others enforce synchronization.
 % \sys first needs to understand the POSIX constructs used to compose larger programs, indicating different levels of candidacy for pararllelization.
@@ -1018,20 +1016,20 @@ This analysis is guided by the script structure: % to identify parallelization c
 %%  (iii) the pipe operator (\ttt{|}) is a candidate for both task and data parallelism, and
 %%  (iv)  other composition operators such as \ttt{\&\&}, \ttt{||}, and \ttt{;} are barrier candidates.
 % Since the shell representation only exposes coarse grained parallelization opportunities, 
-\sys then converts each parallelizable region to a \emph{dataflow graph} (DFG), 
+\sys then converts each parallelizable region to a \emph{dataflow graph} (DFG)~\sx{graph-components}, 
 %% Provided information commands and POSIX constructs, \sys needs to analyze the given script and identify program fragments that are candidates for parallelization.
 %% To achieve this, it converts sections of the script that are amenable to parallelization into a data-flow graph (DFG) representation.
 % Second, \sys defines a dataflow graph model that is suitable for the semantics of the POSIX shell and proposes a set of parallelization optimizations that preserve the behavior of the dataflow graph.
-  a flexible representation that enables a series of local transformations to expose data parallelism, converting the graph into its parallel equivalent.
+  a flexible representation that enables a series of local transformations to expose data parallelism, converting the graph into its parallel equivalent~\sx{ir:transformations}.
 %% , in which DFGs indicate the parallelizable regions.
-Further transformations compile the DFG back to a shell script that uses POSIX constructs to guide parallelism explicitly while aiming at preserving the semantics of the sequential program.
+Further transformations compile the DFG back to a shell script that uses POSIX constructs to guide parallelism explicitly while aiming at preserving the semantics of the sequential program~\sx{backend}.
 
 \heading{Implementation}
-\sys addresses several practical challenges through a set of constructs it provides---\eg a set of
+\sys addresses several practical challenges through a set of constructs it provides---\ie 
 %% linkable
-modular components for augmenting command composition.
+modular components for augmenting command composition~\sx{impl}.
 %% for stream splitting and merging.
-It also provides a small library of efficient data aggregators for a large set of parallelizable commands.
+It also provides a small and efficient \emph{aggregator library} targeting a large set of parallelizable commands.
 %% For the vast majority of commands in one of the parallelizable classes, it also provides  a small library of pure fold function implementations.
 %% \kk{The terms pure, classes, and fold don't mean a lot to the reader at the moment, so I would prefer using more general terminology.}
 All these commands live in the \ttt{PATH} and are addressable by name, which means they can be used like (and by) any other commands.
@@ -1309,7 +1307,7 @@ When \ttt{comm} is invoked without any flags, it produces a three-column output:
   the first column contains lines that are unique to the first input, the second column contains lines that are unique to the second input, and the last column contains lines that exist in both inputs.
 A user can invoke \ttt{comm} with any combination of flags \ttt{-1}, \ttt{-2}, or \ttt{-3} to suppress the corresponding output column(s).
 % The first clause from its annotation record is shown below:
-Its annotation record is shown on the left:
+Below is its annotation record (left) and the implementation of record's first clause (right):
 %
 % \begin{minted}[fontsize=\footnotesize]{json-object}
 %   "predicate":
@@ -1345,7 +1343,10 @@ Its annotation record is shown on the left:
 \noindent
 As the first and third columns are suppressed, \ttt{comm} can be categorized in \sta by regarding its first file argument as a static ``configuration'' input;
 % NV: I don't think this is correct, because the small input might be the other argument;  you could even have `comm - -`
-  this input accompanies every replicated instance of the command executing in parallel. The second clause is symmetric to the first with respect to the second input, and the third clause, which is the general case classifies \ttt{comm} as \pur as it needs to read both inputs completely before outputing its results. The option \ttt{stdin-hyphen} indicates that \ttt{-} represents standard input if given as a file argument.
+  this input accompanies every replicated instance of the command executing in parallel.
+The second clause is symmetric to the first with respect to the second input. 
+The third clause is the general case, classifiying \ttt{comm} in \pur as it needs to read both inputs completely before outputing its results.
+Option \ttt{stdin-hyphen} indicates that \ttt{-} represents standard input if given as a file argument.
 % The third clause is the general case, which includes \ttt{comm} invocations without any options, and is captured by the third clause.
 % There, \ttt{comm} is classified as \pur as it needs to % wait until it 
 %   read both inputs completely before it can output its results.
@@ -1704,7 +1705,7 @@ It will not attempt to parallelize sub-expressions in which the translation pass
 %% In order to effectively apply optimizations and distribute a shell
 %% script, \sys first translates it to a manipulable representation.
 
-\subsection{DFG Definitions}
+\subsection{Dataflow Model Definitions}
 \label{graph-components}
 
 The two main shell abstractions are
@@ -2656,8 +2657,9 @@ The goal is to evaluate performance benefits due to \sys's
 \begin{figure*}[t]
     \centering
     \includegraphics[width=\textwidth]{\detokenize{./figs/tiling_throughput_scaleup.pdf}}
+    \vspace{-20pt}
     \caption{
-      \textbf{\sys's speedup for \ttiny{width=} 2--64.}
+      \textbf{\sys's speedup for \ttiny{width=}2--64.}
       Different configurations per benchmark:
       (i) PaSh: the complete implementation with \ttiny{eager} and \ttiny{split} enabled,
       % (ii) Par+B.Split: \ttt{eager} and input-aware \ttt{split} enabled,
@@ -2666,7 +2668,7 @@ The goal is to evaluate performance benefits due to \sys's
       (iv) \todo{No Eager}: both \ttiny{eager} and \ttiny{split} disabled.
   For some pairs of configurations, \sys produces identical parallel scripts and thus only one is shown.
 }
-    \vspace{-15pt}
+    \vspace{-14pt}
     \label{fig:microbenchmarks}
 \end{figure*}
 
@@ -2928,6 +2930,7 @@ Furthermore, \sys does not decelerate non-trivial computations, even when parall
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{\detokenize{./figs/unix50_individual_speedups_16.pdf}}
+  \vspace{-15pt}
   \caption{
 	  \textbf{Unix50 scripts.}
     Speedup (left axis) over sequential execution (right axis) for Unix50 scripts.
