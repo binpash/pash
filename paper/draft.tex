@@ -354,10 +354,10 @@ This paper presents \sys, a system for parallelizing POSIX shell scripts through
 % a source-to-source shell compiler and associated runtime library
 Given a script, \sys converts it to a dataflow graph, performs a series of transformations that expose parallelism while preserving its sequential semantics, and then converts the dataflow graph back into a script that uses POSIX constructs to explicitly guide parallelism.
 A lightweight annotation language allows command developers to express key parallelizability properties about their commands.
-An accompanying parallelizability study of POSIX and GNU commands---two large and commonly used groups---informs said annotation language and guides the development of an optimized aggregator library that \sys uses.
+An accompanying parallelizability study of POSIX and GNU commands---two large and commonly used groups---guides the annotation language and optimized aggregator library that \sys uses.
 % \kk{eurosys: Can we extend this to say that PaSh automatically uses constructs from this library? Otherwise it sounds like the user has to use it to make their scripts parallel.}
 Finally, \sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
-\sys's extensive evaluation, combining several classic and modern \unix scripts, shows significant speedups (total average over 44 scripts is $6.7\times$) stemming from the combination of its program transformations and runtime primitives.
+\sys's extensive evaluation over 44 unmodified \unix scripts shows significant speedups ($0.98$--$61.1\times$, avg: $6.7\times$) stemming from the combination of its program transformations and runtime primitives.
 % The vast majority (39/44) of scripts---all unmodified---see significant speedups (average over all is $6.7\times$, up to $61\times$).
 \end{abstract}
 
@@ -556,21 +556,18 @@ These address many practical challenges % such as task parallelism, deadlocks, a
 % fragments that are not purely compute-intensive regions, i.e.,
 % the usual focus of conventional parallelization systems.
 
-We evaluate \sys on a set of 44 scripts including:
+We evaluate \sys 44 unmodified scripts including:
   (i) a series of benchmarks, ranging from classic \unix one-liners to modern data-processing scripts;
   (ii) two large and complex use cases for temperature analysis and web indexing;
 %% , and container orchestration;
 and 
-  (iii) a series of micro-benchmarks inspired by (and comparing with) possible alternatives.
-The vast majority (39/44) of scripts---all unmodified---see significant speedups (average over all is $6.7\times$, up to $61\times$).
-Indicatively, applied to 10 representative \unix one-liners,
+  (iii) two micro-benchmarks inspired by (and comparing with) possible alternatives.
+Speedups range between 0.98--61.1$\times$ (avg: $6.7\times$), with the 39 out of 44 scripts seeing non-trivial speedups. 
+\sys's runtime primitives add to the base speedup extracted by \sys's program transformations---\eg 13.24$\times$ over a base 9.35$\times$ average for 10 representative \unix one-liners.
 %  with \ttt{--width=64}, 
- \sys achieves 9.35$\times$ due to program transformations alone and 13.24$\times$ when coupled with its runtime primitives.
 % \kk{eurosys: Readers don't know what --width is here so it might make sense to not mention it.}
 % \sys performs better than \ttt{sort --parallel}, a hand-tuned parallel implementation, and GNU parallel, which returns incorrect results if used without care.
-When applied to a large program used for temperature analysis, 
-  \sys successfully accelerates it by 2.52$\times$---
-  parallelizing both the computation as well as the preprocessing fragment (downloading, extracting, and cleaning the data) which traditionally falls outside of the focus of conventional parallelization systems even though it takes $75\%$ of the whole program's execution time.
+\sys accelerates a large program for temperature analysis by 2.52$\times$, parallelizing both the computation and the preprocessing fragment (\ie data download, extraction, and cleanup), which traditionally falls outside of the focus of conventional parallelization systems---even though it takes $75\%$ of the total execution time.
   % extracting 12.31$\times$ from the portion of the program that traditionally falls outside the focus of conventional parallelization systems.
   % \kk{\sys parallelizes the computation by 12.31 and not the preprocessing. It parallelizes the preprocessing by 2.}
 
@@ -924,6 +921,7 @@ In contrast to restricted programming frameworks that enable parallelization by 
 To be parallelized, each command may require special analysis and treatment---\eg exposing data parallelism in Fig.~\ref{fig:example}'s \ttt{tr} or \ttt{sort} would require splitting their inputs, running them on each partial input, and then merging the partial results.\footnote{
   As explained in the introduction~\sx{intro}, commands such as \ttiny{sort} may have \emph{ad hoc} flags like \ttiny{--parallel}, which do not compose across commands and may risk breaking correctness and unexploiting performance potential~\sx{micro}.
 }
+% Key point: ...analyses and treatment---\eg combining partial results for \ttt{tr} is different than for \ttt{sort}.
 Automating such an analysis is infeasible, as individual commands are black boxes written in a variety of programming languages and models.
 %% \ttt{grep} requires no coordination, \ttt{head} requires light coordination, and \ttt{sort} requires significant coordination.
 %% These behaviors are further concealed by the fact that commands are black boxes implemented in a variety of programming languages and models.
@@ -3073,7 +3071,7 @@ As there are no prior systems directly comparable to \sys, we now draw compariso
 %% \kk{Explain what is the purpose of the
 %%   microbenchmark. We want to establish that \sys scalability is as
 %%   good as it could be.}
-We first compare a GNU \ttt{sort} parallelized by \sys ($S_{PaSh}$) \vs the same \ttt{sort} with the 
+We first compare a GNU \ttt{sort} parallelized by \sys ($S_{p}$) \vs the same \ttt{sort} with the 
 %% \begin{wrapfigure}[10]{r}{0.25\textwidth}
 %%   \centering
 %%   %% \begin{center}
@@ -3082,15 +3080,17 @@ We first compare a GNU \ttt{sort} parallelized by \sys ($S_{PaSh}$) \vs the same
 %% %   \vspace{-15pt}
 %% % \caption{ \textbf{Comparison with \ttt{sort -{}-parallel}.} }
 %% \end{wrapfigure}
-\ttt{--parallel} flag set ($S_{GNU}$). % , shown on the side.
+\ttt{--parallel} flag set ($S_{g}$).\footnote{
+  Both \ttiny{sort}s use the same buffer size internally~\cite{sortp:15}.
+}
 % The results are shown on the side-figure below.
 While \ttt{--parallel} is not a general solution, the comparison serves to establish a baseline for \sys.
-$S_{GNU}$'s parallelism is configured to $2\times$ that of \todo{$S_{PaSh}$'s} \ttt{--width} (\ie the rightmost plot point for $S_{GNU}$ is for \ttt{--parallelism=128}), 
+$S_{g}$'s parallelism is configured to $2\times$ that of $S_{p}$'s \ttt{--width} (\ie the rightmost plot point for $S_{g}$ is for \ttt{--parallelism=128}), 
 to account for \sys's additional runtime processes.
 % and as such we note that the measurements are harsh for \sys.
 
 A few points are worth noting.
-$S_{PaSh}$ without \ttt{eager} performs comparably to $S_{GNU}$, and with \ttt{eager} it outperforms $S_{GNU}$ ($\sim2\times$);
+$S_{p}$ without \ttt{eager} performs comparably to $S_{g}$, and with \ttt{eager} it outperforms $S_{g}$ ($\sim2\times$);
   this is because \ttt{eager} adds intermediate buffers %(on disk)
   that ensure CPU utilization is high.
 %% On the other hand, \ttt{sort --parallel} sorts the input trying to
@@ -3101,9 +3101,9 @@ $S_{PaSh}$ without \ttt{eager} performs comparably to $S_{GNU}$, and with \ttt{e
 %% Of course, it would be possible to manually create a longer pipeline
 %% and use intermediate buffers to speed this up, but this defeats the
 %% purpose of having a simple solution.
-$S_{GNU}$ indicates that \ttt{sort}'s scalability is inherently limited (\ie due to \ttt{sort} and not \sys);
+$S_{g}$ indicates that \ttt{sort}'s scalability is inherently limited (\ie due to \ttt{sort}, not \sys);
   this is why all scripts that contain \ttt{sort} (\eg \S\ref{ours}--\ref{macro2}) are capped at $8\times$ speedup.
-Finally, the comparison also shows \sys's benefits to command developers:
+The comparison also shows \sys's benefits to command developers:
   a low-effort parallelizability annotation achieves better scalability than a custom flag (and underlying parallel implementation) manually added by developers.
 
 %% \kk{There is a weird thing in the results. That the sequential one
