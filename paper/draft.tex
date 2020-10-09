@@ -842,7 +842,7 @@ It then downloads and decompresses each file in the remaining set, extracts the 
 It then calculates the maximum yearly temperature by sorting the values and picking the top element.
 Finally, it matches each maximum value with the appropriate year in order to print the result.
 % 
-The effort expensed writing this script is low:
+The effort expended writing this script is low:
 % \footnote{
 %   Some effort is required to understand NOAA's weather format, but this is true for any program processing any dataset.
 % }
@@ -982,7 +982,7 @@ At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\
 % \kk{eurosys: I suggest to replace the above sentence with the one below. There are a couple reasons. First I don't like the term source-to-source compiler because this sentence only describes the shell-graph compilation pass. Second, I would like to have some intuition about what there regions are (rather than deferring explanation for later). Third each region is tranformed to a DFG and not the whole script.}
 \sys first identifies sections of the script that lack synchronization and scheduling constraints and converts them to dataflow graphs (DFGs).
 It then performs a series of DFG transformations that expose parallelism without breaking semantics, by expanding the DFG to the desired \ttt{width}.
-. % ~\sx{ir:transformations}.
+% ~\sx{ir:transformations}.
 Finally, \sys converts these DFGs back to a shell script augmented with \sys-provided commands. % ~\sx{optimizer}.
 The script is handed off to the user's original shell interpreter for execution.
 \sys addresses the aforementioned challenges~\sx{bg:challenges} as below.
@@ -1464,8 +1464,8 @@ Option \ttt{stdin-hyphen} indicates that \ttt{-} represents standard input if gi
   what do you think?}}
 
 \heading{Complete Annotation Language}
-The complete annotation language contains 6 operators, one of which supports regural expressions.
-It was used to annotate 47 commands, totalling 708 lines of JSON---an effort that took about 2--3 hours.
+The complete annotation language contains 6 operators, one of which supports regular expressions.
+It was used to annotate 47 commands, totaling 708 lines of JSON---an effort that took about 2--3 hours.
 Annotation records are by default conservative so as to not jeopardize correctness, but can be incrementally refined to capture parallelizability when using increasingly complex combinations of flags.
 The language is extensible with more operators (as long as the developer defines their semantics);
   it also supports writing arbitrary Python code for commands whose properties are difficult to capture---\eg higher order \ttt{xargs}, whose parallelizability class depends on the class of the first-order command that it invokes.
@@ -1487,7 +1487,7 @@ In line with the \unix philosophy, these functions can be written in any languag
   (iii) their composition produces the same output as the original command.
 \sys can use the \emph{map} and \emph{aggregate} functions in its graph transformations~\sx{ir} to further expose parallelism.
 % If these invariants are met, after DFG analysis~\sx{ir} \sys can replace occurrences of these commands with their \emph{map} and \emph{aggregate} equivalents, enabling their full parallelization.
-\sys defines aggregators for many POSIX and GNU commands in \pur, dubbing as both its standard library and an exemplar for community efforts tackling other commands.
+\sys defines aggregators for many POSIX and GNU commands in \pur, doubling as both its standard library and an exemplar for community efforts tackling other commands.
 
 
 
@@ -1523,7 +1523,7 @@ graph transformations that can be iteratively applied to expose
 parallelization opportunities for \tsta and \tpur commands.
 %% data parallelism as task parallelism.\nv{What does this mean? What if they are fundamentally different in the reivewer's mind? Example?}
 %% These transformations can then be applied in an iterative way, optimizing the program to utilize available computational resources. 
-We start with the script-to-DFG tranlation~\sx{dataflow-regions}, 
+We start with the script-to-DFG translation~\sx{dataflow-regions}, 
   then define the DFG model and describe the correspondence with shell scripts~\sx{graph-components},
   discuss the transformations that \sys performs~\sx{ir:transformations}, and close with
   the DFG-to-script translation~\sx{backend}.
@@ -2601,7 +2601,7 @@ This section reports on whether \sys can indeed offer performance benefits autom
 \heading{Highlights}
 This paragraph highlights results for \ttt{width=16}, but \sys's evaluation reports on varying \ttt{width}s (2--64).
 % The vast majority (39/44) of scripts---all unmodified---see significant speedups (average over all is $6.7\times$, up to $61\times$).
-Overall, applying \sys to all 44 unmodified scripts accelerates 39 of them by 1.92--17.42$\times$; for the rest, the parallel performance is comparable to the sequential (0.89, 0.91, 0.94, 099, 1.01$\times$). The total average speedup over all 44 benchmarks is $6.7\times$.
+Overall, applying \sys to all 44 unmodified scripts accelerates 39 of them by 1.92--17.42$\times$; for the rest, the parallel performance is comparable to the sequential (0.89, 0.91, 0.94, 0.99, 1.01$\times$). The total average speedup over all 44 benchmarks is $6.7\times$.
 \sys's runtime primitives offer significant benefits---for the 10 scripts that we measured with and without the runtime primitives they bump the average speedup from $5.9\times$ to $8.6\times$.
 % Overall, \sys accelerates 39/44 scripts---all unmodified---by 1.92--17.42$\times$; 
   % for the rest, the parallel performance is comparable to the sequential (0.89, 0.91, 0.94, 099, 1.01$\times$).
