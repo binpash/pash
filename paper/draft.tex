@@ -350,14 +350,15 @@
 %% Note: \begin{abstract}...\end{abstract} environment must come
 %% before \maketitle command
 \begin{abstract}
-This paper presents \sys, a system aimed at parallelizing POSIX shell scripts through a combination of program transformations and runtime primitives.
+This paper presents \sys, a system for parallelizing POSIX shell scripts through a combination of program transformations and runtime primitives.
 % a source-to-source shell compiler and associated runtime library
-Given a script, \sys converts it to a dataflow graph, performs a series of analyses and transformations that aim at exposing parallelism while preserving its sequential semantics, and then converts the dataflow graph back into a script that uses POSIX constructs to explicitly guide parallelism.
-A lightweight annotation language allow command developers to express key parallelizability properties about their commands.
-An accompanying parallelizability study of POSIX and GNU commands---two large and commonly used groups---informs \sys's annotation language and guides the development of a data-parallel standard library.
+Given a script, \sys converts it to a dataflow graph, performs a series of transformations that expose parallelism while preserving its sequential semantics, and then converts the dataflow graph back into a script that uses POSIX constructs to explicitly guide parallelism.
+A lightweight annotation language allows command developers to express key parallelizability properties about their commands.
+An accompanying parallelizability study of POSIX and GNU commands---two large and commonly used groups---informs said annotation language and guides the development of an optimized aggregator library that \sys uses.
 % \kk{eurosys: Can we extend this to say that PaSh automatically uses constructs from this library? Otherwise it sounds like the user has to use it to make their scripts parallel.}
 Finally, \sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
-\sys's extensive evaluation, combining several classic and modern \unix scripts, shows significant \todo{speedups} stemming from the combination of its program transformations and runtime primitives.
+\sys's extensive evaluation, combining several classic and modern \unix scripts, shows significant speedups (total average over 44 scripts is $6.7\times$) stemming from the combination of its program transformations and runtime primitives.
+% The vast majority (39/44) of scripts---all unmodified---see significant speedups (average over all is $6.7\times$, up to $61\times$).
 \end{abstract}
 
 
@@ -561,7 +562,7 @@ We evaluate \sys using
 %% , and container orchestration;
 and 
   (iii) a series of micro-benchmarks inspired by (and comparing with) possible alternatives.
-The vast majority (47/52) of scripts---all unmodified---see significant speedups.
+The vast majority (39/44) of scripts---all unmodified---see significant speedups (average over all is $6.7\times$, up to $61\times$).
 Indicatively, applied to 10 representative \unix one-liners,
 %  with \ttt{--width=64}, 
  \sys achieves 9.35$\times$ due to program transformations alone and 13.24$\times$ when coupled with its runtime primitives.
@@ -2599,7 +2600,8 @@ This section reports on whether \sys can indeed offer performance benefits autom
 
 \heading{Highlights}
 This paragraph highlights results for \ttt{width=16}, but \sys's evaluation reports on varying \ttt{width}s (2--64).
-Overall, \sys accelerates 47/52 scripts---all unmodified---by 1.92--17.42$\times$; 
+% The vast majority (39/44) of scripts---all unmodified---see significant speedups (average over all is $6.7\times$, up to $61\times$).
+Overall, \sys accelerates 39/44 scripts---all unmodified---by 1.92--17.42$\times$; 
   for the rest, the parallel performance is comparable to the sequential (0.89, 0.91, 0.94, 099, 1.01$\times$).
   % \kk{eurosys: I have an issue that I am not sure how to address. I would like to have the 61.1x here (which is due to 64 width)  but I don't see a good way of including it without sounding suspicious.}
 For a subset of our benchmarks~\sx{ours}, we decouple the speedup due to \sys's DFG transformations alone from the one achieved when including its runtime primitives:
@@ -2616,7 +2618,7 @@ Two complex scripts with 15~\sx{macro1} and 34~\sx{macro2} commands written in m
 % In two large cases, tasks such as data download, extraction, and preprocessing---often implemented using shell scripts and outside the focus of specialized parallelization frameworks---take comparable time to the execution of the main computation, and can be significantly accelerated by \sys.
 % In terms of manual effort,
 
-Using \sys's standard library of annotations for POSIX and GNU commands~\sx{parallelizability}, the vast majority of programs ($>50$, with $>200$ commands) require no effort to parallelize other than invoking \sys;
+Using \sys's standard library of annotations for POSIX and GNU commands~\sx{parallelizability}, the vast majority of programs ($>40$, with $>200$ commands) require no effort to parallelize other than invoking \sys;
   only 6 ($<3\%$) commands, outside this library, needed a single-record annotation~\sx{macro2}.
 
 In terms of correctness, \sys's results on multi-GB inputs are identical to the sequential ones.
@@ -2966,7 +2968,7 @@ While the book focuses only on the last stage, \sys parallelizes the entire pipe
 \heading{Results}
 The complete pipeline executes in 44m2s for five years (82GB) of data.
 \sys with \ttt{width=}16 leads to 2.52$\times$ speedup, with different phases seeing different benefits:
-  2.04$\times$ (vs. 33m58s) for all the pre-processing and 
+  2.04$\times$ (vs. 33m58s) for all the pre-processing ($75\%$ of the total running time) and 
   12.31$\times$ speedup (vs. 10m4s) for computing the max.
 
 %> It is worth reporting Hadoop's (3.2.1, Oracle JDK1.8.0\_255) execution time for the curious reader (see below for fairness), which takes \todo{6m22s} (sequential) and \todo{4m30.554s} ($\times$\todo{XX}-parallel).
@@ -3181,7 +3183,7 @@ Here too, however, users are expected to manually rewrite scripts to exploit the
 Recently, Smoosh~\cite{smoosh:18} argued for making concurrency explicit via shell constructs.
 The argument is dissimilar from \sys's, which argues for mostly automated (and correct) parallelization---hence \emph{light-touch} parallel scripting.
 
-Concurrent to \sys, POSH~\cite{raghavan2020posh} is a framework for running shell scripts over remote storage by offloading the I/O-intensive portions to proxy servers closer to the data.
+Developed independently and at the same time with \sys, POSH~\cite{raghavan2020posh} is a framework for running shell scripts over remote storage by offloading the I/O-intensive portions to proxy servers closer to the data.
 POSH focuses on co-locating distributed operation, and introduces a novel scheduling algorithm. 
 \sys instead focuses on the parallelization of CPU-intensive scripts, by transforming them to DFGs, applying transformations, and then transforming them back to parallel schell scripts augmented with \sys's runtime primitives to be executed on a standard shell.
 %  non-distributed parallelism, is location-agnostic, and focuses on correctness through its dataflow transformations.
@@ -3316,8 +3318,9 @@ This paper presented \sys, a system allowing shell users to parallelize shell pr
 The compiler operates by converting dataflow regions into dataflow graphs and then applying iterative transformations based on the characteristics of commands in these regions.
 Characteristics are known by the  use of classification and annotations (for certain classes), which \sys offers for commands in POSIX and Coreutils used frequently.
 \sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
-Applying \sys to classic and modern \unix scripts shows significant speedups---in one set of benchmarks, the compiler's average speedup is $9.3\times$, jumping to $13.2\times$ due to runtime optimizations.
-\sys is open source and available for download at \ttt{blinded}.
+Our evaluation of \sys on a wide variety of \emph{unmodified} scripts shows that the vast majority (39/44) see significant speedups (average over all is $6.7\times$, up to $61\times$).
+% Applying \sys to classic and modern \unix scripts shows significant speedups---in one set of benchmarks, the compiler's average speedup is $9.3\times$, jumping to $13.2\times$ due to runtime optimizations.
+\sys is open source and available for download online~[Blind].
 
 % Its runtime component provides orchestration and planning support during the execution of the program.
 % \sys's current limitations revolve around shell expansion.
