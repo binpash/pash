@@ -2027,17 +2027,17 @@ characters). Formally, a streaming command $f$ is stateless if it commutes with
 the operation of concatenation, \ie it is a semigroup homomorphism:
 %% with respect to concatenation \km{It commutes with the operation of concatenation. This is the definition of (semigroup) homomorphism. I am not sure that linearity is an appropriate term.}
 %% , \ie satisfying the following equation:
-
+%
 \[
 \forall x, x', s, f(x \cdot x', s) = f(x, s) \cdot f(x', s)
 \]
-
+%
 %% This is a nice characterization, which I think is true in most
 %% settings. There is a caveat though: You can have stateless programs
 %% that emit output when they start (before they consume the stream)
 %% and/or when they consume the EOF symbol. In this case I am not sure
 %% the equation above holds.
-
+%
 \noindent
 This means that applying the command $f$ to a concatenation of two
 inputs $x, x'$ produces the same output as applying $f$ to each input
@@ -2047,11 +2047,11 @@ Similarly, some pure commands (such as \ttt{sort} and \ttt{wc}) can be
 parallelized using divide-and-conquer techniques. More formally, these
 pure commands $f$ can be implemented as a combination of a function map
 $m$ and an associative aggregate $agg$, satisfying the following equation:
-
+%
 \[
 \forall x, x', s, f(x \cdot x', s) = agg(m(x, s) \cdot m(x', s), s)
 \]
-
+%
 \noindent
 This means that we get the same output by applying $f$ to a
 concatenation of two inputs $x, x'$ as by applying the aggregation function
