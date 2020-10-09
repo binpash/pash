@@ -2979,10 +2979,12 @@ The complete pipeline executes in 44m2s for five years (82GB) of data.
 % hadoop jar $HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-*.jar -input 719.26s user 63.88s system 155% cpu 8:22.47 total
 
 \heading{Discussion}
+% 
+The speedup of the preprocessing phase of the pipeline is bound by the network and IO costs since \ttt{curl} downloads 82GB of data. However, in the processing phase (which is CPU-bound) the speedup is $12.31\times$, much higher than what would be achieved by parallelizing per loop iteration.
 Similar to Unix50~\sx{unix50}, we found that large pipelines enable significant freedom in terms of expressiveness.
-A few stages of the original script were expressed in a single \ttt{awk};
+% A few stages of the original script were expressed in a single \ttt{awk};
 % unfortunately, \ttt{awk} is too general to have a single meaningful \todo{parallelizability} signature.
-  a simpler (but longer) pipeline that leverages \unix built-ins turns out to be trivially parallelizable.
+  % a simpler (but longer) pipeline that leverages \unix built-ins turns out to be trivially parallelizable.
 
 %> In terms of execution fairness, both systems are message-passing rather than shared-memory, and Hadoop's setup is atypical to improve fairness:
 %>   it operates on non-HDFS file-system and has replication disabled.
