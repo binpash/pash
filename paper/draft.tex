@@ -3316,11 +3316,12 @@ Dryad~\cite{isard2007dryad} is a distributed system for dataflow graphs. Dryad o
 \section{Conclusion}
 \label{discussion}
 
-This paper presented \sys, a system allowing shell users to parallelize shell programs mostly automatically.
-% a source-to-source shell compiler and associated runtime library
-\sys consists of (i) a source-to-source compiler, which transforms scripts to DFGs, parallelizes them, and transforms them back to scripts; and (ii) a runtime component that addresses several practical challenges related to performance and correctness.
-Our evaluation on a wide variety of \emph{unmodified} scripts shows that \sys achieves significant speedups due to parallelism (total avg: $6.7\times$) in the vast majority of them (39/44), including scripts that perform mundane tasks such as downloading, extracting, and cleaning data, which are usually not the focus of parallelization systems.
-\sys is open source and available for download online~[Blind].
+Shell programs are ubiquitous, utilize programs from a plethora of programming languages, and spend a significant fraction of their time interacting with the broader environment to download, extract, and process data---falling outside the focus of conventional parallelization systems.
+This paper presents \sys, a system that allows shell users to parallelize shell programs mostly automatically.
+\sys can be viewed as (i) a source-to-source compiler that transforms scripts to DFGs, parallelizes them, and transforms them back to scripts; coupled with (ii) a  runtime component that addresses several practical challenges related to performance and correctness.
+\sys's extensive evaluation over 44 unmodified Unix scripts demonstrates non-trivial speedups (0.89--61.1$\times$, avg: 6.7$\times$).
+\sys is open source and available for download~[Blind].
+
 
 % The compiler operates by converting dataflow regions into dataflow graphs and then applying iterative transformations based on the characteristics of commands in these regions.
 % Characteristics are known by the  use of classification and annotations (for certain classes), which \sys offers for commands in POSIX and Coreutils used frequently.
