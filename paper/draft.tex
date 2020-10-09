@@ -2681,6 +2681,7 @@ The goal is to evaluate performance benefits due to \sys's
       (iii) \todo{Blocking Eager}, only blocking \ttiny{eager} enabled (no \ttiny{split}),
       (iv) \todo{No Eager}: both \ttiny{eager} and \ttiny{split} disabled.
   For some pairs of configurations, \sys produces identical parallel scripts and thus only one is shown.
+  % \kk{FUTURE: Run and show all plots (with and without split for all experiments.)}
 }
     \vspace{-14pt}
     \label{fig:microbenchmarks}
@@ -2732,7 +2733,6 @@ In the second type, \emph{Pash w/o Split} (red) is identical to \emph{No-Eager} 
 This command requires an \ttt{agg}regator, whose output is of width 1, and beyond which non-\ttt{split} configurations are sequential (and see no speedup).
 % Conversely, all three lines exist when the width remains above 1 for the full program.
 % needing a \ttt{split} to regain width. 
-
 Finally, Tab.~\ref{tab:eval} shows that \sys's transformation time is negligible, and its COST~\cite{mcsherryscalability} is 2. %  for all benchmarks.
 % Filter and Bigrams-opt, not in Fig.~\ref{fig:microbenchmarks}, achieve speedups of 1.5--2.5$\times$ and 2--30$\times$.
 %   size grows due to the resulting complexity of coordinating among parallel executions---multiple FIFOs per pipeline stage, merging and splitting, encoding of divide-and-conquer synchronization \etc
@@ -2837,8 +2837,10 @@ They make extensive use of standard commands under a variety of flags, and appea
 
 \heading{Results}
 Fig.~\ref{fig:unix50-individual} shows the speedup (left) over the sequential runtime (right) for 31 pipelines, with \ttt{width=}16 and 10GB inputs.
-It does not include 3 pipelines that execute in under $0.1s$ by using \ttt{head} to output the first line of input.
-The script index refers to the challenge level, in both the plots and the discussion.
+It does not include 3 pipelines that use \ttt{head} fairly early thereby finishing execution in under $0.1$ seconds.
+We refer to each pipeline using its x-axis index in Fig.~\ref{fig:unix50-individual}.
+% The script index refers to the challenge level, in both the plots and the discussion.
+% \kk{The above is not exactly true since we sorted them. If someone goes to take a look at the solution source they will be confused.}
 Average speedup is \todo{$6.02\times$}, % median is $6.48\times$, 
   and weighted average (with the absolute times as weights) is $5.75\times$.
  % the \todo{geometric mean is $1.08\times$},
@@ -2913,29 +2915,12 @@ or
 %% Cheap (non cpu intensive -- constant costs grow): 0, 4, 5, 6, 7, 8, 12, 14
 %% Long (task-based parallelism in sequential and context switches): 7, 8, 9, 10, 11, 12, 14, 21, 27, 28
 
-%% \kk{Out of all benchmarks, we have talked about the head and the
-%%   non-parallelizable ones in the paper. Maybe we also want to talk
-%%   about the long and the cheap ones. Also we might want to talk and
-%%   find out more about the sort bottleneck.}
-
-
-%% (OLD) Bad result descriptions:
-%%  2. Contains just a head -n 2, and then a cut.
-%%  5. Very fast (small input). Sequential time is 0m0.103s (If we increase the input we will show speedup)
-%%  18. TODO: Implement
-%%  20. Four corners (not parallelizable). So performance is reasonable
-%%      (atm it doesn't return the correct result for multiplied input though)
-%%  21. Last capital character of each line. Their solution is not general (and it is not parallelizable).
-%%      Also, the input is very small. Changing it to a more general one and
-%%      increasing input size leads to speedup. TODO: Run with large input
-%%  22. Exactly the same problem as the above.
-%%  24. (Not sure: It seems that the computation is trivial)
-%%  32. TODO: Implement
-
 
 \heading{Take-aways} \sys accelerates unmodified pipelines found in the wild;
   small tweaks can yield further improvements, showing that \sys-awareness and scripting expertise can improve results.
-Furthermore, \sys does not decelerate non-trivial computations, even when parallelism is impossible.
+Furthermore, \sys does not significantly decelerate non-parallelizable scripts.
+% \kk{eurosys: we cant say it doesnt decelarate since it does slow down some of them. If we dont like this sentence we can also delete it.}
+% non-trivial computations, even when parallelism is impossible.
 
 %% Very nice take-aways!
 
@@ -2974,9 +2959,9 @@ While the book focuses only on the last stage, \sys parallelizes the entire pipe
 
 \heading{Results}
 The complete pipeline executes in 44m2s for five years (82GB) of data.
-\sys with \ttt{width=}16 leads to \todo{2.44$\times$} speedup, with different phases seeing different benefits:
-  \todo{1.99$\times$} (vs. 33m58s) for all the pre-processing and 
-  \todo{10.79$\times$} speedup (vs. 10m4s) for computing the max.
+\sys with \ttt{width=}16 leads to 2.52$\times$ speedup, with different phases seeing different benefits:
+  2.04$\times$ (vs. 33m58s) for all the pre-processing and 
+  12.31$\times$ speedup (vs. 10m4s) for computing the max.
 
 %> It is worth reporting Hadoop's (3.2.1, Oracle JDK1.8.0\_255) execution time for the curious reader (see below for fairness), which takes \todo{6m22s} (sequential) and \todo{4m30.554s} ($\times$\todo{XX}-parallel).
 %> This amounts to \todo{XX}$\times$ speedup versus \todo{XX}$\times$ for \sys's equivalent (part 4).
