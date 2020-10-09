@@ -1364,7 +1364,7 @@ As the first and third columns are suppressed, \ttt{comm} can be categorized in 
 % NV: I don't think this is correct, because the small input might be the other argument;  you could even have `comm - -`
   this input accompanies every replicated instance of the command executing in parallel.
 The second clause is symmetric to the first with respect to the second input. 
-The third clause is the general case, classifiying \ttt{comm} in \pur, as \ttt{comm} needs to read both inputs completely before outputing its results.
+The third clause is the general case, classifying \ttt{comm} in \pur, as \ttt{comm} needs to read both inputs completely before outputting its results.
 Option \ttt{stdin-hyphen} indicates that \ttt{-} represents standard input if given as a file argument, and option \ttt{short-combined} indicates that flags can be combined, as in \ttt{comm -13}.
 % The third clause is the general case, which includes \ttt{comm} invocations without any options, and is captured by the third clause.
 % There, \ttt{comm} is classified as \pur as it needs to % wait until it 
@@ -3185,7 +3185,7 @@ The argument is dissimilar from \sys's, which argues for mostly automated (and c
 
 Developed independently and at the same time with \sys, POSH~\cite{raghavan2020posh} is a framework for running shell scripts over remote storage by offloading the I/O-intensive portions to proxy servers closer to the data.
 POSH focuses on co-locating distributed operation, and introduces a novel scheduling algorithm. 
-\sys instead focuses on the parallelization of CPU-intensive scripts, by transforming them to DFGs, applying transformations, and then transforming them back to parallel schell scripts augmented with \sys's runtime primitives to be executed on a standard shell.
+\sys instead focuses on the parallelization of CPU-intensive scripts, by transforming them to DFGs, applying transformations, and then transforming them back to parallel shell scripts augmented with \sys's runtime primitives to be executed on a standard shell.
 %  non-distributed parallelism, is location-agnostic, and focuses on correctness through its dataflow transformations.
 
 % Nice intro: http://homepages.inf.ed.ac.uk/bfranke/Publications/pldi121-tournavitis.pdf
