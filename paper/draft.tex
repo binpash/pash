@@ -351,16 +351,16 @@
 %% before \maketitle command
 \begin{abstract}
 This paper presents \sys, a system for parallelizing POSIX shell scripts through a combination of program transformations and runtime primitives.
-% a source-to-source shell compiler and associated runtime library
 Given a script, \sys converts it to a dataflow graph, performs a series of transformations that expose parallelism while preserving its sequential semantics, and then converts the dataflow graph back into a script that uses POSIX constructs to explicitly guide parallelism.
 A lightweight annotation language allows command developers to express key parallelizability properties about their commands.
 An accompanying parallelizability study of POSIX and GNU commands---two large and commonly used groups---guides the annotation language and optimized aggregator library that \sys uses.
-% \kk{eurosys: Can we extend this to say that PaSh automatically uses constructs from this library? Otherwise it sounds like the user has to use it to make their scripts parallel.}
 Finally, \sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
 \sys's extensive evaluation over 44 unmodified \unix scripts shows significant speedups ($0.89$--$61.1\times$, avg: $6.7\times$) stemming from the combination of its program transformations and runtime primitives.
-% The vast majority (39/44) of scripts---all unmodified---see significant speedups (average over all is $6.7\times$, up to $61\times$).
 \end{abstract}
 
+% a source-to-source shell compiler and associated runtime library
+% \kk{eurosys: Can we extend this to say that PaSh automatically uses constructs from this library? Otherwise it sounds like the user has to use it to make their scripts parallel.}
+% The vast majority (39/44) of scripts---all unmodified---see significant speedups (average over all is $6.7\times$, up to $61\times$).
 
 %% \maketitle
 %% Note: \maketitle command must come after title commands, author
