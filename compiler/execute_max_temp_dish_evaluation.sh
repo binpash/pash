@@ -30,10 +30,12 @@ mkdir -p $output_dir
 echo "Sequential pipeline has been executed successfully."
 
 ## Split the intermediate output files for all scripts
-split -n l/2 -d $p3_out ${p3_out}_2_
-split -n l/10 -d $p3_out ${p3_out}_10_
-split -n l/2 -d $p4_out ${p4_out}_2_
-split -n l/10 -d $p4_out ${p4_out}_10_
+# split -n l/2 -d $p3_out ${p3_out}_2_
+# split -n l/10 -d $p3_out ${p3_out}_10_
+split -n l/16 -d $p3_out ${p3_out}_16_
+# split -n l/2 -d $p4_out ${p4_out}_2_
+# split -n l/10 -d $p4_out ${p4_out}_10_
+split -n l/16 -d $p4_out ${p4_out}_16_
 
 echo "Intermediate files have been successfully produced."
  
@@ -41,21 +43,29 @@ echo "Intermediate files have been successfully produced."
 echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p4_1_env.sh
 echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p4_2_env.sh
 echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p4_10_env.sh
+echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p4_16_env.sh
 echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p5_1_env.sh
 echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p5_2_env.sh
 echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p5_10_env.sh
+echo "IN_DIR=${output_dir}" > ${intermediary_dir}/p5_16_env.sh
 
-./execute_compile_evaluation_script.sh -s -e "p4" "2"
+# ./execute_compile_evaluation_script.sh -s -e "p4" "2"
+# rm -f /tmp/eager*
+# ./execute_compile_evaluation_script.sh -e "p4" "10"
+# rm -f /tmp/eager*
+./execute_compile_evaluation_script.sh -e "p4" "16"
 rm -f /tmp/eager*
-./execute_compile_evaluation_script.sh -e "p4" "10"
-rm -f /tmp/eager*
-./execute_compile_evaluation_script.sh -s -e "p5" "2"
-rm -f /tmp/eager*
-./execute_compile_evaluation_script.sh -e "p5" "10"
+# ./execute_compile_evaluation_script.sh -s -e "p5" "2"
+# rm -f /tmp/eager*
+# ./execute_compile_evaluation_script.sh -e "p5" "10"
+# rm -f /tmp/eager*
+./execute_compile_evaluation_script.sh -e "p5" "16"
 rm -f /tmp/eager*
 
 ## Executing the first 3 stages with dish
-./execute_compile_evaluation_script.sh -s -a "max_temp_p123" "2"
-rm -f /tmp/eager*
-./execute_compile_evaluation_script.sh -a "max_temp_p123" "10"
+# ./execute_compile_evaluation_script.sh -s -a "max_temp_p123" "2"
+# rm -f /tmp/eager*
+# ./execute_compile_evaluation_script.sh -a "max_temp_p123" "10"
+# rm -f /tmp/eager*
+./execute_compile_evaluation_script.sh -a "max_temp_p123" "16"
 rm -f /tmp/eager*
