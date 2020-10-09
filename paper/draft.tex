@@ -2601,14 +2601,15 @@ This section reports on whether \sys can indeed offer performance benefits autom
 \heading{Highlights}
 This paragraph highlights results for \ttt{width=16}, but \sys's evaluation reports on varying \ttt{width}s (2--64).
 % The vast majority (39/44) of scripts---all unmodified---see significant speedups (average over all is $6.7\times$, up to $61\times$).
-Overall, \sys accelerates 39/44 scripts---all unmodified---by 1.92--17.42$\times$; 
-  for the rest, the parallel performance is comparable to the sequential (0.89, 0.91, 0.94, 099, 1.01$\times$).
+Overall, applying \sys to all 44 unmodified scripts accelerates 39 of them by 1.92--17.42$\times$; for the rest, the parallel performance is comparable to the sequential (0.89, 0.91, 0.94, 099, 1.01$\times$). The total average speedup over all 44 benchmarks is $6.7\times$.
+\sys's runtime primitives offer significant benefits---for the 10 scripts that we measured with and without the runtime primitives they bump the average speedup from $5.9\times$ to $8.6\times$.
+% Overall, \sys accelerates 39/44 scripts---all unmodified---by 1.92--17.42$\times$; 
+  % for the rest, the parallel performance is comparable to the sequential (0.89, 0.91, 0.94, 099, 1.01$\times$).
   % \kk{eurosys: I have an issue that I am not sure how to address. I would like to have the 61.1x here (which is due to 64 width)  but I don't see a good way of including it without sounding suspicious.}
-For a subset of our benchmarks~\sx{ours}, we decouple the speedup due to \sys's DFG transformations alone from the one achieved when including its runtime primitives:
-  the former averages $5.9\times$, jumping to $8.6\times$ due to the latter.
-A different subset ($30$ benchmarks) sees average speedups of $6.02\times$~\sx{unix50}.
-% , depending on the classed of commands involved
-Two complex scripts with 15~\sx{macro1} and 34~\sx{macro2} commands written in multiple languages see speedups of $2.44\times$ and $12.7\times$.
+% For a subset of our benchmarks~\sx{ours}, we decouple the speedup due to \sys's DFG transformations alone from the one achieved when including its runtime primitives:
+  % the former averages $5.9\times$, jumping to $8.6\times$ due to the latter.
+% A different subset ($30$ benchmarks) sees average speedups of $6.02\times$~\sx{unix50}.
+% Two complex scripts with 15~\sx{macro1} and 34~\sx{macro2} commands written in multiple languages see speedups of $2.44\times$ and $12.7\times$.
 \sys significantly outperforms \ttt{sort --parallel}, a hand-tuned parallel implementation, and performs better than GNU \ttt{parallel}, which returns incorrect results if used without care~\sx{micro}.
 % Averages: [1.955223776839714, 3.478591807121036, 5.721328556478535, 8.604380509595906, 10.666921423438112, 13.246864076708423]
 % No Eager Averages: [1.6327834370824543, 2.5481043878162444, 3.8623841529643173, 5.931851620007484, 7.466566647963421, 9.35752032439642]
