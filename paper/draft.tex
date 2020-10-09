@@ -864,7 +864,7 @@ For example, Fig~\ref{fig:example}'s first \ttt{grep} outputs (file-name) elemen
 % As part of this interface, each command has access to (any combination of) three \emph{standard} streams---input, output, and error.
 A special end-of-file (\textsc{EOF}) condition marks the end of a stream.
 
-% Another important feature is synchronization.
+% Another important feature is agg(synchronization.
 Different pipeline stages process data concurrently and possibly at different rates---\eg the second \ttt{curl} produces output at a significantly slower pace than the \ttt{grep} commands before and after it.
 The \unix kernel facilitates scheduling, communication, and synchronization behind the scenes.
 
@@ -872,7 +872,7 @@ The \unix kernel facilitates scheduling, communication, and synchronization behi
 \centering
 \begin{minted}[fontsize=\footnotesize]{bash}
 base="ftp://ftp.ncdc.noaa.gov/pub/data/noaa";
-for y in {2015..2020}; do
+for y in {2015..2019}; do
  curl $base/$y | grep gz | tr -s" " | cut -d" " -f9 |
  sed "s;^;$base/$y/;" | xargs -n 1 curl -s | gunzip |
  cut -c 89-92 | grep -iv 999 | sort -rn | head -n 1 |
@@ -882,7 +882,7 @@ done
 % \includegraphics[width=0.47\textwidth]{\detokenize{./figs/dish_example.pdf}}
 \caption{
   \textbf{Calculating maximum temperatures per year.}
-  The script downloads daily temperatures recorded across the U.S. for the years 2015--2020 and extracts the maximum for every year.
+  The script downloads daily temperatures recorded across the U.S. for the years 2015--2019 and extracts the maximum for every year.
 }
 \vspace{-15pt}
 \label{fig:example}
@@ -1011,13 +1011,13 @@ cat $t2 | xargs -n1 curl -s >$t4 &
 ...
 cat $t9 | sort -rn > $t11 & cat $t10 | sort -rn > $t12 &
 cat $t11 | eager > $t13 & cat $t12 | eager > $t14 &
-sort-merge -rn $t13 $t14 > $t15 &
+sort -mrn $t13 $t14 > $t15 &
 cat $t15 | head -n1 > $out1 &
 wait $! && get-pids | xargs -n 1 kill -SIGPIPE
 \end{minted}
 \caption{
   \textbf{Output of \ttiny{pash --width=2} for Fig.~\ref{fig:example} (fragment).}
-  \sys orchestrates parallel execution through named pipes, parallel operators, and custom runtime primitives---\eg \ttiny{eager}, \ttiny{sort-merge}, and \ttiny{get-pids}.
+  \sys orchestrates parallel execution through named pipes, parallel operators, and custom runtime primitives---\eg \ttiny{eager}, \ttiny{split}, and \ttiny{get-pids}.
 }
 \vspace{-15pt}
 \label{fig:example2}
@@ -1119,7 +1119,7 @@ Side-effectful           & ~\tsid  & \tti{env},  \tti{cp}, \tti{whoami}         
 
 \heading{Stateless Commands}
 The first class, \sta, contains commands that operate on individual line elements of their input, without maintaining state across invocations.
-These are commands that can be expressed as a purely functional $map$ or $filter$---\eg \ttt{grep} filters out individual lines and \ttt{basename} removes a path prefix from a string.
+These are commands that can be expressed as a purely functional \emph{map} or \emph{filter}---\eg \ttt{grep} filters out individual lines and \ttt{basename} removes a path prefix from a string.
 They may produce multiple elements---\eg \ttt{tr} may insert {\sc NL} tokens---but always return empty output for empty input.
 Workloads that use only stateless commands are trivial to parallelize:
   they do not require any synchronization to maintain correctness, nor caution about where to split inputs.
@@ -1161,7 +1161,7 @@ Such constraints affect task parallelism, but not data parallelism:
 The third class, \npu, contains commands that, while purely functional, cannot be parallelized.
 This is because their internal state depends on prior state in the same pass in non-trivial ways. % should we say something about state machines?
 For example, hashing commands such as \ttt{sha1sum} maintain complex state that has to be updated sequentially.
-If parallelized on a single input, each stage would need to wait on the results of all previous stages foregoing any parallelism benefits.
+If parallelized on a single input, each stage would need to wait on the results of all previous stages, foregoing any parallelism benefits.
 
 It is worth noting that while these commands are not parallelizable at the granularity of a single input, they are still parallelizable across different inputs.
 For example, a web crawler involving hashing to compare individual pages would allow \ttt{sha1sum} to proceed in parallel for different pages.
@@ -2050,14 +2050,13 @@ pure commands $f$ can be implemented as a combination of a function map
 $m$ and an associative aggregate $agg$, satisfying the following equation:
 %
 \[
-\forall x, x', s, f(x \cdot x', s) = agg(m(x, s) \cdot m(x', s), s)
+\forall x, x', s, f(x \cdot x', s) = agg(m(x, s), m(x', s), s)
 \]
 %
 \noindent
 This means that we get the same output by applying $f$ to a
-concatenation of two inputs $x, x'$ as by applying the aggregation function
-$agg$ to the concatenation of the outputs produced by applying map $m$
-to each of $x$ and $x'$.
+  concatenation of two inputs $x, x'$ as by applying the aggregation function
+  $agg$ to the outputs produced by applying map $m$ to each of $x$ and $x'$.
 %% \km{We had also discussed here the case of
 %%   operators that can be described as associative and commutative
 %%   functions on the data (e.g., sum). In this case the parallelization
@@ -2090,7 +2089,7 @@ can be shown to preserve the behavior of the graph.
 
 $T$ can be extended straightforwardly to nodes $v \in$ \pur,
 implemented by a map-aggregate pair $(m, agg)$ as $ v(x_1 \cdot x_2
-\cdots x_n, s) \Rightarrow agg(m(x_1, s) \cdot m(x_2, s) \cdots m(x_n,
+\cdots x_n, s) \Rightarrow agg(m(x_1, s), m(x_2, s), \ldots m(x_n,
 s), s)$.
 As long as the pair $(m, agg)$ meets the three invariants outlined earlier~\sx{ext}, 
 $T$ can be shown to be behavior-preserving.
@@ -2098,7 +2097,7 @@ $T$ can be shown to be behavior-preserving.
 
 \heading{Auxiliary Transformations}
 %
-\sys also performs a set of auxiliary transformations $t_{1-3}$that are
+\sys also performs a set of auxiliary transformations $t_{1-3}$ that are
 depicted in \Cref{fig:auxiliary-transformations}. If a node has many
 inputs, $t_1$ concatenates these inputs by inserting a \ttt{cat} node
 to enable the parallelization transformations. In cases where a
@@ -3391,6 +3390,8 @@ Our evaluation of \sys on a wide variety of \emph{unmodified} scripts shows that
 % We want to thank 
 %   Andr\'e DeHon,
 %   Ben Karel,
+%   Caleb Stanford,
+%   Thurston Dang,
 %   Jean-S\'ebastien L\'egar\'e, and 
 %   Nick Roessler.
 % This material is based upon work supported by DARPA contract no. HR00112020013 (ALRSCC) and NSF award CCF 1763514.
