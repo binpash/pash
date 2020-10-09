@@ -31,12 +31,12 @@ experiments = ["minimal_grep",
                "minimal_sort",
                "topn",
                "wf",
-               "grep",
+            #    "grep",
                "spell",
                "shortest_scripts",
                "diff",
                "bigrams",
-               "alt_bigrams",
+            #    "alt_bigrams",
                "set-diff",
                "double_sort"]
 
@@ -365,7 +365,7 @@ def collect_scaleup_times(experiment, results_dir):
 
     ## Plot speedup
     ax.set_ylabel('Speedup')
-    ax.set_xlabel('Level of Parallelism')
+    ax.set_xlabel('--width')
 
     # ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
     # ax.plot(all_scaleup_numbers, all_scaleup_numbers, '-', color='tab:gray', linewidth=0.5, label='Ideal')
@@ -408,7 +408,7 @@ def plot_sort_with_baseline(results_dir):
 
     ## Plot speedup
     ax.set_ylabel('Speedup')
-    ax.set_xlabel('Level of Parallelism')
+    ax.set_xlabel('--width')
     ax.plot(all_scaleup_numbers, sort_distr_speedup, '-o', linewidth=0.5, label='Pash')
     ## Add the no eager times if they exist
     # try:
@@ -750,7 +750,7 @@ def collect_unix50_scaleup_times(unix50_results_dir):
 
     ## Plot speedup
     ax.set_ylabel('Speedup')
-    ax.set_xlabel('Level of Parallelism')
+    ax.set_xlabel('--width')
     ax.plot(scaleup_numbers, avg_results, '-o', linewidth=0.5, label='Parallel')
     # plt.yscale("log")
     plt.xticks(scaleup_numbers)
@@ -785,7 +785,7 @@ def collect_unix50_coarse_scaleup_times(unix50_results_dir):
 
     ## Plot speedup
     ax.set_ylabel('Speedup')
-    ax.set_xlabel('Level of Parallelism')
+    ax.set_xlabel('--width')
     ax.plot(scaleup_numbers, avg_results, '-o', linewidth=0.5, label='Parallel')
     # plt.yscale("log")
     plt.xticks(scaleup_numbers)
@@ -848,7 +848,7 @@ def plot_one_liners_tiling(results_dir):
         if(ax.is_first_col()):
             ax.set_ylabel('Speedup')
         if(ax.is_last_row()):
-            ax.set_xlabel('Level of Parallelism')
+            ax.set_xlabel('--width')
         if(ax.is_first_row()):
             ax.set_xticklabels([])
         # ax.label_outer()
@@ -916,7 +916,7 @@ def plot_less_one_liners_tiling(results_dir):
         if(ax.is_first_col()):
             ax.set_ylabel('Speedup')
         if(ax.is_last_row()):
-            ax.set_xlabel('Level of Parallelism')
+            ax.set_xlabel('--width')
         if(not ax.is_last_row()):
             ax.set_xticklabels([])
         # ax.label_outer()
