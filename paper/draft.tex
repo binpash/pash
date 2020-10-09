@@ -1,7 +1,6 @@
 % TODO Add Ignis and Mozart
-%% \documentclass[letterpaper,twocolumn,10pt]{article}
-%% \pdfoutput=1 % for arxiv
-%% \usepackage{usenix2019_v3}
+% \nv{Make sure we use \ttt{width} everywhere}
+% \nv{Decide on parallelizable regions}
 
 %% EuroSys 2021 -- 12 pages limit
 \documentclass[sigplan, review, screen, anonymous]{acmart}
@@ -353,10 +352,9 @@
 \begin{abstract}
 This paper presents \sys, a system aimed at parallelizing POSIX shell scripts through a combination of program transformations and runtime primitives.
 % a source-to-source shell compiler and associated runtime library
-Given a script, \sys converts it to a data-flow graph, performs a series of analyses that aim at exposing parallelism while preserving its sequential semantics, and then converts the data-flow graph back into a script that uses POSIX constructs to explicitly guide parallelism.
+Given a script, \sys converts it to a dataflow graph, performs a series of analyses and transformations that aim at exposing parallelism while preserving its sequential semantics, and then converts the dataflow graph back into a script that uses POSIX constructs to explicitly guide parallelism.
 A lightweight annotation language allow command developers to express key parallelizability properties about their commands.
-An accompanying parallelizability study of POSIX and GNU commands, two large and commonly used groups, 
-informs \sys's annotation language and guides the development of a data-parallel standard library.
+An accompanying parallelizability study of POSIX and GNU commands---two large and commonly used groups---informs \sys's annotation language and guides the development of a data-parallel standard library.
 % \kk{eurosys: Can we extend this to say that PaSh automatically uses constructs from this library? Otherwise it sounds like the user has to use it to make their scripts parallel.}
 Finally, \sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
 \sys's extensive evaluation, combining several classic and modern \unix scripts, shows significant \todo{speedups} stemming from the combination of its program transformations and runtime primitives.
@@ -426,8 +424,6 @@ Finally, \sys's \unix-aware runtime primitives address several practical issues 
 % % Too low-level descriptions of the problem, maybe keep it high level?
 % For small input sizes this isn't a problem since scripts take less than a second to execute, but as data sizes increase, failing to utilize the underlying parallel computational resources is a significant bottleneck.
 
-\nv{Make sure we use \ttt{width} everywhere}
-\nv{Decide on parallelizable regions}
 
 %% \blfootnote{$^{*}$Equal contribution.}
 The \unix shell is an environment---often interactive---for composing scripts written in a plethora of programming languages.
@@ -449,7 +445,7 @@ The second group is \emph{shell users}, who use POSIX shell constructs to combin
 % require manual changes to the code to make parallelism explicit,
 % at times leverage command flags like the ones mentioned earlier---but each command 
 % oblivious? agnostic?  
-One option is manual tools such as GNU \ttt{parallel}~\cite{Tange2011a}, \ttt{ts}~\cite{tsp}, \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm};
+One option is to use manual tools such as GNU \ttt{parallel}~\cite{Tange2011a}, \ttt{ts}~\cite{tsp}, \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm};
   these tools are either command-unaware, and thus at risk of breaking program semantics, or too coarse-grained, and thus only capable of exploiting parallelism at the level of entire scripts rather than individual components.
 % Tools will attempt to parallelize anything 
 % use the composition abstractions of the \unix shell, 
@@ -461,7 +457,7 @@ Another option is to use shell primitives (such as \ttt{&}, \ttt{wait}) to expli
 % re-writing of the entire script from scratch; unfortunately, this process is expensive and can introduce new bugs, cascading changes, and divergence from legacy functionality---but also foregoes all the productivity benefits of the original script.
 % The fact that a programmer often belongs to both groups at the same time---as composed scripts can themselves form a command used in other scrips---compounds the challenge.
 To top it off, all these options assume a good understanding of parallelism;
-  users with domain of expertise outside computing---hobbyists to data analysts---are left without options.
+  users with domain of expertise outside computing---from hobbyists to data analysts---are left without options.
 %  (see~\S\ref{related} for a full discussion).
 % \nv{I still don't like ``for a full discussion''---raises too many expectations, and we don't have that much more to say}
 
@@ -476,7 +472,7 @@ To top it off, all these options assume a good understanding of parallelism;
   of the commands used in these regions, and finally emits a parallel script
   that uses custom primitives~\sx{optimizer}.
 }
-\vspace{-15pt}
+\vspace{-25pt}
 \label{fig:overview}
 \end{figure}
 
@@ -508,14 +504,14 @@ The study that led to their characterization also informed \sys's annotation and
 The above are tied together with \sys's runtime component.
 % \sys's runtime  component additional packs
 % Aside from these two components, \sys packs a runtime component that serves dual purpose:
-Aware of the \unix philosophy and abstractions, it packs a small library of highly-optimized data aggregators as well as high-performance primitives for eager data splitting and merging.
+Aware of the \unix philosophy and abstractions, it packs a small library of highly-optimized data aggregators as well as high-performance primitives such as ones for eager data splitting and merging.
 These address many practical challenges % such as task parallelism, deadlocks, and performance bottlenecks,
   and were developed by uncovering several pathological situations, on a few of which we report.
 
 
 %% First, shell users composing pipelines (or simply running legacy pipelines on massive datasets) can see scalability benefits without any manual effort---no need for \ttt{qsub}~\cite{gentzsch2001sun}, \textsc{SLURM}~\cite{yoo2003slurm}, calls to \textsc{GNU} \ttt{parallel}~\cite{Tange2011a}, or any manual rewriting~\cite{mapreduce:08, ciel:11, spark:12}.
 
-% \sys packs several ideas around the insight that a large subset of the Shell language can be represented as a data-flow graph, enabling for parallelization optimizations.
+% \sys packs several ideas around the insight that a large subset of the Shell language can be represented as a dataflow graph, enabling for parallelization optimizations.
 % First, a careful study of the parallelizability properties of shell primitives and commands.
 % \sys addresses the challenge by offering command developers a unified set of abstractions for describing the parallelizability characteristics of their commands.
 % Using lightweight annotations akin to type signatures, \sys can automate the parallelization of entire POSIX scripts without any input from their user.
@@ -528,7 +524,7 @@ These address many practical challenges % such as task parallelism, deadlocks, a
 %   the annotation language is informed by the study, but also the study is 
 % XX to a type signature, these annotations describe 
 % 
-% Second, \sys defines a data-flow graph model that is suitable for the semantics of the POSIX shell and proposes a set of parallelization optimizations that preserve the behavior of the data-flow graph.
+% Second, \sys defines a dataflow graph model that is suitable for the semantics of the POSIX shell and proposes a set of parallelization optimizations that preserve the behavior of the dataflow graph.
 % (one sentence for the model)
 % (one sentence for the optimizations)
 % The result of the compilation is still a POSIX-compliant script that manages parallelism explicitly;
@@ -564,13 +560,28 @@ We evaluate \sys using
   (ii) two large and complex use cases for temperature analysis and web indexing;
 %% , and container orchestration;
 and 
-  (iii) a series of micro-benchmarks inspired by (and
-comparing with) possible alternatives.  The results show
-significant advantages in correctness, manual effort,
-and performance---with 
-speedups $X-X\times$ due to \sys's transformations and $Y-Y\times$ due to \sys's runtime primitives.
+  (iii) a series of micro-benchmarks inspired by (and comparing with) possible alternatives.
+The vast majority (47/52) of scripts---all unmodified---see significant speedups.
+Indicatively, applied to 10 programs with parallelism \ttt{--width=64}, \sys achieves 9.35$\times$ due to program transformations alone and 13.24$\times$ when coupled with its runtime primitives.
+% \sys performs better than \ttt{sort --parallel}, a hand-tuned parallel implementation, and GNU parallel, which returns incorrect results if used without care.
+In another case of \ttt{--width=16}, \sys successfully accelerates a large program by 2.44$\times$---extracting 10.79$\times$ from the portion of the program that traditionally falls outside the focus of conventional parallelization systems.
+
+% For the temperature analysis script (which is taken from a Hadoop case study), \sys not only 
+% contains pre-processing that takes X time and Y main processing (Hadoop focus).
+% \sys accelerates the entire pipeline by , including the fragment that is outside the focus of conventional parallelization systems.
+% accelerates the CPU-intensive part that is parallelized by Hadoop, but also for the preprocessing part which takes even more time than what the other part takes.
+% XX--YY speedups in the vast majority of scripts, ones taken from the wild 
+% 1. Sentence about transformations vs runtime primitives
+% 2. Unix 50? 
+% 3. point about Hadoop expressing a fraction of the pipeline and speedup
+% \sys achieves higher speedup than \ttt{sort --parallel} that involved hand-tuned parallel implementation by command developers.
+
+%   The results show
+% significant advantages in correctness, manual effort,
+% and performance---with 
+% speedups $X-X\times$ due to \sys's transformations and $Y-Y\times$ due to \sys's runtime primitives.
 %% ---with \sys's transformations offering an order-of-magnitude performance improvements aided further by \sys's optimized runtime components.
-Improvements depend on several factors such as a script's initial execution time and the parallelizability properties of its commands.
+% Improvements depend on several factors such as a script's initial execution time and the parallelizability properties of its commands.
 
 The paper is structured as follows.
 It starts by introducing the necessary background on shell scripting and overviewing \sys~\sx{bg}.
@@ -930,9 +941,9 @@ Any attempt to automate parallelization should be aware of the POSIX shell langu
 % \kk{eurosys: I am not sure if I completely see the challenge in this paragraph. The only thing I see as challenging is the first sentence talking about ; and sequential composition. We should discuss to make sure we make any challenge here shine.}
 
 \heading{Implementation} %
-On top of command and shell semantics, the \unix environment has its own set of quirks.
+On top of command and shell semantics, the broader \unix environment has its own set of quirks.
 Any attempt to orchestrate parallel execution will hit challenges related to task parallelism, deadlock prevention, and runtime performance.
-For example, forked processes piping their combined results to Fig.~\ref{fig:example}'s \ttt{head} might not receive a \ttt{PIPE} signal if \ttt{head} exits prior to opening all pipes.
+For example, forked processes piping their combined results to Fig.~\ref{fig:example}'s \ttt{head} may not receive a \ttt{PIPE} signal if \ttt{head} exits prior to opening all pipes.
 % A final challenge has to do with practical issues, as even manual parallelization of a given shell script is far from trivial.
 % Parallelizing a script without reimplementing all of its commands, requires primitives to compose existing commands to achieve parallelization.
 %  Designing correct and efficient compositions is particularly challenging in the context of \unix, and requires addressing issues related to scheduling, synchronization, and deadlock prevention. 
@@ -954,12 +965,12 @@ At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\
 % %% parallel execution,
 % \sys analyzes individual program fragments, addressing the challenges mentioned earlier.
 % 
-% \sys's source-to-source compiler translates the script to a dataflow graph (DFG) model~\sx{ir} by identifying and transforming special regions termed \emph{parallelizable regions} explained below. % nv idea: let's call them may-par regions
+% \sys's source-to-source compiler translates the script to a dataflow graph (DFG) model~\sx{ir} by identifying and transforming special regions termed \emph{dataflow regions} explained below. % nv idea: let's call them may-par regions
 % It then runs a series of iterative analyses and transformations within these regions aimed at pushing parallelism as far as possible without risking breaking semantics.
 % Finally, the compiler converts the DFG back into a shell script, replacing nodes with instantiated commands or primitives taken from its runtime library~\sx{optimizer}.
 % An overview of \sys is shown in Fig.~\ref{fig:overview} and described below.
 % First, \sys's source-to-source compiler translates the script to a dataflow graph (DFG) model % ~\sx{dataflow-regions}
-%   by identifying and transforming special regions termed \emph{parallelizable regions} and explained below. % nv idea: let's call them may-par regions
+%   by identifying and transforming special regions termed \emph{dataflow regions} and explained below. % nv idea: let's call them may-par regions
 % \kk{eurosys: I suggest to replace the above sentence with the one below. There are a couple reasons. First I don't like the term source-to-source compiler because this sentence only describes the shell-graph compilation pass. Second, I would like to have some intuition about what there regions are (rather than deferring explanation for later). Third each region is tranformed to a DFG and not the whole script.}
 \sys first identifies sections of the script that lack synchronization and scheduling constraints and converts them to dataflow graphs (DFGs).
 It then performs a series of DFG transformations that expose parallelism without breaking semantics, by expanding the DFG to the desired \ttt{width}.
@@ -984,7 +995,7 @@ Annotations are expressed once per command rather than once per script and aim t
 \begin{figure}[t]
 \centering
 % \includegraphics[width=0.49\textwidth]{\detokenize{./figs/dish_example2.pdf}}
-\begin{minted}[fontsize=\footnotesize]{bash}
+\begin{minted}[fontsize=\footnotesize,escapeinside=()]{bash}
 mkfifo $t{0,1...}
 curl $base/$y > $t0 & cat $t0 | split $t1 $t2 &
 cat $t1 | xargs -n1 curl -s >$t3 & 
@@ -994,11 +1005,11 @@ cat $t9 | sort -rn > $t11 & cat $t10 | sort -rn > $t12 &
 cat $t11 | eager > $t13 & cat $t12 | eager > $t14 &
 sort-merge -rn $t13 $t14 > $t15 &
 cat $t15 | head -n1 > $out1 &
-wait $! && ./pash_get_pids | xargs -n 1 kill -SIGPIPE
+wait $! && get-pids | xargs -n 1 kill -SIGPIPE
 \end{minted}
 \caption{
-  \textbf{\sys's $2\times$-parallel output for fragment of Fig.~\ref{fig:example}.}
-  \sys orchestrates the script's parallel execution through named pipes, parallel operators and careful placement of combiners.
+  \textbf{Output of \ttiny{pash --width=2} for Fig.~\ref{fig:example} (fragment).}
+  \sys orchestrates parallel execution through named pipes, parallel operators, and custom runtime primitives---\eg \ttiny{eager}, \ttiny{sort-merge}, and \ttiny{get-pids}.
 }
 \vspace{-15pt}
 \label{fig:example2}
@@ -1006,9 +1017,9 @@ wait $! && ./pash_get_pids | xargs -n 1 kill -SIGPIPE
 
 
 \heading{Scripts}
-To maintain sequential semantics, \sys first analyzes a script to identify \emph{parallelizable regions} containing commands that are candidates for parallelization~\sx{dataflow-regions}.
+To maintain sequential semantics, \sys first analyzes a script to identify \emph{dataflow regions} containing commands that are candidates for parallelization~\sx{dataflow-regions}.
 This analysis is guided by the script structure: % to identify parallelization candidates:
-  some constructs expose task parallelism; others enforce synchronization.
+  some constructs expose parallelism; others enforce synchronization.
 % \sys first needs to understand the POSIX constructs used to compose larger programs, indicating different levels of candidacy for pararllelization.
 %% To assign a candidacy for parallelization, \sys breaks POSIX constructs into a few broad classes:
 %%  (i) the parallel-composition operator (\ttt{\&}) exposes task parallelism,
@@ -1016,12 +1027,12 @@ This analysis is guided by the script structure: % to identify parallelization c
 %%  (iii) the pipe operator (\ttt{|}) is a candidate for both task and data parallelism, and
 %%  (iv)  other composition operators such as \ttt{\&\&}, \ttt{||}, and \ttt{;} are barrier candidates.
 % Since the shell representation only exposes coarse grained parallelization opportunities, 
-\sys then converts each parallelizable region to a \emph{dataflow graph} (DFG)~\sx{graph-components}, 
+\sys then converts each dataflow region to a \emph{dataflow graph} (DFG)~\sx{graph-components}, 
 %% Provided information commands and POSIX constructs, \sys needs to analyze the given script and identify program fragments that are candidates for parallelization.
-%% To achieve this, it converts sections of the script that are amenable to parallelization into a data-flow graph (DFG) representation.
+%% To achieve this, it converts sections of the script that are amenable to parallelization into a dataflow graph (DFG) representation.
 % Second, \sys defines a dataflow graph model that is suitable for the semantics of the POSIX shell and proposes a set of parallelization optimizations that preserve the behavior of the dataflow graph.
   a flexible representation that enables a series of local transformations to expose data parallelism, converting the graph into its parallel equivalent~\sx{ir:transformations}.
-%% , in which DFGs indicate the parallelizable regions.
+%% , in which DFGs indicate the dataflow regions.
 Further transformations compile the DFG back to a shell script that uses POSIX constructs to guide parallelism explicitly while aiming at preserving the semantics of the sequential program~\sx{backend}.
 
 \heading{Implementation}
@@ -1059,7 +1070,7 @@ Building on this study, it develops a lightweight annotation language that enabl
 \subsection{Parallelizability of Standard Libraries}
 \label{cmd}
 
-Broadly speaking, shell commands can be split into four major classes with respect to their parallelization characteristics, depending on what kind of state they need when processing their input (Tab.\ref{tab:classes}).
+Broadly speaking, shell commands can be split into four major classes with respect to their parallelization characteristics, depending on what kind of state they mutate when processing their input (Tab.\ref{tab:classes}).
 %% how they interact with state.
 These classes are ordered in ascending difficulty (or impossibility) of parallelization.
 In this order, some classes can be thought as subsets of the next---\eg all stateless commands are pure---meaning that the synchronization mechanisms required for any superclass would work with its subclass (but foregoing any performance improvements).
@@ -1101,7 +1112,7 @@ Side-effectful           & ~\tsid  & \tti{env},  \tti{cp}, \tti{whoami}         
 \heading{Stateless Commands}
 The first class, \sta, contains commands that operate on individual line elements of their input, without maintaining state across invocations.
 These are commands that can be expressed as a purely functional $map$ or $filter$---\eg \ttt{grep} filters out individual lines and \ttt{basename} removes a path prefix from a string.
-They may produce multiple elements---\eg \ttt{tr} may insert {\sc NL} tokens---but return empty output for empty input.
+They may produce multiple elements---\eg \ttt{tr} may insert {\sc NL} tokens---but always return empty output for empty input.
 Workloads that use only stateless commands are trivial to parallelize:
   they do not require any synchronization to maintain correctness, nor caution about where to split inputs.
  % map :: (a -> b) -> [a] -> [b]
@@ -1109,7 +1120,7 @@ Workloads that use only stateless commands are trivial to parallelize:
 The choice of line as the data element strikes a convenient balance between coarse-grained (files) and fine-grained (characters) separation while staying in line with \unix's core abstractions.
 This choice can affect the allocation of commands in \sta, as many of its commands (about 1/3) are stateless \emph{within} a stream element---\eg\ttt{tr} transliterates characters within a line, one at a time---enabling further parallelization by splitting individual lines.
 This feature may seem of limited use, as these commands are computationally inexpensive, precisely due to their narrow focus.
-However, it turns out to be  useful for cases with very large stream elements (\ie long lines) such the \ttt{.fastq} format used in bioinformatics.
+However, it may be  useful for cases with very large stream elements (\ie long lines) such the \ttt{.fastq} format used in bioinformatics.
 
 
 \heading{Parallelizable Pure Commands}
@@ -1216,16 +1227,16 @@ The latter can express additions or changes to the command's implementation or i
 
 \heading{Key Concerns}
 \sys's annotations focus on three crucial concerns about a command:
-  (i) its parallelizability class,
-  (ii) its inputs and outputs, and the characteristics of its input consumption, and
+  (C1) its parallelizability class,
+  (C2) its inputs and outputs, and the characteristics of its input consumption, and
   % (ii) for commands that support multiple inputs, the characteristics of input consumption, and
-  (iii) how flags affect its class, inputs, and outputs.
+  (C3) how flags affect its class, inputs, and outputs.
 The first concern was discussed extensively in the previous section; we now turn to the latter two.
 
 To be able to accurately construct the DFG representation, \sys needs to know certain details about a command's inputs and outputs.
 There are a few reasons for this.
-One reason is due to \sys's DFG representation, which connects commands with each other;
-  to perform this connection correctly \sys needs to know the outputs of a command to correctly connect them with the inputs of the next.
+One reason is due to \sys's DFG representation, which connects commands with each other.
+  To perform this connection correctly, \sys needs to know the outputs of a command. % to correctly connect them with the inputs of the next.
 A second reason is due to ordering:
   as some commands consume their inputs in a certain order, this order needs to be maintained in the parallel version of the program.
 For example, consider the data-parallel version of \ttt{grep "foo" f1 f2}:
@@ -1244,8 +1255,8 @@ For example, consider the data-parallel version of \ttt{grep "foo" f1 f2}:
 \noindent
 This is correct only because \sys knows that \ttt{grep} in the sequential program reads first from \ttt{f1} and then from \ttt{f2}.
 
-Command flags (options) are a particularly popular way to control a command's execution, directly affecting its parallelizability classification.
-Commands are thus assigned a default parallelizability class, which should then be refined by the set of flags the command uses.
+Command flags (options) are a particularly popular way of controlling a command's execution, directly affecting its parallelizability classification.
+Commands are thus assigned a default parallelizability class, which is then refined by the set of flags the command uses.
 For example, \ttt{cat} defaults to \sta, but with \ttt{-n} it jumps into \pur because it has to keep track of a counter and print it along with each line.
 
 % As parallelizability classes form a hierarchy from most parallelizable to least parallelizable~\sx{cmd}, a command is classified by the class of its least parallelizable flag.
@@ -1288,9 +1299,9 @@ For example, \ttt{cat} defaults to \sta, but with \ttt{-n} it jumps into \pur be
 % \ttt{comm} is in \pur, but with \ttt{/input1} it jumps into \sta---as it is now partially evaluated, it becomes stateless with respect to the second argument.
 
 \heading{Example Annotations}
-The parallelizability properties of each command are specified in an annotation record that contains several components, each addressing one of the key concerns.
-On the top level, each annotation record contains a set of clauses, each one identified by a predicate on the command arguments (Concern (iii)). 
-Each clause contains an assignment for the command, indicating its class (Concern (i)), and the sequence of its inputs and outputs (Concern (ii)).
+The parallelizability properties of each command are specified in an annotation record that contains several components, each addressing one of the key concerns C1--3.
+At the top level, each annotation record contains a set of clauses, each one identified by a predicate on the command arguments (C3). 
+Each clause contains an assignment for the command, indicating its class (C1), and the sequence of its inputs and outputs (C2).
 %  (a JSON object) that
 % Annotations treat flag arguments differently from file arguments, by checking if they start with a \ttt{-}.
 % \footnote{
@@ -1307,7 +1318,7 @@ When \ttt{comm} is invoked without any flags, it produces a three-column output:
   the first column contains lines that are unique to the first input, the second column contains lines that are unique to the second input, and the last column contains lines that exist in both inputs.
 A user can invoke \ttt{comm} with any combination of flags \ttt{-1}, \ttt{-2}, or \ttt{-3} to suppress the corresponding output column(s).
 % The first clause from its annotation record is shown below:
-Below is its annotation record (left) and the implementation of record's first clause (right):
+Below is its annotation record (left) and the implementation of the record's first clause (right):
 %
 % \begin{minted}[fontsize=\footnotesize]{json-object}
 %   "predicate":
@@ -1345,7 +1356,7 @@ As the first and third columns are suppressed, \ttt{comm} can be categorized in 
 % NV: I don't think this is correct, because the small input might be the other argument;  you could even have `comm - -`
   this input accompanies every replicated instance of the command executing in parallel.
 The second clause is symmetric to the first with respect to the second input. 
-The third clause is the general case, classifiying \ttt{comm} in \pur as it needs to read both inputs completely before outputing its results.
+The third clause is the general case, classifiying \ttt{comm} in \pur, as \ttt{comm} needs to read both inputs completely before outputing its results.
 Option \ttt{stdin-hyphen} indicates that \ttt{-} represents standard input if given as a file argument.
 % The third clause is the general case, which includes \ttt{comm} invocations without any options, and is captured by the third clause.
 % There, \ttt{comm} is classified as \pur as it needs to % wait until it 
@@ -1495,9 +1506,9 @@ In line with the \unix philosophy, these functions can be written in any languag
 \sys's core is an abstract dataflow graph (DFG) model that is used as the intermediate representation on which \sys performs parallelization-exposing transformations.
 %% representation that is expressive enough to model data parallelism in shell programs.
 %% support a large subset of shell programs.\nv{Immediate Q: How Large? Which programs are not supported? Why?}
-\sys first lifts sections of the input script to the DFG
-representation, it performs transformations to expose parallelism (up to the desired \ttt{--width}), and
-then instantiates each DFG back to a parallel shell script.  A
+\sys first lifts sections of the input script to the DFG representation, 
+  then performs transformations to expose parallelism (up to the desired \ttt{--width}), 
+  and finally instantiates each DFG back to a parallel shell script.  A
 fundamental difference with other DFG models is that \sys's DFG encodes the
 order in which a node reads its input streams (not just the order of input elements per stream), which in turn enables a set of
 graph transformations that can be iteratively applied to expose
@@ -1514,7 +1525,7 @@ We start with the script-to-DFG tranlation~\sx{dataflow-regions},
   \includegraphics[width=\columnwidth]{\detokenize{./figs/pash_dfg.pdf}}
   \vspace{-25pt}
   \caption{
-    \textbf{From Shell script AST to DFGs.}
+    \textbf{From a script AST to DFGs.}
     The AST on the left has two dataflow regions, each not extending beyond \ttiny{&&}~\cf{dataflow-regions}.
   }
   \vspace{-15pt}
@@ -1522,11 +1533,11 @@ We start with the script-to-DFG tranlation~\sx{dataflow-regions},
 \end{figure}
 
 
-\subsection{Front-end: From Shell Scripts to DFGs}
+\subsection{Frontend: From a Sequential Script to DFGs}
 \label{dataflow-regions}
 
 % To optimize a script, \sys translates it to a DFG~\sx{ir}.
-% As there are several program fragments that cannot be parallelized---\eg commands connected with \ttt{\&\&}, ~\S\ref{bg}---\sys introduces the notion of \emph{parallelizable program regions} and a translation pass for converting them to DFGs.
+% As there are several program fragments that cannot be parallelized---\eg commands connected with \ttt{\&\&}, ~\S\ref{bg}---\sys introduces the notion of \emph{dataflow program regions} and a translation pass for converting them to DFGs.
 % 
 %% In addition, the shell's highly dynamic
 %% nature compounds the challenge---\eg by not knowing what files does an
@@ -1534,7 +1545,7 @@ We start with the script-to-DFG tranlation~\sx{dataflow-regions},
 % 
 %% \kk{Give examples of writing to environment variables, producing
 %%   irreversible side effects, the ; and \&\& operators.}
-%% To address the first issue, we introduce the notion of parallelizable
+%% To address the first issue, we introduce the notion of dataflow
 %% program regions and a translation pass for converting them to a
 %% dataflow graph. To address the second issue, we limit dynamic
 %% components by deferring translation as late as possible using a
@@ -1551,12 +1562,13 @@ We start with the script-to-DFG tranlation~\sx{dataflow-regions},
 %%   parallelize.}
 
 \heading{Dataflow Regions}
-In order to apply the graph transformations that expose data parallelism, \sys first has to identify program sub-expressions that can be safely transformed to a dataflow graph, \ie sub-expressions that do not impose any scheduling or synchronization (e.g. by using \ttt{;}) and take a set of files as inputs and produce a set of files as outputs.
+In order to apply the graph transformations that expose data parallelism, \sys first has to identify program sub-expressions that can be safely transformed to a dataflow graph, 
+  \ie sub-expressions that (i) do not impose any scheduling or synchronization constraints (\eg by using \ttt{;}), and (ii) take a set of files as inputs and produce a set of files as outputs.
 % The DFG model and associated transformations are applied only to program sub-ex\-pres\-sions that \sys deems would be safe to parallelizable---\ie ones that would not break sequential semantics, as long as the commands involved in these regions fall under the right classes.
 %% respect to their sequential execution.
 The search for these regions is guided by the shell language and the structure of a particular program.
 These contain information about (i) fragments that can be executed independently, and (ii) barriers that are natural synchronization points. % for enforcing synchronization.
-Consider this fragment:
+Consider this code fragment:
 
 % \begin{lstlisting}[language=sh, numbers=none, escapeinside={($}{$)}]
 %  cat f1 f2 | grep "foo" > f3 && sort f3 
@@ -1669,10 +1681,10 @@ If the command is in \sta, \pur, or \npu, the translation pass initiates a dataf
 %% If the command is unsafe, it is still added to the dataflow graph, but is not further parallelized by the optimizer.
 
 Due to the highly dynamic nature of the shell, some information is not known to \sys at the time of translation.
-Examples of such information includes the values of environment variables, strings that have not been expanded, and sub-shell constructs.
+Examples of such information include the values of environment variables, strings that have not been expanded, and sub-shell constructs.
 %% to the the safety properties that are mentioned above cannot be
 %% soundly checked statically.
-For safety purposes, \sys takes a conservative approach avoiding parallelization of such nodes with incomplete information.
+For safety purposes, \sys takes a conservative approach, avoiding parallelization of such nodes with incomplete information.
 It will not attempt to parallelize sub-expressions in which the translation pass cannot infer that, \eg  an environment variable passed as an argument to a command does not change its parallelizability class.
 
 %% \kk{Can we say anything more about the safety considerations? That (i)
@@ -2163,7 +2175,7 @@ A prologue in the script creates the necessary intermediate pipes, and a \ttt{tr
 %% \kk{Maybe guide all of this by showing an example of an output shell
 %%   script?}
 
-This section describes technical challenges related to execution of the resulting script and how they are addressed by \sys's runtime and custom primitives.
+This section describes technical challenges related to execution of the resulting script and how they are addressed by \sys's custom runtime primitives.
 %% it instantiates the \todo{custom} split and relay nodes as highly
 %% optimized commands to improve In this section we describe how \sys
 %% achieves that, and several technical challenges that it addresses.
@@ -2244,7 +2256,7 @@ Consider the following fragment:
 % \end{lstlisting}
 \begin{minted}[fontsize=\footnotesize]{bash}
  mkfifo t1 t2
- grep "foo" in1 > t1 & grep "foo" in2 > t2 & cat t1 t2
+ grep "foo" f1 > t1 & grep "foo" f2 > t2 & cat t1 t2
 \end{minted}
 
 \noindent
@@ -2255,7 +2267,7 @@ As a result, the second \ttt{grep} will remain blocked until the first \ttt{grep
 To solve this, one might be tempted to replace FIFOs with files, a central \unix abstraction, simulating pipes of arbitrary buffering (Fig. \ref{fig:eager}b).
 Aside from severe performance implications, naive replacement can lead to subtle race conditions as a consumer might reach {\sc EOF} before a producer.
 Alternatively, consumers could wait for producers to complete before opening the file for reading (Fig. \ref{fig:eager}c);
-  however, this would insert artificial barriers impeding task-based parallelism and wasting disk resources---that is, this allows data parallelism at the expense of task parallelism.
+  however, this would insert artificial barriers impeding task-based parallelism and wasting disk resources---that is, this allows for data parallelism at the expense of task parallelism.
 % \unix does not provide an easy way out.
 
 To address this challenge,
@@ -2264,6 +2276,8 @@ To address this challenge,
 These nodes feature tight multi-threaded loops that consume input eagerly while attempting to push data to the output stream, forcing upstream nodes to produce output when possible while also preserving task-based parallelism.
 % nv: Removed below because I don't think it adds much
 % We compare \sys's eager implementation with the alternatives from \cref{fig:eager} in \Cref{ours}.
+
+In \sys's evaluation~\sx{eval}, these primitives have the names presented in Fig.~\ref{fig:eager}.
 
 
 %% \TODO{Problem: Cat (and other commands that have multiple inputs) is
@@ -2416,7 +2430,7 @@ and unusual compared to non-\unix systems\footnote{For example,
   code---similar to \ttt{DeleteFile} and other Win32 functions.}
 primarily because pipes and pipelines are at the heart of \unix.
 % write errors are communicated differently 
-Unfortunately though, if a pipe has not been opened for writing yet
+Unfortunately though, if a pipe has not been opened for writing yet,
 % ---possible for named pipes---
   \unix cannot signal this condition.
 % \kk{I think that it is also possible for anonymous, e.g. \ttt{cat f1 - | head -n 1}}
@@ -2578,8 +2592,8 @@ This section reports on whether \sys can indeed offer performance benefits autom
 %   as shown, if written in a conventional language it would correspond to a program on the order of hundreds of lines of code.
 
 \heading{Highlights}
-In this paragraph we summarize results for \ttt{--width=16}, but \sys's evaluation reports on varying \ttt{width}s.
-Overall, \sys accelerates 47/52 scripts by 1.92--17.42$\times$; % Eurosys: results for 16!! \kk{I added them}
+This paragraph highlights results for \ttt{width=16}, but \sys's evaluation reports on varying \ttt{width}s (2--64).
+Overall, \sys accelerates 47/52 scripts---all unmodified---by 1.92--17.42$\times$; 
   for the rest, the parallel performance is comparable to the sequential (0.89, 0.91, 0.94, 099, 1.01$\times$).
   % \kk{eurosys: I have an issue that I am not sure how to address. I would like to have the 61.1x here (which is due to 64 width)  but I don't see a good way of including it without sounding suspicious.}
 For a subset of our benchmarks~\sx{ours}, we decouple the speedup due to \sys's DFG transformations alone from the one achieved when including its runtime primitives:
@@ -2682,7 +2696,7 @@ The goal is to evaluate performance benefits due to \sys's
 %>  parallel because they are all close to 1 (no speedup).}
 Tab.~\ref{tab:eval} summarizes the first collection of programs.
 %  shown in Fig.~\ref{fig:microbenchmarks}, which in turn reports on their performance characteristics.
-NFA-Regex is centered around an expensive \todo{NFA-based} backtracking expression and all of its commands are in \sta.
+NFA-Regex is centered around an expensive NFA-based backtracking expression and all of its commands are in \sta.
 % and the latter being an IO-intensive script.
 % a DFA-based regular expression matching phase;
  % while the \unix \ttt{grep} command defaults to a Thompson NFA, this particular expression makes use of DFA-based backtracking patterns resulting in high runtime overhead.
@@ -2703,18 +2717,18 @@ Finally, Bi-grams replicates and shifts a stream by one entry to calculate bigra
 % TODO \nv{Need to change terminology in plots---files should be (attempted) parallelism, name benchmark, cat should be merge.}
 Fig.~\ref{fig:microbenchmarks} presents \sys's speedup as a function of \ttt{width=}2--64.
 % (Bi-grams-opt is shown as the \ttt{opt} line in Fig.~\ref{fig:microbenchmarks}'s Bi-grams.)
-Average speedups of the optimized \sys, \ie with \ttt{eager} and \ttt{split} enabled, for \ttt{width=}\{2, 4, 8, 16, 32, 64\} are \{\todo{1.97, 3.5, 5.78, 8.83, 10.96, 13.47}\}$\times$, respectively.
-For \emph{No-Eager}, \ie \sys' transformations without its runtime support, speedups drop to 1.63, 2.54, 3.86, 5.93 7.46 9.35$\times$.
+Average speedups of the optimized \sys, \ie with \ttt{eager} and \ttt{split} enabled, for \ttt{width=}\{2, 4, 8, 16, 32, 64\} are \{1.97, 3.5, 5.78, 8.83, 10.96, 13.47\}$\times$, respectively.
+For \emph{No-Eager}, \ie \sys' transformations without its runtime support, speedups drop to 1.63, 2.54, 3.86, 5.93, 7.46, 9.35$\times$.
 % and the geometric means are 1.92, 3.39, 5.48, 7.94, 8.86, 8.51.}
 % \kk{For the one-liners where split doesn't provide any benefit (or overhead) we don't show the PaSh w/o split line.}
 % we experiment with a $200\times$ level of parallelism to see potential overheads
 
 Plots do not include lines for configurations that lead to identical parallel programs.
 There are two types of such cases. %  (that appear in \todo{five} plots).
-In the first, \emph{Pash} (blue) and \emph{Pash-w/o-split} (red, hidden) lines are identical for scripts that \sys does not add any \ttt{split} since the width of the DFG is constant;
+In the first, the \emph{Pash} (blue) and \emph{Pash-w/o-split} (red, hidden) lines are identical for scripts that \sys does not add \ttt{split} since the width of the DFG is constant;
 %  when \sys adds no \ttt{split} because the DFG width remains constant for the whole program;
-  conversely (for spell, bi-grams, and sort), when both lines are shown, \sys has added \ttt{split}s due to changes in the DFG width (e.g. due to a \npu command).
-In the second type, \emph{Pash w/o Split} (red) is identical to No Eager (green, hidden) and Blocking Eager (orange, hidden) because the input script features a command in \pur or \npu relatively early.
+  conversely, when both lines are shown (\eg Spell, Bi-grams, and Sort), \sys has added \ttt{split}s due to changes in the DFG width (e.g. due to a \npu command).
+In the second type, \emph{Pash w/o Split} (red) is identical to \emph{No-Eager} (green, hidden) and \emph{Blocking Eager} (orange, hidden) because the input script features a command in \pur or \npu relatively early.
 This command requires an \ttt{agg}regator, whose output is of width 1, and beyond which non-\ttt{split} configurations are sequential (and see no speedup).
 % Conversely, all three lines exist when the width remains above 1 for the full program.
 % needing a \ttt{split} to regain width. 
@@ -2741,7 +2755,7 @@ Finally, Tab.~\ref{tab:eval} shows that \sys's transformation time is negligible
 % TODO: Add
 % * \ttt{width}
 % * why blocking is less than no eager
-As expected, scripts with commands only in \sta get linear speedup.
+As expected, scripts with commands only in \sta see linear speedup.
 \sys's \ttt{split} benefits scripts with \tpur or \tnpu commands, without negative effects on the rest.
 Its \ttt{eager} primitive improves over Eager and Blocking-eager for all scripts.
 % Blocking eager: data parallelism, but no task parallelism; No eager: blocking FIFO does not allow pushing -> underutilize CPU
@@ -2750,9 +2764,9 @@ Its \ttt{eager} primitive improves over Eager and Blocking-eager for all scripts
 % \kk{eurosys: while the above is technically true, it is a bit difficult to explain here, so I prefer the sentence below.}
 since it allows its producer and consumer to execute in parallel.
 Sort-sort illustrates the full spectrum of primitives:
-  (i) \sys's \ttt{eager} offers benefits despite the lack of \ttt{split} because it fully parallelizes the first \ttt{sort} 
+  (i) \ttt{eager} offers benefits despite the lack of \ttt{split} because it fully parallelizes the first \ttt{sort} 
   % while maintaining task parallelism
-  (ii) \sys gets full benefits because \ttt{split}ting allows parallelizing the second \ttt{sort} too.
+  (ii) \emph{Pash} gets full benefits because \ttt{split}ting allows parallelizing the second \ttt{sort} too.
 
 % \todo{No Eager} and \todo{Blocking Eager} depict configurations without \sys's \ttt{eager} optimization and without \ttt{split}.
 % As described in Fig.\ref{optimizer}, these eager implementations perform worse than \sys's optimized \ttt{eager} relay in all cases (except for a negligible difference in Shortest-Scripts).
@@ -2814,9 +2828,7 @@ They make extensive use of standard commands under a variety of flags, and appea
 %   variety of patterns'' since it doesn't really matter if we
 %   anticipated them (especially since we can address any issues and
 %   then re-run them).} . 
-\sys executes each pipeline as-is, without any modification.\footnote{
-  \nv{Do we need this?}
-}
+\sys executes each pipeline as-is, without any modification.
   % if an obvious fix improves performance, we report the speedup of both versions. %  original and modified. %  pipeline.
 
 % The ability to compose larger programs in versatile ways from smaller utility programs was a hallmark of the \unix design, and the game's levels are designed to stress that.
@@ -3138,7 +3150,7 @@ This would lead to 3.2$\times$ performance improvements but incorrect results wi
 
 % \heading{Graph Transformations}
 % \sys's analysis and generation overheads remain collectively under $5s$ even for the high-scalability benchmarks.
-% We decided to push \sys's limits by constructing an artificial 1000-stage parallelizable region---a worst-case workload that is nowhere near the ones observed in practice.
+% We decided to push \sys's limits by constructing an artificial 1000-stage dataflow region---a worst-case workload that is nowhere near the ones observed in practice.
 % We find the resulting times quite acceptable:
 %   for a $2\times$-parallelization \sys takes $8.23s$ for parsing the script and $3.22s$ for analysis and optimization.
 % Pushing parallelization factor to $100\times$, \sys's runtime jumps to 5 minutes and 8 seconds to perform the analysis, producing an output dataflow graph that has more than 100 thousand edges in a file of about 11MB.
@@ -3178,7 +3190,7 @@ Here too, however, users are expected to manually rewrite scripts to exploit the
 Recently, Smoosh~\cite{smoosh:18} argued for making concurrency explicit via shell constructs.
 The argument is dissimilar from \sys's, which argues for mostly automated (and correct) parallelization---hence \emph{light-touch} parallel scripting.
 
-Concurrent to our work, POSH~\cite{raghavan2020posh} is a framework for running shell scripts over remote storage by offloading the I/O-intensive portions to proxy servers closer to the data.
+Concurrent to \sys, POSH~\cite{raghavan2020posh} is a framework for running shell scripts over remote storage by offloading the I/O-intensive portions to proxy servers closer to the data.
 POSH focuses on co-locating distributed operation, and introduces a novel scheduling algorithm. 
 \sys instead focuses on the parallelization of CPU-intensive scripts, by transforming them to DFGs, applying transformations, and then transforming them back to parallel schell scripts augmented with \sys's runtime primitives to be executed on a standard shell.
 %  non-distributed parallelism, is location-agnostic, and focuses on correctness through its dataflow transformations.
@@ -3199,7 +3211,7 @@ Despite its popularity, most systems perform optimizations that do not preserve 
 Recent work~\cite{HSSGG2014, SHGW2015, MSAIT2019} attempts to address this issue by performing optimizations only in cases where correctness is preserved.
 \sys draws inspiration from these efforts, as it attempts transformations that maintain the program's correctness with respect to the sequential execution.
 Its  DFG model, however, is different and captures ordering constraints.
-This is due to the intricacies of the \unix model---\eg streams, argument processing, and concatenation operators.\str
+This is due to the intricacies of the \unix model---\eg streams, argument processing, and concatenation operators.
 % \kk{eurosys: I could see this being deleted in need of space.}
 
 % As a result, previous work is not directly applicable.
@@ -3310,7 +3322,7 @@ Dryad~\cite{isard2007dryad} is a distributed system for dataflow graphs. Dryad o
 This paper presented \sys, a system allowing shell users to parallelize shell programs mostly automatically.
 % a source-to-source shell compiler and associated runtime library
 \sys can be thought as a parallelizing source-to-source compiler coupled with a runtime component.
-The compiler operates by converting parallelizable regions into dataflow graphs and then applying iterative transformations based on the characteristics of commands in these regions.
+The compiler operates by converting dataflow regions into dataflow graphs and then applying iterative transformations based on the characteristics of commands in these regions.
 Characteristics are known by the  use of classification and annotations (for certain classes), which \sys offers for commands in POSIX and Coreutils used frequently.
 \sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
 Applying \sys to classic and modern \unix scripts shows significant speedups---in one set of benchmarks, the compiler's average speedup is $9.3\times$, jumping to $13.2\times$ due to runtime optimizations.
