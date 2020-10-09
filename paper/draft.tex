@@ -921,7 +921,9 @@ several challenges.
 In contrast to restricted programming frameworks that enable parallelization by supporting a few carefully-designed primitives~\cite{streamit:02, brook:04, mapreduce:08, spark:12}, the \unix shell provides an unprecedented number and variety of composable commands.
 % Due to their varying nature, 
 % As each command may exercise arbitrary behaviors,
-To be parallelized, each command may require special analysis and treatment---\eg exposing data parallelism in Fig.~\ref{fig:example}'s \ttt{sort} would require splitting its input, running \ttt{sort} on each part, and then merging the results.
+To be parallelized, each command may require special analysis and treatment---\eg exposing data parallelism in Fig.~\ref{fig:example}'s \ttt{tr} or \ttt{sort} would require splitting their inputs, running them on each partial input, and then merging the partial results.\footnote{
+  As explained in the introduction~\sx{intro}, commands such as \ttiny{sort} may have \emph{ad hoc} flags like \ttiny{--parallel}, which do not compose across commands and may risk breaking correctness and unexploiting performance potential~\sx{micro}.
+}
 Automating such an analysis is infeasible, as individual commands are black boxes written in a variety of programming languages and models.
 %% \ttt{grep} requires no coordination, \ttt{head} requires light coordination, and \ttt{sort} requires significant coordination.
 %% These behaviors are further concealed by the fact that commands are black boxes implemented in a variety of programming languages and models.
@@ -967,7 +969,7 @@ Moreover, several commands such as \ttt{sort} and \ttt{uniq} require specialized
 \subsection{\sys Design Overview}
 \label{bg:overview}
 
-At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and a parameter \ttt{--width} and outputs a new script, a fragment of which is shown in Fig.~\ref{fig:example2}.
+At a high level, \sys takes as input a POSIX shell script like the one in Fig.~\ref{fig:example} and a parameter \ttt{--width} and outputs a new script, a fragment of which is shown in Fig.~\ref{fig:example2} for \ttt{--width=2} (\ie 2$\times$ \{\ttt{xargs}, \ttt{sort}, \etc\}).
 % concurrent version
 % To expose and exploit data parallelism, % in a given shell script,
 % %% parallel execution,
@@ -2432,8 +2434,8 @@ notifying it that the pipe's consumer has exited.  This is different
 from errors for other system calls
 %% return an error
 and unusual compared to non-\unix systems\footnote{For example,
-  Windows indicates errors for \ttt{WriteFile} using its return
-  code---similar to \ttt{DeleteFile} and other Win32 functions.}
+  Windows indicates errors for \ttiny{WriteFile} using its return
+  code---similar to \ttiny{DeleteFile} and other Win32 functions.}
 primarily because pipes and pipelines are at the heart of \unix.
 % write errors are communicated differently 
 Unfortunately though, if a pipe has not been opened for writing yet,
