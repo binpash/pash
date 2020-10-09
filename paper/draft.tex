@@ -1111,7 +1111,7 @@ Workloads that use only stateless commands are trivial to parallelize:
 The choice of line as the data element strikes a convenient balance between coarse-grained (files) and fine-grained (characters) separation while staying in line with \unix's core abstractions.
 This choice can affect the allocation of commands in \sta, as many of its commands (about 1/3) are stateless \emph{within} a stream element---\eg\ttt{tr} transliterates characters within a line, one at a time---enabling further parallelization by splitting individual lines.
 This feature may seem of limited use, as these commands are computationally inexpensive, precisely due to their narrow focus.
-However, it turns out to be  useful for cases with very large stream elements (\ie long lines) such the \ttt{.fastq} format used in bioinformatics pipelines.  % TODO pointer to 6.3
+However, it turns out to be  useful for cases with very large stream elements (\ie long lines) such the \ttt{.fastq} format used in bioinformatics.
 
 
 \heading{Parallelizable Pure Commands}
@@ -1308,19 +1308,23 @@ For example, consider \ttt{comm}, which performs a join-like operation on its tw
 When \ttt{comm} is invoked without any flags, it produces a three-column output:
   the first column contains lines that are unique to the first input, the second column contains lines that are unique to the second input, and the last column contains lines that exist in both inputs.
 A user can invoke \ttt{comm} with any combination of flags \ttt{-1}, \ttt{-2}, or \ttt{-3} to suppress the corresponding output column(s).
-The first clause from its annotation record is shown below:
+% The first clause from its annotation record is shown below:
+Its annotation record is shown on the left:
 %
-\begin{minted}[fontsize=\footnotesize]{json-object}
-  "predicate":
-    { 
-      "operator": "all",
-      "operands": ["-1", "-3"] 
-    },    
-  "class": "stateless",
-  "inputs": ["args[1]"],
-  "outputs": ["stdout"],
-  "options": ["stdin-hyphen"]
-\end{minted}
+% \begin{minted}[fontsize=\footnotesize]{json-object}
+%   "predicate":
+%     { 
+%       "operator": "all",
+%       "operands": ["-1", "-3"] 
+%     },    
+%   "class": "stateless",
+%   "inputs": ["args[1]"],
+%   "outputs": ["stdout"],
+%   "options": ["stdin-hyphen"]
+% \end{minted}
+
+\hspace*{-0.3cm}\includegraphics[width=\columnwidth]{\detokenize{./figs/pash_annotation.pdf}}
+
 % \begin{lstlisting}[language=json, numbers=none]
 %   "predicate":
 %     { 
@@ -1443,7 +1447,7 @@ As the first and third columns are suppressed, \ttt{comm} can be categorized in 
 The complete annotation language contains 6 operators, one of which supports regural expressions.
 It was used to annotate 47 commands, totalling 708 lines of JSON---an effort that took about 2--3 hours.
 Annotation records are by default conservative so as to not jeopardize correctness, but can be incrementally refined to capture parallelizability when using increasingly complex combinations of flags.
-The language is extensible with more operators (as long as the \todo{user} defines an \todo{interpreter} for them);
+The language is extensible with more operators (as long as the developer defines their semantics);
   it also supports writing arbitrary Python code for commands whose properties are difficult to capture---\eg higher order \ttt{xargs}, whose parallelizability class depends on the class of the first-order command that it invokes.
 % \str
 % \kk{Mention that some commands, such as xargs are handled internally due to their particularities.}
@@ -1511,7 +1515,6 @@ We start with the script-to-DFG tranlation~\sx{dataflow-regions},
   \caption{
     \textbf{From Shell script AST to DFGs.}
     The AST on the left has two dataflow regions, each not extending beyond \ttiny{&&}~\cf{dataflow-regions}.
-    \nv{DFG2 reads from f2, grep writes to f3}
   }
   \vspace{-15pt}
   \label{fig:ast-dfg}
@@ -2593,10 +2596,10 @@ Two complex scripts with 15~\sx{macro1} and 34~\sx{macro2} commands written in m
 % In terms of manual effort,
 
 Using \sys's standard library of annotations for POSIX and GNU commands~\sx{parallelizability}, the vast majority of programs ($>50$, with $>200$ commands) require no effort to parallelize other than invoking \sys;
-  only 6  ($<3\%$) commands, outside this library, needed a single-record annotation.
+  only 6 ($<3\%$) commands, outside this library, needed a single-record annotation~\sx{macro2}.
 
-In terms of correctness, \sys's results on multi-GB inputs are always identical to the sequential.
-Scripts feature ample opportunities for breaking semantics, which \sys avoids.
+In terms of correctness, \sys's results on multi-GB inputs are identical to the sequential ones.
+Scripts feature ample opportunities for breaking semantics~\sx{micro}, which \sys avoids.
 %% In one case, \sys avoids transforming a cycle (\ie a fragment whose input and output identifiers are the same).
 %in another, it preserves the semantics that another parallelization command breaks.
 
@@ -2929,8 +2932,8 @@ Furthermore, \sys does not decelerate non-trivial computations, even when parall
 	  \textbf{Unix50 scripts.}
     Speedup (left axis) over sequential execution (right axis) for Unix50 scripts.
     Parallelism is 16$\times$ on 10GB of input data~\cf{unix50}.
-    Pipelines are sorted in descending speedup order.\str
-    % \kk{Add speedup by primitives and transformations in bar-chart.}
+    Pipelines are sorted in descending speedup order. % \str
+    % \kk{FUTURE: Add speedup by primitives and transformations in bar-chart.}
     % The solid line indicates the average speedup $\times5.49$ and the dotted line indicates 1.
     % \nv{Idea: scripts that only take over 0.01s?}
     % \kk{Now that we removed the small ones, sequential time does not add a lot to this plot. Maybe we can just show speedups?}
@@ -2947,9 +2950,9 @@ Furthermore, \sys does not decelerate non-trivial computations, even when parall
 We now turn our attention to Fig.~\ref{fig:example}'s script~\sx{bg}.
 
 \heading{Program}
-This program is inspired by Hadoop's Definitive Guide~\cite[Chapter 2]{hadoop:15}, where it exemplifies a realistic analytics pipeline comprising three sub-tasks:
-  fetch data from NOAA (shell), convert them to a Hadoop-friendly format (shell), and calculate the maximum temperature (Hadoop).
-While the book focuses only on the last one, \sys parallelizes the entire pipeline.
+This program is inspired by Hadoop's Definitive Guide~\cite[\S2]{hadoop:15}, where it exemplifies a realistic analytics pipeline comprising 3 stages:
+  fetch NOAA data (shell), convert them to a Hadoop-friendly format (shell), and calculate the maximum temperature (Hadoop).
+While the book focuses only on the last stage, \sys parallelizes the entire pipeline.
 % Only the last one is the real focus of the book, % demonstrating the benefits of using distributed framework such as Hadoop.
 %   whereas we consider the entire pipeline. % ---from fetching data to outputting the maximum temperature.
 % The version used in the evaluation is slightly different than the one presented in Fig.~\ref{fig:example} (14 stages and totalling 240 characters), simplified only for clarity of exposition, in that it expresses the \ttt{for} loop as a first stage followed by \ttt{xargs}.
@@ -2982,7 +2985,7 @@ A few stages of the original script were expressed in a single \ttt{awk};
 
 \heading{Take-aways}
 \sys can be applied to programs of notable size \todo{and complexity} to offer significant acceleration.
-A broader take-away is that \sys is also able to extract parallelism from fragments that are not purely compute-intensive regions, \ie the usual focus of conventional parallelization systems.  
+A broader take-away is that \sys is also able to extract parallelism from fragments that are not purely compute-intensive, \ie the usual focus of conventional parallelization systems.  
 
 %% \todo{These programs correspond to much larger programs in other languages, a small fraction of which is automatically parallelizable with conventional systems.}
 
@@ -3045,7 +3048,7 @@ Several other stages are in \sta allowing \sys to achieve benefits by exposing d
 %>   it with similar (but not identical) work.}
 
 % This section attempts to compare \sys with best-of-breed alternatives for particular taks.
-As there are no prior systems directly comparable to \sys, this section draws comparisons with two specialized cases that excel within smaller fragments of \sys's proposed domain.
+As there are no prior systems directly comparable to \sys, we now draw comparisons with two specialized cases that excel within smaller fragments of \sys's proposed domain.
 
 \pichskip{15pt}% Horizontal gap between picture and text
 \parpic[r][t]{%
@@ -3058,7 +3061,7 @@ As there are no prior systems directly comparable to \sys, this section draws co
 %% \kk{Explain what is the purpose of the
 %%   microbenchmark. We want to establish that \sys scalability is as
 %%   good as it could be.}
-We first compare a single GNU \ttt{sort} parallelized by \sys ($S_{PaSh}$) \vs the same \ttt{sort} with the 
+We first compare a GNU \ttt{sort} parallelized by \sys ($S_{PaSh}$) \vs the same \ttt{sort} with the 
 %% \begin{wrapfigure}[10]{r}{0.25\textwidth}
 %%   \centering
 %%   %% \begin{center}
@@ -3098,7 +3101,7 @@ Finally, the comparison also shows \sys's benefits to command developers:
 We compare \sys to \ttt{parallel} (v.20160422), a GNU utility for running other commands in parallel~\cite{Tange2011a}, on a small bio-informatics script.
 % Using its \ttt{--jobs} flag, we  redirect input from a file to 
 % 554 / 330 
-Sequential execution takes 554.8s \vs \sys's 128.5s (4.3$\times$), with most of the overhead coming from \todo{a single command}.
+Sequential execution takes 554.8s \vs \sys's 128.5s (4.3$\times$), with most of the overhead coming from a single command---\ttt{cutadapt}.
 
 % % https://github.com/marcelm/cutadapt/issues/157
 % % https://www.biostars.org/p/123237/
@@ -3173,7 +3176,7 @@ Recently, Smoosh~\cite{smoosh:18} argued for making concurrency explicit via she
 The argument is dissimilar from \sys's, which argues for mostly automated (and correct) parallelization---hence \emph{light-touch} parallel scripting.
 
 Concurrent to our work, POSH~\cite{raghavan2020posh} is a framework for running shell scripts over remote storage by offloading the I/O-intensive portions to proxy servers closer to the data.
-POSH focuses on colocating distributed operation, and introduces a novel scheduling algorithm. 
+POSH focuses on co-locating distributed operation, and introduces a novel scheduling algorithm. 
 \sys instead focuses on the parallelization of CPU-intensive scripts, by transforming them to DFGs, applying transformations, and then transforming them back to parallel schell scripts augmented with \sys's runtime primitives to be executed on a standard shell.
 %  non-distributed parallelism, is location-agnostic, and focuses on correctness through its dataflow transformations.
 
@@ -3219,7 +3222,7 @@ By targeting specific classes of computation (\emph{viz.} \sys's parallelizabili
 
 % \kk{Mention something about Nebula (as an OSDI reviewer asked for.)}
 
-Dryad~\cite{isard2007dryad} is a distributed system for dataflow graphs. Dryad offers a scripting language, Nebula, that allows using shell commands such as \ttt{grep} or \ttt{sed} in place of individual dataflow nodes. The main difference with \sys is that in Dryad the programmer needs to explicitly express the data flow graph, which is then executed in a distributed fashion, whereas Pash automatically parallelizes a given shell script by producing a parallel script that runs on an unmodified shell of choice.
+Dryad~\cite{isard2007dryad} is a distributed system for dataflow graphs. Dryad offers a scripting language, Nebula, that allows using shell commands such as \ttt{grep} or \ttt{sed} in place of individual dataflow nodes. The main difference with \sys is that in Dryad the programmer needs to explicitly express the dataflow graph, which is then executed in a distributed fashion, whereas Pash automatically parallelizes a given shell script by producing a parallel script that runs on an unmodified shell of choice.
 
 
 % % Although still a research prototype, \sys's setup and deployment is simpler.
