@@ -3318,13 +3318,16 @@ Dryad~\cite{isard2007dryad} is a distributed system for dataflow graphs. Dryad o
 
 This paper presented \sys, a system allowing shell users to parallelize shell programs mostly automatically.
 % a source-to-source shell compiler and associated runtime library
-\sys can be thought as a parallelizing source-to-source compiler coupled with a runtime component.
-The compiler operates by converting dataflow regions into dataflow graphs and then applying iterative transformations based on the characteristics of commands in these regions.
-Characteristics are known by the  use of classification and annotations (for certain classes), which \sys offers for commands in POSIX and Coreutils used frequently.
-\sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
-Our evaluation of \sys on a wide variety of \emph{unmodified} scripts shows that the vast majority (39/44) see significant speedups (average over all is $6.7\times$, up to $61\times$).
-% Applying \sys to classic and modern \unix scripts shows significant speedups---in one set of benchmarks, the compiler's average speedup is $9.3\times$, jumping to $13.2\times$ due to runtime optimizations.
+\sys consists of (i) a source-to-source compiler, which transforms scripts to DFGs, parallelizes them, and transforms them back to scripts; and (ii) a runtime component that addresses several practical challenges related to performance and correctness.
+Our evaluation on a wide variety of \emph{unmodified} scripts shows that \sys achieves significant speedups due to parallelism (total avg: $6.7\times$) in the vast majority of them (39/44), including scripts that perform mundane tasks such as downloading, extracting, and cleaning data, which are usually not the focus of parallelization systems.
 \sys is open source and available for download online~[Blind].
+
+% The compiler operates by converting dataflow regions into dataflow graphs and then applying iterative transformations based on the characteristics of commands in these regions.
+% Characteristics are known by the  use of classification and annotations (for certain classes), which \sys offers for commands in POSIX and Coreutils used frequently.
+% \sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
+% Our evaluation of \sys on a wide variety of \emph{unmodified} scripts shows that the vast majority (39/44) see significant speedups (average over all is $6.7\times$, up to $61\times$).
+% Applying \sys to classic and modern \unix scripts shows significant speedups---in one set of benchmarks, the compiler's average speedup is $9.3\times$, jumping to $13.2\times$ due to runtime optimizations.
+
 
 % Its runtime component provides orchestration and planning support during the execution of the program.
 % \sys's current limitations revolve around shell expansion.
