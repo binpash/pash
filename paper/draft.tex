@@ -2283,7 +2283,6 @@ To address this challenge,
 These nodes feature tight multi-threaded loops that consume input eagerly while attempting to push data to the output stream, forcing upstream nodes to produce output when possible while also preserving task-based parallelism.
 % nv: Removed below because I don't think it adds much
 % We compare \sys's eager implementation with the alternatives from \cref{fig:eager} in \Cref{ours}.
-
 In \sys's evaluation~\sx{eval}, these primitives have the names presented in Fig.~\ref{fig:eager}.
 
 
@@ -3156,7 +3155,7 @@ This would lead to 3.2$\times$ performance improvements but incorrect results wi
 \section{Related Work}
 \label{related}
 
-Existing techniques for exploiting parallelism are not directly comparable to \sys, either because they require significantly more \emph{user} effort (see \sx{intro} for distinction between users and developers); or are too specialized, targeting narrow domains or custom programming abstractions.
+Existing techniques for exploiting parallelism are not directly comparable to \sys, either because they require significantly more \emph{user} effort (see \sx{intro} for the distinction between users and developers); or are too specialized, targeting narrow domains or custom programming abstractions.
 %% Techniques for re-writing programs to exploit parallelism fall under a wide spectrum that ranges from fully manual (but, ideally, optimal or more general) to fully automated (but potentially sub-optimal or specialized).
 %% \kk{It is not very clear what the following sentence tries to achieve.}
 %% Following the distinction between \emph{users} and \emph{developers} established earlier~\sx{intro}, we note correctness trade-offs associated with approaches that require user input for the discussion below:
