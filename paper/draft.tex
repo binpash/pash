@@ -466,14 +466,13 @@ To top it off, all these options assume a good understanding of parallelism;
 \centering
 \includegraphics[width=0.49\textwidth]{\detokenize{./figs/pash_overview.pdf}}
 \caption{
-  \textbf{\sys overview and correspondence to sections.}
+  \textbf{\sys overview.}
   \sys identifies dataflow regions~\sx{dataflow-regions}, 
-  converts them to a dataflow graph~\sx{graph-components}, applies iterative
-  transformations~\sx{ir:transformations} based on the parallelizability properties (\S\ref{cmd}, \S\ref{ext}) 
-  of the commands used in these regions, and finally emits a parallel script
-  that uses custom primitives~\sx{optimizer}.
+  converts them to dataflow graphs~\sx{graph-components},
+  applies transformations~\sx{ir:transformations} based on the parallelizability properties  of the commands in these regions(\S\ref{cmd}, \S\ref{ext}),
+  and emits a parallel script that uses custom primitives~\sx{optimizer}.
 }
-\vspace{-25pt}
+\vspace{-18pt}
 \label{fig:overview}
 \end{figure}
 
@@ -2686,8 +2685,8 @@ The goal is to evaluate performance benefits due to \sys's
       (i) PaSh: the complete implementation with \ttiny{eager} and \ttiny{split} enabled,
       % (ii) Par+B.Split: \ttt{eager} and input-aware \ttt{split} enabled,
       (ii) PaSh w/o split: \ttiny{eager} enabled (no \ttiny{split}),
-      (iii) \todo{Blocking Eager}, only blocking \ttiny{eager} enabled (no \ttiny{split}),
-      (iv) \todo{No Eager}: both \ttiny{eager} and \ttiny{split} disabled.
+      (iii) Blocking Eager: only blocking \ttiny{eager} enabled (no \ttiny{split}),
+      (iv) No Eager: both \ttiny{eager} and \ttiny{split} disabled.
   For some pairs of configurations, \sys produces identical parallel scripts and thus only one is shown.
   % \kk{FUTURE: Run and show all plots (with and without split for all experiments.)}
 }
@@ -2849,7 +2848,7 @@ It does not include 3 pipelines that use \ttt{head} fairly early thereby finishi
 We refer to each pipeline using its x-axis index in Fig.~\ref{fig:unix50-individual}.
 % The script index refers to the challenge level, in both the plots and the discussion.
 % \kk{The above is not exactly true since we sorted them. If someone goes to take a look at the solution source they will be confused.}
-Average speedup is \todo{$6.02\times$}, % median is $6.48\times$, 
+Average speedup is $6.02\times$, % median is $6.48\times$, 
   and weighted average (with the absolute times as weights) is $5.75\times$.
  % the \todo{geometric mean is $1.08\times$},
 
@@ -2994,7 +2993,7 @@ Similar to Unix50~\sx{unix50}, we found that large pipelines enable significant 
 
 
 \heading{Take-aways}
-\sys can be applied to programs of notable size \todo{and complexity} to offer significant acceleration.
+\sys can be applied to programs of notable size and complexity to offer significant acceleration.
 A broader take-away is that \sys is also able to extract parallelism from fragments that are not purely compute-intensive, \ie the usual focus of conventional parallelization systems.  
 
 %% \todo{These programs correspond to much larger programs in other languages, a small fraction of which is automatically parallelizable with conventional systems.}
