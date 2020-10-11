@@ -3,7 +3,7 @@
 % \nv{Decide on parallelizable regions}
 
 %% EuroSys 2021 -- 12 pages limit
-\documentclass[sigplan, review, screen, anonymous]{acmart}
+\documentclass[sigplan, screen]{acmart}
 \acmSubmissionID{49}
 \renewcommand\footnotetextcopyrightpermission[1]{}
 \settopmatter{printfolios=false,printccs=false,printacmref=false}
@@ -248,22 +248,22 @@
 %%   {\small MIT, CSAIL \quad $^{\dagger}$University of Pennsylvania \quad $^{\circ}$Rice University \quad $^{\diamond}$Unaffiliated \quad $^{\ddagger}$University of Belgrade}
 %% }
 
-%% \author{Nikos Vasilakis}
-%% \authornote{The two marked authors contributed equally to the paper.}
-%% \affiliation{MIT}
+\author{Nikos Vasilakis}
+\authornote{The two marked authors contributed equally to the paper.}
+\affiliation{MIT}
 
-%% \author{Konstantinos Kallas}
-%% \authornotemark[1]
-%% \affiliation{University of Pennsylvania}
+\author{Konstantinos Kallas}
+\authornotemark[1]
+\affiliation{University of Pennsylvania}
 
-%% \author{Konstantinos Mamouras}
-%% \affiliation{Rice University}
+\author{Konstantinos Mamouras}
+\affiliation{Rice University}
 
-%% \author{Achilleas Benetopoulos}
-%% \affiliation{Unaffiliated}
+\author{Achilleas Benetopoulos}
+\affiliation{Unaffiliated}
 
-%% \author{Lazar Cvetkovich}
-%% \affiliation{University of Belgrade}
+\author{Lazar Cvetkovich}
+\affiliation{Unaffiliated}
 
 %% \authornote{$^{*}$Equal contribution.}     %% \authornote is optional;
 
@@ -344,17 +344,17 @@
 
 %% Keywords
 %% comma separated list
-% \keywords{keyword1, keyword2, keyword3}  %% \keywords are mandatory in final camera-ready submission
+%% \keywords{keyword1, keyword2, keyword3}  %% \keywords are mandatory in final camera-ready submission
 
 %% Abstract
 %% Note: \begin{abstract}...\end{abstract} environment must come
 %% before \maketitle command
 \begin{abstract}
-This paper presents \sys, a system for parallelizing POSIX shell scripts through a combination of program transformations and runtime primitives.
-Given a script, \sys converts it to a dataflow graph, performs a series of transformations that expose parallelism while preserving its sequential semantics, and then converts the dataflow graph back into a script that uses POSIX constructs to explicitly guide parallelism.
+This paper presents \sys, a system for parallelizing POSIX shell scripts. %  through a combination of program transformations and runtime primitives.
+Given a script, \sys converts it to a dataflow graph, performs a series of semantics-preserving program transformations that expose parallelism, and then converts the dataflow graph back into a script---one that adds POSIX constructs to explicitly guide parallelism coupled with \sys-provided \unix-aware runtime primitives for addressing per\-for\-mance- and correctness-related issues.
 A lightweight annotation language allows command developers to express key parallelizability properties about their commands.
 An accompanying parallelizability study of POSIX and GNU commands---two large and commonly used groups---guides the annotation language and optimized aggregator library that \sys uses.
-Finally, \sys's \unix-aware runtime primitives address several practical issues related to performance and correctness.
+Finally, \sys's 
 \sys's extensive evaluation over 44 unmodified \unix scripts shows significant speedups ($0.89$--$61.1\times$, avg: $6.7\times$) stemming from the combination of its program transformations and runtime primitives.
 \end{abstract}
 
@@ -362,10 +362,6 @@ Finally, \sys's \unix-aware runtime primitives address several practical issues 
 % \kk{eurosys: Can we extend this to say that PaSh automatically uses constructs from this library? Otherwise it sounds like the user has to use it to make their scripts parallel.}
 % The vast majority (39/44) of scripts---all unmodified---see significant speedups (average over all is $6.7\times$, up to $61\times$).
 
-%% \maketitle
-%% Note: \maketitle command must come after title commands, author
-%% commands, abstract environment, Computing Classification System
-%% environment and commands, and keywords command.
 \maketitle
 
 % Its runtime component provides orchestration and planning support during the execution of the program.
@@ -1326,7 +1322,8 @@ When \ttt{comm} is invoked without any flags, it produces a three-column output:
   the first column contains lines that are unique to the first input, the second column contains lines that are unique to the second input, and the last column contains lines that exist in both inputs.
 A user can invoke \ttt{comm} with any combination of flags \ttt{-1}, \ttt{-2}, or \ttt{-3} to suppress the corresponding output column(s).
 % The first clause from its annotation record is shown below:
-Below is its annotation record (left) and the implementation of the record's first clause (right):
+
+Fig.~\ref{annotation} presents its annotation record (left) and the implementation of the record's first clause (right).
 %
 % \begin{minted}[fontsize=\footnotesize]{json-object}
 %   "predicate":
@@ -1340,7 +1337,17 @@ Below is its annotation record (left) and the implementation of the record's fir
 %   "options": ["stdin-hyphen"]
 % \end{minted}
 
-\hspace*{-0.3cm}\includegraphics[width=\columnwidth]{\detokenize{./figs/pash_annotation.pdf}}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{\detokenize{./figs/pash_annotation.pdf}}
+  \vspace{-15pt}
+  \caption{
+    \textbf{Parallelizability annotation.}
+    Annotation record for \ttiny{comm} (left) and the implementation of the record's first clause (right).
+  }
+  \vspace{-15pt}
+  \label{fig:annotation}
+\end{figure}
 
 % \begin{lstlisting}[language=json, numbers=none]
 %   "predicate":
@@ -1359,7 +1366,6 @@ Below is its annotation record (left) and the implementation of the record's fir
 % | _  => (P, [arg[0], arg[1]], [stdout])
 % }
 
-\noindent
 As the first and third columns are suppressed, \ttt{comm} can be categorized in \sta by regarding its first file argument as a static ``configuration'' input;
 % NV: I don't think this is correct, because the small input might be the other argument;  you could even have `comm - -`
   this input accompanies every replicated instance of the command executing in parallel.
@@ -3320,7 +3326,9 @@ Shell programs are ubiquitous, utilize programs from a plethora of programming l
 This paper presents \sys, a system that allows shell users to parallelize shell programs mostly automatically.
 \sys can be viewed as (i) a source-to-source compiler that transforms scripts to DFGs, parallelizes them, and transforms them back to scripts; coupled with (ii) a  runtime component that addresses several practical challenges related to performance and correctness.
 \sys's extensive evaluation over 44 unmodified Unix scripts demonstrates non-trivial speedups (0.89--61.1$\times$, avg: 6.7$\times$).
-\sys is open source and available for download~[Blind].
+
+\sys's implementation, as well as all the example code and benchmarks presented in this paper, are all open source and available for download:
+\href{https://github.com/andromeda/pash}{github.com/andromeda/pash}.
 
 
 % The compiler operates by converting dataflow regions into dataflow graphs and then applying iterative transformations based on the characteristics of commands in these regions.
@@ -3394,15 +3402,17 @@ This paper presents \sys, a system that allows shell users to parallelize shell 
 % inferred about them is through their arguments.
 
 % \subsection*{Acknowledgements}
-% % Dumping people so that we don't forget
-% We want to thank 
-%   Andr\'e DeHon,
-%   Ben Karel,
-%   Caleb Stanford,
-%   Thurston Dang,
-%   Jean-S\'ebastien L\'egar\'e, and 
-%   Nick Roessler.
-% This material is based upon work supported by DARPA contract no. HR00112020013 (ALRSCC) and NSF award CCF 1763514.
+\begin{acks}
+% Dumping people so that we don't forget
+We want to thank 
+  Andr\'e DeHon,
+  Ben Karel,
+  Caleb Stanford,
+  Thurston Dang,
+  Jean-S\'ebastien L\'egar\'e, and 
+  Nick Roessler.
+This material is based upon work supported by DARPA contract no. HR00112020013 and NSF award CCF 1763514.
+\end{acks}
 
 %% \grantsponsor{GS100000001}{National Science
 %%   Foundation}{http://dx.doi.org/10.13039/100000001} under Grant
