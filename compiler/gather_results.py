@@ -114,12 +114,90 @@ input_filename_sizes = {"1G": "1~GB",
                         "100M": "100~MB",
                         "all_cmds_x1000": "85~MB"}
 
+suffix_to_runtime_config = {"distr": "eager",
+                            "distr_auto_split": "split",
+                            "distr_no_task_par_eager": "blocking-eager",
+                            "distr_no_eager": "no-eager"}
+
+
+
+class Config:
+    def __init__(self, pash, width=None, runtime=None):
+        if(pash):
+            assert(Config.is_runtime_valid(runtime))
+            assert(isinstance(width, int))
+            self.pash = True
+            self.width = width
+            self.runtime = runtime
+        else:
+            self.pash = False
+    
+    def __repr__(self):
+        if(self.pash):
+            return("PaSh Config(width={}, runtime={})".format(self.width, self.runtime))
+        else:
+            return("No PaSh")
+
+    def is_runtime_valid(runtime):
+        possible_runtimes = ["no-eager",
+                             "blocking-eager",
+                             "eager",
+                             "mini-split",
+                             "split"]
+        return runtime in possible_runtimes
+
+
+class Result:
+    def __init__(self, script, config, value, description=""):
+        self.script = script
+        self.config = config
+        self.value = value
+        self.description = description
+    
+    def __repr__(self):
+        return("Result(description={}, script={}, value={}, config={})".format(self.description,
+                                                                               self.script,
+                                                                               self.value,
+                                                                               self.config))
+
+    def __truediv__(self, other):
+        if not isinstance(other, (int, float, Result)):
+            return NotImplemented
+
+        ## TODO: Change that to Result too
+        return self.value / other
+
+    def __rtruediv__(self, other):
+        if not isinstance(other, (int, float, Result)):
+            return NotImplemented
+
+        ## TODO: Change that to Result too
+        return other / self.value
+
+    def __add__(self, other):
+        if not isinstance(other, (int, float, Result)):
+            return NotImplemented
+
+        if not self.description == "execution time":
+            return NotImplemented
+
+        ## TODO: Change that to Result too
+        return other + self.value
+
+    def __radd__(self, other):
+        return self + other
+
 def safe_zero_div(a, b):
     if(b == 0):
         print("WARNING: Division by zero")
         return 0
     else:
         return a / b
+
+
+##
+## Read From Files
+##
 
 def get_experiment_files(experiment, results_dir):
     files = [f for f in os.listdir(results_dir) if f.startswith(experiment)]
@@ -197,41 +275,70 @@ def check_output_diff_correctness_for_experiment(filename):
         print("!! WARNING: Filename:", filename, "not found!!!")
         return False
 
-def collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers):
-    numbers = [read_distr_execution_time('{}{}_{}'.format(prefix, n, suffix))
-               for n in scaleup_numbers]
-    return numbers
+##
+## Result Collection
+##
 
-def collect_experiment_scaleup_times(prefix, scaleup_numbers):
-    ## Since we have the same input size in all cases, only use the
-    ## one sequential execution for the sequential time
-    seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, scaleup_numbers[0]))
-                   for _ in scaleup_numbers]
-    distr_numbers = collect_distr_experiment_execution_times(prefix, 'distr.time', scaleup_numbers)
+def script_name_from_prefix(prefix):
+    ## TODO: Move this outside
+    script_name = prefix.split("/")[-1].rstrip("_")
+    return script_name
+
+def sequential_experiment_exec_time(prefix, scaleup_number):
+    config = Config(pash=False)
+    value = read_total_time('{}{}_seq.time'.format(prefix, scaleup_number))
+    description = "execution time"
+    script_name = script_name_from_prefix(prefix)
+    result = Result(script_name, config, value, description)
+    return result
+
+def distributed_experiment_exec_time(prefix, scaleup_number, suffix):
+    pash_runtime = suffix_to_runtime_config[suffix.split(".")[0]]
+    # print(pash_runtime)
+    config = Config(pash=True, width=scaleup_number, runtime=pash_runtime)
+    value = read_distr_execution_time('{}{}_{}'.format(prefix, scaleup_number, suffix))
+    description = "execution time"
+    script_name = script_name_from_prefix(prefix)
+    result = Result(script_name, config, value, description)
+    return result
+
+def collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers):
+    numbers = [distributed_experiment_exec_time(prefix, n, suffix)
+               for n in scaleup_numbers]
+
+    ## TODO: Turn to Result
     compile_numbers = [read_distr_total_compilation_time('{}{}_distr.time'.format(prefix, n))
                        for n in scaleup_numbers]
-    return (seq_numbers, distr_numbers, compile_numbers)
+    return (numbers, compile_numbers)
 
+def collect_experiment_scaleup_times(prefix, scaleup_numbers, suffix="distr.time"):
+    ## Since we have the same input size in all cases, only use the
+    ## one sequential execution for the sequential time
+    seq_number = sequential_experiment_exec_time(prefix, scaleup_numbers[0])
+    distr_numbers, compile_numbers = collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers)
+    return (seq_number, distr_numbers, compile_numbers)
+
+## TODO: Obsolete. Remove
 def collect_experiment_speedups(prefix, scaleup_numbers):
-    seq_numbers, distr_numbers, compile_numbers = collect_experiment_scaleup_times(prefix, scaleup_numbers)
-    distr_speedup = [safe_zero_div(seq_numbers[i], t) for i, t in enumerate(distr_numbers)]
-    compile_distr_speedup = [safe_zero_div(seq_numbers[i], t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
-    return (distr_speedup, compile_distr_speedup)
+    return collect_distr_experiment_speedup_with_compilation(prefix, "distr.time", scaleup_numbers)
 
 def collect_baseline_experiment_speedups(prefix, scaleup_numbers, base_seq):
-    seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, n))
+    seq_numbers = [sequential_experiment_exec_time(prefix, n)
                    for n in scaleup_numbers]
     speedup = [safe_zero_div(base_seq, t) for t in seq_numbers]
     return speedup
 
+## TODO: Put the suffix last and give it a default value. Here and on the one below
 def collect_distr_experiment_speedup(prefix, suffix, scaleup_numbers):
-    # TODO: If this messed things up change it back
-    # seq_numbers, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
-    seq_numbers = [read_total_time('{}{}_seq.time'.format(prefix, scaleup_numbers[0]))
-                   for _ in scaleup_numbers]
-    distr_numbers = collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers)
-    distr_speedup = [safe_zero_div(seq_numbers[i], t) for i, t in enumerate(distr_numbers)]
+    distr_speedup, _ = collect_distr_experiment_speedup_with_compilation(prefix, suffix, scaleup_numbers)
     return distr_speedup
+
+def collect_distr_experiment_speedup_with_compilation(prefix, suffix, scaleup_numbers):
+    seq_number, distr_numbers, compile_numbers = collect_experiment_scaleup_times(prefix, scaleup_numbers, suffix=suffix)
+    distr_speedup = [safe_zero_div(seq_number, t) for i, t in enumerate(distr_numbers)]
+    compile_distr_speedup = [safe_zero_div(seq_number, t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
+    return (distr_speedup, compile_distr_speedup)
+
 
 def collect_experiment_command_number(prefix, suffix, scaleup_numbers):
     command_numbers = [read_distr_command_number('{}{}_{}'.format(prefix, n, suffix))
@@ -255,7 +362,7 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
     # all_scaleup_numbers.sort()
     # all_scaleup_numbers = [i for i in all_scaleup_numbers if i > 1]
     prefix = '{}/{}_'.format(results_dir, experiment)
-    distr_speedup, compile_distr_speedup = collect_experiment_speedups(prefix, all_scaleup_numbers)
+    distr_speedup, _ = collect_experiment_speedups(prefix, all_scaleup_numbers)
 
     output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
 
@@ -391,13 +498,13 @@ def plot_sort_with_baseline(results_dir):
     baseline_sort_opt_prefix = '{}/baseline_sort/baseline_sort_opt_'.format(results_dir)
 
     ## Collect all sort numbers
-    seq_numbers, distr_numbers, _ = collect_experiment_scaleup_times(sort_prefix, all_scaleup_numbers)
-    sort_distr_speedup = [safe_zero_div(seq_numbers[i], t) for i, t in enumerate(distr_numbers)]
+    seq_number, distr_numbers, _ = collect_experiment_scaleup_times(sort_prefix, all_scaleup_numbers)
+    sort_distr_speedup = [safe_zero_div(seq_number, t) for i, t in enumerate(distr_numbers)]
     # sort_distr_speedup, _ = collect_experiment_speedups(sort_prefix, all_scaleup_numbers)
     baseline_sort_distr_speedup = collect_baseline_experiment_speedups(baseline_sort_prefix,
                                                                        [1] + [num*2
                                                                               for num in all_scaleup_numbers],
-                                                                       seq_numbers[0])
+                                                                       seq_number)
     # baseline_sort_opt_distr_speedup = collect_baseline_experiment_speedups(baseline_sort_opt_prefix,
     #                                                                        [1] + all_scaleup_numbers[1:],
     #                                                                        seq_numbers[0])
@@ -514,9 +621,8 @@ def generate_experiment_line(experiment, full=True):
     ## Collect and output the sequential time for the experiment
     scaleup_numbers = [2, 16, 64]
     experiment_results_prefix = '{}/{}_'.format(RESULTS, experiment)
-    seq_times, _, compile_times = collect_experiment_scaleup_times(experiment_results_prefix, scaleup_numbers)
-    assert(len(seq_times) == 3)
-    seq_time_seconds = format_time_seconds(seq_times[0])
+    seq_time, _, compile_times = collect_experiment_scaleup_times(experiment_results_prefix, scaleup_numbers)
+    seq_time_seconds = format_time_seconds(seq_time)
     # seq_time_seconds = seq_times[0] / 1000
     line += [seq_time_seconds, '&']
 
@@ -570,8 +676,8 @@ def generate_tex_coarse_table(experiments):
 def collect_unix50_pipeline_scaleup_times(pipeline_number, unix50_results_dir, scaleup_numbers):
     prefix = '{}/unix50_pipeline_{}_'.format(unix50_results_dir, pipeline_number)
     distr_speedups, _ = collect_experiment_speedups(prefix, scaleup_numbers)
-    absolute_seq_times, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
-    return (distr_speedups, absolute_seq_times)
+    absolute_seq_time, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
+    return (distr_speedups, absolute_seq_time)
 
 def collect_unix50_pipeline_coarse_scaleup_times(pipeline_number, unix50_results_dir, scaleup_numbers):
     prefix = '{}/unix50_pipeline_{}_'.format(unix50_results_dir, pipeline_number)
@@ -579,7 +685,7 @@ def collect_unix50_pipeline_coarse_scaleup_times(pipeline_number, unix50_results
     no_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
                                                               'distr_no_eager.time',
                                                               scaleup_numbers)
-    absolute_seq_times = [read_total_time('{}{}_seq.time'.format(prefix, scaleup_numbers[0]))
+    absolute_seq_times = [sequential_experiment_exec_time(prefix, scaleup_numbers[0])
                           for _ in scaleup_numbers]
     return (no_eager_distr_speedup, absolute_seq_times)
 
@@ -609,12 +715,12 @@ def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     print("|------------------------") 
     ## Filter small exec times.
     sorted_all_results = [res for res in sorted_all_results
-                          if (res[1][scaleup_numbers.index(parallelism)] / 1000) > 0.1]
+                          if (res[1] / 1000) > 0.1]
 
     ## Plot individual speedups
     individual_results = [distr_exec_speedup[scaleup_numbers.index(parallelism)]
                           for distr_exec_speedup, _ in sorted_all_results]
-    absolute_seq_times_s = [absolute_seq[scaleup_numbers.index(parallelism)] / 1000
+    absolute_seq_times_s = [absolute_seq / 1000
                             for _, absolute_seq in sorted_all_results]
     print("Unix50 individual speedups for {} parallelism:".format(parallelism), individual_results)
     mean = sum(individual_results) / len(individual_results)
@@ -680,7 +786,7 @@ def make_coarse_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     ## Plot individual speedups
     individual_results = [distr_exec_speedup[scaleup_numbers.index(parallelism)]
                           for distr_exec_speedup, _ in all_results]
-    absolute_seq_times_s = [absolute_seq[scaleup_numbers.index(parallelism)] / 1000
+    absolute_seq_times_s = [absolute_seq / 1000
                             for _, absolute_seq in all_results]
     print("Unix50 individual speedups for {} parallelism:".format(parallelism), individual_results)
     mean = sum(individual_results) / len(individual_results)
