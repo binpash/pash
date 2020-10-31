@@ -318,9 +318,6 @@ def collect_experiment_scaleup_times(prefix, scaleup_numbers, suffix="distr.time
     distr_numbers, compile_numbers = collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers)
     return (seq_number, distr_numbers, compile_numbers)
 
-## TODO: Obsolete. Remove
-def collect_experiment_speedups(prefix, scaleup_numbers):
-    return collect_distr_experiment_speedup_with_compilation(prefix, "distr.time", scaleup_numbers)
 
 def collect_baseline_experiment_speedups(prefix, scaleup_numbers, base_seq):
     seq_numbers = [sequential_experiment_exec_time(prefix, n)
@@ -328,12 +325,11 @@ def collect_baseline_experiment_speedups(prefix, scaleup_numbers, base_seq):
     speedup = [safe_zero_div(base_seq, t) for t in seq_numbers]
     return speedup
 
-## TODO: Put the suffix last and give it a default value. Here and on the one below
-def collect_distr_experiment_speedup(prefix, suffix, scaleup_numbers):
-    distr_speedup, _ = collect_distr_experiment_speedup_with_compilation(prefix, suffix, scaleup_numbers)
+def collect_distr_experiment_speedup(prefix, scaleup_numbers, suffix="distr.time"):
+    distr_speedup, _ = collect_distr_experiment_speedup_with_compilation(prefix, scaleup_numbers, suffix)
     return distr_speedup
 
-def collect_distr_experiment_speedup_with_compilation(prefix, suffix, scaleup_numbers):
+def collect_distr_experiment_speedup_with_compilation(prefix, scaleup_numbers, suffix="distr.time"):
     seq_number, distr_numbers, compile_numbers = collect_experiment_scaleup_times(prefix, scaleup_numbers, suffix=suffix)
     distr_speedup = [safe_zero_div(seq_number, t) for i, t in enumerate(distr_numbers)]
     compile_distr_speedup = [safe_zero_div(seq_number, t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
@@ -362,7 +358,7 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
     # all_scaleup_numbers.sort()
     # all_scaleup_numbers = [i for i in all_scaleup_numbers if i > 1]
     prefix = '{}/{}_'.format(results_dir, experiment)
-    distr_speedup, _ = collect_experiment_speedups(prefix, all_scaleup_numbers)
+    distr_speedup = collect_distr_experiment_speedup(prefix, all_scaleup_numbers)
 
     output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
 
@@ -374,7 +370,7 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
     # ## In the bigrams experiment we want to also have the alt_bigrams plot
     # if(experiment == "bigrams" and not ("mini-split" in custom_scaleup_plots[experiment])):
     #     opt_prefix = '{}/{}_'.format(results_dir, "alt_bigrams")
-    #     opt_distr_speedup, _ = collect_experiment_speedups(opt_prefix, all_scaleup_numbers)
+    #     opt_distr_speedup = collect_distr_experiment_speedup(opt_prefix, all_scaleup_numbers)
     #     line, = ax.plot(all_scaleup_numbers, opt_distr_speedup, '-P', color='magenta', linewidth=0.5, label='Opt. Parallel')
     #     maximum_y = max(maximum_y, max(opt_distr_speedup))
     #     lines.append(line)
@@ -385,13 +381,13 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
         "split" in custom_scaleup_plots[experiment])):
         try:
             auto_split_distr_speedup = collect_distr_experiment_speedup(prefix,
-                                                                        'distr_auto_split.time',
-                                                                        all_scaleup_numbers)
+                                                                        all_scaleup_numbers,
+                                                                        'distr_auto_split.time')
             line, = ax.plot(all_scaleup_numbers, auto_split_distr_speedup, '-D', color='tab:blue', linewidth=0.5, label='Par + Split')
             lines.append(line)
             # split_distr_speedup = collect_distr_experiment_speedup(prefix,
-            #                                                        'distr_split.time',
-            #                                                        all_scaleup_numbers)
+            #                                                        all_scaleup_numbers,
+            #                                                        'distr_split.time')
             # line, = ax.plot(all_scaleup_numbers, split_distr_speedup, '-h', color='brown', linewidth=0.5, label='Par + B. Split')
             # lines.append(line)
             maximum_y = max(maximum_y, max(auto_split_distr_speedup))
@@ -405,8 +401,8 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
         "mini-split" in custom_scaleup_plots[experiment])):
         try:
             auto_split_distr_speedup = collect_distr_experiment_speedup(prefix,
-                                                                        'distr_auto_split.time',
-                                                                        all_scaleup_numbers)
+                                                                        all_scaleup_numbers,
+                                                                        'distr_auto_split.time')
             line, = ax.plot(all_scaleup_numbers, auto_split_distr_speedup, '-^', linewidth=0.5)
             lines.append(line)
             maximum_y = max(maximum_y, max(auto_split_distr_speedup))
@@ -432,8 +428,8 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
         "blocking-eager" in custom_scaleup_plots[experiment])):
         try:
             no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
-                                                                               'distr_no_task_par_eager.time',
-                                                                               all_scaleup_numbers)
+                                                                               all_scaleup_numbers,
+                                                                               'distr_no_task_par_eager.time')
             line, = ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, color='orange', label='Blocking Eager')
             lines.append(line)
             maximum_y = max(maximum_y, max(no_task_par_eager_distr_speedup))
@@ -445,8 +441,8 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
         "no-eager" in custom_scaleup_plots[experiment])):
         try:
             no_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
-                                                                      'distr_no_eager.time',
-                                                                      all_scaleup_numbers)
+                                                                      all_scaleup_numbers,
+                                                                      'distr_no_eager.time')
             line, = ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, color='green', label='No Eager')
             lines.append(line)
             maximum_y = max(maximum_y, max(no_eager_distr_speedup))
@@ -500,7 +496,7 @@ def plot_sort_with_baseline(results_dir):
     ## Collect all sort numbers
     seq_number, distr_numbers, _ = collect_experiment_scaleup_times(sort_prefix, all_scaleup_numbers)
     sort_distr_speedup = [safe_zero_div(seq_number, t) for i, t in enumerate(distr_numbers)]
-    # sort_distr_speedup, _ = collect_experiment_speedups(sort_prefix, all_scaleup_numbers)
+    # sort_distr_speedup = collect_distr_experiment_speedup(sort_prefix, all_scaleup_numbers)
     baseline_sort_distr_speedup = collect_baseline_experiment_speedups(baseline_sort_prefix,
                                                                        [1] + [num*2
                                                                               for num in all_scaleup_numbers],
@@ -520,16 +516,16 @@ def plot_sort_with_baseline(results_dir):
     ## Add the no eager times if they exist
     # try:
     #     no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(sort_prefix,
-    #                                                                         'distr_no_task_par_eager.time',
-    #                                                                         all_scaleup_numbers)
+    #                                                                         all_scaleup_numbers,
+    #                                                                         'distr_no_task_par_eager.time')
     #     ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Pash - Blocking Eager')
     # except ValueError:
     #     pass
 
     try:
         no_eager_distr_speedup = collect_distr_experiment_speedup(sort_prefix,
-                                                                   'distr_no_eager.time',
-                                                                   all_scaleup_numbers)
+                                                                  all_scaleup_numbers,
+                                                                  'distr_no_eager.time')
         ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='Pash - No Eager')
     except ValueError:
         pass
@@ -675,16 +671,16 @@ def generate_tex_coarse_table(experiments):
 
 def collect_unix50_pipeline_scaleup_times(pipeline_number, unix50_results_dir, scaleup_numbers):
     prefix = '{}/unix50_pipeline_{}_'.format(unix50_results_dir, pipeline_number)
-    distr_speedups, _ = collect_experiment_speedups(prefix, scaleup_numbers)
+    distr_speedups = collect_distr_experiment_speedup(prefix, scaleup_numbers)
     absolute_seq_time, _, _ = collect_experiment_scaleup_times(prefix, scaleup_numbers)
     return (distr_speedups, absolute_seq_time)
 
 def collect_unix50_pipeline_coarse_scaleup_times(pipeline_number, unix50_results_dir, scaleup_numbers):
     prefix = '{}/unix50_pipeline_{}_'.format(unix50_results_dir, pipeline_number)
-    # distr_speedups, _ = collect_experiment_speedups(prefix, scaleup_numbers)
+    # distr_speedups = collect_distr_experiment_speedup(prefix, scaleup_numbers)
     no_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
-                                                              'distr_no_eager.time',
-                                                              scaleup_numbers)
+                                                              scaleup_numbers,
+                                                              'distr_no_eager.time')
     absolute_seq_times = [sequential_experiment_exec_time(prefix, scaleup_numbers[0])
                           for _ in scaleup_numbers]
     return (no_eager_distr_speedup, absolute_seq_times)
