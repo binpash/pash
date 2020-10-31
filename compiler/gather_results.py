@@ -1001,6 +1001,9 @@ def plot_less_one_liners_tiling(results_dir):
     for i, experiment in enumerate(experiments):
         ax = fig.add_subplot(gs[i])
         _, lines, best_result, _ = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, coarse_custom_scaleup_plots, ax)
+        ## Turn all the lines the same color
+        for line in lines:
+            line.set_color("tab:blue")
         if(experiment == "double_sort"):
             total_lines = lines + total_lines
         elif(experiment == "bigrams"):

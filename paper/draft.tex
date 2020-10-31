@@ -21,9 +21,10 @@
 %% to hyperlink their references.
 
 
+% \usepackage{amssymb}
+% \usepackage{cleveref}
 \usepackage{enumitem}
 \usepackage{booktabs}
-% \usepackage{amssymb}
 \usepackage{soul}
 \usepackage{xspace}
 \usepackage{color}
@@ -31,17 +32,17 @@
 \usepackage{upquote}
 \usepackage{listings}
 \usepackage{amsmath}
-% \usepackage{cleveref}
 \usepackage{wrapfig}
 \usepackage{syntax}
 \usepackage{caption}
 \usepackage{picins}
 
+% arxiv: use these options:
 % finalizecache: to generate cache before uploading to arxiv
 % frozencache: to load it, for when uploading to arxiv
 % https://tex.stackexchange.com/questions/280590/work-around-for-minted-code-highlighting-in-arxiv
 % https://github.com/gpoore/minted/issues/113#issuecomment-223451550
-\usepackage[finalizecache]{minted}
+\usepackage{minted}
 % \usemintedstyle{xcode}
 % ----- For red boxes ------
 \usepackage{etoolbox}
@@ -269,6 +270,8 @@
 \author{Lazar Cvetkovich}
 \affiliation{Unaffiliated}
 
+\renewcommand{\shortauthors}{N. Vasilakis*, K. Kallas*, K. Mamouras, A.  Benetopoulos, L. Cvetkovich}
+
 %% \authornote{$^{*}$Equal contribution.}     %% \authornote is optional;
 
 %%                                         %% can be repeated if necessary
@@ -366,6 +369,8 @@ An accompanying parallelizability study of POSIX and GNU commands---two large an
 % The vast majority (39/44) of scripts---all unmodified---see significant speedups (average over all is $6.7\times$, up to $61\times$).
 
 \maketitle
+% arxiv: use plan to remove header/footer
+\pagestyle{plain}
 
 % Its runtime component provides orchestration and planning support during the execution of the program.
 % These are from the abstract:

@@ -21,11 +21,19 @@ The repository contains:
 
 # High level Overview
 
-PaSh is a system for parallelizing POSIX shell scripts.
-Given a script, PaSh converts it to a dataflow graph, performs a series of semantics-preserving program transformations that expose parallelism, and then converts the dataflow graph back into a script---one that adds POSIX constructs to explicitly guide parallelism coupled with PaSh-provided Unix-aware runtime primitives for addressing performance- and correctness-related issues.
-A lightweight annotation language allows command developers to express key parallelizability properties about their commands.
-An accompanying parallelizability study of POSIX and GNU commands—two large and commonly used groups—guides the annotation language and optimized aggregator library that PaSh uses.
-PaSh’s extensive evaluation over 44 unmodified Unix scripts shows significant speedups (0.89–61.1×, avg: 6.7×) stemming from the combination of its program transformations and runtime primitives.
+PaSh is  a system for  parallelizing POSIX shell  scripts. Given a  script, PaSh
+converts  it to  a dataflow  graph,  performs a  series of  semantics-preserving
+program transformations that expose parallelism,  and then converts the dataflow
+graph  back  into  a  script---one  that adds  POSIX  constructs  to  explicitly
+guide parallelism  coupled with PaSh-provided Unix-aware  runtime primitives for
+addressing performance- and correctness-related issues. A lightweight annotation
+language allows  command developers to express  key parallelizability properties
+about their commands.  An accompanying parallelizability study of  POSIX and GNU
+commands—two large and  commonly used groups—guides the  annotation language and
+optimized aggregator library that PaSh uses. PaSh’s extensive evaluation over 44
+unmodified  Unix  scripts shows  significant  speedups  (0.89–61.1×, avg:  6.7×)
+stemming  from  the  combination  of its  program  transformations  and  runtime
+primitives.
 
 # Tests
 To execute the current tests (which are all the one-liners) simply run the following:
