@@ -409,79 +409,80 @@ def check_output_diff_correctness(prefix, scaleup_numbers):
                    if not check_output_diff_correctness_for_experiment('{}{}_distr_no_task_par_eager.time'.format(prefix, n))]
     return (wrong_diffs, wrong_diffs_no_eager, wrong_diffs_no_task_par_eager)
 
-
-## TODO: Refactor this to have a very simple control flow loop that only plots the ones we need (and defines colors etc)
-def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, custom_scaleup_plots, ax):
-    print("Plotting:", experiment)
+## TODO: Only do that once for the whole plotting script
+def collect_scaleup_line_speedups(experiment, all_scaleup_numbers, results_dir):
+    print("Collecting results for:", experiment)
 
     prefix = '{}/{}_'.format(results_dir, experiment)
 
     output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
 
-    default_line_plots = ["split",
-                          "eager",
-                          "blocking-eager",
-                          "no-eager"]
-
+    all_line_plots = ["split",
+                      "mini-split",
+                      "eager",
+                      "blocking-eager",
+                      "no-eager"]
+    
     file_suffixes = {"split": "distr_auto_split.time",
                      "mini-split": "distr_auto_split.time",
                      "eager": "distr.time",
                      "blocking-eager": "distr_no_task_par_eager.time",
                      "no-eager": "distr_no_eager.time"}
 
-    ## TODO: Gather all the results no matter which ones we want to plot
-    ## Decide which lines to plot
-    line_plots = default_line_plots
-    if(experiment in custom_scaleup_plots):
-        line_plots = custom_scaleup_plots[experiment]
-
     ## Gather results
     all_speedup_results = {}
-    maximum_y = 0
-    for line_plot in line_plots:
+    for line_plot in all_line_plots:
         file_suffix = file_suffixes[line_plot]
         try:
             speedup_results = collect_distr_experiment_speedup(prefix,
                                                                all_scaleup_numbers,
                                                                file_suffix)
             all_speedup_results[line_plot] = speedup_results
-
-            ## Aggregate all the speedups to find the maximum one
-            maximum_y = max(maximum_y, max(speedup_results))
         except ValueError:
             ## TODO: Should we do anything here?
             pass
-
-    ## Compute if a split line exists to change the color of the non-split top line
-    split_exists = "split" in all_speedup_results
     
+    return all_speedup_results, output_diff
+
+
+def plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, custom_scaleup_plots, ax):
+    print("Plotting:", experiment)
+
+    default_line_plots = ["split",
+                          "eager",
+                          "blocking-eager",
+                          "no-eager"]
+
     ## Compute the best speedups (for averages)
-    try:
-        best_result = all_speedup_results["eager"]
-    except:
-        ## If for any reason we don't have eager in the plots it should still exist in the files
-        ## TODO: Remove that once we gather all results no matter what we plot
-        best_result = collect_distr_experiment_speedup(prefix, all_scaleup_numbers)
+    best_result = all_speedup_results["eager"]
     if("split" in all_speedup_results):
         best_result = all_speedup_results["split"]
     elif("mini-split" in all_speedup_results):
         best_result = all_speedup_results["mini-split"]
 
-    ## We need to return the no-eager speedups as the baseline
-    ## non runtime primitives.
-    try:
-        no_eager_distr_speedup = all_speedup_results["eager"]
-    except:
-        no_eager_distr_speedup = collect_distr_experiment_speedup(prefix, all_scaleup_numbers)
+    ## We need to return the no-eager speedups as the baseline non runtime primitives.
+    no_eager_distr_speedup = all_speedup_results["eager"]
     if("no-eager" in all_speedup_results):
         no_eager_distr_speedup = all_speedup_results["no-eager"]
+
+    ## Compute if a split line exists to change the color of the non-split top line
+    split_exists = "split" in all_speedup_results
+
+    ## Decide which lines to plot
+    line_plots = default_line_plots
+    if(experiment in custom_scaleup_plots):
+        line_plots = custom_scaleup_plots[experiment]
 
     lines = []
     to_plot_lines = [line_plot for line_plot in line_plots
                      if line_plot in all_speedup_results]
+    maximum_y = 0
     for line_plot in to_plot_lines:
         ## Get the result
         speedup_results = all_speedup_results[line_plot]
+
+        ## Aggregate all the speedups to find the maximum one
+        maximum_y = max(maximum_y, max(speedup_results))
 
         ## Get the config
         plot_config = copy.deepcopy(default_line_plot_configs[line_plot])
@@ -500,7 +501,7 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
     ## TODO: Move this outside
     ax.set_ylim(top=maximum_y*1.15)
 
-    return output_diff, lines, best_result, no_eager_distr_speedup
+    return lines, best_result, no_eager_distr_speedup
 
 ## TODO: Rename this. At the moment it is used to produce a pdf plot for each, 
 ##       but maybe we should produce a report of all of them together instead.
@@ -516,7 +517,8 @@ def collect_scaleup_times(experiment, results_dir):
     # ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
     # ax.plot(all_scaleup_numbers, all_scaleup_numbers, '-', color='tab:gray', linewidth=0.5, label='Ideal')
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
-    output_diff, _, _, _ = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, custom_scaleup_plots, ax)
+    all_speedup_results, output_diff = collect_scaleup_line_speedups(experiment, all_scaleup_numbers, results_dir)
+    _, _, _ = plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, custom_scaleup_plots, ax)
 
     # plt.yscale("log")
     plt.xticks(all_scaleup_numbers[1:])
@@ -969,7 +971,8 @@ def plot_one_liners_tiling(results_dir):
     ## Plot microbenchmarks
     for i, experiment in enumerate(experiments):
         ax = fig.add_subplot(gs[i])
-        _, lines, best_result, no_eager_result = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, custom_scaleup_plots, ax)
+        all_speedup_results, _ = collect_scaleup_line_speedups(experiment, all_scaleup_numbers, results_dir)
+        lines, best_result, no_eager_result = plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, custom_scaleup_plots, ax)
         if(experiment == "double_sort"):
             total_lines = lines + total_lines
         # elif(experiment == "bigrams"):
@@ -1039,7 +1042,8 @@ def plot_less_one_liners_tiling(results_dir):
     ## Plot microbenchmarks
     for i, experiment in enumerate(experiments):
         ax = fig.add_subplot(gs[i])
-        _, lines, best_result, _ = collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, coarse_custom_scaleup_plots, ax)
+        all_speedup_results, _ = collect_scaleup_line_speedups(experiment, all_scaleup_numbers, results_dir)
+        lines, best_result, _ = plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, coarse_custom_scaleup_plots, ax)
         ## Turn all the lines the same color
         for line in lines:
             line.set_color("tab:blue")
