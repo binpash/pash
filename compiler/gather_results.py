@@ -28,29 +28,18 @@ UNIX50_RESULTS = "../evaluation/results/unix50/"
 COARSE_UNIX50_RESULTS = "../evaluation/results/unix50-naive/"
 
 
-experiments = ["minimal_grep",
-               "minimal_sort",
-               "topn",
-               "wf",
-            #    "grep",
-               "spell",
-               "shortest_scripts",
-               "diff",
-               "bigrams",
-            #    "alt_bigrams",
-               "set-diff",
-               "double_sort"]
-
-coarse_experiments = ["minimal_grep",
-                      "minimal_sort",
-                      "topn",
-                      "wf",
-                      "spell",
-                      "diff",
-                      "bigrams",
-                      "set-diff",
-                      "shortest_scripts"]
-
+all_experiments = ["minimal_grep",
+                   "minimal_sort",
+                   "topn",
+                   "wf",
+                   "grep",
+                   "spell",
+                   "shortest_scripts",
+                   "diff",
+                   "bigrams",
+                   "alt_bigrams",
+                   "set-diff",
+                   "double_sort"]
 
 pretty_names = {"minimal_grep" : "nfa-regex",
                 "minimal_sort" : "sort",
@@ -505,19 +494,15 @@ def plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, cus
 
 ## TODO: Rename this. At the moment it is used to produce a pdf plot for each, 
 ##       but maybe we should produce a report of all of them together instead.
-def collect_scaleup_times(experiment, results_dir):
-
-
+## TODO: Once add the xlabels in the resultvector obhect we can remove the second
+##       argument here.
+def plot_scaleup_times(experiment, all_scaleup_numbers, all_speedup_results):
     fig, ax = plt.subplots()
 
     ## Plot speedup
     ax.set_ylabel('Speedup')
     ax.set_xlabel('--width')
 
-    # ax.plot(all_scaleup_numbers, total_distr_speedup, '-^', linewidth=0.5, label='+ Merge')
-    # ax.plot(all_scaleup_numbers, all_scaleup_numbers, '-', color='tab:gray', linewidth=0.5, label='Ideal')
-    all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
-    all_speedup_results, output_diff = collect_scaleup_line_speedups(experiment, all_scaleup_numbers, results_dir)
     _, _, _ = plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, custom_scaleup_plots, ax)
 
     # plt.yscale("log")
@@ -525,11 +510,8 @@ def collect_scaleup_times(experiment, results_dir):
     plt.legend(loc='lower right')
     plt.title(pretty_names[experiment])
 
-
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "{}_throughput_scaleup.pdf".format(experiment)),bbox_inches='tight')
-
-    return output_diff
 
 def plot_sort_with_baseline(results_dir):
 
@@ -942,19 +924,9 @@ def collect_unix50_coarse_scaleup_times(unix50_results_dir):
     plt.savefig(os.path.join('../evaluation/plots', "unix50_coarse_throughput_scaleup.pdf"),bbox_inches='tight')
 
 
-def plot_one_liners_tiling(results_dir):
+def plot_one_liners_tiling(all_experiment_results, experiments):
 
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
-    experiments = ["minimal_grep",
-                   "minimal_sort",
-                   "topn",
-                   "wf",
-                   "spell",
-                   "diff",
-                   "bigrams",
-                   "set-diff",
-                   "double_sort",
-                   "shortest_scripts"]
 
     confs = ["PaSh",
              "PaSh w/o split",
@@ -971,7 +943,7 @@ def plot_one_liners_tiling(results_dir):
     ## Plot microbenchmarks
     for i, experiment in enumerate(experiments):
         ax = fig.add_subplot(gs[i])
-        all_speedup_results, _ = collect_scaleup_line_speedups(experiment, all_scaleup_numbers, results_dir)
+        all_speedup_results = all_experiment_results[experiment]
         lines, best_result, no_eager_result = plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, custom_scaleup_plots, ax)
         if(experiment == "double_sort"):
             total_lines = lines + total_lines
@@ -1018,18 +990,9 @@ def plot_one_liners_tiling(results_dir):
     print(" |-- No Eager Averages:", all_no_eager_averages)
     print(" |-- Geometric Means:", geo_means)
 
-def plot_less_one_liners_tiling(results_dir):
+def plot_less_one_liners_tiling(all_experiment_results, experiments):
 
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
-    experiments = ["minimal_grep",
-                   "minimal_sort",
-                   "topn",
-                   "wf",
-                   "spell",
-                   "diff",
-                   "bigrams",
-                   "set-diff",
-                   "shortest_scripts"]
 
     # confs = ["Parallel"]
 
@@ -1042,7 +1005,7 @@ def plot_less_one_liners_tiling(results_dir):
     ## Plot microbenchmarks
     for i, experiment in enumerate(experiments):
         ax = fig.add_subplot(gs[i])
-        all_speedup_results, _ = collect_scaleup_line_speedups(experiment, all_scaleup_numbers, results_dir)
+        all_speedup_results = all_experiment_results[experiment]
         lines, best_result, _ = plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, coarse_custom_scaleup_plots, ax)
         ## Turn all the lines the same color
         for line in lines:
@@ -1078,6 +1041,7 @@ def plot_less_one_liners_tiling(results_dir):
 
     fig.set_size_inches(22.5, 12.5)
     plt.tight_layout()
+    ## TODO: Replace the prefix with a constant
     plt.savefig(os.path.join('../evaluation/plots', "coarse_tiling_throughput_scaleup.pdf"),bbox_inches='tight')
 
     ## Print average, geo-mean
@@ -1111,20 +1075,45 @@ plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 # Plot microbenchmarks
+## TODO: Change that to plot them in a report
 diff_results = []
-for experiment in experiments:
-    output_diff = collect_scaleup_times(experiment, RESULTS)
+all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
+all_experiment_results = {}
+for experiment in all_experiments:
+    all_speedup_results, output_diff = collect_scaleup_line_speedups(experiment, all_scaleup_numbers, RESULTS)
+    all_experiment_results[experiment] = all_speedup_results
+    plot_scaleup_times(experiment, all_scaleup_numbers, all_speedup_results)
     diff_results += format_wrong_output(output_diff[0], experiment, "parallel")
     diff_results += format_wrong_output(output_diff[1], experiment, "parallel no-eager")
     diff_results += format_wrong_output(output_diff[2], experiment, "parallel no-task-par-eager")
 
-plot_one_liners_tiling(RESULTS)
 
-plot_less_one_liners_tiling(RESULTS)
-
-## Generate Tex table for microbenchmarks
+## Plot the tiling plots and generate tex tables for two papers
+experiments = ["minimal_grep",
+               "minimal_sort",
+               "topn",
+               "wf",
+               "spell",
+               "diff",
+               "bigrams",
+               "set-diff",
+               "double_sort",
+               "shortest_scripts"]
+plot_one_liners_tiling(all_experiment_results, experiments)
+## TODO: Change those to accept all_experiment results
 generate_tex_table(experiments)
 
+coarse_experiments = ["minimal_grep",
+                      "minimal_sort",
+                      "topn",
+                      "wf",
+                      "spell",
+                      "diff",
+                      "bigrams",
+                      "set-diff",
+                      "shortest_scripts"]
+plot_less_one_liners_tiling(all_experiment_results, coarse_experiments)
+## TODO: Change those to accept all_experiment results
 generate_tex_coarse_table(coarse_experiments)
 
 
