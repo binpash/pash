@@ -415,17 +415,8 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
     print("Plotting:", experiment)
 
     prefix = '{}/{}_'.format(results_dir, experiment)
-    
-    ## TODO: Replace this when refactoring in this method is done
-    # distr_speedup_results = collect_distr_experiment_speedup(prefix, all_scaleup_numbers)
-    # distr_speedup = distr_speedup_results.results
-    distr_speedup = collect_distr_experiment_speedup(prefix, all_scaleup_numbers)
 
     output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
-
-    maximum_y = 0
-    lines = []
-    best_result = distr_speedup
 
     default_line_plots = ["split",
                           "eager",
@@ -438,72 +429,81 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
                      "blocking-eager": "distr_no_task_par_eager.time",
                      "no-eager": "distr_no_eager.time"}
 
+    ## TODO: Gather all the results no matter which ones we want to plot
+    ## Decide which lines to plot
     line_plots = default_line_plots
     if(experiment in custom_scaleup_plots):
         line_plots = custom_scaleup_plots[experiment]
 
-    ## Compute if a split line exists to change the color of the non-split top line
-    split_exists = "split" in line_plots
-    
-    ## Compute the best speedups (for averages)
-    best_result = distr_speedup
-
-    ## We need to return the no-eager speedups as the baseline
-    ## non runtime primitives.
-    no_eager_distr_speedup = None
-
-    ## TODO: Separate this into first gathering the results and then plotting them
+    ## Gather results
+    all_speedup_results = {}
+    maximum_y = 0
     for line_plot in line_plots:
         file_suffix = file_suffixes[line_plot]
         try:
             speedup_results = collect_distr_experiment_speedup(prefix,
                                                                all_scaleup_numbers,
                                                                file_suffix)
-            plot_config = copy.deepcopy(default_line_plot_configs[line_plot])
-
-            ## If a split exists, the eager should be red
-            ## TODO: Move this logic outside. It should not be part of the plotting function
-            if(line_plot == "eager" and not split_exists):
-                plot_config.color = 'tab:blue'
-                plot_config.linestyle = '-o'
-                plot_config.label = 'Parallel'
-
-            line, = plot_config.plot(all_scaleup_numbers, speedup_results, ax)
-            lines.append(line)
+            all_speedup_results[line_plot] = speedup_results
 
             ## Aggregate all the speedups to find the maximum one
             maximum_y = max(maximum_y, max(speedup_results))
-
-            ## If the current line plot is a split we should save this as the best result
-            if line_plot in ["split", "mini-split"]:
-                best_result = speedup_results
-
-            ## If no-eager doesn't exist then we should return eager as the baseline (no-runtime primitive) results
-            if line_plot == "eager":
-                if not ("no-eager" in line_plots):
-                    no_eager_distr_speedup = speedup_results
-                
-            if line_plot == "no-eager":
-                no_eager_distr_speedup = speedup_results
         except ValueError:
-            
-            ## TODO: Move this in a saner place when we separate computing speedups from plotting
-            if(line_plot == "split"):
-                split_exists = False
-            ## TODO: Should we do anything more here
+            ## TODO: Should we do anything here?
             pass
+
+    ## Compute if a split line exists to change the color of the non-split top line
+    split_exists = "split" in all_speedup_results
+    
+    ## Compute the best speedups (for averages)
+    try:
+        best_result = all_speedup_results["eager"]
+    except:
+        ## If for any reason we don't have eager in the plots it should still exist in the files
+        ## TODO: Remove that once we gather all results no matter what we plot
+        best_result = collect_distr_experiment_speedup(prefix, all_scaleup_numbers)
+    if("split" in all_speedup_results):
+        best_result = all_speedup_results["split"]
+    elif("mini-split" in all_speedup_results):
+        best_result = all_speedup_results["mini-split"]
+
+    ## We need to return the no-eager speedups as the baseline
+    ## non runtime primitives.
+    try:
+        no_eager_distr_speedup = all_speedup_results["eager"]
+    except:
+        no_eager_distr_speedup = collect_distr_experiment_speedup(prefix, all_scaleup_numbers)
+    if("no-eager" in all_speedup_results):
+        no_eager_distr_speedup = all_speedup_results["no-eager"]
+
+    lines = []
+    to_plot_lines = [line_plot for line_plot in line_plots
+                     if line_plot in all_speedup_results]
+    for line_plot in to_plot_lines:
+        ## Get the result
+        speedup_results = all_speedup_results[line_plot]
+
+        ## Get the config
+        plot_config = copy.deepcopy(default_line_plot_configs[line_plot])
+
+        ## If a split exists, the eager should be red
+        ## TODO: Move this logic outside. It should not be part of the plotting function
+        if(line_plot == "eager" and not split_exists):
+            plot_config.color = 'tab:blue'
+            plot_config.linestyle = '-o'
+            plot_config.label = 'Parallel'
+
+        line, = plot_config.plot(all_scaleup_numbers, speedup_results, ax)
+        lines.append(line)
 
     ## Set the ylim
     ## TODO: Move this outside
     ax.set_ylim(top=maximum_y*1.15)
 
-    # Return the no-eager speedup
-    ## TODO: Once we separate result gathering from plotting this can go.
-    if(no_eager_distr_speedup is None):
-        no_eager_distr_speedup = distr_speedup
     return output_diff, lines, best_result, no_eager_distr_speedup
 
-
+## TODO: Rename this. At the moment it is used to produce a pdf plot for each, 
+##       but maybe we should produce a report of all of them together instead.
 def collect_scaleup_times(experiment, results_dir):
 
 
