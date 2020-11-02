@@ -1,3 +1,4 @@
+import copy
 import sys
 import math
 import os
@@ -119,13 +120,27 @@ suffix_to_runtime_config = {"distr": "eager",
                             "distr_no_task_par_eager": "blocking-eager",
                             "distr_no_eager": "no-eager"}
 
+class LinePlotConfig:
+    ## TODO: Have a default label
+    def __init__(self, linestyle, color, label, linewidth=0.5):
+        self.linestyle = linestyle
+        self.color = color
+        self.label = label
+        self.linewidth = linewidth
+    
+    def plot(self, xvalues, yvalues, ax):
+        return ax.plot(xvalues, yvalues, self.linestyle, linewidth=self.linewidth, color=self.color, label=self.label)
 
+default_line_plot_configs = {'eager': LinePlotConfig('-D', 'tab:red', 'Parallel w/o split'),
+                             'split': LinePlotConfig('-o', 'tab:blue', 'Parallel'),
+                             'mini-split': LinePlotConfig('-o', 'tab:blue', 'Parallel'),
+                             'blocking-eager': LinePlotConfig('-p', 'orange', 'Blocking Eager'),
+                             'no-eager': LinePlotConfig('-^', 'green', 'No Eager')}
 
 class Config:
     def __init__(self, pash, width=None, runtime=None):
         if(pash):
             assert(Config.is_runtime_valid(runtime))
-            assert(isinstance(width, int))
             self.pash = True
             self.width = width
             self.runtime = runtime
@@ -186,6 +201,36 @@ class Result:
 
     def __radd__(self, other):
         return self + other
+
+class ResultVector:
+    def __init__(self, script, config, results, description, xvalues, xaxis):
+        self.script = script
+        self.config = config
+        self.results = results 
+        self.description = description
+        self.xvalues = xvalues
+        self.xaxis = xaxis
+
+    def __repr__(self):
+        return("Results(description={}, script={}, config={})".format(self.description,
+                                                                      self.script,
+                                                                      self.value,
+                                                                      self.config))
+
+    def plot(self, ax, linestyle='--', linewidth=0.5, color=None, label=None):
+        if(label is None):
+            ## TODO: If a label is not passed, we can generate one through config
+            return NotImplemented
+        
+        if(color is None):
+            return ax.plot(self.xvalues, self.results, linestyle, linewidth=linewidth, label=label)
+        else:
+            ## This might not be a necessary case-split
+            return ax.plot(self.xvalues, self.results, linestyle, linewidth=linewidth, color=color, label=label)
+
+    def __iter__(self):
+        ''' Returns the iterator for the list of results. '''
+        return self.results.__iter__()
 
 def safe_zero_div(a, b):
     if(b == 0):
@@ -284,6 +329,10 @@ def script_name_from_prefix(prefix):
     script_name = prefix.split("/")[-1].rstrip("_")
     return script_name
 
+def runtime_config_from_suffix(suffix):
+    runtime = suffix_to_runtime_config[suffix.split(".")[0]]
+    return runtime
+
 def sequential_experiment_exec_time(prefix, scaleup_number):
     config = Config(pash=False)
     value = read_total_time('{}{}_seq.time'.format(prefix, scaleup_number))
@@ -293,7 +342,7 @@ def sequential_experiment_exec_time(prefix, scaleup_number):
     return result
 
 def distributed_experiment_exec_time(prefix, scaleup_number, suffix):
-    pash_runtime = suffix_to_runtime_config[suffix.split(".")[0]]
+    pash_runtime = runtime_config_from_suffix(suffix)
     # print(pash_runtime)
     config = Config(pash=True, width=scaleup_number, runtime=pash_runtime)
     value = read_distr_execution_time('{}{}_{}'.format(prefix, scaleup_number, suffix))
@@ -318,7 +367,6 @@ def collect_experiment_scaleup_times(prefix, scaleup_numbers, suffix="distr.time
     distr_numbers, compile_numbers = collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers)
     return (seq_number, distr_numbers, compile_numbers)
 
-
 def collect_baseline_experiment_speedups(prefix, scaleup_numbers, base_seq):
     seq_numbers = [sequential_experiment_exec_time(prefix, n)
                    for n in scaleup_numbers]
@@ -331,9 +379,20 @@ def collect_distr_experiment_speedup(prefix, scaleup_numbers, suffix="distr.time
 
 def collect_distr_experiment_speedup_with_compilation(prefix, scaleup_numbers, suffix="distr.time"):
     seq_number, distr_numbers, compile_numbers = collect_experiment_scaleup_times(prefix, scaleup_numbers, suffix=suffix)
-    distr_speedup = [safe_zero_div(seq_number, t) for i, t in enumerate(distr_numbers)]
-    compile_distr_speedup = [safe_zero_div(seq_number, t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
-    return (distr_speedup, compile_distr_speedup)
+    distr_speedups = [safe_zero_div(seq_number, t) for i, t in enumerate(distr_numbers)]
+    compile_distr_speedups = [safe_zero_div(seq_number, t + compile_numbers[i]) for i, t in enumerate(distr_numbers)]
+
+    ## TODO: Populate the Results using a method in Results   
+    ## TODO: Pass these as arguments to the other methods 
+    ##       (or if populating through a method in Results we can just fill there) 
+    # script_name = script_name_from_prefix(prefix)
+    # description = "speedups"
+    # runtime = runtime_config_from_suffix(suffix)
+    # config = Config(pash=True, width="Var", runtime=runtime)
+    # result_vec = ResultVector(script_name, config, distr_speedups, 
+    #                           description, scaleup_numbers, "width")
+    # return (result_vec, compile_distr_speedups)
+    return (distr_speedups, compile_distr_speedups)
 
 
 def collect_experiment_command_number(prefix, suffix, scaleup_numbers):
@@ -351,13 +410,15 @@ def check_output_diff_correctness(prefix, scaleup_numbers):
     return (wrong_diffs, wrong_diffs_no_eager, wrong_diffs_no_task_par_eager)
 
 
+## TODO: Refactor this to have a very simple control flow loop that only plots the ones we need (and defines colors etc)
 def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, custom_scaleup_plots, ax):
-    print(experiment)
+    print("Plotting:", experiment)
 
-    # all_scaleup_numbers = list(set(get_experiment_files(experiment, results_dir)))
-    # all_scaleup_numbers.sort()
-    # all_scaleup_numbers = [i for i in all_scaleup_numbers if i > 1]
     prefix = '{}/{}_'.format(results_dir, experiment)
+    
+    ## TODO: Replace this when refactoring in this method is done
+    # distr_speedup_results = collect_distr_experiment_speedup(prefix, all_scaleup_numbers)
+    # distr_speedup = distr_speedup_results.results
     distr_speedup = collect_distr_experiment_speedup(prefix, all_scaleup_numbers)
 
     output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
@@ -366,96 +427,78 @@ def collect_scaleup_times_common(experiment, all_scaleup_numbers, results_dir, c
     lines = []
     best_result = distr_speedup
 
-    ## Obsolete
-    # ## In the bigrams experiment we want to also have the alt_bigrams plot
-    # if(experiment == "bigrams" and not ("mini-split" in custom_scaleup_plots[experiment])):
-    #     opt_prefix = '{}/{}_'.format(results_dir, "alt_bigrams")
-    #     opt_distr_speedup = collect_distr_experiment_speedup(opt_prefix, all_scaleup_numbers)
-    #     line, = ax.plot(all_scaleup_numbers, opt_distr_speedup, '-P', color='magenta', linewidth=0.5, label='Opt. Parallel')
-    #     maximum_y = max(maximum_y, max(opt_distr_speedup))
-    #     lines.append(line)
+    default_line_plots = ["split",
+                          "eager",
+                          "blocking-eager",
+                          "no-eager"]
 
-    split_exists = False
-    if(not (experiment in custom_scaleup_plots) or
-       (experiment in custom_scaleup_plots and
-        "split" in custom_scaleup_plots[experiment])):
-        try:
-            auto_split_distr_speedup = collect_distr_experiment_speedup(prefix,
-                                                                        all_scaleup_numbers,
-                                                                        'distr_auto_split.time')
-            line, = ax.plot(all_scaleup_numbers, auto_split_distr_speedup, '-D', color='tab:blue', linewidth=0.5, label='Par + Split')
-            lines.append(line)
-            # split_distr_speedup = collect_distr_experiment_speedup(prefix,
-            #                                                        all_scaleup_numbers,
-            #                                                        'distr_split.time')
-            # line, = ax.plot(all_scaleup_numbers, split_distr_speedup, '-h', color='brown', linewidth=0.5, label='Par + B. Split')
-            # lines.append(line)
-            maximum_y = max(maximum_y, max(auto_split_distr_speedup))
-            # maximum_y = max(maximum_y, max(split_distr_speedup))
-            best_result = auto_split_distr_speedup
-            split_exists = True
-        except ValueError:
-            pass
+    file_suffixes = {"split": "distr_auto_split.time",
+                     "mini-split": "distr_auto_split.time",
+                     "eager": "distr.time",
+                     "blocking-eager": "distr_no_task_par_eager.time",
+                     "no-eager": "distr_no_eager.time"}
 
-    if((experiment in custom_scaleup_plots and
-        "mini-split" in custom_scaleup_plots[experiment])):
-        try:
-            auto_split_distr_speedup = collect_distr_experiment_speedup(prefix,
-                                                                        all_scaleup_numbers,
-                                                                        'distr_auto_split.time')
-            line, = ax.plot(all_scaleup_numbers, auto_split_distr_speedup, '-^', linewidth=0.5)
-            lines.append(line)
-            maximum_y = max(maximum_y, max(auto_split_distr_speedup))
-            best_result = auto_split_distr_speedup
-        except ValueError:
-            pass
+    line_plots = default_line_plots
+    if(experiment in custom_scaleup_plots):
+        line_plots = custom_scaleup_plots[experiment]
 
+    ## Compute if a split line exists to change the color of the non-split top line
+    split_exists = "split" in line_plots
+    
+    ## Compute the best speedups (for averages)
+    best_result = distr_speedup
 
-    if(not (experiment in custom_scaleup_plots) or
-       (experiment in custom_scaleup_plots and
-        "eager" in custom_scaleup_plots[experiment])):
-        if(not split_exists):
-            line_color = 'tab:blue'
-        else:
-            line_color = 'tab:red'
-        line, = ax.plot(all_scaleup_numbers, distr_speedup, '-o', linewidth=0.5, color=line_color, label='Parallel')
-        lines.append(line)
-        maximum_y = max(maximum_y, max(distr_speedup))
-
-    ## Add the no eager times if they exist
-    if(not (experiment in custom_scaleup_plots) or
-       (experiment in custom_scaleup_plots and
-        "blocking-eager" in custom_scaleup_plots[experiment])):
-        try:
-            no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
-                                                                               all_scaleup_numbers,
-                                                                               'distr_no_task_par_eager.time')
-            line, = ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, color='orange', label='Blocking Eager')
-            lines.append(line)
-            maximum_y = max(maximum_y, max(no_task_par_eager_distr_speedup))
-        except ValueError:
-            pass
+    ## We need to return the no-eager speedups as the baseline
+    ## non runtime primitives.
     no_eager_distr_speedup = None
-    if(not (experiment in custom_scaleup_plots) or
-       (experiment in custom_scaleup_plots and
-        "no-eager" in custom_scaleup_plots[experiment])):
+
+    ## TODO: Separate this into first gathering the results and then plotting them
+    for line_plot in line_plots:
+        file_suffix = file_suffixes[line_plot]
         try:
-            no_eager_distr_speedup = collect_distr_experiment_speedup(prefix,
-                                                                      all_scaleup_numbers,
-                                                                      'distr_no_eager.time')
-            line, = ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, color='green', label='No Eager')
+            speedup_results = collect_distr_experiment_speedup(prefix,
+                                                               all_scaleup_numbers,
+                                                               file_suffix)
+            plot_config = copy.deepcopy(default_line_plot_configs[line_plot])
+
+            ## If a split exists, the eager should be red
+            ## TODO: Move this logic outside. It should not be part of the plotting function
+            if(line_plot == "eager" and not split_exists):
+                plot_config.color = 'tab:blue'
+                plot_config.linestyle = '-o'
+                plot_config.label = 'Parallel'
+
+            line, = plot_config.plot(all_scaleup_numbers, speedup_results, ax)
             lines.append(line)
-            maximum_y = max(maximum_y, max(no_eager_distr_speedup))
-            if((experiment in custom_scaleup_plots and
-                not "eager" in custom_scaleup_plots[experiment])):
-                best_result = no_eager_distr_speedup
+
+            ## Aggregate all the speedups to find the maximum one
+            maximum_y = max(maximum_y, max(speedup_results))
+
+            ## If the current line plot is a split we should save this as the best result
+            if line_plot in ["split", "mini-split"]:
+                best_result = speedup_results
+
+            ## If no-eager doesn't exist then we should return eager as the baseline (no-runtime primitive) results
+            if line_plot == "eager":
+                if not ("no-eager" in line_plots):
+                    no_eager_distr_speedup = speedup_results
+                
+            if line_plot == "no-eager":
+                no_eager_distr_speedup = speedup_results
         except ValueError:
+            
+            ## TODO: Move this in a saner place when we separate computing speedups from plotting
+            if(line_plot == "split"):
+                split_exists = False
+            ## TODO: Should we do anything more here
             pass
 
     ## Set the ylim
+    ## TODO: Move this outside
     ax.set_ylim(top=maximum_y*1.15)
 
     # Return the no-eager speedup
+    ## TODO: Once we separate result gathering from plotting this can go.
     if(no_eager_distr_speedup is None):
         no_eager_distr_speedup = distr_speedup
     return output_diff, lines, best_result, no_eager_distr_speedup
