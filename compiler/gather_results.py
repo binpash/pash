@@ -887,6 +887,9 @@ def collect_unix50_coarse_scaleup_times(unix50_results_dir):
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "unix50_coarse_throughput_scaleup.pdf"),bbox_inches='tight')
 
+## TODO: Refactor all tiling plots to happen using the same API
+## TODO: Add more experiments to be ploted in the report
+## TODO: Make the text in the plot become red if there is an error
 def report_all_one_liners(all_scaleup_numbers, all_experiment_results):
 
     confs = ["PaSh",
