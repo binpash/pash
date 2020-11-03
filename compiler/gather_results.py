@@ -94,6 +94,19 @@ suffix_to_runtime_config = {"distr": "eager",
                             "distr_no_task_par_eager": "blocking-eager",
                             "distr_no_eager": "no-eager"}
 
+all_line_plots = ["split",
+                  "mini-split",
+                  "eager",
+                  "blocking-eager",
+                  "no-eager"]
+
+file_suffixes = {"split": "distr_auto_split.time",
+                 "mini-split": "distr_auto_split.time",
+                 "eager": "distr.time",
+                 "blocking-eager": "distr_no_task_par_eager.time",
+                 "no-eager": "distr_no_eager.time"}
+
+
 class LinePlotConfig:
     ## TODO: Have a default label
     def __init__(self, linestyle, color, label, linewidth=0.5):
@@ -288,11 +301,11 @@ def check_output_diff_correctness_for_experiment(filename):
             for line in f:
                 if(line.startswith("Files ")
                    and line.rstrip().endswith("are identical")):
-                    return True
-            return False
+                    return "Correct"
+            return "Wrong"
     except:
-        print("!! WARNING: Filename:", filename, "not found!!!")
-        return False
+        # print("!! WARNING: Filename:", filename, "not found!!!")
+        return "Not Found"
 
 ##
 ## Result Collection
@@ -375,33 +388,24 @@ def collect_experiment_command_number(prefix, suffix, scaleup_numbers):
     return command_numbers
 
 def check_output_diff_correctness(prefix, scaleup_numbers):
-    wrong_diffs = [n for n in scaleup_numbers
-                   if not check_output_diff_correctness_for_experiment('{}{}_distr.time'.format(prefix, n))]
-    wrong_diffs_no_eager = [n for n in scaleup_numbers
-                   if not check_output_diff_correctness_for_experiment('{}{}_distr_no_eager.time'.format(prefix, n))]
-    wrong_diffs_no_task_par_eager = [n for n in scaleup_numbers
-                   if not check_output_diff_correctness_for_experiment('{}{}_distr_no_task_par_eager.time'.format(prefix, n))]
-    return (wrong_diffs, wrong_diffs_no_eager, wrong_diffs_no_task_par_eager)
+    global all_line_plots
+    global file_suffixes
+    
+    result_correctness = {}
+    for line_plot in all_line_plots:
+        suffix = file_suffixes[line_plot]
+        result_correctness[line_plot] = [(n, check_output_diff_correctness_for_experiment('{}{}_{}'.format(prefix, n, suffix)))
+                                         for n in scaleup_numbers]
+    return result_correctness
 
 ## TODO: Only do that once for the whole plotting script
 def collect_scaleup_line_speedups(experiment, all_scaleup_numbers, results_dir):
+    global all_line_plots
+    global file_suffixes
+
     print("Collecting results for:", experiment)
 
     prefix = '{}/{}_'.format(results_dir, experiment)
-
-    output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
-
-    all_line_plots = ["split",
-                      "mini-split",
-                      "eager",
-                      "blocking-eager",
-                      "no-eager"]
-    
-    file_suffixes = {"split": "distr_auto_split.time",
-                     "mini-split": "distr_auto_split.time",
-                     "eager": "distr.time",
-                     "blocking-eager": "distr_no_task_par_eager.time",
-                     "no-eager": "distr_no_eager.time"}
 
     ## Gather results
     all_speedup_results = {}
@@ -415,6 +419,9 @@ def collect_scaleup_line_speedups(experiment, all_scaleup_numbers, results_dir):
         except ValueError:
             ## TODO: Should we do anything here?
             pass
+
+    ## Check if outputs are correct
+    output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
     
     return all_speedup_results, output_diff
 
@@ -890,7 +897,8 @@ def collect_unix50_coarse_scaleup_times(unix50_results_dir):
 ## TODO: Refactor all tiling plots to happen using the same API
 ## TODO: Add more experiments to be ploted in the report
 ## TODO: Make the text in the plot become red if there is an error
-def report_all_one_liners(all_scaleup_numbers, all_experiment_results):
+def report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctness):
+    global all_line_plots
 
     confs = ["PaSh",
              "PaSh w/o split",
@@ -913,9 +921,14 @@ def report_all_one_liners(all_scaleup_numbers, all_experiment_results):
         if(experiment == "double_sort"):
             total_lines = lines + total_lines
         ax.set_xticks(all_scaleup_numbers[1:])
+
+        text_color = 'black'
+        if any_wrong(correctness, experiment, all_line_plots):
+            text_color = 'red'
         ax.text(.5,.91,pretty_names[experiment],
-        horizontalalignment='center',
-        transform=ax.transAxes)
+                horizontalalignment='center',
+                transform=ax.transAxes,
+                color=text_color)
         # ax.set_yticks([])
         fig.add_subplot(ax)
 
@@ -1097,13 +1110,35 @@ def plot_less_one_liners_tiling(all_experiment_results, experiments):
     print(" |-- Geometric Means:", geo_means)
 
 
+def format_correctness(correctness):
+    global all_experiments
+    global all_line_plots
 
-def format_wrong_output(output_diff, experiment, mode):
-    if(len(output_diff) > 0):
-        formatted_output_diff = 'Output for {} -- {} {} is wrong'.format(experiment, output_diff, mode)
-        return [' !! -- WARNING -- !! {}'.format(formatted_output_diff)]
-    else:
-        return []
+    print("\nWrong Result Summary (If results are missing for complete conf they are ignored):")
+    for experiment in all_experiments:
+        for line_plot in all_line_plots:
+            result_correctness = correctness[experiment][line_plot]
+            all_missing = all([res == "Not Found" for n, res in result_correctness])
+            wrong_ns = []
+            missing_ns = []
+            for n, res in result_correctness:
+                if res == "Wrong":
+                    wrong_ns.append(n)
+                elif (res == "Not Found"):
+                    missing_ns.append(n)
+            if len(wrong_ns) > 0:
+                print("|-- WARNING: Wrong output for", experiment, "-", line_plot, "-", wrong_ns)
+            if len(missing_ns) > 0 and not all_missing:
+                print("|-- WARNING: Missing output for", experiment, "-", line_plot, "-", missing_ns)            
+
+def any_wrong(correctness, experiment, line_plots):
+    for line_plot in line_plots:
+        result_correctness = correctness[experiment][line_plot]
+        any_wrong = any([res == "Wrong" for n, res in result_correctness])
+        if any_wrong:
+            return True
+    return False
+
 
 ## Set the fonts to be larger
 SMALL_SIZE = 22
@@ -1119,19 +1154,17 @@ plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 # Plot microbenchmarks
-## TODO: Change that to plot them in a report
 diff_results = []
 all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
 all_experiment_results = {}
+correctness = {}
 for experiment in all_experiments:
     all_speedup_results, output_diff = collect_scaleup_line_speedups(experiment, all_scaleup_numbers, RESULTS)
     all_experiment_results[experiment] = all_speedup_results
-    diff_results += format_wrong_output(output_diff[0], experiment, "parallel")
-    diff_results += format_wrong_output(output_diff[1], experiment, "parallel no-eager")
-    diff_results += format_wrong_output(output_diff[2], experiment, "parallel no-task-par-eager")
+    correctness[experiment] = output_diff
 
 ## Make a report of all one-liners
-report_all_one_liners(all_scaleup_numbers, all_experiment_results)
+report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctness)
 
 ##
 ## Theory Paper
@@ -1168,5 +1201,5 @@ generate_tex_table(experiments)
 collect_unix50_scaleup_times(UNIX50_RESULTS)
 plot_sort_with_baseline(RESULTS)
 
-
-print("\n".join(diff_results))
+## Format and print correctness results
+format_correctness(correctness)
