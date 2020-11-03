@@ -42,6 +42,17 @@ echo $ONE | wc $FLAGS
 pash-call ID1234 echo $ONE | pash-call ID4245 wc $FLAGS
 ```
 
+Or maybe:
+
+```
+pash-pipe PIPE0
+pash-call ID1234 - PIPE0 -- echo $ONE
+pash-call ID2345 PIPE0 - -- wc $FLAGS
+pash-run ID2345
+```
+
+Since we'll want to be able to, e.g., split `PIPE0`.
+
 Probably the technique used at the end will require combining these solutions, and possibly invent a few more:-)
 
 
