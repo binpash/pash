@@ -398,7 +398,6 @@ def check_output_diff_correctness(prefix, scaleup_numbers):
                                          for n in scaleup_numbers]
     return result_correctness
 
-## TODO: Only do that once for the whole plotting script
 def collect_scaleup_line_speedups(experiment, all_scaleup_numbers, results_dir):
     global all_line_plots
     global file_suffixes
@@ -426,7 +425,8 @@ def collect_scaleup_line_speedups(experiment, all_scaleup_numbers, results_dir):
     return all_speedup_results, output_diff
 
 
-def plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, custom_scaleup_plots, ax):
+def plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, custom_scaleup_plots, 
+                       ax, line_plot_configs=default_line_plot_configs):
     print("Plotting:", experiment)
 
     default_line_plots = ["split",
@@ -466,7 +466,7 @@ def plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, cus
         maximum_y = max(maximum_y, max(speedup_results))
 
         ## Get the config
-        plot_config = copy.deepcopy(default_line_plot_configs[line_plot])
+        plot_config = copy.deepcopy(line_plot_configs[line_plot])
 
         ## If a split exists, the eager should be red
         ## TODO: Move this logic outside. It should not be part of the plotting function
@@ -894,36 +894,37 @@ def collect_unix50_coarse_scaleup_times(unix50_results_dir):
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "unix50_coarse_throughput_scaleup.pdf"),bbox_inches='tight')
 
-## TODO: Refactor all tiling plots to happen using the same API
-## TODO: Add more experiments to be ploted in the report
-## TODO: Make the text in the plot become red if there is an error
-def report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctness):
-    global all_line_plots
 
-    confs = ["PaSh",
-             "PaSh w/o split",
-             "Blocking Eager",
-             "No Eager"]
+def set_tiling_axes_labels_ticks(fig):
+    axs = fig.get_axes()
+    for ax in axs:
+        if(ax.is_first_col()):
+            ax.set_ylabel('Speedup')
+        if(ax.is_last_row()):
+            ax.set_xlabel('--width')
+        if(not ax.is_last_row()):
+            ax.set_xticklabels([])
+        # ax.label_outer()
 
-    fig = plt.figure()
-    columns = 5
-    rows = (len(all_experiment_results.keys()) // columns) + 1
-    gs = fig.add_gridspec(rows, columns, hspace=0.05)
-
+def plot_tiling_experiments(fig, gs, experiments, all_experiment_results, all_scaleup_numbers,
+                            correctness=None, custom_scaleup_plots={},
+                            line_plot_configs=default_line_plot_configs):
     total_lines = []
     averages = [[] for _ in all_scaleup_numbers]
     no_eager_averages = [[] for _ in all_scaleup_numbers]
     ## Plot microbenchmarks
-    for i, experiment in enumerate(all_experiments):
+    for i, experiment in enumerate(experiments):
         ax = fig.add_subplot(gs[i])
         all_speedup_results = all_experiment_results[experiment]
-        lines, best_result, no_eager_result = plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, {}, ax)
+        lines, best_result, no_eager_result = plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, 
+                                                                 custom_scaleup_plots, ax, line_plot_configs=line_plot_configs)
         if(experiment == "double_sort"):
             total_lines = lines + total_lines
         ax.set_xticks(all_scaleup_numbers[1:])
 
         text_color = 'black'
-        if any_wrong(correctness, experiment, all_line_plots):
+        if (not correctness is None 
+            and any_wrong(correctness, experiment, all_line_plots)):
             text_color = 'red'
         ax.text(.5,.91,pretty_names[experiment],
                 horizontalalignment='center',
@@ -937,17 +938,41 @@ def report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctne
             averages[i].append(res)
         for i, res in enumerate(no_eager_result):
             no_eager_averages[i].append(res)
+    
+    set_tiling_axes_labels_ticks(fig)
+    
+    return (total_lines, averages, no_eager_averages)
 
+def print_aggregates(prefix, averages, no_eager_averages):
+    ## Print average, geo-mean
+    one_liner_averages = [sum(res)/len(res) for res in averages]
+    all_no_eager_averages = [sum(res)/len(res) for res in no_eager_averages]
+    geo_means = [math.exp(np.log(res).sum() / len(res))
+                 for res in averages]
+    print(prefix, "One-liners Aggregated results:")
+    print(" |-- Averages:", one_liner_averages)
+    print(" |-- No Eager Averages:", all_no_eager_averages)
+    print(" |-- Geometric Means:", geo_means)
 
-    axs = fig.get_axes()
-    for ax in axs:
-        if(ax.is_first_col()):
-            ax.set_ylabel('Speedup')
-        if(ax.is_last_row()):
-            ax.set_xlabel('--width')
-        if(not ax.is_last_row()):
-            ax.set_xticklabels([])
-        # ax.label_outer()
+## TODO: Add more experiments to be ploted in the report
+def report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctness):
+    global all_line_plots
+
+    confs = ["PaSh",
+             "PaSh w/o split",
+             "Blocking Eager",
+             "No Eager"]
+
+    fig = plt.figure()
+    columns = 5
+    rows = (len(all_experiment_results.keys()) // columns) + 1
+    gs = fig.add_gridspec(rows, columns, hspace=0.05)
+
+    plot_res = plot_tiling_experiments(fig, gs, all_experiments, 
+                                       all_experiment_results, 
+                                       all_scaleup_numbers, 
+                                       correctness)
+    total_lines, averages, no_eager_averages = plot_res 
 
     plt.legend(total_lines, confs, loc='lower right', fontsize=16)
     # plt.title(pretty_names[experiment])
@@ -956,15 +981,7 @@ def report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctne
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "all_one_liners_scaleup.pdf"),bbox_inches='tight')
 
-    ## Print average, geo-mean
-    one_liner_averages = [sum(res)/len(res) for res in averages]
-    all_no_eager_averages = [sum(res)/len(res) for res in no_eager_averages]
-    geo_means = [math.exp(np.log(res).sum() / len(res))
-                 for res in averages]
-    print("All One-liners Aggregated results:")
-    print(" |-- Averages:", one_liner_averages)
-    print(" |-- No Eager Averages:", all_no_eager_averages)
-    print(" |-- Geometric Means:", geo_means)
+    print_aggregates("All", averages, no_eager_averages)
 
 def plot_one_liners_tiling(all_experiment_results, experiments):
 
@@ -981,43 +998,12 @@ def plot_one_liners_tiling(all_experiment_results, experiments):
 
     fig = plt.figure()
     gs = fig.add_gridspec(2, 5, hspace=0.05)
-    # fig.suptitle('')
-
-    total_lines = []
-    averages = [[] for _ in all_scaleup_numbers]
-    no_eager_averages = [[] for _ in all_scaleup_numbers]
-    ## Plot microbenchmarks
-    for i, experiment in enumerate(experiments):
-        ax = fig.add_subplot(gs[i])
-        all_speedup_results = all_experiment_results[experiment]
-        lines, best_result, no_eager_result = plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, custom_scaleup_plots, ax)
-        if(experiment == "double_sort"):
-            total_lines = lines + total_lines
-        # elif(experiment == "bigrams"):
-        #     total_lines += [lines[0]]
-        ax.set_xticks(all_scaleup_numbers[1:])
-        ax.text(.5,.91,pretty_names[experiment],
-        horizontalalignment='center',
-        transform=ax.transAxes)
-        # ax.set_yticks([])
-        fig.add_subplot(ax)
-
-        ## Update averages
-        for i, res in enumerate(best_result):
-            averages[i].append(res)
-        for i, res in enumerate(no_eager_result):
-            no_eager_averages[i].append(res)
-
-
-    axs = fig.get_axes()
-    for ax in axs:
-        if(ax.is_first_col()):
-            ax.set_ylabel('Speedup')
-        if(ax.is_last_row()):
-            ax.set_xlabel('--width')
-        if(ax.is_first_row()):
-            ax.set_xticklabels([])
-        # ax.label_outer()
+    
+    plot_res = plot_tiling_experiments(fig, gs, experiments, 
+                                       all_experiment_results, 
+                                       all_scaleup_numbers,
+                                       custom_scaleup_plots=custom_scaleup_plots)
+    total_lines, averages, no_eager_averages = plot_res
 
     plt.legend(total_lines, confs, loc='lower right', fontsize=16)
     # plt.title(pretty_names[experiment])
@@ -1026,72 +1012,40 @@ def plot_one_liners_tiling(all_experiment_results, experiments):
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "tiling_throughput_scaleup.pdf"),bbox_inches='tight')
 
-    ## Print average, geo-mean
-    one_liner_averages = [sum(res)/len(res) for res in averages]
-    all_no_eager_averages = [sum(res)/len(res) for res in no_eager_averages]
-    geo_means = [math.exp(np.log(res).sum() / len(res))
-                 for res in averages]
-    print("One-liners Aggregated results:")
-    print(" |-- Averages:", one_liner_averages)
-    print(" |-- No Eager Averages:", all_no_eager_averages)
-    print(" |-- Geometric Means:", geo_means)
+    print_aggregates("Systems", averages, no_eager_averages)
 
 def plot_less_one_liners_tiling(all_experiment_results, experiments):
 
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
 
     coarse_custom_scaleup_plots = {"minimal_grep" : ["blocking-eager"],
-                                "minimal_sort" : ["no-eager"],
-                                "topn" : ["no-eager"],
-                                "wf" : ["no-eager"],
-                                "spell" : ["mini-split"],
-                                "diff" : ["no-eager"],
-                                "bigrams" : ["mini-split"],
-                                "set-diff" : ["no-eager"],
-                                "shortest_scripts" : ["no-eager"],
-                                }
+                                   "minimal_sort" : ["no-eager"],
+                                   "topn" : ["no-eager"],
+                                   "wf" : ["no-eager"],
+                                   "spell" : ["mini-split"],
+                                   "diff" : ["no-eager"],
+                                   "bigrams" : ["mini-split"],
+                                   "set-diff" : ["no-eager"],
+                                   "shortest_scripts" : ["no-eager"],
+                                  }
+
+    line_plot_configs = {'eager': LinePlotConfig('-o', 'tab:blue', 'Parallel w/o split'),
+                         'split': LinePlotConfig('-o', 'tab:blue', 'Parallel'),
+                         'mini-split': LinePlotConfig('-o', 'tab:blue', 'Parallel'),
+                         'blocking-eager': LinePlotConfig('-o', 'tab:blue', 'Blocking Eager'),
+                         'no-eager': LinePlotConfig('-o', 'tab:blue', 'No Eager')}
 
     # confs = ["Parallel"]
 
     fig = plt.figure()
     gs = fig.add_gridspec(3, 3, hspace=0.05)
-    # fig.suptitle('')
 
-    total_lines = []
-    averages = [[] for _ in all_scaleup_numbers]
-    ## Plot microbenchmarks
-    for i, experiment in enumerate(experiments):
-        ax = fig.add_subplot(gs[i])
-        all_speedup_results = all_experiment_results[experiment]
-        lines, best_result, _ = plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, coarse_custom_scaleup_plots, ax)
-        ## Turn all the lines the same color
-        for line in lines:
-            line.set_color("tab:blue")
-        if(experiment == "double_sort"):
-            total_lines = lines + total_lines
-        elif(experiment == "bigrams"):
-            total_lines += [lines[0]]
-        ax.set_xticks(all_scaleup_numbers[1:])
-        ax.text(.5,.91,pretty_names[experiment],
-        horizontalalignment='center',
-        transform=ax.transAxes)
-        # ax.set_yticks([])
-        fig.add_subplot(ax)
-
-        ## Update averages
-        for i, res in enumerate(best_result):
-            averages[i].append(res)
-
-
-    axs = fig.get_axes()
-    for ax in axs:
-        if(ax.is_first_col()):
-            ax.set_ylabel('Speedup')
-        if(ax.is_last_row()):
-            ax.set_xlabel('--width')
-        if(not ax.is_last_row()):
-            ax.set_xticklabels([])
-        # ax.label_outer()
+    plot_res = plot_tiling_experiments(fig, gs, experiments, 
+                                       all_experiment_results, 
+                                       all_scaleup_numbers,
+                                       custom_scaleup_plots=coarse_custom_scaleup_plots,
+                                       line_plot_configs=line_plot_configs)
+    total_lines, averages, no_eager_averages = plot_res
 
     # plt.legend(total_lines, confs, loc='lower right', fontsize=16)
     # plt.title(pretty_names[experiment])
@@ -1101,13 +1055,7 @@ def plot_less_one_liners_tiling(all_experiment_results, experiments):
     ## TODO: Replace the prefix with a constant
     plt.savefig(os.path.join('../evaluation/plots', "coarse_tiling_throughput_scaleup.pdf"),bbox_inches='tight')
 
-    ## Print average, geo-mean
-    one_liner_averages = [sum(res)/len(res) for res in averages]
-    geo_means = [math.exp(np.log(res).sum() / len(res))
-                 for res in averages]
-    print("Coarse One-liners Aggregated results:")
-    print(" |-- Averages:", one_liner_averages)
-    print(" |-- Geometric Means:", geo_means)
+    print_aggregates("Coarse", averages, no_eager_averages)
 
 
 def format_correctness(correctness):
