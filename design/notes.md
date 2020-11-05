@@ -78,9 +78,50 @@ temp2=$FLAGS
 pash-compile ID1 $temp1 $temp2
 ```
 
+It depends on the string expansion, though. Consider the following
+(hare-brained) example:
+
+```sh
+cat notes.md | { count=0; while read line; do : $((count += 1)); done; echo $count ; }
+```
+
+It's not possible to expand `$count` correctly early. It can be even
+worse:
+
+```sh
+cat notes.md | 
+  { count=0
+    while read line
+    do 
+      : $((count += 1))
+      printf "%05d\t%s\n" "$count" "$line"
+    done
+  }
+```
+
+Neither `$count` nor `$line` can be expanded early. On the plus side,
+these variables are totally local to this mediocre implementation of
+`cat` (or, as above, `wc -l`). Since only builtins can affect the
+environment, we should be able to determine in most situations which
+variables can be expanded and which can't.
+
+
 ### Issue with shell state management
 
 An issue with all proposed solutions (and our existing prototype) is that any changes to the shell state that are performed in a dataflow graph (a parallel script that PaSh generates and runs), are not visible in the original shell that would have executed this code. Such changes include changes to values of environment variables.
 
 To address this we would need to either execute the parallel (optimized) script in the original shell, or manage to copy the state changes to the original shell after execution.
 
+Some of these issues are mitigated by subshell spawning. Asynchronous
+jobs and pipelines are run in subshells, which are forked from the
+main shell and can't affect its state. There's one subtle exception:
+POSIX shells may or may not fork a subshell for the last job of a
+synchronous pipeline. That is, it is POSIX compliant for the following
+program to set `x` to 5 or 10:
+
+```sh
+x=10; echo 5 | read x; echo $x
+```
+
+Bash, dash, and yash will set it to 10, i.e., the `read` occurs in a
+subshell. Zsh sets it to 5.
