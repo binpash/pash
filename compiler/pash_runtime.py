@@ -29,6 +29,8 @@ def main():
     ## Parse arguments
     args = parse_args()
 
+    ## TODO: Instead of just calling optimize we first need to call compile.
+
     ## Call the main procedure
     optimize_script(args.input_ir, args)
 

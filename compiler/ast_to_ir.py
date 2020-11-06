@@ -336,7 +336,14 @@ def compile_redirections(redirections, fileIdGen, config):
                              for redirection in redirections]
     return compiled_redirections
 
+## Replace candidate dataflow AST regions with calls to PaSh's runtime.
+def replace_ast_regions(ast_objects, irFileGen, config):
+    ## TODO: Copy the structure from compile_asts
+    ##       since we want to merge multiple asts 
+    ##       into one if they contain dataflow regions.
 
+    ## TODO: Follow exactly the checks that are done in compile_asts
+    ##       without actually compiling the asts to IRs.
 
 ## Replaces IR subtrees with a command that calls them (more
 ## precisely, a command that calls a python script to call them).
