@@ -58,8 +58,8 @@ else
 fi
 
 ## Save the configuration to restore it afterwards
-cat config.yaml > /tmp/backup-config.yaml
 auto_split_opt=""
+config_path_opt=""
 
 if [ "$auto_split_flag" -eq 1 ]; then
     echo "Distributed with auto-split:"
@@ -69,7 +69,6 @@ if [ "$auto_split_flag" -eq 1 ]; then
     ## TODO: Push this if-then-else in the outside script. Also make the split the default.
     if [ "${microbenchmark}" != "bigrams" ] && [ "${microbenchmark}" != "spell" ] && [ "${microbenchmark}" != "double_sort" ] && [ "${microbenchmark}" != "max_temp_p123" ]; then
         echo "No reason to split on one-liner: ${microbenchmark}"
-        cat /tmp/backup-config.yaml > config.yaml
         exit
     fi
 elif [ "$eager_flag" -eq 1 ]; then
@@ -82,17 +81,17 @@ elif [ "$no_task_par_eager_flag" -eq 1 ]; then
     distr_result_filename="${results}${experiment}_distr_no_task_par_eager.time"
 
     ## Change the configuration
-    ## TODO: Allow the script to take a different config file (to get rid of this terrible replacement).
-    sed -i 's/tools\/eager/tools\/eager-no-task-par.sh/g' config.yaml
+    config_path="/tmp/new-config.yaml"
+    config_path_opt="--config_path ${config_path}"
+    cat config.yaml > ${config_path}
+    sed -i 's/tools\/eager/tools\/eager-no-task-par.sh/g' "${config_path}"
 else
     echo "Distributed without eager:"
     eager_opt="--no_eager"
     distr_result_filename="${results}${experiment}_distr_no_eager.time"
 fi
 
-{ time python3.8 $DISH_TOP/compiler/dish.py --output_optimized $eager_opt $auto_split_opt --output_time $seq_script $distr_script ; } 2> >(tee "${distr_result_filename}" >&2)
-
-cat /tmp/backup-config.yaml > config.yaml
+{ time python3.8 $DISH_TOP/compiler/dish.py --output_optimized $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script $distr_script ; } 2> >(tee "${distr_result_filename}" >&2)
 
 echo "Checking for equivalence..."
 diff -s $seq_output /tmp/distr_output/0 | tee -a "${distr_result_filename}"

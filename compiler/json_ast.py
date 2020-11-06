@@ -4,9 +4,6 @@ import re
 import config
 from subprocess import run, PIPE
 
-if not config.config:
-    config.load_config()
-
 ### --- From JSON --- ###
 
 ## Returns the ast as a object

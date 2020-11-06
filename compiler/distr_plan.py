@@ -42,7 +42,7 @@ def parse_args():
 def optimize_script(ir_filename, args):
     global config
     if not system_config.config:
-        system_config.load_config()
+        system_config.load_config(args.config_path)
 
     config = system_config.config['distr_planner']
 

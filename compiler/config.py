@@ -23,12 +23,12 @@ config = {}
 annotations = []
 dish_args = None
 
-def load_config(config_file_path=False):
+def load_config(config_file_path=""):
     global config
     dish_config = {}
     CONFIG_KEY = 'distr_planner'
 
-    if not config_file_path:
+    if(config_file_path == ""):
       config_file_path = '{}/compiler/config.yaml'.format(DISH_TOP)
     with open(config_file_path) as config_file:
         dish_config = yaml.load(config_file, Loader=yaml.FullLoader)
@@ -63,6 +63,9 @@ def add_common_arguments(parser):
                         type=int,
                         default=1,
                         help="determines the fan out of inserted splits in the DFG")
+    parser.add_argument("--config_path",
+                        help="determines the config file path. By default it is 'DISH_TOP/compiler/config.yaml'.",
+                        default="")
     return
 
 def pass_common_arguments(dish_arguments):
@@ -79,6 +82,9 @@ def pass_common_arguments(dish_arguments):
     arguments.append(string_to_argument(dish_arguments.termination))
     arguments.append(string_to_argument("--split_fan_out"))
     arguments.append(string_to_argument(str(dish_arguments.split_fan_out)))
+    if(not dish_arguments.config_path == ""):
+        arguments.append(string_to_argument("--config_path"))
+        arguments.append(string_to_argument(dish_arguments.config_path))
     return arguments
 
 ##
