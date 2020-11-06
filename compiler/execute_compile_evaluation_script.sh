@@ -3,7 +3,6 @@
 execute_seq_flag=0
 eager_flag=0
 no_task_par_eager_flag=0
-split_flag=0
 auto_split_flag=0
 
 while getopts 'senpa' opt; do
@@ -11,7 +10,6 @@ while getopts 'senpa' opt; do
         s) execute_seq_flag=1 ;;
         e) eager_flag=1 ;;
         n) no_task_par_eager_flag=1 ;;
-        p) split_flag=1 ;;
         a) auto_split_flag=1 ;;
         *) echo 'Error in command line parsing' >&2
            exit 1
@@ -63,44 +61,14 @@ fi
 cat config.yaml > /tmp/backup-config.yaml
 auto_split_opt=""
 
-if [ "$split_flag" -eq 1 ]; then
-    echo "Distributed with split:"
-    eager_opt=""
-    distr_result_filename="${results}${experiment}_distr_split.time"
-    sed -i "s#fan_out: [0-9]\+#fan_out: ${n_in}#" config.yaml
-    if [ "${microbenchmark}" == "bigrams" ]; then
-        ## total_lines=2000000000 # 10G input
-        total_lines=600000000  # 3G input
-        (( batch_size=total_lines / n_in ))
-        sed -i "s#batch_size: [0-9]\+#batch_size: ${batch_size}#" config.yaml
-    elif [ "${microbenchmark}" == "spell" ]; then
-        ## total_lines=200000000 # 1G input
-        total_lines=600000000 # 3G input
-        (( batch_size=total_lines / n_in ))
-        sed -i "s#batch_size: [0-9]\+#batch_size: ${batch_size}#" config.yaml
-    # At the moment set-diff cannot be split because of the issue
-    # elif [ "${microbenchmark}" == "set-diff" ]; then
-    #     ## These are the total lines for 10G input
-    #     total_lines=200000000
-    #     (( batch_size=total_lines / n_in ))
-    #     sed -i "s#batch_size: [0-9]\+#batch_size: ${batch_size}#" config.yaml
-    elif [ "${microbenchmark}" == "double_sort" ]; then
-        ## These are the total lines for 10G input
-        total_lines=200000000
-        ## total_lines=200000
-        (( batch_size=total_lines / n_in ))
-        sed -i "s#batch_size: [0-9]\+#batch_size: ${batch_size}#" config.yaml
-    else
-        echo "No reason to split on one-liner: ${microbenchmark}"
-        cat /tmp/backup-config.yaml > config.yaml
-        exit
-    fi
-elif [ "$auto_split_flag" -eq 1 ]; then
+## TODO: Make fan out be passed as a flag instead of from config
+if [ "$auto_split_flag" -eq 1 ]; then
     echo "Distributed with auto-split:"
     eager_opt=""
     auto_split_opt="--auto_split"
     distr_result_filename="${results}${experiment}_distr_auto_split.time"
     sed -i "s#fan_out: [0-9]\+#fan_out: ${n_in}#" config.yaml
+    ## TODO: Push this if-then-else in the outside script. Also make the split the default.
     if [ "${microbenchmark}" != "bigrams" ] && [ "${microbenchmark}" != "spell" ] && [ "${microbenchmark}" != "double_sort" ] && [ "${microbenchmark}" != "max_temp_p123" ]; then
         echo "No reason to split on one-liner: ${microbenchmark}"
         cat /tmp/backup-config.yaml > config.yaml
