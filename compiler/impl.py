@@ -33,8 +33,12 @@ def execute(graph_json, output_dir, output_script_name, output_optimized, args):
 
 
 def shell_backend(graph_json, output_dir, args):
-    clean_up_graph = args.clean_up_graph
-    drain_streams = args.drain_streams
+    clean_up_graph = False
+    drain_streams = False
+    if(args.termination == "clean_up_graph"):
+        clean_up_graph = True
+    elif(args.termination == "drain_stream"):
+        drain_streams = True
     auto_split = args.auto_split
     # print("Translate:")
     # print(graph_json)

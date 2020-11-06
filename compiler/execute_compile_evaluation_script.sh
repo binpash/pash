@@ -91,7 +91,7 @@ else
     distr_result_filename="${results}${experiment}_distr_no_eager.time"
 fi
 
-{ time python3.8 $DISH_TOP/compiler/dish.py --output_optimized $eager_opt $auto_split_opt --output_time --clean_up_graph $seq_script $distr_script ; } 2> >(tee "${distr_result_filename}" >&2)
+{ time python3.8 $DISH_TOP/compiler/dish.py --output_optimized $eager_opt $auto_split_opt --output_time $seq_script $distr_script ; } 2> >(tee "${distr_result_filename}" >&2)
 
 cat /tmp/backup-config.yaml > config.yaml
 
