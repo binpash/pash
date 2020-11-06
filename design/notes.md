@@ -105,6 +105,11 @@ these variables are totally local to this mediocre implementation of
 environment, we should be able to determine in most situations which
 variables can be expanded and which can't.
 
+This analysis isn't just about parameter expansion---globbing gets hit too.
+
+```sh
+cmd1 | { read x; cd $x; echo *; }
+```
 
 ### Issue with shell state management
 
@@ -125,3 +130,44 @@ x=10; echo 5 | read x; echo $x
 
 Bash, dash, and yash will set it to 10, i.e., the `read` occurs in a
 subshell. Zsh sets it to 5.
+
+### Safe early expansions
+
+It's "safe" to expand something early when it either (a) won't affect
+the shell state, or (b) will stop execution. (Assuming `set -o
+pipefail` if you're in a pipeline.)
+
+ 0. NONPOSIX: Brace expansion
+    * `{w1,w2,...}` is safe if `wi` are safe
+ 1. Tilde
+    * always safe
+ 2. Parameter
+    * `$x` and `${#x}` are safe
+    * `${x?w}` is safe
+    * `${x-w}`, `${x+w}` `${x%w}`, (and `%%`, and `#`, and `##`) are safe if `w` is safe
+    * `${x=w}` is safe when `x` is already assigned, otherwise UNSAFE
+    * NONPOSIX: `${x:off:len}` is safe when `off` and `len` are safe
+    * NONPOSIX: `${!w}` is safe when `w` is safe
+    * NONPOSIX: `${x/pat/str/}` is safe when `pat` and `str` are safe
+ 3. Arithmetic
+    * operations are safe
+    * `+=` and `=` and family are UNSAFE
+    * NONPOSIX: `++` and `--` are UNSAFE
+    * `op="+=1"; $((x $op))` is UNSAFE
+ 4. Command
+    * `$(w)` is safe if `w` is safe
+ 5. Field splitting
+    * always safe
+ 6. Pathname
+    * safe so long as we haven't run `cd` in our block that we can't yet account for, e.g.
+      `foo | { read x; cd $x; echo *; }` is UNSAFE
+ 7. Quote removal
+    * always safe
+    
+Approach:
+
+  Write a safety analysis that walks over the `arg list`
+  (cf. `compile_arg_char` from `compiler/ast_to_ir.py`).
+  
+  A `safe_expand` procedure walks over things and expands things that
+  it deems safe.
