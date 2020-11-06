@@ -18,7 +18,7 @@ def main():
 
     # global config
     if not config.config:
-        config.load_config()
+        config.load_config(args.config_path)
 
     ## Load annotations
     config.load_annotation_files(config.config['distr_planner']['annotations_dir'])
