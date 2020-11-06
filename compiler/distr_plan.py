@@ -62,7 +62,7 @@ def optimize_script(ir_filename, args):
 
     # print(ir_node)
     # with cProfile.Profile() as pr:
-    distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, config['fan_out'],
+    distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, args.split_fan_out,
                                                               config['batch_size'])
     # pr.print_stats()
     # print(distributed_graph)

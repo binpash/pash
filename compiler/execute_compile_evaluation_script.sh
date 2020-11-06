@@ -61,13 +61,11 @@ fi
 cat config.yaml > /tmp/backup-config.yaml
 auto_split_opt=""
 
-## TODO: Make fan out be passed as a flag instead of from config
 if [ "$auto_split_flag" -eq 1 ]; then
     echo "Distributed with auto-split:"
     eager_opt=""
-    auto_split_opt="--auto_split"
+    auto_split_opt="--split_fan_out ${n_in}"
     distr_result_filename="${results}${experiment}_distr_auto_split.time"
-    sed -i "s#fan_out: [0-9]\+#fan_out: ${n_in}#" config.yaml
     ## TODO: Push this if-then-else in the outside script. Also make the split the default.
     if [ "${microbenchmark}" != "bigrams" ] && [ "${microbenchmark}" != "spell" ] && [ "${microbenchmark}" != "double_sort" ] && [ "${microbenchmark}" != "max_temp_p123" ]; then
         echo "No reason to split on one-liner: ${microbenchmark}"
@@ -84,6 +82,7 @@ elif [ "$no_task_par_eager_flag" -eq 1 ]; then
     distr_result_filename="${results}${experiment}_distr_no_task_par_eager.time"
 
     ## Change the configuration
+    ## TODO: Allow the script to take a different config file (to get rid of this terrible replacement).
     sed -i 's/tools\/eager/tools\/eager-no-task-par.sh/g' config.yaml
 else
     echo "Distributed without eager:"

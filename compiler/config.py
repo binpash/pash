@@ -59,10 +59,10 @@ def add_common_arguments(parser):
                         help="determines the termination behavior of the DFG. By default it cleans up the graph after the final node dies but it can also drain all streams until depletion.",
                         choices=['clean_up_graph', 'drain_stream'],
                         default="clean_up_graph")
-    # TODO: Add an argument to this so that the fan out is given
-    parser.add_argument("--auto_split",
-                        help="uses a no-task-parallelism split that automatically calculates batch size",
-                        action="store_true")
+    parser.add_argument("--split_fan_out",
+                        type=int,
+                        default=1,
+                        help="determines the fan out of inserted splits in the DFG")
     return
 
 def pass_common_arguments(dish_arguments):
@@ -77,8 +77,8 @@ def pass_common_arguments(dish_arguments):
         arguments.append(string_to_argument("--no_eager"))
     arguments.append(string_to_argument("--termination"))
     arguments.append(string_to_argument(dish_arguments.termination))
-    if (dish_arguments.auto_split):
-        arguments.append(string_to_argument("--auto_split"))
+    arguments.append(string_to_argument("--split_fan_out"))
+    arguments.append(string_to_argument(str(dish_arguments.split_fan_out)))
     return arguments
 
 ##
