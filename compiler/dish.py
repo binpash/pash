@@ -16,7 +16,6 @@ def main():
     args = parse_args()
     config.dish_args = args
 
-    # global config
     if not config.config:
         config.load_config(args.config_path)
 
