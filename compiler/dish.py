@@ -4,7 +4,7 @@ import argparse
 from datetime import datetime
 
 from ast_to_ir import *
-from distr_plan import *
+from pash_runtime import *
 from ir import *
 from json_ast import *
 from util import *
@@ -29,8 +29,9 @@ def main():
     ## 2. Parse JSON to AST objects
     ast_objects = parse_json_ast_string(json_ast_string)
 
-    ## 3. Compile ASTs to our intermediate representation
-    compiled_asts = compile_replace_asts(ast_objects, config.config)
+    ## 3. Preprocess ASTs by replacing possible candidates for compilation
+    ##    with calls to the PaSh runtime.
+    compiled_asts = preprocess(ast_objects, config.config)
 
     ## 4. Translate the new AST back to shell syntax
     input_script_wo_extension, input_script_extension = os.path.splitext(input_script_path)
@@ -39,9 +40,12 @@ def main():
     from_ir_to_shell(ir_filename, args.output)
 
     compilation_end_time = datetime.now()
-    print_time_delta("Compilation", compilation_start_time, compilation_end_time, args)
+    print_time_delta("Preprocessing", compilation_start_time, compilation_end_time, args)
 
-    ## 5. Execute the compiled version of the input script
+    ## TODO: Change all occurences of compile to preprocess since dish just 
+    #        preprocesses and replaces possibly parallelizable regions with calls to PaSh.
+
+    ## 5. Execute the preprocessed version of the input script
     if(not args.compile_only):
         execute_script(args.output, args.output_optimized, args.compile_optimize_only)
 
@@ -69,12 +73,22 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def compile_replace_asts(ast_objects, config):
+def preprocess_asts(ast_objects, config):
     ## This is for the files in the IR
     fileIdGen = FileIdGen()
 
     ## This is ids for the remporary files that we will save the IRs in
     irFileGen = FileIdGen()
+
+    ## TODO: Instead of compiling the ASTs we just want to preprocess them 
+    ##       by replacing AST regions with calls to PaSh's runtime. Then the
+    ##       runtime will do the compilation and optimization with additional 
+    ##       information.
+    preprocessed_asts = replace_ast_regions(ast_objects, irFileGen, config)
+
+    ## TODO: This needs to also merge different asts if they are all possible 
+    ##       candidates for compilation.
+
 
     final_asts = []
 
