@@ -39,7 +39,10 @@ def shell_backend(graph_json, output_dir, args):
         clean_up_graph = True
     elif(args.termination == "drain_stream"):
         drain_streams = True
-    auto_split = args.auto_split
+    if(args.split_fan_out > 1):
+        auto_split = True
+    else:
+        auto_split = False
     # print("Translate:")
     # print(graph_json)
     fids = graph_json["fids"]

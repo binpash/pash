@@ -9,7 +9,6 @@ distr_planner:
     drain_stream_executable_path: evaluation/tools/drain_stream.sh
     output_dir: /tmp/distr_output
     annotations_dir: annotations
-    fan_out: 1
     batch_size: 1000
     distr_backend: false
     nodes:
