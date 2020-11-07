@@ -47,6 +47,8 @@ preprocess_cases = {
              lambda ast_node: preprocess_node_pipe(ast_node, irFileGen, config)),
     "Command": (lambda irFileGen, config:
                 lambda ast_node: preprocess_node_command(ast_node, irFileGen, config)),
+    "For": (lambda irFileGen, config:
+            lambda ast_node: preprocess_node_for(ast_node, irFileGen, config))
 }
 
 ir_cases = {
@@ -433,6 +435,18 @@ def preprocess_node(ast_object, irFileGen, config):
     global preprocess_cases
     return ast_match_untyped(ast_object, preprocess_cases, irFileGen, config)
 
+## This preprocesses the AST node and also replaces it if it needs replacement .
+## It is called by constructs that cannot be included in a dataflow region.
+def preprocess_close_node(ast_object, irFileGen, config):
+    output = preprocess_node(ast_object, irFileGen, config)
+    preprocessed_ast, should_replace_whole_ast, _is_non_maximal = output
+    if(should_replace_whole_ast):
+        ## TODO: Maybe the first argument has to be a singular list?
+        final_ast = replace_df_region(preprocessed_ast, irFileGen, config)
+    else:
+        final_ast = preprocessed_ast
+    return final_ast
+
 def preprocess_node_pipe(ast_node, _irFileGen, _config):
     ## A pipeline is *always* a candidate dataflow region.
     ## Q: Is that true?
@@ -462,6 +476,14 @@ def preprocess_node_command(ast_node, _irFileGen, _config):
     ## This means we have a command. Commands are always candidate dataflow
     ## regions.
     return ast_node, True, False
+
+## TODO: This is not efficient at all since it calls the PaSh runtime everytime the loop is entered.
+##       We have to find a way to improve that.
+def preprocess_node_for(ast_node, irFileGen, config):
+    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.body = preprocessed_body
+    return ast_node, False, False
 
 
 ## TODO: All the replace parts might need to be deleteD

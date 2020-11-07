@@ -2,6 +2,7 @@ import json
 import os
 import re
 import config
+from definitions.ast_node import CustomJSONEncoder
 from subprocess import run, PIPE
 
 ### --- From JSON --- ###
@@ -35,7 +36,7 @@ def serialize_asts_to_json(asts):
     return "\n".join(serialized_asts)
 
 def serialize_ast_json(ast):
-    standard_json = json.dumps(ast)
+    standard_json = json.dumps(ast, cls=CustomJSONEncoder)
     return standard_json
 
 ### --- AST to Shell --- ###
@@ -51,3 +52,4 @@ def ast_to_shell(ast):
     print(ast_json)
     shell_string = json_to_shell(ast_json)
     return shell_string
+
