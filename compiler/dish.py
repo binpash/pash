@@ -73,40 +73,37 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def preprocess_asts(ast_objects, config):
-    ## This is for the files in the IR
-    fileIdGen = FileIdGen()
-
+def preprocess(ast_objects, config):
     ## This is ids for the remporary files that we will save the IRs in
     irFileGen = FileIdGen()
 
-    ## TODO: Instead of compiling the ASTs we just want to preprocess them 
-    ##       by replacing AST regions with calls to PaSh's runtime. Then the
-    ##       runtime will do the compilation and optimization with additional 
-    ##       information.
+    ## Preprocess ASTs by replacing AST regions with calls to PaSh's runtime. 
+    ## Then the runtime will do the compilation and optimization with additional 
+    ## information.
     preprocessed_asts = replace_ast_regions(ast_objects, irFileGen, config)
 
-    ## TODO: This needs to also merge different asts if they are all possible 
-    ##       candidates for compilation.
+    return preprocessed_asts
 
+    ## TODO: Delete when done
+    # final_asts = []
+    # ## This is for the files in the IR
+    # fileIdGen = FileIdGen()
 
-    final_asts = []
+    # ## Compile the asts
+    # compiled_asts = compile_asts(ast_objects, fileIdGen, config)
 
-    ## Compile the asts
-    compiled_asts = compile_asts(ast_objects, fileIdGen, config)
+    # for i, compiled_ast in enumerate(compiled_asts):
+    #     # print("Replacing AST {}".format(i))
+    #     # print(compiled_ast)
 
-    for i, compiled_ast in enumerate(compiled_asts):
-        # print("Replacing AST {}".format(i))
-        # print(compiled_ast)
+    #     ## Replace the IRs in the ASTs with calls to the distribution
+    #     ## planner. Save the IRs in temporary files.
+    #     final_ast = replace_irs(compiled_ast, irFileGen, config)
 
-        ## Replace the IRs in the ASTs with calls to the distribution
-        ## planner. Save the IRs in temporary files.
-        final_ast = replace_irs(compiled_ast, irFileGen, config)
-
-        # print("Final AST:")
-        # print(final_ast)
-        final_asts.append(final_ast)
-    return final_asts
+    #     # print("Final AST:")
+    #     # print(final_ast)
+    #     final_asts.append(final_ast)
+    # return final_asts
 
 def execute_script(compiled_script_filename, output_optimized, compile_optimize_only):
     exec_obj = subprocess.run(["/bin/bash", compiled_script_filename])
