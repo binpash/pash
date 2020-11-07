@@ -5,30 +5,15 @@ from datetime import datetime
 from util import *
 import config
 
-def execute(graph_json, output_dir, output_script_name, output_optimized, args):
+def to_shell(graph_json, output_dir, args):
     backend_start_time = datetime.now()
 
     output_script = shell_backend(graph_json, output_dir, args)
 
-    ## Output the optimized shell script for inspection
-    if(output_optimized):
-        with open(output_script_name, "w") as output_script_file:
-            print("Optimized script:")
-            print(output_script)
-            output_script_file.write(output_script)
-
     backend_end_time = datetime.now()
     print_time_delta("Backend", backend_start_time, backend_end_time, args)
 
-    if(not args.compile_optimize_only):
-        execution_start_time = datetime.now()
-
-        ## TODO: Handle stdout, stderr, errors
-        exec_obj = subprocess.run(output_script, shell=True, executable="/bin/bash")
-        exec_obj.check_returncode()
-
-        execution_end_time = datetime.now()
-        print_time_delta("Execution", execution_start_time, execution_end_time, args)
+    return output_script
 
 
 
