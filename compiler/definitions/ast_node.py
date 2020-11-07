@@ -47,6 +47,13 @@ class AstNode:
                 return "Background Pipe: {}".format(self.items)    
             else:
                 return "Pipe: {}".format(self.items)
+        elif self.construct is AstNodeConstructor.COMMAND:
+            output = "Command: {}".format(self.arguments)
+            if(len(self.assignments) > 0):
+                output += ", ass[{}]".format(self.assignments)
+            if(len(self.redir_list) > 0):
+                output += ", reds[{}]".format(self.redir_list)
+            return output
         return NotImplemented 
 
     def check(self, **kwargs):
