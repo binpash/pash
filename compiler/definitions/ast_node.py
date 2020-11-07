@@ -1,5 +1,9 @@
+from json import JSONEncoder
+
 from definitions.ast_node_c import *
 from definitions.no_match_exception import *
+from ir_utils import *
+
 
 ## TODO: Create subclasses for all different types of AstNodes
 class AstNode:
@@ -54,6 +58,9 @@ class AstNode:
             if(len(self.redir_list) > 0):
                 output += ", reds[{}]".format(self.redir_list)
             return output
+        elif self.construct is AstNodeConstructor.FOR:
+            output = "for {} in {}; do ({})".format(self.variable, self.argument, self.body)
+            return output
         return NotImplemented 
 
     def check(self, **kwargs):
@@ -64,4 +71,20 @@ class AstNode:
             except Exception as exc:
                 print("check for {} construct failed at key {}".format(self.construct, key))
                 raise exc
+    
+    def json_serialize(self):
+        if self.construct is AstNodeConstructor.FOR:
+            json_output = make_kv(self.construct.value,
+                           [self.line_number,
+                            self.argument,
+                            self.body,
+                            self.variable])
+            return json_output
+        return NotImplemented
 
+class CustomJSONEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, AstNode):
+            return obj.json_serialize()
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
