@@ -1,6 +1,7 @@
 from definitions.ast_node_c import *
 from definitions.no_match_exception import *
 
+## TODO: Create subclasses for all different types of AstNodes
 class AstNode:
     # create an AstNode object from an ast object as parsed by libdash
     def __init__(self, ast_object):
@@ -39,6 +40,14 @@ class AstNode:
             self.variable = args[3]
         else:
             raise ValueError()
+    
+    def __repr__(self):
+        if self.construct is AstNodeConstructor.PIPE:
+            if (self.is_background):
+                return "Background Pipe: {}".format(self.items)    
+            else:
+                return "Pipe: {}".format(self.items)
+        return NotImplemented 
 
     def check(self, **kwargs):
         # user-supplied custom checks
