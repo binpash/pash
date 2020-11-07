@@ -54,7 +54,7 @@ def shell_backend(graph_json, output_dir, args):
 
     output_script_commands = []
 
-    shared_memory_dir = '/dev/shm/dish'
+    shared_memory_dir = '/dev/shm/pash'
     ## Make the output directory if it doesn't exist
     output_script_commands.append('rm -rf {}'.format(output_dir))
     output_script_commands.append('mkdir -p {}'.format(output_dir))
@@ -178,15 +178,15 @@ def node_to_script(node, shared_memory_dir, drain_streams, auto_split):
 
 def new_split(input_file, outputs, batch_size, auto_split):
     if(auto_split):
-        auto_split_bin = '{}/{}'.format(config.DISH_TOP, config.config['runtime']['auto_split_binary'])
+        auto_split_bin = '{}/{}'.format(config.PASH_TOP, config.config['runtime']['auto_split_binary'])
         command_no_outputs = '{} "{}"'.format(auto_split_bin, input_file, batch_size)
     else:
-        split_bin = '{}/{}'.format(config.DISH_TOP, config.config['runtime']['split_binary'])
+        split_bin = '{}/{}'.format(config.PASH_TOP, config.config['runtime']['split_binary'])
         command_no_outputs = '{} "{}" {}'.format(split_bin, input_file, batch_size)
     return ' '.join([command_no_outputs] + outputs)
 
 def drain_stream():
-    script = '{}/{}'.format(config.DISH_TOP, config.config['distr_planner']['drain_stream_executable_path'])
+    script = '{}/{}'.format(config.PASH_TOP, config.config['distr_planner']['drain_stream_executable_path'])
     return [script]
 
 def old_split(inputs, outputs, batch_size):

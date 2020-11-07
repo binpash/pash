@@ -23,7 +23,7 @@ from definitions.ir.nodes.eager import *
 
 runtime_config = {}
 ## There are two ways to enter the distributed planner, either by
-## calling dish (which straight away calls the distributed planner),
+## calling pash_runtime.py (which straight away calls the distributed planner),
 ## or by calling the distributed planner with the name of an ir file
 ## to execute.
 def main():
@@ -535,7 +535,7 @@ def add_eager_nodes(graph):
     # print("Source nodes:")
     # print(source_nodes)
 
-    eager_exec_path = '{}/{}'.format(config.DISH_TOP, runtime_config['eager_executable_path'])
+    eager_exec_path = '{}/{}'.format(config.PASH_TOP, runtime_config['eager_executable_path'])
     ## Generate a fileIdGen from a graph, that doesn't clash with the
     ## current graph fileIds.
     fileIdGen = graph.get_file_id_gen()

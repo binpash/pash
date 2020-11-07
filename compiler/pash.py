@@ -14,7 +14,7 @@ def main():
     compilation_start_time = datetime.now()
     ## Parse arguments
     args = parse_args()
-    config.dish_args = args
+    config.pash_args = args
 
     if not config.config:
         config.load_config(args.config_path)
@@ -43,7 +43,7 @@ def main():
     compilation_end_time = datetime.now()
     print_time_delta("Preprocessing", compilation_start_time, compilation_end_time, args)
 
-    ## TODO: Change all occurences of compile to preprocess since dish just 
+    ## TODO: Change all occurences of compile to preprocess since PaSh just 
     #        preprocesses and replaces possibly parallelizable regions with calls to PaSh.
 
     ## 5. Execute the preprocessed version of the input script

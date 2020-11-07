@@ -26,7 +26,7 @@ intermediary_prefix=$4
 
 experiment="${microbenchmark}_${n_in}"
 
-DISH_TOP=${DISH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 
 eval_directory="../evaluation/"
 directory="${eval_directory}/${4}intermediary/"
@@ -91,7 +91,7 @@ else
     distr_result_filename="${results}${experiment}_distr_no_eager.time"
 fi
 
-{ time python3.8 $DISH_TOP/compiler/dish.py --output_optimized $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script $distr_script ; } 2> >(tee "${distr_result_filename}" >&2)
+{ time python3.8 $PASH_TOP/compiler/pash.py --output_optimized $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script $distr_script ; } 2> >(tee "${distr_result_filename}" >&2)
 
 echo "Checking for equivalence..."
 diff -s $seq_output /tmp/distr_output/0 | tee -a "${distr_result_filename}"
