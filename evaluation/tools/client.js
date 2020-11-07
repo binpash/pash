@@ -61,7 +61,7 @@ let put = (key, json, cb) => {
   //req.end() // TODO combine
 }
   
-const dtVar="DISH_TOKEN";
+const dtVar="PASH_TOKEN";
 
 let printAndExit = (msg) => {
   console.log(msg);

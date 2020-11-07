@@ -8,7 +8,7 @@ In order to install, one has to execute `make opam-dependencies && make libdash 
 Alternatively, one can install libdash (as explained in its README)
 and then run `make` here.
 
-After `make` succeeds you have to assign the `DISH_PARSER` environment
+After `make` succeeds you have to assign the `PASH_PARSER` environment
 variable to the path to `parse_to_json.native`.
 
 To run the parser, one can run:

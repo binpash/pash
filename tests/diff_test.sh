@@ -5,7 +5,7 @@
 experiment=$1
 distr_output_dir=$2
 
-directory="${DISH_TOP}/tests/test_scripts/"
+directory="${PASH_TOP}/tests/test_scripts/"
 prefix="${directory}${experiment}"
 env_file="${prefix}_env.sh"
 seq_script="${prefix}_seq.sh"
@@ -24,7 +24,7 @@ cat $seq_script | grep -v "rm -f" | grep -v "mkfifo"
 /bin/bash $seq_script > $seq_output
 
 echo "Distributed:"
-$DISH_TOP/compiler/translate_script.sh $seq_script $distr_script
+$PASH_TOP/compiler/translate_script.sh $seq_script $distr_script
 cat $distr_output_dir/* > $distr_output
 
 echo "Computing output difference... This will take some time..."

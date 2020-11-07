@@ -555,7 +555,7 @@ def replace_df_region(asts, irFileGen, config):
 
     temp_ir_directory_prefix = config['distr_planner']['temp_ir_prefix']
     ## TODO: I probably have to generate random file names for the irs, so
-    ## that multiple executions of dish don't interfere.
+    ## that multiple executions of PaSh don't interfere.
     ir_filename = ir_file_id.toFileName(temp_ir_directory_prefix)
 
     ## Serialize the node in a file
@@ -584,7 +584,7 @@ def make_command(ir_filename):
                  string_to_argument(config.PLANNER_EXECUTABLE),
                  string_to_argument(ir_filename)]
     ## Pass a relevant argument to the planner
-    arguments += config.pass_common_arguments(config.dish_args)
+    arguments += config.pass_common_arguments(config.pash_args)
 
     line_number = 0
     node = make_kv('Command', [line_number, [], arguments, []])

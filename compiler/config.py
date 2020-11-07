@@ -7,41 +7,41 @@ from ir_utils import *
 
 ## Global
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
-if 'DISH_TOP' in os.environ:
-    DISH_TOP = os.environ['DISH_TOP']
+if 'PASH_TOP' in os.environ:
+    PASH_TOP = os.environ['PASH_TOP']
 else:
-    DISH_TOP = subprocess.run(GIT_TOP_CMD, capture_output=True,
-            text=True).stdout.rstrip()
+    PASH_TOP = subprocess.run(GIT_TOP_CMD, capture_output=True,
+                              text=True).stdout.rstrip()
 
-PARSER_BINARY = os.path.join(DISH_TOP, "parser/parse_to_json.native")
-PRINTER_BINARY = os.path.join(DISH_TOP, "parser/json_to_shell.native")
+PARSER_BINARY = os.path.join(PASH_TOP, "parser/parse_to_json.native")
+PRINTER_BINARY = os.path.join(PASH_TOP, "parser/json_to_shell.native")
 
 PYTHON_VERSION = "python3.8"
-PLANNER_EXECUTABLE = os.path.join(DISH_TOP, "compiler/pash_runtime.py")
+PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
 
 config = {}
 annotations = []
-dish_args = None
+pash_args = None
 
 def load_config(config_file_path=""):
     global config
-    dish_config = {}
+    pash_config = {}
     CONFIG_KEY = 'distr_planner'
 
     if(config_file_path == ""):
-      config_file_path = '{}/compiler/config.yaml'.format(DISH_TOP)
+      config_file_path = '{}/compiler/config.yaml'.format(PASH_TOP)
     with open(config_file_path) as config_file:
-        dish_config = yaml.load(config_file, Loader=yaml.FullLoader)
+        pash_config = yaml.load(config_file, Loader=yaml.FullLoader)
 
-    if not dish_config:
+    if not pash_config:
         raise Exception('No valid configuration could be loaded from {}'.format(config_file_path))
 
-    if CONFIG_KEY not in dish_config:
+    if CONFIG_KEY not in pash_config:
         raise Exception('Missing `{}` config in {}'.format(CONFIG_KEY, config_file_path))
 
-    config = dish_config
+    config = pash_config
 
-## These are arguments that are common to dish and distr_plan.py
+## These are arguments that are common to pash.py and pash_runtime.py
 def add_common_arguments(parser):
     parser.add_argument("--compile_optimize_only",
                         help="only compile and optimize the input script and not execute it",
@@ -64,27 +64,27 @@ def add_common_arguments(parser):
                         default=1,
                         help="determines the fan out of inserted splits in the DFG")
     parser.add_argument("--config_path",
-                        help="determines the config file path. By default it is 'DISH_TOP/compiler/config.yaml'.",
+                        help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")
     return
 
-def pass_common_arguments(dish_arguments):
+def pass_common_arguments(pash_arguments):
     arguments = []
-    if (dish_arguments.compile_optimize_only):
+    if (pash_arguments.compile_optimize_only):
         arguments.append(string_to_argument("--compile_optimize_only"))
-    if (dish_arguments.output_time):
+    if (pash_arguments.output_time):
         arguments.append(string_to_argument("--output_time"))
-    if (dish_arguments.output_optimized):
+    if (pash_arguments.output_optimized):
         arguments.append(string_to_argument("--output_optimized"))
-    if (dish_arguments.no_eager):
+    if (pash_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
     arguments.append(string_to_argument("--termination"))
-    arguments.append(string_to_argument(dish_arguments.termination))
+    arguments.append(string_to_argument(pash_arguments.termination))
     arguments.append(string_to_argument("--split_fan_out"))
-    arguments.append(string_to_argument(str(dish_arguments.split_fan_out)))
-    if(not dish_arguments.config_path == ""):
+    arguments.append(string_to_argument(str(pash_arguments.split_fan_out)))
+    if(not pash_arguments.config_path == ""):
         arguments.append(string_to_argument("--config_path"))
-        arguments.append(string_to_argument(dish_arguments.config_path))
+        arguments.append(string_to_argument(pash_arguments.config_path))
     return arguments
 
 ##
@@ -104,7 +104,7 @@ def load_annotation_file(abs_annotation_filename):
 def load_annotation_files(annotation_dir):
     global annotations
     if(not os.path.isabs(annotation_dir)):
-        annotation_dir = os.path.join(DISH_TOP, annotation_dir)
+        annotation_dir = os.path.join(PASH_TOP, annotation_dir)
 
     for (dirpath, dirnames, filenames) in os.walk(annotation_dir):
         json_filenames = [os.path.join(dirpath, filename) for filename in filenames
@@ -114,7 +114,7 @@ def load_annotation_files(annotation_dir):
 
 
 # TODO load command class file path from config
-command_classes_file_path = '{}/compiler/command-classes.yaml'.format(DISH_TOP)
+command_classes_file_path = '{}/compiler/command-classes.yaml'.format(PASH_TOP)
 command_classes = {}
 with open(command_classes_file_path) as command_classes_file:
     command_classes = yaml.load(command_classes_file, Loader=yaml.FullLoader)

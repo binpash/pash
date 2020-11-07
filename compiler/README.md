@@ -1,3 +1,3 @@
 ## Instructions
 
-Add `DISH_TOP` in your environment to point to the top dish directory.
+Add `PASH_TOP` in your environment to point to the top pash directory.
