@@ -433,7 +433,7 @@ def preprocess_node(ast_object, irFileGen, config):
     global preprocess_cases
     return ast_match_untyped(ast_object, preprocess_cases, irFileGen, config)
 
-def preprocess_node_pipe(ast_node, fileIdGen, config):
+def preprocess_node_pipe(ast_node, _irFileGen, _config):
     ## A pipeline is *always* a candidate dataflow region.
     ## Q: Is that true?
 
@@ -446,72 +446,22 @@ def preprocess_node_pipe(ast_node, fileIdGen, config):
     return ast_node, True, ast_node.is_background
 
 ## TODO: Complete this
-def preprocess_node_command(ast_node, fileIdGen, config):
-    print(ast_node)
-    exit(1)
-    construct_str = ast_node.construct.value
-
-    if(len(ast_node.arguments) == 0):
-        ## TODO: Preprocess assignments (and redirections?) if the command is 
-        ##       just an assignment.
-        ## Just compile the assignments. Specifically compile the
-        ## assigned values, because they might have command
-        ## substitutions etc..
-        preprocessed_ast = make_kv(construct_str, [ast_node.line_number] +
-                                   [compiled_assignments] + [ast_node.arguments, compiled_redirections])
-    
-
-    ## TODO: Do we need the line number?
-
-    ## Compile assignments and redirection list
-    compiled_assignments = compile_assignments(ast_node.assignments, fileIdGen, config)
-    compiled_redirections = compile_redirections(ast_node.redir_list, fileIdGen, config)
+def preprocess_node_command(ast_node, _irFileGen, _config):
+    ## TODO: Preprocess the internals of the pipe to allow
+    ##       for mutually recursive calls to PaSh.
+    ##
+    ##       For example, if a command in the pipe has a command substitution
+    ##       in one of its arguments then we would like to call our runtime
+    ##       there instead of 
 
     ## If there are no arguments, the command is just an
-    ## assignment
+    ## assignment (Q: or just redirections?)
     if(len(ast_node.arguments) == 0):
-        ## Just compile the assignments. Specifically compile the
-        ## assigned values, because they might have command
-        ## substitutions etc..
-        compiled_ast = make_kv(construct_str, [ast_node.line_number] +
-                               [compiled_assignments] + [ast_node.arguments, compiled_redirections])
-    else:
-        arguments = ast_node.arguments
-        command_name = arguments[0]
-        options = compile_command_arguments(arguments[1:], fileIdGen, config)
-
-        stdin_fid = fileIdGen.next_file_id()
-        stdout_fid = fileIdGen.next_file_id()
-        ## Question: Should we return the command in an IR if one of
-        ## its arguments is a command substitution? Meaning that we
-        ## will have to wait for its command to execute first?
-        ##
-        ## ANSWER: Kind of. If a command has a command substitution or
-        ## anything that evaluates we should add it to the IR, but we
-        ## should also make sure that its category is set to the most
-        ## general one. That means that it can be executed
-        ## concurrently with other commands, but it cannot be
-        ## parallelized.
-        command = create_command_assign_file_identifiers(old_ast_node, fileIdGen,
-                                                         command_name, options,
-                                                         stdin=stdin_fid, stdout=stdout_fid,
-                                                         redirections=compiled_redirections)
-
-        ## Don't put the command in an IR if it is creates some effect
-        ## (not stateless or pure)
-        if (command.category in ["stateless", "pure"]):
-            compiled_ast = IR([command],
-                              stdin = [stdin_fid],
-                              stdout = [stdout_fid])
-            compiled_ast.set_ast(old_ast_node)
-        else:
-            compiled_arguments = compile_command_arguments(arguments, fileIdGen, config)
-            compiled_ast = make_kv(construct_str,
-                                   [ast_node.line_number, compiled_assignments,
-                                    compiled_arguments, compiled_redirections])
-
-    return compiled_ast
-
+        return ast_node, False, False
+    
+    ## This means we have a command. Commands are always candidate dataflow
+    ## regions.
+    return ast_node, True, False
 
 
 ## TODO: All the replace parts might need to be deleteD

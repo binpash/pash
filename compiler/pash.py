@@ -7,6 +7,7 @@ from ast_to_ir import *
 from pash_runtime import *
 from ir import *
 from json_ast import *
+from parse import parse_shell, from_ir_to_shell_file
 from util import *
 import config
 
@@ -38,7 +39,7 @@ def main():
     input_script_wo_extension, input_script_extension = os.path.splitext(input_script_path)
     ir_filename = input_script_wo_extension + ".ir"
     save_asts_json(compiled_asts, ir_filename)
-    from_ir_to_shell(ir_filename, args.output)
+    from_ir_to_shell_file(ir_filename, args.output)
 
     compilation_end_time = datetime.now()
     print_time_delta("Preprocessing", compilation_start_time, compilation_end_time, args)
@@ -50,19 +51,6 @@ def main():
     if(not args.compile_only):
         execute_script(args.output, args.output_optimized, args.compile_optimize_only)
 
-def parse_shell(input_script_path):
-    parser_output = subprocess.run([config.PARSER_BINARY, input_script_path], capture_output=True, text=True)
-    if (not parser_output.returncode == 0):
-        print(parser_output.stderr)
-        parser_output.check_returncode()
-    return parser_output.stdout
-
-def from_ir_to_shell(ir_filename, new_shell_filename):
-    printer_output = subprocess.run([config.PRINTER_BINARY, ir_filename], capture_output=True, text=True)
-    printer_output.check_returncode()
-    compiled_script = printer_output.stdout
-    with open(new_shell_filename, 'w') as new_shell_file:
-        new_shell_file.write(compiled_script)
 
 def parse_args():
     parser = argparse.ArgumentParser()
