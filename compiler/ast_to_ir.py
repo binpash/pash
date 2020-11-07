@@ -431,7 +431,7 @@ def replace_ast_regions(ast_objects, irFileGen, config):
 
 def preprocess_node(ast_object, irFileGen, config):
     global preprocess_cases
-    return ast_match(ast_object, preprocess_cases, irFileGen, config)
+    return ast_match_untyped(ast_object, preprocess_cases, irFileGen, config)
 
 def preprocess_node_pipe(ast_node, fileIdGen, config):
     ## A pipeline is *always* a candidate dataflow region.
@@ -511,6 +511,13 @@ def preprocess_node_command(ast_node, fileIdGen, config):
                                     compiled_arguments, compiled_redirections])
 
     return compiled_ast
+
+
+
+## TODO: All the replace parts might need to be deleteD
+
+
+
 
 ## Replaces IR subtrees with a command that calls them (more
 ## precisely, a command that calls a python script to call them).
@@ -660,9 +667,17 @@ def replace_irs_assignments(assignments, irFileGen, config):
 def check_if_ast_is_supported(construct, arguments, **kwargs):
     return
 
-def ast_match(ast_object, cases, fileIdGen, config):
-    ast_node = AstNode(ast_object)
+def ast_match_untyped(untyped_ast_object, cases, fileIdGen, config):
+    ## TODO: This should construct the complete AstNode object (not just the surface level)
+    ast_node = AstNode(untyped_ast_object)
     if ast_node.construct is AstNodeConstructor.PIPE:
         ast_node.check(children_count = lambda : len(ast_node.items) >= 2)
+    return ast_match(ast_node, cases, fileIdGen, config)
+
+def ast_match(ast_node, cases, fileIdGen, config):
+    ## TODO: Remove that once `ast_match_untyped` is fixed to
+    ##       construct the whole AstNode object.
+    if(not isinstance(ast_node, AstNode)):
+        return ast_match_untyped(ast_node, cases, fileIdGen, config)
 
     return cases[ast_node.construct.value](fileIdGen, config)(ast_node)

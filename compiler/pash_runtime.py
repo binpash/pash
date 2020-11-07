@@ -8,11 +8,12 @@ import jsonpickle
 from datetime import datetime
 
 from ir import *
+from ast_to_ir import compile_asts
 from json_ast import *
 from impl import execute
 from distr_back_end import distr_execute
 from util import *
-import config as system_config
+import config
 
 from definitions.ir.nodes.alt_bigram_g_reduce import *
 from definitions.ir.nodes.bigram_g_map import *
@@ -20,7 +21,7 @@ from definitions.ir.nodes.bigram_g_reduce import *
 from definitions.ir.nodes.sort_g_reduce import *
 from definitions.ir.nodes.eager import *
 
-config = {}
+runtime_config = {}
 ## There are two ways to enter the distributed planner, either by
 ## calling dish (which straight away calls the distributed planner),
 ## or by calling the distributed planner with the name of an ir file
@@ -37,21 +38,31 @@ def main():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("input_ir", help="the file containing the dataflow graph to be optimized and executed")
-    system_config.add_common_arguments(parser)
+    config.add_common_arguments(parser)
     args = parser.parse_args()
     return args
 
 def optimize_script(ir_filename, args):
-    global config
-    if not system_config.config:
-        system_config.load_config(args.config_path)
+    global runtime_config
+    if not config.config:
+        config.load_config(args.config_path)
 
-    config = system_config.config['distr_planner']
+    ## Load annotations
+    config.load_annotation_files(config.config['distr_planner']['annotations_dir'])
 
-    print("Retrieving IR: {} ... ".format(ir_filename), end='')
+    runtime_config = config.config['distr_planner']
+
+    print("Retrieving candidate DF region: {} ... ".format(ir_filename), end='')
     with open(ir_filename, "rb") as ir_file:
-        ir_node = pickle.load(ir_file)
+        candidate_df_region = pickle.load(ir_file)
     print("Done!")
+
+    compilation_start_time = datetime.now()
+
+    ir_node = compile_candidate_df_region(candidate_df_region, config.config)
+
+    compilation_end_time = datetime.now()
+    print_time_delta("Compilation", compilation_start_time, compilation_end_time, args)
 
     optimization_start_time = datetime.now()
 
@@ -65,7 +76,7 @@ def optimize_script(ir_filename, args):
     # print(ir_node)
     # with cProfile.Profile() as pr:
     distributed_graph = naive_parallelize_stateless_nodes_bfs(ir_node, args.split_fan_out,
-                                                              config['batch_size'])
+                                                              runtime_config['batch_size'])
     # pr.print_stats()
     # print(distributed_graph)
 
@@ -82,13 +93,37 @@ def optimize_script(ir_filename, args):
     print_time_delta("Optimization", optimization_start_time, optimization_end_time, args)
 
     ## Call the backend that executes the optimized dataflow graph
-    output_script_path = config['optimized_script_filename']
-    if(config['distr_backend']):
-        distr_execute(eager_distributed_graph, config['output_dir'], output_script_path,
-                      args.output_optimized, args.compile_optimize_only, config['nodes'])
+    output_script_path = runtime_config['optimized_script_filename']
+    if(runtime_config['distr_backend']):
+        distr_execute(eager_distributed_graph, runtime_config['output_dir'], output_script_path,
+                      args.output_optimized, args.compile_optimize_only, runtime_config['nodes'])
     else:
-        execute(eager_distributed_graph.serialize_as_JSON(), config['output_dir'],
+        execute(eager_distributed_graph.serialize_as_JSON(), runtime_config['output_dir'],
                 output_script_path, args.output_optimized, args)
+
+def compile_candidate_df_region(candidate_df_region, config):
+    ## This is for the files in the IR
+    fileIdGen = FileIdGen()
+
+    ## TODO: At the moment we only handle candidate_df_regions from
+    ##       the top level. 
+    assert(isinstance(candidate_df_region, list))
+
+    ## Compile the asts
+    ## TODO: Since compilation happens at runtime, we can now expand everything accordingly.
+    ##       We can do that using a shell for start: 
+    ##         if a word is safe to expand, then call a shell to expand it.
+    compiled_asts = compile_asts(candidate_df_region, fileIdGen, config)
+
+    ## TODO: Normally this could return more than one compiled ASTs (containing IRs in them). 
+    ##       To correctly handle that we would need to really replace the optimized IRs
+    ##       with the final parallel corresponding scripts.
+    ##
+    ##       However, for now we just assume that there is one IR that we can execute as is.
+    assert(len(compiled_asts) == 1)
+    ir_node = compiled_asts[0]
+
+    return ir_node
 
 
 def print_graph_statistics(graph):
@@ -500,11 +535,11 @@ def add_eager_nodes(graph):
     # print("Source nodes:")
     # print(source_nodes)
 
-    eager_exec_path = '{}/{}'.format(system_config.DISH_TOP, config['eager_executable_path'])
+    eager_exec_path = '{}/{}'.format(config.DISH_TOP, runtime_config['eager_executable_path'])
     ## Generate a fileIdGen from a graph, that doesn't clash with the
     ## current graph fileIds.
     fileIdGen = graph.get_file_id_gen()
-    intermediateFileIdGen = FileIdGen(0, config['eager_intermediate_prefix'])
+    intermediateFileIdGen = FileIdGen(0, runtime_config['eager_intermediate_prefix'])
 
     ## Get the next nodes
     workset = [node for source_node in source_nodes for node in graph.get_next_nodes(source_node)]

@@ -20,6 +20,7 @@ def main():
         config.load_config(args.config_path)
 
     ## Load annotations
+    ## TODO: This should not happen here anymore.
     config.load_annotation_files(config.config['distr_planner']['annotations_dir'])
 
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
