@@ -120,9 +120,10 @@ def compile_candidate_df_region(candidate_df_region, config):
     ## This is for the files in the IR
     fileIdGen = FileIdGen()
 
-    ## TODO: At the moment we only handle candidate_df_regions from
-    ##       the top level. 
-    assert(isinstance(candidate_df_region, list))
+    ## If the candidate DF region is not from the top level then 
+    ## it won't be a list and thus we need to make it into a list to compile it.
+    if(not isinstance(candidate_df_region, list)):
+        candidate_df_region = [candidate_df_region]
 
     ## Compile the asts
     ## TODO: Since compilation happens at runtime, we can now expand everything accordingly.
