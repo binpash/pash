@@ -10,7 +10,7 @@ spell ~&~ $4\times\tsta, 3\times\tpur$ & 3~GB & 25m7.560s & 193 & 769 & 0.104s &
 difference ~&~ $2\times\tsta, 3\times\tpur$ & 10~GB & 25m49.097s & 125 & 509 & 0.186s & 2.341s & non-parallelizable \tti{diff}ing \\
 bi-grams ~&~ $3\times\tsta, 3\times\tpur$ & 3~GB & 38m9.922s & 185 & 761 & 0.146s & 1.716s & stream shifting and merging \\
 set-difference ~&~ $5\times\tsta, 2\times\tpur$ & 10~GB & 51m32.313s & 155 & 635 & 0.321s & 4.358s & two pipelines merging to a \tti{comm} \\
-sort-sort ~&~ $\tsta, 2\times\tpur$ & 10~GB & 31m26.147s & 154 & 634 & 0.092s & 1.077s & parallelizable \tpur after \tpur \\
+sort-sort ~&~ $\tsta, 2\times\tpur$ & 10~MB & 31m26.147s & 154 & 634 & 0.092s & 1.077s & parallelizable \tpur after \tpur \\
 shortest-scripts ~&~ $5\times\tsta, 2\times\tpur$ & 85~MB & 28m45.900s & 142 & 574 & 0.328s & 4.657s & long \tsta pipeline ending with \tpur \\
 \bottomrule
 \end{tabular*}
