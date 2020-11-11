@@ -4,6 +4,8 @@ import math
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.lines as pltlines
+import matplotlib.ticker as plticker
 import statistics
 
 SMALL_SIZE = 16
@@ -117,6 +119,25 @@ class LinePlotConfig:
     
     def plot(self, xvalues, yvalues, ax):
         return ax.plot(xvalues, yvalues, self.linestyle, linewidth=self.linewidth, color=self.color, label=self.label)
+
+    ## The following two methods are needed since the linestyle argument in plot
+    ## does not correspond to the one in lines2D
+    def get_ls(self):
+        linestyle = self.linestyle
+        if(len(linestyle) == 2 and linestyle[0] == '-' and not linestyle[1] == '-'):
+            return '-'
+        return linestyle
+
+    def get_marker(self):
+        linestyle = self.linestyle
+        if(len(linestyle) == 2 and linestyle[0] == '-' and not linestyle[1] == '-'):
+            return linestyle[1]
+        return None
+
+    def get_artist(self):
+        marker = self.get_marker()
+        linestyle = self.get_ls()
+        return pltlines.Line2D([], [], marker=marker, linestyle=linestyle, linewidth=self.linewidth, color=self.color, label=self.label)
 
 default_line_plot_configs = {'eager': LinePlotConfig('-D', 'tab:red', 'Parallel w/o split'),
                              'split': LinePlotConfig('-o', 'tab:blue', 'Parallel'),
@@ -895,6 +916,18 @@ def collect_unix50_coarse_scaleup_times(unix50_results_dir):
     plt.savefig(os.path.join('../evaluation/plots', "unix50_coarse_throughput_scaleup.pdf"),bbox_inches='tight')
 
 
+def get_statistics_from_lines(lines):
+    minimums = lines[0].get_ydata().copy()
+    maximums = lines[0].get_ydata().copy()
+    sums = [0 for _ in lines[0].get_ydata()]
+    for line in lines:
+        for i, y in enumerate(line.get_ydata()):
+            minimums[i] = min(minimums[i], y)
+            maximums[i] = max(maximums[i], y)
+            sums[i] += y
+    avgs = [float(s)/len(lines) for s in sums]
+    return minimums, maximums, avgs
+
 def set_tiling_axes_labels_ticks(fig):
     axs = fig.get_axes()
     for ax in axs:
@@ -918,8 +951,8 @@ def plot_tiling_experiments(fig, gs, experiments, all_experiment_results, all_sc
         all_speedup_results = all_experiment_results[experiment]
         lines, best_result, no_eager_result = plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, 
                                                                  custom_scaleup_plots, ax, line_plot_configs=line_plot_configs)
-        if(experiment == "double_sort"):
-            total_lines = lines + total_lines
+        # if(experiment == "double_sort"):
+        total_lines = lines + total_lines
         ax.set_xticks(all_scaleup_numbers[1:])
 
         text_color = 'black'
@@ -943,6 +976,7 @@ def plot_tiling_experiments(fig, gs, experiments, all_experiment_results, all_sc
     
     return (total_lines, averages, no_eager_averages)
 
+
 def print_aggregates(prefix, averages, no_eager_averages):
     ## Print average, geo-mean
     one_liner_averages = [sum(res)/len(res) for res in averages]
@@ -958,10 +992,11 @@ def print_aggregates(prefix, averages, no_eager_averages):
 def report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctness):
     global all_line_plots
 
-    confs = ["PaSh",
-             "PaSh w/o split",
-             "Blocking Eager",
-             "No Eager"]
+    line_plots = ["split", "eager", "blocking-eager", "no-eager"]
+    legend_names = ["PaSh",
+                    "PaSh w/o split",
+                    "Blocking Eager",
+                    "No Eager"]
 
     fig = plt.figure()
     columns = 5
@@ -972,9 +1007,10 @@ def report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctne
                                        all_experiment_results, 
                                        all_scaleup_numbers, 
                                        correctness)
-    total_lines, averages, no_eager_averages = plot_res 
+    _total_lines, averages, no_eager_averages = plot_res 
 
-    plt.legend(total_lines, confs, loc='lower right', fontsize=16)
+    legend_artists = [default_line_plot_configs[lplot].get_artist() for lplot in line_plots]
+    plt.legend(legend_artists, legend_names, loc='lower right', fontsize=16)
     # plt.title(pretty_names[experiment])
 
     fig.set_size_inches(columns * 6, rows * 5)
@@ -991,10 +1027,12 @@ def plot_one_liners_tiling(all_experiment_results, experiments):
                             "spell" : ["split", "eager"],
                             "bigrams" : ["split", "eager"]}
 
-    confs = ["PaSh",
-             "PaSh w/o split",
-             "Blocking Eager",
-             "No Eager"]
+    line_plots = ["split", "eager", "blocking-eager", "no-eager"]
+
+    legend_names = ["PaSh",
+                    "PaSh w/o split",
+                    "Blocking Eager",
+                    "No Eager"]
 
     fig = plt.figure()
     gs = fig.add_gridspec(2, 5, hspace=0.05)
@@ -1003,9 +1041,10 @@ def plot_one_liners_tiling(all_experiment_results, experiments):
                                        all_experiment_results, 
                                        all_scaleup_numbers,
                                        custom_scaleup_plots=custom_scaleup_plots)
-    total_lines, averages, no_eager_averages = plot_res
+    _total_lines, averages, no_eager_averages = plot_res
 
-    plt.legend(total_lines, confs, loc='lower right', fontsize=16)
+    legend_artists = [default_line_plot_configs[lplot].get_artist() for lplot in line_plots]
+    plt.legend(legend_artists, legend_names, loc='lower right', fontsize=16)
     # plt.title(pretty_names[experiment])
 
     fig.set_size_inches(27, 8.2)
@@ -1047,6 +1086,8 @@ def plot_less_one_liners_tiling(all_experiment_results, experiments):
                                        line_plot_configs=line_plot_configs)
     total_lines, averages, no_eager_averages = plot_res
 
+    mins, maxs, avgs = get_statistics_from_lines(total_lines)
+
     # plt.legend(total_lines, confs, loc='lower right', fontsize=16)
     # plt.title(pretty_names[experiment])
 
@@ -1054,6 +1095,22 @@ def plot_less_one_liners_tiling(all_experiment_results, experiments):
     plt.tight_layout()
     ## TODO: Replace the prefix with a constant
     plt.savefig(os.path.join('../evaluation/plots', "coarse_tiling_throughput_scaleup.pdf"),bbox_inches='tight')
+
+    ## Plot one plot with all together
+    fig, ax = plt.subplots()
+    ax.plot(all_scaleup_numbers, avgs)
+    ax.fill_between(all_scaleup_numbers, mins, maxs, alpha=0.2)
+    ax.hlines([1], all_scaleup_numbers[0], all_scaleup_numbers[-1], linewidth=0.8, linestyles="dotted")
+    loc = plticker.MultipleLocator(base=10.0) # this locator puts ticks at regular intervals
+    ax.yaxis.set_major_locator(loc)
+    plt.xticks(all_scaleup_numbers)
+    plt.xlim(all_scaleup_numbers[0], all_scaleup_numbers[-1])
+    ax.grid()
+    plt.ylim(0,maxs[-1]*1.05)
+    fig.set_size_inches(9, 5)
+    set_tiling_axes_labels_ticks(fig)
+    plt.tight_layout()
+    plt.savefig(os.path.join('../evaluation/plots', "coarse_aggregate_throughput_scaleup.pdf"),bbox_inches='tight')
 
     print_aggregates("Coarse", averages, no_eager_averages)
 
