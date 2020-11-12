@@ -584,6 +584,22 @@ def collect_input_size(experiment):
     clean_name = input_file_name.split('/')[-1].split('.')[0]
     return clean_name
 
+def collect_script(experiment):
+    # print(experiment)
+    script_file = os.path.join(MICROBENCHMARKS, '{}.sh'.format(experiment))
+    with open(script_file) as file:
+        script_lines = file.readlines()
+        clean_script_lines = [line.lstrip() for line in script_lines
+                              if not line.lstrip().startswith('#')]
+        clean_script_lines = [line.split('#')[0].rstrip(' ') for line in clean_script_lines]
+        script = "".join(clean_script_lines).rstrip()
+        script = script.replace("|\n", "| ")
+        script = script.replace("&\n", "& ")
+        script = script.replace("\n", "; ")
+        print(script)
+    wrapped_script = '\lstinline[columns=fixed,basicstyle=\\footnotesize\\ttfamily]!{}!'.format(script)
+    return wrapped_script
+
 def format_time_seconds(time_milliseconds):
     time_seconds = time_milliseconds / 1000
     time_minutes = int(time_seconds // 60)
@@ -606,12 +622,16 @@ def format_time_milliseconds(time_milliseconds):
 
 def generate_table_header(full=True):
     header = []
-    header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} llllllll}']
-    header += ['\\toprule']
     if(not full):
-        header += ['Script ~&~ Structure & Input &'
-                   'Seq. Time & Highlights \\\\']
+        # header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} llll}']
+        header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} l}']
+        header += ['\\toprule']
+        # header += ['Script ~&~ Structure & Input &'
+        #            'Seq. Time & Highlights \\\\']
+        header += ['Name ~&~ Script \\\\']
     else:
+        header += ['\\begin{tabular*}{\\textwidth}{l @{\\extracolsep{\\fill}} llllllll}']
+        header += ['\\toprule']
         header += ['Script ~&~ Structure & Input &'
                    'Seq. Time & \\multicolumn{2}{l}{\\#Nodes(16, 64)} &'
                    '\\multicolumn{2}{l}{Compile Time (16, 64)} & Highlights \\\\']
@@ -627,8 +647,13 @@ def generate_table_footer(full=True):
 def generate_experiment_line(experiment, full=True):
     line = []
     line += [pretty_names[experiment], '~&~']
-    line += [structures[experiment], '&']
 
+    if(not full):
+        script = collect_script(experiment)
+        line += [script, '\\\\']
+        return " ".join(line)
+
+    line += [structures[experiment], '&']
     ## Collect and output the input size
     input_size = collect_format_input_size(experiment)
     line += [input_size, '&']
