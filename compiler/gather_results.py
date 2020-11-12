@@ -952,7 +952,7 @@ def plot_tiling_experiments(fig, gs, experiments, all_experiment_results, all_sc
         lines, best_result, no_eager_result = plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, 
                                                                  custom_scaleup_plots, ax, line_plot_configs=line_plot_configs)
         # if(experiment == "double_sort"):
-        total_lines = lines + total_lines
+        total_lines += lines
         ax.set_xticks(all_scaleup_numbers[1:])
 
         text_color = 'black'
@@ -1086,8 +1086,8 @@ def plot_less_one_liners_tiling(all_experiment_results, experiments):
                                        line_plot_configs=line_plot_configs)
     total_lines, averages, no_eager_averages = plot_res
 
-    mins, maxs, avgs = get_statistics_from_lines(total_lines)
-
+    print(experiments)
+    print([line.get_ydata() for line in total_lines])
     # plt.legend(total_lines, confs, loc='lower right', fontsize=16)
     # plt.title(pretty_names[experiment])
 
@@ -1095,6 +1095,15 @@ def plot_less_one_liners_tiling(all_experiment_results, experiments):
     plt.tight_layout()
     ## TODO: Replace the prefix with a constant
     plt.savefig(os.path.join('../evaluation/plots', "coarse_tiling_throughput_scaleup.pdf"),bbox_inches='tight')
+
+    ## Plot the aggregate plot for the one liners
+    plot_less_one_liners_aggregate(total_lines, all_scaleup_numbers)
+    plot_all_less_one_liners_one_plot(total_lines, all_scaleup_numbers, experiments)
+
+    print_aggregates("Coarse", averages, no_eager_averages)
+
+def plot_less_one_liners_aggregate(total_lines, all_scaleup_numbers):
+    mins, maxs, avgs = get_statistics_from_lines(total_lines)
 
     ## Plot one plot with all together
     fig, ax = plt.subplots()
@@ -1112,7 +1121,31 @@ def plot_less_one_liners_tiling(all_experiment_results, experiments):
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "coarse_aggregate_throughput_scaleup.pdf"),bbox_inches='tight')
 
-    print_aggregates("Coarse", averages, no_eager_averages)
+def plot_all_less_one_liners_one_plot(total_lines, all_scaleup_numbers, experiments):
+    mins, maxs, avgs = get_statistics_from_lines(total_lines)
+    fig, ax = plt.subplots()
+    ax.plot(all_scaleup_numbers, avgs, label="Average", linewidth=2)
+    for i, line in enumerate(total_lines):
+        print(line.get_xdata(), line.get_ydata())
+        label = pretty_names[experiments[i]]
+        ax.plot(line.get_xdata(), line.get_ydata(), alpha=0.8, label=label, linewidth=1, linestyle="dashed")
+        # new_line = pltlines.Line2D(line.get_xdata(), line.get_ydata())
+        # new_line.update_from(line)
+        # ax.add_line(new_line)
+    ax.hlines([1], all_scaleup_numbers[0], all_scaleup_numbers[-1], linewidth=0.8, linestyles="dotted")
+    loc = plticker.MultipleLocator(base=10.0) # this locator puts ticks at regular intervals
+    ax.yaxis.set_major_locator(loc)
+    plt.xticks(all_scaleup_numbers)
+    plt.xlim(all_scaleup_numbers[0], all_scaleup_numbers[-1])
+    ax.grid()
+    # ax.set_yscale("log")
+    plt.ylim(0,maxs[-1]*1.05)
+    # plt.ylim(0,20)
+    fig.set_size_inches(9, 5)
+    set_tiling_axes_labels_ticks(fig)
+    plt.tight_layout()
+    plt.legend(loc='upper left', fontsize=14)
+    plt.savefig(os.path.join('../evaluation/plots', "coarse_all_in_one_throughput_scaleup.pdf"),bbox_inches='tight')
 
 
 def format_correctness(correctness):
