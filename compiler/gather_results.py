@@ -747,6 +747,18 @@ def aggregate_unix50_results(all_results, scaleup_numbers):
 
     return avg_distr_results
 
+def compute_and_print_aggrs(individual_results, absolute_seq_times_s):
+    mean = sum(individual_results) / len(individual_results)
+    median = statistics.median(individual_results)
+    geo_mean = math.exp(np.log(individual_results).sum() / len(individual_results))
+    weighted_res = [i*a for i, a in zip(individual_results, absolute_seq_times_s)]
+    weighted_avg = sum(weighted_res) / sum(absolute_seq_times_s)
+    print("  Mean:", mean)
+    print("  Median:", median)
+    print("  Geometric Mean:", geo_mean)
+    print("  Weighted Average:", weighted_avg)
+    return mean, median, geo_mean, weighted_res, weighted_avg
+
 def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
 
     ## Sort by speedup
@@ -767,15 +779,9 @@ def make_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     absolute_seq_times_s = [absolute_seq / 1000
                             for _, absolute_seq in sorted_all_results]
     print("Unix50 individual speedups for {} parallelism:".format(parallelism), individual_results)
-    mean = sum(individual_results) / len(individual_results)
-    median = statistics.median(individual_results)
-    geo_mean = math.exp(np.log(individual_results).sum() / len(individual_results))
-    weighted_res = [i*a for i, a in zip(individual_results, absolute_seq_times_s)]
-    weighted_avg = sum(weighted_res) / sum(absolute_seq_times_s)
-    print("  Mean:", mean)
-    print("  Median:", median)
-    print("  Geometric Mean:", geo_mean)
-    print("  Weighted Average:", weighted_avg)
+
+    aggrs = compute_and_print_aggrs(individual_results, absolute_seq_times_s)
+    mean = aggrs[0]
 
     w = 0.2
     ind = np.arange(len(individual_results))
@@ -833,15 +839,9 @@ def make_coarse_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     absolute_seq_times_s = [absolute_seq / 1000
                             for _, absolute_seq in all_results]
     print("Unix50 individual speedups for {} parallelism:".format(parallelism), individual_results)
-    mean = sum(individual_results) / len(individual_results)
-    median = statistics.median(individual_results)
-    geo_mean = math.exp(np.log(individual_results).sum() / len(individual_results))
-    weighted_res = [i*a for i, a in zip(individual_results, absolute_seq_times_s)]
-    weighted_avg = sum(weighted_res) / sum(absolute_seq_times_s)
-    print("  Mean:", mean)
-    print("  Median:", median)
-    print("  Geometric Mean:", geo_mean)
-    print("  Weighted Average:", weighted_avg)
+    
+    aggrs = compute_and_print_aggrs(individual_results, absolute_seq_times_s)
+    mean = aggrs[0]
 
     w = 0.2
     ind = np.arange(len(individual_results))
@@ -873,6 +873,45 @@ def make_coarse_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "unix50_coarse_individual_speedups_{}.pdf".format(parallelism)),bbox_inches='tight')
 
+def make_unix50_scatter_plot(all_results, scaleup_numbers, parallelism):
+    individual_results = [distr_exec_speedup[scaleup_numbers.index(parallelism)]
+                          for distr_exec_speedup, _ in all_results]
+    absolute_seq_times_s = [absolute_seq / 1000
+                            for _, absolute_seq in all_results]
+    print("Unix50 individual speedups for {} parallelism:".format(parallelism), individual_results)
+    
+    aggrs = compute_and_print_aggrs(individual_results, absolute_seq_times_s)
+    mean = aggrs[0]
+
+    fig, ax = plt.subplots()
+    fig.set_size_inches(10, 4)
+    ax.scatter(absolute_seq_times_s, individual_results)
+    ax.grid()
+    ax.set_ylabel('Speedup')
+    ax.set_xlabel('Sequential Time (s)')
+    ax.set_xscale("log")
+    plt.hlines([1], -1, 1000000, linewidth=0.8)
+    plt.xlim(0, max(absolute_seq_times_s) * 2)
+    plt.tight_layout()
+    plt.savefig(os.path.join('../evaluation/plots', "unix50_scatter_speedups_{}.pdf".format(parallelism)),bbox_inches='tight')
+
+def plot_unix50_avg_speedup(all_results, scaleup_numbers, filename):
+    avg_results = aggregate_unix50_results(all_results, scaleup_numbers)
+    print("Unix50 average speedup:", avg_results)
+
+    ## Plot average speedup
+    fig, ax = plt.subplots()
+
+    ## Plot speedup
+    ax.set_ylabel('Speedup')
+    ax.set_xlabel('--width')
+    ax.plot(scaleup_numbers, avg_results, '-o', linewidth=0.5, label='Parallel')
+    # plt.yscale("log")
+    plt.xticks(scaleup_numbers)
+    plt.legend(loc='lower right')
+    plt.title("Unix50 Throughput")
+    plt.tight_layout()
+    plt.savefig(os.path.join('../evaluation/plots', filename),bbox_inches='tight')
 
 def collect_unix50_scaleup_times(unix50_results_dir):
     files = [f for f in os.listdir(unix50_results_dir)]
@@ -890,24 +929,10 @@ def collect_unix50_scaleup_times(unix50_results_dir):
 
     for parallelism in scaleup_numbers:
         make_unix50_bar_chart(all_results, scaleup_numbers, parallelism)
+        make_unix50_scatter_plot(all_results, scaleup_numbers, parallelism)
 
-
-    avg_results = aggregate_unix50_results(all_results, scaleup_numbers)
-    print("Unix50 average speedup:", avg_results)
-
-    ## Plot average speedup
-    fig, ax = plt.subplots()
-
-    ## Plot speedup
-    ax.set_ylabel('Speedup')
-    ax.set_xlabel('--width')
-    ax.plot(scaleup_numbers, avg_results, '-o', linewidth=0.5, label='Parallel')
-    # plt.yscale("log")
-    plt.xticks(scaleup_numbers)
-    plt.legend(loc='lower right')
-    plt.title("Unix50 Throughput")
-    plt.tight_layout()
-    plt.savefig(os.path.join('../evaluation/plots', "unix50_throughput_scaleup.pdf"),bbox_inches='tight')
+    plot_unix50_avg_speedup(all_results, scaleup_numbers, "unix50_throughput_scaleup.pdf")
+    
 
 def collect_unix50_coarse_scaleup_times(unix50_results_dir):
     files = [f for f in os.listdir(unix50_results_dir)]
@@ -926,23 +951,7 @@ def collect_unix50_coarse_scaleup_times(unix50_results_dir):
     for parallelism in scaleup_numbers:
         make_coarse_unix50_bar_chart(all_results, scaleup_numbers, parallelism)
 
-
-    avg_results = aggregate_unix50_results(all_results, scaleup_numbers)
-    print("Unix50 average speedup:", avg_results)
-
-    ## Plot average speedup
-    fig, ax = plt.subplots()
-
-    ## Plot speedup
-    ax.set_ylabel('Speedup')
-    ax.set_xlabel('--width')
-    ax.plot(scaleup_numbers, avg_results, '-o', linewidth=0.5, label='Parallel')
-    # plt.yscale("log")
-    plt.xticks(scaleup_numbers)
-    plt.legend(loc='lower right')
-    plt.title("Unix50 Throughput")
-    plt.tight_layout()
-    plt.savefig(os.path.join('../evaluation/plots', "unix50_coarse_throughput_scaleup.pdf"),bbox_inches='tight')
+    plot_unix50_avg_speedup(all_results, scaleup_numbers, "unix50_coarse_throughput_scaleup.pdf")
 
 
 def get_statistics_from_lines(lines):
@@ -1115,8 +1124,6 @@ def plot_less_one_liners_tiling(all_experiment_results, experiments):
                                        line_plot_configs=line_plot_configs)
     total_lines, averages, no_eager_averages = plot_res
 
-    print(experiments)
-    print([line.get_ydata() for line in total_lines])
     # plt.legend(total_lines, confs, loc='lower right', fontsize=16)
     # plt.title(pretty_names[experiment])
 
@@ -1155,7 +1162,6 @@ def plot_all_less_one_liners_one_plot(total_lines, all_scaleup_numbers, experime
     fig, ax = plt.subplots()
     ax.plot(all_scaleup_numbers, avgs, label="Average", linewidth=2)
     for i, line in enumerate(total_lines):
-        print(line.get_xdata(), line.get_ydata())
         label = pretty_names[experiments[i]]
         ax.plot(line.get_xdata(), line.get_ydata(), alpha=0.8, label=label, linewidth=1, linestyle="dashed")
         # new_line = pltlines.Line2D(line.get_xdata(), line.get_ydata())
