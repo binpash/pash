@@ -592,6 +592,10 @@ def collect_script(experiment):
         clean_script_lines = [line.lstrip() for line in script_lines
                               if not line.lstrip().startswith('#')]
         clean_script_lines = [line.split('#')[0].rstrip(' ') for line in clean_script_lines]
+        ## Remove mkfifo, cat, rm
+        clean_script_lines = [line for line in clean_script_lines
+                              if not line.startswith("mkfifo") and
+                                 not line.startswith("rm")]
         script = "".join(clean_script_lines).rstrip()
         script = script.replace("|\n", "| ")
         script = script.replace("&\n", "& ")
