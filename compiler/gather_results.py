@@ -873,6 +873,11 @@ def make_coarse_unix50_bar_chart(all_results, scaleup_numbers, parallelism):
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "unix50_coarse_individual_speedups_{}.pdf".format(parallelism)),bbox_inches='tight')
 
+def get_pipelines_res(individual_results, absolute_seq_times_s, pipelines):
+    speedups = [individual_results[index] for index in pipelines]
+    seq_times = [absolute_seq_times_s[index] for index in pipelines]
+    return speedups, seq_times
+
 def make_unix50_scatter_plot(all_results, scaleup_numbers, parallelism):
     individual_results = [distr_exec_speedup[scaleup_numbers.index(parallelism)]
                           for distr_exec_speedup, _ in all_results]
@@ -883,15 +888,45 @@ def make_unix50_scatter_plot(all_results, scaleup_numbers, parallelism):
     aggrs = compute_and_print_aggrs(individual_results, absolute_seq_times_s)
     mean = aggrs[0]
 
+    slowdown_pipelines = [2,19,31]
+    no_speedup_pipelines = [13, 24, 25, 26, 29, 30]
+    sort_pipelines = [0, 1, 3, 15, 16, 18, 20, 27, 28, 33]
+    deep_pipelines = [7, 8, 9, 10, 11, 12, 14, 27, 28]
+    io_pipelines = [4, 5, 6, 7, 8, 12, 14, 22, 23]
+    special_pipelines = slowdown_pipelines + no_speedup_pipelines + sort_pipelines + deep_pipelines + io_pipelines
+    rest_pipelines_set = set(range(len(all_results))) - set(special_pipelines)
+    rest_pipelines = sorted(list(rest_pipelines_set))
+    print(rest_pipelines)
+
     fig, ax = plt.subplots()
-    fig.set_size_inches(10, 4)
-    ax.scatter(absolute_seq_times_s, individual_results)
+    fig.set_size_inches(10, 5)
+
+    ## Slowdown Pipelines
+    speeds, seqs = get_pipelines_res(individual_results, absolute_seq_times_s, rest_pipelines)
+    ax.scatter(seqs, speeds, label="Parallelizable")
+
+    speeds, seqs = get_pipelines_res(individual_results, absolute_seq_times_s, sort_pipelines)
+    ax.scatter(seqs, speeds, label="Contain sort")
+
+    speeds, seqs = get_pipelines_res(individual_results, absolute_seq_times_s, io_pipelines)
+    ax.scatter(seqs, speeds, label="Non CPU-heavy")
+
+    speeds, seqs = get_pipelines_res(individual_results, absolute_seq_times_s, deep_pipelines)
+    ax.scatter(seqs, speeds, label="Deep")
+
+    speeds, seqs = get_pipelines_res(individual_results, absolute_seq_times_s, no_speedup_pipelines)
+    ax.scatter(seqs, speeds, label="Non parallelizable")
+
+    speeds, seqs = get_pipelines_res(individual_results, absolute_seq_times_s, slowdown_pipelines)
+    ax.scatter(seqs, speeds, label="Contain head")
+
     ax.grid()
     ax.set_ylabel('Speedup')
     ax.set_xlabel('Sequential Time (s)')
     ax.set_xscale("log")
     plt.hlines([1], -1, 1000000, linewidth=0.8)
     plt.xlim(0, max(absolute_seq_times_s) * 2)
+    plt.legend()
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "unix50_scatter_speedups_{}.pdf".format(parallelism)),bbox_inches='tight')
 
