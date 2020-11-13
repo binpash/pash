@@ -1,7 +1,7 @@
 #!/bin/bash
 # cat $IN | tr A-Z a-z | sort
-TEMP_C="/tmp/{/}.out"
-mkfifo ${TEMP}
-parallel -k "cat {} | tr A-Z a-z | sort > $TEMP_C" ::: $IN & 
-sort -m ${TEMP}
-rm ${TEMP}
+TEMP_C1="/tmp/{/}.out"
+mkfifo ${TEMP1}
+parallel "cat {} | tr A-Z a-z | sort > $TEMP_C1" ::: $IN & 
+sort -m ${TEMP1}
+rm ${TEMP1}
