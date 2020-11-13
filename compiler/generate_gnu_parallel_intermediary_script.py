@@ -10,20 +10,26 @@ def generate_gnu_parallel_script(input_script, output_script, new_input_files):
         input_script_data = file.read()
 
     output_script_data = replace_in_variable(input_script_data, new_input_files)
-    output_script_data = replace_temp_variable(output_script_data, new_input_files)
+    output_script_data = replace_temp_variables(output_script_data, new_input_files)
 
     ## TODO: Also create the TEMP_C variable instead of having it fixed in the script
 
     with open(output_script, "w") as file:
         file.write(output_script_data)
 
-def replace_temp_variable(data, new_input_files):
-    print(new_input_files)
+def replace_temp_variables(data, new_input_files):
+    temp_vars = [line.split('=')[0] for line in data.split('\n')
+                 if line.startswith('TEMP_C')]
     filenames = [filename.split("/")[-1] 
                  for filename in new_input_files]
-    format_string = "/tmp/{}.out"
-    new_data = data.replace(' ${TEMP}', ' ' + ' '.join([format_string.format(filename)
-                                                    for filename in filenames]))
+    new_data = data
+    for temp_var in temp_vars:
+        number = temp_var.split("TEMP_C")[-1]
+        format_string = "/tmp/{}.out" + str(number)
+        replace_origin_string = ' ${TEMP' + str(number) + '}'
+        print(replace_origin_string)
+        new_data = new_data.replace(replace_origin_string, ' ' + ' '.join([format_string.format(filename)
+                                                                           for filename in filenames]))
     return new_data
 
 
