@@ -30,6 +30,9 @@ def replace_temp_variables(data, new_input_files):
         print(replace_origin_string)
         new_data = new_data.replace(replace_origin_string, ' ' + ' '.join([format_string.format(filename)
                                                                            for filename in filenames]))
+
+    number_jobs = len(new_input_files)
+    new_data = new_data.replace("${JOBS}", str(number_jobs))
     return new_data
 
 
