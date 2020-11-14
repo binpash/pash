@@ -6,10 +6,10 @@ nfa-regex ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $I
 sort ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | tr A-Z a-z | sort! \\
 top-n ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | tr -cs A-Za-z '\n' | tr A-Z a-z | sort | uniq -c | sort -rn | sed ${N}q! \\
 wf ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | tr -cs A-Za-z'\n' | tr A-Z a-z | sort | uniq -c | sort -rn | sed ${1}q! \\
-spell ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | col -bx |tr -cs A-Za-z '\n' | tr A-Z a-z |tr -d '[:punct:]' |sort |uniq |comm -23 - $dict! \\
-difference ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | sort | tr [:lower:] [:upper:] > s1 & cat $IN | sort | tr [:upper:] [:lower:] > s2 & diff -B s1 s2! \\
+spell ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | col -bx |tr -cs A-Za-z '\n' | tr A-Z a-z |tr -d '[:punct:]' |sort |uniq |!\\ ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!    comm -23 - $dict! \\
+difference ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | sort | tr [:lower:] [:upper:] > s1 & cat $IN | sort |!\\ ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!    tr [:upper:] [:lower:] > s2 & diff -B s1 s2! \\
 bi-grams ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | tr -cs A-Za-z '\n' | tr A-Z a-z | bigrams_aux | sort | uniq! \\
-set-difference ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | cut -d ' ' -f 1 | sort > s1 & cat $IN | cut -d ' ' -f 1 | sort > s2 & comm -23 s1 s2! \\
-shortest-scripts ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | xargs file | grep "shell script" | cut -d: -f1 | xargs -L 1 wc -l | grep -v '^0$' | sort -n | head -15! \\
+set-difference ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | cut -d ' ' -f 1 | sort > s1 & cat $IN | cut -d ' ' -f 1 | sort > s2 &!\\ ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!    comm -23 s1 s2! \\
+shortest-scripts ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | xargs file | grep "shell script" | cut -d: -f1 | xargs -L 1 wc -l |!\\ ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!    grep -v '^0$' | sort -n | head -15! \\
 \bottomrule
 \end{tabular*}
