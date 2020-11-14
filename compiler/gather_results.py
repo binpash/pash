@@ -2,6 +2,7 @@ import copy
 import sys
 import math
 import os
+import re
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.lines as pltlines
@@ -584,24 +585,46 @@ def collect_input_size(experiment):
     clean_name = input_file_name.split('/')[-1].split('.')[0]
     return clean_name
 
+def separate_into_lines(script):
+    indent_len = 4
+    lines = [script]
+    while (len(lines[-1]) > 90):
+        last_line = lines[-1]
+        last_break_index = -1
+        for i in range(90):
+            if(last_line[i] in ["&", "|"]):
+                last_break_index = i
+
+        if(last_break_index == -1):
+            break
+        new_pre_last_line = last_line[:(last_break_index+1)]
+        new_last_line = " " * indent_len + last_line[(last_break_index+1):].lstrip()
+        lines[-1] = new_pre_last_line
+        lines.append(new_last_line)
+    return lines
+
+
 def collect_script(experiment):
     # print(experiment)
     script_file = os.path.join(MICROBENCHMARKS, '{}.sh'.format(experiment))
     with open(script_file) as file:
         script_lines = file.readlines()
-        clean_script_lines = [line.lstrip() for line in script_lines
-                              if not line.lstrip().startswith('#')]
-        clean_script_lines = [line.split('#')[0].rstrip(' ') for line in clean_script_lines]
-        ## Remove mkfifo, cat, rm
-        clean_script_lines = [line for line in clean_script_lines
-                              if not line.startswith("mkfifo") and
-                                 not line.startswith("rm")]
-        script = "".join(clean_script_lines).rstrip()
-        script = script.replace("|\n", "| ")
-        script = script.replace("&\n", "& ")
-        script = script.replace("\n", "; ")
-        print(script)
-    wrapped_script = '\lstinline[columns=fixed,basicstyle=\\footnotesize\\ttfamily]!{}!'.format(script)
+    clean_script_lines = [line.lstrip() for line in script_lines
+                            if not line.lstrip().startswith('#')]
+    clean_script_lines = [line.split('#')[0].rstrip(' ') for line in clean_script_lines]
+    ## Remove mkfifo, cat, rm
+    clean_script_lines = [line for line in clean_script_lines
+                            if not line.startswith("mkfifo") and
+                                not line.startswith("rm")]
+    script = "".join(clean_script_lines).rstrip()
+    script = script.replace("|\n", "| ")
+    script = script.replace("&\n", "& ")
+    script = script.replace("\n", "; ")
+    print(len(script), script)
+    lines = separate_into_lines(script)
+    wrapped_lines = ['\lstinline[columns=fixed,basicstyle=\\footnotesize\\ttfamily]!{}!'.format(line)
+                     for line in lines]
+    wrapped_script = '\\\\ ~&~ '.join(wrapped_lines)
     return wrapped_script
 
 def format_time_seconds(time_milliseconds):
