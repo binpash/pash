@@ -393,8 +393,12 @@ def collect_baseline_experiment_speedups(prefix, scaleup_numbers, base_seq):
     speedup = [safe_zero_div(base_seq, t) for t in seq_numbers]
     return speedup
 
+def collect_distr_experiment_speedup_seq_time(prefix, scaleup_numbers, suffix="distr.time"):
+    distr_speedup, _, seq_time = collect_distr_experiment_speedup_with_compilation(prefix, scaleup_numbers, suffix)
+    return (distr_speedup, seq_time)
+
 def collect_distr_experiment_speedup(prefix, scaleup_numbers, suffix="distr.time"):
-    distr_speedup, _ = collect_distr_experiment_speedup_with_compilation(prefix, scaleup_numbers, suffix)
+    distr_speedup, _ = collect_distr_experiment_speedup_seq_time(prefix, scaleup_numbers, suffix=suffix)
     return distr_speedup
 
 def collect_distr_experiment_speedup_with_compilation(prefix, scaleup_numbers, suffix="distr.time"):
@@ -412,7 +416,7 @@ def collect_distr_experiment_speedup_with_compilation(prefix, scaleup_numbers, s
     # result_vec = ResultVector(script_name, config, distr_speedups, 
     #                           description, scaleup_numbers, "width")
     # return (result_vec, compile_distr_speedups)
-    return (distr_speedups, compile_distr_speedups)
+    return (distr_speedups, compile_distr_speedups, seq_number)
 
 
 def collect_experiment_command_number(prefix, suffix, scaleup_numbers):
@@ -441,22 +445,22 @@ def collect_scaleup_line_speedups(experiment, all_scaleup_numbers, results_dir):
 
     ## Gather results
     all_speedup_results = {}
+    sequential_time = 0
     for line_plot in all_line_plots:
         file_suffix = file_suffixes[line_plot]
         try:
-            speedup_results = collect_distr_experiment_speedup(prefix,
-                                                               all_scaleup_numbers,
-                                                               file_suffix)
+            speedup_results, sequential_time = collect_distr_experiment_speedup_seq_time(prefix,
+                                                                                         all_scaleup_numbers,
+                                                                                         file_suffix)
             all_speedup_results[line_plot] = speedup_results
         except ValueError:
-            print("Collecting for:", line_plot, experiment)
             ## TODO: Should we do anything here?
             pass
 
     ## Check if outputs are correct
     output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
     
-    return all_speedup_results, output_diff
+    return (all_speedup_results, output_diff, sequential_time)
 
 
 def plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, custom_scaleup_plots, 
@@ -1173,7 +1177,7 @@ def plot_one_liners_tiling(all_experiment_results, experiments):
 
     print_aggregates("Systems", averages, no_eager_averages)
 
-def plot_less_one_liners_tiling(all_experiment_results, experiments):
+def plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, experiments):
 
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
 
@@ -1220,49 +1224,57 @@ def plot_less_one_liners_tiling(all_experiment_results, experiments):
 
     ## Plot two bars, one for the fan-in fan-out and one for the total
     scaleup_number = 16
-    plot_bar_chart_one_liners(total_lines, all_experiment_results, experiments, scaleup_number)
+    plot_bar_chart_one_liners(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number)
 
     print_aggregates("Coarse", averages, no_eager_averages)
 
-def plot_bar_chart_one_liners(total_lines, all_experiment_results, experiments, scaleup_number):
+def plot_bar_chart_one_liners(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number):
+    seq_results_s = [all_sequential_results[experiment] / 1000.0 for experiment in experiments]
+
     ## Gather the good results
-    good_results = []
-    for line in total_lines:
+    good_speedups = []
+    for l_i, line in enumerate(total_lines):
         i, = np.where(line.get_xdata() == scaleup_number)
-        good_results.append(line.get_ydata()[int(i)])
+        speedup = line.get_ydata()[int(i)]
+        good_speedups.append(speedup)
     # print(good_results)
+    good_results = [seq_results_s[l_i] / speedup for i, speedup in enumerate(good_speedups)]
 
     ## Gather the no-aux transformation results
-    no_aux_results = []
+    no_aux_speedups = []
     for ex_i, experiment in enumerate(experiments):
         line = total_lines[ex_i]
         no_aux_res = all_experiment_results[experiment]["no-aux-cat-split"]
         i, = np.where(line.get_xdata() == scaleup_number) 
-        no_aux_results.append(no_aux_res[int(i)])
+        speedup = no_aux_res[int(i)]
+        no_aux_speedups.append(speedup)
     # print(no_aux_results)
 
-    w = 0.2
+    no_aux_results = [safe_zero_div(seq_results_s[i], speedup)
+                      for i, speedup in enumerate(no_aux_speedups)]
+
+    w = 0.12
     ind = np.arange(len(good_results))
     good_speedup_color = 'tab:blue'
-    no_aux_speedup_color = 'tab:red'
+    no_aux_speedup_color = 'tab:orange'
+    seq_color = 'tab:green'
 
     fig, ax = plt.subplots()
     # print(fig.get_size_inches())
     fig.set_size_inches(12, 6)
 
     ## Plot speedup
-    ax.set_xlabel('Speedup')
+    ax.set_xlabel('Execution time (s)')
     ax.set_ylabel('Script')
     ax.grid(axis='x', zorder=0)
 
     # plt.vlines([1], -1, len(good_results) + 1, linewidth=0.8)
-    ax.barh(ind+w, good_results[::-1], height=2*w, align='center', 
-            color=good_speedup_color, label='All', zorder=3)
-    ax.barh(ind-w, no_aux_results[::-1], height=2*w, align='center', 
-            color=no_aux_speedup_color, label='No Cat-Split', zorder=3)
-    old_xlim = plt.xlim()
-    plt.xticks(list(plt.xticks()[0]) + [1])
-    plt.xlim(old_xlim)
+    ax.barh(ind+2*w, good_results[::-1], height=2*w, align='center', 
+            color=good_speedup_color, label='Par', zorder=3)
+    ax.barh(ind, no_aux_results[::-1], height=2*w, align='center', 
+            color=no_aux_speedup_color, label='Par -aux', zorder=3)
+    ax.barh(ind-2*w, seq_results_s[::-1], height=2*w, align='center', 
+            color=seq_color, label='Seq', zorder=3)
     ylabels = [pretty_names[exp] for exp in experiments]
     plt.yticks(ind, ylabels[::-1])    
     # plt.ylim((0.1, 20))
@@ -1270,8 +1282,8 @@ def plot_bar_chart_one_liners(total_lines, all_experiment_results, experiments, 
     plt.tight_layout()
 
     print("Transformation averages:")
-    print("|-- All transformations:", sum(good_results) / len(good_results))
-    print("|-- No Cat-Split transformation:", sum(no_aux_results) / len(no_aux_results))
+    print("|-- All transformations:", sum(good_speedups) / len(good_speedups))
+    print("|-- No Cat-Split transformation:", sum(no_aux_speedups) / len(no_aux_speedups))
 
     plt.savefig(os.path.join('../evaluation/plots', "coarse_one_liners_bar_{}.pdf".format(scaleup_number)),bbox_inches='tight')
 
@@ -1367,10 +1379,12 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 diff_results = []
 all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
 all_experiment_results = {}
+all_sequential_results = {}
 correctness = {}
 for experiment in all_experiments:
-    all_speedup_results, output_diff = collect_scaleup_line_speedups(experiment, all_scaleup_numbers, RESULTS)
+    all_speedup_results, output_diff, sequential_time = collect_scaleup_line_speedups(experiment, all_scaleup_numbers, RESULTS)
     all_experiment_results[experiment] = all_speedup_results
+    all_sequential_results[experiment] = sequential_time
     correctness[experiment] = output_diff
 
 ## Make a report of all one-liners
@@ -1388,7 +1402,7 @@ coarse_experiments = ["minimal_grep",
                       "bigrams",
                       "set-diff",
                       "shortest_scripts"]
-plot_less_one_liners_tiling(all_experiment_results, coarse_experiments)
+plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, coarse_experiments)
 generate_tex_coarse_table(coarse_experiments)
 collect_unix50_coarse_scaleup_times(UNIX50_RESULTS)
 
