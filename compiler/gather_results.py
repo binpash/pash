@@ -1184,7 +1184,7 @@ def plot_less_one_liners_tiling(all_experiment_results, experiments):
                                    "spell" : ["mini-split"],
                                    "diff" : ["no-eager"],
                                    "bigrams" : ["mini-split"],
-                                   "set-diff" : ["no-eager"],
+                                   "set-diff" : ["eager"],
                                    "shortest_scripts" : ["no-eager"],
                                   }
 
@@ -1220,44 +1220,60 @@ def plot_less_one_liners_tiling(all_experiment_results, experiments):
 
     ## Plot two bars, one for the fan-in fan-out and one for the total
     scaleup_number = 16
-    plot_bar_chart_one_liners(all_experiment_results, experiments, scaleup_number)
+    plot_bar_chart_one_liners(total_lines, all_experiment_results, experiments, scaleup_number)
 
     print_aggregates("Coarse", averages, no_eager_averages)
 
-def plot_bar_chart_one_liners(all_experiment_results, experiments, scaleup_number):
-    for experiment in experiments:
-        print(all_experiment_results[experiment])
-    return
-    exit(1)
-    w = 0.2
-    ind = np.arange(len(individual_results))
-    speedup_color = 'tab:blue'
-    seq_time_color = 'tab:red'
+def plot_bar_chart_one_liners(total_lines, all_experiment_results, experiments, scaleup_number):
+    ## Gather the good results
+    good_results = []
+    for line in total_lines:
+        i, = np.where(line.get_xdata() == scaleup_number)
+        good_results.append(line.get_ydata()[int(i)])
+    # print(good_results)
 
-    fig, ax1 = plt.subplots()
+    ## Gather the no-aux transformation results
+    no_aux_results = []
+    for ex_i, experiment in enumerate(experiments):
+        line = total_lines[ex_i]
+        no_aux_res = all_experiment_results[experiment]["no-aux-cat-split"]
+        i, = np.where(line.get_xdata() == scaleup_number) 
+        no_aux_results.append(no_aux_res[int(i)])
+    # print(no_aux_results)
+
+    w = 0.2
+    ind = np.arange(len(good_results))
+    good_speedup_color = 'tab:blue'
+    no_aux_speedup_color = 'tab:red'
+
+    fig, ax = plt.subplots()
     # print(fig.get_size_inches())
-    fig.set_size_inches(10, 4)
+    fig.set_size_inches(12, 6)
 
     ## Plot speedup
-    ax1.set_ylabel('Speedup', color=speedup_color)
-    ax1.set_xlabel('Pipeline')
-    plt.xlim(-1, len(individual_results))
-    plt.hlines([1], -1, len(individual_results) + 1, linewidth=0.8)
-    ax1.bar(ind-w, individual_results, width=2*w, align='center', color=speedup_color)
-    ax1.tick_params(axis='y', labelcolor=speedup_color)
+    ax.set_xlabel('Speedup')
+    ax.set_ylabel('Script')
+    ax.grid(axis='x', zorder=0)
 
-    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-    ax2.set_ylabel('Sequential Time (s)', color=seq_time_color)
-    ax2.set_yscale("log")
-    ax2.bar(ind+w, absolute_seq_times_s, width=2*w, align='center', color=seq_time_color)
-    ax2.tick_params(axis='y', labelcolor=seq_time_color)
-    # plt.yscale("log")
-    # plt.yticks(range(1, 18, 2))
+    # plt.vlines([1], -1, len(good_results) + 1, linewidth=0.8)
+    ax.barh(ind+w, good_results[::-1], height=2*w, align='center', 
+            color=good_speedup_color, label='All', zorder=3)
+    ax.barh(ind-w, no_aux_results[::-1], height=2*w, align='center', 
+            color=no_aux_speedup_color, label='No Cat-Split', zorder=3)
+    old_xlim = plt.xlim()
+    plt.xticks(list(plt.xticks()[0]) + [1])
+    plt.xlim(old_xlim)
+    ylabels = [pretty_names[exp] for exp in experiments]
+    plt.yticks(ind, ylabels[::-1])    
     # plt.ylim((0.1, 20))
-    # plt.legend(loc='lower right')
-    # plt.title("Unix50 Individual Speedups")
+    plt.legend(loc='lower right')
     plt.tight_layout()
-    plt.savefig(os.path.join('../evaluation/plots', "unix50_coarse_individual_speedups_{}.pdf".format(parallelism)),bbox_inches='tight')
+
+    print("Transformation averages:")
+    print("|-- All transformations:", sum(good_results) / len(good_results))
+    print("|-- No Cat-Split transformation:", sum(no_aux_results) / len(no_aux_results))
+
+    plt.savefig(os.path.join('../evaluation/plots', "coarse_one_liners_bar_{}.pdf".format(scaleup_number)),bbox_inches='tight')
 
 def plot_less_one_liners_aggregate(total_lines, all_scaleup_numbers):
     mins, maxs, avgs = get_statistics_from_lines(total_lines)
