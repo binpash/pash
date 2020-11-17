@@ -95,19 +95,22 @@ input_filename_sizes = {"1G": "1~GB",
 suffix_to_runtime_config = {"distr": "eager",
                             "distr_auto_split": "split",
                             "distr_no_task_par_eager": "blocking-eager",
-                            "distr_no_eager": "no-eager"}
+                            "distr_no_eager": "no-eager",
+                            "distr_auto_split_fan_in_fan_out": "no-aux-cat-split"}
 
 all_line_plots = ["split",
                   "mini-split",
                   "eager",
                   "blocking-eager",
-                  "no-eager"]
+                  "no-eager",
+                  "no-aux-cat-split"]
 
 file_suffixes = {"split": "distr_auto_split.time",
                  "mini-split": "distr_auto_split.time",
                  "eager": "distr.time",
                  "blocking-eager": "distr_no_task_par_eager.time",
-                 "no-eager": "distr_no_eager.time"}
+                 "no-eager": "distr_no_eager.time",
+                 "no-aux-cat-split": "distr_auto_split_fan_in_fan_out.time"}
 
 
 class LinePlotConfig:
@@ -144,7 +147,8 @@ default_line_plot_configs = {'eager': LinePlotConfig('-D', 'tab:red', 'Parallel 
                              'split': LinePlotConfig('-o', 'tab:blue', 'Parallel'),
                              'mini-split': LinePlotConfig('-o', 'tab:blue', 'Parallel'),
                              'blocking-eager': LinePlotConfig('-p', 'orange', 'Blocking Eager'),
-                             'no-eager': LinePlotConfig('-^', 'green', 'No Eager')}
+                             'no-eager': LinePlotConfig('-^', 'green', 'No Eager'),
+                             'no-aux-cat-split': LinePlotConfig('-v', 'brown', 'No Aux Cat-Split')}
 
 class Config:
     def __init__(self, pash, width=None, runtime=None):
@@ -167,7 +171,8 @@ class Config:
                              "blocking-eager",
                              "eager",
                              "mini-split",
-                             "split"]
+                             "split",
+                             "no-aux-cat-split"]
         return runtime in possible_runtimes
 
 
@@ -194,6 +199,10 @@ class Result:
     def __rtruediv__(self, other):
         if not isinstance(other, (int, float, Result)):
             return NotImplemented
+
+        if(self.value == 0):
+            print("Division by zero")
+            return 0
 
         ## TODO: Change that to Result too
         return other / self.value
@@ -242,7 +251,9 @@ class ResultVector:
         return self.results.__iter__()
 
 def safe_zero_div(a, b):
-    if(b == 0):
+    if(a is None or b is None):
+        return None
+    elif(b == 0):
         print("WARNING: Division by zero")
         return 0
     else:
@@ -282,11 +293,11 @@ def read_distr_execution_time(filename):
                 times.append(float(milliseconds))
         f.close()
         if(len(times) == 0):
-            raise ValueError
+            return 0
         return sum(times)
     except:
         print("!! WARNING: Filename:", filename, "not found!!!")
-        raise ValueError
+        return 0
 
 def read_distr_total_compilation_time(filename):
     try:
@@ -382,8 +393,12 @@ def collect_baseline_experiment_speedups(prefix, scaleup_numbers, base_seq):
     speedup = [safe_zero_div(base_seq, t) for t in seq_numbers]
     return speedup
 
+def collect_distr_experiment_speedup_seq_time(prefix, scaleup_numbers, suffix="distr.time"):
+    distr_speedup, _, seq_time = collect_distr_experiment_speedup_with_compilation(prefix, scaleup_numbers, suffix)
+    return (distr_speedup, seq_time)
+
 def collect_distr_experiment_speedup(prefix, scaleup_numbers, suffix="distr.time"):
-    distr_speedup, _ = collect_distr_experiment_speedup_with_compilation(prefix, scaleup_numbers, suffix)
+    distr_speedup, _ = collect_distr_experiment_speedup_seq_time(prefix, scaleup_numbers, suffix=suffix)
     return distr_speedup
 
 def collect_distr_experiment_speedup_with_compilation(prefix, scaleup_numbers, suffix="distr.time"):
@@ -401,7 +416,7 @@ def collect_distr_experiment_speedup_with_compilation(prefix, scaleup_numbers, s
     # result_vec = ResultVector(script_name, config, distr_speedups, 
     #                           description, scaleup_numbers, "width")
     # return (result_vec, compile_distr_speedups)
-    return (distr_speedups, compile_distr_speedups)
+    return (distr_speedups, compile_distr_speedups, seq_number)
 
 
 def collect_experiment_command_number(prefix, suffix, scaleup_numbers):
@@ -430,12 +445,13 @@ def collect_scaleup_line_speedups(experiment, all_scaleup_numbers, results_dir):
 
     ## Gather results
     all_speedup_results = {}
+    sequential_time = 0
     for line_plot in all_line_plots:
         file_suffix = file_suffixes[line_plot]
         try:
-            speedup_results = collect_distr_experiment_speedup(prefix,
-                                                               all_scaleup_numbers,
-                                                               file_suffix)
+            speedup_results, sequential_time = collect_distr_experiment_speedup_seq_time(prefix,
+                                                                                         all_scaleup_numbers,
+                                                                                         file_suffix)
             all_speedup_results[line_plot] = speedup_results
         except ValueError:
             ## TODO: Should we do anything here?
@@ -444,7 +460,7 @@ def collect_scaleup_line_speedups(experiment, all_scaleup_numbers, results_dir):
     ## Check if outputs are correct
     output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
     
-    return all_speedup_results, output_diff
+    return (all_speedup_results, output_diff, sequential_time)
 
 
 def plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, custom_scaleup_plots, 
@@ -454,7 +470,8 @@ def plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, cus
     default_line_plots = ["split",
                           "eager",
                           "blocking-eager",
-                          "no-eager"]
+                          "no-eager",
+                          "no-aux-cat-split"]
 
     ## Compute the best speedups (for averages)
     best_result = all_speedup_results["eager"]
@@ -468,13 +485,13 @@ def plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, cus
     if("no-eager" in all_speedup_results):
         no_eager_distr_speedup = all_speedup_results["no-eager"]
 
-    ## Compute if a split line exists to change the color of the non-split top line
-    split_exists = "split" in all_speedup_results
-
     ## Decide which lines to plot
     line_plots = default_line_plots
     if(experiment in custom_scaleup_plots):
         line_plots = custom_scaleup_plots[experiment]
+
+    ## Compute if a split line exists to change the color of the non-split top line
+    split_exists = "split" in line_plots
 
     lines = []
     to_plot_lines = [line_plot for line_plot in line_plots
@@ -926,7 +943,7 @@ def make_unix50_scatter_plot(all_results, scaleup_numbers, parallelism):
 
     ## Slowdown Pipelines
     speeds, seqs = get_pipelines_res(individual_results, absolute_seq_times_s, rest_pipelines)
-    ax.scatter(seqs, speeds, label="Parallelizable")
+    ax.scatter(seqs, speeds, label="Highly Parallelizable")
 
     speeds, seqs = get_pipelines_res(individual_results, absolute_seq_times_s, sort_pipelines)
     ax.scatter(seqs, speeds, label="Contain sort")
@@ -1091,11 +1108,12 @@ def print_aggregates(prefix, averages, no_eager_averages):
 def report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctness):
     global all_line_plots
 
-    line_plots = ["split", "eager", "blocking-eager", "no-eager"]
+    line_plots = ["split", "eager", "blocking-eager", "no-eager", "no-aux-cat-split"]
     legend_names = ["PaSh",
                     "PaSh w/o split",
                     "Blocking Eager",
-                    "No Eager"]
+                    "No Eager",
+                    "No Aux Cat-Split"]
 
     fig = plt.figure()
     columns = 5
@@ -1122,9 +1140,16 @@ def plot_one_liners_tiling(all_experiment_results, experiments):
 
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
 
-    custom_scaleup_plots = {"set-diff" : ["eager", "blocking-eager", "no-eager"],
+    custom_scaleup_plots = {"minimal_grep" : ["eager", "blocking-eager"],
+                            "minimal_sort": ["eager", "blocking-eager", "no-eager"],
+                            "topn": ["eager", "blocking-eager", "no-eager"],
+                            "wf": ["eager", "blocking-eager", "no-eager"],
                             "spell" : ["split", "eager"],
-                            "bigrams" : ["split", "eager"]}
+                            "diff" : ["eager", "blocking-eager", "no-eager"],
+                            "bigrams" : ["split", "eager"],
+                            "set-diff" : ["eager", "blocking-eager", "no-eager"],
+                            "double_sort" : ["split", "eager", "blocking-eager", "no-eager"],
+                            "shortest_scripts" : ["eager", "blocking-eager", "no-eager"]}
 
     line_plots = ["split", "eager", "blocking-eager", "no-eager"]
 
@@ -1152,7 +1177,7 @@ def plot_one_liners_tiling(all_experiment_results, experiments):
 
     print_aggregates("Systems", averages, no_eager_averages)
 
-def plot_less_one_liners_tiling(all_experiment_results, experiments):
+def plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, experiments):
 
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
 
@@ -1163,7 +1188,7 @@ def plot_less_one_liners_tiling(all_experiment_results, experiments):
                                    "spell" : ["mini-split"],
                                    "diff" : ["no-eager"],
                                    "bigrams" : ["mini-split"],
-                                   "set-diff" : ["no-eager"],
+                                   "set-diff" : ["eager"],
                                    "shortest_scripts" : ["no-eager"],
                                   }
 
@@ -1197,7 +1222,70 @@ def plot_less_one_liners_tiling(all_experiment_results, experiments):
     plot_less_one_liners_aggregate(total_lines, all_scaleup_numbers)
     plot_all_less_one_liners_one_plot(total_lines, all_scaleup_numbers, experiments)
 
+    ## Plot two bars, one for the fan-in fan-out and one for the total
+    scaleup_number = 16
+    plot_bar_chart_one_liners(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number)
+
     print_aggregates("Coarse", averages, no_eager_averages)
+
+def plot_bar_chart_one_liners(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number):
+    seq_results_s = [all_sequential_results[experiment] / 1000.0 for experiment in experiments]
+
+    ## Gather the good results
+    good_speedups = []
+    for l_i, line in enumerate(total_lines):
+        i, = np.where(line.get_xdata() == scaleup_number)
+        speedup = line.get_ydata()[int(i)]
+        good_speedups.append(speedup)
+    # print(good_results)
+    good_results = [seq_results_s[l_i] / speedup for i, speedup in enumerate(good_speedups)]
+
+    ## Gather the no-aux transformation results
+    no_aux_speedups = []
+    for ex_i, experiment in enumerate(experiments):
+        line = total_lines[ex_i]
+        no_aux_res = all_experiment_results[experiment]["no-aux-cat-split"]
+        i, = np.where(line.get_xdata() == scaleup_number) 
+        speedup = no_aux_res[int(i)]
+        no_aux_speedups.append(speedup)
+    # print(no_aux_results)
+
+    no_aux_results = [safe_zero_div(seq_results_s[i], speedup)
+                      for i, speedup in enumerate(no_aux_speedups)]
+
+    w = 0.12
+    ind = np.arange(len(good_results))
+    good_speedup_color = 'tab:blue'
+    no_aux_speedup_color = 'tab:orange'
+    seq_color = 'tab:green'
+
+    fig, ax = plt.subplots()
+    # print(fig.get_size_inches())
+    fig.set_size_inches(12, 6)
+
+    ## Plot speedup
+    ax.set_xlabel('Execution time (s)')
+    ax.set_ylabel('Script')
+    ax.grid(axis='x', zorder=0)
+
+    # plt.vlines([1], -1, len(good_results) + 1, linewidth=0.8)
+    ax.barh(ind+2*w, good_results[::-1], height=2*w, align='center', 
+            color=good_speedup_color, label='Par', zorder=3)
+    ax.barh(ind, no_aux_results[::-1], height=2*w, align='center', 
+            color=no_aux_speedup_color, label='Par -aux', zorder=3)
+    ax.barh(ind-2*w, seq_results_s[::-1], height=2*w, align='center', 
+            color=seq_color, label='Seq', zorder=3)
+    ylabels = [pretty_names[exp] for exp in experiments]
+    plt.yticks(ind, ylabels[::-1])    
+    # plt.ylim((0.1, 20))
+    plt.legend(loc='lower right')
+    plt.tight_layout()
+
+    print("Transformation averages:")
+    print("|-- All transformations:", sum(good_speedups) / len(good_speedups))
+    print("|-- No Cat-Split transformation:", sum(no_aux_speedups) / len(no_aux_speedups))
+
+    plt.savefig(os.path.join('../evaluation/plots', "coarse_one_liners_bar_{}.pdf".format(scaleup_number)),bbox_inches='tight')
 
 def plot_less_one_liners_aggregate(total_lines, all_scaleup_numbers):
     mins, maxs, avgs = get_statistics_from_lines(total_lines)
@@ -1291,10 +1379,12 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 diff_results = []
 all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
 all_experiment_results = {}
+all_sequential_results = {}
 correctness = {}
 for experiment in all_experiments:
-    all_speedup_results, output_diff = collect_scaleup_line_speedups(experiment, all_scaleup_numbers, RESULTS)
+    all_speedup_results, output_diff, sequential_time = collect_scaleup_line_speedups(experiment, all_scaleup_numbers, RESULTS)
     all_experiment_results[experiment] = all_speedup_results
+    all_sequential_results[experiment] = sequential_time
     correctness[experiment] = output_diff
 
 ## Make a report of all one-liners
@@ -1312,7 +1402,7 @@ coarse_experiments = ["minimal_grep",
                       "bigrams",
                       "set-diff",
                       "shortest_scripts"]
-plot_less_one_liners_tiling(all_experiment_results, coarse_experiments)
+plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, coarse_experiments)
 generate_tex_coarse_table(coarse_experiments)
 collect_unix50_coarse_scaleup_times(UNIX50_RESULTS)
 
