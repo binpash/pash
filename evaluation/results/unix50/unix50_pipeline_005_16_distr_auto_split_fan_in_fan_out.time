@@ -1,0 +1,16 @@
+kill: (19859): No such process
+kill: (19860): No such process
+kill: (19861): No such process
+Total nodes after optimization: 149
+ -- out of which:
+Cat nodes: 4
+Eager nodes: 93
+Optimization time: 155.524  ms
+Backend time: 1.861  ms
+Execution time: 97164.0  ms
+Compilation time: 25.138  ms
+
+real	1m37.732s
+user	2m8.915s
+sys	3m2.280s
+Files ../evaluation//intermediary//unix50_pipeline_005_seq_output and /tmp/distr_output/0 are identical

@@ -1,0 +1,19 @@
+kill: (51321): No such process
+kill: (51322): No such process
+kill: (51323): No such process
+Total nodes after optimization: 100
+ -- out of which:
+Cat nodes: 3
+Eager nodes: 62
+Optimization time: 79.534  ms
+Backend time: 1.517  ms
+Execution time: 1042966.789  ms
+Compilation time: 63.465  ms
+
+real	17m23.506s
+user	7m20.520s
+sys	16m59.814s
+1c1
+< 8982033
+---
+> 89820357
