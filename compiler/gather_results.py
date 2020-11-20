@@ -1182,7 +1182,7 @@ def plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, 
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
 
     coarse_custom_scaleup_plots = {"minimal_grep" : ["blocking-eager"],
-                                   "minimal_sort" : ["no-eager"],
+                                   "minimal_sort" : ["eager"],
                                    "topn" : ["no-eager"],
                                    "wf" : ["no-eager"],
                                    "spell" : ["mini-split"],
