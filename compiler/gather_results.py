@@ -473,22 +473,33 @@ def plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, cus
                           "no-eager",
                           "no-aux-cat-split"]
 
-    ## Compute the best speedups (for averages)
-    best_result = all_speedup_results["eager"]
-    if("split" in all_speedup_results):
-        best_result = all_speedup_results["split"]
-    elif("mini-split" in all_speedup_results):
-        best_result = all_speedup_results["mini-split"]
-
-    ## We need to return the no-eager speedups as the baseline non runtime primitives.
-    no_eager_distr_speedup = all_speedup_results["eager"]
-    if("no-eager" in all_speedup_results):
-        no_eager_distr_speedup = all_speedup_results["no-eager"]
-
     ## Decide which lines to plot
     line_plots = default_line_plots
     if(experiment in custom_scaleup_plots):
         line_plots = custom_scaleup_plots[experiment]
+
+    ## Compute the best speedups (for averages)
+    best_result = []
+    if("no-eager" in line_plots):
+        best_result = all_speedup_results["no-eager"]
+    if("blocking-eager" in line_plots):
+        best_result = all_speedup_results["blocking-eager"]
+    if("eager" in line_plots):
+        best_result = all_speedup_results["eager"]
+    if("split" in line_plots):
+        split_res = all_speedup_results["split"]
+        if(sum(split_res) > sum(best_result)):
+            best_result = all_speedup_results["split"]
+    elif("mini-split" in line_plots):
+        split_res = all_speedup_results["mini-split"]
+        if(sum(split_res) > sum(best_result)):
+            best_result = all_speedup_results["mini-split"]
+
+    ## We need to return the no-eager speedups as the baseline non runtime primitives.
+    no_eager_distr_speedup = all_speedup_results["eager"]
+    if("no-eager" in line_plots):
+        no_eager_distr_speedup = all_speedup_results["no-eager"]
+
 
     ## Compute if a split line exists to change the color of the non-split top line
     split_exists = "split" in line_plots
@@ -773,6 +784,15 @@ def collect_unix50_pipeline_coarse_scaleup_times(pipeline_number, unix50_results
                           for _ in scaleup_numbers]
     return (no_eager_distr_speedup, absolute_seq_times)
 
+def collect_unix50_pipeline_fan_in_fan_out_scaleup_times(pipeline_number, unix50_results_dir, scaleup_numbers):
+    prefix = '{}/unix50_pipeline_{}_'.format(unix50_results_dir, pipeline_number)
+    fan_in_fan_out_distr_speedup = collect_distr_experiment_speedup(prefix,
+                                                                    scaleup_numbers,
+                                                                    'distr_auto_split_fan_in_fan_out.time')
+    absolute_seq_times = [sequential_experiment_exec_time(prefix, scaleup_numbers[0])
+                          for _ in scaleup_numbers]
+    return (fan_in_fan_out_distr_speedup, absolute_seq_times)
+
 
 def aggregate_unix50_results(all_results, scaleup_numbers):
     avg_distr_results = [[] for _ in scaleup_numbers]
@@ -923,7 +943,7 @@ def make_unix50_scatter_plot(all_results, scaleup_numbers, parallelism):
                           for distr_exec_speedup, _ in all_results]
     absolute_seq_times_s = [absolute_seq / 1000
                             for _, absolute_seq in all_results]
-    print("Unix50 individual speedups for {} parallelism:".format(parallelism), individual_results)
+    print("Unix50 individual speedups for {} scripts and {} parallelism:".format(len(individual_results), parallelism), individual_results)
     
     aggrs = compute_and_print_aggrs(individual_results, absolute_seq_times_s)
     mean = aggrs[0]
@@ -936,7 +956,7 @@ def make_unix50_scatter_plot(all_results, scaleup_numbers, parallelism):
     special_pipelines = slowdown_pipelines + no_speedup_pipelines + sort_pipelines + deep_pipelines + io_pipelines
     rest_pipelines_set = set(range(len(all_results))) - set(special_pipelines)
     rest_pipelines = sorted(list(rest_pipelines_set))
-    print(rest_pipelines)
+
 
     fig, ax = plt.subplots()
     fig.set_size_inches(10, 5)
@@ -944,6 +964,7 @@ def make_unix50_scatter_plot(all_results, scaleup_numbers, parallelism):
     ## Slowdown Pipelines
     speeds, seqs = get_pipelines_res(individual_results, absolute_seq_times_s, rest_pipelines)
     ax.scatter(seqs, speeds, label="Highly Parallelizable")
+    print("|-- Highly parallelizable speedups:", speeds)
 
     speeds, seqs = get_pipelines_res(individual_results, absolute_seq_times_s, sort_pipelines)
     ax.scatter(seqs, speeds, label="Contain sort")
@@ -956,9 +977,11 @@ def make_unix50_scatter_plot(all_results, scaleup_numbers, parallelism):
 
     speeds, seqs = get_pipelines_res(individual_results, absolute_seq_times_s, no_speedup_pipelines)
     ax.scatter(seqs, speeds, label="Non parallelizable")
+    print("|-- Non parallelizable speedups:", speeds)
 
     speeds, seqs = get_pipelines_res(individual_results, absolute_seq_times_s, slowdown_pipelines)
     ax.scatter(seqs, speeds, label="Contain head")
+    print("|-- Head script speedups:", speeds)
 
     ax.grid()
     ax.set_ylabel('Speedup')
@@ -991,19 +1014,29 @@ def plot_unix50_avg_speedup(all_results, scaleup_numbers, filename):
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', filename),bbox_inches='tight')
 
-def collect_unix50_scaleup_times(unix50_results_dir):
+def collect_all_unix50_results(unix50_results_dir):
+    scaleup_numbers = [2, 4, 8, 16]
+
     files = [f for f in os.listdir(unix50_results_dir)]
     # print(files)
     pipeline_numbers = sorted(list(set([f.split('_')[2] for f in files])))
     # print(pipeline_numbers)
 
-    scaleup_numbers = [2, 4, 8, 16]
-
     all_results = [collect_unix50_pipeline_scaleup_times(pipeline_number,
                                                          unix50_results_dir,
                                                          scaleup_numbers)
                    for pipeline_number in pipeline_numbers]
+    fan_in_fan_out_results = [collect_unix50_pipeline_fan_in_fan_out_scaleup_times(pipeline_number,
+                                                                    unix50_results_dir,
+                                                                    scaleup_numbers)
+                   for pipeline_number in pipeline_numbers]
+    
+    return (all_results, fan_in_fan_out_results)
+
+def collect_unix50_scaleup_times(all_results):
+    
     # print(all_results)
+    scaleup_numbers = [2, 4, 8, 16]
 
     for parallelism in scaleup_numbers:
         make_unix50_bar_chart(all_results, scaleup_numbers, parallelism)
@@ -1012,24 +1045,16 @@ def collect_unix50_scaleup_times(unix50_results_dir):
     plot_unix50_avg_speedup(all_results, scaleup_numbers, "unix50_throughput_scaleup.pdf")
     
 
-def collect_unix50_coarse_scaleup_times(unix50_results_dir):
-    files = [f for f in os.listdir(unix50_results_dir)]
-    # print(files)
-    pipeline_numbers = sorted(list(set([f.split('_')[2] for f in files])))
-    # print(pipeline_numbers)
+# def collect_unix50_coarse_scaleup_times(all_results):
+#     print(len(all_results))
+#     scaleup_numbers = [16]
 
-    scaleup_numbers = [16]
+#     # print(all_results)
 
-    all_results = [collect_unix50_pipeline_scaleup_times(pipeline_number,
-                                                         unix50_results_dir,
-                                                         scaleup_numbers)
-                   for pipeline_number in pipeline_numbers]
-    # print(all_results)
+#     for parallelism in scaleup_numbers:
+#         make_coarse_unix50_bar_chart(all_results, scaleup_numbers, parallelism)
 
-    for parallelism in scaleup_numbers:
-        make_coarse_unix50_bar_chart(all_results, scaleup_numbers, parallelism)
-
-    plot_unix50_avg_speedup(all_results, scaleup_numbers, "unix50_coarse_throughput_scaleup.pdf")
+#     plot_unix50_avg_speedup(all_results, scaleup_numbers, "unix50_coarse_throughput_scaleup.pdf")
 
 
 def get_statistics_from_lines(lines):
@@ -1177,7 +1202,7 @@ def plot_one_liners_tiling(all_experiment_results, experiments):
 
     print_aggregates("Systems", averages, no_eager_averages)
 
-def plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, experiments):
+def plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, experiments, unix50_results):
 
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
 
@@ -1225,10 +1250,11 @@ def plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, 
     ## Plot two bars, one for the fan-in fan-out and one for the total
     scaleup_number = 16
     plot_bar_chart_one_liners(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number)
+    plot_bar_chart_one_liners_and_unix50(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number, unix50_results)
 
     print_aggregates("Coarse", averages, no_eager_averages)
 
-def plot_bar_chart_one_liners(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number):
+def gather_abs_times_speedups_bar(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number):
     seq_results_s = [all_sequential_results[experiment] / 1000.0 for experiment in experiments]
 
     ## Gather the good results
@@ -1252,7 +1278,12 @@ def plot_bar_chart_one_liners(total_lines, all_experiment_results, all_sequentia
 
     no_aux_results = [safe_zero_div(seq_results_s[i], speedup)
                       for i, speedup in enumerate(no_aux_speedups)]
+    return (good_results, good_speedups, no_aux_results, no_aux_speedups, seq_results_s)
 
+
+def plot_bar_chart_one_liners(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number):
+    res = gather_abs_times_speedups_bar(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number)
+    (good_results, good_speedups, no_aux_results, no_aux_speedups, seq_results_s) = res
     w = 0.12
     ind = np.arange(len(good_results))
     good_speedup_color = 'tab:blue'
@@ -1281,11 +1312,82 @@ def plot_bar_chart_one_liners(total_lines, all_experiment_results, all_sequentia
     plt.legend(loc='lower right')
     plt.tight_layout()
 
+    plt.savefig(os.path.join('../evaluation/plots', "coarse_one_liners_bar_{}.pdf".format(scaleup_number)),bbox_inches='tight')
     print("Transformation averages:")
     print("|-- All transformations:", sum(good_speedups) / len(good_speedups))
     print("|-- No Cat-Split transformation:", sum(no_aux_speedups) / len(no_aux_speedups))
 
-    plt.savefig(os.path.join('../evaluation/plots', "coarse_one_liners_bar_{}.pdf".format(scaleup_number)),bbox_inches='tight')
+
+def plot_bar_chart_one_liners_and_unix50(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number, unix50_all_results):
+    res = gather_abs_times_speedups_bar(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number)
+    (good_results, good_speedups, no_aux_results, no_aux_speedups, seq_results_s) = res
+
+    unix50_results, unix50_results_fan_in = unix50_all_results
+    index_16 = 3
+    unix50_seq_times_s = [absolute_seq / 1000 for _, absolute_seq in unix50_results]
+    unix50_good_speedups = [float(distr_exec_speedup[index_16])
+                            for distr_exec_speedup, _ in unix50_results]
+    unix50_good_results = [unix50_seq_times_s[i] / float(distr_exec_speedup)
+                           for i, distr_exec_speedup in enumerate(unix50_good_speedups)]
+    unix50_no_aux_speedups = [distr_exec_speedup[index_16]
+                              for distr_exec_speedup, _ in unix50_results_fan_in]
+    unix50_no_aux_results = [safe_zero_div(unix50_seq_times_s[i], distr_exec_speedup)
+                             for i, distr_exec_speedup in enumerate(unix50_no_aux_speedups)]
+
+    ylim = 1800
+    w = 0.12
+    ind = np.arange(len(good_results + unix50_good_results))
+    good_speedup_color = 'tab:blue'
+    no_aux_speedup_color = 'tab:orange'
+    seq_color = 'tab:green'
+
+    fig, ax = plt.subplots()
+    # print(fig.get_size_inches())
+    fig.set_size_inches(25, 7.5)
+
+    ## Plot speedup
+    ax.set_ylabel('Execution time (s)')
+    ax.set_xlabel('Script')
+    ax.grid(axis='y', zorder=0)
+
+    # plt.vlines([1], -1, len(good_results) + 1, linewidth=0.8)
+    ax.bar(ind+2*w, good_results + unix50_good_results, width=2*w, align='center', 
+            color=good_speedup_color, label='Parallel', zorder=3)
+    ax.bar(ind, no_aux_results + unix50_no_aux_results, width=2*w, align='center', 
+            color=no_aux_speedup_color, label='No Cat-Split', zorder=3)
+    ax.bar(ind-2*w, seq_results_s + unix50_seq_times_s, width=2*w, align='center', 
+            color=seq_color, label='Baseline', zorder=3)
+    ## Add text on top
+    for i, v in enumerate(seq_results_s + unix50_seq_times_s):
+        if(v > ylim):
+            plt.text(i-2*w, ylim*1.01, str(int(v)), ha='center')
+
+    xlabels = [pretty_names[exp] for exp in experiments] + ["unix50-{}".format(i) for i in range(len(unix50_good_results))]
+    plt.xticks(ind, xlabels, rotation=45, ha="right") 
+    # ax.set_xscale("log")
+    plt.ylim((0, ylim))
+    plt.legend(loc='upper right')
+    plt.tight_layout()
+
+    all_good_speedups = good_speedups + unix50_good_speedups
+    all_no_aux_speedups = no_aux_speedups + unix50_no_aux_speedups
+    print(all_no_aux_speedups)
+    print("All Transformation averages:")
+    print("|-- All transformations:", sum(all_good_speedups) / len(all_good_speedups))
+    print("|-- No Cat-Split transformation:", sum(all_no_aux_speedups) / len(all_no_aux_speedups))
+
+    print("All Transformation minimum:")
+    print("|-- All transformations:", min(all_good_speedups))
+    print("|-- No Cat-Split transformation:", min(all_no_aux_speedups))
+
+    print("All Transformation maximum:")
+    print("|-- All transformations:", max(all_good_speedups))
+    print("|-- No Cat-Split transformation:", max(all_no_aux_speedups))
+
+
+    plt.savefig(os.path.join('../evaluation/plots', "coarse_all_bar_{}.pdf".format(scaleup_number)),bbox_inches='tight')
+
+
 
 def plot_less_one_liners_aggregate(total_lines, all_scaleup_numbers):
     mins, maxs, avgs = get_statistics_from_lines(total_lines)
@@ -1390,6 +1492,9 @@ for experiment in all_experiments:
 ## Make a report of all one-liners
 report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctness)
 
+## Collect all unix50 results
+unix50_results, unix50_results_fan_in = collect_all_unix50_results(UNIX50_RESULTS)
+
 ##
 ## Theory Paper
 ##
@@ -1398,13 +1503,14 @@ coarse_experiments = ["minimal_grep",
                       "topn",
                       "wf",
                       "spell",
-                      "diff",
                       "bigrams",
+                      "diff",
                       "set-diff",
                       "shortest_scripts"]
-plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, coarse_experiments)
+plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, 
+                            coarse_experiments, (unix50_results, unix50_results_fan_in))
 generate_tex_coarse_table(coarse_experiments)
-collect_unix50_coarse_scaleup_times(UNIX50_RESULTS)
+# collect_unix50_coarse_scaleup_times(unix50_results)
 
 
 ##
@@ -1422,7 +1528,7 @@ experiments = ["minimal_grep",
                "shortest_scripts"]
 plot_one_liners_tiling(all_experiment_results, experiments)
 generate_tex_table(experiments)
-collect_unix50_scaleup_times(UNIX50_RESULTS)
+collect_unix50_scaleup_times(unix50_results)
 plot_sort_with_baseline(RESULTS)
 
 ## Format and print correctness results
