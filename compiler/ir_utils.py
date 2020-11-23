@@ -59,7 +59,8 @@ def format_arg_char(arg_char):
         # The $() is just for illustration. This is backticks
         return '$({})'.format(val)
     elif (key == 'Q'):
-        return '"{}"'.format(format_arg_chars(val))
+        formated_val = format_arg_chars(val)
+        return '"{}"'.format(formated_val)
     elif (key == 'V'):
         return '${{{}}}'.format(val[2])
     elif (key == 'E'):
