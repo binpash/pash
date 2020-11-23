@@ -137,7 +137,12 @@ def node_to_script(node, shared_memory_dir, drain_streams, auto_split):
         if (len(inputs) > 0):
             script.append("cat")
             for fid in inputs:
-                script.append('"{}"'.format(fid))
+                ## Hack to not output double double quotes
+                string_fid = str(fid)
+                if(string_fid.startswith('"')):
+                    script.append('{}'.format(string_fid))
+                else:
+                    script.append('"{}"'.format(string_fid))
             script.append("|")
 
         ## Add the command together with a drain stream
