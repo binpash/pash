@@ -2,6 +2,11 @@ from ir import *
 from union_find import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
+from util import *
+from json_ast import save_asts_json
+from parse import parse_shell, from_ir_to_shell
+import subprocess
+
 import config
 
 import pickle
@@ -298,7 +303,72 @@ def compile_node_for(ast_node, fileIdGen, config):
     return compiled_ast
 
 
-def compile_arg_char(arg_char, fileIdGen, config):
+## This function checks if a word is safe to expand (i.e. if it will not )
+def safe_to_expand(arg_char):
+    key, val = get_kv(arg_char)
+    if (key in ['V']): # Variable
+        return True
+    return False
+
+def make_echo_ast(arg_char):
+    arguments = [string_to_argument("echo"), string_to_argument("-n"), [arg_char]]
+
+    line_number = 0
+    node = make_kv('Command', [line_number, [], arguments, []])
+    return node
+
+## TODO: Move this function somewhere more general
+def execute_shell_asts(asts):
+    ir_filename = os.path.join("/tmp", get_random_string())
+    save_asts_json(asts, ir_filename)
+    output_script = from_ir_to_shell(ir_filename)
+    # print(output_script)
+    exec_obj = subprocess.run(["/bin/bash"], input=output_script, 
+                              capture_output=True,
+                              text=True)
+    exec_obj.check_returncode()
+    # print(exec_obj.stdout)
+    return exec_obj.stdout
+
+## TODO: Properly parse the output of the shell script
+def parse_string_to_arg_char(arg_char_string):
+    # print(arg_char_string)
+    return ['Q', string_to_argument(arg_char_string)]
+
+def naive_expand(arg_char, config):
+    ## Create an AST node that "echo"s the argument
+    echo_ast = make_echo_ast(arg_char)
+
+    ## Execute the echo AST by unparsing it to shell
+    ## and calling bash
+    expanded_string = execute_shell_asts([echo_ast])
+
+    ## Parse the expanded string back to an arg_char
+    expanded_arg_char = parse_string_to_arg_char(expanded_string)
+    
+    ## TODO: Handle any errors
+    # print(expanded_arg_char)
+    return expanded_arg_char
+
+
+
+## This function expands an arg_char. 
+## At the moment it is pretty inefficient as it serves as a prototype.
+def expand(arg_char, config):
+    return naive_expand(arg_char, config)
+
+
+
+## This function compiles an arg char by recursing if it contains quotes or command substitution.
+##
+## It is currently being extended to also expand any arguments that are safe to expand. 
+def compile_arg_char(original_arg_char, fileIdGen, config):
+    ## Check if the arg char can be expanded and if so do it.
+    arg_char = copy.deepcopy(original_arg_char)
+    if(safe_to_expand(arg_char)):
+        arg_char = expand(arg_char, config)
+
+    ## Compile the arg char
     key, val = get_kv(arg_char)
     if (key in ['C',   # Single character
                 'E']): # Escape
