@@ -43,8 +43,10 @@ def load_config(config_file_path=""):
 
 ## These are arguments that are common to pash.py and pash_runtime.py
 def add_common_arguments(parser):
+    parser.add_argument("--compile_only", help="only preprocess and compile the input script and not execute it",
+                        action="store_true")
     parser.add_argument("--compile_optimize_only",
-                        help="only compile and optimize the input script and not execute it",
+                        help="only preprocess, compile, and optimize the input script and not execute it",
                         action="store_true")
     parser.add_argument("--output_time", help="output the the time it took for every step in stderr",
                         action="store_true")
@@ -70,6 +72,8 @@ def add_common_arguments(parser):
 
 def pass_common_arguments(pash_arguments):
     arguments = []
+    if (pash_arguments.compile_only):
+        arguments.append(string_to_argument("--compile_only"))
     if (pash_arguments.compile_optimize_only):
         arguments.append(string_to_argument("--compile_optimize_only"))
     if (pash_arguments.output_time):
