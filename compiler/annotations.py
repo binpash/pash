@@ -37,7 +37,7 @@ def interpret_io(io, options, ann_options):
         assert(io.startswith("args"))
         indices = io.split("[")[1].split("]")[0]
 
-        print(io, options)
+        # print(io, options)
 
         ## Find the file arguments (and their indices)
         args_indices = non_option_args_indices(options)
