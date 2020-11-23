@@ -5,6 +5,9 @@ shift
 outputs="$@"
 n_outputs="$#"
 
+# Set a default DISH_TOP in this directory if it doesn't exist
+DISH_TOP=${DISH_TOP:-$(git rev-parse --show-toplevel)}
+
 temp=$(mktemp -u)
 
 cat "$input" > "$temp"

@@ -469,7 +469,8 @@ def pure_duplicate(command_node, old_input_file_id, input_file_ids, output_file_
     in_out_file_ids = zip(input_file_ids, output_file_ids)
 
     simple_map_pure_commands = ["sort",
-                                "alt_bigrams_aux"]
+                                "alt_bigrams_aux",
+                                "uniq"]
 
     ## This is the category of all commands that don't need a
     ## special generalized map
@@ -500,8 +501,10 @@ def create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen
         return create_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
     elif(str(curr.command) == "alt_bigrams_aux"):
         return create_alt_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
+    elif(str(curr.command) == "uniq"):
+        return create_uniq_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
     else:
-        assert(False)
+        raise NotImplementedError()
 
 ## TODO: These must be generated using some file information
 ##
@@ -520,6 +523,30 @@ def create_alt_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_fil
     tree = create_reduce_tree(lambda file_ids: AltBigramGReduce(curr, file_ids),
                               new_output_file_ids, out_edge_file_id, fileIdGen)
     return tree
+
+## Instead of creating a tree, we just create a single level reducer for uniq
+def create_uniq_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
+    ## Add a cat node that takes all inputs
+    intermediate_file_id = fileIdGen.next_file_id()
+    new_cat = make_cat_node(flatten_list(new_output_file_ids), intermediate_file_id)
+
+    ## Add a uniq node after it
+    command = string_to_argument("uniq")
+    ## TODO: Pass the options of `curr` correctly
+    options = []
+    in_stream = ["stdin"]
+    out_stream = ["stdout"]
+    stdin = intermediate_file_id
+    stdout = out_edge_file_id
+    opt_indices = []
+    ## TODO: Maybe hack this and change this to pure to not reparallelize
+    category = "pure_parallelizable"
+    ## TODO: Fill the AST
+    ast = None
+    uniq_node = Command(ast, command, options, in_stream, out_stream, opt_indices, 
+                        category, stdin=stdin, stdout=stdout)
+    
+    return [new_cat, uniq_node]
 
 ## This function creates the reduce tree. Both input and output file
 ## ids must be lists of lists, as the input file ids and the output

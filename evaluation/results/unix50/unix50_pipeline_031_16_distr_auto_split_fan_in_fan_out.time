@@ -1,0 +1,31 @@
+kill: (68933): No such process
+kill: (68935): No such process
+kill: (68938): No such process
+kill: (68940): No such process
+kill: (68942): No such process
+kill: (68944): No such process
+kill: (68947): No such process
+kill: (68949): No such process
+kill: (68952): No such process
+kill: (68954): No such process
+kill: (68956): No such process
+kill: (68958): No such process
+kill: (68960): No such process
+kill: (68962): No such process
+kill: (68964): No such process
+kill: (69238): No such process
+kill: (69239): No such process
+kill: (69240): No such process
+Total nodes after optimization: 200
+ -- out of which:
+Cat nodes: 5
+Eager nodes: 124
+Optimization time: 270.969  ms
+Backend time: 94.365  ms
+Execution time: 106000.859  ms
+Compilation time: 66.922  ms
+
+real	1m46.822s
+user	0m58.625s
+sys	3m14.915s
+Files ../evaluation//intermediary//unix50_pipeline_031_seq_output and /tmp/distr_output/0 are identical
