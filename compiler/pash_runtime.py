@@ -34,7 +34,7 @@ def main():
     ## TODO: Instead of just calling optimize we first need to call compile.
 
     ## Call the main procedure
-    optimize_script(args.input_ir, args)
+    compile_optimize_script(args.input_ir, args)
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -43,7 +43,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def optimize_script(ir_filename, args):
+def compile_optimize_script(ir_filename, args):
     global runtime_config
     if not config.config:
         config.load_config(args.config_path)
@@ -65,7 +65,10 @@ def optimize_script(ir_filename, args):
     print_time_delta("Compilation", compilation_start_time, compilation_end_time, args)
 
     ## Optimize all the IRs that can be optimized
-    optimized_asts_and_irs = optimize_irs(asts_and_irs, args)
+    if(args.compile_only):
+        optimized_asts_and_irs = asts_and_irs
+    else:
+        optimized_asts_and_irs = optimize_irs(asts_and_irs, args)
 
     ## TODO: Normally this could return more than one compiled ASTs (containing IRs in them). 
     ##       To correctly handle that we would need to really replace the optimized IRs
@@ -105,7 +108,7 @@ def optimize_script(ir_filename, args):
         save_asts_json([optimized_ast_or_ir], ir_filename)
         script_to_execute = from_ir_to_shell(ir_filename)
     
-    if(not args.compile_optimize_only):
+    if(not (args.compile_optimize_only or args.compile_only)):
         execution_start_time = datetime.now()
 
         ## TODO: Handle stdout, stderr, errors
