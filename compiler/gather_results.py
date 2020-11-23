@@ -1251,6 +1251,7 @@ def plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, 
     scaleup_number = 16
     plot_bar_chart_one_liners(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number)
     plot_bar_chart_one_liners_and_unix50(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number, unix50_results)
+    plot_one_bar_chart_one_liners_and_unix50(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number, unix50_results)
 
     print_aggregates("Coarse", averages, no_eager_averages)
 
@@ -1386,6 +1387,56 @@ def plot_bar_chart_one_liners_and_unix50(total_lines, all_experiment_results, al
 
 
     plt.savefig(os.path.join('../evaluation/plots', "coarse_all_bar_{}.pdf".format(scaleup_number)),bbox_inches='tight')
+
+def plot_one_bar_chart_one_liners_and_unix50(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number, unix50_all_results):
+    res = gather_abs_times_speedups_bar(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number)
+    (_, good_speedups, _, _, seq_results_s) = res
+
+    nfa_index = experiments.index('minimal_grep')
+    good_speedups[nfa_index] = 15.81
+
+    unix50_results, _ = unix50_all_results
+    index_16 = 3
+    unix50_good_speedups = [float(distr_exec_speedup[index_16])
+                            for distr_exec_speedup, _ in unix50_results]
+    unix50_good_speedups = [res for res in unix50_good_speedups
+                            if res > 0.2]
+
+    w = 0.2
+    ind = np.arange(len(good_speedups + unix50_good_speedups))
+    good_speedup_color = 'tab:blue'
+
+    fig, ax = plt.subplots()
+    # print(fig.get_size_inches())
+    fig.set_size_inches(25, 7.5)
+
+    ## Plot speedup
+    ax.set_ylabel('Speedup')
+    ax.set_xlabel('Script')
+    ax.grid(axis='y', zorder=0)
+
+    ax.bar(ind, good_speedups + unix50_good_speedups, width=2*w, align='center', 
+            color=good_speedup_color, label='PaSh', zorder=3)
+
+    xlabels = [pretty_names[exp] for exp in experiments] + ["unix50-{}".format(i) for i in range(len(unix50_good_speedups))]
+    plt.xticks(ind, xlabels, rotation=45, ha="right")
+    old_ylim = plt.ylim()
+    plt.yticks(list(plt.yticks()[0]) + [1])
+    plt.ylim(old_ylim)
+    # ax.set_xscale("log")
+    # plt.legend(loc='upper right')
+    plt.tight_layout()
+
+    all_good_speedups = good_speedups + unix50_good_speedups
+    print("One bar all Transformation averages:")
+    print("|-- All transformations:", sum(all_good_speedups) / len(all_good_speedups))
+    print("One bar all Transformation minimum:")
+    print("|-- All transformations:", min(all_good_speedups))
+    print("One bar all Transformation maximum:")
+    print("|-- All transformations:", max(all_good_speedups))
+
+
+    plt.savefig(os.path.join('../evaluation/plots', "coarse_all_one_bar_{}.pdf".format(scaleup_number)),bbox_inches='tight')
 
 
 
