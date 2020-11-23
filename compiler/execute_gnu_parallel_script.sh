@@ -25,7 +25,8 @@ microbenchmarks_dir="${eval_directory}/microbenchmarks/"
 
 ## Generate the intermediary gnu parallel scripts
 python3 generate_gnu_parallel_intermediary_script.py "${gnu_parallel_scripts_dir}" "${microbenchmarks_dir}" \
-        "${microbenchmark}" "${n_in}" "${intermediary_directory}"
+        "${microbenchmark}" "${n_in}" "${intermediary_directory}" || 
+{ echo 'GNU parallel script generation failed' ; exit 1; }
 
 seq_output="${intermediary_directory}/${microbenchmark}_seq_output"
 gnu_parallel_output="${intermediary_directory}/${microbenchmark}_gnu_parallel_output"
