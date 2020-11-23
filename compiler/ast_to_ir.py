@@ -221,7 +221,7 @@ def compile_node_command(ast_node, fileIdGen, config):
 
         ## Don't put the command in an IR if it is creates some effect
         ## (not stateless or pure)
-        if (command.category in ["stateless", "pure"]):
+        if (command.is_at_most_pure()):
             compiled_ast = IR([command],
                               stdin = [stdin_fid],
                               stdout = [stdout_fid])

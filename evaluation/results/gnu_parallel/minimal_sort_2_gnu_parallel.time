@@ -1,0 +1,5 @@
+
+real	0m0.366s
+user	0m0.580s
+sys	0m0.072s
+Files ../evaluation//intermediary//minimal_sort_seq_output and ../evaluation//intermediary//minimal_sort_gnu_parallel_output are identical

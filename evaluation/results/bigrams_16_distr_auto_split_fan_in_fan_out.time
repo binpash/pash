@@ -1,0 +1,29 @@
+kill: (124645): No such process
+kill: (124646): No such process
+kill: (124647): No such process
+Total nodes after optimization: 317
+ -- out of which:
+Cat nodes: 6
+Eager nodes: 195
+Optimization time: 608.976  ms
+Backend time: 19.713  ms
+Execution time: 564564.497  ms
+Compilation time: 44.87  ms
+
+real	9m25.643s
+user	51m34.632s
+sys	18m23.453s
+8828a8829
+> 	bagrati
+28981a28983
+> 	he
+33202a33205
+> husbandry	
+36908a36912
+> knapsacks	
+47416a47421
+> on	
+50337a50343
+> 	pierre
+69813a69820
+> thoughts	
