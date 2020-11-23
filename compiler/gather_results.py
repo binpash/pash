@@ -1392,8 +1392,8 @@ def plot_one_bar_chart_one_liners_and_unix50(total_lines, all_experiment_results
     res = gather_abs_times_speedups_bar(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number)
     (_, good_speedups, _, _, seq_results_s) = res
 
-    nfa_index = experiments.index('minimal_grep')
-    good_speedups[nfa_index] = 15.81
+    # nfa_index = experiments.index('minimal_grep')
+    # good_speedups[nfa_index] = 15.81
 
     unix50_results, _ = unix50_all_results
     index_16 = 3
