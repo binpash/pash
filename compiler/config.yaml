@@ -3,7 +3,7 @@ runtime:
     auto_split_binary: evaluation/tools/auto-split.sh
 distr_planner:
     optimized_script_filename: /tmp/optimized_script.sh
-    temp_ir_prefix: /tmp/dish_temp_ir
+    temp_ir_prefix: /tmp/pash_temp_ir
     eager_intermediate_prefix: /tmp/eager_intermediate_
     eager_executable_path: evaluation/tools/eager
     drain_stream_executable_path: evaluation/tools/drain_stream.sh
