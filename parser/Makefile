@@ -19,19 +19,19 @@ test : $(PARSER).native $(PARSER).byte $(wildcard tests/*)
 
 ## TODO: Unify the two rules below
 $(PARSER).native : ast_json.ml $(PARSER).ml 
-	ocamlfind ocamlopt -g -package str,libdash,ctypes,ctypes.foreign,atdgen,dum \
+	ocamlfind ocamlopt -g -package str,dash,ctypes,ctypes.foreign,atdgen,dum \
 	-linkpkg $^ -o $(PARSER).native
 
 $(PARSER).byte : $(PARSER).ml 
-	ocamlfind ocamlcp -p a -package str,libdash,ctypes,ctypes.foreign,atdgen,dum \
+	ocamlfind ocamlcp -p a -package str,dash,ctypes,ctypes.foreign,atdgen,dum \
 	-linkpkg -i -i $(AST_I) $^ -o $(PARSER).byte
 
 $(JSON_TO_SHELL).native : ast_json.ml $(JSON_TO_SHELL).ml 
-	ocamlfind ocamlopt -g -package str,libdash,ctypes,ctypes.foreign,atdgen,dum \
+	ocamlfind ocamlopt -g -package str,dash,ctypes,ctypes.foreign,atdgen,dum \
 	-linkpkg $^ -o $(JSON_TO_SHELL).native
 
 $(JSON_TO_SHELL).byte : $(JSON_TO_SHELL).ml 
-	ocamlfind ocamlcp -p a -package str,libdash,ctypes,ctypes.foreign,atdgen,dum \
+	ocamlfind ocamlcp -p a -package str,dash,ctypes,ctypes.foreign,atdgen,dum \
 	-linkpkg -i -i $(AST_I) $^ -o $(JSON_TO_SHELL).byte
 
 clean :
