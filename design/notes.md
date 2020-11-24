@@ -140,7 +140,7 @@ pipefail` if you're in a pipeline.)
  0. NONPOSIX: Brace expansion
     * `{w1,w2,...}` is safe if `wi` are safe
  1. Tilde
-    * always safe
+    * safe so long as we haven't set HOME
  2. Parameter
     * `$x` and `${#x}` are safe
     * `${x?w}` is safe

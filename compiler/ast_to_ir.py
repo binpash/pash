@@ -303,11 +303,65 @@ def compile_node_for(ast_node, fileIdGen, config):
     return compiled_ast
 
 
-## This function checks if a word is safe to expand (i.e. if it will not )
+## This function checks if a word is safe to expand (i.e. if it will 
+## not have unpleasant side-effects)
 def safe_to_expand(arg_char):
     key, val = get_kv(arg_char)
     if (key in ['V']): # Variable
         return True
+    return False
+
+def safe_arg(arg):
+    return all([safe_arg_char(arg_char) for arg_char in arg])
+
+def safe_arg_char(arg_char):
+    key, val = get_kv(arg_char)
+    # character, escaped---noop, but safe
+    if (key in ['C', 'E']): 
+        return True
+    # tilde --- only reads system state, safe to do early assuming no writes to HOME prior
+    elif (key in ['T']):
+        return True # TODO 2020-11-24 MMG modified variable set? take in/output written vars...
+    # arithmetic -- depends on what we have
+    elif (key == 'A'):
+        return safe_arith(val)
+    # quoted -- safe if its contents are safe
+    elif (key == 'Q'):
+        return safe_arg(key)
+    # variables -- safe if the format is safe as are the remaining words
+    elif (key == 'V'):
+        return True # TODO depends on format...
+    # command substitution -- depends on the command
+    elif (key == 'B'):
+        return safe_command(val)
+    
+    raise ValueError("bad key {}, expected one of CETAVQB".format(key))
+
+def safe_var(fmt, null, var, arg):
+    if (fmt in ['Normal', 'Length']):
+        return True
+    elif (fmt in ['Minus', 'Plus', 'Question', 'TrimR', 'TrimRMax', 'TrimL', 'TrimLMax']):
+        return safe_arg(arg)
+    elif (fmt in ['Assign']):
+        return False # TODO 2020-11-24 MMG unless we know `var` is set
+
+    raise ValueError("bad parameter format {}".format(fmt))
+
+def safe_arith(arg):
+    # operations are safe
+    # `+=` and `=` and family are UNSAFE
+    # NONPOSIX: `++` and `--` are UNSAFE
+    # `op="+=1"; $((x $op))` is UNSAFE
+
+    # TODO 2020-11-24 MMG
+    # to determine safety, we:
+    #   (a) check that every arg_char here is safe
+    #   (b) pre-parse it symbolically well enough to ensure that no mutating operations occur
+    return False
+
+def safe_command(command):
+    # TODO 2020-11-24 MMG which commands are safe to run in advance?
+    # TODO 2020-11-24 MMG how do we differentiate it being safe to do nested expansions?
     return False
 
 def make_echo_ast(arg_char):
