@@ -8,8 +8,6 @@ The repository contains:
 * [parser](./parser): The parser uses the `libdash` POSIX-compliant parser and `atdgen` to convert scripts to JSON-encoded ASTs.
 * [paper](./paper): The paper submitted to EuroSys 2021, also available on [arxiv](https://arxiv.org/abs/2007.09436).
 * [runtime](./runtime): A JVM-based runtime for PaSh (obsolete).
-* [scripts](./scripts): Auxiliary scripts, for testing and running tasks.
-* [tests](./tests): Contains a set of tests to check that everything works as expected (for CI).
 
 # Table of Contents
 
