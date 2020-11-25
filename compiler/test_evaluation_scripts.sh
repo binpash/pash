@@ -36,7 +36,24 @@ microbenchmarks=(
     # for_loop_simple      # BUG: Output is not the same since it is overwritten
 )
 
-for microbenchmark in "${microbenchmarks[@]}"; do
+test_flags=(
+    ""   # No split + No eager (This cannot be in the end)
+    -n   # No split + Naive eager
+    -e   # No split + Eager
+    -a   # Split    + Eager
+)
+
+microbenchmark_configs=( )
+for i in "${!microbenchmarks[@]}"; do
+    all_flags=${test_flags[@]}
+    microbenchmark_configs[$i]="${microbenchmarks[$i]};${all_flags// /;}"
+done
+
+
+## This is almost the same loop as the one in execute_evaluation_scripts
+for microbenchmark_config in "${microbenchmark_configs[@]}"; do
+    IFS=";" read -r -a flags <<< "${microbenchmark_config}"
+    microbenchmark=${flags[0]}
     echo "Executing test: $microbenchmark"
     # Execute the sequential script on the first run only
     exec_seq="-s"
@@ -46,22 +63,17 @@ for microbenchmark in "${microbenchmarks[@]}"; do
         python3 generate_microbenchmark_intermediary_scripts.py \
                 $microbenchmarks_dir $microbenchmark $n_in $intermediary_dir "env_test"
 
-        ## Execute the intermediary script with eager
-        ./execute_compile_evaluation_script.sh $exec_seq -e "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
-        rm -f /tmp/eager*
+        for flag in "${flags[@]:1}"; do
+            echo "Flag: ${flag}"
 
-        # Only execute the sequential once
-        exec_seq=""
+            ## Execute the intermediary script with eager
+            ./execute_compile_evaluation_script.sh $exec_seq $flag "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
+            rm -f /tmp/eager*
 
-        ## Execute the intermediary script without eager
-        ./execute_compile_evaluation_script.sh $exec_seq -a "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
+            ## Only run the sequential the first time around
+            exec_seq=""
+        done
 
-        ## Execute the intermediary script without eager
-        ./execute_compile_evaluation_script.sh $exec_seq "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
-
-        ## Execute the intermediary script with the naive eager
-        ./execute_compile_evaluation_script.sh $exec_seq -n "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
-        rm -f /tmp/eager*
     done
 done
 
