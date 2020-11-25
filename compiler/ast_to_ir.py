@@ -383,31 +383,31 @@ def safe_arith(arg):
         return True
 
 safe_cases = {
-        "Pipe": (lambda fileIdGen, config:
+        "Pipe": (lambda:
                  lambda ast_node: safe_pipe(ast_node)),
-        "Command": (lambda fileIdGen, config:
+        "Command": (lambda:
                     lambda ast_node: safe_simple(ast_node)),
-        "And": (lambda fileIdGen, config:
+        "And": (lambda:
                 lambda ast_node: safe_and_or_semi(ast_node)),
-        "Or": (lambda fileIdGen, config:
+        "Or": (lambda:
                lambda ast_node: safe_and_or_semi(ast_node)),
-        "Semi": (lambda fileIdGen, config:
+        "Semi": (lambda:
                  lambda ast_node: safe_and_or_semi(ast_node)),
-        "Redir": (lambda fileIdGen, config:
+        "Redir": (lambda:
                   lambda ast_node: safe_redir_subshell(ast_node)),
-        "Subshell": (lambda fileIdGen, config:
+        "Subshell": (lambda:
                      lambda ast_node: safe_redir_subshell(ast_node)),
-        "Background": (lambda fileIdGen, config:
+        "Background": (lambda:
                        lambda ast_node: safe_background(ast_node)),
-        "Defun": (lambda fileIdGen, config:
+        "Defun": (lambda:
                   lambda ast_node: safe_defun(ast_node)),
-        "For": (lambda fileIdGen, config:
+        "For": (lambda:
                   lambda ast_node: safe_for(ast_node)),
-        "While": (lambda fileIdGen, config:
+        "While": (lambda:
                   lambda ast_node: safe_while(ast_node)),
-        "Case": (lambda fileIdGen, config:
+        "Case": (lambda:
                   lambda ast_node: safe_case(ast_node)),
-        "If": (lambda fileIdGen, config:
+        "If": (lambda:
                   lambda ast_node: safe_if(ast_node))
         }
 
@@ -415,7 +415,7 @@ def safe_command(command):
     # TODO 2020-11-24 MMG which commands are safe to run in advance?
     # TODO 2020-11-24 MMG how do we differentiate it being safe to do nested expansions?
     global safe_cases
-    return ast_match(command, safe_cases, "fileIdGen_dummy", "config_dummy")
+    return ast_match(command, safe_cases)
 
 def safe_pipe(node):
     return False
@@ -858,18 +858,17 @@ def replace_irs_assignments(assignments, irFileGen, config):
 def check_if_ast_is_supported(construct, arguments, **kwargs):
     return
 
-# ??? 2020-11-25 MMG just use *args, to make this more generic?
-def ast_match_untyped(untyped_ast_object, cases, fileIdGen, config):
+def ast_match_untyped(untyped_ast_object, cases, *args):
     ## TODO: This should construct the complete AstNode object (not just the surface level)
     ast_node = AstNode(untyped_ast_object)
     if ast_node.construct is AstNodeConstructor.PIPE:
         ast_node.check(children_count = lambda : len(ast_node.items) >= 2)
-    return ast_match(ast_node, cases, fileIdGen, config)
+    return ast_match(ast_node, cases, *args)
 
-def ast_match(ast_node, cases, fileIdGen, config):
+def ast_match(ast_node, cases, *args):
     ## TODO: Remove that once `ast_match_untyped` is fixed to
     ##       construct the whole AstNode object.
     if(not isinstance(ast_node, AstNode)):
-        return ast_match_untyped(ast_node, cases, fileIdGen, config)
+        return ast_match_untyped(ast_node, cases, *args)
 
-    return cases[ast_node.construct.value](fileIdGen, config)(ast_node)
+    return cases[ast_node.construct.value](*args)(ast_node)
