@@ -62,7 +62,7 @@ rm -f /tmp/eager*
 ./execute_compile_evaluation_script.sh -e "p5" "16"
 rm -f /tmp/eager*
 
-## Executing the first 3 stages with dish
+## Executing the first 3 stages with pash
 # ./execute_compile_evaluation_script.sh -s -a "max_temp_p123" "2"
 # rm -f /tmp/eager*
 # ./execute_compile_evaluation_script.sh -a "max_temp_p123" "10"

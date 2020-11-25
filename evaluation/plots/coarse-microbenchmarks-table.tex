@@ -1,15 +1,15 @@
-\begin{tabular*}{\textwidth}{l @{\extracolsep{\fill}} llllllll}
+\begin{tabular*}{\textwidth}{l @{\extracolsep{\fill}} l}
 \toprule
-Script ~&~ Structure & Input &Seq. Time & Highlights \\
+Name ~&~ Script \\
 \midrule
-nfa-regex ~&~ $3\times\tsta$ & 1~GB & 79m35.197s & complex NFA regex \\
-sort ~&~ $\tsta, \tpur$ & 10~GB & 21m46.807s & \tti{sort}ing \\
-top-n ~&~ $2\times\tsta, 4\times\tpur$ & 10~GB & 78m45.872s & double \tti{sort}, \tti{uniq} reduction \\
-wf ~&~ $3\times\tsta, 3\times\tpur$ & 10~GB & 22m30.048s & double \tti{sort}, \tti{uniq} reduction \\
-spell ~&~ $4\times\tsta, 3\times\tpur$ & 3~GB & 25m7.560s & comparisons (\tti{comm}) \\
-difference ~&~ $2\times\tsta, 3\times\tpur$ & 10~GB & 25m49.097s & non-parallelizable \tti{diff}ing \\
-bi-grams ~&~ $3\times\tsta, 3\times\tpur$ & 3~GB & 38m9.922s & stream shifting and merging \\
-set-difference ~&~ $5\times\tsta, 2\times\tpur$ & 10~GB & 51m32.313s & two pipelines merging to a \tti{comm} \\
-shortest-scripts ~&~ $5\times\tsta, 2\times\tpur$ & 85~MB & 28m45.900s & long \tsta pipeline ending with \tpur \\
+nfa-regex ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | tr A-Z a-z | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4'! \\
+sort ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | tr A-Z a-z | sort! \\
+top-n ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | tr -cs A-Za-z '\n' | tr A-Z a-z | sort | uniq -c | sort -rn | sed ${N}q! \\
+wf ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | tr -cs A-Za-z'\n' | tr A-Z a-z | sort | uniq -c | sort -rn | sed ${1}q! \\
+spell ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | col -bx |tr -cs A-Za-z '\n' | tr A-Z a-z |tr -d '[:punct:]' |sort |uniq |!\\ ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!    comm -23 - $dict! \\
+bi-grams ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | tr -cs A-Za-z '\n' | tr A-Z a-z | bigrams_aux | sort | uniq! \\
+difference ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | sort | tr [:lower:] [:upper:] > s1 & cat $IN | sort |!\\ ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!    tr [:upper:] [:lower:] > s2 & diff -B s1 s2! \\
+set-difference ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | cut -d ' ' -f 1 | sort > s1 & cat $IN | cut -d ' ' -f 1 | sort > s2 &!\\ ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!    comm -23 s1 s2! \\
+shortest-scripts ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!cat $IN | xargs file | grep "shell script" | cut -d: -f1 | xargs -L 1 wc -l |!\\ ~&~ \lstinline[columns=fixed,basicstyle=\footnotesize\ttfamily]!    grep -v '^0$' | sort -n | head -15! \\
 \bottomrule
 \end{tabular*}
