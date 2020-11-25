@@ -1,6 +1,7 @@
 #!/bin/bash
 
-curl 'http://ndr.md/corpus/dummy/1M.txt' > 1M.txt
+## This is now included in the directory by default
+# curl 'http://ndr.md/corpus/dummy/1M.txt' > 1M.txt
 
 touch 10M.txt
 for (( i = 0; i < 10; i++ )); do
