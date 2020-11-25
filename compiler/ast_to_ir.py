@@ -311,8 +311,22 @@ def safe_to_expand(arg_char):
         return True
     return False
 
+def guess_arg(arg):
+    res = ""
+    for arg_char in arg:
+        key, val = get_kv(arg_char)
+
+        if (key in ['C', 'E']):
+            res += chr(val)
+        else:
+            return None
+    return res
+
 def safe_arg(arg):
     return all([safe_arg_char(arg_char) for arg_char in arg])
+
+def safe_args(args):
+    return all([safe_arg(arg) for arg in args])
 
 def safe_arg_char(arg_char):
     key, val = get_kv(arg_char)
@@ -327,10 +341,10 @@ def safe_arg_char(arg_char):
         return safe_arith(val)
     # quoted -- safe if its contents are safe
     elif (key == 'Q'):
-        return safe_arg(key)
+        return safe_arg(val)
     # variables -- safe if the format is safe as are the remaining words
     elif (key == 'V'):
-        return True # TODO depends on format...
+        return safe_var(*val)
     # command substitution -- depends on the command
     elif (key == 'B'):
         return safe_command(val)
@@ -353,15 +367,96 @@ def safe_arith(arg):
     # NONPOSIX: `++` and `--` are UNSAFE
     # `op="+=1"; $((x $op))` is UNSAFE
 
-    # TODO 2020-11-24 MMG
     # to determine safety, we:
     #   (a) check that every arg_char here is safe
     #   (b) pre-parse it symbolically well enough to ensure that no mutating operations occur
-    return False
+    expr = guess_arg(arg)
+
+    if (arg is None):
+        # TODO 2020-11-25 MMG symbolic pre-parse?
+        return False
+    elif ('=' in expr or '++' in expr or '--' in expr):
+        # TODO 2020-11-25 MMG false negatives: ==, >=, <=
+        return False
+    else:
+        # it's a concrete string that doesn't have mutation operations in it... go for it!
+        return True
+
+safe_cases = {
+        "Pipe": (lambda fileIdGen, config:
+                 lambda ast_node: safe_pipe(ast_node)),
+        "Command": (lambda fileIdGen, config:
+                    lambda ast_node: safe_simple(ast_node)),
+        "And": (lambda fileIdGen, config:
+                lambda ast_node: safe_and_or_semi(ast_node)),
+        "Or": (lambda fileIdGen, config:
+               lambda ast_node: safe_and_or_semi(ast_node)),
+        "Semi": (lambda fileIdGen, config:
+                 lambda ast_node: safe_and_or_semi(ast_node)),
+        "Redir": (lambda fileIdGen, config:
+                  lambda ast_node: safe_redir_subshell(ast_node)),
+        "Subshell": (lambda fileIdGen, config:
+                     lambda ast_node: safe_redir_subshell(ast_node)),
+        "Background": (lambda fileIdGen, config:
+                       lambda ast_node: safe_background(ast_node)),
+        "Defun": (lambda fileIdGen, config:
+                  lambda ast_node: safe_defun(ast_node)),
+        "For": (lambda fileIdGen, config:
+                  lambda ast_node: safe_for(ast_node)),
+        "While": (lambda fileIdGen, config:
+                  lambda ast_node: safe_while(ast_node)),
+        "Case": (lambda fileIdGen, config:
+                  lambda ast_node: safe_case(ast_node)),
+        "If": (lambda fileIdGen, config:
+                  lambda ast_node: safe_if(ast_node))
+        }
 
 def safe_command(command):
     # TODO 2020-11-24 MMG which commands are safe to run in advance?
     # TODO 2020-11-24 MMG how do we differentiate it being safe to do nested expansions?
+    global safe_cases
+    return ast_match(command, safe_cases, "fileIdGen_dummy", "config_dummy")
+
+def safe_pipe(node):
+    return False
+
+
+safe_commands = ["echo", ":"]
+
+def safe_simple(node):
+    # TODO 2020-11-25 check redirs, assignments
+
+    if (len(node.arguments) < 0):
+        return True
+
+    cmd = guess_arg(node.arguments[0])
+    if (cmd is None or cmd not in safe_commands):
+        return False
+    else:
+        return safe_args(node.arguments[1:])
+
+def safe_and_or_semi(node):
+    return False
+
+def safe_redir_subshell(node):
+    return False
+
+def safe_background(node):
+    return False
+
+def safe_defun(node):
+    return False
+
+def safe_for(node):
+    return False
+
+def safe_while(node):
+    return False
+
+def safe_case(node):
+    return False
+
+def safe_if(node):
     return False
 
 def make_echo_ast(arg_char):
@@ -763,6 +858,7 @@ def replace_irs_assignments(assignments, irFileGen, config):
 def check_if_ast_is_supported(construct, arguments, **kwargs):
     return
 
+# ??? 2020-11-25 MMG just use *args, to make this more generic?
 def ast_match_untyped(untyped_ast_object, cases, fileIdGen, config):
     ## TODO: This should construct the complete AstNode object (not just the surface level)
     ast_node = AstNode(untyped_ast_object)
