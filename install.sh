@@ -37,7 +37,7 @@ python3.8 -m pip install -U PyYAML
 
 # Generate inputs
 echo "Generating input files"
-cd evalulation/scripts/input
+cd evaluation/scripts/input
 ./gen.sh
 cd ../../../
 
