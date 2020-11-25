@@ -37,4 +37,10 @@ python3.8 -m pip install -U PyYAML
 
 # Generate inputs
 echo "Generating input files"
-echo "TODO: Running gen.sh currently doesn't work."
+cd evalulation/scripts/input
+./gen.sh
+cd ../../../
+
+# Export necessary environment variables
+export PASH_TOP=$PWD
+export PASH_PARSER=${PASH_TOP}/parser/parse_to_json.native
