@@ -18,7 +18,7 @@ n_inputs=(
 
 name=distrotest
 
-## TODO: Fix redirections to be passed into dish
+## TODO: Fix redirections to be passed into pash
 
 # Execute the sequential script on the first run only
 exec_seq="-s"

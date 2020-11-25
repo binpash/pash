@@ -44,6 +44,15 @@ def is_sed_pure(options):
     else:
         return "stateless"
 
+## TODO: Move that to annotation
+def is_uniq_pure(options):
+    if(len(options) > 0):
+        first_opt = format_arg_chars(options[0])
+        if(first_opt == "-c"):
+            return "pure"
+    return "parallelizable_pure"
+
+
 ##
 ## Dictionaries with the custom functions
 ##
@@ -54,6 +63,7 @@ custom_command_input_outputs = {
 
 custom_command_categories = {
     "sed"  : is_sed_pure,
+    "uniq" : is_uniq_pure,
 }
 
 

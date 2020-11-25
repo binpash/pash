@@ -76,6 +76,7 @@ class Command(Node):
             assert(False)
             ## This should be unreachable
 
+    ## TODO: Fix this somewhere in the annotations and not the code
     def pure_get_map_output_files(self, input_file_ids, fileIdGen):
         assert(self.is_pure_parallelizable())
         if(str(self.command) == "sort"):
@@ -86,16 +87,22 @@ class Command(Node):
                                    for in_fid in input_file_ids]
         elif(str(self.command) == "alt_bigrams_aux"):
             new_output_file_ids = [[fileIdGen.next_file_id()] for in_fid in input_file_ids]
+        elif(str(self.command) == "uniq"):
+            new_output_file_ids = [[fileIdGen.next_file_id()] for in_fid in input_file_ids]
         else:
             print("Unreachable code reached :(")
             assert(False)
             ## This should be unreachable
         return new_output_file_ids
 
+    def is_at_most_pure(self):
+        return (self.category in ["stateless", "pure", "parallelizable_pure"])
+
     def is_pure_parallelizable(self):
-        return (self.category == "pure"
-                and str(self.command) in list(map(get_command_from_definition,
-                                                  config.parallelizable_pure_commands)))
+        return (self.category == "parallelizable_pure" or
+                (self.category == "pure"
+                 and str(self.command) in list(map(get_command_from_definition,
+                                                   config.parallelizable_pure_commands))))
 
     ## TODO: This has to change, to not search for the inputs in the
     ## in_stream

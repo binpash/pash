@@ -1,0 +1,5 @@
+
+real	4m54.470s
+user	51m45.246s
+sys	1m31.030s
+Files ../evaluation//intermediary//set-diff_seq_output and ../evaluation//intermediary//set-diff_gnu_parallel_output are identical

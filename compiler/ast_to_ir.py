@@ -2,6 +2,11 @@ from ir import *
 from union_find import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
+from util import *
+from json_ast import save_asts_json
+from parse import parse_shell, from_ir_to_shell
+import subprocess
+
 import config
 
 import pickle
@@ -41,6 +46,15 @@ compile_cases = {
         "For": (lambda fileIdGen, config:
                   lambda ast_node: compile_node_for(ast_node, fileIdGen, config))
         }
+
+preprocess_cases = {
+    "Pipe": (lambda irFileGen, config:
+             lambda ast_node: preprocess_node_pipe(ast_node, irFileGen, config)),
+    "Command": (lambda irFileGen, config:
+                lambda ast_node: preprocess_node_command(ast_node, irFileGen, config)),
+    "For": (lambda irFileGen, config:
+            lambda ast_node: preprocess_node_for(ast_node, irFileGen, config))
+}
 
 ir_cases = {
         ## Note: We should never encounter a Pipe construct, since all
@@ -212,7 +226,7 @@ def compile_node_command(ast_node, fileIdGen, config):
 
         ## Don't put the command in an IR if it is creates some effect
         ## (not stateless or pure)
-        if (command.category in ["stateless", "pure"]):
+        if (command.is_at_most_pure()):
             compiled_ast = IR([command],
                               stdin = [stdin_fid],
                               stdout = [stdout_fid])
@@ -289,7 +303,72 @@ def compile_node_for(ast_node, fileIdGen, config):
     return compiled_ast
 
 
-def compile_arg_char(arg_char, fileIdGen, config):
+## This function checks if a word is safe to expand (i.e. if it will not )
+def safe_to_expand(arg_char):
+    key, val = get_kv(arg_char)
+    if (key in ['V']): # Variable
+        return True
+    return False
+
+def make_echo_ast(arg_char):
+    arguments = [string_to_argument("echo"), string_to_argument("-n"), [arg_char]]
+
+    line_number = 0
+    node = make_kv('Command', [line_number, [], arguments, []])
+    return node
+
+## TODO: Move this function somewhere more general
+def execute_shell_asts(asts):
+    ir_filename = os.path.join("/tmp", get_random_string())
+    save_asts_json(asts, ir_filename)
+    output_script = from_ir_to_shell(ir_filename)
+    # print(output_script)
+    exec_obj = subprocess.run(["/bin/bash"], input=output_script, 
+                              capture_output=True,
+                              text=True)
+    exec_obj.check_returncode()
+    # print(exec_obj.stdout)
+    return exec_obj.stdout
+
+## TODO: Properly parse the output of the shell script
+def parse_string_to_arg_char(arg_char_string):
+    # print(arg_char_string)
+    return ['Q', string_to_argument(arg_char_string)]
+
+def naive_expand(arg_char, config):
+    ## Create an AST node that "echo"s the argument
+    echo_ast = make_echo_ast(arg_char)
+
+    ## Execute the echo AST by unparsing it to shell
+    ## and calling bash
+    expanded_string = execute_shell_asts([echo_ast])
+
+    ## Parse the expanded string back to an arg_char
+    expanded_arg_char = parse_string_to_arg_char(expanded_string)
+    
+    ## TODO: Handle any errors
+    # print(expanded_arg_char)
+    return expanded_arg_char
+
+
+
+## This function expands an arg_char. 
+## At the moment it is pretty inefficient as it serves as a prototype.
+def expand(arg_char, config):
+    return naive_expand(arg_char, config)
+
+
+
+## This function compiles an arg char by recursing if it contains quotes or command substitution.
+##
+## It is currently being extended to also expand any arguments that are safe to expand. 
+def compile_arg_char(original_arg_char, fileIdGen, config):
+    ## Check if the arg char can be expanded and if so do it.
+    arg_char = copy.deepcopy(original_arg_char)
+    if(safe_to_expand(arg_char)):
+        arg_char = expand(arg_char, config)
+
+    ## Compile the arg char
     key, val = get_kv(arg_char)
     if (key in ['C',   # Single character
                 'E']): # Escape
@@ -336,6 +415,150 @@ def compile_redirections(redirections, fileIdGen, config):
                              for redirection in redirections]
     return compiled_redirections
 
+##
+## Preprocessing
+##
+
+## The preprocessing pass replaces all _candidate_ dataflow regions with
+## calls to PaSh's runtime to let it establish if they are actually dataflow
+## regions. The pass serializes all candidate dataflow regions:
+## - A list of ASTs if at the top level or
+## - an AST subtree if at a lower level
+##
+## The PaSh runtime then deserializes them, compiles them (if safe) and optimizes them.
+
+## Replace candidate dataflow AST regions with calls to PaSh's runtime.
+def replace_ast_regions(ast_objects, irFileGen, config):
+    ## TODO: Copy the structure from compile_asts
+    ##       since we want to merge multiple asts 
+    ##       into one if they contain dataflow regions.
+
+    ## TODO: Follow exactly the checks that are done in compile_asts
+    ##       without actually compiling the asts to IRs.
+    preprocessed_asts = []
+    candidate_dataflow_region = []
+    for i, ast_object in enumerate(ast_objects):
+        # print("Preprocessing AST {}".format(i))
+        # print(ast_object)
+
+        ## NOTE: This could also replace all ASTs with calls to PaSh runtime.
+        ##       There are a coupld issues with that:
+        ##       1. We would have to make sure that state changes from PaSh runtime
+        ##          affect the current shell. However, this probably has to be solved 
+        ##          anyway except if we can *ensure* that no state changes can happen
+        ##          in replaced parts.
+        ##       2. Performance issues. Performance would be bad.
+
+        ## Goals: This transformation can approximate in several directions.
+        ##        1. Not replacing a candidate dataflow region.
+        ##        2. Replacing a too large candidate region 
+        ##           (making expansion not happen as late as possible)
+        ##        3. Not replacing a maximal dataflow region, 
+        ##           e.g. splitting a big one into two.
+        ##        4. Replacing sections that are *certainly* not dataflow regions.
+        ##           (This can only lead to performance issues.)
+        ##
+        ##        Which of the above can we hope to be precise with?
+        ##        Can we have proofs indicating that we are not approximating those? 
+        
+        ## Preprocess ast by replacing subtrees with calls to runtime.
+        ## - If the whole AST needs to be replaced (e.g. if it is a pipeline)
+        ##   then the second output is true.
+        ## - If the next AST needs to be replaced too (e.g. if the current one is a background)
+        ##   then the third output is true
+        output = preprocess_node(ast_object, irFileGen, config)
+        preprocessed_ast, should_replace_whole_ast, is_non_maximal = output
+        ## If the dataflow region is not maximal then it implies that the whole
+        ## AST should be replaced.
+        assert(not is_non_maximal or should_replace_whole_ast)
+
+        ## If it isn't maximal then we just add it to the candidate
+        if(is_non_maximal):
+            candidate_dataflow_region.append(preprocessed_ast)
+        else:
+            ## If the current candidate dataflow region is non-empty
+            ## it means that the previous AST was in the background so
+            ## the current one has to be included in the process no matter what    
+            if (len(candidate_dataflow_region) > 0):
+                candidate_dataflow_region.append(preprocessed_ast)
+                ## Since the current one is maximal (or not wholy replaced) 
+                ## we close the candidate.
+                replaced_ast = replace_df_region(candidate_dataflow_region, irFileGen, config)
+                candidate_dataflow_region = []
+                preprocessed_asts.append(replaced_ast)
+            else:
+                if(should_replace_whole_ast):
+                    replaced_ast = replace_df_region([preprocessed_ast], irFileGen, config)
+                    preprocessed_asts.append(replaced_ast)
+                else:
+                    preprocessed_asts.append(preprocessed_ast)
+
+    ## Close the final dataflow region
+    if(len(candidate_dataflow_region) > 0):
+        replaced_ast = replace_df_region(candidate_dataflow_region, irFileGen, config)
+        candidate_dataflow_region = []
+        preprocessed_asts.append(replaced_ast)
+    
+    return preprocessed_asts
+
+def preprocess_node(ast_object, irFileGen, config):
+    global preprocess_cases
+    return ast_match_untyped(ast_object, preprocess_cases, irFileGen, config)
+
+## This preprocesses the AST node and also replaces it if it needs replacement .
+## It is called by constructs that cannot be included in a dataflow region.
+def preprocess_close_node(ast_object, irFileGen, config):
+    output = preprocess_node(ast_object, irFileGen, config)
+    preprocessed_ast, should_replace_whole_ast, _is_non_maximal = output
+    if(should_replace_whole_ast):
+        ## TODO: Maybe the first argument has to be a singular list?
+        final_ast = replace_df_region(preprocessed_ast, irFileGen, config)
+    else:
+        final_ast = preprocessed_ast
+    return final_ast
+
+def preprocess_node_pipe(ast_node, _irFileGen, _config):
+    ## A pipeline is *always* a candidate dataflow region.
+    ## Q: Is that true?
+
+    ## TODO: Preprocess the internals of the pipe to allow
+    ##       for mutually recursive calls to PaSh.
+    ##
+    ##       For example, if a command in the pipe has a command substitution
+    ##       in one of its arguments then we would like to call our runtime
+    ##       there instead of 
+    return ast_node, True, ast_node.is_background
+
+## TODO: Complete this
+def preprocess_node_command(ast_node, _irFileGen, _config):
+    ## TODO: Preprocess the internals of the pipe to allow
+    ##       for mutually recursive calls to PaSh.
+    ##
+    ##       For example, if a command in the pipe has a command substitution
+    ##       in one of its arguments then we would like to call our runtime
+    ##       there instead of 
+
+    ## If there are no arguments, the command is just an
+    ## assignment (Q: or just redirections?)
+    if(len(ast_node.arguments) == 0):
+        return ast_node, False, False
+    
+    ## This means we have a command. Commands are always candidate dataflow
+    ## regions.
+    return ast_node, True, False
+
+## TODO: This is not efficient at all since it calls the PaSh runtime everytime the loop is entered.
+##       We have to find a way to improve that.
+def preprocess_node_for(ast_node, irFileGen, config):
+    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.body = preprocessed_body
+    return ast_node, False, False
+
+
+## TODO: All the replace parts might need to be deleteD
+
+
 
 
 ## Replaces IR subtrees with a command that calls them (more
@@ -359,27 +582,27 @@ def compile_redirections(redirections, fileIdGen, config):
 def replace_irs(ast, irFileGen, config):
 
     if (isinstance(ast, IR)):
-        replaced_ast = replace_ir(ast, irFileGen, config)
+        replaced_ast = replace_df_region(ast, irFileGen, config)
     else:
         global ir_cases
         replaced_ast = ast_match(ast, ir_cases, irFileGen, config)
 
     return replaced_ast
 
-## This function serializes an IR in a file, and in its place, it adds
-## a command that calls our distribution planner with the name of the
+## This function serializes a candidate df_region in a file, and in its place, 
+## it adds a command that calls our distribution planner with the name of the
 ## saved file.
-def replace_ir(ast_node, irFileGen, config):
+def replace_df_region(asts, irFileGen, config):
     ir_file_id = irFileGen.next_file_id()
 
     temp_ir_directory_prefix = config['distr_planner']['temp_ir_prefix']
     ## TODO: I probably have to generate random file names for the irs, so
-    ## that multiple executions of dish don't interfere.
+    ## that multiple executions of PaSh don't interfere.
     ir_filename = ir_file_id.toFileName(temp_ir_directory_prefix)
 
     ## Serialize the node in a file
     with open(ir_filename, "wb") as ir_file:
-        pickle.dump(ast_node, ir_file)
+        pickle.dump(asts, ir_file)
 
     ## Replace it with a command that calls the distribution
     ## planner with the name of the file.
@@ -403,7 +626,7 @@ def make_command(ir_filename):
                  string_to_argument(config.PLANNER_EXECUTABLE),
                  string_to_argument(ir_filename)]
     ## Pass a relevant argument to the planner
-    arguments += config.pass_common_arguments(config.dish_args)
+    arguments += config.pass_common_arguments(config.pash_args)
 
     line_number = 0
     node = make_kv('Command', [line_number, [], arguments, []])
@@ -486,9 +709,17 @@ def replace_irs_assignments(assignments, irFileGen, config):
 def check_if_ast_is_supported(construct, arguments, **kwargs):
     return
 
-def ast_match(ast_object, cases, fileIdGen, config):
-    ast_node = AstNode(ast_object)
+def ast_match_untyped(untyped_ast_object, cases, fileIdGen, config):
+    ## TODO: This should construct the complete AstNode object (not just the surface level)
+    ast_node = AstNode(untyped_ast_object)
     if ast_node.construct is AstNodeConstructor.PIPE:
         ast_node.check(children_count = lambda : len(ast_node.items) >= 2)
+    return ast_match(ast_node, cases, fileIdGen, config)
+
+def ast_match(ast_node, cases, fileIdGen, config):
+    ## TODO: Remove that once `ast_match_untyped` is fixed to
+    ##       construct the whole AstNode object.
+    if(not isinstance(ast_node, AstNode)):
+        return ast_match_untyped(ast_node, cases, fileIdGen, config)
 
     return cases[ast_node.construct.value](fileIdGen, config)(ast_node)

@@ -37,7 +37,7 @@ def interpret_io(io, options, ann_options):
         assert(io.startswith("args"))
         indices = io.split("[")[1].split("]")[0]
 
-        print(io, options)
+        # print(io, options)
 
         ## Find the file arguments (and their indices)
         args_indices = non_option_args_indices(options)
@@ -131,6 +131,8 @@ def interpret_predicate(predicate):
         return lambda options: all_operator(operands, options)
     elif(operator == 'or'):
         return lambda options: or_operator(operands, options)
+    elif(operator == 'not'):
+        return lambda options: not_operator(operands, options)
 
     ## TODO: Fill in the rest
     return lambda x: print("Uninterpreted operator:", operator); False
@@ -157,3 +159,10 @@ def all_operator(desired_options, options):
 def or_operator(operands, options):
     operand_predicates = map(lambda op: interpret_predicate(op)(options), operands)
     return any(operand_predicates)
+
+## Operands: One predicate
+def not_operator(operands, options):
+    assert(len(operands) == 1)
+    operand = operands[0]
+    return not interpret_predicate(operand)(options)
+

@@ -47,13 +47,13 @@ bigram_aux_map()
     # ## The goal of this is to write the first line of $IN in the $AUX_HEAD
     # ## stream and the last line of $IN in $AUX_TAIL
 
-    # cat $aux1 | ( head -n 1 > $AUX_HEAD; $DISH_TOP/evaluation/tools/drain_stream.sh ) &
+    # cat $aux1 | ( head -n 1 > $AUX_HEAD; $PASH_TOP/evaluation/tools/drain_stream.sh ) &
     # # while IFS= read -r line
     # # do
     # #     old_line=$line
     # # done < $aux2
     # # echo "$old_line" > $AUX_TAIL
-    # ( tail -n 1 $aux2 > $AUX_TAIL; $DISH_TOP/evaluation/tools/drain_stream.sh ) &
+    # ( tail -n 1 $aux2 > $AUX_TAIL; $PASH_TOP/evaluation/tools/drain_stream.sh ) &
 
     wait
 

@@ -7,20 +7,15 @@ echo "Deleting eager intermediate files..."
 rm -f /tmp/eager*
 mkdir -p $intermediary_dir
 
+gnu_parallel_flag=0
+
 n_inputs=(
-    # 1
     2
     4
     8
     16
     32
     64
-    # 96
-    # 128
-    # 10
-    # 20
-    # 50
-    # 100
 )
 
 microbenchmarks=(
@@ -54,8 +49,6 @@ microbenchmarks=(
     # for_loop_simple      # Probably not for OSDI
 )
 
-## Note: Maybe we need to tune the configuration (fan-out, batch-size)
-##       before some specific benchmarks
 for microbenchmark in "${microbenchmarks[@]}"; do
     ## Execute the sequential script on the first run only
     exec_seq="-s"
@@ -66,16 +59,17 @@ for microbenchmark in "${microbenchmarks[@]}"; do
         python3 generate_microbenchmark_intermediary_scripts.py \
                 $microbenchmarks_dir $microbenchmark $n_in $intermediary_dir
 
+
         ## Execute the intermediary script with eager
         ./execute_compile_evaluation_script.sh $exec_seq -e "${microbenchmark}" "${n_in}"
         rm -f /tmp/eager*
 
+        if [ "$gnu_parallel_flag" -eq 1 ]; then
+            ./execute_gnu_parallel_script.sh $microbenchmark $n_in
+        fi
+
         ## Only execute the sequential once
         exec_seq=""
-
-        ## Execute the intermediary script with split
-        ./execute_compile_evaluation_script.sh $exec_seq -p "${microbenchmark}" "${n_in}"
-        rm -f /tmp/eager*
 
         ## Execute the intermediary script with split
         ./execute_compile_evaluation_script.sh $exec_seq -a "${microbenchmark}" "${n_in}"

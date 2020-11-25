@@ -5,6 +5,30 @@ import re
 import config
 import subprocess
 
+
+def parse_shell(input_script_path):
+    parser_output = subprocess.run([config.PARSER_BINARY, input_script_path], capture_output=True, text=True)
+    if (not parser_output.returncode == 0):
+        print(parser_output.stderr)
+        parser_output.check_returncode()
+    return parser_output.stdout
+
+def from_ir_to_shell(ir_filename):
+    printer_output = subprocess.run([config.PRINTER_BINARY, ir_filename], capture_output=True, text=True)
+    printer_output.check_returncode()
+    preprocessed_script = printer_output.stdout
+    return preprocessed_script
+
+def from_ir_to_shell_file(ir_filename, new_shell_filename):
+    preprocessed_script = from_ir_to_shell(ir_filename)
+    with open(new_shell_filename, 'w') as new_shell_file:
+        new_shell_file.write(preprocessed_script)
+
+
+##
+## Obsolete code
+##
+
 def shell_to_ir(script_contents, new_file=False):
     with tempfile.NamedTemporaryFile(mode="w+", prefix="sh", suffix="temp", delete=False) as file:
     # with open("tmp-DELETE.sh", "w+") as file:
