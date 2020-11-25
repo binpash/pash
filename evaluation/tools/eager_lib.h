@@ -10,7 +10,14 @@
 #include <sys/select.h>
 #include <unistd.h>
 #include <sys/time.h>
+
+#ifdef __APPLE__
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/uio.h>
+#else
 #include <sys/sendfile.h>
+#endif
 
 #ifndef __DEBUG__
 #define __DEBUG__

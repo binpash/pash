@@ -39,9 +39,10 @@ microbenchmarks=(
 test_flags=(
     ""   # No split + No eager (This cannot be in the end)
     -n   # No split + Naive eager
-    -e   # No split + Eager
-    -a   # Split    + Eager
 )
+#    -e   # No split + Eager
+#    -a   # Split    + Eager
+
 
 microbenchmark_configs=( )
 for i in "${!microbenchmarks[@]}"; do
@@ -67,7 +68,7 @@ for microbenchmark_config in "${microbenchmark_configs[@]}"; do
             echo "Flag: ${flag}"
 
             ## Execute the intermediary script
-            ./execute_compile_evaluation_script.sh $exec_seq $flag "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
+            ./execute_compile_evaluation_script.sh $exec_seq $flag "${microbenchmark}" "${n_in}" "test_results" "test_" #> /dev/null 2>&1
             rm -f /tmp/eager*
 
             ## Only run the sequential the first time around

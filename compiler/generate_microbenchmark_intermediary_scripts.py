@@ -34,7 +34,7 @@ def split_inputs(output_dir, number_of_inputs, input_file_name):
     # input_file_n_lines = wc_output.split()[0]
     # print(input_file_n_lines)
     split_file_prefix = os.path.join(split_input_directory, 'input-chunk-')
-    stream = subprocess.run(['split',
+    stream = subprocess.run(['gsplit',
                              '-n l/{}'.format(number_of_inputs),
                              '-d',
                              '{}'.format(input_file_name),
