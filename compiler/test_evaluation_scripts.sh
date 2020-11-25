@@ -66,14 +66,13 @@ for microbenchmark_config in "${microbenchmark_configs[@]}"; do
         for flag in "${flags[@]:1}"; do
             echo "Flag: ${flag}"
 
-            ## Execute the intermediary script with eager
+            ## Execute the intermediary script
             ./execute_compile_evaluation_script.sh $exec_seq $flag "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
             rm -f /tmp/eager*
 
             ## Only run the sequential the first time around
             exec_seq=""
         done
-
     done
 done
 

@@ -66,11 +66,6 @@ if [ "$auto_split_flag" -eq 1 ]; then
     eager_opt=""
     auto_split_opt="--split_fan_out ${n_in}"
     distr_result_filename="${results}${experiment}_distr_auto_split.time"
-    ## TODO: Push this if-then-else in the outside script. Also make the split the default.
-    if [ "${microbenchmark}" != "bigrams" ] && [ "${microbenchmark}" != "spell" ] && [ "${microbenchmark}" != "double_sort" ] && [ "${microbenchmark}" != "max_temp_p123" ]; then
-        echo "No reason to split on one-liner: ${microbenchmark}"
-        exit
-    fi
 elif [ "$eager_flag" -eq 1 ]; then
     echo "Distributed:"
     eager_opt=""
