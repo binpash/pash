@@ -39,11 +39,9 @@ def shell_backend(graph_json, output_dir, args):
 
     output_script_commands = []
 
-    shared_memory_dir = '/dev/shm/pash'
     ## Make the output directory if it doesn't exist
     output_script_commands.append('rm -rf {}'.format(output_dir))
     output_script_commands.append('mkdir -p {}'.format(output_dir))
-    output_script_commands.append('mkdir -p {}'.format(shared_memory_dir))
 
     ## Setup pipes
     rm_com = remove_fifos(fids)
@@ -52,7 +50,7 @@ def shell_backend(graph_json, output_dir, args):
     output_script_commands.append(mkfifo_com)
 
     ## Execute nodes
-    processes = [execute_node(node, shared_memory_dir, drain_streams, auto_split)
+    processes = [execute_node(node, drain_streams, auto_split)
                  for node_id, node in nodes.items()]
     output_script_commands += processes
 
@@ -85,7 +83,6 @@ def shell_backend(graph_json, output_dir, args):
     final_rm_com = remove_fifos(fids)
     output_script_commands.append(rm_com)
 
-    output_script_commands.append('rm -rf "{}"'.format(shared_memory_dir))
     end_time = time.time()
 
     ## TODO: Cat all outputs together if a specific flag is given
@@ -113,11 +110,11 @@ def make_fifos(fids):
     return "\n".join(mkfifos)
     # return 'mkfifo {}'.format(" ".join(['"{}"'.format(fid) for fid in fids]))
 
-def execute_node(node, shared_memory_dir, drain_streams, auto_split):
-    script = node_to_script(node, shared_memory_dir, drain_streams, auto_split)
+def execute_node(node, drain_streams, auto_split):
+    script = node_to_script(node, drain_streams, auto_split)
     return "{} &".format(script)
 
-def node_to_script(node, shared_memory_dir, drain_streams, auto_split):
+def node_to_script(node, drain_streams, auto_split):
     # print(node)
 
     inputs = node["in"]
