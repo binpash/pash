@@ -354,6 +354,9 @@ def naive_expand(arg_char, config):
 
 ## This function expands an arg_char. 
 ## At the moment it is pretty inefficient as it serves as a prototype.
+##
+## TODO: At the moment this has the issue that a command that has the words which we want to expand 
+##       might have assignments of its own, therefore requiring that we use them to properly expand.
 def expand(arg_char, config):
     return naive_expand(arg_char, config)
 
