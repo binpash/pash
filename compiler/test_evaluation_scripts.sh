@@ -58,6 +58,7 @@ for microbenchmark_config in "${microbenchmark_configs[@]}"; do
     # Execute the sequential script on the first run only
     exec_seq="-s"
     for n_in in "${n_inputs[@]}"; do
+        echo "Number of inputs: ${n_in}"
 
         ## Generate the intermediary script
         python3 generate_microbenchmark_intermediary_scripts.py \
