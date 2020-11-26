@@ -41,7 +41,7 @@ clean :
 libdash:
 	git submodule init
 	git submodule update
-	cd libdash && ./autogen.sh && ./configure && make && sudo make install
+	cd libdash && ./autogen.sh || ./autogen.sh && ./configure && make && sudo make install
 	cd libdash/ocaml && make && make install
 
 opam-dependencies: 
