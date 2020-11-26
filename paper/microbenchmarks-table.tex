@@ -1,0 +1,16 @@
+\begin{tabular*}{\textwidth}{l @{\extracolsep{\fill}} llllllll}
+\toprule
+Script ~&~ Structure & Input &Seq. Time & \multicolumn{2}{l}{\#Nodes(16, 64)} &\multicolumn{2}{l}{Compile Time (16, 64)} & Highlights \\
+\midrule
+nfa-regex ~&~ $3\times\tsta$ & 1~GB & 79m35.197s & 49 & 193 & 0.056s & 0.523s & complex NFA regex \\
+sort ~&~ $\tsta, \tpur$ & 10~GB & 21m46.807s & 77 & 317 & 0.090s & 1.083s & \tti{sort}ing \\
+top-n ~&~ $2\times\tsta, 4\times\tpur$ & 10~GB & 78m45.872s & 96 & 384 & 0.145s & 1.790s & double \tti{sort}, \tti{uniq} reduction \\
+wf ~&~ $3\times\tsta, 3\times\tpur$ & 10~GB & 22m30.048s & 96 & 384 & 0.147s & 1.809s & double \tti{sort}, \tti{uniq} reduction \\
+spell ~&~ $4\times\tsta, 3\times\tpur$ & 3~GB & 25m7.560s & 193 & 769 & 0.104s & 1.038s & comparisons (\tti{comm}) \\
+shortest-scripts ~&~ $5\times\tsta, 2\times\tpur$ & 85~MB & 28m45.900s & 142 & 574 & 0.328s & 4.657s & long \tsta pipeline ending with \tpur \\
+difference ~&~ $2\times\tsta, 3\times\tpur$ & 10~GB & 25m49.097s & 125 & 509 & 0.186s & 2.341s & non-parallelizable \tti{diff}ing \\
+bi-grams ~&~ $3\times\tsta, 3\times\tpur$ & 3~GB & 38m9.922s & 185 & 761 & 0.146s & 1.716s & stream shifting and merging \\
+set-difference ~&~ $5\times\tsta, 2\times\tpur$ & 10~GB & 51m32.313s & 155 & 635 & 0.321s & 4.358s & two pipelines merging to a \tti{comm} \\
+sort-sort ~&~ $\tsta, 2\times\tpur$ & 10~GB & 31m26.147s & 154 & 634 & 0.092s & 1.077s & parallelizable \tpur after \tpur \\
+\bottomrule
+\end{tabular*}

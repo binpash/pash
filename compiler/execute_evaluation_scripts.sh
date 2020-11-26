@@ -7,42 +7,37 @@ echo "Deleting eager intermediate files..."
 rm -f /tmp/eager*
 mkdir -p $intermediary_dir
 
+gnu_parallel_flag=0
+
 n_inputs=(
-    # 1
     2
     4
     8
     16
     32
     64
-    # 96
-    # 128
-    # 10
-    # 20
-    # 50
-    # 100
 )
 
 microbenchmarks=(
-    grep                 # PLDI
-    minimal_sort         # PLDI
-    minimal_grep         # PLDI
-    topn                 # PLDI
-    wf                   # PLDI
-    spell                # PLDI
-    shortest_scripts     # PLDI
+    'grep;-n;-e'           # PLDI
+    'minimal_sort;;-n;-e'         # PLDI
+    'minimal_grep;-n;-e'         # PLDI
+    'topn;;-n;-e'                 # PLDI
+    'wf;;-n;-e'                   # PLDI
+    'spell;-e;-a'                # PLDI
+    'shortest_scripts;;-n;-e'     # PLDI
     # micro_1000           # PLDI
 
-    bigrams              # TODO: Fix bug. Run with good split.
-    alt_bigrams          # Optimized version of Bigrams
-    diff                 # TODO: Optimize diff
-    set-diff             # TODO: Handle redirection after reduce
+    'bigrams;-e;-a'              # TODO: Fix bug. Run with good split.
+    'alt_bigrams;;-n;-e'          # Optimized version of Bigrams
+    'diff;;-n;-e'                 # TODO: Optimize diff
+    'set-diff;;-n;-e'             # TODO: Handle redirection after reduce
 
     # sort                 # For comparison with sort --parallel
 
     ## Tests
     # deadlock_test          # Test to check deadlock prevention using drain_stream
-    double_sort            # Checks maximum peformance gains from split
+    'double_sort;;-n;-e;-a'            # Checks maximum peformance gains from split
 
     ## TODO: Add some more for OSDI
     # wc                   # Extremely simple
@@ -54,10 +49,11 @@ microbenchmarks=(
     # for_loop_simple      # Probably not for OSDI
 )
 
-## Note: Maybe we need to tune the configuration (fan-out, batch-size)
-##       before some specific benchmarks
-for microbenchmark in "${microbenchmarks[@]}"; do
-    ## Execute the sequential script on the first run only
+for microbenchmark_config in "${microbenchmarks[@]}"; do
+    IFS=";" read -r -a flags <<< "${microbenchmark_config}"
+    microbenchmark=${flags[0]}
+    echo "Executing: $microbenchmark"
+    # Execute the sequential script on the first run only
     exec_seq="-s"
     for n_in in "${n_inputs[@]}"; do
 
@@ -66,29 +62,20 @@ for microbenchmark in "${microbenchmarks[@]}"; do
         python3 generate_microbenchmark_intermediary_scripts.py \
                 $microbenchmarks_dir $microbenchmark $n_in $intermediary_dir
 
-        ## Execute the intermediary script with eager
-        ./execute_compile_evaluation_script.sh $exec_seq -e "${microbenchmark}" "${n_in}"
-        rm -f /tmp/eager*
+        for flag in "${flags[@]:1}"; do
+            echo "Flag: ${flag}"
 
-        ## Only execute the sequential once
-        exec_seq=""
+            ## Execute the intermediary script
+            ./execute_compile_evaluation_script.sh $exec_seq $flag "${microbenchmark}" "${n_in}"
+            rm -f /tmp/eager*
 
-        ## Execute the intermediary script with split
-        ./execute_compile_evaluation_script.sh $exec_seq -p "${microbenchmark}" "${n_in}"
-        rm -f /tmp/eager*
+            ## Only run the sequential the first time around
+            exec_seq=""
+        done
 
-        ## Execute the intermediary script with split
-        ./execute_compile_evaluation_script.sh $exec_seq -a "${microbenchmark}" "${n_in}"
-        rm -f /tmp/eager*
-
-        ## Execute the intermediary script without eager (only if the
-        ## microbenchmark is not grep or minimal grep).
-        if [ "${microbenchmark}" != "grep" ]  && [ "${microbenchmark}" != "minimal_grep" ]; then
-           ./execute_compile_evaluation_script.sh $exec_seq "${microbenchmark}" "${n_in}"
+        ## Execute the gnu parallel
+        if [ "$gnu_parallel_flag" -eq 1 ]; then
+            ./execute_gnu_parallel_script.sh $microbenchmark $n_in
         fi
-
-        ## Execute the intermediary script with the naive eager
-        ./execute_compile_evaluation_script.sh $exec_seq -n "${microbenchmark}" "${n_in}"
-        rm -f /tmp/eager*
     done
 done

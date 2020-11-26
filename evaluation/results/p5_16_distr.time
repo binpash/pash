@@ -1,0 +1,16 @@
+kill: (72991): No such process
+kill: (72992): No such process
+kill: (72993): No such process
+Total nodes after optimization: 94
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 30
+Optimization time: 130.955  ms
+Backend time: 15.763  ms
+Execution time: 48953.507  ms
+Compilation time: 89.35  ms
+
+real	0m49.720s
+user	11m38.120s
+sys	4m28.995s
+Files ../evaluation//intermediary//p5_seq_output and /tmp/distr_output/0 are identical

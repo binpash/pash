@@ -5,37 +5,29 @@ from datetime import datetime
 from util import *
 import config
 
-def execute(graph_json, output_dir, output_script_name, output_optimized, args):
+def to_shell(graph_json, output_dir, args):
     backend_start_time = datetime.now()
 
     output_script = shell_backend(graph_json, output_dir, args)
 
-    ## Output the optimized shell script for inspection
-    if(output_optimized):
-        with open(output_script_name, "w") as output_script_file:
-            print("Optimized script:")
-            print(output_script)
-            output_script_file.write(output_script)
-
     backend_end_time = datetime.now()
     print_time_delta("Backend", backend_start_time, backend_end_time, args)
 
-    if(not args.compile_optimize_only):
-        execution_start_time = datetime.now()
-
-        ## TODO: Handle stdout, stderr, errors
-        exec_obj = subprocess.run(output_script, shell=True, executable="/bin/bash")
-        exec_obj.check_returncode()
-
-        execution_end_time = datetime.now()
-        print_time_delta("Execution", execution_start_time, execution_end_time, args)
+    return output_script
 
 
 
 def shell_backend(graph_json, output_dir, args):
-    clean_up_graph = args.clean_up_graph
-    drain_streams = args.drain_streams
-    auto_split = args.auto_split
+    clean_up_graph = False
+    drain_streams = False
+    if(args.termination == "clean_up_graph"):
+        clean_up_graph = True
+    elif(args.termination == "drain_stream"):
+        drain_streams = True
+    if(args.split_fan_out > 1):
+        auto_split = True
+    else:
+        auto_split = False
     # print("Translate:")
     # print(graph_json)
     fids = graph_json["fids"]
@@ -47,11 +39,9 @@ def shell_backend(graph_json, output_dir, args):
 
     output_script_commands = []
 
-    shared_memory_dir = '/dev/shm/dish'
     ## Make the output directory if it doesn't exist
     output_script_commands.append('rm -rf {}'.format(output_dir))
     output_script_commands.append('mkdir -p {}'.format(output_dir))
-    output_script_commands.append('mkdir -p {}'.format(shared_memory_dir))
 
     ## Setup pipes
     rm_com = remove_fifos(fids)
@@ -60,7 +50,7 @@ def shell_backend(graph_json, output_dir, args):
     output_script_commands.append(mkfifo_com)
 
     ## Execute nodes
-    processes = [execute_node(node, shared_memory_dir, drain_streams, auto_split)
+    processes = [execute_node(node, drain_streams, auto_split)
                  for node_id, node in nodes.items()]
     output_script_commands += processes
 
@@ -93,7 +83,6 @@ def shell_backend(graph_json, output_dir, args):
     final_rm_com = remove_fifos(fids)
     output_script_commands.append(rm_com)
 
-    output_script_commands.append('rm -rf "{}"'.format(shared_memory_dir))
     end_time = time.time()
 
     ## TODO: Cat all outputs together if a specific flag is given
@@ -121,11 +110,11 @@ def make_fifos(fids):
     return "\n".join(mkfifos)
     # return 'mkfifo {}'.format(" ".join(['"{}"'.format(fid) for fid in fids]))
 
-def execute_node(node, shared_memory_dir, drain_streams, auto_split):
-    script = node_to_script(node, shared_memory_dir, drain_streams, auto_split)
+def execute_node(node, drain_streams, auto_split):
+    script = node_to_script(node, drain_streams, auto_split)
     return "{} &".format(script)
 
-def node_to_script(node, shared_memory_dir, drain_streams, auto_split):
+def node_to_script(node, drain_streams, auto_split):
     # print(node)
 
     inputs = node["in"]
@@ -145,7 +134,12 @@ def node_to_script(node, shared_memory_dir, drain_streams, auto_split):
         if (len(inputs) > 0):
             script.append("cat")
             for fid in inputs:
-                script.append('"{}"'.format(fid))
+                ## Hack to not output double double quotes
+                string_fid = str(fid)
+                if(string_fid.startswith('"')):
+                    script.append('{}'.format(string_fid))
+                else:
+                    script.append('"{}"'.format(string_fid))
             script.append("|")
 
         ## Add the command together with a drain stream
@@ -171,15 +165,15 @@ def node_to_script(node, shared_memory_dir, drain_streams, auto_split):
 
 def new_split(input_file, outputs, batch_size, auto_split):
     if(auto_split):
-        auto_split_bin = '{}/{}'.format(config.DISH_TOP, config.config['runtime']['auto_split_binary'])
+        auto_split_bin = '{}/{}'.format(config.PASH_TOP, config.config['runtime']['auto_split_binary'])
         command_no_outputs = '{} "{}"'.format(auto_split_bin, input_file, batch_size)
     else:
-        split_bin = '{}/{}'.format(config.DISH_TOP, config.config['runtime']['split_binary'])
+        split_bin = '{}/{}'.format(config.PASH_TOP, config.config['runtime']['split_binary'])
         command_no_outputs = '{} "{}" {}'.format(split_bin, input_file, batch_size)
     return ' '.join([command_no_outputs] + outputs)
 
 def drain_stream():
-    script = '{}/{}'.format(config.DISH_TOP, config.config['distr_planner']['drain_stream_executable_path'])
+    script = '{}/{}'.format(config.PASH_TOP, config.config['distr_planner']['drain_stream_executable_path'])
     return [script]
 
 def old_split(inputs, outputs, batch_size):

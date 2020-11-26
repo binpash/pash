@@ -1,49 +1,42 @@
-# Dish: Automatically-Distributed Shell Scripting
+# PaSh: Light-touch Data-Parallel Shell Processing
 
 The repository contains:
 
-* [compiler](./compiler): Dish's data-flow model and associated optimization passes.
-* [distributability](./distributability/): Distributability analysis used to inform the DSL characterizing commands.
+* [compiler](./compiler): PaSh's data-flow model and associated optimization passes.
+* [parallelizability](./parallelizability/): Parallelizability study used to inform the DSL characterizing commands.
 * [evaluation](./evaluation): shell pipelines and example [scripts](./evaluation/scripts) used for the evaluation.
 * [parser](./parser): The parser uses the `libdash` POSIX-compliant parser and `atdgen` to convert scripts to JSON-encoded ASTs.
-* [pldi](./pldi): The paper submitted to PLDI 2020.
-* [runtime](./runtime): A JVM-based runtime for Dish.
-* [scripts](./scripts): Auxiliary scripts
-* [tests](./tests): Contains a set of tests to check that everything works
+* [paper](./paper): The paper submitted to EuroSys 2021, also available on [arxiv](https://arxiv.org/abs/2007.09436).
+* [runtime](./runtime): A JVM-based runtime for PaSh (obsolete).
+
+# Table of Contents
+
+** Notes for artifact award: **
+* create a video, basically outlining artifact evaluation and guiding EAC reviewers through all the results
+* possibly create a minimal docker setup that people can test---with the right Python and Smoosh versions
+* add README with full process and expected results
+* optionally, split process into partial verification and full verification.
+
+# High level Overview
+
+PaSh is  a system for  parallelizing POSIX shell  scripts. Given a  script, PaSh
+converts  it to  a dataflow  graph,  performs a  series of  semantics-preserving
+program transformations that expose parallelism,  and then converts the dataflow
+graph  back  into  a  script---one  that adds  POSIX  constructs  to  explicitly
+guide parallelism  coupled with PaSh-provided Unix-aware  runtime primitives for
+addressing performance- and correctness-related issues. A lightweight annotation
+language allows  command developers to express  key parallelizability properties
+about their commands.  An accompanying parallelizability study of  POSIX and GNU
+commands—two large and  commonly used groups—guides the  annotation language and
+optimized aggregator library that PaSh uses. PaSh’s extensive evaluation over 44
+unmodified  Unix  scripts shows  significant  speedups  (0.89–61.1×, avg:  6.7×)
+stemming  from  the  combination  of its  program  transformations  and  runtime
+primitives.
 
 # Tests
-
 To execute the current tests (which are all the one-liners) simply run the following:
 
 ```sh
 cd compiler
 ./test_evaluation_scripts.sh
 ```
-
-# High level Overview
-
-Figure containing high level overview of the Dish workflow:
-https://docs.google.com/drawings/d/15f3JKa-xF7_yyumX2YGyOWOFmZO_KBog1QC1PQr_LJw/edit
-
-# Some TODOs
-
-Minor things left out by the PLDI submission:
-
-* Collect results for two additional _macro_-benchmarks: (i) a bio-informatics pipeline, and (ii) web-indexing pipeline.
-* Report single-node performance results for all macro-benchmarks
-
-Additions for OSDI:
-
-* Implement, and possibley extend the DSL---and ensure it works with existing commands
-
-* POSIX Compliance: scripts have to be able to run with any POSIX script, even if they do not speed up much of it. That is, there shouldn't be a POSIX script that fails, only ones that do not see any performance improvements.
-    * Environment variables: in the distributed execution, add the ability to synchronize environment variables (and other environment context) across nodes. This requires defining a bit more precisely what makes sense to distribute (e.g., PIDs and machine names cannot be distributed, and Dish should be careful with `/proc/fs`).
-
-* JIT (partial evaluation): introduce the ability to call the planner at runtime, when the latest information possible becomes available. Example of information that is not visible includes values of variables (that can be streams), files, shell expansions etc.
-
-* Distribution:
-    * Distributed file-system (and, more generally, networked distribution): as much of Unix is about files, incorporating an existing Unix-like distributed file-system is key to shell script distribution. With a DFS, `/x/y` would resolve to the filesystem of a specific node---but it should be location-aware so that Dish sends commands to where files (streams) reside.
-
-    * Planner: augment and extend the functionality of the planner with the ability to optimize the distributed script and map it efficiently on the underlying infrastructure---using information about the workload, infrastructure, etc. The planner should also add and leverage metadata (lines, batches etc.) for key planning decisions.
-
-    * Distributed runtime environment: currently Dish rewrites pipelines to extract parallelism---that is, the end result of our toolchain is still a shell pipeline. A more sophisticated runtime environment could provide significant benefits by manipulating metadata for both accelerating performance (e.g., wrapping commands with packing/unpacking) and fault tolerance (by knowing which of calls fail). It is important for the runtime to be optimized significantly so as to not have any issues.

@@ -1,6 +1,11 @@
+from json import JSONEncoder
+
 from definitions.ast_node_c import *
 from definitions.no_match_exception import *
+from ir_utils import *
 
+
+## TODO: Create subclasses for all different types of AstNodes
 class AstNode:
     # create an AstNode object from an ast object as parsed by libdash
     def __init__(self, ast_object):
@@ -39,6 +44,24 @@ class AstNode:
             self.variable = args[3]
         else:
             raise ValueError()
+    
+    def __repr__(self):
+        if self.construct is AstNodeConstructor.PIPE:
+            if (self.is_background):
+                return "Background Pipe: {}".format(self.items)    
+            else:
+                return "Pipe: {}".format(self.items)
+        elif self.construct is AstNodeConstructor.COMMAND:
+            output = "Command: {}".format(self.arguments)
+            if(len(self.assignments) > 0):
+                output += ", ass[{}]".format(self.assignments)
+            if(len(self.redir_list) > 0):
+                output += ", reds[{}]".format(self.redir_list)
+            return output
+        elif self.construct is AstNodeConstructor.FOR:
+            output = "for {} in {}; do ({})".format(self.variable, self.argument, self.body)
+            return output
+        return NotImplemented 
 
     def check(self, **kwargs):
         # user-supplied custom checks
@@ -48,4 +71,20 @@ class AstNode:
             except Exception as exc:
                 print("check for {} construct failed at key {}".format(self.construct, key))
                 raise exc
+    
+    def json_serialize(self):
+        if self.construct is AstNodeConstructor.FOR:
+            json_output = make_kv(self.construct.value,
+                           [self.line_number,
+                            self.argument,
+                            self.body,
+                            self.variable])
+            return json_output
+        return NotImplemented
 
+class CustomJSONEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, AstNode):
+            return obj.json_serialize()
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
