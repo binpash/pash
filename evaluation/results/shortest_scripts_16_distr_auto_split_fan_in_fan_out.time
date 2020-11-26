@@ -1,0 +1,16 @@
+kill: (121910): No such process
+kill: (121911): No such process
+kill: (121912): No such process
+Total nodes after optimization: 324
+ -- out of which:
+Cat nodes: 6
+Eager nodes: 200
+Optimization time: 661.67  ms
+Backend time: 59.99  ms
+Execution time: 266969.987  ms
+Compilation time: 84.243  ms
+
+real	4m28.179s
+user	32m14.203s
+sys	34m26.125s
+Files ../evaluation//intermediary//shortest_scripts_seq_output and /tmp/distr_output/0 are identical

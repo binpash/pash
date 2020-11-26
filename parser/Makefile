@@ -5,7 +5,7 @@ AST_I=./libdash/ocaml/ast.mli
 .PHONY : all test dependencies libdash clean
 
 all : $(PARSER).native $(PARSER).byte $(JSON_TO_SHELL).native $(JSON_TO_SHELL).byte
-	@echo "Add this to your env: DISH_PARSER=${PWD}/$(PARSER).native"
+	@echo "Add this to your env: PASH_PARSER=${PWD}/$(PARSER).native"
 
 test : $(PARSER).native $(PARSER).byte $(wildcard tests/*)
 	@echo "TESTING test.native"
@@ -41,10 +41,10 @@ clean :
 libdash:
 	git submodule init
 	git submodule update
-	cd libdash && ./autogen.sh && ./configure && make && sudo make install
+	cd libdash && ./autogen.sh || ./autogen.sh && ./configure && make && sudo make install
 	cd libdash/ocaml && make && make install
 
-dependencies: libdash
+opam-dependencies: 
 	opam install ctypes.0.11.5
 	opam install ctypes-foreign
 	opam install atdgen

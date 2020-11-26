@@ -128,7 +128,7 @@ def json_graph_to_sh(graph_json, graph_outputs, output_dir, remote_channels, dis
 
     output_script_commands = []
 
-    shared_memory_dir = '/dev/shm/dish'
+    shared_memory_dir = '/dev/shm/pash'
     ## Make the output directory if it doesn't exist
     output_script_commands.append('rm -rf {}'.format(output_dir))
     output_script_commands.append('mkdir -p {}'.format(output_dir))

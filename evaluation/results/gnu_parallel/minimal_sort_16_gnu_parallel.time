@@ -1,0 +1,21 @@
+mkfifo: cannot create fifo '/tmp/input-chunk-00.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-01.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-02.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-03.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-04.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-05.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-06.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-07.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-08.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-09.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-10.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-11.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-12.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-13.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-14.out1': File exists
+mkfifo: cannot create fifo '/tmp/input-chunk-15.out1': File exists
+
+real	2m52.268s
+user	20m30.818s
+sys	2m3.947s
+Files ../evaluation//intermediary//minimal_sort_seq_output and ../evaluation//intermediary//minimal_sort_gnu_parallel_output are identical

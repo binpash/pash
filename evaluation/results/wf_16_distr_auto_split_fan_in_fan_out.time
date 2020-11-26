@@ -1,0 +1,16 @@
+kill: (117748): No such process
+kill: (117749): No such process
+kill: (117750): No such process
+Total nodes after optimization: 255
+ -- out of which:
+Cat nodes: 3
+Eager nodes: 152
+Optimization time: 429.519  ms
+Backend time: 79.389  ms
+Execution time: 448939.97  ms
+Compilation time: 119.13  ms
+
+real	7m29.961s
+user	29m11.283s
+sys	18m33.231s
+Files ../evaluation//intermediary//wf_seq_output and /tmp/distr_output/0 are identical
