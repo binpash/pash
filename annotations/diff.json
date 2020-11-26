@@ -4,7 +4,7 @@
     [
         {
             "predicate": "default",
-            "class": "side-effectful",
+            "class": "pure",
             "inputs": ["args[:]"],
             "outputs": ["stdout"]
         }
