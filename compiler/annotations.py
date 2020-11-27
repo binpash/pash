@@ -127,6 +127,8 @@ def interpret_predicate(predicate):
         return lambda options: len_args(operands[0], options)
     elif(operator == 'exists'):
         return lambda options: exists_operator(operands, options)
+    elif(operator == 'value'):
+        return lambda options: value_operator(operands, options)
     elif(operator == 'all'):
         return lambda options: all_operator(operands, options)
     elif(operator == 'or'):
@@ -150,6 +152,19 @@ def exists_operator(desired_options, options):
     opt_args_set = set(option_args(options))
     existence = map(lambda opt: opt in opt_args_set, desired_options)
     return any(existence)
+
+## Checks that an option exists and that it has a specific value
+def value_operator(option_value, options):
+    args_list = format_args(options)
+    desired_opt = option_value[0]
+    desired_val = option_value[1]
+    ## If the desired option does exist, and the next argument is indeed the correct value
+    try:
+        opt_i = args_list.index(desired_opt)
+        val = args_list[opt_i+1]
+        return (desired_val == val)
+    except:
+        return False
 
 def all_operator(desired_options, options):
     opt_args_set = set(option_args(options))
