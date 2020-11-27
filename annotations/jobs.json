@@ -1,0 +1,12 @@
+{
+    "command": "jobs",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "stateless",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        }
+    ]
+}
