@@ -48,8 +48,7 @@
             "predicate": "default",
             "class": "pure",
             "inputs": ["args[:]"],
-            "outputs": ["stdout"],
-            "comment": "Even though `comm` is pure by default (in the sense that it doesn't produce side-effects), it doesn't conform to the one-input, one-output stream and that is why it isn't classified as pure."
+            "outputs": ["stdout"]
         }
     ]
 }
