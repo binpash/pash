@@ -1,0 +1,12 @@
+{
+    "command": "gunzip",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "non-pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        }
+    ]
+}

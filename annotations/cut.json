@@ -1,0 +1,33 @@
+{
+    "command": "cut",
+    "cases":
+    [
+        {
+            "predicate":
+            {
+                "operator": "and",
+                "operands":
+                [
+                    {
+                        "operator": "val_opt_eq",
+                        "operands": ["-d", "--delimiter", "\n"]
+                    },
+                    {
+                        "operator": "exists",
+                        "operands": ["-f", "--fields"]
+                    }
+                ]
+            },
+            "class": "pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+			"comments": "Stateless in all cases with exception in case where newline is a delimiter."
+        },
+        {
+            "predicate": "default",
+            "class": "stateless",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        }
+    ]
+}

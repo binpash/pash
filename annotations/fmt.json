@@ -1,22 +1,20 @@
 {
-    "command": "tr",
+    "command": "fmt",
     "cases":
     [
         {
             "predicate":
             {
                 "operator": "exists",
-                "operands": ["-d",
-                             "--delete"]
+                "operands": ["-w1"]
             },
             "class": "stateless",
-            "comment": "KK (pure): Not sure if this should be pure or stateless",
             "inputs": ["stdin"],
             "outputs": ["stdout"]
         },
         {
             "predicate": "default",
-            "class": "stateless",
+            "class": "pure",
             "inputs": ["stdin"],
             "outputs": ["stdout"]
         }

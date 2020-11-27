@@ -23,7 +23,7 @@ def main():
     ## Load annotations
     ## TODO: The annotations are not used in the preprocessing step anymore
     ##       so we can avoid loading the annotation files here.
-    config.load_annotation_files(config.config['distr_planner']['annotations_dir'])
+    # config.load_annotation_files(config.config['distr_planner']['annotations_dir'])
 
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
     input_script_path = args.input
