@@ -46,6 +46,9 @@ def get_command_from_definition(command_definition):
     print('Possible issue with definition file: Missing command in command definition {}'.format(command_definition))
     return ''
 
+def format_args(args):
+    formatted_args = [format_arg_chars(arg_chars) for arg_chars in args]
+    return formatted_args
 
 def format_arg_chars(arg_chars):
     chars = [format_arg_char(arg_char) for arg_char in arg_chars]
