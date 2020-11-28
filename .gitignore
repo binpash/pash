@@ -28,12 +28,11 @@ revision.tex
 *.o
 
 # local directory w/ related work
-./papers
+bib.to
 pldi/draft.synctex.gz
 pldi/draft.synctex.gz(busy)
 
 *.class
-papers
 
 notes.txt
 
