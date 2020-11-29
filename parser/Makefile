@@ -45,7 +45,7 @@ libdash:
 	cd libdash/ocaml && make && make install
 
 opam-dependencies: 
-	opam install ctypes.0.11.5
-	opam install ctypes-foreign
-	opam install atdgen
-	opam install dum
+	opam install -y ctypes.0.11.5
+	opam install -y ctypes-foreign
+	opam install -y atdgen
+	opam install -y dum
