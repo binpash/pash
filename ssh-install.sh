@@ -25,26 +25,14 @@ HOSTNAME=$2
 BRANCH="master"
 USER="ubuntu"
 
-echo "Preparing repo archive..."
-mkdir temp_repo_dir
-cd temp_repo_dir
-git clone git@github.com:andromeda/pash.git
-cd pash
-git checkout $BRANCH
-## This needs to happen since libdash repo is linked using ssh
-## TODO: Change the libdash submodule url to https to be cloneable without ssh keys
-git submodule init
-git submodule update
-cd ../
-tar -czf pash.tar.gz pash
+ARCHIVE="pash.tar.gz"
+echo "Preparing repo archive $ARCHIVE..."
+./scripts/clone_compress_repo.sh $ARCHIVE $BRANCH &> /tmp/clone_compress.log
 
 echo "Sending repo archive..."
-scp -o StrictHostKeyChecking=no -i $PRIVATE_KEY pash.tar.gz $USER@$HOSTNAME:/home/$USER
+scp -o StrictHostKeyChecking=no -i $PRIVATE_KEY pash.tar.gz "${USER}@${HOSTNAME}:/home/${USER}"
 
-cd ../
-rm -rf temp_repo_dir
-
-ssh -o StrictHostKeyChecking=no -i $PRIVATE_KEY $USER@$HOSTNAME /bin/bash <<'EOF'
+ssh -o StrictHostKeyChecking=no -i $PRIVATE_KEY "${USER}@${HOSTNAME}" /bin/bash <<'EOF'
 tar -xzf pash.tar.gz
 cd pash
 ./install.sh -p
