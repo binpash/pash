@@ -20,9 +20,11 @@ shift "$(( OPTIND - 1 ))"
 ## If option -p is set, also run the sudo
 if [ "$prepare_sudo_install_flag" -eq 1 ]; then
     echo "Running preparation sudo apt install and opam init:"
-    sudo apt update > $LOG_DIR/apt_update.log
-    sudo apt install -y libtool m4 automake opam pkg-config libffi-dev python3.8 python3-pip > $LOG_DIR/apt_install.log
-    yes | opam init > $LOG_DIR/opam_init.log
+    echo "|-- running apt update..."
+    sudo apt-get update &> $LOG_DIR/apt_update.log
+    echo "|-- running apt install..."
+    sudo apt-get install -y libtool m4 automake opam pkg-config libffi-dev python3.8 python3-pip &> $LOG_DIR/apt_install.log
+    yes | opam init &> $LOG_DIR/opam_init.log
 else
     echo "Requires libtool, m4, automake, opam, pkg-config, libffi-dev, python3.8, pip for python3"
     echo "Ensure that you have them by running:"
@@ -43,23 +45,27 @@ fi
 echo "Building parser..."
 eval $(opam config env)
 cd parser
-make opam-dependencies > $LOG_DIR/make_opam_dependencies.log
-make libdash > $LOG_DIR/make_libdash.log
-make > $LOG_DIR/make.log
+echo "|-- installing opam dependencies..."
+make opam-dependencies &> $LOG_DIR/make_opam_dependencies.log
+echo "|-- making libdash..."
+make libdash &> $LOG_DIR/make_libdash.log
+echo "|-- making parser..."
+make &> $LOG_DIR/make.log
 cd ../
 
 echo "Building runtime..."
 # Build runtime tools: eager, split
 cd evaluation/tools/
-make > $LOG_DIR/make.log
+make &> $LOG_DIR/make.log
 cd ../../
 
 # Install python3.8 dependencies
-python3.8 -m pip install jsonpickle > $LOG_DIR/pip_install_jsonpickle.log
-python3.8 -m pip install -U PyYAML > $LOG_DIR/pip_install_pyyaml.log
+echo "Installing python dependencies..."
+python3.8 -m pip install jsonpickle &> $LOG_DIR/pip_install_jsonpickle.log
+python3.8 -m pip install -U PyYAML &> $LOG_DIR/pip_install_pyyaml.log
 
 # Generate inputs
-echo "Generating input files"
+echo "Generating input files..."
 cd evaluation/scripts/input
 ./gen.sh
 cd ../../../
