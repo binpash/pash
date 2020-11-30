@@ -75,4 +75,6 @@ export PASH_TOP=$PWD
 export PASH_PARSER=${PASH_TOP}/parser/parse_to_json.native
 
 ## This is necessary for the parser to link to libdash
+echo "Do not forget to export LD_LIBRARY_PATH as shown below :)"
+set -v
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"

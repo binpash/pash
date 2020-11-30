@@ -9,6 +9,33 @@ The repository contains:
 * [paper](./paper): The paper submitted to EuroSys 2021, also available on [arxiv](https://arxiv.org/abs/2007.09436).
 * [runtime](./runtime): A JVM-based runtime for PaSh (obsolete).
 
+## Installation
+
+If you are on a fresh clone, first run the following to download the `libdash` submodule:
+```sh
+git submodule init
+git submodule update
+```
+
+Then run:
+```sh
+./install.sh -p
+```
+
+Don't forget to export the library path in the end :)
+```sh
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
+```
+
+## Tests
+To execute the current tests (which are all the one-liners) simply run the following:
+
+```sh
+cd compiler
+./test_evaluation_scripts.sh
+```
+
+
 # Table of Contents
 
 ** Notes for artifact award: **
@@ -32,11 +59,3 @@ optimized aggregator library that PaSh uses. PaSh’s extensive evaluation over 
 unmodified  Unix  scripts shows  significant  speedups  (0.89–61.1×, avg:  6.7×)
 stemming  from  the  combination  of its  program  transformations  and  runtime
 primitives.
-
-# Tests
-To execute the current tests (which are all the one-liners) simply run the following:
-
-```sh
-cd compiler
-./test_evaluation_scripts.sh
-```
