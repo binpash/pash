@@ -43,7 +43,7 @@ echo "Environment:"
 # cat $env_file
 . $env_file
 vars_to_export=$(cut -d= -f1 $env_file)
-if [ ! -z $vars_to_export ]; then
+if [ ! -z "$vars_to_export" ]; then
     export $vars_to_export
 fi
 
