@@ -11,12 +11,15 @@ def find_and_split_inputs(input_env, output_dir, number_of_inputs):
     ## Find the input file name
     input_env_lines = input_env_data.split('\n')
     input_vars = [line.split('=')[1] for line in input_env_lines if line.startswith('IN=')]
-    assert(len(input_vars) == 1)
-    input_file_name = input_vars[0]
-    # print(input_file_name)
+    if(len(input_vars) == 1):
+        input_file_name = input_vars[0]
+        # print(input_file_name)
 
-    ## Split input files
-    new_input_files = split_inputs(output_dir, number_of_inputs, input_file_name)
+        ## Split input files
+        new_input_files = split_inputs(output_dir, number_of_inputs, input_file_name)
+    else:
+        ## If there is no input variable, then we don't split any files
+        new_input_files = []
 
     return new_input_files
 

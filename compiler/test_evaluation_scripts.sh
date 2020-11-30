@@ -22,17 +22,14 @@ microbenchmarks=(
     wf                   # PLDI
     spell                # PLDI
     shortest_scripts     # PLDI
-
     bigrams              # TODO: Fix bug. Run with good split.
     alt_bigrams          # Optimized version of Bigrams
     diff                 # TODO: Optimize diff
     set-diff             # TODO: Handle redirection after reduce
-
     sort                 # For comparison with sort --parallel
-
-    ## Tests
     deadlock_test        # Test to check deadlock prevention using drain_stream
     double_sort          # Checks maximum peformance gains from split
+    no_in_script         # Tests whether a script can be executed by our infrastructure without having its input in a file called $IN
     # for_loop_simple      # BUG: Output is not the same since it is overwritten
 )
 
