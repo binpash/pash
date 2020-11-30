@@ -1,0 +1,17 @@
+kill: (28993): No such process
+kill: (28994): No such process
+kill: (28995): No such process
+Compilation time: 17.955  ms
+Total nodes after optimization: 5
+ -- out of which:
+Cat nodes: 1
+Eager nodes: 2
+Optimization time: 1.204  ms
+Backend time: 0.139  ms
+Execution time: 126.256  ms
+Preprocessing time: 46.753  ms
+
+real	0m4.893s
+user	0m0.831s
+sys	0m0.882s
+Files ../evaluation//intermediary//test_script_seq_output and /tmp/distr_output/0 are identical
