@@ -42,7 +42,8 @@ all_experiments = ["minimal_grep",
                    "bigrams",
                    "alt_bigrams",
                    "set-diff",
-                   "double_sort"]
+                   "double_sort",
+                   "test_script"]
 
 pretty_names = {"minimal_grep" : "nfa-regex",
                 "minimal_sort" : "sort",
@@ -55,7 +56,8 @@ pretty_names = {"minimal_grep" : "nfa-regex",
                 "shortest_scripts" : "shortest-scripts",
                 "diff" : "difference",
                 "set-diff" : "set-difference",
-                "double_sort" : "sort-sort"}
+                "double_sort" : "sort-sort",
+                "test_script" : "temp"}
 
 structures = {"minimal_grep" : "$3\\times\\tsta$",
               "minimal_sort" : "$\\tsta, \\tpur$",
