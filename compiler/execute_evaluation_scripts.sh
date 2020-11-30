@@ -11,35 +11,36 @@ gnu_parallel_flag=0
 
 n_inputs=(
     2
-    4
-    8
-    16
-    32
-    64
+    # 4
+    # 8
+    # 16
+    # 32
+    # 64
 )
 
 microbenchmarks=(
-    'grep;-n;-e'           # PLDI
-    'minimal_sort;;-n;-e'         # PLDI
-    'minimal_grep;-n;-e'         # PLDI
-    'topn;;-n;-e'                 # PLDI
-    'wf;;-n;-e'                   # PLDI
-    'spell;-e;-a'                # PLDI
-    'shortest_scripts;;-n;-e'     # PLDI
-    # micro_1000           # PLDI
+    # 'grep;-n;-e'           # PLDI
+    # 'minimal_sort;;-n;-e'         # PLDI
+    # 'minimal_grep;-n;-e'         # PLDI
+    # 'topn;;-n;-e'                 # PLDI
+    # 'wf;;-n;-e'                   # PLDI
+    # 'spell;-e;-a'                # PLDI
+    # 'shortest_scripts;;-n;-e'     # PLDI
+    # # micro_1000           # PLDI
 
-    'bigrams;-e;-a'              # TODO: Fix bug. Run with good split.
-    'alt_bigrams;;-n;-e'          # Optimized version of Bigrams
-    'diff;;-n;-e'                 # TODO: Optimize diff
-    'set-diff;;-n;-e'             # TODO: Handle redirection after reduce
+    # 'bigrams;-e;-a'              # TODO: Fix bug. Run with good split.
+    # 'alt_bigrams;;-n;-e'          # Optimized version of Bigrams
+    # 'diff;;-n;-e'                 # TODO: Optimize diff
+    # 'set-diff;;-n;-e'             # TODO: Handle redirection after reduce
 
     # sort                 # For comparison with sort --parallel
 
     ## Tests
     # deadlock_test          # Test to check deadlock prevention using drain_stream
-    'double_sort;;-n;-e;-a'            # Checks maximum peformance gains from split
+    # 'double_sort;;-n;-e;-a'            # Checks maximum peformance gains from split
 
     ## TODO: Add some more for OSDI
+    'test_script;-a'
     # wc                   # Extremely simple
     # page-count           # TODO: Change it so that it is one pipeline and it has many files
     # sieve                # Nice to show posix compliance
