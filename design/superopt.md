@@ -1,56 +1,45 @@
+## Superoptimization
 
-The Unix shell has a widely diverse set of uses and thus PaSh's parallelization attempt has to be aware of several constraints.
-For example, short-running one-liners, possibly typed by the user during an interactive session of the shell, should not see any slowdown.
-The same script may be run on vastly different environments ranging from low-capability devices to multiprocessor servers used for compute-intensive workloads.
+The Unix shell has a widely diverse set of uses, runs on vastly different platforms, and accesses data of diverse size and complexity.
+Additionally, PaSh has several runtime components that affect (and may degrade) script performance.	
+Therefore, any parallelization attempt from PaSh needs to be aware of several constraints to provide the ideal performance.
+For example, a short-running one-liner, possibly typed interactively by the user, should not see a slowdown.
 
-0. The basic model we have discussed takes into account the
-parallelism factor: run PaSh with different widths on test inputs to
-identify the best configurations.
+To address these challenges, PaSh includes an incremental superoptimization component.
+The core of this component is a performance model of the parallel script.
+We can start with a very simple model and increase its sophistication as we see fit.
 
-1. On top of that, if (1) the input is not large enough, or if (2) the
-pipeline/program does not execute for long enough, the superoptimizer
-should say that it does not even make sense to run the compiler —
-possibly not even the full superoptimizer. This is solvable by first
-running the sequential version on, say, [the input, half the input,
-quarter the input] and trying to extrapolate how long the full
-sequential run would take.
+A key goal keep the fast path fast.
+An assumption is that shell scripts follow a bi-modal distribution---they are either short-running (say, less than a second) or long-running (more than an hour).
+(This is is not entirely true as evidenced by PaSh 1.0's Unix50 evaluation, where scripts range between 10^{-1, 0, 1, 2, 3}.)
+Thus a key feature of PaSh's superoptimization it operates incrementally over several distinct stages and thus should work adequately for execution time distributions with multiple modes.
 
-2. If speedup from several stages is not good enough, it might make
-sense to keep them sequential. For example, if a sort is followed by
-`tr`, `tr`, it might make sense to not put a `split` after collecting
-the results of `sort`.
+A basic model is the following.
+The sequential execution time t<sub>s</sub> is defined as the sum time of all stages of computation.
+The parallel execution time t<sub>p</sub> is defined as the time to split data, plus the sum of 
+the execution times of all parallelizable stages over _n_ processors, plus the sum of the remaining stages, plus merging data.
+It makes sense to parallelize only if t<sub>s</sub> > t<sub>p</sub>.
 
-3. For specific hardware configurations (say, 2x CPUs), it might not
-even make sense to parallelize a program. i.e., there are programs (or
-individual commands) that will give speedup above a certain
-parallelism factor (lower bound) and only below a different one (upper
-bound).
+More sophisticated models will be easier to express in LaTeX, so they are just summarized below.
+The model should account for:
 
-4. We could assume the developer gives the superoptimizer a global
-"optimization budget" in terms of hours: for example what can we do
-(optimize) in, say, a minute, an hour or overnight? Some optimization
-checks are easier than others, and some are more expensive than
-others—so we should prioritize the optimization axes and start with
-ones that are cost-efficient (this could lead to a nice algorithm).
+* Nodes such as `eager` and `split`, as well as their runtime configurations (cost model is especially important for `eager`, see also Fig. 10 of PaSh 1.0)
+* The overhead of running (several stages of) the superoptimizer itself.
+* The cost of running the compiler itself (which is related to the length of the script and the `width` factor)
+* The cost of running and/or testing a few primitives---for example, using a small part of the input.
 
-5. We could also assume we can spend some time (5.1) checking commands
-for side-effects (via some form of system tracing), and (5.2)
-synthesizing some of the parallel aggregators for commands in the
-program that fall outside the GNU Coreutils  and POSIX subsets. Both
-are highly parallelizable tasks—so if we assume a fixed budget (see
-4), how many resources can we spend on (5.1) and (5.2)?
+For some of the configurations configurations the compiler will need to generate new scripts, so the optimizer needs
 
-6. Later we might want to model the fixed runtime costs of a
-distributed infrastructure — i.e., edges in the dataflow graph may
-also model network channels (rather than pipes), when nodes in the
-graph run on different physical computers. This would inform the
-viability of different parallelization configurations (like --width),
-and even allow some form of fusion for the distributed case (where we
-co-locate multiple stages).
+The superoptimizer may be able to operate at runtime, by using information generated by observing a fraction of the input while the sequential script is executing.
+The input size can be identified approximately at constant time using a system call (without having to pay the linear-time cost of a first `split`).
+A simple transformation that wraps all inputs and outputs could be achieved by running a very transformation for many scripts that are "likely" parallelizable.
 
-Generally, I have focused here on making the "fast-path" faster, where
-if we're not improving things by a lot we should immediately abort and
-run the sequential code.
-This will look great in the evaluation, because we can show the system
-never slows down anything, but also that when it improves things, it
-improves them by a lot.
+Other ideas:
+
+* Run PaSh with different `width` configs on test inputs to identify the optimal configurations.
+
+* If (1) the input is not large enough, or if (2) the pipeline/program does not execute for long enough, PaSh should abort.
+
+* Some stages can be kept sequential -- e.g., if a `sort` is followed by `tr`, `tr`, it might make sense avoid a `split` after the (parallel) `sort`.
+
+* For some configurations (say, 2x CPUs), it might not even make sense to parallelize a program. i.e., there are programs (or individual commands) that will give speedup above a certain `width` (lower bound).
