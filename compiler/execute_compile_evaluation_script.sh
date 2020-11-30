@@ -42,7 +42,10 @@ seq_output="${directory}/${microbenchmark}_seq_output"
 echo "Environment:"
 # cat $env_file
 . $env_file
-export $(cut -d= -f1 $env_file)
+vars_to_export=$(cut -d= -f1 $env_file)
+if [ ! -z $vars_to_export ]; then
+    export $vars_to_export
+fi
 
 ## Export necessary functions
 if [ -f $funs_file ]; then
