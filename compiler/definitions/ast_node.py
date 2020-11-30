@@ -79,12 +79,19 @@ class AstNode:
                             self.argument,
                             self.body,
                             self.variable])
-            return json_output
-        return NotImplemented
+        elif self.construct is AstNodeConstructor.COMMAND:
+            json_output = make_kv(self.construct.value,
+                                  [self.line_number,
+                                   self.assignments,
+                                   self.arguments,
+                                   self.redir_list])
+        else:
+            json_output = NotImplemented
+        return json_output
 
 class CustomJSONEncoder(JSONEncoder):
     def default(self, obj):
         if isinstance(obj, AstNode):
             return obj.json_serialize()
         # Let the base class default method raise the TypeError
-        return json.JSONEncoder.default(self, obj)
+        return JSONEncoder.default(self, obj)
