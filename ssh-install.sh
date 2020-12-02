@@ -26,7 +26,7 @@ BRANCH="master"
 USER="ubuntu"
 
 ARCHIVE="pash.tar.gz"
-echo "Preparing repo archive $ARCHIVE..."
+echo "Preparing repo archive: $ARCHIVE branch: $BRANCH..."
 ./scripts/clone_compress_repo.sh $ARCHIVE $BRANCH &> /tmp/clone_compress.log
 
 echo "Sending repo archive..."
@@ -35,8 +35,8 @@ scp -o StrictHostKeyChecking=no -i $PRIVATE_KEY pash.tar.gz "${USER}@${HOSTNAME}
 ssh -o StrictHostKeyChecking=no -i $PRIVATE_KEY "${USER}@${HOSTNAME}" /bin/bash <<'EOF'
 tar -xzf pash.tar.gz
 cd pash
-./install.sh -p
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
+echo "At branch: $(git rev-parse --abbrev-ref HEAD)"
+source ./install.sh -p
 cd compiler
 ./test_evaluation_scripts.sh
 EOF
