@@ -7,13 +7,9 @@ BRANCH=${2:="master"}
 
 mkdir temp_repo_dir
 cd temp_repo_dir
-git clone git@github.com:andromeda/pash.git
+git clone --recursive git@github.com:andromeda/pash.git
 cd pash
 git checkout $BRANCH
-## This needs to happen since libdash repo is linked using ssh
-## TODO: Change the libdash submodule url to https to be cloneable without ssh keys
-git submodule init
-git submodule update
 cd ../
 tar -czf ../$OUTPUT pash
 cd ../
