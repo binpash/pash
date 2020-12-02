@@ -34,16 +34,17 @@ def main():
     ## TODO: Instead of just calling optimize we first need to call compile.
 
     ## Call the main procedure
-    compile_optimize_script(args.input_ir, args)
+    compile_optimize_script(args.input_ir, args.compiled_script_file, args)
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("compiled_script_file", help="the file in which to output the compiled script")
     parser.add_argument("input_ir", help="the file containing the dataflow graph to be optimized and executed")
     config.add_common_arguments(parser)
     args = parser.parse_args()
     return args
 
-def compile_optimize_script(ir_filename, args):
+def compile_optimize_script(ir_filename, compiled_script_file, args):
     global runtime_config
     if not config.config:
         config.load_config(args.config_path)
@@ -92,6 +93,7 @@ def compile_optimize_script(ir_filename, args):
         script_to_execute = to_shell(optimized_ast_or_ir.serialize_as_JSON(), 
                                      runtime_config['output_dir'], args)
 
+        ## TODO: Merge this write with the one below. Maybe even move this logic in `pash_runtime.sh`
         ## Output the optimized shell script for inspection
         if(args.output_optimized):
             with open(output_script_path, "w") as output_script_file:
@@ -108,16 +110,8 @@ def compile_optimize_script(ir_filename, args):
         save_asts_json([optimized_ast_or_ir], ir_filename)
         script_to_execute = from_ir_to_shell(ir_filename)
     
-    if(not (args.compile_optimize_only or args.compile_only)):
-        execution_start_time = datetime.now()
-
-        ## TODO: Handle stdout, stderr, errors
-        exec_obj = subprocess.run(script_to_execute, shell=True, executable="/bin/bash")
-        exec_obj.check_returncode()
-
-        execution_end_time = datetime.now()
-        print_time_delta("Execution", execution_start_time, execution_end_time, args)
-
+    with open(compiled_script_file, "w") as f:
+            f.write(script_to_execute)
 
 def compile_candidate_df_region(candidate_df_region, config):
     ## This is for the files in the IR
