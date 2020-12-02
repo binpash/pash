@@ -89,8 +89,7 @@ else
     distr_result_filename="${results}${experiment}_distr_no_eager.time"
 fi
 
-{ time python3.8 $PASH_TOP/compiler/pash.py --output_optimized $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script $distr_script ; } 2> >(tee "${distr_result_filename}" >&2)
-
-echo "Checking for equivalence..."
+{ time python3.8 $PASH_TOP/compiler/pash.py --output_optimized $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script $distr_script ; } 2> >(tee "${distr_result_filename}" >&2) &&
+echo "Checking for equivalence..." &&
 diff -s $seq_output /tmp/distr_output/0 | tee -a "${distr_result_filename}"
 
