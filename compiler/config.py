@@ -18,6 +18,7 @@ PRINTER_BINARY = os.path.join(PASH_TOP, "parser/json_to_shell.native")
 
 PYTHON_VERSION = "python3.8"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
+RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 
 config = {}
 annotations = []
