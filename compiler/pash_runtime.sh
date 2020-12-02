@@ -2,10 +2,15 @@
 
 ## Check flags
 pash_output_time_flag=0
+pash_execute_flag=1
 for item in $@
 do
     if [ "--output_time" == "$item" ]; then
         pash_output_time_flag=1
+    fi
+
+    if [ "--compile_optimize_only" == "$item" ] || [ "--compile_only" == "$item" ]; then
+        pash_execute_flag=0
     fi
 done
 
@@ -14,7 +19,9 @@ python3.8 pash_runtime.py ${pash_compiled_script_file} $@
 
 ## Count the execution time and execute the compiled script
 pash_exec_time_start=$(date +"%s%N")
-source ${pash_compiled_script_file}
+if [ "$pash_execute_flag" -eq 1 ]; then
+    source ${pash_compiled_script_file}
+fi
 pash_exec_time_end=$(date +"%s%N")
 
 ## TODO: Maybe remove the temp file after execution

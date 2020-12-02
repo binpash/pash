@@ -110,13 +110,8 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
         save_asts_json([optimized_ast_or_ir], ir_filename)
         script_to_execute = from_ir_to_shell(ir_filename)
     
-    if(not (args.compile_optimize_only or args.compile_only)):
-
-        with open(compiled_script_file, "w") as f:
-                f.write(script_to_execute)
-
-        ## TODO: Check if we need to change the arguments and options if we always output the file
-
+    with open(compiled_script_file, "w") as f:
+            f.write(script_to_execute)
 
 def compile_candidate_df_region(candidate_df_region, config):
     ## This is for the files in the IR
