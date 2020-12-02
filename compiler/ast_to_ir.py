@@ -625,9 +625,12 @@ def make_command(ir_filename):
 
     ## TODO: Do we need to do anything with the line_number? If so, make
     ## sure that I keep it in the IR, so that I can find it.
-    arguments = [string_to_argument(config.PYTHON_VERSION),
-                 string_to_argument(config.PLANNER_EXECUTABLE),
+    arguments = [string_to_argument("source"),
+                 string_to_argument("pash_runtime.sh"),
                  string_to_argument(ir_filename)]
+    # arguments = [string_to_argument(config.PYTHON_VERSION),
+    #              string_to_argument(config.PLANNER_EXECUTABLE),
+    #              string_to_argument(ir_filename)]
     ## Pass a relevant argument to the planner
     arguments += config.pass_common_arguments(config.pash_args)
 
