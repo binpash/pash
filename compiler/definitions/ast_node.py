@@ -85,7 +85,12 @@ class AstNode:
                                    self.assignments,
                                    self.arguments,
                                    self.redir_list])
+        elif self.construct is AstNodeConstructor.PIPE:
+            json_output = make_kv(self.construct.value,
+                                  [self.is_background,
+                                   self.items])
         else:
+            print(self)
             json_output = NotImplemented
         return json_output
 
