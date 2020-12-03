@@ -83,14 +83,14 @@ def compile_asts(ast_objects, fileIdGen, config):
     compiled_asts = []
     acc_ir = None
     for i, ast_object in enumerate(ast_objects):
-        # print("Compiling AST {}".format(i))
-        # print(ast_object)
+        # log("Compiling AST {}".format(i))
+        # log(ast_object)
 
         ## Compile subtrees of the AST to out intermediate representation
         compiled_ast = compile_node(ast_object, fileIdGen, config)
 
-        # print("Compiled AST:")
-        # print(compiled_ast)
+        # log("Compiled AST:")
+        # log(compiled_ast)
 
         ## If the accumulator contains an IR (meaning that the
         ## previous commands where run in background), union it with
@@ -322,17 +322,17 @@ def execute_shell_asts(asts):
     ir_filename = os.path.join("/tmp", get_random_string())
     save_asts_json(asts, ir_filename)
     output_script = from_ir_to_shell(ir_filename)
-    # print(output_script)
+    # log(output_script)
     exec_obj = subprocess.run(["/bin/bash"], input=output_script, 
                               capture_output=True,
                               text=True)
     exec_obj.check_returncode()
-    # print(exec_obj.stdout)
+    # log(exec_obj.stdout)
     return exec_obj.stdout
 
 ## TODO: Properly parse the output of the shell script
 def parse_string_to_arg_char(arg_char_string):
-    # print(arg_char_string)
+    # log(arg_char_string)
     return ['Q', string_to_argument(arg_char_string)]
 
 def naive_expand(arg_char, config):
@@ -347,7 +347,7 @@ def naive_expand(arg_char, config):
     expanded_arg_char = parse_string_to_arg_char(expanded_string)
     
     ## TODO: Handle any errors
-    # print(expanded_arg_char)
+    # log(expanded_arg_char)
     return expanded_arg_char
 
 
@@ -441,8 +441,8 @@ def replace_ast_regions(ast_objects, irFileGen, config):
     preprocessed_asts = []
     candidate_dataflow_region = []
     for i, ast_object in enumerate(ast_objects):
-        # print("Preprocessing AST {}".format(i))
-        # print(ast_object)
+        # log("Preprocessing AST {}".format(i))
+        # log(ast_object)
 
         ## NOTE: This could also replace all ASTs with calls to PaSh runtime.
         ##       There are a coupld issues with that:
