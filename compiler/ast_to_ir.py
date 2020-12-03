@@ -515,7 +515,7 @@ def preprocess_close_node(ast_object, irFileGen, config):
     preprocessed_ast, should_replace_whole_ast, _is_non_maximal = output
     if(should_replace_whole_ast):
         ## TODO: Maybe the first argument has to be a singular list?
-        final_ast = replace_df_region(preprocessed_ast, irFileGen, config)
+        final_ast = replace_df_region([preprocessed_ast], irFileGen, config)
     else:
         final_ast = preprocessed_ast
     return final_ast
