@@ -69,7 +69,7 @@ class AstNode:
             try:
                 assert(value())
             except Exception as exc:
-                print("check for {} construct failed at key {}".format(self.construct, key))
+                log("check for {} construct failed at key {}".format(self.construct, key))
                 raise exc
     
     def json_serialize(self):
@@ -85,7 +85,12 @@ class AstNode:
                                    self.assignments,
                                    self.arguments,
                                    self.redir_list])
+        elif self.construct is AstNodeConstructor.PIPE:
+            json_output = make_kv(self.construct.value,
+                                  [self.is_background,
+                                   self.items])
         else:
+            log(self)
             json_output = NotImplemented
         return json_output
 

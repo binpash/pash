@@ -27,7 +27,7 @@ def non_option_args(options):
 
 def non_option_args_indices(options):
     formated_options = [format_arg_chars(opt) for opt in options]
-    # print(formated_options)
+    # log(formated_options)
 
     ## TODO: This might need to become more general
     ##
@@ -43,7 +43,7 @@ def get_command_from_definition(command_definition):
     if 'command' in command_definition:
         return command_definition['command']
 
-    print('Possible issue with definition file: Missing command in command definition {}'.format(command_definition))
+    log('Possible issue with definition file: Missing command in command definition {}'.format(command_definition))
     return ''
 
 def format_args(args):
@@ -70,7 +70,7 @@ def format_arg_char(arg_char):
         ## TODO: This is not right. I think the main reason for the
         ## problems is the differences between bash and the posix
         ## standard.
-        # print(" -- escape-debug -- ", val, chr(val))
+        # log(" -- escape-debug -- ", val, chr(val))
         non_escape_chars = [92, # \
                             61, # =
                             91, # [

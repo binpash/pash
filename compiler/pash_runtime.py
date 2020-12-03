@@ -54,10 +54,10 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
 
     runtime_config = config.config['distr_planner']
 
-    print("Retrieving candidate DF region: {} ... ".format(ir_filename), end='')
+    log("Retrieving candidate DF region: {} ... ".format(ir_filename), end='')
     with open(ir_filename, "rb") as ir_file:
         candidate_df_region = pickle.load(ir_file)
-    print("Done!")
+    log("Done!")
 
     ## Compile the candidate DF regions
     compilation_start_time = datetime.now()
@@ -76,6 +76,9 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
     ##       with the final parallel corresponding scripts.
     ##
     ##       However, for now we just assume that there is one IR that we can execute as is.
+    ##
+    ## TODO: This might bite us with the quick-abort. 
+    ##       It might complicate things having a script whose half is compiled to a graph and its other half not.
     assert(len(optimized_asts_and_irs) == 1)
     optimized_ast_or_ir = optimized_asts_and_irs[0]
 
@@ -97,21 +100,18 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
         ## Output the optimized shell script for inspection
         if(args.output_optimized):
             with open(output_script_path, "w") as output_script_file:
-                print("Optimized script:")
-                print(script_to_execute)
+                log("Optimized script:")
+                log(script_to_execute)
                 output_script_file.write(script_to_execute)
 
+        with open(compiled_script_file, "w") as f:
+                f.write(script_to_execute)
+
     else:
-        ## Otherwise we still have an AST which should be turned back into a shell script
-        ## using the libdash parser.
-        ## TODO: Replace this tmp file with something else
-        ir_filename = "/tmp/temp_script.ir"
-        ## TODO: Do that for all ASTs or IRs in the list
-        save_asts_json([optimized_ast_or_ir], ir_filename)
-        script_to_execute = from_ir_to_shell(ir_filename)
+        ## Instead of outputing the script here, we just want to exit with a specific exit code
+        ## TODO: Figure out the code and save it somewhere
+        exit(120)
     
-    with open(compiled_script_file, "w") as f:
-            f.write(script_to_execute)
 
 def compile_candidate_df_region(candidate_df_region, config):
     ## This is for the files in the IR
@@ -138,12 +138,12 @@ def optimize_irs(asts_and_irs, args):
     optimized_asts_and_irs = []
     for ast_or_ir in asts_and_irs:
         if(isinstance(ast_or_ir, IR)):
-            # print(ir_node)
+            # log(ir_node)
             # with cProfile.Profile() as pr:
             distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, args.split_fan_out,
                                                                       runtime_config['batch_size'])
             # pr.print_stats()
-            # print(distributed_graph)
+            # log(distributed_graph)
 
             if(not args.no_eager):
                 eager_distributed_graph = add_eager_nodes(distributed_graph)
@@ -152,7 +152,7 @@ def optimize_irs(asts_and_irs, args):
 
             ## Print statistics of output nodes
             print_graph_statistics(eager_distributed_graph)
-            # print(eager_distributed_graph)
+            # log(eager_distributed_graph)
 
             optimized_asts_and_irs.append(eager_distributed_graph)
         else:
@@ -168,10 +168,10 @@ def print_graph_statistics(graph):
     total_nodes = graph.nodes
     cat_nodes = [node for node in total_nodes if isinstance(node, Cat)]
     eager_nodes = [node for node in total_nodes if isinstance(node, Eager)]
-    print("Total nodes after optimization:", len(total_nodes), file=sys.stderr)
-    print(" -- out of which:", file=sys.stderr)
-    print("Cat nodes:", len(cat_nodes), file=sys.stderr)
-    print("Eager nodes:", len(eager_nodes), file=sys.stderr)
+    log("Total nodes after optimization:", len(total_nodes), file=sys.stderr)
+    log(" -- out of which:", file=sys.stderr)
+    log("Cat nodes:", len(cat_nodes), file=sys.stderr)
+    log("Eager nodes:", len(eager_nodes), file=sys.stderr)
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
@@ -190,8 +190,8 @@ def print_graph_statistics(graph):
 ## the graph.
 def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     source_nodes = graph.source_nodes()
-    # print("Source nodes:")
-    # print(source_nodes)
+    # log("Source nodes:")
+    # log(source_nodes)
 
     ## Generate a fileIdGen from a graph, that doesn't clash with the
     ## current graph fileIds.
@@ -233,7 +233,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
             ## output to all of them? Or does it mean that it writes
             ## some to the first and some to the second? Both are not
             ## very symmetric, but I think I would prefer the first.
-            # print(curr, next_nodes)
+            # log(curr, next_nodes)
             # assert(len(next_nodes) <= 1)
 
             graph, new_nodes = parallelize_cat(curr, graph, fileIdGen, fan_out, batch_size)
@@ -247,7 +247,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
             ##
             ## TODO: Fix that
             if(len(new_nodes) > 0):
-                # print("New nodes:", new_nodes)
+                # log("New nodes:", new_nodes)
                 workset += new_nodes
 
     return graph
@@ -411,8 +411,8 @@ def parallelize_command(curr, new_input_file_ids, old_input_file_id, graph, file
 
         new_nodes += new_commands
 
-        # print("New commands:")
-        # print(new_commands)
+        # log("New commands:")
+        # log(new_commands)
         graph.remove_node(curr)
         for new_com in new_commands:
             graph.add_node(new_com)
@@ -437,7 +437,7 @@ def duplicate(command_node, old_input_file_id, new_input_file_ids, new_output_fi
         return pure_duplicate(command_node, old_input_file_id, new_input_file_ids, new_output_file_ids, fileIdGen)
 
     ## This should be unreachable
-    print("Unreachable code reached :(")
+    log("Unreachable code reached :(")
     assert(False)
 
 def stateless_duplicate(command_node, old_input_file_id, input_file_ids, output_file_ids):
@@ -481,7 +481,7 @@ def pure_duplicate(command_node, old_input_file_id, input_file_ids, output_file_
                         for in_fid, out_fids in in_out_file_ids]
     else:
         ## This should be unreachable
-        print("Unreachable code reached :(")
+        log("Unreachable code reached :(")
         assert(False)
 
     return new_commands
@@ -597,8 +597,8 @@ def create_reduce_node(init_func, input_file_ids, output_file_ids):
 ## becoming smaller.
 def add_eager_nodes(graph):
     source_nodes = graph.source_nodes()
-    # print("Source nodes:")
-    # print(source_nodes)
+    # log("Source nodes:")
+    # log(source_nodes)
 
     eager_exec_path = '{}/{}'.format(config.PASH_TOP, runtime_config['eager_executable_path'])
     ## Generate a fileIdGen from a graph, that doesn't clash with the
