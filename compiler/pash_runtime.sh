@@ -20,6 +20,27 @@ pash_sequential_script_file=$1
 # >&2 cat $1
 # source $1
 
+## Current plan: Optimistic sequential execution with eager in stdin stdout. 
+## If the compiler succeeds in compiling (and improving) the script and the following two constraints hold:
+##  (1) The outputs of the DFG are not appended
+##  (2) All input and output files are simple files in the file system (no device files, fifos, etc)
+## then we empty the output files, stop the original script, and execute the parallel script.
+## (Note that we have to reroute what was in the stdin eager buffer to the parallel script.)
+##
+## Else if the original script finished execution before compilation succeeds, or if compilation fails:
+## - We pipe stdout eager to stdout
+## - We let everything finish.
+
+## Assumptions/Constraints:
+##
+## For now we can assume that constraints (1) and (2) hold.
+##
+## TODO: A first TODO would be to check them in the compilation process
+##
+## TODO: An alternative TODO would be to let preprocessing give us information about them, allowing us to 
+##       have a finer tuned execution plan depending on this information. For example, if we see that script
+##       has append to some file we can be carefull and buffer its output using eager.
+
 ## NOTE: The intuition about why quick-abort works is that if the compilation succeeds, then the
 ##       script is a DFG, meaning that we know exactly how it affects its environment after completing.
 ##       Therefore, we can go back and stop the already running script without risking unsafe behavior.
@@ -46,6 +67,8 @@ pash_sequential_script_file=$1
 ##        current shell.
 ## 
 ## TODO: If we choose to follow this solution we have to make sure that there is no race condition.
+
+## TODO: We also want to avoid executing the compiled script if it doesn't contain any improvement.
 
 
 pash_compiled_script_file=$(mktemp -u)
