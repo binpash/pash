@@ -4,6 +4,7 @@ import subprocess
 import yaml
 
 from ir_utils import *
+from util import *
 
 ## Global
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
@@ -91,6 +92,44 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--config_path"))
         arguments.append(string_to_argument(pash_arguments.config_path))
     return arguments
+
+##
+## Read a shell variables file
+##
+
+def read_vars_file(var_file_path):
+    global config
+
+    config['shell_variables'] = None
+    config['shell_variables_file_path'] = var_file_path
+    if(not var_file_path is None):
+        vars_dict = {}
+        with open(var_file_path) as f:
+            lines = [line.rstrip() for line in f.readlines()]
+
+        for line in lines:
+            words = line.split(' ')
+            _export_or_typeset = words[0]
+            rest = " ".join(words[1:])
+
+            space_index = rest.find(' ')
+            eq_index = rest.find('=')
+            var_type = None
+            ## This means we have a type
+            if(space_index < eq_index and not space_index == -1):
+                var_type = rest[:space_index]
+                rest = rest[(space_index+1):]
+                eq_index = rest.find('=')
+            ## We now find the name and value
+            var_name = rest[:eq_index] 
+            var_value = rest[(eq_index+1):]
+
+            vars_dict[var_name] = (var_type, var_value)
+
+        config['shell_variables'] = vars_dict
+
+
+
 
 ##
 ## Load annotation files
