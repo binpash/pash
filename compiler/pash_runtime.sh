@@ -70,9 +70,12 @@ pash_sequential_script_file=$1
 
 ## TODO: We also want to avoid executing the compiled script if it doesn't contain any improvement.
 
+## Prepare a file with all shell variables
+pash_runtime_shell_variables_file=$(mktemp -u)
+declare -p > $pash_runtime_shell_variables_file
 
 pash_compiled_script_file=$(mktemp -u)
-python3.8 pash_runtime.py ${pash_compiled_script_file} "${@:2}"
+python3.8 pash_runtime.py ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
 pash_runtime_return_code=$?
 
 ## Count the execution time and execute the compiled script

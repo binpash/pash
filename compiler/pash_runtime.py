@@ -38,8 +38,13 @@ def main():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("compiled_script_file", help="the file in which to output the compiled script")
-    parser.add_argument("input_ir", help="the file containing the dataflow graph to be optimized and executed")
+    parser.add_argument("compiled_script_file", 
+                        help="the file in which to output the compiled script")
+    parser.add_argument("input_ir", 
+                        help="the file containing the dataflow graph to be optimized and executed")
+    parser.add_argument("--var_file",
+                        help="determines the path of a file containing all shell variables.",
+                        default=None)
     config.add_common_arguments(parser)
     args = parser.parse_args()
     return args
@@ -58,6 +63,9 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
     with open(ir_filename, "rb") as ir_file:
         candidate_df_region = pickle.load(ir_file)
     log("Done!")
+
+    ## Read any shell variables files if present
+    config.read_vars_file(args.var_file)
 
     ## Compile the candidate DF regions
     compilation_start_time = datetime.now()
