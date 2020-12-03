@@ -1,4 +1,5 @@
 from ir_utils import *
+from util import *
 
 ## Checks if the annotation for that command exists
 def get_command_io_from_annotations(command, options, annotations):
@@ -37,7 +38,7 @@ def interpret_io(io, options, ann_options):
         assert(io.startswith("args"))
         indices = io.split("[")[1].split("]")[0]
 
-        # print(io, options)
+        # log(io, options)
 
         ## Find the file arguments (and their indices)
         args_indices = non_option_args_indices(options)
@@ -89,7 +90,7 @@ def get_command_from_annotations(command, options, annotations):
     if(len(relevant_annotations) == 0):
         return None
     elif(len(relevant_annotations) > 1):
-        print("Warning: More than one annotation for command:", command)
+        log("Warning: More than one annotation for command:", command)
 
     return get_command_from_annotation(command, options, relevant_annotations[0])
 
@@ -116,7 +117,7 @@ def predicate_satisfied(options, predicate):
     return func(options)
 
 def interpret_predicate(predicate):
-    # print(predicate)
+    # log(predicate)
     operator = predicate['operator']
     operands = []
     try:
@@ -137,7 +138,7 @@ def interpret_predicate(predicate):
         return lambda options: not_operator(operands, options)
 
     ## TODO: Fill in the rest
-    return lambda x: print("Uninterpreted operator:", operator); False
+    return lambda x: log("Uninterpreted operator:", operator); False
 
 
 ##

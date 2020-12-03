@@ -14,13 +14,26 @@ do
     fi
 done
 
+## The first argument contains the sequential script. Just running it should work for all tests.
+pash_sequential_script_file=$1
+# >&2 echo "Sequential file in: $1 contains"
+# >&2 cat $1
+# ## TODO: Don't write to /tmp_distr_output/0 anymore
+# source $1 > /tmp/distr_output/0
+
 pash_compiled_script_file=$(mktemp -u)
-python3.8 pash_runtime.py ${pash_compiled_script_file} $@
+python3.8 pash_runtime.py ${pash_compiled_script_file} "${@:2}"
+pash_runtime_return_code=$?
 
 ## Count the execution time and execute the compiled script
 pash_exec_time_start=$(date +"%s%N")
 if [ "$pash_execute_flag" -eq 1 ]; then
-    source ${pash_compiled_script_file}
+    ## If the compiler failed, we have to run the sequential
+    if [ "$pash_runtime_return_code" -ne 0 ]; then
+        source ${pash_sequential_script_file}
+    else
+        source ${pash_compiled_script_file}
+    fi
 fi
 pash_exec_time_end=$(date +"%s%N")
 

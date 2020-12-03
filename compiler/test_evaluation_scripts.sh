@@ -31,7 +31,7 @@ microbenchmarks=(
     double_sort          # Checks maximum peformance gains from split
     no_in_script         # Tests whether a script can be executed by our infrastructure without having its input in a file called $IN
     export_var_script         # Tests whether exported variables in the scripts that are processed by PaSh runtime are visible to the rest of the script.
-    # for_loop_simple      # BUG: Output is not the same since it is overwritten
+    for_loop_simple      # BUG: Output is not the same since it is overwritten
 )
 
 test_flags=(

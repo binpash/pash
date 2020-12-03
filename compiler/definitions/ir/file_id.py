@@ -32,7 +32,7 @@ class FileId:
         return self.serialize()
 
     def serialize(self):
-        # print("File id:", self.ident, Find(self).ident, self.resource, self.children)
+        # log("File id:", self.ident, Find(self).ident, self.resource, self.children)
         if (self.resource is None):
             if(self.max_length is None):
                 output = "{}#file{}".format(self.prefix, Find(self).ident)

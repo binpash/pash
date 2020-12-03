@@ -4,7 +4,7 @@ from definitions.ast_node import *
 from definitions.ast_node_c import *
 from util import *
 from json_ast import save_asts_json
-from parse import parse_shell, from_ir_to_shell
+from parse import parse_shell, from_ir_to_shell, from_ir_to_shell_file
 import subprocess
 
 import config
@@ -83,14 +83,14 @@ def compile_asts(ast_objects, fileIdGen, config):
     compiled_asts = []
     acc_ir = None
     for i, ast_object in enumerate(ast_objects):
-        # print("Compiling AST {}".format(i))
-        # print(ast_object)
+        # log("Compiling AST {}".format(i))
+        # log(ast_object)
 
         ## Compile subtrees of the AST to out intermediate representation
         compiled_ast = compile_node(ast_object, fileIdGen, config)
 
-        # print("Compiled AST:")
-        # print(compiled_ast)
+        # log("Compiled AST:")
+        # log(compiled_ast)
 
         ## If the accumulator contains an IR (meaning that the
         ## previous commands where run in background), union it with
@@ -322,17 +322,17 @@ def execute_shell_asts(asts):
     ir_filename = os.path.join("/tmp", get_random_string())
     save_asts_json(asts, ir_filename)
     output_script = from_ir_to_shell(ir_filename)
-    # print(output_script)
+    # log(output_script)
     exec_obj = subprocess.run(["/bin/bash"], input=output_script, 
                               capture_output=True,
                               text=True)
     exec_obj.check_returncode()
-    # print(exec_obj.stdout)
+    # log(exec_obj.stdout)
     return exec_obj.stdout
 
 ## TODO: Properly parse the output of the shell script
 def parse_string_to_arg_char(arg_char_string):
-    # print(arg_char_string)
+    # log(arg_char_string)
     return ['Q', string_to_argument(arg_char_string)]
 
 def naive_expand(arg_char, config):
@@ -347,7 +347,7 @@ def naive_expand(arg_char, config):
     expanded_arg_char = parse_string_to_arg_char(expanded_string)
     
     ## TODO: Handle any errors
-    # print(expanded_arg_char)
+    # log(expanded_arg_char)
     return expanded_arg_char
 
 
@@ -441,8 +441,8 @@ def replace_ast_regions(ast_objects, irFileGen, config):
     preprocessed_asts = []
     candidate_dataflow_region = []
     for i, ast_object in enumerate(ast_objects):
-        # print("Preprocessing AST {}".format(i))
-        # print(ast_object)
+        # log("Preprocessing AST {}".format(i))
+        # log(ast_object)
 
         ## NOTE: This could also replace all ASTs with calls to PaSh runtime.
         ##       There are a coupld issues with that:
@@ -515,7 +515,7 @@ def preprocess_close_node(ast_object, irFileGen, config):
     preprocessed_ast, should_replace_whole_ast, _is_non_maximal = output
     if(should_replace_whole_ast):
         ## TODO: Maybe the first argument has to be a singular list?
-        final_ast = replace_df_region(preprocessed_ast, irFileGen, config)
+        final_ast = replace_df_region([preprocessed_ast], irFileGen, config)
     else:
         final_ast = preprocessed_ast
     return final_ast
@@ -607,9 +607,16 @@ def replace_df_region(asts, irFileGen, config):
     with open(ir_filename, "wb") as ir_file:
         pickle.dump(asts, ir_file)
 
+    ## Serialize the candidate df_region asts back to shell 
+    ## so that the sequential script can be run in parallel to the compilation.
+    second_ir_filename = os.path.join("/tmp", get_random_string())
+    save_asts_json(asts, second_ir_filename)
+    sequential_script_file_name = os.path.join("/tmp", get_random_string())
+    from_ir_to_shell_file(second_ir_filename, sequential_script_file_name)
+
     ## Replace it with a command that calls the distribution
     ## planner with the name of the file.
-    replaced_node = make_command(ir_filename)
+    replaced_node = make_command(ir_filename, sequential_script_file_name)
 
     return replaced_node
 
@@ -621,12 +628,13 @@ def replace_df_region(asts, irFileGen, config):
 ## (MAYBE) TODO: The way I did it, is by calling the parser once, and seeing
 ## what it returns. Maybe it would make sense to call the parser on
 ## the fly to have a cleaner implementation here?
-def make_command(ir_filename):
+def make_command(ir_filename, sequential_script_file_name):
 
     ## TODO: Do we need to do anything with the line_number? If so, make
     ## sure that I keep it in the IR, so that I can find it.
     arguments = [string_to_argument("source"),
                  string_to_argument(config.RUNTIME_EXECUTABLE),
+                 string_to_argument(sequential_script_file_name),
                  string_to_argument(ir_filename)]
     ## Pass a relevant argument to the planner
     arguments += config.pass_common_arguments(config.pash_args)
