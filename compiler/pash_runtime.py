@@ -76,6 +76,9 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
     ##       with the final parallel corresponding scripts.
     ##
     ##       However, for now we just assume that there is one IR that we can execute as is.
+    ##
+    ## TODO: This might bite us with the quick-abort. 
+    ##       It might complicate things having a script whose half is compiled to a graph and its other half not.
     assert(len(optimized_asts_and_irs) == 1)
     optimized_ast_or_ir = optimized_asts_and_irs[0]
 
@@ -101,17 +104,14 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
                 print(script_to_execute)
                 output_script_file.write(script_to_execute)
 
+        with open(compiled_script_file, "w") as f:
+                f.write(script_to_execute)
+
     else:
-        ## Otherwise we still have an AST which should be turned back into a shell script
-        ## using the libdash parser.
-        ## TODO: Replace this tmp file with something else
-        ir_filename = "/tmp/temp_script.ir"
-        ## TODO: Do that for all ASTs or IRs in the list
-        save_asts_json([optimized_ast_or_ir], ir_filename)
-        script_to_execute = from_ir_to_shell(ir_filename)
+        ## Instead of outputing the script here, we just want to exit with a specific exit code
+        ## TODO: Figure out the code
+        exit(1)
     
-    with open(compiled_script_file, "w") as f:
-            f.write(script_to_execute)
 
 def compile_candidate_df_region(candidate_df_region, config):
     ## This is for the files in the IR

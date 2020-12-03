@@ -14,20 +14,26 @@ do
     fi
 done
 
-pash_compiled_script_file=$(mktemp -u)
-python3.8 pash_runtime.py ${pash_compiled_script_file} $@
+## The first argument contains the sequential script. Just running it should work for all tests.
+>&2 echo "Sequential file in: $1 contains"
+>&2 cat $1
+## TODO: Don't write to /tmp_distr_output/0 anymore
+source $1 > /tmp/distr_output/0
 
-## Count the execution time and execute the compiled script
-pash_exec_time_start=$(date +"%s%N")
-if [ "$pash_execute_flag" -eq 1 ]; then
-    source ${pash_compiled_script_file}
-fi
-pash_exec_time_end=$(date +"%s%N")
+# pash_compiled_script_file=$(mktemp -u)
+# python3.8 pash_runtime.py ${pash_compiled_script_file} $@
 
-## TODO: Maybe remove the temp file after execution
+# ## Count the execution time and execute the compiled script
+# pash_exec_time_start=$(date +"%s%N")
+# if [ "$pash_execute_flag" -eq 1 ]; then
+#     source ${pash_compiled_script_file}
+# fi
+# pash_exec_time_end=$(date +"%s%N")
 
-## We want the execution time in milliseconds
-if [ "$pash_output_time_flag" -eq 1 ]; then
-    pash_exec_time_ms=$(echo "scale = 3; ($pash_exec_time_end-$pash_exec_time_start)/1000000" | bc)
-    >&2 echo "Execution time: $pash_exec_time_ms  ms"
-fi
+# ## TODO: Maybe remove the temp file after execution
+
+# ## We want the execution time in milliseconds
+# if [ "$pash_output_time_flag" -eq 1 ]; then
+#     pash_exec_time_ms=$(echo "scale = 3; ($pash_exec_time_end-$pash_exec_time_start)/1000000" | bc)
+#     >&2 echo "Execution time: $pash_exec_time_ms  ms"
+# fi
