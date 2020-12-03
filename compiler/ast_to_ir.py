@@ -4,7 +4,7 @@ from definitions.ast_node import *
 from definitions.ast_node_c import *
 from util import *
 from json_ast import save_asts_json
-from parse import parse_shell, from_ir_to_shell
+from parse import parse_shell, from_ir_to_shell, from_ir_to_shell_file
 import subprocess
 
 import config
@@ -607,9 +607,16 @@ def replace_df_region(asts, irFileGen, config):
     with open(ir_filename, "wb") as ir_file:
         pickle.dump(asts, ir_file)
 
+    ## Serialize the candidate df_region asts back to shell 
+    ## so that the sequential script can be run in parallel to the compilation.
+    ir_filename = os.path.join("/tmp", get_random_string())
+    save_asts_json(asts, ir_filename)
+    sequential_script_file_name = os.path.join("/tmp", get_random_string())
+    from_ir_to_shell_file(ir_filename, sequential_script_file_name)
+
     ## Replace it with a command that calls the distribution
     ## planner with the name of the file.
-    replaced_node = make_command(ir_filename)
+    replaced_node = make_command(ir_filename, sequential_script_file_name)
 
     return replaced_node
 
@@ -621,12 +628,13 @@ def replace_df_region(asts, irFileGen, config):
 ## (MAYBE) TODO: The way I did it, is by calling the parser once, and seeing
 ## what it returns. Maybe it would make sense to call the parser on
 ## the fly to have a cleaner implementation here?
-def make_command(ir_filename):
+def make_command(ir_filename, sequential_script_file_name):
 
     ## TODO: Do we need to do anything with the line_number? If so, make
     ## sure that I keep it in the IR, so that I can find it.
     arguments = [string_to_argument("source"),
                  string_to_argument(config.RUNTIME_EXECUTABLE),
+                 string_to_argument(sequential_script_file_name),
                  string_to_argument(ir_filename)]
     ## Pass a relevant argument to the planner
     arguments += config.pass_common_arguments(config.pash_args)
