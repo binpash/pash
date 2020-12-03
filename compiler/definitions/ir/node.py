@@ -57,7 +57,7 @@ class Node:
             return self.stdin
 
         ## TODO: Complete this
-        print(chunk)
+        log(chunk)
         assert(False)
 
     ## TODO: Is there a way to abstract the behaviour of these two functions?
@@ -68,7 +68,7 @@ class Node:
             self.stdin = value
         else:
             ## TODO: Complete this
-            print(chunk, value)
+            log(chunk, value)
             assert(False)
 
     def find_file_id_in_in_stream(self, fileId):
