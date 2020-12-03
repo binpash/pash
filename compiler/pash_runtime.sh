@@ -28,9 +28,9 @@ pash_runtime_return_code=$?
 ## Count the execution time and execute the compiled script
 pash_exec_time_start=$(date +"%s%N")
 if [ "$pash_execute_flag" -eq 1 ]; then
-    ## TODO: If the compiler failed, we have to run the sequential
+    ## If the compiler failed, we have to run the sequential
     if [ "$pash_runtime_return_code" -ne 0 ]; then
-        source ${pash_sequential_script_file} > /tmp/distr_output/0
+        source ${pash_sequential_script_file}
     else
         source ${pash_compiled_script_file}
     fi

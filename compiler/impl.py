@@ -18,6 +18,8 @@ def to_shell(graph_json, output_dir, args):
 
 
 def shell_backend(graph_json, output_dir, args):
+    ## TODO: Remove output_dir since it is not used
+
     clean_up_graph = False
     drain_streams = False
     if(args.termination == "clean_up_graph"):
@@ -39,9 +41,10 @@ def shell_backend(graph_json, output_dir, args):
 
     output_script_commands = []
 
+    ## TODO: These are osbolete since we now redirect the output outisde
     ## Make the output directory if it doesn't exist
-    output_script_commands.append('rm -rf {}'.format(output_dir))
-    output_script_commands.append('mkdir -p {}'.format(output_dir))
+    # output_script_commands.append('rm -rf {}'.format(output_dir))
+    # output_script_commands.append('mkdir -p {}'.format(output_dir))
 
     ## Setup pipes
     rm_com = remove_fifos(fids)
@@ -55,19 +58,15 @@ def shell_backend(graph_json, output_dir, args):
     output_script_commands += processes
 
     ## Collect outputs
-    # collect_output_args = ["cat"]
-    # for out_fid in out_fids:
-    #     collect_output_args.append('"{}"'.format(out_fid))
-    # collect_output_args.append(">")
-    # collect_output_args.append('"{}"'.format(output_file))
-    # output_script = " ".join(collect_output_args)
-    # print("Collect output:")
-    # print(output_script)
-    # out_p = subprocess.Popen(output_script, shell=True,
-    #                          executable="/bin/bash")
-    for i, out_fid in enumerate(out_fids):
-        output_com = 'cat "{}" > {}/{} &'.format(out_fid, output_dir, i)
-        output_script_commands.append(output_com)
+    ## TODO: Make this work for more than one output. 
+    ##       For now it is fine to only have stdout as output
+    assert(len(out_fids) == 1)
+    output_com = 'cat "{}" &'.format(out_fids[0])
+    output_script_commands.append(output_com)
+    # ## Old moving of outputs to a temporary directory
+    # for i, out_fid in enumerate(out_fids):
+    #     output_com = 'cat "{}" > {}/{} &'.format(out_fid, output_dir, i)
+    #     output_script_commands.append(output_com)
 
     ## If the option to clean up the graph is enabled, we should only
     ## wait on the final pid and kill the rest using SIGPIPE.
