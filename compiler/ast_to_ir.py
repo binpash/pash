@@ -310,12 +310,23 @@ def safe_to_expand(arg_char):
         return True
     return False
 
-def make_echo_ast(arg_char):
+
+def make_echo_ast(arg_char, var_file_path):
+    nodes = []
+    ## Source variables if present
+    if(not var_file_path is None):
+        arguments = [string_to_argument("source"), string_to_argument(var_file_path)]
+
+        line_number = 0
+        node = make_kv('Command', [line_number, [], arguments, []])
+        nodes.append(node)
+
     arguments = [string_to_argument("echo"), string_to_argument("-n"), [arg_char]]
 
     line_number = 0
     node = make_kv('Command', [line_number, [], arguments, []])
-    return node
+    nodes.append(node)
+    return nodes
 
 ## TODO: Move this function somewhere more general
 def execute_shell_asts(asts):
@@ -336,12 +347,19 @@ def parse_string_to_arg_char(arg_char_string):
     return ['Q', string_to_argument(arg_char_string)]
 
 def naive_expand(arg_char, config):
+
+    ## config contains a dictionary with: 
+    ##  - all variables, their types, and values in 'shell_variables'
+    ##  - the name of a file that contains them in 'shell_variables_file_path'
+    # log(config['shell_variables'])
+    # log(config['shell_variables_file_path'])
+
     ## Create an AST node that "echo"s the argument
-    echo_ast = make_echo_ast(arg_char)
+    echo_asts = make_echo_ast(arg_char, config['shell_variables_file_path'])
 
     ## Execute the echo AST by unparsing it to shell
     ## and calling bash
-    expanded_string = execute_shell_asts([echo_ast])
+    expanded_string = execute_shell_asts(echo_asts)
 
     ## Parse the expanded string back to an arg_char
     expanded_arg_char = parse_string_to_arg_char(expanded_string)
