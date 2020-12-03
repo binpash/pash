@@ -609,10 +609,10 @@ def replace_df_region(asts, irFileGen, config):
 
     ## Serialize the candidate df_region asts back to shell 
     ## so that the sequential script can be run in parallel to the compilation.
-    ir_filename = os.path.join("/tmp", get_random_string())
-    save_asts_json(asts, ir_filename)
+    second_ir_filename = os.path.join("/tmp", get_random_string())
+    save_asts_json(asts, second_ir_filename)
     sequential_script_file_name = os.path.join("/tmp", get_random_string())
-    from_ir_to_shell_file(ir_filename, sequential_script_file_name)
+    from_ir_to_shell_file(second_ir_filename, sequential_script_file_name)
 
     ## Replace it with a command that calls the distribution
     ## planner with the name of the file.
