@@ -104,12 +104,51 @@ still_alive()
     jobs -p | tr '\n' ' '
 }
 
+# Taken from: https://stackoverflow.com/a/20473191
+# list_include_item "10 11 12" "2"
+function list_include_item {
+  local list="$1"
+  local item="$2"
+  if [[ $list =~ (^|[[:space:]])"$item"($|[[:space:]]) ]] ; then
+    # yes, list include item
+    result=0
+  else
+    result=1
+  fi
+  return $result
+}
+
 ## Count the execution time
 pash_exec_time_start=$(date +"%s%N")
 
 if [ "$pash_execute_flag" -eq 1 ]; then
+    ## Note: First solution does not contain eager in stdout, therefore not being interactive.
+    ## TODO: Fix the issue with eager in the output to make it interactive
+
+    ## Before running the original script we need to redirect its input and output to 
+    ## eager and pipes.
+    # pash_stdin_redir1=$(mktemp -u)
+    # pash_stdin_redir2=$(mktemp -u)
+    # pash_stdout_redir1=$(mktemp -u)
+    pash_stdout_redir2=$(mktemp -u)
+    # pash_stdin_eager_file=$(mktemp -u)
+    # pash_stdout_eager_file=$(mktemp -u)
+    # mkfifo $pash_stdin_redir1 $pash_stdin_redir2 $pash_stdout_redir1
+    # mkfifo $pash_stdin_redir1 $pash_stdin_redir2 $pash_stdout_redir1 $pash_stdout_redir2
+
+
+    ## TODO: Find the eager directory correctly
+    # ../evaluation/tools/eager "$pash_stdin_redir1" "$pash_stdin_redir2" "$pash_stdin_eager_file" &
+    # >&2 echo "STDIN eager pid: $!"
+    # ../evaluation/tools/eager "$pash_stdout_redir1" "$pash_stdout_redir2" "$pash_stdout_eager_file" &
+    # >&2 echo "STDOUT eager pid: $!"
+    # cat > "$pash_stdin_redir1" &
+    # >&2 echo "STDIN cat pid: $!"
+    ## Note: We don't connect stdout_redir2 yet, since it has to be bufferred for correctness. 
+
     ## Run the original script
-    ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} &
+    # ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir1" < "$pash_stdin_redir2" &
+    ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir2" &
     pash_seq_pid=$!
     >&2 echo "Sequential pid: $pash_seq_pid"
 
@@ -121,13 +160,14 @@ if [ "$pash_execute_flag" -eq 1 ]; then
 
     >&2 echo "Still alive: $(still_alive)"
     ## Wait for either of the two to complete
-    wait -n $pash_seq_pid $pash_compiler_pid
+    wait -n "$pash_seq_pid" "$pash_compiler_pid"
     completed_pid_status=$?
-    alive_pid=$(still_alive)
-    >&2 echo "Still alive: $alive_pid"
+    alive_pids=$(still_alive)
+    >&2 echo "Still alive: $alive_pids"
 
     ## If the sequential is still alive we want to see if the compiler succeeded
-    if [ "$pash_seq_pid" -eq "$alive_pid" ]; then
+    if `list_include_item "$alive_pids" "$pash_seq_pid"` ; then
+    # if [ "$pash_seq_pid" -eq "$alive_pids" ]; then
         pash_runtime_return_code=$completed_pid_status
         >&2 echo "Compilation was done first with return code: $pash_runtime_return_code"
 
@@ -154,19 +194,25 @@ if [ "$pash_execute_flag" -eq 1 ]; then
         else
             ## If the compiler failed we just wait until the sequential is done.
 
-            ## TODO: Redirect eagers to stdin + stdout
-
             wait -n "$pash_seq_pid"
+
+            ## TODO: Redirect eagers to stdin + stdout
+            cat "$pash_stdout_redir2" &
+            >&2 echo "STDOUT cat pid: $!"
+            >&2 echo "Still alive: $(still_alive)"
+
             pash_runtime_final_status=$?
         fi
     else
         >&2 echo "Sequential was done first!"
 
         ## TODO: Redirect eagers to stdin + stdout
+        cat "$pash_stdout_redir2" &
+        >&2 echo "STDOUT cat pid: $!"
 
         ## If this fails (meaning that compilation is done) we do not care
         kill -n 9 "$pash_compiler_pid" 2> /dev/null
-        wait "$pash_compiler_pid"  2> /dev/null
+        wait -n "$pash_compiler_pid"  2> /dev/null
         pash_runtime_final_status=$completed_pid_status
         >&2 echo "Still alive: $(still_alive)"
     fi
