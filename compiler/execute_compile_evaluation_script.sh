@@ -36,6 +36,7 @@ env_file="${prefix}_env.sh"
 funs_file="${prefix}_funs.sh"
 seq_script="${prefix}_seq.sh"
 distr_script="${prefix}_distr.sh"
+input_file="${prefix}.in"
 
 seq_output="${directory}/${microbenchmark}_seq_output"
 
@@ -48,8 +49,15 @@ if [ ! -z "$vars_to_export" ]; then
 fi
 
 ## Export necessary functions
-if [ -f $funs_file ]; then
+if [ -f "$funs_file" ]; then
     source $funs_file
+fi
+
+## Redirect the input if there is an input file
+stdin_redir="/dev/null"
+if [ -f "$input_file" ]; then
+    stdin_redir="$(cat "$input_file")"
+    echo "Has input file: $stdin_redir"
 fi
 
 ## TODO: Extend this script to give input to some arguments from stdin.
@@ -57,7 +65,7 @@ fi
 if [ "$execute_seq_flag" -eq 1 ]; then
     echo "Sequential:"
     cat $seq_script
-    { time /bin/bash $seq_script > $seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
+    cat $stdin_redir | { time /bin/bash $seq_script > $seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
 else
     echo "Not executing sequential..."
 fi
@@ -94,7 +102,7 @@ fi
 ## Make the redirected output dir if it doesn't exist
 mkdir -p /tmp/distr_output
 
-{ time python3.8 $PASH_TOP/compiler/pash.py --speculation no_spec --output_optimized $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script $distr_script ; } 1> /tmp/distr_output/0 2> >(tee "${distr_result_filename}" >&2) &&
+cat $stdin_redir | { time python3.8 $PASH_TOP/compiler/pash.py --speculation no_spec --output_optimized $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script $distr_script ; } 1> /tmp/distr_output/0 2> >(tee "${distr_result_filename}" >&2) &&
 echo "Checking for equivalence..." &&
 diff -s $seq_output /tmp/distr_output/0 | tee -a "${distr_result_filename}"
 
