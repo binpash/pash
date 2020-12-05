@@ -95,28 +95,31 @@ if [ "$pash_execute_flag" -eq 1 ]; then
 
     ## Before running the original script we need to redirect its input and output to 
     ## eager and pipes.
-    # pash_stdin_redir1=$(mktemp -u)
-    # pash_stdin_redir2=$(mktemp -u)
+    pash_stdin_redir1=$(mktemp -u)
+    pash_stdin_redir2=$(mktemp -u)
     # pash_stdout_redir1=$(mktemp -u)
     pash_stdout_redir2=$(mktemp -u)
-    # pash_stdin_eager_file=$(mktemp -u)
+    pash_stdin_eager_file=$(mktemp -u)
+    >&2 echo "eager intermediate file: $pash_stdin_eager_file"
     # pash_stdout_eager_file=$(mktemp -u)
-    # mkfifo $pash_stdin_redir1 $pash_stdin_redir2 $pash_stdout_redir1
+    mkfifo $pash_stdin_redir1 $pash_stdin_redir2
     # mkfifo $pash_stdin_redir1 $pash_stdin_redir2 $pash_stdout_redir1 $pash_stdout_redir2
 
 
     ## TODO: Find the eager directory correctly
-    # ../evaluation/tools/eager "$pash_stdin_redir1" "$pash_stdin_redir2" "$pash_stdin_eager_file" &
-    # >&2 echo "STDIN eager pid: $!"
+    ../evaluation/tools/eager "$pash_stdin_redir1" "$pash_stdin_redir2" "$pash_stdin_eager_file" &
+    >&2 echo "STDIN eager pid: $!"
     # ../evaluation/tools/eager "$pash_stdout_redir1" "$pash_stdout_redir2" "$pash_stdout_eager_file" &
     # >&2 echo "STDOUT eager pid: $!"
-    # cat > "$pash_stdin_redir1" &
-    # >&2 echo "STDIN cat pid: $!"
+    ## The redirections below are necessary to ensure that the background `cat` reads from stdin.
+    { cat > "$pash_stdin_redir1" <&3 3<&- & } 3<&0
+    >&2 echo "STDIN cat pid: $!"
     ## Note: We don't connect stdout_redir2 yet, since it has to be bufferred for correctness. 
 
     ## Run the original script
     # ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir1" < "$pash_stdin_redir2" &
-    ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir2" &
+    ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir2" < "$pash_stdin_redir2" &
+    # ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir2" &
     pash_seq_pid=$!
     >&2 echo "Sequential pid: $pash_seq_pid"
 
@@ -125,12 +128,17 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     pash_compiler_pid=$!
     >&2 echo "Compiler pid: $pash_compiler_pid"
 
-    >&2 echo "Still alive: $(still_alive)"
-    ## Wait for either of the two to complete
-    wait -n "$pash_seq_pid" "$pash_compiler_pid"
-    completed_pid_status=$?
+    
+    ## Wait until one of the two (original script, or compiler) die
     alive_pids=$(still_alive)
     >&2 echo "Still alive: $alive_pids"
+    while `list_include_item "$alive_pids" "$pash_seq_pid"` && `list_include_item "$alive_pids" "$pash_compiler_pid"` ; do
+        ## Wait for either of the two to complete
+        wait -n "$pash_seq_pid" "$pash_compiler_pid"
+        completed_pid_status=$?
+        alive_pids=$(still_alive)
+        >&2 echo "Still alive: $alive_pids"
+    done
 
     ## If the sequential is still alive we want to see if the compiler succeeded
     if `list_include_item "$alive_pids" "$pash_seq_pid"` ; then
