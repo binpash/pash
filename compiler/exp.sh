@@ -1,8 +1,21 @@
 #!/bin/bash
 
-echo "Trap set in $BASHPID"
-trap "echo hi > temp ; exit 0" SIGUSR1
+## Kill the original script if the trap is caught
+cleanup()
+{
+    echo seq_pid: $seq_pid ;
+    kill -9 $seq_pid ;
+    exit 0
+}
 
+## Create a trap that handles SIGUSR1 and kills the original script execution
+echo "Trap set in $BASHPID"
+trap cleanup SIGUSR1
+
+## Execute the original script
 echo $BASHPID
-sleep 10000 &
+./exp2.sh &
+seq_pid=$!
 wait
+
+echo "popo"
