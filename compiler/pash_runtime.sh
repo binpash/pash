@@ -1,5 +1,8 @@
 #!/bin/bash
 
+## Abort script if variable is unset
+set -u
+
 ## Check flags
 pash_output_time_flag=0
 pash_execute_flag=1
@@ -93,26 +96,74 @@ pash_sequential_script_file=$1
 
 ## TODO: We also want to avoid executing the compiled script if it doesn't contain any improvement.
 
-pash_compiled_script_file=$(mktemp -u)
-python3.8 pash_runtime.py ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
-pash_runtime_return_code=$?
+## Execute both the sequential and the compiler in parallel and only run the parallel
+## compiled script if the compiler finished before the sequential.
 
-## Count the execution time and execute the compiled script
+still_alive()
+{
+    jobs -p | tr '\n' ' '
+}
+
+## Count the execution time
 pash_exec_time_start=$(date +"%s%N")
+
 if [ "$pash_execute_flag" -eq 1 ]; then
-    ## If the compiler failed, we have to run the sequential
-    if [ "$pash_runtime_return_code" -ne 0 ]; then
-        ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file}
-        # source ${pash_sequential_script_file}
+    ## Run the original script
+    ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} &
+    pash_seq_pid=$!
+    >&2 echo "Sequential pid: $pash_seq_pid"
+
+    ## Run the compiler
+    pash_compiled_script_file=$(mktemp -u)
+    python3.8 pash_runtime.py ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
+    pash_compiler_pid=$!
+    >&2 echo "Compiler pid: $pash_compiler_pid"
+
+    >&2 echo "Still alive: $(still_alive)"
+    ## Wait for either of the two to complete
+    wait -n $pash_seq_pid $pash_compiler_pid
+    completed_pid_status=$?
+    alive_pid=$(still_alive)
+    >&2 echo "Still alive: $alive_pid"
+
+    ## If the sequential is still alive we want to see if the compiler succeeded
+    if [ "$pash_seq_pid" -eq "$alive_pid" ]; then
+        pash_runtime_return_code=$completed_pid_status
+        >&2 echo "Compilation was done first with return code: $pash_runtime_return_code"
+
+        ## We only want to run the parallel if the compiler succeeded.
+        if [ "$pash_runtime_return_code" -eq 0 ]; then
+            kill -n 9 "$pash_seq_pid" 2> /dev/null
+            kill_status=$?
+            wait "$pash_seq_pid" 2> /dev/null
+            >&2 echo "Still alive: $(still_alive)"
+
+            ## If kill failed it means it was already completed, 
+            ## and therefore we do not need to run the parallel.
+            if [ "$kill_status" -eq 0 ]; then
+                >&2 echo "Run parallel"
+                ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_compiled_script_file}
+                pash_runtime_final_status=$?
+            fi
+        else
+            ## If the compiler failed we just wait until the sequential is done.
+            wait -n "$seq_pid"
+            pash_runtime_final_status=$?
+        fi
     else
-        ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_compiled_script_file}
-        # source ${pash_compiled_script_file}
+        >&2 echo "Sequential was done first!"
+        ## If this fails (meaning that compilation is done) we do not care
+        kill -n 9 "$pash_compiler_pid" 2> /dev/null
+        wait "$pash_compiler_pid"  2> /dev/null
+        pash_runtime_final_status=$completed_pid_status
+        >&2 echo "Still alive: $(still_alive)"
     fi
 fi
-pash_exec_time_end=$(date +"%s%N")
-
-## Source back the output variables of the compiled script
+## Source back the output variables of the compiled script. 
+## In all cases we should have executed a script
 source pash_source_declare_vars.sh $pash_output_variables_file
+
+pash_exec_time_end=$(date +"%s%N")
 
 
 ## TODO: Maybe remove the temp file after execution
@@ -123,3 +174,4 @@ if [ "$pash_output_time_flag" -eq 1 ]; then
     >&2 echo "Execution time: $pash_exec_time_ms  ms"
 fi
 
+# exit $pash_runtime_final_status
