@@ -41,6 +41,19 @@ pash_sequential_script_file=$1
 ##       have a finer tuned execution plan depending on this information. For example, if we see that script
 ##       has append to some file we can be carefull and buffer its output using eager.
 
+## Implementation proposal: Use a signal trap
+##
+## ISSUE: It seems that bash waits to handle a trap only after a command that it executes finished execution.
+##        This means that we can't reliably use source and signal traps.
+##
+## POSSIBLE SOLUTION: 
+##        At the moment we use source for two reasons.
+##          1. To see changes in variables in the parent shell.
+##          2. To see local variables in the sourced shell.
+##        To address the above issue, we could avoid using source,
+##        and actually run the original script in a subshell that first reads its parents
+##        local variables and then exports back the variables.
+
 ## NOTE: The intuition about why quick-abort works is that if the compilation succeeds, then the
 ##       script is a DFG, meaning that we know exactly how it affects its environment after completing.
 ##       Therefore, we can go back and stop the already running script without risking unsafe behavior.
