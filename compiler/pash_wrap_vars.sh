@@ -7,7 +7,7 @@ output_vars_file=$2
 
 source pash_source_declare_vars.sh $input_vars_file
 
->&2 echo "Executing script:"
+>&2 echo "Executing script in ${@:3}:"
 >&2 cat "${@:3}"   
 source "${@:3}"
 pash_exec_status=$?
