@@ -4,5 +4,5 @@
 
 
 echo "Hi! I am the sleeper: $BASHPID"
-sleep 10000
+sleep $1
 # wait
