@@ -163,6 +163,9 @@ if [ "$pash_execute_flag" -eq 1 ]; then
 
                 ## TODO: Redirect stdin/stdout so that the parallel one gets them from the start
                 ##       and so that there are no duplicate entries in the stdout.
+                ## TODO: This seems like a non-trivial solution since it requires keeping stdin open, 
+                ##       while "restarting" the eager, making it send its output to a new pipe, and
+                ##       then first reading all from its intermediate file. 
                 ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_compiled_script_file}
                 pash_runtime_final_status=$?
             fi
