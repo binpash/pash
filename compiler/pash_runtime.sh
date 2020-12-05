@@ -14,11 +14,18 @@ do
     fi
 done
 
+## Prepare a file with all shell variables
+pash_runtime_shell_variables_file=$(mktemp -u)
+declare -p > $pash_runtime_shell_variables_file
+
 ## The first argument contains the sequential script. Just running it should work for all tests.
 pash_sequential_script_file=$1
-# >&2 echo "Sequential file in: $1 contains"
-# >&2 cat $1
-# source $1
+pash_output_variables_file=$(mktemp -u)
+>&2 echo "Sequential file in: $1 contains"
+>&2 cat $1
+./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file $1
+source pash_source_declare_vars.sh $pash_output_variables_file
+# >&2 echo "Input vars: $pash_runtime_shell_variables_file --- Output vars: $pash_output_variables_file"
 
 ## Current plan: Optimistic sequential execution with eager in stdin stdout. 
 ## If the compiler succeeds in compiling (and improving) the script and the following two constraints hold:
@@ -83,30 +90,28 @@ pash_sequential_script_file=$1
 
 ## TODO: We also want to avoid executing the compiled script if it doesn't contain any improvement.
 
-## Prepare a file with all shell variables
-pash_runtime_shell_variables_file=$(mktemp -u)
-declare -p > $pash_runtime_shell_variables_file
 
-pash_compiled_script_file=$(mktemp -u)
-python3.8 pash_runtime.py ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
-pash_runtime_return_code=$?
 
-## Count the execution time and execute the compiled script
-pash_exec_time_start=$(date +"%s%N")
-if [ "$pash_execute_flag" -eq 1 ]; then
-    ## If the compiler failed, we have to run the sequential
-    if [ "$pash_runtime_return_code" -ne 0 ]; then
-        source ${pash_sequential_script_file}
-    else
-        source ${pash_compiled_script_file}
-    fi
-fi
-pash_exec_time_end=$(date +"%s%N")
+# pash_compiled_script_file=$(mktemp -u)
+# python3.8 pash_runtime.py ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
+# pash_runtime_return_code=$?
 
-## TODO: Maybe remove the temp file after execution
+# ## Count the execution time and execute the compiled script
+# pash_exec_time_start=$(date +"%s%N")
+# if [ "$pash_execute_flag" -eq 1 ]; then
+#     ## If the compiler failed, we have to run the sequential
+#     if [ "$pash_runtime_return_code" -ne 0 ]; then
+#         source ${pash_sequential_script_file}
+#     else
+#         source ${pash_compiled_script_file}
+#     fi
+# fi
+# pash_exec_time_end=$(date +"%s%N")
 
-## We want the execution time in milliseconds
-if [ "$pash_output_time_flag" -eq 1 ]; then
-    pash_exec_time_ms=$(echo "scale = 3; ($pash_exec_time_end-$pash_exec_time_start)/1000000" | bc)
-    >&2 echo "Execution time: $pash_exec_time_ms  ms"
-fi
+# ## TODO: Maybe remove the temp file after execution
+
+# ## We want the execution time in milliseconds
+# if [ "$pash_output_time_flag" -eq 1 ]; then
+#     pash_exec_time_ms=$(echo "scale = 3; ($pash_exec_time_end-$pash_exec_time_start)/1000000" | bc)
+#     >&2 echo "Execution time: $pash_exec_time_ms  ms"
+# fi
