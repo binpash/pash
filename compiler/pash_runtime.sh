@@ -136,22 +136,34 @@ if [ "$pash_execute_flag" -eq 1 ]; then
             kill -n 9 "$pash_seq_pid" 2> /dev/null
             kill_status=$?
             wait "$pash_seq_pid" 2> /dev/null
+            pash_runtime_final_status=$?
             >&2 echo "Still alive: $(still_alive)"
 
             ## If kill failed it means it was already completed, 
             ## and therefore we do not need to run the parallel.
             if [ "$kill_status" -eq 0 ]; then
                 >&2 echo "Run parallel"
+                ## TODO: Find the outputs/inputs of the DFG and make sure that the outputs 
+                ##       are clean and normal files (and the inputs are normal files)
+
+                ## TODO: Redirect stdin/stdout so that the parallel one gets them from the start
+                ##       and so that there are no duplicate entries in the stdout.
                 ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_compiled_script_file}
                 pash_runtime_final_status=$?
             fi
         else
             ## If the compiler failed we just wait until the sequential is done.
-            wait -n "$seq_pid"
+
+            ## TODO: Redirect eagers to stdin + stdout
+
+            wait -n "$pash_seq_pid"
             pash_runtime_final_status=$?
         fi
     else
         >&2 echo "Sequential was done first!"
+
+        ## TODO: Redirect eagers to stdin + stdout
+
         ## If this fails (meaning that compilation is done) we do not care
         kill -n 9 "$pash_compiler_pid" 2> /dev/null
         wait "$pash_compiler_pid"  2> /dev/null
@@ -165,6 +177,8 @@ source pash_source_declare_vars.sh $pash_output_variables_file
 
 pash_exec_time_end=$(date +"%s%N")
 
+## TODO: Before merging the PR make sure that quick-abort is configurable.
+
 
 ## TODO: Maybe remove the temp file after execution
 
@@ -174,4 +188,5 @@ if [ "$pash_output_time_flag" -eq 1 ]; then
     >&2 echo "Execution time: $pash_exec_time_ms  ms"
 fi
 
-# exit $pash_runtime_final_status
+>&2 echo "Final status: $pash_runtime_final_status"
+(exit "$pash_runtime_final_status")
