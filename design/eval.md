@@ -14,13 +14,19 @@
 
 # Benchmarks
 
-Debian install scripts or a huge class set of scripts
 
-A diverse set of benchmarks --- Further scripts:
+
+A diverse set of benchmarks:
+* POSIX test suite
+* Debian install scripts 
+* Some other big set of scripts
+
+Further scripts:
 * [A short ML pipeline](https://news.ycombinator.com/item?id=6412190)
 * [Data science commands](https://datascienceworkshops.com/blog/seven-command-line-tools-for-data-science/)
 * [PCAP processing](https://nanxiao.me/en/process-large-pcap-file/)
 * [Tokenization](https://github.com/etnichols/Stanford-NLP-Notes)
+* [Unix for poets](https://www.cs.upc.edu/~padro/Unixforpoets.pdf)
 
 * [bio-inf oneliners](https://github.com/crazyhottommy/oneliners)
 * [data science toolbox](https://www.datascienceatthecommandline.com/1e/chapter-8-parallel-pipelines.html)
@@ -32,11 +38,13 @@ Interactive scripts --- A collection of `bash` history files:
 * [using HISTFILE](https://github.com/search?l=Shell&q=histfile&type=Code)
 * [using .bash_history](https://github.com/search?l=Shell&q=.bash_history&type=Code)
 
-Porting the list of benchmarks [from DGSH](https://github.com/dspinellis/dgsh/tree/master/example)
+Aliases?
+
+Benchmarks [from DGSH](https://github.com/dspinellis/dgsh/tree/master/example)
 
 One thing that matters is latency, and it would address this well.
 
-Number of CPUs
-Memory size
-eager: SSD vs. HDD vs. memory size 
-Linux, FreeBSD, MacOS --- but coreutils
+* Number of CPUs
+* Memory size
+* eager: SSD vs. HDD vs. memory size 
+* Linux, FreeBSD, MacOS --- but coreutils
