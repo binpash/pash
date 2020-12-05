@@ -59,6 +59,10 @@ def add_common_arguments(parser):
     parser.add_argument("--no_eager",
                         help="disable eager nodes before merging nodes",
                         action="store_true")
+    parser.add_argument("--speculation",
+                        help="determines the speculation done by the runtime. By default it does no speculation, i.e. if the compilation succeeds it executes the parallel. Quick-abort runs the original from the start and then if the compilation succeeds, aborts the original and runs the parallel.",
+                        choices=['no_spec', 'quick_abort'],
+                        default='no_spec')
     parser.add_argument("--termination",
                         help="determines the termination behavior of the DFG. By default it cleans up the graph after the final node dies but it can also drain all streams until depletion.",
                         choices=['clean_up_graph', 'drain_stream'],
@@ -86,6 +90,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--no_eager"))
     arguments.append(string_to_argument("--termination"))
     arguments.append(string_to_argument(pash_arguments.termination))
+    arguments.append(string_to_argument("--speculation"))
+    arguments.append(string_to_argument(pash_arguments.speculation))
     arguments.append(string_to_argument("--split_fan_out"))
     arguments.append(string_to_argument(str(pash_arguments.split_fan_out)))
     if(not pash_arguments.config_path == ""):
