@@ -52,6 +52,14 @@ def shell_backend(graph_json, output_dir, args):
     output_script_commands.append(rm_com)
     output_script_commands.append(mkfifo_com)
 
+    ## Redirect stdin
+    ## TODO: Assume that only stdin can be an in_fid.
+    assert(len(in_fids) <= 1)
+    for in_fid in in_fids:
+        ## TODO: Is this a hack?
+        in_com = '{{ cat > "{}" <&3 3<&- & }} 3<&0'.format(in_fid)
+        output_script_commands.append(in_com)
+
     ## Execute nodes
     processes = [execute_node(node, drain_streams, auto_split)
                  for node_id, node in nodes.items()]
@@ -87,7 +95,7 @@ def shell_backend(graph_json, output_dir, args):
     ## TODO: Cat all outputs together if a specific flag is given
 
     # print("Distributed translation execution time:", end_time - start_time)
-    return "\n".join(output_script_commands)
+    return ("\n".join(output_script_commands) + "\n")
 
 def remove_fifos(fids):
     ## We remove one fifo at a time because the big benchmarks crash
