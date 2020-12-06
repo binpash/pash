@@ -102,9 +102,11 @@ def main():
     output_dir = sys.argv[4]
 
     try:
-        env_suffix = sys.argv[5]
+        env_suffix = "env_" + sys.argv[5]
+        input_f_suffix = "_" + sys.argv[5]
     except:
         env_suffix = "env"
+        input_f_suffix = ""
 
     ## This script takes a microbenchmark script as input, finds the $IN
     ## occurence in it and then generates an intermediary script with many
@@ -115,6 +117,8 @@ def main():
     output_env = os.path.join(output_dir, '{}_{}_env.sh'.format(name_of_script, number_of_inputs))
     input_funs = os.path.join(input_dir, name_of_script + "_funs.sh")
     output_funs = os.path.join(output_dir, '{}_{}_funs.sh'.format(name_of_script, number_of_inputs))
+    input_in_f = os.path.join(input_dir, name_of_script + input_f_suffix + ".in")
+    output_in_f = os.path.join(output_dir, '{}_{}.in'.format(name_of_script, number_of_inputs, input_f_suffix))
 
     ## Find and split input files given the environment file
     new_input_files = find_and_split_inputs(input_env, output_dir, number_of_inputs)
@@ -125,6 +129,10 @@ def main():
     ## Copy the funs file (if it exists)
     if os.path.exists(input_funs):
         copyfile(input_funs, output_funs)
+
+    ## Copy the standard input file (if it exists)
+    if os.path.exists(input_in_f):
+        copyfile(input_in_f, output_in_f)
 
     generate_seq_script(input_script, output_script, new_input_files)
 
