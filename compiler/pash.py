@@ -40,21 +40,26 @@ def main():
     input_script_wo_extension, _input_script_extension = os.path.splitext(input_script_path)
     ir_filename = input_script_wo_extension + ".ir"
     save_asts_json(preprocessed_asts, ir_filename)
-    from_ir_to_shell_file(ir_filename, args.output)
+
+    preprocessed_output_filename = os.path.join("/tmp", get_random_string())
+    if(args.output_preprocessed):
+        log("Preprocessed script stored in:", preprocessed_output_filename)
+    from_ir_to_shell_file(ir_filename, preprocessed_output_filename)
 
     preprocessing_end_time = datetime.now()
     print_time_delta("Preprocessing", preprocessing_start_time, preprocessing_end_time, args)
 
     ## 5. Execute the preprocessed version of the input script
     if(not args.preprocess_only):
-        execute_script(args.output)
+        execute_script(preprocessed_output_filename)
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("input", help="the script to be compiled and executed")
-    parser.add_argument("output", help="the path of the compiled shell script")
     parser.add_argument("--preprocess_only", help="only preprocess the input script and not execute it",
+                        action="store_true")
+    parser.add_argument("--output_preprocessed", help="whether to output the preprocessed script",
                         action="store_true")
     config.add_common_arguments(parser)
     args = parser.parse_args()
