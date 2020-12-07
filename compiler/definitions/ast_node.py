@@ -3,6 +3,7 @@ from json import JSONEncoder
 from definitions.ast_node_c import *
 from definitions.no_match_exception import *
 from ir_utils import *
+from util import *
 
 
 ## TODO: Create subclasses for all different types of AstNodes
@@ -42,6 +43,10 @@ class AstNode:
             self.argument = args[1]
             self.body = args[2]
             self.variable = args[3]
+        elif self.construct is AstNodeConstructor.IF:
+            self.cond = args[0]
+            self.then_b = args[1]
+            self.else_b = args[2]
         else:
             raise ValueError()
     
@@ -61,6 +66,7 @@ class AstNode:
         elif self.construct is AstNodeConstructor.FOR:
             output = "for {} in {}; do ({})".format(self.variable, self.argument, self.body)
             return output
+        log(self.construct)
         return NotImplemented 
 
     def check(self, **kwargs):
@@ -89,6 +95,28 @@ class AstNode:
             json_output = make_kv(self.construct.value,
                                   [self.is_background,
                                    self.items])
+        elif self.construct is AstNodeConstructor.DEFUN:
+            json_output = make_kv(self.construct.value,
+                                  [self.line_number,
+                                   self.name,
+                                   self.body])
+        elif self.construct is AstNodeConstructor.IF:
+            json_output = make_kv(self.construct.value,
+                                  [self.cond,
+                                   self.then_b,
+                                   self.else_b])
+        elif self.construct is AstNodeConstructor.SEMI:
+            json_output = make_kv(self.construct.value,
+                                  [self.left_operand,
+                                   self.right_operand])
+        elif self.construct is AstNodeConstructor.OR:
+            json_output = make_kv(self.construct.value,
+                                  [self.left_operand,
+                                   self.right_operand])
+        elif self.construct is AstNodeConstructor.AND:
+            json_output = make_kv(self.construct.value,
+                                  [self.left_operand,
+                                   self.right_operand])
         else:
             log(self)
             json_output = NotImplemented

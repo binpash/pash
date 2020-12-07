@@ -53,7 +53,17 @@ preprocess_cases = {
     "Command": (lambda irFileGen, config:
                 lambda ast_node: preprocess_node_command(ast_node, irFileGen, config)),
     "For": (lambda irFileGen, config:
-            lambda ast_node: preprocess_node_for(ast_node, irFileGen, config))
+            lambda ast_node: preprocess_node_for(ast_node, irFileGen, config)),
+    "Defun": (lambda irFileGen, config:
+              lambda ast_node: preprocess_node_defun(ast_node, irFileGen, config)),
+    "Semi": (lambda irFileGen, config:
+             lambda ast_node: preprocess_node_semi(ast_node, irFileGen, config)),
+    "Or": (lambda irFileGen, config:
+           lambda ast_node: preprocess_node_or(ast_node, irFileGen, config)),
+    "And": (lambda irFileGen, config:
+            lambda ast_node: preprocess_node_and(ast_node, irFileGen, config)),
+    "If": (lambda irFileGen, config:
+            lambda ast_node: preprocess_node_if(ast_node, irFileGen, config))
 }
 
 ir_cases = {
@@ -568,6 +578,8 @@ def preprocess_node_command(ast_node, _irFileGen, _config):
     ## regions.
     return ast_node, True, False
 
+## TODO: For all of the constructs below, think whether we are being too conservative
+
 ## TODO: This is not efficient at all since it calls the PaSh runtime everytime the loop is entered.
 ##       We have to find a way to improve that.
 def preprocess_node_for(ast_node, irFileGen, config):
@@ -576,6 +588,51 @@ def preprocess_node_for(ast_node, irFileGen, config):
     ast_node.body = preprocessed_body
     return ast_node, False, False
 
+## This is the same as the one for `For`
+def preprocess_node_defun(ast_node, irFileGen, config):
+    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.body = preprocessed_body
+    return ast_node, False, False
+
+## TODO: If the preprocessed is not maximal we actually need to combine it with the one on the right.
+def preprocess_node_semi(ast_node, irFileGen, config):
+    # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
+    preprocessed_left = preprocess_close_node(ast_node.left_operand, irFileGen, config)
+    preprocessed_right = preprocess_close_node(ast_node.right_operand, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.left_operand = preprocessed_left
+    ast_node.right_operand = preprocessed_right
+    return ast_node, False, False
+
+def preprocess_node_and(ast_node, irFileGen, config):
+    # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
+    preprocessed_left = preprocess_close_node(ast_node.left_operand, irFileGen, config)
+    preprocessed_right = preprocess_close_node(ast_node.right_operand, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.left_operand = preprocessed_left
+    ast_node.right_operand = preprocessed_right
+    return ast_node, False, False
+
+def preprocess_node_or(ast_node, irFileGen, config):
+    # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
+    preprocessed_left = preprocess_close_node(ast_node.left_operand, irFileGen, config)
+    preprocessed_right = preprocess_close_node(ast_node.right_operand, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.left_operand = preprocessed_left
+    ast_node.right_operand = preprocessed_right
+    return ast_node, False, False
+
+def preprocess_node_if(ast_node, irFileGen, config):
+    # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
+    preprocessed_cond = preprocess_close_node(ast_node.cond, irFileGen, config)
+    preprocessed_then = preprocess_close_node(ast_node.then_b, irFileGen, config)
+    preprocessed_else = preprocess_close_node(ast_node.else_b, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.cond = preprocessed_cond
+    ast_node.then_b = preprocessed_then
+    ast_node.else_b = preprocessed_else
+    return ast_node, False, False
 
 ## TODO: All the replace parts might need to be deleteD
 
