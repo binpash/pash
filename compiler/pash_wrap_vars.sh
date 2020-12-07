@@ -1,11 +1,14 @@
 #!/bin/bash
 
+## File directory
+RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
+
 input_vars_file=$1
 output_vars_file=$2
 
 # >&2 echo $input_vars_file
 
-source pash_source_declare_vars.sh $input_vars_file
+source "$RUNTIME_DIR/pash_source_declare_vars.sh" $input_vars_file
 
 >&2 echo "Executing script in ${@:3}:"
 >&2 cat "${@:3}"   

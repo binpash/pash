@@ -3,6 +3,9 @@
 ## Abort script if variable is unset
 set -u
 
+## File directory
+RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
+
 ## Check flags
 pash_output_time_flag=0
 pash_execute_flag=1
@@ -60,28 +63,26 @@ pash_compiled_script_file=$(mktemp -u)
 pash_exec_time_start=$(date +"%s%N")
 
 if [ "$pash_speculation_flag" -eq 1 ]; then
-    source pash_runtime_quick_abort.sh
+    source "$RUNTIME_DIR/pash_runtime_quick_abort.sh"
 else        
-    python3.8 pash_runtime.py ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
+    python3.8 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
     pash_runtime_return_code=$?
 
     ## Count the execution time and execute the compiled script
     if [ "$pash_execute_flag" -eq 1 ]; then
         ## If the compiler failed, we have to run the sequential
         if [ "$pash_runtime_return_code" -ne 0 ]; then
-            # source ${pash_sequential_script_file}
-            ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file}
+            "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file}
             pash_runtime_final_status=$?
         else
-            ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_compiled_script_file}
-            # source ${pash_compiled_script_file}
+            "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_compiled_script_file}
             pash_runtime_final_status=$?
         fi
     fi
 fi
 ## Source back the output variables of the compiled script. 
 ## In all cases we should have executed a script
-source pash_source_declare_vars.sh $pash_output_variables_file
+source "$RUNTIME_DIR/pash_source_declare_vars.sh" $pash_output_variables_file
 
 pash_exec_time_end=$(date +"%s%N")
 
