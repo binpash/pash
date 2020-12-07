@@ -38,7 +38,8 @@ def main():
 
     ## 4. Translate the new AST back to shell syntax
     input_script_wo_extension, _input_script_extension = os.path.splitext(input_script_path)
-    ir_filename = input_script_wo_extension + ".ir"
+    input_script_basename = os.path.basename(input_script_wo_extension)
+    ir_filename = os.path.join("/tmp", get_random_string() + "_" + input_script_basename + ".ir")
     save_asts_json(preprocessed_asts, ir_filename)
 
     preprocessed_output_filename = os.path.join("/tmp", get_random_string())
