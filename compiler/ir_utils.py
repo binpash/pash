@@ -1,5 +1,7 @@
 ### Utils
 
+from util import *
+
 ##
 ## Separate the option from the non-option command arguments
 ##
@@ -83,8 +85,9 @@ def format_arg_char(arg_char):
         else:
             return '\{}'.format(chr(val))
     else:
+        log("Cannot format arg_char:", arg_char)
         ## TODO: Make this correct
-        return key
+        raise NotImplementedError
 
 ## This function gets a key and a value from the ast json format
 def get_kv(dic):
