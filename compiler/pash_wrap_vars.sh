@@ -14,5 +14,5 @@ source "$RUNTIME_DIR/pash_source_declare_vars.sh" $input_vars_file
 >&2 cat "${@:3}"   
 source "${@:3}"
 pash_exec_status=$?
-declare -p > $output_vars_file
+source "$RUNTIME_DIR/pash_declare_vars.sh" $output_vars_file
 (exit "$pash_exec_status")
