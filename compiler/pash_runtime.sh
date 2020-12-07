@@ -41,7 +41,7 @@ done
 
 ## Prepare a file with all shell variables
 pash_runtime_shell_variables_file=$(mktemp -u)
-declare -p > $pash_runtime_shell_variables_file
+source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
 
 ## Prepare a file for the output shell variables to be saved in
 pash_output_variables_file=$(mktemp -u)
