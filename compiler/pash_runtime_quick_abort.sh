@@ -1,5 +1,8 @@
 #!/bin/bash
 
+## File directory
+RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
+
 ## Current plan: Optimistic sequential execution with eager in stdin stdout. 
 ## If the compiler succeeds in compiling (and improving) the script and the following two constraints hold:
 ##  (1) The outputs of the DFG are not appended
@@ -107,7 +110,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
 
 
     ## TODO: Find the eager directory correctly
-    ../evaluation/tools/eager "$pash_stdin_redir1" "$pash_stdin_redir2" "$pash_stdin_eager_file" &
+    "$RUNTIME_DIR/../evaluation/tools/eager" "$pash_stdin_redir1" "$pash_stdin_redir2" "$pash_stdin_eager_file" &
     >&2 echo "STDIN eager pid: $!"
     # ../evaluation/tools/eager "$pash_stdout_redir1" "$pash_stdout_redir2" "$pash_stdout_eager_file" &
     # >&2 echo "STDOUT eager pid: $!"
@@ -117,9 +120,9 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     ## Note: We don't connect stdout_redir2 yet, since it has to be bufferred for correctness. 
 
     ## Run the original script
-    # ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir1" < "$pash_stdin_redir2" &
-    ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir2" < "$pash_stdin_redir2" &
-    # ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir2" &
+    # "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir1" < "$pash_stdin_redir2" &
+    "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir2" < "$pash_stdin_redir2" &
+    # "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir2" &
     pash_seq_pid=$!
     >&2 echo "Sequential pid: $pash_seq_pid"
 
@@ -166,7 +169,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
                 ## TODO: This seems like a non-trivial solution since it requires keeping stdin open, 
                 ##       while "restarting" the eager, making it send its output to a new pipe, and
                 ##       then first reading all from its intermediate file. 
-                ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_compiled_script_file}
+                "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_compiled_script_file}
                 pash_runtime_final_status=$?
             fi
         else
