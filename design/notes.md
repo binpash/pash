@@ -171,3 +171,52 @@ Approach:
   
   A `safe_expand` procedure walks over things and expands things that
   it deems safe.
+
+# Evaluation
+
+How many programs do we look at?
+
+IDEA: take a tiered approach
+  - For N=3000+, just show correctness: you get the same output.
+  - For N=30-100, detailed argumentation about why we have a nice, diverse set of inputs.
+      Pipelines from different domains
+      Interactive work (show we don't disrupt the interactive/exploratory feel)
+
+Hardware configs
+  Big server
+  Pro laptop
+  Normal laptop
+  Chromebook level
+
+  # of CPUs
+  RAM
+  Disk type?
+
+Software configs
+  Linux distros
+  Darwin/macOS
+  FreeBSD
+  ChromeOS
+  
+  In VM
+  In Docker
+
+Parameters
+  Specified parallelism factors
+
+# Ensemble/early abort mechanism
+
+Compiler only succeeds on idempotent programs.
+Start the sequential version.
+  ... if compiler succeeds, kill sequential, delete its outputs, and run the compiler's output.
+  
+ISSUES:
+  - appends and other side-effects
+  - non-standard files (FIFOs, /dev, etc.; really, just a form of side effect)
+  
+APPROACHES:
+  - use `eager` to buffer output
+  - use cgroup/namespaces/overlayfs to contain the speculative run
+  
+LONGER TERM:
+  - some kind of pre-analysis/decision making before speculation

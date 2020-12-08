@@ -9,8 +9,8 @@
                 "operands": ["-d",
                              "--delete"]
             },
-            "class": "pure",
-            "comment": "Not sure if this should be pure or stateless",
+            "class": "stateless",
+            "comment": "KK (pure): Not sure if this should be pure or stateless",
             "inputs": ["stdin"],
             "outputs": ["stdout"]
         },

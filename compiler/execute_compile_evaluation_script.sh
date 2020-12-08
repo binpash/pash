@@ -35,24 +35,36 @@ prefix="${directory}${experiment}"
 env_file="${prefix}_env.sh"
 funs_file="${prefix}_funs.sh"
 seq_script="${prefix}_seq.sh"
-distr_script="${prefix}_distr.sh"
+input_file="${prefix}.in"
 
 seq_output="${directory}/${microbenchmark}_seq_output"
 
 echo "Environment:"
 # cat $env_file
 . $env_file
-export $(cut -d= -f1 $env_file)
+vars_to_export=$(cut -d= -f1 $env_file)
+if [ ! -z "$vars_to_export" ]; then
+    export $vars_to_export
+fi
 
 ## Export necessary functions
-if [ -f $funs_file ]; then
+if [ -f "$funs_file" ]; then
     source $funs_file
 fi
+
+## Redirect the input if there is an input file
+stdin_redir="/dev/null"
+if [ -f "$input_file" ]; then
+    stdin_redir="$(cat "$input_file")"
+    echo "Has input file: $stdin_redir"
+fi
+
+## TODO: Extend this script to give input to some arguments from stdin.
 
 if [ "$execute_seq_flag" -eq 1 ]; then
     echo "Sequential:"
     cat $seq_script
-    { time /bin/bash $seq_script > $seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
+    cat $stdin_redir | { time /bin/bash $seq_script > $seq_output ; } 2> >(tee "${results}${experiment}_seq.time" >&2)
 else
     echo "Not executing sequential..."
 fi
@@ -66,11 +78,6 @@ if [ "$auto_split_flag" -eq 1 ]; then
     eager_opt=""
     auto_split_opt="--split_fan_out ${n_in}"
     distr_result_filename="${results}${experiment}_distr_auto_split.time"
-    ## TODO: Push this if-then-else in the outside script. Also make the split the default.
-    if [ "${microbenchmark}" != "bigrams" ] && [ "${microbenchmark}" != "spell" ] && [ "${microbenchmark}" != "double_sort" ] && [ "${microbenchmark}" != "max_temp_p123" ]; then
-        echo "No reason to split on one-liner: ${microbenchmark}"
-        exit
-    fi
 elif [ "$eager_flag" -eq 1 ]; then
     echo "Distributed:"
     eager_opt=""
@@ -91,8 +98,10 @@ else
     distr_result_filename="${results}${experiment}_distr_no_eager.time"
 fi
 
-{ time python3.8 $PASH_TOP/compiler/pash.py --output_optimized $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script $distr_script ; } 2> >(tee "${distr_result_filename}" >&2)
+## Make the redirected output dir if it doesn't exist
+mkdir -p /tmp/distr_output
 
-echo "Checking for equivalence..."
+cat $stdin_redir | { time python3.8 $PASH_TOP/compiler/pash.py --speculation no_spec --output_preprocessed --output_optimized $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script ; } 1> /tmp/distr_output/0 2> >(tee "${distr_result_filename}" >&2) &&
+echo "Checking for equivalence..." &&
 diff -s $seq_output /tmp/distr_output/0 | tee -a "${distr_result_filename}"
 

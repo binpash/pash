@@ -4,6 +4,7 @@ import subprocess
 import yaml
 
 from ir_utils import *
+from util import *
 
 ## Global
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
@@ -18,6 +19,7 @@ PRINTER_BINARY = os.path.join(PASH_TOP, "parser/json_to_shell.native")
 
 PYTHON_VERSION = "python3.8"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
+RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 
 config = {}
 annotations = []
@@ -57,6 +59,10 @@ def add_common_arguments(parser):
     parser.add_argument("--no_eager",
                         help="disable eager nodes before merging nodes",
                         action="store_true")
+    parser.add_argument("--speculation",
+                        help="determines the speculation done by the runtime. By default it does no speculation, i.e. if the compilation succeeds it executes the parallel. Quick-abort runs the original from the start and then if the compilation succeeds, aborts the original and runs the parallel.",
+                        choices=['no_spec', 'quick_abort'],
+                        default='no_spec')
     parser.add_argument("--termination",
                         help="determines the termination behavior of the DFG. By default it cleans up the graph after the final node dies but it can also drain all streams until depletion.",
                         choices=['clean_up_graph', 'drain_stream'],
@@ -84,12 +90,52 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--no_eager"))
     arguments.append(string_to_argument("--termination"))
     arguments.append(string_to_argument(pash_arguments.termination))
+    arguments.append(string_to_argument("--speculation"))
+    arguments.append(string_to_argument(pash_arguments.speculation))
     arguments.append(string_to_argument("--split_fan_out"))
     arguments.append(string_to_argument(str(pash_arguments.split_fan_out)))
     if(not pash_arguments.config_path == ""):
         arguments.append(string_to_argument("--config_path"))
         arguments.append(string_to_argument(pash_arguments.config_path))
     return arguments
+
+##
+## Read a shell variables file
+##
+
+def read_vars_file(var_file_path):
+    global config
+
+    config['shell_variables'] = None
+    config['shell_variables_file_path'] = var_file_path
+    if(not var_file_path is None):
+        vars_dict = {}
+        with open(var_file_path) as f:
+            lines = [line.rstrip() for line in f.readlines()]
+
+        for line in lines:
+            words = line.split(' ')
+            _export_or_typeset = words[0]
+            rest = " ".join(words[1:])
+
+            space_index = rest.find(' ')
+            eq_index = rest.find('=')
+            var_type = None
+            ## This means we have a type
+            if(space_index < eq_index and not space_index == -1):
+                var_type = rest[:space_index]
+                rest = rest[(space_index+1):]
+                eq_index = rest.find('=')
+            ## We now find the name and value
+            var_name = rest[:eq_index] 
+            var_value = rest[(eq_index+1):]
+
+            vars_dict[var_name] = (var_type, var_value)
+
+        config['shell_variables'] = vars_dict
+
+
+
 
 ##
 ## Load annotation files
@@ -101,8 +147,8 @@ def load_annotation_file(abs_annotation_filename):
             annotation = json.load(annotation_file)
             return [annotation]
         except json.JSONDecodeError as err:
-            print("WARNING: Could not parse annotation for file:", abs_annotation_filename)
-            print("|-- {}".format(err))
+            log("WARNING: Could not parse annotation for file:", abs_annotation_filename)
+            log("|-- {}".format(err))
             return []
 
 def load_annotation_files(annotation_dir):

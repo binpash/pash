@@ -9,7 +9,7 @@ import subprocess
 def parse_shell(input_script_path):
     parser_output = subprocess.run([config.PARSER_BINARY, input_script_path], capture_output=True, text=True)
     if (not parser_output.returncode == 0):
-        print(parser_output.stderr)
+        log(parser_output.stderr)
         parser_output.check_returncode()
     return parser_output.stdout
 
@@ -51,7 +51,7 @@ def ir_to_shell(ir, new_file=False):
 def shell_file_to_ir(filename, new_file=False):
     parser_output = subprocess.run([config.PARSER_BINARY, filename], capture_output=True, text=True)
     if (not parser_output.returncode == 0):
-        print(parser_output.stderr)
+        log(parser_output.stderr)
         parser_output.check_returncode()
     if (new_file):
         with open(new_file, 'w') as f:
@@ -63,7 +63,7 @@ def shell_file_to_ir(filename, new_file=False):
 def ir_file_to_shell(filename, new_file=False):
     printer_output = subprocess.run([config.PRINTER_BINARY, filename], capture_output=True, text=True)
     if (not printer_output.returncode == 0):
-        print(printer_output.stderr)
+        log(printer_output.stderr)
         printer_output.check_returncode()
     if (new_file):
         with open(new_file, 'w') as f:
