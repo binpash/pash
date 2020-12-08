@@ -10,7 +10,14 @@
 #include <sys/select.h>
 #include <unistd.h>
 #include <sys/time.h>
+
+#ifdef __APPLE__
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/uio.h>
+#else
 #include <sys/sendfile.h>
+#endif
 
 #ifndef __DEBUG__
 #define __DEBUG__
@@ -57,8 +64,13 @@ int readInputWriteToFile(int inputFd, int intermediateWriter, int bufferSize);
 /* void bufferedOutputRestIntermediateFile(int outputFd, int intermediateWriter, int intermediateReader, */
 /*                                         char* outputBuf, int* doneWriting); */
 
+#ifdef __APPLE__
+off_t safeWriteOutput(int outputFd, int intermediateReader,
+                        off_t intermediateFileDiff, int* doneWriting);
+#else
 ssize_t safeWriteOutput(int outputFd, int intermediateReader,
                         off_t intermediateFileDiff, int* doneWriting);
+#endif
 
 void outputRestIntermediateFile(int outputFd, int intermediateWriter,
                                 int intermediateReader, int* doneWriting);

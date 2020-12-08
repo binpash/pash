@@ -78,6 +78,7 @@ int blockOpenOutput(const char *pathname) {
 // Returns the number of bytes read, or 0 if the input was done.
 int readInputWriteToFile(int inputFd, int intermediateWriter, int bufferSize) {
 
+//FIXME --- splice needs GNU_SOURCE
     ssize_t res = splice(inputFd, 0, intermediateWriter, 0, bufferSize, 0);
     if (res < 0) {
         printf("Error: Couldn't read from input!\n");
@@ -182,6 +183,23 @@ void bufferedOutputRestIntermediateFile(int outputFd, int intermediateWriter, in
     return;
 }
 
+// https://stackoverflow.com/questions/8252698/sys-sendfile-h-not-found-gcc
+// https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/sendfile.2.html
+#ifdef __APPLE__
+off_t safeWriteOutput(int outputFd, int intermediateReader,
+                        off_t intermediateFileDiff, int* doneWriting) {
+    sendfile(intermediateReader, outputFd, 0, &intermediateFileDiff, NULL, 0);
+    if (errno != EAGAIN && intermediateFileDiff < 0) {
+        printf("ERROR: %s, when outputing %ld bytes!\n", strerror(errno), intermediateFileDiff);
+        exit(1);
+    } else if (intermediateFileDiff == 0) {
+        debug("We tried to write %d, but output is done!\n", intermediateFileDiff);
+        *doneWriting = 1;
+    }
+
+    return intermediateFileDiff;
+}
+#else
 ssize_t safeWriteOutput(int outputFd, int intermediateReader,
                         off_t intermediateFileDiff, int* doneWriting) {
     ssize_t res;
@@ -195,12 +213,17 @@ ssize_t safeWriteOutput(int outputFd, int intermediateReader,
     }
     return res;
 }
+#endif
 
 void outputRestIntermediateFile(int outputFd, int intermediateWriter,
                                 int intermediateReader, int* doneWriting) {
     off_t finalOffset = safeLseek(intermediateWriter);
     off_t intermediateFileBytesToOutput;
+#ifdef __APPLE__
+    off_t res;
+#else
     ssize_t res;
+#endif
     do {
         intermediateFileBytesToOutput =
              finalOffset - safeLseek(intermediateReader);
