@@ -6,4 +6,8 @@
 ## TODO: Does this work with arrays
 
 ## TODO: Error handling if the argument is empty?
-pash_redir_all_output source $1
+if [ "$PASH_REDIR" == '&2' ]; then
+    >&2 source $1
+else
+    >>"$PASH_REDIR" 2>&1 source $1
+fi
