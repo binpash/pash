@@ -29,6 +29,10 @@ class AstNode:
             self.line_number = args[0]
             self.body = args[1]
             self.redir_list = args[2]
+        elif self.construct is AstNodeConstructor.SUBSHELL:
+            self.line_number = args[0]
+            self.body = args[1]
+            self.redir_list = args[2]
         elif self.construct in [AstNodeConstructor.AND, AstNodeConstructor.OR, AstNodeConstructor.SEMI]:
             self.left_operand = args[0]
             self.right_operand = args[1]
@@ -106,6 +110,11 @@ class AstNode:
                                    self.arguments,
                                    self.redir_list])
         elif self.construct is AstNodeConstructor.BACKGROUND:
+            json_output = make_kv(self.construct.value,
+                                  [self.line_number,
+                                   self.body,
+                                   self.redir_list])
+        elif self.construct is AstNodeConstructor.SUBSHELL:
             json_output = make_kv(self.construct.value,
                                   [self.line_number,
                                    self.body,
