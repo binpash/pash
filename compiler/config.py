@@ -4,7 +4,6 @@ import subprocess
 import yaml
 
 from ir_utils import *
-from util import *
 
 ## Global
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
@@ -50,12 +49,15 @@ def add_common_arguments(parser):
     parser.add_argument("--compile_optimize_only",
                         help="only preprocess, compile, and optimize the input script and not execute it",
                         action="store_true")
-    parser.add_argument("--output_time", help="output the the time it took for every step in stderr",
+    parser.add_argument("--output_time", help="output the the time it took for every step",
                         action="store_true")
     parser.add_argument("--output_optimized",
                         help="output the optimized shell script that"
                         "was produced by the planner for inspection",
                         action="store_true")
+    parser.add_argument("--log_file", 
+                        help="the file to log into. Defaults to stderr.",
+                        default="")
     parser.add_argument("--no_eager",
                         help="disable eager nodes before merging nodes",
                         action="store_true")
@@ -86,6 +88,9 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--output_time"))
     if (pash_arguments.output_optimized):
         arguments.append(string_to_argument("--output_optimized"))
+    if(not pash_arguments.log_file == ""):
+        arguments.append(string_to_argument("--log_file"))
+        arguments.append(string_to_argument(pash_arguments.log_file))
     if (pash_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
     arguments.append(string_to_argument("--termination"))
@@ -98,6 +103,12 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--config_path"))
         arguments.append(string_to_argument(pash_arguments.config_path))
     return arguments
+
+def init_log_file():
+    global pash_args
+    if(not pash_args.log_file == ""):
+        with open(pash_args.log_file, "w") as f:
+            pass
 
 ##
 ## Read a shell variables file
@@ -133,34 +144,6 @@ def read_vars_file(var_file_path):
             vars_dict[var_name] = (var_type, var_value)
 
         config['shell_variables'] = vars_dict
-
-
-
-
-##
-## Load annotation files
-##
-
-def load_annotation_file(abs_annotation_filename):
-    with open(abs_annotation_filename) as annotation_file:
-        try:
-            annotation = json.load(annotation_file)
-            return [annotation]
-        except json.JSONDecodeError as err:
-            log("WARNING: Could not parse annotation for file:", abs_annotation_filename)
-            log("|-- {}".format(err))
-            return []
-
-def load_annotation_files(annotation_dir):
-    global annotations
-    if(not os.path.isabs(annotation_dir)):
-        annotation_dir = os.path.join(PASH_TOP, annotation_dir)
-
-    for (dirpath, dirnames, filenames) in os.walk(annotation_dir):
-        json_filenames = [os.path.join(dirpath, filename) for filename in filenames
-                          if filename.endswith(".json")]
-        curr_annotations = [ann for filename in json_filenames for ann in load_annotation_file(filename) ]
-        annotations += curr_annotations
 
 
 # TODO load command class file path from config

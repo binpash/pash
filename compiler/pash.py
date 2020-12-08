@@ -3,6 +3,7 @@ import subprocess
 import argparse
 from datetime import datetime
 
+from annotations import *
 from ast_to_ir import *
 from pash_runtime import *
 from ir import *
@@ -16,6 +17,9 @@ def main():
     ## Parse arguments
     args = parse_args()
     config.pash_args = args
+    
+    ## Initialize the log file
+    config.init_log_file()
 
     if not config.config:
         config.load_config(args.config_path)
@@ -23,7 +27,7 @@ def main():
     ## Load annotations
     ## TODO: The annotations are not used in the preprocessing step anymore
     ##       so we can avoid loading the annotation files here.
-    # config.load_annotation_files(config.config['distr_planner']['annotations_dir'])
+    # config.annotations = load_annotation_files(config.config['distr_planner']['annotations_dir'])
 
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
     input_script_path = args.input

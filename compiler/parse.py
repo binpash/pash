@@ -5,6 +5,7 @@ import re
 import config
 import subprocess
 
+from util import *
 
 def parse_shell(input_script_path):
     parser_output = subprocess.run([config.PARSER_BINARY, input_script_path], capture_output=True, text=True)
