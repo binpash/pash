@@ -52,6 +52,8 @@ preprocess_cases = {
              lambda ast_node: preprocess_node_pipe(ast_node, irFileGen, config)),
     "Command": (lambda irFileGen, config:
                 lambda ast_node: preprocess_node_command(ast_node, irFileGen, config)),
+    "Background": (lambda irFileGen, config:
+                   lambda ast_node: preprocess_node_background(ast_node, irFileGen, config)),
     "For": (lambda irFileGen, config:
             lambda ast_node: preprocess_node_for(ast_node, irFileGen, config)),
     "While": (lambda irFileGen, config:
@@ -584,6 +586,15 @@ def preprocess_node_command(ast_node, _irFileGen, _config):
     ## This means we have a command. Commands are always candidate dataflow
     ## regions.
     return ast_node, True, False
+
+## TODO: Is that correct? Also, this should probably affect `semi`, `and`, and `or`
+def preprocess_node_background(ast_node, _irFileGen, _config):
+    ## A background node is *always* a candidate dataflow region.
+    ## Q: Is that true?
+
+    ## TODO: Preprocess the internals of the background to allow
+    ##       for mutually recursive calls to PaSh.
+    return ast_node, True, True
 
 ## TODO: For all of the constructs below, think whether we are being too conservative
 
