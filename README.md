@@ -1,6 +1,6 @@
 ## PaSh: Light-touch Data-Parallel Shell Processing
 
-Mailing lists: [Commits](pash-commits@googlegroups.com) | [Discussion](pash-discuss@googlegroups.com)
+Mailing lists: [Commits](mailto:pash-commits@googlegroups.com) | [Discussion](mailto:pash-discuss@googlegroups.com)
 
 PaSh is  a system for  parallelizing POSIX shell  scripts. Key elements include:
 
