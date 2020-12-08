@@ -1,7 +1,97 @@
 benchmark.fact5 # A bit slow but seems to be working
 benchmark.while # Very slow. 500 loop iterations mean 500 calls to pash_runtime
 ...
-builtin.exitcode.test # Crashes WSL, gives error on device full
+builtin.echo.exitcode # Crashes WSL, gives error on device full
+...
+builtin.exitcode # (Maybe) Crashes WSL, gives error on device full
+...
+semantics.assign.noglob # '*' is mistakenly expanded
+semantics.background # Seems to be working, but PaSh should be able to compile it
+semantics.background.pid # FAIL: Recursive call to PaSh
+semantics.backtick.exit # FAIL: No redirection of stdout to stderr
+semantics.backtick.ppid # FAIL: There seems to be an extra newline in the beginning of the output.
+...
+sh.ps1.override # PaSh seems to be called without an input.
+sh.interactive.ps1 # PaSh seems to be called without an input.
 
+## TODO: Timeouts seem to be a common reason for failure
 
-## TODO: Make stderr go to a different file with an option
+benchmark.fact5
+benchmark.while
+builtin.break.lexical
+builtin.break.nonlexical
+builtin.cd.pwd
+builtin.command.ec
+builtin.command.exec
+builtin.command.keyword
+builtin.continue.lexical
+builtin.continue.nonlexical
+builtin.dot.break
+builtin.dot.path
+builtin.dot.return
+builtin.eval
+builtin.exec.noargs.ec
+builtin.export.override
+builtin.export
+builtin.export.unset
+builtin.hash.nonposix
+builtin.history.nonposix
+builtin.pwd.exitcode
+builtin.readonly.assign.interactive
+builtin.readonly.assign.noninteractive
+builtin.set.quoted
+builtin.source.setvar
+builtin.test.-nt.-ot.absent
+builtin.test.nonposix
+builtin.test.symlink
+builtin.trap.chained
+builtin.trap.subshell.loud2
+builtin.trap.subshell.truefalse
+builtin.unset
+parse.error
+parse.eval.error
+semantics.-C
+semantics.-h.nonposix
+semantics.assign.visible
+semantics.background.nojobs.stdin
+semantics.background.pipe.pid
+semantics.backtick.fds
+semantics.command.argv0
+semantics.defun.ec
+semantics.dot.glob
+semantics.errexit.trap
+semantics.error.noninteractive
+semantics.escaping.backslash
+semantics.escaping.newline
+semantics.eval.makeadder
+semantics.evalorder.fun
+semantics.expansion.quotes.adjacent
+semantics.fun.error.restore
+semantics.ifs.combine.ws
+semantics.pattern.hyphen
+semantics.pattern.rightbracket
+semantics.quote.backslash
+semantics.redir.fds
+semantics.redir.from
+semantics.redir.indirect
+semantics.redir.nonregular
+semantics.redir.to
+semantics.simple.link
+semantics.slash.glob
+semantics.substring.quotes
+semantics.tilde.colon
+semantics.tilde.quoted.prefix
+semantics.tilde.sep
+semantics.tilde
+semantics.var.alt.null
+semantics.var.alt.nullifs
+semantics.var.builtin.nonspecial
+semantics.var.dashu
+semantics.var.star.emptyifs
+semantics.var.star.format
+semantics.while
+sh.-c.arg0
+sh.env.ppid
+sh.file.weirdness
+sh.ps1.override
+sh.set.ifs
