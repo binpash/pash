@@ -1,0 +1,7 @@
+benchmark.fact5 # A bit slow but seems to be working
+benchmark.while # Very slow. 500 loop iterations mean 500 calls to pash_runtime
+...
+builtin.exitcode.test # Crashes WSL, gives error on device full
+
+
+## TODO: Make stderr go to a different file with an option
