@@ -13,3 +13,4 @@ class AstNodeConstructor(Enum):
     FOR = 'For'
     WHILE = 'While'
     IF = 'If'
+    CASE = 'Case'

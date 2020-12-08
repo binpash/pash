@@ -65,7 +65,9 @@ preprocess_cases = {
     "And": (lambda irFileGen, config:
             lambda ast_node: preprocess_node_and(ast_node, irFileGen, config)),
     "If": (lambda irFileGen, config:
-            lambda ast_node: preprocess_node_if(ast_node, irFileGen, config))
+            lambda ast_node: preprocess_node_if(ast_node, irFileGen, config)),
+    "Case": (lambda irFileGen, config:
+             lambda ast_node: preprocess_node_case(ast_node, irFileGen, config))
 }
 
 ir_cases = {
@@ -647,7 +649,23 @@ def preprocess_node_if(ast_node, irFileGen, config):
     ast_node.else_b = preprocessed_else
     return ast_node, False, False
 
-## TODO: All the replace parts might need to be deleteD
+def preprocess_case(case, irFileGen, config):
+    preprocessed_body = preprocess_close_node(case["cbody"], irFileGen, config)
+    case["cbody"] = preprocessed_body
+    return case
+
+def preprocess_node_case(ast_node, irFileGen, config):
+    preprocessed_cases = [preprocess_case(case, irFileGen, config) for case in ast_node.cases]
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.cases = preprocessed_cases
+    return ast_node, False, False
+
+
+## TODO: I am a little bit confused about how compilation happens. 
+##       Does it happen bottom up or top down: i.e. when we first encounter an occurence 
+##       do we recurse in it and then compile from the leaf, or just compile the surface?
+
+## TODO: All the replace code might need to be deleted (since we now replace in the preprocessing).
 
 
 
