@@ -1,5 +1,36 @@
+import config
+import os
+import json
 from ir_utils import *
 from util import *
+
+##
+## Load annotation files
+##
+
+def load_annotation_file(abs_annotation_filename):
+    with open(abs_annotation_filename) as annotation_file:
+        try:
+            annotation = json.load(annotation_file)
+            return [annotation]
+        except json.JSONDecodeError as err:
+            log("WARNING: Could not parse annotation for file:", abs_annotation_filename)
+            log("|-- {}".format(err))
+            return []
+
+def load_annotation_files(annotation_dir):
+    annotations = []
+    if(not os.path.isabs(annotation_dir)):
+        annotation_dir = os.path.join(config.PASH_TOP, annotation_dir)
+
+    for (dirpath, _dirnames, filenames) in os.walk(annotation_dir):
+        json_filenames = [os.path.join(dirpath, filename) for filename in filenames
+                          if filename.endswith(".json")]
+        curr_annotations = [ann for filename in json_filenames for ann in load_annotation_file(filename) ]
+        annotations += curr_annotations
+    return annotations
+    
+
 
 ## Checks if the annotation for that command exists
 def get_command_io_from_annotations(command, options, annotations):

@@ -6,4 +6,4 @@
 ## TODO: Does this work with arrays
 
 ## TODO: Error handling if the argument is empty?
-source $1
+pash_redir_all_output source $1

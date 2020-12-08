@@ -30,6 +30,7 @@ runtime_config = {}
 def main():
     ## Parse arguments
     args = parse_args()
+    config.pash_args = args
 
     ## TODO: Instead of just calling optimize we first need to call compile.
 
@@ -55,7 +56,7 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
         config.load_config(args.config_path)
 
     ## Load annotations
-    config.load_annotation_files(config.config['distr_planner']['annotations_dir'])
+    config.annotations = load_annotation_files(config.config['distr_planner']['annotations_dir'])
 
     runtime_config = config.config['distr_planner']
 
@@ -176,10 +177,10 @@ def print_graph_statistics(graph):
     total_nodes = graph.nodes
     cat_nodes = [node for node in total_nodes if isinstance(node, Cat)]
     eager_nodes = [node for node in total_nodes if isinstance(node, Eager)]
-    log("Total nodes after optimization:", len(total_nodes), file=sys.stderr)
-    log(" -- out of which:", file=sys.stderr)
-    log("Cat nodes:", len(cat_nodes), file=sys.stderr)
-    log("Eager nodes:", len(eager_nodes), file=sys.stderr)
+    log("Total nodes after optimization:", len(total_nodes))
+    log(" -- out of which:")
+    log("Cat nodes:", len(cat_nodes))
+    log("Eager nodes:", len(eager_nodes))
 
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The

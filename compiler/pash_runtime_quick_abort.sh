@@ -103,7 +103,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     # pash_stdout_redir1=$(mktemp -u)
     pash_stdout_redir2=$(mktemp -u)
     pash_stdin_eager_file=$(mktemp -u)
-    >&2 echo "eager intermediate file: $pash_stdin_eager_file"
+    pash_redir_output echo "eager intermediate file: $pash_stdin_eager_file"
     # pash_stdout_eager_file=$(mktemp -u)
     mkfifo $pash_stdin_redir1 $pash_stdin_redir2
     # mkfifo $pash_stdin_redir1 $pash_stdin_redir2 $pash_stdout_redir1 $pash_stdout_redir2
@@ -111,12 +111,12 @@ if [ "$pash_execute_flag" -eq 1 ]; then
 
     ## TODO: Find the eager directory correctly
     "$RUNTIME_DIR/../evaluation/tools/eager" "$pash_stdin_redir1" "$pash_stdin_redir2" "$pash_stdin_eager_file" &
-    >&2 echo "STDIN eager pid: $!"
+    pash_redir_output echo "STDIN eager pid: $!"
     # ../evaluation/tools/eager "$pash_stdout_redir1" "$pash_stdout_redir2" "$pash_stdout_eager_file" &
-    # >&2 echo "STDOUT eager pid: $!"
+    # pash_redir_output echo "STDOUT eager pid: $!"
     ## The redirections below are necessary to ensure that the background `cat` reads from stdin.
     { cat > "$pash_stdin_redir1" <&3 3<&- & } 3<&0
-    >&2 echo "STDIN cat pid: $!"
+    pash_redir_output echo "STDIN cat pid: $!"
     ## Note: We don't connect stdout_redir2 yet, since it has to be bufferred for correctness. 
 
     ## Run the original script
@@ -124,30 +124,30 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir2" < "$pash_stdin_redir2" &
     # "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir2" &
     pash_seq_pid=$!
-    >&2 echo "Sequential pid: $pash_seq_pid"
+    pash_redir_output echo "Sequential pid: $pash_seq_pid"
 
     ## Run the compiler
-    python3.8 pash_runtime.py ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
+    pash_redir_all_output python3.8 pash_runtime.py ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
     pash_compiler_pid=$!
-    >&2 echo "Compiler pid: $pash_compiler_pid"
+    pash_redir_output echo "Compiler pid: $pash_compiler_pid"
 
     
     ## Wait until one of the two (original script, or compiler) die
     alive_pids=$(still_alive)
-    >&2 echo "Still alive: $alive_pids"
+    pash_redir_output echo "Still alive: $alive_pids"
     while `list_include_item "$alive_pids" "$pash_seq_pid"` && `list_include_item "$alive_pids" "$pash_compiler_pid"` ; do
         ## Wait for either of the two to complete
         wait -n "$pash_seq_pid" "$pash_compiler_pid"
         completed_pid_status=$?
         alive_pids=$(still_alive)
-        >&2 echo "Still alive: $alive_pids"
+        pash_redir_output echo "Still alive: $alive_pids"
     done
 
     ## If the sequential is still alive we want to see if the compiler succeeded
     if `list_include_item "$alive_pids" "$pash_seq_pid"` ; then
     # if [ "$pash_seq_pid" -eq "$alive_pids" ]; then
         pash_runtime_return_code=$completed_pid_status
-        >&2 echo "Compilation was done first with return code: $pash_runtime_return_code"
+        pash_redir_output echo "Compilation was done first with return code: $pash_runtime_return_code"
 
         ## We only want to run the parallel if the compiler succeeded.
         if [ "$pash_runtime_return_code" -eq 0 ]; then
@@ -155,12 +155,12 @@ if [ "$pash_execute_flag" -eq 1 ]; then
             kill_status=$?
             wait "$pash_seq_pid" 2> /dev/null
             pash_runtime_final_status=$?
-            >&2 echo "Still alive: $(still_alive)"
+            pash_redir_output echo "Still alive: $(still_alive)"
 
             ## If kill failed it means it was already completed, 
             ## and therefore we do not need to run the parallel.
             if [ "$kill_status" -eq 0 ]; then
-                >&2 echo "Run parallel"
+                pash_redir_output echo "Run parallel"
                 ## TODO: Find the outputs/inputs of the DFG and make sure that the outputs 
                 ##       are clean and normal files (and the inputs are normal files)
 
@@ -179,22 +179,22 @@ if [ "$pash_execute_flag" -eq 1 ]; then
 
             ## TODO: Redirect eagers to stdin + stdout
             cat "$pash_stdout_redir2" &
-            >&2 echo "STDOUT cat pid: $!"
-            >&2 echo "Still alive: $(still_alive)"
+            pash_redir_output echo "STDOUT cat pid: $!"
+            pash_redir_output echo "Still alive: $(still_alive)"
 
             pash_runtime_final_status=$?
         fi
     else
-        >&2 echo "Sequential was done first!"
+        pash_redir_output echo "Sequential was done first!"
 
         ## TODO: Redirect eagers to stdin + stdout
         cat "$pash_stdout_redir2" &
-        >&2 echo "STDOUT cat pid: $!"
+        pash_redir_output echo "STDOUT cat pid: $!"
 
         ## If this fails (meaning that compilation is done) we do not care
         kill -n 9 "$pash_compiler_pid" 2> /dev/null
         wait -n "$pash_compiler_pid"  2> /dev/null
         pash_runtime_final_status=$completed_pid_status
-        >&2 echo "Still alive: $(still_alive)"
+        pash_redir_output echo "Still alive: $(still_alive)"
     fi
 fi
