@@ -54,6 +54,8 @@ preprocess_cases = {
                 lambda ast_node: preprocess_node_command(ast_node, irFileGen, config)),
     "Background": (lambda irFileGen, config:
                    lambda ast_node: preprocess_node_background(ast_node, irFileGen, config)),
+    "Subshell": (lambda irFileGen, config:
+                   lambda ast_node: preprocess_node_subshell(ast_node, irFileGen, config)),
     "For": (lambda irFileGen, config:
             lambda ast_node: preprocess_node_for(ast_node, irFileGen, config)),
     "While": (lambda irFileGen, config:
@@ -595,6 +597,20 @@ def preprocess_node_background(ast_node, _irFileGen, _config):
     ## TODO: Preprocess the internals of the background to allow
     ##       for mutually recursive calls to PaSh.
     return ast_node, True, True
+
+## TODO: We can actually preprocess the underlying node and then 
+##       return its characteristics above. However, we would need
+##       to add a field in the IR that a node runs in a subshell
+##       (which would have implications on how the backend outputs it).
+##
+##       e.g. a subshell node should also be output as a subshell in the backend.
+## FIXME: This might not just be suboptimal, but also wrong.
+def preprocess_node_subshell(ast_node, irFileGen, config):
+    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.body = preprocessed_body
+    return ast_node, False, False
+
 
 ## TODO: For all of the constructs below, think whether we are being too conservative
 
