@@ -43,6 +43,9 @@ class AstNode:
             self.argument = args[1]
             self.body = args[2]
             self.variable = args[3]
+        elif self.construct is AstNodeConstructor.WHILE:
+            self.test = args[0]
+            self.body = args[1]
         elif self.construct is AstNodeConstructor.IF:
             self.cond = args[0]
             self.then_b = args[1]
@@ -85,6 +88,10 @@ class AstNode:
                             self.argument,
                             self.body,
                             self.variable])
+        elif self.construct is AstNodeConstructor.WHILE:
+            json_output = make_kv(self.construct.value,
+                           [self.test,
+                            self.body])
         elif self.construct is AstNodeConstructor.COMMAND:
             json_output = make_kv(self.construct.value,
                                   [self.line_number,
