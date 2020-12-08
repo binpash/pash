@@ -71,17 +71,16 @@ def shell_backend(graph_json, output_dir, args):
     assert(len(out_fids) == 1)
     output_com = 'cat "{}" &'.format(out_fids[0])
     output_script_commands.append(output_com)
-    # ## Old moving of outputs to a temporary directory
-    # for i, out_fid in enumerate(out_fids):
-    #     output_com = 'cat "{}" > {}/{} &'.format(out_fid, output_dir, i)
-    #     output_script_commands.append(output_com)
 
     ## If the option to clean up the graph is enabled, we should only
     ## wait on the final pid and kill the rest using SIGPIPE.
     if (clean_up_graph):
+        suffix = ""
+        if (not config.pash_args.log_file == ""):
+            suffix = " 2>> " + config.pash_args.log_file
         output_script_commands.append('wait $!')
         output_script_commands.append("ps --ppid $$ | awk '{print $1}'"
-                                      " | grep -E '[0-9]' | xargs -n 1 kill -SIGPIPE")
+                                      " | grep -E '[0-9]' | xargs -n 1 kill -SIGPIPE" + suffix)
     else:
         ## Otherwise we just wait for all processes to die.
         output_script_commands.append('wait')
