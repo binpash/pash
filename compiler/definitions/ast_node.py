@@ -50,6 +50,10 @@ class AstNode:
             self.cond = args[0]
             self.then_b = args[1]
             self.else_b = args[2]
+        elif self.construct is AstNodeConstructor.CASE:
+            self.line_number = args[0]
+            self.argument = args[1]
+            self.cases = args[2]
         else:
             raise ValueError()
     
@@ -124,6 +128,11 @@ class AstNode:
             json_output = make_kv(self.construct.value,
                                   [self.left_operand,
                                    self.right_operand])
+        elif self.construct is AstNodeConstructor.CASE:
+            json_output = make_kv(self.construct.value,
+                                  [self.line_number,
+                                   self.argument,
+                                   self.cases])
         else:
             log(self)
             json_output = NotImplemented
