@@ -2,6 +2,17 @@
     "command": "cat",
     "cases":
     [
+		{
+            "predicate":
+            {
+                "operator": "exists",
+                "operands": ["-n"]
+            },
+            "class": "pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+			"comment": "Pure because -n prints line numbering, and splitting affects it"
+		},
         {
             "predicate": "default",
             "class": "stateless",

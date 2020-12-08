@@ -41,11 +41,11 @@ clean :
 libdash:
 	git submodule init
 	git submodule update
-	cd libdash && ./autogen.sh && ./configure && make && sudo make install
+	cd libdash && ./autogen.sh || ./autogen.sh && ./configure && make && sudo make install
 	cd libdash/ocaml && make && make install
 
 opam-dependencies: 
-	opam install ctypes.0.11.5
-	opam install ctypes-foreign
-	opam install atdgen
-	opam install dum
+	opam install -y ctypes.0.11.5
+	opam install -y ctypes-foreign
+	opam install -y atdgen
+	opam install -y dum

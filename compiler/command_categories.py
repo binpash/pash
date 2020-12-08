@@ -1,5 +1,6 @@
 from annotations import *
 from ir_utils import *
+from util import *
 
 import config
 
@@ -84,12 +85,12 @@ def find_command_input_output(command, options, stdin, stdout):
     global custom_command_input_outputs
 
     command_string = format_arg_chars(command)
-    # print("Command to categorize:", command_string)
+    # log("Command to categorize:", command_string)
 
     assert(isinstance(command_string, str))
 
     if (command_string in custom_command_input_outputs):
-        print(" -- Warning: Overriding standard inputs-outputs for:", command_string)
+        log(" -- Warning: Overriding standard inputs-outputs for:", command_string)
         custom_io_fun = custom_command_input_outputs[command_string]
         return custom_io_fun(options, stdin, stdout)
 
@@ -98,8 +99,8 @@ def find_command_input_output(command, options, stdin, stdout):
                                                                  options,
                                                                  config.annotations)
     if (command_io_from_annotation):
-        print("inputs-outputs found for:", command_string)
-        print("|--", command_io_from_annotation)
+        log("inputs-outputs found for:", command_string)
+        log("|--", command_io_from_annotation)
         return command_io_from_annotation
 
     return default_input_output(options, stdin, stdout)
@@ -110,13 +111,13 @@ def find_command_category(command, options):
     global custom_command_categories
 
     command_string = format_arg_chars(command)
-    # print("Command to categorize:", command_string)
+    # log("Command to categorize:", command_string)
 
     assert(isinstance(command_string, str))
 
     ## Override standard categories
     if (command_string in custom_command_categories):
-        print(" -- Warning: Overriding standard category for:", command_string)
+        log(" -- Warning: Overriding standard category for:", command_string)
         custom_category_fun = custom_command_categories[command_string]
         return custom_category_fun(options)
 
@@ -125,7 +126,7 @@ def find_command_category(command, options):
                                                                        options,
                                                                        config.annotations)
     if (command_class_from_annotation):
-        print("class:", command_class_from_annotation, "found for:", command_string)
+        log("class:", command_class_from_annotation, "found for:", command_string)
         return command_class_from_annotation
 
     # NOTE order of class declaration in definition file is important, as it

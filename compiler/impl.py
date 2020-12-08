@@ -18,6 +18,8 @@ def to_shell(graph_json, output_dir, args):
 
 
 def shell_backend(graph_json, output_dir, args):
+    ## TODO: Remove output_dir since it is not used
+
     clean_up_graph = False
     drain_streams = False
     if(args.termination == "clean_up_graph"):
@@ -39,11 +41,10 @@ def shell_backend(graph_json, output_dir, args):
 
     output_script_commands = []
 
-    shared_memory_dir = '/dev/shm/pash'
+    ## TODO: These are osbolete since we now redirect the output outisde
     ## Make the output directory if it doesn't exist
-    output_script_commands.append('rm -rf {}'.format(output_dir))
-    output_script_commands.append('mkdir -p {}'.format(output_dir))
-    output_script_commands.append('mkdir -p {}'.format(shared_memory_dir))
+    # output_script_commands.append('rm -rf {}'.format(output_dir))
+    # output_script_commands.append('mkdir -p {}'.format(output_dir))
 
     ## Setup pipes
     rm_com = remove_fifos(fids)
@@ -51,25 +52,29 @@ def shell_backend(graph_json, output_dir, args):
     output_script_commands.append(rm_com)
     output_script_commands.append(mkfifo_com)
 
+    ## Redirect stdin
+    ## TODO: Assume that only stdin can be an in_fid.
+    assert(len(in_fids) <= 1)
+    for in_fid in in_fids:
+        ## TODO: Is this a hack?
+        in_com = '{{ cat > "{}" <&3 3<&- & }} 3<&0'.format(in_fid)
+        output_script_commands.append(in_com)
+
     ## Execute nodes
-    processes = [execute_node(node, shared_memory_dir, drain_streams, auto_split)
+    processes = [execute_node(node, drain_streams, auto_split)
                  for node_id, node in nodes.items()]
     output_script_commands += processes
 
     ## Collect outputs
-    # collect_output_args = ["cat"]
-    # for out_fid in out_fids:
-    #     collect_output_args.append('"{}"'.format(out_fid))
-    # collect_output_args.append(">")
-    # collect_output_args.append('"{}"'.format(output_file))
-    # output_script = " ".join(collect_output_args)
-    # print("Collect output:")
-    # print(output_script)
-    # out_p = subprocess.Popen(output_script, shell=True,
-    #                          executable="/bin/bash")
-    for i, out_fid in enumerate(out_fids):
-        output_com = 'cat "{}" > {}/{} &'.format(out_fid, output_dir, i)
-        output_script_commands.append(output_com)
+    ## TODO: Make this work for more than one output. 
+    ##       For now it is fine to only have stdout as output
+    assert(len(out_fids) == 1)
+    output_com = 'cat "{}" &'.format(out_fids[0])
+    output_script_commands.append(output_com)
+    # ## Old moving of outputs to a temporary directory
+    # for i, out_fid in enumerate(out_fids):
+    #     output_com = 'cat "{}" > {}/{} &'.format(out_fid, output_dir, i)
+    #     output_script_commands.append(output_com)
 
     ## If the option to clean up the graph is enabled, we should only
     ## wait on the final pid and kill the rest using SIGPIPE.
@@ -85,13 +90,12 @@ def shell_backend(graph_json, output_dir, args):
     final_rm_com = remove_fifos(fids)
     output_script_commands.append(rm_com)
 
-    output_script_commands.append('rm -rf "{}"'.format(shared_memory_dir))
     end_time = time.time()
 
     ## TODO: Cat all outputs together if a specific flag is given
 
     # print("Distributed translation execution time:", end_time - start_time)
-    return "\n".join(output_script_commands)
+    return ("\n".join(output_script_commands) + "\n")
 
 def remove_fifos(fids):
     ## We remove one fifo at a time because the big benchmarks crash
@@ -113,11 +117,11 @@ def make_fifos(fids):
     return "\n".join(mkfifos)
     # return 'mkfifo {}'.format(" ".join(['"{}"'.format(fid) for fid in fids]))
 
-def execute_node(node, shared_memory_dir, drain_streams, auto_split):
-    script = node_to_script(node, shared_memory_dir, drain_streams, auto_split)
+def execute_node(node, drain_streams, auto_split):
+    script = node_to_script(node, drain_streams, auto_split)
     return "{} &".format(script)
 
-def node_to_script(node, shared_memory_dir, drain_streams, auto_split):
+def node_to_script(node, drain_streams, auto_split):
     # print(node)
 
     inputs = node["in"]
