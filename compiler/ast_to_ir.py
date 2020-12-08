@@ -54,6 +54,8 @@ preprocess_cases = {
                 lambda ast_node: preprocess_node_command(ast_node, irFileGen, config)),
     "For": (lambda irFileGen, config:
             lambda ast_node: preprocess_node_for(ast_node, irFileGen, config)),
+    "While": (lambda irFileGen, config:
+              lambda ast_node: preprocess_node_while(ast_node, irFileGen, config)),
     "Defun": (lambda irFileGen, config:
               lambda ast_node: preprocess_node_defun(ast_node, irFileGen, config)),
     "Semi": (lambda irFileGen, config:
@@ -371,6 +373,8 @@ def naive_expand(arg_char, config):
     ## and calling bash
     expanded_string = execute_shell_asts(echo_asts)
 
+    log("Expanded:", arg_char, "to:", expanded_string)
+
     ## Parse the expanded string back to an arg_char
     expanded_arg_char = parse_string_to_arg_char(expanded_string)
     
@@ -416,6 +420,7 @@ def compile_arg_char(original_arg_char, fileIdGen, config):
         compiled_val = compile_command_argument(val, fileIdGen, config)
         return [key, compiled_val]
     else:
+        log("Unknown arg_char:", arg_char)
         ## TODO: Complete this
         return arg_char
 
@@ -585,6 +590,14 @@ def preprocess_node_command(ast_node, _irFileGen, _config):
 def preprocess_node_for(ast_node, irFileGen, config):
     preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
     ## TODO: Could there be a problem with the in-place update
+    ast_node.body = preprocessed_body
+    return ast_node, False, False
+
+def preprocess_node_while(ast_node, irFileGen, config):
+    preprocessed_test = preprocess_close_node(ast_node.test, irFileGen, config)
+    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.test = preprocessed_test
     ast_node.body = preprocessed_body
     return ast_node, False, False
 
