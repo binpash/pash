@@ -25,11 +25,12 @@ pash_redir_output echo "(3) Reverted to BaSh set state: $-"
 ## Execute the script
 pash_redir_output echo "(4) Executing script in ${@:4}:"
 pash_redir_output cat "${@:4}"
-pash_pre_set_vars=$-
-# pash_redir_output echo "Set variable before execution: $-"
+## TODO: I think that the following command fails with `set -e`
 (exit "$pash_previous_exit_status")
 source "${@:4}" && internal_exec_status=$? || internal_exec_status=$?
 pash_exec_status=${internal_exec_status}
+pash_redir_output echo "(5) BaSh script exited with ec: $pash_exec_status"
+
 
 ## Save the current set options to a file so that they can be recovered
 pash_final_set_vars=$-
