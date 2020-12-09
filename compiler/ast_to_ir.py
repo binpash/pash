@@ -343,7 +343,6 @@ def make_echo_ast(arg_char, var_file_path):
     arguments = [string_to_argument("exit"), [variable_arg]]
     exit_node = make_kv('Command', [0, [], arguments, []])
     node = make_kv('Subshell', [0, exit_node, []])
-    log(node)
     nodes.append(node)
 
     arguments = [string_to_argument("echo"), string_to_argument("-n"), [arg_char]]
