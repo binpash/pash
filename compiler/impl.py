@@ -52,10 +52,6 @@ def shell_backend(graph_json, output_dir, args):
     output_script_commands.append(rm_com)
     output_script_commands.append(mkfifo_com)
 
-    # ## Setup Functions
-    # function_defs = prelude_functions()
-    # output_script_commands.append(function_defs)
-
     ## Redirect stdin
     ## TODO: Assume that only stdin can be an in_fid.
     assert(len(in_fids) <= 1)
@@ -124,13 +120,6 @@ def make_fifos(fids):
         mkfifos.append('mkfifo "{}"'.format(fid))
     return "\n".join(mkfifos)
     # return 'mkfifo {}'.format(" ".join(['"{}"'.format(fid) for fid in fids]))
-
-def prelude_functions():
-    function_lines=[]
-    # function_lines.append("pash_sigpipe() {")
-    # function_lines.append("  kill -SIGPIPE $1 || true")
-    # function_lines.append("}")
-    return "\n".join(function_lines)
 
 def execute_node(node, drain_streams, auto_split):
     script = node_to_script(node, drain_streams, auto_split)
