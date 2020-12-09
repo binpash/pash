@@ -11,7 +11,8 @@ output_vars_file=$2
 source "$RUNTIME_DIR/pash_source_declare_vars.sh" $input_vars_file
 
 pash_redir_output echo "Executing script in ${@:3}:"
-pash_redir_output cat "${@:3}"   
+pash_redir_output cat "${@:3}"
+(exit "$pash_previous_exit_status")
 source "${@:3}"
 pash_exec_status=$?
 source "$RUNTIME_DIR/pash_declare_vars.sh" $output_vars_file

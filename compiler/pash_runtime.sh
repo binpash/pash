@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ## Store the previous exit status to propagate to the compiler
-pash_previous_exit_status=$?
+export pash_previous_exit_status=$?
 
 ## Abort script if variable is unset
 set -u
