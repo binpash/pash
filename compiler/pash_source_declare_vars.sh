@@ -9,9 +9,14 @@
 
 ## TODO: Fix this filtering
 
+filter_vars_file()
+{
+    cat $1 | grep -v "^declare -\([A-Za-z]\|-\)* \(pash\|BASH\|LINENO\|EUID\|GROUPS\)"    
+}
+
 ## TODO: Error handling if the argument is empty?
 if [ "$PASH_REDIR" == '&2' ]; then
-    >&2 source <(cat $1 | grep -v "BASH" | grep -v "LINENO" | grep -v "EUID" | grep -v "GROUPS" | grep -v "pash")
+    >&2 source <(filter_vars_file $1)
 else
-    >>"$PASH_REDIR" 2>&1 source <(cat $1 | grep -v "BASH" | grep -v "LINENO" | grep -v "EUID" | grep -v "GROUPS" | grep -v "pash")
+    >>"$PASH_REDIR" 2>&1 source <(filter_vars_file $1)
 fi
