@@ -370,6 +370,7 @@ def parse_string_to_arg_char(arg_char_string):
     # log(arg_char_string)
     return ['Q', string_to_argument(arg_char_string)]
 
+## TODO: Use "pash_input_args" when expanding in place of normal arguments.
 def naive_expand(arg_char, config):
 
     ## config contains a dictionary with: 
@@ -778,8 +779,14 @@ def make_command(ir_filename, sequential_script_file_name):
     ## Pass a relevant argument to the planner
     arguments += config.pass_common_arguments(config.pash_args)
 
+    ## The following assignment exists so that we save the arguments.
+    ## They are needed for the expansion to work since the real arguments
+    ## are lost because of the call to source.
+    ## TODO: Make this a constant somewhere
+    assignments = [["pash_input_args",[["Q",[["V",["Normal","false","@",[]]]]]]]]
+
     line_number = 0
-    node = make_kv('Command', [line_number, [], arguments, []])
+    node = make_kv('Command', [line_number, assignments, arguments, []])
     return node
 
 
