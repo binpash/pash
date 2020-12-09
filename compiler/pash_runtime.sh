@@ -186,6 +186,9 @@ else
         ## (3), (4), (5)
         ##
 
+        ## TODO: Also restorre the input arguments from the "pash_input_args"
+        ##       before executing.
+
         ## If the compiler failed, we have to run the sequential
         if [ "$pash_runtime_return_code" -ne 0 ]; then
             "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_sequential_script_file}
