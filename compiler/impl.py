@@ -79,8 +79,13 @@ def shell_backend(graph_json, output_dir, args):
         if (not config.pash_args.log_file == ""):
             suffix = " 2>> " + config.pash_args.log_file
         output_script_commands.append('wait $!')
-        output_script_commands.append("ps --ppid $$ | awk '{print $1}'"
-                                      " | grep -E '[0-9]' | xargs -n 1 kill -SIGPIPE" + suffix)
+        output_script_commands.append('pids_to_kill="$(ps --ppid $$ |' 
+                                      "awk '{print $1}' | "
+                                      "grep -E '[0-9]'" + suffix + ')"') 
+        output_script_commands.append('for pid in $pids_to_kill')
+        output_script_commands.append('do')
+        output_script_commands.append('  (kill -SIGPIPE $pid || true)' + suffix)
+        output_script_commands.append('done')
     else:
         ## Otherwise we just wait for all processes to die.
         output_script_commands.append('wait')
