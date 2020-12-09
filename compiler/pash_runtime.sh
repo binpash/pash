@@ -1,5 +1,8 @@
 #!/bin/bash
 
+## Store the previous exit status to propagate to the compiler
+pash_previous_exit_status=$?
+
 ## Abort script if variable is unset
 set -u
 
@@ -23,7 +26,6 @@ pash_redir_all_output()
 
 export -f pash_redir_output
 export -f pash_redir_all_output
-
 
 ## File directory
 RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
@@ -72,6 +74,8 @@ do
     fi
 done
 
+pash_redir_output echo "Previous exit status: $pash_previous_exit_status"
+
 ## Prepare a file with all shell variables
 pash_runtime_shell_variables_file=$(mktemp -u)
 source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
@@ -97,7 +101,7 @@ pash_exec_time_start=$(date +"%s%N")
 
 if [ "$pash_speculation_flag" -eq 1 ]; then
     source "$RUNTIME_DIR/pash_runtime_quick_abort.sh"
-else        
+else
     pash_redir_all_output python3.8 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
     pash_runtime_return_code=$?
 
