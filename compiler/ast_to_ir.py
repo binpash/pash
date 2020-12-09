@@ -328,6 +328,14 @@ def safe_to_expand(arg_char):
         return True
     return False
 
+## TODO: Make this more general (i.e. to recurse inside and replace all occurences).
+##       This function will become obsolete if we have a proper expansion mechanism.
+def pre_expansion_arg_char(arg_char, config):
+    key, value = get_kv(arg_char)
+    if (key == 'V' and value[2] == '?'):
+        value[2] = 'pash_previous_exit_status'
+        new_arg_char = make_kv(key, value)
+    return arg_char
 
 def make_echo_ast(arg_char, var_file_path):
     nodes = []
@@ -372,14 +380,18 @@ def naive_expand(arg_char, config):
     # log(config['shell_variables'])
     # log(config['shell_variables_file_path'])
 
+    ## In the special case where the argument is a variable.
+    ## TODO: In the general case all occurences of that should be 
+    preprocessed_arg_char = pre_expansion_arg_char(arg_char, config)
+
     ## Create an AST node that "echo"s the argument
-    echo_asts = make_echo_ast(arg_char, config['shell_variables_file_path'])
+    echo_asts = make_echo_ast(preprocessed_arg_char, config['shell_variables_file_path'])
 
     ## Execute the echo AST by unparsing it to shell
     ## and calling bash
     expanded_string = execute_shell_asts(echo_asts)
 
-    log("Expanded:", arg_char, "to:", expanded_string)
+    log("Variable:", arg_char, "was preprocessed to:", preprocessed_arg_char, "and expanded to:", expanded_string)
 
     ## Parse the expanded string back to an arg_char
     expanded_arg_char = parse_string_to_arg_char(expanded_string)
