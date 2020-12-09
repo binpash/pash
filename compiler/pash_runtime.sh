@@ -216,12 +216,8 @@ fi
 pash_redir_output echo "(7) Recovering BaSh variables from: $pash_output_variables_file"
 source "$RUNTIME_DIR/pash_source_declare_vars.sh" $pash_output_variables_file
 
-pash_redir_output echo "Reached here 1"
-
 ## Save the previous `set` state to a variable
 pash_redir_output echo "(7) Reading current BaSh set state from: ${pash_output_set_file}"
-
-pash_redir_output echo "Reached here 2"
 
 pash_redir_output echo "(7) Current BaSh set state: $(cat $pash_output_set_file)"
 ## WARNING: This has to happen after sourcing the variables so that it overwrites it
