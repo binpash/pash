@@ -120,9 +120,9 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     ## Note: We don't connect stdout_redir2 yet, since it has to be bufferred for correctness. 
 
     ## Run the original script
-    # "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir1" < "$pash_stdin_redir2" &
-    "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir2" < "$pash_stdin_redir2" &
-    # "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_sequential_script_file} > "$pash_stdout_redir2" &
+    # "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_sequential_script_file} > "$pash_stdout_redir1" < "$pash_stdin_redir2" &
+    "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_sequential_script_file} > "$pash_stdout_redir2" < "$pash_stdin_redir2" &
+    # "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_sequential_script_file} > "$pash_stdout_redir2" &
     pash_seq_pid=$!
     pash_redir_output echo "Sequential pid: $pash_seq_pid"
 
@@ -169,7 +169,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
                 ## TODO: This seems like a non-trivial solution since it requires keeping stdin open, 
                 ##       while "restarting" the eager, making it send its output to a new pipe, and
                 ##       then first reading all from its intermediate file. 
-                "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_compiled_script_file}
+                "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_compiled_script_file}
                 pash_runtime_final_status=$?
             fi
         else
