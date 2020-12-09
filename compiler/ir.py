@@ -45,7 +45,7 @@ def create_command_assign_file_identifiers(ast, fileIdGen, command, options,
     ## TODO: Maybe compile command instead of just formatting it.
     if(format_arg_chars(command) == "cat"):
         command = Cat(ast, command, options, in_stream, out_stream,
-                      opt_indices, category, stdin, stdout)
+                      opt_indices, category, stdin, stdout, redirections)
     else:
         command = Command(ast, command, options, in_stream, out_stream,
                           opt_indices, category, stdin, stdout, redirections)
