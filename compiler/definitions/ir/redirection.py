@@ -11,8 +11,8 @@ class Redirection():
 
         # log(redirection)
         ## TODO: Support all redirections
-        # assert(self.redir_type == 'File')
-        # assert(self.redir_subtype == 'To')
+        assert(self.redir_type == 'File')
+        assert(self.redir_subtype == 'To')
 
     def __repr__(self):
         return '({}, {}, {}, {})'.format(self.redir_type,

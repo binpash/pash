@@ -4,6 +4,7 @@ from definitions.ir.file_id import *
 from definitions.ir.redirection import *
 
 from ir_utils import *
+from util import *
 import config
 
 ## Commands are specific Nodes that can be parallelized if they are
