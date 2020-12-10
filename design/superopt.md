@@ -43,3 +43,5 @@ Other ideas:
 * Some stages can be kept sequential -- e.g., if a `sort` is followed by `tr`, `tr`, it might make sense avoid a `split` after the (parallel) `sort`.
 
 * For some configurations (say, 2x CPUs), it might not even make sense to parallelize a program. i.e., there are programs (or individual commands) that will give speedup above a certain `width` (lower bound).
+
+In the evaluation, it might make sense to use [radar plots](https://en.wikipedia.org/wiki/Radar_chart) to show the exploration of the configuration space.

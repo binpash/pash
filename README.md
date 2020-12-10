@@ -38,12 +38,10 @@ cd compiler
 ```
 
 ## Running PaSh
-To simply run PaSh on a script `script.sh` with parallelization width `2` make sure you are in the `compiler` directory and run:
+
+To parallelize script `./evaluation/hello-world.sh` with parallelization width of `2`, run:
+
 ```sh
-python3.8 $PASH_TOP/compiler/pash.py --split_fan_out 2 script.sh
+./pa.sh -w 2 ./evaluation/hello-world.sh
 ``` 
-
-## Broader Impact
-
-Ideas about broader impact can be found in this [document](https://docs.google.com/document/d/1XUAXr-Wt44Z2LLIN4OtK6FAlk-KOCHAs-_tWbKoJQGI/edit?usp=sharing).
 
