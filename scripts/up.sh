@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env sh
 
 # TODO: Maybe first check if the repo is accessible via git?
 
@@ -10,8 +10,7 @@ DOWNLOADER='curl'
 alias curl='curl -s'
 
 download () {
-    command -v curl >/dev/null 2>&1 || 
-        { DOWNLOADER='wget'; alias curl='wget -qO- '; }
+  command -v curl >/dev/null 2>&1 || { DOWNLOADER='wget'; alias curl='wget -qO- '; }
 }
 
 cmd_exists () {
@@ -26,4 +25,7 @@ fi
 
 curl -s $URL | tar xzf - --strip-components=1 -C .
 cd pash/scripts
-./install.sh
+# FIXME: it's unclear we should always run as root
+# A first step would be to confirm dependencies are met
+# ./install.sh -p
+echo 'Run `./scripts/install.sh`, with `-p` for installing packages if needed'

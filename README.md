@@ -24,7 +24,7 @@ To parallelize, say, `./evaluation/hello-world.sh` with parallelization width of
 To install, run:
 
 ```sh
-./install.sh -p
+curl  -s up.pash.ndr.md | bash
 ```
 
 The `-p` requires `sudo` (i.e., "root") access to install packages such as `opam`, `python3.8`, etc.
