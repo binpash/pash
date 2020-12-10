@@ -1,6 +1,3 @@
-Name           Category           Description
---------------------------------------------------------------------------------
-
 basename     stateless      Removes the path prefix from a given pathname
 dirname      stateless      Strips non-directory suffix from file name
 echo         stateless      Displays a specified line of text
@@ -26,8 +23,8 @@ fmt         p-stateless     Simple optimal text formatter [nv: might need to fil
 uniq            pure        Removes duplicate lines from a sorted file
 sort            pure        sort lines of text files
 wc              pure        Prints the number of bytes, words, and lines in files
-
 pr              pure        Converts text files for printing
+
 b2sum           pure        Computes and checks BLAKE2b message digest
 base32          pure        Encodes or decodes Base32, and prints result to standard output
 base64          pure        Encodes or decodes Base64, and prints result to standard output
