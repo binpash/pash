@@ -1,6 +1,9 @@
 #!/bin/bash
 
-PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
+export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
+export PASH_PARSER=${PASH_TOP}/parser/parse_to_json.native
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
+
 WIDTH=0
   
 ##
@@ -44,8 +47,8 @@ fi
 
 for file in "$@"; do
   if [ $WIDTH = 0 ]; then
-    echo python3.8 $PASH_TOP/compiler/pash.py $file
+    python3.8 $PASH_TOP/compiler/pash.py $file
   else
-    echo python3.8 $PASH_TOP/compiler/pash.py --split_fan_out 2 $file
+    python3.8 $PASH_TOP/compiler/pash.py --split_fan_out 2 $file
   fi
 done
