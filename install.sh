@@ -17,6 +17,13 @@ while getopts 'p' opt; do
 done
 shift "$(( OPTIND - 1 ))"
 
+## for earlier versions of Debian/Ubuntu
+## https://github.com/janestreet/install-ocaml
+#add-apt-repository ppa:avsm/ppa
+#apt update
+#apt install -y opam m4
+
+
 ## If option -p is set, also run the sudo
 if [ "$prepare_sudo_install_flag" -eq 1 ]; then
     echo "Running preparation sudo apt install and opam init:"
