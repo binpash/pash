@@ -1,5 +1,0 @@
-if [ "_$1" = "_-n" ]; then
-  echo "amd64"
-else
-  echo "amd64 i386"
-fi
