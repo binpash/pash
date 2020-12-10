@@ -22,7 +22,12 @@ shift "$(( OPTIND - 1 ))"
 #add-apt-repository ppa:avsm/ppa
 #apt update
 #apt install -y opam m4
+#opam init -y --compiler=4.07.1
+#eval $(opam env)
+# ocaml -version | grep -o -E '[0-9]+.[0-9]+.[0-9]+$'
 
+git submodule init
+git submodule update
 
 ## If option -p is set, also run the sudo
 if [ "$prepare_sudo_install_flag" -eq 1 ]; then
@@ -31,7 +36,8 @@ if [ "$prepare_sudo_install_flag" -eq 1 ]; then
     sudo apt-get update &> $LOG_DIR/apt_update.log
     echo "|-- running apt install..."
     sudo apt-get install -y libtool m4 automake opam pkg-config libffi-dev python3.8 python3-pip &> $LOG_DIR/apt_install.log
-    yes | opam init &> $LOG_DIR/opam_init.log
+    opam -y init &> $LOG_DIR/opam_init.log
+    # opam update
 else
     echo "Requires libtool, m4, automake, opam, pkg-config, libffi-dev, python3.8, pip for python3"
     echo "Ensure that you have them by running:"
@@ -51,20 +57,20 @@ fi
 # Build the parser (requires libtool, m4, automake, opam)
 echo "Building parser..."
 eval $(opam config env)
-cd parser
+cd comipler/parser
 echo "|-- installing opam dependencies..."
 make opam-dependencies &> $LOG_DIR/make_opam_dependencies.log
 echo "|-- making libdash..."
 make libdash &> $LOG_DIR/make_libdash.log
 echo "|-- making parser..."
 make &> $LOG_DIR/make.log
-cd ../
+cd ../../
 
 echo "Building runtime..."
 # Build runtime tools: eager, split
-cd evaluation/tools/
+cd runtime/
 make &> $LOG_DIR/make.log
-cd ../../
+cd ../
 
 # Install python3.8 dependencies
 echo "Installing python dependencies..."
