@@ -5,6 +5,7 @@ from definitions.ast_node_c import *
 from util import *
 from json_ast import save_asts_json
 from parse import parse_shell, from_ir_to_shell, from_ir_to_shell_file
+from expand import *
 import subprocess
 
 import config
@@ -321,162 +322,6 @@ def compile_node_for(ast_node, fileIdGen, config):
     return compiled_ast
 
 
-## This function checks if a word is safe to expand (i.e. if it will 
-## not have unpleasant side-effects)
-def safe_to_expand(arg_char):
-    key, val = get_kv(arg_char)
-    if (key in ['V']): # Variable
-        return True
-    return False
-
-def guess_arg(arg):
-    res = ""
-    for arg_char in arg:
-        key, val = get_kv(arg_char)
-
-        if (key in ['C', 'E']):
-            res += chr(val)
-        else:
-            return None
-    return res
-
-def safe_arg(arg):
-    return all([safe_arg_char(arg_char) for arg_char in arg])
-
-def safe_args(args):
-    return all([safe_arg(arg) for arg in args])
-
-def safe_arg_char(arg_char):
-    key, val = get_kv(arg_char)
-    # character, escaped---noop, but safe
-    if (key in ['C', 'E']): 
-        return True
-    # tilde --- only reads system state, safe to do early assuming no writes to HOME prior
-    elif (key in ['T']):
-        return True # TODO 2020-11-24 MMG modified variable set? take in/output written vars...
-    # arithmetic -- depends on what we have
-    elif (key == 'A'):
-        return safe_arith(val)
-    # quoted -- safe if its contents are safe
-    elif (key == 'Q'):
-        return safe_arg(val)
-    # variables -- safe if the format is safe as are the remaining words
-    elif (key == 'V'):
-        return safe_var(*val)
-    # command substitution -- depends on the command
-    elif (key == 'B'):
-        return safe_command(val)
-    
-    raise ValueError("bad key {}, expected one of CETAVQB".format(key))
-
-def safe_var(fmt, null, var, arg):
-    if (fmt in ['Normal', 'Length']):
-        return True
-    elif (fmt in ['Minus', 'Plus', 'Question', 'TrimR', 'TrimRMax', 'TrimL', 'TrimLMax']):
-        return safe_arg(arg)
-    elif (fmt in ['Assign']):
-        return False # TODO 2020-11-24 MMG unless we know `var` is set
-
-    raise ValueError("bad parameter format {}".format(fmt))
-
-def safe_arith(arg):
-    # operations are safe
-    # `+=` and `=` and family are UNSAFE
-    # NONPOSIX: `++` and `--` are UNSAFE
-    # `op="+=1"; $((x $op))` is UNSAFE
-
-    # to determine safety, we:
-    #   (a) check that every arg_char here is safe
-    #   (b) pre-parse it symbolically well enough to ensure that no mutating operations occur
-    expr = guess_arg(arg)
-
-    if (arg is None):
-        # TODO 2020-11-25 MMG symbolic pre-parse?
-        return False
-    elif ('=' in expr or '++' in expr or '--' in expr):
-        # TODO 2020-11-25 MMG false negatives: ==, >=, <=
-        return False
-    else:
-        # it's a concrete string that doesn't have mutation operations in it... go for it!
-        return True
-
-safe_cases = {
-        "Pipe": (lambda:
-                 lambda ast_node: safe_pipe(ast_node)),
-        "Command": (lambda:
-                    lambda ast_node: safe_simple(ast_node)),
-        "And": (lambda:
-                lambda ast_node: safe_and_or_semi(ast_node)),
-        "Or": (lambda:
-               lambda ast_node: safe_and_or_semi(ast_node)),
-        "Semi": (lambda:
-                 lambda ast_node: safe_and_or_semi(ast_node)),
-        "Redir": (lambda:
-                  lambda ast_node: safe_redir_subshell(ast_node)),
-        "Subshell": (lambda:
-                     lambda ast_node: safe_redir_subshell(ast_node)),
-        "Background": (lambda:
-                       lambda ast_node: safe_background(ast_node)),
-        "Defun": (lambda:
-                  lambda ast_node: safe_defun(ast_node)),
-        "For": (lambda:
-                  lambda ast_node: safe_for(ast_node)),
-        "While": (lambda:
-                  lambda ast_node: safe_while(ast_node)),
-        "Case": (lambda:
-                  lambda ast_node: safe_case(ast_node)),
-        "If": (lambda:
-                  lambda ast_node: safe_if(ast_node))
-        }
-
-def safe_command(command):
-    # TODO 2020-11-24 MMG which commands are safe to run in advance?
-    # TODO 2020-11-24 MMG how do we differentiate it being safe to do nested expansions?
-    global safe_cases
-    return ast_match(command, safe_cases)
-
-def safe_pipe(node):
-    return False
-
-
-safe_commands = ["echo", ":"]
-
-def safe_simple(node):
-    # TODO 2020-11-25 check redirs, assignments
-
-    if (len(node.arguments) < 0):
-        return True
-
-    cmd = guess_arg(node.arguments[0])
-    if (cmd is None or cmd not in safe_commands):
-        return False
-    else:
-        return safe_args(node.arguments[1:])
-
-def safe_and_or_semi(node):
-    return False
-
-def safe_redir_subshell(node):
-    return False
-
-def safe_background(node):
-    return False
-
-def safe_defun(node):
-    return False
-
-def safe_for(node):
-    return False
-
-def safe_while(node):
-    return False
-
-def safe_case(node):
-    return False
-
-def safe_if(node):
-    return False
-
 def make_echo_ast(arg_char, var_file_path):
     nodes = []
     ## Source variables if present
@@ -553,8 +398,6 @@ def naive_expand(arg_char, config):
 ##       might have assignments of its own, therefore requiring that we use them to properly expand.
 def expand(arg_char, config):
     return naive_expand(arg_char, config)
-
-
 
 ## This function compiles an arg char by recursing if it contains quotes or command substitution.
 ##

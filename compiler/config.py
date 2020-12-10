@@ -124,6 +124,7 @@ def read_vars_file(var_file_path):
         with open(var_file_path) as f:
             lines = [line.rstrip() for line in f.readlines()]
 
+        # ??? MMG 2020-12-10 not sure how you're generating this file, but what about variables with newlines in them?
         for line in lines:
             words = line.split(' ')
             _export_or_typeset = words[0]
