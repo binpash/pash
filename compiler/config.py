@@ -13,8 +13,8 @@ else:
     PASH_TOP = subprocess.run(GIT_TOP_CMD, capture_output=True,
                               text=True).stdout.rstrip()
 
-PARSER_BINARY = os.path.join(PASH_TOP, "parser/parse_to_json.native")
-PRINTER_BINARY = os.path.join(PASH_TOP, "parser/json_to_shell.native")
+PARSER_BINARY = os.path.join(PASH_TOP, "compiler/parser/parse_to_json.native")
+PRINTER_BINARY = os.path.join(PASH_TOP, "compiler/parser/json_to_shell.native")
 
 PYTHON_VERSION = "python3.8"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")

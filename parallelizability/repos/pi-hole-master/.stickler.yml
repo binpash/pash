@@ -1,6 +1,0 @@
-linters:
-  shellcheck:
-    shell: bash
-  phpcs:
-  csslint:
-  flake8:
