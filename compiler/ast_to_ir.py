@@ -4,7 +4,7 @@ from definitions.ast_node import *
 from definitions.ast_node_c import *
 from util import *
 from json_ast import save_asts_json
-from parse import parse_shell, from_ir_to_shell
+from parse import parse_shell, from_ir_to_shell, from_ir_to_shell_file
 import subprocess
 
 import config
@@ -52,8 +52,26 @@ preprocess_cases = {
              lambda ast_node: preprocess_node_pipe(ast_node, irFileGen, config)),
     "Command": (lambda irFileGen, config:
                 lambda ast_node: preprocess_node_command(ast_node, irFileGen, config)),
+    "Background": (lambda irFileGen, config:
+                   lambda ast_node: preprocess_node_background(ast_node, irFileGen, config)),
+    "Subshell": (lambda irFileGen, config:
+                   lambda ast_node: preprocess_node_subshell(ast_node, irFileGen, config)),
     "For": (lambda irFileGen, config:
-            lambda ast_node: preprocess_node_for(ast_node, irFileGen, config))
+            lambda ast_node: preprocess_node_for(ast_node, irFileGen, config)),
+    "While": (lambda irFileGen, config:
+              lambda ast_node: preprocess_node_while(ast_node, irFileGen, config)),
+    "Defun": (lambda irFileGen, config:
+              lambda ast_node: preprocess_node_defun(ast_node, irFileGen, config)),
+    "Semi": (lambda irFileGen, config:
+             lambda ast_node: preprocess_node_semi(ast_node, irFileGen, config)),
+    "Or": (lambda irFileGen, config:
+           lambda ast_node: preprocess_node_or(ast_node, irFileGen, config)),
+    "And": (lambda irFileGen, config:
+            lambda ast_node: preprocess_node_and(ast_node, irFileGen, config)),
+    "If": (lambda irFileGen, config:
+            lambda ast_node: preprocess_node_if(ast_node, irFileGen, config)),
+    "Case": (lambda irFileGen, config:
+             lambda ast_node: preprocess_node_case(ast_node, irFileGen, config))
 }
 
 ir_cases = {
@@ -83,14 +101,14 @@ def compile_asts(ast_objects, fileIdGen, config):
     compiled_asts = []
     acc_ir = None
     for i, ast_object in enumerate(ast_objects):
-        # print("Compiling AST {}".format(i))
-        # print(ast_object)
+        # log("Compiling AST {}".format(i))
+        # log(ast_object)
 
         ## Compile subtrees of the AST to out intermediate representation
         compiled_ast = compile_node(ast_object, fileIdGen, config)
 
-        # print("Compiled AST:")
-        # print(compiled_ast)
+        # log("Compiled AST:")
+        # log(compiled_ast)
 
         ## If the accumulator contains an IR (meaning that the
         ## previous commands where run in background), union it with
@@ -459,50 +477,80 @@ def safe_case(node):
 def safe_if(node):
     return False
 
-def make_echo_ast(arg_char):
+def make_echo_ast(arg_char, var_file_path):
+    nodes = []
+    ## Source variables if present
+    if(not var_file_path is None):
+        arguments = [string_to_argument("source"), string_to_argument(var_file_path)]
+
+        line_number = 0
+        node = make_kv('Command', [line_number, [], arguments, []])
+        nodes.append(node)
+
+    ## Reset the exit status
+    variable_arg = make_kv('V', ['Normal', "false", 'pash_previous_exit_status', []])
+    arguments = [string_to_argument("exit"), [variable_arg]]
+    exit_node = make_kv('Command', [0, [], arguments, []])
+    node = make_kv('Subshell', [0, exit_node, []])
+    nodes.append(node)
+
     arguments = [string_to_argument("echo"), string_to_argument("-n"), [arg_char]]
 
     line_number = 0
     node = make_kv('Command', [line_number, [], arguments, []])
-    return node
+    nodes.append(node)
+    return nodes
 
 ## TODO: Move this function somewhere more general
 def execute_shell_asts(asts):
     ir_filename = os.path.join("/tmp", get_random_string())
     save_asts_json(asts, ir_filename)
     output_script = from_ir_to_shell(ir_filename)
-    # print(output_script)
+    # log(output_script)
     exec_obj = subprocess.run(["/bin/bash"], input=output_script, 
                               capture_output=True,
                               text=True)
     exec_obj.check_returncode()
-    # print(exec_obj.stdout)
+    # log(exec_obj.stdout)
     return exec_obj.stdout
 
 ## TODO: Properly parse the output of the shell script
 def parse_string_to_arg_char(arg_char_string):
-    # print(arg_char_string)
+    # log(arg_char_string)
     return ['Q', string_to_argument(arg_char_string)]
 
+## TODO: Use "pash_input_args" when expanding in place of normal arguments.
 def naive_expand(arg_char, config):
+
+    ## config contains a dictionary with: 
+    ##  - all variables, their types, and values in 'shell_variables'
+    ##  - the name of a file that contains them in 'shell_variables_file_path'
+    # log(config['shell_variables'])
+    # log(config['shell_variables_file_path'])
+
     ## Create an AST node that "echo"s the argument
-    echo_ast = make_echo_ast(arg_char)
+    echo_asts = make_echo_ast(arg_char, config['shell_variables_file_path'])
 
     ## Execute the echo AST by unparsing it to shell
     ## and calling bash
-    expanded_string = execute_shell_asts([echo_ast])
+    expanded_string = execute_shell_asts(echo_asts)
+
+    log("Variable:", arg_char, "was expanded to:", expanded_string)
 
     ## Parse the expanded string back to an arg_char
     expanded_arg_char = parse_string_to_arg_char(expanded_string)
     
     ## TODO: Handle any errors
-    # print(expanded_arg_char)
+    # log(expanded_arg_char)
     return expanded_arg_char
 
 
 
 ## This function expands an arg_char. 
 ## At the moment it is pretty inefficient as it serves as a prototype.
+##
+## TODO: At the moment this has the issue that a command that has the words which we want to expand 
+##       might have assignments of its own, therefore requiring that we use them to properly expand.
 def expand(arg_char, config):
     return naive_expand(arg_char, config)
 
@@ -534,6 +582,7 @@ def compile_arg_char(original_arg_char, fileIdGen, config):
         compiled_val = compile_command_argument(val, fileIdGen, config)
         return [key, compiled_val]
     else:
+        log("Unknown arg_char:", arg_char)
         ## TODO: Complete this
         return arg_char
 
@@ -587,8 +636,8 @@ def replace_ast_regions(ast_objects, irFileGen, config):
     preprocessed_asts = []
     candidate_dataflow_region = []
     for i, ast_object in enumerate(ast_objects):
-        # print("Preprocessing AST {}".format(i))
-        # print(ast_object)
+        # log("Preprocessing AST {}".format(i))
+        # log(ast_object)
 
         ## NOTE: This could also replace all ASTs with calls to PaSh runtime.
         ##       There are a coupld issues with that:
@@ -661,7 +710,7 @@ def preprocess_close_node(ast_object, irFileGen, config):
     preprocessed_ast, should_replace_whole_ast, _is_non_maximal = output
     if(should_replace_whole_ast):
         ## TODO: Maybe the first argument has to be a singular list?
-        final_ast = replace_df_region(preprocessed_ast, irFileGen, config)
+        final_ast = replace_df_region([preprocessed_ast], irFileGen, config)
     else:
         final_ast = preprocessed_ast
     return final_ast
@@ -696,6 +745,31 @@ def preprocess_node_command(ast_node, _irFileGen, _config):
     ## regions.
     return ast_node, True, False
 
+## TODO: Is that correct? Also, this should probably affect `semi`, `and`, and `or`
+def preprocess_node_background(ast_node, _irFileGen, _config):
+    ## A background node is *always* a candidate dataflow region.
+    ## Q: Is that true?
+
+    ## TODO: Preprocess the internals of the background to allow
+    ##       for mutually recursive calls to PaSh.
+    return ast_node, True, True
+
+## TODO: We can actually preprocess the underlying node and then 
+##       return its characteristics above. However, we would need
+##       to add a field in the IR that a node runs in a subshell
+##       (which would have implications on how the backend outputs it).
+##
+##       e.g. a subshell node should also be output as a subshell in the backend.
+## FIXME: This might not just be suboptimal, but also wrong.
+def preprocess_node_subshell(ast_node, irFileGen, config):
+    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.body = preprocessed_body
+    return ast_node, False, False
+
+
+## TODO: For all of the constructs below, think whether we are being too conservative
+
 ## TODO: This is not efficient at all since it calls the PaSh runtime everytime the loop is entered.
 ##       We have to find a way to improve that.
 def preprocess_node_for(ast_node, irFileGen, config):
@@ -704,8 +778,77 @@ def preprocess_node_for(ast_node, irFileGen, config):
     ast_node.body = preprocessed_body
     return ast_node, False, False
 
+def preprocess_node_while(ast_node, irFileGen, config):
+    preprocessed_test = preprocess_close_node(ast_node.test, irFileGen, config)
+    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.test = preprocessed_test
+    ast_node.body = preprocessed_body
+    return ast_node, False, False
 
-## TODO: All the replace parts might need to be deleteD
+## This is the same as the one for `For`
+def preprocess_node_defun(ast_node, irFileGen, config):
+    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.body = preprocessed_body
+    return ast_node, False, False
+
+## TODO: If the preprocessed is not maximal we actually need to combine it with the one on the right.
+def preprocess_node_semi(ast_node, irFileGen, config):
+    # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
+    preprocessed_left = preprocess_close_node(ast_node.left_operand, irFileGen, config)
+    preprocessed_right = preprocess_close_node(ast_node.right_operand, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.left_operand = preprocessed_left
+    ast_node.right_operand = preprocessed_right
+    return ast_node, False, False
+
+def preprocess_node_and(ast_node, irFileGen, config):
+    # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
+    preprocessed_left = preprocess_close_node(ast_node.left_operand, irFileGen, config)
+    preprocessed_right = preprocess_close_node(ast_node.right_operand, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.left_operand = preprocessed_left
+    ast_node.right_operand = preprocessed_right
+    return ast_node, False, False
+
+def preprocess_node_or(ast_node, irFileGen, config):
+    # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
+    preprocessed_left = preprocess_close_node(ast_node.left_operand, irFileGen, config)
+    preprocessed_right = preprocess_close_node(ast_node.right_operand, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.left_operand = preprocessed_left
+    ast_node.right_operand = preprocessed_right
+    return ast_node, False, False
+
+def preprocess_node_if(ast_node, irFileGen, config):
+    # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
+    preprocessed_cond = preprocess_close_node(ast_node.cond, irFileGen, config)
+    preprocessed_then = preprocess_close_node(ast_node.then_b, irFileGen, config)
+    preprocessed_else = preprocess_close_node(ast_node.else_b, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.cond = preprocessed_cond
+    ast_node.then_b = preprocessed_then
+    ast_node.else_b = preprocessed_else
+    return ast_node, False, False
+
+def preprocess_case(case, irFileGen, config):
+    preprocessed_body = preprocess_close_node(case["cbody"], irFileGen, config)
+    case["cbody"] = preprocessed_body
+    return case
+
+def preprocess_node_case(ast_node, irFileGen, config):
+    preprocessed_cases = [preprocess_case(case, irFileGen, config) for case in ast_node.cases]
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.cases = preprocessed_cases
+    return ast_node, False, False
+
+
+## TODO: I am a little bit confused about how compilation happens. 
+##       Does it happen bottom up or top down: i.e. when we first encounter an occurence 
+##       do we recurse in it and then compile from the leaf, or just compile the surface?
+
+## TODO: All the replace code might need to be deleted (since we now replace in the preprocessing).
 
 
 
@@ -753,9 +896,16 @@ def replace_df_region(asts, irFileGen, config):
     with open(ir_filename, "wb") as ir_file:
         pickle.dump(asts, ir_file)
 
+    ## Serialize the candidate df_region asts back to shell 
+    ## so that the sequential script can be run in parallel to the compilation.
+    second_ir_filename = os.path.join("/tmp", get_random_string())
+    save_asts_json(asts, second_ir_filename)
+    sequential_script_file_name = os.path.join("/tmp", get_random_string())
+    from_ir_to_shell_file(second_ir_filename, sequential_script_file_name)
+
     ## Replace it with a command that calls the distribution
     ## planner with the name of the file.
-    replaced_node = make_command(ir_filename)
+    replaced_node = make_command(ir_filename, sequential_script_file_name)
 
     return replaced_node
 
@@ -767,18 +917,25 @@ def replace_df_region(asts, irFileGen, config):
 ## (MAYBE) TODO: The way I did it, is by calling the parser once, and seeing
 ## what it returns. Maybe it would make sense to call the parser on
 ## the fly to have a cleaner implementation here?
-def make_command(ir_filename):
+def make_command(ir_filename, sequential_script_file_name):
 
     ## TODO: Do we need to do anything with the line_number? If so, make
     ## sure that I keep it in the IR, so that I can find it.
-    arguments = [string_to_argument(config.PYTHON_VERSION),
-                 string_to_argument(config.PLANNER_EXECUTABLE),
+    arguments = [string_to_argument("source"),
+                 string_to_argument(config.RUNTIME_EXECUTABLE),
+                 string_to_argument(sequential_script_file_name),
                  string_to_argument(ir_filename)]
     ## Pass a relevant argument to the planner
     arguments += config.pass_common_arguments(config.pash_args)
 
+    ## The following assignment exists so that we save the arguments.
+    ## They are needed for the expansion to work since the real arguments
+    ## are lost because of the call to source.
+    ## TODO: Make this a constant somewhere
+    assignments = [["pash_input_args",[["Q",[["V",["Normal","false","@",[]]]]]]]]
+
     line_number = 0
-    node = make_kv('Command', [line_number, [], arguments, []])
+    node = make_kv('Command', [line_number, assignments, arguments, []])
     return node
 
 

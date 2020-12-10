@@ -13,11 +13,12 @@ else:
     PASH_TOP = subprocess.run(GIT_TOP_CMD, capture_output=True,
                               text=True).stdout.rstrip()
 
-PARSER_BINARY = os.path.join(PASH_TOP, "parser/parse_to_json.native")
-PRINTER_BINARY = os.path.join(PASH_TOP, "parser/json_to_shell.native")
+PARSER_BINARY = os.path.join(PASH_TOP, "compiler/parser/parse_to_json.native")
+PRINTER_BINARY = os.path.join(PASH_TOP, "compiler/parser/json_to_shell.native")
 
 PYTHON_VERSION = "python3.8"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
+RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 
 config = {}
 annotations = []
@@ -48,15 +49,22 @@ def add_common_arguments(parser):
     parser.add_argument("--compile_optimize_only",
                         help="only preprocess, compile, and optimize the input script and not execute it",
                         action="store_true")
-    parser.add_argument("--output_time", help="output the the time it took for every step in stderr",
+    parser.add_argument("--output_time", help="output the the time it took for every step",
                         action="store_true")
     parser.add_argument("--output_optimized",
                         help="output the optimized shell script that"
                         "was produced by the planner for inspection",
                         action="store_true")
+    parser.add_argument("--log_file", 
+                        help="the file to log into. Defaults to stderr.",
+                        default="")
     parser.add_argument("--no_eager",
                         help="disable eager nodes before merging nodes",
                         action="store_true")
+    parser.add_argument("--speculation",
+                        help="determines the speculation done by the runtime. By default it does no speculation, i.e. if the compilation succeeds it executes the parallel. Quick-abort runs the original from the start and then if the compilation succeeds, aborts the original and runs the parallel.",
+                        choices=['no_spec', 'quick_abort'],
+                        default='no_spec')
     parser.add_argument("--termination",
                         help="determines the termination behavior of the DFG. By default it cleans up the graph after the final node dies but it can also drain all streams until depletion.",
                         choices=['clean_up_graph', 'drain_stream'],
@@ -80,10 +88,15 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--output_time"))
     if (pash_arguments.output_optimized):
         arguments.append(string_to_argument("--output_optimized"))
+    if(not pash_arguments.log_file == ""):
+        arguments.append(string_to_argument("--log_file"))
+        arguments.append(string_to_argument(pash_arguments.log_file))
     if (pash_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
     arguments.append(string_to_argument("--termination"))
     arguments.append(string_to_argument(pash_arguments.termination))
+    arguments.append(string_to_argument("--speculation"))
+    arguments.append(string_to_argument(pash_arguments.speculation))
     arguments.append(string_to_argument("--split_fan_out"))
     arguments.append(string_to_argument(str(pash_arguments.split_fan_out)))
     if(not pash_arguments.config_path == ""):
@@ -91,30 +104,46 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument(pash_arguments.config_path))
     return arguments
 
+def init_log_file():
+    global pash_args
+    if(not pash_args.log_file == ""):
+        with open(pash_args.log_file, "w") as f:
+            pass
+
 ##
-## Load annotation files
+## Read a shell variables file
 ##
 
-def load_annotation_file(abs_annotation_filename):
-    with open(abs_annotation_filename) as annotation_file:
-        try:
-            annotation = json.load(annotation_file)
-            return [annotation]
-        except json.JSONDecodeError as err:
-            print("WARNING: Could not parse annotation for file:", abs_annotation_filename)
-            print("|-- {}".format(err))
-            return []
+def read_vars_file(var_file_path):
+    global config
 
-def load_annotation_files(annotation_dir):
-    global annotations
-    if(not os.path.isabs(annotation_dir)):
-        annotation_dir = os.path.join(PASH_TOP, annotation_dir)
+    config['shell_variables'] = None
+    config['shell_variables_file_path'] = var_file_path
+    if(not var_file_path is None):
+        vars_dict = {}
+        with open(var_file_path) as f:
+            lines = [line.rstrip() for line in f.readlines()]
 
-    for (dirpath, dirnames, filenames) in os.walk(annotation_dir):
-        json_filenames = [os.path.join(dirpath, filename) for filename in filenames
-                          if filename.endswith(".json")]
-        curr_annotations = [ann for filename in json_filenames for ann in load_annotation_file(filename) ]
-        annotations += curr_annotations
+        for line in lines:
+            words = line.split(' ')
+            _export_or_typeset = words[0]
+            rest = " ".join(words[1:])
+
+            space_index = rest.find(' ')
+            eq_index = rest.find('=')
+            var_type = None
+            ## This means we have a type
+            if(space_index < eq_index and not space_index == -1):
+                var_type = rest[:space_index]
+                rest = rest[(space_index+1):]
+                eq_index = rest.find('=')
+            ## We now find the name and value
+            var_name = rest[:eq_index] 
+            var_value = rest[(eq_index+1):]
+
+            vars_dict[var_name] = (var_type, var_value)
+
+        config['shell_variables'] = vars_dict
 
 
 # TODO load command class file path from config

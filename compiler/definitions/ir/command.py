@@ -4,6 +4,7 @@ from definitions.ir.file_id import *
 from definitions.ir.redirection import *
 
 from ir_utils import *
+from util import *
 import config
 
 ## Commands are specific Nodes that can be parallelized if they are
@@ -53,10 +54,10 @@ class Command(Node):
         for redirection in self.redirections:
             ## Handle To redirections that have to do with stdout
             if (redirection.is_to_file() and redirection.is_for_stdout()):
-                # print(redirection)
+                # log(redirection)
                 self.stdout.set_resource(redirection.file_arg)
             else:
-                print("Warning -- Unhandled redirection:", redirection)
+                log("Warning -- Unhandled redirection:", redirection)
 
     def get_non_file_options(self):
         return [self.options[i] for _, i in self.opt_indices]
@@ -72,7 +73,7 @@ class Command(Node):
         elif(self.is_pure_parallelizable()):
             return self.pure_get_map_output_files(input_file_ids, fileIdGen)
         else:
-            print("Unreachable code reached :(")
+            log("Unreachable code reached :(")
             assert(False)
             ## This should be unreachable
 
@@ -90,7 +91,7 @@ class Command(Node):
         elif(str(self.command) == "uniq"):
             new_output_file_ids = [[fileIdGen.next_file_id()] for in_fid in input_file_ids]
         else:
-            print("Unreachable code reached :(")
+            log("Unreachable code reached :(")
             assert(False)
             ## This should be unreachable
         return new_output_file_ids

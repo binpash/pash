@@ -1,4 +1,36 @@
+import config
+import os
+import json
 from ir_utils import *
+from util import *
+
+##
+## Load annotation files
+##
+
+def load_annotation_file(abs_annotation_filename):
+    with open(abs_annotation_filename) as annotation_file:
+        try:
+            annotation = json.load(annotation_file)
+            return [annotation]
+        except json.JSONDecodeError as err:
+            log("WARNING: Could not parse annotation for file:", abs_annotation_filename)
+            log("|-- {}".format(err))
+            return []
+
+def load_annotation_files(annotation_dir):
+    annotations = []
+    if(not os.path.isabs(annotation_dir)):
+        annotation_dir = os.path.join(config.PASH_TOP, annotation_dir)
+
+    for (dirpath, _dirnames, filenames) in os.walk(annotation_dir):
+        json_filenames = [os.path.join(dirpath, filename) for filename in filenames
+                          if filename.endswith(".json")]
+        curr_annotations = [ann for filename in json_filenames for ann in load_annotation_file(filename) ]
+        annotations += curr_annotations
+    return annotations
+    
+
 
 ## Checks if the annotation for that command exists
 def get_command_io_from_annotations(command, options, annotations):
@@ -37,7 +69,7 @@ def interpret_io(io, options, ann_options):
         assert(io.startswith("args"))
         indices = io.split("[")[1].split("]")[0]
 
-        # print(io, options)
+        # log(io, options)
 
         ## Find the file arguments (and their indices)
         args_indices = non_option_args_indices(options)
@@ -89,7 +121,7 @@ def get_command_from_annotations(command, options, annotations):
     if(len(relevant_annotations) == 0):
         return None
     elif(len(relevant_annotations) > 1):
-        print("Warning: More than one annotation for command:", command)
+        log("Warning: More than one annotation for command:", command)
 
     return get_command_from_annotation(command, options, relevant_annotations[0])
 
@@ -116,7 +148,7 @@ def predicate_satisfied(options, predicate):
     return func(options)
 
 def interpret_predicate(predicate):
-    # print(predicate)
+    # log(predicate)
     operator = predicate['operator']
     operands = []
     try:
@@ -127,6 +159,8 @@ def interpret_predicate(predicate):
         return lambda options: len_args(operands[0], options)
     elif(operator == 'exists'):
         return lambda options: exists_operator(operands, options)
+    elif(operator == 'value'):
+        return lambda options: value_operator(operands, options)
     elif(operator == 'all'):
         return lambda options: all_operator(operands, options)
     elif(operator == 'or'):
@@ -135,7 +169,7 @@ def interpret_predicate(predicate):
         return lambda options: not_operator(operands, options)
 
     ## TODO: Fill in the rest
-    return lambda x: print("Uninterpreted operator:", operator); False
+    return lambda x: log("Uninterpreted operator:", operator); False
 
 
 ##
@@ -150,6 +184,19 @@ def exists_operator(desired_options, options):
     opt_args_set = set(option_args(options))
     existence = map(lambda opt: opt in opt_args_set, desired_options)
     return any(existence)
+
+## Checks that an option exists and that it has a specific value
+def value_operator(option_value, options):
+    args_list = format_args(options)
+    desired_opt = option_value[0]
+    desired_val = option_value[1]
+    ## If the desired option does exist, and the next argument is indeed the correct value
+    try:
+        opt_i = args_list.index(desired_opt)
+        val = args_list[opt_i+1]
+        return (desired_val == val)
+    except:
+        return False
 
 def all_operator(desired_options, options):
     opt_args_set = set(option_args(options))

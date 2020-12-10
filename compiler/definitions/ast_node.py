@@ -3,6 +3,7 @@ from json import JSONEncoder
 from definitions.ast_node_c import *
 from definitions.no_match_exception import *
 from ir_utils import *
+from util import *
 
 
 ## TODO: Create subclasses for all different types of AstNodes
@@ -24,7 +25,14 @@ class AstNode:
             self.assignments = args[1]
             self.arguments = args[2]
             self.redir_list = args[3]
-            return
+        elif self.construct is AstNodeConstructor.BACKGROUND:
+            self.line_number = args[0]
+            self.body = args[1]
+            self.redir_list = args[2]
+        elif self.construct is AstNodeConstructor.SUBSHELL:
+            self.line_number = args[0]
+            self.body = args[1]
+            self.redir_list = args[2]
         elif self.construct in [AstNodeConstructor.AND, AstNodeConstructor.OR, AstNodeConstructor.SEMI]:
             self.left_operand = args[0]
             self.right_operand = args[1]
@@ -42,6 +50,17 @@ class AstNode:
             self.argument = args[1]
             self.body = args[2]
             self.variable = args[3]
+        elif self.construct is AstNodeConstructor.WHILE:
+            self.test = args[0]
+            self.body = args[1]
+        elif self.construct is AstNodeConstructor.IF:
+            self.cond = args[0]
+            self.then_b = args[1]
+            self.else_b = args[2]
+        elif self.construct is AstNodeConstructor.CASE:
+            self.line_number = args[0]
+            self.argument = args[1]
+            self.cases = args[2]
         else:
             raise ValueError()
     
@@ -61,6 +80,7 @@ class AstNode:
         elif self.construct is AstNodeConstructor.FOR:
             output = "for {} in {}; do ({})".format(self.variable, self.argument, self.body)
             return output
+        log(self.construct)
         return NotImplemented 
 
     def check(self, **kwargs):
@@ -69,7 +89,7 @@ class AstNode:
             try:
                 assert(value())
             except Exception as exc:
-                print("check for {} construct failed at key {}".format(self.construct, key))
+                log("check for {} construct failed at key {}".format(self.construct, key))
                 raise exc
     
     def json_serialize(self):
@@ -79,12 +99,65 @@ class AstNode:
                             self.argument,
                             self.body,
                             self.variable])
-            return json_output
-        return NotImplemented
+        elif self.construct is AstNodeConstructor.WHILE:
+            json_output = make_kv(self.construct.value,
+                           [self.test,
+                            self.body])
+        elif self.construct is AstNodeConstructor.COMMAND:
+            json_output = make_kv(self.construct.value,
+                                  [self.line_number,
+                                   self.assignments,
+                                   self.arguments,
+                                   self.redir_list])
+        elif self.construct is AstNodeConstructor.BACKGROUND:
+            json_output = make_kv(self.construct.value,
+                                  [self.line_number,
+                                   self.body,
+                                   self.redir_list])
+        elif self.construct is AstNodeConstructor.SUBSHELL:
+            json_output = make_kv(self.construct.value,
+                                  [self.line_number,
+                                   self.body,
+                                   self.redir_list])
+        elif self.construct is AstNodeConstructor.PIPE:
+            json_output = make_kv(self.construct.value,
+                                  [self.is_background,
+                                   self.items])
+        elif self.construct is AstNodeConstructor.DEFUN:
+            json_output = make_kv(self.construct.value,
+                                  [self.line_number,
+                                   self.name,
+                                   self.body])
+        elif self.construct is AstNodeConstructor.IF:
+            json_output = make_kv(self.construct.value,
+                                  [self.cond,
+                                   self.then_b,
+                                   self.else_b])
+        elif self.construct is AstNodeConstructor.SEMI:
+            json_output = make_kv(self.construct.value,
+                                  [self.left_operand,
+                                   self.right_operand])
+        elif self.construct is AstNodeConstructor.OR:
+            json_output = make_kv(self.construct.value,
+                                  [self.left_operand,
+                                   self.right_operand])
+        elif self.construct is AstNodeConstructor.AND:
+            json_output = make_kv(self.construct.value,
+                                  [self.left_operand,
+                                   self.right_operand])
+        elif self.construct is AstNodeConstructor.CASE:
+            json_output = make_kv(self.construct.value,
+                                  [self.line_number,
+                                   self.argument,
+                                   self.cases])
+        else:
+            log(self)
+            json_output = NotImplemented
+        return json_output
 
 class CustomJSONEncoder(JSONEncoder):
     def default(self, obj):
         if isinstance(obj, AstNode):
             return obj.json_serialize()
         # Let the base class default method raise the TypeError
-        return json.JSONEncoder.default(self, obj)
+        return JSONEncoder.default(self, obj)

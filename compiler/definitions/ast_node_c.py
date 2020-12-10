@@ -11,3 +11,6 @@ class AstNodeConstructor(Enum):
     BACKGROUND = 'Background'
     DEFUN = 'Defun'
     FOR = 'For'
+    WHILE = 'While'
+    IF = 'If'
+    CASE = 'Case'

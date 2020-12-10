@@ -5,6 +5,8 @@ import config
 from definitions.ast_node import CustomJSONEncoder
 from subprocess import run, PIPE
 
+from util import *
+
 ### --- From JSON --- ###
 
 ## Returns the ast as a object
@@ -13,6 +15,10 @@ def parse_json_line(json_line):
     return ast_object
 
 def parse_json_ast_string(json_string):
+    ## Solve a bug where an empty string leads to a json decoder error
+    if(json_string == ""):
+        log("Warning: Empty json string was given for decoding.")
+        return []
     stripped_json_string = json_string.strip()
     lines = stripped_json_string.split("\n")
     ast_objects = [parse_json_line(line) for line in lines]

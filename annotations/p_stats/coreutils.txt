@@ -1,0 +1,112 @@
+basename     stateless      Removes the path prefix from a given pathname
+dirname      stateless      Strips non-directory suffix from file name
+echo         stateless      Displays a specified line of text
+factor       stateless      Factors numbers
+od           stateless*     Dumps files in octal and other formats [nv: but changes \n location]
+pathchk      stateless      Checks whether file names are valid or portable
+printf       stateless      Formats and prints data
+shuf         stateless*     generate random permutations
+test         stateless      Evaluates an expression
+tr           stateless      Translates or deletes characters
+unexpand     stateless      Converts spaces to tabs
+yes          stateless      Prints a string repeatedly
+comm        l-stateless*    Compares two sorted files line by line
+cut         l-stateless     Removes sections from each line of files
+expand      l-stateless     Converts tabs to spaces
+fold        l-stateless     Wraps each input line to fit in specified width [nv: like map, from one to two lines]
+join        l-stateless     Joins lines of two files on a common field
+nl          l-stateless     Numbers lines of files
+numfmt      l-stateless     Reformat numbers
+paste       l-stateless     Merges lines of files
+fmt         p-stateless     Simple optimal text formatter [nv: might need to fill from next line]
+
+uniq            pure        Removes duplicate lines from a sorted file
+sort            pure        sort lines of text files
+wc              pure        Prints the number of bytes, words, and lines in files
+pr              pure        Converts text files for printing
+
+b2sum           pure        Computes and checks BLAKE2b message digest
+base32          pure        Encodes or decodes Base32, and prints result to standard output
+base64          pure        Encodes or decodes Base64, and prints result to standard output
+cksum           pure        Checksums and count the bytes in a file
+md5sum          pure        Computes and checks MD5 message digest
+sha1sum         pure        Computes and checks SHA-1/SHA-2 message digests
+sha224sum       pure        Computes and checks SHA-1/SHA-2 message digests
+sha256sum       pure        Computes and checks SHA-1/SHA-2 message digests
+sha384sum       pure        Computes and checks SHA-1/SHA-2 message digests
+sha512sum       pure        Computes and checks SHA-1/SHA-2 message digests
+sum             pure        Checksums and counts the blocks in a file
+tsort           pure        Performs a topological sort
+expr            pure        Evaluates expressions [nv: not shell, but math etc]
+
+tac             pure        Concatenates and prints files in reverse order line by line
+cat             pure        Concatenates and prints files on the standard output
+head            pure        Outputs the first part of files [nv: if we have chunks and watermarks, then this is trivially parallelizable]
+tail            pure        Outputs the last part of files
+seq             pure        Prints a sequence of numbers
+
+chcon            DFS        Changes file security context (SELinux)
+chgrp            DFS        Changes file group ownership
+chmod            DFS        Changes the permissions of a file or directory
+chown            DFS        Changes file ownership
+cp               DFS        Copies a file or directory
+csplit           DFS        Splits a file into sections determined by context lines
+dd               DFS        Copies and converts a file
+install          DFS        Copies files and set attributes
+link             DFS        Creates a link to a file
+ln               DFS        Creates a link to a file
+mkdir            DFS        Creates a directory
+mktemp           DFS        Creates a temporary file or directory
+mv               DFS        Moves files or rename files
+readlink         DFS        Displays value of a symbolic link
+realpath         DFS        Returns the resolved absolute or relative path for a file
+rm               DFS        Removes (deletes) files, directories, device nodes and symbolic links
+rmdir            DFS        Removes empty directories
+shred            DFS        Overwrites a file to hide its contents, and optionally deletes it
+split            DFS*       Splits a file into pieces [nv: splitting is pure]
+sync             DFS        Flushes file system buffers
+touch            DFS        Changes file timestamps
+truncate         DFS        Shrink or extend the size of a file to the specified size
+unlink           DFS        Removes the specified file using the unlink function
+vdir             DFS        Is exactly like "ls -l -b". (Files are by default listed in long format.)
+
+arch            info.       Prints machine hardware name (same as uname -m)
+date            info.       Prints or sets the system date and time
+df              info.       Shows disk free space on file systems
+dir             info.       Is exactly like "ls -C -b". (Files are by default listed in columns and sorted vertically.)
+du              info.       Shows disk usage on file systems
+groups          info.       Prints the groups of which the user is a member
+hostid          info.       Prints the numeric identifier for the current host
+id              info.       Prints real or effective UID and GID
+logname         info.       Print the user's login name
+ls              info.       Lists the files in a directory
+pinky           info.       A lightweight version of finger
+printenv        info.       Prints environment variables
+pwd             info.       Prints the current working directory
+stat            info.       Returns data about an inode
+timeout         info.       Run a command with a time limit
+tty             info.       Prints terminal name
+uname           info.       Prints system information
+uptime          info.       Tells how long the system has been running
+users           info.       Prints the user names of users currently logged into the current host
+who             info.       Prints a list of all users currently logged in
+whoami          info.       Prints the effective userid
+
+chroot          envr?       Changes the root directory
+dircolors       envr.       Set up color for ls
+env             envr.       Displays and modifies environment variables
+stty            env         Changes and prints terminal line settings
+
+false     Side-effectful    Does nothing, but exits unsuccessfully
+nice      Side-effectful    Modifies scheduling priority
+nohup     Side-effectful    Allows a command to continue running after logging out
+nproc     Side-effectful    Queries the number of (active) processors
+sleep     Side-effectful    Delays for a specified amount of time
+true      Side-effectful    Does nothing, but exits successfully
+
+mkfifo           ?*         Makes named pipes (FIFOs) [nv: might affect DAG]
+mknod            ?          Makes block or character special files
+ptx              ?          Produces a permuted index of file contents [nv: not sure about its invariants]
+runcon           ?          Run command with specified security context
+stdbuf           ?          Controls buffering for commands that use stdio
+tee              ?*         Sends output to multiple files [nv: affects DAG]

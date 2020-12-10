@@ -1,0 +1,14 @@
+{
+    "command": "gzip",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "stateless",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+			"options": "no_split_stream",
+			"comment": "stateless if gzip a.zip b.zip; single file stream has to be contiguous"
+        }
+    ]
+}
