@@ -14,6 +14,7 @@ source "$RUNTIME_DIR/pash_source_declare_vars.sh" $input_vars_file
 ## WARNING: This has to happen afterwards to avoid 
 output_vars_file=${2?Output var file not given}
 output_set_file=${3?Output set file not given}
+script_source="${@:4}"
 
 ## Recover the `set` state of the previous shell
 # pash_redir_output echo "(3) Previous BaSh set state: $pash_previous_set_status"
@@ -22,15 +23,21 @@ pash_current_set_state=$-
 source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_current_set_state" "$pash_previous_set_status"
 pash_redir_output echo "(3) Reverted to BaSh set state: $-"
 
+## Recover the input arguments of the previous script
+previous_args="$@"
+set -- $pash_input_args
+
 ## Execute the script
-pash_redir_output echo "(4) Executing script in ${@:4}:"
-pash_redir_output cat "${@:4}"
+pash_redir_output echo "(4) Executing script in ${script_source}:"
+pash_redir_output cat "${script_source}"
 ## TODO: I think that the following command fails with `set -e`
 (exit "$pash_previous_exit_status")
-source "${@:4}" && internal_exec_status=$? || internal_exec_status=$?
+source "${script_source}" && internal_exec_status=$? || internal_exec_status=$?
 pash_exec_status=${internal_exec_status}
 pash_redir_output echo "(5) BaSh script exited with ec: $pash_exec_status"
 
+## Recover the previous args of the script
+set -- $previous_args
 
 ## Save the current set options to a file so that they can be recovered
 pash_final_set_vars=$-

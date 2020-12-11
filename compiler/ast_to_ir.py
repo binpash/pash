@@ -345,6 +345,12 @@ def make_echo_ast(arg_char, var_file_path):
     node = make_kv('Subshell', [0, exit_node, []])
     nodes.append(node)
 
+    ## Reset the input arguments
+    variable_arg = make_kv('V', ['Normal', "false", 'pash_input_args', []])
+    arguments = [string_to_argument("set"), string_to_argument("--"), [variable_arg]]
+    set_node = make_kv('Command', [0, [], arguments, []])
+    nodes.append(set_node)
+
     arguments = [string_to_argument("echo"), string_to_argument("-n"), [arg_char]]
 
     line_number = 0
