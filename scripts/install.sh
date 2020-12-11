@@ -36,7 +36,7 @@ if [ "$prepare_sudo_install_flag" -eq 1 ]; then
     sudo apt-get update &> $LOG_DIR/apt_update.log
     echo "|-- running apt install..."
     sudo apt-get install -y libtool m4 automake opam pkg-config libffi-dev python3.8 python3-pip &> $LOG_DIR/apt_install.log
-    opam -y init &> $LOG_DIR/opam_init.log
+    yes | opam init &> $LOG_DIR/opam_init.log
     # opam update
 else
     echo "Requires libtool, m4, automake, opam, pkg-config, libffi-dev, python3.8, pip for python3"
