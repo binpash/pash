@@ -25,8 +25,12 @@ var resError = function(code, msg, req, res) {
     res.end(msg);
 };
 
+let lastTimeCIRun = 0;
 var ci = function (req, res) {
+  if (lastTimeCIRun === 0) {
     runTask('./ci.sh', req, res);
+  } else {
+    process.hrtime
 };
 
 var docs = function (req, res) {
@@ -41,6 +45,7 @@ var echo = function (req, res) {
     runTask('echo hi', req, res);
 };
 
+// TODO Takes a few minutes, use lock file
 var runTask = function (script, req, res) {
     exec(script, function(error, stdout, stderr) {
         if (!error) {

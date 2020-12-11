@@ -5,7 +5,7 @@ bigrams_aux()
     s2=$(mktemp -u)
     mkfifo $s2
     tee $s2 |
-        tail +2 |
+        tail -n +2 |
         paste $s2 - |
         sed '$d'
     rm $s2
@@ -36,12 +36,12 @@ bigram_aux_map()
     sed '$d' $temp > $aux3 &
     cat $temp | head -n 1 > $AUX_HEAD &
     cat $temp | tail -n 1 > $AUX_TAIL &
-    cat $temp | tail +2 | paste $aux3 - > $OUT &
+    cat $temp | tail -n +2 | paste $aux3 - > $OUT &
 
     # ## Old way of doing it
     # cat $IN |
     #     tee $s2 $aux1 $aux2 |
-    #     tail +2 |
+    #     tail -n +2 |
     #     paste $s2 - > $OUT &
 
     # ## The goal of this is to write the first line of $IN in the $AUX_HEAD
