@@ -8,6 +8,9 @@ import subprocess
 from util import *
 
 def parse_shell(input_script_path):
+    if(not os.path.isfile(input_script_path)):
+        log("Error! File:", input_script_path, "does not exist.")
+        exit(1)
     parser_output = subprocess.run([config.PARSER_BINARY, input_script_path], capture_output=True, text=True)
     if (not parser_output.returncode == 0):
         log(parser_output.stderr)
