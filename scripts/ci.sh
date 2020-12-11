@@ -10,6 +10,18 @@ trim() {
   awk 'length > 40{$0 = substr($0, 1, 37) "..."} {print $0}' 
 }
 
+## TODO: We have to remove the sudo from the install script 
+##       to be able to run it.
+install() {
+  scripts/install.sh
+}
+
+tests() {
+  cd compiler 
+  ./test_evaluation_scripts.sh
+  cd ../
+}
+
 run () {
   git pull
 
@@ -23,6 +35,7 @@ run () {
   TIME="0s"
   echo $(date '+%F %T') "Start CI" > $RF
   echo "Lots of tests"   >> $RF
+  tests >> $RF
   echo $(date '+%F %T') "End CI"  >> $RF
 
   FORMAT="%s  %s  %-40s  %s  %s\n"
