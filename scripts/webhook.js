@@ -24,16 +24,20 @@ var resError = function(code, msg, req, res) {
     res.end(msg);
 };
 
-var pull = function (req, res) {
-    runTask('./pull.sh', req, res);
+var ci = function (req, res) {
+    runTask('./ci.sh', req, res);
 };
 
 var docs = function (req, res) {
     runTask('../docs/make.sh', req, res);
 };
 
-var release = function (req, res) {
-    runTask('./release.sh', req, res);
+var pkg = function (req, res) {
+    runTask('./pkg.sh', req, res);
+};
+
+var echo = function (req, res) {
+    runTask('echo hi', req, res);
 };
 
 var runTask = function (script, req, res) {
@@ -43,25 +47,36 @@ var runTask = function (script, req, res) {
             res200(req, res);
         } else {
             resError(500, 'Internal Server Error\n', req, res);
-            console.log("There was an error running pull\n" + error.stack);
-            console.log(stderr);
+            let p = url.parse(req.url).pathname;
+            console.error("There was an error running", p, "\n",  error.stack);
+            console.error(stderr);
         }
     });
 };
 
 var routes = {
-    '/pul': pull,
-    '/doc': docs,
-    '/rel': release
+    '/ci': ci,
+//  '/doc': docs,
+    '/echo': echo,
+    '/pkg': pkg
 };
 
 function tryPull (req, res) {
   // FIXME -- verify by calculating hmac
   // secret in header: X-Hub-Signature-256
   // https://docs.github.com/en/free-pro-team@latest/developers/webhooks-and-events/webhook-events-and-payloads
+    let p = url.parse(req.url).pathname
+    console.log(new Date(), p, req.headers['X-Hub-Signature-256']);
 
-    if (routes[url.parse(req.url).pathname]) {
-       routes[url.parse(req.url).pathname](req, res);
+    if (req.url === '/favicon.ico') {
+      res.writeHead(200, {'Content-Type': 'image/x-icon'} );
+      res.end();
+      console.log('favicon requested');
+      return;
+    }
+
+    if (routes[p]) {
+       routes[p](req, res);
     } else {
         resError(404, "404 Not Found\n", req, res);
     }
