@@ -17,31 +17,41 @@ install() {
 }
 
 tests() {
-  cd compiler 
+  cd ../compiler 
   ./test_evaluation_scripts.sh
   cd ../
 }
 
-run () {
-  git pull
+git pull
 
-  #all this runs after pull
-  REV=$(git rev-parse --short HEAD)
-  MSG="$(git log -1 --pretty=%B | trim)"
+# Vars used in report summary
+REV=$(git rev-parse --short HEAD)
+MSG="$(git log -1 --pretty=%B | trim)"
+RES="fail"
+TIME="0s"
 
-  RF=$REPORT_DIR/$REV
-  SF=$REPORT_DIR/summary
-  PASS="fail"
-  TIME="0s"
-  echo $(date '+%F %T') "Start CI" > $RF
-  echo "Lots of tests"   >> $RF
-  tests >> $RF
-  echo $(date '+%F %T') "End CI"  >> $RF
+# Two report files
+RF=$REPORT_DIR/$REV
+SF=$REPORT_DIR/summary
 
+err_report() {
+	echo "Error on line $1"
   FORMAT="%s  %s  %-40s  %s  %s\n"
-  SUM="$(printf "$FORMAT" "$(date '+%F;%T')" "$REV" "$MSG" "$PASS" "$TIME")"
+  SUM="$(printf "$FORMAT" "$(date '+%F;%T')" "$REV" "$MSG" "$RES" "$TIME")"
   echo "$SUM" >> $SF
 }
 
-run
+trap 'err_report $LINENO' ERR
+
+echo $(date '+%F %T') "Start CI" > $RF
+echo "Lots of tests"   >> $RF
+tests >> $RF
+echo $(date '+%F %T') "End CI"  >> $RF
+
+RES="pass"
+
+FORMAT="%s  %s  %-40s  %s  %s\n"
+SUM="$(printf "$FORMAT" "$(date '+%F;%T')" "$REV" "$MSG" "$RES" "$TIME")"
+echo "$SUM" >> $SF
+
 

@@ -7,7 +7,7 @@ else
 fi
 
 if [ -f $a ]; then
-  cat $a $a $a $a $a $a $a $a | grep -m5 -xiE '([a-z]*([a-z])\2[a-z]*){2}hello world'
+  cat $a $a $a $a $a $a $a $a | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' | wc -l
 else
   echo "Dictionary file $a not found.."
 fi
