@@ -10,17 +10,21 @@ semantics.background # Seems to be working, but PaSh should be able to compile i
 semantics.background.pid # FAIL: Recursive call to PaSh
 semantics.backtick.exit # FAIL: No redirection of stdout to stderr
 semantics.backtick.ppid # FAIL: There seems to be an extra newline in the beginning of the output.
-...
 semantics.command-subst.newline # FAIL: Heredoc redirection doesn't work
-...
 semantics.errexit.subshell # FAIL: HELP-NEEDED: I am not sure I understand why 4 is output in this test
-...
 semantics.escaping.backslash # FAIL: HELP-NEEDED: The parser fails. If we parse and unparse we end up with an unrannable script.
-...
-semantics.eval.makeadder # FAIL: EXPANSION: Arguments of function are not correctly passed. I saved them in "pash_input_args" and now they need to be restored in both expansion and during execution.
+semantics.eval.makeadder # Pass: (Previous issue) EXPANSION: Arguments of function are not correctly passed. I saved them in "pash_input_args" and now they need to be restored in both expansion and during execution.
+semantics.fun.error.restore # FAIL: HELP NEEDED: set -- a b c is lost after a call to a function. It seems that we might need to have some stack information in the environment variables about the location of execution.
+evaluation/scripts/set_bug.sh # FAIL: This fails to capture the argument variables because they are not captured by declare -p. We need to explicitly capture them through $@ but also find a way to not propagate them arbitrarily. Maybe just saving them using pash_input_args="$@" at the end of execution is enough.
+semantics.ifs.combine.ws # FAIL: Messes with IFS and there is a fault that happens during compilation. As a naive solution we could abort the runtime if IFS is not standard. 
+semantics.kill.traps # FAIL: HELP NEEDED: Tries to kill and wait for a pid, but since we execute things in different shells, we cannot wait for them or kill them. At the same time, we don't want to be able to kill more than what we should.
 
 sh.ps1.override # PaSh seems to be called without an input.
 sh.interactive.ps1 # PaSh seems to be called without an input.
+
+
+semantics.expansion.quotes.adjacent # TIMEOUT: Correct but slow.
+
 
 ## TODO: What about loops, break and continue? We need to use bash's info about that.
 
