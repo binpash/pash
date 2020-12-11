@@ -81,3 +81,7 @@ grep --files-with-match "are identical" ../evaluation/results/test_results/*_dis
 
 echo "Below follow the non-identical outputs:"
 grep -L "are identical" ../evaluation/results/test_results/*_distr*.time
+
+TOTAL_TESTS=$(ls -la ../evaluation/results/test_results/*_distr*.time | wc -l)
+PASSED_TESTS=$(grep --files-with-match "are identical" ../evaluation/results/test_results/*_distr*.time | wc -l)
+echo "Summary: ${PASSED_TESTS}/${TOTAL_TESTS} tests passed."

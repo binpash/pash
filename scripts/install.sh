@@ -19,13 +19,20 @@ shift "$(( OPTIND - 1 ))"
 
 ## for earlier versions of Debian/Ubuntu
 ## https://github.com/janestreet/install-ocaml
-#add-apt-repository ppa:avsm/ppa
-#apt update
-#apt install -y opam m4
+#sudo add-apt-repository ppa:avsm/ppa
+#sudo apt update
+#sudo apt install -y opam m4
 #opam init -y --compiler=4.07.1
+#eval $(opam env)
+#opam switch create 4.07.1
 #eval $(opam env)
 # ocaml -version | grep -o -E '[0-9]+.[0-9]+.[0-9]+$'
 
+# Python 3.8 for older versions of Ubuntu
+# sudo add-apt-repository ppa:deadsnakes/ppa
+
+# FIXME At times, this will be 
+# 
 git submodule init
 git submodule update
 
@@ -58,7 +65,7 @@ fi
 # Build the parser (requires libtool, m4, automake, opam)
 echo "Building parser..."
 eval $(opam config env)
-cd compiler/parser
+cd ../compiler/parser
 echo "|-- installing opam dependencies..."
 make opam-dependencies &> $LOG_DIR/make_opam_dependencies.log
 echo "|-- making libdash... (requires sudo)"
@@ -75,6 +82,12 @@ make &> $LOG_DIR/make.log
 cd ../
 
 # Install python3.8 dependencies
+# 16.04 requires distutils, but has no python3-distutils
+# sudo apt install python-distutils-extra
+# sudo apt install python3-distutils-extra
+# sudo apt install python3.8-distutils
+# sudo apt remove python3-pip
+# sudo python3.8 -m easy_install pip
 echo "Installing python dependencies..."
 python3.8 -m pip install jsonpickle &> $LOG_DIR/pip_install_jsonpickle.log
 python3.8 -m pip install -U PyYAML &> $LOG_DIR/pip_install_pyyaml.log

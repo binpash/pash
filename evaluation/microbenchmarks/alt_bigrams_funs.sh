@@ -6,7 +6,7 @@ alt_bigrams_aux()
     ( mkfifo $s2 > /dev/null ) ;
 
     tee $s2 |
-        tail +2 |
+        tail -n +2 |
         paste $s2 - |
         sed '$d' |
         sort |
