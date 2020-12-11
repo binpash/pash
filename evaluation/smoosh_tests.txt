@@ -22,6 +22,8 @@ semantics.eval.makeadder # FAIL: EXPANSION: Arguments of function are not correc
 sh.ps1.override # PaSh seems to be called without an input.
 sh.interactive.ps1 # PaSh seems to be called without an input.
 
+## TODO: What about loops, break and continue? We need to use bash's info about that.
+
 ## TODO: Timeouts seem to be a common reason for failure
 
 benchmark.fact5
