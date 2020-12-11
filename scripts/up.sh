@@ -14,17 +14,17 @@ download () {
 }
 
 cmd_exists () {
-    command -v $1 >/dev/null 2>&1 && 
-        echo 'true' ||
-        echo 'false';
+  command -v $1 >/dev/null 2>&1 && echo 'true' || echo 'false';
 }
 
 if [ $PLATFORM = 'darwin' ]; then
   echo 'PaSh is not yet well supported on OS X'
 fi
 
+mkdir pash
+cd pash
 curl -s $URL | tar xzf - --strip-components=1 -C .
-cd pash/scripts
+cd scripts
 # FIXME: it's unclear we should always run as root
 # A first step would be to confirm dependencies are met
 # ./install.sh -p
