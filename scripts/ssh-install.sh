@@ -36,7 +36,7 @@ ssh -o StrictHostKeyChecking=no -i $PRIVATE_KEY "${USER}@${HOSTNAME}" /bin/bash 
 tar -xzf pash.tar.gz
 cd pash
 echo "At branch: $(git rev-parse --abbrev-ref HEAD)"
-source ./install.sh -p
+source scripts/install.sh -p
 cd compiler
 ./test_evaluation_scripts.sh
 EOF
