@@ -43,10 +43,11 @@ else
     echo "Ensure that you have them by running:"
     echo "  sudo apt install libtool m4 automake opam pkg-config libffi-dev python3.8 python3-pip"
     echo "  opam init"
-    echo "Press 'y' if you have these dependencies installed."
+    echo -n "Press 'y' if you have these dependencies installed. "
     while : ; do
         read -n 1 k <&1
         if [[ $k = y ]] ; then
+            echo ""
             echo "Proceeding..."
             break
         fi
@@ -57,10 +58,11 @@ fi
 # Build the parser (requires libtool, m4, automake, opam)
 echo "Building parser..."
 eval $(opam config env)
-cd comipler/parser
+cd compiler/parser
 echo "|-- installing opam dependencies..."
 make opam-dependencies &> $LOG_DIR/make_opam_dependencies.log
-echo "|-- making libdash..."
+echo "|-- making libdash... (requires sudo)"
+## TODO: How can we get rid of that `sudo make install` in here?
 make libdash &> $LOG_DIR/make_libdash.log
 echo "|-- making parser..."
 make &> $LOG_DIR/make.log
@@ -85,7 +87,7 @@ cd ../../../
 
 # Export necessary environment variables
 export PASH_TOP=$PWD
-export PASH_PARSER=${PASH_TOP}/parser/parse_to_json.native
+export PASH_PARSER=${PASH_TOP}/compiler/parser/parse_to_json.native
 
 ## This is necessary for the parser to link to libdash
 echo "Do not forget to export LD_LIBRARY_PATH as shown below :)"
