@@ -13,7 +13,7 @@ cd ../../
 # rm -rf .gitignore .gitsubmodules .git
 # cd ..
 
-tar -cvzf pash.tar.gz pash/
+tar -cvzf pash.tar.gz pash/ > /dev/null
 # uncomment the following line to keep all versions
 # mv pash.tar.gz get/pash-${REV}.tar.gz
 # ln -sf ./pash-${REV}.tar.gz get/latest 

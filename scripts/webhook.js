@@ -16,6 +16,7 @@ var hmac = function (str) {
 
 var res200 = function(req, res) {
     res.writeHead(200, {'Content-Type': 'text/plain' });
+    res.write(url.parse(req.url).pathname + " ...OK");
     res.end();
 };
 
