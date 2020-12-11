@@ -47,8 +47,8 @@ fi
 
 for file in "$@"; do
   if [ $WIDTH = 0 ]; then
-    python3.8 $PASH_TOP/compiler/pash.py $file
+    python3.8 $PASH_TOP/compiler/pash.py --log_file /tmp/pash.log $file
   else
-    python3.8 $PASH_TOP/compiler/pash.py --split_fan_out 2 $file
+    python3.8 $PASH_TOP/compiler/pash.py --log_file /tmp/pash.log --split_fan_out 2 $file
   fi
 done
