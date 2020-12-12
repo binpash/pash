@@ -36,6 +36,8 @@ class AstNode:
         elif self.construct in [AstNodeConstructor.AND, AstNodeConstructor.OR, AstNodeConstructor.SEMI]:
             self.left_operand = args[0]
             self.right_operand = args[1]
+        elif self.construct is AstNodeConstructor.NOT:
+            self.body = args
         elif self.construct in [AstNodeConstructor.REDIR, AstNodeConstructor.SUBSHELL, AstNodeConstructor.BACKGROUND]:
             self.line_number = args[0]
             # TODO maybe pick a better name?
@@ -145,6 +147,9 @@ class AstNode:
             json_output = make_kv(self.construct.value,
                                   [self.left_operand,
                                    self.right_operand])
+        elif self.construct is AstNodeConstructor.NOT:
+            json_output = make_kv(self.construct.value,
+                                  self.body)
         elif self.construct is AstNodeConstructor.CASE:
             json_output = make_kv(self.construct.value,
                                   [self.line_number,
