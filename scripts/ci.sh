@@ -59,13 +59,16 @@ trap 'err_report $LINENO' ERR
 
 echo $(date '+%F %T') "Start CI" > $RF
 echo "Lots of tests"   >> $RF
+START_TIME=$(date +%s);
 pash_tests >> $RF
 smoosh_tests >> $RF
+END_TIME=$(date +%s);
 echo $(date '+%F %T') "End CI"  >> $RF
 
 RES="$(echo $PASH_RESULTS '|' $SMOOSH_RESULTS)"
+TIME=$(echo $((END_TIME-START_TIME)) | awk '{print int($1/60)":"int($1%60)}')
 
-FORMAT="%s  %s  %-40s  %s  %s\n"
+FORMAT="%s  %s  %-40s  %s  %ss\n"
 SUM="$(printf "$FORMAT" "$(date '+%F;%T')" "$REV" "$MSG" "$RES" "$TIME")"
 echo "$SUM" >> $SF
 
