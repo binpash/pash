@@ -1,4 +1,7 @@
 #!/bin/bash
+## Talk to [Nikos](nikos@vasilak.is) if you need to change this script.
+## Do not start this script if webhook.js is running on the same server, 
+## Otherwise you run the risk of running into concurrency issues.
 
 set -ex
 
@@ -15,17 +18,17 @@ trim() {
   awk 'length > 40{$0 = substr($0, 1, 37) "..."} {print $0}' 
 }
 
-## TODO: We have to remove the sudo from the install script 
-##       to be able to run it.
-install() {
-  scripts/install.sh
+build_runtime() {
+  cd ../runtime 
+  make
+  cd $PASH_TOP/scripts
 }
 
 pash_tests() {
   cd ../compiler 
   ./test_evaluation_scripts.sh | tee  >(grep '^Summary' | cut -d ' ' -f2 > pash_tests.sum)
   PASH_RESULTS=$(cat pash_tests.sum)
-  cd ../scripts
+  cd $PASH_TOP/scripts
 }
 
 smoosh_tests() {
@@ -55,15 +58,24 @@ err_report() {
   echo "$SUM" >> $SF
 }
 
+stage() {
+  echo $(date '+%F %T') $REV $1 >> $RF
+}
+
 trap 'err_report $LINENO' ERR
 
-echo $(date '+%F %T') "Start CI" > $RF
-echo "Lots of tests"   >> $RF
+echo $(date '+%F %T') $REV "Starting" > $RF
 START_TIME=$(date +%s);
+stage "Packaging PaSh"
+./pkg.sh
+stage "Building Runtime"
+build_runtime >> $RF
+stage "Running PaSh Tests"
 pash_tests >> $RF
+stage "Running Smoosh Tests"
 smoosh_tests >> $RF
+stage "Completing CI"
 END_TIME=$(date +%s);
-echo $(date '+%F %T') "End CI"  >> $RF
 
 RES="$(echo $PASH_RESULTS '|' $SMOOSH_RESULTS)"
 TIME=$(echo $((END_TIME-START_TIME)) | awk '{print int($1/60)":"int($1%60)}')

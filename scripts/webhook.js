@@ -16,13 +16,15 @@ let hmac = (str) => {
 };
 
 let ciLock = false;
-let lock = () => {
-  console.log("Locking: A job is starting..");
-  ciLock = true;
+let lockTime = 0;
+let lock = (j) => {
+  lockTime = new Date();
+  ciLock = j;
+  console.log("Locking: A " + ciLock + "job is starting at" + lockTime);
 }
 
 let unlock = () => {
-  console.log("Unlocking: A job is ending..");
+  console.log("Unlocking: A " + ciLock + "job is ending, started at" + lockTime);
   ciLock = false;
 }
 
@@ -39,30 +41,50 @@ let noPriorJob = (res) => {
 
 let ci = (req, res) => {
   if (noPriorJob(res)) {
-    lock();
+    lock('ci');
     runTask('Running CI', './ci.sh', req, res, () => { unlock() });
   }
 };
 
-let all = (req, res) => {
-  if (noPriorJob(res)) {
-    lock();
-    runTask('Packaging PaSh', './pkg.sh', null, null, () => {
-      runTask('Running CI', './ci.sh', req, res, () => {
-        unlock();
-      });
-    });
-  }
-};
-
+// Do not enable: a key invariant is that CI runs one job at a time, so that 
+// scripts do not run in parallel (and can be written to call each other).
+// let all = (req, res) => {
+//   if (noPriorJob(res)) {
+//     lock('all');
+//     runTask('Packaging PaSh', './pkg.sh', null, null, () => {
+//       runTask('Running CI', './ci.sh', req, res, () => {
+//         unlock();
+//       });
+//     });
+//   }
+// };
 
 let docs = (req, res) => {
   runTask('Building docs', '../docs/make.sh', req, res, noop);
 };
 
+let now = (req, res) => {
+  console.log("Executing now")
+  res.writeHead(200, {'Content-Type': 'text/plain' });
+  switch(ciLock) {
+    case false:
+      res.end("No job running");
+      break;
+    case 'ci':
+      res.write("Running a " + ciLock + " job started at " + lockTime + "\n");
+      exec('./now.sh', (error, stdout, stderr) => {
+        res.end(stdout);
+      });
+      break;
+    default:
+      res.write("Running a " + ciLock + " job started at " + lockTime + "\n");
+      break;
+  }
+};
+
 let pkg = (req, res) => {
   if (noPriorJob(res)) {
-    lock();
+    lock('pkg');
     runTask('Packagin PaSh', './pkg.sh', req, res, () => { unlock(); });
   }
 };
@@ -91,18 +113,18 @@ let runTask = (msg, script, req, res, runNext) => {
 
 let routes = {
   '/ci': ci,
-  //  '/doc': docs,
-  '/echo': echo,
+//'/doc': docs,
+  '/ech': echo,
   '/pkg': pkg,
-  '/all': all,
+  '/now': now,
 };
 
 let tryPull = (req, res) => {
   // FIXME -- verify by calculating hmac
   // secret in header: X-Hub-Signature-256
   // https://docs.github.com/en/free-pro-team@latest/developers/webhooks-and-events/webhook-events-and-payloads
-  let p = url.parse(req.url).pathname
-    console.log(new Date(), p, req.headers['x-hub-signature-256']);
+  let p = url.parse(req.url).pathname;
+  console.log(new Date(), p, req.headers['x-hub-signature-256']);
 
   if (req.url === '/favicon.ico') {
     res.writeHead(200, {'Content-Type': 'image/x-icon'} );
