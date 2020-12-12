@@ -16,6 +16,16 @@ let hmac = (str) => {
 };
 
 let ciLock = false;
+let lock = () => {
+  console.log("Locking: A job is starting..");
+  ciLock = true;
+}
+
+let unlock = () => {
+  console.log("Unlocking: A job is ending..");
+  ciLock = false;
+}
+
 let noPriorJob = (res) => {
   if (ciLock) {
     let msg = "Prior CI Job running";
@@ -29,17 +39,17 @@ let noPriorJob = (res) => {
 
 let ci = (req, res) => {
   if (noPriorJob(res)) {
-    ciLock = true;
-    runTask('Running CI', './ci.sh', req, res, () => { ciLock = false; });
+    lock();
+    runTask('Running CI', './ci.sh', req, res, () => { unlock() });
   }
 };
 
 let all = (req, res) => {
   if (noPriorJob(res)) {
-    ciLock = true;
+    lock();
     runTask('Packaging PaSh', './pkg.sh', null, null, () => {
       runTask('Running CI', './ci.sh', req, res, () => {
-        ciLock = false;
+        unlock();
       });
     });
   }
@@ -52,8 +62,8 @@ let docs = (req, res) => {
 
 let pkg = (req, res) => {
   if (noPriorJob(res)) {
-    ciLock = true;
-    runTask('Packagin PaSh', './pkg.sh', req, res, () => { ciLock = false; });
+    lock();
+    runTask('Packagin PaSh', './pkg.sh', req, res, () => { unlock(); });
   }
 };
 
