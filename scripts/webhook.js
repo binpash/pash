@@ -1,5 +1,16 @@
 #!env node
 
+// This JavaScript program is an entry point into a set of (simple) CI jobs,
+// which are shell scripts. The program uses concurrency to be able to serve
+// HTTP while jobs are executing, but waits for any job to complete before
+// issuing new ones. This is especially important for all jobs that include some
+// interaction with `git`: if run via a shell interpreter a git command will (by
+// default) wait for the previous one to complete, because git applies changes
+// to files in the file system. Therefore, this JavaScript  program must enforce
+// similar sequencing (via a lock). One exception is the `now` job that simply
+// returns a filename from the filesystem (outside the repo) and can thus lets
+// the filesystem serve as a synchronization point.
+
 let http = require('http');
 let url  = require('url');
 let exec = require('child_process').exec;
@@ -15,25 +26,33 @@ let hmac = (str) => {
   return hmac.digest('hex');
 };
 
-let ciLock = false;
+let log = (...args) => {
+  console.log(new Date, ...args);
+}
+
+let err = (...args) => {
+  console.error(new Date, ...args);
+}
+
+let lockMsg = false;
 let lockTime = 0;
 let lock = (j) => {
   lockTime = new Date();
-  ciLock = j;
-  console.log("Locking: A " + ciLock + "job is starting at" + lockTime);
+  lockMsg = j;
+  log("Locking: A " + lockMsg + "job is starting at" + lockTime);
 }
 
 let unlock = () => {
-  console.log("Unlocking: A " + ciLock + "job is ending, started on" + lockTime);
-  ciLock = false;
+  log("Unlocking: A " + lockMsg + "job is ending, started on" + lockTime);
+  lockMsg = false;
 }
 
 let noPriorJob = (res) => {
-  if (ciLock) {
+  if (lockMsg) {
     let msg = "Prior CI Job running";
     res.writeHead(200, {'Content-Type': 'text/plain' });
     res.end(msg);
-    console.log(msg);
+    log(msg);
     return false;
   } 
   return true;
@@ -64,20 +83,20 @@ let docs = (req, res) => {
 };
 
 let now = (req, res) => {
-  console.log("Executing now")
+  log("Executing now")
   res.writeHead(200, {'Content-Type': 'text/plain' });
-  switch(ciLock) {
+  switch(lockMsg) {
     case false:
       res.end("No job running");
       break;
     case 'ci':
-      res.write("Running a " + ciLock + " job started on " + lockTime + ": ");
+      res.write("Running a " + lockMsg + " job started on " + lockTime + ": ");
       exec('./now.sh', (error, stdout, stderr) => {
         res.end(stdout);
       });
       break;
     default:
-      res.write("Running a " + ciLock + " job started on " + lockTime + ".\n");
+      res.write("Running a " + lockMsg + " job started on " + lockTime + ".\n");
       break;
   }
 };
@@ -92,16 +111,15 @@ let pkg = (req, res) => {
 let echo = (req, res) => {
   res.writeHead(200, {'Content-Type': 'text/plain' });
   res.end(req.body);
-  console.log(req.body);
+  log(req.body);
 };
 
 let runTask = (msg, script, req, res, runNext) => {
   exec(script, (error, stdout, stderr) => {
     if (!error) {
-      console.log(msg + " ..Done");
+      log(msg + " ..Done");
     } else {
-      let e = msg + "...Error\n" + error.stack + "\n" + stderr;
-      console.error(e);
+      err(msg + "...Error\n" + error.stack + "\n" + stderr);
     }
     runNext();
   });
@@ -124,12 +142,12 @@ let tryPull = (req, res) => {
   // secret in header: X-Hub-Signature-256
   // https://docs.github.com/en/free-pro-team@latest/developers/webhooks-and-events/webhook-events-and-payloads
   let p = url.parse(req.url).pathname;
-  console.log(new Date(), p, req.headers['x-hub-signature-256']);
+  log(p, req.headers['x-hub-signature-256']);
 
   if (req.url === '/favicon.ico') {
     res.writeHead(200, {'Content-Type': 'image/x-icon'} );
     res.end();
-    console.log('favicon requested');
+    log('favicon requested');
     return;
   }
 
@@ -141,4 +159,4 @@ let tryPull = (req, res) => {
   }
 }
 
-http.createServer(tryPull).listen(port, console.log("server listening on port " + port));
+http.createServer(tryPull).listen(port, log("server listening on port " + port));
