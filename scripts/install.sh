@@ -22,6 +22,9 @@ shift "$(( OPTIND - 1 ))"
 #sudo add-apt-repository ppa:avsm/ppa
 #sudo apt update
 #sudo apt install -y opam m4
+
+# Or just download opam
+# wget # https://github.com/ocaml/opam/releases/download/2.0.3/opam-2.0.3-x86_64-linux
 #opam init -y --compiler=4.07.1
 #eval $(opam env)
 #opam switch create 4.07.1
