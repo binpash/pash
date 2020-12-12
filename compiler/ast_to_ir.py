@@ -68,6 +68,8 @@ preprocess_cases = {
            lambda ast_node: preprocess_node_or(ast_node, irFileGen, config)),
     "And": (lambda irFileGen, config:
             lambda ast_node: preprocess_node_and(ast_node, irFileGen, config)),
+    "Not": (lambda irFileGen, config:
+            lambda ast_node: preprocess_node_not(ast_node, irFileGen, config)),
     "If": (lambda irFileGen, config:
             lambda ast_node: preprocess_node_if(ast_node, irFileGen, config)),
     "Case": (lambda irFileGen, config:
@@ -677,6 +679,14 @@ def preprocess_node_or(ast_node, irFileGen, config):
     ast_node.left_operand = preprocessed_left
     ast_node.right_operand = preprocessed_right
     return ast_node, False, False
+
+def preprocess_node_not(ast_node, irFileGen, config):
+    # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
+    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.body = preprocessed_body
+    return ast_node, False, False
+
 
 def preprocess_node_if(ast_node, irFileGen, config):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
