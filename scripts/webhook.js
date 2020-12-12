@@ -24,7 +24,7 @@ let lock = (j) => {
 }
 
 let unlock = () => {
-  console.log("Unlocking: A " + ciLock + "job is ending, started at" + lockTime);
+  console.log("Unlocking: A " + ciLock + "job is ending, started on" + lockTime);
   ciLock = false;
 }
 
@@ -71,13 +71,13 @@ let now = (req, res) => {
       res.end("No job running");
       break;
     case 'ci':
-      res.write("Running a " + ciLock + " job started at " + lockTime + "\n");
+      res.write("Running a " + ciLock + " job started on " + lockTime + ": ");
       exec('./now.sh', (error, stdout, stderr) => {
         res.end(stdout);
       });
       break;
     default:
-      res.write("Running a " + ciLock + " job started at " + lockTime + "\n");
+      res.write("Running a " + ciLock + " job started on " + lockTime + ".\n");
       break;
   }
 };
