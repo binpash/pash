@@ -18,6 +18,14 @@ semantics.fun.error.restore # FAIL: HELP NEEDED: set -- a b c is lost after a ca
 evaluation/scripts/set_bug.sh # FAIL: This fails to capture the argument variables because they are not captured by declare -p. We need to explicitly capture them through $@ but also find a way to not propagate them arbitrarily. Maybe just saving them using pash_input_args="$@" at the end of execution is enough.
 semantics.ifs.combine.ws # FAIL: Messes with IFS and there is a fault that happens during compilation. As a naive solution we could abort the runtime if IFS is not standard. 
 semantics.kill.traps # FAIL: HELP NEEDED: Tries to kill and wait for a pid, but since we execute things in different shells, we cannot wait for them or kill them. At the same time, we don't want to be able to kill more than what we should.
+semantics.pattern.modernish # FAIL: Changes the IFS...
+semantics.quote.tilde # PASS: HELP NEEDED: Our way of producing output is hacky now. We need to use the json_to_shell unparser instead of what we do.
+semantics.redir.fds # FAIL: HELP NEEDED: It seems that we don't propagate redirections. In order to do it we need to find a way to keep them.  Might have to do with the fact that we use fd=3 to redirect stdin
+semantics.simple.link # FAIL: This script modifies the PATH, which the pash_runtime uses, therefore it fails. We need to save the PATH prior to the start of execution for PASH and revert back and forth as with the other variables.
+
+
+Mini conclusion: Since we call the parser/unparser very often it might be inefficient to do it through exec. Maybe we need to think about reimplementing a python binding of the libdash parser.
+
 
 sh.ps1.override # PaSh seems to be called without an input.
 sh.interactive.ps1 # PaSh seems to be called without an input.
