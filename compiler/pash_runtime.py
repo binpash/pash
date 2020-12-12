@@ -10,7 +10,7 @@ from datetime import datetime
 from ir import *
 from ast_to_ir import compile_asts
 from json_ast import *
-from impl import to_shell
+from ir_to_ast import to_shell
 from distr_back_end import distr_execute
 from parse import from_ir_to_shell
 from util import *
@@ -102,7 +102,7 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
     ## If the candidate DF region was indeed a DF region then we have an IR
     ## which should be translated to a parallel script.
     if(isinstance(optimized_ast_or_ir, IR)):
-        script_to_execute = to_shell(optimized_ast_or_ir.serialize_as_JSON(), 
+        script_to_execute = to_shell(optimized_ast_or_ir, 
                                      runtime_config['output_dir'], args)
 
         ## TODO: Merge this write with the one below. Maybe even move this logic in `pash_runtime.sh`
