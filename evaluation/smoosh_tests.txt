@@ -24,6 +24,7 @@ semantics.redir.fds # FAIL: HELP NEEDED: It seems that we don't propagate redire
 semantics.simple.link # FAIL: This script modifies the PATH, which the pash_runtime uses, therefore it fails. We need to save the PATH prior to the start of execution for PASH and revert back and forth as with the other variables.
 
 
+
 Mini conclusion: Since we call the parser/unparser very often it might be inefficient to do it through exec. Maybe we need to think about reimplementing a python binding of the libdash parser.
 
 
