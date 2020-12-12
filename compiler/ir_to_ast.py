@@ -3,6 +3,10 @@ import time
 import subprocess
 from datetime import datetime
 from util import *
+from ir_utils import *
+
+from json_ast import save_asts_json
+from parse import from_ir_to_shell
 import config
 
 ##
@@ -32,10 +36,54 @@ def to_shell(ir, output_dir, args):
 
 
 def ir2ast(ir, args):
-    prologue = make_ir_prologue(ir, args)
+    all_fids = ir.all_fids()
+    log("Fids:", all_fids)
 
-def make_ir_prologue(ir, args):
-    pass
+    ## Find all the ephemeral fids and turn them to ASTs
+    ephemeral_fids = [fid for fid in all_fids
+                      if fid.resource is None]
+
+    ## Call the prologue that creates fifos for all ephemeral fids    
+    prologue = make_ir_prologue(ephemeral_fids)
+    
+    ## Save the prologue in a file to temporarily log it
+    temp_filename = os.path.join("/tmp", get_random_string())
+    save_asts_json(prologue, temp_filename)
+    output_script = from_ir_to_shell(temp_filename)
+    log(output_script)
+    
+
+def make_ir_prologue(ephemeral_fids):
+    asts = []
+    ## Create an `rm -f` for each ephemeral fid
+    for eph_fid in ephemeral_fids:
+        args = [eph_fid.to_ast()]
+        command = make_rm_f_ast(args)
+        asts.append(command)
+
+    ## Create a `mkfifo` for each ephemeral fid
+    for eph_fid in ephemeral_fids:
+        args = [eph_fid.to_ast()]
+        command = make_mkfifo_ast(args)
+        asts.append(command)
+    
+    return asts
+
+def make_command(arguments):
+    lineno = 0
+    assignments = []
+    redirections = []
+    node = make_kv("Command", [lineno, assignments, arguments, redirections])
+    return node
+
+def make_rm_f_ast(arguments):
+    all_args = [string_to_argument("rm"), string_to_argument("-f")] + arguments
+    return make_command(all_args)
+
+def make_mkfifo_ast(arguments):
+    all_args = [string_to_argument("mkfifo")] + arguments
+    return make_command(all_args)
+
 
 def shell_backend(graph_json, output_dir, args):
     ## TODO: Remove output_dir since it is not used
