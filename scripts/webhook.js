@@ -7,7 +7,7 @@ let gitPull = 'git pull';
 let port = 2047;
 let noop = () => {};
 
-let hmac = function (str) {
+let hmac = (str) => {
   let secret = process.env['secret'];
   let crypto = require('crypto');
   let hmac = crypto.createHmac('sha1', secret);
@@ -16,54 +16,78 @@ let hmac = function (str) {
 };
 
 let ciLock = false;
-let ci = function (req, res) {
+let noPriorJob = (res) => {
   if (ciLock) {
     let msg = "Prior CI Job running";
     res.writeHead(200, {'Content-Type': 'text/plain' });
     res.end(msg);
     console.log(msg);
-  } else {
+    return false;
+  } 
+  return true;
+}
+
+let ci = (req, res) => {
+  if (noPriorJob(res)) {
     ciLock = true;
-    runTask('Running CI', './ci.sh', req, res, () => {ciLock = false});
+    runTask('Running CI', './ci.sh', req, res, () => { ciLock = false; });
   }
 };
 
-let docs = function (req, res) {
+let all = (req, res) => {
+  if (noPriorJob(res)) {
+    ciLock = true;
+    runTask('Packaging PaSh', './pkg.sh', null, null, () => {
+      runTask('Running CI', './ci.sh', req, res, () => {
+        ciLock = false;
+      });
+    });
+  }
+};
+
+
+let docs = (req, res) => {
   runTask('Building docs', '../docs/make.sh', req, res, noop);
 };
 
-let pkg = function (req, res) {
-  runTask('Packagin PaSh', './pkg.sh', req, res, noop);
+let pkg = (req, res) => {
+  if (noPriorJob(res)) {
+    ciLock = true;
+    runTask('Packagin PaSh', './pkg.sh', req, res, () => { ciLock = false; });
+  }
 };
 
-let echo = function (req, res) {
+let echo = (req, res) => {
   res.writeHead(200, {'Content-Type': 'text/plain' });
   res.end(req.body);
   console.log(req.body);
 };
 
-let runTask = function (msg, script, req, res, cleanup) {
-  exec(script, function(error, stdout, stderr) {
+let runTask = (msg, script, req, res, runNext) => {
+  exec(script, (error, stdout, stderr) => {
     if (!error) {
-      console.log(script + "\n" + stdout);
+      console.log(msg + " ..Done");
     } else {
       let e = msg + "...Error\n" + error.stack + "\n" + stderr;
       console.error(e);
     }
-    cleanup();
+    runNext();
   });
-  res.writeHead(200, {'Content-Type': 'text/plain' });
-  res.end(msg + " ...started");
+  if (res) {
+    res.writeHead(200, {'Content-Type': 'text/plain' });
+    res.end(msg + " ...started");
+  }
 };
 
 let routes = {
   '/ci': ci,
   //  '/doc': docs,
   '/echo': echo,
-  '/pkg': pkg
+  '/pkg': pkg,
+  '/all': all,
 };
 
-function tryPull (req, res) {
+let tryPull = (req, res) => {
   // FIXME -- verify by calculating hmac
   // secret in header: X-Hub-Signature-256
   // https://docs.github.com/en/free-pro-team@latest/developers/webhooks-and-events/webhook-events-and-payloads
