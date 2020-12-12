@@ -5,6 +5,12 @@ from datetime import datetime
 from util import *
 import config
 
+##
+## TODO: Make this take the real graph as input (and not the serializable one).
+##       Taking the serialized graph was once done to interface with a JVM runtime.
+##       However, we can make a much cleaner IR -> AST transformation as a backend here.
+##
+
 def to_shell(graph_json, output_dir, args):
     backend_start_time = datetime.now()
 
@@ -68,6 +74,8 @@ def shell_backend(graph_json, output_dir, args):
     ## Collect outputs
     ## TODO: Make this work for more than one output. 
     ##       For now it is fine to only have stdout as output
+    ##
+    ## TODO: Make this not cat if the output is a real file.
     assert(len(out_fids) == 1)
     output_com = 'cat "{}" &'.format(out_fids[0])
     output_script_commands.append(output_com)
