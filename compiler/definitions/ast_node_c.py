@@ -5,6 +5,7 @@ class AstNodeConstructor(Enum):
     COMMAND = 'Command'
     AND = 'And'
     OR = 'Or'
+    NOT = 'Not'
     SEMI = 'Semi'
     REDIR = 'Redir'
     SUBSHELL = 'Subshell'
