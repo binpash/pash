@@ -1,91 +1,88 @@
 #!env node
 
-var http = require('http');
-var url  = require('url');
-var exec = require('child_process').exec;
-var gitPull = 'git pull';
-var port = 2047;
+let http = require('http');
+let url  = require('url');
+let exec = require('child_process').exec;
+let gitPull = 'git pull';
+let port = 2047;
+let noop = () => {};
 
-var hmac = function (str) {
-    var secret = process.env['secret'];
-    var crypto = require('crypto');
-    var hmac = crypto.createHmac('sha1', secret);
-    hmac.update('pash-related nonce');
-    return hmac.digest('hex');
+let hmac = function (str) {
+  let secret = process.env['secret'];
+  let crypto = require('crypto');
+  let hmac = crypto.createHmac('sha1', secret);
+  hmac.update('pash-related nonce');
+  return hmac.digest('hex');
 };
 
-var res200 = function(req, res) {
+let ciLock = false;
+let ci = function (req, res) {
+  if (ciLock) {
+    let msg = "Prior CI Job running";
     res.writeHead(200, {'Content-Type': 'text/plain' });
-    res.write(url.parse(req.url).pathname + " ...OK");
-    res.end();
-};
-
-var resError = function(code, msg, req, res) {
-    res.writeHead(code, {"Content-Type": "text/plain"});
     res.end(msg);
-};
-
-let lastTimeCIRun = 0;
-var ci = function (req, res) {
-  if (lastTimeCIRun === 0) {
-    runTask('./ci.sh', req, res);
+    console.log(msg);
   } else {
-    process.hrtime
+    ciLock = true;
+    runTask('Running CI', './ci.sh', req, res, () => {ciLock = false});
+  }
 };
 
-var docs = function (req, res) {
-    runTask('../docs/make.sh', req, res);
+let docs = function (req, res) {
+  runTask('Building docs', '../docs/make.sh', req, res, noop);
 };
 
-var pkg = function (req, res) {
-    runTask('./pkg.sh', req, res);
+let pkg = function (req, res) {
+  runTask('Packagin PaSh', './pkg.sh', req, res, noop);
 };
 
-var echo = function (req, res) {
-    runTask('echo hi', req, res);
+let echo = function (req, res) {
+  res.writeHead(200, {'Content-Type': 'text/plain' });
+  res.end(req.body);
+  console.log(req.body);
 };
 
-// TODO Takes a few minutes, use lock file
-var runTask = function (script, req, res) {
-    exec(script, function(error, stdout, stderr) {
-        if (!error) {
-            console.log(script + "\n" + stdout);
-            res200(req, res);
-        } else {
-            resError(500, 'Internal Server Error\n', req, res);
-            let p = url.parse(req.url).pathname;
-            console.error("There was an error running", p, "\n",  error.stack);
-            console.error(stderr);
-        }
-    });
+let runTask = function (msg, script, req, res, cleanup) {
+  exec(script, function(error, stdout, stderr) {
+    if (!error) {
+      console.log(script + "\n" + stdout);
+    } else {
+      let e = msg + "...Error\n" + error.stack + "\n" + stderr;
+      console.error(e);
+    }
+    cleanup();
+  });
+  res.writeHead(200, {'Content-Type': 'text/plain' });
+  res.end(msg + " ...started");
 };
 
-var routes = {
-    '/ci': ci,
-//  '/doc': docs,
-    '/echo': echo,
-    '/pkg': pkg
+let routes = {
+  '/ci': ci,
+  //  '/doc': docs,
+  '/echo': echo,
+  '/pkg': pkg
 };
 
 function tryPull (req, res) {
   // FIXME -- verify by calculating hmac
   // secret in header: X-Hub-Signature-256
   // https://docs.github.com/en/free-pro-team@latest/developers/webhooks-and-events/webhook-events-and-payloads
-    let p = url.parse(req.url).pathname
-    console.log(new Date(), p, req.headers['X-Hub-Signature-256']);
+  let p = url.parse(req.url).pathname
+    console.log(new Date(), p, req.headers['x-hub-signature-256']);
 
-    if (req.url === '/favicon.ico') {
-      res.writeHead(200, {'Content-Type': 'image/x-icon'} );
-      res.end();
-      console.log('favicon requested');
-      return;
-    }
+  if (req.url === '/favicon.ico') {
+    res.writeHead(200, {'Content-Type': 'image/x-icon'} );
+    res.end();
+    console.log('favicon requested');
+    return;
+  }
 
-    if (routes[p]) {
-       routes[p](req, res);
-    } else {
-        resError(404, "404 Not Found\n", req, res);
-    }
+  if (routes[p]) {
+    routes[p](req, res);
+  } else {
+    res.writeHead(404, {"Content-Type": "text/plain"});
+    res.end("404 Not Found\n");
+  }
 }
 
-http.createServer(tryPull).listen(port, console.log("server listening at " + port));
+http.createServer(tryPull).listen(port, console.log("server listening on port " + port));
