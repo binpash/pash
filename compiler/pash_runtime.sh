@@ -42,6 +42,11 @@
 ##      /----(7)----/
 ##    ...     |
 
+## TODO: Make a list/properly define what needs to be saved at (1), (3), (5), (7)
+## - PATH important for PaSh but might be changed in bash
+##
+## (maybe) TODO: After that, maybe we can create cleaner functions for (1), (3), (5), (7). 
+##               E.g. we can have a correspondence between variable names and revert them using them 
 
 ##
 ## (1)
