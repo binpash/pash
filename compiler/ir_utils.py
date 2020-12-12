@@ -56,6 +56,10 @@ def format_arg_chars(arg_chars):
     chars = [format_arg_char(arg_char) for arg_char in arg_chars]
     return "".join(chars)
 
+##
+## BIG TODO: Fix the formating of arg_chars bask to shell scripts and string.
+##           We need to do this the proper way using the parser.
+##
 def format_arg_char(arg_char):
     key, val = get_kv(arg_char)
     if (key == 'C'):
@@ -79,6 +83,7 @@ def format_arg_char(arg_char):
                             93, # ]
                             45, # -
                             58, # :
+                            126,# ~
                             42] # *
         if(val in non_escape_chars):
             return '{}'.format(chr(val))
