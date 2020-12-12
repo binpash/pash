@@ -83,8 +83,8 @@ def preprocess(ast_objects, config):
 
 def execute_script(compiled_script_filename):
     exec_obj = subprocess.run(["/bin/bash", compiled_script_filename])
-    ## TODO: Can there be an issue by not checking the return code? I think we shouldn't since the script could fail in the end!
-    # exec_obj.check_returncode()
+    ## Return the exit code of the executed script
+    exit(exec_obj.returncode)
 
 if __name__ == "__main__":
     main()
