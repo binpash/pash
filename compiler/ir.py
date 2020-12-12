@@ -144,19 +144,7 @@ class IR:
     def serialize_as_JSON(self):
         output_json = {}
         nodes = {}
-        all_file_ids = []
         for i, node in enumerate(self.nodes):
-
-            ## Gather all pipe names so that they are generated in the
-            ## backend.
-            input_pipes = [fid.serialize()
-                           for fid in node.get_input_file_ids()
-                           if fid.resource is None]
-            output_pipes = [fid.serialize()
-                            for fid in node.get_output_file_ids()
-                            if fid.resource is None]
-            all_file_ids += input_pipes + output_pipes
-
             ## Find the stdin and stdout files of nodes so that the
             ## backend can make the necessary redirections.
             if ("stdin" in node.in_stream):
@@ -177,7 +165,10 @@ class IR:
             node_json["command"] = node.serialize()
             nodes[str(i)] = node_json
 
-        all_file_ids = list(set(all_file_ids))
+        ## Out of all the file identifiers gather the ones that we need to create pipes for.
+        all_file_ids = [fid.serialize()
+                        for fid in self.all_fids()
+                        if fid.resource is None]
         output_json["fids"] = all_file_ids
         output_json["nodes"] = nodes
         flat_stdin = [Find(fid) for fid in self.stdin]
@@ -294,6 +285,17 @@ class IR:
                             file_in.union(file_out)
                 assert(number_of_out_resources <= 1)
 
+    ## Returns all the file identifiers in the IR.
+    def all_fids(self):
+        all_file_ids = []
+        for node in self.nodes:
+            ## Gather all fids that this node uses.
+            input_pipes = [fid for fid in node.get_input_file_ids()]
+            output_pipes = [fid for fid in node.get_output_file_ids()]
+            all_file_ids += input_pipes + output_pipes
+
+        all_file_ids = list(set(all_file_ids))
+        return all_file_ids
 
     ## Returns the sources of the IR (i.e. the nodes that has no
     ## incoming edge)

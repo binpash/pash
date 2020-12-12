@@ -11,7 +11,16 @@ import config
 ##       However, we can make a much cleaner IR -> AST transformation as a backend here.
 ##
 
-def to_shell(graph_json, output_dir, args):
+def to_shell(ir, output_dir, args):
+    log("IR", ir)
+    graph_json = ir.serialize_as_JSON()
+    log("JSON IR:", graph_json)
+
+    ## TODO: First call an IR to AST compilation pass
+    ir2ast(ir, args)
+
+    ## TODO: Then just call the parser.
+
     backend_start_time = datetime.now()
 
     output_script = shell_backend(graph_json, output_dir, args)
@@ -22,6 +31,11 @@ def to_shell(graph_json, output_dir, args):
     return output_script
 
 
+def ir2ast(ir, args):
+    prologue = make_ir_prologue(ir, args)
+
+def make_ir_prologue(ir, args):
+    pass
 
 def shell_backend(graph_json, output_dir, args):
     ## TODO: Remove output_dir since it is not used
@@ -42,8 +56,6 @@ def shell_backend(graph_json, output_dir, args):
     in_fids = graph_json["in"]
     out_fids = graph_json["out"]
     nodes = graph_json["nodes"]
-
-    start_time = time.time()
 
     output_script_commands = []
 
@@ -99,14 +111,8 @@ def shell_backend(graph_json, output_dir, args):
         output_script_commands.append('wait')
 
     ## Kill pipes
-    final_rm_com = remove_fifos(fids)
     output_script_commands.append(rm_com)
 
-    end_time = time.time()
-
-    ## TODO: Cat all outputs together if a specific flag is given
-
-    # print("Distributed translation execution time:", end_time - start_time)
     return ("\n".join(output_script_commands) + "\n")
 
 def remove_fifos(fids):
