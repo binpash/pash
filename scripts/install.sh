@@ -65,7 +65,7 @@ fi
 # Build the parser (requires libtool, m4, automake, opam)
 echo "Building parser..."
 eval $(opam config env)
-cd ../compiler/parser
+cd compiler/parser
 echo "|-- installing opam dependencies..."
 make opam-dependencies &> $LOG_DIR/make_opam_dependencies.log
 echo "|-- making libdash... (requires sudo)"
