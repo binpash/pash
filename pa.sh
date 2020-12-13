@@ -4,7 +4,8 @@ export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export PASH_PARSER=${PASH_TOP}/parser/parse_to_json.native
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 
-WIDTH=0
+WIDTH=2
+VIEW_ONLY=""
   
 ##
 # Friendlier wrapper around the pash core (to decouple the two until the project
@@ -12,20 +13,24 @@ WIDTH=0
 ##
 usage() {
   cat <<EOF
-  Parallelize shell scripts:
+Parallelize shell scripts:
 
-    ${0} [-wh] script.sh
+	  ${0} [-whv] script.sh
 
-    * -w: parallelism width
-    * -h: shows this message
+* -h, --help         show this help message
+* -w n, --width n    configure the level of parallelism sought
+* -v, --view-only    only view parallel script, not execute
 EOF
 }
 
 # Check which argument we have
-while getopts ":w:h" opt; do
+while getopts ":w:hv" opt; do
   case $opt in
     w)
       WIDTH=${OPTARG}
+      ;;
+    v)
+      VIEW_ONLY="--compile_optimize_only"
       ;;
     h)
       usage;
@@ -46,9 +51,5 @@ if [ $# = 0 ]; then
 fi
 
 for file in "$@"; do
-  if [ $WIDTH = 0 ]; then
-    python3.8 $PASH_TOP/compiler/pash.py --log_file /tmp/pash.log $file
-  else
-    python3.8 $PASH_TOP/compiler/pash.py --log_file /tmp/pash.log --split_fan_out $WIDTH $file
-  fi
+    python3.8 $PASH_TOP/compiler/pash.py --log_file /tmp/pash.log --split_fan_out $WIDTH $VIEW_ONLY $file
 done
