@@ -1,3 +1,4 @@
+import copy
 from typing import NoReturn
 from definitions.ast_node import *
 from definitions.ast_node_c import *
@@ -174,13 +175,24 @@ def safe_if(node):
 #
 # - expand_* functions try to expand the AST
 #   + words return a string when it works, None when it doesn't
-#     MMG TODO 2020-12-14 really should return (intermediate?) fields, not a single string
+#     TODO MMG 2020-12-14 really should return (intermediate?) fields, not a single string
 #   + commands just set the structural bits appropriately
 
 # when early expansion detects an error
 class EarlyError(RuntimeError):
     def __init__(self, arg):
         self.arg = arg
+
+class InvalidVariable():
+    def __init__(self, reason):
+        self.reason = reason
+
+def lookup_variable(var, config):
+    return config['shell_variables'].get(var, [None, None])
+
+def invalidate_variable(var, reason, config):
+    config['shell_variables'][var] = [None, InvalidVariable(reason)]
+    return config
 
 def expand_args(args, quoted, config):
     res = []
@@ -217,10 +229,14 @@ def expand_arg_char(arg_char, quoted, config):
         return
     elif key == 'T':
         if val == "":
-            if "HOME" in config['shell_variables']:
-                return config['shell_variables']["HOME"]
-            else:
+            type, val = lookup_variable("HOME", config)
+
+            if isinstance(val, InvalidVariable):
+                return
+            elif val is None:
                 return "~"
+            else:
+                return val
         else:
             # TODO 2020-12-10 getpwnam
             return
@@ -239,11 +255,10 @@ def expand_arg_char(arg_char, quoted, config):
 def expand_var(fmt, null, var, arg, quoted, config):
     # TODO 2020-12-10 special variables
 
-    if var in config['shell_variables']:
-        type, value = config['shell_variables'][var]
-    else:
-        type = None
-        value = None
+    type, value = lookup_variable(var, config)
+
+    if isinstance(value, InvalidVariable):
+        return
 
     if fmt == 'Normal':
         return value
@@ -326,7 +341,11 @@ def expand_command(command, config):
     return ast_to_ir.ast_match(command, expand_cases, config)
 
 def expand_pipe(node, config):
-    return False
+    for i, n in enumerate(node.items):
+        # copy environment to simulate subshell (no outer effect)
+        node.items[i] = expand_command(n, copy.deepcopy(config))
+
+    return node
 
 def expand_simple(node, config):
     # TODO 2020-11-25 check redirs, assignments
@@ -339,25 +358,52 @@ def expand_simple(node, config):
     return node
 
 def expand_and_or_semi(node, config):
+    node.left_operand = expand_command(node.left_operand, config)
+    node.right_operand = expand_command(node.right_operand, config)
+
     return node
 
 def expand_redir_subshell(node, config):
+    # copy environment to simulate subshell (no outer effect)
+    node.node = expand_command(node.node, copy.deepcopy(config))
+
     return node
 
 def expand_background(node, config):
+    # copy environment to simulate subshell (no outer effect)
+    node.node = expand_command(node.node, copy.deepcopy(config))
+
     return node
 
 def expand_defun(node, config):
+    # TODO 2020-11-24 MMG invalidate postional args
+    node.body = expand_command(node.body, copy.deepcopy(config))
+
     return node
 
 def expand_for(node, config):
+    node.argument = expand_arg(node.argument, False, config)
+
+    # TODO 2020-11-24 if node.argument is fully expanded, we can just unroll the loop
+    config = invalidate_variable(node.variable, "variable of for loop", config)
+    node.body = expand_command(node.body, config)
+
     return node
 
 def expand_while(node, config):
+    node.test = expand_command(node.test, config)
+    node.body = expand_command(node.body, config)
+
     return node
 
 def expand_case(node, config):
+    # TODO 2020-11-24 preprocess scrutinee, each pattern, each case
+
     return node
 
 def expand_if(node, config):
+    node.cond = expand_command(node.cond, config)
+    node.then_b = expand_command(node.then_b, config)
+    node.else_b = expand_command(node.else_b, config)
+
     return node
