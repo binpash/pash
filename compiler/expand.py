@@ -377,7 +377,21 @@ def expand_simple(node, config):
     for (i, [x, arg]) in enumerate(node.assignments):
         exp = expand_arg(arg, config)
         node.assignments[i] = [x, exp]
-        config = try_set_variable(x, exp, config)
+
+        # assignment visibility:
+        #
+        # assignments are immediately done when no command...
+        if len(node.arguments) == 0:
+            config = try_set_variable(x, exp, config)
+        else:
+            # or deferred until later when there is one
+            settable[x] = exp
+
+    # once all values are found, _then_ set them before the command
+    # TODO 2020-11-25 if node.arguments[0] is a special builtin, these things are global
+    # if not... then the settings are just for the command, and shouldn't go in the config
+    for (x,exp) in settable:
+        try_set_variable(x, exp, config)
 
     node.arguments = expand_args(node.arguments, config)
 
