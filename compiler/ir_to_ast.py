@@ -16,18 +16,20 @@ import config
 ##
 
 def to_shell(ir, output_dir, args):
-    log("IR", ir)
-    graph_json = ir.serialize_as_JSON()
-    log("JSON IR:", graph_json)
-
-    ## TODO: First call an IR to AST compilation pass
-    ir2ast(ir, args)
-
-    ## TODO: Then just call the parser.
-
     backend_start_time = datetime.now()
 
-    output_script = shell_backend(graph_json, output_dir, args)
+    ## First call an IR to AST compilation pass
+    output_asts = ir2ast(ir, args)
+
+    ## Then just call the parser.
+    temp_filename = os.path.join("/tmp", get_random_string())
+    save_asts_json(output_asts, temp_filename)
+    output_script = from_ir_to_shell(temp_filename)
+
+    ## TODO: Delete, obsolete
+    # graph_json = ir.serialize_as_JSON()
+    # log("JSON IR:", graph_json)
+    # output_script = shell_backend(graph_json, output_dir, args)
 
     backend_end_time = datetime.now()
     print_time_delta("Backend", backend_start_time, backend_end_time, args)
@@ -44,7 +46,6 @@ def ir2ast(ir, args):
         drain_streams = True
 
     all_fids = ir.all_fids()
-    log("Fids:", all_fids)
 
     ## Find all the ephemeral fids and turn them to ASTs
     ephemeral_fids = [fid for fid in all_fids
@@ -53,7 +54,7 @@ def ir2ast(ir, args):
     ## Call the prologue that creates fifos for all ephemeral fids    
     prologue = make_ir_prologue(ephemeral_fids)
     
-    ## TODO: Make the main body
+    ## Make the main body
     body = make_ir_body(ir, args, drain_streams)
 
     ## Call the epilogue that removes all ephemeral fids
@@ -61,11 +62,7 @@ def ir2ast(ir, args):
 
     final_asts = prologue + body + epilogue
 
-    ## Save the prologue in a file to temporarily log it
-    temp_filename = os.path.join("/tmp", get_random_string())
-    save_asts_json(final_asts, temp_filename)
-    output_script = from_ir_to_shell(temp_filename)
-    log(output_script)
+    return final_asts
     
 def make_rms_f_prologue_epilogue(ephemeral_fids):
     asts = []
@@ -124,8 +121,6 @@ def make_ir_body(ir, args, drain_streams):
         com_args = [string_to_argument('source'), string_to_argument(redirect_stdin_script), file_to_redirect_to]
         com = make_command(com_args)
         asts.append(com)
-
-    ## TODO: The above might not work due to the sourcing, background, and subshell combination
 
     ## Make the dataflow graph
     asts += make_dfg(ir, args, drain_streams)
