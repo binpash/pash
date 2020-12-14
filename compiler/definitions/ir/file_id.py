@@ -1,4 +1,5 @@
 from union_find import *
+from ir_utils import *
 from util import *
 
 ## Note: The NULL ident is considered to be the default unknown file id
@@ -48,6 +49,26 @@ class FileId:
     ## serialization procedure.
     def opt_serialize(self):
         return '"{}"'.format(self.serialize())
+
+    ## Returns a shell AST from this file identifier.
+    ## TODO: Once the python libdash bindings are done we could use those instead.
+    def to_ast(self):
+        ## TODO: Eventually we want to remove max_length from everywhere
+        assert (self.max_length is None)
+
+        ## TODO: This here is supposed to identify fifos, but real fifos have a resource
+        ##       but are fifos. Therefore eventually we want to have this check correctly
+        ##       check if a file id refers to a pipe
+        if(self.resource is None):
+            string = "{}#file{}".format(self.prefix, Find(self).ident)
+            ## Quote the argument
+            argument = [make_kv('Q', string_to_argument(string))]
+        else:
+            string = "{}".format(self.resource)
+            argument = string_to_argument(string)
+
+        return argument
+
 
     ## TODO: Maybe this can be merged with serialize
     def pipe_name(self):
