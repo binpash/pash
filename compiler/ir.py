@@ -8,6 +8,7 @@ from definitions.ir.node import *
 from definitions.ir.command import *
 from definitions.ir.resource import *
 from definitions.ir.nodes.cat import *
+from definitions.ir.nodes.pash_split import *
 
 from command_categories import *
 from union_find import *
@@ -81,22 +82,6 @@ def make_split_files(in_fid, fan_out, batch_size, fileIdGen):
     split_com = make_split_file(in_fid, out_fids, batch_size)
     return [split_com], out_fids
 
-## TODO: Make a proper splitter subclass of Node
-def make_split_file(in_fid, out_fids, batch_size):
-    ## TODO: I probably have to give the file names as options to the command to.
-    options = [string_to_argument(str(batch_size))] + out_fids
-    opt_indices = [("option", 0)]
-    stdout_indices = [("option", i+1) for i in range(len(out_fids))]
-    command = Command(None, # TODO: Make a proper AST
-                      string_to_argument("split_file"),
-                      options,
-                      ["stdin"],
-                      stdout_indices,
-                      opt_indices,
-                      None, # TODO: Category?
-                      in_fid)
-    return command
-
 ## This function gets a file identifier and returns the maximum among
 ## its, and its parents identifier (parent regarding Union Find)
 def get_larger_file_id_ident(file_ids):
@@ -107,6 +92,9 @@ def get_larger_file_id_ident(file_ids):
 ## descriptors of the IR, and in general any other local information
 ## that might be relevant.
 class IR:
+
+    ## TODO: Improve the rerpesentation and keep the input and output fids in
+    ##       some structure.
 
     ## IR Assumptions:
     ##
@@ -141,54 +129,39 @@ class IR:
         output = "File ids:\n{}\n".format(all_file_ids) + output
         return output
 
-    def serialize_as_JSON(self):
-        output_json = {}
-        nodes = {}
-        all_file_ids = []
-        for i, node in enumerate(self.nodes):
 
-            ## Gather all pipe names so that they are generated in the
-            ## backend.
-            input_pipes = [fid.serialize()
-                           for fid in node.get_input_file_ids()
-                           if fid.resource is None]
-            output_pipes = [fid.serialize()
-                            for fid in node.get_output_file_ids()
-                            if fid.resource is None]
-            all_file_ids += input_pipes + output_pipes
+    def to_ast(self, drain_streams):
+        asts = []
 
-            ## Find the stdin and stdout files of nodes so that the
-            ## backend can make the necessary redirections.
-            if ("stdin" in node.in_stream):
-                stdin_input_pipes = [Find(node.stdin)]
-            else:
-                stdin_input_pipes = []
+        ## Redirect inputs
+        in_fids = self.all_input_fids()
+        ## TODO: Remove this assert, extending input to more than stdin
+        assert(len(in_fids) <= 1)
+        for in_fid in in_fids:
+            file_to_redirect_to = in_fid.to_ast()
+            redirect_stdin_script = os.path.join(config.PASH_TOP, config.config['runtime']['redirect_stdin_binary'])
+            com_args = [string_to_argument('source'), string_to_argument(redirect_stdin_script), file_to_redirect_to]
+            com = make_command(com_args)
+            asts.append(com)
 
-            if ("stdout" in node.out_stream):
-                stdout_output_pipes = [Find(node.stdout)]
-            else:
-                stdout_output_pipes = []
+        ## Make the dataflow graph
+        for node in self.nodes:
+            node_ast = node.to_ast(drain_streams)
+            asts.append(make_background(node_ast))
+        
+        ## Redirect outputs
+        out_fids = self.all_output_fids()
+        ## TODO: Make this work for more than one output. 
+        ##       For now it is fine to only have stdout as output
+        ##
+        ## TODO: Make this not cat if the output is a real file.
+        assert(len(out_fids) == 1)
+        com_args = [string_to_argument('cat'), out_fids[0].to_ast()]
+        node = make_background(make_command(com_args))
+        asts.append(node)
 
-            ## TODO: Check if leaving the stdin and stdout pipes could
-            ## lead to any problem.
-            node_json = {}
-            node_json["in"] = stdin_input_pipes
-            node_json["out"] = stdout_output_pipes
-            node_json["command"] = node.serialize()
-            nodes[str(i)] = node_json
+        return asts
 
-        all_file_ids = list(set(all_file_ids))
-        output_json["fids"] = all_file_ids
-        output_json["nodes"] = nodes
-        flat_stdin = [Find(fid) for fid in self.stdin]
-        output_json["in"] = [fid.serialize() for fid in flat_stdin]
-        flat_stdout = [Find(fid) for fid in self.stdout]
-        output_json["out"] = [fid.serialize() for fid in flat_stdout]
-        return output_json
-
-    def serialize_as_JSON_string(self):
-        output_json = self.serialize_as_JSON()
-        return json.dumps(output_json, sort_keys=True, indent=4)
 
     def set_ast(self, ast):
         self.ast = ast
@@ -294,6 +267,38 @@ class IR:
                             file_in.union(file_out)
                 assert(number_of_out_resources <= 1)
 
+    ## Returns all the file identifiers in the IR.
+    def all_fids(self):
+        all_file_ids = []
+        for node in self.nodes:
+            ## Gather all fids that this node uses.
+            input_pipes = [fid for fid in node.get_input_file_ids()]
+            output_pipes = [fid for fid in node.get_output_file_ids()]
+            all_file_ids += input_pipes + output_pipes
+
+        ## Remove duplicates
+        ## TODO: This should normally happen without comparing strings, 
+        ##       but there seems to be some problem now and some fifo is 
+        ##       considered both an argument and an fid.
+        unique_file_ids = []
+        seen_file_id_strings = set()
+        for fid in all_file_ids:
+            fid_string = fid.serialize()
+            if(not fid_string in seen_file_id_strings):
+                unique_file_ids.append(fid)
+                seen_file_id_strings.add(fid_string)
+        # all_file_ids = list(set(all_file_ids))
+        return unique_file_ids
+
+    ## Returns all input fids of the IR
+    def all_input_fids(self):
+        flat_stdin = [Find(fid) for fid in self.stdin]
+        return flat_stdin
+
+    ## Returns all output fids of the IR
+    def all_output_fids(self):
+        flat_stdout = [Find(fid) for fid in self.stdout]
+        return flat_stdout
 
     ## Returns the sources of the IR (i.e. the nodes that has no
     ## incoming edge)
