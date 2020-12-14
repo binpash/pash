@@ -108,6 +108,9 @@ def get_larger_file_id_ident(file_ids):
 ## that might be relevant.
 class IR:
 
+    ## TODO: Improve the rerpesentation and keep the input and output fids in
+    ##       some structure.
+
     ## IR Assumptions:
     ##
     ## - Each node has a list of incoming files in order of
@@ -296,6 +299,16 @@ class IR:
 
         all_file_ids = list(set(all_file_ids))
         return all_file_ids
+
+    ## Returns all input fids of the IR
+    def all_input_fids(self):
+        flat_stdin = [Find(fid) for fid in self.stdin]
+        return flat_stdin
+
+    ## Returns all output fids of the IR
+    def all_output_fids(self):
+        flat_stdout = [Find(fid) for fid in self.stdout]
+        return flat_stdout
 
     ## Returns the sources of the IR (i.e. the nodes that has no
     ## incoming edge)

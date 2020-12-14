@@ -54,7 +54,7 @@ def ir2ast(ir, args):
     prologue = make_ir_prologue(ephemeral_fids)
     
     ## TODO: Make the main body
-    body = []
+    body = make_ir_body(ir, args, drain_streams)
 
     ## Call the epilogue that removes all ephemeral fids
     epilogue = make_ir_epilogue(ephemeral_fids, clean_up_graph, args.log_file)
@@ -95,11 +95,11 @@ def make_ir_epilogue(ephemeral_fids, clean_up_graph, log_file):
         ## TODO: Wait for all output nodes not just one
         pids = [[standard_var_ast('!')]]
         clean_up_path_script = os.path.join(config.PASH_TOP, config.config['runtime']['clean_up_graph_binary'])
-        com_args = [string_to_argument(clean_up_path_script)] + pids        
+        com_args = [string_to_argument('source'), string_to_argument(clean_up_path_script)] + pids
         if (log_file == ""):
             com = make_command(com_args)
         else:
-            redirection = redir_append_stderr_to_file(log_file)
+            redirection = redir_append_stderr_to_string_file(log_file)
             com = make_command(com_args, redirections=[redirection])
         asts.append(com)
     else:
@@ -111,11 +111,44 @@ def make_ir_epilogue(ephemeral_fids, clean_up_graph, log_file):
     asts += make_rms_f_prologue_epilogue(ephemeral_fids)
     return asts
 
-def make_command(arguments, redirections=[]):
-    lineno = 0
-    assignments = []
-    node = make_kv("Command", [lineno, assignments, arguments, redirections])
-    return node
+def make_ir_body(ir, args, drain_streams):
+    asts = []
+
+    ## Redirect inputs
+    in_fids = ir.all_input_fids()
+    ## TODO: Remove this assert, extending input to more than stdin
+    assert(len(in_fids) <= 1)
+    for in_fid in in_fids:
+        file_to_redirect_to = in_fid.to_ast()
+        redirect_stdin_script = os.path.join(config.PASH_TOP, config.config['runtime']['redirect_stdin_binary'])
+        com_args = [string_to_argument('source'), string_to_argument(redirect_stdin_script), file_to_redirect_to]
+        com = make_command(com_args)
+        asts.append(com)
+
+    ## TODO: The above might not work due to the sourcing, background, and subshell combination
+
+    ## Make the dataflow graph
+    asts += make_dfg(ir, args, drain_streams)
+    
+    ## Redirect outputs
+    out_fids = ir.all_output_fids()
+    ## TODO: Make this work for more than one output. 
+    ##       For now it is fine to only have stdout as output
+    ##
+    ## TODO: Make this not cat if the output is a real file.
+    assert(len(out_fids) == 1)
+    com_args = [string_to_argument('cat'), out_fids[0].to_ast()]
+    node = make_background(make_command(com_args))
+    asts.append(node)
+
+    return asts
+
+def make_dfg(ir, args, drain_streams):
+    asts = []
+    for node in ir.nodes:
+        node_ast = node.to_ast(drain_streams)
+        asts.append(make_background(node_ast))
+    return asts
 
 def make_rm_f_ast(arguments):
     all_args = [string_to_argument("rm"), string_to_argument("-f")] + arguments
@@ -125,6 +158,8 @@ def make_mkfifo_ast(arguments):
     all_args = [string_to_argument("mkfifo")] + arguments
     return make_command(all_args)
 
+
+## TODO: Delete all the obsolete code below here
 
 def shell_backend(graph_json, output_dir, args):
     ## TODO: Remove output_dir since it is not used
