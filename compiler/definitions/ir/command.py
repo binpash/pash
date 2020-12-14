@@ -7,6 +7,8 @@ from ir_utils import *
 from util import *
 import config
 
+import os
+
 ## Commands are specific Nodes that can be parallelized if they are
 ## classified as stateless, etc...
 class Command(Node):
@@ -41,34 +43,33 @@ class Command(Node):
 
     ## TODO: Improve this functio to be separately implemented for different special nodes,
     ##       such as cat, eager, split, etc...
-    def to_ast(self, drain_streams):
-        ## Find the stdin and stdout files of node so that the
-        ## backend can make the necessary redirections.
-        if ("stdin" in self.in_stream):
-            stdin_input_pipes = [Find(self.stdin)]
+    def to_ast(self, drain_streams):    
+        ## TODO: We might not want to implement this at all actually
+        if (drain_streams):
+            raise NotImplementedError()
         else:
-            stdin_input_pipes = []
-
-        ## TODO: Have split be a separate command (and then there is no need to search for its binary here)
-        if(self.command == "split_file"):
-            ## TODO: Implement
-            # raise NotImplementedError()
-            node = make_command([string_to_argument('split')])
-        else:
-            ## TODO: We might not want to implement this at all actually
-            if (drain_streams):
-                raise NotImplementedError()
+            redirs = []
+            ## TODO: Have split be a separate command (and then there is no need to search for its binary here)
+            if(str(self.command) == "split_file"):
+                ## We don't care about the first index which is the batch size.
+                opt_indices = self.all_opt_indices()[1:]
+                option_asts = [self.options[opt_i].to_ast() for opt_i in opt_indices]
+                ## Find the auto split binary in config
+                auto_split_bin = os.path.join(config.PASH_TOP, config.config['runtime']['auto_split_binary'])
+                ## Find the input fid
+                ## TODO: Improve this. At the moment split actually takes its input file as a first argument
+                ##       but in the IR we have it as stdin
+                fid = Find(self.stdin)
+                arguments = [string_to_argument(auto_split_bin)] + [fid.to_ast()] + option_asts
             else:
                 all_opt_indices = self.all_opt_indices()
                 option_asts = [self.options[opt_i].to_ast() for opt_i in all_opt_indices]
                 # log("Options:", option_asts)
                 arguments = [self.command.to_ast()] + option_asts 
 
-                redirs = []
                 ## If the command has stdin, redirect the pipe to stdin                
                 if ("stdin" in self.in_stream):
                     fid = Find(self.stdin)
-                    log("FidAst:", fid.to_ast())
                     redirs.append(redir_file_to_stdin(fid.to_ast()))
 
                 ## If the command has stdout, redirect stdout to a pipe                
@@ -76,20 +77,11 @@ class Command(Node):
                     fid = Find(self.stdout)
                     redirs.append(redir_stdout_to_file(fid.to_ast()))
 
-                node = make_command(arguments,redirections=redirs)
-
-                ## If the command has stdin, then we need to redirect it to 
-
-
-                
+            node = make_command(arguments,redirections=redirs)
+            
         return node
 
-        ## TODO: Check if leaving the stdin and stdout pipes could
-        ## lead to any problem.
-        # node_json["command"] = self.serialize()
-
-        ## TODO: Add background around it
-
+    
     ## Gets all option indices
     def all_opt_indices(self):
         all_opt_indices = [o_i[1] for o_i in (self.opt_indices + self.in_stream + self.out_stream)
