@@ -61,11 +61,11 @@ class FileId:
         ##       check if a file id refers to a pipe
         if(self.resource is None):
             string = "{}#file{}".format(self.prefix, Find(self).ident)
+            ## Quote the argument
+            argument = [make_kv('Q', string_to_argument(string))]
         else:
             string = "{}".format(self.resource)
-        
-        ## Quote the argument
-        argument = [make_kv('Q', string_to_argument(string))]
+            argument = string_to_argument(string)
 
         return argument
 
