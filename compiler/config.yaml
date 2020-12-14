@@ -1,6 +1,7 @@
 runtime:
     split_binary: runtime/split
     auto_split_binary: runtime/auto-split.sh
+    clean_up_graph_binary: runtime/wait_for_output_and_sigpipe_rest.sh
 distr_planner:
     optimized_script_filename: /tmp/optimized_script.sh
     temp_ir_prefix: /tmp/pash_temp_ir
