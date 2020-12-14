@@ -7,6 +7,8 @@ from ir_utils import *
 from util import *
 import config
 
+import os
+
 ## Commands are specific Nodes that can be parallelized if they are
 ## classified as stateless, etc...
 class Command(Node):
@@ -33,12 +35,48 @@ class Command(Node):
         return output
 
     def serialize(self):
-        all_opt_indices = [o_i[1] for o_i in (self.opt_indices + self.in_stream + self.out_stream)
-                           if isinstance(o_i, tuple)]
-        all_opt_indices.sort()
+        all_opt_indices = self.all_opt_indices()
         options_string = " ".join([self.options[opt_i].opt_serialize() for opt_i in all_opt_indices])
         output = "{} {}".format(self.command, options_string)
         return output
+
+
+    ## TODO: Improve this functio to be separately implemented for different special nodes,
+    ##       such as cat, eager, split, etc...
+    def to_ast(self, drain_streams):    
+        ## TODO: We might not want to implement this at all actually
+        if (drain_streams):
+            raise NotImplementedError()
+        else:
+            redirs = []
+            all_opt_indices = self.all_opt_indices()
+            option_asts = [self.options[opt_i].to_ast() for opt_i in all_opt_indices]
+            # log("Options:", option_asts)
+            arguments = [self.command.to_ast()] + option_asts 
+
+            ## If the command has stdin, redirect the pipe to stdin                
+            if ("stdin" in self.in_stream):
+                fid = Find(self.stdin)
+                redirs.append(redir_file_to_stdin(fid.to_ast()))
+
+            ## If the command has stdout, redirect stdout to a pipe                
+            if ("stdout" in self.out_stream):
+                fid = Find(self.stdout)
+                redirs.append(redir_stdout_to_file(fid.to_ast()))
+
+            node = make_command(arguments,redirections=redirs)
+            
+        return node
+
+    
+    ## Gets all option indices
+    def all_opt_indices(self):
+        all_opt_indices = [o_i[1] for o_i in (self.opt_indices + self.in_stream + self.out_stream)
+                           if isinstance(o_i, tuple)]
+        all_opt_indices.sort()
+        return all_opt_indices
+
+
 
     ## This function applies redirections.
     ##
