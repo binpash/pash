@@ -36,6 +36,13 @@ def to_shell(ir, output_dir, args):
 
 
 def ir2ast(ir, args):
+    clean_up_graph = False
+    drain_streams = False
+    if(args.termination == "clean_up_graph"):
+        clean_up_graph = True
+    elif(args.termination == "drain_stream"):
+        drain_streams = True
+
     all_fids = ir.all_fids()
     log("Fids:", all_fids)
 
@@ -46,20 +53,33 @@ def ir2ast(ir, args):
     ## Call the prologue that creates fifos for all ephemeral fids    
     prologue = make_ir_prologue(ephemeral_fids)
     
+    ## TODO: Make the main body
+    body = []
+
+    ## Call the epilogue that removes all ephemeral fids
+    epilogue = make_ir_epilogue(ephemeral_fids, clean_up_graph, args.log_file)
+
+    final_asts = prologue + body + epilogue
+
     ## Save the prologue in a file to temporarily log it
     temp_filename = os.path.join("/tmp", get_random_string())
-    save_asts_json(prologue, temp_filename)
+    save_asts_json(final_asts, temp_filename)
     output_script = from_ir_to_shell(temp_filename)
     log(output_script)
     
-
-def make_ir_prologue(ephemeral_fids):
+def make_rms_f_prologue_epilogue(ephemeral_fids):
     asts = []
     ## Create an `rm -f` for each ephemeral fid
     for eph_fid in ephemeral_fids:
         args = [eph_fid.to_ast()]
         command = make_rm_f_ast(args)
         asts.append(command)
+    return asts
+
+def make_ir_prologue(ephemeral_fids):
+    asts = []
+    ## Create an `rm -f` for each ephemeral fid
+    asts += make_rms_f_prologue_epilogue(ephemeral_fids)
 
     ## Create a `mkfifo` for each ephemeral fid
     for eph_fid in ephemeral_fids:
@@ -69,10 +89,31 @@ def make_ir_prologue(ephemeral_fids):
     
     return asts
 
-def make_command(arguments):
+def make_ir_epilogue(ephemeral_fids, clean_up_graph, log_file):
+    asts = []
+    if (clean_up_graph):
+        ## TODO: Wait for all output nodes not just one
+        pids = [[standard_var_ast('!')]]
+        clean_up_path_script = os.path.join(config.PASH_TOP, config.config['runtime']['clean_up_graph_binary'])
+        com_args = [string_to_argument(clean_up_path_script)] + pids        
+        if (log_file == ""):
+            com = make_command(com_args)
+        else:
+            redirection = redir_append_stderr_to_file(log_file)
+            com = make_command(com_args, redirections=[redirection])
+        asts.append(com)
+    else:
+        ## Otherwise we just wait for all processes to die.
+        wait_com = make_command(string_to_argument('wait'))
+        asts.append(wait_com)
+
+    ## Create an `rm -f` for each ephemeral fid
+    asts += make_rms_f_prologue_epilogue(ephemeral_fids)
+    return asts
+
+def make_command(arguments, redirections=[]):
     lineno = 0
     assignments = []
-    redirections = []
     node = make_kv("Command", [lineno, assignments, arguments, redirections])
     return node
 
