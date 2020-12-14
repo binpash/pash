@@ -194,7 +194,32 @@ def invalidate_variable(var, reason, config):
     config['shell_variables'][var] = [None, InvalidVariable(reason)]
     return config
 
-def expand_args(args, quoted, config):
+def try_string(expanded):
+    res = ""
+    for arg_char in expanded:
+        key, val = get_kv(arg_char)
+
+        if key in ['C', 'E']:
+            res += chr(val)
+        elif key in ['Q']:
+            quoted = try_string(val)
+            if quoted is not None:
+                res += quoted
+        else:
+            return
+
+    return res
+
+def try_set_variable(var, expanded, config):
+    str = try_string(expanded)
+    if str is None:
+        config = invalidate_variable(var, "couldn't expand early", config)
+    else:
+        config['shell_variables'][var] = [None, str]
+
+    return config
+
+def expand_args(args, config, quoted = False):
     res = []
     for arg in args:
         new = expand_arg(arg, quoted, config)
@@ -208,7 +233,7 @@ def expand_args(args, quoted, config):
 
     return res
 
-def expand_arg(arg_chars, quoted, config):
+def expand_arg(arg_chars, config, quoted = False):
     res = []
     for arg_char in arg_chars:
         new = expand_arg_char(arg_char, quoted, config)
@@ -222,7 +247,7 @@ def expand_arg(arg_chars, quoted, config):
 
     return res
 
-def expand_arg_char(arg_char, quoted, config):
+def expand_arg_char(arg_char, config, quoted = False):
     key, val = get_kv(arg_char)
 
     if key in ['C', 'E']:
@@ -244,7 +269,7 @@ def expand_arg_char(arg_char, quoted, config):
         # TODO 2020-12-10 arithmetic parser and evaluator
         return
     elif key == 'Q':
-        return expand_arg(val, True, config)
+        return expand_arg(val, config, quoted = True)
     elif key == 'V':
         fmt, null, var, arg = val
         return expand_var(fmt, null, var, arg, quoted, config)
@@ -269,17 +294,14 @@ def expand_var(fmt, null, var, arg, quoted, config):
             return str(len(value))
     elif fmt == 'Minus':
         if value is None or (null and value == ""):
-            return expand_arg(arg, quoted, config)
+            return expand_arg(arg, config, quoted = quoted)
         else:
             return value
     elif fmt == 'Assign':
         if value is None or (null and value == ""):
-            new = expand_arg(arg, quoted, config)
-            if new is not None:
-                config['shell_variables'][var] = (None, new)
-                return new
-            else:
-                return
+            new = expand_arg(arg, config, quoted = quoted)
+            config = try_set_variable(var, new, config)
+            return new # may be None
         else:
             return value
     elif fmt == 'Plus':
@@ -290,7 +312,7 @@ def expand_var(fmt, null, var, arg, quoted, config):
     elif fmt == 'Question':
         if value is None or (null and value == ""):
             # TODO 2020-12-10 more context probably helpful here
-            raise EarlyError(expand_arg(arg, quoted, config))
+            raise EarlyError(expand_arg(arg, config, quoted))
         else:
             return value
     elif fmt == 'TrimR':
@@ -348,14 +370,33 @@ def expand_pipe(node, config):
     return node
 
 def expand_simple(node, config):
-    # TODO 2020-11-25 check redirs, assignments
+    # TODO 2020-11-25 MMG is this the order bash does?
+    node.redir_list = expand_redir_list(node.redir_list, config)
 
-    if (len(node.arguments) == 0):
-        return node
+    settable = dict()
+    for (i, [x, arg]) in enumerate(node.assignments):
+        exp = expand_arg(arg, config)
+        node.assignments[i] = [x, exp]
+        config = try_set_variable(x, exp, config)
 
-    node.arguments = expand_args(node.arguments, False, config)
+    node.arguments = expand_args(node.arguments, config)
 
     return node
+
+def expand_redir_list(redir_list, config):
+    for (i, r) in enumerate(redir_list):
+        redir_list[i] = expand_redir(r, config)
+
+    return redir_list
+
+def expand_redir(redirection, config):
+    redir_type = redirection[0]
+    redir_subtype = redirection[1][0]
+    stream_id = redirection[1][1]
+    file_arg = expand_arg(redirection[1][2], config)
+
+    redirection[1][2] = file_arg
+    return redirection
 
 def expand_and_or_semi(node, config):
     node.left_operand = expand_command(node.left_operand, config)
@@ -382,7 +423,7 @@ def expand_defun(node, config):
     return node
 
 def expand_for(node, config):
-    node.argument = expand_arg(node.argument, False, config)
+    node.argument = expand_arg(node.argument, config)
 
     # TODO 2020-11-24 if node.argument is fully expanded, we can just unroll the loop
     config = invalidate_variable(node.variable, "variable of for loop", config)

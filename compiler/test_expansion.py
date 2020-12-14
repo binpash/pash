@@ -3,6 +3,8 @@ import config
 import expand
 import json_ast
 
+import copy
+
 import os
 
 TEST_PATH = "./tests/expansion"
@@ -54,7 +56,7 @@ for test_name in tests:
     expected_safe = test_name.startswith("safe")
     for (i, ast_object) in enumerate(ast_objects):
         try:
-            cmd = expand.expand_command(ast_object, config.config)
+            cmd = expand.expand_command(ast_object, copy.deepcopy(config.config))
             print(test_name, "expanded to", json_ast.ast_to_shell(cmd))
         except expand.EarlyError as e:
             if expected_safe:
