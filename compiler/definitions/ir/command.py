@@ -49,33 +49,20 @@ class Command(Node):
             raise NotImplementedError()
         else:
             redirs = []
-            ## TODO: Have split be a separate command (and then there is no need to search for its binary here)
-            if(str(self.command) == "split_file"):
-                ## We don't care about the first index which is the batch size.
-                opt_indices = self.all_opt_indices()[1:]
-                option_asts = [self.options[opt_i].to_ast() for opt_i in opt_indices]
-                ## Find the auto split binary in config
-                auto_split_bin = os.path.join(config.PASH_TOP, config.config['runtime']['auto_split_binary'])
-                ## Find the input fid
-                ## TODO: Improve this. At the moment split actually takes its input file as a first argument
-                ##       but in the IR we have it as stdin
+            all_opt_indices = self.all_opt_indices()
+            option_asts = [self.options[opt_i].to_ast() for opt_i in all_opt_indices]
+            # log("Options:", option_asts)
+            arguments = [self.command.to_ast()] + option_asts 
+
+            ## If the command has stdin, redirect the pipe to stdin                
+            if ("stdin" in self.in_stream):
                 fid = Find(self.stdin)
-                arguments = [string_to_argument(auto_split_bin)] + [fid.to_ast()] + option_asts
-            else:
-                all_opt_indices = self.all_opt_indices()
-                option_asts = [self.options[opt_i].to_ast() for opt_i in all_opt_indices]
-                # log("Options:", option_asts)
-                arguments = [self.command.to_ast()] + option_asts 
+                redirs.append(redir_file_to_stdin(fid.to_ast()))
 
-                ## If the command has stdin, redirect the pipe to stdin                
-                if ("stdin" in self.in_stream):
-                    fid = Find(self.stdin)
-                    redirs.append(redir_file_to_stdin(fid.to_ast()))
-
-                ## If the command has stdout, redirect stdout to a pipe                
-                if ("stdout" in self.out_stream):
-                    fid = Find(self.stdout)
-                    redirs.append(redir_stdout_to_file(fid.to_ast()))
+            ## If the command has stdout, redirect stdout to a pipe                
+            if ("stdout" in self.out_stream):
+                fid = Find(self.stdout)
+                redirs.append(redir_stdout_to_file(fid.to_ast()))
 
             node = make_command(arguments,redirections=redirs)
             
