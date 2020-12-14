@@ -9,12 +9,10 @@
 
 # AWS
 
-[Create user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html)
-[Create org](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html)
+* [Create user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html)
+* [Create org](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html)
 
 # Benchmarks
-
-
 
 A diverse set of benchmarks:
 * POSIX test suite
@@ -27,6 +25,7 @@ Further scripts:
 * [PCAP processing](https://nanxiao.me/en/process-large-pcap-file/)
 * [Tokenization](https://github.com/etnichols/Stanford-NLP-Notes)
 * [Unix for poets](https://www.cs.upc.edu/~padro/Unixforpoets.pdf)
+* [Google's custom report utils for shell](https://github.com/google/crush-tools) examples
 
 * [bio-inf oneliners](https://github.com/crazyhottommy/oneliners)
 * [data science toolbox](https://www.datascienceatthecommandline.com/1e/chapter-8-parallel-pipelines.html)
