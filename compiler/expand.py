@@ -174,6 +174,7 @@ def safe_if(node):
 #
 # - expand_* functions try to expand the AST
 #   + words return a string when it works, None when it doesn't
+#     MMG TODO 2020-12-14 really should return (intermediate?) fields, not a single string
 #   + commands just set the structural bits appropriately
 
 # when early expansion detects an error
