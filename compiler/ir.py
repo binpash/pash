@@ -297,8 +297,19 @@ class IR:
             output_pipes = [fid for fid in node.get_output_file_ids()]
             all_file_ids += input_pipes + output_pipes
 
-        all_file_ids = list(set(all_file_ids))
-        return all_file_ids
+        ## Remove duplicates
+        ## TODO: This should normally happen without comparing strings, 
+        ##       but there seems to be some problem now and some fifo is 
+        ##       considered both an argument and an fid.
+        unique_file_ids = []
+        seen_file_id_strings = set()
+        for fid in all_file_ids:
+            fid_string = fid.serialize()
+            if(not fid_string in seen_file_id_strings):
+                unique_file_ids.append(fid)
+                seen_file_id_strings.add(fid_string)
+        # all_file_ids = list(set(all_file_ids))
+        return unique_file_ids
 
     ## Returns all input fids of the IR
     def all_input_fids(self):
