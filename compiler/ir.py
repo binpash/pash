@@ -144,45 +144,39 @@ class IR:
         output = "File ids:\n{}\n".format(all_file_ids) + output
         return output
 
-    def serialize_as_JSON(self):
-        output_json = {}
-        nodes = {}
-        for i, node in enumerate(self.nodes):
-            ## Find the stdin and stdout files of nodes so that the
-            ## backend can make the necessary redirections.
-            if ("stdin" in node.in_stream):
-                stdin_input_pipes = [Find(node.stdin)]
-            else:
-                stdin_input_pipes = []
 
-            if ("stdout" in node.out_stream):
-                stdout_output_pipes = [Find(node.stdout)]
-            else:
-                stdout_output_pipes = []
+    def to_ast(self, drain_streams):
+        asts = []
 
-            ## TODO: Check if leaving the stdin and stdout pipes could
-            ## lead to any problem.
-            node_json = {}
-            node_json["in"] = stdin_input_pipes
-            node_json["out"] = stdout_output_pipes
-            node_json["command"] = node.serialize()
-            nodes[str(i)] = node_json
+        ## Redirect inputs
+        in_fids = self.all_input_fids()
+        ## TODO: Remove this assert, extending input to more than stdin
+        assert(len(in_fids) <= 1)
+        for in_fid in in_fids:
+            file_to_redirect_to = in_fid.to_ast()
+            redirect_stdin_script = os.path.join(config.PASH_TOP, config.config['runtime']['redirect_stdin_binary'])
+            com_args = [string_to_argument('source'), string_to_argument(redirect_stdin_script), file_to_redirect_to]
+            com = make_command(com_args)
+            asts.append(com)
 
-        ## Out of all the file identifiers gather the ones that we need to create pipes for.
-        all_file_ids = [fid.serialize()
-                        for fid in self.all_fids()
-                        if fid.resource is None]
-        output_json["fids"] = all_file_ids
-        output_json["nodes"] = nodes
-        flat_stdin = [Find(fid) for fid in self.stdin]
-        output_json["in"] = [fid.serialize() for fid in flat_stdin]
-        flat_stdout = [Find(fid) for fid in self.stdout]
-        output_json["out"] = [fid.serialize() for fid in flat_stdout]
-        return output_json
+        ## Make the dataflow graph
+        for node in self.nodes:
+            node_ast = node.to_ast(drain_streams)
+            asts.append(make_background(node_ast))
+        
+        ## Redirect outputs
+        out_fids = self.all_output_fids()
+        ## TODO: Make this work for more than one output. 
+        ##       For now it is fine to only have stdout as output
+        ##
+        ## TODO: Make this not cat if the output is a real file.
+        assert(len(out_fids) == 1)
+        com_args = [string_to_argument('cat'), out_fids[0].to_ast()]
+        node = make_background(make_command(com_args))
+        asts.append(node)
 
-    def serialize_as_JSON_string(self):
-        output_json = self.serialize_as_JSON()
-        return json.dumps(output_json, sort_keys=True, indent=4)
+        return asts
+
 
     def set_ast(self, ast):
         self.ast = ast
