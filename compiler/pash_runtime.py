@@ -11,7 +11,6 @@ from ir import *
 from ast_to_ir import compile_asts
 from json_ast import *
 from ir_to_ast import to_shell
-from distr_back_end import distr_execute
 from parse import from_ir_to_shell
 from util import *
 import config
@@ -21,6 +20,7 @@ from definitions.ir.nodes.bigram_g_map import *
 from definitions.ir.nodes.bigram_g_reduce import *
 from definitions.ir.nodes.sort_g_reduce import *
 from definitions.ir.nodes.eager import *
+from definitions.ir.nodes.pash_split import *
 
 runtime_config = {}
 ## There are two ways to enter the distributed planner, either by
@@ -93,12 +93,9 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
 
     ## Call the backend that executes the optimized dataflow graph
     output_script_path = runtime_config['optimized_script_filename']
-    assert(not runtime_config['distr_backend'])
     ## TODO: Should never be the case for now. This is obsolete.
-    # if(runtime_config['distr_backend']):
-    #     distr_execute(eager_distributed_graph, runtime_config['output_dir'], output_script_path,
-    #                   args.output_optimized, args.compile_optimize_only, runtime_config['nodes'])
-
+    assert(not runtime_config['distr_backend'])
+    
     ## If the candidate DF region was indeed a DF region then we have an IR
     ## which should be translated to a parallel script.
     if(isinstance(optimized_ast_or_ir, IR)):
@@ -648,7 +645,7 @@ def add_eager_nodes(graph):
             ## TODO: Make sure that we don't add duplicate eager nodes
 
             ## TODO: Refactor this and the above as they are very symmetric
-            if (str(curr.command) == "split_file"):
+            if(isinstance(curr, Split)):
                 curr_output_file_ids = curr.get_output_file_ids()
                 output_file_ids_to_eager = curr_output_file_ids[:-1]
 
