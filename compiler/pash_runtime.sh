@@ -43,7 +43,18 @@
 ##    ...     |
 
 ## TODO: Make a list/properly define what needs to be saved at (1), (3), (5), (7)
+##
+## Necessary for pash:
 ## - PATH important for PaSh but might be changed in bash
+## - IFS has to be kept default for PaSh to work
+##
+## Necessary for bash:
+## - Last PID $! (TODO)
+## - Last exit code $?
+## - set state $-
+## - File descriptors (TODO)
+## - Loop state (?) Maybe `source` is adequate for this (TODO)
+## - Traos (TODO)
 ##
 ## (maybe) TODO: After that, maybe we can create cleaner functions for (1), (3), (5), (7). 
 ##               E.g. we can have a correspondence between variable names and revert them using them 
