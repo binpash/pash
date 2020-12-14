@@ -8,6 +8,7 @@ from definitions.ir.node import *
 from definitions.ir.command import *
 from definitions.ir.resource import *
 from definitions.ir.nodes.cat import *
+from definitions.ir.nodes.pash_split import *
 
 from command_categories import *
 from union_find import *
@@ -80,22 +81,6 @@ def make_split_files(in_fid, fan_out, batch_size, fileIdGen):
     out_fids = [fileIdGen.next_file_id() for i in range(fan_out)]
     split_com = make_split_file(in_fid, out_fids, batch_size)
     return [split_com], out_fids
-
-## TODO: Make a proper splitter subclass of Node
-def make_split_file(in_fid, out_fids, batch_size):
-    ## TODO: I probably have to give the file names as options to the command to.
-    options = [string_to_argument(str(batch_size))] + out_fids
-    opt_indices = [("option", 0)]
-    stdout_indices = [("option", i+1) for i in range(len(out_fids))]
-    command = Command(None, # TODO: Make a proper AST
-                      string_to_argument("split_file"),
-                      options,
-                      ["stdin"],
-                      stdout_indices,
-                      opt_indices,
-                      None, # TODO: Category?
-                      in_fid)
-    return command
 
 ## This function gets a file identifier and returns the maximum among
 ## its, and its parents identifier (parent regarding Union Find)
