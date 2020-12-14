@@ -13,4 +13,7 @@ class Arg:
 
     def opt_serialize(self):
         return self.__repr__()
+    
+    def to_ast(self):
+        return self.arg_char_list
 

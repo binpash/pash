@@ -112,7 +112,24 @@ def char_to_arg_char(char):
     return ['C' , ord(char)]
 
 def standard_var_ast(string):
-    return ["V", ["Normal", False, string, []]]
+    return make_kv("V", ["Normal", False, string, []])
 
-def redir_append_stderr_to_file(string):
-    return ["File",["Append",2,string_to_argument(string)]]
+def redir_append_stderr_to_string_file(string):
+    return make_kv("File",["Append",2,string_to_argument(string)])
+
+def redir_stdout_to_file(arg):
+    return make_kv("File",["To", 1, arg])
+
+def redir_file_to_stdin(arg):
+    return make_kv("File",["From", 0, arg])
+
+def make_background(body, redirections=[]):
+    lineno = 0
+    node = make_kv("Background", [lineno, body, redirections])
+    return node
+
+def make_command(arguments, redirections=[]):
+    lineno = 0
+    assignments = []
+    node = make_kv("Command", [lineno, assignments, arguments, redirections])
+    return node
