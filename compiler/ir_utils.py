@@ -111,3 +111,8 @@ def string_to_argument(string):
 def char_to_arg_char(char):
     return ['C' , ord(char)]
 
+def standard_var_ast(string):
+    return ["V", ["Normal", False, string, []]]
+
+def redir_append_stderr_to_file(string):
+    return ["File",["Append",2,string_to_argument(string)]]
