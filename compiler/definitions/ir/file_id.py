@@ -16,16 +16,12 @@ from util import *
 ## TODO: When doing union, I have to really make both file ids point
 ## to the same file.
 class FileId:
-    def __init__(self, ident, prefix="", resource=None, max_length = None):
+    def __init__(self, ident, prefix="", resource=None):
         self.ident = ident
         self.prefix = prefix
         ## Initialize the parent
         MakeSet(self)
         self.resource=resource
-        ## Max length shows what is the maximum possible length that
-        ## this file shows to. Its use is mostly to split intermediate
-        ## streams.
-        self.max_length = max_length
 
     def __repr__(self):
         ## Note: Outputs the parent of the union and not the file id
@@ -35,10 +31,7 @@ class FileId:
     def serialize(self):
         # log("File id:", self.ident, Find(self).ident, self.resource, self.children)
         if (self.resource is None):
-            if(self.max_length is None):
-                output = "{}#file{}".format(self.prefix, Find(self).ident)
-            else:
-                output = "{}#file{}[max:{}]".format(self.prefix, Find(self).ident, self.max_length)
+            output = "{}#file{}".format(self.prefix, Find(self).ident)
         else:
             output = "{}".format(self.resource)
         return output
@@ -53,9 +46,6 @@ class FileId:
     ## Returns a shell AST from this file identifier.
     ## TODO: Once the python libdash bindings are done we could use those instead.
     def to_ast(self):
-        ## TODO: Eventually we want to remove max_length from everywhere
-        assert (self.max_length is None)
-
         ## TODO: This here is supposed to identify fifos, but real fifos have a resource
         ##       but are fifos. Therefore eventually we want to have this check correctly
         ##       check if a file id refers to a pipe
@@ -87,11 +77,6 @@ class FileId:
 
     def has_resource(self):
         return (not self.resource is None)
-
-    ## This must be used by the implementation to only transfer
-    ## max_length lines in this file.
-    def set_max_length(self, max_length):
-        self.max_length = max_length
 
     def toFileName(self, prefix):
         output = "{}_file{}".format(prefix, Find(self).ident)
