@@ -19,14 +19,13 @@ import config
 
 ## Creates a file id for a given resource
 def create_file_id_for_resource(resource, fileIdGen):
-    file_id = create_split_file_id(resource.get_length(), fileIdGen)
+    file_id = create_split_file_id(fileIdGen)
     file_id.set_resource(resource)
     return file_id
 
 ## Creates a file id that has a given maximum length
-def create_split_file_id(batch_size, fileIdGen):
+def create_split_file_id(fileIdGen):
     file_id = fileIdGen.next_file_id()
-    file_id.set_max_length(batch_size)
     return file_id
 
 class FileIdGen:
@@ -234,6 +233,8 @@ class IR:
     ## equality. However this is not true. There are cases where
     ## different identifiers could refer to the same file.
     ##
+    ## TODO: Fix the above issue by ensuring normalized absolute names
+    ##
     ## Q: Are there also cases where a same name (let's say a
     ## variable) could point to different files in different parts of
     ## the IR? Maybe it can be true if a command is run with
@@ -247,25 +248,31 @@ class IR:
         ## input and 1 output (or more than 1 output in general) we
         ## signal an error.
 
-        ## TODO: (Maybe) Signal an error if an output is an output in
-        ## more than one node
-
         ## For all inputs of all nodes, check if they are the output
         ## of exactly one other node.
+        log("Combining files for:", self)
         for node in self.nodes:
             in_stream_with_resources = [file_in for file_in in node.get_input_file_ids()
                                         if file_in.has_resource()]
+            log("Node:", node)
+            log("^^^ input resources:", in_stream_with_resources)
             for file_in in in_stream_with_resources:
                 in_resource = file_in.get_resource()
                 number_of_out_resources = 0
                 for node2 in self.nodes:
-                    out_stream_with_resources = [file_out for file_out in node.get_output_file_ids()
+                    out_stream_with_resources = [file_out for file_out in node2.get_output_file_ids()
                                                  if file_out.has_resource()]
+                    log("Node:", node2)
+                    log("^^^ output resources:", out_stream_with_resources)
                     for file_out in out_stream_with_resources:
                         out_resource = file_out.get_resource()
                         if (in_resource == out_resource):
+                            log(" --- --- --- ", in_resource, out_resource)
                             number_of_out_resources += 1
                             file_in.union(file_out)
+                ## Exit with an error if a file is written by more than one node.
+                ##
+                ## TODO: Could this ever be improved for additional performance?
                 assert(number_of_out_resources <= 1)
 
     ## Returns all the file identifiers in the IR.
@@ -322,8 +329,11 @@ class IR:
     def get_next_nodes_and_edges(self, node):
         next_nodes_and_edges = []
         for outgoing_fid in node.get_output_file_ids():
+            log("|-- Output file id:", outgoing_fid)
             for other_node in self.nodes:
                 ## Note: What if other_node == node?
+                log("|-- |-- other node:", other_node)
+                log("|-- |-- its inputs:", other_node.get_input_file_ids())
                 if (not outgoing_fid.find_fid_list(other_node.get_input_file_ids()) is None):
                     next_nodes_and_edges.append((other_node, outgoing_fid))
         return next_nodes_and_edges
