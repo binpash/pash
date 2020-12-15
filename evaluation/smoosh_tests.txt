@@ -17,7 +17,7 @@ semantics.eval.makeadder # Pass: (Previous issue) EXPANSION: Arguments of functi
 semantics.fun.error.restore # MG: FAIL: HELP NEEDED: set -- a b c is lost after a call to a function. It seems that we might need to have some stack information in the environment variables about the location of execution.
 evaluation/scripts/set_bug.sh # FAIL: This fails to capture the argument variables because they are not captured by declare -p. We need to explicitly capture them through $@ but also find a way to not propagate them arbitrarily. Maybe just saving them using pash_input_args="$@" at the end of execution is enough.
 semantics.ifs.combine.ws # MG: FAIL: Messes with IFS and there is a fault that happens during compilation. As a naive solution we could abort the runtime if IFS is not standard. 
-semantics.kill.traps # MG: FAIL: HELP NEEDED: Tries to kill and wait for a pid, but since we execute things in different shells, we cannot wait for them or kill them. At the same time, we don't want to be able to kill more than what we should.
+semantics.kill.traps # PASS: Solution: `source` the execution of scripts. Previous fail: Tries to kill and wait for a pid, but since we execute things in different shells, we cannot wait for them or kill them. At the same time, we don't want to be able to kill more than what we should.
 semantics.pattern.modernish # MG: FAIL: Changes the IFS...
 semantics.quote.tilde # PASS: HELP NEEDED: Our way of producing output is hacky now. We need to use the json_to_shell unparser instead of what we do.
 semantics.redir.fds # MG: FAIL: HELP NEEDED: It seems that we don't propagate redirections. In order to do it we need to find a way to keep them.  Might have to do with the fact that we use fd=3 to redirect stdin
