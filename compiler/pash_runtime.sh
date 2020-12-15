@@ -192,7 +192,7 @@ pash_exec_time_start=$(date +"%s%N")
 if [ "$pash_speculation_flag" -eq 1 ]; then
     source "$RUNTIME_DIR/pash_runtime_quick_abort.sh"
 else
-    pash_redir_all_output python3.8 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
+    pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
     pash_runtime_return_code=$?
 
     ## Count the execution time and execute the compiled script
