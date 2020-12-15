@@ -262,6 +262,7 @@ class IR:
                     out_stream_with_resources = [file_out for file_out in node.get_output_file_ids()
                                                  if file_out.has_resource()]
                     for file_out in out_stream_with_resources:
+                        out_resource = file_out.get_resource()
                         if (in_resource == out_resource):
                             number_of_out_resources += 1
                             file_in.union(file_out)
