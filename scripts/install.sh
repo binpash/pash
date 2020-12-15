@@ -45,13 +45,13 @@ if [ "$prepare_sudo_install_flag" -eq 1 ]; then
     echo "|-- running apt update..."
     sudo apt-get update &> $LOG_DIR/apt_update.log
     echo "|-- running apt install..."
-    sudo apt-get install -y libtool m4 automake opam pkg-config libffi-dev python3.8 python3-pip &> $LOG_DIR/apt_install.log
+    sudo apt-get install -y libtool m4 automake opam pkg-config libffi-dev python3 python3-pip &> $LOG_DIR/apt_install.log
     yes | opam init &> $LOG_DIR/opam_init.log
     # opam update
 else
-    echo "Requires libtool, m4, automake, opam, pkg-config, libffi-dev, python3.8, pip for python3"
+    echo "Requires libtool, m4, automake, opam, pkg-config, libffi-dev, python3, pip for python3"
     echo "Ensure that you have them by running:"
-    echo "  sudo apt install libtool m4 automake opam pkg-config libffi-dev python3.8 python3-pip"
+    echo "  sudo apt install libtool m4 automake opam pkg-config libffi-dev python3 python3-pip"
     echo "  opam init"
     echo -n "Press 'y' if you have these dependencies installed. "
     while : ; do
@@ -84,16 +84,16 @@ cd runtime/
 make &> $LOG_DIR/make.log
 cd ../
 
-# Install python3.8 dependencies
+# Install python3 dependencies
 # 16.04 requires distutils, but has no python3-distutils
 # sudo apt install python-distutils-extra
 # sudo apt install python3-distutils-extra
-# sudo apt install python3.8-distutils
+# sudo apt install python3-distutils
 # sudo apt remove python3-pip
-# sudo python3.8 -m easy_install pip
+# sudo python3 -m easy_install pip
 echo "Installing python dependencies..."
-python3.8 -m pip install jsonpickle &> $LOG_DIR/pip_install_jsonpickle.log
-python3.8 -m pip install -U PyYAML &> $LOG_DIR/pip_install_pyyaml.log
+python3 -m pip install jsonpickle &> $LOG_DIR/pip_install_jsonpickle.log
+python3 -m pip install -U PyYAML &> $LOG_DIR/pip_install_pyyaml.log
 
 # Generate inputs
 echo "Generating input files..."
