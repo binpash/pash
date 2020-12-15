@@ -338,12 +338,16 @@ def parallelize_cat(curr, graph, fileIdGen, fan_out, batch_size):
 
     ## If there is only one node afterwards (meaning that we reached a
     ## thin part of the graph), we need to try to parallelize
+    log("Current node is:", curr)
+    log("|-- its next nodes are:", next_nodes_and_edges)
     if(len(next_nodes_and_edges) == 1):
         next_node = next_nodes_and_edges[0][0]
 
         ## If the next node can be parallelized, then we should try to
         ## parallelize
+        log("Next node is:", next_node)
         if(next_node.category == "stateless" or next_node.is_pure_parallelizable()):
+            log("|-- which is parallelizable")
 
             ## If the current node is not a cat, it means that we need
             ## to generate a cat using a split
