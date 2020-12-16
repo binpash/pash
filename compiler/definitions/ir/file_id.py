@@ -24,6 +24,7 @@ class FileId:
         ##       have a prefix. Normal resources have a file system id. Descriptor
         ##       resources have a number.
         self.prefix = prefix
+        ## TODO: Remove all union_find
         ## Initialize the parent
         MakeSet(self)
         self.resource=resource
@@ -32,7 +33,7 @@ class FileId:
         ## Note: Outputs the parent of the union and not the file id
         ##       itself.
         # return self.serialize()
-        if (self.resource is None):
+        if(isinstance(self.resource, EphemeralResource)):
             output = "{}#file{}".format(self.prefix, Find(self).ident)
         else:
             output = "fid:{}:{}".format(Find(self).ident, self.resource)
@@ -40,7 +41,7 @@ class FileId:
 
     def serialize(self):
         # log("File id:", self.ident, Find(self).ident, self.resource, self.children)
-        if (self.resource is None):
+        if(isinstance(self.resource, EphemeralResource)):
             output = "{}#file{}".format(self.prefix, Find(self).ident)
         else:
             output = "{}".format(self.resource)
@@ -59,7 +60,10 @@ class FileId:
         ## TODO: This here is supposed to identify fifos, but real fifos have a resource
         ##       but are fifos. Therefore eventually we want to have this check correctly
         ##       check if a file id refers to a pipe
-        if(self.resource is None):
+        ##
+        ## TODO: I am not sure about the FileDescriptor resource
+        if(isinstance(self.resource, EphemeralResource)
+           or isinstance(self.resource, FileDescriptorResource)):
             string = "{}#file{}".format(self.prefix, Find(self).ident)
             ## Quote the argument
             argument = [make_kv('Q', string_to_argument(string))]
@@ -85,6 +89,7 @@ class FileId:
     def get_resource(self):
         return self.resource
 
+    ## Remove this
     def has_resource(self):
         return (not self.resource is None)
 
@@ -93,7 +98,7 @@ class FileId:
 
     ## Removes a resource from an FID, making it ephemeral
     def make_ephemeral(self):
-        self.resource = None
+        self.resource = EphemeralResource()
 
     def toFileName(self, prefix):
         output = "{}_file{}".format(prefix, Find(self).ident)
