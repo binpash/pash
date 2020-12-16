@@ -19,14 +19,14 @@ import config
 ## directories, etc...
 ##
 ## TODO: Make this complete
-def diff_input_output(options, stdin, stdout):
+def diff_input_output(options):
     in_stream = [("option", i) for i, option in enumerate(options)
                  if not format_arg_chars(option).startswith('-')]
     opt_indices = [("option", i) for i, option in enumerate(options)
                    if format_arg_chars(option).startswith('-')]
     return (in_stream, ["stdout"], opt_indices)
 
-def default_input_output(options, stdin, stdout):
+def default_input_output(options):
     opt_indices = [("option", i) for i in range(len(options))]
     return (["stdin"], ["stdout"], opt_indices)
 
@@ -81,7 +81,7 @@ custom_command_categories = {
 ## are only filled in for commands that we (or the developer) has
 ## specified a list of input resources that also contains files in the
 ## arguments.
-def find_command_input_output(command, options, stdin, stdout):
+def find_command_input_output(command, options):
     global custom_command_input_outputs
 
     command_string = format_arg_chars(command)
@@ -92,7 +92,7 @@ def find_command_input_output(command, options, stdin, stdout):
     if (command_string in custom_command_input_outputs):
         log(" -- Warning: Overriding standard inputs-outputs for:", command_string)
         custom_io_fun = custom_command_input_outputs[command_string]
-        return custom_io_fun(options, stdin, stdout)
+        return custom_io_fun(options)
 
     ## Find the inputs-outputs of the command in the annotation files (if it exists)
     command_io_from_annotation = get_command_io_from_annotations(command_string,
@@ -103,7 +103,7 @@ def find_command_input_output(command, options, stdin, stdout):
         log("|--", command_io_from_annotation)
         return command_io_from_annotation
 
-    return default_input_output(options, stdin, stdout)
+    return default_input_output(options)
 
 
 ## This functions finds and returns a string representing the command category
