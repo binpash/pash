@@ -142,8 +142,7 @@ def make_background(body, redirections=[]):
     node = make_kv("Background", [lineno, body, redirections])
     return node
 
-def make_command(arguments, redirections=[]):
+def make_command(arguments, redirections=[], assignments = []):
     lineno = 0
-    assignments = []
     node = make_kv("Command", [lineno, assignments, arguments, redirections])
     return node
