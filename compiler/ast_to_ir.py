@@ -227,8 +227,6 @@ def compile_node_command(ast_node, fileIdGen, config):
         command_name = arguments[0]
         options = compile_command_arguments(arguments[1:], fileIdGen, config)
 
-        stdin_fid = fileIdGen.next_file_id()
-        stdout_fid = fileIdGen.next_file_id()
         ## Question: Should we return the command in an IR if one of
         ## its arguments is a command substitution? Meaning that we
         ## will have to wait for its command to execute first?
@@ -239,25 +237,22 @@ def compile_node_command(ast_node, fileIdGen, config):
         ## general one. That means that it can be executed
         ## concurrently with other commands, but it cannot be
         ## parallelized.
-        command = create_command_assign_file_identifiers(old_ast_node, fileIdGen,
-                                                         command_name, options,
-                                                         stdin=stdin_fid, stdout=stdout_fid,
-                                                         redirections=compiled_redirections)
-
-        ## Don't put the command in an IR if it is creates some effect
-        ## (not stateless or pure)
-        if (command.is_at_most_pure()):
-            compiled_ast = IR([command],
-                              stdin = [stdin_fid],
-                              stdout = [stdout_fid])
-            compiled_ast.set_ast(old_ast_node)
-        else:
+        try:
+            ## If the command is not compileable to a DFG the following call will fail
+            ir = compile_command_to_DFG(fileIdGen,
+                                        command_name,
+                                        options,
+                                        redirections=compiled_redirections)
+            compiled_ast = ir
+        except ValueError as err:
+            ## TODO: Delete this log from here
+            log(err)
             compiled_arguments = compile_command_arguments(arguments, fileIdGen, config)
             compiled_ast = make_kv(construct_str,
                                    [ast_node.line_number, compiled_assignments,
                                     compiled_arguments, compiled_redirections])
-
-    return compiled_ast
+            
+        return compiled_ast
 
 def compile_node_and_or_semi(ast_node, fileIdGen, config):
     compiled_ast = make_kv(ast_node.construct.value,
