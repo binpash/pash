@@ -30,7 +30,91 @@ def load_annotation_files(annotation_dir):
         annotations += curr_annotations
     return annotations
     
+## TODO: Make the input/output io_list an object and therefore also define
+##       methods that transform inputs/outputs <-> args.
 
+##
+## Inputs, Outputs -> Command Arguments and redirections
+##
+def construct_args_redirs(command, options, input_fids, output_fids, annotations):
+    command_ann = get_command_from_annotations(command, options, annotations)
+    assert(not command_ann is None)
+    inputs = command_ann['inputs']
+    outputs = command_ann['outputs']
+    ann_options = []
+    if('options' in command_ann):
+        ann_options = command_ann['options']
+    args, redirs = args_redirs_from_io_list(inputs, input_fids, ann_options, [], [])
+    args, redirs = args_redirs_from_io_list(outputs, output_fids, ann_options, args, redirs)
+    return args, redirs
+
+def args_redirs_from_io_list(io_list, fids, ann_options, args, redirs):
+    rem_fids = fids
+    for io in io_list:
+        new_args, new_redirs, rem_fids = args_redirs_from_io_list_el(io, rem_fids, ann_options, args, redirs)
+        args = new_args
+        redirs = new_redirs
+    assert(len(rem_fids) == 0)
+    return args, redirs
+
+## TODO: We need to handle args[:] followed by stdin by having a look-ahead.
+def args_redirs_from_io_list_el(io, fids, ann_options, args, redirs):
+    if(io == "stdin"):
+        fid = fids[0]
+        rem_fids = fids[1:]
+        new_redirs = redirs
+        new_redirs.append(redir_file_to_stdin(fid.to_ast()))
+        return args, new_redirs, rem_fids
+    ## TODO: I think that if we have fd redirections that are the same with stdout we don't need to 
+    ##       redirect them.
+    elif(io == "stdout"):
+        fid = fids[0]
+        rem_fids = fids[1:]
+        new_redirs = redirs
+        new_redirs.append(redir_stdout_to_file(fid.to_ast()))
+        return args, new_redirs, rem_fids
+    else:
+        assert(io.startswith("args"))
+        indices = io.split("[")[1].split("]")[0]
+
+        if(not ":" in indices):
+            index = int(indices)
+            ## The argument list is growing with this, so the index might be larger
+            if(index >= len(args)):
+                args += [None] * (index + 1 - len(args))
+            fid = fids[0]
+            rem_fids = fids[1:]
+            args[index] = fid
+        else:
+            start_i_str, end_i_str = indices.split(":")
+
+            start_i = 0
+            if(not start_i_str == ""):
+                start_i = int(start_i_str)
+
+            ## TODO: We need to handle args[:] followed by stdin by having a look-ahead.
+            end_i = len(fids)
+            if(not end_i_str == ""):
+                end_i = int(end_i_str)
+
+            ## The argument list is growing with this, so the index might be larger
+            if(end_i > len(args)):
+                args += [None] * (end_i - len(args))
+
+            ## All the arguments in the required range must be None
+            assert(len([arg for arg in args[start_i:end_i] if not arg is None]) == 0)
+            for i in range(start_i,end_i):
+                args[i] = fids[i-start_i]
+
+            ## Remove the used fids
+            rem_fids = fids[(end_i-start_i):]
+
+        ## If the command has the "stdin-hyphen" option turned on,
+        ## then it means that `-` should be interpreted as stdin
+        ## TODO: What should we do for stdin-hyphen?
+        # if('stdin-hyphen' in ann_options):
+        #     io_list = [handle_stdin_hyphen(io, options) for io in io_list]
+        return args, redirs, rem_fids
 
 ## Checks if the annotation for that command exists
 def get_command_io_from_annotations(command, options, annotations):
