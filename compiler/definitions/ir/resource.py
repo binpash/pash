@@ -29,6 +29,12 @@ class Resource:
     def is_stdout(self):
         return (self.uri == ('fd', 1))
 
+class FileDescriptorResource(Resource):
+    def __init__(self, fd):
+        assert(isinstance(fd, tuple)
+               and len(fd) == 2
+               and fd[0] == 'fd')
+        self.uri = fd
 
 class FileResource(Resource):
     ## The uri is the path of the file.
@@ -36,3 +42,7 @@ class FileResource(Resource):
         assert(isinstance(path, Arg))
         ## TODO: Make sure that paths are normalized
         self.uri = path
+
+class EphemeralResource(Resource):
+    def __init__(self):
+        self.uri = None
