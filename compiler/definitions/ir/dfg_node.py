@@ -1,3 +1,7 @@
+from command_categories import *
+from util import *
+from ir_utils import *
+
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions
 class DFGNode:
@@ -48,6 +52,40 @@ class DFGNode:
                 (self.com_category == "pure"
                  and str(self.com_name) in list(map(get_command_from_definition,
                                                     config.parallelizable_pure_commands))))
+
+    ## TODO: Improve this functio to be separately implemented for different special nodes,
+    ##       such as cat, eager, split, etc...
+    def to_ast(self, edges, drain_streams):    
+        ## TODO: We might not want to implement this at all actually
+        if (drain_streams):
+            raise NotImplementedError()
+        else:
+            ## TODO: Properly handle redirections
+            redirs = self.com_redirs
+            assignments = self.com_assignments
+            option_asts = [opt.to_ast() for opt in self.com_options]
+            arguments = [self.com_name.to_ast()] + option_asts 
+
+            ##
+            ## 1. Find the input and output fids
+            ## 2. Construct the rest of the arguments and input/output redirections according to
+            ##    the command IO
+            input_fids = [edges[in_id][0] for in_id in self.inputs]
+            output_fids = [edges[out_id][0] for out_id in self.outputs]
+            rest_argument_fids, new_redirs = create_command_arguments_redirs(self.com_name.to_ast(),
+                                                                         option_asts,
+                                                                         input_fids,
+                                                                         output_fids)
+            
+            ## Transform the rest of the argument fids to arguments
+            rest_arguments = [fid.to_ast() for fid in rest_argument_fids] 
+
+            all_arguments = arguments + rest_arguments
+            all_redirs = redirs + new_redirs
+
+            node = make_command(all_arguments, redirections=all_redirs, assignments=assignments)
+        return node
+
 
 
     ## This renames the from_id (wherever it exists in inputs ot outputs)
