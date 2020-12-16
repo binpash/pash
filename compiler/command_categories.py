@@ -62,6 +62,10 @@ custom_command_input_outputs = {
     "diff" : diff_input_output
 }
 
+custom_command_args_redirs_from_input_outputs = {
+    "diff" : None
+}
+
 custom_command_categories = {
     "sed"  : is_sed_pure,
     "uniq" : is_uniq_pure,
@@ -105,6 +109,33 @@ def find_command_input_output(command, options):
 
     return default_input_output(options)
 
+## This function is the reverse of the one above. It gives us arguments and redirections
+## from inputs and outputs.
+def create_command_arguments_redirs(command, options, inputs, outputs):
+    global custom_command_args_redirs_from_input_outputs
+
+    command_string = format_arg_chars(command)
+    # log("Command to categorize:", command_string)
+
+    assert(isinstance(command_string, str))
+
+    if (command_string in custom_command_args_redirs_from_input_outputs):
+        log(" -- Warning: Overriding standard inputs-outputs for:", command_string)
+        custom_io_fun = custom_command_args_redirs_from_input_outputs[command_string]
+        return custom_io_fun(options)
+
+    ## Find the inputs-outputs of the command in the annotation files (if it exists)
+    command_arguments_redirs = construct_args_redirs(command_string,
+                                                     options,
+                                                     inputs,
+                                                     outputs,
+                                                     config.annotations)
+    if (command_arguments_redirs):
+        log("arguments, redirs found for:", command_string)
+        log("|--", command_arguments_redirs)
+        return command_arguments_redirs
+
+    return default_arguments_redirs(options, inputs, outputs)
 
 ## This functions finds and returns a string representing the command category
 def find_command_category(command, options):
