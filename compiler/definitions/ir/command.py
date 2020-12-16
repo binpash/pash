@@ -156,6 +156,7 @@ class Command(Node):
         new_output_location = self.out_stream[new_out_stream_index]
         return self.make_duplicate_command(in_fid, out_fid, new_input_location, new_output_location)
 
+    ## TODO: Move that to DFGNode
     def make_duplicate_command(self, in_fid, out_fid, new_input_location, new_output_location):
         ## TODO: Simplify the code below
         in_chunk = new_input_location
