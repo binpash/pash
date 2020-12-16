@@ -55,7 +55,7 @@ def get_option_or_fd(opt_or_fd, options, fileIdGen):
             resource = ("fd", 2)
         else:
             raise NotImplementedError()
-        resource = Resource(resource)
+        resource = FileDescriptorResource(resource)
     
     fid = create_file_id_for_resource(resource, fileIdGen)
     return fid
@@ -96,7 +96,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
     com_category = category
 
     ## Get the options
-    dfg_options = [get_option_or_fd(opt_or_fd, options, fileIdGen)
+    dfg_options = [get_option(opt_or_fd, options, fileIdGen)
                     for opt_or_fd in opt_indices]
     com_redirs = redirections
     ## TODO: Add assignments
@@ -149,15 +149,15 @@ def compile_command_to_DFG(fileIdGen, command, options,
 
 ## TODO: Delete all unneccessary functions.
 
-def replace_file_arg_with_id(opt_or_channel, command, fileIdGen):
-    fid_or_resource = command.get_file_id(opt_or_channel)
-    ## If the file is not a FileId, then it is some argument. We
-    ## create a file identifier, and replace it with that, and
-    ## make sure that the file identifier points to the argument.
-    if (not isinstance(fid_or_resource, FileId)):
-        return create_file_id_for_resource(Resource(fid_or_resource), fileIdGen)
-    else:
-        return fid_or_resource
+# def replace_file_arg_with_id(opt_or_channel, command, fileIdGen):
+#     fid_or_resource = command.get_file_id(opt_or_channel)
+#     ## If the file is not a FileId, then it is some argument. We
+#     ## create a file identifier, and replace it with that, and
+#     ## make sure that the file identifier points to the argument.
+#     if (not isinstance(fid_or_resource, FileId)):
+#         return create_file_id_for_resource(Resource(fid_or_resource), fileIdGen)
+#     else:
+#         return fid_or_resource
 
 
 def make_split_files(in_fid, fan_out, batch_size, fileIdGen):
@@ -254,13 +254,11 @@ class IR:
     def get_stdin(self):
         stdin_id = self.get_stdin_id()
         stdin_fid = self.get_edge_fid(stdin_id)
-        log("Stdin:", stdin_fid)
         return stdin_fid
 
     def get_stdout(self):
         stdout_id = self.get_stdout_id()
         stdout_fid = self.get_edge_fid(stdout_id)
-        log("Stdout:", stdout_fid)
         return stdout_fid
 
     ## Gets the fid that points to the stdin of this DFG
@@ -304,32 +302,28 @@ class IR:
     def to_ast(self, drain_streams):
         asts = []
 
-        ## Redirect inputs
-        in_fids = self.all_input_fids()
-        ## TODO: Remove this assert, extending input to more than stdin
-        assert(len(in_fids) <= 1)
-        for in_fid in in_fids:
-            file_to_redirect_to = in_fid.to_ast()
+        ## Redirect stdin
+        stdin_fid = self.get_stdin()
+        if (not stdin_fid is None):
+            file_to_redirect_to = stdin_fid.to_ast()
             redirect_stdin_script = os.path.join(config.PASH_TOP, config.config['runtime']['redirect_stdin_binary'])
             com_args = [string_to_argument('source'), string_to_argument(redirect_stdin_script), file_to_redirect_to]
             com = make_command(com_args)
             asts.append(com)
 
         ## Make the dataflow graph
-        for node in self.nodes:
-            node_ast = node.to_ast(drain_streams)
+        for _node_id, node in self.nodes.items():
+            node_ast = node.to_ast(self.edges, drain_streams)
             asts.append(make_background(node_ast))
         
         ## Redirect outputs
-        out_fids = self.all_output_fids()
+        stdout_fid = self.get_stdout()
         ## TODO: Make this work for more than one output. 
         ##       For now it is fine to only have stdout as output
-        ##
-        ## TODO: Make this not cat if the output is a real file.
-        assert(len(out_fids) == 1)
-        com_args = [string_to_argument('cat'), out_fids[0].to_ast()]
-        node = make_background(make_command(com_args))
-        asts.append(node)
+        if (not stdout_fid is None):
+            com_args = [string_to_argument('cat'), stdout_fid.to_ast()]
+            node = make_background(make_command(com_args))
+            asts.append(node)
 
         return asts
 
@@ -476,36 +470,44 @@ class IR:
 
     ## Returns all the file identifiers in the IR.
     def all_fids(self):
-        all_file_ids = []
-        for node in self.nodes:
-            ## Gather all fids that this node uses.
-            input_pipes = [fid for fid in node.get_input_file_ids()]
-            output_pipes = [fid for fid in node.get_output_file_ids()]
-            all_file_ids += input_pipes + output_pipes
+        all_fids = [fid for fid, _from_node, _to_node in self.edges.values()]
+        return all_fids
 
-        ## Remove duplicates
-        ## TODO: This should normally happen without comparing strings, 
-        ##       but there seems to be some problem now and some fifo is 
-        ##       considered both an argument and an fid.
-        unique_file_ids = []
-        seen_file_id_strings = set()
-        for fid in all_file_ids:
-            fid_string = fid.serialize()
-            if(not fid_string in seen_file_id_strings):
-                unique_file_ids.append(fid)
-                seen_file_id_strings.add(fid_string)
-        # all_file_ids = list(set(all_file_ids))
-        return unique_file_ids
+        # for node in self.nodes:
+        #     ## Gather all fids that this node uses.
+        #     input_pipes = [fid for fid in node.get_input_file_ids()]
+        #     output_pipes = [fid for fid in node.get_output_file_ids()]
+        #     all_file_ids += input_pipes + output_pipes
+
+        # ## Remove duplicates
+        # ## TODO: This should normally happen without comparing strings, 
+        # ##       but there seems to be some problem now and some fifo is 
+        # ##       considered both an argument and an fid.
+        # unique_file_ids = []
+        # seen_file_id_strings = set()
+        # for fid in all_file_ids:
+        #     fid_string = fid.serialize()
+        #     if(not fid_string in seen_file_id_strings):
+        #         unique_file_ids.append(fid)
+        #         seen_file_id_strings.add(fid_string)
+        # # all_file_ids = list(set(all_file_ids))
+        # return unique_file_ids
 
     ## Returns all input fids of the IR
     def all_input_fids(self):
-        flat_stdin = [Find(fid) for fid in self.stdin]
-        return flat_stdin
+        all_input_fids = [fid for fid, from_node, _to_node in self.edges.values()
+                          if from_node is None]
+        return all_input_fids
+        # flat_stdin = [Find(fid) for fid in self.stdin]
+        # return flat_stdin
 
     ## Returns all output fids of the IR
     def all_output_fids(self):
-        flat_stdout = [Find(fid) for fid in self.stdout]
-        return flat_stdout
+        all_output_fids = [fid for fid, _from_node, to_node in self.edges.values()
+                          if to_node is None]
+        return all_output_fids
+        # flat_stdout = [Find(fid) for fid in self.stdout]
+        # return flat_stdout
 
     ## Returns the sources of the IR (i.e. the nodes that has no
     ## incoming edge)
