@@ -2,6 +2,8 @@ from union_find import *
 from ir_utils import *
 from util import *
 
+from definitions.ir.resource import *
+
 ## Note: The NULL ident is considered to be the default unknown file id
 ##
 ## TODO: WARNING: We have to make sure that a resource in our IR can
@@ -18,6 +20,9 @@ from util import *
 class FileId:
     def __init__(self, ident, prefix="", resource=None):
         self.ident = ident
+        ## TODO: Add this as part of the resource. Ephemeral resources should
+        ##       have a prefix. Normal resources have a file system id. Descriptor
+        ##       resources have a number.
         self.prefix = prefix
         ## Initialize the parent
         MakeSet(self)
@@ -26,7 +31,12 @@ class FileId:
     def __repr__(self):
         ## Note: Outputs the parent of the union and not the file id
         ##       itself.
-        return self.serialize()
+        # return self.serialize()
+        if (self.resource is None):
+            output = "{}#file{}".format(self.prefix, Find(self).ident)
+        else:
+            output = "fid:{}:{}".format(Find(self).ident, self.resource)
+        return output
 
     def serialize(self):
         # log("File id:", self.ident, Find(self).ident, self.resource, self.children)
@@ -78,6 +88,13 @@ class FileId:
     def has_resource(self):
         return (not self.resource is None)
 
+    def has_file_resource(self):
+        return (isinstance(self.resource, FileResource))
+
+    ## Removes a resource from an FID, making it ephemeral
+    def make_ephemeral(self):
+        self.resource = None
+
     def toFileName(self, prefix):
         output = "{}_file{}".format(prefix, Find(self).ident)
         return output
@@ -115,6 +132,7 @@ class FileId:
     def get_ident(self):
         return self.ident
 
+    ##  TODO: Remove
     def flatten(self):
         if(len(self.get_children()) > 0):
             return flatten_list([child.flatten() for child in self.get_children()])
