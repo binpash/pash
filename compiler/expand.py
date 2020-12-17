@@ -323,7 +323,7 @@ def expand_var(fmt, null, var, arg, quoted, config):
             return value
     elif fmt in ['TrimR', 'TrimRMax', 'TrimL', 'TrimLMax']:
         # TODO need patterns
-        raise Unimplemented("patterns", fmt, var, arg)
+        raise Unimplemented("patterns", [fmt, null, var, arg])
     else:
         raise ValueError("bad parameter format {}".format(fmt))
 
