@@ -143,7 +143,8 @@ def compile_command_to_DFG(fileIdGen, command, options,
         dfg_edges[fid_id] = (fid, node_id, to_node)
     
     dfg_nodes = {node_id : dfg_node}
-    return IR(dfg_nodes, dfg_edges)
+    dfg = IR(dfg_nodes, dfg_edges)
+    return dfg
 
 
 
@@ -191,59 +192,35 @@ class IR:
     def __init__(self, nodes, edges, background = False):
         self.nodes = nodes
         self.edges = edges
-        # self.nodes = { id(node) : node for node in nodes}
-        # ## TODO: Delete stdin, stdout
-        # # self.stdin = stdin
-        # # self.stdout = stdout
         self.background = background
-        # self.init_edges()
         log("Nodes:", self.nodes)
         log("Edges:", self.edges)
 
+        ## Apply the redirections for each separate node.
+        ## This needs to be called here because nodes do not
+        ## have information about the edges on their own.
+        self.apply_redirections()
 
     def __repr__(self):
-        output = "(|-{} IR: {} {}-|)".format(self.get_stdin(), self.nodes.values(), self.get_stdout())
+        output = "(|-{} IR: {} {}-|)".format(self.get_stdin(), list(self.nodes.values()), self.get_stdout())
         return output
 
     ## Initialize all edges
-    def init_edges(self):
-        self.edges = {}
-        for node_id, node in self.nodes.items():
-            for input in node.inputs:
-                self.add_to_edge(input, node_id)
-
-            for output in node.outputs:
-                self.add_from_edge(node_id, output)
-
+    def apply_redirections(self):
+        for _, node in self.nodes.items():
+            node.apply_redirections(self.edges)
+        
     ## Add an edge that points to a node
     def add_to_edge(self, to_edge, node_id):
         edge_id = to_edge.get_ident()
         assert(not edge_id in self.edges)
         self.edges[edge_id] = (to_edge, None, node_id)
 
-        # if (edge_id in self.edges):
-        #     edge, from_node, to_node = self.edges[edge_id]
-        #     ## TODO: We might need to loosen the following assertion in
-        #     ##       case the fid is a real file.
-        #     assert(to_node is None)
-        #     self.edges[edge_id] = (edge, from_node, node_id)
-        # else:
-        #     self.edges[edge_id] = (edge, None, node_id)
-
     ## Add an edge that starts from a node
     def add_from_edge(self, node_id, from_edge):
         edge_id = from_edge.get_ident()
         assert(not edge_id in self.edges)
         self.edges[edge_id] = (from_edge, node_id, None)
-
-        # if (edge_id in self.edges):
-        #     from_node, to_node = self.edges[edge_id]
-        #     ## TODO: We might need to loosen the following assertion in
-        #     ##       case the fid is a real file.
-        #     assert(from_node is None)
-        #     self.edges[edge_id] = (node_id, to_node)
-        # else:
-        #     self.edges[edge_id] = (node_id, None)
 
     def get_edge_fid(self, fid_id):
         if(fid_id in self.edges):
@@ -373,6 +350,20 @@ class IR:
         my_out_fid = self.get_edge_fid(my_out)
         my_out_fid.make_ephemeral()
 
+        ## Just call union here
+        self.union(other)
+
+    def union(self, other):
+        log("Self:", self)
+        log("Other:", other)
+        assert(self.valid())
+        assert(other.valid())
+        assert(self.is_in_background())
+        ## This combines two IRs where at least the first one is in
+        ## background. This means that the stdin, stdout are those of
+        ## the second (or None if both are in background). Also if
+        ## both are in background, their union is also in background.
+
         ## Merge the nodes of the two DFGs
         all_nodes = {**self.nodes, **other.nodes}
 
@@ -386,30 +377,17 @@ class IR:
         log("Nodes:", self.nodes)
         log("Edges:", self.edges)
 
-    def union(self, other):
-        assert(self.valid())
-        assert(other.valid())
-        assert(self.is_in_background())
-        ## Merge the nodes of the two DFGs
-        self.nodes = {**self.nodes, **other.nodes}
-
-        ## This combines two IRs where at least the first one is in
-        ## background. This means that the stdin, stdout are those of
-        ## the second (or None if both are in background). Also if
-        ## both are in background, their union is also in background.
-
-        ## TODO: Handle any redirections
+        ## TODO: Handle any redirections. 
+        ## KK (2020-17-21): I am not sure what this TODO refers to :) 
 
         ## If one of them is not in the background, then the whole
         ## thing isn't.
         if (not other.is_in_background()):
             self.set_background(other.is_in_background())
-            self.stdin = other.stdin
-            self.stdout = other.stdout
-
-        ## Note: The ast is not extensible, and thus should be
-        ## invalidated if an operation happens on the IR
-        self.ast = None
+            
+            ## TODO: Delete this if it doesn't make sense
+            # self.stdin = other.stdin
+            # self.stdout = other.stdout
 
         ## TODO: Handle connections of common files (pipes, etc)
         self.combine_common_files()
@@ -440,29 +418,22 @@ class IR:
         ## For all inputs of all nodes, check if they are the output
         ## of exactly one other node.
         # log("Combining files for:", self)
-        for node_id1, node1 in self.nodes.items():
-            log("  ", node1)
-            inputs_with_file_resource = [fid for fid in node1.inputs
+        for _node_id1, node1 in self.nodes.items():
+            inputs_with_file_resource = [(id, fid) for id, fid in node1.get_input_ids_fids(self.edges)
                                          if fid.has_file_resource()]
-            log("  Inputs with file res: ", inputs_with_file_resource)
-            in_stream_with_resources = [file_in for file_in in node.get_input_file_ids()
-                                        if file_in.has_resource()]
-            # log("Node:", node)
-            # log("^^^ input resources:", in_stream_with_resources)
-            for file_in in in_stream_with_resources:
-                in_resource = file_in.get_resource()
+            for id_in, fid_in in inputs_with_file_resource:
+                in_resource = fid_in.get_resource()
                 number_of_out_resources = 0
-                for node2 in self.nodes:
-                    out_stream_with_resources = [file_out for file_out in node2.get_output_file_ids()
-                                                 if file_out.has_resource()]
-                    # log("Node:", node2)
-                    # log("^^^ output resources:", out_stream_with_resources)
-                    for file_out in out_stream_with_resources:
-                        out_resource = file_out.get_resource()
+                for node_id2, node2 in self.nodes.items():
+                    outputs_with_file_resource = [(id, fid) for id, fid in node2.get_output_ids_fids(self.edges)
+                                                  if fid.has_file_resource()]
+                    for id_out, fid_out in outputs_with_file_resource:
+                        out_resource = fid_out.get_resource()
                         if (in_resource == out_resource):
-                            # log(" --- --- --- ", in_resource, out_resource)
                             number_of_out_resources += 1
-                            file_in.union(file_out)
+                            ## They point to the same File resource so we need to unify their fids
+                            self.nodes[node_id2].replace_edge(id_out, id_in)
+
                 ## Exit with an error if a file is written by more than one node.
                 ##
                 ## TODO: Could this ever be improved for additional performance?
@@ -592,8 +563,9 @@ class IR:
     def valid(self):
         return (len(self.nodes) > 0 and
                 (not self.is_in_background()
-                  or (self.get_stdin() is None
-                      and self.get_stdout() is None)))
+                  or (self.get_stdin() is None)))
+                    ## The following is not true. Background IRs should not have stdin, but they can have stdout.
+                    #   and self.get_stdout() is None)))
                  ## The following is not true. A DFG might not have an stdin
                 #  or (not self.is_in_background()
                 #      and not self.get_stdin() is None 
