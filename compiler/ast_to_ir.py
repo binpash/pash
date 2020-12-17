@@ -366,9 +366,9 @@ def execute_shell_asts(asts):
     save_asts_json(asts, ir_filename)
     output_script = from_ir_to_shell(ir_filename)
     # log(output_script)
-    exec_obj = subprocess.run(["/bin/bash"], input=output_script, 
-                              capture_output=True,
-                              text=True)
+    exec_obj = subprocess.run(["/bin/bash"], input=output_script,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+                              universal_newlines=True)
     exec_obj.check_returncode()
     # log(exec_obj.stdout)
     return exec_obj.stdout
