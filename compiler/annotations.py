@@ -33,6 +33,16 @@ def load_annotation_files(annotation_dir):
 ## TODO: Make the input/output io_list an object and therefore also define
 ##       methods that transform inputs/outputs <-> args.
 
+## TODO: Think of a way to create a procedure that:
+##       - given an annotation
+##       - creates two functions:
+##         1. One that takes options and creates inputs, outputs for a DFG Node
+##         2. One that takes inputs+outputs of a DFG and creates arguments and redirections
+##            for the corresponding command.
+##
+##       Such a procedure would replace the current ad-hoc functions that 
+##       re-read the annotation and then do what they are supposed to do.
+
 ##
 ## Inputs, Outputs -> Command Arguments and redirections
 ##
