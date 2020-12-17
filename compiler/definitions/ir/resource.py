@@ -14,21 +14,18 @@ class Resource:
         output = str(self.uri)
         return output
 
+    def is_stdin(self):
+        return False
+
+    def is_stdout(self):
+        return False
+
     ## TODO: Make this check properly
     def __eq__(self, other):
-        log("          Self URI:", self, type(self.uri))
-        log("          Other URI:", other, type(other))
         if isinstance(other, Resource):
-            log("          Other URI:", other, type(other.uri))
             return self.uri == other.uri
         return False
     
-    def is_stdin(self):
-        return (self.uri == ('fd', 0))
-
-    def is_stdout(self):
-        return (self.uri == ('fd', 1))
-
 class FileDescriptorResource(Resource):
     def __init__(self, fd):
         assert(isinstance(fd, tuple)
@@ -36,12 +33,25 @@ class FileDescriptorResource(Resource):
                and fd[0] == 'fd')
         self.uri = fd
 
+    def is_stdin(self):
+        return (self.uri == ('fd', 0))
+
+    def is_stdout(self):
+        return (self.uri == ('fd', 1))
+
+
 class FileResource(Resource):
     ## The uri is the path of the file.
     def __init__(self, path):
         assert(isinstance(path, Arg))
         ## TODO: Make sure that paths are normalized
         self.uri = path
+
+    def __eq__(self, other):
+        if isinstance(other, FileResource):
+            return self.uri == other.uri
+        return False
+
 
 class EphemeralResource(Resource):
     def __init__(self):
