@@ -174,7 +174,7 @@ def safe_if(node):
 # General approach:
 #
 # - expand_* functions try to expand the AST
-#   + words return a string when it works, None when it doesn't
+#   + words return a string when it works, raises when it doesn't
 #     TODO MMG 2020-12-14 really should return (intermediate?) fields, not a single string
 #   + commands just set the structural bits appropriately
 
@@ -183,15 +183,26 @@ class EarlyError(RuntimeError):
     def __init__(self, arg):
         self.arg = arg
 
-class InvalidVariable():
-    def __init__(self, reason):
+class StuckExpansion(RuntimeError):
+    def __init__(self, reason, *info):
+        self.reason = reason
+        self.info = info
+
+class Unimplemented(RuntimeError):
+    def __init__(self, msg, ast):
+        self.msg = msg
+        self.ast = ast
+
+class InvalidVariable(RuntimeError):
+    def __init__(self, var, reason):
+        self.var = var
         self.reason = reason
 
 def lookup_variable(var, config):
     return config['shell_variables'].get(var, [None, None])
 
 def invalidate_variable(var, reason, config):
-    config['shell_variables'][var] = [None, InvalidVariable(reason)]
+    config['shell_variables'][var] = [None, InvalidVariable(var, reason)]
     return config
 
 def try_string(expanded):
@@ -202,34 +213,26 @@ def try_string(expanded):
         if key in ['C', 'E']:
             res += chr(val)
         elif key in ['Q']:
-            quoted = try_string(val)
-            if quoted is not None:
-                res += quoted
+            # TODO 2020-12-17 fields issues
+            res += try_string(val)
         else:
-            return
+            raise StuckExpansion("left over control code", expanded, val)
 
     return res
 
 def try_set_variable(var, expanded, config):
     str = try_string(expanded)
-    if str is None:
-        config = invalidate_variable(var, "couldn't expand early", config)
-    else:
-        config['shell_variables'][var] = [None, str]
+    config['shell_variables'][var] = [None, str]
 
     return config
 
 def expand_args(args, config, quoted = False):
     res = []
     for arg in args:
-        new = expand_arg(arg, quoted, config)
+        new = expand_arg(arg, config, quoted = quoted)
 
-        if new is None:
-            # expansion failed; just keep rolling
-            res.append(arg)
-        else:
-            # expanded! add the string in
-            res.append(new)
+        # expanded! add the string in
+        res.append(new)
 
     return res
 
@@ -240,34 +243,37 @@ def expand_arg(arg_chars, config, quoted = False):
 
         if isinstance(new, str):
             res += [["E", ord(c)] for c in list(new)]
-        elif new is None:
-            res.append(arg_char)
         else:
             res.extend(new)
 
     return res
 
-def expand_arg_char(arg_char, config, quoted = False):
+def expand_arg_char(arg_char, quoted, config):
     key, val = get_kv(arg_char)
 
-    if key in ['C', 'E']:
-        return
+    if key == 'C':
+        if val in ['*', '?', '{', '}', '[', ']'] and not quoted:
+            raise Unimplemented("globbing", arg_char)
+
+        return [arg_char]
+    elif key == 'E':
+        return [arg_char]
     elif key == 'T':
-        if val == "":
-            type, val = lookup_variable("HOME", config)
+        if val is None or val == "" or val == "None":
+            _type, val = lookup_variable("HOME", config)
 
             if isinstance(val, InvalidVariable):
-                return
+                raise StuckExpansion("HOME invalid for ~", arg_char, val)
             elif val is None:
                 return "~"
             else:
                 return val
         else:
             # TODO 2020-12-10 getpwnam
-            return
+            raise Unimplemented("~ with prefix", arg_char)
     elif key == 'A':
         # TODO 2020-12-10 arithmetic parser and evaluator
-        return
+        raise Unimplemented("arithmetic", arg_char)
     elif key == 'Q':
         return expand_arg(val, config, quoted = True)
     elif key == 'V':
@@ -275,7 +281,7 @@ def expand_arg_char(arg_char, config, quoted = False):
         return expand_var(fmt, null, var, arg, quoted, config)
     elif key == 'B':
         # TODO 2020-12-10 run commands?
-        return
+        raise Unimplemented("command substitution", arg_char)
 
 def expand_var(fmt, null, var, arg, quoted, config):
     # TODO 2020-12-10 special variables
@@ -283,7 +289,7 @@ def expand_var(fmt, null, var, arg, quoted, config):
     type, value = lookup_variable(var, config)
 
     if isinstance(value, InvalidVariable):
-        return
+        raise StuckExpansion("couldn't expand invalid variable", value)
 
     if fmt == 'Normal':
         return value
@@ -301,29 +307,23 @@ def expand_var(fmt, null, var, arg, quoted, config):
         if value is None or (null and value == ""):
             new = expand_arg(arg, config, quoted = quoted)
             config = try_set_variable(var, new, config)
-            return new # may be None
+            return new
         else:
             return value
     elif fmt == 'Plus':
         if value is None or (null and value == ""):
             return ""
         else:
-            return expand_arg(arg, quoted, config)
+            return expand_arg(arg, config, quoted = quoted)
     elif fmt == 'Question':
         if value is None or (null and value == ""):
             # TODO 2020-12-10 more context probably helpful here
-            raise EarlyError(expand_arg(arg, config, quoted))
+            raise EarlyError(expand_arg(arg, config, quoted = quoted))
         else:
             return value
-    elif fmt == 'TrimR':
+    elif fmt in ['TrimR', 'TrimRMax', 'TrimL', 'TrimLMax']:
         # TODO need patterns
-        return
-    elif fmt == 'TrimRMax':
-        return
-    elif fmt == 'TrimL':
-        return
-    elif fmt == 'TrimLMax':
-        return
+        raise Unimplemented("patterns", fmt, var, arg)
     else:
         raise ValueError("bad parameter format {}".format(fmt))
 
@@ -454,7 +454,7 @@ def expand_while(node, config):
 def expand_case(node, config):
     # TODO 2020-11-24 preprocess scrutinee, each pattern, each case
 
-    return node
+    raise Unimplemented("case statements", node)
 
 def expand_if(node, config):
     node.cond = expand_command(node.cond, config)
