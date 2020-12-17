@@ -2,6 +2,9 @@ from command_categories import *
 from util import *
 from ir_utils import *
 
+from definitions.ir.redirection import *
+from definitions.ir.resource import *
+
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions
 class DFGNode:
@@ -21,8 +24,8 @@ class DFGNode:
         self.com_name = com_name
         self.com_category = com_category
         self.com_options = com_options
-        self.com_redirs = com_redirs
-        self.com_assignments = com_assignments    
+        self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
+        self.com_assignments = com_assignments
 
     def __repr__(self):
         prefix = "Node"
@@ -35,6 +38,18 @@ class DFGNode:
             self.inputs,
             self.outputs)
         return output
+
+    def get_input_fids(self, edges):
+        return [fid for _, fid in self.get_input_ids_fids()]
+
+    def get_output_fids(self, edges):
+        return [fid for _, fid in self.get_output_ids_fids()]
+
+    def get_input_ids_fids(self, edges):
+        return [(input_edge_id, edges[input_edge_id][0]) for input_edge_id in self.inputs]
+
+    def get_output_ids_fids(self, edges):
+        return [(output_edge_id, edges[output_edge_id][0]) for output_edge_id in self.outputs]
 
     ## TODO: Replace DFGNodes in the nodes of the IR
     ##       - During compilation (AST to IR) create DFGNodes
@@ -86,6 +101,33 @@ class DFGNode:
             node = make_command(all_arguments, redirections=all_redirs, assignments=assignments)
         return node
 
+    ## This method applies the redirections to get the correct, inputs, outputs of a node.
+    ##
+    ## WARNING: For now it only works with 'To' redirections for
+    ## stdout, and it applies them by adding a resource to the stdout
+    ## of the command. It also keeps them for possible future usage.
+    ##
+    ## TODO: Properly handle all redirections. This requires a nice
+    ## abstraction. Maybe the best way would be to keep them around
+    ## and always recompute inputs/outputs when needed by following
+    ## the redirections.
+    ##
+    ## TODO: Is it correct to apply redirections from left to right?
+    def apply_redirections(self, edges):
+        for redirection in self.com_redirs:
+            ## Handle To redirections that have to do with stdout
+            if (redirection.is_to_file() and redirection.is_for_stdout()):
+                # log(redirection)
+                file_resource = FileResource(redirection.file_arg)
+                for i in range(len(self.outputs)):
+                    output_edge_id = self.outputs[i]
+                    output_fid = edges[output_edge_id][0]
+                    if(output_fid.has_file_descriptor_resource()):
+                        edges[output_edge_id][0].set_resource(file_resource)
+                        # self.outputs[i].set_resource(file_resource)
+            else:
+                log("Warning -- Unhandled redirection:", redirection)
+                raise NotImplementedError()
 
 
     ## This renames the from_id (wherever it exists in inputs ot outputs)
