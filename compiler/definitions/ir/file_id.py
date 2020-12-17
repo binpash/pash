@@ -81,9 +81,10 @@ class FileId:
         return output
 
     def set_resource(self, resource):
-        ## The resource cannot be reset. A pointer can never point to
-        ## more than one resource.
-        assert(self.resource is None)
+        ## The file resource cannot be reset. A pointer can never point to
+        ## more than one file resource. However, we can change an ephemeral
+        ## resource or a file_descriptor resource.
+        assert(not self.has_file_resource())
         self.resource = resource
 
     def get_resource(self):
@@ -95,6 +96,9 @@ class FileId:
 
     def has_file_resource(self):
         return (isinstance(self.resource, FileResource))
+
+    def has_file_descriptor_resource(self):
+        return (isinstance(self.resource, FileDescriptorResource))
 
     ## Removes a resource from an FID, making it ephemeral
     def make_ephemeral(self):
