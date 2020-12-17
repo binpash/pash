@@ -27,7 +27,7 @@ To install, run:
 curl -s up.pash.ndr.md | bash
 ```
 
-Appending `-- -a` additionally installs dependencies such as `opam`, `python3.8`, etc. but requires `sudo` (i.e., "root").
+Appending `-- -a` additionally installs dependencies such as `opam`, `python3`, etc. but requires `sudo` (i.e., "root").
 
 ## Tests
 
