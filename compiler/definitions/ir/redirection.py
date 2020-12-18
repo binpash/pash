@@ -1,4 +1,5 @@
 from definitions.ir.arg import *
+from ir_utils import *
 
 class Redirection():
     def __init__(self, redirection):
@@ -19,6 +20,13 @@ class Redirection():
                                          self.redir_subtype,
                                          self.stream_id,
                                          self.file_arg)
+
+    def to_ast(self):
+        redir = make_kv(self.redir_type,
+                        [self.redir_subtype,
+                         self.stream_id,
+                         self.file_arg.to_ast()])
+        return redir
 
     def is_to_file(self):
         return (self.redir_type == 'File'
