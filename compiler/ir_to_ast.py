@@ -34,6 +34,11 @@ def ir2ast(ir, args):
     elif(args.termination == "drain_stream"):
         drain_streams = True
 
+    ## NOTE: We first need to make the main body because it might create additional ephemeral fids.
+
+    ## Make the main body
+    body = ir.to_ast(drain_streams)
+
     all_fids = ir.all_fids()
 
     log("All fids:", all_fids)
@@ -46,9 +51,6 @@ def ir2ast(ir, args):
     ## Call the prologue that creates fifos for all ephemeral fids    
     prologue = make_ir_prologue(ephemeral_fids)
     
-    ## Make the main body
-    body = ir.to_ast(drain_streams)
-
     ## Call the epilogue that removes all ephemeral fids
     epilogue = make_ir_epilogue(ephemeral_fids, clean_up_graph, args.log_file)
 
