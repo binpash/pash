@@ -11,10 +11,10 @@ class DFGNode:
     ## TODO: Make inputs + outputs be structure of fids instead of list. 
     ##       This will allow us to handle comm and other commands with static inputs. 
     ##
-    ## inputs : list of fids
-    ## outputs : list of fids
+    ## inputs : list of fid_ids (that can be used to retrieve fid from edges)
+    ## outputs : list of fid_ids 
     ## com_name : command name Arg
-    ## com_options : list of arguments Arg
+    ## com_options : list of tuples with the option index and the argument Arg
     ## com_redirs : list of redirections
     ## com_assignments : list of assignments
     def __init__(self, inputs, outputs, com_name, com_category, com_options = [], 
@@ -76,10 +76,30 @@ class DFGNode:
             raise NotImplementedError()
         else:
             ## TODO: Properly handle redirections
-            redirs = self.com_redirs
+            ##
+            ## TODO: If one of the redirected outputs or inputs is changed in the IR 
+            ##       (e.g. `cat < s1` was changed to read from an ephemeral file `cat < "#file5"`)
+            ##       this needs to be changed in the redirections too. Maybe we can modify redirections
+            ##       when replacing fid.
+            ##
+            ## It seems that if we have already applied redirections we might not need to
+            ## care about them anymore (since they will be created in new_redirs.)
+            ##
+            ## redirs = [redir.to_ast() for redir in self.com_redirs]
+            ##
+            ## At the moment we do not reprint redirections here (we only produce redirections
+            ## where we recreate arguments and redirections).
+            redirs = []
             assignments = self.com_assignments
-            option_asts = [opt.to_ast() for opt in self.com_options]
-            arguments = [self.com_name.to_ast()] + option_asts 
+            ## Start filling in the arguments
+            opt_arguments = []
+            for i, opt in self.com_options:
+                ## Pad the argument list with None 
+                opt_arguments = pad(opt_arguments, i)
+                opt_arguments[i] = opt.to_ast()
+
+            com_name_ast = self.com_name.to_ast()
+            option_asts = [opt.to_ast() for _, opt in self.com_options]
 
             ##
             ## 1. Find the input and output fids
@@ -87,15 +107,18 @@ class DFGNode:
             ##    the command IO
             input_fids = [edges[in_id][0] for in_id in self.inputs]
             output_fids = [edges[out_id][0] for out_id in self.outputs]
-            rest_argument_fids, new_redirs = create_command_arguments_redirs(self.com_name.to_ast(),
-                                                                         option_asts,
-                                                                         input_fids,
-                                                                         output_fids)
+            rest_argument_fids, new_redirs = create_command_arguments_redirs(com_name_ast,
+                                                                             option_asts,
+                                                                             input_fids,
+                                                                             output_fids)
             
             ## Transform the rest of the argument fids to arguments
-            rest_arguments = [fid.to_ast() for fid in rest_argument_fids] 
+            rest_arguments = [fid.to_ast() for fid in rest_argument_fids]
 
-            all_arguments = arguments + rest_arguments
+            ## Interleave the arguments since options args might contain gaps.
+            arguments = interleave_args(opt_arguments, rest_arguments) 
+
+            all_arguments = [com_name_ast] + arguments
             all_redirs = redirs + new_redirs
 
             node = make_command(all_arguments, redirections=all_redirs, assignments=assignments)
@@ -114,6 +137,7 @@ class DFGNode:
     ##
     ## TODO: Is it correct to apply redirections from left to right?
     def apply_redirections(self, edges):
+        unhandled_redirs = []
         for redirection in self.com_redirs:
             ## Handle To redirections that have to do with stdout
             if (redirection.is_to_file() and redirection.is_for_stdout()):
@@ -127,6 +151,9 @@ class DFGNode:
                         # self.outputs[i].set_resource(file_resource)
             else:
                 log("Warning -- Unhandled redirection:", redirection)
+                unhandled_redirs.append(redirection)
+                ## TODO: I am not sure if this is the correct way to handle unhandled redirections.
+                ##       Does it make any sense to keep them and have them in the Final AST.
                 raise NotImplementedError()
 
 
