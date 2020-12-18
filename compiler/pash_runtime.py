@@ -186,14 +186,6 @@ def print_graph_statistics(graph):
 ##
 ## It returns a maximally expanded (regarding files) graph, that can
 ## be scheduled depending on the available computational resources.
-
-## We assume that the file identifiers that have been added in the
-## intermediate representation show the edges between different IR
-## nodes.
-##
-## We assume that all nodes have an in_stream and an out_stream
-## list, and that these are the ones which will be used to create
-## the graph.
 def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     source_node_ids = graph.source_nodes()
     
@@ -201,10 +193,9 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     ## current graph fileIds.
     fileIdGen = graph.get_file_id_gen()
 
-    ## Starting from the sources of the graph, if they are stateless,
-    ## duplicate the command as many times as the number of
-    ## identifiers in its in_stream. Then connect their outputs in
-    ## order to next command.
+    ## Starting from the sources of the graph traverse the whole graph using a
+    ## node_id workset. Every iteration we add the next nodes to the workset as
+    ## well as any newly added nodes due to optimizations. 
     workset = source_node_ids
     visited = set()
     while (len(workset) > 0):
@@ -219,15 +210,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
             next_node_ids = graph.get_next_nodes(curr_id)
             workset += next_node_ids
 
-            ## Question: What does it mean for a command to have more
-            ## than one next_node? Does it mean that it duplicates its
-            ## output to all of them? Or does it mean that it writes
-            ## some to the first and some to the second? Both are not
-            ## very symmetric, but I think I would prefer the first.
-            # log(curr, next_nodes)
-            # assert(len(next_nodes) <= 1)
-
-            graph, new_nodes = parallelize_cat(curr, graph, fileIdGen, fan_out, batch_size)
+            graph, new_nodes = parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size)
 
             ## Add new nodes to the workset depending on the optimization.
             ##
@@ -242,6 +225,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
                 workset += new_nodes
 
     return graph
+
 
 
 ## TODO: Instead of setting children, we have to use the new way of
@@ -311,6 +295,8 @@ def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, batch_si
                 curr.set_file_id(chunk, new_input_file_id)
                 graph.remove_node(previous_node)
     return (graph, new_cat)
+
+## TODO: Left here
 
 ## If the current command is a cat, and is followed by a node that
 ## is either stateless or pure parallelizable, commute the cat
