@@ -13,7 +13,7 @@ class Redirection():
         # log(redirection)
         ## TODO: Support all redirections
         assert(self.redir_type == 'File')
-        assert(self.redir_subtype == 'To')
+        assert(self.redir_subtype in ['To', 'From'])
 
     def __repr__(self):
         return '({}, {}, {}, {})'.format(self.redir_type,
@@ -34,3 +34,10 @@ class Redirection():
 
     def is_for_stdout(self):
         return (self.stream_id == 1)
+
+    def is_from_file(self):
+        return (self.redir_type == 'File'
+                and self.redir_subtype == 'From')
+
+    def is_for_stdin(self):
+        return (self.stream_id == 0)
