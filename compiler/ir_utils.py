@@ -39,7 +39,16 @@ def non_option_args_indices(options):
             if not option.startswith("-") or option == "-"]
     return args
 
-
+## This function interleaves option arguments (that might contain Nones)
+## with the rest of the arguments
+def interleave_args(opt_arguments, rest_arguments):
+    arguments = opt_arguments
+    for i in range(len(arguments)):
+        if(arguments[i] is None):
+            rest_arg = rest_arguments.pop(0)
+            arguments[i] = rest_arg
+    arguments += rest_arguments
+    return arguments
 
 def get_command_from_definition(command_definition):
     if 'command' in command_definition:
