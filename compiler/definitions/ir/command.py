@@ -77,26 +77,6 @@ class Command(Node):
         return all_opt_indices
 
 
-
-    ## This function applies redirections.
-    ##
-    ## WARNING: For now it only works with 'To' redirections for
-    ## stdout, and it applies them by adding a resource to the stdout
-    ## of the command. It also keeps them for possible future usage.
-    ##
-    ## TODO: Properly handle all redirections. This requires a nice
-    ## abstraction. Maybe the best way would be to keep them around
-    ## and always recompute inputs/outputs when needed by following
-    ## the redirections.
-    def apply_redirections(self):
-        for redirection in self.redirections:
-            ## Handle To redirections that have to do with stdout
-            if (redirection.is_to_file() and redirection.is_for_stdout()):
-                # log(redirection)
-                self.stdout.set_resource(redirection.file_arg)
-            else:
-                log("Warning -- Unhandled redirection:", redirection)
-
     def get_non_file_options(self):
         return [self.options[i] for _, i in self.opt_indices]
 
