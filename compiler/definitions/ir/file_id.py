@@ -62,11 +62,12 @@ class FileId:
         ##       check if a file id refers to a pipe
         ##
         ## TODO: I am not sure about the FileDescriptor resource
-        if(isinstance(self.resource, EphemeralResource)
-           or isinstance(self.resource, FileDescriptorResource)):
+        if(isinstance(self.resource, EphemeralResource)):
             string = "{}#file{}".format(self.prefix, Find(self).ident)
             ## Quote the argument
             argument = [make_kv('Q', string_to_argument(string))]
+        elif(isinstance(self.resource, FileDescriptorResource)):
+            raise NotImplementedError()
         else:
             string = "{}".format(self.resource)
             argument = string_to_argument(string)
@@ -100,6 +101,9 @@ class FileId:
     def has_file_descriptor_resource(self):
         return (isinstance(self.resource, FileDescriptorResource))
 
+    def is_ephemeral(self):
+        return (isinstance(self.resource, EphemeralResource))
+
     ## Removes a resource from an FID, making it ephemeral
     def make_ephemeral(self):
         self.resource = EphemeralResource()
@@ -110,6 +114,8 @@ class FileId:
 
     def isNull(self):
         return self.ident == "NULL"
+
+    ## TODO: Completely remove union-find
 
     ## TODO: This union-find structure is very brittle. It could break
     ## very easily and it is difficult to reason about the
