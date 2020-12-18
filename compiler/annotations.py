@@ -68,6 +68,8 @@ def args_redirs_from_io_list(io_list, fids, ann_options, args, redirs):
     return args, redirs
 
 ## TODO: We need to handle args[:] followed by stdin by having a look-ahead.
+##       It might not be necessary actually. Since it is valid to have them all in
+##       args then.
 def args_redirs_from_io_list_el(io, fids, ann_options, args, redirs):
     if(io == "stdin"):
         fid = fids[0]
@@ -90,8 +92,7 @@ def args_redirs_from_io_list_el(io, fids, ann_options, args, redirs):
         if(not ":" in indices):
             index = int(indices)
             ## The argument list is growing with this, so the index might be larger
-            if(index >= len(args)):
-                args += [None] * (index + 1 - len(args))
+            args = pad(args, index)
             fid = fids[0]
             rem_fids = fids[1:]
             args[index] = fid
@@ -108,8 +109,7 @@ def args_redirs_from_io_list_el(io, fids, ann_options, args, redirs):
                 end_i = int(end_i_str)
 
             ## The argument list is growing with this, so the index might be larger
-            if(end_i > len(args)):
-                args += [None] * (end_i - len(args))
+            args = pad(args, end_i - 1)
 
             ## All the arguments in the required range must be None
             assert(len([arg for arg in args[start_i:end_i] if not arg is None]) == 0)
