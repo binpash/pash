@@ -195,44 +195,29 @@ def print_graph_statistics(graph):
 ## list, and that these are the ones which will be used to create
 ## the graph.
 def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
-    source_nodes = graph.source_nodes()
-    # log("Source nodes:")
-    # log(source_nodes)
-
+    source_node_ids = graph.source_nodes()
+    
     ## Generate a fileIdGen from a graph, that doesn't clash with the
     ## current graph fileIds.
     fileIdGen = graph.get_file_id_gen()
-
-    ## If the source nodes only have one file input, then split it in
-    ## partial files.
-
-
-    # commands_to_split_input = ["cat"]
-    # for source_node in source_nodes:
-    #     input_file_ids = source_node.get_input_file_ids()
-    #     ## TODO: Also split when we have more than one input file
-    #     if(len(input_file_ids) == 1 and
-    #        str(source_node.command) in commands_to_split_input):
-    #         input_file_id = input_file_ids[0]
-    #         input_file_id.split_resource(2, batch_size, fileIdGen)
 
     ## Starting from the sources of the graph, if they are stateless,
     ## duplicate the command as many times as the number of
     ## identifiers in its in_stream. Then connect their outputs in
     ## order to next command.
-    workset= source_nodes
+    workset = source_node_ids
     visited = set()
     while (len(workset) > 0):
 
-        curr = workset.pop(0)
+        curr_id = workset.pop(0)
         ## Node must not be in visited, but must also be in the graph
         ## (because it might have been deleted after some
         ## optimization).
-        if(not curr in visited
-           and curr in graph.nodes):
-            visited.add(curr)
-            next_nodes = graph.get_next_nodes(curr)
-            workset += next_nodes
+        if(not curr_id in visited
+           and curr_id in graph.nodes):
+            visited.add(curr_id)
+            next_node_ids = graph.get_next_nodes(curr_id)
+            workset += next_node_ids
 
             ## Question: What does it mean for a command to have more
             ## than one next_node? Does it mean that it duplicates its
