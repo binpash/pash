@@ -348,8 +348,12 @@ class IR:
         other.edges.pop(other_in)
 
         ## Make the my_out id to be ephemeral file.
-        my_out_fid = self.get_edge_fid(my_out)
+        my_out_fid, from_node, to_node = self.edges[my_out]
+        assert(to_node is None)
         my_out_fid.make_ephemeral()
+
+        ## Add the other node in my edges
+        self.edges[my_out] = (my_out_fid, from_node, other_in_node_id)
 
         ## Just call union here
         self.union(other)
@@ -454,9 +458,13 @@ class IR:
     ## Returns the sources of the IR (i.e. the nodes that has no
     ## incoming edge)
     def source_nodes(self):
-        sources = [node for node in self.nodes if not self.has_incoming_edge(node)]
-        return sources
+        sources = set()
+        for _edge_fid, from_node, to_node in self.edges.values():
+            if(from_node is None):
+                sources.add(to_node)
+        return list(sources)
 
+    ## TODO: Delete this
     ## This function returns whether a node has an incoming edge in an IR
     ##
     ## WARNING: At the moment is is extremely naive and slow.
@@ -469,21 +477,22 @@ class IR:
                     return True
         return False
 
-    def get_next_nodes_and_edges(self, node):
-        next_nodes_and_edges = []
-        for outgoing_fid in node.get_output_file_ids():
-            # log("|-- Output file id:", outgoing_fid)
-            for other_node in self.nodes:
-                ## Note: What if other_node == node?
-                # log("|-- |-- other node:", other_node)
-                # log("|-- |-- its inputs:", other_node.get_input_file_ids())
-                if (not outgoing_fid.find_fid_list(other_node.get_input_file_ids()) is None):
-                    next_nodes_and_edges.append((other_node, outgoing_fid))
-        return next_nodes_and_edges
+    def get_next_edges(self, node_id):
+        output_edge_ids = self.nodes[node_id].outputs
+        log("Output edge ids:", output_edge_ids)
+        return output_edge_ids
 
-    def get_next_nodes(self, node):
-        return [node for node, edge in self.get_next_nodes_and_edges(node)]
+    def get_next_nodes(self, node_id):
+        output_edge_ids = self.get_next_edges(node_id)
+        next_nodes = []
+        for edge_id in output_edge_ids:
+            _fid, from_node, to_node = self.edges[edge_id]
+            assert(from_node == node_id)
+            if(not to_node is None):
+                next_nodes.append(to_node)
+        return next_nodes
 
+    ## TODO: Delete this
     def get_previous_nodes_and_edges(self, node):
         previous_nodes_and_edges = []
         for incoming_fid in node.get_input_file_ids():
