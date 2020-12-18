@@ -6,6 +6,7 @@ from util import *
 from json_ast import save_asts_json
 from parse import parse_shell, from_ir_to_shell, from_ir_to_shell_file
 import subprocess
+import traceback
 
 import config
 
@@ -247,6 +248,7 @@ def compile_node_command(ast_node, fileIdGen, config):
         except ValueError as err:
             ## TODO: Delete this log from here
             log(err)
+            # log(traceback.format_exc())
             compiled_arguments = compile_command_arguments(arguments, fileIdGen, config)
             compiled_ast = make_kv(construct_str,
                                    [ast_node.line_number, compiled_assignments,
@@ -289,7 +291,9 @@ def compile_node_background(ast_node, fileIdGen, config):
         ##
         ## Question: What happens with the stdin, stdout. Should
         ## they be closed?
-        compiled_ast = IR([compiled_node])
+        ## TODO: We should not compile the ast here
+        compiled_ast = ast_node
+        compiled_ast.node = compiled_node
 
     return compiled_ast
 
