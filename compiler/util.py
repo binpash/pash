@@ -8,6 +8,11 @@ import config
 def flatten_list(lst):
     return [item for sublist in lst for item in sublist]
 
+def pad(lst, index):
+    if(index >= len(lst)):
+        lst += [None] * (index + 1 - len(lst))
+    return lst
+
 def print_time_delta(prefix, start_time, end_time, args):
     if(args.output_time):
         time_difference = (end_time - start_time) / timedelta(milliseconds=1)
