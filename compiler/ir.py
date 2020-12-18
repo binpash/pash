@@ -280,10 +280,19 @@ class IR:
     def to_ast(self, drain_streams):
         asts = []
 
+        fileIdGen = self.get_file_id_gen()
+
         ## Redirect stdin
-        stdin_fid = self.get_stdin()
-        if (not stdin_fid is None):
-            file_to_redirect_to = stdin_fid.to_ast()
+        stdin_id = self.get_stdin_id()
+        if (not stdin_id is None):
+            ## Create a new ephemeral resource to redirect stdin to.
+            fid = fileIdGen.next_file_id()
+            fid.make_ephemeral()
+            file_to_redirect_to = fid.to_ast()
+            ## Change the stdin_id to point to this resource
+            _prev_fid, from_node, to_node = self.edges[stdin_id]
+            self.edges[stdin_id] = (fid, from_node, to_node)
+            ## Create a command that redirects stdin to this ephemeral fid
             redirect_stdin_script = os.path.join(config.PASH_TOP, config.config['runtime']['redirect_stdin_binary'])
             com_args = [string_to_argument('source'), string_to_argument(redirect_stdin_script), file_to_redirect_to]
             com = make_command(com_args)
@@ -497,16 +506,8 @@ class IR:
     ## returns a fileId generator that won't clash with the existing
     ## ones.
     def get_file_id_gen(self):
-        max_id = 0
-        max_id = max(get_larger_file_id_ident(self.stdin), max_id)
-        max_id = max(get_larger_file_id_ident(self.stdout), max_id)
-        for node in self.nodes:
-            node_file_ids = node.get_input_file_ids() + node.get_output_file_ids()
-            for file_id in node_file_ids:
-                max_id = max(get_larger_file_id_ident([file_id]), max_id)
+        max_id = max(self.edges.keys())
         return FileIdGen(max_id)
-
-
 
     def remove_node(self, node):
         self.nodes.remove(node)

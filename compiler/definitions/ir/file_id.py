@@ -74,7 +74,6 @@ class FileId:
 
         return argument
 
-
     ## TODO: Maybe this can be merged with serialize
     def pipe_name(self):
         assert(self.resource is None)
