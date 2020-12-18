@@ -135,13 +135,17 @@ def get_command_io_from_annotations(command, options, annotations):
         ann_options = []
         if('options' in command_ann):
             ann_options = command_ann['options']
-        extracted_inputs = interpret_io_list(inputs, options, ann_options)
-        extracted_outputs = interpret_io_list(outputs, options, ann_options)
-        option_indices = rest_options(extracted_inputs, extracted_outputs, options)
+        extracted_inputs, options_to_rem1 = interpret_io_list(inputs, options, ann_options)
+        extracted_outputs, options_to_rem2 = interpret_io_list(outputs, options, ann_options)
+
+        ## Some options do not have to be considered for option_indices
+        ## At the moment this is only `-` for stdin-hyphen
+        options_to_ignore = options_to_rem1 + options_to_rem2 + extracted_inputs + extracted_outputs
+        option_indices = rest_options(options_to_ignore, options)
         return (extracted_inputs, extracted_outputs, option_indices)
 
-def rest_options(inputs, outputs, options):
-    input_output_indices = [io[1] for io in inputs + outputs
+def rest_options(options_to_ignore, options):
+    input_output_indices = [io[1] for io in options_to_ignore
                             if isinstance(io, tuple)]
     io_indices_set = set(input_output_indices)
     all_indices = [("option", i) for i in range(len(options))
@@ -150,15 +154,18 @@ def rest_options(inputs, outputs, options):
 
 def interpret_io_list(files, options, ann_options):
     io_files = []
+    options_to_remove = []
     for io in files:
-        io_files += interpret_io(io, options, ann_options)
-    return io_files
+        new_io_files, new_options_to_remove = interpret_io(io, options, ann_options)
+        io_files += new_io_files
+        options_to_remove += new_options_to_remove
+    return (io_files, options_to_remove)
 
 def interpret_io(io, options, ann_options):
     if(io == "stdin"):
-        return ["stdin"]
+        return (["stdin"], [])
     elif(io == "stdout"):
-        return ["stdout"]
+        return (["stdout"], [])
     else:
         assert(io.startswith("args"))
         indices = io.split("[")[1].split("]")[0]
@@ -187,22 +194,33 @@ def interpret_io(io, options, ann_options):
             for _, i in args_indices[start_i:end_i]:
                 io_list.append(("option", i))
 
+        options_to_remove = []
         ## If the command has the "stdin-hyphen" option turned on,
         ## then it means that `-` should be interpreted as stdin
         if('stdin-hyphen' in ann_options):
-            io_list = [handle_stdin_hyphen(io, options) for io in io_list]
-        return io_list
+            ## We need to remove the `-` from the options.
+            ## TODO: This is not a complete solution. Normally we should
+            ##       keep this info in the DFGNode somewhere. The compilation
+            ##       Command <-> DFGNode is not a bijection at the moment.
+            io_list, options_to_remove = handle_stdin_hyphen(io_list, options)
+        return (io_list, options_to_remove)
 
-def handle_stdin_hyphen(io, options):
-    if(isinstance(io, tuple)):
-        option = options[io[1]]
+def handle_stdin_hyphen(io_list, options):
+    options_to_remove = []
+    for i in range(len(io_list)):
+        io = io_list[i]
+        if(isinstance(io, tuple)):
+            option = options[io[1]]
 
-        ## TODO: For absolute completeness, not being able to
-        ## interpret the argument to `-` means that it should also
-        ## bump up the command class (or not be translated to the DFG).
-        if(format_arg_chars(option) == '-'):
-            return "stdin"
-    return io
+            ## TODO: For absolute completeness, not being able to
+            ## interpret the argument to `-` means that it should also
+            ## bump up the command class (or not be translated to the DFG).
+            if(format_arg_chars(option) == '-'):
+                io_list[i] = "stdin"
+                ## Remove `-` from options
+                options_to_remove.append(io)
+    return (io_list, options_to_remove)
+
 
 def get_command_class_from_annotations(command, options, annotations):
     command_ann = get_command_from_annotations(command, options, annotations)
