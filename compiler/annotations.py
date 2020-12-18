@@ -74,17 +74,23 @@ def args_redirs_from_io_list_el(io, fids, ann_options, args, redirs):
     if(io == "stdin"):
         fid = fids[0]
         rem_fids = fids[1:]
-        new_redirs = redirs
-        new_redirs.append(redir_file_to_stdin(fid.to_ast()))
-        return args, new_redirs, rem_fids
-    ## TODO: I think that if we have fd redirections that are the same with stdout we don't need to 
-    ##       redirect them.
+        ## Do not redirect if it is from stdin
+        if (fid.has_file_descriptor_resource() and fid.resource.is_stdin()):
+            return args, redirs, rem_fids
+        else:
+            new_redirs = redirs
+            new_redirs.append(redir_file_to_stdin(fid.to_ast()))
+            return args, new_redirs, rem_fids
     elif(io == "stdout"):
         fid = fids[0]
         rem_fids = fids[1:]
-        new_redirs = redirs
-        new_redirs.append(redir_stdout_to_file(fid.to_ast()))
-        return args, new_redirs, rem_fids
+        ## Do not redirect if it is for stdout
+        if (fid.has_file_descriptor_resource() and fid.resource.is_stdout()):
+            return args, redirs, rem_fids
+        else:
+            new_redirs = redirs
+            new_redirs.append(redir_stdout_to_file(fid.to_ast()))
+            return args, new_redirs, rem_fids
     else:
         assert(io.startswith("args"))
         indices = io.split("[")[1].split("]")[0]
