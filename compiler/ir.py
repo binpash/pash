@@ -293,15 +293,6 @@ class IR:
         for _node_id, node in self.nodes.items():
             node_ast = node.to_ast(self.edges, drain_streams)
             asts.append(make_background(node_ast))
-        
-        ## Redirect outputs
-        stdout_fid = self.get_stdout()
-        ## TODO: Make this work for more than one output. 
-        ##       For now it is fine to only have stdout as output
-        if (not stdout_fid is None):
-            com_args = [string_to_argument('cat'), stdout_fid.to_ast()]
-            node = make_background(make_command(com_args))
-            asts.append(node)
 
         return asts
 
@@ -439,41 +430,17 @@ class IR:
         all_fids = [fid for fid, _from_node, _to_node in self.edges.values()]
         return all_fids
 
-        # for node in self.nodes:
-        #     ## Gather all fids that this node uses.
-        #     input_pipes = [fid for fid in node.get_input_file_ids()]
-        #     output_pipes = [fid for fid in node.get_output_file_ids()]
-        #     all_file_ids += input_pipes + output_pipes
-
-        # ## Remove duplicates
-        # ## TODO: This should normally happen without comparing strings, 
-        # ##       but there seems to be some problem now and some fifo is 
-        # ##       considered both an argument and an fid.
-        # unique_file_ids = []
-        # seen_file_id_strings = set()
-        # for fid in all_file_ids:
-        #     fid_string = fid.serialize()
-        #     if(not fid_string in seen_file_id_strings):
-        #         unique_file_ids.append(fid)
-        #         seen_file_id_strings.add(fid_string)
-        # # all_file_ids = list(set(all_file_ids))
-        # return unique_file_ids
-
     ## Returns all input fids of the IR
     def all_input_fids(self):
         all_input_fids = [fid for fid, from_node, _to_node in self.edges.values()
                           if from_node is None]
         return all_input_fids
-        # flat_stdin = [Find(fid) for fid in self.stdin]
-        # return flat_stdin
 
     ## Returns all output fids of the IR
     def all_output_fids(self):
         all_output_fids = [fid for fid, _from_node, to_node in self.edges.values()
                           if to_node is None]
         return all_output_fids
-        # flat_stdout = [Find(fid) for fid in self.stdout]
-        # return flat_stdout
 
     ## Returns the sources of the IR (i.e. the nodes that has no
     ## incoming edge)
