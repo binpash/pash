@@ -74,6 +74,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
     ## TODO: There is no need for this redirection here. We can just straight 
     ##       come up with inputs, outputs, options
     in_stream, out_stream, opt_indices = find_command_input_output(command, options)
+    # log("Opt indices:", opt_indices, "options:", options)
     category = find_command_category(command, options)
 
     dfg_edges = {}
@@ -193,8 +194,8 @@ class IR:
         self.nodes = nodes
         self.edges = edges
         self.background = background
-        log("Nodes:", self.nodes)
-        log("Edges:", self.edges)
+        # log("Nodes:", self.nodes)
+        # log("Edges:", self.edges)
 
         ## Apply the redirections for each separate node.
         ## This needs to be called here because nodes do not
@@ -354,8 +355,6 @@ class IR:
         self.union(other)
 
     def union(self, other):
-        log("Self:", self)
-        log("Other:", other)
         assert(self.valid())
         assert(other.valid())
         assert(self.is_in_background())
@@ -374,8 +373,6 @@ class IR:
         ## TODO: Check that all ids are OK (no cycles etc)
         self.nodes = all_nodes
         self.edges = all_edges
-        log("Nodes:", self.nodes)
-        log("Edges:", self.edges)
 
         ## TODO: Handle any redirections. 
         ## KK (2020-17-21): I am not sure what this TODO refers to :) 
