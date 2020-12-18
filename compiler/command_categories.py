@@ -15,17 +15,6 @@ import config
 ##
 
 
-## WARNING: This is not complete!! It doesn't handle - for stdin, or
-## directories, etc...
-##
-## TODO: Make this complete
-def diff_input_output(options):
-    in_stream = [("option", i) for i, option in enumerate(options)
-                 if not format_arg_chars(option).startswith('-')]
-    opt_indices = [("option", i) for i, option in enumerate(options)
-                   if format_arg_chars(option).startswith('-')]
-    return (in_stream, ["stdout"], opt_indices)
-
 def default_input_output(options):
     opt_indices = [("option", i) for i in range(len(options))]
     return (["stdin"], ["stdout"], opt_indices)
@@ -59,11 +48,11 @@ def is_uniq_pure(options):
 ##
 
 custom_command_input_outputs = {
-    "diff" : diff_input_output
+    
 }
 
 custom_command_args_redirs_from_input_outputs = {
-    "diff" : None
+    
 }
 
 custom_command_categories = {
@@ -135,6 +124,8 @@ def create_command_arguments_redirs(command, options, inputs, outputs):
         log("|--", command_arguments_redirs)
         return command_arguments_redirs
 
+    ## TODO: Implement that
+    raise NotImplementedError()
     return default_arguments_redirs(options, inputs, outputs)
 
 ## This functions finds and returns a string representing the command category
