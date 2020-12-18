@@ -143,12 +143,28 @@ class DFGNode:
             if (redirection.is_to_file() and redirection.is_for_stdout()):
                 # log(redirection)
                 file_resource = FileResource(redirection.file_arg)
+                success = False
                 for i in range(len(self.outputs)):
                     output_edge_id = self.outputs[i]
                     output_fid = edges[output_edge_id][0]
-                    if(output_fid.has_file_descriptor_resource()):
+                    if(output_fid.has_file_descriptor_resource()
+                       and output_fid.resource.is_stdout()):
+                        success = True
                         edges[output_edge_id][0].set_resource(file_resource)
                         # self.outputs[i].set_resource(file_resource)
+                assert(success)
+            elif (redirection.is_from_file() and redirection.is_for_stdin()):
+                # log(redirection)
+                file_resource = FileResource(redirection.file_arg)
+                success = False
+                for i in range(len(self.inputs)):
+                    input_edge_id = self.inputs[i]
+                    input_fid = edges[input_edge_id][0]
+                    if(input_fid.has_file_descriptor_resource()
+                       and input_fid.resource.is_stdin()):
+                        success = True
+                        edges[input_edge_id][0].set_resource(file_resource)
+                assert(success)
             else:
                 log("Warning -- Unhandled redirection:", redirection)
                 unhandled_redirs.append(redirection)
