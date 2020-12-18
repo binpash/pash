@@ -66,7 +66,7 @@ def get_option(opt_or_fd, options, fileIdGen):
        and len(opt_or_fd) == 2
        and opt_or_fd[0] == "option")
     arg = Arg(options[opt_or_fd[1]])
-    return arg
+    return (opt_or_fd[1], arg)
 
 ## This function creates a DFG with a single node given a command.
 def compile_command_to_DFG(fileIdGen, command, options,
@@ -97,7 +97,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
 
     ## Get the options
     dfg_options = [get_option(opt_or_fd, options, fileIdGen)
-                    for opt_or_fd in opt_indices]
+                   for opt_or_fd in opt_indices]
     com_redirs = redirections
     ## TODO: Add assignments
     com_assignments = []
