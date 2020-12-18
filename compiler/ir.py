@@ -354,14 +354,25 @@ class IR:
         ## Just call union here
         self.union(other)
 
-    def union(self, other):
+    def background_union(self, other):
         assert(self.valid())
         assert(other.valid())
         assert(self.is_in_background())
         ## This combines two IRs where at least the first one is in
-        ## background. This means that the stdin, stdout are those of
+        ## background. This means that the stdin only works with the second
         ## the second (or None if both are in background). Also if
         ## both are in background, their union is also in background.
+
+        ## If one of them is not in the background, then the whole
+        ## thing isn't.
+        if (not other.is_in_background()):
+            self.set_background(other.is_in_background())
+
+        self.union(other)
+
+    def union(self, other):
+        assert(self.valid())
+        assert(other.valid())
 
         ## Merge the nodes of the two DFGs
         all_nodes = {**self.nodes, **other.nodes}
@@ -369,22 +380,9 @@ class IR:
         ## Merge edges
         all_edges = {**self.edges, **other.edges}
 
-        ## TODO: Combine all other common edges too
         ## TODO: Check that all ids are OK (no cycles etc)
         self.nodes = all_nodes
         self.edges = all_edges
-
-        ## TODO: Handle any redirections. 
-        ## KK (2020-17-21): I am not sure what this TODO refers to :) 
-
-        ## If one of them is not in the background, then the whole
-        ## thing isn't.
-        if (not other.is_in_background()):
-            self.set_background(other.is_in_background())
-            
-            ## TODO: Delete this if it doesn't make sense
-            # self.stdin = other.stdin
-            # self.stdout = other.stdout
 
         ## TODO: Handle connections of common files (pipes, etc)
         self.combine_common_files()

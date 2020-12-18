@@ -119,12 +119,12 @@ def compile_asts(ast_objects, fileIdGen, config):
         if (not acc_ir is None):
 
             if (isinstance(compiled_ast, IR)):
-                acc_ir.union(compiled_ast)
+                acc_ir.background_union(compiled_ast)
             else:
                 ## TODO: Make this union the compiled_ast with the
                 ## accumulated IR, since the user wanted to run these
                 ## commands in parallel (Is that correct?)
-                # acc_ir.union(IR([compiled_ast]))
+                # acc_ir.background_union(IR([compiled_ast]))
                 compiled_asts.append(acc_ir)
                 acc_it = None
                 compiled_asts.append(compiled_ast)
