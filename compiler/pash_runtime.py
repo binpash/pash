@@ -210,7 +210,12 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
             next_node_ids = graph.get_next_nodes(curr_id)
             workset += next_node_ids
 
-            graph, new_nodes = parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size)
+            new_nodes = parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size)
+
+            log("new nodes:", new_nodes)
+
+            ## Assert that the graph stayed valid after the transformation
+            assert(graph.valid())
 
             ## Add new nodes to the workset depending on the optimization.
             ##
@@ -234,6 +239,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
 
 ## Optimizes several commands by splitting its input
 def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, batch_size):
+    raise NotImplementedError()
     ## At the moment this only works for nodes that have one
     ## input. TODO: Extend it to work for nodes that have more than
     ## one input.
@@ -301,23 +307,24 @@ def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, batch_si
 ## If the current command is a cat, and is followed by a node that
 ## is either stateless or pure parallelizable, commute the cat
 ## after the node.
-def parallelize_cat(curr, graph, fileIdGen, fan_out, batch_size):
+def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
+    curr = graph.get_node(curr_id)
     new_nodes_for_workset = []
 
     ## Get next nodes in the graph
-    next_nodes_and_edges = graph.get_next_nodes_and_edges(curr)
+    next_node_ids = graph.get_next_nodes(curr_id)
 
     ## If there is only one node afterwards (meaning that we reached a
     ## thin part of the graph), we need to try to parallelize
-    log("Current node is:", curr)
-    log("|-- its next nodes are:", next_nodes_and_edges)
-    if(len(next_nodes_and_edges) == 1):
-        next_node = next_nodes_and_edges[0][0]
+    log("Current node is:", curr_id, curr)
+    log("|-- its next nodes are:", next_node_ids)
+    if(len(next_node_ids) == 1):
+        next_node_id = next_node_ids[0]
+        next_node = graph.get_node(next_node_id)
 
-        ## If the next node can be parallelized, then we should try to
-        ## parallelize
+        ## If the next node can be parallelized, then we should try to parallelize
         log("Next node is:", next_node)
-        if(next_node.category == "stateless" or next_node.is_pure_parallelizable()):
+        if(next_node.is_parallelizable()):
             log("|-- which is parallelizable")
 
             ## If the current node is not a cat, it means that we need
@@ -334,111 +341,128 @@ def parallelize_cat(curr, graph, fileIdGen, fan_out, batch_size):
             ## already a cat. In any case, we can proceed with the
             ## parallelization
             if(isinstance(curr, Cat)):
+                new_nodes = check_parallelize_dfg_node(curr_id, next_node_id, graph, fileIdGen)
+                new_nodes_for_workset += new_nodes                
 
-                ## Get cat inputs and output. Note that there is only one
-                ## output.
-                cat_input_file_ids = curr.get_input_file_ids()
-                cat_output_file_id = next_nodes_and_edges[0][1]
-                graph, new_nodes = parallelize_command(next_node, cat_input_file_ids,
-                                                       cat_output_file_id, graph, fileIdGen)
-                new_nodes_for_workset += new_nodes
+    return new_nodes_for_workset
 
-                ## If there are no new nodes, it means that no
-                ## parallelization happened. If there were, we should
-                ## delete the original cat.
-                if(len(new_nodes) > 0):
-                    graph.remove_node(curr)
+## TODO: Instead of moving a cat after a node, we need to parallelize cat,
+##       then remove cat (since it takes a single input to a single output),
+##       then parallelize the next node. This will allow us to handle `comm -23 p1 p2`
+##
+## TODO: A nice interface would be (check/apply transformation)
 
-    return graph, new_nodes_for_workset
+## TODO: This could be a method of IR.
+def check_parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
 
+    ## Get cat inputs.
+    cat_input_edge_ids = graph.get_node_input_ids(cat_id)
 
-def parallelize_command(curr, new_input_file_ids, old_input_file_id, graph, fileIdGen):
-    assert(curr.category == "stateless" or curr.is_pure_parallelizable())
-    ## If the next command is stateless or pure parallelizable and has more
-    ## than one inputs, it can be parallelized.
+    ## If Cat has more than one input, then the next node could be parallelized
     new_nodes = []
-    if (len(new_input_file_ids) > 1):
+    if (len(cat_input_edge_ids) > 1):
+        new_nodes = parallelize_dfg_node(cat_id, node_id, graph, fileIdGen)
 
-        ## We assume that every stateless and pure command has
-        ## one output_file_id for now.
-        ##
-        ## TODO: Check if this can be lifted. This seems to be
-        ## connected to assertion regarding the next_nodes.
-        node_out_file_ids = curr.get_output_file_ids()
-        assert(len(node_out_file_ids) == 1)
-        node_out_file_id = node_out_file_ids[0]
+        log("Graph nodes:", graph.nodes)
+        log("Graph edges:", graph.edges)
 
-        ## Get the file names of the outputs of the map commands. This
-        ## differs if the command is stateless, pure that can be
-        ## written as a map and a reduce, and a pure that can be
-        ## written as a generalized map and reduce.
-        new_output_file_ids = curr.get_map_output_files(new_input_file_ids, fileIdGen)
+    return new_nodes
 
-        ## Make a merge command that joins the results of all the
-        ## duplicated commands
-        if(curr.is_pure_parallelizable()):
-            merge_commands = create_merge_commands(curr, new_output_file_ids,
-                                                   node_out_file_id, fileIdGen)
+## TODO: This could be a method of IR.
+def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
+    node = graph.get_node(node_id)
+    assert(node.is_parallelizable())
 
-            ## Add the merge commands in the graph
-            for merge_command in merge_commands:
-                graph.add_node(merge_command)
-            new_nodes += merge_commands
+    ## Get cat inputs and output. Note that there is only one output.
+    cat_input_edge_ids = graph.get_node_input_ids(cat_id)
+    cat_output_edge_ids = graph.get_node_output_ids(cat_id)
+    assert(len(cat_output_edge_ids) == 1)
+    cat_output_edge_id = cat_output_edge_ids[0]
 
-        ## For each new input and output file id, make a new command
-        new_commands = duplicate(curr, old_input_file_id, new_input_file_ids,
-                                      new_output_file_ids, fileIdGen)
+    # new_input_file_ids, old_input_file_id
 
+    new_nodes = []    
+    ## We assume that every stateless and pure parallelizable command has one output_file_id for now.
+    ##
+    ## TODO: Check if this can be lifted.
+    node_output_edge_ids = graph.get_node_output_ids(node_id)
+    assert(len(node_output_edge_ids) == 1)
+    node_output_edge_id = node_output_edge_ids[0]
 
-        new_nodes += new_commands
+    ## For each new input and output file id, make a new command
+    new_dfg_nodes, new_edges, map_output_ids = duplicate(node, 
+                                                         cat_output_edge_id,
+                                                         cat_input_edge_ids,
+                                                         fileIdGen)
+    graph.add_edges(new_edges)
 
-        # log("New commands:")
-        # log(new_commands)
-        graph.remove_node(curr)
-        for new_com in new_commands:
-            graph.add_node(new_com)
+    new_nodes += new_dfg_nodes
 
-        ## WARNING: In order for the above to not mess up
-        ## anything, there must be no other node that writes to
-        ## the same output as the curr node. Otherwise, the above
-        ## procedure will mess this up.
-        ##
-        ## TODO: Either make an assertion to catch any case that
-        ## doesn't satisfy the above assumption here, or extend
-        ## the intermediate representation and the above procedure
-        ## so that this assumption is lifted (either by not
-        ## parallelizing, or by properly handling this case)
-    return graph, new_nodes
+    # log("New commands:")
+    # log(new_commands)
+    graph.remove_node(node_id)
+    graph.remove_node(cat_id)
+    for new_node in new_dfg_nodes:
+        graph.add_node(new_node)
 
-def duplicate(command_node, old_input_file_id, new_input_file_ids, new_output_file_ids, fileIdGen):
-    assert(command_node.category == "stateless" or command_node.is_pure_parallelizable())
-    if (command_node.category == "stateless"):
-        return stateless_duplicate(command_node, old_input_file_id, new_input_file_ids, new_output_file_ids)
-    elif (command_node.is_pure_parallelizable()):
-        return pure_duplicate(command_node, old_input_file_id, new_input_file_ids, new_output_file_ids, fileIdGen)
+    ## TODO: Fix now that we have changed the structure
+    ## Make a merge command that joins the results of all the duplicated commands
+    if(node.is_pure_parallelizable()):
+        raise NotImplementedError()
+        merge_commands = create_merge_commands(node, map_output_fids,
+                                                cat_output_edge_id, fileIdGen)
+
+        ## Add the merge commands in the graph
+        for merge_command in merge_commands:
+            graph.add_node(merge_command)
+        new_nodes += merge_commands
+
+    ## WARNING: In order for the above to not mess up
+    ## anything, there must be no other node that writes to
+    ## the same output as the curr node. Otherwise, the above
+    ## procedure will mess this up.
+    ##
+    ## TODO: Either make an assertion to catch any case that
+    ## doesn't satisfy the above assumption here, or extend
+    ## the intermediate representation and the above procedure
+    ## so that this assumption is lifted (either by not
+    ## parallelizing, or by properly handling this case)
+    return new_nodes
+
+def duplicate(node, cat_output_edge_id, cat_input_edge_ids, fileIdGen):
+    assert(node.is_parallelizable())
+    ## Get the fids that will be used as outputs of the map commands.
+    map_output_fids = node.get_map_output_files(cat_input_edge_ids, fileIdGen)
+
+    if (node.com_category == "stateless"):
+        return stateless_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output_fids)
+    elif (node.is_pure_parallelizable()):
+        return pure_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output_fids, fileIdGen)
 
     ## This should be unreachable
     log("Unreachable code reached :(")
     assert(False)
 
-def stateless_duplicate(command_node, old_input_file_id, input_file_ids, output_file_ids):
-    assert(command_node.category == "stateless")
+def stateless_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output_fids):
+    assert(node.com_category == "stateless")
+    map_output_ids = [fid.get_ident() for fid in map_output_fids]
 
-    out_edge_file_ids = command_node.get_output_file_ids()
-    assert(len(out_edge_file_ids) == 1)
-    out_edge_file_id = out_edge_file_ids[0]
+    node_output_edge_ids = node.outputs
+    assert(len(node_output_edge_ids) == 1)
+    node_output_edge_id = node_output_edge_ids[0]
 
     ## Make a new cat command to add after the current command.
-    new_cat = make_cat_node(output_file_ids, out_edge_file_id)
+    new_cat = make_cat_node(map_output_ids, node_output_edge_id)
 
-    in_out_file_ids = zip(input_file_ids, output_file_ids)
+    in_out_ids = zip(cat_input_edge_ids, map_output_ids)
 
-    new_commands = [command_node.find_in_out_and_make_duplicate_command(old_input_file_id, in_fid,
-        out_edge_file_id, out_fid) for in_fid, out_fid in in_out_file_ids]
+    new_commands = [node.make_duplicate_node(cat_output_edge_id, in_id, node_output_edge_id, out_id) 
+                    for in_id, out_id in in_out_ids]
 
-    return new_commands + [new_cat]
+    return (new_commands + [new_cat], map_output_fids, node_output_edge_id)
 
 def pure_duplicate(command_node, old_input_file_id, input_file_ids, output_file_ids, fileIdGen):
+    raise NotImplementedError
     assert(command_node.is_pure_parallelizable())
 
     in_out_file_ids = zip(input_file_ids, output_file_ids)
