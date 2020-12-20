@@ -77,6 +77,8 @@ def compile_command_to_DFG(fileIdGen, command, options,
     # log("Opt indices:", opt_indices, "options:", options)
     category = find_command_category(command, options)
 
+    ## TODO: Make an empty IR and add edges and nodes incrementally (using the methods defined in IR).
+
     dfg_edges = {}
     ## Add all inputs and outputs to the DFG edges
     dfg_inputs = []
@@ -175,13 +177,14 @@ def get_larger_file_id_ident(file_ids):
     return max([max(fid.get_ident(), Find(fid).get_ident())
                 for fid in file_ids])
 
+
+## TODO: Revise comments and all methods
 ## Note: This might need more information. E.g. all the file
 ## descriptors of the IR, and in general any other local information
 ## that might be relevant.
 class IR:
 
-    ## TODO: Improve the rerpesentation and keep the input and output fids in
-    ##       some structure.
+    ## TODO: Embed the fileIdGen as a field of the IR
 
     ## IR Assumptions:
     ##
@@ -211,6 +214,7 @@ class IR:
         for _, node in self.nodes.items():
             node.apply_redirections(self.edges)
         
+    ## Refactor these to call .add_edge, and .set_edge_to/from 
     ## Add an edge that points to a node
     def add_to_edge(self, to_edge, node_id):
         edge_id = to_edge.get_ident()
@@ -222,6 +226,14 @@ class IR:
         edge_id = from_edge.get_ident()
         assert(not edge_id in self.edges)
         self.edges[edge_id] = (from_edge, node_id, None)
+
+    def set_edge_to(self, edge_id, to_node_id):
+        edge_fid, from_node, old_to_node = self.edges[edge_id]
+        self.edges[edge_id] = (edge_fid, from_node, to_node_id)
+
+    def set_edge_from(self, edge_id, from_node_id):
+        edge_fid, old_from_node, to_node = self.edges[edge_id]
+        self.edges[edge_id] = (edge_fid, from_node_id, to_node)
 
     def get_edge_fid(self, fid_id):
         if(fid_id in self.edges):
@@ -305,7 +317,7 @@ class IR:
 
         return asts
 
-
+    ## TODO: Delete this
     def set_ast(self, ast):
         self.ast = ast
 
@@ -477,13 +489,12 @@ class IR:
                     return True
         return False
 
-    def get_next_edges(self, node_id):
+    def get_node_outputs(self, node_id):
         output_edge_ids = self.nodes[node_id].outputs
-        log("Output edge ids:", output_edge_ids)
         return output_edge_ids
 
     def get_next_nodes(self, node_id):
-        output_edge_ids = self.get_next_edges(node_id)
+        output_edge_ids = self.get_node_outputs(node_id)
         next_nodes = []
         for edge_id in output_edge_ids:
             _fid, from_node, to_node = self.edges[edge_id]
@@ -491,6 +502,29 @@ class IR:
             if(not to_node is None):
                 next_nodes.append(to_node)
         return next_nodes
+    
+    def get_node_input_ids_fids(self, node_id):
+        node = self.get_node(node_id)
+        return [(input_edge_id, self.edges[input_edge_id][0]) for input_edge_id in node.inputs]
+
+    def get_node_input_ids(self, node_id):
+        return [fid_id for fid_id, _fid in self.get_node_input_ids_fids(node_id)]
+
+    def get_node_input_fids(self, node_id):
+        return [fid for _fid_id, fid in self.get_node_input_ids_fids(node_id)]
+
+    def get_node_output_ids_fids(self, node_id):
+        node = self.get_node(node_id)
+        return [(output_edge_id, self.edges[output_edge_id][0]) for output_edge_id in node.outputs]
+
+    def get_node_output_ids(self, node_id):
+        return [fid_id for fid_id, _fid in self.get_node_output_ids_fids(node_id)]
+
+    def get_node_output_fids(self, node_id):
+        return [fid for _fid_id, fid in self.get_node_output_ids_fids(node_id)]
+
+    def get_node(self, node_id):
+        return self.nodes[node_id]
 
     ## TODO: Delete this
     def get_previous_nodes_and_edges(self, node):
@@ -518,16 +552,43 @@ class IR:
         max_id = max(self.edges.keys())
         return FileIdGen(max_id)
 
-    def remove_node(self, node):
-        self.nodes.remove(node)
+    def remove_node(self, node_id):
+        node = self.nodes.pop(node_id)
+        ## Remove the node in the edges dictionary
+        for in_id in node.inputs:
+            self.set_edge_to(in_id, None)
+        
+        for out_id in node.outputs:
+            self.set_edge_from(out_id, None)
+
 
     def add_node(self, node):
-        self.nodes.append(node)
+        node_id = id(node)
+        self.nodes[node_id] = node
+        ## Add the node in the edges dictionary
+        for in_id in node.inputs:
+            self.set_edge_to(in_id, node_id)
+        
+        for out_id in node.outputs:
+            self.set_edge_from(out_id, node_id)
+
+
+    def add_edges(self, edge_fids):
+        for edge_fid in edge_fids:
+            self.add_edge(edge_fid)
+    
+    def add_edge(self, edge_fid):
+        fid_id = edge_fid.get_ident()
+        assert(not fid_id in self.edges)
+        self.edges[fid_id] = (edge_fid, None, None)
 
     ## Note: We assume that the lack of nodes is an adequate condition
     ##       to check emptiness.
     def empty(self):
         return (len(self.nodes) == 0)
+
+    ## TODO: Add a part of valid that checks if all nodes and edges are consistent.
+    ## TODO: Also it should check that there are no unreachable edges
 
     ## This function checks whether an IR is valid -- that is, if it
     ## has at least one node, and stdin, stdout set to some non-null
