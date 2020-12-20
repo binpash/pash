@@ -12,7 +12,7 @@ def make_eager_node(input_id, output_id, intermediate_file_id, eager_exec_path):
     com_name = Arg(string_to_argument(eager_exec_path))
     com_category = "pure"
     ## TODO: In theory the intermediate file id is also an output...
-    com_options = [(2, intermediate_file_id)]
+    com_options = [(2, Arg(intermediate_file_id.to_ast()))]
     return Eager([input_id],
                  [output_id],
                  com_name, 
