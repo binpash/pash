@@ -472,7 +472,7 @@ class IR:
     def source_nodes(self):
         sources = set()
         for _edge_fid, from_node, to_node in self.edges.values():
-            if(from_node is None):
+            if(from_node is None and not to_node is None):
                 sources.add(to_node)
         return list(sources)
 
