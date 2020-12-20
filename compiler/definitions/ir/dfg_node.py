@@ -5,6 +5,10 @@ from ir_utils import *
 from definitions.ir.redirection import *
 from definitions.ir.resource import *
 
+import config
+
+import copy
+
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions
 class DFGNode:
@@ -39,6 +43,9 @@ class DFGNode:
             self.outputs)
         return output
 
+    ## TODO: These are duplicates with the functions in IR.
+    ##
+    ## TODO: Delete
     def get_input_fids(self, edges):
         return [fid for _, fid in self.get_input_ids_fids()]
 
@@ -61,6 +68,8 @@ class DFGNode:
     def is_at_most_pure(self):
         return (self.com_category in ["stateless", "pure", "parallelizable_pure"])
 
+    def is_parallelizable(self):
+        return (self.is_pure_parallelizable() or self.com_category == "stateless")
 
     def is_pure_parallelizable(self):
         return (self.com_category == "parallelizable_pure" or
@@ -195,3 +204,48 @@ class DFGNode:
             new_outputs.append(new_output_id)
         self.inputs = new_inputs
         self.outputs = new_outputs
+
+    ## Get the file names of the outputs of the map commands. This
+    ## differs if the command is stateless, pure that can be
+    ## written as a map and a reduce, and a pure that can be
+    ## written as a generalized map and reduce.
+    def get_map_output_files(self, input_edge_ids, fileIdGen):
+        assert(self.is_parallelizable())
+        if(self.com_category == "stateless"):
+            map_output_fids = [fileIdGen.next_file_id() for in_fid in input_edge_ids]
+        elif(self.is_pure_parallelizable()):
+            map_output_fids = self.pure_get_map_output_files(input_edge_ids, fileIdGen)
+        else:
+            log("Unreachable code reached :(")
+            assert(False)
+            ## This should be unreachable
+        
+        ## Make all the map_output_fids_ephemeral
+        for fid in map_output_fids:
+            fid.make_ephemeral()
+        return map_output_fids
+
+    ## TODO: Fix this somewhere in the annotations and not in the code
+    def pure_get_map_output_files(self, input_edge_ids, fileIdGen):
+        assert(self.is_pure_parallelizable())
+        if(str(self.com_name) == "sort"):
+            new_output_fids = [[fileIdGen.next_file_id()] for in_fid in input_edge_ids]
+        elif(str(self.com_name) == "bigrams_aux"):
+            new_output_fids = [[fileIdGen.next_file_id()
+                                for i in range(config.bigram_g_map_num_outputs)]
+                               for in_fid in input_edge_ids]
+        elif(str(self.com_name) == "alt_bigrams_aux"):
+            new_output_fids = [[fileIdGen.next_file_id()] for in_fid in input_edge_ids]
+        elif(str(self.com_name) == "uniq"):
+            new_output_fids = [[fileIdGen.next_file_id()] for in_fid in input_edge_ids]
+        else:
+            log("Error: Map outputs for command:", self.com_name, "were not found!")
+            raise NotImplementedError()
+        return new_output_fids
+
+    def make_duplicate_node(self, old_input_id, new_input_id,
+                            old_output_id, new_output_id):
+        new_node = copy.deepcopy(self)
+        new_node.replace_edge(old_input_id, new_input_id)
+        new_node.replace_edge(old_output_id, new_output_id)
+        return new_node
