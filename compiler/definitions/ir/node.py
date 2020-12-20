@@ -1,5 +1,4 @@
 from util import *
-from union_find import *
 
 ## Question: Is this information adequate?
 ##
@@ -70,18 +69,3 @@ class Node:
             ## TODO: Complete this
             log(chunk, value)
             assert(False)
-
-    def find_file_id_in_in_stream(self, fileId):
-        return self.find_file_id_in_stream(fileId, self.in_stream)
-
-    def find_file_id_in_out_stream(self, fileId):
-        return self.find_file_id_in_stream(fileId, self.out_stream)
-
-    def find_file_id_in_stream(self, file_id, stream):
-        index = 0
-        for chunk in stream:
-            chunk_file_id = Find(self.get_file_id(chunk))
-            if(Find(file_id) == chunk_file_id):
-                return index
-            index += 1
-        return None

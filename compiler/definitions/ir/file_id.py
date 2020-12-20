@@ -1,4 +1,3 @@
-from union_find import *
 from ir_utils import *
 from util import *
 
@@ -26,7 +25,6 @@ class FileId:
         self.prefix = prefix
         ## TODO: Remove all union_find
         ## Initialize the parent
-        MakeSet(self)
         self.resource=resource
 
     def __repr__(self):
@@ -34,15 +32,14 @@ class FileId:
         ##       itself.
         # return self.serialize()
         if(isinstance(self.resource, EphemeralResource)):
-            output = "{}#file{}".format(self.prefix, Find(self).ident)
+            output = "{}#file{}".format(self.prefix, self.ident)
         else:
-            output = "fid:{}:{}".format(Find(self).ident, self.resource)
+            output = "fid:{}:{}".format(self.ident, self.resource)
         return output
 
     def serialize(self):
-        # log("File id:", self.ident, Find(self).ident, self.resource, self.children)
         if(isinstance(self.resource, EphemeralResource)):
-            output = "{}#file{}".format(self.prefix, Find(self).ident)
+            output = "{}#file{}".format(self.prefix, self.ident)
         else:
             output = "{}".format(self.resource)
         return output
@@ -63,7 +60,7 @@ class FileId:
         ##
         ## TODO: I am not sure about the FileDescriptor resource
         if(isinstance(self.resource, EphemeralResource)):
-            string = "{}#file{}".format(self.prefix, Find(self).ident)
+            string = "{}#file{}".format(self.prefix, self.ident)
             ## Quote the argument
             argument = [make_kv('Q', string_to_argument(string))]
         elif(isinstance(self.resource, FileDescriptorResource)):
@@ -77,7 +74,7 @@ class FileId:
     ## TODO: Maybe this can be merged with serialize
     def pipe_name(self):
         assert(self.resource is None)
-        output = '"#file{}"'.format(Find(self).ident)
+        output = '"#file{}"'.format(self.ident)
         return output
 
     def set_resource(self, resource):
@@ -108,48 +105,11 @@ class FileId:
         self.resource = EphemeralResource()
 
     def toFileName(self, prefix):
-        output = "{}_file{}".format(prefix, Find(self).ident)
+        output = "{}_file{}".format(prefix, self.ident)
         return output
 
     def isNull(self):
         return self.ident == "NULL"
 
-    ## TODO: Completely remove union-find
-
-    ## TODO: This union-find structure is very brittle. It could break
-    ## very easily and it is difficult to reason about the
-    ## files. Replace this with some other structure. Maybe a map that
-    ## keeps the unifications of file identifiers. Make sure that when
-    ## uniting two files, their children and resources are modified
-    ## accordingly.
-    def union(self, other):
-        Union(self, other)
-        my_resource = self.get_resource()
-        other_resource = Find(other).get_resource()
-        ## It shouldn't be the case that both resources are not NULL
-        assert(my_resource is None or
-               other_resource is None or
-               my_resource == other_resource)
-
-        if (my_resource is None):
-            self.set_resource(other_resource)
-        elif (other_resource is None):
-            Find(other).set_resource(my_resource)
-
-    def find_fid_list(self, fids):
-        parent_fids = [Find(other_fid) for other_fid in fids]
-        try:
-            return parent_fids.index(Find(self))
-        except ValueError:
-            return None
-
     def get_ident(self):
         return self.ident
-
-    ##  TODO: Remove
-    def flatten(self):
-        if(len(self.get_children()) > 0):
-            return flatten_list([child.flatten() for child in self.get_children()])
-        else:
-            return [self]
-

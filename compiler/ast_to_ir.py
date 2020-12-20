@@ -1,5 +1,4 @@
 from ir import *
-from union_find import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
 from util import *

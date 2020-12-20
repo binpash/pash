@@ -11,7 +11,6 @@ from definitions.ir.nodes.cat import *
 from definitions.ir.nodes.pash_split import *
 
 from command_categories import *
-from union_find import *
 from ir_utils import *
 from util import *
 
