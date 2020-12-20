@@ -1,23 +1,6 @@
 from util import *
 
-## Question: Is this information adequate?
-##
-## TODO: What other information should a node of the IR contain?
-## (other redirections possibly?).
-##
-## (LATER) TODO: Replace all the file references in IR nodes with new
-## Identifiers that we make. IN order to do this, one has to be able
-## to find these file arguments (based on the analysis that we will
-## do).
-##
-## A node represents an abstract program that our system can
-## distribute. At the moment, that is a program with one input and one
-## output stream. Input and output streams are shown as a list of
-## either options or standard channels (such as stdin, stdout,
-## stderr).
-##
-## Nodes also have a category, which shows whether they can be
-## parallelized on their input stream or not.
+## TODO: This might be completely obsolete now. A Node is not used in the DFG.
 class Node:
     def __init__(self, ast, in_stream=[], out_stream=[],
                  category="none", stdin=None, stdout=None):
