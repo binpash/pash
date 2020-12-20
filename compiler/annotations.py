@@ -242,7 +242,7 @@ def get_command_from_annotations(command_path, options, annotations):
     if(len(relevant_annotations) == 0):
         return None
     elif(len(relevant_annotations) > 1):
-        log("Warning: More than one annotation for command:", command)
+        log("Warning: More than one annotation for command:", command_basename)
 
     return get_command_from_annotation(command_basename, options, relevant_annotations[0])
 
