@@ -601,50 +601,62 @@ def create_reduce_node(init_func, input_file_ids, output_file_ids):
 ## This function adds eager nodes wherever the width of graph is
 ## becoming smaller.
 def add_eager_nodes(graph):
-    source_nodes = graph.source_nodes()
-    # log("Source nodes:")
-    # log(source_nodes)
+    source_node_ids = graph.source_nodes()
 
-    eager_exec_path = '{}/{}'.format(config.PASH_TOP, runtime_config['eager_executable_path'])
-    ## Generate a fileIdGen from a graph, that doesn't clash with the
-    ## current graph fileIds.
+    ## Generate a fileIdGen that doesnt clash with graph fids.
     fileIdGen = graph.get_file_id_gen()
     intermediateFileIdGen = FileIdGen(0, runtime_config['eager_intermediate_prefix'])
 
     ## Get the next nodes
-    workset = [node for source_node in source_nodes for node in graph.get_next_nodes(source_node)]
+    workset = [node for source_node_id in source_node_ids for node in graph.get_next_nodes(source_node_id)]
     visited = set()
     while (len(workset) > 0):
-        curr = workset.pop(0)
-        if (not curr in visited):
-            visited.add(curr)
-            next_nodes = graph.get_next_nodes(curr)
-            workset += next_nodes
+        curr_id = workset.pop(0)
+        curr = graph.get_node(curr_id)
+        if (not curr_id in visited):
+            visited.add(curr_id)
+            next_node_ids = graph.get_next_nodes(curr_id)
+            workset += next_node_ids
 
             ## Add eager nodes if the node has more than one input
-            curr_input_file_ids = curr.get_input_file_ids()
-            if (len(curr_input_file_ids) > 1):
-                new_input_file_ids = [fileIdGen.next_file_id() for _ in curr_input_file_ids]
-                intermediate_file_ids = [intermediateFileIdGen.next_file_id() for _ in curr_input_file_ids]
+            curr_input_ids = graph.get_node_input_ids(curr_id)
+            if (len(curr_input_ids) > 1):
+                new_input_fids = [fileIdGen.next_file_id() for _ in curr_input_ids]
+                new_input_ids = [fid.get_ident() for fid in new_input_fids]
+                for fid in new_input_fids:
+                    fid.make_ephemeral()
+                ## TODO: Remove the line below if eager creates its intermediate file
+                ##       on its own.
+                intermediate_file_ids = [intermediateFileIdGen.next_file_id() for _ in curr_input_ids]                    
+                for fid in intermediate_file_ids:
+                    fid.make_ephemeral()
 
-                file_ids = list(zip(curr_input_file_ids, new_input_file_ids, intermediate_file_ids))
-                eager_nodes = [make_eager_node(old_file_id, new_file_id,
+                file_ids = list(zip(curr_input_ids, new_input_ids, intermediate_file_ids))
+
+                eager_exec_path = '{}/{}'.format(config.PASH_TOP, runtime_config['eager_executable_path'])
+                eager_nodes = [make_eager_node(in_id, out_id,
                                                intermediate_file_id, eager_exec_path)
-                               for old_file_id, new_file_id, intermediate_file_id in file_ids]
+                               for in_id, out_id, intermediate_file_id in file_ids]
+
+                ## Add the edges and the nodes to the graph
+                graph.add_edges(new_input_fids)
+
+                ## Modify the current node inputs to be the new inputs
+                curr.inputs = new_input_ids
 
                 for eager_node in eager_nodes:
                     graph.add_node(eager_node)
 
-                ## Update input file ids
-                for curr_input_file_id, new_input_file_id, _ in file_ids:
-                    chunk_i = curr.find_file_id_in_in_stream(curr_input_file_id)
-                    chunk = curr.in_stream[chunk_i]
-                    curr.set_file_id(chunk, new_input_file_id)
+                ## TODO: If we know that a command reads its inputs in a list,
+                ##       then we might not need to put an eager on its first input.
+                ## Note: This cannot be done for `sort -m` so we need to know in the
+                ##       annotations whether input consumption is in order or not. 
 
             ## TODO: Make sure that we don't add duplicate eager nodes
 
             ## TODO: Refactor this and the above as they are very symmetric
             if(isinstance(curr, Split)):
+                raise NotImplementedError()
                 curr_output_file_ids = curr.get_output_file_ids()
                 output_file_ids_to_eager = curr_output_file_ids[:-1]
 
