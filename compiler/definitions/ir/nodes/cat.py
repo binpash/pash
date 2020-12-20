@@ -8,16 +8,10 @@ class Cat(DFGNode):
                          com_redirs=com_redirs, 
                          com_assignments=com_assignments)
 
-def make_cat_node(input_file_ids, output_file_id):
-    raise NotImplementedError()
-    command = string_to_argument("cat")
-    options = input_file_ids
-    in_stream = [("option", i)  for i in range(len(input_file_ids))]
-    out_stream = ["stdout"]
-    stdout = output_file_id
-    opt_indices = []
-    category = "stateless"
-    ## TODO: Fill the AST
-    ast = None
-    return Cat(ast, command, options, in_stream, out_stream,
-               opt_indices, category, stdout=stdout)
+def make_cat_node(inputs, output):
+    com_name = Arg(string_to_argument("cat"))
+    com_category = "stateless"
+    return Cat(inputs,
+               [output],
+               com_name, 
+               com_category)
