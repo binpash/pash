@@ -207,6 +207,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     while (len(workset) > 0):
 
         curr_id = workset.pop(0)
+        assert(isinstance(curr_id, int))
         ## Node must not be in visited, but must also be in the graph
         ## (because it might have been deleted after some
         ## optimization).
@@ -218,10 +219,9 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
 
             new_nodes = parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size)
 
-            log("new nodes:", new_nodes)
-
             ## Assert that the graph stayed valid after the transformation
-            assert(graph.valid())
+            ## TODO: Do not run this everytime in the loop if we are not in debug mode.
+            # assert(graph.valid())
 
             ## Add new nodes to the workset depending on the optimization.
             ##
@@ -233,7 +233,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
             ## TODO: Fix that
             if(len(new_nodes) > 0):
                 # log("New nodes:", new_nodes)
-                workset += new_nodes
+                workset += [id(node) for node in new_nodes]
 
     return graph
 
@@ -244,17 +244,12 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
 ## optimizations.
 
 ## Optimizes several commands by splitting its input
-def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, batch_size):
-    raise NotImplementedError()
-    ## At the moment this only works for nodes that have one
-    ## input. TODO: Extend it to work for nodes that have more than
-    ## one input.
-    ##
-    ## TODO: Change the test to check if curr is instance of Cat and
-    ## not check its name.
-    number_of_previous_nodes = curr.get_number_of_inputs()
-    assert(curr.category == "stateless" or curr.is_pure_parallelizable())
-    # curr.category in ["stateless", "pure"] and
+def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, _batch_size):
+    ## At the moment this only works for nodes that have one input. 
+    ## 
+    ## TODO: Extend it to work for nodes that have more than one input.
+    number_of_previous_nodes = len(curr.inputs)
+    assert(curr.is_parallelizable())
 
     new_cat = None
     if (not isinstance(curr, Cat)
@@ -264,22 +259,26 @@ def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, batch_si
         ## if it something else
         if(not isinstance(previous_node, Cat) or
            (isinstance(previous_node, Cat) and
-            len(previous_node.get_input_file_ids()) == 1)):
+            len(previous_node.inputs) == 1)):
 
             if(not isinstance(previous_node, Cat)):
-                input_file_ids = curr.get_input_file_ids()
-                assert(len(input_file_ids) == 1)
-                input_file_id = input_file_ids[0]
+                input_ids = curr.inputs
+                assert(len(input_ids) == 1)
+                input_id = input_ids[0]
             else:
                 ## If the previous node is a cat, we need its input
-                input_file_ids = previous_node.get_input_file_ids()
-                assert(len(input_file_ids) == 1)
-                input_file_id = input_file_ids[0]
+                input_ids = previous_node.inputs
+                assert(len(input_ids) == 1)
+                input_id = input_ids[0]
 
             ## First we have to make the split file commands.
-            split_file_commands, output_fids = make_split_files(input_file_id, fan_out,
-                                                                batch_size, fileIdGen)
-            [graph.add_node(split_file_command) for split_file_command in split_file_commands]
+            split_file_commands, output_fids = make_split_files(input_id, fan_out, fileIdGen)
+            for output_fid in output_fids:
+                output_fid.make_ephemeral()
+                graph.add_edge(output_fid)
+
+            for split_file_command in split_file_commands:
+                graph.add_node(split_file_command)
 
             ## With the split file commands in place and their output
             ## fids (and this commands new input ids, we have to
@@ -287,26 +286,38 @@ def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, batch_si
             ## have these as inputs, and connect its output to our
             ## input.
 
-            ## Generate a new file id for the input of the current
-            ## command.
-            new_input_file_id = fileIdGen.next_file_id()
-            new_cat = make_cat_node(output_fids, new_input_file_id)
+            ## Generate a new file id for the input of the current command.
+            new_input_fid = fileIdGen.next_file_id()
+            new_input_fid.make_ephemeral()
+            graph.add_edge(new_input_fid)
+            new_input_id = new_input_fid.get_ident()
+
+            output_ids = [fid.get_ident() for fid in output_fids]
+
+            new_cat = make_cat_node(output_ids, new_input_id)
             graph.add_node(new_cat)
 
             if(not isinstance(previous_node, Cat)):
                 ## Change the current node's input with the new_input
-                index = curr.find_file_id_in_in_stream(input_file_id)
-                chunk = curr.in_stream[index]
-                curr.set_file_id(chunk, new_input_file_id)
+                curr.replace_edge(input_id, new_input_id)
+                ## TODO: Delete this
+                # log("here")
+                # index = curr.find_file_id_in_in_stream(input_file_id)
+                # chunk = curr.in_stream[index]
+                # curr.set_file_id(chunk, new_input_file_id)
             else:
                 ## Change the current node's input with the new_input
-                curr_input_file_ids = curr.get_input_file_ids()
-                assert(len(curr_input_file_ids) == 1)
-                curr_input_file_id = curr_input_file_ids[0]
-                chunk = curr.find_file_id_in_in_stream(curr_input_file_id)
-                curr.set_file_id(chunk, new_input_file_id)
-                graph.remove_node(previous_node)
-    return (graph, new_cat)
+                curr.replace_edge(input_id, new_input_id)
+                graph.remove_node(id(previous_node))
+                ## TODO: Delete this
+                # log("there")
+                # curr_input_file_ids = curr.get_input_file_ids()
+                # assert(len(curr_input_file_ids) == 1)
+                # curr_input_file_id = curr_input_file_ids[0]
+                # chunk = curr.find_file_id_in_in_stream(curr_input_file_id)
+                # curr.set_file_id(chunk, new_input_file_id)
+                # graph.remove_node(previous_node)
+    return new_cat
 
 ## TODO: Left here
 
@@ -336,7 +347,7 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
             ## If the current node is not a cat, it means that we need
             ## to generate a cat using a split
             if(not isinstance(curr, Cat)):
-                graph, new_cat = split_command_input(next_node, curr, graph, fileIdGen, fan_out, batch_size)
+                new_cat = split_command_input(next_node, curr, graph, fileIdGen, fan_out, batch_size)
                 if(not new_cat is None):
                     curr = new_cat
                     next_nodes_and_edges = graph.get_next_nodes_and_edges(curr)
@@ -649,6 +660,8 @@ def add_eager_nodes(graph):
 
                 ## Modify the current node inputs to be the new inputs
                 curr.inputs = new_input_ids
+                for input_id in new_input_ids:
+                    graph.set_edge_to(input_id, curr_id)
 
                 for eager_node in eager_nodes:
                     graph.add_node(eager_node)
