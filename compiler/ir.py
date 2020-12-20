@@ -386,9 +386,6 @@ class IR:
         self.union(other)
 
     def union(self, other):
-        assert(self.valid())
-        assert(other.valid())
-
         ## Merge the nodes of the two DFGs
         all_nodes = {**self.nodes, **other.nodes}
 
@@ -586,19 +583,31 @@ class IR:
     def empty(self):
         return (len(self.nodes) == 0)
 
-    ## TODO: Add a part of valid that checks if all nodes and edges are consistent.
     ## TODO: Also it should check that there are no unreachable edges
+
+    def edge_node_consistency(self):
+        ## Check if edges and nodes are consistent
+        valid = True
+        for edge_id, (_, from_node_id, to_node_id) in self.edges.items():
+            if (not from_node_id is None):
+                from_node = self.get_node(from_node_id)
+                valid = valid and (edge_id in from_node.outputs)
+            if (not to_node_id is None):
+                to_node = self.get_node(to_node_id)
+                valid = valid and (edge_id in to_node.inputs)
+        return valid
 
     ## This function checks whether an IR is valid -- that is, if it
     ## has at least one node, and stdin, stdout set to some non-null
     ## file identifiers.
     def valid(self):
         return (len(self.nodes) > 0 and
+                self.edge_node_consistency() and
                 (not self.is_in_background()
                   or (self.get_stdin() is None)))
-                    ## The following is not true. Background IRs should not have stdin, but they can have stdout.
-                    #   and self.get_stdout() is None)))
-                 ## The following is not true. A DFG might not have an stdin
+                ## The following is not true. Background IRs should not have stdin, but they can have stdout.
+                #   and self.get_stdout() is None)))
+                ## The following is not true. A DFG might not have an stdin
                 #  or (not self.is_in_background()
                 #      and not self.get_stdin() is None 
                 #      and not self.get_stdout() is None)))
