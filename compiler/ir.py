@@ -163,11 +163,12 @@ def compile_command_to_DFG(fileIdGen, command, options,
 #         return fid_or_resource
 
 
-def make_split_files(in_fid, fan_out, batch_size, fileIdGen):
+def make_split_files(input_id, fan_out, fileIdGen):
     assert(fan_out > 1)
     ## Generate the split file ids
     out_fids = [fileIdGen.next_file_id() for i in range(fan_out)]
-    split_com = make_split_file(in_fid, out_fids, batch_size)
+    out_ids = [fid.get_ident() for fid in out_fids]
+    split_com = make_split_file(input_id, out_ids)
     return [split_com], out_fids
 
 ## This function gets a file identifier and returns the maximum among
@@ -310,7 +311,18 @@ class IR:
             asts.append(com)
 
         ## Make the dataflow graph
-        for _node_id, node in self.nodes.items():
+        sink_node_ids = self.sink_nodes()
+        ## TODO: Support more than one output. For this we need to update wait.
+        assert(len(sink_node_ids) == 1)
+
+        for node_id, node in self.nodes.items():
+            if(not node_id in sink_node_ids):
+                node_ast = node.to_ast(self.edges, drain_streams)
+                asts.append(make_background(node_ast))
+
+        ## Put the output node in the end for wait to work.
+        for node_id in sink_node_ids:
+            node = self.get_node(node_id)
             node_ast = node.to_ast(self.edges, drain_streams)
             asts.append(make_background(node_ast))
 
@@ -472,6 +484,13 @@ class IR:
                 sources.add(to_node)
         return list(sources)
 
+    def sink_nodes(self):
+        sources = set()
+        for _edge_fid, from_node, to_node in self.edges.values():
+            if(to_node is None and not from_node is None):
+                sources.add(from_node)
+        return list(sources)
+
     ## TODO: Delete this
     ## This function returns whether a node has an incoming edge in an IR
     ##
@@ -595,6 +614,15 @@ class IR:
             if (not to_node_id is None):
                 to_node = self.get_node(to_node_id)
                 valid = valid and (edge_id in to_node.inputs)
+
+        for node_id, node in self.nodes.items():
+            for edge_id in node.inputs:
+                _, _, to_node_id = self.edges[edge_id]
+                valid = valid and (to_node_id == node_id)
+            for edge_id in node.outputs:
+                _, from_node_id, _ = self.edges[edge_id]
+                valid = valid and (from_node_id == node_id)
+
         return valid
 
     ## This function checks whether an IR is valid -- that is, if it
