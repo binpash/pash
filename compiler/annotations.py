@@ -233,15 +233,18 @@ def get_command_class_from_annotations(command, options, annotations):
     if(command_ann):
         return command_ann['class']
 
-def get_command_from_annotations(command, options, annotations):
+## TODO: Find a general way to handle arbitrary paths etc
+def get_command_from_annotations(command_path, options, annotations):
+    ## Get only the basename from the path of the command
+    command_basename = os.path.basename(command_path)
     ## Find an annotation for this command
-    relevant_annotations = [ann for ann in annotations if ann['command'] == command]
+    relevant_annotations = [ann for ann in annotations if ann['command'] == command_basename]
     if(len(relevant_annotations) == 0):
         return None
     elif(len(relevant_annotations) > 1):
         log("Warning: More than one annotation for command:", command)
 
-    return get_command_from_annotation(command, options, relevant_annotations[0])
+    return get_command_from_annotation(command_basename, options, relevant_annotations[0])
 
 def get_command_from_annotation(command, options, annotation):
     assert(annotation['command'] == command)
