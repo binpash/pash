@@ -37,6 +37,12 @@ class FileIdGen:
         self.next += 1
         return fileId
 
+    def next_ephemeral_file_id(self):
+        fileId = FileId(self.next, self.prefix)
+        self.next += 1
+        fileId.make_ephemeral()
+        return fileId
+
 ## Returns the resource or file descriptor related to this specific opt_or_fd
 ## NOTE: Assumes that everything is expanded. 
 def get_option_or_fd(opt_or_fd, options, fileIdGen):
@@ -606,24 +612,31 @@ class IR:
 
     def edge_node_consistency(self):
         ## Check if edges and nodes are consistent
-        valid = True
         for edge_id, (_, from_node_id, to_node_id) in self.edges.items():
             if (not from_node_id is None):
                 from_node = self.get_node(from_node_id)
-                valid = valid and (edge_id in from_node.outputs)
+                if(not (edge_id in from_node.outputs)):
+                    log("Consistency Error: Edge id:", edge_id, "is not in the node outputs:", from_node)
+                    return False
             if (not to_node_id is None):
                 to_node = self.get_node(to_node_id)
-                valid = valid and (edge_id in to_node.inputs)
+                if(not (edge_id in to_node.inputs)):
+                    log("Consistency Error: Edge id:", edge_id, "is not in the node inputs:", to_node)
+                    return False
 
         for node_id, node in self.nodes.items():
             for edge_id in node.inputs:
                 _, _, to_node_id = self.edges[edge_id]
-                valid = valid and (to_node_id == node_id)
+                if(not (to_node_id == node_id)):
+                    log("Consistency Error: The to_node_id of the output_edge:", edge_id, "of the node:", node, "is equal to:", to_node_id)
+                    return False
             for edge_id in node.outputs:
                 _, from_node_id, _ = self.edges[edge_id]
-                valid = valid and (from_node_id == node_id)
+                if(not (from_node_id == node_id)):
+                    log("Consistency Error: The from_node_id of the input_edge:", edge_id, "of the node:", node, "is equal to:", from_node_id)
+                    return False
 
-        return valid
+        return True
 
     ## This function checks whether an IR is valid -- that is, if it
     ## has at least one node, and stdin, stdout set to some non-null
