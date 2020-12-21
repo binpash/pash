@@ -261,6 +261,9 @@ def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, _batch_s
            (isinstance(previous_node, Cat) and
             len(previous_node.inputs) == 1)):
 
+            log("Current:", curr)
+            log("Previous:", previous_node)
+
             if(not isinstance(previous_node, Cat)):
                 input_ids = curr.inputs
                 assert(len(input_ids) == 1)
@@ -300,16 +303,12 @@ def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, _batch_s
             if(not isinstance(previous_node, Cat)):
                 ## Change the current node's input with the new_input
                 curr.replace_edge(input_id, new_input_id)
-                ## TODO: Delete this
-                # log("here")
-                # index = curr.find_file_id_in_in_stream(input_file_id)
-                # chunk = curr.in_stream[index]
-                # curr.set_file_id(chunk, new_input_file_id)
+                graph.set_edge_to(new_input_id, id(curr))
             else:
                 ## Change the current node's input with the new_input
                 curr.replace_edge(input_id, new_input_id)
                 graph.remove_node(id(previous_node))
-                ## TODO: Delete this
+                ## TODO: Delete this after figuring out what is missing
                 # log("there")
                 # curr_input_file_ids = curr.get_input_file_ids()
                 # assert(len(curr_input_file_ids) == 1)
@@ -317,6 +316,9 @@ def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, _batch_s
                 # chunk = curr.find_file_id_in_in_stream(curr_input_file_id)
                 # curr.set_file_id(chunk, new_input_file_id)
                 # graph.remove_node(previous_node)
+
+            log("graph nodes:", graph.nodes)
+            log("graph edges:", graph.edges)
     return new_cat
 
 ## TODO: Left here
@@ -346,9 +348,13 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
                 new_cat = split_command_input(next_node, curr, graph, fileIdGen, fan_out, batch_size)
                 if(not new_cat is None):
                     curr = new_cat
-                    next_nodes_and_edges = graph.get_next_nodes_and_edges(curr)
-                    assert(len(next_nodes_and_edges) == 1)
-                    next_node = next_nodes_and_edges[0][0]
+                    curr_id = id(curr)
+                    log("New cat:", curr_id, curr)
+                    next_nodes = graph.get_next_nodes(curr_id)
+                    log("Next nodes:", next_nodes)
+                    assert(len(next_nodes) == 1)
+                    next_node_id = next_nodes[0]
+                    next_node = graph.get_node(next_node_id)
 
             ## If curr is cat, it means that split suceeded, or it was
             ## already a cat. In any case, we can proceed with the
@@ -432,8 +438,8 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
         graph.set_edge_from(node_output_edge_id, final_merge_node_id)
         graph.set_edge_from(final_output_id, None)
 
-    log("after merge graph nodes:", graph.nodes)
-    log("after merge graph edges:", graph.edges)
+    # log("after merge graph nodes:", graph.nodes)
+    # log("after merge graph edges:", graph.edges)
 
     ## WARNING: In order for the above to not mess up
     ## anything, there must be no other node that writes to
@@ -605,7 +611,6 @@ def create_reduce_tree(init_func, input_ids, fileIdGen):
 ## output file ids must be lists of lists, as the input file ids and
 ## the output file ids might contain auxiliary files.
 def create_reduce_tree_level(init_func, input_ids, fileIdGen):
-    log("Level:", len(input_ids))
     if(len(input_ids) % 2 == 0):
         output_ids = []
         even_input_ids = input_ids
