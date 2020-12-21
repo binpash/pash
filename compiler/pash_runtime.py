@@ -633,6 +633,28 @@ def create_reduce_tree_level(init_func, input_ids, fileIdGen):
 def create_reduce_node(init_func, input_ids, output_ids):
     return init_func(flatten_list(input_ids) + output_ids)
 
+def add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen):
+    new_fid = fileIdGen.next_ephemeral_file_id()
+    new_id = new_fid.get_ident()
+    ## TODO: Remove the line below if eager creates its intermediate file
+    ##       on its own.
+    intermediate_fid = intermediateFileIdGen.next_ephemeral_file_id()
+
+    eager_exec_path = '{}/{}'.format(config.PASH_TOP, runtime_config['eager_executable_path'])
+
+    eager_node = make_eager_node(eager_input_id, new_id, intermediate_fid, eager_exec_path)
+
+    ## Add the edges and the nodes to the graph
+    graph.add_edge(new_fid)
+
+    ## Modify the next node inputs to be the new inputs
+    next_node_id = graph.edges[eager_input_id][2]
+    if(not next_node_id is None):
+        next_node = graph.get_node(next_node_id)
+        next_node.replace_edge(eager_input_id, new_id)
+        graph.set_edge_to(new_id, next_node_id)
+
+    graph.add_node(eager_node)
 
 
 ## This function adds eager nodes wherever the width of graph is
@@ -658,38 +680,13 @@ def add_eager_nodes(graph):
             ## Add eager nodes if the node has more than one input
             curr_input_ids = graph.get_node_input_ids(curr_id)
             if (len(curr_input_ids) > 1):
-                new_input_fids = [fileIdGen.next_file_id() for _ in curr_input_ids]
-                new_input_ids = [fid.get_ident() for fid in new_input_fids]
-                for fid in new_input_fids:
-                    fid.make_ephemeral()
-                ## TODO: Remove the line below if eager creates its intermediate file
-                ##       on its own.
-                intermediate_file_ids = [intermediateFileIdGen.next_file_id() for _ in curr_input_ids]                    
-                for fid in intermediate_file_ids:
-                    fid.make_ephemeral()
-
-                file_ids = list(zip(curr_input_ids, new_input_ids, intermediate_file_ids))
-
-                eager_exec_path = '{}/{}'.format(config.PASH_TOP, runtime_config['eager_executable_path'])
-                eager_nodes = [make_eager_node(in_id, out_id,
-                                               intermediate_file_id, eager_exec_path)
-                               for in_id, out_id, intermediate_file_id in file_ids]
-
-                ## Add the edges and the nodes to the graph
-                graph.add_edges(new_input_fids)
-
-                ## Modify the current node inputs to be the new inputs
-                curr.inputs = new_input_ids
-                for input_id in new_input_ids:
-                    graph.set_edge_to(input_id, curr_id)
-
-                for eager_node in eager_nodes:
-                    graph.add_node(eager_node)
-
                 ## TODO: If we know that a command reads its inputs in a list,
                 ##       then we might not need to put an eager on its first input.
                 ## Note: This cannot be done for `sort -m` so we need to know in the
                 ##       annotations whether input consumption is in order or not. 
+
+                for curr_input_id in curr_input_ids:
+                    add_eager(curr_input_id, graph, fileIdGen, intermediateFileIdGen) 
 
                 log("after eager graph nodes:", graph.nodes)
                 log("after eager graph edges:", graph.edges)
@@ -699,6 +696,9 @@ def add_eager_nodes(graph):
 
             ## TODO: Refactor this and the above as they are very symmetric
             if(isinstance(curr, Split)):
+                eager_input_ids = curr.outputs[:-1]
+
+
                 raise NotImplementedError()
                 curr_output_file_ids = curr.get_output_file_ids()
                 output_file_ids_to_eager = curr_output_file_ids[:-1]
