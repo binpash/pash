@@ -554,29 +554,26 @@ def create_alt_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen):
 
 ## Instead of creating a tree, we just create a single level reducer for uniq
 def create_uniq_merge_commands(curr, new_output_ids, fileIdGen):
-    ## TODO: Complete that!!!
-    raise NotImplementedError()
-    ## Add a cat node that takes all inputs
-    intermediate_file_id = fileIdGen.next_file_id()
-    new_cat = make_cat_node(flatten_list(new_output_file_ids), intermediate_file_id)
+    ## Make an intermediate cat node
+    intermediate_fid = fileIdGen.next_ephemeral_file_id()
+    intermediate_id = intermediate_fid.get_ident()
+    new_cat = make_cat_node(flatten_list(new_output_ids), intermediate_id)
 
-    ## Add a uniq node after it
-    command = string_to_argument("uniq")
+    ## Make the new uniq output
+    new_out_fid = fileIdGen.next_ephemeral_file_id()
+    new_out_id = new_out_fid.get_ident()
+
     ## TODO: Pass the options of `curr` correctly
-    options = []
-    in_stream = ["stdin"]
-    out_stream = ["stdout"]
-    stdin = intermediate_file_id
-    stdout = out_edge_file_id
-    opt_indices = []
-    ## TODO: Maybe hack this and change this to pure to not reparallelize
-    category = "pure_parallelizable"
-    ## TODO: Fill the AST
-    ast = None
-    uniq_node = Command(ast, command, options, in_stream, out_stream, opt_indices, 
-                        category, stdin=stdin, stdout=stdout)
-    
-    return [new_cat, uniq_node]
+
+    ## Make the uniq merge node
+    uniq_com_name = Arg(string_to_argument("uniq"))
+    com_category = "pure_parallelizable"
+    node = DFGNode([intermediate_id],
+                   [new_out_id],
+                   uniq_com_name, 
+                   com_category)
+
+    return ([new_cat, node], [intermediate_fid, new_out_fid], new_out_id)
 
 ## This function creates the reduce tree. Both input and output file
 ## ids must be lists of lists, as the input file ids and the output
