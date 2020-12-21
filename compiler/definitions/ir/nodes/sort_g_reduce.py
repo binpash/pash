@@ -11,10 +11,11 @@ class SortGReduce(DFGNode):
         else:
             max_opt_index = -1
         com_options = old_node.com_options + [(max_opt_index+1, Arg(string_to_argument("-m")))]
-        super().__init__(input_ids, 
+        com_redirs = [redir.to_ast() for redir in old_node.com_redirs]
+        super().__init__(input_ids,
                          [output_id], 
                          old_node.com_name, 
                          com_category, 
                          com_options=com_options, 
-                         com_redirs=old_node.com_redirs, 
+                         com_redirs=com_redirs, 
                          com_assignments=old_node.com_assignments)
