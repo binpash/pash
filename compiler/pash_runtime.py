@@ -633,6 +633,7 @@ def create_reduce_tree_level(init_func, input_ids, fileIdGen):
 def create_reduce_node(init_func, input_ids, output_ids):
     return init_func(flatten_list(input_ids) + output_ids)
 
+## This functions adds an eager on a given edge.
 def add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen):
     new_fid = fileIdGen.next_ephemeral_file_id()
     new_id = new_fid.get_ident()
@@ -677,6 +678,8 @@ def add_eager_nodes(graph):
             next_node_ids = graph.get_next_nodes(curr_id)
             workset += next_node_ids
 
+            ## TODO: Make sure that we don't add duplicate eager nodes
+
             ## Add eager nodes if the node has more than one input
             curr_input_ids = graph.get_node_input_ids(curr_id)
             if (len(curr_input_ids) > 1):
@@ -688,41 +691,10 @@ def add_eager_nodes(graph):
                 for curr_input_id in curr_input_ids:
                     add_eager(curr_input_id, graph, fileIdGen, intermediateFileIdGen) 
 
-                log("after eager graph nodes:", graph.nodes)
-                log("after eager graph edges:", graph.edges)
-
-
-            ## TODO: Make sure that we don't add duplicate eager nodes
-
-            ## TODO: Refactor this and the above as they are very symmetric
             if(isinstance(curr, Split)):
                 eager_input_ids = curr.outputs[:-1]
-
-
-                raise NotImplementedError()
-                curr_output_file_ids = curr.get_output_file_ids()
-                output_file_ids_to_eager = curr_output_file_ids[:-1]
-
-                new_output_file_ids = [fileIdGen.next_file_id()
-                                       for _ in output_file_ids_to_eager]
-                intermediate_file_ids = [intermediateFileIdGen.next_file_id()
-                                         for _ in output_file_ids_to_eager]
-
-                file_ids = list(zip(output_file_ids_to_eager, new_output_file_ids, intermediate_file_ids))
-                eager_nodes = [make_eager_node(new_file_id, old_file_id,
-                                               intermediate_file_id, eager_exec_path)
-                               for old_file_id, new_file_id, intermediate_file_id in file_ids]
-
-                for eager_node in eager_nodes:
-                    graph.add_node(eager_node)
-
-                ## Update input file ids
-                for curr_output_file_id, new_output_file_id, _ in file_ids:
-                    chunk_i = curr.find_file_id_in_out_stream(curr_output_file_id)
-                    chunk = curr.out_stream[chunk_i]
-                    curr.set_file_id(chunk, new_output_file_id)
-
-
+                for edge_id in eager_input_ids:
+                    add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen) 
 
     return graph
 
