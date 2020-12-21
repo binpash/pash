@@ -1,0 +1,12 @@
+{
+    "command": "alt_bigram_aux_reduce",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["args[:]"],
+            "outputs": ["stdout"]
+        }
+    ]
+}
