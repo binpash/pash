@@ -333,16 +333,12 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
 
     ## If there is only one node afterwards (meaning that we reached a
     ## thin part of the graph), we need to try to parallelize
-    log("Current node is:", curr_id, curr)
-    log("|-- its next nodes are:", next_node_ids)
     if(len(next_node_ids) == 1):
         next_node_id = next_node_ids[0]
         next_node = graph.get_node(next_node_id)
 
         ## If the next node can be parallelized, then we should try to parallelize
-        log("Next node is:", next_node)
         if(next_node.is_parallelizable()):
-            log("|-- which is parallelizable")
 
             ## If the current node is not a cat, it means that we need
             ## to generate a cat using a split
@@ -379,9 +375,6 @@ def check_parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
     new_nodes = []
     if (len(cat_input_edge_ids) > 1):
         new_nodes = parallelize_dfg_node(cat_id, node_id, graph, fileIdGen)
-
-        log("Graph nodes:", graph.nodes)
-        log("Graph edges:", graph.edges)
 
     return new_nodes
 
@@ -422,17 +415,28 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
     for new_node in new_dfg_nodes:
         graph.add_node(new_node)
 
-    ## TODO: Fix now that we have changed the structure
     ## Make a merge command that joins the results of all the duplicated commands
     if(node.is_pure_parallelizable()):
-        raise NotImplementedError()
-        merge_commands = create_merge_commands(node, map_output_fids,
-                                                cat_output_edge_id, fileIdGen)
+        merge_commands, new_edges, final_output_id = create_merge_commands(node, 
+                                                                           map_output_ids, 
+                                                                           fileIdGen)
+        graph.add_edges(new_edges)
 
         ## Add the merge commands in the graph
         for merge_command in merge_commands:
             graph.add_node(merge_command)
         new_nodes += merge_commands
+
+        ## Replace the previous final_output_id with the previous id
+        final_merge_node_id = graph.edges[final_output_id][1]
+        final_merge_node = graph.get_node(final_merge_node_id)
+        final_merge_node.replace_edge(final_output_id, cat_output_edge_id)
+        graph.set_edge_from(cat_output_edge_id, final_merge_node_id)
+        graph.set_edge_from(final_output_id, None)
+
+    log("after merge graph nodes:", graph.nodes)
+    log("after merge graph edges:", graph.edges)
+
 
     ## WARNING: In order for the above to not mess up
     ## anything, there must be no other node that writes to
@@ -452,13 +456,13 @@ def duplicate(node, cat_output_edge_id, cat_input_edge_ids, fileIdGen):
     map_output_fids = node.get_map_output_files(cat_input_edge_ids, fileIdGen)
 
     if (node.com_category == "stateless"):
-        return stateless_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output_fids)
+        new_nodes, output_ids = stateless_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output_fids)
+        new_fids = map_output_fids
     elif (node.is_pure_parallelizable()):
-        return pure_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output_fids, fileIdGen)
-
-    ## This should be unreachable
-    log("Unreachable code reached :(")
-    assert(False)
+        new_nodes, output_ids = pure_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output_fids)
+        new_fids = [fid for fid_list in map_output_fids for fid in fid_list]
+    
+    return (new_nodes, new_fids, output_ids)
 
 def stateless_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output_fids):
     assert(node.com_category == "stateless")
@@ -476,13 +480,14 @@ def stateless_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output
     new_commands = [node.make_duplicate_node(cat_output_edge_id, in_id, node_output_edge_id, out_id) 
                     for in_id, out_id in in_out_ids]
 
-    return (new_commands + [new_cat], map_output_fids, node_output_edge_id)
+    return (new_commands + [new_cat], [node_output_edge_id])
 
-def pure_duplicate(command_node, old_input_file_id, input_file_ids, output_file_ids, fileIdGen):
-    raise NotImplementedError
-    assert(command_node.is_pure_parallelizable())
+def pure_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output_fids):
+    assert(node.is_pure_parallelizable())
+    map_output_ids = [[fid.get_ident() for fid in output_fid_list]
+                      for output_fid_list in map_output_fids]
 
-    in_out_file_ids = zip(input_file_ids, output_file_ids)
+    in_out_ids = zip(cat_input_edge_ids, map_output_ids)
 
     simple_map_pure_commands = ["sort",
                                 "alt_bigrams_aux",
@@ -490,58 +495,64 @@ def pure_duplicate(command_node, old_input_file_id, input_file_ids, output_file_
 
     ## This is the category of all commands that don't need a
     ## special generalized map
-    if(str(command_node.command) in simple_map_pure_commands):
+    if(str(node.com_name) in simple_map_pure_commands):
 
         ## make_duplicate_command duplicates a node based on its
         ## output file ids, so we first need to assign them.
-        new_output_file_ids = [fids[0] for fids in output_file_ids]
+        new_output_file_ids = [fids[0] for fids in map_output_fids]
 
-        new_commands = [command_node.find_in_out_and_make_duplicate_command(old_input_file_id, in_fid,
-            command_node.stdout, out_fids[0]) for in_fid, out_fids in in_out_file_ids]
-    elif(str(command_node.command) == "bigrams_aux"):
-        new_commands = [BigramGMap([in_fid] + out_fids)
-                        for in_fid, out_fids in in_out_file_ids]
+        ## Find the output of the node
+        node_output_edge_ids = node.outputs
+        assert(len(node_output_edge_ids) == 1)
+        node_output_edge_id = node_output_edge_ids[0]
+
+        new_commands = [node.make_duplicate_node(cat_output_edge_id, in_id, 
+            node_output_edge_id, out_ids[0]) for in_id, out_ids in in_out_ids]
+    elif(str(node.com_name) == "bigrams_aux"):
+        raise NotImplementedError()
+        new_commands = [BigramGMap([in_id] + out_ids)
+                        for in_id, out_ids in in_out_ids]
     else:
-        ## This should be unreachable
-        log("Unreachable code reached :(")
-        assert(False)
+        raise NotImplementedError()
 
-    return new_commands
+    return new_commands, map_output_ids
 
 ## Creates a merge command for all pure commands that can be
 ## parallelized using a map and a reduce/merge step
-def create_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
-    if(str(curr.command) == "sort"):
-        return create_sort_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
-    elif(str(curr.command) == "bigrams_aux"):
-        return create_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
-    elif(str(curr.command) == "alt_bigrams_aux"):
-        return create_alt_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
-    elif(str(curr.command) == "uniq"):
-        return create_uniq_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen)
+def create_merge_commands(curr, new_output_ids, fileIdGen):
+    if(str(curr.com_name) == "sort"):
+        return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
+    elif(str(curr.com_name) == "bigrams_aux"):
+        return create_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen)
+    elif(str(curr.com_name) == "alt_bigrams_aux"):
+        return create_alt_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen)
+    elif(str(curr.com_name) == "uniq"):
+        return create_uniq_merge_commands(curr, new_output_ids, fileIdGen)
     else:
         raise NotImplementedError()
 
 ## TODO: These must be generated using some file information
 ##
 ## TODO: Find a better place to put these functions
-def create_sort_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
-    tree = create_reduce_tree(lambda file_ids: SortGReduce(curr, file_ids),
-                              new_output_file_ids, out_edge_file_id, fileIdGen)
-    return tree
+def create_sort_merge_commands(curr, new_output_ids, fileIdGen):
+    output = create_reduce_tree(lambda ids: SortGReduce(curr, ids),
+                                new_output_ids, fileIdGen)
+    return output
 
-def create_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
-    tree = create_reduce_tree(lambda file_ids: BigramGReduce(curr, file_ids),
-                              new_output_file_ids, out_edge_file_id, fileIdGen)
-    return tree
+def create_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen):
+    output = create_reduce_tree(lambda ids: BigramGReduce(curr, ids),
+                                new_output_ids, fileIdGen)
+    return output
 
-def create_alt_bigram_aux_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
-    tree = create_reduce_tree(lambda file_ids: AltBigramGReduce(curr, file_ids),
-                              new_output_file_ids, out_edge_file_id, fileIdGen)
-    return tree
+def create_alt_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen):
+    output = create_reduce_tree(lambda ids: AltBigramGReduce(curr, ids),
+                                new_output_ids, fileIdGen)
+    return output
 
 ## Instead of creating a tree, we just create a single level reducer for uniq
-def create_uniq_merge_commands(curr, new_output_file_ids, out_edge_file_id, fileIdGen):
+def create_uniq_merge_commands(curr, new_output_ids, fileIdGen):
+    ## TODO: Complete that!!!
+    raise NotImplementedError()
     ## Add a cat node that takes all inputs
     intermediate_file_id = fileIdGen.next_file_id()
     new_cat = make_cat_node(flatten_list(new_output_file_ids), intermediate_file_id)
@@ -567,51 +578,58 @@ def create_uniq_merge_commands(curr, new_output_file_ids, out_edge_file_id, file
 ## This function creates the reduce tree. Both input and output file
 ## ids must be lists of lists, as the input file ids and the output
 ## file ids might contain auxiliary files.
-def create_reduce_tree(init_func, input_file_ids, output_file_id, fileIdGen):
+def create_reduce_tree(init_func, input_ids, fileIdGen):
     tree = []
-    curr_file_ids = input_file_ids
-    while(len(curr_file_ids) > 1):
-        new_level, curr_file_ids = create_reduce_tree_level(init_func, curr_file_ids, fileIdGen)
+    new_edges = []
+    curr_ids = input_ids
+    while(len(curr_ids) > 1):
+        new_level, curr_ids, new_fids = create_reduce_tree_level(init_func, curr_ids, fileIdGen)
         tree += new_level
-    ## Get the main output file identifier from the reduce and union
-    ## it with the wanted output file identifier
-    ##
-    ## TODO: If the union below is done in the reverse order, then
-    ## redirections are not transfered. FIX this disgusting union-find
-    ## structure.
-    output_file_id.union(curr_file_ids[0][0])
+        new_edges += new_fids
+    
+    ## Find the final output
+    final_output_id = curr_ids[0][0]
 
     ## Drain the final auxiliary outputs
-    final_auxiliary_outputs = curr_file_ids[0][1:]
-    drain_file_id = fileIdGen.next_file_id()
-    drain_file_id.set_resource('/dev/null')
-    drain_cat_commands = [make_cat_node([final_auxiliary_output], drain_file_id)
-                          for final_auxiliary_output in final_auxiliary_outputs]
-    return (tree + drain_cat_commands)
+    final_auxiliary_outputs = curr_ids[0][1:]
+    drain_fids = [fileIdGen.next_file_id() 
+                  for final_auxiliary_output in final_auxiliary_outputs]
+    for drain_fid in drain_fids:
+        drain_fid.set_resource(FileResource(Arg(string_to_argument('/dev/null'))))
+        new_edges.append(drain_fid)
+    drain_ids = [fid.get_ident() for fid in drain_fids]
+
+    drain_cat_commands = [make_cat_node([final_auxiliary_output], drain_id)
+                          for final_auxiliary_output, drain_id in zip(final_auxiliary_outputs, drain_ids)]
+    return (tree + drain_cat_commands), new_edges, final_output_id
 
 
 ## This function creates a level of the reduce tree. Both input and
 ## output file ids must be lists of lists, as the input file ids and
 ## the output file ids might contain auxiliary files.
-def create_reduce_tree_level(init_func, input_file_ids, fileIdGen):
-    if(len(input_file_ids) % 2 == 0):
-        output_file_ids = []
-        even_input_file_ids = input_file_ids
+def create_reduce_tree_level(init_func, input_ids, fileIdGen):
+    log("Level:", len(input_ids))
+    if(len(input_ids) % 2 == 0):
+        output_ids = []
+        even_input_ids = input_ids
     else:
-        output_file_ids = [input_file_ids[0]]
-        even_input_file_ids = input_file_ids[1:]
+        output_ids = [input_ids[0]]
+        even_input_ids = input_ids[1:]
 
+    new_fids = []
     level = []
-    for i in range(0, len(even_input_file_ids), 2):
-        new_out_file_ids = [fileIdGen.next_file_id() for _ in input_file_ids[i]]
-        output_file_ids.append(new_out_file_ids)
-        new_node = create_reduce_node(init_func, even_input_file_ids[i:i+2], new_out_file_ids)
+    for i in range(0, len(even_input_ids), 2):
+        new_out_fids = [fileIdGen.next_ephemeral_file_id() for _ in input_ids[i]]
+        new_fids += new_out_fids
+        new_out_ids = [fid.get_ident() for fid in new_out_fids]
+        output_ids.append(new_out_ids)
+        new_node = create_reduce_node(init_func, even_input_ids[i:i+2], new_out_ids)
         level.append(new_node)
-    return (level, output_file_ids)
+    return (level, output_ids, new_fids)
 
 ## This function creates one node of the reduce tree
-def create_reduce_node(init_func, input_file_ids, output_file_ids):
-    return init_func(flatten_list(input_file_ids) + output_file_ids)
+def create_reduce_node(init_func, input_ids, output_ids):
+    return init_func(flatten_list(input_ids) + output_ids)
 
 
 
@@ -670,6 +688,10 @@ def add_eager_nodes(graph):
                 ##       then we might not need to put an eager on its first input.
                 ## Note: This cannot be done for `sort -m` so we need to know in the
                 ##       annotations whether input consumption is in order or not. 
+
+                log("after eager graph nodes:", graph.nodes)
+                log("after eager graph edges:", graph.edges)
+
 
             ## TODO: Make sure that we don't add duplicate eager nodes
 
