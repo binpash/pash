@@ -419,6 +419,9 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
     for new_node in new_dfg_nodes:
         graph.add_node(new_node)
 
+    log("after duplicate graph nodes:", graph.nodes)
+    log("after duplicate graph edges:", graph.edges)
+
     ## Make a merge command that joins the results of all the duplicated commands
     if(node.is_pure_parallelizable()):
         merge_commands, new_edges, final_output_id = create_merge_commands(node, 
@@ -512,8 +515,7 @@ def pure_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output_fids
         new_commands = [node.make_duplicate_node(cat_output_edge_id, in_id, 
             node_output_edge_id, out_ids[0]) for in_id, out_ids in in_out_ids]
     elif(str(node.com_name) == "bigrams_aux"):
-        raise NotImplementedError()
-        new_commands = [BigramGMap([in_id] + out_ids)
+        new_commands = [BigramGMap(in_id, out_ids)
                         for in_id, out_ids in in_out_ids]
     else:
         raise NotImplementedError()
