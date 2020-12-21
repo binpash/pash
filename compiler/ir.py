@@ -317,7 +317,13 @@ class IR:
             asts.append(com)
 
         ## Make the dataflow graph
-        sink_node_ids = self.sink_nodes()
+        ##
+        ## TODO: Normally this should have all sink nodes at the end, but
+        ##       for now we just have the stdout node in the end 
+        ##       (since this is always the output in our benchmarks).
+        # sink_node_ids = self.sink_nodes()
+        stdout_edge_id = self.get_stdout_id()
+        sink_node_ids = [self.edges[stdout_edge_id][1]]
         ## TODO: Support more than one output. For this we need to update wait.
         assert(len(sink_node_ids) == 1)
 
