@@ -464,6 +464,8 @@ class IR:
                             number_of_out_resources += 1
                             ## They point to the same File resource so we need to unify their fids
                             self.nodes[node_id2].replace_edge(id_out, id_in)
+                            self.set_edge_from(id_in, node_id2)
+                            self.set_edge_from(id_out, None)
 
                 ## Exit with an error if a file is written by more than one node.
                 ##
