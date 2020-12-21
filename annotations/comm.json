@@ -50,5 +50,6 @@
             "inputs": ["args[:]"],
             "outputs": ["stdout"]
         }
-    ]
+    ],
+    "comment": "TODO: fix the issue with inputs, outputs. If the inputs are not a list but rather a tuple, then we should recognize the first part as configuration inputs and the rest as not."
 }
