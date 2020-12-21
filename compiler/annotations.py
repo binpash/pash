@@ -110,8 +110,11 @@ def args_redirs_from_io_list_el(io, fids, ann_options, args, redirs):
                 start_i = int(start_i_str)
 
             ## TODO: We need to handle args[:] followed by stdin by having a look-ahead.
-            end_i = len(fids)
+
+            ## If it has a variable end we need to add all the fids
+            end_i = len(fids) + start_i
             if(not end_i_str == ""):
+                ## TODO: This might be wrong
                 end_i = int(end_i_str)
 
             ## The argument list is growing with this, so the index might be larger
