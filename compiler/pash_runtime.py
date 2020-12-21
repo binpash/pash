@@ -389,9 +389,7 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
     assert(len(cat_output_edge_ids) == 1)
     cat_output_edge_id = cat_output_edge_ids[0]
 
-    # new_input_file_ids, old_input_file_id
-
-    new_nodes = []    
+    new_nodes = []
     ## We assume that every stateless and pure parallelizable command has one output_file_id for now.
     ##
     ## TODO: Check if this can be lifted.
@@ -430,13 +428,12 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
         ## Replace the previous final_output_id with the previous id
         final_merge_node_id = graph.edges[final_output_id][1]
         final_merge_node = graph.get_node(final_merge_node_id)
-        final_merge_node.replace_edge(final_output_id, cat_output_edge_id)
-        graph.set_edge_from(cat_output_edge_id, final_merge_node_id)
+        final_merge_node.replace_edge(final_output_id, node_output_edge_id)
+        graph.set_edge_from(node_output_edge_id, final_merge_node_id)
         graph.set_edge_from(final_output_id, None)
 
     log("after merge graph nodes:", graph.nodes)
     log("after merge graph edges:", graph.edges)
-
 
     ## WARNING: In order for the above to not mess up
     ## anything, there must be no other node that writes to
