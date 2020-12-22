@@ -248,7 +248,7 @@ def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, _batch_s
     ## At the moment this only works for nodes that have one input. 
     ## 
     ## TODO: Extend it to work for nodes that have more than one input.
-    number_of_previous_nodes = len(curr.inputs)
+    number_of_previous_nodes = len(curr.get_input_list())
     assert(curr.is_parallelizable())
 
     new_cat = None
@@ -259,18 +259,18 @@ def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, _batch_s
         ## if it something else
         if(not isinstance(previous_node, Cat) or
            (isinstance(previous_node, Cat) and
-            len(previous_node.inputs) == 1)):
+            len(previous_node.get_input_list()) == 1)):
 
             log("Current:", curr)
             log("Previous:", previous_node)
 
             if(not isinstance(previous_node, Cat)):
-                input_ids = curr.inputs
+                input_ids = curr.get_input_list()
                 assert(len(input_ids) == 1)
                 input_id = input_ids[0]
             else:
                 ## If the previous node is a cat, we need its input
-                input_ids = previous_node.inputs
+                input_ids = previous_node.get_input_list()
                 assert(len(input_ids) == 1)
                 input_id = input_ids[0]
 
