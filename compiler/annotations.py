@@ -52,8 +52,8 @@ def construct_args_redirs(command, options, input_fids, output_fids, annotations
     command_ann = get_command_from_annotations(command, options, annotations)
     assert(not command_ann is None)
     ## TODO: Move parsing to happen once when the annotation is loaded.
-    _, input_args_redirs_assigner_fun, _ = parse_command_inputs_outputs(command_ann['inputs'])
-    _, output_args_redirs_assigner_fun, _ = parse_command_inputs_outputs(command_ann['outputs'])
+    _, input_args_redirs_assigner_fun = parse_command_inputs_outputs(command_ann['inputs'])
+    _, output_args_redirs_assigner_fun = parse_command_inputs_outputs(command_ann['outputs'])
     ann_options = []
     if('options' in command_ann):
         ann_options = command_ann['options']
@@ -145,10 +145,7 @@ def args_redirs_from_io_list_el(io, fids, ann_options, args, redirs):
 ##
 ## TODO: Unify both of these creations into one. Now there is a lot of duplication.
 def parse_command_inputs_outputs(inputs_outputs):
-    input_assigner_fun = None
-    args_redirs_assigner_fun = None
     if(isinstance(inputs_outputs, list)):
-        input_consumption_type = InputConsumptionMode.ORDERED
         input_assigner_fun = lambda options, ann_options: interpret_io_list(inputs_outputs, options, ann_options)
         args_redirs_assigner_fun = lambda fids, ann_options, args, redirs: args_redirs_from_io_list(inputs_outputs,
                                                                                                     fids,
@@ -156,10 +153,23 @@ def parse_command_inputs_outputs(inputs_outputs):
                                                                                                     args,
                                                                                                     redirs)
     else:
-        raise NotImplementedError()
+        configuration_inputs = inputs_outputs["configuration"]
+        standard_inputs = inputs_outputs["standard"]
+        input_assigner_fun = lambda options, ann_options: assign_configuration_standard_inputs(configuration_inputs, standard_inputs, options, ann_options)
+        all_inputs = configuration_inputs + standard_inputs
+        args_redirs_assigner_fun = lambda fids, ann_options, args, redirs: args_redirs_from_io_list(all_inputs,
+                                                                                                    fids,
+                                                                                                    ann_options,
+                                                                                                    args,
+                                                                                                    redirs)
 
-    return (input_assigner_fun, args_redirs_assigner_fun, input_consumption_type)
+    return (input_assigner_fun, args_redirs_assigner_fun)
     
+def assign_configuration_standard_inputs(configuration_inputs, standard_inputs, options, ann_options):
+    extracted_config_inputs, options_to_rem1 = interpret_io_list(configuration_inputs, options, ann_options)
+    extracted_standard_inputs, options_to_rem2 = interpret_io_list(standard_inputs, options, ann_options)
+    extracted_inputs = (extracted_config_inputs, extracted_standard_inputs)
+    return (extracted_inputs, options_to_rem1 + options_to_rem2)
 
 
 ## Checks if the annotation for that command exists
@@ -167,8 +177,8 @@ def get_command_io_from_annotations(command, options, annotations):
     command_ann = get_command_from_annotations(command, options, annotations)
     if(command_ann):
         ## TODO: Move parsing to happen once when the annotation is loaded.
-        input_assigner_fun, _, input_consumption_type = parse_command_inputs_outputs(command_ann['inputs'])
-        output_assigner_fun, _, _ = parse_command_inputs_outputs(command_ann['outputs'])
+        input_assigner_fun, _ = parse_command_inputs_outputs(command_ann['inputs'])
+        output_assigner_fun, _ = parse_command_inputs_outputs(command_ann['outputs'])
         ann_options = []
         if('options' in command_ann):
             ann_options = command_ann['options']
@@ -177,9 +187,12 @@ def get_command_io_from_annotations(command, options, annotations):
 
         ## Some options do not have to be considered for option_indices
         ## At the moment this is only `-` for stdin-hyphen
-        options_to_ignore = options_to_rem1 + options_to_rem2 + extracted_inputs + extracted_outputs
+        if(isinstance(extracted_inputs, tuple)):
+            options_to_ignore = options_to_rem1 + options_to_rem2 + extracted_inputs[0] + extracted_inputs[1] + extracted_outputs
+        else:
+            options_to_ignore = options_to_rem1 + options_to_rem2 + extracted_inputs + extracted_outputs
         option_indices = rest_options(options_to_ignore, options)
-        return (extracted_inputs, extracted_outputs, option_indices, input_consumption_type)
+        return (extracted_inputs, extracted_outputs, option_indices)
 
 def rest_options(options_to_ignore, options):
     input_output_indices = [io[1] for io in options_to_ignore

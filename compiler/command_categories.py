@@ -2,8 +2,6 @@ from annotations import *
 from ir_utils import *
 from util import *
 
-from definitions.input_consumption_mode import *
-
 import config
 
 ###
@@ -19,7 +17,7 @@ import config
 
 def default_input_output(options):
     opt_indices = [("option", i) for i in range(len(options))]
-    return (["stdin"], ["stdout"], opt_indices, InputConsumptionMode.ORDERED)
+    return (["stdin"], ["stdout"], opt_indices)
 
 
 ##
