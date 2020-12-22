@@ -45,7 +45,7 @@ if [ "$prepare_sudo_install_flag" -eq 1 ]; then
     echo "|-- running apt update..."
     sudo apt-get update &> $LOG_DIR/apt_update.log
     echo "|-- running apt install..."
-    sudo apt-get install -y libtool m4 automake opam pkg-config libffi-dev python3 python3-pip &> $LOG_DIR/apt_install.log
+    sudo apt-get install -y libtool m4 automake opam pkg-config libffi-dev python3 python3-pip wamerican-insane &> $LOG_DIR/apt_install.log
     yes | opam init &> $LOG_DIR/opam_init.log
     # opam update
 else
@@ -75,6 +75,7 @@ echo "|-- making libdash... (requires sudo)"
 ## TODO: How can we get rid of that `sudo make install` in here?
 make libdash &> $LOG_DIR/make_libdash.log
 echo "|-- making parser..."
+# FIXME: This make here seems to be calling the targets above. Why?
 make &> $LOG_DIR/make.log
 cd ../../
 
