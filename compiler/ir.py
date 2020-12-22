@@ -73,12 +73,32 @@ def get_option(opt_or_fd, options, fileIdGen):
     arg = Arg(options[opt_or_fd[1]])
     return (opt_or_fd[1], arg)
 
+## This function 
+def create_edges_from_opt_or_fd_list(opt_or_fd_list, edges_dict, options, fileIdGen):
+    new_edge_list = []
+    for opt_or_fd in opt_or_fd_list:
+        fid = get_option_or_fd(opt_or_fd, options, fileIdGen)
+        fid_id = fid.get_ident()
+        edges_dict[fid_id] = (fid, None, None)
+        new_edge_list.append(fid_id)
+    return new_edge_list
+
+def find_input_edges(inputs, dfg_edges, options, fileIdGen):
+    if(isinstance(inputs, list)):
+        return create_edges_from_opt_or_fd_list(inputs, dfg_edges, options, fileIdGen)
+    elif(isinstance(inputs, tuple)):
+        config_inputs = create_edges_from_opt_or_fd_list(inputs[0], dfg_edges, options, fileIdGen)
+        standard_inputs = create_edges_from_opt_or_fd_list(inputs[1], dfg_edges, options, fileIdGen)
+        return (config_inputs, standard_inputs)
+    else:
+        raise NotImplementedError()
+
 ## This function creates a DFG with a single node given a command.
 def compile_command_to_DFG(fileIdGen, command, options,
                            redirections=[]):
     ## TODO: There is no need for this redirection here. We can just straight 
     ##       come up with inputs, outputs, options
-    in_stream, out_stream, opt_indices, input_consumption_mode = find_command_input_output(command, options)
+    inputs, out_stream, opt_indices = find_command_input_output(command, options)
     # log("Opt indices:", opt_indices, "options:", options)
     category = find_command_category(command, options)
 
@@ -86,19 +106,8 @@ def compile_command_to_DFG(fileIdGen, command, options,
 
     dfg_edges = {}
     ## Add all inputs and outputs to the DFG edges
-    dfg_inputs = []
-    for opt_or_fd in in_stream:
-        fid = get_option_or_fd(opt_or_fd, options, fileIdGen)
-        fid_id = fid.get_ident()
-        dfg_edges[fid_id] = (fid, None, None)
-        dfg_inputs.append(fid_id)
-
-    dfg_outputs = []
-    for opt_or_fd in out_stream:
-        fid = get_option_or_fd(opt_or_fd, options, fileIdGen)
-        fid_id = fid.get_ident()
-        dfg_edges[fid_id] = (fid, None, None)
-        dfg_outputs.append(fid_id)
+    dfg_inputs = find_input_edges(inputs, dfg_edges, options, fileIdGen)
+    dfg_outputs = create_edges_from_opt_or_fd_list(out_stream, dfg_edges, options, fileIdGen)
 
     com_name = Arg(command)
     com_category = category
@@ -117,7 +126,6 @@ def compile_command_to_DFG(fileIdGen, command, options,
                        com_name,
                        ## TODO: We don't really need to pass category, name, or input_consumption for Cat
                        com_category,
-                       input_consumption_mode=input_consumption_mode,
                        com_options=dfg_options,
                        com_redirs=com_redirs,
                        com_assignments=com_assignments)
@@ -128,7 +136,6 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            dfg_outputs, 
                            com_name,
                            com_category,
-                           input_consumption_mode=input_consumption_mode,
                            com_options=dfg_options,
                            com_redirs=com_redirs,
                            com_assignments=com_assignments)
@@ -139,12 +146,12 @@ def compile_command_to_DFG(fileIdGen, command, options,
     node_id = id(dfg_node)
 
     ## Assign the from, to node in edges
-    for fid_id in dfg_inputs:
+    for fid_id in dfg_node.get_input_list():
         fid, from_node, to_node = dfg_edges[fid_id]
         assert(to_node is None)
         dfg_edges[fid_id] = (fid, from_node, node_id)
     
-    for fid_id in dfg_outputs:
+    for fid_id in dfg_node.outputs:
         fid, from_node, to_node = dfg_edges[fid_id]
         assert(from_node is None)
         dfg_edges[fid_id] = (fid, node_id, to_node)
@@ -533,7 +540,7 @@ class IR:
     
     def get_node_input_ids_fids(self, node_id):
         node = self.get_node(node_id)
-        return [(input_edge_id, self.edges[input_edge_id][0]) for input_edge_id in node.inputs]
+        return [(input_edge_id, self.edges[input_edge_id][0]) for input_edge_id in node.get_input_list()]
 
     def get_node_input_ids(self, node_id):
         return [fid_id for fid_id, _fid in self.get_node_input_ids_fids(node_id)]
@@ -583,7 +590,7 @@ class IR:
     def remove_node(self, node_id):
         node = self.nodes.pop(node_id)
         ## Remove the node in the edges dictionary
-        for in_id in node.inputs:
+        for in_id in node.get_input_list():
             self.set_edge_to(in_id, None)
         
         for out_id in node.outputs:
@@ -594,7 +601,7 @@ class IR:
         node_id = id(node)
         self.nodes[node_id] = node
         ## Add the node in the edges dictionary
-        for in_id in node.inputs:
+        for in_id in node.get_input_list():
             self.set_edge_to(in_id, node_id)
         
         for out_id in node.outputs:
@@ -627,12 +634,12 @@ class IR:
                     return False
             if (not to_node_id is None):
                 to_node = self.get_node(to_node_id)
-                if(not (edge_id in to_node.inputs)):
+                if(not (edge_id in to_node.get_input_list())):
                     log("Consistency Error: Edge id:", edge_id, "is not in the node inputs:", to_node)
                     return False
 
         for node_id, node in self.nodes.items():
-            for edge_id in node.inputs:
+            for edge_id in node.get_input_list():
                 _, _, to_node_id = self.edges[edge_id]
                 if(not (to_node_id == node_id)):
                     log("Consistency Error: The to_node_id of the output_edge:", edge_id, "of the node:", node, "is equal to:", to_node_id)
