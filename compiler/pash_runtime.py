@@ -688,7 +688,11 @@ def add_eager_nodes(graph):
                 ##       annotations whether input consumption is in order or not. 
 
                 for curr_input_id in curr_input_ids:
-                    add_eager(curr_input_id, graph, fileIdGen, intermediateFileIdGen) 
+                    _fid, from_node, to_node = graph.edges[curr_input_id]
+                    assert(to_node == curr_id)
+                    ## If the edge is an input edge, then we don't want to put eager.
+                    if(not from_node is None):
+                        add_eager(curr_input_id, graph, fileIdGen, intermediateFileIdGen) 
 
             if(isinstance(curr, Split)):
                 eager_input_ids = curr.outputs[:-1]
