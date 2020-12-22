@@ -78,7 +78,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            redirections=[]):
     ## TODO: There is no need for this redirection here. We can just straight 
     ##       come up with inputs, outputs, options
-    in_stream, out_stream, opt_indices = find_command_input_output(command, options)
+    in_stream, out_stream, opt_indices, input_consumption_mode = find_command_input_output(command, options)
     # log("Opt indices:", opt_indices, "options:", options)
     category = find_command_category(command, options)
 
@@ -115,14 +115,12 @@ def compile_command_to_DFG(fileIdGen, command, options,
         dfg_node = Cat(dfg_inputs,
                        dfg_outputs,
                        com_name,
-                       ## TODO: We don't really need to pass category for Cat
+                       ## TODO: We don't really need to pass category, name, or input_consumption for Cat
                        com_category,
+                       input_consumption_mode=input_consumption_mode,
                        com_options=dfg_options,
                        com_redirs=com_redirs,
                        com_assignments=com_assignments)
-        ## TODO: Make Cat a subtype of DFGNode
-        # command = Cat(ast, command, options, in_stream, out_stream,
-        #               opt_indices, category, stdin, stdout, redirections)
     else:
         ## Assume: Everything must be completely expanded
         ## TODO: Add an assertion about that.
@@ -130,6 +128,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            dfg_outputs, 
                            com_name,
                            com_category,
+                           input_consumption_mode=input_consumption_mode,
                            com_options=dfg_options,
                            com_redirs=com_redirs,
                            com_assignments=com_assignments)

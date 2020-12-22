@@ -4,6 +4,8 @@ import json
 from ir_utils import *
 from util import *
 
+from definitions.input_consumption_mode import *
+
 ##
 ## Load annotation files
 ##
@@ -49,13 +51,14 @@ def load_annotation_files(annotation_dir):
 def construct_args_redirs(command, options, input_fids, output_fids, annotations):
     command_ann = get_command_from_annotations(command, options, annotations)
     assert(not command_ann is None)
-    inputs = command_ann['inputs']
-    outputs = command_ann['outputs']
+    ## TODO: Move parsing to happen once when the annotation is loaded.
+    _, input_args_redirs_assigner_fun, _ = parse_command_inputs_outputs(command_ann['inputs'])
+    _, output_args_redirs_assigner_fun, _ = parse_command_inputs_outputs(command_ann['outputs'])
     ann_options = []
     if('options' in command_ann):
         ann_options = command_ann['options']
-    args, redirs = args_redirs_from_io_list(inputs, input_fids, ann_options, [], [])
-    args, redirs = args_redirs_from_io_list(outputs, output_fids, ann_options, args, redirs)
+    args, redirs = input_args_redirs_assigner_fun(input_fids, ann_options, [], [])
+    args, redirs = output_args_redirs_assigner_fun(output_fids, ann_options, args, redirs)
     return args, redirs
 
 def args_redirs_from_io_list(io_list, fids, ann_options, args, redirs):
@@ -135,23 +138,48 @@ def args_redirs_from_io_list_el(io, fids, ann_options, args, redirs):
         #     io_list = [handle_stdin_hyphen(io, options) for io in io_list]
         return args, redirs, rem_fids
 
+## This function parses the command inputs and creates a function 
+## that can be extracts inputs from options
+##
+## TODO: Come up with the conditions that need to hold for these functions
+##
+## TODO: Unify both of these creations into one. Now there is a lot of duplication.
+def parse_command_inputs_outputs(inputs_outputs):
+    input_assigner_fun = None
+    args_redirs_assigner_fun = None
+    if(isinstance(inputs_outputs, list)):
+        input_consumption_type = InputConsumptionMode.ORDERED
+        input_assigner_fun = lambda options, ann_options: interpret_io_list(inputs_outputs, options, ann_options)
+        args_redirs_assigner_fun = lambda fids, ann_options, args, redirs: args_redirs_from_io_list(inputs_outputs,
+                                                                                                    fids,
+                                                                                                    ann_options,
+                                                                                                    args,
+                                                                                                    redirs)
+    else:
+        raise NotImplementedError()
+
+    return (input_assigner_fun, args_redirs_assigner_fun, input_consumption_type)
+    
+
+
 ## Checks if the annotation for that command exists
 def get_command_io_from_annotations(command, options, annotations):
     command_ann = get_command_from_annotations(command, options, annotations)
     if(command_ann):
-        inputs = command_ann['inputs']
-        outputs = command_ann['outputs']
+        ## TODO: Move parsing to happen once when the annotation is loaded.
+        input_assigner_fun, _, input_consumption_type = parse_command_inputs_outputs(command_ann['inputs'])
+        output_assigner_fun, _, _ = parse_command_inputs_outputs(command_ann['outputs'])
         ann_options = []
         if('options' in command_ann):
             ann_options = command_ann['options']
-        extracted_inputs, options_to_rem1 = interpret_io_list(inputs, options, ann_options)
-        extracted_outputs, options_to_rem2 = interpret_io_list(outputs, options, ann_options)
+        extracted_inputs, options_to_rem1 = input_assigner_fun(options, ann_options)
+        extracted_outputs, options_to_rem2 = output_assigner_fun(options, ann_options)
 
         ## Some options do not have to be considered for option_indices
         ## At the moment this is only `-` for stdin-hyphen
         options_to_ignore = options_to_rem1 + options_to_rem2 + extracted_inputs + extracted_outputs
         option_indices = rest_options(options_to_ignore, options)
-        return (extracted_inputs, extracted_outputs, option_indices)
+        return (extracted_inputs, extracted_outputs, option_indices, input_consumption_type)
 
 def rest_options(options_to_ignore, options):
     input_output_indices = [io[1] for io in options_to_ignore

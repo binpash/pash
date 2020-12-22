@@ -4,6 +4,7 @@ from ir_utils import *
 
 from definitions.ir.redirection import *
 from definitions.ir.resource import *
+from definitions.input_consumption_mode import *
 
 import config
 
@@ -18,15 +19,18 @@ class DFGNode:
     ## inputs : list of fid_ids (that can be used to retrieve fid from edges)
     ## outputs : list of fid_ids 
     ## com_name : command name Arg
+    ## com_category : string denoting category
+    ## input_consumption_mode : enumeration
     ## com_options : list of tuples with the option index and the argument Arg
     ## com_redirs : list of redirections
     ## com_assignments : list of assignments
-    def __init__(self, inputs, outputs, com_name, com_category, com_options = [], 
-                 com_redirs = [], com_assignments=[]):
+    def __init__(self, inputs, outputs, com_name, com_category, input_consumption_mode = InputConsumptionMode.ORDERED,
+                 com_options = [], com_redirs = [], com_assignments=[]):
         self.inputs = inputs
         self.outputs = outputs
         self.com_name = com_name
         self.com_category = com_category
+        self.input_consumption_mode = input_consumption_mode
         self.com_options = com_options
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
         self.com_assignments = com_assignments
