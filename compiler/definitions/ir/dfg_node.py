@@ -13,7 +13,7 @@ import copy
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions
 class DFGNode:
-    ## TODO: Make inputs + outputs be structure of fids instead of list. 
+    ## TODO: Make inputs + outputs be structure of edge ids instead of list. 
     ##       This will allow us to handle comm and other commands with static inputs. 
     ##
     ## inputs : list of fid_ids (that can be used to retrieve fid from edges)
@@ -24,13 +24,12 @@ class DFGNode:
     ## com_options : list of tuples with the option index and the argument Arg
     ## com_redirs : list of redirections
     ## com_assignments : list of assignments
-    def __init__(self, inputs, outputs, com_name, com_category, input_consumption_mode = InputConsumptionMode.ORDERED,
+    def __init__(self, inputs, outputs, com_name, com_category,
                  com_options = [], com_redirs = [], com_assignments=[]):
-        self.inputs = inputs
+        self.set_inputs(inputs)
         self.outputs = outputs
         self.com_name = com_name
         self.com_category = com_category
-        self.input_consumption_mode = input_consumption_mode
         self.com_options = com_options
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
         self.com_assignments = com_assignments
@@ -43,9 +42,21 @@ class DFGNode:
             prefix = "Pure"
         output = "{}: \"{}\" in:{} out:{}".format(
             prefix, self.com_name, 
-            self.inputs,
+            self.get_input_list(),
             self.outputs)
         return output
+
+    ## TODO: Make that a proper class.
+    def set_inputs(self, inputs):
+        if(isinstance(inputs, list)):
+            self.inputs = ([], inputs)
+        elif(isinstance(inputs, tuple)):
+            self.inputs = inputs
+        else:
+            raise NotImplementedError()
+
+    def get_input_list(self):
+        return (self.inputs[0] + self.inputs[1])
 
     ## TODO: These are duplicates with the functions in IR.
     ##
@@ -57,7 +68,7 @@ class DFGNode:
         return [fid for _, fid in self.get_output_ids_fids()]
 
     def get_input_ids_fids(self, edges):
-        return [(input_edge_id, edges[input_edge_id][0]) for input_edge_id in self.inputs]
+        return [(input_edge_id, edges[input_edge_id][0]) for input_edge_id in self.get_input_list()]
 
     def get_output_ids_fids(self, edges):
         return [(output_edge_id, edges[output_edge_id][0]) for output_edge_id in self.outputs]
@@ -118,7 +129,7 @@ class DFGNode:
             ## 1. Find the input and output fids
             ## 2. Construct the rest of the arguments and input/output redirections according to
             ##    the command IO
-            input_fids = [edges[in_id][0] for in_id in self.inputs]
+            input_fids = [edges[in_id][0] for in_id in self.get_input_list()]
             output_fids = [edges[out_id][0] for out_id in self.outputs]
             rest_argument_fids, new_redirs = create_command_arguments_redirs(com_name_ast,
                                                                              option_asts,
@@ -170,8 +181,7 @@ class DFGNode:
                 # log(redirection)
                 file_resource = FileResource(redirection.file_arg)
                 success = False
-                for i in range(len(self.inputs)):
-                    input_edge_id = self.inputs[i]
+                for input_edge_id in self.get_input_list():
                     input_fid = edges[input_edge_id][0]
                     if(input_fid.has_file_descriptor_resource()
                        and input_fid.resource.is_stdin()):
@@ -191,23 +201,23 @@ class DFGNode:
     ##
     ## TODO: Make sure we don't need to change redirections here.
     def replace_edge(self, from_id, to_id):
-        new_inputs = []
-        for input_id in self.inputs:
-            if(input_id == from_id):
-                new_input_id = to_id
-            else:
-                new_input_id = input_id
-            new_inputs.append(new_input_id)
-
-        new_outputs = []
-        for output_id in self.outputs:
-            if(output_id == from_id):
-                new_output_id = to_id
-            else:
-                new_output_id = output_id
-            new_outputs.append(new_output_id)
-        self.inputs = new_inputs
+        new_config_inputs = self.replace_edge_in_list(self.inputs[0], from_id, to_id)
+        new_standard_inputs = self.replace_edge_in_list(self.inputs[1], from_id, to_id)
+        new_outputs = self.replace_edge_in_list(self.outputs, from_id, to_id)
+        
+        self.set_inputs((new_config_inputs, new_standard_inputs))
         self.outputs = new_outputs
+
+    ## TODO: There must be a lib function to do this.
+    def replace_edge_in_list(self, edge_ids, from_id, to_id):
+        new_edge_ids = []
+        for id in edge_ids:
+            if(id == from_id):
+                new_edge_id = to_id
+            else:
+                new_edge_id = id
+            new_edge_ids.append(new_edge_id)
+        return new_edge_ids
 
     ## Get the file names of the outputs of the map commands. This
     ## differs if the command is stateless, pure that can be
