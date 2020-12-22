@@ -19,7 +19,11 @@
                 ]
             },
             "class": "stateless",
-            "inputs": ["args[1]"],
+            "inputs":
+            {
+                "configuration": ["args[0]"],
+                "standard": ["args[1]"]
+            },
             "outputs": ["stdout"],
             "options": ["stdin-hyphen"]
         },
@@ -40,7 +44,11 @@
                 ]
             },
             "class": "stateless",
-            "inputs": ["args[0]"],
+            "inputs":
+            {
+                "configuration": ["args[1]"],
+                "standard": ["args[0]"]
+            },
             "outputs": ["stdout"],
             "options": ["stdin-hyphen"]
         },
@@ -50,6 +58,5 @@
             "inputs": ["args[:]"],
             "outputs": ["stdout"]
         }
-    ],
-    "comment": "TODO: fix the issue with inputs, outputs. If the inputs are not a list but rather a tuple, then we should recognize the first part as configuration inputs and the rest as not."
+    ]
 }
