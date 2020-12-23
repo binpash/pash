@@ -39,8 +39,6 @@ clean :
 	$(JSON_TO_SHELL).native $(JSON_TO_SHELL).byte test.err
 
 libdash:
-	git submodule init
-	git submodule update
 	cd libdash && ./autogen.sh || ./autogen.sh && ./configure && make && sudo make install
 	cd libdash/ocaml && make && make install
 
