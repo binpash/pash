@@ -1,5 +1,4 @@
 from definitions.ir.dfg_node import *
-from definitions.input_consumption_mode import *
 
 class Cat(DFGNode):
     def __init__(self, inputs, outputs, com_name, com_category,
