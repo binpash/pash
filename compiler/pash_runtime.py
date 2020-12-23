@@ -152,7 +152,7 @@ def optimize_irs(asts_and_irs, args):
             distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, args.split_fan_out,
                                                                       runtime_config['batch_size'])
             # pr.print_stats()
-            # log(distributed_graph)
+            log(distributed_graph)
 
             if(not args.no_eager):
                 eager_distributed_graph = add_eager_nodes(distributed_graph)
@@ -205,7 +205,6 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     workset = source_node_ids
     visited = set()
     while (len(workset) > 0):
-
         curr_id = workset.pop(0)
         assert(isinstance(curr_id, int))
         ## Node must not be in visited, but must also be in the graph
@@ -213,6 +212,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
         ## optimization).
         if(not curr_id in visited
            and curr_id in graph.nodes):
+            log("Curr id:", curr_id)
             visited.add(curr_id)
             next_node_ids = graph.get_next_nodes(curr_id)
             workset += next_node_ids
@@ -221,6 +221,8 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
 
             ## Assert that the graph stayed valid after the transformation
             ## TODO: Do not run this everytime in the loop if we are not in debug mode.
+            # log("Graph nodes:", graph.nodes)
+            # log("Graph edges:", graph.edges)
             # assert(graph.valid())
 
             ## Add new nodes to the workset depending on the optimization.
@@ -260,9 +262,6 @@ def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, _batch_s
         if(not isinstance(previous_node, Cat) or
            (isinstance(previous_node, Cat) and
             len(previous_node.get_input_list()) == 1)):
-
-            log("Current:", curr)
-            log("Previous:", previous_node)
 
             if(not isinstance(previous_node, Cat)):
                 input_ids = curr.get_input_list()
@@ -308,6 +307,10 @@ def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, _batch_s
                 ## Change the current node's input with the new_input
                 curr.replace_edge(input_id, new_input_id)
                 graph.remove_node(id(previous_node))
+
+                ## TODO: Think if this is necessary
+                graph.set_edge_to(new_input_id, id(curr))
+
                 ## TODO: Delete this after figuring out what is missing
                 # log("there")
                 # curr_input_file_ids = curr.get_input_file_ids()
@@ -317,8 +320,8 @@ def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, _batch_s
                 # curr.set_file_id(chunk, new_input_file_id)
                 # graph.remove_node(previous_node)
 
-            log("graph nodes:", graph.nodes)
-            log("graph edges:", graph.edges)
+            # log("graph nodes:", graph.nodes)
+            # log("graph edges:", graph.edges)
     return new_cat
 
 ## TODO: Left here
@@ -349,9 +352,7 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
                 if(not new_cat is None):
                     curr = new_cat
                     curr_id = id(curr)
-                    log("New cat:", curr_id, curr)
                     next_nodes = graph.get_next_nodes(curr_id)
-                    log("Next nodes:", next_nodes)
                     assert(len(next_nodes) == 1)
                     next_node_id = next_nodes[0]
                     next_node = graph.get_node(next_node_id)
@@ -403,24 +404,10 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
     assert(len(node_output_edge_ids) == 1)
     node_output_edge_id = node_output_edge_ids[0]
 
-    ## For each new input and output file id, make a new command
-    new_dfg_nodes, new_edges, map_output_ids = duplicate(node, 
-                                                         cat_output_edge_id,
-                                                         cat_input_edge_ids,
-                                                         fileIdGen)
-    graph.add_edges(new_edges)
+    map_output_ids = graph.parallelize_node(node_id, fileIdGen)
 
-    new_nodes += new_dfg_nodes
-
-    # log("New commands:")
-    # log(new_commands)
-    graph.remove_node(node_id)
-    graph.remove_node(cat_id)
-    for new_node in new_dfg_nodes:
-        graph.add_node(new_node)
-
-    log("after duplicate graph nodes:", graph.nodes)
-    log("after duplicate graph edges:", graph.edges)
+    # log("after duplicate graph nodes:", graph.nodes)
+    # log("after duplicate graph edges:", graph.edges)
 
     ## Make a merge command that joins the results of all the duplicated commands
     if(node.is_pure_parallelizable()):
@@ -432,7 +419,7 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
         ## Add the merge commands in the graph
         for merge_command in merge_commands:
             graph.add_node(merge_command)
-        new_nodes += merge_commands
+        new_nodes += merge_commands        
 
         ## Replace the previous final_output_id with the previous id
         final_merge_node_id = graph.edges[final_output_id][1]
@@ -455,72 +442,6 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
     ## so that this assumption is lifted (either by not
     ## parallelizing, or by properly handling this case)
     return new_nodes
-
-def duplicate(node, cat_output_edge_id, cat_input_edge_ids, fileIdGen):
-    assert(node.is_parallelizable())
-    ## Get the fids that will be used as outputs of the map commands.
-    map_output_fids = node.get_map_output_files(cat_input_edge_ids, fileIdGen)
-
-    if (node.com_category == "stateless"):
-        new_nodes, output_ids = stateless_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output_fids)
-        new_fids = map_output_fids
-    elif (node.is_pure_parallelizable()):
-        new_nodes, output_ids = pure_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output_fids)
-        new_fids = [fid for fid_list in map_output_fids for fid in fid_list]
-    
-    return (new_nodes, new_fids, output_ids)
-
-def stateless_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output_fids):
-    assert(node.com_category == "stateless")
-    map_output_ids = [fid.get_ident() for fid in map_output_fids]
-
-    node_output_edge_ids = node.outputs
-    assert(len(node_output_edge_ids) == 1)
-    node_output_edge_id = node_output_edge_ids[0]
-
-    ## Make a new cat command to add after the current command.
-    new_cat = make_cat_node(map_output_ids, node_output_edge_id)
-
-    in_out_ids = zip(cat_input_edge_ids, map_output_ids)
-
-    new_commands = [node.make_duplicate_node(cat_output_edge_id, in_id, node_output_edge_id, out_id) 
-                    for in_id, out_id in in_out_ids]
-
-    return (new_commands + [new_cat], [node_output_edge_id])
-
-def pure_duplicate(node, cat_output_edge_id, cat_input_edge_ids, map_output_fids):
-    assert(node.is_pure_parallelizable())
-    map_output_ids = [[fid.get_ident() for fid in output_fid_list]
-                      for output_fid_list in map_output_fids]
-
-    in_out_ids = zip(cat_input_edge_ids, map_output_ids)
-
-    simple_map_pure_commands = ["sort",
-                                "alt_bigrams_aux",
-                                "uniq"]
-
-    ## This is the category of all commands that don't need a
-    ## special generalized map
-    if(str(node.com_name) in simple_map_pure_commands):
-
-        ## make_duplicate_command duplicates a node based on its
-        ## output file ids, so we first need to assign them.
-        new_output_file_ids = [fids[0] for fids in map_output_fids]
-
-        ## Find the output of the node
-        node_output_edge_ids = node.outputs
-        assert(len(node_output_edge_ids) == 1)
-        node_output_edge_id = node_output_edge_ids[0]
-
-        new_commands = [node.make_duplicate_node(cat_output_edge_id, in_id, 
-            node_output_edge_id, out_ids[0]) for in_id, out_ids in in_out_ids]
-    elif(str(node.com_name) == "bigrams_aux"):
-        new_commands = [BigramGMap(in_id, out_ids)
-                        for in_id, out_ids in in_out_ids]
-    else:
-        raise NotImplementedError()
-
-    return new_commands, map_output_ids
 
 ## Creates a merge command for all pure commands that can be
 ## parallelized using a map and a reduce/merge step

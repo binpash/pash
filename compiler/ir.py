@@ -6,9 +6,11 @@ import os
 from definitions.ir.arg import *
 from definitions.ir.node import *
 from definitions.ir.command import *
+from definitions.ir.dfg_node import *
 from definitions.ir.resource import *
 from definitions.ir.nodes.cat import *
 from definitions.ir.nodes.pash_split import *
+from definitions.ir.nodes.bigram_g_map import *
 
 from command_categories import *
 from ir_utils import *
@@ -188,6 +190,36 @@ def make_split_files(input_id, fan_out, fileIdGen):
 def get_larger_file_id_ident(file_ids):
     return max([max(fid.get_ident(), Find(fid).get_ident())
                 for fid in file_ids])
+
+##
+## Node builder functions
+##
+
+def make_tee(input, outputs):
+    com_name = Arg(string_to_argument("tee"))
+    com_category = "pure"
+    return DFGNode([input],
+                   outputs,
+                   com_name, 
+                   com_category)
+
+## TODO: Move it somewhere else, but where?
+def make_map_node(node, new_inputs, new_outputs):
+    ## Some nodes have special map commands
+    ##
+    ## TODO: Make this more general instead of hardcoded
+    if(str(node.com_name) == "bigrams_aux"):
+        ## Ensure that the inputs have the correct size for this
+        assert(len(new_inputs[0]) == 0)
+        assert(len(new_inputs[1]) == 1)
+        new_node = BigramGMap(new_inputs[1][0], new_outputs)
+    else:
+        new_node = copy.deepcopy(node)
+        new_node.inputs = new_inputs
+        new_node.outputs = new_outputs
+    return new_node
+
+
 
 
 ## TODO: Revise comments and all methods
@@ -622,6 +654,134 @@ class IR:
     def empty(self):
         return (len(self.nodes) == 0)
 
+
+    ## This function parallelizes a cat followed by a parallelizable node
+    ##
+    ##    (conf_input) ----+
+    ##                      \
+    ##    (in1) --- cat ---- node ---(out)---
+    ##             /
+    ##    (in2) --+
+    ##
+    ## is transformed to
+    ##
+    ##    (conf_input) -- tee ------------+
+    ##                       \             \
+    ##                        \   (in1) --- node --- agg ---(out)---
+    ##                         \                    /
+    ##                (in2) --- node --------------+
+    ##
+    ## where edges are named with parenthesis and nodes are named without them.
+    ##
+    ## TODO: Eventually delete the fileIdGen from here and always use the graph internal one.
+    ##
+    ## TODO: Eventually this should be tunable to not happen for all inputs (but maybe for less)
+    def parallelize_node(self, node_id, fileIdGen):
+        node = self.get_node(node_id)
+        assert(node.is_parallelizable())
+
+        ## Identify the cat node
+        ##
+        ## TODO: This should also work for no cat (all inputs are part of the node)
+        node_input_ids = node.get_standard_inputs()
+        assert(len(node_input_ids) == 1)
+        node_input_id = node_input_ids[0]
+        previous_node_id = self.edges[node_input_id][1]
+        previous_node = self.get_node(previous_node_id)
+        assert(isinstance(previous_node, Cat))
+
+        ## Identify the parallel inputs, each of which will be given to a different copy of the node.
+        parallel_input_ids = previous_node.get_input_list()
+        parallelism = len(parallel_input_ids)
+
+        ## Identify the output.
+        node_output_edge_ids = node.outputs
+        assert(len(node_output_edge_ids) == 1)
+        node_output_edge_id = node_output_edge_ids[0]
+
+        ## Remove the original node and the cat node before it
+        ## This also unplugs all the inputs
+        self.remove_node(node_id)
+        self.remove_node(previous_node_id)
+
+        ## TODO: This does not work at the moment. There seem to be some issues with tee.
+        ##       It either has to do with a misunderstanding of how configuration inputs work
+        ##       or it has to do with 
+        ## Unplug the configuration inputs from the node and tee it
+        parallel_configuration_ids = [[] for _ in range(parallelism)]
+        node_conf_inputs = node.get_configuration_inputs()
+        for conf_edge_id in node_conf_inputs:
+            # self.set_edge_to(conf_edge_id, None)
+            tee_id = self.tee_edge(conf_edge_id, parallelism, fileIdGen)
+            tee_node = self.get_node(tee_id)
+            for i in range(parallelism):
+                parallel_configuration_ids[i].append(tee_node.outputs[i])
+        
+        ## Create a temporary output edge for each parallel command.
+        map_output_fids = node.get_map_output_files(parallel_input_ids, fileIdGen)
+
+        all_map_output_ids = []
+        ## For each parallel input, create a parallel command
+        for index in range(parallelism):
+            ## Gather inputs and outputs
+            conf_ins = parallel_configuration_ids[index]
+            standard_in = parallel_input_ids[index]
+            new_inputs = (conf_ins, [standard_in])
+            map_output_fid = map_output_fids[index]
+            if(not isinstance(map_output_fid, list)):
+                output_fid_list = [map_output_fid]
+            else:
+                output_fid_list = map_output_fid
+            new_output_ids = [fid.get_ident() for fid in output_fid_list]
+            all_map_output_ids.append(new_output_ids)
+
+            ## Add the map_output_edges to the graph
+            for output_fid in output_fid_list:
+                self.add_edge(output_fid)
+
+            parallel_node = make_map_node(node, new_inputs, new_output_ids)
+            self.add_node(parallel_node)
+
+            parallel_node_id = id(parallel_node)
+
+            ## Set the to of all input edges
+            for conf_in in conf_ins:
+                self.set_edge_to(conf_in, parallel_node_id)
+            self.set_edge_to(standard_in, parallel_node_id)
+        
+        if (node.com_category == "stateless"):
+            new_cat = make_cat_node(flatten_list(all_map_output_ids), node_output_edge_id)
+            self.add_node(new_cat)
+            self.set_edge_from(node_output_edge_id, id(new_cat))
+        else:
+            ## TODO: Create an aggregator here. At the moment it happens in `pash_runtime.py`.
+            pass
+
+
+        return all_map_output_ids
+
+    ## Replicates an edge using tee and returns the new node_id.
+    def tee_edge(self, edge_id, times, fileIdGen):
+        ## Assert that the edge is unplugged
+        assert(self.edges[edge_id][2] is None)
+
+        output_fids = [fileIdGen.next_ephemeral_file_id() for _ in range(times)]
+        output_ids = [fid.get_ident() for fid in output_fids]
+
+        ## Create the tee node
+        new_node = make_tee(edge_id, output_ids)
+        new_node_id = id(new_node)
+
+        ## Rewire the dfg
+        for edge_fid in output_fids:
+            self.add_from_edge(new_node_id, edge_fid)
+        self.add_node(new_node)
+        self.set_edge_to(edge_id, new_node_id)
+        
+        return new_node_id
+        
+
+
     ## TODO: Also it should check that there are no unreachable edges
 
     def edge_node_consistency(self):
@@ -642,12 +802,12 @@ class IR:
             for edge_id in node.get_input_list():
                 _, _, to_node_id = self.edges[edge_id]
                 if(not (to_node_id == node_id)):
-                    log("Consistency Error: The to_node_id of the output_edge:", edge_id, "of the node:", node, "is equal to:", to_node_id)
+                    log("Consistency Error: The to_node_id of the input_edge:", edge_id, "of the node:", node, "is equal to:", to_node_id)
                     return False
             for edge_id in node.outputs:
                 _, from_node_id, _ = self.edges[edge_id]
                 if(not (from_node_id == node_id)):
-                    log("Consistency Error: The from_node_id of the input_edge:", edge_id, "of the node:", node, "is equal to:", from_node_id)
+                    log("Consistency Error: The from_node_id of the output_edge:", edge_id, "of the node:", node, "is equal to:", from_node_id)
                     return False
 
         return True
