@@ -43,7 +43,18 @@
 ##    ...     |
 
 ## TODO: Make a list/properly define what needs to be saved at (1), (3), (5), (7)
+##
+## Necessary for pash:
 ## - PATH important for PaSh but might be changed in bash
+## - IFS has to be kept default for PaSh to work
+##
+## Necessary for bash:
+## - Last PID $! (TODO)
+## - Last exit code $?
+## - set state $-
+## - File descriptors (TODO)
+## - Loop state (?) Maybe `source` is adequate for this (TODO)
+## - Traos (TODO)
 ##
 ## (maybe) TODO: After that, maybe we can create cleaner functions for (1), (3), (5), (7). 
 ##               E.g. we can have a correspondence between variable names and revert them using them 
@@ -181,7 +192,7 @@ pash_exec_time_start=$(date +"%s%N")
 if [ "$pash_speculation_flag" -eq 1 ]; then
     source "$RUNTIME_DIR/pash_runtime_quick_abort.sh"
 else
-    pash_redir_all_output python3.8 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
+    pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
     pash_runtime_return_code=$?
 
     ## Count the execution time and execute the compiled script
@@ -191,15 +202,12 @@ else
         ## (3), (4), (5)
         ##
 
-        ## TODO: Also restorre the input arguments from the "pash_input_args"
-        ##       before executing.
-
         ## If the compiler failed, we have to run the sequential
         if [ "$pash_runtime_return_code" -ne 0 ]; then
-            "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_sequential_script_file}
+            source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_sequential_script_file}
             pash_runtime_final_status=$?
         else
-            "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_compiled_script_file}
+            source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_compiled_script_file}
             pash_runtime_final_status=$?
         fi
     fi
