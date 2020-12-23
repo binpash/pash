@@ -20,7 +20,6 @@ A diverse set of benchmarks:
 * Some other big set of scripts
 
 Further scripts:
-* [A short ML pipeline](https://news.ycombinator.com/item?id=6412190)
 * [Data science commands](https://datascienceworkshops.com/blog/seven-command-line-tools-for-data-science/)
 * [PCAP processing](https://nanxiao.me/en/process-large-pcap-file/)
 * [Tokenization](https://github.com/etnichols/Stanford-NLP-Notes)
@@ -37,7 +36,16 @@ Interactive scripts --- A collection of `bash` history files:
 * [using HISTFILE](https://github.com/search?l=Shell&q=histfile&type=Code)
 * [using .bash_history](https://github.com/search?l=Shell&q=.bash_history&type=Code)
 
+ML: Unfortunately, this `bigml` is a wrapper for a web API.
+* [WhizzML Scripts](https://github.com/whizzml/examples)
+* [A short ML pipeline](https://news.ycombinator.com/item?id=6412190)
+
 Aliases?
+
+Log parsing:
+* [parse ngingx logs](https://rtcamp.com/tutorials/nginx/log-parsing/)
+* 
+  
 
 Benchmarks [from DGSH](https://github.com/dspinellis/dgsh/tree/master/example)
 
