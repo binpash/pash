@@ -4,8 +4,6 @@ import json
 from ir_utils import *
 from util import *
 
-from definitions.input_consumption_mode import *
-
 ##
 ## Load annotation files
 ##

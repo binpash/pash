@@ -4,7 +4,6 @@ from ir_utils import *
 
 from definitions.ir.redirection import *
 from definitions.ir.resource import *
-from definitions.input_consumption_mode import *
 
 import config
 
