@@ -1,4 +1,3 @@
-from definitions.ir.command import *
 from definitions.ir.file_id import *
 
 from definitions.ir.dfg_node import *

@@ -4,8 +4,6 @@ import yaml
 import os
 
 from definitions.ir.arg import *
-from definitions.ir.node import *
-from definitions.ir.command import *
 from definitions.ir.dfg_node import *
 from definitions.ir.resource import *
 from definitions.ir.nodes.cat import *
