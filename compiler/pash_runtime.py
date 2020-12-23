@@ -152,7 +152,7 @@ def optimize_irs(asts_and_irs, args):
             distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, args.split_fan_out,
                                                                       runtime_config['batch_size'])
             # pr.print_stats()
-            log(distributed_graph)
+            # log(distributed_graph)
 
             if(not args.no_eager):
                 eager_distributed_graph = add_eager_nodes(distributed_graph)
@@ -212,7 +212,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
         ## optimization).
         if(not curr_id in visited
            and curr_id in graph.nodes):
-            log("Curr id:", curr_id)
+            # log("Curr id:", curr_id)
             visited.add(curr_id)
             next_node_ids = graph.get_next_nodes(curr_id)
             workset += next_node_ids
@@ -385,7 +385,6 @@ def check_parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
 
     return new_nodes
 
-## TODO: This could be a method of IR.
 def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
     node = graph.get_node(node_id)
     assert(node.is_parallelizable())

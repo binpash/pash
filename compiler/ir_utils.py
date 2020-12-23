@@ -57,20 +57,6 @@ def get_command_from_definition(command_definition):
     log('Possible issue with definition file: Missing command in command definition {}'.format(command_definition))
     return ''
 
-## Formats arg_chars to a string assuming that they are all expanded.
-## However, even a completely expanded string might contain escapes, quotes etc
-##
-## TODO: Instead of expanding them straight away, it would be better to store them in an object as they are,
-##       and only print them for logging.
-# def expanded_arg_chars_to_string(expanded_arg_chars):
-#     log("Expanded chars:", expanded_arg_chars)
-#     chars = []
-#     for key, val in expanded_arg_chars:
-#         assert(key == 'C')
-#         chars.append(str(chr(val)))
-#     return "".join(chars)
-
-
 def format_args(args):
     formatted_args = [format_arg_chars(arg_chars) for arg_chars in args]
     return formatted_args
