@@ -4,9 +4,9 @@
     [
         {
             "predicate": "default",
-            "class": "side-effectful",
+            "class": "pure",
             "inputs": ["stdin"],
-            "outputs": ["stdout"]
+            "outputs": ["stdout", "args[:]"]
         }
     ]
 }
