@@ -161,20 +161,6 @@ def compile_command_to_DFG(fileIdGen, command, options,
     return dfg
 
 
-
-## TODO: Delete all unneccessary functions.
-
-# def replace_file_arg_with_id(opt_or_channel, command, fileIdGen):
-#     fid_or_resource = command.get_file_id(opt_or_channel)
-#     ## If the file is not a FileId, then it is some argument. We
-#     ## create a file identifier, and replace it with that, and
-#     ## make sure that the file identifier points to the argument.
-#     if (not isinstance(fid_or_resource, FileId)):
-#         return create_file_id_for_resource(Resource(fid_or_resource), fileIdGen)
-#     else:
-#         return fid_or_resource
-
-
 def make_split_files(input_id, fan_out, fileIdGen):
     assert(fan_out > 1)
     ## Generate the split file ids
@@ -182,12 +168,6 @@ def make_split_files(input_id, fan_out, fileIdGen):
     out_ids = [fid.get_ident() for fid in out_fids]
     split_com = make_split_file(input_id, out_ids)
     return [split_com], out_fids
-
-## This function gets a file identifier and returns the maximum among
-## its, and its parents identifier (parent regarding Union Find)
-def get_larger_file_id_ident(file_ids):
-    return max([max(fid.get_ident(), Find(fid).get_ident())
-                for fid in file_ids])
 
 ##
 ## Node builder functions
@@ -220,7 +200,6 @@ def make_map_node(node, new_inputs, new_outputs):
 
 
 
-## TODO: Revise comments and all methods
 ## Note: This might need more information. E.g. all the file
 ## descriptors of the IR, and in general any other local information
 ## that might be relevant.
@@ -485,14 +464,14 @@ class IR:
         ## For all inputs of all nodes, check if they are the output
         ## of exactly one other node.
         # log("Combining files for:", self)
-        for _node_id1, node1 in self.nodes.items():
-            inputs_with_file_resource = [(id, fid) for id, fid in node1.get_input_ids_fids(self.edges)
+        for node_id1, _node1 in self.nodes.items():
+            inputs_with_file_resource = [(id, fid) for id, fid in self.get_node_input_ids_fids(node_id1)
                                          if fid.has_file_resource()]
             for id_in, fid_in in inputs_with_file_resource:
                 in_resource = fid_in.get_resource()
                 number_of_out_resources = 0
-                for node_id2, node2 in self.nodes.items():
-                    outputs_with_file_resource = [(id, fid) for id, fid in node2.get_output_ids_fids(self.edges)
+                for node_id2, _node2 in self.nodes.items():
+                    outputs_with_file_resource = [(id, fid) for id, fid in self.get_node_output_ids_fids(node_id2)
                                                   if fid.has_file_resource()]
                     for id_out, fid_out in outputs_with_file_resource:
                         out_resource = fid_out.get_resource()
@@ -545,14 +524,14 @@ class IR:
     ## This function returns whether a node has an incoming edge in an IR
     ##
     ## WARNING: At the moment is is extremely naive and slow.
-    def has_incoming_edge(self, node):
-        for incoming_fid in node.get_input_file_ids():
-            for other_node in self.nodes:
-                ## Note: What if other_node == node?
-                if (not incoming_fid.find_fid_list(other_node.get_output_file_ids())
-                    is None):
-                    return True
-        return False
+    # def has_incoming_edge(self, node):
+    #     for incoming_fid in node.get_input_file_ids():
+    #         for other_node in self.nodes:
+    #             ## Note: What if other_node == node?
+    #             if (not incoming_fid.find_fid_list(other_node.get_output_file_ids())
+    #                 is None):
+    #                 return True
+    #     return False
 
     def get_node_outputs(self, node_id):
         output_edge_ids = self.nodes[node_id].outputs
@@ -590,25 +569,6 @@ class IR:
 
     def get_node(self, node_id):
         return self.nodes[node_id]
-
-    ## TODO: Delete this
-    def get_previous_nodes_and_edges(self, node):
-        previous_nodes_and_edges = []
-        for incoming_fid in node.get_input_file_ids():
-            previous_node = self.get_fids_previous_node_and_edge(incoming_fid)
-            if (not previous_node is None):
-                previous_nodes_and_edges.append((previous_node, incoming_fid))
-        return previous_nodes_and_edges
-
-    def get_fids_previous_node_and_edge(self, fid):
-        for other_node in self.nodes:
-            ## Note: What if other_node == node?
-            if (not fid.find_fid_list(other_node.get_output_file_ids()) is None):
-                return other_node
-        return None
-
-    def get_previous_nodes(self, node):
-        return [node for node, edge in self.get_previous_nodes_and_edges(node)]
 
     ## This command gets all file identifiers of the graph, and
     ## returns a fileId generator that won't clash with the existing

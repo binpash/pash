@@ -12,10 +12,7 @@ import copy
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions
 class DFGNode:
-    ## TODO: Make inputs + outputs be structure of edge ids instead of list. 
-    ##       This will allow us to handle comm and other commands with static inputs. 
-    ##
-    ## inputs : list of fid_ids (that can be used to retrieve fid from edges)
+    ## inputs : tuple of lists of fid_ids (that can be used to retrieve fid from edges)
     ## outputs : list of fid_ids 
     ## com_name : command name Arg
     ## com_category : string denoting category
@@ -62,28 +59,6 @@ class DFGNode:
     
     def get_configuration_inputs(self):
         return self.inputs[0]
-
-    ## TODO: These are duplicates with the functions in IR.
-    ##
-    ## TODO: Delete
-    def get_input_fids(self, edges):
-        return [fid for _, fid in self.get_input_ids_fids()]
-
-    def get_output_fids(self, edges):
-        return [fid for _, fid in self.get_output_ids_fids()]
-
-    def get_input_ids_fids(self, edges):
-        return [(input_edge_id, edges[input_edge_id][0]) for input_edge_id in self.get_input_list()]
-
-    def get_output_ids_fids(self, edges):
-        return [(output_edge_id, edges[output_edge_id][0]) for output_edge_id in self.outputs]
-
-    ## TODO: Replace DFGNodes in the nodes of the IR
-    ##       - During compilation (AST to IR) create DFGNodes
-    ##       - Modify all IR methods to work with DFGNodes
-    ##       - Remove UnionFind from files now that we don't have to have references to arguments.
-    ##       - Remove flatten/unflatten for Fids
-    ##       - Write functions that are able to recreate ASTNode from DFGNode
 
     def is_at_most_pure(self):
         return (self.com_category in ["stateless", "pure", "parallelizable_pure"])

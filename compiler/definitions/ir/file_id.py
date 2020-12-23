@@ -28,9 +28,6 @@ class FileId:
         self.resource=resource
 
     def __repr__(self):
-        ## Note: Outputs the parent of the union and not the file id
-        ##       itself.
-        # return self.serialize()
         if(isinstance(self.resource, EphemeralResource)):
             output = "{}#file{}".format(self.prefix, self.ident)
         else:

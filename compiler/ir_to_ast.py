@@ -41,12 +41,12 @@ def ir2ast(ir, args):
 
     all_fids = ir.all_fids()
 
-    log("All fids:", all_fids)
+    # log("All fids:", all_fids)
     ## Find all the ephemeral fids and turn them to ASTs
     ephemeral_fids = [fid for fid in all_fids
                       if fid.is_ephemeral()]
 
-    log("Ephemeral fids:", ephemeral_fids)
+    # log("Ephemeral fids:", ephemeral_fids)
 
     ## Call the prologue that creates fifos for all ephemeral fids    
     prologue = make_ir_prologue(ephemeral_fids)
