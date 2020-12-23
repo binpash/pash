@@ -57,6 +57,12 @@ class DFGNode:
 
     def get_input_list(self):
         return (self.inputs[0] + self.inputs[1])
+    
+    def get_standard_inputs(self):
+        return self.inputs[1]
+    
+    def get_configuration_inputs(self):
+        return self.inputs[0]
 
     ## TODO: These are duplicates with the functions in IR.
     ##
@@ -200,6 +206,8 @@ class DFGNode:
     ## to the to_id.
     ##
     ## TODO: Make sure we don't need to change redirections here.
+    ##
+    ## TODO: Make this a method of graph to change the from, to too.
     def replace_edge(self, from_id, to_id):
         new_config_inputs = self.replace_edge_in_list(self.inputs[0], from_id, to_id)
         new_standard_inputs = self.replace_edge_in_list(self.inputs[1], from_id, to_id)
@@ -253,10 +261,3 @@ class DFGNode:
             log("Error: Map outputs for command:", self.com_name, "were not found!")
             raise NotImplementedError()
         return new_output_fids
-
-    def make_duplicate_node(self, old_input_id, new_input_id,
-                            old_output_id, new_output_id):
-        new_node = copy.deepcopy(self)
-        new_node.replace_edge(old_input_id, new_input_id)
-        new_node.replace_edge(old_output_id, new_output_id)
-        return new_node
