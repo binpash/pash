@@ -25,10 +25,6 @@ class AstNode:
             self.assignments = args[1]
             self.arguments = args[2]
             self.redir_list = args[3]
-        elif self.construct is AstNodeConstructor.BACKGROUND:
-            self.line_number = args[0]
-            self.body = args[1]
-            self.redir_list = args[2]
         elif self.construct is AstNodeConstructor.SUBSHELL:
             self.line_number = args[0]
             self.body = args[1]
@@ -114,7 +110,7 @@ class AstNode:
         elif self.construct is AstNodeConstructor.BACKGROUND:
             json_output = make_kv(self.construct.value,
                                   [self.line_number,
-                                   self.body,
+                                   self.node,
                                    self.redir_list])
         elif self.construct is AstNodeConstructor.SUBSHELL:
             json_output = make_kv(self.construct.value,

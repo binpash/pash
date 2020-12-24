@@ -14,6 +14,7 @@ mkfifo s1 s2
 
 cat $IN |
     cut -d ' ' -f 1 |
+    tr [:lower] [:upper] |
     sort > s1 &
 
 cat $IN |

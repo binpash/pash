@@ -1,0 +1,13 @@
+{
+    "command": "alt_bigrams_aux",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        }
+    ],
+    "comment": "This is a custom command that is used in our evaluation."
+}

@@ -39,7 +39,16 @@ def non_option_args_indices(options):
             if not option.startswith("-") or option == "-"]
     return args
 
-
+## This function interleaves option arguments (that might contain Nones)
+## with the rest of the arguments
+def interleave_args(opt_arguments, rest_arguments):
+    arguments = opt_arguments
+    for i in range(len(arguments)):
+        if(arguments[i] is None):
+            rest_arg = rest_arguments.pop(0)
+            arguments[i] = rest_arg
+    arguments += rest_arguments
+    return arguments
 
 def get_command_from_definition(command_definition):
     if 'command' in command_definition:
@@ -128,8 +137,7 @@ def make_background(body, redirections=[]):
     node = make_kv("Background", [lineno, body, redirections])
     return node
 
-def make_command(arguments, redirections=[]):
+def make_command(arguments, redirections=[], assignments = []):
     lineno = 0
-    assignments = []
     node = make_kv("Command", [lineno, assignments, arguments, redirections])
     return node
