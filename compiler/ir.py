@@ -4,14 +4,13 @@ import yaml
 import os
 
 from definitions.ir.arg import *
-from definitions.ir.node import *
-from definitions.ir.command import *
+from definitions.ir.dfg_node import *
 from definitions.ir.resource import *
 from definitions.ir.nodes.cat import *
 from definitions.ir.nodes.pash_split import *
+from definitions.ir.nodes.bigram_g_map import *
 
 from command_categories import *
-from union_find import *
 from ir_utils import *
 from util import *
 
@@ -19,14 +18,13 @@ import config
 
 ## Creates a file id for a given resource
 def create_file_id_for_resource(resource, fileIdGen):
-    file_id = create_split_file_id(resource.get_length(), fileIdGen)
+    file_id = create_split_file_id(fileIdGen)
     file_id.set_resource(resource)
     return file_id
 
 ## Creates a file id that has a given maximum length
-def create_split_file_id(batch_size, fileIdGen):
+def create_split_file_id(fileIdGen):
     file_id = fileIdGen.next_file_id()
-    file_id.set_max_length(batch_size)
     return file_id
 
 class FileIdGen:
@@ -39,62 +37,175 @@ class FileIdGen:
         self.next += 1
         return fileId
 
-def create_command_assign_file_identifiers(ast, fileIdGen, command, options,
-                                           stdin=None, stdout=None, redirections=[]):
-    in_stream, out_stream, opt_indices = find_command_input_output(command, options, stdin, stdout)
+    def next_ephemeral_file_id(self):
+        fileId = FileId(self.next, self.prefix)
+        self.next += 1
+        fileId.make_ephemeral()
+        return fileId
+
+## Returns the resource or file descriptor related to this specific opt_or_fd
+## NOTE: Assumes that everything is expanded. 
+def get_option_or_fd(opt_or_fd, options, fileIdGen):
+    if(isinstance(opt_or_fd, tuple)
+       and len(opt_or_fd) == 2
+       and opt_or_fd[0] == "option"):
+        resource = FileResource(Arg(options[opt_or_fd[1]]))
+    else:
+        ## TODO: Make this be a subtype of Resource
+        if(opt_or_fd == "stdin"):
+            resource = ("fd", 0)
+        elif(opt_or_fd == "stdout"):
+            resource = ("fd", 1)
+        elif(opt_or_fd == "stderr"):
+            resource = ("fd", 2)
+        else:
+            raise NotImplementedError()
+        resource = FileDescriptorResource(resource)
+    
+    fid = create_file_id_for_resource(resource, fileIdGen)
+    return fid
+
+## Get the options as arguments
+def get_option(opt_or_fd, options, fileIdGen):
+    assert(isinstance(opt_or_fd, tuple)
+       and len(opt_or_fd) == 2
+       and opt_or_fd[0] == "option")
+    arg = Arg(options[opt_or_fd[1]])
+    return (opt_or_fd[1], arg)
+
+## This function 
+def create_edges_from_opt_or_fd_list(opt_or_fd_list, edges_dict, options, fileIdGen):
+    new_edge_list = []
+    for opt_or_fd in opt_or_fd_list:
+        fid = get_option_or_fd(opt_or_fd, options, fileIdGen)
+        fid_id = fid.get_ident()
+        edges_dict[fid_id] = (fid, None, None)
+        new_edge_list.append(fid_id)
+    return new_edge_list
+
+def find_input_edges(inputs, dfg_edges, options, fileIdGen):
+    if(isinstance(inputs, list)):
+        return create_edges_from_opt_or_fd_list(inputs, dfg_edges, options, fileIdGen)
+    elif(isinstance(inputs, tuple)):
+        config_inputs = create_edges_from_opt_or_fd_list(inputs[0], dfg_edges, options, fileIdGen)
+        standard_inputs = create_edges_from_opt_or_fd_list(inputs[1], dfg_edges, options, fileIdGen)
+        return (config_inputs, standard_inputs)
+    else:
+        raise NotImplementedError()
+
+## This function creates a DFG with a single node given a command.
+def compile_command_to_DFG(fileIdGen, command, options,
+                           redirections=[]):
+    ## TODO: There is no need for this redirection here. We can just straight 
+    ##       come up with inputs, outputs, options
+    inputs, out_stream, opt_indices = find_command_input_output(command, options)
+    # log("Opt indices:", opt_indices, "options:", options)
     category = find_command_category(command, options)
-    ## TODO: Maybe compile command instead of just formatting it.
-    if(format_arg_chars(command) == "cat"):
-        command = Cat(ast, command, options, in_stream, out_stream,
-                      opt_indices, category, stdin, stdout, redirections)
+
+    ## TODO: Make an empty IR and add edges and nodes incrementally (using the methods defined in IR).
+
+    dfg_edges = {}
+    ## Add all inputs and outputs to the DFG edges
+    dfg_inputs = find_input_edges(inputs, dfg_edges, options, fileIdGen)
+    dfg_outputs = create_edges_from_opt_or_fd_list(out_stream, dfg_edges, options, fileIdGen)
+
+    com_name = Arg(command)
+    com_category = category
+
+    ## Get the options
+    dfg_options = [get_option(opt_or_fd, options, fileIdGen)
+                   for opt_or_fd in opt_indices]
+    com_redirs = redirections
+    ## TODO: Add assignments
+    com_assignments = []
+
+    ## TODO: Combine them both in a constructor that decided whether to instantiate Cat or DFGNode
+    if(str(com_name) == "cat"):
+        dfg_node = Cat(dfg_inputs,
+                       dfg_outputs,
+                       com_name,
+                       ## TODO: We don't really need to pass category, name, or input_consumption for Cat
+                       com_category,
+                       com_options=dfg_options,
+                       com_redirs=com_redirs,
+                       com_assignments=com_assignments)
     else:
-        command = Command(ast, command, options, in_stream, out_stream,
-                          opt_indices, category, stdin, stdout, redirections)
+        ## Assume: Everything must be completely expanded
+        ## TODO: Add an assertion about that.
+        dfg_node = DFGNode(dfg_inputs, 
+                           dfg_outputs, 
+                           com_name,
+                           com_category,
+                           com_options=dfg_options,
+                           com_redirs=com_redirs,
+                           com_assignments=com_assignments)
+    
+    if(not dfg_node.is_at_most_pure()):
+        raise ValueError()
 
-    ## The options that are part of the input and output streams must
-    ## be swapped with file identifiers. This means that each file
-    ## identifier must have a unique resource that it points to.
-    for opt_or_ch in in_stream:
-        new_fid = replace_file_arg_with_id(opt_or_ch, command, fileIdGen)
-        command.set_file_id(opt_or_ch, new_fid)
+    node_id = id(dfg_node)
 
-    for opt_or_ch in out_stream:
-        new_fid = replace_file_arg_with_id(opt_or_ch, command, fileIdGen)
-        command.set_file_id(opt_or_ch, new_fid)
-
-    return command
-
-def replace_file_arg_with_id(opt_or_channel, command, fileIdGen):
-    fid_or_resource = command.get_file_id(opt_or_channel)
-    ## If the file is not a FileId, then it is some argument. We
-    ## create a file identifier, and replace it with that, and
-    ## make sure that the file identifier points to the argument.
-    if (not isinstance(fid_or_resource, FileId)):
-        return create_file_id_for_resource(Resource(fid_or_resource), fileIdGen)
-    else:
-        return fid_or_resource
+    ## Assign the from, to node in edges
+    for fid_id in dfg_node.get_input_list():
+        fid, from_node, to_node = dfg_edges[fid_id]
+        assert(to_node is None)
+        dfg_edges[fid_id] = (fid, from_node, node_id)
+    
+    for fid_id in dfg_node.outputs:
+        fid, from_node, to_node = dfg_edges[fid_id]
+        assert(from_node is None)
+        dfg_edges[fid_id] = (fid, node_id, to_node)
+    
+    dfg_nodes = {node_id : dfg_node}
+    dfg = IR(dfg_nodes, dfg_edges)
+    return dfg
 
 
-def make_split_files(in_fid, fan_out, batch_size, fileIdGen):
+def make_split_files(input_id, fan_out, fileIdGen):
     assert(fan_out > 1)
     ## Generate the split file ids
     out_fids = [fileIdGen.next_file_id() for i in range(fan_out)]
-    split_com = make_split_file(in_fid, out_fids, batch_size)
+    out_ids = [fid.get_ident() for fid in out_fids]
+    split_com = make_split_file(input_id, out_ids)
     return [split_com], out_fids
 
-## This function gets a file identifier and returns the maximum among
-## its, and its parents identifier (parent regarding Union Find)
-def get_larger_file_id_ident(file_ids):
-    return max([max(fid.get_ident(), Find(fid).get_ident())
-                for fid in file_ids])
+##
+## Node builder functions
+##
+
+def make_tee(input, outputs):
+    com_name = Arg(string_to_argument("tee"))
+    com_category = "pure"
+    return DFGNode([input],
+                   outputs,
+                   com_name, 
+                   com_category)
+
+## TODO: Move it somewhere else, but where?
+def make_map_node(node, new_inputs, new_outputs):
+    ## Some nodes have special map commands
+    ##
+    ## TODO: Make this more general instead of hardcoded
+    if(str(node.com_name) == "bigrams_aux"):
+        ## Ensure that the inputs have the correct size for this
+        assert(len(new_inputs[0]) == 0)
+        assert(len(new_inputs[1]) == 1)
+        new_node = BigramGMap(new_inputs[1][0], new_outputs)
+    else:
+        new_node = copy.deepcopy(node)
+        new_node.inputs = new_inputs
+        new_node.outputs = new_outputs
+    return new_node
+
+
+
 
 ## Note: This might need more information. E.g. all the file
 ## descriptors of the IR, and in general any other local information
 ## that might be relevant.
 class IR:
 
-    ## TODO: Improve the rerpesentation and keep the input and output fids in
-    ##       some structure.
+    ## TODO: Embed the fileIdGen as a field of the IR
 
     ## IR Assumptions:
     ##
@@ -103,15 +214,84 @@ class IR:
     ##
     ## - If two nodes have the same file as output, then they both
     ##   write to it concurrently.
-    def __init__(self, nodes, stdin = [], stdout = [], background = False):
+    def __init__(self, nodes, edges, background = False):
         self.nodes = nodes
-        self.stdin = stdin
-        self.stdout = stdout
+        self.edges = edges
         self.background = background
+        # log("Nodes:", self.nodes)
+        # log("Edges:", self.edges)
+
+        ## Apply the redirections for each separate node.
+        ## This needs to be called here because nodes do not
+        ## have information about the edges on their own.
+        self.apply_redirections()
 
     def __repr__(self):
-        output = "(|-{} IR: {} {}-|)".format(self.stdin, self.nodes, self.stdout)
+        output = "(|-{} IR: {} {}-|)".format(self.get_stdin(), list(self.nodes.values()), self.get_stdout())
         return output
+
+    ## Initialize all edges
+    def apply_redirections(self):
+        for _, node in self.nodes.items():
+            node.apply_redirections(self.edges)
+        
+    ## Refactor these to call .add_edge, and .set_edge_to/from 
+    ## Add an edge that points to a node
+    def add_to_edge(self, to_edge, node_id):
+        edge_id = to_edge.get_ident()
+        assert(not edge_id in self.edges)
+        self.edges[edge_id] = (to_edge, None, node_id)
+
+    ## Add an edge that starts from a node
+    def add_from_edge(self, node_id, from_edge):
+        edge_id = from_edge.get_ident()
+        assert(not edge_id in self.edges)
+        self.edges[edge_id] = (from_edge, node_id, None)
+
+    def set_edge_to(self, edge_id, to_node_id):
+        edge_fid, from_node, old_to_node = self.edges[edge_id]
+        self.edges[edge_id] = (edge_fid, from_node, to_node_id)
+
+    def set_edge_from(self, edge_id, from_node_id):
+        edge_fid, old_from_node, to_node = self.edges[edge_id]
+        self.edges[edge_id] = (edge_fid, from_node_id, to_node)
+
+    def get_edge_fid(self, fid_id):
+        if(fid_id in self.edges):
+            return self.edges[fid_id][0]
+        else:
+            return None
+
+    def get_stdin(self):
+        stdin_id = self.get_stdin_id()
+        stdin_fid = self.get_edge_fid(stdin_id)
+        return stdin_fid
+
+    def get_stdout(self):
+        stdout_id = self.get_stdout_id()
+        stdout_fid = self.get_edge_fid(stdout_id)
+        return stdout_fid
+
+    ## Gets the fid that points to the stdin of this DFG
+    def get_stdin_id(self):
+        ## ASSERT: There must be only one
+        stdin_id = None
+        for edge_id, (edge_fid, _from, _to) in self.edges.items():
+            resource = edge_fid.get_resource()
+            if(resource.is_stdin()):
+                assert(stdin_id is None)
+                stdin_id = edge_id
+        return stdin_id  
+
+    def get_stdout_id(self):
+        ## ASSERT: There must be only one
+        stdout_id = None
+        for edge_id, (edge_fid, _from, _to) in self.edges.items():
+            resource = edge_fid.get_resource()
+            if(resource.is_stdout()):
+                assert(stdout_id is None)
+                stdout_id = edge_id
+        return stdout_id   
 
     def serialize(self):
         output = "Nodes:\n"
@@ -133,36 +313,49 @@ class IR:
     def to_ast(self, drain_streams):
         asts = []
 
-        ## Redirect inputs
-        in_fids = self.all_input_fids()
-        ## TODO: Remove this assert, extending input to more than stdin
-        assert(len(in_fids) <= 1)
-        for in_fid in in_fids:
-            file_to_redirect_to = in_fid.to_ast()
+        fileIdGen = self.get_file_id_gen()
+
+        ## Redirect stdin
+        stdin_id = self.get_stdin_id()
+        if (not stdin_id is None):
+            ## Create a new ephemeral resource to redirect stdin to.
+            fid = fileIdGen.next_file_id()
+            fid.make_ephemeral()
+            file_to_redirect_to = fid.to_ast()
+            ## Change the stdin_id to point to this resource
+            _prev_fid, from_node, to_node = self.edges[stdin_id]
+            self.edges[stdin_id] = (fid, from_node, to_node)
+            ## Create a command that redirects stdin to this ephemeral fid
             redirect_stdin_script = os.path.join(config.PASH_TOP, config.config['runtime']['redirect_stdin_binary'])
             com_args = [string_to_argument('source'), string_to_argument(redirect_stdin_script), file_to_redirect_to]
             com = make_command(com_args)
             asts.append(com)
 
         ## Make the dataflow graph
-        for node in self.nodes:
-            node_ast = node.to_ast(drain_streams)
-            asts.append(make_background(node_ast))
-        
-        ## Redirect outputs
-        out_fids = self.all_output_fids()
-        ## TODO: Make this work for more than one output. 
-        ##       For now it is fine to only have stdout as output
         ##
-        ## TODO: Make this not cat if the output is a real file.
-        assert(len(out_fids) == 1)
-        com_args = [string_to_argument('cat'), out_fids[0].to_ast()]
-        node = make_background(make_command(com_args))
-        asts.append(node)
+        ## TODO: Normally this should have all sink nodes at the end, but
+        ##       for now we just have the stdout node in the end 
+        ##       (since this is always the output in our benchmarks).
+        # sink_node_ids = self.sink_nodes()
+        stdout_edge_id = self.get_stdout_id()
+        sink_node_ids = [self.edges[stdout_edge_id][1]]
+        ## TODO: Support more than one output. For this we need to update wait.
+        assert(len(sink_node_ids) == 1)
+
+        for node_id, node in self.nodes.items():
+            if(not node_id in sink_node_ids):
+                node_ast = node.to_ast(self.edges, drain_streams)
+                asts.append(make_background(node_ast))
+
+        ## Put the output node in the end for wait to work.
+        for node_id in sink_node_ids:
+            node = self.get_node(node_id)
+            node_ast = node.to_ast(self.edges, drain_streams)
+            asts.append(make_background(node_ast))
 
         return asts
 
-
+    ## TODO: Delete this
     def set_ast(self, ast):
         self.ast = ast
 
@@ -181,7 +374,6 @@ class IR:
     def pipe_append(self, other):
         assert(self.valid())
         assert(other.valid())
-        self.nodes += other.nodes
 
         ## This combines the two IRs by adding all of the nodes
         ## together, and by union-ing the stdout of the first with the
@@ -190,38 +382,58 @@ class IR:
         ## Question: What happens if one of them is NULL. This
         ##           shouldn't be the case after we check that
         ##           both self and other are not empty.
-        assert(len(self.stdout) == 1)
-        assert(len(self.stdin) == 1)
-        self.stdout[0].union(other.stdin[0])
-        self.stdout = other.stdout
+        my_out = self.get_stdout_id()
+        other_in = other.get_stdin_id()
+        assert(not my_out is None)
+        assert(not other_in is None)
 
-        ## Note: The ast is not extensible, and thus should be
-        ## invalidated if an operation happens on the IR
-        self.ast = None
 
-    def union(self, other):
+        _other_in_fid, from_node, other_in_node_id = other.edges[other_in]
+        assert(from_node is None)
+        ## ... = OtherInNode(..., other_in, ...)
+        ##          v
+        ## ... = OtherInNode(..., my_out, ...)
+        other_in_node = other.nodes[other_in_node_id]
+        other_in_node.replace_edge(other_in, my_out)
+        other.edges.pop(other_in)
+
+        ## Make the my_out id to be ephemeral file.
+        my_out_fid, from_node, to_node = self.edges[my_out]
+        assert(to_node is None)
+        my_out_fid.make_ephemeral()
+
+        ## Add the other node in my edges
+        self.edges[my_out] = (my_out_fid, from_node, other_in_node_id)
+
+        ## Just call union here
+        self.union(other)
+
+    def background_union(self, other):
         assert(self.valid())
         assert(other.valid())
         assert(self.is_in_background())
-        self.nodes += other.nodes
-
         ## This combines two IRs where at least the first one is in
-        ## background. This means that the stdin, stdout are those of
+        ## background. This means that the stdin only works with the second
         ## the second (or None if both are in background). Also if
         ## both are in background, their union is also in background.
-
-        ## TODO: Handle any redirections
 
         ## If one of them is not in the background, then the whole
         ## thing isn't.
         if (not other.is_in_background()):
             self.set_background(other.is_in_background())
-            self.stdin = other.stdin
-            self.stdout = other.stdout
 
-        ## Note: The ast is not extensible, and thus should be
-        ## invalidated if an operation happens on the IR
-        self.ast = None
+        self.union(other)
+
+    def union(self, other):
+        ## Merge the nodes of the two DFGs
+        all_nodes = {**self.nodes, **other.nodes}
+
+        ## Merge edges
+        all_edges = {**self.edges, **other.edges}
+
+        ## TODO: Check that all ids are OK (no cycles etc)
+        self.nodes = all_nodes
+        self.edges = all_edges
 
         ## TODO: Handle connections of common files (pipes, etc)
         self.combine_common_files()
@@ -233,6 +445,8 @@ class IR:
     ## (syntactically) for equality, implies semantic
     ## equality. However this is not true. There are cases where
     ## different identifiers could refer to the same file.
+    ##
+    ## TODO: Fix the above issue by ensuring normalized absolute names
     ##
     ## Q: Are there also cases where a same name (let's say a
     ## variable) could point to different files in different parts of
@@ -247,142 +461,327 @@ class IR:
         ## input and 1 output (or more than 1 output in general) we
         ## signal an error.
 
-        ## TODO: (Maybe) Signal an error if an output is an output in
-        ## more than one node
-
         ## For all inputs of all nodes, check if they are the output
         ## of exactly one other node.
-        for node in self.nodes:
-            in_stream_with_resources = [file_in for file_in in node.get_input_file_ids()
-                                        if file_in.has_resource()]
-            for file_in in in_stream_with_resources:
-                in_resource = file_in.get_resource()
+        # log("Combining files for:", self)
+        for node_id1, _node1 in self.nodes.items():
+            inputs_with_file_resource = [(id, fid) for id, fid in self.get_node_input_ids_fids(node_id1)
+                                         if fid.has_file_resource()]
+            for id_in, fid_in in inputs_with_file_resource:
+                in_resource = fid_in.get_resource()
                 number_of_out_resources = 0
-                for node2 in self.nodes:
-                    out_stream_with_resources = [file_out for file_out in node.get_output_file_ids()
-                                                 if file_out.has_resource()]
-                    for file_out in out_stream_with_resources:
+                for node_id2, _node2 in self.nodes.items():
+                    outputs_with_file_resource = [(id, fid) for id, fid in self.get_node_output_ids_fids(node_id2)
+                                                  if fid.has_file_resource()]
+                    for id_out, fid_out in outputs_with_file_resource:
+                        out_resource = fid_out.get_resource()
                         if (in_resource == out_resource):
                             number_of_out_resources += 1
-                            file_in.union(file_out)
+                            ## They point to the same File resource so we need to unify their fids
+                            self.nodes[node_id2].replace_edge(id_out, id_in)
+                            self.set_edge_from(id_in, node_id2)
+                            self.set_edge_from(id_out, None)
+
+                ## Exit with an error if a file is written by more than one node.
+                ##
+                ## TODO: Could this ever be improved for additional performance?
                 assert(number_of_out_resources <= 1)
 
     ## Returns all the file identifiers in the IR.
     def all_fids(self):
-        all_file_ids = []
-        for node in self.nodes:
-            ## Gather all fids that this node uses.
-            input_pipes = [fid for fid in node.get_input_file_ids()]
-            output_pipes = [fid for fid in node.get_output_file_ids()]
-            all_file_ids += input_pipes + output_pipes
-
-        ## Remove duplicates
-        ## TODO: This should normally happen without comparing strings, 
-        ##       but there seems to be some problem now and some fifo is 
-        ##       considered both an argument and an fid.
-        unique_file_ids = []
-        seen_file_id_strings = set()
-        for fid in all_file_ids:
-            fid_string = fid.serialize()
-            if(not fid_string in seen_file_id_strings):
-                unique_file_ids.append(fid)
-                seen_file_id_strings.add(fid_string)
-        # all_file_ids = list(set(all_file_ids))
-        return unique_file_ids
+        all_fids = [fid for fid, _from_node, _to_node in self.edges.values()]
+        return all_fids
 
     ## Returns all input fids of the IR
     def all_input_fids(self):
-        flat_stdin = [Find(fid) for fid in self.stdin]
-        return flat_stdin
+        all_input_fids = [fid for fid, from_node, _to_node in self.edges.values()
+                          if from_node is None]
+        return all_input_fids
 
     ## Returns all output fids of the IR
     def all_output_fids(self):
-        flat_stdout = [Find(fid) for fid in self.stdout]
-        return flat_stdout
+        all_output_fids = [fid for fid, _from_node, to_node in self.edges.values()
+                          if to_node is None]
+        return all_output_fids
 
     ## Returns the sources of the IR (i.e. the nodes that has no
     ## incoming edge)
     def source_nodes(self):
-        sources = [node for node in self.nodes if not self.has_incoming_edge(node)]
-        return sources
+        sources = set()
+        for _edge_fid, from_node, to_node in self.edges.values():
+            if(from_node is None and not to_node is None):
+                sources.add(to_node)
+        return list(sources)
 
+    def sink_nodes(self):
+        sources = set()
+        for _edge_fid, from_node, to_node in self.edges.values():
+            if(to_node is None and not from_node is None):
+                sources.add(from_node)
+        return list(sources)
+
+    ## TODO: Delete this
     ## This function returns whether a node has an incoming edge in an IR
     ##
     ## WARNING: At the moment is is extremely naive and slow.
-    def has_incoming_edge(self, node):
-        for incoming_fid in node.get_input_file_ids():
-            for other_node in self.nodes:
-                ## Note: What if other_node == node?
-                if (not incoming_fid.find_fid_list(other_node.get_output_file_ids())
-                    is None):
-                    return True
-        return False
+    # def has_incoming_edge(self, node):
+    #     for incoming_fid in node.get_input_file_ids():
+    #         for other_node in self.nodes:
+    #             ## Note: What if other_node == node?
+    #             if (not incoming_fid.find_fid_list(other_node.get_output_file_ids())
+    #                 is None):
+    #                 return True
+    #     return False
 
-    def get_next_nodes_and_edges(self, node):
-        next_nodes_and_edges = []
-        for outgoing_fid in node.get_output_file_ids():
-            for other_node in self.nodes:
-                ## Note: What if other_node == node?
-                if (not outgoing_fid.find_fid_list(other_node.get_input_file_ids()) is None):
-                    next_nodes_and_edges.append((other_node, outgoing_fid))
-        return next_nodes_and_edges
+    def get_node_outputs(self, node_id):
+        output_edge_ids = self.nodes[node_id].outputs
+        return output_edge_ids
 
-    def get_next_nodes(self, node):
-        return [node for node, edge in self.get_next_nodes_and_edges(node)]
+    def get_next_nodes(self, node_id):
+        output_edge_ids = self.get_node_outputs(node_id)
+        next_nodes = []
+        for edge_id in output_edge_ids:
+            _fid, from_node, to_node = self.edges[edge_id]
+            assert(from_node == node_id)
+            if(not to_node is None):
+                next_nodes.append(to_node)
+        return next_nodes
+    
+    def get_node_input_ids_fids(self, node_id):
+        node = self.get_node(node_id)
+        return [(input_edge_id, self.edges[input_edge_id][0]) for input_edge_id in node.get_input_list()]
 
-    def get_previous_nodes_and_edges(self, node):
-        previous_nodes_and_edges = []
-        for incoming_fid in node.get_input_file_ids():
-            previous_node = self.get_fids_previous_node_and_edge(incoming_fid)
-            if (not previous_node is None):
-                previous_nodes_and_edges.append((previous_node, incoming_fid))
-        return previous_nodes_and_edges
+    def get_node_input_ids(self, node_id):
+        return [fid_id for fid_id, _fid in self.get_node_input_ids_fids(node_id)]
 
-    def get_fids_previous_node_and_edge(self, fid):
-        for other_node in self.nodes:
-            ## Note: What if other_node == node?
-            if (not fid.find_fid_list(other_node.get_output_file_ids()) is None):
-                return other_node
-        return None
+    def get_node_input_fids(self, node_id):
+        return [fid for _fid_id, fid in self.get_node_input_ids_fids(node_id)]
 
-    def get_previous_nodes(self, node):
-        return [node for node, edge in self.get_previous_nodes_and_edges(node)]
+    def get_node_output_ids_fids(self, node_id):
+        node = self.get_node(node_id)
+        return [(output_edge_id, self.edges[output_edge_id][0]) for output_edge_id in node.outputs]
+
+    def get_node_output_ids(self, node_id):
+        return [fid_id for fid_id, _fid in self.get_node_output_ids_fids(node_id)]
+
+    def get_node_output_fids(self, node_id):
+        return [fid for _fid_id, fid in self.get_node_output_ids_fids(node_id)]
+
+    def get_node(self, node_id):
+        return self.nodes[node_id]
 
     ## This command gets all file identifiers of the graph, and
     ## returns a fileId generator that won't clash with the existing
     ## ones.
     def get_file_id_gen(self):
-        max_id = 0
-        max_id = max(get_larger_file_id_ident(self.stdin), max_id)
-        max_id = max(get_larger_file_id_ident(self.stdout), max_id)
-        for node in self.nodes:
-            node_file_ids = node.get_input_file_ids() + node.get_output_file_ids()
-            for file_id in node_file_ids:
-                max_id = max(get_larger_file_id_ident([file_id]), max_id)
+        max_id = max(self.edges.keys())
         return FileIdGen(max_id)
 
+    def remove_node(self, node_id):
+        node = self.nodes.pop(node_id)
+        ## Remove the node in the edges dictionary
+        for in_id in node.get_input_list():
+            self.set_edge_to(in_id, None)
+        
+        for out_id in node.outputs:
+            self.set_edge_from(out_id, None)
 
-
-    def remove_node(self, node):
-        self.nodes.remove(node)
 
     def add_node(self, node):
-        self.nodes.append(node)
+        node_id = id(node)
+        self.nodes[node_id] = node
+        ## Add the node in the edges dictionary
+        for in_id in node.get_input_list():
+            self.set_edge_to(in_id, node_id)
+        
+        for out_id in node.outputs:
+            self.set_edge_from(out_id, node_id)
+
+
+    def add_edges(self, edge_fids):
+        for edge_fid in edge_fids:
+            self.add_edge(edge_fid)
+    
+    def add_edge(self, edge_fid):
+        fid_id = edge_fid.get_ident()
+        assert(not fid_id in self.edges)
+        self.edges[fid_id] = (edge_fid, None, None)
 
     ## Note: We assume that the lack of nodes is an adequate condition
     ##       to check emptiness.
     def empty(self):
         return (len(self.nodes) == 0)
 
+
+    ## This function parallelizes a cat followed by a parallelizable node
+    ##
+    ##    (conf_input) ----+
+    ##                      \
+    ##    (in1) --- cat ---- node ---(out)---
+    ##             /
+    ##    (in2) --+
+    ##
+    ## is transformed to
+    ##
+    ##    (conf_input) -- tee ------------+
+    ##                       \             \
+    ##                        \   (in1) --- node --- agg ---(out)---
+    ##                         \                    /
+    ##                (in2) --- node --------------+
+    ##
+    ## where edges are named with parenthesis and nodes are named without them.
+    ##
+    ## TODO: Eventually delete the fileIdGen from here and always use the graph internal one.
+    ##
+    ## TODO: Eventually this should be tunable to not happen for all inputs (but maybe for less)
+    def parallelize_node(self, node_id, fileIdGen):
+        node = self.get_node(node_id)
+        assert(node.is_parallelizable())
+
+        ## Identify the cat node
+        ##
+        ## TODO: This should also work for no cat (all inputs are part of the node)
+        node_input_ids = node.get_standard_inputs()
+        assert(len(node_input_ids) == 1)
+        node_input_id = node_input_ids[0]
+        previous_node_id = self.edges[node_input_id][1]
+        previous_node = self.get_node(previous_node_id)
+        assert(isinstance(previous_node, Cat))
+
+        ## Identify the parallel inputs, each of which will be given to a different copy of the node.
+        parallel_input_ids = previous_node.get_input_list()
+        parallelism = len(parallel_input_ids)
+
+        ## Identify the output.
+        node_output_edge_ids = node.outputs
+        assert(len(node_output_edge_ids) == 1)
+        node_output_edge_id = node_output_edge_ids[0]
+
+        ## Remove the original node and the cat node before it
+        ## This also unplugs all the inputs
+        self.remove_node(node_id)
+        self.remove_node(previous_node_id)
+
+        ## TODO: This does not work at the moment. There seem to be some issues with tee.
+        ##       It either has to do with a misunderstanding of how configuration inputs work
+        ##       or it has to do with 
+        ## Unplug the configuration inputs from the node and tee it
+        parallel_configuration_ids = [[] for _ in range(parallelism)]
+        node_conf_inputs = node.get_configuration_inputs()
+        for conf_edge_id in node_conf_inputs:
+            # self.set_edge_to(conf_edge_id, None)
+            tee_id = self.tee_edge(conf_edge_id, parallelism, fileIdGen)
+            tee_node = self.get_node(tee_id)
+            for i in range(parallelism):
+                parallel_configuration_ids[i].append(tee_node.outputs[i])
+        
+        ## Create a temporary output edge for each parallel command.
+        map_output_fids = node.get_map_output_files(parallel_input_ids, fileIdGen)
+
+        all_map_output_ids = []
+        ## For each parallel input, create a parallel command
+        for index in range(parallelism):
+            ## Gather inputs and outputs
+            conf_ins = parallel_configuration_ids[index]
+            standard_in = parallel_input_ids[index]
+            new_inputs = (conf_ins, [standard_in])
+            map_output_fid = map_output_fids[index]
+            if(not isinstance(map_output_fid, list)):
+                output_fid_list = [map_output_fid]
+            else:
+                output_fid_list = map_output_fid
+            new_output_ids = [fid.get_ident() for fid in output_fid_list]
+            all_map_output_ids.append(new_output_ids)
+
+            ## Add the map_output_edges to the graph
+            for output_fid in output_fid_list:
+                self.add_edge(output_fid)
+
+            parallel_node = make_map_node(node, new_inputs, new_output_ids)
+            self.add_node(parallel_node)
+
+            parallel_node_id = id(parallel_node)
+
+            ## Set the to of all input edges
+            for conf_in in conf_ins:
+                self.set_edge_to(conf_in, parallel_node_id)
+            self.set_edge_to(standard_in, parallel_node_id)
+        
+        if (node.com_category == "stateless"):
+            new_cat = make_cat_node(flatten_list(all_map_output_ids), node_output_edge_id)
+            self.add_node(new_cat)
+            self.set_edge_from(node_output_edge_id, id(new_cat))
+        else:
+            ## TODO: Create an aggregator here. At the moment it happens in `pash_runtime.py`.
+            pass
+
+
+        return all_map_output_ids
+
+    ## Replicates an edge using tee and returns the new node_id.
+    def tee_edge(self, edge_id, times, fileIdGen):
+        ## Assert that the edge is unplugged
+        assert(self.edges[edge_id][2] is None)
+
+        output_fids = [fileIdGen.next_ephemeral_file_id() for _ in range(times)]
+        output_ids = [fid.get_ident() for fid in output_fids]
+
+        ## Create the tee node
+        new_node = make_tee(edge_id, output_ids)
+        new_node_id = id(new_node)
+
+        ## Rewire the dfg
+        for edge_fid in output_fids:
+            self.add_from_edge(new_node_id, edge_fid)
+        self.add_node(new_node)
+        self.set_edge_to(edge_id, new_node_id)
+        
+        return new_node_id
+        
+
+
+    ## TODO: Also it should check that there are no unreachable edges
+
+    def edge_node_consistency(self):
+        ## Check if edges and nodes are consistent
+        for edge_id, (_, from_node_id, to_node_id) in self.edges.items():
+            if (not from_node_id is None):
+                from_node = self.get_node(from_node_id)
+                if(not (edge_id in from_node.outputs)):
+                    log("Consistency Error: Edge id:", edge_id, "is not in the node outputs:", from_node)
+                    return False
+            if (not to_node_id is None):
+                to_node = self.get_node(to_node_id)
+                if(not (edge_id in to_node.get_input_list())):
+                    log("Consistency Error: Edge id:", edge_id, "is not in the node inputs:", to_node)
+                    return False
+
+        for node_id, node in self.nodes.items():
+            for edge_id in node.get_input_list():
+                _, _, to_node_id = self.edges[edge_id]
+                if(not (to_node_id == node_id)):
+                    log("Consistency Error: The to_node_id of the input_edge:", edge_id, "of the node:", node, "is equal to:", to_node_id)
+                    return False
+            for edge_id in node.outputs:
+                _, from_node_id, _ = self.edges[edge_id]
+                if(not (from_node_id == node_id)):
+                    log("Consistency Error: The from_node_id of the output_edge:", edge_id, "of the node:", node, "is equal to:", from_node_id)
+                    return False
+
+        return True
+
     ## This function checks whether an IR is valid -- that is, if it
     ## has at least one node, and stdin, stdout set to some non-null
     ## file identifiers.
     def valid(self):
         return (len(self.nodes) > 0 and
-                ((self.is_in_background()
-                  and len(self.stdin) == 0
-                  and len(self.stdout) == 0)
-                 or (not self.is_in_background()
-                     and len(self.stdin) > 0
-                     and len(self.stdout) > 0)))
+                self.edge_node_consistency() and
+                (not self.is_in_background()
+                  or (self.get_stdin() is None)))
+                ## The following is not true. Background IRs should not have stdin, but they can have stdout.
+                #   and self.get_stdout() is None)))
+                ## The following is not true. A DFG might not have an stdin
+                #  or (not self.is_in_background()
+                #      and not self.get_stdin() is None 
+                #      and not self.get_stdout() is None)))
 
