@@ -21,4 +21,5 @@ for (( i = 0; i < 10; i++ )); do
   cat 100M.txt >> 1G.txt
 done
 
-# more logic to truncate file --- trivial on Linux, more difficult on OS X
+## Generate a correctly sorted dict.txt
+sort dict.txt > sorted_dict.txt
