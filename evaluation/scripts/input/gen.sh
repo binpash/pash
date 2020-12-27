@@ -20,6 +20,3 @@ touch 1G.txt
 for (( i = 0; i < 10; i++ )); do
   cat 100M.txt >> 1G.txt
 done
-
-## Generate a correctly sorted dict.txt
-sort dict.txt > sorted_dict.txt
