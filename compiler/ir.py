@@ -638,6 +638,9 @@ class IR:
         node = self.get_node(node_id)
         assert(node.is_parallelizable())
 
+        ## Initialize the new_node list
+        new_nodes = []
+
         ## Identify the cat node
         ##
         ## TODO: This should also work for no cat (all inputs are part of the node)
@@ -710,13 +713,14 @@ class IR:
         if (node.com_category == "stateless"):
             new_cat = make_cat_node(flatten_list(all_map_output_ids), node_output_edge_id)
             self.add_node(new_cat)
+            new_nodes.append(new_cat)
             self.set_edge_from(node_output_edge_id, id(new_cat))
         else:
             ## TODO: Create an aggregator here. At the moment it happens in `pash_runtime.py`.
             pass
 
 
-        return all_map_output_ids
+        return new_nodes, all_map_output_ids
 
     ## Replicates an edge using tee and returns the new node_id.
     def tee_edge(self, edge_id, times, fileIdGen):
