@@ -333,6 +333,8 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
     curr = graph.get_node(curr_id)
     new_nodes_for_workset = []
 
+    # log("Check to parallelize curr:", curr)
+
     ## Get next nodes in the graph
     next_node_ids = graph.get_next_nodes(curr_id)
 
@@ -341,6 +343,7 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
     if(len(next_node_ids) == 1):
         next_node_id = next_node_ids[0]
         next_node = graph.get_node(next_node_id)
+        # log("|-- its next node is:", next_node)
 
         ## If the next node can be parallelized, then we should try to parallelize
         if(next_node.is_parallelizable()):
@@ -348,6 +351,8 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
             ## If the current node is not a cat, it means that we need
             ## to generate a cat using a split
             if(not isinstance(curr, Cat)):
+            ## TODO: We can split even if cat here has less than the inputs that we want
+            #    or (isinstance(curr, Cat) and len(graph.get_node_input_ids(curr_id)) <= 1)):
                 new_cat = split_command_input(next_node, curr, graph, fileIdGen, fan_out, batch_size)
                 if(not new_cat is None):
                     curr = new_cat
@@ -362,6 +367,7 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
             ## parallelization
             if(isinstance(curr, Cat)):
                 new_nodes = check_parallelize_dfg_node(curr_id, next_node_id, graph, fileIdGen)
+                # log("New nodes:", new_nodes)
                 new_nodes_for_workset += new_nodes                
 
     return new_nodes_for_workset
@@ -403,7 +409,8 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
     assert(len(node_output_edge_ids) == 1)
     node_output_edge_id = node_output_edge_ids[0]
 
-    map_output_ids = graph.parallelize_node(node_id, fileIdGen)
+    new_parallel_nodes, map_output_ids = graph.parallelize_node(node_id, fileIdGen)
+    new_nodes += new_parallel_nodes
 
     # log("after duplicate graph nodes:", graph.nodes)
     # log("after duplicate graph edges:", graph.edges)
