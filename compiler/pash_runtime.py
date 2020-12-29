@@ -102,6 +102,8 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
         script_to_execute = to_shell(optimized_ast_or_ir, 
                                      runtime_config['output_dir'], args)
 
+        log("Optimized script saved in:", compiled_script_file)
+
         ## TODO: Merge this write with the one below. Maybe even move this logic in `pash_runtime.sh`
         ## Output the optimized shell script for inspection
         if(args.output_optimized):
