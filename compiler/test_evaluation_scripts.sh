@@ -32,8 +32,8 @@ microbenchmarks=(
     export_var_script    # Tests whether exported variables in the scripts that are processed by PaSh runtime are visible to the rest of the script.
     for_loop_simple      # Tests whether PaSh can handle a for loop where the body is parallelizable
     minimal_grep_stdin   # Tests whether PaSh can handle a script that reads from stdin
-    comm-par-test        # Tests whether PaSh can parallelize configuration inputs correctly.
-    # comm-par-test2       # Tests whether PaSh can parallelize configuration inputs correctly.
+    comm-par-test        # Small comm test to ensure non-parallelizability
+    comm-par-test2       # Small comm test with input redirection and hyphen
     micro_1000           # Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
 )
 

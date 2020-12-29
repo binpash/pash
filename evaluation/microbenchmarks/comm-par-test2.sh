@@ -4,7 +4,7 @@
 mkfifo s1 s2
 
 cat $IN > s1 &
-cat $IN > s2 &
+cat $IN | grep "king" > s2 &
 comm -23 - s2 < s1
 
 rm s1 s2
