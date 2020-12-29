@@ -20,3 +20,6 @@ touch 1G.txt
 for (( i = 0; i < 10; i++ )); do
   cat 100M.txt >> 1G.txt
 done
+
+## Re-sort words for this machine
+sort words > sorted_words
