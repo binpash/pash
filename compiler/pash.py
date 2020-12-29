@@ -47,8 +47,10 @@ def main():
     save_asts_json(preprocessed_asts, ir_filename)
 
     preprocessed_output_filename = os.path.join("/tmp", get_random_string())
+    log("Preprocessed script stored in:", preprocessed_output_filename)
     if(args.output_preprocessed):
-        log("Preprocessed script stored in:", preprocessed_output_filename)
+        log("Preprocessed script:")
+        log(from_ir_to_shell(ir_filename))
     from_ir_to_shell_file(ir_filename, preprocessed_output_filename)
 
     preprocessing_end_time = datetime.now()
