@@ -75,7 +75,7 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
     print_time_delta("Compilation", compilation_start_time, compilation_end_time, args)
 
     ## Optimize all the IRs that can be optimized
-    if(args.compile_only):
+    if(args.no_optimize):
         optimized_asts_and_irs = asts_and_irs
     else:
         optimized_asts_and_irs = optimize_irs(asts_and_irs, args)
