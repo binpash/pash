@@ -53,9 +53,10 @@ def json_to_shell(json_string):
                   encoding='ascii', check=True)
     return subproc.stdout
 
-def ast_to_shell(ast):
+def ast_to_shell(ast, verbose=True):
     ast_json = serialize_ast_json(ast)
-    print(ast_json)
+    if verbose:
+        print(ast_json)
     shell_string = json_to_shell(ast_json)
     return shell_string
 

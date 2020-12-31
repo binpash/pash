@@ -13,7 +13,10 @@ TEST_PATH = "./tests/expansion"
 if not config.config:
         config.load_config()
 config.read_vars_file(os.path.join(TEST_PATH, "sample.env"))
-print(config.config)
+#print(config.config)
+
+def load_ast(file):
+    return json_ast.parse_json_ast_string(parse.parse_shell(test))
 
 print("Using parser {} to parser tests from {}".format(config.PARSER_BINARY, TEST_PATH))
 
@@ -32,7 +35,7 @@ def safety(b):
 failures = set()
 for test_name in tests:
     test = os.path.join(TEST_PATH, test_name)
-    ast_objects = parse.shell_file_to_ir(test)
+    ast_objects = load_ast(test)
 
     expected_safe = test_name.startswith("safe")
     for (i, ast_object) in enumerate(ast_objects):
@@ -52,14 +55,14 @@ print("\n* Expansion tests")
 failures = set()
 for test_name in tests:
     test = os.path.join(TEST_PATH, test_name)
-    ast_objects = parse.shell_file_to_ir(test)
+    ast_objects = load_ast(test)
 
     expanded = os.path.join(TEST_PATH, test_name.replace("sh","expanded"))
     expected_safe = os.path.exists(expanded)
     for (i, ast_object) in enumerate(ast_objects):
         try:
             cmd = expand.expand_command(ast_object, copy.deepcopy(config.config))
-            got = json_ast.ast_to_shell(cmd)
+            got = json_ast.ast_to_shell(cmd, verbose=False)
 
             # ??? MMG 2020-12-17 unsure about fixing the pretty printing (which may need these backslashes!)
             got = got.replace("\\'", "'")
