@@ -9,7 +9,7 @@
                 "operands": ["-n"]
             },
             "class": "pure",
-            "inputs": ["stdin"],
+            "inputs": ["args[:]"],
             "outputs": ["stdout"],
 			"comment": "Pure because -n prints line numbering, and splitting affects it"
 		},
@@ -19,5 +19,6 @@
             "inputs": ["args[:]"],
             "outputs": ["stdout"]
         }
-    ]
+    ],
+    "options": ["stdin-hyphen"]
 }

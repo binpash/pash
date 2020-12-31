@@ -15,18 +15,7 @@ import config
 ##
 
 
-## WARNING: This is not complete!! It doesn't handle - for stdin, or
-## directories, etc...
-##
-## TODO: Make this complete
-def diff_input_output(options, stdin, stdout):
-    in_stream = [("option", i) for i, option in enumerate(options)
-                 if not format_arg_chars(option).startswith('-')]
-    opt_indices = [("option", i) for i, option in enumerate(options)
-                   if format_arg_chars(option).startswith('-')]
-    return (in_stream, ["stdout"], opt_indices)
-
-def default_input_output(options, stdin, stdout):
+def default_input_output(options):
     opt_indices = [("option", i) for i in range(len(options))]
     return (["stdin"], ["stdout"], opt_indices)
 
@@ -59,7 +48,11 @@ def is_uniq_pure(options):
 ##
 
 custom_command_input_outputs = {
-    "diff" : diff_input_output
+    
+}
+
+custom_command_args_redirs_from_input_outputs = {
+    
 }
 
 custom_command_categories = {
@@ -81,7 +74,7 @@ custom_command_categories = {
 ## are only filled in for commands that we (or the developer) has
 ## specified a list of input resources that also contains files in the
 ## arguments.
-def find_command_input_output(command, options, stdin, stdout):
+def find_command_input_output(command, options):
     global custom_command_input_outputs
 
     command_string = format_arg_chars(command)
@@ -92,7 +85,7 @@ def find_command_input_output(command, options, stdin, stdout):
     if (command_string in custom_command_input_outputs):
         log(" -- Warning: Overriding standard inputs-outputs for:", command_string)
         custom_io_fun = custom_command_input_outputs[command_string]
-        return custom_io_fun(options, stdin, stdout)
+        return custom_io_fun(options)
 
     ## Find the inputs-outputs of the command in the annotation files (if it exists)
     command_io_from_annotation = get_command_io_from_annotations(command_string,
@@ -103,8 +96,37 @@ def find_command_input_output(command, options, stdin, stdout):
         log("|--", command_io_from_annotation)
         return command_io_from_annotation
 
-    return default_input_output(options, stdin, stdout)
+    return default_input_output(options)
 
+## This function is the reverse of the one above. It gives us arguments and redirections
+## from inputs and outputs.
+def create_command_arguments_redirs(command, options, inputs, outputs):
+    global custom_command_args_redirs_from_input_outputs
+
+    command_string = format_arg_chars(command)
+    # log("Command to categorize:", command_string)
+
+    assert(isinstance(command_string, str))
+
+    if (command_string in custom_command_args_redirs_from_input_outputs):
+        log(" -- Warning: Overriding standard inputs-outputs for:", command_string)
+        custom_io_fun = custom_command_args_redirs_from_input_outputs[command_string]
+        return custom_io_fun(options)
+
+    ## Find the inputs-outputs of the command in the annotation files (if it exists)
+    command_arguments_redirs = construct_args_redirs(command_string,
+                                                     options,
+                                                     inputs,
+                                                     outputs,
+                                                     config.annotations)
+    if (command_arguments_redirs):
+        log("arguments, redirs found for:", command_string)
+        log("|--", command_arguments_redirs)
+        return command_arguments_redirs
+
+    ## TODO: Implement that
+    raise NotImplementedError()
+    return default_arguments_redirs(options, inputs, outputs)
 
 ## This functions finds and returns a string representing the command category
 def find_command_category(command, options):

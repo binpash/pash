@@ -127,7 +127,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     pash_redir_output echo "Sequential pid: $pash_seq_pid"
 
     ## Run the compiler
-    pash_redir_all_output python3.8 pash_runtime.py ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
+    pash_redir_all_output python3 pash_runtime.py ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
     pash_compiler_pid=$!
     pash_redir_output echo "Compiler pid: $pash_compiler_pid"
 

@@ -31,5 +31,6 @@
             "inputs": ["args[:]"],
             "outputs": ["stdout"]
         }
-    ]
+    ],
+    "comment": "For the stateless one we need to add -h|--no-filename as a requirement if it takes multiple files as input."
 }

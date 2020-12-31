@@ -1,4 +1,5 @@
 from definitions.ir.arg import *
+from ir_utils import *
 
 class Redirection():
     def __init__(self, redirection):
@@ -12,7 +13,7 @@ class Redirection():
         # log(redirection)
         ## TODO: Support all redirections
         assert(self.redir_type == 'File')
-        assert(self.redir_subtype == 'To')
+        assert(self.redir_subtype in ['To', 'From'])
 
     def __repr__(self):
         return '({}, {}, {}, {})'.format(self.redir_type,
@@ -20,9 +21,23 @@ class Redirection():
                                          self.stream_id,
                                          self.file_arg)
 
+    def to_ast(self):
+        redir = make_kv(self.redir_type,
+                        [self.redir_subtype,
+                         self.stream_id,
+                         self.file_arg.to_ast()])
+        return redir
+
     def is_to_file(self):
         return (self.redir_type == 'File'
                 and self.redir_subtype == 'To')
 
     def is_for_stdout(self):
         return (self.stream_id == 1)
+
+    def is_from_file(self):
+        return (self.redir_type == 'File'
+                and self.redir_subtype == 'From')
+
+    def is_for_stdin(self):
+        return (self.stream_id == 0)
