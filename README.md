@@ -1,6 +1,6 @@
 ## PaSh: Light-touch Data-Parallel Shell Processing
 
-Mailing lists: [Commits](https://groups.google.com/g/pash-commits) | Discussion](https://groups.google.com/g/pash-discuss)
+Mailing lists: [Commits](https://groups.google.com/g/pash-commits) | [Discussion](https://groups.google.com/g/pash-discuss)
 
 PaSh is  a system for  parallelizing POSIX shell  scripts. Key elements include:
 
@@ -28,7 +28,7 @@ To parallelize, say, `./evaluation/hello-world.sh` with parallelization width of
 curl -s img.pash.ndr.md | docker load; docker run -i pash-latest
 ```
 
-After you're in the image, run `cd pash; git pull` to get the latest updates.
+After you're in the image, run `cd pash; git pull` to get the latest updates. (Update git email/username via `git config --global user.email "em@i.l"` and `git config --global user.name "f l"`, [generate new keys](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent), and add them to your account.)
 
 **Linux:** Alternatively, if you're on an Ubuntu, run:
 
