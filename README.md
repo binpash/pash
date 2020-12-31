@@ -21,13 +21,21 @@ To parallelize, say, `./evaluation/hello-world.sh` with parallelization width of
 
 ## Installation
 
-To install, run:
+**Docker:** The easiest way to play with `pash` today is using Docker:
+
+```sh
+curl -s img.pash.ndr.md | docker load; docker run -i pash-latest
+```
+
+After you're in the image, run `cd pash; git pull` to get the latest updates.
+
+**Linux:** Alternatively, if you're on an Ubuntu, run:
 
 ```sh
 curl -s up.pash.ndr.md | bash
 ```
 
-Appending `-- -a` additionally installs dependencies such as `opam`, `python3`, etc. but requires `sudo` (i.e., "root").
+Appending `-- -a` additionally installs dependencies such as `opam`, `python3`, etc. but requires `sudo` (i.e., "root"). This option is great for AWS images.
 
 ## Tests
 
