@@ -6,7 +6,7 @@ alt_bigrams_aux()
     ( mkfifo $s2 > /dev/null ) ;
 
     tee $s2 |
-        tail +2 |
+        tail -n +2 |
         paste $s2 - |
         sed '$d' |
         sort |
@@ -18,10 +18,9 @@ alt_bigram_aux_reduce()
 {
     IN1=$1
     IN2=$2
-    OUT=$3
 
     sort -m $IN1 $IN2 |
-        uniq > $OUT
+        uniq
 }
 
 export -f alt_bigrams_aux

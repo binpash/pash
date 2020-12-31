@@ -10,17 +10,31 @@ semantics.background # Seems to be working, but PaSh should be able to compile i
 semantics.background.pid # FAIL: Recursive call to PaSh
 semantics.backtick.exit # FAIL: No redirection of stdout to stderr
 semantics.backtick.ppid # FAIL: There seems to be an extra newline in the beginning of the output.
-...
 semantics.command-subst.newline # FAIL: Heredoc redirection doesn't work
-...
-semantics.errexit.subshell # FAIL: HELP-NEEDED: I am not sure I understand why 4 is output in this test
-...
-semantics.escaping.backslash # FAIL: HELP-NEEDED: The parser fails. If we parse and unparse we end up with an unrannable script.
-...
-semantics.eval.makeadder # FAIL: EXPANSION: Arguments of function are not correctly passed. I saved them in "pash_input_args" and now they need to be restored in both expansion and during execution.
+semantics.errexit.subshell # MG: FAIL: HELP-NEEDED: I am not sure I understand why 4 is output in this test
+semantics.escaping.backslash # MG: FAIL: HELP-NEEDED: The parser fails. If we parse and unparse we end up with an unrannable script.
+semantics.eval.makeadder # Pass: (Previous issue) EXPANSION: Arguments of function are not correctly passed. I saved them in "pash_input_args" and now they need to be restored in both expansion and during execution.
+semantics.fun.error.restore # MG: FAIL: HELP NEEDED: set -- a b c is lost after a call to a function. It seems that we might need to have some stack information in the environment variables about the location of execution.
+evaluation/scripts/set_bug.sh # FAIL: This fails to capture the argument variables because they are not captured by declare -p. We need to explicitly capture them through $@ but also find a way to not propagate them arbitrarily. Maybe just saving them using pash_input_args="$@" at the end of execution is enough.
+semantics.ifs.combine.ws # MG: FAIL: Messes with IFS and there is a fault that happens during compilation. As a naive solution we could abort the runtime if IFS is not standard. 
+semantics.kill.traps # PASS: Solution: `source` the execution of scripts. Previous fail: Tries to kill and wait for a pid, but since we execute things in different shells, we cannot wait for them or kill them. At the same time, we don't want to be able to kill more than what we should.
+semantics.pattern.modernish # MG: FAIL: Changes the IFS...
+semantics.quote.tilde # PASS: HELP NEEDED: Our way of producing output is hacky now. We need to use the json_to_shell unparser instead of what we do.
+semantics.redir.fds # MG: FAIL: HELP NEEDED: It seems that we don't propagate redirections. In order to do it we need to find a way to keep them.  Might have to do with the fact that we use fd=3 to redirect stdin
+semantics.simple.link # FAIL: This script modifies the PATH, which the pash_runtime uses, therefore it fails. We need to save the PATH prior to the start of execution for PASH and revert back and forth as with the other variables.
+
+
+Mini conclusion: Since we call the parser/unparser very often it might be inefficient to do it through exec. Maybe we need to think about reimplementing a python binding of the libdash parser.
+
 
 sh.ps1.override # PaSh seems to be called without an input.
 sh.interactive.ps1 # PaSh seems to be called without an input.
+
+
+semantics.expansion.quotes.adjacent # TIMEOUT: Correct but slow.
+
+
+## TODO: What about loops, break and continue? We need to use bash's info about that.
 
 ## TODO: Timeouts seem to be a common reason for failure
 

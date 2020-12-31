@@ -10,13 +10,12 @@ GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-work
 if 'PASH_TOP' in os.environ:
     PASH_TOP = os.environ['PASH_TOP']
 else:
-    PASH_TOP = subprocess.run(GIT_TOP_CMD, capture_output=True,
-                              text=True).stdout.rstrip()
+    PASH_TOP = subprocess.run(GIT_TOP_CMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).stdout.rstrip()
 
 PARSER_BINARY = os.path.join(PASH_TOP, "compiler/parser/parse_to_json.native")
 PRINTER_BINARY = os.path.join(PASH_TOP, "compiler/parser/json_to_shell.native")
 
-PYTHON_VERSION = "python3.8"
+PYTHON_VERSION = "python3"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 
@@ -44,10 +43,14 @@ def load_config(config_file_path=""):
 
 ## These are arguments that are common to pash.py and pash_runtime.py
 def add_common_arguments(parser):
-    parser.add_argument("--compile_only", help="only preprocess and compile the input script and not execute it",
+    parser.add_argument("--no_optimize",
+                        help="do not apply transformations on the dataflow",
                         action="store_true")
-    parser.add_argument("--compile_optimize_only",
-                        help="only preprocess, compile, and optimize the input script and not execute it",
+    parser.add_argument("--dry_run_compiler",
+                        help="do not execute the compiled script even if the compiler succeeded",
+                        action="store_true")
+    parser.add_argument("--assert_compiler_success",
+                        help="assert that the compiler succeeded (used to make tests more robust)",
                         action="store_true")
     parser.add_argument("--output_time", help="output the the time it took for every step",
                         action="store_true")
@@ -80,10 +83,12 @@ def add_common_arguments(parser):
 
 def pass_common_arguments(pash_arguments):
     arguments = []
-    if (pash_arguments.compile_only):
-        arguments.append(string_to_argument("--compile_only"))
-    if (pash_arguments.compile_optimize_only):
-        arguments.append(string_to_argument("--compile_optimize_only"))
+    if (pash_arguments.no_optimize):
+        arguments.append(string_to_argument("--no_optimize"))
+    if (pash_arguments.dry_run_compiler):
+        arguments.append(string_to_argument("--dry_run_compiler"))
+    if (pash_arguments.assert_compiler_success):
+        arguments.append(string_to_argument("--assert_compiler_success"))
     if (pash_arguments.output_time):
         arguments.append(string_to_argument("--output_time"))
     if (pash_arguments.output_optimized):

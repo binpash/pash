@@ -9,12 +9,10 @@
 
 # AWS
 
-[Create user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html)
-[Create org](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html)
+* [Create user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html)
+* [Create org](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html)
 
 # Benchmarks
-
-
 
 A diverse set of benchmarks:
 * POSIX test suite
@@ -22,11 +20,11 @@ A diverse set of benchmarks:
 * Some other big set of scripts
 
 Further scripts:
-* [A short ML pipeline](https://news.ycombinator.com/item?id=6412190)
 * [Data science commands](https://datascienceworkshops.com/blog/seven-command-line-tools-for-data-science/)
 * [PCAP processing](https://nanxiao.me/en/process-large-pcap-file/)
 * [Tokenization](https://github.com/etnichols/Stanford-NLP-Notes)
 * [Unix for poets](https://www.cs.upc.edu/~padro/Unixforpoets.pdf)
+* [Google's custom report utils for shell](https://github.com/google/crush-tools) examples
 
 * [bio-inf oneliners](https://github.com/crazyhottommy/oneliners)
 * [data science toolbox](https://www.datascienceatthecommandline.com/1e/chapter-8-parallel-pipelines.html)
@@ -38,7 +36,16 @@ Interactive scripts --- A collection of `bash` history files:
 * [using HISTFILE](https://github.com/search?l=Shell&q=histfile&type=Code)
 * [using .bash_history](https://github.com/search?l=Shell&q=.bash_history&type=Code)
 
+ML: Unfortunately, this `bigml` is a wrapper for a web API.
+* [WhizzML Scripts](https://github.com/whizzml/examples)
+* [A short ML pipeline](https://news.ycombinator.com/item?id=6412190)
+
 Aliases?
+
+Log parsing:
+* [parse ngingx logs](https://rtcamp.com/tutorials/nginx/log-parsing/)
+* 
+  
 
 Benchmarks [from DGSH](https://github.com/dspinellis/dgsh/tree/master/example)
 

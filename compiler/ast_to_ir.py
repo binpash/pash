@@ -1,5 +1,4 @@
 from ir import *
-from union_find import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
 from util import *
@@ -7,6 +6,7 @@ from json_ast import save_asts_json
 from parse import parse_shell, from_ir_to_shell, from_ir_to_shell_file
 from expand import *
 import subprocess
+import traceback
 
 import config
 
@@ -69,6 +69,8 @@ preprocess_cases = {
            lambda ast_node: preprocess_node_or(ast_node, irFileGen, config)),
     "And": (lambda irFileGen, config:
             lambda ast_node: preprocess_node_and(ast_node, irFileGen, config)),
+    "Not": (lambda irFileGen, config:
+            lambda ast_node: preprocess_node_not(ast_node, irFileGen, config)),
     "If": (lambda irFileGen, config:
             lambda ast_node: preprocess_node_if(ast_node, irFileGen, config)),
     "Case": (lambda irFileGen, config:
@@ -117,12 +119,12 @@ def compile_asts(ast_objects, fileIdGen, config):
         if (not acc_ir is None):
 
             if (isinstance(compiled_ast, IR)):
-                acc_ir.union(compiled_ast)
+                acc_ir.background_union(compiled_ast)
             else:
                 ## TODO: Make this union the compiled_ast with the
                 ## accumulated IR, since the user wanted to run these
                 ## commands in parallel (Is that correct?)
-                # acc_ir.union(IR([compiled_ast]))
+                # acc_ir.background_union(IR([compiled_ast]))
                 compiled_asts.append(acc_ir)
                 acc_it = None
                 compiled_asts.append(compiled_ast)
@@ -226,8 +228,6 @@ def compile_node_command(ast_node, fileIdGen, config):
         command_name = arguments[0]
         options = compile_command_arguments(arguments[1:], fileIdGen, config)
 
-        stdin_fid = fileIdGen.next_file_id()
-        stdout_fid = fileIdGen.next_file_id()
         ## Question: Should we return the command in an IR if one of
         ## its arguments is a command substitution? Meaning that we
         ## will have to wait for its command to execute first?
@@ -238,25 +238,23 @@ def compile_node_command(ast_node, fileIdGen, config):
         ## general one. That means that it can be executed
         ## concurrently with other commands, but it cannot be
         ## parallelized.
-        command = create_command_assign_file_identifiers(old_ast_node, fileIdGen,
-                                                         command_name, options,
-                                                         stdin=stdin_fid, stdout=stdout_fid,
-                                                         redirections=compiled_redirections)
-
-        ## Don't put the command in an IR if it is creates some effect
-        ## (not stateless or pure)
-        if (command.is_at_most_pure()):
-            compiled_ast = IR([command],
-                              stdin = [stdin_fid],
-                              stdout = [stdout_fid])
-            compiled_ast.set_ast(old_ast_node)
-        else:
+        try:
+            ## If the command is not compileable to a DFG the following call will fail
+            ir = compile_command_to_DFG(fileIdGen,
+                                        command_name,
+                                        options,
+                                        redirections=compiled_redirections)
+            compiled_ast = ir
+        except ValueError as err:
+            ## TODO: Delete this log from here
+            log(err)
+            # log(traceback.format_exc())
             compiled_arguments = compile_command_arguments(arguments, fileIdGen, config)
             compiled_ast = make_kv(construct_str,
                                    [ast_node.line_number, compiled_assignments,
                                     compiled_arguments, compiled_redirections])
-
-    return compiled_ast
+            
+        return compiled_ast
 
 def compile_node_and_or_semi(ast_node, fileIdGen, config):
     compiled_ast = make_kv(ast_node.construct.value,
@@ -293,7 +291,9 @@ def compile_node_background(ast_node, fileIdGen, config):
         ##
         ## Question: What happens with the stdin, stdout. Should
         ## they be closed?
-        compiled_ast = IR([compiled_node])
+        ## TODO: We should not compile the ast here
+        compiled_ast = ast_node
+        compiled_ast.node = compiled_node
 
     return compiled_ast
 
@@ -339,6 +339,12 @@ def make_echo_ast(arg_char, var_file_path):
     node = make_kv('Subshell', [0, exit_node, []])
     nodes.append(node)
 
+    ## Reset the input arguments
+    variable_arg = make_kv('V', ['Normal', "false", 'pash_input_args', []])
+    arguments = [string_to_argument("set"), string_to_argument("--"), [variable_arg]]
+    set_node = make_kv('Command', [0, [], arguments, []])
+    nodes.append(set_node)
+
     arguments = [string_to_argument("echo"), string_to_argument("-n"), [arg_char]]
 
     line_number = 0
@@ -352,9 +358,9 @@ def execute_shell_asts(asts):
     save_asts_json(asts, ir_filename)
     output_script = from_ir_to_shell(ir_filename)
     # log(output_script)
-    exec_obj = subprocess.run(["/bin/bash"], input=output_script, 
-                              capture_output=True,
-                              text=True)
+    exec_obj = subprocess.run(["/bin/bash"], input=output_script,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+                              universal_newlines=True)
     exec_obj.check_returncode()
     # log(exec_obj.stdout)
     return exec_obj.stdout
@@ -663,6 +669,14 @@ def preprocess_node_or(ast_node, irFileGen, config):
     ast_node.left_operand = preprocessed_left
     ast_node.right_operand = preprocessed_right
     return ast_node, False, False
+
+def preprocess_node_not(ast_node, irFileGen, config):
+    # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
+    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.body = preprocessed_body
+    return ast_node, False, False
+
 
 def preprocess_node_if(ast_node, irFileGen, config):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)

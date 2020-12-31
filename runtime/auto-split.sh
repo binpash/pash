@@ -19,4 +19,4 @@ batch_size=$( expr $total_lines / $n_outputs )
 # echo "Total Lines: $total_lines"
 # echo "Batch Size: $batch_size"
 # echo "$PASH_TOP/evaluation/tools/split $input $batch_size $outputs"
-$PASH_TOP/evaluation/tools/split "$temp" "$batch_size" $outputs
+$PASH_TOP/runtime/split "$temp" "$batch_size" $outputs

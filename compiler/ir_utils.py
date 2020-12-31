@@ -39,7 +39,16 @@ def non_option_args_indices(options):
             if not option.startswith("-") or option == "-"]
     return args
 
-
+## This function interleaves option arguments (that might contain Nones)
+## with the rest of the arguments
+def interleave_args(opt_arguments, rest_arguments):
+    arguments = opt_arguments
+    for i in range(len(arguments)):
+        if(arguments[i] is None):
+            rest_arg = rest_arguments.pop(0)
+            arguments[i] = rest_arg
+    arguments += rest_arguments
+    return arguments
 
 def get_command_from_definition(command_definition):
     if 'command' in command_definition:
@@ -56,6 +65,10 @@ def format_arg_chars(arg_chars):
     chars = [format_arg_char(arg_char) for arg_char in arg_chars]
     return "".join(chars)
 
+##
+## BIG TODO: Fix the formating of arg_chars bask to shell scripts and string.
+##           We need to do this the proper way using the parser.
+##
 def format_arg_char(arg_char):
     key, val = get_kv(arg_char)
     if (key == 'C'):
@@ -79,6 +92,7 @@ def format_arg_char(arg_char):
                             93, # ]
                             45, # -
                             58, # :
+                            126,# ~
                             42] # *
         if(val in non_escape_chars):
             return '{}'.format(chr(val))
@@ -106,3 +120,24 @@ def string_to_argument(string):
 def char_to_arg_char(char):
     return ['C' , ord(char)]
 
+def standard_var_ast(string):
+    return make_kv("V", ["Normal", False, string, []])
+
+def redir_append_stderr_to_string_file(string):
+    return make_kv("File",["Append",2,string_to_argument(string)])
+
+def redir_stdout_to_file(arg):
+    return make_kv("File",["To", 1, arg])
+
+def redir_file_to_stdin(arg):
+    return make_kv("File",["From", 0, arg])
+
+def make_background(body, redirections=[]):
+    lineno = 0
+    node = make_kv("Background", [lineno, body, redirections])
+    return node
+
+def make_command(arguments, redirections=[], assignments = []):
+    lineno = 0
+    node = make_kv("Command", [lineno, assignments, arguments, redirections])
+    return node
