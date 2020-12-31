@@ -1,15 +1,16 @@
 ## PaSh: Light-touch Data-Parallel Shell Processing
 
-Mailing lists: [Commits](mailto:pash-commits@googlegroups.com) ([join](https://groups.google.com/g/pash-commits)) | [Discussion](mailto:pash-discuss@googlegroups.com) ([join](https://groups.google.com/g/pash-discuss))
+Mailing lists: [Commits](https://groups.google.com/g/pash-commits) | Discussion](https://groups.google.com/g/pash-discuss)
 
 PaSh is  a system for  parallelizing POSIX shell  scripts. Key elements include:
 
-* [compiler](./compiler): Shell-to-Dataflow translations and associated parallelization transformations.
 * [annotations](./annotations/): DSL characterizing commands, parallelizability study, and associated annotations.
-* [evaluation](./evaluation): shell pipelines and example [scripts](./evaluation/scripts) used for the evaluation.
-* [runtime](./runtime): PaSh's runtime components, including `eager`, `split`, and assocaited combiners.
+* [compiler](./compiler): Shell-Dataflow translations and associated parallelization transformations.
 * [docs](./docs): Design documents, tutorials, installation instructions, etc.
+* [evaluation](./evaluation): Shell pipelines and example [scripts](./evaluation/scripts) used for the evaluation.
 * [papers](./papers): Academic papers related to PaSh ([EuroSys 2021](https://arxiv.org/abs/2007.09436)).
+* [runtime](./runtime): Runtime component — e.g., `eager`, `split`, and assocaited combiners.
+* [scripts](./scripts): Scripts related to continuous integration, deployment, and testing.
 
 ## Running PaSh
 
