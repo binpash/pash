@@ -3,52 +3,11 @@
     "cases":
     [
         {
-            "predicate":
-            {
-                "operator": "or",
-                "operands":
-                [
-                    {
-                        "operator": "exists",
-                        "operands": ["-13"]
-                    },
-                    {
-                        "operator": "all",
-                        "operands": ["-1", "-3"]
-                    }
-                ]
-            },
-            "class": "stateless",
-            "inputs": ["args[1]"],
-            "outputs": ["stdout"],
-            "options": ["stdin-hyphen"]
-        },
-        {
-            "predicate":
-            {
-                "operator": "or",
-                "operands":
-                [
-                    {
-                        "operator": "exists",
-                        "operands": ["-23"]
-                    },
-                    {
-                        "operator": "all",
-                        "operands": ["-2", "-3"]
-                    }
-                ]
-            },
-            "class": "stateless",
-            "inputs": ["args[0]"],
-            "outputs": ["stdout"],
-            "options": ["stdin-hyphen"]
-        },
-        {
             "predicate": "default",
             "class": "pure",
             "inputs": ["args[:]"],
-            "outputs": ["stdout"]
+            "outputs": ["stdout"],
+            "options": ["stdin-hyphen"]
         }
     ]
 }

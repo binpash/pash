@@ -1,17 +1,21 @@
-from definitions.ir.command import *
+from definitions.ir.dfg_node import *
 
-class SortGReduce(Command):
-    def __init__(self, old_command, file_ids):
-        assert(str(old_command.command) == "sort")
-        command = old_command.command
-        input_file_ids = file_ids[:-1]
-        output_file_id = file_ids[-1]
-        old_options = old_command.get_non_file_options()
-        options = [string_to_argument("-m")] + old_options + input_file_ids
-        in_stream = [("option", 1 + len(old_options)), ("option", 2 + len(old_options))]
-        out_stream = ["stdout"]
-        opt_indices = [("option", i) for i in range(len(old_options) + 1)]
-        category = "pure"
-        super().__init__(None, command, options, in_stream, out_stream,
-                         opt_indices, category, stdout=output_file_id)
-
+class SortGReduce(DFGNode):
+    def __init__(self, old_node, ids):
+        assert(str(old_node.com_name) == "sort")
+        input_ids = ids[:-1]
+        output_id = ids[-1]
+        com_category="pure"
+        if(len(old_node.com_options) > 0):
+            max_opt_index = max([i for i, _opt in old_node.com_options])
+        else:
+            max_opt_index = -1
+        com_options = old_node.com_options + [(max_opt_index+1, Arg(string_to_argument("-m")))]
+        com_redirs = [redir.to_ast() for redir in old_node.com_redirs]
+        super().__init__(input_ids,
+                         [output_id], 
+                         old_node.com_name, 
+                         com_category, 
+                         com_options=com_options, 
+                         com_redirs=com_redirs, 
+                         com_assignments=old_node.com_assignments)

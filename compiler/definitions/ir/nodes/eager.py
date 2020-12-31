@@ -1,23 +1,20 @@
-from definitions.ir.command import *
+from definitions.ir.dfg_node import *
 
-class Eager(Command):
-    def __init__(self, ast, command, options, in_stream, out_stream,
-                 opt_indices, category, stdin=None, stdout=None):
-        super().__init__(ast, command, options, in_stream, out_stream,
-                         opt_indices, category, stdin=stdin, stdout=stdout)
+class Eager(DFGNode):
+    def __init__(self, inputs, outputs, com_name, com_category, com_options = [], 
+                 com_redirs = [], com_assignments=[]):
+        super().__init__(inputs, outputs, com_name, com_category, 
+                         com_options=com_options, 
+                         com_redirs=com_redirs, 
+                         com_assignments=com_assignments)
 
-def make_eager_node(input_file_id, output_file_id, intermediate_file_id, path):
-    command = string_to_argument(path)
-    options = [input_file_id, output_file_id, intermediate_file_id]
-    in_stream = [("option", 0)]
-    out_stream = [("option", 1)]
-    ## The intermediate file is not really an option (but an output).
-    ##
-    ## TODO: Change that
-    opt_indices = [("option", 2)]
-    category = "pure"
-    ## TODO: Fill the AST
-    ast = None
-    return Eager(ast, command, options, in_stream, out_stream,
-                 opt_indices, category)
-
+def make_eager_node(input_id, output_id, intermediate_file_id, eager_exec_path):
+    com_name = Arg(string_to_argument(eager_exec_path))
+    com_category = "pure"
+    ## TODO: In theory the intermediate file id is also an output...
+    com_options = [(2, Arg(intermediate_file_id.to_ast()))]
+    return Eager([input_id],
+                 [output_id],
+                 com_name, 
+                 com_category,
+                 com_options=com_options)

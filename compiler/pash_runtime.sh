@@ -103,6 +103,8 @@ export PASH_REDIR="&2"
 pash_output_time_flag=0
 pash_execute_flag=1
 pash_speculation_flag=0 # By default there is no speculation
+pash_dry_run_compiler_flag=0
+pash_assert_compiler_success_flag=0
 pash_checking_speculation=0
 pash_checking_log_file=0
 for item in $@
@@ -112,7 +114,7 @@ do
         if [ "no_spec" == "$item" ]; then
             pash_speculation_flag=0
         elif [ "quick_abort" == "$item" ]; then
-            ## TODO: Fix how speculation interacts with compile_optimize_only and compile_only
+            ## TODO: Fix how speculation interacts with dry_run, assert_compiler_success
             pash_speculation_flag=1
         else
             echo "Unknown value for option --speculation"
@@ -129,8 +131,12 @@ do
         pash_output_time_flag=1
     fi
 
-    if [ "--compile_optimize_only" == "$item" ] || [ "--compile_only" == "$item" ]; then
-        pash_execute_flag=0
+    if [ "--dry_run_compiler" == "$item" ]; then
+        pash_dry_run_compiler_flag=1
+    fi
+
+    if [ "--assert_compiler_success" == "$item" ]; then
+        pash_assert_compiler_success_flag=1
     fi
 
     if [ "--speculation" == "$item" ]; then
@@ -194,22 +200,23 @@ if [ "$pash_speculation_flag" -eq 1 ]; then
 else
     pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
     pash_runtime_return_code=$?
+    pash_redir_output echo "Compiler exited with code: $pash_runtime_return_code"
+    if [ "$pash_runtime_return_code" -ne 0 ] && [ "$pash_assert_compiler_success_flag" -eq 1 ]; then
+        pash_redir_output echo "ERROR: Compiler failed with error code: $pash_runtime_return_code"
+        exit 1
+    fi
 
-    ## Count the execution time and execute the compiled script
-    if [ "$pash_execute_flag" -eq 1 ]; then
+    ##
+    ## (3), (4), (5)
+    ##
 
-        ##
-        ## (3), (4), (5)
-        ##
-
-        ## If the compiler failed, we have to run the sequential
-        if [ "$pash_runtime_return_code" -ne 0 ]; then
-            source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_sequential_script_file}
-            pash_runtime_final_status=$?
-        else
-            source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_compiled_script_file}
-            pash_runtime_final_status=$?
-        fi
+    ## If the compiler failed or if we dry_run the compiler, we have to run the sequential
+    if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_dry_run_compiler_flag" -eq 1 ]; then
+        source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_sequential_script_file}
+        pash_runtime_final_status=$?
+    else
+        source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_compiled_script_file}
+        pash_runtime_final_status=$?
     fi
 fi
 
