@@ -51,5 +51,5 @@ if [ $# = 0 ]; then
 fi
 
 for file in "$@"; do
-    python3.8 $PASH_TOP/compiler/pash.py --log_file /tmp/pash.log --split_fan_out $WIDTH $VIEW_ONLY $file
+    python3 $PASH_TOP/compiler/pash.py --log_file /tmp/pash.log --split_fan_out $WIDTH $VIEW_ONLY $file
 done
