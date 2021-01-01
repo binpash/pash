@@ -38,7 +38,7 @@ shift "$(( OPTIND - 1 ))"
 # are no Github ssh keys on the server that runs the tests.
 # git submodule init
 # git submodule update
-echo "Before installing make sure that your submodules are updates using:"
+echo "Before installing make sure that your submodules are updated using:"
 echo "    git submodule update --init --recursive"
 
 ## If option -p is set, also run the sudo
