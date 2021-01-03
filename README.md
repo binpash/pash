@@ -17,8 +17,10 @@ PaSh is  a system for  parallelizing POSIX shell  scripts. Key elements include:
 To parallelize, say, `./evaluation/hello-world.sh` with parallelization width of `2`, from the top-level directory of the repository run:
 
 ```sh
-./pa.sh -w 2 ./evaluation/hello-world.sh
+./pa.sh ./evaluation/hello-world.sh
 ``` 
+
+Run `./pa.sh --help` to get more information about the available commands.
 
 ## Installation
 
