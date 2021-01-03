@@ -34,10 +34,12 @@ shift "$(( OPTIND - 1 ))"
 # Python 3.8 for older versions of Ubuntu
 # sudo add-apt-repository ppa:deadsnakes/ppa
 
-# FIXME At times, this will be 
-# 
-git submodule init
-git submodule update
+# I removed the following since they mess up with the ssh-install script if there
+# are no Github ssh keys on the server that runs the tests.
+# git submodule init
+# git submodule update
+echo "Before installing make sure that your submodules are updated using:"
+echo "    git submodule update --init --recursive"
 
 ## If option -p is set, also run the sudo
 if [ "$prepare_sudo_install_flag" -eq 1 ]; then

@@ -3,10 +3,8 @@ import os
 import subprocess
 from shutil import copyfile, rmtree
 
-def find_and_split_inputs(input_env, output_dir, number_of_inputs):
+def find_and_split_inputs(input_env_data, output_dir, number_of_inputs):
     ## Generate the environment file (by splitting inputs)
-    with open(input_env) as file:
-        input_env_data = file.read()
 
     ## Find the input file name
     input_env_lines = input_env_data.split('\n')
@@ -63,11 +61,7 @@ def list_split_inputs(output_dir):
     return new_input_files
 
 
-def generate_env_file(input_env, output_env, new_input_files):
-    ## Generate the environment file (by splitting inputs)
-    with open(input_env) as file:
-        input_env_data = file.read()
-
+def generate_env_file(input_env_data, output_env, new_input_files):
     ## Find the input file name
     input_env_lines = input_env_data.split('\n')
 
@@ -120,11 +114,20 @@ def main():
     input_in_f = os.path.join(input_dir, name_of_script + input_f_suffix + ".in")
     output_in_f = os.path.join(output_dir, '{}_{}.in'.format(name_of_script, number_of_inputs, input_f_suffix))
 
+    ## Read the input env file if it exists
+    try:
+        with open(input_env) as file:
+            input_env_data = file.read()
+    except:
+        print("Env file:", input_env, "could not be read.")
+        input_env_data = ""
+
+
     ## Find and split input files given the environment file
-    new_input_files = find_and_split_inputs(input_env, output_dir, number_of_inputs)
+    new_input_files = find_and_split_inputs(input_env_data, output_dir, number_of_inputs)
 
     ## Generate new environment file
-    generate_env_file(input_env, output_env, new_input_files)
+    generate_env_file(input_env_data, output_env, new_input_files)
 
     ## Copy the funs file (if it exists)
     if os.path.exists(input_funs):
