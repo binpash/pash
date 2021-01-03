@@ -24,10 +24,11 @@ To parallelize, say, `./evaluation/hello-world.sh` with parallelization width of
 **Docker:** The easiest way to play with `pash` today is using Docker:
 
 ```sh
-curl -s img.pash.ndr.md | docker load; docker run -i pash-latest
+curl img.pash.ndr.md | docker load; docker run --name pash-playground -it pash/18.04
 ```
 
-After you're in the image, run `cd pash; git pull` to get the latest updates.
+To restart the image after exiting, run `docker start -i pash-playground`. After you're in the image, run `cd pash; git pull` to get the latest updates.
+For more information, check out the [pash-on-docker guide]()
 
 **Linux:** Alternatively, if you're on an Ubuntu, run:
 
