@@ -1,4 +1,4 @@
-# PaSh on Docker: A Pocket Guide
+## PaSh on Docker: A Pocket Guide
 
 This is a pocket guide for running PaSh in a docker container.
 
@@ -58,5 +58,22 @@ Useful options for `docker run`:
 * [Limit CPU/Mem](https://docs.docker.com/config/containers/resource_constraints/): `--cpus='.5' --mem=1g`
 * [Limit disk size](https://docs.docker.com/engine/reference/commandline/run/#set-storage-driver-options-per-container): `--storage-opt size=10G`
 
+## Using GNU Screen
 
+We often use GNU `screen`, a terminal multiplexer, for pair programming. GNU `screen` has two benefits: (1) it allows a session to continue executing even after one detaches and closes the terminal window, which is useful for executing long-running processes such as PaSh's experiments; and (2) it allows multiple people to share a session, with the ability to read and write in the terminal window as if it was a single person.
+
+Here are commands related to launching a screen session:
+* `screen`                   -> start a new session
+* `screen -ls`               -> show all screen sessions in this machine
+* `screen -x <ID>`           -> attach to screen with id `<ID>`, as shown by `-ls` above.
+* `screen -x <user>/<pash>`  -> attach to session `pash` of user `user`, assuming it exists/running; 
+
+When in a `screen` session, all `screen`-related commands are prefixed by `ctr-a` (which means pressing `ctrl` and `a` _together_, and _then_ pressing the followup character). Here are the 5 most useful commands:
+* `ctrl-a c`                 -> create­a new window in the current session
+* `ctrl-a "`                 -> show all windows and choose using up/down arrows
+* `ctr-a <N>`                -> go to window <N>, where <N> is 0..9 inclusive
+* `ctrl-a ctrl-a`            -> fast-toggle between latest windows
+* `ctrl-a d`                 -> detach window, to exit without closing screen
+
+A slightly more extended pocket guide [in this gist](https://gist.github.com/nvasilakis/826e4f88d0e0dba2adf4df4834cb9394).
 

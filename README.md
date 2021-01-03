@@ -28,8 +28,8 @@ To parallelize, say, `./evaluation/hello-world.sh` with parallelization width of
 curl img.pash.ndr.md | docker load; docker run --name pash-playground -it pash/18.04
 ```
 
-Pash is in the container's `/pash` directory, so run `cd pash; git pull` to fetch the latest updates; to restart the image after exiting, run `docker start -i pash-playground`.
-More information in the [pash-on-docker guide](./docker.md).
+PaSh can be found in the container's `/pash` directory, so run `cd pash; git pull` to fetch the latest updates; to restart the image after exiting, run `docker start -i pash-playground`.
+More information in the [pash-on-docker guide](./docs/contrib.md#pash-on-docker-a-pocket-guide).
 
 **Linux:** Alternatively, if you're on an Ubuntu, run:
 
