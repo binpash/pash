@@ -151,7 +151,7 @@ def optimize_irs(asts_and_irs, args):
 
             # log(ir_node)
             # with cProfile.Profile() as pr:
-            distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, args.split_fan_out,
+            distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, args.width,
                                                                       runtime_config['batch_size'])
             # pr.print_stats()
             # log(distributed_graph)

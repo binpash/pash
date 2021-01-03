@@ -76,7 +76,7 @@ config_path_opt=""
 if [ "$auto_split_flag" -eq 1 ]; then
     echo "Distributed with auto-split:"
     eager_opt=""
-    auto_split_opt="--split_fan_out ${n_in}"
+    auto_split_opt="--width ${n_in}"
     distr_result_filename="${results}${experiment}_distr_auto_split.time"
 elif [ "$eager_flag" -eq 1 ]; then
     echo "Distributed:"
