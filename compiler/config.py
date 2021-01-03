@@ -6,6 +6,7 @@ import yaml
 from ir_utils import *
 
 ## Global
+__version__ = "0.2" # FIXME add libdash version
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'PASH_TOP' in os.environ:
     PASH_TOP = os.environ['PASH_TOP']
@@ -80,6 +81,9 @@ def add_common_arguments(parser):
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")
+    parser.add_argument("-v", "--version",
+                        action='version',
+                        version='%(prog)s {version}'.format(version=__version__))
     return
 
 def pass_common_arguments(pash_arguments):

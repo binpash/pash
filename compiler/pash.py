@@ -64,7 +64,7 @@ def main():
 def parse_args():
     prog_name = sys.argv[0]
     if 'PASH_FROM_SH' in os.environ:
-      prog_name = os.environ['PASH_FROM_SH']
+        prog_name = os.environ['PASH_FROM_SH']
     parser = argparse.ArgumentParser(prog_name)
     parser.add_argument("input", help="the script to be compiled and executed")
     parser.add_argument("--preprocess_only", 
@@ -73,12 +73,6 @@ def parse_args():
     parser.add_argument("--output_preprocessed", 
                         help="whether to output the preprocessed script",
                         action="store_true")
-    parser.add_argument("-p", "--print-only", 
-                        help="Output the preprocessed script",
-                        action="store_true")
-    parser.add_argument("-v", "--version", 
-                        help="Output version number and exit",
-                        action="show_version")
     config.add_common_arguments(parser)
     args = parser.parse_args()
     return args
