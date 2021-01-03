@@ -27,9 +27,8 @@ Flag `-i` starts it interactively.
 
 ### Customizing image
 
-To be used for continuous integration and testing, this image has been configured to have access to the repo through a different user.
-
-To fix the name and email used for `git` commits, and to [generate an ssh key pair](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
+To be used for continuous integration and testing, this image has been configured to have _read-only_ access to the repo through a different user.
+To get write access, update the name and email used for `git` commits with your name and email, and [generate an ssh key pair](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
 
 ```sh
 git config --global user.name "FIRST_NAME LAST_NAME"
@@ -76,4 +75,24 @@ When in a `screen` session, all `screen`-related commands are prefixed by `ctr-a
 * `ctrl-a d`                 -> detach window, to exit without closing screen
 
 A slightly more extended pocket guide [in this gist](https://gist.github.com/nvasilakis/826e4f88d0e0dba2adf4df4834cb9394).
+
+## Pushing to new branches
+
+To keep the main branch free of breakage, we often push technical work in new branches. To do this, from the main/master branch on your local machine:
+
+```sh
+git checkout -b <NAME>    # create a new branch and switch to it
+git push -u origin <NAME> # push the new branch as a new branch on github
+```
+
+You can always fetch changes into the main/master:
+
+```sh
+git checkout master        # switch to main/master
+git pull                   # fetch remote changes
+git checkout <NAME>        # switch back to your branch
+git merge master           # fetch changes from main/master
+```
+
+(You can use `rebase` instead of `merge` if your branch is local and hasn't been pushed to GitHub, but `merge` if your branch is already pushed.)
 
