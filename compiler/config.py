@@ -47,31 +47,31 @@ def add_common_arguments(parser):
     parser.add_argument("-w", "--width",
                         type=int,
                         default=2, 
-                        help="Set data-parallelism factor")
+                        help="set data-parallelism factor")
 
     parser.add_argument("--no_optimize",
-                        help="Not apply transformations over the DFG",
+                        help="not apply transformations over the DFG",
                         action="store_true")
     parser.add_argument("--dry_run_compiler",
-                        help="Not execute the compiled script, even if the compiler succeeded",
+                        help="not execute the compiled script, even if the compiler succeeded",
                         action="store_true")
     parser.add_argument("--assert_compiler_success",
-                        help="Assert that the compiler succeeded (used to make tests more robust)",
+                        help="assert that the compiler succeeded (used to make tests more robust)",
                         action="store_true")
     parser.add_argument("-t", "--output_time", #FIXME: --time
-                        help="Output the time it took for every step",
+                        help="output the time it took for every step",
                         action="store_true") 
     parser.add_argument("-p", "--output_optimized", # FIXME: --print
-                        help="Output the parallel shell script for inspection",
+                        help="output the parallel shell script for inspection",
                         action="store_true")
     parser.add_argument("--log_file", 
-                        help="Configure where to write the log; defaults to stderr.",
+                        help="configure where to write the log; defaults to stderr.",
                         default="")
     parser.add_argument("--no_eager",
-                        help="Disable eager nodes before merging nodes",
+                        help="disable eager nodes before merging nodes",
                         action="store_true")
     parser.add_argument("--speculation",
-                        help="Run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
+                        help="run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
                         choices=['no_spec', 'quick_abort'],
                         default='no_spec')
     parser.add_argument("--termination",

@@ -71,7 +71,7 @@ def parse_args():
                         help="only preprocess the input script and not execute it",
                         action="store_true")
     parser.add_argument("--output_preprocessed", 
-                        help="whether to output the preprocessed script",
+                        help=" output the preprocessed script",
                         action="store_true")
     config.add_common_arguments(parser)
     args = parser.parse_args()
