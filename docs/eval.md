@@ -21,7 +21,7 @@ A diverse set of benchmarks:
 
 Further scripts:
 * [Data science commands](https://datascienceworkshops.com/blog/seven-command-line-tools-for-data-science/)
-* [PCAP processing](https://nanxiao.me/en/process-large-pcap-file/)
+* [Data science pipelines](https://github.com/hofesh/common/blob/d243b93c7523e2f1ff86f1cf4ab3114ee70e5fe6/data-bash-snippets.sh)
 * [Tokenization](https://github.com/etnichols/Stanford-NLP-Notes)
 * [Unix for poets](https://www.cs.upc.edu/~padro/Unixforpoets.pdf)
 * [Google's custom report utils for shell](https://github.com/google/crush-tools) examples
@@ -40,11 +40,12 @@ ML: Unfortunately, this `bigml` is a wrapper for a web API.
 * [WhizzML Scripts](https://github.com/whizzml/examples)
 * [A short ML pipeline](https://news.ycombinator.com/item?id=6412190)
 
-Aliases?
+Aliases/Interactive workloads ([arxiv](https://arxiv.org/abs/2012.10206), [db](https://zenodo.org/record/3778825#.X8_HqOlKibs), [pipelines](./evaluation/aliases))
 
 Log parsing:
 * [parse ngingx logs](https://rtcamp.com/tutorials/nginx/log-parsing/)
-* 
+* [network traffic](https://www.sans.org/reading-room/whitepapers/protocols/paper/34037)
+* [PCAP processing](https://nanxiao.me/en/process-large-pcap-file/)
   
 
 Benchmarks [from DGSH](https://github.com/dspinellis/dgsh/tree/master/example)
