@@ -1,15 +1,16 @@
 ## PaSh: Light-touch Data-Parallel Shell Processing
 
-Mailing lists: [Commits](mailto:pash-commits@googlegroups.com) | [Discussion](mailto:pash-discuss@googlegroups.com)
+Mailing lists: [Commits](https://groups.google.com/g/pash-commits) | [Discussion](https://groups.google.com/g/pash-discuss)
 
 PaSh is  a system for  parallelizing POSIX shell  scripts. Key elements include:
 
-* [compiler](./compiler): Shell-to-Dataflow translations and associated parallelization transformations.
 * [annotations](./annotations/): DSL characterizing commands, parallelizability study, and associated annotations.
-* [evaluation](./evaluation): shell pipelines and example [scripts](./evaluation/scripts) used for the evaluation.
-* [runtime](./runtime): PaSh's runtime components, including `eager`, `split`, and assocaited combiners.
+* [compiler](./compiler): Shell-Dataflow translations and associated parallelization transformations.
 * [docs](./docs): Design documents, tutorials, installation instructions, etc.
+* [evaluation](./evaluation): Shell pipelines and example [scripts](./evaluation/scripts) used for the evaluation.
 * [papers](./papers): Academic papers related to PaSh ([EuroSys 2021](https://arxiv.org/abs/2007.09436)).
+* [runtime](./runtime): Runtime component — e.g., `eager`, `split`, and assocaited combiners.
+* [scripts](./scripts): Scripts related to continuous integration, deployment, and testing.
 
 ## Running PaSh
 
@@ -27,8 +28,8 @@ To parallelize, say, `./evaluation/hello-world.sh` with parallelization width of
 curl img.pash.ndr.md | docker load; docker run --name pash-playground -it pash/18.04
 ```
 
-To restart the image after exiting, run `docker start -i pash-playground`. After you're in the image, run `cd pash; git pull` to get the latest updates.
-For more information, check out the [pash-on-docker guide]()
+Pash is in the container's `/pash` directory, so run `cd pash; git pull` to fetch the latest updates; to restart the image after exiting, run `docker start -i pash-playground`.
+More information in the [pash-on-docker guide](./docker.md).
 
 **Linux:** Alternatively, if you're on an Ubuntu, run:
 
