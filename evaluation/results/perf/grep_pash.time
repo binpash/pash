@@ -1,63 +1,68 @@
+Exporting:
+IN=../evaluation/scripts/input/100M.txt
+Executing:
+#!/bin/bash
+cat $IN | grep '[a-zA-Z0-9]\+@[a-zA-Z0-9]\+\.[a-z]\{2,\}'
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/tmp.L3Bb3d7Ten
-(1) Bash variables saved in: /tmp/tmp.L3Bb3d7Ten
+Writing vars to: /tmp/tmp.xhSSiPxVJe
+(1) Bash variables saved in: /tmp/tmp.xhSSiPxVJe
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
-Variable: ['V', ['Normal', False, 'IN', []]] was expanded to: ../evaluation/scripts/input/10M.txt
+Variable: ['V', ['Normal', False, 'IN', []]] was expanded to: ../evaluation/scripts/input/100M.txt
 inputs-outputs found for: cat
 |-- ([('option', 0)], ['stdout'], [])
 class: stateless found for: cat
 inputs-outputs found for: grep
 |-- (['stdin'], ['stdout'], [('option', 0)])
 class: stateless found for: grep
-Compilation time: 19.442  ms
+Compilation time: 5.904  ms
 Total nodes after optimization: 2
  -- out of which:
 Cat nodes: 0
 Eager nodes: 0
-Optimization time: 0.195  ms
+Optimization time: 0.064  ms
 arguments, redirs found for: cat
-|-- ([fid:1:"../evaluation/scripts/input/10M.txt"], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50]]]]]]])
+|-- ([fid:1:"../evaluation/scripts/input/100M.txt"], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50]]]]]]])
 arguments, redirs found for: grep
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50]]]]]]])
-Backend time: 7.567  ms
-Optimized script saved in: /tmp/tmp.t3ISrRItJY
+Backend time: 2.239  ms
+Optimized script saved in: /tmp/tmp.hUQGADlmzl
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/tmp.L3Bb3d7Ten
+(3) Recovering variables from: /tmp/tmp.xhSSiPxVJe
 /dev/fd/63: line 45: declare: PPID: readonly variable
 /dev/fd/63: line 53: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 56: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/tmp.t3ISrRItJY:
+(4) Executing script in /tmp/tmp.hUQGADlmzl:
 rm -f "#file2"
 mkfifo "#file2"
-{ cat "../evaluation/scripts/input/10M.txt" >"#file2" & }
+{ cat "../evaluation/scripts/input/100M.txt" >"#file2" & }
 { grep "[a-zA-Z0-9]\\+@[a-zA-Z0-9]\\+\\.[a-z]\\{2,\\}" <"#file2" & }
 source /home/konstantinos/University/research/dish/runtime/wait_for_output_and_sigpipe_rest.sh ${!}
 rm -f "#file2"
-/home/konstantinos/University/research/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (5665) - No such process
+/home/konstantinos/University/research/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (10674) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/tmp.F2m9slxosc
+(5) Writing current BaSh set state to: /tmp/tmp.y8adxMQef8
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/tmp.XfTuucaASW
+Writing vars to: /tmp/tmp.MFlWpq3LmH
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 8887.734 ms
-(7) Recovering BaSh variables from: /tmp/tmp.XfTuucaASW
+Execution time: 1529.009 ms
+(7) Recovering BaSh variables from: /tmp/tmp.MFlWpq3LmH
 /dev/fd/63: line 46: declare: PPID: readonly variable
 /dev/fd/63: line 54: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 57: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/tmp.F2m9slxosc
+(7) Reading current BaSh set state from: /tmp/tmp.y8adxMQef8
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/jwhtnjam
-Preprocessing time: 34.684  ms
+Preprocessed script stored in: /tmp/mwswtjjx
+Preprocessing time: 10.2  ms
 
-real	0m18.187s
-user	0m2.537s
-sys	0m2.508s
+real	0m2.956s
+user	0m0.708s
+sys	0m0.280s
 Files /tmp/pash_evaluation_seq_output and /tmp/pash_evaluation_output are identical

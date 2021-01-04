@@ -20,7 +20,7 @@ widths=(
 )
 
 microbenchmarks=(
-    # 'grep'           # PLDI
+    'grep'           # PLDI
     # 'minimal_sort'         # PLDI
     # 'minimal_grep'         # PLDI
     # 'topn'                 # PLDI
@@ -64,6 +64,8 @@ exec_microbenchmark()
     input_file="${prefix}.in"
 
     . $env_file
+    echo "Exporting:" > "$result_file"
+    cat $env_file >> "$result_file" 
     vars_to_export=$(cut -d= -f1 $env_file)
     if [ ! -z "$vars_to_export" ]; then
         export $vars_to_export
@@ -80,7 +82,10 @@ exec_microbenchmark()
         stdin_redir="$(cat "$input_file")"
     fi
 
-    cat $stdin_redir | { time $shell $script ; } 1> $output 2> >(tee "$result_file" >&2)
+    echo "Executing:" >> "$result_file"
+    cat "$script" >> "$result_file"
+
+    cat $stdin_redir | { time $shell $script ; } 1> $output 2> >(tee -a "$result_file" >&2)
 }
 
 exec_seq_microbenchmark()
