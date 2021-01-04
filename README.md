@@ -35,10 +35,8 @@ PaSh can be found in the container's `/pash` directory, so run `cd pash; git pul
 **Linux:** Alternatively, if you're on an Ubuntu, run:
 
 ```sh
-curl -s up.pash.ndr.md | bash
+curl up.pash.ndr.md | bash
 ```
-
-Appending `-- -a` additionally installs dependencies such as `opam`, `python3`, etc. but requires `sudo` (i.e., "root"). This option is great for AWS images.
 
 ## Tests
 
