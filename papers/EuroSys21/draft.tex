@@ -1,4 +1,13 @@
-% TODO Add Ignis, m31, and Mozart
+% TODO CAMERA READY
+% * Add Ignis, m31, Mozart, ODFG, kq
+% * Make model  more informal.
+% * Talk annotations as a special case of the node<->command corr (pair of) function(s)
+
+% Detailed comments for camera ready
+% \kk{We need a way to instantiate the correspondence (bidirectional transformations) from commands to DFG nodes and back. This could be done with arbitrary python code in the general setting that checks arbitrary things for each command. We should allow that. For a big subset of commands though (how big) we come up with an annotation language that allows one to easily instantiate this correspondence.}
+% 
+% \kk{Maybe rename this whole thing a framework for instantiating the node $\leftrightarrow$ command correspondence.}
+
 
 % arxiv: https://arxiv.org/abs/2007.09436
 
@@ -267,8 +276,8 @@
 \author{Achilleas Benetopoulos}
 \affiliation{Unaffiliated}
 
-\author{Lazar Cvetkovich}
-\affiliation{Unaffiliated}
+\author{Lazar Cvetkovi\'{c}}
+\affiliation{University of Belgrade}
 
 \renewcommand{\shortauthors}{N. Vasilakis*, K. Kallas*, K. Mamouras, A.  Benetopoulos, L. Cvetkovich}
 
@@ -1197,10 +1206,6 @@ For example, \ttt{date}, \ttt{uname}, and \ttt{finger} are all commands interfac
 \subsection{Extensibility Annotations}
 \label{ext}
 
-\kk{We need a way to instantiate the correspondence (bidirectional transformations) from commands to DFG nodes and back. This could be done with arbitrary python code in the general setting that checks arbitrary things for each command. We should allow that. For a big subset of commands though (how big) we come up with an annotation language that allows one to easily instantiate this correspondence.}
-
-\kk{Maybe rename this whole thing a framework for instantiating the node $\leftrightarrow$ command correspondence.}
-
 % TODO: \nv{Note command breadth/impossibility of our task.}
 % https://nextbreakpoint.com/posts/article-compile-code-with-docker.html
 
@@ -1528,8 +1533,6 @@ In line with the \unix philosophy, these functions can be written in any languag
 
 \section{Dataflow Graph Model}
 \label{ir}
-
-\TODO{Remember to make this more informal.}
 
 \sys's core is an abstract dataflow graph (DFG) model~\sx{graph-components} that is used as the intermediate representation on which \sys performs parallelization-exposing transformations~\sx{ir:transformations}.
 %% representation that is expressive enough to model data parallelism in shell programs.

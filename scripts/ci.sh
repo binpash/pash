@@ -42,8 +42,8 @@ pash_tests() {
 
 smoosh_tests() {
   cd ../../smoosh
-  TEST_SHELL="python3 $PASH_TOP/compiler/pash.py --split_fan_out 2 --log_file /tmp/log_file" make -C tests veryclean
-  TEST_SHELL="python3 $PASH_TOP/compiler/pash.py --split_fan_out 2 --log_file /tmp/log_file" make -C tests  | tee >(grep 'tests passed' | cut -d ' ' -f2 > smoosh_tests.sum)
+  TEST_SHELL="python3.8 $PASH_TOP/compiler/pash.py --split_fan_out 2 --log_file /tmp/log_file" make -C tests veryclean
+  TEST_SHELL="python3.8 $PASH_TOP/compiler/pash.py --split_fan_out 2 --log_file /tmp/log_file" make -C tests  | tee >(grep 'tests passed' | cut -d ' ' -f2 > smoosh_tests.sum)
   SMOOSH_RESULTS=$(cat smoosh_tests.sum)
   cd $PASH_TOP/scripts
 }
