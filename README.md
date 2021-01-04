@@ -17,26 +17,26 @@ PaSh is  a system for  parallelizing POSIX shell  scripts. Key elements include:
 To parallelize, say, `./evaluation/hello-world.sh` with parallelization width of `2`, from the top-level directory of the repository run:
 
 ```sh
-./pa.sh -w 2 ./evaluation/hello-world.sh
+./pa.sh ./evaluation/hello-world.sh
 ``` 
+
+Run `./pa.sh --help` to get more information about the available commands.
 
 ## Installation
 
 **Docker:** The easiest way to play with `pash` today is using Docker:
 
 ```sh
-curl -s img.pash.ndr.md | docker load; docker run -i pash-latest
+curl img.pash.ndr.md | docker load; docker run --name pash-playground -it pash/18.04
 ```
 
-After you're in the image, run `cd pash; git pull` to get the latest updates. (Update git email/username via `git config --global user.email "em@i.l"` and `git config --global user.name "f l"`, [generate new keys](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent), and add them to your account.)
+PaSh can be found in the container's `/pash` directory, so run `cd pash; git pull` to fetch the latest updates; more information in the [pash-on-docker guide](./docs/contrib.md#pash-on-docker-a-pocket-guide).
 
 **Linux:** Alternatively, if you're on an Ubuntu, run:
 
 ```sh
-curl -s up.pash.ndr.md | bash
+curl up.pash.ndr.md | bash
 ```
-
-Appending `-- -a` additionally installs dependencies such as `opam`, `python3`, etc. but requires `sudo` (i.e., "root"). This option is great for AWS images.
 
 ## Tests
 
