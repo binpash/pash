@@ -1,11 +1,16 @@
+Exporting:
+IN=../evaluation/scripts/input/100M.txt
+Executing:
+#!/bin/bash
+cat $IN | tr A-Z a-z | sort | sort -r
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/tmp.umbfUcnZxi
-(1) Bash variables saved in: /tmp/tmp.umbfUcnZxi
+Writing vars to: /tmp/tmp.bfNqrMS6Bf
+(1) Bash variables saved in: /tmp/tmp.bfNqrMS6Bf
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
-Variable: ['V', ['Normal', False, 'IN', []]] was expanded to: ../evaluation/scripts/input/10M.txt
+Variable: ['V', ['Normal', False, 'IN', []]] was expanded to: ../evaluation/scripts/input/100M.txt
 inputs-outputs found for: cat
 |-- ([('option', 0)], ['stdout'], [])
 class: stateless found for: cat
@@ -18,14 +23,14 @@ class: pure found for: sort
 inputs-outputs found for: sort
 |-- (['stdin'], ['stdout'], [('option', 0)])
 class: pure found for: sort
-Compilation time: 17.048  ms
+Compilation time: 5.828  ms
 Total nodes after optimization: 16
  -- out of which:
 Cat nodes: 0
 Eager nodes: 0
-Optimization time: 4.199  ms
+Optimization time: 1.616  ms
 arguments, redirs found for: cat
-|-- ([fid:1:"../evaluation/scripts/input/10M.txt"], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50]]]]]]])
+|-- ([fid:1:"../evaluation/scripts/input/100M.txt"], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50]]]]]]])
 arguments, redirs found for: tr
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52]]]]]]])
 arguments, redirs found for: /home/konstantinos/University/research/dish/runtime/auto-split.sh
@@ -56,15 +61,15 @@ arguments, redirs found for: /home/konstantinos/University/research/dish//runtim
 |-- ([#file19, #file26], [])
 arguments, redirs found for: sort
 |-- ([#file25, #file26], [])
-Backend time: 14.52  ms
-Optimized script saved in: /tmp/tmp.XCanD5HmKs
+Backend time: 4.673  ms
+Optimized script saved in: /tmp/tmp.8O9BbS5DGx
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/tmp.umbfUcnZxi
+(3) Recovering variables from: /tmp/tmp.bfNqrMS6Bf
 /dev/fd/63: line 45: declare: PPID: readonly variable
 /dev/fd/63: line 53: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 56: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/tmp.XCanD5HmKs:
+(4) Executing script in /tmp/tmp.8O9BbS5DGx:
 rm -f "#file2"
 rm -f "#file4"
 rm -f "#file6"
@@ -107,7 +112,7 @@ mkfifo "#file23"
 mkfifo "#file24"
 mkfifo "#file25"
 mkfifo "#file26"
-{ cat "../evaluation/scripts/input/10M.txt" >"#file2" & }
+{ cat "../evaluation/scripts/input/100M.txt" >"#file2" & }
 { tr A-Z a-z <"#file2" >"#file4" & }
 { /home/konstantinos/University/research/dish/runtime/auto-split.sh "#file4" "#file9" "#file10" & }
 { sort <"#file21" >"#file12" & }
@@ -145,27 +150,27 @@ rm -f "#file23"
 rm -f "#file24"
 rm -f "#file25"
 rm -f "#file26"
-/home/konstantinos/University/research/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (6050) - No such process
+/home/konstantinos/University/research/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (10902) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/tmp.pSdDwCys6A
+(5) Writing current BaSh set state to: /tmp/tmp.0CD8CTF7cU
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/tmp.HSxNIBMgsT
+Writing vars to: /tmp/tmp.oK4hqgtWbP
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 10167.139 ms
-(7) Recovering BaSh variables from: /tmp/tmp.HSxNIBMgsT
+Execution time: 6640.998 ms
+(7) Recovering BaSh variables from: /tmp/tmp.oK4hqgtWbP
 /dev/fd/63: line 46: declare: PPID: readonly variable
 /dev/fd/63: line 54: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 57: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/tmp.pSdDwCys6A
+(7) Reading current BaSh set state from: /tmp/tmp.0CD8CTF7cU
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/zhakrnhn
-Preprocessing time: 44.112  ms
+Preprocessed script stored in: /tmp/xgbjmeuh
+Preprocessing time: 9.841  ms
 
-real	0m18.978s
-user	0m4.481s
-sys	0m3.198s
+real	0m8.177s
+user	0m8.429s
+sys	0m3.134s
 Files /tmp/pash_evaluation_seq_output and /tmp/pash_evaluation_output are identical
