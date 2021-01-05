@@ -192,10 +192,9 @@ pash_compiled_script_file=$(mktemp -u)
 # ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file $1
 
 
-## Count the execution time
-pash_exec_time_start=$(date +"%s%N")
-
 if [ "$pash_speculation_flag" -eq 1 ]; then
+    ## Count the execution time
+    pash_exec_time_start=$(date +"%s%N")
     source "$RUNTIME_DIR/pash_runtime_quick_abort.sh"
 else
     pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
@@ -209,6 +208,9 @@ else
     ##
     ## (3), (4), (5)
     ##
+
+    ## Count the execution time
+    pash_exec_time_start=$(date +"%s%N")
 
     ## If the compiler failed or if we dry_run the compiler, we have to run the sequential
     if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_dry_run_compiler_flag" -eq 1 ]; then
