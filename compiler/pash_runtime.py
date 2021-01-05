@@ -251,7 +251,9 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size):
     ## At the moment this only works for nodes that have one input. 
     ## 
     ## TODO: Extend it to work for nodes that have more than one input.
+    ##       This has to be done to be able to parallelize comm
     number_of_previous_nodes = len(curr.get_input_list())
+    new_cat = None
     if (number_of_previous_nodes == 1):
         ## If the previous command is either a cat with one input, or
         ## if it something else
@@ -292,6 +294,8 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size):
 
         # log("graph nodes:", graph.nodes)
         # log("graph edges:", graph.edges)
+    
+    return new_cat
 
 
 ## If the current command is a cat, and is followed by a node that
@@ -322,14 +326,14 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
             if(not isinstance(curr, Cat)
                or (isinstance(curr, Cat) 
                    and len(curr.get_input_list()) < fan_out)):
-                split_command_input(next_node, graph, fileIdGen, fan_out, batch_size)
+                new_cat = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size)
 
                 ## After split has succeeded we know that the curr node (previous of the next)
                 ## has changed. Therefore we need to retrieve it again.
-                prev_nodes = graph.get_previous_nodes(next_node_id)
-                assert(len(prev_nodes) == 1)
-                curr_id = prev_nodes[0]
-                curr = graph.get_node(curr_id)
+                if (not new_cat is None):
+                    curr_id = id(new_cat)
+                    curr = new_cat
+                    assert(isinstance(curr, Cat))
 
             ## If curr is cat, it means that split suceeded, or it was
             ## already a cat. In any case, we can proceed with the
@@ -394,7 +398,6 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
         ## Add the merge commands in the graph
         for merge_command in merge_commands:
             graph.add_node(merge_command)
-        new_nodes += merge_commands        
 
         ## Replace the previous final_output_id with the previous id
         final_merge_node_id = graph.edges[final_output_id][1]
@@ -402,6 +405,10 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
         final_merge_node.replace_edge(final_output_id, node_output_edge_id)
         graph.set_edge_from(node_output_edge_id, final_merge_node_id)
         graph.set_edge_from(final_output_id, None)
+        
+        ## Only add the final node to the new_nodes
+        new_nodes.append(final_merge_node)
+
 
     # log("after merge graph nodes:", graph.nodes)
     # log("after merge graph edges:", graph.edges)
