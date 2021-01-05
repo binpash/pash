@@ -4,13 +4,15 @@ execute_seq_flag=0
 eager_flag=0
 no_task_par_eager_flag=0
 auto_split_flag=0
+assert_compiler_success=""
 
-while getopts 'senpa' opt; do
+while getopts 'senpac' opt; do
     case $opt in
         s) execute_seq_flag=1 ;;
         e) eager_flag=1 ;;
         n) no_task_par_eager_flag=1 ;;
         a) auto_split_flag=1 ;;
+        c) assert_compiler_success="--assert_compiler_success" ;;
         *) echo 'Error in command line parsing' >&2
            exit 1
     esac
@@ -101,6 +103,6 @@ fi
 ## Make the redirected output dir if it doesn't exist
 mkdir -p /tmp/distr_output
 
-cat $stdin_redir | { time python3 $PASH_TOP/compiler/pash.py --speculation no_spec $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script ; } 1> /tmp/distr_output/0 2> >(tee "${distr_result_filename}" >&2) &&
+cat $stdin_redir | { time python3 $PASH_TOP/compiler/pash.py --speculation no_spec $assert_compiler_success $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script ; } 1> /tmp/distr_output/0 2> >(tee "${distr_result_filename}" >&2) &&
 echo "Checking for equivalence..." &&
 diff -s $seq_output /tmp/distr_output/0 | tee -a "${distr_result_filename}"
