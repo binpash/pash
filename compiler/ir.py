@@ -262,6 +262,12 @@ class IR:
         else:
             return None
 
+    def get_edge_from(self, edge_id):
+        if(edge_id in self.edges):
+            return self.edges[edge_id][1]
+        else:
+            return None
+
     def get_stdin(self):
         stdin_id = self.get_stdin_id()
         stdin_fid = self.get_edge_fid(stdin_id)
