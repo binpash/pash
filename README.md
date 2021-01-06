@@ -8,7 +8,6 @@ PaSh is  a system for  parallelizing POSIX shell  scripts. Key elements include:
 * [compiler](./compiler): Shell-Dataflow translations and associated parallelization transformations.
 * [docs](./docs): Design documents, tutorials, installation instructions, etc.
 * [evaluation](./evaluation): Shell pipelines and example [scripts](./evaluation/scripts) used for the evaluation.
-* [papers](./papers): Academic papers related to PaSh ([EuroSys 2021](https://arxiv.org/abs/2007.09436)).
 * [runtime](./runtime): Runtime component — e.g., `eager`, `split`, and assocaited combiners.
 * [scripts](./scripts): Scripts related to continuous integration, deployment, and testing.
 
