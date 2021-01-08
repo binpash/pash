@@ -101,13 +101,13 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--output_time"))
     if (pash_arguments.output_optimized):
         arguments.append(string_to_argument("--output_optimized"))
-    if(pash_arguments.debug == "0"):
-        pash_arguments.log_file = "/dev/null"
     if(not pash_arguments.log_file == ""):
         arguments.append(string_to_argument("--log_file"))
         arguments.append(string_to_argument(pash_arguments.log_file))
     if (pash_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
+    arguments.append(string_to_argument("--debug"))
+    arguments.append(string_to_argument(pash_arguments.debug))
     arguments.append(string_to_argument("--termination"))
     arguments.append(string_to_argument(pash_arguments.termination))
     arguments.append(string_to_argument("--speculation"))
