@@ -64,6 +64,9 @@ def add_common_arguments(parser):
     parser.add_argument("-p", "--output_optimized", # FIXME: --print
                         help="output the parallel shell script for inspection",
                         action="store_true")
+    parser.add_argument("-d", "--debug", 
+                        help="configure debug level; defaults to 0",
+                        default="0")
     parser.add_argument("--log_file", 
                         help="configure where to write the log; defaults to stderr.",
                         default="")
@@ -98,6 +101,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--output_time"))
     if (pash_arguments.output_optimized):
         arguments.append(string_to_argument("--output_optimized"))
+    if(pash_arguments.debug == "0"):
+        pash_arguments.log_file = "/dev/null"
     if(not pash_arguments.log_file == ""):
         arguments.append(string_to_argument("--log_file"))
         arguments.append(string_to_argument(pash_arguments.log_file))

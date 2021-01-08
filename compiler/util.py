@@ -24,7 +24,8 @@ def print_time_delta(prefix, start_time, end_time, args):
 ##       allow us to not pollute the .time files.
 def log(*args, end='\n'):
     if(config.pash_args.log_file == ""):
-        print(*args, file=sys.stderr, end=end)
+        if (not config.pash_args.debug == "0"):
+            print(*args, file=sys.stderr, end=end)
     else:
         with open(config.pash_args.log_file, "a") as f:
             print(*args, file=f, end=end)
