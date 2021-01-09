@@ -5,7 +5,7 @@
         {
             "predicate": "default",
             "class": "pure",
-            "inputs": ["stdin"],
+            "inputs": ["args[:]"],
             "outputs": ["stdout"],
             "options": ["stdin-hyphen"]
         }
