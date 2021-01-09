@@ -235,6 +235,9 @@ class IR:
         for _, node in self.nodes.items():
             node.apply_redirections(self.edges)
         
+        ## We need to merge common files after redirections have been applied.
+        self.combine_common_files()
+
     ## Refactor these to call .add_edge, and .set_edge_to/from 
     ## Add an edge that points to a node
     def add_to_edge(self, to_edge, node_id):
@@ -490,7 +493,9 @@ class IR:
                                                   if fid.has_file_resource()]
                     for id_out, fid_out in outputs_with_file_resource:
                         out_resource = fid_out.get_resource()
-                        if (in_resource == out_resource):
+                        ## Do not combine if the ids of the edges are already the same
+                        if (not id_in == id_out
+                            and in_resource == out_resource):
                             number_of_out_resources += 1
                             ## They point to the same File resource so we need to unify their fids
                             self.nodes[node_id2].replace_edge(id_out, id_in)
