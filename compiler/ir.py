@@ -343,10 +343,19 @@ class IR:
         ##       for now we just have the stdout node in the end 
         ##       (since this is always the output in our benchmarks).
         # sink_node_ids = self.sink_nodes()
+        ##
+        ## TODO: Support more than one output (and less than one).
+        ##       For this we need to update wait.
+        ##
+        ## For now we just allow more than one output by waiting for one of them
+        ## at random.
         stdout_edge_id = self.get_stdout_id()
-        sink_node_ids = [self.edges[stdout_edge_id][1]]
-        ## TODO: Support more than one output. For this we need to update wait.
-        assert(len(sink_node_ids) == 1)
+        if (not stdout_edge_id is None):
+            sink_node_ids = [self.edges[stdout_edge_id][1]]
+        else:
+            sink_node_ids = self.sink_nodes()
+            sink_node_ids = [sink_node_ids[0]]
+
 
         for node_id, node in self.nodes.items():
             if(not node_id in sink_node_ids):
