@@ -1,5 +1,9 @@
 #!/bin/bash
 
+## TODO: Measure separate speedup for preprocessing and computation
+
+## TODO: Maybe also measure the whole pipeline together (if it works)
+
 eval_dir="../evaluation/"
 directory="${eval_dir}/scripts/max-temp/"
 p1="${directory}/p1.sh"
