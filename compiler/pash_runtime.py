@@ -319,13 +319,13 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
 
         ## If the next node can be parallelized, then we should try to parallelize
         if(next_node.is_parallelizable()
-           and not isinstance(next_node, Cat)
-           and fan_out > 1):
+           and not isinstance(next_node, Cat)):
             ## If the current node is not a cat, it means that we need
             ## to generate a cat using a split
-            if(not isinstance(curr, Cat)
-               or (isinstance(curr, Cat) 
-                   and len(curr.get_input_list()) < fan_out)):
+            if(fan_out > 1
+               and (not isinstance(curr, Cat)
+                    or (isinstance(curr, Cat)
+                        and len(curr.get_input_list()) < fan_out))):
                 new_cat = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size)
 
                 ## After split has succeeded we know that the curr node (previous of the next)

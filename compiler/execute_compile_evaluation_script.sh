@@ -72,7 +72,7 @@ else
 fi
 
 ## Save the configuration to restore it afterwards
-auto_split_opt=""
+auto_split_opt="--width 1"
 config_path_opt=""
 
 if [ "$auto_split_flag" -eq 1 ]; then
