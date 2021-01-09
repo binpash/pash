@@ -645,9 +645,10 @@ def preprocess_node_while(ast_node, irFileGen, config):
 
 ## This is the same as the one for `For`
 def preprocess_node_defun(ast_node, irFileGen, config):
-    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    ## TODO: For now we don't want to compile function bodies
+    # preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
     ## TODO: Could there be a problem with the in-place update
-    ast_node.body = preprocessed_body
+    # ast_node.body = preprocessed_body
     return ast_node, False, False
 
 ## TODO: If the preprocessed is not maximal we actually need to combine it with the one on the right.
