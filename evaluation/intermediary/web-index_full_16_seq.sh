@@ -81,7 +81,7 @@ trigrams_aux()
     s1=$(mktemp -u)
     s2=$(mktemp -u)
 
-    mkfifo $s1 $s2
+    mkfifo $s2 $s3
 
     tee $s2 |
         tail +2 |
@@ -93,7 +93,7 @@ trigrams_aux()
         sed "\$d" |
         sed "\$d"
 
-    rm $s1 $s2
+    rm $s2 $s3
 }
 
 extract_text()
