@@ -6,6 +6,7 @@ unix50_dir = sys.argv[1]
 intermediaries_dir = sys.argv[2]
 input_size_increase = int(sys.argv[3])
 
+## TODO: Make this variable depend on the input size increase
 MAXIMUM_INPUT_SIZE = 10000000000 # 10 GB
 
 ## Make the generated inputs dir
