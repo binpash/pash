@@ -26,8 +26,9 @@ def default_input_output(options):
 
 ## TODO: All of these are possibly non-complete
 def is_sed_pure(options):
-    first_opt = format_arg_chars(options[0])
-    if(not first_opt.startswith("-")
+    first_opt = format_expanded_arg_chars(options[0])
+    if(not (first_opt.startswith("-")
+            or first_opt.startswith("s"))
        and ("d" in first_opt
             or "q" in first_opt)):
         return "pure"
