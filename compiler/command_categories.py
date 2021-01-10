@@ -35,6 +35,18 @@ def is_sed_pure(options):
     else:
         return "stateless"
 
+def contains_s(option):
+    return ((option.startswith("-") and "s" in option)
+            or option == "--squeeze-repeats")
+
+def is_tr_pure(options):
+    formatted_opts = [format_expanded_arg_chars(option)
+                      for option in options]
+    if(any([contains_s(opt) for opt in formatted_opts])):
+        return "pure"
+    else:
+        return "stateless"
+
 ## TODO: Move that to annotation
 def is_uniq_pure(options):
     if(len(options) > 0):
@@ -58,6 +70,7 @@ custom_command_args_redirs_from_input_outputs = {
 
 custom_command_categories = {
     "sed"  : is_sed_pure,
+    "tr"   : is_tr_pure,
     "uniq" : is_uniq_pure,
 }
 
