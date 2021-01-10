@@ -2,7 +2,7 @@ from definitions.ir.dfg_node import *
 
 class SortGReduce(DFGNode):
     def __init__(self, old_node, ids):
-        assert(str(old_node.com_name) == "sort")
+        name = Arg(string_to_argument("sort"))
         input_ids = ids[:-1]
         output_id = ids[-1]
         com_category="pure"
@@ -14,7 +14,7 @@ class SortGReduce(DFGNode):
         com_redirs = [redir.to_ast() for redir in old_node.com_redirs]
         super().__init__(input_ids,
                          [output_id], 
-                         old_node.com_name, 
+                         name,
                          com_category, 
                          com_options=com_options, 
                          com_redirs=com_redirs, 
