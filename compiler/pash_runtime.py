@@ -430,6 +430,8 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
 def create_merge_commands(curr, new_output_ids, fileIdGen):
     if(str(curr.com_name) == "sort"):
         return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
+    elif(str(curr.com_name) == "custom_sort"):
+        return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
     elif(str(curr.com_name) == "bigrams_aux"):
         return create_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen)
     elif(str(curr.com_name) == "alt_bigrams_aux"):
