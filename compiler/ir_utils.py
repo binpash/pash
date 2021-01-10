@@ -148,6 +148,8 @@ def get_kv(dic):
 def make_kv(key, val):
     return [key, val]
 
+def string_to_arguments(string):
+    return [string_to_argument(word) for word in string.split(" ")]
 
 def string_to_argument(string):
     return [char_to_arg_char(char) for char in string]

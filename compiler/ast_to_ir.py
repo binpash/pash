@@ -321,14 +321,28 @@ def compile_node_for(ast_node, fileIdGen, config):
     return compiled_ast
 
 
-## This function checks if a word is safe to expand (i.e. if it will not )
-def safe_to_expand(arg_char):
+## This function checks if we should expand an arg_char
+##
+## It has a dual purpose:
+## 1. First, it checks whether we need
+##    to pay the overhead of expanding (by checking that there is something to expand)
+##    like a variable
+## 2. Second it raises an error if we cannot expand an argument.
+def should_expand_arg_char(arg_char):
     key, val = get_kv(arg_char)
     if (key in ['V']): # Variable
         return True
+    elif (key == 'Q'):
+        return should_expand_argument(val)
+    elif (key == 'B'):
+        log("Cannot expand:", arg_char)
+        raise NotImplementedError()
     return False
 
-def make_echo_ast(arg_char, var_file_path):
+def should_expand_argument(argument):
+    return any([should_expand_arg_char(arg_char) for arg_char in argument])
+
+def make_echo_ast(argument, var_file_path):
     nodes = []
     ## Source variables if present
     if(not var_file_path is None):
@@ -351,7 +365,7 @@ def make_echo_ast(arg_char, var_file_path):
     set_node = make_kv('Command', [0, [], arguments, []])
     nodes.append(set_node)
 
-    arguments = [string_to_argument("echo"), string_to_argument("-n"), [arg_char]]
+    arguments = [string_to_argument("echo"), string_to_argument("-n"), argument]
 
     line_number = 0
     node = make_kv('Command', [line_number, [], arguments, []])
@@ -372,12 +386,12 @@ def execute_shell_asts(asts):
     return exec_obj.stdout
 
 ## TODO: Properly parse the output of the shell script
-def parse_string_to_arg_char(arg_char_string):
+def parse_string_to_arguments(arg_char_string):
     # log(arg_char_string)
-    return ['Q', string_to_argument(arg_char_string)]
+    return string_to_arguments(arg_char_string)
 
 ## TODO: Use "pash_input_args" when expanding in place of normal arguments.
-def naive_expand(arg_char, config):
+def naive_expand(argument, config):
 
     ## config contains a dictionary with: 
     ##  - all variables, their types, and values in 'shell_variables'
@@ -386,20 +400,20 @@ def naive_expand(arg_char, config):
     # log(config['shell_variables_file_path'])
 
     ## Create an AST node that "echo"s the argument
-    echo_asts = make_echo_ast(arg_char, config['shell_variables_file_path'])
+    echo_asts = make_echo_ast(argument, config['shell_variables_file_path'])
 
     ## Execute the echo AST by unparsing it to shell
     ## and calling bash
     expanded_string = execute_shell_asts(echo_asts)
 
-    log("Variable:", arg_char, "was expanded to:", expanded_string)
+    log("Argument:", argument, "was expanded to:", expanded_string)
 
     ## Parse the expanded string back to an arg_char
-    expanded_arg_char = parse_string_to_arg_char(expanded_string)
+    expanded_arguments = parse_string_to_arguments(expanded_string)
     
     ## TODO: Handle any errors
     # log(expanded_arg_char)
-    return expanded_arg_char
+    return expanded_arguments
 
 
 
@@ -408,20 +422,16 @@ def naive_expand(arg_char, config):
 ##
 ## TODO: At the moment this has the issue that a command that has the words which we want to expand 
 ##       might have assignments of its own, therefore requiring that we use them to properly expand.
-def expand(arg_char, config):
-    return naive_expand(arg_char, config)
-
-
+def expand_command_argument(argument, config):
+    new_arguments = [argument]
+    if(should_expand_argument(argument)):
+        new_arguments = naive_expand(argument, config)
+    return new_arguments
 
 ## This function compiles an arg char by recursing if it contains quotes or command substitution.
 ##
 ## It is currently being extended to also expand any arguments that are safe to expand. 
-def compile_arg_char(original_arg_char, fileIdGen, config):
-    ## Check if the arg char can be expanded and if so do it.
-    arg_char = copy.deepcopy(original_arg_char)
-    if(safe_to_expand(arg_char)):
-        arg_char = expand(arg_char, config)
-
+def compile_arg_char(arg_char, fileIdGen, config):
     ## Compile the arg char
     key, val = get_kv(arg_char)
     if (key in ['C',   # Single character
@@ -448,7 +458,8 @@ def compile_command_argument(argument, fileIdGen, config):
     return compiled_argument
 
 def compile_command_arguments(arguments, fileIdGen, config):
-    compiled_arguments = [compile_command_argument(arg, fileIdGen, config) for arg in arguments]
+    expanded_arguments = flatten_list([expand_command_argument(arg, config) for arg in arguments])
+    compiled_arguments = [compile_command_argument(arg, fileIdGen, config) for arg in expanded_arguments]
     return compiled_arguments
 
 ## Compiles the value assigned to a variable using the command argument rules.
