@@ -1,7 +1,7 @@
 mkfifo {1,2,3}grams
 
 
-cat "$IN_DIR/p1.out_2_00" "$IN_DIR/p1.out_2_01" |
+cat $IN_DIR/p1.out_2_00 ${IN_DIR}/p1.out_2_01 |
   sed "s#^#$WIKI#" |
   extract_text |
   tr -cs A-Za-z '\n' |
