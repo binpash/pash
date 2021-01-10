@@ -40,23 +40,6 @@ bigram_aux_map()
     cat $temp | tail -n 1 > $AUX_TAIL &
     cat $temp | tail +2 | paste $aux3 - > $OUT &
 
-    # ## Old way of doing it
-    # cat $IN |
-    #     tee $s2 $aux1 $aux2 |
-    #     tail +2 |
-    #     paste $s2 - > $OUT &
-
-    # ## The goal of this is to write the first line of $IN in the $AUX_HEAD
-    # ## stream and the last line of $IN in $AUX_TAIL
-
-    # cat $aux1 | ( head -n 1 > $AUX_HEAD; $PASH_TOP/evaluation/tools/drain_stream.sh ) &
-    # # while IFS= read -r line
-    # # do
-    # #     old_line=$line
-    # # done < $aux2
-    # # echo "$old_line" > $AUX_TAIL
-    # ( tail -n 1 $aux2 > $AUX_TAIL; $PASH_TOP/evaluation/tools/drain_stream.sh ) &
-
     wait
 
     rm $temp
@@ -95,15 +78,11 @@ bigram_aux_reduce()
 
 trigrams_aux()
 {
-    s1=$(mktemp -u)
     s2=$(mktemp -u)
     s3=$(mktemp -u)
-    s4=$(mktemp -u)
 
-    mkfifo $s1 $s2 $s3 $s4
+    mkfifo $s1 $s2
 
-    # sed '$d' $s1 > $s2 &
-    # sed '$d' $s3 > $s4 &
     tee $s2 |
         tail +2 |
         paste $s2 - |
@@ -111,18 +90,12 @@ trigrams_aux()
         cut -f 1 |
         tail +3 |
         paste $s3 - |
-        sed '$d' |
-        sed '$d'
+        sed "\$d" |
+        sed "\$d"
 
-    rm $s1 $s2 $s3 $s4
+    rm $s1 $s2
 }
 
-extract_line()
-{
-    cat $1 |
-        iconv -c -t ascii//TRANSLIT |
-        pandoc +RTS -K64m -RTS --from html --to plain --quiet
-}
 
 extract_text()
 {
@@ -163,6 +136,6 @@ cat 3grams |
     trigrams_aux |
     sort |
     uniq -c |
-    sort -rn # >> 3-grams.txt
+    sort -rn # > 3-grams.txt
 
 rm {1,2,3}grams
