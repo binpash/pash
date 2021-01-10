@@ -4,6 +4,6 @@ custom_sort() {
     sort $@
 }
 
-FILE=../evaluation/scripts/input/1M.txt
+FILES="../evaluation/scripts/input/1M.txt ../evaluation/scripts/input/1M.txt"
 
-cat $FILE | tr A-Z a-z | custom_sort
+cat $FILES | tr A-Z a-z | custom_sort
