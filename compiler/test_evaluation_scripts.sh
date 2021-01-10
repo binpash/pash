@@ -21,6 +21,7 @@ script_microbenchmarks=(
     export_var_script    # Tests whether exported variables in the scripts that are processed by PaSh runtime are visible to the rest of the script.
     comm-par-test        # Small comm test to ensure non-parallelizability
     comm-par-test2       # Small comm test with input redirection and hyphen
+    tee_web_index_bug    # Tests a tee bug from web index
 )
 
 pipeline_microbenchmarks=(
@@ -40,6 +41,7 @@ pipeline_microbenchmarks=(
     minimal_grep_stdin   # Tests whether PaSh can handle a script that reads from stdin
     micro_1000           # Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
     sed-test             # Tests all sed occurences in our evaluation to make sure that they work
+    fun-def              # Tests whether PaSh can handle a simple function definition
 )
 
 
