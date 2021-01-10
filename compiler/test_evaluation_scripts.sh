@@ -39,6 +39,7 @@ pipeline_microbenchmarks=(
     for_loop_simple      # Tests whether PaSh can handle a for loop where the body is parallelizable
     minimal_grep_stdin   # Tests whether PaSh can handle a script that reads from stdin
     micro_1000           # Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
+    sed-test             # Tests all sed occurences in our evaluation to make sure that they work
 )
 
 
