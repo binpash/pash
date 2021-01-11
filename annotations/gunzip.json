@@ -4,7 +4,7 @@
     [
         {
             "predicate": "default",
-            "class": "non-pure",
+            "class": "stateless",
             "inputs": ["stdin"],
             "outputs": ["stdout"]
         }
