@@ -156,7 +156,7 @@ pash_redir_output echo "(1) Previous exit status: $pash_previous_exit_status"
 pash_redir_output echo "(1) Previous set state: $pash_previous_set_status"
 
 ## Prepare a file with all shell variables
-pash_runtime_shell_variables_file=$(mktemp -u)
+pash_runtime_shell_variables_file="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
 source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
 pash_redir_output echo "(1) Bash variables saved in: $pash_runtime_shell_variables_file"
 
@@ -174,17 +174,17 @@ pash_redir_output echo "(1) Set state reverted to PaSh-internal set state: $-"
 ##
 
 ## Prepare a file for the output shell variables to be saved in
-pash_output_variables_file=$(mktemp -u)
+pash_output_variables_file="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
 # pash_redir_output echo "Input vars: $pash_runtime_shell_variables_file --- Output vars: $pash_output_variables_file"
 
 ## Prepare a file for the `set` state of the inner shell to be output
-pash_output_set_file=$(mktemp -u)
+pash_output_set_file="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
 
 ## The first argument contains the sequential script. Just running it should work for all tests.
 pash_sequential_script_file=$1
 
 ## The parallel script will be saved in the following file if compilation is successful.
-pash_compiled_script_file=$(mktemp -u)
+pash_compiled_script_file="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
 
 ## Just execute the original script
 # pash_redir_output echo "Sequential file in: $1 contains"

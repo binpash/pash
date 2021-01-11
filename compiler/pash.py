@@ -43,10 +43,10 @@ def main():
     ## 4. Translate the new AST back to shell syntax
     input_script_wo_extension, _input_script_extension = os.path.splitext(input_script_path)
     input_script_basename = os.path.basename(input_script_wo_extension)
-    ir_filename = os.path.join("/tmp", get_random_string() + "_" + input_script_basename + ".ir")
+    ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string() + "_" + input_script_basename + ".ir")
     save_asts_json(preprocessed_asts, ir_filename)
 
-    preprocessed_output_filename = os.path.join("/tmp", get_random_string())
+    preprocessed_output_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
     log("Preprocessed script stored in:", preprocessed_output_filename)
     if(args.output_preprocessed):
         log("Preprocessed script:")

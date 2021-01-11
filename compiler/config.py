@@ -20,6 +20,8 @@ PYTHON_VERSION = "python3"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 
+PASH_TMP_PREFIX = "pash_"
+
 config = {}
 annotations = []
 pash_args = None
