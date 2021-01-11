@@ -7,13 +7,12 @@ seq 2000 2004 |
     grep gz |
     tr -s ' ' |
     cut -d ' ' -f9 |
-    head |
     sed 's;^\(.*\)\(20[0-9][0-9]\).gz;\2/\1\2\.gz;' |
-    ## TODO: Should this be 2005?
-    sed 's;^;http://ndr.md/data/noaa/2005/;' |
+    sed 's;^;http://ndr.md/data/noaa/;' |
     xargs -n1 curl -s |
     gunzip |
     ## Processing
+    ## TODO: Does this really take the temperature?
     cut -c 89-92 |
     grep -v 999 |
     sort -rn |
