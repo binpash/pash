@@ -78,8 +78,8 @@ bigram_aux_reduce()
 
 trigrams_aux()
 {
-    s1=$(mktemp -u)
     s2=$(mktemp -u)
+    s3=$(mktemp -u)
 
     mkfifo $s2 $s3
 
