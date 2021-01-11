@@ -15,15 +15,16 @@ mkdir -p "../evaluation/results/${results_subdir}/"
 ## TODO: The generation of scripts has to be transparent.
 ## TODO: Simplify this parameter
 ## TODO: See if results are similar with a smaller input size
-input_size_increase=100000000
-python3 generate_unix50_scripts.py $unix50_dir $unix50_intermediary $input_size_increase
+# maximum_input_size="$((10 * 1000 * 1000 * 1000))" # 10 GB
+maximum_input_size="$((100 * 1000 * 1000))" # 100 MB
+python3 generate_unix50_scripts.py $unix50_dir $unix50_intermediary $maximum_input_size
 
 n_inputs=(
     # 1
-    2
+    # 2
     4
-    8
-    16
+    # 8
+    # 16
     # 32
     # 64
 )
