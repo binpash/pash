@@ -180,8 +180,8 @@ def optimize_irs(asts_and_irs, args):
 
 def print_graph_statistics(graph):
     total_nodes = graph.nodes
-    cat_nodes = [node for node in total_nodes if isinstance(node, Cat)]
-    eager_nodes = [node for node in total_nodes if isinstance(node, Eager)]
+    cat_nodes = [node for node in total_nodes.values() if isinstance(node, Cat)]
+    eager_nodes = [node for node in total_nodes.values() if isinstance(node, Eager)]
     log("Total nodes after optimization:", len(total_nodes))
     log(" -- out of which:")
     log("Cat nodes:", len(cat_nodes))
