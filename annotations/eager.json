@@ -1,5 +1,5 @@
 {
-    "command": "eager",
+    "command": "eager.sh",
     "cases":
     [
         {
