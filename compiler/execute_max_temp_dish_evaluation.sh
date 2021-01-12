@@ -23,10 +23,10 @@ seq "$start_year" "$end_year" | { time /bin/bash $max_temp_complete_script > $se
 
 ## TODO: Figure a way to redirect stderr from curl not having input (maybe use an argument for time)
 echo "Executing the complete max-temp script with pash -w 16 (log in: /tmp/pash_16_log)"
-seq "$start_year" "$end_year" | { time $PASH_TOP/pa.sh -w 16 --log_file /tmp/pash_16_log --output_time $max_temp_complete_script ; } 1> "$pash_width_16_output" 2> >(tee "$pash_width_16_time}" >&2)
+seq "$start_year" "$end_year" | { time $PASH_TOP/pa.sh -w 16 --log_file /tmp/pash_16_log --output_time $max_temp_complete_script ; } 1> "$pash_width_16_output" 2> >(tee "$pash_width_16_time" >&2)
 echo "Checking for output equivalence..."
 diff -s $seq_output $pash_width_16_output | head
-# 
+ 
 ## TODO: Add an optional flag for the following
 echo "Executing preprocessing and processing separately"
 
