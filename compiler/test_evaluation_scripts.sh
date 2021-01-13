@@ -42,6 +42,7 @@ pipeline_microbenchmarks=(
     micro_1000           # Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
     sed-test             # Tests all sed occurences in our evaluation to make sure that they work
     fun-def              # Tests whether PaSh can handle a simple function definition
+    tr-test              # Tests all possible behaviors of tr that exist in our evaluation
 )
 
 
