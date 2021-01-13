@@ -39,10 +39,22 @@ def contains_s(option):
     return ((option.startswith("-") and "s" in option)
             or option == "--squeeze-repeats")
 
+def contains_d(option):
+    return ((option.startswith("-") and "d" in option)
+            or option == "--delete")
+
 def is_tr_pure(options):
     formatted_opts = [format_expanded_arg_chars(option)
                       for option in options]
-    if(any([contains_s(opt) for opt in formatted_opts])):
+    set_opts = [opt for opt in formatted_opts if not opt.startswith("-")]
+    set1_opt = set_opts[0]
+    ## If -s is one of the options (and \n is in SET2)
+    ## If -d is one of the options (and \n is in SET1)
+    if((any([contains_s(opt) for opt in formatted_opts])
+        and len(set_opts) >= 2
+        and "\\n" in set_opts[1])
+       or (any([contains_d(opt) for opt in formatted_opts])
+           and "\\n" in set1_opt)):
         return "pure"
     else:
         return "stateless"
