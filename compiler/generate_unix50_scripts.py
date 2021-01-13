@@ -1,6 +1,7 @@
 import sys
 import os
 import re
+import math
 
 unix50_dir = sys.argv[1]
 intermediaries_dir = sys.argv[2]
@@ -44,8 +45,8 @@ for input_file in input_file_names:
     # print("Input:", input_file_path, "size:", len(input_file_data))
     num_iterations = maximum_input_size // len(input_file_data)
     with open(generated_input_file_path, "w") as file:
-        for _ in range(num_iterations):
-            file.write(input_file_data)
+        for _ in range(0, num_iterations, 100):
+            file.write(input_file_data * 100)
 
 print("|-- Separating and extracting all pipelines from the solutions script in:", unix50_script)
 print("|--   and saving them in:", intermediaries_dir)
