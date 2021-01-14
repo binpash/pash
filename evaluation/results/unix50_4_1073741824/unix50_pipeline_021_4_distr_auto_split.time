@@ -1,8 +1,5 @@
 
-real	0m30.010s
-user	3m46.096s
-sys	0m9.124s
-1a2,4
-> PORT
-> PORT
-> PORT
+real	0m37.870s
+user	3m55.758s
+sys	0m15.617s
+Files ../evaluation//intermediary//unix50_pipeline_021_seq_output and /tmp/distr_output/0 are identical
