@@ -6,7 +6,7 @@
 #define PRINTDBG(fmt, ...)
 #endif
 
-//TODO: batchs should always end with a new line(if batchSize is too small now, the invariant is broken)
+//TODO: batches should always end with a new line(if batchSize is too small now, the invariant is broken)
 void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned int numOutputFiles) {
   PRINTDBG("%s: will split input\n", __func__);
   //TODO: find better way?
@@ -31,13 +31,13 @@ void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned in
   FILE* outputFile = outputFiles[current];
   size_t readSize = batchSize;
 
-  //if size isn't set we can approximate it
+  //if batchSize isn't set we can approximate it
   if (!readSize) {
     int inputfd = fileno(inputFile);
     struct stat buf;
     fstat(inputfd, &buf);
     size_t inputSize = buf.st_size;
-    readSize = MIN(inputSize/MINCHUNKS, CHUNKSIZE); //autotune this better or replace with batchSize?
+    readSize = MIN(inputSize/MINCHUNKS, CHUNKSIZE); //autotune this better?
   }
 
   //allocate both buffers at the same time
@@ -45,11 +45,9 @@ void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned in
   char* incompleteLine = buffer + readSize + 1;
   int blockID = 0;
 
-  
 
-  // Research: find if there is benefit to fflush
   // Do round robin copying of the input file to the output files
-  // Each block has a header of one number representing the size of the next chunk block
+  // Each block has a header of "ID blockSize\n"
   while ((len = fread(buffer, 1, readSize, inputFile)) > 0) {
 
     //find pivot point for head and rest
