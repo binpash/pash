@@ -27,7 +27,7 @@ void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned in
   }
   PRINTDBG("%s: Opened input file %s\n", __func__, input);
   
-  size_t len = 0, totalbytes = 0, headSize = 0, restSize = 0, prevRestSize = 0, writeSize = 0;
+  size_t len = 0, headSize = 0, restSize = 0, prevRestSize = 0, writeSize = 0;
   FILE* outputFile = outputFiles[current];
   size_t readSize = batchSize;
 
@@ -80,10 +80,6 @@ void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned in
     outputFile = outputFiles[current];
     prevRestSize = restSize;
     headSize = restSize = 0;
-
-    #ifdef DEBUG
-      totalbytes += writeSize;
-    #endif
   }
 
   if (readSize < 0) {
