@@ -52,8 +52,9 @@ All shell scripts that the OCaml implementation works on are regenerated, byte-f
      33 REF_ABORT_1
 ```
 
-### Known Limitations
+### Known Bugs
 
 * `fresh_marker` for heredocs. This is really obscure and a pain to implement in C. For real-world, non-adversarial settings, just change the market from "EOF" to some random text.
+* Not Python
 
 ## Shell script -> JSON (TODO)
