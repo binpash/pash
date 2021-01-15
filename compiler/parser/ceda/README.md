@@ -45,6 +45,9 @@ Output:
 * `PASS` is good.
 
 #### Testing all the scripts in /pash/
+
+This includes `test_JSON_to_shell2.sh`!
+
 ```
 make tests-all
 ```
@@ -57,7 +60,7 @@ All shell scripts that the OCaml implementation works on are regenerated, byte-f
 
 ### Known Bugs
 
-* `fresh_marker` for heredocs. This is really obscure and a pain to implement in C. For real-world, non-adversarial settings, just change the market from "EOF" to some random text.
+* `fresh_marker` for heredocs. This is really obscure and a pain to implement in C. For real-world, non-adversarial settings, just change the marker from "EOF" to some random text.
 * Not Python
 
 ## Shell script -> JSON (TODO)
