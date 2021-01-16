@@ -1,7 +1,7 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_qzDwBBVV7E
-(1) Bash variables saved in: /tmp/pash_qzDwBBVV7E
+Writing vars to: /tmp/pash_wODtbmtTSn
+(1) Bash variables saved in: /tmp/pash_wODtbmtTSn
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
@@ -21,12 +21,12 @@ class: pure found for: sort
 inputs-outputs found for: awk
 |-- (['stdin'], ['stdout'], [('option', 0)])
 class: pure found for: awk
-Compilation time: 68.966  ms
+Compilation time: 67.13  ms
 Total nodes after optimization: 18
  -- out of which:
 Cat nodes: 0
 Eager nodes: 6
-Optimization time: 3.794  ms
+Optimization time: 3.256  ms
 arguments, redirs found for: tr
 |-- ([], [['File', ['From', 0, [['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50]]]]]]])
 arguments, redirs found for: tr
@@ -63,15 +63,15 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file21, #file28], [])
 arguments, redirs found for: awk
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57]]]]]]])
-Backend time: 15.808  ms
-Optimized script saved in: /tmp/pash_1q0iYMoejM
+Backend time: 16.556  ms
+Optimized script saved in: /tmp/pash_b5JLmMicYs
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_qzDwBBVV7E
+(3) Recovering variables from: /tmp/pash_wODtbmtTSn
 /dev/fd/63: line 36: declare: PPID: readonly variable
 /dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 78: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_1q0iYMoejM:
+(4) Executing script in /tmp/pash_b5JLmMicYs:
 rm -f "#file5"
 rm -f "#file7"
 rm -f "#file9"
@@ -151,27 +151,27 @@ rm -f "#file25"
 rm -f "#file26"
 rm -f "#file27"
 rm -f "#file28"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (14472) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (34348) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_sIJey6084M
+(5) Writing current BaSh set state to: /tmp/pash_VCEsmPrBCo
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_snDWltgUUY
+Writing vars to: /tmp/pash_h3SnQ1Daeh
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 201058.967 ms
-(7) Recovering BaSh variables from: /tmp/pash_snDWltgUUY
+Execution time: 182551.997 ms
+(7) Recovering BaSh variables from: /tmp/pash_h3SnQ1Daeh
 /dev/fd/63: line 37: declare: PPID: readonly variable
 /dev/fd/63: line 45: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 79: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_sIJey6084M
+(7) Reading current BaSh set state from: /tmp/pash_VCEsmPrBCo
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_davfyzni
-Preprocessing time: 28.817  ms
+Preprocessed script stored in: /tmp/pash_vizmwivf
+Preprocessing time: 27.921  ms
 
-real	3m21.580s
-user	10m15.839s
-sys	0m40.469s
+real	3m3.067s
+user	9m58.810s
+sys	0m38.571s
 Files ../evaluation//intermediary//unix50_pipeline_020_seq_output and /tmp/distr_output/0 are identical

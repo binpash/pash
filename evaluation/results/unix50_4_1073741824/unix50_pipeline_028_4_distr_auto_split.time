@@ -1,7 +1,7 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_424ojGujVg
-(1) Bash variables saved in: /tmp/pash_424ojGujVg
+Writing vars to: /tmp/pash_9rPLagm9rb
+(1) Bash variables saved in: /tmp/pash_9rPLagm9rb
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
@@ -39,12 +39,12 @@ inputs-outputs found for: tr
 inputs-outputs found for: tr
 |-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
  -- Warning: Overriding standard category for: tr
-Compilation time: 111.083  ms
+Compilation time: 69.989  ms
 Total nodes after optimization: 32
  -- out of which:
 Cat nodes: 2
 Eager nodes: 11
-Optimization time: 6.145  ms
+Optimization time: 6.268  ms
 arguments, redirs found for: sed
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49]]]]]]])
 arguments, redirs found for: sed
@@ -109,15 +109,15 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file40, #file51], [])
 arguments, redirs found for: tr
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49]]]]]]])
-Backend time: 30.971  ms
-Optimized script saved in: /tmp/pash_ChiVCDYboo
+Backend time: 26.221  ms
+Optimized script saved in: /tmp/pash_eHCinJ6DQt
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_424ojGujVg
+(3) Recovering variables from: /tmp/pash_9rPLagm9rb
 /dev/fd/63: line 36: declare: PPID: readonly variable
 /dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 78: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_ChiVCDYboo:
+(4) Executing script in /tmp/pash_eHCinJ6DQt:
 rm -f "#file5"
 rm -f "#file7"
 rm -f "#file9"
@@ -262,27 +262,27 @@ rm -f "#file48"
 rm -f "#file49"
 rm -f "#file50"
 rm -f "#file51"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (34751) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (35460) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_DcWCQxU4ZO
+(5) Writing current BaSh set state to: /tmp/pash_n1LDIyWlaX
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_r2cRXnyXts
+Writing vars to: /tmp/pash_1arLdDFhfY
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 44993.284 ms
-(7) Recovering BaSh variables from: /tmp/pash_r2cRXnyXts
+Execution time: 44183.284 ms
+(7) Recovering BaSh variables from: /tmp/pash_1arLdDFhfY
 /dev/fd/63: line 37: declare: PPID: readonly variable
 /dev/fd/63: line 45: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 79: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_DcWCQxU4ZO
+(7) Reading current BaSh set state from: /tmp/pash_n1LDIyWlaX
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_fnoboxob
-Preprocessing time: 43.543  ms
+Preprocessed script stored in: /tmp/pash_nkpkbvlp
+Preprocessing time: 28.586  ms
 
-real	0m45.650s
-user	3m11.678s
-sys	0m35.607s
+real	0m44.711s
+user	3m10.629s
+sys	0m38.425s
 Files ../evaluation//intermediary//unix50_pipeline_028_seq_output and /tmp/distr_output/0 are identical

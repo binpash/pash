@@ -1,7 +1,7 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_wqPKwokKxw
-(1) Bash variables saved in: /tmp/pash_wqPKwokKxw
+Writing vars to: /tmp/pash_U32wkfBcgA
+(1) Bash variables saved in: /tmp/pash_U32wkfBcgA
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
@@ -17,12 +17,12 @@ inputs-outputs found for: cut
 |-- (['stdin'], ['stdout'], [('option', 0), ('option', 1), ('option', 2), ('option', 3)])
 Uninterpreted operator: and
 class: stateless found for: cut
-Compilation time: 66.842  ms
+Compilation time: 69.975  ms
 Total nodes after optimization: 9
  -- out of which:
 Cat nodes: 1
 Eager nodes: 4
-Optimization time: 2.39  ms
+Optimization time: 2.392  ms
 Uninterpreted operator: and
 arguments, redirs found for: cut
 |-- ([], [['File', ['From', 0, [['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56]]]]]]])
@@ -45,15 +45,15 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file11, #file15], [])
 arguments, redirs found for: cat
 |-- ([#file12, #file13, #file14, #file15], [])
-Backend time: 9.595  ms
-Optimized script saved in: /tmp/pash_vJHEbiHOHn
+Backend time: 12.804  ms
+Optimized script saved in: /tmp/pash_HBOpZKMSDL
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_wqPKwokKxw
+(3) Recovering variables from: /tmp/pash_U32wkfBcgA
 /dev/fd/63: line 36: declare: PPID: readonly variable
 /dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 78: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_vJHEbiHOHn:
+(4) Executing script in /tmp/pash_HBOpZKMSDL:
 rm -f "#file5"
 rm -f "#file8"
 rm -f "#file9"
@@ -91,27 +91,27 @@ rm -f "#file12"
 rm -f "#file13"
 rm -f "#file14"
 rm -f "#file15"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (79546) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (52576) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_9nVgw41kRa
+(5) Writing current BaSh set state to: /tmp/pash_FTMkH6cAzf
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_zDBgRDDKlh
+Writing vars to: /tmp/pash_yVTUvS5kQ9
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 4262.851 ms
-(7) Recovering BaSh variables from: /tmp/pash_zDBgRDDKlh
+Execution time: 4276.815 ms
+(7) Recovering BaSh variables from: /tmp/pash_yVTUvS5kQ9
 /dev/fd/63: line 37: declare: PPID: readonly variable
 /dev/fd/63: line 45: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 79: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_9nVgw41kRa
+(7) Reading current BaSh set state from: /tmp/pash_FTMkH6cAzf
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_pxusgihq
-Preprocessing time: 26.453  ms
+Preprocessed script stored in: /tmp/pash_suitztxf
+Preprocessing time: 27.915  ms
 
-real	0m4.761s
-user	0m12.195s
-sys	0m7.605s
+real	0m4.789s
+user	0m12.412s
+sys	0m7.748s
 Files ../evaluation//intermediary//unix50_pipeline_000_seq_output and /tmp/distr_output/0 are identical

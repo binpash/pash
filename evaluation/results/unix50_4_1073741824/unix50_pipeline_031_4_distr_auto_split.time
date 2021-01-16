@@ -1,7 +1,7 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_ymtMB8BxqG
-(1) Bash variables saved in: /tmp/pash_ymtMB8BxqG
+Writing vars to: /tmp/pash_mObaURPG5i
+(1) Bash variables saved in: /tmp/pash_mObaURPG5i
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
@@ -37,12 +37,12 @@ inputs-outputs found for: tr
 inputs-outputs found for: tr
 |-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
  -- Warning: Overriding standard category for: tr
-Compilation time: 63.368  ms
+Compilation time: 67.203  ms
 Total nodes after optimization: 45
  -- out of which:
 Cat nodes: 3
 Eager nodes: 18
-Optimization time: 7.14  ms
+Optimization time: 8.029  ms
 arguments, redirs found for: head
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49]]]]]]])
 arguments, redirs found for: tr
@@ -141,15 +141,15 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file49, #file67], [])
 arguments, redirs found for: cat
 |-- ([#file64, #file65, #file66, #file67], [])
-Backend time: 28.527  ms
-Optimized script saved in: /tmp/pash_qKGnN4Wmee
+Backend time: 27.256  ms
+Optimized script saved in: /tmp/pash_s3S9dTkx48
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_ymtMB8BxqG
+(3) Recovering variables from: /tmp/pash_mObaURPG5i
 /dev/fd/63: line 36: declare: PPID: readonly variable
 /dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 78: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_qKGnN4Wmee:
+(4) Executing script in /tmp/pash_s3S9dTkx48:
 rm -f "#file5"
 rm -f "#file7"
 rm -f "#file9"
@@ -361,30 +361,30 @@ rm -f "#file64"
 rm -f "#file65"
 rm -f "#file66"
 rm -f "#file67"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (43999) - No such process
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (44000) - No such process
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (44001) - No such process
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (44116) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (43930) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (43931) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (43932) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (44045) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_4LQDYHCrPv
+(5) Writing current BaSh set state to: /tmp/pash_62N4tcIyO0
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_wzLgtzmv7k
+Writing vars to: /tmp/pash_hNsSDjhYZX
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 556.430 ms
-(7) Recovering BaSh variables from: /tmp/pash_wzLgtzmv7k
+Execution time: 500.117 ms
+(7) Recovering BaSh variables from: /tmp/pash_hNsSDjhYZX
 /dev/fd/63: line 37: declare: PPID: readonly variable
 /dev/fd/63: line 45: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 79: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_4LQDYHCrPv
+(7) Reading current BaSh set state from: /tmp/pash_62N4tcIyO0
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_zqkbigot
-Preprocessing time: 28.556  ms
+Preprocessed script stored in: /tmp/pash_dzhtpqrh
+Preprocessing time: 29.213  ms
 
-real	0m1.084s
-user	0m1.067s
-sys	0m0.676s
+real	0m1.024s
+user	0m1.039s
+sys	0m0.758s
 Files ../evaluation//intermediary//unix50_pipeline_031_seq_output and /tmp/distr_output/0 are identical
