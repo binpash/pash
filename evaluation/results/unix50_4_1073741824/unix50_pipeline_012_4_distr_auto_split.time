@@ -1,7 +1,7 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_IcUBGQGPI3
-(1) Bash variables saved in: /tmp/pash_IcUBGQGPI3
+Writing vars to: /tmp/pash_5h9xtQrkJA
+(1) Bash variables saved in: /tmp/pash_5h9xtQrkJA
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
@@ -25,12 +25,12 @@ inputs-outputs found for: cut
 |-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
 Uninterpreted operator: and
 class: stateless found for: cut
-Compilation time: 65.273  ms
+Compilation time: 63.56  ms
 Total nodes after optimization: 17
  -- out of which:
 Cat nodes: 1
 Eager nodes: 4
-Optimization time: 4.075  ms
+Optimization time: 4.692  ms
 arguments, redirs found for: grep
 |-- ([], [['File', ['From', 0, [['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50]]]]]]])
 arguments, redirs found for: grep
@@ -73,15 +73,15 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file23, #file27], [])
 arguments, redirs found for: cat
 |-- ([#file24, #file25, #file26, #file27], [])
-Backend time: 14.861  ms
-Optimized script saved in: /tmp/pash_Gk72L4KYol
+Backend time: 14.464  ms
+Optimized script saved in: /tmp/pash_Ei1s20UuVP
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_IcUBGQGPI3
+(3) Recovering variables from: /tmp/pash_5h9xtQrkJA
 /dev/fd/63: line 36: declare: PPID: readonly variable
 /dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 78: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_Gk72L4KYol:
+(4) Executing script in /tmp/pash_Ei1s20UuVP:
 rm -f "#file5"
 rm -f "#file7"
 rm -f "#file9"
@@ -157,27 +157,27 @@ rm -f "#file24"
 rm -f "#file25"
 rm -f "#file26"
 rm -f "#file27"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (8616) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (72760) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_J6lp7YRr8U
+(5) Writing current BaSh set state to: /tmp/pash_Nmdc5ppoKC
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_LfWSIda2x8
+Writing vars to: /tmp/pash_DdStoIEP4n
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 2604.724 ms
-(7) Recovering BaSh variables from: /tmp/pash_LfWSIda2x8
+Execution time: 2359.672 ms
+(7) Recovering BaSh variables from: /tmp/pash_DdStoIEP4n
 /dev/fd/63: line 37: declare: PPID: readonly variable
 /dev/fd/63: line 45: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 79: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_J6lp7YRr8U
+(7) Reading current BaSh set state from: /tmp/pash_Nmdc5ppoKC
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_mwotxwmf
-Preprocessing time: 28.411  ms
+Preprocessed script stored in: /tmp/pash_xsupbxab
+Preprocessing time: 27.957  ms
 
-real	0m3.112s
-user	0m15.758s
-sys	0m6.455s
+real	0m2.863s
+user	0m14.708s
+sys	0m6.147s
 Files ../evaluation//intermediary//unix50_pipeline_012_seq_output and /tmp/distr_output/0 are identical
