@@ -7,9 +7,6 @@ small_evaluation_flag=1
 
 ## TODO: Add a script that runs the parallel sort evaluation
 
-microbenchmarks_dir="../evaluation/microbenchmarks/"
-intermediary_dir="../evaluation/intermediary/"
-
 if [ "$small_evaluation_flag" -eq 1 ]; then
     echo "Executing small evaluation..."
     n_inputs=(
@@ -47,6 +44,12 @@ microbenchmarks=(
     'double_sort;;-n;-e;-a'     # EuroSys: sort-sort
     'shortest_scripts;;-n;-e'   # EuroSys: shortest-scripts
 )
+
+microbenchmarks_dir="../evaluation/microbenchmarks/"
+intermediary_dir="../evaluation/${intermediary_prefix}intermediary/"
+mkdir -p $intermediary_dir
+mkdir -p "../evaluation/results/$result_subdir/"
+
 
 echo "Deleting eager intermediate files..."
 rm -f /tmp/eager*
