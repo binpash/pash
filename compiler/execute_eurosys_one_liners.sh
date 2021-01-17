@@ -33,16 +33,16 @@ else
 fi
 
 microbenchmarks=(
-    'minimal_grep;-n;-e'        # EuroSys: nfa-regex
-    'minimal_sort;;-n;-e'       # EuroSys: sort
-    'topn;;-n;-e'               # EuroSys: top-n
-    'wf;;-n;-e'                 # EuroSys: wf
+    'minimal_grep;-n;-a'        # EuroSys: nfa-regex
+    'minimal_sort;;-n;-a'       # EuroSys: sort
+    'topn;;-n;-a'               # EuroSys: top-n
+    'wf;;-n;-a'                 # EuroSys: wf
     'spell;-e;-a'               # EuroSys: spell
-    'diff;;-n;-e'               # EuroSys: difference
+    'diff;;-n;-a'               # EuroSys: difference
     'bigrams;-e;-a'             # EuroSys: bi-grams
-    'set-diff;;-n;-e'           # EuroSys: set-difference
+    'set-diff;;-n;-a'           # EuroSys: set-difference
     'double_sort;;-n;-e;-a'     # EuroSys: sort-sort
-    'shortest_scripts;;-n;-e'   # EuroSys: shortest-scripts
+    'shortest_scripts;;-n;-a'   # EuroSys: shortest-scripts
 )
 
 microbenchmarks_dir="../evaluation/microbenchmarks/"
