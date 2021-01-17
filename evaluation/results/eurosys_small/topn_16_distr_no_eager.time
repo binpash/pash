@@ -1,0 +1,124 @@
+(1) Previous exit status: 0
+(1) Previous set state: hB
+Writing vars to: /tmp/pash_DFOi9Lvp7L
+(1) Bash variables saved in: /tmp/pash_DFOi9Lvp7L
+(1) Bash set state at start of execution: hB
+(1) Set state reverted to PaSh-internal set state: huB
+Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
+Argument: [['V', ['Normal', False, 'IN0', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-00
+Argument: [['V', ['Normal', False, 'IN1', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-01
+Argument: [['V', ['Normal', False, 'IN2', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-02
+Argument: [['V', ['Normal', False, 'IN3', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-03
+Argument: [['V', ['Normal', False, 'IN4', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-04
+Argument: [['V', ['Normal', False, 'IN5', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-05
+Argument: [['V', ['Normal', False, 'IN6', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-06
+Argument: [['V', ['Normal', False, 'IN7', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-07
+Argument: [['V', ['Normal', False, 'IN8', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-08
+Argument: [['V', ['Normal', False, 'IN9', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-09
+Argument: [['V', ['Normal', False, 'IN10', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-10
+Argument: [['V', ['Normal', False, 'IN11', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-11
+Argument: [['V', ['Normal', False, 'IN12', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-12
+Argument: [['V', ['Normal', False, 'IN13', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-13
+Argument: [['V', ['Normal', False, 'IN14', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-14
+Argument: [['V', ['Normal', False, 'IN15', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-15
+inputs-outputs found for: cat
+|-- ([('option', 0), ('option', 1), ('option', 2), ('option', 3), ('option', 4), ('option', 5), ('option', 6), ('option', 7), ('option', 8), ('option', 9), ('option', 10), ('option', 11), ('option', 12), ('option', 13), ('option', 14), ('option', 15)], ['stdout'], [])
+class: stateless found for: cat
+inputs-outputs found for: tr
+|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1), ('option', 2)])
+ -- Warning: Overriding standard category for: tr
+inputs-outputs found for: tr
+|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
+ -- Warning: Overriding standard category for: tr
+inputs-outputs found for: sort
+|-- (['stdin'], ['stdout'], [])
+class: pure found for: sort
+inputs-outputs found for: uniq
+|-- (['stdin'], ['stdout'], [('option', 0)])
+ -- Warning: Overriding standard category for: uniq
+inputs-outputs found for: sort
+|-- (['stdin'], ['stdout'], [('option', 0)])
+class: pure found for: sort
+Argument: [['V', ['Normal', False, 'N', []]], ['C', 113]] was expanded to: 1000q
+inputs-outputs found for: sed
+|-- (['stdin'], ['stdout'], [('option', 0)])
+ -- Warning: Overriding standard category for: sed
+Compilation time: 284.552  ms
+Total nodes after optimization: 7
+ -- out of which:
+Cat nodes: 1
+Eager nodes: 0
+Optimization time: 0.429  ms
+arguments, redirs found for: cat
+|-- ([fid:1:../evaluation/small_intermediary/split_inputs/input-chunk-00, fid:2:../evaluation/small_intermediary/split_inputs/input-chunk-01, fid:3:../evaluation/small_intermediary/split_inputs/input-chunk-02, fid:4:../evaluation/small_intermediary/split_inputs/input-chunk-03, fid:5:../evaluation/small_intermediary/split_inputs/input-chunk-04, fid:6:../evaluation/small_intermediary/split_inputs/input-chunk-05, fid:7:../evaluation/small_intermediary/split_inputs/input-chunk-06, fid:8:../evaluation/small_intermediary/split_inputs/input-chunk-07, fid:9:../evaluation/small_intermediary/split_inputs/input-chunk-08, fid:10:../evaluation/small_intermediary/split_inputs/input-chunk-09, fid:11:../evaluation/small_intermediary/split_inputs/input-chunk-10, fid:12:../evaluation/small_intermediary/split_inputs/input-chunk-11, fid:13:../evaluation/small_intermediary/split_inputs/input-chunk-12, fid:14:../evaluation/small_intermediary/split_inputs/input-chunk-13, fid:15:../evaluation/small_intermediary/split_inputs/input-chunk-14, fid:16:../evaluation/small_intermediary/split_inputs/input-chunk-15], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 55]]]]]]])
+arguments, redirs found for: tr
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57]]]]]]])
+arguments, redirs found for: tr
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 51]]]]]]])
+arguments, redirs found for: uniq
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 51]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 53]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 55]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 55]]]]]]])
+Backend time: 16.09  ms
+Optimized script saved in: /tmp/pash_KIP27ckJBg
+Compiler exited with code: 0
+(3) Recovering variables from: /tmp/pash_DFOi9Lvp7L
+/dev/fd/63: line 49: declare: PPID: readonly variable
+/dev/fd/63: line 57: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 91: declare: UID: readonly variable
+(3) Reverted to BaSh set state: hB
+(4) Executing script in /tmp/pash_KIP27ckJBg:
+rm -f "#file17"
+rm -f "#file19"
+rm -f "#file21"
+rm -f "#file23"
+rm -f "#file25"
+rm -f "#file27"
+mkfifo "#file17"
+mkfifo "#file19"
+mkfifo "#file21"
+mkfifo "#file23"
+mkfifo "#file25"
+mkfifo "#file27"
+{ cat ../evaluation/small_intermediary/split_inputs/input-chunk-00 ../evaluation/small_intermediary/split_inputs/input-chunk-01 ../evaluation/small_intermediary/split_inputs/input-chunk-02 ../evaluation/small_intermediary/split_inputs/input-chunk-03 ../evaluation/small_intermediary/split_inputs/input-chunk-04 ../evaluation/small_intermediary/split_inputs/input-chunk-05 ../evaluation/small_intermediary/split_inputs/input-chunk-06 ../evaluation/small_intermediary/split_inputs/input-chunk-07 ../evaluation/small_intermediary/split_inputs/input-chunk-08 ../evaluation/small_intermediary/split_inputs/input-chunk-09 ../evaluation/small_intermediary/split_inputs/input-chunk-10 ../evaluation/small_intermediary/split_inputs/input-chunk-11 ../evaluation/small_intermediary/split_inputs/input-chunk-12 ../evaluation/small_intermediary/split_inputs/input-chunk-13 ../evaluation/small_intermediary/split_inputs/input-chunk-14 ../evaluation/small_intermediary/split_inputs/input-chunk-15 >"#file17" & }
+{ tr -cs A-Za-z "\\n" <"#file17" >"#file19" & }
+{ tr A-Z a-z <"#file19" >"#file21" & }
+{ sort <"#file21" >"#file23" & }
+{ uniq -c <"#file23" >"#file25" & }
+{ sort -rn <"#file25" >"#file27" & }
+{ sed 1000q <"#file27" & }
+source /home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh ${!}
+rm -f "#file17"
+rm -f "#file19"
+rm -f "#file21"
+rm -f "#file23"
+rm -f "#file25"
+rm -f "#file27"
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (89696) - No such process
+(5) BaSh script exited with ec: 0
+(5) Writing current BaSh set state to: /tmp/pash_AHuytjwTO6
+(5) Current BaSh shell: hB
+(5) Reverted to PaSh set state to: huB
+Writing vars to: /tmp/pash_JAbpkD8Bvt
+(5) Exiting from BaSh with BaSh status: 0
+Execution time: 413341.997 ms
+(7) Recovering BaSh variables from: /tmp/pash_JAbpkD8Bvt
+/dev/fd/63: line 50: declare: PPID: readonly variable
+/dev/fd/63: line 58: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 92: declare: UID: readonly variable
+(7) Reading current BaSh set state from: /tmp/pash_AHuytjwTO6
+(7) Current BaSh set state: hB
+(7) Current PaSh set state: huB
+(7) Reverted to BaSh set state before exiting: hB
+(7) Reverting last BaSh exit code: 0
+Preprocessed script stored in: /tmp/pash_wtghkgnh
+Preprocessing time: 28.851  ms
+
+real	6m54.064s
+user	7m0.522s
+sys	0m14.258s
+Files ../evaluation//small_intermediary//topn_seq_output and /tmp/distr_output/0 are identical
