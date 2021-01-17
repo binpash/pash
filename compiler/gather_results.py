@@ -29,6 +29,7 @@ MICROBENCHMARKS = "../evaluation/microbenchmarks/"
 RESULTS = "../evaluation/results/"
 UNIX50_RESULTS = "../evaluation/results/unix50/"
 SMALL_UNIX50_RESULTS = "../evaluation/results/unix50_4_1073741824/"
+BIG_UNIX50_RESULTS = "../evaluation/results/unix50_16_10737418240/"
 COARSE_UNIX50_RESULTS = "../evaluation/results/unix50-naive/"
 
 
@@ -1546,6 +1547,7 @@ report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctness)
 ## Collect all unix50 results
 unix50_results, unix50_results_fan_in = collect_all_unix50_results(UNIX50_RESULTS)
 small_unix50_results, _ = collect_all_unix50_results(SMALL_UNIX50_RESULTS, scaleup_numbers=[4], suffix='distr_auto_split.time')
+big_unix50_results, _ = collect_all_unix50_results(BIG_UNIX50_RESULTS, scaleup_numbers=[16], suffix='distr_auto_split.time')
 
 ##
 ## Theory Paper
@@ -1581,7 +1583,8 @@ experiments = ["minimal_grep",
 plot_one_liners_tiling(all_experiment_results, experiments)
 generate_tex_table(experiments)
 collect_unix50_scaleup_times(unix50_results)
-collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_small")
+collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB")
+collect_unix50_scaleup_times(big_unix50_results, scaleup=[16], small_prefix="_10GB")
 plot_sort_with_baseline(RESULTS)
 
 ## Format and print correctness results
