@@ -1,5 +1,5 @@
 /*
-GitHub Webhook controller for managing Pash's EC2 test instances.
+Web service for Pash's AWS resources, with a focus on CI.
 
 Requires an AWS user with permissions for sending commands
 to an EC2 instance used for correctness tests, and the EC2
@@ -77,10 +77,10 @@ const runTask = (msg, script, req, res, runNext) => {
 
 
 const routes = {
-  '/ci': ci,
-  '/ech': echo,
-  '/pkg': pkg,
-  '/now': now,
+    '/ci': ci,
+    '/ech': echo,
+    '/pkg': pkg,
+    '/now': now,
 };
 
 
@@ -93,7 +93,6 @@ const createHmacDigest = (secret, message) =>
 
 const authenticateRequest = (clientAssertedSignature, message) =>
       timingSafeEqual(clientAssertedSignature, createHmacDigest(secret, message));
-
 
 const dispatcher = (req, res) => {
     const { pathname: p } = parseUrl(req.url);
@@ -111,7 +110,6 @@ const dispatcher = (req, res) => {
 const createGitHubWebhookServer = ({ port = 2047 } = {}) =>
       createServer(dispatcher).listen(port, log("server listening on port " + port));
 
-
-module.exports = {
-    createGitHubWebhookServer,
-};
+if (require.main === module) {
+    createGitHubWebhookServer({ port: 2047 });
+}

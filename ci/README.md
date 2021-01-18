@@ -36,6 +36,7 @@ To add a worker to the system:
 
 1. Create the EC2 instance.
 2. Connect to the instance and write its instructions in an executable `~/worker-script.sh`
+   (`workers` contains scripts suitable for use in this project)
 3. In AWS, create a `Pash` tag on the instance and set the value to `worker`.
 
 
