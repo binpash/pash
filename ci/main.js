@@ -3,5 +3,5 @@
 const { createGitHubWebhookServer } = require('./github-webhooks.js');
 
 if (require.main === module) {
-    createGitHubWebhookServer(2047);
+    createGitHubWebhookServer({ port: 2047 });
 }
