@@ -30,7 +30,7 @@ This is functionally not much different than the prior version,
 but the implementation leverages more cloud computing features.
 
 
-# Add a Worker
+## Add a Worker
 
 To add a worker to the system:
 
