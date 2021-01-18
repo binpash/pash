@@ -3,7 +3,7 @@ This is a draft for an AWS-based CI system.
 
 ## Use
 
-To start the controller service, run `node main.js`.
+To start the controller service, run `node controller/main.js`.
 
 To add a worker for the controller to use, see [here](#add-a-worker).
 
