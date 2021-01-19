@@ -19,15 +19,16 @@ make install
 
 ### Usage
 
-It has the same usage as `json_to_shell` e.g.,
+It has the same usage as `json_to_shell` i.e.,
+`./json_to_shell2 JSON_FILE_NAME` or `./json_to_shell2 < JSON_FILE_NAME`
+
+e.g.,
 
 ```
 $ cat /pash/evaluation/hello-world.sh | ../parse_to_json.native | ./json_to_shell2
 if [ $(uname) = "Darwin" ]; then a=/usr/share/dict/web2; else a=/usr/share/dict/words; fi
 if [ -f ${a} ]; then cat ${a} ${a} ${a} ${a} ${a} ${a} ${a} ${a} | grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" | wc -l; else echo "Dictionary file ${a} not found.."; fi
 ```
-
-Alternatively, it can will read from a file specified as the first parameter.
 
 ### Testing
 
