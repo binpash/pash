@@ -3,7 +3,9 @@
 const { respond, getRequestBody } = require('./lib.js');
 const SSM = require('@aws-sdk/client-ssm');
 
-const ssm = new SSM.SSMClient({ region: "us-east-1" });
+const region = "us-east-1";
+
+const ssm = new SSM.SSMClient({ region });
 
 const echo = async (req, res) =>
       respond(res, 200, await getRequestBody(req));
@@ -16,11 +18,15 @@ const assignment = (assignees) =>
         OutputS3BucketName: 'pash-reports',
         Parameters: {
             commands: ['/home/ubuntu/worker-script.sh'],
-            workingDirectory: [''],
+            workingDirectory: ['/home/ubuntu'],
             executionTimeout: ['3600']
         },
     });
 
+
+
+const buildCommandStatusUrl = (commandId) =>
+      `https://console.aws.amazon.com/systems-manager/run-command/${commandId}?region=us-east-1`;
 
 // Tells every EC2 instance responsible for correctness tests to run their scripts.
 const ci = async (req, res) => {
@@ -29,7 +35,7 @@ const ci = async (req, res) => {
 
         if (httpStatusCode === 200) {
             const { CommandId }  = Command;
-            respond(res, 200, `CI signal sent. SSM Command Id: ${CommandId}\n`);
+            respond(res, 200, `Sent. Check status using the link below.\n\n${buildCommandStatusUrl(CommandId)}\n`);
         } else {
             respond(res, 500, `AWS SSM responded with error code ${httpStatusCode}\n`);
         }
