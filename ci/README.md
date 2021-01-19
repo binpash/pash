@@ -27,6 +27,9 @@ To start it, run `node controller/main.js`.
 ### Jan 19 2021
 
 - Decouple service from routes so that implementations can be swapped.
+- Implement new versions of `/ci` and `/now` to leverage AWS SSM
+- Use AWS JS SDK to reduce dependence on Bash subprocesses
+
 
 ### Jan 18 2021
 
