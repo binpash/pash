@@ -27,6 +27,7 @@ plt.rcParams['font.family'] = 'STIXGeneral'
 
 MICROBENCHMARKS = "../evaluation/microbenchmarks/"
 RESULTS = "../evaluation/results/"
+SMALL_RESULTS = "../evaluation/results/eurosys_small/"
 UNIX50_RESULTS = "../evaluation/results/unix50/"
 SMALL_UNIX50_RESULTS = "../evaluation/results/unix50_4_1073741824/"
 BIG_UNIX50_RESULTS = "../evaluation/results/unix50_16_10737418240/"
@@ -1162,20 +1163,10 @@ def report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctne
 
     print_aggregates("All", averages, no_eager_averages)
 
-def plot_one_liners_tiling(all_experiment_results, experiments):
-
-    all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
-
-    custom_scaleup_plots = {"minimal_grep" : ["eager", "blocking-eager"],
-                            "minimal_sort": ["eager", "blocking-eager", "no-eager"],
-                            "topn": ["eager", "blocking-eager", "no-eager"],
-                            "wf": ["eager", "blocking-eager", "no-eager"],
-                            "spell" : ["split", "eager"],
-                            "diff" : ["eager", "blocking-eager", "no-eager"],
-                            "bigrams" : ["split", "eager"],
-                            "set-diff" : ["eager", "blocking-eager", "no-eager"],
-                            "double_sort" : ["split", "eager", "blocking-eager", "no-eager"],
-                            "shortest_scripts" : ["eager", "blocking-eager", "no-eager"]}
+def plot_one_liners_tiling(all_experiment_results, experiments,
+                           custom_scaleup_plots,
+                           all_scaleup_numbers=[2, 4, 8, 16, 32, 64],
+                           prefix=""):
 
     line_plots = ["split", "eager", "blocking-eager", "no-eager"]
 
@@ -1199,7 +1190,7 @@ def plot_one_liners_tiling(all_experiment_results, experiments):
 
     fig.set_size_inches(27, 8.2)
     plt.tight_layout()
-    plt.savefig(os.path.join('../evaluation/plots', "tiling_throughput_scaleup.pdf"),bbox_inches='tight')
+    plt.savefig(os.path.join('../evaluation/plots', "{}tiling_throughput_scaleup.pdf".format(prefix)),bbox_inches='tight')
 
     print_aggregates("Systems", averages, no_eager_averages)
 
@@ -1541,6 +1532,13 @@ for experiment in all_experiments:
     all_sequential_results[experiment] = sequential_time
     correctness[experiment] = output_diff
 
+small_one_liners_scaleup_numbers = [2, 16]
+small_one_liner_results = {}
+for experiment in all_experiments:
+    small_speedup_results, _, sequential_time = collect_scaleup_line_speedups(experiment, small_one_liners_scaleup_numbers, SMALL_RESULTS)
+    small_one_liner_results[experiment] = small_speedup_results
+
+
 ## Make a report of all one-liners
 report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctness)
 
@@ -1580,7 +1578,36 @@ experiments = ["minimal_grep",
                "set-diff",
                "double_sort",
                "shortest_scripts"]
-plot_one_liners_tiling(all_experiment_results, experiments)
+
+custom_scaleup_plots = {"minimal_grep" : ["eager", "blocking-eager"],
+                        "minimal_sort": ["eager", "blocking-eager", "no-eager"],
+                        "topn": ["eager", "blocking-eager", "no-eager"],
+                        "wf": ["eager", "blocking-eager", "no-eager"],
+                        "spell" : ["split", "eager"],
+                        "diff" : ["eager", "blocking-eager", "no-eager"],
+                        "bigrams" : ["split", "eager"],
+                        "set-diff" : ["eager", "blocking-eager", "no-eager"],
+                        "double_sort" : ["split", "eager", "blocking-eager", "no-eager"],
+                        "shortest_scripts" : ["eager", "blocking-eager", "no-eager"]}
+
+plot_one_liners_tiling(all_experiment_results, experiments, custom_scaleup_plots)
+
+small_custom_scaleup_plots = {"minimal_grep" : ["split", "blocking-eager"],
+                              "minimal_sort": ["split", "blocking-eager", "no-eager"],
+                              "topn": ["split", "blocking-eager", "no-eager"],
+                              "wf": ["split", "blocking-eager", "no-eager"],
+                              "spell" : ["split", "eager"],
+                              "diff" : ["split", "blocking-eager", "no-eager"],
+                              "bigrams" : ["split", "eager"],
+                              "set-diff" : ["split", "blocking-eager", "no-eager"],
+                              "double_sort" : ["split", "eager", "blocking-eager", "no-eager"],
+                              "shortest_scripts" : ["split", "blocking-eager", "no-eager"]}
+
+
+plot_one_liners_tiling(small_one_liner_results, experiments,
+                       small_custom_scaleup_plots,
+                       all_scaleup_numbers=small_one_liners_scaleup_numbers,
+                       prefix="small_")
 generate_tex_table(experiments)
 collect_unix50_scaleup_times(unix50_results)
 collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB")
