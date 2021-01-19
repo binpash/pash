@@ -29,13 +29,13 @@ const ci = async (req, res) => {
 
         if (httpStatusCode === 200) {
             const { CommandId }  = Command;
-            respond(res, 200, `CI signal sent. SSM Command Id: ${CommandId}`);
+            respond(res, 200, `CI signal sent. SSM Command Id: ${CommandId}\n`);
         } else {
-            respond(res, 500, `AWS SSM responded with error code ${httpStatusCode}`);
+            respond(res, 500, `AWS SSM responded with error code ${httpStatusCode}\n`);
         }
     } catch (e) {
         err(e);
-        respond(res, 500, `Failed to distribute work to ci workers.`);
+        respond(res, 500, `Failed to distribute work to ci workers.\n`);
     }
 };
 
