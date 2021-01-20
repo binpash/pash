@@ -1,5 +1,8 @@
 #!/bin/bash
 
+## Necessary to set PASH_TOP
+export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+
 execute_seq_flag=0
 eager_flag=0
 no_task_par_eager_flag=0
@@ -28,9 +31,7 @@ intermediary_prefix=$4
 
 experiment="${microbenchmark}_${n_in}"
 
-export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
-
-eval_directory="../evaluation/"
+eval_directory="$PASH_TOP/evaluation/"
 directory="${eval_directory}/${4}intermediary/"
 results="${eval_directory}results/${results_subdir}/"
 prefix="${directory}${experiment}"
@@ -42,13 +43,12 @@ input_file="${prefix}.in"
 seq_output="${directory}/${microbenchmark}_seq_output"
 
 echo "Environment:"
-cat $env_file
+# cat $env_file
 . $env_file
 vars_to_export=$(cut -d= -f1 $env_file)
 if [ ! -z "$vars_to_export" ]; then
     export $vars_to_export
 fi
-echo $IN0 $IN1
 
 ## Export necessary functions
 if [ -f "$funs_file" ]; then
