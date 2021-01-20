@@ -1,7 +1,7 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_3rih4mb3zQ
-(1) Bash variables saved in: /tmp/pash_3rih4mb3zQ
+Writing vars to: /tmp/pash_aPyG8PiPxd
+(1) Bash variables saved in: /tmp/pash_aPyG8PiPxd
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
@@ -16,12 +16,12 @@ inputs-outputs found for: tr
 inputs-outputs found for: grep
 |-- (['stdin'], ['stdout'], [('option', 0)])
 class: stateless found for: grep
-Compilation time: 33.43  ms
+Compilation time: 33.949  ms
 Total nodes after optimization: 7
  -- out of which:
 Cat nodes: 1
 Eager nodes: 2
-Optimization time: 2.183  ms
+Optimization time: 2.35  ms
 arguments, redirs found for: tr
 |-- ([], [['File', ['From', 0, [['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 115], ['C', 109], ['C', 97], ['C', 108], ['C', 108], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56]]]]]]])
 arguments, redirs found for: tr
@@ -36,15 +36,15 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file11, #file13], [])
 arguments, redirs found for: cat
 |-- ([#file12, #file13], [])
-Backend time: 11.503  ms
-Optimized script saved in: /tmp/pash_mbXSnn7y4p
+Backend time: 11.355  ms
+Optimized script saved in: /tmp/pash_oNW5YsWpPo
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_3rih4mb3zQ
+(3) Recovering variables from: /tmp/pash_aPyG8PiPxd
 /dev/fd/63: line 34: declare: PPID: readonly variable
 /dev/fd/63: line 42: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 76: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_mbXSnn7y4p:
+(4) Executing script in /tmp/pash_oNW5YsWpPo:
 rm -f "#file3"
 rm -f "#file5"
 rm -f "#file8"
@@ -77,27 +77,27 @@ rm -f "#file10"
 rm -f "#file11"
 rm -f "#file12"
 rm -f "#file13"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (54974) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (36795) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_qD552ZZi38
+(5) Writing current BaSh set state to: /tmp/pash_QklxLZmK7E
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_yxsGBtG2t8
+Writing vars to: /tmp/pash_oqYa0n8uQY
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 233615.907 ms
-(7) Recovering BaSh variables from: /tmp/pash_yxsGBtG2t8
+Execution time: 242312.412 ms
+(7) Recovering BaSh variables from: /tmp/pash_oqYa0n8uQY
 /dev/fd/63: line 35: declare: PPID: readonly variable
 /dev/fd/63: line 43: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 77: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_qD552ZZi38
+(7) Reading current BaSh set state from: /tmp/pash_QklxLZmK7E
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_sfqchfow
-Preprocessing time: 27.5  ms
+Preprocessed script stored in: /tmp/pash_idsaztqy
+Preprocessing time: 27.878  ms
 
-real	3m54.085s
-user	7m45.116s
-sys	0m4.801s
+real	4m2.785s
+user	8m1.222s
+sys	0m4.493s
 Files ../evaluation//small_intermediary//minimal_grep_seq_output and /tmp/distr_output/0 are identical

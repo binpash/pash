@@ -1,7 +1,7 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_VGaYTVqo8N
-(1) Bash variables saved in: /tmp/pash_VGaYTVqo8N
+Writing vars to: /tmp/pash_HwFJIP7OLc
+(1) Bash variables saved in: /tmp/pash_HwFJIP7OLc
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
@@ -43,12 +43,12 @@ Argument: [['V', ['Normal', False, 'N', []]], ['C', 113]] was expanded to: 1000q
 inputs-outputs found for: sed
 |-- (['stdin'], ['stdout'], [('option', 0)])
  -- Warning: Overriding standard category for: sed
-Compilation time: 218.574  ms
+Compilation time: 288.647  ms
 Total nodes after optimization: 174
  -- out of which:
 Cat nodes: 1
 Eager nodes: 90
-Optimization time: 18.673  ms
+Optimization time: 18.966  ms
 arguments, redirs found for: cat
 |-- ([fid:1:../evaluation/small_intermediary/split_inputs/input-chunk-00, fid:2:../evaluation/small_intermediary/split_inputs/input-chunk-01, fid:3:../evaluation/small_intermediary/split_inputs/input-chunk-02, fid:4:../evaluation/small_intermediary/split_inputs/input-chunk-03, fid:5:../evaluation/small_intermediary/split_inputs/input-chunk-04, fid:6:../evaluation/small_intermediary/split_inputs/input-chunk-05, fid:7:../evaluation/small_intermediary/split_inputs/input-chunk-06, fid:8:../evaluation/small_intermediary/split_inputs/input-chunk-07, fid:9:../evaluation/small_intermediary/split_inputs/input-chunk-08, fid:10:../evaluation/small_intermediary/split_inputs/input-chunk-09, fid:11:../evaluation/small_intermediary/split_inputs/input-chunk-10, fid:12:../evaluation/small_intermediary/split_inputs/input-chunk-11, fid:13:../evaluation/small_intermediary/split_inputs/input-chunk-12, fid:14:../evaluation/small_intermediary/split_inputs/input-chunk-13, fid:15:../evaluation/small_intermediary/split_inputs/input-chunk-14, fid:16:../evaluation/small_intermediary/split_inputs/input-chunk-15], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 55]]]]]]])
 arguments, redirs found for: tr
@@ -397,15 +397,15 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file140, #file231], [])
 arguments, redirs found for: sed
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 55]]]]]]])
-Backend time: 79.059  ms
-Optimized script saved in: /tmp/pash_gSScNzgmpp
+Backend time: 82.669  ms
+Optimized script saved in: /tmp/pash_V9cvKtXQU7
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_VGaYTVqo8N
+(3) Recovering variables from: /tmp/pash_HwFJIP7OLc
 /dev/fd/63: line 49: declare: PPID: readonly variable
 /dev/fd/63: line 57: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 91: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_gSScNzgmpp:
+(4) Executing script in /tmp/pash_V9cvKtXQU7:
 rm -f "#file17"
 rm -f "#file19"
 rm -f "#file21"
@@ -1205,27 +1205,27 @@ rm -f "#file228"
 rm -f "#file229"
 rm -f "#file230"
 rm -f "#file231"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (42487) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (43980) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_JJcppOYh7H
+(5) Writing current BaSh set state to: /tmp/pash_LSG0620sP6
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_m6Ri6mtOy2
+Writing vars to: /tmp/pash_nkKxWFAsEZ
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 89583.971 ms
-(7) Recovering BaSh variables from: /tmp/pash_m6Ri6mtOy2
+Execution time: 83277.434 ms
+(7) Recovering BaSh variables from: /tmp/pash_nkKxWFAsEZ
 /dev/fd/63: line 50: declare: PPID: readonly variable
 /dev/fd/63: line 58: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 92: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_JJcppOYh7H
+(7) Reading current BaSh set state from: /tmp/pash_LSG0620sP6
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_mkgdgefg
-Preprocessing time: 27.54  ms
+Preprocessed script stored in: /tmp/pash_mwkccrja
+Preprocessing time: 28.261  ms
 
-real	1m30.357s
-user	10m14.600s
-sys	1m27.829s
+real	1m24.103s
+user	9m16.477s
+sys	1m28.889s
 Files ../evaluation//small_intermediary//topn_seq_output and /tmp/distr_output/0 are identical

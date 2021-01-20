@@ -1,7 +1,7 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_6sk27mB59x
-(1) Bash variables saved in: /tmp/pash_6sk27mB59x
+Writing vars to: /tmp/pash_KMK5K04jP7
+(1) Bash variables saved in: /tmp/pash_KMK5K04jP7
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
@@ -32,12 +32,12 @@ Argument: [['V', ['Normal', False, 'dict', []]]] was expanded to: ../evaluation/
 inputs-outputs found for: comm
 |-- (['stdin', ('option', 2)], ['stdout'], [('option', 0)])
 class: pure found for: comm
-Compilation time: 51.633  ms
+Compilation time: 51.663  ms
 Total nodes after optimization: 27
  -- out of which:
 Cat nodes: 2
 Eager nodes: 9
-Optimization time: 4.229  ms
+Optimization time: 5.65  ms
 arguments, redirs found for: tr
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55]]]]]]])
 arguments, redirs found for: col
@@ -92,15 +92,15 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file15, #file46], [])
 arguments, redirs found for: comm
 |-- ([#file46, fid:17:../evaluation/scripts/input/sorted_words], [])
-Backend time: 21.398  ms
-Optimized script saved in: /tmp/pash_KybrckhE1d
+Backend time: 20.363  ms
+Optimized script saved in: /tmp/pash_3HIoHVi9nW
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_6sk27mB59x
+(3) Recovering variables from: /tmp/pash_KMK5K04jP7
 /dev/fd/63: line 34: declare: PPID: readonly variable
 /dev/fd/63: line 42: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 76: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_KybrckhE1d:
+(4) Executing script in /tmp/pash_3HIoHVi9nW:
 rm -f "#file3"
 rm -f "#file5"
 rm -f "#file7"
@@ -234,27 +234,27 @@ rm -f "#file43"
 rm -f "#file44"
 rm -f "#file45"
 rm -f "#file46"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (8830) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (47913) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_ybDipLIOA4
+(5) Writing current BaSh set state to: /tmp/pash_Sn23Ql0QW8
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_Fb7ERehQm9
+Writing vars to: /tmp/pash_MINpFvlGCP
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 32417.831 ms
-(7) Recovering BaSh variables from: /tmp/pash_Fb7ERehQm9
+Execution time: 32980.013 ms
+(7) Recovering BaSh variables from: /tmp/pash_MINpFvlGCP
 /dev/fd/63: line 35: declare: PPID: readonly variable
 /dev/fd/63: line 43: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 77: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_ybDipLIOA4
+(7) Reading current BaSh set state from: /tmp/pash_Sn23Ql0QW8
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_gznnkubf
-Preprocessing time: 29.373  ms
+Preprocessed script stored in: /tmp/pash_djguyahz
+Preprocessing time: 28.711  ms
 
-real	0m32.901s
-user	0m57.105s
-sys	0m21.276s
+real	0m33.482s
+user	0m57.732s
+sys	0m23.081s
 Files ../evaluation//small_intermediary//spell_seq_output and /tmp/distr_output/0 are identical
