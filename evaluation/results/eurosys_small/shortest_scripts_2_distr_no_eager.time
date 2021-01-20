@@ -1,7 +1,7 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_Qt30o1gzha
-(1) Bash variables saved in: /tmp/pash_Qt30o1gzha
+Writing vars to: /tmp/pash_i7IPsCBKVn
+(1) Bash variables saved in: /tmp/pash_i7IPsCBKVn
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
@@ -33,12 +33,12 @@ class: pure found for: sort
 inputs-outputs found for: head
 |-- (['stdin'], ['stdout'], [('option', 0)])
 class: pure found for: head
-Compilation time: 36.29  ms
+Compilation time: 34.961  ms
 Total nodes after optimization: 14
  -- out of which:
 Cat nodes: 0
 Eager nodes: 0
-Optimization time: 4.643  ms
+Optimization time: 3.973  ms
 arguments, redirs found for: xargs
 |-- ([], [['File', ['From', 0, [['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 115], ['C', 109], ['C', 97], ['C', 108], ['C', 108], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56]]]]]]])
 arguments, redirs found for: xargs
@@ -69,15 +69,15 @@ arguments, redirs found for: sort
 |-- ([#file28, #file29], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53]]]]]]])
 arguments, redirs found for: head
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53]]]]]]])
-Backend time: 13.618  ms
-Optimized script saved in: /tmp/pash_J2bvViFi6z
+Backend time: 13.837  ms
+Optimized script saved in: /tmp/pash_F6ZBPHYRah
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_Qt30o1gzha
+(3) Recovering variables from: /tmp/pash_i7IPsCBKVn
 /dev/fd/63: line 34: declare: PPID: readonly variable
 /dev/fd/63: line 42: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 76: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_J2bvViFi6z:
+(4) Executing script in /tmp/pash_F6ZBPHYRah:
 rm -f "#file3"
 rm -f "#file5"
 rm -f "#file7"
@@ -153,27 +153,27 @@ rm -f "#file27"
 rm -f "#file28"
 rm -f "#file29"
 rm -f "#file30"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (116585) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (116921) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_6KraEhiGuQ
+(5) Writing current BaSh set state to: /tmp/pash_c5PvqnBvWG
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_22Zq24Uv7r
+Writing vars to: /tmp/pash_aWJ4HSkaDM
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 89165.653 ms
-(7) Recovering BaSh variables from: /tmp/pash_22Zq24Uv7r
+Execution time: 87813.873 ms
+(7) Recovering BaSh variables from: /tmp/pash_aWJ4HSkaDM
 /dev/fd/63: line 35: declare: PPID: readonly variable
 /dev/fd/63: line 43: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 77: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_6KraEhiGuQ
+(7) Reading current BaSh set state from: /tmp/pash_c5PvqnBvWG
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_ppaipwhf
-Preprocessing time: 24.822  ms
+Preprocessed script stored in: /tmp/pash_xdnskbnu
+Preprocessing time: 28.822  ms
 
-real	1m29.641s
-user	2m49.842s
-sys	0m39.828s
+real	1m28.298s
+user	2m50.007s
+sys	0m44.896s
 Files ../evaluation//small_intermediary//shortest_scripts_seq_output and /tmp/distr_output/0 are identical

@@ -1,7 +1,7 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_j8MtUYlYYc
-(1) Bash variables saved in: /tmp/pash_j8MtUYlYYc
+Writing vars to: /tmp/pash_32qTYloXSE
+(1) Bash variables saved in: /tmp/pash_32qTYloXSE
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
@@ -43,12 +43,12 @@ Argument: [['V', ['Normal', False, '1', []]], ['C', 113]] was expanded to: q
 inputs-outputs found for: sed
 |-- (['stdin'], ['stdout'], [('option', 0)])
  -- Warning: Overriding standard category for: sed
-Compilation time: 204.735  ms
+Compilation time: 289.283  ms
 Total nodes after optimization: 96
  -- out of which:
 Cat nodes: 0
 Eager nodes: 30
-Optimization time: 11.228  ms
+Optimization time: 14.648  ms
 arguments, redirs found for: uniq
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 51]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 53]]]]]]])
 arguments, redirs found for: sort
@@ -152,27 +152,27 @@ arguments, redirs found for: sort
 arguments, redirs found for: sort
 |-- ([#file99, #file100], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55], ['C', 56]]]]]]])
 arguments, redirs found for: sort
-|-- ([#file101, #file102], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55], ['C', 57]]]]]]])
+|-- ([#file103, #file104], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55], ['C', 57]]]]]]])
 arguments, redirs found for: sort
-|-- ([#file103, #file104], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 48]]]]]]])
+|-- ([#file101, #file102], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 48]]]]]]])
 arguments, redirs found for: sort
 |-- ([#file105, #file106], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 49]]]]]]])
 arguments, redirs found for: sort
 |-- ([#file107, #file108], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 50]]]]]]])
 arguments, redirs found for: sort
-|-- ([#file93, #file94], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 51]]]]]]])
+|-- ([#file95, #file96], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 51]]]]]]])
 arguments, redirs found for: sort
 |-- ([#file97, #file98], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 52]]]]]]])
 arguments, redirs found for: sort
-|-- ([#file95, #file96], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 53]]]]]]])
+|-- ([#file93, #file94], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 53]]]]]]])
 arguments, redirs found for: sort
 |-- ([#file113, #file114], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 54]]]]]]])
 arguments, redirs found for: sort
 |-- ([#file115, #file116], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 55]]]]]]])
 arguments, redirs found for: sort
-|-- ([#file109, #file110], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 56]]]]]]])
+|-- ([#file111, #file112], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 56]]]]]]])
 arguments, redirs found for: sort
-|-- ([#file111, #file112], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 57]]]]]]])
+|-- ([#file109, #file110], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 57]]]]]]])
 arguments, redirs found for: sort
 |-- ([#file119, #file120], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57], ['C', 48]]]]]]])
 arguments, redirs found for: sort
@@ -180,13 +180,13 @@ arguments, redirs found for: sort
 arguments, redirs found for: sort
 |-- ([#file121, #file122], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 51]]]]]]])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
-|-- ([#file72, #file93], [])
+|-- ([#file76, #file93], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
-|-- ([#file73, #file94], [])
+|-- ([#file77, #file94], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
-|-- ([#file76, #file95], [])
+|-- ([#file72, #file95], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
-|-- ([#file77, #file96], [])
+|-- ([#file73, #file96], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file74, #file97], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
@@ -196,13 +196,13 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file63, #file100], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
-|-- ([#file64, #file101], [])
+|-- ([#file66, #file101], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
-|-- ([#file65, #file102], [])
+|-- ([#file67, #file102], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
-|-- ([#file66, #file103], [])
+|-- ([#file64, #file103], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
-|-- ([#file67, #file104], [])
+|-- ([#file65, #file104], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file68, #file105], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
@@ -212,13 +212,13 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file71, #file108], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
-|-- ([#file82, #file109], [])
+|-- ([#file84, #file109], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
-|-- ([#file83, #file110], [])
+|-- ([#file85, #file110], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
-|-- ([#file84, #file111], [])
+|-- ([#file82, #file111], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
-|-- ([#file85, #file112], [])
+|-- ([#file83, #file112], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file78, #file113], [])
 arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
@@ -241,15 +241,15 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file91, #file122], [])
 arguments, redirs found for: sed
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 55]]]]]]])
-Backend time: 43.417  ms
-Optimized script saved in: /tmp/pash_c07RpWI09C
+Backend time: 47.792  ms
+Optimized script saved in: /tmp/pash_eirP07aEK2
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_j8MtUYlYYc
+(3) Recovering variables from: /tmp/pash_32qTYloXSE
 /dev/fd/63: line 48: declare: PPID: readonly variable
 /dev/fd/63: line 56: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 90: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_c07RpWI09C:
+(4) Executing script in /tmp/pash_eirP07aEK2:
 rm -f "#file17"
 rm -f "#file19"
 rm -f "#file21"
@@ -499,40 +499,40 @@ mkfifo "#file122"
 { sort <"#file60" >"#file76" & }
 { sort <"#file61" >"#file77" & }
 { sort -m "#file99" "#file100" >"#file78" & }
-{ sort -m "#file101" "#file102" >"#file79" & }
-{ sort -m "#file103" "#file104" >"#file80" & }
+{ sort -m "#file103" "#file104" >"#file79" & }
+{ sort -m "#file101" "#file102" >"#file80" & }
 { sort -m "#file105" "#file106" >"#file81" & }
 { sort -m "#file107" "#file108" >"#file82" & }
-{ sort -m "#file93" "#file94" >"#file83" & }
+{ sort -m "#file95" "#file96" >"#file83" & }
 { sort -m "#file97" "#file98" >"#file84" & }
-{ sort -m "#file95" "#file96" >"#file85" & }
+{ sort -m "#file93" "#file94" >"#file85" & }
 { sort -m "#file113" "#file114" >"#file86" & }
 { sort -m "#file115" "#file116" >"#file87" & }
-{ sort -m "#file109" "#file110" >"#file88" & }
-{ sort -m "#file111" "#file112" >"#file89" & }
+{ sort -m "#file111" "#file112" >"#file88" & }
+{ sort -m "#file109" "#file110" >"#file89" & }
 { sort -m "#file119" "#file120" >"#file90" & }
 { sort -m "#file117" "#file118" >"#file91" & }
 { sort -m "#file121" "#file122" >"#file23" & }
-{ /home/nikos/dish/runtime/eager.sh "#file72" "#file93" "/tmp/pash_eager_intermediate_#file1" & }
-{ /home/nikos/dish/runtime/eager.sh "#file73" "#file94" "/tmp/pash_eager_intermediate_#file2" & }
-{ /home/nikos/dish/runtime/eager.sh "#file76" "#file95" "/tmp/pash_eager_intermediate_#file3" & }
-{ /home/nikos/dish/runtime/eager.sh "#file77" "#file96" "/tmp/pash_eager_intermediate_#file4" & }
+{ /home/nikos/dish/runtime/eager.sh "#file76" "#file93" "/tmp/pash_eager_intermediate_#file1" & }
+{ /home/nikos/dish/runtime/eager.sh "#file77" "#file94" "/tmp/pash_eager_intermediate_#file2" & }
+{ /home/nikos/dish/runtime/eager.sh "#file72" "#file95" "/tmp/pash_eager_intermediate_#file3" & }
+{ /home/nikos/dish/runtime/eager.sh "#file73" "#file96" "/tmp/pash_eager_intermediate_#file4" & }
 { /home/nikos/dish/runtime/eager.sh "#file74" "#file97" "/tmp/pash_eager_intermediate_#file5" & }
 { /home/nikos/dish/runtime/eager.sh "#file75" "#file98" "/tmp/pash_eager_intermediate_#file6" & }
 { /home/nikos/dish/runtime/eager.sh "#file62" "#file99" "/tmp/pash_eager_intermediate_#file7" & }
 { /home/nikos/dish/runtime/eager.sh "#file63" "#file100" "/tmp/pash_eager_intermediate_#file8" & }
-{ /home/nikos/dish/runtime/eager.sh "#file64" "#file101" "/tmp/pash_eager_intermediate_#file9" & }
-{ /home/nikos/dish/runtime/eager.sh "#file65" "#file102" "/tmp/pash_eager_intermediate_#file10" & }
-{ /home/nikos/dish/runtime/eager.sh "#file66" "#file103" "/tmp/pash_eager_intermediate_#file11" & }
-{ /home/nikos/dish/runtime/eager.sh "#file67" "#file104" "/tmp/pash_eager_intermediate_#file12" & }
+{ /home/nikos/dish/runtime/eager.sh "#file66" "#file101" "/tmp/pash_eager_intermediate_#file9" & }
+{ /home/nikos/dish/runtime/eager.sh "#file67" "#file102" "/tmp/pash_eager_intermediate_#file10" & }
+{ /home/nikos/dish/runtime/eager.sh "#file64" "#file103" "/tmp/pash_eager_intermediate_#file11" & }
+{ /home/nikos/dish/runtime/eager.sh "#file65" "#file104" "/tmp/pash_eager_intermediate_#file12" & }
 { /home/nikos/dish/runtime/eager.sh "#file68" "#file105" "/tmp/pash_eager_intermediate_#file13" & }
 { /home/nikos/dish/runtime/eager.sh "#file69" "#file106" "/tmp/pash_eager_intermediate_#file14" & }
 { /home/nikos/dish/runtime/eager.sh "#file70" "#file107" "/tmp/pash_eager_intermediate_#file15" & }
 { /home/nikos/dish/runtime/eager.sh "#file71" "#file108" "/tmp/pash_eager_intermediate_#file16" & }
-{ /home/nikos/dish/runtime/eager.sh "#file82" "#file109" "/tmp/pash_eager_intermediate_#file17" & }
-{ /home/nikos/dish/runtime/eager.sh "#file83" "#file110" "/tmp/pash_eager_intermediate_#file18" & }
-{ /home/nikos/dish/runtime/eager.sh "#file84" "#file111" "/tmp/pash_eager_intermediate_#file19" & }
-{ /home/nikos/dish/runtime/eager.sh "#file85" "#file112" "/tmp/pash_eager_intermediate_#file20" & }
+{ /home/nikos/dish/runtime/eager.sh "#file84" "#file109" "/tmp/pash_eager_intermediate_#file17" & }
+{ /home/nikos/dish/runtime/eager.sh "#file85" "#file110" "/tmp/pash_eager_intermediate_#file18" & }
+{ /home/nikos/dish/runtime/eager.sh "#file82" "#file111" "/tmp/pash_eager_intermediate_#file19" & }
+{ /home/nikos/dish/runtime/eager.sh "#file83" "#file112" "/tmp/pash_eager_intermediate_#file20" & }
 { /home/nikos/dish/runtime/eager.sh "#file78" "#file113" "/tmp/pash_eager_intermediate_#file21" & }
 { /home/nikos/dish/runtime/eager.sh "#file79" "#file114" "/tmp/pash_eager_intermediate_#file22" & }
 { /home/nikos/dish/runtime/eager.sh "#file80" "#file115" "/tmp/pash_eager_intermediate_#file23" & }
@@ -644,27 +644,27 @@ rm -f "#file119"
 rm -f "#file120"
 rm -f "#file121"
 rm -f "#file122"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (115197) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (46110) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_DHpWPFG9qW
+(5) Writing current BaSh set state to: /tmp/pash_IKahm9pQg3
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_HAW5nMWyyT
+Writing vars to: /tmp/pash_6GXth0uLKr
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 18190.832 ms
-(7) Recovering BaSh variables from: /tmp/pash_HAW5nMWyyT
+Execution time: 18481.907 ms
+(7) Recovering BaSh variables from: /tmp/pash_6GXth0uLKr
 /dev/fd/63: line 49: declare: PPID: readonly variable
 /dev/fd/63: line 57: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 91: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_DHpWPFG9qW
+(7) Reading current BaSh set state from: /tmp/pash_IKahm9pQg3
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_ssmwaayf
-Preprocessing time: 24.113  ms
+Preprocessed script stored in: /tmp/pash_fyahvcxl
+Preprocessing time: 29.423  ms
 
-real	0m18.852s
-user	2m50.638s
-sys	1m39.918s
+real	0m19.267s
+user	2m49.161s
+sys	1m52.441s
 Files ../evaluation//small_intermediary//wf_seq_output and /tmp/distr_output/0 are identical
