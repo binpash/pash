@@ -93,7 +93,7 @@ elif [ "$no_task_par_eager_flag" -eq 1 ]; then
     ## Change the configuration
     config_path="/tmp/new-config.yaml"
     config_path_opt="--config_path ${config_path}"
-    cat config.yaml > ${config_path}
+    cat "$PASH_TOP/compiler/config.yaml" > ${config_path}
     sed -i 's/tools\/eager/tools\/eager-no-task-par.sh/g' "${config_path}"
 else
     echo "Distributed without eager:"
