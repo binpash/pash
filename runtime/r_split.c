@@ -1,15 +1,11 @@
 #include "r_split.h"
 
-#ifdef DEBUG
-#define PRINTDBG(fmt, ...) printf(fmt, ##__VA_ARGS__)
-#else
-#define PRINTDBG(fmt, ...)
-#endif
-
 //helper function
 void writeHeader(FILE* destFile, size_t blocksize) {
-  static int blockID = 0;
-  fprintf(destFile, "%d %lu\n", blockID++, blocksize);
+  static int64_t blockID = 0;
+  fwrite(&blockID, sizeof(int64_t), 1, destFile);
+  fwrite(&blocksize, 1, sizeof(size_t), destFile);
+  blockID += 1;
 }
 
 void SplitByBytes(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned int numOutputFiles) {
