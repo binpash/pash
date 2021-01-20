@@ -43,12 +43,14 @@ def main():
     ## 4. Translate the new AST back to shell syntax
     input_script_wo_extension, _input_script_extension = os.path.splitext(input_script_path)
     input_script_basename = os.path.basename(input_script_wo_extension)
-    ir_filename = os.path.join("/tmp", get_random_string() + "_" + input_script_basename + ".ir")
+    ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string() + "_" + input_script_basename + ".ir")
     save_asts_json(preprocessed_asts, ir_filename)
 
-    preprocessed_output_filename = os.path.join("/tmp", get_random_string())
+    preprocessed_output_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
+    log("Preprocessed script stored in:", preprocessed_output_filename)
     if(args.output_preprocessed):
-        log("Preprocessed script stored in:", preprocessed_output_filename)
+        log("Preprocessed script:")
+        log(from_ir_to_shell(ir_filename))
     from_ir_to_shell_file(ir_filename, preprocessed_output_filename)
 
     preprocessing_end_time = datetime.now()
@@ -60,11 +62,16 @@ def main():
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    prog_name = sys.argv[0]
+    if 'PASH_FROM_SH' in os.environ:
+        prog_name = os.environ['PASH_FROM_SH']
+    parser = argparse.ArgumentParser(prog_name)
     parser.add_argument("input", help="the script to be compiled and executed")
-    parser.add_argument("--preprocess_only", help="only preprocess the input script and not execute it",
+    parser.add_argument("--preprocess_only", 
+                        help="only preprocess the input script and not execute it",
                         action="store_true")
-    parser.add_argument("--output_preprocessed", help="whether to output the preprocessed script",
+    parser.add_argument("--output_preprocessed", 
+                        help=" output the preprocessed script",
                         action="store_true")
     config.add_common_arguments(parser)
     args = parser.parse_args()

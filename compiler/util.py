@@ -8,6 +8,11 @@ import config
 def flatten_list(lst):
     return [item for sublist in lst for item in sublist]
 
+def pad(lst, index):
+    if(index >= len(lst)):
+        lst += [None] * (index + 1 - len(lst))
+    return lst
+
 def print_time_delta(prefix, start_time, end_time, args):
     if(args.output_time):
         time_difference = (end_time - start_time) / timedelta(milliseconds=1)
@@ -19,7 +24,8 @@ def print_time_delta(prefix, start_time, end_time, args):
 ##       allow us to not pollute the .time files.
 def log(*args, end='\n'):
     if(config.pash_args.log_file == ""):
-        print(*args, file=sys.stderr, end=end)
+        if (not config.pash_args.debug == "0"):
+            print(*args, file=sys.stderr, end=end)
     else:
         with open(config.pash_args.log_file, "a") as f:
             print(*args, file=f, end=end)
@@ -29,3 +35,6 @@ def get_random_string(length=8):
     letters = string.ascii_lowercase
     result_str = ''.join(random.choice(letters) for i in range(length))
     return result_str
+
+def get_pash_prefixed_random_string(length=8):
+    return config.PASH_TMP_PREFIX + get_random_string(length)

@@ -6,6 +6,7 @@ import yaml
 from ir_utils import *
 
 ## Global
+__version__ = "0.2" # FIXME add libdash version
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'PASH_TOP' in os.environ:
     PASH_TOP = os.environ['PASH_TOP']
@@ -18,6 +19,8 @@ PRINTER_BINARY = os.path.join(PASH_TOP, "compiler/parser/json_to_shell.native")
 PYTHON_VERSION = "python3"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
+
+PASH_TMP_PREFIX = "pash_"
 
 config = {}
 annotations = []
@@ -43,46 +46,59 @@ def load_config(config_file_path=""):
 
 ## These are arguments that are common to pash.py and pash_runtime.py
 def add_common_arguments(parser):
-    parser.add_argument("--compile_only", help="only preprocess and compile the input script and not execute it",
+    parser.add_argument("-w", "--width",
+                        type=int,
+                        default=2, 
+                        help="set data-parallelism factor")
+
+    parser.add_argument("--no_optimize",
+                        help="not apply transformations over the DFG",
                         action="store_true")
-    parser.add_argument("--compile_optimize_only",
-                        help="only preprocess, compile, and optimize the input script and not execute it",
+    parser.add_argument("--dry_run_compiler",
+                        help="not execute the compiled script, even if the compiler succeeded",
                         action="store_true")
-    parser.add_argument("--output_time", help="output the the time it took for every step",
+    parser.add_argument("--assert_compiler_success",
+                        help="assert that the compiler succeeded (used to make tests more robust)",
                         action="store_true")
-    parser.add_argument("--output_optimized",
-                        help="output the optimized shell script that"
-                        "was produced by the planner for inspection",
+    parser.add_argument("-t", "--output_time", #FIXME: --time
+                        help="output the time it took for every step",
+                        action="store_true") 
+    parser.add_argument("-p", "--output_optimized", # FIXME: --print
+                        help="output the parallel shell script for inspection",
                         action="store_true")
+    parser.add_argument("-d", "--debug", 
+                        help="configure debug level; defaults to 0",
+                        default="0")
     parser.add_argument("--log_file", 
-                        help="the file to log into. Defaults to stderr.",
+                        help="configure where to write the log; defaults to stderr.",
                         default="")
     parser.add_argument("--no_eager",
                         help="disable eager nodes before merging nodes",
                         action="store_true")
     parser.add_argument("--speculation",
-                        help="determines the speculation done by the runtime. By default it does no speculation, i.e. if the compilation succeeds it executes the parallel. Quick-abort runs the original from the start and then if the compilation succeeds, aborts the original and runs the parallel.",
+                        help="run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
                         choices=['no_spec', 'quick_abort'],
                         default='no_spec')
     parser.add_argument("--termination",
-                        help="determines the termination behavior of the DFG. By default it cleans up the graph after the final node dies but it can also drain all streams until depletion.",
+                        help="determine the termination behavior of the DFG. Defaults to cleanup after the last process dies, but can drain all streams until depletion",
                         choices=['clean_up_graph', 'drain_stream'],
                         default="clean_up_graph")
-    parser.add_argument("--split_fan_out",
-                        type=int,
-                        default=1,
-                        help="determines the fan out of inserted splits in the DFG")
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")
+    parser.add_argument("-v", "--version",
+                        action='version',
+                        version='%(prog)s {version}'.format(version=__version__))
     return
 
 def pass_common_arguments(pash_arguments):
     arguments = []
-    if (pash_arguments.compile_only):
-        arguments.append(string_to_argument("--compile_only"))
-    if (pash_arguments.compile_optimize_only):
-        arguments.append(string_to_argument("--compile_optimize_only"))
+    if (pash_arguments.no_optimize):
+        arguments.append(string_to_argument("--no_optimize"))
+    if (pash_arguments.dry_run_compiler):
+        arguments.append(string_to_argument("--dry_run_compiler"))
+    if (pash_arguments.assert_compiler_success):
+        arguments.append(string_to_argument("--assert_compiler_success"))
     if (pash_arguments.output_time):
         arguments.append(string_to_argument("--output_time"))
     if (pash_arguments.output_optimized):
@@ -92,12 +108,14 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument(pash_arguments.log_file))
     if (pash_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
+    arguments.append(string_to_argument("--debug"))
+    arguments.append(string_to_argument(pash_arguments.debug))
     arguments.append(string_to_argument("--termination"))
     arguments.append(string_to_argument(pash_arguments.termination))
     arguments.append(string_to_argument("--speculation"))
     arguments.append(string_to_argument(pash_arguments.speculation))
-    arguments.append(string_to_argument("--split_fan_out"))
-    arguments.append(string_to_argument(str(pash_arguments.split_fan_out)))
+    arguments.append(string_to_argument("--width"))
+    arguments.append(string_to_argument(str(pash_arguments.width)))
     if(not pash_arguments.config_path == ""):
         arguments.append(string_to_argument("--config_path"))
         arguments.append(string_to_argument(pash_arguments.config_path))

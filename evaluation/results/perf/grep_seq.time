@@ -1,0 +1,9 @@
+Exporting:
+IN=../evaluation/scripts/input/100M.txt
+Executing:
+#!/bin/bash
+cat $IN | grep '[a-zA-Z0-9]\+@[a-zA-Z0-9]\+\.[a-z]\{2,\}'
+
+real	0m0.055s
+user	0m0.000s
+sys	0m0.088s

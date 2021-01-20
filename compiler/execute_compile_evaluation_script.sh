@@ -4,13 +4,15 @@ execute_seq_flag=0
 eager_flag=0
 no_task_par_eager_flag=0
 auto_split_flag=0
+assert_compiler_success=""
 
-while getopts 'senpa' opt; do
+while getopts 'senpac' opt; do
     case $opt in
         s) execute_seq_flag=1 ;;
         e) eager_flag=1 ;;
         n) no_task_par_eager_flag=1 ;;
         a) auto_split_flag=1 ;;
+        c) assert_compiler_success="--assert_compiler_success" ;;
         *) echo 'Error in command line parsing' >&2
            exit 1
     esac
@@ -70,13 +72,13 @@ else
 fi
 
 ## Save the configuration to restore it afterwards
-auto_split_opt=""
+auto_split_opt="--width 1"
 config_path_opt=""
 
 if [ "$auto_split_flag" -eq 1 ]; then
     echo "Distributed with auto-split:"
     eager_opt=""
-    auto_split_opt="--split_fan_out ${n_in}"
+    auto_split_opt="--width ${n_in}"
     distr_result_filename="${results}${experiment}_distr_auto_split.time"
 elif [ "$eager_flag" -eq 1 ]; then
     echo "Distributed:"
@@ -101,7 +103,6 @@ fi
 ## Make the redirected output dir if it doesn't exist
 mkdir -p /tmp/distr_output
 
-cat $stdin_redir | { time python3 $PASH_TOP/compiler/pash.py --speculation no_spec --output_optimized $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script ; } 1> /tmp/distr_output/0 2> >(tee "${distr_result_filename}" >&2) &&
+cat $stdin_redir | { time python3 $PASH_TOP/compiler/pash.py -d 1 --speculation no_spec $assert_compiler_success $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script ; } 1> /tmp/distr_output/0 2> >(tee "${distr_result_filename}" >&2) &&
 echo "Checking for equivalence..." &&
-diff -s $seq_output /tmp/distr_output/0 | tee -a "${distr_result_filename}"
-
+diff -s $seq_output /tmp/distr_output/0 | head | tee -a "${distr_result_filename}" >&2

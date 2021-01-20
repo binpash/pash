@@ -1,11 +1,11 @@
 from ir import *
-from union_find import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
 from util import *
 from json_ast import save_asts_json
 from parse import parse_shell, from_ir_to_shell, from_ir_to_shell_file
 import subprocess
+import traceback
 
 import config
 
@@ -118,12 +118,12 @@ def compile_asts(ast_objects, fileIdGen, config):
         if (not acc_ir is None):
 
             if (isinstance(compiled_ast, IR)):
-                acc_ir.union(compiled_ast)
+                acc_ir.background_union(compiled_ast)
             else:
                 ## TODO: Make this union the compiled_ast with the
                 ## accumulated IR, since the user wanted to run these
                 ## commands in parallel (Is that correct?)
-                # acc_ir.union(IR([compiled_ast]))
+                # acc_ir.background_union(IR([compiled_ast]))
                 compiled_asts.append(acc_ir)
                 acc_it = None
                 compiled_asts.append(compiled_ast)
@@ -227,8 +227,6 @@ def compile_node_command(ast_node, fileIdGen, config):
         command_name = arguments[0]
         options = compile_command_arguments(arguments[1:], fileIdGen, config)
 
-        stdin_fid = fileIdGen.next_file_id()
-        stdout_fid = fileIdGen.next_file_id()
         ## Question: Should we return the command in an IR if one of
         ## its arguments is a command substitution? Meaning that we
         ## will have to wait for its command to execute first?
@@ -239,25 +237,23 @@ def compile_node_command(ast_node, fileIdGen, config):
         ## general one. That means that it can be executed
         ## concurrently with other commands, but it cannot be
         ## parallelized.
-        command = create_command_assign_file_identifiers(old_ast_node, fileIdGen,
-                                                         command_name, options,
-                                                         stdin=stdin_fid, stdout=stdout_fid,
-                                                         redirections=compiled_redirections)
-
-        ## Don't put the command in an IR if it is creates some effect
-        ## (not stateless or pure)
-        if (command.is_at_most_pure()):
-            compiled_ast = IR([command],
-                              stdin = [stdin_fid],
-                              stdout = [stdout_fid])
-            compiled_ast.set_ast(old_ast_node)
-        else:
+        try:
+            ## If the command is not compileable to a DFG the following call will fail
+            ir = compile_command_to_DFG(fileIdGen,
+                                        command_name,
+                                        options,
+                                        redirections=compiled_redirections)
+            compiled_ast = ir
+        except ValueError as err:
+            ## TODO: Delete this log from here
+            log(err)
+            # log(traceback.format_exc())
             compiled_arguments = compile_command_arguments(arguments, fileIdGen, config)
             compiled_ast = make_kv(construct_str,
                                    [ast_node.line_number, compiled_assignments,
                                     compiled_arguments, compiled_redirections])
-
-    return compiled_ast
+            
+        return compiled_ast
 
 def compile_node_and_or_semi(ast_node, fileIdGen, config):
     compiled_ast = make_kv(ast_node.construct.value,
@@ -294,7 +290,9 @@ def compile_node_background(ast_node, fileIdGen, config):
         ##
         ## Question: What happens with the stdin, stdout. Should
         ## they be closed?
-        compiled_ast = IR([compiled_node])
+        ## TODO: We should not compile the ast here
+        compiled_ast = ast_node
+        compiled_ast.node = compiled_node
 
     return compiled_ast
 
@@ -323,14 +321,28 @@ def compile_node_for(ast_node, fileIdGen, config):
     return compiled_ast
 
 
-## This function checks if a word is safe to expand (i.e. if it will not )
-def safe_to_expand(arg_char):
+## This function checks if we should expand an arg_char
+##
+## It has a dual purpose:
+## 1. First, it checks whether we need
+##    to pay the overhead of expanding (by checking that there is something to expand)
+##    like a variable
+## 2. Second it raises an error if we cannot expand an argument.
+def should_expand_arg_char(arg_char):
     key, val = get_kv(arg_char)
     if (key in ['V']): # Variable
         return True
+    elif (key == 'Q'):
+        return should_expand_argument(val)
+    elif (key == 'B'):
+        log("Cannot expand:", arg_char)
+        raise NotImplementedError()
     return False
 
-def make_echo_ast(arg_char, var_file_path):
+def should_expand_argument(argument):
+    return any([should_expand_arg_char(arg_char) for arg_char in argument])
+
+def make_echo_ast(argument, var_file_path):
     nodes = []
     ## Source variables if present
     if(not var_file_path is None):
@@ -353,7 +365,7 @@ def make_echo_ast(arg_char, var_file_path):
     set_node = make_kv('Command', [0, [], arguments, []])
     nodes.append(set_node)
 
-    arguments = [string_to_argument("echo"), string_to_argument("-n"), [arg_char]]
+    arguments = [string_to_argument("echo"), string_to_argument("-n"), argument]
 
     line_number = 0
     node = make_kv('Command', [line_number, [], arguments, []])
@@ -362,7 +374,7 @@ def make_echo_ast(arg_char, var_file_path):
 
 ## TODO: Move this function somewhere more general
 def execute_shell_asts(asts):
-    ir_filename = os.path.join("/tmp", get_random_string())
+    ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
     save_asts_json(asts, ir_filename)
     output_script = from_ir_to_shell(ir_filename)
     # log(output_script)
@@ -374,12 +386,12 @@ def execute_shell_asts(asts):
     return exec_obj.stdout
 
 ## TODO: Properly parse the output of the shell script
-def parse_string_to_arg_char(arg_char_string):
+def parse_string_to_arguments(arg_char_string):
     # log(arg_char_string)
-    return ['Q', string_to_argument(arg_char_string)]
+    return string_to_arguments(arg_char_string)
 
 ## TODO: Use "pash_input_args" when expanding in place of normal arguments.
-def naive_expand(arg_char, config):
+def naive_expand(argument, config):
 
     ## config contains a dictionary with: 
     ##  - all variables, their types, and values in 'shell_variables'
@@ -388,20 +400,20 @@ def naive_expand(arg_char, config):
     # log(config['shell_variables_file_path'])
 
     ## Create an AST node that "echo"s the argument
-    echo_asts = make_echo_ast(arg_char, config['shell_variables_file_path'])
+    echo_asts = make_echo_ast(argument, config['shell_variables_file_path'])
 
     ## Execute the echo AST by unparsing it to shell
     ## and calling bash
     expanded_string = execute_shell_asts(echo_asts)
 
-    log("Variable:", arg_char, "was expanded to:", expanded_string)
+    log("Argument:", argument, "was expanded to:", expanded_string)
 
     ## Parse the expanded string back to an arg_char
-    expanded_arg_char = parse_string_to_arg_char(expanded_string)
+    expanded_arguments = parse_string_to_arguments(expanded_string)
     
     ## TODO: Handle any errors
     # log(expanded_arg_char)
-    return expanded_arg_char
+    return expanded_arguments
 
 
 
@@ -410,20 +422,16 @@ def naive_expand(arg_char, config):
 ##
 ## TODO: At the moment this has the issue that a command that has the words which we want to expand 
 ##       might have assignments of its own, therefore requiring that we use them to properly expand.
-def expand(arg_char, config):
-    return naive_expand(arg_char, config)
-
-
+def expand_command_argument(argument, config):
+    new_arguments = [argument]
+    if(should_expand_argument(argument)):
+        new_arguments = naive_expand(argument, config)
+    return new_arguments
 
 ## This function compiles an arg char by recursing if it contains quotes or command substitution.
 ##
 ## It is currently being extended to also expand any arguments that are safe to expand. 
-def compile_arg_char(original_arg_char, fileIdGen, config):
-    ## Check if the arg char can be expanded and if so do it.
-    arg_char = copy.deepcopy(original_arg_char)
-    if(safe_to_expand(arg_char)):
-        arg_char = expand(arg_char, config)
-
+def compile_arg_char(arg_char, fileIdGen, config):
     ## Compile the arg char
     key, val = get_kv(arg_char)
     if (key in ['C',   # Single character
@@ -450,7 +458,8 @@ def compile_command_argument(argument, fileIdGen, config):
     return compiled_argument
 
 def compile_command_arguments(arguments, fileIdGen, config):
-    compiled_arguments = [compile_command_argument(arg, fileIdGen, config) for arg in arguments]
+    expanded_arguments = flatten_list([expand_command_argument(arg, config) for arg in arguments])
+    compiled_arguments = [compile_command_argument(arg, fileIdGen, config) for arg in expanded_arguments]
     return compiled_arguments
 
 ## Compiles the value assigned to a variable using the command argument rules.
@@ -647,9 +656,10 @@ def preprocess_node_while(ast_node, irFileGen, config):
 
 ## This is the same as the one for `For`
 def preprocess_node_defun(ast_node, irFileGen, config):
-    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    ## TODO: For now we don't want to compile function bodies
+    # preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
     ## TODO: Could there be a problem with the in-place update
-    ast_node.body = preprocessed_body
+    # ast_node.body = preprocessed_body
     return ast_node, False, False
 
 ## TODO: If the preprocessed is not maximal we actually need to combine it with the one on the right.
@@ -765,9 +775,9 @@ def replace_df_region(asts, irFileGen, config):
 
     ## Serialize the candidate df_region asts back to shell 
     ## so that the sequential script can be run in parallel to the compilation.
-    second_ir_filename = os.path.join("/tmp", get_random_string())
+    second_ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
     save_asts_json(asts, second_ir_filename)
-    sequential_script_file_name = os.path.join("/tmp", get_random_string())
+    sequential_script_file_name = os.path.join("/tmp", get_pash_prefixed_random_string())
     from_ir_to_shell_file(second_ir_filename, sequential_script_file_name)
 
     ## Replace it with a command that calls the distribution

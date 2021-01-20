@@ -15,18 +15,7 @@ import config
 ##
 
 
-## WARNING: This is not complete!! It doesn't handle - for stdin, or
-## directories, etc...
-##
-## TODO: Make this complete
-def diff_input_output(options, stdin, stdout):
-    in_stream = [("option", i) for i, option in enumerate(options)
-                 if not format_arg_chars(option).startswith('-')]
-    opt_indices = [("option", i) for i, option in enumerate(options)
-                   if format_arg_chars(option).startswith('-')]
-    return (in_stream, ["stdout"], opt_indices)
-
-def default_input_output(options, stdin, stdout):
+def default_input_output(options):
     opt_indices = [("option", i) for i in range(len(options))]
     return (["stdin"], ["stdout"], opt_indices)
 
@@ -37,10 +26,35 @@ def default_input_output(options, stdin, stdout):
 
 ## TODO: All of these are possibly non-complete
 def is_sed_pure(options):
-    first_opt = format_arg_chars(options[0])
-    if(not first_opt.startswith("-")
+    first_opt = format_expanded_arg_chars(options[0])
+    if(not (first_opt.startswith("-")
+            or first_opt.startswith("s"))
        and ("d" in first_opt
             or "q" in first_opt)):
+        return "pure"
+    else:
+        return "stateless"
+
+def contains_s(option):
+    return ((option.startswith("-") and "s" in option)
+            or option == "--squeeze-repeats")
+
+def contains_d(option):
+    return ((option.startswith("-") and "d" in option)
+            or option == "--delete")
+
+def is_tr_pure(options):
+    formatted_opts = [format_expanded_arg_chars(option)
+                      for option in options]
+    set_opts = [opt for opt in formatted_opts if not opt.startswith("-")]
+    set1_opt = set_opts[0]
+    ## If -s is one of the options (and \n is in SET2)
+    ## If -d is one of the options (and \n is in SET1)
+    if((any([contains_s(opt) for opt in formatted_opts])
+        and len(set_opts) >= 2
+        and "\\n" in set_opts[1])
+       or (any([contains_d(opt) for opt in formatted_opts])
+           and "\\n" in set1_opt)):
         return "pure"
     else:
         return "stateless"
@@ -59,11 +73,16 @@ def is_uniq_pure(options):
 ##
 
 custom_command_input_outputs = {
-    "diff" : diff_input_output
+    
+}
+
+custom_command_args_redirs_from_input_outputs = {
+    
 }
 
 custom_command_categories = {
     "sed"  : is_sed_pure,
+    "tr"   : is_tr_pure,
     "uniq" : is_uniq_pure,
 }
 
@@ -81,7 +100,7 @@ custom_command_categories = {
 ## are only filled in for commands that we (or the developer) has
 ## specified a list of input resources that also contains files in the
 ## arguments.
-def find_command_input_output(command, options, stdin, stdout):
+def find_command_input_output(command, options):
     global custom_command_input_outputs
 
     command_string = format_arg_chars(command)
@@ -92,7 +111,7 @@ def find_command_input_output(command, options, stdin, stdout):
     if (command_string in custom_command_input_outputs):
         log(" -- Warning: Overriding standard inputs-outputs for:", command_string)
         custom_io_fun = custom_command_input_outputs[command_string]
-        return custom_io_fun(options, stdin, stdout)
+        return custom_io_fun(options)
 
     ## Find the inputs-outputs of the command in the annotation files (if it exists)
     command_io_from_annotation = get_command_io_from_annotations(command_string,
@@ -103,8 +122,37 @@ def find_command_input_output(command, options, stdin, stdout):
         log("|--", command_io_from_annotation)
         return command_io_from_annotation
 
-    return default_input_output(options, stdin, stdout)
+    return default_input_output(options)
 
+## This function is the reverse of the one above. It gives us arguments and redirections
+## from inputs and outputs.
+def create_command_arguments_redirs(command, options, inputs, outputs):
+    global custom_command_args_redirs_from_input_outputs
+
+    command_string = format_arg_chars(command)
+    # log("Command to categorize:", command_string)
+
+    assert(isinstance(command_string, str))
+
+    if (command_string in custom_command_args_redirs_from_input_outputs):
+        log(" -- Warning: Overriding standard inputs-outputs for:", command_string)
+        custom_io_fun = custom_command_args_redirs_from_input_outputs[command_string]
+        return custom_io_fun(options)
+
+    ## Find the inputs-outputs of the command in the annotation files (if it exists)
+    command_arguments_redirs = construct_args_redirs(command_string,
+                                                     options,
+                                                     inputs,
+                                                     outputs,
+                                                     config.annotations)
+    if (command_arguments_redirs):
+        log("arguments, redirs found for:", command_string)
+        log("|--", command_arguments_redirs)
+        return command_arguments_redirs
+
+    ## TODO: Implement that
+    raise NotImplementedError()
+    return default_arguments_redirs(options, inputs, outputs)
 
 ## This functions finds and returns a string representing the command category
 def find_command_category(command, options):
