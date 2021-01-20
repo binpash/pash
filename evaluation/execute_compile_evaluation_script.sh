@@ -28,7 +28,7 @@ intermediary_prefix=$4
 
 experiment="${microbenchmark}_${n_in}"
 
-PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 
 eval_directory="../evaluation/"
 directory="${eval_directory}/${4}intermediary/"
@@ -42,12 +42,13 @@ input_file="${prefix}.in"
 seq_output="${directory}/${microbenchmark}_seq_output"
 
 echo "Environment:"
-# cat $env_file
+cat $env_file
 . $env_file
 vars_to_export=$(cut -d= -f1 $env_file)
 if [ ! -z "$vars_to_export" ]; then
     export $vars_to_export
 fi
+echo $IN0 $IN1
 
 ## Export necessary functions
 if [ -f "$funs_file" ]; then

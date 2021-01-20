@@ -1,5 +1,8 @@
 #!/bin/bash
 
+## Necessary to set PASH_TOP
+export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+
 microbenchmarks_dir="../evaluation/microbenchmarks/"
 intermediary_dir="../evaluation/test_intermediary/"
 
@@ -74,14 +77,14 @@ execute_tests() {
             echo "Number of inputs: ${n_in}"
 
             ## Generate the intermediary script
-            python3 generate_microbenchmark_intermediary_scripts.py \
+            python3 "$PASH_TOP/evaluation/generate_microbenchmark_intermediary_scripts.py" \
                     $microbenchmarks_dir $microbenchmark $n_in $intermediary_dir "test"
 
             for flag in "${flags[@]:1}"; do
                 echo "Flag: ${flag}"
 
                 ## Execute the intermediary script
-                ./execute_compile_evaluation_script.sh $assert_correctness $exec_seq $flag "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
+                "$PASH_TOP/evaluation/execute_compile_evaluation_script.sh" $assert_correctness $exec_seq $flag "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
                 rm -f /tmp/eager*
 
                 ## Only run the sequential the first time around
