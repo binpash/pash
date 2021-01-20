@@ -24,6 +24,12 @@ To start it, run `node controller/main.js`.
 
 ## Changelog
 
+### Jan 20 2021
+
+- Got `ci.sh` working on EC2 instance
+- Add `ssh-routes.js` to issue commands directly to a host.
+
+
 ### Jan 19 2021
 
 - Decouple service from routes so that implementations can be swapped.
