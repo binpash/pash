@@ -1,110 +1,12 @@
-(1) Previous exit status: 0
-(1) Previous set state: hB
-Writing vars to: /tmp/pash_o9TSzVMr39
-(1) Bash variables saved in: /tmp/pash_o9TSzVMr39
-(1) Bash set state at start of execution: hB
-(1) Set state reverted to PaSh-internal set state: huB
-Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
-Argument: [['V', ['Normal', False, 'IN0', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-00
-Argument: [['V', ['Normal', False, 'IN1', []]]] was expanded to: ../evaluation/small_intermediary/split_inputs/input-chunk-01
-inputs-outputs found for: cat
-|-- ([('option', 0), ('option', 1)], ['stdout'], [])
-class: stateless found for: cat
-inputs-outputs found for: tr
-|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1), ('option', 2)])
- -- Warning: Overriding standard category for: tr
-inputs-outputs found for: tr
-|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
- -- Warning: Overriding standard category for: tr
-inputs-outputs found for: sort
-|-- (['stdin'], ['stdout'], [])
-class: pure found for: sort
-inputs-outputs found for: uniq
-|-- (['stdin'], ['stdout'], [('option', 0)])
- -- Warning: Overriding standard category for: uniq
-inputs-outputs found for: sort
-|-- (['stdin'], ['stdout'], [('option', 0)])
-class: pure found for: sort
-Argument: [['V', ['Normal', False, 'N', []]], ['C', 113]] was expanded to: 1000q
-inputs-outputs found for: sed
-|-- (['stdin'], ['stdout'], [('option', 0)])
- -- Warning: Overriding standard category for: sed
-Compilation time: 49.701  ms
-Total nodes after optimization: 7
- -- out of which:
-Cat nodes: 1
-Eager nodes: 0
-Optimization time: 0.371  ms
-arguments, redirs found for: cat
-|-- ([fid:1:../evaluation/small_intermediary/split_inputs/input-chunk-00, fid:2:../evaluation/small_intermediary/split_inputs/input-chunk-01], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51]]]]]]])
-arguments, redirs found for: tr
-|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53]]]]]]])
-arguments, redirs found for: tr
-|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55]]]]]]])
-arguments, redirs found for: sort
-|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57]]]]]]])
-arguments, redirs found for: uniq
-|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49]]]]]]])
-arguments, redirs found for: sort
-|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 51]]]]]]])
-arguments, redirs found for: sed
-|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 51]]]]]]])
-Backend time: 10.414  ms
-Optimized script saved in: /tmp/pash_NWW4g9umW2
-Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_o9TSzVMr39
-/dev/fd/63: line 35: declare: PPID: readonly variable
-/dev/fd/63: line 43: declare: SHELLOPTS: readonly variable
-/dev/fd/63: line 77: declare: UID: readonly variable
-(3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_NWW4g9umW2:
-rm -f "#file3"
-rm -f "#file5"
-rm -f "#file7"
-rm -f "#file9"
-rm -f "#file11"
-rm -f "#file13"
-mkfifo "#file3"
-mkfifo "#file5"
-mkfifo "#file7"
-mkfifo "#file9"
-mkfifo "#file11"
-mkfifo "#file13"
-{ cat ../evaluation/small_intermediary/split_inputs/input-chunk-00 ../evaluation/small_intermediary/split_inputs/input-chunk-01 >"#file3" & }
-{ tr -cs A-Za-z "\\n" <"#file3" >"#file5" & }
-{ tr A-Z a-z <"#file5" >"#file7" & }
-{ sort <"#file7" >"#file9" & }
-{ uniq -c <"#file9" >"#file11" & }
-{ sort -rn <"#file11" >"#file13" & }
-{ sed 1000q <"#file13" & }
-source /home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh ${!}
-rm -f "#file3"
-rm -f "#file5"
-rm -f "#file7"
-rm -f "#file9"
-rm -f "#file11"
-rm -f "#file13"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (41558) - No such process
-(5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_EyQKPSfuxB
-(5) Current BaSh shell: hB
-(5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_5y1aavCKyy
-(5) Exiting from BaSh with BaSh status: 0
-Execution time: 415627.560 ms
-(7) Recovering BaSh variables from: /tmp/pash_5y1aavCKyy
-/dev/fd/63: line 36: declare: PPID: readonly variable
-/dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
-/dev/fd/63: line 78: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_EyQKPSfuxB
-(7) Current BaSh set state: hB
-(7) Current PaSh set state: huB
-(7) Reverted to BaSh set state before exiting: hB
-(7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_dvgecsot
-Preprocessing time: 28.24  ms
+Traceback (most recent call last):
+  File "/home/nikos/dish/compiler/pash.py", line 97, in <module>
+    main()
+  File "/home/nikos/dish/compiler/pash.py", line 25, in main
+    config.load_config(args.config_path)
+  File "/home/nikos/dish/compiler/config.py", line 40, in load_config
+    raise Exception('No valid configuration could be loaded from {}'.format(config_file_path))
+Exception: No valid configuration could be loaded from /tmp/new-config.yaml
 
-real	6m56.114s
-user	7m3.557s
-sys	0m14.466s
-Files ../evaluation//small_intermediary//topn_seq_output and /tmp/distr_output/0 are identical
+real	0m0.139s
+user	0m0.114s
+sys	0m0.024s
