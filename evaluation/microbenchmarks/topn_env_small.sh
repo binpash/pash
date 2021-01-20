@@ -1,3 +1,3 @@
 N=1000
-IN=../evaluation/scripts/input/1G.txt
+IN=$PASH_TOP/evaluation/scripts/input/1G.txt
 

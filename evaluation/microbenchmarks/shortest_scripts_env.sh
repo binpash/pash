@@ -1,1 +1,1 @@
-IN=../evaluation/scripts/input/all_cmds_x1000.txt
+IN=$PASH_TOP/evaluation/scripts/input/all_cmds_x1000.txt
