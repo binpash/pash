@@ -1,5 +1,8 @@
 #!/bin/bash
 
+## Necessary to set PASH_TOP
+export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+
 ## This sets up to what extent we run the evaluation.
 ## There are 3 levels:
 ## 1. Small inputs | --width 2, 16 | Only full PaSh config
@@ -19,7 +22,7 @@ while getopts 'smlh' opt; do
            echo "option -s: Small inputs | --width 2, 16 | Only full PaSh config"
            echo "option -m: Small inputs | --width 2, 16 | All PaSh configs"
            echo "option -l: Big inputs | -- width 2, 4, 8, 16, 32, 64 | All PaSh configs"
-           exit 0
+           exit 0 ;;
         *) echo 'Error in command line parsing' >&2
            exit 1
     esac
@@ -27,8 +30,6 @@ done
 shift "$(( OPTIND - 1 ))"
 
 ## TODO: Add a script that runs the parallel sort evaluation
-
-## TODO: Move this to the evaluation folder
 
 if [ "$evaluation_level" -eq 1 ]; then
     echo "Executing small evaluation..."
@@ -103,10 +104,10 @@ else
     exit 1
 fi
 
-microbenchmarks_dir="../evaluation/microbenchmarks/"
-intermediary_dir="../evaluation/${intermediary_prefix}intermediary/"
+microbenchmarks_dir="$PASH_TOP/evaluation/microbenchmarks/"
+intermediary_dir="$PASH_TOP/evaluation/${intermediary_prefix}intermediary/"
 mkdir -p $intermediary_dir
-mkdir -p "../evaluation/results/$result_subdir/"
+mkdir -p "$PASH_TOP/evaluation/results/$result_subdir/"
 
 for microbenchmark_config in "${microbenchmarks[@]}"; do
     IFS=";" read -r -a flags <<< "${microbenchmark_config}"
@@ -118,14 +119,14 @@ for microbenchmark_config in "${microbenchmarks[@]}"; do
 
         ## Generate the intermediary script
         echo "Generating input and intermediary scripts... be patient..."
-        python3 generate_microbenchmark_intermediary_scripts.py \
+        python3 "$PASH_TOP/evaluation/generate_microbenchmark_intermediary_scripts.py" \
                 $microbenchmarks_dir $microbenchmark $n_in $intermediary_dir $env_suffix
 
         for flag in "${flags[@]:1}"; do
             echo "Flag: ${flag}"
 
             ## Execute the intermediary script
-            ./execute_compile_evaluation_script.sh $exec_seq $flag "${microbenchmark}" "${n_in}" $result_subdir $intermediary_prefix
+            "$PASH_TOP/evaluation/execute_compile_evaluation_script.sh" $exec_seq $flag "${microbenchmark}" "${n_in}" $result_subdir $intermediary_prefix
 
             ## Only run the sequential the first time around
             exec_seq=""
