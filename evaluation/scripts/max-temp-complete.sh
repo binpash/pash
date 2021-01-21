@@ -2,7 +2,7 @@
 
 sed 's;^;http://ndr.md/data/noaa/;' |
     sed 's;$;/;' |
-    xargs -n 1 curl -s |
+    xargs -r -n 1 curl -s |
     grep gz |
     tr -s ' \n' |
     cut -d ' ' -f9 |
@@ -11,7 +11,6 @@ sed 's;^;http://ndr.md/data/noaa/;' |
     xargs -n1 curl -s |
     gunzip |
     ## Processing
-    ## TODO: Does this really take the temperature?
     cut -c 89-92 |
     grep -v 999 |
     sort -rn |
