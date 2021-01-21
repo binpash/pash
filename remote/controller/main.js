@@ -9,7 +9,7 @@ const createControlServer = (routes) =>
           const { pathname } = parseUrl(req.url);
 
           log(req.url);
-          
+
           try {
               if (typeof routes[pathname] === 'function') {
                   routes[pathname](req, res);
