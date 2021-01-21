@@ -121,7 +121,7 @@ const createStreamMonitor = (shouldStopWaiting, timeout) => {
 }
 
 const run = async (req, res) => {
-    await command.run({ shouldStopWaiting: () => true });
+    command.run({ shouldStopWaiting: () => true });
     respond(res, 200, 'Sent command\n');
 };
 
