@@ -1,13 +1,31 @@
 #!/bin/bash
 
-PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 
-eval_dir="../evaluation/"
+## There are two possible execution levels:
+## options -s: end_year=2000
+## options -l: end_year=2004 (The EuroSys evaluation)
+start_year=2000
+end_year=2000 # For the small evaluation
+
+while getopts 'slh' opt; do
+    case $opt in
+        s) end_year=2000 ;;
+        l) end_year=2004 ;;
+        h) echo "There are three possible execution levels:"
+           echo "option -s: end_year=2000"
+           echo "option -l: end_year=2004 (The EuroSys evaluation)"
+           exit 0 ;;
+        *) echo 'Error in command line parsing' >&2
+           exit 1
+    esac
+done
+shift "$(( OPTIND - 1 ))"
+
+
+eval_dir="$PASH_TOP/evaluation/"
 results_dir="${eval_dir}/results/"
 
-start_year=2000
-end_year=2004 # For the full evaluation
-# end_year=2000
 
 echo "Running max-temp evaluation for years: $start_year-$end_year"
 
