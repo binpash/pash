@@ -1,28 +1,31 @@
-This system handles networked Pash operations, with a focus on CI.
-
-The system consists of a controller, and workers.
+This system handles networked Pash operations using a controller, and
+workers. Use for delegating project tasks (like CI) to remote hosts.
 
 
 ## Worker
 
-A worker is an EC2 instance that:
+A worker is an SSH-enabled host that:
 
 1. has a script located at `~/worker-script.sh` for the AMI's default user.
-2. has a tag named `Pash`. The value of the tag reflects the role of that instance in the project.
-3. will not run two instances of its script concurrently.
+2. will not run two instances of its script concurrently.
 
-The `workers` directory contains scripts that are each suitable for
-use in the first invariant. None of those scripts should depend on
-another.
+The `workers` directory contains suitable worker scripts.
 
 
 ## Controller
 
-The controller is a web server that controls workers.
-To start it, run `node controller/main.js`.
+The controller is a web server that controls workers.  To start it,
+run `node controller/main.js`.
 
 
 ## Changelog
+
+### Jan 21 2021
+
+- Rename `ci` to `remote`
+- Use only vanilla SSH routes in the name of faster turnaround
+- Add directory for downloading reports
+
 
 ### Jan 20 2021
 

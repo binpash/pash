@@ -18,7 +18,12 @@ const createControlServer = (routes) =>
               }
           } catch (e) {
               err(e);
-              respond(res, 500, '500 Internal Error');
+
+              if (e.respond) {
+                  e.respond(res);
+              } else {
+                  respond(res, 500, '500 Internal Error');
+              }
           }
       });
 
