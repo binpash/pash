@@ -31,12 +31,11 @@ worker are the same machine. Leverage this when prototyping.
 The controller only allows one command to run at a time for _any_
 host. Furthermore, it only protects this invariant using local state,
 so restarting the server will make it forget A) that a worker is
-already running, and B) anything it know about a command running on
+already running, and B) anything it knows about a command running on
 the worker.
 
-For the time being you should not rely on the controller to protect
-invariants related to a worker's script. The worker take measures to
-prevent unwanted executions.
+You should not (yet?) rely on the controller to protect a worker's
+invariants. For now, that's a worker's problem.
 
 This situation will improve with the addition of shared state, a
 migration to AWS SSM, etc.
