@@ -1,26 +1,26 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_BH3TxxOmMm
-(1) Bash variables saved in: /tmp/pash_BH3TxxOmMm
+Writing vars to: /tmp/pash_H36XmksVEs
+(1) Bash variables saved in: /tmp/pash_H36XmksVEs
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
-Argument: [['V', ['Normal', False, 'IN0', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-00
-Argument: [['V', ['Normal', False, 'IN1', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-01
-Argument: [['V', ['Normal', False, 'IN2', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-02
-Argument: [['V', ['Normal', False, 'IN3', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-03
-Argument: [['V', ['Normal', False, 'IN4', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-04
-Argument: [['V', ['Normal', False, 'IN5', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-05
-Argument: [['V', ['Normal', False, 'IN6', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-06
-Argument: [['V', ['Normal', False, 'IN7', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-07
-Argument: [['V', ['Normal', False, 'IN8', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-08
-Argument: [['V', ['Normal', False, 'IN9', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-09
-Argument: [['V', ['Normal', False, 'IN10', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-10
-Argument: [['V', ['Normal', False, 'IN11', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-11
-Argument: [['V', ['Normal', False, 'IN12', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-12
-Argument: [['V', ['Normal', False, 'IN13', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-13
-Argument: [['V', ['Normal', False, 'IN14', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-14
-Argument: [['V', ['Normal', False, 'IN15', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-15
+Argument: [['V', ['Normal', False, 'IN0', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-00
+Argument: [['V', ['Normal', False, 'IN1', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-01
+Argument: [['V', ['Normal', False, 'IN2', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-02
+Argument: [['V', ['Normal', False, 'IN3', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-03
+Argument: [['V', ['Normal', False, 'IN4', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-04
+Argument: [['V', ['Normal', False, 'IN5', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-05
+Argument: [['V', ['Normal', False, 'IN6', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-06
+Argument: [['V', ['Normal', False, 'IN7', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-07
+Argument: [['V', ['Normal', False, 'IN8', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-08
+Argument: [['V', ['Normal', False, 'IN9', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-09
+Argument: [['V', ['Normal', False, 'IN10', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-10
+Argument: [['V', ['Normal', False, 'IN11', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-11
+Argument: [['V', ['Normal', False, 'IN12', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-12
+Argument: [['V', ['Normal', False, 'IN13', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-13
+Argument: [['V', ['Normal', False, 'IN14', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-14
+Argument: [['V', ['Normal', False, 'IN15', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-15
 inputs-outputs found for: cat
 |-- ([('option', 0), ('option', 1), ('option', 2), ('option', 3), ('option', 4), ('option', 5), ('option', 6), ('option', 7), ('option', 8), ('option', 9), ('option', 10), ('option', 11), ('option', 12), ('option', 13), ('option', 14), ('option', 15)], ['stdout'], [])
 class: stateless found for: cat
@@ -32,14 +32,14 @@ inputs-outputs found for: cut
 |-- (['stdin'], ['stdout'], [('option', 0), ('option', 1), ('option', 2), ('option', 3)])
 Uninterpreted operator: and
 class: stateless found for: cut
-Compilation time: 208.106  ms
+Compilation time: 277.76  ms
 Total nodes after optimization: 51
  -- out of which:
 Cat nodes: 2
 Eager nodes: 31
-Optimization time: 6.515  ms
+Optimization time: 7.447  ms
 arguments, redirs found for: cat
-|-- ([fid:1:../evaluation/intermediary/split_inputs/input-chunk-00, fid:2:../evaluation/intermediary/split_inputs/input-chunk-01, fid:3:../evaluation/intermediary/split_inputs/input-chunk-02, fid:4:../evaluation/intermediary/split_inputs/input-chunk-03, fid:5:../evaluation/intermediary/split_inputs/input-chunk-04, fid:6:../evaluation/intermediary/split_inputs/input-chunk-05, fid:7:../evaluation/intermediary/split_inputs/input-chunk-06, fid:8:../evaluation/intermediary/split_inputs/input-chunk-07, fid:9:../evaluation/intermediary/split_inputs/input-chunk-08, fid:10:../evaluation/intermediary/split_inputs/input-chunk-09, fid:11:../evaluation/intermediary/split_inputs/input-chunk-10, fid:12:../evaluation/intermediary/split_inputs/input-chunk-11, fid:13:../evaluation/intermediary/split_inputs/input-chunk-12, fid:14:../evaluation/intermediary/split_inputs/input-chunk-13, fid:15:../evaluation/intermediary/split_inputs/input-chunk-14, fid:16:../evaluation/intermediary/split_inputs/input-chunk-15], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 55]]]]]]])
+|-- ([fid:1:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-00, fid:2:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-01, fid:3:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-02, fid:4:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-03, fid:5:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-04, fid:6:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-05, fid:7:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-06, fid:8:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-07, fid:9:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-08, fid:10:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-09, fid:11:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-10, fid:12:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-11, fid:13:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-12, fid:14:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-13, fid:15:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-14, fid:16:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-15], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 55]]]]]]])
 arguments, redirs found for: head
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57]]]]]]])
 arguments, redirs found for: /home/nikos/dish/runtime/auto-split.sh
@@ -156,15 +156,15 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file54, #file85], [])
 arguments, redirs found for: cat
 |-- ([#file70, #file71, #file72, #file73, #file74, #file75, #file76, #file77, #file78, #file79, #file80, #file81, #file82, #file83, #file84, #file85], [])
-Backend time: 31.859  ms
-Optimized script saved in: /tmp/pash_0AHt4bvaqu
+Backend time: 36.352  ms
+Optimized script saved in: /tmp/pash_yQ7qqhmXc6
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_BH3TxxOmMm
-/dev/fd/63: line 48: declare: PPID: readonly variable
-/dev/fd/63: line 56: declare: SHELLOPTS: readonly variable
-/dev/fd/63: line 90: declare: UID: readonly variable
+(3) Recovering variables from: /tmp/pash_H36XmksVEs
+/dev/fd/63: line 49: declare: PPID: readonly variable
+/dev/fd/63: line 57: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 91: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_0AHt4bvaqu:
+(4) Executing script in /tmp/pash_yQ7qqhmXc6:
 rm -f "#file17"
 rm -f "#file19"
 rm -f "#file22"
@@ -297,7 +297,7 @@ mkfifo "#file82"
 mkfifo "#file83"
 mkfifo "#file84"
 mkfifo "#file85"
-{ cat ../evaluation/intermediary/split_inputs/input-chunk-00 ../evaluation/intermediary/split_inputs/input-chunk-01 ../evaluation/intermediary/split_inputs/input-chunk-02 ../evaluation/intermediary/split_inputs/input-chunk-03 ../evaluation/intermediary/split_inputs/input-chunk-04 ../evaluation/intermediary/split_inputs/input-chunk-05 ../evaluation/intermediary/split_inputs/input-chunk-06 ../evaluation/intermediary/split_inputs/input-chunk-07 ../evaluation/intermediary/split_inputs/input-chunk-08 ../evaluation/intermediary/split_inputs/input-chunk-09 ../evaluation/intermediary/split_inputs/input-chunk-10 ../evaluation/intermediary/split_inputs/input-chunk-11 ../evaluation/intermediary/split_inputs/input-chunk-12 ../evaluation/intermediary/split_inputs/input-chunk-13 ../evaluation/intermediary/split_inputs/input-chunk-14 ../evaluation/intermediary/split_inputs/input-chunk-15 >"#file17" & }
+{ cat /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-00 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-01 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-02 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-03 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-04 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-05 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-06 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-07 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-08 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-09 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-10 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-11 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-12 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-13 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-14 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-15 >"#file17" & }
 { head -n 2 <"#file17" >"#file19" & }
 { /home/nikos/dish/runtime/auto-split.sh "#file19" "#file22" "#file23" "#file24" "#file25" "#file26" "#file27" "#file28" "#file29" "#file30" "#file31" "#file32" "#file33" "#file34" "#file35" "#file36" "#file37" & }
 { cut -d " " -f 2 <"#file55" >"#file39" & }
@@ -415,27 +415,27 @@ rm -f "#file82"
 rm -f "#file83"
 rm -f "#file84"
 rm -f "#file85"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (77724) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (67296) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_kV10yGQO1E
+(5) Writing current BaSh set state to: /tmp/pash_i0YyYV71iQ
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_f59cMDl9BG
+Writing vars to: /tmp/pash_9DQHUP9Kzz
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 432.485 ms
-(7) Recovering BaSh variables from: /tmp/pash_f59cMDl9BG
-/dev/fd/63: line 49: declare: PPID: readonly variable
-/dev/fd/63: line 57: declare: SHELLOPTS: readonly variable
-/dev/fd/63: line 91: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_kV10yGQO1E
+Execution time: 534.295 ms
+(7) Recovering BaSh variables from: /tmp/pash_9DQHUP9Kzz
+/dev/fd/63: line 50: declare: PPID: readonly variable
+/dev/fd/63: line 58: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 92: declare: UID: readonly variable
+(7) Reading current BaSh set state from: /tmp/pash_i0YyYV71iQ
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_aqskweqw
-Preprocessing time: 26.175  ms
+Preprocessed script stored in: /tmp/pash_ttnfvosv
+Preprocessing time: 28.364  ms
 
-real	0m1.085s
-user	0m0.910s
-sys	0m0.646s
-Files ../evaluation//intermediary//unix50_pipeline_002_seq_output and /tmp/distr_output/0 are identical
+real	0m1.275s
+user	0m1.007s
+sys	0m0.708s
+Files /home/nikos/dish/evaluation//intermediary//unix50_pipeline_002_seq_output and /tmp/distr_output/0 are identical
