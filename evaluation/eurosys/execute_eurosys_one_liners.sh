@@ -126,7 +126,7 @@ for microbenchmark_config in "${microbenchmarks[@]}"; do
             echo "Flag: ${flag}"
 
             ## Execute the intermediary script
-            "$PASH_TOP/evaluation/execute_compile_evaluation_script.sh" $exec_seq $flag "${microbenchmark}" "${n_in}" $result_subdir $intermediary_prefix
+            "$PASH_TOP/evaluation/execute_compile_evaluation_script.sh" $exec_seq $flag "${microbenchmark}" "${n_in}" $result_subdir $intermediary_prefix > /dev/null 2>&1
 
             ## Only run the sequential the first time around
             exec_seq=""
