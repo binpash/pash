@@ -132,14 +132,29 @@ const ci = async (req, res) => {
     command.run({
         timeout: hours(1),
         shouldStopWaiting: (stdout, stderr) => /<<(fail|done)>>/.test(stdout),
-        postCompletion: (ssh) => {
-            // `recursive: true' is `mkdir -p', which prevents an
-            // exception if the directory exists.
-            const dir = `${__dirname}/reports`;
-            fs.mkdirSync(dir, { recursive: true });
-
+        postCompletion: async (ssh) => {
             // FIXME: Download size can grow without bound. Revisit when it becomes a problem.
-            return ssh.getDirectory(dir, `${homedir}/reports`, { recursive: true })
+
+            const tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'pash-'));
+            const dir = `${__dirname}/reports`;
+            console.log(dir, tmpdir);
+
+            try {
+                await ssh.getDirectory(tmpdir, `${homedir}/reports`, { recursive: true });
+
+                // We need to sync b/c ssh.getDirectory will create a
+                // nested 'reports' directory if the `reports'
+                // directory already exists. We also don't want to
+                // delete the original directory in advance, because
+                // that risks discarding information that does not
+                // exist on the remote.
+                syncdir(tmpdir, dir, { type: 'copy' });
+            } catch (e) {
+                err(e);
+                throw e;
+            } finally {
+                fs.rmdirSync(tmpdir, { recursive: true });
+            }
         },
     });
 
