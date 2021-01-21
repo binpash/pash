@@ -33,6 +33,7 @@ const hours = h => (1000 * 60 * 60 * h);
 
 
 // The command module ensures only one command runs at a time.
+// TODO: Upgrade for use with more than one host at a time.
 const command = (() => {
     let initial = true;
     let idle = true;
@@ -83,13 +84,6 @@ const command = (() => {
     return exports;
 })();
 
-
-
-// Runs a command on a remote host. command.assign raises an error if
-// some command is already running for a host. Defers actual execution
-// until control passes the point the error would be raised.
-//
-// TODO: Upgrade for use with more than one host at a time.
 
 
 // The SSH commands do not actually wait for the commands to complete.
