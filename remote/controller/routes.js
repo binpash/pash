@@ -1,126 +1,186 @@
 // A controller implementation that uses SSH
 //
-// Pros: Simple.
-// Cons: Scales poorly. SSH credential overhead.
+// WARNING: Do not use `await' where you see <!> in a comment. A broken
+// promise chain is intentional when waiting would hang the HTTP
+// connection.  Use informational GET endpoints to monitor status of
+// the orphaned promise.
 
 const { log, err, respond, getRequestBody } = require('./lib.js');
 const { NodeSSH } = require('node-ssh');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const syncdir = require('sync-directory');
 
-const USER = 'ubuntu';
-const HOST = 'ec2-3-84-95-88.compute-1.amazonaws.com';
+const getSshCredentials = () => ({
+    host: process.env.PASH_REMOTE_HOST || 'localhost',
+    username: process.env.PASH_REMOTE_USER || process.env.USER,
+    privateKey: process.env.PASH_REMOTE_PRIVATE_KEY || `${process.env.HOME}/.ssh/id_rsa`,
+});
+
+const getRemoteHomeDirectory = () => {
+    const { username } = getSshCredentials();
+    return `/home/${username}`;
+};
 
 const sshConnect = async (username, host) => {
     const ssh = new NodeSSH();
-
-    await ssh.connect({
-        host,
-        username,
-        privateKey: `${process.env.HOME}/.ssh/sgcom-aws.pem`,
-    });
-    
+    await ssh.connect(getSshCredentials());
     return ssh;
 };
 
+const hours = h => (1000 * 60 * 60 * h);
 
-// This decorator caches a Promise returned from makePromise until it
-// settles. This makes sure only one async operation from the function
-// is active at a time.
-const exclusive = (makePromise) => {
-    let p;
-    return (...a) => {
-        if (p) {
-            return p;
-        } else {
-            p = makePromise(...a);
-            return p.catch((e) => {}).then(() => (p = false));
-        }
+
+// The command module ensures only one command runs at a time.
+const command = (() => {
+    let initial = true;
+    let idle = true;
+    let promise = Promise.resolve();
+    let stdout = '';
+    let stderr = '';
+
+    async function exec({
+        cwd = getRemoteHomeDirectory(),
+        shouldStopWaiting,
+        timeout = hours(1),
+        postCompletion = () => {},
+    }) {
+        stdout = stderr = '';
+        const ssh = await sshConnect();
+        const [check, completion] = createStreamMonitor(shouldStopWaiting, timeout);
+
+        await ssh.execCommand(`${getRemoteHomeDirectory()}/work.sh`, {
+            cwd,
+            onStdout: (c) => (stdout += c.toString('utf8'), check(stdout, stderr)),
+            onStderr: (c) => (stderr += c.toString('utf8'), check(stdout, stderr)),
+        });
+
+        await completion;
+        await Promise.resolve(postCompletion(ssh));
+        ssh.dispose();
+    }
+
+    const exports = {
+        neverRan: () => initial,
+        isIdle: () => idle,
+        dump: () => ({ stdout, stderr }),
+        run: (options) => {
+            if (idle) {
+                idle = initial = false;
+                return exec(options)
+                    .catch((e) => { idle = true; return Promise.reject(e); })
+                    .then((v) => { idle = true; return v; });
+            } else {
+                const msg = 'A command is already running.';
+                const err = new Error(msg);
+                err.respond = (res) => respond(res, 400, msg);
+                throw err;
+            }
+        },
     };
-};
+
+    return exports;
+})();
 
 
-// Runs a fixed script on the remote host and download the reports
-// directory it generates.
+
+// Runs a command on a remote host. command.assign raises an error if
+// some command is already running for a host. Defers actual execution
+// until control passes the point the error would be raised.
 //
-// This is marked exclusive b/c multiple concurrent script runs and
-// directory downloads would generate overwhelming traffic.
-//
-// FIXME: The reports directory grows over time. Therefore, the
-// download will grow too. Revisit when size becomes a problem.
+// TODO: Upgrade for use with more than one host at a time.
 
-let stdout = '';
-let stderr = '';
 
 // The SSH commands do not actually wait for the commands to complete.
-// Best approach is to inspect the output to know when to proceed.
-const createMonitor = () => {
-    let resolve;
+// Current approach is to inspect the output to know when to proceed.
+//
+// FIXME: This doesn't work unless the SSH connection remains unbroken
+// for the entire life of the command. This should instead consult the
+// host's process list to see if an instance of the command is still
+// running.
+const createStreamMonitor = (shouldStopWaiting, timeout) => {
+    let _resolve, alarm;
 
-    const check = () => {
-        if (/<<(fail|done)>>/.test(stdout))
-            resolve();
+    const check = (stdout, stderr) => {
+        if (shouldStopWaiting(stdout, stderr)) {
+            clearTimeout(alarm);
+            _resolve();
+        }
     };
 
-    const promise = new Promise((r) => (resolve = r));
+    const promise = new Promise((resolve, reject) => {
+        // Allow external control of promise resolution.
+        // Works because the callback for the Promise
+        // constructor is called immediately and synchronously.
+        _resolve = resolve;
+        alarm = setTimeout(() => reject(new Error('<Command timed out>')), timeout);
+    });
 
     return [check, promise];
 }
 
-const runCorrectnessTests = exclusive(async () => {
-    stdout = stderr = '';
+const run = async (req, res) => {
+    await command.run({ shouldStopWaiting: () => true });
+    respond(res, 200, 'Sent command\n');
+};
 
-    const username = USER;
-    const host = HOST;
-    const homedir = `/home/${username}`;
-    const ssh = await sshConnect(username, host);
-    const [check, sentinel] = createMonitor();
-    
-    try {
-        await ssh.execCommand(`${homedir}/worker-script.sh`, {
-            cwd: homedir,
-            onStdout: (c) => (stdout += c.toString('utf8'), check()),
-            onStderr: (c) => (stderr += c.toString('utf8')),
-        });
-
-        await sentinel;        
-        await ssh.getDirectory(__dirname, `${homedir}/reports`, { recursive: true });
-    } catch (e) {
-        err(e);
-    }
-});
-    
-
-// Runs a fixed script on a host
 const ci = async (req, res) => {
-    try {
-        // Do not use await here. This can take a while and would just
-        // hold up the HTTP connection.
-        runCorrectnessTests();
-        respond(res, 200, 'Sent command. GET /now to monitor STDOUT and STDERR.');
-    } catch (e) {
-        err(e);
-        respond(res, 500, `Failed to connect to CI worker.\n`);
-    }
+    const homedir = getRemoteHomeDirectory();
+
+    // <!>
+    command.run({
+        timeout: hours(1),
+        shouldStopWaiting: (stdout, stderr) => /<<(fail|done)>>/.test(stdout),
+        postCompletion: (ssh) => {
+            // `recursive: true' is `mkdir -p', which prevents an
+            // exception if the directory exists.
+            const dir = `${__dirname}/reports`;
+            fs.mkdirSync(dir, { recursive: true });
+
+            // FIXME: Download size can grow without bound. Revisit when it becomes a problem.
+            return ssh.getDirectory(dir, `${homedir}/reports`, { recursive: true })
+        },
+    });
+
+    respond(res, 200, 'Sent command\n');
 };
 
 
-// STDOUT and STDERR are streaming, so output may change.
-const now = async (req, res) => {
-    try {
-        res.write(stdout);
-
-        if (stderr) {
-            res.write('\n\n====STDERR===\n');
-            res.write(stderr);
-        }
-        
+const show = (key) => (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    if (command.neverRan()) {
+        res.end('Not monitoring a command.\n');
+    } else {
+        res.write(command.dump()[key]);
         res.end('\n');
-    } catch (e) {
-        err(e);
     }
 };
 
+
+const now = (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    const { stdout, stderr } = command.dump();
+
+    if (command.neverRan()) {
+        res.end('Not monitoring a command.\n');
+    } else {
+        res.write(stdout);
+        res.write('\n\n===STDERR===\n');
+        res.write(stderr);
+        res.end('\n');
+    }
+};
+
+const echo = async (req, res) =>
+      respond(res, 200, await getRequestBody(req));
 
 module.exports = {
+    '/stdout': show('stdout'),
+    '/stderr': show('stderr'),
+    // For backwards compatibility
+    '/ech': echo,
     '/now': now,
+    '/run': run,
     '/ci': ci,
 };
