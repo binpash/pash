@@ -27,6 +27,9 @@ revision.tex
 *.byte
 *.o
 
+# Node.js
+node_modules
+
 # local directory w/ related work
 bib.to
 pldi/draft.synctex.gz
