@@ -138,7 +138,6 @@ const ci = async (req, res) => {
 
             const tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'pash-'));
             const dir = `${__dirname}/reports`;
-            console.log(dir, tmpdir);
 
             try {
                 await ssh.getDirectory(tmpdir, `${homedir}/reports`, { recursive: true });
