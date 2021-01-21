@@ -17,11 +17,12 @@ const createControlServer = (routes) =>
                   respond(res, 404, '404 Not Found');
               }
           } catch (e) {
-              err(e);
-
               if (e.respond) {
                   e.respond(res);
+                  e.respond = undefined;
+                  err(e);
               } else {
+                  err(e);
                   respond(res, 500, '500 Internal Error');
               }
           }
