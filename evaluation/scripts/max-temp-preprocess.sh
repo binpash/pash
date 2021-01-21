@@ -2,7 +2,7 @@
 
 sed 's;^;http://ndr.md/data/noaa/;' |
     sed 's;$;/;' |
-    xargs -n 1 curl -s |
+    xargs -r -n 1 curl -s |
     grep gz |
     tr -s ' \n' |
     cut -d ' ' -f9 |
