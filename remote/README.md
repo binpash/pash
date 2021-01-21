@@ -26,12 +26,20 @@ environment variables:
 Note that the defaults make it such that the controller and remote
 worker are the same machine. Leverage this when prototyping.
 
-Currently, the controller only allows one command to run at a time for
-_any_ host. Furthermore, it only protects this invariant using local
-state, so restarting the server will make it forget that a worker is
-already running. For redundancy, the worker should also try to prevent
-any unwanted concurrent executions. This situation should improve with
-the addition of shared state.
+### Limitations
+
+The controller only allows one command to run at a time for _any_
+host. Furthermore, it only protects this invariant using local state,
+so restarting the server will make it forget A) that a worker is
+already running, and B) anything it know about a command running on
+the worker.
+
+For the time being you should not rely on the controller to protect
+invariants related to a worker's script. The worker take measures to
+prevent unwanted executions.
+
+This situation will improve with the addition of shared state, a
+migration to AWS SSM, etc.
 
 
 ### API
@@ -40,41 +48,50 @@ the addition of shared state.
 
 * `/now` dumps the current STDOUT and STDERR for the running command.
    If no command is running, it dumps the STDOUT and STDERR for the
-   last-issued command. Note that this shows values accumulated by the
-   _controller_ in memory! If you restart the server, it will clear
-   the response of this endpoint.
+   last-issued command. The actual response body depends on
+   [Limitations](#limitations).
 
 * `/stdout`: like `/now`, but only shows STDOUT.
 
 * `/stderr`: like `/now`, but only shows STDERR.
 
 * `/ci`: like `/run`, with an added invariant. It assumes the worker
-   script is `workers/run-ci.sh`, or a script based on it. It
-   downloads a `reports` directory from the remote host. *This is for
-   backwards compatibility to make sure reports are visible to the
-   NGINX server using `scripts/pash-nginx.conf`*.
+   script is `workers/run-ci.sh`, or a script based on it. If the
+   controller detects relevant output, it downloads a `reports`
+   directory from the remote host. *This is for backwards
+   compatibility to make sure reports are visible to the NGINX server
+   using `scripts/pash-nginx.conf`*.
 
 
-## Quick Start on Your Machine
+## Quick Start
 
 Make sure `sshd` is running on your machine (`systemctl start sshd`),
 and that you add your public key to `~/.ssh/authorized_keys`. That way
 you can log in as yourself using `ssh localhost`.
 
+Follow these instructions _without_ making an SSH connection.
+
 1. Start the server with `node controller/main.js` in one terminal.
 2. Put a script at `~/work.sh`.
 3. Run `curl [::]:2047/run`
-4. Check `curl [::]:2047/now` to monitor STDOUT and STDERR.
+4. Check `curl [::]:2047/now` to monitor/review STDOUT and STDERR.
+5. Repeat steps 3-4 to iterate until you get desired output.
+
+Once you are satisfied with how the script works, update the
+`PASH_REMOTE_*` environment variables to the (presumably more
+powerful) machine you want to run the script from that point on. Copy
+`work.sh` over, then repeat step 5 to iterate on the behavior of the
+worker.
 
 
 ## Changelog
 
 ### Jan 21 2021
 
-- Rename `ci` to `remote`
+- Rename files to clarify their purpose.
 - Use only vanilla SSH routes in the name of faster turnaround
-- Add directory for downloading reports
-
+- Add documentation
+- Add submodule to protect command invariants.
 
 ### Jan 20 2021
 
