@@ -134,7 +134,12 @@ const ci = async (req, res) => {
             const dir = `${__dirname}/reports`;
 
             try {
-                await ssh.getDirectory(tmpdir, `${homedir}/reports`, { recursive: true });
+                // FIXME: Blowing away the directory is too crude. A
+                // sync function is below, but it doesn't work right
+                // now. This is a quick fix to help the team ensure
+                // they have a serveable reports directory.
+                fs.rmdirSync(dir, { recursive: true });
+                await ssh.getDirectory(dir, `${homedir}/reports`, { recursive: true });
 
                 // We need to sync b/c ssh.getDirectory will create a
                 // nested 'reports' directory if the `reports'
@@ -142,7 +147,7 @@ const ci = async (req, res) => {
                 // delete the original directory in advance, because
                 // that risks discarding information that does not
                 // exist on the remote.
-                syncdir(tmpdir, dir, { type: 'copy' });
+                // syncdir(tmpdir, dir, { type: 'copy' });
             } catch (e) {
                 err(e);
                 throw e;
