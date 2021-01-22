@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# run it by piping output to /dev/null
-
 # scripts from https://unixgame.io/
 # https://github.com/psinghbh/softsec.github.io
 # input files https://github.com/psinghbh/softsec.github.io/tree/master/ctf/unixgame.io/challenges
