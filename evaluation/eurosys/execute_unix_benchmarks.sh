@@ -9,7 +9,7 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 ## 2. Big inputs (10GB) | --width 16 (EuroSys evaluation)
 evaluation_level=1
 
-while getopts 'smlh' opt; do
+while getopts 'slh' opt; do
     case $opt in
         s) evaluation_level=1 ;;
         l) evaluation_level=2 ;;
