@@ -1,14 +1,14 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_wAB12nkiwn
-(1) Bash variables saved in: /tmp/pash_wAB12nkiwn
+Writing vars to: /tmp/pash_HILgoguztY
+(1) Bash variables saved in: /tmp/pash_HILgoguztY
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
-Argument: [['V', ['Normal', False, 'IN0', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-00
-Argument: [['V', ['Normal', False, 'IN1', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-01
-Argument: [['V', ['Normal', False, 'IN2', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-02
-Argument: [['V', ['Normal', False, 'IN3', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-03
+Argument: [['V', ['Normal', False, 'IN0', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-00
+Argument: [['V', ['Normal', False, 'IN1', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-01
+Argument: [['V', ['Normal', False, 'IN2', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-02
+Argument: [['V', ['Normal', False, 'IN3', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-03
 inputs-outputs found for: cat
 |-- ([('option', 0), ('option', 1), ('option', 2), ('option', 3)], ['stdout'], [])
 class: stateless found for: cat
@@ -26,14 +26,14 @@ class: stateless found for: cut
 inputs-outputs found for: wc
 |-- (['stdin'], ['stdout'], [('option', 0)])
 class: pure found for: wc
-Compilation time: 68.649  ms
+Compilation time: 66.353  ms
 Total nodes after optimization: 20
  -- out of which:
 Cat nodes: 2
 Eager nodes: 7
-Optimization time: 3.295  ms
+Optimization time: 3.255  ms
 arguments, redirs found for: cat
-|-- ([fid:1:../evaluation/intermediary/split_inputs/input-chunk-00, fid:2:../evaluation/intermediary/split_inputs/input-chunk-01, fid:3:../evaluation/intermediary/split_inputs/input-chunk-02, fid:4:../evaluation/intermediary/split_inputs/input-chunk-03], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53]]]]]]])
+|-- ([fid:1:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-00, fid:2:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-01, fid:3:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-02, fid:4:/home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-03], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53]]]]]]])
 arguments, redirs found for: sed
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55]]]]]]])
 arguments, redirs found for: /home/nikos/dish/runtime/auto-split.sh
@@ -76,15 +76,15 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file26, #file33], [])
 arguments, redirs found for: wc
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49]]]]]]])
-Backend time: 17.994  ms
-Optimized script saved in: /tmp/pash_TyR9JCFvmF
+Backend time: 17.635  ms
+Optimized script saved in: /tmp/pash_4B72BtXOQg
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_wAB12nkiwn
-/dev/fd/63: line 36: declare: PPID: readonly variable
-/dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
-/dev/fd/63: line 78: declare: UID: readonly variable
+(3) Recovering variables from: /tmp/pash_HILgoguztY
+/dev/fd/63: line 37: declare: PPID: readonly variable
+/dev/fd/63: line 45: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 79: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_TyR9JCFvmF:
+(4) Executing script in /tmp/pash_4B72BtXOQg:
 rm -f "#file5"
 rm -f "#file7"
 rm -f "#file9"
@@ -133,7 +133,7 @@ mkfifo "#file30"
 mkfifo "#file31"
 mkfifo "#file32"
 mkfifo "#file33"
-{ cat ../evaluation/intermediary/split_inputs/input-chunk-00 ../evaluation/intermediary/split_inputs/input-chunk-01 ../evaluation/intermediary/split_inputs/input-chunk-02 ../evaluation/intermediary/split_inputs/input-chunk-03 >"#file5" & }
+{ cat /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-00 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-01 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-02 /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-03 >"#file5" & }
 { sed 1d <"#file5" >"#file7" & }
 { /home/nikos/dish/runtime/auto-split.sh "#file7" "#file14" "#file15" "#file16" "#file17" & }
 { grep "Bell" <"#file27" >"#file19" & }
@@ -178,27 +178,27 @@ rm -f "#file30"
 rm -f "#file31"
 rm -f "#file32"
 rm -f "#file33"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (39144) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (105323) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_ir7v9iJb5X
+(5) Writing current BaSh set state to: /tmp/pash_ruEob1b53p
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_akioiAH07k
+Writing vars to: /tmp/pash_E43DqJW3PP
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 10497.181 ms
-(7) Recovering BaSh variables from: /tmp/pash_akioiAH07k
-/dev/fd/63: line 37: declare: PPID: readonly variable
-/dev/fd/63: line 45: declare: SHELLOPTS: readonly variable
-/dev/fd/63: line 79: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_ir7v9iJb5X
+Execution time: 10665.847 ms
+(7) Recovering BaSh variables from: /tmp/pash_E43DqJW3PP
+/dev/fd/63: line 38: declare: PPID: readonly variable
+/dev/fd/63: line 46: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 80: declare: UID: readonly variable
+(7) Reading current BaSh set state from: /tmp/pash_ruEob1b53p
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_sgvxntlw
-Preprocessing time: 29.413  ms
+Preprocessed script stored in: /tmp/pash_ycgwbykw
+Preprocessing time: 27.953  ms
 
-real	0m10.999s
-user	0m9.672s
-sys	0m15.606s
-Files ../evaluation//intermediary//unix50_pipeline_029_seq_output and /tmp/distr_output/0 are identical
+real	0m11.138s
+user	0m9.682s
+sys	0m15.913s
+Files /home/nikos/dish/evaluation//intermediary//unix50_pipeline_029_seq_output and /tmp/distr_output/0 are identical

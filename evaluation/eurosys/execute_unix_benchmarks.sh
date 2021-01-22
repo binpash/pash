@@ -30,9 +30,11 @@ intermediary_dir="$PASH_TOP/evaluation/intermediary/"
 results_subdir_prefix="unix50"
 
 if [ "$evaluation_level" -eq 1 ]; then
+    echo "Executing Unix50 scripts with 1GB inputs and --width 4"
     maximum_input_size="$((1024 * 1024 * 1024))" # 1 GB
     n_in=4
 elif [ "$evaluation_level" -eq 2 ]; then
+    echo "Executing Unix50 scripts with 10GB inputs and --width 16"
     maximum_input_size="$((10 * 1024 * 1024 * 1024))" # 10 GB
     n_in=16
 else
@@ -58,6 +60,6 @@ for unix50_pipeline in $(ls ${unix50_intermediary} | grep -v "_env" | cut -f 1 -
             $unix50_intermediary $unix50_pipeline $n_in $intermediary_dir
 
     echo "Executing script with bash and pash..."
-    "$PASH_TOP/evaluation/execute_compile_evaluation_script.sh" -s -a "${unix50_pipeline}" "${n_in}" "${results_subdir}"  # > /dev/null
+    "$PASH_TOP/evaluation/execute_compile_evaluation_script.sh" -s -a "${unix50_pipeline}" "${n_in}" "${results_subdir}" > /dev/null 2>&1
     rm -f /tmp/eager*
 done
