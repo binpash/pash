@@ -51,6 +51,7 @@ fi
 eval_directory="$PASH_TOP/evaluation/"
 intermediary_dir="$PASH_TOP/evaluation/intermediary/"
 script_dir="${eval_directory}scripts/"
+microbenchmarks_dir="$PASH_TOP/evaluation/microbenchmarks/"
 results="${eval_directory}results/baseline_sort/"
 
 mkdir -p $results
@@ -58,7 +59,7 @@ mkdir -p $results
 for n_in in "${n_inputs[@]}"; do
     experiment="baseline_sort_${n_in}"
     echo "$experiment"
-    exec_script="${intermediary_dir}sort_${n_in}_seq.sh"
+    sort_parallel_script="${intermediary_dir}sort_${n_in}_seq.sh"
     env_file="${intermediary_dir}sort_${n_in}_env.sh"
 
     echo "Generating input and intermediary scripts... be patient..."
@@ -69,7 +70,13 @@ for n_in in "${n_inputs[@]}"; do
     export $(cut -d= -f1 $env_file)
 
     echo "Executing sort with parallel flag for parallelism: ${n_in}"
-    { time /bin/bash $exec_script "${n_in}" > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_${intermediary_prefix}seq.time" >&2)
+    { time /bin/bash $sort_parallel_script "${n_in}" > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_${intermediary_prefix}seq.time" >&2)
+
+    echo "Generating input and intermediary scripts... be patient..."
+    python3 "$PASH_TOP/evaluation/generate_microbenchmark_intermediary_scripts.py" \
+                $microbenchmarks_dir "sort" $n_in $intermediary_dir $env_suffix
+
+    exec_script="${intermediary_dir}sort_${n_in}_seq.sh"
 
     echo "Executing pash on sort with --width ${n_in}"
     { time $PASH_TOP/pa.sh -w "${n_in}" --log_file /tmp/pash_log --output_time $exec_script ; } 1> /tmp/pash_output 2> >(tee "${results}${experiment}_${intermediary_prefix}pash.time" >&2)
