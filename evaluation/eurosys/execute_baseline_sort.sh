@@ -30,7 +30,6 @@ if [ "$evaluation_level" -eq 1 ]; then
         16
     )
     env_suffix="small"
-    env_suffix_underscore="_small"
     intermediary_prefix="small_"
 elif [ "$evaluation_level" -eq 2 ]; then
     echo "Executing large baseline sort evaluation..."
@@ -43,7 +42,6 @@ elif [ "$evaluation_level" -eq 2 ]; then
         64
     )
     env_suffix=""
-    env_suffix_underscore=""
     intermediary_prefix=""
 else
     echo "Unrecognizable execution level: $evaluation_level"
@@ -61,7 +59,7 @@ for n_in in "${n_inputs[@]}"; do
     experiment="baseline_sort_${n_in}"
     echo "$experiment"
     exec_script="${intermediary_dir}sort_${n_in}_seq.sh"
-    env_file="${intermediary_dir}sort_${n_in}_env${env_suffix_underscore}.sh"
+    env_file="${intermediary_dir}sort_${n_in}_env.sh"
 
     echo "Generating input and intermediary scripts... be patient..."
     python3 "$PASH_TOP/evaluation/generate_microbenchmark_intermediary_scripts.py" \
@@ -74,5 +72,5 @@ for n_in in "${n_inputs[@]}"; do
     { time /bin/bash $exec_script "${n_in}" > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_${intermediary_prefix}seq.time" >&2)
 
     echo "Executing pash on sort with --width ${n_in}"
-    { time $PASH_TOP/pa.sh -w "${n_in}" --log_file /tmp/pash_2_log --output_time $exec_script ; } 1> /tmp/pash_output 2> >(tee "${results}${experiment}_${intermediary_prefix}pash.time" >&2)
+    { time $PASH_TOP/pa.sh -w "${n_in}" --log_file /tmp/pash_log --output_time $exec_script ; } 1> /tmp/pash_output 2> >(tee "${results}${experiment}_${intermediary_prefix}pash.time" >&2)
 done
