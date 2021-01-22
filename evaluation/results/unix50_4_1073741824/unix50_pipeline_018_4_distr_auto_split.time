@@ -1,14 +1,14 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_AoEnLhThGX
-(1) Bash variables saved in: /tmp/pash_AoEnLhThGX
+Writing vars to: /tmp/pash_G2ioIFf1fi
+(1) Bash variables saved in: /tmp/pash_G2ioIFf1fi
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
-Argument: [['V', ['Normal', False, 'IN0', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-00
-Argument: [['V', ['Normal', False, 'IN1', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-01
-Argument: [['V', ['Normal', False, 'IN2', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-02
-Argument: [['V', ['Normal', False, 'IN3', []]]] was expanded to: ../evaluation/intermediary/split_inputs/input-chunk-03
+Argument: [['V', ['Normal', False, 'IN0', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-00
+Argument: [['V', ['Normal', False, 'IN1', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-01
+Argument: [['V', ['Normal', False, 'IN2', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-02
+Argument: [['V', ['Normal', False, 'IN3', []]]] was expanded to: /home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-03
 inputs-outputs found for: cat
 |-- ([('option', 0), ('option', 1), ('option', 2), ('option', 3)], ['stdout'], [])
 class: stateless found for: cat
@@ -26,22 +26,22 @@ class: stateless found for: cut
 inputs-outputs found for: awk
 |-- (['stdin'], ['stdout'], [('option', 0)])
 class: pure found for: awk
-Compilation time: 67.472  ms
+Compilation time: 68.444  ms
 Total nodes after optimization: 24
  -- out of which:
 Cat nodes: 2
 Eager nodes: 11
-Optimization time: 4.259  ms
+Optimization time: 4.541  ms
 arguments, redirs found for: awk
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57]]]]]]])
 arguments, redirs found for: grep
-|-- ([], [['File', ['From', 0, [['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 52]]]]]]])
+|-- ([], [['File', ['From', 0, [['C', 47], ['C', 104], ['C', 111], ['C', 109], ['C', 101], ['C', 47], ['C', 110], ['C', 105], ['C', 107], ['C', 111], ['C', 115], ['C', 47], ['C', 100], ['C', 105], ['C', 115], ['C', 104], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 52]]]]]]])
 arguments, redirs found for: grep
-|-- ([], [['File', ['From', 0, [['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 49]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53]]]]]]])
+|-- ([], [['File', ['From', 0, [['C', 47], ['C', 104], ['C', 111], ['C', 109], ['C', 101], ['C', 47], ['C', 110], ['C', 105], ['C', 107], ['C', 111], ['C', 115], ['C', 47], ['C', 100], ['C', 105], ['C', 115], ['C', 104], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 49]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53]]]]]]])
 arguments, redirs found for: grep
-|-- ([], [['File', ['From', 0, [['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 50]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 54]]]]]]])
+|-- ([], [['File', ['From', 0, [['C', 47], ['C', 104], ['C', 111], ['C', 109], ['C', 101], ['C', 47], ['C', 110], ['C', 105], ['C', 107], ['C', 111], ['C', 115], ['C', 47], ['C', 100], ['C', 105], ['C', 115], ['C', 104], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 50]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 54]]]]]]])
 arguments, redirs found for: grep
-|-- ([], [['File', ['From', 0, [['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 51]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 55]]]]]]])
+|-- ([], [['File', ['From', 0, [['C', 47], ['C', 104], ['C', 111], ['C', 109], ['C', 101], ['C', 47], ['C', 110], ['C', 105], ['C', 107], ['C', 111], ['C', 115], ['C', 47], ['C', 100], ['C', 105], ['C', 115], ['C', 104], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 51]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 55]]]]]]])
 arguments, redirs found for: cat
 |-- ([#file27, #file28, #file29, #file30], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55]]]]]]])
 arguments, redirs found for: /home/nikos/dish/runtime/auto-split.sh
@@ -84,15 +84,15 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file26, #file37], [])
 arguments, redirs found for: awk
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49]]]]]]])
-Backend time: 19.341  ms
-Optimized script saved in: /tmp/pash_jsomUwN4sB
+Backend time: 19.495  ms
+Optimized script saved in: /tmp/pash_mW1b3sUYF4
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_AoEnLhThGX
-/dev/fd/63: line 36: declare: PPID: readonly variable
-/dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
-/dev/fd/63: line 78: declare: UID: readonly variable
+(3) Recovering variables from: /tmp/pash_G2ioIFf1fi
+/dev/fd/63: line 37: declare: PPID: readonly variable
+/dev/fd/63: line 45: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 79: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_jsomUwN4sB:
+(4) Executing script in /tmp/pash_mW1b3sUYF4:
 rm -f "#file5"
 rm -f "#file7"
 rm -f "#file9"
@@ -150,10 +150,10 @@ mkfifo "#file35"
 mkfifo "#file36"
 mkfifo "#file37"
 { awk "length <= 45" <"#file7" >"#file9" & }
-{ grep "Bell" <../evaluation/intermediary/split_inputs/input-chunk-00 >"#file14" & }
-{ grep "Bell" <../evaluation/intermediary/split_inputs/input-chunk-01 >"#file15" & }
-{ grep "Bell" <../evaluation/intermediary/split_inputs/input-chunk-02 >"#file16" & }
-{ grep "Bell" <../evaluation/intermediary/split_inputs/input-chunk-03 >"#file17" & }
+{ grep "Bell" </home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-00 >"#file14" & }
+{ grep "Bell" </home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-01 >"#file15" & }
+{ grep "Bell" </home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-02 >"#file16" & }
+{ grep "Bell" </home/nikos/dish/evaluation/intermediary/split_inputs/input-chunk-03 >"#file17" & }
 { cat "#file27" "#file28" "#file29" "#file30" >"#file7" & }
 { /home/nikos/dish/runtime/auto-split.sh "#file9" "#file18" "#file19" "#file20" "#file21" & }
 { cut -d "," -f 2 <"#file31" >"#file23" & }
@@ -202,27 +202,27 @@ rm -f "#file34"
 rm -f "#file35"
 rm -f "#file36"
 rm -f "#file37"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (34580) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (101356) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_s1ZAjSEIdl
+(5) Writing current BaSh set state to: /tmp/pash_YeZzEGXjaQ
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_BNcCt6pNQA
+Writing vars to: /tmp/pash_f3UVow0C42
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 1433.441 ms
-(7) Recovering BaSh variables from: /tmp/pash_BNcCt6pNQA
-/dev/fd/63: line 37: declare: PPID: readonly variable
-/dev/fd/63: line 45: declare: SHELLOPTS: readonly variable
-/dev/fd/63: line 79: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_s1ZAjSEIdl
+Execution time: 1423.979 ms
+(7) Recovering BaSh variables from: /tmp/pash_f3UVow0C42
+/dev/fd/63: line 38: declare: PPID: readonly variable
+/dev/fd/63: line 46: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 80: declare: UID: readonly variable
+(7) Reading current BaSh set state from: /tmp/pash_YeZzEGXjaQ
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_istwibhq
-Preprocessing time: 28.185  ms
+Preprocessed script stored in: /tmp/pash_tmqhxbic
+Preprocessing time: 27.521  ms
 
-real	0m1.946s
-user	0m3.245s
-sys	0m2.553s
-Files ../evaluation//intermediary//unix50_pipeline_018_seq_output and /tmp/distr_output/0 are identical
+real	0m1.914s
+user	0m3.182s
+sys	0m2.479s
+Files /home/nikos/dish/evaluation//intermediary//unix50_pipeline_018_seq_output and /tmp/distr_output/0 are identical
