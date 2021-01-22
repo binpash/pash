@@ -14,7 +14,7 @@
 ## TODO: By default run all small
 ##       In the video, we need to explain all options, and what do you get for all options.
 
-
+## TODO: Set up $PASH_TOP in the beginning or run the install script.
 
 ## TODO: Note that the execution times reported in the paper are in the log (and not the general time commands).
 
@@ -31,6 +31,71 @@ echo "Section 6.1: Common Unix One-liners"
 ## TODO: Run the plotting 
 ## TODO: Also save aggregates (avg, etc) in a file
 ## TODO: Depending on flag, echo where the results and plot are
+
+## Note that input files that are used as inputs for this script are generated 
+## using the `gen*` scripts in `evaluation/scripts/input/`.
+## ```
+## cd $PASH_TOP/evaluation/scripts/input/
+## ./gen.sh
+## ./gen.sh # Warning: This requires more than 100GB of space.
+## ```
+##
+## If you just want to run the scripts with small inputs (the main conclusions still hold)
+## you only need to run `./gen.sh`.
+##
+## The one-liner scripts are included in `evaluation/microbenchmarks`
+## The list of scripts (and their correspondence to the names in the paper) are seen below:
+##  - minimal_grep.sh       # EuroSys: nfa-regex
+##  - minimal_sort.sh       # EuroSys: sort
+##  - topn.sh               # EuroSys: top-n
+##  - wf.sh                 # EuroSys: wf
+##  - spell.sh              # EuroSys: spell
+##  - diff.sh               # EuroSys: difference
+##  - bigrams.sh            # EuroSys: bi-grams
+##  - set-diff.sh           # EuroSys: set-difference
+##  - double_sort.sh        # EuroSys: sort-sort
+##  - shortest_scripts.sh   # EuroSys: shortest-scripts
+##
+## The inputs that we are going to run them on are defined in
+##  - *_env_small.sh (for the small input)
+##  - *_env.sh (for the large EuroSys eval input, usually 10x larger than the small)
+##
+## The script that runs PaSh on these programs is: `evaluation/eurosys/execute_eurosys_one_liners.sh` 
+## There are three modes of execution (can be seen by calling the script with the -h flag):
+##   1. Small inputs | --width 2, 16 | Only full PaSh config
+##   2. Small inputs | --width 2, 16 | All PaSh configs
+##   3. Big inputs | -- width 2, 4, 8, 16, 32, 64 | All PaSh configs
+##
+## If you just want to check that PaSh achieves speedups as presented in the paper
+## you can just run 1 with option `-s`.
+##
+## If you are interested in seeing the improvements by PaSh's runtime primitives
+## (all lines in Figure 9), you can run 2 with option `-m`. 
+## This should take a couple hours and should validate the trends between different PaSh
+## configurations as shown in Figure 9.
+##
+## If you want to reproduce the complete results from Figure 9, you need to run 3 with option `-l`.
+## Note that this should take more than a day to execute.
+## Also this requires several hundred GBs of free space (due to intermediate inputs, outputs, and buffering).
+##
+## To plot the results from any of the above experiments, do the following:
+## ```
+## cd $PASH_TOP/compiler
+## python3 gather_results.py
+## ```
+##
+## This will create plots for all invocations of 
+## `evaluation/eurosys/execute_eurosys_one_liners.sh`, one for each flag.
+##
+## The plots are:
+## - for `-s`: evaluation/plots/small_tiling_throughput_scaleup.pdf
+## - for `-m`: evaluation/plots/medium_tiling_throughput_scaleup.pdf
+## - for `-l`: evaluation/plots/tiling_throughput_scaleup.pdf
+##
+## Note that `-m` supersedes `-s` but `-l` does not supersede any of the two.
+##
+## Also note that if you run a script partially, it might end up saving partial results,
+## therefore having 0 speedups in some points of the plots.
 
 echo ""
 echo "Section 6.2: Unix50 from Bell Labs"
