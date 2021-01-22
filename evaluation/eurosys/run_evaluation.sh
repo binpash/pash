@@ -11,7 +11,12 @@
 
 ## TODO: Copy the plots (Unix50 1GB, 10GB and the one-liners in a different dir)
 
-## TODO: Ensure that all input files (e.g. x100 for spell) are present.
+
+
+## TODO: By default run all small
+##       In the video, we need to explain all options, and what do you get for all options.
+
+
 
 ## TODO: Note that the execution times reported in the paper are in the log (and not the general time commands).
 
@@ -41,13 +46,61 @@ echo "Section 6.2: Unix50 from Bell Labs"
 
 echo ""
 echo "Section 6.3: Use Case: NOAA Weather Analysis"
-## TODO: Run the weather analysis max-temp
 
-## TODO: Also save results in files and report
-
-
-## TODO: Inputs of web-indexing have to be accessible...
-
+## Note that input files that are needed by this script 
+## are curled from a server in the local network and therefore
+## cannot be accessed from elsewhere.
+##
+## Before running the script we first need to move to the correct directory
+##   `cd $PASH_TOP/evaluation/eurosys`
+##
+## The program that we run, described in Section 6.3, can be seen in `evaluation/scripts/max-temp-complete.sh`.
+## It takes as input a sequence of lines each containing a year (e.g. using `seq 2000 2004`).
+## 
+## To run the script with a single year of input use:
+##   `./execute_max_temp_dish_evaluation.sh -s`
+##
+## These should take less than 10 minutes.
+##
+## It runs the script on:
+## - bash
+## - pa.sh --width 16
+##
+## The results are saved in:
+## - `evaluation/results/max-temp-complete-2000-2000-seq.time`
+## - `evaluation/results/max-temp-complete-2000-2000-16-pash.time`
+##
+## If you want to run the program with 5 years of input (as is done in Section 6.3)
+## you need to use the following:
+##   `./execute_max_temp_dish_evaluation.sh -l`
+##
+## It should take less than an hour. 
+## It also runs the script with bash and pash --width 16.
+##
+## The results are saved in:
+## - `evaluation/results/max-temp-complete-2000-2004-seq.time`
+## - `evaluation/results/max-temp-complete-2000-2004-16-pash.time`
+##
+## If you want to separate the preprocessing and processing (as done in Section 6.3)
+## you need to add the `-e` flag to either 1 or 5 year execution, e.g.:
+##   `./execute_max_temp_dish_evaluation.sh -l -e`
+##
+## This runs:
+## - `evaluation/scripts/max-temp-preprocess.sh`
+## - `evaluation/scripts/max-temp-process.sh`
+##
+## with bash, and pash --width 16. It saves results in:
+## - `evaluation/results/max-temp-preprocess-2000-2000-seq.time`
+## - `evaluation/results/max-temp-preprocess-2000-2000-16-pash.time`
+## - `evaluation/results/max-temp-process-2000-2000-seq.time`
+## - `evaluation/results/max-temp-process-2000-2000-16-pash.time`
+##
+## and similarly for the large inputs (2000-2004).
+##
+## Note that PaSh's speedup for the complete script 2000-2004 with width 16
+## is actually higher than what is reported in the paper since it doesn't
+## have to write the intermediate files (between preprocessing and processing) to disk.
+##
 
 echo ""
 echo "Section 6.4: Use Case: Wikipedia Web Indexing"
