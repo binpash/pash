@@ -3,17 +3,42 @@
 ## Necessary to set PASH_TOP
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 
+## This sets up to what extent we run the evaluation.
+## There are 2 levels:
+## 1. Small inputs (1GB) | --width 4
+## 2. Big inputs (10GB) | --width 16 (EuroSys evaluation)
+evaluation_level=1
+
+while getopts 'smlh' opt; do
+    case $opt in
+        s) evaluation_level=1 ;;
+        l) evaluation_level=2 ;;
+        h) echo "There are two possible execution levels:"
+           echo "option -s: Small inputs (1GB) | --width 4"
+           echo "option -l: Big inputs (10GB) | --width 16 (EuroSys evaluation)"
+           exit 0 ;;
+        *) echo 'Error in command line parsing' >&2
+           exit 1
+    esac
+done
+shift "$(( OPTIND - 1 ))"
+
+
 unix50_dir="$PASH_TOP/evaluation/unix50/"
 unix50_intermediary="${unix50_dir}/intermediary/"
 intermediary_dir="$PASH_TOP/evaluation/intermediary/"
 results_subdir_prefix="unix50"
 
-## TODO: Choose with flag
-maximum_input_size="$((10 * 1024 * 1024 * 1024))" # 10 GB
-n_in=16
-# maximum_input_size="$((1024 * 1024 * 1024))" # 1 GB
-# n_in=4
-
+if [ "$evaluation_level" -eq 1 ]; then
+    maximum_input_size="$((1024 * 1024 * 1024))" # 1 GB
+    n_in=4
+elif [ "$evaluation_level" -eq 2 ]; then
+    maximum_input_size="$((10 * 1024 * 1024 * 1024))" # 10 GB
+    n_in=16
+else
+    echo "Unrecognizable execution level: $evaluation_level"
+    exit 1
+fi
 
 results_subdir="${results_subdir_prefix}_${n_in}_${maximum_input_size}"
 
