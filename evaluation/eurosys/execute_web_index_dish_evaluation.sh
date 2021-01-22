@@ -5,13 +5,13 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 ## There are two possible execution levels:
 ## options -s: 1,000 urls (about 1.5 minutes in bash)
 ## options -l: 100,000 urls (a couple hours in bash)
-export IN="$input_dir/index_h_1000.txt" # About 1.5 minutes in bash 
-# export IN="$input_dir/index_h_100.txt" # About 10 seconds in bash 
+input_number=1000 # About 1.5 minutes in bash
+# input_number=100 # About 7 seconds in bash
 
 while getopts 'slh' opt; do
     case $opt in
-        s) export IN="$input_dir/index_h_1000.txt" ;;
-        l) export IN="$input_dir/index_h_100000.txt" ;;
+        s) input_number=1000 ;;
+        l) input_number=100000 ;;
         h) echo "There are three possible execution levels:"
            echo "option -s: 1,000 urls (about 1.5 minutes in bash)"
            echo "option -l: 100,000 urls (a couple hours in bash) (EuroSys evaluation)"
@@ -27,6 +27,7 @@ directory="${eval_dir}/scripts/web-index/"
 results_dir="${eval_dir}/results/"
 input_dir="${HOME}/wikipedia/"
 
+export IN="$input_dir/index_h_${input_number}.txt"
 export WIKI="${input_dir}"
 export WEB_INDEX_DIR="${directory}"
 
@@ -35,9 +36,9 @@ web_index_script="${eval_dir}/scripts/web-index.sh"
 seq_output=/tmp/seq_output
 pash_width_2_output=/tmp/pash_2_output
 pash_width_16_output=/tmp/pash_16_output
-seq_time="$results_dir/web-index-seq.time"
-pash_width_2_time="$results_dir/web-index-2-pash.time"
-pash_width_16_time="$results_dir/web-index-16-pash.time"
+seq_time="$results_dir/web-index-${input_number}-seq.time"
+pash_width_2_time="$results_dir/web-index-${input_number}-2-pash.time"
+pash_width_16_time="$results_dir/web-index-${input_number}-16-pash.time"
 
 echo "Executing the script with bash..."
 { time /bin/bash $web_index_script > $seq_output ; } 2> >(tee "${seq_time}" >&2)
