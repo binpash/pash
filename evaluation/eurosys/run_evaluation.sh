@@ -1,36 +1,14 @@
 #!/bin/bash
 
-## Things to note:
-## - gen_big_files has to run together with install
-## - PaSh is storage hungry!!! So we need to give reviewers access to machines with tons of storage
-##   + Either give them access to 3 EC2 instances with 64 instances and 1TB storage (they might cost a lot)
-##   + Or give all of them access to deathstar
-##   + Both of the above should provide a `screen` and instructions about how to use it.
-
-## TODO: Copy the plots (Unix50 1GB, 10GB and the one-liners in a different dir)
-
-
-
-## TODO: By default run all small
-##       In the video, we need to explain all options, and what do you get for all options.
-
 ## TODO: Set up $PASH_TOP in the beginning or run the install script.
 
-## TODO: Note that the execution times reported in the paper are in the log (and not the general time commands).
 
 echo "This script runs the whole EuroSys 2021 PaSh evaluation"
 
-## TODO: Get the provided execution level
-## TODO: Can also have an only-plot option  
-
-
 echo ""
 echo "Section 6.1: Common Unix One-liners"
-## TODO: Run the one-liners evaluation
 
-## TODO: Run the plotting 
 ## TODO: Also save aggregates (avg, etc) in a file
-## TODO: Depending on flag, echo where the results and plot are
 
 ## Note that input files that are used as inputs for this script are generated 
 ## using the `gen*` scripts in `evaluation/scripts/input/`.
@@ -66,6 +44,9 @@ echo "Section 6.1: Common Unix One-liners"
 ##   2. Small inputs | --width 2, 16 | All PaSh configs
 ##   3. Big inputs | -- width 2, 4, 8, 16, 32, 64 | All PaSh configs
 ##
+## The script `evaluation/eurosys/execute_eurosys_one_liners.sh` is based on
+## `evaluation/execute_compile_evaluation_script.sh` that correctly sets up PaSh for the different configurations.
+##
 ## If you just want to check that PaSh achieves speedups as presented in the paper
 ## you can just run 1 with option `-s`.
 ##
@@ -99,13 +80,54 @@ echo "Section 6.1: Common Unix One-liners"
 
 echo ""
 echo "Section 6.2: Unix50 from Bell Labs"
-## TODO: Run the unix50
 
-## TODO: Run the plotting 
 ## TODO: Also save aggregates (avg, etc) in a file
-## TODO: Depending on flag, echo where the results and plot are
 
-## TODO: Inputs of max-temp have to be accessible...
+## All of the Unix50 pipelines are in `evaluation/unix50/unix50.sh`.
+## The inputs of the pipelines are in `evaluation/unix50/`.
+## 
+## The script that runs PaSh on these programs is: `evaluation/eurosys/execute_unix_benchmarks.sh` 
+## There are two modes of execution (can be seen by calling the script with the -h flag):
+##   1. Small inputs (1GB) | --width 4
+##   2. Big inputs (10GB) | --width 16 (EuroSys evaluation)
+##
+## The first one, called with `-s`, uses pash on the unix50 scripts with 1GB input and width 4 
+## and should be done in less than an hour.
+## The trend shown in the paper (Fig 10) should be visible in the results from this script.
+##
+## If you are interested in running the complete evaluation to reproduce Figure 10,
+## you need to run the script with `-l`. This should take several hours.
+##
+## To plot the results from any of the above experiments, do the following:
+## ```
+## cd $PASH_TOP/compiler
+## python3 gather_results.py
+## ```
+##
+## This will create plots for both "1GB --width 4" and for "10GB --width 16".
+##
+## The plots are in:
+## - for `-s`: evaluation/plots/unix50_1GB_individual_speedups_4.pdf
+## - for `-l`: evaluation/plots/unix50_10GB_individual_speedups_16.pdf
+##
+## Note that the pipelines in the plot are sorted with respect to speedup, and not by their ID.
+## So the first pipeline does not necessarily correspond to the first pipeline in `evaluation/unix50`.
+##
+## There are two small differences of these plots compared to Figure 10.
+## These differences are due to the evolution of PaSh and the refinement of its annotations.
+##  - First, the first pipeline has higher speedup that 4 and 16 in both cases. This is because
+##    this pipeline is not very CPU intensive and contains an initial `cat`. PaSh has evolved
+##    to perform an optimization that removes `cat` occurences that only contain a single file,
+##    and therefore removes it, improving performance significantly.
+##  - Second, the slowdown in the last 3 scripts is more significant than the one reported in the paper.
+##    This is because these scripts contain `tr -d '\n'`, the annotation for which was refined recently due to additional testing.
+##    The initial annotation for `tr` considered this invocation of `tr` to be stateless while it isn't, 
+##    since it removes all lines and therefore cannot be parallelized based on lines. The refinement in the annotation
+##    leads to additional splits to be added after `tr -d '\n'` (since it is non parallelizable pure).
+##    The issue with these splits is that they do not manage to split the file (since there is only one line)
+##    leaving the rest of the script to run sequentially.
+##
+
 
 echo ""
 echo "Section 6.3: Use Case: NOAA Weather Analysis"
