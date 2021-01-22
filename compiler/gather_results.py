@@ -1579,6 +1579,7 @@ experiments = ["minimal_grep",
                "double_sort",
                "shortest_scripts"]
 
+## Large inputs `-l`
 custom_scaleup_plots = {"minimal_grep" : ["eager", "blocking-eager"],
                         "minimal_sort": ["eager", "blocking-eager", "no-eager"],
                         "topn": ["eager", "blocking-eager", "no-eager"],
@@ -1592,22 +1593,42 @@ custom_scaleup_plots = {"minimal_grep" : ["eager", "blocking-eager"],
 
 plot_one_liners_tiling(all_experiment_results, experiments, custom_scaleup_plots)
 
-small_custom_scaleup_plots = {"minimal_grep" : ["split", "blocking-eager"],
-                              "minimal_sort": ["split", "blocking-eager", "no-eager"],
-                              "topn": ["split", "blocking-eager", "no-eager"],
-                              "wf": ["split", "blocking-eager", "no-eager"],
-                              "spell" : ["split", "eager"],
-                              "diff" : ["split", "blocking-eager", "no-eager"],
-                              "bigrams" : ["split", "eager"],
-                              "set-diff" : ["split", "blocking-eager", "no-eager"],
-                              "double_sort" : ["split", "eager", "blocking-eager", "no-eager"],
-                              "shortest_scripts" : ["split", "blocking-eager", "no-eager"]}
+## Medium input `-m`
+medium_custom_scaleup_plots = {"minimal_grep" : ["split", "blocking-eager"],
+                               "minimal_sort": ["split", "blocking-eager", "no-eager"],
+                               "topn": ["split", "blocking-eager", "no-eager"],
+                               "wf": ["split", "blocking-eager", "no-eager"],
+                               "spell" : ["split", "eager"],
+                               "diff" : ["split", "blocking-eager", "no-eager"],
+                               "bigrams" : ["split", "eager"],
+                               "set-diff" : ["split", "blocking-eager", "no-eager"],
+                               "double_sort" : ["split", "eager", "blocking-eager", "no-eager"],
+                               "shortest_scripts" : ["split", "blocking-eager", "no-eager"]}
+
+
+plot_one_liners_tiling(small_one_liner_results, experiments,
+                       medium_custom_scaleup_plots,
+                       all_scaleup_numbers=small_one_liners_scaleup_numbers,
+                       prefix="medium_")
+
+## Small input `-s`
+small_custom_scaleup_plots = {"minimal_grep" : ["split"],
+                              "minimal_sort": ["split"],
+                              "topn": ["split"],
+                              "wf": ["split"],
+                              "spell" : ["split"],
+                              "diff" : ["split"],
+                              "bigrams" : ["split"],
+                              "set-diff" : ["split"],
+                              "double_sort" : ["split"],
+                              "shortest_scripts" : ["split"]}
 
 
 plot_one_liners_tiling(small_one_liner_results, experiments,
                        small_custom_scaleup_plots,
                        all_scaleup_numbers=small_one_liners_scaleup_numbers,
                        prefix="small_")
+
 generate_tex_table(experiments)
 collect_unix50_scaleup_times(unix50_results)
 collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB")
