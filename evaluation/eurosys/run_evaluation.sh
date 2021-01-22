@@ -1,8 +1,6 @@
 #!/bin/bash
 
-## BIG Issues:
-## - Inputs for max-temp have to be accessible
-## - Input for web-indexing has to be copied
+## Things to note:
 ## - gen_big_files has to run together with install
 ## - PaSh is storage hungry!!! So we need to give reviewers access to machines with tons of storage
 ##   + Either give them access to 3 EC2 instances with 64 instances and 1TB storage (they might cost a lot)
@@ -48,7 +46,7 @@ echo ""
 echo "Section 6.3: Use Case: NOAA Weather Analysis"
 
 ## Note that input files that are needed by this script 
-## are curled from a server in the local network and therefore
+## are `curl`ed from a server in the local network and therefore
 ## cannot be accessed from elsewhere.
 ##
 ## Before running the script we first need to move to the correct directory
@@ -56,7 +54,7 @@ echo "Section 6.3: Use Case: NOAA Weather Analysis"
 ##
 ## The program that we run, described in Section 6.3, can be seen in `evaluation/scripts/max-temp-complete.sh`.
 ## It takes as input a sequence of lines each containing a year (e.g. using `seq 2000 2004`).
-## 
+##
 ## To run the script with a single year of input use:
 ##   `./execute_max_temp_dish_evaluation.sh -s`
 ##
@@ -104,6 +102,38 @@ echo "Section 6.3: Use Case: NOAA Weather Analysis"
 
 echo ""
 echo "Section 6.4: Use Case: Wikipedia Web Indexing"
-## TODO: Run the web-index script
 
-## Also save the results in files and report
+## Note that input files that are needed by this script (complete Wikipedia) 
+## are saved locally on the server and therefore this program cannot be run from elsewhere.
+##
+## Before running the script we first need to move to the correct directory
+##   `cd $PASH_TOP/evaluation/eurosys`
+##
+## The program that we run, described in Section 6.4, can be seen in `evaluation/scripts/web-index.sh`.
+## It requires having set the `$IN`, `$WIKI`, and `$WEB_INDEX_DIR` variables.
+##
+## To run the script for a 1000 wikipedia links use:
+##   `./execute_web_index_dish_evaluation.sh -s`
+##
+## This sets up the required variables and should take less than 5 minutes.
+## It runs the script with bash, pash --width 2, pash --width 16.
+##
+## The results are saved in:
+## - `evaluation/results/web-index-1000-seq.time`
+## - `evaluation/results/web-index-1000-2-pash.time`
+## - `evaluation/results/web-index-1000-16-pash.time`
+##
+## If you want to run with the EuroSys evaluation inputs (100k links), use:
+##   `./execute_web_index_dish_evaluation.sh -l`
+##
+## This should take a couple hours and the results are saved in:
+## - `evaluation/results/web-index-100000-seq.time`
+## - `evaluation/results/web-index-100000-2-pash.time`
+## - `evaluation/results/web-index-100000-16-pash.time`
+
+echo ""
+echo "Section 6.5: Further Micro-benchmarks"
+
+## TODO: Run the parallel sort
+
+## TODO(@nikos): Run and explain the GNU Parallel
