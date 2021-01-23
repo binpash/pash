@@ -1,8 +1,11 @@
 ## PaSh: Light-touch Data-Parallel Shell Processing
+> PaSh is  a system for  parallelizing POSIX shell  scripts.
 
-Mailing lists: [Commits](https://groups.google.com/g/pash-commits) | [Discussion](https://groups.google.com/g/pash-discuss)
+Quick Jump: [Repo Structure](#repo-structure) | [Running PaSh](#running-pash) | [Installation](#installation) | [Testing](#testing) | [Community & More](#community--more)
 
-PaSh is  a system for  parallelizing POSIX shell  scripts. Key elements include:
+## Repo Structure
+
+This repo hosts the core `pash` development. The structure is as follows:
 
 * [annotations](./annotations/): DSL characterizing commands, parallelizability study, and associated annotations.
 * [compiler](./compiler): Shell-Dataflow translations and associated parallelization transformations.
@@ -46,3 +49,10 @@ cd compiler
 ./test_evaluation_scripts.sh
 ```
 
+## Community & More
+
+Mailing Lists: [Commits](https://groups.google.com/g/pash-commits) | [Discussion](https://groups.google.com/g/pash-discuss)
+
+Continuous Integration Server: [http://pash.ndr.md/](http://pash.ndr.md/)
+
+Contribution guide: [docs/contrib](docs/contrib.md)
