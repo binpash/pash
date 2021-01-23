@@ -762,11 +762,6 @@ def replace_irs(ast, irFileGen, config):
 ## it adds a command that calls our distribution planner with the name of the
 ## saved file.
 def replace_df_region(asts, irFileGen, config):
-    # ir_file_id = irFileGen.next_file_id()
-    # temp_ir_directory_prefix = config['distr_planner']['temp_ir_prefix']
-    ## TODO: I probably have to generate random file names for the irs, so
-    ## that multiple executions of PaSh don't interfere.
-    # ir_filename = ir_file_id.toFileName(temp_ir_directory_prefix)
     ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
 
     ## Serialize the node in a file
