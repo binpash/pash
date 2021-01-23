@@ -1,7 +1,7 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_nkq4jGqrdI
-(1) Bash variables saved in: /tmp/pash_nkq4jGqrdI
+Writing vars to: /tmp/pash_f0yuMjuXDe
+(1) Bash variables saved in: /tmp/pash_f0yuMjuXDe
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
@@ -33,12 +33,12 @@ class: pure found for: sort
 inputs-outputs found for: head
 |-- (['stdin'], ['stdout'], [('option', 0)])
 class: pure found for: head
-Compilation time: 35.537  ms
+Compilation time: 37.459  ms
 Total nodes after optimization: 14
  -- out of which:
 Cat nodes: 0
 Eager nodes: 0
-Optimization time: 4.274  ms
+Optimization time: 3.957  ms
 arguments, redirs found for: xargs
 |-- ([], [['File', ['From', 0, [['C', 47], ['C', 104], ['C', 111], ['C', 109], ['C', 101], ['C', 47], ['C', 110], ['C', 105], ['C', 107], ['C', 111], ['C', 115], ['C', 47], ['C', 100], ['C', 105], ['C', 115], ['C', 104], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 115], ['C', 109], ['C', 97], ['C', 108], ['C', 108], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56]]]]]]])
 arguments, redirs found for: xargs
@@ -69,15 +69,15 @@ arguments, redirs found for: sort
 |-- ([#file28, #file29], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53]]]]]]])
 arguments, redirs found for: head
 |-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53]]]]]]])
-Backend time: 13.204  ms
-Optimized script saved in: /tmp/pash_M6oYQX25SJ
+Backend time: 12.097  ms
+Optimized script saved in: /tmp/pash_46mgEqaUnr
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_nkq4jGqrdI
+(3) Recovering variables from: /tmp/pash_f0yuMjuXDe
 /dev/fd/63: line 35: declare: PPID: readonly variable
 /dev/fd/63: line 43: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 77: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_M6oYQX25SJ:
+(4) Executing script in /tmp/pash_46mgEqaUnr:
 rm -f "#file3"
 rm -f "#file5"
 rm -f "#file7"
@@ -153,27 +153,27 @@ rm -f "#file27"
 rm -f "#file28"
 rm -f "#file29"
 rm -f "#file30"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (106689) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (70410) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_k4dSmE7LQD
+(5) Writing current BaSh set state to: /tmp/pash_ikB9W5XsTE
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_RALYVimi71
+Writing vars to: /tmp/pash_gffFZxLoVG
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 88707.101 ms
-(7) Recovering BaSh variables from: /tmp/pash_RALYVimi71
+Execution time: 87225.467 ms
+(7) Recovering BaSh variables from: /tmp/pash_gffFZxLoVG
 /dev/fd/63: line 36: declare: PPID: readonly variable
 /dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 78: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_k4dSmE7LQD
+(7) Reading current BaSh set state from: /tmp/pash_ikB9W5XsTE
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_tmejtrkg
-Preprocessing time: 29.285  ms
+Preprocessed script stored in: /tmp/pash_uupovfjl
+Preprocessing time: 26.939  ms
 
-real	1m29.166s
-user	2m49.943s
-sys	0m45.890s
+real	1m27.675s
+user	2m48.356s
+sys	0m41.736s
 Files /home/nikos/dish/evaluation//small_intermediary//shortest_scripts_seq_output and /tmp/distr_output/0 are identical
