@@ -1,7 +1,7 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_V1OtO3WYls
-(1) Bash variables saved in: /tmp/pash_V1OtO3WYls
+Writing vars to: /tmp/pash_PFKXHueVSt
+(1) Bash variables saved in: /tmp/pash_PFKXHueVSt
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
@@ -16,12 +16,12 @@ inputs-outputs found for: tr
 inputs-outputs found for: sort
 |-- (['stdin'], ['stdout'], [])
 class: pure found for: sort
-Compilation time: 35.271  ms
+Compilation time: 34.895  ms
 Total nodes after optimization: 7
  -- out of which:
 Cat nodes: 0
 Eager nodes: 2
-Optimization time: 1.672  ms
+Optimization time: 1.932  ms
 arguments, redirs found for: tr
 |-- ([], [['File', ['From', 0, [['C', 47], ['C', 104], ['C', 111], ['C', 109], ['C', 101], ['C', 47], ['C', 110], ['C', 105], ['C', 107], ['C', 111], ['C', 115], ['C', 47], ['C', 100], ['C', 105], ['C', 115], ['C', 104], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 115], ['C', 109], ['C', 97], ['C', 108], ['C', 108], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56]]]]]]])
 arguments, redirs found for: tr
@@ -36,15 +36,15 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager.sh
 |-- ([#file11, #file14], [])
 arguments, redirs found for: sort
 |-- ([#file13, #file14], [])
-Backend time: 10.539  ms
-Optimized script saved in: /tmp/pash_UmOzUwHnmU
+Backend time: 10.507  ms
+Optimized script saved in: /tmp/pash_9ip77fC3xG
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_V1OtO3WYls
+(3) Recovering variables from: /tmp/pash_PFKXHueVSt
 /dev/fd/63: line 35: declare: PPID: readonly variable
 /dev/fd/63: line 43: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 77: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_UmOzUwHnmU:
+(4) Executing script in /tmp/pash_9ip77fC3xG:
 rm -f "#file3"
 rm -f "#file5"
 rm -f "#file8"
@@ -80,27 +80,27 @@ rm -f "#file11"
 rm -f "#file12"
 rm -f "#file13"
 rm -f "#file14"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (33810) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (119392) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_KlMC8c1Qku
+(5) Writing current BaSh set state to: /tmp/pash_lPia5G6ar1
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_kJzv0CSsBS
+Writing vars to: /tmp/pash_sLGo63uTXO
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 70332.887 ms
-(7) Recovering BaSh variables from: /tmp/pash_kJzv0CSsBS
+Execution time: 70679.514 ms
+(7) Recovering BaSh variables from: /tmp/pash_sLGo63uTXO
 /dev/fd/63: line 36: declare: PPID: readonly variable
 /dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 78: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_KlMC8c1Qku
+(7) Reading current BaSh set state from: /tmp/pash_lPia5G6ar1
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_ypgdptxm
-Preprocessing time: 28.776  ms
+Preprocessed script stored in: /tmp/pash_wruvhart
+Preprocessing time: 27.38  ms
 
-real	1m10.770s
-user	2m5.726s
-sys	0m15.721s
+real	1m11.108s
+user	2m5.395s
+sys	0m15.890s
 Files /home/nikos/dish/evaluation//small_intermediary//minimal_sort_seq_output and /tmp/distr_output/0 are identical
