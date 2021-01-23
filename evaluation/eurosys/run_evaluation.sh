@@ -38,6 +38,9 @@ echo "Section 6.1: Common Unix One-liners"
 ##  - *_env_small.sh (for the small input)
 ##  - *_env.sh (for the large EuroSys eval input, usually 10x larger than the small)
 ##
+## Before running the script we first need to move to the correct directory
+##   `cd $PASH_TOP/evaluation/eurosys`
+##
 ## The script that runs PaSh on these programs is: `evaluation/eurosys/execute_eurosys_one_liners.sh` 
 ## There are three modes of execution (can be seen by calling the script with the -h flag):
 ##   1. Small inputs | --width 2, 16 | Only full PaSh config
@@ -86,6 +89,9 @@ echo "Section 6.2: Unix50 from Bell Labs"
 ## All of the Unix50 pipelines are in `evaluation/unix50/unix50.sh`.
 ## The inputs of the pipelines are in `evaluation/unix50/`.
 ## 
+## Before running the script we first need to move to the correct directory
+##   `cd $PASH_TOP/evaluation/eurosys`
+##
 ## The script that runs PaSh on these programs is: `evaluation/eurosys/execute_unix_benchmarks.sh` 
 ## There are two modes of execution (can be seen by calling the script with the -h flag):
 ##   1. Small inputs (1GB) | --width 4
@@ -221,6 +227,17 @@ echo "Section 6.4: Use Case: Wikipedia Web Indexing"
 echo ""
 echo "Section 6.5: Further Micro-benchmarks"
 
-## TODO: Run the parallel sort
+## To run the comparison with sort --parallel, just use `evaluation/eurosys/execute_baseline_sort.sh`
+##
+## Before running the script we first need to move to the correct directory
+##   `cd $PASH_TOP/evaluation/eurosys`
+##
+## There are two modes of execution:
+## 1. option: -s Small input | --width 2, 16
+## 2. option: -l Big input | -- width 2, 4, 8, 16, 32, 64
+##
+## Note that this script executes sort --parallel with double the value of --width
+## since we noticed that it grows slightly slower (as shown in the Figure in Section 6.5).
+
 
 ## TODO(@nikos): Run and explain the GNU Parallel
