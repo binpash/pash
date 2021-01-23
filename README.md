@@ -1,5 +1,5 @@
 ## PaSh: Light-touch Data-Parallel Shell Processing
-> PaSh is  a system for  parallelizing POSIX shell  scripts.
+> _A system for parallelizing POSIX shell scripts._
 
 Quick Jump: [Repo Structure](#repo-structure) | [Running PaSh](#running-pash) | [Installation](#installation) | [Testing](#testing) | [Community & More](#community--more)
 
@@ -23,6 +23,7 @@ To parallelize, say, `./evaluation/hello-world.sh` with parallelization width of
 ``` 
 
 Run `./pa.sh --help` to get more information about the available commands.
+Read a longer tutorial, see [docs/tutorial](docs/tutorial.md).
 
 ## Installation
 
@@ -51,8 +52,10 @@ cd compiler
 
 ## Community & More
 
-Mailing Lists: [Commits](https://groups.google.com/g/pash-commits) | [Discussion](https://groups.google.com/g/pash-discuss)
+Mailing Lists: 
+* [Discussion](https://groups.google.com/g/pash-discuss): Join this mailing list for discussing all things `pash`
+* [Commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
 
-Continuous Integration Server: [http://pash.ndr.md/](http://pash.ndr.md/)
-
-Contribution guide: [docs/contrib](docs/contrib.md)
+Development/contributions:
+* Contribution guide: [docs/contrib](docs/contrib.md)
+* Continuous Integration Server: [http://pash.ndr.md/](http://pash.ndr.md/)
