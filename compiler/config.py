@@ -123,6 +123,8 @@ def pass_common_arguments(pash_arguments):
 
 def init_log_file():
     global pash_args
+    if(pash_args.debug == "0"):  
+        pash_args.log_file = "/dev/null"
     if(not pash_args.log_file == ""):
         with open(pash_args.log_file, "w") as f:
             pass
