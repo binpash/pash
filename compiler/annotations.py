@@ -372,7 +372,6 @@ def len_args(desired_length, options):
     args = non_option_args(options)
     return (len(args) == desired_length)
 
-## TODO: Handle all short_long below
 def exists_operator(desired_options, short_long, options):
     ## First get all option args (ones that start with '-')
     all_opt_args = option_args(options)
@@ -384,16 +383,19 @@ def exists_operator(desired_options, short_long, options):
     existence = map(lambda opt: opt in opt_args_set, long_desired_options)
     return any(existence)
 
-## TODO: Handle short_long
-##
 ## Checks that an option exists and that it has a specific value
 def value_operator(option_value, short_long, options):
+    ## First, translate the options to strings
     args_list = format_args(options)
+    ## Then transform any options to their long variants (if they exist)
+    ## TODO: Warning, this could also replace non-option arguments with long
+    long_args_list = transform_opts_to_long(args_list, short_long)
     desired_opt = option_value[0]
+    desired_opt_long = transform_opts_to_long([desired_opt], short_long)[0]
     desired_val = option_value[1]
     ## If the desired option does exist, and the next argument is indeed the correct value
     try:
-        opt_i = args_list.index(desired_opt)
+        opt_i = long_args_list.index(desired_opt_long)
         val = args_list[opt_i+1]
         return (desired_val == val)
     except:
