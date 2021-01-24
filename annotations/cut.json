@@ -20,8 +20,7 @@
             },
             "class": "pure",
             "inputs": ["stdin"],
-            "outputs": ["stdout"],
-			"comments": "Stateless in all cases with exception in case where newline is a delimiter."
+            "outputs": ["stdout"]
         },
         {
             "predicate": "default",
@@ -30,7 +29,14 @@
             "outputs": ["stdout"]
         }
     ],
-    "short-long": [
+    "comment": "TODO: Put args[:] in the inputs of cut. The issue with this at the moment is that option values are considered file arguments.",
+    "options":
+    [
+        "stdin-hyphen",
+        "empty-args-stdin"
+    ],    
+    "short-long":
+    [
         {
             "short": "-d",
             "long": "--delimiter"
