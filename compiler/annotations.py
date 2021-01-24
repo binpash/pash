@@ -174,6 +174,7 @@ def assign_configuration_standard_inputs(configuration_inputs, standard_inputs, 
 def get_command_io_from_annotations(command, options, annotations):
     command_ann = get_command_from_annotations(command, options, annotations)
     if(command_ann):
+        log("Annotation:", command_ann)
         ## TODO: Move parsing to happen once when the annotation is loaded.
         input_assigner_fun, _ = parse_command_inputs_outputs(command_ann['inputs'])
         output_assigner_fun, _ = parse_command_inputs_outputs(command_ann['outputs'])
@@ -292,25 +293,53 @@ def get_command_from_annotation(command, options, annotation):
     assert(annotation['command'] == command)
 
     cases = annotation['cases']
-    case = find_annotation_case(options, cases)
+    ## Maps short to long options
+    short_long_correspondence = get_short_long_mapping(annotation)
+    case = find_annotation_case(options, short_long_correspondence, cases)
     return case
 
-def find_annotation_case(options, cases):
+## TODO: Get the short-long mapping and pass it to predicates
+def get_short_long_mapping(annotation):
+    short_long_correspondence = {}
+    if('short-long' in annotation):
+        short_long_json = annotation['short-long']
+        # log(short_long_json)
+        for pair in short_long_json:
+            short_opt=pair['short']
+            long_opt=pair['long']
+            short_long_correspondence[short_opt] = long_opt
+
+    return short_long_correspondence
+
+## Uses the short-long correspondence to map as many short options
+## to long.
+def transform_opts_to_long(opts, short_long):
+    log("Options to transform:", opts)
+    new_opts = opts[:]
+    for i in range(len(new_opts)):
+        opt = new_opts[i]
+        if(opt in short_long):
+            new_opts[i] = short_long[opt]
+    return new_opts
+
+def find_annotation_case(options, short_long, cases):
     for case in cases:
-        if(predicate_satisfied(options, case['predicate'])):
+        if(predicate_satisfied(options, short_long, case['predicate'])):
             return case
 
     ## Unreachable
     assert(False)
 
-def predicate_satisfied(options, predicate):
+def predicate_satisfied(options, short_long, predicate):
     if(predicate == 'default'):
         return True
 
-    func = interpret_predicate(predicate)
+    func = interpret_predicate(predicate, short_long)
     return func(options)
 
-def interpret_predicate(predicate):
+## TODO: Handle val_opt_eq
+
+def interpret_predicate(predicate, short_long):
     # log(predicate)
     operator = predicate['operator']
     operands = []
@@ -321,15 +350,15 @@ def interpret_predicate(predicate):
     if(operator == 'len_args_eq'):
         return lambda options: len_args(operands[0], options)
     elif(operator == 'exists'):
-        return lambda options: exists_operator(operands, options)
+        return lambda options: exists_operator(operands, short_long, options)
     elif(operator == 'value'):
-        return lambda options: value_operator(operands, options)
+        return lambda options: value_operator(operands, short_long, options)
     elif(operator == 'all'):
-        return lambda options: all_operator(operands, options)
+        return lambda options: all_operator(operands, short_long, options)
     elif(operator == 'or'):
-        return lambda options: or_operator(operands, options)
+        return lambda options: or_operator(operands, short_long, options)
     elif(operator == 'not'):
-        return lambda options: not_operator(operands, options)
+        return lambda options: not_operator(operands, short_long, options)
 
     ## TODO: Fill in the rest
     return lambda x: log("Uninterpreted operator:", operator); False
@@ -343,13 +372,22 @@ def len_args(desired_length, options):
     args = non_option_args(options)
     return (len(args) == desired_length)
 
-def exists_operator(desired_options, options):
-    opt_args_set = set(option_args(options))
-    existence = map(lambda opt: opt in opt_args_set, desired_options)
+## TODO: Handle all short_long below
+def exists_operator(desired_options, short_long, options):
+    ## First get all option args (ones that start with '-')
+    all_opt_args = option_args(options)
+    ## Then transform the to their long variants (if they exist)
+    long_opt_args = transform_opts_to_long(all_opt_args, short_long)
+    opt_args_set = set(long_opt_args)
+    ## Also transform the desired options to their long variants (if they exist)
+    long_desired_options = transform_opts_to_long(desired_options, short_long)
+    existence = map(lambda opt: opt in opt_args_set, long_desired_options)
     return any(existence)
 
+## TODO: Handle short_long
+##
 ## Checks that an option exists and that it has a specific value
-def value_operator(option_value, options):
+def value_operator(option_value, short_long, options):
     args_list = format_args(options)
     desired_opt = option_value[0]
     desired_val = option_value[1]
@@ -361,18 +399,26 @@ def value_operator(option_value, options):
     except:
         return False
 
-def all_operator(desired_options, options):
-    opt_args_set = set(option_args(options))
-    existence = map(lambda opt: opt in opt_args_set, desired_options)
+## This is a shortcut for and . exists. It means that all
+## desired options should exist in options.
+def all_operator(desired_options, short_long, options):
+    ## First get all option args (ones that start with '-')
+    all_opt_args = option_args(options)
+    ## Then transform the to their long variants (if they exist)
+    long_opt_args = transform_opts_to_long(all_opt_args, short_long)
+    opt_args_set = set(long_opt_args)
+    ## Also transform the desired options to their long variants (if they exist)
+    long_desired_options = transform_opts_to_long(desired_options, short_long)
+    existence = map(lambda opt: opt in opt_args_set, long_desired_options)
     return all(existence)
 
-def or_operator(operands, options):
-    operand_predicates = map(lambda op: interpret_predicate(op)(options), operands)
+def or_operator(operands, short_long, options):
+    operand_predicates = map(lambda op: interpret_predicate(op, short_long)(options), operands)
     return any(operand_predicates)
 
 ## Operands: One predicate
-def not_operator(operands, options):
+def not_operator(operands, short_long, options):
     assert(len(operands) == 1)
     operand = operands[0]
-    return not interpret_predicate(operand)(options)
+    return not interpret_predicate(operand, short_long)(options)
 
