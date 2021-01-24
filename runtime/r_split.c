@@ -1,15 +1,8 @@
 #include "r_split.h"
 
-//helper function
-void writeHeader(FILE* destFile, size_t blocksize) {
-  static int64_t blockID = 0;
-  fwrite(&blockID, sizeof(int64_t), 1, destFile);
-  fwrite(&blocksize, 1, sizeof(size_t), destFile);
-  blockID += 1;
-}
-
 void SplitByBytes(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned int numOutputFiles) {
   int current = 0;
+  int64_t id = 0;
   size_t len = 0;
   FILE* outputFile = outputFiles[current];
   
@@ -19,13 +12,14 @@ void SplitByBytes(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned 
   // Each block has a header of "ID blockSize\n"
   while ((len = fread(buffer, 1, batchSize, inputFile)) > 0) {
     //write header
-    writeHeader(outputFile, len);
-    
+    writeHeader(outputFile, id, len);
+
     //write blocks
     fwrite(buffer, 1, len, outputFile);
     
     current = (current + 1) % numOutputFiles;
     outputFile = outputFiles[current];
+    id+=1;
   }
 
   if (len < 0) {
@@ -39,6 +33,7 @@ void SplitByBytes(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned 
 
 void SplitByLines(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned int numOutputFiles) {
   int current = 0;
+  int64_t id = 0;
   size_t len = 0, headSize = 0, restSize = 0, prevRestSize = 0, blockSize = 0, bufLen = 0;
   FILE* outputFile = outputFiles[current];
   
@@ -69,7 +64,7 @@ void SplitByLines(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned 
         exit(1);
       }
       blockSize = prevRestSize + headSize + len;
-      writeHeader(outputFile, blockSize);
+      writeHeader(outputFile, id, blockSize);
       //write blocks
       if (prevRestSize)
         fwrite(incompleteLine, 1, prevRestSize, outputFile);
@@ -78,7 +73,7 @@ void SplitByLines(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned 
     } else {
       blockSize = prevRestSize + headSize;
       //write header
-      writeHeader(outputFile, blockSize);
+      writeHeader(outputFile, id, blockSize);
       //write blocks
       if (prevRestSize)
         fwrite(incompleteLine, 1, prevRestSize, outputFile);
@@ -91,11 +86,17 @@ void SplitByLines(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned 
     outputFile = outputFiles[current];
     prevRestSize = restSize;
     headSize = restSize = 0;
+    id+=1;
   }
 
   if (len < 0) {
     perror(LOC);
     exit(1);
+  }
+
+  if(prevRestSize > 0) {
+    writeHeader(outputFile, id, prevRestSize);
+    fwrite(incompleteLine, 1, prevRestSize, outputFile);
   }
 
   //clean up
