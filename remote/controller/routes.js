@@ -33,6 +33,7 @@ const hours = h => (1000 * 60 * 60 * h);
 
 
 // The command module ensures only one command runs at a time.
+// TODO: Upgrade for use with more than one host at a time.
 const command = (() => {
     let initial = true;
     let idle = true;
@@ -85,13 +86,6 @@ const command = (() => {
 
 
 
-// Runs a command on a remote host. command.assign raises an error if
-// some command is already running for a host. Defers actual execution
-// until control passes the point the error would be raised.
-//
-// TODO: Upgrade for use with more than one host at a time.
-
-
 // The SSH commands do not actually wait for the commands to complete.
 // Current approach is to inspect the output to know when to proceed.
 //
@@ -140,7 +134,13 @@ const ci = async (req, res) => {
             const dir = `${__dirname}/reports`;
 
             try {
-                await ssh.getDirectory(dir, `${homedir}/reports`, { recursive: true}); // validate: (a) => {console.log(a)} });
+                // FIXME: Blowing away the directory is too crude. A
+                // sync function is below, but it doesn't work right
+                // now. This is a quick fix to help the team ensure
+                // they have a serveable reports directory.
+                fs.rmdirSync(dir, { recursive: true });
+                await ssh.getDirectory(dir, `${homedir}/reports`, { recursive: true });
+                // validate: (a) => {console.log(a)} });
 
                 // We need to sync b/c ssh.getDirectory will create a
                 // nested 'reports' directory if the `reports'
