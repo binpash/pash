@@ -50,8 +50,8 @@ def construct_args_redirs(command, options, input_fids, output_fids, annotations
     command_ann = get_command_from_annotations(command, options, annotations)
     assert(not command_ann is None)
     ## TODO: Move parsing to happen once when the annotation is loaded.
-    _, input_args_redirs_assigner_fun = parse_command_inputs_outputs(command_ann['inputs'])
-    _, output_args_redirs_assigner_fun = parse_command_inputs_outputs(command_ann['outputs'])
+    _, input_args_redirs_assigner_fun = parse_command_inputs_outputs(command_ann['inputs'], True)
+    _, output_args_redirs_assigner_fun = parse_command_inputs_outputs(command_ann['outputs'], False)
     ann_options = []
     if('options' in command_ann):
         ann_options = command_ann['options']
@@ -142,9 +142,9 @@ def args_redirs_from_io_list_el(io, fids, ann_options, args, redirs):
 ## TODO: Come up with the conditions that need to hold for these functions
 ##
 ## TODO: Unify both of these creations into one. Now there is a lot of duplication.
-def parse_command_inputs_outputs(inputs_outputs):
+def parse_command_inputs_outputs(inputs_outputs, parsing_inputs : bool):
     if(isinstance(inputs_outputs, list)):
-        input_assigner_fun = lambda options, ann_options: interpret_io_list(inputs_outputs, options, ann_options)
+        input_assigner_fun = lambda options, ann_options: interpret_io_list(inputs_outputs, options, ann_options, parsing_inputs)
         args_redirs_assigner_fun = lambda fids, ann_options, args, redirs: args_redirs_from_io_list(inputs_outputs,
                                                                                                     fids,
                                                                                                     ann_options,
@@ -153,7 +153,7 @@ def parse_command_inputs_outputs(inputs_outputs):
     else:
         configuration_inputs = inputs_outputs["configuration"]
         standard_inputs = inputs_outputs["standard"]
-        input_assigner_fun = lambda options, ann_options: assign_configuration_standard_inputs(configuration_inputs, standard_inputs, options, ann_options)
+        input_assigner_fun = lambda options, ann_options: assign_configuration_standard_inputs(configuration_inputs, standard_inputs, options, ann_options, parsing_inputs)
         all_inputs = configuration_inputs + standard_inputs
         args_redirs_assigner_fun = lambda fids, ann_options, args, redirs: args_redirs_from_io_list(all_inputs,
                                                                                                     fids,
@@ -163,9 +163,9 @@ def parse_command_inputs_outputs(inputs_outputs):
 
     return (input_assigner_fun, args_redirs_assigner_fun)
     
-def assign_configuration_standard_inputs(configuration_inputs, standard_inputs, options, ann_options):
-    extracted_config_inputs, options_to_rem1 = interpret_io_list(configuration_inputs, options, ann_options)
-    extracted_standard_inputs, options_to_rem2 = interpret_io_list(standard_inputs, options, ann_options)
+def assign_configuration_standard_inputs(configuration_inputs, standard_inputs, options, ann_options, parsing_inputs):
+    extracted_config_inputs, options_to_rem1 = interpret_io_list(configuration_inputs, options, ann_options, parsing_inputs)
+    extracted_standard_inputs, options_to_rem2 = interpret_io_list(standard_inputs, options, ann_options, parsing_inputs)
     extracted_inputs = (extracted_config_inputs, extracted_standard_inputs)
     return (extracted_inputs, options_to_rem1 + options_to_rem2)
 
@@ -176,8 +176,8 @@ def get_command_io_from_annotations(command, options, annotations):
     if(command_ann):
         log("Annotation:", command_ann)
         ## TODO: Move parsing to happen once when the annotation is loaded.
-        input_assigner_fun, _ = parse_command_inputs_outputs(command_ann['inputs'])
-        output_assigner_fun, _ = parse_command_inputs_outputs(command_ann['outputs'])
+        input_assigner_fun, _ = parse_command_inputs_outputs(command_ann['inputs'], True)
+        output_assigner_fun, _ = parse_command_inputs_outputs(command_ann['outputs'], False)
         ann_options = []
         if('options' in command_ann):
             ann_options = command_ann['options']
@@ -201,13 +201,21 @@ def rest_options(options_to_ignore, options):
                    if not i in io_indices_set]
     return all_indices
 
-def interpret_io_list(files, options, ann_options):
+def interpret_io_list(files, options, ann_options, parsing_inputs):
+    log("Files:", files)
     io_files = []
     options_to_remove = []
     for io in files:
         new_io_files, new_options_to_remove = interpret_io(io, options, ann_options)
         io_files += new_io_files
         options_to_remove += new_options_to_remove
+    ## If there is an annotation option "empty-args-stdin" 
+    ##   and there is no io_file until now, we need to put stdin
+    if(len(new_io_files) == 0
+       and parsing_inputs
+       and 'empty-args-stdin' in ann_options):
+        assert(len(options_to_remove) == 0)
+        io_files = ["stdin"]
     return (io_files, options_to_remove)
 
 def interpret_io(io, options, ann_options):
@@ -296,6 +304,15 @@ def get_command_from_annotation(command, options, annotation):
     ## Maps short to long options
     short_long_correspondence = get_short_long_mapping(annotation)
     case = find_annotation_case(options, short_long_correspondence, cases)
+
+    ## Extend the case with the options from the main annotation
+    if('options' in annotation):
+        general_options = annotation['options']
+        case_options = []
+        if('options' in case):
+            case_options = case['options']
+        case['options'] = general_options + case_options
+
     return case
 
 ## TODO: Get the short-long mapping and pass it to predicates
@@ -314,7 +331,7 @@ def get_short_long_mapping(annotation):
 ## Uses the short-long correspondence to map as many short options
 ## to long.
 def transform_opts_to_long(opts, short_long):
-    log("Options to transform:", opts)
+    # log("Options to transform:", opts)
     new_opts = opts[:]
     for i in range(len(new_opts)):
         opt = new_opts[i]
