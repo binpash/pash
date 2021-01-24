@@ -140,7 +140,7 @@ const ci = async (req, res) => {
             const dir = `${__dirname}/reports`;
 
             try {
-                await ssh.getDirectory(tmpdir, `${homedir}/reports`, { recursive: true });
+                await ssh.getDirectory(dir, `${homedir}/reports`, { recursive: true}); // validate: (a) => {console.log(a)} });
 
                 // We need to sync b/c ssh.getDirectory will create a
                 // nested 'reports' directory if the `reports'
@@ -148,7 +148,7 @@ const ci = async (req, res) => {
                 // delete the original directory in advance, because
                 // that risks discarding information that does not
                 // exist on the remote.
-                syncdir(tmpdir, dir, { type: 'copy' });
+                // syncdir(tmpdir, dir, { type: 'copy' });
             } catch (e) {
                 err(e);
                 throw e;
