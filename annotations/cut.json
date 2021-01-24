@@ -5,16 +5,16 @@
         {
             "predicate":
             {
-                "operator": "and",
+                "operator": "or",
                 "operands":
                 [
                     {
-                        "operator": "val_opt_eq",
-                        "operands": ["-d", "--delimiter", "\n"]
+                        "operator": "value",
+                        "operands": ["-d", "\n"]
                     },
                     {
                         "operator": "exists",
-                        "operands": ["-f", "--fields"]
+                        "operands": ["-z"]
                     }
                 ]
             },
@@ -28,6 +28,16 @@
             "class": "stateless",
             "inputs": ["stdin"],
             "outputs": ["stdout"]
+        }
+    ],
+    "short-long": [
+        {
+            "short": "-d",
+            "long": "--delimiter"
+        },
+        {
+            "short": "-z",
+            "long": "--zero-terminated"
         }
     ]
 }
