@@ -11,6 +11,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const syncdir = require('sync-directory');
+const rimraf = require('rimraf');
 
 const getSshCredentials = () => ({
     host: process.env.PASH_REMOTE_HOST || 'localhost',
@@ -138,7 +139,10 @@ const ci = async (req, res) => {
                 // sync function is below, but it doesn't work right
                 // now. This is a quick fix to help the team ensure
                 // they have a serveable reports directory.
-                fs.rmdirSync(dir, { recursive: true });
+                // nv: this doesn't work prior to 10.x, and upgrading to later
+                //     seems to cause other problems, so use rimraf for now
+                // fs.rmdirSync(dir, { recursive: true });
+                rimraf.sync(dir + '/*');
                 await ssh.getDirectory(dir, `${homedir}/reports`, { recursive: true });
             } catch (e) {
                 err(e);
