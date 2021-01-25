@@ -45,5 +45,12 @@
             "short": "-z",
             "long": "--zero-terminated"
         }
+    ],
+    "options-with-arguments":
+    [
+        "-b",
+        "-c",
+        "-d",
+        "-f"
     ]
 }
