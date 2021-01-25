@@ -1,7 +1,7 @@
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_R3NaKWNl3n
-(1) Bash variables saved in: /tmp/pash_R3NaKWNl3n
+Writing vars to: /tmp/pash_KHwYjLS0y3
+(1) Bash variables saved in: /tmp/pash_KHwYjLS0y3
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
@@ -9,36 +9,36 @@ inputs-outputs found for: mkfifo
 |-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
 class: side-effectful found for: mkfifo
 
-Compilation time: 0.229  ms
+Compilation time: 0.225  ms
 Optimization time: 0.003  ms
 Compiler exited with code: 120
-(3) Recovering variables from: /tmp/pash_R3NaKWNl3n
+(3) Recovering variables from: /tmp/pash_KHwYjLS0y3
 /dev/fd/63: line 35: declare: PPID: readonly variable
 /dev/fd/63: line 43: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 77: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_ftsrzvkp:
+(4) Executing script in /tmp/pash_rrkhudll:
 mkfifo s1 s2
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_eQONFllrLT
+(5) Writing current BaSh set state to: /tmp/pash_0jMgnX7Dmc
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_g1BqaBv5kZ
+Writing vars to: /tmp/pash_lADol9rtqV
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 46.819 ms
-(7) Recovering BaSh variables from: /tmp/pash_g1BqaBv5kZ
+Execution time: 47.156 ms
+(7) Recovering BaSh variables from: /tmp/pash_lADol9rtqV
 /dev/fd/63: line 36: declare: PPID: readonly variable
 /dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 78: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_eQONFllrLT
+(7) Reading current BaSh set state from: /tmp/pash_0jMgnX7Dmc
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_YCfqhJNOiy
-(1) Bash variables saved in: /tmp/pash_YCfqhJNOiy
+Writing vars to: /tmp/pash_NMcGg3DMkI
+(1) Bash variables saved in: /tmp/pash_NMcGg3DMkI
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file2 ... Done!
@@ -67,12 +67,12 @@ class: pure found for: sort
 inputs-outputs found for: diff
 |-- ([('option', 1), ('option', 2)], ['stdout'], [('option', 0)])
 class: pure found for: diff
-Compilation time: 76.933  ms
+Compilation time: 72.778  ms
 Total nodes after optimization: 17
  -- out of which:
 Cat nodes: 0
 Eager nodes: 6
-Optimization time: 5.627  ms
+Optimization time: 4.171  ms
 arguments, redirs found for: tr
 |-- ([], [['File', ['From', 0, [['C', 47], ['C', 104], ['C', 111], ['C', 109], ['C', 101], ['C', 47], ['C', 110], ['C', 105], ['C', 107], ['C', 111], ['C', 115], ['C', 47], ['C', 100], ['C', 105], ['C', 115], ['C', 104], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 115], ['C', 109], ['C', 97], ['C', 108], ['C', 108], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56]]]]]]])
 arguments, redirs found for: tr
@@ -107,15 +107,15 @@ arguments, redirs found for: /home/nikos/dish/runtime/eager-no-task-par.sh
 |-- ([fid:16:s2, #file33], [])
 arguments, redirs found for: diff
 |-- ([#file32, #file33], [])
-Backend time: 15.94  ms
-Optimized script saved in: /tmp/pash_NpkohYHIoi
+Backend time: 17.284  ms
+Optimized script saved in: /tmp/pash_drZZBRIOFy
 Compiler exited with code: 0
-(3) Recovering variables from: /tmp/pash_YCfqhJNOiy
+(3) Recovering variables from: /tmp/pash_NMcGg3DMkI
 /dev/fd/63: line 36: declare: PPID: readonly variable
 /dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 78: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_NpkohYHIoi:
+(4) Executing script in /tmp/pash_drZZBRIOFy:
 rm -f "#file3"
 rm -f "#file5"
 rm -f "#file10"
@@ -194,27 +194,27 @@ rm -f "#file30"
 rm -f "#file31"
 rm -f "#file32"
 rm -f "#file33"
-/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (113570) - No such process
+/home/nikos/dish/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (130788) - No such process
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_aSY6CG4KsB
+(5) Writing current BaSh set state to: /tmp/pash_9UE0sntEHC
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_ykYzzpi7WI
+Writing vars to: /tmp/pash_acGjB7ejfz
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 132008.731 ms
-(7) Recovering BaSh variables from: /tmp/pash_ykYzzpi7WI
+Execution time: 133539.717 ms
+(7) Recovering BaSh variables from: /tmp/pash_acGjB7ejfz
 /dev/fd/63: line 36: declare: PPID: readonly variable
 /dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 78: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_aSY6CG4KsB
+(7) Reading current BaSh set state from: /tmp/pash_9UE0sntEHC
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
 (1) Previous exit status: 0
 (1) Previous set state: hB
-Writing vars to: /tmp/pash_DIXQ20nZX4
-(1) Bash variables saved in: /tmp/pash_DIXQ20nZX4
+Writing vars to: /tmp/pash_F8bEt7xfCf
+(1) Bash variables saved in: /tmp/pash_F8bEt7xfCf
 (1) Bash set state at start of execution: hB
 (1) Set state reverted to PaSh-internal set state: huB
 Retrieving candidate DF region: /tmp/pash_temp_ir_file3 ... Done!
@@ -222,36 +222,36 @@ inputs-outputs found for: rm
 |-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
 class: side-effectful found for: rm
 
-Compilation time: 0.219  ms
+Compilation time: 0.218  ms
 Optimization time: 0.003  ms
 Compiler exited with code: 120
-(3) Recovering variables from: /tmp/pash_DIXQ20nZX4
+(3) Recovering variables from: /tmp/pash_F8bEt7xfCf
 /dev/fd/63: line 36: declare: PPID: readonly variable
 /dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 78: declare: UID: readonly variable
 (3) Reverted to BaSh set state: hB
-(4) Executing script in /tmp/pash_obdmltdi:
+(4) Executing script in /tmp/pash_tncaqhfh:
 rm s1 s2
 (5) BaSh script exited with ec: 0
-(5) Writing current BaSh set state to: /tmp/pash_5iuvAZrmn9
+(5) Writing current BaSh set state to: /tmp/pash_LrbExYA84I
 (5) Current BaSh shell: hB
 (5) Reverted to PaSh set state to: huB
-Writing vars to: /tmp/pash_JGVF24KxKU
+Writing vars to: /tmp/pash_0fpAXzRG7T
 (5) Exiting from BaSh with BaSh status: 0
-Execution time: 47.546 ms
-(7) Recovering BaSh variables from: /tmp/pash_JGVF24KxKU
+Execution time: 47.606 ms
+(7) Recovering BaSh variables from: /tmp/pash_0fpAXzRG7T
 /dev/fd/63: line 36: declare: PPID: readonly variable
 /dev/fd/63: line 44: declare: SHELLOPTS: readonly variable
 /dev/fd/63: line 78: declare: UID: readonly variable
-(7) Reading current BaSh set state from: /tmp/pash_5iuvAZrmn9
+(7) Reading current BaSh set state from: /tmp/pash_LrbExYA84I
 (7) Current BaSh set state: hB
 (7) Current PaSh set state: huB
 (7) Reverted to BaSh set state before exiting: hB
 (7) Reverting last BaSh exit code: 0
-Preprocessed script stored in: /tmp/pash_mfhpbsgm
-Preprocessing time: 45.467  ms
+Preprocessed script stored in: /tmp/pash_vxlievgw
+Preprocessing time: 41.666  ms
 
-real	2m13.058s
-user	4m22.233s
-sys	0m48.686s
+real	2m14.581s
+user	4m20.795s
+sys	0m44.685s
 Files /home/nikos/dish/evaluation//small_intermediary//diff_seq_output and /tmp/distr_output/0 are identical
