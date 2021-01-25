@@ -15,13 +15,7 @@ of a worker. Either link or copy the one you need to `~/work.sh`.
 ## Controller
 
 The controller is a web server that issues commands to workers.  To
-start it, run `node controller/main.js` with desired values for these
-environment variables:
-
-* `PASH_REMOTE_HOST`: A hostname or IP address on which an SSH daemon runs. Defaults to `localhost`.
-* `PASH_REMOTE_USER`: The username used for authentication. Defaults to `$USER`.
-* `PASH_REMOTE_PRIVATE_KEY`: A path to the private key used for authentication.
-  Defaults to `/home/${PASH_REMOTE_USER}/.ssh/id_rsa`.
+start it, run `node controller/main.js` with a desired [configuration](#runtime-configuration).
 
 Note that the defaults make it such that the controller and remote
 worker are the same machine. Leverage this when prototyping.
@@ -39,6 +33,29 @@ invariants. For now, that's a worker's problem.
 
 This situation will improve with the addition of shared state, a
 migration to AWS SSM, etc.
+
+### Runtime Configuration
+
+The `PASH_REMOTE_RCFILE` environment variable specifies the location
+of the runtime configuration file ("rcfile"). Make sure this is an
+absolute path, otherwise the process will try to load configuration
+w.r.t. the working directory. By default, `PASH_REMOTE_RCFILE` is set
+to the absolute path of `controller/rc.json` on the host system.
+It does not have to exist.
+
+The rcfile is a JSON document. The process uses the following keys:
+
+* `host`: A hostname or IP address on which an SSH daemon runs. Defaults to `localhost`.
+* `user`: The username used for authentication. Defaults to `process.env.USER`.
+* `private_key`: A path to the private key used for authentication. Defaults to `${process.env.HOME}/.ssh/id_rsa`.
+
+If the key is not defined in the JSON document--or the rcfile does not
+exist--,then the process will check the current environment variables
+instead. The envvar name is the upcased version of the rcfile key,
+with a `PASH_REMOTE_` prefix, and underscores replacing all
+non-alphanumeric characters.
+
+e.g. `host` -> `PASH_REMOTE_HOST`, or `my-conf1g-key` -> `PASH_REMOTE_MY_CONF1G_KEY`
 
 
 ### API
