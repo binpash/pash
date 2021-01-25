@@ -5,13 +5,13 @@
 # Requires Docker and an available `pash-playground` container (See pash's README.md).
 
 set -e
-trap 'rm lock' EXIT
 trap 'echo "<<fail>>"' ERR
 
 if [ -f lock ]; then
   echo "Busy on existing job."
 else
     touch lock
+    trap 'rm lock' EXIT
     docker start pash-playground
     docker exec pash-playground bash -c 'cd /pash/scripts && ./ci.sh'
 
