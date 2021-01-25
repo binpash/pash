@@ -138,7 +138,7 @@ const ci = async (req, res) => {
                     new Rsync()
                         .flags('abziu')
                         .set('e', `ssh -i ${rc('private_key')}`)
-                        .source(`${rc('user')}@${rc('host')}:reports/`) // Trailing / is meaningful. It prevents creation of nested subdir
+                        .source(`${rc('user')}@${rc('host')}:reports/`) // Trailing '/' is meaningful: https://serverfault.com/a/529294
                         .destination(rc('ci_reports_path', `${__dirname}/reports`))
                 );
 
