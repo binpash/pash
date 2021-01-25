@@ -73,7 +73,7 @@ def add_common_arguments(parser):
     parser.add_argument("-d", "--debug",
                         type=int,
                         help="configure debug level; defaults to 0",
-                        default="0")
+                        default=0)
     parser.add_argument("--log_file", 
                         help="configure where to write the log; defaults to stderr.",
                         default="")
