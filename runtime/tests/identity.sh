@@ -19,4 +19,4 @@ else
     printf 'The file "%s" is different from "%s"\n' "$testFile" "$file5"
 fi
 
-# rm -rf *.out
+rm -rf *.out
