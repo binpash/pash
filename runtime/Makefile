@@ -29,5 +29,8 @@ rsplit: r_split.c r_split.h
 
 rmerge: r_merge.c r_split.h
 	gcc ${CFLAGS} r_merge.c -o r_merge
+
+rwrap: r_merge.c r_split.h
+	gcc ${CFLAGS} r_wrap.c -o r_wrap
 clean:
 	rm eager split
