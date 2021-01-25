@@ -52,7 +52,7 @@ git pull
 
 # Vars used in report summary
 REV=$(git rev-parse --short HEAD)
-MSG="$(git log -1 --pretty=%B | trim)"
+MSG="$(git log -1 --pretty=%B | trim | head -n 1)"
 RES="fail"
 TIME="0s"
 
