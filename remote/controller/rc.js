@@ -18,7 +18,7 @@ const rcfile = (() => {
     return lookup;
 })();
 
-const keyToEnv = (key) => `PASH_REMOTE_${key.toUpperCase().replace(/[^A-Z]/g, '_')}`;
+const keyToEnv = (key) => `PASH_REMOTE_${key.toUpperCase().replace(/[^A-Z0-9_]/g, '_')}`;
 
 const useDefined = (current, next) => (current === undefined) ? next : current;
 
