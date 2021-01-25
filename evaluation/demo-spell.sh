@@ -1,7 +1,8 @@
 #!/bin/bash
 
-DIR="scripts/input"
-FILE="$DIR/100M.txt"
-DICT="$DIR/dict.txt"
+# Would this expansion work:
+# cd "$(dirname "${BASH_SOURCE[0]}")"
+FILE="$PASH_TOP/evaluation/scripts/input/100M.txt"
+DICT="$PASH_TOP/evaluation/scripts/input/dict.txt"
 
 cat "$FILE" | tr A-Z a-z | tr -cs A-Za-z '\n' | sort | uniq | comm -13 $DICT -
