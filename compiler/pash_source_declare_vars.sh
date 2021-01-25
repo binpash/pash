@@ -15,8 +15,12 @@ filter_vars_file()
 }
 
 ## TODO: Error handling if the argument is empty?
-if [ "$PASH_REDIR" == '&2' ]; then
-    >&2 source <(filter_vars_file $1)
+if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
+        > /dev/null 2>&1 $@
 else
-    >>"$PASH_REDIR" 2>&1 source <(filter_vars_file $1)
+    if [ "$PASH_REDIR" == '&2' ]; then
+        >&2 source <(filter_vars_file $1)
+    else
+        >>"$PASH_REDIR" 2>&1 source <(filter_vars_file $1)
+    fi
 fi

@@ -55,7 +55,6 @@ def add_common_arguments(parser):
                         type=int,
                         default=getWidth(), 
                         help="set data-parallelism factor")
-
     parser.add_argument("--no_optimize",
                         help="not apply transformations over the DFG",
                         action="store_true")
@@ -71,9 +70,10 @@ def add_common_arguments(parser):
     parser.add_argument("-p", "--output_optimized", # FIXME: --print
                         help="output the parallel shell script for inspection",
                         action="store_true")
-    parser.add_argument("-d", "--debug", 
+    parser.add_argument("-d", "--debug",
+                        type=int,
                         help="configure debug level; defaults to 0",
-                        default="0")
+                        default=0)
     parser.add_argument("--log_file", 
                         help="configure where to write the log; defaults to stderr.",
                         default="")
@@ -114,7 +114,7 @@ def pass_common_arguments(pash_arguments):
     if (pash_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
     arguments.append(string_to_argument("--debug"))
-    arguments.append(string_to_argument(pash_arguments.debug))
+    arguments.append(string_to_argument(str(pash_arguments.debug)))
     arguments.append(string_to_argument("--termination"))
     arguments.append(string_to_argument(pash_arguments.termination))
     arguments.append(string_to_argument("--speculation"))
