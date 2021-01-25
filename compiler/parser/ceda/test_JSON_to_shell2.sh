@@ -3,7 +3,7 @@
 
 SHELL_TO_JSON_OCAML=/pash/compiler/parser/parse_to_json.native
 JSON_TO_SHELL_OCAML=/pash/compiler/parser/json_to_shell.native
-JSON_TO_SHELL_C=/pash/compiler/parser/libdash/src/json_to_shell2
+JSON_TO_SHELL_C=/pash/compiler/parser/ceda/json_to_shell2
 
 
 if [ $# -ne 1 ]
