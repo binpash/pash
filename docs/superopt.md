@@ -45,3 +45,17 @@ Other ideas:
 * For some configurations (say, 2x CPUs), it might not even make sense to parallelize a program. i.e., there are programs (or individual commands) that will give speedup above a certain `width` (lower bound).
 
 In the evaluation, it might make sense to use [radar plots](https://en.wikipedia.org/wiki/Radar_chart) to show the exploration of the configuration space.
+
+More thoughts (from @angelhof):
+1. Read the Ernest paper (NSDI 2016). They use subsets of input data to train performance model of jobs on increasing number of machines (analogous to --width)
+2. Training on a subset of the data only works if 
+  a) dataset is fixed per job (or if data shape/type does mot affect performance)
+  b) task takes a long time so that training on subset makes sense
+
+TODO:
+ - Explore how data shape/type affects performance of a script. How does size affect them too.
+ - Establish that there are long running scripts in practice that can benefit from training on subset of inputs.
+
+IDEAS:
+- think about creating a model offline (especially if there exists a simple parametric model of input data). This is possible for the shell since qe have commands in access anyway.
+- Use statistical techniques to find parameters of performance model (rather than manually fixing them)
