@@ -10,14 +10,17 @@ const { NodeSSH } = require('node-ssh');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const rc = require('./rc.js');
 const syncdir = require('sync-directory');
 const rimraf = require('rimraf');
 
 const getSshCredentials = () => ({
-    host: process.env.PASH_REMOTE_HOST || 'localhost',
-    username: process.env.PASH_REMOTE_USER || process.env.USER,
-    privateKey: process.env.PASH_REMOTE_PRIVATE_KEY || `${process.env.HOME}/.ssh/id_rsa`,
+    host: rc('host', 'localhost'),
+    username: rc('user', process.env.USER),
+    privateKey: rc('private_key', `${process.env.HOME}/.ssh/id_rsa`),
 });
+
+console.log(getSshCredentials());
 
 const getRemoteHomeDirectory = () => {
     const { username } = getSshCredentials();
