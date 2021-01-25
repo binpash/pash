@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import yaml
+import math
 
 from ir_utils import *
 
@@ -44,11 +45,15 @@ def load_config(config_file_path=""):
 
     config = pash_config
 
+def getWidth():
+    cpus = os.cpu_count()
+    return math.floor(cpus / 8) if cpus >= 16 else 2
+
 ## These are arguments that are common to pash.py and pash_runtime.py
 def add_common_arguments(parser):
     parser.add_argument("-w", "--width",
                         type=int,
-                        default=2, 
+                        default=getWidth(), 
                         help="set data-parallelism factor")
 
     parser.add_argument("--no_optimize",
