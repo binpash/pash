@@ -12,7 +12,7 @@ const createControlServer = (routes) =>
 
           try {
               if (typeof routes[pathname] === 'function') {
-                  routes[pathname](req, res);
+                  await Promise.resolve(routes[pathname](req, res));
               } else {
                   respond(res, 404, '404 Not Found');
               }

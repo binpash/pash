@@ -76,7 +76,7 @@ const command = (() => {
             } else {
                 const msg = 'A command is already running.';
                 const err = new Error(msg);
-                err.respond = (res) => respond(res, 400, msg);
+                err.respond = (res) => respond(res, 400, `${msg}\n`);
                 throw err;
             }
         },
