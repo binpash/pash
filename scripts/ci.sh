@@ -24,7 +24,7 @@ cd -
 SMOOSH_RESULTS=""
 
 trim() {
-  awk 'length > 40{$0 = substr($0, 1, 37) "..."} {print $0}' 
+  tr -d '\n' | awk 'length > 40{$0 = substr($0, 1, 37) "..."} {print $0}'
 }
 
 build_runtime() {
