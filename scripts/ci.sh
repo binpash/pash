@@ -72,7 +72,15 @@ stage() {
   echo $(date '+%F %T') $REV $1 >> $RF
 }
 
+cleanup() {
+  git clean -f
+}
+
 trap 'err_report $LINENO' ERR
+trap 'cleanup' EXIT
+
+# To respect invariants of stages
+mkdir -p $REPORT_DIR ../../get
 
 echo $(date '+%F %T') $REV "Starting" > $RF
 START_TIME=$(date +%s);
