@@ -48,6 +48,8 @@ The rcfile is a JSON document. The process uses the following keys:
 * `host`: A hostname or IP address on which an SSH daemon runs. Defaults to `localhost`.
 * `user`: The username used for authentication. Defaults to `process.env.USER`.
 * `private_key`: A path to the private key used for authentication. Defaults to `${process.env.HOME}/.ssh/id_rsa`.
+* `ci_reports_path`: The destination path used by `/ci` to download reports from its worker.
+  Defaults to the (completed) path of `controller/reports` on the host system.
 
 If the key is not defined in the JSON document--or the rcfile does not
 exist--,then the process will check the current environment variables
@@ -101,6 +103,11 @@ worker.
 
 
 ## Changelog
+
+### Jan 25 2021
+- Add runtime configuration module
+- Use `rsync` to fix issues with downloading reports directory
+- Add setting to control where reports directory gets downloaded
 
 ### Jan 21 2021
 
