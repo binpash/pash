@@ -11,16 +11,13 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const rc = require('./rc.js');
-const syncdir = require('sync-directory');
-const rimraf = require('rimraf');
+const Rsync = require('rsync');
 
 const getSshCredentials = () => ({
     host: rc('host', 'localhost'),
     username: rc('user', process.env.USER),
     privateKey: rc('private_key', `${process.env.HOME}/.ssh/id_rsa`),
 });
-
-console.log(getSshCredentials());
 
 const getRemoteHomeDirectory = () => {
     const { username } = getSshCredentials();
@@ -132,21 +129,26 @@ const ci = async (req, res) => {
         timeout: hours(1),
         shouldStopWaiting: (stdout, stderr) => /<<(fail|done)>>/.test(stdout),
         postCompletion: async (ssh) => {
-            // FIXME: Download size can grow without bound. Revisit when it becomes a problem.
-
             const tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'pash-'));
             const dir = `${__dirname}/reports`;
 
             try {
-                // FIXME: Blowing away the directory is too crude. A
-                // sync function is below, but it doesn't work right
-                // now. This is a quick fix to help the team ensure
-                // they have a serveable reports directory.
-                // nv: this doesn't work prior to 10.x, and upgrading to later
-                //     seems to cause other problems, so use rimraf for now
-                // fs.rmdirSync(dir, { recursive: true });
-                rimraf.sync(dir + '/*');
-                await ssh.getDirectory(dir, `${homedir}/reports`, { recursive: true });
+                // TODO: Stream rsync stdin/stdout to new files.
+                const rsync = (
+                    new Rsync()
+                        .flags('abziu')
+                        .set('e', `ssh -i ${rc('private_key')}`)
+                        .source(`${rc('user')}@${rc('host')}:reports/`) // Trailing / is meaningful. It prevents creation of nested subdir
+                        .destination(rc('ci_reports_path', `${__dirname}/reports`))
+                );
+
+                await new Promise((resolve, reject) =>
+                    rsync.execute((error, code, cmd) => {
+                        if (error)
+                            reject(error)
+                        else
+                            resolve();
+                    }));
             } catch (e) {
                 err(e);
                 throw e;
