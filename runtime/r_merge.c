@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "r_split.h"
 
 
@@ -10,17 +7,13 @@ typedef struct block {
   FILE* inputFile;
 } block_t;
 
-void readHeader(FILE* inputFile, int64_t *id, size_t *blockSize) {
-  fread(id, sizeof(int64_t), 1, inputFile);
-  fread(blockSize, sizeof(size_t), 1, inputFile);
-}
 //prints to stdout, could be modified to write to a file
 void MergeInput(char* inputFileNames[], unsigned int numInputFiles) {
     //ring buffer, this implemntation assumes that each round over the file will have the next complete set of blocks 
     //(ie in 2 blocks, block 1 will have ids 0..2..4 and block 2 will have 1..3..5) 
     block_t* blockBuf = malloc(sizeof(block_t) * numInputFiles);
     size_t bufLen = CHUNKSIZE; //buffer length, would be resized as needed
-    char* buffer = malloc(bufLen + 1); //from r_split not possible to have bigger block
+    char* buffer = malloc(bufLen + 1);
     int64_t id;
     size_t blockSize;
     
