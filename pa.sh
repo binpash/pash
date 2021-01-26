@@ -4,6 +4,11 @@ export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export PASH_PARSER=${PASH_TOP}/parser/parse_to_json.native
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 
+if [ "$#" -eq 1 ] && [ "$1" = "--init" ]; then
+  ./compiler/superoptimize.sh
+  exit
+fi
+
 if ! command -v python3 &> /dev/null
 then
     echo "Python >=3 could not be found"
