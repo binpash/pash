@@ -58,4 +58,4 @@ Mailing Lists:
 
 Development/contributions:
 * Contribution guide: [docs/contrib](docs/contrib.md)
-* Continuous Integration Server: [http://pash.ndr.md/](http://pash.ndr.md/)
+* Continuous Integration Server: [ci.pash.ndr.md](http://ci.pash.ndr.md)
