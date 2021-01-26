@@ -3,6 +3,7 @@
 const { createServer } = require('http');
 const { parse: parseUrl } = require('url');
 const { log, err, respond } = require('./lib.js');
+const rc = require('./rc.js');
 
 const createControlServer = (routes) =>
       createServer(async (req, res) => {
@@ -33,6 +34,7 @@ module.exports = {
 };
 
 if (require.main === module) {
+    const port = rc('port', 2047);
     createControlServer(require('./routes.js'))
-        .listen(2047, log("server listening on port " + 2047));
+        .listen(port, log("server listening on port " + port));
 }
