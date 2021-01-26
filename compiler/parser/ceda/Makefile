@@ -2,28 +2,44 @@ JSON_C_DIR=/pash/json-c-0.15/install/
 SCRIPTS_DIR=/pash/evaluation/
 
 CC=gcc
-CFLAGS=-g -O2 -Wall -Werror -I"$(JSON_C_DIR)/include/json-c"
+CFLAGS=-g -O2 -Wall -Werror -I"$(JSON_C_DIR)/include/json-c" -I"../libdash/src"
 LDFLAGS=-ljson-c -L"$(JSON_C_DIR)/lib" -Wl,-rpath="$(JSON_C_DIR)/lib"
 
 
-all: json_to_shell2
+all: parse_to_json2 json_to_shell2 prettyprint_json
 
+
+parse_to_json2: parse_to_json2.o ast2a.o dash2.o CharList.o Stack.o arg_char.o
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS) -ldash
 
 json_to_shell2: json_to_shell2.o ast2b.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
+prettyprint_json: prettyprint_json.o
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-tests: json_to_shell2
-	@find "$(SCRIPTS_DIR)" | grep '[.]sh$$' | while read f; do sh test_JSON_to_shell2.sh "$$f"; done | tee /tmp/cdash.log
+
+testsA: parse_to_json2
+	@find "$(SCRIPTS_DIR)" | grep '[.]sh$$' | while read f; do sh test_parse_to_JSON2.sh "$$f"; done | tee /tmp/cdash.log
+	@echo
+	@cat /tmp/cdash.log | grep ':' | cut -d ':' -f 1 | sort | uniq -c
+
+testsA-all: parse_to_json2
+	@find "/pash" | grep '[.]sh$$' | while read f; do sh test_parse_to_JSON2.sh "$$f"; done | tee /tmp/cdash.log
 	@echo
 	@cat /tmp/cdash.log | grep ':' | cut -d ':' -f 1 | sort | uniq -c
 
 
-tests-all: json_to_shell2
+testsB: json_to_shell2
+	@find "$(SCRIPTS_DIR)" | grep '[.]sh$$' | while read f; do sh test_JSON_to_shell2.sh "$$f"; done | tee /tmp/cdash.log
+	@echo
+	@cat /tmp/cdash.log | grep ':' | cut -d ':' -f 1 | sort | uniq -c
+
+testsB-all: json_to_shell2
 	@find "/pash/" | grep '[.]sh$$' | while read f; do sh test_JSON_to_shell2.sh "$$f"; done | tee /tmp/cdash.log
 	@echo
 	@cat /tmp/cdash.log | grep ':' | cut -d ':' -f 1 | sort | uniq -c
 
 
 clean:
-	rm json_to_shell2 *.o
+	rm parse_to_json2 json_to_shell2 *.o
