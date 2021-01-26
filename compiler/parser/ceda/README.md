@@ -1,8 +1,6 @@
 # JSON <-> shell script (without OCaml)
 
-## JSON -> shell script
-
-### Pre-requisites
+## Pre-requisites
 
 * json-c v0.15:
 
@@ -16,6 +14,8 @@ cd build/
 cmake -DCMAKE_INSTALL_PREFIX=/pash/json-c-0.15/install ../
 make install
 ```
+
+## JSON -> shell script
 
 ### Usage
 
@@ -50,7 +50,7 @@ Output:
 This includes `test_JSON_to_shell2.sh`!
 
 ```
-make tests-all
+make testsA-all
 ```
 
 All shell scripts that the OCaml implementation works on are regenerated, byte-for-byte identical:
@@ -64,4 +64,43 @@ All shell scripts that the OCaml implementation works on are regenerated, byte-f
 * `fresh_marker` for heredocs. This is really obscure and a pain to implement in C. For real-world, non-adversarial settings, just change the marker from "EOF" to some random text.
 * Not Python
 
-## Shell script -> JSON (TODO)
+## WORK-IN-PROGRESS: Shell script -> JSON
+
+### Usage
+
+It has the same usage as `parse_to_json` i.e.,
+`./parse_to_json2 SCRIPT_FILE_NAME` or `./parse_to_json2 < SCRIPT_FILE_NAME`
+
+e.g.,
+```
+$ ./parse_to_json2 /pash/evaluation/hello-world.sh
+```
+
+### Testing
+
+#### Testing a single script
+
+```
+sh test_parse_to_JSON2.sh SOME_SCRIPT_FILE
+```
+
+This applies the OCaml implementation of `parse_to_json` to the specified script file, and compares the output against this re-implementation.
+
+Output:
+* `REF_ABORT_1` means the shell script cannot be parsed to JSON by the reference implementation. 
+* `ABORT` or `FAIL` means there's a bug in Thurston's code.
+* `PASS` is good.
+
+#### Testing all the scripts in /pash/
+
+```
+make testsB-all
+```
+
+Current progress (come back soon for updates!):
+```
+     49 ABORT
+     29 FAIL
+    174 PASS
+     33 REF_ABORT_1
+```
