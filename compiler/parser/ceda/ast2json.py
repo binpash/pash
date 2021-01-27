@@ -2,6 +2,7 @@
 
 
 import os;
+from os import abort;
 
 
 STRING_OF_VAR_TYPE_DICT = {
@@ -37,6 +38,16 @@ def intercalate (p, ss):
         i = i + 1;
 
     return (str);
+
+
+# let braces s = "{ " ^ s ^ " ; }"
+def braces (s):
+    return "{ " + s + " ; }";
+
+
+# let parens s = "( " ^ s ^ " )"
+def parens (s):
+    return "( " + s + " )";
 
 
 # let string_of_var_type = function
@@ -153,14 +164,57 @@ def to_string (ast):
                 return (background (p));
             else:
                 return (p);
+        elif (type == "Redir"):
+            (_, a, redirs) = params;
+
+            return to_string (a) + string_of_redirs (redirs);
+        elif (type == "Background"):
+            (_, a, redirs) = params;
+
+            return background (to_string (a) + string_of_redirs (redirs));
+        elif (type == "Subshell"):
+            (_, a, redirs) = params;
+
+            return parens (to_string (a) + string_of_redirs (redirs));
+        elif (type == "And"):
+            (a1, a2) = params;
+
+            return to_string (a1) + " && " + to_string (a2);
+        elif (type == "Or"):
+            (a1, a2) = params;
+
+            return to_string (a1) + " || " + to_string (a2);
+        elif (type == "Not"):
+            (a) = params;
+
+            return "! " + to_string (a);
+        elif (type == "Semi"):
+            (a1, a2) = params;
+
+            return to_string (a1) + " ; " + to_string (a2);
         elif (type == "If"):
             (c, t, e) = params;
             return string_of_if (c, t, e);
+        elif (type == "While"):
+            (first, b) = params;
+
+            if (first [0] == "Not"):
+                abort;
+            else:
+                t = first;
+
+                return "while " + to_string (t) + "; do " + to_string (b) + "; done ";
+        elif (type == "For"):
+            abort ();
+        elif (type == "Case"):
+            abort ();
+        elif (type == "Defun"):
+            (_, name, body) = params;
+
+            return name + "() {\n" + to_string (body) + "\n}";
         else:
-            return "TODO(" + type + ")";
-
-
-    return "";
+            print ("Invalid type: %s" % type);
+            abort ();
 
 
 

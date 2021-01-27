@@ -22,23 +22,23 @@ prettyprint_json: prettyprint_json.o
 tests: parse_to_json2 json_to_shell2
 	@find "$(SCRIPTS_DIR)" | grep '[.]sh$$' | while read f; do sh test_rt.sh "$$f"; done | tee /tmp/cdash.log
 	@echo
-	@cat /tmp/cdash.log | grep ':' | cut -d ':' -f 1 | sort | uniq -c
+	@cat /tmp/cdash.log | egrep '^[A-Z]+:' | cut -d ':' -f 1 | sort | uniq -c
 
 testsA: parse_to_json2
 	@find "$(SCRIPTS_DIR)" | grep '[.]sh$$' | while read f; do sh test_parse_to_JSON2.sh "$$f"; done | tee /tmp/cdashA.log
 	@echo
-	@cat /tmp/cdashA.log | grep ':' | cut -d ':' -f 1 | sort | uniq -c
+	@cat /tmp/cdashA.log | egrep '^[A-Z]+:' | cut -d ':' -f 1 | sort | uniq -c
 
 tests: test_rt.sh parse_to_json2 json_to_shell2
 	@find "$(SCRIPTS_DIR)" | grep '[.]sh$$' | while read f; do sh test_rt.sh "$$f"; done | tee /tmp/cdash_rt.log
 	@echo
-	@cat /tmp/cdash_rt.log | grep ':' | cut -d ':' -f 1 | sort | uniq -c
+	@cat /tmp/cdash_rt.log | egrep '^[A-Z]+:' | cut -d ':' -f 1 | sort | uniq -c
 
 
 testsA_py: test_rt_py.sh
 	@find "$(SCRIPTS_DIR)" | grep '[.]sh$$' | while read f; do sh test_rt_py.sh "$$f"; done | tee /tmp/cdashA_py.log
 	@echo
-	@cat /tmp/cdashA_py.log | grep ':' | cut -d ':' -f 1 | sort | uniq -c
+	@cat /tmp/cdashA_py.log | egrep '^[A-Z]+:' | cut -d ':' -f 1 | sort | uniq -c
 
 
 clean:
