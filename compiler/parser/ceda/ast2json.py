@@ -238,8 +238,21 @@ def string_of_if (c, t, e):
     str = "if " + to_string (c) + \
           "; then " + to_string (t);
 
-    # TODO: uncommon cases
-    str = str + "; else " + to_string (e) + "; fi";
+    # ['Command', [-1, [], [], []]]
+    if (    (len (e) == 2)        \
+        and (e [0] == "Command")  \
+        and (len (e [1]) == 4)    \
+        and (e [1][0] == -1))     \
+        and (len (e [1][1]) == 0) \
+        and (len (e [1][2]) == 0) \
+        and (len (e [1][3]) == 0):
+       str = str + "; fi";
+    elif (e [0] == "If"):
+        (c2, t2, e2) = e;
+
+        str = str + "; el" + string_of_if (c2, t2, e2);
+    else:
+        str = str + "; else " + to_string (e) + "; fi";
 
     return (str);
 
