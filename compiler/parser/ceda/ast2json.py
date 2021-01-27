@@ -1,64 +1,79 @@
 #!/usr/bin/python3
 
 
+import os;
+
+
+STRING_OF_VAR_TYPE_DICT = {
+    "Normal"   : "",
+    "Minus"    : "-",
+    "Plus"     : "+",
+    "Question" : "?",
+    "Assign"   : "=",
+    "TrimR"    : "%",
+    "TrimRMax" : "%%",
+    "TrimL"    : "#",
+    "TrimLMax" : "##",
+    "Length"   : "#"
+};
+
+
+# dash.ml
+# let rec intercalate p ss =
+#   match ss with
+#   | [] -> ""
+#   | [s] -> s
+#   | s::ss -> s ^ p ^ intercalate p ss  
+def intercalate (p, ss):
+    str = "";
+
+    i = 0;
+    for s in ss:
+        if (i > 0):
+            str = str + p;
+
+        str = str + s;
+
+        i = i + 1;
+
+    return (str);
+
+
+# let string_of_var_type = function
+#  | Normal -> ""
+#  | Minus -> "-"
+#  | Plus -> "+"
+#  | Question -> "?"
+#  | Assign -> "="
+#  | TrimR -> "%"
+#  | TrimRMax -> "%%"
+#  | TrimL -> "#"
+#  | TrimLMax -> "##" 
+#  | Length -> "#" 
+def string_of_var_type (var_type):
+    if (var_type in STRING_OF_VAR_TYPE_DICT):
+        return (STRING_OF_VAR_TYPE_DICT [var_type]);
+
+    exit (1);
+
+
 # let separated f l = intercalate " " (List.map f l)
-# 
-# let show_unless expected actual =
-#   if expected = actual
-#   then ""
-#   else string_of_int actual
-# 
-# let background s = "{ " ^ s ^ " & }"
-#                             
-
-
 def separated (f, l):
     return " ".join (map (f, l));
 
 
-
-def to_string (ast):
-    print (ast);
-
-    if (len (ast) == 0):
-        pass;
-    else:
-        assert (len (ast) == 2);
-
-        type = ast [0];
-        params = ast [1]
-
-        if (type == "Command"):
-            print ("Command");
-
-            (_, assigns, cmds, redirs) = params;
-            str = separated (string_of_assign, assigns);
-            if ((len (assigns) == 0) or (len (cmds) == 0)):
-                pass;
-            else:
-                str = str + " ";
-            str = str + separated (string_of_arg, cmds) + string_of_redirs (redirs);
-
-            return (str);
-        elif (type == "Pipe"):
-            print ("Type")
-        elif (type == "If"):
-            (c, t, e) = params;
-            print ("If")
-
-            return string_of_if (c, t, e);
-
-    return "";
+# let show_unless expected actual =
+#   if expected = actual
+#   then ""
+#   else string_of_int actual
 
 
-def string_of_if (c, t, e):
-    str = "if " + to_string (c) + \
-          "; then " + to_string (t);
+# let background s = "{ " ^ s ^ " & }"
+def background (s):
+    return ("{ " + s + " & }");
 
-    # TODO: uncommon cases
-    str = str + "; else " + to_string (e) + "; fi";
 
-    return (str);
+
 
 
 
@@ -104,6 +119,45 @@ def string_of_if (c, t, e):
 #      "case " ^ string_of_arg a ^ " in " ^
 #      separated string_of_case cs ^ " esac"
 #   | Defun (_,name,body) -> name ^ "() {\n" ^ to_string body ^ "\n}"
+def to_string (ast):
+    # print (ast);
+
+    if (len (ast) == 0):
+        pass;
+    else:
+        assert (len (ast) == 2);
+
+        type = ast [0];
+        params = ast [1]
+
+        if (type == "Command"):
+            (_, assigns, cmds, redirs) = params;
+            str = separated (string_of_assign, assigns);
+            if ((len (assigns) == 0) or (len (cmds) == 0)):
+                pass;
+            else:
+                str = str + " ";
+            str = str + separated (string_of_arg, cmds) + string_of_redirs (redirs);
+
+            return (str);
+        elif (type == "Pipe"):
+            (bg, ps) = params;
+            p = intercalate (" | ", (map (to_string, ps)));
+
+            if (bg):
+                return (background (p));
+            else:
+                return (p);
+        elif (type == "If"):
+            (c, t, e) = params;
+            return string_of_if (c, t, e);
+        else:
+            return "TODO(" + type + ")";
+
+
+    return "";
+
+
 
 
 
@@ -116,7 +170,17 @@ def string_of_if (c, t, e):
 #    | Command (-1,[],[],[]) -> "; fi" (* one-armed if *)
 #    | If (c,t,e) -> "; el" ^ string_of_if c t e
 #    | _ -> "; else " ^ to_string e ^ "; fi")
-#                                                  
+def string_of_if (c, t, e):
+    str = "if " + to_string (c) + \
+          "; then " + to_string (t);
+
+    # TODO: uncommon cases
+    str = str + "; else " + to_string (e) + "; fi";
+
+    return (str);
+
+
+
 # and string_of_arg_char = function
 #   | E '\'' -> "\\'"
 #   | E '\"' -> "\\\""
@@ -139,13 +203,87 @@ def string_of_if (c, t, e):
 #      "${" ^ name ^ (if nul then ":" else "") ^ string_of_var_type vt ^ string_of_arg a ^ "}"
 #   | Q a -> "\"" ^ string_of_arg a ^ "\""
 #   | B t -> "$(" ^ to_string t ^ ")"
+def string_of_arg_char (c):
+    assert (len (c) == 2);
+
+    (type, param) = c;
+
+    if (type == "E"):
+        char = chr (param);
+
+        if (char == "'"):
+            return "\\'";
+        elif (char == "\""):
+            return "\\\"";
+        elif (char == "("):
+            return "\\(";
+        elif (char == ")"):
+            return "\\)";
+        elif (char == "{"):
+            return "\\{";
+        elif (char == "}"):
+            return "\\}";
+        elif (char == "$"):
+            return "\\$";
+        elif (char == "!"):
+            return "\\!";
+        elif (char == "&"):
+            return "\\&";
+        elif (char == "|"):
+            return "\\|";
+        elif (char == ";"):
+            return "\\;";
+        elif (char == "\\"):
+            return "\\\\";
+        elif (char == "\t"):
+            return "\\t";
+        else:
+            if ((param < 32) or (param > 126)):
+                return ("\\" + str (param));
+            else:
+                return (char);
+
+        return "TODO11";
+    elif (type == "C"):
+        return chr (param);
+    elif (type == "T"):
+        return "TODO12";
+    elif (type == "A"):
+        return "TODO13";
+    elif (type == "V"):
+        assert (len (param) == 4);
+        if (param [0] == "Length"):
+            (_, _, name, _) = param;
+            return "${#" + name + "}";
+        else:
+            (vt, nul, name, a) = param;
+
+            str = "${" + name;
+            if (nul):
+                str = str + ":";
+
+            str = str + string_of_var_type (vt) + string_of_arg (a) + "}";
+
+            return str;
+    elif (type == "Q"):
+        return "\"" + string_of_arg (param) + "\"";
+    elif (type == "B"):
+        return "$(" + to_string (param) + ")";
+    else:
+        abort ();
 
 
 # and string_of_arg = function
 #   | [] -> ""
 #   | c :: a -> string_of_arg_char c ^ string_of_arg a
-def string_of_arg (arg):
-    return "TODO";
+def string_of_arg (args):
+    if (len (args) == 0):
+        return "";
+    else:
+        c = args [0];
+        a = args [1:];
+
+        return string_of_arg_char (c) + string_of_arg (a);
 
 
 # and string_of_assign (v,a) = v ^ "=" ^ string_of_arg a
@@ -172,10 +310,22 @@ def string_of_assign (both):
 #      let marker = fresh_marker (lines heredoc) "EOF" in
 #      show_unless 0 fd ^ "<<" ^
 #      (if t = XHere then marker else "'" ^ marker ^ "'") ^ "\n" ^ heredoc ^ marker ^ "\n"
-#                                                                                
+def string_of_redir (redir):
+    assert (len (redir) == 2);
+
+    (type, param) = redir;
+
+    return "TODO";
+
+
 # and string_of_redirs rs =
 #   let ss = List.map string_of_redir rs in
 #   (if List.length ss > 0 then " " else "") ^ intercalate " " ss
 def string_of_redirs (rs):
-    return "TODO"
+    str = "";
+
+    for redir in rs:
+        str = str + " " + string_of_redir (redir);
+
+    return (str);
 

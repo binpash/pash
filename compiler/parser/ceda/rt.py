@@ -20,23 +20,23 @@ inputFile = sys.argv [1];
 # from_ir_to_shell
 
 json = parse_shell (inputFile);
-print ("JSON: %s" % json);
+#print ("JSON: %s" % json);
 
 asts = parse_json_ast_string (json);
-print (asts);
-print ();
+#print (asts);
+#print ();
 
-print ("TODO: directly convert AST to shell script\n");
+#print ("TODO: directly convert AST to shell script\n");
 
 json_rt = serialize_asts_to_json (asts)
-print ("JSON round-trip: %s" % json_rt);
-print ();
+#print ("JSON round-trip: %s" % json_rt);
+#print ();
 
 
 shell_rt = json_to_shell (json_rt);
-print ("Shell round-trip: %s" % shell_rt);
+#print ("Shell round-trip: %s" % shell_rt);
 
-print ("to_string");
+#print ("to_string");
 for ast in asts:
     shell_direct = to_string (ast);
     print ("%s" % shell_direct);
