@@ -1,5 +1,5 @@
 module.exports = {
     makeCommandOptions: () => ({
-        shouldStop: () => true,
+        shouldStopWaiting: () => true,
     }),
 };
