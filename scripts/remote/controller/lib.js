@@ -8,6 +8,8 @@ const respond = (res, status, msg, mediaType = 'text/plain') => {
     res.end(msg);
 };
 
+const hours = h => (1000 * 60 * 60 * h);
+
 const checkHmac = (clientAssertedSignature, secret, message) =>
       timingSafeEqual(clientAssertedSignature, createHmac('sha256', secret).update(message).digest('hex'));
 
@@ -21,6 +23,7 @@ const getRequestBody = (req) =>
 module.exports = {
     log,
     err,
+    hours,
     respond,
     checkHmac,
     getRequestBody,
