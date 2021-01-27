@@ -2,5 +2,5 @@
     "port": 2047,
     "command_module": "./commands/correctness-tests.js",
     "user": "ec2-user",
-    "host": "localhost"
+    "host": "ec2-18-217-74-195.us-east-2.compute.amazonaws.com"
 }
