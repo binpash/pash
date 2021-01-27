@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export PASH_PARSER=${PASH_TOP}/parser/parse_to_json.native
