@@ -22,13 +22,15 @@ def print_time_delta(prefix, start_time, end_time, args):
 ##
 ## TODO: Extend the configuration to allow for custom file to output PaSh log. This would
 ##       allow us to not pollute the .time files.
-def log(*args, end='\n'):
-    if(config.pash_args.log_file == ""):
-        if (not config.pash_args.debug == "0"):
+def log(*args, end='\n', level=1):
+    ## If the debug logging level is at least
+    ## as high as this log message.
+    if (config.pash_args.debug >= level):
+        if(config.pash_args.log_file == ""):
             print(*args, file=sys.stderr, end=end)
-    else:
-        with open(config.pash_args.log_file, "a") as f:
-            print(*args, file=f, end=end)
+        else:
+            with open(config.pash_args.log_file, "a") as f:
+                print(*args, file=f, end=end)
     
 
 def get_random_string(length=8):

@@ -22,7 +22,7 @@ PRIVATE_KEY=$1
 ## The user and IP address or hostname of the server
 HOSTNAME=$2
 
-BRANCH="master"
+BRANCH="main"
 USER="ubuntu"
 
 ARCHIVE="pash.tar.gz"

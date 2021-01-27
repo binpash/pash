@@ -76,19 +76,29 @@ export pash_previous_set_status=$-
 ## because it is necessary for performing the rest of (1)
 pash_redir_output()
 {
-    if [ "$PASH_REDIR" == '&2' ]; then
-        >&2 $@
+    ## TODO: We should properly allow for different debug levels
+    ## TODO: This code is copied in pash_source_declare_vars.sh
+    if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
+        > /dev/null $@
     else
-        >>"$PASH_REDIR" $@
+        if [ "$PASH_REDIR" == '&2' ]; then
+            >&2 $@
+        else
+            >>"$PASH_REDIR" $@
+        fi
     fi
 }
 
 pash_redir_all_output()
 {
-    if [ "$PASH_REDIR" == '&2' ]; then
-        >&2 $@
+    if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
+        > /dev/null 2>&1 $@
     else
-        >>"$PASH_REDIR" 2>&1 $@
+        if [ "$PASH_REDIR" == '&2' ]; then
+            >&2 $@
+        else
+            >>"$PASH_REDIR" 2>&1 $@
+        fi
     fi
 }
 
@@ -98,6 +108,7 @@ export -f pash_redir_all_output
 ## File directory
 RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
 export PASH_REDIR="&2"
+export PASH_DEBUG_LEVEL=0
 
 ## Check flags
 pash_output_time_flag=0
@@ -107,6 +118,7 @@ pash_dry_run_compiler_flag=0
 pash_assert_compiler_success_flag=0
 pash_checking_speculation=0
 pash_checking_log_file=0
+pash_checking_debug_level=0
 for item in $@
 do
     if [ "$pash_checking_speculation" -eq 1 ]; then
@@ -127,6 +139,12 @@ do
         export PASH_REDIR="$item"
     fi
 
+    if [ "$pash_checking_debug_level" -eq 1 ]; then
+        pash_checking_debug_level=0
+        pash_redir_output echo "$item"
+        export PASH_DEBUG_LEVEL=$item
+    fi
+
     if [ "--output_time" == "$item" ]; then
         pash_output_time_flag=1
     fi
@@ -145,6 +163,11 @@ do
 
     if [ "--log_file" == "$item" ]; then
         pash_checking_log_file=1
+    fi
+
+    if [ "-d" == "$item" ] || [ "--debug" == "$item" ]; then
+        pash_checking_debug_level=1
+        pash_redir_output echo "$item"
     fi
 done
 

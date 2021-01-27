@@ -310,12 +310,12 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
     ## Get next nodes in the graph
     next_node_ids = graph.get_next_nodes(curr_id)
 
-    ## If there is only one node afterwards (meaning that we reached a
-    ## thin part of the graph), we need to try to parallelize
-    if(len(next_node_ids) == 1):
-        next_node_id = next_node_ids[0]
+    ## We try to parallelize for all the edges that go out from the current node and into another node
+    for next_node_id in next_node_ids:
         next_node = graph.get_node(next_node_id)
         # log("|-- its next node is:", next_node)
+        new_curr = curr
+        new_curr_id = curr_id
 
         ## If the next node can be parallelized, then we should try to parallelize
         if(next_node.is_parallelizable()
@@ -331,15 +331,15 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
                 ## After split has succeeded we know that the curr node (previous of the next)
                 ## has changed. Therefore we need to retrieve it again.
                 if (not new_cat is None):
-                    curr_id = id(new_cat)
-                    curr = new_cat
-                    assert(isinstance(curr, Cat))
+                    new_curr_id = id(new_cat)
+                    new_curr = new_cat
+                    assert(isinstance(new_curr, Cat))
 
             ## If curr is cat, it means that split suceeded, or it was
             ## already a cat. In any case, we can proceed with the
             ## parallelization
-            if(isinstance(curr, Cat)):
-                new_nodes = check_parallelize_dfg_node(curr_id, next_node_id, graph, fileIdGen)
+            if(isinstance(new_curr, Cat)):
+                new_nodes = check_parallelize_dfg_node(new_curr_id, next_node_id, graph, fileIdGen)
                 # log("New nodes:", new_nodes)
                 new_nodes_for_workset += new_nodes                
 

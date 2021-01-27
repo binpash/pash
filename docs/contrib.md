@@ -100,3 +100,12 @@ git merge master           # fetch changes from main/master
 
 It's important to write [clear commit messages](https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html).
 At a minimum, a short single-line summary at the top with verbs in present tense:-)
+
+## Process for Using EC2 Instance 
+
+A reason to use Amazon Elastic Compute Cloud (EC2) is having insufficient computing power in your local machine. The steps to do are as follows. The generated key is of the form user@hostname.
+
+1. Make changes in local Docker
+2. `git push` in local Docker
+3. Run `scripts/ssh-install.sh ~/.ssh/id_rsa <hostname>` in cloned pash repository on local machine (pulls changes from GitHub)
+4. Run `ssh <SSH Key>`. The changes will have automatically been transferred over. Can confirm with `git log`.
