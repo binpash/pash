@@ -51,7 +51,7 @@ sh test_parse_to_JSON2.sh SOME_SCRIPT_FILE
 This applies the OCaml implementation of `parse_to_json` to the specified script file, and compares the output against this re-implementation.
 
 Output:
-* `REF_ABORT_1` means the shell script cannot be parsed to JSON by the reference implementation. 
+* `INVALID_INPUT_1` means the shell script cannot be parsed to JSON by the reference implementation. 
 * `ABORT` or `FAIL` means there's a bug in Thurston's code.
 * `PASS` is good.
 
@@ -64,7 +64,7 @@ sh test_JSON_to_shell2.sh SOME_SCRIPT_FILE
 This applies the OCaml implementation of `parse_to_json` to the specified script file, then compares the OCaml `json_to_shell` against this re-implementation.
 
 Output:
-* `REF_ABORT_1` or `REF_ABORT_2` means the shell script cannot be parsed to or from JSON by the reference implementation. 
+* `INVALID_INPUT_1` or `INVALID_INPUT_2` means the shell script cannot be parsed to or from JSON by the reference implementation. 
 * `ABORT` or `FAIL` means there's a bug in Thurston's code.
 * `PASS` is good.
 
