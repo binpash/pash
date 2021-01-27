@@ -66,6 +66,11 @@ def separated (f, l):
 #   if expected = actual
 #   then ""
 #   else string_of_int actual
+def show_unless (expected, actual):
+    if (expected == actual):
+        return "";
+    else:
+        return (str (actual));
 
 
 # let background s = "{ " ^ s ^ " & }"
@@ -303,6 +308,7 @@ def string_of_assign (both):
 #   | File (From,fd,a)    -> show_unless 0 fd ^ "<" ^ string_of_arg a
 #   | File (FromTo,fd,a)  -> show_unless 0 fd ^ "<>" ^ string_of_arg a
 #   | File (Append,fd,a)  -> show_unless 1 fd ^ ">>" ^ string_of_arg a
+
 #   | Dup (ToFD,fd,tgt)   -> show_unless 1 fd ^ ">&" ^ string_of_arg tgt
 #   | Dup (FromFD,fd,tgt) -> show_unless 0 fd ^ "<&" ^ string_of_arg tgt
 #   | Heredoc (t,fd,a) ->
@@ -314,6 +320,24 @@ def string_of_redir (redir):
     assert (len (redir) == 2);
 
     (type, param) = redir;
+    if (type == "File"):
+        assert (len (param) == 3);
+
+        (subtype, fd, a) = param;
+        if (subtype == "To"):
+            return (show_unless (1, fd) + ">" + string_of_arg (a));
+        elif (subtype == "Clobber"):
+            return (show_unless (1, fd) + ">|" + string_of_arg (a));
+        elif (subtype == "From"):
+            return (show_unless (0, fd) + "<" + string_of_arg (a));
+        elif (subtype == "FromTo"):
+            return (show_unless (0, fd) + "<>" + string_of_arg (a));
+        elif (subtype == "Append"):
+            return (show_unless (1, fd) + ">>" + string_of_arg (a));
+        else:
+            abort ();
+    else:
+        abort ();
 
     return "TODO";
 
