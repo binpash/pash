@@ -2,6 +2,7 @@
 
 import sys
 
+
 sys.path.append("/pash/compiler")
 
 from parse import parse_shell, from_ir_to_shell, from_ir_to_shell_file
@@ -20,7 +21,9 @@ inputFile = sys.argv [1];
 # from_ir_to_shell
 
 json = parse_shell (inputFile);
-#print ("JSON: %s" % json);
+
+if (len (json) == 0):
+    sys.exit (0);
 
 asts = parse_json_ast_string (json);
 #print (asts);
@@ -28,15 +31,17 @@ asts = parse_json_ast_string (json);
 
 #print ("TODO: directly convert AST to shell script\n");
 
-json_rt = serialize_asts_to_json (asts)
+#json_rt = serialize_asts_to_json (asts)
 #print ("JSON round-trip: %s" % json_rt);
 #print ();
 
 
-shell_rt = json_to_shell (json_rt);
+#shell_rt = json_to_shell (json_rt);
 #print ("Shell round-trip: %s" % shell_rt);
 
 #print ("to_string");
 for ast in asts:
     shell_direct = to_string (ast);
-    print ("%s" % shell_direct);
+    print (shell_direct);
+#    print (shell_direct.encode ('utf8'));
+#    sys.stdout.buffer.write (shell_direct);

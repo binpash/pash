@@ -187,7 +187,7 @@ def to_string (ast):
         elif (type == "Not"):
             (a) = params;
 
-            return "! " + to_string (a);
+            return "! " + braces (to_string (a));
         elif (type == "Semi"):
             (a1, a2) = params;
 
@@ -212,6 +212,10 @@ def to_string (ast):
             return "for " + var + " in " + string_of_arg (a) + "; do " + \
                    to_string (body) + "; done";
         elif (type == "Case"):
+            (_, a, cs) = params;
+
+            return "case " + string_of_arg (a) + " in " + \
+                   separated (string_of_case, cs) + " esac";
             abort ();
         elif (type == "Defun"):
             (_, name, body) = params;
@@ -220,11 +224,6 @@ def to_string (ast):
         else:
             print ("Invalid type: %s" % type);
             abort ();
-
-
-
-
-
 
 
 # and string_of_if c t e =
@@ -322,11 +321,8 @@ def string_of_arg_char (c):
     elif (type == "C"):
         return chr (param);
     elif (type == "T"):
-        if (len (param) == 1):
-            if (param [0] == "None"):
-                return "~";
-            else:
-                abort ();
+        if (param == "None"):
+            return "~";
         elif (len (param) == 2):
             if (param [0] == "Some"):
                 (_, u) = param;
@@ -335,6 +331,7 @@ def string_of_arg_char (c):
             else:
                 abort ();
         else:
+            print ("Unexpected param for T: %s" % param);
             abort ();
     elif (type == "A"):
         return "$((" + string_of_arg (param) + "))";
@@ -346,13 +343,13 @@ def string_of_arg_char (c):
         else:
             (vt, nul, name, a) = param;
 
-            str = "${" + name;
+            stri = "${" + name;
             if (nul):
-                str = str + ":";
+                stri = stri + ":";
 
-            str = str + string_of_var_type (vt) + string_of_arg (a) + "}";
+            stri = stri + string_of_var_type (vt) + string_of_arg (a) + "}";
 
-            return str;
+            return stri;
     elif (type == "Q"):
         return "\"" + string_of_arg (param) + "\"";
     elif (type == "B"):
@@ -380,11 +377,15 @@ def string_of_assign (both):
     return v + "=" + string_of_arg (a);
 
 
-#                                                    
 # and string_of_case c =
 #   let pats = List.map string_of_arg c.cpattern in
 #   intercalate "|" pats ^ ") " ^ to_string c.cbody ^ ";;"
-# 
+def string_of_case (c):
+    pats = map (string_of_arg, c ['cpattern']);
+
+    return intercalate ("|", pats) + ") " + to_string (c ['cbody']) + ";;";
+
+
 # and string_of_redir = function
 #   | File (To,fd,a)      -> show_unless 1 fd ^ ">" ^ string_of_arg a
 #   | File (Clobber,fd,a) -> show_unless 1 fd ^ ">|" ^ string_of_arg a
@@ -427,7 +428,20 @@ def string_of_redir (redir):
         else:
             abort ();
     elif (type == "Heredoc"):
-        abort ();
+        (t, fd, a) = params;
+
+        heredoc = string_of_arg (a);
+        marker = "EOF"; # TODO: fresh_marker
+
+        stri = show_unless (0, fd) + "<<";
+        if (t == "XHere"):
+            stri = stri + marker;
+        else:
+            stri = stri + "'" + marker + "'";
+
+        stri = stri + "\n" + heredoc + marker + "\n";
+
+        return (stri);
     else:
         print ("Invalid type: %s" % type);
         abort ();
