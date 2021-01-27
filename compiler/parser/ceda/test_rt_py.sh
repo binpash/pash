@@ -48,14 +48,16 @@ then
     exit 1
 fi
 
-diff /tmp/rt_ocaml.$$ /tmp/rt_py.$$
+diff /tmp/rt_ocaml.$$ /tmp/rt_py.$$ > /dev/null
 if [ $? -ne 0 ]
 then
-    diff -w /tmp/rt_ocaml.$$ /tmp/rt_py.$$
+    diff -w /tmp/rt_ocaml.$$ /tmp/rt_py.$$ > /dev/null
     if [ $? -ne 0 ]
     then
+        diff -w /tmp/rt_ocaml.$$ /tmp/rt_py.$$
         echo "FAIL: '$testFile' | /tmp/rt_ocaml.$$ /tmp/rt_py.$$"
     else
+        diff /tmp/rt_ocaml.$$ /tmp/rt_py.$$
         echo "FAIL_WHITESPACE: '$testFile' | /tmp/rt_ocaml.$$ /tmp/rt_py.$$"
     fi
     exit 1
