@@ -2,7 +2,7 @@
 
 
 import os;
-from os import abort;
+# from os import abort;
 
 
 STRING_OF_VAR_TYPE_DICT = {
@@ -199,13 +199,18 @@ def to_string (ast):
             (first, b) = params;
 
             if (first [0] == "Not"):
-                abort;
+                (_, t) = first;
+
+                return "until " + to_string (t) + "; do " + to_string (b) + "; done ";
             else:
                 t = first;
 
                 return "while " + to_string (t) + "; do " + to_string (b) + "; done ";
         elif (type == "For"):
-            abort ();
+            (_, a, body, var) = params;
+
+            return "for " + var + " in " + string_of_arg (a) + "; do " + \
+                   to_string (body) + "; done";
         elif (type == "Case"):
             abort ();
         elif (type == "Defun"):
@@ -301,14 +306,25 @@ def string_of_arg_char (c):
                 return ("\\" + str (param));
             else:
                 return (char);
-
-        return "TODO11";
     elif (type == "C"):
         return chr (param);
     elif (type == "T"):
-        return "TODO12";
+        if (len (param) == 1):
+            if (param [0] == "None"):
+                return "~";
+            else:
+                abort ();
+        elif (len (param) == 2):
+            if (param [0] == "Some"):
+                (_, u) = param;
+
+                return "~" + u;
+            else:
+                abort ();
+        else:
+            abort ();
     elif (type == "A"):
-        return "TODO13";
+        return "$((" + string_of_arg (param) + "))";
     elif (type == "V"):
         assert (len (param) == 4);
         if (param [0] == "Length"):
@@ -373,11 +389,9 @@ def string_of_assign (both):
 def string_of_redir (redir):
     assert (len (redir) == 2);
 
-    (type, param) = redir;
+    (type, params) = redir;
     if (type == "File"):
-        assert (len (param) == 3);
-
-        (subtype, fd, a) = param;
+        (subtype, fd, a) = params;
         if (subtype == "To"):
             return (show_unless (1, fd) + ">" + string_of_arg (a));
         elif (subtype == "Clobber"):
@@ -390,10 +404,20 @@ def string_of_redir (redir):
             return (show_unless (1, fd) + ">>" + string_of_arg (a));
         else:
             abort ();
-    else:
-        abort ();
+    elif (type == "Dup"):
+        (subtype, fd, tgt) = params;
 
-    return "TODO";
+        if (subtype == "ToFD"):
+            return (show_unless (1, fd) + ">&" + string_of_arg (tgt));
+        elif (subtype == "FromFD"):
+            return (show_unless (0, fd) + "<&" + string_of_arg (tgt));
+        else:
+            abort ();
+    elif (type == "Heredoc"):
+        abort ();
+    else:
+        print ("Invalid type: %s" % type);
+        abort ();
 
 
 # and string_of_redirs rs =
