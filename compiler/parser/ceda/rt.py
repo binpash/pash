@@ -1,6 +1,10 @@
 #!/usr/bin/python3
 
 import sys
+import codecs
+
+#sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+
 
 
 sys.path.append("/pash/compiler")
@@ -42,6 +46,23 @@ asts = parse_json_ast_string (json);
 #print ("to_string");
 for ast in asts:
     shell_direct = to_string (ast);
-    print (shell_direct);
+
+    # Some shell scripts have characters with ASCII value >= 128,
+    # which disagrees with the default Python print.
+    sys.stdout.buffer.write (shell_direct.encode ('utf-8'));
+
+    newline = (10).to_bytes (1, byteorder='little');
+    sys.stdout.buffer.write (newline);
+
+#    sys.stdout.buffer.write (
+
+#    shell_direct_bytes = shell_direct.encode ('utf-8').strip ();
+#
+#    print (len (shell_direct_bytes));
+#    for b in range (len (shell_direct_bytes)):
+#        print ("%s" % chr (shell_direct_bytes [b]), end ="");
+
+#    sys.stdout.write (shell_direct);
+#    print (shell_direct);
 #    print (shell_direct.encode ('utf8'));
 #    sys.stdout.buffer.write (shell_direct);

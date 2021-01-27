@@ -20,6 +20,7 @@ STRING_OF_VAR_TYPE_DICT = {
 
 
 # dash.ml
+#
 # let rec intercalate p ss =
 #   match ss with
 #   | [] -> ""
@@ -40,11 +41,15 @@ def intercalate (p, ss):
     return (str);
 
 
+# dash.ml
+#
 # let braces s = "{ " ^ s ^ " ; }"
 def braces (s):
     return "{ " + s + " ; }";
 
 
+# dash.ml
+#
 # let parens s = "( " ^ s ^ " )"
 def parens (s):
     return "( " + s + " )";
@@ -87,10 +92,6 @@ def show_unless (expected, actual):
 # let background s = "{ " ^ s ^ " & }"
 def background (s):
     return ("{ " + s + " & }");
-
-
-
-
 
 
 # let rec to_string = function
@@ -256,7 +257,6 @@ def string_of_if (c, t, e):
     return (str);
 
 
-
 # and string_of_arg_char = function
 #   | E '\'' -> "\\'"
 #   | E '\"' -> "\\\""
@@ -368,6 +368,8 @@ def string_of_arg (args):
         c = args [0];
         a = args [1:];
 
+#        print (string_of_arg_char (c));
+
         return string_of_arg_char (c) + string_of_arg (a);
 
 
@@ -457,4 +459,3 @@ def string_of_redirs (rs):
         str = str + " " + string_of_redir (redir);
 
     return (str);
-
