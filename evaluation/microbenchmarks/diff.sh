@@ -10,13 +10,13 @@ mkfifo s1 s2
 
 cat $IN |
   # shuf |
-  sort |
-  tr [:lower:] [:upper:] > s1 &
+  tr [:lower:] [:upper:] |
+  sort > s1 &
 
 cat $IN |
   # shuf |
-  sort |
-  tr [:upper:] [:lower:] > s2 &
+  tr [:upper:] [:lower:] |
+  sort > s2 &
 
 diff -B s1 s2
 rm s1 s2

@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import yaml
+import math
 
 from ir_utils import *
 
@@ -44,13 +45,16 @@ def load_config(config_file_path=""):
 
     config = pash_config
 
+def getWidth():
+    cpus = os.cpu_count()
+    return math.floor(cpus / 8) if cpus >= 16 else 2
+
 ## These are arguments that are common to pash.py and pash_runtime.py
 def add_common_arguments(parser):
     parser.add_argument("-w", "--width",
                         type=int,
-                        default=2, 
+                        default=getWidth(), 
                         help="set data-parallelism factor")
-
     parser.add_argument("--no_optimize",
                         help="not apply transformations over the DFG",
                         action="store_true")
@@ -66,9 +70,10 @@ def add_common_arguments(parser):
     parser.add_argument("-p", "--output_optimized", # FIXME: --print
                         help="output the parallel shell script for inspection",
                         action="store_true")
-    parser.add_argument("-d", "--debug", 
+    parser.add_argument("-d", "--debug",
+                        type=int,
                         help="configure debug level; defaults to 0",
-                        default="0")
+                        default=0)
     parser.add_argument("--log_file", 
                         help="configure where to write the log; defaults to stderr.",
                         default="")
@@ -109,7 +114,7 @@ def pass_common_arguments(pash_arguments):
     if (pash_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
     arguments.append(string_to_argument("--debug"))
-    arguments.append(string_to_argument(pash_arguments.debug))
+    arguments.append(string_to_argument(str(pash_arguments.debug)))
     arguments.append(string_to_argument("--termination"))
     arguments.append(string_to_argument(pash_arguments.termination))
     arguments.append(string_to_argument("--speculation"))

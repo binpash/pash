@@ -1,5 +1,8 @@
 #!/bin/bash
 
+## Necessary to set PASH_TOP
+export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+
 microbenchmarks_dir="../evaluation/microbenchmarks/"
 intermediary_dir="../evaluation/test_intermediary/"
 
@@ -42,6 +45,7 @@ pipeline_microbenchmarks=(
     micro_1000           # Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
     sed-test             # Tests all sed occurences in our evaluation to make sure that they work
     fun-def              # Tests whether PaSh can handle a simple function definition
+    tr-test              # Tests all possible behaviors of tr that exist in our evaluation
 )
 
 
@@ -73,14 +77,14 @@ execute_tests() {
             echo "Number of inputs: ${n_in}"
 
             ## Generate the intermediary script
-            python3 generate_microbenchmark_intermediary_scripts.py \
+            python3 "$PASH_TOP/evaluation/generate_microbenchmark_intermediary_scripts.py" \
                     $microbenchmarks_dir $microbenchmark $n_in $intermediary_dir "test"
 
             for flag in "${flags[@]:1}"; do
                 echo "Flag: ${flag}"
 
                 ## Execute the intermediary script
-                ./execute_compile_evaluation_script.sh $assert_correctness $exec_seq $flag "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
+                "$PASH_TOP/evaluation/execute_compile_evaluation_script.sh" $assert_correctness $exec_seq $flag "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
                 rm -f /tmp/eager*
 
                 ## Only run the sequential the first time around

@@ -17,3 +17,4 @@ touch all_cmds_x1000.txt
 for (( i = 0; i < 100; i++ )); do                                               
   cat all_cmds_x10.txt >> all_cmds_x1000.txt                                                           
 done
+
