@@ -45,7 +45,8 @@ w.r.t. the working directory. By default, `PASH_REMOTE_RCFILE` is set
 to the absolute path of `controller/rc.json` on the host system.
 It does not have to exist.
 
-The rcfile is a JSON document. The process uses the following keys:
+The rcfile is a JSON document. Some useable examples are in
+`controller/configs`. A controller uses the following keys:
 
 * `host`: A hostname or IP address on which an SSH daemon runs. Defaults to `localhost`.
 
