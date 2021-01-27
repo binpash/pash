@@ -31,7 +31,7 @@ script_microbenchmarks=(
 pipeline_microbenchmarks=(
     # grep                 # One-liner
     minimal_sort         # One-liner
-    # minimal_grep         # One-liner
+    minimal_grep         # One-liner
     # topn                 # One-liner
     # wf                   # One-liner
     # spell                # One-liner
@@ -98,36 +98,38 @@ execute_tests() {
             input_file="${prefix}_${n_in}.in"
             echo "$script_to_execute"
 
+            echo "Environment:"
+            # cat $env_file
+            . $env_file
+            vars_to_export=$(cut -d= -f1 $env_file)
+            if [ ! -z "$vars_to_export" ]; then
+                export $vars_to_export
+            fi
+
+            ## Export necessary functions
+            if [ -f "$funs_file" ]; then
+                source $funs_file
+            fi
+
+            ## Redirect the input if there is an input file
+            stdin_redir="/dev/null"
+            if [ -f "$input_file" ]; then
+                stdin_redir="$(cat "$input_file")"
+                echo "Has input file: $stdin_redir"
+            fi
+
             if [ "$exec_seq" == "-s" ]; then
-                echo "Environment:"
-                # cat $env_file
-                . $env_file
-                vars_to_export=$(cut -d= -f1 $env_file)
-                if [ ! -z "$vars_to_export" ]; then
-                    export $vars_to_export
-                fi
-
-                ## Export necessary functions
-                if [ -f "$funs_file" ]; then
-                    source $funs_file
-                fi
-
-                ## Redirect the input if there is an input file
-                stdin_redir="/dev/null"
-                if [ -f "$input_file" ]; then
-                    stdin_redir="$(cat "$input_file")"
-                    echo "Has input file: $stdin_redir"
-                fi
-
-
                 echo "Executing the script with bash..."
                 cat $stdin_redir | { time /bin/bash "$script_to_execute" > $seq_output ; } 2> >(tee "${seq_time}" >&2)
             fi
-            ## TODO: Stop using execute_compile_evaluation_script.sh
 
-            ## Execute the intermediary script
-            "$PASH_TOP/evaluation/execute_compile_evaluation_script.sh" $assert_correctness -a "${microbenchmark}" "${n_in}" "test_results" "test_" # > /dev/null 2>&1
-            rm -f /tmp/eager*
+            ## TODO: Execute the script with pash
+            pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_auto_split.time"
+            pash_output="${intermediary_dir}/${microbenchmark}_${n_in}_pash_output"
+
+            cat $stdin_redir | { time "$PASH_TOP/pa.sh" -d 1 $assert_correctness --width "${n_in}" --output_time $script_to_execute ; } 1> "$pash_output" 2> >(tee "${pash_time}" >&2) &&
+            echo "Checking for equivalence..." &&
+            diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
 
             ## Only run the sequential the first time around
             exec_seq=""
@@ -136,7 +138,7 @@ execute_tests() {
 }
 
 execute_tests "" "${script_microbenchmarks[@]}"
-execute_tests "-c" "${pipeline_microbenchmarks[@]}"
+execute_tests "--assert_compiler_success" "${pipeline_microbenchmarks[@]}"
 
 echo "Below follow the identical outputs:"
 grep --files-with-match "are identical" "$test_results_dir"/*_distr*.time
