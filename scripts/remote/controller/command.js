@@ -11,7 +11,7 @@ const path = require('path');
 
 const { NodeSSH } = require('node-ssh');
 
-const { log, err, getRequestBody } = require('./lib.js');
+const { hours, log, err, getRequestBody } = require('./lib.js');
 const rc = require('./rc.js');
 
 const getSshCredentials = () => ({
