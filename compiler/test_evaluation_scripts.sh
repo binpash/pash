@@ -48,14 +48,6 @@ pipeline_microbenchmarks=(
     tr-test              # Tests all possible behaviors of tr that exist in our evaluation
 )
 
-
-test_flags=(
-    ""   # No split + No eager (This cannot be in the end)
-    -n   # No split + Naive eager
-    -e   # No split + Eager
-    -a   # Split    + Eager
-)
-
 execute_tests() {
     assert_correctness="$1"
     microbenchmarks=("${@:2}")
@@ -76,20 +68,19 @@ execute_tests() {
         for n_in in "${n_inputs[@]}"; do
             echo "Number of inputs: ${n_in}"
 
+            ## TODO: Similarly stop using this...
             ## Generate the intermediary script
             python3 "$PASH_TOP/evaluation/generate_microbenchmark_intermediary_scripts.py" \
                     $microbenchmarks_dir $microbenchmark $n_in $intermediary_dir "test"
 
-            for flag in "${flags[@]:1}"; do
-                echo "Flag: ${flag}"
+            ## TODO: Stop using execute_compile_evaluation_script.sh
 
-                ## Execute the intermediary script
-                "$PASH_TOP/evaluation/execute_compile_evaluation_script.sh" $assert_correctness $exec_seq $flag "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
-                rm -f /tmp/eager*
+            ## Execute the intermediary script
+            "$PASH_TOP/evaluation/execute_compile_evaluation_script.sh" $assert_correctness $exec_seq -a "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
+            rm -f /tmp/eager*
 
-                ## Only run the sequential the first time around
-                exec_seq=""
-            done
+            ## Only run the sequential the first time around
+            exec_seq=""
         done
     done
 }
