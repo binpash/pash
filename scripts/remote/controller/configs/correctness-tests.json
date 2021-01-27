@@ -1,0 +1,6 @@
+{
+    "port": 2047,
+    "command_module": "./commands/correctness-tests.js",
+    "user": "ec2-user",
+    "host": "localhost"
+}
