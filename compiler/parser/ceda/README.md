@@ -92,15 +92,17 @@ This includes `test_JSON_to_shell2.sh`!
 make tests  # Uses test_rt.sh
 make testsA # Uses test_parse_to_json2.sh
 make testsB # Uses test_parse_to_json2.sh
+
+make testsA_py # Uses test_rt_py.sh
 ```
 
-### parse_to_json2 results (WORK-IN-PROGRESS)
+### parse_to_json2.c results (WORK-IN-PROGRESS)
 
 Some failures are because the Background line number is not initialized by dash for some shell scripts (the libdash OCaml
 implementation returns "random" values); I think this is a bug in dash. In any case, since these line numbers are not
 used, these differences are irrelevant.
 
-### json_to_shell2 results
+### json_to_shell2.c results
 
 All shell scripts that the OCaml implementation works on are regenerated, byte-for-byte identical:
 ```
@@ -108,6 +110,20 @@ All shell scripts that the OCaml implementation works on are regenerated, byte-f
      33 REF_ABORT_1
 ```
 
+### ast2json.py results
+
+```
+      1 ABORT
+      2 FAIL
+    238 PASS
+```
+
+There are three failures/aborts, due to weird non-ASCII characters that don't play nicely with Python:
+```
+FAIL: '/pash/evaluation/poets/pipelines.sh' | /tmp/rt_ocaml.28692 /tmp/rt_py.28692
+FAIL: '/pash/compiler/parser/run_parser_on_scripts.sh' | /tmp/rt_ocaml.29910 /tmp/rt_py.29910
+ABORT: '/pash/compiler/parser/libdash/ltmain.sh'
+```
 
 ## Mapping of Files
 
