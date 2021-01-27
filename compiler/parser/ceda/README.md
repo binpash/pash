@@ -7,7 +7,8 @@
 * Shell script <-> JSON
     * Shell script -> JSON, C implementation: work-in-progress
     * JSON -> shell script, C implementation: 99.9% complete
-Pash already has functions for JSON <-> Past AST (*).
+
+N.B. Pash already has functions for JSON <-> Past AST (*).
 
 * Shell script <-> Pash AST, skipping JSON entirely
     * Shell script -> Pash AST, Python implementation: not started
