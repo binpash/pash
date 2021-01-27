@@ -1,18 +1,23 @@
-# Shell scripts <-> JSON (without OCaml)
+# Shell scripts <-> Pash AST (without OCaml)
+
+
 
 ## Overall status
 
-* Port to C
+* Shell script <-> JSON
     * Shell script -> JSON, C implementation: work-in-progress
     * JSON -> shell script, C implementation: 99.9% complete
+Pash already has functions for JSON <-> Past AST (*).
 
-* Skipping the JSON middleman
+* Shell script <-> Pash AST, skipping JSON entirely
     * Shell script -> Pash AST, Python implementation: not started
     * Pash AST -> shell script, Python implementation: 99% complete
 
-Note: the Pash AST is defined as the data structure obtained
+(*) The Pash AST is defined as the data structure obtained
 from `parse_json_ast_string (json)`, and which can be used as
 input to `serialize_asts_to_json (asts)`.
+
+
 
 ## Pre-requisites for C implementations
 
@@ -28,6 +33,8 @@ cd build/
 cmake -DCMAKE_INSTALL_PREFIX=/pash/json-c-0.15/install ../
 make install
 ```
+
+
 
 ## Usage
 
@@ -54,15 +61,21 @@ if [ $(uname) = "Darwin" ]; then a=/usr/share/dict/web2; else a=/usr/share/dict/
 if [ -f ${a} ]; then cat ${a} ${a} ${a} ${a} ${a} ${a} ${a} ${a} | grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" | wc -l; else echo "Dictionary file ${a} not found.."; fi
 ```
 
-### AST -> shell script (Python implementation; WORK-IN-PROGRESS)
+### Shell script -> Pash AST
+
+TODO
+
+### Pash AST -> shell script (Python implementation; WORK-IN-PROGRESS)
 
 ast2json.py :: string_of
 
 See the misleadingly-named rt.py for example usage
 
+
+
 ## Testing (with an individual test case)
 
-### Shell script -> JSON
+### Shell script -> JSON (C implementation)
 
 ```
 sh test_parse_to_JSON2.sh SOME_SCRIPT_FILE
@@ -75,7 +88,7 @@ Output:
 * `ABORT` or `FAIL` means there's a bug in Thurston's code.
 * `PASS` is good.
 
-### JSON -> shell script
+### JSON -> shell script (C implementation)
 
 ```
 sh test_JSON_to_shell2.sh SOME_SCRIPT_FILE
@@ -88,7 +101,7 @@ Output:
 * `ABORT` or `FAIL` means there's a bug in Thurston's code.
 * `PASS` is good.
 
-### Combo (shell script -> JSON -> shell script)
+### Combo: shell script -> JSON -> shell script (C implementation)
 
 ```
 sh test_rt.sh SOME_SCRIPT_FILE
@@ -139,7 +152,8 @@ FAIL: '/pash/compiler/parser/run_parser_on_scripts.sh' | /tmp/rt_ocaml.29910 /tm
 ABORT: '/pash/compiler/parser/libdash/ltmain.sh'
 ```
 
-## Mapping of Files
+
+## Mapping of Files between C and OCaml implementations
 
 * arg_char.c => ast.ml (part 1A: just the arg_char type and associated functions, used for parsing to JSON)
 * ast2a.c => ast.ml (part 1B: everything else for parsing to JSON)
@@ -168,3 +182,8 @@ For testing only:
 ### json_to_shell2
 * `fresh_marker` for heredocs. This is really obscure and a pain to implement in C. For real-world, non-adversarial settings, just change the marker from "EOF" to some random text.
 * Not Python
+
+### ast2json.py
+* `fresh_marker` for heredocs
+* Non-ASCII characters
+
