@@ -1,8 +1,9 @@
 // Runtime configuration module that leverages rcfile and envvars
 
 const fs = require('fs');
+const path = require('path');
 
-const rcfilepath = process.env.PASH_REMOTE_RCFILE = `${__dirname}/rc.json`;
+const rcfilepath = path.resolve(__dirname, process.env.PASH_REMOTE_RCFILE || './rc.json');
 
 const rcfile = (() => {
     let cache;
