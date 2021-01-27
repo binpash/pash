@@ -28,14 +28,14 @@ fi
 "$SHELL_TO_JSON_OCAML" < "$testFile" > /tmp/json.$$
 if [ $? -ne 0 ]
 then
-    echo "REF_ABORT_1: '$testFile' | Unable to run '$SHELL_TO_JSON_OCAML' on '$testFile'"
+    echo "INVALID_INPUT_1: '$testFile' | Unable to run '$SHELL_TO_JSON_OCAML' on '$testFile'"
     exit 1
 fi
 
 "$JSON_TO_SHELL_OCAML" < /tmp/json.$$ > /tmp/rt_ocaml.$$
 if [ $? -ne 0 ]
 then
-    echo "REF_ABORT_2: '$testFile' | Unable to run '$JSON_TO_SHELL_OCAML' on '/tmp/json.$$'"
+    echo "INVALID_INPUT_2: '$testFile' | Unable to run '$JSON_TO_SHELL_OCAML' on '/tmp/json.$$'"
     exit 1
 fi
 

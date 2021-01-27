@@ -35,14 +35,7 @@ json_c="/tmp/json_c.$$"
 "$SHELL_TO_JSON_OCAML" < "$testFile" > "${json_ocaml}"
 if [ $? -ne 0 ]
 then
-    echo "REF_ABORT_1: '$testFile' | Unable to run '$SHELL_TO_JSON_OCAML' on '$testFile'"
-    exit 1
-fi
-
-"$PRETTYPRINT_JSON" < "${json_ocaml}" > "${json_ocaml_pretty}"
-if [ $? -ne 0 ]
-then
-    echo "REF_ABORT_2: '$testFile' | Unable to run '$PRETTYPRINT_JSON' on '${json_ocaml}'"
+    echo "INVALID_INPUT: '$testFile' | Unable to run '$SHELL_TO_JSON_OCAML' on '$testFile'"
     exit 1
 fi
 
@@ -53,19 +46,30 @@ then
     exit 1
 fi
 
-diff "${json_ocaml_pretty}" "${json_c}" > /dev/null
+
+diff "${json_ocaml}" "${json_c}" > /dev/null
 if [ $? -ne 0 ]
 then
-    diff -w "${json_ocaml_pretty}" "${json_c}" > /dev/null
+    for f in "${json_ocaml}" "${json_c}"
+    do
+        "$PRETTYPRINT_JSON" < "${f}" > "${f}.pretty"
+        if [ $? -ne 0 ]
+        then
+            echo "PRETTYPRINT_FAIL: '$testFile' | Unable to run '$PRETTYPRINT_JSON' on '${f}'"
+            exit 1
+        fi
+    done
+
+    diff -w "${json_ocaml}.pretty" "${json_c}.pretty" > /dev/null
     if [ $? -ne 0 ]
     then
-        diff -w "${json_ocaml_pretty}" "${json_c}"
-        echo "FAIL: '$testFile' | ${json_ocaml} ${json_ocaml_pretty} ${json_c}"
+        diff -w "${json_ocaml}.pretty" "${json_c}.pretty"
+        echo "FAIL: '$testFile' | ${json_ocaml} ${json_c} ${json_ocaml}.pretty ${json_c}.pretty"
     else
-        diff "${json_ocaml_pretty}" "${json_c}"
-        echo "FAIL_WHITESPACE: '$testFile' | ${json_ocaml} ${json_ocaml_pretty} ${json_c}"
+        diff "${json_ocaml}" "${json_c}"
+        echo "FAIL_WHITESPACE: '$testFile' | ${json_ocaml} ${json_c} ${json_ocaml}.pretty ${json_c}.pretty"
     fi
     exit 1
 fi
 
-echo "PASS: '$testFile' | ${json_ocaml} ${json_ocaml_pretty} ${json_c}"
+echo "PASS: '$testFile' | ${json_ocaml} ${json_c} ${json_ocaml}.pretty ${json_c}.pretty"
