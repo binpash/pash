@@ -1,4 +1,5 @@
 const { hours, syncRemoteDirectory } = require('../lib.js');
+const rc = require('../rc.js');
 
 module.exports = {
     makeCommandOptions: () => ({
