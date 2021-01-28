@@ -25,17 +25,12 @@ HOSTNAME=$2
 BRANCH="main"
 USER="ubuntu"
 
-ARCHIVE="pash.tar.gz"
-echo "Preparing repo archive: $ARCHIVE branch: $BRANCH..."
-./scripts/clone_compress_repo.sh $ARCHIVE $BRANCH &> /tmp/clone_compress.log
-
-echo "Sending repo archive..."
-scp -o StrictHostKeyChecking=no -i $PRIVATE_KEY pash.tar.gz "${USER}@${HOSTNAME}:/home/${USER}"
-
 ssh -o StrictHostKeyChecking=no -i $PRIVATE_KEY "${USER}@${HOSTNAME}" /bin/bash <<'EOF'
-tar -xzf pash.tar.gz
+rm -rf pash
+git clone https://github.com/andromeda/pash.git
 cd pash
 echo "At branch: $(git rev-parse --abbrev-ref HEAD)"
+sed -i 's#git@github.com:angelhof/libdash.git#https://github.com/angelhof/libdash/#g' .gitmodules
 source scripts/install.sh -p
 cd compiler
 ./test_evaluation_scripts.sh
