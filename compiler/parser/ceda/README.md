@@ -203,12 +203,14 @@ For testing only:
 
 ## Known Bugs
 
-### parse_to_json2
+### parse_to_json2.c
 * Memory leaks galore
+* To keep the code somewhat resembling OCaml, I've left in recursion instead of eliminating tail calls. I'm hoping the C compiler will optimize them away; if not, the stack may overflow.
 * Not Python
 
-### json_to_shell2
+### json_to_shell2.c
 * `fresh_marker` for heredocs. This is really obscure and a pain to implement in C. For real-world, non-adversarial settings, just change the marker from "EOF" to some random text.
+* Same issue with tail calls
 * Not Python
 
 ### ast2shell.py
