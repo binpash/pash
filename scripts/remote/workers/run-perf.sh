@@ -4,8 +4,6 @@
 
 CONTAINER_NAME=pash-perf
 
-docker run -itd --name pash-perf pash bin/bash
-
 cleanup() {
   docker container stop $CONTAINER_NAME
   docker container rm $CONTAINER_NAME
@@ -14,6 +12,9 @@ cleanup() {
 run() {
   docker exec $CONTAINER_NAME /bin/bash -c "cd /pash/evaluation/eurosys && $@"
 }
+
+cleanup
+docker run -itd --name pash-perf pash /bin/bash
 
 trap 'cleanup' EXIT
 trap 'echo "<<fail>>"' ERR
