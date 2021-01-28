@@ -36,9 +36,15 @@ This is simpler than the parsing direction, which requires the (lib)dash C libra
 
 The upshot of this is that, if we skip the JSON step, the unparsing pipeline can be simplified to:
 1. Pash Python AST -> shell script
+
 which can be done in pure Python code. Voila: https://github.com/andromeda/pash/blob/ceda/compiler/parser/ceda/ast2shell.py
 
 Compare to the to_string function of the libdash OCaml unparser: https://github.com/angelhof/libdash/blob/ef6302502b904e33dd4cc686d71142fb1a87bbbd/ocaml/ast.ml)
+
+The parsing pipeline, sans JSON, would still require the C dash library (albeit without OCaml):
+1. shell script -> Dash C AST
+4. Dash C AST -> Pash Python AST
+
 
 
 ## Pre-requisites for C implementations
