@@ -39,12 +39,12 @@ input_file_names = input_file_name_assignments.values()
 for input_file in input_file_names:
     input_file_path = os.path.join(unix50_dir, input_file)
     generated_input_file_path = os.path.join(generated_inputs_dir, input_file)
-    with open(input_file_path) as file:
+    with open(input_file_path, encoding='utf-8') as file:
         input_file_data = file.read()
 
     # print("Input:", input_file_path, "size:", len(input_file_data))
     num_iterations = maximum_input_size // len(input_file_data)
-    with open(generated_input_file_path, "w") as file:
+    with open(generated_input_file_path, "w", encoding='utf-8') as file:
         for _ in range(0, num_iterations, 100):
             file.write(input_file_data * 100)
 
