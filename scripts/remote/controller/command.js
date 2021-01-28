@@ -11,26 +11,14 @@ const path = require('path');
 
 const { NodeSSH } = require('node-ssh');
 
-const { hours, log, err, getRequestBody } = require('./lib.js');
+const { hours, log, err, getRequestBody, respond, getRemoteHomeDirectory, getSshCredentials } = require('./lib.js');
 const rc = require('./rc.js');
-
-const getSshCredentials = () => ({
-    host: rc('host', 'localhost'),
-    username: rc('user', process.env.USER),
-    privateKey: rc('private_key', `${process.env.HOME}/.ssh/id_rsa`),
-});
-
-const getRemoteHomeDirectory = () => {
-    const { username } = getSshCredentials();
-    return `/home/${username}`;
-};
 
 const sshConnect = async (username, host) => {
     const ssh = new NodeSSH();
     await ssh.connect(getSshCredentials());
     return ssh;
 };
-
 
 // The SSH commands do not actually wait for the commands to complete.
 // Current approach is to inspect the output to know when to proceed.
