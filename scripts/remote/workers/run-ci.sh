@@ -7,11 +7,12 @@
 set -e
 trap 'echo "<<fail>>"' ERR
 
-if [ -f lock ]; then
-  echo "Busy on existing job."
+if [ -d lock ]; then
+    echo "Busy on existing job."
+    echo "<<fail>>"
 else
-    touch lock
-    trap 'rm lock' EXIT
+    mkdir lock
+    trap 'rm -r lock' EXIT
     docker start pash-playground
     docker exec pash-playground bash -c 'cd /pash/scripts && ./ci.sh'
 
