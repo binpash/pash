@@ -129,6 +129,7 @@ are visible to the NGINX server using `scripts/pash-nginx.conf`*.
 
 ### Jan 28 2021
 
+- Add EuroSys one-liner suite to performance worker
 - Fix performance test configuration for Unix50 suite
 - Use directories for locks, since `mkdir` is atomic
 - Simplify `correctness-tests.js`
