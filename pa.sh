@@ -5,7 +5,7 @@ export PASH_PARSER=${PASH_TOP}/parser/parse_to_json.native
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 
 if [ "$#" -eq 1 ] && [ "$1" = "--init" ]; then
-  ./compiler/superoptimize.sh
+  $PASH_TOP/compiler/superoptimize.sh
   exit
 fi
 
