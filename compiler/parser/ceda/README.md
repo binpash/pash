@@ -68,7 +68,7 @@ TODO
 
 ### Pash AST -> shell script (Python implementation; WORK-IN-PROGRESS)
 
-ast2json.py :: string_of
+ast2shell.py :: string_of
 
 See the misleadingly-named rt.py for example usage
 
@@ -138,7 +138,7 @@ All shell scripts that the OCaml implementation works on are regenerated, byte-f
      33 REF_ABORT_1
 ```
 
-### ast2json.py results
+### ast2shell.py results
 
 ```
       1 ABORT
@@ -184,7 +184,7 @@ For testing only:
 * `fresh_marker` for heredocs. This is really obscure and a pain to implement in C. For real-world, non-adversarial settings, just change the marker from "EOF" to some random text.
 * Not Python
 
-### ast2json.py
+### ast2shell.py
 * `fresh_marker` for heredocs
 * Non-ASCII characters
 
