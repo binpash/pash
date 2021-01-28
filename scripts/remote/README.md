@@ -127,6 +127,18 @@ are visible to the NGINX server using `scripts/pash-nginx.conf`*.
 
 ## Changelog
 
+### Jan 28 2021
+
+- Fix performance test configuration for Unix50 suite
+
+
+### Jan 27 2021
+
+- Add `controller/configs` directory
+- Resolve rcfile using `path.resolve` w.r.t controller directory.
+- Draft performance test configuration
+
+
 ### Jan 26 2021
 
 - Small refactor to allow configurable `/run` endpoint.
