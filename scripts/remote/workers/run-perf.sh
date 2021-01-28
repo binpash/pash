@@ -22,7 +22,7 @@ else
     touch lock
     trap 'rm lock' EXIT
 
-    #run ./execute_eurosys_one_liners.sh -s
+    run ./execute_eurosys_one_liners.sh -s
     run ./execute_unix_benchmarks.sh -s
 
     ## Uncomment when ready to deal with large inputs.
