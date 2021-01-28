@@ -150,6 +150,25 @@ static int isEmptyJSONArray (json_object* obj) {
 // ----------------------------------------------------------------------------
 
 
+int json_object_get_flex_boolean (json_object* bg) {
+    int truth = FALSE;
+
+    if (json_object_get_type (bg) == json_type_boolean) {
+        truth = json_object_get_boolean (bg);
+    } else if (json_object_get_type (bg) == json_type_string) {
+        if (strcmp (json_object_get_string (bg), "false") == 0) {
+            truth = FALSE;
+        } else if (strcmp (json_object_get_string (bg), "true") == 0) {
+            truth = TRUE;
+        } else {
+            abort ();
+        }
+    }
+
+    return (truth);
+}
+
+
 // string_of_commandI contains code moved out of the OCaml 'to_string' for clarity
 /*
     | Command (_,assigns,cmds,redirs) ->
@@ -201,10 +220,9 @@ void string_of_pipeI (json_object* bg, json_object* ps) {
     assert (bg != NULL);
     assert (ps != NULL);
 
-    assert (json_object_get_type (bg) == json_type_boolean);
     assert (json_object_get_type (ps) == json_type_array);
 
-    if (json_object_get_boolean (bg)) { // Inline 'background'
+    if (json_object_get_flex_boolean (bg)) { // Inline 'background'
         printf ("{ ");
     }
 
@@ -215,7 +233,7 @@ void string_of_pipeI (json_object* bg, json_object* ps) {
         to_string (json_object_array_get_idx (ps, i));
     }
 
-    if (json_object_get_boolean (bg)) { // Inline 'background'
+    if (json_object_get_flex_boolean (bg)) { // Inline 'background'
         printf (" & }");
     }
 }
@@ -738,7 +756,10 @@ void string_of_arg_char (json_object* first, json_object* second) {
             json_object* Some = json_object_array_get_idx (second, 0);
             json_object* u    = json_object_array_get_idx (second, 1);
 
-            assert (JSONMatchesStr (Some, "Some"));
+            if (! JSONMatchesStr (Some, "Some")) {
+                assert (! "Was not None or Some");
+                exit (1);
+            }
 
             assert (json_object_get_type (u) == json_type_string);
 
@@ -783,8 +804,7 @@ void string_of_arg_char (json_object* first, json_object* second) {
             printf ("${");
             printf ("%s", json_object_get_string (name));
 
-            assert (json_object_get_type (nul) == json_type_boolean);
-            if (json_object_get_boolean (nul)) {
+            if (json_object_get_flex_boolean (nul)) {
                 printf (":");
             }
 
