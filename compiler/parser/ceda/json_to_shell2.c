@@ -7,8 +7,10 @@
 #include "ast2b.h"
 
 
-// 640KB ought to be enough for anybody
-#define MAX_LINE_LENGTH (640 * 1024)
+// 640MB ought to be enough for anybody
+// With copy-on-write, the large malloc practically doesn't cost anything
+// until it's actually used.
+#define MAX_LINE_LENGTH (640 * 1024 * 1024)
 
 
 int main (int argc, char* argv []) {
@@ -24,7 +26,7 @@ int main (int argc, char* argv []) {
     char* buf = malloc (MAX_LINE_LENGTH * sizeof (char));
     assert (buf != NULL);
 
-    while (fgets (buf, 640 * 1024, fp) != NULL) {
+    while (fgets (buf, MAX_LINE_LENGTH, fp) != NULL) {
         json_text_to_string (buf);
         putchar ('\n');
     }
