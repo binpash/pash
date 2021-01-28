@@ -27,7 +27,7 @@ else
 
     docker exec $CONTAINER_NAME /bin/bash -c "cd /pash && git pull"
     run ./execute_eurosys_one_liners.sh -m
-    run ./execute_unix_benchmarks.sh -m
+    run ./execute_unix_benchmarks.sh -l
 
     ## Uncomment when ready to deal with large inputs.
     # run execute_baseline_sort.sh
