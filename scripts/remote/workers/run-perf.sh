@@ -1,8 +1,10 @@
 #! /bin/bash
 
+# Invariant: Docker image `pash` must exist.
+
 CONTAINER_NAME=pash-perf
 
-#docker run -itd --name pash-perf pash bin/bash
+docker run -itd --name pash-perf pash bin/bash
 
 cleanup() {
   docker container stop $CONTAINER_NAME
@@ -13,7 +15,7 @@ run() {
   docker exec $CONTAINER_NAME /bin/bash -c "cd /pash/evaluation/eurosys && $@"
 }
 
-#trap 'cleanup' EXIT
+trap 'cleanup' EXIT
 trap 'echo "<<fail>>"' ERR
 
 if [ -f lock ]; then
@@ -22,8 +24,9 @@ else
     touch lock
     trap 'rm lock' EXIT
 
-    run ./execute_eurosys_one_liners.sh -s
-    run ./execute_unix_benchmarks.sh -s
+    docker exec $CONTAINER_NAME /bin/bash -c "cd /pash && git pull"
+    run ./execute_eurosys_one_liners.sh -m
+    run ./execute_unix_benchmarks.sh -m
 
     ## Uncomment when ready to deal with large inputs.
     # run execute_baseline_sort.sh
