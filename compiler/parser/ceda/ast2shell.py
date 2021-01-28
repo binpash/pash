@@ -257,6 +257,50 @@ def string_of_if (c, t, e):
     return (str);
 
 
+# https://github.com/ocaml/ocaml/blob/trunk/stdlib/char.ml
+# let escaped = function
+#   | '\'' -> "\\'"
+#   | '\\' -> "\\\\"
+#   | '\n' -> "\\n"
+#   | '\t' -> "\\t"
+#   | '\r' -> "\\r"
+#   | '\b' -> "\\b"
+#   | ' ' .. '~' as c ->
+#       let s = bytes_create 1 in
+#       bytes_unsafe_set s 0 c;
+#       unsafe_to_string s
+#   | c ->
+#       let n = code c in
+#       let s = bytes_create 4 in
+#       bytes_unsafe_set s 0 '\\';
+#       bytes_unsafe_set s 1 (unsafe_chr (48 + n / 100));
+#       bytes_unsafe_set s 2 (unsafe_chr (48 + (n / 10) mod 10));
+#       bytes_unsafe_set s 3 (unsafe_chr (48 + n mod 10));
+#       unsafe_to_string s
+def escaped (param):
+    char = chr (param)
+
+    if (char == "'"):
+        return "\\'";
+    elif (char == "\\"):
+        return "\\\\";
+    elif (char == "\n"):
+        return "\\n";
+    elif (char == "\t"):
+        return "\\t";
+    elif (char == "\r"):
+        return "\\r";
+    elif (char == "\b"):
+        return "\\b";
+    elif ((param >= ord (' ')) and (param <= ord ('~'))):
+        return char;
+    else:
+        return   "\\" \
+               + chr (48 + int (param / 100)) \
+               + chr (48 + ((int (param / 10)) % 10)) \
+               + chr (48 + (param % 10));
+
+
 # and string_of_arg_char = function
 #   | E '\'' -> "\\'"
 #   | E '\"' -> "\\\""
@@ -309,15 +353,8 @@ def string_of_arg_char (c):
             return "\\|";
         elif (char == ";"):
             return "\\;";
-        elif (char == "\\"):
-            return "\\\\";
-        elif (char == "\t"):
-            return "\\t";
         else:
-            if ((param < 32) or (param > 126)):
-                return ("\\" + str (param));
-            else:
-                return (char);
+            return escaped (param)
     elif (type == "C"):
         return chr (param);
     elif (type == "T"):
