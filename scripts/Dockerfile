@@ -13,3 +13,9 @@ RUN sudo bash scripts/install.sh -p
 ENV PASH_TOP=/pash
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 CMD ["/bin/bash"]
+
+RUN apt-get update
+RUN apt-get install -y locales locales-all
+ENV LC_ALL en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US.UTF-8
