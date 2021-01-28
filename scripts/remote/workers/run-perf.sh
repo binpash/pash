@@ -19,11 +19,11 @@ docker run -itd --name pash-perf pash /bin/bash
 trap 'cleanup' EXIT
 trap 'echo "<<fail>>"' ERR
 
-if [ -f lock ]; then
+if [ -d lock ]; then
     echo "Busy on existing job."
 else
-    touch lock
-    trap 'rm lock' EXIT
+    mkdir lock
+    trap 'rm -r lock' EXIT
 
     docker exec $CONTAINER_NAME /bin/bash -c "cd /pash && git pull"
     run ./execute_eurosys_one_liners.sh -m
