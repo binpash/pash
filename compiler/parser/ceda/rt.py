@@ -11,7 +11,7 @@ sys.path.append("/pash/compiler")
 
 from parse import parse_shell, from_ir_to_shell, from_ir_to_shell_file
 from json_ast import parse_json_ast_string, serialize_asts_to_json, json_to_shell
-from ast2json import to_string
+from ast2shell import to_string
 
 
 if (len (sys.argv) != 2):
