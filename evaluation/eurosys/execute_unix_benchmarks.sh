@@ -31,7 +31,7 @@ results_subdir_prefix="unix50"
 
 if [ "$evaluation_level" -eq 1 ]; then
     echo "Executing Unix50 scripts with 1GB inputs and --width 4"
-    maximum_input_size="$((1024 * 1024 * 1024))" # 1 GB
+    maximum_input_size="$((1024 * 1024))" # 1 GB
     n_in=4
 elif [ "$evaluation_level" -eq 2 ]; then
     echo "Executing Unix50 scripts with 10GB inputs and --width 16"
