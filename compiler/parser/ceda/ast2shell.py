@@ -235,8 +235,8 @@ def to_string (ast):
 #    | If (c,t,e) -> "; el" ^ string_of_if c t e
 #    | _ -> "; else " ^ to_string e ^ "; fi")
 def string_of_if (c, t, e):
-    str = "if " + to_string (c) + \
-          "; then " + to_string (t);
+    str1 = "if " + to_string (c) + \
+           "; then " + to_string (t);
 
     # ['Command', [-1, [], [], []]]
     if (    (len (e) == 2)        \
@@ -246,15 +246,15 @@ def string_of_if (c, t, e):
         and (len (e [1][1]) == 0) \
         and (len (e [1][2]) == 0) \
         and (len (e [1][3]) == 0):
-       str = str + "; fi";
+       str1 = str1 + "; fi";
     elif (e [0] == "If"):
         (c2, t2, e2) = e;
 
-        str = str + "; el" + string_of_if (c2, t2, e2);
+        str1 = str1 + "; el" + string_of_if (c2, t2, e2);
     else:
-        str = str + "; else " + to_string (e) + "; fi";
+        str1 = str1 + "; else " + to_string (e) + "; fi";
 
-    return (str);
+    return (str1);
 
 
 # https://github.com/ocaml/ocaml/blob/trunk/stdlib/char.ml
@@ -295,10 +295,11 @@ def escaped (param):
     elif ((param >= ord (' ')) and (param <= ord ('~'))):
         return char;
     else:
-        return   "\\" \
-               + chr (48 + int (param / 100)) \
-               + chr (48 + ((int (param / 10)) % 10)) \
-               + chr (48 + (param % 10));
+#        str1 =   "\\" \
+#               + chr (48 + int (param / 100)) \
+#               + chr (48 + ((int (param / 10)) % 10)) \
+#               + chr (48 + (param % 10));
+        return ("\\" + str (param));
 
 
 # and string_of_arg_char = function
