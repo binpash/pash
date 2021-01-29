@@ -3,8 +3,10 @@
 import sys
 import codecs
 
-#sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+# export PYTHONIOENCODING=charmap
 
+
+# sys.stdout = codecs.getwriter('charmap')(sys.stdout)
 
 
 sys.path.append("/pash/compiler")
@@ -25,11 +27,14 @@ inputFile = sys.argv [1];
 # from_ir_to_shell
 
 json = parse_shell (inputFile);
+#print ("Shell script -> JSON:");
+#print (json);
 
 if (len (json) == 0):
     sys.exit (0);
 
 asts = parse_json_ast_string (json);
+#print ("JSON -> Pash AST:");
 #print (asts);
 #print ();
 
@@ -45,14 +50,18 @@ asts = parse_json_ast_string (json);
 
 #print ("to_string");
 for ast in asts:
-    shell_direct = to_string (ast);
+    str1 = to_string (ast);
+    shell_direct = str1;
+#    shell_direct = str.encode ("utf-8") + str1;
 
     # Some shell scripts have characters with ASCII value >= 128,
     # which disagrees with the default Python print.
-    sys.stdout.buffer.write (shell_direct.encode ('utf-8'));
+    print (shell_direct);
 
-    newline = (10).to_bytes (1, byteorder='little');
-    sys.stdout.buffer.write (newline);
+#    sys.stdout.buffer.write (shell_direct.encode ('utf-8'));
+
+#    newline = (10).to_bytes (1, byteorder='little');
+#    sys.stdout.buffer.write (newline);
 
 #    sys.stdout.buffer.write (
 

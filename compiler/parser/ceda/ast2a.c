@@ -9,7 +9,7 @@
                   relevant OCaml snippets are included as comments.
 
 
-        TODO: serialize to JSON fix, memory leaks
+        N.B. this leaks memory - don't use it for a persistent process.
 
 
 */
@@ -32,7 +32,7 @@
 
 #include "dash2.h"
 #include "ast2a.h"
-
+#include "ast2json.h"
 
 #include "json_object.h"
 
@@ -41,35 +41,26 @@
 #include "Stack.h"
 
 
-#define TRUE  1
-#define FALSE 0
+//----------------------------------------------------------------------------------------------------------------------
 
+int var_type (int vstype);
 
-//------------------------------------------------------------------------------------------
+int needs_escaping (char c);
 
+void mk_file (struct redirection_TYPE* redirection, union node* n, int ty);
+void mk_dup (struct redirection_TYPE* redirection, union node* n, int ty);
+void mk_here (struct redirection_TYPE* redirection, union node* n, int ty);
+struct redirectionList* redirs (union node* n);
+arg_TYPE to_arg (struct narg* n);
+arg_TYPE parse_arg (CharList s, struct nodelist** bqlist, Stack stack);
+char* parse_tilde (CharList left, CharList s);
+arg_TYPE arg_char_FUNC (struct arg_char_TYPE* c, CharList s, struct nodelist** bqlist, Stack stack);
+struct assign_TYPE* to_assign (CharList left, CharList right);
+struct assign_list* to_assigns (union node* assign);
+struct args_TYPE* to_args (union node* n);
 
-#define STACK_CTLVar 100
-#define STACK_CTLAri 101
-#define STACK_CTLQuo 102
+//----------------------------------------------------------------------------------------------------------------------
 
-
-//------------------------------------------------------------------------------------------
-
-
-#define TYPE_T_COMMAND    0
-#define TYPE_T_PIPE       1
-#define TYPE_T_REDIR      2
-#define TYPE_T_BACKGROUND 3
-#define TYPE_T_SUBSHELL   4
-#define TYPE_T_AND        5
-#define TYPE_T_OR         6
-#define TYPE_T_NOT        7
-#define TYPE_T_SEMI       8
-#define TYPE_T_IF         9
-#define TYPE_T_WHILE      10
-#define TYPE_T_FOR        11
-#define TYPE_T_CASE       12
-#define TYPE_T_DEFUN      13
 
 const char* SERIALIZE_TYPE_T []
     = {
@@ -77,31 +68,6 @@ const char* SERIALIZE_TYPE_T []
        "And", "Or", "Not", "Semi",
        "If", "While", "For", "Case", "Defun"
       };
-
-
-/*
-    var_type =
-       | Normal
-       | Minus
-       | Plus
-       | Question
-       | Assign
-       | TrimR
-       | TrimRMax
-       | TrimL
-       | TrimLMax
-       | Length
-*/
-#define VAR_TYPE_NORMAL    0x0
-#define VAR_TYPE_MINUS     0x2
-#define VAR_TYPE_PLUS      0x3
-#define VAR_TYPE_QUESTION  0x4
-#define VAR_TYPE_ASSIGN    0x5
-#define VAR_TYPE_TRIMR     0x6
-#define VAR_TYPE_TRIMRMAX  0x7
-#define VAR_TYPE_TRIML     0x8
-#define VAR_TYPE_TRIMLMAX  0x9
-#define VAR_TYPE_LENGTH    0xA
 
 const char* SERIALIZE_VAR_TYPE []
     = {
@@ -118,904 +84,16 @@ const char* SERIALIZE_VAR_TYPE []
        "Length"    // 0xA
       };
 
-
-/*
-   redirection =
-   | File of redir_type * int * arg
-   | Dup of dup_type * int * arg
-   | Heredoc of heredoc_type * int * arg
-*/
-// Don't mix up with REDIR_TYPE_*!
-#define REDIRECTION_TYPE_FILE    0x0
-#define REDIRECTION_TYPE_DUP     0x1
-#define REDIRECTION_TYPE_HEREDOC 0x2
-
 const char* SERIALIZE_REDIRECTION_TYPE [] = {"File", "Dup", "Heredoc"};
-
-
-// redir_type = To | Clobber | From | FromTo | Append
-#define REDIR_TYPE_TO      0x0
-#define REDIR_TYPE_CLOBBER 0x1
-#define REDIR_TYPE_FROM    0x2
-#define REDIR_TYPE_FROMTO  0x3
-#define REDIR_TYPE_APPEND  0x4
 
 const char* SERIALIZE_REDIR_TYPE [] = {"To", "Clobber", "From", "FromTo", "Append"};
 
-
-// dup_type = ToFD | FromFD
-#define DUP_TYPE_TOFD   0x0
-#define DUP_TYPE_FROMFD 0x1
-
 const char* SERIALIZE_DUP_TYPE [] = {"ToFD", "FromFD"};
-
-
-// heredoc_type = Here | XHere (* for when in a quote... not sure when this comes up *)
-#define HEREDOC_TYPE_HERE  0x0
-#define HEREDOC_TYPE_XHERE 0x1
 
 const char* SERIALIZE_HEREDOC_TYPE [] = {"Here", "XHere"};
 
 
-typedef CharList arg_TYPE; // arg = arg_char list
-
-
-//------------------------------------------------------------------------------------------
-// SIMPLE LIST TYPES
-
-
-struct t_list {
-    struct t_TYPE* t;
-    struct t_list* next;
-};
-
-struct assign_list {
-    struct assign_TYPE* assign;
-    struct assign_list* next;
-};
-
-struct redirectionList {
-    struct redirection_TYPE* redir;
-    struct redirectionList* next;
-};
-
-// args = arg list
-// Note that 'arg_TYPE' is typedef'ed above as a CharList
-struct args_TYPE {
-    arg_TYPE arg;
-    struct args_TYPE* next;
-};
-
-struct case_list {
-    struct case_TYPE* casey;
-    struct case_list* next;
-};
-
-
-//------------------------------------------------------------------------------------------
-
-
-// assign = string * arg
-struct assign_TYPE {
-    char* string;
-    arg_TYPE arg;
-};
-
-
-// | File of redir_type * int * arg
-//
-// Not to be mistaken with <stdio.h>'s FILE
-struct file_TYPE {
-    int redir_type;
-    int fd;
-    arg_TYPE a;
-};
-
-
-// | Dup of dup_type * int * arg
-struct dup_TYPE {
-    int dup_type;
-    int fd;
-    arg_TYPE tgt;
-};
-
-
-// | Heredoc of heredoc_type * int * arg
-struct heredoc_TYPE {
-    int heredoc_type;
-    int fd;
-    arg_TYPE a;
-};
-
-
-/*
-   redirection =
-   | File of redir_type * int * arg
-   | Dup of dup_type * int * arg
-   | Heredoc of heredoc_type * int * arg
-*/
-struct redirection_TYPE {
-    int type;
-
-    union {
-        struct file_TYPE file;
-        struct dup_TYPE dup;
-        struct heredoc_TYPE heredoc;
-    };
-};
-
-
-// case = { cpattern : arg list; cbody : t }
-//
-// Note: the hash table is useful only for JSON serialization/deserialization
-// purposes; we don't store it that way internally.
-struct case_TYPE {
-    struct args_TYPE cpattern;
-    struct t* cbody;
-};
-
-
-//------------------------------------------------------------------------------------------
-// type t = ...
-
-
-//  | Command of linno * assign list * args * redirection list (* assign, args, redir *)
-struct Command_TYPE {
-    int linno;
-    struct assign_list* assign;
-    struct args_TYPE* args;
-    struct redirectionList* redirect;
-};
-
-
-//  | Pipe of bool * t list (* background?, commands *)
-struct Pipe_TYPE {
-    int background;
-    struct t_list* spill;
-};
-
-
-//  | Redir of linno * t * redirection list
-struct Redir_TYPE {
-    int linno;
-    struct t_TYPE* t;
-    struct redirectionList* redirect;
-};
-
-
-//  | Background of linno * t * redirection list 
-struct Background_TYPE {
-    int linno;
-    struct t_TYPE* t;
-    struct redirectionList* redirect;
-};
-
-
-//  | Subshell of linno * t * redirection list
-struct Subshell_TYPE {
-    int linno;
-    struct t_TYPE* t;
-    struct redirectionList* redirect;
-};
-
-
-//  | And of t * t
-struct And_TYPE {
-    struct t_TYPE* left;
-    struct t_TYPE* right;
-};
-
-
-//  | Or of t * t
-struct Or_TYPE {
-    struct t_TYPE* left;
-    struct t_TYPE* right;
-};
-
-
-//  | Not of t
-struct Not_TYPE {
-    struct t_TYPE* t;
-};
-
-
-//  | Semi of t * t
-struct Semi_TYPE {
-    struct t_TYPE* left;
-    struct t_TYPE* right;
-};
-
-
-//  | If of t * t * t (* cond, then, else *)
-struct If_TYPE {
-    struct t_TYPE* test;
-    struct t_TYPE* ifpart;
-    struct t_TYPE* elsepart;
-};
-
-
-//  | While of t * t (* test, body *) (* until encoded as a While . Not *)
-struct While_TYPE {
-    struct t_TYPE* test;
-    struct t_TYPE* body;
-};
-
-
-//  | For of linno * arg * t * string (* args, body, var *)
-struct For_TYPE {
-    int linno;
-    arg_TYPE arg;
-    struct t_TYPE* body;
-    char* var;
-};
-
-
-// | Case of linno * arg * case list
-struct Case_TYPE {
-    int linno;
-    arg_TYPE arg;
-    struct case_list* cases;
-};
-
-
-//  | Defun of linno * string * t (* name, body *)
-struct Defun_TYPE {
-    int linno;
-    char* name;
-    struct t_TYPE* body;
-};
-
-
-struct t_TYPE {
-    int type;
-
-    union {
-        struct Command_TYPE Command;
-        struct Pipe_TYPE Pipe;
-        struct Redir_TYPE Redir;
-        struct Background_TYPE Background;
-        struct Subshell_TYPE Subshell;
-        struct And_TYPE And;
-        struct Or_TYPE Or;
-        struct Not_TYPE Not;
-        struct Semi_TYPE Semi;
-        struct If_TYPE If;
-        struct While_TYPE While;
-        struct For_TYPE For;
-        struct Case_TYPE Case;
-        struct Defun_TYPE Defun;
-    };
-};
-
-
 //----------------------------------------------------------------------------------------------------------------------
-
-struct json_object* json_arg_char_TYPE (struct arg_char_TYPE* head);
-struct json_object* json_assign_list (struct assign_list* assign);
-struct json_object* json_arg_TYPE (arg_TYPE arg);
-struct json_object* json_args_TYPE (struct args_TYPE* args);
-struct json_object* json_redirectionList (struct redirectionList* redirect);
-struct json_object* json_t_TYPE (struct t_TYPE* t);
-
-void debug_arg_char_TYPE (struct arg_char_TYPE* head);
-void debug_assign_list (struct assign_list* assign);
-void debug_arg_TYPE (arg_TYPE arg);
-void debug_args_TYPE (struct args_TYPE* args);
-void debug_redirectionList (struct redirectionList* redirect);
-void debug_t_TYPE (struct t_TYPE* t);
-void pour_the_t (struct t_TYPE* t);
-
-void both (union node* n);
-
-int var_type (int vstype);
-
-int needs_escaping (char c);
-
-struct t_TYPE* of_node (union node* n);
-void mk_file (struct redirection_TYPE* redirection, union node* n, int ty);
-void mk_dup (struct redirection_TYPE* redirection, union node* n, int ty);
-void mk_here (struct redirection_TYPE* redirection, union node* n, int ty);
-struct redirectionList* redirs (union node* n);
-arg_TYPE to_arg (struct narg* n);
-arg_TYPE parse_arg (CharList s, struct nodelist** bqlist, Stack stack);
-char* parse_tilde (CharList left, CharList s);
-arg_TYPE arg_char_FUNC (struct arg_char_TYPE* c, CharList s, struct nodelist** bqlist, Stack stack);
-char* reverseStr (char* str);
-struct assign_TYPE* to_assign (CharList left, CharList right);
-struct assign_list* to_assigns (union node* assign);
-struct args_TYPE* to_args (union node* n);
-
-//----------------------------------------------------------------------------------------------------------------------
-
-
-struct json_object* json_arg_char_TYPE (struct arg_char_TYPE* head) {
-    struct json_object* root = json_object_new_array ();
-    assert (root != NULL);
-
-    assert (head->type >= 0);
-//    assert (head->type < sizeof (SERIALIZE_TYPE_ARG_CHAR) / sizeof (char*));
-    json_object_array_add (root, json_object_new_string (SERIALIZE_TYPE_ARG_CHAR [head->type]));
-
-    switch (head->type) {
-        case TYPE_ARG_CHAR_C: {
-            json_object_array_add (root, json_object_new_int (head->C.c));
-        }
-            break;
-
-        case TYPE_ARG_CHAR_E: {
-            json_object_array_add (root, json_object_new_int (head->E.c));
-        }
-            break;
-
-        case TYPE_ARG_CHAR_T: {
-            if (head->T.str == NULL) {
-                json_object_array_add (root, json_object_new_string ("None"));
-            } else {
-                struct json_object* nest = json_object_new_array ();
-                assert (nest != NULL);
-
-                json_object_array_add (nest, json_object_new_string ("Some"));
-                json_object_array_add (nest, json_object_new_string (head->T.str));
-
-                json_object_array_add (root, nest);
-            }
-        }
-            break;
-
-        case TYPE_ARG_CHAR_A: {
-            json_object_array_add (root, json_arg_TYPE (head->A.arg));
-        }
-            break;
-
-        case TYPE_ARG_CHAR_V: {
-            struct json_object* nest = json_object_new_array ();
-            assert (nest != NULL);
-
-            json_object_array_add (nest, json_object_new_string (SERIALIZE_VAR_TYPE [head->V.var_type]));
-            json_object_array_add (nest, json_object_new_boolean (head->V.vsnul));
-            json_object_array_add (nest, json_object_new_string (head->V.str));
-            json_object_array_add (nest, json_arg_TYPE (head->V.arg));
-
-            json_object_array_add (root, nest);
-        }
-            break;
-
-        case TYPE_ARG_CHAR_Q: {
-            json_object_array_add (root, json_arg_TYPE (head->Q.arg));
-        }
-            break;
-
-        case TYPE_ARG_CHAR_B: {
-            json_object_array_add (root, json_t_TYPE (head->B.t));
-        }
-            break;
-
-        default:
-            break;
-    }
-
-    return (root);
-}
-
-
-struct json_object* json_assign_list (struct assign_list* assigns) {
-    struct json_object* root = json_object_new_array ();
-    assert (root != NULL);
-
-    while (assigns != NULL) {
-        struct assign_TYPE* assign = assigns->assign;
-
-        struct json_object* nest = json_object_new_array ();
-        assert (nest != NULL);
-
-        json_object_array_add (nest, json_object_new_string (assign->string));
-        json_object_array_add (nest, json_arg_TYPE (assign->arg));
-
-        json_object_array_add (root, nest);
-
-        assigns = assigns->next;
-    }
-
-    return (root);
-}
-
-
-struct json_object* json_arg_TYPE (arg_TYPE arg) {
-    struct json_object* root = json_object_new_array ();
-    assert (root != NULL);
-
-    // arg is a list of arg_char, but stored in CharList
-    while (! isCharListEmpty (arg)) {
-        struct arg_char_TYPE* arg_char = charListHead_arg_char (arg);
-        json_object_array_add (root, json_arg_char_TYPE (arg_char));
-
-        charListTail (arg);
-    }
-
-    return (root);
-}
-
-
-struct json_object* json_args_TYPE (struct args_TYPE* args) {
-    struct json_object* root = json_object_new_array ();
-    assert (root != NULL);
-
-    while (args != NULL) {
-        json_object_array_add (root, json_arg_TYPE (args->arg));
-
-        args = args->next;
-    }
-
-    return (root);
-}
-
-
-struct json_object* json_redirectionListI (struct redirectionList* redirect,
-                                           json_object* root) {
-    struct json_object* nest = json_object_new_array ();
-    assert (nest != NULL);
-
-    if (redirect == NULL) {
-    } else {
-        // TODO: bounds check
-        json_object_array_add (nest, json_object_new_string (SERIALIZE_REDIRECTION_TYPE [redirect->redir->type]));
-
-        switch (redirect->redir->type) {
-            case REDIRECTION_TYPE_FILE: {
-                struct json_object* nest2 = json_object_new_array ();
-                assert (nest2 != NULL);
-
-                json_object_array_add (nest2, json_object_new_string (SERIALIZE_REDIR_TYPE [redirect->redir->file.redir_type]));
-                json_object_array_add (nest2, json_object_new_int (redirect->redir->file.fd));
-                json_object_array_add (nest2, json_arg_TYPE (redirect->redir->file.a));
-
-                json_object_array_add (nest, nest2);
-            }
-                break;
-
-            case REDIRECTION_TYPE_DUP: {
-                assert (! "TODO");
-            }
-                break;
-
-            case REDIRECTION_TYPE_HEREDOC: {
-                assert (! "TODO");
-            }
-                break;
-
-            default:
-                assert (! "Invalid redirection type");
-                break;
-        }
-
-        json_object_array_add (root, nest);
-        json_redirectionListI (redirect->next, root);
-    }
-
-    return (root);
-}
-
-
-// TODO: serialize JSON
-struct json_object* json_redirectionList (struct redirectionList* redirect) {
-    struct json_object* root = json_object_new_array ();
-    assert (root != NULL);
-
-    return (json_redirectionListI (redirect, root));
-}
-
-
-struct json_object* json_t_TYPE (struct t_TYPE* t) {
-    struct json_object* root = json_object_new_array ();
-    assert (root != NULL);
-
-    if (t == NULL) {
-        return root;
-    }
-
-    assert (t->type >= 0);
-    assert (t->type < sizeof (SERIALIZE_TYPE_T) / sizeof (char*));
-    json_object_array_add (root, json_object_new_string (SERIALIZE_TYPE_T [t->type]));
-
-    struct json_object* nest = json_object_new_array ();
-    assert (nest != NULL);
-
-    switch (t->type) {
-        case TYPE_T_COMMAND: {
-            json_object_array_add (nest, json_object_new_int (t->Command.linno));
-            json_object_array_add (nest, json_assign_list (t->Command.assign));
-            json_object_array_add (nest, json_args_TYPE (t->Command.args));
-            json_object_array_add (nest, json_redirectionList (t->Command.redirect));
-
-//            json_object_array_add (root, json_object_new_string ("blah"));
-//            json_object_array_add (root, json_object_new_string ("blah2"));
-//            json_object_array_add (root, json_object_new_string ("blah3"));
-            break;
-        }
-
-        case TYPE_T_PIPE: {
-            json_object_array_add (nest, json_object_new_boolean (t->Pipe.background));
-
-            struct t_list* spill = t->Pipe.spill;
-
-            struct json_object* nest2 = json_object_new_array ();
-            assert (nest2 != NULL);
-
-            while (spill != NULL) {
-                json_object_array_add (nest2, json_t_TYPE (spill->t));
-                spill = spill->next;
-            }
-
-            json_object_array_add (nest, nest2);
-
-            break;
-        }
-
-        case TYPE_T_REDIR: {
-            json_object_array_add (nest, json_t_TYPE (t->Redir.t));
-            json_object_array_add (nest, json_redirectionList (t->Redir.redirect));
-
-            break;
-        }
-
-        case TYPE_T_BACKGROUND: {
-            json_object_array_add (nest, json_t_TYPE (t->Background.t));
-            json_object_array_add (nest, json_redirectionList (t->Background.redirect));
-
-            break;
-        }
-
-        case TYPE_T_SUBSHELL: {
-            json_object_array_add (nest, json_t_TYPE (t->Subshell.t));
-            json_object_array_add (nest, json_redirectionList (t->Subshell.redirect));
-
-            break;
-        }
-
-        case TYPE_T_AND: {
-            json_object_array_add (nest, json_t_TYPE (t->And.left));
-            json_object_array_add (nest, json_t_TYPE (t->And.right));
-            break;
-        }
-
-        case TYPE_T_OR: {
-            json_object_array_add (nest, json_t_TYPE (t->Or.left));
-            json_object_array_add (nest, json_t_TYPE (t->Or.right));
-            break;
-        }
-
-        case TYPE_T_NOT: {
-            json_object_array_add (nest, json_t_TYPE (t->Not.t));
-            break;
-        }
-
-        case TYPE_T_SEMI: {
-            json_object_array_add (nest, json_t_TYPE (t->Or.left));
-            json_object_array_add (nest, json_t_TYPE (t->Or.right));
-
-            break;
-        }
-
-        case TYPE_T_IF: {
-            json_object_array_add (nest, json_t_TYPE (t->If.test));
-            json_object_array_add (nest, json_t_TYPE (t->If.ifpart));
-            json_object_array_add (nest, json_t_TYPE (t->If.elsepart));
-
-            break;
-        }
-
-        case TYPE_T_WHILE: {
-            json_object_array_add (nest, json_t_TYPE (t->While.test));
-            json_object_array_add (nest, json_t_TYPE (t->While.body));
-
-            break;
-        }
-
-        case TYPE_T_FOR: {
-            assert (! "debug_t_TYPE: TYPE_FOR not implemented");
-            break;
-        }
-
-        case TYPE_T_CASE: {
-            assert (! "debug_t_TYPE: TYPE_CASE not implemented");
-            break;
-        }
-
-        case TYPE_T_DEFUN: {
-            struct json_object* nest2 = json_object_new_array ();
-            assert (nest2 != NULL);
-
-            json_object_array_add (nest, json_object_new_int (t->Defun.linno));
-            json_object_array_add (nest, json_object_new_string (t->Defun.name));
-
-            json_object_array_add (nest2, json_t_TYPE (t->Defun.body));
-
-            json_object_array_add (nest, nest2);
-            break;
-        }
-
-        default:
-            assert (! "Invalid t type");
-            break;
-    }
-
-    json_object_array_add (root, nest);
-
-    return (root);
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-void debug_arg_char_TYPE (struct arg_char_TYPE* head) {
-    switch (head->type) {
-        case TYPE_ARG_CHAR_C:
-            putchar (head->C.c);
-            break;
-        case TYPE_ARG_CHAR_E:
-            if (needs_escaping (head->E.c)) {
-                putchar ('\\');
-            }
-            putchar (head->E.c);
-            break;
-        case TYPE_ARG_CHAR_T:
-            putchar ('~');
-            if (head->T.str != NULL) {
-                printf ("%s", head->T.str);
-            }
-            break;
-        case TYPE_ARG_CHAR_A:
-            printf ("[a]");
-            debug_arg_TYPE (head->A.arg);
-            printf ("[/a]");
-            break;
-        case TYPE_ARG_CHAR_V:
-            printf ("${%s}", head->V.str);
-            debug_arg_TYPE (head->V.arg);
-            break;
-        case TYPE_ARG_CHAR_Q:
-            putchar ('"');
-            debug_arg_TYPE (head->Q.arg);
-            putchar ('"');
-            break;
-        case TYPE_ARG_CHAR_B:
-            printf ("$(");
-            debug_t_TYPE (head->B.t);
-            printf (")");
-            break;
-        default:
-            break;
-    }
-}
-
-
-void debug_assign_list (struct assign_list* assigns) {
-    while (assigns != NULL) {
-        struct assign_TYPE* assign = assigns->assign;
-
-        printf ("%s=", assign->string);
-        debug_arg_TYPE (assign->arg);
-
-        assigns = assigns->next;
-    }
-}
-
-
-void debug_arg_TYPE (arg_TYPE arg) {
-    // arg is a list of arg_char, but stored in CharList
-    while (! isCharListEmpty (arg)) {
-        struct arg_char_TYPE* arg_char = charListHead_arg_char (arg);
-        debug_arg_char_TYPE (arg_char);
-
-        charListTail (arg);
-    }
-}
-
-
-void debug_args_TYPE (struct args_TYPE* args) {
-    while (args != NULL) {
-        putchar (' ');
-        debug_arg_TYPE (args->arg);
-
-        args = args->next;
-    }
-}
-
-
-void debug_redirectionList (struct redirectionList* redirect) {
-    if (redirect == NULL) {
-    } else {
-        switch (redirect->redir->type) {
-            case REDIRECTION_TYPE_FILE: {
-                printf (" [%s, %d, ", SERIALIZE_REDIR_TYPE [redirect->redir->file.redir_type],
-                                  redirect->redir->file.fd);
-                debug_arg_TYPE (redirect->redir->file.a);
-                putchar (']');
-            }
-                break;
-
-            case REDIRECTION_TYPE_DUP: {
-                assert (! "TODO");
-            }
-                break;
-
-            case REDIRECTION_TYPE_HEREDOC: {
-                assert (! "TODO");
-            }
-                break;
-
-            default:
-                assert (! "Invalid redirection type");
-                break;
-        }
-
-        debug_redirectionList (redirect->next);
-    }
-}
-
-
-void debug_t_TYPE (struct t_TYPE* t) {
-    if (t == NULL) {
-        return;
-    }
-
-    switch (t->type) {
-        case TYPE_T_COMMAND: {
-            debug_assign_list (t->Command.assign);
-            putchar (' ');
-            debug_args_TYPE (t->Command.args);
-            putchar (' ');
-            debug_redirectionList (t->Command.redirect);
-
-            break;
-        }
-
-        case TYPE_T_PIPE: {
-            if (t->Pipe.background) {
-                printf (" {");
-            }
-
-            struct t_list* spill = t->Pipe.spill;
-
-            while (spill != NULL) {
-                if (spill != t->Pipe.spill) {
-                    printf (" | ");
-                }
-
-                debug_t_TYPE (spill->t);
-                spill = spill->next;
-            }
-
-            if (t->Pipe.background) {
-                printf (" & } ");
-            }
-
-            break;
-        }
-
-        case TYPE_T_REDIR: {
-            debug_t_TYPE (t->Redir.t);
-            debug_redirectionList (t->Redir.redirect);
-
-            break;
-        }
-
-        case TYPE_T_BACKGROUND: {
-            printf (" {");
-            debug_t_TYPE (t->Background.t);
-            debug_redirectionList (t->Background.redirect);
-            printf (" & };");
-
-            break;
-        }
-
-        case TYPE_T_SUBSHELL: {
-            printf (" (");
-            debug_t_TYPE (t->Subshell.t);
-            debug_redirectionList (t->Subshell.redirect);
-            printf (" ) ;");
-
-            break;
-        }
-
-        case TYPE_T_AND: {
-            debug_t_TYPE (t->And.left);
-            printf (" && ");
-            debug_t_TYPE (t->And.right);
-            break;
-        }
-
-        case TYPE_T_OR: {
-            debug_t_TYPE (t->Or.left);
-            printf (" || ");
-            debug_t_TYPE (t->Or.right);
-            break;
-        }
-
-        case TYPE_T_NOT: {
-            printf ("!");
-            debug_t_TYPE (t->Not.t);
-            break;
-        }
-
-        case TYPE_T_SEMI: {
-            debug_t_TYPE (t->Or.left);
-            printf ("; ");
-            debug_t_TYPE (t->Or.right);
-            break;
-        }
-
-        case TYPE_T_IF: {
-            printf ("if ");
-            debug_t_TYPE (t->If.test);
-            printf ("; then ");
-            debug_t_TYPE (t->If.ifpart);
-            printf ("; ");
-            printf ("else ");
-            debug_t_TYPE (t->If.elsepart);
-            printf ("; fi ");
-
-            break;
-        }
-
-        case TYPE_T_WHILE: {
-            printf ("while ");
-            debug_t_TYPE (t->While.test);
-            printf ("; do ");
-            debug_t_TYPE (t->While.body);
-            printf ("; done\n");
-
-            break;
-        }
-
-        case TYPE_T_FOR: {
-            assert (! "debug_t_TYPE: TYPE_FOR not implemented");
-            break;
-        }
-
-        case TYPE_T_CASE: {
-            assert (! "debug_t_TYPE: TYPE_CASE not implemented");
-            break;
-        }
-
-        case TYPE_T_DEFUN: {
-            printf ("%s() {\n", t->Defun.name);
-            debug_t_TYPE (t->Defun.body);
-            printf ("\n");
-            printf ("}\n");
-
-            break;
-        }
-
-        default:
-            assert (! "Invalid t type");
-            break;
-    }
-}
-
-
-void pour_the_t (struct t_TYPE* t) {
-//    debug_t_TYPE (t);
-    struct json_object* root = json_t_TYPE (t);
-
-    const char* text = json_object_to_json_string_ext (root, JSON_C_TO_STRING_PRETTY);
-    printf ("%s\n", text);
-}
-
-
-// -------------------------------------------------------------------------------------
-
-
-void both (union node* n) {
-    struct t_TYPE* t = of_node (n);
-    pour_the_t (t);
-}
-
-
-
-// -------------------------------------------------------------------------------------
-
 
 
 int var_type (int vstype) {
@@ -1074,7 +152,6 @@ struct t_TYPE* of_node (union node* n) {
     */
     if (n == NULL) {
         t->type = TYPE_T_COMMAND;
-
         t->Command.linno = -1;
         t->Command.assign = NULL;
         t->Command.args = NULL;
@@ -1083,15 +160,6 @@ struct t_TYPE* of_node (union node* n) {
         switch (n->type) {
             case NCMD: {
                 (void) 0;
-
-                // struct ncmd {
-                //       int type;
-                //       int linno;
-                //       union node *assign;
-                //       union node *args;
-                //       union node *redirect;
-                // };
-
                 /*
                     let n = n @-> node_ncmd in
                     Command (getf n ncmd_linno,
@@ -1101,21 +169,14 @@ struct t_TYPE* of_node (union node* n) {
                 */
 
                 t->type = TYPE_T_COMMAND;
-
-                t->Command.linno = n->ncmd.linno;
-                t->Command.assign = to_assigns (n->ncmd.assign);
-                t->Command.args = to_args (n->ncmd.args);
+                t->Command.linno    = n->ncmd.linno;
+                t->Command.assign   = to_assigns (n->ncmd.assign);
+                t->Command.args     = to_args (n->ncmd.args);
                 t->Command.redirect = redirs (n->ncmd.redirect);
             }
                 break; // Should be unreachable but we leave it in for clarity
 
             case NPIPE: {
-                // struct npipe {
-                //       int type;
-                //       int backgnd;
-                //       struct nodelist *cmdlist;
-                // };
-
                 /*
                     let n = n @-> node_npipe in
                     Pipe (getf n npipe_backgnd <> 0,
@@ -1123,12 +184,10 @@ struct t_TYPE* of_node (union node* n) {
                 */
 
                 t->type = TYPE_T_PIPE;
-
                 t->Pipe.background = (n->npipe.backgnd != 0);
                 t->Pipe.spill = NULL;
 
                 struct t_list* last = NULL;
-
                 struct nodelist* cmdlist = n->npipe.cmdlist;
                 while (cmdlist != NULL) {
                     struct t_list* newLast = malloc (sizeof (struct t_list));
@@ -1151,14 +210,6 @@ struct t_TYPE* of_node (union node* n) {
                 break;
 
             case NREDIR: {
-                // struct nredir {
-                //       int type;
-                //       int linno;
-                //       union node *n;
-                //       union node *redirect;
-                // };
-
-
                 /*
                     let (ty,fd,arg) = of_nredir n in Redir (ty,fd,arg)
 
@@ -1173,8 +224,6 @@ struct t_TYPE* of_node (union node* n) {
                 t->Redir.linno    = n->nredir.linno;
                 t->Redir.t        = of_node (n->nredir.n);
                 t->Redir.redirect = redirs (n->nredir.redirect);
-
-                assert (! "of_node: NREDIR not implemented");
             }
                 break;
 
@@ -1201,12 +250,6 @@ struct t_TYPE* of_node (union node* n) {
                 break;
 
             case NAND: {
-                // struct nbinary {
-                //       int type;
-                //       union node *ch1;
-                //       union node *ch2;
-                // };
-
                 // let (l,r) = of_binary n in And (l,r)
                 //
                 // Manually inlined 'of_binary':
@@ -1225,11 +268,8 @@ struct t_TYPE* of_node (union node* n) {
                 // let (l,r) = of_binary n in Or (l,r)
 
                 t->type = TYPE_T_OR;
-
-                t->Or.left = of_node (n->nbinary.ch1);
+                t->Or.left  = of_node (n->nbinary.ch1);
                 t->Or.right = of_node (n->nbinary.ch2);
-
-                return (t);
             }
                 break;
 
@@ -1237,11 +277,8 @@ struct t_TYPE* of_node (union node* n) {
                 // let (l,r) = of_binary n in Semi (l,r)
 
                 t->type = TYPE_T_SEMI;
-
-                t->Semi.left = of_node (n->nbinary.ch1);
+                t->Semi.left  = of_node (n->nbinary.ch1);
                 t->Semi.right = of_node (n->nbinary.ch2);
-
-                return (t);
             }
                 break;
 
@@ -1257,14 +294,6 @@ struct t_TYPE* of_node (union node* n) {
                 t->If.test     = of_node (n->nif.test);
                 t->If.ifpart   = of_node (n->nif.ifpart);
                 t->If.elsepart = of_node (n->nif.elsepart);
-
-                // struct nif {
-                //       int type;
-                //       union node *test;
-                //       union node *ifpart;
-                //       union node *elsepart;
-                // };
-                return (t);
             }
                 break;
 
@@ -1274,27 +303,24 @@ struct t_TYPE* of_node (union node* n) {
                 t->type = TYPE_T_WHILE;
                 t->While.test = of_node (n->nbinary.ch1);
                 t->While.body = of_node (n->nbinary.ch2);
-
-                return (t);
             }
                 break;
 
             case NUNTIL: {
                 // let (t,b) = of_binary n in While (Not t,b)
 
-                assert (! "of_node: NUNTIL not implemented");
+                struct t_TYPE* not_node = malloc (sizeof (struct t_TYPE));
+                assert (not_node != NULL);
+                not_node->type = TYPE_T_NOT;
+                not_node->Not.t = of_node (n->nbinary.ch1);
+
+                t->type = TYPE_T_WHILE;
+                t->While.test = not_node;
+                t->While.body = of_node (n->nbinary.ch2);
             }
                 break;
 
             case NFOR: {
-                // struct nfor {
-                //       int type;
-                //       int linno;
-                //       union node *args;
-                //       union node *body;
-                //       char *var;
-                // };
-
                 /*
                     let n = n @-> node_nfor in
                     For (getf n nfor_linno,
@@ -1302,19 +328,25 @@ struct t_TYPE* of_node (union node* n) {
                          of_node (getf n nfor_body),
                          getf n nfor_var)
                 */
-                assert (! "of_node: NFOR not implemented");
+
+                t->type = TYPE_T_FOR;
+                t->For.linno = n->nfor.linno;
+                t->For.arg   = to_arg (&(n->nfor.args->narg));
+                t->For.body  = of_node (n->nfor.body);
+                t->For.var   = n->nfor.var;
             }
                 break;
 
             case NCASE: {
-                // struct ncase {
-                //       int type;
-                //       int linno;
-                //       union node *expr;
-                //       union node *cases;
-                // };
+               /*
+                   let rec caselist (n : node union ptr) =
+                      if nullptr n
+                      then []
+                      else
+                         let n = n @-> node_nclist in
+                            assert (getf n nclist_type = 13); (* NCLIST *)
+                            (getf n nclist_pattern, getf n nclist_body)::caselist (getf n nclist_next)
 
-                /*
                    let n = n @-> node_ncase in
                    Case (getf n ncase_linno,
                          to_arg (getf n ncase_expr @-> node_narg),
@@ -1324,18 +356,47 @@ struct t_TYPE* of_node (union node* n) {
                                cbody = of_node body})
                            (caselist (getf n ncase_cases)))
                 */
-                assert (! "of_node: NCASE not implemented");
+
+                t->type = TYPE_T_CASE;
+                t->Case.linno = n->ncase.linno;
+                t->Case.arg   = to_arg (&(n->ncase.expr->narg));
+
+                struct case_list* cases_ceda = NULL;
+                struct case_list* cases_ceda_tail = cases_ceda;
+
+                union node* case_head = n->ncase.cases;
+                while (case_head != NULL) {
+                    assert (case_head->type == NCLIST);
+
+                    struct case_TYPE* newCase = malloc (sizeof (struct case_TYPE));
+                    assert (newCase != NULL);
+
+                    newCase->cpattern = to_args (case_head->nclist.pattern);
+                    newCase->cbody    = of_node (case_head->nclist.body);
+
+                    if (cases_ceda == NULL) {
+                        cases_ceda = malloc (sizeof (struct case_list));
+                        assert (cases_ceda != NULL);
+
+                        cases_ceda_tail = cases_ceda;
+                    } else {
+                        cases_ceda_tail->next = malloc (sizeof (struct case_list));
+                        assert (cases_ceda_tail->next != NULL);
+
+                        cases_ceda_tail = cases_ceda_tail->next;
+                    }
+
+                    cases_ceda_tail->casey = newCase;
+                    cases_ceda_tail->next = NULL;
+
+                    case_head = case_head->nclist.next;
+                }
+
+                t->Case.cases = cases_ceda;
             }
                 break;
 
             case NDEFUN: {
-                // struct ndefun {
-                //       int type;
-                //       int linno;
-                //       char *text;
-                //       union node *body;
-                // };
-
                 /*
                     let n = n @-> node_ndefun in
                     Defun (getf n ndefun_linno,
@@ -1343,7 +404,6 @@ struct t_TYPE* of_node (union node* n) {
                            of_node (getf n ndefun_body))
                 */
                 t->type = TYPE_T_DEFUN;
-
                 t->Defun.linno = n->ndefun.linno;
                 t->Defun.name = n->ndefun.text;
                 t->Defun.body = of_node (n->ndefun.body);
@@ -1352,14 +412,8 @@ struct t_TYPE* of_node (union node* n) {
 
             case NNOT: {
                 // Not (of_node (getf (n @-> node_nnot) nnot_com))
-
-                struct t_TYPE* t = malloc (sizeof (struct t_TYPE));
-                assert (t != NULL);
                 t->type = TYPE_T_NOT;
-
                 t->Not.t = of_node (n->nbinary.ch1);
-
-                return (t);
             }
                 break;
 
@@ -1418,24 +472,34 @@ void mk_dup (struct redirection_TYPE* redirection, union node* n, int ty) {
     assert (redirection != NULL);
     assert (n != NULL);
 
-/*
     union node* vname = n->ndup.vname;
 
-    arg_TYPE tgt;
+    arg_TYPE tgt = newCharList ();
     if (vname == NULL) {
         int dupfd = n->ndup.dupfd;
 
         if (dupfd == -1) {
-            tgt = newArgCharC ('-');
+            appendCharList_arg_char (tgt, newArgCharC ('-'));
         } else {
             // List.map (fun c -> C c) (explode (string_of_int dupfd))
-            assert (! "TODO");
+            // Use string instead of list
+
+            char dupfd_str [640];
+            sprintf (dupfd_str, "%d", dupfd);
+
+            int i = 0;
+            while ((i < 100) && (dupfd_str [i] != '\0')) {
+                appendCharList_arg_char (tgt, newArgCharC (dupfd_str [i]));
+                i ++;
+            }
         }
     }
 
     redirection->type = REDIRECTION_TYPE_DUP;
-*/
-    assert (! "TODO");
+
+    redirection->dup.dup_type = ty;
+    redirection->dup.fd       = n->ndup.fd;
+    redirection->dup.tgt      = tgt;
 }
 
 
@@ -1456,13 +520,7 @@ void mk_here (struct redirection_TYPE* redirection, union node* n, int ty) {
 }
 
 
-// TODO
 /*
-        let mk_file ty =
-          let n = n @-> node_nfile in
-          File (ty,getf n nfile_fd,to_arg (getf n nfile_fname @-> node_narg)) in
-    ...
-
     redirs (n : node union ptr) =
       if nullptr n
       then []
@@ -1499,56 +557,68 @@ struct redirectionList* redirs (union node* n) {
         case NCLOBBER: {
             // (* NCLOBBER *)
             // | 17 -> mk_file Clobber
-            assert (! "Not implemented");
+
+            redirection->type = REDIRECTION_TYPE_FILE;
+            mk_file (redirection, n, REDIR_TYPE_CLOBBER);
         }
             break;
 
         case NFROM: {
             // (* NFROM *)
             // | 18 -> mk_file From
-            assert (! "Not implemented");
+            redirection->type = REDIRECTION_TYPE_FILE;
+            mk_file (redirection, n, REDIR_TYPE_FROM);
         }
             break;
 
         case NFROMTO: {
             // (* NFROMTO *)
             // | 19 -> mk_file FromTo
-            assert (! "Not implemented");
+            redirection->type = REDIRECTION_TYPE_FILE;
+            mk_file (redirection, n, REDIR_TYPE_FROMTO);
         }
             break;
 
         case NAPPEND: {
             // (* NAPPEND *)
             // | 20 -> mk_file Append
-            assert (! "Not implemented");
+            redirection->type = REDIRECTION_TYPE_FILE;
+            mk_file (redirection, n, REDIR_TYPE_APPEND);
         }
             break;
 
         case NTOFD: {
             // (* NTOFD *)
             // | 21 -> mk_dup ToFD
-            assert (! "Not implemented");
+
+            redirection->type = REDIRECTION_TYPE_DUP;
+            mk_dup (redirection, n, DUP_TYPE_TOFD);
         }
             break;
 
         case NFROMFD: {
             // (* NFROMFD *)
             // | 22 -> mk_dup FromFD
-            assert (! "Not implemented");
+
+            redirection->type = REDIRECTION_TYPE_DUP;
+            mk_dup (redirection, n, DUP_TYPE_FROMFD);
         }
             break;
 
         case NHERE: {
             // (* NHERE quoted heredoc---no expansion)*)
             // | 23 -> mk_here Here
-            assert (! "Not implemented");
+
+            redirection->type = REDIRECTION_TYPE_HEREDOC;
+            mk_here (redirection, n, HEREDOC_TYPE_HERE);
         }
             break;
 
         case NXHERE: {
             // (* NXHERE unquoted heredoc (param/command/arith expansion) *)
             // | 24 -> mk_here XHere
-            assert (! "Not implemented");
+            redirection->type = REDIRECTION_TYPE_HEREDOC;
+            mk_here (redirection, n, HEREDOC_TYPE_XHERE);
         }
             break;
 
@@ -1594,6 +664,8 @@ arg_TYPE to_arg (struct narg* n) {
     assert (bqlist == NULL);
     assert (isStackEmpty (stack));
 
+    destroyStack (stack);
+
     return (a);
 }
 
@@ -1634,98 +706,101 @@ arg_TYPE parse_arg (CharList s, struct nodelist** bqlist, Stack stack) {
 
                let v,s,bqlist,stack
                = match t land 0x0f, s with
-                  (* VSNORMAL and VSLENGTH get special treatment
-                  neither ever gets VSNUL
-                  VSNORMAL is terminated just with the =, without a CTLENDVAR *)
-                  (* VSNORMAL *)
-                  | 0x1,'='::s ->
-                     V (Normal,false,implode var_name,[]),s,bqlist,stack
-                  (* VSLENGTH *)
-                  | 0xa,'='::'\131'::s ->
-                     V (Length,false,implode var_name,[]),s,bqlist,stack
-                  | 0x1,c::_ | 0xa,c::_ ->
-                     failwith ("Missing CTLENDVAR for VSNORMAL/VSLENGTH, found " ^ Char.escaped c)
-                  (* every other VSTYPE takes mods before CTLENDVAR *)
-                  | vstype,'='::s ->
-                     let a,s,bqlist,stack' = parse_arg s bqlist (`CTLVar::stack) in
-                     V (var_type vstype,t land 0x10 = 0x10,implode var_name,a), s, bqlist, stack'
-                  | _,c::_ -> failwith ("Expected '=' terminating variable name, found " ^ Char.escaped c)
-                  | _,[] -> failwith "Expected '=' terminating variable name, found EOF"
+                  ...
                in
 
                arg_char v s bqlist stack
         */
 
         charListTail (s);
-        char t = (charListHead_char (s) & 0x0f); // Inline 'land 0x0f'
+        char t = charListHead_char (s);
+        char tM = t & 0xF;
         charListTail (s);
 
         CharList var_name = split_at (s, '=');
 
         struct arg_char_TYPE* v = NULL;
 
-        if (   (t == 0x1)
+        if (   (tM == 0x1)
             && (charListLength (s) >= 1)
             && (charListHead_char (s) == '=')) {
+            /*
+                  (* VSNORMAL and VSLENGTH get special treatment
+                  neither ever gets VSNUL
+                  VSNORMAL is terminated just with the =, without a CTLENDVAR *)
+                  (* VSNORMAL *)
+                  | 0x1,'='::s ->
+                     V (Normal,false,implode var_name,[]),s,bqlist,stack
+            */
+
             charListTail (s);
 
-            v = newArgCharV (VAR_TYPE_NORMAL, FALSE, reverseStr (implode (var_name)), newCharList ());
-        } else if (   (t == 0xA)
+            v = newArgCharV (VAR_TYPE_NORMAL, FALSE, implode (var_name), newCharList ());
+        } else if (   (tM == 0xA)
                    && (charListLength (s) >= 2)
                    && (charListHead_char (s) == '=')
                    && (charListSecond_char (s) == CTLENDVAR)) {
+            /*
+                  (* VSLENGTH *)
+                  | 0xa,'='::'\131'::s ->
+                     V (Length,false,implode var_name,[]),s,bqlist,stack
+            */
+
             charListTail (s);
             charListTail (s); // Drop two
 
-            v = newArgCharV (VAR_TYPE_LENGTH, FALSE, reverseStr (implode (var_name)), newCharList ());
-        } else if ((t == 0x1 || t == 0xA) && (charListLength (s) >= 0)) {
+            v = newArgCharV (VAR_TYPE_LENGTH, FALSE, implode (var_name), newCharList ());
+        } else if ((tM == 0x1 || tM == 0xA) && (charListLength (s) >= 0)) {
+            /*
+                  | 0x1,c::_ | 0xa,c::_ ->
+                     failwith ("Missing CTLENDVAR for VSNORMAL/VSLENGTH, found " ^ Char.escaped c)
+            */
+
             assert (! "Missing CTLENDVAR for VSNORMAL/VSLENGTH");
         } else if (   (charListLength (s) >= 1)
                    && (charListHead_char (s) == '=')) {
             /*
-                (* every other VSTYPE takes mods before CTLENDVAR *)
-                | vstype,'='::s ->
-                   let a,s,bqlist,stack' = parse_arg s bqlist (`CTLVar::stack) in
-                   V (var_type vstype,t land 0x10 = 0x10,implode var_name,a), s, bqlist, stack'
+                  (* every other VSTYPE takes mods before CTLENDVAR *)
+                  | vstype,'='::s ->
+                     let a,s,bqlist,stack' = parse_arg s bqlist (`CTLVar::stack) in
+                     V (var_type vstype,t land 0x10 = 0x10,implode var_name,a), s, bqlist, stack'
             */
 
             charListTail (s);
-            char vstype = t;
+            char vstype = tM;
 
             pushStack (stack, STACK_CTLVar);
             arg_TYPE a = parse_arg (s, bqlist, stack);
 
-            v = newArgCharV (var_type (vstype), (t == 0x10), reverseStr (implode (var_name)), a);
-
-            assert (! "Implemented but not tested: 1");
+            v = newArgCharV (var_type (vstype), ((t & 0x10) == 0x10), implode (var_name), a);
         } else if (charListLength (s) >= 1) {
+            // | _,c::_ -> failwith ("Expected '=' terminating variable name, found " ^ Char.escaped c)
             assert (! "Expected '=' terminating variable name");
         } else {
+            // | _,[] -> failwith "Expected '=' terminating variable name, found EOF"
             assert ("Expected '=' terminating variable name, found EOF");
         }
 
-        destroyCharList (var_name);
+        // 'implode' has already destroyed the list
+        // destroyCharList (var_name);
 
         return (arg_char_FUNC (v, s, bqlist, stack));
     } else if (   (! isCharListEmpty (s))
                && (charListHead_char (s) == CTLENDVAR)) {
-        /*
-            (* CTLENDVAR *)
-            | '\131'::s,`CTLVar::stack' -> [],s,bqlist,stack'
-            | '\131'::_,`CTLAri::_ -> failwith "Saw CTLENDVAR before CTLENDARI"
-            | '\131'::_,`CTLQuo::_ -> failwith "Saw CTLENDVAR before CTLQUOTEMARK"
-            | '\131'::_,[] -> failwith "Saw CTLENDVAR outside of CTLVAR"
-        */
         if (isStackEmpty (stack)) {
+            // | '\131'::_,[] -> failwith "Saw CTLENDVAR outside of CTLVAR"
             assert (! "Saw CTLENDVAR outside of CTLVAR");
         } else if (topStack (stack) == STACK_CTLVar) {
+            // | '\131'::s,`CTLVar::stack' -> [],s,bqlist,stack'
             charListTail (s);
             popStack (stack);
 
             return newCharList ();
         } else if (topStack (stack) == STACK_CTLAri) {
+            // | '\131'::_,`CTLAri::_ -> failwith "Saw CTLENDVAR before CTLENDARI"
             assert (! "Saw CTLENDVAR before CTLENDARI");
         } else if (topStack (stack) == STACK_CTLQuo) {
+            // | '\131'::_,`CTLQuo::_ -> failwith "Saw CTLENDVAR before CTLQUOTEMARK"
             assert (! "Saw CTLENDVAR before CTLQUOTEMARK");
         } else {
             assert (! "Unexpected stack contents");
@@ -1746,7 +821,7 @@ arg_TYPE parse_arg (CharList s, struct nodelist** bqlist, Stack stack) {
             assert (! "Saw CTLBACKQ but bqlist was null");
         } else {
             struct arg_char_TYPE* a = newArgCharB (of_node ((*bqlist)->n));
-            *bqlist = (*bqlist)->next; // TODO: check if this should persist
+            *bqlist = (*bqlist)->next;
 
             return (arg_char_FUNC (a, s, bqlist, stack));
         }
@@ -1775,45 +850,43 @@ arg_TYPE parse_arg (CharList s, struct nodelist** bqlist, Stack stack) {
         return (arg_char_FUNC (a, s, bqlist, stack));
     } else if (   (! isCharListEmpty (s))
                && (charListHead_char (s) == CTLENDARI)) {
-        /*
-            | '\135'::s,`CTLAri::stack' -> [],s,bqlist,stack'
-            | '\135'::_,`CTLVar::_' -> failwith "Saw CTLENDARI before CTLENDVAR"
-            | '\135'::_,`CTLQuo::_' -> failwith "Saw CTLENDARI before CTLQUOTEMARK"
-            | '\135'::_,[] -> failwith "Saw CTLENDARI outside of CTLARI"
-        */
-
         if (isStackEmpty (stack)) {
+            // | '\135'::_,[] -> failwith "Saw CTLENDARI outside of CTLARI"
             assert (! "Saw CTLENDARI outside of CTLARI");
         } else if (topStack (stack) == STACK_CTLAri) {
+            // | '\135'::s,`CTLAri::stack' -> [],s,bqlist,stack'
             charListTail (s);
             popStack (stack);
 
             return newCharList ();
         } else if (topStack (stack) == STACK_CTLVar) {
+            // | '\135'::_,`CTLVar::_' -> failwith "Saw CTLENDARI before CTLENDVAR"
             assert (! "Saw CTLENDARI before CTLENDVAR");
         } else if (topStack (stack) == STACK_CTLQuo) {
+            // | '\135'::_,`CTLQuo::_' -> failwith "Saw CTLENDARI before CTLQUOTEMARK"
             assert (! "Saw CTLENDARI before CTLQUOTEMARK");
         } else {
             assert (! "Unexpected stack contents");
         }
     } else if (   (! isCharListEmpty (s))
                && (charListHead_char (s) == CTLQUOTEMARK)) {
-        /*
-            (* CTLQUOTEMARK *)
-            | '\136'::s,`CTLQuo::stack' -> [],s,bqlist,stack'
-            | '\136'::s,_ ->
-               let a,s,bqlist,stack' = parse_arg s bqlist (`CTLQuo::stack) in
-               assert (stack' = stack);
-               arg_char (Q a) s bqlist stack'
-        */
-
-        charListTail (s);
+        charListTail (s); // See below
 
         if ((! isStackEmpty (stack)) && (topStack (stack) == STACK_CTLQuo)) {
+            // | '\136'::s,`CTLQuo::stack' -> [],s,bqlist,stack'
+
             popStack (stack);
 
             return newCharList ();
         } else {
+            /*
+                (* CTLQUOTEMARK *)
+                | '\136'::s,_ ->
+                   let a,s,bqlist,stack' = parse_arg s bqlist (`CTLQuo::stack) in
+                   assert (stack' = stack);
+                   arg_char (Q a) s bqlist stack'
+            */
+
             char* oldStackStr = serializeStack (stack);
 
             pushStack (stack, STACK_CTLQuo);
@@ -1863,20 +936,22 @@ arg_TYPE parse_arg (CharList s, struct nodelist** bqlist, Stack stack) {
 
         return (arg_char_FUNC (newArgCharC (c), s, bqlist, stack));
     }
+
+    return NULL; // Reachable if NDEBUG
 }
 
 
-static char* implodeOrNull (CharList acc, int reverse) {
+static char* implodeOrNull (CharList acc) {
     if (isCharListEmpty (acc)) {
         return NULL;
-    } else if (reverse) {
-        return reverseStr (implode (acc));
     } else {
         return implode (acc);
     }
 }
 
 
+// Note: we encode "None" as NULL, and "Some String" as char*
+//       The OCaml-style serialization will be handled by ast2json.c.
 /*
     parse_tilde acc =
       let ret = if acc = [] then None else Some (implode acc) in
@@ -1884,12 +959,12 @@ static char* implodeOrNull (CharList acc, int reverse) {
       ...
 */
 char* parse_tilde (CharList acc, CharList s) {
-    // OCaml has lazy evaluation but C does not, hence we can't afford
-    // to define 'ret' here
+    // C does not have lazy evaluation
+    // hence we can't afford to define 'ret' here
 
     if (isCharListEmpty (s)) {
         // |     [] -> (ret , [])
-        return implodeOrNull (acc, TRUE);
+        return implodeOrNull (acc);
     } else if (charListHead_char (s) == CTLESC) {
         // (* CTLESC *)
         // |     '\129'::_ as s -> None, s
@@ -1905,15 +980,15 @@ char* parse_tilde (CharList acc, CharList s) {
         // |     '\131'::_ as s -> ret, s
         // |     ':'::_ as s -> ret, s
         // |     '/'::_ as s -> ret, s
-        return implodeOrNull (acc, TRUE);
+        return implodeOrNull (acc);
     } else {
         // (* ordinary char *)
         // (* TODO 2019-01-03 only characters from the portable character set *)
         // |     c::s' -> parse_tilde (acc @ [c]) s'
 
-        // This is reversed - implode will fix it
-        prependCharList_char (acc, charListHead_char (s));
+        char c = charListHead_char (s);
         charListTail (s);
+        appendCharList_char (acc, c);
 
         // Could convert tail recursion to a while loop
         return parse_tilde (acc, s);
@@ -1931,29 +1006,10 @@ arg_TYPE arg_char_FUNC (struct arg_char_TYPE* c, CharList s, struct nodelist** b
     arg_TYPE a = parse_arg (s, bqlist, stack);
 
     if (c != NULL) {
-        prependCharList_arg_char (a, (void*) c);
+        prependCharList_arg_char (a, (void*) c); // Intentional preprend
     }
 
     return (a);
-}
-
-
-// Helper kludge
-char* reverseStr (char* str) {
-    assert (str != NULL);
-
-    int len = strlen (str);
-
-    char* reverse = malloc (len + 1);
-    assert (reverse != NULL);
-
-    int i;
-    for (i = 0; i < len; i++) {
-        reverse [i] = str [len - 1 - i];
-    }
-    reverse [len] = '\0';
-
-    return (reverse);
 }
 
 
@@ -1970,80 +1026,70 @@ struct assign_TYPE* to_assign (CharList v, CharList ca) {
     if (isCharListEmpty (ca)) {
         assert (! "Never found an '=' sign in assignment");
     } else {
-        struct arg_char_TYPE* ca_head = charListHead_arg_char (ca);
+        struct arg_char_TYPE* c = charListHead_arg_char (ca);
         charListTail (ca);
+        CharList a = ca;
 
-        if (ca_head->type != TYPE_ARG_CHAR_C) {
+        if (c->type != TYPE_ARG_CHAR_C) {
             assert (! "Unexpected special character in assignment");
         }
 
-        if (ca_head->C.c == '=') {
-            // Inline implode
+        if (c->C.c == '=') {
             struct assign_TYPE* assign = malloc (sizeof (struct assign_TYPE));
             assert (assign != NULL);
 
-            assign->string = reverseStr (implode (v));
-            assign->arg    = ca;
+            assign->string = implode (v);
+            assign->arg    = a;
 
             return (assign);
         } else {
-            // Kludge: CharList.c only allows prepending, not appending;
-            // implode will fix this.
-            prependCharList_char (v, ca_head->C.c);
+            appendCharList_char (v, c->C.c);
 
-            return to_assign (v, ca);
+            return to_assign (v, a);
         }
     }
+
+    return NULL; // Reachable if NDEBUG
 }
 
 
-/*
-            // struct narg {
-            //       int type;
-            //       union node *next;
-            //       char *text;
-            //       struct nodelist *backquote;
-            // };
-*/
 // to_assigns n = List.map (to_assign []) (to_args n)
 struct assign_list* to_assigns (union node* n) {
     struct args_TYPE* args = to_args (n);
     struct assign_list* assigns = NULL;
 
+    struct assign_list* assignsLast = NULL;
+
     while (args != NULL) {
         struct assign_TYPE* assign = to_assign (newCharList (), args->arg);
 
-        struct assign_list* newAssigns = malloc (sizeof (struct assign_list));
-        assert (newAssigns != NULL);
+        if (assigns == NULL) {
+            assigns = malloc (sizeof (struct assign_list));
+            assert (assigns != NULL);
 
-        newAssigns->assign = assign;
-        newAssigns->next   = assigns;
+            assignsLast = assigns;
+        } else {
+            assignsLast->next = malloc (sizeof (struct assign_list));
+            assert (assignsLast->next != NULL);
 
-        assigns = newAssigns;
+            assignsLast = assignsLast->next;
+        }
 
-        args = args->next;
+        assignsLast->assign = assign;
+        assignsLast->next   = NULL;
+
+        struct args_TYPE* next = args->next;
+        free (args);
+        args = next;
     }
+
+    free (args);
 
     return assigns;
 }
 
 
 /*
-    union node {
-          int type;
-          ...
-          struct narg narg;
-          ...
-    };
-
-    struct narg {
-           int type;
-           union node *next;
-           char *text;
-           struct nodelist *backquote;
-    };
-
-
     to_args (n : node union ptr) : args =
       if nullptr n
       then []
