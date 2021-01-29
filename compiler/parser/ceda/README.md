@@ -5,7 +5,7 @@
 ## Overall status
 
 * Shell script <-> JSON
-    * Shell script -> JSON, C implementation: work-in-progress
+    * Shell script -> JSON, C implementation: 99.9% complete
     * JSON -> shell script, C implementation: 99.9% complete
 
 N.B. Pash already has functions for JSON <-> Past AST (*).
@@ -89,11 +89,9 @@ if [ $(uname) = "Darwin" ]; then a=/usr/share/dict/web2; else a=/usr/share/dict/
 if [ -f ${a} ]; then cat ${a} ${a} ${a} ${a} ${a} ${a} ${a} ${a} | grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" | wc -l; else echo "Dictionary file ${a} not found.."; fi
 ```
 
-### Shell script -> Pash AST
+### Shell script -> Pash AST (TODO)
 
-TODO
-
-### Pash AST -> shell script (Python implementation; WORK-IN-PROGRESS)
+### Pash AST -> shell script (Python implementation)
 
 ast2shell.py :: string_of
 
@@ -141,38 +139,53 @@ This compares the output of the OCaml pipeline (parse_to_json + json_to_shell) a
 
 ## Testing (with all the scripts in /pash/)
 
-This includes `test_JSON_to_shell2.sh`!
+This includes `test_JSON_to_shell2.sh` and any other helper scripts in my local copy of PaSh, hence
+the number of scripts may vary on your system.
+
 
 ```
-make tests  # Uses test_rt.sh
+make testsRT # Uses test_rt.sh
+
 make testsA # Uses test_parse_to_json2.sh
 make testsB # Uses test_parse_to_json2.sh
 
-make testsA_py # Uses test_rt_py.sh
+make testsB_py # Uses test_ast2shell_py.sh
 ```
 
 ### parse_to_json2.c results (WORK-IN-PROGRESS)
 
-Some failures are because the Background line number is not initialized by dash for some shell scripts (the libdash OCaml
-implementation returns "random" values); I think this is a bug in dash. In any case, since these line numbers are not
-used, these differences are irrelevant.
+Failures are because the Background line number is not initialized by dash for some shell scripts
+(the libdash OCaml implementation returns "random" values). As discussed via email, this is not relevant to
+PaSh.
+
+```
+     11 FAIL
+     33 INVALID_INPUT
+    330 PASS
+```
 
 ### json_to_shell2.c results
 
 All shell scripts that the OCaml implementation works on are regenerated, byte-for-byte identical:
 ```
-    234 PASS
+     33 INVALID_INPUT_1
+    341 PASS
+```
+
+### parse_to_json2.c + json_to_shell2.c round-trip results
+```
+    341 PASS
      33 REF_ABORT_1
 ```
 
 ### ast2shell.py results
 
-When using ASCII or UTF-8 encoding, there are three failures/aborts, due to weird non-ASCII characters that
-don't play nicely with Python:
+When using ASCII or UTF-8 encoding, there are three failures/aborts, due to weird non-ASCII
+characters that don't play nicely with Python:
 ```
-      1 ABORT
-      2 FAIL
-    238 PASS
+      3 ABORT
+    338 PASS
+     33 REF_ABORT_1
 ```
 
 ```
@@ -181,8 +194,9 @@ FAIL: '/pash/compiler/parser/run_parser_on_scripts.sh' | /tmp/rt_ocaml.29910 /tm
 ABORT: '/pash/compiler/parser/libdash/ltmain.sh'
 ```
 
-The failures disappear when we use `export PYTHONIOENCODING=charmap`.
-The "ABORT" case actually happens in parse.py::parse_shell i.e., not in ast2shell.py.
+The two failures disappear when we use `export PYTHONIOENCODING=charmap`.
+The remaining "ABORT" case (ltmain.sh) actually happens in parse.py::parse_shell even with
+the OCaml implementation i.e., not in ast2shell.py.
 
 ## Mapping of Files between C and OCaml implementations
 
@@ -219,4 +233,3 @@ For testing only:
 ### ast2shell.py
 * `fresh_marker` for heredocs
 * Non-ASCII characters
-
