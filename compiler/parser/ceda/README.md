@@ -12,7 +12,7 @@ N.B. Pash already has functions for JSON <-> Past AST (*).
 
 * Shell script <-> Pash AST, skipping JSON entirely
     * Shell script -> Pash AST, Python implementation: not started
-    * Pash AST -> shell script, Python implementation: 99% complete
+    * Pash AST -> shell script, Python implementation: 99.9% complete
 
 (*) The Pash AST is defined as the data structure obtained
 from `parse_json_ast_string (json)`, and which can be used as
@@ -99,7 +99,7 @@ ast2shell.py :: string_of
 
 See the misleadingly-named rt.py for example usage
 
-
+* Secret sauce: `export PYTHONIOENCODING=charmap`
 
 ## Testing (with an individual test case)
 
@@ -167,19 +167,22 @@ All shell scripts that the OCaml implementation works on are regenerated, byte-f
 
 ### ast2shell.py results
 
+When using ASCII or UTF-8 encoding, there are three failures/aborts, due to weird non-ASCII characters that
+don't play nicely with Python:
 ```
       1 ABORT
       2 FAIL
     238 PASS
 ```
 
-There are three failures/aborts, due to weird non-ASCII characters that don't play nicely with Python:
 ```
 FAIL: '/pash/evaluation/poets/pipelines.sh' | /tmp/rt_ocaml.28692 /tmp/rt_py.28692
 FAIL: '/pash/compiler/parser/run_parser_on_scripts.sh' | /tmp/rt_ocaml.29910 /tmp/rt_py.29910
 ABORT: '/pash/compiler/parser/libdash/ltmain.sh'
 ```
 
+The failures disappear when we use `export PYTHONIOENCODING=charmap`.
+The "ABORT" case actually happens in parse.py::parse_shell i.e., not in ast2shell.py.
 
 ## Mapping of Files between C and OCaml implementations
 
