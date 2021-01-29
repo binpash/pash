@@ -1,3 +1,6 @@
+#include "CharList.h"
+
+
 struct stackmark* Dash_init_stack (void);
 void Dash_pop_stack (struct stackmark* smark);
 char* Dash_alloc_stack_string (char* str);
@@ -16,3 +19,6 @@ int Dash_freshfd_ge10 (int fd);
 
 union node* Dash_parsecmd_safe (int interact);
 union node* Dash_parse_next (int interactive);
+
+CharList explode (char* str);
+char* implode (CharList myList);

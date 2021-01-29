@@ -9,7 +9,7 @@
 
 #include "dash2.h"
 #include "ast2a.h"
-
+#include "ast2json.h"
 
 #include "json.h"
 
@@ -50,7 +50,9 @@ void parse_all (void) {
         } else if (n == NULL) { // Dash.Null
 //            printf ("null\n");
         } else { // Dash.Parsed
-            both (n);
+            struct t_TYPE* t = of_node (n);
+            pour_the_t (t);
+
             printf ("\n");
 
             Dash_pop_stack (smark);

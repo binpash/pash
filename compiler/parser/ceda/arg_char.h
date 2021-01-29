@@ -1,9 +1,6 @@
 #include "CharList.h"
 
 
-#define TRUE  1
-#define FALSE 0
-
 #define TYPE_ARG_CHAR_C 0
 #define TYPE_ARG_CHAR_E 1
 #define TYPE_ARG_CHAR_T 2
@@ -25,12 +22,12 @@ extern const char* SERIALIZE_TYPE_ARG_CHAR [];
 
 //   | C of char
 struct arg_char_C {
-    char c;
+    unsigned char c;
 };
 
 //   | E of char (* escape... necessary for expansion *)
 struct arg_char_E {
-    char c;
+    unsigned char c;
 };
 
 //   | T of string option (* tilde *)
