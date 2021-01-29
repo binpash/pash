@@ -19,26 +19,25 @@ prettyprint_json: prettyprint_json.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 
-tests: parse_to_json2 json_to_shell2
-	@find "$(SCRIPTS_DIR)" | grep '[.]sh$$' | while read f; do sh test_rt.sh "$$f"; done | tee /tmp/cdash.log
-	@echo
-	@cat /tmp/cdash.log | egrep '^[A-Z]+:' | cut -d ':' -f 1 | sort | uniq -c
-
 testsA: parse_to_json2
 	@find "$(SCRIPTS_DIR)" | grep '[.]sh$$' | while read f; do sh test_parse_to_JSON2.sh "$$f"; done | tee /tmp/cdashA.log
 	@echo
 	@cat /tmp/cdashA.log | egrep '^[A-Z]+:' | cut -d ':' -f 1 | sort | uniq -c
 
-tests: test_rt.sh parse_to_json2 json_to_shell2
+testsB: json_to_shell2
+	@find "$(SCRIPTS_DIR)" | grep '[.]sh$$' | while read f; do sh test_JSON_to_shell2.sh "$$f"; done | tee /tmp/cdashB.log
+	@echo
+	@cat /tmp/cdashB.log | egrep '^[A-Z]+:' | cut -d ':' -f 1 | sort | uniq -c
+
+testsRT: test_rt.sh parse_to_json2 json_to_shell2
 	@find "$(SCRIPTS_DIR)" | grep '[.]sh$$' | while read f; do sh test_rt.sh "$$f"; done | tee /tmp/cdash_rt.log
 	@echo
 	@cat /tmp/cdash_rt.log | egrep '^[A-Z]+:' | cut -d ':' -f 1 | sort | uniq -c
 
-
-testsA_py: test_rt_py.sh
-	@find "$(SCRIPTS_DIR)" | grep '[.]sh$$' | while read f; do sh test_rt_py.sh "$$f"; done | tee /tmp/cdashA_py.log
+testsB_py: test_ast2shell_py.sh
+	@find "$(SCRIPTS_DIR)" | grep '[.]sh$$' | while read f; do sh test_ast2shell_py.sh "$$f"; done | tee /tmp/cdashB_py.log
 	@echo
-	@cat /tmp/cdashA_py.log | egrep '^[A-Z]+:' | cut -d ':' -f 1 | sort | uniq -c
+	@cat /tmp/cdashB_py.log | egrep '^[A-Z]+:' | cut -d ':' -f 1 | sort | uniq -c
 
 
 clean:
