@@ -14,6 +14,8 @@
 #include "redir.h"
 #include "var.h"
 
+#include "dash2.h"
+
 
 // As a poor man's namespace, we prepend everything with "Dash_"
 // Sometimes, Dash_x is the same as x (e.g., popfile), but sometimes
@@ -145,3 +147,57 @@ union node* Dash_parse_next (int interactive) {
 
     return n;
 }
+
+
+/*
+let explode s =
+  let rec exp i l =
+    if i < 0 then l else exp (i - 1) (s.[i] :: l) in
+  exp (String.length s - 1) []
+*/
+CharList explode (char* str) {
+    assert (str != NULL);
+
+    CharList list = newCharList ();
+
+    for (int i = strlen (str) - 1; i >= 0; i--) {
+        prependCharList_char (list, str [i]);
+    }
+
+    return (list);
+}
+
+
+/*
+let implode l =
+  let s = Bytes.create (List.length l) in
+  let rec imp i l =
+    match l with
+    | []  -> ()
+    | (c::l) -> (Bytes.set s i c; imp (i+1) l)
+  in
+  imp 0 l;
+  Bytes.unsafe_to_string s
+*/
+char* implode (CharList myList) {
+    assert (myList != NULL);
+
+    char* str = malloc (charListLength (myList) + 1);
+    assert (str != NULL);
+
+    int i = 0;
+    while (! isCharListEmpty (myList)) {
+        str [i] = charListHead_char (myList);
+        charListTail (myList);
+
+        i ++;
+    }
+
+    str [i] = '\0';
+
+    destroyCharList (myList);
+
+    return (str);
+}
+
+
