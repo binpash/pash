@@ -189,12 +189,13 @@ characters that don't play nicely with Python:
 ```
 
 ```
-FAIL: '/pash/evaluation/poets/pipelines.sh' | /tmp/rt_ocaml.28692 /tmp/rt_py.28692
-FAIL: '/pash/compiler/parser/run_parser_on_scripts.sh' | /tmp/rt_ocaml.29910 /tmp/rt_py.29910
+ABORT: '/pash/evaluation/poets/pipelines.sh' | /tmp/rt_ocaml.28692 /tmp/rt_py.28692
+ABORT: '/pash/compiler/parser/run_parser_on_scripts.sh' | /tmp/rt_ocaml.29910 /tmp/rt_py.29910
 ABORT: '/pash/compiler/parser/libdash/ltmain.sh'
 ```
 
-The two failures disappear when we use `export PYTHONIOENCODING=charmap`.
+The two failures/aborts (depending on the settings)
+ disappear when we use `export PYTHONIOENCODING=charmap`.
 The remaining "ABORT" case (ltmain.sh) actually happens in parse.py::parse_shell even with
 the OCaml implementation i.e., not in ast2shell.py.
 
