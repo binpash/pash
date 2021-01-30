@@ -66,7 +66,7 @@ make install
 
 ## Usage
 
-### Shell script -> JSON (C implementation; WORK-IN-PROGRESS)
+### Shell script -> JSON (C implementation)
 
 It has the same usage as `parse_to_json` i.e.,
 `./parse_to_json2 SCRIPT_FILE_NAME` or `./parse_to_json2 < SCRIPT_FILE_NAME`
@@ -152,7 +152,13 @@ make testsB # Uses test_parse_to_json2.sh
 make testsB_py # Uses test_ast2shell_py.sh
 ```
 
-### parse_to_json2.c results (WORK-IN-PROGRESS)
+### testsRT: parse_to_json2.c + json_to_shell2.c round-trip results
+```
+    341 PASS
+     33 REF_ABORT_1
+```
+
+### testsA: parse_to_json2.c results
 
 Failures are because the Background line number is not initialized by dash for some shell scripts
 (the libdash OCaml implementation returns "random" values). As discussed via email, this is not relevant to
@@ -164,7 +170,7 @@ PaSh.
     330 PASS
 ```
 
-### json_to_shell2.c results
+### testsB: json_to_shell2.c results
 
 All shell scripts that the OCaml implementation works on are regenerated, byte-for-byte identical:
 ```
@@ -172,13 +178,7 @@ All shell scripts that the OCaml implementation works on are regenerated, byte-f
     341 PASS
 ```
 
-### parse_to_json2.c + json_to_shell2.c round-trip results
-```
-    341 PASS
-     33 REF_ABORT_1
-```
-
-### ast2shell.py results
+### testsB_py: ast2shell.py results
 
 When using ASCII or UTF-8 encoding, there are three failures/aborts, due to weird non-ASCII
 characters that don't play nicely with Python:
