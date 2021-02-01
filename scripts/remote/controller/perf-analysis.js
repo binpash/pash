@@ -38,7 +38,7 @@ const extractWidth = (p) =>
       parseInt((path.basename(p, path.extname(p)).match(/_(\d+)_/) || [])[1]);
 
 const extractVariant = (p) =>
-      (p.match(/_distr_?([^\.]+)/) || [])[1];
+      (path.basename(p, path.extname(p)).match(/\d+_(\D+)$/) || [])[1]
 
 const extractExecTime = (p) =>
       (fs.readFileSync(p).toString().match(/Execution time:[^\d]+([\d\.]+)/i) || [])[1];
