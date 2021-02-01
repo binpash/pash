@@ -127,6 +127,11 @@ are visible to the NGINX server using `scripts/pash-nginx.conf`*.
 
 ## Changelog
 
+### Feb 1 2021
+
+- Add `perf-analysis.js` module
+
+
 ### Jan 28 2021
 
 - Add EuroSys one-liner suite to performance worker
