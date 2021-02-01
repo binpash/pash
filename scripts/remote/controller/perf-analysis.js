@@ -60,7 +60,7 @@ const keepTimed = (data) =>
 // them as rows in a text table.
 /////////////////////////////////////////////////////////////////////////////////
 
-const createRow = (data, columnNames, width) => {
+const createRow = (data, columnNames) => {
     const grouped = groupByTestName(data);
     return columnNames.map((c) => (grouped[c] || { exec_time: '' }).exec_time);
 };
@@ -74,11 +74,11 @@ const findTestNames = (data, names = new Set()) => {
     return names;
 };
 
-const render = (history, tests, width) => {
+const render = (history, tests) => {
     const columnNames = Array.from(tests).slice(0).sort();
     const firstRow = [''].concat(columnNames);
     const rows = history.map(([label, data]) =>
-        [label].concat(createRow(data, columnNames, width)));
+        [label].concat(createRow(data, columnNames)));
 
     return table([firstRow].concat(rows));
 };
