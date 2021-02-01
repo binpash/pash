@@ -17,7 +17,7 @@ const { lets } = require('./lib.js');
 // Analysis: Convert result text files to relevant metadata and content.
 /////////////////////////////////////////////////////////////////////////////////
 
-const analyzeResults = (dir) =>
+const analyze = (dir) =>
       Array
       .from(fs.readdirSync(dir))
       .filter((entry) => !fs.lstatSync(path.resolve(dir, entry)).isDirectory())
@@ -49,51 +49,45 @@ const extractExecTime = (p) =>
 const extractTestName = (p) =>
       (path.basename(p, path.extname(p)).split(/_\d/) || [])[0];
 
+const keepWidth = (data, width) =>
+      data.filter(({ width: actual }) => width === actual);
+
+const keepTimed = (data) =>
+      data.filter(({ exec_time }) => exec_time);
+
 
 // Presentation: Take _many_ outputs of analyzeResults() and present
 // them as rows in a text table.
 /////////////////////////////////////////////////////////////////////////////////
 
 const createRow = (data, columnNames, width) => {
-    const relevant = data.filter(({ width: actual }) => width === actual);
-    const grouped = groupByTestName(relevant);
-    return columnNames.map((c) => (grouped[c] || {}).exec_time || '');
+    const grouped = groupByTestName(data);
+    return columnNames.map((c) => (grouped[c] || { exec_time: '' }).exec_time);
 };
 
 const groupByTestName = (data) =>
       data.reduce((res, e) => Object.assign(res, { [e.name]: e }), {});
 
-const getColumnNames = (history) => {
-    const allNames = new Set();
-
-    for (const [commit, data] of history) {
-        for (const { name } of data) {
-            allNames.add(name);
-        }
-    }
-
-    return Array.from(allNames).sort();
+const findTestNames = (data, names = new Set()) => {
+    for (const { name } of data)
+        names.add(name);
+    return names;
 };
 
-const renderPerfSummary = (history, { width }) => {
-    const columnNames = getColumnNames(history);
-
+const render = (history, tests, width) => {
+    const columnNames = Array.from(tests).slice(0).sort();
     const firstRow = [''].concat(columnNames);
+    const rows = history.map(([label, data]) =>
+        [label].concat(createRow(data, columnNames, width)));
 
-    const rows = history.map(([commit, data]) =>
-        [commit].concat(createRow(data, columnNames, width)));
-
-    return table([firstRow].concat(rows), {
-        columns: {
-            0: {
-                width: 12,
-            },
-        },
-    });
+    return table([firstRow].concat(rows));
 };
 
 
 module.exports = {
-    analyzeResults,
-    renderPerfSummary,
+    analyze,
+    findTestNames,
+    keepWidth,
+    keepTimed,
+    render,
 };
