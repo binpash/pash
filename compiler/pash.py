@@ -11,16 +11,17 @@ from json_ast import *
 from parse import parse_shell, from_ir_to_shell_file
 from util import *
 import config
+import pprint
+import tempfile
 
 def main():
     preprocessing_start_time = datetime.now()
     ## Parse arguments
     args = parse_args()
     config.pash_args = args
-    
+
     ## Initialize the log file
     config.init_log_file()
-
     if not config.config:
         config.load_config(args.config_path)
 
@@ -36,6 +37,7 @@ def main():
     ## 2. Parse JSON to AST objects
     ast_objects = parse_json_ast_string(json_ast_string)
 
+
     ## 3. Preprocess ASTs by replacing possible candidates for compilation
     ##    with calls to the PaSh runtime.
     preprocessed_asts = preprocess(ast_objects, config.config)
@@ -43,22 +45,22 @@ def main():
     ## 4. Translate the new AST back to shell syntax
     input_script_wo_extension, _input_script_extension = os.path.splitext(input_script_path)
     input_script_basename = os.path.basename(input_script_wo_extension)
-    ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string() + "_" + input_script_basename + ".ir")
+    ir_filename = os.path.join(config.PASH_TMP_PREFIX, input_script_basename + ".ir")
     save_asts_json(preprocessed_asts, ir_filename)
 
-    preprocessed_output_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
-    log("Preprocessed script stored in:", preprocessed_output_filename)
+    preprocessed_output, fname = ptempfile()
+    log("Preprocessed script stored in:", fname)
     if(args.output_preprocessed):
         log("Preprocessed script:")
         log(from_ir_to_shell(ir_filename))
-    from_ir_to_shell_file(ir_filename, preprocessed_output_filename)
+    from_ir_to_shell_file(ir_filename, fname)
 
     preprocessing_end_time = datetime.now()
     print_time_delta("Preprocessing", preprocessing_start_time, preprocessing_end_time, args)
 
     ## 5. Execute the preprocessed version of the input script
     if(not args.preprocess_only):
-        execute_script(preprocessed_output_filename)
+        execute_script(fname)
 
 
 def parse_args():
@@ -67,10 +69,10 @@ def parse_args():
         prog_name = os.environ['PASH_FROM_SH']
     parser = argparse.ArgumentParser(prog_name)
     parser.add_argument("input", help="the script to be compiled and executed")
-    parser.add_argument("--preprocess_only", 
+    parser.add_argument("--preprocess_only",
                         help="only preprocess the input script and not execute it",
                         action="store_true")
-    parser.add_argument("--output_preprocessed", 
+    parser.add_argument("--output_preprocessed",
                         help=" output the preprocessed script",
                         action="store_true")
     config.add_common_arguments(parser)
@@ -78,11 +80,11 @@ def parse_args():
     return args
 
 def preprocess(ast_objects, config):
-    ## This is ids for the remporary files that we will save the IRs in
+    ## This is ids for the temporary files that we will save the IRs in
     irFileGen = FileIdGen()
 
-    ## Preprocess ASTs by replacing AST regions with calls to PaSh's runtime. 
-    ## Then the runtime will do the compilation and optimization with additional 
+    ## Preprocess ASTs by replacing AST regions with calls to PaSh's runtime.
+    ## Then the runtime will do the compilation and optimization with additional
     ## information.
     preprocessed_asts = replace_ast_regions(ast_objects, irFileGen, config)
 

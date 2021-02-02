@@ -252,7 +252,7 @@ def compile_node_command(ast_node, fileIdGen, config):
             compiled_ast = make_kv(construct_str,
                                    [ast_node.line_number, compiled_assignments,
                                     compiled_arguments, compiled_redirections])
-            
+
         return compiled_ast
 
 def compile_node_and_or_semi(ast_node, fileIdGen, config):
@@ -374,12 +374,12 @@ def make_echo_ast(argument, var_file_path):
 
 ## TODO: Move this function somewhere more general
 def execute_shell_asts(asts):
-    ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
+    _, ir_filename = ptempfile()
     save_asts_json(asts, ir_filename)
     output_script = from_ir_to_shell(ir_filename)
     # log(output_script)
-    exec_obj = subprocess.run(["/bin/bash"], input=output_script,
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+    exec_obj = subprocess.run(["/usr/bin/env", "bash"], input=output_script,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                               universal_newlines=True)
     exec_obj.check_returncode()
     # log(exec_obj.stdout)
@@ -393,7 +393,7 @@ def parse_string_to_arguments(arg_char_string):
 ## TODO: Use "pash_input_args" when expanding in place of normal arguments.
 def naive_expand(argument, config):
 
-    ## config contains a dictionary with: 
+    ## config contains a dictionary with:
     ##  - all variables, their types, and values in 'shell_variables'
     ##  - the name of a file that contains them in 'shell_variables_file_path'
     # log(config['shell_variables'])
@@ -410,17 +410,17 @@ def naive_expand(argument, config):
 
     ## Parse the expanded string back to an arg_char
     expanded_arguments = parse_string_to_arguments(expanded_string)
-    
+
     ## TODO: Handle any errors
     # log(expanded_arg_char)
     return expanded_arguments
 
 
 
-## This function expands an arg_char. 
+## This function expands an arg_char.
 ## At the moment it is pretty inefficient as it serves as a prototype.
 ##
-## TODO: At the moment this has the issue that a command that has the words which we want to expand 
+## TODO: At the moment this has the issue that a command that has the words which we want to expand
 ##       might have assignments of its own, therefore requiring that we use them to properly expand.
 def expand_command_argument(argument, config):
     new_arguments = [argument]
@@ -430,7 +430,7 @@ def expand_command_argument(argument, config):
 
 ## This function compiles an arg char by recursing if it contains quotes or command substitution.
 ##
-## It is currently being extended to also expand any arguments that are safe to expand. 
+## It is currently being extended to also expand any arguments that are safe to expand.
 def compile_arg_char(arg_char, fileIdGen, config):
     ## Compile the arg char
     key, val = get_kv(arg_char)
@@ -496,7 +496,7 @@ def compile_redirections(redirections, fileIdGen, config):
 ## Replace candidate dataflow AST regions with calls to PaSh's runtime.
 def replace_ast_regions(ast_objects, irFileGen, config):
     ## TODO: Copy the structure from compile_asts
-    ##       since we want to merge multiple asts 
+    ##       since we want to merge multiple asts
     ##       into one if they contain dataflow regions.
 
     ## TODO: Follow exactly the checks that are done in compile_asts
@@ -510,23 +510,23 @@ def replace_ast_regions(ast_objects, irFileGen, config):
         ## NOTE: This could also replace all ASTs with calls to PaSh runtime.
         ##       There are a coupld issues with that:
         ##       1. We would have to make sure that state changes from PaSh runtime
-        ##          affect the current shell. However, this probably has to be solved 
+        ##          affect the current shell. However, this probably has to be solved
         ##          anyway except if we can *ensure* that no state changes can happen
         ##          in replaced parts.
         ##       2. Performance issues. Performance would be bad.
 
         ## Goals: This transformation can approximate in several directions.
         ##        1. Not replacing a candidate dataflow region.
-        ##        2. Replacing a too large candidate region 
+        ##        2. Replacing a too large candidate region
         ##           (making expansion not happen as late as possible)
-        ##        3. Not replacing a maximal dataflow region, 
+        ##        3. Not replacing a maximal dataflow region,
         ##           e.g. splitting a big one into two.
         ##        4. Replacing sections that are *certainly* not dataflow regions.
         ##           (This can only lead to performance issues.)
         ##
         ##        Which of the above can we hope to be precise with?
-        ##        Can we have proofs indicating that we are not approximating those? 
-        
+        ##        Can we have proofs indicating that we are not approximating those?
+
         ## Preprocess ast by replacing subtrees with calls to runtime.
         ## - If the whole AST needs to be replaced (e.g. if it is a pipeline)
         ##   then the second output is true.
@@ -544,10 +544,10 @@ def replace_ast_regions(ast_objects, irFileGen, config):
         else:
             ## If the current candidate dataflow region is non-empty
             ## it means that the previous AST was in the background so
-            ## the current one has to be included in the process no matter what    
+            ## the current one has to be included in the process no matter what
             if (len(candidate_dataflow_region) > 0):
                 candidate_dataflow_region.append(preprocessed_ast)
-                ## Since the current one is maximal (or not wholy replaced) 
+                ## Since the current one is maximal (or not wholy replaced)
                 ## we close the candidate.
                 replaced_ast = replace_df_region(candidate_dataflow_region, irFileGen, config)
                 candidate_dataflow_region = []
@@ -564,7 +564,7 @@ def replace_ast_regions(ast_objects, irFileGen, config):
         replaced_ast = replace_df_region(candidate_dataflow_region, irFileGen, config)
         candidate_dataflow_region = []
         preprocessed_asts.append(replaced_ast)
-    
+
     return preprocessed_asts
 
 def preprocess_node(ast_object, irFileGen, config):
@@ -592,7 +592,7 @@ def preprocess_node_pipe(ast_node, _irFileGen, _config):
     ##
     ##       For example, if a command in the pipe has a command substitution
     ##       in one of its arguments then we would like to call our runtime
-    ##       there instead of 
+    ##       there instead of
     return ast_node, True, ast_node.is_background
 
 ## TODO: Complete this
@@ -602,13 +602,13 @@ def preprocess_node_command(ast_node, _irFileGen, _config):
     ##
     ##       For example, if a command in the pipe has a command substitution
     ##       in one of its arguments then we would like to call our runtime
-    ##       there instead of 
+    ##       there instead of
 
     ## If there are no arguments, the command is just an
     ## assignment (Q: or just redirections?)
     if(len(ast_node.arguments) == 0):
         return ast_node, False, False
-    
+
     ## This means we have a command. Commands are always candidate dataflow
     ## regions.
     return ast_node, True, False
@@ -622,7 +622,7 @@ def preprocess_node_background(ast_node, _irFileGen, _config):
     ##       for mutually recursive calls to PaSh.
     return ast_node, True, True
 
-## TODO: We can actually preprocess the underlying node and then 
+## TODO: We can actually preprocess the underlying node and then
 ##       return its characteristics above. However, we would need
 ##       to add a field in the IR that a node runs in a subshell
 ##       (which would have implications on how the backend outputs it).
@@ -721,8 +721,8 @@ def preprocess_node_case(ast_node, irFileGen, config):
     return ast_node, False, False
 
 
-## TODO: I am a little bit confused about how compilation happens. 
-##       Does it happen bottom up or top down: i.e. when we first encounter an occurence 
+## TODO: I am a little bit confused about how compilation happens.
+##       Does it happen bottom up or top down: i.e. when we first encounter an occurence
 ##       do we recurse in it and then compile from the leaf, or just compile the surface?
 
 ## TODO: All the replace code might need to be deleted (since we now replace in the preprocessing).
@@ -758,21 +758,22 @@ def replace_irs(ast, irFileGen, config):
 
     return replaced_ast
 
-## This function serializes a candidate df_region in a file, and in its place, 
+## This function serializes a candidate df_region in a file, and in its place,
 ## it adds a command that calls our distribution planner with the name of the
 ## saved file.
 def replace_df_region(asts, irFileGen, config):
-    ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
+    _, ir_filename = ptempfile()
 
     ## Serialize the node in a file
     with open(ir_filename, "wb") as ir_file:
         pickle.dump(asts, ir_file)
 
-    ## Serialize the candidate df_region asts back to shell 
+    ## Serialize the candidate df_region asts back to shell
     ## so that the sequential script can be run in parallel to the compilation.
-    second_ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
+    _, second_ir_filename = ptempfile()
     save_asts_json(asts, second_ir_filename)
-    sequential_script_file_name = os.path.join("/tmp", get_pash_prefixed_random_string())
+    _, sequential_script_file_name = ptempfile()
+    print("seq:", sequential_script_file_name)
     from_ir_to_shell_file(second_ir_filename, sequential_script_file_name)
 
     ## Replace it with a command that calls the distribution
