@@ -91,7 +91,9 @@ def preprocess(ast_objects, config):
     return preprocessed_asts
 
 def execute_script(compiled_script_filename):
-    exec_obj = subprocess.run(["/usr/bin/env", "bash" ,compiled_script_filename])
+    new_env = os.environ.copy()
+    new_env["TMPDIR"] = config.PASH_TMP_PREFIX
+    exec_obj = subprocess.run(["/usr/bin/env", "bash" ,compiled_script_filename], env=new_env)
     ## Return the exit code of the executed script
     exit(exec_obj.returncode)
 
