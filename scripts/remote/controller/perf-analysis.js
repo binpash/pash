@@ -11,8 +11,6 @@ const path = require('path');
 
 const { table } = require('table');
 
-const { lets } = require('./lib.js');
-
 
 // Analysis: Convert result text files to relevant metadata and content.
 /////////////////////////////////////////////////////////////////////////////////
