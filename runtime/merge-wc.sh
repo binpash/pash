@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Part of a distributed-`wc` wrapper, merging two `wc` results
 
-paste -d '+' 
+paste -d '+'
     <(cat * |
       wc |
       tr -s ' '  '\n' |
