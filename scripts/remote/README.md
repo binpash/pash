@@ -129,7 +129,7 @@ are visible to the NGINX server using `scripts/pash-nginx.conf`*.
 
 ### Feb 1 2021
 
-- Add `perf-analysis.js` module
+- Add `perf-analysis` subsystem
 
 
 ### Jan 28 2021
