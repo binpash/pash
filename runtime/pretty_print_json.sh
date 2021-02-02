@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 sed 's/</{/g' "$1" | \
     sed 's/>/}/g' | \
