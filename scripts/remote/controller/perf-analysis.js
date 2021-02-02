@@ -28,7 +28,7 @@ const analyze = (dir) =>
               path: absolutePath,
               name: extractTestName(absolutePath),
               width: extractWidth(absolutePath),
-              exec_time: extractExecTime(absolutePath),
+              exec_time: extractExecTime(fs.readFileSync(absolutePath).toString()),
               variant: extractVariant(absolutePath),
           };
       });
@@ -40,8 +40,15 @@ const extractWidth = (p) =>
 const extractVariant = (p) =>
       (path.basename(p, path.extname(p)).match(/\d+_(\D+)$/) || [])[1]
 
-const extractExecTime = (p) =>
-      (fs.readFileSync(p).toString().match(/Execution time:[^\d]+([\d\.]+)/i) || [])[1];
+const extractExecTimeRec = (str, rx, sum) => {
+    const match = rx.exec(str);
+    return (match)
+        ? extractExecTimeRec(str, rx, parseFloat(match[1]) + sum)
+        : sum;
+};
+
+const extractExecTime = (str) =>
+      extractExecTimeRec(str, /Execution time:[^\d]+([\d\.]+)/gi, 0);
 
 // Test names appear to come before an underscore-prefixed numerical
 // segment.  I split based off _\d because splitting by underscores
@@ -86,6 +93,8 @@ const render = (history, tests) => {
 
 module.exports = {
     analyze,
+    extractWidth,
+    extractExecTime,
     findTestNames,
     keepWidth,
     keepTimed,
