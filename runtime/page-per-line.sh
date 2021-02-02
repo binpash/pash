@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Squash all HTML for each URL into a single line, streaming fashion
 # It also prefixes with the URL

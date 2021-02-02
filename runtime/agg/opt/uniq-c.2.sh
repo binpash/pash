@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 END_OF_1=$(tail -n 1 $1)
 END_NUM=$(echo $END_OF_1 | grep -E -o '^[ ]*[0-9]*[ ]*' | tr -d "[:space:]")
@@ -16,4 +16,3 @@ if [[ $START_WORD == $END_WORD ]]; then
 else
   cat $1 $2
 fi
-

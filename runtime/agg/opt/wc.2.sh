@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Part of a distributed-`wc` wrapper, merging two `wc` results
 # FIXME needs correct padding
 
-paste -d '+' 
+paste -d '+'
     <(cat $1 |
       wc |
       tr -s ' '  '\n' |
