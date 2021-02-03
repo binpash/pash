@@ -42,7 +42,7 @@ main() {
         local width="$4";
         local variant="$5";
         echo "$heading, --width $width ($variant)" >> "$output_summary_file";
-        node "$pash_d/scripts/remote/perf-analysis/report.js" \
+        node "$pash_d/scripts/remote/controller/perf-analysis/report.js" \
              "$output_revision_directory/$subdir" "$width" "$variant" >> "$output_summary_file";
     }
 
