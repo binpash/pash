@@ -19,7 +19,7 @@ main() {
     local revision="${1:-$latest_main_revision}";
 
     # For reproducibility.
-    trap 'git checkout "$initial_revision"' EXIT
+    trap "git checkout '$initial_revision'" EXIT
     
     # Use subshell for new working directory and
     # visual distinction in `set -e`
