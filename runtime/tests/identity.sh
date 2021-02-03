@@ -3,13 +3,18 @@ file2=2.out
 file3=3.out
 file4=4.out
 file5=5.out
-testFile=test1.txt
-batchSize=100
+testFile=../../evaluation/scripts/input/10M.txt
+batchSize=10000
 
-../r_split $testFile $batchSize $file1 $file2
+mkfifo $file1
+mkfifo $file2
+mkfifo $file3
+mkfifo $file4
 
-../r_wrap cat < $file1 > $file3
-../r_wrap cat < $file2 > $file4 
+../r_split $testFile $batchSize $file1 $file2 &
+
+../r_wrap cat < $file1 > $file3 &
+../r_wrap cat < $file2 > $file4 &
 
 ../r_merge $file3 $file4 > $file5
 
