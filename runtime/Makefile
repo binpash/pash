@@ -19,7 +19,7 @@ split-debug: split.c
 	gcc ${CFLAGS} split.c -o split
 
 eager: eager.c eager_lib.c
-	gcc ${CFLAGS} eager.c eager_lib.c -o eagers
+	gcc ${CFLAGS} eager.c eager_lib.c -o eager
 
 eager-debug: eager.c eager_lib.c
 	gcc ${CFLAGS} -pg eager.c eager_lib.c -o eager
