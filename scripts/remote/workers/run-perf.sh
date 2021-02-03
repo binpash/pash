@@ -9,10 +9,6 @@ cleanup() {
   docker container rm $CONTAINER_NAME
 }
 
-run() {
-  docker exec $CONTAINER_NAME /bin/bash -c "cd /pash/evaluation/eurosys && $@"
-}
-
 cleanup
 docker run -itd --name pash-perf pash /bin/bash
 
@@ -33,7 +29,7 @@ else
     # Do not delete the dots and slashes at the end of the arguments.
     # They trigger desired merging behavior.
     # https://github.com/moby/moby/issues/31251#issuecomment-281634234
-    docker cp "$CONTAINER_NAME:/pash/evaluation/results/." results/
+    docker cp "$CONTAINER_NAME:/tmp/results/." results/
 
     # The controller looks for this.
     echo '<<done>>'
