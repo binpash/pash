@@ -3,7 +3,7 @@
 # Run performance tests
 
 main() {
-    set +Eex;
+    set -Eex;
 
     local pash_d="$(get_pash_dir)";
 
@@ -13,17 +13,20 @@ main() {
     echo "Will write to $output_revision_directory";
 
     cd "$pash_d";
-    git fetch && git pull;
+    git fetch;
     local initial_revision="$(get_revision HEAD)";
     local latest_main_revision="$(get_revision main)";
-    local revision="${1:-latest_main_revision}";
+    local revision="${1:-$latest_main_revision}";
 
     # For reproducibility.
     trap 'git checkout "$initial_revision"' EXIT
-
+    
     # Use subshell for new working directory and
     # visual distinction in `set -e`
-    (build_pash_runtime && run_performance_test_suites);
+    echo "Running performance tests for $revision"
+    (git checkout "$revision" && \
+     build_pash_runtime && \
+     run_performance_test_suites);
 
     # The code to build the summary file might not be in the commit
     # used to run the tests.
