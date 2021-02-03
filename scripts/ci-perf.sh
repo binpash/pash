@@ -12,6 +12,7 @@ main() {
     local output_revision_directory="${output_dir}/$revision";
     echo "Will write to $output_revision_directory";
 
+    cd "$pash_d";
     git fetch && git pull;
     local initial_revision="$(get_revision HEAD)";
     local latest_main_revision="$(get_revision main)";
@@ -43,7 +44,7 @@ get_revision() {
     git rev-parse --short "${1:-HEAD}";
 }
 
-run_performance_test_suites() { 
+run_performance_test_suites() {
     local pash_d=$(get_pash_dir);
     cd "$pash_d/evaluation/eurosys";
     echo "RUNNING";
