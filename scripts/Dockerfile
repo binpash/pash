@@ -5,12 +5,14 @@ RUN apt-get update -y
 RUN apt-get upgrade -y
 RUN apt-get install -y git sudo locales locales-all curl
 
-# According to an email, Node v8.x is close to lowest stakeholder version.
-# Adjust PPA accordingly.
-RUN curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh
-RUN bash nodesource_setup.sh
-RUN apt-get update -y
-RUN apt-get install -y nodejs npm
+# NVM
+ENV NVM_DIR ~/.nvm
+ENV NODE_VERSION 8.9.4 # Reportedly the lowest NodeJS version used by stakeholders.
+RUN curl https://raw.githubusercontent.com/creationix/nvm/v0.37.2/install.sh | bash \
+    && . $NVM_DIR/nvm.sh \
+    && nvm install $NODE_VERSION \
+    && nvm alias default $NODE_VERSION \
+    && nvm use default
 
 RUN git clone https://github.com/andromeda/pash.git
 WORKDIR "/pash"
