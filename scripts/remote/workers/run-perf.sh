@@ -25,14 +25,7 @@ else
     mkdir lock
     trap 'rm -r lock' EXIT
 
-    docker exec $CONTAINER_NAME /bin/bash -c "cd /pash && git pull"
-    run ./execute_eurosys_one_liners.sh -m
-    run ./execute_unix_benchmarks.sh -l
-
-    ## Uncomment when ready to deal with large inputs.
-    # run execute_baseline_sort.sh
-    # run execute_max_temp_dish_evaluation.sh
-    # run execute_web_index_dish_evaluation.sh
+    docker exec $CONTAINER_NAME /bin/bash -c "/pash/scripts/ci-perf.sh"
 
     # WARNING: If you are using the snap edition of Docker, this
     # command may break at the start of a personalized rabbit hole.
