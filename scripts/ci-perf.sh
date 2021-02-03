@@ -32,7 +32,24 @@ main() {
     # used to run the tests.
     git checkout "$latest_main_revision";
     echo "Summarizing results";
+
+    summarize_suite() {
+        local heading="$1";
+        local subdir="$2";
+        local tests="$3";
+        local width="$4";
+        local variant="$5";
+        echo "$heading, --width $width ($variant)" >> "$output_summary_file";
+        echo node "$(get_pash_dir)/scripts/remote/perf-analysis/report.js" \
+             "$output_revision_directory/$subdir" "$width" "$variant" #>> "$output_summary_file";
+    }
+
+    summarize_suite "EuroSys One-liners" \
+                    "eurosys_small" \
+                    "wf,topn" \
+                    2 "distr_auto_split";
 }
+
 
 build_pash_runtime() {
     make -C "$(get_pash_dir)/runtime"
