@@ -8,7 +8,7 @@ main() {
     local pash_d="$(get_pash_dir)";
 
     cd "$pash_d";
-    git fetch;
+
     local initial_revision="$(get_revision HEAD)";
     local latest_main_revision="$(get_revision main)";
     local revision="${1:-$latest_main_revision}";
@@ -16,6 +16,10 @@ main() {
     local output_dir="${2:-/tmp/results}";
     local output_revision_directory="${output_dir}/$revision";
     echo "Will write to $output_revision_directory";
+
+    # Use subshell for new working directory and
+    # visual distinction in `set -e`
+    echo "Running performance tests for $revision"
 
     mkdir -p "$output_revision_directory";
     cp -r "$pash_d/evaluation/results/." "$output_revision_directory/"
@@ -28,10 +32,23 @@ main() {
         local width="$5";
         local variant="$6";
         local summary_file="${output_dir}/summary_${summary_name}";
-        echo "$heading, --width $width ($variant)" >> "$summary_file";
+        local heading_arg=$(
+            if [ ! -f "$summary_file" ]; then
+                printf "$heading, --width $width ($variant)";
+            else
+                printf ''
+            fi
+        )
+
         node "$pash_d/scripts/remote/controller/perf-analysis/report.js" \
-             "$output_revision_directory/$subdir" "$tests" "$width" "$variant" 2>"$summary_file.stderr" 1>> "$summary_file";
-        echo >> "$summary_file";
+             "$revision" \
+             "$output_revision_directory/$subdir" \
+             "$tests" \
+             "$width" \
+             "$variant" \
+             "$heading_arg" \
+             1>> "$summary_file" \
+             2>"$summary_file.stderr";
     }
 
     echo "Summarizing results";
@@ -57,5 +74,6 @@ get_pash_dir() {
 get_revision() {
     git rev-parse --short "${1:-HEAD}";
 }
+
 
 main "$@"
