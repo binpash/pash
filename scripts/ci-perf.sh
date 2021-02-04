@@ -29,7 +29,7 @@ main() {
      run_performance_test_suites);
 
     mkdir -p "$output_dir";
-    cp -r "$pash_d/evaluation/results" "$output_revision_directory"
+    cp -r "$pash_d/evaluation/results/." "$output_revision_directory/"
 
     # The code to build the summary file might not be in the commit
     # used to run the tests.
