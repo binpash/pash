@@ -27,7 +27,7 @@ else
     trap 'cleanup' EXIT
     trap 'echo "<<fail>>"' ERR
 
-    local fallback_path=~/pash/scripts/Dockerfile;
+    fallback_path=~/pash/scripts/Dockerfile;
     docker build -t $IMAGE_TAG - < "${1:-$fallback_path}";
     docker run -itd --name $CONTAINER_NAME $IMAGE_TAG /bin/bash
 
