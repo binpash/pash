@@ -14,7 +14,6 @@ main() {
     local revision="${1:-$latest_main_revision}";
 
     local output_dir="${2:-/tmp/results}";
-    local output_summary_file="${output_dir}/summary";
     local output_revision_directory="${output_dir}/$revision";
     echo "Will write to $output_revision_directory";
 
@@ -37,13 +36,14 @@ main() {
 
     summarize_suite() {
         local heading="$1";
+        local summary_name="$2";
         local subdir="$2";
         local tests="$3";
         local width="$4";
         local variant="$5";
         echo "$heading, --width $width ($variant)" >> "$output_summary_file";
         node "$pash_d/scripts/remote/controller/perf-analysis/report.js" \
-             "$output_revision_directory/$subdir" "$tests" "$width" "$variant" >> "$output_summary_file";
+             "$output_revision_directory/$subdir" "$tests" "$width" "$variant" >> "${output_dir}/summary_$2";
     }
 
     echo "Summarizing results";
@@ -51,8 +51,14 @@ main() {
 
     summarize_suite "EuroSys One-liners" \
                     "eurosys_small" \
+                    "eurosys_small" \
                     "$eurosys_tests" \
-                    2 "distr_auto_split";
+                    "2" \
+                    "distr_auto_split";
+
+    # Generate index page so others can review available summaries
+    # through web server.
+    ls "${output_dir}/summary_*" > "${output_dir}/index";
 }
 
 
