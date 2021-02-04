@@ -41,9 +41,11 @@ main() {
         local tests="$3";
         local width="$4";
         local variant="$5";
-        echo "$heading, --width $width ($variant)" >> "$output_summary_file";
+        local summary_file="${output_dir}/summary_${summary_name}";
+        echo "$heading, --width $width ($variant)" >> "$summary_file";
         node "$pash_d/scripts/remote/controller/perf-analysis/report.js" \
-             "$output_revision_directory/$subdir" "$tests" "$width" "$variant" >> "${output_dir}/summary_$2";
+             "$output_revision_directory/$subdir" "$tests" "$width" "$variant" >> "$summary_file";
+        echo >> "$summary_file";
     }
 
     echo "Summarizing results";
