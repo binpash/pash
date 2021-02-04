@@ -24,6 +24,9 @@ else
     docker build -t $IMAGE_TAG - < "${1:-~/pash/scripts/Dockerfile}"
     docker run -itd --name $CONTAINER_NAME $IMAGE_TAG /bin/bash
 
+    # /!\ Remove this line when merging branch to main /!\
+    docker exec $CONTAINER_NAME /bin/bash -c "cd /pash && git fetch && git checkout perf && git pull"
+
     docker exec $CONTAINER_NAME /bin/bash -c "/pash/scripts/ci-perf.sh"
 
     # WARNING: If you are using the snap edition of Docker, this
