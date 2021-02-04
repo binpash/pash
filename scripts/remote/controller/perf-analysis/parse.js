@@ -61,15 +61,22 @@ const analyzePerfSuite = (dir, tests, width, variant) =>
 
 // The summarize* functions return strings suitable for use in a report.
 const summarizePerfData = ({ analyzeContent, variant }) => {
-    const { execTime, speedup, bashTimes: { real, user, sys } } = analyzeContent();
+    if (variant === 'seq') {
+        try {
+            const { bashTimes: { real, user, sys } } = analyzeContent();
+            return `R:${real}s U:${user}s S:${sys}s`;
+        } catch (e) {
+            return '?';
+        }
+    } else {
+        const { execTime, speedup } = analyzeContent();
 
-    const factor = (typeof speedup === 'number')
-          ? `, x${speedup.toFixed(2)}`
-          : '';
+        const factor = (typeof speedup === 'number')
+              ? `, x${speedup.toFixed(2)}`
+              : '';
 
-    return variant === 'seq'
-        ? `R:${real}s U:${user}s S:${sys}s`
-        : `${execTime.toFixed(2)}s${factor}`;
+        return `${execTime.toFixed(2)}s${factor}`;
+    }
 };
 
 
