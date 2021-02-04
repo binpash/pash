@@ -7,7 +7,7 @@ IMAGE_TAG=pash-perf-img
 CONTAINER_NAME=pash-perf
 
 cleanup() {
-    rm -r lock
+    [ -d lock ] && rm -r lock
     docker container stop $CONTAINER_NAME
     docker container rm $CONTAINER_NAME
 }
