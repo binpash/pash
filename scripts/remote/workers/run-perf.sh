@@ -27,7 +27,7 @@ else
     trap 'cleanup' EXIT
     trap 'echo "<<fail>>"' ERR
 
-    docker build -t $IMAGE_TAG - < "${1:-~/pash/scripts/Dockerfile}"
+    docker build -t $IMAGE_TAG - < ${1:-~/pash/scripts/Dockerfile}
     docker run -itd --name $CONTAINER_NAME $IMAGE_TAG /bin/bash
 
     # /!\ Remove this line when merging branch to main /!\
