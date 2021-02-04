@@ -7,20 +7,20 @@ main() {
 
     local pash_d="$(get_pash_dir)";
 
-    local output_dir="${2:-/tmp/results}";
-    local output_summary_file="${output_dir}/summary";
-    local output_revision_directory="${output_dir}/$revision";
-    echo "Will write to $output_revision_directory";
-
     cd "$pash_d";
     git fetch;
     local initial_revision="$(get_revision HEAD)";
     local latest_main_revision="$(get_revision main)";
     local revision="${1:-$latest_main_revision}";
 
+    local output_dir="${2:-/tmp/results}";
+    local output_summary_file="${output_dir}/summary";
+    local output_revision_directory="${output_dir}/$revision";
+    echo "Will write to $output_revision_directory";
+
     # For reproducibility.
     trap "git checkout '$initial_revision'" EXIT
-    
+
     # Use subshell for new working directory and
     # visual distinction in `set -e`
     echo "Running performance tests for $revision"
@@ -28,7 +28,7 @@ main() {
      build_pash_runtime && \
      run_performance_test_suites);
 
-    mkdir -p "$output_dir";
+    mkdir -p "$output_revision_directory";
     cp -r "$pash_d/evaluation/results/." "$output_revision_directory/"
 
     # The code to build the summary file might not be in the commit
