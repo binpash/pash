@@ -54,11 +54,9 @@ const analyzePerfFile = (absolutePath) => {
 };
 
 
-const analyzePerfSuite = (dir, tests, width, variant) => {
-    console.log(tests);
-    return tests.map((test) =>
-        analyzePerfFile(path.resolve(dir, makePerfFileName(test, width, variant))));
-}
+const analyzePerfSuite = (dir, tests, width, variant) =>
+      tests.map((test) =>
+          analyzePerfFile(path.resolve(dir, makePerfFileName(test, width, variant))));
 
 
 // The summarize* functions return strings suitable for use in a report.
