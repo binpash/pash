@@ -1,21 +1,12 @@
 #! /bin/bash
 
-# Invariant: ~/pash/scripts/Dockerfile exists, if argument is not
-# specified.
+# Invariant: pash-perf container is running
 
 IMAGE_TAG=pash-perf-img
 CONTAINER_NAME=pash-perf
 
 cleanup() {
     [ -d lock ] && rm -r lock
-
-    if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
-        if [ "$(docker ps -aq -f status=exited -f name=$CONTAINER_NAME)" ]; then
-            echo
-            docker container stop "$CONTAINER_NAME";
-            docker container rm "$CONTAINER_NAME";
-        fi
-    fi
 }
 
 if [ -d lock ]; then
@@ -25,11 +16,7 @@ else
     mkdir lock
 
     trap 'cleanup' EXIT
-    trap 'echo "<<fail>>"' ERR
-
-    fallback_path=~/pash/scripts/Dockerfile;
-    docker build -t $IMAGE_TAG - < "${1:-$fallback_path}";
-    docker run -itd --name $CONTAINER_NAME $IMAGE_TAG /bin/bash
+    trap 'echo "<<fail>>"; exit 1' ERR
 
     # /!\ Remove this line when merging branch to main /!\
     docker exec $CONTAINER_NAME /bin/bash -c "cd /pash && git fetch && git checkout perf && git pull"
