@@ -43,7 +43,7 @@ main() {
         local variant="$5";
         echo "$heading, --width $width ($variant)" >> "$output_summary_file";
         node "$pash_d/scripts/remote/controller/perf-analysis/report.js" \
-             "$output_revision_directory/$subdir" "$width" "$variant" >> "$output_summary_file";
+             "$output_revision_directory/$subdir" "$tests" "$width" "$variant" >> "$output_summary_file";
     }
 
     echo "Summarizing results";
