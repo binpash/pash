@@ -1,7 +1,9 @@
 #! /bin/bash
 
-# Invariant: Docker image `pash` must exist.
+# Invariant: ~/pash/scripts/Dockerfile exists, if argument is not
+# specified.
 
+IMAGE_TAG=pash-perf-img
 CONTAINER_NAME=pash-perf
 
 cleanup() {
@@ -9,17 +11,17 @@ cleanup() {
   docker container rm $CONTAINER_NAME
 }
 
-cleanup
-docker run -itd --name pash-perf pash /bin/bash
-
-trap 'cleanup' EXIT
-trap 'echo "<<fail>>"' ERR
-
 if [ -d lock ]; then
     echo "Busy on existing job."
 else
     mkdir lock
     trap 'rm -r lock' EXIT
+
+    docker build -t $IMAGE_TAG - < "${1:-~/pash/scripts/Dockerfile}"
+    docker run -itd --name $CONTAINER_NAME $IMAGE_TAG /bin/bash
+
+    trap 'cleanup' EXIT
+    trap 'echo "<<fail>>"' ERR
 
     docker exec $CONTAINER_NAME /bin/bash -c "/pash/scripts/ci-perf.sh"
 
