@@ -47,9 +47,11 @@ main() {
     }
 
     echo "Summarizing results";
+    local eurosys_tests='bigrams,diff,minimal_grep,minimal_sort,set-diff,spell,topn,wf'
+
     summarize_suite "EuroSys One-liners" \
                     "eurosys_small" \
-                    "wf,topn" \
+                    "$eurosys_tests" \
                     2 "distr_auto_split";
 }
 
