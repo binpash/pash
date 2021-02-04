@@ -42,15 +42,23 @@ main() {
         local width="$5";
         local variant="$6";
         local summary_file="${output_dir}/summary_${summary_name}";
-
-        if [ ! -f "$summary_file" ]; then
-            echo "$heading, --width $width ($variant)" > "$summary_file";
-        fi
+        local heading_arg=$(
+            if [ ! -f "$summary_file" ]; then
+                printf "$heading, --width $width ($variant)";
+            else
+                printf ''
+            fi
+        )
 
         node "$pash_d/scripts/remote/controller/perf-analysis/report.js" \
-             "$output_revision_directory/$subdir" "$tests" "$width" "$variant" 2>"$summary_file.stderr" 1>> "$summary_file";
-
-        echo >> "$summary_file";
+             "$revision" \
+             "$output_revision_directory/$subdir" \
+             "$tests" \
+             "$width" \
+             "$variant" \
+             "$heading_arg" \
+             1>> "$summary_file" \
+             2>"$summary_file.stderr";
     }
 
     echo "Summarizing results";
