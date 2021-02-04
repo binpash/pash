@@ -37,14 +37,14 @@ main() {
     summarize_suite() {
         local heading="$1";
         local summary_name="$2";
-        local subdir="$2";
-        local tests="$3";
-        local width="$4";
-        local variant="$5";
+        local subdir="$3";
+        local tests="$4";
+        local width="$5";
+        local variant="$6";
         local summary_file="${output_dir}/summary_${summary_name}";
         echo "$heading, --width $width ($variant)" >> "$summary_file";
         node "$pash_d/scripts/remote/controller/perf-analysis/report.js" \
-             "$output_revision_directory/$subdir" "$tests" "$width" "$variant" >> "$summary_file";
+             "$output_revision_directory/$subdir" "$tests" "$width" "$variant" 2>"$summary_file.stderr" 1>> "$summary_file";
         echo >> "$summary_file";
     }
 
