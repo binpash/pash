@@ -8,8 +8,14 @@ CONTAINER_NAME=pash-perf
 
 cleanup() {
     [ -d lock ] && rm -r lock
-    docker container stop $CONTAINER_NAME
-    docker container rm $CONTAINER_NAME
+
+    if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
+        if [ "$(docker ps -aq -f status=exited -f name=$CONTAINER_NAME)" ]; then
+            echo
+            docker container stop "$CONTAINER_NAME";
+            docker container rm "$CONTAINER_NAME";
+        fi
+    fi
 }
 
 if [ -d lock ]; then
