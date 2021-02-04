@@ -28,12 +28,12 @@ main() {
      build_pash_runtime && \
      run_performance_test_suites);
 
+    mkdir -p "$output_dir";
+    cp -r "$pash_d/evaluation/results" "$output_revision_directory"
+
     # The code to build the summary file might not be in the commit
     # used to run the tests.
     git checkout "$latest_main_revision";
-
-    echo "Summarizing results";
-    mkdir -p "$output_revision_directory";
 
     summarize_suite() {
         local heading="$1";
@@ -46,6 +46,7 @@ main() {
              "$output_revision_directory/$subdir" "$width" "$variant" >> "$output_summary_file";
     }
 
+    echo "Summarizing results";
     summarize_suite "EuroSys One-liners" \
                     "eurosys_small" \
                     "wf,topn" \
