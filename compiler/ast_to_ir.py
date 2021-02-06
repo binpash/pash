@@ -773,7 +773,6 @@ def replace_df_region(asts, irFileGen, config):
     _, second_ir_filename = ptempfile()
     save_asts_json(asts, second_ir_filename)
     _, sequential_script_file_name = ptempfile()
-    print("seq:", sequential_script_file_name)
     from_ir_to_shell_file(second_ir_filename, sequential_script_file_name)
 
     ## Replace it with a command that calls the distribution
