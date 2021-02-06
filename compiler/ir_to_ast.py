@@ -8,6 +8,7 @@ from ir_utils import *
 from json_ast import save_asts_json
 from parse import from_ir_to_shell
 import config
+import tempfile
 
 def to_shell(ir, output_dir, args):
     backend_start_time = datetime.now()
@@ -16,7 +17,7 @@ def to_shell(ir, output_dir, args):
     output_asts = ir2ast(ir, args)
 
     ## Then just call the parser.
-    temp_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
+    temp_fh, temp_filename = tempfile.mkstemp(dir=config.PASH_TMP_PREFIX)
     save_asts_json(output_asts, temp_filename)
     output_script = from_ir_to_shell(temp_filename)
 
@@ -48,16 +49,16 @@ def ir2ast(ir, args):
 
     # log("Ephemeral fids:", ephemeral_fids)
 
-    ## Call the prologue that creates fifos for all ephemeral fids    
+    ## Call the prologue that creates fifos for all ephemeral fids
     prologue = make_ir_prologue(ephemeral_fids)
-    
+
     ## Call the epilogue that removes all ephemeral fids
     epilogue = make_ir_epilogue(ephemeral_fids, clean_up_graph, args.log_file)
 
     final_asts = prologue + body + epilogue
 
     return final_asts
-    
+
 def make_rms_f_prologue_epilogue(ephemeral_fids):
     asts = []
     ## Create an `rm -f` for each ephemeral fid
@@ -77,7 +78,7 @@ def make_ir_prologue(ephemeral_fids):
         args = [eph_fid.to_ast()]
         command = make_mkfifo_ast(args)
         asts.append(command)
-    
+
     return asts
 
 def make_ir_epilogue(ephemeral_fids, clean_up_graph, log_file):
