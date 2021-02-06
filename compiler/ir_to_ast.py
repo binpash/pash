@@ -8,7 +8,6 @@ from ir_utils import *
 from json_ast import save_asts_json
 from parse import from_ir_to_shell
 import config
-import tempfile
 
 def to_shell(ir, output_dir, args):
     backend_start_time = datetime.now()
@@ -17,7 +16,7 @@ def to_shell(ir, output_dir, args):
     output_asts = ir2ast(ir, args)
 
     ## Then just call the parser.
-    temp_fh, temp_filename = tempfile.mkstemp(dir=config.PASH_TMP_PREFIX)
+    temp_fh, temp_filename = ptempfile()
     save_asts_json(output_asts, temp_filename)
     output_script = from_ir_to_shell(temp_filename)
 
