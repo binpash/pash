@@ -5,7 +5,6 @@ from datetime import datetime
 
 from annotations import *
 from ast_to_ir import *
-from pash_runtime import *
 from ir import *
 from json_ast import *
 from parse import parse_shell, from_ir_to_shell_file
