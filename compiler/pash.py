@@ -46,10 +46,10 @@ def main():
     ## 4. Translate the new AST back to shell syntax
     input_script_wo_extension, _input_script_extension = os.path.splitext(input_script_path)
     input_script_basename = os.path.basename(input_script_wo_extension)
-    ir_filename = os.path.join(config.PASH_TMP_PREFIX, input_script_basename + ".ir")
+    _, ir_filename = ptempfile()
     save_asts_json(preprocessed_asts, ir_filename)
 
-    preprocessed_output, fname = ptempfile()
+    _, fname = ptempfile()
     log("Preprocessed script stored in:", fname)
     if(args.output_preprocessed):
         log("Preprocessed script:")
