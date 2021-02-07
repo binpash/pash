@@ -537,105 +537,115 @@ void mk_here (struct redirection_TYPE* redirection, union node* n, int ty) {
     h :: redirs (getf (n @-> node_nfile) nfile_next)
 */
 struct redirectionList* redirs (union node* n) {
-    if (n == NULL) {
-        return NULL;
+    struct redirectionList* headRL = NULL;
+    struct redirectionList* lastRL = NULL;
+
+    while (n != NULL) {
+        struct redirection_TYPE* redirection = malloc (sizeof (struct redirection_TYPE));
+        assert (redirection != NULL);
+
+        switch (n->type) {
+            case NTO: {
+                // (* NTO *)
+                // | 16 -> mk_file To
+
+                redirection->type = REDIRECTION_TYPE_FILE;
+                mk_file (redirection, n, REDIR_TYPE_TO);
+            }
+                break;
+
+            case NCLOBBER: {
+                // (* NCLOBBER *)
+                // | 17 -> mk_file Clobber
+
+                redirection->type = REDIRECTION_TYPE_FILE;
+                mk_file (redirection, n, REDIR_TYPE_CLOBBER);
+            }
+                break;
+
+            case NFROM: {
+                // (* NFROM *)
+                // | 18 -> mk_file From
+                redirection->type = REDIRECTION_TYPE_FILE;
+                mk_file (redirection, n, REDIR_TYPE_FROM);
+            }
+                break;
+
+            case NFROMTO: {
+                // (* NFROMTO *)
+                // | 19 -> mk_file FromTo
+                redirection->type = REDIRECTION_TYPE_FILE;
+                mk_file (redirection, n, REDIR_TYPE_FROMTO);
+            }
+                break;
+
+            case NAPPEND: {
+                // (* NAPPEND *)
+                // | 20 -> mk_file Append
+                redirection->type = REDIRECTION_TYPE_FILE;
+                mk_file (redirection, n, REDIR_TYPE_APPEND);
+            }
+                break;
+
+            case NTOFD: {
+                // (* NTOFD *)
+                // | 21 -> mk_dup ToFD
+
+                redirection->type = REDIRECTION_TYPE_DUP;
+                mk_dup (redirection, n, DUP_TYPE_TOFD);
+            }
+                break;
+
+            case NFROMFD: {
+                // (* NFROMFD *)
+                // | 22 -> mk_dup FromFD
+
+                redirection->type = REDIRECTION_TYPE_DUP;
+                mk_dup (redirection, n, DUP_TYPE_FROMFD);
+            }
+                break;
+
+            case NHERE: {
+                // (* NHERE quoted heredoc---no expansion)*)
+                // | 23 -> mk_here Here
+
+                redirection->type = REDIRECTION_TYPE_HEREDOC;
+                mk_here (redirection, n, HEREDOC_TYPE_HERE);
+            }
+                break;
+
+            case NXHERE: {
+                // (* NXHERE unquoted heredoc (param/command/arith expansion) *)
+                // | 24 -> mk_here XHere
+                redirection->type = REDIRECTION_TYPE_HEREDOC;
+                mk_here (redirection, n, HEREDOC_TYPE_XHERE);
+            }
+                break;
+
+            default: {
+                // | nt -> failwith ("unexpected node_type in redirlist: " ^ string_of_int nt)
+                assert (! "Invalid redirs type");
+            }
+                break;
+        }
+
+        struct redirectionList* newRL = malloc (sizeof (struct redirectionList));
+        assert (newRL != NULL);
+        newRL->redir = redirection;
+        newRL->next = NULL;
+
+        if (headRL == NULL) {
+            headRL = newRL;
+            lastRL = newRL;
+        } else {
+            lastRL->next = newRL;
+            lastRL = newRL;
+        }
+
+        n = n->nfile.next;
     }
 
-    struct redirection_TYPE* redirection = malloc (sizeof (struct redirection_TYPE));
-    assert (redirection != NULL);
-
-    struct redirectionList* rlist = malloc (sizeof (struct redirectionList));
-    assert (rlist != NULL);
-    rlist->redir = redirection;
-
-    switch (n->type) {
-        case NTO: {
-            // (* NTO *)
-            // | 16 -> mk_file To
-
-            redirection->type = REDIRECTION_TYPE_FILE;
-            mk_file (redirection, n, REDIR_TYPE_TO);
-        }
-            break;
-
-        case NCLOBBER: {
-            // (* NCLOBBER *)
-            // | 17 -> mk_file Clobber
-
-            redirection->type = REDIRECTION_TYPE_FILE;
-            mk_file (redirection, n, REDIR_TYPE_CLOBBER);
-        }
-            break;
-
-        case NFROM: {
-            // (* NFROM *)
-            // | 18 -> mk_file From
-            redirection->type = REDIRECTION_TYPE_FILE;
-            mk_file (redirection, n, REDIR_TYPE_FROM);
-        }
-            break;
-
-        case NFROMTO: {
-            // (* NFROMTO *)
-            // | 19 -> mk_file FromTo
-            redirection->type = REDIRECTION_TYPE_FILE;
-            mk_file (redirection, n, REDIR_TYPE_FROMTO);
-        }
-            break;
-
-        case NAPPEND: {
-            // (* NAPPEND *)
-            // | 20 -> mk_file Append
-            redirection->type = REDIRECTION_TYPE_FILE;
-            mk_file (redirection, n, REDIR_TYPE_APPEND);
-        }
-            break;
-
-        case NTOFD: {
-            // (* NTOFD *)
-            // | 21 -> mk_dup ToFD
-
-            redirection->type = REDIRECTION_TYPE_DUP;
-            mk_dup (redirection, n, DUP_TYPE_TOFD);
-        }
-            break;
-
-        case NFROMFD: {
-            // (* NFROMFD *)
-            // | 22 -> mk_dup FromFD
-
-            redirection->type = REDIRECTION_TYPE_DUP;
-            mk_dup (redirection, n, DUP_TYPE_FROMFD);
-        }
-            break;
-
-        case NHERE: {
-            // (* NHERE quoted heredoc---no expansion)*)
-            // | 23 -> mk_here Here
-
-            redirection->type = REDIRECTION_TYPE_HEREDOC;
-            mk_here (redirection, n, HEREDOC_TYPE_HERE);
-        }
-            break;
-
-        case NXHERE: {
-            // (* NXHERE unquoted heredoc (param/command/arith expansion) *)
-            // | 24 -> mk_here XHere
-            redirection->type = REDIRECTION_TYPE_HEREDOC;
-            mk_here (redirection, n, HEREDOC_TYPE_XHERE);
-        }
-            break;
-
-        default: {
-            // | nt -> failwith ("unexpected node_type in redirlist: " ^ string_of_int nt)
-            assert (! "Invalid redirs type");
-        }
-            break;
-    }
-
-    rlist->next = redirs (n->nfile.next);
-
-    return rlist;
+    return headRL;
 }
 
 
@@ -789,7 +799,8 @@ arg_TYPE parse_arg (CharList s, struct nodelist** bqlist, Stack stack) {
         // destroyCharList (var_name);
 
         return (arg_char_FUNC (v, s, bqlist, stack));
-    } else if (   (! isCharListEmpty (s))
+    } else if (   FALSE /* match Pash's version of libdash */
+               && (! isCharListEmpty (s))
                && (charListHead_char (s) == CTLVAR)) {
         // | '\130'::_, _ -> raise (ParseException "bad substitution (missing variable name in ${}?")
         assert (! "bad substitution (missing variable name in ${}?");
