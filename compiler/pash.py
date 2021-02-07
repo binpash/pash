@@ -13,6 +13,7 @@ from util import *
 import config
 import pprint
 import tempfile
+import shutil
 
 def main():
     preprocessing_start_time = datetime.now()
@@ -60,7 +61,7 @@ def main():
 
     ## 5. Execute the preprocessed version of the input script
     if(not args.preprocess_only):
-        execute_script(fname)
+        execute_script(fname, args.debug)
 
 
 def parse_args():
@@ -90,10 +91,13 @@ def preprocess(ast_objects, config):
 
     return preprocessed_asts
 
-def execute_script(compiled_script_filename):
+def execute_script(compiled_script_filename, debug_level):
     new_env = os.environ.copy()
     new_env["PASH_TMP_PREFIX"] = config.PASH_TMP_PREFIX
     exec_obj = subprocess.run(["/usr/bin/env", "bash" ,compiled_script_filename], env=new_env)
+    ## Delete the temp directory when not debugging
+    if(debug_level == 0):
+        shutil.rmtree(config.PASH_TMP_PREFIX)
     ## Return the exit code of the executed script
     exit(exec_obj.returncode)
 
