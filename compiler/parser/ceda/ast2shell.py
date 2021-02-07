@@ -247,8 +247,9 @@ def string_of_if (c, t, e):
         and (len (e [1][2]) == 0) \
         and (len (e [1][3]) == 0):
        str1 = str1 + "; fi";
-    elif (e [0] == "If"):
-        (c2, t2, e2) = e;
+    elif (    e [0] == "If" \
+          and (len (e [1]) == 3)):
+        (c2, t2, e2) = e [1];
 
         str1 = str1 + "; el" + string_of_if (c2, t2, e2);
     else:
@@ -325,7 +326,9 @@ def escaped (param):
 #   | Q a -> "\"" ^ string_of_arg a ^ "\""
 #   | B t -> "$(" ^ to_string t ^ ")"
 def string_of_arg_char (c):
-    assert (len (c) == 2);
+    if (len (c) != 2):
+        print (c);
+        assert (len (c) == 2);
 
     (type, param) = c;
 
@@ -400,6 +403,8 @@ def string_of_arg_char (c):
 #   | [] -> ""
 #   | c :: a -> string_of_arg_char c ^ string_of_arg a
 def string_of_arg (args):
+    # print (args);
+
     if (len (args) == 0):
         return "";
     else:
