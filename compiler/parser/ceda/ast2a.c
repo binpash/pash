@@ -474,8 +474,10 @@ void mk_dup (struct redirection_TYPE* redirection, union node* n, int ty) {
 
     union node* vname = n->ndup.vname;
 
-    arg_TYPE tgt = newCharList ();
+    arg_TYPE tgt;
     if (vname == NULL) {
+        tgt = newCharList ();
+
         int dupfd = n->ndup.dupfd;
 
         if (dupfd == -1) {
@@ -493,6 +495,8 @@ void mk_dup (struct redirection_TYPE* redirection, union node* n, int ty) {
                 i ++;
             }
         }
+    } else {
+        tgt = to_arg (&(vname->narg)); // Not used!
     }
 
     redirection->type = REDIRECTION_TYPE_DUP;
