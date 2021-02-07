@@ -28,11 +28,6 @@ def main():
     ## Make a directory for temporary files
     config.PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
 
-    ## Load annotations
-    ## TODO: The annotations are not used in the preprocessing step anymore
-    ##       so we can avoid loading the annotation files here.
-    # config.annotations = load_annotation_files(config.config['distr_planner']['annotations_dir'])
-
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
     input_script_path = args.input
     json_ast_string = parse_shell(input_script_path)
