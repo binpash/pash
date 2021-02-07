@@ -22,7 +22,10 @@ PYTHON_VERSION = "python3"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 
-PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
+if os.getenv('PASH_TMP_PREFIX') is None:
+    PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
+else:
+    PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
 
 config = {}
 annotations = []
