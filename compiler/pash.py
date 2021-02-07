@@ -25,6 +25,9 @@ def main():
     if not config.config:
         config.load_config(args.config_path)
 
+    ## Make a directory for temporary files
+    config.PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
+
     ## Load annotations
     ## TODO: The annotations are not used in the preprocessing step anymore
     ##       so we can avoid loading the annotation files here.
@@ -36,7 +39,6 @@ def main():
 
     ## 2. Parse JSON to AST objects
     ast_objects = parse_json_ast_string(json_ast_string)
-
 
     ## 3. Preprocess ASTs by replacing possible candidates for compilation
     ##    with calls to the PaSh runtime.

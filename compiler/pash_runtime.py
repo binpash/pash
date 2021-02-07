@@ -32,7 +32,9 @@ def main():
     args = parse_args()
     config.pash_args = args
 
-    ## TODO: Instead of just calling optimize we first need to call compile.
+    ## Ensure that PASH_TMP_PREFIX is set by pash.py
+    assert(not os.getenv('PASH_TMP_PREFIX') is None)
+    config.PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
 
     ## Call the main procedure
     compile_optimize_script(args.input_ir, args.compiled_script_file, args)
