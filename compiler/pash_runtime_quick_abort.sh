@@ -98,13 +98,13 @@ if [ "$pash_execute_flag" -eq 1 ]; then
 
     ## Before running the original script we need to redirect its input and output to 
     ## eager and pipes.
-    pash_stdin_redir1="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
-    pash_stdin_redir2="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
-    # pash_stdout_redir1="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
-    pash_stdout_redir2="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
-    pash_stdin_eager_file="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
+    pash_stdin_redir1="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    pash_stdin_redir2="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    # pash_stdout_redir1="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    pash_stdout_redir2="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    pash_stdin_eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     pash_redir_output echo "eager intermediate file: $pash_stdin_eager_file"
-    # pash_stdout_eager_file="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
+    # pash_stdout_eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     mkfifo $pash_stdin_redir1 $pash_stdin_redir2
     # mkfifo $pash_stdin_redir1 $pash_stdin_redir2 $pash_stdout_redir1 $pash_stdout_redir2
 
