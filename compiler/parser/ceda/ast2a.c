@@ -790,6 +790,10 @@ arg_TYPE parse_arg (CharList s, struct nodelist** bqlist, Stack stack) {
 
         return (arg_char_FUNC (v, s, bqlist, stack));
     } else if (   (! isCharListEmpty (s))
+               && (charListHead_char (s) == CTLVAR)) {
+        // | '\130'::_, _ -> raise (ParseException "bad substitution (missing variable name in ${}?")
+        assert (! "bad substitution (missing variable name in ${}?");
+    } else if (   (! isCharListEmpty (s))
                && (charListHead_char (s) == CTLENDVAR)) {
         if (isStackEmpty (stack)) {
             // | '\131'::_,[] -> failwith "Saw CTLENDVAR outside of CTLVAR"
