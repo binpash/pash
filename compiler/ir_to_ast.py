@@ -16,7 +16,7 @@ def to_shell(ir, output_dir, args):
     output_asts = ir2ast(ir, args)
 
     ## Then just call the parser.
-    temp_filename = os.path.join("/tmp", get_random_string())
+    temp_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
     save_asts_json(output_asts, temp_filename)
     output_script = from_ir_to_shell(temp_filename)
 

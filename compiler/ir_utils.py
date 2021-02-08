@@ -103,6 +103,44 @@ def format_arg_char(arg_char):
         ## TODO: Make this correct
         raise NotImplementedError
 
+## This function finds the first raw character in an argument.
+## It needs to be called on an expanded string.
+def format_expanded_arg_chars(arg_chars):
+    chars = [format_expanded_arg_char(arg_char) for arg_char in arg_chars]
+    return "".join(chars)
+
+def format_expanded_arg_char(arg_char):
+    key, val = get_kv(arg_char)
+    if (key == 'C'):
+        return str(chr(val))
+    elif (key == 'Q'):
+        formated_val = format_expanded_arg_chars(val)
+        return '{}'.format(formated_val)
+    elif (key == 'E'):
+        ## TODO: I am not sure if this should add \ or not
+        ##
+        ## TODO: This is not right. I think the main reason for the
+        ## problems is the differences between bash and the posix
+        ## standard.
+        # log(" -- escape-debug -- ", val, chr(val))
+        non_escape_chars = [92, # \
+                            61, # =
+                            91, # [
+                            93, # ]
+                            45, # -
+                            58, # :
+                            126,# ~
+                            42] # *
+        if(val in non_escape_chars):
+            return '{}'.format(chr(val))
+        else:
+            return '\{}'.format(chr(val))
+    else:
+        log("Expanded arg char should not contain:", arg_char)
+        ## TODO: Make this correct
+        raise ValueError
+
+
 ## This function gets a key and a value from the ast json format
 def get_kv(dic):
     return (dic[0], dic[1])
@@ -110,6 +148,8 @@ def get_kv(dic):
 def make_kv(key, val):
     return [key, val]
 
+def string_to_arguments(string):
+    return [string_to_argument(word) for word in string.split(" ")]
 
 def string_to_argument(string):
     return [char_to_arg_char(char) for char in string]

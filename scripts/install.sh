@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Ensure that the script fails if something failed
 set -e
@@ -104,7 +104,6 @@ cd ../../../
 
 # Export necessary environment variables
 export PASH_TOP=$PWD
-export PASH_PARSER=${PASH_TOP}/compiler/parser/parse_to_json.native
 
 ## This is necessary for the parser to link to libdash
 echo "Do not forget to export LD_LIBRARY_PATH as shown below :)"

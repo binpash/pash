@@ -151,7 +151,7 @@ def optimize_irs(asts_and_irs, args):
 
             # log(ir_node)
             # with cProfile.Profile() as pr:
-            distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, args.split_fan_out,
+            distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, args.width,
                                                                       runtime_config['batch_size'])
             # pr.print_stats()
             # log(distributed_graph)
@@ -180,8 +180,8 @@ def optimize_irs(asts_and_irs, args):
 
 def print_graph_statistics(graph):
     total_nodes = graph.nodes
-    cat_nodes = [node for node in total_nodes if isinstance(node, Cat)]
-    eager_nodes = [node for node in total_nodes if isinstance(node, Eager)]
+    cat_nodes = [node for node in total_nodes.values() if isinstance(node, Cat)]
+    eager_nodes = [node for node in total_nodes.values() if isinstance(node, Eager)]
     log("Total nodes after optimization:", len(total_nodes))
     log(" -- out of which:")
     log("Cat nodes:", len(cat_nodes))
@@ -242,91 +242,61 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
     return graph
 
 
-
-## TODO: Instead of setting children, we have to use the new way of
-## having a cat command before the node so that we enable
-## optimizations.
-
 ## Optimizes several commands by splitting its input
-def split_command_input(curr, previous_node, graph, fileIdGen, fan_out, _batch_size):
+def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size):
+    assert(curr.is_parallelizable())
+    assert(not isinstance(curr, Cat))
+    assert(fan_out > 1)
+
     ## At the moment this only works for nodes that have one input. 
     ## 
     ## TODO: Extend it to work for nodes that have more than one input.
+    ##       This has to be done to be able to parallelize comm
     number_of_previous_nodes = len(curr.get_input_list())
-    assert(curr.is_parallelizable())
-
     new_cat = None
-    if (not isinstance(curr, Cat)
-        and number_of_previous_nodes == 1
-        and fan_out > 1):
+    if (number_of_previous_nodes == 1):
         ## If the previous command is either a cat with one input, or
         ## if it something else
-        if(not isinstance(previous_node, Cat) or
-           (isinstance(previous_node, Cat) and
-            len(previous_node.get_input_list()) == 1)):
 
-            if(not isinstance(previous_node, Cat)):
-                input_ids = curr.get_input_list()
-                assert(len(input_ids) == 1)
-                input_id = input_ids[0]
-            else:
-                ## If the previous node is a cat, we need its input
-                input_ids = previous_node.get_input_list()
-                assert(len(input_ids) == 1)
-                input_id = input_ids[0]
+        input_ids = curr.get_input_list()
+        assert(len(input_ids) == 1)
+        input_id = input_ids[0]
 
-            ## First we have to make the split file commands.
-            split_file_commands, output_fids = make_split_files(input_id, fan_out, fileIdGen)
-            for output_fid in output_fids:
-                output_fid.make_ephemeral()
-                graph.add_edge(output_fid)
+        ## First we have to make the split file commands.
+        split_file_commands, output_fids = make_split_files(input_id, fan_out, fileIdGen)
+        for output_fid in output_fids:
+            output_fid.make_ephemeral()
+            graph.add_edge(output_fid)
 
-            for split_file_command in split_file_commands:
-                graph.add_node(split_file_command)
+        for split_file_command in split_file_commands:
+            graph.add_node(split_file_command)
 
-            ## With the split file commands in place and their output
-            ## fids (and this commands new input ids, we have to
-            ## create a new Cat node (or modify the existing one) to
-            ## have these as inputs, and connect its output to our
-            ## input.
+        ## With the split file commands in place and their output
+        ## fids (and this commands new input ids, we have to
+        ## create a new Cat node (or modify the existing one) to
+        ## have these as inputs, and connect its output to our
+        ## input.
 
-            ## Generate a new file id for the input of the current command.
-            new_input_fid = fileIdGen.next_file_id()
-            new_input_fid.make_ephemeral()
-            graph.add_edge(new_input_fid)
-            new_input_id = new_input_fid.get_ident()
+        ## Generate a new file id for the input of the current command.
+        new_input_fid = fileIdGen.next_file_id()
+        new_input_fid.make_ephemeral()
+        graph.add_edge(new_input_fid)
+        new_input_id = new_input_fid.get_ident()
 
-            output_ids = [fid.get_ident() for fid in output_fids]
+        output_ids = [fid.get_ident() for fid in output_fids]
 
-            new_cat = make_cat_node(output_ids, new_input_id)
-            graph.add_node(new_cat)
+        new_cat = make_cat_node(output_ids, new_input_id)
+        graph.add_node(new_cat)
 
-            if(not isinstance(previous_node, Cat)):
-                ## Change the current node's input with the new_input
-                curr.replace_edge(input_id, new_input_id)
-                graph.set_edge_to(new_input_id, id(curr))
-            else:
-                ## Change the current node's input with the new_input
-                curr.replace_edge(input_id, new_input_id)
-                graph.remove_node(id(previous_node))
+        ## Replace the previous input edge with the new input edge that is after the cat.
+        curr.replace_edge(input_id, new_input_id)
+        graph.set_edge_to(new_input_id, id(curr))
 
-                ## TODO: Think if this is necessary
-                graph.set_edge_to(new_input_id, id(curr))
-
-                ## TODO: Delete this after figuring out what is missing
-                # log("there")
-                # curr_input_file_ids = curr.get_input_file_ids()
-                # assert(len(curr_input_file_ids) == 1)
-                # curr_input_file_id = curr_input_file_ids[0]
-                # chunk = curr.find_file_id_in_in_stream(curr_input_file_id)
-                # curr.set_file_id(chunk, new_input_file_id)
-                # graph.remove_node(previous_node)
-
-            # log("graph nodes:", graph.nodes)
-            # log("graph edges:", graph.edges)
+        # log("graph nodes:", graph.nodes)
+        # log("graph edges:", graph.edges)
+    
     return new_cat
 
-## TODO: Left here
 
 ## If the current command is a cat, and is followed by a node that
 ## is either stateless or pure parallelizable, commute the cat
@@ -340,35 +310,36 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
     ## Get next nodes in the graph
     next_node_ids = graph.get_next_nodes(curr_id)
 
-    ## If there is only one node afterwards (meaning that we reached a
-    ## thin part of the graph), we need to try to parallelize
-    if(len(next_node_ids) == 1):
-        next_node_id = next_node_ids[0]
+    ## We try to parallelize for all the edges that go out from the current node and into another node
+    for next_node_id in next_node_ids:
         next_node = graph.get_node(next_node_id)
         # log("|-- its next node is:", next_node)
+        new_curr = curr
+        new_curr_id = curr_id
 
         ## If the next node can be parallelized, then we should try to parallelize
-        if(next_node.is_parallelizable()):
-
+        if(next_node.is_parallelizable()
+           and not isinstance(next_node, Cat)):
             ## If the current node is not a cat, it means that we need
             ## to generate a cat using a split
-            if(not isinstance(curr, Cat)):
-            ## TODO: We can split even if cat here has less than the inputs that we want
-            #    or (isinstance(curr, Cat) and len(graph.get_node_input_ids(curr_id)) <= 1)):
-                new_cat = split_command_input(next_node, curr, graph, fileIdGen, fan_out, batch_size)
-                if(not new_cat is None):
-                    curr = new_cat
-                    curr_id = id(curr)
-                    next_nodes = graph.get_next_nodes(curr_id)
-                    assert(len(next_nodes) == 1)
-                    next_node_id = next_nodes[0]
-                    next_node = graph.get_node(next_node_id)
+            if(fan_out > 1
+               and (not isinstance(curr, Cat)
+                    or (isinstance(curr, Cat)
+                        and len(curr.get_input_list()) < fan_out))):
+                new_cat = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size)
+
+                ## After split has succeeded we know that the curr node (previous of the next)
+                ## has changed. Therefore we need to retrieve it again.
+                if (not new_cat is None):
+                    new_curr_id = id(new_cat)
+                    new_curr = new_cat
+                    assert(isinstance(new_curr, Cat))
 
             ## If curr is cat, it means that split suceeded, or it was
             ## already a cat. In any case, we can proceed with the
             ## parallelization
-            if(isinstance(curr, Cat)):
-                new_nodes = check_parallelize_dfg_node(curr_id, next_node_id, graph, fileIdGen)
+            if(isinstance(new_curr, Cat)):
+                new_nodes = check_parallelize_dfg_node(new_curr_id, next_node_id, graph, fileIdGen)
                 # log("New nodes:", new_nodes)
                 new_nodes_for_workset += new_nodes                
 
@@ -427,7 +398,6 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
         ## Add the merge commands in the graph
         for merge_command in merge_commands:
             graph.add_node(merge_command)
-        new_nodes += merge_commands        
 
         ## Replace the previous final_output_id with the previous id
         final_merge_node_id = graph.edges[final_output_id][1]
@@ -435,6 +405,10 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
         final_merge_node.replace_edge(final_output_id, node_output_edge_id)
         graph.set_edge_from(node_output_edge_id, final_merge_node_id)
         graph.set_edge_from(final_output_id, None)
+        
+        ## Only add the final node to the new_nodes
+        new_nodes.append(final_merge_node)
+
 
     # log("after merge graph nodes:", graph.nodes)
     # log("after merge graph edges:", graph.edges)
@@ -455,6 +429,8 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
 ## parallelized using a map and a reduce/merge step
 def create_merge_commands(curr, new_output_ids, fileIdGen):
     if(str(curr.com_name) == "sort"):
+        return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
+    elif(str(curr.com_name) == "custom_sort"):
         return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
     elif(str(curr.com_name) == "bigrams_aux"):
         return create_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen)

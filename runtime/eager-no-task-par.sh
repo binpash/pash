@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # $input="${1}"
 # $output="${2}"
@@ -8,3 +8,4 @@ touch "$3"
 
 cat "$1" > "$3"
 cat "$3" > "$2"
+rm "$3"

@@ -7,7 +7,7 @@ class BigramGMap(DFGNode):
     def __init__(self, input, outputs):
         assert(self.num_outputs == 3)
         com_name = Arg(string_to_argument("bigram_aux_map"))
-        category = "stateless"
+        category = "pure"
         super().__init__([input],
                          outputs, 
                          com_name, 

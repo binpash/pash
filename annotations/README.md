@@ -1,8 +1,4 @@
-
-**TODOs**: 
-* Update / define the annotation language
-* Convert json to yaml to simplify annotations
-* Describe annotations
+Here is a preliminary version of the annotation language:
 
 ```
   <option> ::= `-' <string>
@@ -32,3 +28,8 @@
   <command-list> ::= <command>
                    | <command> <command-list>
 ```
+
+**TODOs**: 
+* Update the annotation language based on the most recent insights
+* Convert `json` to `yaml` to improve human readability of annotations
+* Describe key annotations and the annotation DSL using examples

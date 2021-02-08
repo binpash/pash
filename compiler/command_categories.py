@@ -26,10 +26,34 @@ def default_input_output(options):
 
 ## TODO: All of these are possibly non-complete
 def is_sed_pure(options):
-    first_opt = format_arg_chars(options[0])
-    if(not first_opt.startswith("-")
+    first_opt = format_expanded_arg_chars(options[0])
+    if(not (first_opt.startswith("-")
+            or first_opt.startswith("s"))
        and ("d" in first_opt
             or "q" in first_opt)):
+        return "pure"
+    else:
+        return "stateless"
+
+def contains_s(option):
+    return ((option.startswith("-") and "s" in option)
+            or option == "--squeeze-repeats")
+
+def contains_d(option):
+    return ((option.startswith("-") and "d" in option)
+            or option == "--delete")
+
+def is_tr_pure(options):
+    formatted_opts = [format_expanded_arg_chars(option)
+                      for option in options]
+    set_opts = [opt for opt in formatted_opts if not opt.startswith("-")]
+    set1_opt = set_opts[0]
+    ## If -s is one of the options (and \n is in the last SET)
+    ## If -d is one of the options (and \n is in SET1)
+    if((any([contains_s(opt) for opt in formatted_opts])
+        and "\\n" in set_opts[-1])
+       or (any([contains_d(opt) for opt in formatted_opts])
+           and "\\n" in set1_opt)):
         return "pure"
     else:
         return "stateless"
@@ -57,6 +81,7 @@ custom_command_args_redirs_from_input_outputs = {
 
 custom_command_categories = {
     "sed"  : is_sed_pure,
+    "tr"   : is_tr_pure,
     "uniq" : is_uniq_pure,
 }
 

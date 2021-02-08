@@ -235,6 +235,9 @@ class IR:
         for _, node in self.nodes.items():
             node.apply_redirections(self.edges)
         
+        ## We need to merge common files after redirections have been applied.
+        self.combine_common_files()
+
     ## Refactor these to call .add_edge, and .set_edge_to/from 
     ## Add an edge that points to a node
     def add_to_edge(self, to_edge, node_id):
@@ -259,6 +262,12 @@ class IR:
     def get_edge_fid(self, fid_id):
         if(fid_id in self.edges):
             return self.edges[fid_id][0]
+        else:
+            return None
+
+    def get_edge_from(self, edge_id):
+        if(edge_id in self.edges):
+            return self.edges[edge_id][1]
         else:
             return None
 
@@ -337,10 +346,19 @@ class IR:
         ##       for now we just have the stdout node in the end 
         ##       (since this is always the output in our benchmarks).
         # sink_node_ids = self.sink_nodes()
+        ##
+        ## TODO: Support more than one output (and less than one).
+        ##       For this we need to update wait.
+        ##
+        ## For now we just allow more than one output by waiting for one of them
+        ## at random.
         stdout_edge_id = self.get_stdout_id()
-        sink_node_ids = [self.edges[stdout_edge_id][1]]
-        ## TODO: Support more than one output. For this we need to update wait.
-        assert(len(sink_node_ids) == 1)
+        if (not stdout_edge_id is None):
+            sink_node_ids = [self.edges[stdout_edge_id][1]]
+        else:
+            sink_node_ids = self.sink_nodes()
+            sink_node_ids = [sink_node_ids[0]]
+
 
         for node_id, node in self.nodes.items():
             if(not node_id in sink_node_ids):
@@ -475,7 +493,9 @@ class IR:
                                                   if fid.has_file_resource()]
                     for id_out, fid_out in outputs_with_file_resource:
                         out_resource = fid_out.get_resource()
-                        if (in_resource == out_resource):
+                        ## Do not combine if the ids of the edges are already the same
+                        if (not id_in == id_out
+                            and in_resource == out_resource):
                             number_of_out_resources += 1
                             ## They point to the same File resource so we need to unify their fids
                             self.nodes[node_id2].replace_edge(id_out, id_in)
@@ -520,18 +540,9 @@ class IR:
                 sources.add(from_node)
         return list(sources)
 
-    ## TODO: Delete this
-    ## This function returns whether a node has an incoming edge in an IR
-    ##
-    ## WARNING: At the moment is is extremely naive and slow.
-    # def has_incoming_edge(self, node):
-    #     for incoming_fid in node.get_input_file_ids():
-    #         for other_node in self.nodes:
-    #             ## Note: What if other_node == node?
-    #             if (not incoming_fid.find_fid_list(other_node.get_output_file_ids())
-    #                 is None):
-    #                 return True
-    #     return False
+    def get_node_inputs(self, node_id):
+        input_edge_ids = self.nodes[node_id].get_input_list()
+        return input_edge_ids
 
     def get_node_outputs(self, node_id):
         output_edge_ids = self.nodes[node_id].outputs
@@ -546,7 +557,17 @@ class IR:
             if(not to_node is None):
                 next_nodes.append(to_node)
         return next_nodes
-    
+
+    def get_previous_nodes(self, node_id):
+        input_edge_ids = self.get_node_inputs(node_id)
+        previous_nodes = []
+        for edge_id in input_edge_ids:
+            _fid, from_node, to_node = self.edges[edge_id]
+            assert(to_node == node_id)
+            if(not from_node is None):
+                previous_nodes.append(from_node)
+        return previous_nodes
+
     def get_node_input_ids_fids(self, node_id):
         node = self.get_node(node_id)
         return [(input_edge_id, self.edges[input_edge_id][0]) for input_edge_id in node.get_input_list()]

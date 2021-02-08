@@ -223,6 +223,8 @@ class DFGNode:
         assert(self.is_pure_parallelizable())
         if(str(self.com_name) == "sort"):
             new_output_fids = [[fileIdGen.next_ephemeral_file_id()] for in_fid in input_edge_ids]
+        elif(str(self.com_name) == "custom_sort"):
+            new_output_fids = [[fileIdGen.next_ephemeral_file_id()] for in_fid in input_edge_ids]
         elif(str(self.com_name) == "bigrams_aux"):
             new_output_fids = [[fileIdGen.next_ephemeral_file_id()
                                 for i in range(config.bigram_g_map_num_outputs)]

@@ -76,19 +76,29 @@ export pash_previous_set_status=$-
 ## because it is necessary for performing the rest of (1)
 pash_redir_output()
 {
-    if [ "$PASH_REDIR" == '&2' ]; then
-        >&2 $@
+    ## TODO: We should properly allow for different debug levels
+    ## TODO: This code is copied in pash_source_declare_vars.sh
+    if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
+        > /dev/null $@
     else
-        >>"$PASH_REDIR" $@
+        if [ "$PASH_REDIR" == '&2' ]; then
+            >&2 $@
+        else
+            >>"$PASH_REDIR" $@
+        fi
     fi
 }
 
 pash_redir_all_output()
 {
-    if [ "$PASH_REDIR" == '&2' ]; then
-        >&2 $@
+    if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
+        > /dev/null 2>&1 $@
     else
-        >>"$PASH_REDIR" 2>&1 $@
+        if [ "$PASH_REDIR" == '&2' ]; then
+            >&2 $@
+        else
+            >>"$PASH_REDIR" 2>&1 $@
+        fi
     fi
 }
 
@@ -98,6 +108,7 @@ export -f pash_redir_all_output
 ## File directory
 RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
 export PASH_REDIR="&2"
+export PASH_DEBUG_LEVEL=0
 
 ## Check flags
 pash_output_time_flag=0
@@ -107,6 +118,7 @@ pash_dry_run_compiler_flag=0
 pash_assert_compiler_success_flag=0
 pash_checking_speculation=0
 pash_checking_log_file=0
+pash_checking_debug_level=0
 for item in $@
 do
     if [ "$pash_checking_speculation" -eq 1 ]; then
@@ -125,6 +137,12 @@ do
     if [ "$pash_checking_log_file" -eq 1 ]; then
         pash_checking_log_file=0
         export PASH_REDIR="$item"
+    fi
+
+    if [ "$pash_checking_debug_level" -eq 1 ]; then
+        pash_checking_debug_level=0
+        pash_redir_output echo "$item"
+        export PASH_DEBUG_LEVEL=$item
     fi
 
     if [ "--output_time" == "$item" ]; then
@@ -146,6 +164,11 @@ do
     if [ "--log_file" == "$item" ]; then
         pash_checking_log_file=1
     fi
+
+    if [ "-d" == "$item" ] || [ "--debug" == "$item" ]; then
+        pash_checking_debug_level=1
+        pash_redir_output echo "$item"
+    fi
 done
 
 ##
@@ -156,7 +179,7 @@ pash_redir_output echo "(1) Previous exit status: $pash_previous_exit_status"
 pash_redir_output echo "(1) Previous set state: $pash_previous_set_status"
 
 ## Prepare a file with all shell variables
-pash_runtime_shell_variables_file=$(mktemp -u)
+pash_runtime_shell_variables_file="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
 source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
 pash_redir_output echo "(1) Bash variables saved in: $pash_runtime_shell_variables_file"
 
@@ -174,17 +197,17 @@ pash_redir_output echo "(1) Set state reverted to PaSh-internal set state: $-"
 ##
 
 ## Prepare a file for the output shell variables to be saved in
-pash_output_variables_file=$(mktemp -u)
+pash_output_variables_file="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
 # pash_redir_output echo "Input vars: $pash_runtime_shell_variables_file --- Output vars: $pash_output_variables_file"
 
 ## Prepare a file for the `set` state of the inner shell to be output
-pash_output_set_file=$(mktemp -u)
+pash_output_set_file="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
 
 ## The first argument contains the sequential script. Just running it should work for all tests.
 pash_sequential_script_file=$1
 
 ## The parallel script will be saved in the following file if compilation is successful.
-pash_compiled_script_file=$(mktemp -u)
+pash_compiled_script_file="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
 
 ## Just execute the original script
 # pash_redir_output echo "Sequential file in: $1 contains"
@@ -192,10 +215,9 @@ pash_compiled_script_file=$(mktemp -u)
 # ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file $1
 
 
-## Count the execution time
-pash_exec_time_start=$(date +"%s%N")
-
 if [ "$pash_speculation_flag" -eq 1 ]; then
+    ## Count the execution time
+    pash_exec_time_start=$(date +"%s%N")
     source "$RUNTIME_DIR/pash_runtime_quick_abort.sh"
 else
     pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
@@ -209,6 +231,9 @@ else
     ##
     ## (3), (4), (5)
     ##
+
+    ## Count the execution time
+    pash_exec_time_start=$(date +"%s%N")
 
     ## If the compiler failed or if we dry_run the compiler, we have to run the sequential
     if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_dry_run_compiler_flag" -eq 1 ]; then

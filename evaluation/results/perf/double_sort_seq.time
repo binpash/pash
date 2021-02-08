@@ -1,0 +1,9 @@
+Exporting:
+IN=../evaluation/scripts/input/100M.txt
+Executing:
+#!/bin/bash
+cat $IN | tr A-Z a-z | sort | sort -r
+
+real	0m6.432s
+user	0m6.145s
+sys	0m0.823s
