@@ -18,9 +18,6 @@ else
     trap 'cleanup' EXIT
     trap 'echo "<<fail>>"; exit 1' ERR
 
-    # /!\ Remove this line when merging branch to main /!\
-    docker exec $CONTAINER_NAME /bin/bash -c "cd /pash && git fetch && git checkout perf && git pull"
-
     docker exec $CONTAINER_NAME /bin/bash -c "/pash/scripts/ci-perf.sh"
 
     # WARNING: If you are using the snap edition of Docker, this
