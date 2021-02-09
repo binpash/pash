@@ -55,7 +55,7 @@
                       //
                       // e.g. '0.19s,x12' -> use '12'. parseFloat will return 12.0.
                       //      '1.23s' -> use as-is. parseFloat will return 1.23
-                      const number = (/x/.test(val))
+                      const hasNumber = (/x/.test(val))
                             ? val.replace(/[^x]+x/, '')
                             : val;
 
