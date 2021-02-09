@@ -22,7 +22,7 @@
                   const files = text.match(/(\S+)/g) || [];
                   const urls = files.map((f) => `./tests/${f}`);
 
-                  return Promise.all(urls.map(fetch));
+                  return Promise.all(urls.map((u) => fetch(u)));
               })
               .then((resps) => Promise.all(resps.map((r) => r.text())))
       }
