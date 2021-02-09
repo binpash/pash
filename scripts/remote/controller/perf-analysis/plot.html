@@ -43,7 +43,24 @@
               series: testNames.map((name, i) => ({
                   name,
                   // Added one accounts for commit heading.
-                  values: cells.map((c) => parseFloat(c[1 + i])),
+                  values: cells.map((row) => {
+                      const val = row[1 + i];
+
+                      // Recall that parseFloat will stop once it has
+                      // a complete float.  the 'x' appears in summary
+                      // data to tell us that a speedup number is
+                      // available. In that case we remove the leading
+                      // characters so that parseFloat sees it
+                      // instead.
+                      //
+                      // e.g. '0.19s,x12' -> use '12'. parseFloat will return 12.0.
+                      //      '1.23s' -> use as-is. parseFloat will return 1.23
+                      const number = (/x/.test(val))
+                            ? val.replace(/[^x]+x/, '')
+                            : val;
+
+                      return parseFloat(hasNumber);
+                  }),
               })),
           };
       }
