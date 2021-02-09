@@ -19,6 +19,7 @@ typedef __uint64_t uint64_t;
 #define NUMOUTFILESLIMIT 4
 
 #define CHUNKSIZE 1024*1024 //chunk will be bigger depending on where the line ends
+#define BUFLEN BUFSIZ
 
 #define MINCHUNKS 12 //minimum number of chunks
 
