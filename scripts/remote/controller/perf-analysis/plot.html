@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://d3js.org/d3.v6.js"></script>
+    <title>PaSH Performance Metrics</title>
+  </head>
+  <body id="output">
+    <noscript>Please enable JavaScript.</noscript>
+    <script type="text/javascript">
+      const width = 1200;
+      const height = 600;
+      const marginTop = 20;
+      const marginBottom = 30;
+      const marginLeft = 40;
+      const marginRight = 30;
+      const host = '';
+
+      function downloadData() {
+          fetch(host)
+              .then((resp) =>
+                    Promise.all(resp.text().split(/\s+/g).map(fetch)))
+              .then((resps) => resps.map((r) => r.text()))
+      }
+
+      function parseSummaryText(text) {
+          const spaces = /\s+/g;
+          const hasData = (l) => l.match(/\S/);
+          const lines = text.split('\n').filter(hasData).map(l => l.trim());
+          const heading = lines[0];
+          const cells = lines.slice(1).map((l, i) => l.split(spaces));
+          const testNames = heading.split(spaces).filter(hasData).slice(1);
+
+          return {
+              commits: cells.map((c, ordinal) => ({
+                  label: c[0],
+                  ordinal,
+              })),
+              series: testNames.map((name, i) => ({
+                  name,
+                  // Added one accounts for commit heading.
+                  values: cells.map((c) => parseFloat(c[1 + i])),
+              })),
+          };
+      }
+
+      function plot(heading, text) {
+          const data = parseSummaryText(text);
+          const yank = (k) => data.commits.map((c) => c[k]);
+
+          const ordinals = yank('ordinal');
+          const labels   = yank('label');
+
+          const x = (
+              d3.scaleUtc()
+                .domain(d3.extent(ordinals))
+                .range([marginLeft, width - marginRight])
+          );
+
+          const y = (
+              d3.scaleLinear()
+                .domain([0, d3.max(data.series, d => d3.max(d.values))]).nice()
+                .range([height - marginBottom, marginTop])
+          );
+
+          const xAxis = (g) => (
+              g.attr('transform', `translate(0, ${height - marginBottom})`)
+                  .call(d3.axisBottom(x)
+                        .ticks(width / 80)
+                        .tickValues(ordinals)
+                        .tickSizeOuter(0)
+                        .tickFormat((_, i) => labels[i]))
+          );
+
+          const yAxis = (g) => (
+              g.attr('transform', `translate(${marginLeft},0)`)
+               .call(d3.axisLeft(y))
+               .call(g => g.select('.domain').remove())
+               .call(g => g.select('.tick:last-of-type text').clone()
+                     .attr('x', 3)
+                     .attr('text-anchor', 'start')
+                     .attr('font-weight', 'bold')
+                     .text('Time (seconds)'))
+          );
+
+          const line = (
+              d3.line()
+                .defined(d => !isNaN(d))
+                .x((d, i) => x(data.commits[i].ordinal))
+                .y(d => y(d))
+          );
+
+          const svg = (
+              d3.create('svg')
+                .attr('viewBox', [0, 0, width, height])
+                .style('overflow', 'visible')
+          );
+
+          svg.append('g').call(xAxis)
+          svg.append('g').call(yAxis);
+
+          const path = (
+              svg.append('g')
+                 .attr('fill', 'none')
+                 .attr('stroke', 'steelblue')
+                 .attr('stroke-width', 1.5)
+                 .attr('stroke-linejoin', 'round')
+                 .attr('stroke-linecap', 'round')
+                 .selectAll('path')
+                 .data(data.series)
+                 .join('path')
+                 .style('mix-blend-mode', 'multiply')
+                 .attr('d', d => line(d.values))
+          );
+
+          function hover(svg, path) {
+              if ('ontouchstart' in document) {
+                  svg
+                      .style('-webkit-tap-highlight-color', 'transparent')
+                      .on('touchmove', moved)
+                      .on('touchstart', entered)
+                      .on('touchend', left)
+              }
+              else {
+                  svg
+                      .on('mousemove', moved)
+                      .on('mouseenter', entered)
+                      .on('mouseleave', left);
+              }
+
+              const dot = svg.append('g').attr('display', 'none');
+
+              dot.append('circle').attr('r', 2.5);
+
+              dot.append('text')
+                  .attr('font-family', 'sans-serif')
+                  .attr('font-size', 10)
+                  .attr('text-anchor', 'middle')
+                  .attr('y', -8);
+
+              function moved(event) {
+                  event.preventDefault();
+                  const pointer = d3.pointer(event, this);
+                  const xm = x.invert(pointer[0]);
+                  const ym = y.invert(pointer[1]);
+                  const i = d3.bisectCenter(ordinals, xm);
+                  const s = d3.least(data.series, d => Math.abs(d.values[i] - ym));
+
+                  path.attr('stroke', d => d === s ? null : '#ddd').filter(d => d === s).raise();
+                  dot.attr('transform', `translate(${x(ordinals[i])},${y(s.values[i])})`);
+                  dot.select('text').text(s.name);
+              }
+
+              function entered() {
+                  path.style('mix-blend-mode', null).attr('stroke', '#ddd');
+                  dot.attr('display', null);
+              }
+
+              function left() {
+                  path.style('mix-blend-mode', 'multiply').attr('stroke', null);
+                  dot.attr('display', 'none');
+              }
+          }
+
+          svg.call(hover, path);
+
+          const h = document.createElement('h1');
+          h.innerText = heading;
+          h.style = 'display: inline';
+
+          const pre = document.createElement('pre');
+          pre.innerText = text;
+
+          const summary = document.createElement('summary');
+          summary.appendChild(h);
+
+          const deets = document.createElement('details');
+          deets.appendChild(summary);
+          deets.appendChild(pre);
+
+          output.appendChild(deets);
+          output.appendChild(svg.node());
+      }
+
+      window.onload = () => {
+          const next = `
+          <commit> wf_seq whatever_seq
+          abcdef   0      5
+          bacdef   1      4
+          cabdef   2      3
+          defabe   3      2
+          beabbb   4      1
+          fffaaf   5      0
+          `;
+
+          plot('A friendly heading', next);
+      }
+    </script>
+  </body>
+</html>
