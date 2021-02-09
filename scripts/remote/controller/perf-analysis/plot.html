@@ -17,13 +17,14 @@
 
       function downloadData() {
           return fetch('./tests/index')
-              .then((resp) => {
-                  const files = resp.text().match(/(\S+)/g) || [];
+              .then((resp) => resp.text())
+              .then((text) => {
+                  const files = text.match(/(\S+)/g) || [];
                   const urls = files.map((f) => `./tests/${f}`);
 
                   return Promise.all(urls.map(fetch));
               })
-              .then((resps) => resps.map((r) => r.text()))
+              .then((resps) => Promise.all(resps.map((r) => r.text())))
       }
 
       function parseSummaryText(text) {
