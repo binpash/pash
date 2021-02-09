@@ -183,7 +183,7 @@
       }
 
       window.onload = () => {
-          const next = `
+          plot('Width 2, shblobbity blue', `
           <commit> wf_seq whatever_seq
           abcdef   0      5
           bacdef   1      4
@@ -191,9 +191,18 @@
           defabe   3      2
           beabbb   4      1
           fffaaf   5      0
-          `;
+          `);
 
-          plot('A friendly heading', next);
+          plot('Width Sweet 16, yay I can drive', `
+          <commit> alpha_distr beta_distr
+          abcdef   9      0
+          bacdef   2      100
+          cabdef   8      50
+          defabe   11     25
+          beabbb   1      99
+          fffaaf   5      67
+          `);
+
       }
     </script>
   </body>
