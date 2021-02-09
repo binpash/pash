@@ -1,32 +1,30 @@
-const fs = require('fs');
-const path = require('path');
-const history = require('./history.js');
-const { analyzePerfSuite, summarizePerfData, makePerfFileName } = require('./parse.js');
+const { fileContentCache, analyzePerfSuite, summarizePerfData } = require('./parse.js');
 
-const directoryExists = (path) => {
-    try {
-        return fs.lstatSync(path).isDirectory();
-    } catch (e) {
-        return false;
+const renderRow = (cells, cellWidth) =>
+      cells.map((c) => c.toString().padEnd(cellWidth, ' ')).join('');
+
+if (require.main === module) {
+    const [,, label, dir, cstests, width = 2, variant = 'distr_auto_split', heading = ''] = process.argv;
+
+    if (!label || !dir || !cstests) {
+        console.log('usage: report.js LABEL RESULTS_DIR TESTS [WIDTH] [VARIANT] [HEADING]');
+        console.log('e.g. node report.js \'9b3afc\' ../results wf,sort 16 distr \'My Test Results\'');
+        process.exit(1);
+    } else {
+        const sorted = cstests.split(',').map((t) => t.trim()).sort();
+        const cellWidth = 20;
+        const lines = [];
+        
+        if (heading) {
+            lines.push(heading + '\n');
+            lines.push(renderRow(['<commit>'].concat(sorted), cellWidth));
+        }
+        
+        lines.push(renderRow([label].concat(analyzePerfSuite(dir, sorted, width, variant).map(summarizePerfData)), cellWidth));
+
+        console.log(lines.join('\n'));
+        
+        fileContentCache.clear();
+        process.exit(0);
     }
-};
-
-const reportPerfSuite = (dir, tests, {
-    width,
-    variant,
-}) => {
-    const sorted = tests.slice(0).sort();
-    return history.render([
-        sorted,
-        analyzePerfSuite(dir, sorted, width, variant).map(summarizePerfData)
-    ]);
 }
-
-const accumulateDirectoryListings = (dirs, accum = []) =>
-  (dirs.length === 0)
-      ? accum.sort()
-      : accumulateDirectoryListings(dirs.slice(1), accum.concat(fs.readdirSync(dirs[0])));
-
-module.exports = {
-    reportPerfSuite,
-};
