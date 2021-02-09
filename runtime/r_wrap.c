@@ -6,7 +6,7 @@
 #define WRITE_END 1
 
 void processCmd(char* args[]) {
-    size_t bufLen = CHUNKSIZE; //buffer length, would be resized as needed
+    size_t bufLen = BUFLEN; //buffer length, would be resized as needed
     int64_t id;
     size_t blockSize;
     char* buffer = malloc(bufLen + 1);
@@ -41,22 +41,25 @@ void processCmd(char* args[]) {
             
             FILE* execOutFile = fdopen(fdOut[READ_END], "r");
             //Read batch
-            if(blockSize > bufLen) {
-                bufLen = blockSize;
-                buffer = realloc(buffer, bufLen + 1);
-            }
+            size_t tot_read = 0, readSize = 0;
+            while (tot_read < blockSize) {
+                readSize = MIN(bufLen, blockSize-tot_read);
+                if (fread(buffer, 1, readSize, stdin) != readSize) {
+                    fprintf(stderr, "r_wrap: There is a problem with reading the block\n");
+                    exit(1);
+                }
+                
+                //Write to forked process
+                if (write(fdIn[WRITE_END], buffer, readSize) != readSize) {
+                    fprintf(stderr, "Failed wrtiting to pipe\n");
+                    exit(1);
+                }
 
-            if (fread(buffer, 1, blockSize, stdin) != blockSize) {
-                fprintf(stderr, "There is a problem with the file head data\n");
-                exit(1);
-            }
-            
-            //Write to forked process
-            if (write(fdIn[WRITE_END], buffer, blockSize) != blockSize) {
-                fprintf(stderr, "Failed wrtiting to pipe\n");
-                exit(1);
+                tot_read += readSize;
             }
             close(fdIn[WRITE_END]);
+            
+            assert(tot_read == blockSize);
 
             //read output of forked process (do I need to wait or is read blocking enough?)
             waitpid(pid, NULL, 0);
@@ -77,7 +80,6 @@ void processCmd(char* args[]) {
             if (fwrite(cmdOutput, 1, currLen, stdout) != currLen) {
                 perror("fwrite failed");
             }
-            fflush(stdout);
 
             //update header (ordered at the end so !feof works) and cleanup
             readHeader(stdin, &id, &blockSize);
