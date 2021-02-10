@@ -105,7 +105,7 @@ void SplitByLines(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned 
   if(newLineBuffer)
     free(newLineBuffer);
 }
-//TODO: batches should always end with a new line(if batchSize is too small now, the invariant is broken)
+
 void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned int numOutputFiles, int8_t useBytes) {
   PRINTDBG("%s: will split input\n", __func__);
   //TODO: find better way?
