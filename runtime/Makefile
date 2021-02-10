@@ -1,15 +1,20 @@
 .PHONY: all eager-debug split-debug
 
-all: eager split
+all: eager split rmerge rwrap rsplit
 
 CFLAGS=-Wall
 
 ifeq ($(DEBUG),1)
   # We want debug mode.
-  CFLAGS += -g -DDEBUG -Og
+  CFLAGS += -g -DDEBUG -Og -ggdb -Wno-attributes -Wall
 else
   # We want release mode.
   CFLAGS += -O3 -DNDEBUG
+endif
+
+ifeq ($(PERF),1)
+  # We want debug mode.
+  CXXFLAGS += -g -ggdb
 endif
 
 split: split.c
