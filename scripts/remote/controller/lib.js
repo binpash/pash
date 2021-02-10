@@ -31,7 +31,7 @@ const getSshCredentials = () => ({
 
 const getRemoteHomeDirectory = () => {
     const { username } = getSshCredentials();
-    return `/home/${username}`;
+    return (username === 'root') ? '/root' : `/home/${username}`;
 };
 
 const syncRemoteDirectory = (srcPath, dest) => {
