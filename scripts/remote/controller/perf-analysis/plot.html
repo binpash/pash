@@ -27,7 +27,9 @@
               .then((resps) => Promise.all(resps.map((r) => r.text())))
       }
 
-      function parseSummaryText(text) {
+      function parseSummaryText(originalText) {
+          // Speedup data with spaces makes it harder to split on spaces.
+          const text = originalText.replace(/,\s+x/g, ',x');
           const spaces = /\s+/g;
           const hasData = (l) => l.match(/\S/);
           const lines = text.split('\n').filter(hasData).map(l => l.trim());
