@@ -19,7 +19,17 @@
           return fetch('./tests/index')
               .then((resp) => resp.text())
               .then((text) => {
-                  const files = text.match(/(\S+)/g) || [];
+                  const entries = text.match(/(\S+)/g) || [];
+
+                  // The index is a directory listing. Process the entries
+                  // such that we only get relative paths to desired
+                  // extensionless files.
+                  const files = (
+                      entries
+                          .map((e) => /[\/]/.test(e) ? e.split('/').pop() : e)
+                          .filter((basename) => /\./.test(basename))
+                  );
+
                   const urls = files.map((f) => `./tests/${f}`);
 
                   return Promise.all(urls.map((u) => fetch(u)));
