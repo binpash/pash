@@ -15,6 +15,10 @@
       const marginLeft = 40;
       const marginRight = 30;
 
+      const KIND_SPEEDUP = 'Speedup';
+      const KIND_PASH_TIME = 'PaSh Time (seconds)';
+      const KIND_BASH_TIME = 'User time (seconds)';
+
       function downloadData() {
           return fetch('./tests/index')
               .then((resp) => resp.text())
@@ -48,6 +52,15 @@
           const testNames = heading.split(spaces).filter(hasData).slice(1);
 
           return {
+              y: (() => {
+                  if (/x/.test(text)) {
+                      return KIND_SPEEDUP;
+                  } else if (/U/.text(text)) {
+                      return KIND_BASH_TIME;
+                  } else {
+                      return KIND_PASH_TIME;
+                  }
+              })(),
               commits: cells.map((c, ordinal) => ({
                   label: c[0],
                   ordinal,
@@ -113,7 +126,7 @@
                      .attr('x', 3)
                      .attr('text-anchor', 'start')
                      .attr('font-weight', 'bold')
-                     .text('Time (seconds)'))
+                     .text(data.y)
           );
 
           const line = (
