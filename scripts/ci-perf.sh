@@ -95,9 +95,9 @@ get_revision() {
 run_performance_test_suites() {
     local pash_d=$(get_pash_dir);
     cd "$pash_d/evaluation/eurosys";
-    ./execute_eurosys_one_liners.sh -l
-    ./execute_unix_benchmarks.sh -l
-    ./execute_baseline_sort.sh -l
+    ./execute_eurosys_one_liners.sh -s
+    # ./execute_unix_benchmarks.sh -l
+    # ./execute_baseline_sort.sh
     # ./execute_max_temp_dish_evaluation.sh
     # ./execute_web_index_dish_evaluation.sh
 }
