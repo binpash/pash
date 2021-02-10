@@ -14,13 +14,14 @@
       const marginBottom = 30;
       const marginLeft = 40;
       const marginRight = 30;
+      const resultsDirName = 'perf_results';
 
       const KIND_SPEEDUP = 'Speedup';
       const KIND_PASH_TIME = 'PaSh Time (seconds)';
       const KIND_BASH_TIME = 'User time (seconds)';
 
       function downloadData() {
-          return fetch('./tests/index')
+          return fetch(`./${resultsDirName}/index`)
               .then((resp) => resp.text())
               .then((text) => {
                   const entries = text.match(/(\S+)/g) || [];
@@ -34,7 +35,7 @@
                           .filter((basename) => !/\./.test(basename))
                   );
 
-                  const urls = files.map((f) => `./tests/${f}`);
+                  const urls = files.map((f) => `./${resultsDirName}/${f}`);
 
                   return Promise.all(urls.map((u) => fetch(u)));
               })
