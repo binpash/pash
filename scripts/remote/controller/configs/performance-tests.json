@@ -1,5 +1,6 @@
 {
     "port": 2048,
     "command_module": "./commands/performance-tests.js",
-    "host": "memstar.ndr.md"
+    "host": "memstar.ndr.md",
+    "perf_results_path": "/var/www/pash-web/perf-results/"
 }
