@@ -27,7 +27,7 @@
                   const files = (
                       entries
                           .map((e) => /[\/]/.test(e) ? e.split('/').pop() : e)
-                          .filter((basename) => /\./.test(basename))
+                          .filter((basename) => !/\./.test(basename))
                   );
 
                   const urls = files.map((f) => `./tests/${f}`);
