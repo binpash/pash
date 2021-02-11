@@ -64,7 +64,7 @@ const summarizePerfData = ({ analyzeContent, variant }) => {
     if (variant === 'seq') {
         try {
             const { bashTimes: { real, user, sys } } = analyzeContent();
-            return `R:${real}s U:${user}s S:${sys}s`;
+            return `R:${real}s,U:${user}s,S:${sys}s`;
         } catch (e) {
             return '?';
         }
@@ -72,7 +72,7 @@ const summarizePerfData = ({ analyzeContent, variant }) => {
         const { execTime, speedup } = analyzeContent();
 
         const factor = (typeof speedup === 'number')
-              ? `, x${speedup.toFixed(2)}`
+              ? `,x${speedup.toFixed(2)}`
               : '';
 
         return `${execTime.toFixed(2)}s${factor}`;

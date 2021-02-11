@@ -70,3 +70,9 @@ lazily-loaded perf file contents in memory for a limited time. Node
 will wait on these timeouts at the end of its process.  To avoid
 waiting at the end of the process, clear the cache with
 `fileContentCache.clear()`.
+
+## Plotting Performance Tests
+
+`plot.html` renders summary data using D3.js client-side. It tries to
+download that data when loaded. If it fails to do so, just make sure a
+results directory is available where it is making requests.

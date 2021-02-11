@@ -31,7 +31,7 @@ const getSshCredentials = () => ({
 
 const getRemoteHomeDirectory = () => {
     const { username } = getSshCredentials();
-    return `/home/${username}`;
+    return (username === 'root') ? '/root' : `/home/${username}`;
 };
 
 const syncRemoteDirectory = (srcPath, dest) => {
@@ -54,10 +54,12 @@ const syncRemoteDirectory = (srcPath, dest) => {
 
     return new Promise((resolve, reject) =>
         rsync.execute((error, code, cmd) => {
-            if (error)
+            if (error) {
                 reject(error)
-            else
+            } else {
+                log(`Synced ${src} -> ${dest}`);
                 resolve();
+            }
         }));
 }
 

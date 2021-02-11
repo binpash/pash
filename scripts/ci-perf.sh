@@ -73,7 +73,9 @@ main() {
 
     # Generate index page so others can review available summaries
     # through web server.
-    ls "${output_dir}"/summary_* > "${output_dir}/index";
+    cd "${output_dir}"
+    ls summary_* > index;
+    cd -
 }
 
 
