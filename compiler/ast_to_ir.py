@@ -391,49 +391,6 @@ def parse_string_to_arguments(arg_char_string):
     # log(arg_char_string)
     return string_to_arguments(arg_char_string)
 
-## TODO: Use "pash_input_args" when expanding in place of normal arguments.
-def naive_expand(argument, config):
-
-    ## config contains a dictionary with: 
-    ##  - all variables, their types, and values in 'shell_variables'
-    ##  - the name of a file that contains them in 'shell_variables_file_path'
-    # log(config['shell_variables'])
-    # log(config['shell_variables_file_path'])
-
-    ## Create an AST node that "echo"s the argument
-    echo_asts = make_echo_ast(argument, config['shell_variables_file_path'])
-
-    ## Execute the echo AST by unparsing it to shell
-    ## and calling bash
-    expanded_string = execute_shell_asts(echo_asts)
-
-    log("Argument:", argument, "was expanded to:", expanded_string)
-
-    ## Parse the expanded string back to an arg_char
-    expanded_arguments = parse_string_to_arguments(expanded_string)
-    
-    ## TODO: Handle any errors
-    # log(expanded_arg_char)
-    return expanded_arguments
-
-
-
-## This function expands an arg_char. 
-## At the moment it is pretty inefficient as it serves as a prototype.
-##
-## TODO: At the moment this has the issue that a command that has the words which we want to expand 
-##       might have assignments of its own, therefore requiring that we use them to properly expand.
-
-def expand(arg_char, config):
-#    return naive_expand(arg_char, config)
-    return expand_command_argument(arg_char, config)
-
-def expand_command_argument(argument, config):
-    new_arguments = [argument]
-    if(should_expand_argument(argument)):
-        new_arguments = naive_expand(argument, config)
-    return new_arguments
-
 ## This function compiles an arg char by recursing if it contains quotes or command substitution.
 ##
 ## It is currently being extended to also expand any arguments that are safe to expand. 
@@ -464,7 +421,7 @@ def compile_command_argument(argument, fileIdGen, config):
     return compiled_argument
 
 def compile_command_arguments(arguments, fileIdGen, config):
-    expanded_arguments = flatten_list([expand_command_argument(arg, config) for arg in arguments])
+    expanded_arguments = flatten_list([expand_arg(arg, config) for arg in arguments])
     compiled_arguments = [compile_command_argument(arg, fileIdGen, config) for arg in expanded_arguments]
     return compiled_arguments
 
