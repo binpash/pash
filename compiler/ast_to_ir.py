@@ -425,7 +425,8 @@ def naive_expand(argument, config):
 ##       might have assignments of its own, therefore requiring that we use them to properly expand.
 
 def expand(arg_char, config):
-    return naive_expand(arg_char, config)
+#    return naive_expand(arg_char, config)
+    return expand_command_argument(arg_char, config)
 
 def expand_command_argument(argument, config):
     new_arguments = [argument]
