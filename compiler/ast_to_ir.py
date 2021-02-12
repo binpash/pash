@@ -421,7 +421,7 @@ def compile_command_argument(argument, fileIdGen, config):
     return compiled_argument
 
 def compile_command_arguments(arguments, fileIdGen, config):
-    expanded_arguments = flatten_list([expand_arg(arg, config) for arg in arguments])
+    expanded_arguments = expand_args(arguments, config)
     compiled_arguments = [compile_command_argument(arg, fileIdGen, config) for arg in expanded_arguments]
     return compiled_arguments
 

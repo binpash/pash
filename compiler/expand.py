@@ -275,13 +275,15 @@ def expand_arg_char(arg_char, quoted, config):
         # TODO 2020-12-10 arithmetic parser and evaluator
         raise Unimplemented("arithmetic", arg_char)
     elif key == 'Q':
-        return expand_arg(val, config, quoted = True)
+        return [['Q', expand_arg(val, config, quoted = True)]]
     elif key == 'V':
         fmt, null, var, arg = val
         return expand_var(fmt, null, var, arg, quoted, config)
     elif key == 'B':
         # TODO 2020-12-10 run commands?
         raise Unimplemented("command substitution", arg_char)
+    else:
+        raise Unimplemented("weird key", key)
 
 def expand_var(fmt, null, var, arg, quoted, config):
     # TODO 2020-12-10 special variables
@@ -292,7 +294,10 @@ def expand_var(fmt, null, var, arg, quoted, config):
         raise StuckExpansion("couldn't expand invalid variable", value)
 
     if fmt == 'Normal':
-        return value
+        if value is None:
+            return ""
+        else:
+            return value
     elif fmt == 'Length':
         if value is None:
             return "0"
