@@ -7,9 +7,6 @@ from dash2 import *;
 # For testing
 sys.path.append("/pash/compiler")
 
-from parse import parse_shell
-from json_ast import parse_json_ast_string
-
 from ast2shell import to_string
 
 
@@ -17,12 +14,13 @@ from ast2shell import to_string
 LIBDASH2_LIBRARY_PATH = "./libdash2.so"; # Uses shims in dash2.c
 
 
-def parse_to_ast (inputPath):
+def parse_to_ast (inputPath, init):
     libdash = CDLL (LIBDASH2_LIBRARY_PATH);
 
-    libdash.Dash_initialize.argtypes = [];
-    libdash.Dash_initialize.restypes = None;
-    libdash.Dash_initialize ();
+    if (init):
+        libdash.Dash_initialize.argtypes = [];
+        libdash.Dash_initialize.restypes = None;
+        libdash.Dash_initialize ();
 
     if (inputPath == "-"):
         libdash.Dash_setinputtostdin ();
