@@ -247,9 +247,8 @@ def string_of_if (c, t, e):
         and (len (e [1][2]) == 0) \
         and (len (e [1][3]) == 0):
        str1 = str1 + "; fi";
-    elif (    e [0] == "If" \
-          and (len (e [1]) == 3)):
-        (c2, t2, e2) = e [1];
+    elif (e [0] == "If"):
+        (c2, t2, e2) = e;
 
         str1 = str1 + "; el" + string_of_if (c2, t2, e2);
     else:
