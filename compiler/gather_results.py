@@ -1,13 +1,32 @@
 import copy
 import sys
 import math
+import argparse
 import os
 import re
+import statistics
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.lines as pltlines
 import matplotlib.ticker as plticker
-import statistics
+
+parser = argparse.ArgumentParser(description='Produce plots from various experiments with PaSh.')
+parser.add_argument('--eurosys2021',
+                    action='store_true',
+                    help='generates the plots for all the experiments in the EuroSys2021 paper')
+parser.add_argument('--all',
+                    action='store_true',
+                    help='generates all plots')
+
+args = parser.parse_args()
+
+if args.all is True:
+    args.eurosys2021 = True
+
+if not args.all and not args.eurosys2021:
+    print("You have to specify some plot to generate!")
+    print("See command usage with --help.")
+    exit(0)
 
 SMALL_SIZE = 16
 MEDIUM_SIZE = 18
@@ -1542,10 +1561,14 @@ for experiment in all_experiments:
 ## Make a report of all one-liners
 report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctness)
 
+## Legacy unix50 results
+if args.all:
+    unix50_results, unix50_results_fan_in = collect_all_unix50_results(UNIX50_RESULTS)
+
 ## Collect all unix50 results
-unix50_results, unix50_results_fan_in = collect_all_unix50_results(UNIX50_RESULTS)
-small_unix50_results, _ = collect_all_unix50_results(SMALL_UNIX50_RESULTS, scaleup_numbers=[4], suffix='distr_auto_split.time')
-big_unix50_results, _ = collect_all_unix50_results(BIG_UNIX50_RESULTS, scaleup_numbers=[16], suffix='distr_auto_split.time')
+if args.eurosys2021:
+    small_unix50_results, _ = collect_all_unix50_results(SMALL_UNIX50_RESULTS, scaleup_numbers=[4], suffix='distr_auto_split.time')
+    big_unix50_results, _ = collect_all_unix50_results(BIG_UNIX50_RESULTS, scaleup_numbers=[16], suffix='distr_auto_split.time')
 
 ##
 ## Theory Paper
@@ -1559,10 +1582,12 @@ coarse_experiments = ["minimal_grep",
                       "diff",
                       "set-diff",
                       "shortest_scripts"]
-plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, 
-                            coarse_experiments, (unix50_results, unix50_results_fan_in))
-generate_tex_coarse_table(coarse_experiments)
-# collect_unix50_coarse_scaleup_times(unix50_results)
+
+if args.all:
+    plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, 
+                                coarse_experiments, (unix50_results, unix50_results_fan_in))
+    generate_tex_coarse_table(coarse_experiments)
+    # collect_unix50_coarse_scaleup_times(unix50_results)
 
 
 ##
@@ -1591,7 +1616,8 @@ custom_scaleup_plots = {"minimal_grep" : ["eager", "blocking-eager"],
                         "double_sort" : ["split", "eager", "blocking-eager", "no-eager"],
                         "shortest_scripts" : ["eager", "blocking-eager", "no-eager"]}
 
-plot_one_liners_tiling(all_experiment_results, experiments, custom_scaleup_plots)
+if args.eurosys2021:
+    plot_one_liners_tiling(all_experiment_results, experiments, custom_scaleup_plots)
 
 ## Medium input `-m`
 medium_custom_scaleup_plots = {"minimal_grep" : ["split", "blocking-eager"],
@@ -1606,10 +1632,11 @@ medium_custom_scaleup_plots = {"minimal_grep" : ["split", "blocking-eager"],
                                "shortest_scripts" : ["split", "blocking-eager", "no-eager"]}
 
 
-plot_one_liners_tiling(small_one_liner_results, experiments,
-                       medium_custom_scaleup_plots,
-                       all_scaleup_numbers=small_one_liners_scaleup_numbers,
-                       prefix="medium_")
+if args.eurosys2021:
+    plot_one_liners_tiling(small_one_liner_results, experiments,
+                           medium_custom_scaleup_plots,
+                           all_scaleup_numbers=small_one_liners_scaleup_numbers,
+                           prefix="medium_")
 
 ## Small input `-s`
 small_custom_scaleup_plots = {"minimal_grep" : ["split"],
@@ -1623,17 +1650,23 @@ small_custom_scaleup_plots = {"minimal_grep" : ["split"],
                               "double_sort" : ["split"],
                               "shortest_scripts" : ["split"]}
 
+if args.eurosys2021:
+    plot_one_liners_tiling(small_one_liner_results, experiments,
+                           small_custom_scaleup_plots,
+                           all_scaleup_numbers=small_one_liners_scaleup_numbers,
+                           prefix="small_")
 
-plot_one_liners_tiling(small_one_liner_results, experiments,
-                       small_custom_scaleup_plots,
-                       all_scaleup_numbers=small_one_liners_scaleup_numbers,
-                       prefix="small_")
+if args.eurosys2021:
+    generate_tex_table(experiments)
+    collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB")
+    collect_unix50_scaleup_times(big_unix50_results, scaleup=[16], small_prefix="_10GB")
+    plot_sort_with_baseline(RESULTS)
 
-generate_tex_table(experiments)
-collect_unix50_scaleup_times(unix50_results)
-collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB")
-collect_unix50_scaleup_times(big_unix50_results, scaleup=[16], small_prefix="_10GB")
-plot_sort_with_baseline(RESULTS)
+## Legacy plots
+if args.all:
+    collect_unix50_scaleup_times(unix50_results)
+
 
 ## Format and print correctness results
-format_correctness(correctness)
+if args.all:
+    format_correctness(correctness)
