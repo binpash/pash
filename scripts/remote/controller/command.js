@@ -56,6 +56,16 @@ const command = (() => {
     let stdout = '';
     let stderr = '';
 
+    const lock = () => {
+        log('Locking');
+        idle = initial = false;
+    };
+
+    const unlock = () => {
+        log('Unlocking');
+        idle = true;
+    };
+
     async function exec({
         cwd = getRemoteHomeDirectory(),
         shouldStopWaiting,
@@ -83,10 +93,10 @@ const command = (() => {
         dump: () => ({ stdout, stderr }),
         run: (options) => {
             if (idle) {
-                idle = initial = false;
+                lock();
                 return exec(options)
-                    .catch((e) => { idle = true; return Promise.reject(e); })
-                    .then((v) => { idle = true; return v; });
+                    .catch((e) => { unlock(); return Promise.reject(e); })
+                    .then((v) => { unlock(); return v; });
             } else {
                 const msg = 'A command is already running.';
                 const err = new Error(msg);
