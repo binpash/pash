@@ -52,15 +52,22 @@ const syncRemoteDirectory = (srcPath, dest) => {
             .destination(dest)
     );
 
-    return new Promise((resolve, reject) =>
+    return new Promise((resolve, reject) => {
+        const alarm = setTimeout(() => {
+          reject(new Error('rsync timeout. Check if it can connect to the host, and is not transmitting too many files.'));
+        }, 1000 * 60 * 5);
+
         rsync.execute((error, code, cmd) => {
+            clearTimeout(alarm);
+
             if (error) {
                 reject(error)
             } else {
                 log(`Synced ${src} -> ${dest}`);
                 resolve();
             }
-        }));
+        })
+    });
 }
 
 module.exports = {
