@@ -1,11 +1,11 @@
 #!/bin/sh
 
 
-SHELL_TO_JSON_OCAML=/pash/compiler/parser/parse_to_json.native
+SHELL_TO_JSON_OCAML=../parse_to_json.native
 
-PRETTYPRINT_JSON=/pash/compiler/parser/ceda/prettyprint_json
+PRETTYPRINT_JSON=./prettyprint_json
 
-SHELL_TO_JSON_C=/pash/compiler/parser/ceda/parse_to_json2
+SHELL_TO_JSON_C=./parse_to_json2
 
 
 if [ $# -ne 1 ]

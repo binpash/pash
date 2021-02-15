@@ -1,10 +1,10 @@
 #!/bin/sh
 
 
-SHELL_TO_JSON_OCAML=/pash/compiler/parser/parse_to_json.native
-JSON_TO_SHELL_OCAML=/pash/compiler/parser/json_to_shell.native
+SHELL_TO_JSON_OCAML=../parse_to_json.native
+JSON_TO_SHELL_OCAML=../json_to_shell.native
 
-RT_PYTHON=/pash/compiler/parser/ceda/ceda_rt.py
+RT_PYTHON=./ceda_rt.py
 
 
 if [ $# -ne 1 ]
@@ -47,14 +47,16 @@ then
     exit 1
 fi
 
-diff /tmp/rt_ocaml.$$ /tmp/rt_python.$$
+diff /tmp/rt_ocaml.$$ /tmp/rt_python.$$ > /dev/null
 if [ $? -ne 0 ]
 then
-    diff -w /tmp/rt_ocaml.$$ /tmp/rt_python.$$
+    diff -w /tmp/rt_ocaml.$$ /tmp/rt_python.$$ > /dev/null
     if [ $? -ne 0 ]
     then
+        diff -w /tmp/rt_ocaml.$$ /tmp/rt_python.$$
         echo "FAIL: '$testFile' | /tmp/rt_ocaml.$$ /tmp/rt_python.$$"
     else
+        diff /tmp/rt_ocaml.$$ /tmp/rt_python.$$
         echo "FAIL_WHITESPACE: '$testFile' | /tmp/rt_ocaml.$$ /tmp/rt_python.$$"
     fi
     exit 1
