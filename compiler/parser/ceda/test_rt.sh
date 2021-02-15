@@ -1,11 +1,11 @@
 #!/bin/sh
 
 
-SHELL_TO_JSON_OCAML=/pash/compiler/parser/parse_to_json.native
-JSON_TO_SHELL_OCAML=/pash/compiler/parser/json_to_shell.native
+SHELL_TO_JSON_OCAML=../parse_to_json.native
+JSON_TO_SHELL_OCAML=../json_to_shell.native
 
-SHELL_TO_JSON_C=/pash/compiler/parser/ceda/parse_to_json2
-JSON_TO_SHELL_C=/pash/compiler/parser/ceda/json_to_shell2
+SHELL_TO_JSON_C=./parse_to_json2
+JSON_TO_SHELL_C=./json_to_shell2
 
 
 if [ $# -ne 1 ]
