@@ -1,0 +1,24 @@
+RUN:
+pash run.sh (Runs all scripts in the scripts/ folder)
+
+Scripts that fail:
+    -> awk issues on pash?
+        scripts/bigrams_appear_twice.sh
+        scripts/find_anagrams.sh
+        scripts/vowel_sequencies_gr_1K.sh
+
+    -> trigram script does not exist
+        scripts/trigram_rec.sh
+
+Several scripts had different outputs in comparison with bash:
+    eg:
+        scripts/4letter_words.sh 
+    pash output: 
+        4767
+        4630
+        226
+        285
+    bash output:
+        9397
+        511
+    In fact they are the same (4767 + 4630 = 9397 and 226 + 285 = 511)
