@@ -1,0 +1,9 @@
+#!/bin/sh
+
+
+cat <<HELLO
+EOF
+EOFF
+EOFFF
+EOFFFF
+HELLO

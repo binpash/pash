@@ -424,6 +424,29 @@ def string_of_case (c):
     return intercalate ("|", pats) + ") " + to_string (c ['cbody']) + ";;";
 
 
+
+# let rec fresh_marker ls s =
+#   if List.mem s ls
+#   then fresh_marker ls (s ^ (String.sub s (String.length s - 1) 1))
+#   else s
+#
+# OCaml implementation above is O(n^1.5). Algorithm below is linear.
+def fresh_marker (heredoc):
+    maxRespects = 0;
+
+    for line in heredoc.split ('\n'):
+        respects = 0;
+
+        if ((len (line) > 2) and (line [0] == 'E') and (line [1] == 'O')):
+            for i in range (2, len (line)):
+                if (line [i] == 'F'):
+                    respects = i - 1;
+
+            maxRespects = max (maxRespects, respects);
+
+    return "EOF" + ("F" * maxRespects);
+
+
 # and string_of_redir = function
 #   | File (To,fd,a)      -> show_unless 1 fd ^ ">" ^ string_of_arg a
 #   | File (Clobber,fd,a) -> show_unless 1 fd ^ ">|" ^ string_of_arg a
@@ -469,7 +492,7 @@ def string_of_redir (redir):
         (t, fd, a) = params;
 
         heredoc = string_of_arg (a);
-        marker = "EOF"; # TODO: fresh_marker
+        marker = fresh_marker (heredoc);
 
         stri = show_unless (0, fd) + "<<";
         if (t == "XHere"):
