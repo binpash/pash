@@ -2,8 +2,7 @@ rm -f $PASH_TOP/evaluation/scripts/input/error.txt
 rm -f $PASH_TOP/evaluation/scripts/input/succ.txt
 # strip the first column
 mkdir -p $PASH_TOP/evaluation/scripts/input/generated
-cut -f1 -d" " --complement  $PASH_TOP/evaluation/scripts/input/likely-longest-pipelines.txt > 
-$PASH_TOP/evaluation/scripts/input/generated/generated.file
+cut -f1 -d" " --complement  $PASH_TOP/evaluation/scripts/input/likely-longest-pipelines.txt > $PASH_TOP/evaluation/scripts/input/generated/generated.file
 
 cd $PASH_TOP/evaluation/scripts/input/generated
 # we could read the file iteratively with IFS, but the environment was affected
