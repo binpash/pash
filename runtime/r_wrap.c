@@ -72,8 +72,6 @@ void processCmd(char* args[]) {
                     currLen += len;
                     // fprintf(stderr, "read %ld bytes\n", len);
                 }
-                fflush(execOutFile);
-
                 tot_read += readSize;
             }
             close(fdIn[WRITE_END]);
@@ -91,14 +89,13 @@ void processCmd(char* args[]) {
                 }
                 memcpy(cmdOutput + currLen, buffer, len);
                 currLen += len;
-                fflush(execOutFile);
             }
             fclose(execOutFile);
 
             //write block to stdout
             writeHeader(stdout, id, currLen);
             safeWrite(cmdOutput, 1, currLen, stdout);
-
+            fflush(stdout);
             //update header (ordered at the end so !feof works) and cleanup
             readHeader(stdin, &id, &blockSize);
             free(cmdOutput);
