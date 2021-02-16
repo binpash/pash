@@ -1,3 +1,3 @@
 # Count morphs in genesis
-INPUT=${INPUT:-inputs/genesis}
+INPUT=${INPUT:-$PATH_TOP/evaluation/scripts/input/genesis}
 spell -v ${INPUT} | sed 's/ .*//g' | sort | uniq -c 

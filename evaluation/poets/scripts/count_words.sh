@@ -1,4 +1,4 @@
 # Count words given an input file
 # $INPUT is the input file
-INPUT=${INPUT:-inputs/genesis}
+INPUT=${INPUT:-$PATH_TOP/evaluation/scripts/input/genesis}
 tr -sc '[A-Z][a-z]' '[\012*]' <  ${INPUT} | sort | uniq -c

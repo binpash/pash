@@ -1,5 +1,5 @@
 # Find anagrams 
-INPUT=${INPUT:-inputs/genesis}
+INPUT=${INPUT:-$PATH_TOP/evaluation/scripts/input/genesis}
 # need to generate words
 tr -sc '[A-Z][a-z]' '[\012*]' < ${INPUT} > ${INPUT}.words
 # need to generate types
