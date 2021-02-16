@@ -3,6 +3,8 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <assert.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #ifdef DEBUG
 #define PRINTDBG(fmt, ...) printf(fmt, ##__VA_ARGS__)
@@ -36,7 +38,14 @@ void readHeader(FILE* inputFile, int64_t *id, size_t *blockSize) {
     };
 }
 
+
+void safeWrite(char* buffer, int bytes, int count, FILE* outputFile) {
+    if(fwrite(buffer, bytes, count, outputFile) != count) {
+      fprintf(stderr, "write failed");
+    }
+}
+
 void writeHeader(FILE* destFile, int64_t id, size_t blocksize) {
-  fwrite(&id, sizeof(int64_t), 1, destFile);
-  fwrite(&blocksize, 1, sizeof(size_t), destFile);
+  safeWrite((char *) &id, sizeof(int64_t), 1, destFile);
+  safeWrite((char *) &blocksize, sizeof(size_t), 1, destFile);
 }
