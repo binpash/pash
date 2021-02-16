@@ -27,16 +27,18 @@ STRING_OF_VAR_TYPE_DICT = {
 #   | [s] -> s
 #   | s::ss -> s ^ p ^ intercalate p ss  
 def intercalate (p, ss):
-    str = "";
+    str = p.join (ss);
 
-    i = 0;
-    for s in ss:
-        if (i > 0):
-            str = str + p;
-
-        str = str + s;
-
-        i = i + 1;
+#    str = "";
+#
+#    i = 0;
+#    for s in ss:
+#        if (i > 0):
+#            str = str + p;
+#
+#        str = str + s;
+#
+#        i = i + 1;
 
     return (str);
 
@@ -142,10 +144,7 @@ def to_string (ast):
     if (len (ast) == 0):
         pass;
     else:
-        assert (len (ast) == 2);
-
-        type = ast [0];
-        params = ast [1]
+        (type, params) = ast;
 
         if (type == "Command"):
             (_, assigns, cmds, redirs) = params;
@@ -153,8 +152,8 @@ def to_string (ast):
             if ((len (assigns) == 0) or (len (cmds) == 0)):
                 pass;
             else:
-                str = str + " ";
-            str = str + separated (string_of_arg, cmds) + string_of_redirs (redirs);
+                str += " ";
+            str += separated (string_of_arg, cmds) + string_of_redirs (redirs);
 
             return (str);
         elif (type == "Pipe"):
@@ -247,12 +246,13 @@ def string_of_if (c, t, e):
         and (len (e [1][2]) == 0) \
         and (len (e [1][3]) == 0):
        str1 = str1 + "; fi";
-    elif (e [0] == "If"):
-        (c2, t2, e2) = e;
+    elif (    e [0] == "If" \
+          and (len (e [1]) == 3)):
+        (c2, t2, e2) = e [1];
 
-        str1 = str1 + "; el" + string_of_if (c2, t2, e2);
+        str1 += "; el" + string_of_if (c2, t2, e2);
     else:
-        str1 = str1 + "; else " + to_string (e) + "; fi";
+        str1 += "; else " + to_string (e) + "; fi";
 
     return (str1);
 
@@ -325,10 +325,6 @@ def escaped (param):
 #   | Q a -> "\"" ^ string_of_arg a ^ "\""
 #   | B t -> "$(" ^ to_string t ^ ")"
 def string_of_arg_char (c):
-    if (len (c) != 2):
-        print (c);
-        assert (len (c) == 2);
-
     (type, param) = c;
 
     if (type == "E"):
@@ -385,9 +381,9 @@ def string_of_arg_char (c):
 
             stri = "${" + name;
             if (nul):
-                stri = stri + ":";
+                stri += ":";
 
-            stri = stri + string_of_var_type (vt) + string_of_arg (a) + "}";
+            stri += string_of_var_type (vt) + string_of_arg (a) + "}";
 
             return stri;
     elif (type == "Q"):
@@ -404,15 +400,13 @@ def string_of_arg_char (c):
 def string_of_arg (args):
     # print (args);
 
-    if (len (args) == 0):
-        return "";
-    else:
-        c = args [0];
-        a = args [1:];
+    text = "".join (map (string_of_arg_char, args));
 
-#        print (string_of_arg_char (c));
+#    text = "";
+#    for arg in args:
+#        text = text + string_of_arg_char (arg);
 
-        return string_of_arg_char (c) + string_of_arg (a);
+    return (text);
 
 
 # and string_of_assign (v,a) = v ^ "=" ^ string_of_arg a
@@ -479,11 +473,11 @@ def string_of_redir (redir):
 
         stri = show_unless (0, fd) + "<<";
         if (t == "XHere"):
-            stri = stri + marker;
+            stri += marker;
         else:
-            stri = stri + "'" + marker + "'";
+            stri += "'" + marker + "'";
 
-        stri = stri + "\n" + heredoc + marker + "\n";
+        stri += "\n" + heredoc + marker + "\n";
 
         return (stri);
     else:
@@ -495,6 +489,13 @@ def string_of_redir (redir):
 #   let ss = List.map string_of_redir rs in
 #   (if List.length ss > 0 then " " else "") ^ intercalate " " ss
 def string_of_redirs (rs):
+#    if (rs == []):
+#        return "";
+#
+#    ss = map (string_of_redir, rs);
+#
+#    return intercalate (" ", ss);
+
     str = "";
 
     for redir in rs:
