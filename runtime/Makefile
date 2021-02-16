@@ -1,12 +1,12 @@
 .PHONY: all eager-debug split-debug
 
-all: eager split rmerge rwrap rsplit
+all: eager split r-merge r-wrap r-split r-unwrap
 
 CFLAGS=-Wall
 
 ifeq ($(DEBUG),1)
   # We want debug mode.
-  CFLAGS += -g -DDEBUG -Og -ggdb -Wno-attributes -Wall
+  CFLAGS += -g -DDEBUG -Og -ggdb -Wno-attributes
 else
   # We want release mode.
   CFLAGS += -O3 -DNDEBUG
@@ -29,13 +29,16 @@ eager: eager.c eager_lib.c
 eager-debug: eager.c eager_lib.c
 	gcc ${CFLAGS} -pg eager.c eager_lib.c -o eager
 
-rsplit: r_split.c r_split.h
+r-split: r_split.c r_split.h
 	gcc ${CFLAGS} r_split.c -o r_split
 
-rmerge: r_merge.c r_split.h
+r-merge: r_merge.c r_split.h
 	gcc ${CFLAGS} r_merge.c -o r_merge
 
-rwrap: r_merge.c r_split.h
+r-wrap: r_wrap.c r_split.h
 	gcc ${CFLAGS} r_wrap.c -o r_wrap
+
+r-unwrap: r_unwrap.c r_split.h
+	gcc ${CFLAGS} r_unwrap.c -o r_unwrap
 clean:
 	rm eager split
