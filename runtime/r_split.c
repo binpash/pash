@@ -31,6 +31,7 @@ void SplitByBytes(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned 
   free(buffer);
 }
 
+
 void SplitByLines(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned int numOutputFiles) {
   int current = 0;
   int64_t id = 0;
@@ -44,7 +45,6 @@ void SplitByLines(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned 
   // Do round robin copying of the input file to the output files
   // Each block has a header of "ID blockSize\n"
   while ((len = fread(buffer, 1, batchSize, inputFile)) > 0) {
-
     //find pivot point for head and rest
     for (int i = len - 1; i >= 0; i--) {
       if (buffer[i] == '\n') {
@@ -67,21 +67,21 @@ void SplitByLines(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned 
       writeHeader(outputFile, id, blockSize);
       //write blocks
       if (prevRestSize)
-        fwrite(incompleteLine, 1, prevRestSize, outputFile);
-      fwrite(buffer, 1, headSize, outputFile);
-      fwrite(newLineBuffer, 1, len, outputFile);
+        safeWrite(incompleteLine, 1, prevRestSize, outputFile);
+      safeWrite(buffer, 1, headSize, outputFile);
+      safeWrite(newLineBuffer, 1, len, outputFile);
     } else {
       blockSize = prevRestSize + headSize;
       //write header
       writeHeader(outputFile, id, blockSize);
       //write blocks
       if (prevRestSize)
-        fwrite(incompleteLine, 1, prevRestSize, outputFile);
-      fwrite(buffer, 1, headSize, outputFile);
+        safeWrite(incompleteLine, 1, prevRestSize, outputFile);
+      safeWrite(buffer, 1, headSize, outputFile);
       //update incompleteLine to the current block
       memcpy(incompleteLine, buffer + headSize , restSize);
     }
-    
+    fflush(outputFile);
     current = (current + 1) % numOutputFiles;
     outputFile = outputFiles[current];
     prevRestSize = restSize;
@@ -96,7 +96,7 @@ void SplitByLines(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned 
 
   if(prevRestSize > 0) {
     writeHeader(outputFile, id, prevRestSize);
-    fwrite(incompleteLine, 1, prevRestSize, outputFile);
+    safeWrite(incompleteLine, 1, prevRestSize, outputFile);
   }
 
   //clean up
