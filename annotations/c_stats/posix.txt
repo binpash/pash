@@ -1,5 +1,3 @@
-Name            Category            Status (Option code)    Description                                                               First appeared
-------------------------------------------------------------------------------------------------------------------------------------------------------
 qalter      Batch utilities          Obsolescent (BE)    Alter batch job    
 qdel        Batch utilities          Obsolescent (BE)    Delete batch jobs    
 qhold       Batch utilities          Obsolescent (BE)    Hold batch jobs    
@@ -160,4 +158,3 @@ uniq        Text processing          Mandatory           Report or filter out re
 vi          Text processing          Optional (UP)       Screen-oriented (visual) display editor    1BSD
 wc          Text processing          Mandatory           Line, word and byte or character count    Version 1 AT&T UNIX
 zcat        Text processing          Optional (XSI)      Expand and concatenate data    4.3BSD
-
