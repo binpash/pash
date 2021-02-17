@@ -1,0 +1,30 @@
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'port 53'|grep -Ev '(com|net|org|gov|mil|arpa)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'port 53'| uniq |grep -Ev '(com|net|org|gov|mil|arpa)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'port 53'|grep -i referer
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'port 53'| uniq |grep -i referer
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'port 53'|grep -Ev '(GET|HEAD)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'port 53'| uniq |grep -Ev '(GET|HEAD)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'dst port 80'|grep -Ev '(com|net|org|gov|mil|arpa)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'dst port 80'| uniq |grep -Ev '(com|net|org|gov|mil|arpa)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'dst port 80'|grep -i referer
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'dst port 80'| uniq |grep -i referer
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'dst port 80'|grep -Ev '(GET|HEAD)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'dst port 80'| uniq |grep -Ev '(GET|HEAD)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'tcp'|grep -Ev '(com|net|org|gov|mil|arpa)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'tcp'| uniq |grep -Ev '(com|net|org|gov|mil|arpa)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'tcp'|grep -i referer
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'tcp'| uniq |grep -i referer
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'tcp'|grep -Ev '(GET|HEAD)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'tcp'| uniq |grep -Ev '(GET|HEAD)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'udp'|grep -Ev '(com|net|org|gov|mil|arpa)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'udp'| uniq |grep -Ev '(com|net|org|gov|mil|arpa)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'udp'|grep -i referer
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'udp'| uniq |grep -i referer
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'udp'|grep -Ev '(GET|HEAD)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'udp'| uniq |grep -Ev '(GET|HEAD)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'ip'|grep -Ev '(com|net|org|gov|mil|arpa)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'ip'| uniq |grep -Ev '(com|net|org|gov|mil|arpa)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'ip'|grep -i referer
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'ip'| uniq |grep -i referer
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'ip'|grep -Ev '(GET|HEAD)'
+tcpdump -nn -r /pash/evaluation/scripts/input.pcap -A 'ip'| uniq |grep -Ev '(GET|HEAD)'
