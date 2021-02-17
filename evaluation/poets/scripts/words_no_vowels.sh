@@ -1,3 +1,3 @@
 # words with no vowels
-INPUT=${INPUT:-$PATH_TOP/evaluation/scripts/input/genesis}
+INPUT=${INPUT:-$PASH_TOP/evaluation/scripts/input/poets/genesis}
 tr -sc '[A-Z][a-z]' '[\012*]' < ${INPUT} | grep -vi '[aeiou]' | sort | uniq -c
