@@ -653,6 +653,8 @@ There are two modes of execution:
 Note that this script executes sort --parallel with double the value of --width
 since we noticed that it grows slightly slower (as shown in the Figure in Section 6.5).
 
+_This script throws a warning that is expected: `Env file: .../evaluation/microbenchmarks/sort_env_small.sh could not be read.` The warning is expected and can be safely ignored._
+
 
 ## Support & Epilogue
 
