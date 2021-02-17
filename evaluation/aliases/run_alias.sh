@@ -1,12 +1,5 @@
-rm -f $PASH_TOP/evaluation/scripts/input/error.txt
-rm -f $PASH_TOP/evaluation/scripts/input/succ.txt
-# strip the first column
-mkdir -p $PASH_TOP/evaluation/scripts/input/generated
-cut -f1 -d" " --complement  $PASH_TOP/evaluation/scripts/input/likely-longest-pipelines.txt > $PASH_TOP/evaluation/scripts/input/generated/generated.file
-
-cd $PASH_TOP/evaluation/scripts/input/generated
 # we could read the file iteratively with IFS, but the environment was affected
-# idk maybe Im bad
+cd $PASH_TOP/evaluation/scripts/input/aliases
 IFS=$'\r\n' GLOBIGNORE='*' command eval  'cmd_array=($(cat generated.file))'
 lc=$(cat generated.file | wc -l)
 for i in $(seq 0 $lc)
