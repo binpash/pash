@@ -11,4 +11,4 @@ export INPUT=${IN}
 # process on genesis
 grep 'And he said' ${INPUT} > ${GREP_RES}2
 export INPUT=${GREP_RES}2
-bash scripts/count_trigrams.sh | cat ${GREP_RES}2.trigrams | sort -nr | sed 5q
+$PASH_TOP/pa.sh scripts/count_trigrams.sh | cat ${GREP_RES}2.trigrams | sort -nr | sed 5q
