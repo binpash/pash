@@ -14,6 +14,7 @@ main() {
         --monitoring "Enabled=false" \
         --subnet-id "$PASH_AWS_EC2_SUBNET" \
         --query 'Instances[0].InstanceId' \
+        --block-device-mappings "DeviceName=/dev/sda1,Ebs={VolumeSize=$PASH_AWS_EC2_DISK_SIZE_GB}" \
         --output text
 }
 
