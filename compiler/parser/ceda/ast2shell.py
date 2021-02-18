@@ -432,6 +432,30 @@ def string_of_case (c):
 #
 # OCaml implementation above is O(n^1.5). Algorithm below is linear.
 def fresh_marker (heredoc):
+    respectsFound = {};
+
+    for line in heredoc.split ('\n'):
+        respects = 0;
+
+        if ((len (line) > 2) and (line [0] == 'E') and (line [1] == 'O')):
+            for i in range (2, len (line)):
+                if (line [i] == 'F'):
+                    respects = i - 2;
+
+            respectsFound [respects] = 1;
+
+    i = 0;
+    while (True):
+        if (not (i in respectsFound)):
+            return "EOF" + ("F" * i);
+
+        i = i + 1;
+
+
+# This version may give an unnecessarily long EOFFFF... (and therefore won't
+# match the OCaml output but it is still correct w.r.t. giving a fresh
+# marker, and uses less memory than fresh_marker above).
+def fresh_marker0 (heredoc):
     maxRespects = 0;
 
     for line in heredoc.split ('\n'):
