@@ -1,5 +1,5 @@
 #!/bin/bash
-# Suggests envvars for use in ./make-ec2-instance.sh
+# Suggests envvars for use in ./make-ec2.sh
 
 main() {
     local vpc_id="$(aws ec2 describe-vpcs --output text --query 'Vpcs[0].VpcId')";
