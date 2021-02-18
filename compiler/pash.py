@@ -27,7 +27,6 @@ def main():
 
     ## Make a directory for temporary files
     config.PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
-
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
     input_script_path = args.input
     json_ast_string = parse_shell(input_script_path)
@@ -65,7 +64,11 @@ def parse_args():
     if 'PASH_FROM_SH' in os.environ:
         prog_name = os.environ['PASH_FROM_SH']
     parser = argparse.ArgumentParser(prog_name)
-    parser.add_argument("input", help="the script to be compiled and executed")
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    group.add_argument("-c", "--command", nargs='?', type=str, help="Execute the script from the argument")
+    group.add_argument("input",  nargs='?', help="the script to be compiled and executed")
+    parser.parse_known_args(['input', '--command'])
     parser.add_argument("--preprocess_only",
                         help="only preprocess the input script and not execute it",
                         action="store_true")
@@ -74,6 +77,21 @@ def parse_args():
                         action="store_true")
     config.add_common_arguments(parser)
     args = parser.parse_args()
+    # handle the script argument as executable code
+#    if args.input and args.command:
+#        parser.error('Select either script_name or -c command_to_execute')
+#        parser.error('No input given, add script_name or -c command_to_execute')
+#        sys.exit(2)
+    if args.command:
+        # create new temp file
+        _, fname = ptempfile()
+        f = open(fname, "w")
+        # write the contents of the argument
+        f.write(args.command)
+        f.close()
+        # assign the input flag to the tmp filename
+        args.input = f.name
+        args.command = None
     return args
 
 def preprocess(ast_objects, config):
