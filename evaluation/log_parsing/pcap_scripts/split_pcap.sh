@@ -1,8 +1,8 @@
 #!/bin/sh
 # To process large pcap file, usually it is better to split it into small chunks first, 
 # then process every chunk in parallel.
-INPUT=${INPUT:-$PASH_TOP/evaluation/scripts/input/log_parsing/201011271400.dump}
-OUTPUT=${OUTPUT:-$PASH_TOP/evaluation/scripts/input/log_parsing/out.pcap}
+INPUT=${INPUT:-$PASH_TOP/evaluation/scripts/input/201011271400.dump}
+OUTPUT=${OUTPUT:-$PASH_TOP/evaluation/scripts/input/out.pcap}
 split_size=1000
 output_index=1
 loop_count=10

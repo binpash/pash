@@ -1,4 +1,4 @@
-INPUT=${INPUT:-$PASH_TOP/evaluation/scripts/input/log_parsing/201011271400.dump}
+INPUT=${INPUT:-$PASH_TOP/evaluation/scripts/input/201011271400.dump}
 tcpdump -nn -r ${INPUT} -A 'port 53'| sort | uniq |grep -Ev '(com|net|org|gov|mil|arpa)' > /dev/null                    
 tcpdump -nn -r ${INPUT} -A 'port 53'| sort |uniq |grep -Ev '(com|net|org|gov|mil|arpa)' > /dev/null
 #tcpdump -nn -r ${INPUT} -A 'port 53'| grep -i referer
