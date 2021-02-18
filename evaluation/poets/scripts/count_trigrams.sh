@@ -1,5 +1,5 @@
 # Count tri-grams
-INPUT=${INPUT:-$PASH_TOP/evaluation/scripts/input/poets/genesis}
+INPUT=${INPUT:-$PASH_TOP/evaluation/scripts/input/genesis}
 tr -sc '[A-Z][a-z]' '[\012*]' < ${INPUT} > ${INPUT}.words
 tail +2 ${INPUT}.words > ${INPUT}.nextwords
 tail +3 ${INPUT}.words > ${INPUT}.nextwords2
