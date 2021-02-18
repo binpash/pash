@@ -27,7 +27,6 @@ def main():
 
     ## Make a directory for temporary files
     config.PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
-
     if args.command:
         with open(config.config['runtime']['immediate'], 'w') as f:
             f.write(args.command)
