@@ -2,8 +2,12 @@
 
 
 cat <<HELLO
-EOF
+blah
 EOFF
+EOF
 EOFFF
-EOFFFF
+
+EOFFFFF
+OCaml will use a marker with 4 'F's!
+But it would also be ok to return 6 (EOFFFFFF)
 HELLO
