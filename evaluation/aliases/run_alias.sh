@@ -1,5 +1,8 @@
+# parses the generated.file, and creates a log of the commands that were executed
+# successfully (succ.txt) and the failed ones (err.txt)
+
+cd $PASH_TOP/evaluation/scripts/input/
 # we could read the file iteratively with IFS, but the environment was affected
-cd $PASH_TOP/evaluation/scripts/input/aliases
 IFS=$'\r\n' GLOBIGNORE='*' command eval  'cmd_array=($(cat generated.file))'
 lc=$(cat generated.file | wc -l)
 for i in $(seq 0 $lc)
