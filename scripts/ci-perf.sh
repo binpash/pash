@@ -34,42 +34,15 @@ main() {
     # used to run the tests.
     git checkout "$latest_main_revision";
 
-    summarize_suite() {
-        local heading="$1";
-        local summary_name="$2";
-        local subdir="$3";
-        local tests="$4";
-        local width="$5";
-        local variant="$6";
-        local summary_file="${output_dir}/summary_${summary_name}";
-        local heading_arg=$(
-            if [ ! -f "$summary_file" ]; then
-                printf "$heading, --width $width ($variant)";
-            else
-                printf ''
-            fi
-        )
-
-        node "$pash_d/scripts/remote/controller/perf-analysis/report.js" \
-             "$revision" \
-             "$output_revision_directory/$subdir" \
-             "$tests" \
-             "$width" \
-             "$variant" \
-             "$heading_arg" \
-             1>> "$summary_file" \
-             2>"$summary_file.stderr";
-    }
-
     echo "Summarizing results";
     local eurosys_tests='bigrams,diff,minimal_grep,minimal_sort,set-diff,spell,topn,wf'
-
-    summarize_suite "EuroSys One-liners" \
-                    "eurosys_small" \
-                    "eurosys_small" \
-                    "$eurosys_tests" \
-                    "2" \
-                    "distr_auto_split";
+    summarize_perf_suite "EuroSys One-liners" \
+                         "$revision" \
+                         "${output_revision_directory}/eurosys_small" \
+                         "$eurosys_tests" \
+                         "2" \
+                         "distr_auto_split" \
+                         "${output_dir}/summary_eurosys_small"
 
     # Generate index page so others can review available summaries
     # through web server.
@@ -80,7 +53,7 @@ main() {
 
 
 build_pash_runtime() {
-    make -C "$(get_pash_dir)/runtime"
+    make -C "$(get_pash_dir)/runtime";
 }
 
 get_pash_dir() {
@@ -102,4 +75,89 @@ run_performance_test_suites() {
     # ./execute_web_index_dish_evaluation.sh
 }
 
-main "$@"
+summarize_perf_suite() {
+    local heading="$1";
+    local revision="$2";
+    local input_dir="$3";
+    local tests="$4";
+    local width="$5";
+    local variant="$6";
+    local summary_file="$7";
+    local cell_fmt='%-20s';
+
+    IFS=',' read -ra test_array <<< "$tests";
+
+    # When starting a summary file, include a header.
+    if [[ ! -f "$summary_file" ]]; then
+        (
+            printf "$heading (width=$width variant=$variant)\n";
+            printf "$cell_fmt" 'revision';
+            for t in "${test_array[@]}"; do
+                printf "$cell_fmt" "$t";
+            done;
+            printf '\n';
+        ) > "$summary_file";
+    fi
+
+    # Add a row of test data.
+    printf "$cell_fmt" "$revision" >> "$summary_file";
+    for t in "${test_array[@]}"; do
+        local perf_file="${input_dir}/${t}_${width}_${variant}.time";
+        echo "Summarizing $perf_file";
+        printf "$cell_fmt" $(summarize_perf_file "$perf_file") >> "$summary_file";
+    done
+    printf '\n' >> "$summary_file";
+}
+
+print_pash_execution_time() {
+    LC_NUMERIC='C' \
+        cat "$1" | \
+        grep 'Execution time: ' | \
+        sed 's/[^0-9\.]//g' | \
+        awk '{s+=sprintf("%f", $1)}END{printf "%.4f",s}';
+}
+
+print_user_time() {
+    local time_string="$(egrep 'user[^m]+m[0-9\.]+s' "$1" | sed 's/^[^0-9]+//g')";
+    local seconds="$(echo "$time_string" | sed -nr 's/.*m([^s]+)s/\1/p')"
+    local minutes="$(echo "$time_string" | sed -nr 's/^[^0-9]+([0-9\.]+)m.*/\1/p')";
+    echo "scale=4; ($minutes * 60) + $seconds" | bc;
+}
+
+summarize_perf_file() {
+    local perf_file="$1";
+    read -a data < <(split_perf_file_name "$perf_file");
+
+    local test="${data[0]}";
+    local width="${data[1]}";
+    local variant="${data[2]}";
+
+    if [[ "$variant" == 'seq' ]]; then
+        printf "%ss" "$(print_user_time "$1")";
+    elif [[ -f "$(make_perf_file_name "$test" "$width" "seq")" ]]; then
+        local ptime="$(print_pash_execution_time "$1")";
+        local utime="$(print_user_time "$1")";
+        printf "%ss,x%s" "$ptime" "$(echo "scale=4; $utime / $ptime" | bc)";
+    else
+        print_pash_execution_time "$1";
+    fi
+}
+
+split_perf_file_name() {
+    if [[ "$(basename $1)" =~ (.*)_([0-9]+)_(.*).time$ ]]; then
+        echo "${BASH_REMATCH[@]:1}";
+        return 0
+    else
+        return 1
+    fi
+}
+
+make_perf_file_name() {
+    local name="$1";
+    local width="$2";
+    local variant="$3";
+    echo "${name}_${width}_${variant}.time";
+}
+
+
+(return 0 2>/dev/null) || main "$@"
