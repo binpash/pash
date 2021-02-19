@@ -28,6 +28,11 @@ def main():
     ## Make a directory for temporary files
     config.PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
 
+    if args.command:
+        with open(config.config['runtime']['immediate'], 'w') as f:
+            f.write(args.command)
+        args.input = './.tmp_script.sh'
+
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
     input_script_path = args.input
     json_ast_string = parse_shell(input_script_path)
@@ -65,13 +70,16 @@ def parse_args():
     if 'PASH_FROM_SH' in os.environ:
         prog_name = os.environ['PASH_FROM_SH']
     parser = argparse.ArgumentParser(prog_name)
-    parser.add_argument("input", help="the script to be compiled and executed")
+    parser.add_argument("input", nargs='?', help="the script to be compiled and executed")
     parser.add_argument("--preprocess_only",
                         help="only preprocess the input script and not execute it",
                         action="store_true")
     parser.add_argument("--output_preprocessed",
                         help=" output the preprocessed script",
                         action="store_true")
+    parser.add_argument("-c", "--command",
+                        help="Evaluate the following as a script, rather than a file",
+                        default="")
     config.add_common_arguments(parser)
     args = parser.parse_args()
     return args
@@ -94,6 +102,8 @@ def execute_script(compiled_script_filename, debug_level):
     ## Delete the temp directory when not debugging
     if(debug_level == 0):
         shutil.rmtree(config.PASH_TMP_PREFIX)
+    if args.command:
+        os.remove(config.config['runtime']['immediate'])
     ## Return the exit code of the executed script
     exit(exec_obj.returncode)
 
