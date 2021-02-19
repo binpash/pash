@@ -380,8 +380,16 @@ def string_of_arg_char (c):
             (vt, nul, name, a) = param;
 
             stri = "${" + name;
-            if (nul):
+
+            # Depending on who generated the JSON, nul may be
+            # a string or a boolean! In Python, non-empty strings
+            # to True.
+            if (str (nul).lower () == "true"):
                 stri += ":";
+            elif (str (nul).lower () == "false"):
+                pass;
+            else:
+                os.abort (); # For my own sanity
 
             stri += string_of_var_type (vt) + string_of_arg (a) + "}";
 
