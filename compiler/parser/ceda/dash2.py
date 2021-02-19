@@ -30,6 +30,77 @@ NXHERE    = 24;
 NNOT      = 25;
 
 
+# struct stackmark {
+#     struct stack_block *stackp;
+#     char *stacknxt;
+#     size_t stacknleft;
+# };
+#
+# We only care about getting the struct size correct, not the contents.
+class stackmark (Structure):
+    _fields_ = [("stackp", c_void_p),
+                ("nxt",    c_void_p),
+                ("size",   c_size_t)];
+
+
+def init_stack (libdash):
+    stack = create_string_buffer (sizeof (stackmark));
+
+    libdash.setstackmark.argtypes = [c_void_p]; # Pretend we don't know the contents
+    libdash.setstackmark.restypes = None;
+    libdash.setstackmark (stack);
+
+    return (stack);
+
+def pop_stack (libdash, smark):
+    # Inefficient, we should only initialize once
+
+    libdash.popstackmark.argtypes = [c_void_p]; # Again, hide the contents
+    libdash.popstackmark.restype = None;
+
+    return (libdash.popstackmark (smark));
+
+
+def dash_init (libdash):
+    libdash.init.argtypes = [];
+    libdash.init.restype = None;
+
+    libdash.init ();
+
+
+def initialize_dash_errno (libdash):
+    libdash.initialize_dash_errno.argtypes = [];
+    libdash.initialize_dash_errno.restype = None;
+
+    libdash.initialize_dash_errno ();
+
+
+def initialize (libdash):
+    initialize_dash_errno (libdash);
+    dash_init (libdash);
+
+
+def setinputtostdin (libdash):
+    libdash.setinputfd.argtypes = [c_int, c_int];
+    libdash.setinputfd.restype = None;
+
+    libdash.setinputfd (0, 0);
+
+
+# TODO: allow push parameter
+def setinputfile (libdash, filename):
+    libdash.setinputfile.argtypes = [c_char_p, c_int];
+    libdash.setinputfile.restypes = c_int;
+    libdash.setinputfile (filename.encode ('utf-8'), 0);
+
+
+def parsecmd_safe (libdash, interactive):
+    libdash.parsecmd_safe.argtypes = [c_int];
+    libdash.parsecmd_safe.restype = c_void_p;
+
+    return (libdash.parsecmd_safe (int (interactive)));
+
+
 # Forward declarations to break recursive dependencies
 class union_node (Union):
     pass;
