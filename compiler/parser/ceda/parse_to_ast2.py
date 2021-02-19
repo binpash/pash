@@ -4,19 +4,15 @@ from ctypes import *
 from ast2a import of_node;
 from dash2 import *;
 
-# For testing
-sys.path.append("/pash/compiler")
-
-from ast2shell import to_string
+sys.path.append("/pash/compiler");
+from json_ast import serialize_asts_to_json, parse_json_ast;
 
 
 LIBDASH_LIBRARY_PATH = "../libdash/src/.libs/libdash.so";
-LIBDASH2_LIBRARY_PATH = "./libdash2.so"; # Uses shims in dash2.c
 
 
+# This is a mix of dash.ml:parse_next and parse_to_json.ml.
 def parse_to_ast (inputPath, init):
-    libdash2 = CDLL (LIBDASH2_LIBRARY_PATH);
-
     libdash = CDLL (LIBDASH_LIBRARY_PATH);
 
     if (init):
@@ -25,7 +21,7 @@ def parse_to_ast (inputPath, init):
     if (inputPath == "-"):
         setinputtostdin (libdash);
     else:
-        setinputfile (libdash, sys.argv [1]);
+        setinputfile (libdash, inputPath);
 
     smark = init_stack (libdash);
 
