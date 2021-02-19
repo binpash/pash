@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+
+
 import sys;
 
 from parse_to_ast2 import parse_to_ast;
