@@ -5,7 +5,8 @@ from ast2a import of_node;
 from dash2 import *;
 
 
-LIBDASH_LIBRARY_PATH = "../libdash/src/.libs/libdash.so";
+# TODO: use Pash root directory
+LIBDASH_LIBRARY_PATH = "/pash/compiler/parser/libdash/src/.libs/libdash.so";
 
 
 # This is a mix of dash.ml:parse_next and parse_to_json.ml.
