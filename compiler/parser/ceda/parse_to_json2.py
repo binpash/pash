@@ -1,6 +1,9 @@
 import sys;
 
-from parse_to_ast2 import *;
+from parse_to_ast2 import parse_to_ast;
+
+sys.path.append("/pash/compiler");
+from json_ast import serialize_asts_to_json;
 
 
 def main ():

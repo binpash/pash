@@ -4,9 +4,6 @@ from ctypes import *
 from ast2a import of_node;
 from dash2 import *;
 
-sys.path.append("/pash/compiler");
-from json_ast import serialize_asts_to_json, parse_json_ast;
-
 
 LIBDASH_LIBRARY_PATH = "../libdash/src/.libs/libdash.so";
 
