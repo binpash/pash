@@ -30,7 +30,7 @@ def main():
     if args.command:
         with open(config.config['runtime']['immediate'], 'w') as f:
             f.write(args.command)
-        args.input = './.tmp_script.sh'
+        args.input = f.name
 
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
     input_script_path = args.input
@@ -61,7 +61,7 @@ def main():
 
     ## 5. Execute the preprocessed version of the input script
     if(not args.preprocess_only):
-        execute_script(fname, args.debug)
+        execute_script(fname, args.debug, args.command)
 
 
 def parse_args():
@@ -69,14 +69,16 @@ def parse_args():
     if 'PASH_FROM_SH' in os.environ:
         prog_name = os.environ['PASH_FROM_SH']
     parser = argparse.ArgumentParser(prog_name)
-    parser.add_argument("input", nargs='?', help="the script to be compiled and executed")
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    group.add_argument("input", nargs='?', help="the script to be compiled and executed")
     parser.add_argument("--preprocess_only",
                         help="only preprocess the input script and not execute it",
                         action="store_true")
     parser.add_argument("--output_preprocessed",
                         help=" output the preprocessed script",
                         action="store_true")
-    parser.add_argument("-c", "--command",
+    group.add_argument("-c", "--command",
                         help="Evaluate the following as a script, rather than a file",
                         default="")
     config.add_common_arguments(parser)
@@ -94,14 +96,14 @@ def preprocess(ast_objects, config):
 
     return preprocessed_asts
 
-def execute_script(compiled_script_filename, debug_level):
+def execute_script(compiled_script_filename, debug_level, command):
     new_env = os.environ.copy()
     new_env["PASH_TMP_PREFIX"] = config.PASH_TMP_PREFIX
     exec_obj = subprocess.run(["/usr/bin/env", "bash" ,compiled_script_filename], env=new_env)
     ## Delete the temp directory when not debugging
     if(debug_level == 0):
         shutil.rmtree(config.PASH_TMP_PREFIX)
-    if args.command:
+    if command:
         os.remove(config.config['runtime']['immediate'])
     ## Return the exit code of the executed script
     exit(exec_obj.returncode)
