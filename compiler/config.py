@@ -15,9 +15,6 @@ if 'PASH_TOP' in os.environ:
 else:
     PASH_TOP = subprocess.run(GIT_TOP_CMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).stdout.rstrip()
 
-PARSER_BINARY = os.path.join(PASH_TOP, "compiler/parser/parse_to_json.native")
-PRINTER_BINARY = os.path.join(PASH_TOP, "compiler/parser/json_to_shell.native")
-
 PYTHON_VERSION = "python3"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
