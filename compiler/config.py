@@ -13,6 +13,7 @@ if 'PASH_TOP' in os.environ:
 else:
     PASH_TOP = subprocess.run(GIT_TOP_CMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).stdout.rstrip()
 
+## TODO: Change bang in the beginning of python executables to use env
 PARSER_BINARY = os.path.join(PASH_TOP, "compiler/parser/ceda/parse_to_json2.py")
 PRINTER_BINARY = os.path.join(PASH_TOP, "compiler/parser/ceda/json_to_shell2.py")
 
