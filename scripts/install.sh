@@ -41,7 +41,7 @@ git submodule update
 
 ## If option -p is set, also run the sudo
 if [ "$prepare_sudo_install_flag" -eq 1 ]; then
-    echo "Running preparation sudo apt install and opam init:"
+    echo "Running preparation sudo apt install:"
     echo "|-- running apt update..."
     sudo apt-get update &> $LOG_DIR/apt_update.log
     echo "|-- running apt install..."
@@ -83,6 +83,7 @@ cd ../../
 # echo "|-- making libdash... (requires sudo)"
 # ## TODO: How can we get rid of that `sudo make install` in here?
 # make libdash &> $LOG_DIR/make_libdash.log
+# make libdash-ocaml &>> $LOG_DIR/make_libdash.log
 # echo "|-- making parser..."
 # make &> $LOG_DIR/make.log
 # cd ../../

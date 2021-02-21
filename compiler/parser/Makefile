@@ -2,7 +2,7 @@ PARSER=parse_to_json
 JSON_TO_SHELL=json_to_shell
 AST_I=./libdash/ocaml/ast.mli
 
-.PHONY : all test dependencies libdash clean
+.PHONY : all test dependencies libdash libdash-ocaml clean
 
 all : $(PARSER).native $(PARSER).byte $(JSON_TO_SHELL).native $(JSON_TO_SHELL).byte
 
@@ -39,6 +39,8 @@ clean :
 
 libdash:
 	cd libdash && ./autogen.sh || ./autogen.sh && ./configure && make && sudo make install
+
+libdash-ocaml:
 	cd libdash/ocaml && make && make install
 
 opam-dependencies: 
