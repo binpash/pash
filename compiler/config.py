@@ -8,7 +8,7 @@ import tempfile
 from ir_utils import *
 
 ## Global
-__version__ = "0.3" # FIXME add libdash version
+__version__ = "0.4" # FIXME add libdash version
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'PASH_TOP' in os.environ:
     PASH_TOP = os.environ['PASH_TOP']
