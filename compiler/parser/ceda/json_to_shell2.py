@@ -1,24 +1,28 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
+import os
+import sys
 
-import sys;
+if 'PASH_TOP' in os.environ:
+    PASH_TOP = os.environ['PASH_TOP']
+else:
+    GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
+    PASH_TOP = subprocess.run(GIT_TOP_CMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).stdout.rstrip()
 
-sys.path.append("/pash/compiler");
-from json_ast import parse_json_ast;
+sys.path.append(os.path.join(PASH_TOP, "compiler"))
 
-
-from ast2shell import *;
+from json_ast import parse_json_ast
+from ast2shell import *
 
 
 def main ():
     if (len (sys.argv) == 1):
-        asts = parse_json_ast ("/dev/stdin");
+        asts = parse_json_ast ("/dev/stdin")
     else:
-        asts = parse_json_ast (sys.argv [1]);
+        asts = parse_json_ast (sys.argv [1])
 
     for ast in asts:
-        print (to_string (ast));
-
+        print (to_string (ast))
 
 if __name__ == "__main__":
-    main ();
+    main ()
