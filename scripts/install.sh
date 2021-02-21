@@ -41,18 +41,15 @@ git submodule update
 
 ## If option -p is set, also run the sudo
 if [ "$prepare_sudo_install_flag" -eq 1 ]; then
-    echo "Running preparation sudo apt install and opam init:"
+    echo "Running preparation sudo apt install:"
     echo "|-- running apt update..."
     sudo apt-get update &> $LOG_DIR/apt_update.log
     echo "|-- running apt install..."
-    sudo apt-get install -y libtool m4 automake opam pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils &> $LOG_DIR/apt_install.log
-    yes | opam init &> $LOG_DIR/opam_init.log
-    # opam update
+    sudo apt-get install -y libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils &> $LOG_DIR/apt_install.log
 else
     echo "Requires libtool, m4, automake, opam, pkg-config, libffi-dev, python3, pip for python3, a dictionary, bc, bsdmainutils"
     echo "Ensure that you have them by running:"
-    echo "  sudo apt install libtool m4 automake opam pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils"
-    echo "  opam init"
+    echo "  sudo apt install libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils"
     echo -n "Press 'y' if you have these dependencies installed. "
     while : ; do
         read -n 1 k <&1
@@ -64,20 +61,33 @@ else
     done
 fi
 
+## Old installation also required `sudo apt install opam` and `yes | opam init`
+# sudo apt-get install opam
+# yes | opam init &> $LOG_DIR/opam_init.log
 
 # Build the parser (requires libtool, m4, automake, opam)
 echo "Building parser..."
-eval $(opam config env)
 cd compiler/parser
-echo "|-- installing opam dependencies..."
-make opam-dependencies &> $LOG_DIR/make_opam_dependencies.log
 echo "|-- making libdash... (requires sudo)"
 ## TODO: How can we get rid of that `sudo make install` in here?
 make libdash &> $LOG_DIR/make_libdash.log
-echo "|-- making parser..."
-# FIXME: This make here seems to be calling the targets above. Why?
-make &> $LOG_DIR/make.log
 cd ../../
+
+## This was the old parser installation that required opam.
+# # Build the parser (requires libtool, m4, automake, opam)
+# echo "Building parser..."
+# eval $(opam config env)
+# cd compiler/parser
+# echo "|-- installing opam dependencies..."
+# make opam-dependencies &> $LOG_DIR/make_opam_dependencies.log
+# echo "|-- making libdash... (requires sudo)"
+# ## TODO: How can we get rid of that `sudo make install` in here?
+# make libdash &> $LOG_DIR/make_libdash.log
+# make libdash-ocaml &>> $LOG_DIR/make_libdash.log
+# echo "|-- making parser..."
+# make &> $LOG_DIR/make.log
+# cd ../../
+
 
 echo "Building runtime..."
 # Build runtime tools: eager, split
