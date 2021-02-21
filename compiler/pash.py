@@ -56,8 +56,6 @@ def parse_args():
     if 'PASH_FROM_SH' in os.environ:
         prog_name = os.environ['PASH_FROM_SH']
     parser = argparse.ArgumentParser(prog_name)
-    # group = parser.add_mutually_exclusive_group(required=True)
-    # group.add_argument("input", nargs='?', help="the script to be compiled and executed")
     parser.add_argument("input", nargs='?', help="the script to be compiled and executed")
     parser.add_argument("--preprocess_only",
                         help="only preprocess the input script and not execute it",
@@ -70,7 +68,7 @@ def parse_args():
                         default="")
     config.add_common_arguments(parser)
     args = parser.parse_args()
-    config.pash_args = args;
+    config.pash_args = args
 
     ## Initialize the log file
     config.init_log_file()
@@ -86,7 +84,7 @@ def parse_args():
 
     if (args.input == None):
         parser.print_usage()
-        exit();
+        exit()
 
     return args
 
