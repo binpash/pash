@@ -1,5 +1,6 @@
 {
     "command": "sort",
+    "aggregate": "sort -m",
     "cases":
     [
         {
@@ -15,6 +16,7 @@
         {
             "predicate": "default",
             "class": "pure",
+            "agg": "sort",
             "inputs": ["stdin"],
             "outputs": ["stdout"]
         }

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ## By making tee | tail | paste its own function, we can implement it
 ## as a pure command separated into a generalized map and a
@@ -19,7 +19,7 @@ bigram_aux_map()
     s2=$(mktemp -u)
     aux1=$(mktemp -u)
     aux2=$(mktemp -u)
-    
+
     mkfifo $s2
     mkfifo $aux1
     mkfifo $aux2
@@ -60,7 +60,7 @@ bigram_aux_reduce()
     AUX_TAIL_OUT=$9
 
     temp=$(mktemp -u)
-    
+
     mkfifo $temp
 
     cat $AUX_HEAD1 > $AUX_HEAD_OUT &

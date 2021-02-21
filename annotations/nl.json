@@ -1,5 +1,6 @@
 {
-    "command": "paste",
+    "command": "nl",
+    "aggregate": "$PASH_TOP/runtime/agg/py/nl.py",
     "cases":
     [
         {

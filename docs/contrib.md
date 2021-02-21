@@ -25,14 +25,6 @@ docker start -i pash-playground
 
 Flag `-i` starts it interactively.
 
-### Loading Image w/ Smoosh Tests
-
-To load a Docker image that contains the `smoosh` correctness tests too, run instead:
-
-```sh
-curl img.pash.ndr.md/pash-smoosh.tar.gz | docker load; docker run --name smoosh -it pash-smoosh/18.04
-```
-
 ### Customizing image
 
 To be used for continuous integration and testing, this image has been configured to have _read-only_ access to the repo through a different user.

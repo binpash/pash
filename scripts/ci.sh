@@ -24,7 +24,7 @@ cd -
 SMOOSH_RESULTS=""
 
 trim() {
-  awk 'length > 40{$0 = substr($0, 1, 37) "..."} {print $0}' 
+  tr -d '\n' | awk 'length > 40{$0 = substr($0, 1, 37) "..."} {print $0}'
 }
 
 build_runtime() {
@@ -42,8 +42,8 @@ pash_tests() {
 
 smoosh_tests() {
   cd ../../smoosh
-  TEST_SHELL="python3.8 $PASH_TOP/compiler/pash.py --split_fan_out 2 --log_file /tmp/log_file" make -C tests veryclean
-  TEST_SHELL="python3.8 $PASH_TOP/compiler/pash.py --split_fan_out 2 --log_file /tmp/log_file" make -C tests  | tee >(grep 'tests passed' | cut -d ' ' -f2 > smoosh_tests.sum)
+  TEST_SHELL="$PASH_TOP/pa.sh --width 2 --log_file /tmp/log_file" make -C tests veryclean
+  TEST_SHELL="$PASH_TOP/pa.sh --width 2 --log_file /tmp/log_file" make -C tests  | tee >(grep 'tests passed' | cut -d ' ' -f2 > smoosh_tests.sum)
   SMOOSH_RESULTS=$(cat smoosh_tests.sum)
   cd $PASH_TOP/scripts
 }
@@ -52,7 +52,7 @@ git pull
 
 # Vars used in report summary
 REV=$(git rev-parse --short HEAD)
-MSG="$(git log -1 --pretty=%B | trim)"
+MSG="$(git log -1 --pretty=%B | trim | head -n 1)"
 RES="fail"
 TIME="0s"
 
@@ -72,7 +72,15 @@ stage() {
   echo $(date '+%F %T') $REV $1 >> $RF
 }
 
+cleanup() {
+  git clean -f
+}
+
 trap 'err_report $LINENO' ERR
+trap 'cleanup' EXIT
+
+# To respect invariants of stages
+mkdir -p $REPORT_DIR ../../get
 
 echo $(date '+%F %T') $REV "Starting" > $RF
 START_TIME=$(date +%s);

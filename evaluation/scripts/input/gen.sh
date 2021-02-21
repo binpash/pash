@@ -23,3 +23,15 @@ done
 
 ## Re-sort words for this machine
 sort words > sorted_words
+
+rm -f all_cmds_x10.txt
+touch all_cmds_x10.txt
+for (( i = 0; i < 10; i++ )); do
+  cat all_cmds.txt >> all_cmds_x100.txt
+done
+
+rm -f all_cmds_x100.txt
+touch all_cmds_x100.txt
+for (( i = 0; i < 10; i++ )); do
+  cat all_cmds_x10.txt >> all_cmds_x100.txt
+done
