@@ -17,20 +17,7 @@ import shutil
 def main():
     preprocessing_start_time = datetime.now()
     ## Parse arguments
-    args = parse_args()
-    config.pash_args = args
-
-    ## Initialize the log file
-    config.init_log_file()
-    if not config.config:
-        config.load_config(args.config_path)
-
-    ## Make a directory for temporary files
-    config.PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
-    if args.command:
-        with open(config.config['runtime']['immediate'], 'w') as f:
-            f.write(args.command)
-        args.input = f.name
+    args = parse_args();
 
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
     input_script_path = args.input
@@ -69,20 +56,38 @@ def parse_args():
     if 'PASH_FROM_SH' in os.environ:
         prog_name = os.environ['PASH_FROM_SH']
     parser = argparse.ArgumentParser(prog_name)
-    group = parser.add_mutually_exclusive_group(required=True)
-
-    group.add_argument("input", nargs='?', help="the script to be compiled and executed")
+    # group = parser.add_mutually_exclusive_group(required=True)
+    # group.add_argument("input", nargs='?', help="the script to be compiled and executed")
+    parser.add_argument("input", nargs='?', help="the script to be compiled and executed")
     parser.add_argument("--preprocess_only",
                         help="only preprocess the input script and not execute it",
                         action="store_true")
     parser.add_argument("--output_preprocessed",
                         help=" output the preprocessed script",
                         action="store_true")
-    group.add_argument("-c", "--command",
+    parser.add_argument("-c", "--command",
                         help="Evaluate the following as a script, rather than a file",
                         default="")
     config.add_common_arguments(parser)
     args = parser.parse_args()
+    config.pash_args = args;
+
+    ## Initialize the log file
+    config.init_log_file()
+    if not config.config:
+        config.load_config(args.config_path)
+
+    ## Make a directory for temporary files
+    config.PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
+    if args.command:
+        with open(config.config['runtime']['immediate'], 'w') as f:
+            f.write(args.command)
+            args.input = f.name
+
+    if (args.input == None):
+        parser.print_usage()
+        exit();
+
     return args
 
 def preprocess(ast_objects, config):
