@@ -5,7 +5,6 @@ AST_I=./libdash/ocaml/ast.mli
 .PHONY : all test dependencies libdash clean
 
 all : $(PARSER).native $(PARSER).byte $(JSON_TO_SHELL).native $(JSON_TO_SHELL).byte
-	@echo "Add this to your env: PASH_PARSER=${PWD}/$(PARSER).native"
 
 test : $(PARSER).native $(PARSER).byte $(wildcard tests/*)
 	@echo "TESTING test.native"

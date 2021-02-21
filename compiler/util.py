@@ -4,6 +4,7 @@ from datetime import timedelta
 import sys
 
 import config
+import tempfile
 
 def flatten_list(lst):
     return [item for sublist in lst for item in sublist]
@@ -22,19 +23,15 @@ def print_time_delta(prefix, start_time, end_time, args):
 ##
 ## TODO: Extend the configuration to allow for custom file to output PaSh log. This would
 ##       allow us to not pollute the .time files.
-def log(*args, end='\n'):
-    if(config.pash_args.log_file == ""):
-        if (not config.pash_args.debug == "0"):
+def log(*args, end='\n', level=1):
+    ## If the debug logging level is at least
+    ## as high as this log message.
+    if (config.pash_args.debug >= level):
+        if(config.pash_args.log_file == ""):
             print(*args, file=sys.stderr, end=end)
-    else:
-        with open(config.pash_args.log_file, "a") as f:
-            print(*args, file=f, end=end)
-    
+        else:
+            with open(config.pash_args.log_file, "a") as f:
+                print(*args, file=f, end=end)
 
-def get_random_string(length=8):
-    letters = string.ascii_lowercase
-    result_str = ''.join(random.choice(letters) for i in range(length))
-    return result_str
-
-def get_pash_prefixed_random_string(length=8):
-    return config.PASH_TMP_PREFIX + get_random_string(length)
+def ptempfile():
+    return tempfile.mkstemp(dir=config.PASH_TMP_PREFIX)

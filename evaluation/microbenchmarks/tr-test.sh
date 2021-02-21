@@ -22,3 +22,4 @@ cat $FILE | tr A-Z a-z
 cat $FILE | tr -d '[:punct:]'
 cat $FILE | tr [:lower] [:upper]
 cat $FILE | tr -s ' '
+cat $FILE | tr -s ' \n'

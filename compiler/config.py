@@ -2,6 +2,8 @@ import json
 import os
 import subprocess
 import yaml
+import math
+import tempfile
 
 from ir_utils import *
 
@@ -21,7 +23,9 @@ PYTHON_VERSION = "python3"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 
-PASH_TMP_PREFIX = "pash_"
+## This is set in pash.py and pash_runtime.py accordingly.
+## In both cases the setting is different.
+PASH_TMP_PREFIX = None
 
 config = {}
 annotations = []
@@ -45,13 +49,16 @@ def load_config(config_file_path=""):
 
     config = pash_config
 
+def getWidth():
+    cpus = os.cpu_count()
+    return math.floor(cpus / 8) if cpus >= 16 else 2
+
 ## These are arguments that are common to pash.py and pash_runtime.py
 def add_common_arguments(parser):
     parser.add_argument("-w", "--width",
                         type=int,
-                        default=2, 
+                        default=getWidth(),
                         help="set data-parallelism factor")
-
     parser.add_argument("--no_optimize",
                         help="not apply transformations over the DFG",
                         action="store_true")
@@ -63,14 +70,15 @@ def add_common_arguments(parser):
                         action="store_true")
     parser.add_argument("-t", "--output_time", #FIXME: --time
                         help="output the time it took for every step",
-                        action="store_true") 
+                        action="store_true")
     parser.add_argument("-p", "--output_optimized", # FIXME: --print
                         help="output the parallel shell script for inspection",
                         action="store_true")
-    parser.add_argument("-d", "--debug", 
+    parser.add_argument("-d", "--debug",
+                        type=int,
                         help="configure debug level; defaults to 0",
-                        default="0")
-    parser.add_argument("--log_file", 
+                        default=0)
+    parser.add_argument("--log_file",
                         help="configure where to write the log; defaults to stderr.",
                         default="")
     parser.add_argument("--no_eager",
@@ -110,7 +118,7 @@ def pass_common_arguments(pash_arguments):
     if (pash_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
     arguments.append(string_to_argument("--debug"))
-    arguments.append(string_to_argument(pash_arguments.debug))
+    arguments.append(string_to_argument(str(pash_arguments.debug)))
     arguments.append(string_to_argument("--termination"))
     arguments.append(string_to_argument(pash_arguments.termination))
     arguments.append(string_to_argument("--speculation"))
@@ -156,7 +164,7 @@ def read_vars_file(var_file_path):
                 rest = rest[(space_index+1):]
                 eq_index = rest.find('=')
             ## We now find the name and value
-            var_name = rest[:eq_index] 
+            var_name = rest[:eq_index]
             var_value = rest[(eq_index+1):]
 
             vars_dict[var_name] = (var_type, var_value)
