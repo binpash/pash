@@ -24,4 +24,4 @@ HOSTNAME=$2
 
 USER="ubuntu"
 
-ssh -o StrictHostKeyChecking=no -o 'ConnectionAttempts 10' -i $PRIVATE_KEY "${USER}@${HOSTNAME}" /bin/bash < "$PASH_TOP/evaluation/multi-instance-experiment/experiment-script.sh"
+ssh -o StrictHostKeyChecking=no -o 'ConnectionAttempts 10' -i $PRIVATE_KEY "${USER}@${HOSTNAME}" /bin/bash
