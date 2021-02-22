@@ -18,6 +18,7 @@ def parse_shell_to_ast(input_script_path):
     new_asts = parse_to_ast(input_script_path)
     return new_asts
 
+## TODO: Avoid going through JSON for the unparsing.
 ## Parser straight from JSON to a shell string without calling an executable 
 def from_ir_to_shell(ir_filename):
     preprocessed_script = json_to_shell_string(ir_filename)
