@@ -26,7 +26,7 @@ FORK="andromeda"
 BRANCH="main"
 USER="ubuntu"
 
-ssh -o StrictHostKeyChecking=no -i $PRIVATE_KEY "${USER}@${HOSTNAME}" /bin/bash <<EOF
+ssh -o StrictHostKeyChecking=no -o 'ConnectionAttempts 10' -i $PRIVATE_KEY "${USER}@${HOSTNAME}" /bin/bash <<EOF
 rm -rf pash
 git clone https://github.com/$FORK/pash.git
 cd pash
