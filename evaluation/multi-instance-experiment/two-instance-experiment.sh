@@ -22,11 +22,13 @@
 
 ## Q: What if we need to create a new key pair
 
-## Q: Is it safe to save the instance idsin public?
+## Q: Is it safe to save the instance ids in public?
+
+## TODO: Refactor this to run for an arbitrary experiment so that it can be reused.
 
 key_path="~/.ssh/aws_pash.pem"
-standard_disk_instance_id="i-06c696618d6fea3bc"
-fast_disk_instance_id="i-0f9b98c5f7948dd70"
+standard_disk_instance_id="i-0347068fae17c256e"
+fast_disk_instance_id="i-07814ed42a1ddd013"
 
 eval_dir="$PASH_TOP/evaluation/multi-instance-experiment/"
 local_res_dir="$eval_dir/results"
