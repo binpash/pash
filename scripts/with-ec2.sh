@@ -26,10 +26,11 @@ wait-for-instance-ip() {
 call-with-active-ec2() {
     set -e
     local instance_id="$1"
+    echo "Starting instance $instance_id"
     aws ec2 start-instances --instance-ids "$instance_id"
     local ip=$(wait-for-instance-ip "$instance_id");
     echo "$ip"
-    trap "aws ec2 stop-instances --instance-ids $instance_id" EXIT
+    trap "echo Stopping instance: $instance_id; aws ec2 stop-instances --instance-ids $instance_id" EXIT
     ${@:2} "$ip"
 }
 
