@@ -3,6 +3,17 @@
 # Runs a command on the host within the lifespan of an EC2 instance.
 # Uses AWS CLI v2
 
+stop_flag=1
+
+while getopts 's' opt; do
+    case $opt in
+        s) stop_flag=0 ;;
+        *) echo 'Error in command line parsing' >&2
+           exit 1
+    esac
+done
+shift "$(( OPTIND - 1 ))"
+
 get-instance-ip() {
     aws ec2 describe-instances \
         --instance-ids "$1" \
@@ -30,7 +41,9 @@ call-with-active-ec2() {
     aws ec2 start-instances --instance-ids "$instance_id"
     local ip=$(wait-for-instance-ip "$instance_id");
     echo "$ip"
-    trap "echo Stopping instance: $instance_id; aws ec2 stop-instances --instance-ids $instance_id" EXIT
+    if [ "$stop_flag" -eq 1 ]; then
+        trap "echo Stopping instance: $instance_id; aws ec2 stop-instances --instance-ids $instance_id" EXIT
+    fi
     ${@:2} "$ip"
 }
 
