@@ -24,5 +24,12 @@ def main ():
     for ast in asts:
         print (to_string (ast))
 
+def json_to_shell_string(input_filename):
+    asts = parse_json_ast(input_filename)
+    shell_list = []
+    for ast in asts:
+        shell_list.append(to_string(ast))
+    return "\n".join(shell_list)
+
 if __name__ == "__main__":
     main ()
