@@ -14,6 +14,8 @@ main() {
     echo "export PASH_AWS_EC2_SUBNET='$subnet';";
     echo "export PASH_AWS_EC2_SECURITY_GROUP='$sg';";
     echo "export PASH_AWS_EC2_DISK_SIZE_GB='10';";
+    echo "export PASH_AWS_EC2_DISK_TYPE='gp2';";
+    echo "export PASH_AWS_EC2_DISK_IOPS='100';";
 }
 
 main
