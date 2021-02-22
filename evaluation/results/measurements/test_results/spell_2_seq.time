@@ -1,0 +1,6 @@
+../evaluation//test_intermediary/spell_2_seq.sh: line 3: col: command not found
+comm: ../evaluation/scripts/input/sorted_words: No such file or directory
+
+real	0m0.010s
+user	0m0.015s
+sys	0m0.007s

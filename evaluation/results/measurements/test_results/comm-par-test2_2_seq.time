@@ -1,0 +1,6 @@
+comm: file 2 is not in sorted order
+comm: file 1 is not in sorted order
+
+real	0m0.121s
+user	0m0.073s
+sys	0m0.085s
