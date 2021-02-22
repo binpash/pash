@@ -17,7 +17,7 @@ LIBDASH_LIBRARY_PATH = os.path.join(PASH_TOP, "compiler/parser/libdash/src/.libs
 
 
 # This is a mix of dash.ml:parse_next and parse_to_json.ml.
-def parse_to_ast (inputPath, init):
+def parse_to_ast (inputPath, init=True):
     libdash = CDLL (LIBDASH_LIBRARY_PATH);
 
     if (init):
