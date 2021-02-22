@@ -43,5 +43,5 @@ execute_on_instance_and_collect_results()
     $PASH_TOP/scripts/with-ec2.sh "$instance_id" "$eval_dir/execute-and-collect.sh" "$instance_id" "$key_path" "$instance_res_dir"
 }
 
-# execute_on_instance_and_collect_results "$standard_disk_instance_id"
+execute_on_instance_and_collect_results "$standard_disk_instance_id"
 execute_on_instance_and_collect_results "$fast_disk_instance_id"
