@@ -29,7 +29,6 @@ fast_disk_instance_id="i-07814ed42a1ddd013"
 
 eval_dir="$PASH_TOP/evaluation/multi-instance-experiment/"
 local_res_dir="$eval_dir/results"
-fast_disk_res_dir="$local_res_dir/$fast_disk_instance_id"
 
 ## Assumes that script is installed and instance exists.
 ## This can be done by sourcing a profile:
