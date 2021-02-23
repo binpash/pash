@@ -1,6 +1,6 @@
 ## Running Smoosh Tests
 
-1. Clone the Smoosh repository
+1. Clone the [Smoosh repository](https://github.com/mgree/smoosh.git)
 2. Apply the patch `smoosh_problematic_tests.patch` which comments out some tests that lead to space issues
 3. Make sure to export `$PASH_TOP` and the other final lines in `scripts/install.sh`
 4. When in the smoosh top directory, run:
