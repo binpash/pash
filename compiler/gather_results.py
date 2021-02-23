@@ -398,7 +398,7 @@ def collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers):
                for n in scaleup_numbers]
 
     ## TODO: Turn to Result
-    compile_numbers = [read_distr_total_compilation_time('{}{}_distr.time'.format(prefix, n))
+    compile_numbers = [read_distr_total_compilation_time('{}{}_{}'.format(prefix, n, suffix))
                        for n in scaleup_numbers]
     return (numbers, compile_numbers)
 
@@ -721,7 +721,8 @@ def generate_table_footer(full=True):
     footer += ['\\end{tabular*}']
     return "\n".join(footer)
 
-def generate_experiment_line(experiment, full=True):
+
+def generate_experiment_line(experiment, results_dir=RESULTS, full=True, small=False):
     line = []
     line += [pretty_names[experiment], '~&~']
 
@@ -735,17 +736,21 @@ def generate_experiment_line(experiment, full=True):
     input_size = collect_format_input_size(experiment)
     line += [input_size, '&']
 
+    if(small is False):
+        suffix='distr.time'
+        if(experiment in ["spell", "bigrams", "double_sort"]):
+            suffix='distr_auto_split.time'
+    else:
+        suffix='distr_auto_split.time'
+
     ## Collect and output the sequential time for the experiment
     scaleup_numbers = [2, 16, 64]
-    experiment_results_prefix = '{}/{}_'.format(RESULTS, experiment)
-    seq_time, _, compile_times = collect_experiment_scaleup_times(experiment_results_prefix, scaleup_numbers)
+    experiment_results_prefix = '{}/{}_'.format(results_dir, experiment)
+    seq_time, _, compile_times = collect_experiment_scaleup_times(experiment_results_prefix, scaleup_numbers, suffix=suffix)
     seq_time_seconds = format_time_seconds(seq_time)
     # seq_time_seconds = seq_times[0] / 1000
     line += [seq_time_seconds, '&']
 
-    suffix='distr.time'
-    if(experiment in ["spell", "bigrams", "double_sort"]):
-        suffix='distr_auto_split.time'
     commands_16, commands_64 = collect_experiment_command_number(experiment_results_prefix,
                                                                 suffix, [16, 64])
     if(full):
@@ -760,18 +765,20 @@ def generate_experiment_line(experiment, full=True):
     line += [highlights[experiment], '\\\\']
     return " ".join(line)
 
+def generate_tables(experiments, results_dir=RESULTS, table_suffix="", small=False):
+    generate_tex_table(experiments, results_dir=results_dir, table_suffix=table_suffix, small=small)
 
-def generate_tex_table(experiments):
+def generate_tex_table(experiments, results_dir=RESULTS, table_suffix="", small=False):
     header = generate_table_header()
     lines = []
     for experiment in experiments:
-        line = generate_experiment_line(experiment)
+        line = generate_experiment_line(experiment, results_dir=results_dir, small=small)
         # print(line)
         lines.append(line)
     data = "\n".join(lines)
     footer = generate_table_footer()
     table_tex = "\n".join([header, data, footer])
-    tex_filename = os.path.join('../evaluation/plots', 'microbenchmarks-table.tex')
+    tex_filename = os.path.join('../evaluation/plots', 'microbenchmarks-table{}.tex'.format(table_suffix))
     with open(tex_filename, 'w') as file:
         file.write(table_tex)
 
@@ -1657,7 +1664,8 @@ if args.eurosys2021:
                            prefix="small_")
 
 if args.eurosys2021:
-    generate_tex_table(experiments)
+    generate_tables(experiments, results_dir=SMALL_RESULTS, table_suffix="-small", small=True)
+    generate_tables(experiments)
     collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB")
     collect_unix50_scaleup_times(big_unix50_results, scaleup=[16], small_prefix="_10GB")
     plot_sort_with_baseline(RESULTS)
