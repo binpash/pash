@@ -96,7 +96,7 @@ On `deathstar`, it takes about 41s.
 To execute it using `pash` with 2x-parallelism:
 
 ```sh
-time $PASH_TOP/pa.sh -w 2 --log_file pash.log demo-spell.sh > pash-spell.out
+time $PASH_TOP/pa.sh -w 2 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
 ``` 
 
 On `deathstar`, the 2x-parallel script takes about 28s.
@@ -109,7 +109,7 @@ diff spell.out pash-spell.out
 
 You could also execute it with 8x-parallelism using:
 ```sh
-time $PASH_TOP/pa.sh -w 8 --log_file pash.log demo-spell.sh > pash-spell.out
+time $PASH_TOP/pa.sh -w 8 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
 ``` 
 
 which takes about 14s.
