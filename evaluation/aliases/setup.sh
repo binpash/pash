@@ -18,6 +18,14 @@ cd tomhannen-20080409/wav
 # total 5.7 size of audio files
 for i in *.wav; do
   FILE=$(basename "$i")
-  for x in {1..200}; do cp $i "../../wav/$i$x.wav"; done
+  for x in {1..2}; do cp $i "../../wav/$i$x.wav"; done
 done
 rm -rf ../../tomhannen-20080409
+cd  $PW
+# fetch all gutenberg books here ?
+# NLP grep
+rm *.tar.gz
+wget -O nlp.tar.gz https://wordnetcode.princeton.edu/3.0/WNdb-3.0.tar.gz
+tar xf nlp.tar.gz
+
+
