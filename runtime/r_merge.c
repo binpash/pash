@@ -27,7 +27,6 @@ void MergeInput(char *inputFileNames[], unsigned int numInputFiles)
     }
     blockBuf[i].inputFile = inputFile;
   }
-
   int bufferIdx = 0;
   int64_t nextID = 0;
   for(;;) {
@@ -41,6 +40,7 @@ void MergeInput(char *inputFileNames[], unsigned int numInputFiles)
     blockBuf[bufferIdx].blockSize = blockSize;
     
     size_t tot_read = 0, readSize = 0;
+    // fprintf(stderr, "start reading block %ld\n", id);
     while (tot_read < blockSize) {
         readSize = MIN(bufLen, blockSize-tot_read);
         if (fread(buffer, 1, readSize, blockBuf[bufferIdx].inputFile) != readSize)
@@ -50,10 +50,11 @@ void MergeInput(char *inputFileNames[], unsigned int numInputFiles)
         }
         
         tot_read += readSize;
-        fwrite(buffer, 1, readSize, stdout);
+        safeWrite(buffer, 1, readSize, stdout);
+        fflush(stdout);
     }
     assert(tot_read == blockSize);
-
+    
     bufferIdx = (bufferIdx + 1) % numInputFiles;
     nextID += 1;
   };
