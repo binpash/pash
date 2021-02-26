@@ -6,7 +6,7 @@ file5=5.out
 
 
 batchSize=10000
-testFile="/home/ubuntu/pash/evaluation/scripts/input/10M.txt"
+testFile="/home/ubuntu/pash/evaluation/scripts/input/100M.txt"
 if ![ $1 -eq 0 ]; then
     testFile=@1
 fi

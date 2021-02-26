@@ -79,8 +79,7 @@ void processCmd(char* args[]) {
             assert(tot_read == blockSize);
 
             //read output of forked process (do I need to wait or is read blocking enough?)
-            // waitpid(pid, NULL, 0);
-            // fprintf(stderr, "forked process ended\n");
+            //Use nonblock to make sure you read until the process exits
             fcntl(fdOut[READ_END], F_SETFL, ~O_NONBLOCK);
             while ((len = fread(buffer, 1, bufLen, execOutFile)) > 0) {
                 if ((currLen + len) > outBufLen) {
