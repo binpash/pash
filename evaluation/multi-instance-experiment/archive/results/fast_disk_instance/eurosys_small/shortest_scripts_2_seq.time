@@ -1,0 +1,8 @@
+Usage: file [-bcEhikLlNnprsvzZ0] [--apple] [--extension] [--mime-encoding] [--mime-type]
+            [-e testname] [-F separator] [-f namefile] [-m magicfiles] file ...
+       file -C [-m magicfiles]
+       file [--help]
+
+real	0m0.016s
+user	0m0.007s
+sys	0m0.005s

@@ -1,0 +1,254 @@
+(1) Previous exit status: 0
+(1) Previous set state: hB
+Writing vars to: /tmp/pash_ek80uq50/pash_BPKCdKV3eI
+(1) Bash variables saved in: /tmp/pash_ek80uq50/pash_BPKCdKV3eI
+(1) Bash set state at start of execution: hB
+(1) Set state reverted to PaSh-internal set state: huB
+Retrieving candidate DF region: /tmp/pash_ek80uq50/tmpl8w50o9t ... Done!
+inputs-outputs found for: mkfifo
+|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
+class: side-effectful found for: mkfifo
+
+Compilation time: 0.173  ms
+Optimization time: 0.002  ms
+Compiler exited with code: 120
+(3) Recovering variables from: /tmp/pash_ek80uq50/pash_BPKCdKV3eI
+/dev/fd/63: line 26: declare: PPID: readonly variable
+/dev/fd/63: line 33: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 38: declare: UID: readonly variable
+(3) Reverted to BaSh set state: hB
+(4) Executing script in /tmp/pash_ek80uq50/tmp6j7etjpb:
+mkfifo s1 s2(5) BaSh script exited with ec: 0
+(5) Writing current BaSh set state to: /tmp/pash_ek80uq50/pash_Ndtlmj0R8e
+(5) Current BaSh shell: hB
+(5) Reverted to PaSh set state to: huB
+Writing vars to: /tmp/pash_ek80uq50/pash_lq11N9HmJn
+(5) Exiting from BaSh with BaSh status: 0
+Execution time: 19.846 ms
+(7) Recovering BaSh variables from: /tmp/pash_ek80uq50/pash_lq11N9HmJn
+/dev/fd/63: line 27: declare: PPID: readonly variable
+/dev/fd/63: line 34: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 39: declare: UID: readonly variable
+(7) Reading current BaSh set state from: /tmp/pash_ek80uq50/pash_Ndtlmj0R8e
+(7) Current BaSh set state: hB
+(7) Current PaSh set state: huB
+(7) Reverted to BaSh set state before exiting: hB
+(7) Reverting last BaSh exit code: 0
+(1) Previous exit status: 0
+(1) Previous set state: hB
+Writing vars to: /tmp/pash_ek80uq50/pash_N8SeZHTrGl
+(1) Bash variables saved in: /tmp/pash_ek80uq50/pash_N8SeZHTrGl
+(1) Bash set state at start of execution: hB
+(1) Set state reverted to PaSh-internal set state: huB
+Retrieving candidate DF region: /tmp/pash_ek80uq50/tmpljfjgnik ... Done!
+Argument: [['V', ['Normal', False, 'IN0', []]]] was expanded to: /home/ubuntu/pash/evaluation/small_intermediary/split_inputs/input-chunk-00
+Argument: [['V', ['Normal', False, 'IN1', []]]] was expanded to: /home/ubuntu/pash/evaluation/small_intermediary/split_inputs/input-chunk-01
+inputs-outputs found for: cat
+|-- ([('option', 0), ('option', 1)], ['stdout'], [])
+class: stateless found for: cat
+inputs-outputs found for: tr
+|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
+ -- Warning: Overriding standard category for: tr
+inputs-outputs found for: sort
+|-- (['stdin'], ['stdout'], [])
+class: pure found for: sort
+Argument: [['V', ['Normal', False, 'IN0', []]]] was expanded to: /home/ubuntu/pash/evaluation/small_intermediary/split_inputs/input-chunk-00
+Argument: [['V', ['Normal', False, 'IN1', []]]] was expanded to: /home/ubuntu/pash/evaluation/small_intermediary/split_inputs/input-chunk-01
+inputs-outputs found for: cat
+|-- ([('option', 0), ('option', 1)], ['stdout'], [])
+class: stateless found for: cat
+inputs-outputs found for: tr
+|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
+ -- Warning: Overriding standard category for: tr
+inputs-outputs found for: sort
+|-- (['stdin'], ['stdout'], [])
+class: pure found for: sort
+inputs-outputs found for: diff
+|-- ([('option', 1), ('option', 2)], ['stdout'], [('option', 0)])
+class: pure found for: diff
+Compilation time: 19.351  ms
+Total nodes after optimization: 17
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 6
+Optimization time: 1.323  ms
+arguments, redirs found for: tr
+|-- ([], [['File', ['From', 0, [['C', 47], ['C', 104], ['C', 111], ['C', 109], ['C', 101], ['C', 47], ['C', 117], ['C', 98], ['C', 117], ['C', 110], ['C', 116], ['C', 117], ['C', 47], ['C', 112], ['C', 97], ['C', 115], ['C', 104], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 115], ['C', 109], ['C', 97], ['C', 108], ['C', 108], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56]]]]]]])
+arguments, redirs found for: tr
+|-- ([], [['File', ['From', 0, [['C', 47], ['C', 104], ['C', 111], ['C', 109], ['C', 101], ['C', 47], ['C', 117], ['C', 98], ['C', 117], ['C', 110], ['C', 116], ['C', 117], ['C', 47], ['C', 112], ['C', 97], ['C', 115], ['C', 104], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 115], ['C', 109], ['C', 97], ['C', 108], ['C', 108], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 49]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57]]]]]]])
+arguments, redirs found for: tr
+|-- ([], [['File', ['From', 0, [['C', 47], ['C', 104], ['C', 111], ['C', 109], ['C', 101], ['C', 47], ['C', 117], ['C', 98], ['C', 117], ['C', 110], ['C', 116], ['C', 117], ['C', 47], ['C', 112], ['C', 97], ['C', 115], ['C', 104], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 115], ['C', 109], ['C', 97], ['C', 108], ['C', 108], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 48]]]]]]])
+arguments, redirs found for: tr
+|-- ([], [['File', ['From', 0, [['C', 47], ['C', 104], ['C', 111], ['C', 109], ['C', 101], ['C', 47], ['C', 117], ['C', 98], ['C', 117], ['C', 110], ['C', 116], ['C', 117], ['C', 47], ['C', 112], ['C', 97], ['C', 115], ['C', 104], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 115], ['C', 109], ['C', 97], ['C', 108], ['C', 108], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 49]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 50]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 51]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file28, #file29], [['File', ['To', 1, [['C', 115], ['C', 49]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 48]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 53]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 54]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file30, #file31], [['File', ['To', 1, [['C', 115], ['C', 50]]]]])
+arguments, redirs found for: /home/ubuntu/pash/runtime/eager.sh
+|-- ([#file22, #file28], [])
+arguments, redirs found for: /home/ubuntu/pash/runtime/eager.sh
+|-- ([#file23, #file29], [])
+arguments, redirs found for: /home/ubuntu/pash/runtime/eager.sh
+|-- ([#file25, #file30], [])
+arguments, redirs found for: /home/ubuntu/pash/runtime/eager.sh
+|-- ([#file26, #file31], [])
+arguments, redirs found for: /home/ubuntu/pash/runtime/eager.sh
+|-- ([fid:15:s1, #file32], [])
+arguments, redirs found for: /home/ubuntu/pash/runtime/eager.sh
+|-- ([fid:16:s2, #file33], [])
+arguments, redirs found for: diff
+|-- ([#file32, #file33], [])
+Backend time: 3.775  ms
+Optimized script saved in: /tmp/pash_ek80uq50/pash_yx7j9s6Oej
+Compiler exited with code: 0
+(3) Recovering variables from: /tmp/pash_ek80uq50/pash_N8SeZHTrGl
+/dev/fd/63: line 27: declare: PPID: readonly variable
+/dev/fd/63: line 34: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 39: declare: UID: readonly variable
+(3) Reverted to BaSh set state: hB
+(4) Executing script in /tmp/pash_ek80uq50/pash_yx7j9s6Oej:
+rm -f "#file3"
+rm -f "#file5"
+rm -f "#file10"
+rm -f "#file12"
+rm -f "#file18"
+rm -f "#file19"
+rm -f "#file20"
+rm -f "#file21"
+rm -f "#file22"
+rm -f "#file23"
+rm -f "#file24"
+rm -f "#file25"
+rm -f "#file26"
+rm -f "#file27"
+rm -f "#file28"
+rm -f "#file29"
+rm -f "#file30"
+rm -f "#file31"
+rm -f "#file32"
+rm -f "#file33"
+mkfifo "#file3"
+mkfifo "#file5"
+mkfifo "#file10"
+mkfifo "#file12"
+mkfifo "#file18"
+mkfifo "#file19"
+mkfifo "#file20"
+mkfifo "#file21"
+mkfifo "#file22"
+mkfifo "#file23"
+mkfifo "#file24"
+mkfifo "#file25"
+mkfifo "#file26"
+mkfifo "#file27"
+mkfifo "#file28"
+mkfifo "#file29"
+mkfifo "#file30"
+mkfifo "#file31"
+mkfifo "#file32"
+mkfifo "#file33"
+{ tr [:lower:] [:upper:] </home/ubuntu/pash/evaluation/small_intermediary/split_inputs/input-chunk-00 >"#file18" & }
+{ tr [:lower:] [:upper:] </home/ubuntu/pash/evaluation/small_intermediary/split_inputs/input-chunk-01 >"#file19" & }
+{ tr [:upper:] [:lower:] </home/ubuntu/pash/evaluation/small_intermediary/split_inputs/input-chunk-00 >"#file20" & }
+{ tr [:upper:] [:lower:] </home/ubuntu/pash/evaluation/small_intermediary/split_inputs/input-chunk-01 >"#file21" & }
+{ sort <"#file18" >"#file22" & }
+{ sort <"#file19" >"#file23" & }
+{ sort -m "#file28" "#file29" >s1 & }
+{ sort <"#file20" >"#file25" & }
+{ sort <"#file21" >"#file26" & }
+{ sort -m "#file30" "#file31" >s2 & }
+{ /home/ubuntu/pash/runtime/eager.sh "#file22" "#file28" "/tmp/pash_eager_intermediate_#file1" & }
+{ /home/ubuntu/pash/runtime/eager.sh "#file23" "#file29" "/tmp/pash_eager_intermediate_#file2" & }
+{ /home/ubuntu/pash/runtime/eager.sh "#file25" "#file30" "/tmp/pash_eager_intermediate_#file3" & }
+{ /home/ubuntu/pash/runtime/eager.sh "#file26" "#file31" "/tmp/pash_eager_intermediate_#file4" & }
+{ /home/ubuntu/pash/runtime/eager.sh s1 "#file32" "/tmp/pash_eager_intermediate_#file5" & }
+{ /home/ubuntu/pash/runtime/eager.sh s2 "#file33" "/tmp/pash_eager_intermediate_#file6" & }
+{ diff -B "#file32" "#file33" & }
+source /home/ubuntu/pash/runtime/wait_for_output_and_sigpipe_rest.sh ${!}
+rm -f "#file3"
+rm -f "#file5"
+rm -f "#file10"
+rm -f "#file12"
+rm -f "#file18"
+rm -f "#file19"
+rm -f "#file20"
+rm -f "#file21"
+rm -f "#file22"
+rm -f "#file23"
+rm -f "#file24"
+rm -f "#file25"
+rm -f "#file26"
+rm -f "#file27"
+rm -f "#file28"
+rm -f "#file29"
+rm -f "#file30"
+rm -f "#file31"
+rm -f "#file32"
+rm -f "#file33"diff: memory exhausted
+(5) BaSh script exited with ec: 0
+(5) Writing current BaSh set state to: /tmp/pash_ek80uq50/pash_Ijrym4kjB4
+(5) Current BaSh shell: hB
+(5) Reverted to PaSh set state to: huB
+Writing vars to: /tmp/pash_ek80uq50/pash_ayq6I4BlGp
+(5) Exiting from BaSh with BaSh status: 0
+Execution time: 53280.668 ms
+(7) Recovering BaSh variables from: /tmp/pash_ek80uq50/pash_ayq6I4BlGp
+/dev/fd/63: line 27: declare: PPID: readonly variable
+/dev/fd/63: line 34: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 39: declare: UID: readonly variable
+(7) Reading current BaSh set state from: /tmp/pash_ek80uq50/pash_Ijrym4kjB4
+(7) Current BaSh set state: hB
+(7) Current PaSh set state: huB
+(7) Reverted to BaSh set state before exiting: hB
+(7) Reverting last BaSh exit code: 0
+(1) Previous exit status: 0
+(1) Previous set state: hB
+Writing vars to: /tmp/pash_ek80uq50/pash_Z51NxT6lzf
+(1) Bash variables saved in: /tmp/pash_ek80uq50/pash_Z51NxT6lzf
+(1) Bash set state at start of execution: hB
+(1) Set state reverted to PaSh-internal set state: huB
+Retrieving candidate DF region: /tmp/pash_ek80uq50/tmpjqk7nt0y ... Done!
+inputs-outputs found for: rm
+|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
+class: side-effectful found for: rm
+
+Compilation time: 0.16  ms
+Optimization time: 0.001  ms
+Compiler exited with code: 120
+(3) Recovering variables from: /tmp/pash_ek80uq50/pash_Z51NxT6lzf
+/dev/fd/63: line 27: declare: PPID: readonly variable
+/dev/fd/63: line 34: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 39: declare: UID: readonly variable
+(3) Reverted to BaSh set state: hB
+(4) Executing script in /tmp/pash_ek80uq50/tmplq3wcpc7:
+rm s1 s2(5) BaSh script exited with ec: 0
+(5) Writing current BaSh set state to: /tmp/pash_ek80uq50/pash_h7gKY1N9dl
+(5) Current BaSh shell: hB
+(5) Reverted to PaSh set state to: huB
+Writing vars to: /tmp/pash_ek80uq50/pash_WBk6wbJxI6
+(5) Exiting from BaSh with BaSh status: 0
+Execution time: 19.629 ms
+(7) Recovering BaSh variables from: /tmp/pash_ek80uq50/pash_WBk6wbJxI6
+/dev/fd/63: line 27: declare: PPID: readonly variable
+/dev/fd/63: line 34: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 39: declare: UID: readonly variable
+(7) Reading current BaSh set state from: /tmp/pash_ek80uq50/pash_h7gKY1N9dl
+(7) Current BaSh set state: hB
+(7) Current PaSh set state: huB
+(7) Reverted to BaSh set state before exiting: hB
+(7) Reverting last BaSh exit code: 0
+Preprocessed script stored in: /tmp/pash_ek80uq50/tmph8cfki8s
+Preprocessing time: 5.957  ms
+
+real	0m53.879s
+user	1m52.585s
+sys	0m25.886s
+Files /home/ubuntu/pash/evaluation//small_intermediary//diff_seq_output and /tmp/pash_output are identical
