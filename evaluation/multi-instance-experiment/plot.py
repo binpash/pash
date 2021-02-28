@@ -70,4 +70,7 @@ all_results = {
     "standard-disk": standard_disk_results,
     "fast-disk": fast_disk_results,
 }
+if not os.path.exists('plots'):
+    os.makedirs('plots')
+
 plot(all_results, experiments, scaleup_numbers)
