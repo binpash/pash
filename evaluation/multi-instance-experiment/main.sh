@@ -25,7 +25,9 @@
 
 key_path="~/.ssh/aws_pash.pem"
 standard_disk_instance_id="i-0347068fae17c256e"
+standard_disk_pretty_name="standard_disk_instance"
 fast_disk_instance_id="i-07814ed42a1ddd013"
+fast_disk_pretty_name="fast_disk_instance"
 
 eval_dir="$PASH_TOP/evaluation/multi-instance-experiment/"
 local_res_dir="$eval_dir/results"
@@ -40,13 +42,13 @@ local_res_dir="$eval_dir/results"
 execute_on_instance_and_collect_results()
 {
     local instance_id=$1
-    local instance_res_dir="$local_res_dir/$instance_id"
+    local instance_res_dir="$local_res_dir/$2"
 
     ## Execute and Collect results
     $PASH_TOP/scripts/with-ec2.sh "$instance_id" "$eval_dir/execute-and-collect.sh" "$instance_id" "$key_path" "$instance_res_dir"
 }
 
-execute_on_instance_and_collect_results "$standard_disk_instance_id"
-execute_on_instance_and_collect_results "$fast_disk_instance_id"
+execute_on_instance_and_collect_results "$standard_disk_instance_id" "$standard_disk_pretty_name"
+execute_on_instance_and_collect_results "$fast_disk_instance_id" "$fast_disk_pretty_name"
 
 ## TODO: Add plotting
