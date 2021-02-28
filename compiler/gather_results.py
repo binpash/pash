@@ -10,23 +10,25 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as pltlines
 import matplotlib.ticker as plticker
 
-parser = argparse.ArgumentParser(description='Produce plots from various experiments with PaSh.')
-parser.add_argument('--eurosys2021',
-                    action='store_true',
-                    help='generates the plots for all the experiments in the EuroSys2021 paper')
-parser.add_argument('--all',
-                    action='store_true',
-                    help='generates all plots')
+def parse_args():
+    parser = argparse.ArgumentParser(description='Produce plots from various experiments with PaSh.')
+    parser.add_argument('--eurosys2021',
+                        action='store_true',
+                        help='generates the plots for all the experiments in the EuroSys2021 paper')
+    parser.add_argument('--all',
+                        action='store_true',
+                        help='generates all plots')
 
-args = parser.parse_args()
+    args = parser.parse_args()
 
-if args.all is True:
-    args.eurosys2021 = True
+    if args.all is True:
+        args.eurosys2021 = True
 
-if not args.all and not args.eurosys2021:
-    print("You have to specify some plot to generate!")
-    print("See command usage with --help.")
-    exit(0)
+    if not args.all and not args.eurosys2021:
+        print("You have to specify some plot to generate!")
+        print("See command usage with --help.")
+        exit(0)
+    return args
 
 SMALL_SIZE = 16
 MEDIUM_SIZE = 18
@@ -1526,147 +1528,150 @@ def any_wrong(correctness, experiment, line_plots):
     return False
 
 
-## Set the fonts to be larger
-SMALL_SIZE = 22
-MEDIUM_SIZE = 24
-BIGGER_SIZE = 30
 
-plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-plt.rc('axes', titlesize=MEDIUM_SIZE)     # fontsize of the axes title
-plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
-plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
-plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+if __name__ == "__main__":
+    args = parse_args()
+    ## Set the fonts to be larger
+    SMALL_SIZE = 22
+    MEDIUM_SIZE = 24
+    BIGGER_SIZE = 30
 
-# Plot microbenchmarks
-diff_results = []
-all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
-all_experiment_results = {}
-all_sequential_results = {}
-correctness = {}
-for experiment in all_experiments:
-    all_speedup_results, output_diff, sequential_time = collect_scaleup_line_speedups(experiment, all_scaleup_numbers, RESULTS)
-    all_experiment_results[experiment] = all_speedup_results
-    all_sequential_results[experiment] = sequential_time
-    correctness[experiment] = output_diff
+    plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+    plt.rc('axes', titlesize=MEDIUM_SIZE)     # fontsize of the axes title
+    plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+    plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
-small_one_liners_scaleup_numbers = [2, 16]
-small_one_liner_results = {}
-for experiment in all_experiments:
-    small_speedup_results, _, sequential_time = collect_scaleup_line_speedups(experiment, small_one_liners_scaleup_numbers, SMALL_RESULTS)
-    small_one_liner_results[experiment] = small_speedup_results
+    # Plot microbenchmarks
+    diff_results = []
+    all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
+    all_experiment_results = {}
+    all_sequential_results = {}
+    correctness = {}
+    for experiment in all_experiments:
+        all_speedup_results, output_diff, sequential_time = collect_scaleup_line_speedups(experiment, all_scaleup_numbers, RESULTS)
+        all_experiment_results[experiment] = all_speedup_results
+        all_sequential_results[experiment] = sequential_time
+        correctness[experiment] = output_diff
 
-
-## Make a report of all one-liners
-report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctness)
-
-## Legacy unix50 results
-if args.all:
-    unix50_results, unix50_results_fan_in = collect_all_unix50_results(UNIX50_RESULTS)
-
-## Collect all unix50 results
-if args.eurosys2021:
-    small_unix50_results, _ = collect_all_unix50_results(SMALL_UNIX50_RESULTS, scaleup_numbers=[4], suffix='distr_auto_split.time')
-    big_unix50_results, _ = collect_all_unix50_results(BIG_UNIX50_RESULTS, scaleup_numbers=[16], suffix='distr_auto_split.time')
-
-##
-## Theory Paper
-##
-coarse_experiments = ["minimal_grep",
-                      "minimal_sort",
-                      "topn",
-                      "wf",
-                      "spell",
-                      "bigrams",
-                      "diff",
-                      "set-diff",
-                      "shortest_scripts"]
-
-if args.all:
-    plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, 
-                                coarse_experiments, (unix50_results, unix50_results_fan_in))
-    generate_tex_coarse_table(coarse_experiments)
-    # collect_unix50_coarse_scaleup_times(unix50_results)
+    small_one_liners_scaleup_numbers = [2, 16]
+    small_one_liner_results = {}
+    for experiment in all_experiments:
+        small_speedup_results, _, sequential_time = collect_scaleup_line_speedups(experiment, small_one_liners_scaleup_numbers, SMALL_RESULTS)
+        small_one_liner_results[experiment] = small_speedup_results
 
 
-##
-## Systems Paper
-##
-experiments = ["minimal_grep",
-               "minimal_sort",
-               "topn",
-               "wf",
-               "spell",
-               "diff",
-               "bigrams",
-               "set-diff",
-               "double_sort",
-               "shortest_scripts"]
+    ## Make a report of all one-liners
+    report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctness)
 
-## Large inputs `-l`
-custom_scaleup_plots = {"minimal_grep" : ["eager", "blocking-eager"],
-                        "minimal_sort": ["eager", "blocking-eager", "no-eager"],
-                        "topn": ["eager", "blocking-eager", "no-eager"],
-                        "wf": ["eager", "blocking-eager", "no-eager"],
-                        "spell" : ["split", "eager"],
-                        "diff" : ["eager", "blocking-eager", "no-eager"],
-                        "bigrams" : ["split", "eager"],
-                        "set-diff" : ["eager", "blocking-eager", "no-eager"],
-                        "double_sort" : ["split", "eager", "blocking-eager", "no-eager"],
-                        "shortest_scripts" : ["eager", "blocking-eager", "no-eager"]}
+    ## Legacy unix50 results
+    if args.all:
+        unix50_results, unix50_results_fan_in = collect_all_unix50_results(UNIX50_RESULTS)
 
-if args.eurosys2021:
-    plot_one_liners_tiling(all_experiment_results, experiments, custom_scaleup_plots)
+    ## Collect all unix50 results
+    if args.eurosys2021:
+        small_unix50_results, _ = collect_all_unix50_results(SMALL_UNIX50_RESULTS, scaleup_numbers=[4], suffix='distr_auto_split.time')
+        big_unix50_results, _ = collect_all_unix50_results(BIG_UNIX50_RESULTS, scaleup_numbers=[16], suffix='distr_auto_split.time')
 
-## Medium input `-m`
-medium_custom_scaleup_plots = {"minimal_grep" : ["split", "blocking-eager"],
-                               "minimal_sort": ["split", "blocking-eager", "no-eager"],
-                               "topn": ["split", "blocking-eager", "no-eager"],
-                               "wf": ["split", "blocking-eager", "no-eager"],
-                               "spell" : ["split", "eager"],
-                               "diff" : ["split", "blocking-eager", "no-eager"],
-                               "bigrams" : ["split", "eager"],
-                               "set-diff" : ["split", "blocking-eager", "no-eager"],
-                               "double_sort" : ["split", "eager", "blocking-eager", "no-eager"],
-                               "shortest_scripts" : ["split", "blocking-eager", "no-eager"]}
+    ##
+    ## Theory Paper
+    ##
+    coarse_experiments = ["minimal_grep",
+                        "minimal_sort",
+                        "topn",
+                        "wf",
+                        "spell",
+                        "bigrams",
+                        "diff",
+                        "set-diff",
+                        "shortest_scripts"]
+
+    if args.all:
+        plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, 
+                                    coarse_experiments, (unix50_results, unix50_results_fan_in))
+        generate_tex_coarse_table(coarse_experiments)
+        # collect_unix50_coarse_scaleup_times(unix50_results)
 
 
-if args.eurosys2021:
-    plot_one_liners_tiling(small_one_liner_results, experiments,
-                           medium_custom_scaleup_plots,
-                           all_scaleup_numbers=small_one_liners_scaleup_numbers,
-                           prefix="medium_")
+    ##
+    ## Systems Paper
+    ##
+    experiments = ["minimal_grep",
+                "minimal_sort",
+                "topn",
+                "wf",
+                "spell",
+                "diff",
+                "bigrams",
+                "set-diff",
+                "double_sort",
+                "shortest_scripts"]
 
-## Small input `-s`
-small_custom_scaleup_plots = {"minimal_grep" : ["split"],
-                              "minimal_sort": ["split"],
-                              "topn": ["split"],
-                              "wf": ["split"],
-                              "spell" : ["split"],
-                              "diff" : ["split"],
-                              "bigrams" : ["split"],
-                              "set-diff" : ["split"],
-                              "double_sort" : ["split"],
-                              "shortest_scripts" : ["split"]}
+    ## Large inputs `-l`
+    custom_scaleup_plots = {"minimal_grep" : ["eager", "blocking-eager"],
+                            "minimal_sort": ["eager", "blocking-eager", "no-eager"],
+                            "topn": ["eager", "blocking-eager", "no-eager"],
+                            "wf": ["eager", "blocking-eager", "no-eager"],
+                            "spell" : ["split", "eager"],
+                            "diff" : ["eager", "blocking-eager", "no-eager"],
+                            "bigrams" : ["split", "eager"],
+                            "set-diff" : ["eager", "blocking-eager", "no-eager"],
+                            "double_sort" : ["split", "eager", "blocking-eager", "no-eager"],
+                            "shortest_scripts" : ["eager", "blocking-eager", "no-eager"]}
 
-if args.eurosys2021:
-    plot_one_liners_tiling(small_one_liner_results, experiments,
-                           small_custom_scaleup_plots,
-                           all_scaleup_numbers=small_one_liners_scaleup_numbers,
-                           prefix="small_")
+    if args.eurosys2021:
+        plot_one_liners_tiling(all_experiment_results, experiments, custom_scaleup_plots)
 
-if args.eurosys2021:
-    generate_tex_table(experiments)
-    collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB")
-    collect_unix50_scaleup_times(big_unix50_results, scaleup=[16], small_prefix="_10GB")
-    plot_sort_with_baseline(RESULTS)
+    ## Medium input `-m`
+    medium_custom_scaleup_plots = {"minimal_grep" : ["split", "blocking-eager"],
+                                "minimal_sort": ["split", "blocking-eager", "no-eager"],
+                                "topn": ["split", "blocking-eager", "no-eager"],
+                                "wf": ["split", "blocking-eager", "no-eager"],
+                                "spell" : ["split", "eager"],
+                                "diff" : ["split", "blocking-eager", "no-eager"],
+                                "bigrams" : ["split", "eager"],
+                                "set-diff" : ["split", "blocking-eager", "no-eager"],
+                                "double_sort" : ["split", "eager", "blocking-eager", "no-eager"],
+                                "shortest_scripts" : ["split", "blocking-eager", "no-eager"]}
 
-## Legacy plots
-if args.all:
-    collect_unix50_scaleup_times(unix50_results)
+
+    if args.eurosys2021:
+        plot_one_liners_tiling(small_one_liner_results, experiments,
+                            medium_custom_scaleup_plots,
+                            all_scaleup_numbers=small_one_liners_scaleup_numbers,
+                            prefix="medium_")
+
+    ## Small input `-s`
+    small_custom_scaleup_plots = {"minimal_grep" : ["split"],
+                                "minimal_sort": ["split"],
+                                "topn": ["split"],
+                                "wf": ["split"],
+                                "spell" : ["split"],
+                                "diff" : ["split"],
+                                "bigrams" : ["split"],
+                                "set-diff" : ["split"],
+                                "double_sort" : ["split"],
+                                "shortest_scripts" : ["split"]}
+
+    if args.eurosys2021:
+        plot_one_liners_tiling(small_one_liner_results, experiments,
+                            small_custom_scaleup_plots,
+                            all_scaleup_numbers=small_one_liners_scaleup_numbers,
+                            prefix="small_")
+
+    if args.eurosys2021:
+        generate_tex_table(experiments)
+        collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB")
+        collect_unix50_scaleup_times(big_unix50_results, scaleup=[16], small_prefix="_10GB")
+        plot_sort_with_baseline(RESULTS)
+
+    ## Legacy plots
+    if args.all:
+        collect_unix50_scaleup_times(unix50_results)
 
 
-## Format and print correctness results
-if args.all:
-    format_correctness(correctness)
+    ## Format and print correctness results
+    if args.all:
+        format_correctness(correctness)
