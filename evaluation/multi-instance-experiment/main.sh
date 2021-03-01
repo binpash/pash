@@ -26,7 +26,8 @@
 key_path="~/.ssh/aws_pash.pem"
 standard_disk_instance_id="i-0347068fae17c256e"
 standard_disk_pretty_name="standard_disk_instance"
-fast_disk_instance_id="i-07814ed42a1ddd013"
+
+fast_disk_instance_id="i-0dffae07e7c7f8db2"
 fast_disk_pretty_name="fast_disk_instance"
 
 eval_dir="$PASH_TOP/evaluation/multi-instance-experiment/"
