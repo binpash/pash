@@ -78,14 +78,17 @@ def add_common_arguments(parser):
                         help="configure where to write the log; defaults to stderr.",
                         default="")
     parser.add_argument("--no_eager",
-                        help="disable eager nodes before merging nodes",
+                        help="(experimental) disable eager nodes before merging nodes",
+                        action="store_true")
+    parser.add_argument("--no_cat_split_vanish",
+                        help="(experimental) disable the optimization that removes cat with N inputs that is followed by a split with N inputs",
                         action="store_true")
     parser.add_argument("--speculation",
-                        help="run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
+                        help="(experimental) run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
                         choices=['no_spec', 'quick_abort'],
                         default='no_spec')
     parser.add_argument("--termination",
-                        help="determine the termination behavior of the DFG. Defaults to cleanup after the last process dies, but can drain all streams until depletion",
+                        help="(experimental) determine the termination behavior of the DFG. Defaults to cleanup after the last process dies, but can drain all streams until depletion",
                         choices=['clean_up_graph', 'drain_stream'],
                         default="clean_up_graph")
     parser.add_argument("--config_path",
@@ -113,6 +116,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument(pash_arguments.log_file))
     if (pash_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
+    if (pash_arguments.no_cat_split_vanish):
+        arguments.append(string_to_argument("--no_cat_split_vanish"))
     arguments.append(string_to_argument("--debug"))
     arguments.append(string_to_argument(str(pash_arguments.debug)))
     arguments.append(string_to_argument("--termination"))
