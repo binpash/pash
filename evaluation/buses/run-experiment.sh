@@ -16,9 +16,9 @@ do
     pash_width_16_no_cat_split_output=/tmp/pash_16_no_cat_split_output
     pash_width_16_output=/tmp/pash_16_output
 
-    seq_time="${results_dir}/${i}-2_seq.time"
-    pash_width_16_no_cat_split_time="${results_dir}/${i}-16_distr_auto_split_fan_in_fan_out.time"
-    pash_width_16_time="${results_dir}/${i}-16_distr_auto_split.time"
+    seq_time="${results_dir}/${i}_2_seq.time"
+    pash_width_16_no_cat_split_time="${results_dir}/${i}_16_distr_auto_split_fan_in_fan_out.time"
+    pash_width_16_time="${results_dir}/${i}_16_distr_auto_split.time"
 
     echo "Executing the script with bash..."
     { time /bin/bash $script > $seq_output ; } 2> >(tee "${seq_time}" >&2)
