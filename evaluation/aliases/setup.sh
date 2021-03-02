@@ -3,15 +3,18 @@
 #sed -e '46106d' $1                                                               
 # likely-longest-pipelines.txt is locally stored
 # strip the number of pipe column
-cut -f1 -d " " --complement  likely-longest-pipelines.txt > $PASH_TOP/evaluation/scripts/input/generated.file
+#cut -f1 -d " " --complement  likely-longest-pipelines.txt > $PASH_TOP/evaluation/scripts/input/generated.file
 
 ## mp3 dataset ##
-apt-get install ffmpeg unrtf imagemagick
+#apt-get install ffmpeg unrtf imagemagick
 PW=$PASH_TOP/evaluation/scripts/input/aliases
 mkdir -p $PW
 cd $PW
-wget http://www.repository.voxforge1.org/downloads/SpeechCorpus/Trunk/Audio/Original/48kHz_16bit/tomhannen-20080409.tgz
-tar xf tomhannen-20080409.tgz
+if [ ! -f tomhannen-20080409.tgz ]; then                                                 
+    echo "Fetching Dataset"                                                   
+    wget http://www.repository.voxforge1.org/downloads/SpeechCorpus/Trunk/Audio/Original/48kHz_16bit/tomhannen-20080409.tgz
+    tar xf tomhannen-20080409.tgz
+fi
 rm -rf wav mp3
 mkdir wav mp3 rtf
 cd tomhannen-20080409/wav
@@ -24,28 +27,35 @@ rm -rf ../../tomhannen-20080409
 cd  $PW
 # fetch all gutenberg books here ?
 # NLP grep
-rm *.tar.gz
-wget -O nlp.tar.gz https://wordnetcode.princeton.edu/3.0/WNdb-3.0.tar.gz
-tar xf nlp.tar.gz
-
+if [ ! -f nlp.tar.gz ]; then
+    echo "Fetching Dataset"                                                   
+    wget -O nlp.tar.gz https://wordnetcode.princeton.edu/3.0/WNdb-3.0.tar.gz
+    tar xf nlp.tar.gz
+fi
 wget https://jeroen.github.io/files/sample.rtf
 for i in {0..10000}
 do
     cp sample.rtf rtf/sample$i.rtf
 done
 
-if [ ! -f jpg1.tar.gz ]; then                                                 
+if [ ! -f jpg1.tar.gz ]; then
     echo "Fetching Dataset"                                                   
     wget -O jpg1.tar.gz ftp://ftp.inrialpes.fr/pub/lear/douze/data/jpg1.tar.gz
+    tar xf jpg1.tar.gz                                                            
 fi                                                                            
-tar xf jpg1.tar.gz                                                            
 mkdir -p tmp                                                                  
-cd jpg/                                                                       
+cd jpg/
 for filename in *.jpg; do                                                     
-    echo $filename                                                            
     cp $filename ../tmp/${filename}_copy.jpg                                  
+done
+cd ../tmp
+for filename in *.jpg; do                                                     
+    cp $filename ../jpg/
 done                                                                          
-
-mv ../tmp/* .
+echo "JPGs copied"
 rm -rf ../tmp
 cd ..
+rm -rf tmp
+mkdir tmp
+seq -w 1 1000000 | xargs -P 50 -I{} sh -c 'num=$(echo {} | sed 's/^0*//');val=$(($num % 1000)); touch tmp/f{}.$val;'
+echo "Generated 1000000 empty files"

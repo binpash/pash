@@ -114,9 +114,56 @@ rtf_to_txt()
     find . -name "*.rtf" | xargs -I {} unrtf {} --text > /dev/null
 )
 
+# count how many times each file type exist in a directory
+# 1GB files take about 14s on i7 8th gen
+get_type_count()
+(
+    cd $1
+    find . -type f | while read f; do echo ""${f##*.}""; done | sed ""/^\s*$/d"" | sort | uniq -c | sort -rn > /dev/null
+)
+
+# calculate a hash? can we change it to calculate hashes for all the files?
+get_hash()
+(
+    head -c32 /dev/urandom | openssl dgst -sha256 -binary -hmac $(xxd -p -l32 -c32 /dev/urandom) | base64 | cut -b-32
+)
+
+# compress all the files in a directory using dd and tar
+compress_files()
+(
+    cd $1
+    find . -name "*.rtf" | xargs -I {} sh -c "dd if={} bs=1 skip=24 > '{}f'; tar -zcvf {}.tar.gz {}f; rm {}f" sh {}
+)
+
+# compress and encrypt all files in a directory 
+encrypt_files()
+(
+    cd $1
+    find . -name "*.rtf" | xargs -I {} sh -c "tar -czf - {} | openssl enc -e -pbkdf2 -out {}.enc" sh {}
+)
+
+# no idea what this does, but it takes time
+func()
+(
+while read line; 
+do 
+    count=1; 
+    out=$(echo "$line"|tr "|" "\n");  
+    echo $out |
+        while IFS= read -r i; 
+        do echo "$count $i"; 
+            count=$((count+1)); 
+        done; 
+        echo "-----------------------------------------------      -----------------------------------------------------"; 
+    done
+)
 
 #convert_to_mp3 "$PASH_TOP/evaluation/scripts/input/aliases/wav"
 #gen_playlist "$PASH_TOP/evaluation/scripts/input/aliases/"
-resize_image "$PASH_TOP/evaluation/scripts/input/aliases/jpg"
-jpg_to_psd "$PASH_TOP/evaluation/scripts/input/aliases/jpg"
+#resize_image "$PASH_TOP/evaluation/scripts/input/aliases/jpg"
+#jpg_to_psd "$PASH_TOP/evaluation/scripts/input/aliases/jpg"
 #rtf_to_txt  "$PASH_TOP/evaluation/scripts/input/aliases/rtf"
+#get_type_count "$PASH_TOP/evaluation/scripts/input/aliases/tmp"
+#compress_files $PASH_TOP/evaluation/scripts/input/aliases/rtf
+#encrypt_files $PASH_TOP/evaluation/scripts/input/aliases/rtf
+
