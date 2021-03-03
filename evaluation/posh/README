@@ -1,0 +1,20 @@
+mogrify: Creates thumbnails with 100x100 size from a list of images (Works)
+    mogrify -format gif -path thumbs_dir -thumbnail 100x100 data_dir/*.jpg
+
+Distributed cat: Distributed log analysis (Works)
+    dataset1: wget http://www.sec.gov/dera/data/Public-EDGAR-log-file-data/2017/Qtr1/log20170314.zip 
+    dataset2: wget http://www.sec.gov/dera/data/Public-EDGAR-log-file-data/2017/Qtr1/log20170315.zip 
+    cat /d/c/foo /b/a/foo /e/d/foo /f/e/foo | grep 'bar' > /local/local.txt
+
+Ray Tracing: Dataset ?
+    the paper cites this link https://github.com/stanfordsnr/gg
+    cat /d/c/b/1.INFO | grep '[RAY]' | head -n1 | cut -c 7- > /d/c/b/rays.csv
+
+scan_command: Port scan analysis Datasets ?
+    1. Clean the raw data with a program called zannotate.
+    2. Use a JSON processing tool, jq, to isolate the IP and AS ID# (Autonomous System ID) columns.
+    3. Use pr to merge the columns together.
+    4. Use awk to count the number of IPs per AS.
+
+    pr -mts, <( cat annotated | jq \".ip\" | tr -d '\"' ) <( cat annotated | jq -c \".    zannotate.routing.asn\" ) 
+    | awk -F',' '{ a[$2]++; } END { for (n in a) print n \",\" a[n] } ' | sort     -k2 -n -t',' -r > as_popularity  

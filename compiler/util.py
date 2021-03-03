@@ -4,6 +4,7 @@ from datetime import timedelta
 import sys
 
 import config
+import tempfile
 
 def flatten_list(lst):
     return [item for sublist in lst for item in sublist]
@@ -31,12 +32,6 @@ def log(*args, end='\n', level=1):
         else:
             with open(config.pash_args.log_file, "a") as f:
                 print(*args, file=f, end=end)
-    
 
-def get_random_string(length=8):
-    letters = string.ascii_lowercase
-    result_str = ''.join(random.choice(letters) for i in range(length))
-    return result_str
-
-def get_pash_prefixed_random_string(length=8):
-    return config.PASH_TMP_PREFIX + get_random_string(length)
+def ptempfile():
+    return tempfile.mkstemp(dir=config.PASH_TMP_PREFIX)

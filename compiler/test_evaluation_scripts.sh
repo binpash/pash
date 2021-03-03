@@ -2,15 +2,18 @@
 
 ## Necessary to set PASH_TOP
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+export DEBUG=0
+# export DEBUG=1 # Uncomment to print pash output
 
-microbenchmarks_dir="../evaluation/microbenchmarks/"
-intermediary_dir="../evaluation/test_intermediary/"
+microbenchmarks_dir="${PASH_TOP}/evaluation/microbenchmarks/"
+intermediary_dir="${PASH_TOP}/evaluation/test_intermediary/"
+test_results_dir="${PASH_TOP}/evaluation/results/test_results/"
 
 echo "Deleting eager intermediate files..."
 rm -f /tmp/eager*
 mkdir -p $intermediary_dir
-rm -rf "../evaluation/results/test_results/"
-mkdir -p "../evaluation/results/test_results/"
+rm -rf "$test_results_dir"
+mkdir -p "$test_results_dir"
 
 n_inputs=(
     2
@@ -48,13 +51,15 @@ pipeline_microbenchmarks=(
     tr-test              # Tests all possible behaviors of tr that exist in our evaluation
 )
 
-
-test_flags=(
-    ""   # No split + No eager (This cannot be in the end)
-    -n   # No split + Naive eager
-    -e   # No split + Eager
-    -a   # Split    + Eager
-)
+execute_pash_and_check_diff() {
+    if [ "$DEBUG" -eq 1 ]; then
+        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> >(tee "${pash_time}" >&2) &&
+        diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
+    else
+        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> "${pash_time}" &&
+        diff -s "$seq_output" "$pash_output" | head >> "${pash_time}"
+    fi
+}
 
 execute_tests() {
     assert_correctness="$1"
@@ -72,37 +77,64 @@ execute_tests() {
         microbenchmark=${flags[0]}
         echo "Executing test: $microbenchmark"
         # Execute the sequential script on the first run only
-        exec_seq="-s"
+        
+        prefix="${microbenchmarks_dir}/${microbenchmark}"
+
+        export seq_output="${intermediary_dir}/${microbenchmark}_seq_output"
+        seq_time="$test_results_dir/${microbenchmark}_seq.time"
+
+        script_to_execute="${prefix}.sh"
+        env_file="${prefix}_env_test.sh"
+        funs_file="${prefix}_funs.sh"
+        input_file="${prefix}_test.in"
+
+        if [ -f "$env_file" ]; then
+            . $env_file
+            vars_to_export=$(cut -d= -f1 $env_file)
+            if [ ! -z "$vars_to_export" ]; then
+                export $vars_to_export
+            fi
+        else
+            echo "|-- Doesn't have env file"
+        fi
+
+        ## Export necessary functions
+        if [ -f "$funs_file" ]; then
+            source $funs_file
+        fi
+
+        ## Redirect the input if there is an input file
+        stdin_redir="/dev/null"
+        if [ -f "$input_file" ]; then
+            stdin_redir="$(cat "$input_file")"
+            echo "|-- Has input file: $stdin_redir"
+        fi
+
+        echo "|-- Executing the script with bash..."
+        cat $stdin_redir | { time /bin/bash "$script_to_execute" > $seq_output ; } 2> "${seq_time}"
+
         for n_in in "${n_inputs[@]}"; do
-            echo "Number of inputs: ${n_in}"
+            echo "|-- Executing with pash --width ${n_in}..."
+            export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_auto_split.time"
+            export pash_output="${intermediary_dir}/${microbenchmark}_${n_in}_pash_output"
 
-            ## Generate the intermediary script
-            python3 "$PASH_TOP/evaluation/generate_microbenchmark_intermediary_scripts.py" \
-                    $microbenchmarks_dir $microbenchmark $n_in $intermediary_dir "test"
-
-            for flag in "${flags[@]:1}"; do
-                echo "Flag: ${flag}"
-
-                ## Execute the intermediary script
-                "$PASH_TOP/evaluation/execute_compile_evaluation_script.sh" $assert_correctness $exec_seq $flag "${microbenchmark}" "${n_in}" "test_results" "test_" > /dev/null 2>&1
-                rm -f /tmp/eager*
-
-                ## Only run the sequential the first time around
-                exec_seq=""
-            done
+            cat $stdin_redir | 
+                execute_pash_and_check_diff -d 1 $assert_correctness --width "${n_in}" --output_time $script_to_execute
         done
     done
 }
 
 execute_tests "" "${script_microbenchmarks[@]}"
-execute_tests "-c" "${pipeline_microbenchmarks[@]}"
+execute_tests "--assert_compiler_success" "${pipeline_microbenchmarks[@]}"
 
 echo "Below follow the identical outputs:"
-grep --files-with-match "are identical" ../evaluation/results/test_results/*_distr*.time
+grep --files-with-match "are identical" "$test_results_dir"/*_distr*.time |
+    sed "s,^$PASH_TOP/,,"
 
 echo "Below follow the non-identical outputs:"
-grep -L "are identical" ../evaluation/results/test_results/*_distr*.time
+grep -L "are identical" "$test_results_dir"/*_distr*.time |
+    sed "s,^$PASH_TOP/,,"
 
-TOTAL_TESTS=$(ls -la ../evaluation/results/test_results/*_distr*.time | wc -l)
-PASSED_TESTS=$(grep --files-with-match "are identical" ../evaluation/results/test_results/*_distr*.time | wc -l)
+TOTAL_TESTS=$(ls -la "$test_results_dir"/*_distr*.time | wc -l)
+PASSED_TESTS=$(grep --files-with-match "are identical" "$test_results_dir"/*_distr*.time | wc -l)
 echo "Summary: ${PASSED_TESTS}/${TOTAL_TESTS} tests passed."

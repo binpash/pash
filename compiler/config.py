@@ -3,11 +3,12 @@ import os
 import subprocess
 import yaml
 import math
+import tempfile
 
 from ir_utils import *
 
 ## Global
-__version__ = "0.2" # FIXME add libdash version
+__version__ = "0.3" # FIXME add libdash version
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'PASH_TOP' in os.environ:
     PASH_TOP = os.environ['PASH_TOP']
@@ -21,7 +22,9 @@ PYTHON_VERSION = "python3"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 
-PASH_TMP_PREFIX = "pash_"
+## This is set in pash.py and pash_runtime.py accordingly.
+## In both cases the setting is different.
+PASH_TMP_PREFIX = None
 
 config = {}
 annotations = []
@@ -53,7 +56,7 @@ def getWidth():
 def add_common_arguments(parser):
     parser.add_argument("-w", "--width",
                         type=int,
-                        default=getWidth(), 
+                        default=getWidth(),
                         help="set data-parallelism factor")
     parser.add_argument("--no_optimize",
                         help="not apply transformations over the DFG",
@@ -66,7 +69,7 @@ def add_common_arguments(parser):
                         action="store_true")
     parser.add_argument("-t", "--output_time", #FIXME: --time
                         help="output the time it took for every step",
-                        action="store_true") 
+                        action="store_true")
     parser.add_argument("-p", "--output_optimized", # FIXME: --print
                         help="output the parallel shell script for inspection",
                         action="store_true")
@@ -74,7 +77,7 @@ def add_common_arguments(parser):
                         type=int,
                         help="configure debug level; defaults to 0",
                         default=0)
-    parser.add_argument("--log_file", 
+    parser.add_argument("--log_file",
                         help="configure where to write the log; defaults to stderr.",
                         default="")
     parser.add_argument("--no_eager",
@@ -160,7 +163,7 @@ def read_vars_file(var_file_path):
                 rest = rest[(space_index+1):]
                 eq_index = rest.find('=')
             ## We now find the name and value
-            var_name = rest[:eq_index] 
+            var_name = rest[:eq_index]
             var_value = rest[(eq_index+1):]
 
             vars_dict[var_name] = (var_type, var_value)

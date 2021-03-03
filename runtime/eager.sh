@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 input=${1?"ERROR: Eager: No input file given"}
 output=${2?"ERROR: Eager: No output file given"}
