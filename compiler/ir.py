@@ -11,6 +11,7 @@ from definitions.ir.nodes.cat import *
 from definitions.ir.nodes.bigram_g_map import *
 
 import definitions.ir.nodes.pash_split as pash_split
+import definitions.ir.nodes.r_merge as r_merge
 import definitions.ir.nodes.r_split as r_split
 
 from command_categories import *
@@ -644,7 +645,14 @@ class IR:
         return (len(self.nodes) == 0)
 
 
-    ## This function parallelizes a cat followed by a parallelizable node
+    ## This function parallelizes a merger followed by a parallelizable node
+    ##
+    ## There are several combinations that it can handle:
+    ##   1. cat -> parallelizable node
+    ##   2. r_merge -> stateless node without conf_input
+    ##   3. r_merge -> commutative pure parallelizable node 
+    ##
+    ## 1. cat followed by a parallelizable node
     ##
     ##    (conf_input) ----+
     ##                      \
@@ -662,6 +670,14 @@ class IR:
     ##
     ## where edges are named with parenthesis and nodes are named without them.
     ##
+    ## 2. r_merge followed by a stateless node without conf_input
+    ##
+    ## TODO: Add visual representation
+    ##
+    ## In this case the stateless command is wrapped with wrap so we cannot actually tee the input (since we do not know apriori how many forks we have).
+    ## However, we can actually write it to a file (not always worth performance wise) and then read it from all at once.
+    ## 
+    ## 
     ## TODO: Eventually delete the fileIdGen from here and always use the graph internal one.
     ##
     ## TODO: Eventually this should be tunable to not happen for all inputs (but maybe for less)
@@ -672,7 +688,7 @@ class IR:
         ## Initialize the new_node list
         new_nodes = []
 
-        ## Identify the cat node
+        ## Identify the previous merger node (cat or r_merge)
         ##
         ## TODO: This should also work for no cat (all inputs are part of the node)
         node_input_ids = node.get_standard_inputs()
@@ -680,7 +696,11 @@ class IR:
         node_input_id = node_input_ids[0]
         previous_node_id = self.edges[node_input_id][1]
         previous_node = self.get_node(previous_node_id)
-        assert(isinstance(previous_node, Cat))
+        assert(isinstance(previous_node, Cat)
+               or isinstance(previous_node, r_merge.RMerge))
+        
+        ## Determine if the previous node is r_merge to determine which of the three parallelization cases to follow
+        r_merge_flag = isinstance(previous_node, r_merge.RMerge)
 
         ## Identify the parallel inputs, each of which will be given to a different copy of the node.
         parallel_input_ids = previous_node.get_input_list()
@@ -697,12 +717,13 @@ class IR:
         self.remove_node(previous_node_id)
 
         ## TODO: This does not work at the moment. There seem to be some issues with tee.
-        ##       It either has to do with a misunderstanding of how configuration inputs work
-        ##       or it has to do with 
+        ##       It probably has to do with a misunderstanding of how configuration inputs work
         ## Unplug the configuration inputs from the node and tee it
         parallel_configuration_ids = [[] for _ in range(parallelism)]
         node_conf_inputs = node.get_configuration_inputs()
         for conf_edge_id in node_conf_inputs:
+            ## TODO: For now this does not work for r_merge
+            assert(not r_merge_flag)
             # self.set_edge_to(conf_edge_id, None)
             tee_id = self.tee_edge(conf_edge_id, parallelism, fileIdGen)
             tee_node = self.get_node(tee_id)
@@ -731,7 +752,11 @@ class IR:
             for output_fid in output_fid_list:
                 self.add_edge(output_fid)
 
-            parallel_node = make_map_node(node, new_inputs, new_output_ids)
+            ## If the previous merger is r_merge we need to put wrap around the nodes
+            if(r_merge_flag is True):
+                assert(False)
+            else:
+                parallel_node = make_map_node(node, new_inputs, new_output_ids)
             self.add_node(parallel_node)
 
             parallel_node_id = id(parallel_node)

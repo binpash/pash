@@ -359,8 +359,11 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
 
             ## If curr is cat, it means that split suceeded, or it was
             ## already a cat. In any case, we can proceed with the
-            ## parallelization
-            if(isinstance(new_curr, Cat)):
+            ## parallelization.
+            ##
+            ## Both Cat and RMerge can be "commuted" with parallelizable nodes
+            if(isinstance(new_curr, Cat)
+               or isinstance(new_curr, r_merge.RMerge)):
                 new_nodes = check_parallelize_dfg_node(new_curr_id, next_node_id, graph, fileIdGen)
                 # log("New nodes:", new_nodes)
                 new_nodes_for_workset += new_nodes
@@ -372,29 +375,32 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
 ##       then parallelize the next node. This will allow us to handle `comm -23 p1 p2`
 ##
 ## TODO: A nice interface would be (check/apply transformation)
-
+##
 ## TODO: This could be a method of IR.
-def check_parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
+##
+## TODO: We need to check if the previous node is a cat or a merge
+def check_parallelize_dfg_node(merger_id, node_id, graph, fileIdGen):
 
-    ## Get cat inputs.
-    cat_input_edge_ids = graph.get_node_input_ids(cat_id)
+    ## Get merger inputs (cat or r_merge).
+    merger_input_edge_ids = graph.get_node_input_ids(merger_id)
 
     ## If Cat has more than one input, then the next node could be parallelized
     new_nodes = []
-    if (len(cat_input_edge_ids) > 1):
-        new_nodes = parallelize_dfg_node(cat_id, node_id, graph, fileIdGen)
+    if (len(merger_input_edge_ids) > 1):
+        new_nodes = parallelize_dfg_node(merger_id, node_id, graph, fileIdGen)
 
     return new_nodes
 
-def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
+def parallelize_dfg_node(old_merger_id, node_id, graph, fileIdGen):
     node = graph.get_node(node_id)
     assert(node.is_parallelizable())
 
+    ## TODO: Delete this
     ## Get cat inputs and output. Note that there is only one output.
-    cat_input_edge_ids = graph.get_node_input_ids(cat_id)
-    cat_output_edge_ids = graph.get_node_output_ids(cat_id)
-    assert(len(cat_output_edge_ids) == 1)
-    cat_output_edge_id = cat_output_edge_ids[0]
+    # old_merger_input_edge_ids = graph.get_node_input_ids(old_merger_id)
+    # old_merger_output_edge_ids = graph.get_node_output_ids(old_merger_id)
+    # assert(len(old_merger_output_edge_ids) == 1)
+    # old_merger_output_edge_id = old_merger_output_edge_ids[0]
 
     new_nodes = []
     ## We assume that every stateless and pure parallelizable command has one output_file_id for now.
@@ -404,6 +410,7 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
     assert(len(node_output_edge_ids) == 1)
     node_output_edge_id = node_output_edge_ids[0]
 
+    ## TODO: Add a commutativity check before actually applying this transformation if the current node is pure parallelizable.
     new_parallel_nodes, map_output_ids = graph.parallelize_node(node_id, fileIdGen)
     new_nodes += new_parallel_nodes
 
@@ -411,6 +418,8 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
     # log("after duplicate graph edges:", graph.edges)
 
     ## Make a merge command that joins the results of all the duplicated commands
+    ##
+    ## TODO: We need to figure out what to do with r_merge when commands are not commutative
     if(node.is_pure_parallelizable()):
         merge_commands, new_edges, final_output_id = create_merge_commands(node,
                                                                            map_output_ids,
