@@ -155,7 +155,8 @@ def optimize_irs(asts_and_irs, args):
             # with cProfile.Profile() as pr:
             distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, args.width,
                                                                       runtime_config['batch_size'],
-                                                                      args.no_cat_split_vanish)
+                                                                      args.no_cat_split_vanish,
+                                                                      args.r_split)
             # pr.print_stats()
             # log(distributed_graph)
 
@@ -197,7 +198,7 @@ def print_graph_statistics(graph):
 ##
 ## It returns a maximally expanded (regarding files) graph, that can
 ## be scheduled depending on the available computational resources.
-def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_split_vanish):
+def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_split_vanish, r_split_flag):
     source_node_ids = graph.source_nodes()
 
     ## Generate a fileIdGen from a graph, that doesn't clash with the
@@ -222,7 +223,8 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_spl
             next_node_ids = graph.get_next_nodes(curr_id)
             workset += next_node_ids
 
-            new_nodes = parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size, no_cat_split_vanish)
+            new_nodes = parallelize_cat(curr_id, graph, fileIdGen,
+                                        fan_out, batch_size, no_cat_split_vanish, r_split_flag)
 
             ## Assert that the graph stayed valid after the transformation
             ## TODO: Do not run this everytime in the loop if we are not in debug mode.
@@ -246,7 +248,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_spl
 
 
 ## Optimizes several commands by splitting its input
-def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size):
+def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_flag):
     assert(curr.is_parallelizable())
     assert(not isinstance(curr, Cat))
     assert(fan_out > 1)
@@ -266,7 +268,7 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size):
         input_id = input_ids[0]
 
         ## First we have to make the split file commands.
-        split_file_commands, output_fids = make_split_files(input_id, fan_out, fileIdGen)
+        split_file_commands, output_fids = make_split_files(input_id, fan_out, fileIdGen, r_split_flag)
         for output_fid in output_fids:
             output_fid.make_ephemeral()
             graph.add_edge(output_fid)
@@ -301,10 +303,14 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size):
     return new_cat
 
 
+## TODO: There needs to be some state to keep track of open r-split sessions
+##       (that either end at r-merge or at r_unwrap before a commutative command).
+
 ## If the current command is a cat, and is followed by a node that
 ## is either stateless or pure parallelizable, commute the cat
 ## after the node.
-def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size, no_cat_split_vanish):
+def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
+                    batch_size, no_cat_split_vanish, r_split_flag):
     curr = graph.get_node(curr_id)
     new_nodes_for_workset = []
 
@@ -332,7 +338,7 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size, no_cat_split
                     or (not isinstance(curr, Cat)
                         or (isinstance(curr, Cat)
                             and len(curr.get_input_list()) < fan_out)))):
-                new_cat = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size)
+                new_cat = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size, r_split_flag)
 
                 ## After split has succeeded we know that the curr node (previous of the next)
                 ## has changed. Therefore we need to retrieve it again.
