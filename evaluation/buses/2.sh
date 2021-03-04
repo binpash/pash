@@ -14,14 +14,12 @@
 # Replace the line below with the two lines above to stream the latest file
 cat in.csv |                    # assumes saved input
   sed 's/T..:..:..//' |         # hide times
-  awk -F, '{print $3,$1}' |     # keep only day and bus no
-  sort -n |                     # preparing for uniq
-  uniq -c |                     # remove duplicate records due to time
-  awk '{print $2}' |            # keep all buses
+  cut -d ',' -f 3,1 |           # keep only day and bus ID
+  sort -u |                     # removing duplicate day-buses
+  cut -d ',' -f 2 |             # keep only bus ID
   sort |                        # preparing for uniq
   uniq -c |                     # count unique dates
-  awk '{print $2,$1}' |         # print first date, then count
-  sort -k2n |                   # sort in reverse numerical order
-  tr ' ' '\t' > out             # replace space w/ tab as per original script
+  sort -k1n |                   # sort in reverse numerical order
+  awk -v OFS="\t" "{print \$2,\$1}"     # print first date, then count
 
 # diff out{1,}
