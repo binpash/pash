@@ -64,7 +64,10 @@ class DFGNode:
         return (self.com_category in ["stateless", "pure", "parallelizable_pure"])
 
     def is_parallelizable(self):
-        return (self.is_pure_parallelizable() or self.com_category == "stateless")
+        return (self.is_pure_parallelizable() or self.is_stateless())
+
+    def is_stateless(self):
+        return (self.com_category == "stateless")
 
     def is_pure_parallelizable(self):
         return (self.com_category == "parallelizable_pure" or
