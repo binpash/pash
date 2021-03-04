@@ -13,6 +13,7 @@ from definitions.ir.nodes.bigram_g_map import *
 import definitions.ir.nodes.pash_split as pash_split
 import definitions.ir.nodes.r_merge as r_merge
 import definitions.ir.nodes.r_split as r_split
+import definitions.ir.nodes.r_wrap as r_wrap
 
 from command_categories import *
 from ir_utils import *
@@ -208,6 +209,18 @@ def make_map_node(node, new_inputs, new_outputs):
         new_node.outputs = new_outputs
     return new_node
 
+## Makes a wrap node that encloses a map parallel node.
+##
+## At the moment it only works with one input and one output since wrap cannot redirect input in the command.
+def make_wrap_map_node(node, new_inputs, new_outputs):
+    log("Inputs:", new_inputs)
+    log("Outputs:", new_outputs)
+    assert(is_single_input(new_inputs))
+    assert(len(new_outputs) == 1)
+
+    new_node = make_map_node(node, new_inputs, new_outputs)
+    wrap_node = r_wrap.wrap_node(new_node)
+    return wrap_node
 
 
 
@@ -754,7 +767,7 @@ class IR:
 
             ## If the previous merger is r_merge we need to put wrap around the nodes
             if(r_merge_flag is True):
-                assert(False)
+                parallel_node = make_wrap_map_node(node, new_inputs, new_output_ids)
             else:
                 parallel_node = make_map_node(node, new_inputs, new_output_ids)
             self.add_node(parallel_node)
@@ -767,14 +780,17 @@ class IR:
             self.set_edge_to(standard_in, parallel_node_id)
         
         if (node.com_category == "stateless"):
-            new_cat = make_cat_node(flatten_list(all_map_output_ids), node_output_edge_id)
-            self.add_node(new_cat)
-            new_nodes.append(new_cat)
-            self.set_edge_from(node_output_edge_id, id(new_cat))
+            if(r_merge_flag is True):
+                new_merger = r_merge.make_r_merge_node(flatten_list(all_map_output_ids), node_output_edge_id)
+            else:
+                new_merger = make_cat_node(flatten_list(all_map_output_ids), node_output_edge_id)
+            
+            self.add_node(new_merger)
+            new_nodes.append(new_merger)
+            self.set_edge_from(node_output_edge_id, id(new_merger))
         else:
             ## TODO: Create an aggregator here. At the moment it happens in `pash_runtime.py`.
             pass
-
 
         return new_nodes, all_map_output_ids
 
