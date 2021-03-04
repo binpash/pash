@@ -86,6 +86,10 @@ def add_common_arguments(parser):
     parser.add_argument("--r_split",
                         help="(experimental) use round robin split, merge, wrap, and unwrap",
                         action="store_true")
+    parser.add_argument("--r_split_batch_size",
+                        type=int,
+                        help="(experimental) configure the batch size of r_splti (default: 100KB)",
+                        default=100000)
     parser.add_argument("--speculation",
                         help="(experimental) run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
                         choices=['no_spec', 'quick_abort'],
