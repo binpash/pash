@@ -41,7 +41,10 @@ def non_option_args_indices(options):
 
 ## This function interleaves option arguments (that might contain Nones)
 ## with the rest of the arguments
+##
+## Assumption: rest_arguments does not contain Nones
 def interleave_args(opt_arguments, rest_arguments):
+    assert(all([arg for arg in rest_arguments if not arg is None]))
     arguments = opt_arguments
     for i in range(len(arguments)):
         if(arguments[i] is None):
