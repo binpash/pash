@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 A="paste -d '+' "
 for i in "$@"; do
@@ -8,4 +8,3 @@ done
 A="$A | bc | tr -s '\n'  ' ' | sed 's/^/   /' | sed 's/$/\n /'"
 
 eval $A
-

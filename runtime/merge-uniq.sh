@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This is how to merge results of `uniq -c`, contained in {1,2,3}.txt
 # I am using 3 inputs to stress it works with more than just pairs:-)
