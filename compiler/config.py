@@ -83,6 +83,9 @@ def add_common_arguments(parser):
     parser.add_argument("--no_cat_split_vanish",
                         help="(experimental) disable the optimization that removes cat with N inputs that is followed by a split with N inputs",
                         action="store_true")
+    parser.add_argument("--r_split",
+                        help="(experimental) use round robin split, merge, wrap, and unwrap",
+                        action="store_true")
     parser.add_argument("--speculation",
                         help="(experimental) run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
                         choices=['no_spec', 'quick_abort'],
@@ -116,6 +119,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument(pash_arguments.log_file))
     if (pash_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
+    if (pash_arguments.r_split):
+        arguments.append(string_to_argument("--r_split"))
     if (pash_arguments.no_cat_split_vanish):
         arguments.append(string_to_argument("--no_cat_split_vanish"))
     arguments.append(string_to_argument("--debug"))

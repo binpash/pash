@@ -5,9 +5,10 @@ import os
 
 from definitions.ir.arg import *
 from definitions.ir.dfg_node import *
+from definitions.ir.file_id import *
 from definitions.ir.resource import *
 from definitions.ir.nodes.cat import *
-from definitions.ir.nodes.pash_split import *
+import definitions.ir.nodes.pash_split as pash_split
 from definitions.ir.nodes.bigram_g_map import *
 
 from command_categories import *
@@ -161,13 +162,20 @@ def compile_command_to_DFG(fileIdGen, command, options,
     return dfg
 
 
-def make_split_files(input_id, fan_out, fileIdGen):
+def make_split_files(input_id, fan_out, fileIdGen, r_split_flag):
     assert(fan_out > 1)
     ## Generate the split file ids
     out_fids = [fileIdGen.next_file_id() for i in range(fan_out)]
     out_ids = [fid.get_ident() for fid in out_fids]
-    split_com = make_split_file(input_id, out_ids)
+    split_com = make_split_file(input_id, out_ids, r_split_flag)
     return [split_com], out_fids
+
+def make_split_file(input_id, out_ids, r_split_flag):
+    if(r_split_flag):
+        assert(False)
+    else:
+        split_com = pash_split.make_split_file(input_id, out_ids, r_split_flag)
+    return split_com
 
 ##
 ## Node builder functions
