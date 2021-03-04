@@ -22,6 +22,9 @@ from definitions.ir.nodes.sort_g_reduce import *
 from definitions.ir.nodes.eager import *
 from definitions.ir.nodes.pash_split import *
 
+import definitions.ir.nodes.r_merge as r_merge
+
+
 runtime_config = {}
 ## There are two ways to enter the distributed planner, either by
 ## calling pash_runtime.py (which straight away calls the distributed planner),
@@ -292,8 +295,12 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_fl
 
         output_ids = [fid.get_ident() for fid in output_fids]
 
-        new_cat = make_cat_node(output_ids, new_input_id)
-        graph.add_node(new_cat)
+        ## If we add r_split, then the merger is actually an r_merge
+        if(r_split_flag):
+            new_merger = r_merge.make_r_merge_node(output_ids, new_input_id)
+        else:
+            new_merger = make_cat_node(output_ids, new_input_id)
+        graph.add_node(new_merger)
 
         ## Replace the previous input edge with the new input edge that is after the cat.
         curr.replace_edge(input_id, new_input_id)
@@ -302,7 +309,7 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_fl
         # log("graph nodes:", graph.nodes)
         # log("graph edges:", graph.edges)
 
-    return new_cat
+    return new_merger
 
 
 ## TODO: There needs to be some state to keep track of open r-split sessions
@@ -340,14 +347,15 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
                     or (not isinstance(curr, Cat)
                         or (isinstance(curr, Cat)
                             and len(curr.get_input_list()) < fan_out)))):
-                new_cat = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size, r_split_flag, r_split_batch_size)
+                new_merger = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size, r_split_flag, r_split_batch_size)
 
                 ## After split has succeeded we know that the curr node (previous of the next)
                 ## has changed. Therefore we need to retrieve it again.
-                if (not new_cat is None):
-                    new_curr_id = id(new_cat)
-                    new_curr = new_cat
-                    assert(isinstance(new_curr, Cat))
+                if (not new_merger is None):
+                    new_curr_id = id(new_merger)
+                    new_curr = new_merger
+                    assert(isinstance(new_curr, Cat)
+                           or isinstance(new_curr, r_merge.RMerge))
 
             ## If curr is cat, it means that split suceeded, or it was
             ## already a cat. In any case, we can proceed with the
