@@ -156,7 +156,7 @@ def optimize_irs(asts_and_irs, args):
             distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, args.width,
                                                                       runtime_config['batch_size'],
                                                                       args.no_cat_split_vanish,
-                                                                      args.r_split)
+                                                                      args.r_split, args.r_split_batch_size)
             # pr.print_stats()
             # log(distributed_graph)
 
@@ -198,7 +198,8 @@ def print_graph_statistics(graph):
 ##
 ## It returns a maximally expanded (regarding files) graph, that can
 ## be scheduled depending on the available computational resources.
-def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_split_vanish, r_split_flag):
+def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_split_vanish,
+                                          r_split_flag, r_split_batch_size):
     source_node_ids = graph.source_nodes()
 
     ## Generate a fileIdGen from a graph, that doesn't clash with the
@@ -224,7 +225,8 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_spl
             workset += next_node_ids
 
             new_nodes = parallelize_cat(curr_id, graph, fileIdGen,
-                                        fan_out, batch_size, no_cat_split_vanish, r_split_flag)
+                                        fan_out, batch_size, no_cat_split_vanish,
+                                        r_split_flag, r_split_batch_size)
 
             ## Assert that the graph stayed valid after the transformation
             ## TODO: Do not run this everytime in the loop if we are not in debug mode.
@@ -248,7 +250,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_spl
 
 
 ## Optimizes several commands by splitting its input
-def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_flag):
+def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_flag, r_split_batch_size):
     assert(curr.is_parallelizable())
     assert(not isinstance(curr, Cat))
     assert(fan_out > 1)
@@ -268,7 +270,7 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_fl
         input_id = input_ids[0]
 
         ## First we have to make the split file commands.
-        split_file_commands, output_fids = make_split_files(input_id, fan_out, fileIdGen, r_split_flag)
+        split_file_commands, output_fids = make_split_files(input_id, fan_out, fileIdGen, r_split_flag, r_split_batch_size)
         for output_fid in output_fids:
             output_fid.make_ephemeral()
             graph.add_edge(output_fid)
@@ -310,7 +312,7 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_fl
 ## is either stateless or pure parallelizable, commute the cat
 ## after the node.
 def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
-                    batch_size, no_cat_split_vanish, r_split_flag):
+                    batch_size, no_cat_split_vanish, r_split_flag, r_split_batch_size):
     curr = graph.get_node(curr_id)
     new_nodes_for_workset = []
 
@@ -338,7 +340,7 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
                     or (not isinstance(curr, Cat)
                         or (isinstance(curr, Cat)
                             and len(curr.get_input_list()) < fan_out)))):
-                new_cat = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size, r_split_flag)
+                new_cat = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size, r_split_flag, r_split_batch_size)
 
                 ## After split has succeeded we know that the curr node (previous of the next)
                 ## has changed. Therefore we need to retrieve it again.

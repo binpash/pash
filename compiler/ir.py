@@ -8,8 +8,10 @@ from definitions.ir.dfg_node import *
 from definitions.ir.file_id import *
 from definitions.ir.resource import *
 from definitions.ir.nodes.cat import *
-import definitions.ir.nodes.pash_split as pash_split
 from definitions.ir.nodes.bigram_g_map import *
+
+import definitions.ir.nodes.pash_split as pash_split
+import definitions.ir.nodes.r_split as r_split
 
 from command_categories import *
 from ir_utils import *
@@ -162,19 +164,19 @@ def compile_command_to_DFG(fileIdGen, command, options,
     return dfg
 
 
-def make_split_files(input_id, fan_out, fileIdGen, r_split_flag):
+def make_split_files(input_id, fan_out, fileIdGen, r_split_flag, r_split_batch_size):
     assert(fan_out > 1)
     ## Generate the split file ids
     out_fids = [fileIdGen.next_file_id() for i in range(fan_out)]
     out_ids = [fid.get_ident() for fid in out_fids]
-    split_com = make_split_file(input_id, out_ids, r_split_flag)
+    split_com = make_split_file(input_id, out_ids, r_split_flag, r_split_batch_size)
     return [split_com], out_fids
 
-def make_split_file(input_id, out_ids, r_split_flag):
+def make_split_file(input_id, out_ids, r_split_flag, r_split_batch_size):
     if(r_split_flag):
-        assert(False)
+        split_com = r_split.make_r_split(input_id, out_ids, r_split_batch_size)
     else:
-        split_com = pash_split.make_split_file(input_id, out_ids, r_split_flag)
+        split_com = pash_split.make_split_file(input_id, out_ids)
     return split_com
 
 ##
