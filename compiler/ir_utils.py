@@ -143,6 +143,13 @@ def format_expanded_arg_char(arg_char):
         ## TODO: Make this correct
         raise ValueError
 
+## These functions check tuple inputs (configuration and streaming ones)
+def is_single_input(inputs):
+    assert(isinstance(inputs, tuple))
+    conf_inputs = inputs[0]
+    streaming_inputs = inputs[1]
+    return (len(conf_inputs) == 0
+            and len(streaming_inputs) == 1)
 
 ## This function gets a key and a value from the ast json format
 def get_kv(dic):
