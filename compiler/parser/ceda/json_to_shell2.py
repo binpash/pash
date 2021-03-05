@@ -29,7 +29,7 @@ def json_to_shell_string(input_filename):
     shell_list = []
     for ast in asts:
         shell_list.append(to_string(ast))
-    return "\n".join(shell_list)
+    return "\n".join(shell_list) + "\n"
 
 if __name__ == "__main__":
     main ()
