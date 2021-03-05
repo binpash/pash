@@ -39,10 +39,13 @@ void readHeader(FILE* inputFile, int64_t *id, size_t *blockSize) {
 }
 
 
-void safeWrite(char* buffer, int bytes, int count, FILE* outputFile) {
-    if(fwrite(buffer, bytes, count, outputFile) != count) {
-      fprintf(stderr, "write failed");
+void safeWrite(char* buffer, size_t bytes, size_t count, FILE* outputFile) {
+    size_t len;
+    if((len = fwrite(buffer, bytes, count, outputFile)) != count) {
+      fprintf(stderr, "write failed count %ld, wrote %ld\n", count, len);
+      exit(1);
     }
+    fflush(outputFile);
 }
 
 void writeHeader(FILE* destFile, int64_t id, size_t blocksize) {
