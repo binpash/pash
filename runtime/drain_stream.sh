@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ## This command drains a stream. It is used if we want a prefix of a
 ## stream that was written by tee. Since tee writes in both streams

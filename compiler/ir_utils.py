@@ -41,7 +41,10 @@ def non_option_args_indices(options):
 
 ## This function interleaves option arguments (that might contain Nones)
 ## with the rest of the arguments
+##
+## Assumption: rest_arguments does not contain Nones
 def interleave_args(opt_arguments, rest_arguments):
+    assert(all([arg for arg in rest_arguments if not arg is None]))
     arguments = opt_arguments
     for i in range(len(arguments)):
         if(arguments[i] is None):
@@ -140,6 +143,13 @@ def format_expanded_arg_char(arg_char):
         ## TODO: Make this correct
         raise ValueError
 
+## These functions check tuple inputs (configuration and streaming ones)
+def is_single_input(inputs):
+    assert(isinstance(inputs, tuple))
+    conf_inputs = inputs[0]
+    streaming_inputs = inputs[1]
+    return (len(conf_inputs) == 0
+            and len(streaming_inputs) == 1)
 
 ## This function gets a key and a value from the ast json format
 def get_kv(dic):

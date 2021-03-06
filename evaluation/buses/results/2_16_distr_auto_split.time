@@ -1,0 +1,1958 @@
+(1) Previous exit status: 0
+(1) Previous set state: hB
+Writing vars to: /tmp/pash_wjh7a1fq/pash_oIsrPvqb2g
+(1) Bash variables saved in: /tmp/pash_wjh7a1fq/pash_oIsrPvqb2g
+(1) Bash set state at start of execution: hB
+(1) Set state reverted to PaSh-internal set state: huB
+Retrieving candidate DF region: /tmp/pash_wjh7a1fq/tmp21czs_s1 ... Done!
+inputs-outputs found for: cat
+|-- ([('option', 0)], ['stdout'], [])
+class: stateless found for: cat
+inputs-outputs found for: sed
+|-- (['stdin'], ['stdout'], [('option', 0)])
+ -- Warning: Overriding standard category for: sed
+Uninterpreted operator: and
+inputs-outputs found for: cut
+|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1), ('option', 2), ('option', 3)])
+Uninterpreted operator: and
+class: stateless found for: cut
+inputs-outputs found for: sort
+|-- (['stdin'], ['stdout'], [('option', 0)])
+class: pure found for: sort
+Uninterpreted operator: and
+inputs-outputs found for: cut
+|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1), ('option', 2), ('option', 3)])
+Uninterpreted operator: and
+class: stateless found for: cut
+inputs-outputs found for: sort
+|-- (['stdin'], ['stdout'], [])
+class: pure found for: sort
+inputs-outputs found for: uniq
+|-- (['stdin'], ['stdout'], [('option', 0)])
+ -- Warning: Overriding standard category for: uniq
+inputs-outputs found for: sort
+|-- (['stdin'], ['stdout'], [('option', 0)])
+class: pure found for: sort
+inputs-outputs found for: awk
+|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1), ('option', 2)])
+class: pure found for: awk
+Compilation time: 2.262  ms
+Total nodes after optimization: 282
+ -- out of which:
+Cat nodes: 1
+Eager nodes: 135
+Optimization time: 31.562  ms
+arguments, redirs found for: cat
+|-- ([fid:1:in.csv], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50]]]]]]])
+arguments, redirs found for: uniq
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 52]]]]]]])
+arguments, redirs found for: /home/konstantinos/pash/runtime/auto-split.sh
+|-- ([#file2, #file19, #file20, #file21, #file22, #file23, #file24, #file25, #file26, #file27, #file28, #file29, #file30, #file31, #file32, #file33, #file34], [])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49], ['C', 49]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 54]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49], ['C', 50]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 55]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49], ['C', 51]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 56]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49], ['C', 52]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 57]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 48]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49], ['C', 54]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 49]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 50]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 51]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 52]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 50], ['C', 48]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 53]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 50], ['C', 49]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 54]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 50], ['C', 50]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 55]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 50], ['C', 51]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 56]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 50], ['C', 52]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 57]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 50], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 48]]]]]]])
+arguments, redirs found for: sed
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 52]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 49]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 54]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 50]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 51]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 52]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 53]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 48]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 54]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 49]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 55]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 50]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 56]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 51]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 57]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 52]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 48]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 49]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 54]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 50]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 51]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 52]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 52], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 53]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 48]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 54]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 49]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 55]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 50]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 56]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 51]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 57]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 52]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55], ['C', 48]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 54]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55], ['C', 50]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55], ['C', 51]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55], ['C', 52]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55], ['C', 53]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 48]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55], ['C', 54]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 49]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55], ['C', 55]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 50]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55], ['C', 56]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 51]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 55], ['C', 57]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 52]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 48]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 54]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 50]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 51]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file226, #file227], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 52]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file228, #file229], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 53]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file230, #file231], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 54]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file232, #file233], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 55]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file234, #file235], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 56]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file236, #file237], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56], ['C', 57]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file238, #file239], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57], ['C', 48]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file240, #file241], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file242, #file243], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57], ['C', 50]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file244, #file245], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57], ['C', 51]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file246, #file247], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57], ['C', 52]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file248, #file249], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57], ['C', 53]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file250, #file251], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57], ['C', 54]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file252, #file253], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57], ['C', 55]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file254, #file255], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56]]]]]]])
+arguments, redirs found for: /home/konstantinos/pash/runtime/auto-split.sh
+|-- ([#file8, #file99, #file100, #file101, #file102, #file103, #file104, #file105, #file106, #file107, #file108, #file109, #file110, #file111, #file112, #file113, #file114], [])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 53], ['C', 54]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49], ['C', 54]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 53], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49], ['C', 55]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 53], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49], ['C', 56]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 53], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49], ['C', 57]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 54], ['C', 48]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 48]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 54], ['C', 49]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 49]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 54], ['C', 50]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 50]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 54], ['C', 51]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 51]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 54], ['C', 52]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 52]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 54], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 53]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 54], ['C', 54]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 54]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 54], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 55]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 54], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 56]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 54], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 57]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 55], ['C', 48]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 51], ['C', 48]]]]]]])
+Uninterpreted operator: and
+arguments, redirs found for: cut
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49], ['C', 52]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 51], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49], ['C', 54]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 51], ['C', 50]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 51], ['C', 51]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 51], ['C', 52]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 51], ['C', 53]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 48]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 51], ['C', 54]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 49]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 51], ['C', 55]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 50]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 51], ['C', 56]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 51]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 51], ['C', 57]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 52]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 52], ['C', 48]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 52], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 54]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 52], ['C', 50]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 52], ['C', 51]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 52], ['C', 52]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 52], ['C', 53]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 51], ['C', 48]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 52], ['C', 54]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 51], ['C', 49]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 52], ['C', 55]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file271, #file272], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 52], ['C', 56]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file273, #file274], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 52], ['C', 57]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file275, #file276], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53], ['C', 48]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file277, #file278], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file279, #file280], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53], ['C', 50]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file281, #file282], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53], ['C', 51]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file283, #file284], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53], ['C', 52]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file285, #file286], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53], ['C', 53]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file287, #file288], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53], ['C', 54]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file289, #file290], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53], ['C', 55]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file291, #file292], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53], ['C', 56]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file293, #file294], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53], ['C', 57]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file295, #file296], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 54], ['C', 48]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file297, #file298], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 54], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file299, #file300], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50]]]]]]])
+arguments, redirs found for: /home/konstantinos/pash/runtime/auto-split.sh
+|-- ([#file14, #file163, #file164, #file165, #file166, #file167, #file168, #file169, #file170, #file171, #file172, #file173, #file174, #file175, #file176, #file177, #file178], [])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 48], ['C', 49]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56], ['C', 48]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 48], ['C', 50]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 48], ['C', 51]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56], ['C', 50]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 48], ['C', 52]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56], ['C', 51]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 48], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56], ['C', 52]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 48], ['C', 54]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56], ['C', 53]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 48], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56], ['C', 54]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 48], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56], ['C', 55]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 48], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56], ['C', 56]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 49], ['C', 48]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56], ['C', 57]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 49], ['C', 49]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57], ['C', 48]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 49], ['C', 50]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 49], ['C', 51]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57], ['C', 50]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 49], ['C', 52]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57], ['C', 51]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 49], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57], ['C', 52]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 55], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57], ['C', 53]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file316, #file317], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57], ['C', 54]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file318, #file319], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57], ['C', 55]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file320, #file321], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57], ['C', 56]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file322, #file323], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57], ['C', 57]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file324, #file325], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 48], ['C', 48]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file326, #file327], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 48], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file328, #file329], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 48], ['C', 50]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file330, #file331], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 48], ['C', 51]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file332, #file333], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 48], ['C', 52]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file334, #file335], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 48], ['C', 53]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file336, #file337], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 48], ['C', 54]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file338, #file339], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 48], ['C', 55]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file340, #file341], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 48], ['C', 56]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file342, #file343], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 48], ['C', 57]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file344, #file345], [['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 54]]]]]]])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file19, #file211], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file20, #file212], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file21, #file213], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file22, #file214], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file23, #file215], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file24, #file216], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file25, #file217], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file26, #file218], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file27, #file219], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file28, #file220], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file29, #file221], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file30, #file222], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file31, #file223], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file32, #file224], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file33, #file225], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file68, #file226], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file69, #file227], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file70, #file228], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file71, #file229], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file72, #file230], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file73, #file231], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file74, #file232], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file75, #file233], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file76, #file234], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file77, #file235], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file78, #file236], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file79, #file237], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file80, #file238], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file81, #file239], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file82, #file240], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file83, #file241], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file84, #file242], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file85, #file243], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file86, #file244], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file87, #file245], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file88, #file246], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file89, #file247], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file90, #file248], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file91, #file249], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file92, #file250], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file93, #file251], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file94, #file252], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file95, #file253], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file96, #file254], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file97, #file255], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file99, #file256], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file100, #file257], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file101, #file258], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file102, #file259], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file103, #file260], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file104, #file261], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file105, #file262], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file106, #file263], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file107, #file264], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file108, #file265], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file109, #file266], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file110, #file267], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file111, #file268], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file112, #file269], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file113, #file270], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file132, #file271], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file133, #file272], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file134, #file273], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file135, #file274], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file136, #file275], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file137, #file276], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file138, #file277], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file139, #file278], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file140, #file279], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file141, #file280], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file142, #file281], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file143, #file282], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file144, #file283], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file145, #file284], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file146, #file285], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file147, #file286], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file148, #file287], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file149, #file288], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file150, #file289], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file151, #file290], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file152, #file291], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file153, #file292], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file154, #file293], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file155, #file294], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file156, #file295], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file157, #file296], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file158, #file297], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file159, #file298], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file160, #file299], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file161, #file300], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file163, #file301], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file164, #file302], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file165, #file303], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file166, #file304], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file167, #file305], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file168, #file306], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file169, #file307], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file170, #file308], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file171, #file309], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file172, #file310], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file173, #file311], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file174, #file312], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file175, #file313], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file176, #file314], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file177, #file315], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file180, #file316], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file181, #file317], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file182, #file318], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file183, #file319], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file184, #file320], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file185, #file321], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file186, #file322], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file187, #file323], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file188, #file324], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file189, #file325], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file190, #file326], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file191, #file327], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file192, #file328], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file193, #file329], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file194, #file330], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file195, #file331], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file196, #file332], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file197, #file333], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file198, #file334], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file199, #file335], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file200, #file336], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file201, #file337], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file202, #file338], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file203, #file339], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file204, #file340], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file205, #file341], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file206, #file342], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file207, #file343], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file208, #file344], [])
+arguments, redirs found for: /home/konstantinos/pash/runtime/eager.sh
+|-- ([#file209, #file345], [])
+arguments, redirs found for: awk
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 54]]]]]]])
+Backend time: 141.506  ms
+Optimized script saved in: /tmp/pash_wjh7a1fq/pash_yH8uJoNl84
+Compiler exited with code: 0
+(3) Recovering variables from: /tmp/pash_wjh7a1fq/pash_oIsrPvqb2g
+/dev/fd/63: line 32: declare: PPID: readonly variable
+/dev/fd/63: line 39: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 72: declare: UID: readonly variable
+(3) Reverted to BaSh set state: hB
+(4) Executing script in /tmp/pash_wjh7a1fq/pash_yH8uJoNl84:
+rm -f "#file2"
+rm -f "#file4"
+rm -f "#file6"
+rm -f "#file8"
+rm -f "#file10"
+rm -f "#file12"
+rm -f "#file14"
+rm -f "#file16"
+rm -f "#file19"
+rm -f "#file20"
+rm -f "#file21"
+rm -f "#file22"
+rm -f "#file23"
+rm -f "#file24"
+rm -f "#file25"
+rm -f "#file26"
+rm -f "#file27"
+rm -f "#file28"
+rm -f "#file29"
+rm -f "#file30"
+rm -f "#file31"
+rm -f "#file32"
+rm -f "#file33"
+rm -f "#file34"
+rm -f "#file35"
+rm -f "#file36"
+rm -f "#file37"
+rm -f "#file38"
+rm -f "#file39"
+rm -f "#file40"
+rm -f "#file41"
+rm -f "#file42"
+rm -f "#file43"
+rm -f "#file44"
+rm -f "#file45"
+rm -f "#file46"
+rm -f "#file47"
+rm -f "#file48"
+rm -f "#file49"
+rm -f "#file50"
+rm -f "#file51"
+rm -f "#file52"
+rm -f "#file53"
+rm -f "#file54"
+rm -f "#file55"
+rm -f "#file56"
+rm -f "#file57"
+rm -f "#file58"
+rm -f "#file59"
+rm -f "#file60"
+rm -f "#file61"
+rm -f "#file62"
+rm -f "#file63"
+rm -f "#file64"
+rm -f "#file65"
+rm -f "#file66"
+rm -f "#file67"
+rm -f "#file68"
+rm -f "#file69"
+rm -f "#file70"
+rm -f "#file71"
+rm -f "#file72"
+rm -f "#file73"
+rm -f "#file74"
+rm -f "#file75"
+rm -f "#file76"
+rm -f "#file77"
+rm -f "#file78"
+rm -f "#file79"
+rm -f "#file80"
+rm -f "#file81"
+rm -f "#file82"
+rm -f "#file83"
+rm -f "#file84"
+rm -f "#file85"
+rm -f "#file86"
+rm -f "#file87"
+rm -f "#file88"
+rm -f "#file89"
+rm -f "#file90"
+rm -f "#file91"
+rm -f "#file92"
+rm -f "#file93"
+rm -f "#file94"
+rm -f "#file95"
+rm -f "#file96"
+rm -f "#file97"
+rm -f "#file98"
+rm -f "#file99"
+rm -f "#file100"
+rm -f "#file101"
+rm -f "#file102"
+rm -f "#file103"
+rm -f "#file104"
+rm -f "#file105"
+rm -f "#file106"
+rm -f "#file107"
+rm -f "#file108"
+rm -f "#file109"
+rm -f "#file110"
+rm -f "#file111"
+rm -f "#file112"
+rm -f "#file113"
+rm -f "#file114"
+rm -f "#file115"
+rm -f "#file116"
+rm -f "#file117"
+rm -f "#file118"
+rm -f "#file119"
+rm -f "#file120"
+rm -f "#file121"
+rm -f "#file122"
+rm -f "#file123"
+rm -f "#file124"
+rm -f "#file125"
+rm -f "#file126"
+rm -f "#file127"
+rm -f "#file128"
+rm -f "#file129"
+rm -f "#file130"
+rm -f "#file131"
+rm -f "#file132"
+rm -f "#file133"
+rm -f "#file134"
+rm -f "#file135"
+rm -f "#file136"
+rm -f "#file137"
+rm -f "#file138"
+rm -f "#file139"
+rm -f "#file140"
+rm -f "#file141"
+rm -f "#file142"
+rm -f "#file143"
+rm -f "#file144"
+rm -f "#file145"
+rm -f "#file146"
+rm -f "#file147"
+rm -f "#file148"
+rm -f "#file149"
+rm -f "#file150"
+rm -f "#file151"
+rm -f "#file152"
+rm -f "#file153"
+rm -f "#file154"
+rm -f "#file155"
+rm -f "#file156"
+rm -f "#file157"
+rm -f "#file158"
+rm -f "#file159"
+rm -f "#file160"
+rm -f "#file161"
+rm -f "#file162"
+rm -f "#file163"
+rm -f "#file164"
+rm -f "#file165"
+rm -f "#file166"
+rm -f "#file167"
+rm -f "#file168"
+rm -f "#file169"
+rm -f "#file170"
+rm -f "#file171"
+rm -f "#file172"
+rm -f "#file173"
+rm -f "#file174"
+rm -f "#file175"
+rm -f "#file176"
+rm -f "#file177"
+rm -f "#file178"
+rm -f "#file179"
+rm -f "#file180"
+rm -f "#file181"
+rm -f "#file182"
+rm -f "#file183"
+rm -f "#file184"
+rm -f "#file185"
+rm -f "#file186"
+rm -f "#file187"
+rm -f "#file188"
+rm -f "#file189"
+rm -f "#file190"
+rm -f "#file191"
+rm -f "#file192"
+rm -f "#file193"
+rm -f "#file194"
+rm -f "#file195"
+rm -f "#file196"
+rm -f "#file197"
+rm -f "#file198"
+rm -f "#file199"
+rm -f "#file200"
+rm -f "#file201"
+rm -f "#file202"
+rm -f "#file203"
+rm -f "#file204"
+rm -f "#file205"
+rm -f "#file206"
+rm -f "#file207"
+rm -f "#file208"
+rm -f "#file209"
+rm -f "#file210"
+rm -f "#file211"
+rm -f "#file212"
+rm -f "#file213"
+rm -f "#file214"
+rm -f "#file215"
+rm -f "#file216"
+rm -f "#file217"
+rm -f "#file218"
+rm -f "#file219"
+rm -f "#file220"
+rm -f "#file221"
+rm -f "#file222"
+rm -f "#file223"
+rm -f "#file224"
+rm -f "#file225"
+rm -f "#file226"
+rm -f "#file227"
+rm -f "#file228"
+rm -f "#file229"
+rm -f "#file230"
+rm -f "#file231"
+rm -f "#file232"
+rm -f "#file233"
+rm -f "#file234"
+rm -f "#file235"
+rm -f "#file236"
+rm -f "#file237"
+rm -f "#file238"
+rm -f "#file239"
+rm -f "#file240"
+rm -f "#file241"
+rm -f "#file242"
+rm -f "#file243"
+rm -f "#file244"
+rm -f "#file245"
+rm -f "#file246"
+rm -f "#file247"
+rm -f "#file248"
+rm -f "#file249"
+rm -f "#file250"
+rm -f "#file251"
+rm -f "#file252"
+rm -f "#file253"
+rm -f "#file254"
+rm -f "#file255"
+rm -f "#file256"
+rm -f "#file257"
+rm -f "#file258"
+rm -f "#file259"
+rm -f "#file260"
+rm -f "#file261"
+rm -f "#file262"
+rm -f "#file263"
+rm -f "#file264"
+rm -f "#file265"
+rm -f "#file266"
+rm -f "#file267"
+rm -f "#file268"
+rm -f "#file269"
+rm -f "#file270"
+rm -f "#file271"
+rm -f "#file272"
+rm -f "#file273"
+rm -f "#file274"
+rm -f "#file275"
+rm -f "#file276"
+rm -f "#file277"
+rm -f "#file278"
+rm -f "#file279"
+rm -f "#file280"
+rm -f "#file281"
+rm -f "#file282"
+rm -f "#file283"
+rm -f "#file284"
+rm -f "#file285"
+rm -f "#file286"
+rm -f "#file287"
+rm -f "#file288"
+rm -f "#file289"
+rm -f "#file290"
+rm -f "#file291"
+rm -f "#file292"
+rm -f "#file293"
+rm -f "#file294"
+rm -f "#file295"
+rm -f "#file296"
+rm -f "#file297"
+rm -f "#file298"
+rm -f "#file299"
+rm -f "#file300"
+rm -f "#file301"
+rm -f "#file302"
+rm -f "#file303"
+rm -f "#file304"
+rm -f "#file305"
+rm -f "#file306"
+rm -f "#file307"
+rm -f "#file308"
+rm -f "#file309"
+rm -f "#file310"
+rm -f "#file311"
+rm -f "#file312"
+rm -f "#file313"
+rm -f "#file314"
+rm -f "#file315"
+rm -f "#file316"
+rm -f "#file317"
+rm -f "#file318"
+rm -f "#file319"
+rm -f "#file320"
+rm -f "#file321"
+rm -f "#file322"
+rm -f "#file323"
+rm -f "#file324"
+rm -f "#file325"
+rm -f "#file326"
+rm -f "#file327"
+rm -f "#file328"
+rm -f "#file329"
+rm -f "#file330"
+rm -f "#file331"
+rm -f "#file332"
+rm -f "#file333"
+rm -f "#file334"
+rm -f "#file335"
+rm -f "#file336"
+rm -f "#file337"
+rm -f "#file338"
+rm -f "#file339"
+rm -f "#file340"
+rm -f "#file341"
+rm -f "#file342"
+rm -f "#file343"
+rm -f "#file344"
+rm -f "#file345"
+mkfifo "#file2"
+mkfifo "#file4"
+mkfifo "#file6"
+mkfifo "#file8"
+mkfifo "#file10"
+mkfifo "#file12"
+mkfifo "#file14"
+mkfifo "#file16"
+mkfifo "#file19"
+mkfifo "#file20"
+mkfifo "#file21"
+mkfifo "#file22"
+mkfifo "#file23"
+mkfifo "#file24"
+mkfifo "#file25"
+mkfifo "#file26"
+mkfifo "#file27"
+mkfifo "#file28"
+mkfifo "#file29"
+mkfifo "#file30"
+mkfifo "#file31"
+mkfifo "#file32"
+mkfifo "#file33"
+mkfifo "#file34"
+mkfifo "#file35"
+mkfifo "#file36"
+mkfifo "#file37"
+mkfifo "#file38"
+mkfifo "#file39"
+mkfifo "#file40"
+mkfifo "#file41"
+mkfifo "#file42"
+mkfifo "#file43"
+mkfifo "#file44"
+mkfifo "#file45"
+mkfifo "#file46"
+mkfifo "#file47"
+mkfifo "#file48"
+mkfifo "#file49"
+mkfifo "#file50"
+mkfifo "#file51"
+mkfifo "#file52"
+mkfifo "#file53"
+mkfifo "#file54"
+mkfifo "#file55"
+mkfifo "#file56"
+mkfifo "#file57"
+mkfifo "#file58"
+mkfifo "#file59"
+mkfifo "#file60"
+mkfifo "#file61"
+mkfifo "#file62"
+mkfifo "#file63"
+mkfifo "#file64"
+mkfifo "#file65"
+mkfifo "#file66"
+mkfifo "#file67"
+mkfifo "#file68"
+mkfifo "#file69"
+mkfifo "#file70"
+mkfifo "#file71"
+mkfifo "#file72"
+mkfifo "#file73"
+mkfifo "#file74"
+mkfifo "#file75"
+mkfifo "#file76"
+mkfifo "#file77"
+mkfifo "#file78"
+mkfifo "#file79"
+mkfifo "#file80"
+mkfifo "#file81"
+mkfifo "#file82"
+mkfifo "#file83"
+mkfifo "#file84"
+mkfifo "#file85"
+mkfifo "#file86"
+mkfifo "#file87"
+mkfifo "#file88"
+mkfifo "#file89"
+mkfifo "#file90"
+mkfifo "#file91"
+mkfifo "#file92"
+mkfifo "#file93"
+mkfifo "#file94"
+mkfifo "#file95"
+mkfifo "#file96"
+mkfifo "#file97"
+mkfifo "#file98"
+mkfifo "#file99"
+mkfifo "#file100"
+mkfifo "#file101"
+mkfifo "#file102"
+mkfifo "#file103"
+mkfifo "#file104"
+mkfifo "#file105"
+mkfifo "#file106"
+mkfifo "#file107"
+mkfifo "#file108"
+mkfifo "#file109"
+mkfifo "#file110"
+mkfifo "#file111"
+mkfifo "#file112"
+mkfifo "#file113"
+mkfifo "#file114"
+mkfifo "#file115"
+mkfifo "#file116"
+mkfifo "#file117"
+mkfifo "#file118"
+mkfifo "#file119"
+mkfifo "#file120"
+mkfifo "#file121"
+mkfifo "#file122"
+mkfifo "#file123"
+mkfifo "#file124"
+mkfifo "#file125"
+mkfifo "#file126"
+mkfifo "#file127"
+mkfifo "#file128"
+mkfifo "#file129"
+mkfifo "#file130"
+mkfifo "#file131"
+mkfifo "#file132"
+mkfifo "#file133"
+mkfifo "#file134"
+mkfifo "#file135"
+mkfifo "#file136"
+mkfifo "#file137"
+mkfifo "#file138"
+mkfifo "#file139"
+mkfifo "#file140"
+mkfifo "#file141"
+mkfifo "#file142"
+mkfifo "#file143"
+mkfifo "#file144"
+mkfifo "#file145"
+mkfifo "#file146"
+mkfifo "#file147"
+mkfifo "#file148"
+mkfifo "#file149"
+mkfifo "#file150"
+mkfifo "#file151"
+mkfifo "#file152"
+mkfifo "#file153"
+mkfifo "#file154"
+mkfifo "#file155"
+mkfifo "#file156"
+mkfifo "#file157"
+mkfifo "#file158"
+mkfifo "#file159"
+mkfifo "#file160"
+mkfifo "#file161"
+mkfifo "#file162"
+mkfifo "#file163"
+mkfifo "#file164"
+mkfifo "#file165"
+mkfifo "#file166"
+mkfifo "#file167"
+mkfifo "#file168"
+mkfifo "#file169"
+mkfifo "#file170"
+mkfifo "#file171"
+mkfifo "#file172"
+mkfifo "#file173"
+mkfifo "#file174"
+mkfifo "#file175"
+mkfifo "#file176"
+mkfifo "#file177"
+mkfifo "#file178"
+mkfifo "#file179"
+mkfifo "#file180"
+mkfifo "#file181"
+mkfifo "#file182"
+mkfifo "#file183"
+mkfifo "#file184"
+mkfifo "#file185"
+mkfifo "#file186"
+mkfifo "#file187"
+mkfifo "#file188"
+mkfifo "#file189"
+mkfifo "#file190"
+mkfifo "#file191"
+mkfifo "#file192"
+mkfifo "#file193"
+mkfifo "#file194"
+mkfifo "#file195"
+mkfifo "#file196"
+mkfifo "#file197"
+mkfifo "#file198"
+mkfifo "#file199"
+mkfifo "#file200"
+mkfifo "#file201"
+mkfifo "#file202"
+mkfifo "#file203"
+mkfifo "#file204"
+mkfifo "#file205"
+mkfifo "#file206"
+mkfifo "#file207"
+mkfifo "#file208"
+mkfifo "#file209"
+mkfifo "#file210"
+mkfifo "#file211"
+mkfifo "#file212"
+mkfifo "#file213"
+mkfifo "#file214"
+mkfifo "#file215"
+mkfifo "#file216"
+mkfifo "#file217"
+mkfifo "#file218"
+mkfifo "#file219"
+mkfifo "#file220"
+mkfifo "#file221"
+mkfifo "#file222"
+mkfifo "#file223"
+mkfifo "#file224"
+mkfifo "#file225"
+mkfifo "#file226"
+mkfifo "#file227"
+mkfifo "#file228"
+mkfifo "#file229"
+mkfifo "#file230"
+mkfifo "#file231"
+mkfifo "#file232"
+mkfifo "#file233"
+mkfifo "#file234"
+mkfifo "#file235"
+mkfifo "#file236"
+mkfifo "#file237"
+mkfifo "#file238"
+mkfifo "#file239"
+mkfifo "#file240"
+mkfifo "#file241"
+mkfifo "#file242"
+mkfifo "#file243"
+mkfifo "#file244"
+mkfifo "#file245"
+mkfifo "#file246"
+mkfifo "#file247"
+mkfifo "#file248"
+mkfifo "#file249"
+mkfifo "#file250"
+mkfifo "#file251"
+mkfifo "#file252"
+mkfifo "#file253"
+mkfifo "#file254"
+mkfifo "#file255"
+mkfifo "#file256"
+mkfifo "#file257"
+mkfifo "#file258"
+mkfifo "#file259"
+mkfifo "#file260"
+mkfifo "#file261"
+mkfifo "#file262"
+mkfifo "#file263"
+mkfifo "#file264"
+mkfifo "#file265"
+mkfifo "#file266"
+mkfifo "#file267"
+mkfifo "#file268"
+mkfifo "#file269"
+mkfifo "#file270"
+mkfifo "#file271"
+mkfifo "#file272"
+mkfifo "#file273"
+mkfifo "#file274"
+mkfifo "#file275"
+mkfifo "#file276"
+mkfifo "#file277"
+mkfifo "#file278"
+mkfifo "#file279"
+mkfifo "#file280"
+mkfifo "#file281"
+mkfifo "#file282"
+mkfifo "#file283"
+mkfifo "#file284"
+mkfifo "#file285"
+mkfifo "#file286"
+mkfifo "#file287"
+mkfifo "#file288"
+mkfifo "#file289"
+mkfifo "#file290"
+mkfifo "#file291"
+mkfifo "#file292"
+mkfifo "#file293"
+mkfifo "#file294"
+mkfifo "#file295"
+mkfifo "#file296"
+mkfifo "#file297"
+mkfifo "#file298"
+mkfifo "#file299"
+mkfifo "#file300"
+mkfifo "#file301"
+mkfifo "#file302"
+mkfifo "#file303"
+mkfifo "#file304"
+mkfifo "#file305"
+mkfifo "#file306"
+mkfifo "#file307"
+mkfifo "#file308"
+mkfifo "#file309"
+mkfifo "#file310"
+mkfifo "#file311"
+mkfifo "#file312"
+mkfifo "#file313"
+mkfifo "#file314"
+mkfifo "#file315"
+mkfifo "#file316"
+mkfifo "#file317"
+mkfifo "#file318"
+mkfifo "#file319"
+mkfifo "#file320"
+mkfifo "#file321"
+mkfifo "#file322"
+mkfifo "#file323"
+mkfifo "#file324"
+mkfifo "#file325"
+mkfifo "#file326"
+mkfifo "#file327"
+mkfifo "#file328"
+mkfifo "#file329"
+mkfifo "#file330"
+mkfifo "#file331"
+mkfifo "#file332"
+mkfifo "#file333"
+mkfifo "#file334"
+mkfifo "#file335"
+mkfifo "#file336"
+mkfifo "#file337"
+mkfifo "#file338"
+mkfifo "#file339"
+mkfifo "#file340"
+mkfifo "#file341"
+mkfifo "#file342"
+mkfifo "#file343"
+mkfifo "#file344"
+mkfifo "#file345"
+{ cat in.csv >"#file2" & }
+{ uniq -c <"#file12" >"#file14" & }
+{ /home/konstantinos/pash/runtime/auto-split.sh "#file2" "#file19" "#file20" "#file21" "#file22" "#file23" "#file24" "#file25" "#file26" "#file27" "#file28" "#file29" "#file30" "#file31" "#file32" "#file33" "#file34" & }
+{ sed "s/T..:..:..//" <"#file211" >"#file36" & }
+{ sed "s/T..:..:..//" <"#file212" >"#file37" & }
+{ sed "s/T..:..:..//" <"#file213" >"#file38" & }
+{ sed "s/T..:..:..//" <"#file214" >"#file39" & }
+{ sed "s/T..:..:..//" <"#file215" >"#file40" & }
+{ sed "s/T..:..:..//" <"#file216" >"#file41" & }
+{ sed "s/T..:..:..//" <"#file217" >"#file42" & }
+{ sed "s/T..:..:..//" <"#file218" >"#file43" & }
+{ sed "s/T..:..:..//" <"#file219" >"#file44" & }
+{ sed "s/T..:..:..//" <"#file220" >"#file45" & }
+{ sed "s/T..:..:..//" <"#file221" >"#file46" & }
+{ sed "s/T..:..:..//" <"#file222" >"#file47" & }
+{ sed "s/T..:..:..//" <"#file223" >"#file48" & }
+{ sed "s/T..:..:..//" <"#file224" >"#file49" & }
+{ sed "s/T..:..:..//" <"#file225" >"#file50" & }
+{ sed "s/T..:..:..//" <"#file34" >"#file51" & }
+{ cut -d "," -f 3,1 <"#file36" >"#file52" & }
+{ cut -d "," -f 3,1 <"#file37" >"#file53" & }
+{ cut -d "," -f 3,1 <"#file38" >"#file54" & }
+{ cut -d "," -f 3,1 <"#file39" >"#file55" & }
+{ cut -d "," -f 3,1 <"#file40" >"#file56" & }
+{ cut -d "," -f 3,1 <"#file41" >"#file57" & }
+{ cut -d "," -f 3,1 <"#file42" >"#file58" & }
+{ cut -d "," -f 3,1 <"#file43" >"#file59" & }
+{ cut -d "," -f 3,1 <"#file44" >"#file60" & }
+{ cut -d "," -f 3,1 <"#file45" >"#file61" & }
+{ cut -d "," -f 3,1 <"#file46" >"#file62" & }
+{ cut -d "," -f 3,1 <"#file47" >"#file63" & }
+{ cut -d "," -f 3,1 <"#file48" >"#file64" & }
+{ cut -d "," -f 3,1 <"#file49" >"#file65" & }
+{ cut -d "," -f 3,1 <"#file50" >"#file66" & }
+{ cut -d "," -f 3,1 <"#file51" >"#file67" & }
+{ sort -u <"#file52" >"#file68" & }
+{ sort -u <"#file53" >"#file69" & }
+{ sort -u <"#file54" >"#file70" & }
+{ sort -u <"#file55" >"#file71" & }
+{ sort -u <"#file56" >"#file72" & }
+{ sort -u <"#file57" >"#file73" & }
+{ sort -u <"#file58" >"#file74" & }
+{ sort -u <"#file59" >"#file75" & }
+{ sort -u <"#file60" >"#file76" & }
+{ sort -u <"#file61" >"#file77" & }
+{ sort -u <"#file62" >"#file78" & }
+{ sort -u <"#file63" >"#file79" & }
+{ sort -u <"#file64" >"#file80" & }
+{ sort -u <"#file65" >"#file81" & }
+{ sort -u <"#file66" >"#file82" & }
+{ sort -u <"#file67" >"#file83" & }
+{ sort -u -m "#file226" "#file227" >"#file84" & }
+{ sort -u -m "#file228" "#file229" >"#file85" & }
+{ sort -u -m "#file230" "#file231" >"#file86" & }
+{ sort -u -m "#file232" "#file233" >"#file87" & }
+{ sort -u -m "#file234" "#file235" >"#file88" & }
+{ sort -u -m "#file236" "#file237" >"#file89" & }
+{ sort -u -m "#file238" "#file239" >"#file90" & }
+{ sort -u -m "#file240" "#file241" >"#file91" & }
+{ sort -u -m "#file242" "#file243" >"#file92" & }
+{ sort -u -m "#file244" "#file245" >"#file93" & }
+{ sort -u -m "#file246" "#file247" >"#file94" & }
+{ sort -u -m "#file248" "#file249" >"#file95" & }
+{ sort -u -m "#file250" "#file251" >"#file96" & }
+{ sort -u -m "#file252" "#file253" >"#file97" & }
+{ sort -u -m "#file254" "#file255" >"#file8" & }
+{ /home/konstantinos/pash/runtime/auto-split.sh "#file8" "#file99" "#file100" "#file101" "#file102" "#file103" "#file104" "#file105" "#file106" "#file107" "#file108" "#file109" "#file110" "#file111" "#file112" "#file113" "#file114" & }
+{ cut -d "," -f 2 <"#file256" >"#file116" & }
+{ cut -d "," -f 2 <"#file257" >"#file117" & }
+{ cut -d "," -f 2 <"#file258" >"#file118" & }
+{ cut -d "," -f 2 <"#file259" >"#file119" & }
+{ cut -d "," -f 2 <"#file260" >"#file120" & }
+{ cut -d "," -f 2 <"#file261" >"#file121" & }
+{ cut -d "," -f 2 <"#file262" >"#file122" & }
+{ cut -d "," -f 2 <"#file263" >"#file123" & }
+{ cut -d "," -f 2 <"#file264" >"#file124" & }
+{ cut -d "," -f 2 <"#file265" >"#file125" & }
+{ cut -d "," -f 2 <"#file266" >"#file126" & }
+{ cut -d "," -f 2 <"#file267" >"#file127" & }
+{ cut -d "," -f 2 <"#file268" >"#file128" & }
+{ cut -d "," -f 2 <"#file269" >"#file129" & }
+{ cut -d "," -f 2 <"#file270" >"#file130" & }
+{ cut -d "," -f 2 <"#file114" >"#file131" & }
+{ sort <"#file116" >"#file132" & }
+{ sort <"#file117" >"#file133" & }
+{ sort <"#file118" >"#file134" & }
+{ sort <"#file119" >"#file135" & }
+{ sort <"#file120" >"#file136" & }
+{ sort <"#file121" >"#file137" & }
+{ sort <"#file122" >"#file138" & }
+{ sort <"#file123" >"#file139" & }
+{ sort <"#file124" >"#file140" & }
+{ sort <"#file125" >"#file141" & }
+{ sort <"#file126" >"#file142" & }
+{ sort <"#file127" >"#file143" & }
+{ sort <"#file128" >"#file144" & }
+{ sort <"#file129" >"#file145" & }
+{ sort <"#file130" >"#file146" & }
+{ sort <"#file131" >"#file147" & }
+{ sort -m "#file271" "#file272" >"#file148" & }
+{ sort -m "#file273" "#file274" >"#file149" & }
+{ sort -m "#file275" "#file276" >"#file150" & }
+{ sort -m "#file277" "#file278" >"#file151" & }
+{ sort -m "#file279" "#file280" >"#file152" & }
+{ sort -m "#file281" "#file282" >"#file153" & }
+{ sort -m "#file283" "#file284" >"#file154" & }
+{ sort -m "#file285" "#file286" >"#file155" & }
+{ sort -m "#file287" "#file288" >"#file156" & }
+{ sort -m "#file289" "#file290" >"#file157" & }
+{ sort -m "#file291" "#file292" >"#file158" & }
+{ sort -m "#file293" "#file294" >"#file159" & }
+{ sort -m "#file295" "#file296" >"#file160" & }
+{ sort -m "#file297" "#file298" >"#file161" & }
+{ sort -m "#file299" "#file300" >"#file12" & }
+{ /home/konstantinos/pash/runtime/auto-split.sh "#file14" "#file163" "#file164" "#file165" "#file166" "#file167" "#file168" "#file169" "#file170" "#file171" "#file172" "#file173" "#file174" "#file175" "#file176" "#file177" "#file178" & }
+{ sort -k1n <"#file301" >"#file180" & }
+{ sort -k1n <"#file302" >"#file181" & }
+{ sort -k1n <"#file303" >"#file182" & }
+{ sort -k1n <"#file304" >"#file183" & }
+{ sort -k1n <"#file305" >"#file184" & }
+{ sort -k1n <"#file306" >"#file185" & }
+{ sort -k1n <"#file307" >"#file186" & }
+{ sort -k1n <"#file308" >"#file187" & }
+{ sort -k1n <"#file309" >"#file188" & }
+{ sort -k1n <"#file310" >"#file189" & }
+{ sort -k1n <"#file311" >"#file190" & }
+{ sort -k1n <"#file312" >"#file191" & }
+{ sort -k1n <"#file313" >"#file192" & }
+{ sort -k1n <"#file314" >"#file193" & }
+{ sort -k1n <"#file315" >"#file194" & }
+{ sort -k1n <"#file178" >"#file195" & }
+{ sort -k1n -m "#file316" "#file317" >"#file196" & }
+{ sort -k1n -m "#file318" "#file319" >"#file197" & }
+{ sort -k1n -m "#file320" "#file321" >"#file198" & }
+{ sort -k1n -m "#file322" "#file323" >"#file199" & }
+{ sort -k1n -m "#file324" "#file325" >"#file200" & }
+{ sort -k1n -m "#file326" "#file327" >"#file201" & }
+{ sort -k1n -m "#file328" "#file329" >"#file202" & }
+{ sort -k1n -m "#file330" "#file331" >"#file203" & }
+{ sort -k1n -m "#file332" "#file333" >"#file204" & }
+{ sort -k1n -m "#file334" "#file335" >"#file205" & }
+{ sort -k1n -m "#file336" "#file337" >"#file206" & }
+{ sort -k1n -m "#file338" "#file339" >"#file207" & }
+{ sort -k1n -m "#file340" "#file341" >"#file208" & }
+{ sort -k1n -m "#file342" "#file343" >"#file209" & }
+{ sort -k1n -m "#file344" "#file345" >"#file16" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file19" "#file211" "/tmp/pash_eager_intermediate_#file1" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file20" "#file212" "/tmp/pash_eager_intermediate_#file2" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file21" "#file213" "/tmp/pash_eager_intermediate_#file3" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file22" "#file214" "/tmp/pash_eager_intermediate_#file4" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file23" "#file215" "/tmp/pash_eager_intermediate_#file5" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file24" "#file216" "/tmp/pash_eager_intermediate_#file6" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file25" "#file217" "/tmp/pash_eager_intermediate_#file7" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file26" "#file218" "/tmp/pash_eager_intermediate_#file8" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file27" "#file219" "/tmp/pash_eager_intermediate_#file9" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file28" "#file220" "/tmp/pash_eager_intermediate_#file10" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file29" "#file221" "/tmp/pash_eager_intermediate_#file11" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file30" "#file222" "/tmp/pash_eager_intermediate_#file12" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file31" "#file223" "/tmp/pash_eager_intermediate_#file13" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file32" "#file224" "/tmp/pash_eager_intermediate_#file14" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file33" "#file225" "/tmp/pash_eager_intermediate_#file15" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file68" "#file226" "/tmp/pash_eager_intermediate_#file16" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file69" "#file227" "/tmp/pash_eager_intermediate_#file17" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file70" "#file228" "/tmp/pash_eager_intermediate_#file18" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file71" "#file229" "/tmp/pash_eager_intermediate_#file19" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file72" "#file230" "/tmp/pash_eager_intermediate_#file20" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file73" "#file231" "/tmp/pash_eager_intermediate_#file21" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file74" "#file232" "/tmp/pash_eager_intermediate_#file22" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file75" "#file233" "/tmp/pash_eager_intermediate_#file23" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file76" "#file234" "/tmp/pash_eager_intermediate_#file24" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file77" "#file235" "/tmp/pash_eager_intermediate_#file25" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file78" "#file236" "/tmp/pash_eager_intermediate_#file26" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file79" "#file237" "/tmp/pash_eager_intermediate_#file27" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file80" "#file238" "/tmp/pash_eager_intermediate_#file28" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file81" "#file239" "/tmp/pash_eager_intermediate_#file29" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file82" "#file240" "/tmp/pash_eager_intermediate_#file30" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file83" "#file241" "/tmp/pash_eager_intermediate_#file31" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file84" "#file242" "/tmp/pash_eager_intermediate_#file32" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file85" "#file243" "/tmp/pash_eager_intermediate_#file33" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file86" "#file244" "/tmp/pash_eager_intermediate_#file34" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file87" "#file245" "/tmp/pash_eager_intermediate_#file35" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file88" "#file246" "/tmp/pash_eager_intermediate_#file36" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file89" "#file247" "/tmp/pash_eager_intermediate_#file37" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file90" "#file248" "/tmp/pash_eager_intermediate_#file38" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file91" "#file249" "/tmp/pash_eager_intermediate_#file39" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file92" "#file250" "/tmp/pash_eager_intermediate_#file40" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file93" "#file251" "/tmp/pash_eager_intermediate_#file41" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file94" "#file252" "/tmp/pash_eager_intermediate_#file42" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file95" "#file253" "/tmp/pash_eager_intermediate_#file43" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file96" "#file254" "/tmp/pash_eager_intermediate_#file44" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file97" "#file255" "/tmp/pash_eager_intermediate_#file45" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file99" "#file256" "/tmp/pash_eager_intermediate_#file46" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file100" "#file257" "/tmp/pash_eager_intermediate_#file47" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file101" "#file258" "/tmp/pash_eager_intermediate_#file48" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file102" "#file259" "/tmp/pash_eager_intermediate_#file49" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file103" "#file260" "/tmp/pash_eager_intermediate_#file50" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file104" "#file261" "/tmp/pash_eager_intermediate_#file51" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file105" "#file262" "/tmp/pash_eager_intermediate_#file52" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file106" "#file263" "/tmp/pash_eager_intermediate_#file53" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file107" "#file264" "/tmp/pash_eager_intermediate_#file54" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file108" "#file265" "/tmp/pash_eager_intermediate_#file55" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file109" "#file266" "/tmp/pash_eager_intermediate_#file56" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file110" "#file267" "/tmp/pash_eager_intermediate_#file57" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file111" "#file268" "/tmp/pash_eager_intermediate_#file58" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file112" "#file269" "/tmp/pash_eager_intermediate_#file59" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file113" "#file270" "/tmp/pash_eager_intermediate_#file60" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file132" "#file271" "/tmp/pash_eager_intermediate_#file61" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file133" "#file272" "/tmp/pash_eager_intermediate_#file62" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file134" "#file273" "/tmp/pash_eager_intermediate_#file63" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file135" "#file274" "/tmp/pash_eager_intermediate_#file64" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file136" "#file275" "/tmp/pash_eager_intermediate_#file65" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file137" "#file276" "/tmp/pash_eager_intermediate_#file66" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file138" "#file277" "/tmp/pash_eager_intermediate_#file67" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file139" "#file278" "/tmp/pash_eager_intermediate_#file68" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file140" "#file279" "/tmp/pash_eager_intermediate_#file69" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file141" "#file280" "/tmp/pash_eager_intermediate_#file70" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file142" "#file281" "/tmp/pash_eager_intermediate_#file71" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file143" "#file282" "/tmp/pash_eager_intermediate_#file72" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file144" "#file283" "/tmp/pash_eager_intermediate_#file73" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file145" "#file284" "/tmp/pash_eager_intermediate_#file74" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file146" "#file285" "/tmp/pash_eager_intermediate_#file75" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file147" "#file286" "/tmp/pash_eager_intermediate_#file76" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file148" "#file287" "/tmp/pash_eager_intermediate_#file77" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file149" "#file288" "/tmp/pash_eager_intermediate_#file78" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file150" "#file289" "/tmp/pash_eager_intermediate_#file79" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file151" "#file290" "/tmp/pash_eager_intermediate_#file80" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file152" "#file291" "/tmp/pash_eager_intermediate_#file81" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file153" "#file292" "/tmp/pash_eager_intermediate_#file82" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file154" "#file293" "/tmp/pash_eager_intermediate_#file83" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file155" "#file294" "/tmp/pash_eager_intermediate_#file84" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file156" "#file295" "/tmp/pash_eager_intermediate_#file85" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file157" "#file296" "/tmp/pash_eager_intermediate_#file86" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file158" "#file297" "/tmp/pash_eager_intermediate_#file87" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file159" "#file298" "/tmp/pash_eager_intermediate_#file88" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file160" "#file299" "/tmp/pash_eager_intermediate_#file89" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file161" "#file300" "/tmp/pash_eager_intermediate_#file90" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file163" "#file301" "/tmp/pash_eager_intermediate_#file91" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file164" "#file302" "/tmp/pash_eager_intermediate_#file92" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file165" "#file303" "/tmp/pash_eager_intermediate_#file93" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file166" "#file304" "/tmp/pash_eager_intermediate_#file94" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file167" "#file305" "/tmp/pash_eager_intermediate_#file95" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file168" "#file306" "/tmp/pash_eager_intermediate_#file96" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file169" "#file307" "/tmp/pash_eager_intermediate_#file97" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file170" "#file308" "/tmp/pash_eager_intermediate_#file98" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file171" "#file309" "/tmp/pash_eager_intermediate_#file99" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file172" "#file310" "/tmp/pash_eager_intermediate_#file100" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file173" "#file311" "/tmp/pash_eager_intermediate_#file101" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file174" "#file312" "/tmp/pash_eager_intermediate_#file102" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file175" "#file313" "/tmp/pash_eager_intermediate_#file103" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file176" "#file314" "/tmp/pash_eager_intermediate_#file104" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file177" "#file315" "/tmp/pash_eager_intermediate_#file105" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file180" "#file316" "/tmp/pash_eager_intermediate_#file106" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file181" "#file317" "/tmp/pash_eager_intermediate_#file107" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file182" "#file318" "/tmp/pash_eager_intermediate_#file108" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file183" "#file319" "/tmp/pash_eager_intermediate_#file109" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file184" "#file320" "/tmp/pash_eager_intermediate_#file110" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file185" "#file321" "/tmp/pash_eager_intermediate_#file111" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file186" "#file322" "/tmp/pash_eager_intermediate_#file112" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file187" "#file323" "/tmp/pash_eager_intermediate_#file113" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file188" "#file324" "/tmp/pash_eager_intermediate_#file114" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file189" "#file325" "/tmp/pash_eager_intermediate_#file115" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file190" "#file326" "/tmp/pash_eager_intermediate_#file116" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file191" "#file327" "/tmp/pash_eager_intermediate_#file117" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file192" "#file328" "/tmp/pash_eager_intermediate_#file118" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file193" "#file329" "/tmp/pash_eager_intermediate_#file119" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file194" "#file330" "/tmp/pash_eager_intermediate_#file120" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file195" "#file331" "/tmp/pash_eager_intermediate_#file121" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file196" "#file332" "/tmp/pash_eager_intermediate_#file122" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file197" "#file333" "/tmp/pash_eager_intermediate_#file123" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file198" "#file334" "/tmp/pash_eager_intermediate_#file124" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file199" "#file335" "/tmp/pash_eager_intermediate_#file125" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file200" "#file336" "/tmp/pash_eager_intermediate_#file126" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file201" "#file337" "/tmp/pash_eager_intermediate_#file127" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file202" "#file338" "/tmp/pash_eager_intermediate_#file128" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file203" "#file339" "/tmp/pash_eager_intermediate_#file129" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file204" "#file340" "/tmp/pash_eager_intermediate_#file130" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file205" "#file341" "/tmp/pash_eager_intermediate_#file131" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file206" "#file342" "/tmp/pash_eager_intermediate_#file132" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file207" "#file343" "/tmp/pash_eager_intermediate_#file133" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file208" "#file344" "/tmp/pash_eager_intermediate_#file134" & }
+{ /home/konstantinos/pash/runtime/eager.sh "#file209" "#file345" "/tmp/pash_eager_intermediate_#file135" & }
+{ awk -v OFS="\\t" "{print \$2,\$1}" <"#file16" & }
+source /home/konstantinos/pash/runtime/wait_for_output_and_sigpipe_rest.sh ${!}
+rm -f "#file2"
+rm -f "#file4"
+rm -f "#file6"
+rm -f "#file8"
+rm -f "#file10"
+rm -f "#file12"
+rm -f "#file14"
+rm -f "#file16"
+rm -f "#file19"
+rm -f "#file20"
+rm -f "#file21"
+rm -f "#file22"
+rm -f "#file23"
+rm -f "#file24"
+rm -f "#file25"
+rm -f "#file26"
+rm -f "#file27"
+rm -f "#file28"
+rm -f "#file29"
+rm -f "#file30"
+rm -f "#file31"
+rm -f "#file32"
+rm -f "#file33"
+rm -f "#file34"
+rm -f "#file35"
+rm -f "#file36"
+rm -f "#file37"
+rm -f "#file38"
+rm -f "#file39"
+rm -f "#file40"
+rm -f "#file41"
+rm -f "#file42"
+rm -f "#file43"
+rm -f "#file44"
+rm -f "#file45"
+rm -f "#file46"
+rm -f "#file47"
+rm -f "#file48"
+rm -f "#file49"
+rm -f "#file50"
+rm -f "#file51"
+rm -f "#file52"
+rm -f "#file53"
+rm -f "#file54"
+rm -f "#file55"
+rm -f "#file56"
+rm -f "#file57"
+rm -f "#file58"
+rm -f "#file59"
+rm -f "#file60"
+rm -f "#file61"
+rm -f "#file62"
+rm -f "#file63"
+rm -f "#file64"
+rm -f "#file65"
+rm -f "#file66"
+rm -f "#file67"
+rm -f "#file68"
+rm -f "#file69"
+rm -f "#file70"
+rm -f "#file71"
+rm -f "#file72"
+rm -f "#file73"
+rm -f "#file74"
+rm -f "#file75"
+rm -f "#file76"
+rm -f "#file77"
+rm -f "#file78"
+rm -f "#file79"
+rm -f "#file80"
+rm -f "#file81"
+rm -f "#file82"
+rm -f "#file83"
+rm -f "#file84"
+rm -f "#file85"
+rm -f "#file86"
+rm -f "#file87"
+rm -f "#file88"
+rm -f "#file89"
+rm -f "#file90"
+rm -f "#file91"
+rm -f "#file92"
+rm -f "#file93"
+rm -f "#file94"
+rm -f "#file95"
+rm -f "#file96"
+rm -f "#file97"
+rm -f "#file98"
+rm -f "#file99"
+rm -f "#file100"
+rm -f "#file101"
+rm -f "#file102"
+rm -f "#file103"
+rm -f "#file104"
+rm -f "#file105"
+rm -f "#file106"
+rm -f "#file107"
+rm -f "#file108"
+rm -f "#file109"
+rm -f "#file110"
+rm -f "#file111"
+rm -f "#file112"
+rm -f "#file113"
+rm -f "#file114"
+rm -f "#file115"
+rm -f "#file116"
+rm -f "#file117"
+rm -f "#file118"
+rm -f "#file119"
+rm -f "#file120"
+rm -f "#file121"
+rm -f "#file122"
+rm -f "#file123"
+rm -f "#file124"
+rm -f "#file125"
+rm -f "#file126"
+rm -f "#file127"
+rm -f "#file128"
+rm -f "#file129"
+rm -f "#file130"
+rm -f "#file131"
+rm -f "#file132"
+rm -f "#file133"
+rm -f "#file134"
+rm -f "#file135"
+rm -f "#file136"
+rm -f "#file137"
+rm -f "#file138"
+rm -f "#file139"
+rm -f "#file140"
+rm -f "#file141"
+rm -f "#file142"
+rm -f "#file143"
+rm -f "#file144"
+rm -f "#file145"
+rm -f "#file146"
+rm -f "#file147"
+rm -f "#file148"
+rm -f "#file149"
+rm -f "#file150"
+rm -f "#file151"
+rm -f "#file152"
+rm -f "#file153"
+rm -f "#file154"
+rm -f "#file155"
+rm -f "#file156"
+rm -f "#file157"
+rm -f "#file158"
+rm -f "#file159"
+rm -f "#file160"
+rm -f "#file161"
+rm -f "#file162"
+rm -f "#file163"
+rm -f "#file164"
+rm -f "#file165"
+rm -f "#file166"
+rm -f "#file167"
+rm -f "#file168"
+rm -f "#file169"
+rm -f "#file170"
+rm -f "#file171"
+rm -f "#file172"
+rm -f "#file173"
+rm -f "#file174"
+rm -f "#file175"
+rm -f "#file176"
+rm -f "#file177"
+rm -f "#file178"
+rm -f "#file179"
+rm -f "#file180"
+rm -f "#file181"
+rm -f "#file182"
+rm -f "#file183"
+rm -f "#file184"
+rm -f "#file185"
+rm -f "#file186"
+rm -f "#file187"
+rm -f "#file188"
+rm -f "#file189"
+rm -f "#file190"
+rm -f "#file191"
+rm -f "#file192"
+rm -f "#file193"
+rm -f "#file194"
+rm -f "#file195"
+rm -f "#file196"
+rm -f "#file197"
+rm -f "#file198"
+rm -f "#file199"
+rm -f "#file200"
+rm -f "#file201"
+rm -f "#file202"
+rm -f "#file203"
+rm -f "#file204"
+rm -f "#file205"
+rm -f "#file206"
+rm -f "#file207"
+rm -f "#file208"
+rm -f "#file209"
+rm -f "#file210"
+rm -f "#file211"
+rm -f "#file212"
+rm -f "#file213"
+rm -f "#file214"
+rm -f "#file215"
+rm -f "#file216"
+rm -f "#file217"
+rm -f "#file218"
+rm -f "#file219"
+rm -f "#file220"
+rm -f "#file221"
+rm -f "#file222"
+rm -f "#file223"
+rm -f "#file224"
+rm -f "#file225"
+rm -f "#file226"
+rm -f "#file227"
+rm -f "#file228"
+rm -f "#file229"
+rm -f "#file230"
+rm -f "#file231"
+rm -f "#file232"
+rm -f "#file233"
+rm -f "#file234"
+rm -f "#file235"
+rm -f "#file236"
+rm -f "#file237"
+rm -f "#file238"
+rm -f "#file239"
+rm -f "#file240"
+rm -f "#file241"
+rm -f "#file242"
+rm -f "#file243"
+rm -f "#file244"
+rm -f "#file245"
+rm -f "#file246"
+rm -f "#file247"
+rm -f "#file248"
+rm -f "#file249"
+rm -f "#file250"
+rm -f "#file251"
+rm -f "#file252"
+rm -f "#file253"
+rm -f "#file254"
+rm -f "#file255"
+rm -f "#file256"
+rm -f "#file257"
+rm -f "#file258"
+rm -f "#file259"
+rm -f "#file260"
+rm -f "#file261"
+rm -f "#file262"
+rm -f "#file263"
+rm -f "#file264"
+rm -f "#file265"
+rm -f "#file266"
+rm -f "#file267"
+rm -f "#file268"
+rm -f "#file269"
+rm -f "#file270"
+rm -f "#file271"
+rm -f "#file272"
+rm -f "#file273"
+rm -f "#file274"
+rm -f "#file275"
+rm -f "#file276"
+rm -f "#file277"
+rm -f "#file278"
+rm -f "#file279"
+rm -f "#file280"
+rm -f "#file281"
+rm -f "#file282"
+rm -f "#file283"
+rm -f "#file284"
+rm -f "#file285"
+rm -f "#file286"
+rm -f "#file287"
+rm -f "#file288"
+rm -f "#file289"
+rm -f "#file290"
+rm -f "#file291"
+rm -f "#file292"
+rm -f "#file293"
+rm -f "#file294"
+rm -f "#file295"
+rm -f "#file296"
+rm -f "#file297"
+rm -f "#file298"
+rm -f "#file299"
+rm -f "#file300"
+rm -f "#file301"
+rm -f "#file302"
+rm -f "#file303"
+rm -f "#file304"
+rm -f "#file305"
+rm -f "#file306"
+rm -f "#file307"
+rm -f "#file308"
+rm -f "#file309"
+rm -f "#file310"
+rm -f "#file311"
+rm -f "#file312"
+rm -f "#file313"
+rm -f "#file314"
+rm -f "#file315"
+rm -f "#file316"
+rm -f "#file317"
+rm -f "#file318"
+rm -f "#file319"
+rm -f "#file320"
+rm -f "#file321"
+rm -f "#file322"
+rm -f "#file323"
+rm -f "#file324"
+rm -f "#file325"
+rm -f "#file326"
+rm -f "#file327"
+rm -f "#file328"
+rm -f "#file329"
+rm -f "#file330"
+rm -f "#file331"
+rm -f "#file332"
+rm -f "#file333"
+rm -f "#file334"
+rm -f "#file335"
+rm -f "#file336"
+rm -f "#file337"
+rm -f "#file338"
+rm -f "#file339"
+rm -f "#file340"
+rm -f "#file341"
+rm -f "#file342"
+rm -f "#file343"
+rm -f "#file344"
+rm -f "#file345"(5) BaSh script exited with ec: 0
+(5) Writing current BaSh set state to: /tmp/pash_wjh7a1fq/pash_0H5Jl5PwPs
+(5) Current BaSh shell: hB
+(5) Reverted to PaSh set state to: huB
+Writing vars to: /tmp/pash_wjh7a1fq/pash_AZxdjj5Mrg
+(5) Exiting from BaSh with BaSh status: 0
+Execution time: 46011.808 ms
+(7) Recovering BaSh variables from: /tmp/pash_wjh7a1fq/pash_AZxdjj5Mrg
+/dev/fd/63: line 33: declare: PPID: readonly variable
+/dev/fd/63: line 40: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 73: declare: UID: readonly variable
+(7) Reading current BaSh set state from: /tmp/pash_wjh7a1fq/pash_0H5Jl5PwPs
+(7) Current BaSh set state: hB
+(7) Current PaSh set state: huB
+(7) Reverted to BaSh set state before exiting: hB
+(7) Reverting last BaSh exit code: 0
+Preprocessed script stored in: /tmp/pash_wjh7a1fq/tmp4ne1zel5
+Preprocessing time: 11.272  ms
+
+real	0m46.966s
+user	6m4.844s
+sys	0m44.452s

@@ -10,7 +10,7 @@ file8=8.out
 file9=9.out
 rm -f *.out
 
-testFile="/home/ubuntu/pash/evaluation/scripts/input/1G.txt"
+testFile="$PASH_TOP/evaluation/scripts/input/100M.txt"
 batchSize=10000000
 if [ "$#" -gt "0" ]
  then
@@ -31,13 +31,13 @@ mkfifo $file4
 # mkfifo $file9
 
 
-../../runtime/r_split $testFile $batchSize $file1 $file2 &
+$PASH_TOP/runtime/r_split $testFile $batchSize $file1 $file2 &
 
-../../runtime/r_wrap grep 'Bell' < $file1 > $file3 &
-../../runtime/r_wrap grep 'Bell' < $file2 > $file4 &
+$PASH_TOP/runtime/r_wrap grep 'Bell' < $file1 > $file3 &
+$PASH_TOP/runtime/r_wrap grep 'Bell' < $file2 > $file4 &
 # ../r_wrap grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' < $file7 > $file8 &
 
-../../runtime/r_merge $file3 $file4
+$PASH_TOP/runtime/r_merge $file3 $file4
 
 # cat $testFile | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' > $file6
 # if cmp -s "$file6" "$file5"; then
