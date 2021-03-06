@@ -22,6 +22,9 @@ from definitions.ir.nodes.sort_g_reduce import *
 from definitions.ir.nodes.eager import *
 from definitions.ir.nodes.pash_split import *
 
+import definitions.ir.nodes.r_merge as r_merge
+
+
 runtime_config = {}
 ## There are two ways to enter the distributed planner, either by
 ## calling pash_runtime.py (which straight away calls the distributed planner),
@@ -154,7 +157,9 @@ def optimize_irs(asts_and_irs, args):
             # log(ir_node)
             # with cProfile.Profile() as pr:
             distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, args.width,
-                                                                      runtime_config['batch_size'])
+                                                                      runtime_config['batch_size'],
+                                                                      args.no_cat_split_vanish,
+                                                                      args.r_split, args.r_split_batch_size)
             # pr.print_stats()
             # log(distributed_graph)
 
@@ -196,7 +201,8 @@ def print_graph_statistics(graph):
 ##
 ## It returns a maximally expanded (regarding files) graph, that can
 ## be scheduled depending on the available computational resources.
-def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
+def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_split_vanish,
+                                          r_split_flag, r_split_batch_size):
     source_node_ids = graph.source_nodes()
 
     ## Generate a fileIdGen from a graph, that doesn't clash with the
@@ -221,7 +227,9 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
             next_node_ids = graph.get_next_nodes(curr_id)
             workset += next_node_ids
 
-            new_nodes = parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size)
+            new_nodes = parallelize_cat(curr_id, graph, fileIdGen,
+                                        fan_out, batch_size, no_cat_split_vanish,
+                                        r_split_flag, r_split_batch_size)
 
             ## Assert that the graph stayed valid after the transformation
             ## TODO: Do not run this everytime in the loop if we are not in debug mode.
@@ -245,7 +253,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size):
 
 
 ## Optimizes several commands by splitting its input
-def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size):
+def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_flag, r_split_batch_size):
     assert(curr.is_parallelizable())
     assert(not isinstance(curr, Cat))
     assert(fan_out > 1)
@@ -265,7 +273,7 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size):
         input_id = input_ids[0]
 
         ## First we have to make the split file commands.
-        split_file_commands, output_fids = make_split_files(input_id, fan_out, fileIdGen)
+        split_file_commands, output_fids = make_split_files(input_id, fan_out, fileIdGen, r_split_flag, r_split_batch_size)
         for output_fid in output_fids:
             output_fid.make_ephemeral()
             graph.add_edge(output_fid)
@@ -287,8 +295,12 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size):
 
         output_ids = [fid.get_ident() for fid in output_fids]
 
-        new_cat = make_cat_node(output_ids, new_input_id)
-        graph.add_node(new_cat)
+        ## If we add r_split, then the merger is actually an r_merge
+        if(r_split_flag):
+            new_merger = r_merge.make_r_merge_node(output_ids, new_input_id)
+        else:
+            new_merger = make_cat_node(output_ids, new_input_id)
+        graph.add_node(new_merger)
 
         ## Replace the previous input edge with the new input edge that is after the cat.
         curr.replace_edge(input_id, new_input_id)
@@ -297,13 +309,17 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size):
         # log("graph nodes:", graph.nodes)
         # log("graph edges:", graph.edges)
 
-    return new_cat
+    return new_merger
 
+
+## TODO: There needs to be some state to keep track of open r-split sessions
+##       (that either end at r-merge or at r_unwrap before a commutative command).
 
 ## If the current command is a cat, and is followed by a node that
 ## is either stateless or pure parallelizable, commute the cat
 ## after the node.
-def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
+def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
+                    batch_size, no_cat_split_vanish, r_split_flag, r_split_batch_size):
     curr = graph.get_node(curr_id)
     new_nodes_for_workset = []
 
@@ -324,23 +340,30 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
            and not isinstance(next_node, Cat)):
             ## If the current node is not a cat, it means that we need
             ## to generate a cat using a split
+
+            ## no_cat_split_vanish shortcircuits this and inserts a split even if the current node is a cat.
             if(fan_out > 1
-               and (not isinstance(curr, Cat)
-                    or (isinstance(curr, Cat)
-                        and len(curr.get_input_list()) < fan_out))):
-                new_cat = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size)
+               and (no_cat_split_vanish
+                    or (not isinstance(curr, Cat)
+                        or (isinstance(curr, Cat)
+                            and len(curr.get_input_list()) < fan_out)))):
+                new_merger = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size, r_split_flag, r_split_batch_size)
 
                 ## After split has succeeded we know that the curr node (previous of the next)
                 ## has changed. Therefore we need to retrieve it again.
-                if (not new_cat is None):
-                    new_curr_id = id(new_cat)
-                    new_curr = new_cat
-                    assert(isinstance(new_curr, Cat))
+                if (not new_merger is None):
+                    new_curr_id = id(new_merger)
+                    new_curr = new_merger
+                    assert(isinstance(new_curr, Cat)
+                           or isinstance(new_curr, r_merge.RMerge))
 
             ## If curr is cat, it means that split suceeded, or it was
             ## already a cat. In any case, we can proceed with the
-            ## parallelization
-            if(isinstance(new_curr, Cat)):
+            ## parallelization.
+            ##
+            ## Both Cat and RMerge can be "commuted" with parallelizable nodes
+            if(isinstance(new_curr, Cat)
+               or isinstance(new_curr, r_merge.RMerge)):
                 new_nodes = check_parallelize_dfg_node(new_curr_id, next_node_id, graph, fileIdGen)
                 # log("New nodes:", new_nodes)
                 new_nodes_for_workset += new_nodes
@@ -352,29 +375,32 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out, batch_size):
 ##       then parallelize the next node. This will allow us to handle `comm -23 p1 p2`
 ##
 ## TODO: A nice interface would be (check/apply transformation)
-
+##
 ## TODO: This could be a method of IR.
-def check_parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
+##
+## TODO: We need to check if the previous node is a cat or a merge
+def check_parallelize_dfg_node(merger_id, node_id, graph, fileIdGen):
 
-    ## Get cat inputs.
-    cat_input_edge_ids = graph.get_node_input_ids(cat_id)
+    ## Get merger inputs (cat or r_merge).
+    merger_input_edge_ids = graph.get_node_input_ids(merger_id)
 
     ## If Cat has more than one input, then the next node could be parallelized
     new_nodes = []
-    if (len(cat_input_edge_ids) > 1):
-        new_nodes = parallelize_dfg_node(cat_id, node_id, graph, fileIdGen)
+    if (len(merger_input_edge_ids) > 1):
+        new_nodes = parallelize_dfg_node(merger_id, node_id, graph, fileIdGen)
 
     return new_nodes
 
-def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
+def parallelize_dfg_node(old_merger_id, node_id, graph, fileIdGen):
     node = graph.get_node(node_id)
     assert(node.is_parallelizable())
 
+    ## TODO: Delete this
     ## Get cat inputs and output. Note that there is only one output.
-    cat_input_edge_ids = graph.get_node_input_ids(cat_id)
-    cat_output_edge_ids = graph.get_node_output_ids(cat_id)
-    assert(len(cat_output_edge_ids) == 1)
-    cat_output_edge_id = cat_output_edge_ids[0]
+    # old_merger_input_edge_ids = graph.get_node_input_ids(old_merger_id)
+    # old_merger_output_edge_ids = graph.get_node_output_ids(old_merger_id)
+    # assert(len(old_merger_output_edge_ids) == 1)
+    # old_merger_output_edge_id = old_merger_output_edge_ids[0]
 
     new_nodes = []
     ## We assume that every stateless and pure parallelizable command has one output_file_id for now.
@@ -384,6 +410,7 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
     assert(len(node_output_edge_ids) == 1)
     node_output_edge_id = node_output_edge_ids[0]
 
+    ## TODO: Add a commutativity check before actually applying this transformation if the current node is pure parallelizable.
     new_parallel_nodes, map_output_ids = graph.parallelize_node(node_id, fileIdGen)
     new_nodes += new_parallel_nodes
 
@@ -391,6 +418,8 @@ def parallelize_dfg_node(cat_id, node_id, graph, fileIdGen):
     # log("after duplicate graph edges:", graph.edges)
 
     ## Make a merge command that joins the results of all the duplicated commands
+    ##
+    ## TODO: We need to figure out what to do with r_merge when commands are not commutative
     if(node.is_pure_parallelizable()):
         merge_commands, new_edges, final_output_id = create_merge_commands(node,
                                                                            map_output_ids,
