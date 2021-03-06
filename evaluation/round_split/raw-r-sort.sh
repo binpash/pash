@@ -10,7 +10,6 @@ file8=8.out
 
 rm -f *.out
 
-testFile=../../evaluation/scripts/input/100M.txt
 batchSize=10000000
 testFile="$PASH_TOP/evaluation/scripts/input/100M.txt"
 if [ "$#" -gt "0" ]
@@ -30,16 +29,13 @@ mkfifo $file6
 mkfifo $file7
 mkfifo $file8
 
-$PASH_TOP/runtime/r_split $testFile $batchSize $file1 $file2 &
+$PASH_TOP/runtime/r_split -r $testFile $batchSize $file1 $file2 &
 
-../../runtime/r_unwrap < $file1 > $file3 &
-../../runtime/r_unwrap < $file2 > $file4 &
+# ../../runtime/eager.sh $file1 $file5 "/tmp/pash_eager_intermediate_#file1" &
+# ../../runtime/eager.sh $file2 $file6 "/tmp/pash_eager_intermediate_#file2" &
 
-../../runtime/eager.sh $file3 $file5 "/tmp/pash_eager_intermediate_#file1" &
-../../runtime/eager.sh $file4 $file6 "/tmp/pash_eager_intermediate_#file2" &
-
-sort < $file5 > $file7 &
-sort < $file6 > $file8 &
+sort < $file1 > $file7 &
+sort < $file2 > $file8 &
 
 sort -m $file7 $file8
 
