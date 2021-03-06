@@ -64,7 +64,10 @@ class DFGNode:
         return (self.com_category in ["stateless", "pure", "parallelizable_pure"])
 
     def is_parallelizable(self):
-        return (self.is_pure_parallelizable() or self.com_category == "stateless")
+        return (self.is_pure_parallelizable() or self.is_stateless())
+
+    def is_stateless(self):
+        return (self.com_category == "stateless")
 
     def is_pure_parallelizable(self):
         return (self.com_category == "parallelizable_pure" or
@@ -117,7 +120,15 @@ class DFGNode:
                                                                              output_fids)
             
             ## Transform the rest of the argument fids to arguments
-            rest_arguments = [fid.to_ast() for fid in rest_argument_fids]
+            ## Since some of the rest_arguments can be None (they only contain inputs and outputs)
+            ## we need to make sure that we don't turn None objects to asts.
+            ##
+            ## The None fields need to be filtered out because they are taken care of by the interleave function.
+            ##
+            ## TODO: Is this actually OK?
+            rest_arguments = [fid.to_ast()
+                              for fid in rest_argument_fids
+                              if not fid is None]
 
             ## Interleave the arguments since options args might contain gaps.
             arguments = interleave_args(opt_arguments, rest_arguments) 

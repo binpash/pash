@@ -3,25 +3,25 @@ import os
 import subprocess
 import yaml
 import math
+import tempfile
 
 from ir_utils import *
 
 ## Global
-__version__ = "0.2" # FIXME add libdash version
+__version__ = "0.4" # FIXME add libdash version
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'PASH_TOP' in os.environ:
     PASH_TOP = os.environ['PASH_TOP']
 else:
     PASH_TOP = subprocess.run(GIT_TOP_CMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).stdout.rstrip()
 
-PARSER_BINARY = os.path.join(PASH_TOP, "compiler/parser/parse_to_json.native")
-PRINTER_BINARY = os.path.join(PASH_TOP, "compiler/parser/json_to_shell.native")
-
 PYTHON_VERSION = "python3"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 
-PASH_TMP_PREFIX = "pash_"
+## This is set in pash.py and pash_runtime.py accordingly.
+## In both cases the setting is different.
+PASH_TMP_PREFIX = None
 
 config = {}
 annotations = []
@@ -53,7 +53,7 @@ def getWidth():
 def add_common_arguments(parser):
     parser.add_argument("-w", "--width",
                         type=int,
-                        default=getWidth(), 
+                        default=getWidth(),
                         help="set data-parallelism factor")
     parser.add_argument("--no_optimize",
                         help="not apply transformations over the DFG",
@@ -66,7 +66,7 @@ def add_common_arguments(parser):
                         action="store_true")
     parser.add_argument("-t", "--output_time", #FIXME: --time
                         help="output the time it took for every step",
-                        action="store_true") 
+                        action="store_true")
     parser.add_argument("-p", "--output_optimized", # FIXME: --print
                         help="output the parallel shell script for inspection",
                         action="store_true")
@@ -74,18 +74,28 @@ def add_common_arguments(parser):
                         type=int,
                         help="configure debug level; defaults to 0",
                         default=0)
-    parser.add_argument("--log_file", 
+    parser.add_argument("--log_file",
                         help="configure where to write the log; defaults to stderr.",
                         default="")
     parser.add_argument("--no_eager",
-                        help="disable eager nodes before merging nodes",
+                        help="(experimental) disable eager nodes before merging nodes",
                         action="store_true")
+    parser.add_argument("--no_cat_split_vanish",
+                        help="(experimental) disable the optimization that removes cat with N inputs that is followed by a split with N inputs",
+                        action="store_true")
+    parser.add_argument("--r_split",
+                        help="(experimental) use round robin split, merge, wrap, and unwrap",
+                        action="store_true")
+    parser.add_argument("--r_split_batch_size",
+                        type=int,
+                        help="(experimental) configure the batch size of r_splti (default: 100KB)",
+                        default=100000)
     parser.add_argument("--speculation",
-                        help="run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
+                        help="(experimental) run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
                         choices=['no_spec', 'quick_abort'],
                         default='no_spec')
     parser.add_argument("--termination",
-                        help="determine the termination behavior of the DFG. Defaults to cleanup after the last process dies, but can drain all streams until depletion",
+                        help="(experimental) determine the termination behavior of the DFG. Defaults to cleanup after the last process dies, but can drain all streams until depletion",
                         choices=['clean_up_graph', 'drain_stream'],
                         default="clean_up_graph")
     parser.add_argument("--config_path",
@@ -113,6 +123,10 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument(pash_arguments.log_file))
     if (pash_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
+    if (pash_arguments.r_split):
+        arguments.append(string_to_argument("--r_split"))
+    if (pash_arguments.no_cat_split_vanish):
+        arguments.append(string_to_argument("--no_cat_split_vanish"))
     arguments.append(string_to_argument("--debug"))
     arguments.append(string_to_argument(str(pash_arguments.debug)))
     arguments.append(string_to_argument("--termination"))
@@ -160,7 +174,7 @@ def read_vars_file(var_file_path):
                 rest = rest[(space_index+1):]
                 eq_index = rest.find('=')
             ## We now find the name and value
-            var_name = rest[:eq_index] 
+            var_name = rest[:eq_index]
             var_value = rest[(eq_index+1):]
 
             vars_dict[var_name] = (var_type, var_value)
