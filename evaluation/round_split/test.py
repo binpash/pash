@@ -178,4 +178,5 @@ def run_tests():
     print(test10M.df[["test", "real", "user", "sys", "cpu%"]].to_string(index = False))
 
 if __name__ == '__main__':
+    os.environ["PASH_TOP"] = "/home/tamlu/pash"
     run_tests()
