@@ -30,11 +30,13 @@ typedef __uint64_t uint64_t;
 void readHeader(FILE* inputFile, int64_t *id, size_t *blockSize) {
     int ret;
     if ((ret = fread(id, sizeof(int64_t), 1, inputFile)) < 0) {
-        PRINTDBG("Id read failed\n");
+        fprintf(stderr, "Id read failed\n");
+        exit(1);
     }
     
     if((ret = fread(blockSize, sizeof(size_t), 1, inputFile)) < 0) {
-        PRINTDBG("Blocksize read failed\n");
+        fprintf(stderr, "Blocksize read failed\n");
+        exit(1);
     };
 }
 

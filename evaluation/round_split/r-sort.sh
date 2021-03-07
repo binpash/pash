@@ -32,11 +32,11 @@ mkfifo $file8
 
 $PASH_TOP/runtime/r_split $testFile $batchSize $file1 $file2 &
 
-../../runtime/r_unwrap < $file1 > $file3 &
-../../runtime/r_unwrap < $file2 > $file4 &
+$PASH_TOP/runtime/r_unwrap < $file1 > $file3 &
+$PASH_TOP/runtime/r_unwrap < $file2 > $file4 &
 
-../../runtime/eager.sh $file3 $file5 "/tmp/pash_eager_intermediate_#file1" &
-../../runtime/eager.sh $file4 $file6 "/tmp/pash_eager_intermediate_#file2" &
+$PASH_TOP/runtime/eager.sh $file3 $file5 "/tmp/pash_eager_intermediate_#file1" &
+$PASH_TOP/runtime/eager.sh $file4 $file6 "/tmp/pash_eager_intermediate_#file2" &
 
 sort < $file5 > $file7 &
 sort < $file6 > $file8 &
