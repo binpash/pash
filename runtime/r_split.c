@@ -152,8 +152,8 @@ void SplitByLinesRaw(FILE *inputFile, int batchSize, FILE *outputFiles[], unsign
 
   // Do round robin copying of the input file to the output files
   // Each block has a header of "ID blockSize\n"
-  int fd = fileno(inputFile);
-  while ((len = read(fd, buffer, batchSize)) > 0)
+
+  while ((len = fread(buffer, 1, batchSize, inputFile)) > 0)
   {
     //find pivot point for head and rest
     for (int i = len - 1; i >= 0; i--)
@@ -165,7 +165,7 @@ void SplitByLinesRaw(FILE *inputFile, int batchSize, FILE *outputFiles[], unsign
         break;
       }
     }
-
+    
     //no new line character
     if (headSize == 0)
     {
