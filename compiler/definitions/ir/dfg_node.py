@@ -21,11 +21,15 @@ class DFGNode:
     ## com_redirs : list of redirections
     ## com_assignments : list of assignments
     def __init__(self, inputs, outputs, com_name, com_category,
-                 com_options = [], com_redirs = [], com_assignments=[]):
+                 com_properties = [],
+                 com_options = [],
+                 com_redirs = [],
+                 com_assignments=[]):
         self.set_inputs(inputs)
         self.outputs = outputs
         self.com_name = com_name
         self.com_category = com_category
+        self.com_properties = com_properties
         self.com_options = com_options
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
         self.com_assignments = com_assignments
@@ -36,6 +40,8 @@ class DFGNode:
             prefix = "Stateless"
         elif (self.com_category == "pure"):
             prefix = "Pure"
+        if (self.is_commutative()):
+            prefix = 'Commutative ' + prefix
         output = "{}: \"{}\" in:{} out:{}".format(
             prefix, self.com_name, 
             self.get_input_list(),
@@ -74,6 +80,9 @@ class DFGNode:
                 (self.com_category == "pure"
                  and str(self.com_name) in list(map(get_command_from_definition,
                                                     config.parallelizable_pure_commands))))
+
+    def is_commutative(self):
+        return ('commutative' in self.com_properties)
 
     ## TODO: Improve this functio to be separately implemented for different special nodes,
     ##       such as cat, eager, split, etc...
