@@ -107,6 +107,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
     inputs, out_stream, opt_indices = find_command_input_output(command, options)
     # log("Opt indices:", opt_indices, "options:", options)
     category = find_command_category(command, options)
+    com_properties = find_command_properties(command, options)
 
     ## TODO: Make an empty IR and add edges and nodes incrementally (using the methods defined in IR).
 
@@ -142,6 +143,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            dfg_outputs, 
                            com_name,
                            com_category,
+                           com_properties=com_properties,
                            com_options=dfg_options,
                            com_redirs=com_redirs,
                            com_assignments=com_assignments)
