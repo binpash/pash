@@ -3,6 +3,9 @@ from ir_utils import *
 
 class Redirection():
     def __init__(self, redirection):
+        ## Handle initialization from an existing Redirection object
+        if(isinstance(redirection, Redirection)):
+            redirection = redirection.to_ast()
         assert(len(redirection) == 2)
         self.redir_type = redirection[0]
         assert(len(redirection[1]) == 3)
