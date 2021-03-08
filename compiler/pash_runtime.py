@@ -314,6 +314,9 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_fl
 
 ## TODO: There needs to be some state to keep track of open r-split sessions
 ##       (that either end at r-merge or at r_unwrap before a commutative command).
+##
+## TODO: At the moment we greedily try to add r-splits if possible, so we need to have a better procedure of deciding whether to put them or not.
+##       For example for non-commutative pure commands.
 
 ## If the current command is a cat, and is followed by a node that
 ## is either stateless or pure parallelizable, commute the cat
@@ -338,14 +341,16 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
         ## If the next node can be parallelized, then we should try to parallelize
         if(next_node.is_parallelizable()
            and not isinstance(next_node, Cat)):
-            ## If the current node is not a cat, it means that we need
-            ## to generate a cat using a split
+            ## If the current node is not a merger, it means that we need
+            ## to generate a merger using a splitter (auto_split or r_split)
 
             ## no_cat_split_vanish shortcircuits this and inserts a split even if the current node is a cat.
             if(fan_out > 1
                and (no_cat_split_vanish
-                    or (not isinstance(curr, Cat)
-                        or (isinstance(curr, Cat)
+                    or (not (isinstance(curr, Cat)
+                             or isinstance(next_node, r_merge.RMerge))
+                        or ((isinstance(curr, Cat)
+                             or isinstance(next_node, r_merge.RMerge))
                             and len(curr.get_input_list()) < fan_out)))):
                 new_merger = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size, r_split_flag, r_split_batch_size)
 
@@ -384,10 +389,16 @@ def check_parallelize_dfg_node(merger_id, node_id, graph, fileIdGen):
     ## Get merger inputs (cat or r_merge).
     merger_input_edge_ids = graph.get_node_input_ids(merger_id)
 
-    ## If Cat has more than one input, then the next node could be parallelized
+    ## If the merger has more than one input, then the next node could be parallelized
     new_nodes = []
     if (len(merger_input_edge_ids) > 1):
-        new_nodes = parallelize_dfg_node(merger_id, node_id, graph, fileIdGen)
+        ## If the merger is r-merge, then the next node needs to either be stateless, or commutative parallelizable.
+        merger = graph.get_node(merger_id)
+        node = graph.get_node(node_id)
+        if(isinstance(merger, r_merge.RMerge)
+           and (node.is_stateless()
+                or node.is_commutative())):
+            new_nodes = parallelize_dfg_node(merger_id, node_id, graph, fileIdGen)
 
     return new_nodes
 
