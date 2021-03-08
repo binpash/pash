@@ -15,6 +15,7 @@
         {
             "predicate": "default",
             "class": "parallelizable_pure",
+            "properties": ["commutative"],
             "inputs": ["stdin"],
             "outputs": ["stdout"]
         }
