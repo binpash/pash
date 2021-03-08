@@ -339,8 +339,18 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
         new_curr_id = curr_id
 
         ## If the next node can be parallelized, then we should try to parallelize
+        ##
+        ## If the user has provided the r_split flag (they want to use r_split), 
+        ## then parallelizability depends on commutativity (if a command is pure parallelizable but not commutative)
+        ## then it can't be parallelized. Therefore we do not parallelize non-commutative pure parallelizable commands.
+        ##
+        ## TODO: We need to extend PaSh to have a mode where it can have both r_splits and auto_split if a command is not
+        ##       commutative. This can be added as an option to the r_split flag, e.g., r_split="no" | "yes" | "optimal".
         if(next_node.is_parallelizable()
-           and not isinstance(next_node, Cat)):
+           and not isinstance(next_node, Cat)
+           and (not r_split_flag
+                or (next_node.is_commutative()
+                    or next_node.is_stateless()))):
             ## If the current node is not a merger, it means that we need
             ## to generate a merger using a splitter (auto_split or r_split)
 
@@ -348,9 +358,9 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
             if(fan_out > 1
                and (no_cat_split_vanish
                     or (not (isinstance(curr, Cat)
-                             or isinstance(next_node, r_merge.RMerge))
+                             or isinstance(curr, r_merge.RMerge))
                         or ((isinstance(curr, Cat)
-                             or isinstance(next_node, r_merge.RMerge))
+                             or isinstance(curr, r_merge.RMerge))
                             and len(curr.get_input_list()) < fan_out)))):
                 new_merger = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size, r_split_flag, r_split_batch_size)
 
