@@ -187,3 +187,19 @@ def find_command_category(command, options):
 
     return('none')
 
+def find_command_properties(command, options):
+
+    command_string = format_arg_chars(command)
+    # log("Command to find properties:", command_string)
+
+    assert(isinstance(command_string, str))
+
+    ## Find the properties of the command in the annotation files (if it exists)
+    command_properties_from_annotation = get_command_properties_from_annotations(command_string,
+                                                                                 options,
+                                                                                 config.annotations)
+    if (command_properties_from_annotation):
+        log("properties:", command_properties_from_annotation, "found for:", command_string)
+        return command_properties_from_annotation
+
+    return []
