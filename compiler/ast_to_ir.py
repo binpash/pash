@@ -2,7 +2,7 @@ from ir import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
 from util import *
-from json_ast import save_asts_json
+from json_ast import save_asts_json, ast_to_shell
 from parse import parse_shell, from_ir_to_shell, from_ir_to_shell_file
 from expand import *
 import subprocess
@@ -107,8 +107,16 @@ def compile_asts(ast_objects, fileIdGen, config):
         # log("Compiling AST {}".format(i))
         # log(ast_object)
 
+        log("MMG config")
+        log(config['shell_variables'])
+        
+        log("MMG expanding")
+        log(ast_to_shell(ast_object))
         ## Compile subtrees of the AST to out intermediate representation
-        compiled_ast = compile_node(ast_object, fileIdGen, config)
+        expanded_ast = expand_command(ast_object, config)
+        log("MMG expanded")
+        log(ast_to_shell(expanded_ast))
+        compiled_ast = compile_node(expanded_ast, fileIdGen, config)
 
         # log("Compiled AST:")
         # log(compiled_ast)
@@ -245,6 +253,8 @@ def compile_node_command(ast_node, fileIdGen, config):
                                         options,
                                         redirections=compiled_redirections)
             compiled_ast = ir
+#            log("MMG compiled")
+#            log(compiled_ast)
         except ValueError as err:
             ## TODO: Delete this log from here
             log(err)
@@ -375,11 +385,11 @@ def make_echo_ast(argument, var_file_path):
 
 ## TODO: Move this function somewhere more general
 def execute_shell_asts(asts):
-    _, ir_filename = ptempfile()
+    ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
     save_asts_json(asts, ir_filename)
     output_script = from_ir_to_shell(ir_filename)
     # log(output_script)
-    exec_obj = subprocess.run(["/usr/bin/env", "bash"], input=output_script,
+    exec_obj = subprocess.run(["/bin/bash"], input=output_script,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                               universal_newlines=True)
     exec_obj.check_returncode()
@@ -459,8 +469,7 @@ def compile_command_argument(argument, fileIdGen, config):
     return compiled_argument
 
 def compile_command_arguments(arguments, fileIdGen, config):
-    expanded_arguments = expand_args(arguments, config)
-    compiled_arguments = [compile_command_argument(arg, fileIdGen, config) for arg in expanded_arguments]
+    compiled_arguments = [compile_command_argument(arg, fileIdGen, config) for arg in arguments]
     return compiled_arguments
 
 ## Compiles the value assigned to a variable using the command argument rules.
@@ -763,7 +772,7 @@ def replace_irs(ast, irFileGen, config):
 ## it adds a command that calls our distribution planner with the name of the
 ## saved file.
 def replace_df_region(asts, irFileGen, config):
-    _, ir_filename = ptempfile()
+    ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
 
     ## Serialize the node in a file
     with open(ir_filename, "wb") as ir_file:
@@ -771,9 +780,9 @@ def replace_df_region(asts, irFileGen, config):
 
     ## Serialize the candidate df_region asts back to shell
     ## so that the sequential script can be run in parallel to the compilation.
-    _, second_ir_filename = ptempfile()
+    second_ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
     save_asts_json(asts, second_ir_filename)
-    _, sequential_script_file_name = ptempfile()
+    sequential_script_file_name = os.path.join("/tmp", get_pash_prefixed_random_string())
     from_ir_to_shell_file(second_ir_filename, sequential_script_file_name)
 
     ## Replace it with a command that calls the distribution
