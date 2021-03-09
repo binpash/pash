@@ -718,6 +718,35 @@ class IR:
         ## Determine if the previous node is r_merge to determine which of the three parallelization cases to follow
         r_merge_flag = isinstance(previous_node, r_merge.RMerge)
 
+        ## If the previous node of r_merge is an r_split, then we need to replace it with -r, 
+        ## instead of doing unwraps.
+        if(r_merge_flag):
+            assert(isinstance(previous_node, r_merge.RMerge))
+            r_merge_prev_node_ids = self.get_previous_nodes(previous_node_id)
+
+            ## If all the previous nodes are r_split this means that they are the same
+            ##
+            ## Q: Could that ever not be true?
+            ##
+            ## TODO: If we ever want to measure the benefit from this optimization we need
+            ##       to make a conjunction in this flag here.
+            r_split_before_r_merge_opt_flag = all([isinstance(self.get_node(node_id), r_split.RSplit)
+                                                   for node_id in r_merge_prev_node_ids])
+
+            ## If r_split was right before the r_merge, and the node is pure parallelizable, 
+            ## this means that we will not add unwraps, and therefore we need to add the -r flag to r_split.
+            if (r_split_before_r_merge_opt_flag
+                and node.is_pure_parallelizable()):
+                assert(node.is_commutative())
+                r_split_id = r_merge_prev_node_ids[0]
+                r_split_node = self.get_node(r_split_id)
+                
+                ## Add -r flag in r_split
+                r_split_node.add_r_flag()            
+        else:
+            r_split_before_r_merge_opt_flag = False
+
+
         ## Identify the parallel inputs, each of which will be given to a different copy of the node.
         parallel_input_ids = previous_node.get_input_list()
         parallelism = len(parallel_input_ids)
@@ -778,27 +807,34 @@ class IR:
                 else:
                     ## If we have a pure parallelizable node, then we have to unwrap, before parallelizing the node.
                     ##
-                    ## TODO: This can only work if the node is actually commutative
+                    ## This can only work if the node is actually commutative
                     assert(node.is_pure_parallelizable())
                     assert(is_single_input(new_inputs))
+                    assert(node.is_commutative())
 
-                    ## Make the edge between unwrap and the command
-                    unwrap_output_fid = fileIdGen.next_ephemeral_file_id()
-                    unwrap_output_id = unwrap_output_fid.get_ident()
-                    self.add_edge(unwrap_output_fid)
+                    ## Optimization: If the node before r_merge is an r_split, then we
+                    ##               don't need to add unwrap, and we can just add -r to r_split.
+                    if(r_split_before_r_merge_opt_flag):
+                        parallel_node = make_map_node(node, new_inputs, new_output_ids)
+                        self.add_node(parallel_node)
+                    else:
+                        ## Make the edge between unwrap and the command
+                        unwrap_output_fid = fileIdGen.next_ephemeral_file_id()
+                        unwrap_output_id = unwrap_output_fid.get_ident()
+                        self.add_edge(unwrap_output_fid)
 
-                    ## TODO: Make an unwrap node and create new inputs
-                    unwrap_node = r_unwrap.make_unwrap_node(new_inputs, unwrap_output_id)
-                    self.add_node(unwrap_node)
-                    self.set_edge_from(unwrap_output_id, id(unwrap_node))
+                        ## TODO: Make an unwrap node and create new inputs
+                        unwrap_node = r_unwrap.make_unwrap_node(new_inputs, unwrap_output_id)
+                        self.add_node(unwrap_node)
+                        self.set_edge_from(unwrap_output_id, id(unwrap_node))
 
-                    parallel_node_inputs = ([], [unwrap_output_id])
-                    parallel_node = make_map_node(node, parallel_node_inputs, new_output_ids)
-                    self.add_node(parallel_node)
-                    self.set_edge_to(unwrap_output_id, id(parallel_node))
+                        parallel_node_inputs = ([], [unwrap_output_id])
+                        parallel_node = make_map_node(node, parallel_node_inputs, new_output_ids)
+                        self.add_node(parallel_node)
+                        self.set_edge_to(unwrap_output_id, id(parallel_node))
 
-                    ## Note: unwrap needs to be set as the parallel node since below the inputs are set to point to it.
-                    parallel_node = unwrap_node
+                        ## Note: unwrap needs to be set as the parallel node since below the inputs are set to point to it.
+                        parallel_node = unwrap_node
             else:
                 ## If we are working with a `cat` (and not an r_merge), then we just make a parallel node
                 parallel_node = make_map_node(node, new_inputs, new_output_ids)
@@ -810,7 +846,8 @@ class IR:
             for conf_in in conf_ins:
                 self.set_edge_to(conf_in, parallel_node_id)
             self.set_edge_to(standard_in, parallel_node_id)
-        
+
+
         if (node.com_category == "stateless"):
             if(r_merge_flag is True):
                 new_merger = r_merge.make_r_merge_node(flatten_list(all_map_output_ids), node_output_edge_id)
