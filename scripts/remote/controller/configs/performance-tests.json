@@ -1,5 +1,0 @@
-{
-    "port": 2048,
-    "command_module": "./commands/performance-tests.js",
-    "host": "memstar.ndr.md"
-}

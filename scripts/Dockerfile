@@ -2,7 +2,7 @@ FROM ubuntu:18.04
 
 RUN apt-get update -y
 RUN apt-get upgrade -y
-RUN apt-get install -y git sudo locales locales-all
+RUN apt-get install -y git sudo locales locales-all curl
 
 RUN git clone https://github.com/andromeda/pash.git
 WORKDIR "/pash"
@@ -16,4 +16,5 @@ ENV LANGUAGE en_US.UTF-8
 
 ENV PASH_TOP=/pash
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
+
 CMD ["/bin/bash"]
