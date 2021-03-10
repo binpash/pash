@@ -83,6 +83,12 @@ def parse_args():
         parser.print_usage()
         exit()
 
+    ## Print all the arguments
+    log("Arguments:")
+    for arg_name, arg_val in vars(args).items():
+        log(arg_name, arg_val)
+    log("-" * 40)
+
     return args
 
 def preprocess(ast_objects, config):
