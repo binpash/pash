@@ -82,4 +82,5 @@ for n_in in "${n_inputs[@]}"; do
 
     echo "Executing pash on sort with --width ${n_in}"
     { time $PASH_TOP/pa.sh -w "${n_in}" --log_file /tmp/pash_log --output_time $exec_script ; } 1> /tmp/pash_output 2> >(tee "${results}${experiment}_${intermediary_prefix}pash.time" >&2)
+    diff -s /tmp/seq_output /tmp/pash_output | head
 done
