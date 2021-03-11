@@ -10,7 +10,11 @@ file8=8.out
 file9=9.out
 rm -f *.out
 
+<<<<<<< HEAD
 testFile="$PASH_TOP/evaluation/scripts/input/100M.txt"
+=======
+testFile="/home/tamlu/pash/evaluation/scripts/input/1G.txt"
+>>>>>>> 6700ef1b... compatibility changes to tests
 batchSize=10000000
 if [ "$#" -gt "0" ]
  then
@@ -24,7 +28,8 @@ mkfifo $file1
 mkfifo $file2
 mkfifo $file3
 mkfifo $file4
-# mkfifo $file5
+mkfifo $file5
+mkfifo $file6
 
 # mkfifo $file7
 # mkfifo $file8
@@ -33,11 +38,22 @@ mkfifo $file4
 
 $PASH_TOP/runtime/r_split $testFile $batchSize $file1 $file2 &
 
+<<<<<<< HEAD
 $PASH_TOP/runtime/r_wrap grep 'Bell' < $file1 > $file3 &
 $PASH_TOP/runtime/r_wrap grep 'Bell' < $file2 > $file4 &
 # ../r_wrap grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' < $file7 > $file8 &
 
 $PASH_TOP/runtime/r_merge $file3 $file4
+=======
+../../runtime/r_wrap tr A-Z a-z < $file1 > $file5 &
+../../runtime/r_wrap tr A-Z a-z < $file2 > $file6 &
+
+# ../../runtime/r_wrap grep 'Bell' < $file1 > $file5 &
+# ../../runtime/r_wrap grep 'Bell' < $file2 > $file6 &
+# ../r_wrap grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' < $file7 > $file8 &
+
+../../runtime/r_merge $file5 $file6
+>>>>>>> 6700ef1b... compatibility changes to tests
 
 # cat $testFile | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' > $file6
 # if cmp -s "$file6" "$file5"; then
