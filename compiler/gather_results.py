@@ -17,6 +17,9 @@ parser.add_argument('--eurosys2021',
 parser.add_argument('--all',
                     action='store_true',
                     help='generates all plots')
+parser.add_argument('--debug',
+                    action='store_true',
+                    help='prints debugging info')
 
 args = parser.parse_args()
 
@@ -27,6 +30,7 @@ if not args.all and not args.eurosys2021:
     print("You have to specify some plot to generate!")
     print("See command usage with --help.")
     exit(0)
+
 
 SMALL_SIZE = 16
 MEDIUM_SIZE = 18
@@ -52,6 +56,8 @@ SMALL_UNIX50_RESULTS = "../evaluation/results/unix50_4_1073741824/"
 BIG_UNIX50_RESULTS = "../evaluation/results/unix50_16_10737418240/"
 COARSE_UNIX50_RESULTS = "../evaluation/results/unix50-naive/"
 
+## Create the plots directory
+os.makedirs("../evaluation/plots", exist_ok=True)
 
 all_experiments = ["minimal_grep",
                    "minimal_sort",
@@ -223,7 +229,8 @@ class Result:
             return NotImplemented
 
         if(self.value == 0):
-            print("Division by zero")
+            if(args.debug):
+                print("Division by zero")
             return 0
 
         ## TODO: Change that to Result too
@@ -276,7 +283,8 @@ def safe_zero_div(a, b):
     if(a is None or b is None):
         return None
     elif(b == 0):
-        print("WARNING: Division by zero")
+        if(args.debug):
+            print("WARNING: Division by zero")
         return 0
     else:
         return a / b
@@ -837,11 +845,15 @@ def aggregate_unix50_results(all_results, scaleup_numbers):
     return avg_distr_results
 
 def compute_and_print_aggrs(individual_results, absolute_seq_times_s):
-    mean = sum(individual_results) / len(individual_results)
-    median = statistics.median(individual_results)
-    geo_mean = math.exp(np.log(individual_results).sum() / len(individual_results))
+    mean = safe_zero_div(sum(individual_results), len(individual_results))
+    if (len(individual_results) > 0):
+        median = statistics.median(individual_results)
+    else:
+        median = 0
+    geo_mean = math.exp(safe_zero_div(np.log(individual_results).sum(),
+                                      len(individual_results)))
     weighted_res = [i*a for i, a in zip(individual_results, absolute_seq_times_s)]
-    weighted_avg = sum(weighted_res) / sum(absolute_seq_times_s)
+    weighted_avg = safe_zero_div(sum(weighted_res), sum(absolute_seq_times_s))
     print("  Mean:", mean)
     print("  Median:", median)
     print("  Geometric Mean:", geo_mean)
@@ -1045,7 +1057,10 @@ def plot_unix50_avg_speedup(all_results, scaleup_numbers, filename):
 
 def collect_all_unix50_results(unix50_results_dir, scaleup_numbers=[2, 4, 8, 16], suffix='distr.time'):
 
-    files = [f for f in os.listdir(unix50_results_dir)]
+    try:
+        files = [f for f in os.listdir(unix50_results_dir)]
+    except:
+        files = []
     # print(files)
     pipeline_numbers = sorted(list(set([f.split('_')[2] for f in files])))
     # print(pipeline_numbers)
@@ -1062,15 +1077,16 @@ def collect_all_unix50_results(unix50_results_dir, scaleup_numbers=[2, 4, 8, 16]
     
     return (all_results, fan_in_fan_out_results)
 
-def collect_unix50_scaleup_times(all_results, scaleup=[2,4,8,16], small_prefix=""):
+def collect_unix50_scaleup_times(all_results, scaleup=[2,4,8,16], small_prefix="", scatter=True):
     
     # print(all_results)
 
     for parallelism in scaleup:
         make_unix50_bar_chart(all_results, scaleup, parallelism, small_prefix=small_prefix)
-        make_unix50_scatter_plot(all_results, scaleup, parallelism)
+        if(scatter):
+            make_unix50_scatter_plot(all_results, scaleup, parallelism)
 
-    plot_unix50_avg_speedup(all_results, scaleup, "unix50_throughput_scaleup.pdf")
+    # plot_unix50_avg_speedup(all_results, scaleup, "unix50_throughput_scaleup.pdf")
     
 
 # def collect_unix50_coarse_scaleup_times(all_results):
@@ -1148,9 +1164,9 @@ def plot_tiling_experiments(fig, gs, experiments, all_experiment_results, all_sc
 
 def print_aggregates(prefix, averages, no_eager_averages):
     ## Print average, geo-mean
-    one_liner_averages = [sum(res)/len(res) for res in averages]
-    all_no_eager_averages = [sum(res)/len(res) for res in no_eager_averages]
-    geo_means = [math.exp(np.log(res).sum() / len(res))
+    one_liner_averages = [safe_zero_div(sum(res), len(res)) for res in averages]
+    all_no_eager_averages = [safe_zero_div(sum(res), len(res)) for res in no_eager_averages]
+    geo_means = [math.exp(safe_zero_div(np.log(res).sum(), len(res)))
                  for res in averages]
     print(prefix, "One-liners Aggregated results:")
     print(" |-- Averages:", one_liner_averages)
@@ -1666,8 +1682,8 @@ if args.eurosys2021:
 if args.eurosys2021:
     generate_tables(experiments, results_dir=SMALL_RESULTS, table_suffix="-small", small=True)
     generate_tables(experiments)
-    collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB")
-    collect_unix50_scaleup_times(big_unix50_results, scaleup=[16], small_prefix="_10GB")
+    collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB", scatter=False)
+    collect_unix50_scaleup_times(big_unix50_results, scaleup=[16], small_prefix="_10GB", scatter=False)
     plot_sort_with_baseline(RESULTS)
 
 ## Legacy plots
