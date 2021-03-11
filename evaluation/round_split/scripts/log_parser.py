@@ -105,6 +105,7 @@ class LogParser:
         Return:
             A single entry pandas dataframe
         """
+        pass
 
     def parse_folder(self, path: str)->pd.DataFrame:
         """
@@ -114,11 +115,12 @@ class LogParser:
         Return:
             pandas dataframe with all parsed logs
         """
+        pass
 
     def get_df(self):
         return self.df
 
-    def __parse_args__(self, args: str, args_of_interest) :
+    def __parse_args__(self, args: str, args_of_interest):
         lines = args.split("\n")
         args_dict = {i:False for i in args_of_interest}
         for line in lines:
@@ -128,7 +130,6 @@ class LogParser:
                     args_dict[arg] = val
             except:
                 continue
-                
         return args_dict
     
     def __parse_pash_log__(self, args: str, tags_of_interest) :
