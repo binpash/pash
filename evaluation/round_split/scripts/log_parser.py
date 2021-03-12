@@ -3,6 +3,8 @@ import argparse
 import re
 import os
 
+DEFAULT_LOG_FOLDER = "tmp_log/"
+
 class LogParser:
     """
     A class used to parse the pa.sh log files
@@ -20,6 +22,7 @@ class LogParser:
 
     Dataframe columns:
         - test_name
+        - IN
         - split_type
         - no_eager
         - width
@@ -53,7 +56,7 @@ class LogParser:
         border = "-"*40
         argslog, pashlog, timelog = log.split(border)
 
-        args_of_interest = set(["input", "width", "output_time", "no_eager", "r_split", "r_split_batch_size"])
+        args_of_interest = set(["input", "width", "output_time", "no_eager", "r_split", "r_split_batch_size", "IN"])
         parsed_args = self.__parse_args__(argslog, args_of_interest)
 
         tags_of_interest = set(["Execution time", "Backend time", "Compilation time", "Preprocessing time", "Eager nodes", "Compiler exited with code"])
@@ -73,6 +76,7 @@ class LogParser:
         data = {
             #From Args
             "test_name" : test_name,
+            "IN": os.path.basename(parsed_args["IN"]),
             "split_type" : split_type,
             "no_eager" : parsed_args["no_eager"],
             "width": parsed_args["width"],
@@ -99,13 +103,16 @@ class LogParser:
         self.df = self.df.append(data, ignore_index=True)
 
         return df
-    def parse_file(self, file_path: str)->pd.DataFrame:
+    def parse_file(self, log_file: str)->pd.DataFrame:
         """
         Parses a pa.sh log with path file_path
         Return:
             A single entry pandas dataframe
         """
-        pass
+        with open(log_file, "r") as f:
+            log = f.read()
+            df = self.parse_log(log)
+        return df
 
     def parse_folder(self, path: str)->pd.DataFrame:
         """
@@ -115,7 +122,13 @@ class LogParser:
         Return:
             pandas dataframe with all parsed logs
         """
-        pass
+        log_files = [os.path.join(path, f) for f in os.listdir(path) if f.endswith(".log")]
+        ret_df = pd.DataFrame()
+        for log_file in log_files:
+            df = self.parse_file(log_file)
+            ret_df = ret_df.append(df, ignore_index=True)
+        
+        return ret_df
 
     def get_df(self):
         return self.df
@@ -184,3 +197,9 @@ def process_gnu_time(time_data):
         "exit_status" : lines[22]
     }
     return data
+
+if __name__ == '__main__':
+    #sample execution
+    log_parser = LogParser()
+    df = log_parser.parse_folder(DEFAULT_LOG_FOLDER)
+    print(log_parser.get_df()[["test_name", "no_eager", "split_type", "exec_time", "cpu%", "width"]].to_string(index = False))
