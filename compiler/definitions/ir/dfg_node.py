@@ -1,3 +1,4 @@
+import copy
 from command_categories import *
 from util import *
 from ir_utils import *
@@ -7,11 +8,12 @@ from definitions.ir.resource import *
 
 import config
 
-import copy
-
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions
 class DFGNode:
+    ## Unique identifier for nodes
+    next_id = 0
+
     ## inputs : tuple of lists of fid_ids (that can be used to retrieve fid from edges)
     ## outputs : list of fid_ids 
     ## com_name : command name Arg
@@ -25,6 +27,11 @@ class DFGNode:
                  com_options = [],
                  com_redirs = [],
                  com_assignments=[]):
+        ## Add a unique identifier to each DFGNode since id() is not guaranteed to be unique for objects that have different lifetimes.
+        ## This leads to issues when nodes are deleted and new ones are created, leading to id() clashes between them
+        self.id = DFGNode.next_id
+        DFGNode.next_id += 1
+
         self.set_inputs(inputs)
         self.outputs = outputs
         self.com_name = com_name
@@ -33,6 +40,8 @@ class DFGNode:
         self.com_options = com_options
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
         self.com_assignments = com_assignments
+
+        # log("Node created:", self.id, self)
 
     def __repr__(self):
         prefix = "Node"
@@ -47,6 +56,16 @@ class DFGNode:
             self.get_input_list(),
             self.outputs)
         return output
+
+    def get_id(self):
+        return self.id
+
+    ## Copying requires setting the id to a new one too
+    def copy(self):
+        node_copy = copy.deepcopy(self)
+        node_copy.id = DFGNode.next_id
+        DFGNode.next_id += 1
+        return node_copy
 
     ## TODO: Make that a proper class.
     def set_inputs(self, inputs):

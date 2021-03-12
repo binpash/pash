@@ -1,4 +1,3 @@
-import copy
 import json
 import yaml
 import os
@@ -151,7 +150,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
     if(not dfg_node.is_at_most_pure()):
         raise ValueError()
 
-    node_id = id(dfg_node)
+    node_id = dfg_node.get_id()
 
     ## Assign the from, to node in edges
     for fid_id in dfg_node.get_input_list():
@@ -207,7 +206,7 @@ def make_map_node(node, new_inputs, new_outputs):
         assert(len(new_inputs[1]) == 1)
         new_node = BigramGMap(new_inputs[1][0], new_outputs)
     else:
-        new_node = copy.deepcopy(node)
+        new_node = node.copy()
         new_node.inputs = new_inputs
         new_node.outputs = new_outputs
     return new_node
@@ -216,8 +215,8 @@ def make_map_node(node, new_inputs, new_outputs):
 ##
 ## At the moment it only works with one input and one output since wrap cannot redirect input in the command.
 def make_wrap_map_node(node, new_inputs, new_outputs):
-    log("Inputs:", new_inputs)
-    log("Outputs:", new_outputs)
+    # log("Inputs:", new_inputs)
+    # log("Outputs:", new_outputs)
     assert(is_single_input(new_inputs))
     assert(len(new_outputs) == 1)
 
@@ -636,7 +635,7 @@ class IR:
 
 
     def add_node(self, node):
-        node_id = id(node)
+        node_id = node.get_id()
         self.nodes[node_id] = node
         ## Add the node in the edges dictionary
         for in_id in node.get_input_list():
@@ -826,12 +825,12 @@ class IR:
                         ## TODO: Make an unwrap node and create new inputs
                         unwrap_node = r_unwrap.make_unwrap_node(new_inputs, unwrap_output_id)
                         self.add_node(unwrap_node)
-                        self.set_edge_from(unwrap_output_id, id(unwrap_node))
+                        self.set_edge_from(unwrap_output_id, unwrap_node.get_id())
 
                         parallel_node_inputs = ([], [unwrap_output_id])
                         parallel_node = make_map_node(node, parallel_node_inputs, new_output_ids)
                         self.add_node(parallel_node)
-                        self.set_edge_to(unwrap_output_id, id(parallel_node))
+                        self.set_edge_to(unwrap_output_id, parallel_node.get_id())
 
                         ## Note: unwrap needs to be set as the parallel node since below the inputs are set to point to it.
                         parallel_node = unwrap_node
@@ -840,7 +839,7 @@ class IR:
                 parallel_node = make_map_node(node, new_inputs, new_output_ids)
                 self.add_node(parallel_node)
 
-            parallel_node_id = id(parallel_node)
+            parallel_node_id = parallel_node.get_id()
 
             ## Set the to of all input edges
             for conf_in in conf_ins:
@@ -856,7 +855,7 @@ class IR:
             
             self.add_node(new_merger)
             new_nodes.append(new_merger)
-            self.set_edge_from(node_output_edge_id, id(new_merger))
+            self.set_edge_from(node_output_edge_id, new_merger.get_id())
         else:
             ## TODO: Create an aggregator here. At the moment it happens in `pash_runtime.py`.
             pass
@@ -873,7 +872,7 @@ class IR:
 
         ## Create the tee node
         new_node = make_tee(edge_id, output_ids)
-        new_node_id = id(new_node)
+        new_node_id = new_node.get_id()
 
         ## Rewire the dfg
         for edge_fid in output_fids:
