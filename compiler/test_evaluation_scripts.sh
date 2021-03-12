@@ -20,6 +20,11 @@ n_inputs=(
     8
 )
 
+configurations=(
+    ""
+    "--r_split"
+)
+
 ## Tests where the compiler will not always succeed (e.g. because they have mkfifo)
 script_microbenchmarks=(
     diff                 # (quick-abort) BUG: Might have to do with the named pipes, and the fact that they are reused for parallel and sequential script.
@@ -45,7 +50,8 @@ pipeline_microbenchmarks=(
     no_in_script         # Tests whether a script can be executed by our infrastructure without having its input in a file called $IN
     for_loop_simple      # Tests whether PaSh can handle a for loop where the body is parallelizable
     minimal_grep_stdin   # Tests whether PaSh can handle a script that reads from stdin
-    micro_1000           # Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
+    # micro_1000           # Not being run anymore, as it is very slow. Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
+    micro_10           # A small version of the pipeline above for debugging.
     sed-test             # Tests all sed occurences in our evaluation to make sure that they work
     fun-def              # Tests whether PaSh can handle a simple function definition
     tr-test              # Tests all possible behaviors of tr that exist in our evaluation
@@ -113,13 +119,15 @@ execute_tests() {
         echo "|-- Executing the script with bash..."
         cat $stdin_redir | { time /bin/bash "$script_to_execute" > $seq_output ; } 2> "${seq_time}"
 
-        for n_in in "${n_inputs[@]}"; do
-            echo "|-- Executing with pash --width ${n_in}..."
-            export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_auto_split.time"
-            export pash_output="${intermediary_dir}/${microbenchmark}_${n_in}_pash_output"
+        for conf in "${configurations[@]}"; do
+            for n_in in "${n_inputs[@]}"; do
+                echo "|-- Executing with pash --width ${n_in} ${conf}..."
+                export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_${conf}.time"
+                export pash_output="${intermediary_dir}/${microbenchmark}_${n_in}_pash_output"
 
-            cat $stdin_redir | 
-                execute_pash_and_check_diff -d 1 $assert_correctness --width "${n_in}" --output_time $script_to_execute
+                cat $stdin_redir |
+                    execute_pash_and_check_diff -d 1 $assert_correctness ${conf} --width "${n_in}" --output_time $script_to_execute
+            done
         done
     done
 }
