@@ -50,6 +50,15 @@ void processCmd(char* args[]) {
             size_t outBufLen = 0, len = 0, currLen = 0;
             char *cmdOutput = malloc(0);
 
+            //select prep
+            fd_set readFds;
+            fd_set writeFds;
+            FD_ZERO(&readFds); // Clear FD set for select
+            FD_ZERO(&writeFds); // Clear FD set for select
+            int maxFd;
+            int inputFd = fdOut[READ_END];
+            int outputFd = fdIn[WRITE_END];
+
             //Read batch
             size_t tot_read = 0, readSize = 0;
             while (tot_read < blockSize) {
@@ -59,17 +68,39 @@ void processCmd(char* args[]) {
                     fprintf(stderr, "r_wrap: There is a problem with reading the block\n");
                     exit(1);
                 }
-                //Try reading from forked processs, nonblocking
-                while ((len = fread(readBuffer, 1, bufLen, execOutFile)) > 0) {
-                    if ((currLen + len) > outBufLen) {
-                        outBufLen = currLen + len + CHUNKSIZE;
-                        cmdOutput = realloc(cmdOutput, outBufLen + 1);
-                    }
-                    memcpy(cmdOutput + currLen, readBuffer, len);
-                    currLen += len;
-                    // fprintf(stderr, "read %ld bytes\n", len);
-                }
+                FD_ZERO(&readFds); // Clear FD set for select
+                FD_ZERO(&writeFds); // Clear FD set for select
+                while (!FD_ISSET(outputFd, &writeFds)) {
+                    // fprintf(stderr, "looping select\n");
+                    FD_ZERO(&readFds); // Clear FD set for select
+                    FD_ZERO(&writeFds); // Clear FD set for select
+                    FD_SET(inputFd, &readFds);
+                    FD_SET(outputFd, &writeFds);
 
+                    maxFd = MAX(inputFd, outputFd);
+
+                    // TODO: Should I handle some error here?
+                    select(maxFd + 1, &readFds, &writeFds, NULL, NULL);
+
+                    // TODO: Make writing more preferable by trying to rewrite if
+                    // it was possible once since this would help not accumulate
+                    // memory in this intermediate buffer.
+                    if (FD_ISSET(inputFd, &readFds)) {
+                        //Try reading from forked processs, nonblocking
+                        if ((len = fread(readBuffer, 1, bufLen, execOutFile)) > 0) {
+                            if ((currLen + len) > outBufLen) {
+                                outBufLen = currLen + len + CHUNKSIZE;
+                                cmdOutput = realloc(cmdOutput, outBufLen + 1);
+                            }
+                            memcpy(cmdOutput + currLen, readBuffer, len);
+                            currLen += len;
+                            // fprintf(stderr, "read %ld bytes\n", len);
+                        }
+                    }
+                    
+                }
+                
+                // fprintf(stderr, "writing %ld bytes\n", readSize);
                 //Write to forked process
                 safeWrite(buffer, 1 , readSize, execInFile);
                 
