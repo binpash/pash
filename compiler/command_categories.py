@@ -117,8 +117,8 @@ def find_command_input_output(command, options):
                                                                  options,
                                                                  config.annotations)
     if (command_io_from_annotation):
-        log("inputs-outputs found for:", command_string)
-        log("|--", command_io_from_annotation)
+        # log("inputs-outputs found for:", command_string)
+        # log("|--", command_io_from_annotation)
         return command_io_from_annotation
 
     return default_input_output(options)
@@ -145,8 +145,8 @@ def create_command_arguments_redirs(command, options, inputs, outputs):
                                                      outputs,
                                                      config.annotations)
     if (command_arguments_redirs):
-        log("arguments, redirs found for:", command_string)
-        log("|--", command_arguments_redirs)
+        # log("arguments, redirs found for:", command_string)
+        # log("|--", command_arguments_redirs)
         return command_arguments_redirs
 
     ## TODO: Implement that
