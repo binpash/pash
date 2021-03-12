@@ -405,9 +405,11 @@ def check_parallelize_dfg_node(merger_id, node_id, graph, fileIdGen):
         ## If the merger is r-merge, then the next node needs to either be stateless, or commutative parallelizable.
         merger = graph.get_node(merger_id)
         node = graph.get_node(node_id)
-        if(isinstance(merger, r_merge.RMerge)
-           and (node.is_stateless()
-                or node.is_commutative())):
+        if((isinstance(merger, Cat)
+            and node.is_parallelizable())
+           or (isinstance(merger, r_merge.RMerge)
+               and (node.is_stateless()
+                    or node.is_commutative()))):
             new_nodes = parallelize_dfg_node(merger_id, node_id, graph, fileIdGen)
 
     return new_nodes
