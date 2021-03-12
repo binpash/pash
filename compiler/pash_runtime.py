@@ -23,6 +23,8 @@ from definitions.ir.nodes.eager import *
 from definitions.ir.nodes.pash_split import *
 
 import definitions.ir.nodes.r_merge as r_merge
+import definitions.ir.nodes.r_split as r_split
+import definitions.ir.nodes.r_unwrap as r_unwrap
 
 
 runtime_config = {}
@@ -655,6 +657,18 @@ def add_eager_nodes(graph):
 
             if(isinstance(curr, Split)):
                 eager_input_ids = curr.outputs[:-1]
+                for edge_id in eager_input_ids:
+                    add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen)
+
+            ## Add an eager after r_unwrap            
+            if(isinstance(curr, r_unwrap.RUnwrap)):
+                eager_input_id = curr.outputs[0]
+                add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen)
+
+            ## Add an eager after r_split with option -r
+            if(isinstance(curr, r_split.RSplit)
+               and curr.has_r_flag()):
+                eager_input_ids = curr.outputs
                 for edge_id in eager_input_ids:
                     add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen)
 

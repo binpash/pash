@@ -23,6 +23,11 @@ class RSplit(DFGNode):
         shifted_options = [(i+1, opt) for i, opt in self.com_options]
         self.com_options = [new_opt] + shifted_options
 
+    ## This is not a proper option check. It just works if the r_flag is added as a separate option.
+    def has_r_flag(self):
+        option_strings = [str(opt) for i, opt in self.com_options]
+        return ("-r" in option_strings)
+
 
 ## TODO: Make a proper splitter subclass of Node
 def make_r_split(input_id, out_ids, r_split_batch_size):
