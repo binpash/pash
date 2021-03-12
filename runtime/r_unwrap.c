@@ -18,7 +18,7 @@ void unwrap(FILE* inputFile) {
             }
             
             //Write to forked process
-            safeWrite(buffer, 1, readSize, stdout);
+            safeWriteWithFlush(buffer, 1, readSize, stdout);
             tot_read += readSize;
         }
         // fflush(stdout);

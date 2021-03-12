@@ -44,7 +44,7 @@ void processCmd(char *args[])
             close(fdOut[WRITE_END]);
             close(fdIn[READ_END]);
             close(fdIn[WRITE_END]);
-            // free(buffer);
+            // free(buffer); copy-on-write fork optimize this better(freeing is more harm than good here)
             execvp(args[0], args);
             //shouldn't get here
             perror("Exec failed");
@@ -95,7 +95,6 @@ void processCmd(char *args[])
                     if (FD_ISSET(inputFd, &readFds))
                     {
                         //Try reading from forked processs, nonblocking
-                        // if ((len = fread(readBuffer, 1, bufLen, execOutFile) > 0) {
                         len = fread(readBuffer, 1, bufLen, execOutFile);
                         if ((currLen + len) > outBufLen)
                         {
@@ -104,19 +103,16 @@ void processCmd(char *args[])
                         }
                         memcpy(cmdOutput + currLen, readBuffer, len);
                         currLen += len;
-                        // fprintf(stderr, "read %ld bytes\n", len);
-                        // }
                     }
                 }
                 // fprintf(stderr, "writing %ld bytes\n", readSize);
                 //Write to forked process
-                safeWrite(buffer, 1, readSize, execInFile);
+                safeWriteWithFlush(buffer, 1, readSize, execInFile);
 
                 tot_read += readSize;
             }
-            // close(fdIn[WRITE_END]);
             fclose(execInFile);
-            // fprintf(stderr, "finished stdin loop\n");
+
             assert(tot_read == blockSize);
 
             //read output of forked process (do I need to wait or is read blocking enough?)
@@ -136,7 +132,7 @@ void processCmd(char *args[])
 
             //write block to stdout
             writeHeader(stdout, id, currLen);
-            safeWrite(cmdOutput, 1, currLen, stdout);
+            safeWriteWithFlush(cmdOutput, 1, currLen, stdout);
 
             //update header (ordered at the end so !feof works) and cleanup
             readHeader(stdin, &id, &blockSize);
@@ -144,6 +140,7 @@ void processCmd(char *args[])
         }
     }
     free(buffer);
+    free(readBuffer);
 }
 
 int main(int argc, char *argv[])

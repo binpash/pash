@@ -51,8 +51,8 @@ void MergeInput(char *inputFileNames[], unsigned int numInputFiles)
         
         tot_read += readSize;
         safeWrite(buffer, 1, readSize, stdout);
-        fflush(stdout);
     }
+    fflush(stdout); //only need to flush after block ended
     assert(tot_read == blockSize);
     
     bufferIdx = (bufferIdx + 1) % numInputFiles;
