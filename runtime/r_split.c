@@ -34,7 +34,7 @@ void SplitByBytes(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
   free(buffer);
 }
 
-void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned int numOutputFiles)
+void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned int numOutputFiles, int8_t add_header)
 {
   int current = 0;
   int64_t id = 0;
@@ -72,22 +72,24 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
         exit(1);
       }
       blockSize = prevRestSize + headSize + len;
-      writeHeader(outputFile, id, blockSize);
+      if (add_header)
+        writeHeader(outputFile, id, blockSize);
       //write blocks
       if (prevRestSize)
         safeWrite(incompleteLine, 1, prevRestSize, outputFile);
       safeWrite(buffer, 1, headSize, outputFile);
-      safeWrite(newLineBuffer, 1, len, outputFile);
+      safeWriteWithFlush(newLineBuffer, 1, len, outputFile);
     }
     else
     {
       blockSize = prevRestSize + headSize;
       //write header
-      writeHeader(outputFile, id, blockSize);
+      if (add_header)
+        writeHeader(outputFile, id, blockSize);
       //write blocks
       if (prevRestSize)
         safeWrite(incompleteLine, 1, prevRestSize, outputFile);
-      safeWrite(buffer, 1, headSize, outputFile);
+      safeWriteWithFlush(buffer, 1, headSize, outputFile);
       //update incompleteLine to the current block
       memcpy(incompleteLine, buffer + headSize, restSize);
     }
@@ -108,7 +110,7 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
   if (prevRestSize > 0)
   {
     writeHeader(outputFile, id, prevRestSize);
-    safeWrite(incompleteLine, 1, prevRestSize, outputFile);
+    safeWriteWithFlush(incompleteLine, 1, prevRestSize, outputFile);
   }
 
   //clean up
@@ -120,103 +122,21 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
 
 void SplitByLinesRaw(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned int numOutputFiles)
 {
-  // int current = 0, len = 0;
-  // size_t blockSize = 0, bufLen = 0;
-  // FILE* outputFile = outputFiles[current];
+  int current = 0, len = 0;
+  size_t blockSize = 0, bufLen = 0;
+  FILE* outputFile = outputFiles[current];
 
-  // char* buffer = NULL;
+  char* buffer = NULL;
 
-  // // Do round robin copying of the input file to the output files without any headers
-  // while ((len = getline(&buffer, &bufLen, inputFile)) > 0) {
-  //     //TODO: might need to fflush or use fputs
-  //     // fputs(buffer, outputFile);
-  //     fwrite(buffer, 1, len, outputFile);
-  //     current = (current + 1) % numOutputFiles;
-  //     outputFile = outputFiles[current];
-  //     // if (blockSize >= batchSize) {
-  //     //   safeWrite(buffer, 1, blockSize, outputFile);
-  //     //   blockSize = 0;
-
-  //     // }
-  //   fflush(outputFile);
-  // //clean up
-  // free(buffer);
-  int current = 0;
-  int64_t id = 0;
-  size_t len = 0, headSize = 0, restSize = 0, prevRestSize = 0, blockSize = 0, bufLen = 0;
-  FILE *outputFile = outputFiles[current];
-
-  char *buffer = malloc(batchSize + 1);
-  char *incompleteLine = malloc(batchSize + 1);
-  char *newLineBuffer = NULL; //only used when a newline character is not found in chunk
-
-  // Do round robin copying of the input file to the output files
-  // Each block has a header of "ID blockSize\n"
-
-  while ((len = fread(buffer, 1, batchSize, inputFile)) > 0)
-  {
-    //find pivot point for head and rest
-    for (int i = len - 1; i >= 0; i--)
-    {
-      if (buffer[i] == '\n')
-      {
-        headSize = i + 1;
-        restSize = len - headSize;
-        break;
-      }
-    }
-    
-    //no new line character
-    if (headSize == 0)
-    {
-      headSize = len;
-
-      if ((len = getline(&newLineBuffer, &bufLen, inputFile)) < 0)
-      {
-        //edge case to fix: can't be called if file ended
-        fprintf(stderr, "r_split: getline failed");
-        exit(1);
-      }
-      blockSize = prevRestSize + headSize + len;
-      //write blocks
-      if (prevRestSize)
-        safeWrite(incompleteLine, 1, prevRestSize, outputFile);
-      safeWrite(buffer, 1, headSize, outputFile);
-      safeWrite(newLineBuffer, 1, len, outputFile);
-    }
-    else
-    {
-      blockSize = prevRestSize + headSize;
-      //write blocks
-      if (prevRestSize)
-        safeWrite(incompleteLine, 1, prevRestSize, outputFile);
-      safeWrite(buffer, 1, headSize, outputFile);
-      //update incompleteLine to the current block
-      memcpy(incompleteLine, buffer + headSize, restSize);
-    }
-    current = (current + 1) % numOutputFiles;
-    outputFile = outputFiles[current];
-    prevRestSize = restSize;
-    headSize = restSize = 0;
-    id += 1;
+  // Do round robin copying of the input file to the output files without any headers
+  while ((len = getline(&buffer, &bufLen, inputFile)) > 0) {
+      safeWrite(buffer, 1, len, outputFile);
+      current = (current + 1) % numOutputFiles;
+      outputFile = outputFiles[current];
   }
-
-  if (len < 0)
-  {
-    perror(LOC);
-    exit(1);
-  }
-
-  if (prevRestSize > 0)
-  {
-    safeWrite(incompleteLine, 1, prevRestSize, outputFile);
-  }
-
   //clean up
   free(buffer);
-  free(incompleteLine);
-  if (newLineBuffer)
-    free(newLineBuffer);
+
 }
 
 
@@ -263,7 +183,7 @@ void SplitInput(char *input, int batchSize, char *outputFileNames[], unsigned in
   }
   else
   {
-    SplitByLines(inputFile, batchSize, outputFiles, numOutputFiles);
+    SplitByLines(inputFile, batchSize, outputFiles, numOutputFiles, 1);
   }
 
   PRINTDBG("%s: Done splitting input %s, will clean up\n", __func__, input);
