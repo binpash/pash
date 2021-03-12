@@ -12,7 +12,7 @@ while getopts 'slh' opt; do
     case $opt in
         s) input_number=1000 ;;
         l) input_number=100000 ;;
-        h) echo "There are three possible execution levels:"
+        h) echo "There are two possible execution levels:"
            echo "option -s: 1,000 urls (about 1.5 minutes in bash)"
            echo "option -l: 100,000 urls (a couple hours in bash) (EuroSys evaluation)"
            exit 0 ;;

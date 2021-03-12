@@ -13,7 +13,7 @@ while getopts 'slh' opt; do
     case $opt in
         s) evaluation_level=1 ;;
         l) evaluation_level=2 ;;
-        h) echo "There are three possible execution levels:"
+        h) echo "There are two possible execution levels:"
            echo "option -s: Small input | --width 2, 16"
            echo "option -l: Big input | -- width 2, 4, 8, 16, 32, 64"
            exit 0 ;;
