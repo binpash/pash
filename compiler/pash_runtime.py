@@ -247,7 +247,7 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_spl
             ## TODO: Fix that
             if(len(new_nodes) > 0):
                 # log("New nodes:", new_nodes)
-                workset += [id(node) for node in new_nodes]
+                workset += [node.get_id() for node in new_nodes]
 
     return graph
 
@@ -263,7 +263,7 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_fl
     ## TODO: Extend it to work for nodes that have more than one input.
     ##       This has to be done to be able to parallelize comm
     number_of_previous_nodes = len(curr.get_input_list())
-    new_cat = None
+    new_merger = None
     if (number_of_previous_nodes == 1):
         ## If the previous command is either a cat with one input, or
         ## if it something else
@@ -304,7 +304,7 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_fl
 
         ## Replace the previous input edge with the new input edge that is after the cat.
         curr.replace_edge(input_id, new_input_id)
-        graph.set_edge_to(new_input_id, id(curr))
+        graph.set_edge_to(new_input_id, curr.get_id())
 
         # log("graph nodes:", graph.nodes)
         # log("graph edges:", graph.edges)
@@ -367,7 +367,7 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
                 ## After split has succeeded we know that the curr node (previous of the next)
                 ## has changed. Therefore we need to retrieve it again.
                 if (not new_merger is None):
-                    new_curr_id = id(new_merger)
+                    new_curr_id = new_merger.get_id()
                     new_curr = new_merger
                     assert(isinstance(new_curr, Cat)
                            or isinstance(new_curr, r_merge.RMerge))
