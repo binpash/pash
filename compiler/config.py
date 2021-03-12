@@ -125,6 +125,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--no_eager"))
     if (pash_arguments.r_split):
         arguments.append(string_to_argument("--r_split"))
+    arguments.append(string_to_argument("--r_split_batch_size"))
+    arguments.append(string_to_argument(str(pash_arguments.r_split_batch_size)))
     if (pash_arguments.no_cat_split_vanish):
         arguments.append(string_to_argument("--no_cat_split_vanish"))
     arguments.append(string_to_argument("--debug"))
