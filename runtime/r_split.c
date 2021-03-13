@@ -123,7 +123,7 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
 void SplitByLinesRaw(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned int numOutputFiles)
 {
   int current = 0, len = 0;
-  size_t blockSize = 0, bufLen = 0;
+  size_t bufLen = 0;
   FILE* outputFile = outputFiles[current];
 
   char* buffer = NULL;
@@ -166,7 +166,8 @@ void SplitInput(char *input, int batchSize, char *outputFileNames[], unsigned in
 
   if (raw)
   {
-    SplitByLinesRaw(inputFile, batchSize, outputFiles, numOutputFiles);
+    // SplitByLinesRaw(inputFile, batchSize, outputFiles, numOutputFiles);
+    SplitByLines(inputFile, batchSize, outputFiles, numOutputFiles, 0);
   }
   else if (useBytes)
   {
