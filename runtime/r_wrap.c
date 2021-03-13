@@ -7,12 +7,12 @@
 
 void processCmd(char *args[])
 {
-    size_t bufLen = BUFLEN; //buffer length, would be resized as needed
+    size_t bufLen = BUFLEN, outBufLen = BUFLEN; //buffer length, would be resized as needed
     int64_t id;
     size_t blockSize;
     char *buffer = malloc(bufLen + 1);
     char *readBuffer = malloc(bufLen + 1);
-
+    char *cmdOutput = malloc(outBufLen+1);
     //select
     fd_set readFds;
     fd_set writeFds;
@@ -40,6 +40,7 @@ void processCmd(char *args[])
         {
             dup2(fdOut[WRITE_END], STDOUT_FILENO);
             dup2(fdIn[READ_END], STDIN_FILENO);
+
             close(fdOut[READ_END]);
             close(fdOut[WRITE_END]);
             close(fdIn[READ_END]);
@@ -62,8 +63,7 @@ void processCmd(char *args[])
             FILE *execInFile = fdopen(outputFd, "wb");
             fcntl(inputFd, F_SETFL, O_NONBLOCK);
 
-            size_t outBufLen = 0, len = 0, currLen = 0;
-            char *cmdOutput = malloc(0);
+            size_t len = 0, currLen = 0;
 
             //select prep
             maxFd = MAX(inputFd, outputFd);
@@ -108,7 +108,6 @@ void processCmd(char *args[])
 
                     // TODO: Should I handle some error here?
                     select(maxFd + 1, &readFds, &writeFds, NULL, NULL);
-
                     if (FD_ISSET(inputFd, &readFds))
                     {
                         //Try reading from forked processs, nonblocking
@@ -130,7 +129,7 @@ void processCmd(char *args[])
                 tot_read += readSize;
             }
             fclose(execInFile);
-
+            // fprintf(stderr, "finished one fork\n");
             assert(tot_read == blockSize);
 
             //read output of forked process (do I need to wait or is read blocking enough?)
@@ -154,11 +153,12 @@ void processCmd(char *args[])
 
             //update header (ordered at the end so !feof works) and cleanup
             readHeader(stdin, &id, &blockSize);
-            free(cmdOutput);
         }
+        kill(pid, SIGKILL);
     }
     free(buffer);
     free(readBuffer);
+    free(cmdOutput);
 }
 
 int main(int argc, char *argv[])
