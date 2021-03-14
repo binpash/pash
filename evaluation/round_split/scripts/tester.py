@@ -40,7 +40,7 @@ class Tests(LogParser):
 
         if r_split:
             command.append("--r_split")
-            batch_size = batch_size if batch_size else self.batch_sz
+            batch_size = str(batch_size) if batch_size else self.batch_sz #str(int(os.path.getsize(in_file)/90))
             command.append("--r_split_batch_size")
             command.append(batch_size)
         if no_eager:
@@ -63,7 +63,7 @@ class Tests(LogParser):
                 print(f"log in {log_file}")
         
         df = self.log_parser.parse_log(result.stderr)
-
+        
         return result, df
 
     #Run provided tests in folder x with the env files
@@ -88,19 +88,20 @@ class Tests(LogParser):
         log_file = os.path.join(log_folder, temp_filename)
         return log_file
 
+
 def run_tests():
-    test10M = Tests(TESTFILES[1], BATCHSZ[1])
-    tests = ['minimal_grep', 'minimal_sort', 'topn', 'wf', 'diff', 'set-diff', 'double_sort', 'shortest_scripts'] #'bigrams', 'spell'
+    test10M = Tests(TESTFILES[3], BATCHSZ[3])
+    tests = ['minimal_sort', 'topn', 'wf', 'diff', 'set-diff', 'double_sort', 'sort'] #'bigrams', 'spell' 'shortest_scripts'
     
     test_files = []
     for test in tests:
         test_path = f"{PASH_TOP}/evaluation/microbenchmarks/{test}.sh"
         test_files.append(test_path)
-    
-    test10M.run_test_list(test_files, r_split=True, width=2, log_folder="tmp_log")
-    test10M.run_test_list(test_files, r_split=True, width=2, no_eager=True)
-    # test10M.run_test_list(test_files, width=2)
-    
+    tmp_folder = "tmp_1G_width4/"
+    test10M.run_test_list(test_files, r_split=True, width=4, log_folder=tmp_folder)
+    test10M.run_test_list(test_files, r_split=True, width=4, no_eager=True, log_folder=tmp_folder)
+    test10M.run_test_list(test_files, width=4, log_folder=tmp_folder)
+    test10M.run_test_list(test_files, width=4, no_eager=True, log_folder=tmp_folder)
     print(test10M.get_df()[["test_name", "no_eager", "split_type", "exec_time", "cpu%", "width"]].to_string(index = False))
 
 if __name__ == '__main__':
