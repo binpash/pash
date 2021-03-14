@@ -2,6 +2,7 @@ import pandas as pd
 import argparse
 import re
 import os
+from sys import argv
 
 DEFAULT_LOG_FOLDER = "tmp_log/"
 
@@ -26,6 +27,7 @@ class LogParser:
         - split_type
         - no_eager
         - width
+        - r_split_batch_size
         - exec_time
         - backend_time
         - execiton_time
@@ -45,6 +47,9 @@ class LogParser:
 
     def __init__(self, df=None):
         self.df = df if df else pd.DataFrame()
+    
+    def __split__time(self, s):
+        return float(s.split(" ")[0])
         
     def parse_log(self, log: str)->pd.DataFrame:
         """
@@ -71,7 +76,7 @@ class LogParser:
         df = pd.DataFrame()
 
         test_name = os.path.basename(parsed_args["input"]).replace(".sh", "")
-        split_type = "r-split" if parsed_args["r_split"]=="True" else "auto-split"
+        split_type = "r-split" if parsed_args["r_split"] else "auto-split"
 
         data = {
             #From Args
@@ -79,23 +84,24 @@ class LogParser:
             "IN": os.path.basename(parsed_args["IN"]),
             "split_type" : split_type,
             "no_eager" : parsed_args["no_eager"],
-            "width": parsed_args["width"],
+            "width": int(parsed_args["width"]),
+            "r_split_batch_size": int(parsed_args["r_split_batch_size"]),
             #From pash log
-            "exec_time": parsed_log["Execution time"],
-            "backend_time": parsed_log["Backend time"],
-            "compilation_time": parsed_log["Compilation time"],
-            "preprocess_time": parsed_log["Preprocessing time"],
-            "eager_nodes": parsed_log["Eager nodes"],
+            "exec_time": self.__split__time(parsed_log["Execution time"]),
+            "backend_time": self.__split__time(parsed_log["Backend time"]),
+            "compilation_time": self.__split__time(parsed_log["Compilation time"]),
+            "preprocess_time": self.__split__time(parsed_log["Preprocessing time"]),
+            "eager_nodes": int(parsed_log["Eager nodes"]),
             "compiler_exit" : parsed_log["Compiler exited with code"],
             #From time
             "gnu_real": parsed_time["gnu_real"], 
             "gnu_usr": parsed_time["user"],
             "gnu_sys": parsed_time["sys"],
             "cpu%": parsed_time["cpu%"],
-            "max_res_size": parsed_time["max_resident"],
-            "avg_res_size": parsed_time["average_resident"],
-            "major_pagefaults": parsed_time["major_pagefaults"],
-            "minor_pagefaults": parsed_time["minor_pagefaults"],
+            "max_res_size": int(parsed_time["max_resident"]),
+            "avg_res_size": int(parsed_time["average_resident"]),
+            "major_pagefaults": int(parsed_time["major_pagefaults"]),
+            "minor_pagefaults": int(parsed_time["minor_pagefaults"]),
         }
 
         #update local and global df
@@ -131,6 +137,9 @@ class LogParser:
         return ret_df
 
     def get_df(self):
+        self.df["no_eager"] = self.df["no_eager"].astype(bool)
+        self.df["width"] = self.df["width"].astype(int)
+        self.df["r_split_batch_size"] = self.df["r_split_batch_size"].astype(int)
         return self.df
 
     def __parse_args__(self, args: str, args_of_interest):
@@ -140,7 +149,10 @@ class LogParser:
             try:
                 arg, val = line.split(" ")
                 if arg in args_of_interest:
-                    args_dict[arg] = val
+                    if val == "True" or val == "False":
+                        args_dict[arg] = True if val == "True" else False
+                    else:
+                        args_dict[arg] = val
             except:
                 continue
         return args_dict
@@ -201,5 +213,9 @@ def process_gnu_time(time_data):
 if __name__ == '__main__':
     #sample execution
     log_parser = LogParser()
-    df = log_parser.parse_folder(DEFAULT_LOG_FOLDER)
-    print(log_parser.get_df()[["test_name", "no_eager", "split_type", "exec_time", "cpu%", "width"]].to_string(index = False))
+    #can pass folder name in first argument
+    if len(argv) > 1:
+        df = log_parser.parse_folder(argv[1])
+    else:
+        df = log_parser.parse_folder(DEFAULT_LOG_FOLDER)
+    print(log_parser.get_df()[["test_name", "IN", "r_split_batch_size", "no_eager", "split_type", "exec_time", "cpu%", "width"]].to_string(index = False))
