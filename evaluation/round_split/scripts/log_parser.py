@@ -47,9 +47,6 @@ class LogParser:
 
     def __init__(self, df=None):
         self.df = df if df else pd.DataFrame()
-    
-    def __split__time(self, s):
-        return float(s.split(" ")[0])
         
     def parse_log(self, log: str)->pd.DataFrame:
         """
@@ -87,10 +84,10 @@ class LogParser:
             "width": int(parsed_args["width"]),
             "r_split_batch_size": int(parsed_args["r_split_batch_size"]),
             #From pash log
-            "exec_time": self.__split__time(parsed_log["Execution time"]),
-            "backend_time": self.__split__time(parsed_log["Backend time"]),
-            "compilation_time": self.__split__time(parsed_log["Compilation time"]),
-            "preprocess_time": self.__split__time(parsed_log["Preprocessing time"]),
+            "exec_time": parsed_log["Execution time"],
+            "backend_time": parsed_log["Backend time"],
+            "compilation_time": parsed_log["Compilation time"],
+            "preprocess_time": parsed_log["Preprocessing time"],
             "eager_nodes": int(parsed_log["Eager nodes"]),
             "compiler_exit" : parsed_log["Compiler exited with code"],
             #From time
@@ -159,13 +156,16 @@ class LogParser:
     
     def __parse_pash_log__(self, args: str, tags_of_interest) :
         lines = args.split("\n")
-        log_dict = {i:False for i in tags_of_interest}
+        log_dict = {i:0 for i in tags_of_interest}
         
         for line in lines:
             try:
                 tag, val = line.split(": ")
                 if tag in tags_of_interest:
-                    log_dict[tag] = val
+                    if tag.endswith("time"):
+                        log_dict[tag] += float(val.split(" ")[0])
+                    else:
+                        log_dict[tag] = val
             except:
                 continue
         return log_dict
