@@ -6,6 +6,7 @@ from time import time as timestamp
 from functools import wraps
 import pandas as pd
 
+PASH_TOP = "/home/tamlu/pash"
 TESTFILES = ["../scripts/input/1M.txt", "../scripts/input/10M.txt", "../scripts/input/100M.txt", "../scripts/input/1G.txt"]
 BATCHSZ = [10000, 100000, 1000000, 10000000]
 
@@ -47,15 +48,11 @@ class Tests():
         self.batch_sz = str(batch_sz)
         self.df = df if df else pd.DataFrame()
     
-    def get_dataframe(self, testname, r_data, sys_data, pash_data):
-        r_data["test"] = "r-split " + testname
-        sys_data["test"] = "system " + testname
-        pash_data["test"] = "pash " + testname
-
-        self.df = self.df.append(r_data, ignore_index=True)
-        self.df = self.df.append(sys_data, ignore_index=True)
-        self.df = self.df.append(pash_data, ignore_index=True)
-
+    def get_dataframe(self, testname, all_data):
+        for test in all_data:
+            test_data = all_data[test]
+            test_data["test"] = test + " " + testname
+            self.df = self.df.append(test_data, ignore_index=True)
         return self.df
 
     def time(self, command):
@@ -73,14 +70,15 @@ class Tests():
 
     
     def wcTest(self):
+        data = {}
         #round-split
         command = ["./r-wc.sh", self.test_file, self.batch_sz]
-        out, data = self.time(command)
+        out, data["r-split"] = self.time(command)
 
         os.environ["IN"] = self.test_file
         #default
         command = ["./wc.sh"]
-        out1, data1 = self.time(command)
+        out1, data["system"] = self.time(command)
         # print(out)
         # print(out.split(), out1.split())
         # add assert when merge works
@@ -89,71 +87,82 @@ class Tests():
         os.environ["IN"] = self.test_file
         pash_file = get_pash_script("wc.sh")
         command = [pash_file]
-        out2, data2 = self.time(command)
+        out2, data["pash"] = self.time(command)
  
         # assert(out == out1 == out2)
         
-        df = self.get_dataframe("wc", data, data1, data2)
+        df = self.get_dataframe("wc", data)
         
         return df
 
     def minimal_grep(self):
+        data = {}
+
         #round-split
         command = ["./r-minimal_grep.sh", self.test_file, self.batch_sz]
-        out, data = self.time(command)
+        out, data["r-split"] = self.time(command)
 
         os.environ["IN"] = self.test_file
         #default
         command = ["./minimal_grep.sh"]
-        out1, data1 = self.time(command)
+        out1, data["system"] = self.time(command)
         assert(out == out1)
 
         # pa.sh
         pash_file = get_pash_script("./minimal_grep.sh")
         command = [pash_file]
-        out2, data2 = self.time(command)
-        df = self.get_dataframe("minimal_grep", data, data1, data2)
+        out2, data["pash"] = self.time(command)
+        df = self.get_dataframe("minimal_grep", data)
         
         return df
 
     def bell_grep(self):
+        data = {}
         #round-split
         command = ["./r-bell_grep.sh", self.test_file, self.batch_sz]
-        out, data = self.time(command)
+        out, data["r-split"] = self.time(command)
 
         os.environ["IN"] = self.test_file
         #default
         command = ["./bell_grep.sh"]
-        out1, data1 = self.time(command)
+        out1, data["system"] = self.time(command)
         
         assert(out == out1)
         # pa.sh
         pash_file = get_pash_script("bell_grep.sh")
         command = [pash_file]
-        out2, data2 = self.time(command)
-        df = self.get_dataframe("bell", data, data1, data2)
+        out2, data["pash"] = self.time(command)
+        df = self.get_dataframe("bell", data)
         
         return df
 
     def sort(self):
+        data = {}
         #round-split
         command = ["./r-sort.sh", self.test_file, self.batch_sz]
-        out, data = self.time(command)
+        out, data["r-split"] = self.time(command)
+
+        #using -r
+        command = ["./raw-r-sort.sh", self.test_file, self.batch_sz]
+        out1, data["raw-split"] = self.time(command)
 
         os.environ["IN"] = self.test_file
         #default
         command = ["../microbenchmarks/sort.sh"]
-        out1, data1 = self.time(command)
+        out2, data["system"] = self.time(command)
 
-        assert(out == out1)
+        assert(out == out2)
+        assert(out1 == out2)
+
         # pa.sh
         pash_file = get_pash_script("../microbenchmarks/sort.sh")
         command = [pash_file]
-        out2, data2 = self.time(command)
-        df = self.get_dataframe("sort", data, data1, data2)
+        out2, data["pash"] = self.time(command)
+        df = self.get_dataframe("sort", data)
         
         return df
-
+        
+        
 def run_tests():
     print("-----------Running 100M tests---------------")
     test100M = Tests(TESTFILES[2], BATCHSZ[2])
@@ -178,5 +187,5 @@ def run_tests():
     print(test10M.df[["test", "real", "user", "sys", "cpu%"]].to_string(index = False))
 
 if __name__ == '__main__':
-    os.environ["PASH_TOP"] = "/home/tamlu/pash"
+    os.environ["PASH_TOP"] = PASH_TOP
     run_tests()

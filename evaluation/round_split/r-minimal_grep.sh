@@ -10,8 +10,8 @@ file8=8.out
 file9=9.out
 rm -f *.out
 
-testFile="$PASH_TOP/evaluation/scripts/input/100M.txt"
-batchSize=100000
+testFile="$PASH_TOP/evaluation/scripts/input/10M.txt"
+batchSize=1000000
 if [ "$#" -gt "0" ]
  then
     testFile=$1
@@ -24,17 +24,20 @@ mkfifo $file1
 mkfifo $file2
 mkfifo $file3
 mkfifo $file4
+mkfifo $file5
+mkfifo $file6
 
-../../runtime/r_split $testFile $batchSize $file1 $file2 &
+$PASH_TOP/runtime/r_split $testFile $batchSize $file1 $file2 &
 
-../../runtime/r_wrap grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' < $file1 > $file3 &
-../../runtime/r_wrap grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' < $file2 > $file4 &
-# ../r_wrap grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' < $file7 > $file8 &
+$PASH_TOP/runtime/r_wrap tr A-Z a-z < $file1 > $file3 &
+$PASH_TOP/runtime/r_wrap tr A-Z a-z < $file2 > $file4 &
 
-../../runtime/r_merge $file3 $file4
+$PASH_TOP/runtime/r_wrap grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' < $file3 > $file5 &
+$PASH_TOP/runtime/r_wrap grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' < $file4 > $file6 &
 
-# cat $testFile | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' > $file6
-# if cmp -s "$file6" "$file5"; then
+../../runtime/r_merge $file5 $file6
+# cat $testFile | tr A-Z a-z | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' > t2.out
+# if cmp -s t1.out t2.out; then
 #     printf 'The file "%s" is the same as "%s"\n' "$file6" "$file5"
 # else
 #     printf 'The file "%s" is different from "%s"\n' "$file6" "$file5"
