@@ -1,7 +1,8 @@
 #ifndef AST2_H
 #define AST2_H
 
-#include "CharList.h"
+
+#include "ArgCharStack.h"
 
 
 #define TRUE  1
@@ -102,7 +103,8 @@ extern const char* SERIALIZE_DUP_TYPE [];
 extern const char* SERIALIZE_HEREDOC_TYPE [];
 
 
-typedef CharList arg_TYPE; // arg = arg_char list
+// Duplicates arg_char.h
+typedef ArgCharStack arg_TYPE; // arg = arg_char list
 
 
 //------------------------------------------------------------------------------------------

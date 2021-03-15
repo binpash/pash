@@ -51,6 +51,8 @@ void parse_all (void) {
 //            printf ("null\n");
         } else { // Dash.Parsed
             struct t_TYPE* t = of_node (n);
+
+            assert (t != NULL);
             pour_the_t (t);
 
             printf ("\n");
@@ -74,9 +76,11 @@ int main (int argc, char* argv []) {
         }
     }
 
+for (int i = 0; i < 1; i++) {
     set_input_src (inputPath);
 
     parse_all ();
+}
 
     // TODO: print_ast (JSON output)
 
