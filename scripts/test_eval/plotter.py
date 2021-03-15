@@ -8,9 +8,9 @@ import os
 def plot_barchart(df, y_axis="exec_time", test_names=None, save_file="output.png"):
     if test_names is not None:
         df = df[df["test_name"].isin(test_names)]
-        labels = test_names
+        labels = sorted(test_names)
     else:
-        labels = df.test_name.unique()
+        labels = sorted(df.test_name.unique())
 
     x = np.arange(len(labels))  # the label locations
     width = 0.2  # the width of the bars
