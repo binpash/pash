@@ -6,7 +6,7 @@ from time import time as timestamp
 from functools import wraps
 import pandas as pd
 
-TESTFILES = ["/home/ubuntu/pash/evaluation/scripts/input/1M.txt", "/home/ubuntu/pash/evaluation/scripts/input/10M.txt", "/home/ubuntu/pash/evaluation/scripts/input/100M.txt", "/home/ubuntu/pash/evaluation/scripts/input/1G.txt"]
+TESTFILES = ["../scripts/input/1M.txt", "../scripts/input/10M.txt", "../scripts/input/100M.txt", "../scripts/input/1G.txt"]
 BATCHSZ = [10000, 100000, 1000000, 10000000]
 
 def process_gnu_time(time_data):
@@ -155,19 +155,19 @@ class Tests():
         return df
 
 def run_tests():
-    # print("-----------Running 100M tests---------------")
-    # test100M = Tests(TESTFILES[2], BATCHSZ[2])
-    # test100M.bell_grep()
-    # test100M.sort()
-    # test100M.wcTest()
-    # print(test100M.df[["test", "real", "user", "sys", "cpu%"]].to_string(index = False))
+    print("-----------Running 100M tests---------------")
+    test100M = Tests(TESTFILES[2], BATCHSZ[2])
+    test100M.bell_grep()
+    test100M.sort()
+    test100M.wcTest()
+    print(test100M.df[["test", "real", "user", "sys", "cpu%"]].to_string(index = False))
 
-    # print("\n-----------Running 1G tests---------------")
-    # test1G = Tests(TESTFILES[3], BATCHSZ[3])
-    # test1G.bell_grep()
-    # test1G.sort()
-    # test1G.wcTest()
-    # print(test1G.df[["test", "real", "user", "sys", "cpu%"]].to_string(index = False))
+    print("\n-----------Running 1G tests---------------")
+    test1G = Tests(TESTFILES[3], BATCHSZ[3])
+    test1G.bell_grep()
+    test1G.sort()
+    test1G.wcTest()
+    print(test1G.df[["test", "real", "user", "sys", "cpu%"]].to_string(index = False))
 
     print("\n-----------Running 10M tests---------------")
     test10M = Tests(TESTFILES[1], BATCHSZ[1])
