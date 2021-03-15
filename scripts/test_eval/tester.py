@@ -6,8 +6,8 @@ import pandas as pd
 import uuid
 
 PASH_TOP = "/home/tamlu/pash"
-TESTFILES = [f"{PASH_TOP}/evaluation/scripts/input/1M.txt", f"{PASH_TOP}/evaluation/scripts/input/10M.txt", f"{PASH_TOP}/evaluation/scripts/input/100M.txt", f"{PASH_TOP}/evaluation/scripts/input/1G.txt"]
-BATCHSZ = [10000, 100000, 1000000, 10000000]
+TESTFILES = [f"{PASH_TOP}/evaluation/scripts/input/1M.txt", f"{PASH_TOP}/evaluation/scripts/input/10M.txt", f"{PASH_TOP}/evaluation/scripts/input/100M.txt", f"{PASH_TOP}/evaluation/scripts/input/1G.txt", f"{PASH_TOP}/evaluation/scripts/input/3G.txt", f"{PASH_TOP}/evaluation/scripts/input/100G.txt"]
+BATCHSZ = [10000, 100000, 1000000, 10000000, 30000000, 100000000]
 
 class Tests(LogParser):
     def __init__(self, in_file = TESTFILES[1], batch_sz = 100000):
@@ -92,12 +92,12 @@ class Tests(LogParser):
 def run_tests():
     test10M = Tests(TESTFILES[3], BATCHSZ[3])
     tests = ['minimal_sort', 'topn', 'wf', 'diff', 'set-diff', 'double_sort', 'sort'] #'bigrams', 'spell' 'shortest_scripts'
-    
+    tests = ["double_sort", "diff"]
     test_files = []
     for test in tests:
         test_path = f"{PASH_TOP}/evaluation/microbenchmarks/{test}.sh"
         test_files.append(test_path)
-    tmp_folder = "tmp_1G_width4/"
+    tmp_folder = "tmp2_1G_width4rm/"
     test10M.run_test_list(test_files, r_split=True, width=4, log_folder=tmp_folder)
     test10M.run_test_list(test_files, r_split=True, width=4, no_eager=True, log_folder=tmp_folder)
     test10M.run_test_list(test_files, width=4, log_folder=tmp_folder)
