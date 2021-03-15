@@ -10,7 +10,7 @@ file8=8.out
 file9=9.out
 rm -f *.out
 
-testFile="/home/ubuntu/pash/evaluation/scripts/input/10M.txt"
+testFile="$PASH_TOP/evaluation/scripts/input/100M.txt"
 batchSize=100000
 if [ "$#" -gt "0" ]
  then
