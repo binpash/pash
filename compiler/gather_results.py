@@ -88,8 +88,8 @@ structures = {"minimal_grep" : "$3\\times\\tsta$",
               "alt_bigrams" : "$3\\times\\tsta, \\tpur$",
               "spell" : "$4\\times\\tsta, 3\\times\\tpur$",
               "shortest_scripts" : "$5\\times\\tsta, 2\\times\\tpur$",
-              "diff" : "$2\\times\\tsta, 3\\times\\tpur$",
-              "set-diff" : "$5\\times\\tsta, 2\\times\\tpur$",
+              "diff" : "$2\\times\\tsta, 2\\times\\tpur, \\tnpu$",
+              "set-diff" : "$5\\times\\tsta, 2\\times\\tpur, \\tnpu$",
               "double_sort" : "$\\tsta, 2\\times\\tpur$"}
 
 highlights = {"minimal_grep" : "complex NFA regex",
@@ -603,11 +603,12 @@ def plot_sort_with_baseline(results_dir):
     ax.plot(all_scaleup_numbers, baseline_sort_distr_speedup[1:], '-p', linewidth=0.5, label='sort --parallel')
     # ax.plot(all_scaleup_numbers, baseline_sort_opt_distr_speedup[1:], '-', linewidth=0.5, label='sort --parallel -S 30%')
 
+    plt.ylim(1, 8.6)
 
     plt.xticks(all_scaleup_numbers[1:])
     plt.legend(loc='lower right')
     # plt.title("Comparison with sort --parallel")
-
+    fig.set_size_inches(8, 5.5)
 
     plt.tight_layout()
     plt.savefig(os.path.join('../evaluation/plots', "sort_baseline_comparison_scaleup.pdf"),bbox_inches='tight')
