@@ -98,6 +98,9 @@ python3 -m pip install -U PyYAML &> $LOG_DIR/pip_install_pyyaml.log
 python3 -m pip install numpy &> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib &> $LOG_DIR/pip_install_matplotlib.log
 
+
+sudo apt-get install -y p7zip-full
+
 # Generate inputs
 echo "Generating input files..."
 cd evaluation/scripts/input
