@@ -65,6 +65,9 @@ else
 fi
 
 
+# Export necessary environment variables
+export PASH_TOP=$PWD
+
 # Build the parser (requires libtool, m4, automake, opam)
 echo "Building parser..."
 eval $(opam config env)
@@ -116,9 +119,6 @@ echo "Generating input files..."
 cd evaluation/scripts/input
 ./gen.sh
 cd ../../../
-
-# Export necessary environment variables
-export PASH_TOP=$PWD
 
 ## This is necessary for the parser to link to libdash
 echo "Do not forget to export LD_LIBRARY_PATH as shown below :)"
