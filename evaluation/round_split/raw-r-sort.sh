@@ -11,7 +11,7 @@ file8=8.out
 rm -f *.out
 
 batchSize=10000000
-testFile="$PASH_TOP/evaluation/scripts/input/100M.txt"
+testFile="$PASH_TOP/evaluation/scripts/input/1G.txt"
 if [ "$#" -gt "0" ]
  then
     testFile=$1

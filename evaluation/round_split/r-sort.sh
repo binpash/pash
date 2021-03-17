@@ -12,7 +12,7 @@ rm -f *.out
 
 testFile=../../evaluation/scripts/input/100M.txt
 batchSize=10000000
-testFile="$PASH_TOP/evaluation/scripts/input/100M.txt"
+testFile="$PASH_TOP/evaluation/scripts/input/1G.txt"
 if [ "$#" -gt "0" ]
  then
     testFile=$1
@@ -30,7 +30,7 @@ mkfifo $file6
 mkfifo $file7
 mkfifo $file8
 
-$PASH_TOP/runtime/r_split $testFile $batchSize $file1 $file2 &
+$PASH_TOP/runtime/r_split  $testFile $batchSize $file1 $file2 &
 
 $PASH_TOP/runtime/r_unwrap < $file1 > $file3 &
 $PASH_TOP/runtime/r_unwrap < $file2 > $file4 &

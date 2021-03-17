@@ -64,7 +64,6 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
     if (headSize == 0)
     {
       headSize = len;
-
       if ((len = getline(&newLineBuffer, &bufLen, inputFile)) < 0)
       {
         //edge case to fix: can't be called if file ended
@@ -109,7 +108,8 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
 
   if (prevRestSize > 0)
   {
-    writeHeader(outputFile, id, prevRestSize);
+    if (add_header)
+      writeHeader(outputFile, id, prevRestSize);
     safeWriteWithFlush(incompleteLine, 1, prevRestSize, outputFile);
   }
 
