@@ -10,6 +10,7 @@ void processCmd(char* args[]) {
     int64_t id;
     size_t blockSize;
     char* buffer = malloc(bufLen + 1);
+    char* readBuffer = malloc(bufLen + 1);
 
     readHeader(stdin, &id, &blockSize);
     while(!feof(stdin)) {     
@@ -53,35 +54,30 @@ void processCmd(char* args[]) {
             size_t tot_read = 0, readSize = 0;
             while (tot_read < blockSize) {
                 readSize = MIN(bufLen, blockSize-tot_read);
-                fprintf(stderr, "reading stdin\n");
+                // fprintf(stderr, "reading stdin\n");
                 if (fread(buffer, 1, readSize, stdin) != readSize) {
                     fprintf(stderr, "r_wrap: There is a problem with reading the block\n");
                     exit(1);
                 }
-                
-                fprintf(stderr, "writing to fork\n");
-                //Write to forked process
-                safeWrite(buffer, 1 , readSize, execInFile);
-                // if (write(fdIn[WRITE_END], buffer, readSize) != readSize) {
-                //     fprintf(stderr, "Failed wrtiting to pipe\n");
-                //     exit(1);
-                // }
-                fprintf(stderr, "wrote to fork and reading\n");
                 //Try reading from forked processs, nonblocking
-                if ((len = fread(buffer, 1, bufLen, execOutFile)) > 0) {
+                while ((len = fread(readBuffer, 1, bufLen, execOutFile)) > 0) {
                     if ((currLen + len) > outBufLen) {
                         outBufLen = currLen + len + CHUNKSIZE;
                         cmdOutput = realloc(cmdOutput, outBufLen + 1);
                     }
-                    memcpy(cmdOutput + currLen, buffer, len);
+                    memcpy(cmdOutput + currLen, readBuffer, len);
                     currLen += len;
                     // fprintf(stderr, "read %ld bytes\n", len);
                 }
+
+                //Write to forked process
+                safeWrite(buffer, 1 , readSize, execInFile);
+                
                 tot_read += readSize;
             }
             // close(fdIn[WRITE_END]);
             fclose(execInFile);
-            fprintf(stderr, "finished stdin loop\n");
+            // fprintf(stderr, "finished stdin loop\n");
             assert(tot_read == blockSize);
 
             //read output of forked process (do I need to wait or is read blocking enough?)
@@ -100,7 +96,7 @@ void processCmd(char* args[]) {
             //write block to stdout
             writeHeader(stdout, id, currLen);
             safeWrite(cmdOutput, 1, currLen, stdout);
-            // fflush(stdout);
+            
             //update header (ordered at the end so !feof works) and cleanup
             readHeader(stdin, &id, &blockSize);
             free(cmdOutput);
