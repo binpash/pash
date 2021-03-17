@@ -26,6 +26,7 @@ typedef __uint64_t uint64_t;
 #define MINCHUNKS 12 //minimum number of chunks
 
 #define  MIN(a,b) a > b ? b : a
+#define  MAX(a,b) a < b ? b : a
 
 void readHeader(FILE* inputFile, int64_t *id, size_t *blockSize) {
     int ret;

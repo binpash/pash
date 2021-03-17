@@ -111,6 +111,7 @@ def execute_script(compiled_script_filename, debug_level, command):
         shutil.rmtree(config.PASH_TMP_PREFIX)
     if command:
         os.remove(config.config['runtime']['immediate'])
+    log("-" * 40) #log end marker
     ## Return the exit code of the executed script
     exit(exec_obj.returncode)
 
