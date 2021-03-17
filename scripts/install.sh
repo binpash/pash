@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Ensure that the script fails if something failed
 set -e
@@ -45,13 +45,13 @@ if [ "$prepare_sudo_install_flag" -eq 1 ]; then
     echo "|-- running apt update..."
     sudo apt-get update &> $LOG_DIR/apt_update.log
     echo "|-- running apt install..."
-    sudo apt-get install -y libtool m4 automake opam pkg-config libffi-dev python3 python3-pip wamerican-insane &> $LOG_DIR/apt_install.log
+    sudo apt-get install -y libtool m4 automake opam pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils &> $LOG_DIR/apt_install.log
     yes | opam init &> $LOG_DIR/opam_init.log
     # opam update
 else
-    echo "Requires libtool, m4, automake, opam, pkg-config, libffi-dev, python3, pip for python3"
+    echo "Requires libtool, m4, automake, opam, pkg-config, libffi-dev, python3, pip for python3, a dictionary, bc, bsdmainutils"
     echo "Ensure that you have them by running:"
-    echo "  sudo apt install libtool m4 automake opam pkg-config libffi-dev python3 python3-pip"
+    echo "  sudo apt install libtool m4 automake opam pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils"
     echo "  opam init"
     echo -n "Press 'y' if you have these dependencies installed. "
     while : ; do
@@ -95,6 +95,8 @@ cd ../
 echo "Installing python dependencies..."
 python3 -m pip install jsonpickle &> $LOG_DIR/pip_install_jsonpickle.log
 python3 -m pip install -U PyYAML &> $LOG_DIR/pip_install_pyyaml.log
+python3 -m pip install numpy &> $LOG_DIR/pip_install_numpy.log
+python3 -m pip install matplotlib &> $LOG_DIR/pip_install_matplotlib.log
 
 # Generate inputs
 echo "Generating input files..."
@@ -104,7 +106,6 @@ cd ../../../
 
 # Export necessary environment variables
 export PASH_TOP=$PWD
-export PASH_PARSER=${PASH_TOP}/compiler/parser/parse_to_json.native
 
 ## This is necessary for the parser to link to libdash
 echo "Do not forget to export LD_LIBRARY_PATH as shown below :)"
