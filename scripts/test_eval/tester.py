@@ -1,16 +1,24 @@
-from log_parser import LogParser, DEFAULT_LOG_FOLDER
+from .logparser import LogParser, DEFAULT_LOG_FOLDER
 from subprocess import PIPE, run
 import argparse
 import os
 import pandas as pd
 import uuid
 
+<<<<<<< HEAD:scripts/test_eval/tester.py
 PASH_TOP = "/home/tamlu/pash"
 TESTFILES = [f"{PASH_TOP}/evaluation/scripts/input/1M.txt", f"{PASH_TOP}/evaluation/scripts/input/10M.txt", f"{PASH_TOP}/evaluation/scripts/input/100M.txt", f"{PASH_TOP}/evaluation/scripts/input/1G.txt", f"{PASH_TOP}/evaluation/scripts/input/3G.txt", f"{PASH_TOP}/evaluation/scripts/input/100G.txt"]
 BATCHSZ = [10000, 100000, 1000000, 10000000, 30000000, 100000000]
+=======
+GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
+if 'PASH_TOP' in os.environ:
+    PASH_TOP = os.environ['PASH_TOP']
+else:
+    PASH_TOP = run(GIT_TOP_CMD, stdout=PIPE, stderr=PIPE, universal_newlines=True).stdout.rstrip()
+>>>>>>> refs/rewritten/round-split-6:evaluation/round_split/scripts/tester.py
 
 class Tests(LogParser):
-    def __init__(self, in_file = TESTFILES[1], batch_sz = 100000):
+    def __init__(self, in_file = None, batch_sz = 100000):
         self.in_file = in_file
         self.batch_sz = str(batch_sz)
         self.log_parser = LogParser()
@@ -35,7 +43,8 @@ class Tests(LogParser):
             in_file = self.in_file
 
         new_env["IN"] = in_file
-
+        new_env["PASH_TOP"] = PASH_TOP
+        
         command = [f"{PASH_TOP}/pa.sh", test_path, "--output_time", f"-w {width}", "-d 1"]
 
         if r_split:
@@ -87,6 +96,7 @@ class Tests(LogParser):
         temp_filename = os.path.basename(test_path).replace(".sh", "") + "_" + str(uuid.uuid4()) + ".log"
         log_file = os.path.join(log_folder, temp_filename)
         return log_file
+<<<<<<< HEAD:scripts/test_eval/tester.py
 
 
 def run_tests():
@@ -107,3 +117,5 @@ def run_tests():
 if __name__ == '__main__':
     os.environ["PASH_TOP"] = PASH_TOP
     run_tests()
+=======
+>>>>>>> refs/rewritten/round-split-6:evaluation/round_split/scripts/tester.py
