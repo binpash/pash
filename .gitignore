@@ -43,5 +43,5 @@ notes.txt
 **/__pycache__/*
 
 #testing and plotting
-scripts/test_eval/tmp_*
 scripts/test_eval/*.png
+tmp*
