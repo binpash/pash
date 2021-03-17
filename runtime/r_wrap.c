@@ -79,10 +79,6 @@ void processCmd(char *args[])
                     fprintf(stderr, "r_wrap: There is a problem with reading the block\n");
                     exit(1);
                 }
-<<<<<<< HEAD
-
-=======
-<<<<<<< HEAD
                 //Try reading from forked processs, nonblocking
                 while ((len = fread(readBuffer, 1, bufLen, execOutFile)) > 0) {
                     if ((currLen + len) > outBufLen) {
@@ -94,9 +90,7 @@ void processCmd(char *args[])
                     // fprintf(stderr, "read %ld bytes\n", len);
                 }
 
-=======
                 FD_ZERO(&readFds); // Clear FD set for select
->>>>>>> refs/rewritten/round-split-4
                 FD_ZERO(&writeFds); // Clear FD set for select
                 while (!FD_ISSET(outputFd, &writeFds))
                 {
@@ -122,7 +116,6 @@ void processCmd(char *args[])
                     }
                 }
                 // fprintf(stderr, "writing %ld bytes\n", readSize);
->>>>>>> refs/rewritten/round-split-3
                 //Write to forked process
                 safeWriteWithFlush(buffer, 1, readSize, execInFile);
 
