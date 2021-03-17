@@ -104,7 +104,7 @@ wget https://github.com/jgm/pandoc/releases/download/2.2.1/pandoc-2.2.1-1-$(dpkg
 sudo dpkg -i ./pandoc-2.2.1-1-$(dpkg --print-architecture).deb
 rm ./pandoc-2.2.1-1-$(dpkg --print-architecture).deb 
 # node version 10+ does not need external npm
-sudo apt-get install -y curl 
+sudo apt-get install -y curl p7zip-full
 curl -fsSL https://deb.nodesource.com/setup_10.x | sudo -E bash -
 sudo apt-get install -y nodejs
 cd  $PASH_TOP/evaluation/scripts/web-index
