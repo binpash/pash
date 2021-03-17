@@ -17,10 +17,12 @@ void processCmd(char* args[]) {
         int fdOut[2];
         if (pipe(fdIn) < 0) {
             perror("pipe failed");
+            exit(1);
         }
 
         if (pipe(fdOut) < 0) {
             perror("pipe failed");
+            exit(1);
         }
         
         int pid = fork();
@@ -31,15 +33,17 @@ void processCmd(char* args[]) {
             close(fdOut[WRITE_END]);
             close(fdIn[READ_END]);
             close(fdIn[WRITE_END]);
-            free(buffer);
+            // free(buffer);
             execvp(args[0], args);
             //shouldn't get here
             perror("Exec failed");
+            exit(1);
         } else {
             close(fdIn[READ_END]);
             close(fdOut[WRITE_END]);
             
             FILE* execOutFile = fdopen(fdOut[READ_END], "rb");
+            FILE* execInFile = fdopen(fdIn[WRITE_END], "wb");
             fcntl(fdOut[READ_END], F_SETFL, O_NONBLOCK);
 
             size_t outBufLen = 0, len = 0, currLen = 0;
@@ -49,19 +53,20 @@ void processCmd(char* args[]) {
             size_t tot_read = 0, readSize = 0;
             while (tot_read < blockSize) {
                 readSize = MIN(bufLen, blockSize-tot_read);
-                // fprintf(stderr, "reading stdin\n");
+                fprintf(stderr, "reading stdin\n");
                 if (fread(buffer, 1, readSize, stdin) != readSize) {
                     fprintf(stderr, "r_wrap: There is a problem with reading the block\n");
                     exit(1);
                 }
                 
-                // fprintf(stderr, "writing to fork\n");
+                fprintf(stderr, "writing to fork\n");
                 //Write to forked process
-                if (write(fdIn[WRITE_END], buffer, readSize) != readSize) {
-                    fprintf(stderr, "Failed wrtiting to pipe\n");
-                    exit(1);
-                }
-                // fprintf(stderr, "wrote to fork and reading\n");
+                safeWrite(buffer, 1 , readSize, execInFile);
+                // if (write(fdIn[WRITE_END], buffer, readSize) != readSize) {
+                //     fprintf(stderr, "Failed wrtiting to pipe\n");
+                //     exit(1);
+                // }
+                fprintf(stderr, "wrote to fork and reading\n");
                 //Try reading from forked processs, nonblocking
                 if ((len = fread(buffer, 1, bufLen, execOutFile)) > 0) {
                     if ((currLen + len) > outBufLen) {
@@ -74,8 +79,9 @@ void processCmd(char* args[]) {
                 }
                 tot_read += readSize;
             }
-            close(fdIn[WRITE_END]);
-            // fprintf(stderr, "finished stdin loop\n");
+            // close(fdIn[WRITE_END]);
+            fclose(execInFile);
+            fprintf(stderr, "finished stdin loop\n");
             assert(tot_read == blockSize);
 
             //read output of forked process (do I need to wait or is read blocking enough?)
@@ -116,11 +122,11 @@ int main(int argc, char* argv[]) {
     }
 
     //process arguments
-    args = malloc(sizeof(char *)*(argc-1));
+    args = malloc(sizeof(char *)*(argc));
     for (int i = 1; i < argc; i++) {
-       args[i-1] = malloc(strlen(argv[i]));
+       args[i-1] = malloc(strlen(argv[i])+1);
        strcpy(args[i-1], argv[i]);
     }
-
+    args[argc - 1] = '\0';
     processCmd(args);
 }
