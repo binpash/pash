@@ -81,7 +81,7 @@ void SplitByLines(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned 
       //update incompleteLine to the current block
       memcpy(incompleteLine, buffer + headSize , restSize);
     }
-    fflush(outputFile);
+    // fflush(outputFile);
     current = (current + 1) % numOutputFiles;
     outputFile = outputFiles[current];
     prevRestSize = restSize;
@@ -106,26 +106,57 @@ void SplitByLines(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned 
     free(newLineBuffer);
 }
 
-void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned int numOutputFiles, int8_t useBytes) {
+void SplitByLinesRaw(FILE* inputFile, int batchSize, FILE* outputFiles[], unsigned int numOutputFiles) {
+  int current = 0, len = 0;
+  size_t blockSize = 0, bufLen = 0;
+  FILE* outputFile = outputFiles[current];
+  
+  char* buffer = NULL;
+
+  // Do round robin copying of the input file to the output files without any headers
+  while ((len = getline(&buffer, &bufLen, inputFile)) > 0) {
+      // blockSize += len;
+      // if (len < 0)
+      //   break;
+      // printf("len %zu\n", len);
+      // fputs(buffer, outputFile);
+      fwrite(buffer, 1, len, outputFile);
+      current = (current + 1) % numOutputFiles;
+      outputFile = outputFiles[current];
+      // if (blockSize >= batchSize) {
+      //   safeWrite(buffer, 1, blockSize, outputFile);
+      //   blockSize = 0;
+       
+      // }
+    // fflush(outputFile);
+  }
+ 
+  //clean up
+  free(buffer);
+}
+
+void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned int numOutputFiles, int8_t useBytes, int8_t raw) {
   PRINTDBG("%s: will split input\n", __func__);
   //TODO: find better way?
   FILE** outputFiles = malloc(sizeof(FILE*)*numOutputFiles);
   for(int i = 0; i < numOutputFiles; i++) {
-    outputFiles[i] = fopen(outputFileNames[i], "wb");
+    outputFiles[i] = fopen(outputFileNames[i], "w");
     if (!outputFiles[i]) {
       perror(LOC);
       exit(1);
     }
   }
 
-  FILE* inputFile = fopen(input, "rb");
+  FILE* inputFile = fopen(input, "r");
   if (!inputFile) {
     perror(LOC);
     exit(1);
   }
   PRINTDBG("%s: Opened input file %s\n", __func__, input);
 
-  if (useBytes) {
+  if(raw) {
+    SplitByLinesRaw(inputFile, batchSize, outputFiles, numOutputFiles);
+  } else if (useBytes) {
     //if batchSize isn't set we can approximate it
     if (batchSize == 0) {
       int inputfd = fileno(inputFile);
@@ -158,7 +189,7 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "missing input!\n");
     exit(1);
   }
-  int8_t useBytes = 0, offset = 0;
+  int8_t useBytes = 0, offset = 0, raw = 0;
   size_t batchSize = 0;
   char** outputFileNames = NULL;
   char* inputFileName = NULL;
@@ -166,6 +197,12 @@ int main(int argc, char* argv[]) {
     //check flags
     if(strcmp(argv[i], "-b") == 0) {
       useBytes = 1;
+      offset += 1;
+      continue;
+    }
+
+    if(strcmp(argv[i], "-r") == 0) {
+      raw = 1;
       offset += 1;
       continue;
     }
@@ -184,7 +221,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  SplitInput(inputFileName, batchSize, outputFileNames, argc - 3, useBytes);
+  SplitInput(inputFileName, batchSize, outputFileNames, argc - offset - 3, useBytes, raw);
 
   PRINTDBG("SplitInput is done\n");
   return 0;
