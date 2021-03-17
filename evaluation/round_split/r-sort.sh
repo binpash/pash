@@ -35,11 +35,11 @@ mkfifo $file8
 ../../runtime/r_unwrap < $file1 > $file3 &
 ../../runtime/r_unwrap < $file2 > $file4 &
 
-sort < $file3 > $file5 &
-sort < $file4 > $file6 &
+../../runtime/eager.sh $file3 $file5 "/tmp/pash_eager_intermediate_#file1" &
+../../runtime/eager.sh $file4 $file6 "/tmp/pash_eager_intermediate_#file2" &
 
-../../runtime/eager.sh $file5 $file7 "/tmp/pash_eager_intermediate_#file1" &
-../../runtime/eager.sh $file6 $file8 "/tmp/pash_eager_intermediate_#file2" &
+sort < $file5 > $file7 &
+sort < $file6 > $file8 &
 
 sort -m $file7 $file8
 
