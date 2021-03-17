@@ -47,7 +47,7 @@ void processCmd(char* args[]) {
             fcntl(fdOut[READ_END], F_SETFL, O_NONBLOCK);
 
             size_t outBufLen = 0, len = 0, currLen = 0;
-            char *cmdOutput = NULL;
+            char *cmdOutput = malloc(0);
 
             //Read batch
             size_t tot_read = 0, readSize = 0;
@@ -100,7 +100,7 @@ void processCmd(char* args[]) {
             //write block to stdout
             writeHeader(stdout, id, currLen);
             safeWrite(cmdOutput, 1, currLen, stdout);
-            fflush(stdout);
+            // fflush(stdout);
             //update header (ordered at the end so !feof works) and cleanup
             readHeader(stdin, &id, &blockSize);
             free(cmdOutput);

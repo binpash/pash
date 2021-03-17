@@ -21,7 +21,7 @@ void unwrap(FILE* inputFile) {
             safeWrite(buffer, 1, readSize, stdout);
             tot_read += readSize;
         }
-        fflush(stdout);
+        // fflush(stdout);
         assert(tot_read == blockSize);
 
         //update header (ordered at the end so !feof works) and cleanup
