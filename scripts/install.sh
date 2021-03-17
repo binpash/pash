@@ -98,6 +98,19 @@ python3 -m pip install -U PyYAML &> $LOG_DIR/pip_install_pyyaml.log
 python3 -m pip install numpy &> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib &> $LOG_DIR/pip_install_matplotlib.log
 
+echo "Installing web-index dependencies..."
+# pandoc v.2.2.1
+wget https://github.com/jgm/pandoc/releases/download/2.2.1/pandoc-2.2.1-1-$(dpkg --print-architecture).deb
+sudo dpkg -i ./pandoc-2.2.1-1-$(dpkg --print-architecture).deb
+rm ./pandoc-2.2.1-1-$(dpkg --print-architecture).deb 
+# node version 10+ does not need external npm
+sudo apt-get install -y curl 
+curl -fsSL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+sudo apt-get install -y nodejs
+cd  $PASH_TOP/evaluation/scripts/web-index
+npm install
+cd $PASH_TOP
+
 # Generate inputs
 echo "Generating input files..."
 cd evaluation/scripts/input
