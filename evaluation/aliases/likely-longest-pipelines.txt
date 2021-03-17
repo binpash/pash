@@ -46103,7 +46103,6 @@
 2 -o json | jq '.'
 2 -n1|sed -e "
 2 -l | xargs -o vim
-2 -i brightness | cut -f2 -d "" "" > ~/.currentbrightness; cat\
 2 -exec awk -i inplace ""!( NR<20 && !/^[[:blank:]]*#.*)/ && /^[[:blank:]]*($|[/].*)/)"" {} \;"
 2 -c-6,21-94 | tail +2"
 2 --stat -p --reverse HEAD@{1}.. | perl -pe 's/^(\++.+).*/\e[38;5;34m\e[1m$1\e[m/; s/^(\-+.*)/\e[38;5;196m\e[1m$1\e[m/'

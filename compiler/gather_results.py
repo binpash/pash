@@ -1,13 +1,32 @@
 import copy
 import sys
 import math
+import argparse
 import os
 import re
+import statistics
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.lines as pltlines
 import matplotlib.ticker as plticker
-import statistics
+
+parser = argparse.ArgumentParser(description='Produce plots from various experiments with PaSh.')
+parser.add_argument('--eurosys2021',
+                    action='store_true',
+                    help='generates the plots for all the experiments in the EuroSys2021 paper')
+parser.add_argument('--all',
+                    action='store_true',
+                    help='generates all plots')
+
+args = parser.parse_args()
+
+if args.all is True:
+    args.eurosys2021 = True
+
+if not args.all and not args.eurosys2021:
+    print("You have to specify some plot to generate!")
+    print("See command usage with --help.")
+    exit(0)
 
 SMALL_SIZE = 16
 MEDIUM_SIZE = 18
@@ -379,7 +398,7 @@ def collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers):
                for n in scaleup_numbers]
 
     ## TODO: Turn to Result
-    compile_numbers = [read_distr_total_compilation_time('{}{}_distr.time'.format(prefix, n))
+    compile_numbers = [read_distr_total_compilation_time('{}{}_{}'.format(prefix, n, suffix))
                        for n in scaleup_numbers]
     return (numbers, compile_numbers)
 
@@ -702,7 +721,8 @@ def generate_table_footer(full=True):
     footer += ['\\end{tabular*}']
     return "\n".join(footer)
 
-def generate_experiment_line(experiment, full=True):
+
+def generate_experiment_line(experiment, results_dir=RESULTS, full=True, small=False):
     line = []
     line += [pretty_names[experiment], '~&~']
 
@@ -716,17 +736,21 @@ def generate_experiment_line(experiment, full=True):
     input_size = collect_format_input_size(experiment)
     line += [input_size, '&']
 
+    if(small is False):
+        suffix='distr.time'
+        if(experiment in ["spell", "bigrams", "double_sort"]):
+            suffix='distr_auto_split.time'
+    else:
+        suffix='distr_auto_split.time'
+
     ## Collect and output the sequential time for the experiment
     scaleup_numbers = [2, 16, 64]
-    experiment_results_prefix = '{}/{}_'.format(RESULTS, experiment)
-    seq_time, _, compile_times = collect_experiment_scaleup_times(experiment_results_prefix, scaleup_numbers)
+    experiment_results_prefix = '{}/{}_'.format(results_dir, experiment)
+    seq_time, _, compile_times = collect_experiment_scaleup_times(experiment_results_prefix, scaleup_numbers, suffix=suffix)
     seq_time_seconds = format_time_seconds(seq_time)
     # seq_time_seconds = seq_times[0] / 1000
     line += [seq_time_seconds, '&']
 
-    suffix='distr.time'
-    if(experiment in ["spell", "bigrams", "double_sort"]):
-        suffix='distr_auto_split.time'
     commands_16, commands_64 = collect_experiment_command_number(experiment_results_prefix,
                                                                 suffix, [16, 64])
     if(full):
@@ -741,18 +765,20 @@ def generate_experiment_line(experiment, full=True):
     line += [highlights[experiment], '\\\\']
     return " ".join(line)
 
+def generate_tables(experiments, results_dir=RESULTS, table_suffix="", small=False):
+    generate_tex_table(experiments, results_dir=results_dir, table_suffix=table_suffix, small=small)
 
-def generate_tex_table(experiments):
+def generate_tex_table(experiments, results_dir=RESULTS, table_suffix="", small=False):
     header = generate_table_header()
     lines = []
     for experiment in experiments:
-        line = generate_experiment_line(experiment)
+        line = generate_experiment_line(experiment, results_dir=results_dir, small=small)
         # print(line)
         lines.append(line)
     data = "\n".join(lines)
     footer = generate_table_footer()
     table_tex = "\n".join([header, data, footer])
-    tex_filename = os.path.join('../evaluation/plots', 'microbenchmarks-table.tex')
+    tex_filename = os.path.join('../evaluation/plots', 'microbenchmarks-table{}.tex'.format(table_suffix))
     with open(tex_filename, 'w') as file:
         file.write(table_tex)
 
@@ -1542,10 +1568,14 @@ for experiment in all_experiments:
 ## Make a report of all one-liners
 report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctness)
 
+## Legacy unix50 results
+if args.all:
+    unix50_results, unix50_results_fan_in = collect_all_unix50_results(UNIX50_RESULTS)
+
 ## Collect all unix50 results
-unix50_results, unix50_results_fan_in = collect_all_unix50_results(UNIX50_RESULTS)
-small_unix50_results, _ = collect_all_unix50_results(SMALL_UNIX50_RESULTS, scaleup_numbers=[4], suffix='distr_auto_split.time')
-big_unix50_results, _ = collect_all_unix50_results(BIG_UNIX50_RESULTS, scaleup_numbers=[16], suffix='distr_auto_split.time')
+if args.eurosys2021:
+    small_unix50_results, _ = collect_all_unix50_results(SMALL_UNIX50_RESULTS, scaleup_numbers=[4], suffix='distr_auto_split.time')
+    big_unix50_results, _ = collect_all_unix50_results(BIG_UNIX50_RESULTS, scaleup_numbers=[16], suffix='distr_auto_split.time')
 
 ##
 ## Theory Paper
@@ -1559,10 +1589,12 @@ coarse_experiments = ["minimal_grep",
                       "diff",
                       "set-diff",
                       "shortest_scripts"]
-plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, 
-                            coarse_experiments, (unix50_results, unix50_results_fan_in))
-generate_tex_coarse_table(coarse_experiments)
-# collect_unix50_coarse_scaleup_times(unix50_results)
+
+if args.all:
+    plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, 
+                                coarse_experiments, (unix50_results, unix50_results_fan_in))
+    generate_tex_coarse_table(coarse_experiments)
+    # collect_unix50_coarse_scaleup_times(unix50_results)
 
 
 ##
@@ -1591,7 +1623,8 @@ custom_scaleup_plots = {"minimal_grep" : ["eager", "blocking-eager"],
                         "double_sort" : ["split", "eager", "blocking-eager", "no-eager"],
                         "shortest_scripts" : ["eager", "blocking-eager", "no-eager"]}
 
-plot_one_liners_tiling(all_experiment_results, experiments, custom_scaleup_plots)
+if args.eurosys2021:
+    plot_one_liners_tiling(all_experiment_results, experiments, custom_scaleup_plots)
 
 ## Medium input `-m`
 medium_custom_scaleup_plots = {"minimal_grep" : ["split", "blocking-eager"],
@@ -1606,10 +1639,11 @@ medium_custom_scaleup_plots = {"minimal_grep" : ["split", "blocking-eager"],
                                "shortest_scripts" : ["split", "blocking-eager", "no-eager"]}
 
 
-plot_one_liners_tiling(small_one_liner_results, experiments,
-                       medium_custom_scaleup_plots,
-                       all_scaleup_numbers=small_one_liners_scaleup_numbers,
-                       prefix="medium_")
+if args.eurosys2021:
+    plot_one_liners_tiling(small_one_liner_results, experiments,
+                           medium_custom_scaleup_plots,
+                           all_scaleup_numbers=small_one_liners_scaleup_numbers,
+                           prefix="medium_")
 
 ## Small input `-s`
 small_custom_scaleup_plots = {"minimal_grep" : ["split"],
@@ -1623,17 +1657,24 @@ small_custom_scaleup_plots = {"minimal_grep" : ["split"],
                               "double_sort" : ["split"],
                               "shortest_scripts" : ["split"]}
 
+if args.eurosys2021:
+    plot_one_liners_tiling(small_one_liner_results, experiments,
+                           small_custom_scaleup_plots,
+                           all_scaleup_numbers=small_one_liners_scaleup_numbers,
+                           prefix="small_")
 
-plot_one_liners_tiling(small_one_liner_results, experiments,
-                       small_custom_scaleup_plots,
-                       all_scaleup_numbers=small_one_liners_scaleup_numbers,
-                       prefix="small_")
+if args.eurosys2021:
+    generate_tables(experiments, results_dir=SMALL_RESULTS, table_suffix="-small", small=True)
+    generate_tables(experiments)
+    collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB")
+    collect_unix50_scaleup_times(big_unix50_results, scaleup=[16], small_prefix="_10GB")
+    plot_sort_with_baseline(RESULTS)
 
-generate_tex_table(experiments)
-collect_unix50_scaleup_times(unix50_results)
-collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB")
-collect_unix50_scaleup_times(big_unix50_results, scaleup=[16], small_prefix="_10GB")
-plot_sort_with_baseline(RESULTS)
+## Legacy plots
+if args.all:
+    collect_unix50_scaleup_times(unix50_results)
+
 
 ## Format and print correctness results
-format_correctness(correctness)
+if args.all:
+    format_correctness(correctness)

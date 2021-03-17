@@ -35,11 +35,26 @@ curl img.pash.ndr.md | docker load; docker run --name pash-playground -it pash/1
 
 PaSh can be found in the container's `/pash` directory, so run `cd pash; git pull` to fetch the latest updates; more information in the [pash-on-docker guide](./docs/contrib.md#pash-on-docker-a-pocket-guide).
 
-**Linux:** Alternatively, if you're on an Ubuntu, run:
+Alternatively, you can built the Docker container from scratch by running
+
+```sh
+git clone git@github.com:andromeda/pash.git
+cd pash/scripts
+docker build -t "pash/18.04" .
+# Then you launch the container as above
+docker run --name pash-playground -it pash/18.04
+```
+
+This should build a fresh docker image running `pash`.
+
+**Linux:** Alternatively, if you're on an Ubuntu 18.04, run:
 
 ```sh
 curl up.pash.ndr.md | bash
 ```
+
+This runs the install script in [scritps/install.sh](scritps/install.sh).
+We have only tested this script on Ubuntu 18.04 (like the one used for the docker container and on AWS).
 
 ## Tests
 
