@@ -10,7 +10,11 @@ file8=8.out
 file9=9.out
 rm -f *.out
 
+<<<<<<< HEAD
+testFile="$PASH_TOP/evaluation/scripts/input/100M.txt"
+=======
 testFile="/home/tamlu/pash/evaluation/scripts/input/1G.txt"
+>>>>>>> 6700ef1b... compatibility changes to tests
 batchSize=10000000
 if [ "$#" -gt "0" ]
  then
