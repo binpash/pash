@@ -10,7 +10,7 @@ file8=8.out
 file9=9.out
 rm -f *.out
 
-testFile="$PASH_TOP/evaluation/scripts/input/100M.txt"
+testFile="$PASH_TOP/evaluation/scripts/input/10M.txt"
 batchSize=1000000
 if [ "$#" -gt "0" ]
  then
@@ -35,7 +35,7 @@ $PASH_TOP/runtime/r_wrap tr A-Z a-z < $file2 > $file4 &
 $PASH_TOP/runtime/r_wrap grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' < $file3 > $file5 &
 $PASH_TOP/runtime/r_wrap grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' < $file4 > $file6 &
 
-../../runtime/r_merge $file5 $file6
+$PASH_TOP/runtime/r_merge $file5 $file6
 # cat $testFile | tr A-Z a-z | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' > t2.out
 # if cmp -s t1.out t2.out; then
 #     printf 'The file "%s" is the same as "%s"\n' "$file6" "$file5"
