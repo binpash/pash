@@ -65,7 +65,7 @@ void processCmd(char *args[])
             int inputFd = fdOut[READ_END];
             int outputFd = fdIn[WRITE_END];
 
-            FILE *execOutFile = fdopen(inputFd, "rb");
+            // FILE *execOutFile = fdopen(inputFd, "rb");
             // FILE *execInFile = fdopen(outputFd, "wb");
             
             non_block_fd(inputFd, "r-wrap-fork-read");
@@ -84,8 +84,7 @@ void processCmd(char *args[])
                 // fprintf(stderr, "reading stdin\n");
                 if (readSize && fread(buffer, 1, readSize, stdin) != readSize)
                 {
-                    fprintf(stderr, "r_wrap: There is a problem with reading the block\n");
-                    exit(1);
+                    err(2, "r_wrap: There is a problem with reading the block");
                 }
                 if ((currWriteLen + readSize) > writeBufLen) {
                     writeBufLen = 2*(currWriteLen + readSize);
@@ -110,7 +109,7 @@ void processCmd(char *args[])
                     if (FD_ISSET(inputFd, &readFds))
                     {
                         //Try reading from forked processs, nonblocking
-                        if ((len = fread(readBuffer, 1, bufLen, execOutFile)) > 0) {
+                        if ((len = read(inputFd, readBuffer, bufLen)) > 0) {
                             if ((currReadLen + len) > stdoutBlockBufLen)
                             {
                                 stdoutBlockBufLen = 2*(currReadLen + len);
@@ -123,7 +122,7 @@ void processCmd(char *args[])
 					        case EAGAIN:
                                 break;
                             default:
-                                err(STDERR_FILENO, "r_wrap: failed reading from fork, error %ld", len);
+                                err(2, "r_wrap: failed reading from fork, error %ld", len);
                             }
                         }
                     }
@@ -138,7 +137,7 @@ void processCmd(char *args[])
 						len = 0;
 						break;
 					default:
-						err(STDERR_FILENO, "r_wrap: error writing to fork, error %ld", len);
+						err(2, "r_wrap: error writing to fork, error %ld", len);
 					}            
                 } else {
                     currWriteLen -= len; 
@@ -154,7 +153,7 @@ void processCmd(char *args[])
             // read output of forked process
             // block to make sure you read until the process exits and to save cpu cycles
             block_fd(inputFd, "r-wrap-fork-read");
-            while ((len = fread(buffer, 1, bufLen, execOutFile)) > 0)
+            while ((len = read(inputFd, buffer, bufLen)) > 0)
             {
                 if ((currReadLen + len) > stdoutBlockBufLen)
                 {
@@ -164,7 +163,7 @@ void processCmd(char *args[])
                 memcpy(stdoutBlock + currReadLen, buffer, len);
                 currReadLen += len;
             }
-            fclose(execOutFile);
+            close(inputFd);
 
             //write block to stdout
             writeHeader(stdout, id, currReadLen);
@@ -178,6 +177,7 @@ void processCmd(char *args[])
     free(buffer);
     free(readBuffer);
     free(stdoutBlock);
+    free(writebuffer);
 }
 
 int main(int argc, char *argv[])
