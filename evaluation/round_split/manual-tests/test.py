@@ -6,9 +6,9 @@ from time import time as timestamp
 from functools import wraps
 import pandas as pd
 
-PASH_TOP = "/home/tamlu/pash"
-TESTFILES = ["../scripts/input/1M.txt", "../scripts/input/10M.txt", "../scripts/input/100M.txt", "../scripts/input/1G.txt"]
-BATCHSZ = [10000, 100000, 1000000, 10000000]
+PASH_TOP = os.environ['PASH_TOP']
+TESTFILES = [f"{PASH_TOP}/evaluation/scripts/input/1M.txt", f"{PASH_TOP}/evaluation/scripts/input/10M.txt", f"{PASH_TOP}/evaluation/scripts/input/100M.txt", f"{PASH_TOP}/evaluation/scripts/input/1G.txt", f"{PASH_TOP}/evaluation/scripts/input/3G.txt", f"{PASH_TOP}/evaluation/scripts/input/100G.txt"]
+BATCHSZ = [10000, 100000, 1000000, 10000000, 30000000, 100000000]
 
 def process_gnu_time(time_data):
     data_start = time_data.find("Command being timed: ")
@@ -29,7 +29,7 @@ def process_gnu_time(time_data):
     return data
 
 def get_pash_script(filename) :
-    pash_command = ["../../pa.sh", filename, "-d 1"]
+    pash_command = [f"{PASH_TOP}/pa.sh", filename, "-d 1"]
     result = run(pash_command, stdout=PIPE, universal_newlines=True, stdin=None, stderr=PIPE)
     data = result.stderr.split("\n")
     for line in data:
@@ -148,14 +148,14 @@ class Tests():
 
         os.environ["IN"] = self.test_file
         #default
-        command = ["../microbenchmarks/sort.sh"]
+        command = [f"{PASH_TOP}/evaluation/microbenchmarks/sort.sh"]
         out2, data["system"] = self.time(command)
 
         assert(out == out2)
         assert(out1 == out2)
 
         # pa.sh
-        pash_file = get_pash_script("../microbenchmarks/sort.sh")
+        pash_file = get_pash_script(f"{PASH_TOP}/evaluation/microbenchmarks/sort.sh")
         command = [pash_file]
         out2, data["pash"] = self.time(command)
         df = self.get_dataframe("sort", data)
@@ -164,19 +164,19 @@ class Tests():
         
         
 def run_tests():
-    print("-----------Running 100M tests---------------")
-    test100M = Tests(TESTFILES[2], BATCHSZ[2])
-    test100M.bell_grep()
-    test100M.sort()
-    test100M.wcTest()
-    print(test100M.df[["test", "real", "user", "sys", "cpu%"]].to_string(index = False))
+    # print("-----------Running 100M tests---------------")
+    # test100M = Tests(TESTFILES[2], BATCHSZ[2])
+    # test100M.bell_grep()
+    # test100M.sort()
+    # test100M.wcTest()
+    # print(test100M.df[["test", "real", "user", "sys", "cpu%"]].to_string(index = False))
 
-    print("\n-----------Running 1G tests---------------")
-    test1G = Tests(TESTFILES[3], BATCHSZ[3])
-    test1G.bell_grep()
-    test1G.sort()
-    test1G.wcTest()
-    print(test1G.df[["test", "real", "user", "sys", "cpu%"]].to_string(index = False))
+    # print("\n-----------Running 1G tests---------------")
+    # test1G = Tests(TESTFILES[3], BATCHSZ[3])
+    # test1G.bell_grep()
+    # test1G.sort()
+    # test1G.wcTest()
+    # print(test1G.df[["test", "real", "user", "sys", "cpu%"]].to_string(index = False))
 
     print("\n-----------Running 10M tests---------------")
     test10M = Tests(TESTFILES[1], BATCHSZ[1])
