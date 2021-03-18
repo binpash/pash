@@ -17,6 +17,9 @@ parser.add_argument('--eurosys2021',
 parser.add_argument('--all',
                     action='store_true',
                     help='generates all plots')
+parser.add_argument('--debug',
+                    action='store_true',
+                    help='prints debugging info')
 
 args = parser.parse_args()
 
@@ -27,6 +30,7 @@ if not args.all and not args.eurosys2021:
     print("You have to specify some plot to generate!")
     print("See command usage with --help.")
     exit(0)
+
 
 SMALL_SIZE = 16
 MEDIUM_SIZE = 18
@@ -52,6 +56,8 @@ SMALL_UNIX50_RESULTS = "../evaluation/results/unix50_4_1073741824/"
 BIG_UNIX50_RESULTS = "../evaluation/results/unix50_16_10737418240/"
 COARSE_UNIX50_RESULTS = "../evaluation/results/unix50-naive/"
 
+## Create the plots directory
+os.makedirs("../evaluation/plots", exist_ok=True)
 
 all_experiments = ["minimal_grep",
                    "minimal_sort",
@@ -118,7 +124,8 @@ suffix_to_runtime_config = {"distr": "eager",
                             "distr_auto_split": "split",
                             "distr_no_task_par_eager": "blocking-eager",
                             "distr_no_eager": "no-eager",
-                            "distr_auto_split_fan_in_fan_out": "no-aux-cat-split"}
+                            "distr_auto_split_fan_in_fan_out": "no-aux-cat-split",
+                            "pash": "split"}
 
 all_line_plots = ["split",
                   "mini-split",
@@ -223,7 +230,8 @@ class Result:
             return NotImplemented
 
         if(self.value == 0):
-            print("Division by zero")
+            if(args.debug):
+                print("Division by zero")
             return 0
 
         ## TODO: Change that to Result too
@@ -276,7 +284,8 @@ def safe_zero_div(a, b):
     if(a is None or b is None):
         return None
     elif(b == 0):
-        print("WARNING: Division by zero")
+        if(args.debug):
+            print("WARNING: Division by zero")
         return 0
     else:
         return a / b
@@ -375,9 +384,9 @@ def runtime_config_from_suffix(suffix):
     runtime = suffix_to_runtime_config[suffix.split(".")[0]]
     return runtime
 
-def sequential_experiment_exec_time(prefix, scaleup_number):
+def sequential_experiment_exec_time(prefix, scaleup_number, suffix='seq.time'):
     config = Config(pash=False)
-    value = read_total_time('{}{}_seq.time'.format(prefix, scaleup_number))
+    value = read_total_time('{}{}_{}'.format(prefix, scaleup_number, suffix))
     description = "execution time"
     script_name = script_name_from_prefix(prefix)
     result = Result(script_name, config, value, description)
@@ -439,6 +448,16 @@ def collect_distr_experiment_speedup_with_compilation(prefix, scaleup_numbers, s
     #                           description, scaleup_numbers, "width")
     # return (result_vec, compile_distr_speedups)
     return (distr_speedups, compile_distr_speedups, seq_number)
+
+## This function just collects the execution time for a specific suffix
+def collect_experiment_scaleup_times_simple(prefix, scaleup_numbers, suffix='distr.time'):
+    _seq_number, distr_numbers, _compile_numbers = collect_experiment_scaleup_times(prefix, scaleup_numbers, suffix=suffix)
+    return distr_numbers
+
+def collect_non_pash_experiment_scaleup_times(prefix, scaleup_numbers, suffix):
+    numbers = [sequential_experiment_exec_time(prefix, n, suffix)
+               for n in scaleup_numbers]
+    return numbers
 
 
 def collect_experiment_command_number(prefix, suffix, scaleup_numbers):
@@ -556,26 +575,41 @@ def plot_scaleup_lines(experiment, all_scaleup_numbers, all_speedup_results, cus
 
     return lines, best_result, no_eager_distr_speedup
 
-def plot_sort_with_baseline(results_dir):
+def plot_sort_with_baseline(results_dir, small=True):
 
-    all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
-    sort_prefix = '{}/sort_'.format(results_dir)
-    baseline_sort_prefix = '{}/baseline_sort/baseline_sort_'.format(results_dir)
-    baseline_sort_opt_prefix = '{}/baseline_sort/baseline_sort_opt_'.format(results_dir)
+    if(small):
+        infix="small_"
+        all_scaleup_numbers = [2, 16]
+    else:
+        infix=""
+        all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
 
-    ## Collect all sort numbers
-    seq_number, distr_numbers, _ = collect_experiment_scaleup_times(sort_prefix, all_scaleup_numbers)
-    sort_distr_speedup = [safe_zero_div(seq_number, t) for i, t in enumerate(distr_numbers)]
-    # sort_distr_speedup = collect_distr_experiment_speedup(sort_prefix, all_scaleup_numbers)
-    baseline_sort_distr_speedup = collect_baseline_experiment_speedups(baseline_sort_prefix,
-                                                                       [1] + [num*2
-                                                                              for num in all_scaleup_numbers],
-                                                                       seq_number)
-    # baseline_sort_opt_distr_speedup = collect_baseline_experiment_speedups(baseline_sort_opt_prefix,
-    #                                                                        [1] + all_scaleup_numbers[1:],
-    #                                                                        seq_numbers[0])
+    sort_prefix = '{}/baseline_sort/baseline_sort_{}'.format(results_dir, infix)
+    double_scaleup_numbers = [2 * num for num in all_scaleup_numbers]
 
-    # output_diff = check_output_diff_correctness(prefix, all_scaleup_numbers)
+    pash_times = collect_non_pash_experiment_scaleup_times(sort_prefix,
+                                                           all_scaleup_numbers,
+                                                           suffix='pash.time')
+
+    pash_no_eager_times = collect_non_pash_experiment_scaleup_times(sort_prefix,
+                                                                    all_scaleup_numbers,
+                                                                    suffix='pash_no_eager.time')
+
+    sort_par_times = collect_non_pash_experiment_scaleup_times(sort_prefix,
+                                                               double_scaleup_numbers,
+                                                               suffix='parallel.time')
+
+    sort_times = collect_non_pash_experiment_scaleup_times(sort_prefix,
+                                                          [2],
+                                                          suffix='seq.time')
+    sort_time = sort_times[0]
+    # print(pash_times)
+    # print(sort_par_times)
+    # print(sort_time)
+    
+    sort_distr_speedup = [safe_zero_div(sort_time, t) for t in pash_times]
+    no_eager_distr_speedup = [safe_zero_div(sort_time, t) for t in pash_no_eager_times]
+    baseline_sort_distr_speedup = [safe_zero_div(sort_time, t) for t in sort_par_times]
 
     fig, ax = plt.subplots()
 
@@ -583,26 +617,8 @@ def plot_sort_with_baseline(results_dir):
     ax.set_ylabel('Speedup')
     ax.set_xlabel('--width')
     ax.plot(all_scaleup_numbers, sort_distr_speedup, '-o', linewidth=0.5, label='Pash')
-    ## Add the no eager times if they exist
-    # try:
-    #     no_task_par_eager_distr_speedup = collect_distr_experiment_speedup(sort_prefix,
-    #                                                                         all_scaleup_numbers,
-    #                                                                         'distr_no_task_par_eager.time')
-    #     ax.plot(all_scaleup_numbers, no_task_par_eager_distr_speedup, '-p', linewidth=0.5, label='Pash - Blocking Eager')
-    # except ValueError:
-    #     pass
-
-    try:
-        no_eager_distr_speedup = collect_distr_experiment_speedup(sort_prefix,
-                                                                  all_scaleup_numbers,
-                                                                  'distr_no_eager.time')
-        ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='Pash - No Eager')
-    except ValueError:
-        pass
-
-    ax.plot(all_scaleup_numbers, baseline_sort_distr_speedup[1:], '-p', linewidth=0.5, label='sort --parallel')
-    # ax.plot(all_scaleup_numbers, baseline_sort_opt_distr_speedup[1:], '-', linewidth=0.5, label='sort --parallel -S 30%')
-
+    ax.plot(all_scaleup_numbers, no_eager_distr_speedup, '-^', linewidth=0.5, label='Pash - No Eager')
+    ax.plot(all_scaleup_numbers, baseline_sort_distr_speedup, '-p', linewidth=0.5, label='sort --parallel')
 
     plt.xticks(all_scaleup_numbers[1:])
     plt.legend(loc='lower right')
@@ -610,7 +626,7 @@ def plot_sort_with_baseline(results_dir):
 
 
     plt.tight_layout()
-    plt.savefig(os.path.join('../evaluation/plots', "sort_baseline_comparison_scaleup.pdf"),bbox_inches='tight')
+    plt.savefig(os.path.join('../evaluation/plots', "sort_baseline_{}comparison_scaleup.pdf".format(infix)),bbox_inches='tight')
 
 
 def collect_format_input_size(experiment):
@@ -837,11 +853,15 @@ def aggregate_unix50_results(all_results, scaleup_numbers):
     return avg_distr_results
 
 def compute_and_print_aggrs(individual_results, absolute_seq_times_s):
-    mean = sum(individual_results) / len(individual_results)
-    median = statistics.median(individual_results)
-    geo_mean = math.exp(np.log(individual_results).sum() / len(individual_results))
+    mean = safe_zero_div(sum(individual_results), len(individual_results))
+    if (len(individual_results) > 0):
+        median = statistics.median(individual_results)
+    else:
+        median = 0
+    geo_mean = math.exp(safe_zero_div(np.log(individual_results).sum(),
+                                      len(individual_results)))
     weighted_res = [i*a for i, a in zip(individual_results, absolute_seq_times_s)]
-    weighted_avg = sum(weighted_res) / sum(absolute_seq_times_s)
+    weighted_avg = safe_zero_div(sum(weighted_res), sum(absolute_seq_times_s))
     print("  Mean:", mean)
     print("  Median:", median)
     print("  Geometric Mean:", geo_mean)
@@ -1045,7 +1065,10 @@ def plot_unix50_avg_speedup(all_results, scaleup_numbers, filename):
 
 def collect_all_unix50_results(unix50_results_dir, scaleup_numbers=[2, 4, 8, 16], suffix='distr.time'):
 
-    files = [f for f in os.listdir(unix50_results_dir)]
+    try:
+        files = [f for f in os.listdir(unix50_results_dir)]
+    except:
+        files = []
     # print(files)
     pipeline_numbers = sorted(list(set([f.split('_')[2] for f in files])))
     # print(pipeline_numbers)
@@ -1062,15 +1085,16 @@ def collect_all_unix50_results(unix50_results_dir, scaleup_numbers=[2, 4, 8, 16]
     
     return (all_results, fan_in_fan_out_results)
 
-def collect_unix50_scaleup_times(all_results, scaleup=[2,4,8,16], small_prefix=""):
+def collect_unix50_scaleup_times(all_results, scaleup=[2,4,8,16], small_prefix="", scatter=True):
     
     # print(all_results)
 
     for parallelism in scaleup:
         make_unix50_bar_chart(all_results, scaleup, parallelism, small_prefix=small_prefix)
-        make_unix50_scatter_plot(all_results, scaleup, parallelism)
+        if(scatter):
+            make_unix50_scatter_plot(all_results, scaleup, parallelism)
 
-    plot_unix50_avg_speedup(all_results, scaleup, "unix50_throughput_scaleup.pdf")
+    # plot_unix50_avg_speedup(all_results, scaleup, "unix50_throughput_scaleup.pdf")
     
 
 # def collect_unix50_coarse_scaleup_times(all_results):
@@ -1148,9 +1172,9 @@ def plot_tiling_experiments(fig, gs, experiments, all_experiment_results, all_sc
 
 def print_aggregates(prefix, averages, no_eager_averages):
     ## Print average, geo-mean
-    one_liner_averages = [sum(res)/len(res) for res in averages]
-    all_no_eager_averages = [sum(res)/len(res) for res in no_eager_averages]
-    geo_means = [math.exp(np.log(res).sum() / len(res))
+    one_liner_averages = [safe_zero_div(sum(res), len(res)) for res in averages]
+    all_no_eager_averages = [safe_zero_div(sum(res), len(res)) for res in no_eager_averages]
+    geo_means = [math.exp(safe_zero_div(np.log(res).sum(), len(res)))
                  for res in averages]
     print(prefix, "One-liners Aggregated results:")
     print(" |-- Averages:", one_liner_averages)
@@ -1666,9 +1690,10 @@ if args.eurosys2021:
 if args.eurosys2021:
     generate_tables(experiments, results_dir=SMALL_RESULTS, table_suffix="-small", small=True)
     generate_tables(experiments)
-    collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB")
-    collect_unix50_scaleup_times(big_unix50_results, scaleup=[16], small_prefix="_10GB")
-    plot_sort_with_baseline(RESULTS)
+    collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB", scatter=False)
+    collect_unix50_scaleup_times(big_unix50_results, scaleup=[16], small_prefix="_10GB", scatter=False)
+    plot_sort_with_baseline(RESULTS, small=True)
+    plot_sort_with_baseline(RESULTS, small=False)
 
 ## Legacy plots
 if args.all:

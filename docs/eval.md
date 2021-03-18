@@ -192,7 +192,7 @@ Annotations can be thought of as defining a bidirectional correspondence between
 Since command behaviors (and correspondence) can change based on their arguments, annotations contain a sequence of predicates.
 Each predicate is accompanied by information that instantiates the correspondence between a command and a dataflow node.
 
-Annotations for about 60 popular commands are stored in [./annotations](../annotations)encoded as JSON.
+Annotations for about 60 popular commands are stored in [./annotations](../annotations) encoded as JSON.
 These average about 14 lines per annotation, for a total of 846 lines of annotations.
 
 Below we present two example annotations for `chmod` and `cut`.
@@ -487,7 +487,7 @@ To plot the results from any of the above experiments, do the following:
 
 ```sh
 cd $PASH_TOP/compiler
-python3 gather_results.py
+python3 gather_results.py --eurosys2021
 ```
 
 This will create plots for all invocations of `evaluation/eurosys/execute_eurosys_one_liners.sh`, one for each flag.
@@ -526,7 +526,7 @@ To plot the results from any of the above experiments, do the following:
 
 ```sh
 cd $PASH_TOP/compiler
-python3 gather_results.py
+python3 gather_results.py --eurosys2021
 ```
 
 This will create plots for both "1GB --width 4" and for "10GB --width 16".

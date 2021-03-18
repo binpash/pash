@@ -13,7 +13,7 @@ while getopts 'slh' opt; do
     case $opt in
         s) evaluation_level=1 ;;
         l) evaluation_level=2 ;;
-        h) echo "There are three possible execution levels:"
+        h) echo "There are two possible execution levels:"
            echo "option -s: Small input | --width 2, 16"
            echo "option -l: Big input | -- width 2, 4, 8, 16, 32, 64"
            exit 0 ;;
@@ -69,17 +69,27 @@ for n_in in "${n_inputs[@]}"; do
     export $(cut -d= -f1 $env_file)
 
     p_n_in="$(( $n_in * 2 ))"
-    experiment="baseline_sort_${p_n_in}"
+    experiment="baseline_sort_${intermediary_prefix}${p_n_in}"
     echo "Executing sort with parallel flag for parallelism: ${p_n_in}"
-    { time /bin/bash $sort_parallel_script "${p_n_in}" > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_${intermediary_prefix}seq.time" >&2)
+    { time /bin/bash $sort_parallel_script "${p_n_in}" > /tmp/seq_output ; } 2> >(tee "${results}${experiment}_parallel.time" >&2)
 
     echo "Generating input and intermediary scripts... be patient..."
     python3 "$PASH_TOP/evaluation/generate_microbenchmark_intermediary_scripts.py" \
                 $microbenchmarks_dir "sort" $n_in $intermediary_dir $env_suffix
 
     exec_script="${intermediary_dir}sort_${n_in}_seq.sh"
-    experiment="baseline_sort_${n_in}"
+    experiment="baseline_sort_${intermediary_prefix}${n_in}"
+
+    if [ "$n_in" -eq 2 ]; then
+        echo "Executing sort with bash"
+        { time /bin/bash $exec_script ; } 1> /tmp/bash_output 2> >(tee "${results}${experiment}_seq.time" >&2)
+    fi
+
+    echo "Executing pash (no eager) on sort with --width ${n_in}"
+    { time $PASH_TOP/pa.sh -w "${n_in}" --log_file /tmp/pash_log --output_time --no_eager $exec_script ; } 1> /tmp/pash_output 2> >(tee "${results}${experiment}_pash_no_eager.time" >&2)
+    diff -s /tmp/seq_output /tmp/pash_output | head
 
     echo "Executing pash on sort with --width ${n_in}"
-    { time $PASH_TOP/pa.sh -w "${n_in}" --log_file /tmp/pash_log --output_time $exec_script ; } 1> /tmp/pash_output 2> >(tee "${results}${experiment}_${intermediary_prefix}pash.time" >&2)
+    { time $PASH_TOP/pa.sh -w "${n_in}" --log_file /tmp/pash_log --output_time $exec_script ; } 1> /tmp/pash_output 2> >(tee "${results}${experiment}_pash.time" >&2)
+    diff -s /tmp/seq_output /tmp/pash_output | head
 done
