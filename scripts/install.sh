@@ -101,6 +101,7 @@ python3 -m pip install -U PyYAML &> $LOG_DIR/pip_install_pyyaml.log
 python3 -m pip install numpy &> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib &> $LOG_DIR/pip_install_matplotlib.log
 
+sudo apt-get install -y p7zip-full
 echo "Installing web-index dependencies..."
 # pandoc v.2.2.1
 wget https://github.com/jgm/pandoc/releases/download/2.2.1/pandoc-2.2.1-1-$(dpkg --print-architecture).deb
