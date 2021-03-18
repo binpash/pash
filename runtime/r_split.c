@@ -67,8 +67,7 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
       if ((len = getline(&newLineBuffer, &bufLen, inputFile)) < 0)
       {
         //edge case to fix: can't be called if file ended
-        fprintf(stderr, "r_split: getline failed");
-        exit(1);
+        err(2, "r_split: getline failed");
       }
       blockSize = prevRestSize + headSize + len;
       if (add_header)

@@ -45,8 +45,7 @@ void MergeInput(char *inputFileNames[], unsigned int numInputFiles)
         readSize = MIN(bufLen, blockSize-tot_read);
         if (fread(buffer, 1, readSize, blockBuf[bufferIdx].inputFile) != readSize)
         {
-          fprintf(stderr, "r_merge: There is a problem with the merge files head data");
-          exit(1);
+          err(2, "r_merge: There is a problem with the merge files head data");
         }
         
         tot_read += readSize;

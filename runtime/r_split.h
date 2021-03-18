@@ -32,30 +32,24 @@ typedef int8_t bool;
 
 void readHeader(FILE* inputFile, int64_t *id, size_t *blockSize) {
     int ret;
-    if ((ret = fread(id, sizeof(int64_t), 1, inputFile)) < 0) {
-        fprintf(stderr, "Id read failed\n");
-        exit(1);
-    }
-    
-    if((ret = fread(blockSize, sizeof(size_t), 1, inputFile)) < 0) {
-        fprintf(stderr, "Blocksize read failed\n");
-        exit(1);
-    };
+    if ((ret = fread(id, sizeof(int64_t), 1, inputFile)) < 0)
+        err(2, "Id read failed");
+
+    if((ret = fread(blockSize, sizeof(size_t), 1, inputFile)) < 0)
+        err(2, "Blocksize read failed");
 }
 
 void safeWriteWithFlush(char* buffer, size_t bytes, size_t count, FILE* outputFile) {
     size_t len;
     if((len = fwrite(buffer, bytes, count, outputFile)) != count) {
-      fprintf(stderr, "write failed count %ld, wrote %ld\n", count, len);
-      exit(1);
+      err(2, "write failed count %ld, wrote %ld", count, len);
     }
     fflush(outputFile);
 }
 void safeWrite(char* buffer, size_t bytes, size_t count, FILE* outputFile) {
     size_t len;
     if((len = fwrite(buffer, bytes, count, outputFile)) != count) {
-      fprintf(stderr, "write failed count %ld, wrote %ld\n", count, len);
-      exit(1);
+      err(2, "write failed count %ld, wrote %ld", count, len);
     }
 }
 
@@ -69,16 +63,16 @@ void non_block_fd(int fd, const char *name)
 {
 	int flags = fcntl(fd, F_GETFL, 0);
 	if (flags < 0)
-		fprintf(stderr, "Error getting flags for %s", name);
+		err(2, "Error getting flags for %s", name);
 	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
-		fprintf(stderr, "Error setting %s to non-blocking mode", name);
+		err(2, "Error setting %s to non-blocking mode", name);
 }
 
 void block_fd(int fd, const char *name)
 {
 	int flags = fcntl(fd, F_GETFL, 0);
 	if (flags < 0)
-		fprintf(stderr, "Error getting flags for %s", name);
+		err(2, "Error getting flags for %s", name);
 	if (fcntl(fd, F_SETFL, flags & (~O_NONBLOCK)) < 0)
-		fprintf(stderr, "Error setting %s to blocking mode", name);
+		err(2, "Error setting %s to blocking mode", name);
 }
