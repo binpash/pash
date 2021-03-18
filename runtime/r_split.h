@@ -5,6 +5,8 @@
 #include <assert.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <err.h>
 
 #ifdef DEBUG
 #define PRINTDBG(fmt, ...) printf(fmt, ##__VA_ARGS__)
@@ -13,7 +15,7 @@
 #endif
 
 typedef __uint64_t uint64_t;
-
+typedef int8_t bool;
 #define MAX_LINE_LENGTH 1e6
 
 #define LOC __FILE__ // TODO expand
@@ -41,7 +43,6 @@ void readHeader(FILE* inputFile, int64_t *id, size_t *blockSize) {
     };
 }
 
-
 void safeWriteWithFlush(char* buffer, size_t bytes, size_t count, FILE* outputFile) {
     size_t len;
     if((len = fwrite(buffer, bytes, count, outputFile)) != count) {
@@ -61,4 +62,23 @@ void safeWrite(char* buffer, size_t bytes, size_t count, FILE* outputFile) {
 void writeHeader(FILE* destFile, int64_t id, size_t blocksize) {
   safeWrite((char *) &id, sizeof(int64_t), 1, destFile);
   safeWrite((char *) &blocksize, sizeof(size_t), 1, destFile);
+}
+
+//taken from https://github.com/dspinellis/dgsh/blob/master/core-tools/src/dgsh-tee.c
+void non_block_fd(int fd, const char *name)
+{
+	int flags = fcntl(fd, F_GETFL, 0);
+	if (flags < 0)
+		fprintf(stderr, "Error getting flags for %s", name);
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
+		fprintf(stderr, "Error setting %s to non-blocking mode", name);
+}
+
+void block_fd(int fd, const char *name)
+{
+	int flags = fcntl(fd, F_GETFL, 0);
+	if (flags < 0)
+		fprintf(stderr, "Error getting flags for %s", name);
+	if (fcntl(fd, F_SETFL, flags & (~O_NONBLOCK)) < 0)
+		fprintf(stderr, "Error setting %s to blocking mode", name);
 }
