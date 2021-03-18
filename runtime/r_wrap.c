@@ -5,14 +5,20 @@
 #define READ_END 0
 #define WRITE_END 1
 
+/*
+Batch sizes in and out should be around the same size or smaller ideally. 
+The code was not tested in cases were the fork would output significantly more lines 
+than the input but that would definitly lead to incread memory cosumption in the whole pipeline.
+*/
 void processCmd(char *args[])
 {
-    size_t bufLen = BUFLEN, outBufLen = BUFLEN; //buffer length, would be resized as needed
+    size_t bufLen = BUFLEN, stdoutBlockBufLen = BUFLEN, writeBufLen = 2*BUFLEN; //buffer length, would be resized as needed
     int64_t id;
     size_t blockSize;
     char *buffer = malloc(bufLen + 1);
     char *readBuffer = malloc(bufLen + 1);
-    char *cmdOutput = malloc(outBufLen+1);
+    char *writebuffer = malloc(writeBufLen + 1);
+    char *stdoutBlock = malloc(stdoutBlockBufLen+1);
     //select
     fd_set readFds;
     fd_set writeFds;
@@ -60,25 +66,33 @@ void processCmd(char *args[])
             int outputFd = fdIn[WRITE_END];
 
             FILE *execOutFile = fdopen(inputFd, "rb");
-            FILE *execInFile = fdopen(outputFd, "wb");
-            fcntl(inputFd, F_SETFL, O_NONBLOCK);
+            // FILE *execInFile = fdopen(outputFd, "wb");
+            
+            non_block_fd(inputFd, "r-wrap-fork-read");
+            non_block_fd(outputFd, "r-wrap-fork-write");
 
-            size_t len = 0, currLen = 0;
+            size_t len = 0, currReadLen = 0, currWriteLen = 0;
 
             //select prep
             maxFd = MAX(inputFd, outputFd);
 
             //Read batch
             size_t tot_read = 0, readSize = 0;
-            while (tot_read < blockSize)
+            while (tot_read < blockSize || currWriteLen > 0)
             {
                 readSize = MIN(bufLen, blockSize - tot_read);
                 // fprintf(stderr, "reading stdin\n");
-                if (fread(buffer, 1, readSize, stdin) != readSize)
+                if (readSize && fread(buffer, 1, readSize, stdin) != readSize)
                 {
                     fprintf(stderr, "r_wrap: There is a problem with reading the block\n");
                     exit(1);
                 }
+                if ((currWriteLen + readSize) > writeBufLen) {
+                    writeBufLen = 2*(currWriteLen + readSize);
+                    writebuffer = realloc(writebuffer, writeBufLen+1);
+                }
+                memcpy(writebuffer + currWriteLen, buffer, readSize);
+                currWriteLen += readSize;
 
                 FD_ZERO(&writeFds); // Clear FD set for select
                 while (!FD_ISSET(outputFd, &writeFds))
@@ -89,49 +103,72 @@ void processCmd(char *args[])
                     FD_SET(inputFd, &readFds);
                     FD_SET(outputFd, &writeFds);
 
-                    // TODO: Should I handle some error here?
+                    // TODO: handle select errors
+                    // theortically we don't need select because both pipes are blocking 
+                    // but it saves cpu cycles
                     select(maxFd + 1, &readFds, &writeFds, NULL, NULL);
                     if (FD_ISSET(inputFd, &readFds))
                     {
                         //Try reading from forked processs, nonblocking
-                        len = fread(readBuffer, 1, bufLen, execOutFile);
-                        if ((currLen + len) > outBufLen)
-                        {
-                            outBufLen = currLen + len + CHUNKSIZE;
-                            cmdOutput = realloc(cmdOutput, outBufLen + 1);
+                        if ((len = fread(readBuffer, 1, bufLen, execOutFile)) > 0) {
+                            if ((currReadLen + len) > stdoutBlockBufLen)
+                            {
+                                stdoutBlockBufLen = 2*(currReadLen + len);
+                                stdoutBlock = realloc(stdoutBlock, stdoutBlockBufLen + 1);
+                            }
+                            memcpy(stdoutBlock + currReadLen, readBuffer, len);
+                            currReadLen += len;
+                        } else {
+                            switch (len) {
+					        case EAGAIN:
+                                break;
+                            default:
+                                err(STDERR_FILENO, "r_wrap: failed reading from fork, error %ld", len);
+                            }
                         }
-                        memcpy(cmdOutput + currLen, readBuffer, len);
-                        currLen += len;
                     }
                 }
                 // fprintf(stderr, "writing %ld bytes\n", readSize);
-                //Write to forked process
-                safeWriteWithFlush(buffer, 1, readSize, execInFile);
+                // Write to forked process
+                // For some reason nonblocking fd is not working correctly with fwrite. 
+                // Check shortest-scripts.sh with big batch size to recreate the problem
+                if ((len = write(outputFd, writebuffer, currWriteLen)) < 0) {
+					switch (len) {
+					case EAGAIN:
+						len = 0;
+						break;
+					default:
+						err(STDERR_FILENO, "r_wrap: error writing to fork, error %ld", len);
+					}            
+                } else {
+                    currWriteLen -= len; 
+                    memmove(writebuffer, writebuffer + len, currWriteLen);
+                }
 
                 tot_read += readSize;
             }
-            fclose(execInFile);
+            close(outputFd);
             // fprintf(stderr, "finished one fork\n");
             assert(tot_read == blockSize);
 
-            //read output of forked process (do I need to wait or is read blocking enough?)
-            //Use nonblock to make sure you read until the process exits
-            fcntl(inputFd, F_SETFL, ~O_NONBLOCK);
+            // read output of forked process
+            // block to make sure you read until the process exits and to save cpu cycles
+            block_fd(inputFd, "r-wrap-fork-read");
             while ((len = fread(buffer, 1, bufLen, execOutFile)) > 0)
             {
-                if ((currLen + len) > outBufLen)
+                if ((currReadLen + len) > stdoutBlockBufLen)
                 {
-                    outBufLen = currLen + len + CHUNKSIZE;
-                    cmdOutput = realloc(cmdOutput, outBufLen + 1);
+                    stdoutBlockBufLen = currReadLen + len + CHUNKSIZE;
+                    stdoutBlock = realloc(stdoutBlock, stdoutBlockBufLen + 1);
                 }
-                memcpy(cmdOutput + currLen, buffer, len);
-                currLen += len;
+                memcpy(stdoutBlock + currReadLen, buffer, len);
+                currReadLen += len;
             }
             fclose(execOutFile);
 
             //write block to stdout
-            writeHeader(stdout, id, currLen);
-            safeWriteWithFlush(cmdOutput, 1, currLen, stdout);
+            writeHeader(stdout, id, currReadLen);
+            safeWriteWithFlush(stdoutBlock, 1, currReadLen, stdout);
 
             //update header (ordered at the end so !feof works) and cleanup
             readHeader(stdin, &id, &blockSize);
@@ -140,7 +177,7 @@ void processCmd(char *args[])
     }
     free(buffer);
     free(readBuffer);
-    free(cmdOutput);
+    free(stdoutBlock);
 }
 
 int main(int argc, char *argv[])
