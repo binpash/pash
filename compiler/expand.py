@@ -3,6 +3,8 @@ from typing import NoReturn
 from definitions.ast_node import *
 from definitions.ast_node_c import *
 
+from util import log
+
 import ast_to_ir
 import config
 
@@ -234,7 +236,44 @@ def expand_args(args, config, quoted = False):
         # expanded! add the string in
         res.append(new)
 
+    return split_args(res, config)
+
+def split_args(args, config):
+    _, ifs = lookup_variable("IFS", config)
+
+    if ifs is None:
+        ifs = "\n\t "
+
+    ifs = [ord(c) for c in ifs]
+
+    res = []
+    for arg in args:
+        cur = []
+
+        for c in arg:
+            (key, val) = c
+            if key == 'C' and val in ifs:
+                 # split!
+                 if len(cur) > 0:
+                     res.append(cur)
+                 cur = []
+            else:
+                cur.append(c)
+
+        if len(cur) > 0:
+            res.append(cur)
+
+    log("MMG: split {} into {}".format(args, res))
+
     return res
+
+def char_code(c):
+    type = "C"
+
+    if c in "'\\\"()${}[]*?":
+        type = "E"
+    
+    return [type, ord(c)]
 
 def expand_arg(arg_chars, config, quoted = False):
     res = []
@@ -242,7 +281,7 @@ def expand_arg(arg_chars, config, quoted = False):
         new = expand_arg_char(arg_char, quoted, config)
 
         if isinstance(new, str):
-            res += [["E", ord(c)] for c in list(new)]
+            res += [char_code(c) for c in list(new)]
         else:
             res.extend(new)
 
@@ -288,7 +327,7 @@ def expand_arg_char(arg_char, quoted, config):
 def expand_var(fmt, null, var, arg, quoted, config):
     # TODO 2020-12-10 special variables
 
-    type, value = lookup_variable(var, config)
+    _type, value = lookup_variable(var, config)
 
     if isinstance(value, InvalidVariable):
         raise StuckExpansion("couldn't expand invalid variable", value)
