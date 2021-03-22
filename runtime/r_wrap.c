@@ -102,10 +102,14 @@ void processCmd(char *args[])
                     FD_SET(inputFd, &readFds);
                     FD_SET(outputFd, &writeFds);
 
-                    // TODO: handle select errors
-                    // theortically we don't need select because both pipes are blocking 
+                    // Theoretically we don't need select because both pipes are blocking 
                     // but it saves cpu cycles
-                    select(maxFd + 1, &readFds, &writeFds, NULL, NULL);
+                    if (select(maxFd + 1, &readFds, &writeFds, NULL, NULL) < 0) {
+                        if (errno == EINTR)
+				            continue;
+			            perror("select");
+                    }
+                    
                     if (FD_ISSET(inputFd, &readFds))
                     {
                         //Try reading from forked processs, nonblocking
