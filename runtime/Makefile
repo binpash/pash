@@ -25,14 +25,9 @@ else
 DGSH_ASSEMBLY_FILE=dgsh-elf.s
 endif
 
-
-lib_LIBRARIES = libdgsh.a
 libdgsh_a_SOURCES = negotiate.c $(DGSH_ASSEMBLY_FILE)
 
 dgsh_tee_SOURCES = dgsh-tee.c
-
-dgsh_tee_LDADD = libdgsh.a
-	
 
 
 split: split.c
