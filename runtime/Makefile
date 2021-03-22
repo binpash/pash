@@ -1,6 +1,6 @@
 .PHONY: all eager-debug split-debug
 
-all: eager split r-merge r-wrap r-split r-unwrap
+all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee
 
 CFLAGS=-Wall
 
@@ -54,13 +54,14 @@ r-wrap: r_wrap.c r_split.h
 r-unwrap: r_unwrap.c r_split.h
 	gcc ${CFLAGS} r_unwrap.c -o r_unwrap
 
-#This was taken from https://github.com/dspinellis/dgsh
 dgsh-tee:
 	git clone https://github.com/dspinellis/dgsh
 	cd dgsh/core-tools/src; \
+	git checkout 9e695a59c3d6ce7de14fdb6d9f9613454cf7281b;\
 	gcc ${CFLAGS} $(dgsh_tee_SOURCES) $(libdgsh_a_SOURCES) $(DGSH_ASSEMBLY_FILE) -o $@; \
 	cp dgsh-tee ../../../dgsh-tee;
 	rm -rf dgsh/
 
 clean:
 	rm -f eager split r_split r_wrap r_unwrap dgsh-tee
+	rm -rf dgsh
