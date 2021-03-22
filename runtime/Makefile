@@ -14,8 +14,26 @@ endif
 
 ifeq ($(PERF),1)
   # We want debug mode.
-  CXXFLAGS += -g -ggdb
+  CFLAGS += -g -ggdb
 endif
+
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S), Darwin)
+DGSH_ASSEMBLY_FILE=dgsh-macho.s
+else
+DGSH_ASSEMBLY_FILE=dgsh-elf.s
+endif
+
+
+lib_LIBRARIES = libdgsh.a
+libdgsh_a_SOURCES = negotiate.c $(DGSH_ASSEMBLY_FILE)
+
+dgsh_tee_SOURCES = dgsh-tee.c
+
+dgsh_tee_LDADD = libdgsh.a
+	
+
 
 split: split.c
 	gcc ${CFLAGS} split.c -o split
@@ -40,5 +58,14 @@ r-wrap: r_wrap.c r_split.h
 
 r-unwrap: r_unwrap.c r_split.h
 	gcc ${CFLAGS} r_unwrap.c -o r_unwrap
+
+#This was taken from https://github.com/dspinellis/dgsh
+dgsh-tee:
+	git clone https://github.com/dspinellis/dgsh
+	cd dgsh/core-tools/src; \
+	gcc ${CFLAGS} $(dgsh_tee_SOURCES) $(libdgsh_a_SOURCES) $(DGSH_ASSEMBLY_FILE) -o $@; \
+	cp dgsh-tee ../../../dgsh-tee;
+	rm -rf dgsh/
+
 clean:
-	rm eager split
+	rm -f eager split r_split r_wrap r_unwrap dgsh-tee
