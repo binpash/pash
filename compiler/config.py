@@ -90,6 +90,9 @@ def add_common_arguments(parser):
                         type=int,
                         help="(experimental) configure the batch size of r_splti (default: 100KB)",
                         default=100000)
+    parser.add_argument("--dgsh_tee",
+                        help="(experimental) use dgsh-tee instead of eagers",
+                        action="store_true")
     parser.add_argument("--speculation",
                         help="(experimental) run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
                         choices=['no_spec', 'quick_abort'],
@@ -125,6 +128,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--no_eager"))
     if (pash_arguments.r_split):
         arguments.append(string_to_argument("--r_split"))
+    if (pash_arguments.dgsh_tee):
+        arguments.append(string_to_argument("--dgsh_tee"))
     arguments.append(string_to_argument("--r_split_batch_size"))
     arguments.append(string_to_argument(str(pash_arguments.r_split_batch_size)))
     if (pash_arguments.no_cat_split_vanish):
