@@ -184,7 +184,7 @@ def read_vars_file(var_file_path):
                 var_value = rest[(eq_index+1):]
 
             ## Strip quotes
-            if var_type is None and var_value is not None and len(var_value) >= 2 and \
+            if var_value is not None and len(var_value) >= 2 and \
                var_value[0] == "\"" and var_value[-1] == "\"":
                 var_value = var_value[1:-1]                
                 

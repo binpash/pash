@@ -385,7 +385,7 @@ def make_echo_ast(argument, var_file_path):
 
 ## TODO: Move this function somewhere more general
 def execute_shell_asts(asts):
-    ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
+    _, ir_filename = ptempfile()
     save_asts_json(asts, ir_filename)
     output_script = from_ir_to_shell(ir_filename)
     # log(output_script)
@@ -772,7 +772,7 @@ def replace_irs(ast, irFileGen, config):
 ## it adds a command that calls our distribution planner with the name of the
 ## saved file.
 def replace_df_region(asts, irFileGen, config):
-    ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
+    _, ir_filename = ptempfile()
 
     ## Serialize the node in a file
     with open(ir_filename, "wb") as ir_file:
@@ -780,9 +780,9 @@ def replace_df_region(asts, irFileGen, config):
 
     ## Serialize the candidate df_region asts back to shell
     ## so that the sequential script can be run in parallel to the compilation.
-    second_ir_filename = os.path.join("/tmp", get_pash_prefixed_random_string())
+    _, second_ir_filename = ptempfile()
     save_asts_json(asts, second_ir_filename)
-    sequential_script_file_name = os.path.join("/tmp", get_pash_prefixed_random_string())
+    _, sequential_script_file_name = ptempfile()
     from_ir_to_shell_file(second_ir_filename, sequential_script_file_name)
 
     ## Replace it with a command that calls the distribution
