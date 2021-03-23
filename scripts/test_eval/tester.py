@@ -17,18 +17,16 @@ class Tests(LogParser):
         self.batch_sz = str(batch_sz)
         self.log_parser = LogParser()
 
-    def time(self, command, env):
+    def time(self, command, env, stdout=PIPE):
         time_command = ["/usr/bin/time" , "-v", "bash"]
         time_command.extend(command)
-
         result = run(time_command, stdout=PIPE, universal_newlines=True, stdin=None, stderr=PIPE, env=env)
- 
         return result
 
     def get_df(self):
         return self.log_parser.get_df()
 
-    def run_test(self, test_path, width = 2, r_split=False, batch_size=None, in_file=None, no_eager=False, log_folder=DEFAULT_LOG_FOLDER):
+    def run_test(self, test_path, width = 2, r_split=False, batch_size=None, in_file=None, no_eager=False, dgsh_tee=False, log_folder=DEFAULT_LOG_FOLDER):
         if in_file==None:
             in_file = self.in_file
         
@@ -48,6 +46,8 @@ class Tests(LogParser):
             command.append(batch_size)
         if no_eager:
             command.append("--no_eager")
+        if dgsh_tee:
+            command.append("--dgsh_tee")
 
         result = self.time(command, new_env)
         
@@ -66,19 +66,19 @@ class Tests(LogParser):
                 print(f"log in {log_file}")
         
         df = self.log_parser.parse_log(result.stderr)
-        
+
         return result, df
 
     #Run provided tests in folder x with the env files
-    def run_folder_tests(self, tests, folder, width = 2, r_split=False, batch_size=None, in_file=None, no_eager=False, log_folder=None):
+    def run_folder_tests(self, tests, folder, width = 2, r_split=False, batch_size=None, in_file=None, no_eager=False, dgsh_tee=False, log_folder=None):
         pass
 
     #run a list of tests, each test should be the full path of .sh file
     #if log_folder provided it generates unique name for each log
-    def run_test_list(self, tests, width = 2, r_split=False, batch_size=None, in_file=None, no_eager=False, log_folder=DEFAULT_LOG_FOLDER):
+    def run_test_list(self, tests, width = 2, r_split=False, batch_size=None, in_file=None, no_eager=False, dgsh_tee=False, log_folder=DEFAULT_LOG_FOLDER):
         df = pd.DataFrame()
         for test in tests:
-            result, dfnew = self.run_test(test, width, r_split, batch_size, in_file, no_eager, log_folder)
+            result, dfnew = self.run_test(test, width, r_split, batch_size, in_file, no_eager, dgsh_tee, log_folder)
             df = df.append(dfnew, ignore_index=True)
 
         return df
