@@ -124,7 +124,7 @@ void processCmd(char *args[])
                         } else {
                             switch (len) {
 					        case EAGAIN:
-                                continue;
+                                break; 
                             default:
                                 err(2, "r_wrap: failed reading from fork, error %ld", len);
                             }
@@ -135,17 +135,17 @@ void processCmd(char *args[])
                 // Write to forked process
                 // For some reason nonblocking fd is not working correctly with fwrite. 
                 // Check shortest-scripts.sh with big batch size to recreate the problem
-                if ((len = write(outputFd, writebuffer, currWriteLen)) < 0) {
-					switch (len) {
+                if ((len = write(outputFd, writebuffer, currWriteLen)) > 0) {
+                    currWriteLen -= len; 
+                    memmove(writebuffer, writebuffer + len, currWriteLen);
+                } else if (len < 0) {
+                    switch (len) {
 					case EAGAIN:
 						len = 0;
 						break;
 					default:
 						err(2, "r_wrap: error writing to fork, error %ld", len);
 					}            
-                } else {
-                    currWriteLen -= len; 
-                    memmove(writebuffer, writebuffer + len, currWriteLen);
                 }
 
                 tot_read += readSize;
