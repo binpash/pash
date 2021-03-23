@@ -25,10 +25,6 @@ else
 DGSH_ASSEMBLY_FILE=dgsh-elf.s
 endif
 
-libdgsh_a_SOURCES = negotiate.c $(DGSH_ASSEMBLY_FILE)
-
-dgsh_tee_SOURCES = dgsh-tee.c
-
 
 split: split.c
 	gcc ${CFLAGS} split.c -o split
@@ -54,11 +50,17 @@ r-wrap: r_wrap.c r_split.h
 r-unwrap: r_unwrap.c r_split.h
 	gcc ${CFLAGS} r_unwrap.c -o r_unwrap
 
+
+libdgsh_a_SOURCES = negotiate.c $(DGSH_ASSEMBLY_FILE)
+dgsh_tee_SOURCES = dgsh-tee.c
+
+## For some reason needs DDEBUG flag to work properly with testing script
+## TODO: figure out how to make it work without DDEBUG
 dgsh-tee:
 	git clone https://github.com/dspinellis/dgsh
 	cd dgsh/core-tools/src; \
 	git checkout 9e695a59c3d6ce7de14fdb6d9f9613454cf7281b;\
-	gcc ${CFLAGS} $(dgsh_tee_SOURCES) $(libdgsh_a_SOURCES) $(DGSH_ASSEMBLY_FILE) -o $@; \
+	gcc ${CFLAGS} $(dgsh_tee_SOURCES) $(libdgsh_a_SOURCES) -o $@; \
 	cp dgsh-tee ../../../dgsh-tee;
 	rm -rf dgsh/
 
