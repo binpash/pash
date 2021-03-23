@@ -58,7 +58,7 @@ class LogParser:
         border = "-"*40
         argslog, pashlog, timelog = log.split(border)
 
-        args_of_interest = set(["input", "width", "output_time", "no_eager", "r_split", "r_split_batch_size", "IN"])
+        args_of_interest = set(["input", "width", "output_time", "no_eager", "r_split", "r_split_batch_size", "IN", "dgsh_tee"])
         parsed_args = self.__parse_args__(argslog, args_of_interest)
 
         tags_of_interest = set(["Execution time", "Backend time", "Compilation time", "Preprocessing time", "Eager nodes", "Compiler exited with code"])
@@ -83,6 +83,7 @@ class LogParser:
             "no_eager" : parsed_args["no_eager"],
             "width": int(parsed_args["width"]),
             "r_split_batch_size": int(parsed_args["r_split_batch_size"]),
+            "dgsh_tee": parsed_args["dgsh_tee"],
             #From pash log
             "exec_time": parsed_log["Execution time"],
             "backend_time": parsed_log["Backend time"],
@@ -137,6 +138,7 @@ class LogParser:
         self.df["no_eager"] = self.df["no_eager"].astype(bool)
         self.df["width"] = self.df["width"].astype(int)
         self.df["r_split_batch_size"] = self.df["r_split_batch_size"].astype(int)
+        self.df["dgsh_tee"] = self.df["dgsh_tee"].astype(bool)
         return self.df
 
     def __parse_args__(self, args: str, args_of_interest):
