@@ -124,7 +124,7 @@ void processCmd(char *args[])
                         } else {
                             switch (len) {
 					        case EAGAIN:
-                                break;
+                                continue;
                             default:
                                 err(2, "r_wrap: failed reading from fork, error %ld", len);
                             }
