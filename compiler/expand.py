@@ -254,7 +254,7 @@ def split_args(args, config):
             (key, val) = c
             if key == 'C' and val in ifs:
                  # split!
-                 if len(cur) > 0:
+                 if len(cur) > 0: # TODO(mmg): or if val isn't IFS whitespace
                      res.append(cur)
                  cur = []
             else:
