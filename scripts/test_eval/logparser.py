@@ -26,6 +26,7 @@ class LogParser:
         - IN
         - split_type
         - no_eager
+        - dgsh_tee
         - width
         - r_split_batch_size
         - exec_time
