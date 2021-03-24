@@ -7,26 +7,35 @@
 # 1 (default) + 3 + 1 + 1 + 6 + 1 + 1 + 3 + 5 + 9 + 3 + 2 + 1 = 37 (there are 3 missing)
 # missing 8.5, 9.5, 12.1 
 
-IN1=1.txt
-IN2=2.txt
-IN3=3.txt
-IN4=4.txt
-IN5=5.txt
-IN6=6.txt
-IN7=7.txt
-IN8=8.txt
-IN91=9.1.txt
-IN92=9.2.txt
-IN93=9.3.txt
-IN94=9.4.txt
-IN95=9.5.txt
-IN96=9.6.txt
-IN97=9.7.txt
-IN98=9.8.txt
-IN99=9.9.txt
-IN10=10.txt
-IN11=11.txt
-IN12=12.txt
+if [[ -z "$IN_PRE" ]]; then
+  if [[ -z "$PASH_TOP" ]]; then
+    echo "Need to provide PASH_TOP, possibly $(git rev-parse --show-toplevel)" 1>&2
+    exit 1
+  else
+    export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input
+  fi
+fi
+
+IN1=$IN_PRE/1.txt
+IN2=$IN_PRE/2.txt
+IN3=$IN_PRE/3.txt
+IN4=$IN_PRE/4.txt
+IN5=$IN_PRE/5.txt
+IN6=$IN_PRE/6.txt
+IN7=$IN_PRE/7.txt
+IN8=$IN_PRE/8.txt
+IN91=$IN_PRE/9.1.txt
+IN92=$IN_PRE/9.2.txt
+IN93=$IN_PRE/9.3.txt
+IN94=$IN_PRE/9.4.txt
+IN95=$IN_PRE/9.5.txt
+IN96=$IN_PRE/9.6.txt
+IN97=$IN_PRE/9.7.txt
+IN98=$IN_PRE/9.8.txt
+IN99=$IN_PRE/9.9.txt
+IN10=$IN_PRE/10.txt
+IN11=$IN_PRE/11.txt
+IN12=$IN_PRE/12.txt
 
 # 1.0: extract the last name
 cat $IN1 | cut -d ' ' -f 2
@@ -67,8 +76,7 @@ cat $IN4 | tr ' ' '\n' | grep '\.' | cut -d '.' -f 2 | cut -c 1-1 | tr '[a-z]' '
 # 5.1: extract hello world
 cat $IN5 | grep 'print' | cut -d "\"" -f 2 | cut -c 1-12
 
-# 6.1: order the bodies by how easy it would be to land on them in Thompson's
-#      Space Travel game when playing at the highest simulation scale
+# 6.1: order the bodies by how easy it would be to land on them in Thompson's Space Travel game when playing at the highest simulation scale
 cat $IN6 | awk "{print \$2, \$0}" | sort -nr | cut -d ' ' -f 2
 
 # 7.1: identify number of AT&T unix versions
