@@ -1,9 +1,6 @@
 # Resize image 
-resize_image()
-(
-    cd $1
-    find . -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" -o -name "*.JPG" -o -name "*.PNG" \
-        -o -name "*.JPEG" | xargs -P 16 -I {} sh -c "convert -resize 70% {} {}.70; mv {}.70 $2" sh {}
-)
-
-resize_image input/jpg $PWD/output/
+INPUT=${INPUT:-$PASH_TOP/evaluation/aliases/input/jpg}
+OUTPUT=${OUTPUT:-$PASH_TOP/evaluation/aliases/output}
+cd $INPUT
+find . -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" -o -name "*.JPG" -o -name "*.PNG" \
+    -o -name "*.JPEG" | xargs -P 16 -I {} sh -c "convert -resize 70% {} {}.70; mv {}.70 $OUTPUT" sh {}

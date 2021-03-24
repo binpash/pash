@@ -1,8 +1,4 @@
+INPUT=${INPUT:-$PASH_TOP/evaluation/aliases/input/rtf}
+OUTPUT=${OUTPUT:-$PASH_TOP/evaluation/aliases/output}
 # convert all rtf to txt
-rtf_to_txt()
-(
-    find $1 -name "*.rtf" | xargs -I {} unrtf {} --text > /dev/null
-)
-
-
-rtf_to_txt  input/rtf
+find $INPUT -name "*.rtf" | xargs -I {} unrtf {} --text > /dev/null
