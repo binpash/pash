@@ -1,3 +1,13 @@
+mkdir -p input
+mkdir -p output
+cd input
+wget https://dblp.uni-trier.de/xml/dblp.xml.gz
+gunzip dblp.xml.gz
+wget http://www.bmrb.wisc.edu/ftp/pub/bmrb/timedomain/bmr6443/timedomain_data/c13-hsqc/june11-se-6426-CA.fid/fid
+wget https://www.stats.govt.nz/assets/Uploads/International-trade/International-trade-December-2020-quarter/Download-data/international-trade-december-2020-quarter-csv.zip
+unzip *.zip
+mv final/* .
+rm -rf final
 #!/bin/sh
 
 # MIT License

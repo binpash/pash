@@ -24,7 +24,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
+
+INPUT=${INPUT:-$PASH_TOP/evaluation/dgsh/input/dblp.xml}
+OUTPUT=${OUTPUT:-$PASH_TOP/evaluation/dgsh/output}
+cd ${OUTPUT}
 mkfifo a b c d a1 b1 c1 d1 
 cat a | cat > a1 &
 # List two-letter palindromes
@@ -39,7 +42,7 @@ cat c | sed -E 's/.*([^aeiouyAEIOUY]{4}).*/c: \1/;t
 cat d | awk '{if (length($1) > 12) print "l:", length($1);
     else print ""}' | cat > d1 &
 
-cat db | tr -cs a-zA-Z \\n | sort -u | tee a b c d  > /dev/null &
+cat ${INPUT} | tr -cs a-zA-Z \\n | sort -u | tee a b c d  > /dev/null &
 paste a1 b1 c1 d1  | fgrep :
 #cat d1 | fgrep :
 rm a b c d a1 b1 c1 d1

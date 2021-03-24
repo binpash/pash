@@ -26,9 +26,11 @@
 #  limitations under the License.
 #
 
+INPUT=${INPUT:-$PASH_TOP/evaluation/dgsh/input/XD}
+OUTPUT=${OUTPUT:-$PASH_TOP/evaluation/dgsh/output}
+cd ${OUTPUT}
 # Consistent sorting across machines
 export LC_ALL=C
-
 
 # Convert input into a ranked frequency list
 ranked_frequency()
@@ -52,7 +54,7 @@ ngram()
 export -f ranked_frequency
 export -f ngram
 
-mkfifo a b c e f g digram.txt trigram.txt words.txt
+mkfifo a b c d e f g digram.txt trigram.txt words.txt
 mkfifo teea_res teeb_res
 # redirect the input to these 2 processes
 mkfifo teea teeb
@@ -70,7 +72,7 @@ cat teea | tee a e > /dev/null &
 # the the file byte count
 cat teeb | wc -c | cat > teea_res &
 # redir the file to these two proc
-cat | tee teeb teea > /dev/null &
+cat ${INPUT} | tee teeb teea > /dev/null &
 sleep 1
 
 
@@ -85,5 +87,5 @@ cat e |
 		cat teea_res | getline NCHARS
 		OFMT = "%.2g%%"}
 		{print $1, $2, $1 / NCHARS * 100}' > acharacter.txt &
-    rm a b c e f g   trigram.txt words.txt digram.txt teea teeb teea_res teeb_res
+    rm a b c e f g d  trigram.txt words.txt digram.txt teea teeb teea_res teeb_res
 

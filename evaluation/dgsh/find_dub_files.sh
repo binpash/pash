@@ -15,3 +15,4 @@ find . -type f |               # Create list of files
   join -2 2 - a |              # Join repeated MD5 sums with corresponding file names
   awk ' BEGIN {ORS=""} $0 != prev && prev {print "\n"} END {if (prev) print "\n"} {if (prev) print " "; prev = $1; print $2}'
 # Output same files on a single line
+rm a
