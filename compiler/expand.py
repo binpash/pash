@@ -263,8 +263,6 @@ def split_args(args, config):
         if len(cur) > 0:
             res.append(cur)
 
-    log("MMG: split {} into {}".format(args, res))
-
     return res
 
 def char_code(c):

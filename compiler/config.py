@@ -15,9 +15,6 @@ if 'PASH_TOP' in os.environ:
 else:
     PASH_TOP = subprocess.run(GIT_TOP_CMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).stdout.rstrip()
 
-PARSER_BINARY = os.path.join(PASH_TOP, "compiler/parser/parse_to_json.native")
-PRINTER_BINARY = os.path.join(PASH_TOP, "compiler/parser/json_to_shell.native")
-
 PYTHON_VERSION = "python3"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
@@ -155,8 +152,7 @@ def read_vars_file(var_file_path):
         with open(var_file_path) as f:
             lines = [line.rstrip() for line in f.readlines()]
 
-        # ??? MMG 2020-12-10 not sure how you're generating this file, but what about variables with newlines in them?
-        # MMG 2021-03-09 definitively breaking on IFS and function outputs (i.e., `declare -f`)
+        # MMG 2021-03-09 definitively breaking on newlines (e.g., IFS) and function outputs (i.e., `declare -f`)
         for line in lines:
             words = line.split(' ')
             _export_or_typeset = words[0]
@@ -193,7 +189,6 @@ def read_vars_file(var_file_path):
                var_value[0] == "\"" and var_value[-1] == "\"":
                 var_value = var_value[1:-1]                
                 
-            print("MMG writing var {}={} with type {}".format(var_name,var_value, var_type))
             vars_dict[var_name] = (var_type, var_value)
 
         config['shell_variables'] = vars_dict

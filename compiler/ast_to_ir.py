@@ -107,15 +107,8 @@ def compile_asts(ast_objects, fileIdGen, config):
         # log("Compiling AST {}".format(i))
         # log(ast_object)
 
-        log("MMG config")
-        log(config['shell_variables'])
-        
-        log("MMG expanding")
-        log(ast_to_shell(ast_object))
         ## Compile subtrees of the AST to out intermediate representation
         expanded_ast = expand_command(ast_object, config)
-        log("MMG expanded")
-        log(ast_to_shell(expanded_ast))
         compiled_ast = compile_node(expanded_ast, fileIdGen, config)
 
         # log("Compiled AST:")
@@ -253,8 +246,6 @@ def compile_node_command(ast_node, fileIdGen, config):
                                         options,
                                         redirections=compiled_redirections)
             compiled_ast = ir
-#            log("MMG compiled")
-#            log(compiled_ast)
         except ValueError as err:
             ## TODO: Delete this log from here
             log(err)
@@ -389,7 +380,7 @@ def execute_shell_asts(asts):
     save_asts_json(asts, ir_filename)
     output_script = from_ir_to_shell(ir_filename)
     # log(output_script)
-    exec_obj = subprocess.run(["/bin/bash"], input=output_script,
+    exec_obj = subprocess.run(["/usr/bin/env", "bash"], input=output_script,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                               universal_newlines=True)
     exec_obj.check_returncode()
