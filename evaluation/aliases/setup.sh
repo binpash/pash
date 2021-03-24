@@ -7,7 +7,8 @@
 
 ## mp3 dataset ##
 #apt-get install ffmpeg unrtf imagemagick
-PW=$PASH_TOP/evaluation/scripts/input/aliases
+PW=$PWD/input #$PASH_TOP/evaluation/scripts/input/aliases
+mkdir -p output
 mkdir -p $PW
 cd $PW
 if [ ! -f tomhannen-20080409.tgz ]; then                                                 
@@ -21,17 +22,10 @@ cd tomhannen-20080409/wav
 # total 5.7 size of audio files
 for i in *.wav; do
   FILE=$(basename "$i")
-  for x in {1..2}; do cp $i "../../wav/$i$x.wav"; done
+  for x in {1..20}; do cp $i "../../wav/$i$x.wav"; done
 done
 rm -rf ../../tomhannen-20080409
 cd  $PW
-# fetch all gutenberg books here ?
-# NLP grep
-if [ ! -f nlp.tar.gz ]; then
-    echo "Fetching Dataset"                                                   
-    wget -O nlp.tar.gz https://wordnetcode.princeton.edu/3.0/WNdb-3.0.tar.gz
-    tar xf nlp.tar.gz
-fi
 wget https://jeroen.github.io/files/sample.rtf
 for i in {0..10000}
 do
@@ -57,5 +51,5 @@ rm -rf ../tmp
 cd ..
 rm -rf tmp
 mkdir tmp
-seq -w 1 1000000 | xargs -P 50 -I{} sh -c 'num=$(echo {} | sed 's/^0*//');val=$(($num % 1000)); touch tmp/f{}.$val;'
-echo "Generated 1000000 empty files"
+seq -w 1 100000 | xargs -P 100 -I{} sh -c 'num=$(echo {} | sed 's/^0*//');val=$(($num % 1000)); touch tmp/f{}.$val;'
+echo "Generated 100000 empty files"
