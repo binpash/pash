@@ -3,7 +3,7 @@
 # Taken from https://crashingdaily.wordpress.com/2008/03/06/diff-two-stdout-streams/
 # shuf() { awk 'BEGIN {srand(); OFMT="%.17f"} {print rand(), $0}' "$@" | sort -k1,1n | cut -d ' ' -f2-; }
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/expert-oneliners/10G.txt}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/input/1G.txt}
 
 mkfifo s1 s2
 

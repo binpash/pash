@@ -2,7 +2,9 @@
 # Calculate mispelled words in an input
 # https://dl.acm.org/doi/10.1145/3532.315102
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/expert-oneliners/10G.txt}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/input/1G.txt}
+dict=${dict:-$PASH_TOP/evaluation/benchmarks/oneliners/input/dict.txt}
+
 
 cat $IN |
     # groff -t -e -mandoc -Tascii |  # remove formatting commands
