@@ -5,27 +5,14 @@ set -e
 # call the script with its absolute name
 cd $(dirname $0)
 
+curl 'http://ndr.md/data/dummy/1G.txt' > 1G.txt
 curl 'http://ndr.md/data/dummy/1M.txt' > 1M.txt
 # download wamerican-insane dictionary and sort according to machine
 curl 'http://ndr.md/data/dummy/dict.txt' | sort > dict.txt
 
-touch 10M.txt
-for (( i = 0; i < 10; i++ )); do
-  cat 1M.txt >> 10M.txt
-done
-
-touch 100M.txt
-for (( i = 0; i < 10; i++ )); do
-  cat 10M.txt >> 100M.txt
-done
-
-touch 1G.txt
-for (( i = 0; i < 10; i++ )); do
-  cat 100M.txt >> 1G.txt
-done
-
 if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
   echo Generting full-size inputs
+  # FIXME PR: Do we need all of them?
 
   touch 3G.txt
   for (( i = 0; i < 3; i++ )); do
