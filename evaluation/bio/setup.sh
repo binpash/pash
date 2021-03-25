@@ -1,4 +1,6 @@
-cd $PASH_TOP/evaluation/scripts/input
+mkdir -p input
+mkdir -p output
+cd input
 mkdir -p bio3
 mkdir -p bio2
 wget ndr.md/data/bio/{R1.fastq.gz,R2.fastq.gz,ref.fa}
@@ -11,7 +13,7 @@ cp R1.fastq bio2/Sample1.R1.fq
 cp R2.fastq bio2/Sample1.R2.fq
 git clone https://github.com/lh3/wgsim
 cd wgsim/ && gcc -g -O2 -Wall -o wgsim wgsim.c -lz -lm && cd -
-apt-get install samtools bowtie2 vcftools sra-toolkit
+apt-get install samtools bowtie2 vcftools sra-toolkit cutadapt
 wget https://github.com/FelixKrueger/TrimGalore/archive/0.6.6.zip
 unzip 0.6.6.zip
 mv TrimGalore-0.6.6 Trim/

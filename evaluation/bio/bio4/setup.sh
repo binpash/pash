@@ -1,6 +1,7 @@
-PW=$PASH_TOP/evaluation/scripts/input/bio4
+PW=${PASH_TOP}/evaluation/bio/bio4/input
 mkdir -p $PW
-cat ./Inds.txt |while read s_line;
+mkdir -p ${PASH_TOP}/evaluation/bio/bio4/output
+cat ./input.txt |while read s_line;
 	do
     sample=$(echo $s_line |cut -d " " -f 2);
     pop=$(echo $s_line |cut -f 1 -d " ");

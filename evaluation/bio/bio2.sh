@@ -1,6 +1,6 @@
 #### Ported ####
 # https://dfzljdn9uc3pi.cloudfront.net/2013/203/1/Supplement_S2.pdf
-cd $PASH_TOP/evaluation/scripts/input/bio2
+cd $PASH_TOP/evaluation/bio/input/bio2
 ls *.R1.fq > namelist 
 sed -i 's/.R1.fq//g' namelist 
 NAMES=( `cat "namelist" `)
@@ -63,7 +63,7 @@ samtools index Sample1.bam
 samtools mpileup -D -f reference *.bam >mpileup 
 # VarScan calls all sites with at least 5X coverage, a variant frequency above
 # 10%, and 95% probability of being a SNP. Need varscan 2.3.5 version
-java -jar ../VarScan.jar mpileup2snp mpileup --output-vcf --min-coverage 5 --strand-filter 0 --min-var-freq 0.1 --p-value 0.05 >SNPS.vcf
+java -jar VarScan.jar mpileup2snp mpileup --output-vcf --min-coverage 5 --strand-filter 0 --min-var-freq 0.1 --p-value 0.05 >SNPS.vcf
 # VCFtools to filter raw SNPs and create a filtered vcf file (Final.recode.vcf)
 # with SNPs that are present in every individual and that are not INDels
 # can also work with --geno 0.99 flag but it needs vcftools 0.1.10 version
