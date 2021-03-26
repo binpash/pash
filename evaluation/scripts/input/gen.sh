@@ -27,7 +27,7 @@ sort words > sorted_words
 rm -f all_cmds_x10.txt
 touch all_cmds_x10.txt
 for (( i = 0; i < 10; i++ )); do
-  cat all_cmds.txt >> all_cmds_x100.txt
+  cat all_cmds.txt >> all_cmds_x10.txt
 done
 
 rm -f all_cmds_x100.txt
