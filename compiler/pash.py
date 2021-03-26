@@ -83,6 +83,12 @@ def parse_args():
         parser.print_usage()
         exit()
 
+    ## Print all the arguments
+    log("Arguments:")
+    for arg_name, arg_val in vars(args).items():
+        log(arg_name, arg_val)
+    log("-" * 40)
+
     return args
 
 def preprocess(ast_objects, config):
@@ -105,6 +111,7 @@ def execute_script(compiled_script_filename, debug_level, command):
         shutil.rmtree(config.PASH_TMP_PREFIX)
     if command:
         os.remove(config.config['runtime']['immediate'])
+    log("-" * 40) #log end marker
     ## Return the exit code of the executed script
     exit(exec_obj.returncode)
 

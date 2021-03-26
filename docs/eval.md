@@ -15,7 +15,7 @@ Here is the table of contents:
 
 The recommended exploration path the following 
   (1) start with the [quick check](#quick-check), to confirm you can access everything (about 5 minutes)
-  (2) watch the [video walkthrough](./artifact-video.mp4) of the entire artifact (about 20 minutes)
+  (2) watch the video walkthrough (artifact-video.mp4) of the entire artifact (about 20 minutes)
   (3) then cover details in this tutorial as necessary (the [full experimental run](#experimental-evaluation) takes several hours)
 
 ## Quick check
@@ -56,18 +56,18 @@ curl img.pash.ndr.md | docker load; docker run --name pash-playground -it pash/1
 The artifact consists of PaSh's three main components and a few additional "auxiliary" files and directories. 
 The three main components are:
 
-* [annotations](./pash/annotations/): DSL characterizing commands, parallelizability study, and associated annotations.
-* [compiler](./pash/compiler): Shell-Dataflow translations and associated parallelization transformations.
-* [runtime](./pash/runtime): Runtime component — e.g., `eager`, `split`, and associated combiners.
+* [annotations](../annotations/): DSL characterizing commands, parallelizability study, and associated annotations.
+* [compiler](../compiler): Shell-Dataflow translations and associated parallelization transformations.
+* [runtime](../runtime): Runtime component — e.g., `eager`, `split`, and associated combiners.
 
 These three components implement the contributions presented in the paper.
 They are expected to be usable with minimal effort, through a few different means presented later---including a `docker` container and log in credentials to our evaluation server.
 
 The auxiliary directories are:
-* [docs](./pash/docs): Design documents, tutorials, installation instructions, etc.
-* [evaluation](./pash/evaluation): Shell pipelines and example [scripts](./pash/evaluation/scripts) used for the evaluation.
+* [docs](../docs): Design documents, tutorials, installation instructions, etc.
+* [evaluation](../evaluation): Shell pipelines and example [scripts](../evaluation/scripts) used for the evaluation.
 
-You should also find a video file named [./artifact-video.mp4](./artifact-video.mp4), and this `artifact-readme.md` file.
+You should also find a video file named `artifact-video.mp4`, and this `artifact-readme.md` file.
 
 #### A Minimal Run: Demo Spell
 
@@ -96,7 +96,7 @@ On `deathstar`, it takes about 41s.
 To execute it using `pash` with 2x-parallelism:
 
 ```sh
-time $PASH_TOP/pa.sh -w 2 --log_file pash.log demo-spell.sh > pash-spell.out
+time $PASH_TOP/pa.sh -w 2 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
 ``` 
 
 On `deathstar`, the 2x-parallel script takes about 28s.
@@ -109,7 +109,7 @@ diff spell.out pash-spell.out
 
 You could also execute it with 8x-parallelism using:
 ```sh
-time $PASH_TOP/pa.sh -w 8 --log_file pash.log demo-spell.sh > pash-spell.out
+time $PASH_TOP/pa.sh -w 8 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
 ``` 
 
 which takes about 14s.
@@ -161,7 +161,7 @@ Note that most stages in the pipeline are repeated twice and proceed in parallel
 
 ## Video Tutorial
 
-To help getting started with the artifact, we recorded a 20-minute tutorial video, found in [./artifact-video.mp4](./artifact-video.mp4), that explains and demonstrates PaSh's main claims and functionality.
+To help getting started with the artifact, we recorded a 20-minute tutorial video, found in `artifact-video.mp4`, that explains and demonstrates PaSh's main claims and functionality.
 
 ## Claims
 
@@ -181,7 +181,7 @@ The parallelizability study informed the design of the annotation language, whic
 #### Parallelizability Study of Commands in GNU & POSIX
 
 The main results of the parallelizability study are summarized in the paper (Sec. 3.1 and Tab. 1).
-In the artifact, the parallelizability study is summarized in the [./annotations/p_stats](annotations/p_stats).
+In the artifact, the parallelizability study is summarized in the [./annotations/p_stats](../annotations/p_stats).
 
 We note that, like the rest of the project, the results of the parallelizability study are being updated and might not exactly reflect percentages in the table;
   the camera-ready version of the paper will include the final numbers.
@@ -192,7 +192,7 @@ Annotations can be thought of as defining a bidirectional correspondence between
 Since command behaviors (and correspondence) can change based on their arguments, annotations contain a sequence of predicates.
 Each predicate is accompanied by information that instantiates the correspondence between a command and a dataflow node.
 
-Annotations for about 60 popular commands are stored in [./annotations](annotations)encoded as JSON.
+Annotations for about 60 popular commands are stored in [./annotations](../annotations)encoded as JSON.
 These average about 14 lines per annotation, for a total of 846 lines of annotations.
 
 Below we present two example annotations for `chmod` and `cut`.
@@ -282,34 +282,34 @@ Note that currently PaSh's `cut` annotation engine does not handle the `empty-ar
 
 ## Claim 2: A Dataflow-based Parallelizing Compiler
 
-The bulk of PaSh is in the [compiler](pash/compiler/) directory.
-A diagram of the compiler is shown in [docs/pash_architecture.png](pash/docs/pash_architecture.png).
+The bulk of PaSh is in the [compiler](../compiler/) directory.
+A diagram of the compiler is shown in [docs/pash_architecture.png](../docs/pash_architecture.png).
 A correspondence between blocks in the diagram and Python modules is shown below:
 
-- PaSh Preprocessor -- [pash.py](pash/compiler/pash.py)
-- Expand, Compile -- [ast_to_ir.py](pash/compiler/ast_to_ir.py)
-- Annotations -- [annotations.py](pash/compiler/annotations.py), [command_categories.py](pash/compiler/command_categories.py)
-- Optimize -- [pash_runtime.py](pash/compiler/pash_runtime.py)
+- PaSh Preprocessor -- [pash.py](../compiler/pash.py)
+- Expand, Compile -- [ast_to_ir.py](../compiler/ast_to_ir.py)
+- Annotations -- [annotations.py](../compiler/annotations.py), [command_categories.py](../compiler/command_categories.py)
+- Optimize -- [pash_runtime.py](../compiler/pash_runtime.py)
 
 **Note:** At the time of the paper submission, PaSh did not have a preprocessing component, and didn't handle variable expansion. These changes significantly improve the practical applicability of PaSh since it can be used on scripts where the environment variables are modified throughout the script.
 
-First, there is the parser in [compiler/parser](pash/compiler/parser), which is a port of [libdash](https://github.com/mgree/), the dash parser extended with OCaml bindings, extended with ocaml2json and json2ocaml code to interface with PaSh.
+First, there is the parser in [compiler/parser](../compiler/parser), which is a port of [libdash](https://github.com/mgree/), the dash parser extended with OCaml bindings, extended with ocaml2json and json2ocaml code to interface with PaSh.
 
-Now let's get to the compiler. It's entry point is [compiler/pash.py](pash/compiler/pash.py) that parses a script and replaces potentially parallelizable regions with calls to [compiler/pash_runtime.sh](pash/compiler/pash_runtime.sh). It then executes the script.
+Now let's get to the compiler. It's entry point is [compiler/pash.py](../compiler/pash.py) that parses a script and replaces potentially parallelizable regions with calls to [compiler/pash_runtime.sh](../compiler/pash_runtime.sh). It then executes the script.
 This allows invoking the compiler during the runtime to have information about the values of environment variables.
 
-The runtime script [compiler/pash_runtime.sh](pash/compiler/pash_runtime.sh) simply invokes the compiler [compiler/pash_runtime.py](pash/compiler/pash_runtime.py) and if it succeeds it executes the optimized script, otherwise it executes the original script.
+The runtime script [compiler/pash_runtime.sh](../compiler/pash_runtime.sh) simply invokes the compiler [compiler/pash_runtime.py](../compiler/pash_runtime.py) and if it succeeds it executes the optimized script, otherwise it executes the original script.
 
 Now the compiler has several stages:
 
 1. It expands words in the AST and then it turns it into our dataflow model (guided by annotations)
-   - The expansion and translation happens in [ast_to_ir.py](ast_to_ir.py)
-   - The dataflow model is mostly defined in [ir.py](ir.py)
-   - The annotations are processed in [annotations.py](annotations.py) and [command_categories.py](command_categories.py)
+   - The expansion and translation happens in [ast_to_ir.py](../compiler/ast_to_ir.py)
+   - The dataflow model is mostly defined in [ir.py](../compiler/ir.py)
+   - The annotations are processed in [annotations.py](../compiler/annotations.py) and [command_categories.py](../compiler/command_categories.py)
 2. It performs transformations on the dataflow graph to expose parallelism (guided by annotations)
-   - Translations happen in [pash_runtime.py](pash_runtime.py)
+   - Translations happen in [pash_runtime.py](../compiler/pash_runtime.py)
 3. It then translates the dataflow graph back to a shell script to execute it with bash
-   - The `dfg2shell` translation happens in [ir_to_ast.py](ir_to_ast.py)
+   - The `dfg2shell` translation happens in [ir_to_ast.py](../compiler/ir_to_ast.py)
    
  A few interesting fragments are shown below.
  
@@ -372,21 +372,21 @@ PaSh includes a small library of runtime primitives for supporting the runtime e
 ### Stream Splitting
 
 The PaSh compiler inserts `split` nodes to expose parallelism when parallelizable nodes only have one input.
-The command `split` is in [./runtime](./pash/runtime).
+The command `split` is in [./runtime](../runtime).
 
 ### Eager Stream Polling
 
 To overcome the laziness challenges outlined in Sec. 5, PaSh inserts and instantiates `eager` nodes on streams.
-The command `eager` is in [./runtime](./pash/runtime).
+The command `eager` is in [./runtime](../runtime).
 
 ### Cleanup Logic
 
 PaSh contains cleanup logic for dealing with dangling FIFOs.
-This is implemented in `wait_for_output_and_sigpipe_rest.sh`, contained in [./runtime](./pash/runtime).
+This is implemented in `wait_for_output_and_sigpipe_rest.sh`, contained in [./runtime](../runtime).
 
 ### Aggregators
 
-There is a small custom aggregator library provided in [runtime/agg/py/](pash/runtime/agg/py/).
+There is a small custom aggregator library provided in [runtime/agg/py/](../runtime/agg/py/).
 These aggregators are used to merge partial results from the parallel scripts.
 
 For example, the aggregator `wc.py` can merge results from partial `wc` running in parallel.
@@ -431,7 +431,7 @@ PaSh’s library currently several aggregators, many of which are usable by more
 
 This section provides detailed instructions on how to replicate parts of the experimental evaluation of the system.
 
-Note that input files that are used as inputs for this script are generated using the `gen*` scripts in [evaluation/scripts/input/](evaluation/scripts/input/).
+Note that input files that are used as inputs for this script are generated using the `gen*` scripts in [evaluation/scripts/input/](../evaluation/scripts/input/).
 
 ```sh
 # No need to run this on deathstar, inputs are already there
@@ -445,7 +445,7 @@ you only need to run `./gen.sh`.
 
 #### Section 6.1: Common Unix one-liners
 
-The one-liner scripts are included in [evaluation/microbenchmarks](evaluation/microbenchmarks).
+The one-liner scripts are included in [evaluation/microbenchmarks](../evaluation/microbenchmarks).
 The list of scripts (and their correspondence to the names in the paper) are seen below:
  - minimal_grep.sh       # EuroSys: nfa-regex
  - minimal_sort.sh       # EuroSys: sort
@@ -465,14 +465,14 @@ The inputs that we are going to run them on are defined in
 Before running the script we first need to `cd` to the correct directory
   `cd $PASH_TOP/evaluation/eurosys`
 
-The script that runs PaSh on these programs is: [evaluation/eurosys/execute_eurosys_one_liners.sh](evaluation/eurosys/execute_eurosys_one_liners.sh) 
+The script that runs PaSh on these programs is: [evaluation/eurosys/execute_eurosys_one_liners.sh](../evaluation/eurosys/execute_eurosys_one_liners.sh) 
 There are three modes of execution (can be seen by calling the script with the -h flag):
 
   1. Small inputs | --width 2, 16 | Only full PaSh config
   2. Small inputs | --width 2, 16 | All PaSh configs
   3. Big inputs | -- width 2, 4, 8, 16, 32, 64 | All PaSh configs
 
-The script [evaluation/eurosys/execute_eurosys_one_liners.sh](evaluation/eurosys/execute_eurosys_one_liners.sh) is based on [evaluation/execute_compile_evaluation_script.sh](evaluation/execute_compile_evaluation_script.sh) that correctly sets up PaSh for the different configurations.
+The script [evaluation/eurosys/execute_eurosys_one_liners.sh](../evaluation/eurosys/execute_eurosys_one_liners.sh) is based on [evaluation/execute_compile_evaluation_script.sh](../evaluation/execute_compile_evaluation_script.sh) that correctly sets up PaSh for the different configurations.
 
 If you just want to check that PaSh achieves speedups as presented in the paper you can just run 1 with option `-s`.
 
@@ -490,11 +490,11 @@ cd $PASH_TOP/compiler
 python3 gather_results.py
 ```
 
-This will create plots for all invocations of [evaluation/eurosys/execute_eurosys_one_liners.sh`, one for each flag.
+This will create plots for all invocations of `evaluation/eurosys/execute_eurosys_one_liners.sh`, one for each flag.
 The plots are:
 * for `-s`: [evaluation/plots/small_tiling_throughput_scaleup.pdf](evaluation/plots/small_tiling_throughput_scaleup.pdf)
-* for `-m`: [evaluation/plots/medium_tiling_throughput_scaleup.pdf](evaluation/plots/medium_tiling_throughput_scaleup.pdf)
-* for `-l`: [evaluation/plots/tiling_throughput_scaleup.pdf](evaluation/plots/tiling_throughput_scaleup.pdf)
+* for `-m`: [evaluation/plots/medium_tiling_throughput_scaleup.pdf](../evaluation/plots/medium_tiling_throughput_scaleup.pdf)
+* for `-l`: [evaluation/plots/tiling_throughput_scaleup.pdf](../evaluation/plots/tiling_throughput_scaleup.pdf)
 
 Note that `-m` supersedes `-s` but `-l` does not supersede any of the two.
 
@@ -503,13 +503,13 @@ therefore having 0 speedups in some points of the plots.
 
 #### Section 6.2: Unix50 from Bell Labs
 
-All of the Unix50 pipelines are in [evaluation/unix50/unix50.sh](evaluation/unix50/unix50.sh).
-The inputs of the pipelines are in [evaluation/unix50/](evaluation/unix50/).
+All of the Unix50 pipelines are in [evaluation/unix50/unix50.sh](../evaluation/unix50/unix50.sh).
+The inputs of the pipelines are in [evaluation/unix50/](../evaluation/unix50/).
 
 Before running the script we first need to move to the correct directory
   `cd $PASH_TOP/evaluation/eurosys`
 
-The script that runs PaSh on these programs is: [evaluation/eurosys/execute_unix_benchmarks.sh](evaluation/eurosys/execute_unix_benchmarks.sh) 
+The script that runs PaSh on these programs is: [evaluation/eurosys/execute_unix_benchmarks.sh](../evaluation/eurosys/execute_unix_benchmarks.sh) 
 There are two modes of execution (can be seen by calling the script with the -h flag):
 
   1. Small inputs (1GB) | --width 4
@@ -532,11 +532,11 @@ python3 gather_results.py
 This will create plots for both "1GB --width 4" and for "10GB --width 16".
 
 The plots are in:
-- for `-s`: [evaluation/plots/unix50_1GB_individual_speedups_4.pdf](evaluation/plots/unix50_1GB_individual_speedups_4.pdf)
-- for `-l`: [evaluation/plots/unix50_10GB_individual_speedups_16.pdf](evaluation/plots/unix50_10GB_individual_speedups_16.pdf)
+- for `-s`: [evaluation/plots/unix50_1GB_individual_speedups_4.pdf](../evaluation/plots/unix50_1GB_individual_speedups_4.pdf)
+- for `-l`: [evaluation/plots/unix50_10GB_individual_speedups_16.pdf](../evaluation/plots/unix50_10GB_individual_speedups_16.pdf)
 
 Note that the pipelines in the plot are sorted with respect to speedup, and not by their ID.
-So the first pipeline does not necessarily correspond to the first pipeline in [evaluation/unix50](evaluation/unix50).
+So the first pipeline does not necessarily correspond to the first pipeline in [evaluation/unix50](../evaluation/unix50).
 
 There are two small differences of these plots compared to Figure 10.
 These differences are due to the evolution of PaSh and the refinement of its annotations.
@@ -561,7 +561,7 @@ cannot be accessed from elsewhere.
 Before running the script we first need to move to the correct directory
   `cd $PASH_TOP/evaluation/eurosys`
 
-The program that we run, described in Section 6.3, can be seen in [evaluation/scripts/max-temp-complete.sh](evaluation/scripts/max-temp-complete.sh).
+The program that we run, described in Section 6.3, can be seen in [evaluation/scripts/max-temp-complete.sh](../evaluation/scripts/max-temp-complete.sh).
 It takes as input a sequence of lines each containing a year (e.g. using `seq 2000 2004`).
 
 To run the script with a single year of input use:
@@ -574,8 +574,8 @@ It runs the script on:
 - pa.sh --width 16
 
 The results are saved in:
-- [evaluation/results/max-temp-complete-2000-2000-seq.time](evaluation/results/max-temp-complete-2000-2000-seq.time)
-- [evaluation/results/max-temp-complete-2000-2000-16-pash.time](evaluation/results/max-temp-complete-2000-2000-16-pash.time)
+- [evaluation/results/max-temp-complete-2000-2000-seq.time](../evaluation/results/max-temp-complete-2000-2000-seq.time)
+- [evaluation/results/max-temp-complete-2000-2000-16-pash.time](../evaluation/results/max-temp-complete-2000-2000-16-pash.time)
 
 If you want to run the program with 5 years of input (as is done in Section 6.3)
 you need to use the following:
@@ -585,8 +585,8 @@ It should take less than an hour.
 It also runs the script with bash and pash --width 16.
 
 The results are saved in:
-- [evaluation/results/max-temp-complete-2000-2004-seq.time](evaluation/results/max-temp-complete-2000-2004-seq.time)
-- [evaluation/results/max-temp-complete-2000-2004-16-pash.time](evaluation/results/max-temp-complete-2000-2004-16-pash.time)
+- [evaluation/results/max-temp-complete-2000-2004-seq.time](../evaluation/results/max-temp-complete-2000-2004-seq.time)
+- [evaluation/results/max-temp-complete-2000-2004-16-pash.time](../evaluation/results/max-temp-complete-2000-2004-16-pash.time)
 
 If you want to separate the preprocessing and processing (as done in Section 6.3)
 you need to add the `-e` flag to either 1 or 5 year execution, e.g.:
@@ -597,10 +597,10 @@ This runs:
 - `evaluation/scripts/max-temp-process.sh`
 
 with bash, and pash --width 16. It saves results in:
-- [evaluation/results/max-temp-preprocess-2000-2000-seq.time](evaluation/results/max-temp-preprocess-2000-2000-seq.time)
-- [evaluation/results/max-temp-preprocess-2000-2000-16-pash.time](evaluation/results/max-temp-preprocess-2000-2000-16-pash.time)
-- [evaluation/results/max-temp-process-2000-2000-seq.time](evaluation/results/max-temp-process-2000-2000-seq.time)
-- [evaluation/results/max-temp-process-2000-2000-16-pash.time](evaluation/results/max-temp-process-2000-2000-16-pash.time)
+- [evaluation/results/max-temp-preprocess-2000-2000-seq.time](../evaluation/results/max-temp-preprocess-2000-2000-seq.time)
+- [evaluation/results/max-temp-preprocess-2000-2000-16-pash.time](../evaluation/results/max-temp-preprocess-2000-2000-16-pash.time)
+- [evaluation/results/max-temp-process-2000-2000-seq.time](../evaluation/results/max-temp-process-2000-2000-seq.time)
+- [evaluation/results/max-temp-process-2000-2000-16-pash.time](../evaluation/results/max-temp-process-2000-2000-16-pash.time)
 
 and similarly for the large inputs (2000-2004).
 
@@ -617,7 +617,7 @@ are saved locally on the server and therefore this program cannot be run from el
 Before running the script we first need to move to the correct directory
   `cd $PASH_TOP/evaluation/eurosys`
 
-The program that we run, described in Section 6.4, can be seen in [evaluation/scripts/web-index.sh](evaluation/scripts/web-index.sh).
+The program that we run, described in Section 6.4, can be seen in [evaluation/scripts/web-index.sh](../evaluation/scripts/web-index.sh).
 It requires having set the `$IN`, `$WIKI`, and `$WEB_INDEX_DIR` variables.
 
 To run the script for a 1000 wikipedia links use:
@@ -627,21 +627,21 @@ This sets up the required variables and should take less than 5 minutes.
 It runs the script with bash, pash --width 2, pash --width 16.
 
 The results are saved in:
-- [evaluation/results/web-index-1000-seq.time](evaluation/results/web-index-1000-seq.time)
-- [evaluation/results/web-index-1000-2-pash.time](evaluation/results/web-index-1000-2-pash.time)
-- [evaluation/results/web-index-1000-16-pash.time](evaluation/results/web-index-1000-16-pash.time)
+- [evaluation/results/web-index-1000-seq.time](../evaluation/results/web-index-1000-seq.time)
+- [evaluation/results/web-index-1000-2-pash.time](../evaluation/results/web-index-1000-2-pash.time)
+- [evaluation/results/web-index-1000-16-pash.time](../evaluation/results/web-index-1000-16-pash.time)
 
 If you want to run with the EuroSys evaluation inputs (100k links), use:
   `./execute_web_index_dish_evaluation.sh -l`
 
 This should take a couple hours and the results are saved in:
-- [evaluation/results/web-index-100000-seq.time](evaluation/results/web-index-100000-seq.time)
-- [evaluation/results/web-index-100000-2-pash.time](evaluation/results/web-index-100000-2-pash.time)
-- [evaluation/results/web-index-100000-16-pash.time](evaluation/results/web-index-100000-16-pash.time)
+- [evaluation/results/web-index-100000-seq.time](../evaluation/results/web-index-100000-seq.time)
+- [evaluation/results/web-index-100000-2-pash.time](../evaluation/results/web-index-100000-2-pash.time)
+- [evaluation/results/web-index-100000-16-pash.time](../evaluation/results/web-index-100000-16-pash.time)
 
 #### Section 6.5: Further Micro-benchmarks
 
-To run the comparison with sort --parallel, just use [evaluation/eurosys/execute_baseline_sort.sh](evaluation/eurosys/execute_baseline_sort.sh)
+To run the comparison with sort --parallel, just use [evaluation/eurosys/execute_baseline_sort.sh](../evaluation/eurosys/execute_baseline_sort.sh)
 
 Before running the script we first need to move to the correct directory
   `cd $PASH_TOP/evaluation/eurosys`
@@ -667,5 +667,5 @@ Mailing Lists:
 * [Commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
 
 Development/contributions:
-* Contribution guide: [docs/contrib](docs/contrib.md)
+* Contribution guide: [docs/contrib](../docs/contrib.md)
 * Continuous Integration Server: [http://pash.ndr.md/](http://pash.ndr.md/)
