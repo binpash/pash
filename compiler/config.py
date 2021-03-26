@@ -83,9 +83,6 @@ def add_common_arguments(parser):
     parser.add_argument("--no_cat_split_vanish",
                         help="(experimental) disable the optimization that removes cat with N inputs that is followed by a split with N inputs",
                         action="store_true")
-    parser.add_argument("--no_cat_split_vanish",
-                        help="(experimental) disable the optimization that removes cat with N inputs that is followed by a split with N inputs",
-                        action="store_true")
     parser.add_argument("--r_split",
                         help="(experimental) use round robin split, merge, wrap, and unwrap",
                         action="store_true")
