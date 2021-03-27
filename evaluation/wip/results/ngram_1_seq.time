@@ -1,5 +1,0 @@
-mkfifo: cannot create fifo 's2': File exists
-
-real	0m2.344s
-user	0m2.480s
-sys	0m0.084s

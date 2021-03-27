@@ -1,3 +1,4 @@
+import copy
 from command_categories import *
 from util import *
 from ir_utils import *
@@ -7,11 +8,12 @@ from definitions.ir.resource import *
 
 import config
 
-import copy
-
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions
 class DFGNode:
+    ## Unique identifier for nodes
+    next_id = 0
+
     ## inputs : tuple of lists of fid_ids (that can be used to retrieve fid from edges)
     ## outputs : list of fid_ids 
     ## com_name : command name Arg
@@ -21,14 +23,25 @@ class DFGNode:
     ## com_redirs : list of redirections
     ## com_assignments : list of assignments
     def __init__(self, inputs, outputs, com_name, com_category,
-                 com_options = [], com_redirs = [], com_assignments=[]):
+                 com_properties = [],
+                 com_options = [],
+                 com_redirs = [],
+                 com_assignments=[]):
+        ## Add a unique identifier to each DFGNode since id() is not guaranteed to be unique for objects that have different lifetimes.
+        ## This leads to issues when nodes are deleted and new ones are created, leading to id() clashes between them
+        self.id = DFGNode.next_id
+        DFGNode.next_id += 1
+
         self.set_inputs(inputs)
         self.outputs = outputs
         self.com_name = com_name
         self.com_category = com_category
+        self.com_properties = com_properties
         self.com_options = com_options
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
         self.com_assignments = com_assignments
+
+        # log("Node created:", self.id, self)
 
     def __repr__(self):
         prefix = "Node"
@@ -36,11 +49,23 @@ class DFGNode:
             prefix = "Stateless"
         elif (self.com_category == "pure"):
             prefix = "Pure"
+        if (self.is_commutative()):
+            prefix = 'Commutative ' + prefix
         output = "{}: \"{}\" in:{} out:{}".format(
             prefix, self.com_name, 
             self.get_input_list(),
             self.outputs)
         return output
+
+    def get_id(self):
+        return self.id
+
+    ## Copying requires setting the id to a new one too
+    def copy(self):
+        node_copy = copy.deepcopy(self)
+        node_copy.id = DFGNode.next_id
+        DFGNode.next_id += 1
+        return node_copy
 
     ## TODO: Make that a proper class.
     def set_inputs(self, inputs):
@@ -64,13 +89,19 @@ class DFGNode:
         return (self.com_category in ["stateless", "pure", "parallelizable_pure"])
 
     def is_parallelizable(self):
-        return (self.is_pure_parallelizable() or self.com_category == "stateless")
+        return (self.is_pure_parallelizable() or self.is_stateless())
+
+    def is_stateless(self):
+        return (self.com_category == "stateless")
 
     def is_pure_parallelizable(self):
         return (self.com_category == "parallelizable_pure" or
                 (self.com_category == "pure"
                  and str(self.com_name) in list(map(get_command_from_definition,
                                                     config.parallelizable_pure_commands))))
+
+    def is_commutative(self):
+        return ('commutative' in self.com_properties)
 
     ## TODO: Improve this functio to be separately implemented for different special nodes,
     ##       such as cat, eager, split, etc...
@@ -117,7 +148,15 @@ class DFGNode:
                                                                              output_fids)
             
             ## Transform the rest of the argument fids to arguments
-            rest_arguments = [fid.to_ast() for fid in rest_argument_fids]
+            ## Since some of the rest_arguments can be None (they only contain inputs and outputs)
+            ## we need to make sure that we don't turn None objects to asts.
+            ##
+            ## The None fields need to be filtered out because they are taken care of by the interleave function.
+            ##
+            ## TODO: Is this actually OK?
+            rest_arguments = [fid.to_ast()
+                              for fid in rest_argument_fids
+                              if not fid is None]
 
             ## Interleave the arguments since options args might contain gaps.
             arguments = interleave_args(opt_arguments, rest_arguments) 

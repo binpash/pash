@@ -1,6 +1,10 @@
 runtime:
     split_binary: runtime/split
     auto_split_binary: runtime/auto-split.sh
+    r_split_binary: runtime/r_split
+    r_merge_binary: runtime/r_merge
+    r_wrap_binary: runtime/r_wrap
+    r_unwrap_binary: runtime/r_unwrap
     clean_up_graph_binary: runtime/wait_for_output_and_sigpipe_rest.sh
     redirect_stdin_binary: runtime/redirect_stdin_to.sh
     immediate: ./.pash_immediate_command.sh
