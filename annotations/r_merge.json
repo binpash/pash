@@ -1,0 +1,13 @@
+{
+    "command": "r_merge",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "stateless",
+            "inputs": ["args[:]"],
+            "outputs": ["stdout"]
+        }
+    ],
+    "options": ["stdin-hyphen"]
+}

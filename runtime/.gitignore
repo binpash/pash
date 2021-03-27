@@ -1,2 +1,8 @@
 eager
 split
+r_split
+r_merge
+r_unwrap
+r_wrap
+tests/perf*
+tests/*out

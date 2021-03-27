@@ -45,7 +45,14 @@ docker build -t "pash/18.04" .
 docker run --name pash-playground -it pash/18.04
 ```
 
-This should build a fresh docker image running `pash`.
+This should build a fresh docker image running `pash`.  If you wish to
+run the tests, then you will need to extend the image.
+
+```sh
+cd pash/scripts
+docker build -t pash-test --build-arg FROM_IMAGE=pash/18.04 - <Dockerfile.testing
+docker run --name pash-with-tests -it pash-test
+```
 
 **Linux:** Alternatively, if you're on an Ubuntu 18.04, run:
 
