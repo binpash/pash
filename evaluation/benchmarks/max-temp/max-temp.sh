@@ -1,23 +1,23 @@
 #!/bin/bash
-#Calculate maximum temperature across the US over five years
 
-#NOTE: The `head -n 1 below is for minimizing the number of pages to be seen
+FROM=${FROM:-2015}
+TO=${TO:-2015}
+IN=${IN:-'http://ndr.md/data/noaa/'}
+fetch=${fetch:-curl} # -s
 
-# `seq` is similar to {1995..2005}, but this requires shell expansion rules that
-# are quite convoluted
-seq 2015 2019 | 
-  sed 's;^;http://ndr.md/data/noaa/;' |
-  sed 's;$;/;' |
-  xargs -n 1 curl -s |
-  grep gz |
-  head -n 1 | # <-- remove this line for full scale
-  tr -s ' ' |
-  cut -d ' ' -f9 |
-  sed 's;^;http://ndr.md/noaa/2005/;' |
-  xargs -n1 curl -s |
-  gunzip |
-  cut -c 89-92 |
-  grep -v 999 |
-  sort -rn |
-  head -n1
-  
+seq $FROM $TO |
+    sed "s;^;$IN;" |
+    sed 's;$;/;' |
+    xargs -r -n 1 $fetch |
+    grep gz |
+    tr -s ' \n' |
+    cut -d ' ' -f9 |
+    sed 's;^\(.*\)\(20[0-9][0-9]\).gz;\2/\1\2\.gz;' |
+    sed "s;^;$IN;" |
+    xargs -n1 curl -s |
+    gunzip |
+    ## Processing
+    cut -c 89-92 |
+    grep -v 999 |
+    sort -rn |
+    head -n1

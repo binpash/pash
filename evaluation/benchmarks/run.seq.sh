@@ -78,34 +78,12 @@ webindex(){
   cd ..
 }
 
+maxtemp(){
+  echo executing max temp
+  cd max-temp/
+  echo mex-temp.sh: $({ time ./max-temp.sh > /dev/null; } 2>&1)
+  cd ..
+}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+maxtemp
