@@ -1,0 +1,12 @@
+{
+    "command": "r_split",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["args[0]"],
+            "outputs": ["args[2:]"]
+        }
+    ]
+}

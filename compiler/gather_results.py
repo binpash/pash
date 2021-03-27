@@ -51,6 +51,7 @@ UNIX50_RESULTS = "../evaluation/results/unix50/"
 SMALL_UNIX50_RESULTS = "../evaluation/results/unix50_4_1073741824/"
 BIG_UNIX50_RESULTS = "../evaluation/results/unix50_16_10737418240/"
 COARSE_UNIX50_RESULTS = "../evaluation/results/unix50-naive/"
+OASA_RESULTS = "../evaluation/buses/results/"
 
 
 all_experiments = ["minimal_grep",
@@ -398,7 +399,7 @@ def collect_distr_experiment_execution_times(prefix, suffix, scaleup_numbers):
                for n in scaleup_numbers]
 
     ## TODO: Turn to Result
-    compile_numbers = [read_distr_total_compilation_time('{}{}_distr.time'.format(prefix, n))
+    compile_numbers = [read_distr_total_compilation_time('{}{}_{}'.format(prefix, n, suffix))
                        for n in scaleup_numbers]
     return (numbers, compile_numbers)
 
@@ -721,7 +722,8 @@ def generate_table_footer(full=True):
     footer += ['\\end{tabular*}']
     return "\n".join(footer)
 
-def generate_experiment_line(experiment, full=True):
+
+def generate_experiment_line(experiment, results_dir=RESULTS, full=True, small=False):
     line = []
     line += [pretty_names[experiment], '~&~']
 
@@ -735,17 +737,21 @@ def generate_experiment_line(experiment, full=True):
     input_size = collect_format_input_size(experiment)
     line += [input_size, '&']
 
+    if(small is False):
+        suffix='distr.time'
+        if(experiment in ["spell", "bigrams", "double_sort"]):
+            suffix='distr_auto_split.time'
+    else:
+        suffix='distr_auto_split.time'
+
     ## Collect and output the sequential time for the experiment
     scaleup_numbers = [2, 16, 64]
-    experiment_results_prefix = '{}/{}_'.format(RESULTS, experiment)
-    seq_time, _, compile_times = collect_experiment_scaleup_times(experiment_results_prefix, scaleup_numbers)
+    experiment_results_prefix = '{}/{}_'.format(results_dir, experiment)
+    seq_time, _, compile_times = collect_experiment_scaleup_times(experiment_results_prefix, scaleup_numbers, suffix=suffix)
     seq_time_seconds = format_time_seconds(seq_time)
     # seq_time_seconds = seq_times[0] / 1000
     line += [seq_time_seconds, '&']
 
-    suffix='distr.time'
-    if(experiment in ["spell", "bigrams", "double_sort"]):
-        suffix='distr_auto_split.time'
     commands_16, commands_64 = collect_experiment_command_number(experiment_results_prefix,
                                                                 suffix, [16, 64])
     if(full):
@@ -760,18 +766,20 @@ def generate_experiment_line(experiment, full=True):
     line += [highlights[experiment], '\\\\']
     return " ".join(line)
 
+def generate_tables(experiments, results_dir=RESULTS, table_suffix="", small=False):
+    generate_tex_table(experiments, results_dir=results_dir, table_suffix=table_suffix, small=small)
 
-def generate_tex_table(experiments):
+def generate_tex_table(experiments, results_dir=RESULTS, table_suffix="", small=False):
     header = generate_table_header()
     lines = []
     for experiment in experiments:
-        line = generate_experiment_line(experiment)
+        line = generate_experiment_line(experiment, results_dir=results_dir, small=small)
         # print(line)
         lines.append(line)
     data = "\n".join(lines)
     footer = generate_table_footer()
     table_tex = "\n".join([header, data, footer])
-    tex_filename = os.path.join('../evaluation/plots', 'microbenchmarks-table.tex')
+    tex_filename = os.path.join('../evaluation/plots', 'microbenchmarks-table{}.tex'.format(table_suffix))
     with open(tex_filename, 'w') as file:
         file.write(table_tex)
 
@@ -1213,7 +1221,7 @@ def plot_one_liners_tiling(all_experiment_results, experiments,
 
     print_aggregates("Systems", averages, no_eager_averages)
 
-def plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, experiments, unix50_results):
+def plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, experiments, unix50_results, oasa_results):
 
     all_scaleup_numbers = [2, 4, 8, 16, 32, 64]
 
@@ -1261,7 +1269,7 @@ def plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, 
     ## Plot two bars, one for the fan-in fan-out and one for the total
     scaleup_number = 16
     plot_bar_chart_one_liners(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number)
-    plot_bar_chart_one_liners_and_unix50(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number, unix50_results)
+    plot_bar_chart_one_liners_and_unix50(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number, unix50_results, oasa_results)
     plot_one_bar_chart_one_liners_and_unix50(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number, unix50_results)
 
     print_aggregates("Coarse", averages, no_eager_averages)
@@ -1330,7 +1338,7 @@ def plot_bar_chart_one_liners(total_lines, all_experiment_results, all_sequentia
     print("|-- No Cat-Split transformation:", sum(no_aux_speedups) / len(no_aux_speedups))
 
 
-def plot_bar_chart_one_liners_and_unix50(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number, unix50_all_results):
+def plot_bar_chart_one_liners_and_unix50(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number, unix50_all_results, oasa_results):
     res = gather_abs_times_speedups_bar(total_lines, all_experiment_results, all_sequential_results, experiments, scaleup_number)
     (good_results, good_speedups, no_aux_results, no_aux_speedups, seq_results_s) = res
 
@@ -1346,9 +1354,28 @@ def plot_bar_chart_one_liners_and_unix50(total_lines, all_experiment_results, al
     unix50_no_aux_results = [safe_zero_div(unix50_seq_times_s[i], distr_exec_speedup)
                              for i, distr_exec_speedup in enumerate(unix50_no_aux_speedups)]
 
-    ylim = 1800
+    ## Extract the OASA experiment data
+    ##
+    ## TODO: Disgusting copy-paste...
+    oasa_experiments = [str(i) for i in range(1,5)]
+    oasa_seq_times_s = [oasa_results[exp]['seq'] / 1000.0 
+                       for exp in oasa_experiments]
+    oasa_good_speedups = [float(oasa_results[exp]['split'][index_16]) 
+                          for exp in oasa_experiments]
+    oasa_good_results = [safe_zero_div(oasa_seq_times_s[i], float(distr_exec_speedup))
+                         for i, distr_exec_speedup in enumerate(oasa_good_speedups)]
+    oasa_no_aux_speedups = [float(oasa_results[exp]['no-aux-cat-split'][index_16]) 
+                            for exp in oasa_experiments]
+    oasa_no_aux_results = [safe_zero_div(oasa_seq_times_s[i], distr_exec_speedup)
+                             for i, distr_exec_speedup in enumerate(oasa_no_aux_speedups)]
+
+    all_good_results = good_results + unix50_good_results + oasa_good_results
+    all_no_aux_results = no_aux_results + unix50_no_aux_results + oasa_no_aux_results
+    all_seq_results = seq_results_s + unix50_seq_times_s + oasa_seq_times_s
+
+    ylim = 1500
     w = 0.12
-    ind = np.arange(len(good_results + unix50_good_results))
+    ind = np.arange(len(all_good_results))
     good_speedup_color = 'tab:blue'
     no_aux_speedup_color = 'tab:orange'
     seq_color = 'tab:green'
@@ -1363,26 +1390,39 @@ def plot_bar_chart_one_liners_and_unix50(total_lines, all_experiment_results, al
     ax.grid(axis='y', zorder=0)
 
     # plt.vlines([1], -1, len(good_results) + 1, linewidth=0.8)
-    ax.bar(ind+2*w, good_results + unix50_good_results, width=2*w, align='center', 
+    ax.bar(ind+2*w, all_good_results, width=2*w, align='center', 
             color=good_speedup_color, label='Parallel', zorder=3)
-    ax.bar(ind, no_aux_results + unix50_no_aux_results, width=2*w, align='center', 
+    ax.bar(ind, all_no_aux_results, width=2*w, align='center', 
             color=no_aux_speedup_color, label='No Cat-Split', zorder=3)
-    ax.bar(ind-2*w, seq_results_s + unix50_seq_times_s, width=2*w, align='center', 
+    ax.bar(ind-2*w, all_seq_results, width=2*w, align='center', 
             color=seq_color, label='Baseline', zorder=3)
     ## Add text on top
-    for i, v in enumerate(seq_results_s + unix50_seq_times_s):
+    prev_i = -2
+    for i, v in enumerate(all_seq_results):
         if(v > ylim):
-            plt.text(i-2*w, ylim*1.01, str(int(v)), ha='center')
+            if(prev_i == i-1):
+                y_pos = ylim*1.07
+            else:
+                y_pos = ylim * 1.01
+                prev_i = i
+            plt.text(i-2*w, y_pos, str(int(v)), ha='center')
 
-    xlabels = [pretty_names[exp] for exp in experiments] + ["unix50-{}".format(i) for i in range(len(unix50_good_results))]
+    xlabels = [pretty_names[exp] for exp in experiments] + ["unix50-{}".format(i) for i in range(len(unix50_good_results))] + ["buses-{}".format(i) for i in range(1,5)]
     plt.xticks(ind, xlabels, rotation=45, ha="right") 
     # ax.set_xscale("log")
     plt.ylim((0, ylim))
     plt.legend(loc='upper right')
     plt.tight_layout()
 
-    all_good_speedups = good_speedups + unix50_good_speedups
-    all_no_aux_speedups = no_aux_speedups + unix50_no_aux_speedups
+    ## Add vertical lines
+    line_x=len(good_results) - 4 * w
+    plt.axvline(x=line_x, color='black', linestyle='--')
+
+    line_x=len(good_results + unix50_good_results) - 4 * w
+    plt.axvline(x=line_x, color='black', linestyle='--')
+
+    all_good_speedups = good_speedups + unix50_good_speedups + oasa_good_speedups
+    all_no_aux_speedups = no_aux_speedups + unix50_no_aux_speedups + oasa_no_aux_speedups
     print(all_no_aux_speedups)
     print("All Transformation averages:")
     print("|-- All transformations:", sum(all_good_speedups) / len(all_good_speedups))
@@ -1557,6 +1597,14 @@ for experiment in all_experiments:
     small_speedup_results, _, sequential_time = collect_scaleup_line_speedups(experiment, small_one_liners_scaleup_numbers, SMALL_RESULTS)
     small_one_liner_results[experiment] = small_speedup_results
 
+## Gather results for OASA benchmarks
+oasa_experiments = [str(i) for i in range(1,5)]
+oasa_scaleup_numbers = all_scaleup_numbers
+oasa_experiment_results = {}
+for experiment in oasa_experiments:
+    all_speedup_results, _, sequential_time = collect_scaleup_line_speedups(experiment, oasa_scaleup_numbers, OASA_RESULTS)
+    oasa_experiment_results[experiment] = all_speedup_results
+    oasa_experiment_results[experiment]['seq'] = sequential_time
 
 ## Make a report of all one-liners
 report_all_one_liners(all_scaleup_numbers, all_experiment_results, correctness)
@@ -1585,7 +1633,8 @@ coarse_experiments = ["minimal_grep",
 
 if args.all:
     plot_less_one_liners_tiling(all_experiment_results, all_sequential_results, 
-                                coarse_experiments, (unix50_results, unix50_results_fan_in))
+                                coarse_experiments, (unix50_results, unix50_results_fan_in),
+                                oasa_experiment_results)
     generate_tex_coarse_table(coarse_experiments)
     # collect_unix50_coarse_scaleup_times(unix50_results)
 
@@ -1657,7 +1706,8 @@ if args.eurosys2021:
                            prefix="small_")
 
 if args.eurosys2021:
-    generate_tex_table(experiments)
+    generate_tables(experiments, results_dir=SMALL_RESULTS, table_suffix="-small", small=True)
+    generate_tables(experiments)
     collect_unix50_scaleup_times(small_unix50_results, scaleup=[4], small_prefix="_1GB")
     collect_unix50_scaleup_times(big_unix50_results, scaleup=[16], small_prefix="_10GB")
     plot_sort_with_baseline(RESULTS)

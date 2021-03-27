@@ -41,3 +41,9 @@ notes.txt
 
 # python
 **/__pycache__/*
+
+#testing and plotting
+scripts/test_eval/*.png
+tmp*
+compiler/1-grams.txt
+compiler/2-grams.txt
