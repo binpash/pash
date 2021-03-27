@@ -1,129 +1,146 @@
 #!/bin/bash
 
-# Requires avoiding buffering lines
-# http://mywiki.wooledge.org/BashFAQ/009
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/web-index/input/5.txt}
+WEB_INDEX_DIR=${WEB_INDEX_DIR:-$PASH_TOP/evaluation/benchmarks/web-index/input}
+WIKI=${WIKI:-$PASH_TOP/evaluation/benchmarks/web-index/input/}
 
-# Requires: pandoc, node, python
-# run `npm install` to install packages
+mkfifo {1,2,3}grams
 
-# iconv is stateless
-# ```bash
-# echo 'hello there, would you like some umlauts?\n\n ü ä ö ß or some unicode? ☺' |
-# iconv -c -t ascii//TRANSLIT
-# ```
+bigrams_aux()
+{
+    ( mkfifo s2 > /dev/null ) ;
+    ( mkfifo s3 > /dev/null ) ;
 
-# https://webcache.googleusercontent.com/search?q=cache:l-R5pHOys9MJ:https://stackoverflow.com/questions/207047/what-linux-unix-commands-are-outdated-and-have-powerful-alternatives+&cd=13&hl=en&ct=clnk&gl=us
-# https://github.com/flonatel/pipexec
+    sed '$d' s2 > s3 &
+    tee s2 |
+        tail +2 |
+        paste s3 -
+    rm s2
+    rm s3
+}
 
-cat  >seed.txt <<EOM
-# Do not start this experiment without redirecting **all** HTTP 
-# requests to one of our servers.
-http://en.wikipedia.org
-EOM
+bigram_aux_map()
+{
+    IN=$1
+    OUT=$2
+    AUX_HEAD=$3
+    AUX_TAIL=$4
 
-PROXY=$([ "$(hostname)" == "deathstar" ] && echo "gamma.ndr.md" || echo "localhost")
-SEEN="./seen.txt";
-SOURCE="./seed.txt";
-i=0
+    s2=$(mktemp -u)
+    aux1=$(mktemp -u)
+    aux2=$(mktemp -u)
+    aux3=$(mktemp -u)
+    temp=$(mktemp -u)
 
-rm s1 s2 drainbuf
-mkfifo s1 s2 drainbuf
-echo $PROXY
+    mkfifo $s2
+    mkfifo $aux1
+    mkfifo $aux2
+    mkfifo $aux3
 
-# TODO (nv): I have a feeling this creates duplicates
-cat drainbuf |
-  tee /dev/null >&2 & 
+    ## New way of doing it using an intermediate file. This is slow
+    ## but doesn't deadlock
+    cat $IN > $temp
 
-# to enable line buffering: stdbuf -oL
-tail -f $SOURCE |
-# removes buffering
-tee drainbuf |
-grep --line-buffered -v '^#' |
-sed -u 's/^https/http/' |
-head -n 2 |
-# to debug curl, remove `-s`
-xargs -0 -n 1 -d '\n' curl -s --connect-to "::${PROXY}:8080"  |
-# {
-#   # this lambda is only for hitting multiple servers to increase throughput
-#   read url;
-#   hosts=(localhost) # Can add more servers (gamma.ndr.md delta.ndr.md)
-#   sleep 1;
-#   echo $url >&2;
-#   curl -s  --connect-to "::${hosts[$((i++ % 2))]}:8080" 
-# } |
-  tee -a s1 -a s2 >/dev/null &
+    sed '$d' $temp > $aux3 &
+    cat $temp | head -n 1 > $AUX_HEAD &
+    cat $temp | tail -n 1 > $AUX_TAIL &
+    cat $temp | tail +2 | paste $aux3 - > $OUT &
 
-echo "http://en.wikipedia.org" >> $SOURCE &
+    wait
 
-# # s1---URL manipulation: Get all URLs, diff with SEEN, and write back to SOURCE and SEEN
-# FIXME: sort won't work here because it's gonna wait indefinitely---but { read v; echo $v | comm .. } should work
-cat s1 |
-./grep-url.js |
-# grep -Eoi '<a [^>]+>' | 
-# grep -Eo 'href="[^\"]+"' | 
-# grep -Eo '(http|https)://[^/"]+' |
-grep '^http' |
-# filtering in-place, because we can't do sort
-# realized that xargs is a window operator!
-# it's impossible to use <( ) with xargs because it's evaluated before 
-# xargs expands `{}` --- so the solution is to call bash
-# quotes are used to avoid command injection
-# TODO: Alternatively, this can be written as a (possibly anon.) function
-xargs -0 -n 1 -d '\n' -I {} bash -c 'echo "$(grep -Fxv -f ./test.txt <(echo "{}"))"' |
-# grep -w amp
-# {
-#   read v;
-# # echo "-->  $v" >&2;
-#   echo $v # |  -
-# } |
-grep --line-buffered -v '^#' |
-sed -u 's/^https/http/' |
-# # tr 'x' 'x' |
-# Note the append on SEEN and write on SOURCE
-tee -a $SEEN -a $SOURCE > /dev/null &
+    rm $temp
+    rm $s2
+    rm $aux1
+    rm $aux2
+    rm $aux3
+}
 
-rm shift{1,2,3} {1,2,3}grams
-mkfifo shift{1,2,3} {1,2,3}grams
+bigram_aux_reduce()
+{
+    IN1=$1
+    AUX_HEAD1=$2
+    AUX_TAIL1=$3
+    IN2=$4
+    AUX_HEAD2=$5
+    AUX_TAIL2=$6
+    OUT=$7
+    AUX_HEAD_OUT=$8
+    AUX_TAIL_OUT=$9
 
-cat '1grams' |
-    sort |
-    uniq -c |
-    sort -rn >> 1-grams.txt &
+    temp=$(mktemp -u)
 
-cat '2grams' |
-    tr -cs A-Za-z '\n' |
-    tr A-Z a-z |
-    tee shift1 |
-    tail +2 |
-    paste shift1 - |
-    sort |
-    uniq -c |
-    sort -rn >> 2-grams.txt &
+    mkfifo $temp
 
-cat '3grams' |
-    tr -cs A-Za-z '\n' |
-    tr A-Z a-z |
-    tee shift2 |
-    tail +2 |
-    paste shift2 - |
-    tee shift3 |
-    cut -f 1 |
-    tail +3 |
-    paste shift3 - |
-    sort |
-    uniq -c |
-    sort -rn >> 3-grams.txt &
+    cat $AUX_HEAD1 > $AUX_HEAD_OUT &
+    cat $AUX_TAIL2 > $AUX_TAIL_OUT &
+    paste $AUX_TAIL1 $AUX_HEAD2 > $temp &
+    cat $IN1 $temp $IN2 > $OUT &
 
-# s2---NLP manipulation:  get text
-cat s2 |
-  pandoc --from html --to plain --quiet |
+    wait
+
+    rm $temp
+}
+
+
+trigrams_aux()
+{
+    s2=$(mktemp -u)
+    s3=$(mktemp -u)
+
+    mkfifo $s2 $s3
+
+    tee $s2 |
+        tail +2 |
+        paste $s2 - |
+        tee $s3 |
+        cut -f 1 |
+        tail +3 |
+        paste $s3 - |
+        sed "\$d" |
+        sed "\$d"
+
+    rm $s2 $s3
+}
+
+
+extract_text()
+{
+    while read -r line
+    do
+        cat $line |
+            iconv -c -t ascii//TRANSLIT |
+            pandoc +RTS -K64m -RTS --from html --to plain --quiet
+    done
+}
+
+cat $IN |
+  sed "s#^#$WIKI#" |
+  extract_text |
   tr -cs A-Za-z '\n' |
   tr A-Z a-z |
-  iconv -c -t ascii//TRANSLIT |
-  grep -vwFf stopwords.txt |
-  ./stem-words.js | # stem-to-roots
-  tee '3grams' '2grams' '1grams' > /dev/null &
+  grep -vwFf $WEB_INDEX_DIR/stopwords.txt |
+  $WEB_INDEX_DIR/stem-words.js |
+  tee 3grams 2grams 1grams > /dev/null &
 
-wait
-# lynx -dump -stdin
-# rm s1 s2
+cat 1grams |
+    sort |
+    uniq -c |
+    sort -rn > 1-grams.txt &
+
+cat 2grams |
+    tr -cs A-Za-z '\n' |
+    tr A-Z a-z |
+    bigrams_aux |
+    sort |
+    uniq -c |
+    sort -rn > 2-grams.txt &
+
+cat 3grams |
+    tr -cs A-Za-z '\n' |
+    tr A-Z a-z |
+    trigrams_aux |
+    sort |
+    uniq -c |
+    sort -rn # > 3-grams.txt
+
+rm {1,2,3}grams

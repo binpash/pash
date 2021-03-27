@@ -1,0 +1,5 @@
+*
+!./setup.sh
+!./stem-words.js
+!./stopwords.txt
+!./grep-url.js
