@@ -21,7 +21,7 @@ RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 
 ## This is set in pash.py and pash_runtime.py accordingly.
 ## In both cases the setting is different.
-PASH_TMP_PREFIX = "pash_"
+PASH_TMP_PREFIX = None
 
 config = {}
 annotations = []
