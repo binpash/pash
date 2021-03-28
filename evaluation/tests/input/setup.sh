@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ## This is now included in the directory by default
-# curl 'http://ndr.md/corpus/dummy/1M.txt' > 1M.txt
+curl 'http://ndr.md/corpus/dummy/1M.txt' > 1M.txt
 
 rm -f 10M.txt
 touch 10M.txt
