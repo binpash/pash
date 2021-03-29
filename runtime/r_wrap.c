@@ -121,12 +121,12 @@ void processCmd(char *args[])
                             }
                             memcpy(stdoutBlock + currReadLen, readBuffer, len);
                             currReadLen += len;
-                        } else {
-                            switch (len) {
+                        } else if (len < 0) {
+                            switch (errno) {
 					        case EAGAIN:
-                                break; 
+                                break;
                             default:
-                                err(2, "r_wrap: failed reading from fork, error %ld", len);
+                                err(2, "r_wrap: failed reading from fork, error %d", errno);
                             }
                         }
                     }
@@ -139,12 +139,15 @@ void processCmd(char *args[])
                     currWriteLen -= len; 
                     memmove(writebuffer, writebuffer + len, currWriteLen);
                 } else if (len < 0) {
-                    switch (len) {
+                    switch (errno) {
+                        
 					case EAGAIN:
 						len = 0;
 						break;
+                    // TODO handle broken pipe if needed
+                    case EPIPE:
 					default:
-						err(2, "r_wrap: error writing to fork, error %ld", len);
+						err(2, "r_wrap: error writing to fork, error %d", errno);
 					}            
                 }
 
@@ -157,15 +160,28 @@ void processCmd(char *args[])
             // read output of forked process
             // block to make sure you read until the process exits and to save cpu cycles
             block_fd(inputFd, "r-wrap-fork-read");
-            while ((len = read(inputFd, buffer, bufLen)) > 0)
-            {
-                if ((currReadLen + len) > stdoutBlockBufLen)
-                {
-                    stdoutBlockBufLen = currReadLen + len + CHUNKSIZE;
-                    stdoutBlock = realloc(stdoutBlock, stdoutBlockBufLen + 1);
+            bool reached_eof = 0;
+            while (!reached_eof) {
+                if ((len = read(inputFd, buffer, bufLen)) > 0) {
+                    if ((currReadLen + len) > stdoutBlockBufLen)
+                    {
+                        stdoutBlockBufLen = currReadLen + len + CHUNKSIZE;
+                        stdoutBlock = realloc(stdoutBlock, stdoutBlockBufLen + 1);
+                    }
+                    memcpy(stdoutBlock + currReadLen, buffer, len);
+                    currReadLen += len;
+                } else {
+                    if (len == 0)
+                        reached_eof = 1;
+                    else {
+                        switch (errno) {
+                            case EAGAIN:
+                                break;
+                            default:
+                                err(2, "r_wrap: error writing to fork, error %d", errno);
+                        }
+                    }
                 }
-                memcpy(stdoutBlock + currReadLen, buffer, len);
-                currReadLen += len;
             }
             close(inputFd);
 
