@@ -1,0 +1,91 @@
+(1) Previous exit status: 0
+(1) Previous set state: hB
+Writing vars to: /tmp/tmp.lk6oz3v2RE
+(1) Bash variables saved in: /tmp/tmp.lk6oz3v2RE
+(1) Bash set state at start of execution: hB
+(1) Set state reverted to PaSh-internal set state: huB
+Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
+inputs-outputs found for: tr
+|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
+class: stateless found for: tr
+inputs-outputs found for: grep
+|-- (['stdin'], ['stdout'], [('option', 0)])
+class: stateless found for: grep
+Compilation time: 1.152  ms
+Total nodes after optimization: 5
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 0
+Optimization time: 0.986  ms
+arguments, redirs found for: tr
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 48]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50]]]]]]])
+arguments, redirs found for: /pash/runtime/auto-split.sh
+|-- ([#file2, #file5, #file6], [])
+arguments, redirs found for: grep
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56]]]]]]])
+arguments, redirs found for: grep
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 54]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57]]]]]]])
+arguments, redirs found for: cat
+|-- ([#file8, #file9], [])
+Backend time: 10.06  ms
+Optimized script saved in: /tmp/tmp.dkrf5iBcYn
+Compiler exited with code: 0
+(3) Recovering variables from: /tmp/tmp.lk6oz3v2RE
+/dev/fd/63: line 28: declare: PPID: readonly variable
+/dev/fd/63: line 36: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 40: declare: UID: readonly variable
+(3) Reverted to BaSh set state: hB
+(4) Executing script in /tmp/tmp.dkrf5iBcYn:
+rm -f "#file10"
+rm -f "#file2"
+rm -f "#file5"
+rm -f "#file6"
+rm -f "#file7"
+rm -f "#file8"
+rm -f "#file9"
+mkfifo "#file10"
+mkfifo "#file2"
+mkfifo "#file5"
+mkfifo "#file6"
+mkfifo "#file7"
+mkfifo "#file8"
+mkfifo "#file9"
+source /pash/runtime/redirect_stdin_to.sh "#file10"
+{ tr A-Z a-z <"#file10" >"#file2" & }
+{ /pash/runtime/auto-split.sh "#file2" "#file5" "#file6" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"#file5" >"#file8" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"#file6" >"#file9" & }
+{ cat "#file8" "#file9" & }
+source /pash/runtime/wait_for_output_and_sigpipe_rest.sh ${!}
+rm -f "#file10"
+rm -f "#file2"
+rm -f "#file5"
+rm -f "#file6"
+rm -f "#file7"
+rm -f "#file8"
+rm -f "#file9"
+/pash/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (49125) - No such process
+(5) BaSh script exited with ec: 0
+(5) Writing current BaSh set state to: /tmp/tmp.ibf7JNMQo4
+(5) Current BaSh shell: hB
+(5) Reverted to PaSh set state to: huB
+Writing vars to: /tmp/tmp.L1MOAUjqZi
+(5) Exiting from BaSh with BaSh status: 0
+/pash/compiler/pash_runtime.sh: line 233: bc: command not found
+Execution time: ms
+(7) Recovering BaSh variables from: /tmp/tmp.L1MOAUjqZi
+/dev/fd/63: line 29: declare: PPID: readonly variable
+/dev/fd/63: line 37: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 41: declare: UID: readonly variable
+(7) Reading current BaSh set state from: /tmp/tmp.ibf7JNMQo4
+(7) Current BaSh set state: hB
+(7) Current PaSh set state: huB
+(7) Reverted to BaSh set state before exiting: hB
+(7) Reverting last BaSh exit code: 0
+Preprocessed script stored in: /tmp/nwbysbbd
+Preprocessing time: 29.165  ms
+
+real	0m4.931s
+user	0m4.814s
+sys	0m0.277s
+Files ../evaluation//test_intermediary//minimal_grep_stdin_seq_output and /tmp/distr_output/0 are identical
