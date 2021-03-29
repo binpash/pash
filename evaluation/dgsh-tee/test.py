@@ -20,22 +20,18 @@ The test hangs for some reason otherwise.
 '''
 import os
 def run_tests():
-    test10M = Tests(TESTFILES[1], BATCHSZ[1])
-    tests = ['minimal_sort', 'topn', 'wf', 'diff', 'set-diff', 'double_sort', 'sort'] #'bigrams', 'spell' 'shortest_scripts'
+    test10M = Tests(TESTFILES[3], BATCHSZ[3])
+    tests = ['minimal_sort', 'topn', 'wf', 'diff', 'set-diff', 'double_sort', 'sort', 'shortest_scripts'] #'bigrams', 'spell'
     # tests = ["double_sort", "diff"]
     test_files = []
     for test in tests:
         test_path = f"{PASH_TOP}/evaluation/microbenchmarks/{test}.sh"
         test_files.append(test_path)
-    tmp_folder = "tmp_width4_10M/"
+    tmp_folder = "tmp_width4_1G"
     test10M.run_test_list(test_files, r_split=True, width=4, log_folder=tmp_folder, dgsh_tee=True)
     test10M.run_test_list(test_files, width=4, log_folder=tmp_folder, dgsh_tee=True)
-
-    test10M.run_test_list(test_files, r_split=True, width=4, log_folder=tmp_folder)
-    # test10M.run_test_list(test_files, r_split=True, width=4, no_eager=True, log_folder=tmp_folder)
-    # test10M.run_test_list(test_files, width=4, log_folder=tmp_folder)
-    # test10M.run_test_list(test_files, width=4, no_eager=True, log_folder=tmp_folder)
-
+    test10M.run_test_list(test_files, r_split=True, width=4, log_folder=tmp_folder, dgsh_tee=False)
+    test10M.run_test_list(test_files, width=4, log_folder=tmp_folder, dgsh_tee=False)
     print(test10M.get_df()[["test_name", "no_eager", "split_type", "exec_time", "cpu%", "width", "dgsh_tee"]].to_string(index = False))
 
 if __name__ == '__main__':
