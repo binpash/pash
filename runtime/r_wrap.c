@@ -81,7 +81,6 @@ void processCmd(char *args[])
             while (tot_read < blockSize || currWriteLen > 0)
             {
                 readSize = MIN(bufLen, blockSize - tot_read);
-                // fprintf(stderr, "reading stdin\n");
                 if (readSize && fread(buffer, 1, readSize, stdin) != readSize)
                 {
                     err(2, "r_wrap: There is a problem with reading the block");
@@ -96,7 +95,6 @@ void processCmd(char *args[])
                 FD_ZERO(&writeFds); // Clear FD set for select
                 while (!FD_ISSET(outputFd, &writeFds))
                 {
-                    // fprintf(stderr, "looping select\n");
                     FD_ZERO(&readFds);  // Clear FD set for select
                     FD_ZERO(&writeFds); // Clear FD set for select
                     FD_SET(inputFd, &readFds);
@@ -131,10 +129,8 @@ void processCmd(char *args[])
                         }
                     }
                 }
-                // fprintf(stderr, "writing %ld bytes\n", readSize);
+
                 // Write to forked process
-                // For some reason nonblocking fd is not working correctly with fwrite. 
-                // Check shortest-scripts.sh with big batch size to recreate the problem
                 if ((len = write(outputFd, writebuffer, currWriteLen)) > 0) {
                     currWriteLen -= len; 
                     memmove(writebuffer, writebuffer + len, currWriteLen);
@@ -154,7 +150,6 @@ void processCmd(char *args[])
                 tot_read += readSize;
             }
             close(outputFd);
-            // fprintf(stderr, "finished one fork\n");
             assert(tot_read == blockSize);
 
             // read output of forked process
