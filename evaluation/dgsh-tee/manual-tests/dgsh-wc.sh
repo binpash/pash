@@ -11,7 +11,7 @@ file8=8.out
 rm -f *.out
 
 testFile=$PASH_TOP/evaluation/scripts/input/1G.txt
-batchSize=1000000
+batchSize=10000000
 testFile="$PASH_TOP/evaluation/scripts/input/1G.txt"
 if [ "$#" -gt "0" ]
  then
@@ -31,8 +31,8 @@ mkfifo $file6
 
 $PASH_TOP/runtime/r_split -r $testFile $batchSize $file1 $file2 &
 
-$PASH_TOP/runtime/dgsh-tee -I -f -i $file1 -o $file3 &
-$PASH_TOP/runtime/dgsh-tee -I -f -i $file2 -o $file4 &
+$PASH_TOP/runtime/dgsh-tee -I -f -i $file1 -o $file3 -b 10M &
+$PASH_TOP/runtime/dgsh-tee -I -f -i $file2 -o $file4 -b 10M &
 # $PASH_TOP/runtime/r_unwrap < $file1 > $file3 &
 # $PASH_TOP/runtime/r_unwrap < $file2 > $file4 &
 
