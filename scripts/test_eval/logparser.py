@@ -114,9 +114,12 @@ class LogParser:
         Return:
             A single entry pandas dataframe
         """
-        with open(log_file, "r") as f:
-            log = f.read()
-            df = self.parse_log(log)
+        try:
+            with open(log_file, "r") as f:
+                log = f.read()
+                df = self.parse_log(log)
+        except:
+                print("failed to parse", log_file)
         return df
 
     def parse_folder(self, path: str)->pd.DataFrame:
@@ -130,9 +133,9 @@ class LogParser:
         log_files = [os.path.join(path, f) for f in os.listdir(path) if f.endswith(".log")]
         ret_df = pd.DataFrame()
         for log_file in log_files:
-            df = self.parse_file(log_file)
-            ret_df = ret_df.append(df, ignore_index=True)
-        
+                df = self.parse_file(log_file)
+                ret_df = ret_df.append(df, ignore_index=True)
+                
         return ret_df
 
     def get_df(self):
