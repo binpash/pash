@@ -672,9 +672,8 @@ def add_eager_nodes(graph, use_dgsh_tee):
                 eager_input_id = curr.outputs[0]
                 add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
 
-            ## Add an eager after r_split with option -r
-            if(isinstance(curr, r_split.RSplit)
-               and curr.has_r_flag()):
+            ## Add an eager after r_split
+            if(isinstance(curr, r_split.RSplit)):
                 eager_input_ids = curr.outputs
                 for edge_id in eager_input_ids:
                     add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
