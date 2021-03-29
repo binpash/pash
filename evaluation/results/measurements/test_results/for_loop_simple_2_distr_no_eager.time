@@ -1,0 +1,271 @@
+(1) Previous exit status: 0
+(1) Previous set state: hB
+Writing vars to: /tmp/tmp.m9PgOEIjUX
+(1) Bash variables saved in: /tmp/tmp.m9PgOEIjUX
+(1) Bash set state at start of execution: hB
+(1) Set state reverted to PaSh-internal set state: huB
+Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
+Variable: ['V', ['Normal', False, 'IN0', []]] was expanded to: ../evaluation/test_intermediary/split_inputs/input-chunk-00
+Variable: ['V', ['Normal', False, 'IN1', []]] was expanded to: ../evaluation/test_intermediary/split_inputs/input-chunk-01
+inputs-outputs found for: cat
+|-- ([('option', 0), ('option', 1)], ['stdout'], [])
+class: stateless found for: cat
+inputs-outputs found for: tr
+|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
+class: stateless found for: tr
+inputs-outputs found for: sort
+|-- (['stdin'], ['stdout'], [])
+class: pure found for: sort
+Compilation time: 35.622  ms
+Total nodes after optimization: 5
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 0
+Optimization time: 1.698  ms
+arguments, redirs found for: tr
+|-- ([], [['File', ['From', 0, [['C', 34], ['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 116], ['C', 101], ['C', 115], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48], ['C', 34]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56]]]]]]])
+arguments, redirs found for: tr
+|-- ([], [['File', ['From', 0, [['C', 34], ['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 116], ['C', 101], ['C', 115], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 49], ['C', 34]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 48]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file10, #file11], [])
+Backend time: 9.766  ms
+Optimized script saved in: /tmp/tmp.mYu9dfYMHS
+Compiler exited with code: 0
+(3) Recovering variables from: /tmp/tmp.m9PgOEIjUX
+/dev/fd/63: line 30: declare: PPID: readonly variable
+/dev/fd/63: line 38: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 42: declare: UID: readonly variable
+(3) Reverted to BaSh set state: hB
+(4) Executing script in /tmp/tmp.mYu9dfYMHS:
+rm -f "#file3"
+rm -f "#file5"
+rm -f "#file8"
+rm -f "#file9"
+rm -f "#file10"
+rm -f "#file11"
+rm -f "#file12"
+mkfifo "#file3"
+mkfifo "#file5"
+mkfifo "#file8"
+mkfifo "#file9"
+mkfifo "#file10"
+mkfifo "#file11"
+mkfifo "#file12"
+{ tr A-Z a-z <"../evaluation/test_intermediary/split_inputs/input-chunk-00" >"#file8" & }
+{ tr A-Z a-z <"../evaluation/test_intermediary/split_inputs/input-chunk-01" >"#file9" & }
+{ sort <"#file8" >"#file10" & }
+{ sort <"#file9" >"#file11" & }
+{ sort -m "#file10" "#file11" & }
+source /pash/runtime/wait_for_output_and_sigpipe_rest.sh ${!}
+rm -f "#file3"
+rm -f "#file5"
+rm -f "#file8"
+rm -f "#file9"
+rm -f "#file10"
+rm -f "#file11"
+rm -f "#file12"
+/pash/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (43522) - No such process
+(5) BaSh script exited with ec: 0
+(5) Writing current BaSh set state to: /tmp/tmp.Oxs02cmBeg
+(5) Current BaSh shell: hB
+(5) Reverted to PaSh set state to: huB
+Writing vars to: /tmp/tmp.fRydKUzy6m
+(5) Exiting from BaSh with BaSh status: 0
+/pash/compiler/pash_runtime.sh: line 233: bc: command not found
+Execution time: ms
+(7) Recovering BaSh variables from: /tmp/tmp.fRydKUzy6m
+/dev/fd/63: line 31: declare: PPID: readonly variable
+/dev/fd/63: line 39: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 43: declare: UID: readonly variable
+(7) Reading current BaSh set state from: /tmp/tmp.Oxs02cmBeg
+(7) Current BaSh set state: hB
+(7) Current PaSh set state: huB
+(7) Reverted to BaSh set state before exiting: hB
+(7) Reverting last BaSh exit code: 0
+(1) Previous exit status: 0
+(1) Previous set state: hB
+Writing vars to: /tmp/tmp.yNGb0354q2
+(1) Bash variables saved in: /tmp/tmp.yNGb0354q2
+(1) Bash set state at start of execution: hB
+(1) Set state reverted to PaSh-internal set state: huB
+Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
+Variable: ['V', ['Normal', False, 'IN0', []]] was expanded to: ../evaluation/test_intermediary/split_inputs/input-chunk-00
+Variable: ['V', ['Normal', False, 'IN1', []]] was expanded to: ../evaluation/test_intermediary/split_inputs/input-chunk-01
+inputs-outputs found for: cat
+|-- ([('option', 0), ('option', 1)], ['stdout'], [])
+class: stateless found for: cat
+inputs-outputs found for: tr
+|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
+class: stateless found for: tr
+inputs-outputs found for: sort
+|-- (['stdin'], ['stdout'], [])
+class: pure found for: sort
+Compilation time: 36.21  ms
+Total nodes after optimization: 5
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 0
+Optimization time: 1.72  ms
+arguments, redirs found for: tr
+|-- ([], [['File', ['From', 0, [['C', 34], ['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 116], ['C', 101], ['C', 115], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48], ['C', 34]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56]]]]]]])
+arguments, redirs found for: tr
+|-- ([], [['File', ['From', 0, [['C', 34], ['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 116], ['C', 101], ['C', 115], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 49], ['C', 34]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 48]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file10, #file11], [])
+Backend time: 10.317  ms
+Optimized script saved in: /tmp/tmp.x3tPT3qppZ
+Compiler exited with code: 0
+(3) Recovering variables from: /tmp/tmp.yNGb0354q2
+/dev/fd/63: line 31: declare: PPID: readonly variable
+/dev/fd/63: line 39: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 43: declare: UID: readonly variable
+(3) Reverted to BaSh set state: hB
+(4) Executing script in /tmp/tmp.x3tPT3qppZ:
+rm -f "#file3"
+rm -f "#file5"
+rm -f "#file8"
+rm -f "#file9"
+rm -f "#file10"
+rm -f "#file11"
+rm -f "#file12"
+mkfifo "#file3"
+mkfifo "#file5"
+mkfifo "#file8"
+mkfifo "#file9"
+mkfifo "#file10"
+mkfifo "#file11"
+mkfifo "#file12"
+{ tr A-Z a-z <"../evaluation/test_intermediary/split_inputs/input-chunk-00" >"#file8" & }
+{ tr A-Z a-z <"../evaluation/test_intermediary/split_inputs/input-chunk-01" >"#file9" & }
+{ sort <"#file8" >"#file10" & }
+{ sort <"#file9" >"#file11" & }
+{ sort -m "#file10" "#file11" & }
+source /pash/runtime/wait_for_output_and_sigpipe_rest.sh ${!}
+rm -f "#file3"
+rm -f "#file5"
+rm -f "#file8"
+rm -f "#file9"
+rm -f "#file10"
+rm -f "#file11"
+rm -f "#file12"
+/pash/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (43679) - No such process
+(5) BaSh script exited with ec: 0
+(5) Writing current BaSh set state to: /tmp/tmp.p1GQxTwUPJ
+(5) Current BaSh shell: hB
+(5) Reverted to PaSh set state to: huB
+Writing vars to: /tmp/tmp.W1oowSdmsk
+(5) Exiting from BaSh with BaSh status: 0
+/pash/compiler/pash_runtime.sh: line 233: bc: command not found
+Execution time: ms
+(7) Recovering BaSh variables from: /tmp/tmp.W1oowSdmsk
+/dev/fd/63: line 31: declare: PPID: readonly variable
+/dev/fd/63: line 39: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 43: declare: UID: readonly variable
+(7) Reading current BaSh set state from: /tmp/tmp.p1GQxTwUPJ
+(7) Current BaSh set state: hB
+(7) Current PaSh set state: huB
+(7) Reverted to BaSh set state before exiting: hB
+(7) Reverting last BaSh exit code: 0
+(1) Previous exit status: 0
+(1) Previous set state: hB
+Writing vars to: /tmp/tmp.nhIH4YU5Vk
+(1) Bash variables saved in: /tmp/tmp.nhIH4YU5Vk
+(1) Bash set state at start of execution: hB
+(1) Set state reverted to PaSh-internal set state: huB
+Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
+Variable: ['V', ['Normal', False, 'IN0', []]] was expanded to: ../evaluation/test_intermediary/split_inputs/input-chunk-00
+Variable: ['V', ['Normal', False, 'IN1', []]] was expanded to: ../evaluation/test_intermediary/split_inputs/input-chunk-01
+inputs-outputs found for: cat
+|-- ([('option', 0), ('option', 1)], ['stdout'], [])
+class: stateless found for: cat
+inputs-outputs found for: tr
+|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
+class: stateless found for: tr
+inputs-outputs found for: sort
+|-- (['stdin'], ['stdout'], [])
+class: pure found for: sort
+Compilation time: 36.961  ms
+Total nodes after optimization: 5
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 0
+Optimization time: 1.825  ms
+arguments, redirs found for: tr
+|-- ([], [['File', ['From', 0, [['C', 34], ['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 116], ['C', 101], ['C', 115], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 48], ['C', 34]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56]]]]]]])
+arguments, redirs found for: tr
+|-- ([], [['File', ['From', 0, [['C', 34], ['C', 46], ['C', 46], ['C', 47], ['C', 101], ['C', 118], ['C', 97], ['C', 108], ['C', 117], ['C', 97], ['C', 116], ['C', 105], ['C', 111], ['C', 110], ['C', 47], ['C', 116], ['C', 101], ['C', 115], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 116], ['C', 101], ['C', 114], ['C', 109], ['C', 101], ['C', 100], ['C', 105], ['C', 97], ['C', 114], ['C', 121], ['C', 47], ['C', 115], ['C', 112], ['C', 108], ['C', 105], ['C', 116], ['C', 95], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 115], ['C', 47], ['C', 105], ['C', 110], ['C', 112], ['C', 117], ['C', 116], ['C', 45], ['C', 99], ['C', 104], ['C', 117], ['C', 110], ['C', 107], ['C', 45], ['C', 48], ['C', 49], ['C', 34]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 48]]]]]]])
+arguments, redirs found for: sort
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 57]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 49]]]]]]])
+arguments, redirs found for: sort
+|-- ([#file10, #file11], [])
+Backend time: 9.58  ms
+Optimized script saved in: /tmp/tmp.FfNGd9fjoJ
+Compiler exited with code: 0
+(3) Recovering variables from: /tmp/tmp.nhIH4YU5Vk
+/dev/fd/63: line 31: declare: PPID: readonly variable
+/dev/fd/63: line 39: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 43: declare: UID: readonly variable
+(3) Reverted to BaSh set state: hB
+(4) Executing script in /tmp/tmp.FfNGd9fjoJ:
+rm -f "#file3"
+rm -f "#file5"
+rm -f "#file8"
+rm -f "#file9"
+rm -f "#file10"
+rm -f "#file11"
+rm -f "#file12"
+mkfifo "#file3"
+mkfifo "#file5"
+mkfifo "#file8"
+mkfifo "#file9"
+mkfifo "#file10"
+mkfifo "#file11"
+mkfifo "#file12"
+{ tr A-Z a-z <"../evaluation/test_intermediary/split_inputs/input-chunk-00" >"#file8" & }
+{ tr A-Z a-z <"../evaluation/test_intermediary/split_inputs/input-chunk-01" >"#file9" & }
+{ sort <"#file8" >"#file10" & }
+{ sort <"#file9" >"#file11" & }
+{ sort -m "#file10" "#file11" & }
+source /pash/runtime/wait_for_output_and_sigpipe_rest.sh ${!}
+rm -f "#file3"
+rm -f "#file5"
+rm -f "#file8"
+rm -f "#file9"
+rm -f "#file10"
+rm -f "#file11"
+rm -f "#file12"
+/pash/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (43836) - No such process
+(5) BaSh script exited with ec: 0
+(5) Writing current BaSh set state to: /tmp/tmp.k9iPII01vU
+(5) Current BaSh shell: hB
+(5) Reverted to PaSh set state to: huB
+Writing vars to: /tmp/tmp.6FlnThKY2S
+(5) Exiting from BaSh with BaSh status: 0
+/pash/compiler/pash_runtime.sh: line 233: bc: command not found
+Execution time: ms
+(7) Recovering BaSh variables from: /tmp/tmp.6FlnThKY2S
+/dev/fd/63: line 31: declare: PPID: readonly variable
+/dev/fd/63: line 39: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 43: declare: UID: readonly variable
+(7) Reading current BaSh set state from: /tmp/tmp.k9iPII01vU
+(7) Current BaSh set state: hB
+(7) Current PaSh set state: huB
+(7) Reverted to BaSh set state before exiting: hB
+(7) Reverting last BaSh exit code: 0
+Preprocessed script stored in: /tmp/xdmlmhqo
+Preprocessing time: 29.333  ms
+
+real	0m2.320s
+user	0m2.244s
+sys	0m0.957s
+Files ../evaluation//test_intermediary//for_loop_simple_seq_output and /tmp/distr_output/0 are identical

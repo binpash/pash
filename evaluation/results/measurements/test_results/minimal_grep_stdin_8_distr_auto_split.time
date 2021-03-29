@@ -1,0 +1,235 @@
+(1) Previous exit status: 0
+(1) Previous set state: hB
+Writing vars to: /tmp/tmp.DR9qbwlpLx
+(1) Bash variables saved in: /tmp/tmp.DR9qbwlpLx
+(1) Bash set state at start of execution: hB
+(1) Set state reverted to PaSh-internal set state: huB
+Retrieving candidate DF region: /tmp/pash_temp_ir_file1 ... Done!
+inputs-outputs found for: tr
+|-- (['stdin'], ['stdout'], [('option', 0), ('option', 1)])
+class: stateless found for: tr
+inputs-outputs found for: grep
+|-- (['stdin'], ['stdout'], [('option', 0)])
+class: stateless found for: grep
+Compilation time: 1.283  ms
+Total nodes after optimization: 26
+ -- out of which:
+Cat nodes: 0
+Eager nodes: 0
+Optimization time: 4.857  ms
+arguments, redirs found for: tr
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 51], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50]]]]]]])
+arguments, redirs found for: /pash/runtime/auto-split.sh
+|-- ([#file2, #file5, #file6, #file7, #file8, #file9, #file10, #file11, #file12], [])
+arguments, redirs found for: grep
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 50]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 52]]]]]]])
+arguments, redirs found for: grep
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 51]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 53]]]]]]])
+arguments, redirs found for: grep
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 52]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 54]]]]]]])
+arguments, redirs found for: grep
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 53]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 55]]]]]]])
+arguments, redirs found for: grep
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 54]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 56]]]]]]])
+arguments, redirs found for: grep
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 55]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 57]]]]]]])
+arguments, redirs found for: grep
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 56]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 48]]]]]]])
+arguments, redirs found for: grep
+|-- ([], [['File', ['From', 0, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 49], ['C', 50]]]]]], ['File', ['To', 1, [['Q', [['C', 35], ['C', 102], ['C', 105], ['C', 108], ['C', 101], ['C', 50], ['C', 49]]]]]]])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file5, #file22], [])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file6, #file23], [])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file7, #file24], [])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file8, #file25], [])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file9, #file26], [])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file10, #file27], [])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file11, #file28], [])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file14, #file29], [])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file15, #file30], [])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file16, #file31], [])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file17, #file32], [])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file18, #file33], [])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file19, #file34], [])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file20, #file35], [])
+arguments, redirs found for: /pash/runtime/eager
+|-- ([#file21, #file36], [])
+arguments, redirs found for: cat
+|-- ([#file29, #file30, #file31, #file32, #file33, #file34, #file35, #file36], [])
+Backend time: 20.608  ms
+Optimized script saved in: /tmp/tmp.IEfxo1luZ0
+Compiler exited with code: 0
+(3) Recovering variables from: /tmp/tmp.DR9qbwlpLx
+/dev/fd/63: line 28: declare: PPID: readonly variable
+/dev/fd/63: line 36: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 40: declare: UID: readonly variable
+(3) Reverted to BaSh set state: hB
+(4) Executing script in /tmp/tmp.IEfxo1luZ0:
+rm -f "#file37"
+rm -f "#file2"
+rm -f "#file5"
+rm -f "#file6"
+rm -f "#file7"
+rm -f "#file8"
+rm -f "#file9"
+rm -f "#file10"
+rm -f "#file11"
+rm -f "#file12"
+rm -f "#file13"
+rm -f "#file14"
+rm -f "#file15"
+rm -f "#file16"
+rm -f "#file17"
+rm -f "#file18"
+rm -f "#file19"
+rm -f "#file20"
+rm -f "#file21"
+rm -f "#file22"
+rm -f "#file23"
+rm -f "#file24"
+rm -f "#file25"
+rm -f "#file26"
+rm -f "#file27"
+rm -f "#file28"
+rm -f "#file29"
+rm -f "#file30"
+rm -f "#file31"
+rm -f "#file32"
+rm -f "#file33"
+rm -f "#file34"
+rm -f "#file35"
+rm -f "#file36"
+mkfifo "#file37"
+mkfifo "#file2"
+mkfifo "#file5"
+mkfifo "#file6"
+mkfifo "#file7"
+mkfifo "#file8"
+mkfifo "#file9"
+mkfifo "#file10"
+mkfifo "#file11"
+mkfifo "#file12"
+mkfifo "#file13"
+mkfifo "#file14"
+mkfifo "#file15"
+mkfifo "#file16"
+mkfifo "#file17"
+mkfifo "#file18"
+mkfifo "#file19"
+mkfifo "#file20"
+mkfifo "#file21"
+mkfifo "#file22"
+mkfifo "#file23"
+mkfifo "#file24"
+mkfifo "#file25"
+mkfifo "#file26"
+mkfifo "#file27"
+mkfifo "#file28"
+mkfifo "#file29"
+mkfifo "#file30"
+mkfifo "#file31"
+mkfifo "#file32"
+mkfifo "#file33"
+mkfifo "#file34"
+mkfifo "#file35"
+mkfifo "#file36"
+source /pash/runtime/redirect_stdin_to.sh "#file37"
+{ tr A-Z a-z <"#file37" >"#file2" & }
+{ /pash/runtime/auto-split.sh "#file2" "#file5" "#file6" "#file7" "#file8" "#file9" "#file10" "#file11" "#file12" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"#file22" >"#file14" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"#file23" >"#file15" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"#file24" >"#file16" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"#file25" >"#file17" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"#file26" >"#file18" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"#file27" >"#file19" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"#file28" >"#file20" & }
+{ grep "\\(.\\).*\\1\\(.\\).*\\2\\(.\\).*\\3\\(.\\).*\\4" <"#file12" >"#file21" & }
+{ /pash/runtime/eager "#file5" "#file22" "/tmp/eager_intermediate_#file1" & }
+{ /pash/runtime/eager "#file6" "#file23" "/tmp/eager_intermediate_#file2" & }
+{ /pash/runtime/eager "#file7" "#file24" "/tmp/eager_intermediate_#file3" & }
+{ /pash/runtime/eager "#file8" "#file25" "/tmp/eager_intermediate_#file4" & }
+{ /pash/runtime/eager "#file9" "#file26" "/tmp/eager_intermediate_#file5" & }
+{ /pash/runtime/eager "#file10" "#file27" "/tmp/eager_intermediate_#file6" & }
+{ /pash/runtime/eager "#file11" "#file28" "/tmp/eager_intermediate_#file7" & }
+{ /pash/runtime/eager "#file14" "#file29" "/tmp/eager_intermediate_#file8" & }
+{ /pash/runtime/eager "#file15" "#file30" "/tmp/eager_intermediate_#file9" & }
+{ /pash/runtime/eager "#file16" "#file31" "/tmp/eager_intermediate_#file10" & }
+{ /pash/runtime/eager "#file17" "#file32" "/tmp/eager_intermediate_#file11" & }
+{ /pash/runtime/eager "#file18" "#file33" "/tmp/eager_intermediate_#file12" & }
+{ /pash/runtime/eager "#file19" "#file34" "/tmp/eager_intermediate_#file13" & }
+{ /pash/runtime/eager "#file20" "#file35" "/tmp/eager_intermediate_#file14" & }
+{ /pash/runtime/eager "#file21" "#file36" "/tmp/eager_intermediate_#file15" & }
+{ cat "#file29" "#file30" "#file31" "#file32" "#file33" "#file34" "#file35" "#file36" & }
+source /pash/runtime/wait_for_output_and_sigpipe_rest.sh ${!}
+rm -f "#file37"
+rm -f "#file2"
+rm -f "#file5"
+rm -f "#file6"
+rm -f "#file7"
+rm -f "#file8"
+rm -f "#file9"
+rm -f "#file10"
+rm -f "#file11"
+rm -f "#file12"
+rm -f "#file13"
+rm -f "#file14"
+rm -f "#file15"
+rm -f "#file16"
+rm -f "#file17"
+rm -f "#file18"
+rm -f "#file19"
+rm -f "#file20"
+rm -f "#file21"
+rm -f "#file22"
+rm -f "#file23"
+rm -f "#file24"
+rm -f "#file25"
+rm -f "#file26"
+rm -f "#file27"
+rm -f "#file28"
+rm -f "#file29"
+rm -f "#file30"
+rm -f "#file31"
+rm -f "#file32"
+rm -f "#file33"
+rm -f "#file34"
+rm -f "#file35"
+rm -f "#file36"
+/pash/runtime/wait_for_output_and_sigpipe_rest.sh: line 9: kill: (50532) - No such process
+(5) BaSh script exited with ec: 0
+(5) Writing current BaSh set state to: /tmp/tmp.Tg7vyyQhbA
+(5) Current BaSh shell: hB
+(5) Reverted to PaSh set state to: huB
+Writing vars to: /tmp/tmp.69bL4Ogavp
+(5) Exiting from BaSh with BaSh status: 0
+/pash/compiler/pash_runtime.sh: line 233: bc: command not found
+Execution time: ms
+(7) Recovering BaSh variables from: /tmp/tmp.69bL4Ogavp
+/dev/fd/63: line 29: declare: PPID: readonly variable
+/dev/fd/63: line 37: declare: SHELLOPTS: readonly variable
+/dev/fd/63: line 41: declare: UID: readonly variable
+(7) Reading current BaSh set state from: /tmp/tmp.Tg7vyyQhbA
+(7) Current BaSh set state: hB
+(7) Current PaSh set state: huB
+(7) Reverted to BaSh set state before exiting: hB
+(7) Reverting last BaSh exit code: 0
+Preprocessed script stored in: /tmp/spsdhtdx
+Preprocessing time: 29.045  ms
+
+real	0m1.560s
+user	0m5.059s
+sys	0m0.416s
+Files ../evaluation//test_intermediary//minimal_grep_stdin_seq_output and /tmp/distr_output/0 are identical
