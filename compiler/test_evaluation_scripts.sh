@@ -24,6 +24,7 @@ configurations=(
     ""
     "--r_split"
     "--dgsh_tee"
+    "--r_split --dgsh_tee"
 )
 
 ## Tests where the compiler will not always succeed (e.g. because they have mkfifo)
