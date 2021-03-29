@@ -118,9 +118,11 @@ class LogParser:
             with open(log_file, "r") as f:
                 log = f.read()
                 df = self.parse_log(log)
+                return df
         except:
                 print("failed to parse", log_file)
-        return df
+                return pd.DataFrame()
+        
 
     def parse_folder(self, path: str)->pd.DataFrame:
         """
