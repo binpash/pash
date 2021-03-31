@@ -23,6 +23,7 @@ if [ ! -f ./1M.txt ]; then
       exit 1
     fi
   fi
+  echo '' >> ./1M.txt
 fi
 
 if [ ! -f ./all_cmds.txt ]; then
@@ -31,6 +32,7 @@ if [ ! -f ./all_cmds.txt ]; then
     # This should be OK for tests, no need for abort
     ls /usr/bin/* > all_cmds.txt
   fi
+  echo '' >> ./all_cmds.txt
 fi
 
 if [ ! -f ./words ]; then
@@ -53,6 +55,7 @@ if [ ! -f ./words ]; then
       fi
     fi
   fi
+  echo '' >> words
 fi
 
 if [ ! -f ./10M.txt ]; then
