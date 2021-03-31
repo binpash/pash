@@ -5,7 +5,7 @@
 | unix50        | 36            | 1G    |      |
 | max-temp      | 1             | 34G   |      |
 | web-index     | 1             | 50G   |      |
-| analytics-mts | 5             | 50G   |      |
+| analytics-mts | 5             | 34G   |      |
 | poets         |               |       |      |
 | aliases       |               |       |      |
 | analysis-logs |               |       |      |

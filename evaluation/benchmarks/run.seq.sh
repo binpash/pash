@@ -12,7 +12,9 @@ fi
 oneliners(){
   echo executing one-liners
   export IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/input/1M.txt}
-  cd oneliners/
+  cd oneliners/input
+  ./setup.sh
+  cd ..
   echo nfa-regex.sh:        $({ time ./nfa-regex.sh > /dev/null; } 2>&1)
   echo sort.sh:             $({ time ./sort.sh > /dev/null; } 2>&1)
   echo top-n.sh:            $({ time ./top-n.sh > /dev/null; } 2>&1)
@@ -28,7 +30,9 @@ oneliners(){
 
 unix50(){
   echo executing unix50
-  cd unix50/
+  cd unix50/input
+  ./setup.sh
+  cd ..
   echo 1.sh:  $({ time ./1.sh  > /dev/null; } 2>&1)
   echo 2.sh:  $({ time ./2.sh  > /dev/null; } 2>&1)
   echo 3.sh:  $({ time ./3.sh  > /dev/null; } 2>&1)
@@ -68,9 +72,11 @@ unix50(){
   cd ..
 }
 
-webindex(){
+web-index(){
   echo executing web index
-  cd web-index/
+  cd web-index/input
+  ./setup.sh
+  cd ..
   export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/100.txt
   export WEB_INDEX_DIR=$PASH_TOP/evaluation/benchmarks/web-index/input
   export WIKI=$PASH_TOP/evaluation/benchmarks/web-index/input/
@@ -78,12 +84,23 @@ webindex(){
   cd ..
 }
 
-maxtemp(){
+max-temp(){
   echo executing max temp
   cd max-temp/
   echo mex-temp.sh: $({ time ./max-temp.sh > /dev/null; } 2>&1)
   cd ..
 }
 
+analytics-mts(){
+  echo executing MTS analytics
+  cd analytics-mts/input
+  ./setup.sh
+  cd ..
+  echo 1.sh: $({ time ./1.sh > /dev/null; } 2>&1)
+  echo 2.sh: $({ time ./2.sh > /dev/null; } 2>&1)
+  echo 3.sh: $({ time ./3.sh > /dev/null; } 2>&1)
+  echo 4.sh: $({ time ./4.sh > /dev/null; } 2>&1)
+  # echo 5.sh: $({ time ./5.sh > /dev/null; } 2>&1)
+  cd ..
+}
 
-maxtemp
