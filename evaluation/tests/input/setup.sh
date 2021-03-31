@@ -10,7 +10,7 @@
 # https://superuser.com/a/590170
 
 if [[ "$1" == "-c" ]]; then
-  rm 1M.txt all_cmds.txt words sorted_words 10M.txt
+  rm -f 1M.txt all_cmds.txt words sorted_words 10M.txt
   exit
 fi
 
