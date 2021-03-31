@@ -12,7 +12,6 @@
 | analysis-pcap |               |       |      |
 | bio-align     |               |       |      |
 | posh-inspired |               |       |      |
-| README.md     |               |       |      |
 | smoosh        |               |       |      |
 
 * Can we merge bigrams aux?
