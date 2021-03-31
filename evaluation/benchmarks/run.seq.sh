@@ -104,3 +104,35 @@ analytics-mts(){
   cd ..
 }
 
+poets(){
+  echo executing Unix-for-poets
+  cd poets/input
+  ./setup.sh
+  cd ..
+  echo 1syllable_words.sh:               $({ time ./1syllable_words.sh > /dev/null; } 2>&1)
+  echo 2syllable_words.sh:               $({ time ./2syllable_words.sh > /dev/null; } 2>&1)
+  echo 4letter_words.sh:                 $({ time ./4letter_words.sh > /dev/null; } 2>&1)
+  echo bigrams_appear_twice.sh:          $({ time ./bigrams_appear_twice.sh > /dev/null; } 2>&1)
+  echo bigrams.sh:                       $({ time ./bigrams.sh > /dev/null; } 2>&1)
+  echo compare_exodus_genesis.sh:        $({ time ./compare_exodus_genesis.sh > /dev/null; } 2>&1)
+  echo count_consonant_seq.sh:           $({ time ./count_consonant_seq.sh > /dev/null; } 2>&1)
+  echo count_morphs.sh:                  $({ time ./count_morphs.sh > /dev/null; } 2>&1)
+  echo count_trigrams.sh:                $({ time ./count_trigrams.sh > /dev/null; } 2>&1)
+  echo count_vowel_seq.sh:               $({ time ./count_vowel_seq.sh > /dev/null; } 2>&1)
+  echo count_words.sh:                   $({ time ./count_words.sh > /dev/null; } 2>&1)
+  echo find_anagrams.sh:                 $({ time ./find_anagrams.sh > /dev/null; } 2>&1)
+  echo merge_upper.sh:                   $({ time ./merge_upper.sh > /dev/null; } 2>&1)
+  echo sort.sh:                          $({ time ./sort.sh > /dev/null; } 2>&1)
+  echo sort_words_by_folding.sh:         $({ time ./sort_words_by_folding.sh > /dev/null; } 2>&1)
+  echo sort_words_by_num_of_syllables.sh:$({ time ./sort_words_by_num_of_syllables.sh > /dev/null; } 2>&1)
+  echo sort_words_by_rhyming.sh:         $({ time ./sort_words_by_rhyming.sh > /dev/null; } 2>&1)
+  echo trigram_rec.sh:                   $({ time ./trigram_rec.sh > /dev/null; } 2>&1)
+  echo uppercase_by_token.sh:            $({ time ./uppercase_by_token.sh > /dev/null; } 2>&1)
+  echo uppercase_by_type.sh:             $({ time ./uppercase_by_type.sh > /dev/null; } 2>&1)
+  echo verses_2om_3om_2instances.sh:     $({ time ./verses_2om_3om_2instances.sh > /dev/null; } 2>&1)
+  echo vowel_sequencies_gr_1K.sh:        $({ time ./vowel_sequencies_gr_1K.sh > /dev/null; } 2>&1)
+  echo words_no_vowels.sh:               $({ time ./words_no_vowels.sh > /dev/null; } 2>&1)
+  cd ..
+}
+
+poets
