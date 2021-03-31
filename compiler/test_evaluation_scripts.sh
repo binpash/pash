@@ -5,15 +5,20 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 export DEBUG=0
 # export DEBUG=1 # Uncomment to print pash output
 
-microbenchmarks_dir="${PASH_TOP}/evaluation/microbenchmarks/"
-intermediary_dir="${PASH_TOP}/evaluation/test_intermediary/"
-test_results_dir="${PASH_TOP}/evaluation/results/test_results/"
+microbenchmarks_dir="${PASH_TOP}/evaluation/tests/"
+intermediary_dir="${PASH_TOP}/evaluation/tests/test_intermediary/"
+test_results_dir="${PASH_TOP}/evaluation/tests/results/"
 
 echo "Deleting eager intermediate files..."
 rm -f /tmp/eager*
 mkdir -p $intermediary_dir
 rm -rf "$test_results_dir"
 mkdir -p "$test_results_dir"
+
+echo "Generating inputs..."
+cd "$microbenchmarks_dir/input"
+./setup.sh
+cd -
 
 n_inputs=(
     2

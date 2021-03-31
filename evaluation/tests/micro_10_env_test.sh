@@ -1,1 +1,1 @@
-IN=$PASH_TOP/evaluation/scripts/input/1M.txt
+IN=$PASH_TOP/evaluation/tests/input/1M.txt
