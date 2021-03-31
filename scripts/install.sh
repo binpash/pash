@@ -110,8 +110,8 @@ python3 -m pip install matplotlib &> $LOG_DIR/pip_install_matplotlib.log
 
 # Generate inputs
 echo "Generating input files..."
-cd evaluation/scripts/input
-./gen.sh
+cd evaluation/tests/input
+./setup.sh
 cd ../../../
 
 # Export necessary environment variables
