@@ -6,6 +6,9 @@
 # echo "changing to $DIR to run setup.sh"
 # cd $DIR
 
+PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
+
+
 # another solution for capturing HTTP status code
 # https://superuser.com/a/590170
 
@@ -23,7 +26,7 @@ if [ ! -f ./1M.txt ]; then
       exit 1
     fi
   fi
-  echo '' >> ./1M.txt
+  "$PASH_TOP/scripts/append_nl_if_not.sh" ./1M.txt
 fi
 
 if [ ! -f ./all_cmds.txt ]; then
@@ -32,7 +35,7 @@ if [ ! -f ./all_cmds.txt ]; then
     # This should be OK for tests, no need for abort
     ls /usr/bin/* > all_cmds.txt
   fi
-  echo '' >> ./all_cmds.txt
+  "$PASH_TOP/scripts/append_nl_if_not.sh" ./all_cmds.txt
 fi
 
 if [ ! -f ./words ]; then
@@ -55,11 +58,11 @@ if [ ! -f ./words ]; then
       fi
     fi
   fi
-  echo '' >> words
+  "$PASH_TOP/scripts/append_nl_if_not.sh" words
 fi
 
 if [ ! -f ./10M.txt ]; then
-  echo '' > 10M.txt
+  touch 10M.txt
   for (( i = 0; i < 10; i++ )); do
     cat 1M.txt >> 10M.txt
   done
