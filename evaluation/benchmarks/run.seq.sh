@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 
 # time: print real in seconds, to simplify parsing
@@ -30,6 +31,8 @@ oneliners(){
 
 unix50(){
   echo executing unix50
+  # FIXME this is the input prefix; do we want all to be IN 
+  export IN_PRE=${IN_PRE:-$PASH_TOP/evaluation/benchmarks/unix50/input}
   cd unix50/input
   ./setup.sh
   cd ..
@@ -100,12 +103,13 @@ analytics-mts(){
   echo 2.sh: $({ time ./2.sh > /dev/null; } 2>&1)
   echo 3.sh: $({ time ./3.sh > /dev/null; } 2>&1)
   echo 4.sh: $({ time ./4.sh > /dev/null; } 2>&1)
-  # echo 5.sh: $({ time ./5.sh > /dev/null; } 2>&1)
+#FIXME: echo 5.sh: $({ time ./5.sh > /dev/null; } 2>&1)
   cd ..
 }
 
 poets(){
   echo executing Unix-for-poets
+  export IN=$PASH_TOP/evaluation/benchmarks/poets/input/pg/01frd10.txt
   cd poets/input
   ./setup.sh
   cd ..
@@ -116,7 +120,7 @@ poets(){
   echo bigrams.sh:                       $({ time ./bigrams.sh > /dev/null; } 2>&1)
   echo compare_exodus_genesis.sh:        $({ time ./compare_exodus_genesis.sh > /dev/null; } 2>&1)
   echo count_consonant_seq.sh:           $({ time ./count_consonant_seq.sh > /dev/null; } 2>&1)
-  echo count_morphs.sh:                  $({ time ./count_morphs.sh > /dev/null; } 2>&1)
+# FIXME echo count_morphs.sh:                  $({ time ./count_morphs.sh > /dev/null; } 2>&1)
   echo count_trigrams.sh:                $({ time ./count_trigrams.sh > /dev/null; } 2>&1)
   echo count_vowel_seq.sh:               $({ time ./count_vowel_seq.sh > /dev/null; } 2>&1)
   echo count_words.sh:                   $({ time ./count_words.sh > /dev/null; } 2>&1)
@@ -126,7 +130,7 @@ poets(){
   echo sort_words_by_folding.sh:         $({ time ./sort_words_by_folding.sh > /dev/null; } 2>&1)
   echo sort_words_by_num_of_syllables.sh:$({ time ./sort_words_by_num_of_syllables.sh > /dev/null; } 2>&1)
   echo sort_words_by_rhyming.sh:         $({ time ./sort_words_by_rhyming.sh > /dev/null; } 2>&1)
-  echo trigram_rec.sh:                   $({ time ./trigram_rec.sh > /dev/null; } 2>&1)
+#FIXME echo trigram_rec.sh:                   $({ time ./trigram_rec.sh > /dev/null; } 2>&1)
   echo uppercase_by_token.sh:            $({ time ./uppercase_by_token.sh > /dev/null; } 2>&1)
   echo uppercase_by_type.sh:             $({ time ./uppercase_by_type.sh > /dev/null; } 2>&1)
   echo verses_2om_3om_2instances.sh:     $({ time ./verses_2om_3om_2instances.sh > /dev/null; } 2>&1)
