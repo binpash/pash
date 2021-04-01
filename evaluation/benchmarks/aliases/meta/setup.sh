@@ -10,6 +10,9 @@ if [[ "$1" == "-c" ]]; then
     rm -rf ${IN}/jpg
     rm -rf ${IN}/rtf
     rm -rf ${IN}/wav
+    rm -rf ${IN}/linux
+    rm -f access.log apache.log shutdown.log
+    rm -f nginx.zip
     rm -rf ${OUT}
     exit 
 fi
@@ -18,7 +21,31 @@ fi
 
 
 mkdir -p ${OUT} 
+
+
 cd $IN
+if [[ ! -f nginx.zip ]]
+then
+    wget -O nginx.zip https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/3QBYB5/NXKB6J
+    unzip nginx.zip 
+    rm -rf __MACOSX
+    rm -f nginx.zip
+fi
+
+cd $IN
+if [[ ! -f apache.log ]]
+then
+    wget -O apache.log http://www.almhuette-raith.at/apache-log/access.log
+fi
+
+cd $IN
+if [[ ! -d linux ]]; then
+    touch xd
+    git clone https://github.com/torvalds/linux
+fi
+
+
+
 
 # mp3 dataset
 # many, small files
@@ -29,6 +56,7 @@ cd $IN
 # fi
 # total 5.7 size of audio files
 
+cd $IN
 mkdir -p wav
 cd wav
 
