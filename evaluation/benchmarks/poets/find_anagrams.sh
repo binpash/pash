@@ -1,7 +1,7 @@
 # Find anagrams 
 INPUT=${INPUT:-$PASH_TOP/evaluation/scripts/input/genesis}
 # need to generate words
-tr -sc '[A-Z][a-z]' '[\012*]' < ${INPUT} > ${INPUT}.words
+ls $IN/ | xargs cat | tr -sc '[A-Z][a-z]' '[\012*]' > ${INPUT}.words
 # need to generate types
 sort -u ${INPUT}.words > ${INPUT}.types
 # Actual find anagram script
