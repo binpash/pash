@@ -1,3 +1,3 @@
 # Count morphs in genesis
-INPUT=${INPUT:-$PASH_TOP/evaluation/scripts/input/genesis}
-ls $IN/ | xargs cat | spell | sed 's/ .*//g' | sort | uniq -c 
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
+ls $IN | xargs cat | spell | sed 's/ .*//g' | sort | uniq -c 

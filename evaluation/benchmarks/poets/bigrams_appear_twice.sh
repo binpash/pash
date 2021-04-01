@@ -1,3 +1,3 @@
 # Bigrams that appear twice
-INPUT=${INPUT:-$PASH_TOP/evaluation/scripts/input/genesis.bigrams}
-ls $IN/ | xargs cat | awk '$1 == 2 {print $2, $3}' 
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
+ls $IN | xargs cat | awk '$1 == 2 {print $2, $3}' 

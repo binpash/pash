@@ -1,3 +1,3 @@
 # Count vowel Sequences
-INPUT=${INPUT:-$PASH_TOP/evaluation/scripts/input/genesis}
-ls $IN/ | xargs cat | tr 'a-z' '[A-Z]' | tr -sc 'AEIOU' '[\012*]'| sort | uniq -c 
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
+ls $IN | xargs cat | tr 'a-z' '[A-Z]' | tr -sc 'AEIOU' '[\012*]'| sort | uniq -c 
