@@ -3,10 +3,22 @@
 # exit when any command fails
 set -e
 
-IN=$PASH_TOP/evaluation/benchmarks/aliases/input
 
+IN=$PASH_TOP/evaluation/benchmarks/aliases/meta/
+OUT=$PASH_TOP/evaluation/benchmarks/aliases/meta/out
+if [[ "$1" == "-c" ]]; then
+    rm -rf ${IN}/jpg
+    rm -rf ${IN}/rtf
+    rm -rf ${IN}/wav
+    rm -rf ${OUT}
+    exit 
+fi
+
+
+
+
+mkdir -p ${OUT} 
 cd $IN
-mkdir -p out
 
 # mp3 dataset
 # many, small files
