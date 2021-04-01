@@ -1,3 +1,7 @@
+#!/bin/bash
+# tag: trigram_rec
+set -e
+
 # FIXME: what is this?
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
 OUT=$PASH_TOP/evaluation/script/input

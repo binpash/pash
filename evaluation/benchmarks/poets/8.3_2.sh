@@ -1,4 +1,7 @@
-# Find anagrams 
+#!/bin/bash 
+# tag: find_anagrams.sh
+set -e
+
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
 # need to generate words
 ls $IN | xargs cat | tr -sc '[A-Z][a-z]' '[\012*]' > ${INPUT}.words
