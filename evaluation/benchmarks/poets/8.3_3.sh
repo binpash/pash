@@ -1,4 +1,7 @@
-# Compare exodus and genesis
+#!/bin/bash
+# tag: compare_exodus_genesis.sh
+set -e
+
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
 INPUT2=${INPUT2:-$PASH_TOP/evaluation/benchmarks/poets/input/exodus}
 ls $IN | xargs cat | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u >  1.types
