@@ -2,8 +2,9 @@ from ir import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
 from util import *
-from json_ast import save_asts_json
+from json_ast import save_asts_json, ast_to_shell
 from parse import parse_shell, from_ir_to_shell, from_ir_to_shell_file
+from expand import *
 import subprocess
 import traceback
 
@@ -107,7 +108,8 @@ def compile_asts(ast_objects, fileIdGen, config):
         # log(ast_object)
 
         ## Compile subtrees of the AST to out intermediate representation
-        compiled_ast = compile_node(ast_object, fileIdGen, config)
+        expanded_ast = expand_command(ast_object, config)
+        compiled_ast = compile_node(expanded_ast, fileIdGen, config)
 
         # log("Compiled AST:")
         # log(compiled_ast)
@@ -458,8 +460,7 @@ def compile_command_argument(argument, fileIdGen, config):
     return compiled_argument
 
 def compile_command_arguments(arguments, fileIdGen, config):
-    expanded_arguments = flatten_list([expand_command_argument(arg, config) for arg in arguments])
-    compiled_arguments = [compile_command_argument(arg, fileIdGen, config) for arg in expanded_arguments]
+    compiled_arguments = [compile_command_argument(arg, fileIdGen, config) for arg in arguments]
     return compiled_arguments
 
 ## Compiles the value assigned to a variable using the command argument rules.
@@ -887,17 +888,17 @@ def replace_irs_assignments(assignments, irFileGen, config):
 def check_if_ast_is_supported(construct, arguments, **kwargs):
     return
 
-def ast_match_untyped(untyped_ast_object, cases, fileIdGen, config):
+def ast_match_untyped(untyped_ast_object, cases, *args):
     ## TODO: This should construct the complete AstNode object (not just the surface level)
     ast_node = AstNode(untyped_ast_object)
     if ast_node.construct is AstNodeConstructor.PIPE:
         ast_node.check(children_count = lambda : len(ast_node.items) >= 2)
-    return ast_match(ast_node, cases, fileIdGen, config)
+    return ast_match(ast_node, cases, *args)
 
-def ast_match(ast_node, cases, fileIdGen, config):
+def ast_match(ast_node, cases, *args):
     ## TODO: Remove that once `ast_match_untyped` is fixed to
     ##       construct the whole AstNode object.
     if(not isinstance(ast_node, AstNode)):
-        return ast_match_untyped(ast_node, cases, fileIdGen, config)
+        return ast_match_untyped(ast_node, cases, *args)
 
-    return cases[ast_node.construct.value](fileIdGen, config)(ast_node)
+    return cases[ast_node.construct.value](*args)(ast_node)
