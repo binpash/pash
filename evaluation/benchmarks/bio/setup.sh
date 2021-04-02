@@ -3,9 +3,9 @@ if [[ $1 == "-c" ]]; then
     rm -rf output
     exit
 fi
-PW=${PASH_TOP}/evaluation/bio/bio4/input
+PW=${PASH_TOP}/evaluation/benchmarks/bio/input
 mkdir -p $PW
-mkdir -p ${PASH_TOP}/evaluation/bio/bio4/output
+mkdir -p ${PASH_TOP}/evaluation/benchmarks/bio/output
 cat ./input.txt |while read s_line;
 	do
     
