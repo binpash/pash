@@ -1,6 +1,6 @@
 .PHONY: all eager-debug split-debug
 
-all: eager split r-merge r-wrap r-split r-unwrap
+all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee
 
 CFLAGS=-Wall
 
@@ -14,8 +14,17 @@ endif
 
 ifeq ($(PERF),1)
   # We want debug mode.
-  CXXFLAGS += -g -ggdb
+  CFLAGS += -g -ggdb
 endif
+
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S), Darwin)
+DGSH_ASSEMBLY_FILE=dgsh-macho.s
+else
+DGSH_ASSEMBLY_FILE=dgsh-elf.s
+endif
+
 
 split: split.c
 	gcc ${CFLAGS} split.c -o split
@@ -40,5 +49,20 @@ r-wrap: r_wrap.c r_split.h
 
 r-unwrap: r_unwrap.c r_split.h
 	gcc ${CFLAGS} r_unwrap.c -o r_unwrap
+
+
+libdgsh_a_SOURCES = negotiate.c $(DGSH_ASSEMBLY_FILE)
+dgsh_tee_SOURCES = dgsh-tee.c
+
+dgsh-tee:
+	git clone https://github.com/tammam1998/dgsh.git;\
+	cd dgsh;\
+	git checkout pash;\
+	cd core-tools/src;\
+	gcc ${CFLAGS} $(dgsh_tee_SOURCES) $(libdgsh_a_SOURCES) -o $@; \
+	cp dgsh-tee ../../../dgsh-tee;
+	rm -rf dgsh/
+	
 clean:
-	rm eager split
+	rm -f eager split r_split r_wrap r_unwrap dgsh-tee
+	rm -rf dgsh
