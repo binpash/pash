@@ -110,57 +110,57 @@ mkfifo "#file64"
 mkfifo "#file65"
 mkfifo "#file66"
 
-{ cat /home/tammam/pash/evaluation/scripts/input/1G.txt >"#file2" & }
-{ /home/tammam/pash/runtime/r_split "#file2" 10000000 "#file63" "#file64" "#file65" "#file66" & }
+{ cat $PASH_TOP/evaluation/scripts/input/1G.txt >"#file2" & }
+{ $PASH_TOP/runtime/r_split "#file2" 10000000 "#file63" "#file64" "#file65" "#file66" & }
 
-{ /home/tammam/pash/runtime/dgsh_tee.sh "#file63" "#file17" -I -f & }
-{ /home/tammam/pash/runtime/dgsh_tee.sh "#file64" "#file18" -I -f & }
-{ /home/tammam/pash/runtime/dgsh_tee.sh "#file65" "#file19" -I -f & }
-{ /home/tammam/pash/runtime/dgsh_tee.sh "#file66" "#file20" -I -f & }
+{ $PASH_TOP/runtime/dgsh_tee.sh "#file63" "#file17" -I -f & }
+{ $PASH_TOP/runtime/dgsh_tee.sh "#file64" "#file18" -I -f & }
+{ $PASH_TOP/runtime/dgsh_tee.sh "#file65" "#file19" -I -f & }
+{ $PASH_TOP/runtime/dgsh_tee.sh "#file66" "#file20" -I -f & }
 
-{ /home/tammam/pash/runtime/r_wrap xargs file <"#file17" >"#file22" & }
-{ /home/tammam/pash/runtime/r_wrap xargs file <"#file18" >"#file23" & }
-{ /home/tammam/pash/runtime/r_wrap xargs file <"#file19" >"#file24" & }
-{ /home/tammam/pash/runtime/r_wrap xargs file <"#file20" >"#file25" & }
-{ /home/tammam/pash/runtime/r_wrap grep "shell script" <"#file22" >"#file26" & }
-{ /home/tammam/pash/runtime/r_wrap grep "shell script" <"#file23" >"#file27" & }
-{ /home/tammam/pash/runtime/r_wrap grep "shell script" <"#file24" >"#file28" & }
-{ /home/tammam/pash/runtime/r_wrap grep "shell script" <"#file25" >"#file29" & }
-{ /home/tammam/pash/runtime/r_wrap cut -d: -f1 <"#file26" >"#file30" & }
-{ /home/tammam/pash/runtime/r_wrap cut -d: -f1 <"#file27" >"#file31" & }
-{ /home/tammam/pash/runtime/r_wrap cut -d: -f1 <"#file28" >"#file32" & }
-{ /home/tammam/pash/runtime/r_wrap cut -d: -f1 <"#file29" >"#file33" & }
-{ /home/tammam/pash/runtime/r_wrap xargs -L 1 wc -l <"#file30" >"#file34" & }
-{ /home/tammam/pash/runtime/r_wrap xargs -L 1 wc -l <"#file31" >"#file35" & }
-{ /home/tammam/pash/runtime/r_wrap xargs -L 1 wc -l <"#file32" >"#file36" & }
-{ /home/tammam/pash/runtime/r_wrap xargs -L 1 wc -l <"#file33" >"#file37" & }
-{ /home/tammam/pash/runtime/r_wrap grep -v "^0$" <"#file34" >"#file38" & }
-{ /home/tammam/pash/runtime/r_wrap grep -v "^0$" <"#file35" >"#file39" & }
-{ /home/tammam/pash/runtime/r_wrap grep -v "^0$" <"#file36" >"#file40" & }
-{ /home/tammam/pash/runtime/r_wrap grep -v "^0$" <"#file37" >"#file41" & }
-{ /home/tammam/pash/runtime/r_unwrap <"#file38" >"#file46" & }
+{ $PASH_TOP/runtime/r_wrap xargs file <"#file17" >"#file22" & }
+{ $PASH_TOP/runtime/r_wrap xargs file <"#file18" >"#file23" & }
+{ $PASH_TOP/runtime/r_wrap xargs file <"#file19" >"#file24" & }
+{ $PASH_TOP/runtime/r_wrap xargs file <"#file20" >"#file25" & }
+{ $PASH_TOP/runtime/r_wrap grep "shell script" <"#file22" >"#file26" & }
+{ $PASH_TOP/runtime/r_wrap grep "shell script" <"#file23" >"#file27" & }
+{ $PASH_TOP/runtime/r_wrap grep "shell script" <"#file24" >"#file28" & }
+{ $PASH_TOP/runtime/r_wrap grep "shell script" <"#file25" >"#file29" & }
+{ $PASH_TOP/runtime/r_wrap cut -d: -f1 <"#file26" >"#file30" & }
+{ $PASH_TOP/runtime/r_wrap cut -d: -f1 <"#file27" >"#file31" & }
+{ $PASH_TOP/runtime/r_wrap cut -d: -f1 <"#file28" >"#file32" & }
+{ $PASH_TOP/runtime/r_wrap cut -d: -f1 <"#file29" >"#file33" & }
+{ $PASH_TOP/runtime/r_wrap xargs -L 1 wc -l <"#file30" >"#file34" & }
+{ $PASH_TOP/runtime/r_wrap xargs -L 1 wc -l <"#file31" >"#file35" & }
+{ $PASH_TOP/runtime/r_wrap xargs -L 1 wc -l <"#file32" >"#file36" & }
+{ $PASH_TOP/runtime/r_wrap xargs -L 1 wc -l <"#file33" >"#file37" & }
+{ $PASH_TOP/runtime/r_wrap grep -v "^0$" <"#file34" >"#file38" & }
+{ $PASH_TOP/runtime/r_wrap grep -v "^0$" <"#file35" >"#file39" & }
+{ $PASH_TOP/runtime/r_wrap grep -v "^0$" <"#file36" >"#file40" & }
+{ $PASH_TOP/runtime/r_wrap grep -v "^0$" <"#file37" >"#file41" & }
+{ $PASH_TOP/runtime/r_unwrap <"#file38" >"#file46" & }
 { sort -n <"#file53" >"#file42" & }
-{ /home/tammam/pash/runtime/r_unwrap <"#file39" >"#file47" & }
+{ $PASH_TOP/runtime/r_unwrap <"#file39" >"#file47" & }
 { sort -n <"#file54" >"#file43" & }
-{ /home/tammam/pash/runtime/r_unwrap <"#file40" >"#file48" & }
+{ $PASH_TOP/runtime/r_unwrap <"#file40" >"#file48" & }
 { sort -n <"#file55" >"#file44" & }
-{ /home/tammam/pash/runtime/r_unwrap <"#file41" >"#file49" & }
+{ $PASH_TOP/runtime/r_unwrap <"#file41" >"#file49" & }
 { sort -n <"#file56" >"#file45" & }
 { sort -n -m "#file57" "#file58" >"#file50" & }
 { sort -n -m "#file59" "#file60" >"#file51" & }
 { sort -n -m "#file61" "#file62" >"#file14" & }
-{ /home/tammam/pash/runtime/dgsh_tee.sh "#file46" "#file53" -I -f & }
-{ /home/tammam/pash/runtime/dgsh_tee.sh "#file47" "#file54" -I -f & }
-{ /home/tammam/pash/runtime/dgsh_tee.sh "#file48" "#file55" -I -f & }
-{ /home/tammam/pash/runtime/dgsh_tee.sh "#file49" "#file56" -I -f & }
-{ /home/tammam/pash/runtime/dgsh_tee.sh "#file42" "#file57" -I -f & }
-{ /home/tammam/pash/runtime/dgsh_tee.sh "#file43" "#file58" -I -f & }
-{ /home/tammam/pash/runtime/dgsh_tee.sh "#file44" "#file59" -I -f & }
-{ /home/tammam/pash/runtime/dgsh_tee.sh "#file45" "#file60" -I -f & }
-{ /home/tammam/pash/runtime/dgsh_tee.sh "#file50" "#file61" -I -f & }
-{ /home/tammam/pash/runtime/dgsh_tee.sh "#file51" "#file62" -I -f & }
+{ $PASH_TOP/runtime/dgsh_tee.sh "#file46" "#file53" -I -f & }
+{ $PASH_TOP/runtime/dgsh_tee.sh "#file47" "#file54" -I -f & }
+{ $PASH_TOP/runtime/dgsh_tee.sh "#file48" "#file55" -I -f & }
+{ $PASH_TOP/runtime/dgsh_tee.sh "#file49" "#file56" -I -f & }
+{ $PASH_TOP/runtime/dgsh_tee.sh "#file42" "#file57" -I -f & }
+{ $PASH_TOP/runtime/dgsh_tee.sh "#file43" "#file58" -I -f & }
+{ $PASH_TOP/runtime/dgsh_tee.sh "#file44" "#file59" -I -f & }
+{ $PASH_TOP/runtime/dgsh_tee.sh "#file45" "#file60" -I -f & }
+{ $PASH_TOP/runtime/dgsh_tee.sh "#file50" "#file61" -I -f & }
+{ $PASH_TOP/runtime/dgsh_tee.sh "#file51" "#file62" -I -f & }
 { head -15 <"#file14" & }
-source /home/tammam/pash/runtime/wait_for_output_and_sigpipe_rest.sh ${!}
+source $PASH_TOP/runtime/wait_for_output_and_sigpipe_rest.sh ${!}
 rm -f "#file2"
 rm -f "#file4"
 rm -f "#file6"
