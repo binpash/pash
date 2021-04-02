@@ -1,8 +1,6 @@
 #!/bin/bash
-# Adapted from the DGSH
-# https://www.spinellis.gr/sw/dgsh/#commit-stats
-
 # tag: git commit stats
+# from: https://www.spinellis.gr/sw/dgsh/#commit-stats
 set -e
 # A function the original script uses, in case we want to use it
 forder()

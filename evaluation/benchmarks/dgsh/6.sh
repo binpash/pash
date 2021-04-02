@@ -1,34 +1,9 @@
 #!/bin/bash
-#
-# SYNOPSIS Word properties
-# DESCRIPTION
-# Read text from the standard IN and list words
-# containing a two-letter palindrome, words containing
-# four consonants, and words longer than 12 characters.
-#
-# Demonstrates the use of dgsh-compatible paste as a gather function
-#
-# Example:
-# curl ftp://sunsite.informatik.rwth-aachen.de/pub/mirror/ibiblio/gutenberg/1/3/139/139.txt | word-properties
-#
-#  Copyright 2013 Diomidis Spinellis
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
 # tag: word_properties
+# from: https://www2.dmst.aueb.gr/dds/sw/dgsh/#word-properties
 set -e
-
-
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/dgsh/input/dblp.xml}
+# FIXME Output is weird
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/dgsh/input/}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dgsh/input}
 cd ${OUT}
 #OUTPUT=${OUTPUT:-$PASH_TOP/evaluation/benchmarks/dgsh/output}
@@ -47,7 +22,7 @@ cat c | sed -E 's/.*([^aeiouyAEIOUY]{4}).*/c: \1/;t
 cat d | awk '{if (length($1) > 12) print "l:", length($1);
     else print ""}' | cat > d1 &
 
-cat ${IN} |tail -n 100 | tr -cs a-zA-Z \\n | sort -u | tee a b c d  > /dev/null &
+cat ${IN}mini.xml | head -n 12000 | tr -cs a-zA-Z \\n | sort -u | tee a b c d  > /dev/null  
 paste a1 b1 c1 d1  | fgrep :
 #cat d1 | fgrep :
 rm a b c d a1 b1 c1 d1

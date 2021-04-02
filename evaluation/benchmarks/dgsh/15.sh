@@ -1,13 +1,12 @@
 #!/bin/bash
-# nuclear things 
 # tag: nuclear
+# from: https://www2.dmst.aueb.gr/dds/sw/dgsh/#NMRPipe
 set -e
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/dgsh/input/fid}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dgsh/input}
 cd ${OUT}
-rm -f a b 
-#OUTPUT=${OUTPUT:-$PASH_TOP/evaluation/benchmarks/dgsh/output}
-mkfifo a b
+rm -f a b  A B
+mkfifo a b A B
 
 # IP/AP channel conversion
 # See http://tech.groups.yahoo.com/group//opt/bin/opt/nmrbin.linux9/nmrPipe/message/389
@@ -53,7 +52,7 @@ cat b | /opt/nmrpipe/nmrbin.linux9/nmrPipe |
     -xCAR          4.73    -yCAR   118.000      \
     -xLAB          1H      -yLAB   15N      \
     -ndim          2       -aq2D   States      \
-    -verb  | tee a b > /dev/null
+    -verb  | tee a b > /dev/null 
 #FIXME
 
 # We use temporary files rather than streams, because

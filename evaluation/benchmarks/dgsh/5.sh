@@ -1,8 +1,9 @@
 #!/bin/bash
 # tag: highlight misspelled words
+# from: https://www2.dmst.aueb.gr/dds/sw/dgsh/#spell-highlight
 set -e
 export LC_ALL=C
-IN=/usr/share/dict/words
+IN=${VOC:-/usr/share/dict/words}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dgsh/input}
 sort /usr/share/dict/words | cat > ${OUT}/sort_dict
 mkfifo ${OUT}/a ${OUT}/sort_IN

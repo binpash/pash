@@ -1,9 +1,7 @@
 #!/bin/bash
 
-# Windows-like DIR command for the current directory. Nothing that couldn't be
-# done with ls -l | awk. Demonstrates use of wrapped commands with no IN (df,
-# echo).
 # tag: directory listing
+# from: https://www2.dmst.aueb.gr/dds/sw/dgsh/#dir
 set -e
 
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/dgsh/input/}

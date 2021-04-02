@@ -7,6 +7,7 @@ cd input
 if [[ ! -f dblp.xml ]]; then
     wget https://dblp.uni-trier.de/xml/dblp.xml.gz
     gunzip dblp.xml.gz
+    cat dblp.xml | head -n 35 > mini.xml
 fi
 
 if [[ ! -f fid ]]; then

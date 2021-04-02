@@ -1,10 +1,7 @@
 #!/bin/bash
-#
-# SYNOPSIS Parallel word count
-# DESCRIPTION
-# Number of processes
-# word count
-#FIXME dataset
+# from https://www2.dmst.aueb.gr/dds/sw/dgsh/#parallel-word-count
+# tag: parallel word count
+#FIXME dataset, outdated split ?
 set -e
 N=8
 # Collation order for sorting

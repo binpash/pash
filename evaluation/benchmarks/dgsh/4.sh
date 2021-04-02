@@ -1,10 +1,8 @@
 #!/bin/bash
-# Adapted from the DGSH
-# https://www.spinellis.gr/sw/dgsh/#duplicate-files
 # tag: find dublicate files
+# from: https://www.spinellis.gr/sw/dgsh/#duplicate-files
 #FIXME need dataset 
 set -e
-# Identifies duplicate content files via hashing
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dgsh/input}
 cd ${OUT}
 rm -f a
