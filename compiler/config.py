@@ -91,7 +91,7 @@ def add_common_arguments(parser):
                         help="(experimental) configure the batch size of r_splti (default: 100KB)",
                         default=100000)
     parser.add_argument("--dgsh_tee",
-                        help="(experimental) use dgsh-tee instead of eagers",
+                        help="(experimental) use dgsh-tee instead of eager",
                         action="store_true")
     parser.add_argument("--speculation",
                         help="(experimental) run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
