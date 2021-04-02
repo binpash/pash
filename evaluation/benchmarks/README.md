@@ -6,13 +6,13 @@
 | max-temp      | 1             | 34G   |      |
 | web-index     | 1             | 50G   |      |
 | analytics-mts | 5             | 34G   |      |
-| poets         |               |       |      |
-| aliases       |               |       |      |
-| analysis-logs |               |       |      |
-| analysis-pcap |               |       |      |
-| bio-align     |               |       |      |
+| poets         | 22            | 51G   |      |
+| aliases       | 50            | 1--20 |      |
+| bio-align     | 1             |       |      |
 | posh-inspired |               |       |      |
+| DGSH          |               |       |      |
 | smoosh        |               |       |      |
+| POSIX         |               |       |      |
 
 * Can we merge bigrams aux?
 * 
