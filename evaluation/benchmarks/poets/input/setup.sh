@@ -2,6 +2,8 @@
 
 # FIXME: when compression is ready, apply to all PG books
 
+# wget ndr.md/data/pg.xz | tar -xf 
+
 if [[ "$1" == "-c" ]]; then
     rm -f genesis exodus
     exit

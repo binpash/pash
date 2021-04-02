@@ -15,7 +15,7 @@ fi
 oneliners(){
   cd oneliners/
   if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd)) (found ./seq.res)"
+    echo "skipping $(basename $(pwd))/seq.res"
     return 0
   fi
   
@@ -43,7 +43,7 @@ oneliners(){
 unix50(){
   cd unix50/
   if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd)) (found ./seq.res)"
+    echo "skipping $(basename $(pwd))/seq.res"
     return 0
   fi
 
@@ -97,7 +97,7 @@ unix50(){
 web-index(){
   cd web-index/
   if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd)) (found ./seq.res)"
+    echo "skipping $(basename $(pwd))/seq.res"
     return 0
   fi
 
@@ -117,7 +117,7 @@ web-index(){
 max-temp(){
   cd max-temp/
   if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd)) (found ./seq.res)"
+    echo "skipping $(basename $(pwd))/seq.res"
     return 0
   fi
 
@@ -130,7 +130,7 @@ max-temp(){
 analytics-mts(){
   cd analytics-mts/
   if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd)) (found ./seq.res)"
+    echo "skipping $(basename $(pwd))/seq.res"
     return 0
   fi
 
@@ -151,7 +151,7 @@ analytics-mts(){
 poets(){
   cd poets/
   if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd)) (found ./seq.res)"
+    echo "skipping $(basename $(pwd))/seq.res"
     return 0
   fi
 
@@ -161,7 +161,7 @@ poets(){
 
   echo '' > seq.res
   echo executing Unix-for-poets $(date) | tee -a ./seq.res
-  export IN=$PASH_TOP/evaluation/benchmarks/poets/input/pg/01frd10.txt
+  export IN=$PASH_TOP/evaluation/benchmarks/poets/input/genesis
   echo 1syllable_words.sh:               $({ time ./6_4.sh > /dev/null; } 2>&1) | tee -a ./seq.res
   echo 2syllable_words.sh:               $({ time ./6_5.sh > /dev/null; } 2>&1) | tee -a ./seq.res
   echo 4letter_words.sh:                 $({ time ./6_2.sh > /dev/null; } 2>&1) | tee -a ./seq.res
@@ -178,7 +178,7 @@ poets(){
   echo sort.sh:                          $({ time ./3_1.sh > /dev/null; } 2>&1) | tee -a ./seq.res
   echo sort_words_by_folding.sh:         $({ time ./3_2.sh > /dev/null; } 2>&1) | tee -a ./seq.res
   echo sort_words_by_num_of_syllables.sh:$({ time ./8_1.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo sort_words_by_rhyming.sh:         $({ time ./3.3 > /dev/null; } 2>&1) | tee -a ./seq.res
+  echo sort_words_by_rhyming.sh:         $({ time ./3_3.sh > /dev/null; } 2>&1) | tee -a ./seq.res
 # echo trigram_rec.sh:                   $({ time ./6_1.sh > /dev/null; } 2>&1) | tee -a ./seq.res
   echo uppercase_by_token.sh:            $({ time ./6_1_1.sh > /dev/null; } 2>&1) | tee -a ./seq.res
   echo uppercase_by_type.sh:             $({ time ./6_1_2.sh > /dev/null; } 2>&1) | tee -a ./seq.res
