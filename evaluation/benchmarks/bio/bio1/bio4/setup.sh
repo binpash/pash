@@ -1,3 +1,8 @@
+if [[ $1 == "-c" ]]; then
+    rm -rf input
+    rm -rf output
+    exit
+fi
 PW=${PASH_TOP}/evaluation/bio/bio4/input
 mkdir -p $PW
 mkdir -p ${PASH_TOP}/evaluation/bio/bio4/output
