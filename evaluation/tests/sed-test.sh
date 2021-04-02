@@ -1,4 +1,4 @@
-cat $PASH_TOP/evaluation/scripts/input/1M.txt |
+cat $PASH_TOP/evaluation/tests/input/1M.txt |
     sed 's;^d;da;' |
     sed 's;^;http://ndr.md/data/noaa/;' |
     sed 's;$;/;' |

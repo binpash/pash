@@ -1,4 +1,4 @@
-IN=../evaluation/scripts/input/1M.txt
+IN=../evaluation/tests/input/1M.txt
 
 mkfifo {1,2,3}grams
 

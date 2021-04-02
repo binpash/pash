@@ -2,7 +2,7 @@
 
 ## This test contains all occurences of tr (to test the annotation)
 
-FILE="../evaluation/scripts/input/1M.txt"
+FILE="../evaluation/tests/input/1M.txt"
 
 cat $FILE | tr -d ','
 cat $FILE | tr -d '\n'
