@@ -26,6 +26,7 @@ class LogParser:
         - IN
         - split_type
         - no_eager
+        - dgsh_tee
         - width
         - r_split_batch_size
         - exec_time
@@ -58,7 +59,7 @@ class LogParser:
         border = "-"*40
         argslog, pashlog, timelog = log.split(border)
 
-        args_of_interest = set(["input", "width", "output_time", "no_eager", "r_split", "r_split_batch_size", "IN"])
+        args_of_interest = set(["input", "width", "output_time", "no_eager", "r_split", "r_split_batch_size", "IN", "dgsh_tee"])
         parsed_args = self.__parse_args__(argslog, args_of_interest)
 
         tags_of_interest = set(["Execution time", "Backend time", "Compilation time", "Preprocessing time", "Eager nodes", "Compiler exited with code"])
@@ -83,6 +84,7 @@ class LogParser:
             "no_eager" : parsed_args["no_eager"],
             "width": int(parsed_args["width"]),
             "r_split_batch_size": int(parsed_args["r_split_batch_size"]),
+            "dgsh_tee": parsed_args["dgsh_tee"],
             #From pash log
             "exec_time": parsed_log["Execution time"],
             "backend_time": parsed_log["Backend time"],
@@ -112,10 +114,15 @@ class LogParser:
         Return:
             A single entry pandas dataframe
         """
-        with open(log_file, "r") as f:
-            log = f.read()
-            df = self.parse_log(log)
-        return df
+        try:
+            with open(log_file, "r") as f:
+                log = f.read()
+                df = self.parse_log(log)
+                return df
+        except:
+                print("failed to parse", log_file)
+                return pd.DataFrame()
+        
 
     def parse_folder(self, path: str)->pd.DataFrame:
         """
@@ -128,15 +135,16 @@ class LogParser:
         log_files = [os.path.join(path, f) for f in os.listdir(path) if f.endswith(".log")]
         ret_df = pd.DataFrame()
         for log_file in log_files:
-            df = self.parse_file(log_file)
-            ret_df = ret_df.append(df, ignore_index=True)
-        
+                df = self.parse_file(log_file)
+                ret_df = ret_df.append(df, ignore_index=True)
+                
         return ret_df
 
     def get_df(self):
         self.df["no_eager"] = self.df["no_eager"].astype(bool)
         self.df["width"] = self.df["width"].astype(int)
         self.df["r_split_batch_size"] = self.df["r_split_batch_size"].astype(int)
+        self.df["dgsh_tee"] = self.df["dgsh_tee"].astype(bool)
         return self.df
 
     def __parse_args__(self, args: str, args_of_interest):
