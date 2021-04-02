@@ -188,4 +188,14 @@ poets(){
   cd ..
 }
 
+
+aliases(){
+  echo executing aliases
+  cd aliases/select
+  echo tomp3: $({ time ./1.tomp3.sh > /dev/null; } 2>&1)
+  echo unrtf: $({ time ./2.unrtf.sh > /dev/null; } 2>&1)
+
+}
+
 poets
+
