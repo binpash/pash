@@ -3,8 +3,9 @@
 set -e
 
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
-ls $IN | xargs cat | tr -sc '[A-Z][a-z]' '[\012*]' > ${INPUT}.words
-tail +2 ${INPUT}.words > ${INPUT}.nextwords
-tail +3 ${INPUT}.words > ${INPUT}.nextwords2
-paste ${INPUT}.words ${INPUT}.nextwords ${INPUT}.nextwords2 |
-sort | uniq -c  > ${INPUT}.trigrams
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/input/output/}
+ls $IN | xargs cat | tr -sc '[A-Z][a-z]' '[\012*]' > ${OUT}.words
+tail +2 ${OUT}.words > ${OUT}.nextwords
+tail +3 ${OUT}.words > ${OUT}.nextwords2
+paste ${OUT}.words ${OUT}.nextwords ${OUT}.nextwords2 |
+sort | uniq -c  > ${OUT}.trigrams

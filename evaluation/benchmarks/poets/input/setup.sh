@@ -3,7 +3,7 @@
 # FIXME: when compression is ready, apply to all PG books
 
 # wget ndr.md/data/pg.xz | tar -xf 
-
+mkdir -p $PASH_TOP/evaluation/benchmarks/poets/input/output
 if [[ "$1" == "-c" ]]; then
     rm -f genesis exodus
     exit
