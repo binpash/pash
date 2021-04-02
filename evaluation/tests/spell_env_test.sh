@@ -1,3 +1,3 @@
-dict=$PASH_TOP/evaluation/scripts/input/sorted_words
-IN=$PASH_TOP/evaluation/scripts/input/10M.txt
+dict=$PASH_TOP/evaluation/tests/input/sorted_words
+IN=$PASH_TOP/evaluation/tests/input/10M.txt
 
