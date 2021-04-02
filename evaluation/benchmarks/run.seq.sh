@@ -190,7 +190,6 @@ poets(){
 
 
 aliases(){
-  echo executing aliases
   cd aliases/
   if [ -e ./seq.res ]; then
     echo "skipping $(basename $(pwd))/seq.res"
@@ -203,11 +202,16 @@ aliases(){
   echo '' > seq.res
   echo executing aliases $(date) | tee -a ./seq.res
   cd select
-
+  export WAV=$PASH_TOP/evaluation/benchmarks/aliases/meta/wav
+  export JPG=$PASH_TOP/evaluation/benchmarks/aliases/meta/jpg
+  export RTF=$PASH_TOP/evaluation/benchmarks/aliases/meta/rtf
+  export GIT=$PASH_TOP/evaluation/benchmarks/aliases/meta/linux
+  export IN=$PASH_TOP/evaluation/benchmarks/aliases/meta/
+  export OUT=$PASH_TOP/evaluation/benchmarks/aliases/meta/out
   echo tomp3: $({ time ./1.tomp3.sh > /dev/null; } 2>&1) | tee -a ../seq.res
   echo unrtf: $({ time ./2.unrtf.sh > /dev/null; } 2>&1) | tee -a ../seq.res
   echo convertjpg: $({ time ./3.resiz.sh > /dev/null; } 2>&1) | tee -a ../seq.res
-  echo gitkernel: $({ time ./4.gitkernel.sh > /dev/null; } 2>&1) | tee -a ../seq.res  FIXME need complex grep command
+  #echo gitkernel: $({ time ./4.gitkernel.sh > /dev/null; } 2>&1) | tee -a ../seq.res  FIXME need complex grep command
   echo apachelog: $({ time ./5.apachelog.sh > /dev/null; } 2>&1) | tee -a ../seq.res
   echo msg: $({ time ./6.msg.sh > /dev/null; } 2>&1) | tee -a ../seq.res 
   echo nginx: $({ time ./7.nginx.sh > /dev/null; } 2>&1) | tee -a ../seq.res
@@ -220,34 +224,36 @@ dgsh() {
         echo "skipping $(basename $(pwd))/seq.res"
         return 0
     fi
-    
     ./setup.sh
     echo '' > seq.res
     echo executing dgsh $(date) | tee -a ./seq.res
+
+    export VOC=/usr/share/dict/words
+    export IN=$PASH_TOP/evaluation/benchmarks/dgsh/input
+    export OUT=$PASH_TOP/evaluation/benchmarks/dgsh/input
+    export BIN=/usr/local/bin
+
+
 
     echo compressionbench: $({ time ./1.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo gitstats: $({ time ./2.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     #echo cmetrics: $({ time ./3.resiz.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
     echo dublicatefiles: $({ time ./4.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo highlightwords: $({ time ./5.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    #echo wordproperties: $({ time ./6.sh > /dev/null; } 2>&1) | tee -a ./seq.res RUNS without the run.seq.sh
+    #echo wordproperties: $({ time ./6.sh > /dev/null; } 2>&1) | tee -a ./seq.res #FIXME
     #echo weatherreport: $({ time ./7.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    # echo textproperties: $({ time ./8.sh > /dev/null; } 2>&1) | tee -a ./seq.res Runs without the run.seq.sh
+    echo textproperties: $({ time ./8.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
     echo staticsymbols: $({ time ./9.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo hierarchymap: $({ time ./10.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     #echo plotgit: $({ time ./11.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    #echo parallelword: $({ time ./12.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    #echo venuauthor: $({ time ./13.sh > /dev/null; } 2>&1) | tee -a ./seq.res incomplete
+    #echo parallelword: $({ time ./12.sh > /dev/null; } 2>&1) | tee -a ./seq.res #FIXME
+    #echo venuauthor: $({ time ./13.sh > /dev/null; } 2>&1) | tee -a ./seq.res #FIXME
     #echo 2dfourier: $({ time ./14.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo nuclear: $({ time ./15.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+    # echo nuclear: $({ time ./15.sh > /dev/null; } 2>&1) | tee -a ./seq.res #FIXME
     #echo fft: $({ time ./16.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo reordercol: $({ time ./17.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo dirlisting: $({ time ./18.sh > /dev/null; } 2>&1) | tee -a ./seq.res
 }
-
-
-
-
 
 #poets
 #aliases
