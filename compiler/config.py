@@ -160,6 +160,7 @@ def init_log_file():
 def read_vars_file(var_file_path):
     global config
 
+
     config['shell_variables'] = None
     config['shell_variables_file_path'] = var_file_path
     if(not var_file_path is None):
@@ -167,6 +168,7 @@ def read_vars_file(var_file_path):
         with open(var_file_path) as f:
             lines = [line.rstrip() for line in f.readlines()]
 
+        # MMG 2021-03-09 definitively breaking on newlines (e.g., IFS) and function outputs (i.e., `declare -f`)
         for line in lines:
             words = line.split(' ')
             _export_or_typeset = words[0]
@@ -175,15 +177,34 @@ def read_vars_file(var_file_path):
             space_index = rest.find(' ')
             eq_index = rest.find('=')
             var_type = None
-            ## This means we have a type
-            if(space_index < eq_index and not space_index == -1):
-                var_type = rest[:space_index]
-                rest = rest[(space_index+1):]
-                eq_index = rest.find('=')
-            ## We now find the name and value
-            var_name = rest[:eq_index]
-            var_value = rest[(eq_index+1):]
 
+            ## Declared but unset?
+            if eq_index == -1:
+                if space_index != -1:
+                    var_name = rest[(space_index+1):]
+                    var_type = rest[:space_index]
+                else:
+                    var_name = rest
+                var_value = ""
+            ## Set, with type
+            elif(space_index < eq_index and not space_index == -1):
+                var_type = rest[:space_index]
+
+                if var_type == "--":
+                    var_type = None
+                
+                var_name = rest[(space_index+1):eq_index]
+                var_value = rest[(eq_index+1):]
+            ## Set, without type
+            else:
+                var_name = rest[:eq_index]
+                var_value = rest[(eq_index+1):]
+
+            ## Strip quotes
+            if var_value is not None and len(var_value) >= 2 and \
+               var_value[0] == "\"" and var_value[-1] == "\"":
+                var_value = var_value[1:-1]                
+                
             vars_dict[var_name] = (var_type, var_value)
 
         config['shell_variables'] = vars_dict
