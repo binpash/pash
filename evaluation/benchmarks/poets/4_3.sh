@@ -4,6 +4,7 @@ set -e
 
 # Bigrams (contrary to our version, this uses intermediary files)
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
-ls $IN | xargs cat | tr -sc '[A-Z][a-z]' '[\012*]' > input.words
-tail +2 input.words > input.nextwords
-paste input.words input.nextwords | sort | uniq -c > input.bigrams
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/input/output/}
+ls $IN | xargs cat | tr -sc '[A-Z][a-z]' '[\012*]' > ${OUT}.input.words
+tail +2 ${OUT}.input.words > ${OUT}.input.nextwords
+paste ${OUT}.input.words ${OUT}.input.nextwords | sort | uniq -c > ${OUT}.input.bigrams
