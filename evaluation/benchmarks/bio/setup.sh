@@ -6,6 +6,7 @@ fi
 PW=${PASH_TOP}/evaluation/benchmarks/bio/input
 mkdir -p $PW
 mkdir -p ${PASH_TOP}/evaluation/benchmarks/bio/output
+apt-get install samtools
 cat ./input.txt |while read s_line;
 	do
     
