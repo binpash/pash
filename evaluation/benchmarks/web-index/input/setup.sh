@@ -16,6 +16,7 @@ if [[ "$1" == "-c" ]]; then
   exit
 fi
 
+## FIXME Isn't this input huge? If so let's warn the users before running it, or maybe require a --full flag.
 if [ ! -d ./en/ ]; then
   wget https://dumps.wikimedia.org/other/static_html_dumps/current/en/wikipedia-en-html.tar.7z
   7za x wikipedia-en-html.tar.7z
