@@ -10,7 +10,7 @@ PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 # another solution for capturing HTTP status code
 # https://superuser.com/a/590170
 
-input_files="1M.txt 1G.txt dict.txt 3G.txt 10G.txt 100G.txt"
+input_files="1M.txt 10M.txt 100M.txt 1G.txt dict.txt 3G.txt 10G.txt 100G.txt"
 
 if [[ "$1" == "-c" ]]; then
   rm -f $input_files
@@ -25,6 +25,20 @@ if [ ! -f ./1M.txt ]; then
     exit 1
   fi
   "$PASH_TOP/scripts/append_nl_if_not.sh" ./1M.txt
+fi
+
+if [ ! -f ./10M.txt ]; then
+  touch 10M.txt
+  for (( i = 0; i < 10; i++ )); do
+    cat 1M.txt >> 10M.txt
+  done
+fi
+
+if [ ! -f ./100M.txt ]; then
+  touch 100M.txt
+  for (( i = 0; i < 10; i++ )); do
+    cat 10M.txt >> 100M.txt
+  done
 fi
 
 if [ ! -f ./1G.txt ]; then
@@ -47,7 +61,7 @@ if [ ! -f ./dict.txt ]; then
 fi
 
 if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
-  echo Generting full-size inputs
+  echo Generating full-size inputs
   # FIXME PR: Do we need all of them?
 
   if [ ! -f ./3G.txt ]; then
@@ -64,10 +78,11 @@ if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
     done
   fi
 
-  if [ ! -f ./100G.txt ]; then
-    touch 100G.txt
-    for (( i = 0; i < 10; i++ )); do
-      cat 10G.txt >> 100G.txt
-    done
-  fi
+  # FIXME We might not need this
+  # if [ ! -f ./100G.txt ]; then
+  #   touch 100G.txt
+  #   for (( i = 0; i < 10; i++ )); do
+  #     cat 10G.txt >> 100G.txt
+  #   done
+  # fi
 fi
