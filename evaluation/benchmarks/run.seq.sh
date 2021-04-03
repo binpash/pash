@@ -102,11 +102,12 @@ unix50(){
 }
 
 web-index(){
-  cd web-index/
   if [ -e ./seq.res ]; then
     echo "skipping $(basename $(pwd))/seq.res"
     return 0
   fi
+
+  cd web-index/
 
   cd input/
   ./setup.sh
@@ -122,11 +123,12 @@ web-index(){
 }
 
 max-temp(){
-  cd max-temp/
   if [ -e ./seq.res ]; then
     echo "skipping $(basename $(pwd))/seq.res"
     return 0
   fi
+
+  cd max-temp/
 
   echo '' > seq.res
   echo executing max temp $(date) | tee -a ./seq.res
@@ -135,11 +137,12 @@ max-temp(){
 }
 
 analytics-mts(){
-  cd analytics-mts/
   if [ -e ./seq.res ]; then
     echo "skipping $(basename $(pwd))/seq.res"
     return 0
   fi
+
+  cd analytics-mts/
 
   cd input/
   ./setup.sh
@@ -156,11 +159,12 @@ analytics-mts(){
 }
 
 poets(){
-  cd poets/
   if [ -e ./seq.res ]; then
     echo "skipping $(basename $(pwd))/seq.res"
     return 0
   fi
+
+  cd poets/
 
   cd input/
   ./setup.sh
