@@ -49,7 +49,7 @@ oneliners(){
   export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/3GB.txt"
   echo sort-sort.sh:        $({ time ./sort-sort.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
   ## FIXME command inputs
-  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/1M.txt"
+  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/all_cmdsx100.txt"
   echo shortest-scripts.sh: $({ time ./shortest-scripts.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"  
   cd ..
 }

@@ -10,7 +10,7 @@ PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 # another solution for capturing HTTP status code
 # https://superuser.com/a/590170
 
-input_files="1M.txt 10M.txt 100M.txt 1G.txt dict.txt 3G.txt 10G.txt 100G.txt"
+input_files="1M.txt 10M.txt 100M.txt 1G.txt dict.txt 3G.txt 10G.txt 100G.txt all_cmds.txt all_cmdsx100.txt"
 
 if [[ "$1" == "-c" ]]; then
   rm -f $input_files
@@ -60,6 +60,16 @@ if [ ! -f ./dict.txt ]; then
   "$PASH_TOP/scripts/append_nl_if_not.sh" ./dict.txt
 fi
 
+if [ ! -f ./all_cmds.txt ]; then
+  curl -sf 'http://ndr.md/data/dummy/all_cmds.txt' > all_cmds.txt
+  if [ $? -ne 0 ]; then
+    # This should be OK for tests, no need for abort
+    ls /usr/bin/* > all_cmds.txt
+  fi
+  "$PASH_TOP/scripts/append_nl_if_not.sh" ./all_cmds.txt
+fi
+
+
 if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
   echo Generating full-size inputs
   # FIXME PR: Do we need all of them?
@@ -75,6 +85,13 @@ if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
     touch 10G.txt
     for (( i = 0; i < 10; i++ )); do
       cat 1G.txt >> 10G.txt
+    done
+  fi
+
+  if [ ! -f ./all_cmdsx100.txt ]; then
+    touch all_cmdsx100.txt
+    for (( i = 0; i < 100; i++ )); do
+      cat all_cmds.txt >> all_cmdsx100.txt
     done
   fi
 
