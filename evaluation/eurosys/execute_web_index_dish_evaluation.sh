@@ -33,9 +33,12 @@ export WEB_INDEX_DIR="${directory}"
 
 web_index_script="${eval_dir}/scripts/web-index.sh"
 
-seq_output=/tmp/seq_output
-pash_width_2_output=/tmp/pash_2_output
-pash_width_16_output=/tmp/pash_16_output
+temp_dir=web_index_tmp_results
+mkdir -p "$temp_dir"
+
+seq_output="${temp_dir}/seq_output"
+pash_width_2_output="${temp_dir}/pash_2_output"
+pash_width_16_output="${temp_dir}/pash_16_output"
 seq_time="$results_dir/web-index-${input_number}-seq.time"
 pash_width_2_time="$results_dir/web-index-${input_number}-2-pash.time"
 pash_width_16_time="$results_dir/web-index-${input_number}-16-pash.time"
@@ -43,12 +46,12 @@ pash_width_16_time="$results_dir/web-index-${input_number}-16-pash.time"
 echo "Executing the script with bash..."
 { time /bin/bash $web_index_script > $seq_output ; } 2> >(tee "${seq_time}" >&2)
 
-echo "Executing the script with pash -w 2 (log in: /tmp/pash_2_log)"
-{ time $PASH_TOP/pa.sh -w 2 --log_file /tmp/pash_2_log --output_time $web_index_script ; } 1> "$pash_width_2_output" 2> >(tee "${pash_width_2_time}" >&2)
+echo "Executing the script with pash -w 2 (log in: ${temp_dir}/pash_2_log)"
+{ time $PASH_TOP/pa.sh -w 2 --log_file "${temp_dir}/pash_2_log" --output_time $web_index_script ; } 1> "$pash_width_2_output" 2> >(tee "${pash_width_2_time}" >&2)
 echo "Checking for output equivalence..."
 diff -s $seq_output $pash_width_2_output | head
 
-echo "Executing the script with pash -w 16 (log in: /tmp/pash_16_log)"
-{ time $PASH_TOP/pa.sh -w 16 --log_file /tmp/pash_16_log --output_time $web_index_script ; } 1> "$pash_width_16_output" 2> >(tee "${pash_width_16_time}" >&2)
+echo "Executing the script with pash -w 16 (log in: ${temp_dir}/pash_16_log)"
+{ time $PASH_TOP/pa.sh -w 16 --log_file "${temp_dir}/pash_16_log" --output_time $web_index_script ; } 1> "$pash_width_16_output" 2> >(tee "${pash_width_16_time}" >&2)
 echo "Checking for output equivalence..."
 diff -s $seq_output $pash_width_16_output | head
