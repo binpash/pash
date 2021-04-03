@@ -3,6 +3,8 @@
 set -e
 
 ## FIXME: Make sure that we don't redownload if the input is already downloaded.
+
+## FIXME: These inputs are already 1G when downloaded
 echo 1 10 11 12 2 3 4 5 6 7 8 9.1 9.2 9.3 9.4 9.5 9.6 9.7 9.8 9.9 | xargs -n 1 |
   sed 's/$/.txt/' | sed 's;^;http://ndr.md/data/unix50/;' | xargs -n1 wget
 
