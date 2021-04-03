@@ -2,7 +2,8 @@
 
 # FIXME: skip running if output file exists (using tee?)
 
-set -e
+## FIX: We should not have a set -e in a script that is supposed to be sourced.
+# set -e
 
 # time: print real in seconds, to simplify parsing
 TIMEFORMAT="%3R" # %3U %3S"
@@ -13,30 +14,33 @@ if [[ -z "$PASH_TOP" ]]; then
 fi
 
 oneliners(){
-  cd oneliners/
-  if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd))/seq.res"
+  seq_times_file="seq.res"
+  seq_outputs_file="/dev/null"
+  if [ -e "oneliners/$seq_times_file" ]; then
+    echo "skipping $(basename $(pwd))/$seq_times_file"
     return 0
   fi
   
+  cd oneliners/
+
   cd ./input/
   ./setup.sh
   cd ..
 
-  echo '' > seq.res
-  echo executing one-liners $(date) | tee -a ./seq.res
+  touch "$seq_times_file"
+  echo executing one-liners $(date) | tee -a "$seq_times_file"
   export IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/input/1M.txt}
-  echo '' > seq.res
-  echo nfa-regex.sh:        $({ time ./nfa-regex.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo sort.sh:             $({ time ./sort.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo top-n.sh:            $({ time ./top-n.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo wf.sh:               $({ time ./wf.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo spell.sh:            $({ time ./spell.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo bi-grams.sh:         $({ time ./bi-grams.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo diff.sh:             $({ time ./diff.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo set-diff.sh:         $({ time ./set-diff.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo shortest-scripts.sh: $({ time ./shortest-scripts.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo sort-sort.sh:        $({ time ./sort-sort.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+  echo '' >> "$seq_times_file"
+  echo nfa-regex.sh:        $({ time ./nfa-regex.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+  echo sort.sh:             $({ time ./sort.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+  echo top-n.sh:            $({ time ./top-n.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+  echo wf.sh:               $({ time ./wf.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+  echo spell.sh:            $({ time ./spell.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+  echo bi-grams.sh:         $({ time ./bi-grams.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+  echo diff.sh:             $({ time ./diff.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+  echo set-diff.sh:         $({ time ./set-diff.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+  echo shortest-scripts.sh: $({ time ./shortest-scripts.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+  echo sort-sort.sh:        $({ time ./sort-sort.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
   cd ..
 }
 
@@ -196,6 +200,3 @@ aliases(){
   echo unrtf: $({ time ./2.unrtf.sh > /dev/null; } 2>&1)
 
 }
-
-poets
-
