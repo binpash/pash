@@ -45,11 +45,12 @@ oneliners(){
 }
 
 unix50(){
-  cd unix50/
   if [ -e ./seq.res ]; then
     echo "skipping $(basename $(pwd))/seq.res"
     return 0
   fi
+
+  cd unix50/
 
   cd input/
   ./setup.sh
@@ -58,6 +59,8 @@ unix50(){
   echo '' > seq.res
   echo executing unix50 $(date) | tee -a ./seq.res
   # FIXME this is the input prefix; do we want all to be IN 
+  # FIXME IN_PRE is also exported in the separate unix50 scripts, making this export here useless.
+  #       I think we would like to just do it here.
   export IN_PRE=${IN_PRE:-$PASH_TOP/evaluation/benchmarks/unix50/input}
   echo 1.sh:  $({ time ./1.sh  > /dev/null; } 2>&1) | tee -a ./seq.res
   echo 2.sh:  $({ time ./2.sh  > /dev/null; } 2>&1) | tee -a ./seq.res
