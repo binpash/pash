@@ -12,4 +12,4 @@ sort -u ${OUT}.words > ${OUT}.types
 rev < ${OUT}.types > ${OUT}.types.rev
 sort ${OUT}.types ${OUT}.types.rev |
 uniq -c |
-awk '$1 >= 2 {print $2}'
+awk "\$1 >= 2 {print \$2}"
