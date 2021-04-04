@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # FIXME: when compression is ready, apply to all PG books
+PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 
 # wget ndr.md/data/pg.xz | tar -xf 
 mkdir -p $PASH_TOP/evaluation/benchmarks/poets/input/output
