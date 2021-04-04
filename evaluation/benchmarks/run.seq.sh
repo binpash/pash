@@ -15,7 +15,7 @@ fi
 
 oneliners(){
   seq_times_file="seq.res"
-  seq_outputs_file="/dev/null"
+  seq_outputs_suffix="seq.out"
   if [ -e "oneliners/$seq_times_file" ]; then
     echo "skipping $(basename $(pwd))/$seq_times_file"
     return 0
@@ -32,23 +32,22 @@ oneliners(){
   echo '' >> "$seq_times_file"
   export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/100M.txt"
   echo nfa-regex.sh:        $({ time ./nfa-regex.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
-  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/3GB.txt"
+  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/3G.txt"
   echo sort.sh:             $({ time ./sort.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
-  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/1GB.txt"
+  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/1G.txt"
   echo top-n.sh:            $({ time ./top-n.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
-  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/3GB.txt"
+  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/3G.txt"
   echo wf.sh:               $({ time ./wf.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
-  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/1GB.txt"
+  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/1G.txt"
   echo spell.sh:            $({ time ./spell.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
-  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/3GB.txt"
+  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/3G.txt"
   echo diff.sh:             $({ time ./diff.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
-  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/1GB.txt"
+  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/1G.txt"
   echo bi-grams.sh:         $({ time ./bi-grams.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
-  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/3GB.txt"
+  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/3G.txt"
   echo set-diff.sh:         $({ time ./set-diff.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
-  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/3GB.txt"
+  export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/3G.txt"
   echo sort-sort.sh:        $({ time ./sort-sort.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
-  ## FIXME command inputs
   export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/all_cmdsx100.txt"
   echo shortest-scripts.sh: $({ time ./shortest-scripts.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"  
   cd ..
