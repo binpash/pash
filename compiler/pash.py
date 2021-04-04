@@ -15,19 +15,25 @@ import tempfile
 import shutil
 
 def main():
-    preprocessing_start_time = datetime.now()
     ## Parse arguments
     args = parse_args()
 
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
     input_script_path = args.input
+    preprocessing_parsing_start_time = datetime.now()
     ast_objects = parse_shell_to_ast(input_script_path)
+    preprocessing_parsing_end_time = datetime.now()
+    print_time_delta("Preprocessing -- Parsing", preprocessing_parsing_start_time, preprocessing_parsing_end_time, args)
 
     ## 2. Preprocess ASTs by replacing possible candidates for compilation
     ##    with calls to the PaSh runtime.
+    preprocessing_pash_start_time = datetime.now()
     preprocessed_asts = preprocess(ast_objects, config.config)
+    preprocessing_pash_end_time = datetime.now()
+    print_time_delta("Preprocessing -- PaSh", preprocessing_pash_start_time, preprocessing_pash_end_time, args)
 
     ## 3. Translate the new AST back to shell syntax
+    preprocessing_unparsing_start_time = datetime.now()
     input_script_wo_extension, _input_script_extension = os.path.splitext(input_script_path)
     input_script_basename = os.path.basename(input_script_wo_extension)
     _, ir_filename = ptempfile()
@@ -40,8 +46,8 @@ def main():
         log(from_ir_to_shell(ir_filename))
     from_ir_to_shell_file(ir_filename, fname)
 
-    preprocessing_end_time = datetime.now()
-    print_time_delta("Preprocessing", preprocessing_start_time, preprocessing_end_time, args)
+    preprocessing_unparsing_end_time = datetime.now()
+    print_time_delta("Preprocessing -- Unparsing", preprocessing_unparsing_start_time, preprocessing_unparsing_end_time, args)
 
     ## 4. Execute the preprocessed version of the input script
     if(not args.preprocess_only):
