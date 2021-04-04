@@ -14,8 +14,8 @@ oneliners_pash(){
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
-  if [ -e "oneliners/$seq_times_file" ]; then
-    echo "skipping oneliners/$seq_times_file"
+  if [ -e "oneliners/$par_times_file" ]; then
+    echo "skipping oneliners/$par_times_file"
     return 0
   fi
   
@@ -58,7 +58,7 @@ oneliners_pash(){
     par_outputs_file="${outputs_dir}/${script}.${par_outputs_suffix}"
     pash_log="${pash_logs_dir}/${script}.pash.log"
 
-    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" -d 1 -w "${width}" --log_file "${pash_log}" ${script}.sh > "$par_outputs_file"; } 2>&1) | tee -a "$par_times_file"
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" --r_split --dgsh_tee -d 1 -w "${width}" --log_file "${pash_log}" ${script}.sh > "$par_outputs_file"; } 2>&1) | tee -a "$par_times_file"
   done
 
   cd ..
