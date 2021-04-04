@@ -18,7 +18,7 @@ oneliners(){
   seq_outputs_suffix="seq.out"
   outputs_dir="outputs"
   if [ -e "oneliners/$seq_times_file" ]; then
-    echo "skipping $(basename $(pwd))/$seq_times_file"
+    echo "skipping oneliners/$seq_times_file"
     return 0
   fi
   
