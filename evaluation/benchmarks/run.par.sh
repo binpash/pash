@@ -64,7 +64,7 @@ oneliners_pash(){
   cd ..
 }
 
-unix50(){
+unix50_pash(){
   times_file="par.res"
   outputs_suffix="par.out"
   outputs_dir="outputs"

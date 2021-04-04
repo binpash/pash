@@ -15,8 +15,15 @@ compare_outputs(){
   done
 }
 
-# oneliners
-# oneliners_pash
+oneliners
+oneliners_pash
+
+compare_outputs "oneliners/outputs"
+
+unix50
+unix50_pash
+
+compare_outputs "unix50/outputs"
 
 poets
 poets_pash
