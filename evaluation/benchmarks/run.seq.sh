@@ -66,8 +66,11 @@ oneliners(){
 }
 
 unix50(){
-  if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd))/seq.res"
+  times_file="seq.res"
+  outputs_suffix="seq.out"
+  outputs_dir="outputs"
+  if [ -e "unix50/${times_file}" ]; then
+    echo "skipping unix50/${times_file}"
     return 0
   fi
 
@@ -77,48 +80,27 @@ unix50(){
   ./setup.sh
   cd ..
 
-  echo '' > seq.res
-  echo executing unix50 $(date) | tee -a ./seq.res
+  mkdir -p "$outputs_dir"
+
+  touch "$times_file"
+  echo executing Unix50 $(date) | tee -a "$times_file"
+  echo '' >> "$times_file"
+
   # FIXME this is the input prefix; do we want all to be IN 
-  # FIXME IN_PRE is also exported in the separate unix50 scripts, making this export here useless.
-  #       I think we would like to just do it here.
   export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input
-  echo 1.sh:  $({ time ./1.sh  > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 2.sh:  $({ time ./2.sh  > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 3.sh:  $({ time ./3.sh  > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 4.sh:  $({ time ./4.sh  > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 5.sh:  $({ time ./5.sh  > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 6.sh:  $({ time ./6.sh  > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 7.sh:  $({ time ./7.sh  > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 8.sh:  $({ time ./8.sh  > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 9.sh:  $({ time ./9.sh  > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 10.sh: $({ time ./10.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 11.sh: $({ time ./11.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 12.sh: $({ time ./12.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 13.sh: $({ time ./13.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 14.sh: $({ time ./14.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 15.sh: $({ time ./15.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 16.sh: $({ time ./16.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 17.sh: $({ time ./17.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 18.sh: $({ time ./18.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 19.sh: $({ time ./19.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 20.sh: $({ time ./20.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 21.sh: $({ time ./21.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 22.sh: $({ time ./22.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 23.sh: $({ time ./23.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 24.sh: $({ time ./24.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 25.sh: $({ time ./25.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 26.sh: $({ time ./26.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 27.sh: $({ time ./27.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 28.sh: $({ time ./28.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 29.sh: $({ time ./29.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 30.sh: $({ time ./30.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 31.sh: $({ time ./31.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 32.sh: $({ time ./32.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 33.sh: $({ time ./33.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 34.sh: $({ time ./34.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 35.sh: $({ time ./35.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 36.sh: $({ time ./36.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+
+  for number in `seq 36`
+  do
+    script="${number}.sh"
+    
+    printf -v pad %20s
+    padded_script="${script}:${pad}"
+    padded_script=${padded_script:0:20}
+
+    outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+
+    echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
+  done  
   cd ..
 }
 

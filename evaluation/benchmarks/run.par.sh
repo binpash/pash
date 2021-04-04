@@ -64,6 +64,49 @@ oneliners_pash(){
   cd ..
 }
 
+unix50(){
+  times_file="par.res"
+  outputs_suffix="par.out"
+  outputs_dir="outputs"
+  pash_logs_dir="pash_logs"
+  width=16
+  if [ -e "unix50/${times_file}" ]; then
+    echo "skipping unix50/${times_file}"
+    return 0
+  fi
+
+  cd unix50/
+
+  cd input/
+  ./setup.sh
+  cd ..
+
+  mkdir -p "$outputs_dir"
+  mkdir -p "$pash_logs_dir"
+
+  touch "$times_file"
+  echo executing Unix50 $(date) | tee -a "$times_file"
+  echo '' >> "$times_file"
+
+  # FIXME this is the input prefix; do we want all to be IN 
+  export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input
+
+  for number in `seq 36`
+  do
+    script="${number}.sh"
+    
+    printf -v pad %20s
+    padded_script="${script}:${pad}"
+    padded_script=${padded_script:0:20}
+
+    outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+    pash_log="${pash_logs_dir}/${script}.pash.log"
+
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" --r_split --dgsh_tee -d 1 -w "${width}" --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
+  done  
+  cd ..
+}
+
 poets_pash(){
   times_file="par.res"
   outputs_suffix="par.out"
