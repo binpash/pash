@@ -82,7 +82,7 @@ unix50(){
   # FIXME this is the input prefix; do we want all to be IN 
   # FIXME IN_PRE is also exported in the separate unix50 scripts, making this export here useless.
   #       I think we would like to just do it here.
-  export IN_PRE=${IN_PRE:-$PASH_TOP/evaluation/benchmarks/unix50/input}
+  export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input
   echo 1.sh:  $({ time ./1.sh  > /dev/null; } 2>&1) | tee -a ./seq.res
   echo 2.sh:  $({ time ./2.sh  > /dev/null; } 2>&1) | tee -a ./seq.res
   echo 3.sh:  $({ time ./3.sh  > /dev/null; } 2>&1) | tee -a ./seq.res
