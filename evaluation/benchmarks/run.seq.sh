@@ -91,10 +91,10 @@ unix50(){
 
   for number in `seq 36`
   do
-    script="${number}.sh"
+    script="${number}"
     
     printf -v pad %20s
-    padded_script="${script}:${pad}"
+    padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:20}
 
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
