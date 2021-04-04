@@ -32,7 +32,7 @@ typedef int8_t bool;
 
 void readHeader(FILE *inputFile, int64_t *id, size_t *blockSize)
 {
-  int ret;
+  size_t ret;
   if ((ret = fread(id, sizeof(int64_t), 1, inputFile)) < 0)
     err(2, "Id read failed");
 
@@ -50,7 +50,7 @@ void safeWriteWithFlush(char *buffer, size_t bytes, size_t count, FILE *outputFi
     if (len == -1 && errno == EPIPE) {
       exit(EXIT_SUCCESS);
     }
-    err(2, "write failed count %ld, wrote %ld", count, len);
+    err(2, "write failed count %lu, wrote %lu", count, len);
   }
   fflush(outputFile);
 }
@@ -64,7 +64,7 @@ void safeWrite(char *buffer, size_t bytes, size_t count, FILE *outputFile)
       exit(EXIT_SUCCESS);
     }
 
-    err(2, "write failed count %ld, wrote %ld", count, len);
+    err(2, "write failed count %lu, wrote %lu", count, len);
   }
 }
 
