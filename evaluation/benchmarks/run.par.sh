@@ -107,6 +107,37 @@ unix50_pash(){
   cd ..
 }
 
+web-index_pash(){
+  times_file="par.res"
+  outputs_suffix="par.out"
+  outputs_dir="outputs"
+  pash_logs_dir="pash_logs"
+  width=16
+  if [ -e "web-index/${times_file}" ]; then
+    echo "skipping web-index/${times_file}"
+    return 0
+  fi
+
+  cd web-index/
+
+  cd input/
+  ./setup.sh
+  cd ..
+
+  mkdir -p "$outputs_dir"
+  mkdir -p "$pash_logs_dir"
+  
+  touch "$times_file"
+  echo executing web index with pash $(date) | tee -a "$times_file"
+  export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/1000.txt
+  export WEB_INDEX_DIR=$PASH_TOP/evaluation/benchmarks/web-index/input
+  export WIKI=$PASH_TOP/evaluation/benchmarks/web-index/input/
+  outputs_file="${outputs_dir}/web-index.${outputs_suffix}"
+  pash_log="${pash_logs_dir}/web-index.pash.log"
+  echo web-index.sh: $({ time "$PASH_TOP/pa.sh" --r_split --dgsh_tee -d 1 -w "${width}" --log_file "${pash_log}" web-index.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
+  cd ..
+}
+
 poets_pash(){
   times_file="par.res"
   outputs_suffix="par.out"
