@@ -1,6 +1,7 @@
 #### Ported ####
 # https://dfzljdn9uc3pi.cloudfront.net/2013/203/1/Supplement_S2.pdf
-cd $PASH_TOP/evaluation/bio/input/bio2
+set -e
+cd $PASH_TOP/evaluation/benchmarks/bio/bio1/input/
 ls *.R1.fq > namelist 
 sed -i 's/.R1.fq//g' namelist 
 NAMES=( `cat "namelist" `)
@@ -13,8 +14,8 @@ mkdir -p assembly
 for i in "${NAMES[@]}"
 do
   echo $i
-  ../Trim/trim_galore --paired -q 0 --length 90 -a   GATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATATCGTATGCCGTCTTCTGCTTG -a2   GATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCG --stringency 20   ${i}.R1.fq ${i}.R2.fq --output_dir ./assembly
-  ../Trim/trim_galore --paired -q 20 --length 20 -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATATCGTATGCCGTCTTCTGCTTG -a2 GATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCG --stringency 10 $i.R1.fq $i.R2.fq
+  Trim/trim_galore --paired -q 0 --length 90 -a   GATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATATCGTATGCCGTCTTCTGCTTG -a2   GATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCG --stringency 20   ${i}.R1.fq ${i}.R2.fq --output_dir ./assembly
+  Trim/trim_galore --paired -q 20 --length 20 -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATATCGTATGCCGTCTTCTGCTTG -a2 GATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCG --stringency 10 $i.R1.fq $i.R2.fq
 done 
 
 # Renaming trimmed files to simpler names
@@ -30,21 +31,21 @@ done
 cat ./assembly/*.R1_val_1.fq > forward
 cat ./assembly/*.R2_val_2.fq > reverse
 # Rainbow now clusters and assembles
-../rainbow/rainbow cluster -1 forward -2 reverse > cat.rbcluster.out 2> log
+rainbow/rainbow cluster -1 forward -2 reverse > cat.rbcluster.out 2> log
 # we can add -f $1 but im not good with maths
-../rainbow/rainbow div -i cat.rbcluster.out -o cat.rbdiv.out 
-../rainbow/rainbow merge -a -i cat.rbdiv.out -o cat.rbasm.out -N 1000
-perl ../rainbow/select_best_rbcontig.pl cat.rbasm.out > rainbowf
+rainbow/rainbow div -i cat.rbcluster.out -o cat.rbdiv.out 
+rainbow/rainbow merge -a -i cat.rbdiv.out -o cat.rbasm.out -N 1000
+perl rainbow/select_best_rbcontig.pl cat.rbasm.out > rainbowf
 # Renames contigs to sequential numbers for simplicity
 fastx_renamer -n COUNT -i rainbowf -o reference 
 ## Mapping
 # Use BWA to index reference
-../bwa-0.7.17/bwa index -a bwtsw reference
+bwa-0.7.17/bwa index -a bwtsw reference
 # Use BWA to map reads to reference.
 ### These parameters could be further optimized for particular taxa
 for i in "${NAMES[@]}"
 do
-  ../bwa-0.7.17/bwa mem reference $i.1.fq $i.2.fq -t 32 -a -T 10 > $i.sam
+  bwa-0.7.17/bwa mem reference $i.1.fq $i.2.fq -t 32 -a -T 10 > $i.sam
 done 
 #Convert Sam to Bam and remove low quality, ambiguous mapping
 for i in "${NAMES[@]}"

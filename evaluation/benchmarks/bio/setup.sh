@@ -1,11 +1,16 @@
+# red color
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+# reset the color
+NC='\033[0m'
 
+IN=${BIO4:-$PASH_TOP/evaluation/benchmarks/bio}
+IN_NAME=${IN_N:-input_all.txt}
 if [[ $1 == "-c" ]]; then
     rm -rf input
     rm -rf output
     exit
 fi
+
 PW=${PASH_TOP}/evaluation/benchmarks/bio/input
 mkdir -p $PW
 mkdir -p ${PASH_TOP}/evaluation/benchmarks/bio/output
@@ -20,9 +25,7 @@ if ! dpkg -s $pkgs >/dev/null 2>&1; then
     fi                                                                       
 fi
 
-
-
-cat ./input.txt |while read s_line;
+cat ${IN}/${IN_NAME} |while read s_line;
 	do
     
     sample=$(echo $s_line |cut -d " " -f 2);
@@ -32,4 +35,3 @@ cat ./input.txt |while read s_line;
         wget -O "$PW/$sample".bam  "$link"; ##this part can be adjusted maybe
     fi
 done;
-
