@@ -138,6 +138,30 @@ web-index_pash(){
   cd ..
 }
 
+max-temp_pash(){
+  times_file="par.res"
+  outputs_suffix="par.out"
+  outputs_dir="outputs"
+  pash_logs_dir="pash_logs"
+  width=16
+  if [ -e "max-temp/${times_file}" ]; then
+    echo "skipping max-temp/${times_file}"
+    return 0
+  fi
+
+  cd max-temp/
+
+  mkdir -p "$outputs_dir"
+  mkdir -p "$pash_logs_dir"
+
+  touch "$times_file"
+  echo executing max temp with pash $(date) | tee -a "$times_file"
+  outputs_file="${outputs_dir}/max-temp.${outputs_suffix}"
+  pash_log="${pash_logs_dir}/max-temp.pash.log"
+  echo mex-temp.sh: $({ time time "$PASH_TOP/pa.sh" --r_split --dgsh_tee -d 1 -w "${width}" --log_file "${pash_log}" max-temp.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
+  cd ..
+}
+
 poets_pash(){
   times_file="par.res"
   outputs_suffix="par.out"

@@ -132,16 +132,22 @@ web-index(){
 }
 
 max-temp(){
-  if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd))/seq.res"
+  times_file="seq.res"
+  outputs_suffix="seq.out"
+  outputs_dir="outputs"
+  if [ -e "max-temp/${times_file}" ]; then
+    echo "skipping max-temp/${times_file}"
     return 0
   fi
 
   cd max-temp/
 
-  echo '' > seq.res
-  echo executing max temp $(date) | tee -a ./seq.res
-  echo mex-temp.sh: $({ time ./max-temp.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+  mkdir -p "$outputs_dir"
+
+  touch "$times_file"
+  echo executing max temp $(date) | tee -a "$times_file"
+  outputs_file="${outputs_dir}/max-temp.${outputs_suffix}"
+  echo mex-temp.sh: $({ time ./max-temp.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
   cd ..
 }
 
