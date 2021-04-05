@@ -29,3 +29,8 @@ poets
 poets_pash
 
 compare_outputs "poets/outputs"
+
+web-index
+web-index_pash
+
+compare_outputs "web-index/outputs"
