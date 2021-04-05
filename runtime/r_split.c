@@ -64,19 +64,24 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
     if (headSize == 0)
     {
       headSize = len;
-      if ((len = getline(&newLineBuffer, &bufLen, inputFile)) < 0)
+      ssize_t linelen = 0;
+      if ((linelen = getline(&newLineBuffer, &bufLen, inputFile)) < 0)
       {
-        //edge case to fix: can't be called if file ended
-        err(2, "r_split: getline failed");
+        // It's fine if error is caused by eof
+        if (feof(inputFile)) {
+          linelen = 0;
+        } else {
+          err(2, "getline failed");
+        }
       }
-      blockSize = prevRestSize + headSize + len;
+      blockSize = prevRestSize + headSize + linelen;
       if (add_header)
         writeHeader(outputFile, id, blockSize);
       //write blocks
       if (prevRestSize)
         safeWrite(incompleteLine, 1, prevRestSize, outputFile);
       safeWrite(buffer, 1, headSize, outputFile);
-      safeWriteWithFlush(newLineBuffer, 1, len, outputFile);
+      safeWriteWithFlush(newLineBuffer, 1, linelen, outputFile);
     }
     else
     {
