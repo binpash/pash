@@ -134,7 +134,9 @@ web-index_pash(){
   export WIKI=$PASH_TOP/evaluation/benchmarks/web-index/input/
   outputs_file="${outputs_dir}/web-index.${outputs_suffix}"
   pash_log="${pash_logs_dir}/web-index.pash.log"
-  echo web-index.sh: $({ time "$PASH_TOP/pa.sh" --r_split --dgsh_tee -d 1 -w "${width}" --log_file "${pash_log}" web-index.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
+
+  ## FIXME: There is a bug when running with r_split at the moment. r_wrap cannot execute bash_functions
+  echo web-index.sh: $({ time "$PASH_TOP/pa.sh" --dgsh_tee -d 1 -w "${width}" --log_file "${pash_log}" web-index.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
   cd ..
 }
 
