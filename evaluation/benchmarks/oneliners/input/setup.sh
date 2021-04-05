@@ -32,6 +32,7 @@ if [ ! -f ./10M.txt ]; then
   for (( i = 0; i < 10; i++ )); do
     cat 1M.txt >> 10M.txt
   done
+  "$PASH_TOP/scripts/append_nl_if_not.sh" ./10M.txt
 fi
 
 if [ ! -f ./100M.txt ]; then
@@ -39,6 +40,7 @@ if [ ! -f ./100M.txt ]; then
   for (( i = 0; i < 10; i++ )); do
     cat 10M.txt >> 100M.txt
   done
+  "$PASH_TOP/scripts/append_nl_if_not.sh" ./100M.txt
 fi
 
 if [ ! -f ./1G.txt ]; then
@@ -79,6 +81,7 @@ if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
     for (( i = 0; i < 3; i++ )); do
       cat 1G.txt >> 3G.txt
     done
+    "$PASH_TOP/scripts/append_nl_if_not.sh" ./3G.txt
   fi
 
   if [ ! -f ./10G.txt ]; then
@@ -86,6 +89,7 @@ if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
     for (( i = 0; i < 10; i++ )); do
       cat 1G.txt >> 10G.txt
     done
+    "$PASH_TOP/scripts/append_nl_if_not.sh" ./10G.txt
   fi
 
   if [ ! -f ./all_cmdsx100.txt ]; then
