@@ -2,7 +2,7 @@
 # tag: distributed cat of log files
 set -e
 
-INPUT=${INPUT:-$PASH_TOP/evaluation/benchmarks/posh}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/posh}
 M0=${M0:-$PASH_TOP/evaluation/benchmarks/posh/input/cr_data/apps/distributed_logs/mount0}
 M1=${M1:-$PASH_TOP/evaluation/benchmarks/posh/input/cr_data/apps/distributed_logs/mount1}
 M2=${M2:-$PASH_TOP/evaluation/benchmarks/posh/input/cr_data/apps/distributed_logs/mount2}

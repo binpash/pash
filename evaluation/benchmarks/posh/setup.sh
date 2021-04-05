@@ -1,7 +1,8 @@
 if [[ "$1" == "-c" ]]; then
   rm -rf input
 fi
-mkdir input output
+./install-deps.sh
+mkdir -p input output
 cd input
 if [[ ! -d cr_data ]]; then
   echo "Downloading 37GB"
