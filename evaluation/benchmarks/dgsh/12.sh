@@ -11,7 +11,7 @@ OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dgsh/input}
 cd ${OUT}
 
 # split our chunk in N files
-split -dn ${IN}/$N $1
+split -dn  $N ${IN}
 # our files are in x00 x01 x02 
 for i in $(seq $((N -1))) ; 
 do 
