@@ -27,6 +27,8 @@ if [ ! -f index.txt ]; then
   wget http://ndr.md/data/wikipedia/index.txt
   head -n 5 index.txt > 5.txt
   head -n 100 index.txt > 100.txt
+  head -n 1000 index.txt > 1000.txt
+  head -n 100000 index.txt > 100000.txt
 fi
 
 if [ ! -d ./node_modules/ ]; then
