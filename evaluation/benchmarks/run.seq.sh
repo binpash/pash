@@ -105,8 +105,11 @@ unix50(){
 }
 
 web-index(){
-  if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd))/seq.res"
+  times_file="seq.res"
+  outputs_suffix="seq.out"
+  outputs_dir="outputs"
+  if [ -e "web-index/${times_file}" ]; then
+    echo "skipping web-index/${times_file}"
     return 0
   fi
 
@@ -116,12 +119,15 @@ web-index(){
   ./setup.sh
   cd ..
 
-  echo '' > seq.res
-  echo executing web index $(date) | tee -a ./seq.res
-  export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/100.txt
+  mkdir -p "$outputs_dir"
+  
+  touch "$times_file"
+  echo executing web index $(date) | tee -a "$times_file"
+  export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/1000.txt
   export WEB_INDEX_DIR=$PASH_TOP/evaluation/benchmarks/web-index/input
   export WIKI=$PASH_TOP/evaluation/benchmarks/web-index/input/
-  echo web-index.sh: $({ time ./web-index.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+  outputs_file="${outputs_dir}/web-index.${outputs_suffix}"
+  echo web-index.sh: $({ time ./web-index.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
   cd ..
 }
 
