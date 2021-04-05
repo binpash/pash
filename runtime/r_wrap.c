@@ -83,7 +83,7 @@ void processCmd(char *args[])
                 readSize = MIN(bufLen, blockSize - tot_read);
                 if (readSize && fread(buffer, 1, readSize, stdin) != readSize)
                 {
-                    err(2, "r_wrap: There is a problem with reading the block");
+                    err(2, "There is a problem with reading the block");
                 }
                 if ((currWriteLen + readSize) > writeBufLen) {
                     writeBufLen = 2*(currWriteLen + readSize);
@@ -124,7 +124,7 @@ void processCmd(char *args[])
 					        case EAGAIN:
                                 break;
                             default:
-                                err(2, "r_wrap: failed reading from fork, error %d", errno);
+                                err(2, "Failed reading from fork, error %d", errno);
                             }
                         }
                     }
@@ -143,7 +143,7 @@ void processCmd(char *args[])
                     // TODO handle broken pipe if needed
                     case EPIPE:
 					default:
-						err(2, "r_wrap: error writing to fork, error %d", errno);
+						err(2, "Error writing to fork, error %d", errno);
 					}            
                 }
 
@@ -173,7 +173,7 @@ void processCmd(char *args[])
                             case EAGAIN:
                                 break;
                             default:
-                                err(2, "r_wrap: error writing to fork, error %d", errno);
+                                err(2, "Error writing to fork, error %d", errno);
                         }
                     }
                 }
