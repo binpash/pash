@@ -1,6 +1,8 @@
 #include "r_split.h"
-#include <unistd.h>
 #include <sys/wait.h>
+
+#define __USE_GNU
+#include <unistd.h>
 
 #define READ_END 0
 #define WRITE_END 1
@@ -10,7 +12,7 @@ Batch sizes in and out should be around the same size or smaller ideally.
 The code was not tested in cases were the fork would output significantly more lines 
 than the input but that would definitly lead to incread memory cosumption in the whole pipeline.
 */
-void processCmd(char *args[])
+void processCmd(char *args[], char **envp)
 {
     size_t bufLen = BUFLEN, stdoutBlockBufLen = BUFLEN, writeBufLen = 2*BUFLEN; //buffer length, would be resized as needed
     int64_t id;
@@ -52,7 +54,7 @@ void processCmd(char *args[])
             close(fdIn[READ_END]);
             close(fdIn[WRITE_END]);
             // free(buffer); copy-on-write fork optimize this better(freeing is more harm than good here)
-            execvp(args[0], args);
+            execvpe(args[0], args, envp);
             //shouldn't get here
             perror("Exec failed");
             exit(1);
@@ -195,7 +197,7 @@ void processCmd(char *args[])
     free(writebuffer);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[], char **envp)
 {
     //arg1: command
     //args 2.. : arguments for command
@@ -216,5 +218,9 @@ int main(int argc, char *argv[])
         strcpy(args[i - 1], argv[i]);
     }
     args[argc - 1] = '\0';
-    processCmd(args);
+
+    // for (int i=0; envp[i] != NULL; i++) {
+    //     fprintf(stderr, "%s\n", envp[i]);
+    // }
+    processCmd(args, envp);
 }
