@@ -111,7 +111,7 @@ export PASH_REDIR="&2"
 export PASH_DEBUG_LEVEL=0
 
 ## Check flags
-pash_output_time_flag=0
+pash_output_time_flag=1
 pash_execute_flag=1
 pash_speculation_flag=0 # By default there is no speculation
 pash_dry_run_compiler_flag=0
@@ -145,9 +145,10 @@ do
         export PASH_DEBUG_LEVEL=$item
     fi
 
-    if [ "--output_time" == "$item" ]; then
-        pash_output_time_flag=1
-    fi
+    # We output time always 
+    # if [ "--output_time" == "$item" ]; then
+    #     pash_output_time_flag=1
+    # fi
 
     if [ "--dry_run_compiler" == "$item" ]; then
         pash_dry_run_compiler_flag=1

@@ -51,9 +51,11 @@ def is_tr_pure(options):
     ## If -s is one of the options (and \n is in the last SET)
     ## If -d is one of the options (and \n is in SET1)
     if((any([contains_s(opt) for opt in formatted_opts])
-        and "\\n" in set_opts[-1])
+        and ("\\n" in set_opts[-1]
+             or "\\012" in set_opts[-1]))
        or (any([contains_d(opt) for opt in formatted_opts])
-           and "\\n" in set1_opt)):
+           and ("\\n" in set1_opt
+                or "\\012" in set1_opt))):
         return "pure"
     else:
         return "stateless"

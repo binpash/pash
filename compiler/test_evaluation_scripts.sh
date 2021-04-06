@@ -26,8 +26,10 @@ n_inputs=(
 )
 
 configurations=(
-    ""
+    # "" # Commenting this out since the tests take a lot of time to finish
     "--r_split"
+    "--dgsh_tee"
+    "--r_split --dgsh_tee"
 )
 
 ## Tests where the compiler will not always succeed (e.g. because they have mkfifo)
@@ -55,10 +57,11 @@ pipeline_microbenchmarks=(
     no_in_script         # Tests whether a script can be executed by our infrastructure without having its input in a file called $IN
     for_loop_simple      # Tests whether PaSh can handle a for loop where the body is parallelizable
     minimal_grep_stdin   # Tests whether PaSh can handle a script that reads from stdin
-    micro_10           # A small version of the pipeline above for debugging.
+    micro_10             # A small version of the pipeline above for debugging.
     sed-test             # Tests all sed occurences in our evaluation to make sure that they work
     fun-def              # Tests whether PaSh can handle a simple function definition
     tr-test              # Tests all possible behaviors of tr that exist in our evaluation
+    grep-test            # Tests some interesting grep invocations
     # # # micro_1000           # Not being run anymore, as it is very slow. Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
 )
 
