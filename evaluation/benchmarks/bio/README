@@ -1,0 +1,17 @@
+Papers
+1 https://www.nature.com/articles/s41586-019-1728-8
+2 https://www.nature.com/articles/s41586-019-1555-y
+3 https://www.nature.com/articles/s41586-020-2153-8
+
+samtools view -H "${INPUT}/$sample".bam | sed -e 's/SN:([0-9XY])/SN:chr\1/' -e 's/SN:MT/SN:chrM/' \
+    | samtools reheader - "${INPUT}/$sample".bam > "${OUTPUT}/$sample"_corrected.bam ;
+auto einai to pio periergo, ousiastika anoigei to bam file meso tou samtools, kai pianei ta headers opou edw adistoixoun sto kathe xrwmoswma
+kai xanatupwnei to bam file me kainourgia headers, oste na einai ola ta bam files mas consistent oso anafora ta headers
+dld na leei chr1 gia to xrwmoswma ena adi na leei '1' h 'CH1'
+samtools index -b "${OUTPUT}/$sample"_corrected.bam ; auto einai tou samtools, to kanei indes to bam file gia na borei na kanei meta allaes diadikasies
+a loipon h idea einai oti tha dineis mia lista me deigmata (onoma deigmatos, plhthismos, link)
+kai tha ta katevazei kai proetimazei gia metepeita diadikasies
+px 'population genetic studies'
+opote einai gia na kaneis uniform ola ta dataset
+apospas mono ta xrwmoswmata pou thes, analoga me to pou vriskode ta gonia pou thes na apomonwseis
+#to 2o arxeio prepei n exei mesa t onomata twn gonidion kai se poio xrwmoswma vriskode

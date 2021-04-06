@@ -16,6 +16,7 @@
         {
             "predicate": "default",
             "class": "pure",
+            "properties": ["commutative"],
             "agg": "sort",
             "inputs": ["stdin"],
             "outputs": ["stdout"]

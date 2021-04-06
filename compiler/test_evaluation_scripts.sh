@@ -5,9 +5,9 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 export DEBUG=0
 # export DEBUG=1 # Uncomment to print pash output
 
-microbenchmarks_dir="${PASH_TOP}/evaluation/microbenchmarks/"
-intermediary_dir="${PASH_TOP}/evaluation/test_intermediary/"
-test_results_dir="${PASH_TOP}/evaluation/results/test_results/"
+microbenchmarks_dir="${PASH_TOP}/evaluation/tests/"
+intermediary_dir="${PASH_TOP}/evaluation/tests/test_intermediary/"
+test_results_dir="${PASH_TOP}/evaluation/tests/results/"
 
 echo "Deleting eager intermediate files..."
 rm -f /tmp/eager*
@@ -15,9 +15,21 @@ mkdir -p $intermediary_dir
 rm -rf "$test_results_dir"
 mkdir -p "$test_results_dir"
 
+echo "Generating inputs..."
+cd "$microbenchmarks_dir/input"
+./setup.sh
+cd -
+
 n_inputs=(
     2
     8
+)
+
+configurations=(
+    # "" # Commenting this out since the tests take a lot of time to finish
+    "--r_split"
+    "--dgsh_tee"
+    "--r_split --dgsh_tee"
 )
 
 ## Tests where the compiler will not always succeed (e.g. because they have mkfifo)
@@ -45,11 +57,15 @@ pipeline_microbenchmarks=(
     no_in_script         # Tests whether a script can be executed by our infrastructure without having its input in a file called $IN
     for_loop_simple      # Tests whether PaSh can handle a for loop where the body is parallelizable
     minimal_grep_stdin   # Tests whether PaSh can handle a script that reads from stdin
-    micro_1000           # Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
+    micro_10             # A small version of the pipeline above for debugging.
     sed-test             # Tests all sed occurences in our evaluation to make sure that they work
     fun-def              # Tests whether PaSh can handle a simple function definition
     tr-test              # Tests all possible behaviors of tr that exist in our evaluation
+    grep-test            # Tests some interesting grep invocations
+    # # # micro_1000           # Not being run anymore, as it is very slow. Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
 )
+
+
 
 execute_pash_and_check_diff() {
     if [ "$DEBUG" -eq 1 ]; then
@@ -113,13 +129,15 @@ execute_tests() {
         echo "|-- Executing the script with bash..."
         cat $stdin_redir | { time /bin/bash "$script_to_execute" > $seq_output ; } 2> "${seq_time}"
 
-        for n_in in "${n_inputs[@]}"; do
-            echo "|-- Executing with pash --width ${n_in}..."
-            export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_auto_split.time"
-            export pash_output="${intermediary_dir}/${microbenchmark}_${n_in}_pash_output"
+        for conf in "${configurations[@]}"; do
+            for n_in in "${n_inputs[@]}"; do
+                echo "|-- Executing with pash --width ${n_in} ${conf}..."
+                export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_${conf}.time"
+                export pash_output="${intermediary_dir}/${microbenchmark}_${n_in}_pash_output"
 
-            cat $stdin_redir | 
-                execute_pash_and_check_diff -d 1 $assert_correctness --width "${n_in}" --output_time $script_to_execute
+                cat $stdin_redir |
+                    execute_pash_and_check_diff -d 1 $assert_correctness ${conf} --width "${n_in}" --output_time $script_to_execute
+            done
         done
     done
 }
