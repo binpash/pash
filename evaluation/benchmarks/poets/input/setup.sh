@@ -2,7 +2,6 @@
 
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 
-mkdir -p $PASH_TOP/evaluation/benchmarks/poets/input/output
 [[ "$1" == "-c" ]] && { rm -rf genesis exodus pg; exit; }
 
 if [ ! -f ./genesis ]; then
