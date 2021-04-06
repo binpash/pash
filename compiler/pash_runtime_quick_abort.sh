@@ -88,13 +88,22 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     pash_seq_pid=$!
     pash_redir_output echo "Sequential pid: $pash_seq_pid"
 
+    ## (E) The sequential output eager
+    pash_seq_eager2_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    mkfifo "$pash_seq_eager2_output"
+    pash_seq_eager2_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    "$RUNTIME_DIR/../runtime/eager" "$pash_seq_output" "$pash_seq_eager2_output" "$pash_seq_eager2_file" &
+
     ## (F) Second eager
     cat "$pash_tee_stdout2" > /dev/null &
 
-    cat "$pash_seq_output"
-
+    ## Once this is done, we can redirect the output
     wait $pash_seq_pid
     pash_seq_status=$?
+
+    ## (1) Redirect the seq output to stdout
+    cat "$pash_seq_eager2_output"
+
     (exit "$pash_seq_status")
 
 
