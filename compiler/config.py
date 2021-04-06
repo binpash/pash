@@ -64,8 +64,9 @@ def add_common_arguments(parser):
     parser.add_argument("--assert_compiler_success",
                         help="assert that the compiler succeeded (used to make tests more robust)",
                         action="store_true")
+    ## TODO: Delete that at some point, or make it have a different use (e.g., outputting time even without -d 1).
     parser.add_argument("-t", "--output_time", #FIXME: --time
-                        help="output the time it took for every step",
+                        help="(obsolete, time is always logged now) output the time it took for every step",
                         action="store_true")
     parser.add_argument("-p", "--output_optimized", # FIXME: --print
                         help="output the parallel shell script for inspection",

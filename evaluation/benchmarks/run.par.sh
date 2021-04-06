@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# FIXME: skip running if output file exists (using tee?)
-
-## FIX: We should not have a set -e in a script that is supposed to be sourced.
-# set -e
-
 # time: print real in seconds, to simplify parsing
 TIMEFORMAT="%3R" # %3U %3S"
 
@@ -13,12 +8,14 @@ if [[ -z "$PASH_TOP" ]]; then
   exit 1
 fi
 
-oneliners(){
-  seq_times_file="seq.res"
-  seq_outputs_suffix="seq.out"
+oneliners_pash(){
+  par_times_file="par.res"
+  par_outputs_suffix="par.out"
   outputs_dir="outputs"
-  if [ -e "oneliners/$seq_times_file" ]; then
-    echo "skipping oneliners/$seq_times_file"
+  pash_logs_dir="pash_logs"
+  width=16
+  if [ -e "oneliners/$par_times_file" ]; then
+    echo "skipping oneliners/$par_times_file"
     return 0
   fi
   
@@ -29,6 +26,7 @@ oneliners(){
   cd ..
 
   mkdir -p "$outputs_dir"
+  mkdir -p "$pash_logs_dir"
 
   scripts_inputs=(
     "nfa-regex;100M.txt"
@@ -43,9 +41,9 @@ oneliners(){
     "shortest-scripts;all_cmdsx100.txt"
   )
 
-  touch "$seq_times_file"
-  echo executing one-liners $(date) | tee -a "$seq_times_file"
-  echo '' >> "$seq_times_file"
+  touch "$par_times_file"
+  echo executing one-liners with pash $(date) | tee -a "$par_times_file"
+  echo '' >> "$par_times_file"
 
   for script_input in ${scripts_inputs[@]}
   do
@@ -57,18 +55,21 @@ oneliners(){
     padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:30}
 
-    seq_outputs_file="${outputs_dir}/${script}.${seq_outputs_suffix}"
+    par_outputs_file="${outputs_dir}/${script}.${par_outputs_suffix}"
+    pash_log="${pash_logs_dir}/${script}.pash.log"
 
-    echo "${padded_script}" $({ time ./${script}.sh > "$seq_outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" --r_split --dgsh_tee -d 1 -w "${width}" --log_file "${pash_log}" ${script}.sh > "$par_outputs_file"; } 2>&1) | tee -a "$par_times_file"
   done
 
   cd ..
 }
 
-unix50(){
-  times_file="seq.res"
-  outputs_suffix="seq.out"
+unix50_pash(){
+  times_file="par.res"
+  outputs_suffix="par.out"
   outputs_dir="outputs"
+  pash_logs_dir="pash_logs"
+  width=16
   if [ -e "unix50/${times_file}" ]; then
     echo "skipping unix50/${times_file}"
     return 0
@@ -81,6 +82,7 @@ unix50(){
   cd ..
 
   mkdir -p "$outputs_dir"
+  mkdir -p "$pash_logs_dir"
 
   touch "$times_file"
   echo executing Unix50 $(date) | tee -a "$times_file"
@@ -98,16 +100,19 @@ unix50(){
     padded_script=${padded_script:0:20}
 
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+    pash_log="${pash_logs_dir}/${script}.pash.log"
 
-    echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" --r_split --dgsh_tee -d 1 -w "${width}" --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
   done  
   cd ..
 }
 
-web-index(){
-  times_file="seq.res"
-  outputs_suffix="seq.out"
+web-index_pash(){
+  times_file="par.res"
+  outputs_suffix="par.out"
   outputs_dir="outputs"
+  pash_logs_dir="pash_logs"
+  width=16
   if [ -e "web-index/${times_file}" ]; then
     echo "skipping web-index/${times_file}"
     return 0
@@ -120,21 +125,27 @@ web-index(){
   cd ..
 
   mkdir -p "$outputs_dir"
+  mkdir -p "$pash_logs_dir"
   
   touch "$times_file"
-  echo executing web index $(date) | tee -a "$times_file"
+  echo executing web index with pash $(date) | tee -a "$times_file"
   export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/1000.txt
   export WEB_INDEX_DIR=$PASH_TOP/evaluation/benchmarks/web-index/input
   export WIKI=$PASH_TOP/evaluation/benchmarks/web-index/input/
   outputs_file="${outputs_dir}/web-index.${outputs_suffix}"
-  echo web-index.sh: $({ time ./web-index.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
+  pash_log="${pash_logs_dir}/web-index.pash.log"
+
+  ## FIXME: There is a bug when running with r_split at the moment. r_wrap cannot execute bash_functions
+  echo web-index.sh: $({ time "$PASH_TOP/pa.sh" --dgsh_tee -d 1 -w "${width}" --log_file "${pash_log}" web-index.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
   cd ..
 }
 
-max-temp(){
-  times_file="seq.res"
-  outputs_suffix="seq.out"
+max-temp_pash(){
+  times_file="par.res"
+  outputs_suffix="par.out"
   outputs_dir="outputs"
+  pash_logs_dir="pash_logs"
+  width=16
   if [ -e "max-temp/${times_file}" ]; then
     echo "skipping max-temp/${times_file}"
     return 0
@@ -143,40 +154,22 @@ max-temp(){
   cd max-temp/
 
   mkdir -p "$outputs_dir"
+  mkdir -p "$pash_logs_dir"
 
   touch "$times_file"
-  echo executing max temp $(date) | tee -a "$times_file"
+  echo executing max temp with pash $(date) | tee -a "$times_file"
   outputs_file="${outputs_dir}/max-temp.${outputs_suffix}"
-  echo mex-temp.sh: $({ time ./max-temp.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
+  pash_log="${pash_logs_dir}/max-temp.pash.log"
+  echo mex-temp.sh: $({ time time "$PASH_TOP/pa.sh" --r_split --dgsh_tee -d 1 -w "${width}" --log_file "${pash_log}" max-temp.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
   cd ..
 }
 
-analytics-mts(){
-  if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd))/seq.res"
-    return 0
-  fi
-
-  cd analytics-mts/
-
-  cd input/
-  ./setup.sh
-  cd ..
-
-  echo '' > seq.res
-  echo executing MTS analytics $(date) | tee -a ./seq.res
-  echo 1.sh: $({ time ./1.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 2.sh: $({ time ./2.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 3.sh: $({ time ./3.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 4.sh: $({ time ./4.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-#FIXME: echo 5.sh: $({ time ./5.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  cd ..
-}
-
-poets(){
-  times_file="seq.res"
-  outputs_suffix="seq.out"
+poets_pash(){
+  times_file="par.res"
+  outputs_suffix="par.out"
   outputs_dir="outputs"
+  pash_logs_dir="pash_logs"
+  width=16
   if [ -e "poets/${times_file}" ]; then
     echo "skipping poets/${times_file}"
     return 0
@@ -189,6 +182,7 @@ poets(){
   cd ..
 
   mkdir -p "$outputs_dir"
+  mkdir -p "$pash_logs_dir"
 
   names_scripts=(
     "1syllable_words;6_4"
@@ -217,7 +211,7 @@ poets(){
   )
 
   touch "$times_file"
-  echo executing Unix-for-poets $(date) | tee -a "$times_file"
+  echo executing Unix-for-poets with pash $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
 
   for name_script in ${names_scripts[@]}
@@ -231,17 +225,9 @@ poets(){
     padded_script=${padded_script:0:30}
 
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+    pash_log="${pash_logs_dir}/${script}.pash.log"
 
-    echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" --r_split --dgsh_tee -d 1 -w "${width}" --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
   done
   cd ..
-}
-
-
-aliases(){
-  echo executing aliases
-  cd aliases/select
-  echo tomp3: $({ time ./1.tomp3.sh > /dev/null; } 2>&1)
-  echo unrtf: $({ time ./2.unrtf.sh > /dev/null; } 2>&1)
-
 }
