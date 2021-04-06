@@ -15,9 +15,9 @@ def pad(lst, index):
     return lst
 
 def print_time_delta(prefix, start_time, end_time, args):
-    if(args.output_time):
-        time_difference = (end_time - start_time) / timedelta(milliseconds=1)
-        log("{} time:".format(prefix), time_difference, " ms")
+    ## Always output time in the log.
+    time_difference = (end_time - start_time) / timedelta(milliseconds=1)
+    log("{} time:".format(prefix), time_difference, " ms")
 
 ## This is a wrapper for prints
 ##
@@ -28,10 +28,10 @@ def log(*args, end='\n', level=1):
     ## as high as this log message.
     if (config.pash_args.debug >= level):
         if(config.pash_args.log_file == ""):
-            print(*args, file=sys.stderr, end=end)
+            print(*args, file=sys.stderr, end=end, flush=True)
         else:
             with open(config.pash_args.log_file, "a") as f:
-                print(*args, file=f, end=end)
+                print(*args, file=f, end=end, flush=True)
 
 def ptempfile():
     return tempfile.mkstemp(dir=config.PASH_TMP_PREFIX)
