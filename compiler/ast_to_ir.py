@@ -160,48 +160,40 @@ def compile_node_pipe(ast_node, fileIdGen, config):
     compiled_pipe_nodes = combine_pipe([compile_node(pipe_item, fileIdGen, config)
                                         for pipe_item in ast_node.items])
 
-    if (len(compiled_pipe_nodes) == 1):
-        ## Note: When calling combine_pipe_nodes (which
-        ##       optimistically distributes all the children of a
-        ##       pipeline) the compiled_pipe_nodes should always
-        ##       be one IR
-        compiled_ir = compiled_pipe_nodes[0]
-        ## Note: Save the old ast for the end-to-end prototype
-        old_ast_node = make_kv(ast_node.construct.value, [ast_node.is_background, ast_node.items])
-        compiled_ir.set_ast(old_ast_node)
-        ## Set the IR background so that it can be parallelized with
-        ## the next command if the pipeline was run in background
-        compiled_ir.set_background(ast_node.is_background)
-        ## TODO: If the pipeline is in background, I also have to
-        ## redirect its stdin, stdout
-        compiled_ast = compiled_ir
-    else:
-        ## Note: This should be unreachable with the current combine pipe
-        assert(False)
-        compiled_ast = make_kv(construct, [arguments[0]] + [compiled_pipe_nodes])
+    ## Note: When calling combine_pipe_nodes (which
+    ##       optimistically distributes all the children of a
+    ##       pipeline) the compiled_pipe_nodes should always
+    ##       be one IR
+    compiled_ir = compiled_pipe_nodes[0]
+    ## Note: Save the old ast for the end-to-end prototype
+    old_ast_node = make_kv(ast_node.construct.value, [ast_node.is_background, ast_node.items])
+    compiled_ir.set_ast(old_ast_node)
+    ## Set the IR background so that it can be parallelized with
+    ## the next command if the pipeline was run in background
+    compiled_ir.set_background(ast_node.is_background)
+    ## TODO: If the pipeline is in background, I also have to
+    ## redirect its stdin, stdout
+    compiled_ast = compiled_ir
     return compiled_ast
 
-## This combines all the children of the Pipeline to an IR, even
-## though they might not be IRs themselves. This means that an IR
-## might contain mixed commands and ASTs. The ASTs can be
-## (conservatively) considered as stateful commands by default).
+## This combines all the children of the Pipeline to an IR.
 def combine_pipe(ast_nodes):
     ## Initialize the IR with the first node in the Pipe
     if (isinstance(ast_nodes[0], IR)):
         combined_nodes = ast_nodes[0]
     else:
-        ## FIXME: This one will not work. The IR of an AST node
-        ##        doesn't have any stdin or stdout.
-        combined_nodes = IR([ast_nodes[0]])
+        ## If any part of the pipe is not an IR, the compilation must fail.
+        log("Node: {} is not pure".format(AstNode(ast_nodes[0])))
+        exit(1)
 
     ## Combine the rest of the nodes
     for ast_node in ast_nodes[1:]:
         if (isinstance(ast_node, IR)):
             combined_nodes.pipe_append(ast_node)
         else:
-            ## FIXME: This one will not work. The IR of an AST node
-            ##        doesn't have any stdin or stdout.
-            combined_nodes.pipe_append(IR([ast_node]))
+            ## If any part of the pipe is not an IR, the compilation must fail.
+            log("Node: {} is not pure".format(AstNode(ast_nodes)))
+            exit(1)
 
     return [combined_nodes]
 
@@ -249,6 +241,8 @@ def compile_node_command(ast_node, fileIdGen, config):
         except ValueError as err:
             ## TODO: Delete this log from here
             log(err)
+            ## TODO: Maybe we want to fail here instead of waiting for later?
+            ##       Is there any case where a non-compiled command is fine?
             # log(traceback.format_exc())
             compiled_arguments = compile_command_arguments(arguments, fileIdGen, config)
             compiled_ast = make_kv(construct_str,

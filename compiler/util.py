@@ -15,9 +15,9 @@ def pad(lst, index):
     return lst
 
 def print_time_delta(prefix, start_time, end_time, args):
-    if(args.output_time):
-        time_difference = (end_time - start_time) / timedelta(milliseconds=1)
-        log("{} time:".format(prefix), time_difference, " ms")
+    ## Always output time in the log.
+    time_difference = (end_time - start_time) / timedelta(milliseconds=1)
+    log("{} time:".format(prefix), time_difference, " ms")
 
 ## This is a wrapper for prints
 ##
