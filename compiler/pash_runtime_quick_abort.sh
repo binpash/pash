@@ -56,6 +56,8 @@ function list_include_item {
 
 ## TODO: We also want to avoid executing the compiled script if it doesn't contain any improvement.
 
+## TODO: Maybe the reroute needs to be put around (C) and not (D)
+
 if [ "$pash_execute_flag" -eq 1 ]; then
     # set -x
     ## (A) Redirect stdin to `tee`
@@ -86,7 +88,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
         ${pash_sequential_script_file} \
         > "$pash_seq_output" < "$pash_seq_eager_output" &
     pash_seq_pid=$!
-    pash_redir_output echo "Sequential pid: $pash_seq_pid"
+    pash_redir_output echo "(QAbort) Sequential pid: $pash_seq_pid"
 
     ## (E) The sequential output eager
     pash_seq_eager2_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
@@ -95,116 +97,87 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     "$RUNTIME_DIR/../runtime/eager" "$pash_seq_output" "$pash_seq_eager2_output" "$pash_seq_eager2_file" &
 
     ## (F) Second eager
-    cat "$pash_tee_stdout2" > /dev/null &
+    pash_par_eager_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    mkfifo "$pash_par_eager_output"
+    pash_par_eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    "$RUNTIME_DIR/../runtime/eager" "$pash_tee_stdout2" "$pash_par_eager_output" "$pash_par_eager_file" &
 
-    ## Once this is done, we can redirect the output
-    wait $pash_seq_pid
-    pash_seq_status=$?
+    ## Run the compiler
+    pash_redir_all_output python3 pash_runtime.py ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
+    pash_compiler_pid=$!
+    pash_redir_output echo "(QAbort) Compiler pid: $pash_compiler_pid"
 
-    ## (1) Redirect the seq output to stdout
-    cat "$pash_seq_eager2_output"
+    ## Wait until one of the two (original script, or compiler) die
+    alive_pids=$(still_alive)
+    pash_redir_output echo "(QAbort) Still alive: $alive_pids"
+    while `list_include_item "$alive_pids" "$pash_seq_pid"` && `list_include_item "$alive_pids" "$pash_compiler_pid"` ; do
+        ## Wait for either of the two to complete
+        wait -n "$pash_seq_pid" "$pash_compiler_pid"
+        completed_pid_status=$?
+        alive_pids=$(still_alive)
+        pash_redir_output echo "(QAbort) Still alive: $alive_pids"
+    done
 
-    (exit "$pash_seq_status")
+    ## If the sequential is still alive we want to see if the compiler succeeded
+    if `list_include_item "$alive_pids" "$pash_seq_pid"` ; then
+        pash_runtime_return_code=$completed_pid_status
+        pash_redir_output echo "(QAbort) Compilation was done first with return code: $pash_runtime_return_code"
 
+        ## We only want to run the parallel if the compiler succeeded.
+        ## TODO: Enable that
+        if false && [ "$pash_runtime_return_code" -eq 0 ]; then
 
-    # ## Before running the original script we need to redirect its input and output to 
-    # ## eager and pipes.
-    # pash_stdin_redir1="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    # pash_stdin_redir2="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    # # pash_stdout_redir1="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    # pash_stdout_redir2="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    # pash_stdin_eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    # pash_redir_output echo "eager intermediate file: $pash_stdin_eager_file"
-    # # pash_stdout_eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    # mkfifo $pash_stdin_redir1 $pash_stdin_redir2
-    # # mkfifo $pash_stdin_redir1 $pash_stdin_redir2 $pash_stdout_redir1 $pash_stdout_redir2
+            ## TODO: We really need to kill the sequential (so that it stops writing to other outputs).
+            ##       Actually we need to call it with reroute to dump its stdin to /dev/null and kill it.
+            # kill -n 9 "$pash_seq_pid" 2> /dev/null
+            # kill_status=$?
+            # wait "$pash_seq_pid" 2> /dev/null
+            # pash_runtime_final_status=$?
+            # pash_redir_output echo "Still alive: $(still_alive)"
 
+            ## If kill failed it means it was already completed, 
+            ## and therefore we do not need to run the parallel.
+            if true || [ "$kill_status" -eq 0 ]; then
+                pash_redir_output echo "(QAbort) Run parallel"
 
-    # ## TODO: Find the eager directory correctly
-    # "$RUNTIME_DIR/../evaluation/tools/eager" "$pash_stdin_redir1" "$pash_stdin_redir2" "$pash_stdin_eager_file" &
-    # pash_redir_output echo "STDIN eager pid: $!"
-    # # ../evaluation/tools/eager "$pash_stdout_redir1" "$pash_stdout_redir2" "$pash_stdout_eager_file" &
-    # # pash_redir_output echo "STDOUT eager pid: $!"
+                ## (2) Run the parallel
+                source "$RUNTIME_DIR/pash_wrap_vars.sh" \
+                    $pash_runtime_shell_variables_file \
+                    $pash_output_variables_file \
+                    ${pash_output_set_file} \
+                    ${pash_compiled_script_file} \
+                    < "$pash_par_eager_output"
+                pash_runtime_final_status=$?
+            fi
+        else
+            ## If the compiler failed we just wait until the sequential is done.
+
+            ## TODO: Do we need -n?
+            # wait -n "$pash_seq_pid"
+            wait "$pash_seq_pid"
+            pash_runtime_final_status=$?
+
+            ## (1) Redirect the seq output to stdout
+            cat "$pash_seq_eager2_output"
+            pash_redir_output echo "STDOUT cat pid: $!"
+            pash_redir_output echo "Still alive: $(still_alive)"
+        fi
+    else
+        pash_runtime_final_status=$completed_pid_status
+        pash_redir_output echo "(QAbort) Sequential was done first!"
+
+        ## (1) Redirect the seq output to stdout
+        cat "$pash_seq_eager2_output"
+        pash_redir_output echo "STDOUT cat pid: $!"
+
+        ## If this fails (meaning that compilation is done) we do not care
+        ## TODO: Do we actually need to kill compiler
+        # kill -n 9 "$pash_compiler_pid" 2> /dev/null
+        # wait -n "$pash_compiler_pid"  2> /dev/null
+        # pash_runtime_final_status=$completed_pid_status
+        # pash_redir_output echo "Still alive: $(still_alive)"
+    fi
     
-    # pash_redir_output echo "STDIN cat pid: $!"
-    # ## Note: We don't connect stdout_redir2 yet, since it has to be bufferred for correctness. 
-
-    # ## Run the original script
-    # # "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_sequential_script_file} > "$pash_stdout_redir1" < "$pash_stdin_redir2" &
-    # "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_sequential_script_file} > "$pash_stdout_redir2" < "$pash_stdin_redir2" &
-    # # "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_sequential_script_file} > "$pash_stdout_redir2" &
-    # pash_seq_pid=$!
-    # pash_redir_output echo "Sequential pid: $pash_seq_pid"
-
-    # ## Run the compiler
-    # pash_redir_all_output python3 pash_runtime.py ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
-    # pash_compiler_pid=$!
-    # pash_redir_output echo "Compiler pid: $pash_compiler_pid"
-
-    
-    # ## Wait until one of the two (original script, or compiler) die
-    # alive_pids=$(still_alive)
-    # pash_redir_output echo "Still alive: $alive_pids"
-    # while `list_include_item "$alive_pids" "$pash_seq_pid"` && `list_include_item "$alive_pids" "$pash_compiler_pid"` ; do
-    #     ## Wait for either of the two to complete
-    #     wait -n "$pash_seq_pid" "$pash_compiler_pid"
-    #     completed_pid_status=$?
-    #     alive_pids=$(still_alive)
-    #     pash_redir_output echo "Still alive: $alive_pids"
-    # done
-
-    # ## If the sequential is still alive we want to see if the compiler succeeded
-    # if `list_include_item "$alive_pids" "$pash_seq_pid"` ; then
-    # # if [ "$pash_seq_pid" -eq "$alive_pids" ]; then
-    #     pash_runtime_return_code=$completed_pid_status
-    #     pash_redir_output echo "Compilation was done first with return code: $pash_runtime_return_code"
-
-    #     ## We only want to run the parallel if the compiler succeeded.
-    #     if [ "$pash_runtime_return_code" -eq 0 ]; then
-    #         kill -n 9 "$pash_seq_pid" 2> /dev/null
-    #         kill_status=$?
-    #         wait "$pash_seq_pid" 2> /dev/null
-    #         pash_runtime_final_status=$?
-    #         pash_redir_output echo "Still alive: $(still_alive)"
-
-    #         ## If kill failed it means it was already completed, 
-    #         ## and therefore we do not need to run the parallel.
-    #         if [ "$kill_status" -eq 0 ]; then
-    #             pash_redir_output echo "Run parallel"
-    #             ## TODO: Find the outputs/inputs of the DFG and make sure that the outputs 
-    #             ##       are clean and normal files (and the inputs are normal files)
-
-    #             ## TODO: Redirect stdin/stdout so that the parallel one gets them from the start
-    #             ##       and so that there are no duplicate entries in the stdout.
-    #             ## TODO: This seems like a non-trivial solution since it requires keeping stdin open, 
-    #             ##       while "restarting" the eager, making it send its output to a new pipe, and
-    #             ##       then first reading all from its intermediate file. 
-    #             "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_compiled_script_file}
-    #             pash_runtime_final_status=$?
-    #         fi
-    #     else
-    #         ## If the compiler failed we just wait until the sequential is done.
-
-    #         wait -n "$pash_seq_pid"
-
-    #         ## TODO: Redirect eagers to stdin + stdout
-    #         cat "$pash_stdout_redir2" &
-    #         pash_redir_output echo "STDOUT cat pid: $!"
-    #         pash_redir_output echo "Still alive: $(still_alive)"
-
-    #         pash_runtime_final_status=$?
-    #     fi
-    # else
-    #     pash_redir_output echo "Sequential was done first!"
-
-    #     ## TODO: Redirect eagers to stdin + stdout
-    #     cat "$pash_stdout_redir2" &
-    #     pash_redir_output echo "STDOUT cat pid: $!"
-
-    #     ## If this fails (meaning that compilation is done) we do not care
-    #     kill -n 9 "$pash_compiler_pid" 2> /dev/null
-    #     wait -n "$pash_compiler_pid"  2> /dev/null
-    #     pash_runtime_final_status=$completed_pid_status
-    #     pash_redir_output echo "Still alive: $(still_alive)"
-    # fi
+    ## Return the exit code
+    (exit "$pash_runtime_final_status")
 fi
