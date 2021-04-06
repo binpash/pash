@@ -125,7 +125,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
 
         ## We only want to run the parallel if the compiler succeeded.
         ## TODO: Enable that
-        if false && [ "$pash_runtime_return_code" -eq 0 ]; then
+        if [ "$pash_runtime_return_code" -eq 0 ]; then
 
             ## TODO: We really need to kill the sequential (so that it stops writing to other outputs).
             ##       Actually we need to call it with reroute to dump its stdin to /dev/null and kill it.
