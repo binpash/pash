@@ -168,15 +168,17 @@ if [ "$pash_execute_flag" -eq 1 ]; then
         pash_redir_output echo "(QAbort) Sequential was done first with return code: $pash_runtime_final_status"
 
         ## (1) Redirect the seq output to stdout
-        cat "$pash_seq_eager2_output"
-        pash_redir_output echo "STDOUT cat pid: $!"
+        cat "$pash_seq_eager2_output" &
+        final_cat_pid=$!
+        pash_redir_output echo "(QAbort) STDOUT cat pid: $final_cat_pid"
 
-        # ## If this fails (meaning that compilation is done) we do not care
-        # ## TODO: Do we actually need to kill compiler
-        # kill -n 9 "$pash_compiler_pid" 2> /dev/null
-        # wait -n "$pash_compiler_pid"  2> /dev/null
-        # pash_runtime_final_status=$completed_pid_status
-        # pash_redir_output echo "(QAbort) Still alive: $(still_alive)"
+        ## If this fails (meaning that compilation is done) we do not care
+        ## TODO: Do we actually need to kill compiler
+        kill -9 "$pash_compiler_pid" 2> /dev/null
+        wait "$pash_compiler_pid"  2> /dev/null
+        pash_redir_output echo "(QAbort) Still alive: $(still_alive)"
+
+        wait "$final_cat_pid"
     fi
     
     ## Return the exit code
