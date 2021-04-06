@@ -41,6 +41,7 @@ seq_script="${prefix}_seq.sh"
 input_file="${prefix}.in"
 
 seq_output="${directory}/${microbenchmark}_seq_output"
+pash_output="${directory}/${microbenchmark}_pash_output"
 
 echo "Environment:"
 # cat $env_file
@@ -101,6 +102,6 @@ else
     distr_result_filename="${results}${experiment}_distr_no_eager.time"
 fi
 
-cat $stdin_redir | { time python3 $PASH_TOP/compiler/pash.py -d 1 --speculation no_spec $assert_compiler_success $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script ; } 1> /tmp/pash_output 2> >(tee "${distr_result_filename}" >&2) &&
+cat $stdin_redir | { time python3 $PASH_TOP/compiler/pash.py -d 1 --speculation no_spec $assert_compiler_success $eager_opt $auto_split_opt $config_path_opt --output_time $seq_script ; } 1> $pash_output 2> >(tee "${distr_result_filename}" >&2) &&
 echo "Checking for equivalence..." &&
-diff -s $seq_output /tmp/pash_output | head | tee -a "${distr_result_filename}" >&2
+diff -s $seq_output $pash_output | head | tee -a "${distr_result_filename}" >&2
