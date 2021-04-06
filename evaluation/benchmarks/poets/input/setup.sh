@@ -18,15 +18,16 @@ if [ ! -e ./pg ]; then
   mkdir pg
   cd pg
   echo 'N.b.: download/extraction will take about 10min'
-  curl -f ndr.md/data/pg.tar.xz > pg.tar.xz
+  wget ndr.md/data/pg.tar.xz
   if [ $? -ne 0 ]; then
 		cat <<-'EOF' | sed 's/^ *//'
 		Downloading input dataset failed, thus need to manually rsync all books from  project gutenberg:
 		rsync -av --del --prune-empty-dirs --include='*.txt' --include='*/' --exclude='*' ftp@ftp.ibiblio.org::gutenberg .
 		please contact the pash developers pash-devs@googlegroups.com
 		EOF
+    exit 1
   fi
-  cat pg.tar.gz | tar -xJ
+  cat pg.tar.xz | tar -xJ
   for f in *.txt; do
     "$PASH_TOP/scripts/append_nl_if_not.sh" $f
   done
