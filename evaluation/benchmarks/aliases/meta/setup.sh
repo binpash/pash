@@ -24,7 +24,7 @@ mkdir -p ${OUT}
 
 
 cd $IN
-if [[ ! -f nginx.zip ]]
+if [[ ! -f access.log ]]
 then
     wget -O nginx.zip https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/3QBYB5/NXKB6J
     unzip nginx.zip 
@@ -40,7 +40,6 @@ fi
 
 cd $IN
 if [[ ! -d linux ]]; then
-    touch xd
     git clone https://github.com/torvalds/linux
 fi
 
