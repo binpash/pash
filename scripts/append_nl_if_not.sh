@@ -1,7 +1,6 @@
 #!/bin/bash
 
 ## Adds a newline at the end of a file if it doesn't already end in a newline.
-##
 ## Used to prepare inputs for PaSh.
 
 if [ -z "$1" ]; then

@@ -2,13 +2,11 @@ FROM ubuntu:18.04
 
 RUN apt-get update -y
 RUN apt-get upgrade -y
-RUN apt-get install -y git sudo locales locales-all curl wget
+RUN apt-get install -y git sudo locales locales-all curl wget wamerican-insane
 
 RUN git clone https://github.com/andromeda/pash.git
-WORKDIR "/pash"
 
-RUN sed -i 's#git@github.com:angelhof/libdash.git#https://github.com/angelhof/libdash/#g' .gitmodules
-RUN sudo bash scripts/install.sh -p
+RUN sudo bash /pash/scripts/install.sh -p
 
 ENV LC_ALL en_US.UTF-8
 ENV LANG en_US.UTF-8

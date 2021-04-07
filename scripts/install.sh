@@ -3,9 +3,11 @@
 # Ensure that the script fails if something failed
 set -e
 
+PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
+cd $PASH_TOP
+
 LOG_DIR=$PWD/install_logs
 mkdir -p $LOG_DIR
-
 
 prepare_sudo_install_flag=0
 while getopts 'p' opt; do
@@ -65,9 +67,6 @@ fi
 # sudo apt-get install opam
 # yes | opam init &> $LOG_DIR/opam_init.log
 
-# Export necessary environment variables
-export PASH_TOP=$PWD
-
 # Build the parser (requires libtool, m4, automake, opam)
 echo "Building parser..."
 cd compiler/parser
@@ -111,25 +110,9 @@ python3 -m pip install -U PyYAML &> $LOG_DIR/pip_install_pyyaml.log
 python3 -m pip install numpy &> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib &> $LOG_DIR/pip_install_matplotlib.log
 
-sudo apt-get install -y p7zip-full
-echo "Installing web-index dependencies..."
-# pandoc v.2.2.1
-wget https://github.com/jgm/pandoc/releases/download/2.2.1/pandoc-2.2.1-1-$(dpkg --print-architecture).deb
-sudo dpkg -i ./pandoc-2.2.1-1-$(dpkg --print-architecture).deb
-rm ./pandoc-2.2.1-1-$(dpkg --print-architecture).deb 
-# node version 10+ does not need external npm
-sudo apt-get install -y curl 
-curl -fsSL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-sudo apt-get install -y nodejs
-cd  $PASH_TOP/evaluation/scripts/web-index
-npm install
-cd $PASH_TOP
-
 # Generate inputs
 echo "Generating input files..."
-cd evaluation/tests/input
-./setup.sh
-cd ../../../
+$PASH_TOP/evaluation/tests/input/setup.sh
 
 ## This is necessary for the parser to link to libdash
 echo "Do not forget to export LD_LIBRARY_PATH as shown below :)"
