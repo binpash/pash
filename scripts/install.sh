@@ -3,6 +3,7 @@
 # Ensure that the script fails if something failed
 set -e
 
+cd $(dirname $0)
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 cd $PASH_TOP
 
