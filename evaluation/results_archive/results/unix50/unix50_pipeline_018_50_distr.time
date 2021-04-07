@@ -1,9 +1,0 @@
-cat: write error: No space left on device
-Optimization time: 2.79  ms
-Backend time: 42.33  ms
-Execution time: 41429.968  ms
-Compilation time: 107.358  ms
-
-real	0m41.929s
-user	0m0.844s
-sys	0m51.102s

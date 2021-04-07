@@ -1,9 +1,0 @@
-Optimization time: 449.939  ms
-Backend time: 94.447  ms
-Execution time: 4525373.426  ms
-Compilation time: 60.77  ms
-
-real	75m26.350s
-user	75m19.328s
-sys	0m28.540s
-Files ../evaluation//intermediary//minimal_grep_seq_output and /tmp/distr_output/0 are identical

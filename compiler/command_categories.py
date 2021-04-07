@@ -51,9 +51,11 @@ def is_tr_pure(options):
     ## If -s is one of the options (and \n is in the last SET)
     ## If -d is one of the options (and \n is in SET1)
     if((any([contains_s(opt) for opt in formatted_opts])
-        and "\\n" in set_opts[-1])
+        and ("\\n" in set_opts[-1]
+             or "\\012" in set_opts[-1]))
        or (any([contains_d(opt) for opt in formatted_opts])
-           and "\\n" in set1_opt)):
+           and ("\\n" in set1_opt
+                or "\\012" in set1_opt))):
         return "pure"
     else:
         return "stateless"
@@ -117,8 +119,8 @@ def find_command_input_output(command, options):
                                                                  options,
                                                                  config.annotations)
     if (command_io_from_annotation):
-        log("inputs-outputs found for:", command_string)
-        log("|--", command_io_from_annotation)
+        # log("inputs-outputs found for:", command_string)
+        # log("|--", command_io_from_annotation)
         return command_io_from_annotation
 
     return default_input_output(options)
@@ -145,8 +147,8 @@ def create_command_arguments_redirs(command, options, inputs, outputs):
                                                      outputs,
                                                      config.annotations)
     if (command_arguments_redirs):
-        log("arguments, redirs found for:", command_string)
-        log("|--", command_arguments_redirs)
+        # log("arguments, redirs found for:", command_string)
+        # log("|--", command_arguments_redirs)
         return command_arguments_redirs
 
     ## TODO: Implement that
@@ -187,3 +189,19 @@ def find_command_category(command, options):
 
     return('none')
 
+def find_command_properties(command, options):
+
+    command_string = format_arg_chars(command)
+    # log("Command to find properties:", command_string)
+
+    assert(isinstance(command_string, str))
+
+    ## Find the properties of the command in the annotation files (if it exists)
+    command_properties_from_annotation = get_command_properties_from_annotations(command_string,
+                                                                                 options,
+                                                                                 config.annotations)
+    if (command_properties_from_annotation):
+        log("properties:", command_properties_from_annotation, "found for:", command_string)
+        return command_properties_from_annotation
+
+    return []
