@@ -30,6 +30,7 @@ configurations=(
     "--r_split"
     "--dgsh_tee"
     "--r_split --dgsh_tee"
+    # "--speculation quick_abort"
 )
 
 ## Tests where the compiler will not always succeed (e.g. because they have mkfifo)
@@ -126,8 +127,10 @@ execute_tests() {
             echo "|-- Has input file: $stdin_redir"
         fi
 
-        echo "|-- Executing the script with bash..."
-        cat $stdin_redir | { time /bin/bash "$script_to_execute" > $seq_output ; } 2> "${seq_time}"
+        echo -n "|-- Executing the script with bash..."
+        { time /bin/bash "$script_to_execute" > $seq_output ; } \
+            < "$stdin_redir" 2> "${seq_time}"
+        echo "   exited with $?"
 
         for conf in "${configurations[@]}"; do
             for n_in in "${n_inputs[@]}"; do
