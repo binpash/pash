@@ -5,6 +5,16 @@
         {
             "predicate":
             {
+                "operator": "exists",
+                "operands": ["-c"]
+            },
+            "class": "pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        },
+        {
+            "predicate":
+            {
                 "operator": "len_args_eq",
                 "operands": [1]
             },

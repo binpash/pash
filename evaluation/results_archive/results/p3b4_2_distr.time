@@ -1,6 +1,0 @@
-
-gzip: stdin: decompression OK, trailing garbage ignored
-
-real	4m30.554s
-user	9m34.604s
-sys	3m23.044s

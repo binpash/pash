@@ -1,0 +1,20 @@
+find . -name "*.sh" | bash compress-compare.sh
+code-metrics.sh
+commit-stats.sh
+dir.sh
+dublicate-files.sh
+map-hierarchy
+cat /usr/share/dict/words | bash spell-highlight.sh
+bash NMRPipe.sh /pash/evaluation/benchmarks/dgsh/input/fid
+cat index.html | bash web-properties.sh
+echo input.txt | bash text-properties.sh  "idk what it does"
+bash static-functions.sh folder/  " need dataset with .o"
+
+# FAIL
+
+ft2d too many deps
+log-resolve fails
+web-log-report needs input ?
+web-log-stats needs input ?
+committer-plot deps
+
