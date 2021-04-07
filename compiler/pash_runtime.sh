@@ -220,6 +220,7 @@ if [ "$pash_speculation_flag" -eq 1 ]; then
     ## Count the execution time
     pash_exec_time_start=$(date +"%s%N")
     source "$RUNTIME_DIR/pash_runtime_quick_abort.sh"
+    pash_runtime_final_status=$?
 else
     pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
     pash_runtime_return_code=$?
