@@ -6,7 +6,7 @@ set -e
 N=8
 # Collation order for sorting
 export LC_ALL=C
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/dgsh/input/dblp.xml}
+IN=${MINI:-$PASH_TOP/evaluation/benchmarks/dgsh/input/mini.xml}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dgsh/input}
 cd ${OUT}
 

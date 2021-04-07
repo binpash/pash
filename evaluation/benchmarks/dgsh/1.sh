@@ -25,6 +25,10 @@
 #  limitations under the License.
 #
 
+IN=${MINI:-$PASH_TOP/evaluation/benchmarks/dgsh/input/mini.xml}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dgsh/input/}
+
+
 (
 
 	export SGDIR=/tmp/sg-$$.0
@@ -63,7 +67,7 @@
 	done
 
 	mkdir $SGDIR
-	cat <&3 3<&-  >$SGDIR/npi-0.0.0
+	cat ${IN}  >$SGDIR/npi-0.0.0
 ln $SGDIR/npi-0.0.0 $SGDIR/npi-0.1.0
 ln $SGDIR/npi-0.0.0 $SGDIR/npi-0.2.0
 ln $SGDIR/npi-0.0.0 $SGDIR/npi-0.3.0

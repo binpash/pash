@@ -25,6 +25,9 @@
 #  limitations under the License.
 #
 
+
+export IN=${MINI:-$PASH_TOP/evaluation/benchmarks/dgsh/input/mini.xml}
+
 export LC_ALL=C
 
 (
@@ -65,7 +68,7 @@ export LC_ALL=C
 	done
 
 	mkdir $SGDIR
-	cat <&3 3<&-  >$SGDIR/npi-0.1.0
+	cat ${IN}  >$SGDIR/npi-0.1.0
 ln $SGDIR/npi-0.1.0 $SGDIR/npi-0.2.0
  {  sort /usr/share/dict/words
 }</dev/null  >$SGDIR/npfo-dict.0

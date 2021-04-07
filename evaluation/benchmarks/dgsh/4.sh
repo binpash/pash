@@ -23,8 +23,10 @@
 #  limitations under the License.
 #
 
+export IN=${IN:-$PASH_TOP/evaluation/benchmarks/dgsh/input}
+
 # Create list of files
-find "$@" -type f |
+find ${IN} -type f |
 
 # Produce lines of the form
 # MD5(filename)= 811bfd4b5974f39e986ddc037e1899e7
