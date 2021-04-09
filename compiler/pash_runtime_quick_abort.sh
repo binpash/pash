@@ -130,11 +130,13 @@ if [ "$pash_execute_flag" -eq 1 ]; then
 
             ## TODO: We really need to kill the sequential (so that it stops writing to other outputs).
             ##       Actually we need to call it with reroute to dump its stdin to /dev/null and kill it.
-            # kill -n 9 "$pash_seq_pid" 2> /dev/null
-            # kill_status=$?
-            # wait "$pash_seq_pid" 2> /dev/null
-            # pash_runtime_final_status=$?
-            # pash_redir_output echo "$$: Still alive: $(still_alive)"
+            pash_redir_output echo "$$: (QAbort) Killing sequential pid: $pash_seq_pid..."
+            kill -n 9 "$pash_seq_pid" 2> /dev/null
+            kill_status=$?
+            wait "$pash_seq_pid" 2> /dev/null
+            seq_exit_status=$?
+            pash_redir_output echo "$$: (QAbort) Sequential pid: $pash_seq_pid was killed successfully returning status $seq_exit_status."
+            pash_redir_output echo "$$: (QAbort) Still alive: $(still_alive)"
 
             ## If kill failed it means it was already completed, 
             ## and therefore we do not need to run the parallel.
