@@ -63,17 +63,17 @@ pipeline_microbenchmarks=(
     fun-def              # Tests whether PaSh can handle a simple function definition
     tr-test              # Tests all possible behaviors of tr that exist in our evaluation
     grep-test            # Tests some interesting grep invocations
-    # # # micro_1000           # Not being run anymore, as it is very slow. Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
+    # # # # micro_1000           # Not being run anymore, as it is very slow. Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
 )
 
 
 
 execute_pash_and_check_diff() {
     if [ "$DEBUG" -eq 1 ]; then
-        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> >(tee "${pash_time}" >&2) &&
+        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
         diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
     else
-        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> "${pash_time}" &&
+        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
         diff -s "$seq_output" "$pash_output" | head >> "${pash_time}"
     fi
 }
@@ -137,6 +137,7 @@ execute_tests() {
                 echo "|-- Executing with pash --width ${n_in} ${conf}..."
                 export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_${conf}.time"
                 export pash_output="${intermediary_dir}/${microbenchmark}_${n_in}_pash_output"
+                echo '' > "${pash_time}"
 
                 cat $stdin_redir |
                     execute_pash_and_check_diff -d 1 $assert_correctness ${conf} --width "${n_in}" --output_time $script_to_execute
