@@ -210,6 +210,14 @@ if [ "$pash_execute_flag" -eq 1 ]; then
 
         wait "$final_cat_pid"
     fi
+
+    ## TODO: Not clear if this is needed
+    ## Kill every spawned process
+    still_alive_pids="$(still_alive)"
+    log "Killing all the still alive: $still_alive_pids"
+    kill -9 $still_alive_pids 2> /dev/null
+    wait $still_alive_pids 2> /dev/null
+    log "All the alive pids died: $still_alive_pids"
     
     ## Return the exit code
     (exit "$pash_runtime_final_status")
