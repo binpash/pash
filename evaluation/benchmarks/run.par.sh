@@ -164,6 +164,45 @@ max-temp_pash(){
   cd ..
 }
 
+analytics-mts_pash(){
+  times_file="par.res"
+  outputs_suffix="par.out"
+  outputs_dir="outputs"
+  pash_logs_dir="pash_logs"
+  width=16
+  if [ -e "analytics-mts/${times_file}" ]; then
+    echo "skipping analytics-mts/${times_file}"
+    return 0
+  fi
+
+  cd analytics-mts/
+
+  cd input/
+  ./setup.sh
+  cd ..
+
+  mkdir -p "$outputs_dir"
+  mkdir -p "$pash_logs_dir"
+
+  touch "$times_file"
+  echo executing MTS analytics with pash $(date) | tee -a "$times_file"
+  ## FIXME 5.sh is not working yet
+  for number in `seq 4`
+  do
+    script="${number}"
+    
+    printf -v pad %20s
+    padded_script="${script}.sh:${pad}"
+    padded_script=${padded_script:0:20}
+
+    outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+    pash_log="${pash_logs_dir}/${script}.pash.log"
+
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" --r_split --dgsh_tee -d 1 -w "${width}" --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
+  done
+  cd ..
+}
+
 poets_pash(){
   times_file="par.res"
   outputs_suffix="par.out"
