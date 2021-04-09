@@ -176,7 +176,8 @@ if [ "$pash_execute_flag" -eq 1 ]; then
 
             ## (1) Redirect the seq output to stdout
             cat "$pash_seq_eager2_output" &
-            log "STDOUT cat pid: $!"
+            seq_output_cat_pid=$!
+            log "STDOUT cat pid: $seq_output_cat_pid"
             log "Still alive: $(still_alive)"
 
             log "Waiting for sequential: $pash_seq_pid"
@@ -184,6 +185,13 @@ if [ "$pash_execute_flag" -eq 1 ]; then
             # wait -n "$pash_seq_pid"
             wait "$pash_seq_pid"
             pash_runtime_final_status=$?
+            log "DONE Sequential: $pash_seq_pid exited with status: $pash_runtime_final_status"
+
+            ## TODO: It is not clear if we also need to wait for the output cat to end.
+            log "Waiting for sequential output cat: $seq_output_cat_pid"
+            wait "$seq_output_cat_pid"
+            log "DONE Waiting for sequential output cat: $seq_output_cat_pid"
+
         fi
     else
         pash_runtime_final_status=$completed_pid_status
