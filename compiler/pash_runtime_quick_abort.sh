@@ -27,11 +27,30 @@ function list_include_item {
   return $result
 }
 
+## This spawns a buffer command to buffer inputs and outputs
+## For now it is a plain eager, but could be dgsh-tee or something else too.
+##
+## It writes the pid to stdout
+spawn_eager()
+{
+    local name=$1
+    local input=$2
+    local output=$3
+    local eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    # "$RUNTIME_DIR/../runtime/eager" "$input" "$output" "$eager_file" </dev/null 1>/dev/null 2>/dev/null &
+    "$RUNTIME_DIR/../runtime/dgsh_tee.sh" "$input" "$output" -I -f </dev/null 1>/dev/null 2>/dev/null &
+    local eager_pid=$!
+    log "Spawned $name eager: $eager_pid with:"
+    log "  -- IN: $input"
+    log "  -- OUT: $output"
+    log "  -- INTERM: $eager_file"
+    echo "$eager_pid"
+}
 
 ## Solution Schematic:
 ##
-##  (A)      (B)      (C)       (D)                (E)
-## stdin --- tee --- eager --- reroute seq.sh --- eager --- OUT_SEQ
+##  (A)      (B)      (C)       (D)        (E)
+## stdin --- tee --- eager --- seq.sh --- eager --- OUT_SEQ
 ##            \      (F)
 ##             \--- eager --- PAR_IN
 ##
@@ -63,6 +82,15 @@ function list_include_item {
 
 ## TODO: Maybe the reroute needs to be put around (C) and not (D)
 
+## FIXME There is an issue now, that if the command doesn't actually need stdin, the parallel pipeline
+##       gets stuck until the stdin gets closed (even though that wouldn't be the case normally).
+## TODO: Is there a way to detect that the sequential script closes its stdin and doesn't need it?
+##       If so, based on that we could make that decision too.     
+
+## FIXME It seems that the 2nd unix script does not terminate even if the parallel does, and it
+##       still waits for the sequential to finish (or at least it gets stuck somewhere)
+## TODO: Is there a way to consistently kill anything that is spawned from the current shell?
+
 if [ "$pash_execute_flag" -eq 1 ]; then
     # set -x
     ## (A) Redirect stdin to `tee`
@@ -70,6 +98,8 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     mkfifo "$pash_tee_stdin"
     ## The redirections below are necessary to ensure that the background `cat` reads from stdin.
     { cat > "$pash_tee_stdin" <&3 3<&- & } 3<&0
+    pash_input_cat_pid=$!
+    log "Spawned input cat with pid: $pash_input_cat_pid"
 
     ## (B) A `tee` that duplicates input to both the sequential and parallel
     pash_tee_stdout1="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
@@ -80,13 +110,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     ## (C) The sequential input eager
     pash_seq_eager_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     mkfifo "$pash_seq_eager_output"
-    pash_seq_eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    "$RUNTIME_DIR/../runtime/eager" "$pash_tee_stdout1" "$pash_seq_eager_output" "$pash_seq_eager_file" &
-    seq_input_eager_pid=$!
-    log "Spawned sequential input eager: $seq_input_eager_pid with:"
-    log "  -- IN: $pash_tee_stdout1"
-    log "  -- OUT: $pash_seq_eager_output"
-    log "  -- INTERM: $pash_seq_eager_file"
+    seq_input_eager_pid=$(spawn_eager "sequential input" "$pash_tee_stdout1" "$pash_seq_eager_output")
 
     ## (D) Sequential command
     pash_seq_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
@@ -103,19 +127,12 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     ## (E) The sequential output eager
     pash_seq_eager2_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     mkfifo "$pash_seq_eager2_output"
-    pash_seq_eager2_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    "$RUNTIME_DIR/../runtime/eager" "$pash_seq_output" "$pash_seq_eager2_output" "$pash_seq_eager2_file" &
+    seq_output_eager_pid=$(spawn_eager "sequential output" "$pash_seq_output" "$pash_seq_eager2_output")
 
     ## (F) Second eager
     pash_par_eager_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     mkfifo "$pash_par_eager_output"
-    pash_par_eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    "$RUNTIME_DIR/../runtime/eager" "$pash_tee_stdout2" "$pash_par_eager_output" "$pash_par_eager_file" &
-    par_eager_pid=$!
-    log "Spawned parallel eager: $par_eager_pid with:"
-    log "  -- IN: $pash_tee_stdout2"
-    log "  -- OUT: $pash_par_eager_output"
-    log "  -- INTERM: $pash_par_eager_file"
+    par_eager_pid=$(spawn_eager "parallel input" "$pash_tee_stdout2" "$pash_par_eager_output")
 
     ## Run the compiler
     pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
@@ -143,6 +160,12 @@ if [ "$pash_execute_flag" -eq 1 ]; then
         ## TODO: Enable that
         if [ "$pash_runtime_return_code" -eq 0 ]; then
 
+            ## TODO: Is this necessary
+            ## Redirect the sequential output to /dev/null
+            cat "$pash_seq_eager2_output" > /dev/null &
+            seq_cat_pid=$!
+            log "seq to /dev/null cat pid: $seq_cat_pid"
+
             ## TODO: We really need to kill the sequential (so that it stops writing to other outputs).
             ##       Actually we need to call it with reroute to dump its stdin to /dev/null and kill it.
             log "Killing sequential pid: $pash_seq_pid..."
@@ -163,13 +186,28 @@ if [ "$pash_execute_flag" -eq 1 ]; then
                 log "  -- Output set: ${pash_output_set_file}"
                 log "  -- Compiled script: ${pash_compiled_script_file}"
                 log "  -- Input: $pash_par_eager_output"
+
+#                cat "$pash_par_eager_output" |
                 "$RUNTIME_DIR/pash_wrap_vars.sh" \
                     $pash_runtime_shell_variables_file \
                     $pash_output_variables_file \
                     ${pash_output_set_file} \
                     ${pash_compiled_script_file} \
-                    < "$pash_par_eager_output"
+                    < "$pash_par_eager_output" &
+                # TODO: For some reason the above redirection does not work for some tests.
+
+
+                ## TODO: Should we spawn on background and wait on it like that?
+                pash_par_pid=$!
+                log "Parallel is running with pid: $pash_par_pid..."
+                # strace -p $pash_par_pid 2>> $PASH_REDIR
+                wait "$pash_par_pid"
                 pash_runtime_final_status=$?
+                log "Parallel is done with status: $pash_runtime_final_status"
+            else
+                ## TODO: Handle that case properly!
+                log "ERROR: Shouldn't have reached that"
+                exit 1
             fi
         else
             ## If the compiler failed we just wait until the sequential is done.
@@ -211,7 +249,14 @@ if [ "$pash_execute_flag" -eq 1 ]; then
         wait "$final_cat_pid"
     fi
 
-    ## TODO: Not clear if this is needed
+    ## TODO: Not clear if this is needed or if it doesn indeed kill all the
+    ##       processes and cleans up everything properly
+    ## Kill the input process
+    log "Killing the input cat process: $pash_input_cat_pid"
+    kill -9 $pash_input_cat_pid 2> /dev/null
+    wait $pash_input_cat_pid 2> /dev/null
+    log "The input cat: $pash_input_cat_pid died!"
+    
     ## Kill every spawned process
     still_alive_pids="$(still_alive)"
     log "Killing all the still alive: $still_alive_pids"
