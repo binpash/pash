@@ -82,6 +82,11 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     mkfifo "$pash_seq_eager_output"
     pash_seq_eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     "$RUNTIME_DIR/../runtime/eager" "$pash_tee_stdout1" "$pash_seq_eager_output" "$pash_seq_eager_file" &
+    seq_input_eager_pid=$!
+    log "Spawned sequential input eager: $seq_input_eager_pid with:"
+    log "  -- IN: $pash_tee_stdout1"
+    log "  -- OUT: $pash_seq_eager_output"
+    log "  -- INTERM: $pash_seq_eager_file"
 
     ## (D) Sequential command
     pash_seq_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
