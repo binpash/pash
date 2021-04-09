@@ -156,10 +156,14 @@ if [ "$pash_execute_flag" -eq 1 ]; then
             ## If kill failed it means it was already completed, 
             ## and therefore we do not need to run the parallel.
             if true || [ "$kill_status" -eq 0 ]; then
-                log "Run parallel"
-
                 ## (2) Run the parallel
-                source "$RUNTIME_DIR/pash_wrap_vars.sh" \
+                log "Run parallel:"
+                log "  -- Runtime vars: $pash_runtime_shell_variables_file"
+                log "  -- Output vars: $pash_output_variables_file"
+                log "  -- Output set: ${pash_output_set_file}"
+                log "  -- Compiled script: ${pash_compiled_script_file}"
+                log "  -- Input: $pash_par_eager_output"
+                "$RUNTIME_DIR/pash_wrap_vars.sh" \
                     $pash_runtime_shell_variables_file \
                     $pash_output_variables_file \
                     ${pash_output_set_file} \
