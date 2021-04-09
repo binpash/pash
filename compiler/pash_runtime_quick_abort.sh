@@ -103,7 +103,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     "$RUNTIME_DIR/../runtime/eager" "$pash_tee_stdout2" "$pash_par_eager_output" "$pash_par_eager_file" &
 
     ## Run the compiler
-    pash_redir_all_output python3 pash_runtime.py ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
+    pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
     pash_compiler_pid=$!
     pash_redir_output echo "(QAbort) Compiler pid: $pash_compiler_pid"
 
