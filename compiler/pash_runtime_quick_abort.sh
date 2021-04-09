@@ -174,15 +174,16 @@ if [ "$pash_execute_flag" -eq 1 ]; then
         else
             ## If the compiler failed we just wait until the sequential is done.
 
+            ## (1) Redirect the seq output to stdout
+            cat "$pash_seq_eager2_output" &
+            log "STDOUT cat pid: $!"
+            log "Still alive: $(still_alive)"
+
+            log "Waiting for sequential: $pash_seq_pid"
             ## TODO: Do we need -n?
             # wait -n "$pash_seq_pid"
             wait "$pash_seq_pid"
             pash_runtime_final_status=$?
-
-            ## (1) Redirect the seq output to stdout
-            cat "$pash_seq_eager2_output"
-            pash_redir_output echo "$$: STDOUT cat pid: $!"
-            pash_redir_output echo "$$: Still alive: $(still_alive)"
         fi
     else
         pash_runtime_final_status=$completed_pid_status
