@@ -129,7 +129,7 @@ do
             ## TODO: Fix how speculation interacts with dry_run, assert_compiler_success
             pash_speculation_flag=1
         else
-            echo "Unknown value for option --speculation"
+            pash_redir_output echo "$$: Unknown value for option --speculation"
             exit 1
         fi
     fi
@@ -141,7 +141,7 @@ do
 
     if [ "$pash_checking_debug_level" -eq 1 ]; then
         pash_checking_debug_level=0
-        pash_redir_output echo "$item"
+        pash_redir_output echo "$$: $item"
         export PASH_DEBUG_LEVEL=$item
     fi
 
@@ -168,7 +168,7 @@ do
 
     if [ "-d" == "$item" ] || [ "--debug" == "$item" ]; then
         pash_checking_debug_level=1
-        pash_redir_output echo "$item"
+        pash_redir_output echo "$$: $item"
     fi
 done
 
@@ -176,21 +176,21 @@ done
 ## temporary (2) -> (1)
 ##
 
-pash_redir_output echo "(1) Previous exit status: $pash_previous_exit_status"
-pash_redir_output echo "(1) Previous set state: $pash_previous_set_status"
+pash_redir_output echo "$$: (1) Previous exit status: $pash_previous_exit_status"
+pash_redir_output echo "$$: (1) Previous set state: $pash_previous_set_status"
 
 ## Prepare a file with all shell variables
 pash_runtime_shell_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
 source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
-pash_redir_output echo "(1) Bash variables saved in: $pash_runtime_shell_variables_file"
+pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_variables_file"
 
 ## Abort script if variable is unset
 pash_default_set_state="huB"
 
 ## Revert the `set` state to not have spurious failures 
-pash_redir_output echo "(1) Bash set state at start of execution: $-"
+pash_redir_output echo "$$: (1) Bash set state at start of execution: $-"
 source "$RUNTIME_DIR/pash_set_from_to.sh" "$-" "$pash_default_set_state"
-pash_redir_output echo "(1) Set state reverted to PaSh-internal set state: $-"
+pash_redir_output echo "$$: (1) Set state reverted to PaSh-internal set state: $-"
 
 
 ##
@@ -199,7 +199,7 @@ pash_redir_output echo "(1) Set state reverted to PaSh-internal set state: $-"
 
 ## Prepare a file for the output shell variables to be saved in
 pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-# pash_redir_output echo "Input vars: $pash_runtime_shell_variables_file --- Output vars: $pash_output_variables_file"
+# pash_redir_output echo "$$: Input vars: $pash_runtime_shell_variables_file --- Output vars: $pash_output_variables_file"
 
 ## Prepare a file for the `set` state of the inner shell to be output
 pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
@@ -211,7 +211,7 @@ pash_sequential_script_file=$1
 pash_compiled_script_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
 
 ## Just execute the original script
-# pash_redir_output echo "Sequential file in: $1 contains"
+# pash_redir_output echo "$$: Sequential file in: $1 contains"
 # pash_redir_output cat $1
 # ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file $1
 
@@ -224,9 +224,9 @@ if [ "$pash_speculation_flag" -eq 1 ]; then
 else
     pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
     pash_runtime_return_code=$?
-    pash_redir_output echo "Compiler exited with code: $pash_runtime_return_code"
+    pash_redir_output echo "$$: Compiler exited with code: $pash_runtime_return_code"
     if [ "$pash_runtime_return_code" -ne 0 ] && [ "$pash_assert_compiler_success_flag" -eq 1 ]; then
-        pash_redir_output echo "ERROR: Compiler failed with error code: $pash_runtime_return_code"
+        pash_redir_output echo "$$: ERROR: Compiler failed with error code: $pash_runtime_return_code"
         exit 1
     fi
 
@@ -263,21 +263,21 @@ fi
 
 ## Source back the output variables of the compiled script. 
 ## In all cases we should have executed a script
-pash_redir_output echo "(7) Recovering BaSh variables from: $pash_output_variables_file"
+pash_redir_output echo "$$: (7) Recovering BaSh variables from: $pash_output_variables_file"
 source "$RUNTIME_DIR/pash_source_declare_vars.sh" $pash_output_variables_file
 
 ## Save the previous `set` state to a variable
-pash_redir_output echo "(7) Reading current BaSh set state from: ${pash_output_set_file}"
+pash_redir_output echo "$$: (7) Reading current BaSh set state from: ${pash_output_set_file}"
 
-pash_redir_output echo "(7) Current BaSh set state: $(cat $pash_output_set_file)"
+pash_redir_output echo "$$: (7) Current BaSh set state: $(cat $pash_output_set_file)"
 ## WARNING: This has to happen after sourcing the variables so that it overwrites it
 pash_previous_set_status="$(cat $pash_output_set_file)"
 
 ## Propagate the `set` state after running the script to the outer script
 ## TODO: Maybe move this to the end to avoid spurious failures
-pash_redir_output echo "(7) Current PaSh set state: $-"
+pash_redir_output echo "$$: (7) Current PaSh set state: $-"
 source "$RUNTIME_DIR/pash_set_from_to.sh" "$-" "$(cat $pash_output_set_file)"
-pash_redir_output echo "(7) Reverted to BaSh set state before exiting: $-"
+pash_redir_output echo "$$: (7) Reverted to BaSh set state before exiting: $-"
 
-pash_redir_output echo "(7) Reverting last BaSh exit code: $pash_runtime_final_status"
+pash_redir_output echo "$$: (7) Reverting last BaSh exit code: $pash_runtime_final_status"
 (exit "$pash_runtime_final_status")

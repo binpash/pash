@@ -8,6 +8,11 @@ still_alive()
     jobs -p | tr '\n' ' '
 }
 
+log()
+{
+    pash_redir_output echo "$$: (QAbort) " "$@"
+}
+
 # Taken from: https://stackoverflow.com/a/20473191
 # list_include_item "10 11 12" "2"
 function list_include_item {
@@ -77,6 +82,11 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     mkfifo "$pash_seq_eager_output"
     pash_seq_eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     "$RUNTIME_DIR/../runtime/eager" "$pash_tee_stdout1" "$pash_seq_eager_output" "$pash_seq_eager_file" &
+    seq_input_eager_pid=$!
+    log "Spawned sequential input eager: $seq_input_eager_pid with:"
+    log "  -- IN: $pash_tee_stdout1"
+    log "  -- OUT: $pash_seq_eager_output"
+    log "  -- INTERM: $pash_seq_eager_file"
 
     ## (D) Sequential command
     pash_seq_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
@@ -88,7 +98,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
         ${pash_sequential_script_file} \
         > "$pash_seq_output" < "$pash_seq_eager_output" &
     pash_seq_pid=$!
-    pash_redir_output echo "(QAbort) Sequential pid: $pash_seq_pid"
+    log "Sequential pid: $pash_seq_pid"
 
     ## (E) The sequential output eager
     pash_seq_eager2_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
@@ -101,28 +111,33 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     mkfifo "$pash_par_eager_output"
     pash_par_eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     "$RUNTIME_DIR/../runtime/eager" "$pash_tee_stdout2" "$pash_par_eager_output" "$pash_par_eager_file" &
+    par_eager_pid=$!
+    log "Spawned parallel eager: $par_eager_pid with:"
+    log "  -- IN: $pash_tee_stdout2"
+    log "  -- OUT: $pash_par_eager_output"
+    log "  -- INTERM: $pash_par_eager_file"
 
     ## Run the compiler
-    pash_redir_all_output python3 pash_runtime.py ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
+    pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
     pash_compiler_pid=$!
-    pash_redir_output echo "(QAbort) Compiler pid: $pash_compiler_pid"
+    log "Compiler pid: $pash_compiler_pid"
 
     ## Wait until one of the two (original script, or compiler) die
     alive_pids=$(still_alive)
-    pash_redir_output echo "(QAbort) Still alive: $alive_pids"
+    log "Still alive: $alive_pids"
     while `list_include_item "$alive_pids" "$pash_seq_pid"` && `list_include_item "$alive_pids" "$pash_compiler_pid"` ; do
         ## Wait for either of the two to complete
         wait -n "$pash_seq_pid" "$pash_compiler_pid"
         completed_pid_status=$?
-        pash_redir_output echo "(QAbort) Process exited with return code: $completed_pid_status"
+        log "Process exited with return code: $completed_pid_status"
         alive_pids=$(still_alive)
-        pash_redir_output echo "(QAbort) Still alive: $alive_pids"
+        log "Still alive: $alive_pids"
     done
 
     ## If the sequential is still alive we want to see if the compiler succeeded
     if `list_include_item "$alive_pids" "$pash_seq_pid"` ; then
         pash_runtime_return_code=$completed_pid_status
-        pash_redir_output echo "(QAbort) Compilation was done first with return code: $pash_runtime_return_code"
+        log "Compilation was done first with return code: $pash_runtime_return_code"
 
         ## We only want to run the parallel if the compiler succeeded.
         ## TODO: Enable that
@@ -130,19 +145,25 @@ if [ "$pash_execute_flag" -eq 1 ]; then
 
             ## TODO: We really need to kill the sequential (so that it stops writing to other outputs).
             ##       Actually we need to call it with reroute to dump its stdin to /dev/null and kill it.
-            # kill -n 9 "$pash_seq_pid" 2> /dev/null
-            # kill_status=$?
-            # wait "$pash_seq_pid" 2> /dev/null
-            # pash_runtime_final_status=$?
-            # pash_redir_output echo "Still alive: $(still_alive)"
+            log "Killing sequential pid: $pash_seq_pid..."
+            kill -n 9 "$pash_seq_pid" 2> /dev/null
+            kill_status=$?
+            wait "$pash_seq_pid" 2> /dev/null
+            seq_exit_status=$?
+            log "Sequential pid: $pash_seq_pid was killed successfully returning status $seq_exit_status."
+            log "Still alive: $(still_alive)"
 
             ## If kill failed it means it was already completed, 
             ## and therefore we do not need to run the parallel.
             if true || [ "$kill_status" -eq 0 ]; then
-                pash_redir_output echo "(QAbort) Run parallel"
-
                 ## (2) Run the parallel
-                source "$RUNTIME_DIR/pash_wrap_vars.sh" \
+                log "Run parallel:"
+                log "  -- Runtime vars: $pash_runtime_shell_variables_file"
+                log "  -- Output vars: $pash_output_variables_file"
+                log "  -- Output set: ${pash_output_set_file}"
+                log "  -- Compiled script: ${pash_compiled_script_file}"
+                log "  -- Input: $pash_par_eager_output"
+                "$RUNTIME_DIR/pash_wrap_vars.sh" \
                     $pash_runtime_shell_variables_file \
                     $pash_output_variables_file \
                     ${pash_output_set_file} \
@@ -153,33 +174,50 @@ if [ "$pash_execute_flag" -eq 1 ]; then
         else
             ## If the compiler failed we just wait until the sequential is done.
 
+            ## (1) Redirect the seq output to stdout
+            cat "$pash_seq_eager2_output" &
+            seq_output_cat_pid=$!
+            log "STDOUT cat pid: $seq_output_cat_pid"
+            log "Still alive: $(still_alive)"
+
+            log "Waiting for sequential: $pash_seq_pid"
             ## TODO: Do we need -n?
             # wait -n "$pash_seq_pid"
             wait "$pash_seq_pid"
             pash_runtime_final_status=$?
+            log "DONE Sequential: $pash_seq_pid exited with status: $pash_runtime_final_status"
 
-            ## (1) Redirect the seq output to stdout
-            cat "$pash_seq_eager2_output"
-            pash_redir_output echo "STDOUT cat pid: $!"
-            pash_redir_output echo "Still alive: $(still_alive)"
+            ## TODO: It is not clear if we also need to wait for the output cat to end.
+            log "Waiting for sequential output cat: $seq_output_cat_pid"
+            wait "$seq_output_cat_pid"
+            log "DONE Waiting for sequential output cat: $seq_output_cat_pid"
+
         fi
     else
         pash_runtime_final_status=$completed_pid_status
-        pash_redir_output echo "(QAbort) Sequential was done first with return code: $pash_runtime_final_status"
+        log "Sequential was done first with return code: $pash_runtime_final_status"
 
         ## (1) Redirect the seq output to stdout
         cat "$pash_seq_eager2_output" &
         final_cat_pid=$!
-        pash_redir_output echo "(QAbort) STDOUT cat pid: $final_cat_pid"
+        log "STDOUT cat pid: $final_cat_pid"
 
         ## If this fails (meaning that compilation is done) we do not care
         ## TODO: Do we actually need to kill compiler
         kill -9 "$pash_compiler_pid" 2> /dev/null
         wait "$pash_compiler_pid"  2> /dev/null
-        pash_redir_output echo "(QAbort) Still alive: $(still_alive)"
+        log "Still alive: $(still_alive)"
 
         wait "$final_cat_pid"
     fi
+
+    ## TODO: Not clear if this is needed
+    ## Kill every spawned process
+    still_alive_pids="$(still_alive)"
+    log "Killing all the still alive: $still_alive_pids"
+    kill -9 $still_alive_pids 2> /dev/null
+    wait $still_alive_pids 2> /dev/null
+    log "All the alive pids died: $still_alive_pids"
     
     ## Return the exit code
     (exit "$pash_runtime_final_status")
