@@ -28,7 +28,6 @@ function list_include_item {
 }
 
 ## This spawns a buffer command to buffer inputs and outputs
-## For now it is a plain eager, but could be dgsh-tee or something else too.
 ##
 ## It writes the pid to stdout
 spawn_eager()
@@ -37,6 +36,8 @@ spawn_eager()
     local input=$2
     local output=$3
     local eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    ## Note: Using eager actually leads to some deadlock issues. It must have to do with eagers behavior when
+    ##       its input or output closes.
     # "$RUNTIME_DIR/../runtime/eager" "$input" "$output" "$eager_file" </dev/null 1>/dev/null 2>/dev/null &
     "$RUNTIME_DIR/../runtime/dgsh_tee.sh" "$input" "$output" -I -f </dev/null 1>/dev/null 2>/dev/null &
     local eager_pid=$!
@@ -45,6 +46,26 @@ spawn_eager()
     log "  -- OUT: $output"
     log "  -- INTERM: $eager_file"
     echo "$eager_pid"
+}
+
+## Kills the process group that belongs to the given pgid
+kill_pg()
+{
+    local pg_lead_pid=$1
+    /bin/kill -15 "-${pg_lead_pid}" 2> /dev/null
+}
+
+## TODO: Make sure that this waits for all processes in the process group to finish executing.
+wait_pg()
+{
+    local pg_lead_pid=$1
+    wait "$pg_lead_pid" 2> /dev/null    
+}
+
+kill_wait_pg()
+{
+    kill_pg "$1"
+    wait_pg "$1"
 }
 
 ## Solution Schematic:
@@ -82,14 +103,10 @@ spawn_eager()
 
 ## TODO: Maybe the reroute needs to be put around (C) and not (D)
 
-## FIXME There is an issue now, that if the command doesn't actually need stdin, the parallel pipeline
-##       gets stuck until the stdin gets closed (even though that wouldn't be the case normally).
-## TODO: Is there a way to detect that the sequential script closes its stdin and doesn't need it?
-##       If so, based on that we could make that decision too.     
+## TODO: Improve the happy path (very fast sequential) execution time 
 
-## FIXME It seems that the 2nd unix script does not terminate even if the parallel does, and it
-##       still waits for the sequential to finish (or at least it gets stuck somewhere)
-## TODO: Is there a way to consistently kill anything that is spawned from the current shell?
+## TODO: Use reroute around dgsh_tees to make sure that they do not use storage unnecessarily 
+##       (if their later command is done).
 
 if [ "$pash_execute_flag" -eq 1 ]; then
     # set -x
@@ -97,7 +114,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     pash_tee_stdin="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     mkfifo "$pash_tee_stdin"
     ## The redirections below are necessary to ensure that the background `cat` reads from stdin.
-    { cat > "$pash_tee_stdin" <&3 3<&- & } 3<&0
+    { setsid cat > "$pash_tee_stdin" <&3 3<&- & } 3<&0
     pash_input_cat_pid=$!
     log "Spawned input cat with pid: $pash_input_cat_pid"
 
@@ -115,7 +132,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     ## (D) Sequential command
     pash_seq_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     mkfifo "$pash_seq_output"
-    "$RUNTIME_DIR/pash_wrap_vars.sh" \
+    setsid "$RUNTIME_DIR/pash_wrap_vars.sh" \
         $pash_runtime_shell_variables_file \
         $pash_output_variables_file \
         ${pash_output_set_file} \
@@ -135,7 +152,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     par_eager_pid=$(spawn_eager "parallel input" "$pash_tee_stdout2" "$pash_par_eager_output")
 
     ## Run the compiler
-    pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
+    setsid python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
     pash_compiler_pid=$!
     log "Compiler pid: $pash_compiler_pid"
 
@@ -157,7 +174,6 @@ if [ "$pash_execute_flag" -eq 1 ]; then
         log "Compilation was done first with return code: $pash_runtime_return_code"
 
         ## We only want to run the parallel if the compiler succeeded.
-        ## TODO: Enable that
         if [ "$pash_runtime_return_code" -eq 0 ]; then
 
             ## TODO: Is this necessary
@@ -166,18 +182,19 @@ if [ "$pash_execute_flag" -eq 1 ]; then
             seq_cat_pid=$!
             log "seq to /dev/null cat pid: $seq_cat_pid"
 
-            ## TODO: We really need to kill the sequential (so that it stops writing to other outputs).
-            ##       Actually we need to call it with reroute to dump its stdin to /dev/null and kill it.
+            ## Kill the sequential process tree
             log "Killing sequential pid: $pash_seq_pid..."
-            kill -n 9 "$pash_seq_pid" 2> /dev/null
+            kill_pg "$pash_seq_pid"
             kill_status=$?
-            wait "$pash_seq_pid" 2> /dev/null
+            wait_pg "$pash_seq_pid"
             seq_exit_status=$?
             log "Sequential pid: $pash_seq_pid was killed successfully returning status $seq_exit_status."
             log "Still alive: $(still_alive)"
 
             ## If kill failed it means it was already completed, 
             ## and therefore we do not need to run the parallel.
+            ##
+            ## TOOD: Enable this optimization
             if true || [ "$kill_status" -eq 0 ]; then
                 ## (2) Run the parallel
                 log "Run parallel:"
@@ -187,17 +204,15 @@ if [ "$pash_execute_flag" -eq 1 ]; then
                 log "  -- Compiled script: ${pash_compiled_script_file}"
                 log "  -- Input: $pash_par_eager_output"
 
-#                cat "$pash_par_eager_output" |
                 "$RUNTIME_DIR/pash_wrap_vars.sh" \
                     $pash_runtime_shell_variables_file \
                     $pash_output_variables_file \
                     ${pash_output_set_file} \
                     ${pash_compiled_script_file} \
                     < "$pash_par_eager_output" &
-                # TODO: For some reason the above redirection does not work for some tests.
+                ## Note: For some reason the above redirection used to create some issues,
+                ##       but no more after we started using dgsh-tee
 
-
-                ## TODO: Should we spawn on background and wait on it like that?
                 pash_par_pid=$!
                 log "Parallel is running with pid: $pash_par_pid..."
                 # strace -p $pash_par_pid 2>> $PASH_REDIR
@@ -205,7 +220,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
                 pash_runtime_final_status=$?
                 log "Parallel is done with status: $pash_runtime_final_status"
             else
-                ## TODO: Handle that case properly!
+                ## TODO: Handle that case properly by enabling the optimization above.
                 log "ERROR: Shouldn't have reached that"
                 exit 1
             fi
@@ -216,11 +231,8 @@ if [ "$pash_execute_flag" -eq 1 ]; then
             cat "$pash_seq_eager2_output" &
             seq_output_cat_pid=$!
             log "STDOUT cat pid: $seq_output_cat_pid"
-            log "Still alive: $(still_alive)"
 
             log "Waiting for sequential: $pash_seq_pid"
-            ## TODO: Do we need -n?
-            # wait -n "$pash_seq_pid"
             wait "$pash_seq_pid"
             pash_runtime_final_status=$?
             log "DONE Sequential: $pash_seq_pid exited with status: $pash_runtime_final_status"
@@ -240,11 +252,9 @@ if [ "$pash_execute_flag" -eq 1 ]; then
         final_cat_pid=$!
         log "STDOUT cat pid: $final_cat_pid"
 
+        ## We need to kill the compiler to not get delayed log output
         ## If this fails (meaning that compilation is done) we do not care
-        ## TODO: Do we actually need to kill compiler
-        kill -9 "$pash_compiler_pid" 2> /dev/null
-        wait "$pash_compiler_pid"  2> /dev/null
-        log "Still alive: $(still_alive)"
+        kill_wait_pg "$pash_compiler_pid"
 
         wait "$final_cat_pid"
     fi
@@ -253,14 +263,18 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     ##       processes and cleans up everything properly
     ## Kill the input process
     log "Killing the input cat process: $pash_input_cat_pid"
-    kill -9 $pash_input_cat_pid 2> /dev/null
-    wait $pash_input_cat_pid 2> /dev/null
+    kill_wait_pg "$pash_input_cat_pid"
+    # kill -9 $pash_input_cat_pid 2> /dev/null
+    # wait $pash_input_cat_pid 2> /dev/null
     log "The input cat: $pash_input_cat_pid died!"
     
+
+    ## TODO: This (and the above) should not be needed actually, everything should be already done due to
+    ##       sequential and parallel both having exited.
     ## Kill every spawned process
     still_alive_pids="$(still_alive)"
     log "Killing all the still alive: $still_alive_pids"
-    kill -9 $still_alive_pids 2> /dev/null
+    kill -15 "$still_alive_pids" 2> /dev/null
     wait $still_alive_pids 2> /dev/null
     log "All the alive pids died: $still_alive_pids"
     
