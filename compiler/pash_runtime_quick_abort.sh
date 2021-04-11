@@ -13,6 +13,15 @@ log()
     pash_redir_output echo "$$: (QAbort) " "$@"
 }
 
+log_time_from()
+{
+    local start_time="$1"
+    local prefix="$2"
+    local end_time=$(date +"%s%N")
+    local time_ms=$(echo "scale = 3; ($end_time-$start_time)/1000000" | bc)
+    log "$prefix Execution time: $time_ms ms"
+}
+
 # Taken from: https://stackoverflow.com/a/20473191
 # list_include_item "10 11 12" "2"
 function list_include_item {
@@ -111,6 +120,7 @@ kill_wait_pg()
 if [ "$pash_execute_flag" -eq 1 ]; then
     # set -x
     ## (A) Redirect stdin to `tee`
+    pash_quick_abort_time_start=$(date +"%s%N")
     pash_tee_stdin="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     mkfifo "$pash_tee_stdin"
     ## The redirections below are necessary to ensure that the background `cat` reads from stdin.
@@ -155,8 +165,11 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     setsid python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
     pash_compiler_pid=$!
     log "Compiler pid: $pash_compiler_pid"
+    log_time_from "$pash_quick_abort_time_start" "Phases (A-F)"
+
 
     ## Wait until one of the two (original script, or compiler) die
+    pash_quick_abort_time_before_wait=$(date +"%s%N")
     alive_pids=$(still_alive)
     log "Still alive: $alive_pids"
     while `list_include_item "$alive_pids" "$pash_seq_pid"` && `list_include_item "$alive_pids" "$pash_compiler_pid"` ; do
@@ -167,6 +180,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
         alive_pids=$(still_alive)
         log "Still alive: $alive_pids"
     done
+    log_time_from "$pash_quick_abort_time_before_wait" "Waiting"
 
     ## If the sequential is still alive we want to see if the compiler succeeded
     if `list_include_item "$alive_pids" "$pash_seq_pid"` ; then
@@ -259,6 +273,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
         wait "$final_cat_pid"
     fi
 
+    pash_quick_abort_time_before_cleanup=$(date +"%s%N")
     ## TODO: Not clear if this is needed or if it doesn indeed kill all the
     ##       processes and cleans up everything properly
     ## Kill the input process
@@ -277,7 +292,8 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     kill -15 "$still_alive_pids" 2> /dev/null
     wait $still_alive_pids 2> /dev/null
     log "All the alive pids died: $still_alive_pids"
-    
+    log_time_from "$pash_quick_abort_time_before_cleanup" "Cleanup"
+
     ## Return the exit code
     (exit "$pash_runtime_final_status")
 fi
