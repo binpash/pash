@@ -3,7 +3,7 @@
 # tag: zannotate scan data
 set -e
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/posh/input}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/posh/output}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/posh/input/output}
 
 export zannotate=/home/deeptir/go/bin/zannotate
 #export filename=$IN/2019091303_port_80.json
