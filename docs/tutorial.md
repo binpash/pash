@@ -1,6 +1,6 @@
 # A Short PaSh Tutorial
 
-This tutorial covers the `pash`'s main functionality and key contributions as presented in the EuroSys paper.
+This tutorial covers the `pash`'s main functionality.
 Here is the table of contents:
 
 0. [Introduction](#introduction)
@@ -18,14 +18,15 @@ Here is the table of contents:
 ## Introduction
 
 PaSh is a system for parallelizing POSIX shell scripts.
-It has been shown to achieve order-of-magnitude performance improvements, while maintaining the correctness of the sequential scripts with respect to their sequential output.
+It has been shown to achieve order-of-magnitude performance improvements.
 
-> N.b.: PaSh is still under heavy development.
+> _N.b.: PaSh is still under heavy development._
 
-Consider the following log-analysis script, applied to many logs 
+#### Example Script
+Consider the following spell-checking script, applied to two large markdown files `f1.md` and `f2.md` (line 1):
 
 ```sh
-# log-analysis.sh
+# spell-checking.sh
 cat f1.md f2.md | 
   tr A-Z a-z |
   tr -cs A-Za-z '\n' |
@@ -34,18 +35,20 @@ cat f1.md f2.md |
   comm -13 dict.txt - > out
 cat out | wc -l | sed 's/$/ mispelled words!/'
 ```
-The first `cat` streams two markdown files into a pipeline that converts characters in the stream into lower case, removes punctuation, sorts the stream in alphabetical order, removes duplicate words, and filters out words from a dictionary file (line 1--7).
+The first `cat` streams two markdown files into a pipeline that converts characters in the stream into lower case, removes punctuation, sorts the stream in alphabetical order, removes duplicate words, and filters out words from a dictionary file (lines 1--7).
 A second pipeline (line 7) counts the resulting lines to report the number of misspelled words to the user.
 
 > If you're new to shell scripting, try to run each part of the pipeline separately and observe the output.
-> For example, run `cat f1.md f2.md | tr A-Z a-z` on your terminal to witness the conversion to lower-case.
+> For example, run `cat f1.md f2.md | tr A-Z a-z` in your terminal to witness the lower-case conversion.
 
-Visually, the script can be thought as executing as follows:
+Visually, the script can be thought as executing sequentially as follows:
 
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vQv-Krzb9hxWCbbQC9Zg5knm6SySJrayh3mdZXG3Z4Y6hC4kgQj4PWqYmxNAR-LyKN5Fu9lWHJV0J0F/pub?w=517&amp;h=55">
 
 The first pipeline (left; parts omitted) _sequentially_ processes `f1.md` and `f2.md` through all pipeline stages and writes to `out`.
-After it, executes to completion the second pipeline starts its _sequential_ execution.
+After it executes to completion, the second pipeline starts its _sequential_ execution.
+
+#### Parallelizing with PaSh
 
 PaSh transforms and executes each pipeline in a data-parallel fashion.
 Visually, the parallel script would look like this for 2x-parallelism (i.e., assuming that the computer on which we execute the script has at least two CPUs and that PaSh is invoked with `-w` value of `2`).
@@ -55,16 +58,16 @@ Visually, the parallel script would look like this for 2x-parallelism (i.e., ass
 Given a script, PaSh converts it to a dataflow graph, performs a series of semantics-preserving program transformations that expose parallelism, and then converts the dataflow graph back into a POSIX script.
 The new parallel script has POSIX constructs added to explicitly guide parallelism, coupled with PaSh-provided Unix-aware runtime primitives for addressing performance- and correctness-related issues.
 
-#### PaSh Structure
+#### The Structure of PaSh
 
 PaSh consist of three main components and a few additional "auxiliary" files and directories. 
 The three main components are:
 
-* [annotations](../annotations/): DSL characterizing commands, parallelizability study, and associated annotations---more specifically, (i) a lightweight annotation language allows command developers to express key parallelizability properties about their commands; (ii) an accompanying parallelizability study of POSIX and GNU commands. guides the annotation language and optimized aggregator library 
+* [annotations](../annotations/): DSL characterizing commands, parallelizability study, and associated annotations. More specifically, (i) a lightweight annotation language allows command developers to express key parallelizability properties about their commands; (ii) an accompanying parallelizability study of POSIX and GNU commands. guides the annotation language and optimized aggregator library 
 
-* [compiler](../compiler): Shell-Dataflow translations and associated parallelization transformations---given a script, PaSh's compiler converts it to a dataflow graph, performs a series of semantics-preserving program transformations that expose parallelism, and then converts the dataflow graph back into a POSIX script. 
+* [compiler](../compiler): Shell-Dataflow translations and associated parallelization transformations. Given a script, the PaSh compiler converts it to a dataflow graph, performs a series of semantics-preserving program transformations that expose parallelism, and then converts the dataflow graph back into a POSIX script. 
 
-* [runtime](../runtime): Runtime components such as `eager`, `split`, and associated combiners. apart from POSIX constructs added to guide parallelism explicitly, PaSh provides Unix-aware runtime primitives for addressing performance- and correctness-related issues.
+* [runtime](../runtime): Runtime components such as `eager`, `split`, and associated combiners. Apart from POSIX constructs added to guide parallelism explicitly, PaSh provides Unix-aware runtime primitives for addressing performance- and correctness-related issues.
 
 These three components implement the contributions presented [in the EuroSys paper](https://arxiv.org/pdf/2007.09436.pdf).
 They are expected to be usable with minimal effort, through a few different installation means presented below.
@@ -75,23 +78,22 @@ The auxiliary directories are:
 
 ## Installation
 
-#### Ubuntu
+#### Natively on Linux
 
-If you're on ubuntu, setting up `pash` should be as easy as
+On Ubuntu, Fedora, or Arch Linux setting up `pash` should be as easy as:
 
 ```sh
 curl up.pash.ndr.md | sh
 ```
 
-#### Other Linux:
-
-If you're on other linux distros, first install these packages (some of which might already be installed in your system):
+On other Linux distros, first install the following packages (some of which might already be installed in your system):
 
 ```
 libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils
 ```
 
-Then clone the repo and run  `setup-pash.sh` as follows:
+Then clone the repository and run `setup-pash.sh` as follows:
+
 ```sh
 git clone git@github.com:andromeda/pash.git
 ./pash/script/setup-pash.sh
@@ -101,18 +103,17 @@ As noted at the end of `setup-pash.sh`, make sure you set `PASH_TOP` pointing to
 
 #### Docker
 
-Trying `pash` with Docker is easy.
-Note that `pash` on Docker may or may not be able to exploit all available hardware resources, but is still useful for development on Windows or OS X.
+PaSh on Docker is useful when native installation is not an option -- for example, to allow development on Windows and OS X.
+Note that PaSh on Docker may or may not be able to exploit all available hardware resources.
+There are several options for installing PaSh via Docker.
 
-**Installation:**
-There are several options for installing `pash` via Docker.
 The easiest is to `pull` the docker image [from GitHub](https://github.com/andromeda/pash/packages/715796):
 ```sh
 docker pull docker.pkg.github.com/andromeda/pash/pash:latest
 ```
-We refresh this image with every major release.
+We refresh this image on every major release.[](TODO: Need to automate per commit)
 
-Alternatively, you can built the latest Docker container from scratch by running `docker build` in the repo:
+Alternatively, one can built the latest Docker container from scratch by running `docker build` in the repo:
 ```sh
 git clone git@github.com:andromeda/pash.git
 cd pash/scripts
@@ -125,12 +126,10 @@ It is also possible to fetch an image directly, but this is not longer recommend
 curl img.pash.ndr.md | docker load; docker run --name pash-play-$(whoami) -it pash/18.04
 ```
 
-**Launch container**
-After `pull`ing or `build`ing the image, you can launch the container as follows:
+In all the above cases, lunching the container is done via:
 ```sh
 docker run --name pash-play -it pash/18.04
 ```
-
 PaSh can be found in the container's `/pash` directory, so run `cd pash; git pull` to fetch the latest updates.
 More information in the [pash-on-docker guide](./docs/contrib.md#pash-on-docker-a-pocket-guide).
 
@@ -138,33 +137,37 @@ More information in the [pash-on-docker guide](./docs/contrib.md#pash-on-docker-
 
 All scripts in this guide assume that `$PASH_TOP` is set to the top directory of the PaSh codebase (e.g., `~/pash` on `deathstar` or `/pash` in docker)
 
-> You can avoid including `$PASH_TOP` before `pa.sh` by adding `PASH_TOP` in your `PATH`, which amounts to adding an `export PATH=$PATH:$PASH_TOP` in your shell configuration file.
+**To run scripts in this section of the tutorial, make sure you are in the `intro` directory of the `evaluation`:**
+```sh
+cd $PASH_TOP/evaluation/intro
+```
+
+> In the following examples, you can avoid including `$PASH_TOP` before `pa.sh` by adding `PASH_TOP` in your `PATH`, which amounts to adding an `export PATH=$PATH:$PASH_TOP` in your shell configuration file.
 
 #### Hello World
 
-The simplest script to try out `pash` is `hello-world`, which applies an expensive regular expression over the system dictionary file.
+The simplest script to try out `pash` is `hello-world.sh`, which applies an expensive regular expression over the system's dictionary file.
 
-To run `hello-world.sh` normally, you would call `bash` on it:
+To run `hello-world.sh` sequentially, you would call it using `bash`:
 ```sh
-time bash $PASH_TOP/evaluation/intro/hello-world.sh
+time bash ./hello-world.sh
 ```
 
-To run it in parallel:
+To run it in parallel with PaSh:
 ```sh
 time $PASH_TOP/pa.sh $PASH_TOP/evaluation/intro/hello-world.sh
 ```
 
+At this point, you might be interested in running `pa.sh --help` to get a first sense of the available options.
+Of particular interest is `--with` or `-w`, which specifies the degree of parallelism sought by PaSh (_e.g.,_ `-w 2`).
+
 #### A More Interesting Script: Demo Spell
 
-First, `cd` to `$PASH_TOP/evaluation/intro`:
-```sh 
-cd $PASH_TOP/evaluation/intro
-```
-We will use `demo-spell.sh` --- a pipeline based [on the original Unix spell program](https://dl.acm.org/doi/10.1145/3532.315102) by Johnson --- to confirm that the infrastructure works as expected. We need to setup the appropriate input files for this script to execute:
+We will use `demo-spell.sh` -- a pipeline based [on the original Unix spell program](https://dl.acm.org/doi/10.1145/3532.315102) by Johnson -- to confirm that the infrastructure works as expected. We need to setup the appropriate input files for this script to execute:
 ```sh
 ./input/setup.sh
 ```
-After inputs are configured, let's take a quick look at `spell`:
+After inputs are configured, let's take a quick look at `demo-spell.sh`:
 ```sh
 cat demo-spell.sh
 ```
@@ -181,17 +184,18 @@ To execute it using `pash` with 2x-parallelism:
 ```sh
 time $PASH_TOP/pa.sh -w 2 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
 ``` 
-On `deathstar`, the 2x-parallel script takes about 28s.
+On our evaluation infrastructure, the 2x-parallel script takes about 28s.
 
 You can check that the results are correct by:
 ```sh
 diff spell.out pash-spell.out
 ```
+
 Assuming you have more than 8 CPUs, you could also execute it with 8x-parallelism using:
 ```sh
 time $PASH_TOP/pa.sh -w 8 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
 ``` 
-which takes about 14s.
+On our evaluation infrastructure, the 8x-parallel script takes about 14s.
 
 To view the parallel code emitted by the compiler, you can inspect the log:
 ```sh
