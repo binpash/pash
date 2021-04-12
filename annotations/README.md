@@ -1,4 +1,5 @@
 # Parallelizability Study & Annotation Language
+Quick Jump: [Parallelizability](#main-parallelizability-classes) | [study](#parallelizability-study-of-commands-in-gnu--posix) | [example 1](#a-simple-example-chmod) | [example 1](#another-example-cut) | [howto](#how-to-annotate-a-command)
 
 PaSh includes 
   (i) a parallelizability study of commands in POSIX and GNU Coreutils, and 
@@ -7,9 +8,9 @@ The parallelizability study informed the design of the annotation language, whic
 
 > _N.b.: We welcome contributions to the study and annotatations for common commands._
 
-#### Four Main Parallelizability Classes
+#### Main Parallelizability Classes
 
-There are essentially four major classes:
+PaSh introduces four major parallelizability classes:
 
 * _Stateless Commands:_
 The first class, `stateless`, contains commands that operate on individual line elements of their input, without maintaining state across invocations.
@@ -36,17 +37,15 @@ Such commands are not parallelizable without finer-grained concurrency control m
 
 #### Parallelizability Study of Commands in GNU & POSIX
 
-The main results of the parallelizability study are summarized [in the paper (Sec. 3.1 and Tab. 1)](https://arxiv.org/pdf/2007.09436.pdf).
-To see the results of the  parallelizability study, run [./annotations/p_stats](../annotations/p_stats).
+The parallelizability study of commands in GNU and POSIX is comprised of two parts: a coarse-grained parallelizability study, and a set of annotations for commands.
 
-#### Annotations of Commands in GNU & POSIX
+The main results of the parallelizability study are summarized in the [PaSh EuroSys'21 paper (Sec. 3.1 and Tab. 1)](https://arxiv.org/pdf/2007.09436.pdf).
+To see the results of the  parallelizability study, run [./p_stats](./p_stats).
 
+Annotations for about 60 popular commands are stored in this directory encoded as JSON files (about 14 lines per annotation on average, for a total of 846 lines of annotations).
 Annotations can be thought of as defining a bidirectional correspondence between a command and a node in the dataflow graph---the abstraction used by the PaSh compiler.
 Since command behaviors (and correspondence) can change based on their arguments, annotations contain a sequence of predicates.
 Each predicate is accompanied by information that instantiates the correspondence between a command and a dataflow node.
-
-Annotations for about 60 popular commands are stored in [./annotations](../annotations) encoded as JSON.
-These average about 14 lines per annotation, for a total of 846 lines of annotations.
 
 #### A Simple Example: `chmod`
 

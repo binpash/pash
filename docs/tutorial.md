@@ -1,12 +1,7 @@
 # A Short PaSh Tutorial
+Quick jump: [Introduction](#introduction) | [Installation](#installation) | [Running Scripts](#running-scripts) | [What Next?](#what-next)
 
 This short tutorial covers the `pash`'s main functionality.
-Here is the table of contents:
-
-1. [Introduction](#introduction)
-2. [Installation](#installation)
-3. [Running Scripts](#running-scripts)
-4. [What Next?](#experimental-evaluation)
 
 ## Introduction
 
