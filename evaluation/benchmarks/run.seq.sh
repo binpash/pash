@@ -179,6 +179,7 @@ analytics-mts(){
     padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:20}
 
+    export IN="input/in.csv"
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
 
     echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
@@ -307,22 +308,47 @@ aliases(){
 }
 
 bio() {
-  cd bio
-  if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd))/seq.res"
+  seq_times_file="seq.res"
+  outputs_suffix="seq.out"
+  outputs_dir="outputs"
+  if [ -e "aliases/${seq_times_file}" ]; then
+    echo "skipping aliases/${seq_times_file}"
     return 0
   fi
+
+  cd bio/
+
+  cd input/
+  ./setup.sh
+  cd ..
+
+  mkdir -p "$outputs_dir"
+
+  names_scripts=(
+    "bio4.sh;bio4"
+  )
+
+  touch "$seq_times_file"
+  echo executing bio $(date) | tee -a "$seq_times_file"
+  echo '' >> "$seq_times_file"
+
   export IN=$PASH_TOP/evaluation/benchmarks/bio/
   # takes too many files to download
   export IN_N=input_all.txt
   export OUT=$PASH_TOP/evaluation/benchmarks/bio/output
-  # bio4
-  ./setup.sh
-  echo '' > seq.res
-  echo executing bio $(date) | tee -a ./seq.res
 
-  echo bio4.sh: $({ time ./bio4.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  # echo bio2.sh: $({ time ./bio2.sh > /dev/null; } 2>&1) | tee -a ./seq.res to check
+  for name_script in ${names_scripts[@]}
+  do
+    IFS=";" read -r -a name_script_parsed <<< "${name_script}"
+    name="${name_script_parsed[0]}"
+    script="${name_script_parsed[1]}"
+    printf -v pad %30s
+    padded_script="${name}.sh:${pad}"
+    padded_script=${padded_script:0:30}
+    outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+    echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+  done
+  cd ..
 }
 
 # everything under this line is WIP
@@ -437,15 +463,3 @@ posh() {
     done
     cd ..
 }
-
-
-
-
-
-
-
-posh
-#poets
-#aliases
-#dgsh
-#
