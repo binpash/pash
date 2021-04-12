@@ -1,5 +1,7 @@
 FROM ubuntu:18.04
 
+# ARG CACHEBUST=1
+
 RUN apt-get update -y
 RUN apt-get upgrade -y
 RUN apt-get install -y git sudo locales locales-all curl wget wamerican-insane
