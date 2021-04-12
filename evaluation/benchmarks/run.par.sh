@@ -102,7 +102,7 @@ unix50_pash(){
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
     pash_log="${pash_logs_dir}/${script}.pash.log"
 
-    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" --r_split --dgsh_tee -d 1 -w "${width}" --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" --speculation quick_abort --r_split --dgsh_tee -d 1 -w "${width}" --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
   done  
   cd ..
 }
@@ -195,6 +195,7 @@ analytics-mts_pash(){
     padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:20}
 
+    export IN="input/in.csv"
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
     pash_log="${pash_logs_dir}/${script}.pash.log"
 
