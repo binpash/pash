@@ -14,7 +14,7 @@ git submodule update
 
 echo "Building parser..."
 cd compiler/parser
-echo "|-- making libdash... (requires sudo)"
+echo "|-- making libdash..."
 make libdash &> $LOG_DIR/make_libdash.log
 cd ../../
 
@@ -51,7 +51,7 @@ $PASH_TOP/evaluation/tests/input/setup.sh
 
 ## This is necessary for the parser to link to libdash
 echo "Do not forget to export PASH_TOP as shown below :)"
-set -v
 # export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
-export PASH_TOP=$PASH_TOP
+# set -v
+echo export PASH_TOP=$PASH_TOP
 
