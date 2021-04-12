@@ -23,7 +23,7 @@ You can also built the Docker container from scratch by running
 git clone git@github.com:andromeda/pash.git
 cd pash/scripts
 docker build -t "pash/18.04" .
-# Then launch continer:
+# Then launch container:
 docker run --name pash-play -it pash/18.04
 ```
 
@@ -38,8 +38,6 @@ cd compiler
 ./test_evaluation_scripts.sh
 ```
 
-More tests are available in [evaluation](./evaluation).
-
 ## Repo Structure
 
 This repo hosts the core `pash` development. The structure is as follows:
@@ -50,7 +48,6 @@ This repo hosts the core `pash` development. The structure is as follows:
 * [evaluation](./evaluation): Shell pipelines and example [scripts](./evaluation/scripts) used for the evaluation.
 * [runtime](./runtime): Runtime component — e.g., `eager`, `split`, and assocaited combiners.
 * [scripts](./scripts): Scripts related to continuous integration, deployment, and testing.
-
 
 ## Community & More
 
