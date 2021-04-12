@@ -49,9 +49,8 @@ python3 -m pip install matplotlib &> $LOG_DIR/pip_install_matplotlib.log
 echo "Generating input files..."
 $PASH_TOP/evaluation/tests/input/setup.sh
 
-## This is necessary for the parser to link to libdash
-echo "Do not forget to export PASH_TOP as shown below :)"
 # export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
-# set -v
-echo export PASH_TOP=$PASH_TOP
+echo " * * * "
+echo "Do not forget to export PASH_TOP before using pash: \`export PASH_TOP=$PASH_TOP\`"
+echo '(optionally, you can update PATH to include it: `export PATH=$PATH:$PASH_TOP`)'
 
