@@ -146,7 +146,7 @@ This process then has to be repeated for every set of arguments, which have to b
 This can be (and is currently) achieved in an incremental fashion:
   a few flags at a time.
 
-For more details, here is an early version of the annotation language[:](TODO: Update it!)
+For more details, here is an early version of the annotation language[:]("TODO: Update it!")
 ```
   <option> ::= `-' <string>
   <category> ::= `stateless' | `pure' | ...
