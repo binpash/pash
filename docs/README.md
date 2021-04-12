@@ -5,7 +5,7 @@
 The following resources offer overviews of important PaSh components.
 
 * Short tutorial: [introduction](./tutorial.md#introduction), [installation](./tutorial.md#installation), [execution](./tutorial.md#running-scripts), and [next steps](./tutorial.md#what-next)
-* Annotations: [Parallelizability](../annotations#main-parallelizability-classes) | [study](../annotations#parallelizability-study-of-commands-in-gnu--posix) | [example 1](../annotations#a-simple-example-chmod) | [example 1](../annotations#another-example-cut) | [howto](../annotations#how-to-annotate-a-command)
+* Annotations: [parallelizability](../annotations#main-parallelizability-classes) | [study](../annotations#parallelizability-study-of-commands-in-gnu--posix) | [example 1](../annotations#a-simple-example-chmod) | [example 1](../annotations#another-example-cut) | [howto](../annotations#how-to-annotate-a-command)
 * Compiler: [overview](../compiler)
 * Runtime: [overview](../runtime)
 * Scripts: [oneliners](../runtime)
