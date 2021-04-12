@@ -1,18 +1,7 @@
 ## PaSh: Light-touch Data-Parallel Shell Processing
 > _A system for parallelizing POSIX shell scripts._
 
-Quick Jump: [Repo Structure](#repo-structure) | [Running PaSh](#running-pash) | [Installation](#installation) | [Testing](#testing) | [Community & More](#community--more)
-
-## Repo Structure
-
-This repo hosts the core `pash` development. The structure is as follows:
-
-* [annotations](./annotations/): DSL characterizing commands, parallelizability study, and associated annotations.
-* [compiler](./compiler): Shell-Dataflow translations and associated parallelization transformations.
-* [docs](./docs): Design documents, tutorials, installation instructions, etc.
-* [evaluation](./evaluation): Shell pipelines and example [scripts](./evaluation/scripts) used for the evaluation.
-* [runtime](./runtime): Runtime component — e.g., `eager`, `split`, and assocaited combiners.
-* [scripts](./scripts): Scripts related to continuous integration, deployment, and testing.
+Quick Jump: [Running PaSh](#running-pash) | [Installation](#installation) | [Testing](#testing) | [Repo Structure](#repo-structure) | [Community & More](#community--more)
 
 ## Running PaSh
 
@@ -27,50 +16,41 @@ Read a longer tutorial, see [docs/tutorial](docs/tutorial.md).
 
 ## Installation
 
-**Docker:** The easiest way to play with `pash` today is using Docker:
+If on Ubuntu, Fedora, or Arch, you can simply run `curl up.pash.ndr.md | sh`. Alternatively, you can clone the repo and run `./scripts/up.sh`
 
-```sh
-curl img.pash.ndr.md | docker load; docker run --name pash-playground -it pash/18.04
-```
-
-PaSh can be found in the container's `/pash` directory, so run `cd pash; git pull` to fetch the latest updates; more information in the [pash-on-docker guide](./docs/contrib.md#pash-on-docker-a-pocket-guide).
-
-Alternatively, you can built the Docker container from scratch by running
-
+You can also built the Docker container from scratch by running
 ```sh
 git clone git@github.com:andromeda/pash.git
 cd pash/scripts
 docker build -t "pash/18.04" .
-# Then you launch the container as above
-docker run --name pash-playground -it pash/18.04
+# Then launch continer:
+docker run --name pash-play -it pash/18.04
 ```
 
-This should build a fresh docker image running `pash`.  If you wish to
-run the tests, then you will need to extend the image.
+More installation instructions in [the tutorial](./docs/tutorial.md#installation). Remember to `export` `PASH_TOP` in your startup scripts!
 
-```sh
-cd pash/scripts
-docker build -t pash-test --build-arg FROM_IMAGE=pash/18.04 - <Dockerfile.testing
-docker run --name pash-with-tests -it pash-test
-```
+## Testing
 
-**Linux:** Alternatively, if you're on an Ubuntu 18.04, run:
-
-```sh
-curl up.pash.ndr.md | bash
-```
-
-This runs the install script in [scritps/install.sh](scritps/install.sh).
-We have only tested this script on Ubuntu 18.04 (like the one used for the docker container and on AWS).
-
-## Tests
-
-To execute the current tests, one-liner shell scripts, simply run:
+To execute the current tests before committing or pushing code, simply run:
 
 ```sh
 cd compiler
 ./test_evaluation_scripts.sh
 ```
+
+More tests are available in [evaluation](./evaluation).
+
+## Repo Structure
+
+This repo hosts the core `pash` development. The structure is as follows:
+
+* [annotations](./annotations/): DSL characterizing commands, parallelizability study, and associated annotations.
+* [compiler](./compiler): Shell-Dataflow translations and associated parallelization transformations.
+* [docs](./docs): Design documents, tutorials, installation instructions, etc.
+* [evaluation](./evaluation): Shell pipelines and example [scripts](./evaluation/scripts) used for the evaluation.
+* [runtime](./runtime): Runtime component — e.g., `eager`, `split`, and assocaited combiners.
+* [scripts](./scripts): Scripts related to continuous integration, deployment, and testing.
+
 
 ## Community & More
 
