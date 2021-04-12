@@ -4,8 +4,8 @@
 set -e
 
 
-IN=$PASH_TOP/evaluation/benchmarks/aliases/meta/
-OUT=$PASH_TOP/evaluation/benchmarks/aliases/meta/out
+IN=$PASH_TOP/evaluation/benchmarks/aliases/input/
+OUT=$PASH_TOP/evaluation/benchmarks/aliases/input/out
 if [[ "$1" == "-c" ]]; then
     rm -rf ${IN}/jpg
     rm -rf ${IN}/rtf
