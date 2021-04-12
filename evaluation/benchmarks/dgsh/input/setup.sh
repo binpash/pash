@@ -1,5 +1,5 @@
 if [[ $1 == "-c" ]]; then
-    rm -rf input/
+    find . ! -name '*.sh' -type f -exec rm -f {} +
     exit 1
 fi
 mkdir -p input
@@ -7,7 +7,7 @@ cd input
 if [[ ! -f dblp.xml ]]; then
     wget https://dblp.uni-trier.de/xml/dblp.xml.gz
     gunzip dblp.xml.gz
-    cat dblp.xml | head -n 35 > mini.xml
+    cat dblp.xml | head -n 1000000 > mini.xml
 fi
 
 if [[ ! -f fid ]]; then
