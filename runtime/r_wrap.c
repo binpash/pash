@@ -42,6 +42,10 @@ void processCmd(char *args[])
         }
 
         int pid = fork();
+        if (pid == -1) {
+            err(2, "fork failed");
+        }
+
         if (pid == 0)
         {
             dup2(fdOut[WRITE_END], STDOUT_FILENO);
@@ -180,14 +184,17 @@ void processCmd(char *args[])
             }
             close(inputFd);
 
-            //write block to stdout
+            // write block to stdout
             writeHeader(stdout, id, currReadLen);
             safeWriteWithFlush(stdoutBlock, 1, currReadLen, stdout);
 
-            //update header (ordered at the end so !feof works) and cleanup
+            // update header (ordered at the end so !feof works) and cleanup
             readHeader(stdin, &id, &blockSize);
+
+            // wait is necessary to reclaim process
+            // Do I need to do something with return status?
+            waitpid(pid, NULL, 0);
         }
-        kill(pid, SIGKILL);
     }
     free(buffer);
     free(readBuffer);
