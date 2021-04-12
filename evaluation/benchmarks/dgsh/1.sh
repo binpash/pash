@@ -25,7 +25,7 @@
 #  limitations under the License.
 #
 
-IN=${MINI:-$PASH_TOP/evaluation/benchmarks/dgsh/input/mini.xml}
+IN=${FULL:-$PASH_TOP/evaluation/benchmarks/dgsh/input/dblp.xml}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dgsh/input/}
 
 

@@ -303,41 +303,70 @@ bio() {
 # everything under this line is WIP
 
 dgsh() {
-    cd dgsh
-    if [ -e ./seq.res ]; then
-        echo "skipping $(basename $(pwd))/seq.res"
-        return 0
+    seq_times_file="seq.res"
+    seq_outpus_suffix="seq.out"
+    outputs_dir="outputs"
+    if [ -e "dgsh/$seq_times_file" ]; then
+      echo "skipping dgsh/$seq_times_file"
+      return 0
     fi
-    ./input/setup.sh
-    echo '' > seq.res
-    echo executing dgsh $(date) | tee -a ./seq.res
+
+    cd dgsh
+      
+    cd ./input/
+    ./setup.sh -full
+    cd ..
+
+    mkdir -p "$outputs_dir"
+  
+    names_scripts=(
+      "compressionbench;1"
+      "gitstats;2"
+      "cmetrics;3"
+      "dublicatefiles;4"
+      "highlightwords;5"
+      # "wordproperties;6"
+      # "weatherreport;7"
+      "textproperties;8"
+      "staticsymbols;9"
+      # "hierarchymap;10"
+      # "plotgit;11"
+      "parallelword;12"
+      # "venuauthor;13"
+      # "2dfourier;14"
+      # "nuclear;15"
+      # "fft;16"
+      "reordercol;17"
+      "dirlisting;18"
+    )
+
+
+    touch "$seq_times_file"
+    echo executing DGSH $(date) | tee -a "$seq_times_file"
+    echo '' >> "$seq_times_file"
+
+
+
 
     export VOC=/usr/share/dict/words
     export IN=$PASH_TOP/evaluation/benchmarks/dgsh/input
+    export FULL=$IN/dblp.xml
     export MINI=$IN/mini.xml
     export OUT=$PASH_TOP/evaluation/benchmarks/dgsh/input
     export BIN=/usr/local/bin
 
-
-
-    echo compressionbench: $({ time ./1.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo gitstats: $({ time ./2.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo cmetrics: $({ time manual/3.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo dublicatefiles: $({ time ./4.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo highlightwords: $({ time ./5.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo wordproperties: $({ time ./6.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
-    #echo weatherreport: $({ time ./7.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo textproperties: $({ time ./8.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
-    echo staticsymbols: $({ time ./9.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    #echo hierarchymap: $({ time ./10.sh > /dev/null; } 2>&1) | tee -a ./seq.res     #dont know how it works
-    #echo plotgit: $({ time ./11.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo parallelword: $({ time ./manual/12.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
-    #echo venuauthor: $({ time ./13.sh > /dev/null; } 2>&1) | tee -a ./seq.res #FIXME
-    #echo 2dfourier: $({ time ./14.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    #echo nuclear: $({ time ./15.sh > /dev/null; } 2>&1) | tee -a ./seq.res Cannot the trace the error, the script runs fine
-    #echo fft: $({ time ./16.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo reordercol: $({ time ./manual/17.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo dirlisting: $({ time ./18.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+    for name_script in ${names_scripts[@]}
+    do
+      IFS=";" read -r -a name_script_parsed <<< "${name_script}"
+      name="${name_script_parsed[0]}"
+      script="${name_script_parsed[1]}"
+      printf -v pad %30s
+      padded_script="${name}.sh:${pad}"
+      padded_script=${padded_script:0:30}
+      outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+      echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+    done
+    cd ..
 }
 
 
@@ -369,7 +398,7 @@ posh() {
 
 
 
-posh
+#posh
 #poets
 #aliases
 dgsh
