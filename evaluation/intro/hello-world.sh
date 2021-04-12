@@ -1,10 +1,4 @@
-if [ $(uname) = 'Darwin' ]; then
-  # On OSX
-  a=/usr/share/dict/web2
-else
-  # On Linux 
-  a=/usr/share/dict/words
-fi
+[ $(uname) = 'Darwin' ] && a=/usr/share/dict/web2 || a=/usr/share/dict/words
 
 if [ -f $a ]; then
   cat $a $a $a $a $a $a $a $a | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' | wc -l
