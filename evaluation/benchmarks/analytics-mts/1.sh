@@ -9,7 +9,7 @@
 # curl https://balab.aueb.gr/~dds/oasa-$(date --date='1 days ago' +'%y-%m-%d').bz2 | 
 #   bzip2 -d |              # decompress
 # Replace the line below with the two lines above to stream the latest file
-cat in.csv |                # assumes saved input
+cat $IN |                # assumes saved input
   sed 's/T..:..:..//' |     # hide times
   cut -d ',' -f 1,3 |       # keep only day and bus no
   sort -u |                 # remove duplicate records due to time

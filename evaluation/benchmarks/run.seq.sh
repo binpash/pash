@@ -179,6 +179,7 @@ analytics-mts(){
     padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:20}
 
+    export IN="input/in.csv"
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
 
     echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
@@ -425,6 +426,6 @@ posh() {
 
 #posh
 #poets
-aliases
+# aliases
 #dgsh
 #
