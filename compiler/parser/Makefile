@@ -38,7 +38,7 @@ clean :
 	$(JSON_TO_SHELL).native $(JSON_TO_SHELL).byte test.err
 
 libdash:
-	cd libdash && ./autogen.sh || ./autogen.sh && ./configure && make && sudo make install
+	cd libdash && ./autogen.sh && ./configure && make
 
 libdash-ocaml:
 	cd libdash/ocaml && make && make install
