@@ -26,7 +26,7 @@
 #
 
 
-export IN=${MINI:-$PASH_TOP/evaluation/benchmarks/dgsh/input/mini.xml}
+export IN=${FULL:-$PASH_TOP/evaluation/benchmarks/dgsh/input/dblp.xml}
 
 export LC_ALL=C
 
