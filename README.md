@@ -12,11 +12,12 @@ To parallelize, say, `./evaluation/intro/hello-world.sh` with parallelization wi
 ``` 
 
 Run `./pa.sh --help` to get more information about the available commands.
-Read a longer tutorial, see [docs/tutorial](docs/tutorial.md).
+See [docs/tutorial](docs/tutorial.md) for a longer tutorial.
 
 ## Installation
 
-If on Ubuntu, Fedora, or Arch, you can simply run `curl up.pash.ndr.md | sh`. Alternatively, you can clone the repo and run `./scripts/up.sh`
+On Ubuntu, Fedora, or Arch, run `curl up.pash.ndr.md | sh` to setup PaSh.
+Alternatively, you can clone the repo and run `./scripts/up.sh`
 
 You can also built the Docker container from scratch by running
 ```sh
@@ -27,7 +28,8 @@ docker build -t "pash/18.04" .
 docker run --name pash-play -it pash/18.04
 ```
 
-More installation instructions in [the tutorial](./docs/tutorial.md#installation). Remember to `export` `PASH_TOP` in your startup scripts!
+More installation instructions in [the tutorial](./docs/tutorial.md#installation).
+Remember to `export` `PASH_TOP` in your startup scripts!
 
 ## Testing
 
