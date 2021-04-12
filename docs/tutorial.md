@@ -1,19 +1,12 @@
 # A Short PaSh Tutorial
 
-This tutorial covers the `pash`'s main functionality.
+This short tutorial covers the `pash`'s main functionality.
 Here is the table of contents:
 
-0. [Introduction](#introduction)
-
-1. [Installation](#installation)
-2. [Running Introductory Scripts](#running-introductory-scripts)
-3. [Experimental Evaluation](#experimental-evaluation)
-
-4. [Parallelizability Study & Annotation Language](#parallelizability-study--annotation-language)
-5. [A Dataflow-based Parallelizing Compiler](#a-dataflow-based-parallelizing-compiler)
-6. [Runtime support](#runtime-support)
-
-7. [Epilogue-development](#epilogue-development)
+1. [Introduction](#introduction)
+2. [Installation](#installation)
+3. [Running Scripts](#running-scripts)
+4. [What Next?](#experimental-evaluation)
 
 ## Introduction
 
@@ -23,6 +16,7 @@ It has been shown to achieve order-of-magnitude performance improvements.
 > _N.b.: PaSh is still under heavy development._
 
 #### Example Script
+
 Consider the following spell-checking script, applied to two large markdown files `f1.md` and `f2.md` (line 1):
 
 ```sh
@@ -241,112 +235,11 @@ rm -f "#file2"
 
 Note that most stages in the pipeline are repeated twice and proceed in parallel (i.e., using `&`). This completes the "quick-check".
 
-## Parallelizability Study & Annotation Language
+## What Next?
 
-PaSh includes (i) a parallelizability study of commands in POSIX and GNU Coreutils, and (ii) an annotation language for describing the parallelizability properties of individual commands.
-The parallelizability study informed the design of the annotation language, which was in turn used to capture the key parallelizability characteristics in many of these commands.
+This concludes the first tutorial on PaSh.
+Here are some points for further exploration, depending on your needs:
 
-#### Parallelizability Study of Commands in GNU & POSIX
-
-The main results of the parallelizability study are summarized in the paper (Sec. 3.1 and Tab. 1).
-In the artifact, the parallelizability study is summarized in the [./annotations/p_stats](../annotations/p_stats).
-
-We note that, like the rest of the project, the results of the parallelizability study are being updated and might not exactly reflect percentages in the table;
-  the camera-ready version of the paper will include the final numbers.
-
-#### Annotations of Commands in GNU & POSIX
-
-Annotations can be thought of as defining a bidirectional correspondence between a command and a node in the dataflow graph.
-Since command behaviors (and correspondence) can change based on their arguments, annotations contain a sequence of predicates.
-Each predicate is accompanied by information that instantiates the correspondence between a command and a dataflow node.
-
-Annotations for about 60 popular commands are stored in [./annotations](../annotations) encoded as JSON.
-These average about 14 lines per annotation, for a total of 846 lines of annotations.
-
-Below we present two example annotations for `chmod` and `cut`.
-
-```json
-{
-  "command": "chmod",
-  "cases": [
-    {
-      "predicate": "default",
-      "class": "side-effectful"
-    }
-  ]
-}
-```
-
-The annotation for `chmod` is very simple, since it only needs to establish that `chmod` is side-effectful and therefore cannot be translated to a dataflow node.
-
-```json
-{
-  "command": "cut",
-  "cases": [
-    {
-      "predicate": {
-        "operator": "or",
-        "operands": [
-          {
-            "operator": "val_opt_eq",
-            "operands": [
-              "-d",
-              "\n"
-            ]
-          },
-          {
-            "operator": "exists",
-            "operands": [
-              "-z"
-            ]
-          }
-        ]
-      },
-      "class": "pure",
-      "inputs": [
-        "args[:]"
-      ],
-      "outputs": [
-        "stdout"
-      ]
-    },
-    {
-      "predicate": "default",
-      "class": "stateless",
-      "inputs": [
-        "args[:]"
-      ],
-      "outputs": [
-        "stdout"
-      ]
-    }
-  ],
-  "options": [
-    "stdin-hyphen",
-    "empty-args-stdin"
-  ],
-  "short-long": [
-    {
-      "short": "-d",
-      "long": "--delimiter"
-    },
-    {
-      "short": "-z",
-      "long": "--zero-terminated"
-    }
-  ]
-}
-```
-
-The annotation for `cut` has two cases, each of which consists of a predicate on its arguments, and then an assignment of its parallelizability class, inputs, and outputs.
-The first predicate indicates that cut is “pure”, i.e., not parallelizable but representable as a dataflow node, if the value accompanying the `-d` option is `\n` or if it was used with the `-z` flag.
-In both of these cases, newlines do not represent data item boundaries, but are rather used internally by the command, making it unsafe to parallelize by splitting on line boundaries.
-In all other cases (see the “default” case) the command is stateless.
-Inputs are always assigned to the non-option arguments and the output is always stdout.
-The option “stdin-hyphen” indicates that a non-option argument that is just a dash `-` represents the stdin, and the option “empty-args-stdin” indicates that if non-option arguments are empty, then the command reads from its stdin.
-The list identified by “short-long” contains a correspondence of short and long argument names for this command.
-
-Note that currently PaSh's `cut` annotation engine does not handle the `empty-args-stdin` option and the `short-long` key, so the annotation looks slightly different. We are continuously working on the annotations engine to improve it to handle a wider range of annotations. 
 
 ## A Dataflow-based Parallelizing Compiler
 
