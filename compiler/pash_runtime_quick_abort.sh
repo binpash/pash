@@ -44,7 +44,7 @@ spawn_eager()
     local name=$1
     local input=$2
     local output=$3
-    local eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    # local eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     ## Note: Using eager actually leads to some deadlock issues. It must have to do with eagers behavior when
     ##       its input or output closes.
     # "$RUNTIME_DIR/../runtime/eager" "$input" "$output" "$eager_file" </dev/null 1>/dev/null 2>/dev/null &
@@ -53,8 +53,22 @@ spawn_eager()
     log "Spawned $name eager: $eager_pid with:"
     log "  -- IN: $input"
     log "  -- OUT: $output"
-    log "  -- INTERM: $eager_file"
+    # log "  -- INTERM: $eager_file"
     echo "$eager_pid"
+}
+
+spawn_tee()
+{
+    local input=$1
+    local output1=$2
+    local output2=$3
+    "$RUNTIME_DIR/../runtime/dgsh_tee" -i "$input" -o "$output1" -o "$output2" -f </dev/null 1>/dev/null 2>/dev/null &
+    local tee_pid=$!
+    log "Spawned dgsh-tee: $tee_pid with:"
+    log "  -- IN: $input"
+    log "  -- OUT1: $output1"
+    log "  -- OUT1: $output2"
+    echo "$tee_pid"
 }
 
 ## Kills the process group that belongs to the given pgid
@@ -117,31 +131,31 @@ kill_wait_pg()
 ## TODO: Use reroute around dgsh_tees to make sure that they do not use storage unnecessarily 
 ##       (if their later command is done).
 
+## TODO: Catch SIGCHILD instead of waiting for everything to be set up before running.
+##       This would require that we encapsulate all the sequential script execution in a different
+##          script, to make sure that trapping SIGCHLD only happens if ony of the two big scripts exits.
+##       Then we would have to have a big script for the compiler.
+##       Only these two childs should be spawned, and then we can wait until any of them finishes.
+##
+
+## We start by catching a trap for SIGCHLD to instantly exit if sequential is done
+
+# function child_exited()
+# {
+#     log "Child exited!"
+
+# }
+# trap redirect_null CHLD
+# echo "SIGCHLD trap set"
+
 if [ "$pash_execute_flag" -eq 1 ]; then
-    # set -x
-    ## (A) Redirect stdin to `tee`
-    pash_quick_abort_time_start=$(date +"%s%N")
-    pash_tee_stdin="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    mkfifo "$pash_tee_stdin"
-    ## The redirections below are necessary to ensure that the background `cat` reads from stdin.
-    { setsid cat > "$pash_tee_stdin" <&3 3<&- & } 3<&0
-    pash_input_cat_pid=$!
-    log "Spawned input cat with pid: $pash_input_cat_pid"
-
-    ## (B) A `tee` that duplicates input to both the sequential and parallel
-    pash_tee_stdout1="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    pash_tee_stdout2="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    mkfifo "$pash_tee_stdout1" "$pash_tee_stdout2"
-    tee "$pash_tee_stdout1" > "$pash_tee_stdout2" < "$pash_tee_stdin" &
-
-    ## (C) The sequential input eager
-    pash_seq_eager_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    mkfifo "$pash_seq_eager_output"
-    seq_input_eager_pid=$(spawn_eager "sequential input" "$pash_tee_stdout1" "$pash_seq_eager_output")
+    ## We start with the sequential command so that it can finish first if it has no
+    ## requirement for reading from stdin.
 
     ## (D) Sequential command
+    pash_seq_eager_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     pash_seq_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    mkfifo "$pash_seq_output"
+    mkfifo "$pash_seq_eager_output" "$pash_seq_output"
     setsid "$RUNTIME_DIR/pash_wrap_vars.sh" \
         $pash_runtime_shell_variables_file \
         $pash_output_variables_file \
@@ -155,6 +169,26 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     pash_seq_eager2_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     mkfifo "$pash_seq_eager2_output"
     seq_output_eager_pid=$(spawn_eager "sequential output" "$pash_seq_output" "$pash_seq_eager2_output")
+
+    ## (A) Redirect stdin to `tee`
+    pash_quick_abort_time_start=$(date +"%s%N")
+    pash_tee_stdin="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    mkfifo "$pash_tee_stdin"
+    ## The redirections below are necessary to ensure that the background `cat` reads from stdin.
+    { setsid cat > "$pash_tee_stdin" <&3 3<&- & } 3<&0
+    pash_input_cat_pid=$!
+    log "Spawned input cat with pid: $pash_input_cat_pid"
+
+    ## (B) A `tee` that duplicates input to both the sequential and parallel
+    pash_tee_stdout1="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    pash_tee_stdout2="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    mkfifo "$pash_tee_stdout1" "$pash_tee_stdout2"
+    # tee_pid=$(spawn_tee "$pash_tee_stdin" "$pash_tee_stdout1" "$pash_tee_stdout2")
+    tee "$pash_tee_stdout1" > "$pash_tee_stdout2" < "$pash_tee_stdin" &
+
+    ## TODO: We probably don't need this.
+    # (C) The sequential input eager
+    seq_input_eager_pid=$(spawn_eager "sequential input" "$pash_tee_stdout1" "$pash_seq_eager_output")
 
     ## (F) Second eager
     pash_par_eager_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
@@ -203,7 +237,6 @@ if [ "$pash_execute_flag" -eq 1 ]; then
             wait_pg "$pash_seq_pid"
             seq_exit_status=$?
             log "Sequential pid: $pash_seq_pid was killed successfully returning status $seq_exit_status."
-            log "Still alive: $(still_alive)"
 
             ## If kill failed it means it was already completed, 
             ## and therefore we do not need to run the parallel.
