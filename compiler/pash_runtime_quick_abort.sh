@@ -193,20 +193,16 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     ## Wait until one of the two (original script, or compiler) die
     pash_quick_abort_time_before_wait=$(date +"%s%N")
     ## TODO: Delete this loop if not necessary
-    # alive_pids=$(still_alive)
-    # log "Still alive: $alive_pids"
-    # while `list_include_item "$alive_pids" "$pash_seq_pid"` && `list_include_item "$alive_pids" "$pash_compiler_pid"` ; do
-    #     ## Wait for either of the two to complete
-    #     wait -n "$pash_seq_pid" "$pash_compiler_pid"
-    #     completed_pid_status=$?
-    #     log "Process exited with return code: $completed_pid_status"
-    #     alive_pids=$(still_alive)
-    #     log "Still alive: $alive_pids"
-    # done
-    wait -n "$pash_seq_pid" "$pash_compiler_pid"
-    completed_pid_status=$?
-    log "Process exited with return code: $completed_pid_status"
     alive_pids=$(still_alive)
+    log "Still alive: $alive_pids"
+    while `list_include_item "$alive_pids" "$pash_seq_pid"` && `list_include_item "$alive_pids" "$pash_compiler_pid"` ; do
+        ## Wait for either of the two to complete
+        wait -n "$pash_seq_pid" "$pash_compiler_pid"
+        completed_pid_status=$?
+        log "Process exited with return code: $completed_pid_status"
+        alive_pids=$(still_alive)
+        log "Still alive: $alive_pids"
+    done
     log_time_from "$pash_quick_abort_time_before_wait" "Waiting"
 
     ## If the sequential is still alive we want to see if the compiler succeeded
