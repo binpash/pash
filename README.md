@@ -16,10 +16,10 @@ This repo hosts the core `pash` development. The structure is as follows:
 
 ## Running PaSh
 
-To parallelize, say, `./evaluation/hello-world.sh` with parallelization width of `2`, from the top-level directory of the repository run:
+To parallelize, say, `./evaluation/intro/hello-world.sh` with parallelization width of `2`, from the top-level directory of the repository run:
 
 ```sh
-./pa.sh ./evaluation/hello-world.sh
+./pa.sh ./evaluation/intro/hello-world.sh
 ``` 
 
 Run `./pa.sh --help` to get more information about the available commands.
