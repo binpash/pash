@@ -1,7 +1,7 @@
 #!/bin/bash
 # First command is almost always a generator
 set -e
-IN=${GIT:-$PASH_TOP/evaluation/benchmarks/aliases/meta/linux}
+IN=${GIT:-$PASH_TOP/evaluation/benchmarks/aliases/input/linux}
 
 #FIXME define a complex expression
 COMPLEX=""

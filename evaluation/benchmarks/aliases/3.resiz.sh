@@ -4,8 +4,8 @@
 set -e
 
 
-IN=${JPG:-$PASH_TOP/evaluation/benchmarks/aliases/meta/jpg}
-OUT=${OUT:-PASH_TOP/evaluation/benchmarks/aliases/meta/out}
+IN=${JPG:-$PASH_TOP/evaluation/benchmarks/aliases/input/jpg}
+OUT=${OUT:-PASH_TOP/evaluation/benchmarks/aliases/input/out}
 
 find $IN -name "*.jpg" | 
   xargs -n1 basename |
