@@ -295,12 +295,13 @@ dgsh() {
         echo "skipping $(basename $(pwd))/seq.res"
         return 0
     fi
-    ./setup.sh
+    ./input/setup.sh
     echo '' > seq.res
     echo executing dgsh $(date) | tee -a ./seq.res
 
     export VOC=/usr/share/dict/words
     export IN=$PASH_TOP/evaluation/benchmarks/dgsh/input
+    export MINI=$IN/mini.xml
     export OUT=$PASH_TOP/evaluation/benchmarks/dgsh/input
     export BIN=/usr/local/bin
 
@@ -308,21 +309,21 @@ dgsh() {
 
     echo compressionbench: $({ time ./1.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo gitstats: $({ time ./2.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo cmetrics: $({ time new_scripts/3.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+    echo cmetrics: $({ time manual/3.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo dublicatefiles: $({ time ./4.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo highlightwords: $({ time ./5.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo wordproperties: $({ time news_cripts/6.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
+    echo wordproperties: $({ time ./6.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
     #echo weatherreport: $({ time ./7.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo textproperties: $({ time ./8.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
     echo staticsymbols: $({ time ./9.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo hierarchymap: $({ time ./10.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+    #echo hierarchymap: $({ time ./10.sh > /dev/null; } 2>&1) | tee -a ./seq.res     #dont know how it works
     #echo plotgit: $({ time ./11.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo parallelword: $({ time ./12.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
+    echo parallelword: $({ time ./manual/12.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
     #echo venuauthor: $({ time ./13.sh > /dev/null; } 2>&1) | tee -a ./seq.res #FIXME
     #echo 2dfourier: $({ time ./14.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo nuclear: $({ time new_scripts/15.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+    #echo nuclear: $({ time ./15.sh > /dev/null; } 2>&1) | tee -a ./seq.res Cannot the trace the error, the script runs fine
     #echo fft: $({ time ./16.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo reordercol: $({ time ./17.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+    echo reordercol: $({ time ./manual/17.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo dirlisting: $({ time ./18.sh > /dev/null; } 2>&1) | tee -a ./seq.res
 }
 
@@ -356,5 +357,5 @@ posh() {
 #posh
 #poets
 #aliases
-#dgsh
+dgsh
 

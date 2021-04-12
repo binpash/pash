@@ -31,8 +31,8 @@
 
 # Consitent sorting across machines
 export LC_ALL=C
-
-
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dgsh/input}
+IN=${VOC:-/usr/share/dict/words}
 # Convert input into a ranked frequency list
 ranked_frequency()
 {
@@ -89,18 +89,18 @@ ngram()
 	done
 
 	mkdir $SGDIR
-	cat <&3 3<&-  >$SGDIR/npi-0.0.0
+	cat < ${IN}  >$SGDIR/npi-0.0.0
 ln $SGDIR/npi-0.0.0 $SGDIR/npi-0.1.0
 ln $SGDIR/npi-0.0.0 $SGDIR/npi-0.2.0
  {  tr -cs a-zA-Z \\n
 } <$SGDIR/npi-0.0.0 >$SGDIR/npi-1.0.0
 ln $SGDIR/npi-1.0.0 $SGDIR/npi-1.1.0
 ln $SGDIR/npi-1.0.0 $SGDIR/npi-1.2.0
- {  ngram 2 >digram.txt
+ {  ngram 2 >${OUT}/digram.txt
 : ; } <$SGDIR/npi-1.0.0 >$SGDIR/npfo-none-1.0.0
- {  ngram 3 >trigram.txt
+ {  ngram 3 >${OUT}/trigram.txt
 : ; } <$SGDIR/npi-1.1.0 >$SGDIR/npfo-none-1.1.0
- {  ranked_frequency >words.txt
+ {  ranked_frequency >${OUT}/words.txt
 : ; } <$SGDIR/npi-1.2.0 >$SGDIR/npfo-none-1.2.0
 NCHARS=$(  {  wc -c
 } <$SGDIR/npi-0.1.0 )
@@ -109,7 +109,7 @@ NCHARS=$(  {  wc -c
 	   # Print absolute and percentage
 	   ranked_frequency |
 	   awk 'BEGIN {OFMT = "%.2g%%"}
-	   {print $1, $2, $1 / '"`echo ${NCHARS}`"' * 100}' >character.txt
+	   {print $1, $2, $1 / '"`echo ${NCHARS}`"' * 100}' >${OUT}/character.txt
 : ; } <$SGDIR/npi-0.2.0 >$SGDIR/npfo-none-0.2.0
 
 # Gather the results

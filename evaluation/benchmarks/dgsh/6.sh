@@ -32,6 +32,8 @@
 # Consitent sorting across machines
 export LC_ALL=C
 
+IN=${VOC:-/usr/share/dict/words}
+cat ${IN} | 
 # Split input one word per line
 tr -cs a-zA-Z \\n |
 # Create list of unique words

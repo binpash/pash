@@ -17,7 +17,11 @@
 
 # The conversion is configured for the following file:
 # http://www.bmrb.wisc.edu/ftp/pub/bmrb/timedomain/bmr6443/timedomain_data/c13-hsqc/june11-se-6426-CA.fid/fid
-/opt/nmrpipe/nmrbin.linux212_64/var2pipe -in $1						\
+set -e 
+IN=${FID:-$PASH_TOP/evaluation/benchmarks/dgsh/input/fid}
+
+export 
+/opt/nmrpipe/nmrbin.linux212_64/var2pipe -in $IN						\
  -xN            1280            -yN     256		\
  -xT            640             -yT     128		\
  -xMODE         Complex -yMODE  Complex			\
@@ -81,7 +85,7 @@ ln $SGDIR/npi-0.0.0 $SGDIR/npi-0.1.0
 	   /opt/nmrpipe/nmrbin.linux212_64/nmrPipe -fn FT |
 	   /opt/nmrpipe/nmrbin.linux212_64/nmrPipe -fn PS -p0 0 -p1 0 -di |
 	   /opt/nmrpipe/nmrbin.linux212_64/nmrPipe -fn TP |
-	   /opt/nmrpipe/nmrbin.linux212_64/nmrPipe -fn POLY -auto -verb >A
+	   /opt/nmrpipe/nmrbin.linux212_64/nmrPipe -fn POLY -auto -verb > A
 : ; } <$SGDIR/npi-0.0.0 >$SGDIR/npfo-none-0.0.0
  {  /opt/nmrpipe/nmrbin.linux212_64/nmrPipe |
 	   /opt/nmrpipe/nmrbin.linux212_64/nmrPipe -fn SOL |
@@ -97,16 +101,17 @@ ln $SGDIR/npi-0.0.0 $SGDIR/npi-0.1.0
 	   /opt/nmrpipe/nmrbin.linux212_64/nmrPipe -fn FT |
 	   /opt/nmrpipe/nmrbin.linux212_64/nmrPipe -fn PS -p0 -90 -p1 0 -di |
 	   /opt/nmrpipe/nmrbin.linux212_64/nmrPipe -fn TP |
-	   /opt/nmrpipe/nmrbin.linux212_64/nmrPipe -fn POLY -auto -verb >B
+	   /opt/nmrpipe/nmrbin.linux212_64/nmrPipe -fn POLY -auto -verb > B
 : ; } <$SGDIR/npi-0.1.0 >$SGDIR/npfo-none-0.1.0
 
 # Gather the results
-./sgsh-tee  -i $SGDIR/npfo-none-0.0.0  -i $SGDIR/npfo-none-0.1.0 >/dev/null
+./sgsh-tee  -i $SGDIR/npfo-none-0.0.0  -i $SGDIR/npfo-none-0.1.0 > /dev/null
 
 )  3<&0 
 
 # We use temporary files rather than streams, because
 # addNMR mmaps its input files. The diagram displayed in the
 # example shows the notional data flow.
-/opt/nmrpipe/nmrbin.linux212_64/addNMR -in1 A -in2 B -out A+B.sgsh.ft2 -c1 1.0 -c2 1.25 -add
-/opt/nmrpipe/nmrbin.linux212_64/addNMR -in1 A -in2 B -out A-B.sgsh.ft2 -c1 1.0 -c2 1.25 -sub
+/opt/nmrpipe/nmrbin.linux212_64/addNMR -in1 A -in2 B -out A+B.sgsh.ft2 -c1 1.0 -c2 1.25 -add 
+/opt/nmrpipe/nmrbin.linux212_64/addNMR -in1 A -in2 B -out A-B.sgsh.ft2 -c1 1.0 -c2 1.25 -sub 
+rm -f A B A+B.sgsh.ft2 A-B.sgsh.ft2

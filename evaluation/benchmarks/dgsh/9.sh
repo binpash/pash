@@ -26,9 +26,12 @@
 #  limitations under the License.
 #
 
-# Find object files
-find "$1" -name \*.o |
 
+IN=${BIN:-/usr/local/bin}
+# Find object files
+find ${IN} -type f -exec grep -IL . "{}" \; |
+
+  
 # Print defined symbols
 xargs nm |
 

@@ -3,7 +3,7 @@
 # from: https://www2.dmst.aueb.gr/dds/sw/dgsh/#word-properties
 set -e
 # FIXME Output is weird
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/dgsh/input/}
+IN=${MINI:-$PASH_TOP/evaluation/benchmarks/dgsh/input/mini.xml}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dgsh/input}
 cd ${OUT}
 #OUTPUT=${OUTPUT:-$PASH_TOP/evaluation/benchmarks/dgsh/output}
@@ -22,7 +22,7 @@ cat c | sed -E 's/.*([^aeiouyAEIOUY]{4}).*/c: \1/;t
 cat d | awk '{if (length($1) > 12) print "l:", length($1);
     else print ""}' | cat > d1 &
 
-cat ${IN}mini.xml | head -n 12000 | tr -cs a-zA-Z \\n | sort -u | tee a b c d  > /dev/null  
+cat ${IN} | tr -cs a-zA-Z \\n | sort -u | tee a b c d  > /dev/null  
 paste a1 b1 c1 d1  | fgrep :
 #cat d1 | fgrep :
 rm a b c d a1 b1 c1 d1
