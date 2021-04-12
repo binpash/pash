@@ -335,12 +335,14 @@ posh() {
         echo "skipping $(basename $(pwd))/seq.res"
         return 0
     fi
+    cd input
     ./setup.sh
+    cd ..
     echo '' > seq.res
     echo executing posh $(date) | tee -a ./seq.res
 
     #export IN=$PASH_TOP/evaluation/benchmarks/posh/input
-    export OUT=$PASH_TOP/evaluation/benchmarks/posh/output
+    export OUT=$PASH_TOP/evaluation/benchmarks/posh/input/output
 
     echo discat: $({ time ./1.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo convert: $({ time ./2.sh > /dev/null; } 2>&1) | tee -a ./seq.res
@@ -354,7 +356,7 @@ posh() {
 
 
 
-#posh
+posh
 #poets
 #aliases
 dgsh
