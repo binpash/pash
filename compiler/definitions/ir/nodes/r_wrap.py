@@ -28,8 +28,11 @@ def wrap_node(node):
 
     ## TODO: All arguments must be options, otherwise there must be
     ##       special handling in the wrap node2ast code. 
-    old_options_transposed = [(i+1, opt) for i, opt in node.com_options]
-    options = [(0, node.com_name)] + old_options_transposed
+    old_options_strs = [str(opt) for i, opt in node.com_options]
+    wrapped_command = " ".join([str(node.com_name)] + old_options_strs)
+    wrapped_command_arg = [(1, Arg(string_to_argument(f"\'{wrapped_command}\'")))]
+    bash_command_arg = [(0, Arg(string_to_argument("bash -c")))]
+    options = bash_command_arg +  wrapped_command_arg
 
     ## TODO: It is not clear if it is safe to just pass redirections and assignments down the line as is
     redirs = node.com_redirs
