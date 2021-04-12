@@ -87,7 +87,9 @@ The easiest is to `pull` the docker image [from GitHub](https://github.com/andro
 ```sh
 docker pull docker.pkg.github.com/andromeda/pash/pash:latest
 ```
-We refresh this image on every major release.[](TODO: Need to automate per commit)
+We refresh this image on every major release.
+
+[//]: # (TODO: Need to automate this per commit.)
 
 Alternatively, one can built the latest Docker container from scratch by running `docker build` in the repo:
 ```sh

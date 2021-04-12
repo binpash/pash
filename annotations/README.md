@@ -146,7 +146,8 @@ This process then has to be repeated for every set of arguments, which have to b
 This can be (and is currently) achieved in an incremental fashion:
   a few flags at a time.
 
-For more details, here is an early version of the annotation language[:]("TODO: Update it!")
+For more details, here is an early version of the annotation language:
+
 ```
   <option> ::= `-' <string>
   <category> ::= `stateless' | `pure' | ...
@@ -175,3 +176,7 @@ For more details, here is an early version of the annotation language[:]("TODO: 
   <command-list> ::= <command>
                    | <command> <command-list>
 ```
+
+[//]: # (TODO: 1. update language spec; 2. put all annotations in a directory)
+
+
