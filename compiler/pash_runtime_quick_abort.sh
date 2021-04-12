@@ -142,6 +142,7 @@ kill_wait_pg()
 if [ "$pash_execute_flag" -eq 1 ]; then
     ## We start with the sequential command so that it can finish first if it has no
     ## requirement for reading from stdin.
+    pash_quick_abort_time_start=$(date +"%s%N")
 
     ## (D) Sequential command
     pash_seq_eager_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
@@ -162,7 +163,6 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     seq_output_eager_pid=$(spawn_eager "sequential output" "$pash_seq_output" "$pash_seq_eager2_output")
 
     ## (A) Redirect stdin to `tee`
-    pash_quick_abort_time_start=$(date +"%s%N")
     pash_tee_stdin="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
     mkfifo "$pash_tee_stdin"
     ## The redirections below are necessary to ensure that the background `cat` reads from stdin.
