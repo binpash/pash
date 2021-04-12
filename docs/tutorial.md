@@ -1,9 +1,9 @@
-# EuroSys'21 PaSh Artifact
->  This file is primarily to aid EuroSys AEC.
+# A Short PaSh Tutorial
 
 This tutorial covers the `pash`'s main functionality and key contributions as presented in the EuroSys paper.
 Here is the table of contents:
 
+1. [Installation](#installation)
 1. [Quick check](#quick-check)
 2. [Video Tutorial](#video-tutorial)
 3. [Claims](#claims)
@@ -18,67 +18,121 @@ The recommended exploration path the following
   (2) watch the video walkthrough (artifact-video.mp4) of the entire artifact (about 20 minutes)
   (3) then cover details in this tutorial as necessary (the [full experimental run](#experimental-evaluation) takes several hours)
 
-## Quick check
+## Installation
 
-Here is how to check that everything works on your chosen evaluation environment:
+#### Ubuntu
 
-#### Requirements
-
-The `pash` artifact has the following requirements:
-* Hardware: a modern multi-processor, to show performance results (the more cpus, the merrier)
-* Software: Python 3.5+, Ocaml 4.05.0, Bash 5+, and GNU Coreutils
-
-The `deathstar` server below meets all these requirements; 
-  the `pash-playground` docker image is the next-best option, which meets all the software requirements.
-_If the AEC reviewers decide to run the entire evaluation on their own infrastructure, they need to account for the time to setup `pash`, which might be considerable due to the OCaml dependencies_.
-
-
-#### Evaluation Server (deathstar)
-
-We have created a reviewer account on `deathstar`, the machine used for all the results reported in the paper. Here _reviewers have to coordinate themselves other to not run checks/experiments at the same time_. If the AEC reviewers decide to use `deathstar`, run a quick check with:
+If you're on ubuntu, setting up `pash` should be as easy as
 
 ```sh
-ssh eurosys21@deathstar.ndr.md                          # password shared via AEC form
-./pash/scripts/quickcheck.sh
+curl up.pash.ndr.md | sh
 ```
 
-#### Docker Container (local)
+#### Other Linux:
 
-Another way to try PaSh is locally through a Docker container, running a pre-setup ubuntu Linux.
+If you're on other linux distros, first install these packages (some of which might already be installed in your system):
 
+```
+libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils
+```
+
+Then clone the repo and run  `setup-pash.sh` as follows:
 ```sh
-curl img.pash.ndr.md | docker load; docker run --name pash-playground -it pash/18.04
-./pash/scripts/quickcheck.sh                                            # this is typed _in_ the container
+git clone git@github.com:andromeda/pash.git
+./pash/script/setup-pash.sh
 ```
 
-#### Confirm Artifact Structure
+As noted at the end of `setup-pash.sh`, make sure you set `PASH_TOP` pointing to the absolute path of the directory `pa.sh` resides (you can optionally place that in your `PATH`).
 
-The artifact consists of PaSh's three main components and a few additional "auxiliary" files and directories. 
+#### Docker
+
+Trying `pash` with Docker is easy.
+Note that `pash` on Docker may or may not be able to exploit all available hardware resources, but is still useful for development on Windows or OS X.
+
+**Installation:**
+There are several options for installing `pash` via Docker.
+The easiest is to `pull` the docker image [from GitHub](https://github.com/andromeda/pash/packages/715796):
+```sh
+docker pull docker.pkg.github.com/andromeda/pash/pash:latest
+```
+We refresh this image with every major release.
+
+Alternatively, you can built the latest Docker container from scratch by running `docker build` in the repo:
+```sh
+git clone git@github.com:andromeda/pash.git
+cd pash/scripts
+docker build -t "pash/18.04" .
+```
+This will build a fresh Docker image using the latest commit---recommended for development.
+
+It is also possible to fetch an image directly, but this is not longer recommended:
+```sh
+curl img.pash.ndr.md | docker load; docker run --name pash-play-$(whoami) -it pash/18.04
+```
+
+**Launch container**
+After `pull`ing or `build`ing the image, you can launch the container as follows:
+```sh
+docker run --name pash-play -it pash/18.04
+```
+
+PaSh can be found in the container's `/pash` directory, so run `cd pash; git pull` to fetch the latest updates.
+More information in the [pash-on-docker guide](./docs/contrib.md#pash-on-docker-a-pocket-guide).
+
+# Running Scripts
+
+All scripts in this guide assume that `$PASH_TOP` is set to the top directory of the PaSh codebase (e.g., `~/pash` on `deathstar` or `/pash` in docker)
+
+> You can avoid including `$PASH_TOP` before `pa.sh` by adding `PASH_TOP` in your `PATH`, which amounts to adding an `export PATH=$PATH:$PASH_TOP` in your shell configuration file.
+
+#### PaSh Structure
+
+PaSh consist of three main components and a few additional "auxiliary" files and directories. 
 The three main components are:
 
 * [annotations](../annotations/): DSL characterizing commands, parallelizability study, and associated annotations.
 * [compiler](../compiler): Shell-Dataflow translations and associated parallelization transformations.
 * [runtime](../runtime): Runtime component — e.g., `eager`, `split`, and associated combiners.
 
-These three components implement the contributions presented in the paper.
-They are expected to be usable with minimal effort, through a few different means presented later---including a `docker` container and log in credentials to our evaluation server.
+These three components implement the contributions presented [in the EuroSys paper](https://arxiv.org/pdf/2007.09436.pdf).
+They are expected to be usable with minimal effort, through a few different means presented earlier.
 
 The auxiliary directories are:
 * [docs](../docs): Design documents, tutorials, installation instructions, etc.
-* [evaluation](../evaluation): Shell pipelines and example [scripts](../evaluation/scripts) used for the evaluation.
+* [evaluation](../evaluation): Shell pipelines and script used for the evaluation of `pash`.
 
-You should also find a video file named `artifact-video.mp4`, and this `artifact-readme.md` file.
+_Most benchmark sets in the evaluation infrastructure include a `input/setup.sh` script for fetching inputs and setting up the experiment appropriately._
+See [Running other script]() later.
 
-#### A Minimal Run: Demo Spell
+#### Hello World
 
-All scripts in this guide assume that `$PASH_TOP` is set to the top directory of the PaSh codebase (i.e., `~/pash` on `deathstar` or `/pash` in docker)
+The simplest script to try out `pash` is `hello-world`, which applies an expensive regular expression over the system dictionary file.
+
+To run `hello-world.sh` normally, you would call `bash` on it:
+```sh
+time bash $PASH_TOP/evaluation/intro/hello-world.sh
+```
+
+To run it in parallel:
+```sh
+time $PASH_TOP/pa.sh $PASH_TOP/evaluation/intro/hello-world.sh
+```
+
+#### A More Interesting Script: Demo Spell
 
 We will use `demo-spell.sh` --- a pipeline based [on the original Unix spell program](https://dl.acm.org/doi/10.1145/3532.315102) by Johnson --- to confirm that the infrastructure works as expected.
 
-First, let's take a quick look at `spell`:
+First, we need to setup the appropriate input files for this script to execute:
 
 ```sh
-cd $PASH_TOP/evaluation
+cd $PASH_TOP/evaluation/intro/input
+./setup.sh
+```
+
+After inputs are configured, let's take a quick look at `spell`:
+
+```sh
+cd $PASH_TOP/evaluation/intro/
 cat demo-spell.sh
 ```
 
@@ -91,7 +145,7 @@ time ./demo-spell.sh > spell.out
 ```
 
 We prefix the script with the `time` command, which should also output how long it took for the script to execute.
-On `deathstar`, it takes about 41s.
+On our evaluation infrastructure, the script takes about 41s.
 
 To execute it using `pash` with 2x-parallelism:
 
@@ -314,7 +368,7 @@ Now the compiler has several stages:
  A few interesting fragments are shown below.
  
  The [ast_to_ir.py](https://github.com/andromeda/pash/blob/main/compiler/ast_to_ir.py) contains a case statement that essentially pattern-matches on constructs of the shells script AST and then compiles them accordingly.
- ```Python
+```Python
  compile_cases = {
         "Pipe": (lambda fileIdGen, config:
                  lambda ast_node: compile_node_pipe(ast_node, fileIdGen, config)),
@@ -340,7 +394,6 @@ The following function from [ir.py](https://github.com/andromeda/pash/blob/main/
         ## Initialize the new_node list
         new_nodes = []
         # ... more code ...
-    
 ```
 
 Another interesting fragment is in [ir_to_ast.py](https://github.com/andromeda/pash/blob/main/compiler/ir_to_ast.py), which translates the parallel dataflow graph back to an AST.
