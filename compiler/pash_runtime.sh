@@ -121,6 +121,17 @@ tempfile()
     mktemp --tmpdir="$PASH_TMP_PREFIX" -u pash_XXXXXXXXXX
 }
 
+declare_vars()
+{
+    local vars_file="${1?File not given}"
+    # source "$RUNTIME_DIR/pash_declare_vars.sh" "$vars_file"
+
+    pash_redir_output echo "Writing vars to: $vars_file"
+
+    declare -p > "$vars_file"
+    declare -f >> "$vars_file"
+}
+
 export -f pash_redir_output
 export -f pash_redir_all_output
 export -f log_time_from
@@ -204,7 +215,7 @@ pash_redir_output echo "$$: (1) Previous set state: $pash_previous_set_status"
 
 ## Prepare a file with all shell variables
 pash_runtime_shell_variables_file="$(tempfile)"
-source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
+declare_vars "$pash_runtime_shell_variables_file"
 pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_variables_file"
 
 ## Abort script if variable is unset
@@ -294,7 +305,8 @@ pash_runtime_time_pre_cleanup=$(date +"%s%N")
 ## Source back the output variables of the compiled script. 
 ## In all cases we should have executed a script
 pash_redir_output echo "$$: (7) Recovering BaSh variables from: $pash_output_variables_file"
-source "$RUNTIME_DIR/pash_source_declare_vars.sh" $pash_output_variables_file
+declare_vars "$pash_output_variables_file"
+# source "$RUNTIME_DIR/pash_source_declare_vars.sh" "$pash_output_variables_file"
 
 ## Save the previous `set` state to a variable
 pash_redir_output echo "$$: (7) Reading current BaSh set state from: ${pash_output_set_file}"
