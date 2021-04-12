@@ -144,10 +144,26 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     ## requirement for reading from stdin.
     pash_quick_abort_time_start=$(date +"%s%N")
 
+    ## Setup all tempfiles at once
+    pash_seq_eager_output="$(tempfile)"
+    pash_seq_output="$(tempfile)"
+    pash_seq_eager2_output="$(tempfile)"
+    pash_tee_stdin="$(tempfile)"
+    pash_tee_stdout1="$(tempfile)"
+    pash_tee_stdout2="$(tempfile)"
+    pash_par_eager_output="$(tempfile)"
+    mkfifo "$pash_seq_eager_output" \
+           "$pash_seq_output" \
+           "$pash_seq_eager2_output" \
+           "$pash_tee_stdin" \
+           "$pash_tee_stdout1" \
+           "$pash_tee_stdout2" \
+           "$pash_par_eager_output"
+    log_time_from "$pash_quick_abort_time_start" "Tempfile preparation"
+
+    pash_quick_abort_time_after_tempfiles=$(date +"%s%N")
+
     ## (D) Sequential command
-    pash_seq_eager_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    pash_seq_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    mkfifo "$pash_seq_eager_output" "$pash_seq_output"
     setsid "$RUNTIME_DIR/pash_wrap_vars.sh" \
         $pash_runtime_shell_variables_file \
         $pash_output_variables_file \
@@ -158,22 +174,15 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     log "Sequential pid: $pash_seq_pid"
 
     ## (E) The sequential output eager
-    pash_seq_eager2_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    mkfifo "$pash_seq_eager2_output"
     seq_output_eager_pid=$(spawn_eager "sequential output" "$pash_seq_output" "$pash_seq_eager2_output")
 
     ## (A) Redirect stdin to `tee`
-    pash_tee_stdin="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    mkfifo "$pash_tee_stdin"
     ## The redirections below are necessary to ensure that the background `cat` reads from stdin.
     { setsid cat > "$pash_tee_stdin" <&3 3<&- & } 3<&0
     pash_input_cat_pid=$!
     log "Spawned input cat with pid: $pash_input_cat_pid"
 
     ## (B) A `tee` that duplicates input to both the sequential and parallel
-    pash_tee_stdout1="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    pash_tee_stdout2="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    mkfifo "$pash_tee_stdout1" "$pash_tee_stdout2"
     # tee_pid=$(spawn_tee "$pash_tee_stdin" "$pash_tee_stdout1" "$pash_tee_stdout2")
     tee "$pash_tee_stdout1" > "$pash_tee_stdout2" < "$pash_tee_stdin" &
 
@@ -182,16 +191,13 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     seq_input_eager_pid=$(spawn_eager "sequential input" "$pash_tee_stdout1" "$pash_seq_eager_output")
 
     ## (F) Second eager
-    pash_par_eager_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    mkfifo "$pash_par_eager_output"
     par_eager_pid=$(spawn_eager "parallel input" "$pash_tee_stdout2" "$pash_par_eager_output")
 
     ## Run the compiler
     setsid python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
     pash_compiler_pid=$!
     log "Compiler pid: $pash_compiler_pid"
-    log_time_from "$pash_quick_abort_time_start" "Phases (A-F)"
-
+    log_time_from "$pash_quick_abort_time_after_tempfiles" "Phases (A-F)"
 
     ## Wait until one of the two (original script, or compiler) die
     pash_quick_abort_time_before_wait=$(date +"%s%N")
