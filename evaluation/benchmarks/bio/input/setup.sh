@@ -6,8 +6,9 @@ NC='\033[0m'
 IN=${BIO4:-$PASH_TOP/evaluation/benchmarks/bio}
 IN_NAME=${IN_N:-input_all.txt}
 if [[ $1 == "-c" ]]; then
-    rm -rf input
-    rm -rf output
+    rm -rf *.bam
+    rm -rf *.sam
+    rm -rf ../output
     exit
 fi
 
