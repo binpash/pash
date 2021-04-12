@@ -2,7 +2,7 @@
 
 ## Introductory Material
 
-The following resources offer
+The following resources offer overviews of important PaSh components.
 
 * Short tutorial: [introduction](./tutorial.md#introduction), [installation](./tutorial.md#installation), [execution](./tutorial.md#running-scripts), and [next steps](./tutorial.md#what-next)
 * Annotations: [Parallelizability](../annotations#main-parallelizability-classes) | [study](../annotations#parallelizability-study-of-commands-in-gnu--posix) | [example 1](../annotations#a-simple-example-chmod) | [example 1](../annotations#another-example-cut) | [howto](../annotations#how-to-annotate-a-command)
@@ -12,11 +12,11 @@ The following resources offer
 
 ## Videos & Video Presentations
 
-The following presentations are in reverse chronological order:
+The following presentations offer short PaSh introductions:
 
-* PaSh: Light-touch Data-Parallel Shell Processing (coming soon!)
-* [PaSh: A parallelizing shell](https://www.youtube.com/watch?v=UAkfruEvLTk&list=PLdrM8z9GiOahvmZsPn1CXf4EVjy8OA9aq&index=11&t=76s) (Athens PL Seminar 2020)
-* [PaSh: A parallelizing shell](https://www.youtube.com/watch?v=3uqYJo1v1E0) (POPL 2021 SRC 3-min Teaser)
+* PaSh: Light-touch Data-Parallel Shell Processing (EuroSys'21: 10-minute | 20-minute) (coming soon!)
+* PaSh: A parallelizing shell (Athens PL Seminar 2020: [~40 minutes](https://www.youtube.com/watch?v=UAkfruEvLTk&list=PLdrM8z9GiOahvmZsPn1CXf4EVjy8OA9aq&index=11&t=76s))
+* PaSh: A parallelizing shell (POPL 2021 SRC Teaser: [3 minutes](https://www.youtube.com/watch?v=3uqYJo1v1E0))
 
 ## Academic Papers
 
@@ -43,6 +43,7 @@ Michael Greenberg, Konstantinos Kallas, Nikos Vasilakis
   series = {HotOS '19}
 }
 ```
+</details>
 
 #### PaSh: Light-touch Data-Parallel Shell Processing
 Nikos Vasilakis*, Konstantinos Kallas*, Konstantinos Mamouras, Achilles Benetopoulos, Lazar Cvetković  
