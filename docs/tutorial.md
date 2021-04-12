@@ -3,20 +3,75 @@
 This tutorial covers the `pash`'s main functionality and key contributions as presented in the EuroSys paper.
 Here is the table of contents:
 
-1. [Installation](#installation)
-1. [Quick check](#quick-check)
-2. [Video Tutorial](#video-tutorial)
-3. [Claims](#claims)
-4. [Claim 1: Parallelizability Study & Annotation Language](#claim-1-parallelizability-study--annotation-language)
-5. [Claim 2: A Dataflow-based Parallelizing Compiler](#claim-2-a-dataflow-based-parallelizing-compiler)
-6. [Claim 3: Runtime primitives](#claim-3-runtime-primitives)
-7. [Experimental Evaluation](#experimental-evaluation)
-8. [Support & Epilogue](#support--epilogue)
+0. [Introduction](#introduction)
 
-The recommended exploration path the following 
-  (1) start with the [quick check](#quick-check), to confirm you can access everything (about 5 minutes)
-  (2) watch the video walkthrough (artifact-video.mp4) of the entire artifact (about 20 minutes)
-  (3) then cover details in this tutorial as necessary (the [full experimental run](#experimental-evaluation) takes several hours)
+1. [Installation](#installation)
+2. [Running Introductory Scripts](#running-introductory-scripts)
+3. [Experimental Evaluation](#experimental-evaluation)
+
+4. [Parallelizability Study & Annotation Language](#parallelizability-study--annotation-language)
+5. [A Dataflow-based Parallelizing Compiler](#a-dataflow-based-parallelizing-compiler)
+6. [Runtime support](#runtime-support)
+
+7. [Epilogue-development](#epilogue-development)
+
+## Introduction
+
+PaSh is a system for parallelizing POSIX shell scripts.
+It has been shown to achieve order-of-magnitude performance improvements, while maintaining the correctness of the sequential scripts with respect to their sequential output.
+
+> N.b.: PaSh is still under heavy development.
+
+Consider the following log-analysis script, applied to many logs 
+
+```sh
+# log-analysis.sh
+cat f1.md f2.md | 
+  tr A-Z a-z |
+  tr -cs A-Za-z '\n' |
+  sort |
+  uniq | 
+  comm -13 dict.txt - > out
+cat out | wc -l | sed 's/$/ mispelled words!/'
+```
+The first `cat` streams two markdown files into a pipeline that converts characters in the stream into lower case, removes punctuation, sorts the stream in alphabetical order, removes duplicate words, and filters out words from a dictionary file (line 1--7).
+A second pipeline (line 7) counts the resulting lines to report the number of misspelled words to the user.
+
+> If you're new to shell scripting, try to run each part of the pipeline separately and observe the output.
+> For example, run `cat f1.md f2.md | tr A-Z a-z` on your terminal to witness the conversion to lower-case.
+
+Visually, the script can be thought as executing as follows:
+
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vQv-Krzb9hxWCbbQC9Zg5knm6SySJrayh3mdZXG3Z4Y6hC4kgQj4PWqYmxNAR-LyKN5Fu9lWHJV0J0F/pub?w=517&amp;h=55">
+
+The first pipeline (left; parts omitted) _sequentially_ processes `f1.md` and `f2.md` through all pipeline stages and writes to `out`.
+After it, executes to completion the second pipeline starts its _sequential_ execution.
+
+PaSh transforms and executes each pipeline in a data-parallel fashion.
+Visually, the parallel script would look like this for 2x-parallelism (i.e., assuming that the computer on which we execute the script has at least two CPUs and that PaSh is invoked with `-w` value of `2`).
+
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vR8AL-gkL7CvqRJYiyX8z20_WcJ68l9JUEinJgI-_jKussb6q33Qlc1saaXx7Cf2pYp8-qjKhYXGu5e/pub?w=517&amp;h=55">
+
+Given a script, PaSh converts it to a dataflow graph, performs a series of semantics-preserving program transformations that expose parallelism, and then converts the dataflow graph back into a POSIX script.
+The new parallel script has POSIX constructs added to explicitly guide parallelism, coupled with PaSh-provided Unix-aware runtime primitives for addressing performance- and correctness-related issues.
+
+#### PaSh Structure
+
+PaSh consist of three main components and a few additional "auxiliary" files and directories. 
+The three main components are:
+
+* [annotations](../annotations/): DSL characterizing commands, parallelizability study, and associated annotations---more specifically, (i) a lightweight annotation language allows command developers to express key parallelizability properties about their commands; (ii) an accompanying parallelizability study of POSIX and GNU commands. guides the annotation language and optimized aggregator library 
+
+* [compiler](../compiler): Shell-Dataflow translations and associated parallelization transformations---given a script, PaSh's compiler converts it to a dataflow graph, performs a series of semantics-preserving program transformations that expose parallelism, and then converts the dataflow graph back into a POSIX script. 
+
+* [runtime](../runtime): Runtime components such as `eager`, `split`, and associated combiners. apart from POSIX constructs added to guide parallelism explicitly, PaSh provides Unix-aware runtime primitives for addressing performance- and correctness-related issues.
+
+These three components implement the contributions presented [in the EuroSys paper](https://arxiv.org/pdf/2007.09436.pdf).
+They are expected to be usable with minimal effort, through a few different installation means presented below.
+
+The auxiliary directories are:
+* [docs](../docs): Design documents, tutorials, installation instructions, etc.
+* [evaluation](../evaluation): Shell pipelines and script used for the evaluation of `pash`.
 
 ## Installation
 
@@ -79,30 +134,11 @@ docker run --name pash-play -it pash/18.04
 PaSh can be found in the container's `/pash` directory, so run `cd pash; git pull` to fetch the latest updates.
 More information in the [pash-on-docker guide](./docs/contrib.md#pash-on-docker-a-pocket-guide).
 
-# Running Scripts
+## Running Scripts
 
 All scripts in this guide assume that `$PASH_TOP` is set to the top directory of the PaSh codebase (e.g., `~/pash` on `deathstar` or `/pash` in docker)
 
 > You can avoid including `$PASH_TOP` before `pa.sh` by adding `PASH_TOP` in your `PATH`, which amounts to adding an `export PATH=$PATH:$PASH_TOP` in your shell configuration file.
-
-#### PaSh Structure
-
-PaSh consist of three main components and a few additional "auxiliary" files and directories. 
-The three main components are:
-
-* [annotations](../annotations/): DSL characterizing commands, parallelizability study, and associated annotations.
-* [compiler](../compiler): Shell-Dataflow translations and associated parallelization transformations.
-* [runtime](../runtime): Runtime component — e.g., `eager`, `split`, and associated combiners.
-
-These three components implement the contributions presented [in the EuroSys paper](https://arxiv.org/pdf/2007.09436.pdf).
-They are expected to be usable with minimal effort, through a few different means presented earlier.
-
-The auxiliary directories are:
-* [docs](../docs): Design documents, tutorials, installation instructions, etc.
-* [evaluation](../evaluation): Shell pipelines and script used for the evaluation of `pash`.
-
-_Most benchmark sets in the evaluation infrastructure include a `input/setup.sh` script for fetching inputs and setting up the experiment appropriately._
-See [Running other script]() later.
 
 #### Hello World
 
@@ -120,58 +156,46 @@ time $PASH_TOP/pa.sh $PASH_TOP/evaluation/intro/hello-world.sh
 
 #### A More Interesting Script: Demo Spell
 
-We will use `demo-spell.sh` --- a pipeline based [on the original Unix spell program](https://dl.acm.org/doi/10.1145/3532.315102) by Johnson --- to confirm that the infrastructure works as expected.
-
-First, we need to setup the appropriate input files for this script to execute:
-
-```sh
-cd $PASH_TOP/evaluation/intro/input
-./setup.sh
+First, `cd` to `$PASH_TOP/evaluation/intro`:
+```sh 
+cd $PASH_TOP/evaluation/intro
 ```
-
-After inputs are configured, let's take a quick look at `spell`:
-
+We will use `demo-spell.sh` --- a pipeline based [on the original Unix spell program](https://dl.acm.org/doi/10.1145/3532.315102) by Johnson --- to confirm that the infrastructure works as expected. We need to setup the appropriate input files for this script to execute:
 ```sh
-cd $PASH_TOP/evaluation/intro/
+./input/setup.sh
+```
+After inputs are configured, let's take a quick look at `spell`:
+```sh
 cat demo-spell.sh
 ```
-
 The script streams the input file into a pipeline that converts characters to lower case, removes punctuation, sorts in alphabetical order,  removes duplicate words, and filters out words from a dictionary file.
 
 Next, let's run it on sequential inputs:
-
 ```sh
 time ./demo-spell.sh > spell.out
 ```
-
 We prefix the script with the `time` command, which should also output how long it took for the script to execute.
 On our evaluation infrastructure, the script takes about 41s.
 
 To execute it using `pash` with 2x-parallelism:
-
 ```sh
 time $PASH_TOP/pa.sh -w 2 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
 ``` 
-
 On `deathstar`, the 2x-parallel script takes about 28s.
 
 You can check that the results are correct by:
-
 ```sh
 diff spell.out pash-spell.out
 ```
-
-You could also execute it with 8x-parallelism using:
+Assuming you have more than 8 CPUs, you could also execute it with 8x-parallelism using:
 ```sh
 time $PASH_TOP/pa.sh -w 8 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
 ``` 
-
 which takes about 14s.
 
 To view the parallel code emitted by the compiler, you can inspect the log:
-
 ```sh
-vim pash.log
+cat pash.log
 ```
 
 The contents of the parallel script are shown after the line `(4) Executing script in ...` and for 2x parallelism (`--width 2`) they should look like this:
@@ -213,23 +237,9 @@ rm -f "#file2"
 
 Note that most stages in the pipeline are repeated twice and proceed in parallel (i.e., using `&`). This completes the "quick-check".
 
-## Video Tutorial
+## Parallelizability Study & Annotation Language
 
-To help getting started with the artifact, we recorded a 20-minute tutorial video, found in `artifact-video.mp4`, that explains and demonstrates PaSh's main claims and functionality.
-
-## Claims
-
-Our paper claims the following contributions:
-* [Annotations](#claim-1-parallelizability-study--annotation-language): A study of the parallelizability of shell commands, and a lightweight annotation language for commands that are executable in a data-parallel manner.
-* [Compiler](#claim-2-a-dataflow-based-parallelizing-compiler): A dataflow model and associated transformations that expose data parallelism while preserving the semantics of the sequential program.
-* [Runtime](#claim-3-runtime-primitives): A set of runtime components, addressing the correctness and performance challenges arising during the execution of parallel shell scripts.
-
-In the text below (but also more generally, in our discussions) we call first contribution "Annotations", the second contribution "Compiler", and the third contribution "Runtime".
-
-## Claim 1: Parallelizability Study & Annotation Language
-
-The first claim is broken down into two parts.
-The first part is a parallelizability study of commands in POSIX and GNU Coreutils, and the second part is an annotation language for describing the parallelizability properties of individual commands.
+PaSh includes (i) a parallelizability study of commands in POSIX and GNU Coreutils, and (ii) an annotation language for describing the parallelizability properties of individual commands.
 The parallelizability study informed the design of the annotation language, which was in turn used to capture the key parallelizability characteristics in many of these commands.
 
 #### Parallelizability Study of Commands in GNU & POSIX
@@ -334,7 +344,7 @@ The list identified by “short-long” contains a correspondence of short and l
 
 Note that currently PaSh's `cut` annotation engine does not handle the `empty-args-stdin` option and the `short-long` key, so the annotation looks slightly different. We are continuously working on the annotations engine to improve it to handle a wider range of annotations. 
 
-## Claim 2: A Dataflow-based Parallelizing Compiler
+## A Dataflow-based Parallelizing Compiler
 
 The bulk of PaSh is in the [compiler](../compiler/) directory.
 A diagram of the compiler is shown in [docs/pash_architecture.png](../docs/pash_architecture.png).
@@ -418,7 +428,7 @@ def ir2ast(ir, args):
 
 This AST is then unparsed back into a (parallel) shell script.
 
-## Claim 3: Runtime primitives
+## Runtime primitives
 
 PaSh includes a small library of runtime primitives for supporting the runtime execution of parallel scripts emitted by the compiler.
 
@@ -481,6 +491,9 @@ Utility functions such as `read` and `help`, common across our aggregator librar
 PaSh’s library currently several aggregators, many of which are usable by more than one command or flag. For example, the aggregator shown above is shared among `wc`, `wc -lw`, `wc -lm` etc.
 
 ## Experimental Evaluation
+
+_Most benchmark sets in the evaluation infrastructure include a `input/setup.sh` script for fetching inputs and setting up the experiment appropriately._
+See [Running other script]() later.
 
 This section provides detailed instructions on how to replicate parts of the experimental evaluation of the system.
 
