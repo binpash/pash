@@ -396,9 +396,6 @@ dgsh() {
     echo executing DGSH $(date) | tee -a "$seq_times_file"
     echo '' >> "$seq_times_file"
 
-
-
-
     export VOC=/usr/share/dict/words
     export IN=$PASH_TOP/evaluation/benchmarks/dgsh/input
     export FULL=$IN/dblp.xml
@@ -423,28 +420,46 @@ dgsh() {
 
 
 posh() {
-    cd posh
-    if [ -e ./seq.res ]; then
-        echo "skipping $(basename $(pwd))/seq.res"
-        return 0
+
+    seq_times_file="seq.res"
+    seq_outpus_suffix="seq.out"
+    outputs_dir="outputs"
+    if [ -e "posh/$seq_times_file" ]; then
+      echo "skipping posh/$seq_times_file"
+      return 0
     fi
-    cd input
-    ./setup.sh
+
+    cd posh
+      
+    cd ./input/
+    ./setup.sh -full
     cd ..
-    echo '' > seq.res
-    echo executing posh $(date) | tee -a ./seq.res
 
-    #export IN=$PASH_TOP/evaluation/benchmarks/posh/input
+    mkdir -p "$outputs_dir"
+  
+    names_scripts=(
+      "discat;1"
+      "convert;2"
+      "raytracing;3"
+      # "zannotate;4" where is zannotate binary
+    )
+
+
+    touch "$seq_times_file"
+    echo executing posh $(date) | tee -a "$seq_times_file"
+    echo '' >> "$seq_times_file"
+
     export OUT=$PASH_TOP/evaluation/benchmarks/posh/input/output
-
-    echo discat: $({ time ./1.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo convert: $({ time ./2.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo raytracing: $({ time ./3.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    #echo zannotate: $({ time ./4.sh > /dev/null; } 2>&1) | tee -a ./seq.res where is zannotate binary
+    for name_script in ${names_scripts[@]}
+    do
+      IFS=";" read -r -a name_script_parsed <<< "${name_script}"
+      name="${name_script_parsed[0]}"
+      script="${name_script_parsed[1]}"
+      printf -v pad %30s
+      padded_script="${name}.sh:${pad}"
+      padded_script=${padded_script:0:30}
+      outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+      echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+    done
+    cd ..
 }
-
-#posh
-#poets
-#aliases
-#dgsh
-#bio
