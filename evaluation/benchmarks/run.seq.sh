@@ -252,34 +252,59 @@ poets(){
 
 
 aliases(){
-  cd aliases/
-  if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd))/seq.res"
+  seq_times_file="seq.res"
+  outputs_suffix="seq.out"
+  outputs_dir="outputs"
+  if [ -e "aliases/${seq_times_file}" ]; then
+    echo "skipping aliases/${seq_times_file}"
     return 0
   fi
 
-  cd meta/
-  ./setup.sh
-  cd ..
-  echo '' > seq.res
-  echo executing aliases $(date) | tee -a ./seq.res
-  cd select
-  export WAV=$PASH_TOP/evaluation/benchmarks/aliases/meta/wav
-  export JPG=$PASH_TOP/evaluation/benchmarks/aliases/meta/jpg
-  export RTF=$PASH_TOP/evaluation/benchmarks/aliases/meta/rtf
-  export GIT=$PASH_TOP/evaluation/benchmarks/aliases/meta/linux
-  export IN=$PASH_TOP/evaluation/benchmarks/aliases/meta/
-  export OUT=$PASH_TOP/evaluation/benchmarks/aliases/meta/out
-  echo tomp3: $({ time ./1.tomp3.sh > /dev/null; } 2>&1) | tee -a ../seq.res
-  echo unrtf: $({ time ./2.unrtf.sh > /dev/null; } 2>&1) | tee -a ../seq.res
-  echo convertjpg: $({ time ./3.resiz.sh > /dev/null; } 2>&1) | tee -a ../seq.res
-  #echo gitkernel: $({ time ./4.gitkernel.sh > /dev/null; } 2>&1) | tee -a ../seq.res  FIXME need complex grep command
-  echo apachelog: $({ time ./5.apachelog.sh > /dev/null; } 2>&1) | tee -a ../seq.res
-  echo msg: $({ time ./6.msg.sh > /dev/null; } 2>&1) | tee -a ../seq.res 
-  echo nginx: $({ time ./7.nginx.sh > /dev/null; } 2>&1) | tee -a ../seq.res
-  echo varlog: $({ time ./8.varlog.sh > /dev/null; } 2>&1) | tee -a ../seq.res
-}
+  cd aliases/
 
+  cd input/
+  ./setup.sh
+  ./install-deps.sh
+  cd ..
+
+  mkdir -p "$outputs_dir"
+
+  names_scripts=(
+    #"tomp3;1.tomp3"
+    #"unrtf;2.unrtf"
+    #"convertjpg;3.resiz"
+    # "gitkernel;4.gitkernel" # needs complex grep command
+    "apachelog;5.apachelog"
+    "msg;6.msg"
+    "nginx;7.nginx"
+    "varlog;8.varlog"
+  )
+
+  touch "$seq_times_file"
+  echo executing aliases $(date) | tee -a "$seq_times_file"
+  echo '' >> "$seq_times_file"
+
+  export WAV=$PASH_TOP/evaluation/benchmarks/aliases/input/wav
+  export JPG=$PASH_TOP/evaluation/benchmarks/aliases/input/jpg
+  export RTF=$PASH_TOP/evaluation/benchmarks/aliases/input/rtf
+  export GIT=$PASH_TOP/evaluation/benchmarks/aliases/input/linux
+  export IN=$PASH_TOP/evaluation/benchmarks/aliases/input/
+  export OUT=$PASH_TOP/evaluation/benchmarks/aliases/input/out
+  for name_script in ${names_scripts[@]}
+  do
+    IFS=";" read -r -a name_script_parsed <<< "${name_script}"
+    name="${name_script_parsed[0]}"
+    script="${name_script_parsed[1]}"
+    printf -v pad %30s
+    padded_script="${name}.sh:${pad}"
+    padded_script=${padded_script:0:30}
+
+    outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+
+    echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+  done
+  cd ..
+}
 
 bio() {
   cd bio
@@ -369,8 +394,8 @@ posh() {
 
 
 
-posh
+#posh
 #poets
-#aliases
-dgsh
-
+aliases
+#dgsh
+#

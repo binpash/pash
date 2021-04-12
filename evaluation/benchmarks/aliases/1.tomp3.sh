@@ -3,8 +3,8 @@
 # tag: wav-to-mp3
 set -e
 
-IN=${WAV:-$PASH_TOP/evaluation/benchmarks/aliases/meta/wav}
-OUT=${OUT:-PASH_TOP/evaluation/benchmarks/aliases/meta/out}
+IN=${WAV:-$PASH_TOP/evaluation/benchmarks/aliases/input/wav}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/aliases/input/out}
 
 find $IN -name '*.wav' | 
     xargs -n1 basename |
