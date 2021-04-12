@@ -128,16 +128,7 @@ kill_wait_pg()
 ##       Then we would have to have a big script for the compiler.
 ##       Only these two childs should be spawned, and then we can wait until any of them finishes.
 ##
-
-## We start by catching a trap for SIGCHLD to instantly exit if sequential is done
-
-# function child_exited()
-# {
-#     log "Child exited!"
-
-# }
-# trap redirect_null CHLD
-# echo "SIGCHLD trap set"
+##       Alternatively, we could implement this here in C, having finer-grained control over the concurrent processes.
 
 if [ "$pash_execute_flag" -eq 1 ]; then
     ## We start with the sequential command so that it can finish first if it has no
@@ -201,16 +192,19 @@ if [ "$pash_execute_flag" -eq 1 ]; then
 
     ## Wait until one of the two (original script, or compiler) die
     pash_quick_abort_time_before_wait=$(date +"%s%N")
-    alive_pids=$(still_alive)
-    log "Still alive: $alive_pids"
-    while `list_include_item "$alive_pids" "$pash_seq_pid"` && `list_include_item "$alive_pids" "$pash_compiler_pid"` ; do
-        ## Wait for either of the two to complete
-        wait -n "$pash_seq_pid" "$pash_compiler_pid"
-        completed_pid_status=$?
-        log "Process exited with return code: $completed_pid_status"
-        alive_pids=$(still_alive)
-        log "Still alive: $alive_pids"
-    done
+    # alive_pids=$(still_alive)
+    # log "Still alive: $alive_pids"
+    # while `list_include_item "$alive_pids" "$pash_seq_pid"` && `list_include_item "$alive_pids" "$pash_compiler_pid"` ; do
+    #     ## Wait for either of the two to complete
+    #     wait -n "$pash_seq_pid" "$pash_compiler_pid"
+    #     completed_pid_status=$?
+    #     log "Process exited with return code: $completed_pid_status"
+    #     alive_pids=$(still_alive)
+    #     log "Still alive: $alive_pids"
+    # done
+    wait -n "$pash_seq_pid" "$pash_compiler_pid"
+    completed_pid_status=$?
+    log "Process exited with return code: $completed_pid_status"
     log_time_from "$pash_quick_abort_time_before_wait" "Waiting"
 
     ## If the sequential is still alive we want to see if the compiler succeeded
