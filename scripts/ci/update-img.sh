@@ -13,6 +13,7 @@ docker start pash-playground
 docker exec  pash-playground bash -c 'cd /pash; git pull'
 docker stop  pash-playground
 
+
 docker commit $(docker ps -a | grep pash-playground | cut -f1 -d' ')  pash/18.04:latest
 docker save pash/18.04:latest | gzip > pash-docker.tar.gz
 

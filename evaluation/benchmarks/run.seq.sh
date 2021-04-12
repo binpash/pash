@@ -152,8 +152,11 @@ max-temp(){
 }
 
 analytics-mts(){
-  if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd))/seq.res"
+  times_file="seq.res"
+  outputs_suffix="seq.out"
+  outputs_dir="outputs"
+  if [ -e "analytics-mts/${times_file}" ]; then
+    echo "skipping analytics-mts/${times_file}"
     return 0
   fi
 
@@ -163,13 +166,23 @@ analytics-mts(){
   ./setup.sh
   cd ..
 
-  echo '' > seq.res
-  echo executing MTS analytics $(date) | tee -a ./seq.res
-  echo 1.sh: $({ time ./1.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 2.sh: $({ time ./2.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 3.sh: $({ time ./3.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 4.sh: $({ time ./4.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-#FIXME: echo 5.sh: $({ time ./5.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+  mkdir -p "$outputs_dir"
+
+  touch "$times_file"
+  echo executing MTS analytics $(date) | tee -a "$times_file"
+  ## FIXME 5.sh is not working yet
+  for number in `seq 4`
+  do
+    script="${number}"
+    
+    printf -v pad %20s
+    padded_script="${script}.sh:${pad}"
+    padded_script=${padded_script:0:20}
+
+    outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+
+    echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
+  done
   cd ..
 }
 
@@ -295,12 +308,13 @@ dgsh() {
         echo "skipping $(basename $(pwd))/seq.res"
         return 0
     fi
-    ./setup.sh
+    ./input/setup.sh
     echo '' > seq.res
     echo executing dgsh $(date) | tee -a ./seq.res
 
     export VOC=/usr/share/dict/words
     export IN=$PASH_TOP/evaluation/benchmarks/dgsh/input
+    export MINI=$IN/mini.xml
     export OUT=$PASH_TOP/evaluation/benchmarks/dgsh/input
     export BIN=/usr/local/bin
 
@@ -308,21 +322,21 @@ dgsh() {
 
     echo compressionbench: $({ time ./1.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo gitstats: $({ time ./2.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo cmetrics: $({ time new_scripts/3.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+    echo cmetrics: $({ time manual/3.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo dublicatefiles: $({ time ./4.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo highlightwords: $({ time ./5.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo wordproperties: $({ time news_cripts/6.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
+    echo wordproperties: $({ time ./6.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
     #echo weatherreport: $({ time ./7.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo textproperties: $({ time ./8.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
     echo staticsymbols: $({ time ./9.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo hierarchymap: $({ time ./10.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+    #echo hierarchymap: $({ time ./10.sh > /dev/null; } 2>&1) | tee -a ./seq.res     #dont know how it works
     #echo plotgit: $({ time ./11.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo parallelword: $({ time ./12.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
+    echo parallelword: $({ time ./manual/12.sh > /dev/null; } 2>&1) | tee -a ./seq.res 
     #echo venuauthor: $({ time ./13.sh > /dev/null; } 2>&1) | tee -a ./seq.res #FIXME
     #echo 2dfourier: $({ time ./14.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo nuclear: $({ time new_scripts/15.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+    #echo nuclear: $({ time ./15.sh > /dev/null; } 2>&1) | tee -a ./seq.res Cannot the trace the error, the script runs fine
     #echo fft: $({ time ./16.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-    echo reordercol: $({ time ./17.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+    echo reordercol: $({ time ./manual/17.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo dirlisting: $({ time ./18.sh > /dev/null; } 2>&1) | tee -a ./seq.res
 }
 
@@ -334,12 +348,14 @@ posh() {
         echo "skipping $(basename $(pwd))/seq.res"
         return 0
     fi
+    cd input
     ./setup.sh
+    cd ..
     echo '' > seq.res
     echo executing posh $(date) | tee -a ./seq.res
 
     #export IN=$PASH_TOP/evaluation/benchmarks/posh/input
-    export OUT=$PASH_TOP/evaluation/benchmarks/posh/output
+    export OUT=$PASH_TOP/evaluation/benchmarks/posh/input/output
 
     echo discat: $({ time ./1.sh > /dev/null; } 2>&1) | tee -a ./seq.res
     echo convert: $({ time ./2.sh > /dev/null; } 2>&1) | tee -a ./seq.res
@@ -353,8 +369,8 @@ posh() {
 
 
 
-#posh
+posh
 #poets
 #aliases
-#dgsh
+dgsh
 
