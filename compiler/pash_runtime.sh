@@ -102,8 +102,25 @@ pash_redir_all_output()
     fi
 }
 
+log()
+{
+    pash_redir_output echo "$$:" "$@"
+}
+
+log_time_from()
+{
+    local start_time="$1"
+    local prefix="$2"
+    local end_time=$(date +"%s%N")
+    local time_ms=$(echo "scale = 3; ($end_time-$start_time)/1000000" | bc)
+    log "${prefix} Execution time: $time_ms ms"
+}
+
 export -f pash_redir_output
 export -f pash_redir_all_output
+export -f log_time_from
+
+pash_runtime_time_start=$(date +"%s%N")
 
 ## File directory
 RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
@@ -215,6 +232,7 @@ pash_compiled_script_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
 # pash_redir_output cat $1
 # ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file $1
 
+log_time_from "$pash_runtime_time_start" "Preparation"
 
 if [ "$pash_speculation_flag" -eq 1 ]; then
     ## Count the execution time
@@ -222,6 +240,7 @@ if [ "$pash_speculation_flag" -eq 1 ]; then
     source "$RUNTIME_DIR/pash_runtime_quick_abort.sh"
     pash_runtime_final_status=$?
 else
+    pash_runtime_time_pre_compiler=$(date +"%s%N")
     python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
     pash_runtime_return_code=$?
     pash_redir_output echo "$$: Compiler exited with code: $pash_runtime_return_code"
@@ -229,6 +248,8 @@ else
         pash_redir_output echo "$$: ERROR: Compiler failed with error code: $pash_runtime_return_code"
         exit 1
     fi
+
+    log_time_from "$pash_runtime_time_pre_compiler" "Compiler"
 
     ##
     ## (3), (4), (5)
@@ -251,15 +272,18 @@ fi
 ## (6)
 ##
 
-pash_exec_time_end=$(date +"%s%N")
+# pash_exec_time_end=$(date +"%s%N")
 
 ## TODO: Maybe remove the temp file after execution
 
 ## We want the execution time in milliseconds
-if [ "$pash_output_time_flag" -eq 1 ]; then
-    pash_exec_time_ms=$(echo "scale = 3; ($pash_exec_time_end-$pash_exec_time_start)/1000000" | bc)
-    pash_redir_output echo "Execution time: $pash_exec_time_ms  ms"
-fi
+# if [ "$pash_output_time_flag" -eq 1 ]; then
+#     pash_exec_time_ms=$(echo "scale = 3; ($pash_exec_time_end-$pash_exec_time_start)/1000000" | bc)
+#     pash_redir_output echo "Execution time: $pash_exec_time_ms  ms"
+# fi
+log_time_from "$pash_exec_time_start" ""
+
+pash_runtime_time_pre_cleanup=$(date +"%s%N")
 
 ## Source back the output variables of the compiled script. 
 ## In all cases we should have executed a script
@@ -278,6 +302,8 @@ pash_previous_set_status="$(cat $pash_output_set_file)"
 pash_redir_output echo "$$: (7) Current PaSh set state: $-"
 source "$RUNTIME_DIR/pash_set_from_to.sh" "$-" "$(cat $pash_output_set_file)"
 pash_redir_output echo "$$: (7) Reverted to BaSh set state before exiting: $-"
+
+log_time_from "$pash_runtime_time_pre_cleanup" "Cleanup"
 
 pash_redir_output echo "$$: (7) Reverting last BaSh exit code: $pash_runtime_final_status"
 (exit "$pash_runtime_final_status")

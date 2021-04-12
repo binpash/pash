@@ -13,15 +13,6 @@ log()
     pash_redir_output echo "$$: (QAbort) " "$@"
 }
 
-log_time_from()
-{
-    local start_time="$1"
-    local prefix="$2"
-    local end_time=$(date +"%s%N")
-    local time_ms=$(echo "scale = 3; ($end_time-$start_time)/1000000" | bc)
-    log "$prefix Execution time: $time_ms ms"
-}
-
 # Taken from: https://stackoverflow.com/a/20473191
 # list_include_item "10 11 12" "2"
 function list_include_item {
