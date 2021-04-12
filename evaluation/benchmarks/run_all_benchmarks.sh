@@ -34,3 +34,8 @@ web-index
 web-index_pash
 
 compare_outputs "web-index/outputs"
+
+analytics-mts
+analytics-mts_pash
+
+compare_outputs "analytics-mts/outputs"

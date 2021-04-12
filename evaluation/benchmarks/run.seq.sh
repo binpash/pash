@@ -152,8 +152,11 @@ max-temp(){
 }
 
 analytics-mts(){
-  if [ -e ./seq.res ]; then
-    echo "skipping $(basename $(pwd))/seq.res"
+  times_file="seq.res"
+  outputs_suffix="seq.out"
+  outputs_dir="outputs"
+  if [ -e "analytics-mts/${times_file}" ]; then
+    echo "skipping analytics-mts/${times_file}"
     return 0
   fi
 
@@ -163,13 +166,23 @@ analytics-mts(){
   ./setup.sh
   cd ..
 
-  echo '' > seq.res
-  echo executing MTS analytics $(date) | tee -a ./seq.res
-  echo 1.sh: $({ time ./1.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 2.sh: $({ time ./2.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 3.sh: $({ time ./3.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-  echo 4.sh: $({ time ./4.sh > /dev/null; } 2>&1) | tee -a ./seq.res
-#FIXME: echo 5.sh: $({ time ./5.sh > /dev/null; } 2>&1) | tee -a ./seq.res
+  mkdir -p "$outputs_dir"
+
+  touch "$times_file"
+  echo executing MTS analytics $(date) | tee -a "$times_file"
+  ## FIXME 5.sh is not working yet
+  for number in `seq 4`
+  do
+    script="${number}"
+    
+    printf -v pad %20s
+    padded_script="${script}.sh:${pad}"
+    padded_script=${padded_script:0:20}
+
+    outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+
+    echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
+  done
   cd ..
 }
 
