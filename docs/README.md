@@ -23,15 +23,15 @@ The following presentations offer short PaSh introductions:
 
 The following papers present or use PaSh.
 
-**An Order-aware Dataflow Model for Extracting Shell Script Parallelism**
+**An Order-aware Dataflow Model for Extracting Shell Script Parallelism**  
 Shivam Handa, Konstantinos Kallas, Nikos Vasilakis, Martin Rinard  
 pdf | bibtex
 
-**Automatic Synthesis of Parallel and Distributed Unix Commands with KumQuat**
+**Automatic Synthesis of Parallel and Distributed Unix Commands with KumQuat**  
 Nikos Vasilakis*, Jiasi Shen*, Martin Rinard  
 pdf | bibtex
 
-**The Once and Future Shell**
+**The Once and Future Shell**  
 Michael Greenberg, Konstantinos Kallas, Nikos Vasilakis  
 ```bibtex
 @inproceedings{pash:hotos:21,
@@ -44,7 +44,7 @@ Michael Greenberg, Konstantinos Kallas, Nikos Vasilakis
 }
 ```
 
-**PaSh: Light-touch Data-Parallel Shell Processing**
+**PaSh: Light-touch Data-Parallel Shell Processing**  
 Nikos Vasilakis*, Konstantinos Kallas*, Konstantinos Mamouras, Achilles Benetopoulos, Lazar Cvetković  
 [arxiv](https://arxiv.org/pdf/2007.09436.pdf) | acm | video
 ```bibtex
