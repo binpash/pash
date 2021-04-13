@@ -1,10 +1,14 @@
-#!/bin/bash
+#!/bin/sh
 
-# Would this expansion work:
-# cd "$(dirname "${BASH_SOURCE[0]}")"
-FILE="$(dirname $0)/input/100M.txt"
-DICT="$(dirname $0)/input/sorted_words"
+# FIXME: the following expansion would not have worked
+# (https://github.com/andromeda/pash/issues/218)
+# cd "$(dirname $0)"
 
-echo $FILE $DICT
+[ -z $PASH_TOP ] && { 
+  echo "PASH_TOP not set, maybe $(git rev-parse --show-toplevel)?"
+  exit
+}
+FILE="$PASH_TOP/input/100M.txt"
+DICT="$PASH_TOP/input/sorted_words"
 
 cat "$FILE" | tr A-Z a-z | tr -cs A-Za-z '\n' | sort | uniq | comm -13 $DICT -
