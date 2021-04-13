@@ -463,5 +463,3 @@ posh() {
     done
     cd ..
 }
-
-dgsh
