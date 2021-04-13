@@ -7,6 +7,15 @@ PaSh has recently shifted away from ahead-of-time compilation and towards just-i
 This shift brings many benefits, allowing PaSh to correctly handle expansion and other important details -- but complicates the clear exposition of the two phases.
 A high-level diagram of PaSh's end-to-end operation is shown below:
 
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vSIuacgBR_QFOzawoAdJMmTjgsdnDUkp1DbSjLVlrowlhL6kxqckXXsL7SPoRXKfaC1hw9HQzJitmDP/pub?w=682&amp;h=227">
+
+PaSh pre-processes a sequential script to insert calls to the `pash_runtime.py`.
+It then invokes the script, switching between evaluation, execution, and parallelization at runtime:
+(i) it first parses the script, creating an abstact syntax tree (AST); 
+(ii) it then expands the nodes of the AST, often calling the shell which performs that expansion;
+(iii) it compiles dataflow regions, parts of the AST that are potentially parallelizable, through an iterative optimization proceedure applied over a dataflow graph (DFG); and
+(iv) finally emits the parallel script by translating the DFG to AST and unparsing the AST back to a shell script.
+The compilation takes into account information about individual commands through [annotations](../annotations), and the emitted parallel script uses additional constructs provided by PaSh's [runtime library](../runtime)
 
 A correspondence between blocks in the diagram and Python modules is shown below:
 
