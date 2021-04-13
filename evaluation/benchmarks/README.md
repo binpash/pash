@@ -1,9 +1,10 @@
 # Experimental Evaluation
+Quick Jump: [one-liners](#common-unix-one-liners) | [unix50](#unix-50-from-bell-labs) | [weather analysis](#noaa-weather-analysis) | [web indexing](#wikipedia-web-indexing)
 
 _Most benchmark sets in the evaluation infrastructure include a `input/setup.sh` script for fetching inputs and setting up the experiment appropriately._
 See [Running other script]() later.
 
-#### Section 6.1: Common Unix one-liners
+#### Common Unix one-liners
 
 The one-liner scripts are included in [evaluation/microbenchmarks](../evaluation/microbenchmarks).
 The list of scripts (and their correspondence to the names in the paper) are seen below:
@@ -61,7 +62,7 @@ Note that `-m` supersedes `-s` but `-l` does not supersede any of the two.
 Also note that if you run a script partially, it might end up saving partial results,
 therefore having 0 speedups in some points of the plots.
 
-#### Section 6.2: Unix50 from Bell Labs
+#### Unix50 from Bell Labs
 
 All of the Unix50 pipelines are in [evaluation/unix50/unix50.sh](../evaluation/unix50/unix50.sh).
 The inputs of the pipelines are in [evaluation/unix50/](../evaluation/unix50/).
@@ -112,7 +113,7 @@ These differences are due to the evolution of PaSh and the refinement of its ann
    The issue with these splits is that they do not manage to split the file (since there is only one line)
    leaving the rest of the script to run sequentially.
 
-#### Section 6.3: Use Case: NOAA Weather Analysis
+#### NOAA Weather Analysis
 
 Note that input files that are needed by this script 
 are `curl`ed from a server in the local network and therefore
@@ -169,7 +170,7 @@ is actually higher than what is reported in the paper since it doesn't
 have to write the intermediate files (between preprocessing and processing) to disk.
 
 
-#### Section 6.4: Use Case: Wikipedia Web Indexing
+#### Wikipedia Web Indexing
 
 Note that input files that are needed by this script (complete Wikipedia) 
 are saved locally on the server and therefore this program cannot be run from elsewhere.
