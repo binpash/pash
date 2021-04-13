@@ -5,7 +5,6 @@ set -e
 
 cd $(dirname $0)
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
-cd $PASH_TOP
 
 LOG_DIR=$PWD/install_logs
 mkdir -p $LOG_DIR
@@ -22,7 +21,7 @@ shift "$(( OPTIND - 1 ))"
 
 ## If option -p is set, also run the sudo
 if [ "$prepare_sudo_install_flag" -eq 1 ]; then
-  ./scripts/distro-deps.sh
+  ./distro-deps.sh
 else
   echo "Requires libtool, m4, automake, opam, pkg-config, libffi-dev, python3, pip for python3, a dictionary, bc, bsdmainutils"
   echo "Ensure that you have them by running:"
@@ -38,4 +37,4 @@ else
   done
 fi
 
-./scripts/setup-pash.sh
+./setup-pash.sh
