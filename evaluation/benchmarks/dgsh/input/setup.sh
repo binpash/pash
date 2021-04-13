@@ -2,8 +2,7 @@ if [[ $1 == "-c" ]]; then
     find . ! -name '*.sh' -type f -exec rm -f {} +
     exit 1
 fi
-mkdir -p input
-cd input
+
 if [[ ! -f dblp.xml ]]; then
     wget https://dblp.uni-trier.de/xml/dblp.xml.gz
     gunzip dblp.xml.gz
@@ -17,6 +16,3 @@ if [[ ! -f fid ]]; then
     mv final/* .
     rm -rf final
 fi
-
-
-
