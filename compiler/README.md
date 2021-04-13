@@ -15,7 +15,7 @@ It then invokes the script, switching between evaluation, execution, and paralle
 (ii) it then expands the nodes of the AST, often calling the shell which performs that expansion;
 (iii) it compiles dataflow regions, parts of the AST that are potentially parallelizable, through an iterative optimization proceedure applied over a dataflow graph (DFG); and
 (iv) finally emits the parallel script by translating the DFG to AST and unparsing the AST back to a shell script.
-The compilation takes into account information about individual commands through [annotations](../annotations), and the emitted parallel script uses additional constructs provided by PaSh's [runtime library](../runtime)
+The compilation takes into account information about individual commands through [annotations](../annotations), and the emitted parallel script uses additional constructs provided by PaSh's [runtime library](../runtime).
 
 A correspondence between blocks in the diagram and Python modules is shown below:
 
