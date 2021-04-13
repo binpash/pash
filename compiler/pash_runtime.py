@@ -5,6 +5,7 @@ import sys
 import pickle
 import subprocess
 import jsonpickle
+import traceback
 from datetime import datetime
 
 from ir import *
@@ -29,11 +30,17 @@ import definitions.ir.nodes.dgsh_tee as dgsh_tee
 
 
 runtime_config = {}
-## There are two ways to enter the distributed planner, either by
-## calling pash_runtime.py (which straight away calls the distributed planner),
-## or by calling the distributed planner with the name of an ir file
-## to execute.
+## We want to catch all exceptions here so that they are logged correctly
+## and not just printed to the stderr.
 def main():
+    try:
+        main_body()
+    except Exception:
+        log("Compiler failed, no need to worry, executing original script...")
+        log(traceback.format_exc())
+        exit(1)
+
+def main_body():
     ## Parse arguments
     args = parse_args()
     config.pash_args = args
