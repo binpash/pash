@@ -17,7 +17,8 @@ See [docs/tutorial](docs/tutorial.md) for a longer tutorial.
 ## Installation
 
 On Ubuntu, Fedora, or Arch, run `curl up.pash.ndr.md | sh` to setup PaSh.
-Alternatively, you can clone the repo and run `./scripts/up.sh`
+Alternatively, you can clone the repo and run `./scripts/distro-deps.sh;
+./scripts/setup-pash.sh`
 
 You can also built the Docker container from scratch by running
 ```sh
