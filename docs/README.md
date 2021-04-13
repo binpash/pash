@@ -1,13 +1,14 @@
 # PaSh Documentation
+Quick Jump: [using pash](#using-pash) | [videos](#videos--video-presentations) | [papers](#academic-papers) 
 
-## Introductory Material
+## Using PaSh
 
 The following resources offer overviews of important PaSh components.
 
 * Short tutorial: [introduction](./tutorial.md#introduction), [installation](./tutorial.md#installation), [execution](./tutorial.md#running-scripts), and [next steps](./tutorial.md#what-next)
-* Annotations: [parallelizability](../annotations#main-parallelizability-classes) | [study](../annotations#parallelizability-study-of-commands-in-gnu--posix) | [example 1](../annotations#a-simple-example-chmod) | [example 1](../annotations#another-example-cut) | [howto](../annotations#how-to-annotate-a-command)
-* Compiler: [overview](../compiler)
-* Runtime: [overview](../runtime)
+* Annotations: [parallelizability](../annotations#main-parallelizability-classes), [study](../annotations#parallelizability-study-of-commands-in-gnu--posix), [example 1](../annotations#a-simple-example-chmod), [example 1](../annotations#another-example-cut), [howto](../annotations#how-to-annotate-a-command)
+* Compiler: [intro](../compiler#introduction), [overview](../compiler#compiler-overview), [details](../compiler#zooming-into-fragments), [earlier versions](../compiler#earlier-versions)
+* Runtime: [split](../runtime#stream-splitting), [eager](../runtime#eager-stream-polling),  [cleanup](../runtime#cleanup-logic),  [aggregate](../runtime#aggregators)
 * Scripts: [oneliners](../runtime)
 
 ## Videos & Video Presentations
