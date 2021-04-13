@@ -32,7 +32,6 @@ pdf | bibtex
 
 #### The Once and Future Shell
 Michael Greenberg, Konstantinos Kallas, Nikos Vasilakis  
-[pdf]() | <details><summary>bibtex</summary>
 ```bibtex
 @inproceedings{pash:hotos:21,
   author = {Greenberg, Michael, and Kallas, Konstantinos, and Vasilakis, Nikos},
@@ -43,11 +42,10 @@ Michael Greenberg, Konstantinos Kallas, Nikos Vasilakis
   series = {HotOS '19}
 }
 ```
-</details>
 
 #### PaSh: Light-touch Data-Parallel Shell Processing
 Nikos Vasilakis*, Konstantinos Kallas*, Konstantinos Mamouras, Achilles Benetopoulos, Lazar Cvetković  
-[pdf](https://arxiv.org/pdf/2007.09436.pdf) | <details><summary>bibtex</summary>
+[arxiv](https://arxiv.org/pdf/2007.09436.pdf) | acm | video
 ```bibtex
 @inproceedings{pash:eurosys:21,
   author = {Vasilakis, Nikos, and Kallas, Konstantinos, and Mamouras, Konstantinos, and Benetopoulos, Achilles, and Cvetkovi\'{c}, Lazar},
@@ -63,6 +61,3 @@ Nikos Vasilakis*, Konstantinos Kallas*, Konstantinos Mamouras, Achilles Benetopo
   series = {EuroSys '21}
 }
 ```
-</details>
-
-
