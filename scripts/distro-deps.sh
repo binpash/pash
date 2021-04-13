@@ -45,9 +45,3 @@ case "$distro" in
     ;;
    *)        echo "unknown distro: '$distro'" ; exit 1 ;;
 esac
-
-
-
-
-
-
