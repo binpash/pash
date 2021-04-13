@@ -15,6 +15,13 @@ if [ ! -f ./1M.txt ]; then
   append_nl_if_not ./1M.txt
 fi
 
+pkgs='curl'
+if ! dpkg -s $pkgs >/dev/null 2>&1; then
+  sudo apt-get install $pkgs -y
+fi
+
+
+
 if [ ! -f ./all_cmds.txt ]; then
   if [ "$(hostname)" = "deathstar" ]; then
     curl -sf 'http://ndr.md/data/dummy/all_cmds.txt' > all_cmds.txt || eexit "all_cmds not found"
