@@ -20,8 +20,19 @@ if [ "$PLATFORM" = "darwin" ]; then
   exit 1
 fi
 
+set +e
 git clone git@github.com:andromeda/pash.git
+if [ $? -ne 0 ]; then
+  echo 'SSH clone failed; attempting HTTPS'
+  git clone https://github.com/andromeda/pash.git
+fi
+set -e
+
 cd pash/scripts
 # git checkout s3 # FIXME only for testing while PR is up
-bash distro-deps.sh
+
+if [  $(groups $(whoami) | grep -c "sudo") -ge 1 ]; then
+  # only run this if we are in the sudo group (or it's doomed to fail)
+  bash distro-deps.sh
+fi
 bash setup-pash.sh
