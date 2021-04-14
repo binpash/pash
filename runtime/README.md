@@ -3,20 +3,20 @@ Quick Jump: [Stream Splitting](#stream-splitting) | [Eager Stream Polling](#eage
 
 PaSh includes a small library of runtime primitives supporting the runtime execution of parallel scripts emitted by the compiler.
 
-### Stream Splitting
+## Stream Splitting
 
 The PaSh compiler inserts `split` nodes to expose parallelism when parallelizable nodes only have one input.
 
-### Eager Stream Polling
+## Eager Stream Polling
 
 To overcome the laziness challenges outlined in Sec. 5, PaSh inserts and instantiates `eager` nodes on streams.
 
-### Cleanup Logic
+## Cleanup Logic
 
 PaSh contains cleanup logic for dealing with dangling FIFOs.
 This is implemented in `wait_for_output_and_sigpipe_rest.sh`.
 
-### Aggregators
+## Aggregators
 
 There is a small custom aggregator library provided in [agg/py/](agg/py/).
 These aggregators are used to merge partial results from the parallel scripts.

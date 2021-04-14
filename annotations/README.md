@@ -8,7 +8,7 @@ The parallelizability study informed the design of the annotation language, whic
 
 > _N.b.: We welcome contributions to the study and annotatations for common commands._
 
-#### Main Parallelizability Classes
+## Main Parallelizability Classes
 
 PaSh introduces four major parallelizability classes:
 
@@ -35,7 +35,7 @@ If parallelized on a single input, each stage would need to wait on the results 
 The last class, `side-effectful`, contains commands that have side-effects across the system -- for example, updating environment variables, interacting with the filesystem, and accessing the network.
 Such commands are not parallelizable without finer-grained concurrency control mechanisms that can detect side-effects across the system.
 
-#### Parallelizability Study of Commands in GNU & POSIX
+## Parallelizability Study of Commands in GNU & POSIX
 
 The parallelizability study of commands in GNU and POSIX is comprised of two parts: a coarse-grained parallelizability study, and a set of annotations for commands.
 
@@ -47,7 +47,7 @@ Annotations can be thought of as defining a bidirectional correspondence between
 Since command behaviors (and correspondence) can change based on their arguments, annotations contain a sequence of predicates.
 Each predicate is accompanied by information that instantiates the correspondence between a command and a dataflow node.
 
-#### A Simple Example: `chmod`
+## A Simple Example: `chmod`
 
 As a first example, below we present the annotations for `chmod`.
 
@@ -65,7 +65,7 @@ As a first example, below we present the annotations for `chmod`.
 
 The annotation for `chmod` is very simple, since it only needs to establish that `chmod` is side-effectful and therefore cannot be translated to a dataflow node.
 
-#### Another Example: `cut`
+## Another Example: `cut`
 
 As another example, below we present the annotations for `chmod`.
 
@@ -136,7 +136,7 @@ Inputs are always assigned to the non-option arguments and the output is always 
 The option "stdin-hyphen" indicates that a non-option argument that is just a dash `-` represents the stdin, and the option “empty-args-stdin” indicates that if non-option arguments are empty, then the command reads from its stdin.
 The list identified by "short-long" contains a correspondence of short and long argument names for this command.
 
-#### How to Annotate a Command
+## How to Annotate a Command
 
 The first step to annotating a command is to identify its default class: `stateless`, `pure`, `non-parallelizable`, and `side-effectful`. How does the command behave without any inputs?
 The next step is to identify the set of inputs and their order.
