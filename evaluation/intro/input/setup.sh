@@ -7,9 +7,9 @@ cd $(dirname $0)
 [ "$1" = "-c" ] && rm-files 100M.txt words sorted_words
 
 if [ ! -f ./100M.txt ]; then
-  curl -sf 'ndr.md/data/dummy/100M.txt' > 100M.txt
+  curl -f 'ndr.md/data/dummy/100M.txt' > 100M.txt
   if [ $? -ne 0 ]; then
-    curl -sf 'http://www.gutenberg.org/files/2600/2600-0.txt' | head -c 1M > 1M.txt
+    curl -f 'http://www.gutenberg.org/files/2600/2600-0.txt' | head -c 1M > 1M.txt
     [ $? -ne 0 ] && eexit 'cannot find 1M.txt'
     touch 100M.txt
     for (( i = 0; i < 10; i++ )); do
@@ -20,7 +20,7 @@ if [ ! -f ./100M.txt ]; then
 fi
 
 if [ ! -f ./words ]; then
-  curl -sf 'http://ndr.md/data/dummy/words' > words
+  curl -f 'http://ndr.md/data/dummy/words' > words
   if [ $? -ne 0 ]; then
     if [ $(uname) = 'Darwin' ]; then
       cp /usr/share/dict/web2 words || eexit "cannot find dict file"
