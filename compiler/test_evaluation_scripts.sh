@@ -41,6 +41,7 @@ script_microbenchmarks=(
     comm-par-test        # Small comm test to ensure non-parallelizability
     comm-par-test2       # Small comm test with input redirection and hyphen
     tee_web_index_bug    # Tests a tee bug from web index
+    fun-def              # Tests whether PaSh can handle a simple function definition
 )
 
 pipeline_microbenchmarks=(
@@ -60,7 +61,6 @@ pipeline_microbenchmarks=(
     minimal_grep_stdin   # Tests whether PaSh can handle a script that reads from stdin
     micro_10             # A small version of the pipeline above for debugging.
     sed-test             # Tests all sed occurences in our evaluation to make sure that they work
-    fun-def              # Tests whether PaSh can handle a simple function definition
     tr-test              # Tests all possible behaviors of tr that exist in our evaluation
     grep-test            # Tests some interesting grep invocations
     # # # # micro_1000           # Not being run anymore, as it is very slow. Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
