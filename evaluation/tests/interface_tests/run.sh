@@ -41,4 +41,20 @@ test1()
     $shell echo_args.sh 1 2 3
 }
 
+## Tests -c
+test2()
+{
+    local shell=$1
+    $shell -c 'echo $2 $1' pash 2 3
+}
+
+## Tests -c and the assignment to $0
+test3()
+{
+    local shell=$1
+    $shell -c 'echo $0 $2 $1' pash 2 3
+}
+
 run_test test1
+run_test test2
+run_test test3
