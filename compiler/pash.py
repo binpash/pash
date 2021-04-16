@@ -19,7 +19,8 @@ def main():
     args = parse_args()
 
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
-    input_script_path = args.input
+    input_script_path = args.input[0]
+    input_script_arguments = args.input[1:]
     preprocessing_parsing_start_time = datetime.now()
     ast_objects = parse_shell_to_ast(input_script_path)
     preprocessing_parsing_end_time = datetime.now()
@@ -51,7 +52,7 @@ def main():
 
     ## 4. Execute the preprocessed version of the input script
     if(not args.preprocess_only):
-        execute_script(fname, args.debug, args.command)
+        execute_script(fname, args.debug, args.command, input_script_arguments)
 
 
 def parse_args():
@@ -59,7 +60,7 @@ def parse_args():
     if 'PASH_FROM_SH' in os.environ:
         prog_name = os.environ['PASH_FROM_SH']
     parser = argparse.ArgumentParser(prog_name)
-    parser.add_argument("input", nargs='?', help="the script to be compiled and executed")
+    parser.add_argument("input", nargs='+', help="the script to be compiled and executed (followed by any command-line arguments")
     parser.add_argument("--preprocess_only",
                         help="only preprocess the input script and not execute it",
                         action="store_true")
@@ -85,7 +86,8 @@ def parse_args():
             f.write(args.command)
             args.input = f.name
 
-    if (args.input == None):
+    ## TODO: Might be obsolete now
+    if (args.input is None):
         parser.print_usage()
         exit()
 
@@ -108,10 +110,10 @@ def preprocess(ast_objects, config):
 
     return preprocessed_asts
 
-def execute_script(compiled_script_filename, debug_level, command):
+def execute_script(compiled_script_filename, debug_level, command, arguments):
     new_env = os.environ.copy()
     new_env["PASH_TMP_PREFIX"] = config.PASH_TMP_PREFIX
-    exec_obj = subprocess.run(["/usr/bin/env", "bash" ,compiled_script_filename], env=new_env)
+    exec_obj = subprocess.run(["/usr/bin/env", "bash" ,compiled_script_filename] + arguments, env=new_env)
     ## Delete the temp directory when not debugging
     if(debug_level == 0):
         shutil.rmtree(config.PASH_TMP_PREFIX)
