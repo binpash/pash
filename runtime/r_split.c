@@ -38,12 +38,11 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
 {
   int current = 0;
   int64_t id = 0;
-  size_t len = 0, headSize = 0, restSize = 0, prevRestSize = 0, blockSize = 0, bufLen = 0;
+  size_t len = 0, headSize = 0, restSize = 0, prevRestSize = 0, blockSize = 0;
   FILE *outputFile = outputFiles[current];
 
   char *buffer = malloc(batchSize + 1);
   char *incompleteLine = malloc(batchSize + 1);
-  char *newLineBuffer = NULL; //only used when a newline character is not found in chunk
 
   // Do round robin copying of the input file to the output files
   // Each block has a header of "ID blockSize\n"
@@ -75,6 +74,7 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
         safeWrite(incompleteLine, 1, prevRestSize, outputFile);
       safeWriteWithFlush(buffer, 1, headSize, outputFile);
 
+      // Prepare next iteration
       prevRestSize = 0;
     }
     else
@@ -90,12 +90,13 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
       //update incompleteLine to the current block
       memcpy(incompleteLine, buffer + headSize, restSize);
 
+      // Prepare next iteration
       current = (current + 1) % numOutputFiles;
       outputFile = outputFiles[current];
       prevRestSize = restSize;
       id += 1;
     }
-    // fflush(outputFile);
+
     headSize = restSize = 0;
   }
 
@@ -115,8 +116,6 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
   //clean up
   free(buffer);
   free(incompleteLine);
-  if (newLineBuffer)
-    free(newLineBuffer);
 }
 
 void SplitByLinesRaw(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned int numOutputFiles)
