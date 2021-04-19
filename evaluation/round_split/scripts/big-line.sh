@@ -1,1 +1,0 @@
-cat $IN | tr -d '\n' | tr '[A-Z]' '[a-z]'
