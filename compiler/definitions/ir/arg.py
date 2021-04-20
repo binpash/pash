@@ -25,3 +25,5 @@ class Arg:
     def to_ast(self):
         return self.arg_char_list
 
+    def raw_str(self):
+        return format_arg_to_raw_chars(self.arg_char_list)

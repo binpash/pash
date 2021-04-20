@@ -28,8 +28,10 @@ def wrap_node(node):
 
     ## TODO: All arguments must be options, otherwise there must be
     ##       special handling in the wrap node2ast code. 
-    old_options_strs = [str(opt) for i, opt in node.com_options]
-    wrapped_command = " ".join([str(node.com_name)] + old_options_strs)
+    # print("options: ",  node.com_options.replace("\\", ""))
+    
+    old_options_strs = [opt.raw_str() for i, opt in node.com_options]
+    wrapped_command = " ".join([node.com_name.raw_str()] + old_options_strs)
     wrapped_command_arg = [(1, Arg(string_to_argument(f"\'{wrapped_command}\'")))]
     bash_command_arg = [(0, Arg(string_to_argument("bash -c")))]
     options = bash_command_arg +  wrapped_command_arg
