@@ -60,12 +60,67 @@ def plot_barchart(df, y_axis="exec_time", test_names=None, save_file="output.png
     
     fig.savefig(save_file)
 
+#This function only compares between folders
+#dfs is tuple: (df_name, pd.df)
+def plot_barchart_against(dfs: list, y_axis="exec_time", test_names=None, save_file="output.png"):
+    print(test_names)
+    df1 = dfs[0][1]
+    if test_names is not None:
+        df1 = df1[df1["test_name"].isin(test_names)]
+        labels = sorted(test_names)
+    else:
+        labels = sorted(df1.test_name.unique())
+
+    x = np.arange(len(labels))  # the label locations
+    width = 1/(len(dfs))*4/5  # the width of the bars
+
+    rects = []
+    for df_name, df in dfs:
+        df = df[(df.split_type == "r-split") & (df.no_eager == False) & (df.dgsh_tee == True)]
+        rects.append(df)
+
+    bar_height = [[] for i in range(len(rects))]
+    error_height = [[] for i in range(len(rects))]
+
+    for label in labels:
+        for i, rect in enumerate(rects):
+            try:
+                bar_height[i].append(rect.loc[rect["test_name"] == label][y_axis].mean())
+                error_height[i].append(rect.loc[rect["test_name"] == label][y_axis].std())
+            except:
+                print("plot_shart_against: failed: ", label)
+        
+
+    fig, ax = plt.subplots(figsize=(20,10))
+    for i in range(len(dfs)):
+        label = ""
+        df_name = dfs[i][0]
+        offset = (i -  int(len(dfs)/2))
+        if len(dfs)%2 == 0:
+            offset += 1/2
+        print(offset)
+        ax.bar(x + offset*width, bar_height[i], width, yerr=error_height[i], label=label+df_name)
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('ms')
+    # ax.set_title('')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    plt.xticks(rotation=90)
+    ax.legend()
+    
+    fig.savefig(save_file)
+
 if __name__ == '__main__':
     #sample execution
-    log_parser = LogParser()
-    dir_to_plot = argv[1] if len(argv) > 1 else DEFAULT_LOG_FOLDER
-    df = log_parser.parse_folder(dir_to_plot)
+    
+    log_dfs = []
+    if len(argv) > 1:
+        for folder in argv[1:]:
+            log_parser = LogParser()
+            df = log_parser.parse_folder(folder)
+            log_dfs.append((folder, df))
     # parse more directories if needed
     # df = log_parser.parse_folder("tmp2_1G_width4bbackup")
 
-    plot_barchart(log_parser.get_df(), save_file=os.path.dirname(dir_to_plot) + ".png")
+    plot_barchart_against(log_dfs, save_file="compare" + ".png")
