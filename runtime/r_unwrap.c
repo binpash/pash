@@ -4,9 +4,10 @@ void unwrap(FILE* inputFile) {
     size_t bufLen = BUFLEN; //buffer length, would be resized as needed
     int64_t id;
     size_t blockSize;
+    bool isLast;
     char* buffer = malloc(bufLen + 1);
 
-    readHeader(stdin, &id, &blockSize);
+    readHeader(stdin, &id, &blockSize, &isLast);
     while(!feof(stdin)) {     
         //Read batch
         size_t tot_read = 0, readSize = 0;
@@ -24,10 +25,9 @@ void unwrap(FILE* inputFile) {
         assert(tot_read == blockSize);
 
         //update header (ordered at the end so !feof works) and cleanup
-        readHeader(stdin, &id, &blockSize);
-    }  
-        
-    free(buffer);   
+        readHeader(stdin, &id, &blockSize, &isLast);
+    }
+    free(buffer);
 }
 
 int main(int argc, char* argv[]) {

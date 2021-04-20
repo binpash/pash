@@ -15,6 +15,7 @@ void processCmd(char *args[])
     size_t bufLen = BUFLEN, stdoutBlockBufLen = BUFLEN, writeBufLen = 2*BUFLEN; //buffer length, would be resized as needed
     int64_t id;
     size_t blockSize;
+    bool isLast;
     char *buffer = malloc(bufLen + 1);
     char *readBuffer = malloc(bufLen + 1);
     char *writebuffer = malloc(writeBufLen + 1);
@@ -24,7 +25,7 @@ void processCmd(char *args[])
     fd_set writeFds;
     int maxFd;
 
-    readHeader(stdin, &id, &blockSize);
+    readHeader(stdin, &id, &blockSize, &isLast);
     while (!feof(stdin))
     {
         int fdIn[2];
@@ -75,14 +76,16 @@ void processCmd(char *args[])
             non_block_fd(inputFd, "r-wrap-fork-read");
             non_block_fd(outputFd, "r-wrap-fork-write");
 
-            size_t len = 0, currReadLen = 0, currWriteLen = 0;
+            size_t currReadLen = 0;
+
+            size_t len = 0, currWriteLen = 0;
 
             //select prep
             maxFd = MAX(inputFd, outputFd);
 
             //Read batch
             size_t tot_read = 0, readSize = 0;
-            while (tot_read < blockSize || currWriteLen > 0)
+            while (tot_read < blockSize || currWriteLen > 0 || !isLast)
             {
                 readSize = MIN(bufLen, blockSize - tot_read);
                 if (readSize && fread(buffer, 1, readSize, stdin) != readSize)
@@ -150,9 +153,21 @@ void processCmd(char *args[])
 						err(2, "Error writing to fork, error %d", errno);
 					}            
                 }
-
                 tot_read += readSize;
-            }
+                
+                if (currReadLen > CHUNKSIZE) {
+                    // write block to stdout
+                    writeHeader(stdout, id, currReadLen, 0);
+                    safeWriteWithFlush(stdoutBlock, 1, currReadLen, stdout);
+                    currReadLen = 0;
+                }
+
+                if (!isLast && tot_read == blockSize && currWriteLen == 0) {
+                    readHeader(stdin, &id, &blockSize, &isLast);
+                    currWriteLen = 0;
+                    tot_read = 0;
+                }
+            } 
             close(outputFd);
             assert(tot_read == blockSize);
 
@@ -185,11 +200,11 @@ void processCmd(char *args[])
             close(inputFd);
 
             // write block to stdout
-            writeHeader(stdout, id, currReadLen);
+            writeHeader(stdout, id, currReadLen, 1);
             safeWriteWithFlush(stdoutBlock, 1, currReadLen, stdout);
 
             // update header (ordered at the end so !feof works) and cleanup
-            readHeader(stdin, &id, &blockSize);
+            readHeader(stdin, &id, &blockSize, &isLast);
 
             // wait is necessary to reclaim process
             // Do I need to do something with return status?

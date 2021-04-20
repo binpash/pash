@@ -17,6 +17,8 @@ void MergeInput(char *inputFileNames[], unsigned int numInputFiles)
   char *buffer = malloc(bufLen + 1);
   int64_t id;
   size_t blockSize;
+  bool isLast;
+
   for (int i = 0; i < numInputFiles; i++)
   {
     FILE *inputFile = fopen(inputFileNames[i], "r");
@@ -31,7 +33,7 @@ void MergeInput(char *inputFileNames[], unsigned int numInputFiles)
   int64_t nextID = 0;
   for(;;) {
     //read header
-    readHeader(blockBuf[bufferIdx].inputFile, &id, &blockSize);
+    readHeader(blockBuf[bufferIdx].inputFile, &id, &blockSize, &isLast);
     if (feof(blockBuf[bufferIdx].inputFile)) {
       PRINTDBG("r_merge: End of file");
       break;
@@ -54,8 +56,10 @@ void MergeInput(char *inputFileNames[], unsigned int numInputFiles)
     fflush(stdout); //only need to flush after block ended
     assert(tot_read == blockSize);
     
-    bufferIdx = (bufferIdx + 1) % numInputFiles;
-    nextID += 1;
+    if (isLast) {
+      bufferIdx = (bufferIdx + 1) % numInputFiles;
+      nextID += 1;
+    }
   };
 
   //assert reason while loop terminated is eof
