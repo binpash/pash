@@ -191,7 +191,7 @@ def to_string (ast):
         elif (type == "Semi"):
             (a1, a2) = params;
 
-            return to_string (a1) + " ; " + to_string (a2);
+            return to_string (a1) + " \n " + to_string (a2);
         elif (type == "If"):
             (c, t, e) = params;
             return string_of_if (c, t, e);

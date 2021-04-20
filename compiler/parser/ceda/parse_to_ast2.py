@@ -33,8 +33,6 @@ def parse_to_ast (inputPath, init=True):
     NEOF = addressof (c_int.in_dll (libdash, "tokpushback"));
     NERR = addressof (c_int.in_dll (libdash, "lasttoken"));
 
-    new_asts = [];
-
     while (True):
         n_ptr_C = parsecmd_safe (libdash, False);
 
@@ -48,8 +46,6 @@ def parse_to_ast (inputPath, init=True):
             n_ptr = cast (n_ptr_C, POINTER (union_node));
             new_ast = of_node (n_ptr);
 
-            new_asts.append (new_ast);
+            yield new_ast
 
             pop_stack (libdash, smark);
-
-    return (new_asts);
