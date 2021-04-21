@@ -2,6 +2,7 @@
 
 import os
 import sys
+import subprocess
 from parse_to_ast2 import parse_to_ast
 
 if 'PASH_TOP' in os.environ:
@@ -15,15 +16,26 @@ from json_ast import serialize_asts_to_json
 
 
 def main ():
-    if (len (sys.argv) == 1):
-        new_asts = parse_to_ast ("-", True)
-    else:
-        new_asts = parse_to_ast (sys.argv [1], True)
+    sys.setrecursionlimit (90001)
 
-    json = serialize_asts_to_json (new_asts)
+    if (len (sys.argv) == 1):
+        inputPath = "-"
+    else:
+        inputPath = sys.argv [1]
+
+    json = []
+    for output in (parse_to_ast (inputPath, True)):
+        (new_ast, verbatim, linno_before, linno_after) = output;
+        json.append (new_ast);
+
+        # Debugging
+        if (False):
+            print ("### Parsed lines [%d, %d)" % (linno_before, linno_after));
+            print ("--------------------");
+            print (verbatim, end='');
+            print ("--------------------");
 
     print (json)
-
 
 if __name__ == "__main__":
     main ()
