@@ -5,6 +5,21 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 export DEBUG=0
 # export DEBUG=1 # Uncomment to print pash output
 
+## Determines whether the experimental pash flags will be tested. 
+## By default they are not.
+export EXPERIMENTAL=0
+
+for item in $@
+do
+    if [ "--debug" == "$item" ] || [ "-d" == "$item" ]; then
+        export DEBUG=1
+    fi
+
+    if [ "--experimental" == "$item" ]; then
+        export EXPERIMENTAL=1
+    fi
+done
+
 microbenchmarks_dir="${PASH_TOP}/evaluation/tests/"
 intermediary_dir="${PASH_TOP}/evaluation/tests/test_intermediary/"
 test_results_dir="${PASH_TOP}/evaluation/tests/results/"
@@ -25,13 +40,21 @@ n_inputs=(
     8
 )
 
-configurations=(
-    # "" # Commenting this out since the tests take a lot of time to finish
-    "--r_split"
-    "--dgsh_tee"
-    "--r_split --dgsh_tee"
-    # "--speculation quick_abort"
-)
+
+if [ "$EXPERIMENTAL" -eq 1 ]; then
+    configurations=(
+        # "" # Commenting this out since the tests take a lot of time to finish
+        "--r_split"
+        "--dgsh_tee"
+        "--r_split --dgsh_tee"
+        # "--speculation quick_abort"
+    )
+else
+    configurations=(
+        ""
+    )
+fi
+
 
 ## Tests where the compiler will not always succeed (e.g. because they have mkfifo)
 script_microbenchmarks=(
