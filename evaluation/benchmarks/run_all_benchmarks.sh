@@ -1,5 +1,16 @@
 #!/bin/bash
 
+## Determines whether the experimental pash flags will be tested. 
+## By default they are not.
+export EXPERIMENTAL=0
+
+for item in $@
+do
+    if [ "--experimental" == "$item" ]; then
+        export EXPERIMENTAL=1
+    fi
+done
+
 ## This script is necessary to ensure that sourcing happens with bash
 source run.seq.sh
 source run.par.sh
@@ -14,6 +25,13 @@ compare_outputs(){
     diff -q "$seq_output" "$pash_output"
   done
 }
+
+if [ "$EXPERIMENTAL" -eq 1 ]; then
+  export PASH_FLAGS="--speculation quick_abort --r_split --dgsh_tee --r_split_batch_size 1000000"
+else
+  export PASH_FLAGS=""
+fi
+
 
 oneliners
 oneliners_pash
