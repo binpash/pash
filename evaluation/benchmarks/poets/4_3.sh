@@ -1,6 +1,6 @@
 #!/bin/bash 
 # tag: bigrams.sh
-set -e
+# set -e
 
 # Bigrams (contrary to our version, this uses intermediary files)
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}

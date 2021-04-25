@@ -1,6 +1,6 @@
 #!/bin/bash
 # tag: trigram_rec
-set -e
+# set -e
 
 # FIXME: what is this?
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}

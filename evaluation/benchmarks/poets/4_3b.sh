@@ -1,6 +1,6 @@
 #!/bin/bash 
 #tag: count_trigrams.sh
-set -e
+# set -e
 
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/input/output/}

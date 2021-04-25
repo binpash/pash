@@ -1,6 +1,6 @@
 #!/bin/bash
 # tag: merge_upper
-set -e
+# set -e
 
 # Merge upper and lower counts
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
