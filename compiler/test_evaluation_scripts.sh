@@ -42,6 +42,7 @@ script_microbenchmarks=(
     comm-par-test2       # Small comm test with input redirection and hyphen
     tee_web_index_bug    # Tests a tee bug from web index
     fun-def              # Tests whether PaSh can handle a simple function definition
+    bigrams              # One-liner
 )
 
 pipeline_microbenchmarks=(
@@ -52,7 +53,6 @@ pipeline_microbenchmarks=(
     wf                   # One-liner
     spell                # One-liner
     shortest_scripts     # One-liner
-    bigrams              # One-liner
     alt_bigrams          # One-liner
     deadlock_test        # Test to check deadlock prevention using drain_stream
     double_sort          # Checks maximum peformance gains from split
