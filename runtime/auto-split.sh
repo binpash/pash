@@ -18,6 +18,16 @@ batch_size=$( expr $total_lines / $n_outputs )
 # echo "Number of outputs: $n_outputs"
 # echo "Total Lines: $total_lines"
 # echo "Batch Size: $batch_size"
+
+cleanup()
+{
+    kill -SIGPIPE $split_pid > /dev/null 2>&1
+}
+trap cleanup EXIT
+
+
 # echo "$PASH_TOP/evaluation/tools/split $input $batch_size $outputs"
-$PASH_TOP/runtime/split "$temp" "$batch_size" $outputs
+$PASH_TOP/runtime/split "$temp" "$batch_size" $outputs &
+split_pid=$!
+wait $split_pid
 rm -f $temp
