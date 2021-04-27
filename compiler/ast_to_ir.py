@@ -1,3 +1,4 @@
+from ast_util import *
 from ir import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
@@ -487,21 +488,6 @@ def compile_redirections(redirections, fileIdGen, config):
 ## - an AST subtree if at a lower level
 ##
 ## The PaSh runtime then deserializes them, compiles them (if safe) and optimizes them.
-class PreprocessedAST:
-    def __init__(self, ast, replace_whole, non_maximal, something_replaced=True):
-        self.ast = ast
-        self.replace_whole = replace_whole
-        self.non_maximal = non_maximal
-        self.something_replaced = something_replaced
-
-    def should_replace_whole_ast(self):
-        return self.replace_whole
-
-    def is_non_maximal(self):
-        return self.non_maximal
-    
-    def will_anything_be_replaced(self):
-        return self.something_replaced
 
 ## Replace candidate dataflow AST regions with calls to PaSh's runtime.
 def replace_ast_regions(ast_objects, irFileGen, config):
@@ -559,7 +545,12 @@ def replace_ast_regions(ast_objects, irFileGen, config):
                     replaced_ast = replace_df_region([preprocessed_ast_object.ast], irFileGen, config)
                     preprocessed_asts.append(replaced_ast)
                 else:
-                    preprocessed_asts.append(preprocessed_ast_object.ast)
+                    ## In this case, it is possible that no replacement happened,
+                    ## meaning that we can simply return the original parsed text as it was.
+                    if(preprocessed_ast_object.will_anything_be_replaced()):
+                        preprocessed_asts.append(preprocessed_ast_object.ast)
+                    else:
+                        preprocessed_asts.append(UnparsedScript(original_text))
 
     ## Close the final dataflow region
     if(len(candidate_dataflow_region) > 0):

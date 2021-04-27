@@ -6,8 +6,7 @@ from datetime import datetime
 from annotations import *
 from ast_to_ir import *
 from ir import *
-from json_ast import *
-from parse import parse_shell_to_asts, from_ir_to_shell_file
+from parse import parse_shell_to_asts, from_ast_objects_to_shell
 from util import *
 import config
 import pprint
@@ -35,17 +34,16 @@ def main():
 
     ## 3. Translate the new AST back to shell syntax
     preprocessing_unparsing_start_time = datetime.now()
-    input_script_wo_extension, _input_script_extension = os.path.splitext(input_script_path)
-    input_script_basename = os.path.basename(input_script_wo_extension)
-    _, ir_filename = ptempfile()
-    save_asts_json(preprocessed_asts, ir_filename)
-
     _, fname = ptempfile()
     log("Preprocessed script stored in:", fname)
+    preprocessed_shell_script = from_ast_objects_to_shell(preprocessed_asts)
     if(args.output_preprocessed):
         log("Preprocessed script:")
-        log(from_ir_to_shell(ir_filename))
-    from_ir_to_shell_file(ir_filename, fname)
+        log(preprocessed_shell_script)
+    
+    ## Write the new shell script to a file to execute
+    with open(fname, 'w') as new_shell_file:
+        new_shell_file.write(preprocessed_shell_script)
 
     preprocessing_unparsing_end_time = datetime.now()
     print_time_delta("Preprocessing -- Unparsing", preprocessing_unparsing_start_time, preprocessing_unparsing_end_time, args)
