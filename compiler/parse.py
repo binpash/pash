@@ -14,9 +14,9 @@ from json_to_shell2 import json_to_shell_string
 
 ## Parses straight a shell script to an AST
 ## through python without calling it as an executable
-def parse_shell_to_ast(input_script_path):
-    new_asts = parse_to_ast(input_script_path)
-    return new_asts
+def parse_shell_to_asts(input_script_path):
+    new_ast_objects = parse_to_ast(input_script_path)
+    return new_ast_objects
 
 ## TODO: Avoid going through JSON for the unparsing.
 ## Parser straight from JSON to a shell string without calling an executable 

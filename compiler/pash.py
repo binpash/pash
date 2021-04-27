@@ -7,7 +7,7 @@ from annotations import *
 from ast_to_ir import *
 from ir import *
 from json_ast import *
-from parse import parse_shell_to_ast, from_ir_to_shell_file
+from parse import parse_shell_to_asts, from_ir_to_shell_file
 from util import *
 import config
 import pprint
@@ -22,7 +22,7 @@ def main():
     input_script_path = args.input[0]
     input_script_arguments = args.input[1:]
     preprocessing_parsing_start_time = datetime.now()
-    ast_objects = parse_shell_to_ast(input_script_path)
+    ast_objects = parse_shell_to_asts(input_script_path)
     preprocessing_parsing_end_time = datetime.now()
     print_time_delta("Preprocessing -- Parsing", preprocessing_parsing_start_time, preprocessing_parsing_end_time, args)
 
