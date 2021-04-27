@@ -4,7 +4,7 @@ from definitions.ast_node import *
 from definitions.ast_node_c import *
 from util import *
 from json_ast import save_asts_json, ast_to_shell
-from parse import parse_shell, from_ir_to_shell, from_ir_to_shell_file
+from parse import parse_shell, from_ast_objects_to_shell, from_ast_objects_to_shell_file
 from expand import *
 import subprocess
 import traceback
@@ -371,9 +371,7 @@ def make_echo_ast(argument, var_file_path):
 
 ## TODO: Move this function somewhere more general
 def execute_shell_asts(asts):
-    _, ir_filename = ptempfile()
-    save_asts_json(asts, ir_filename)
-    output_script = from_ir_to_shell(ir_filename)
+    output_script = from_ast_objects_to_shell(asts)
     # log(output_script)
     exec_obj = subprocess.run(["/usr/bin/env", "bash"], input=output_script,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -824,10 +822,10 @@ def replace_df_region(asts, irFileGen, config):
 
     ## Serialize the candidate df_region asts back to shell
     ## so that the sequential script can be run in parallel to the compilation.
-    _, second_ir_filename = ptempfile()
-    save_asts_json(asts, second_ir_filename)
+    ## TODO: There is no need to print this, we can just keep the original string again!
     _, sequential_script_file_name = ptempfile()
-    from_ir_to_shell_file(second_ir_filename, sequential_script_file_name)
+    kv_asts = [ast.json_serialize() for ast in asts]
+    from_ast_objects_to_shell_file(kv_asts, sequential_script_file_name)
 
     ## Replace it with a command that calls the distribution
     ## planner with the name of the file.
