@@ -492,8 +492,8 @@ def replace_ast_regions(ast_objects, irFileGen, config):
     preprocessed_asts = []
     candidate_dataflow_region = []
     for i, ast_object in enumerate(ast_objects):
-        log("Preprocessing AST {}".format(i))
-        log(ast_object)
+        # log("Preprocessing AST {}".format(i))
+        # log(ast_object)
         ast, original_text, _linno_before, _linno_after = ast_object
 
         ## Goals: This transformation can approximate in several directions.
