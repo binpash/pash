@@ -1,3 +1,6 @@
+import config
+import os
+
 from ir_utils import *
 from util import *
 
@@ -57,7 +60,8 @@ class FileId:
         ##
         ## TODO: I am not sure about the FileDescriptor resource
         if(isinstance(self.resource, EphemeralResource)):
-            string = "{}#file{}".format(self.prefix, self.ident)
+            suffix = "{}#file{}".format(self.prefix, self.ident)
+            string = os.path.join(config.PASH_TMP_PREFIX, suffix)
             ## Quote the argument
             argument = [make_kv('Q', string_to_argument(string))]
         elif(isinstance(self.resource, FileDescriptorResource)):
