@@ -21,7 +21,7 @@ def main():
     input_script_path = args.input[0]
     input_script_arguments = args.input[1:]
     preprocessing_parsing_start_time = datetime.now()
-    ast_objects = parse_shell_to_asts(input_script_path)
+    ast_objects = list(parse_shell_to_asts(input_script_path))
     preprocessing_parsing_end_time = datetime.now()
     print_time_delta("Preprocessing -- Parsing", preprocessing_parsing_start_time, preprocessing_parsing_end_time, args)
 
