@@ -526,21 +526,27 @@ def replace_ast_regions(ast_objects, irFileGen, config):
 
         ## If it isn't maximal then we just add it to the candidate
         if(preprocessed_ast_object.is_non_maximal()):
-            candidate_dataflow_region.append(preprocessed_ast_object.ast)
+            candidate_dataflow_region.append((preprocessed_ast_object.ast,
+                                              original_text))
         else:
             ## If the current candidate dataflow region is non-empty
             ## it means that the previous AST was in the background so
             ## the current one has to be included in the process no matter what
             if (len(candidate_dataflow_region) > 0):
-                candidate_dataflow_region.append(preprocessed_ast_object.ast)
+                candidate_dataflow_region.append((preprocessed_ast_object.ast,
+                                                  original_text))
                 ## Since the current one is maximal (or not wholy replaced)
                 ## we close the candidate.
-                replaced_ast = replace_df_region(candidate_dataflow_region, irFileGen, config)
+                dataflow_region_asts, dataflow_region_lines = unzip(candidate_dataflow_region)
+                dataflow_region_text = "\n".join(dataflow_region_lines)
+                replaced_ast = replace_df_region(dataflow_region_asts, irFileGen, config,
+                                                 ast_text=dataflow_region_text)
                 candidate_dataflow_region = []
                 preprocessed_asts.append(replaced_ast)
             else:
                 if(preprocessed_ast_object.should_replace_whole_ast()):
-                    replaced_ast = replace_df_region([preprocessed_ast_object.ast], irFileGen, config)
+                    replaced_ast = replace_df_region([preprocessed_ast_object.ast], irFileGen, config,
+                                                     ast_text=original_text)
                     preprocessed_asts.append(replaced_ast)
                 else:
                     ## In this case, it is possible that no replacement happened,
@@ -552,7 +558,10 @@ def replace_ast_regions(ast_objects, irFileGen, config):
 
     ## Close the final dataflow region
     if(len(candidate_dataflow_region) > 0):
-        replaced_ast = replace_df_region(candidate_dataflow_region, irFileGen, config)
+        dataflow_region_asts, dataflow_region_lines = unzip(candidate_dataflow_region)
+        dataflow_region_text = "\n".join(dataflow_region_lines)
+        replaced_ast = replace_df_region(dataflow_region_asts, irFileGen, config,
+                                         ast_text=dataflow_region_text)
         candidate_dataflow_region = []
         preprocessed_asts.append(replaced_ast)
 
@@ -569,9 +578,6 @@ def preprocess_close_node(ast_object, irFileGen, config):
     preprocessed_ast = preprocessed_ast_object.ast
     should_replace_whole_ast = preprocessed_ast_object.should_replace_whole_ast()
     if(should_replace_whole_ast):
-        ## TODO: Maybe the first argument has to be a singular list?
-        ##
-        ## TODO: Return that something changed
         final_ast = replace_df_region([preprocessed_ast], irFileGen, config)
         something_replaced = True
     else:
@@ -800,6 +806,8 @@ def preprocess_node_case(ast_node, irFileGen, config):
 ##
 ## TODO: Visual improvement: Can we abstract away the traverse of this
 ## ast in a mpa function, so that we don't rewrite all the cases?
+
+## TODO: This function can be deleted almost certainly!
 def replace_irs(ast, irFileGen, config):
 
     if (isinstance(ast, IR)):
@@ -813,7 +821,7 @@ def replace_irs(ast, irFileGen, config):
 ## This function serializes a candidate df_region in a file, and in its place,
 ## it adds a command that calls our distribution planner with the name of the
 ## saved file.
-def replace_df_region(asts, irFileGen, config):
+def replace_df_region(asts, irFileGen, config, ast_text=None):
     _, ir_filename = ptempfile()
 
     ## Serialize the node in a file
@@ -822,10 +830,15 @@ def replace_df_region(asts, irFileGen, config):
 
     ## Serialize the candidate df_region asts back to shell
     ## so that the sequential script can be run in parallel to the compilation.
-    ## TODO: There is no need to print this, we can just keep the original string again!
     _, sequential_script_file_name = ptempfile()
-    kv_asts = [ast.json_serialize() for ast in asts]
-    from_ast_objects_to_shell_file(kv_asts, sequential_script_file_name)
+    ## If we don't have the original ast text, we need to unparse the ast
+    if (ast_text is None):
+        kv_asts = [ast.json_serialize() for ast in asts]
+        from_ast_objects_to_shell_file(kv_asts, sequential_script_file_name)
+    else:
+        ## However, if we have the original ast text, then we can simply output that.
+        with open(sequential_script_file_name, "w") as script_file:
+            script_file.write(ast_text)
 
     ## Replace it with a command that calls the distribution
     ## planner with the name of the file.
