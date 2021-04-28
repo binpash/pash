@@ -179,7 +179,7 @@ def to_string (ast):
         elif (type == "And"):
             (a1, a2) = params;
 
-            return to_string (a1) + " && " + to_string (a2);
+            return braces(to_string(a1)) + " && " + braces(to_string(a2))
         elif (type == "Or"):
             (a1, a2) = params;
 
