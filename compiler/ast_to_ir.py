@@ -798,25 +798,6 @@ def preprocess_node_case(ast_node, irFileGen, config):
 ## TODO: For now this just replaces the IRs starting from the ourside
 ## one first, but it should start from the bottom up to handle
 ## recursive IRs.
-##
-## TODO: Optimization: This pass could be merged with the previous
-## translation one. I am not doing this now so that it remains
-## cleaner. If we find out that we might benefit from this
-## optimization, we can do it.
-##
-## TODO: Visual improvement: Can we abstract away the traverse of this
-## ast in a mpa function, so that we don't rewrite all the cases?
-
-## TODO: This function can be deleted almost certainly!
-def replace_irs(ast, irFileGen, config):
-
-    if (isinstance(ast, IR)):
-        replaced_ast = replace_df_region(ast, irFileGen, config)
-    else:
-        global ir_cases
-        replaced_ast = ast_match(ast, ir_cases, irFileGen, config)
-
-    return replaced_ast
 
 ## This function serializes a candidate df_region in a file, and in its place,
 ## it adds a command that calls our distribution planner with the name of the
@@ -874,76 +855,6 @@ def make_command(ir_filename, sequential_script_file_name):
     line_number = 0
     node = make_kv('Command', [line_number, assignments, arguments, []])
     return node
-
-
-def replace_irs_and_or_semi(ast_node, irFileGen, config):
-    r_left = replace_irs(ast_node.left_operand, irFileGen, config)
-    r_right = replace_irs(ast_node.right_operand, irFileGen, config)
-    return make_kv(ast_node.construct.value, [r_left, r_right])
-
-def replace_irs_command(ast_node, irFileGen, config):
-    ## TODO: I probably have to also handle the redir_list (applies to
-    ## compile_node_command too)
-    c = ast_node.construct.value
-    line_number = ast_node.line_number
-    assignments = ast_node.assignments
-    args = ast_node.arguments
-    redir_list = ast_node.redir_list
-
-    replaced_assignments = replace_irs_assignments(assignments, irFileGen, config)
-    if(len(args) == 0):
-        ## Note: The flow here is similar to compile
-        replaced_ast = make_kv(c, [line_number, replaced_assignments, args, redir_list])
-    else:
-        command_name = args[0]
-        replaced_options = replace_irs_command_arguments(args[1:], irFileGen, config)
-        replaced_args = [command_name] + replaced_options
-
-        replaced_ast = make_kv(c, [line_number, replaced_assignments, replaced_args, redir_list])
-
-    return replaced_ast
-
-def replace_irs_for(ast_node, irFileGen, config):
-    ## Question: Is it a problem if we replace the same IR? Could
-    ## there be changes between loops that are not reflected?
-    replaced_ast = make_kv(ast_node.construct.value,
-                           [ast_node.line_number,
-                            replace_irs_command_argument(ast_node.argument, irFileGen, config),
-                            replace_irs(ast_node.body, irFileGen, config),
-                            ast_node.variable])
-    return replaced_ast
-
-
-def replace_irs_arg_char(arg_char, irFileGen, config):
-    key, val = get_kv(arg_char)
-    if (key == 'C'):
-        return arg_char
-    elif (key == 'B'):
-        replaced_node = replace_irs(val, irFileGen, config)
-        return make_kv(key, replaced_node)
-    elif (key == 'Q'):
-        replaced_val = replace_irs_command_argument(val, irFileGen, config)
-        return make_kv(key, replaced_val)
-    else:
-        ## TODO: Complete this (as we have to do with the compile)
-        return arg_char
-
-def replace_irs_command_argument(argument, irFileGen, config):
-    replaced_argument = [replace_irs_arg_char(char, irFileGen, config) for char in argument]
-    return replaced_argument
-
-def replace_irs_command_arguments(arguments, irFileGen, config):
-    replaced_arguments = [replace_irs_command_argument(arg, irFileGen, config) for arg in arguments]
-    return replaced_arguments
-
-## This is similar to compile_assignments
-##
-## TODO: Is that the correct way to handle them? Question also applied
-## to compile_assignments.
-def replace_irs_assignments(assignments, irFileGen, config):
-    replaced_assignments = [[assignment[0], replace_irs_command_argument(assignment[1], irFileGen, config)]
-                            for assignment in assignments]
-    return replaced_assignments
 
 ##
 ## Pattern matching for the AST

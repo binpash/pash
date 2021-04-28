@@ -66,15 +66,3 @@ def from_ir_to_shell_legacy(ir_filename):
     printer_output.check_returncode()
     preprocessed_script = printer_output.stdout
     return preprocessed_script
-
-## TODO: Avoid going through JSON for the unparsing.
-## Parser straight from JSON to a shell string without calling an executable 
-def from_ir_to_shell(ir_filename):
-    preprocessed_script = json_to_shell_string(ir_filename)
-    return preprocessed_script
-
-def from_ir_to_shell_file(ir_filename, new_shell_filename):
-    preprocessed_script = from_ir_to_shell(ir_filename)
-    with open(new_shell_filename, 'w') as new_shell_file:
-        new_shell_file.write(preprocessed_script)
-
