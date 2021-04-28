@@ -9,6 +9,9 @@ from json_ast import save_asts_json
 from parse import from_ir_to_shell
 import config
 
+RM_PASH_FIFOS_NAME="rm_pash_fifos"
+MKFIFO_PASH_FIFOS_NAME="mkfifo_pash_fifos"
+
 def to_shell(ir, output_dir, args):
     backend_start_time = datetime.now()
 
@@ -70,13 +73,25 @@ def make_rms_f_prologue_epilogue(ephemeral_fids):
 def make_ir_prologue(ephemeral_fids):
     asts = []
     ## Create an `rm -f` for each ephemeral fid
-    asts += make_rms_f_prologue_epilogue(ephemeral_fids)
+    rm_asts = make_rms_f_prologue_epilogue(ephemeral_fids)
+    defun_rm_pash_fifos = make_defun(RM_PASH_FIFOS_NAME, make_semi_sequence(rm_asts))
+    asts.append(defun_rm_pash_fifos)
 
     ## Create a `mkfifo` for each ephemeral fid
+    mkfifo_asts = []
     for eph_fid in ephemeral_fids:
         args = [eph_fid.to_ast()]
         command = make_mkfifo_ast(args)
-        asts.append(command)
+        mkfifo_asts.append(command)
+    
+    defun_mkfifos = make_defun(MKFIFO_PASH_FIFOS_NAME, make_semi_sequence(mkfifo_asts))
+    asts.append(defun_mkfifos)
+
+    call_rm_pash_fifos = make_command([string_to_argument(RM_PASH_FIFOS_NAME)])
+    asts.append(call_rm_pash_fifos)
+
+    call_mkfifos = make_command([string_to_argument(MKFIFO_PASH_FIFOS_NAME)])
+    asts.append(call_mkfifos)
 
     return asts
 
@@ -99,7 +114,9 @@ def make_ir_epilogue(ephemeral_fids, clean_up_graph, log_file):
         asts.append(wait_com)
 
     ## Create an `rm -f` for each ephemeral fid
-    asts += make_rms_f_prologue_epilogue(ephemeral_fids)
+    call_rm_pash_funs = make_command([string_to_argument(RM_PASH_FIFOS_NAME)])
+    asts.append(call_rm_pash_funs)
+    # asts += make_rms_f_prologue_epilogue(ephemeral_fids)
     return asts
 
 def make_rm_f_ast(arguments):
@@ -109,18 +126,3 @@ def make_rm_f_ast(arguments):
 def make_mkfifo_ast(arguments):
     all_args = [string_to_argument("mkfifo")] + arguments
     return make_command(all_args)
-
-## Keeping the old code below just in case we want to reimplement it
-
-# def new_split(input_file, outputs, batch_size, auto_split):
-#     if(auto_split):
-#         auto_split_bin = '{}/{}'.format(config.PASH_TOP, config.config['runtime']['auto_split_binary'])
-#         command_no_outputs = '{} "{}"'.format(auto_split_bin, input_file, batch_size)
-#     else:
-#         split_bin = '{}/{}'.format(config.PASH_TOP, config.config['runtime']['split_binary'])
-#         command_no_outputs = '{} "{}" {}'.format(split_bin, input_file, batch_size)
-#     return ' '.join([command_no_outputs] + outputs)
-
-# def drain_stream():
-#     script = '{}/{}'.format(config.PASH_TOP, config.config['distr_planner']['drain_stream_executable_path'])
-#     return [script]
