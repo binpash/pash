@@ -8,6 +8,7 @@ import sys
 
 from ast_util import *
 from util import *
+from definitions.ast_node import *
 
 sys.path.append(os.path.join(config.PASH_TOP, "compiler/parser/ceda"))
 
@@ -25,9 +26,22 @@ def from_ast_objects_to_shell(asts):
     shell_list = []
     for ast in asts:
         if(isinstance(ast, UnparsedScript)):
+            # log("Unparsed script is going back out")
+            # log(ast.text)
+            # exit(1)
             shell_list.append(ast.text)
         else:
-            shell_list.append(to_string(ast))
+            ## We are working with two different abstractions for ASTs, one is the class and the other
+            ## is its JSON object form. Due to Python's _disgusting_ lack of types (and our bad code)
+            ## you can sometimes end up here with both.
+            ##
+            ## TODO: At some point this should be fixed and we should only work with the AstNode abstraction
+            ##       and only serialize at the end.
+            if(isinstance(ast, AstNode)):
+                serialized_ast = ast.json_serialize()
+            else:
+                serialized_ast = ast
+            shell_list.append(to_string(serialized_ast))
     return "\n".join(shell_list) + "\n"
 
 def from_ast_objects_to_shell_file(asts, new_shell_filename):
