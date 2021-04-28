@@ -23,10 +23,10 @@ def main ():
     else:
         inputPath = sys.argv [1]
 
-    json = []
+    new_asts = []
     for output in (parse_to_ast (inputPath, True)):
         (new_ast, verbatim, linno_before, linno_after) = output;
-        json.append (new_ast);
+        new_asts.append (new_ast);
 
         # Debugging
         if (False):
@@ -35,6 +35,7 @@ def main ():
             print (verbatim, end='');
             print ("--------------------");
 
+    json = serialize_asts_to_json (new_asts)
     print (json)
 
 if __name__ == "__main__":
