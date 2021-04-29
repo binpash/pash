@@ -177,21 +177,21 @@ def to_string (ast):
 
             return parens (to_string (a) + string_of_redirs (redirs));
         elif (type == "And"):
-            (a1, a2) = params;
+            (a1, a2) = params
 
             return braces(to_string(a1)) + " && " + braces(to_string(a2))
         elif (type == "Or"):
-            (a1, a2) = params;
+            (a1, a2) = params
 
-            return to_string (a1) + " || " + to_string (a2);
+            return braces(to_string(a1)) + " || " + braces(to_string(a2))
         elif (type == "Not"):
-            (a) = params;
+            (a) = params
 
-            return "! " + braces (to_string (a));
+            return "! " + braces(to_string(a))
         elif (type == "Semi"):
-            (a1, a2) = params;
+            (a1, a2) = params
 
-            return to_string (a1) + " \n " + to_string (a2);
+            return braces(to_string(a1)) + " \n " + braces(to_string(a2))
         elif (type == "If"):
             (c, t, e) = params;
             return string_of_if (c, t, e);
