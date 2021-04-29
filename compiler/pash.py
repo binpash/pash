@@ -83,6 +83,11 @@ def parse_args():
         _, fname = ptempfile()
         with open(fname, 'w') as f:
             f.write(args.command)
+            ## If last line does not contain a newline before EOF, we add one since the dash parser is slightly goofy.
+            ##
+            ## TODO: Figure out a proper way to do this.
+            if not args.command.endswith('\n'):
+                f.write('\n')
             ## If the shell is invoked with -c and arguments after it, then these arguments
             ## need to be assigned to $0, $1, $2, ... and not $1, $2, $3, ...
             if(len(args.input) > 0):
