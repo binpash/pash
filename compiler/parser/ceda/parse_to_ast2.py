@@ -17,6 +17,9 @@ else:
 LIBDASH_LIBRARY_PATH = os.path.join(PASH_TOP, "compiler/parser/libdash/src/.libs/libdash.so")
 
 
+EOF_NLEFT = -99; # libdash/src/input.c
+
+
 # This is a mix of dash.ml:parse_next and parse_to_json.ml.
 def parse_to_ast (inputPath, init=True):
     lines = [];
@@ -50,15 +53,10 @@ def parse_to_ast (inputPath, init=True):
     while (True):
         linno_before = parsefile_var.contents.linno - 1; # libdash is 1-indexed
 
-        nleft = parsefile_var.contents.nleft;
-        if (nleft != 0):
-            # Our assumption is that parsecmd_safe always parses complete line(s)
-            print ("Oops");
-            os.abort ();
-
         n_ptr_C = parsecmd_safe (libdash, False);
 
         linno_after = parsefile_var.contents.linno - 1; # libdash is 1-indexed
+        nleft_after = parsefile_var.contents.nleft;
 
         if (n_ptr_C == None): # Dash.Null
             pass;
@@ -67,6 +65,16 @@ def parse_to_ast (inputPath, init=True):
         elif (n_ptr_C == NERR): # Dash.Error
             break;
         else:
+            if (nleft_after == EOF_NLEFT):
+                linno_after = linno_after + 1; # The last line wasn't counted
+
+                assert (linno_after == len (lines));
+
+                # Last line did not have a newline
+                assert (len (lines [-1]) == 0 or (lines [-1][-1] != '\n'));
+            else:
+                assert (nleft_after == 0); # Read whole lines
+
             n_ptr = cast (n_ptr_C, POINTER (union_node));
             new_ast = of_node (n_ptr);
 
