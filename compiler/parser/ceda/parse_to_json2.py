@@ -29,7 +29,7 @@ def main ():
         new_asts.append (new_ast);
 
         # Debugging
-        if (True):
+        if (False):
             print ("### Parsed lines [%d, %d)" % (linno_before, linno_after));
             print ("--------------------");
             print (verbatim, end='');
