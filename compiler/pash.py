@@ -77,6 +77,12 @@ def parse_args():
     if not config.config:
         config.load_config(args.config_path)
 
+    ## Print all the arguments before they are modified below
+    log("Arguments:")
+    for arg_name, arg_val in vars(args).items():
+        log(arg_name, arg_val)
+    log("-" * 40)
+
     ## Make a directory for temporary files
     config.PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
     if args.command:
@@ -88,24 +94,48 @@ def parse_args():
             ## TODO: Figure out a proper way to do this.
             if not args.command.endswith('\n'):
                 f.write('\n')
-            ## If the shell is invoked with -c and arguments after it, then these arguments
-            ## need to be assigned to $0, $1, $2, ... and not $1, $2, $3, ...
-            if(len(args.input) > 0):
-                ## Assign $0
-                args.name = args.input[0]
-                args.input = args.input[1:]
-            args.input = [fname] + args.input
-
-    if (len(args.input) == 0):
+        ## If the shell is invoked with -c and arguments after it, then these arguments
+        ## need to be assigned to $0, $1, $2, ... and not $1, $2, $3, ...
+        if(len(args.input) > 0):
+            ## Assign $0
+            args.name = args.input[0]
+            args.input = args.input[1:]
+        args.input = [fname] + args.input
+    elif (len(args.input) == 0):
         parser.print_usage()
         print("Error: PaSh does not yet support interactive mode!")
         exit(1)
+    else:
+        ## This is the standard input file mode.
+        ##
+        ## We need to copy the input file to a different location simply because 
+        ## we need to make sure that it contains a newline before EOF (to not confuse the dash parser).
 
-    ## Print all the arguments
-    log("Arguments:")
-    for arg_name, arg_val in vars(args).items():
-        log(arg_name, arg_val)
-    log("-" * 40)
+        ## Some considerations:
+        ##
+        ## - If the user wanted to modify the input script as it was running, 
+        ##   it is now not possible since changes won't propagate to the copy.
+        ## - Copying the script might introduce a time-of-check-time-of-use vulnerability.
+        ##
+        ## TODO: Eventually, we want to use the real input script, just making sure that
+        ##       we wrap around dash's interface properly, to make it return the correct
+        ##       parsed text.
+        _, fname = ptempfile()
+        try:
+            with open(args.input[0], 'r') as finput:
+                input_script = finput.read()
+        except FileNotFoundError as e:
+            print("File:", e.filename, "does not exist!")
+            exit(1)
+        with open(fname, 'w') as f:
+            f.write(input_script)
+            ## If last line does not contain a newline before EOF, we add one since the dash parser is slightly goofy.
+            ##
+            ## TODO: Figure out a proper way to do this.
+            if not input_script.endswith('\n'):
+                f.write('\n')
+        log("Input file copied to:", fname)
+        args.input[0] = fname
 
     return args
 
