@@ -32,14 +32,14 @@ class FileId:
 
     def __repr__(self):
         if(isinstance(self.resource, EphemeralResource)):
-            output = "{}#file{}".format(self.prefix, self.ident)
+            output = "{}#fifo{}".format(self.prefix, self.ident)
         else:
             output = "fid:{}:{}".format(self.ident, self.resource)
         return output
 
     def serialize(self):
         if(isinstance(self.resource, EphemeralResource)):
-            output = "{}#file{}".format(self.prefix, self.ident)
+            output = "{}#fifo{}".format(self.prefix, self.ident)
         else:
             output = "{}".format(self.resource)
         return output
@@ -60,7 +60,7 @@ class FileId:
         ##
         ## TODO: I am not sure about the FileDescriptor resource
         if(isinstance(self.resource, EphemeralResource)):
-            suffix = "{}#file{}".format(self.prefix, self.ident)
+            suffix = "{}#fifo{}".format(self.prefix, self.ident)
             string = os.path.join(config.PASH_TMP_PREFIX, suffix)
             ## Quote the argument
             argument = [make_kv('Q', string_to_argument(string))]
@@ -71,12 +71,6 @@ class FileId:
             argument = string_to_argument(string)
 
         return argument
-
-    ## TODO: Maybe this can be merged with serialize
-    def pipe_name(self):
-        assert(self.resource is None)
-        output = '"#file{}"'.format(self.ident)
-        return output
 
     def set_resource(self, resource):
         ## The file resource cannot be reset. A pointer can never point to
