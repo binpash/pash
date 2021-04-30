@@ -55,6 +55,14 @@ test3()
     $shell -c 'echo $0 $2 $1' pash 2 3
 }
 
+test4()
+{
+    local shell=$1
+    $shell -c 'shift; echo $1 $2' pash 2 3 4 5
+}
+
+
 run_test test1
 run_test test2
 run_test test3
+run_test test4
