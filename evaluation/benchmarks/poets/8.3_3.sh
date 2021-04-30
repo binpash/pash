@@ -1,6 +1,6 @@
 #!/bin/bash
 # tag: compare_exodus_genesis.sh
-set -e
+# set -e
 
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
 INPUT2=${INPUT2:-$PASH_TOP/evaluation/benchmarks/poets/input/exodus}

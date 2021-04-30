@@ -1,6 +1,6 @@
 #!/bin/bash
 # tag: uppercase_by_type
-set -e
+# set -e
 
 # Uppercase words by type
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}

@@ -191,3 +191,22 @@ def make_command(arguments, redirections=[], assignments = []):
     lineno = 0
     node = make_kv("Command", [lineno, assignments, arguments, redirections])
     return node
+
+def make_semi_sequence(asts):
+    assert(len(asts) > 0)
+
+    if(len(asts) == 1):
+        return asts[0]
+    else:
+        acc = asts[-1]
+        ## Remove the last ast
+        iter_asts = asts[:-1]
+        for ast in iter_asts[::-1]:
+            acc = make_kv("Semi", [ast, acc])
+        return acc
+
+def make_defun(name, body):
+    lineno = 0
+    node = make_kv("Defun", [lineno, name, body])
+    return node
+
