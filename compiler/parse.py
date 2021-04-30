@@ -36,11 +36,12 @@ def from_ast_objects_to_shell(asts):
             ## you can sometimes end up here with both.
             ##
             ## TODO: At some point this should be fixed and we should only work with the AstNode abstraction
-            ##       and only serialize at the end.
+            ##       and only serialize at the end. There is more info on that in ast_node.py
             if(isinstance(ast, AstNode)):
-                serialized_ast = ast.json_serialize()
+                serialized_ast = ast_node_to_untyped_deep(ast)
             else:
                 serialized_ast = ast
+
             shell_list.append(to_string(serialized_ast))
     return "\n".join(shell_list) + "\n"
 

@@ -184,7 +184,7 @@ def combine_pipe(ast_nodes):
         combined_nodes = ast_nodes[0]
     else:
         ## If any part of the pipe is not an IR, the compilation must fail.
-        log("Node: {} is not pure".format(AstNode(ast_nodes[0])))
+        log("Node: {} is not pure".format(ast_nodes[0]))
         exit(1)
 
     ## Combine the rest of the nodes
@@ -193,7 +193,7 @@ def combine_pipe(ast_nodes):
             combined_nodes.pipe_append(ast_node)
         else:
             ## If any part of the pipe is not an IR, the compilation must fail.
-            log("Node: {} is not pure".format(AstNode(ast_nodes)))
+            log("Node: {} is not pure".format(ast_nodes))
             exit(1)
 
     return [combined_nodes]
@@ -495,6 +495,8 @@ def replace_ast_regions(ast_objects, irFileGen, config):
         # log("Preprocessing AST {}".format(i))
         # log(ast_object)
         ast, original_text, _linno_before, _linno_after = ast_object
+
+        ## TODO: Turn the untyped ast to an AstNode
 
         ## Goals: This transformation can approximate in several directions.
         ##        1. Not replacing a candidate dataflow region.
@@ -814,7 +816,7 @@ def replace_df_region(asts, irFileGen, config, ast_text=None):
     _, sequential_script_file_name = ptempfile()
     ## If we don't have the original ast text, we need to unparse the ast
     if (ast_text is None):
-        kv_asts = [ast.json_serialize() for ast in asts]
+        kv_asts = [ast_node_to_untyped_deep(ast) for ast in asts]
         from_ast_objects_to_shell_file(kv_asts, sequential_script_file_name)
     else:
         ## However, if we have the original ast text, then we can simply output that.
@@ -835,7 +837,7 @@ def replace_df_region(asts, irFileGen, config, ast_text=None):
 ## (MAYBE) TODO: The way I did it, is by calling the parser once, and seeing
 ## what it returns. Maybe it would make sense to call the parser on
 ## the fly to have a cleaner implementation here?
-def make_command(ir_filename, sequential_script_file_name):
+def make_command(ir_filename, sequential_script_file_name) -> AstNode:
 
     ## TODO: Do we need to do anything with the line_number? If so, make
     ## sure that I keep it in the IR, so that I can find it.
@@ -865,6 +867,7 @@ def check_if_ast_is_supported(construct, arguments, **kwargs):
 
 def ast_match_untyped(untyped_ast_object, cases, *args):
     ## TODO: This should construct the complete AstNode object (not just the surface level)
+    ## TODO: Remove this and then at some point make real proper use of the AstNode
     ast_node = AstNode(untyped_ast_object)
     if ast_node.construct is AstNodeConstructor.PIPE:
         ast_node.check(children_count = lambda : len(ast_node.items) >= 2)

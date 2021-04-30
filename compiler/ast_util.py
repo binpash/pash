@@ -1,7 +1,9 @@
+from definitions.ast_node import *
 
 ## This class is used by the preprocessor in ast_to_ir
 class PreprocessedAST:
     def __init__(self, ast, replace_whole, non_maximal, something_replaced=True):
+        assert(isinstance(ast, AstNode))
         self.ast = ast
         self.replace_whole = replace_whole
         self.non_maximal = non_maximal
