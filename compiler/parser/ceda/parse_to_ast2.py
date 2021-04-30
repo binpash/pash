@@ -72,7 +72,7 @@ def parse_to_ast (inputPath, init=True):
                     assert (linno_after == len (lines));
 
                     # Last line did not have a newline
-                    assert (len (lines [-1]) == 0 or (lines [-1][-1] != '\n'));
+                    assert (len (lines [-1]) > 0 and (lines [-1][-1] != '\n'));
             else:
                 assert (nleft_after == 0); # Read whole lines
 
