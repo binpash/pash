@@ -68,10 +68,11 @@ def parse_to_ast (inputPath, init=True):
             if (nleft_after == EOF_NLEFT):
                 linno_after = linno_after + 1; # The last line wasn't counted
 
-                assert (linno_after == len (lines));
+                if (inputPath != "-"):
+                    assert (linno_after == len (lines));
 
-                # Last line did not have a newline
-                assert (len (lines [-1]) == 0 or (lines [-1][-1] != '\n'));
+                    # Last line did not have a newline
+                    assert (len (lines [-1]) > 0 and (lines [-1][-1] != '\n'));
             else:
                 assert (nleft_after == 0); # Read whole lines
 

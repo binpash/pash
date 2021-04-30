@@ -14,6 +14,9 @@ else:
 sys.path.append(os.path.join(PASH_TOP, "compiler"))
 from json_ast import serialize_asts_to_json
 
+##
+## This is not part of the main flow anymore and is only used for debugging and testing purposes.
+##
 
 def main ():
     sys.setrecursionlimit (90001)
@@ -29,11 +32,11 @@ def main ():
         new_asts.append (new_ast);
 
         # Debugging
-        # if (True):
-        #     print ("### Parsed lines [%d, %d)" % (linno_before, linno_after));
-        #     print ("--------------------");
-        #     print (verbatim, end='');
-        #     print ("--------------------");
+        if (False):
+            print ("### Parsed lines [%d, %d)" % (linno_before, linno_after));
+            print ("--------------------");
+            print (verbatim, end='');
+            print ("--------------------");
 
     json = serialize_asts_to_json (new_asts)
     print (json)
