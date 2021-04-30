@@ -143,29 +143,6 @@ def format_expanded_arg_char(arg_char):
         ## TODO: Make this correct
         raise ValueError
 
-def format_arg_to_raw_chars(arg_char_list):
-    chars = [format_arg_to_raw_char(arg_char) for arg_char in arg_char_list]
-    return "".join(chars)
-
-def format_arg_to_raw_char(arg_char):
-    key, val = get_kv(arg_char)
-    if (key == 'C'):
-        return str(chr(val))
-    elif (key == 'B'):
-        # The $() is just for illustration. This is backticks
-        return '$({})'.format(val)
-    elif (key == 'Q'):
-        formated_val = format_arg_to_raw_chars(val)
-        return '"{}"'.format(formated_val)
-    elif (key == 'V'):
-        return '${{{}}}'.format(val[2])
-    elif (key == 'E'):
-        return '{}'.format(chr(val))
-    else:
-        log("Cannot format arg_char:", arg_char)
-        ## TODO: Make this correct
-        raise NotImplementedError
-
 ## These functions check tuple inputs (configuration and streaming ones)
 def is_single_input(inputs):
     assert(isinstance(inputs, tuple))

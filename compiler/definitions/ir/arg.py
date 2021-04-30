@@ -25,5 +25,7 @@ class Arg:
     def to_ast(self):
         return self.arg_char_list
 
-    def raw_str(self):
-        return format_arg_to_raw_chars(self.arg_char_list)
+    def concatenate(self, other):
+        space = [['C', 32]]
+        self.arg_char_list.extend(space)
+        self.arg_char_list.extend(other.arg_char_list)
