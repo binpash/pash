@@ -42,7 +42,6 @@ class stackmark (Structure):
                 ("nxt",    c_void_p),
                 ("size",   c_size_t)];
 
-
 def init_stack (libdash):
     stack = create_string_buffer (sizeof (stackmark));
 
@@ -212,6 +211,63 @@ union_node._fields_ = [("type",    c_int),
                        ("ndup",    ndup),
                        ("nhere",   nhere),
                        ("nnot",    nnot)];
+
+
+class strpush (Structure):
+    pass;
+
+# struct strpush {
+#     struct strpush *prev;   /* preceding string on stack */
+#     char *prevstring;
+#     int prevnleft;
+#     struct alias *ap;   /* if push was associated with an alias */
+#     char *string;       /* remember the string since it may change */
+#
+#     /* Remember last two characters for pungetc. */
+#     int lastc[2];
+#
+#     /* Number of outstanding calls to pungetc. */
+#     int unget;
+# };
+strpush._fields_ = [("prev", POINTER (strpush)),
+                    ("prevstring", c_char_p),
+                    ("prevnleft", c_int),
+                    ("ap", c_void_p),
+                    ("string", c_char_p),
+                    ("lastc", 2 * c_int),
+                    ("unget", c_int)];
+
+class parsefile (Structure):
+    pass;
+
+# struct parsefile {
+#     struct parsefile *prev; /* preceding file on stack */
+#     int linno;      /* current line */
+#     int fd;         /* file descriptor (or -1 if string) */
+#     int nleft;      /* number of chars left in this line */
+#     int lleft;      /* number of chars left in this buffer */
+#     char *nextc;        /* next char in buffer */
+#     char *buf;      /* input buffer */
+#     struct strpush *strpush; /* for pushing strings at this level */
+#     struct strpush basestrpush; /* so pushing one is fast */
+#
+#     /* Remember last two characters for pungetc. */
+#     int lastc[2];
+#
+#     /* Number of outstanding calls to pungetc. */
+#     int unget;
+# };
+parsefile._fields_ = [("prev",        POINTER (parsefile)),
+                      ("linno",       c_int),
+                      ("fd",          c_int),
+                      ("nleft",       c_int),
+                      ("lleft",       c_int),
+                      ("nextc",       POINTER (c_char)), # NOT c_char_p!
+                      ("buf",         c_char_p),
+                      ("strpush",     POINTER (strpush)),
+                      ("basestrpush", strpush),
+                      ("lastc",       2 * c_int),
+                      ("unget",       c_int)];
 
 
 # dash.ast

@@ -12,7 +12,6 @@ from ir import *
 from ast_to_ir import compile_asts
 from json_ast import *
 from ir_to_ast import to_shell
-from parse import from_ir_to_shell
 from util import *
 import config
 

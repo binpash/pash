@@ -9,6 +9,11 @@ import tempfile
 def flatten_list(lst):
     return [item for sublist in lst for item in sublist]
 
+def unzip(lst):
+    res = [[ i for i, j in lst ],
+           [ j for i, j in lst ]]
+    return res
+
 def pad(lst, index):
     if(index >= len(lst)):
         lst += [None] * (index + 1 - len(lst))

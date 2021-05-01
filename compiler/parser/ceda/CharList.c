@@ -14,14 +14,9 @@ struct charList {
 
 
 struct charNode {
-    // Form a more perfect union instead of proper polymorphism
-    union {
-        char c;         // Translate OCaml 's : char list'
-        void* arg_char; // Translate OCaml 'arg_char'
-    };
+    char c;         // Translate OCaml 's : char list'
 
     struct charNode* next;
-    struct charNode* prev;
 };
 
 
@@ -111,83 +106,9 @@ void charListTail (CharList myList) {
     if (myList->head == NULL) {
         // []
         myList->last = NULL;
-    } else {
-        // head : rest
-        myList->head->prev = NULL;
     }
 
     myList->length = myList->length - 1;
-
-    checkList (myList);
-}
-
-
-// Haskell-style: "Return all the elements of a list except the last one."
-void charListInit (CharList myList) {
-    assert (myList != NULL);
-
-    assert (myList->head != NULL);
-    assert (myList->last != NULL);
-
-    struct charNode* oldLast = myList->last;
-    myList->last = oldLast->prev;
-
-    free (oldLast);
-
-    if (myList->last == NULL) {
-        myList->head = NULL;
-    } else {
-        myList->last->next = NULL;
-    }
-
-    myList->length = myList->length - 1;
-
-    checkList (myList);
-}
-
-
-// Add to the start of the list
-static void prependCharList_empty (CharList myList) {
-    assert (myList != NULL);
-
-    struct charNode* newHead = malloc (sizeof (struct charNode));
-    assert (newHead != NULL);
-
-    newHead->prev = NULL;
-    newHead->next = myList->head;
-
-    if (isCharListEmpty (myList)) {
-        myList->last = newHead;
-    } else {
-        myList->head->prev = newHead;
-    }
-
-    myList->head = newHead;
-    myList->length = myList->length + 1;
-
-    checkList (myList);
-}
-
-
-// Add to the end of the list
-static void appendCharList_empty (CharList myList) {
-    assert (myList != NULL);
-
-    struct charNode* newLast = malloc (sizeof (struct charNode));
-    assert (newLast != NULL);
-
-    newLast->next = NULL;
-
-    if (isCharListEmpty (myList)) {
-        newLast->prev = NULL;
-        myList->head = newLast;
-    } else {
-        newLast->prev = myList->last;
-        myList->last->next = newLast;
-    }
-
-    myList->last = newLast;
-    myList->length = myList->length + 1;
 
     checkList (myList);
 }
@@ -213,22 +134,38 @@ void destroyCharList (CharList myList) {
 void prependCharList_char (CharList myList, char newChar) {
     assert (myList != NULL);
 
-    prependCharList_empty (myList);
+    struct charNode* newHead = malloc (sizeof (struct charNode));
+    assert (newHead != NULL);
 
-    assert (myList->head != NULL);
-    assert (myList->last != NULL);
-    myList->head->c = newChar;
+    newHead->c = newChar;
+    newHead->next = myList->head;
+
+    if (isCharListEmpty (myList)) {
+        myList->last = newHead;
+    }
+
+    myList->head = newHead;
+    myList->length = myList->length + 1;
 }
 
 
 void appendCharList_char (CharList myList, char newChar) {
     assert (myList != NULL);
 
-    appendCharList_empty (myList);
+    struct charNode* newLast = malloc (sizeof (struct charNode));
+    assert (newLast != NULL);
 
-    assert (myList->head != NULL);
-    assert (myList->last != NULL);
-    myList->last->c = newChar;
+    newLast->c = newChar;
+    newLast->next = NULL;
+
+    if (isCharListEmpty (myList)) {
+        myList->head = newLast;
+    } else {
+        myList->last->next = newLast;
+    }
+
+    myList->last = newLast;
+    myList->length = myList->length + 1;
 }
 
 
@@ -262,79 +199,6 @@ char charListLast_char (CharList myList) {
 }
 
 
-/*
-CharList explode (char* str) {
-    assert (str != NULL);
-
-    CharList list = newCharList ();
-
-    for (int i = strlen (str) - 1; i >= 0; i--) {
-        prependCharList_char (list, str [i]);
-    }
-
-    return (list);
-}
-*/
-
-
-// Kludge: reverse
-/*
-char* implode (CharList myList) {
-    assert (myList != NULL);
-
-    char* str = malloc (charListLength (myList) + 1);
-    assert (str != NULL);
-
-    int i = charListLength (myList);
-    str [i] = '\0';
-
-    struct charNode* head = myList->head;
-    while (head != NULL) {
-        i --;
-        str [i] = head->c;
-
-        head = head->next;
-    }
-
-    return (str);
-}
-*/
-
-/*
-char* implode (CharList myList) {
-    assert (myList != NULL);
-
-    char* str = malloc (charListLength (myList) + 1);
-    assert (str != NULL);
-
-    int i = 0;
-
-    struct charNode* head = myList->head;
-    while (head != NULL) {
-        str [i] = head->c;
-        i ++;
-
-        head = head->next;
-    }
-
-    str [i] = '\0';
-
-    return (str);
-}
-*/
-
-/*
-let rec split_at p xs =
-  match xs with
-  | [] -> ([],[])
-  | x::xs ->
-     if p x
-     then ([],x::xs)
-     else let (xs,ys) = split_at p xs in
-          (x::xs, ys)
-*/
-
-
 // Returns the first half of the list, divided by the separator (which stays in the original list).
 CharList split_at (CharList myList, char separator) {
     assert (myList != NULL);
@@ -352,68 +216,4 @@ CharList split_at (CharList myList, char separator) {
     }
 
     return (leftList);
-}
-
-
-/*
-int existsInCharList (CharList myList, char key) {
-    assert (myList != NULL);
-
-    struct charNode* head = myList->head;
-    while (head != NULL) {
-        if (head->c == key) {
-            return TRUE;
-        }
-
-        head = head->next;
-    }
-
-    return FALSE;
-}
-*/
-
-
-//-------------------------------------------------------------------------------------------
-// arg_char
-
-
-void prependCharList_arg_char (CharList myList, void* new_arg_char) {
-    assert (myList != NULL);
-
-    prependCharList_empty (myList);
-
-    assert (myList->head != NULL);
-    assert (myList->last != NULL);
-    myList->head->arg_char = new_arg_char;
-}
-
-
-void appendCharList_arg_char (CharList myList, void* new_arg_char) {
-    assert (myList != NULL);
-
-    appendCharList_empty (myList);
-
-    assert (myList->head != NULL);
-    assert (myList->last != NULL);
-    myList->last->arg_char = new_arg_char;
-}
-
-
-void* charListHead_arg_char (CharList myList) {
-    assert (myList != NULL);
-
-    assert (myList->head != NULL);
-    assert (myList->last != NULL);
-
-    return (myList->head->arg_char);
-}
-
-
-void* charListLast_arg_char (CharList myList) {
-    assert (myList != NULL);
-
-    assert (myList->head != NULL);
-    assert (myList->last != NULL);
-
-    return (myList->last->arg_char);
 }

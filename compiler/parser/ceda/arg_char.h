@@ -1,4 +1,4 @@
-#include "CharList.h"
+#include "ArgCharStack.h"
 
 
 #define TYPE_ARG_CHAR_C 0
@@ -10,7 +10,8 @@
 #define TYPE_ARG_CHAR_B 6
 
 
-typedef CharList arg_TYPE; // arg = arg_char list
+// typedef ArgCharList arg_TYPE; // arg = arg_char list
+typedef ArgCharStack arg_TYPE; // arg = arg_char list
 
 
 extern const char* SERIALIZE_TYPE_ARG_CHAR [];

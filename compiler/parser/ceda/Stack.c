@@ -1,3 +1,4 @@
+#include <string.h>
 #include <malloc.h>
 #include <assert.h>
 
@@ -81,6 +82,23 @@ char topStack (Stack myStack) {
 }
 
 
+char secondTopStack (Stack myStack) {
+    assert (myStack != NULL);
+
+    assert (myStack->head != NULL);
+    assert (myStack->head->next != NULL);
+
+    return (myStack->head->next->c);
+}
+
+
+unsigned int getStackSize (Stack myStack) {
+    assert (myStack != NULL);
+
+    return (myStack->size);
+}
+
+
 void destroyStack (Stack myStack) {
     assert (myStack != NULL);
 
@@ -126,3 +144,83 @@ int existsInStack (Stack myStack, char key) {
 
     return FALSE;
 }
+
+
+
+Stack explode (char* str) {
+    assert (str != NULL);
+
+    Stack list = newStack ();
+
+    int len = strlen (str);
+    for (int i = len - 1; i >= 0; i--) {
+//    for (int i = 0; i < len; i++) {
+        pushStack (list, str [i]);
+    }
+
+    return (list);
+}
+
+
+char* implode (Stack myList) {
+    assert (myList != NULL);
+
+    char* str = malloc (getStackSize (myList) + 1);
+    assert (str != NULL);
+
+    int i = 0;
+    while (getStackSize (myList) > 0) {
+        str [i] = popStack (myList);
+
+        i ++;
+    }
+
+    str [i] = '\0';
+
+    destroyStack (myList);
+
+    return (str);
+}
+
+
+
+// Returns the first half of the list, divided by the separator (which stays in the original list).
+Stack split_at (Stack myStack, char separator) {
+    assert (myStack != NULL);
+
+    Stack leftStack = newStack ();
+
+    while (getStackSize (myStack) > 0) {
+        if (topStack (myStack) == separator) {
+            break; // Ugh
+        }
+
+        pushStack (leftStack, popStack (myStack));
+    }
+
+    Stack revLeftStack = newStack ();
+    while (getStackSize (leftStack) > 0) {
+        pushStack (revLeftStack, popStack (leftStack));
+    }
+
+    return (revLeftStack);
+}
+
+
+/*
+Stack split_at (Stack oldStack, char separator) {
+    assert (oldStack != NULL);
+
+    Stack myStack = newStack ();
+    assert (myStack != NULL);
+
+    for (int i = 0; i < oldStack->usedSize; i++) {
+        if (oldStack->items [i] == separator) {
+        
+        }
+    }
+
+    assert (! "Separator not found");
+    return NULL;
+}
+*/

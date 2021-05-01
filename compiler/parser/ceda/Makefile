@@ -10,7 +10,7 @@ all: parse_to_json2 json_to_shell2 prettyprint_json libdash2.so
 
 
 # C binaries
-parse_to_json2: parse_to_json2.o ast2a.o ast2json.o dash2.o CharList.o Stack.o arg_char.o
+parse_to_json2: parse_to_json2.o ast2a.o ast2json.o dash2.o Stack2.o arg_char.o ArgCharStack2.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS) -ldash
 
 json_to_shell2: json_to_shell2.o ast2b.o
@@ -19,9 +19,11 @@ json_to_shell2: json_to_shell2.o ast2b.o
 prettyprint_json: prettyprint_json.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
+
 # Shared objects
-libdash2.so: dash2.o CharList.o
+libdash2.so: dash2.o
 	$(CC) -shared $^ -o $@ $(LDFLAGS) -ldash
+
 
 # Tests for C binaries
 testsA: parse_to_json2
@@ -49,6 +51,7 @@ testsRT_py: test_rt_py.sh
 #	@find "$(SCRIPTS_DIR)" | grep '[.]sh$$' | while read f; do sh test_ast2shell_py.sh "$$f"; done | tee /tmp/cdashB_py.log
 #	@echo
 #	@cat /tmp/cdashB_py.log | egrep '^[A-Z]+:' | cut -d ':' -f 1 | sort | uniq -c
+
 
 # Clean
 clean:
