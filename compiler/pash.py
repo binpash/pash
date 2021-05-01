@@ -6,8 +6,7 @@ from datetime import datetime
 from annotations import *
 from ast_to_ir import *
 from ir import *
-from json_ast import *
-from parse import parse_shell_to_ast, from_ir_to_shell_file
+from parse import parse_shell_to_asts, from_ast_objects_to_shell
 from util import *
 import config
 import pprint
@@ -22,7 +21,7 @@ def main():
     input_script_path = args.input[0]
     input_script_arguments = args.input[1:]
     preprocessing_parsing_start_time = datetime.now()
-    ast_objects = parse_shell_to_ast(input_script_path)
+    ast_objects = list(parse_shell_to_asts(input_script_path))
     preprocessing_parsing_end_time = datetime.now()
     print_time_delta("Preprocessing -- Parsing", preprocessing_parsing_start_time, preprocessing_parsing_end_time, args)
 
@@ -35,17 +34,16 @@ def main():
 
     ## 3. Translate the new AST back to shell syntax
     preprocessing_unparsing_start_time = datetime.now()
-    input_script_wo_extension, _input_script_extension = os.path.splitext(input_script_path)
-    input_script_basename = os.path.basename(input_script_wo_extension)
-    _, ir_filename = ptempfile()
-    save_asts_json(preprocessed_asts, ir_filename)
-
     _, fname = ptempfile()
     log("Preprocessed script stored in:", fname)
+    preprocessed_shell_script = from_ast_objects_to_shell(preprocessed_asts)
     if(args.output_preprocessed):
         log("Preprocessed script:")
-        log(from_ir_to_shell(ir_filename))
-    from_ir_to_shell_file(ir_filename, fname)
+        log(preprocessed_shell_script)
+    
+    ## Write the new shell script to a file to execute
+    with open(fname, 'w') as new_shell_file:
+        new_shell_file.write(preprocessed_shell_script)
 
     preprocessing_unparsing_end_time = datetime.now()
     print_time_delta("Preprocessing -- Unparsing", preprocessing_unparsing_start_time, preprocessing_unparsing_end_time, args)
@@ -79,30 +77,29 @@ def parse_args():
     if not config.config:
         config.load_config(args.config_path)
 
+    ## Print all the arguments before they are modified below
+    log("Arguments:")
+    for arg_name, arg_val in vars(args).items():
+        log(arg_name, arg_val)
+    log("-" * 40)
+
     ## Make a directory for temporary files
     config.PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
     if args.command:
         _, fname = ptempfile()
         with open(fname, 'w') as f:
             f.write(args.command)
-            ## If the shell is invoked with -c and arguments after it, then these arguments
-            ## need to be assigned to $0, $1, $2, ... and not $1, $2, $3, ...
-            if(len(args.input) > 0):
-                ## Assign $0
-                args.name = args.input[0]
-                args.input = args.input[1:]
-            args.input = [fname] + args.input
-
-    if (len(args.input) == 0):
+        ## If the shell is invoked with -c and arguments after it, then these arguments
+        ## need to be assigned to $0, $1, $2, ... and not $1, $2, $3, ...
+        if(len(args.input) > 0):
+            ## Assign $0
+            args.name = args.input[0]
+            args.input = args.input[1:]
+        args.input = [fname] + args.input
+    elif (len(args.input) == 0):
         parser.print_usage()
         print("Error: PaSh does not yet support interactive mode!")
         exit(1)
-
-    ## Print all the arguments
-    log("Arguments:")
-    for arg_name, arg_val in vars(args).items():
-        log(arg_name, arg_val)
-    log("-" * 40)
 
     return args
 

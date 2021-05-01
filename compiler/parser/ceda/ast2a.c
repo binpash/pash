@@ -37,7 +37,6 @@
 #include "json_object.h"
 
 #include "arg_char.h"
-#include "CharList.h"
 #include "Stack.h"
 
 
@@ -52,10 +51,10 @@ void mk_dup (struct redirection_TYPE* redirection, union node* n, int ty);
 void mk_here (struct redirection_TYPE* redirection, union node* n, int ty);
 struct redirectionList* redirs (union node* n);
 arg_TYPE to_arg (struct narg* n);
-arg_TYPE parse_arg (CharList s, struct nodelist** bqlist, Stack stack);
-char* parse_tilde (CharList left, CharList s);
-arg_TYPE arg_char_FUNC (struct arg_char_TYPE* c, CharList s, struct nodelist** bqlist, Stack stack);
-struct assign_TYPE* to_assign (CharList left, CharList right);
+arg_TYPE parse_arg (Stack s, struct nodelist** bqlist, Stack stack);
+char* parse_tilde (Stack s);
+arg_TYPE arg_char_FUNC (struct arg_char_TYPE* c, Stack s, struct nodelist** bqlist, Stack stack);
+struct assign_TYPE* to_assign (ArgCharStack ca);
 struct assign_list* to_assigns (union node* assign);
 struct args_TYPE* to_args (union node* n);
 
@@ -476,12 +475,12 @@ void mk_dup (struct redirection_TYPE* redirection, union node* n, int ty) {
 
     arg_TYPE tgt;
     if (vname == NULL) {
-        tgt = newCharList ();
+        tgt = newArgCharStack ();
 
         int dupfd = n->ndup.dupfd;
 
         if (dupfd == -1) {
-            appendCharList_arg_char (tgt, newArgCharC ('-'));
+            pushArgCharStack (tgt, newArgCharC ('-'));
         } else {
             // List.map (fun c -> C c) (explode (string_of_int dupfd))
             // Use string instead of list
@@ -491,7 +490,7 @@ void mk_dup (struct redirection_TYPE* redirection, union node* n, int ty) {
 
             int i = 0;
             while ((i < 100) && (dupfd_str [i] != '\0')) {
-                appendCharList_arg_char (tgt, newArgCharC (dupfd_str [i]));
+                pushArgCharStack (tgt, newArgCharC (dupfd_str [i]));
                 i ++;
             }
         }
@@ -668,17 +667,18 @@ struct redirectionList* redirs (union node* n) {
       a  
 */
 arg_TYPE to_arg (struct narg* n) {
-    CharList s = explode (n->text);
+    Stack s = explode_rev (n->text);
+
     struct nodelist* bqlist = n->backquote;
     Stack stack = newStack ();
 
-    CharList a = parse_arg (s, &bqlist, stack);
+    ArgCharStack a = parse_arg (s, &bqlist, stack);
 
-    assert (isCharListEmpty (s));
+    assert (isStackEmpty (s));
     assert (bqlist == NULL);
     assert (isStackEmpty (stack));
 
-    destroyStack (stack);
+    // destroyStack (stack);
 
     return (a);
 }
@@ -689,282 +689,310 @@ arg_TYPE to_arg (struct narg* n) {
        match s,stack with
        ...
 */
-arg_TYPE parse_arg (CharList s, struct nodelist** bqlist, Stack stack) {
-    if (isCharListEmpty (s) && isStackEmpty (stack)) {
-        // | [],[] -> [],[],bqlist,[]
-        return newCharList ();
-    } else if (isCharListEmpty (s) && topStack (stack) == STACK_CTLVar) {
-        // | [],`CTLVar::_ -> failwith "End of string before CTLENDVAR"
-        assert (! "End of string before CTLENDVAR");
-    } else if (isCharListEmpty (s) && topStack (stack) == STACK_CTLAri) {
-        // | [],`CTLAri::_ -> failwith "End of string before CTLENDARI"
-        assert (! "End of string before CTLENDARI");
-    } else if (isCharListEmpty (s) && topStack (stack) == STACK_CTLQuo) {
-        // | [],`CTLQuo::_ -> failwith "End of string before CTLQUOTEMARK"
-        assert (! "End of string before CTLENDQUOTEMARK");
-    } else if ((charListLength (s) > 1) && (charListHead_char (s) == CTLESC)) {
-        // | '\129'::c::s,_ -> arg_char (E c) s bqlist stack
-        charListTail (s);
+arg_TYPE parse_arg (Stack s, struct nodelist** bqlist, Stack stack) {
+    ArgCharStack acc = newArgCharStack ();
+    while (TRUE) {
+        int s_len = getStackSize (s);
 
-        char c = charListHead_char (s);
-        charListTail (s);
+        if ((s_len == 0) && isStackEmpty (stack)) {
+            // | [],[] -> [],[],bqlist,[]
+            reverseArgCharStack (acc);
+            return acc;
 
-        return arg_char_FUNC (newArgCharE (c), s, bqlist, stack);
-    } else if ((charListLength (s) > 1) && (charListHead_char (s) == CTLVAR)) {
-        /*
-            Lightly reformatted
+        } else if (s_len == 0) { // We know that len (stack) > 0!
+            if (topStack (stack) == STACK_CTLVar) {
+                // | [],`CTLVar::_ -> failwith "End of string before CTLENDVAR"
+                assert (! "End of string before CTLENDVAR");
+            } else if (topStack (stack) == STACK_CTLAri) {
+                // | [],`CTLAri::_ -> failwith "End of string before CTLENDARI"
+                assert (! "End of string before CTLENDARI");
+            } else if (topStack (stack) == STACK_CTLQuo) {
+                // | [],`CTLQuo::_ -> failwith "End of string before CTLQUOTEMARK"
+                assert (! "End of string before CTLENDQUOTEMARK");
+            } else {
+                printf ("Top of stack is %d\n", topStack (stack));
+                assert (! "Invalid stack");
+            }
+        } else { // We know that s_len > 0
+            if ((s_len >= 2) && (topStack (s) == CTLESC)) {
+                // | '\129'::c::s,_ -> arg_char (E c) s bqlist stack
+                popStack (s);
 
-            | '\130'::t::s,_ ->
-               let var_name,s = split_at (fun c -> c = '=') s in
-               let t = int_of_char t in
+                char c = popStack (s);
 
-               let v,s,bqlist,stack
-               = match t land 0x0f, s with
-                  ...
-               in
+                pushArgCharStack (acc, newArgCharE (c));
+            } else if ((s_len >= 2) && (topStack (s) == CTLVAR)) {
+                /*
+                    Lightly reformatted
 
-               arg_char v s bqlist stack
-        */
+                    | '\130'::t::s,_ ->
+                       let var_name,s = split_at (fun c -> c = '=') s in
+                       let t = int_of_char t in
 
-        charListTail (s);
-        char t = charListHead_char (s);
-        char tM = t & 0xF;
-        charListTail (s);
+                       let v,s,bqlist,stack
+                       = match t land 0x0f, s with
+                          ...
+                       in
 
-        CharList var_name = split_at (s, '=');
+                       arg_char v s bqlist stack
+                */
 
-        struct arg_char_TYPE* v = NULL;
+                popStack (s);
+                char t = popStack (s);
+                char tM = t & 0xF;
 
-        if (   (tM == 0x1)
-            && (charListLength (s) >= 1)
-            && (charListHead_char (s) == '=')) {
-            /*
-                  (* VSNORMAL and VSLENGTH get special treatment
-                  neither ever gets VSNUL
-                  VSNORMAL is terminated just with the =, without a CTLENDVAR *)
-                  (* VSNORMAL *)
-                  | 0x1,'='::s ->
-                     V (Normal,false,implode var_name,[]),s,bqlist,stack
-            */
+                Stack var_name = split_at (s, '=');
 
-            charListTail (s);
+                struct arg_char_TYPE* v = NULL;
 
-            v = newArgCharV (VAR_TYPE_NORMAL, FALSE, implode (var_name), newCharList ());
-        } else if (   (tM == 0xA)
-                   && (charListLength (s) >= 2)
-                   && (charListHead_char (s) == '=')
-                   && (charListSecond_char (s) == CTLENDVAR)) {
-            /*
-                  (* VSLENGTH *)
-                  | 0xa,'='::'\131'::s ->
-                     V (Length,false,implode var_name,[]),s,bqlist,stack
-            */
+                if (   (tM == 0x1)
+                    && (getStackSize (s) >= 1)
+                    && (topStack (s) == '=')) {
+                    /*
+                          (* VSNORMAL and VSLENGTH get special treatment
+                          neither ever gets VSNUL
+                          VSNORMAL is terminated just with the =, without a CTLENDVAR *)
+                          (* VSNORMAL *)
+                          | 0x1,'='::s ->
+                             V (Normal,false,implode var_name,[]),s,bqlist,stack
+                    */
 
-            charListTail (s);
-            charListTail (s); // Drop two
+                    popStack (s);
 
-            v = newArgCharV (VAR_TYPE_LENGTH, FALSE, implode (var_name), newCharList ());
-        } else if ((tM == 0x1 || tM == 0xA) && (charListLength (s) >= 0)) {
-            /*
-                  | 0x1,c::_ | 0xa,c::_ ->
-                     failwith ("Missing CTLENDVAR for VSNORMAL/VSLENGTH, found " ^ Char.escaped c)
-            */
+                    v = newArgCharV (VAR_TYPE_NORMAL, FALSE, implode_rev (var_name), newArgCharStack ());
+                } else if (   (tM == 0xA)
+                           && (getStackSize (s) >= 2)
+                           && (topStack (s) == '=')
+                           && (secondTopStack (s) == CTLENDVAR)) {
+                    /*
+                          (* VSLENGTH *)
+                          | 0xa,'='::'\131'::s ->
+                             V (Length,false,implode var_name,[]),s,bqlist,stack
+                    */
 
-            assert (! "Missing CTLENDVAR for VSNORMAL/VSLENGTH");
-        } else if (   (charListLength (s) >= 1)
-                   && (charListHead_char (s) == '=')) {
-            /*
-                  (* every other VSTYPE takes mods before CTLENDVAR *)
-                  | vstype,'='::s ->
-                     let a,s,bqlist,stack' = parse_arg s bqlist (`CTLVar::stack) in
-                     V (var_type vstype,t land 0x10 = 0x10,implode var_name,a), s, bqlist, stack'
-            */
+                    popStack (s);
+                    popStack (s); // Drop two
 
-            charListTail (s);
-            char vstype = tM;
+                    v = newArgCharV (VAR_TYPE_LENGTH, FALSE, implode_rev (var_name), newArgCharStack ());
+                } else if ((tM == 0x1 || tM == 0xA) && (getStackSize (s) >= 0)) {
+                    /*
+                          | 0x1,c::_ | 0xa,c::_ ->
+                             failwith ("Missing CTLENDVAR for VSNORMAL/VSLENGTH, found " ^ Char.escaped c)
+                    */
 
-            pushStack (stack, STACK_CTLVar);
-            arg_TYPE a = parse_arg (s, bqlist, stack);
+                    assert (! "Missing CTLENDVAR for VSNORMAL/VSLENGTH");
+                } else if (   (getStackSize (s) >= 1)
+                           && (topStack (s) == '=')) {
+                    /*
+                          (* every other VSTYPE takes mods before CTLENDVAR *)
+                          | vstype,'='::s ->
+                             let a,s,bqlist,stack' = parse_arg s bqlist (`CTLVar::stack) in
+                             V (var_type vstype,t land 0x10 = 0x10,implode var_name,a), s, bqlist, stack'
+                    */
 
-            v = newArgCharV (var_type (vstype), ((t & 0x10) == 0x10), implode (var_name), a);
-        } else if (charListLength (s) >= 1) {
-            // | _,c::_ -> failwith ("Expected '=' terminating variable name, found " ^ Char.escaped c)
-            assert (! "Expected '=' terminating variable name");
-        } else {
-            // | _,[] -> failwith "Expected '=' terminating variable name, found EOF"
-            assert ("Expected '=' terminating variable name, found EOF");
+                    popStack (s);
+                    char vstype = tM;
+
+                    pushStack (stack, STACK_CTLVar);
+                    arg_TYPE a = parse_arg (s, bqlist, stack);
+
+                    v = newArgCharV (var_type (vstype), ((t & 0x10) == 0x10), implode_rev (var_name), a);
+                } else if (getStackSize (s) >= 1) {
+                    // | _,c::_ -> failwith ("Expected '=' terminating variable name, found " ^ Char.escaped c)
+                    assert (! "Expected '=' terminating variable name");
+                } else {
+                    // | _,[] -> failwith "Expected '=' terminating variable name, found EOF"
+                    assert ("Expected '=' terminating variable name, found EOF");
+                }
+
+                // 'implode' has already destroyed the list
+                // destroyStack (var_name);
+
+                pushArgCharStack (acc, v);
+
+            } else if (   FALSE /* match Pash's version of libdash */
+                       && (! isStackEmpty (s))
+                       && (topStack (s) == CTLVAR)) {
+                // | '\130'::_, _ -> raise (ParseException "bad substitution (missing variable name in ${}?")
+                assert (! "bad substitution (missing variable name in ${}?");
+
+            } else if (topStack (s) == CTLENDVAR) {
+                if (isStackEmpty (stack)) {
+                    // | '\131'::_,[] -> failwith "Saw CTLENDVAR outside of CTLVAR"
+                    assert (! "Saw CTLENDVAR outside of CTLVAR");
+                } else if (topStack (stack) == STACK_CTLVar) {
+                    // | '\131'::s,`CTLVar::stack' -> [],s,bqlist,stack'
+                    popStack (s);
+                    popStack (stack);
+
+                    reverseArgCharStack (acc);
+                    return acc;
+                } else if (topStack (stack) == STACK_CTLAri) {
+                    // | '\131'::_,`CTLAri::_ -> failwith "Saw CTLENDVAR before CTLENDARI"
+                    assert (! "Saw CTLENDVAR before CTLENDARI");
+                } else if (topStack (stack) == STACK_CTLQuo) {
+                    // | '\131'::_,`CTLQuo::_ -> failwith "Saw CTLENDVAR before CTLQUOTEMARK"
+                    assert (! "Saw CTLENDVAR before CTLQUOTEMARK");
+                } else {
+                    assert (! "Unexpected stack contents");
+                }
+
+            } else if (topStack (s) == CTLBACKQ) {
+                /*
+                    (* CTLBACKQ *)
+                    | '\132'::s,_ ->
+                       if nullptr bqlist
+                       then failwith "Saw CTLBACKQ but bqlist was null"
+                       else arg_char (B (of_node (bqlist @-> nodelist_n))) s (bqlist @-> nodelist_next) stack
+                */
+
+                popStack (s);
+
+                if (bqlist == NULL) {
+                    assert (! "Saw CTLBACKQ but bqlist was null");
+                } else {
+                    struct arg_char_TYPE* a = newArgCharB (of_node ((*bqlist)->n));
+                    *bqlist = (*bqlist)->next;
+
+                    pushArgCharStack (acc, a);
+                }
+
+            } else if (topStack (s) == CTLARI) {
+                /*
+                    (* CTLARI *)
+                    | '\134'::s,_ ->
+                       let a,s,bqlist,stack' = parse_arg s bqlist (`CTLAri::stack) in
+                       assert (stack = stack');
+                       arg_char (A a) s bqlist stack'
+                */
+
+                popStack (s);
+
+//                char* oldStackStr = serializeStack (stack);
+
+                pushStack (stack, STACK_CTLAri);
+
+                struct arg_char_TYPE* a = newArgCharA (parse_arg (s, bqlist, stack));
+
+//                char* newStackStr = serializeStack (stack);
+//                assert (strcmp (oldStackStr, newStackStr) == 0);
+//                free (oldStackStr);
+//                free (newStackStr);
+
+                pushArgCharStack (acc, a);
+
+            } else if (topStack (s) == CTLENDARI) {
+                if (isStackEmpty (stack)) {
+                    // | '\135'::_,[] -> failwith "Saw CTLENDARI outside of CTLARI"
+                    assert (! "Saw CTLENDARI outside of CTLARI");
+                } else if (topStack (stack) == STACK_CTLAri) {
+                    // | '\135'::s,`CTLAri::stack' -> [],s,bqlist,stack'
+                    popStack (s);
+                    popStack (stack);
+
+                    reverseArgCharStack (acc);
+                    return acc;
+                } else if (topStack (stack) == STACK_CTLVar) {
+                    // | '\135'::_,`CTLVar::_' -> failwith "Saw CTLENDARI before CTLENDVAR"
+                    assert (! "Saw CTLENDARI before CTLENDVAR");
+                } else if (topStack (stack) == STACK_CTLQuo) {
+                    // | '\135'::_,`CTLQuo::_' -> failwith "Saw CTLENDARI before CTLQUOTEMARK"
+                    assert (! "Saw CTLENDARI before CTLQUOTEMARK");
+                } else {
+                    assert (! "Unexpected stack contents");
+                }
+
+            } else if (topStack (s) == CTLQUOTEMARK) {
+                popStack (s); // See below
+
+                if ((! isStackEmpty (stack)) && (topStack (stack) == STACK_CTLQuo)) {
+                    // | '\136'::s,`CTLQuo::stack' -> [],s,bqlist,stack'
+
+                    popStack (stack);
+
+                    reverseArgCharStack (acc);
+                    return acc;
+                } else {
+                    /*
+                        (* CTLQUOTEMARK *)
+                        | '\136'::s,_ ->
+                           let a,s,bqlist,stack' = parse_arg s bqlist (`CTLQuo::stack) in
+                           assert (stack' = stack);
+                           arg_char (Q a) s bqlist stack'
+                    */
+
+//                    char* oldStackStr = serializeStack (stack);
+
+                    pushStack (stack, STACK_CTLQuo);
+
+                    struct arg_char_TYPE* a = newArgCharQ (parse_arg (s, bqlist, stack));
+
+//                    char* newStackStr = serializeStack (stack);
+//                    assert (strcmp (oldStackStr, newStackStr) == 0);
+//                    free (oldStackStr);
+//                    free (newStackStr);
+
+                    pushArgCharStack (acc, a);
+                }
+
+            } else if (topStack (s) == '~') {
+                /*
+                   (* tildes *)
+                   | '~'::s,stack ->
+                      if List.exists (fun m -> m = `CTLQuo || m = `CTLAri) stack
+                      then (* we're in arithmetic or double quotes, so tilde is ignored *)
+                         arg_char (C '~') s bqlist stack
+                      else
+                         let uname,s' = parse_tilde [] s in
+                         arg_char (T uname) s' bqlist stack
+                */
+
+                popStack (s);
+                if (   existsInStack (stack, STACK_CTLQuo)
+                    || existsInStack (stack, STACK_CTLAri)) {
+                    // N.B. Would be more efficient to search for both simultaneously
+
+                    pushArgCharStack (acc, newArgCharC ('~'));
+                } else {
+                    char* uname = parse_tilde (s);
+
+                    pushArgCharStack (acc, newArgCharT (uname));
+                }
+
+            } else {
+                /*
+                    (* ordinary character *)
+                    | c::s,_ ->
+                       arg_char (C c) s bqlist stack
+                */
+                char c = popStack (s);
+
+                pushArgCharStack (acc, newArgCharC (c));
+            }
         }
-
-        // 'implode' has already destroyed the list
-        // destroyCharList (var_name);
-
-        return (arg_char_FUNC (v, s, bqlist, stack));
-    } else if (   FALSE /* match Pash's version of libdash */
-               && (! isCharListEmpty (s))
-               && (charListHead_char (s) == CTLVAR)) {
-        // | '\130'::_, _ -> raise (ParseException "bad substitution (missing variable name in ${}?")
-        assert (! "bad substitution (missing variable name in ${}?");
-    } else if (   (! isCharListEmpty (s))
-               && (charListHead_char (s) == CTLENDVAR)) {
-        if (isStackEmpty (stack)) {
-            // | '\131'::_,[] -> failwith "Saw CTLENDVAR outside of CTLVAR"
-            assert (! "Saw CTLENDVAR outside of CTLVAR");
-        } else if (topStack (stack) == STACK_CTLVar) {
-            // | '\131'::s,`CTLVar::stack' -> [],s,bqlist,stack'
-            charListTail (s);
-            popStack (stack);
-
-            return newCharList ();
-        } else if (topStack (stack) == STACK_CTLAri) {
-            // | '\131'::_,`CTLAri::_ -> failwith "Saw CTLENDVAR before CTLENDARI"
-            assert (! "Saw CTLENDVAR before CTLENDARI");
-        } else if (topStack (stack) == STACK_CTLQuo) {
-            // | '\131'::_,`CTLQuo::_ -> failwith "Saw CTLENDVAR before CTLQUOTEMARK"
-            assert (! "Saw CTLENDVAR before CTLQUOTEMARK");
-        } else {
-            assert (! "Unexpected stack contents");
-        }
-    } else if (   (! isCharListEmpty (s))
-               && (charListHead_char (s) == CTLBACKQ)) {
-        /*
-            (* CTLBACKQ *)
-            | '\132'::s,_ ->
-               if nullptr bqlist
-               then failwith "Saw CTLBACKQ but bqlist was null"
-               else arg_char (B (of_node (bqlist @-> nodelist_n))) s (bqlist @-> nodelist_next) stack
-        */
-
-        charListTail (s);
-
-        if (bqlist == NULL) {
-            assert (! "Saw CTLBACKQ but bqlist was null");
-        } else {
-            struct arg_char_TYPE* a = newArgCharB (of_node ((*bqlist)->n));
-            *bqlist = (*bqlist)->next;
-
-            return (arg_char_FUNC (a, s, bqlist, stack));
-        }
-    } else if ((! isCharListEmpty (s)) && (charListHead_char (s) == CTLARI)) {
-        /*
-            (* CTLARI *)
-            | '\134'::s,_ ->
-               let a,s,bqlist,stack' = parse_arg s bqlist (`CTLAri::stack) in
-               assert (stack = stack');
-               arg_char (A a) s bqlist stack'
-        */
-
-        charListTail (s);
-
-        char* oldStackStr = serializeStack (stack);
-
-        pushStack (stack, STACK_CTLAri);
-
-        struct arg_char_TYPE* a = newArgCharA (parse_arg (s, bqlist, stack));
-
-        char* newStackStr = serializeStack (stack);
-        assert (strcmp (oldStackStr, newStackStr) == 0);
-        free (oldStackStr);
-        free (newStackStr);
-
-        return (arg_char_FUNC (a, s, bqlist, stack));
-    } else if (   (! isCharListEmpty (s))
-               && (charListHead_char (s) == CTLENDARI)) {
-        if (isStackEmpty (stack)) {
-            // | '\135'::_,[] -> failwith "Saw CTLENDARI outside of CTLARI"
-            assert (! "Saw CTLENDARI outside of CTLARI");
-        } else if (topStack (stack) == STACK_CTLAri) {
-            // | '\135'::s,`CTLAri::stack' -> [],s,bqlist,stack'
-            charListTail (s);
-            popStack (stack);
-
-            return newCharList ();
-        } else if (topStack (stack) == STACK_CTLVar) {
-            // | '\135'::_,`CTLVar::_' -> failwith "Saw CTLENDARI before CTLENDVAR"
-            assert (! "Saw CTLENDARI before CTLENDVAR");
-        } else if (topStack (stack) == STACK_CTLQuo) {
-            // | '\135'::_,`CTLQuo::_' -> failwith "Saw CTLENDARI before CTLQUOTEMARK"
-            assert (! "Saw CTLENDARI before CTLQUOTEMARK");
-        } else {
-            assert (! "Unexpected stack contents");
-        }
-    } else if (   (! isCharListEmpty (s))
-               && (charListHead_char (s) == CTLQUOTEMARK)) {
-        charListTail (s); // See below
-
-        if ((! isStackEmpty (stack)) && (topStack (stack) == STACK_CTLQuo)) {
-            // | '\136'::s,`CTLQuo::stack' -> [],s,bqlist,stack'
-
-            popStack (stack);
-
-            return newCharList ();
-        } else {
-            /*
-                (* CTLQUOTEMARK *)
-                | '\136'::s,_ ->
-                   let a,s,bqlist,stack' = parse_arg s bqlist (`CTLQuo::stack) in
-                   assert (stack' = stack);
-                   arg_char (Q a) s bqlist stack'
-            */
-
-            char* oldStackStr = serializeStack (stack);
-
-            pushStack (stack, STACK_CTLQuo);
-
-            struct arg_char_TYPE* a = newArgCharQ (parse_arg (s, bqlist, stack));
-
-            char* newStackStr = serializeStack (stack);
-            assert (strcmp (oldStackStr, newStackStr) == 0);
-            free (oldStackStr);
-            free (newStackStr);
-
-            return (arg_char_FUNC (a, s, bqlist, stack));
-        }
-    } else if ((! isCharListEmpty (s)) && (charListHead_char (s) == '~')) {
-        /*
-           (* tildes *)
-           | '~'::s,stack ->
-              if List.exists (fun m -> m = `CTLQuo || m = `CTLAri) stack
-              then (* we're in arithmetic or double quotes, so tilde is ignored *)
-                 arg_char (C '~') s bqlist stack
-              else
-                 let uname,s' = parse_tilde [] s in
-                 arg_char (T uname) s' bqlist stack
-        */
-
-        charListTail (s);
-        if (   existsInStack (stack, STACK_CTLQuo)
-            || existsInStack (stack, STACK_CTLAri)) {
-            // N.B. Would be more efficient to search for both simultaneously
-
-            return (arg_char_FUNC (newArgCharC ('~'), s, bqlist, stack));
-        } else {
-            char* uname = parse_tilde (newCharList (), s);
-
-            return (arg_char_FUNC (newArgCharT (uname), s, bqlist, stack));
-        }
-
-    } else {
-        /*
-            (* ordinary character *)
-            | c::s,_ ->
-               arg_char (C c) s bqlist stack
-        */
-        char c = charListHead_char (s);
-
-        charListTail (s);
-
-        return (arg_char_FUNC (newArgCharC (c), s, bqlist, stack));
     }
-
-    return NULL; // Reachable if NDEBUG
 }
 
 
-static char* implodeOrNull (CharList acc) {
-    if (isCharListEmpty (acc)) {
+/*
+static char* implodeOrNull (Stack acc) {
+    if (isStackEmpty (acc)) {
         return NULL;
     } else {
         return implode (acc);
+    }
+}
+*/
+
+
+static char* stringOrNull (char* str, int i) {
+    if (i == 0) {
+        free (str);
+
+        return NULL;
+    } else {
+        str [i] = '\0';
+        return str;
     }
 }
 
@@ -977,40 +1005,46 @@ static char* implodeOrNull (CharList acc) {
       function
       ...
 */
-char* parse_tilde (CharList acc, CharList s) {
+char* parse_tilde (Stack s) {
+    char* acc_str = malloc (1 + getStackSize (s));
+    assert (acc_str != NULL);
+
+    int i = 0;
+
     // C does not have lazy evaluation
     // hence we can't afford to define 'ret' here
 
-    if (isCharListEmpty (s)) {
-        // |     [] -> (ret , [])
-        return implodeOrNull (acc);
-    } else if (charListHead_char (s) == CTLESC) {
-        // (* CTLESC *)
-        // |     '\129'::_ as s -> None, s
-        return NULL;
-    } else if (charListHead_char (s) == CTLQUOTEMARK) {
-        // (* CTLQUOTEMARK *)
-        // |     '\136'::_ as s -> None, s
-        return NULL;
-    } else if (   (charListHead_char (s) == CTLENDVAR)
-               || (charListHead_char (s) == ':')
-               || (charListHead_char (s) == '/')) {
-        // (* terminal: CTLENDVAR, /, : *)
-        // |     '\131'::_ as s -> ret, s
-        // |     ':'::_ as s -> ret, s
-        // |     '/'::_ as s -> ret, s
-        return implodeOrNull (acc);
-    } else {
-        // (* ordinary char *)
-        // (* TODO 2019-01-03 only characters from the portable character set *)
-        // |     c::s' -> parse_tilde (acc @ [c]) s'
+    while (TRUE) {
+        if (isStackEmpty (s)) {
+            // |     [] -> (ret , [])
+            return stringOrNull (acc_str, i);
+        } else if (topStack (s) == CTLESC) {
+            // (* CTLESC *)
+            // |     '\129'::_ as s -> None, s
+            return NULL;
+        } else if (topStack (s) == CTLQUOTEMARK) {
+            // (* CTLQUOTEMARK *)
+            // |     '\136'::_ as s -> None, s
+            return NULL;
+        } else if (   (topStack (s) == CTLENDVAR)
+                   || (topStack (s) == ':')
+                   || (topStack (s) == '/')) {
+            // (* terminal: CTLENDVAR, /, : *)
+            // |     '\131'::_ as s -> ret, s
+            // |     ':'::_ as s -> ret, s
+            // |     '/'::_ as s -> ret, s
+            return stringOrNull (acc_str, i);
+        } else {
+            // (* ordinary char *)
+            // (* TODO 2019-01-03 only characters from the portable character set *)
+            // |     c::s' -> parse_tilde (acc @ [c]) s'
 
-        char c = charListHead_char (s);
-        charListTail (s);
-        appendCharList_char (acc, c);
+            char c = popStack (s);
 
-        // Could convert tail recursion to a while loop
-        return parse_tilde (acc, s);
+            acc_str [i] = c;
+        }
+
+        i ++;
     }
 }
 
@@ -1021,15 +1055,17 @@ char* parse_tilde (CharList acc, CharList s) {
       (c::a,s,bqlist,stack)
 */
 // Note that, in ast.ml, arg_char is both a type and a function!
-arg_TYPE arg_char_FUNC (struct arg_char_TYPE* c, CharList s, struct nodelist** bqlist, Stack stack) {
+/*
+arg_TYPE arg_char_FUNC (struct arg_char_TYPE* c, Stack s, struct nodelist** bqlist, Stack stack) {
     arg_TYPE a = parse_arg (s, bqlist, stack);
 
     if (c != NULL) {
-        prependCharList_arg_char (a, (void*) c); // Intentional preprend
+        prependStack_arg_char (a, (void*) c); // Intentional preprend
     }
 
     return (a);
 }
+*/
 
 
 /*
@@ -1041,15 +1077,19 @@ arg_TYPE arg_char_FUNC (struct arg_char_TYPE* c, CharList s, struct nodelist** b
       | v   (C c  ) :: a    -> to_assign (v @ [c])      a
       | v   _               -> failwith "Unexpected special character in assignment"
 */
-struct assign_TYPE* to_assign (CharList v, CharList ca) {
-    if (isCharListEmpty (ca)) {
-        assert (! "Never found an '=' sign in assignment");
-    } else {
-        struct arg_char_TYPE* c = charListHead_arg_char (ca);
-        charListTail (ca);
-        CharList a = ca;
+struct assign_TYPE* to_assign (ArgCharStack ca) {
+    char* v_str = malloc (1 + getArgCharStackSize (ca));
+    assert (v_str != NULL);
+
+    int i = 0;
+
+    while (! isArgCharStackEmpty (ca)) {
+        struct arg_char_TYPE* c = popArgCharStack (ca);
+
+        ArgCharStack a = ca;
 
         if (c->type != TYPE_ARG_CHAR_C) {
+            printf ("Type %d\n", c->type);
             assert (! "Unexpected special character in assignment");
         }
 
@@ -1057,16 +1097,20 @@ struct assign_TYPE* to_assign (CharList v, CharList ca) {
             struct assign_TYPE* assign = malloc (sizeof (struct assign_TYPE));
             assert (assign != NULL);
 
-            assign->string = implode (v);
+            v_str [i] = '\0';
+
+            assign->string = v_str;
             assign->arg    = a;
 
             return (assign);
         } else {
-            appendCharList_char (v, c->C.c);
-
-            return to_assign (v, a);
+            v_str [i] = c->C.c;
         }
+
+        i ++;
     }
+
+    assert (! "Never found an '=' sign in assignment");
 
     return NULL; // Reachable if NDEBUG
 }
@@ -1075,27 +1119,24 @@ struct assign_TYPE* to_assign (CharList v, CharList ca) {
 // to_assigns n = List.map (to_assign []) (to_args n)
 struct assign_list* to_assigns (union node* n) {
     struct args_TYPE* args = to_args (n);
-    struct assign_list* assigns = NULL;
 
+    struct assign_list* assigns = NULL;
     struct assign_list* assignsLast = NULL;
 
     while (args != NULL) {
-        struct assign_TYPE* assign = to_assign (newCharList (), args->arg);
+        struct assign_TYPE* assign = to_assign (args->arg);
+
+        struct assign_list* curr = malloc (sizeof (struct assign_list));
+        assert (curr != NULL);
+        curr->assign = assign;
+        curr->next   = NULL;
 
         if (assigns == NULL) {
-            assigns = malloc (sizeof (struct assign_list));
-            assert (assigns != NULL);
-
-            assignsLast = assigns;
+            assigns = curr;
         } else {
-            assignsLast->next = malloc (sizeof (struct assign_list));
-            assert (assignsLast->next != NULL);
-
-            assignsLast = assignsLast->next;
+            assignsLast->next = curr;
         }
-
-        assignsLast->assign = assign;
-        assignsLast->next   = NULL;
+        assignsLast = curr;
 
         struct args_TYPE* next = args->next;
         free (args);
@@ -1117,17 +1158,26 @@ struct assign_list* to_assigns (union node* n) {
             to_arg n::to_args (getf n narg_next))
 */
 struct args_TYPE* to_args (union node* n) {
-    if (n == NULL) {
-        return NULL;
-    } else {
+    struct args_TYPE* args = NULL;
+    struct args_TYPE* last = NULL;
+
+    while (n != NULL) {
         assert (n->type == NARG);
 
-        struct args_TYPE* args = malloc (sizeof (struct args_TYPE));
-        assert (args != NULL);
+        struct args_TYPE* curr = malloc (sizeof (struct args_TYPE));
+        assert (curr != NULL);
+        curr->arg  = to_arg (&(n->narg));
+        curr->next = NULL;
 
-        args->arg  = to_arg (&(n->narg));
-        args->next = to_args ((n->narg).next);
+        if (last == NULL) {
+            args = curr;
+        } else {
+            last->next = curr;
+        }
+        last = curr;
 
-        return (args);
+        n = (n->narg).next;
     }
+
+    return (args);
 }
