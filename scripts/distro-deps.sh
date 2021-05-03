@@ -33,6 +33,7 @@ case "$distro" in
      sudo apt-get install -y git libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils &> $LOG_DIR/apt_install.log
      ;;
    debian*)
+     # tested with debian:stable-20210408
      echo "Running preparation sudo apt install:"
      echo "|-- running apt update..."
      apt-get update &> $LOG_DIR/apt_update.log
