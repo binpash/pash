@@ -51,7 +51,7 @@ The new parallel script has POSIX constructs added to explicitly guide paralleli
 
 #### Natively on Linux
 
-On Ubuntu, Fedora, or Arch Linux setting up `pash` should be as easy as:
+On Ubuntu, Fedora, Debian, or Arch setting up `pash` should be as easy as:
 
 ```sh
 curl up.pash.ndr.md | sh
