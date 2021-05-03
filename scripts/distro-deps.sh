@@ -23,7 +23,6 @@ fi
 
 # convert to lowercase
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
-
 # now do different things depending on distro
 case "$distro" in
    ubuntu*)  
@@ -32,6 +31,13 @@ case "$distro" in
      sudo apt-get update &> $LOG_DIR/apt_update.log
      echo "|-- running apt install..."
      sudo apt-get install -y git libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils &> $LOG_DIR/apt_install.log
+     ;;
+   debian*)
+     echo "Running preparation sudo apt install:"
+     echo "|-- running apt update..."
+     apt-get update &> $LOG_DIR/apt_update.log
+     echo "|-- running apt install..."
+     apt-get install -y git libtool curl sudo procps m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils &> $LOG_DIR/apt_install.log
      ;;
    fedora*) 
      echo "|-- running dnf install...."
