@@ -37,8 +37,7 @@ Remember to `export` `PASH_TOP` in your startup scripts!
 To execute the current tests before committing or pushing code, simply run:
 
 ```sh
-cd compiler
-./test_evaluation_scripts.sh
+./run_tests.sh
 ```
 
 ## Repo Structure

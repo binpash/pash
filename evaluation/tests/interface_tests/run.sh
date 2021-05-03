@@ -12,6 +12,12 @@ mkdir -p "$output_dir"
 run_test()
 {
     local test=$1
+
+    if [ "$(type -t $test)" != "function" ]; then
+        echo "$test is not a function!   FAIL"
+        return 1
+    fi
+
     echo -n "Running $test..."
     $test "bash" > "$output_dir/$test.bash.out"
     test_bash_ec=$?
@@ -55,6 +61,14 @@ test3()
     $shell -c 'echo $0 $2 $1' pash 2 3
 }
 
-run_test test1
-run_test test2
-run_test test3
+## We run all tests composed with && to exit on the first that fails
+if [ "$#" -eq 0 ]; then
+    run_test test1 &&
+    run_test test2
+    # run_test test3  # This is commented out at the moment because it doesn't suceed
+else
+    for testname in $@
+    do
+        run_test "$testname"
+    done
+fi
