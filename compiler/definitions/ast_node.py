@@ -78,6 +78,15 @@ class AstNode:
         elif self.construct is AstNodeConstructor.FOR:
             output = "for {} in {}; do ({})".format(self.variable, self.argument, self.body)
             return output
+        elif self.construct is AstNodeConstructor.AND:
+            output = "{} && {}".format(self.left_operand, self.right_operand)
+            return output
+        elif self.construct is AstNodeConstructor.SEMI:
+            output = "{} ; {}".format(self.left_operand, self.right_operand)
+            return output
+        elif self.construct is AstNodeConstructor.OR:
+            output = "{} || {}".format(self.left_operand, self.right_operand)
+            return output
         log(self.construct)
         return NotImplemented 
 
@@ -152,7 +161,7 @@ class AstNode:
                                    self.argument,
                                    self.cases])
         else:
-            log(self)
+            log("Not implemented serialization", self)
             json_output = NotImplemented
         return json_output
 
@@ -162,3 +171,25 @@ class CustomJSONEncoder(JSONEncoder):
             return obj.json_serialize()
         # Let the base class default method raise the TypeError
         return JSONEncoder.default(self, obj)
+
+
+## This function takes an object that contains a mix of untyped and typed AstNodes (yuck) 
+## and turns it into untyped json-like object. It is required atm because the infrastructure that
+## we have does not translate everything to its typed form at once before compiling, and therefore
+## we end up with these abomination objects.
+##
+## Very important TODO: 
+##    We need to fix this by properly defining types (based on `compiler/parser/ast_atd.atd`)
+##    and creating a bidirectional transformation from these types to the untyped json object.
+##    Then we can have all ast_to_ir infrastructure work on these objects, and only in the end
+##    requiring to go to the untyped form to interface with printing and parsing 
+##    (which ATM does not interface with the typed form).
+def ast_node_to_untyped_deep(node):
+    if(isinstance(node, AstNode)):
+        json_key, json_val = node.json_serialize()
+        untyped_json_val = [ast_node_to_untyped_deep(obj) for obj in json_val]
+        return [json_key, untyped_json_val]
+    elif(isinstance(node, list)):
+        return [ast_node_to_untyped_deep(obj) for obj in node]
+    else:
+        return node

@@ -11,7 +11,7 @@ else:
 
 sys.path.append(os.path.join(PASH_TOP, "compiler"))
 
-from json_ast import parse_json_ast
+from json_ast import parse_json_ast, parse_json_ast_string
 from ast2shell import *
 
 
@@ -24,12 +24,17 @@ def main ():
     for ast in asts:
         print (to_string (ast))
 
-def json_to_shell_string(input_filename):
-    asts = parse_json_ast(input_filename)
+def json_string_to_shell_string(json_string):
+    asts = parse_json_ast_string(json_string)
     shell_list = []
     for ast in asts:
         shell_list.append(to_string(ast))
     return "\n".join(shell_list) + "\n"
+
+def json_to_shell_string(input_filename):
+    with open(input_filename) as json_file:
+        json_string = json_file.read()
+        return json_string_to_shell_string(json_string)
 
 if __name__ == "__main__":
     main ()

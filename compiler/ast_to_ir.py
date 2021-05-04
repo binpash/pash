@@ -1,9 +1,10 @@
+from ast_util import *
 from ir import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
 from util import *
 from json_ast import save_asts_json, ast_to_shell
-from parse import parse_shell, from_ir_to_shell, from_ir_to_shell_file
+from parse import parse_shell, from_ast_objects_to_shell, from_ast_objects_to_shell_file
 from expand import *
 import subprocess
 import traceback
@@ -183,7 +184,7 @@ def combine_pipe(ast_nodes):
         combined_nodes = ast_nodes[0]
     else:
         ## If any part of the pipe is not an IR, the compilation must fail.
-        log("Node: {} is not pure".format(AstNode(ast_nodes[0])))
+        log("Node: {} is not pure".format(ast_nodes[0]))
         exit(1)
 
     ## Combine the rest of the nodes
@@ -192,7 +193,7 @@ def combine_pipe(ast_nodes):
             combined_nodes.pipe_append(ast_node)
         else:
             ## If any part of the pipe is not an IR, the compilation must fail.
-            log("Node: {} is not pure".format(AstNode(ast_nodes)))
+            log("Node: {} is not pure".format(ast_nodes))
             exit(1)
 
     return [combined_nodes]
@@ -370,9 +371,7 @@ def make_echo_ast(argument, var_file_path):
 
 ## TODO: Move this function somewhere more general
 def execute_shell_asts(asts):
-    _, ir_filename = ptempfile()
-    save_asts_json(asts, ir_filename)
-    output_script = from_ir_to_shell(ir_filename)
+    output_script = from_ast_objects_to_shell(asts)
     # log(output_script)
     exec_obj = subprocess.run(["/usr/bin/env", "bash"], input=output_script,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -490,25 +489,14 @@ def compile_redirections(redirections, fileIdGen, config):
 
 ## Replace candidate dataflow AST regions with calls to PaSh's runtime.
 def replace_ast_regions(ast_objects, irFileGen, config):
-    ## TODO: Copy the structure from compile_asts
-    ##       since we want to merge multiple asts
-    ##       into one if they contain dataflow regions.
-
-    ## TODO: Follow exactly the checks that are done in compile_asts
-    ##       without actually compiling the asts to IRs.
     preprocessed_asts = []
     candidate_dataflow_region = []
     for i, ast_object in enumerate(ast_objects):
         # log("Preprocessing AST {}".format(i))
         # log(ast_object)
+        ast, original_text, _linno_before, _linno_after = ast_object
 
-        ## NOTE: This could also replace all ASTs with calls to PaSh runtime.
-        ##       There are a coupld issues with that:
-        ##       1. We would have to make sure that state changes from PaSh runtime
-        ##          affect the current shell. However, this probably has to be solved
-        ##          anyway except if we can *ensure* that no state changes can happen
-        ##          in replaced parts.
-        ##       2. Performance issues. Performance would be bad.
+        ## TODO: Turn the untyped ast to an AstNode
 
         ## Goals: This transformation can approximate in several directions.
         ##        1. Not replacing a candidate dataflow region.
@@ -527,36 +515,55 @@ def replace_ast_regions(ast_objects, irFileGen, config):
         ##   then the second output is true.
         ## - If the next AST needs to be replaced too (e.g. if the current one is a background)
         ##   then the third output is true
-        output = preprocess_node(ast_object, irFileGen, config)
-        preprocessed_ast, should_replace_whole_ast, is_non_maximal = output
+        preprocessed_ast_object = preprocess_node(ast, irFileGen, config)
         ## If the dataflow region is not maximal then it implies that the whole
         ## AST should be replaced.
-        assert(not is_non_maximal or should_replace_whole_ast)
+        assert(not preprocessed_ast_object.is_non_maximal() 
+               or preprocessed_ast_object.should_replace_whole_ast())
+        
+        ## If the whole AST needs to be replaced then it implies that
+        ## something will be replaced
+        assert(not preprocessed_ast_object.should_replace_whole_ast() 
+               or preprocessed_ast_object.will_anything_be_replaced())
 
         ## If it isn't maximal then we just add it to the candidate
-        if(is_non_maximal):
-            candidate_dataflow_region.append(preprocessed_ast)
+        if(preprocessed_ast_object.is_non_maximal()):
+            candidate_dataflow_region.append((preprocessed_ast_object.ast,
+                                              original_text))
         else:
             ## If the current candidate dataflow region is non-empty
             ## it means that the previous AST was in the background so
             ## the current one has to be included in the process no matter what
             if (len(candidate_dataflow_region) > 0):
-                candidate_dataflow_region.append(preprocessed_ast)
+                candidate_dataflow_region.append((preprocessed_ast_object.ast,
+                                                  original_text))
                 ## Since the current one is maximal (or not wholy replaced)
                 ## we close the candidate.
-                replaced_ast = replace_df_region(candidate_dataflow_region, irFileGen, config)
+                dataflow_region_asts, dataflow_region_lines = unzip(candidate_dataflow_region)
+                dataflow_region_text = "\n".join(dataflow_region_lines)
+                replaced_ast = replace_df_region(dataflow_region_asts, irFileGen, config,
+                                                 ast_text=dataflow_region_text)
                 candidate_dataflow_region = []
                 preprocessed_asts.append(replaced_ast)
             else:
-                if(should_replace_whole_ast):
-                    replaced_ast = replace_df_region([preprocessed_ast], irFileGen, config)
+                if(preprocessed_ast_object.should_replace_whole_ast()):
+                    replaced_ast = replace_df_region([preprocessed_ast_object.ast], irFileGen, config,
+                                                     ast_text=original_text)
                     preprocessed_asts.append(replaced_ast)
                 else:
-                    preprocessed_asts.append(preprocessed_ast)
+                    ## In this case, it is possible that no replacement happened,
+                    ## meaning that we can simply return the original parsed text as it was.
+                    if(preprocessed_ast_object.will_anything_be_replaced()):
+                        preprocessed_asts.append(preprocessed_ast_object.ast)
+                    else:
+                        preprocessed_asts.append(UnparsedScript(original_text))
 
     ## Close the final dataflow region
     if(len(candidate_dataflow_region) > 0):
-        replaced_ast = replace_df_region(candidate_dataflow_region, irFileGen, config)
+        dataflow_region_asts, dataflow_region_lines = unzip(candidate_dataflow_region)
+        dataflow_region_text = "\n".join(dataflow_region_lines)
+        replaced_ast = replace_df_region(dataflow_region_asts, irFileGen, config,
+                                         ast_text=dataflow_region_text)
         candidate_dataflow_region = []
         preprocessed_asts.append(replaced_ast)
 
@@ -569,14 +576,16 @@ def preprocess_node(ast_object, irFileGen, config):
 ## This preprocesses the AST node and also replaces it if it needs replacement .
 ## It is called by constructs that cannot be included in a dataflow region.
 def preprocess_close_node(ast_object, irFileGen, config):
-    output = preprocess_node(ast_object, irFileGen, config)
-    preprocessed_ast, should_replace_whole_ast, _is_non_maximal = output
+    preprocessed_ast_object = preprocess_node(ast_object, irFileGen, config)
+    preprocessed_ast = preprocessed_ast_object.ast
+    should_replace_whole_ast = preprocessed_ast_object.should_replace_whole_ast()
     if(should_replace_whole_ast):
-        ## TODO: Maybe the first argument has to be a singular list?
         final_ast = replace_df_region([preprocessed_ast], irFileGen, config)
+        something_replaced = True
     else:
         final_ast = preprocessed_ast
-    return final_ast
+        something_replaced = preprocessed_ast_object.will_anything_be_replaced()
+    return final_ast, something_replaced
 
 def preprocess_node_pipe(ast_node, _irFileGen, _config):
     ## A pipeline is *always* a candidate dataflow region.
@@ -588,7 +597,10 @@ def preprocess_node_pipe(ast_node, _irFileGen, _config):
     ##       For example, if a command in the pipe has a command substitution
     ##       in one of its arguments then we would like to call our runtime
     ##       there instead of
-    return ast_node, True, ast_node.is_background
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=True,
+                                              non_maximal=ast_node.is_background)
+    return preprocessed_ast_object
 
 ## TODO: Complete this
 def preprocess_node_command(ast_node, _irFileGen, _config):
@@ -602,11 +614,18 @@ def preprocess_node_command(ast_node, _irFileGen, _config):
     ## If there are no arguments, the command is just an
     ## assignment (Q: or just redirections?)
     if(len(ast_node.arguments) == 0):
-        return ast_node, False, False
+        preprocessed_ast_object = PreprocessedAST(ast_node,
+                                                  replace_whole=False,
+                                                  non_maximal=False,
+                                                  something_replaced=False)
+        return preprocessed_ast_object
 
     ## This means we have a command. Commands are always candidate dataflow
     ## regions.
-    return ast_node, True, False
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=True,
+                                              non_maximal=False)
+    return preprocessed_ast_object
 
 ## TODO: Is that correct? Also, this should probably affect `semi`, `and`, and `or`
 def preprocess_node_background(ast_node, _irFileGen, _config):
@@ -615,7 +634,10 @@ def preprocess_node_background(ast_node, _irFileGen, _config):
 
     ## TODO: Preprocess the internals of the background to allow
     ##       for mutually recursive calls to PaSh.
-    return ast_node, True, True
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=True,
+                                              non_maximal=True)
+    return preprocessed_ast_object
 
 ## TODO: We can actually preprocess the underlying node and then
 ##       return its characteristics above. However, we would need
@@ -625,29 +647,42 @@ def preprocess_node_background(ast_node, _irFileGen, _config):
 ##       e.g. a subshell node should also be output as a subshell in the backend.
 ## FIXME: This might not just be suboptimal, but also wrong.
 def preprocess_node_subshell(ast_node, irFileGen, config):
-    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    preprocessed_body, something_replaced = preprocess_close_node(ast_node.body,
+                                                                  irFileGen, config)
     ## TODO: Could there be a problem with the in-place update
     ast_node.body = preprocessed_body
-    return ast_node, False, False
-
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=False,
+                                              non_maximal=False,
+                                              something_replaced=something_replaced)
+    return preprocessed_ast_object
 
 ## TODO: For all of the constructs below, think whether we are being too conservative
 
 ## TODO: This is not efficient at all since it calls the PaSh runtime everytime the loop is entered.
 ##       We have to find a way to improve that.
 def preprocess_node_for(ast_node, irFileGen, config):
-    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    preprocessed_body, something_replaced = preprocess_close_node(ast_node.body, irFileGen, config)
     ## TODO: Could there be a problem with the in-place update
     ast_node.body = preprocessed_body
-    return ast_node, False, False
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=False,
+                                              non_maximal=False,
+                                              something_replaced=something_replaced)
+    return preprocessed_ast_object
 
 def preprocess_node_while(ast_node, irFileGen, config):
-    preprocessed_test = preprocess_close_node(ast_node.test, irFileGen, config)
-    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    preprocessed_test, sth_replaced_test = preprocess_close_node(ast_node.test, irFileGen, config)
+    preprocessed_body, sth_replaced_body = preprocess_close_node(ast_node.body, irFileGen, config)
     ## TODO: Could there be a problem with the in-place update
     ast_node.test = preprocessed_test
     ast_node.body = preprocessed_body
-    return ast_node, False, False
+    something_replaced = sth_replaced_test or sth_replaced_body
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=False,
+                                              non_maximal=False,
+                                              something_replaced=something_replaced)
+    return preprocessed_ast_object
 
 ## This is the same as the one for `For`
 def preprocess_node_defun(ast_node, irFileGen, config):
@@ -655,73 +690,103 @@ def preprocess_node_defun(ast_node, irFileGen, config):
     # preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
     ## TODO: Could there be a problem with the in-place update
     # ast_node.body = preprocessed_body
-    return ast_node, False, False
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=False,
+                                              non_maximal=False,
+                                              something_replaced=False)
+    return preprocessed_ast_object
 
 ## TODO: If the preprocessed is not maximal we actually need to combine it with the one on the right.
 def preprocess_node_semi(ast_node, irFileGen, config):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
-    preprocessed_left = preprocess_close_node(ast_node.left_operand, irFileGen, config)
-    preprocessed_right = preprocess_close_node(ast_node.right_operand, irFileGen, config)
+    preprocessed_left, sth_replaced_left = preprocess_close_node(ast_node.left_operand, irFileGen, config)
+    preprocessed_right, sth_replaced_right = preprocess_close_node(ast_node.right_operand, irFileGen, config)
     ## TODO: Could there be a problem with the in-place update
     ast_node.left_operand = preprocessed_left
     ast_node.right_operand = preprocessed_right
-    return ast_node, False, False
+    sth_replaced = sth_replaced_left or sth_replaced_right
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=False,
+                                              non_maximal=False,
+                                              something_replaced=sth_replaced)
+    return preprocessed_ast_object
 
 def preprocess_node_and(ast_node, irFileGen, config):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
-    preprocessed_left = preprocess_close_node(ast_node.left_operand, irFileGen, config)
-    preprocessed_right = preprocess_close_node(ast_node.right_operand, irFileGen, config)
+    preprocessed_left, sth_replaced_left = preprocess_close_node(ast_node.left_operand, irFileGen, config)
+    preprocessed_right, sth_replaced_right = preprocess_close_node(ast_node.right_operand, irFileGen, config)
     ## TODO: Could there be a problem with the in-place update
     ast_node.left_operand = preprocessed_left
     ast_node.right_operand = preprocessed_right
-    return ast_node, False, False
+    sth_replaced = sth_replaced_left or sth_replaced_right
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=False,
+                                              non_maximal=False,
+                                              something_replaced=sth_replaced)
+    return preprocessed_ast_object
 
 def preprocess_node_or(ast_node, irFileGen, config):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
-    preprocessed_left = preprocess_close_node(ast_node.left_operand, irFileGen, config)
-    preprocessed_right = preprocess_close_node(ast_node.right_operand, irFileGen, config)
+    preprocessed_left, sth_replaced_left = preprocess_close_node(ast_node.left_operand, irFileGen, config)
+    preprocessed_right, sth_replaced_right = preprocess_close_node(ast_node.right_operand, irFileGen, config)
     ## TODO: Could there be a problem with the in-place update
     ast_node.left_operand = preprocessed_left
     ast_node.right_operand = preprocessed_right
-    return ast_node, False, False
+    sth_replaced = sth_replaced_left or sth_replaced_right
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=False,
+                                              non_maximal=False,
+                                              something_replaced=sth_replaced)
+    return preprocessed_ast_object
 
 def preprocess_node_not(ast_node, irFileGen, config):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
-    preprocessed_body = preprocess_close_node(ast_node.body, irFileGen, config)
+    preprocessed_body, sth_replaced = preprocess_close_node(ast_node.body, irFileGen, config)
     ## TODO: Could there be a problem with the in-place update
     ast_node.body = preprocessed_body
-    return ast_node, False, False
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=False,
+                                              non_maximal=False,
+                                              something_replaced=sth_replaced)
+    return preprocessed_ast_object
 
 
 def preprocess_node_if(ast_node, irFileGen, config):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
-    preprocessed_cond = preprocess_close_node(ast_node.cond, irFileGen, config)
-    preprocessed_then = preprocess_close_node(ast_node.then_b, irFileGen, config)
-    preprocessed_else = preprocess_close_node(ast_node.else_b, irFileGen, config)
+    preprocessed_cond, sth_replaced_cond = preprocess_close_node(ast_node.cond, irFileGen, config)
+    preprocessed_then, sth_replaced_then = preprocess_close_node(ast_node.then_b, irFileGen, config)
+    preprocessed_else, sth_replaced_else = preprocess_close_node(ast_node.else_b, irFileGen, config)
     ## TODO: Could there be a problem with the in-place update
     ast_node.cond = preprocessed_cond
     ast_node.then_b = preprocessed_then
     ast_node.else_b = preprocessed_else
-    return ast_node, False, False
+    sth_replaced = sth_replaced_cond or sth_replaced_then or sth_replaced_else
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=False,
+                                              non_maximal=False,
+                                              something_replaced=sth_replaced)
+    return preprocessed_ast_object
 
 def preprocess_case(case, irFileGen, config):
-    preprocessed_body = preprocess_close_node(case["cbody"], irFileGen, config)
+    preprocessed_body, sth_replaced = preprocess_close_node(case["cbody"], irFileGen, config)
     case["cbody"] = preprocessed_body
-    return case
+    return case, sth_replaced
 
 def preprocess_node_case(ast_node, irFileGen, config):
-    preprocessed_cases = [preprocess_case(case, irFileGen, config) for case in ast_node.cases]
+    preprocessed_cases_replaced = [preprocess_case(case, irFileGen, config) for case in ast_node.cases]
+    preprocessed_cases, sth_replaced_cases = list(zip(*preprocessed_cases_replaced))
     ## TODO: Could there be a problem with the in-place update
     ast_node.cases = preprocessed_cases
-    return ast_node, False, False
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=False,
+                                              non_maximal=False,
+                                              something_replaced=any(sth_replaced_cases))
+    return preprocessed_ast_object
 
 
 ## TODO: I am a little bit confused about how compilation happens.
 ##       Does it happen bottom up or top down: i.e. when we first encounter an occurence
 ##       do we recurse in it and then compile from the leaf, or just compile the surface?
-
-## TODO: All the replace code might need to be deleted (since we now replace in the preprocessing).
-
 
 
 
@@ -735,28 +800,11 @@ def preprocess_node_case(ast_node, irFileGen, config):
 ## TODO: For now this just replaces the IRs starting from the ourside
 ## one first, but it should start from the bottom up to handle
 ## recursive IRs.
-##
-## TODO: Optimization: This pass could be merged with the previous
-## translation one. I am not doing this now so that it remains
-## cleaner. If we find out that we might benefit from this
-## optimization, we can do it.
-##
-## TODO: Visual improvement: Can we abstract away the traverse of this
-## ast in a mpa function, so that we don't rewrite all the cases?
-def replace_irs(ast, irFileGen, config):
-
-    if (isinstance(ast, IR)):
-        replaced_ast = replace_df_region(ast, irFileGen, config)
-    else:
-        global ir_cases
-        replaced_ast = ast_match(ast, ir_cases, irFileGen, config)
-
-    return replaced_ast
 
 ## This function serializes a candidate df_region in a file, and in its place,
 ## it adds a command that calls our distribution planner with the name of the
 ## saved file.
-def replace_df_region(asts, irFileGen, config):
+def replace_df_region(asts, irFileGen, config, ast_text=None):
     _, ir_filename = ptempfile()
 
     ## Serialize the node in a file
@@ -765,10 +813,15 @@ def replace_df_region(asts, irFileGen, config):
 
     ## Serialize the candidate df_region asts back to shell
     ## so that the sequential script can be run in parallel to the compilation.
-    _, second_ir_filename = ptempfile()
-    save_asts_json(asts, second_ir_filename)
     _, sequential_script_file_name = ptempfile()
-    from_ir_to_shell_file(second_ir_filename, sequential_script_file_name)
+    ## If we don't have the original ast text, we need to unparse the ast
+    if (ast_text is None):
+        kv_asts = [ast_node_to_untyped_deep(ast) for ast in asts]
+        from_ast_objects_to_shell_file(kv_asts, sequential_script_file_name)
+    else:
+        ## However, if we have the original ast text, then we can simply output that.
+        with open(sequential_script_file_name, "w") as script_file:
+            script_file.write(ast_text)
 
     ## Replace it with a command that calls the distribution
     ## planner with the name of the file.
@@ -787,7 +840,7 @@ def replace_df_region(asts, irFileGen, config):
 ## (MAYBE) TODO: The way I did it, is by calling the parser once, and seeing
 ## what it returns. Maybe it would make sense to call the parser on
 ## the fly to have a cleaner implementation here?
-def make_call_to_runtime(ir_filename, sequential_script_file_name):
+def make_call_to_runtime(ir_filename, sequential_script_file_name) -> AstNode:
 
     ## Save the previous exit state:
     ## ```
@@ -842,76 +895,6 @@ def make_call_to_runtime(ir_filename, sequential_script_file_name):
                                    set_exit_status_node])
     return sequence
 
-
-def replace_irs_and_or_semi(ast_node, irFileGen, config):
-    r_left = replace_irs(ast_node.left_operand, irFileGen, config)
-    r_right = replace_irs(ast_node.right_operand, irFileGen, config)
-    return make_kv(ast_node.construct.value, [r_left, r_right])
-
-def replace_irs_command(ast_node, irFileGen, config):
-    ## TODO: I probably have to also handle the redir_list (applies to
-    ## compile_node_command too)
-    c = ast_node.construct.value
-    line_number = ast_node.line_number
-    assignments = ast_node.assignments
-    args = ast_node.arguments
-    redir_list = ast_node.redir_list
-
-    replaced_assignments = replace_irs_assignments(assignments, irFileGen, config)
-    if(len(args) == 0):
-        ## Note: The flow here is similar to compile
-        replaced_ast = make_kv(c, [line_number, replaced_assignments, args, redir_list])
-    else:
-        command_name = args[0]
-        replaced_options = replace_irs_command_arguments(args[1:], irFileGen, config)
-        replaced_args = [command_name] + replaced_options
-
-        replaced_ast = make_kv(c, [line_number, replaced_assignments, replaced_args, redir_list])
-
-    return replaced_ast
-
-def replace_irs_for(ast_node, irFileGen, config):
-    ## Question: Is it a problem if we replace the same IR? Could
-    ## there be changes between loops that are not reflected?
-    replaced_ast = make_kv(ast_node.construct.value,
-                           [ast_node.line_number,
-                            replace_irs_command_argument(ast_node.argument, irFileGen, config),
-                            replace_irs(ast_node.body, irFileGen, config),
-                            ast_node.variable])
-    return replaced_ast
-
-
-def replace_irs_arg_char(arg_char, irFileGen, config):
-    key, val = get_kv(arg_char)
-    if (key == 'C'):
-        return arg_char
-    elif (key == 'B'):
-        replaced_node = replace_irs(val, irFileGen, config)
-        return make_kv(key, replaced_node)
-    elif (key == 'Q'):
-        replaced_val = replace_irs_command_argument(val, irFileGen, config)
-        return make_kv(key, replaced_val)
-    else:
-        ## TODO: Complete this (as we have to do with the compile)
-        return arg_char
-
-def replace_irs_command_argument(argument, irFileGen, config):
-    replaced_argument = [replace_irs_arg_char(char, irFileGen, config) for char in argument]
-    return replaced_argument
-
-def replace_irs_command_arguments(arguments, irFileGen, config):
-    replaced_arguments = [replace_irs_command_argument(arg, irFileGen, config) for arg in arguments]
-    return replaced_arguments
-
-## This is similar to compile_assignments
-##
-## TODO: Is that the correct way to handle them? Question also applied
-## to compile_assignments.
-def replace_irs_assignments(assignments, irFileGen, config):
-    replaced_assignments = [[assignment[0], replace_irs_command_argument(assignment[1], irFileGen, config)]
-                            for assignment in assignments]
-    return replaced_assignments
-
 ##
 ## Pattern matching for the AST
 ##
@@ -921,6 +904,7 @@ def check_if_ast_is_supported(construct, arguments, **kwargs):
 
 def ast_match_untyped(untyped_ast_object, cases, *args):
     ## TODO: This should construct the complete AstNode object (not just the surface level)
+    ## TODO: Remove this and then at some point make real proper use of the AstNode
     ast_node = AstNode(untyped_ast_object)
     if ast_node.construct is AstNodeConstructor.PIPE:
         ast_node.check(children_count = lambda : len(ast_node.items) >= 2)

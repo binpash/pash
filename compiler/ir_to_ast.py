@@ -6,7 +6,7 @@ from util import *
 from ir_utils import *
 
 from json_ast import save_asts_json
-from parse import from_ir_to_shell
+from parse import from_ast_objects_to_shell
 import config
 
 RM_PASH_FIFOS_NAME="rm_pash_fifos"
@@ -19,9 +19,7 @@ def to_shell(ir, output_dir, args):
     output_asts = ir2ast(ir, args)
 
     ## Then just call the parser.
-    temp_fh, temp_filename = ptempfile()
-    save_asts_json(output_asts, temp_filename)
-    output_script = from_ir_to_shell(temp_filename)
+    output_script = from_ast_objects_to_shell(output_asts)
 
     backend_end_time = datetime.now()
     print_time_delta("Backend", backend_start_time, backend_end_time, args)
