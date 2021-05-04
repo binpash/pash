@@ -772,38 +772,75 @@ def replace_df_region(asts, irFileGen, config):
 
     ## Replace it with a command that calls the distribution
     ## planner with the name of the file.
-    replaced_node = make_command(ir_filename, sequential_script_file_name)
+    replaced_node = make_call_to_runtime(ir_filename, sequential_script_file_name)
 
     return replaced_node
 
-## This function makes a command that calls the distribution planner
+## This function makes a command that calls the pash runtime
 ## together with the name of the file containing an IR. Then the
-## distribution planner should read from this file and continue
+## pash runtime should read from this file and continue
 ## execution.
+##
+## TODO: At the moment this is written in python but it is in essense a simple shell script.
+##       Is it possible to make it be a simple string instead of manually creating the AST?
 ##
 ## (MAYBE) TODO: The way I did it, is by calling the parser once, and seeing
 ## what it returns. Maybe it would make sense to call the parser on
 ## the fly to have a cleaner implementation here?
-def make_command(ir_filename, sequential_script_file_name):
+def make_call_to_runtime(ir_filename, sequential_script_file_name):
 
-    ## TODO: Do we need to do anything with the line_number? If so, make
-    ## sure that I keep it in the IR, so that I can find it.
+    ## Save the previous exit state:
+    ## ```
+    ## pash_previous_exit_status="$?"
+    ## ```
+    assignments = [["pash_previous_exit_status",
+                    [make_quoted_variable("?")]]]
+    previous_status_command = make_command([], assignments=assignments)
+
+    ## Save the input arguments
+    ## ```
+    ## pash_input_args="$@"
+    ## ```
+    assignments = [["pash_input_args",
+                    [make_quoted_variable("@")]]]
+    input_args_command = make_command([],
+                                      assignments=assignments)
+
+    ## Call the runtime
     arguments = [string_to_argument("source"),
                  string_to_argument(config.RUNTIME_EXECUTABLE),
                  string_to_argument(sequential_script_file_name),
                  string_to_argument(ir_filename)]
     ## Pass a relevant argument to the planner
     arguments += config.pass_common_arguments(config.pash_args)
+    runtime_node = make_command(arguments)
 
-    ## The following assignment exists so that we save the arguments.
-    ## They are needed for the expansion to work since the real arguments
-    ## are lost because of the call to source.
-    ## TODO: Make this a constant somewhere
-    assignments = [["pash_input_args",[["Q",[["V",["Normal","false","@",[]]]]]]]]
+    ## Restore the arguments to propagate internal changes, e.g., from `shift` outside.
+    ## ```
+    ## set -- $pash_input_args
+    ## ```
+    ##
+    ## TODO: Maybe we need to only do this if there is a change.
+    set_arguments = [string_to_argument("set"),
+                     string_to_argument("--"),
+                     [standard_var_ast("pash_input_args")]]
+    set_args_node = make_command(set_arguments)
 
-    line_number = 0
-    node = make_kv('Command', [line_number, assignments, arguments, []])
-    return node
+    ## Restore the exit code (since now we have executed `set` last)
+    ## ```
+    ## ( exit "$pash_runtime_final_status")
+    ## ```
+    set_exit_status_command_arguments = [string_to_argument("exit"),
+                                         [make_quoted_variable("pash_runtime_final_status")]]
+    set_exit_status_command = make_command(set_exit_status_command_arguments)
+    set_exit_status_node = make_kv('Subshell', [0, set_exit_status_command, []])
+
+    sequence = make_semi_sequence([previous_status_command,
+                                   input_args_command,
+                                   runtime_node,
+                                   set_args_node,
+                                   set_exit_status_node])
+    return sequence
 
 
 def replace_irs_and_or_semi(ast_node, irFileGen, config):
