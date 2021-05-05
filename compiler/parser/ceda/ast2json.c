@@ -32,7 +32,7 @@
 #include "json_object.h"
 
 #include "arg_char.h"
-#include "CharList.h"
+#include "ArgCharStack.h"
 #include "Stack.h"
 
 
@@ -147,11 +147,9 @@ static struct json_object* json_arg_TYPE (arg_TYPE arg) {
     assert (root != NULL);
 
     // arg is a list of arg_char, but stored in CharList
-    while (! isCharListEmpty (arg)) {
-        struct arg_char_TYPE* arg_char = charListHead_arg_char (arg);
+    while (! isArgCharStackEmpty (arg)) {
+        struct arg_char_TYPE* arg_char = popArgCharStack (arg);
         json_object_array_add (root, json_arg_char_TYPE (arg_char));
-
-        charListTail (arg);
     }
 
     return (root);
