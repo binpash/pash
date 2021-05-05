@@ -64,7 +64,10 @@
 ##
 
 ## Store the previous exit status to propagate to the compiler
-export pash_previous_exit_status=$?
+## export pash_previous_exit_status=$?
+## The assignment now happens outside
+export pash_previous_exit_status
+
 ## Store the current `set` status to pash to the inside script 
 export pash_previous_set_status=$-
 
@@ -272,6 +275,9 @@ pash_redir_output echo "$$: (7) Reading current BaSh set state from: ${pash_outp
 pash_redir_output echo "$$: (7) Current BaSh set state: $(cat $pash_output_set_file)"
 ## WARNING: This has to happen after sourcing the variables so that it overwrites it
 pash_previous_set_status="$(cat $pash_output_set_file)"
+
+export pash_input_args
+pash_redir_output echo "$$: (7) Arguments (might) have been updated to be: $pash_input_args"
 
 ## Propagate the `set` state after running the script to the outer script
 ## TODO: Maybe move this to the end to avoid spurious failures
