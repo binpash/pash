@@ -26,6 +26,7 @@ pash_redir_output echo "$$: (3) Reverted to BaSh set state: $-"
 ## Recover the input arguments of the previous script
 previous_args="$@"
 set -- $pash_input_args
+pash_redir_output echo "$$: (3) Reverted to BaSh input arguments: $@"
 
 ## Execute the script
 pash_redir_output echo "$$: (4) Executing script in ${script_source}:"
@@ -35,6 +36,9 @@ pash_redir_output cat "${script_source}"
 source "${script_source}" && internal_exec_status=$? || internal_exec_status=$?
 pash_exec_status=${internal_exec_status}
 pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_exec_status"
+
+## Make sure that any input argument changes are propagated outside
+export pash_input_args="$@"
 
 ## Recover the previous args of the script
 set -- $previous_args
