@@ -253,13 +253,13 @@ poets_pash(){
   touch "$times_file"
   echo executing Unix-for-poets with pash $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
+  export IN="$PASH_TOP/evaluation/benchmarks/poets/input/pg/"
 
   for name_script in ${names_scripts[@]}
   do
     IFS=";" read -r -a name_script_parsed <<< "${name_script}"
     name="${name_script_parsed[0]}"
     script="${name_script_parsed[1]}"
-    export IN="$PASH_TOP/evaluation/benchmarks/poets/input/genesis"
     printf -v pad %30s
     padded_script="${name}.sh:${pad}"
     padded_script=${padded_script:0:30}
@@ -512,3 +512,4 @@ bio_pash(){
   done
   cd ..
 }
+
