@@ -17,6 +17,7 @@ def make_dgsh_tee_node(input_id, output_id):
     ## TODO: add as command line arguments
     com_options = [(2, Arg(string_to_argument("-I")))] # Eager functionality
     com_options.append((3, Arg(string_to_argument("-f")))) # use file on disk when buffer reaches maximum
+    com_options.append((4, Arg(string_to_argument(f"-b {config.config['runtime']['dgsh_buffer_size']}")))) # set buffer size
     # com_options.append(4, Arg(string_to_argument("−m batch_size"))) # set the 
 
     return DGSHTee([input_id],

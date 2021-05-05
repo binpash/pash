@@ -9,6 +9,7 @@ runtime:
     clean_up_graph_binary: runtime/wait_for_output_and_sigpipe_rest.sh
     redirect_stdin_binary: runtime/redirect_stdin_to.sh
     immediate: ./.pash_immediate_command.sh
+    dgsh_buffer_size: "5M"
 
 distr_planner:
     optimized_script_filename: /tmp/optimized_script.sh
