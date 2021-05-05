@@ -34,10 +34,10 @@ Remember to `export` `PASH_TOP` in your startup scripts!
 
 ## Testing
 
-To execute the current tests before committing or pushing code, simply run:
+To execute the current tests before committing and pushing code, simply run:
 
 ```sh
-./run_tests.sh
+./scripts/run_tests.sh
 ```
 
 ## Repo Structure
