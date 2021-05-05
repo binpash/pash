@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+# set -e
 
 # tag: count_consonant_sequences
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}

@@ -30,15 +30,12 @@ typedef int8_t bool;
 #define MIN(a, b) a > b ? b : a
 #define MAX(a, b) a < b ? b : a
 
-void readHeader(FILE *inputFile, int64_t *id, size_t *blockSize)
-{
-  size_t ret;
-  if ((ret = fread(id, sizeof(int64_t), 1, inputFile)) < 0)
-    err(2, "Id read failed");
+typedef struct block_header {
+  int64_t id;
+  size_t blockSize;
+  int8_t isLast; 
+} block_header;
 
-  if ((ret = fread(blockSize, sizeof(size_t), 1, inputFile)) < 0)
-    err(2, "Blocksize read failed");
-}
 
 void safeWriteWithFlush(char *buffer, size_t bytes, size_t count, FILE *outputFile)
 {
@@ -66,12 +63,6 @@ void safeWrite(char *buffer, size_t bytes, size_t count, FILE *outputFile)
 
     err(2, "write failed count %lu, wrote %lu", count, len);
   }
-}
-
-void writeHeader(FILE *destFile, int64_t id, size_t blockSize)
-{
-  safeWrite((char *)&id, sizeof(int64_t), 1, destFile);
-  safeWrite((char *)&blockSize, sizeof(size_t), 1, destFile);
 }
 
 // Clear block in case of broken pipe
@@ -107,4 +98,21 @@ void block_fd(int fd, const char *name)
     err(2, "Error getting flags for %s", name);
   if (fcntl(fd, F_SETFL, flags & (~O_NONBLOCK)) < 0)
     err(2, "Error setting %s to blocking mode", name);
+}
+
+void readHeader(FILE *inputFile, int64_t *id, size_t *blockSize, bool *isLast)
+{
+  size_t ret;
+  block_header header;
+  if ((ret = fread(&header, sizeof(block_header), 1, inputFile)) < 0)
+    err(2, "Reading header failed");
+  *id = header.id;
+  *blockSize = header.blockSize;
+  *isLast = header.isLast;
+}
+
+void writeHeader(FILE *destFile, int64_t id, size_t blockSize, bool isLast)
+{
+  block_header header = {id, blockSize, isLast};
+  safeWrite((char *)&header, sizeof(block_header), 1, destFile);
 }

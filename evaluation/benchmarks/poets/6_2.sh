@@ -1,6 +1,6 @@
 #!/bin/bash
 # tag: four-letter words
-set -e
+# set -e
 
 # the original script has both versions
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}

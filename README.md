@@ -16,7 +16,7 @@ See [docs/tutorial](docs/tutorial.md) for a longer tutorial.
 
 ## Installation
 
-On Ubuntu, Fedora, or Arch, run `curl up.pash.ndr.md | sh` to setup PaSh.
+On Ubuntu, Fedora, Debian, or Arch, run `curl up.pash.ndr.md | sh` to setup PaSh.
 Alternatively, you can clone the repo and run `./scripts/distro-deps.sh;
 ./scripts/setup-pash.sh`
 
@@ -34,11 +34,10 @@ Remember to `export` `PASH_TOP` in your startup scripts!
 
 ## Testing
 
-To execute the current tests before committing or pushing code, simply run:
+To execute the current tests before committing and pushing code, simply run:
 
 ```sh
-cd compiler
-./test_evaluation_scripts.sh
+./scripts/run_tests.sh
 ```
 
 ## Repo Structure

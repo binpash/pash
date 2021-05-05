@@ -5,6 +5,21 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 export DEBUG=0
 # export DEBUG=1 # Uncomment to print pash output
 
+## Determines whether the experimental pash flags will be tested. 
+## By default they are not.
+export EXPERIMENTAL=0
+
+for item in $@
+do
+    if [ "--debug" == "$item" ] || [ "-d" == "$item" ]; then
+        export DEBUG=1
+    fi
+
+    if [ "--experimental" == "$item" ]; then
+        export EXPERIMENTAL=1
+    fi
+done
+
 microbenchmarks_dir="${PASH_TOP}/evaluation/tests/"
 intermediary_dir="${PASH_TOP}/evaluation/tests/test_intermediary/"
 test_results_dir="${PASH_TOP}/evaluation/tests/results/"
@@ -25,13 +40,21 @@ n_inputs=(
     8
 )
 
-configurations=(
-    # "" # Commenting this out since the tests take a lot of time to finish
-    "--r_split"
-    "--dgsh_tee"
-    "--r_split --dgsh_tee"
-    # "--speculation quick_abort"
-)
+
+if [ "$EXPERIMENTAL" -eq 1 ]; then
+    configurations=(
+        # "" # Commenting this out since the tests take a lot of time to finish
+        "--r_split"
+        "--dgsh_tee"
+        "--r_split --dgsh_tee"
+        # "--speculation quick_abort"
+    )
+else
+    configurations=(
+        ""
+    )
+fi
+
 
 ## Tests where the compiler will not always succeed (e.g. because they have mkfifo)
 script_microbenchmarks=(
@@ -41,6 +64,8 @@ script_microbenchmarks=(
     comm-par-test        # Small comm test to ensure non-parallelizability
     comm-par-test2       # Small comm test with input redirection and hyphen
     tee_web_index_bug    # Tests a tee bug from web index
+    fun-def              # Tests whether PaSh can handle a simple function definition
+    bigrams              # One-liner
 )
 
 pipeline_microbenchmarks=(
@@ -51,7 +76,6 @@ pipeline_microbenchmarks=(
     wf                   # One-liner
     spell                # One-liner
     shortest_scripts     # One-liner
-    bigrams              # One-liner
     alt_bigrams          # One-liner
     deadlock_test        # Test to check deadlock prevention using drain_stream
     double_sort          # Checks maximum peformance gains from split
@@ -60,7 +84,6 @@ pipeline_microbenchmarks=(
     minimal_grep_stdin   # Tests whether PaSh can handle a script that reads from stdin
     micro_10             # A small version of the pipeline above for debugging.
     sed-test             # Tests all sed occurences in our evaluation to make sure that they work
-    fun-def              # Tests whether PaSh can handle a simple function definition
     tr-test              # Tests all possible behaviors of tr that exist in our evaluation
     grep-test            # Tests some interesting grep invocations
     # # # # micro_1000           # Not being run anymore, as it is very slow. Tests whether the compiler is fast enough. It is a huge pipeline without any computation.

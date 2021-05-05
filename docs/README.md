@@ -1,14 +1,15 @@
 # PaSh Documentation
+Quick Jump: [using pash](#using-pash) | [videos](#videos--video-presentations) | [papers](#academic-papers) 
 
-## Introductory Material
+## Using PaSh
 
 The following resources offer overviews of important PaSh components.
 
 * Short tutorial: [introduction](./tutorial.md#introduction), [installation](./tutorial.md#installation), [execution](./tutorial.md#running-scripts), and [next steps](./tutorial.md#what-next)
-* Annotations: [parallelizability](../annotations#main-parallelizability-classes) | [study](../annotations#parallelizability-study-of-commands-in-gnu--posix) | [example 1](../annotations#a-simple-example-chmod) | [example 1](../annotations#another-example-cut) | [howto](../annotations#how-to-annotate-a-command)
-* Compiler: [overview](../compiler)
-* Runtime: [overview](../runtime)
-* Scripts: [oneliners](../runtime)
+* Annotations: [parallelizability](../annotations#main-parallelizability-classes), [study](../annotations#parallelizability-study-of-commands-in-gnu--posix), [example 1](../annotations#a-simple-example-chmod), [example 1](../annotations#another-example-cut), [howto](../annotations#how-to-annotate-a-command)
+* Compiler: [intro](../compiler#introduction), [overview](../compiler#compiler-overview), [details](../compiler#zooming-into-fragments), [earlier versions](../compiler#earlier-versions)
+* Runtime: [split](../runtime#stream-splitting), [eager](../runtime#eager-stream-polling),  [cleanup](../runtime#cleanup-logic),  [aggregate](../runtime#aggregators)
+* Scripts: [one-liners](#common-unix-one-liners), [unix50](#unix-50-from-bell-labs), [weather analysis](#noaa-weather-analysis), [web indexing](#wikipedia-web-indexing)
 
 ## Videos & Video Presentations
 
@@ -22,17 +23,16 @@ The following presentations offer short PaSh introductions:
 
 The following papers present or use PaSh.
 
-#### An Order-aware Dataflow Model for Extracting Shell Script Parallelism
+**An Order-aware Dataflow Model for Extracting Shell Script Parallelism**  
 Shivam Handa, Konstantinos Kallas, Nikos Vasilakis, Martin Rinard  
 pdf | bibtex
 
-#### Automatic Synthesis of Parallel and Distributed Unix Commands with KumQuat
+**Automatic Synthesis of Parallel and Distributed Unix Commands with KumQuat**  
 Nikos Vasilakis*, Jiasi Shen*, Martin Rinard  
 pdf | bibtex
 
-#### The Once and Future Shell
+**The Once and Future Shell**  
 Michael Greenberg, Konstantinos Kallas, Nikos Vasilakis  
-[pdf]() | <details><summary>bibtex</summary>
 ```bibtex
 @inproceedings{pash:hotos:21,
   author = {Greenberg, Michael, and Kallas, Konstantinos, and Vasilakis, Nikos},
@@ -43,11 +43,10 @@ Michael Greenberg, Konstantinos Kallas, Nikos Vasilakis
   series = {HotOS '19}
 }
 ```
-</details>
 
-#### PaSh: Light-touch Data-Parallel Shell Processing
+**PaSh: Light-touch Data-Parallel Shell Processing**  
 Nikos Vasilakis*, Konstantinos Kallas*, Konstantinos Mamouras, Achilles Benetopoulos, Lazar Cvetković  
-[pdf](https://arxiv.org/pdf/2007.09436.pdf) | <details><summary>bibtex</summary>
+[arxiv](https://arxiv.org/pdf/2007.09436.pdf) | acm | video
 ```bibtex
 @inproceedings{pash:eurosys:21,
   author = {Vasilakis, Nikos, and Kallas, Konstantinos, and Mamouras, Konstantinos, and Benetopoulos, Achilles, and Cvetkovi\'{c}, Lazar},
@@ -63,6 +62,3 @@ Nikos Vasilakis*, Konstantinos Kallas*, Konstantinos Mamouras, Achilles Benetopo
   series = {EuroSys '21}
 }
 ```
-</details>
-
-
