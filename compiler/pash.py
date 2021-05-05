@@ -118,7 +118,9 @@ def execute_script(compiled_script_filename, debug_level, command, arguments):
     new_env = os.environ.copy()
     new_env["PASH_TMP_PREFIX"] = config.PASH_TMP_PREFIX
     ## TODO: Assign $0
-    exec_obj = subprocess.run(["/usr/bin/env", "bash", compiled_script_filename] + arguments, env=new_env)
+    subprocess_args = ["/usr/bin/env", "bash", compiled_script_filename] + arguments
+    log("Executing:", "PASH_TMP_PREFIX={} {}".format(config.PASH_TMP_PREFIX, " ".join(subprocess_args)))
+    exec_obj = subprocess.run(subprocess_args, env=new_env)
     ## Delete the temp directory when not debugging
     if(debug_level == 0):
         shutil.rmtree(config.PASH_TMP_PREFIX)
