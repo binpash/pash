@@ -8,7 +8,7 @@ PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 
 cleanup()
 {
-    kill -SIGKILL $dgsh_tee_pid > /dev/null 2>&1
+    kill -SIGTERM $dgsh_tee_pid > /dev/null 2>&1
 }
 trap cleanup EXIT
 
