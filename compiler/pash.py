@@ -15,7 +15,7 @@ import shutil
 
 def main():
     ## Parse arguments
-    args = parse_args()
+    args, shell_name = parse_args()
 
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
     input_script_path = args.input[0]
@@ -50,7 +50,7 @@ def main():
 
     ## 4. Execute the preprocessed version of the input script
     if(not args.preprocess_only):
-        execute_script(fname, args.debug, args.command, input_script_arguments)
+        execute_script(fname, args.debug, args.command, input_script_arguments, shell_name)
 
 
 def parse_args():
@@ -83,6 +83,9 @@ def parse_args():
         log(arg_name, arg_val)
     log("-" * 40)
 
+    ## TODO: Properly assign this to the pa.sh entry point
+    shell_name = "pash"
+
     ## Make a directory for temporary files
     config.PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
     if args.command:
@@ -93,15 +96,18 @@ def parse_args():
         ## need to be assigned to $0, $1, $2, ... and not $1, $2, $3, ...
         if(len(args.input) > 0):
             ## Assign $0
-            args.name = args.input[0]
+            shell_name = args.input[0]
             args.input = args.input[1:]
         args.input = [fname] + args.input
     elif (len(args.input) == 0):
         parser.print_usage()
         print("Error: PaSh does not yet support interactive mode!")
         exit(1)
+    else:
+        shell_name = args.input[0]
 
-    return args
+
+    return args, shell_name
 
 def preprocess(ast_objects, config):
     ## This is ids for the temporary files that we will save the IRs in
@@ -114,11 +120,12 @@ def preprocess(ast_objects, config):
 
     return preprocessed_asts
 
-def execute_script(compiled_script_filename, debug_level, command, arguments):
+def execute_script(compiled_script_filename, debug_level, command, arguments, shell_name):
     new_env = os.environ.copy()
     new_env["PASH_TMP_PREFIX"] = config.PASH_TMP_PREFIX
-    ## TODO: Assign $0
-    subprocess_args = ["/usr/bin/env", "bash", compiled_script_filename] + arguments
+    ## TODO: This introduces an error when setting the bsah state inside. The set +c doesn't work.
+    subprocess_args = ["/usr/bin/env", "bash", "-c", 'source {}'.format(compiled_script_filename), shell_name] + arguments
+    # subprocess_args = ["/usr/bin/env", "bash", compiled_script_filename] + arguments
     log("Executing:", "PASH_TMP_PREFIX={} {}".format(config.PASH_TMP_PREFIX, " ".join(subprocess_args)))
     exec_obj = subprocess.run(subprocess_args, env=new_env)
     ## Delete the temp directory when not debugging
