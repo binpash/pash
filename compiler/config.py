@@ -102,9 +102,6 @@ def add_common_arguments(parser):
                         help="(experimental) determine the termination behavior of the DFG. Defaults to cleanup after the last process dies, but can drain all streams until depletion",
                         choices=['clean_up_graph', 'drain_stream'],
                         default="clean_up_graph")
-    parser.add_argument("--name",
-                        help="determines $0. The default is pash. Warning: this is overwritten by the arguments of -c if it has a positional argument.",
-                        default="pash")
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")
@@ -146,8 +143,6 @@ def pass_common_arguments(pash_arguments):
     arguments.append(string_to_argument(pash_arguments.speculation))
     arguments.append(string_to_argument("--width"))
     arguments.append(string_to_argument(str(pash_arguments.width)))
-    arguments.append(string_to_argument("--name"))
-    arguments.append(string_to_argument(str(pash_arguments.name)))
     if(not pash_arguments.config_path == ""):
         arguments.append(string_to_argument("--config_path"))
         arguments.append(string_to_argument(pash_arguments.config_path))
