@@ -71,7 +71,7 @@ test4()
 if [ "$#" -eq 0 ]; then
     run_test test1 &&
     run_test test2 &&
-#    run_test test3 && # Commented out because it doesn't suceed ATM
+    run_test test3 &&
     run_test test4
 else
     for testname in $@
