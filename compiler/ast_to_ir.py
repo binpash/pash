@@ -492,10 +492,9 @@ def replace_ast_regions(ast_objects, irFileGen, config):
     preprocessed_asts = []
     candidate_dataflow_region = []
     for i, ast_object in enumerate(ast_objects):
-        # log("Preprocessing AST {}".format(i))
-        # log(ast_object)
+        log("Preprocessing AST {}".format(i))
+        log(ast_object)
         ast, original_text, _linno_before, _linno_after = ast_object
-
         ## TODO: Turn the untyped ast to an AstNode
 
         ## Goals: This transformation can approximate in several directions.
@@ -662,6 +661,7 @@ def preprocess_node_subshell(ast_node, irFileGen, config):
 ## TODO: This is not efficient at all since it calls the PaSh runtime everytime the loop is entered.
 ##       We have to find a way to improve that.
 def preprocess_node_for(ast_node, irFileGen, config):
+    log("Ast Node Before:", ast_node)
     preprocessed_body, something_replaced = preprocess_close_node(ast_node.body, irFileGen, config)
     ## TODO: Could there be a problem with the in-place update
     ast_node.body = preprocessed_body
@@ -669,6 +669,7 @@ def preprocess_node_for(ast_node, irFileGen, config):
                                               replace_whole=False,
                                               non_maximal=False,
                                               something_replaced=something_replaced)
+    log("Ast Node After:", ast_node)
     return preprocessed_ast_object
 
 def preprocess_node_while(ast_node, irFileGen, config):
