@@ -66,12 +66,26 @@ test4()
     $shell -c 'shift; echo $1 $2' pash 2 3 4 5
 }
 
+test5()
+{
+    local shell=$1
+    $shell heredoc1.sh
+}
+
+test6()
+{
+    local shell=$1
+    $shell loop1.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1 &&
     run_test test2 &&
     run_test test3 &&
-    run_test test4
+    run_test test4 &&
+    run_test test5 &&
+    run_test test6
 else
     for testname in $@
     do
