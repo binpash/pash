@@ -203,9 +203,9 @@ class InvalidVariable(RuntimeError):
 def lookup_variable(var, config):
     ## If the variable is input arguments then get it from pash_input_args.
     ##
-    ## TODO KK 2021-05-05 Do we need to split using IFS or is it always spaces?
+    ## TODO KK PR#246 Do we need to split using IFS or is it always spaces?
     ##
-    ## TODO KK 2021-05-05 Maybe instead of this we could do this setup
+    ## TODO KK PR#246 Maybe instead of this we could do this setup
     ##      once during initialization and leave lookup unaltered?
     if(var == '@'):
         return config['shell_variables']['pash_input_args']
