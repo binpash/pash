@@ -2,7 +2,6 @@
 
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 
-## TODO: Make the compiler work too.
 bash="bash"
 pash="$PASH_TOP/pa.sh"
 
