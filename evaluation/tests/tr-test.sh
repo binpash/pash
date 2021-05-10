@@ -19,6 +19,7 @@ cat $FILE | tr -cs A-Za-z '\n'
 cat $FILE | tr A-Z a-z
 cat $FILE | tr -d '[:punct:]'
 cat $FILE | tr [:lower] [:upper]
+cat $FILE | tr [:lower:] [:upper:]
 cat $FILE | tr -s ' '
 cat $FILE | tr -s ' \n'
 cat $FILE | tr -d '\012' | sort
