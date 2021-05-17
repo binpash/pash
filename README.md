@@ -1,7 +1,11 @@
 ## PaSh: Light-touch Data-Parallel Shell Processing
 > _A system for parallelizing POSIX shell scripts._
 
-Quick Jump: [Running PaSh](#running-pash) | [Installation](#installation) | [Testing](#testing) | [Repo Structure](#repo-structure) | [Community & More](#community--more)
+Quick Jump: [News](#news) | [Running PaSh](#running-pash) | [Installation](#installation) | [Testing](#testing) | [Repo Structure](#repo-structure) | [Community & More](#community--more)
+
+## News
+
+* We are organizing a [HotOS'21](https://sigops.org/s/conferences/hotos/2021/) panel/round-table on the future of the shell: [Thu 3 Jun, 1–2:30pm EDT](https://calendar.google.com/event?action=TEMPLATE&tmeid=MTFrN2tpbWJuMTVmZHBuazduOGpkNThqamIgNWo1MTBsNGIzY2VoYTc2bmVzc3FtMDhnNGtAZw&tmsrc=5j510l4b3ceha76nessqm08g4k%40group.calendar.google.com) | [More info](https://fut-shell.github.io/) | [Register](https://web.cvent.com/2event/ea21de2e-ff68-470b-8b09-743b6572c469/)
 
 ## Running PaSh
 
