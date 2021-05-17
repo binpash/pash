@@ -38,7 +38,7 @@ Michael Greenberg, Konstantinos Kallas, Nikos Vasilakis
   author = {Greenberg, Michael, and Kallas, Konstantinos, and Vasilakis, Nikos},
   title = {The Future of the Shell: UNIX and beyond},
   year = {2021},
-  isbn = {978-1-4503-8438-4/21/05},
+  isbn = {9781450384384},
   publisher = {Association for Computing Machinery},
   address = {New York, NY, USA},
   url = {https://doi.org/10.1145/3458336.3465296},
@@ -59,7 +59,7 @@ pdf | acm | [event](https://sigops.org/s/conferences/hotos/2021/#program)
   author = {Greenberg, Michael, and Kallas, Konstantinos, and Vasilakis, Nikos},
   title = {UNIX Shell Programming: The Next 50 Years},
   year = {2021},
-  isbn = {978-1-4503-8438-4/21/05},
+  isbn = {9781450384384},
   publisher = {Association for Computing Machinery},
   address = {New York, NY, USA},
   url = {https://doi.org/10.1145/3458336.3465294},
@@ -76,7 +76,7 @@ pdf | acm | [event](https://sigops.org/s/conferences/hotos/2021/#program)
 Nikos Vasilakis*, Konstantinos Kallas*, Konstantinos Mamouras, Achilles Benetopoulos, Lazar Cvetković  
 [arxiv](https://arxiv.org/pdf/2007.09436.pdf) | acm | video
 ```bibtex
-@inproceedings{10.1145/3447786.3456228,
+@inproceedings{pash:eurosys:21,
   author = {Vasilakis, Nikos and Kallas, Konstantinos and Mamouras, Konstantinos and Benetopoulos, Achilles and Cvetkovi\'{c}, Lazar},
   title = {PaSh: Light-Touch Data-Parallel Shell Processing},
   year = {2021},
