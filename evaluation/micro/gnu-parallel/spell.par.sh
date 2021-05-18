@@ -6,11 +6,6 @@ TEMP_C1="/tmp/{/}.out1"
 TEMP1=$(seq -w 0 $(($JOBS - 1)) | sed 's+^+/tmp/in+' | sed 's/$/.out1/' | tr '\n' ' ')
 TEMP1=$(echo $TEMP1)
 mkfifo $TEMP1
-echo $TEMP1
-ls $TEMP1
-echo $IN
 parallel "cat {} | col -bx | tr -cs A-Za-z '\n' | tr A-Z a-z | tr -d '[:punct:]' | sort > $TEMP_C1" ::: $IN &
-ls $TEMP1
-echo $TEMP1
-sort -m $TEMP1 # | parallel -k --jobs ${JOBS} --pipe --block "$BLOCK_SIZE" "uniq" | uniq # | parallel -k --jobs ${JOBS} --pipe --block "$BLOCK_SIZE" "comm -23 - $dict"
+sort -m $TEMP1 | parallel -k --jobs ${JOBS} --pipe --block "$BLOCK_SIZE" "uniq" | uniq | parallel -k --jobs ${JOBS} --pipe --block "$BLOCK_SIZE" "comm -23 - $dict"
 rm $TEMP1
