@@ -4,7 +4,7 @@
 # TEMP_C1="/tmp/{/}.out1"
 # TEMP_C2="/tmp/{/}.out2"
 # mkfifo ${TEMP1} ${TEMP2}
-# parallel "cat {} | cut -d ' ' -f 1 | sort > $TEMP_C1" ::: $IN &
+# parallel "cat {} | cut -d ' ' -f 1 | tr [:lower:] [:upper:] | sort > $TEMP_C1" ::: $IN &
 # sort -m ${TEMP1} > s1 &
 # parallel "cat {} | cut -d ' ' -f 1 | sort > $TEMP_C2" ::: $IN &
 # sort -m ${TEMP2} > s2 &
