@@ -30,7 +30,7 @@ Shivam Handa, Konstantinos Kallas, Nikos Vasilakis, Martin Rinard
   ..coming soon..
 ```
 
-**The Future of the Shell: UNIX and beyond**
+**The Future of the Shell: UNIX and beyond**  
 Michael Greenberg, Konstantinos Kallas, Nikos Vasilakis  
 [pdf](https://fut-shell.github.io/panel-summary.pdf) | acm | [event](https://sigops.org/s/conferences/hotos/2021/#program)
 ```bibtex
