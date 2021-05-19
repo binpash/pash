@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
+set -e
+cd $(dirname "$0")
 TIMEFORMAT="%3R" # %3U %3S"
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+cd $PASH_TOP/evaluation/benchmarks/oneliners
 # setup 
 cd input
 bash setup.sh $1
@@ -59,9 +62,11 @@ do
   outputs_file_nc="${outputs_dir}/${script}.${outputs_nc_suffix}"
   echo "Executing the script with pash -w 16 without the cat-split optimization"
   echo "${padded_script}" $({ time $PASH_TOP/pa.sh -d 1 -w 16 --log_file ${pash_nc_log} --no_cat_split_vanish ${script}.sh > ${outputs_file_nc} ; } 2>&1) | tee -a "${times_nc_file}"
+  diff -s $seq_outputs_file $outputs_file_nc | head
   # PASH FULL
   echo "Executing the script with pash -w 16"
   par_outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
   echo "${padded_script}" $({ time $PASH_TOP/pa.sh  -d 1 -w 16 --log_file ${pash_log} ${script}.sh > "$par_outputs_file"; } 2>&1) | tee -a     "$par_times_file"
-
+  diff -s $par_outputs_file $outputs_file_nc | head
 done
+paste seq.res par.nc.res par.res
