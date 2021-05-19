@@ -18,7 +18,7 @@ scripts_inputs=(
 "diff;3G.txt"
 "bi-grams;1G.txt"
 "set-diff;3G.txt"
-"sort-sort;1G.txt"
+#"sort-sort;1G.txt"
 "shortest-scripts;all_cmdsx100.txt"
 )
 
