@@ -47,7 +47,7 @@ do
   IFS=";" read -r -a script_input_parsed <<< "${script_input}"
   script="${script_input_parsed[0]}"
   input="${script_input_parsed[1]}"
-  export IN="$PASH_TOP/evaluation/icfp-2021/oneliners/input/$input"
+  export IN="input/$input"
   printf -v pad %30s
   padded_script="${script}.sh:${pad}"
   padded_script=${padded_script:0:30}
