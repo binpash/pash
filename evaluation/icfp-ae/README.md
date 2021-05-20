@@ -19,7 +19,7 @@ PaSh, including the changes described in the paper, is fully functional. It incl
 
 Each of the main sets of evaluation benchmarks is in its own directory. For benchmarks in §7.1:
 
-* The GNU `parallel` case study can be found in [ ](https://github.com/andromeda/pash/blob/icfp-ae/evaluation/icfp-ae/gnu-parallel-case-study.sh)
+* The GNU `parallel` case study can be found in [./evaluation/icfp-ae/gnu-parallel-case-study.sh](https://github.com/andromeda/pash/blob/icfp-ae/evaluation/icfp-ae/gnu-parallel-case-study.sh)
 
 For benchmarks in §7.2:
 
