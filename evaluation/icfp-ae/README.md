@@ -43,9 +43,8 @@ $PASH_TOP/evaluation/icfp-ae/unix50.sh
 $PASH_TOP/evaluation/icfp-ae/analytics-mts.sh
 ```
 
-Passing no flags to these scripts will execute smaller inputs (in under one hour), so that the reviewers can quickly confirm that everything works as expected.
-Passing the `--full` flag on all benchmarks will run with the full input set, as reported in the paper.
-(Note: these inputs have already been set up on `deathstar`, the machine used for , but will take additional time to download and set up on other environments and will require about 300GB).
-
 The results include the sequential baseline (running `bash`), `pash` without the `cat`-`split` transformation, and full `pash` performing all transformations. The scripts are configured to apply `pash` with a parallelism `--width` of `16`.
+
+Note on hardware and software requirements: Running these scripts will require significant disk space (>100GB), it will take considerable time (several hours), and will need many CPUs (ideally more than 32). AEC reviewers are provided access to `deathstar`, the machine used to gather the results reported in the paper, which already meets these hardware and software requirements.
+
 

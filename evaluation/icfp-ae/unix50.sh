@@ -5,7 +5,7 @@ TIMEFORMAT="%3R" # %3U %3S"
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 cd $PASH_TOP/evaluation/benchmarks/unix50
 cd input/
-bash setup.sh $1
+./setup.sh --full
 cd ..
 export IN_PRE=input
 rm -f *.res

@@ -6,7 +6,7 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 cd $PASH_TOP/evaluation/benchmarks/oneliners
 # setup 
 cd input
-bash setup.sh $1
+./setup.sh --full
 cd ..
 
 scripts_inputs=(
