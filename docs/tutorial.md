@@ -67,7 +67,7 @@ Then clone the repository and run `setup-pash.sh` as follows:
 
 ```sh
 git clone git@github.com:andromeda/pash.git
-./pash/script/setup-pash.sh
+./pash/scripts/setup-pash.sh
 ```
 
 As noted at the end of `setup-pash.sh`, make sure you set `PASH_TOP` pointing to the absolute path of the directory `pa.sh` resides (you can optionally place that in your `PATH`).
