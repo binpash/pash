@@ -13,6 +13,8 @@ We claim all three badges for this contribution: Available, Functional, and Repr
 
 Our artifact is available on GitHub, including all the changes described in the paper, permanently and publicly. The re-implementation discussed in the paper, including the bug fixes, includes several commits---the majority of which are included in [Pull Request #83](https://github.com/andromeda/pash/commit/94b09e71316e8a0b10e0b6450a0b2953a04a71df). This PR and other fixes have been merged into PaSh, and are permanantely and publicly available in PaSh's GitHub repository.
 
+For archival purposes, we have also uploaded a [quemu VM image on Zenodo](https://zenodo.org/record/4776838). We do not recommend using this VM for reproducing the exact paper results though, due to performance overheads associated with the VM.
+
 ##  "Artifact Functional" badge: 
 
 PaSh, including the changes described in the paper, is fully functional. It includes all key components described in the paper, automated scripts, and input data for to run the experiments described in the paper. It also includes extensive documentation: [Introduction](https://github.com/andromeda/pash/blob/icfp-ae/docs/tutorial.md#introduction) | [Installation](https://github.com/andromeda/pash/blob/icfp-ae/docs/tutorial.md#installation) | [Running Scripts](https://github.com/andromeda/pash/blob/icfp-ae/docs/tutorial.md#running-scripts) | [What Next?](https://github.com/andromeda/pash/blob/icfp-ae/docs/tutorial.md#what-next)
