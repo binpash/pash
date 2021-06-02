@@ -2,7 +2,7 @@
 
 export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
-
+export PYTHONPATH=${PYTHON_DEPS:-$PASH_TOP/python_deps}
 if [ "$#" -eq 1 ] && [ "$1" = "--init" ]; then
   $PASH_TOP/compiler/superoptimize.sh
   exit

@@ -7,8 +7,9 @@ PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 cd $PASH_TOP
 
 LOG_DIR=$PWD/install_logs
+PYTHON_DEPS=$PWD/python_deps
 mkdir -p $LOG_DIR
-
+mkdir -p $PYTHON_DEPS
 git submodule init
 git submodule update
 
@@ -41,10 +42,10 @@ make &> $LOG_DIR/make.log
 cd ../
 
 echo "Installing python dependencies..."
-python3 -m pip install jsonpickle &> $LOG_DIR/pip_install_jsonpickle.log
-python3 -m pip install -U PyYAML &> $LOG_DIR/pip_install_pyyaml.log
-python3 -m pip install numpy &> $LOG_DIR/pip_install_numpy.log
-python3 -m pip install matplotlib &> $LOG_DIR/pip_install_matplotlib.log
+python3 -m pip install --target=$PYTHON_DEPS/ jsonpickle==1.4.2 &> $LOG_DIR/pip_install_jsonpickle.log
+python3 -m pip install --target=$PYTHON_DEPS/ PyYAML==5.4.1 &> $LOG_DIR/pip_install_pyyaml.log
+python3 -m pip install --target=$PYTHON_DEPS/ numpy==1.19.5 &> $LOG_DIR/pip_install_numpy.log
+python3 -m pip install --target=$PYTHON_DEPS/ matplotlib==3.3.4 &> $LOG_DIR/pip_install_matplotlib.log
 
 echo "Generating input files..."
 $PASH_TOP/evaluation/tests/input/setup.sh
@@ -52,5 +53,6 @@ $PASH_TOP/evaluation/tests/input/setup.sh
 # export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 echo " * * * "
 echo "Do not forget to export PASH_TOP before using pash: \`export PASH_TOP=$PASH_TOP\`"
+echo "Do not forget to export PYTHONPATH before using pash: \`export PYTHONPATH=$PYTHON_DEPS:$PYTHONPATH\`"
 echo '(optionally, you can update PATH to include it: `export PATH=$PATH:$PASH_TOP`)'
 
