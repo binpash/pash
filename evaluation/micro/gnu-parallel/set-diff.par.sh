@@ -16,14 +16,15 @@ BLOCK_SIZE=${BLOCK_SIZE:-250M}
 ## Correct
 mkfifo s1
 rm -f s2
-TEMP_C1="/tmp/{/}.out1"
-TEMP1=$(seq -w 0 $(($JOBS - 1)) | sed 's+^+/tmp/in+' | sed 's/$/.out1/' | tr '\n' ' ')
+TEMP_C1="{/}.out1"
+TEMP1=$(seq -w 0 $(($JOBS - 1)) | sed 's+^+in+' | sed 's/$/.out1/' | tr '\n' ' ')
 TEMP1=$(echo $TEMP1)
 
-TEMP_C2="/tmp/{/}.out2"
-TEMP2=$(seq -w 0 $(($JOBS - 1)) | sed 's+^+/tmp/in+' | sed 's/$/.out2/' | tr '\n' ' ')
+TEMP_C2="{/}.out2"
+TEMP2=$(seq -w 0 $(($JOBS - 1)) | sed 's+^+in+' | sed 's/$/.out2/' | tr '\n' ' ')
 TEMP2=$(echo $TEMP2)
 
+rm -f ${TEMP1} ${TEMP2}
 mkfifo ${TEMP1} ${TEMP2}
 parallel "cat {} | cut -d ' ' -f 1 | tr [:lower:] [:upper:] | sort > $TEMP_C1" ::: $IN &
 sort -m ${TEMP1} > s1 &
