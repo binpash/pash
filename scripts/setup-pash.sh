@@ -52,8 +52,6 @@ $PASH_TOP/evaluation/tests/input/setup.sh
 # export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 echo " * * * "
 echo "Do not forget to export PASH_TOP before using pash: \`export PASH_TOP=$PASH_TOP\`"
-echo "Do not forget to export PYTHONPATH before using pash: \`export PYTHONPATH=$PYTHON_DEPS:$PYTHONPATH\`"
+echo '(optionally, you can update PATH to include it: `export PATH=$PATH:$PASH_TOP`)'
 echo "Do not forget to run \`source pashenv/bin/activate\`!"
 echo "Do not forget to run \`deactivate\` when leaving the pash environment!"
-echo '(optionally, you can update PATH to include it: `export PATH=$PATH:$PASH_TOP`)'
-
