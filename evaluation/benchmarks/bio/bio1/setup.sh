@@ -25,7 +25,7 @@ if [[ ! -d wgsim ]]; then
   git clone https://github.com/lh3/wgsim
   cd wgsim/ && gcc -g -O2 -Wall -o wgsim wgsim.c -lz -lm && cd -
 fi
-#apt-get install samtools bowtie2 vcftools sra-toolkit cutadapt zlib1g-dev default-jre
+apt-get install samtools bowtie2 vcftools sra-toolkit cutadapt zlib1g-dev default-jre
 if [[ ! -d Trim ]]; then
   wget https://github.com/FelixKrueger/TrimGalore/archive/0.6.6.zip
   unzip 0.6.6.zip
