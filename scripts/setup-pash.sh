@@ -7,6 +7,7 @@ PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 cd $PASH_TOP
 
 LOG_DIR=$PWD/install_logs
+REQ=$PWD/scripts/requirements.txt
 mkdir -p $LOG_DIR
 git submodule init
 git submodule update
@@ -40,11 +41,8 @@ make &> $LOG_DIR/make.log
 cd ../
 virtualenv -p python3 pashenv
 source pashenv/bin/activate
-echo "Installing python dependencies..."
-python3 -m pip install  jsonpickle==1.4.2 &> $LOG_DIR/pip_install_jsonpickle.log
-python3 -m pip install  PyYAML==5.4.1 &> $LOG_DIR/pip_install_pyyaml.log
-python3 -m pip install  numpy==1.19.5 &> $LOG_DIR/pip_install_numpy.log
-python3 -m pip install  matplotlib==3.3.4 &> $LOG_DIR/pip_install_matplotlib.log
+# after we activate the environment
+pip install -r ${REQ} &> $LOG_DIR/pip_reqs.log
 
 echo "Generating input files..."
 $PASH_TOP/evaluation/tests/input/setup.sh
