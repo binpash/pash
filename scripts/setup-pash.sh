@@ -43,7 +43,7 @@ cd ../
 
 echo "Installing python dependencies..."
 
-virtualenv -p python3 pashenv
+virtualenv -p python3 pashenv &> $LOG_DIR/venv.log
 source pashenv/bin/activate
 # after we activate the environment
 pip install -r ${REQ} &> $LOG_DIR/pip_reqs.log
