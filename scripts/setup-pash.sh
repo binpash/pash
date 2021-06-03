@@ -7,6 +7,7 @@ PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 cd $PASH_TOP
 
 LOG_DIR=$PWD/install_logs
+REQ=$PWD/scripts/requirements.txt
 mkdir -p $LOG_DIR
 
 git submodule init
@@ -41,10 +42,11 @@ make &> $LOG_DIR/make.log
 cd ../
 
 echo "Installing python dependencies..."
-python3 -m pip install jsonpickle &> $LOG_DIR/pip_install_jsonpickle.log
-python3 -m pip install -U PyYAML &> $LOG_DIR/pip_install_pyyaml.log
-python3 -m pip install numpy &> $LOG_DIR/pip_install_numpy.log
-python3 -m pip install matplotlib &> $LOG_DIR/pip_install_matplotlib.log
+
+virtualenv -p python3 pashenv &> $LOG_DIR/venv.log
+source pashenv/bin/activate
+# after we activate the environment
+pip install -r ${REQ} &> $LOG_DIR/pip_reqs.log
 
 echo "Generating input files..."
 $PASH_TOP/evaluation/tests/input/setup.sh
@@ -53,4 +55,5 @@ $PASH_TOP/evaluation/tests/input/setup.sh
 echo " * * * "
 echo "Do not forget to export PASH_TOP before using pash: \`export PASH_TOP=$PASH_TOP\`"
 echo '(optionally, you can update PATH to include it: `export PATH=$PATH:$PASH_TOP`)'
-
+echo "Do not forget to run \`source pashenv/bin/activate\`!"
+echo "Do not forget to run \`deactivate\` when leaving the pash environment!"

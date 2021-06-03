@@ -1,0 +1,4 @@
+jsonpickle==1.4.2
+PyYAML==5.4.1
+numpy==1.19.5
+matplotlib==3.3.4

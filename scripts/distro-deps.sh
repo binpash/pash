@@ -30,7 +30,7 @@ case "$distro" in
      echo "|-- running apt update..."
      sudo apt-get update &> $LOG_DIR/apt_update.log
      echo "|-- running apt install..."
-     sudo apt-get install -y git libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils &> $LOG_DIR/apt_install.log
+     DEBIAN_FRONTEND=noninteractive sudo apt-get install -y git curl virtualenv libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils &> $LOG_DIR/apt_install.log
      ;;
    debian*)
      # tested with debian:stable-20210408
@@ -38,17 +38,17 @@ case "$distro" in
      echo "|-- running apt update..."
      apt-get update &> $LOG_DIR/apt_update.log
      echo "|-- running apt install..."
-     apt-get install -y git libtool curl sudo procps m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils &> $LOG_DIR/apt_install.log
+     apt-get install -y git libtool curl virtualenv sudo procps m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils &> $LOG_DIR/apt_install.log
      ;;
    fedora*) 
      echo "|-- running dnf install...."
-     dnf install git gcc python3-pip make automake autoconf libtool hostname bc procps -y  &> $LOG_DIR/dnf_install.log
+     dnf install git diffutils gcc python3-pip curl virtualenv make automake autoconf libtool hostname bc procps -y  &> $LOG_DIR/dnf_install.log
      ;;
    arch*) 
     echo "Updating mirrors"
     pacman -Sy &> $LOG_DIR/pacman_update.log
      echo "|-- running pacman install...."
-    yes | pacman -S git libtool m4 automake pkg-config python-pip libffi make autoconf gcc sudo inetutils bc
+    yes | pacman -S git libtool m4 automake curl python-virtualenv pkg-config python-pip libffi make autoconf gcc sudo inetutils bc &> $LOG_DIR/pacman_install.log
     ;;
    *)        echo "unknown distro: '$distro'" ; exit 1 ;;
 esac
