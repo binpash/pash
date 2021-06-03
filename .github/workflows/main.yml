@@ -1,36 +1,58 @@
-# This is a basic workflow to help you get started with Actions
+name: Pash-Benchmark-Tests
 
-name: CI
-
-# Controls when the action will run. 
-on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-  push:
-    branches: [ main ]
+# execute the workflow only when we are pushing on a pull request 
+on: 
   pull_request:
-    branches: [ main ]
+    types: [assigned, opened, synchronize, reopened]
 
-  # Allows you to run this workflow manually from the Actions tab
+    paths: 
+        - compiler/**
+        - runtime/**
   workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# Jobs section
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+    Pash-Tests:
+      strategy:
+        matrix:
+          os: 
+            - ubuntu-18.04
+            - ubuntu-20.04
+            #- debian #stable-20210408
+      runs-on: ${{ matrix.os }}
+            
+      steps:
+        - uses: actions/checkout@v2 
+        - name: Running-Pash-Benchmarks
+          run: |
+            bash scripts/distro-deps.sh
+            bash scripts/setup-pash.sh
+            export PASH_TOP=${GITHUB_WORKSPACE}
+            export PATH=$PATH:$PASH_TOP
+            cd scripts
+            bash run_tests.sh  
+            cd workflow
+            bash parse.sh > results.log 2>&1  
+            # get the timer in english
+            date=$(LANG=en_us_88591; date)
+            echo "VERSION<<EOF" >> $GITHUB_ENV
+            echo  "OS:${{matrix.os}}" >> $GITHUB_ENV
+            echo -e "$date\n" >> $GITHUB_ENV
+            # Parses the results and construct a github message post
+            # we append the data to the global env
+            cat results.log >> $GITHUB_ENV
+            echo 'EOF' >> $GITHUB_ENV
+          # We post the results on the corresponding pull request thread
+        - name: Posting Results
+          uses: unsplash/comment-on-pr@master
+          if: github.ref != 'refs/heads/main'
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            msg: "${{ env.VERSION }}"
+            check_for_duplicate_msg: false
+        # Check the return code of the scripts. If one of the tests failed
+        # post the error
+        - name: Exit-code
+          run: |
+            cd scripts/workflow
+            bash exit_code.sh
