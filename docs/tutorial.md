@@ -60,7 +60,7 @@ curl up.pash.ndr.md | sh
 On other Linux distros, first install the following packages (some of which might already be installed in your system):
 
 ```
-libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils
+git curl virtualenv libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils
 ```
 
 Then clone the repository and run `setup-pash.sh` as follows:
