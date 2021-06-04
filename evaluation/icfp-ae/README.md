@@ -27,7 +27,7 @@ For benchmarks in §7.2:
 
 * Expert Pipelines can be found in [./evaluation/benchmarks/oneliners](https://github.com/andromeda/pash/tree/icfp-ae/evaluation/benchmarks/oneliners)
 * Unix50 Pipelines can be found in [./evaluation/benchmarks/unix50](https://github.com/andromeda/pash/tree/icfp-ae/evaluation/benchmarks/unix50)
-* COVID-19 Mass-Transit Analysis Pipelines can be found in [./evaluation/benchmarks/unix50](https://github.com/andromeda/pash/tree/icfp-ae/evaluation/benchmarks/analytics-mts)
+* COVID-19 Mass-Transit Analysis Pipelines can be found in [./evaluation/benchmarks/analytics-mts](https://github.com/andromeda/pash/tree/icfp-ae/evaluation/benchmarks/analytics-mts)
 
 Note that each one of the last three benchmark sets has its own `./input/setup.sh` in the directory of the benchmark for setting up its inputs.
 
