@@ -1,8 +1,9 @@
 #!/bin/bash
-
+# time: print real in seconds, to simplify parsing
 ## Necessary to set PASH_TOP
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 export DEBUG=0
+export PASH_LOG=1
 # export DEBUG=1 # Uncomment to print pash output
 
 ## Determines whether the experimental pash flags will be tested. 
@@ -14,7 +15,9 @@ do
     if [ "--debug" == "$item" ] || [ "-d" == "$item" ]; then
         export DEBUG=1
     fi
-
+    if [ "--no-pash-log" == "$item" ]; then
+        export PASH_LOG=0
+    fi
     if [ "--experimental" == "$item" ]; then
         export EXPERIMENTAL=1
     fi
@@ -23,7 +26,7 @@ done
 microbenchmarks_dir="${PASH_TOP}/evaluation/tests/"
 intermediary_dir="${PASH_TOP}/evaluation/tests/test_intermediary/"
 test_results_dir="${PASH_TOP}/evaluation/tests/results/"
-
+results_time="$test_results_dir/results.time"
 echo "Deleting eager intermediate files..."
 rm -f /tmp/eager*
 mkdir -p $intermediary_dir
@@ -92,11 +95,14 @@ pipeline_microbenchmarks=(
 
 
 execute_pash_and_check_diff() {
+    TIMEFORMAT="${script_conf%%.*}_pash, %3R" # %3U %3S"
     if [ "$DEBUG" -eq 1 ]; then
         { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
+        tail -n1 ${pash_time} >> ${results_time} &&
         diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
     else
         { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
+        tail -n1 ${pash_time} >> ${results_time} &&
         diff -s "$seq_output" "$pash_output" | head >> "${pash_time}"
     fi
 }
@@ -150,20 +156,22 @@ execute_tests() {
             echo "|-- Has input file: $stdin_redir"
         fi
 
+        TIMEFORMAT="${microbenchmark%%.*}_bash, %3R" # %3U %3S"
         echo -n "|-- Executing the script with bash..."
         { time /bin/bash "$script_to_execute" > $seq_output ; } \
-            < "$stdin_redir" 2> "${seq_time}"
+            < "$stdin_redir" 2>> "${seq_time}"
         echo "   exited with $?"
-
+        tail -n1 ${seq_time} >> ${results_time}
         for conf in "${configurations[@]}"; do
             for n_in in "${n_inputs[@]}"; do
                 echo "|-- Executing with pash --width ${n_in} ${conf}..."
                 export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_${conf}.time"
                 export pash_output="${intermediary_dir}/${microbenchmark}_${n_in}_pash_output"
+                export script_conf=${microbenchmark}_${n_in}
                 echo '' > "${pash_time}"
-
+                # do we need to write the PaSh output ?
                 cat $stdin_redir |
-                    execute_pash_and_check_diff -d 1 $assert_correctness ${conf} --width "${n_in}" --output_time $script_to_execute
+                    execute_pash_and_check_diff -d $PASH_LOG $assert_correctness ${conf} --width "${n_in}" --output_time $script_to_execute
             done
         done
     done
@@ -171,6 +179,9 @@ execute_tests() {
 
 execute_tests "" "${script_microbenchmarks[@]}"
 execute_tests "--assert_compiler_success" "${pipeline_microbenchmarks[@]}"
+
+
+
 
 echo "Below follow the identical outputs:"
 grep --files-with-match "are identical" "$test_results_dir"/*_distr*.time |

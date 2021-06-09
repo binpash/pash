@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # time: print real in seconds, to simplify parsing
-TIMEFORMAT="%3R" # %3U %3S"
 
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 
@@ -12,15 +11,16 @@ output_dir="$PASH_TOP/evaluation/intro/output"
 mkdir -p "$output_dir"
 
 ( cd "$PASH_TOP/evaluation/intro/input"; ./setup.sh ) 
-
+echo "Test, Time" > $output_dir/results.time
 run_test()
 {
     local test=$1
-
     echo -n "Running $test..."
-    { time $bash "$test" > "$output_dir/$test.bash.out"; } 2>  $output_dir/${test}.bash.time
+    TIMEFORMAT="${test%%.*}_bash, %3R" # %3U %3S"
+    { time $bash "$test" > "$output_dir/$test.bash.out"; } 2>>  $output_dir/results.time
     test_bash_ec=$?
-    { time $pash "$test" > "$output_dir/$test.pash.out"; } 2>  $output_dir/${test}.pash.time
+    TIMEFORMAT="${test%%.*}_pash, %3R" # %3U %3S"
+    { time $pash "$test" > "$output_dir/$test.pash.out"; } 2>>  $output_dir/results.time
     test_pash_ec=$?
     diff "$output_dir/$test.bash.out" "$output_dir/$test.pash.out"
     test_diff_ec=$?
