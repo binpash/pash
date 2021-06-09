@@ -33,6 +33,7 @@ mkdir -p $intermediary_dir
 rm -rf "$test_results_dir"
 mkdir -p "$test_results_dir"
 
+echo "Test@Time" > ${results_time}
 echo "Generating inputs..."
 cd "$microbenchmarks_dir/input"
 ./setup.sh
@@ -95,7 +96,7 @@ pipeline_microbenchmarks=(
 
 
 execute_pash_and_check_diff() {
-    TIMEFORMAT="${script_conf%%.*}_pash, %3R" # %3U %3S"
+    TIMEFORMAT="${script_conf%%.*}_pash@%3R" # %3U %3S"
     if [ "$DEBUG" -eq 1 ]; then
         { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
         tail -n1 ${pash_time} >> ${results_time} &&
@@ -156,7 +157,7 @@ execute_tests() {
             echo "|-- Has input file: $stdin_redir"
         fi
 
-        TIMEFORMAT="${microbenchmark%%.*}_bash, %3R" # %3U %3S"
+        TIMEFORMAT="${microbenchmark%%.*}_bash@%3R" # %3U %3S"
         echo -n "|-- Executing the script with bash..."
         { time /bin/bash "$script_to_execute" > $seq_output ; } \
             < "$stdin_redir" 2>> "${seq_time}"
@@ -179,6 +180,9 @@ execute_tests() {
 
 execute_tests "" "${script_microbenchmarks[@]}"
 execute_tests "--assert_compiler_success" "${pipeline_microbenchmarks[@]}"
+
+cat ${results_time} | sed 's/,/./' > /tmp/a
+cat /tmp/a | sed 's/@/,/' > ${results_time}
 
 
 
