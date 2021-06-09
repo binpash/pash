@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# time: print real in seconds, to simplify parsing
+TIMEFORMAT="%3R" # %3U %3S"
 
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 
@@ -16,9 +18,9 @@ run_test()
     local test=$1
 
     echo -n "Running $test..."
-    $bash "$test" > "$output_dir/$test.bash.out"
+    { time $bash "$test" > "$output_dir/$test.bash.out"; } 2>  $output_dir/${test}.bash.time
     test_bash_ec=$?
-    $pash "$test" > "$output_dir/$test.pash.out"
+    { time $pash "$test" > "$output_dir/$test.pash.out"; } 2>  $output_dir/${test}.pash.time
     test_pash_ec=$?
     diff "$output_dir/$test.bash.out" "$output_dir/$test.pash.out"
     test_diff_ec=$?
@@ -29,11 +31,11 @@ run_test()
         echo -n "$test exit code mismatch"
     fi
     if [ $test_diff_ec -ne 0 ] || [ $test_bash_ec -ne $test_pash_ec ]; then
-        echo "are not identical" > $output_dir/${test}_distr*.time
+        echo "are not identical" > $output_dir/${test}_distr.time
         echo '   FAIL'
         return 1
     else
-        echo "are identical" > $output_dir/${test}_distr*.time
+        echo "are identical" > $output_dir/${test}_distr.time
         echo '   OK'
         return 0
     fi
@@ -43,11 +45,11 @@ run_test "demo-spell.sh"
 run_test "hello-world.sh"
 
 echo "Below follow the identical outputs:"
-grep --files-with-match "are identical" "$output_dir"/*_distr*.time
+grep --files-with-match "are identical" "$output_dir"/*_distr.time
 
 echo "Below follow the non-identical outputs:"
-grep -L "are identical" "$output_dir"/*_distr*.time
+grep -L "are identical" "$output_dir"/*_distr.time
 
-TOTAL_TESTS=$(ls -la "$output_dir"/*_distr*.time | wc -l)
-PASSED_TESTS=$(grep --files-with-match "are identical" "$output_dir"/*_distr*.time | wc -l)
+TOTAL_TESTS=$(ls -la "$output_dir"/*_distr.time | wc -l)
+PASSED_TESTS=$(grep --files-with-match "are identical" "$output_dir"/*_distr.time | wc -l)
 echo "Summary: ${PASSED_TESTS}/${TOTAL_TESTS} tests passed."
