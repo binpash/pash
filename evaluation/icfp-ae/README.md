@@ -47,6 +47,12 @@ $PASH_TOP/evaluation/icfp-ae/analytics-mts.sh
 
 The results include the sequential baseline (running `bash`), `pash` without the `cat`-`split` transformation, and full `pash` performing all transformations. The scripts are configured to apply `pash` with a parallelism `--width` of `16`.
 
+### Notes 
+
+The input sizes for `oneliners` have been scaled down (x3 or x10) with respect to the ones shown in the paper so that they execute in a reasonable amount of time.
+
+The unix50 scripts (`1.sh` - `36.sh`) contain two scripts that are empty (`22.sh` and `27.sh`) that are not shown in the paper plot.
+
 Note on hardware and software requirements: Running these scripts will require significant disk space (>100GB), it will take considerable time (several hours), and will need many CPUs (ideally more than 32). AEC reviewers are provided access to `deathstar`, the machine used to gather the results reported in the paper, which already meets these hardware and software requirements.
 
 
