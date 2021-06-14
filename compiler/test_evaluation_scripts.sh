@@ -142,7 +142,7 @@ execute_tests() {
                 export $vars_to_export
             fi
         else
-            echo "|-- Doesn't have env file"
+            echo "|-- Does not have env file"
         fi
 
         ## Export necessary functions
