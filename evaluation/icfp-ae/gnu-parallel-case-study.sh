@@ -6,6 +6,8 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 ## Setup inputs if they are not there already
 echo "Downloading/setting up input..."
 cd "$PASH_TOP/evaluation/benchmarks/oneliners/input"
+# remove old input
+./setup.sh -c
 ./setup.sh
 
 ## Set parallelism level

@@ -6,6 +6,8 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 cd $PASH_TOP/evaluation/benchmarks/oneliners
 # setup 
 cd input
+# remove old input
+./setup.sh -c 
 ./setup.sh --full
 cd ..
 
