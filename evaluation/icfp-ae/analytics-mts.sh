@@ -5,6 +5,8 @@ TIMEFORMAT="%3R" # %3U %3S"
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 cd $PASH_TOP/evaluation/benchmarks/analytics-mts
 cd input/
+# remove old input
+./setup.sh -c
 ./setup.sh --full
 cd ..
 export IN=input/in.csv
