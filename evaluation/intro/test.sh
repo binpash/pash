@@ -9,18 +9,19 @@ pash="$PASH_TOP/pa.sh -w 2"
 
 output_dir="$PASH_TOP/evaluation/intro/output"
 mkdir -p "$output_dir"
+rm -f  $output_dir/results.time_bash
+rm -f  $output_dir/results.time_pash
 
 ( cd "$PASH_TOP/evaluation/intro/input"; ./setup.sh ) 
-echo "Test@Time" > $output_dir/results.time
 run_test()
 {
     local test=$1
     echo -n "Running $test..."
-    TIMEFORMAT="${test%%.*}_bash@%3R" # %3U %3S"
-    { time $bash "$test" > "$output_dir/$test.bash.out"; } 2>>  $output_dir/results.time
+    TIMEFORMAT="${test%%.*}:%3R" # %3U %3S"
+    { time $bash "$test" > "$output_dir/$test.bash.out"; } 2>>  $output_dir/results.time_bash
     test_bash_ec=$?
-    TIMEFORMAT="${test%%.*}_pash@%3R" # %3U %3S"
-    { time $pash "$test" > "$output_dir/$test.pash.out"; } 2>>  $output_dir/results.time
+    TIMEFORMAT="%3R" # %3U %3S"
+    { time $pash "$test" > "$output_dir/$test.pash.out"; } 2>>  $output_dir/results.time_pash
     test_pash_ec=$?
     diff "$output_dir/$test.bash.out" "$output_dir/$test.pash.out"
     test_diff_ec=$?
@@ -43,8 +44,10 @@ run_test()
 
 run_test "demo-spell.sh"
 run_test "hello-world.sh"
-cat ${output_dir}/results.time | sed 's/,/./' > /tmp/a
-cat /tmp/a | sed 's/@/,/' > ${output_dir}/results.time 
+
+echo "group,Bash,Pash" > $output_dir/results.time
+paste $output_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's/\t/,/' >> $output_dir/results.time
+
 
 echo "Below follow the identical outputs:"
 grep --files-with-match "are identical" "$output_dir"/*_distr.time
