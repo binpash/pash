@@ -103,7 +103,7 @@ else
     done
 fi
 
-echo "group,Bash,Pash" > $output_dir/results.time
+echo "group,Bash,Pash-DRY_COMP" > $output_dir/results.time
 paste $output_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's/\t/,/' >> $output_dir/results.time
 
 echo "Below follow the identical outputs:"
