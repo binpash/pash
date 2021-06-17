@@ -36,8 +36,8 @@ compare_outputs(){
 #compare_outputs "web-index/outputs"
 rm -f $1/*.res
 echo "group,Bash,Pash16" > results.time
-b=$($1      | grep -v executing | sed 's\.sh:\_bash\g' |  sed 's\,\.\g' | awk '{ print $1 "," $2}')
-p=$($1_pash | grep -v executing | sed 's\.sh:\_pash\g' |  sed 's\,\.\g' | awk '{ print $1 "," $2}' | awk '{sub(/[^,]*/,"");sub(/,/,"")} 1')
+b=$($1      | grep -v executing | sed 's\.sh:\bash\g' |  sed 's\,\.\g' | awk '{ print $1 "," $2}')
+p=$($1_pash | grep -v executing | sed 's\.sh:\pash\g' |  sed 's\,\.\g' | awk '{ print $1 "," $2}' | awk '{sub(/[^,]*/,"");sub(/,/,"")} 1')
 res=$(paste -d '@' <(echo "$b") <(echo "$p"))
 echo "$res" | sed 's\@\,\g' >> results.time
 compare_outputs "$1/outputs"
