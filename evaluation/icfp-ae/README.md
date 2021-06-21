@@ -49,10 +49,12 @@ The results include the sequential baseline (running `bash`), `pash` without the
 
 ### Notes 
 
-The input sizes for `oneliners` have been scaled down (x3 or x10) with respect to the ones shown in the paper so that they execute in a reasonable amount of time.
+- Our claims and results are not particular to specific command versions, but [pkg_versions.txt](../scripts/pkg_versions.txt) contains versions of requirements on our experimental infrastructure for future reproducibility.
 
-The unix50 scripts (`1.sh` - `36.sh`) contain two scripts that are empty (`22.sh` and `27.sh`) that are not shown in the paper plot.
+- The input sizes for `oneliners` have been scaled down (x3 or x10) with respect to the ones shown in the paper so that they execute in a reasonable amount of time.
 
-Note on hardware and software requirements: Running these scripts will require significant disk space (>100GB), it will take considerable time (several hours), and will need many CPUs (ideally more than 32). AEC reviewers are provided access to `deathstar`, the machine used to gather the results reported in the paper, which already meets these hardware and software requirements.
+- The unix50 scripts (`1.sh` - `36.sh`) contain two scripts that are empty (`22.sh` and `27.sh`) that are not shown in the paper plot.
+
+- Note on hardware and software requirements: Running these scripts will require significant disk space (>100GB), it will take considerable time (several hours), and will need many CPUs (ideally more than 32). AEC reviewers are provided access to `deathstar`, the machine used to gather the results reported in the paper, which already meets these hardware and software requirements.
 
 
