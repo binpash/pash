@@ -58,3 +58,29 @@ The results include the sequential baseline (running `bash`), `pash` without the
 - Note on hardware and software requirements: Running these scripts will require significant disk space (>100GB), it will take considerable time (several hours), and will need many CPUs (ideally more than 32). AEC reviewers are provided access to `deathstar`, the machine used to gather the results reported in the paper, which already meets these hardware and software requirements.
 
 - Our claims and results are not particular to specific command versions, but [pkg_versions.txt](../scripts/pkg_versions.txt) contains versions of requirements on our experimental infrastructure for future reproducibility.
+
+
+### Expected Results
+
+We collect the output of a run of all experiments for future reference:
+
+#### GNU Parallel
+
+#### Oneliners
+
+```
+nfa-regex.sh:                  478.333  nfa-regex.sh:                  31.031   nfa-regex.sh:                  30.442
+sort.sh:                       376.471  sort.sh:                       75.852   sort.sh:                       75.187
+top-n.sh:                      412.159  top-n.sh:                      101.036  top-n.sh:                      83.411
+wf.sh:                         402.054  wf.sh:                         109.512  wf.sh:                         88.821
+spell.sh:                      479.021  spell.sh:                      152.901  spell.sh:                      118.043
+diff.sh:                       465.938  diff.sh:                       176.832  diff.sh:                       151.463
+bi-grams.sh:                   752.060  bi-grams.sh:                   171.769  bi-grams.sh:                   156.463
+set-diff.sh:                   1031.311 set-diff.sh:                   182.028  set-diff.sh:                   164.986
+shortest-scripts.sh:           183.320  shortest-scripts.sh:           20.289   shortest-scripts.sh:           15.562
+```
+
+#### Unix50
+
+#### Analytics MTS
+
