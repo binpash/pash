@@ -30,7 +30,7 @@ case "$distro" in
      echo "|-- running apt update..."
      sudo apt-get update &> $LOG_DIR/apt_update.log
      echo "|-- running apt install..."
-     DEBIAN_FRONTEND=noninteractive sudo apt-get install -y git curl virtualenv libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils &> $LOG_DIR/apt_install.log
+     DEBIAN_FRONTEND=noninteractive sudo apt-get install -y git curl virtualenv libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils parallel &> $LOG_DIR/apt_install.log
      ;;
    debian*)
      # tested with debian:stable-20210408

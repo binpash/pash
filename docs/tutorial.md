@@ -62,7 +62,7 @@ On other Linux distros, first install the following packages (some of which migh
 ```
 git curl virtualenv libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils
 ```
-
+The required versions of these packages can be found in [pkg_versions.txt](../scripts/pkg_versions.txt) 
 Then manually install the Python libraries available in [requirements.txt](../scripts/requirements.txt) or clone the repository and run `setup-pash.sh` as follows:
 
 ```sh
