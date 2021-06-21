@@ -8,7 +8,7 @@ echo "Downloading/setting up input..."
 cd "$PASH_TOP/evaluation/benchmarks/oneliners/input"
 # remove old input
 ./setup.sh -c
-./setup.sh
+./setup.sh --full
 
 ## Set parallelism level
 ## Warning: these two have to mirror each other
