@@ -66,6 +66,57 @@ We collect the output of a run of all experiments for future reference:
 
 #### GNU Parallel
 
+```
+Downloading/setting up input...
+Generating full-size inputs
+Running spell with bash...
+
+real    8m30.196s
+user    9m3.771s
+sys     2m34.787s
+Running spell with gnu-parallel with block_size=50K...
+
+real    2m48.019s
+user    11m51.651s
+sys     6m28.305s
+Comparing bash and gnu-parallel output
+Running spell with gnu-parallel with block_size=250K...
+
+real    1m10.121s
+user    9m37.386s
+sys     3m11.701s
+Comparing bash and gnu-parallel output
+Running spell with gnu-parallel with block_size=250M...
+
+real    0m52.812s
+user    9m0.701s
+sys     2m24.801s
+Comparing bash and gnu-parallel output
+Running spell with pash...
+
+real    1m2.798s
+user    11m3.757s
+sys     3m38.919s
+Comparing bash and pash output
+Running set-diff with bash...
+
+real    17m6.116s
+user    18m19.996s
+sys     0m25.974s
+Running set-diff with gnu-parallel with block_size=250M...
+
+real    2m40.809s
+user    18m30.232s
+sys     0m38.266s
+Comparing bash and gnu-parallel output
+Running set-diff with pash...
+
+real    2m20.964s
+user    22m54.571s
+sys     2m33.453s
+Comparing bash and pash output
+```
+
 #### Oneliners
 
 ```
@@ -84,3 +135,9 @@ shortest-scripts.sh:           183.320  shortest-scripts.sh:           20.289   
 
 #### Analytics MTS
 
+```
+1 336.147       1 84.240        1 49.946
+2 336.735       2 85.818        2 50.433
+3 408.517       3 94.363        3 60.014
+4 107.901       4 68.830        4 35.527
+```
