@@ -267,19 +267,14 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_fl
     assert(not isinstance(curr, Cat))
     assert(fan_out > 1)
 
-    ## At the moment this only works for nodes that have one input.
-    ##
-    ## TODO: Extend it to work for nodes that have more than one input.
-    ##       This has to be done to be able to parallelize comm
-    number_of_previous_nodes = len(curr.get_input_list())
+    ## At the moment this only works for nodes that have one standard input.
+    standard_input_ids = curr.get_standard_inputs()
     new_merger = None
-    if (number_of_previous_nodes == 1):
+    if (len(standard_input_ids) == 1):
         ## If the previous command is either a cat with one input, or
         ## if it something else
-
-        input_ids = curr.get_input_list()
-        assert(len(input_ids) == 1)
-        input_id = input_ids[0]
+        
+        input_id = standard_input_ids[0]
 
         ## First we have to make the split file commands.
         split_file_commands, output_fids = make_split_files(input_id, fan_out, fileIdGen, r_split_flag, r_split_batch_size)
@@ -372,7 +367,6 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
                              or isinstance(curr, r_merge.RMerge))
                             and len(curr.get_input_list()) < fan_out)))):
                 new_merger = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size, r_split_flag, r_split_batch_size)
-
                 ## After split has succeeded we know that the curr node (previous of the next)
                 ## has changed. Therefore we need to retrieve it again.
                 if (not new_merger is None):
