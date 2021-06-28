@@ -71,6 +71,7 @@ script_microbenchmarks=(
     tee_web_index_bug    # Tests a tee bug from web index
     fun-def              # Tests whether PaSh can handle a simple function definition
     bigrams              # One-liner
+    spell-grep           # Spell variant with `grep -f` instead of `comm`
 )
 
 pipeline_microbenchmarks=(
