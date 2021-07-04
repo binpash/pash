@@ -68,20 +68,23 @@ EXEC=()
 # cleanup
 rm -f $1/*.res
 # run bash
-b=$($1      | grep -v executing | sed 's\.sh:\bash\g' |  sed 's\,\.\g' | awk '{ print $1 "," $2}')
+b=$($1      | grep -v executing | sed 's\.sh:\\g' |  sed 's\,\.\g' | awk '{ print $1 "," $2}')
 labels="group,Bash"
+#echo "${b}"
 for conf in "${configurations[@]}"; do
     for n_in in "${n_inputs[@]}"; do
+        find /tmp/ -group dkarnikis | grep sg | xargs -n1 rm -f 2> /dev/null
         # on each run, clean all the res files 
-        rm -f $1/*.res
+        rm -f $1/par.res
         # re-export the new config
         export PASH_FLAGS="${conf} -w ${n_in}"
         # append the new labels for the plot
         labels="${labels},${conf}_${n_in}"
-        # execute the pash with the new config
-        p=$($1_pash | grep -v executing | sed 's\.sh:\pash\g' |  sed 's\,\.\g' | awk '{ print $1 "," $2}' | awk '{sub(/[^,]*/,"");sub(/,/,"")} 1')
+        # execute  the pash with the new config
+        $1_pash > /dev/null
+        res=$(awk '{if (NR!=1) {print $2}}' $1/par.res)
         # store the results
-        EXEC+=("$p")
+        EXEC+=("${res}")
     done
 done
 # concat all the results and merge them to create the final data for plotting
