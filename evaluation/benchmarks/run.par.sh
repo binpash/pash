@@ -186,6 +186,7 @@ analytics-mts_pash(){
 
   touch "$times_file"
   echo executing MTS analytics with pash $(date) | tee -a "$times_file"
+  echo '' >> "$times_file"
   ## FIXME 5.sh is not working yet
   for number in `seq 4`
   do
