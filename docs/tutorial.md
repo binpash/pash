@@ -99,7 +99,7 @@ It is also possible to fetch an image directly, but this is not longer recommend
 curl img.pash.ndr.md | docker load; docker run --name pash-play-$(whoami) -it pash/18.04
 ```
 
-In all the above cases, lunching the container is done via:
+In all the above cases, launching the container is done via:
 ```sh
 docker run --name pash-play -it pash/18.04
 ```
