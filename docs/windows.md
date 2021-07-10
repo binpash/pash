@@ -21,8 +21,6 @@ machine or dualboot setup.
 
   - [Ubuntu 20.04-lts](https://www.microsoft.com/el-gr/p/ubuntu-2004-lts/9n6svws3rx71?rtc=1&activetab=pivot:overviewtab)
   - [Debian GNU/Linux](https://www.microsoft.com/el-gr/p/debian/9msvkqc78pk6?rtc=1&activetab=pivot:overviewtab)
-  - [Fedora Remix](https://www.microsoft.com/el-gr/p/fedora-remix-for-wsl/9n6gdm4k2hnc?rtc=1&activetab=pivot:overviewtab)
-  - [Available Distros](https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-6---install-your-linux-distribution-of-choice)
 
 - Reboot your computer
 - On Windows search menu, find wsl
