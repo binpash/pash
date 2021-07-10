@@ -72,6 +72,10 @@ git clone git@github.com:andromeda/pash.git
 
 As noted at the end of `setup-pash.sh`, make sure you set `PASH_TOP` pointing to the absolute path of the directory `pa.sh` resides (you can optionally place that in your `PATH`).
 
+#### Windows using WSL
+
+For windows installation, follow this [guide](./windows.md).
+
 #### Docker
 
 PaSh on Docker is useful when native installation is not an option -- for example, to allow development on Windows and OS X.
