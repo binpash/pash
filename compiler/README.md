@@ -66,7 +66,7 @@ The [ast_to_ir.py](./ast_to_ir.py) file contains a case statement that essential
 ```
 
 The following function from [ir.py](./ir.py) is responsible for parallelizing a single node (_i.e._, a command) in the dataflow graph.
-Look at the schematic in the comments starting [on line 637](./ir.py#L637) that gives the high-level overview of what this function does (not shown below).
+Look at the schematic in the comments starting [on line 663](./ir.py#L663) that gives the high-level overview of what this function does (not shown below).
 
 [//]: # (TODO: Add schematic here)
 
