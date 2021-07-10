@@ -36,6 +36,8 @@ docker run --name pash-play -it pash/18.04
 More installation instructions in [the tutorial](./docs/tutorial.md#installation).
 Remember to `export` `PASH_TOP` in your startup scripts!
 
+On Windows, you can follow [wsl guide](./docs/windows.md) to install `Windows Subsystem for Linux` and then setup PaSh.
+
 ## Testing
 
 To execute the current tests before committing and pushing code, simply run:
