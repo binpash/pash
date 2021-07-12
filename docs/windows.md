@@ -1,32 +1,76 @@
-# Windows Installation
-To setup and install PaSh on a Windows machine, `Windows Subsystem for Linux (WSL)` needs to be installed.
+# PaSh installation on Windows
+To setup and install PaSh on a Windows machine, `Windows Subsystem for Linux (WSL)` needs to be installed first.
 
 ## What is WSL
 The Windows Subsystem for Linux lets developers run a GNU/Linux environment 
--- including most command-line tools, utilities, and applications -- 
-directly on Windows, unmodified, without the overhead of a traditional virtual 
-machine or dualboot setup.
+— including most command-line tools, utilities, and applications — 
+directly on Windows, unmodified, without the need to setup a traditional virtual 
+machine or use dualboot.
 
 ## Setup WSL
+You can either install WSL or WSL2. WSL2 has more features (notably, it includes the full Linux kernel),
+but confilcts with other virtualization software such as VirtualBox or VMware, as it requires Hyper-V to work.
+Here are the short instructions that assume installing WSL2 on a compatible Windows 10 machine running on x64.
 
-- Open PowerShell as Administrator and run:
+In case of errors, consult the full installation guide on [Microsoft Docs](https://docs.microsoft.com/en-us/windows/wsl/install-win10)
+and the [WSL Troubleshooting Guide](https://github.com/MicrosoftDocs/WSL/blob/master/WSL/troubleshooting.md).
 
-    `dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart`
+### Installing WSL2 — short guide
+All commands below should be run in an Administrator Poweshell prompt.
 
-- Enable Linux Filesystem for Windows
+- If Running Windows 10 Preview build 20262 or higher:
+    - List the available Linux Distributions. Note that currently only Ubuntu, Debian and Fedora are supported by PaSh.
+        ```powershell
+        wsl --list --online
+        ```
+    - Install WSL2 with with a given distribution
+        ```powershell
+        wsl --install -d <distribution-name-from-above>
+        ```
+    - Restart your machine
+        ```powershell
+        Restart-Computer
+        ```
+- Else (most people):
+    - Enable WSL
+        ```powershell
+        dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+        ```
+    - Enable Virtual Machine Platform (required for Hyper-V and WSL2)
+        ```powershell
+        dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+        ```
+    - Restart your machine
+       ```powershell
+       Restart-Computer
+       ```
+    - Update WSL to WSL2
+        - Download the WSL to WSL2 updater and run it
+            ```powershell
+            (New-Object System.Net.WebClient).DownloadFile("https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi", "C:/Windows/Temp/wsl2.msi");
+            msiexec /i "C:/Windows/Temp/wsl2.msi";
+            Remove-Item "C:/Windows/Temp/wsl2.msi"
+            ```
+        - Set WSL2 as default WSL version
+            ```powershell
+            wsl --set-default-version 2
+            ```
+    - Install one of the **supported Linux distributions** from the Microsoft Store (cannot be done using command line, 
+      unless using something like Chocolatey, but in that case the whole process is automated):
+        - [Ubuntu 18.04 LTS](https://www.microsoft.com/store/apps/9N9TNGVNDL3Q)
+        - [Ubuntu 20.04 LTS](https://www.microsoft.com/store/apps/9n6svws3rx71)
+        - [Debian GNU/Linux](https://www.microsoft.com/store/apps/9MSVKQC78PK6)
+        - [Fedora Remix for WSL](https://www.microsoft.com/store/apps/9n6gdm4k2hnc)
+        
+    - Restart your machine
+       ```powershell
+       Restart-Computer
+       ```
+- Run the `wsl` command or find the installed Linux distribution in Windows Start menu and run it.
+- After a few minutes of installation, enter a username and password for the internal WSL account to be created.
 
-    `dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart`
-
-- Install the distro of your choice:
-
-  - [Ubuntu 20.04-lts](https://www.microsoft.com/el-gr/p/ubuntu-2004-lts/9n6svws3rx71?rtc=1&activetab=pivot:overviewtab)
-  - [Debian GNU/Linux](https://www.microsoft.com/el-gr/p/debian/9msvkqc78pk6?rtc=1&activetab=pivot:overviewtab)
-
-- Reboot your computer
-- On Windows search menu, find wsl
-- It will take some time to initialize and then it will ask a username/password
-- After this point, you may run full Linux applications on your Windows machine!
-- Continue the PaSh installation from [here](https://github.com/andromeda/pash/blob/main/docs/tutorial.md#installation)
+Continue the PaSh installation process from [here](https://github.com/andromeda/pash/blob/main/docs/tutorial.md#installation)
+inside the WSL installation.
 
 
 ## Docker TODO
