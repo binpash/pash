@@ -19,7 +19,7 @@ and the [WSL Troubleshooting Guide](https://github.com/MicrosoftDocs/WSL/blob/ma
 All commands below should be run in an Administrator Poweshell prompt.
 
 - If Running Windows 10 Preview build 20262 or higher:
-    - List the available Linux Distributions
+    - List the available Linux Distributions. Note that currently only Ubuntu, Debian and Fedora are supported by PaSh.
         ```powershell
         wsl --list --online
         ```
@@ -55,19 +55,13 @@ All commands below should be run in an Administrator Poweshell prompt.
             ```powershell
             wsl --set-default-version 2
             ```
-    - Install a Linux distribution from the Microsoft Store (cannot be done using command line, 
+    - Install one of the **supported Linux distributions** from the Microsoft Store (cannot be done using command line, 
       unless using something like Chocolatey, but in that case the whole process is automated):
         - [Ubuntu 18.04 LTS](https://www.microsoft.com/store/apps/9N9TNGVNDL3Q)
         - [Ubuntu 20.04 LTS](https://www.microsoft.com/store/apps/9n6svws3rx71)
-        - [openSUSE Leap 15.1](https://www.microsoft.com/store/apps/9NJFZK00FGKV)
-        - [SUSE Linux Enterprise Server 12 SP5](https://www.microsoft.com/store/apps/9MZ3D1TRP8T1)
-        - [SUSE Linux Enterprise Server 15 SP1](https://www.microsoft.com/store/apps/9PN498VPMF3Z)
-        - [Kali Linux](https://www.microsoft.com/store/apps/9PKR34TNCV07)
         - [Debian GNU/Linux](https://www.microsoft.com/store/apps/9MSVKQC78PK6)
         - [Fedora Remix for WSL](https://www.microsoft.com/store/apps/9n6gdm4k2hnc)
-        - [Pengwin](https://www.microsoft.com/store/apps/9NV1GV1PXZ6P)
-        - [Pengwin Enterprise](https://www.microsoft.com/store/apps/9N8LP0X93VCP)
-        - [Alpine WSL](https://www.microsoft.com/store/apps/9p804crf0395)
+        
     - Restart your machine
        ```powershell
        Restart-Computer
