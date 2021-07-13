@@ -41,7 +41,7 @@ libdash:
 	cd libdash && ./autogen.sh && ./configure && make
 
 libdash-ocaml:
-	cd libdash/ocaml && make && make install
+	cd libdash/ocaml && $(MAKE) && $(MAKE) install
 
 opam-dependencies: 
 	opam install -y ctypes.0.11.5
