@@ -1,6 +1,6 @@
 .PHONY: all eager-debug split-debug
 
-all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee
+all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee agg
 
 CFLAGS=-Wall
 
@@ -63,6 +63,10 @@ dgsh-tee:
 	cp dgsh-tee ../../../dgsh-tee;
 	rm -rf dgsh/
 	
+agg:
+	$(MAKE) -C agg/cpp
+
 clean:
 	rm -f eager split r_split r_wrap r_unwrap dgsh-tee
 	rm -rf dgsh
+	$(MAKE) -C agg/cpp clean
