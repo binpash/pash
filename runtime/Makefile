@@ -1,4 +1,4 @@
-.PHONY: all eager-debug split-debug
+.PHONY: all eager-debug split-debug clean agg
 
 all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee agg
 
