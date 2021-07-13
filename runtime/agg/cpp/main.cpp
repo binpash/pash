@@ -1,6 +1,7 @@
 #include "main.h"
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <cstdlib>
 
 std::ifstream g_in1;
@@ -15,33 +16,33 @@ int main(int argc, const char* argv[])
 		return EXIT_FAILURE;
 	}
 
-    std::ios_base::sync_with_stdio(false);
+	std::ios_base::sync_with_stdio(false);
 
 	g_in1.open(argv[1], std::ios_base::in  | std::ios_base::binary);
 	g_in2.open(argv[2], std::ios_base::in  | std::ios_base::binary);
 	g_out.open(argv[3], std::ios_base::out | std::ios_base::binary);
 
 	aggregate();
-	
+
 	return EXIT_SUCCESS;
 }
 
 [[nodiscard]] std::optional<std::string> input(std::ifstream& in) noexcept
 {
-    if (!in)
-        return std::nullopt;
-    
-    std::string s;
-    std::getline(in, s)
+	if (!in)
+		return std::nullopt;
 
-    return s;
+	std::string s;
+	std::getline(in, s);
+
+	return s;
 }
 [[nodiscard]] std::string inputAll(std::ifstream& in) noexcept
 {
-    if (!in)
-        return {};
-    
-    std::string contents;
+	if (!in)
+    		return {};
+
+	std::string contents;
 	in.seekg(0, std::ios::end);
 	contents.resize(in.tellg());
 	in.seekg(0, std::ios::beg);
@@ -51,19 +52,19 @@ int main(int argc, const char* argv[])
 }
 [[nodiscard]] std::pair<std::string, std::vector<std::string_view>> inputAllLines(std::ifstream& in) noexcept
 {
-    std::string contents{inputAll(in)};
-    int lineCount = std::count(contents.begin(), contents.end(), '\n');
-    std::vector<std::string_view> lines{};
-    lines.reserve(lineCount);
-    for (int i = 0, first = 0; i < contents.size(); ++i)
-    {
-        if (contents[i] == '\n')
-        {
-            lines.emplace_back(contents + first, i - first);
-            first = i + 1;
-        }
-    }
-    return {contents, lines};
+	std::string contents{inputAll(in)};
+	size_t lineCount = std::count(contents.begin(), contents.end(), '\n');
+	std::vector<std::string_view> lines{};
+	lines.reserve(lineCount);
+	for (size_t i = 0, first = 0; i < contents.size(); ++i)
+	{
+		if (contents[i] == '\n')
+		{
+			lines.emplace_back(contents.c_str() + first, i - first);
+			first = i + 1;
+		}
+	}
+	return {contents, lines};
 }
 
 [[nodiscard]] std::optional<std::string> input1() noexcept { return input(g_in1); }
@@ -76,7 +77,7 @@ int main(int argc, const char* argv[])
 void output(const std::string& s) noexcept { output(s.c_str(), s.size()); }
 void output(const char* s, size_t len) noexcept
 {
-    g_out.write(s, len);
-    if (s[len - 1] != '\n')
-        g_out.put('\n');
+	g_out.write(s, len);
+	if (s[len - 1] != '\n')
+		g_out.put('\n');
 }

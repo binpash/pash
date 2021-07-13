@@ -11,7 +11,7 @@
 // To use it, just include it and implement the function presented below
 // and remember to link the executable with main.cpp
 
-[[nodiscard]] void aggregate() noexcept; // implement this
+void aggregate() noexcept; // implement this
 
 // It should work in the following manner:
 // 1. It should request inputs to aggregate when it needs them using the functions below:
