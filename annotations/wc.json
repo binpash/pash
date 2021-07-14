@@ -1,6 +1,6 @@
 {
     "command": "wc",
-    "aggregate": "$PASH_TOP/runtime/agg/py/wc.py",
+    "aggregate": "$PASH_TOP/runtime/agg/cpp/wc",
     "cases":
     [
         {
