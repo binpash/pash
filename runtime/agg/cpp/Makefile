@@ -1,14 +1,12 @@
 .PHONY: clean
-all: grep grep-c
+all: wc
 
 CFLAGS = -Wall -std=c++17 -O3 -DNDEBUG -I.
 CFLAGS += main.cpp
 DEPS = main.cpp main.h
 
-grep: $(DEPS) grep.cpp
-	g++ ${CFLAGS} grep.cpp -o grep
-grep-c: $(DEPS) grep-c.cpp
-	g++ ${CFLAGS} grep-c.cpp -o grep-c
+wc: $(DEPS) wc.cpp
+	g++ ${CFLAGS} wc.cpp -o wc
 
 clean:
-	rm -f grep grep-c
+	rm -f wc

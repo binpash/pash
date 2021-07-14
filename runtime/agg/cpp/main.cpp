@@ -27,57 +27,15 @@ int main(int argc, const char* argv[])
 	return EXIT_SUCCESS;
 }
 
-[[nodiscard]] std::optional<std::string> input(std::ifstream& in) noexcept
+[[nodiscard]] std::istream& input1() noexcept
 {
-	if (!in)
-		return std::nullopt;
-
-	std::string s;
-	std::getline(in, s);
-
-	return s;
+	return g_in1;
 }
-[[nodiscard]] std::string inputAll(std::ifstream& in) noexcept
+[[nodiscard]] std::istream& input2() noexcept
 {
-	if (!in)
-    		return {};
-
-	std::string contents;
-	in.seekg(0, std::ios::end);
-	contents.resize(in.tellg());
-	in.seekg(0, std::ios::beg);
-	in.read(&contents[0], contents.size());
-
-	return contents;
+	return g_in2;
 }
-[[nodiscard]] std::pair<std::string, std::vector<std::string_view>> inputAllLines(std::ifstream& in) noexcept
+[[nodiscard]] std::ostream& output() noexcept
 {
-	std::string contents{inputAll(in)};
-	size_t lineCount = std::count(contents.begin(), contents.end(), '\n');
-	std::vector<std::string_view> lines{};
-	lines.reserve(lineCount);
-	for (size_t i = 0, first = 0; i < contents.size(); ++i)
-	{
-		if (contents[i] == '\n')
-		{
-			lines.emplace_back(contents.c_str() + first, i - first);
-			first = i + 1;
-		}
-	}
-	return {contents, lines};
-}
-
-[[nodiscard]] std::optional<std::string> input1() noexcept { return input(g_in1); }
-[[nodiscard]] std::optional<std::string> input2() noexcept { return input(g_in2); }
-[[nodiscard]] std::string input1All() noexcept { return inputAll(g_in1); }
-[[nodiscard]] std::string input2All() noexcept { return inputAll(g_in2); }
-
-[[nodiscard]] std::pair<std::string, std::vector<std::string_view>> input1AllLines() noexcept { return inputAllLines(g_in1); }
-[[nodiscard]] std::pair<std::string, std::vector<std::string_view>> input2AllLines() noexcept { return inputAllLines(g_in2); }
-void output(const std::string& s) noexcept { output(s.c_str(), s.size()); }
-void output(const char* s, size_t len) noexcept
-{
-	g_out.write(s, len);
-	if (s[len - 1] != '\n')
-		g_out.put('\n');
+	return g_out;
 }
