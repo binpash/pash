@@ -1,5 +1,6 @@
 {
     "command": "cat",
+    "aggregate": "$PASH_TOP/runtime/agg/py/cat.py",
     "cases":
     [
 		{

@@ -1,0 +1,35 @@
+{
+    "command": "pr",
+    "cases":
+    [
+    	{
+            "predicate":
+            {
+            	"operator": "and",
+            	"operands":
+            	[
+            	    {
+            		"operator": "exists",
+            		"operands": ["-T, --omit-pagination"],
+            	    },
+            	    {
+            		"operator": "!exists",
+            		"operands": ["integer"],
+            	    }
+            	
+            	]
+            	
+            },
+            "class": "stateless",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+            
+        },
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        }
+    ]
+}
