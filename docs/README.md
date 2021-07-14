@@ -34,7 +34,7 @@ Shivam Handa, Konstantinos Kallas, Nikos Vasilakis, Martin Rinard
 Michael Greenberg, Konstantinos Kallas, Nikos Vasilakis  
 [pdf](https://fut-shell.github.io/panel-summary.pdf) | acm | [event](https://sigops.org/s/conferences/hotos/2021/#program)
 ```bibtex
-@inproceedings{panel:hotos:21
+@inproceedings{panel:hotos:21,
   author = {Greenberg, Michael, and Kallas, Konstantinos, and Vasilakis, Nikos},
   title = {The Future of the Shell: UNIX and beyond},
   year = {2021},
