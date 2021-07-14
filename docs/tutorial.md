@@ -72,6 +72,10 @@ git clone git@github.com:andromeda/pash.git
 
 As noted at the end of `setup-pash.sh`, make sure you set `PASH_TOP` pointing to the absolute path of the directory `pa.sh` resides (you can optionally place that in your `PATH`).
 
+#### Windows using WSL
+
+For windows installation, follow this [guide](./windows.md).
+
 #### Docker
 
 PaSh on Docker is useful when native installation is not an option -- for example, to allow development on Windows and OS X.
@@ -99,7 +103,7 @@ It is also possible to fetch an image directly, but this is not longer recommend
 curl img.pash.ndr.md | docker load; docker run --name pash-play-$(whoami) -it pash/18.04
 ```
 
-In all the above cases, lunching the container is done via:
+In all the above cases, launching the container is done via:
 ```sh
 docker run --name pash-play -it pash/18.04
 ```

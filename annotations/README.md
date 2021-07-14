@@ -67,7 +67,7 @@ The annotation for `chmod` is very simple, since it only needs to establish that
 
 ## Another Example: `cut`
 
-As another example, below we present the annotations for `chmod`.
+As another example, below we present the annotations for `cut`.
 
 ```json
 {
