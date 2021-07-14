@@ -9,7 +9,7 @@ The following resources offer overviews of important PaSh components.
 * Annotations: [parallelizability](../annotations#main-parallelizability-classes), [study](../annotations#parallelizability-study-of-commands-in-gnu--posix), [example 1](../annotations#a-simple-example-chmod), [example 1](../annotations#another-example-cut), [howto](../annotations#how-to-annotate-a-command)
 * Compiler: [intro](../compiler#introduction), [overview](../compiler#compiler-overview), [details](../compiler#zooming-into-fragments), [earlier versions](../compiler#earlier-versions)
 * Runtime: [split](../runtime#stream-splitting), [eager](../runtime#eager-stream-polling),  [cleanup](../runtime#cleanup-logic),  [aggregate](../runtime#aggregators)
-* Scripts: [one-liners](#common-unix-one-liners), [unix50](#unix-50-from-bell-labs), [weather analysis](#noaa-weather-analysis), [web indexing](#wikipedia-web-indexing)
+* Scripts: [one-liners](../evaluation/benchmarks/#common-unix-one-liners), [unix50](../evaluation/benchmarks/#unix-50-from-bell-labs), [weather analysis](../evaluation/benchmarks/#noaa-weather-analysis), [web indexing](../evaluation/benchmarks/#wikipedia-web-indexing)
 
 ## Videos & Video Presentations
 
