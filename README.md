@@ -60,8 +60,8 @@ This repo hosts the core `pash` development. The structure is as follows:
 ## Community & More
 
 Mailing Lists: 
-* [Discussion](https://groups.google.com/g/pash-discuss): Join this mailing list for discussing all things `pash`
-* [Commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
+* [pash-users](https://groups.google.com/g/pash-users): Join this mailing list for discussing all things `pash`
+* [pash-commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
 
 Development/contributions:
 * Contribution guide: [docs/contrib](docs/contrib.md)
