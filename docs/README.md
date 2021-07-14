@@ -1,5 +1,5 @@
 # PaSh Documentation
-Quick Jump: [using pash](#using-pash) | [videos](#videos--video-presentations) | [papers](#academic-papers) 
+Quick Jump: [using pash](#using-pash) | [videos](#videos--video-presentations) | [papers](#academic-papers--events) 
 
 ## Using PaSh
 
