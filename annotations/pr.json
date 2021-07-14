@@ -15,6 +15,7 @@
             	    {
             		"operator": "!exists",
             		"operands": ["integer"],
+            		"comment": "Unsure how to express this kind of thing. Want to say: operand does not contain an integer."
             	    }
             	
             	]
