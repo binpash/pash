@@ -45,7 +45,7 @@ This is a small list of useful docker commands. Docker distinguishes between an 
 ```
 docker images                    # shows all images in the system
 docker ps -a | grep pash         # shows all containers with name pash
-docker run --name NN pash/18.04  # creates a wriable container (add `-it` for interactive)
+docker run --name NN pash/18.04  # creates a writable container (add `-it` for interactive)
 docker start -i NN               # starts container (add `-i` to drop straight into shell)
 docker attach NN                 # non-interactive -> interactive
 <CTL+p>, then <CTL+q>            # interactive -> non-interactive
