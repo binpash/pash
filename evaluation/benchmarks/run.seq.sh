@@ -170,6 +170,7 @@ analytics-mts(){
 
   touch "$times_file"
   echo executing MTS analytics $(date) | tee -a "$times_file"
+  echo '' >> "$times_file"
   ## FIXME 5.sh is not working yet
   for number in `seq 4`
   do

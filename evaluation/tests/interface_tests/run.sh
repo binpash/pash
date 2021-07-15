@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+# time: print real in seconds, to simplify parsing
 
 ## TODO: Make the compiler work too.
 bash="bash"
@@ -9,6 +10,8 @@ pash="$PASH_TOP/pa.sh --dry_run_compiler"
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 mkdir -p "$output_dir"
 
+rm -f  $output_dir/results.time_bash
+rm -f  $output_dir/results.time_pash
 run_test()
 {
     local test=$1
@@ -19,9 +22,11 @@ run_test()
     fi
 
     echo -n "Running $test..."
-    $test "bash" > "$output_dir/$test.bash.out"
+    TIMEFORMAT="${test%%.*}:%3R" # %3U %3S"
+    { time $test "bash" > "$output_dir/$test.bash.out"; } 2>> $output_dir/results.time_bash
     test_bash_ec=$?
-    $test "$pash" > "$output_dir/$test.pash.out"
+    TIMEFORMAT="%3R" # %3U %3S"
+    { time $test "$pash" > "$output_dir/$test.pash.out"; } 2>> $output_dir/results.time_pash
     test_pash_ec=$?
     diff "$output_dir/$test.bash.out" "$output_dir/$test.pash.out"
     test_diff_ec=$?
@@ -98,6 +103,8 @@ else
     done
 fi
 
+echo "group,Bash,Pash-DRY_COMP" > $output_dir/results.time
+paste $output_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's/\t/,/' >> $output_dir/results.time
 
 echo "Below follow the identical outputs:"
 grep --files-with-match "are identical" "$output_dir"/*_distr*.time
