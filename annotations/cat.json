@@ -1,6 +1,6 @@
 {
     "command": "cat",
-    "aggregate": "$PASH_TOP/runtime/agg/py/cat.py",
+    "aggregate": "$PASH_TOP/runtime/agg/py/cat.py", "comment": "TODO(@DanielSongShen) Can't capture all cases of cat i.e. cat -n needs a different aggregator. Perhaps have an aggregate record per predicate.",
     "cases":
     [
 		{
