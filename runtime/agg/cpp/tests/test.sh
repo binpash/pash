@@ -1,4 +1,5 @@
 ./test-common.sh wc "" ../wc
+./test-common.sh uniq " -c" ../uniq-c
 
 # These tests are run during PASH_TOP/scripts/run_tests.sh
 # Make sure to build the aggregators using PASH_TOP/scripts/setup-pash.sh first
