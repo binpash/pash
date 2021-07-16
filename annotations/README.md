@@ -1,5 +1,5 @@
 # Parallelizability Study & Annotation Language
-Quick Jump: [Parallelizability](#main-parallelizability-classes) | [study](#parallelizability-study-of-commands-in-gnu--posix) | [example 1](#a-simple-example-chmod) | [example 1](#another-example-cut) | [howto](#how-to-annotate-a-command)
+Quick Jump: [Parallelizability](#main-parallelizability-classes) | [study](#parallelizability-study-of-commands-in-gnu--posix) | [example 1](#a-simple-example-chmod) | [example 1](#another-example-cut) | [howto](#how-to-annotate-a-command) | [issues](#Issues)
 
 PaSh includes 
   (i) a parallelizability study of commands in POSIX and GNU Coreutils, and 
@@ -178,4 +178,8 @@ For more details, here is an early version of the annotation language:
 
 [//]: # (TODO: 1. update language spec; 2. put all annotations in a directory)
 
+## Issues
+
+* [pr.json line 18] (https://github.com/binpash/pash/tree/main/annotations/pr.json)
+* [cat.json line 3] (https://github.com/binpash/pash/tree/main/annotations/cat.json)
 
