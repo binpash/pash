@@ -1,12 +1,12 @@
 {
-    "command": "echo",
-    "cases":
-    [
-        {
-            "predicate": "default",
-            "class": "stateless",
-            "inputs": ["stdin"],
-            "outputs": ["stdout"]
-        }
-    ]
+	"command": "echo",
+	"cases":
+	[
+	    {
+		"predicate": "default",
+		"class": "pure", "comment": "No input so f(a++b) != f(a) ++ f(b)",
+		"inputs": ["args[:]"],
+		"outputs": ["stdout"]
+	    }
+	]
 }

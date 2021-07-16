@@ -1,12 +1,14 @@
 {
-    "command": "diff",
+    "command": "tac",
+    "aggregate": "$PASH_TOP/runtime/agg/py/tac.py",
     "cases":
     [
         {
             "predicate": "default",
-            "class": "non-pure",
+            "class": "stateless",
             "inputs": ["args[:]"],
             "outputs": ["stdout"]
         }
-    ]
+    ],
+    "options": ["stdin-hyphen"]
 }
