@@ -1,11 +1,11 @@
 {
-    "command": "diff",
+    "command": "pwd",
     "cases":
     [
         {
             "predicate": "default",
-            "class": "non-pure",
-            "inputs": ["args[:]"],
+            "class": "side-effectful",
+            "inputs": [],
             "outputs": ["stdout"]
         }
     ]
