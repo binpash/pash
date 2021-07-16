@@ -84,11 +84,11 @@ There are several options for installing PaSh via Docker.
 
 The easiest is to `pull` the docker image [from GitHub](https://github.com/andromeda/pash/packages/715796):
 ```sh
-docker pull docker.pkg.github.com/andromeda/pash/pash:latest
+docker pull binpash/pash
 ```
-We refresh this image on every major release.
+We refresh this image (as well as other images) on every major release.
 
-[//]: # (TODO: Need to automate this per commit.)
+[//]: # (TODO(@nvasilakis, @dkarnikis): Need to automate this per release.)
 
 Alternatively, one can built the latest Docker container from scratch by running `docker build` in the repo:
 ```sh
