@@ -12,7 +12,7 @@ To parallelize, say, `./evaluation/intro/hello-world.sh` with parallelization wi
 ``` 
 
 Run `./pa.sh --help` to get more information about the available commands.
-See [docs/tutorial](docs/tutorial.md) for a longer tutorial.
+See [docs/tutorial](docs/tutorial/) for a longer tutorial.
 
 ## Installation
 
@@ -58,5 +58,5 @@ Mailing Lists:
 * [pash-commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
 
 Development/contributions:
-* Contribution guide: [docs/contrib](docs/contrib.md)
+* Contribution guide: [docs/contrib](docs/contrib)
 * Continuous Integration Server: [ci.binpa.sh](http://ci.binpa.sh)
