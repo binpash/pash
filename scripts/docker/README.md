@@ -72,4 +72,4 @@ _This will not work if the scripts depend on environment variables on the enviro
 * build the image: `docker build -t "binpash/pash:$distro-$version"`
 * push the image `docker push binpash/pash:$distro-$version`
 
-[//]: # (TODO(@nvasilakis, @dkarnikis): Just add a script.)
+[//]: # "TODO(@nvasilakis, @dkarnikis): Just add a script."
