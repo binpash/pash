@@ -4,7 +4,7 @@
 Docker files for [PaSh](https://github.com/binpash/pash) published on Dockerhub:
 
 * Ubuntu 18.04: [binpash/pash:ubuntu-18.04](https://hub.docker.com/r/binpash/pash)
-* Fedora 35 : [binpash/pash:fedora-35](https://hub.docker.com/r/binpash/pash)
+* Fedora 35: [binpash/pash:fedora-35](https://hub.docker.com/r/binpash/pash)
 * Debian 10: [binpash/pash:debian-10](https://hub.docker.com/r/binpash/pash)
 
 ## Run locally
@@ -28,33 +28,16 @@ docker build -t "pash:latest" .
 
 ## As a Dockerfile
 
-```
-FROM ubuntu:18.04
+* Ubuntu 18.04: [rendered](https://github.com/binpash/pash/blob/main/scripts/dockerfiles/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/dockerfiles/ubuntu/Dockerfile)
+* Fedora 35: [rendered](https://github.com/binpash/pash/blob/main/scripts/dockerfiles/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/dockerfiles/ubuntu/Dockerfile)
+* Debian 10: [rendered](https://github.com/binpash/pash/blob/main/scripts/dockerfiles/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/dockerfiles/ubuntu/Dockerfile)
 
-# ARG CACHEBUST=1
-
-RUN apt-get update -y
-RUN apt-get upgrade -y
-RUN apt-get install -y git sudo locales locales-all curl wget wamerican-insane
-
-RUN git clone https://github.com/andromeda/pash.git
-
-RUN sudo bash /pash/scripts/install.sh -p
-
-ENV LC_ALL en_US.UTF-8
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US.UTF-8
-
-ENV PASH_TOP=/pash
-ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
-
-CMD ["/bin/bash"]
-```
-
-and build and run this locally:
+To build any of these containers and run it locally:
 
 ```sh
-$ docker build -t app . && docker run -it --init -p 1993:1993 app
+# URL points to ubuntu, pick any of the "raw" URLs above
+wget https://raw.githubusercontent.com/binpash/pash/main/scripts/dockerfiles/ubuntu/Dockerfile
+docker build -t "pash:stable" . && docker run -it "pash:stable"
 ```
 
 ## (optional) Add `pash-docker` as an alias to your shell
@@ -82,7 +65,7 @@ pash --version
 pash -w=2 hello.sh
 ```
 
-_This will not work if the scipts depend on environment variables on the environment hosting the Docker container._
+_This will not work if the scripts depend on environment variables on the environment hosting the Docker container._
 
 ### Preparing Docker Images
 
