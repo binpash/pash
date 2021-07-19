@@ -8,6 +8,9 @@ on:
     paths: 
         - compiler/**
         - runtime/**
+        - evaluation/**
+        - annotations/**
+
   workflow_dispatch:
 # Jobs section
 jobs:
