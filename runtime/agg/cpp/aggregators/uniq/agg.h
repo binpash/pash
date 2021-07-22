@@ -4,7 +4,7 @@
 #include <iostream>
 
 constexpr cmd_opts g_options{
-    cmd_opt{"count",'c'}
+    cmd_opt{"count",'c', cmd_opt::Argument::None}
 };
 
 static inline void uniq_c() noexcept

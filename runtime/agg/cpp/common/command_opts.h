@@ -16,7 +16,16 @@ struct opt_holder
     std::array<char, 256> map;
 };
 
-using cmd_opt = std::pair<const char*, char>;
+struct cmd_opt
+{
+    const char* long_name;
+    char abbreviation;
+    enum class Argument {
+        None = no_argument,
+        Required = required_argument,
+        Optional = optional_argument
+    } argument;
+};
 
 template <size_t Size>
 class cmd_opts : public std::array<cmd_opt, Size>, public opt_holder
@@ -31,9 +40,9 @@ public:
                 int i = 0;
                 for (auto& opt : base)
                 {
-                    if (opt.second)
+                    if (opt.abbreviation)
                     {
-                        map[opt.second] = i;
+                        map[opt.abbreviation] = i;
                     }
                     ++i;
                 }
@@ -47,11 +56,11 @@ public:
             int i = 0;
             for (auto& opt : base)
             {
-                if (opt.first)
+                if (opt.long_name && opt.long_name[0] != '\0')
                 {
                     long_opts[current_idx++] = {
-                        opt.first,
-                        optional_argument,
+                        opt.long_name,
+                        static_cast<int>(opt.argument),
                         &present[i],
                         1
                     };
@@ -66,11 +75,17 @@ public:
             auto& base = static_cast<std::array<cmd_opt, Size>&>(*this);
             for (auto& opt : base)
             {
-                if (opt.second)
+                if (opt.abbreviation)
                 {
-                    optstring[current_idx++] = opt.second;
-                    optstring[current_idx++] = ':';
-                    optstring[current_idx++] = ':';
+                    optstring[current_idx++] = opt.abbreviation;
+                    if (opt.argument != cmd_opt::Argument::None)
+                    {
+                        optstring[current_idx++] = ':';
+                        if (opt.argument == cmd_opt::Argument::Optional)
+                        {
+                            optstring[current_idx++] = ':';
+                        }
+                    }
                 }
             }
             return optstring;
