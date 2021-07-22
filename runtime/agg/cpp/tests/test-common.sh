@@ -14,7 +14,7 @@ cat $IN1 | $CMD $FLG > partial1
 cat $IN2 | $CMD $FLG > partial2
 cat $IN1 $IN2 | $CMD $FLG > reference
 
-$AGG partial1 partial2 aggregated
+$AGG partial1 partial2 aggregated $FLG
 
 diff aggregated reference > log
 if [ $? -ne 0 ]; then
