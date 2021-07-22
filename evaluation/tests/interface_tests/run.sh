@@ -91,8 +91,8 @@ if [ "$#" -eq 0 ]; then
     run_test test3 &&
     run_test test4 &&
     run_test test5 &&
-    run_test test6 &&
-    run_test test7
+    run_test test6
+    # && run_test test7
 else
     for testname in $@
     do
