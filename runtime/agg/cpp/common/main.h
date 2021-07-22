@@ -24,6 +24,9 @@ void aggregate() noexcept; // implement this
 //     cmd_opt{ "reverse", 'r'}
 // };
 
+//   Then, the member functions is_present and argument can be used
+//   with the arguemnt being the index of the option in the constructor.
+
 // 2. It should request inputs to aggregate when it needs them using
 //    objects returned by the functions below:
 

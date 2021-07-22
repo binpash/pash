@@ -12,43 +12,43 @@ std::ifstream g_in2;
 std::ofstream g_out;
 
 void parse_options(int argc, char** argv, const opt_holder& options) noexcept
-{
-	int ch, longind;
+{	
+	int ch, longind = 0;
 	while ((ch = getopt_long(argc, argv, options.optstring, options.long_options, &longind)) != -1)
 	{
+		size_t opt_idx;
 		switch(ch)
 		{
 		case 0:
-		{
-			auto* opt = reinterpret_cast<cmd_opt*>(reinterpret_cast<char*>(options.long_options[longind].flag) - offsetof(cmd_opt, present));
-			size_t optarglen = strlen(optarg);
-			opt->arg = new char[optarglen + 1];
-			strcpy(opt->arg, optarg);
+			opt_idx = (options.long_options[longind].flag - options.present);	
 			break;
-		}
 		case '?':
 			nyi_error(("Unsupported flag " + std::to_string(ch)).c_str());
 		default:
+			opt_idx = options.map[ch];
 			break;
 		}
+		if (optarg)
+			options.args[opt_idx] = optarg;
+		options.present[opt_idx] = 1;
 	}
 }
 
 int main(int argc, char** argv)
 {
+	std::ios_base::sync_with_stdio(false);
+
 	if (argc < 4)
 	{
 		std::cerr << "Usage: " << argv[0] << " input1 input2 output [OPTION]...\n";
 		return EXIT_FAILURE;
 	}
 
-	parse_options(argc - 4, argv + 4, g_options);
-
-	std::ios_base::sync_with_stdio(false);
-
 	g_in1.open(argv[1], std::ios_base::in  | std::ios_base::binary);
 	g_in2.open(argv[2], std::ios_base::in  | std::ios_base::binary);
 	g_out.open(argv[3], std::ios_base::out | std::ios_base::binary);
+
+	parse_options(argc - 3, argv + 3, g_options);
 
 	aggregate();
 

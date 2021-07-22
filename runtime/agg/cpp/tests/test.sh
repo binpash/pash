@@ -1,5 +1,6 @@
 ./test-common.sh wc "" ../wc
-./test-common.sh uniq " --count" ../uniq-c
+./test-common.sh uniq " -c" ../uniq       # Works with both short
+./test-common.sh uniq " --count" ../uniq  # and long option
 
 # These tests are run during PASH_TOP/scripts/run_tests.sh
 # Make sure to build the aggregators using PASH_TOP/scripts/setup-pash.sh first

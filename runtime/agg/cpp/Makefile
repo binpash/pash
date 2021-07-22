@@ -1,7 +1,8 @@
 .PHONY: clean
 all: wc uniq
 
-CFLAGS = -Wall -std=c++17 -O3 -DNDEBUG -Icommon
+#CFLAGS = -Wall -std=c++17 -O3 -DNDEBUG -Icommon
+CFLAGS = -Wall -std=c++17 -g -DDEBUG -Icommon
 CFLAGS += common/main.cpp
 DEPS = common/*
 
