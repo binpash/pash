@@ -207,6 +207,36 @@ def lookup_variable(var, config):
     ##
     ## TODO KK PR#246 Maybe instead of this we could do this setup
     ##      once during initialization and leave lookup unaltered?
+    ##
+    ## TODO MMG this isn't quite adequate: if pash_input_args contains
+    ##      spaces, we'll miscount. KK and I wrote a test
+    ##      evaluation/tests/interface_tests that's disabled as of PR#246.
+    ##
+    ##      the right solution here is:
+    ##
+    ##         - positional arguments get their own field in the
+    ##           config---they're not store with ordinary shell
+    ##           variables
+    ##
+    ##         - we save those separately, probably in a separate file
+    ##
+    ##           ```
+    ##           echo pash_argc=$# >pash_positional_args
+    ##           for i in $(seq 0 $#)
+    ##           do
+    ##             echo "pash_arg$i=\"$i\"" >pash_positional_args
+    ##           done
+    ##           ```
+    ##
+    ##         - we load these separately. pretty annoying; here's a sketch
+    ##
+    ##           ```
+    ##           cmd="set --"
+    ##           for i in $(seq 0 $pash_argc)
+    ##           do
+    ##             cmd="$cmd \"\$pash_arg$i\""
+    ##           done
+    ##           eval "$cmd"
     if(var == '@'):
         return config['shell_variables']['pash_input_args']
     elif(var == '#'):
