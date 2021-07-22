@@ -1,14 +1,13 @@
-name: Pash-Benchmark-Tests
-
-# execute the workflow only when we are pushing on a pull request 
+name: Pash-Correctness-Tests
 on: 
-  pull_request:
+  pull_request_target:
     types: [assigned, opened, synchronize, reopened]
-
+    # the paths that trigger the ci
     paths: 
         - compiler/**
         - runtime/**
-  workflow_dispatch:
+        - evaluation/**
+        - annotations/**
 # Jobs section
 jobs:
     Pash-Tests:
@@ -17,41 +16,39 @@ jobs:
           os: 
             - ubuntu-18.04
             - ubuntu-20.04
-            #- debian #stable-20210408
       runs-on: ${{ matrix.os }}
-            
       steps:
         - uses: actions/checkout@v2 
         - name: Running-Pash-Benchmarks
           run: |
             bash scripts/distro-deps.sh
             bash scripts/setup-pash.sh
-            export PASH_TOP=${GITHUB_WORKSPACE}
+            export PASH_TOP=$PWD
             export PATH=$PATH:$PASH_TOP
             cd scripts
             bash run_tests.sh  
             cd workflow
             bash parse.sh > results.log 2>&1  
             # get the timer in english
-            date=$(LANG=en_us_88591; date)
+            d=$(LANG=en_us_88591; date)
             echo "VERSION<<EOF" >> $GITHUB_ENV
             echo  "OS:${{matrix.os}}" >> $GITHUB_ENV
-            echo -e "$date\n" >> $GITHUB_ENV
+            echo "$d" >> $GITHUB_ENV
             # Parses the results and construct a github message post
             # we append the data to the global env
             cat results.log >> $GITHUB_ENV
             echo 'EOF' >> $GITHUB_ENV
-          # We post the results on the corresponding pull request thread
-        - name: Posting Results
-          uses: unsplash/comment-on-pr@master
-          if: github.ref != 'refs/heads/main'
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        - name: Comment on PR
+          uses: actions/github-script@v3
           with:
-            msg: "${{ env.VERSION }}"
-            check_for_duplicate_msg: false
-        # Check the return code of the scripts. If one of the tests failed
-        # post the error
+            script: |
+              let body = `${{ env.VERSION }}`
+              github.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body,
+              })     
         - name: Exit-code
           run: |
             cd scripts/workflow

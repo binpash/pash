@@ -6,7 +6,7 @@ This short tutorial covers the `pash`'s main functionality.
 ## Introduction
 
 PaSh is a system for parallelizing POSIX shell scripts.
-It has been shown to achieve order-of-magnitude performance improvements.
+It has been shown to achieve order-of-magnitude performance improvements on shell scripts.
 
 > _N.b.: PaSh is still under heavy development._
 
@@ -34,10 +34,10 @@ Visually, the script can be thought as executing sequentially as follows:
 
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vQv-Krzb9hxWCbbQC9Zg5knm6SySJrayh3mdZXG3Z4Y6hC4kgQj4PWqYmxNAR-LyKN5Fu9lWHJV0J0F/pub?w=517&amp;h=55">
 
-The first pipeline (left; parts omitted) _sequentially_ processes `f1.md` and `f2.md` through all pipeline stages and writes to `out`.
+The first pipeline (left; parts omitted) processes `f1.md` and `f2.md` _sequentially_ through all pipeline stages and writes to `out`.
 After it executes to completion, the second pipeline starts its _sequential_ execution.
 
-#### Parallelizing with PaSh
+#### Parallelizing Scripts with PaSh
 
 PaSh transforms and executes each pipeline in a data-parallel fashion.
 Visually, the parallel script would look like this for 2x-parallelism (i.e., assuming that the computer on which we execute the script has at least two CPUs and that PaSh is invoked with `-w` value of `2`).
@@ -51,68 +51,69 @@ The new parallel script has POSIX constructs added to explicitly guide paralleli
 
 #### Natively on Linux
 
-On Ubuntu, Fedora, Debian, or Arch setting up `pash` should be as easy as:
+_Ubuntu, Fedora, Debian, Arch:_
+Use `up`:
 
 ```sh
-curl up.pash.ndr.md | sh
+curl up.binpa.sh | sh
 ```
 
-On other Linux distros, first install the following packages (some of which might already be installed in your system):
+_Other distros_:
+Use the system's package manager to install the following packages (some of which might already be installed in your system):
 
 ```
 libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils
 ```
 
-Then clone the repository and run `setup-pash.sh` as follows:
+Then clone the PaSh repository and run `setup-pash.sh` as follows:
 
 ```sh
-git clone git@github.com:andromeda/pash.git
+git clone git@github.com:binpash/pash.git
 ./pash/scripts/setup-pash.sh
 ```
 
 As noted at the end of `setup-pash.sh`, make sure you set `PASH_TOP` pointing to the absolute path of the directory `pa.sh` resides (you can optionally place that in your `PATH`).
 
-#### Windows using WSL
-
-For windows installation, follow this [guide](./windows.md).
-
 #### Docker
 
-PaSh on Docker is useful when native installation is not an option -- for example, to allow development on Windows and OS X.
-Note that PaSh on Docker may or may not be able to exploit all available hardware resources.
-There are several options for installing PaSh via Docker.
+PaSh on Docker is useful when native installation is not an option -- for example, to allow development on Windows or OS X.
+First [make sure you install Docker](https://docs.docker.com/get-docker/) on your machine.
+Note that, depending on the configuration, PaSh on Docker may or may not be able to exploit all available hardware resources.
+There are two main options for installing PaSh via Docker.
 
-The easiest is to `pull` the docker image [from GitHub](https://github.com/andromeda/pash/packages/715796):
+_Major Releases:_
+The easiest is to `pull` the docker image [from Docker Hub](https://hub.docker.com/r/binpash/pash):
 ```sh
-docker pull docker.pkg.github.com/andromeda/pash/pash:latest
+docker pull binpash/pash
 ```
-We refresh this image on every major release.
+We refresh this image (as well as other images) on every major release.
 
-[//]: # (TODO: Need to automate this per commit.)
+[//]: # "TODO(@nvasilakis, @dkarnikis): Need to automate this per release."
 
-Alternatively, one can built the latest Docker container from scratch by running `docker build` in the repo:
+_Latest Commit:_
+To built the latest Docker container from scratch, run `docker build` in scripts:
 ```sh
-git clone git@github.com:andromeda/pash.git
+git clone git@github.com:binpash/pash.git
 cd pash/scripts
-docker build -t "pash/18.04" .
+docker build -t "pash:latest" .
 ```
 This will build a fresh Docker image using the latest commit---recommended for development.
 
-It is also possible to fetch an image directly, but this is not longer recommended:
-```sh
-curl img.pash.ndr.md | docker load; docker run --name pash-play-$(whoami) -it pash/18.04
-```
-
 In all the above cases, launching the container is done via:
 ```sh
-docker run --name pash-play -it pash/18.04
+docker run --name pash-play -it pash
 ```
 PaSh can be found in the container's `/pash` directory, so run `cd pash; git pull` to fetch the latest updates.
-More information in the [pash-on-docker guide](./docs/contrib.md#pash-on-docker-a-pocket-guide).
+More information in the [pash-on-docker guide](../contrib#pash-on-docker-a-pocket-guide).
+
+#### Windows using WSL
+
+To run PaSh on windows without Docker, install [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
+A short tutorial is included in the [contributing](../contrib/) guide.
 
 ## Running Scripts
 
-All scripts in this guide assume that `$PASH_TOP` is set to the top directory of the PaSh codebase (e.g., `~/pash` on `deathstar` or `/pash` in docker)
+All scripts in this guide assume that `$PASH_TOP` is set to the top directory of the PaSh codebase (e.g., `/pash` on docker)
 
 **To run scripts in this section of the tutorial, make sure you are in the `intro` directory of the `evaluation`:**
 ```sh
@@ -121,7 +122,7 @@ cd $PASH_TOP/evaluation/intro
 
 > In the following examples, you can avoid including `$PASH_TOP` before `pa.sh` by adding `PASH_TOP` in your `PATH`, which amounts to adding an `export PATH=$PATH:$PASH_TOP` in your shell configuration file.
 
-#### Hello World
+#### Intro: Hello, Parallel World!
 
 The simplest script to try out `pash` is `hello-world.sh`, which applies an expensive regular expression over the system's dictionary file.
 
@@ -220,7 +221,7 @@ Note that most stages in the pipeline are repeated twice and proceed in parallel
 
 ## What Next?
 
-This concludes the first tutorial on PaSh.
+This concludes the first PaSh tutorial.
 This section includes pointers for further exploration, depending on your needs.
 
 #### The PaSh Repo
@@ -241,16 +242,17 @@ The auxiliary directories are:
 * [docs](../docs): Design documents, tutorials, installation instructions, etc.
 * [evaluation](../evaluation): Shell pipelines and script used for the evaluation of `pash`.
 
-#### A More In-depth Introduction to PaSh
+#### PaSh Concepts in Depth
 
-The EuroSys'21 paper titled "_PaSh: Light-touch Data-parallel Shell Processing_" includes a substantially deeper introduction into PaSh[.](Add pointers to all papers?)
+Academic [papers](../docs#academic-papers--events) associated with PaSh offer substantially deeper overviews of the concepts underpinning several PaSh components.
 
 #### Useful Links
 
 Mailing Lists: 
-* [Discussion](https://groups.google.com/g/pash-discuss): Join this mailing list for discussing all things `pash`
+* [Discussion](https://groups.google.com/g/pash-users): Join this mailing list for discussing all things `pash`
 * [Commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
 
 Development/contributions:
 * Contribution guide: [docs/contrib](../docs/contrib.md)
-* Continuous Integration Server: [http://pash.ndr.md/](http://pash.ndr.md/)
+* Continuous Integration Server: [http://ci.binpa.sh/](http://ci.binpa.sh/)
+
