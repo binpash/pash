@@ -78,6 +78,12 @@ test6()
     $shell loop1.sh
 }
 
+test7()
+{
+    local shell=$1
+    $shell args_with_spaces.sh "hello there" "hi friend"
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1 &&
@@ -85,7 +91,8 @@ if [ "$#" -eq 0 ]; then
     run_test test3 &&
     run_test test4 &&
     run_test test5 &&
-    run_test test6
+    run_test test6 &&
+    run_test test7
 else
     for testname in $@
     do
