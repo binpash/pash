@@ -1,0 +1,55 @@
+name: Pash-Correctness-Tests
+on: 
+  pull_request_target:
+    types: [assigned, opened, synchronize, reopened]
+    # the paths that trigger the ci
+    paths: 
+        - compiler/**
+        - runtime/**
+        - evaluation/**
+        - annotations/**
+# Jobs section
+jobs:
+    Pash-Tests:
+      strategy:
+        matrix:
+          os: 
+            - ubuntu-18.04
+            - ubuntu-20.04
+      runs-on: ${{ matrix.os }}
+      steps:
+        - uses: actions/checkout@v2 
+        - name: Running-Pash-Benchmarks
+          run: |
+            bash scripts/distro-deps.sh
+            bash scripts/setup-pash.sh
+            export PASH_TOP=$PWD
+            export PATH=$PATH:$PASH_TOP
+            cd scripts
+            bash run_tests.sh  
+            cd workflow
+            bash parse.sh > results.log 2>&1  
+            # get the timer in english
+            d=$(LANG=en_us_88591; date)
+            echo "VERSION<<EOF" >> $GITHUB_ENV
+            echo  "OS:${{matrix.os}}" >> $GITHUB_ENV
+            echo "$d" >> $GITHUB_ENV
+            # Parses the results and construct a github message post
+            # we append the data to the global env
+            cat results.log >> $GITHUB_ENV
+            echo 'EOF' >> $GITHUB_ENV
+        - name: Comment on PR
+          uses: actions/github-script@v3
+          with:
+            script: |
+              let body = `${{ env.VERSION }}`
+              github.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body,
+              })     
+        - name: Exit-code
+          run: |
+            cd scripts/workflow
+            bash exit_code.sh

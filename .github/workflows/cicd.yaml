@@ -1,0 +1,23 @@
+name: Pash-CI-issue
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the main branch
+  push:
+    branches:
+      - main
+    paths: 
+        - compiler/**
+        - runtime/**
+        - evaluation/**
+        - annotations/**
+
+jobs:
+  pash-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Performance Tests
+        run: |
+          # issue the performance tests
+          curl -s "http://ctrl.pash.ndr.md/job=issue&branch=main&action=PERFORMANCE"
+          # issue the correctness tests
+          curl -s "http://ctrl.pash.ndr.md/job=issue&branch=main&action=CORRECTNESS"

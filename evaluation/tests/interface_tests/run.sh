@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+# time: print real in seconds, to simplify parsing
 
 bash="bash"
 pash="$PASH_TOP/pa.sh"
@@ -8,6 +9,8 @@ pash="$PASH_TOP/pa.sh"
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 mkdir -p "$output_dir"
 
+rm -f  $output_dir/results.time_bash
+rm -f  $output_dir/results.time_pash
 run_test()
 {
     local test=$1
@@ -18,9 +21,11 @@ run_test()
     fi
 
     echo -n "Running $test..."
-    $test "bash" > "$output_dir/$test.bash.out"
+    TIMEFORMAT="${test%%.*}:%3R" # %3U %3S"
+    { time $test "bash" > "$output_dir/$test.bash.out"; } 2>> $output_dir/results.time_bash
     test_bash_ec=$?
-    $test "$pash" > "$output_dir/$test.pash.out"
+    TIMEFORMAT="%3R" # %3U %3S"
+    { time $test "$pash" > "$output_dir/$test.pash.out"; } 2>> $output_dir/results.time_pash
     test_pash_ec=$?
     diff "$output_dir/$test.bash.out" "$output_dir/$test.pash.out"
     test_diff_ec=$?
@@ -32,9 +37,11 @@ run_test()
         echo -n "$test exit code mismatch"
     fi
     if [ $test_diff_ec -ne 0 ] || [ $test_bash_ec -ne $test_pash_ec ]; then
+        echo "are not identical" > $output_dir/${test}_distr.time
         echo '   FAIL'
         return 1
     else
+        echo "are identical" > $output_dir/${test}_distr.time
         echo '   OK'
         return 0
     fi
@@ -88,7 +95,7 @@ test7()
 if [ "$#" -eq 0 ]; then
     run_test test1 &&
     run_test test2 &&
-    run_test test3 &&
+    run_test test3 && # This is commented out at the moment because it doesn't suceed
     run_test test4 &&
     run_test test5 &&
     run_test test6
@@ -99,3 +106,16 @@ else
         run_test "$testname"
     done
 fi
+
+echo "group,Bash,Pash-DRY_COMP" > $output_dir/results.time
+paste $output_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's/\t/,/' >> $output_dir/results.time
+
+echo "Below follow the identical outputs:"
+grep --files-with-match "are identical" "$output_dir"/*_distr*.time
+
+echo "Below follow the non-identical outputs:"
+grep -L "are identical" "$output_dir"/*_distr*.time
+
+TOTAL_TESTS=$(ls -la "$output_dir"/*_distr*.time | wc -l)
+PASSED_TESTS=$(grep --files-with-match "are identical" "$output_dir"/*_distr*.time | wc -l)
+echo "Summary: ${PASSED_TESTS}/${TOTAL_TESTS} tests passed."

@@ -1,11 +1,12 @@
 {
     "command": "head",
+    "aggregate": "$PASH_TOP/runtime/agg/py/head.py",
     "cases":
     [
         {
             "predicate": "default",
             "class": "pure",
-            "inputs": ["stdin"],
+            "inputs": [],
             "outputs": ["stdout"]
         }
     ]
