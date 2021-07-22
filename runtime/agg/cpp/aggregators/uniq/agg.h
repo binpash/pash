@@ -1,7 +1,13 @@
 #include "main.h"
+#include "command_opts.h"
 #include <map>
+#include <iostream>
 
-void aggregate() noexcept
+constexpr cmd_opts g_options{
+    cmd_opt{"count",'c'}
+};
+
+static inline void uniq_c() noexcept
 {
     size_t padding = 0;
     if (input1())
@@ -48,4 +54,16 @@ void aggregate() noexcept
     }
 
     output() << input2().rdbuf();
+}
+
+void aggregate() noexcept
+{
+    if (g_options.is_present(0))
+    {
+        uniq_c();
+    }
+    else
+    {
+       nyi_error("Currently only invocations with the -c flag are supported");
+    }
 }

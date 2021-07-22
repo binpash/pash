@@ -1,14 +1,14 @@
 .PHONY: clean
-all: wc uniq-c
+all: wc uniq
 
-CFLAGS = -Wall -std=c++17 -O3 -DNDEBUG -I.
-CFLAGS += main.cpp
-DEPS = main.cpp main.h
+CFLAGS = -Wall -std=c++17 -O3 -DNDEBUG -Icommon
+CFLAGS += common/main.cpp
+DEPS = common/*
 
-wc: $(DEPS) wc.cpp
-	g++ ${CFLAGS} wc.cpp -o wc
-uniq-c: $(DEPS) uniq-c.cpp
-	g++ ${CFLAGS} uniq-c.cpp -o uniq-c
+wc: $(DEPS) aggregators/wc/agg.h
+	g++ ${CFLAGS} -Iaggregators/wc -o wc
+uniq: $(DEPS) aggregators/uniq/agg.h
+	g++ ${CFLAGS} -Iaggregators/uniq -o uniq
 
 clean:
-	rm -f wc uniq-c
+	rm -f wc uniq

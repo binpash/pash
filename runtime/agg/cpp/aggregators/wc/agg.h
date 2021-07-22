@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstdlib>
 
+inline constexpr cmd_opts g_options{};
+
 void aggregate() noexcept
 {
     size_t line_count1, word_count1, char_count1;
