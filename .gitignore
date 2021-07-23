@@ -49,3 +49,8 @@ compiler/1-grams.txt
 compiler/2-grams.txt
 runtime/dgsh-tee
 *.res
+
+# IDE files
+.vscode/*
+.idea/*
+.vs/*
