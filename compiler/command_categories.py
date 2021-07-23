@@ -217,11 +217,11 @@ def find_command_properties(command, options):
 def find_command_aggregator(command, options):
 
     command_string = format_arg_chars(command)
-    # log("Command to find properties:", command_string)
+    # log("Command to find aggregator:", command_string)
 
     assert(isinstance(command_string, str))
 
-    ## Find the properties of the command in the annotation files (if it exists)
+    ## Find the aggregator of the command in the annotation files (if it exists)
     command_aggregator_from_annotation = get_command_aggregator_from_annotations(command_string,
                                                                                  options,
                                                                                  config.annotations)

@@ -20,7 +20,6 @@ from definitions.ir.aggregator_node import *
 from definitions.ir.nodes.alt_bigram_g_reduce import *
 from definitions.ir.nodes.bigram_g_map import *
 from definitions.ir.nodes.bigram_g_reduce import *
-from definitions.ir.nodes.sort_g_reduce import *
 from definitions.ir.nodes.eager import *
 from definitions.ir.nodes.pash_split import *
 
@@ -491,8 +490,6 @@ def parallelize_dfg_node(old_merger_id, node_id, graph, fileIdGen):
 ##
 ## TODO: Make that generic to work through annotations
 def create_merge_commands(curr, new_output_ids, fileIdGen):
-    # if(str(curr.com_name) == "sort"):
-    #     return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
     if(str(curr.com_name) == "custom_sort"):
         return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
     elif(str(curr.com_name) == "bigrams_aux"):
