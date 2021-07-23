@@ -484,6 +484,10 @@ def parallelize_dfg_node(old_merger_id, node_id, graph, fileIdGen):
 
 ## Creates a merge command for all pure commands that can be
 ## parallelized using a map and a reduce/merge step
+##
+## Currently adding an aggregator can be done by adding another branch to this function
+##
+## TODO: Make that generic to work through annotations
 def create_merge_commands(curr, new_output_ids, fileIdGen):
     if(str(curr.com_name) == "sort"):
         return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
