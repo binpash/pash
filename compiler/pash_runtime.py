@@ -18,7 +18,6 @@ import config
 from definitions.ir.aggregator_node import *
 
 from definitions.ir.nodes.alt_bigram_g_reduce import *
-from definitions.ir.nodes.bigram_g_map import *
 from definitions.ir.nodes.bigram_g_reduce import *
 from definitions.ir.nodes.eager import *
 from definitions.ir.nodes.pash_split import *
