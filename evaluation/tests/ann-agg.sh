@@ -4,12 +4,12 @@
 
 FILE="../evaluation/tests/input/1M.txt"
 
-test-one() {
+test_one() {
   cat
 }
 
-test-two() {
+test_two() {
   cat
 }
 
-cat $FILE | test-one | test-two
+cat $FILE | test_one | test_two
