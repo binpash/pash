@@ -1,5 +1,5 @@
 {
-    "command": "test-two",
+    "command": "test_one",
     "cases":
     [
         {
@@ -9,10 +9,9 @@
             "outputs": ["stdout"],
             "aggregator":
             {
-                "name": "$PASH_TOP/runtime/agg/py/cat.py",
+                "rel_path": "runtime/agg/opt/concat.sh",
                 "options": []
             }
         }
-    ],
+    ]
 }
-
