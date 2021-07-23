@@ -22,7 +22,7 @@
             "aggregator":
             {
                 "name": "sort",
-                "options":"-m"
+                "options": ["-m"]
             }
         }
     ],
