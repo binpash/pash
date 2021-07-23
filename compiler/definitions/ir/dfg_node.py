@@ -19,11 +19,14 @@ class DFGNode:
     ## com_name : command name Arg
     ## com_category : string denoting category
     ## input_consumption_mode : enumeration
+    ## com_properties : properties such as commutativity
+    ## com_aggregator : a class that contains necessary information to instantiate an aggregator
     ## com_options : list of tuples with the option index and the argument Arg
     ## com_redirs : list of redirections
     ## com_assignments : list of assignments
     def __init__(self, inputs, outputs, com_name, com_category,
                  com_properties = [],
+                 com_aggregator = None,
                  com_options = [],
                  com_redirs = [],
                  com_assignments=[]):
@@ -37,6 +40,7 @@ class DFGNode:
         self.com_name = com_name
         self.com_category = com_category
         self.com_properties = com_properties
+        self.com_aggregator = com_aggregator
         self.com_options = com_options
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
         self.com_assignments = com_assignments
