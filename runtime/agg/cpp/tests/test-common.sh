@@ -19,9 +19,9 @@ $AGG partial1 partial2 aggregated $FLG
 diff aggregated reference > log
 if [ $? -ne 0 ]; then
     cat log | head
-    echo $CMD "$FLG...fail"
+    echo $CMD "$FLG ...fail"
 else
-    echo $CMD "$FLG...pass"
+    echo $CMD "$FLG ...pass"
 fi
 
 rm -f partial1 partial2 aggregated reference log
