@@ -194,15 +194,6 @@ def find_command_category(command, options):
         log("class:", command_class_from_annotation, "found for:", command_string)
         return command_class_from_annotation
 
-    # NOTE order of class declaration in definition file is important, as it
-    # dictates class precedence in the following search
-    for command_class, commands in config.command_classes.items():
-        command_list = list(map(get_command_from_definition, commands))
-
-        if (command_string in command_list
-            or command_string.split("/")[-1] in command_list):
-            return command_class
-
     return('none')
 
 def find_command_properties(command, options):

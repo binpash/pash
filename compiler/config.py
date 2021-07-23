@@ -210,19 +210,5 @@ def read_vars_file(var_file_path):
 
         config['shell_variables'] = vars_dict
 
-
-# TODO load command class file path from config
-command_classes_file_path = '{}/compiler/command-classes.yaml'.format(PASH_TOP)
-command_classes = {}
-with open(command_classes_file_path) as command_classes_file:
-    command_classes = yaml.load(command_classes_file, Loader=yaml.FullLoader)
-
-if not command_classes:
-    raise Exception('Failed to load description of command classes from {}'.format(command_classes_file_path))
-
-stateless_commands = command_classes['stateless'] if 'stateless' in command_classes else {}
-pure_commands = command_classes['pure'] if 'pure' in command_classes else {}
-parallelizable_pure_commands = command_classes['parallelizable_pure'] if 'parallelizable_pure' in command_classes else {}
-
 ## TODO: Move these to a configuration file
 bigram_g_map_num_outputs = 3
