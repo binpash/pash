@@ -3,7 +3,18 @@
     "aggregate": "sort -m",
     "cases":
     [
-        {
+    	{
+    	    "predicate": "exists"
+    	    {
+    	    	"operator": "exists",
+    	    	"operands": ["-o"],
+    	    },
+    	    "class": "side-effectful",
+    	    "inputs": ["args[:]"],
+    	    "outputs": ["file"],
+    	    "comment": "side-effectful because writes to a file"
+    	},
+        {    
             "predicate":
             {
                 "operator": "exists",
@@ -11,16 +22,18 @@
             },
             "class": "pure",
             "inputs": ["args[:]"],
-            "outputs": ["stdout"]
+            "outputs": ["stdout"],
+            "comment": "@DanielSongShen Why is this a separate predicate?"
         },
         {
             "predicate": "default",
             "class": "pure",
             "properties": ["commutative"],
             "agg": "sort",
-            "inputs": ["stdin"],
+            "inputs": ["args[:]"],
             "outputs": ["stdout"]
         }
     ],
-    "comment": "TODO: This is not correct. To assign arguments correctly, we need to check if there is any file argument. If not, then we can read from stdin, otherwise we have to read from input files."
+    "comment": "TODO: This is not correct. To assign arguments correctly, we need to check if there is any file argument. If not, then we can read from stdin, otherwise we have to read from input files.",
+    "comment": "@DanielSongShen This should be resolved now."
 }

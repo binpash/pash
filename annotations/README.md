@@ -182,4 +182,7 @@ For more details, here is an early version of the annotation language:
 
 * [pr.json line 18] (https://github.com/binpash/pash/tree/main/annotations/pr.json)
 * [cat.json line 3] (https://github.com/binpash/pash/tree/main/annotations/cat.json)
+* [ls.json line 7] (https://github.com/binpash/pash/tree/main/annotations/ls.json). [More generally] (https://github.com/binpash/pash/issues/281), how to describe read-only and file-parallel classes in annotation language. 
+* The current annotation language cannot capture the classification of high level functions like [xargs (line 15)] (https://github.com/binpash/pash/tree/main/annotations/xargs.json) For example, `$IN | xargs cat` applies the `cat` command on `$IN` and is hence stateless while `$IN | xargs ls` applies `ls` on `$IN` and is hence side-effectful.
+* [sort.json line 25] (https://github.com/binpash/pash/tree/main/annotations/sort.json)
 

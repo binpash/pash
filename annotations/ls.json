@@ -4,7 +4,7 @@
     [
         {
             "predicate": "default",
-            "class": "side-effectful",
+            "class": "side-effectful", "comment": "@TODO (DanielSongShen) ls is read-only. How to describe this?",
             "inputs": ["stdin"],
             "outputs": ["stdout"]
         }

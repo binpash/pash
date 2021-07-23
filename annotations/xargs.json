@@ -5,6 +5,18 @@
         {
             "predicate": 
             {
+                "operator": "exists",
+                "operands": ["-p"]
+            },
+            "class": "side-effectful",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+            "options": ["resolve_at_runtime"],
+			"comment": "TODO: Implement the 'resolve_at_runtime' option by finding the category based on the arguments at runtime."
+        },
+        {
+            "predicate": 
+            {
                 "operator": "value",
                 "operands": ["-L", "1"]
             },
@@ -12,7 +24,7 @@
             "inputs": ["stdin"],
             "outputs": ["stdout"],
             "options": ["resolve_at_runtime"],
-			"comment": "TODO: Implement the 'resolve_at_runtime' option by finding the category based on  the arguments at runtime."
+			"comment": "TODO: Implement the 'resolve_at_runtime' option by finding the category based on the arguments at runtime."
         },
         {
             "predicate": "default",
@@ -20,7 +32,7 @@
             "inputs": ["stdin"],
             "outputs": ["stdout"],
             "options": ["resolve_at_runtime"],
-			"comment": "TODO: Implement the 'resolve_at_runtime' option by finding the category based on  the arguments at runtime."
+			"comment": "TODO: Implement the 'resolve_at_runtime' option by finding the category based on the arguments at runtime."
         }
     ]
 }
