@@ -209,6 +209,3 @@ def read_vars_file(var_file_path):
             vars_dict[var_name] = (var_type, var_value)
 
         config['shell_variables'] = vars_dict
-
-## TODO: Move these to a configuration file
-bigram_g_map_num_outputs = 3

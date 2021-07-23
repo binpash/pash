@@ -199,6 +199,7 @@ def make_tee(input, outputs):
                    com_category)
 
 ## TODO: Move it somewhere else, but where?
+## TODO: Make this be generic and to depend on annotations.
 def make_map_node(node, new_inputs, new_outputs):
     ## Some nodes have special map commands
     ##
