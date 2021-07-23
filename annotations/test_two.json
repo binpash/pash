@@ -4,11 +4,7 @@
     [
         {
             "predicate": "default",
-<<<<<<< HEAD
             "class": "parallelizable_pure",
-=======
-            "class": "pure",
->>>>>>> origin/main
             "inputs": ["stdin"],
             "outputs": ["stdout"],
             "aggregator":
