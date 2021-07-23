@@ -14,19 +14,15 @@ class SortGReduce(DFGNode):
         ## TODO: The category should also be acquired through annotations (and maybe should be asserted to be at most pure)
         com_category="pure"
 
-        ## TODO: This assumes that all options from the old function are copied to the new.
-        if(len(old_node.com_options) > 0):
-            max_opt_index = max([i for i, _opt in old_node.com_options])
-        else:
-            max_opt_index = -1
-        com_options = old_node.com_options + [(max_opt_index+1, Arg(string_to_argument("-m")))]
-
         ## TODO: Not sure if redirections need to be copied to new function.
         com_redirs = [redir.to_ast() for redir in old_node.com_redirs]
         super().__init__(input_ids,
                          [output_id], 
                          name,
                          com_category, 
-                         com_options=com_options, 
+                         com_options=old_node.com_options, 
                          com_redirs=com_redirs, 
                          com_assignments=old_node.com_assignments)
+
+        ## TODO: This assumes that all options from the old function are copied to the new.
+        self.append_options(["-m"])

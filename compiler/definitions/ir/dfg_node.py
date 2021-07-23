@@ -107,6 +107,17 @@ class DFGNode:
     def is_commutative(self):
         return ('commutative' in self.com_properties)
 
+    ## kk: 2021-07-23 Not totally sure if that is generally correct. Tests will say ¯\_(ツ)_/¯
+    ##     I think it assumes that new options can be added in the beginning if there are no options already
+    def append_options(self, new_options):
+        if(len(self.com_options) > 0):
+            max_opt_index = max([i for i, _opt in self.com_options])
+        else:
+            max_opt_index = -1
+        new_com_options = [(max_opt_index + 1 + i, Arg(string_to_argument(opt))) 
+                           for i, opt in enumerate(new_options)]
+        self.com_options = self.com_options + new_com_options
+
     ## TODO: Improve this functio to be separately implemented for different special nodes,
     ##       such as cat, eager, split, etc...
     def to_ast(self, edges, drain_streams):    
