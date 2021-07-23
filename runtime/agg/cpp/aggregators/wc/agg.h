@@ -3,22 +3,38 @@
 #include <algorithm>
 #include <cstdlib>
 
-inline constexpr cmd_opts g_options{};
+inline constexpr cmd_opts g_options{
+    cmd_opt{"lines",'l', cmd_opt::Argument::None},
+    cmd_opt{"words",'w', cmd_opt::Argument::None},
+    cmd_opt{"bytes",'c', cmd_opt::Argument::None},
+    cmd_opt{"chars",'m', cmd_opt::Argument::None},
+    cmd_opt{"chars",'L', cmd_opt::Argument::None}
+};
 
 void aggregate() noexcept
 {
-    size_t line_count1, word_count1, char_count1;
-    input1() >> line_count1;
-    size_t padding = input1().tellg();
-    input1() >> word_count1 >> char_count1;
+    size_t padding;
+    input1() >> padding; // dummy read
+    padding = input1().tellg();
+    input1().seekg(std::ios_base::beg);
 
-    size_t line_count2, word_count2, char_count2;
-    input2() >> line_count2 >> word_count2 >> char_count2;
+    int numbers_to_input = 0;
+    for (int i = 0; i < 5; ++i)
+        numbers_to_input += g_options.is_present(0); // +1 for each option
+    if (numbers_to_input == 0)
+        numbers_to_input = 3; // by default there are 3
 
-    output().width(padding);
-    output() << line_count1 + line_count2 << ' ';
-    output().width(padding);
-    output() << word_count1 + word_count2 << ' ';
-    output().width(padding);
-    output() << char_count1 + char_count2 << '\n';
+    for (int i = 0; i < numbers_to_input; ++i)
+    {
+        size_t count1, count2;
+        input1() >> count1;
+        input2() >> count2;
+
+        output().width(padding);
+        output() << count1 + count2;
+        if (i != numbers_to_input - 1)
+            output() << ' ';
+    }
+
+    output() << '\n';
 }
