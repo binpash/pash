@@ -491,10 +491,6 @@ def parallelize_dfg_node(old_merger_id, node_id, graph, fileIdGen):
 def create_merge_commands(curr, new_output_ids, fileIdGen):
     if(str(curr.com_name) == "custom_sort"):
         return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
-    elif(str(curr.com_name) == "bigrams_aux"):
-        return create_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen)
-    elif(str(curr.com_name) == "alt_bigrams_aux"):
-        return create_alt_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen)
     elif(str(curr.com_name) == "uniq"):
         return create_uniq_merge_commands(curr, new_output_ids, fileIdGen)
     else:
@@ -503,7 +499,7 @@ def create_merge_commands(curr, new_output_ids, fileIdGen):
 ## This is a function that creates a reduce tree for a generic function
 def create_generic_aggregator_tree(curr, new_output_ids, fileIdGen):
     ## The Aggregator node takes a sequence of input ids and an output id
-    output = create_reduce_tree(lambda ids: AggregatorNode(curr, ids[:-1], ids[-1]),
+    output = create_reduce_tree(lambda in_ids, out_ids: AggregatorNode(curr, in_ids, out_ids),
                                 new_output_ids, fileIdGen)
     return output
 
@@ -512,16 +508,6 @@ def create_generic_aggregator_tree(curr, new_output_ids, fileIdGen):
 ## TODO: Find a better place to put these functions
 def create_sort_merge_commands(curr, new_output_ids, fileIdGen):
     output = create_reduce_tree(lambda ids: SortGReduce(curr, ids),
-                                new_output_ids, fileIdGen)
-    return output
-
-def create_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen):
-    output = create_reduce_tree(lambda ids: BigramGReduce(curr, ids),
-                                new_output_ids, fileIdGen)
-    return output
-
-def create_alt_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen):
-    output = create_reduce_tree(lambda ids: AltBigramGReduce(curr, ids),
                                 new_output_ids, fileIdGen)
     return output
 
@@ -601,7 +587,7 @@ def create_reduce_tree_level(init_func, input_ids, fileIdGen):
 
 ## This function creates one node of the reduce tree
 def create_reduce_node(init_func, input_ids, output_ids):
-    return init_func(flatten_list(input_ids) + output_ids)
+    return init_func(flatten_list(input_ids), output_ids)
 
 
 ## This functions adds an eager on a given edge.

@@ -29,7 +29,7 @@ class MapperAggregatorNode(DFGNode):
 
 
 class AggregatorNode(MapperAggregatorNode):
-    def __init__(self, old_node, input_ids, output_id):
+    def __init__(self, old_node, input_ids, output_ids):
 
         ## Check if an aggregator can be instantiated from the node
         if(old_node.com_aggregator is None):
@@ -40,7 +40,7 @@ class AggregatorNode(MapperAggregatorNode):
         agg_name_string = old_node.com_aggregator.name
         new_options = old_node.com_aggregator.options
 
-        super().__init__(old_node, input_ids, [output_id], agg_name_string, new_options)
+        super().__init__(old_node, input_ids, output_ids, agg_name_string, new_options)
 
         log("Generic Aggregator Created:", self)
 
