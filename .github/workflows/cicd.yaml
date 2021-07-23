@@ -10,14 +10,19 @@ on:
         - runtime/**
         - evaluation/**
         - annotations/**
-
 jobs:
   pash-ci:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2 
       - name: Trigger Performance Tests
         run: |
-          # issue the performance tests
-          curl -s "http://ctrl.pash.ndr.md/job=issue&branch=main&action=PERFORMANCE"
+          # fetch the commit hash
+          hash=$(git rev-parse --short HEAD | tr -d "\n")
+          # construct the url for performance and correctness
+          perf="http://ctrl.pash.ndr.md/job=issue&branch=main&benchmark=PERFORMANCE&commit=$hash"
+          cor="http://ctrl.pash.ndr.md/job=issue&branch=main&benchmark=CORRECTNESS&commit=$hash"
           # issue the correctness tests
-          curl -s "http://ctrl.pash.ndr.md/job=issue&branch=main&action=CORRECTNESS"
+          curl -s "$cor"
+          # issue the performance tests
+          curl -s "$perf"
