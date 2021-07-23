@@ -9,7 +9,7 @@
             "outputs": ["stdout"],
             "aggregator":
             {
-                "name": "$PASH_TOP/runtime/agg/py/cat.py",
+                "rel_path": "runtime/agg/py/cat.py",
                 "options": []
             }
         }
