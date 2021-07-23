@@ -99,10 +99,7 @@ class DFGNode:
         return (self.com_category == "stateless")
 
     def is_pure_parallelizable(self):
-        return (self.com_category == "parallelizable_pure" or
-                (self.com_category == "pure"
-                 and str(self.com_name) in list(map(get_command_from_definition,
-                                                    config.parallelizable_pure_commands))))
+        return (self.com_category == "parallelizable_pure")
 
     def is_commutative(self):
         return ('commutative' in self.com_properties)

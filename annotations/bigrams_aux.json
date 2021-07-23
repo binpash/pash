@@ -4,7 +4,7 @@
     [
         {
             "predicate": "default",
-            "class": "pure",
+            "class": "parallelizable_pure",
             "inputs": ["stdin"],
             "outputs": ["stdout"]
         }
