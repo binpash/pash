@@ -2,6 +2,7 @@
 ./test-common.sh tr "A-Z a-z" ../tr
 ./test-common.sh tr "-c '[A-Z]' '\n'" ../tr
 ./test-common.sh tr "--complement '[1-9]\n*' '[a-z][A-Z]" ../tr
+./test-common.sh tr "--complement -t '[1-9]\n*' '[a-z][A-Z]" ../tr
 
 ./test-common.sh wc "" ../wc
 ./test-common.sh wc "-l" ../wc
