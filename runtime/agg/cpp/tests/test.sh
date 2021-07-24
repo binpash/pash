@@ -11,6 +11,7 @@
 ./test-common.sh wc "--bytes -c --chars -L" ../wc
 ./test-common.sh wc "-L --lines --words" ../wc
 
+./test-common.sh uniq "" ../uniq
 ./test-common.sh uniq " -c" ../uniq       # Works with both short
 ./test-common.sh uniq " --count" ../uniq  # and long option
 
