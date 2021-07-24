@@ -1,3 +1,6 @@
+#ifndef AGG_WC_H
+#define AGG_WC_H
+
 #include "main.h"
 #include <string>
 #include <algorithm>
@@ -58,3 +61,5 @@ void aggregate() noexcept
 
     output() << '\n';
 }
+
+#endif

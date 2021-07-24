@@ -1,3 +1,6 @@
+#ifndef AGG_UNIQ_H
+#define AGG_UNIQ_H
+
 #include "main.h"
 #include "util.h"
 #include "command_opts.h"
@@ -71,3 +74,5 @@ void aggregate() noexcept
         uniq();
     }
 }
+
+#endif

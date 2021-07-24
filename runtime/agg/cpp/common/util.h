@@ -1,3 +1,6 @@
+#ifndef UTIL_H
+#define UTIL_H
+
 #include <iostream>
 #include <memory>
 
@@ -17,3 +20,5 @@ bool stream_copy_n(std::istream& in, std::ostream& out, std::size_t count) noexc
 
     return in.good() && out.good();
 }
+
+#endif
