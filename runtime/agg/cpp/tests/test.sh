@@ -1,3 +1,6 @@
+./test-common.sh tr "'[a-z]' '\n'" ../tr
+./test-common.sh tr "A-Z a-z" ../tr
+
 ./test-common.sh wc "" ../wc
 ./test-common.sh wc "-l" ../wc
 ./test-common.sh wc "-w" ../wc
@@ -12,8 +15,8 @@
 ./test-common.sh wc "-L --lines --words" ../wc
 
 ./test-common.sh uniq "" ../uniq
-./test-common.sh uniq " -c" ../uniq       # Works with both short
-./test-common.sh uniq " --count" ../uniq  # and long option
+./test-common.sh uniq "-c" ../uniq 
+./test-common.sh uniq "--count" ../uniq
 
 # These tests are run during PASH_TOP/scripts/run_tests.sh
 # Make sure to build the aggregators using PASH_TOP/scripts/setup-pash.sh first
