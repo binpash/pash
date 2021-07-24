@@ -6,7 +6,7 @@
 #include "command_opts.h"
 
 constexpr cmd_opts g_options{
-    //cmd_opt{"complement",'c', cmd_opt::Argument::None},
+    cmd_opt{"complement",'c', cmd_opt::Argument::None}
     //cmd_opt{"delete",'d', cmd_opt::Argument::None},
     //cmd_opt{"squeeze-repeats",'s', cmd_opt::Argument::None},
     //cmd_opt{"truncate-set1",'t', cmd_opt::Argument::None},
