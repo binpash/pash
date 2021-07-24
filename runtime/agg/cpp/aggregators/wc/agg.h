@@ -15,13 +15,9 @@ void aggregate() noexcept
 {
     size_t padding = std::numeric_limits<size_t>::max();
     {
-        size_t prev_pos = 0;
-        while(true)
+        size_t prev_pos = 0, dummy;
+        while(input1() >> dummy)
         {
-            size_t dummy;
-            input1() >> dummy;
-            if (!input1())
-                break;
             size_t new_pos = input1().tellg();
             padding = std::min(new_pos - prev_pos, padding);
             prev_pos = new_pos + 1;

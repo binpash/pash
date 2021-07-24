@@ -28,13 +28,14 @@ void aggregate() noexcept; // implement this
 //   with the arguemnt being the index of the option in the constructor.
 
 // 2. It should request inputs to aggregate when it needs them using
-//    objects returned by the functions below:
+//    objects returned by the functions below. Both inputs are guaranteed
+//    to be .good() at the beggining.
 
 [[nodiscard]] std::istream& input1() noexcept;
 [[nodiscard]] std::istream& input2() noexcept;
 
 // 3. It should output the aggregated results as soon as it has a piece
-//    of them done to the stream returned to function below:
+//    of them done to the stream returned by the function below:
 
 [[nodiscard]] std::ostream& output() noexcept;
 

@@ -45,7 +45,19 @@ int main(int argc, char** argv)
 	}
 
 	g_in1.open(argv[1], std::ios_base::in  | std::ios_base::binary);
+	if (g_in1.peek() == EOF)
+	{
+		output() << input2().rdbuf();
+		return EXIT_SUCCESS;
+	}
+
 	g_in2.open(argv[2], std::ios_base::in  | std::ios_base::binary);
+	if (g_in2.peek() == EOF)
+	{
+		output() << input1().rdbuf();
+		return EXIT_SUCCESS;
+	}
+
 	g_out.open(argv[3], std::ios_base::out | std::ios_base::binary);
 
 	parse_options(argc - 3, argv + 3, g_options);
