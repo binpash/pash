@@ -1,6 +1,6 @@
 {
     "command": "uniq",
-    "aggregate": "$PASH_TOP/runtime/agg/py/uniq.py",
+    "aggregate": "$PASH_TOP/runtime/agg/cpp/uniq",
     "cases":
     [
         {
