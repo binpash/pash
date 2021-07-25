@@ -37,6 +37,7 @@ case "$distro" in
      # tested with debian:stable-20210408
      echo "Running preparation sudo apt install:"
      echo "|-- running apt update..."
+     add-apt-repository ppa:ubuntu-toolchain-r/test -y # for g++-10
      apt-get update &> $LOG_DIR/apt_update.log
      echo "|-- running apt install..."
      apt-get install -y git libtool curl sudo procps m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils g++-10 &> $LOG_DIR/apt_install.log
