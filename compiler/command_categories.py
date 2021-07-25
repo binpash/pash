@@ -87,6 +87,14 @@ custom_command_categories = {
     "uniq" : is_uniq_pure,
 }
 
+class Aggregator:
+    def __init__(self, aggregator_json):
+        self.name = aggregator_json['name']
+        self.options = aggregator_json['options']
+    
+    def __repr__(self):
+        return "Aggregator(name={},opts={})".format(self.name, self.options)
+
 
 ## This function returns the input and output streams of a command.
 ##
@@ -205,3 +213,21 @@ def find_command_properties(command, options):
         return command_properties_from_annotation
 
     return []
+
+def find_command_aggregator(command, options):
+
+    command_string = format_arg_chars(command)
+    # log("Command to find aggregator:", command_string)
+
+    assert(isinstance(command_string, str))
+
+    ## Find the aggregator of the command in the annotation files (if it exists)
+    command_aggregator_from_annotation = get_command_aggregator_from_annotations(command_string,
+                                                                                 options,
+                                                                                 config.annotations)
+    if (command_aggregator_from_annotation):
+        aggregator_object = Aggregator(command_aggregator_from_annotation)
+        log("aggregator:", aggregator_object, "found for:", command_string)
+        return aggregator_object
+
+    return None
