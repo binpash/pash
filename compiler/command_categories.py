@@ -100,7 +100,12 @@ class Aggregator:
             self.name = os.path.join(config.PASH_TOP, aggregator_json['rel_path'])
         else:
             self.name = aggregator_json['name']
-        self.options = aggregator_json['options']
+        
+        ## By default options are []
+        if('options' in aggregator_json):
+            self.options = aggregator_json['options']
+        else:
+            self.options = []
     
     def __repr__(self):
         return "Aggregator(name={},opts={})".format(self.name, self.options)
