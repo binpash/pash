@@ -91,13 +91,13 @@ custom_command_categories = {
 class Aggregator:
     def __init__(self, aggregator_json):
         ## Exactly one of the two should exist in the JSON
-        assert('name' in aggregator_json or 'rel_path' in aggregator_json)
-        assert(not ('name' in aggregator_json and 'rel_path' in aggregator_json))
+        assert('name' in aggregator_json or 'path' in aggregator_json)
+        assert(not ('name' in aggregator_json and 'path' in aggregator_json))
         
         ## TODO: Instead of initializing like this, we could keep both, and return the correct information when asked the name.
-        if('rel_path' in aggregator_json):
+        if('path' in aggregator_json):
             ## Set the name to be the absolute path
-            self.name = os.path.join(config.PASH_TOP, aggregator_json['rel_path'])
+            self.name = os.path.join(config.PASH_TOP, aggregator_json['path'])
         else:
             self.name = aggregator_json['name']
         
@@ -115,15 +115,20 @@ class Aggregator:
 class Mapper:
     def __init__(self, mapper_json):
         ## Exactly one of the two should exist in the JSON
-        assert('name' in mapper_json or 'rel_path' in mapper_json)
-        assert(not ('name' in mapper_json and 'rel_path' in mapper_json))
+        assert('name' in mapper_json or 'path' in mapper_json)
+        assert(not ('name' in mapper_json and 'path' in mapper_json))
         
-        if('rel_path' in mapper_json):
+        if('path' in mapper_json):
             ## Set the name to be the absolute path
-            self.name = os.path.join(config.PASH_TOP, mapper_json['rel_path'])
+            self.name = os.path.join(config.PASH_TOP, mapper_json['path'])
         else:
             self.name = mapper_json['name']
-        self.options = mapper_json['options']
+
+        ## By default options are []
+        if('options' in mapper_json):
+            self.options = mapper_json['options']
+        else:
+            self.options = []
         
         if ('num_outputs' in mapper_json):
             self.num_outputs = mapper_json['num_outputs']

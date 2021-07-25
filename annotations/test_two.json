@@ -9,7 +9,7 @@
             "outputs": ["stdout"],
             "aggregator":
             {
-                "rel_path": "runtime/agg/py/cat.py"
+                "path": "runtime/agg/py/cat.py"
             }
         }
     ]
