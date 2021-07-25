@@ -1,16 +1,7 @@
-
+Currently aggregators are WIP. The new ones are in `cpp/bin`. They are automatically built during `setup_pash.sh` and the unit tests in `cpp/tests` are run during `run_tests.sh`. The interface is like the following:
 
 ```sh
-cat A B | wc
-# should be the same as the following
-python wc.py <(cat A | wc) <(cat B | wc)
+aggregator inputFile1 inputFile2 outputFile args
 ```
 
-
-Aggregators are not complete, yet.
-
-* need to take care of padding
-* nee to make them cross-platform
-* ideally, make them streaming-based
-
-
+Where `args` are the arguments that were passed to the command that produced the input files.
