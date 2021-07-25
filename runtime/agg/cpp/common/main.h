@@ -24,22 +24,28 @@ void aggregate() noexcept; // implement this
 //     cmd_opt{ "reverse", 'r'}
 // };
 
-//   Then, the member functions is_present and argument can be used
-//   with the arguemnt being the index of the option in the constructor.
+//   Then, the member functions .is_present(idx) and .argument(idx) can be used
+//   with the argument being the index of the option in the constructor.
 
-// 2. It should request inputs to aggregate when it needs them using
+// 2. If there are any commandline arguments remaining - not associated with
+//    an option - they can be retrieved using the below functions:
+
+[[nodiscard]] size_t argc() noexcept;
+[[nodiscard]] char** argv() noexcept;
+
+// 3. It should request inputs to aggregate when it needs them using
 //    objects returned by the functions below. Both inputs are guaranteed
 //    to be .good() at the beggining.
 
 [[nodiscard]] std::istream& input1() noexcept;
 [[nodiscard]] std::istream& input2() noexcept;
 
-// 3. It should output the aggregated results as soon as it has a piece
+// 4. It should output the aggregated results as soon as it has a piece
 //    of them done to the stream returned by the function below:
 
 [[nodiscard]] std::ostream& output() noexcept;
 
-// 4. If some behaviour has not been implemented yet, the below
+// 5. If some behaviour has not been implemented yet, the below
 //    function can be called:
 
 [[noreturn]] void nyi_error(const char* message) noexcept;

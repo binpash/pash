@@ -6,12 +6,15 @@
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
+#include <tuple>
 
-std::ifstream g_in1;
-std::ifstream g_in2;
-std::ofstream g_out;
+[[noreturn]] void nyi_error(const char* message) noexcept
+{
+	std::cerr << "Not yet implemented error: " << message << '\n';
+	exit(EXIT_FAILURE);
+}
 
-void parse_options(int argc, char** argv, const opt_holder& options) noexcept
+std::pair<int, char**> parse_options(int argc, char** argv, const opt_holder& options) noexcept
 {	
 	int ch, longind = 0;
 	while ((ch = getopt_long(argc, argv, options.optstring, options.long_options, &longind)) != -1)
@@ -32,35 +35,44 @@ void parse_options(int argc, char** argv, const opt_holder& options) noexcept
 			options.args[opt_idx] = optarg;
 		options.present[opt_idx] = 1;
 	}
+	return {argc - optind, argv + optind};
 }
 
-int main(int argc, char** argv)
+// Written to by main
+// Read by functions below it
+std::ifstream g_in1;
+std::ifstream g_in2;
+std::ofstream g_out;
+int g_argc;
+char** g_argv;
+
+int main(int _argc, char** _argv)
 {
 	std::ios_base::sync_with_stdio(false);
 
-	if (argc < 4)
+	if (_argc < 4)
 	{
-		std::cerr << "Usage: " << argv[0] << " input1 input2 output [OPTION]...\n";
+		std::cerr << "Usage: " << _argv[0] << " input1 input2 output [OPTION]...\n";
 		return EXIT_FAILURE;
 	}
 
-	g_in1.open(argv[1], std::ios_base::in  | std::ios_base::binary);
+	g_in1.open(_argv[1], std::ios_base::in  | std::ios_base::binary);
 	if (g_in1.peek() == EOF)
 	{
 		output() << input2().rdbuf();
 		return EXIT_SUCCESS;
 	}
 
-	g_in2.open(argv[2], std::ios_base::in  | std::ios_base::binary);
+	g_in2.open(_argv[2], std::ios_base::in  | std::ios_base::binary);
 	if (g_in2.peek() == EOF)
 	{
 		output() << input1().rdbuf();
 		return EXIT_SUCCESS;
 	}
 
-	g_out.open(argv[3], std::ios_base::out | std::ios_base::binary);
+	g_out.open(_argv[3], std::ios_base::out | std::ios_base::binary);
 
-	parse_options(argc - 3, argv + 3, g_options);
+	std::tie(g_argc, g_argv) = parse_options(_argc - 3, _argv + 3, g_options);
 
 	aggregate();
 
@@ -78,10 +90,4 @@ int main(int argc, char** argv)
 [[nodiscard]] std::ostream& output() noexcept
 {
 	return g_out;
-}
-
-[[noreturn]] void nyi_error(const char* message) noexcept
-{
-	std::cerr << "Not yet implemented error: " << message << '\n';
-	exit(EXIT_FAILURE);
 }

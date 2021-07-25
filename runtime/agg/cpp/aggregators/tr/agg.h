@@ -8,18 +8,21 @@
 constexpr cmd_opts g_options{
     cmd_opt{"complement",'c', cmd_opt::Argument::None},
     cmd_opt{"truncate-set1",'t', cmd_opt::Argument::None},
-    cmd_opt{"delete",'d', cmd_opt::Argument::None}
-    //cmd_opt{"squeeze-repeats",'s', cmd_opt::Argument::None},
+    cmd_opt{"delete",'d', cmd_opt::Argument::None},
+    cmd_opt{"squeeze-repeats",'s', cmd_opt::Argument::None}
 };
 
 inline static void tr() noexcept
 {
-    output() << input1().rdbuf() << input2().rdbuf();
+    nyi_error("The -s option isn't supported yet.");
 }
 
 void aggregate() noexcept
 {
-    tr();
+    if (!g_options.is_present(3))
+        output() << input1().rdbuf() << input2().rdbuf();
+    else
+        tr();
 }
 
 #endif
