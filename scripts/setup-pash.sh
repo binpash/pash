@@ -37,7 +37,7 @@ cd ../../
 echo "Building runtime..."
 # Build runtime tools: eager, split
 cd runtime/
-make &> $LOG_DIR/make.log
+make #&> $LOG_DIR/make.log
 cd ../
 
 echo "Installing python dependencies..."
