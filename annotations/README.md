@@ -226,9 +226,9 @@ utils.help()
 utils.out("".join(functools.reduce(agg, utils.read_all(), [])))
 ```
 
-For PaSh to be able to hook these aggregators correctly, we also need to add their annotations in [annotations/custom_aggregators](https://github.com/binpash/pash/tree/main/annotations/custom_aggregators).
+For PaSh to be able to hook these aggregators correctly, i.e., so that it can instantiate them as command invocations, we also need to add their annotations in [annotations/custom_aggregators](https://github.com/binpash/pash/tree/main/annotations/custom_aggregators).
 Below are the two annotation files named `cat.py.json` and `concat.json`. (FIXME: relative path? **Until this is fixed, prefix aggregator names with `pagg-` to avoid name clashes!**)
-The most important information in these files is (i) the aggregation command's `name`, and (ii) its treatment of inputs (both taking `["args[:]"]`).
+The most important information in these files is (i) the aggregation command's `name`, and (ii) its treatment of inputs (both taking `["args[:]"]`), and outputs (both outputing to `["stdout"]`).
 
 ```json
 {
@@ -265,7 +265,8 @@ The most important information in these files is (i) the aggregation command's `
 Add two new annotation files in `$PASH_TOP/annotations` with names `test_one.json` and  `test_two.json`, so that they point to the right aggregator commands.
 Apart from providing the correct command `name`, the two key properties are the `class` (which should be `parallelizable_pure`) and the `rel_path` (which should point to the aggregator programs we just implemented---ideally, relative to `$PASH_TOP`).
 
-Here is the annotation for `test_one.json`, pointing to `runtime/agg/opt/concat.sh` (i.e., implying `$PASH_TOP/runtime/agg/opt/concat.sh`):
+Here is the annotation for `test_one.json`, where the aggregator points to `runtime/agg/opt/concat.sh`. 
+Note that path is relative with respect to `$PASH_TOP` and therefore refers to `$PASH_TOP/runtime/agg/opt/concat.sh`:
 ```json
 {
     "command": "test_one",
@@ -278,8 +279,7 @@ Here is the annotation for `test_one.json`, pointing to `runtime/agg/opt/concat.
             "outputs": ["stdout"],
             "aggregator":
             {
-                "rel_path": "runtime/agg/opt/concat.sh",
-                "options": []
+                "path": "runtime/agg/opt/concat.sh"
             }
         }
     ]
@@ -287,7 +287,7 @@ Here is the annotation for `test_one.json`, pointing to `runtime/agg/opt/concat.
 ```
 
 Here is the annotation for `test_two.json`, pointing to `runtime/agg/py/cat.py` (i.e., implying `$PASH_TOP/runtime/agg/py/cat.py`).
-The annotations also specifies that the aggregator should be called with the `-a` flag, in addition to any other flags provided to the original command by `pash`.
+The annotations also specifies that the aggregator should be called with the `-a` flag, in addition to any other flags provided to the original command.
 
 ```json
 {
@@ -301,7 +301,7 @@ The annotations also specifies that the aggregator should be called with the `-a
             "outputs": ["stdout"],
             "aggregator":
             {
-                "rel_path": "runtime/agg/opt/concat.sh",
+                "path": "runtime/agg/opt/concat.sh",
                 "options": ["-a"]
             }
         }
@@ -315,7 +315,6 @@ Here is the `uniq` annotation that has two cases to support two different sets o
 ```
 {
     "command": "uniq",
-    "aggregate": "$PASH_TOP/runtime/agg/py/uniq.py",
     "cases":
     [
         {
@@ -329,7 +328,7 @@ Here is the `uniq` annotation that has two cases to support two different sets o
             "outputs": ["stdout"],
             "aggregator":
             {
-                "rel_path": "runtime/agg/py/uniq.py",
+                "path": "runtime/agg/py/uniq.py",
                 "options": ["-c"]
             }
         },
@@ -340,8 +339,7 @@ Here is the `uniq` annotation that has two cases to support two different sets o
             "outputs": ["stdout"],
             "aggregator":
             {
-                "rel_path": "runtime/agg/py/uniq.py",
-                "options": []
+                "path": "runtime/agg/py/uniq.py"
             }
         }
     ]
