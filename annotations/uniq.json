@@ -1,6 +1,6 @@
 {
     "command": "uniq",
-    "aggregate": "$PASH_TOP/runtime/agg/cpp/uniq",
+    "aggregate": "$PASH_TOP/runtime/agg/cpp/bin/uniq",
     "cases":
     [
         {

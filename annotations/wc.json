@@ -1,6 +1,6 @@
 {
     "command": "wc",
-    "aggregate": "$PASH_TOP/runtime/agg/cpp/wc",
+    "aggregate": "$PASH_TOP/runtime/agg/cpp/bin/wc",
     "cases":
     [
         {
