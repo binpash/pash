@@ -79,6 +79,15 @@ int main(int _argc, char** _argv)
 	return EXIT_SUCCESS;
 }
 
+[[nodiscard]] size_t argc() noexcept
+{
+	return g_argc;
+}
+[[nodiscard]] char** argv() noexcept
+{
+	return g_argv;
+}
+
 [[nodiscard]] std::istream& input1() noexcept
 {
 	return g_in1;
