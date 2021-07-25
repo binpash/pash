@@ -27,11 +27,11 @@ distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 case "$distro" in
    ubuntu*)  
      echo "Running preparation sudo apt install:"
-     echo "|-- running apt update..."
-     sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y # for g++10
+     echo "|-- running apt update and install..."
      sudo apt-get update &> $LOG_DIR/apt_update.log
-     echo "|-- running apt install..."
-     sudo apt-get install -y git libtool m4 curl automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils g++10 &> $LOG_DIR/apt_install.log
+     sudo apt-get install -y git libtool m4 curl automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils apt-transport-https &> $LOG_DIR/apt_install.log
+     sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y > /dev/null
+     sudo apt-get install g++10 &> $LOG_DIR/apt_install.log
      ;;
    debian*)
      # tested with debian:stable-20210408
