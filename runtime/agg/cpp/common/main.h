@@ -50,5 +50,4 @@ void aggregate() noexcept; // implement this
 
 [[noreturn]] void nyi_error(const char* message) noexcept;
 
-
 #endif
