@@ -1,5 +1,5 @@
 #!/bin/bash
-# tag: vowel_sequencies_gr_1K.sh
+# tag: vowel_sequences_gr_1K.sh
 # set -e
 
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
