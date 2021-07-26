@@ -89,7 +89,15 @@ custom_command_categories = {
 
 class Aggregator:
     def __init__(self, aggregator_json):
-        self.name = aggregator_json['name']
+        ## Exactly one of the two should exist in the JSON
+        assert('name' in aggregator_json or 'rel_path' in aggregator_json)
+        assert(not ('name' in aggregator_json and 'rel_path' in aggregator_json))
+        
+        if('rel_path' in aggregator_json):
+            ## Set the name to be the absolute path
+            self.name = os.path.join(config.PASH_TOP, aggregator_json['rel_path'])
+        else:
+            self.name = aggregator_json['name']
         self.options = aggregator_json['options']
     
     def __repr__(self):
