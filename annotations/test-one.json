@@ -1,0 +1,17 @@
+{
+    "command": "test-one",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+            "aggregator":
+            {
+                "name": "$PASH_TOP/runtime/agg/opt/concat.sh",
+                "options": []
+            }
+        }
+    ],
+}
