@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # tag: 1-syllable words
 # set -e
 

@@ -10,6 +10,4 @@ ls ${IN} | sed "s;^;$IN;"| xargs cat | tr -sc '[A-Z][a-z]' '[\012*]' > ${OUT}.wo
 sort -u ${OUT}.words > ${OUT}.types
 # Actual find anagram script
 rev < ${OUT}.types > ${OUT}.types.rev
-sort ${OUT}.types ${OUT}.types.rev |
-uniq -c |
-awk "\$1 >= 2 {print \$2}"
+sort ${OUT}.types ${OUT}.types.rev | uniq -c | awk "\$1 >= 2 {print \$2}"
