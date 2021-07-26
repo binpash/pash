@@ -92,6 +92,7 @@ pipeline_microbenchmarks=(
     sed-test             # Tests all sed occurences in our evaluation to make sure that they work
     tr-test              # Tests all possible behaviors of tr that exist in our evaluation
     grep-test            # Tests some interesting grep invocations
+    ann-agg              # Tests custom aggregators in annotations
     # # # # micro_1000           # Not being run anymore, as it is very slow. Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
 )
 

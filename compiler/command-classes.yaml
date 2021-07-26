@@ -28,4 +28,5 @@ parallelizable_pure:
     - command: sort
     - command: bigrams_aux
     - command: alt_bigrams_aux
+    - command: test_one
 

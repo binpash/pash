@@ -275,18 +275,17 @@ class DFGNode:
     ## TODO: Fix this somewhere in the annotations and not in the code
     def pure_get_map_output_files(self, input_edge_ids, fileIdGen):
         assert(self.is_pure_parallelizable())
-        if(str(self.com_name) == "sort"):
-            new_output_fids = [[fileIdGen.next_ephemeral_file_id()] for in_fid in input_edge_ids]
-        elif(str(self.com_name) == "custom_sort"):
+        one_to_one_pure_parallelizable = ["sort",
+                                          "test_one",
+                                          "custom_sort",
+                                          "alt_bigrams_aux",
+                                          "uniq"]
+        if(str(self.com_name) in one_to_one_pure_parallelizable):
             new_output_fids = [[fileIdGen.next_ephemeral_file_id()] for in_fid in input_edge_ids]
         elif(str(self.com_name) == "bigrams_aux"):
             new_output_fids = [[fileIdGen.next_ephemeral_file_id()
                                 for i in range(config.bigram_g_map_num_outputs)]
                                for in_fid in input_edge_ids]
-        elif(str(self.com_name) == "alt_bigrams_aux"):
-            new_output_fids = [[fileIdGen.next_ephemeral_file_id()] for in_fid in input_edge_ids]
-        elif(str(self.com_name) == "uniq"):
-            new_output_fids = [[fileIdGen.next_ephemeral_file_id()] for in_fid in input_edge_ids]
         else:
             log("Error: Map outputs for command:", self.com_name, "were not found!")
             raise NotImplementedError()
