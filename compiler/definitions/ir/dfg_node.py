@@ -20,12 +20,14 @@ class DFGNode:
     ## com_category : string denoting category
     ## input_consumption_mode : enumeration
     ## com_properties : properties such as commutativity
+    ## com_mapper : a class that contains necessary information to instantiate a mapper (by defaule this corresponds to the command)
     ## com_aggregator : a class that contains necessary information to instantiate an aggregator
     ## com_options : list of tuples with the option index and the argument Arg
     ## com_redirs : list of redirections
     ## com_assignments : list of assignments
     def __init__(self, inputs, outputs, com_name, com_category,
                  com_properties = [],
+                 com_mapper = None,
                  com_aggregator = None,
                  com_options = [],
                  com_redirs = [],
@@ -40,6 +42,7 @@ class DFGNode:
         self.com_name = com_name
         self.com_category = com_category
         self.com_properties = com_properties
+        self.com_mapper = com_mapper
         self.com_aggregator = com_aggregator
         self.com_options = com_options
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
@@ -53,6 +56,8 @@ class DFGNode:
             prefix = "Stateless"
         elif (self.com_category == "pure"):
             prefix = "Pure"
+        elif (self.is_pure_parallelizable()):
+            prefix = "Par. Pure"
         if (self.is_commutative()):
             prefix = 'Commutative ' + prefix
         output = "{}: \"{}\" in:{} out:{}".format(
@@ -99,10 +104,7 @@ class DFGNode:
         return (self.com_category == "stateless")
 
     def is_pure_parallelizable(self):
-        return (self.com_category == "parallelizable_pure" or
-                (self.com_category == "pure"
-                 and str(self.com_name) in list(map(get_command_from_definition,
-                                                    config.parallelizable_pure_commands))))
+        return (self.com_category == "parallelizable_pure")
 
     def is_commutative(self):
         return ('commutative' in self.com_properties)
@@ -275,18 +277,13 @@ class DFGNode:
     ## TODO: Fix this somewhere in the annotations and not in the code
     def pure_get_map_output_files(self, input_edge_ids, fileIdGen):
         assert(self.is_pure_parallelizable())
-        one_to_one_pure_parallelizable = ["sort",
-                                          "test_one",
-                                          "custom_sort",
-                                          "alt_bigrams_aux",
-                                          "uniq"]
-        if(str(self.com_name) in one_to_one_pure_parallelizable):
-            new_output_fids = [[fileIdGen.next_ephemeral_file_id()] for in_fid in input_edge_ids]
-        elif(str(self.com_name) == "bigrams_aux"):
-            new_output_fids = [[fileIdGen.next_ephemeral_file_id()
-                                for i in range(config.bigram_g_map_num_outputs)]
-                               for in_fid in input_edge_ids]
+        
+        ## The number of the mapper outputs defaults to 1
+        if(self.com_mapper is None):
+            number_outputs = 1
         else:
-            log("Error: Map outputs for command:", self.com_name, "were not found!")
-            raise NotImplementedError()
+            number_outputs = self.com_mapper.num_outputs
+
+        new_output_fids = [[fileIdGen.next_ephemeral_file_id() for i in range(number_outputs)] 
+                           for in_fid in input_edge_ids]
         return new_output_fids
