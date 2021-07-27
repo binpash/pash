@@ -1,3 +1,5 @@
+# Aggregators
+
 Currently aggregators are WIP. The new ones are in `cpp/bin`. They are automatically built during `setup_pash.sh` and the unit tests in `cpp/tests` are run during `run_tests.sh`. The interface is like the following:
 
 ```sh
@@ -5,3 +7,13 @@ aggregator inputFile1 inputFile2 outputFile args
 ```
 
 Where `args` are the arguments that were passed to the command that produced the input files.
+
+## Adding new aggregators
+
+Let's assume that the aggregator being implemented is for a command called `cmd`.
+
+  1. Create a folder named `cmd` inside `aggregators`
+  2. Create a file named `agg.h` inside that folder
+  3. Implement the aggregator inside that file using the instructions provided in `common/main.h` or use a different aggregator as an example
+  4. Add the aggregator to `Makefile` (see instructions inside the `Makefile`)
+  5. Add unit tests for the created aggregator in `test.sh`. Consult the instructions in that file. Remember to test all options and flags of the aggregator.
