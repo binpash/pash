@@ -1,3 +1,26 @@
+./test-common.sh grep "'\.'" ../bin/grep
+./test-common.sh grep "'[A-Z]'" ../bin/grep
+./test-common.sh grep "'x'" ../bin/grep
+./test-common.sh grep "'Bell'" ../bin/grep
+./test-common.sh grep "-c '^[A-Z]'" ../bin/grep
+./test-common.sh grep "-c '^....$'" ../bin/grep
+./test-common.sh grep "gz" ../bin/grep
+./test-common.sh grep "1969" ../bin/grep
+./test-common.sh grep "-vi '[aeiou]'" ../bin/grep
+./test-common.sh grep "-vc 'light.\*light.\*light'" ../bin/grep
+./test-common.sh grep "-v '^0$'" ../bin/grep
+./test-common.sh grep "-v '[KQRBN]'" ../bin/grep
+./test-common.sh grep "-i '^[^aeiou]*[aeiou][^aeiou]*[aeiou][^aeiou]$'" ../bin/grep
+./test-common.sh grep "-i '^[^aeiou]*[aeiou][^aeiou]*$'" ../bin/grep
+./test-common.sh grep "-c 'light.\*light.\*light'" ../bin/grep
+./test-common.sh grep "-c 'light.\*light'" ../bin/grep
+./test-common.sh grep "'print'" ../bin/grep
+./test-common.sh grep "'light.\*light'" ../bin/grep
+./test-common.sh grep "'\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4'" ../bin/grep
+./test-common.sh grep "'[KQRBN]'" ../bin/grep
+./test-common.sh grep "'UNIX'" ../bin/grep
+./test-common.sh grep "'AT&T'" ../bin/grep
+
 ./test-common.sh tr "'[a-z]' '\n'" ../bin/tr
 ./test-common.sh tr "A-Z a-z" ../bin/tr
 ./test-common.sh tr "-c '[A-Z]' '\n'" ../bin/tr
