@@ -4,10 +4,10 @@ import os
 
 from definitions.ir.arg import *
 from definitions.ir.dfg_node import *
+from definitions.ir.aggregator_node import *
 from definitions.ir.file_id import *
 from definitions.ir.resource import *
 from definitions.ir.nodes.cat import *
-from definitions.ir.nodes.bigram_g_map import *
 
 import definitions.ir.nodes.pash_split as pash_split
 import definitions.ir.nodes.r_merge as r_merge
@@ -107,7 +107,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
     # log("Opt indices:", opt_indices, "options:", options)
     category = find_command_category(command, options)
     com_properties = find_command_properties(command, options)
-    com_aggregator = find_command_aggregator(command, options)
+    com_mapper, com_aggregator = find_command_mapper_aggregator(command, options)
 
     ## TODO: Make an empty IR and add edges and nodes incrementally (using the methods defined in IR).
 
@@ -144,6 +144,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            com_name,
                            com_category,
                            com_properties=com_properties,
+                           com_mapper=com_mapper,
                            com_aggregator=com_aggregator,
                            com_options=dfg_options,
                            com_redirs=com_redirs,
@@ -197,16 +198,10 @@ def make_tee(input, outputs):
                    com_name, 
                    com_category)
 
-## TODO: Move it somewhere else, but where?
 def make_map_node(node, new_inputs, new_outputs):
     ## Some nodes have special map commands
-    ##
-    ## TODO: Make this more general instead of hardcoded
-    if(str(node.com_name) == "bigrams_aux"):
-        ## Ensure that the inputs have the correct size for this
-        assert(len(new_inputs[0]) == 0)
-        assert(len(new_inputs[1]) == 1)
-        new_node = BigramGMap(new_inputs[1][0], new_outputs)
+    if(not node.com_mapper is None):
+        new_node = MapperNode(node, new_inputs, new_outputs)
     else:
         new_node = node.copy()
         new_node.inputs = new_inputs

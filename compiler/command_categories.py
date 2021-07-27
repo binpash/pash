@@ -87,12 +87,14 @@ custom_command_categories = {
     "uniq" : is_uniq_pure,
 }
 
+## The class that contains the aggregator information that was parsed from the annotation
 class Aggregator:
     def __init__(self, aggregator_json):
         ## Exactly one of the two should exist in the JSON
         assert('name' in aggregator_json or 'rel_path' in aggregator_json)
         assert(not ('name' in aggregator_json and 'rel_path' in aggregator_json))
         
+        ## TODO: Instead of initializing like this, we could keep both, and return the correct information when asked the name.
         if('rel_path' in aggregator_json):
             ## Set the name to be the absolute path
             self.name = os.path.join(config.PASH_TOP, aggregator_json['rel_path'])
@@ -103,6 +105,31 @@ class Aggregator:
     def __repr__(self):
         return "Aggregator(name={},opts={})".format(self.name, self.options)
 
+
+## The class that contains the mapper information that was mapped from annotation (rare).
+class Mapper:
+    def __init__(self, mapper_json):
+        ## Exactly one of the two should exist in the JSON
+        assert('name' in mapper_json or 'rel_path' in mapper_json)
+        assert(not ('name' in mapper_json and 'rel_path' in mapper_json))
+        
+        if('rel_path' in mapper_json):
+            ## Set the name to be the absolute path
+            self.name = os.path.join(config.PASH_TOP, mapper_json['rel_path'])
+        else:
+            self.name = mapper_json['name']
+        self.options = mapper_json['options']
+        
+        if ('num_outputs' in mapper_json):
+            self.num_outputs = mapper_json['num_outputs']
+        else:
+            self.num_outputs = 1
+    
+    def __repr__(self):
+        if(self.num_outputs == 1):
+            return "Mapper(name={},opts={})".format(self.name, self.options)
+        else:
+            return "Mapper(name={},opts={},num_outs={})".format(self.name, self.options, self.num_outputs)
 
 ## This function returns the input and output streams of a command.
 ##
@@ -194,15 +221,6 @@ def find_command_category(command, options):
         log("class:", command_class_from_annotation, "found for:", command_string)
         return command_class_from_annotation
 
-    # NOTE order of class declaration in definition file is important, as it
-    # dictates class precedence in the following search
-    for command_class, commands in config.command_classes.items():
-        command_list = list(map(get_command_from_definition, commands))
-
-        if (command_string in command_list
-            or command_string.split("/")[-1] in command_list):
-            return command_class
-
     return('none')
 
 def find_command_properties(command, options):
@@ -222,7 +240,7 @@ def find_command_properties(command, options):
 
     return []
 
-def find_command_aggregator(command, options):
+def find_command_mapper_aggregator(command, options):
 
     command_string = format_arg_chars(command)
     # log("Command to find aggregator:", command_string)
@@ -233,9 +251,19 @@ def find_command_aggregator(command, options):
     command_aggregator_from_annotation = get_command_aggregator_from_annotations(command_string,
                                                                                  options,
                                                                                  config.annotations)
+    aggregator_object = None
     if (command_aggregator_from_annotation):
         aggregator_object = Aggregator(command_aggregator_from_annotation)
         log("aggregator:", aggregator_object, "found for:", command_string)
-        return aggregator_object
+        
+    ## Find the mapper of the command in the annotation files (if it exists)
+    command_mapper_from_annotation = get_command_mapper_from_annotations(command_string,
+                                                                         options,
+                                                                         config.annotations)
+    mapper_object = None
+    if (command_mapper_from_annotation):
+        mapper_object = Mapper(command_mapper_from_annotation)
+        log("mapper:", mapper_object, "found for:", command_string)
+    
+    return (mapper_object, aggregator_object)
 
-    return None

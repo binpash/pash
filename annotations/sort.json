@@ -14,7 +14,7 @@
         },
         {
             "predicate": "default",
-            "class": "pure",
+            "class": "parallelizable_pure",
             "properties": ["commutative"],
             "agg": "sort",
             "inputs": ["stdin"],
