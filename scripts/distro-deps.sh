@@ -47,10 +47,10 @@ case "$distro" in
      dnf install git gcc gcc-c++ python3-pip make curl automake autoconf libtool hostname bc procps -y &> $LOG_DIR/dnf_install.log
      ;;
    arch*) 
-    echo "Updating mirrors"
-    pacman -Sy &> $LOG_DIR/pacman_update.log
+     echo "Updating mirrors"
+     pacman -Sy &> $LOG_DIR/pacman_update.log
      echo "|-- running pacman install...."
-    yes | pacman -S git libtool m4 automake curl pkg-config python-pip libffi make autoconf gcc10 sudo inetutils bc
-    ;;
+     yes | pacman -S git libtool m4 automake curl pkg-config python-pip libffi make autoconf gcc10 sudo inetutils bc
+     ;;
    *)        echo "unknown distro: '$distro'" ; exit 1 ;;
 esac

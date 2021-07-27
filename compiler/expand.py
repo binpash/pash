@@ -201,7 +201,60 @@ class InvalidVariable(RuntimeError):
         self.reason = reason
 
 def lookup_variable(var, config):
-    return config['shell_variables'].get(var, [None, None])
+    ## If the variable is input arguments then get it from pash_input_args.
+    ##
+    ## TODO KK PR#246 Do we need to split using IFS or is it always spaces?
+    ##
+    ## TODO KK PR#246 Maybe instead of this we could do this setup
+    ##      once during initialization and leave lookup unaltered?
+    ##
+    ## TODO MMG this isn't quite adequate: if pash_input_args contains
+    ##      spaces, we'll miscount. KK and I wrote a test
+    ##      evaluation/tests/interface_tests that's disabled as of PR#246.
+    ##
+    ##      the right solution here is:
+    ##
+    ##         - positional arguments get their own field in the
+    ##           config---they're not store with ordinary shell
+    ##           variables
+    ##
+    ##         - we save those separately, probably in a separate file
+    ##
+    ##           ```
+    ##           echo pash_argc=$# >pash_positional_args
+    ##           for i in $(seq 0 $#)
+    ##           do
+    ##             echo "pash_arg$i=\"$i\"" >pash_positional_args
+    ##           done
+    ##           ```
+    ##
+    ##         - we load these separately. pretty annoying; here's a sketch
+    ##
+    ##           ```
+    ##           cmd="set --"
+    ##           for i in $(seq 0 $pash_argc)
+    ##           do
+    ##             cmd="$cmd \"\$pash_arg$i\""
+    ##           done
+    ##           eval "$cmd"
+    if(var == '@'):
+        return config['shell_variables']['pash_input_args']
+    elif(var == '#'):
+        _type, input_args = config['shell_variables']['pash_input_args']
+        return (None, str(len(input_args.split())))
+    elif(var.isnumeric() and int(var) >= 1):
+        _type, input_args = config['shell_variables']['pash_input_args']
+        split_args = input_args.split()
+        index = int(var) - 1
+        try:
+            val = split_args[index]
+        except:
+            val = ''
+        return (None, val)
+    elif(var == '0'):
+        return config['shell_variables']['pash_shell_name']
+    else:
+        return config['shell_variables'].get(var, [None, None])
 
 def invalidate_variable(var, reason, config):
     config['shell_variables'][var] = [None, InvalidVariable(var, reason)]

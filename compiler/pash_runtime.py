@@ -15,10 +15,11 @@ from ir_to_ast import to_shell
 from util import *
 import config
 
+from definitions.ir.aggregator_node import *
+
 from definitions.ir.nodes.alt_bigram_g_reduce import *
 from definitions.ir.nodes.bigram_g_map import *
 from definitions.ir.nodes.bigram_g_reduce import *
-from definitions.ir.nodes.sort_g_reduce import *
 from definitions.ir.nodes.eager import *
 from definitions.ir.nodes.pash_split import *
 
@@ -484,10 +485,12 @@ def parallelize_dfg_node(old_merger_id, node_id, graph, fileIdGen):
 
 ## Creates a merge command for all pure commands that can be
 ## parallelized using a map and a reduce/merge step
+##
+## Currently adding an aggregator can be done by adding another branch to this function
+##
+## TODO: Make that generic to work through annotations
 def create_merge_commands(curr, new_output_ids, fileIdGen):
-    if(str(curr.com_name) == "sort"):
-        return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
-    elif(str(curr.com_name) == "custom_sort"):
+    if(str(curr.com_name) == "custom_sort"):
         return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
     elif(str(curr.com_name) == "bigrams_aux"):
         return create_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen)
@@ -496,7 +499,14 @@ def create_merge_commands(curr, new_output_ids, fileIdGen):
     elif(str(curr.com_name) == "uniq"):
         return create_uniq_merge_commands(curr, new_output_ids, fileIdGen)
     else:
-        raise NotImplementedError()
+        return create_generic_aggregator_tree(curr, new_output_ids, fileIdGen)
+
+## This is a function that creates a reduce tree for a generic function
+def create_generic_aggregator_tree(curr, new_output_ids, fileIdGen):
+    ## The Aggregator node takes a sequence of input ids and an output id
+    output = create_reduce_tree(lambda ids: AggregatorNode(curr, ids[:-1], ids[-1]),
+                                new_output_ids, fileIdGen)
+    return output
 
 ## TODO: These must be generated using some file information
 ##

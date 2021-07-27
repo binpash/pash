@@ -1,12 +1,11 @@
 {
-    "command": "uniq",
-    "aggregate": "$PASH_TOP/runtime/agg/py/uniq.py",
+    "command": "concat.sh",
     "cases":
     [
         {
             "predicate": "default",
             "class": "pure",
-            "inputs": ["stdin"],
+            "inputs": ["args[:]"],
             "outputs": ["stdout"]
         }
     ]

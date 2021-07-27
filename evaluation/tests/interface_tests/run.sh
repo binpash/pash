@@ -3,9 +3,8 @@
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 # time: print real in seconds, to simplify parsing
 
-## TODO: Make the compiler work too.
 bash="bash"
-pash="$PASH_TOP/pa.sh --dry_run_compiler"
+pash="$PASH_TOP/pa.sh"
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 mkdir -p "$output_dir"
@@ -86,16 +85,21 @@ test6()
     $shell loop1.sh
 }
 
+test7()
+{
+    local shell=$1
+    $shell args_with_spaces.sh "hello there" "hi friend"
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1 &&
     run_test test2 &&
-    run_test test3 &&
+    run_test test3 && # This is commented out at the moment because it doesn't suceed
     run_test test4 &&
     run_test test5 &&
     run_test test6
-
-    # run_test test3  # This is commented out at the moment because it doesn't suceed
+    # && run_test test7
 else
     for testname in $@
     do
