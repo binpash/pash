@@ -310,28 +310,34 @@ The annotations also specifies that the aggregator should be called with the `-a
 ```
 
 **More complex aggregators**:
-Here is the `uniq` annotation that has two cases to support two different sets of flags: 
+Suppose we want to parallelize a new script called [ann-agg-2.sh](https://github.com/binpash/pash/blob/main/evaluation/tests/ann-agg.sh).
+This script contains two new commands `test_uniq_1` and `test_uniq_2`. 
+Their annotations are in files [annotations/test_uniq_1]() and [annotations/test_uniq_2.json]().
 
-```
+```json
 {
-    "command": "uniq",
+    "command": "test_uniq_1",
     "cases":
     [
         {
-            "predicate":
-            {
-                "operator": "exists",
-                "operands": ["-c"]
-            },
+            "predicate": "default"
             "class": "parallelizable_pure",
             "inputs": ["stdin"],
             "outputs": ["stdout"],
             "aggregator":
             {
-                "path": "runtime/agg/py/uniq.py",
-                "options": ["-c"]
+                "path": "runtime/agg/bin/uniq"
             }
-        },
+        }
+    ]
+}
+```
+
+```json
+{
+    "command": "test_uniq_2",
+    "cases":
+    [
         {
             "predicate": "default",
             "class": "parallelizable_pure",
@@ -339,12 +345,13 @@ Here is the `uniq` annotation that has two cases to support two different sets o
             "outputs": ["stdout"],
             "aggregator":
             {
-                "path": "runtime/agg/py/uniq.py"
+                "path": "runtime/agg/bin/uniq",
+                "options": ["-c"]
             }
         }
     ]
 }
-
+```
 
 ## Issues
 
