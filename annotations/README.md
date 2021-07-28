@@ -20,7 +20,7 @@ Workloads that use only stateless commands are trivial to parallelize:
   they do not require any synchronization to maintain correctness, nor caution about where to split inputs.
 
 * _Parallelizable Pure Commands:_
-The second class, `pure`, contains commands that respect functional purity -- _i.e.,_ same outputs for same inputs -- but maintain internal state across their entire pass.
+The second class, `parallelizable_pure`, contains commands that respect functional purity -- _i.e.,_ same outputs for same inputs -- but maintain internal state across their entire pass.
 The details of this state and its propagation during element processing affect their parallelizability characteristics.
 Some commands are easy to parallelize, because they maintain trivial state and are commutative -- _e.g.,_ `wc` simply maintains a counter.
 Other commands, such as `sort`, maintain more complex invariants that have to be taken into account when merging partial results.
@@ -138,7 +138,7 @@ The list identified by "short-long" contains a correspondence of short and long 
 
 ## How to Annotate a Command
 
-The first step to annotating a command is to identify its default class: `stateless`, `pure`, `non-parallelizable`, and `side-effectful`. How does the command behave without any inputs?
+The first step to annotating a command is to identify its default class: `stateless`, `parallelizable_pure`, `non-parallelizable`, and `side-effectful`. How does the command behave without any inputs?
 The next step is to identify the set of inputs and their order.
 
 This process then has to be repeated for every set of arguments, which have to be expressed as first-order-logic predicates (see examples above).
@@ -177,6 +177,176 @@ For more details, here is an early version of the annotation language:
 ```
 
 [//]: # (TODO: 1. update language spec; 2. put all annotations in a directory)
+
+## Mini-tutorial: Adding Custom Aggregators
+
+For this tutorial, let's assume you want to parallelize [the following script](https://github.com/binpash/pash/blob/main/evaluation/tests/ann-agg.sh):
+
+```bash
+FILE="$PASH_TOP/evaluation/tests/input/1M.txt"
+
+test_one() {
+  cat
+}
+
+test_two() {
+  cat
+}
+
+cat $FILE | test_one | test_two
+```
+
+Let's also assume there are no annotations or aggregators for the commands `test_one` and `test_two`.
+Note that normally these two commands would be annotated as `stateless`, as their aggregator is simply the con`cat`enation function;
+  however, we will now annotate them as `parallelizable_pure` and provide "custom" aggregation commands that simply concatenate their input streams.
+
+*Step 1: Implement aggregators and their annotations*:
+
+An aggregator is usually either binary or _n_-ary:
+  it takes as input two or _n_ file names (or paths) and outputs results to the standard out.
+An aggregator  may also take additional flags---for example, flags that configure its operation or flags that were provided to the original command.
+
+We will implement `test_one`'s aggregator as [a shell script](https://github.com/binpash/pash/blob/main/runtime/agg/opt/concat.sh) that internally uses the Unix `cat` command to concatenate any number of input streams.
+
+```bash
+#!/usr/bin/env bash
+cat $*
+```
+
+We will implement `test_two`'s aggregator as [a Python script](https://github.com/binpash/pash/blob/main/runtime/agg/py/cat.py) that concatenates any number of inputs streams.
+
+```Python
+#!/usr/bin/python
+import sys, os, functools, utils
+
+def agg(a, b):
+  return a + b
+
+utils.help()
+utils.out("".join(functools.reduce(agg, utils.read_all(), [])))
+```
+
+For PaSh to be able to hook these aggregators correctly, we also need to add their annotations in [annotations/custom_aggregators](https://github.com/binpash/pash/tree/main/annotations/custom_aggregators).
+Below are the two annotation files named `cat.py.json` and `concat.json`. (FIXME: relative path? **Until this is fixed, prefix aggregator names with `pagg-` to avoid name clashes!**)
+The most important information in these files is (i) the aggregation command's `name`, and (ii) its treatment of inputs (both taking `["args[:]"]`).
+
+```json
+{
+    "command": "cat.py",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["args[:]"],
+            "outputs": ["stdout"]
+        }
+    ]
+}
+```
+
+```json
+{
+    "command": "concat.sh",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["args[:]"],
+            "outputs": ["stdout"]
+        }
+    ]
+}
+```
+
+
+*Step 2: Point commands to their custom aggregators*:
+Add two new annotation files in `$PASH_TOP/annotations` with names `test_one.json` and  `test_two.json`, so that they point to the right aggregator commands.
+Apart from providing the correct command `name`, the two key properties are the `class` (which should be `parallelizable_pure`) and the `rel_path` (which should point to the aggregator programs we just implemented---ideally, relative to `$PASH_TOP`).
+
+Here is the annotation for `test_one.json`, pointing to `runtime/agg/opt/concat.sh` (i.e., implying `$PASH_TOP/runtime/agg/opt/concat.sh`):
+```json
+{
+    "command": "test_one",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "parallelizable_pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+            "aggregator":
+            {
+                "rel_path": "runtime/agg/opt/concat.sh",
+                "options": []
+            }
+        }
+    ]
+}
+```
+
+Here is the annotation for `test_two.json`, pointing to `runtime/agg/py/cat.py` (i.e., implying `$PASH_TOP/runtime/agg/py/cat.py`).
+The annotations also specifies that the aggregator should be called with the `-a` flag, in addition to any other flags provided to the original command by `pash`.
+
+```json
+{
+    "command": "test_one",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "parallelizable_pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+            "aggregator":
+            {
+                "rel_path": "runtime/agg/opt/concat.sh",
+                "options": ["-a"]
+            }
+        }
+    ]
+}
+```
+
+**More complex aggregators**:
+Here is the `uniq` annotation that has two cases to support two different sets of flags: 
+
+```
+{
+    "command": "uniq",
+    "aggregate": "$PASH_TOP/runtime/agg/py/uniq.py",
+    "cases":
+    [
+        {
+            "predicate":
+            {
+                "operator": "exists",
+                "operands": ["-c"]
+            },
+            "class": "parallelizable_pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+            "aggregator":
+            {
+                "rel_path": "runtime/agg/py/uniq.py",
+                "options": ["-c"]
+            }
+        },
+        {
+            "predicate": "default",
+            "class": "parallelizable_pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+            "aggregator":
+            {
+                "rel_path": "runtime/agg/py/uniq.py",
+                "options": []
+            }
+        }
+    ]
+}
+
 
 ## Issues
 
