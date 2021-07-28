@@ -2,7 +2,7 @@
 
 ## Test contains command aliases with annotations that point to custom aggregators
 
-FILE="../evaluation/tests/input/1M.txt"
+FILE="$PASH_TOP/evaluation/tests/input/1M.txt"
 
 test_one() {
   cat

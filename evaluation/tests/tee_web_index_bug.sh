@@ -1,4 +1,4 @@
-IN=../evaluation/tests/input/1M.txt
+IN=$PASH_TOP/evaluation/tests/input/1M.txt
 
 mkfifo {1,2,3}grams
 
