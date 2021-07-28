@@ -180,21 +180,7 @@ For more details, here is an early version of the annotation language:
 
 ## Mini-tutorial: Adding Custom Aggregators
 
-For this tutorial, let's assume you want to parallelize [the following script](https://github.com/binpash/pash/blob/main/evaluation/tests/ann-agg.sh):
-
-```bash
-FILE="$PASH_TOP/evaluation/tests/input/1M.txt"
-
-test_one() {
-  cat
-}
-
-test_two() {
-  cat
-}
-
-cat $FILE | test_one | test_two
-```
+For this tutorial, let's assume you want to parallelize [a simple `ann-agg.sh` script](https://github.com/binpash/pash/blob/main/evaluation/tests/ann-agg.sh).
 
 Let's also assume there are no annotations or aggregators for the commands `test_one` and `test_two`.
 Note that normally these two commands would be annotated as `stateless`, as their aggregator is simply the con`cat`enation function;
@@ -208,23 +194,7 @@ An aggregator  may also take additional flags---for example, flags that configur
 
 We will implement `test_one`'s aggregator as [a shell script](https://github.com/binpash/pash/blob/main/runtime/agg/opt/concat.sh) that internally uses the Unix `cat` command to concatenate any number of input streams.
 
-```bash
-#!/usr/bin/env bash
-cat $*
-```
-
 We will implement `test_two`'s aggregator as [a Python script](https://github.com/binpash/pash/blob/main/runtime/agg/py/cat.py) that concatenates any number of inputs streams.
-
-```Python
-#!/usr/bin/python
-import sys, os, functools, utils
-
-def agg(a, b):
-  return a + b
-
-utils.help()
-utils.out("".join(functools.reduce(agg, utils.read_all(), [])))
-```
 
 For PaSh to be able to hook these aggregators correctly, _i.e._, so that it can instantiate them as command invocations, we also need to add their annotations in [annotations/custom_aggregators](https://github.com/binpash/pash/tree/main/annotations/custom_aggregators).
 Below are the two annotation files named [`annotations/custom_aggregators/cat.py.json`](./custom_aggregators/cat.py.json) and [`annotations/custom_aggregators/concat.json`](./custom_aggregators/concat.json). (FIXME: relative path? **Until this is fixed, prefix aggregator names with `pagg-` to avoid name clashes!**)
