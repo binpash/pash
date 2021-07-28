@@ -12,8 +12,8 @@ Where `args` are the arguments that were passed to the command that produced the
 
 Let's assume that the aggregator being implemented is for a command called `cmd`.
 
-  1. Create a folder named `cmd` inside `aggregators`
+  1. Create a folder named `cmd` inside `cpp/aggregators`
   2. Create a file named `agg.h` inside that folder
-  3. Implement the aggregator inside that file using the instructions provided in `common/main.h` or use a different aggregator as an example
-  4. Add the aggregator to `Makefile` (see instructions inside the `Makefile`)
-  5. Add unit tests for the created aggregator in `test.sh`. Consult the instructions in that file. Remember to test all options and flags of the aggregator.
+  3. Implement the aggregator inside that file using the instructions provided in `cpp/common/main.h` or use a different aggregator as an example
+  4. Add the aggregator to `cpp/Makefile` (see instructions inside the Makefile)
+  5. Add unit tests for the created aggregator in `cpp/tests/test.sh`. Consult the instructions in that file. Remember to test all options and flags of the aggregator.
