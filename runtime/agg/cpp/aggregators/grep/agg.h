@@ -1,5 +1,5 @@
-#ifndef AGG_TR_H
-#define AGG_TR_H
+#ifndef AGG_GREP_H
+#define AGG_GREP_H
 
 #include "main.h"
 #include "util.h"
