@@ -26,7 +26,7 @@ Some commands are easy to parallelize, because they maintain trivial state and a
 Other commands, such as `sort`, maintain more complex invariants that have to be taken into account when merging partial results.
 
 * _Non-parallelizable Pure Commands:_
-The third class, `non-parallelizable`, contains commands that, while purely functional, cannot be parallelized within a single data stream.
+The third class, `pure`, contains commands that, while purely functional, cannot be parallelized within a single data stream.
 This is because their internal state depends on prior state in non-trivial ways over the same pass. % should we say something about state machines?
 For example, hashing commands such as `sha1sum` maintain complex state that has to be updated sequentially.
 If parallelized on a single input, each stage would need to wait on the results of all previous stages, foregoing any parallelism benefits.
@@ -138,7 +138,7 @@ The list identified by "short-long" contains a correspondence of short and long 
 
 ## How to Annotate a Command
 
-The first step to annotating a command is to identify its default class: `stateless`, `parallelizable_pure`, `non-parallelizable`, and `side-effectful`. How does the command behave without any inputs?
+The first step to annotating a command is to identify its default class: `stateless`, `parallelizable_pure`, `pure`, and `side-effectful`. How does the command behave without any inputs?
 The next step is to identify the set of inputs and their order.
 
 This process then has to be repeated for every set of arguments, which have to be expressed as first-order-logic predicates (see examples above).
