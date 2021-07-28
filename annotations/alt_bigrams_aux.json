@@ -9,8 +9,7 @@
             "outputs": ["stdout"],
             "aggregator":
             {
-                "name": "alt_bigram_aux_reduce",
-                "options": []
+                "name": "alt_bigram_aux_reduce"
             }
         }
     ],
