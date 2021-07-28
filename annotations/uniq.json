@@ -4,30 +4,11 @@
     "cases":
     [
         {
-            "predicate":
-            {
-                "operator": "exists",
-                "operands": ["-c"]
-            },
-            "class": "parallelizable_pure",
-            "inputs": ["stdin"],
-            "outputs": ["stdout"],
-            "aggregator":
-            {
-                "rel_path": "runtime/agg/py/uniq.py",
-                "options": ["-c"]
-            }
-        },
-        {
             "predicate": "default",
-            "class": "parallelizable_pure",
+            "class": "pure",
             "inputs": ["stdin"],
-            "outputs": ["stdout"],
-            "aggregator":
-            {
-                "rel_path": "runtime/agg/py/uniq.py",
-                "options": []
-            }
+            "outputs": ["stdout"]
         }
     ]
 }
+
