@@ -226,132 +226,24 @@ utils.help()
 utils.out("".join(functools.reduce(agg, utils.read_all(), [])))
 ```
 
-For PaSh to be able to hook these aggregators correctly, i.e., so that it can instantiate them as command invocations, we also need to add their annotations in [annotations/custom_aggregators](https://github.com/binpash/pash/tree/main/annotations/custom_aggregators).
-Below are the two annotation files named `cat.py.json` and `concat.json`. (FIXME: relative path? **Until this is fixed, prefix aggregator names with `pagg-` to avoid name clashes!**)
+For PaSh to be able to hook these aggregators correctly, _i.e._, so that it can instantiate them as command invocations, we also need to add their annotations in [annotations/custom_aggregators](https://github.com/binpash/pash/tree/main/annotations/custom_aggregators).
+Below are the two annotation files named [`annotations/custom_aggregators/cat.py.json`](./custom_aggregators/cat.py.json) and [`annotations/custom_aggregators/concat.json`](./custom_aggregators/concat.json). (FIXME: relative path? **Until this is fixed, prefix aggregator names with `pagg-` to avoid name clashes!**)
 The most important information in these files is (i) the aggregation command's `name`, and (ii) its treatment of inputs (both taking `["args[:]"]`), and outputs (both outputing to `["stdout"]`).
-
-```json
-{
-    "command": "cat.py",
-    "cases":
-    [
-        {
-            "predicate": "default",
-            "class": "pure",
-            "inputs": ["args[:]"],
-            "outputs": ["stdout"]
-        }
-    ]
-}
-```
-
-```json
-{
-    "command": "concat.sh",
-    "cases":
-    [
-        {
-            "predicate": "default",
-            "class": "pure",
-            "inputs": ["args[:]"],
-            "outputs": ["stdout"]
-        }
-    ]
-}
-```
-
 
 *Step 2: Point commands to their custom aggregators*:
 Add two new annotation files in `$PASH_TOP/annotations` with names `test_one.json` and  `test_two.json`, so that they point to the right aggregator commands.
 Apart from providing the correct command `name`, the two key properties are the `class` (which should be `parallelizable_pure`) and the `rel_path` (which should point to the aggregator programs we just implemented---ideally, relative to `$PASH_TOP`).
 
-Here is the annotation for `test_one.json`, where the aggregator points to `runtime/agg/opt/concat.sh`. 
+Here is the annotation for [`test_one.json`](./test_one.json), where the aggregator points to `runtime/agg/opt/concat.sh`. 
 Note that path is relative with respect to `$PASH_TOP` and therefore refers to `$PASH_TOP/runtime/agg/opt/concat.sh`:
-```json
-{
-    "command": "test_one",
-    "cases":
-    [
-        {
-            "predicate": "default",
-            "class": "parallelizable_pure",
-            "inputs": ["stdin"],
-            "outputs": ["stdout"],
-            "aggregator":
-            {
-                "path": "runtime/agg/opt/concat.sh"
-            }
-        }
-    ]
-}
-```
 
-Here is the annotation for `test_two.json`, pointing to `runtime/agg/py/cat.py` (i.e., implying `$PASH_TOP/runtime/agg/py/cat.py`).
+Here is the annotation for [`test_two.json`](./test_two.json), pointing to `runtime/agg/py/cat.py` (i.e., implying `$PASH_TOP/runtime/agg/py/cat.py`).
 The annotations also specifies that the aggregator should be called with the `-a` flag, in addition to any other flags provided to the original command.
-
-```json
-{
-    "command": "test_one",
-    "cases":
-    [
-        {
-            "predicate": "default",
-            "class": "parallelizable_pure",
-            "inputs": ["stdin"],
-            "outputs": ["stdout"],
-            "aggregator":
-            {
-                "path": "runtime/agg/opt/concat.sh",
-                "options": ["-a"]
-            }
-        }
-    ]
-}
-```
 
 **More complex aggregators**:
 Suppose we want to parallelize a new script called [ann-agg-2.sh](https://github.com/binpash/pash/blob/main/evaluation/tests/ann-agg.sh).
 This script contains two new commands `test_uniq_1` and `test_uniq_2`. 
-Their annotations are in files [annotations/test_uniq_1]() and [annotations/test_uniq_2.json]().
-
-```json
-{
-    "command": "test_uniq_1",
-    "cases":
-    [
-        {
-            "predicate": "default"
-            "class": "parallelizable_pure",
-            "inputs": ["stdin"],
-            "outputs": ["stdout"],
-            "aggregator":
-            {
-                "path": "runtime/agg/bin/uniq"
-            }
-        }
-    ]
-}
-```
-
-```json
-{
-    "command": "test_uniq_2",
-    "cases":
-    [
-        {
-            "predicate": "default",
-            "class": "parallelizable_pure",
-            "inputs": ["stdin"],
-            "outputs": ["stdout"],
-            "aggregator":
-            {
-                "path": "runtime/agg/bin/uniq",
-                "options": ["-c"]
-            }
-        }
-    ]
-}
-```
+Their annotations are in files [annotations/test_uniq_1](./test_uniq_1.json) and [annotations/test_uniq_2.json](./test_uniq_2.json).
 
 ## Issues
 
