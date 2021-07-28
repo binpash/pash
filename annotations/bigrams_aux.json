@@ -9,13 +9,11 @@
             "outputs": ["stdout"],
             "aggregator":
             {
-                "name": "bigram_aux_reduce",
-                "options": []
+                "name": "bigram_aux_reduce"
             },
             "mapper":
             {
                 "name": "bigram_aux_map",
-                "options": [],
                 "num_outputs": 3,
                 "comment": "This is only needed if the map phase of a command is not the same as the command itself. In addition, this map here needs to keep extra info. TODO: At some point, the num_outputs should be extracted from the annotation of the mapper itself."
             }
