@@ -44,6 +44,15 @@ if [ ! -f ./10M.txt ]; then
   done
 fi
 
+if [ ! -f ./ab.txt ]; then
+  touch ab.txt
+  for (( i = 0; i < 10; i++ )); do
+    echo 'aaa' >> ab.txt
+    echo 'bbb' >> ab.txt
+  done
+fi
+
+
 ## Re-sort words for this machine
 if [ ! -f ./sorted_words ]; then
   sort words > sorted_words
