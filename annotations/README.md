@@ -192,9 +192,7 @@ An aggregator is usually either binary or _n_-ary:
   it takes as input two or _n_ file names (or paths) and outputs results to the standard out.
 An aggregator  may also take additional flags---for example, flags that configure its operation or flags that were provided to the original command.
 
-We will implement `test_one`'s aggregator as [a shell script](https://github.com/binpash/pash/blob/main/runtime/agg/opt/concat.sh) that internally uses the Unix `cat` command to concatenate any number of input streams.
-
-We will implement `test_two`'s aggregator as [a Python script](https://github.com/binpash/pash/blob/main/runtime/agg/py/cat.py) that concatenates any number of inputs streams.
+We will implement `test_one`'s aggregator as [a shell script](https://github.com/binpash/pash/blob/main/runtime/agg/opt/concat.sh) that internally uses the Unix `cat` command to concatenate any number of input streams. We will implement `test_two`'s aggregator as [a Python script](https://github.com/binpash/pash/blob/main/runtime/agg/py/cat.py) that concatenates any number of inputs streams. For instructions on how to implement aggregators, see [this file](https://github.com/binpash/pash/blob/main/runtime/agg/README.md).
 
 For PaSh to be able to hook these aggregators correctly, _i.e._, so that it can instantiate them as command invocations, we also need to add their annotations in [annotations/custom_aggregators](https://github.com/binpash/pash/tree/main/annotations/custom_aggregators).
 Below are the two annotation files named [`annotations/custom_aggregators/cat.py.json`](./custom_aggregators/cat.py.json) and [`annotations/custom_aggregators/concat.json`](./custom_aggregators/concat.json). (FIXME: relative path? **Until this is fixed, prefix aggregator names with `pagg-` to avoid name clashes!**)
