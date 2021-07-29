@@ -1,12 +1,9 @@
 {
-    "command": "chmod",
-    "cases":
-    [
-        {
-            "predicate": "default",
-            "class": "side-effectful",
-            "inputs": ["stdin"],
-            "outputs": ["stdout"]
-        }
-    ]
+  "command": "chmod",
+  "cases": [
+    {
+      "predicate": "default",
+      "class": "side-effectful"
+    }
+  ]
 }
