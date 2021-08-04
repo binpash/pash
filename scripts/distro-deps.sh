@@ -50,5 +50,12 @@ case "$distro" in
      echo "|-- running pacman install...."
     yes | pacman -S git libtool m4 automake curl pkg-config python-pip libffi make autoconf gcc sudo inetutils bc
     ;;
-   *)        echo "unknown distro: '$distro'" ; exit 1 ;;
+    freebsd*)
+        echo "Updating mirros"
+        pkg update &> $LOG_DIR/pkg_update.log
+        echo "|-- running pkg install...."
+        yes | pkg install libtool m4 automake curl libffi py38-pip autoconf gcc
+    ;;
+
+*)        echo "unknown distro: '$distro'" ; exit 1 ;;
 esac
