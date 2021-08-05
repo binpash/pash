@@ -10,7 +10,13 @@
 #include <sys/select.h>
 #include <unistd.h>
 #include <sys/time.h>
+#ifdef __linux__
 #include <sys/sendfile.h>
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/uio.h>
+#endif
 
 #ifndef __DEBUG__
 #define __DEBUG__
