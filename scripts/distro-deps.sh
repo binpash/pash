@@ -32,6 +32,10 @@ case "$distro" in
      sudo apt-get update &> $LOG_DIR/apt_update.log
      echo "|-- running apt install..."
      sudo apt-get install -y git libtool m4 curl automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils g++-10 &> $LOG_DIR/apt_install.log
+     echo "|-- make g++-10 default..."
+     sudo update-alternatives --remove-all g++
+     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10
+     sudo update-alternatives --set /usr/bin/g++ g++ /usr/bin/g++-10
      ;;
    debian*)
      # tested with debian:stable-20210408
@@ -41,6 +45,10 @@ case "$distro" in
      apt-get update &> $LOG_DIR/apt_update.log
      echo "|-- running apt install..."
      apt-get install -y git libtool curl sudo procps m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils g++-10 &> $LOG_DIR/apt_install.log
+     echo "|-- make g++-10 default..."
+     sudo update-alternatives --remove-all g++
+     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10
+     sudo update-alternatives --set /usr/bin/g++ g++ /usr/bin/g++-10
      ;;
    fedora*) 
      echo "|-- running dnf install...."
