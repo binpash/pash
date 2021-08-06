@@ -16,3 +16,6 @@ echo "Running compiler tests..."
 cd "$PASH_TOP/compiler"
 ./test_evaluation_scripts.sh
 
+echo "Running aggregator tests..."
+cd "$PASH_TOP/runtime/agg/cpp/tests"
+./test.sh
