@@ -4,7 +4,7 @@
 # Add cmd at the end of the line below
 all: wc uniq tr grep
 
-CXX = g++-10
+CXX = g++
 CFLAGS = -Wall -std=c++17 -O3 -DNDEBUG -Icommon
 CFLAGS += common/main.cpp
 DEPS = common/*
