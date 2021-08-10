@@ -9,16 +9,23 @@ CFLAGS = -Wall -std=c++17 -O3 -DNDEBUG -Icommon
 CFLAGS += common/main.cpp
 DEPS = common/*
 
+ifeq ($(shell uname -s), Linux)
+	AGG_PATH = aggregators/linux
+endif
+ifeq ($(shell uname -s), FreeBSD)
+	AGG_PATH = aggregators/bsd
+endif
+
 # Copy one of these pairs of two lines and paste it at the end of the list
 # And change each occurence of the command name (like wc) for cmd
-wc: $(DEPS) aggregators/wc/agg.h
-	${CXX} ${CFLAGS} -Iaggregators/wc -o ./bin/wc
-uniq: $(DEPS) aggregators/uniq/agg.h
-	${CXX} ${CFLAGS} -Iaggregators/uniq -o ./bin/uniq
-tr: $(DEPS) aggregators/tr/agg.h
-	${CXX} ${CFLAGS} -Iaggregators/tr -o ./bin/tr
-grep: $(DEPS) aggregators/grep/agg.h
-	${CXX} ${CFLAGS} -Iaggregators/grep -o ./bin/grep
+wc: $(DEPS) $(AGG_PATH)/wc/agg.h
+	${CXX} ${CFLAGS} -I$(AGG_PATH)/wc -o ./bin/wc
+uniq: $(DEPS) $(AGG_PATH)/uniq/agg.h
+	${CXX} ${CFLAGS} -I$(AGG_PATH)/uniq -o ./bin/uniq
+tr: $(DEPS) $(AGG_PATH)/tr/agg.h
+	${CXX} ${CFLAGS} -I$(AGG_PATH)/tr -o ./bin/tr
+grep: $(DEPS) $(AGG_PATH)/grep/agg.h
+	${CXX} ${CFLAGS} -I$(AGG_PATH)/grep -o ./bin/grep
 
 # That's it for this file
 
