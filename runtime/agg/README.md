@@ -22,6 +22,6 @@ Let's assume that the aggregator being implemented is for a command called `cmd`
 
     2.3 You may create additional files in the aggregator directory. This can be used to share code between aggregator implementations for different `OS`es. When `#include`ing, assume that the aggregator directory is in the include path.
 
-3. Add unit tests for the created aggregator in `cpp/tests/test.sh`. Consult the instructions in that file. Remember to test all options and flags of the aggregator.
+3. Add unit tests for the created aggregator in `cpp/tests/test-OS.sh` for each `OS`. Consult the instructions in that file. Remember to test all options and flags of the aggregator.
 
 Note: after completing these steps the aggregator will automatically be built by the `Makefile` with no changes to it required.

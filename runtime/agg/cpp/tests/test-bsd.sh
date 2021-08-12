@@ -23,11 +23,9 @@
 
 ./test-common.sh tr "'[a-z]' '\n'" ../bin/tr
 ./test-common.sh tr "A-Z a-z" ../bin/tr
+./test-common.sh tr "-cdu A-Z a-z" ../bin/tr
 ./test-common.sh tr "-c '[A-Z]' '\n'" ../bin/tr
-./test-common.sh tr "--complement '[1-9]\n*' '[a-z][A-Z]" ../bin/tr
-./test-common.sh tr "--complement -t '[1-9]\n*' '[a-z][A-Z]" ../bin/tr
 ./test-common.sh tr "-d '\n'" ../bin/tr
-./test-common.sh tr "-tcd '[1-9][a-z][A-Z]\n'" ../bin/tr
 
 ./test-common.sh wc "" ../bin/wc
 ./test-common.sh wc "-l" ../bin/wc
