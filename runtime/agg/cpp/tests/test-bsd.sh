@@ -23,7 +23,7 @@
 
 ./test-common.sh tr "'[a-z]' '\n'" ../bin/tr
 ./test-common.sh tr "A-Z a-z" ../bin/tr
-./test-common.sh tr "-cu -d A-Z a-z" ../bin/tr
+./test-common.sh tr "-cud A-Z" ../bin/tr
 ./test-common.sh tr "-c '[A-Z]' '\n'" ../bin/tr
 ./test-common.sh tr "-d '\n'" ../bin/tr
 
