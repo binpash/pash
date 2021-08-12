@@ -1,33 +1,32 @@
-# To add a new aggregator, follow the steps below
-# Let's assume the aggregator is for a command named cmd
-.PHONY: clean
-# Add cmd at the end of the line below
-all: wc uniq tr grep
+.PHONY: all clean
+all:
 
 CXX = g++
 CFLAGS = -Wall -std=c++17 -O3 -DNDEBUG -Icommon
 CFLAGS += common/main.cpp
 DEPS = common/*
+TARGETS =
 
 ifeq ($(shell uname -s), Linux)
-	AGG_PATH = aggregators/linux
+	SYSTEM_NAME = linux
 endif
 ifeq ($(shell uname -s), FreeBSD)
-	AGG_PATH = aggregators/bsd
+	SYSTEM_NAME = bsd
 endif
 
-# Copy one of these pairs of two lines and paste it at the end of the list
-# And change each occurence of the command name (like wc) for cmd
-wc: $(DEPS) $(AGG_PATH)/wc/agg.h
-	${CXX} ${CFLAGS} -I$(AGG_PATH)/wc -o ./bin/wc
-uniq: $(DEPS) $(AGG_PATH)/uniq/agg.h
-	${CXX} ${CFLAGS} -I$(AGG_PATH)/uniq -o ./bin/uniq
-tr: $(DEPS) $(AGG_PATH)/tr/agg.h
-	${CXX} ${CFLAGS} -I$(AGG_PATH)/tr -o ./bin/tr
-grep: $(DEPS) $(AGG_PATH)/grep/agg.h
-	${CXX} ${CFLAGS} -I$(AGG_PATH)/grep -o ./bin/grep
+define add_aggregator
 
-# That's it for this file
+$1: $(DEPS) aggregators/$1/agg-${SYSTEM_NAME}.h
+	mkdir -p intermediate/$1
+	cp aggregators/$1/agg-${SYSTEM_NAME}.h intermediate/$1/agg.h
+	${CXX} ${CFLAGS} -I intermediate/$1 -I aggregators/$1/ -o ./bin/$1
+TARGETS += $1
+endef
+
+$(eval $(foreach agg,$(shell ls aggregators),$(call add_aggregator,$(agg))))
+
+all: $(TARGETS)
 
 clean:
 	rm -rf ./bin/*
+	rm -rf ./intermediate/*
