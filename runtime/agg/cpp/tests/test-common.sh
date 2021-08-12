@@ -1,11 +1,3 @@
-if [[ -z "$PASH_TOP" ]]; then
-    echo "Must set PASH_TOP" 1>&2
-    exit 1
-fi
-
-IN1=$PASH_TOP/evaluation/intro/input/100M.txt
-IN2=$PASH_TOP/evaluation/intro/input/words
-
 CMD="$1"
 FLG="$2"
 AGG="$3"
