@@ -3,12 +3,6 @@ FLG="$2"
 AGG="$3"
 
 cat $IN1 $IN2 | $CMD $FLG > reference
-
-if [ $? -ge 2 ]; then
-    echo "Base $CMD invocation failed ...FAIL"
-    exit 1
-fi
-
 cat $IN1 | $CMD $FLG > partial1
 cat $IN2 | $CMD $FLG > partial2
 
