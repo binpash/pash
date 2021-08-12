@@ -4,7 +4,7 @@ AGG="$3"
 
 cat $IN1 $IN2 | $CMD $FLG > reference
 
-if [ $? -ne 0 ]; then
+if [ $? -ge 2 ]; then
     echo "Base $CMD invocation failed ...FAIL"
     exit 1
 fi
