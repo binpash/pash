@@ -5,7 +5,6 @@ CXX = g++
 CFLAGS = -Wall -std=c++17 -O3 -DNDEBUG -Icommon
 CFLAGS += common/main.cpp
 DEPS = common/*
-TARGETS =
 
 ifeq ($(shell uname -s), Linux)
 	SYSTEM_NAME = linux
