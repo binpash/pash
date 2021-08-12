@@ -40,8 +40,6 @@
 ./test-common.sh wc "-mlw" ../bin/wc
 ./test-common.sh wc "-mLc" ../bin/wc
 ./test-common.sh wc "-L -mc -w" ../bin/wc
-./test-common.sh wc "--bytes -c --chars -L" ../bin/wc
-./test-common.sh wc "-L --lines --words" ../bin/wc
 
 ./test-common.sh uniq "" ../bin/uniq
 ./test-common.sh uniq "-c" ../bin/uniq 
