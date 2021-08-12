@@ -3,8 +3,10 @@
 
 #include "common.h"
 
-int platform_dependent_option_count_tweak(int x) { 
-    return x - (g_options.is_present(2) && g_options.is_present(3)); 
+size_t platform_dependent(int& numbers_to_input) { 
+    if(g_options.is_present(2) && g_options.is_present(3))
+        --numbers_to_input;
+    return 7;
 }
 
 #endif
