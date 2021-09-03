@@ -2,18 +2,18 @@ CMD="$1"
 FLG="$2"
 AGG="$3"
 
-cat $IN1 $IN2 | $CMD $FLG > reference
-cat $IN1 | $CMD $FLG > partial1
-cat $IN2 | $CMD $FLG > partial2
+cat $IN1 $IN2 | $CMD $FLG > ./temp/reference
+cat $IN1 | $CMD $FLG > ./temp/partial1
+cat $IN2 | $CMD $FLG > ./temp/partial2
 
-$AGG partial1 partial2 $FLG > aggregated
+$AGG ./temp/partial1 ./temp/partial2 $FLG > ./temp/aggregated
 
-diff aggregated reference > log
+diff ./temp/aggregated ./temp/reference > ./temp/log
 if [ $? -ne 0 ]; then
-    cat log | head
+    cat ./temp/log | head
     echo $CMD "$FLG ...FAIL"
 else
     echo $CMD "$FLG ...pass"
 fi
 
-rm -f partial1 partial2 aggregated reference log
+rm -f ./temp/partial1 ./temp/partial2 ./temp/aggregated ./temp/reference ./temp/log
