@@ -19,7 +19,7 @@ distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 # now do different things depending on distro
 case "$distro" in
    freebsd*)  
-    temp="$(TMPDIR=/tmp mktemp -u pash_XXXXXXXXXX)"
+    temp="$(TMPDIR=/tmp mktemp pash_XXXXXXXXXX)"
     ;;
     *)
     temp="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"

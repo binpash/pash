@@ -12,7 +12,7 @@ case "$distro" in
     freebsd*)  
         # bsd is so fun :)
         mkdir -p "$PASH_TMP_PREFIX"
-        tmp=$(mktemp -u pash_XXXXXXXXXX)
+        tmp=$(mktemp pash_XXXXXXXXXX)
         mv $tmp "$PASH_TMP_PREFIX"
         echo "${PASH_TMP_PREFIX}/${tmp}"
         ;;
