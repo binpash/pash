@@ -11,10 +11,8 @@ distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 case "$distro" in
     freebsd*)  
         # bsd is so fun :)
-        mkdir -p "$PASH_TMP_PREFIX"
-        tmp=$(mktemp pash_XXXXXXXXXX)
-        mv $tmp "$PASH_TMP_PREFIX"
-        echo "${PASH_TMP_PREFIX}/${tmp}"
+        tmp=$(TMPDIR=$PASH_TMP_PREFIX mktemp -t pash_XXXXXXXXXX)
+        echo "${tmp}"
         ;;
     *)
         echo "$(mktemp --tmpdir="$PASH_TMP_PREFIX" -u pash_XXXXXXXXXX)"
