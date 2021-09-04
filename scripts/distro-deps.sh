@@ -25,36 +25,38 @@ fi
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 # now do different things depending on distro
 case "$distro" in
-    ubuntu*)  
-        echo "Running preparation sudo apt install:"
-        echo "|-- running apt update..."
-        sudo apt-get update &> $LOG_DIR/apt_update.log
-        echo "|-- running apt install..."
-        sudo apt-get install -y git libtool m4 curl automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils &> $LOG_DIR/apt_install.log
-        ;;
-    debian*)
-        # tested with debian:stable-20210408
-        echo "Running preparation sudo apt install:"
-        echo "|-- running apt update..."
-        apt-get update &> $LOG_DIR/apt_update.log
-        echo "|-- running apt install..."
-        apt-get install -y git libtool curl sudo procps m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils &> $LOG_DIR/apt_install.log
-        ;;
-    fedora*) 
-        echo "|-- running dnf install...."
-        dnf install git gcc python3-pip make curl automake autoconf libtool hostname bc procps -y  &> $LOG_DIR/dnf_install.log
-        ;;
-    arch*) 
-        echo "Updating mirrors"
-        pacman -Sy &> $LOG_DIR/pacman_update.log
-        echo "|-- running pacman install...."
-        yes | pacman -S git libtool m4 automake curl pkg-config python-pip libffi make autoconf gcc sudo inetutils bc
-        ;;
-    freebsd*)
-        echo "Updating mirros"
-        pkg update &> $LOG_DIR/pkg_update.log
-        echo "|-- running pkg install...."
-        yes | pkg install libtool m4 automake curl libffi py38-pip autoconf gcc gsed gmake
-        ;;
-    *)        echo "unknown distro: '$distro'" ; exit 1 ;;
+   ubuntu*)  
+     echo "Running preparation sudo apt install:"
+     echo "|-- running apt update..."
+     sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y # for g++-10
+     sudo apt-get update &> $LOG_DIR/apt_update.log
+     echo "|-- running apt install..."
+     sudo apt-get install -y git libtool m4 curl automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils g++-10 &> $LOG_DIR/apt_install.log
+     ;;
+   debian*)
+     # tested with debian:stable-20210408
+     echo "Running preparation sudo apt install:"
+     echo "|-- running apt update..."
+     add-apt-repository ppa:ubuntu-toolchain-r/test -y # for g++-10
+     apt-get update &> $LOG_DIR/apt_update.log
+     echo "|-- running apt install..."
+     apt-get install -y git libtool curl sudo procps m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils g++-10 &> $LOG_DIR/apt_install.log
+     ;;
+   fedora*) 
+     echo "|-- running dnf install...."
+     dnf install git gcc gcc-c++ python3-pip make curl automake autoconf libtool hostname bc procps -y &> $LOG_DIR/dnf_install.log
+     ;;
+   arch*) 
+     echo "Updating mirrors"
+     pacman -Sy &> $LOG_DIR/pacman_update.log
+     echo "|-- running pacman install...."
+     yes | pacman -S git libtool m4 automake curl pkg-config python-pip libffi make autoconf gcc10 sudo inetutils bc
+     ;;
+   freebsd*)
+     echo "Updating mirros"
+     pkg update &> $LOG_DIR/pkg_update.log
+     echo "|-- running pkg install...."
+     yes | pkg install libtool m4 automake curl libffi py38-pip autoconf gcc gsed gmake
+     ;;
+   *)        echo "unknown distro: '$distro'" ; exit 1 ;;
 esac
