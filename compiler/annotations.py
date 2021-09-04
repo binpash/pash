@@ -281,6 +281,18 @@ def get_command_properties_from_annotations(command, options, annotations):
        and 'properties' in command_ann):
         return command_ann['properties']
 
+def get_command_aggregator_from_annotations(command, options, annotations):
+    command_ann = get_command_from_annotations(command, options, annotations)
+    if(command_ann
+       and 'aggregator' in command_ann):
+        return command_ann['aggregator']
+
+def get_command_mapper_from_annotations(command, options, annotations):
+    command_ann = get_command_from_annotations(command, options, annotations)
+    if(command_ann
+       and 'mapper' in command_ann):
+        return command_ann['mapper']
+
 ## TODO: Find a general way to handle arbitrary paths etc
 def get_command_from_annotations(command_path, options, annotations):
     ## Get only the basename from the path of the command

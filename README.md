@@ -12,7 +12,7 @@ To parallelize, say, `./evaluation/intro/hello-world.sh` with parallelization wi
 ``` 
 
 Run `./pa.sh --help` to get more information about the available commands.
-See [docs/tutorial](docs/tutorial.md) for a longer tutorial.
+See [docs/tutorial](docs/tutorial/) for a longer tutorial.
 
 ## Installation
 
@@ -22,7 +22,7 @@ Alternatively, you can clone the repo and run `./scripts/distro-deps.sh;
 
 You can also built the Docker container from scratch by running
 ```sh
-git clone git@github.com:andromeda/pash.git
+git clone git@github.com:binpash/pash.git
 cd pash/scripts
 docker build -t "pash/18.04" .
 # Then launch container:
@@ -54,9 +54,9 @@ This repo hosts the core `pash` development. The structure is as follows:
 ## Community & More
 
 Mailing Lists: 
-* [Discussion](https://groups.google.com/g/pash-discuss): Join this mailing list for discussing all things `pash`
-* [Commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
+* [pash-users](https://groups.google.com/g/pash-users): Join this mailing list for discussing all things `pash`
+* [pash-commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
 
 Development/contributions:
-* Contribution guide: [docs/contrib](docs/contrib.md)
-* Continuous Integration Server: [ci.pash.ndr.md](http://ci.pash.ndr.md)
+* Contribution guide: [docs/contrib](docs/contrib)
+* Continuous Integration Server: [ci.binpa.sh](http://ci.binpa.sh)

@@ -15,10 +15,8 @@ from ir_to_ast import to_shell
 from util import *
 import config
 
-from definitions.ir.nodes.alt_bigram_g_reduce import *
-from definitions.ir.nodes.bigram_g_map import *
-from definitions.ir.nodes.bigram_g_reduce import *
-from definitions.ir.nodes.sort_g_reduce import *
+from definitions.ir.aggregator_node import *
+
 from definitions.ir.nodes.eager import *
 from definitions.ir.nodes.pash_split import *
 
@@ -267,19 +265,14 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_fl
     assert(not isinstance(curr, Cat))
     assert(fan_out > 1)
 
-    ## At the moment this only works for nodes that have one input.
-    ##
-    ## TODO: Extend it to work for nodes that have more than one input.
-    ##       This has to be done to be able to parallelize comm
-    number_of_previous_nodes = len(curr.get_input_list())
+    ## At the moment this only works for nodes that have one standard input.
+    standard_input_ids = curr.get_standard_inputs()
     new_merger = None
-    if (number_of_previous_nodes == 1):
+    if (len(standard_input_ids) == 1):
         ## If the previous command is either a cat with one input, or
         ## if it something else
-
-        input_ids = curr.get_input_list()
-        assert(len(input_ids) == 1)
-        input_id = input_ids[0]
+        
+        input_id = standard_input_ids[0]
 
         ## First we have to make the split file commands.
         split_file_commands, output_fids = make_split_files(input_id, fan_out, fileIdGen, r_split_flag, r_split_batch_size)
@@ -372,7 +365,6 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
                              or isinstance(curr, r_merge.RMerge))
                             and len(curr.get_input_list()) < fan_out)))):
                 new_merger = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size, r_split_flag, r_split_batch_size)
-
                 ## After split has succeeded we know that the curr node (previous of the next)
                 ## has changed. Therefore we need to retrieve it again.
                 if (not new_merger is None):
@@ -490,35 +482,30 @@ def parallelize_dfg_node(old_merger_id, node_id, graph, fileIdGen):
 
 ## Creates a merge command for all pure commands that can be
 ## parallelized using a map and a reduce/merge step
+##
+## Currently adding an aggregator can be done by adding another branch to this function
+##
+## TODO: Make that generic to work through annotations
 def create_merge_commands(curr, new_output_ids, fileIdGen):
-    if(str(curr.com_name) == "sort"):
+    if(str(curr.com_name) == "custom_sort"):
         return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
-    elif(str(curr.com_name) == "custom_sort"):
-        return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
-    elif(str(curr.com_name) == "bigrams_aux"):
-        return create_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen)
-    elif(str(curr.com_name) == "alt_bigrams_aux"):
-        return create_alt_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen)
     elif(str(curr.com_name) == "uniq"):
         return create_uniq_merge_commands(curr, new_output_ids, fileIdGen)
     else:
-        raise NotImplementedError()
+        return create_generic_aggregator_tree(curr, new_output_ids, fileIdGen)
+
+## This is a function that creates a reduce tree for a generic function
+def create_generic_aggregator_tree(curr, new_output_ids, fileIdGen):
+    ## The Aggregator node takes a sequence of input ids and an output id
+    output = create_reduce_tree(lambda in_ids, out_ids: AggregatorNode(curr, in_ids, out_ids),
+                                new_output_ids, fileIdGen)
+    return output
 
 ## TODO: These must be generated using some file information
 ##
 ## TODO: Find a better place to put these functions
 def create_sort_merge_commands(curr, new_output_ids, fileIdGen):
     output = create_reduce_tree(lambda ids: SortGReduce(curr, ids),
-                                new_output_ids, fileIdGen)
-    return output
-
-def create_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen):
-    output = create_reduce_tree(lambda ids: BigramGReduce(curr, ids),
-                                new_output_ids, fileIdGen)
-    return output
-
-def create_alt_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen):
-    output = create_reduce_tree(lambda ids: AltBigramGReduce(curr, ids),
                                 new_output_ids, fileIdGen)
     return output
 
@@ -598,7 +585,7 @@ def create_reduce_tree_level(init_func, input_ids, fileIdGen):
 
 ## This function creates one node of the reduce tree
 def create_reduce_node(init_func, input_ids, output_ids):
-    return init_func(flatten_list(input_ids) + output_ids)
+    return init_func(flatten_list(input_ids), output_ids)
 
 
 ## This functions adds an eager on a given edge.

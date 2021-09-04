@@ -4,26 +4,15 @@ This is a pocket guide for running PaSh in a docker container.
 
 ### Loading image
 
-The latest docker container runs PaSh in a pre-configured Ubuntu 18.04 image, loadable as 
+The following will pull and launch the latest image (tag: `pash:latest`) using the name `pash-play`
 
 ```sh
-curl img.pash.ndr.md | docker load
+docker pull binpash/pash
+docker run --name pash-play -it pash
 ```
+This will use `pash-play` for the container (to be able to start/stop it later) and `-it` runs it interactively (subsuming the next command).
 
-Then, to create a writable container from this image, run:
-
-```sh
-docker run --name pash-playground -it pash/18.04  
-```
-
-This will use `pash-playground` for the container (to be able to start/stop it later) and `-it` runs it interactively (subsuming the next command).
-
-After exiting (or if not `-it` is used), one can start the container with:
-```sh
-docker start -i pash-playground
-```
-
-Flag `-i` starts it interactively.
+To restart after you exit, run `docker start -i pash-play` (flag `-i` starts it interactively.)
 
 ### Customizing image
 
@@ -45,7 +34,7 @@ This is a small list of useful docker commands. Docker distinguishes between an 
 ```
 docker images                    # shows all images in the system
 docker ps -a | grep pash         # shows all containers with name pash
-docker run --name NN pash/18.04  # creates a wriable container (add `-it` for interactive)
+docker run --name NN pash/18.04  # creates a writable container (add `-it` for interactive)
 docker start -i NN               # starts container (add `-i` to drop straight into shell)
 docker attach NN                 # non-interactive -> interactive
 <CTL+p>, then <CTL+q>            # interactive -> non-interactive
@@ -56,6 +45,74 @@ Useful options for `docker run`:
 * [Mount host storage](https://docs.docker.com/storage/bind-mounts/): `-v /HST:/IN/NN`
 * [Limit CPU/Mem](https://docs.docker.com/config/containers/resource_constraints/): `--cpus='.5' --mem=1g`
 * [Limit disk size](https://docs.docker.com/engine/reference/commandline/run/#set-storage-driver-options-per-container): `--storage-opt size=10G`
+
+## Installing WSL on Windows
+
+To run PaSh on Windows without Docker, a user needs to install WSL (Windows Subsystem for Linux).
+WSL lets developers run a GNU/Linux environment — including most command-line tools, utilities, and applications — directly on Windows, unmodified, without the need to setup a traditional virtual machine or use dualboot.
+
+[Microsoft docs](https://docs.microsoft.com/en-us/windows/wsl/install-win10) and [troubleshooting](https://github.com/MicrosoftDocs/WSL/blob/master/WSL/troubleshooting.md) detail the installation process; below is a short guide.
+_All commands below should be run in an Administrator Poweshell prompt._
+
+#### Windows 10 Preview build 20262 or higher
+
+List the available Linux Distributions. _Note that currently only Ubuntu, Debian and Fedora are supported by PaSh_
+```powershell
+wsl --list --online
+```
+Install WSL2 with with a given distribution
+```powershell
+wsl --install -d <distribution-name-from-above>
+```
+Restart your machine
+```powershell
+Restart-Computer
+```
+
+#### Everyone else (most people)
+Enable WSL:
+```powershell
+dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+```
+Enable Virtual Machine Platform (required for Hyper-V and WSL2):
+```powershell
+dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+```
+Restart your machine:
+```powershell
+Restart-Computer
+```
+Update WSL to WSL2. Download the WSL-to-WSL2 updater and run it:
+```powershell
+(New-Object System.Net.WebClient).DownloadFile("https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi", "C:/Windows/Temp/wsl2.msi");
+msiexec /i "C:/Windows/Temp/wsl2.msi";
+Remove-Item "C:/Windows/Temp/wsl2.msi"
+```
+Set WSL2 as default WSL version
+```powershell
+wsl --set-default-version 2
+```
+
+Install one of the Linux distributions on which PaSh has been tested from the Microsoft Store:
+* [Ubuntu 18.04 LTS](https://www.microsoft.com/store/apps/9N9TNGVNDL3Q)
+* [Ubuntu 20.04 LTS](https://www.microsoft.com/store/apps/9n6svws3rx71)
+* [Debian GNU/Linux](https://www.microsoft.com/store/apps/9MSVKQC78PK6)
+* [Fedora Remix for WSL](https://www.microsoft.com/store/apps/9n6gdm4k2hnc)
+
+Restart your machine
+```powershell
+Restart-Computer
+```
+
+#### Epilogue
+
+Run the `wsl` command (or find the installed Linux distribution in Windows Start menu and run it).
+After a few minutes of installation, enter a username and password for the internal WSL account to be created.
+
+Continue the PaSh installation process from [here](https://github.com/binpash/pash/blob/main/docs/tutorial.md#installation) inside the WSL installation.
+
+
+## Docker TODO
 
 ## Using GNU Screen
 

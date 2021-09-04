@@ -54,6 +54,8 @@ preprocess_cases = {
              lambda ast_node: preprocess_node_pipe(ast_node, irFileGen, config)),
     "Command": (lambda irFileGen, config:
                 lambda ast_node: preprocess_node_command(ast_node, irFileGen, config)),
+    "Redir": (lambda irFileGen, config:
+              lambda ast_node: preprocess_node_redir(ast_node, irFileGen, config)),
     "Background": (lambda irFileGen, config:
                    lambda ast_node: preprocess_node_background(ast_node, irFileGen, config)),
     "Subshell": (lambda irFileGen, config:
@@ -495,7 +497,6 @@ def replace_ast_regions(ast_objects, irFileGen, config):
         # log("Preprocessing AST {}".format(i))
         # log(ast_object)
         ast, original_text, _linno_before, _linno_after = ast_object
-
         ## TODO: Turn the untyped ast to an AstNode
 
         ## Goals: This transformation can approximate in several directions.
@@ -625,6 +626,19 @@ def preprocess_node_command(ast_node, _irFileGen, _config):
     preprocessed_ast_object = PreprocessedAST(ast_node,
                                               replace_whole=True,
                                               non_maximal=False)
+    return preprocessed_ast_object
+
+# Background of (linno * t * redirection list) 
+## TODO: It might be possible to actually not close the inner node but rather apply the redirections on it
+def preprocess_node_redir(ast_node, irFileGen, config):
+    preprocessed_node, something_replaced = preprocess_close_node(ast_node.node,
+                                                                  irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.node = preprocessed_node
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=False,
+                                              non_maximal=False,
+                                              something_replaced=something_replaced)
     return preprocessed_ast_object
 
 ## TODO: Is that correct? Also, this should probably affect `semi`, `and`, and `or`

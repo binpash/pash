@@ -1,0 +1,17 @@
+{
+    "command": "test_two",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "parallelizable_pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+            "aggregator":
+            {
+                "path": "runtime/agg/py/cat.py"
+            }
+        }
+    ]
+}
+

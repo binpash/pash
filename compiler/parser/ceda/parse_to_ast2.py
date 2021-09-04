@@ -19,6 +19,10 @@ LIBDASH_LIBRARY_PATH = os.path.join(PASH_TOP, "compiler/parser/libdash/src/.libs
 
 EOF_NLEFT = -99; # libdash/src/input.c
 
+class ParsingException(Exception):
+    def __init__(self, message='ParseError'):
+        # Call the base class constructor with the parameters it needs
+        super(ParsingException, self).__init__(message)
 
 # This is a mix of dash.ml:parse_next and parse_to_json.ml.
 def parse_to_ast (inputPath, init=True):
@@ -63,16 +67,18 @@ def parse_to_ast (inputPath, init=True):
         elif (n_ptr_C == NEOF): # Dash.Done
             break;
         elif (n_ptr_C == NERR): # Dash.Error
-            break;
+            raise ParsingException()
         else:
             if (nleft_after == EOF_NLEFT):
                 linno_after = linno_after + 1; # The last line wasn't counted
 
                 if (inputPath != "-"):
-                    assert (linno_after == len (lines));
+                    ## Both of these assertions check "our" assumption with respect to the final parser state
+                    ## and are therefore not necessary if they become an issue.
+                    assert((linno_after == len (lines)) or (linno_after == len (lines) + 1))
 
                     # Last line did not have a newline
-                    assert (len (lines [-1]) > 0 and (lines [-1][-1] != '\n'));
+                    assert(len (lines [-1]) > 0 and (lines [-1][-1] != '\n'))
             else:
                 assert (nleft_after == 0); # Read whole lines
 

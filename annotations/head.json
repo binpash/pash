@@ -1,5 +1,6 @@
 {
     "command": "head",
+    "aggregate": "$PASH_TOP/runtime/agg/py/head.py",
     "cases":
     [
         {
