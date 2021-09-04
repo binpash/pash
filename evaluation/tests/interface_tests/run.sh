@@ -109,6 +109,12 @@ test10()
     $shell exit_error.sh
 }
 
+test11()
+{
+    local shell=$1
+    $shell incomplete-arith.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1 &&
@@ -120,7 +126,8 @@ if [ "$#" -eq 0 ]; then
     # && run_test test7
     run_test test8 &&
     run_test test9 &&
-    run_test test10
+    run_test test10 &&
+    run_test test11
 else
     for testname in $@
     do
