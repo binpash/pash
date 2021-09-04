@@ -91,6 +91,18 @@ test7()
     $shell args_with_spaces.sh "hello there" "hi friend"
 }
 
+test8()
+{
+    local shell=$1
+    $shell -c 'shift 5; echo $#' pash 2 3 4
+}
+
+test9()
+{
+    local shell=$1
+    $shell tilde.sh
+}
+
 test10()
 {
     local shell=$1
@@ -106,6 +118,8 @@ if [ "$#" -eq 0 ]; then
     run_test test5 &&
     run_test test6 &&
     # && run_test test7
+    run_test test8 &&
+    run_test test9 &&
     run_test test10
 else
     for testname in $@
