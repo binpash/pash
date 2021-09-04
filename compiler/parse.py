@@ -13,14 +13,18 @@ from definitions.ast_node import *
 sys.path.append(os.path.join(config.PASH_TOP, "compiler/parser/ceda"))
 
 from ast2shell import *
-from parse_to_ast2 import parse_to_ast
+from parse_to_ast2 import parse_to_ast, ParsingException
 from json_to_shell2 import json_to_shell_string, json_string_to_shell_string
 
 ## Parses straight a shell script to an AST
 ## through python without calling it as an executable
 def parse_shell_to_asts(input_script_path):
-    new_ast_objects = parse_to_ast(input_script_path)
-    return new_ast_objects
+    try:
+        new_ast_objects = parse_to_ast(input_script_path)
+        return list(new_ast_objects)
+    except ParsingException as e:
+        log("Parsing error!", e)
+        exit(1)
 
 def from_ast_objects_to_shell(asts):
     shell_list = []
