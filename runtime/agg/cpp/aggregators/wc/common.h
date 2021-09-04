@@ -1,6 +1,3 @@
-#ifndef AGG_WC_H
-#define AGG_WC_H
-
 #include "main.h"
 #include <string>
 #include <algorithm>
@@ -14,26 +11,17 @@ inline constexpr cmd_opts g_options{
     cmd_opt{"max-line-length",'L', cmd_opt::Argument::None}
 };
 
+size_t platform_dependent(int& numbers_to_input);
+
 void aggregate() noexcept
 {
-    size_t padding = std::numeric_limits<size_t>::max();
-    {
-        size_t prev_pos = 0, dummy;
-        while(input1() >> dummy)
-        {
-            size_t new_pos = input1().tellg();
-            padding = std::min(new_pos - prev_pos, padding);
-            prev_pos = new_pos + 1;
-        }
-        input1().clear();
-        input1().seekg(std::ios_base::beg);
-    }
-
     int numbers_to_input = 0;
     for (int i = 0; i < 4; ++i)
         numbers_to_input += g_options.is_present(i); // +1 for each option
     if (numbers_to_input == 0 && !g_options.is_present(4))
         numbers_to_input = 3; // by default there are 3
+    
+    size_t padding = platform_dependent(numbers_to_input);
 
     for (int i = 0; i < numbers_to_input; ++i)
     {
@@ -61,5 +49,3 @@ void aggregate() noexcept
 
     output() << '\n';
 }
-
-#endif

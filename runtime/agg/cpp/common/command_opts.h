@@ -28,27 +28,11 @@ struct cmd_opt
 };
 
 template <size_t Size>
-class cmd_opts : public std::array<cmd_opt, Size>, public opt_holder
+class cmd_opts : public std::array<cmd_opt, Size>
 {
 public:
     constexpr cmd_opts(std::initializer_list<cmd_opt> ar) noexcept :
         std::array<cmd_opt, Size>{il_to_array<Size>(ar)},
-        opt_holder{long_opts.data(), optstring.data(), present, arg,
-            [&](){
-                std::array<char, 256> map{};
-                auto& base = static_cast<std::array<cmd_opt, Size>&>(*this);
-                int i = 0;
-                for (auto& opt : base)
-                {
-                    if (opt.abbreviation)
-                    {
-                        map[opt.abbreviation] = i;
-                    }
-                    ++i;
-                }
-                return map;
-            }()
-        },
         long_opts{[&](){
             std::array<option, Size + 1> long_opts{};
             size_t current_idx = 0;
@@ -89,7 +73,23 @@ public:
                 }
             }
             return optstring;
-        }()}
+        }()},
+        option_data{long_opts.data(), optstring.data(), present, arg,
+            [&](){
+                std::array<char, 256> map{};
+                auto& base = static_cast<std::array<cmd_opt, Size>&>(*this);
+                int i = 0;
+                for (auto& opt : base)
+                {
+                    if (opt.abbreviation)
+                    {
+                        map[opt.abbreviation] = i;
+                    }
+                    ++i;
+                }
+                return map;
+            }()
+        }
         {
         }
 
@@ -117,6 +117,8 @@ private:
     {
         return il_to_array_impl<N>(il, std::make_index_sequence<N>{});
     }
+public:
+    const opt_holder option_data;
 };
 
 template <typename... T>
