@@ -190,6 +190,26 @@ execute_tests "--assert_compiler_success" "${pipeline_microbenchmarks[@]}"
 #cat /tmp/a | sed 's/@/,/' > ${results_time}
 
 
+if type lsb_release >/dev/null 2>&1 ; then
+   distro=$(lsb_release -i -s)
+elif [ -e /etc/os-release ] ; then
+   distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
+fi
+
+distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
+# now do different things depending on distro
+case "$distro" in
+    freebsd*)  
+        # change sed to gsed
+        alias sed="gsed"
+        sed () {
+            gsed $@
+        }
+        ;;
+    *)
+        ;;
+esac
+
 echo "group,Bash,Pash2,Pash8" > ${results_time}
 paste -d'@' $test_results_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's\@\,\g' >> ${results_time}
 

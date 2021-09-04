@@ -10,15 +10,15 @@ LOG_DIR=$PWD/install_logs
 mkdir -p $LOG_DIR
 
 if [[ $(uname) == 'Darwin' ]]; then
-  echo 'Currently pash can run only on Linux'
-  exit 1
+    echo 'Currently pash can run only on Linux'
+    exit 1
 fi
 
 
 if type lsb_release >/dev/null 2>&1 ; then
-   distro=$(lsb_release -i -s)
+    distro=$(lsb_release -i -s)
 elif [ -e /etc/os-release ] ; then
-   distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
+    distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
 fi
 
 # convert to lowercase
@@ -51,6 +51,12 @@ case "$distro" in
      pacman -Sy &> $LOG_DIR/pacman_update.log
      echo "|-- running pacman install...."
      yes | pacman -S git libtool m4 automake curl pkg-config python-pip libffi make autoconf gcc10 sudo inetutils bc
+     ;;
+   freebsd*)
+     echo "Updating mirros"
+     pkg update &> $LOG_DIR/pkg_update.log
+     echo "|-- running pkg install...."
+     yes | pkg install libtool m4 automake curl libffi py38-pip autoconf gcc gsed gmake
      ;;
    *)        echo "unknown distro: '$distro'" ; exit 1 ;;
 esac

@@ -45,9 +45,27 @@ run_test()
 run_test "demo-spell.sh"
 run_test "hello-world.sh"
 
+if type lsb_release >/dev/null 2>&1 ; then
+   distro=$(lsb_release -i -s)
+elif [ -e /etc/os-release ] ; then
+   distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
+fi
+
+distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
+# now do different things depending on distro
+case "$distro" in
+    freebsd*)  
+        # change sed to gsed
+        sed () {
+            gsed $@
+        }
+        ;;
+    *)
+        ;;
+esac
+
 echo "group,Bash,Pash2" > $output_dir/results.time
 paste $output_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's/\t/,/' >> $output_dir/results.time
-
 
 echo "Below follow the identical outputs:"
 grep --files-with-match "are identical" "$output_dir"/*_distr.time

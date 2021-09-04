@@ -14,9 +14,35 @@ git submodule update
 
 echo "Building parser..."
 cd compiler/parser
+
+if type lsb_release >/dev/null 2>&1 ; then
+   distro=$(lsb_release -i -s)
+elif [ -e /etc/os-release ] ; then
+   distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
+fi
+
 echo "|-- making libdash..."
-make libdash &> $LOG_DIR/make_libdash.log
-cd ../../
+# convert to lowercase
+distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
+# now do different things depending on distro
+case "$distro" in
+   freebsd*) 
+    gsed -i 's/ make/ gmake/g' Makefile
+    gmake libdash &> $LOG_DIR/make_libdash.log
+    echo "Building runtime..."
+    # Build runtime tools: eager, split
+    cd ../../runtime/
+    gmake &> $LOG_DIR/make.log
+    ;;
+   *)
+    make libdash &> $LOG_DIR/make_libdash.log
+    echo "Building runtime..."
+    # Build runtime tools: eager, split
+    cd ../../runtime/
+    make &> $LOG_DIR/make.log
+    ;;
+esac
+
 
 ## This was the old parser installation that required opam.
 # # Build the parser (requires libtool, m4, automake, opam)
@@ -34,10 +60,6 @@ cd ../../
 # cd ../../
 
 
-echo "Building runtime..."
-# Build runtime tools: eager, split
-cd runtime/
-make &> $LOG_DIR/make.log
 cd ../
 
 echo "Installing python dependencies..."

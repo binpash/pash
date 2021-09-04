@@ -4,12 +4,21 @@ PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 . "$PASH_TOP/scripts/utils.sh"
 cd $(dirname $0)
 
+distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
+head_sz="M"
+# now do different things depending on distro
+case "$distro" in
+   freebsd*) 
+    head_sz="m"
+    ;;
+esac
+
 [ "$1" = "-c" ] && rm-files 1M.txt all_cmds.txt words sorted_words 10M.txt
 
 if [ ! -f ./1M.txt ]; then
   curl -sf 'http://ndr.md/data/dummy/1M.txt' > 1M.txt
   if [ $? -ne 0 ]; then
-    curl -sf 'http://www.gutenberg.org/files/2600/2600-0.txt' | head -c 1M > 1M.txt
+    curl -sf 'http://www.gutenberg.org/files/2600/2600-0.txt' | head -c 1${head_sz} > 1M.txt
     [ $? -ne 0 ] && eexit 'cannot find 1M.txt'
   fi
   append_nl_if_not ./1M.txt
