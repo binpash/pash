@@ -126,7 +126,7 @@ if [ "$#" -eq 0 ]; then
     run_test test4 &&
     run_test test5 &&
     run_test test6 &&
-    # && run_test test7
+    run_test test7 &&
     run_test test8 &&
     run_test test9 &&
     run_test test10 &&
