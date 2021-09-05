@@ -57,7 +57,8 @@ def parse_args():
     prog_name = sys.argv[0]
     if 'PASH_FROM_SH' in os.environ:
         prog_name = os.environ['PASH_FROM_SH']
-    parser = argparse.ArgumentParser(prog_name)
+    ## We need to set `+` as a prefix char too
+    parser = argparse.ArgumentParser(prog_name, prefix_chars='-+')
     parser.add_argument("input", nargs='*', help="the script to be compiled and executed (followed by any command-line arguments")
     parser.add_argument("--preprocess_only",
                         help="only preprocess the input script and not execute it",
@@ -75,6 +76,7 @@ def parse_args():
     parser.add_argument("+a",
                         help="Disabling the `allexport` shell option",
                         action="store_true")
+    
     config.add_common_arguments(parser)
     args = parser.parse_args()
     config.pash_args = args
