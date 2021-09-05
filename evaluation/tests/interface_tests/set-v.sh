@@ -1,0 +1,2 @@
+set -v
+echo hello

@@ -118,6 +118,13 @@ test11()
     $shell incomplete-arith.sh
 }
 
+test12()
+{
+    local shell=$1
+    $shell set-v.sh 2> set-v.log
+    grep "echo hello" < set-v.log
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1 &&
@@ -130,7 +137,8 @@ if [ "$#" -eq 0 ]; then
     run_test test8 &&
     run_test test9 &&
     run_test test10 &&
-    run_test test11
+    run_test test11 &&
+    run_test test12
 else
     for testname in $@
     do
