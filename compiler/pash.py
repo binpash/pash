@@ -68,6 +68,13 @@ def parse_args():
     parser.add_argument("-c", "--command",
                         help="Evaluate the following as a script, rather than a file",
                         default="")
+    ## This is not the correct way to parse these, because more than one option can be given together, e.g., -ae
+    parser.add_argument("-a",
+                        help="Enabling the `allexport` shell option",
+                        action="store_true")
+    parser.add_argument("+a",
+                        help="Disabling the `allexport` shell option",
+                        action="store_true")
     config.add_common_arguments(parser)
     args = parser.parse_args()
     config.pash_args = args
@@ -124,8 +131,13 @@ def execute_script(compiled_script_filename, debug_level, command, arguments, sh
     new_env = os.environ.copy()
     new_env["PASH_TMP_PREFIX"] = config.PASH_TMP_PREFIX
     new_env["pash_shell_name"] = shell_name
-    ## TODO: This introduces an error when setting the bsah state inside. The set +c doesn't work.
-    subprocess_args = ["/usr/bin/env", "bash", "-c", 'source {}'.format(compiled_script_filename), shell_name] + arguments
+    subprocess_args = ["/usr/bin/env", "bash"]
+    ## Add shell specific arguments
+    if config.pash_args.a:
+        subprocess_args.append("-a")
+    elif vars(config.pash_args)["+a"]:
+        subprocess_args.append("+a")
+    subprocess_args += ["-c", 'source {}'.format(compiled_script_filename), shell_name] + arguments
     # subprocess_args = ["/usr/bin/env", "bash", compiled_script_filename] + arguments
     log("Executing:", "PASH_TMP_PREFIX={} pash_shell_name={} {}".format(config.PASH_TMP_PREFIX, 
                                                                         shell_name,
