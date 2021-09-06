@@ -1,6 +1,8 @@
 #ifndef AGG_WC_H
 #define AGG_WC_H
 
+#include <limits>
+
 #include "common.h"
 
 size_t platform_dependent(int&) {
