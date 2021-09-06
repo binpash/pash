@@ -2,6 +2,7 @@
 #include <string>
 #include <algorithm>
 #include <cstdlib>
+#include <limits.h>
 
 inline constexpr cmd_opts g_options{
     cmd_opt{"lines",'l', cmd_opt::Argument::None},
