@@ -91,6 +91,19 @@ test7()
     $shell args_with_spaces.sh "hello there" "hi friend"
 }
 
+test8()
+{
+    local shell=$1
+    $shell -c 'shift 5; echo $#' pash 2 3 4
+}
+
+test9()
+{
+    local shell=$1
+    $shell tilde.sh
+}
+
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1 &&
@@ -98,8 +111,10 @@ if [ "$#" -eq 0 ]; then
     run_test test3 && # This is commented out at the moment because it doesn't suceed
     run_test test4 &&
     run_test test5 &&
-    run_test test6
+    run_test test6 &&
     # && run_test test7
+    run_test test8 &&
+    run_test test9
 else
     for testname in $@
     do
