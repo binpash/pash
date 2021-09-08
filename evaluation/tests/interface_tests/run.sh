@@ -31,10 +31,10 @@ run_test()
     test_diff_ec=$?
 
     if [ $test_diff_ec -ne 0 ]; then
-        echo -n "$test output mismatch"
+        echo -n "$test output mismatch "
     fi
     if [ $test_bash_ec -ne $test_pash_ec ]; then
-        echo -n "$test exit code mismatch"
+        echo -n "$test exit code mismatch "
     fi
     if [ $test_diff_ec -ne 0 ] || [ $test_bash_ec -ne $test_pash_ec ]; then
         echo "are not identical" > $output_dir/${test}_distr.time
@@ -103,6 +103,11 @@ test9()
     $shell tilde.sh
 }
 
+test10()
+{
+    local shell=$1
+    $shell exit_error.sh
+}
 
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
@@ -114,7 +119,8 @@ if [ "$#" -eq 0 ]; then
     run_test test6 &&
     # && run_test test7
     run_test test8 &&
-    run_test test9
+    run_test test9 &&
+    run_test test10
 else
     for testname in $@
     do
