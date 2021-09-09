@@ -30,13 +30,16 @@ run_test()
     diff "$output_dir/$test.bash.out" "$output_dir/$test.pash.out"
     test_diff_ec=$?
 
+    ## Check if the two exit codes are both success or both error
+    { [ $test_bash_ec -eq 0 ] && [ $test_pash_ec -eq 0 ]; } || { [ $test_bash_ec -ne 0 ] && [ $test_pash_ec -ne 0 ]; }
+    test_ec=$?
     if [ $test_diff_ec -ne 0 ]; then
         echo -n "$test output mismatch "
     fi
-    if [ $test_bash_ec -ne $test_pash_ec ]; then
+    if [ $test_ec -ne 0 ]; then
         echo -n "$test exit code mismatch "
     fi
-    if [ $test_diff_ec -ne 0 ] || [ $test_bash_ec -ne $test_pash_ec ]; then
+    if [ $test_diff_ec -ne 0 ] || [ $test_ec -ne 0 ]; then
         echo "are not identical" > $output_dir/${test}_distr.time
         echo '   FAIL'
         return 1
@@ -109,6 +112,12 @@ test10()
     $shell exit_error.sh
 }
 
+test11()
+{
+    local shell=$1
+    $shell incomplete-arith.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1 &&
@@ -120,7 +129,8 @@ if [ "$#" -eq 0 ]; then
     # && run_test test7
     run_test test8 &&
     run_test test9 &&
-    run_test test10
+    run_test test10 &&
+    run_test test11
 else
     for testname in $@
     do
