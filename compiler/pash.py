@@ -6,7 +6,7 @@ from datetime import datetime
 from annotations import *
 from ast_to_ir import *
 from ir import *
-from parse import parse_shell_to_asts, from_ast_objects_to_shell
+from parse import parse_shell_to_asts, parse_shell_to_asts_interactive, from_ast_objects_to_shell
 from util import *
 import config
 import pprint
@@ -51,6 +51,21 @@ def main():
     ## 4. Execute the preprocessed version of the input script
     if(not args.preprocess_only):
         execute_script(fname, args.debug, args.command, input_script_arguments, shell_name)
+
+## TODO: Create an interactive pash
+def interactive(args, shell_name):
+    ## This means that we are interactive
+    assert(len(args.input) == 0)
+
+    ## TODO: Spawn a bash shell in interactive mode
+
+    ## TODO: For each parsed AST:
+    ##         1. Preprocess it
+    ##         2. Translate it to shell syntax
+    ##         3. Send it to the interactive bash 
+    ast_objects = parse_shell_to_asts_interactive()
+    for ast_object in ast_objects:
+        pass
 
 
 def parse_args():
