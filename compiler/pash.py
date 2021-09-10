@@ -57,7 +57,8 @@ def parse_args():
     prog_name = sys.argv[0]
     if 'PASH_FROM_SH' in os.environ:
         prog_name = os.environ['PASH_FROM_SH']
-    parser = argparse.ArgumentParser(prog_name)
+    ## We need to set `+` as a prefix char too
+    parser = argparse.ArgumentParser(prog_name, prefix_chars='-+')
     parser.add_argument("input", nargs='*', help="the script to be compiled and executed (followed by any command-line arguments")
     parser.add_argument("--preprocess_only",
                         help="only preprocess the input script and not execute it",
@@ -68,6 +69,16 @@ def parse_args():
     parser.add_argument("-c", "--command",
                         help="Evaluate the following as a script, rather than a file",
                         default="")
+    ## This is not the correct way to parse these, because more than one option can be given together, e.g., -ae
+    parser.add_argument("-a",
+                        help="Enabling the `allexport` shell option",
+                        action="store_true",
+                        default=False)
+    parser.add_argument("+a",
+                        help="Disabling the `allexport` shell option",
+                        action="store_false",
+                        default=False)
+    
     config.add_common_arguments(parser)
     args = parser.parse_args()
     config.pash_args = args
@@ -124,8 +135,13 @@ def execute_script(compiled_script_filename, debug_level, command, arguments, sh
     new_env = os.environ.copy()
     new_env["PASH_TMP_PREFIX"] = config.PASH_TMP_PREFIX
     new_env["pash_shell_name"] = shell_name
-    ## TODO: This introduces an error when setting the bsah state inside. The set +c doesn't work.
-    subprocess_args = ["/usr/bin/env", "bash", "-c", 'source {}'.format(compiled_script_filename), shell_name] + arguments
+    subprocess_args = ["/usr/bin/env", "bash"]
+    ## Add shell specific arguments
+    if config.pash_args.a:
+        subprocess_args.append("-a")
+    else:
+        subprocess_args.append("+a")
+    subprocess_args += ["-c", 'source {}'.format(compiled_script_filename), shell_name] + arguments
     # subprocess_args = ["/usr/bin/env", "bash", compiled_script_filename] + arguments
     log("Executing:", "PASH_TMP_PREFIX={} pash_shell_name={} {}".format(config.PASH_TMP_PREFIX, 
                                                                         shell_name,
