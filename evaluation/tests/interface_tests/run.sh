@@ -139,6 +139,15 @@ test14()
     $shell +a readonly.sh
 }
 
+## Checks interactivity
+##
+## TODO: Make the interactivity script more elaborate (variable dependencies)
+test15()
+{
+    local shell=$1
+    $shell < readonly.sh 
+}   
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1 &&
