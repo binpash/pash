@@ -17,23 +17,27 @@ def main():
     ## Parse arguments
     args, shell_name = parse_args()
 
-    ## 1. Execute the POSIX shell parser that returns the AST in JSON
-    input_script_path = args.input[0]
-    input_script_arguments = args.input[1:]
-    preprocessing_parsing_start_time = datetime.now()
-    ast_objects = parse_shell_to_asts(input_script_path)
-    preprocessing_parsing_end_time = datetime.now()
-    print_time_delta("Preprocessing -- Parsing", preprocessing_parsing_start_time, preprocessing_parsing_end_time, args)
+    ## If it is interactive we need a different execution mode
+    if(len(args.input) == 0):
+        interactive(args, shell_name)
+    else:
+        ## 1. Execute the POSIX shell parser that returns the AST in JSON
+        input_script_path = args.input[0]
+        input_script_arguments = args.input[1:]
+        preprocessing_parsing_start_time = datetime.now()
+        ast_objects = parse_shell_to_asts(input_script_path)
+        preprocessing_parsing_end_time = datetime.now()
+        print_time_delta("Preprocessing -- Parsing", preprocessing_parsing_start_time, preprocessing_parsing_end_time, args)
 
-    ## Preprocess and execute the parsed ASTs
-    return_code = preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell_name)
-    
-    ## Delete the temp directory when not debugging
-    if(args.debug == 0):
-        shutil.rmtree(config.PASH_TMP_PREFIX)
-    log("-" * 40) #log end marker
-    ## Return the exit code of the executed script
-    exit(return_code)
+        ## Preprocess and execute the parsed ASTs
+        return_code = preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell_name)
+        
+        ## Delete the temp directory when not debugging
+        if(args.debug == 0):
+            shutil.rmtree(config.PASH_TMP_PREFIX)
+        log("-" * 40) #log end marker
+        ## Return the exit code of the executed script
+        exit(return_code)
     
 def preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell_name):
     ## 2. Preprocess ASTs by replacing possible candidates for compilation
@@ -80,12 +84,17 @@ def interactive(args, shell_name):
     ##         3. Send it to the interactive bash 
     ast_objects = parse_shell_to_asts_interactive()
     for ast_object in ast_objects:
-        ## TODO: This is copy-pasted from main, abstract it (or maybe go through the interactive mode for everything)
-        preprocessed_asts = preprocess([ast_object], config.config)
+        ## TODO: Maybe go through the interactive mode for everything
+        return_code = preprocess_and_execute_asts([ast_object], args, [], shell_name)
 
-        _, fname = ptempfile()
-        log("Preprocessed script stored in:", fname)
-        preprocessed_shell_script = from_ast_objects_to_shell(preprocessed_asts)
+        ## TODO: The return code needs to be passed in the enxt execution (this will be solved if we spawn a bash shell in interactive mode and send it source)
+    
+    ## Delete the temp directory when not debugging
+    if(args.debug == 0):
+        shutil.rmtree(config.PASH_TMP_PREFIX)
+    log("-" * 40) #log end marker
+    ## Return the exit code of the executed script
+    exit(return_code)
 
 
 def parse_args():
@@ -146,9 +155,10 @@ def parse_args():
             args.input = args.input[1:]
         args.input = [fname] + args.input
     elif (len(args.input) == 0):
-        parser.print_usage()
-        print("Error: PaSh does not yet support interactive mode!")
-        exit(1)
+        # parser.print_usage()
+        # print("Error: PaSh does not yet support interactive mode!")
+        # exit(1)
+        pass
     else:
         shell_name = args.input[0]
 
