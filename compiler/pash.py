@@ -25,6 +25,17 @@ def main():
     preprocessing_parsing_end_time = datetime.now()
     print_time_delta("Preprocessing -- Parsing", preprocessing_parsing_start_time, preprocessing_parsing_end_time, args)
 
+    ## Preprocess and execute the parsed ASTs
+    return_code = preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell_name)
+    
+    ## Delete the temp directory when not debugging
+    if(args.debug == 0):
+        shutil.rmtree(config.PASH_TMP_PREFIX)
+    log("-" * 40) #log end marker
+    ## Return the exit code of the executed script
+    exit(return_code)
+    
+def preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell_name):
     ## 2. Preprocess ASTs by replacing possible candidates for compilation
     ##    with calls to the PaSh runtime.
     preprocessing_pash_start_time = datetime.now()
@@ -50,7 +61,11 @@ def main():
 
     ## 4. Execute the preprocessed version of the input script
     if(not args.preprocess_only):
-        execute_script(fname, args.debug, args.command, input_script_arguments, shell_name)
+        return_code = execute_script(fname, args.command, input_script_arguments, shell_name)
+    else:
+        return_code = 0
+
+    return return_code
 
 ## TODO: Create an interactive pash
 def interactive(args, shell_name):
@@ -65,7 +80,12 @@ def interactive(args, shell_name):
     ##         3. Send it to the interactive bash 
     ast_objects = parse_shell_to_asts_interactive()
     for ast_object in ast_objects:
-        pass
+        ## TODO: This is copy-pasted from main, abstract it (or maybe go through the interactive mode for everything)
+        preprocessed_asts = preprocess([ast_object], config.config)
+
+        _, fname = ptempfile()
+        log("Preprocessed script stored in:", fname)
+        preprocessed_shell_script = from_ast_objects_to_shell(preprocessed_asts)
 
 
 def parse_args():
@@ -146,7 +166,7 @@ def preprocess(ast_objects, config):
 
     return preprocessed_asts
 
-def execute_script(compiled_script_filename, debug_level, command, arguments, shell_name):
+def execute_script(compiled_script_filename, command, arguments, shell_name):
     new_env = os.environ.copy()
     new_env["PASH_TMP_PREFIX"] = config.PASH_TMP_PREFIX
     new_env["pash_shell_name"] = shell_name
@@ -162,12 +182,8 @@ def execute_script(compiled_script_filename, debug_level, command, arguments, sh
                                                                         shell_name,
                                                                         " ".join(subprocess_args)))
     exec_obj = subprocess.run(subprocess_args, env=new_env)
-    ## Delete the temp directory when not debugging
-    if(debug_level == 0):
-        shutil.rmtree(config.PASH_TMP_PREFIX)
-    log("-" * 40) #log end marker
-    ## Return the exit code of the executed script
-    exit(exec_obj.returncode)
+
+    return exec_obj.returncode
 
 if __name__ == "__main__":
     main()
