@@ -105,6 +105,12 @@ def interactive(args, shell_name):
                           text=True) as shell_proc:
         ## TODO: Do we need to pipe stdout/stderror
 
+        ## First send an exec so that we change the name of the shell
+        ##
+        ## TODO: Can this be done in a less ad-hoc way?
+        command = bash_exec_string(shell_name)
+        shell_proc.stdin.write(command)
+
         ## For each parsed AST:
         ##   1. Preprocess it
         ##   2. Translate it to shell syntax
@@ -189,12 +195,7 @@ def parse_args():
             shell_name = args.input[0]
             args.input = args.input[1:]
         args.input = [fname] + args.input
-    elif (len(args.input) == 0):
-        # parser.print_usage()
-        # print("Error: PaSh does not yet support interactive mode!")
-        # exit(1)
-        pass
-    else:
+    elif (len(args.input) > 0):
         shell_name = args.input[0]
 
 
@@ -217,6 +218,7 @@ def shell_env(shell_name: str):
     new_env["pash_shell_name"] = shell_name
     return new_env
 
+## The following two functions need to correspond completely
 def bash_prefix_args():
     subprocess_args = ["/usr/bin/env", "bash"]
     ## Add shell specific arguments
@@ -225,6 +227,12 @@ def bash_prefix_args():
     else:
         subprocess_args.append("+a")
     return subprocess_args
+
+def bash_exec_string(shell_name):
+    a_flag = ''
+    if config.pash_args.a:
+        a_flag = '-a'
+    return "exec -a{} bash {} -s $@\n".format(shell_name, a_flag)
 
 def execute_script(compiled_script_filename, command, arguments, shell_name):
     new_env = shell_env(shell_name)
