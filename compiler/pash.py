@@ -18,7 +18,9 @@ def main():
     args, shell_name = parse_args()
 
     ## If it is interactive we need a different execution mode
-    if(len(args.input) == 0):
+    ##
+    ## The user can also ask for an interactive mode irregardless of whether pash was invoked in interactive mode. 
+    if(len(args.input) == 0 or args.interactive):
         interactive(args, shell_name)
     else:
         ## 1. Execute the POSIX shell parser that returns the AST in JSON
@@ -38,8 +40,8 @@ def main():
         log("-" * 40) #log end marker
         ## Return the exit code of the executed script
         exit(return_code)
-    
-def preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell_name):
+
+def preprocess_ast(ast_objects, args):
     ## 2. Preprocess ASTs by replacing possible candidates for compilation
     ##    with calls to the PaSh runtime.
     preprocessing_pash_start_time = datetime.now()
@@ -49,19 +51,25 @@ def preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell
 
     ## 3. Translate the new AST back to shell syntax
     preprocessing_unparsing_start_time = datetime.now()
-    _, fname = ptempfile()
-    log("Preprocessed script stored in:", fname)
     preprocessed_shell_script = from_ast_objects_to_shell(preprocessed_asts)
     if(args.output_preprocessed):
         log("Preprocessed script:")
         log(preprocessed_shell_script)
     
+    preprocessing_unparsing_end_time = datetime.now()
+    print_time_delta("Preprocessing -- Unparsing", preprocessing_unparsing_start_time, preprocessing_unparsing_end_time, args)
+    return preprocessed_shell_script
+
+
+def preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell_name):
+    preprocessed_shell_script = preprocess_ast(ast_objects, args)
+    
     ## Write the new shell script to a file to execute
+    _, fname = ptempfile()
+    log("Preprocessed script stored in:", fname)
     with open(fname, 'w') as new_shell_file:
         new_shell_file.write(preprocessed_shell_script)
 
-    preprocessing_unparsing_end_time = datetime.now()
-    print_time_delta("Preprocessing -- Unparsing", preprocessing_unparsing_start_time, preprocessing_unparsing_end_time, args)
 
     ## 4. Execute the preprocessed version of the input script
     if(not args.preprocess_only):
@@ -74,27 +82,51 @@ def preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell
 ## TODO: Create an interactive pash
 def interactive(args, shell_name):
     ## This means that we are interactive
-    assert(len(args.input) == 0)
+    assert(len(args.input) == 0 or args.interactive)
 
-    ## TODO: Spawn a bash shell in interactive mode
+    if len(args.input) == 0:
+        ## Read from stdin
+        input_script_path = "-"
+        script_args = []
+    else:
+        input_script_path = args.input[0]
+        script_args = args.input[1:]
 
-    ## TODO: For each parsed AST:
-    ##         1. Preprocess it
-    ##         2. Translate it to shell syntax
-    ##         3. Send it to the interactive bash 
-    ast_objects = parse_shell_to_asts_interactive()
-    for ast_object in ast_objects:
-        ## TODO: Maybe go through the interactive mode for everything
-        return_code = preprocess_and_execute_asts([ast_object], args, [], shell_name)
+    ## Spawn a bash shell in interactive mode
+    new_env = shell_env(shell_name)
+    subprocess_args = bash_prefix_args()
+    ## Add this option to read code from stdin
+    subprocess_args.append("-s")
+    ## Add the script arguments here
+    subprocess_args += script_args
+    with subprocess.Popen(subprocess_args,
+                          env=new_env,
+                          stdin=subprocess.PIPE,
+                          text=True) as shell_proc:
+        ## TODO: Do we need to pipe stdout/stderror
 
-        ## TODO: The return code needs to be passed in the enxt execution (this will be solved if we spawn a bash shell in interactive mode and send it source)
+        ## For each parsed AST:
+        ##   1. Preprocess it
+        ##   2. Translate it to shell syntax
+        ##   3. Send it to the interactive bash 
+        ast_objects = parse_shell_to_asts_interactive(input_script_path)
+        for ast_object in ast_objects:
+            ## Preprocess each ast object and produce a preprocessed shell script fragment
+            preprocessed_shell_script = preprocess_ast([ast_object], args)
+
+            ## Send the preprocessed script fragment to the shell process
+            shell_proc.stdin.write(preprocessed_shell_script)
     
-    ## Delete the temp directory when not debugging
-    if(args.debug == 0):
-        shutil.rmtree(config.PASH_TMP_PREFIX)
-    log("-" * 40) #log end marker
-    ## Return the exit code of the executed script
-    exit(return_code)
+        ## Close the input and wait for the internal process to finish
+        shell_proc.stdin.close()
+        shell_proc.wait()
+    
+        ## Delete the temp directory when not debugging
+        if(args.debug == 0):
+            shutil.rmtree(config.PASH_TMP_PREFIX)
+        log("-" * 40) #log end marker
+        ## Return the exit code of the executed script
+        exit(shell_proc.returncode)
 
 
 def parse_args():
@@ -109,6 +141,9 @@ def parse_args():
                         action="store_true")
     parser.add_argument("--output_preprocessed",
                         help=" output the preprocessed script",
+                        action="store_true")
+    parser.add_argument("--interactive",
+                        help="Executes the script using an interactive internal shell session (experimental)",
                         action="store_true")
     parser.add_argument("-c", "--command",
                         help="Evaluate the following as a script, rather than a file",
@@ -176,16 +211,24 @@ def preprocess(ast_objects, config):
 
     return preprocessed_asts
 
-def execute_script(compiled_script_filename, command, arguments, shell_name):
+def shell_env(shell_name: str):
     new_env = os.environ.copy()
     new_env["PASH_TMP_PREFIX"] = config.PASH_TMP_PREFIX
     new_env["pash_shell_name"] = shell_name
+    return new_env
+
+def bash_prefix_args():
     subprocess_args = ["/usr/bin/env", "bash"]
     ## Add shell specific arguments
     if config.pash_args.a:
         subprocess_args.append("-a")
     else:
         subprocess_args.append("+a")
+    return subprocess_args
+
+def execute_script(compiled_script_filename, command, arguments, shell_name):
+    new_env = shell_env(shell_name)
+    subprocess_args = bash_prefix_args()
     subprocess_args += ["-c", 'source {}'.format(compiled_script_filename), shell_name] + arguments
     # subprocess_args = ["/usr/bin/env", "bash", compiled_script_filename] + arguments
     log("Executing:", "PASH_TMP_PREFIX={} pash_shell_name={} {}".format(config.PASH_TMP_PREFIX, 
