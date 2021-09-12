@@ -119,7 +119,7 @@ def interactive(args, shell_name):
         for ast_object in ast_objects:
             ## Preprocess each ast object and produce a preprocessed shell script fragment
             preprocessed_shell_script = preprocess_ast([ast_object], args)
-
+            log("Sending script to shell process...")
             ## Send the preprocessed script fragment to the shell process
             shell_proc.stdin.write(preprocessed_shell_script)
     
