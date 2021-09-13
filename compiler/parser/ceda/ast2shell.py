@@ -334,6 +334,8 @@ def string_of_arg_char (c):
             return "\\'";
         elif (char == "\""):
             return "\\\"";
+        elif (char == "`"):
+            return "\\`";
         elif (char == "("):
             return "\\(";
         elif (char == ")"):
