@@ -340,13 +340,15 @@ def expand_arg(arg_chars, config, quoted = False):
 
 def expand_arg_char(arg_char, quoted, config):
     key, val = get_kv(arg_char)
-
     if key == 'C':
         if val in ['*', '?', '{', '}', '[', ']'] and not quoted:
             raise Unimplemented("globbing", arg_char)
 
         return [arg_char]
     elif key == 'E':
+        ## 2021-09-15 MMG Just guessing here
+        if val in ['*', '?', '{', '}', '[', ']'] and not quoted:
+            raise Unimplemented("globbing", arg_char)
         return [arg_char]
     elif key == 'T':
         if val is None or val == "" or val == "None":
