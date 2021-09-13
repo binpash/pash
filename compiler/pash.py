@@ -122,6 +122,7 @@ def interactive(args, shell_name):
             log("Sending script to shell process...")
             ## Send the preprocessed script fragment to the shell process
             shell_proc.stdin.write(preprocessed_shell_script)
+            shell_proc.stdin.flush()
     
         ## Close the input and wait for the internal process to finish
         shell_proc.stdin.close()
