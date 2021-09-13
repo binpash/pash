@@ -4,7 +4,7 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 # time: print real in seconds, to simplify parsing
 
 bash="bash"
-pash="$PASH_TOP/pa.sh"
+pash="$PASH_TOP/pa.sh --interactive"
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 mkdir -p "$output_dir"
@@ -138,6 +138,15 @@ test14()
     local shell=$1
     $shell +a readonly.sh
 }
+
+## Checks interactivity
+##
+## TODO: Make the interactivity script more elaborate (variable dependencies)
+test15()
+{
+    local shell=$1
+    $shell < readonly.sh 
+}   
 
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then

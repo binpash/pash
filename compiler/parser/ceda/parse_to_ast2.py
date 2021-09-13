@@ -26,46 +26,46 @@ class ParsingException(Exception):
 
 # This is a mix of dash.ml:parse_next and parse_to_json.ml.
 def parse_to_ast (inputPath, init=True):
-    lines = [];
+    lines = []
 
-    libdash = CDLL (LIBDASH_LIBRARY_PATH);
+    libdash = CDLL (LIBDASH_LIBRARY_PATH)
 
     if (init):
-        initialize (libdash);
+        initialize (libdash)
 
     if (inputPath == "-"):
-        setinputtostdin (libdash);
+        setinputtostdin (libdash)
     else:
-        setinputfile (libdash, inputPath);
+        setinputfile (libdash, inputPath)
 
-        fp = open (inputPath, 'r');
+        fp = open (inputPath, 'r')
         for line in fp:
-            lines.append (line);
+            lines.append (line)
         fp.close()
 
     # struct parsefile *parsefile = &basepf;  /* current input file */
     # Get the value of parsefile (not &parsefile)!
-    parsefile_ptr_ptr = addressof (parsefile.in_dll (libdash, "parsefile"));
-    parsefile_ptr = cast (parsefile_ptr_ptr, POINTER (POINTER (parsefile)));
-    parsefile_var = parsefile_ptr.contents;
+    parsefile_ptr_ptr = addressof (parsefile.in_dll (libdash, "parsefile"))
+    parsefile_ptr = cast (parsefile_ptr_ptr, POINTER (POINTER (parsefile)))
+    parsefile_var = parsefile_ptr.contents
 
-    smark = init_stack (libdash);
+    smark = init_stack (libdash)
 
-    NEOF = addressof (c_int.in_dll (libdash, "tokpushback"));
-    NERR = addressof (c_int.in_dll (libdash, "lasttoken"));
+    NEOF = addressof (c_int.in_dll (libdash, "tokpushback"))
+    NERR = addressof (c_int.in_dll (libdash, "lasttoken"))
 
     while (True):
         linno_before = parsefile_var.contents.linno - 1; # libdash is 1-indexed
 
-        n_ptr_C = parsecmd_safe (libdash, False);
+        n_ptr_C = parsecmd_safe (libdash, False)
 
         linno_after = parsefile_var.contents.linno - 1; # libdash is 1-indexed
-        nleft_after = parsefile_var.contents.nleft;
+        nleft_after = parsefile_var.contents.nleft
 
         if (n_ptr_C == None): # Dash.Null
-            pass;
+            pass
         elif (n_ptr_C == NEOF): # Dash.Done
-            break;
+            break
         elif (n_ptr_C == NERR): # Dash.Error
             raise ParsingException()
         else:
@@ -82,14 +82,14 @@ def parse_to_ast (inputPath, init=True):
             else:
                 assert (nleft_after == 0); # Read whole lines
 
-            n_ptr = cast (n_ptr_C, POINTER (union_node));
-            new_ast = of_node (n_ptr);
+            n_ptr = cast (n_ptr_C, POINTER (union_node))
+            new_ast = of_node (n_ptr)
 
             if (inputPath != "-"):
-                parsedLines = "".join (lines [linno_before:linno_after]);
+                parsedLines = "".join(lines[linno_before:linno_after])
             else:
-                parsedLines = "# Cannot return parsed lines for stdin input";
+                parsedLines = "# Cannot return parsed lines for stdin input"
 
             yield (new_ast, parsedLines, linno_before, linno_after)
 
-            pop_stack (libdash, smark);
+            pop_stack (libdash, smark)
