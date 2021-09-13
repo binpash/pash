@@ -160,6 +160,12 @@ test17()
     $shell star-escape.sh
 }
 
+test18()
+{
+    local shell=$1
+    $shell escape-madness.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1 &&
@@ -178,7 +184,8 @@ if [ "$#" -eq 0 ]; then
     run_test test14 &&
     # run_test test15 &&
     run_test test16 &&
-    run_test test17
+    run_test test17 &&
+    run_test test18
 else
     for testname in $@
     do
