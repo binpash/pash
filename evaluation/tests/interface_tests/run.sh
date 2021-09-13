@@ -4,7 +4,7 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 # time: print real in seconds, to simplify parsing
 
 bash="bash"
-pash="$PASH_TOP/pa.sh"
+pash="$PASH_TOP/pa.sh --interactive"
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 mkdir -p "$output_dir"
@@ -118,11 +118,47 @@ test11()
     $shell incomplete-arith.sh
 }
 
+test12()
+{
+    local shell=$1
+    $shell set-v.sh 2> set-v.log
+    grep "echo hello" < set-v.log
+}
+
 test13()
 {
     local shell=$1
+    $shell -a -c 'var=1; env' > test13.log
+    grep -e "^var=1" < test13.log
+}
+
+## Checks if +a is parsed correctly
+test14()
+{
+    local shell=$1
+    $shell +a readonly.sh
+}
+
+## Checks interactivity
+##
+## TODO: Make the interactivity script more elaborate (variable dependencies)
+test15()
+{
+    local shell=$1
+    $shell < readonly.sh 
+}
+
+test16()
+{
+    local shell=$1
     $shell heredoc2.sh
-}    
+}
+
+test17()
+{
+    local shell=$1
+    $shell star-escape.sh
+}
 
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
@@ -137,7 +173,12 @@ if [ "$#" -eq 0 ]; then
     run_test test9 &&
     run_test test10 &&
     run_test test11 &&
-    run_test test13
+    run_test test12 &&
+    run_test test13 &&
+    run_test test14 &&
+    # run_test test15 &&
+    run_test test16 &&
+    run_test test17
 else
     for testname in $@
     do
