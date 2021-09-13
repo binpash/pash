@@ -168,23 +168,23 @@ test18()
 
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
-    run_test test1 &&
-    run_test test2 &&
-    run_test test3 &&
-    run_test test4 &&
-    run_test test5 &&
-    run_test test6 &&
+    run_test test1
+    run_test test2
+    run_test test3
+    run_test test4
+    run_test test5
+    run_test test6
     # run_test test7
-    run_test test8 &&
-    run_test test9 &&
-    run_test test10 &&
-    run_test test11 &&
-    run_test test12 &&
-    run_test test13 &&
-    run_test test14 &&
-    # run_test test15 &&
-    run_test test16 &&
-    run_test test17 &&
+    run_test test8
+    run_test test9
+    run_test test10
+    run_test test11
+    run_test test12
+    run_test test13
+    run_test test14
+    # run_test test15
+    run_test test16
+    run_test test17
     run_test test18
 else
     for testname in $@
