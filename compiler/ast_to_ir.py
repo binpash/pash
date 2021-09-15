@@ -552,7 +552,6 @@ def replace_ast_regions(ast_objects, irFileGen, config):
                                                      ast_text=original_text)
                     preprocessed_asts.append(replaced_ast)
                 else:
-                    preprocessed_asts.append(preprocessed_ast_object.ast)
                     ## In this case, it is possible that no replacement happened,
                     ## meaning that we can simply return the original parsed text as it was.
                     if(preprocessed_ast_object.will_anything_be_replaced() or original_text is None):
