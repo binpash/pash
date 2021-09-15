@@ -33,9 +33,6 @@ def from_ast_objects_to_shell(asts):
     shell_list = []
     for ast in asts:
         if(isinstance(ast, UnparsedScript)):
-            # log("Unparsed script is going back out")
-            # log(ast.text)
-            # exit(1)
             shell_list.append(ast.text)
         else:
             ## We are working with two different abstractions for ASTs, one is the class and the other

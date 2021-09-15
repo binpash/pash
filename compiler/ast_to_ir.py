@@ -552,12 +552,13 @@ def replace_ast_regions(ast_objects, irFileGen, config):
                                                      ast_text=original_text)
                     preprocessed_asts.append(replaced_ast)
                 else:
-                    ## In this case, it is possible that no replacement happened,
-                    ## meaning that we can simply return the original parsed text as it was.
-                    if(preprocessed_ast_object.will_anything_be_replaced()):
-                        preprocessed_asts.append(preprocessed_ast_object.ast)
-                    else:
-                        preprocessed_asts.append(UnparsedScript(original_text))
+                    preprocessed_asts.append(preprocessed_ast_object.ast)
+                    # ## In this case, it is possible that no replacement happened,
+                    # ## meaning that we can simply return the original parsed text as it was.
+                    # if(preprocessed_ast_object.will_anything_be_replaced()):
+                    #     preprocessed_asts.append(preprocessed_ast_object.ast)
+                    # else:
+                    #     preprocessed_asts.append(UnparsedScript(original_text))
 
     ## Close the final dataflow region
     if(len(candidate_dataflow_region) > 0):
@@ -829,7 +830,7 @@ def replace_df_region(asts, irFileGen, config, ast_text=None):
     ## so that the sequential script can be run in parallel to the compilation.
     _, sequential_script_file_name = ptempfile()
     ## If we don't have the original ast text, we need to unparse the ast
-    if (ast_text is None):
+    if (ast_text is None or True):
         kv_asts = [ast_node_to_untyped_deep(ast) for ast in asts]
         from_ast_objects_to_shell_file(kv_asts, sequential_script_file_name)
     else:
