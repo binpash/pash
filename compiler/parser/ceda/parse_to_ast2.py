@@ -88,7 +88,8 @@ def parse_to_ast (inputPath, init=True):
             if (inputPath != "-"):
                 parsedLines = "".join(lines[linno_before:linno_after])
             else:
-                parsedLines = "# Cannot return lines for stdin\n"
+                ## When parsing from stdin there is no way to save the lines
+                parsedLines = None
 
             yield (new_ast, parsedLines, linno_before, linno_after)
 
