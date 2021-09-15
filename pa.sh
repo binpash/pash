@@ -16,13 +16,3 @@ fi
 
 
 PASH_FROM_SH="pa.sh" python3 $PASH_TOP/compiler/pash.py "$@"
-
-# mkfifo /tmp/fifo
-
-# # TODO: Do we need setsid?
-# { tee /tmp/pipo > /tmp/fifo <&3 3<&- & } 3<&0
-
-# PASH_FROM_SH="pa.sh" python3 $PASH_TOP/compiler/pash.py "$@" < /tmp/fifo
-# # TODO: Does interactivity mean more than just reading line by line? Do we need to also return something back?
-
-# rm /tmp/fifo
