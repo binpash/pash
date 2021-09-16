@@ -541,7 +541,7 @@ def replace_ast_regions(ast_objects, irFileGen, config):
                 ## Since the current one is maximal (or not wholy replaced)
                 ## we close the candidate.
                 dataflow_region_asts, dataflow_region_lines = unzip(candidate_dataflow_region)
-                dataflow_region_text = "\n".join(dataflow_region_lines)
+                dataflow_region_text = join_original_text_lines(dataflow_region_lines)
                 replaced_ast = replace_df_region(dataflow_region_asts, irFileGen, config,
                                                  ast_text=dataflow_region_text)
                 candidate_dataflow_region = []
@@ -554,7 +554,7 @@ def replace_ast_regions(ast_objects, irFileGen, config):
                 else:
                     ## In this case, it is possible that no replacement happened,
                     ## meaning that we can simply return the original parsed text as it was.
-                    if(preprocessed_ast_object.will_anything_be_replaced()):
+                    if(preprocessed_ast_object.will_anything_be_replaced() or original_text is None):
                         preprocessed_asts.append(preprocessed_ast_object.ast)
                     else:
                         preprocessed_asts.append(UnparsedScript(original_text))
@@ -562,13 +562,21 @@ def replace_ast_regions(ast_objects, irFileGen, config):
     ## Close the final dataflow region
     if(len(candidate_dataflow_region) > 0):
         dataflow_region_asts, dataflow_region_lines = unzip(candidate_dataflow_region)
-        dataflow_region_text = "\n".join(dataflow_region_lines)
+        dataflow_region_text = join_original_text_lines(dataflow_region_lines)
         replaced_ast = replace_df_region(dataflow_region_asts, irFileGen, config,
                                          ast_text=dataflow_region_text)
         candidate_dataflow_region = []
         preprocessed_asts.append(replaced_ast)
 
     return preprocessed_asts
+
+## This function joins original unparsed shell source in a safe way 
+##   so as to deal with the case where some of the text is None (e.g., in case of stdin parsing).
+def join_original_text_lines(shell_source_lines_or_none):
+    if any([text_or_none is None for text_or_none in shell_source_lines_or_none]):
+        return None
+    else:
+        return "\n".join(shell_source_lines_or_none)
 
 def preprocess_node(ast_object, irFileGen, config):
     global preprocess_cases

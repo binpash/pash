@@ -182,7 +182,7 @@ if [ "$#" -eq 0 ]; then
     run_test test12
     run_test test13
     run_test test14
-    # run_test test15
+    run_test test15
     run_test test16
     run_test test17
     run_test test18
