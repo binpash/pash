@@ -37,7 +37,7 @@ run_test()
         echo -n "$test output mismatch "
     fi
     if [ $test_ec -ne 0 ]; then
-        echo -n "$test exit code mismatch "
+        echo -n "$test exit code mismatch (bash: $test_bash_ec) (pash: $test_pash_ec)"
     fi
     if [ $test_diff_ec -ne 0 ] || [ $test_ec -ne 0 ]; then
         echo "are not identical" > $output_dir/${test}_distr.time
@@ -164,6 +164,17 @@ test18()
 {
     local shell=$1
     $shell escape-madness.sh
+}
+
+test_trap()
+{
+    local shell=$1
+    $shell trap.sh &
+    shell_pid=$!
+    sleep 3
+    kill -INT $shell_pid
+    wait $shell_pid
+    cat trap.txt
 }
 
 ## We run all tests composed with && to exit on the first that fails
