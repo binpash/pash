@@ -166,6 +166,12 @@ test18()
     $shell escape-madness.sh
 }
 
+test_redirect()
+{
+    local shell=$1
+    $shell redirect_wrapper.sh "$shell"
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
