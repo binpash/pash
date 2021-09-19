@@ -16,6 +16,25 @@ else:
 # TODO: use Pash root directory
 LIBDASH_LIBRARY_PATH = os.path.join(PASH_TOP, "compiler/parser/libdash/src/.libs/libdash.so")
 
+#  TODO: Call libdash in interactive mode
+# let parse_next i : parse_result =
+#   let stackmark = Dash.init_stack () in
+#   let res =
+#     match Dash.parse_next ~interactive:(is_interactive_mode i) () with
+#     | Done -> ParseDone
+#     | Error -> ParseError ""
+#     | Null -> ParseNull
+#     | Parsed n ->
+#        try
+#          let c = of_node n in
+#          ParseStmt c
+#        with ParseException s ->
+#          ParseError (Printf.sprintf "%s: %s\n" (Filename.basename Sys.executable_name) s)
+#   in
+#   Dash.pop_stack stackmark;
+#   res
+
+
 
 EOF_NLEFT = -99; # libdash/src/input.c
 
