@@ -166,6 +166,12 @@ test18()
     $shell escape-madness.sh
 }
 
+test_set_e()
+{
+    local shell=$1
+    $shell set-e.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -186,6 +192,7 @@ if [ "$#" -eq 0 ]; then
     run_test test16
     run_test test17
     run_test test18
+    run_test test_set_e
 else
     for testname in $@
     do
