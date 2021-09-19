@@ -218,6 +218,8 @@ pash_compiled_script_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
 # pash_redir_output cat $1
 # ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file $1
 
+pash_redir_output echo "File descriptors:"
+pash_redir_all_output "$RUNTIME_DIR/fds"
 
 if [ "$pash_speculation_flag" -eq 1 ]; then
     ## Count the execution time
