@@ -178,6 +178,12 @@ test_set_e_2()
     $shell set-e-2.sh
 }
 
+test_set_e_3()
+{
+    local shell=$1
+    $shell set-e-3.sh
+}
+
 test_redirect()
 {
     local shell=$1
@@ -214,6 +220,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_redirect
     run_test test_unparsing
     run_test test_set_e_2
+    run_test test_set_e_3
 else
     for testname in $@
     do
