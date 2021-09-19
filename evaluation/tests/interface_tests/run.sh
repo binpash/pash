@@ -41,11 +41,11 @@ run_test()
     fi
     if [ $test_diff_ec -ne 0 ] || [ $test_ec -ne 0 ]; then
         echo "are not identical" > $output_dir/${test}_distr.time
-        echo '   FAIL'
+        echo -e '\t\tFAIL'
         return 1
     else
         echo "are identical" > $output_dir/${test}_distr.time
-        echo '\t\tOK'
+        echo -e '\t\tOK'
         return 0
     fi
 }
