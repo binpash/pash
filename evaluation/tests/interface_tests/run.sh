@@ -45,7 +45,7 @@ run_test()
         return 1
     else
         echo "are identical" > $output_dir/${test}_distr.time
-        echo '   OK'
+        echo '\t\tOK'
         return 0
     fi
 }
@@ -172,6 +172,12 @@ test_set_e()
     $shell set-e.sh
 }
 
+test_set_e_2()
+{
+    local shell=$1
+    $shell set-e-2.sh
+}
+
 test_redirect()
 {
     local shell=$1
@@ -207,6 +213,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_set_e
     run_test test_redirect
     run_test test_unparsing
+    run_test test_set_e_2
 else
     for testname in $@
     do
