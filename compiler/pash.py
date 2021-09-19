@@ -102,7 +102,8 @@ def interactive(args, shell_name):
     with subprocess.Popen(subprocess_args,
                           env=new_env,
                           stdin=subprocess.PIPE,
-                          universal_newlines=True) as shell_proc:
+                          universal_newlines=True,
+                          close_fds=False) as shell_proc:
         ## TODO: Do we need to pipe stdout/stderror
 
         ## First send an exec so that we change the name of the shell
