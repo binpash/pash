@@ -1,4 +1,3 @@
-set -x
 set -e
 ( { false; }
   { echo one; } ) | cat
