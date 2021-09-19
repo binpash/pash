@@ -192,6 +192,7 @@ if [ "$#" -eq 0 ]; then
     run_test test16
     run_test test17
     run_test test18
+    run_test test_redirect
 else
     for testname in $@
     do
