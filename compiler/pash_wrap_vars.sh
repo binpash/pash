@@ -36,6 +36,7 @@ pash_redir_output cat "${script_source}"
 if (exit "$pash_previous_exit_status")
 then 
 {
+    ## Old way of executing the script but it doesn't properly work because the position is unchecked and therefore `set -e` doesn't behave as expected.
     # source "${script_source}" && internal_exec_status=$? || internal_exec_status=$?
     source "${script_source}"
     internal_exec_status=$?
