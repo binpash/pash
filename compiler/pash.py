@@ -102,7 +102,8 @@ def interactive(args, shell_name):
     with subprocess.Popen(subprocess_args,
                           env=new_env,
                           stdin=subprocess.PIPE,
-                          universal_newlines=True) as shell_proc:
+                          universal_newlines=True,
+                          close_fds=False) as shell_proc:
         ## TODO: Do we need to pipe stdout/stderror
 
         ## First send an exec so that we change the name of the shell
@@ -243,7 +244,7 @@ def execute_script(compiled_script_filename, command, arguments, shell_name):
     log("Executing:", "PASH_TMP_PREFIX={} pash_shell_name={} {}".format(config.PASH_TMP_PREFIX, 
                                                                         shell_name,
                                                                         " ".join(subprocess_args)))
-    exec_obj = subprocess.run(subprocess_args, env=new_env)
+    exec_obj = subprocess.run(subprocess_args, env=new_env, close_fds=False)
 
     return exec_obj.returncode
 

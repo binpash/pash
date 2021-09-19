@@ -330,10 +330,11 @@ def string_of_arg_char (c, is_quoted=False):
     if (type == "E"):
         char = chr (param);
 
+        ## MMG 2021-09-20 It might be safe to move everything except for " in the second list, but no need to do it if the tests pass 
         ## Chars to escape unconditionally
         chars_to_escape = ["'", '"', '`', '(', ')', '{', '}', '$', '!', '&', '|', ';']
         ## Chars to escape only when not quoted
-        chars_to_escape_when_no_quotes = ['*', '?', '[', ']']
+        chars_to_escape_when_no_quotes = ['*', '?', '[', ']', '#', '<', '>', '~', ' ']
         if char in chars_to_escape:
             return '\\' + char
         elif char in chars_to_escape_when_no_quotes and not is_quoted:
