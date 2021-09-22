@@ -166,6 +166,12 @@ test18()
     $shell escape-madness.sh
 }
 
+test_set_e()
+{
+    local shell=$1
+    $shell set-e.sh
+}
+
 test_redirect()
 {
     local shell=$1
@@ -198,6 +204,7 @@ if [ "$#" -eq 0 ]; then
     run_test test16
     run_test test17
     run_test test18
+    run_test test_set_e
     run_test test_redirect
     run_test test_unparsing
 else
