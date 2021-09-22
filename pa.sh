@@ -14,5 +14,4 @@ then
     exit
 fi
 
-
 PASH_FROM_SH="pa.sh" python3 $PASH_TOP/compiler/pash.py "$@"
