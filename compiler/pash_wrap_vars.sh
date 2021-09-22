@@ -31,9 +31,11 @@ pash_redir_output echo "$$: (3) Reverted to BaSh input arguments: $@"
 ## Execute the script
 pash_redir_output echo "$$: (4) Executing script in ${script_source}:"
 pash_redir_output cat "${script_source}"
-## TODO: I think that the following command fails with `set -e`
-(exit "$pash_previous_exit_status")
-source "${script_source}" && internal_exec_status=$? || internal_exec_status=$?
+## Note: We run the `exit` in a checked position so that we don't simply exit when we are in `set -e`.
+if (exit "$pash_previous_exit_status")
+then source "${script_source}" && internal_exec_status=$? || internal_exec_status=$?
+else source "${script_source}" && internal_exec_status=$? || internal_exec_status=$?
+fi
 pash_exec_status=${internal_exec_status}
 pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_exec_status"
 
