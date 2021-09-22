@@ -166,6 +166,12 @@ test18()
     $shell escape-madness.sh
 }
 
+test_redirect()
+{
+    local shell=$1
+    $shell redirect_wrapper.sh "$shell"
+}
+
 test_unparsing()
 {
     local shell=$1
@@ -192,6 +198,7 @@ if [ "$#" -eq 0 ]; then
     run_test test16
     run_test test17
     run_test test18
+    run_test test_redirect
     run_test test_unparsing
 else
     for testname in $@
