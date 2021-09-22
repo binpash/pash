@@ -196,5 +196,9 @@ def ast_node_to_untyped_deep(node):
         return [json_key, untyped_json_val]
     elif(isinstance(node, list)):
         return [ast_node_to_untyped_deep(obj) for obj in node]
+    elif(isinstance(node, tuple)):
+        return [ast_node_to_untyped_deep(obj) for obj in node]
+    elif(isinstance(node, dict)):
+        return {k: ast_node_to_untyped_deep(v) for k, v in node.items()}
     else:
         return node
