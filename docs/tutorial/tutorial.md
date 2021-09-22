@@ -109,7 +109,7 @@ More information in the [pash-on-docker guide](../contrib#pash-on-docker-a-pocke
 #### Windows using WSL
 
 To run PaSh on windows without Docker, install [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
-A short tutorial is included in the [contributing](../contrib/) guide.
+A short tutorial is included in the [contributing](../contributing/contrib.md) guide.
 
 ## Running Scripts
 
