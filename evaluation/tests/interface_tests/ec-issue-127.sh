@@ -1,0 +1,2 @@
+unset foobar
+echo ${foobar?}

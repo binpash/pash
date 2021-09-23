@@ -4,16 +4,18 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 # time: print real in seconds, to simplify parsing
 
 bash="bash"
-pash="$PASH_TOP/pa.sh --interactive"
+pash="$PASH_TOP/pa.sh"
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 mkdir -p "$output_dir"
 
 rm -f  $output_dir/results.time_bash
 rm -f  $output_dir/results.time_pash
+
 run_test()
 {
     local test=$1
+    local pash_specific_args=$2
 
     if [ "$(type -t $test)" != "function" ]; then
         echo "$test is not a function!   FAIL"
@@ -25,7 +27,7 @@ run_test()
     { time $test "bash" > "$output_dir/$test.bash.out"; } 2>> $output_dir/results.time_bash
     test_bash_ec=$?
     TIMEFORMAT="%3R" # %3U %3S"
-    { time $test "$pash" > "$output_dir/$test.pash.out"; } 2>> $output_dir/results.time_pash
+    { time $test "$pash" "$pash_specific_args" > "$output_dir/$test.pash.out"; } 2>> $output_dir/results.time_pash
     test_pash_ec=$?
     diff "$output_dir/$test.bash.out" "$output_dir/$test.pash.out"
     test_diff_ec=$?
@@ -196,6 +198,14 @@ test_unparsing()
     $shell unparsing-special-chars.sh
 }
 
+test_unset_exit_codes()
+{
+    local shell=$1
+    local pash_specific_args=$2
+    $shell $pash_specific_args ec-issue-127.sh
+    echo $?
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -221,6 +231,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_unparsing
     run_test test_set_e_2
     run_test test_set_e_3
+    run_test test_unset_exit_codes "--batch"
 else
     for testname in $@
     do
