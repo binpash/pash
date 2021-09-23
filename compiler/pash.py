@@ -221,25 +221,21 @@ def shell_env(shell_name: str):
 
 ## The following two functions need to correspond completely
 def bash_prefix_args():
-    subprocess_args = ["/usr/bin/env", "bash"]
-    ## Add shell specific arguments
-    if config.pash_args.a:
-        subprocess_args.append("-a")
-    else:
-        subprocess_args.append("+a")
-    return subprocess_args
+    return ["/usr/bin/env", "bash"]
 
 def bash_exec_string(shell_name):
+    return "{} $@\n".format(bash_exec_string_no_args(shell_name))
+
+def bash_exec_string_no_args(shell_name):
     a_flag = ''
     if config.pash_args.a:
         a_flag = '-a'
-    return "exec -a{} bash {} -s $@\n".format(shell_name, a_flag)
+    return "exec -a {} bash {} -s ".format(shell_name, a_flag)
 
 def execute_script(compiled_script_filename, command, arguments, shell_name):
     new_env = shell_env(shell_name)
     subprocess_args = bash_prefix_args()
-    subprocess_args += ["-c", 'source {}'.format(compiled_script_filename), shell_name] + arguments
-    # subprocess_args = ["/usr/bin/env", "bash", compiled_script_filename] + arguments
+    subprocess_args += ["-c", "{} {} < {}".format(bash_exec_string_no_args(shell_name), " ".join(arguments), compiled_script_filename)]
     log("Executing:", "PASH_TMP_PREFIX={} pash_shell_name={} {}".format(config.PASH_TMP_PREFIX, 
                                                                         shell_name,
                                                                         " ".join(subprocess_args)))
