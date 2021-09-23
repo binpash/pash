@@ -6,7 +6,7 @@ from datetime import datetime
 from annotations import *
 from ast_to_ir import *
 from ir import *
-from parse import parse_shell_to_asts, parse_shell_to_asts_interactive, from_ast_objects_to_shell
+from parse import parse_shell_to_asts, parse_shell_to_asts_line_based, from_ast_objects_to_shell
 from util import *
 import config
 import pprint
@@ -17,11 +17,8 @@ def main():
     ## Parse arguments
     args, shell_name = parse_args()
 
-    ## If it is interactive we need a different execution mode
-    ##
-    ## The user can also ask for an interactive mode irregardless of whether pash was invoked in interactive mode. 
-    if(len(args.input) == 0 or args.interactive):
-        interactive(args, shell_name)
+    if(len(args.input) == 0 or not args.batch):
+        line_based_execution(args, shell_name)
     else:
         ## 1. Execute the POSIX shell parser that returns the AST in JSON
         input_script_path = args.input[0]
@@ -79,10 +76,8 @@ def preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell
 
     return return_code
 
-## TODO: Create an interactive pash
-def interactive(args, shell_name):
-    ## This means that we are interactive
-    assert(len(args.input) == 0 or args.interactive)
+def line_based_execution(args, shell_name):
+    assert(len(args.input) == 0 or not args.batch)
 
     if len(args.input) == 0:
         ## Read from stdin
@@ -92,7 +87,7 @@ def interactive(args, shell_name):
         input_script_path = args.input[0]
         script_args = args.input[1:]
 
-    ## Spawn a bash shell in interactive mode
+    ## Spawn a bash shell
     new_env = shell_env(shell_name)
     subprocess_args = bash_prefix_args()
     ## Add this option to read code from stdin
@@ -115,8 +110,8 @@ def interactive(args, shell_name):
         ## For each parsed AST:
         ##   1. Preprocess it
         ##   2. Translate it to shell syntax
-        ##   3. Send it to the interactive bash 
-        ast_objects = parse_shell_to_asts_interactive(input_script_path)
+        ##   3. Send it to the bash process 
+        ast_objects = parse_shell_to_asts_line_based(input_script_path)
         for ast_object in ast_objects:
             ## Preprocess each ast object and produce a preprocessed shell script fragment
             preprocessed_shell_script = preprocess_ast([ast_object], args)
@@ -150,8 +145,8 @@ def parse_args():
     parser.add_argument("--output_preprocessed",
                         help=" output the preprocessed script",
                         action="store_true")
-    parser.add_argument("--interactive",
-                        help="Executes the script using an interactive internal shell session (experimental)",
+    parser.add_argument("--batch",
+                        help="Executes the script using an single shell session instead of parsing line by line and sending to a spawned shell. This was the old default behavior.",
                         action="store_true")
     parser.add_argument("-c", "--command",
                         help="Evaluate the following as a script, rather than a file",
@@ -200,6 +195,10 @@ def parse_args():
     elif (len(args.input) > 0):
         shell_name = args.input[0]
 
+    ## Currently pash does not support --batch execution when it receives input from stdin.
+    if (args.batch and len(args.input) == 0):
+        log("Error: PaSh does not yet support --batch and input from stdin!", level=0)
+        exit(1)
 
     return args, shell_name
 
