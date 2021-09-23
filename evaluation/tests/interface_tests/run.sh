@@ -177,6 +177,13 @@ test_trap()
     cat trap.txt
 }
 
+## TODO: os.isatty and libdash should also have some configuration for interactive mode
+test_interactive()
+{
+    local shell=$1
+    PS1="$" $shell -i 2>&1
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
