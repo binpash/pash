@@ -206,6 +206,16 @@ test_unset_exit_codes()
     echo $?
 }
 
+test_redir()
+{
+    local shell=$1
+    $shell redir-test.sh
+    ec=$?
+    cat redir_test.out
+    cat redir_test.err
+    (exit $ec)
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
