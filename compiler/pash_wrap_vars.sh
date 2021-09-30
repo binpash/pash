@@ -20,7 +20,7 @@ source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_current_set_state" "$pash_previ
 pash_redir_output echo "$$: (3) Reverted to BaSh set state: $-"
 
 ## Recover the input arguments of the previous script
-export previous_args="$@"
+## Note: We don't need to care about wrap_vars arguments because we have stored all of them already.
 set -- $pash_input_args
 pash_redir_output echo "$$: (3) Reverted to BaSh input arguments: $@"
 
@@ -35,7 +35,6 @@ then
     source "${script_source}"
     internal_exec_status=$?
     ## Make sure that any input argument changes are propagated outside
-    ## TODO: Is this actually needed
     export pash_input_args="$@"
     (exit $internal_exec_status)
 
@@ -45,7 +44,6 @@ else
     source "${script_source}"
     internal_exec_status=$?
     ## Make sure that any input argument changes are propagated outside
-    ## TODO: Is this actually needed
     export pash_input_args="$@"
     (exit $internal_exec_status)
 }

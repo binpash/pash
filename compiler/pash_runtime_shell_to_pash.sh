@@ -12,10 +12,6 @@ output_set_file=${2?Output set file not given}
 pash_exec_status=${internal_exec_status}
 pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_exec_status"
 
-## Recover the previous args of the script
-## TODO: Is this needed
-set -- $previous_args
-
 ## Save the current set options to a file so that they can be recovered
 pash_final_set_vars=$-
 pash_redir_output echo "$$: (5) Writing current BaSh set state to: $output_set_file"
@@ -29,5 +25,5 @@ pash_redir_output echo "$$: (5) Reverted to PaSh set state to: $-"
 
 ## Save the current variables
 source "$RUNTIME_DIR/pash_declare_vars.sh" $output_vars_file
-pash_redir_output echo "$$: (5) Exiting from BaSh with BaSh status: $pash_exec_status"
-(exit "$pash_exec_status")
+# pash_redir_output echo "$$: (5) Exiting from BaSh with BaSh status: $pash_exec_status"
+# (exit "$pash_exec_status")

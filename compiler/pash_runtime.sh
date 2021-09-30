@@ -221,11 +221,6 @@ pash_sequential_script_file=$1
 ## The parallel script will be saved in the following file if compilation is successful.
 pash_compiled_script_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
 
-## Just execute the original script
-# pash_redir_output echo "$$: Sequential file in: $1 contains"
-# pash_redir_output cat $1
-# ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file $1
-
 if [ "$pash_speculation_flag" -eq 1 ]; then
     ## Count the execution time
     pash_exec_time_start=$(date +"%s%N")
