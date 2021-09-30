@@ -35,6 +35,9 @@
 ##    ...     |
 ##    (4)     |
 ##    ...     |
+##
+## (The rest of the steps happen only in debug mode)
+##    ...
 ##      \----(5)----\
 ##            |     ...
 ##            |     (6)
@@ -256,7 +259,7 @@ else
     ##
     ## (4)
     ##
-    source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_script_to_execute}
+    source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file ${pash_script_to_execute}
     pash_runtime_final_status=$?
 
     ## We only want to execute (5) and (6) if we are in debug mode and it is not explicitly avoided

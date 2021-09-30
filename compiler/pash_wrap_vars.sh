@@ -10,12 +10,7 @@ input_vars_file=${1??Input var file not given}
 pash_redir_output echo "$$: (3) Recovering variables from: $input_vars_file"
 source "$RUNTIME_DIR/pash_source_declare_vars.sh" $input_vars_file
 
-## Set the output file variables
-## WARNING: This has to happen afterwards to avoid 
-## TODO: Delete these two
-output_vars_file=${2?Output var file not given}
-output_set_file=${3?Output set file not given}
-script_source="${@:4}"
+script_source="${@:2}"
 
 ## Recover the `set` state of the previous shell
 # pash_redir_output echo "$$: (3) Previous BaSh set state: $pash_previous_set_status"
@@ -37,8 +32,6 @@ pash_redir_output cat "${script_source}"
 if (exit "$pash_previous_exit_status")
 then 
 {
-    ## Old way of executing the script but it doesn't properly work because the position is unchecked and therefore `set -e` doesn't behave as expected.
-    # source "${script_source}" && internal_exec_status=$? || internal_exec_status=$?
     source "${script_source}"
     internal_exec_status=$?
     ## Make sure that any input argument changes are propagated outside
