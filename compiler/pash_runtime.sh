@@ -254,16 +254,20 @@ else
     source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_script_to_execute}
     pash_runtime_final_status=$?
 
-    ##
-    ## (5)
-    ##
 
-    source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_variables_file} ${pash_output_set_file}
-
+    ## TODO: Add a flag that can avoid running (5), (6) even when in debug mode
     ##
-    ## (6)
-    ##
+    ## We only want to execute (5) and (6) if we are in debug mode
+    if [ "$pash_checking_debug_level" -eq 1 ]; then
+        ##
+        ## (5)
+        ##
+        source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_variables_file} ${pash_output_set_file}
 
-    source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
+        ##
+        ## (6)
+        ##
+        source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
+    fi
 fi
 
