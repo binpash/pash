@@ -235,7 +235,7 @@ else
     fi
 
     ##
-    ## (3), (4)
+    ## (3)
     ##
 
     ## Count the execution time
@@ -243,12 +243,16 @@ else
 
     ## If the compiler failed or if we dry_run the compiler, we have to run the sequential
     if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_dry_run_compiler_flag" -eq 1 ]; then
-        source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_sequential_script_file}
-        pash_runtime_final_status=$?
+        pash_script_to_execute="${pash_sequential_script_file}"
     else
-        source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_compiled_script_file}
-        pash_runtime_final_status=$?
+        pash_script_to_execute="${pash_compiled_script_file}"
     fi
+
+    ##
+    ## (4)
+    ##
+    source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_script_to_execute}
+    pash_runtime_final_status=$?
 
     ##
     ## (5)
