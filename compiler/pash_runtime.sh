@@ -116,6 +116,17 @@ RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
 export PASH_REDIR="&2"
 export PASH_DEBUG_LEVEL=0
 
+## Get distro
+## TODO: Move that somewhere where it happens once
+if type lsb_release >/dev/null 2>&1 ; then
+    distro=$(lsb_release -i -s)
+elif [ -e /etc/os-release ] ; then
+    distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
+fi
+
+# convert to lowercase
+distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
+
 ## Check flags
 pash_output_time_flag=1
 pash_execute_flag=1
@@ -191,7 +202,7 @@ pash_redir_output echo "$$: (1) Previous exit status: $pash_previous_exit_status
 pash_redir_output echo "$$: (1) Previous set state: $pash_previous_set_status"
 
 ## Prepare a file with all shell variables
-pash_runtime_shell_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+pash_runtime_shell_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
 source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
 pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_variables_file"
 
@@ -203,7 +214,6 @@ pash_redir_output echo "$$: (1) Bash set state at start of execution: $pash_prev
 source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_previous_set_status" "$pash_default_set_state"
 pash_redir_output echo "$$: (1) Set state reverted to PaSh-internal set state: $pash_previous_set_status"
 
-
 ##
 ## (2)
 ##
@@ -212,7 +222,8 @@ pash_redir_output echo "$$: (1) Set state reverted to PaSh-internal set state: $
 pash_sequential_script_file=$1
 
 ## The parallel script will be saved in the following file if compilation is successful.
-pash_compiled_script_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+pash_compiled_script_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+
 
 if [ "$pash_speculation_flag" -eq 1 ]; then
     ## Count the execution time
@@ -257,11 +268,11 @@ else
         ##
 
         ## Prepare a file for the output shell variables to be saved in
-        pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+        pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
         # pash_redir_output echo "$$: Output vars: $pash_output_variables_file"
 
         ## Prepare a file for the `set` state of the inner shell to be output
-        pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+        pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
 
         source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_variables_file} ${pash_output_set_file}
 
