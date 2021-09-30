@@ -35,6 +35,9 @@
 ##    ...     |
 ##    (4)     |
 ##    ...     |
+##
+## (The rest of the steps happen only in debug mode)
+##    ...
 ##      \----(5)----\
 ##            |     ...
 ##            |     (6)
@@ -122,6 +125,7 @@ pash_assert_compiler_success_flag=0
 pash_checking_speculation=0
 pash_checking_log_file=0
 pash_checking_debug_level=0
+pash_avoid_pash_runtime_completion_flag=0
 for item in $@
 do
     if [ "$pash_checking_speculation" -eq 1 ]; then
@@ -169,6 +173,10 @@ do
         pash_checking_log_file=1
     fi
 
+    if [ "--avoid_pash_runtime_completion" == "$item" ]; then
+        pash_avoid_pash_runtime_completion_flag=1
+    fi
+
     if [ "-d" == "$item" ] || [ "--debug" == "$item" ]; then
         pash_checking_debug_level=1
         pash_redir_output echo "$$: $item"
@@ -200,29 +208,19 @@ pash_redir_output echo "$$: (1) Set state reverted to PaSh-internal set state: $
 ## (2)
 ##
 
-## Prepare a file for the output shell variables to be saved in
-pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-# pash_redir_output echo "$$: Input vars: $pash_runtime_shell_variables_file --- Output vars: $pash_output_variables_file"
-
-## Prepare a file for the `set` state of the inner shell to be output
-pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-
 ## The first argument contains the sequential script. Just running it should work for all tests.
 pash_sequential_script_file=$1
 
 ## The parallel script will be saved in the following file if compilation is successful.
 pash_compiled_script_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
 
-## Just execute the original script
-# pash_redir_output echo "$$: Sequential file in: $1 contains"
-# pash_redir_output cat $1
-# ./pash_wrap_vars.sh $pash_runtime_shell_variables_file $pash_output_variables_file $1
-
 if [ "$pash_speculation_flag" -eq 1 ]; then
     ## Count the execution time
     pash_exec_time_start=$(date +"%s%N")
     source "$RUNTIME_DIR/pash_runtime_quick_abort.sh"
     pash_runtime_final_status=$?
+    ## For now this will fail!!!
+    exit 1
 else
     pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
     pash_runtime_return_code=$?
@@ -233,7 +231,7 @@ else
     fi
 
     ##
-    ## (3), (4), (5)
+    ## (3)
     ##
 
     ## Count the execution time
@@ -241,48 +239,36 @@ else
 
     ## If the compiler failed or if we dry_run the compiler, we have to run the sequential
     if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_dry_run_compiler_flag" -eq 1 ]; then
-        source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_sequential_script_file}
-        pash_runtime_final_status=$?
+        pash_script_to_execute="${pash_sequential_script_file}"
     else
-        source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file $pash_output_variables_file ${pash_output_set_file} ${pash_compiled_script_file}
-        pash_runtime_final_status=$?
+        pash_script_to_execute="${pash_compiled_script_file}"
+    fi
+
+    ##
+    ## (4)
+    ##
+    source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file ${pash_script_to_execute}
+    pash_runtime_final_status=$?
+
+    ## We only want to execute (5) and (6) if we are in debug mode and it is not explicitly avoided
+    if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
+        ##
+        ## (5)
+        ##
+
+        ## Prepare a file for the output shell variables to be saved in
+        pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+        # pash_redir_output echo "$$: Output vars: $pash_output_variables_file"
+
+        ## Prepare a file for the `set` state of the inner shell to be output
+        pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+
+        source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_variables_file} ${pash_output_set_file}
+
+        ##
+        ## (6)
+        ##
+        source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
     fi
 fi
 
-##
-## (6)
-##
-
-pash_exec_time_end=$(date +"%s%N")
-
-## TODO: Maybe remove the temp file after execution
-
-## We want the execution time in milliseconds
-if [ "$pash_output_time_flag" -eq 1 ]; then
-    pash_exec_time_ms=$(echo "scale = 3; ($pash_exec_time_end-$pash_exec_time_start)/1000000" | bc)
-    pash_redir_output echo "Execution time: $pash_exec_time_ms  ms"
-fi
-
-## Source back the output variables of the compiled script. 
-## In all cases we should have executed a script
-pash_redir_output echo "$$: (7) Recovering BaSh variables from: $pash_output_variables_file"
-source "$RUNTIME_DIR/pash_source_declare_vars.sh" $pash_output_variables_file
-
-## Save the previous `set` state to a variable
-pash_redir_output echo "$$: (7) Reading current BaSh set state from: ${pash_output_set_file}"
-
-pash_redir_output echo "$$: (7) Current BaSh set state: $(cat $pash_output_set_file)"
-## WARNING: This has to happen after sourcing the variables so that it overwrites it
-pash_previous_set_status="$(cat $pash_output_set_file)"
-
-export pash_input_args
-pash_redir_output echo "$$: (7) Arguments (might) have been updated to be: $pash_input_args"
-
-## Propagate the `set` state after running the script to the outer script
-## TODO: Maybe move this to the end to avoid spurious failures
-pash_redir_output echo "$$: (7) Current PaSh set state: $-"
-source "$RUNTIME_DIR/pash_set_from_to.sh" "$-" "$(cat $pash_output_set_file)"
-pash_redir_output echo "$$: (7) Reverted to BaSh set state before exiting: $-"
-
-pash_redir_output echo "$$: (7) Reverting last BaSh exit code: $pash_runtime_final_status"
-(exit "$pash_runtime_final_status")
