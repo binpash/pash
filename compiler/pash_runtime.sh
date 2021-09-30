@@ -222,13 +222,19 @@ if [ "$pash_speculation_flag" -eq 1 ]; then
     ## For now this will fail!!!
     exit 1
 else
-    pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
+    pash_compilation_time_start=$(date +"%s%N")
+    pash_redir_all_output python3 -S "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
     pash_runtime_return_code=$?
     pash_redir_output echo "$$: Compiler exited with code: $pash_runtime_return_code"
     if [ "$pash_runtime_return_code" -ne 0 ] && [ "$pash_assert_compiler_success_flag" -eq 1 ]; then
         pash_redir_output echo "$$: ERROR: Compiler failed with error code: $pash_runtime_return_code"
         exit 1
     fi
+    pash_compilation_time_end=$(date +"%s%N")
+
+    pash_compilation_time_ms=$(echo "scale = 3; ($pash_compilation_time_end-$pash_compilation_time_start)/1000000" | bc)
+    pash_redir_output echo "Compilation time: $pash_compilation_time_ms  ms"
+
 
     ##
     ## (3)

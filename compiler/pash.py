@@ -12,6 +12,7 @@ import config
 import pprint
 import tempfile
 import shutil
+import sys
 
 def main():
     ## Parse arguments
@@ -39,7 +40,7 @@ def main():
             shutil.rmtree(config.PASH_TMP_PREFIX)
         log("-" * 40) #log end marker
         ## Return the exit code of the executed script
-        exit(return_code)
+        sys.exit(return_code)
 
 def preprocess_ast(ast_objects, args):
     ## 2. Preprocess ASTs by replacing possible candidates for compilation
@@ -134,7 +135,7 @@ def interactive(args, shell_name):
             shutil.rmtree(config.PASH_TMP_PREFIX)
         log("-" * 40) #log end marker
         ## Return the exit code of the executed script
-        exit(shell_proc.returncode)
+        sys.exit(shell_proc.returncode)
 
 
 def parse_args():
