@@ -260,7 +260,7 @@ else
     pash_runtime_final_status=$?
 
     ## We only want to execute (5) and (6) if we are in debug mode and it is not explicitly avoided
-    if [ "$PASH_DEBUG_LEVEL" -eq 1 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
+    if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
         ##
         ## (5)
         ##
