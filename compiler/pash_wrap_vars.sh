@@ -40,34 +40,45 @@ then
     # source "${script_source}" && internal_exec_status=$? || internal_exec_status=$?
     source "${script_source}"
     internal_exec_status=$?
+    ## Make sure that any input argument changes are propagated outside
+    ## TODO: Is this actually needed
+    export pash_input_args="$@"
+    source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh"
+
 }
 else 
 {
     source "${script_source}"
     internal_exec_status=$?
+    ## Make sure that any input argument changes are propagated outside
+    ## TODO: Is this actually needed
+    export pash_input_args="$@"
+    source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh"
 }
 fi
-pash_exec_status=${internal_exec_status}
-pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_exec_status"
-
-## Make sure that any input argument changes are propagated outside
-export pash_input_args="$@"
-
-## Recover the previous args of the script
-set -- $previous_args
-
-## Save the current set options to a file so that they can be recovered
-pash_final_set_vars=$-
-pash_redir_output echo "$$: (5) Writing current BaSh set state to: $output_set_file"
-pash_redir_output echo "$$: (5) Current BaSh shell: $-"
-echo "$pash_final_set_vars" > "$output_set_file"
-
-## Revert to the old set state to avoid spurious fails
-source "$RUNTIME_DIR/pash_set_from_to.sh" "$-" "$pash_current_set_state"
-pash_redir_output echo "$$: (5) Reverted to PaSh set state to: $-"
 
 
-## Save the current variables
-source "$RUNTIME_DIR/pash_declare_vars.sh" $output_vars_file
-pash_redir_output echo "$$: (5) Exiting from BaSh with BaSh status: $pash_exec_status"
-(exit "$pash_exec_status")
+# pash_exec_status=${internal_exec_status}
+# pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_exec_status"
+
+# ## Make sure that any input argument changes are propagated outside
+# export pash_input_args="$@"
+
+# ## Recover the previous args of the script
+# set -- $previous_args
+
+# ## Save the current set options to a file so that they can be recovered
+# pash_final_set_vars=$-
+# pash_redir_output echo "$$: (5) Writing current BaSh set state to: $output_set_file"
+# pash_redir_output echo "$$: (5) Current BaSh shell: $-"
+# echo "$pash_final_set_vars" > "$output_set_file"
+
+# ## Revert to the old set state to avoid spurious fails
+# source "$RUNTIME_DIR/pash_set_from_to.sh" "$-" "$pash_current_set_state"
+# pash_redir_output echo "$$: (5) Reverted to PaSh set state to: $-"
+
+
+# ## Save the current variables
+# source "$RUNTIME_DIR/pash_declare_vars.sh" $output_vars_file
+# pash_redir_output echo "$$: (5) Exiting from BaSh with BaSh status: $pash_exec_status"
+# (exit "$pash_exec_status")
