@@ -3,14 +3,7 @@
 ## File directory
 RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
 
-input_vars_file=${1??Input var file not given}
-
-## Recover the variables that the previous shell had access to
-## WARNING: This has to happen first, so that the variables underneath overwrite it.
-pash_redir_output echo "$$: (3) Recovering variables from: $input_vars_file"
-source "$RUNTIME_DIR/pash_source_declare_vars.sh" $input_vars_file
-
-script_source="${@:2}"
+script_source="${@:1}"
 
 ## Recover the `set` state of the previous shell
 # pash_redir_output echo "$$: (3) Previous BaSh set state: $pash_previous_set_status"
