@@ -202,6 +202,10 @@ pash_redir_output echo "$$: (1) Previous exit status: $pash_previous_exit_status
 pash_redir_output echo "$$: (1) Previous set state: $pash_previous_set_status"
 
 ## Prepare a file with all shell variables
+##
+## This is only needed by PaSh to expand.
+##
+## TODO: Maybe we can get rid of it since PaSh has access to the environment anyway?
 pash_runtime_shell_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
 source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
 pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_variables_file"
@@ -258,7 +262,7 @@ else
     ##
     ## (4)
     ##
-    source "$RUNTIME_DIR/pash_wrap_vars.sh" $pash_runtime_shell_variables_file ${pash_script_to_execute}
+    source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute}
     pash_runtime_final_status=$?
 
     ## We only want to execute (5) and (6) if we are in debug mode and it is not explicitly avoided
