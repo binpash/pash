@@ -6,10 +6,14 @@
 
 ## TODO: Use that for (1) too
 
+output_vars_file=${1?Output var file not given}
+output_set_file=${2?Output set file not given}
+
 pash_exec_status=${internal_exec_status}
 pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_exec_status"
 
 ## Recover the previous args of the script
+## TODO: Is this needed
 set -- $previous_args
 
 ## Save the current set options to a file so that they can be recovered
