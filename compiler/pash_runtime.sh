@@ -208,13 +208,6 @@ pash_redir_output echo "$$: (1) Set state reverted to PaSh-internal set state: $
 ## (2)
 ##
 
-## Prepare a file for the output shell variables to be saved in
-pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-# pash_redir_output echo "$$: Input vars: $pash_runtime_shell_variables_file --- Output vars: $pash_output_variables_file"
-
-## Prepare a file for the `set` state of the inner shell to be output
-pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-
 ## The first argument contains the sequential script. Just running it should work for all tests.
 pash_sequential_script_file=$1
 
@@ -262,6 +255,14 @@ else
         ##
         ## (5)
         ##
+
+        ## Prepare a file for the output shell variables to be saved in
+        pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+        # pash_redir_output echo "$$: Output vars: $pash_output_variables_file"
+
+        ## Prepare a file for the `set` state of the inner shell to be output
+        pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+
         source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_variables_file} ${pash_output_set_file}
 
         ##
