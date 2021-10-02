@@ -201,10 +201,6 @@ done
 pash_redir_output echo "$$: (1) Previous exit status: $pash_previous_exit_status"
 pash_redir_output echo "$$: (1) Previous set state: $pash_previous_set_status"
 
-echo "pipi" > "$RUNTIME_IN_FIFO"
-pash_redir_output echo "$$: (1) Daemon responds"
-pash_redir_output cat "$RUNTIME_OUT_FIFO"
-
 ## Prepare a file with all shell variables
 ##
 ## This is only needed by PaSh to expand.
@@ -241,6 +237,11 @@ if [ "$pash_speculation_flag" -eq 1 ]; then
     ## For now this will fail!!!
     exit 1
 else
+    ## TODO: Have a more proper communication protocol
+    echo "Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}" > "$RUNTIME_IN_FIFO"
+    pash_redir_output echo "$$: (1) Daemon responds:"
+    pash_redir_output cat "$RUNTIME_OUT_FIFO"
+    
     pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
     pash_runtime_return_code=$?
     pash_redir_output echo "$$: Compiler exited with code: $pash_runtime_return_code"
