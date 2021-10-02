@@ -201,6 +201,10 @@ done
 pash_redir_output echo "$$: (1) Previous exit status: $pash_previous_exit_status"
 pash_redir_output echo "$$: (1) Previous set state: $pash_previous_set_status"
 
+echo "pipi" > "$RUNTIME_IN_FIFO"
+pash_redir_output echo "$$: (1) Daemon responds"
+pash_redir_output cat "$RUNTIME_OUT_FIFO"
+
 ## Prepare a file with all shell variables
 ##
 ## This is only needed by PaSh to expand.

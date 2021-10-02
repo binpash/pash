@@ -14,4 +14,17 @@ then
     exit
 fi
 
+## TODO: Add these fifos in the random directory
+export RUNTIME_IN_FIFO=runtime_in_fifo
+export RUNTIME_OUT_FIFO=runtime_out_fifo
+rm -f "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
+mkfifo "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
+
+python3 "$PASH_TOP/compiler/pash_runtime_daemon.py" "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO" &
+daemon_pid=$!
+
 PASH_FROM_SH="pa.sh" python3 $PASH_TOP/compiler/pash.py "$@"
+
+## TODO: Make sure to properly terminate the pash runtime "daemon"
+kill -15 "$daemon_pid" 2> /dev/null 1>&2
+wait 2> /dev/null 1>&2 

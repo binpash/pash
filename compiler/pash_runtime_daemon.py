@@ -10,6 +10,8 @@ import pash_runtime
 
 ## TODO: Rename the pash_runtime to pash_compiler and this to pash_daemon
 
+## TODO: Should we maybe use sockets instead of fifos?
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("input", help="the input fifo from which the daemon will read its input")
