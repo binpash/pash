@@ -116,17 +116,6 @@ RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
 export PASH_REDIR="&2"
 export PASH_DEBUG_LEVEL=0
 
-## Get distro
-## TODO: Move that somewhere where it happens once
-if type lsb_release >/dev/null 2>&1 ; then
-    distro=$(lsb_release -i -s)
-elif [ -e /etc/os-release ] ; then
-    distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
-fi
-
-# convert to lowercase
-distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
-
 ## Check flags
 pash_output_time_flag=1
 pash_execute_flag=1
@@ -225,6 +214,9 @@ pash_redir_output echo "$$: (1) Set state reverted to PaSh-internal set state: $
 ## The first argument contains the sequential script. Just running it should work for all tests.
 pash_sequential_script_file=$1
 
+## The second argument SHOULD be the file that contains the IR to be compiled 
+pash_input_ir_file=$2
+
 ## The parallel script will be saved in the following file if compilation is successful.
 pash_compiled_script_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
 
@@ -238,12 +230,16 @@ if [ "$pash_speculation_flag" -eq 1 ]; then
     exit 1
 else
     ## TODO: Have a more proper communication protocol
-    echo "Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}" > "$RUNTIME_IN_FIFO"
-    pash_redir_output echo "$$: (1) Daemon responds:"
-    pash_redir_output cat "$RUNTIME_OUT_FIFO"
-    
-    pash_redir_all_output python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}"
-    pash_runtime_return_code=$?
+    ## TODO: Make a proper client for the daemon
+    echo "Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}| Input IR File:${pash_input_ir_file}" > "$RUNTIME_IN_FIFO"
+    daemon_response="$(cat $RUNTIME_OUT_FIFO)"
+    pash_redir_output echo "$$: (2) Daemon responds: $daemon_response"
+    if [[ "$daemon_response" == *"OK:"* ]]; then
+        pash_runtime_return_code=0
+    else
+        pash_runtime_return_code=1
+    fi
+
     pash_redir_output echo "$$: Compiler exited with code: $pash_runtime_return_code"
     if [ "$pash_runtime_return_code" -ne 0 ] && [ "$pash_assert_compiler_success_flag" -eq 1 ]; then
         pash_redir_output echo "$$: ERROR: Compiler failed with error code: $pash_runtime_return_code"

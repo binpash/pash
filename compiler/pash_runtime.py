@@ -99,9 +99,7 @@ def compile_optimize_output_script(ir_filename, compiled_script_file, args):
                 f.write(script_to_execute)
 
     else:
-        ## Instead of outputing the script here, we just want to exit with a specific exit code
-        ## TODO: Figure out the code and save it somewhere
-        exit(120)
+        raise Exception("Script failed to compile!")
 
 def load_df_region(ir_filename):
     log("Retrieving candidate DF region: {} ... ".format(ir_filename), end='')
