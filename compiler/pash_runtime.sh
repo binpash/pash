@@ -205,7 +205,7 @@ pash_default_set_state="huB"
 ## Revert the `set` state to not have spurious failures 
 pash_redir_output echo "$$: (1) Bash set state at start of execution: $pash_previous_set_status"
 source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_previous_set_status" "$pash_default_set_state"
-pash_redir_output echo "$$: (1) Set state reverted to PaSh-internal set state: $pash_previous_set_status"
+pash_redir_output echo "$$: (1) Set state reverted to PaSh-internal set state: $-"
 
 ##
 ## (2)

@@ -57,26 +57,26 @@ def success_response(string):
 def error_response(string):
     return f'ERROR: {string}\n'
 
-def parse_command_line(line):
+def parse_command(input):
     ## TODO: Improve the way parsing happens plz :')
-    if(line.startswith("Compile:")):
-        return compile(line)
+    if(input.startswith("Compile:")):
+        return compile(input)
     else:
-        return error_response(f'Unsupported command: {line}')
+        return error_response(f'Unsupported command: {input}')
 
 ## TODO: Improve the way parsing happens plz :') At the moment this will fail with : in file etc
-def parse_compile_line(line):
+def parse_compile_command(input):
     try:
-        components = line.rstrip().split("|")
+        components = input.rstrip().split("|")
         compiled_script_file = components[0].split(":")[1]
         var_file = components[1].split(":")[1]
         input_ir_file = components[2].split(":")[1]
         return compiled_script_file, var_file, input_ir_file
     except:
-        raise Exception(f'Parsing failure for line: {line}')
+        raise Exception(f'Parsing failure for line: {input}')
 
-def compile(line):
-    compiled_script_file, var_file, input_ir_file = parse_compile_line(line)
+def compile(input):
+    compiled_script_file, var_file, input_ir_file = parse_compile_command(input)
     
     ## Read any shell variables files if present
     config.read_vars_file(var_file)
@@ -93,13 +93,14 @@ def main():
     while True:
         ## Process a single request
         with open(args.input) as fin, open(args.output, "w") as fout:
-            for line in fin.readlines():
-                try:
-                    ret = parse_command_line(line)
-                except Exception as e:
-                    ret = error_response(str(e))
-                    
-                fout.write(ret)
+            input = fin.read()
+            try:
+                ret = parse_command(input)
+            except Exception as e:
+                ret = error_response(str(e))
+            
+            fout.write(ret)
+            fout.flush()
 
 if __name__ == "__main__":
     main()
