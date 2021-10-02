@@ -1,6 +1,7 @@
 import argparse
 
-import pash_runtime
+import config
+# import pash_runtime
 
 ##
 ## A Daemon responding to requests for compilation
@@ -12,11 +13,29 @@ import pash_runtime
 
 ## TODO: Should we maybe use sockets instead of fifos?
 
+## TODO: Fix the daemon logging.
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("input", help="the input fifo from which the daemon will read its input")
     parser.add_argument("output", help="the output fifo to which the daemon will write its output")
-    args = parser.parse_args()
+    config.add_common_arguments(parser)
+    args, unknown_args = parser.parse_known_args()
+
+    ## Print all the arguments before they are modified below
+    print("Arguments:")
+    for arg_name, arg_val in vars(args).items():
+        print(arg_name, arg_val)
+    print("-" * 40)
+    print("Unknown rest arguments:")
+    print(unknown_args)
+    print("-" * 40)
+
+    return args
+
+## Initialize the daemon
+def init():
+    args = parse_args()
     return args
 
 ## TODO: Implement actual commands here
@@ -24,7 +43,7 @@ def parse_line(line):
     return line
 
 def main():
-    args = parse_args()
+    args = init()
 
     while True:
         ## Process a single request

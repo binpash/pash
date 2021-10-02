@@ -185,7 +185,13 @@ def parse_args():
     shell_name = "pash"
 
     ## Make a directory for temporary files
-    config.PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
+    ## TODO: Delete this now that it is set in pa.sh and refactor it in config
+    # config.PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
+    
+    ## Ensure that PASH_TMP_PREFIX is set by pa.SH
+    assert(not os.getenv('PASH_TMP_PREFIX') is None)
+    config.PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
+
     if args.command:
         _, fname = ptempfile()
         with open(fname, 'w') as f:
