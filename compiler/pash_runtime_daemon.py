@@ -70,16 +70,22 @@ def parse_compile_line(line):
         components = line.rstrip().split("|")
         compiled_script_file = components[0].split(":")[1]
         var_file = components[1].split(":")[1]
-        return compiled_script_file, var_file
+        input_ir_file = components[2].split(":")[1]
+        return compiled_script_file, var_file, input_ir_file
     except:
         raise Exception(f'Parsing failure for line: {line}')
 
 def compile(line):
-    compiled_script_file, var_file = parse_compile_line(line)
-    ## TODO: Load the variable file
+    compiled_script_file, var_file, input_ir_file = parse_compile_line(line)
+    
+    ## Read any shell variables files if present
+    config.read_vars_file(var_file)
+
+    ## Call the main procedure
+    pash_runtime.compile_optimize_output_script(input_ir_file, compiled_script_file, config.pash_args)
 
     ## TODO: Compile and optimize the df region script
-    return success_response(f'{compiled_script_file} {var_file}')
+    return success_response(f'{compiled_script_file} {var_file} {input_ir_file}')
 
 def main():
     args = init()
