@@ -44,10 +44,6 @@ def main_body():
     args = parse_args()
     config.pash_args = args
 
-    ## Ensure that PASH_TMP_PREFIX is set by pash.py
-    assert(not os.getenv('PASH_TMP_PREFIX') is None)
-    config.PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
-
     ## Load the configuration
     if not config.config:
         config.load_config(args.config_path)
