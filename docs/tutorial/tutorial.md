@@ -104,12 +104,12 @@ In all the above cases, launching the container is done via:
 docker run --name pash-play -it pash
 ```
 PaSh can be found in the container's `/pash` directory, so run `cd pash; git pull` to fetch the latest updates.
-More information in the [pash-on-docker guide](../contrib#pash-on-docker-a-pocket-guide).
+More information in the [pash-on-docker guide](../contributing/contrib.md#pash-on-docker-a-pocket-guide).
 
 #### Windows using WSL
 
 To run PaSh on windows without Docker, install [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
-A short tutorial is included in the [contributing](../contrib/) guide.
+A short tutorial is included in the [contributing](../contributing/contrib.md) guide.
 
 ## Running Scripts
 
@@ -229,22 +229,22 @@ This section includes pointers for further exploration, depending on your needs.
 PaSh consist of three main components and a few additional "auxiliary" files and directories. 
 The three main components are:
 
-* [annotations](../annotations/): DSL characterizing commands, parallelizability study, and associated annotations. More specifically, (i) a lightweight annotation language allows command developers to express key parallelizability properties about their commands; (ii) an accompanying parallelizability study of POSIX and GNU commands. guides the annotation language and optimized aggregator library 
+* [annotations](../../annotations/): DSL characterizing commands, parallelizability study, and associated annotations. More specifically, (i) a lightweight annotation language allows command developers to express key parallelizability properties about their commands; (ii) an accompanying parallelizability study of POSIX and GNU commands. guides the annotation language and optimized aggregator library 
 
-* [compiler](../compiler): Shell-Dataflow translations and associated parallelization transformations. Given a script, the PaSh compiler converts it to a dataflow graph, performs a series of semantics-preserving program transformations that expose parallelism, and then converts the dataflow graph back into a POSIX script. 
+* [compiler](../../compiler): Shell-Dataflow translations and associated parallelization transformations. Given a script, the PaSh compiler converts it to a dataflow graph, performs a series of semantics-preserving program transformations that expose parallelism, and then converts the dataflow graph back into a POSIX script. 
 
-* [runtime](../runtime): Runtime components such as `eager`, `split`, and associated combiners. Apart from POSIX constructs added to guide parallelism explicitly, PaSh provides Unix-aware runtime primitives for addressing performance- and correctness-related issues.
+* [runtime](../../runtime): Runtime components such as `eager`, `split`, and associated combiners. Apart from POSIX constructs added to guide parallelism explicitly, PaSh provides Unix-aware runtime primitives for addressing performance- and correctness-related issues.
 
 These three components implement the contributions presented [in the EuroSys paper](https://arxiv.org/pdf/2007.09436.pdf).
 They are expected to be usable with minimal effort, through a few different installation means presented below.
 
 The auxiliary directories are:
-* [docs](../docs): Design documents, tutorials, installation instructions, etc.
-* [evaluation](../evaluation): Shell pipelines and script used for the evaluation of `pash`.
+* [docs](../../docs): Design documents, tutorials, installation instructions, etc.
+* [evaluation](../../evaluation): Shell pipelines and script used for the evaluation of `pash`.
 
 #### PaSh Concepts in Depth
 
-Academic [papers](../docs#academic-papers--events) associated with PaSh offer substantially deeper overviews of the concepts underpinning several PaSh components.
+Academic [papers](../README.md#academic-papers--events) associated with PaSh offer substantially deeper overviews of the concepts underpinning several PaSh components.
 
 #### Useful Links
 
@@ -253,6 +253,6 @@ Mailing Lists:
 * [Commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
 
 Development/contributions:
-* Contribution guide: [docs/contrib](../docs/contrib.md)
+* Contribution guide: [docs/contrib](../../docs/contributing/contrib.md)
 * Continuous Integration Server: [http://ci.binpa.sh/](http://ci.binpa.sh/)
 
