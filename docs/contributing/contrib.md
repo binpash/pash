@@ -109,7 +109,7 @@ Restart-Computer
 Run the `wsl` command (or find the installed Linux distribution in Windows Start menu and run it).
 After a few minutes of installation, enter a username and password for the internal WSL account to be created.
 
-Continue the PaSh installation process from [here](https://github.com/binpash/pash/blob/main/docs/tutorial.md#installation) inside the WSL installation.
+Continue the PaSh installation process from [here](https://github.com/binpash/pash/blob/main/docs/tutorial/tutorial.md#installation) inside the WSL installation.
 
 
 ## Docker TODO
