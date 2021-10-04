@@ -19,9 +19,9 @@ PYTHON_VERSION = "python3"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 
-## This is set in pash.py and pash_runtime.py accordingly.
-## In both cases the setting is different.
-PASH_TMP_PREFIX = None
+## Ensure that PASH_TMP_PREFIX is set by pa.sh
+assert(not os.getenv('PASH_TMP_PREFIX') is None)
+PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
 
 config = {}
 annotations = []
