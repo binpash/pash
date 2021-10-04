@@ -34,7 +34,7 @@ do
             ## TODO: Fix how speculation interacts with dry_run, assert_compiler_success
             export pash_speculation_flag=1
         else
-            pash_redir_output echo "$$: Unknown value for option --speculation"
+            echo "$$: Unknown value for option --speculation" 1>&2
             exit 1
         fi
     fi
@@ -46,7 +46,6 @@ do
 
     if [ "$pash_checking_debug_level" -eq 1 ]; then
         export pash_checking_debug_level=0
-        pash_redir_output echo "$$: $item"
         export PASH_DEBUG_LEVEL=$item
     fi
 
@@ -77,7 +76,6 @@ do
 
     if [ "-d" == "$item" ] || [ "--debug" == "$item" ]; then
         pash_checking_debug_level=1
-        pash_redir_output echo "$$: $item"
     fi
 done
 
