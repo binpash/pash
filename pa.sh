@@ -29,8 +29,8 @@ export distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
 
 ## Create the input and output fifo that the runtime will use for communication
-export RUNTIME_IN_FIFO="$(mktemp -d ${PASH_TMP_PREFIX}/runtime_in_fifo_XXXX)"
-export RUNTIME_OUT_FIFO="$(mktemp -d ${PASH_TMP_PREFIX}/runtime_out_fifo_XXXX)"
+export RUNTIME_IN_FIFO="$(mktemp -u ${PASH_TMP_PREFIX}/runtime_in_fifo_XXXX)"
+export RUNTIME_OUT_FIFO="$(mktemp -u ${PASH_TMP_PREFIX}/runtime_out_fifo_XXXX)"
 rm -f "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 mkfifo "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 
