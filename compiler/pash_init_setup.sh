@@ -134,51 +134,6 @@ else
     fi
 fi
 
-## Even though this is strictly in (2) it happens here
-## because it is necessary for performing the rest of (1)
-##
-## These two functions are strictly for logging since when not debugging they do not execute their commands
-# pash_redir_output()
-# {
-#     ## TODO: We should properly allow for different debug levels
-#     ## TODO: This code is copied in pash_source_declare_vars.sh
-#     if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
-#         :
-#     else
-#         if [ "$PASH_REDIR" == '&2' ]; then
-#             >&2 $@
-#         else
-#             >>"$PASH_REDIR" $@
-#         fi
-#     fi
-# }
-
-# pash_redir_all_output()
-# {
-#     if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
-#         :
-#     else
-#         if [ "$PASH_REDIR" == '&2' ]; then
-#             >&2 $@
-#         else
-#             >>"$PASH_REDIR" 2>&1 $@
-#         fi
-#     fi
-# }
-
-# pash_redir_all_output_always_execute()
-# {
-#     if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
-#         > /dev/null 2>&1 $@
-#     else
-#         if [ "$PASH_REDIR" == '&2' ]; then
-#             >&2 $@
-#         else
-#             >>"$PASH_REDIR" 2>&1 $@
-#         fi
-#     fi
-# }
-
 export -f pash_redir_output
 export -f pash_redir_all_output
 export -f pash_redir_all_output_always_execute
