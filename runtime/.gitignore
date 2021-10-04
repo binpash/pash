@@ -4,5 +4,6 @@ r_split
 r_merge
 r_unwrap
 r_wrap
+set-diff
 tests/perf*
 tests/*out

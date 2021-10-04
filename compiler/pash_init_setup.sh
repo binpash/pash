@@ -11,6 +11,8 @@ export distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 
 ## File directory
 export RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
+## TODO: Is there a better way to do this?
+export RUNTIME_LIBRARY_DIR="$RUNTIME_DIR/../runtime/"
 export PASH_REDIR="&2"
 export PASH_DEBUG_LEVEL=0
 
