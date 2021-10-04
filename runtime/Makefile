@@ -1,6 +1,6 @@
 .PHONY: all eager-debug split-debug clean agg
 
-all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee agg
+all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee agg set-diff
 
 CFLAGS=-Wall
 
@@ -49,6 +49,9 @@ r-wrap: r_wrap.c r_split.h
 
 r-unwrap: r_unwrap.c r_split.h
 	gcc ${CFLAGS} r_unwrap.c -o r_unwrap
+
+set-diff: set-diff.c
+	gcc ${CFLAGS} set-diff.c -o set-diff
 
 
 libdgsh_a_SOURCES = negotiate.c $(DGSH_ASSEMBLY_FILE)
