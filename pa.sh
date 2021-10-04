@@ -14,17 +14,6 @@ then
     exit
 fi
 
-## Get distro
-## TODO: Move that somewhere where it happens once (during installation)
-if type lsb_release >/dev/null 2>&1 ; then
-    distro=$(lsb_release -i -s)
-elif [ -e /etc/os-release ] ; then
-    distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
-fi
-
-# convert to lowercase
-export distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
-
 ## Create a temporary directory where PaSh can use for temporary files and logs
 export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
 
@@ -36,6 +25,9 @@ mkfifo "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 
 python3 "$PASH_TOP/compiler/pash_runtime_daemon.py" "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO" $@ &
 daemon_pid=$!
+
+## Initialize all things necessary for pash to execute (logging/functions/etc)
+source "$PASH_TOP/compiler/pash_init_setup.sh" "$@"
 
 PASH_FROM_SH="pa.sh" python3 $PASH_TOP/compiler/pash.py "$@"
 pash_exit_code=$?
