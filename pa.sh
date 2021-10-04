@@ -28,9 +28,9 @@ export distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 ## Create a temporary directory where PaSh can use for temporary files and logs
 export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
 
-## TODO: Add these fifos in the random directory
-export RUNTIME_IN_FIFO=runtime_in_fifo
-export RUNTIME_OUT_FIFO=runtime_out_fifo
+## Create the input and output fifo that the runtime will use for communication
+export RUNTIME_IN_FIFO="$(mktemp -d ${PASH_TMP_PREFIX}/runtime_in_fifo_XXXX)"
+export RUNTIME_OUT_FIFO="$(mktemp -d ${PASH_TMP_PREFIX}/runtime_out_fifo_XXXX)"
 rm -f "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 mkfifo "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 
