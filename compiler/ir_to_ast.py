@@ -12,7 +12,7 @@ import config
 RM_PASH_FIFOS_NAME="rm_pash_fifos"
 MKFIFO_PASH_FIFOS_NAME="mkfifo_pash_fifos"
 
-def to_shell(ir, output_dir, args):
+def to_shell(ir, args):
     backend_start_time = datetime.now()
 
     ## First call an IR to AST compilation pass

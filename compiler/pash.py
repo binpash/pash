@@ -184,8 +184,6 @@ def parse_args():
     ## TODO: We might need to have a better default (like $0 of pa.sh)
     shell_name = "pash"
 
-    ## Make a directory for temporary files
-    config.PASH_TMP_PREFIX = tempfile.mkdtemp(prefix="pash_")
     if args.command:
         _, fname = ptempfile()
         with open(fname, 'w') as f:
