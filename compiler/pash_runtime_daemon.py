@@ -24,15 +24,6 @@ def parse_args():
     config.add_common_arguments(parser)
     args, unknown_args = parser.parse_known_args()
 
-    ## Print all the arguments before they are modified below
-    # print("Arguments:")
-    # for arg_name, arg_val in vars(args).items():
-    #     print(arg_name, arg_val)
-    # print("-" * 40)
-    # print("Unknown rest arguments:")
-    # print(unknown_args)
-    # print("-" * 40)
-
     return args
 
 ## Initialize the daemon
@@ -84,7 +75,6 @@ def compile(input):
     ## Call the main procedure
     pash_runtime.compile_optimize_output_script(input_ir_file, compiled_script_file, config.pash_args)
 
-    ## TODO: Compile and optimize the df region script
     return success_response(f'{compiled_script_file} {var_file} {input_ir_file}')
 
 def main():
