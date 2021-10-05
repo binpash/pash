@@ -201,7 +201,6 @@ distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 case "$distro" in
     freebsd*)  
         # change sed to gsed
-        alias sed="gsed"
         sed () {
             gsed $@
         }

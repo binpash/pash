@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ## TODO: Give it the output pid as an argument
-
+## TODO pass the distro version via the python script
 wait $@
 if type lsb_release >/dev/null 2>&1 ; then
     distro=$(lsb_release -i -s)

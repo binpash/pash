@@ -1,14 +1,5 @@
-## Get distro
-## TODO: Move that somewhere where it happens once (during installation)
-if type lsb_release >/dev/null 2>&1 ; then
-    distro=$(lsb_release -i -s)
-elif [ -e /etc/os-release ] ; then
-    distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
-fi
-
-# convert to lowercase
-export distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
-
+# source the local pash config
+source ~/.pash_init
 ## File directory
 export RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
 ## TODO: Is there a better way to do this?

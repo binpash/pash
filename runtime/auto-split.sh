@@ -7,25 +7,8 @@ n_outputs="$#"
 
 # Set a default DISH_TOP in this directory if it doesn't exist
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
-
-if type lsb_release >/dev/null 2>&1 ; then
-   distro=$(lsb_release -i -s)
-elif [ -e /etc/os-release ] ; then
-   distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
-fi
-
-# convert to lowercase
-distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
-# now do different things depending on distro
-case "$distro" in
-   freebsd*)  
-    temp="$(TMPDIR=/tmp mktemp pash_XXXXXXXXXX)"
-    ;;
-    *)
-    temp="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
-    ;;
-esac
-
+# generate a temp file
+temp="$(mktemp -u /tmp/pash_XXXXXXXXXX)"
 
 cat "$input" > "$temp"
 total_lines=$(wc -l $temp | cut -f 1 -d ' ')
