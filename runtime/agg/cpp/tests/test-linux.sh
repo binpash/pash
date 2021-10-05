@@ -46,6 +46,8 @@
 ./test-common.sh uniq "-c" ../bin/uniq 
 ./test-common.sh uniq "--count" ../bin/uniq
 
+./test-common.sh sort "" ../bin/sort
+
 # These tests are run during PASH_TOP/scripts/run_tests.sh
 # Make sure to build the aggregators using PASH_TOP/scripts/setup-pash.sh first
 #
