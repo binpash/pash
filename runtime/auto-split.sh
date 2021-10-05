@@ -7,15 +7,6 @@ n_outputs="$#"
 
 # Set a default DISH_TOP in this directory if it doesn't exist
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
-# TODO change all auto-split calls to provide $distro as argument
-if type lsb_release >/dev/null 2>&1 ; then
-   distro=$(lsb_release -i -s)
-elif [ -e /etc/os-release ] ; then
-   distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
-fi
-
-# convert to lowercase
-distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 # generate a temp file
 temp="$(TMPDIR=/tmp mktemp -t pash_XXXXXXXXXX)"
 
