@@ -16,7 +16,7 @@ Let's assume that the aggregator being implemented is for a command called `cmd`
 
 2. For each `OS` supported by PaSh:
 
-    2.1 Create a file named `OS-agg.h` inside that folder
+    2.1 Create a file named `agg-OS.h` inside that folder
 
     2.2. Implement the aggregator inside that file using the instructions provided in `cpp/common/main.h` or use a different aggregator as an example. Remember about the include guard.
 
