@@ -43,6 +43,8 @@ case "$distro" in
     ;;
 esac
 
+# save distro in the init file
+echo "export distro=$distro" > ~/.pash_init
 
 ## This was the old parser installation that required opam.
 # # Build the parser (requires libtool, m4, automake, opam)
@@ -58,7 +60,6 @@ esac
 # echo "|-- making parser..."
 # make &> $LOG_DIR/make.log
 # cd ../../
-
 
 cd ../
 
