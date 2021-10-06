@@ -1,13 +1,9 @@
 #!/usr/bin/python3
 
 import sys
-#import codecs
-
 # export PYTHONIOENCODING=charmap
 
-
 # sys.stdout = codecs.getwriter('charmap')(sys.stdout)
-
 
 sys.path.append("/pash/compiler")
 

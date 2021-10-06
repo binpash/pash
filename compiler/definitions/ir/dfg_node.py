@@ -2,11 +2,8 @@ import copy
 from command_categories import *
 from util import *
 from ir_utils import *
-
 from definitions.ir.redirection import *
 from definitions.ir.resource import *
-
-#import config
 
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions

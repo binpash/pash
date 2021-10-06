@@ -1,8 +1,6 @@
 import os
-#import sys
 import subprocess
 from ctypes import *
-
 from ast2a import of_node
 from dash2 import *
 

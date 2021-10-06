@@ -1,7 +1,4 @@
-#import json
-#import tempfile
 import os
-#import re
 import config
 import subprocess
 import sys

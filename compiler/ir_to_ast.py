@@ -1,11 +1,7 @@
 import os
-#import time
-#import subprocess
 from datetime import datetime
 from util import *
 from ir_utils import *
-
-#from json_ast import save_asts_json
 from parse import from_ast_objects_to_shell
 import config
 

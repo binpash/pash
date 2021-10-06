@@ -1,12 +1,9 @@
 from definitions.ir.file_id import *
-
 from definitions.ir.dfg_node import *
-from ir_utils import string_to_argument#, make_command
+from ir_utils import string_to_argument
 
 import config
-
 import os
-
 
 class Split(DFGNode):
     def __init__(self, inputs, outputs, com_name, com_category, com_options = [], 

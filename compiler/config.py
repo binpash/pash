@@ -1,9 +1,7 @@
 import json
 import os
 import subprocess
-#import yaml
 import math
-#import tempfile
 
 from ir_utils import *
 
