@@ -3,16 +3,11 @@ from ir import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
 from util import *
-from json_ast import save_asts_json, ast_to_shell
-from parse import parse_shell, from_ast_objects_to_shell, from_ast_objects_to_shell_file
+from parse import from_ast_objects_to_shell, from_ast_objects_to_shell_file
 from expand import *
 import subprocess
-import traceback
-
 import config
-
 import pickle
-
 
 ##
 ## Compile AST -> Extended AST with IRs

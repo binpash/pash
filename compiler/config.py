@@ -1,9 +1,7 @@
 import json
 import os
 import subprocess
-import yaml
 import math
-import tempfile
 
 from ir_utils import *
 
@@ -33,9 +31,9 @@ def load_config(config_file_path=""):
     CONFIG_KEY = 'distr_planner'
 
     if(config_file_path == ""):
-      config_file_path = '{}/compiler/config.yaml'.format(PASH_TOP)
+      config_file_path = '{}/compiler/config.json'.format(PASH_TOP)
     with open(config_file_path) as config_file:
-        pash_config = yaml.load(config_file, Loader=yaml.FullLoader)
+        pash_config = json.load(config_file)
 
     if not pash_config:
         raise Exception('No valid configuration could be loaded from {}'.format(config_file_path))
@@ -177,6 +175,7 @@ def read_vars_file(var_file_path):
         # MMG 2021-03-09 definitively breaking on newlines (e.g., IFS) and function outputs (i.e., `declare -f`)
         for line in lines:
             words = line.split(' ')
+            # FIXME is this assignment needed?
             _export_or_typeset = words[0]
             rest = " ".join(words[1:])
 

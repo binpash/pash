@@ -3,11 +3,7 @@ import sys;
 from parse_to_ast2 import parse_to_ast;
 from ast2shell import to_string;
 
-import cProfile;
-
-
 sys.setrecursionlimit (9001);
-
 
 def print_asts (new_asts):
     for ast in new_asts:
