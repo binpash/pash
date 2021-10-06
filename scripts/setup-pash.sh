@@ -64,10 +64,9 @@ esac
 cd ../
 
 echo "Installing python dependencies..."
-python3 -m pip install jsonpickle   --target=$PYTHON_PKG_DIR #&> $LOG_DIR/pip_install_jsonpickle.log
-#python3 -m pip install -U PyYAML    --target=$PYTHON_PKG_DIR &> $LOG_DIR/pip_install_pyyaml.log
-python3 -m pip install numpy        --target=$PYTHON_PKG_DIR #&> $LOG_DIR/pip_install_numpy.log
-python3 -m pip install matplotlib   --target=$PYTHON_PKG_DIR #&> $LOG_DIR/pip_install_matplotlib.log
+python3 -m pip install jsonpickle --system -t $PYTHON_PKG_DIR &> $LOG_DIR/pip_install_jsonpickle.log
+python3 -m pip install numpy      --system -t $PYTHON_PKG_DIR &> $LOG_DIR/pip_install_numpy.log
+python3 -m pip install matplotlib --system -t $PYTHON_PKG_DIR &> $LOG_DIR/pip_install_matplotlib.log
 
 echo "Generating input files..."
 $PASH_TOP/evaluation/tests/input/setup.sh
