@@ -1,7 +1,7 @@
 #import cProfile
 #import os
 import argparse
-#import sys
+import sys
 import pickle
 #import subprocess
 #import jsonpickle
@@ -35,7 +35,7 @@ def main():
     except Exception:
         log("Compiler failed, no need to worry, executing original script...")
         log(traceback.format_exc())
-        exit(1)
+        sys.exit(1)
 
 def main_body():
     global runtime_config

@@ -24,7 +24,7 @@ def parse_shell_to_asts(input_script_path):
         return list(new_ast_objects)
     except ParsingException as e:
         log("Parsing error!", e)
-        exit(1)
+        sys.exit(1)
 
 def parse_shell_to_asts_interactive(input_script_path: str):
     return parse_to_ast(input_script_path)
@@ -57,7 +57,7 @@ def from_ast_objects_to_shell_file(asts, new_shell_filename):
 def parse_shell(input_script_path):
     if(not os.path.isfile(input_script_path)):
         log("Error! File:", input_script_path, "does not exist.", level=0)
-        exit(1)
+        sys.exit(1)
     parser_output = subprocess.run([config.PARSER_BINARY, input_script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     if (not parser_output.returncode == 0):
         log(parser_output.stderr)
