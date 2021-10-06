@@ -1,7 +1,7 @@
-#import json
+import json
 import os
 import subprocess
-import yaml
+#import yaml
 import math
 #import tempfile
 
@@ -33,9 +33,9 @@ def load_config(config_file_path=""):
     CONFIG_KEY = 'distr_planner'
 
     if(config_file_path == ""):
-      config_file_path = '{}/compiler/config.yaml'.format(PASH_TOP)
+      config_file_path = '{}/compiler/config.json'.format(PASH_TOP)
     with open(config_file_path) as config_file:
-        pash_config = yaml.load(config_file, Loader=yaml.FullLoader)
+        pash_config = json.load(config_file)
 
     if not pash_config:
         raise Exception('No valid configuration could be loaded from {}'.format(config_file_path))

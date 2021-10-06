@@ -9,7 +9,7 @@ cd $PASH_TOP
 LOG_DIR=$PWD/install_logs
 mkdir -p $LOG_DIR
 PYTHON_PKG_DIR=$PASH_TOP/python_pkgs
-mkdir $PYTHON_PKG_DIR
+mkdir -p $PYTHON_PKG_DIR
 git submodule init
 git submodule update
 
@@ -65,7 +65,7 @@ cd ../
 
 echo "Installing python dependencies..."
 python3 -m pip install jsonpickle   --target=$PYTHON_PKG_DIR &> $LOG_DIR/pip_install_jsonpickle.log
-python3 -m pip install -U PyYAML    --target=$PYTHON_PKG_DIR &> $LOG_DIR/pip_install_pyyaml.log
+#python3 -m pip install -U PyYAML    --target=$PYTHON_PKG_DIR &> $LOG_DIR/pip_install_pyyaml.log
 python3 -m pip install numpy        --target=$PYTHON_PKG_DIR &> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib   --target=$PYTHON_PKG_DIR &> $LOG_DIR/pip_install_matplotlib.log
 
