@@ -1,5 +1,5 @@
-import random
-import string
+#import random
+#import string
 from datetime import timedelta
 import sys
 

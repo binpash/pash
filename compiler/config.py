@@ -1,9 +1,9 @@
-import json
+#import json
 import os
 import subprocess
 import yaml
 import math
-import tempfile
+#import tempfile
 
 from ir_utils import *
 
@@ -177,6 +177,7 @@ def read_vars_file(var_file_path):
         # MMG 2021-03-09 definitively breaking on newlines (e.g., IFS) and function outputs (i.e., `declare -f`)
         for line in lines:
             words = line.split(' ')
+            # FIXME is this assignment needed?
             _export_or_typeset = words[0]
             rest = " ".join(words[1:])
 

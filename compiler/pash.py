@@ -10,10 +10,9 @@ from ir import *
 from parse import parse_shell_to_asts, parse_shell_to_asts_interactive, from_ast_objects_to_shell
 from util import *
 import config
-import pprint
-import tempfile
+#import pprint
+#import tempfile
 import shutil
-import importlib
 
 def main():
     ## Parse arguments

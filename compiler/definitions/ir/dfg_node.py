@@ -6,7 +6,7 @@ from ir_utils import *
 from definitions.ir.redirection import *
 from definitions.ir.resource import *
 
-import config
+#import config
 
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions

@@ -1,7 +1,7 @@
 from definitions.ir.file_id import *
 
 from definitions.ir.dfg_node import *
-from ir_utils import string_to_argument, make_command
+from ir_utils import string_to_argument#, make_command
 
 import config
 

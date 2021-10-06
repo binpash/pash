@@ -3,7 +3,7 @@ import sys;
 from parse_to_ast2 import parse_to_ast;
 from ast2shell import to_string;
 
-import cProfile;
+#import cProfile;
 
 
 sys.setrecursionlimit (9001);
