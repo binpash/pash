@@ -1,7 +1,6 @@
 import sys
 import os
-import subprocess
-from shutil import copyfile, rmtree
+from shutil import copyfile
 from generate_microbenchmark_intermediary_scripts import list_split_inputs, generate_env_file, replace_in_variable
 
 def generate_gnu_parallel_script(input_script, output_script, new_input_files):
