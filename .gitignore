@@ -30,6 +30,8 @@ revision.tex
 # Node.js
 node_modules
 
+python_pkgs
+
 # local directory w/ related work
 bib.to
 pldi/draft.synctex.gz

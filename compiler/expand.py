@@ -1,12 +1,8 @@
 import copy
-from typing import NoReturn
 from definitions.ast_node import *
 from definitions.ast_node_c import *
 
-from util import log
-
 import ast_to_ir
-import config
 
 ################################################################################
 # SAFE EXPANSION ANALYSIS

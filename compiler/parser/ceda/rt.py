@@ -1,18 +1,14 @@
 #!/usr/bin/python3
 
 import sys
-import codecs
-
 # export PYTHONIOENCODING=charmap
-
 
 # sys.stdout = codecs.getwriter('charmap')(sys.stdout)
 
-
 sys.path.append("/pash/compiler")
 
-from parse import parse_shell, from_ir_to_shell, from_ir_to_shell_file
-from json_ast import parse_json_ast_string, serialize_asts_to_json, json_to_shell
+from parse import parse_shell#, from_ir_to_shell, from_ir_to_shell_file
+from json_ast import parse_json_ast_string#, serialize_asts_to_json, json_to_shell
 from ast2shell import to_string
 
 

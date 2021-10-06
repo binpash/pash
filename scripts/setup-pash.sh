@@ -8,7 +8,8 @@ cd $PASH_TOP
 
 LOG_DIR=$PWD/install_logs
 mkdir -p $LOG_DIR
-
+PYTHON_PKG_DIR=$PWD/python_pkgs
+mkdir -p $PYTHON_PKG_DIR
 git submodule init
 git submodule update
 
@@ -64,10 +65,10 @@ echo "export distro=$distro" > ~/.pash_init
 cd ../
 
 echo "Installing python dependencies..."
-python3 -m pip install jsonpickle &> $LOG_DIR/pip_install_jsonpickle.log
-python3 -m pip install -U PyYAML &> $LOG_DIR/pip_install_pyyaml.log
+python3 -m pip install jsonpickle --system -t $PYTHON_PKG_DIR &> $LOG_DIR/pip_install_jsonpickle.log
 python3 -m pip install numpy &> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib &> $LOG_DIR/pip_install_matplotlib.log
+
 
 echo "Generating input files..."
 $PASH_TOP/evaluation/tests/input/setup.sh

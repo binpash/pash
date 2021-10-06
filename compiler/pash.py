@@ -1,3 +1,4 @@
+import sys
 import os
 import subprocess
 import argparse
@@ -9,14 +10,11 @@ from ir import *
 from parse import parse_shell_to_asts, parse_shell_to_asts_interactive, from_ast_objects_to_shell
 from util import *
 import config
-import pprint
-import tempfile
 import shutil
 
 def main():
     ## Parse arguments
     args, shell_name = parse_args()
-
     ## If it is interactive we need a different execution mode
     ##
     ## The user can also ask for an interactive mode irregardless of whether pash was invoked in interactive mode. 
@@ -39,7 +37,7 @@ def main():
             shutil.rmtree(config.PASH_TMP_PREFIX)
         log("-" * 40) #log end marker
         ## Return the exit code of the executed script
-        exit(return_code)
+        sys.exit(return_code)
 
 def preprocess_ast(ast_objects, args):
     ## 2. Preprocess ASTs by replacing possible candidates for compilation
@@ -134,7 +132,7 @@ def interactive(args, shell_name):
             shutil.rmtree(config.PASH_TMP_PREFIX)
         log("-" * 40) #log end marker
         ## Return the exit code of the executed script
-        exit(shell_proc.returncode)
+        sys.exit(shell_proc.returncode)
 
 
 def parse_args():
