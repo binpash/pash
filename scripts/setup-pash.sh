@@ -8,7 +8,7 @@ cd $PASH_TOP
 
 LOG_DIR=$PWD/install_logs
 mkdir -p $LOG_DIR
-PYTHON_PKG_DIR=$PASH_TOP/python_pkgs
+PYTHON_PKG_DIR=$PWD/python_pkgs
 mkdir -p $PYTHON_PKG_DIR
 git submodule init
 git submodule update
