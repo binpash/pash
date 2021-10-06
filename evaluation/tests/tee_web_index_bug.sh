@@ -22,4 +22,4 @@ cat 3grams |
     uniq -c |
     sort -rn # >> 3-grams.txt
 
-rm {1,2,3}grams
+rm {1,2,3}grams.txt
