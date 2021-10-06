@@ -1,8 +1,5 @@
-import random
-import string
 from datetime import timedelta
 import sys
-
 import config
 import tempfile
 
