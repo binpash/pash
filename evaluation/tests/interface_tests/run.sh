@@ -118,11 +118,15 @@ test11()
     $shell incomplete-arith.sh
 }
 
+## This test checks the behavior of the shell when -v is set.
+##
+## We do not care about what exactly is in the log, but rather about whether it contains something.
 test12()
 {
     local shell=$1
     $shell set-v.sh 2> set-v.log
-    grep "echo hello" < set-v.log
+    grep "echo hello" < set-v.log > /dev/null
+    echo $?
 }
 
 test13()
