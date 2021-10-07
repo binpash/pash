@@ -1,16 +1,10 @@
 #!/usr/bin/env bash
 
 ## TODO: Give it the output pid as an argument
-## TODO pass the distro version via the python script
 wait $@
-if type lsb_release >/dev/null 2>&1 ; then
-    distro=$(lsb_release -i -s)
-elif [ -e /etc/os-release ] ; then
-    distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
-fi
 
-# convert to lowercase
-distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
+## It is assumed that $distro is set when this is called.
+
 # now do different things depending on distro
 case "$distro" in
     freebsd*)  
