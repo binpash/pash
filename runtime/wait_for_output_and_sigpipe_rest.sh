@@ -22,5 +22,10 @@ for pid in $pids_to_kill
 do
     (> /dev/null 2>&1 kill -SIGPIPE $pid || true)
 done
-## Need to wait to not leave any zombies
-wait
+
+## Only wait if that is not empty
+if [ ! -z "$var" ];
+then
+    ## Need to wait to not leave any zombies
+    wait
+fi
