@@ -56,7 +56,7 @@ case "$distro" in
      echo "Updating mirrors"
      pacman -Sy &> $LOG_DIR/pacman_update.log
      echo "|-- running pacman install...."
-     yes | pacman -S git libtool m4 automake curl pkg-config python-pip libffi make autoconf gcc10 sudo inetutils bc
+     yes | pacman -S git libtool m4 automake curl pkg-config python python-pip libffi make autoconf gcc10 sudo inetutils bc
      ;;
    freebsd*)
      echo "Updating mirros"
