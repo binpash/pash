@@ -545,13 +545,17 @@ class IR:
                           if to_node is None]
         return all_output_fids
 
-    ## Returns the sources of the IR (i.e. the nodes that has no
-    ## incoming edge)
+    ## Returns the sources of the IR.
+    ##   This includes both the nodes that have an incoming edge (file) that has no from_node,
+    ##     but also nodes that have no incoming edge (generator nodes). 
     def source_nodes(self):
         sources = set()
         for _edge_fid, from_node, to_node in self.edges.values():
             if(from_node is None and not to_node is None):
                 sources.add(to_node)
+        for node_id, node in self.nodes.items():
+            if len(node.get_input_list()) == 0:
+                sources.add(node_id)
         return list(sources)
 
     def sink_nodes(self):
