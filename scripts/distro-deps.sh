@@ -47,10 +47,7 @@ case "$distro" in
      dnf install git gcc gcc-c++ python python3-pip make curl automake autoconf libtool hostname bc procps -y &> $LOG_DIR/dnf_install.log
      ;;
    arch*) 
-     echo "Updating mirrors"
-     pacman -Sy &> $LOG_DIR/pacman_update.log
-     echo "|-- running pacman install...."
-     yes | pacman -S git libtool m4 automake curl pkg-config python python-pip libffi make autoconf gcc10 sudo inetutils bc
-     ;;
+     echo "Build the current stable PaSh release for Arch using: $PASH_TOP/scripts/packages/arch/PKGBUILD or https://aur.archlinux.org/pkgbase/pash-shell/"
+     exit 0;;
    *)        echo "unknown distro: '$distro'" ; exit 1 ;;
 esac
