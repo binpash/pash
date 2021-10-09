@@ -4,6 +4,7 @@ import subprocess
 import math
 
 from ir_utils import *
+from util import *
 
 ## Global
 __version__ = "0.5" # FIXME add libdash version
@@ -163,7 +164,7 @@ def init_log_file():
 def update_bash_mirror_vars(var_file_path):
     global bash_mirror
 
-    assert(not var_file_path is "" and not var_file_path is None)
+    assert(var_file_path != ""  and not var_file_path is None)
 
     ## TODO: There is unnecessary write/read to this var file now.
     bash_mirror.stdin.write(f'source {var_file_path}\n')
@@ -175,7 +176,20 @@ def update_bash_mirror_vars(var_file_path):
     ## Actually in this case bash output should be completely empty (only stderr should contain stuff)
     ## TODO: This might actually block and fail
     # bash_ret = bash_mirror.stout.read()
-    
+
+    _, file_to_save_output = ptempfile()
+    bash_mirror.stdin.write(f'echo $- > {file_to_save_output}')
+    bash_mirror.stdin.flush()
+
+    log("Flushed echo hi")
+
+    terminal = bash_mirror.stdout.read(3)
+    log("bash returned:", terminal)
+
+
+    with open(file_to_save_output) as f:
+        log("Ready to print output")
+        log(f.read())
 
 ##
 ## Read a shell variables file

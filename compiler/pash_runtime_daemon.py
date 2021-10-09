@@ -63,7 +63,10 @@ def init_bash_mirror_subprocess():
                                         stdin=subprocess.PIPE,
                                         stdout=subprocess.PIPE,
                                         universal_newlines=True,
-                                        close_fds=False)
+                                        close_fds=False) 
+    ## TODO: Should we close fds?
+
+    ## TODO: Maybe we should use pexpect?
     return bash_mirror_proc
 
 def success_response(string):
