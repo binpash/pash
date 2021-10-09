@@ -166,6 +166,7 @@ def wait_bash_mirror(bash_mirror):
     assert(r == 0)
     # log(bash_mirror.before)
 
+
 def query_expand_variable_bash_mirror(variable):
     global bash_mirror
     
@@ -177,8 +178,6 @@ def query_expand_variable_bash_mirror(variable):
     else:
         return data
     
-
-
 def query_expand_bash_mirror(string):
     global bash_mirror
 
@@ -208,18 +207,15 @@ def update_bash_mirror_vars(var_file_path):
 
     assert(var_file_path != ""  and not var_file_path is None)
 
-    ## TODO: There is unnecessary write/read to this var file now.
     bash_mirror.sendline(f'PS1="EXPECT\$ "')
     wait_bash_mirror(bash_mirror)
     log("PS1 set!")
 
+    ## TODO: There is unnecessary write/read to this var file now.
     bash_mirror.sendline(f'source {var_file_path}')
     log("sent source to mirror")
     wait_bash_mirror(bash_mirror)
     log("mirror done!")
-
-    ## This is just for debugging
-    query_expand_bash_mirror("$-")
     
 
 ##
