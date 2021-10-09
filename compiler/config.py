@@ -164,7 +164,10 @@ def init_log_file():
 def wait_bash_mirror(bash_mirror):
     r = bash_mirror.expect(r'EXPECT\$ ')
     assert(r == 0)
-    # log(bash_mirror.before)
+    output = bash_mirror.before
+    log("Before the prompt!")
+    log(output)
+    return output
 
 
 def query_expand_variable_bash_mirror(variable):
@@ -184,21 +187,15 @@ def query_expand_bash_mirror(string):
     command = f'echo -n "{string}"'
     return sync_run_line_command_mirror(command)
 
-## TODO: Enable writing straight to output instead of file
 def sync_run_line_command_mirror(command):
-    _, file_to_save_output = ptempfile()
-    bash_command = f'{command} > {file_to_save_output}'
+    bash_command = f'{command}'
     log("Executing bash command in mirror:", bash_command)
 
     bash_mirror.sendline(bash_command)
     
-    wait_bash_mirror(bash_mirror)
+    data = wait_bash_mirror(bash_mirror)
     log("mirror done!")
 
-    with open(file_to_save_output) as f:
-        log("Ready to print output")
-        data = f.read()
-        log(data)
     return data
 
 

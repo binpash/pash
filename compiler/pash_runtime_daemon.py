@@ -65,24 +65,15 @@ def init():
     return args
 
 def init_bash_mirror_subprocess():
-    ## TODO: Do we need more args?
-    # bash_args = ["/usr/bin/env", "bash"]
-
-    # ## TODO: For now we don't do anything with stderr but we should!
-    # bash_mirror_proc = subprocess.Popen(bash_args,
-    #                                     stdin=subprocess.PIPE,
-    #                                     stdout=subprocess.PIPE,
-    #                                     universal_newlines=True,
-    #                                     close_fds=False) 
-    # ## TODO: Should we close fds?
-
-    # return bash_mirror_proc
+    ## Spawn a bash process to ask it for expansions
     p = pexpect.spawn('/usr/bin/env', ['bash', '-i'], 
-                      encoding='utf-8', echo=False)
-    _, file_to_save_output = ptempfile()
-    log("bash mirror log saved in:", file_to_save_output)
-    fout = open(file_to_save_output, "w")
-    p.logfile = fout
+                      echo=False)
+    ## If we are in debug mode also log the bash's output
+    if (config.pash_args.debug >= 1):
+        _, file_to_save_output = ptempfile()
+        log("bash mirror log saved in:", file_to_save_output)
+        fout = open(file_to_save_output, "wb")
+        p.logfile = fout
     return p
 
 def success_response(string):
