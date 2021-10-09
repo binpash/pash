@@ -66,6 +66,7 @@ cd ../
 
 echo "Installing python dependencies..."
 python3 -m pip install jsonpickle --system -t $PYTHON_PKG_DIR &> $LOG_DIR/pip_install_jsonpickle.log
+python3 -m pip install pexpect --system -t $PYTHON_PKG_DIR &> $LOG_DIR/pip_install_pexpect.log
 python3 -m pip install numpy &> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib &> $LOG_DIR/pip_install_matplotlib.log
 
