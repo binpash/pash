@@ -166,9 +166,32 @@ def wait_bash_mirror(bash_mirror):
     assert(r == 0)
     # log(bash_mirror.before)
 
-def query_expand_bash_mirror(bash_mirror, string):
+def query_expand_variable_bash_mirror(variable):
+    global bash_mirror
+    
+    command = f'if [ -z ${{{variable}+foo}} ]; then echo -n "PASH_VAR_UNSET"; else echo -n "${variable}"; fi'
+    data = sync_run_line_command_mirror(command)
+
+    if data == "PASH_VAR_UNSET":
+        return None
+    else:
+        return data
+    
+
+
+def query_expand_bash_mirror(string):
+    global bash_mirror
+
+    command = f'echo -n "{string}"'
+    return sync_run_line_command_mirror(command)
+
+## TODO: Enable writing straight to output instead of file
+def sync_run_line_command_mirror(command):
     _, file_to_save_output = ptempfile()
-    bash_mirror.sendline(f'echo -n {string} > {file_to_save_output}')
+    bash_command = f'{command} > {file_to_save_output}'
+    log("Executing bash command in mirror:", bash_command)
+
+    bash_mirror.sendline(bash_command)
     
     wait_bash_mirror(bash_mirror)
     log("mirror done!")
@@ -178,6 +201,7 @@ def query_expand_bash_mirror(bash_mirror, string):
         data = f.read()
         log(data)
     return data
+
 
 def update_bash_mirror_vars(var_file_path):
     global bash_mirror
@@ -191,13 +215,11 @@ def update_bash_mirror_vars(var_file_path):
 
     bash_mirror.sendline(f'source {var_file_path}')
     log("sent source to mirror")
-    # bash_mirror.stdin.write(f'source {var_file_path}\n')
-    # bash_mirror.stdin.flush()
     wait_bash_mirror(bash_mirror)
     log("mirror done!")
 
     ## This is just for debugging
-    query_expand_bash_mirror(bash_mirror, "$-")
+    query_expand_bash_mirror("$-")
     
 
 ##
