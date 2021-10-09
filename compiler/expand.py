@@ -1,5 +1,4 @@
 import copy
-import os
 
 from definitions.ast_node import *
 from definitions.ast_node_c import *
@@ -201,7 +200,7 @@ class InvalidVariable(RuntimeError):
         self.reason = reason
 
 ## TODO: `config` doesn't need to be passed down since it is imported
-def lookup_variable(var, lookup_config):
+def lookup_variable(var, _lookup_config):
     ## If the variable is input arguments then get it from pash_input_args.
     ##
     ## TODO KK PR#246 Do we need to split using IFS or is it always spaces?
@@ -238,25 +237,19 @@ def lookup_variable(var, lookup_config):
     ##             cmd="$cmd \"\$pash_arg$i\""
     ##           done
     ##           eval "$cmd"
-    log("expanding var", var)
     if(var == '@'):
-        # return lookup_config['shell_variables']['pash_input_args']
         expanded_var = config.query_expand_variable_bash_mirror(f'pash_input_args')
         return None, expanded_var
     elif(var == '?'):
-        # return lookup_config['shell_variables']['pash_previous_exit_status']
         expanded_var = config.query_expand_variable_bash_mirror(f'pash_previous_exit_status')
         return None, expanded_var
     elif(var == '-'):
-        # return lookup_config['shell_variables']['pash_previous_set_status']
         expanded_var = config.query_expand_variable_bash_mirror(f'pash_previous_set_status')
         return None, expanded_var
     elif(var == '#'):
-        # _type, input_args = lookup_config['shell_variables']['pash_input_args']
         input_args = config.query_expand_variable_bash_mirror(f'pash_input_args')
         return (None, str(len(input_args.split())))
     elif(var.isnumeric() and int(var) >= 1):
-        # _type, input_args = lookup_config['shell_variables']['pash_input_args']
         input_args = config.query_expand_variable_bash_mirror(f'pash_input_args')
         split_args = input_args.split()
         index = int(var) - 1
@@ -266,11 +259,9 @@ def lookup_variable(var, lookup_config):
             val = ''
         return (None, val)
     elif(var == '0'):
-        # return lookup_config['shell_variables']['pash_shell_name']
         expanded_var = config.query_expand_variable_bash_mirror(f'pash_shell_name')
         return None, expanded_var
     else:
-        # return lookup_config['shell_variables'].get(var, [None, None])
         ## TODO: We can pull this to expand any string.
         expanded_var = config.query_expand_variable_bash_mirror(var)
         return None, expanded_var
@@ -349,8 +340,8 @@ def char_code(c):
     return [type, ord(c)]
 
 def expand_arg(arg_chars, config, quoted = False):
-    log("expanding arg", arg_chars)
-    log("unparsed_string:", parse.pash_string_of_arg(arg_chars))
+    # log("expanding arg", arg_chars)
+    # log("unparsed_string:", parse.pash_string_of_arg(arg_chars))
     res = []
     for arg_char in arg_chars:
         new = expand_arg_char(arg_char, quoted, config)
