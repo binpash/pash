@@ -382,6 +382,8 @@ def expand_var(fmt, null, var, arg, quoted, config):
 
     _type, value = lookup_variable(var, config)
 
+    log("Var:", var, "value:", value)
+
     if isinstance(value, InvalidVariable):
         raise StuckExpansion("couldn't expand invalid variable", value)
 

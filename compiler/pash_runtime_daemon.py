@@ -1,4 +1,5 @@
 import argparse
+import subprocess
 import traceback
 
 from annotations import *
@@ -41,7 +42,29 @@ def init():
 
     pash_runtime.runtime_config = config.config['distr_planner']
 
+    ## Initialize a bash that is used for expanding
+    ##
+    ## TODO: Alternatively, we could set up a communication with the original bash 
+    ## (though this makes it difficult to have concurrent compilations and execution)
+    ## TODO: We actually need to discuss which arch is better.
+    bash_mirror = init_bash_mirror_subprocess()
+
+    ## Is it OK to save it in config?
+    config.bash_mirror = bash_mirror
+
     return args
+
+def init_bash_mirror_subprocess():
+    ## TODO: Do we need more args?
+    bash_args = ["/usr/bin/env", "bash"]
+
+    ## TODO: For now we don't do anything with stderr but we should!
+    bash_mirror_proc = subprocess.Popen(bash_args,
+                                        stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        universal_newlines=True,
+                                        close_fds=False)
+    return bash_mirror_proc
 
 def success_response(string):
     return f'OK: {string}\n'
@@ -72,6 +95,10 @@ def compile(input):
     
     ## Read any shell variables files if present
     config.read_vars_file(var_file)
+
+    ## Update the bash mirror with the new variables
+    config.update_bash_mirror_vars(var_file)
+    ## TODO: Maybe we also need to update current directory of bash mirror for file-based expansion?
 
     ## Call the main procedure
     pash_runtime.compile_optimize_output_script(input_ir_file, compiled_script_file, config.pash_args)

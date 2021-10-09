@@ -25,6 +25,9 @@ config = {}
 annotations = []
 pash_args = None
 
+## Contains a bash subprocess that is used for expanding
+bash_mirror = None
+
 def load_config(config_file_path=""):
     global config
     pash_config = {}
@@ -156,6 +159,23 @@ def init_log_file():
     if(not pash_args.log_file == ""):
         with open(pash_args.log_file, "w") as f:
             pass
+
+def update_bash_mirror_vars(var_file_path):
+    global bash_mirror
+
+    assert(not var_file_path is "" and not var_file_path is None)
+
+    ## TODO: There is unnecessary write/read to this var file now.
+    bash_mirror.stdin.write(f'source {var_file_path}\n')
+    bash_mirror.stdin.flush()
+
+    ## TODO: Do proper concurrent read/writes to avoid blocking
+
+    ## Make sure to read bash's output
+    ## Actually in this case bash output should be completely empty (only stderr should contain stuff)
+    ## TODO: This might actually block and fail
+    # bash_ret = bash_mirror.stout.read()
+    
 
 ##
 ## Read a shell variables file
