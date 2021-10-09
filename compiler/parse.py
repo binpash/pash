@@ -61,6 +61,11 @@ def parse_shell(input_script_path):
         parser_output.check_returncode()
     return parser_output.stdout
 
+
+## Simply wraps the ceda string_of_arg
+def pash_string_of_arg(arg, quoted=False):
+    return string_of_arg(arg, quoted)
+
 ### Legacy
 
 def from_ir_to_shell_legacy(ir_filename):
