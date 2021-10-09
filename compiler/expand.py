@@ -199,6 +199,9 @@ class InvalidVariable(RuntimeError):
         self.var = var
         self.reason = reason
 
+## TODO: Make an optimization that only asks for each variable once 
+##       (since during compilation nothing should change).
+##
 ## TODO: `config` doesn't need to be passed down since it is imported
 def lookup_variable(var, _lookup_config):
     ## If the variable is input arguments then get it from pash_input_args.
@@ -239,32 +242,28 @@ def lookup_variable(var, _lookup_config):
     ##           eval "$cmd"
     if(var == '@'):
         expanded_var = config.query_expand_variable_bash_mirror(f'pash_input_args')
-        return None, expanded_var
     elif(var == '?'):
         expanded_var = config.query_expand_variable_bash_mirror(f'pash_previous_exit_status')
-        return None, expanded_var
     elif(var == '-'):
         expanded_var = config.query_expand_variable_bash_mirror(f'pash_previous_set_status')
-        return None, expanded_var
     elif(var == '#'):
         input_args = config.query_expand_variable_bash_mirror(f'pash_input_args')
-        return (None, str(len(input_args.split())))
+        expanded_var = str(len(input_args.split()))
     elif(var.isnumeric() and int(var) >= 1):
         input_args = config.query_expand_variable_bash_mirror(f'pash_input_args')
         split_args = input_args.split()
         index = int(var) - 1
         try:
-            val = split_args[index]
+            expanded_var = split_args[index]
         except:
-            val = ''
-        return (None, val)
+            expanded_var = ''
     elif(var == '0'):
         expanded_var = config.query_expand_variable_bash_mirror(f'pash_shell_name')
-        return None, expanded_var
     else:
         ## TODO: We can pull this to expand any string.
         expanded_var = config.query_expand_variable_bash_mirror(var)
-        return None, expanded_var
+    
+    return None, expanded_var
 
 def invalidate_variable(var, reason, config):
     config['shell_variables'][var] = [None, InvalidVariable(var, reason)]

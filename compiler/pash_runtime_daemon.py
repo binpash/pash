@@ -67,12 +67,13 @@ def init():
 def init_bash_mirror_subprocess():
     ## Spawn a bash process to ask it for expansions
     p = pexpect.spawn('/usr/bin/env', ['bash', '-i'], 
+                      encoding='utf-8',
                       echo=False)
     ## If we are in debug mode also log the bash's output
     if (config.pash_args.debug >= 1):
         _, file_to_save_output = ptempfile()
         log("bash mirror log saved in:", file_to_save_output)
-        fout = open(file_to_save_output, "wb")
+        fout = open(file_to_save_output, "w")
         p.logfile = fout
     return p
 

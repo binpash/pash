@@ -179,6 +179,8 @@ def query_expand_variable_bash_mirror(variable):
     if data == "PASH_VAR_UNSET":
         return None
     else:
+        ## This is here because we haven't specified utf encoding when spawning bash mirror
+        # return data.decode('ascii')
         return data
     
 def query_expand_bash_mirror(string):
