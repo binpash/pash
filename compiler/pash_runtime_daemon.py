@@ -111,6 +111,9 @@ def compile(input):
     config.update_bash_mirror_vars(var_file)
     ## TODO: Maybe we also need to update current directory of bash mirror for file-based expansion?
 
+    ## Clean up the variable cache
+    config.reset_variable_cache()
+
     ## Call the main procedure
     pash_runtime.compile_optimize_output_script(input_ir_file, compiled_script_file, config.pash_args)
 

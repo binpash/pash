@@ -29,6 +29,9 @@ pash_args = None
 ## Contains a bash subprocess that is used for expanding
 bash_mirror = None
 
+## A cache containing variable values since variables are not meant to change while we compile one region
+variable_cache = {}
+
 def load_config(config_file_path=""):
     global config
     pash_config = {}
@@ -215,7 +218,22 @@ def update_bash_mirror_vars(var_file_path):
     log("sent source to mirror")
     wait_bash_mirror(bash_mirror)
     log("mirror done!")
-    
+
+def add_to_variable_cache(variable_name, value):
+    global variable_cache
+    variable_cache[variable_name] = value
+
+def get_from_variable_cache(variable_name):
+    global variable_cache
+    try:
+        return variable_cache[variable_name]
+    except:
+        return None
+
+def reset_variable_cache():
+    global variable_cache
+
+    variable_cache = {}
 
 ##
 ## Read a shell variables file

@@ -199,8 +199,8 @@ class InvalidVariable(RuntimeError):
         self.var = var
         self.reason = reason
 
-## TODO: Make an optimization that only asks for each variable once 
-##       (since during compilation nothing should change).
+## TODO: Figure out if there is a way to batch calls to bash and ask it 
+##       to expand everything at once! We would need to make variable lookups asynchronous.
 ##
 ## TODO: `config` doesn't need to be passed down since it is imported
 def lookup_variable(var, _lookup_config):
@@ -240,6 +240,12 @@ def lookup_variable(var, _lookup_config):
     ##             cmd="$cmd \"\$pash_arg$i\""
     ##           done
     ##           eval "$cmd"
+
+    ## If we find the value in the cache just use it
+    var_value = config.get_from_variable_cache(var)
+    if var_value is not None:
+        return None, var_value
+
     if(var == '@'):
         expanded_var = config.query_expand_variable_bash_mirror(f'pash_input_args')
     elif(var == '?'):
@@ -263,6 +269,8 @@ def lookup_variable(var, _lookup_config):
         ## TODO: We can pull this to expand any string.
         expanded_var = config.query_expand_variable_bash_mirror(var)
     
+    ## Add it to the cache to find it next time
+    config.add_to_variable_cache(var, expanded_var)
     return None, expanded_var
 
 def invalidate_variable(var, reason, config):
