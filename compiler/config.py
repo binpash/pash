@@ -168,6 +168,10 @@ def wait_bash_mirror(bash_mirror):
     r = bash_mirror.expect(r'EXPECT\$ ')
     assert(r == 0)
     output = bash_mirror.before
+
+    ## I am not sure why, but \r s are added before \n s
+    output = output.replace('\r\n', '\n')
+
     log("Before the prompt!")
     log(output)
     return output
