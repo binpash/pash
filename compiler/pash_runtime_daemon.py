@@ -1,4 +1,5 @@
 import argparse
+import pexpect
 import subprocess
 import traceback
 
@@ -56,18 +57,25 @@ def init():
 
 def init_bash_mirror_subprocess():
     ## TODO: Do we need more args?
-    bash_args = ["/usr/bin/env", "bash"]
+    # bash_args = ["/usr/bin/env", "bash"]
 
-    ## TODO: For now we don't do anything with stderr but we should!
-    bash_mirror_proc = subprocess.Popen(bash_args,
-                                        stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE,
-                                        universal_newlines=True,
-                                        close_fds=False) 
-    ## TODO: Should we close fds?
+    # ## TODO: For now we don't do anything with stderr but we should!
+    # bash_mirror_proc = subprocess.Popen(bash_args,
+    #                                     stdin=subprocess.PIPE,
+    #                                     stdout=subprocess.PIPE,
+    #                                     universal_newlines=True,
+    #                                     close_fds=False) 
+    # ## TODO: Should we close fds?
 
-    ## TODO: Maybe we should use pexpect?
-    return bash_mirror_proc
+    # ## TODO: Maybe we should use pexpect?
+    # return bash_mirror_proc
+    p = pexpect.spawn('/usr/bin/env', ['bash', '-i'], 
+                      encoding='utf-8', echo=False)
+    _, file_to_save_output = ptempfile()
+    log("bash mirror log saved in:", file_to_save_output)
+    fout = open(file_to_save_output, "w")
+    p.logfile = fout
+    return p
 
 def success_response(string):
     return f'OK: {string}\n'

@@ -161,35 +161,44 @@ def init_log_file():
         with open(pash_args.log_file, "w") as f:
             pass
 
+def wait_bash_mirror(bash_mirror):
+    r = bash_mirror.expect(r'EXPECT\$ ')
+    assert(r == 0)
+    # log(bash_mirror.before)
+
+def query_expand_bash_mirror(bash_mirror, string):
+    _, file_to_save_output = ptempfile()
+    bash_mirror.sendline(f'echo -n {string} > {file_to_save_output}')
+    
+    wait_bash_mirror(bash_mirror)
+    log("mirror done!")
+
+    with open(file_to_save_output) as f:
+        log("Ready to print output")
+        data = f.read()
+        log(data)
+    return data
+
 def update_bash_mirror_vars(var_file_path):
     global bash_mirror
 
     assert(var_file_path != ""  and not var_file_path is None)
 
     ## TODO: There is unnecessary write/read to this var file now.
-    bash_mirror.stdin.write(f'source {var_file_path}\n')
-    bash_mirror.stdin.flush()
+    bash_mirror.sendline(f'PS1="EXPECT\$ "')
+    wait_bash_mirror(bash_mirror)
+    log("PS1 set!")
 
-    ## TODO: Do proper concurrent read/writes to avoid blocking
+    bash_mirror.sendline(f'source {var_file_path}')
+    log("sent source to mirror")
+    # bash_mirror.stdin.write(f'source {var_file_path}\n')
+    # bash_mirror.stdin.flush()
+    wait_bash_mirror(bash_mirror)
+    log("mirror done!")
 
-    ## Make sure to read bash's output
-    ## Actually in this case bash output should be completely empty (only stderr should contain stuff)
-    ## TODO: This might actually block and fail
-    # bash_ret = bash_mirror.stout.read()
-
-    _, file_to_save_output = ptempfile()
-    bash_mirror.stdin.write(f'echo $- > {file_to_save_output}')
-    bash_mirror.stdin.flush()
-
-    log("Flushed echo hi")
-
-    terminal = bash_mirror.stdout.read(3)
-    log("bash returned:", terminal)
-
-
-    with open(file_to_save_output) as f:
-        log("Ready to print output")
-        log(f.read())
+    ## This is just for debugging
+    query_expand_bash_mirror(bash_mirror, "$-")
+    
 
 ##
 ## Read a shell variables file
