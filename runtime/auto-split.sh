@@ -7,8 +7,8 @@ n_outputs="$#"
 
 # Set a default DISH_TOP in this directory if it doesn't exist
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
-
-temp="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
+# generate a temp file
+temp="$(mktemp -u /tmp/pash_XXXXXXXXXX)"
 
 cat "$input" > "$temp"
 total_lines=$(wc -l $temp | cut -f 1 -d ' ')

@@ -8,15 +8,44 @@ cd $PASH_TOP
 
 LOG_DIR=$PWD/install_logs
 mkdir -p $LOG_DIR
-
+PYTHON_PKG_DIR=$PWD/python_pkgs
+mkdir -p $PYTHON_PKG_DIR
 git submodule init
 git submodule update
 
 echo "Building parser..."
 cd compiler/parser
+
+if type lsb_release >/dev/null 2>&1 ; then
+   distro=$(lsb_release -i -s)
+elif [ -e /etc/os-release ] ; then
+   distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
+fi
+
 echo "|-- making libdash..."
-make libdash &> $LOG_DIR/make_libdash.log
-cd ../../
+# convert to lowercase
+distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
+# now do different things depending on distro
+case "$distro" in
+   freebsd*) 
+    gsed -i 's/ make/ gmake/g' Makefile
+    gmake libdash &> $LOG_DIR/make_libdash.log
+    echo "Building runtime..."
+    # Build runtime tools: eager, split
+    cd ../../runtime/
+    gmake &> $LOG_DIR/make.log
+    ;;
+   *)
+    make libdash &> $LOG_DIR/make_libdash.log
+    echo "Building runtime..."
+    # Build runtime tools: eager, split
+    cd ../../runtime/
+    make &> $LOG_DIR/make.log
+    ;;
+esac
+
+# save distro in the init file
+echo "export distro=$distro" > ~/.pash_init
 
 ## This was the old parser installation that required opam.
 # # Build the parser (requires libtool, m4, automake, opam)
@@ -33,18 +62,13 @@ cd ../../
 # make &> $LOG_DIR/make.log
 # cd ../../
 
-
-echo "Building runtime..."
-# Build runtime tools: eager, split
-cd runtime/
-make &> $LOG_DIR/make.log
 cd ../
 
 echo "Installing python dependencies..."
-python3 -m pip install jsonpickle &> $LOG_DIR/pip_install_jsonpickle.log
-python3 -m pip install -U PyYAML &> $LOG_DIR/pip_install_pyyaml.log
+python3 -m pip install jsonpickle --system -t $PYTHON_PKG_DIR &> $LOG_DIR/pip_install_jsonpickle.log
 python3 -m pip install numpy &> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib &> $LOG_DIR/pip_install_matplotlib.log
+
 
 echo "Generating input files..."
 $PASH_TOP/evaluation/tests/input/setup.sh

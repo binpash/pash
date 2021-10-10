@@ -34,7 +34,7 @@ class AggregatorNode(MapperAggregatorNode):
         ## Check if an aggregator can be instantiated from the node
         if(old_node.com_aggregator is None):
             log("Error: Node:", old_node, "does not contain information to instantiate an aggregator!")
-            exit(1)
+            raise Exception('No information to instantiate aggregator')
 
         ## The name of the aggregator command
         agg_name_string = old_node.com_aggregator.name
@@ -50,7 +50,7 @@ class MapperNode(MapperAggregatorNode):
         ## Check if an mapper can be instantiated from the node
         if(old_node.com_mapper is None):
             log("Error: Node:", old_node, "does not contain information to instantiate a mapper!")
-            exit(1)
+            raise Exception('No information to instantiate mapper')
 
         ## The name of the aggregator command
         mapper_name_string = old_node.com_mapper.name

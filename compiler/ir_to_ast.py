@@ -1,18 +1,14 @@
 import os
-import time
-import subprocess
 from datetime import datetime
 from util import *
 from ir_utils import *
-
-from json_ast import save_asts_json
 from parse import from_ast_objects_to_shell
 import config
 
 RM_PASH_FIFOS_NAME="rm_pash_fifos"
 MKFIFO_PASH_FIFOS_NAME="mkfifo_pash_fifos"
 
-def to_shell(ir, output_dir, args):
+def to_shell(ir, args):
     backend_start_time = datetime.now()
 
     ## First call an IR to AST compilation pass

@@ -3,16 +3,11 @@ from ir import *
 from definitions.ast_node import *
 from definitions.ast_node_c import *
 from util import *
-from json_ast import save_asts_json, ast_to_shell
-from parse import parse_shell, from_ast_objects_to_shell, from_ast_objects_to_shell_file
+from parse import from_ast_objects_to_shell, from_ast_objects_to_shell_file
 from expand import *
 import subprocess
-import traceback
-
 import config
-
 import pickle
-
 
 ##
 ## Compile AST -> Extended AST with IRs
@@ -54,6 +49,8 @@ preprocess_cases = {
              lambda ast_node: preprocess_node_pipe(ast_node, irFileGen, config)),
     "Command": (lambda irFileGen, config:
                 lambda ast_node: preprocess_node_command(ast_node, irFileGen, config)),
+    "Redir": (lambda irFileGen, config:
+              lambda ast_node: preprocess_node_redir(ast_node, irFileGen, config)),
     "Background": (lambda irFileGen, config:
                    lambda ast_node: preprocess_node_background(ast_node, irFileGen, config)),
     "Subshell": (lambda irFileGen, config:
@@ -185,7 +182,7 @@ def combine_pipe(ast_nodes):
     else:
         ## If any part of the pipe is not an IR, the compilation must fail.
         log("Node: {} is not pure".format(ast_nodes[0]))
-        exit(1)
+        raise Exception('Not pure node in pipe')
 
     ## Combine the rest of the nodes
     for ast_node in ast_nodes[1:]:
@@ -194,7 +191,7 @@ def combine_pipe(ast_nodes):
         else:
             ## If any part of the pipe is not an IR, the compilation must fail.
             log("Node: {} is not pure".format(ast_nodes))
-            exit(1)
+            raise Exception('Not pure node in pipe')
 
     return [combined_nodes]
 
@@ -539,7 +536,7 @@ def replace_ast_regions(ast_objects, irFileGen, config):
                 ## Since the current one is maximal (or not wholy replaced)
                 ## we close the candidate.
                 dataflow_region_asts, dataflow_region_lines = unzip(candidate_dataflow_region)
-                dataflow_region_text = "\n".join(dataflow_region_lines)
+                dataflow_region_text = join_original_text_lines(dataflow_region_lines)
                 replaced_ast = replace_df_region(dataflow_region_asts, irFileGen, config,
                                                  ast_text=dataflow_region_text)
                 candidate_dataflow_region = []
@@ -552,7 +549,7 @@ def replace_ast_regions(ast_objects, irFileGen, config):
                 else:
                     ## In this case, it is possible that no replacement happened,
                     ## meaning that we can simply return the original parsed text as it was.
-                    if(preprocessed_ast_object.will_anything_be_replaced()):
+                    if(preprocessed_ast_object.will_anything_be_replaced() or original_text is None):
                         preprocessed_asts.append(preprocessed_ast_object.ast)
                     else:
                         preprocessed_asts.append(UnparsedScript(original_text))
@@ -560,13 +557,21 @@ def replace_ast_regions(ast_objects, irFileGen, config):
     ## Close the final dataflow region
     if(len(candidate_dataflow_region) > 0):
         dataflow_region_asts, dataflow_region_lines = unzip(candidate_dataflow_region)
-        dataflow_region_text = "\n".join(dataflow_region_lines)
+        dataflow_region_text = join_original_text_lines(dataflow_region_lines)
         replaced_ast = replace_df_region(dataflow_region_asts, irFileGen, config,
                                          ast_text=dataflow_region_text)
         candidate_dataflow_region = []
         preprocessed_asts.append(replaced_ast)
 
     return preprocessed_asts
+
+## This function joins original unparsed shell source in a safe way 
+##   so as to deal with the case where some of the text is None (e.g., in case of stdin parsing).
+def join_original_text_lines(shell_source_lines_or_none):
+    if any([text_or_none is None for text_or_none in shell_source_lines_or_none]):
+        return None
+    else:
+        return "\n".join(shell_source_lines_or_none)
 
 def preprocess_node(ast_object, irFileGen, config):
     global preprocess_cases
@@ -624,6 +629,19 @@ def preprocess_node_command(ast_node, _irFileGen, _config):
     preprocessed_ast_object = PreprocessedAST(ast_node,
                                               replace_whole=True,
                                               non_maximal=False)
+    return preprocessed_ast_object
+
+# Background of (linno * t * redirection list) 
+## TODO: It might be possible to actually not close the inner node but rather apply the redirections on it
+def preprocess_node_redir(ast_node, irFileGen, config):
+    preprocessed_node, something_replaced = preprocess_close_node(ast_node.node,
+                                                                  irFileGen, config)
+    ## TODO: Could there be a problem with the in-place update
+    ast_node.node = preprocessed_node
+    preprocessed_ast_object = PreprocessedAST(ast_node,
+                                              replace_whole=False,
+                                              non_maximal=False,
+                                              something_replaced=something_replaced)
     return preprocessed_ast_object
 
 ## TODO: Is that correct? Also, this should probably affect `semi`, `and`, and `or`
