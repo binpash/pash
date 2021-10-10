@@ -69,7 +69,7 @@ int main(int _argc, char** _argv)
 		return EXIT_SUCCESS;
 	}
 
-	std::tie(g_argc, g_argv) = parse_options(_argc - 2, _argv + 2, g_options);
+	std::tie(g_argc, g_argv) = parse_options(_argc - 2, _argv + 2, g_options.option_data);
 
 	aggregate();
 

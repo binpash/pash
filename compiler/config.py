@@ -1,14 +1,12 @@
 import json
 import os
 import subprocess
-import yaml
 import math
-import tempfile
 
 from ir_utils import *
 
 ## Global
-__version__ = "0.4" # FIXME add libdash version
+__version__ = "0.5" # FIXME add libdash version
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'PASH_TOP' in os.environ:
     PASH_TOP = os.environ['PASH_TOP']
@@ -19,9 +17,9 @@ PYTHON_VERSION = "python3"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 
-## This is set in pash.py and pash_runtime.py accordingly.
-## In both cases the setting is different.
-PASH_TMP_PREFIX = None
+## Ensure that PASH_TMP_PREFIX is set by pa.sh
+assert(not os.getenv('PASH_TMP_PREFIX') is None)
+PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
 
 config = {}
 annotations = []
@@ -33,9 +31,9 @@ def load_config(config_file_path=""):
     CONFIG_KEY = 'distr_planner'
 
     if(config_file_path == ""):
-      config_file_path = '{}/compiler/config.yaml'.format(PASH_TOP)
+      config_file_path = '{}/compiler/config.json'.format(PASH_TOP)
     with open(config_file_path) as config_file:
-        pash_config = yaml.load(config_file, Loader=yaml.FullLoader)
+        pash_config = json.load(config_file)
 
     if not pash_config:
         raise Exception('No valid configuration could be loaded from {}'.format(config_file_path))
@@ -63,6 +61,9 @@ def add_common_arguments(parser):
                         action="store_true")
     parser.add_argument("--assert_compiler_success",
                         help="assert that the compiler succeeded (used to make tests more robust)",
+                        action="store_true")
+    parser.add_argument("--avoid_pash_runtime_completion",
+                        help="avoid the pash_runtime execution completion (only relevant when --debug > 0)",
                         action="store_true")
     ## TODO: Delete that at some point, or make it have a different use (e.g., outputting time even without -d 1).
     parser.add_argument("-t", "--output_time", #FIXME: --time
@@ -118,6 +119,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--dry_run_compiler"))
     if (pash_arguments.assert_compiler_success):
         arguments.append(string_to_argument("--assert_compiler_success"))
+    if (pash_arguments.avoid_pash_runtime_completion):
+        arguments.append(string_to_argument("--avoid_pash_runtime_completion"))
     if (pash_arguments.output_time):
         arguments.append(string_to_argument("--output_time"))
     if (pash_arguments.output_optimized):
@@ -172,6 +175,7 @@ def read_vars_file(var_file_path):
         # MMG 2021-03-09 definitively breaking on newlines (e.g., IFS) and function outputs (i.e., `declare -f`)
         for line in lines:
             words = line.split(' ')
+            # FIXME is this assignment needed?
             _export_or_typeset = words[0]
             rest = " ".join(words[1:])
 

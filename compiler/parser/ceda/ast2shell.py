@@ -324,34 +324,21 @@ def escaped (param):
 #      "${" ^ name ^ (if nul then ":" else "") ^ string_of_var_type vt ^ string_of_arg a ^ "}"
 #   | Q a -> "\"" ^ string_of_arg a ^ "\""
 #   | B t -> "$(" ^ to_string t ^ ")"
-def string_of_arg_char (c):
+def string_of_arg_char (c, is_quoted=False):
     (type, param) = c;
 
     if (type == "E"):
         char = chr (param);
 
-        if (char == "'"):
-            return "\\'";
-        elif (char == "\""):
-            return "\\\"";
-        elif (char == "("):
-            return "\\(";
-        elif (char == ")"):
-            return "\\)";
-        elif (char == "{"):
-            return "\\{";
-        elif (char == "}"):
-            return "\\}";
-        elif (char == "$"):
-            return "\\$";
-        elif (char == "!"):
-            return "\\!";
-        elif (char == "&"):
-            return "\\&";
-        elif (char == "|"):
-            return "\\|";
-        elif (char == ";"):
-            return "\\;";
+        ## MMG 2021-09-20 It might be safe to move everything except for " in the second list, but no need to do it if the tests pass 
+        ## Chars to escape unconditionally
+        chars_to_escape = ["'", '"', '`', '(', ')', '{', '}', '$', '!', '&', '|', ';']
+        ## Chars to escape only when not quoted
+        chars_to_escape_when_no_quotes = ['*', '?', '[', ']', '#', '<', '>', '~', ' ']
+        if char in chars_to_escape:
+            return '\\' + char
+        elif char in chars_to_escape_when_no_quotes and not is_quoted:
+            return '\\' + char
         else:
             return escaped (param)
     elif (type == "C"):
@@ -370,7 +357,7 @@ def string_of_arg_char (c):
             print ("Unexpected param for T: %s" % param);
             abort ();
     elif (type == "A"):
-        return "$((" + string_of_arg (param) + "))";
+        return "$((" + string_of_arg (param, is_quoted) + "))";
     elif (type == "V"):
         assert (len (param) == 4);
         if (param [0] == "Length"):
@@ -391,11 +378,11 @@ def string_of_arg_char (c):
             else:
                 os.abort (); # For my own sanity
 
-            stri += string_of_var_type (vt) + string_of_arg (a) + "}";
+            stri += string_of_var_type (vt) + string_of_arg (a, is_quoted) + "}";
 
             return stri;
     elif (type == "Q"):
-        return "\"" + string_of_arg (param) + "\"";
+        return "\"" + string_of_arg (param, is_quoted=True) + "\"";
     elif (type == "B"):
         return "$(" + to_string (param) + ")";
     else:
@@ -405,10 +392,10 @@ def string_of_arg_char (c):
 # and string_of_arg = function
 #   | [] -> ""
 #   | c :: a -> string_of_arg_char c ^ string_of_arg a
-def string_of_arg (args):
+def string_of_arg (args, is_quoted=False):
     # print (args);
 
-    text = "".join (map (string_of_arg_char, args));
+    text = "".join (map (lambda arg: string_of_arg_char(arg, is_quoted), args));
 
 #    text = "";
 #    for arg in args:

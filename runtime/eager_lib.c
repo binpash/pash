@@ -1,5 +1,85 @@
 #include "eager_lib.h"
 
+#ifdef __FreeBSD__
+#define BUF_SIZE 8192
+#define min(a,b) (((a)<(b))?(a):(b))
+void fatal
+(const char *err)
+{
+	perror(err);
+	abort();
+}
+
+int std_copy(int in_fd, int out_fd, int unused, int size)
+{
+    char buf[4096];
+    int err = -1;
+    int bytes;
+    while( (bytes = read(in_fd, buf, size)) > 0 )
+    {
+        if(write(out_fd, buf, bytes) != bytes)
+        {
+            perror("write:");
+            goto out;
+        }
+    }
+    err = 0;
+    out:
+    return err;
+}
+
+
+ssize_t
+send_file(int out_fd, int in_fd, off_t *offset, size_t count)
+{
+    off_t orig = 0;
+
+    if (offset != NULL) {
+        /* Save current file offset and set offset to value in '*offset' */
+        orig = lseek(in_fd, 0, SEEK_CUR);
+        if (orig == -1)
+            return -1;
+        if (lseek(in_fd, *offset, SEEK_SET) == -1)
+            return -1;
+    }
+
+    size_t totSent = 0;
+
+    while (count > 0) {
+        size_t toRead = min(BUF_SIZE, count);
+
+        char buf[BUF_SIZE];
+        ssize_t numRead = read(in_fd, buf, toRead);
+        if (numRead == -1)
+            return -1;
+        if (numRead == 0)
+            break;                      /* EOF */
+
+        ssize_t numSent = write(out_fd, buf, numRead);
+        if (numSent == -1)
+            return -1;
+        if (numSent == 0)               /* Should never happen */
+            fatal("send_file: write() transferred 0 bytes");
+
+        count -= numSent;
+        totSent += numSent;
+    }
+
+    if (offset != NULL) {
+
+        /* Return updated file offset in '*offset', and reset the file offset
+           to the value it had when we were called. */
+
+        *offset = lseek(in_fd, 0, SEEK_CUR);
+        if (*offset == -1)
+            return -1;
+        if (lseek(in_fd, orig, SEEK_SET) == -1)
+            return -1;
+    }
+    return totSent;
+}
+#endif
+
 int safeOpen3(const char *pathname, int flags, mode_t mode) {
     int fd = open(pathname, flags, mode);
     if (fd < 0) {
@@ -77,10 +157,16 @@ int blockOpenOutput(const char *pathname) {
 
 // Returns the number of bytes read, or 0 if the input was done.
 int readInputWriteToFile(int inputFd, int intermediateWriter, int bufferSize) {
-
-    ssize_t res = splice(inputFd, 0, intermediateWriter, 0, bufferSize, 0);
+    ssize_t res = 
+#ifdef __linux__
+    splice(inputFd, 0, intermediateWriter, 0, bufferSize, 0);
+#else
+    // https://man.openbsd.org/sosplice.9
+    // naive implementation to match our needs, maybe we could we use sosplice, somove 
+    std_copy(inputFd, intermediateWriter, 0, bufferSize);
+#endif
     if (res < 0) {
-        printf("Error: Couldn't read from input!\n");
+        printf("Error: Couldn't read from inputaa!\n");
         exit(1);
     }
     return res;
@@ -99,7 +185,7 @@ int bufferedReadInputWriteToFile(int inputFd, int intermediateWriter, int buffer
 
     inputBytesRead = read(inputFd, inputBuf, sizeof(inputBuf));
     if (inputBytesRead < 0) {
-        printf("Error: Couldn't read from input!\n");
+        printf("Error: Couldn't read from input@@!\n");
         exit(1);
     }
     if (inputBytesRead == 0) {
@@ -185,7 +271,14 @@ void bufferedOutputRestIntermediateFile(int outputFd, int intermediateWriter, in
 ssize_t safeWriteOutput(int outputFd, int intermediateReader,
                         off_t intermediateFileDiff, int* doneWriting) {
     ssize_t res;
-    res = sendfile(outputFd, intermediateReader, 0, intermediateFileDiff);
+    res = 
+#ifdef __linux__
+    sendfile
+#else
+    send_file
+#endif
+    (outputFd, intermediateReader, 0, intermediateFileDiff);
+
     if (res < 0 && errno != EAGAIN) {
         printf("ERROR: %s, when outputing %ld bytes!\n", strerror(errno), intermediateFileDiff);
         exit(1);

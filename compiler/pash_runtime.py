@@ -1,10 +1,6 @@
-import cProfile
-import os
 import argparse
 import sys
 import pickle
-import subprocess
-import jsonpickle
 import traceback
 from datetime import datetime
 
@@ -35,19 +31,29 @@ def main():
     except Exception:
         log("Compiler failed, no need to worry, executing original script...")
         log(traceback.format_exc())
-        exit(1)
+        sys.exit(1)
 
 def main_body():
+    global runtime_config
+
     ## Parse arguments
     args = parse_args()
     config.pash_args = args
 
-    ## Ensure that PASH_TMP_PREFIX is set by pash.py
-    assert(not os.getenv('PASH_TMP_PREFIX') is None)
-    config.PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
+    ## Load the configuration
+    if not config.config:
+        config.load_config(args.config_path)
+
+    ## Load annotations
+    config.annotations = load_annotation_files(config.config['distr_planner']['annotations_dir'])
+
+    runtime_config = config.config['distr_planner']
+
+    ## Read any shell variables files if present
+    config.read_vars_file(args.var_file)
 
     ## Call the main procedure
-    compile_optimize_script(args.input_ir, args.compiled_script_file, args)
+    compile_optimize_output_script(args.input_ir, args.compiled_script_file, args)
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -62,27 +68,46 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def compile_optimize_script(ir_filename, compiled_script_file, args):
+def compile_optimize_output_script(ir_filename, compiled_script_file, args):
     global runtime_config
-    if not config.config:
-        config.load_config(args.config_path)
+    
+    ## Load the df_region from a file
+    candidate_df_region = load_df_region(ir_filename)
 
-    ## Load annotations
-    config.annotations = load_annotation_files(config.config['distr_planner']['annotations_dir'])
+    ## Compile it
+    optimized_ast_or_ir = compile_optimize_df_region(candidate_df_region, args)
 
-    runtime_config = config.config['distr_planner']
+    ## Call the backend that executes the optimized dataflow graph
+    ## TODO: Should never be the case for now. This is obsolete.
+    assert(not runtime_config['distr_backend'])
 
+    ## If the candidate DF region was indeed a DF region then we have an IR
+    ## which should be translated to a parallel script.
+    if(isinstance(optimized_ast_or_ir, IR)):
+        script_to_execute = to_shell(optimized_ast_or_ir, args)
+
+        ## This might not be needed anymore (since the output script is output anyway)
+        ## TODO: This is probably useless, remove
+        maybe_log_optimized_script(script_to_execute, args)
+
+        log("Optimized script saved in:", compiled_script_file)
+        with open(compiled_script_file, "w") as f:
+                f.write(script_to_execute)
+
+    else:
+        raise Exception("Script failed to compile!")
+
+def load_df_region(ir_filename):
     log("Retrieving candidate DF region: {} ... ".format(ir_filename), end='')
     with open(ir_filename, "rb") as ir_file:
         candidate_df_region = pickle.load(ir_file)
     log("Done!")
+    return candidate_df_region
 
-    ## Read any shell variables files if present
-    config.read_vars_file(args.var_file)
-
+def compile_optimize_df_region(df_region, args):
     ## Compile the candidate DF regions
     compilation_start_time = datetime.now()
-    asts_and_irs = compile_candidate_df_region(candidate_df_region, config.config)
+    asts_and_irs = compile_candidate_df_region(df_region, config.config)
     compilation_end_time = datetime.now()
     print_time_delta("Compilation", compilation_start_time, compilation_end_time, args)
 
@@ -102,36 +127,18 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
     ##       It might complicate things having a script whose half is compiled to a graph and its other half not.
     assert(len(optimized_asts_and_irs) == 1)
     optimized_ast_or_ir = optimized_asts_and_irs[0]
+    
+    return optimized_ast_or_ir
 
-    ## Call the backend that executes the optimized dataflow graph
-    output_script_path = runtime_config['optimized_script_filename']
-    ## TODO: Should never be the case for now. This is obsolete.
-    assert(not runtime_config['distr_backend'])
-
-    ## If the candidate DF region was indeed a DF region then we have an IR
-    ## which should be translated to a parallel script.
-    if(isinstance(optimized_ast_or_ir, IR)):
-        script_to_execute = to_shell(optimized_ast_or_ir,
-                                     runtime_config['output_dir'], args)
-
-        log("Optimized script saved in:", compiled_script_file)
-
-        ## TODO: Merge this write with the one below. Maybe even move this logic in `pash_runtime.sh`
-        ## Output the optimized shell script for inspection
-        if(args.output_optimized):
-            with open(output_script_path, "w") as output_script_file:
-                log("Optimized script:")
-                log(script_to_execute)
-                output_script_file.write(script_to_execute)
-
-        with open(compiled_script_file, "w") as f:
-                f.write(script_to_execute)
-
-    else:
-        ## Instead of outputing the script here, we just want to exit with a specific exit code
-        ## TODO: Figure out the code and save it somewhere
-        exit(120)
-
+def maybe_log_optimized_script(script_to_execute, args):
+    ## TODO: Merge this write with the one below. Maybe even move this logic in `pash_runtime.sh`
+    ## Output the optimized shell script for inspection
+    if(args.output_optimized):
+        output_script_path = runtime_config['optimized_script_filename']
+        with open(output_script_path, "w") as output_script_file:
+            log("Optimized script:")
+            log(script_to_execute)
+            output_script_file.write(script_to_execute)
 
 def compile_candidate_df_region(candidate_df_region, config):
     ## This is for the files in the IR
