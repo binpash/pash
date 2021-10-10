@@ -1,4 +1,5 @@
 import argparse
+import traceback
 
 from annotations import *
 import config
@@ -87,6 +88,7 @@ def main():
             try:
                 ret = parse_command(input)
             except Exception as e:
+                log(traceback.format_exc())
                 ret = error_response(str(e))
             
             fout.write(ret)
