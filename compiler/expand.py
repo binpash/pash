@@ -235,6 +235,10 @@ def lookup_variable(var, config):
     ##           eval "$cmd"
     if(var == '@'):
         return config['shell_variables']['pash_input_args']
+    elif(var == '?'):
+        return config['shell_variables']['pash_previous_exit_status']
+    elif(var == '-'):
+        return config['shell_variables']['pash_previous_set_status']
     elif(var == '#'):
         _type, input_args = config['shell_variables']['pash_input_args']
         return (None, str(len(input_args.split())))

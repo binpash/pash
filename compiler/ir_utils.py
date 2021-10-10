@@ -195,8 +195,12 @@ def make_command(arguments, redirections=[], assignments=[]):
     node = make_kv("Command", [lineno, assignments, arguments, redirections])
     return node
 
+def make_nop():
+    return make_command([string_to_argument(":")])
+
 def make_semi_sequence(asts):
-    assert(len(asts) > 0)
+    if(len(asts) == 0):
+        return make_nop()
 
     if(len(asts) == 1):
         return asts[0]
