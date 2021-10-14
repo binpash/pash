@@ -33,8 +33,12 @@ source "$PASH_TOP/compiler/pash_init_setup.sh" "$@"
 PASH_FROM_SH="pa.sh" python3 -S $PASH_TOP/compiler/pash.py "$@"
 pash_exit_code=$?
 
+echo "Done" > "$RUNTIME_IN_FIFO"
+daemon_response=$(cat "$RUNTIME_OUT_FIFO")
+echo $daemon_response
+
 ## TODO: Make sure to properly terminate the pash runtime "daemon"
 kill -15 "$daemon_pid" 2> /dev/null 1>&2
 wait 2> /dev/null 1>&2 
-
+rm -rf "${PASH_TMP_PREFIX}"
 (exit $pash_exit_code)

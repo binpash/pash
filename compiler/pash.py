@@ -33,8 +33,8 @@ def main():
         return_code = preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell_name)
         
         ## Delete the temp directory when not debugging
-        if(args.debug == 0):
-            shutil.rmtree(config.PASH_TMP_PREFIX)
+        # if(args.debug == 0):
+        #     shutil.rmtree(config.PASH_TMP_PREFIX)
         log("-" * 40) #log end marker
         ## Return the exit code of the executed script
         sys.exit(return_code)

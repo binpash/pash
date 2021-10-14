@@ -121,6 +121,7 @@ else
     echo "Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}| Input IR File:${pash_input_ir_file}" > "$RUNTIME_IN_FIFO"
     daemon_response="$(cat $RUNTIME_OUT_FIFO)"
     pash_redir_output echo "$$: (2) Daemon responds: $daemon_response"
+
     if [[ "$daemon_response" == *"OK:"* ]]; then
         pash_runtime_return_code=0
     else
@@ -147,11 +148,15 @@ else
         pash_script_to_execute="${pash_compiled_script_file}"
     fi
 
+    response_args=($daemon_response)
+    process_id=${response_args[1]}
+
     ##
     ## (4)
     ##
-    source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute}
+    source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id} &
     pash_runtime_final_status=$?
+    
 
     ## We only want to execute (5) and (6) if we are in debug mode and it is not explicitly avoided
     if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then

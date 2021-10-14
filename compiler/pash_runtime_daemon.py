@@ -78,21 +78,148 @@ def compile(input):
 
     return success_response(f'{compiled_script_file} {var_file} {input_ir_file}')
 
+class Scheduler:
+    def __init__(self):
+        self.fids_in_use = set()
+        self.process_fids = {}
+        self.next_id = 0
+        self.waiting_process = (None, None) # (process_id, compilation_response)
+        self.running_procs = 0
+        self.unsafe_running = False
+        self.done = False
+        
+    def compile_and_add(self, compiled_script_file, var_file, input_ir_file):
+        self.wait_unsafe()
+        process_id = self.get_next_id()
+        # optimized_ast_or_ir = pash_runtime.compile_ir(input_ir_file, config.pash_args)
+        compile_success = False
+        run_parallel = False
+        ast_or_ir = pash_runtime.compile_ir(input_ir_file, compiled_script_file, config.pash_args)
+        print(ast_or_ir)
+        if ast_or_ir == None:
+            response = error_response(f'{process_id} failed to compile')
+            self.waiting_process = (process_id, response)
+            return self.wait_for_all()
+        else:
+            response = success_response(f'{process_id} {compiled_script_file} {var_file} {input_ir_file}')
+            compile_success = True
+
+            script_fids = set(ast_or_ir.all_output_fids())
+            self.process_fids[process_id] = script_fids
+            fids_to_use = self.fids_in_use.union(script_fids)
+            print(fids_in_use)
+            print(script_fids)
+            print(fids_to_use)
+            run_parallel = len(self.fids_in_use) + len(script_fids) == len(fids_to_use)
+            if run_parallel:
+                self.fids_in_use = fids_to_use
+                self.running_procs += 1
+            else:
+                self.waiting_process = (process_id, response)
+                return self.wait_for_all()
+
+            self.fout.write(response)
+            
+
+    def remove_process(self, process_id):
+        if process_id in self.process_fids:
+            self.fids_in_use -= self.process_fids[process_id]
+            del self.process_fids[process_id]
+            
+        self.running_procs -= 1
+        if self.running_procs == 0:
+            self.unsafe_running = False
+
+    def is_idle(self):
+        return len(self.fids_in_use) + len(self.process_fids) == 0
+
+    def get_next_id(self):
+        self.next_id += 1
+        return self.next_id
+
+    def wait_for_all(self):
+        while self.running_procs > 0:
+            with open(self.in_filename) as fin:
+                input_cmd = fin.read()
+                # must be exit command
+                if (input_cmd.startswith("Exit:")):
+                    self.remove_process(int(input_cmd.split(":")[1]))
+                else:
+                    raise Exception(f"Command should be exit but it was {input_cmd}")
+                print(f"waitall {input_cmd}")
+        # finished waiting -> execute waiting process and wait for it to finish
+        self.run_waiting_process()
+
+    def run_waiting_process(self):
+        waiting_process_id, response = self.waiting_process
+        if not waiting_process_id:
+            return
+        self.fids_in_use = set()
+        self.waiting_process = (None, None)
+        self.fout.write(response)
+        self.running_procs += 1
+        self.unsafe_running = True
+        
+    def wait_unsafe(self):
+        if self.unsafe_running:
+            with open(self.in_filename) as fin:
+                input_cmd = fin.read()
+                if (not input_cmd.startswith("Exit:")):
+                    raise Exception(f"Command should be exit but it was {input_cmd}")
+                print(f"unsafe {input_cmd}")
+            self.unsafe_running = False
+            self.running_procs -= 1
+
+    def parse_and_run_cmd(self, input_cmd):
+        if(input_cmd.startswith("Compile")):
+            compiled_script_file, var_file, input_ir_file = parse_compile_command(input_cmd)
+            self.compile_and_add(compiled_script_file, var_file, input_ir_file)
+        elif (input_cmd.startswith("Exit")):
+            self.remove_process(int(input_cmd.split(":")[1]))
+        elif (input_cmd.startswith("Done")):
+            self.wait_for_all()
+            self.fout.write("All finished")
+            self.done = True
+        else:
+            self.fout.write(error_response(f'Unsupported command: {input_cmd}'))
+
+    def run(self, in_filename, out_filename):
+        while not self.done:
+            self.in_filename = in_filename
+            self.out_filename = out_filename
+            ## Process a single request
+            with open(in_filename) as fin:
+                input_cmd = fin.read()
+                if not input_cmd:
+                    continue
+                input_cmd = input_cmd.rstrip()
+                print(input_cmd)
+                if (not input_cmd.startswith("Exit:")):
+                    self.fout = open(out_filename, "w")
+
+                self.parse_and_run_cmd(input_cmd)
+                
+                if (not input_cmd.startswith("Exit:")):
+                    self.fout.close()
+                # if self.running_procs == 0 and self.wait_for_all:
+                #     self.wait_for_all = False
+                #     if self.waiting_process[0]:
+                #         waiting_process_id, response = self.waiting_process
+                #         self.running_procs += 1
+                #         self.fids_in_use = set()
+                #         # Should always be true for now
+                #         self.waiting_process = (None, None)
+                #         fout.write(response)
+                #         fout.flush()
+
+
+
 def main():
     args = init()
-
-    while True:
-        ## Process a single request
-        with open(args.input) as fin, open(args.output, "w") as fout:
-            input = fin.read()
-            try:
-                ret = parse_command(input)
-            except Exception as e:
-                log(traceback.format_exc())
-                ret = error_response(str(e))
-            
-            fout.write(ret)
-            fout.flush()
+    scheduler = Scheduler()
+    scheduler.run(in_filename=args.input, out_filename=args.output)
 
 if __name__ == "__main__":
     main()
+#TODO
+### Flag to turn off, abstaction, interferancem
