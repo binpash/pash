@@ -68,6 +68,42 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
+def compile_ir(ir_filename, compiled_script_file, args):
+    """
+    Return IR object for compilation success. None otherwise.
+    """
+    ret = None
+    try:
+        global runtime_config
+        
+        ## Load the df_region from a file
+        candidate_df_region = load_df_region(ir_filename)
+
+        ## Compile it
+        optimized_ast_or_ir = compile_optimize_df_region(candidate_df_region, args)
+
+        ## If the candidate DF region was indeed a DF region then we have an IR
+        ## which should be translated to a parallel script.
+        if(isinstance(optimized_ast_or_ir, IR)):
+            script_to_execute = to_shell(optimized_ast_or_ir, args)
+
+            ## This might not be needed anymore (since the output script is output anyway)
+            ## TODO: This is probably useless, remove
+            maybe_log_optimized_script(script_to_execute, args)
+
+            log("Optimized script saved in:", compiled_script_file)
+            with open(compiled_script_file, "w") as f:
+                    f.write(script_to_execute)
+            ret = optimized_ast_or_ir
+        else:
+            raise Exception("Script failed to compile!")
+    except Exception as e:
+        log(e)
+
+    return ret
+
+
 def compile_optimize_output_script(ir_filename, compiled_script_file, args):
     global runtime_config
     

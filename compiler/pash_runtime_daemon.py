@@ -80,22 +80,32 @@ def compile(input):
 
 class Scheduler:
     def __init__(self):
-        self.fids_in_use = set()
-        self.process_fids = {}
+        self.input_fids = set()
+        self.output_fids = set()
+        self.process_fids = {} # map process_id -> (input_fids, output_fids)
         self.next_id = 0
         self.waiting_process = (None, None) # (process_id, compilation_response)
         self.running_procs = 0
         self.unsafe_running = False
         self.done = False
         
+    def check_fids_safety(self, process_id):
+        proc_input_fids, proc_output_fids = self.process_fids[process_id]
+        all_proc_fids = proc_input_fids.union(proc_output_fids)
+        if self.output_fids.intersection(all_proc_fids) or self.input_fids.intersection(proc_output_fids):
+            return False
+        return True
+
     def compile_and_add(self, compiled_script_file, var_file, input_ir_file):
         self.wait_unsafe()
         process_id = self.get_next_id()
         # optimized_ast_or_ir = pash_runtime.compile_ir(input_ir_file, config.pash_args)
         compile_success = False
         run_parallel = False
+        ## Read any shell variables files if present
+        config.read_vars_file(var_file)
         ast_or_ir = pash_runtime.compile_ir(input_ir_file, compiled_script_file, config.pash_args)
-        print(ast_or_ir)
+
         if ast_or_ir == None:
             response = error_response(f'{process_id} failed to compile')
             self.waiting_process = (process_id, response)
@@ -104,15 +114,14 @@ class Scheduler:
             response = success_response(f'{process_id} {compiled_script_file} {var_file} {input_ir_file}')
             compile_success = True
 
-            script_fids = set(ast_or_ir.all_output_fids())
-            self.process_fids[process_id] = script_fids
-            fids_to_use = self.fids_in_use.union(script_fids)
-            print(fids_in_use)
-            print(script_fids)
-            print(fids_to_use)
-            run_parallel = len(self.fids_in_use) + len(script_fids) == len(fids_to_use)
+            proc_input_fids = set(map(lambda out: str(out.resource) if str(out.resource) != "None" else out, ast_or_ir.all_input_fids()))
+            proc_output_fids = set(map(lambda out: str(out.resource) if str(out.resource) != "None" else out, ast_or_ir.all_output_fids()))
+        
+            self.process_fids[process_id] = (proc_input_fids, proc_output_fids)
+            run_parallel = self.check_fids_safety(process_id)
             if run_parallel:
-                self.fids_in_use = fids_to_use
+                self.input_fids = self.input_fids.union(proc_input_fids)
+                self.output_fids = self.output_fids.union(proc_output_fids)
                 self.running_procs += 1
             else:
                 self.waiting_process = (process_id, response)
@@ -123,7 +132,9 @@ class Scheduler:
 
     def remove_process(self, process_id):
         if process_id in self.process_fids:
-            self.fids_in_use -= self.process_fids[process_id]
+            proc_input_fids, proc_output_fids = self.process_fids[process_id]
+            self.input_fids -= proc_input_fids
+            self.output_fids -= proc_output_fids
             del self.process_fids[process_id]
             
         self.running_procs -= 1
@@ -146,7 +157,7 @@ class Scheduler:
                     self.remove_process(int(input_cmd.split(":")[1]))
                 else:
                     raise Exception(f"Command should be exit but it was {input_cmd}")
-                print(f"waitall {input_cmd}")
+                # print(f"waitall {input_cmd}")
         # finished waiting -> execute waiting process and wait for it to finish
         self.run_waiting_process()
 
@@ -159,14 +170,14 @@ class Scheduler:
         self.fout.write(response)
         self.running_procs += 1
         self.unsafe_running = True
-        
+
     def wait_unsafe(self):
         if self.unsafe_running:
             with open(self.in_filename) as fin:
                 input_cmd = fin.read()
                 if (not input_cmd.startswith("Exit:")):
                     raise Exception(f"Command should be exit but it was {input_cmd}")
-                print(f"unsafe {input_cmd}")
+                #print(f"unsafe {input_cmd}")
             self.unsafe_running = False
             self.running_procs -= 1
 
@@ -175,6 +186,7 @@ class Scheduler:
             compiled_script_file, var_file, input_ir_file = parse_compile_command(input_cmd)
             self.compile_and_add(compiled_script_file, var_file, input_ir_file)
         elif (input_cmd.startswith("Exit")):
+            #print(input_cmd.split(":")[1], file=sys.stderr)
             self.remove_process(int(input_cmd.split(":")[1]))
         elif (input_cmd.startswith("Done")):
             self.wait_for_all()
@@ -193,13 +205,14 @@ class Scheduler:
                 if not input_cmd:
                     continue
                 input_cmd = input_cmd.rstrip()
-                print(input_cmd)
+                # print(input_cmd)
                 if (not input_cmd.startswith("Exit:")):
                     self.fout = open(out_filename, "w")
 
                 self.parse_and_run_cmd(input_cmd)
                 
                 if (not input_cmd.startswith("Exit:")):
+                    self.fout.flush()
                     self.fout.close()
                 # if self.running_procs == 0 and self.wait_for_all:
                 #     self.wait_for_all = False

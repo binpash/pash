@@ -23,29 +23,23 @@ pash_redir_output echo "$$: (4) Restoring previous exit code: ${pash_previous_ex
 pash_redir_output echo "$$: (4) Will execute script in ${script_source}:"
 pash_redir_output cat "${script_source}"
 ## Note: We run the `exit` in a checked position so that we don't simply exit when we are in `set -e`.
-source "${script_source}"
-internal_exec_status=$?
-## Make sure that any input argument changes are propagated outside
-export pash_input_args="$@"
+if (exit "$pash_previous_exit_status")
+then 
+{
+    source "${script_source}"
+    internal_exec_status=$?
+    ## Make sure that any input argument changes are propagated outside
+    export pash_input_args="$@"
+    (exit $internal_exec_status)
+
+}
+else 
+{
+    source "${script_source}"
+    internal_exec_status=$?
+    ## Make sure that any input argument changes are propagated outside
+    export pash_input_args="$@"
+    (exit $internal_exec_status)
+}
+fi
 echo "Exit:${process_id}" > "$RUNTIME_IN_FIFO"
-(exit $internal_exec_status)
-
-# if (exit "$pash_previous_exit_status")
-# then 
-# {
-#     source "${script_source}"
-#     internal_exec_status=$?
-#     ## Make sure that any input argument changes are propagated outside
-#     export pash_input_args="$@"
-#     (exit $internal_exec_status)
-
-# }
-# else 
-# {
-#     source "${script_source}"
-#     internal_exec_status=$?
-#     ## Make sure that any input argument changes are propagated outside
-#     export pash_input_args="$@"
-#     (exit $internal_exec_status)
-# }
-# fi

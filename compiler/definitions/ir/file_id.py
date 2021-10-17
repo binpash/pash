@@ -3,6 +3,7 @@ import os
 
 from ir_utils import *
 from util import *
+import uuid
 
 from definitions.ir.resource import *
 
@@ -32,18 +33,21 @@ class FileId:
 
     def __repr__(self):
         if(isinstance(self.resource, EphemeralResource)):
-            output = "{}#fifo{}".format(self.prefix, self.ident)
+            output = self.get_fifo_suffix()
         else:
             output = "fid:{}:{}".format(self.ident, self.resource)
         return output
 
     def serialize(self):
         if(isinstance(self.resource, EphemeralResource)):
-            output = "{}#fifo{}".format(self.prefix, self.ident)
+            output = self.get_fifo_suffix()
         else:
             output = "{}".format(self.resource)
         return output
 
+    def get_fifo_suffix(self):
+        fifo_name = "{}#fifo{}".format(self.prefix, self.ident)
+        return fifo_name
     ## Serialize as an option for the JSON serialization when sent to
     ## the backend. This is needed as options can either be files or
     ## arguments, and in each case there needs to be a different
@@ -60,8 +64,8 @@ class FileId:
         ##
         ## TODO: I am not sure about the FileDescriptor resource
         if(isinstance(self.resource, EphemeralResource)):
-            suffix = "{}#fifo{}".format(self.prefix, self.ident)
-            string = os.path.join(config.PASH_TMP_PREFIX, suffix)
+            suffix = self.get_fifo_suffix()
+            string = os.path.join(config.PASH_TMP_PREFIX, suffix)     
             ## Quote the argument
             argument = [make_kv('Q', string_to_argument(string))]
         elif(isinstance(self.resource, FileDescriptorResource)):

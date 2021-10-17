@@ -127,6 +127,10 @@ else
     else
         pash_runtime_return_code=1
     fi
+    
+    # Get assigned process id
+    response_args=($daemon_response)
+    process_id=${response_args[1]}
 
     pash_redir_output echo "$$: Compiler exited with code: $pash_runtime_return_code"
     if [ "$pash_runtime_return_code" -ne 0 ] && [ "$pash_assert_compiler_success_flag" -eq 1 ]; then
@@ -144,39 +148,40 @@ else
     ## If the compiler failed or if we dry_run the compiler, we have to run the sequential
     if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_dry_run_compiler_flag" -eq 1 ]; then
         pash_script_to_execute="${pash_sequential_script_file}"
+        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id}
     else
         pash_script_to_execute="${pash_compiled_script_file}"
+        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id} <&0 &
     fi
-
-    response_args=($daemon_response)
-    process_id=${response_args[1]}
-
-    ##
-    ## (4)
-    ##
-    source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id} &
     pash_runtime_final_status=$?
+    
+ 
+    # ##
+    # ## (4)
+    # ##
+    # source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id} <&0 &
+    # pash_runtime_final_status=$?
     
 
     ## We only want to execute (5) and (6) if we are in debug mode and it is not explicitly avoided
-    if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
-        ##
-        ## (5)
-        ##
+    # if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
+    #     ##
+    #     ## (5)
+    #     ##
 
-        ## Prepare a file for the output shell variables to be saved in
-        pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
-        # pash_redir_output echo "$$: Output vars: $pash_output_variables_file"
+    #     ## Prepare a file for the output shell variables to be saved in
+    #     pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+    #     # pash_redir_output echo "$$: Output vars: $pash_output_variables_file"
 
-        ## Prepare a file for the `set` state of the inner shell to be output
-        pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+    #     ## Prepare a file for the `set` state of the inner shell to be output
+    #     pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
 
-        source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_variables_file} ${pash_output_set_file}
+    #     source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_variables_file} ${pash_output_set_file}
 
-        ##
-        ## (6)
-        ##
-        source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
-    fi
+    #     ##
+    #     ## (6)
+    #     ##
+    #     source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
+    # fi
 fi
 

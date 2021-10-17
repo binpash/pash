@@ -32,9 +32,6 @@ def main():
         ## Preprocess and execute the parsed ASTs
         return_code = preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell_name)
         
-        ## Delete the temp directory when not debugging
-        # if(args.debug == 0):
-        #     shutil.rmtree(config.PASH_TMP_PREFIX)
         log("-" * 40) #log end marker
         ## Return the exit code of the executed script
         sys.exit(return_code)
@@ -126,10 +123,7 @@ def interactive(args, shell_name):
         ## Close the input and wait for the internal process to finish
         shell_proc.stdin.close()
         shell_proc.wait()
-    
-        ## Delete the temp directory when not debugging
-        if(args.debug == 0):
-            shutil.rmtree(config.PASH_TMP_PREFIX)
+        
         log("-" * 40) #log end marker
         ## Return the exit code of the executed script
         sys.exit(shell_proc.returncode)
