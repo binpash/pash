@@ -4,9 +4,9 @@ FROM debian:10
 
 RUN apt-get update -y
 RUN apt-get upgrade -y
-RUN apt-get install -y git sudo locales locales-all curl wget wamerican-insane
+RUN apt-get install -y git sudo locales locales-all curl wget wamerican-insane software-properties-common
 
-RUN git clone https://github.com/andromeda/pash.git
+RUN git clone https://github.com/binpash/pash.git
 
 RUN sudo bash /pash/scripts/install.sh -p
 
