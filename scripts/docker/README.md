@@ -18,7 +18,7 @@ docker run --name pash-play -it pash
 
 To restart after you exit, run `docker start -i pash-play`
 
-## From PaSh's Official Dockerfiles
+## From PaSh's Official docker
 
 ```sh
 git clone git@github.com:binpash/pash.git
@@ -28,15 +28,15 @@ docker build -t "pash:latest" .
 
 ## As a Dockerfile
 
-* Ubuntu 18.04: [rendered](https://github.com/binpash/pash/blob/main/scripts/dockerfiles/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/dockerfiles/ubuntu/Dockerfile)
-* Fedora 35: [rendered](https://github.com/binpash/pash/blob/main/scripts/dockerfiles/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/dockerfiles/ubuntu/Dockerfile)
-* Debian 10: [rendered](https://github.com/binpash/pash/blob/main/scripts/dockerfiles/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/dockerfiles/ubuntu/Dockerfile)
+* Ubuntu 18.04: [rendered](https://github.com/binpash/pash/blob/main/scripts/docker/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/docker/ubuntu/Dockerfile)
+* Fedora 35: [rendered](https://github.com/binpash/pash/blob/main/scripts/docker/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/docker/ubuntu/Dockerfile)
+* Debian 10: [rendered](https://github.com/binpash/pash/blob/main/scripts/docker/ubuntu/Dockerfile); [raw](https://raw.githubusercontent.com/binpash/pash/main/scripts/docker/ubuntu/Dockerfile)
 
 To build any of these containers and run it locally:
 
 ```sh
 # URL points to ubuntu, pick any of the "raw" URLs above
-wget https://raw.githubusercontent.com/binpash/pash/main/scripts/dockerfiles/ubuntu/Dockerfile
+wget https://raw.githubusercontent.com/binpash/pash/main/scripts/docker/ubuntu/Dockerfile
 docker build -t "pash:stable" . && docker run -it "pash:stable"
 ```
 
