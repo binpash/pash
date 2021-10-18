@@ -75,7 +75,7 @@ echo "export distro=$distro" > ~/.pash_init
 cd ../
 
 echo "Installing python dependencies..."
-python3 -m pip install jsonpickle --system -t $PYTHON_PKG_DIR &> $LOG_DIR/pip_install_jsonpickle.log
+python3 -m pip install jsonpickle -t $PYTHON_PKG_DIR &> $LOG_DIR/pip_install_jsonpickle.log
 python3 -m pip install numpy &> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib &> $LOG_DIR/pip_install_matplotlib.log
 
