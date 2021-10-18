@@ -240,7 +240,6 @@ def execute_script(compiled_script_filename, command, arguments, shell_name):
                                                                         shell_name,
                                                                         " ".join(subprocess_args)))
     exec_obj = subprocess.run(subprocess_args, env=new_env, close_fds=False)
-
     return exec_obj.returncode
 
 if __name__ == "__main__":
