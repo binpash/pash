@@ -3,15 +3,25 @@
 set -e
 
 cd $(dirname $0)
-PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
+# check the git status of the project
+if git rev-parse --git-dir > /dev/null 2>&1; then
+    # we have cloned from the git repo, so all the .git related files/metadata are available
+    git submodule init
+    git submodule update
+    # set PASH_TOP
+    PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
+else
+    # we are in package mode, no .git information is available
+    git clone https://github.com/angelhof/libdash/ compiler/parser/libdash/ --depth 1
+    # set PASH_TOP to the root folder of the project if it is not available
+    PASH_TOP=${PASH_TOP:-$PWD/..}
+fi
 cd $PASH_TOP
 
 LOG_DIR=$PWD/install_logs
 mkdir -p $LOG_DIR
 PYTHON_PKG_DIR=$PWD/python_pkgs
 mkdir -p $PYTHON_PKG_DIR
-git submodule init
-git submodule update
 
 echo "Building parser..."
 cd compiler/parser
