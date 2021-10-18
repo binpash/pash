@@ -145,23 +145,40 @@ else
     ## Count the execution time
     pash_exec_time_start=$(date +"%s%N")
 
+    
     ## If the compiler failed or if we dry_run the compiler, we have to run the sequential
     if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_dry_run_compiler_flag" -eq 1 ]; then
         pash_script_to_execute="${pash_sequential_script_file}"
-        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id}
     else
         pash_script_to_execute="${pash_compiled_script_file}"
-        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id} <&0 &
     fi
     pash_runtime_final_status=$?
     
- 
     # ##
     # ## (4)
     # ##
-    # source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id} <&0 &
-    # pash_runtime_final_status=$?
-    
+
+    function clean_up () {
+        echo "Exit:${process_id}" > "$RUNTIME_IN_FIFO"
+    } 
+
+    function run_parallel() {
+        trap clean_up SIGTERM SIGINT EXIT
+        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id}
+        internal_exec_status=$?
+        clean_up
+        (exit $internal_exec_status)
+    }
+
+    # Don't fork if compilation faild. The script might have effects on the shell state.
+    if [ "$pash_runtime_return_code" -ne 0 ]; then
+        clean_up # Early clean up in case the script effects shell like "break" or "exec"
+        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id}
+    else 
+        # What happens in case of error?
+        run_parallel <&0 &
+    fi
+    pash_runtime_final_status=$?
 
     ## We only want to execute (5) and (6) if we are in debug mode and it is not explicitly avoided
     # if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then

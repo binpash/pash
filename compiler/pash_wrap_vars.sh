@@ -1,10 +1,12 @@
-#!/bin/bash
+#!/bin/bash -e
 
 ## File directory
 RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
 
 script_source="$1"
 process_id=$2
+
+#ONLY WAY OUT IS TO TREAT EXEC in special way
 
 ## Recover the `set` state of the previous shell
 # pash_redir_output echo "$$: (3) Previous BaSh set state: $pash_previous_set_status"
@@ -22,6 +24,7 @@ pash_redir_output echo "$$: (3) Reverted to BaSh input arguments: $@"
 pash_redir_output echo "$$: (4) Restoring previous exit code: ${pash_previous_exit_status}"
 pash_redir_output echo "$$: (4) Will execute script in ${script_source}:"
 pash_redir_output cat "${script_source}"
+
 ## Note: We run the `exit` in a checked position so that we don't simply exit when we are in `set -e`.
 if (exit "$pash_previous_exit_status")
 then 
@@ -31,7 +34,6 @@ then
     ## Make sure that any input argument changes are propagated outside
     export pash_input_args="$@"
     (exit $internal_exec_status)
-
 }
 else 
 {
@@ -42,4 +44,3 @@ else
     (exit $internal_exec_status)
 }
 fi
-echo "Exit:${process_id}" > "$RUNTIME_IN_FIFO"
