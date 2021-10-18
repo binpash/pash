@@ -1,6 +1,7 @@
 #!/bin/bash
 # time: print real in seconds, to simplify parsing
 ## Necessary to set PASH_TOP
+cd $(dirname $0)
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 export DEBUG=0
 export PASH_LOG=1

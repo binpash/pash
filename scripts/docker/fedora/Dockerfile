@@ -5,7 +5,7 @@ FROM fedora:35
 RUN dnf install -y git sudo curl diffutils python-devel pip python3-setuptools zlib-devel libjpeg-devel gcc g++
 RUN python3 -m pip install wheel --upgrade Pillow
 
-RUN git clone https://github.com/andromeda/pash.git 
+RUN git clone https://github.com/binpash/pash.git 
 RUN sudo bash /pash/scripts/install.sh -p 
 
 ENV PASH_TOP=/pash
