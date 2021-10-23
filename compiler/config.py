@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import math
+import shlex
 
 from ir_utils import *
 from util import *
@@ -244,6 +245,17 @@ def reset_variable_cache():
 
     variable_cache = {}
 
+
+## This finds the end of this variable/function
+def find_next_delimiter(tokens, i):
+    if (tokens[i] == "declare"):
+        return i + 3
+    else:
+        j = i + 1
+        while j < len(tokens) and (tokens[j] != "declare"):
+            j += 1
+        return j
+
 ##
 ## Read a shell variables file
 ##
@@ -256,15 +268,27 @@ def read_vars_file(var_file_path):
     config['shell_variables_file_path'] = var_file_path
     if(not var_file_path is None):
         vars_dict = {}
+        # with open(var_file_path) as f:
+        #     lines = [line.rstrip() for line in f.readlines()]
+
         with open(var_file_path) as f:
-            lines = [line.rstrip() for line in f.readlines()]
+            data = f.read()
+            tokens = shlex.split(data)
+            # log(tokens)
 
         # MMG 2021-03-09 definitively breaking on newlines (e.g., IFS) and function outputs (i.e., `declare -f`)
-        for line in lines:
-            words = line.split(' ')
+        # KK  2021-10-26 no longer breaking on newlines (probably)
+
+        ## At the start of each iteration token_i should point to a 'declare'
+        token_i = 0
+        while token_i < len(tokens):
             # FIXME is this assignment needed?
-            _export_or_typeset = words[0]
-            rest = " ".join(words[1:])
+            _export_or_typeset = tokens[token_i]
+
+            new_token_i = find_next_delimiter(tokens, token_i)
+            rest = " ".join(tokens[(token_i+1):new_token_i])
+            # log("Rest:", rest)
+            token_i = new_token_i
 
             space_index = rest.find(' ')
             eq_index = rest.find('=')
