@@ -3,23 +3,35 @@
 set -e
 
 cd $(dirname $0)
-PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
+# check the git status of the project
+if git rev-parse --git-dir > /dev/null 2>&1; then
+    # we have cloned from the git repo, so all the .git related files/metadata are available
+    git submodule init
+    git submodule update
+    # set PASH_TOP
+    PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
+else
+    # set PASH_TOP to the root folder of the project if it is not available
+    PASH_TOP=${PASH_TOP:-$PWD/..}
+    # remove previous installation if it exists
+    rm -rf $PASH_TOP/compiler/parser/libdash
+    # we are in package mode, no .git information is available
+    git clone https://github.com/angelhof/libdash/ $PASH_TOP/compiler/parser/libdash
+fi
 cd $PASH_TOP
 
 LOG_DIR=$PWD/install_logs
 mkdir -p $LOG_DIR
 PYTHON_PKG_DIR=$PWD/python_pkgs
 mkdir -p $PYTHON_PKG_DIR
-git submodule init
-git submodule update
 
 echo "Building parser..."
 cd compiler/parser
 
 if type lsb_release >/dev/null 2>&1 ; then
-   distro=$(lsb_release -i -s)
+    distro=$(lsb_release -i -s)
 elif [ -e /etc/os-release ] ; then
-   distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
+    distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
 fi
 
 echo "|-- making libdash..."
@@ -27,21 +39,21 @@ echo "|-- making libdash..."
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 # now do different things depending on distro
 case "$distro" in
-   freebsd*) 
-    gsed -i 's/ make/ gmake/g' Makefile
-    gmake libdash &> $LOG_DIR/make_libdash.log
-    echo "Building runtime..."
-    # Build runtime tools: eager, split
-    cd ../../runtime/
-    gmake &> $LOG_DIR/make.log
-    ;;
-   *)
-    make libdash &> $LOG_DIR/make_libdash.log
-    echo "Building runtime..."
-    # Build runtime tools: eager, split
-    cd ../../runtime/
-    make &> $LOG_DIR/make.log
-    ;;
+    freebsd*) 
+        gsed -i 's/ make/ gmake/g' Makefile
+        gmake libdash &> $LOG_DIR/make_libdash.log
+        echo "Building runtime..."
+        # Build runtime tools: eager, split
+        cd ../../runtime/
+        gmake &> $LOG_DIR/make.log
+        ;;
+    *)
+        make libdash &> $LOG_DIR/make_libdash.log
+        echo "Building runtime..."
+        # Build runtime tools: eager, split
+        cd ../../runtime/
+        make &> $LOG_DIR/make.log
+        ;;
 esac
 
 # save distro in the init file
@@ -65,10 +77,10 @@ echo "export distro=$distro" > ~/.pash_init
 cd ../
 
 echo "Installing python dependencies..."
-python3 -m pip install jsonpickle --system -t $PYTHON_PKG_DIR &> $LOG_DIR/pip_install_jsonpickle.log
-python3 -m pip install pexpect --system -t $PYTHON_PKG_DIR &> $LOG_DIR/pip_install_pexpect.log
-python3 -m pip install numpy &> $LOG_DIR/pip_install_numpy.log
-python3 -m pip install matplotlib &> $LOG_DIR/pip_install_matplotlib.log
+python3 -m pip install jsonpickle --root $PYTHON_PKG_DIR #&> $LOG_DIR/pip_install_jsonpickle.log
+python3 -m pip install pexpect --root $PYTHON_PKG_DIR #&> $LOG_DIR/pip_install_pexpect.log
+python3 -m pip install numpy #&> $LOG_DIR/pip_install_numpy.log
+python3 -m pip install matplotlib #&> $LOG_DIR/pip_install_matplotlib.log
 
 
 echo "Generating input files..."
