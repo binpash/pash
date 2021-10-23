@@ -282,7 +282,8 @@ def lookup_variable_inner(varname):
     if config.pash_args.expand_using_bash_mirror:
         return config.query_expand_variable_bash_mirror(varname)
     else:
-        return config['shell_variables'][varname]
+        _type, value = config.config['shell_variables'][varname]
+        return value
 
 def invalidate_variable(var, reason, config):
     config['shell_variables'][var] = [None, InvalidVariable(var, reason)]
