@@ -26,3 +26,5 @@ jobs:
           curl -s "$cor"
           # issue the performance tests
           curl -s "$perf"
+          # build the new docker images
+          curl -s ctrl.pash.ndr.md/job=build_docker

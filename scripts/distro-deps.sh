@@ -31,26 +31,21 @@ case "$distro" in
      sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y # for g++-10
      sudo apt-get update &> $LOG_DIR/apt_update.log
      echo "|-- running apt install..."
-     sudo apt-get install -y git libtool m4 curl automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils g++-10 python3-testresources &> $LOG_DIR/apt_install.log
+     sudo apt-get install -y git libtool m4 curl automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils g++-10 python3-testresources python3-setuptools &> $LOG_DIR/apt_install.log
      echo "|-- make g++-10 default..."
      sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
      sudo update-alternatives --set g++ /usr/bin/g++-10
      ;;
    debian*)
-     # tested with debian:stable-20210408
      echo "Running preparation sudo apt install:"
      echo "|-- running apt update..."
-     add-apt-repository ppa:ubuntu-toolchain-r/test -y # for g++-10
      apt-get update &> $LOG_DIR/apt_update.log
      echo "|-- running apt install..."
-     apt-get install -y git libtool curl sudo procps m4 automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils g++-10 python3-testresources &> $LOG_DIR/apt_install.log
-     echo "|-- make g++-10 default..."
-     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
-     sudo update-alternatives --set g++ /usr/bin/g++-10
+     apt-get install -y git libtool curl sudo procps m4 automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils python3-testresources python3-setuptools &> $LOG_DIR/apt_install.log
      ;;
    fedora*) 
      echo "|-- running dnf install...."
-     dnf install git gcc gcc-c++ python python3-pip make curl automake autoconf libtool hostname bc procps python3-testresources -y &> $LOG_DIR/dnf_install.log
+     dnf install git gcc gcc-c++ python python3-pip make curl automake autoconf libtool hostname bc procps python3-testresources python3-setuptools -y &> $LOG_DIR/dnf_install.log
      ;;
    arch*) 
      echo "Updating mirrors"
