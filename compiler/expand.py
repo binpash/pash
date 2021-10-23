@@ -241,22 +241,25 @@ def lookup_variable(var, _lookup_config):
     ##           done
     ##           eval "$cmd"
 
-    ## If we find the value in the cache just use it
-    var_value = config.get_from_variable_cache(var)
-    if var_value is not None:
-        return None, var_value
+
+    ## Only check the cache if we are using bash mirror
+    if config.pash_args.expand_using_bash_mirror:
+        ## If we find the value in the cache just use it
+        var_value = config.get_from_variable_cache(var)
+        if var_value is not None:
+            return None, var_value
 
     if(var == '@'):
-        expanded_var = config.query_expand_variable_bash_mirror(f'pash_input_args')
+        expanded_var = lookup_variable_inner('pash_input_args')
     elif(var == '?'):
-        expanded_var = config.query_expand_variable_bash_mirror(f'pash_previous_exit_status')
+        expanded_var = lookup_variable_inner('pash_previous_exit_status')
     elif(var == '-'):
-        expanded_var = config.query_expand_variable_bash_mirror(f'pash_previous_set_status')
+        expanded_var = lookup_variable_inner('pash_previous_set_status')
     elif(var == '#'):
-        input_args = config.query_expand_variable_bash_mirror(f'pash_input_args')
+        input_args = lookup_variable_inner('pash_input_args')
         expanded_var = str(len(input_args.split()))
     elif(var.isnumeric() and int(var) >= 1):
-        input_args = config.query_expand_variable_bash_mirror(f'pash_input_args')
+        input_args = lookup_variable_inner('pash_input_args')
         split_args = input_args.split()
         index = int(var) - 1
         try:
@@ -264,14 +267,22 @@ def lookup_variable(var, _lookup_config):
         except:
             expanded_var = ''
     elif(var == '0'):
-        expanded_var = config.query_expand_variable_bash_mirror(f'pash_shell_name')
+        expanded_var = lookup_variable_inner('pash_shell_name')
     else:
         ## TODO: We can pull this to expand any string.
-        expanded_var = config.query_expand_variable_bash_mirror(var)
+        expanded_var = lookup_variable_inner(var)
     
     ## Add it to the cache to find it next time
-    config.add_to_variable_cache(var, expanded_var)
+    if config.pash_args.expand_using_bash_mirror:
+        config.add_to_variable_cache(var, expanded_var)
+
     return None, expanded_var
+
+def lookup_variable_inner(varname):
+    if config.pash_args.expand_using_bash_mirror:
+        return config.query_expand_variable_bash_mirror(varname)
+    else:
+        return config['shell_variables'][varname]
 
 def invalidate_variable(var, reason, config):
     config['shell_variables'][var] = [None, InvalidVariable(var, reason)]

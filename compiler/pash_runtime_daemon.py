@@ -52,15 +52,16 @@ def init():
 
     pash_runtime.runtime_config = config.config['distr_planner']
 
-    ## Initialize a bash that is used for expanding
-    ##
-    ## TODO: Alternatively, we could set up a communication with the original bash 
-    ## (though this makes it difficult to have concurrent compilations and execution)
-    ## TODO: We actually need to discuss which arch is better.
-    bash_mirror = init_bash_mirror_subprocess()
+    if config.pash_args.expand_using_bash_mirror:
+        ## Initialize a bash that is used for expanding
+        ##
+        ## TODO: Alternatively, we could set up a communication with the original bash 
+        ## (though this makes it difficult to have concurrent compilations and execution)
+        ## TODO: We actually need to discuss which arch is better.
+        bash_mirror = init_bash_mirror_subprocess()
 
-    ## Is it OK to save it in config?
-    config.bash_mirror = bash_mirror
+        ## Is it OK to save it in config?
+        config.bash_mirror = bash_mirror
 
     return args
 
@@ -107,12 +108,13 @@ def compile(input):
     ## Read any shell variables files if present
     config.read_vars_file(var_file)
 
-    ## Update the bash mirror with the new variables
-    config.update_bash_mirror_vars(var_file)
-    ## TODO: Maybe we also need to update current directory of bash mirror for file-based expansion?
+    if config.pash_args.expand_using_bash_mirror:
+        ## Update the bash mirror with the new variables
+        config.update_bash_mirror_vars(var_file)
+        ## TODO: Maybe we also need to update current directory of bash mirror for file-based expansion?
 
-    ## Clean up the variable cache
-    config.reset_variable_cache()
+        ## Clean up the variable cache
+        config.reset_variable_cache()
 
     ## Call the main procedure
     pash_runtime.compile_optimize_output_script(input_ir_file, compiled_script_file, config.pash_args)

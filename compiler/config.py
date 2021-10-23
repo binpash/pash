@@ -72,6 +72,9 @@ def add_common_arguments(parser):
     parser.add_argument("--avoid_pash_runtime_completion",
                         help="avoid the pash_runtime execution completion (only relevant when --debug > 0)",
                         action="store_true")
+    parser.add_argument("--expand_using_bash_mirror",
+                        help="instead of expanding using the internal expansion code, expand using a bash mirror process (slow)",
+                        action="store_true")
     ## TODO: Delete that at some point, or make it have a different use (e.g., outputting time even without -d 1).
     parser.add_argument("-t", "--output_time", #FIXME: --time
                         help="(obsolete, time is always logged now) output the time it took for every step",
@@ -128,6 +131,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--assert_compiler_success"))
     if (pash_arguments.avoid_pash_runtime_completion):
         arguments.append(string_to_argument("--avoid_pash_runtime_completion"))
+    if (pash_arguments.expand_using_bash_mirror):
+        arguments.append(string_to_argument("--expand_using_bash_mirror"))
     if (pash_arguments.output_time):
         arguments.append(string_to_argument("--output_time"))
     if (pash_arguments.output_optimized):
