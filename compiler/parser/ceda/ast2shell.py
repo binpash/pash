@@ -408,7 +408,7 @@ def string_of_arg (args, is_quoted=False):
         # we'll escape the $, too
         if c == "$" and args[i+1][0] == "E":
             c = "\\$"
-        text.push(c)
+        text.append(c)
 
         i = i+1
     
