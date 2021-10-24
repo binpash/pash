@@ -1,8 +1,11 @@
 import copy
+
 from definitions.ast_node import *
 from definitions.ast_node_c import *
 
 import ast_to_ir
+import config
+import parse
 
 ################################################################################
 # SAFE EXPANSION ANALYSIS
@@ -196,7 +199,11 @@ class InvalidVariable(RuntimeError):
         self.var = var
         self.reason = reason
 
-def lookup_variable(var, config):
+## TODO: Figure out if there is a way to batch calls to bash and ask it 
+##       to expand everything at once! We would need to make variable lookups asynchronous.
+##
+## TODO: `config` doesn't need to be passed down since it is imported
+def lookup_variable(var, _lookup_config):
     ## If the variable is input arguments then get it from pash_input_args.
     ##
     ## TODO KK PR#246 Do we need to split using IFS or is it always spaces?
@@ -233,28 +240,50 @@ def lookup_variable(var, config):
     ##             cmd="$cmd \"\$pash_arg$i\""
     ##           done
     ##           eval "$cmd"
+
+
+    ## Only check the cache if we are using bash mirror
+    if config.pash_args.expand_using_bash_mirror:
+        ## If we find the value in the cache just use it
+        var_value = config.get_from_variable_cache(var)
+        if var_value is not None:
+            return None, var_value
+
     if(var == '@'):
-        return config['shell_variables']['pash_input_args']
+        expanded_var = lookup_variable_inner('pash_input_args')
     elif(var == '?'):
-        return config['shell_variables']['pash_previous_exit_status']
+        expanded_var = lookup_variable_inner('pash_previous_exit_status')
     elif(var == '-'):
-        return config['shell_variables']['pash_previous_set_status']
+        expanded_var = lookup_variable_inner('pash_previous_set_status')
     elif(var == '#'):
-        _type, input_args = config['shell_variables']['pash_input_args']
-        return (None, str(len(input_args.split())))
+        input_args = lookup_variable_inner('pash_input_args')
+        expanded_var = str(len(input_args.split()))
     elif(var.isnumeric() and int(var) >= 1):
-        _type, input_args = config['shell_variables']['pash_input_args']
+        input_args = lookup_variable_inner('pash_input_args')
         split_args = input_args.split()
         index = int(var) - 1
         try:
-            val = split_args[index]
+            expanded_var = split_args[index]
         except:
-            val = ''
-        return (None, val)
+            expanded_var = ''
     elif(var == '0'):
-        return config['shell_variables']['pash_shell_name']
+        expanded_var = lookup_variable_inner('pash_shell_name')
     else:
-        return config['shell_variables'].get(var, [None, None])
+        ## TODO: We can pull this to expand any string.
+        expanded_var = lookup_variable_inner(var)
+    
+    ## Add it to the cache to find it next time
+    if config.pash_args.expand_using_bash_mirror:
+        config.add_to_variable_cache(var, expanded_var)
+
+    return None, expanded_var
+
+def lookup_variable_inner(varname):
+    if config.pash_args.expand_using_bash_mirror:
+        return config.query_expand_variable_bash_mirror(varname)
+    else:
+        _type, value = config.config['shell_variables'].get(varname, [None, None])
+        return value
 
 def invalidate_variable(var, reason, config):
     config['shell_variables'][var] = [None, InvalidVariable(var, reason)]
@@ -281,6 +310,9 @@ def try_set_variable(var, expanded, config):
 
     return config
 
+## TODO: Replace this with an expansion that happens in the bash mirror
+##
+## TODO: If there is any potential side-effect, exit early
 def expand_args(args, config, quoted = False):
     res = []
     for arg in args:
@@ -327,6 +359,8 @@ def char_code(c):
     return [type, ord(c)]
 
 def expand_arg(arg_chars, config, quoted = False):
+    # log("expanding arg", arg_chars)
+    # log("unparsed_string:", parse.pash_string_of_arg(arg_chars))
     res = []
     for arg_char in arg_chars:
         new = expand_arg_char(arg_char, quoted, config)
@@ -381,6 +415,8 @@ def expand_var(fmt, null, var, arg, quoted, config):
     # TODO 2020-12-10 special variables
 
     _type, value = lookup_variable(var, config)
+
+    log("Var:", var, "value:", value)
 
     if isinstance(value, InvalidVariable):
         raise StuckExpansion("couldn't expand invalid variable", value)
