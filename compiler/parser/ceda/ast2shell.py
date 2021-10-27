@@ -395,11 +395,24 @@ def string_of_arg_char (c, is_quoted=False):
 def string_of_arg (args, is_quoted=False):
     # print (args);
 
-    text = "".join (map (lambda arg: string_of_arg_char(arg, is_quoted), args));
+    i = 0
+    text = []
+    while i < len(args):
+        c = string_of_arg_char(args[i], is_quoted)
 
-#    text = "";
-#    for arg in args:
-#        text = text + string_of_arg_char (arg);
+        # dash will parse '$?' as
+        # [(C, '$'), (E, '?')]
+        # but we don't normally want to escape ?
+        #
+        # so we check up after the fact: if the character after $ is escaped,
+        # we'll escape the $, too
+        if c == "$" and args[i+1][0] == "E":
+            c = "\\$"
+        text.push(c)
+
+        i = i+1
+    
+    text = "".join(text)
 
     return (text);
 
