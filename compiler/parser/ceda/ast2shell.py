@@ -406,7 +406,7 @@ def string_of_arg (args, is_quoted=False):
         #
         # so we check up after the fact: if the character after $ is escaped,
         # we'll escape the $, too
-        if c == "$" and args[i+1][0] == "E":
+        if c == "$" and (i+1 < len(args)) and args[i+1][0] == "E":
             c = "\\$"
         text.append(c)
 
