@@ -206,6 +206,12 @@ test_new_line_in_var()
     $shell newline_in_var.sh
 }
 
+test_cmd_sbst()
+{
+    local shell=$1
+    `true; false; true; $shell cmd_sbst_subscript.sh`
+}
+
 
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
@@ -233,6 +239,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_set_e_2
     run_test test_set_e_3
     run_test test_new_line_in_var
+    run_test test_cmd_sbst
 else
     for testname in $@
     do
