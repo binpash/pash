@@ -200,6 +200,13 @@ test_unparsing()
     $shell unparsing-special-chars.sh
 }
 
+test_new_line_in_var()
+{
+    local shell=$1
+    $shell newline_in_var.sh
+}
+
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -225,6 +232,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_unparsing
     run_test test_set_e_2
     run_test test_set_e_3
+    run_test test_new_line_in_var
 else
     for testname in $@
     do

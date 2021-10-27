@@ -1,4 +1,8 @@
 import argparse
+import pexpect
+import signal
+import subprocess
+import sys
 import traceback
 
 from annotations import *
@@ -17,6 +21,13 @@ from util import *
 ## TODO: Should we maybe use sockets instead of fifos?
 
 ## TODO: Fix the daemon logging.
+
+def handler(signum, frame):
+    log("Signal:", signum, "caught")
+    shutdown()
+
+# Set the signal handler and a 5-second alarm
+signal.signal(signal.SIGTERM, handler)
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -41,7 +52,31 @@ def init():
 
     pash_runtime.runtime_config = config.config['distr_planner']
 
+    if config.pash_args.expand_using_bash_mirror:
+        ## Initialize a bash that is used for expanding
+        ##
+        ## TODO: Alternatively, we could set up a communication with the original bash 
+        ## (though this makes it difficult to have concurrent compilations and execution)
+        ## TODO: We actually need to discuss which arch is better.
+        bash_mirror = init_bash_mirror_subprocess()
+
+        ## Is it OK to save it in config?
+        config.bash_mirror = bash_mirror
+
     return args
+
+def init_bash_mirror_subprocess():
+    ## Spawn a bash process to ask it for expansions
+    p = pexpect.spawn('/usr/bin/env', ['bash', '-i'], 
+                      encoding='utf-8',
+                      echo=False)
+    ## If we are in debug mode also log the bash's output
+    if (config.pash_args.debug >= 1):
+        _, file_to_save_output = ptempfile()
+        log("bash mirror log saved in:", file_to_save_output)
+        fout = open(file_to_save_output, "w")
+        p.logfile = fout
+    return p
 
 def success_response(string):
     return f'OK: {string}\n'
@@ -73,10 +108,33 @@ def compile(input):
     ## Read any shell variables files if present
     config.read_vars_file(var_file)
 
+    if config.pash_args.expand_using_bash_mirror:
+        ## Update the bash mirror with the new variables
+        config.update_bash_mirror_vars(var_file)
+        ## TODO: Maybe we also need to update current directory of bash mirror for file-based expansion?
+
+        ## Clean up the variable cache
+        config.reset_variable_cache()
+
     ## Call the main procedure
     pash_runtime.compile_optimize_output_script(input_ir_file, compiled_script_file, config.pash_args)
 
     return success_response(f'{compiled_script_file} {var_file} {input_ir_file}')
+
+def shutdown():
+    ## There may be races since this is called through the signal handling
+
+    log("PaSh daemon is shutting down...")
+    if config.bash_mirror is not None:
+        ## TODO: Do we need force
+        ret = config.bash_mirror.terminate(force=True)
+        
+        ## The mirror was terminated successfully
+        assert(ret)
+
+        config.bash_mirror.wait()
+    log("PaSh daemon shut down successfully...")
+    sys.exit(0)
 
 def main():
     args = init()
@@ -93,6 +151,8 @@ def main():
             
             fout.write(ret)
             fout.flush()
+    
+    shutdown()
 
 if __name__ == "__main__":
     main()
