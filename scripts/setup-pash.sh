@@ -81,10 +81,10 @@ python3 -m pip install jsonpickle --root $PYTHON_PKG_DIR --force-reinstall #&> $
 python3 -m pip install pexpect --root $PYTHON_PKG_DIR --force-reinstall #&> $LOG_DIR/pip_install_pexpect.log
 python3 -m pip install numpy #&> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib #&> $LOG_DIR/pip_install_matplotlib.log
-# tidy the packages
-mv $PYTHON_PKG_DIR/home/"$USER"/.local/lib/python3.9/site-packages/* $PYTHON_PKG_DIR/
-rm -rf $PYTHON_PKG_DIR/home
-
+# clean the python packages
+cd $PASH_TOP/python_pkgs/
+find . -name "site-packages" -type d | xargs -I '{}' mv $PASH_TOP/python_pkgs/{}/ .
+mv site-packages/* . && rm -rf site-packages
 
 echo "Generating input files..."
 $PASH_TOP/evaluation/tests/input/setup.sh
