@@ -1,4 +1,8 @@
 import argparse
+import pexpect
+import signal
+import subprocess
+import sys
 import traceback
 
 from annotations import *
@@ -18,6 +22,13 @@ from util import *
 
 # TODO: Fix the daemon logging.
 
+
+def handler(signum, frame):
+    log("Signal:", signum, "caught")
+    shutdown()
+
+# Set the signal handler and a 5-second alarm
+signal.signal(signal.SIGTERM, handler)
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -47,8 +58,31 @@ def init():
 
     pash_runtime.runtime_config = config.config['distr_planner']
 
+    if config.pash_args.expand_using_bash_mirror:
+        ## Initialize a bash that is used for expanding
+        ##
+        ## TODO: Alternatively, we could set up a communication with the original bash 
+        ## (though this makes it difficult to have concurrent compilations and execution)
+        ## TODO: We actually need to discuss which arch is better.
+        bash_mirror = init_bash_mirror_subprocess()
+
+        ## Is it OK to save it in config?
+        config.bash_mirror = bash_mirror
+
     return args
 
+def init_bash_mirror_subprocess():
+    ## Spawn a bash process to ask it for expansions
+    p = pexpect.spawn('/usr/bin/env', ['bash', '-i'], 
+                      encoding='utf-8',
+                      echo=False)
+    ## If we are in debug mode also log the bash's output
+    if (config.pash_args.debug >= 1):
+        _, file_to_save_output = ptempfile()
+        log("bash mirror log saved in:", file_to_save_output)
+        fout = open(file_to_save_output, "w")
+        p.logfile = fout
+    return p
 
 def success_response(string):
     return f'OK: {string}\n'
@@ -95,8 +129,20 @@ class Scheduler:
         self.wait_unsafe()
         process_id = self.get_next_id()
         run_parallel = False
+
         # Read any shell variables files if present
         config.read_vars_file(var_file)
+        if config.pash_args.expand_using_bash_mirror:
+            ## Initialize a bash that is used for expanding
+            ##
+            ## TODO: Alternatively, we could set up a communication with the original bash 
+            ## (though this makes it difficult to have concurrent compilations and execution)
+            ## TODO: We actually need to discuss which arch is better.
+            bash_mirror = init_bash_mirror_subprocess()
+
+            ## Is it OK to save it in config?
+            config.bash_mirror = bash_mirror
+
         ast_or_ir = pash_runtime.compile_ir(
             input_ir_file, compiled_script_file, config.pash_args)
 
@@ -209,13 +255,28 @@ class Scheduler:
                 self.fout = open(out_filename, "w")
 
             self.parse_and_run_cmd(input_cmd)
+            
+        shutdown()
 
+
+def shutdown():
+    ## There may be races since this is called through the signal handling
+    log("PaSh daemon is shutting down...")
+    if config.bash_mirror is not None:
+        ## TODO: Do we need force
+        ret = config.bash_mirror.terminate(force=True)
+        
+        ## The mirror was terminated successfully
+        assert(ret)
+
+        config.bash_mirror.wait()
+    log("PaSh daemon shut down successfully...")
 
 def main():
     args = init()
     scheduler = Scheduler()
     scheduler.run(in_filename=args.input, out_filename=args.output)
-
+   
 
 if __name__ == "__main__":
     main()
