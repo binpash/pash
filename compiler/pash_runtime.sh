@@ -171,7 +171,7 @@ else
     }
 
     # Don't fork if compilation faild. The script might have effects on the shell state.
-    if [ "$pash_runtime_return_code" -ne 0 ]; then
+    if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_parallel_pipelines" -eq 0 ]; then
         clean_up # Early clean up in case the script effects shell like "break" or "exec"
         source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id}
     else 

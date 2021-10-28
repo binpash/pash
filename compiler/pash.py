@@ -157,6 +157,10 @@ def parse_args():
                         help="Disabling the `allexport` shell option",
                         action="store_false",
                         default=False)
+    parser.add_argument("--pash_parallel_pipelines",
+                        help="Run multiple pipelines in parallel if they are safe to run",
+                        action="store_true",
+                        default=False)
     
     config.add_common_arguments(parser)
     args = parser.parse_args()

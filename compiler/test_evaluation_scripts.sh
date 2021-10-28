@@ -53,6 +53,7 @@ if [ "$EXPERIMENTAL" -eq 1 ]; then
         "--dgsh_tee"
         "--r_split --dgsh_tee"
         # "--speculation quick_abort"
+        "--pash_parallel_pipelines"
     )
 else
     configurations=(
