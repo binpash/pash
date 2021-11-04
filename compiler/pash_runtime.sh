@@ -152,7 +152,6 @@ else
     else
         pash_script_to_execute="${pash_compiled_script_file}"
     fi
-    pash_runtime_final_status=$?
     
     # ##
     # ## (4)
