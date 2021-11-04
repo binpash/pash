@@ -171,6 +171,29 @@ else
         (exit $internal_exec_status)
     }
 
+    ## We only want to execute (5) and (6) if we are in debug mode and it is not explicitly avoided
+    function final_steps() {
+        if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
+            ##
+            ## (5)
+            ##
+
+            ## Prepare a file for the output shell variables to be saved in
+            pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+            # pash_redir_output echo "$$: Output vars: $pash_output_variables_file"
+
+            ## Prepare a file for the `set` state of the inner shell to be output
+            pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+
+            source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_variables_file} ${pash_output_set_file}
+
+            ##
+            ## (6)
+            ##
+            source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
+        fi
+    }
+
     # Don't fork if compilation faild. The script might have effects on the shell state.
     if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_parallel_pipelines" -eq 0 ]; then
         # Early clean up in case the script effects shell like "break" or "exec"
@@ -185,27 +208,5 @@ else
         run_parallel <&0 &
         pash_runtime_final_status=$?
     fi
-
-    ## We only want to execute (5) and (6) if we are in debug mode and it is not explicitly avoided
-    function final_steps() {
-        if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
-            ##
-            ## (5)
-            ##
-
-            ## Prepare a file for the output shell variables to be saved in
-            pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
-            # pash_redir_output echo "$$: Output vars: $pash_output_variables_file"
-
-            ## Prepare a file for the `set` state of the inner shell to be output
-
-            source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_variables_file} ${pash_output_set_file}
-
-            ##
-            ## (6)
-            ##
-            source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
-        fi
-    }
 fi
 
