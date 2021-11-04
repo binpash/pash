@@ -110,73 +110,75 @@ class Scheduler:
     """
 
     def __init__(self):
-        self.input_fids = set()
-        self.output_fids = set()
-        self.process_fids = {}  # map process_id -> (input_fids, output_fids)
+        self.input_resources = set()
+        self.output_resources = set()
+        self.process_resources = {}  # map process_id -> (input_resources, output_resources)
         self.next_id = 0
         self.running_procs = 0
         self.unsafe_running = False
         self.done = False
 
-    def check_fids_safety(self, process_id):
-        proc_input_fids, proc_output_fids = self.process_fids[process_id]
-        all_proc_fids = proc_input_fids.union(proc_output_fids)
-        if self.output_fids.intersection(all_proc_fids) or self.input_fids.intersection(proc_output_fids):
+    def check_resources_safety(self, process_id):
+        proc_input_resources, proc_output_resources = self.process_resources[process_id]
+        all_proc_resources = proc_input_resources.union(proc_output_resources)
+        if self.output_resources.intersection(all_proc_resources) or self.input_resources.intersection(proc_output_resources):
             return False
         return True
 
     def compile_and_add(self, compiled_script_file, var_file, input_ir_file):
         self.wait_unsafe()
+
         process_id = self.get_next_id()
         run_parallel = False
+        compile_success = False
 
         # Read any shell variables files if present
         config.read_vars_file(var_file)
         if config.pash_args.expand_using_bash_mirror:
-            ## Initialize a bash that is used for expanding
-            ##
-            ## TODO: Alternatively, we could set up a communication with the original bash 
-            ## (though this makes it difficult to have concurrent compilations and execution)
-            ## TODO: We actually need to discuss which arch is better.
-            bash_mirror = init_bash_mirror_subprocess()
+            ## Update the bash mirror with the new variables
+            config.update_bash_mirror_vars(var_file)
+            ## TODO: Maybe we also need to update current directory of bash mirror for file-based expansion?
 
-            ## Is it OK to save it in config?
-            config.bash_mirror = bash_mirror
+            ## Clean up the variable cache
+            config.reset_variable_cache()
 
         ast_or_ir = pash_runtime.compile_ir(
             input_ir_file, compiled_script_file, config.pash_args)
 
-        if ast_or_ir == None:
-            response = error_response(f'{process_id} failed to compile')
-        else:
-            response = success_response(
-                f'{process_id} {compiled_script_file} {var_file} {input_ir_file}')
+        if ast_or_ir != None:
+            compile_success = True
 
-            proc_input_fids = set(map(lambda out: str(out.resource) if str(
+            proc_input_resources = set(map(lambda out: str(out.resource) if str(
                 out.resource) != "None" else out, ast_or_ir.all_input_fids()))
-            proc_output_fids = set(map(lambda out: str(out.resource) if str(
+            proc_output_resources = set(map(lambda out: str(out.resource) if str(
                 out.resource) != "None" else out, ast_or_ir.all_output_fids()))
 
-            self.process_fids[process_id] = (proc_input_fids, proc_output_fids)
+            self.process_resources[process_id] = (proc_input_resources, proc_output_resources)
 
-            run_parallel = self.check_fids_safety(process_id)
+            run_parallel = self.check_resources_safety(process_id)
             if run_parallel:
-                self.input_fids = self.input_fids.union(proc_input_fids)
-                self.output_fids = self.output_fids.union(proc_output_fids)
+                self.input_resources = self.input_resources.union(proc_input_resources)
+                self.output_resources = self.output_resources.union(proc_output_resources)
 
         if not run_parallel:
             self.wait_for_all()
+            
+        if compile_success:
+            response = success_response(
+                f'{process_id} {compiled_script_file} {var_file} {input_ir_file}')
+        else:
+            response = error_response(f'{process_id} failed to compile')
             self.unsafe_running = True
 
         self.running_procs += 1
         self.send_output(response)
 
     def remove_process(self, process_id):
-        if process_id in self.process_fids:
-            proc_input_fids, proc_output_fids = self.process_fids[process_id]
-            self.input_fids -= proc_input_fids
-            self.output_fids -= proc_output_fids
-            del self.process_fids[process_id]
+        if process_id in self.process_resources:
+            del self.process_resources[process_id]
+            # TODO: Should be improved to not rebuild inputs and outputs from scratch maybe use counters
+            self.input_resources = set().union(*[input_resources for input_resources, _ in self.process_resources.values()])
+            self.output_resources = set().union(*[output_resources for _, output_resources in self.process_resources.values()])
 
         self.running_procs -= 1
         if self.running_procs == 0:

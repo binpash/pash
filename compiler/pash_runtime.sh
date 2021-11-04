@@ -119,7 +119,7 @@ else
     ## TODO: Have a more proper communication protocol
     ## TODO: Make a proper client for the daemon
     echo "Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}| Input IR File:${pash_input_ir_file}" > "$RUNTIME_IN_FIFO"
-    daemon_response="$(cat $RUNTIME_OUT_FIFO)"
+    daemon_response="$(cat $RUNTIME_OUT_FIFO)" # Blocking step, daemon will not send response until it's safe to continue
     pash_redir_output echo "$$: (2) Daemon responds: $daemon_response"
 
     if [[ "$daemon_response" == *"OK:"* ]]; then
@@ -166,39 +166,46 @@ else
         trap clean_up SIGTERM SIGINT EXIT
         source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id}
         internal_exec_status=$?
+        final_steps
         clean_up
         (exit $internal_exec_status)
     }
 
     # Don't fork if compilation faild. The script might have effects on the shell state.
     if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_parallel_pipelines" -eq 0 ]; then
-        clean_up # Early clean up in case the script effects shell like "break" or "exec"
+        # Early clean up in case the script effects shell like "break" or "exec"
+        # This is safe because the script is run sequentially and the shell 
+        # won't be able to move forward until this is finished
+        clean_up 
         source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id}
+        pash_runtime_final_status=$?
+        final_steps
     else 
-        # What happens in case of error?
+        # Should we redirect errors aswell?
         run_parallel <&0 &
+        pash_runtime_final_status=$?
     fi
-    pash_runtime_final_status=$?
 
     ## We only want to execute (5) and (6) if we are in debug mode and it is not explicitly avoided
-    # if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
-    #     ##
-    #     ## (5)
-    #     ##
+    function final_steps() {
+        if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
+            ##
+            ## (5)
+            ##
 
-    #     ## Prepare a file for the output shell variables to be saved in
-    #     pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
-    #     # pash_redir_output echo "$$: Output vars: $pash_output_variables_file"
+            ## Prepare a file for the output shell variables to be saved in
+            pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+            # pash_redir_output echo "$$: Output vars: $pash_output_variables_file"
 
-    #     ## Prepare a file for the `set` state of the inner shell to be output
-    #     pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+            ## Prepare a file for the `set` state of the inner shell to be output
 
-    #     source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_variables_file} ${pash_output_set_file}
+            source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_variables_file} ${pash_output_set_file}
 
-    #     ##
-    #     ## (6)
-    #     ##
-    #     source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
-    # fi
+            ##
+            ## (6)
+            ##
+            source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
+        fi
+    }
 fi
 

@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 ## File directory
 RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
