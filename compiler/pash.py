@@ -31,9 +31,6 @@ def main():
         ## Preprocess and execute the parsed ASTs
         return_code = preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell_name)
         
-        ## Delete the temp directory when not debugging
-        if(args.debug == 0):
-            shutil.rmtree(config.PASH_TMP_PREFIX)
         log("-" * 40) #log end marker
         ## Return the exit code of the executed script
         sys.exit(return_code)
@@ -125,10 +122,7 @@ def interactive(args, shell_name):
         ## Close the input and wait for the internal process to finish
         shell_proc.stdin.close()
         shell_proc.wait()
-    
-        ## Delete the temp directory when not debugging
-        if(args.debug == 0):
-            shutil.rmtree(config.PASH_TMP_PREFIX)
+        
         log("-" * 40) #log end marker
         ## Return the exit code of the executed script
         sys.exit(shell_proc.returncode)
@@ -161,6 +155,10 @@ def parse_args():
     parser.add_argument("+a",
                         help="Disabling the `allexport` shell option",
                         action="store_false",
+                        default=False)
+    parser.add_argument("--pash_parallel_pipelines",
+                        help="Run multiple pipelines in parallel if they are safe to run",
+                        action="store_true",
                         default=False)
     
     config.add_common_arguments(parser)

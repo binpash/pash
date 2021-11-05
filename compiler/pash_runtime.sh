@@ -119,13 +119,18 @@ else
     ## TODO: Have a more proper communication protocol
     ## TODO: Make a proper client for the daemon
     echo "Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}| Input IR File:${pash_input_ir_file}" > "$RUNTIME_IN_FIFO"
-    daemon_response="$(cat $RUNTIME_OUT_FIFO)"
+    daemon_response="$(cat $RUNTIME_OUT_FIFO)" # Blocking step, daemon will not send response until it's safe to continue
     pash_redir_output echo "$$: (2) Daemon responds: $daemon_response"
+
     if [[ "$daemon_response" == *"OK:"* ]]; then
         pash_runtime_return_code=0
     else
         pash_runtime_return_code=1
     fi
+    
+    # Get assigned process id
+    response_args=($daemon_response)
+    process_id=${response_args[1]}
 
     pash_redir_output echo "$$: Compiler exited with code: $pash_runtime_return_code"
     if [ "$pash_runtime_return_code" -ne 0 ] && [ "$pash_assert_compiler_success_flag" -eq 1 ]; then
@@ -140,38 +145,70 @@ else
     ## Count the execution time
     pash_exec_time_start=$(date +"%s%N")
 
+    
     ## If the compiler failed or if we dry_run the compiler, we have to run the sequential
     if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_dry_run_compiler_flag" -eq 1 ]; then
         pash_script_to_execute="${pash_sequential_script_file}"
     else
         pash_script_to_execute="${pash_compiled_script_file}"
     fi
+    
+    # ##
+    # ## (4)
+    # ##
 
-    ##
-    ## (4)
-    ##
-    source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute}
-    pash_runtime_final_status=$?
+    function clean_up () {
+        echo "Exit:${process_id}" > "$RUNTIME_IN_FIFO"
+    } 
+
+    function run_parallel() {
+        trap clean_up SIGTERM SIGINT EXIT
+        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id}
+        internal_exec_status=$?
+        final_steps
+        clean_up
+        (exit $internal_exec_status)
+    }
 
     ## We only want to execute (5) and (6) if we are in debug mode and it is not explicitly avoided
-    if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
-        ##
-        ## (5)
-        ##
+    function final_steps() {
+        if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
+            ##
+            ## (5)
+            ##
 
-        ## Prepare a file for the output shell variables to be saved in
-        pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
-        # pash_redir_output echo "$$: Output vars: $pash_output_variables_file"
+            ## Prepare a file for the output shell variables to be saved in
+            pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+            # pash_redir_output echo "$$: Output vars: $pash_output_variables_file"
 
-        ## Prepare a file for the `set` state of the inner shell to be output
-        pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+            ## Prepare a file for the `set` state of the inner shell to be output
+            pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
 
-        source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_variables_file} ${pash_output_set_file}
+            source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_variables_file} ${pash_output_set_file}
 
-        ##
-        ## (6)
-        ##
-        source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
+            ##
+            ## (6)
+            ##
+            source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
+        fi
+    }
+
+    # Don't fork if compilation faild. The script might have effects on the shell state.
+    if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_parallel_pipelines" -eq 0 ]; then
+        # Early clean up in case the script effects shell like "break" or "exec"
+        # This is safe because the script is run sequentially and the shell 
+        # won't be able to move forward until this is finished
+        clean_up 
+        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id}
+        pash_runtime_final_status=$?
+        final_steps
+    else 
+        # Should we redirect errors aswell?
+        # TODO: capturing the return state here isn't completely correct. 
+        # Might need more complex design if this end up being a problem
+        run_parallel <&0 &
+        pash_runtime_final_status=$?
+        pash_redir_output echo "$$: Running pipeline"
     fi
 fi
 

@@ -3,9 +3,9 @@
 ## TODO: Give it the output pid as an argument
 wait $@
 
-## It is assumed that $distro is set when this is called.
+# It is assumed that $distro is set when this is called.
 
-## Note: We need the || true after the grep so that it doesn't exit with error if it finds nothing.
+# Note: We need the || true after the grep so that it doesn't exit with error if it finds nothing.
 
 # now do different things depending on distro
 case "$distro" in
@@ -20,12 +20,13 @@ esac
 
 for pid in $pids_to_kill
 do
+    # wait $pid
     (> /dev/null 2>&1 kill -SIGPIPE $pid || true)
 done
 
 ## Only wait if that is not empty
-if [ ! -z "$var" ];
-then
-    ## Need to wait to not leave any zombies
-    wait
-fi
+# if [ ! -z "$var" ];
+# then
+#     ## Need to wait to not leave any zombies
+#     wait
+# fi
