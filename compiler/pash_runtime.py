@@ -68,12 +68,28 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
+def compile_ir(ir_filename, compiled_script_file, args):
+    """
+    Return IR object for compilation success. None otherwise.
+    """
+    ret = None
+    try:
+        ret = compile_optimize_output_script(ir_filename, compiled_script_file, args)
+    except Exception as e:
+        log(e)
+
+    return ret
+
+
 def compile_optimize_output_script(ir_filename, compiled_script_file, args):
     global runtime_config
     
+    ret = None
+
     ## Load the df_region from a file
     candidate_df_region = load_df_region(ir_filename)
-
+    
     ## Compile it
     optimized_ast_or_ir = compile_optimize_df_region(candidate_df_region, args)
 
@@ -94,8 +110,11 @@ def compile_optimize_output_script(ir_filename, compiled_script_file, args):
         with open(compiled_script_file, "w") as f:
                 f.write(script_to_execute)
 
+        ret = optimized_ast_or_ir
     else:
         raise Exception("Script failed to compile!")
+    
+    return ret
 
 def load_df_region(ir_filename):
     log("Retrieving candidate DF region: {} ... ".format(ir_filename), end='')

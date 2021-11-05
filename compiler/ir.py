@@ -33,7 +33,10 @@ def create_split_file_id(fileIdGen):
 class FileIdGen:
     def __init__(self, next = 0, prefix = ""):
         self.next = next + 1
-        self.prefix = prefix
+        directory = f"{str(uuid.uuid4().hex)}"
+        self.prefix = f"{directory}/{prefix}"
+        directory_path = os.path.join(config.PASH_TMP_PREFIX, self.prefix)  
+        os.makedirs(directory_path)
 
     def next_file_id(self):
         fileId = FileId(self.next, self.prefix)
