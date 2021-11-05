@@ -204,8 +204,11 @@ else
         final_steps
     else 
         # Should we redirect errors aswell?
+        # TODO: capturing the return state here isn't completely correct. 
+        # Might need more complex design if this end up being a problem
         run_parallel <&0 &
         pash_runtime_final_status=$?
+        pash_redir_output echo "$$: Running pipeline"
     fi
 fi
 

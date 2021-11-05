@@ -99,8 +99,9 @@ class Scheduler:
     Flow:
         input cmd -> 
                     |   Compile -> 
-                            1- Wait for any unsafe processes to finish
-                            2- Compile and check for success and any conficts 
+                            1- Try compiling the pipeline
+                            2- Wait for any unsafe processes to finish
+                            3- Check compilation for success and any conficts 
                                 - no side effects -> allow to run in parallel by sending a response
                                 - failed or conflict -> wait for all process to exit then run this process in unsafe mode
 
@@ -126,8 +127,6 @@ class Scheduler:
         return True
 
     def compile_and_add(self, compiled_script_file, var_file, input_ir_file):
-        self.wait_unsafe()
-
         process_id = self.get_next_id()
         run_parallel = False
         compile_success = False
@@ -145,6 +144,7 @@ class Scheduler:
         ast_or_ir = pash_runtime.compile_ir(
             input_ir_file, compiled_script_file, config.pash_args)
 
+        self.wait_unsafe()
         if ast_or_ir != None:
             compile_success = True
 
@@ -160,6 +160,7 @@ class Scheduler:
                 self.input_resources = self.input_resources.union(proc_input_resources)
                 self.output_resources = self.output_resources.union(proc_output_resources)
 
+        
         if not run_parallel:
             self.wait_for_all()
             
@@ -197,6 +198,7 @@ class Scheduler:
             else:
                 raise Exception(
                     f"Command should be exit but it was {input_cmd}")
+        self.unsafe_running = False
 
     def wait_unsafe(self):
         if self.unsafe_running:
