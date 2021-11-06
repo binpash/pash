@@ -20,8 +20,8 @@ fi
 
 ## Source back the output variables of the compiled script. 
 ## In all cases we should have executed a script
-pash_redir_output echo "$$: (7) Recovering BaSh variables from: $pash_output_variables_file"
-source "$RUNTIME_DIR/pash_source_declare_vars.sh" $pash_output_variables_file
+pash_redir_output echo "$$: (7) Recovering BaSh variables from: $pash_output_var_file"
+source "$RUNTIME_DIR/pash_source_declare_vars.sh" $pash_output_var_file
 
 ## Save the previous `set` state to a variable
 pash_redir_output echo "$$: (7) Reading current BaSh set state from: ${pash_output_set_file}"
