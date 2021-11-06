@@ -33,10 +33,14 @@ source "$PASH_TOP/compiler/pash_init_setup.sh" "$@"
 PASH_FROM_SH="pa.sh" python3 -S $PASH_TOP/compiler/pash.py "$@"
 pash_exit_code=$?
 
-echo "Done" > "$RUNTIME_IN_FIFO"
-daemon_response=$(cat "$RUNTIME_OUT_FIFO")
-# echo $daemon_response
+## Only wait for daemon if it lives (it might be dead, rip)
+if ps -p $daemon_pid > /dev/null 
+then
+  echo "Done" > "$RUNTIME_IN_FIFO"
+  daemon_response=$(cat "$RUNTIME_OUT_FIFO")
+  # echo $daemon_response
+  wait 2> /dev/null 1>&2 
+fi
 
-wait 2> /dev/null 1>&2 
 rm -rf "${PASH_TMP_PREFIX}"
 (exit $pash_exit_code)
