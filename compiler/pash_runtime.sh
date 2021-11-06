@@ -178,13 +178,13 @@ else
             ##
 
             ## Prepare a file for the output shell variables to be saved in
-            pash_output_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
-            # pash_redir_output echo "$$: Output vars: $pash_output_variables_file"
+            pash_output_var_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+            # pash_redir_output echo "$$: Output vars: $pash_output_var_file"
 
             ## Prepare a file for the `set` state of the inner shell to be output
             pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
 
-            source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_variables_file} ${pash_output_set_file}
+            source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_var_file} ${pash_output_set_file}
 
             ##
             ## (6)
