@@ -309,13 +309,17 @@ def get_command_from_annotations(command_path, options, annotations):
 def get_command_from_annotation(command, options, annotation):
     assert(annotation['command'] == command)
 
+    log("Checking for command:", command)
     cases = annotation['cases']
     case = find_annotation_case(options, cases)
     return case
 
 def find_annotation_case(options, cases):
+    log("Command options:", options)
     for case in cases:
+        log("Checking Predicate:", case['predicate'])
         if(predicate_satisfied(options, case['predicate'])):
+            log("Predicate was satisfied")
             return case
 
     ## Unreachable
