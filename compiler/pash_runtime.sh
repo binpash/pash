@@ -124,7 +124,7 @@ else
 
     if [[ "$daemon_response" == *"OK:"* ]]; then
         pash_runtime_return_code=0
-    elif [ -z $daemon_response ]; then
+    elif [ -z "$daemon_response" ]; then
         echo "here"
         ## Trouble... Daemon crashed, rip
         pash_redir_output echo "$$: ERROR: (2) Daemon crashed!"
