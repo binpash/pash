@@ -53,7 +53,10 @@ class FileId:
 
     ## Returns a shell AST from this file identifier.
     ## TODO: Once the python libdash bindings are done we could use those instead.
-    def to_ast(self):
+    ##
+    ## If stdin_dash is True, then we can turn stdin to `-` since the
+    ##   context in which we are using it is a command for which `-` means stdin.
+    def to_ast(self, stdin_dash=False):
         ## TODO: This here is supposed to identify fifos, but real fifos have a resource
         ##       but are fifos. Therefore eventually we want to have this check correctly
         ##       check if a file id refers to a pipe
@@ -65,7 +68,10 @@ class FileId:
             ## Quote the argument
             argument = [make_kv('Q', string_to_argument(string))]
         elif(isinstance(self.resource, FileDescriptorResource)):
-            raise NotImplementedError()
+            if (self.resource.is_stdin() and stdin_dash):
+                argument = string_to_argument("-")
+            else:
+                raise NotImplementedError()
         else:
             string = "{}".format(self.resource)
             argument = string_to_argument(string)

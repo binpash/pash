@@ -1,4 +1,5 @@
 import copy
+import annotations
 from command_categories import *
 from util import *
 from ir_utils import *
@@ -127,27 +128,47 @@ class DFGNode:
     def special_to_ast(self, edges):
         ## Every argument should be completely expanded so making it a string should be fine
         if str(self.com_name) == "cat":
-            log("\n\n\nMaking cat a command from a DFG")
             redirs = self._to_ast_aux_get_redirs()
             assignments = self.com_assignments
             com_name_ast = self.com_name.to_ast()
             option_asts = [opt.to_ast() for _, opt in self.com_options]
 
             ## We simply turn inputs to arguments by appending them to the options
-            input_fids = [edges[in_id][0] for in_id in self.get_input_list()]
-            log("Input fids:", input_fids)
-            # input_arguments = [fid.to_ast()
-            #                    for fid in rest_argument_fids
-            #                    if not fid is None]
+            input_arguments = self._to_ast_aux_inputs_as_args(edges, stdin_dash=True)
 
             ## TODO: Make sure a library of useful constructs that create
             ##       a command from a DFG node.
 
-            output_fids = [edges[out_id][0] for out_id in self.outputs]
-            return None
+            ## We simply send output to stdout (as redir if needed)
+            output_redir = self._to_ast_aux_single_stdout_fid(edges)
+
+            all_arguments = [com_name_ast] + option_asts + input_arguments
+            all_redirs = redirs + output_redir
+
+            node = make_command(all_arguments, redirections=all_redirs, assignments=assignments)
+            return node
         else:
             return None
 
+    ## This function handles the input fids as arguments.
+    def _to_ast_aux_inputs_as_args(self, edges, stdin_dash=False):
+        input_fids = [edges[in_id][0] for in_id in self.get_input_list()]
+
+        input_arguments = [fid.to_ast(stdin_dash=stdin_dash)
+                            for fid in input_fids]
+        return input_arguments
+
+    ## This function handles the redirections when a command has a single output
+    ##   and it can always be stdout.
+    def _to_ast_aux_single_stdout_fid(self, edges):
+        output_fids = [edges[out_id][0] for out_id in self.outputs]
+        assert len(output_fids) == 1
+        output_fid = output_fids[0]
+        # log("output fid:", output_fid)
+
+        output_redir = redirect_to_stdout_if_not_already(output_fid)
+        # log("Redir:", output_redir)
+        return output_redir
 
     ## Auxiliary method that returns any necessary redirections,
     ##   at the moment it doesn't look necessary.
@@ -167,6 +188,7 @@ class DFGNode:
         ## At the moment we do not reprint redirections here (we only produce redirections
         ## where we recreate arguments and redirections).
         return []
+
 
     ## TODO: Improve this functio to be separately implemented for different special nodes,
     ##       such as cat, eager, split, etc...
