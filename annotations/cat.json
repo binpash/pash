@@ -29,7 +29,8 @@
             "predicate": "default",
             "class": "stateless",
             "inputs": ["args[:]"],
-            "outputs": ["stdout"]
+            "outputs": ["stdout"],
+            "options": ["stdin-hyphen"]
         }
     ],
     "options": ["stdin-hyphen"]

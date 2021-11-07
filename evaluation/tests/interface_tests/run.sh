@@ -220,6 +220,15 @@ test_exec_redirections()
     [ -s exec-redirections.err ]
 }
 
+test_cat_hyphen()
+{
+    local shell=$1
+    echo popo > /tmp/cat.in
+    echo pipis >> /tmp/cat.in
+    echo papa >> /tmp/cat.in
+    echo "pipi" | $shell -c 'cat /tmp/cat.in - /tmp/cat.in | grep pipi'
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -248,6 +257,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_new_line_in_var
     run_test test_cmd_sbst
     run_test test_exec_redirections
+    run_test test_cat_hyphen
 else
     for testname in $@
     do
