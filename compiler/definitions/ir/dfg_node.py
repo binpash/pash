@@ -1,4 +1,5 @@
 import copy
+import annotations
 from command_categories import *
 from util import *
 from ir_utils import *
@@ -117,6 +118,78 @@ class DFGNode:
                            for i, opt in enumerate(new_options)]
         self.com_options = self.com_options + new_com_options
 
+    ## This method handles special DFG nodes specially when it has to do
+    ## with turning them to commands.
+    ##
+    ## The goal would be for this function to be developed for more and more nodes
+    ## so as to guide the second version of the annotations.
+    ##
+    ## TODO: Abstract this function away to annotations 2.0
+    def special_to_ast(self, edges):
+        ## Every argument should be completely expanded so making it a string should be fine
+        if str(self.com_name) == "cat":
+            redirs = self._to_ast_aux_get_redirs()
+            assignments = self.com_assignments
+            com_name_ast = self.com_name.to_ast()
+            option_asts = [opt.to_ast() for _, opt in self.com_options]
+
+            ## We simply turn inputs to arguments by appending them to the options
+            input_arguments = self._to_ast_aux_inputs_as_args(edges, stdin_dash=True)
+
+            ## TODO: Make sure a library of useful constructs that create
+            ##       a command from a DFG node.
+
+            ## We simply send output to stdout (as redir if needed)
+            output_redir = self._to_ast_aux_single_stdout_fid(edges)
+
+            all_arguments = [com_name_ast] + option_asts + input_arguments
+            all_redirs = redirs + output_redir
+
+            node = make_command(all_arguments, redirections=all_redirs, assignments=assignments)
+            return node
+        else:
+            return None
+
+    ## This function handles the input fids as arguments.
+    def _to_ast_aux_inputs_as_args(self, edges, stdin_dash=False):
+        input_fids = [edges[in_id][0] for in_id in self.get_input_list()]
+
+        input_arguments = [fid.to_ast(stdin_dash=stdin_dash)
+                            for fid in input_fids]
+        return input_arguments
+
+    ## This function handles the redirections when a command has a single output
+    ##   and it can always be stdout.
+    def _to_ast_aux_single_stdout_fid(self, edges):
+        output_fids = [edges[out_id][0] for out_id in self.outputs]
+        assert len(output_fids) == 1
+        output_fid = output_fids[0]
+        # log("output fid:", output_fid)
+
+        output_redir = redirect_to_stdout_if_not_already(output_fid)
+        # log("Redir:", output_redir)
+        return output_redir
+
+    ## Auxiliary method that returns any necessary redirections,
+    ##   at the moment it doesn't look necessary.
+    def _to_ast_aux_get_redirs(self):
+        ## TODO: Properly handle redirections
+        ##
+        ## TODO: If one of the redirected outputs or inputs is changed in the IR 
+        ##       (e.g. `cat < s1` was changed to read from an ephemeral file `cat < "#file5"`)
+        ##       this needs to be changed in the redirections too. Maybe we can modify redirections
+        ##       when replacing fid.
+        ##
+        ## It seems that if we have already applied redirections we might not need to
+        ## care about them anymore (since they will be created in new_redirs.)
+        ##
+        ## redirs = [redir.to_ast() for redir in self.com_redirs]
+        ##
+        ## At the moment we do not reprint redirections here (we only produce redirections
+        ## where we recreate arguments and redirections).
+        return []
+
+
     ## TODO: Improve this functio to be separately implemented for different special nodes,
     ##       such as cat, eager, split, etc...
     def to_ast(self, edges, drain_streams):    
@@ -124,21 +197,13 @@ class DFGNode:
         if (drain_streams):
             raise NotImplementedError()
         else:
-            ## TODO: Properly handle redirections
-            ##
-            ## TODO: If one of the redirected outputs or inputs is changed in the IR 
-            ##       (e.g. `cat < s1` was changed to read from an ephemeral file `cat < "#file5"`)
-            ##       this needs to be changed in the redirections too. Maybe we can modify redirections
-            ##       when replacing fid.
-            ##
-            ## It seems that if we have already applied redirections we might not need to
-            ## care about them anymore (since they will be created in new_redirs.)
-            ##
-            ## redirs = [redir.to_ast() for redir in self.com_redirs]
-            ##
-            ## At the moment we do not reprint redirections here (we only produce redirections
-            ## where we recreate arguments and redirections).
-            redirs = []
+            ## Handle special node to ast here
+            node = self.special_to_ast(edges)
+            if node is not None:
+                return node
+            
+
+            redirs = self._to_ast_aux_get_redirs()
             assignments = self.com_assignments
             ## Start filling in the arguments
             opt_arguments = []

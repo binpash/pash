@@ -4,7 +4,7 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 # time: print real in seconds, to simplify parsing
 
 bash="bash"
-pash="$PASH_TOP/pa.sh --interactive"
+pash="$PASH_TOP/pa.sh"
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 mkdir -p "$output_dir"
@@ -219,6 +219,22 @@ test_cmd_sbst()
     `true; false; true; $shell cmd_sbst_subscript.sh`
 }
 
+test_exec_redirections()
+{
+    local shell=$1
+    $shell exec-redirections.sh
+    cat exec-redirections.out
+    [ -s exec-redirections.err ]
+}
+
+test_cat_hyphen()
+{
+    local shell=$1
+    echo popo > /tmp/cat.in
+    echo pipis >> /tmp/cat.in
+    echo papa >> /tmp/cat.in
+    echo "pipi" | $shell -c 'cat /tmp/cat.in - /tmp/cat.in | grep pipi'
+}
 
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
@@ -248,6 +264,8 @@ if [ "$#" -eq 0 ]; then
     run_test test_set_e_3
     run_test test_new_line_in_var
     run_test test_cmd_sbst
+    run_test test_exec_redirections
+    run_test test_cat_hyphen
 else
     for testname in $@
     do
