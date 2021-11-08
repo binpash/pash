@@ -45,6 +45,9 @@ def parse_args():
 
 
 def init():
+    ## Set the logging prefix
+    config.LOGGING_PREFIX = "Daemon: "
+    
     args = parse_args()
     config.pash_args = args
 

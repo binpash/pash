@@ -23,6 +23,8 @@ RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 assert(not os.getenv('PASH_TMP_PREFIX') is None)
 PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
 
+LOGGING_PREFIX = ""
+
 config = {}
 annotations = []
 pash_args = None
@@ -262,6 +264,8 @@ def find_next_delimiter(tokens, i):
 
 def read_vars_file(var_file_path):
     global config
+
+    log("Reading variables from:", var_file_path)
 
 
     config['shell_variables'] = None
