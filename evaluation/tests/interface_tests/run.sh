@@ -219,6 +219,12 @@ test_cmd_sbst()
     `true; false; true; $shell cmd_sbst_subscript.sh`
 }
 
+test_cmd_sbst2()
+{
+    local shell=$1
+    $shell cmd_sbst.sh
+}
+
 test_exec_redirections()
 {
     local shell=$1
@@ -264,6 +270,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_set_e_3
     run_test test_new_line_in_var
     run_test test_cmd_sbst
+    run_test test_cmd_sbst2
     run_test test_exec_redirections
     run_test test_cat_hyphen
 else

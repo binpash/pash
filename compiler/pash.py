@@ -12,6 +12,9 @@ import config
 import shutil
 
 def main():
+    ## Set the logging prefix
+    config.LOGGING_PREFIX = "PaSh Preprocessor: "
+
     ## Parse arguments
     args, shell_name = parse_args()
     ## If it is interactive we need a different execution mode

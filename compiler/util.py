@@ -30,10 +30,10 @@ def log(*args, end='\n', level=1):
     ## as high as this log message.
     if (config.pash_args.debug >= level):
         if(config.pash_args.log_file == ""):
-            print(*args, file=sys.stderr, end=end, flush=True)
+            print(config.LOGGING_PREFIX, *args, file=sys.stderr, end=end, flush=True)
         else:
             with open(config.pash_args.log_file, "a") as f:
-                print(*args, file=f, end=end, flush=True)
+                print(config.LOGGING_PREFIX, *args, file=f, end=end, flush=True)
 
 def ptempfile():
     return tempfile.mkstemp(dir=config.PASH_TMP_PREFIX)

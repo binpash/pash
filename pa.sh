@@ -42,5 +42,9 @@ then
   wait 2> /dev/null 1>&2 
 fi
 
-rm -rf "${PASH_TMP_PREFIX}"
+## Don't delete the temporary directory if we are debugging
+if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
+  rm -rf "${PASH_TMP_PREFIX}"
+fi
+
 (exit $pash_exit_code)
