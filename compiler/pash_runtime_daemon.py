@@ -205,6 +205,7 @@ class Scheduler:
         self.unsafe_running = False
 
     def wait_unsafe(self):
+        log("Unsafe running:", self.unsafe_running)
         if self.unsafe_running:
             assert(self.running_procs == 1)
             self.wait_for_all()
@@ -226,6 +227,8 @@ class Scheduler:
                 f'Unsupported command: {input_cmd}'))
 
     def wait_input(self):
+        log("Previous cmd buffer:", self.cmd_buffer)
+        log("Previous cmd buffer length:", len(self.cmd_buffer))
         input_buffer = ""
         if self.cmd_buffer:
             # Don't wait on fin if cmd buffer isn't empty
@@ -234,8 +237,9 @@ class Scheduler:
             with open(self.in_filename) as fin:
                 input_buffer = fin.read()
 
+        log("Input buffer:", input_buffer)
         cmd, rest = input_buffer.split("\n", 1) # split on the first \n only
-        self.cmd_buffer = rest.rstrip()
+        self.cmd_buffer = rest
         cmd = cmd.rstrip()
         return cmd
 
