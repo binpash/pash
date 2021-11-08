@@ -122,6 +122,7 @@ class Scheduler:
         self.unsafe_running = False
         self.done = False
         self.cmd_buffer = ""
+        self.reader = None
 
     def check_resources_safety(self, process_id):
         proc_input_resources, proc_output_resources = self.process_resources[process_id]
@@ -227,20 +228,9 @@ class Scheduler:
                 f'Unsupported command: {input_cmd}'))
 
     def wait_input(self):
-        log("Previous cmd buffer:", self.cmd_buffer)
-        log("Previous cmd buffer length:", len(self.cmd_buffer))
-        input_buffer = ""
-        if self.cmd_buffer:
-            # Don't wait on fin if cmd buffer isn't empty
-            input_buffer = self.cmd_buffer
-        else:
-            with open(self.in_filename) as fin:
-                input_buffer = fin.read()
-
-        log("Input buffer:", input_buffer)
-        cmd, rest = input_buffer.split("\n", 1) # split on the first \n only
-        self.cmd_buffer = rest
-        cmd = cmd.rstrip()
+        cmd = ""
+        while not cmd:
+            cmd = self.reader.get_next_cmd()
         return cmd
 
     def send_output(self, message):
@@ -261,7 +251,7 @@ class Scheduler:
             raise Exception(f'Parsing failure for line: {input}')
 
     def run(self, in_filename, out_filename):
-        self.in_filename = in_filename
+        self.reader = Reader(in_filename)
         self.out_filename = out_filename
         while not self.done:
             # Process a single request
@@ -274,9 +264,40 @@ class Scheduler:
                 self.fout = open(out_filename, "w")
 
             self.parse_and_run_cmd(input_cmd)
-            
+        
+        self.reader.close()
         shutdown()
 
+
+class Reader:
+    def __init__(self, in_filename):
+        self.in_filename = in_filename
+        self.buffer = ""
+        self.fin = open(self.in_filename)
+
+    def get_next_cmd(self):
+        log("Previous cmd buffer:", self.buffer)
+        log("Previous cmd buffer length:", len(self.buffer))
+        input_buffer = ""
+        if self.buffer:
+            # Don't wait on fin if cmd buffer isn't empty
+            input_buffer = self.buffer
+        else:
+            input_buffer = self.fin.read()
+
+        log("Input buffer:", input_buffer)
+        if "\n" in input_buffer:
+            cmd, rest = input_buffer.split("\n", 1) # split on the first \n only
+            self.buffer = rest
+        else:
+            cmd = input_buffer
+            self.buffer = ""
+
+        cmd = cmd.rstrip()
+        return cmd
+
+    def close(self):
+        self.fin.close()
 
 def shutdown():
     ## There may be races since this is called through the signal handling
