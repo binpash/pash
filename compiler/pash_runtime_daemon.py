@@ -226,16 +226,16 @@ class Scheduler:
                 f'Unsupported command: {input_cmd}'))
 
     def wait_input(self):
+        input_buffer = ""
         if self.cmd_buffer:
             # Don't wait on fin if cmd buffer isn't empty
             input_buffer = self.cmd_buffer
         else:
-            input_buffer = ""
             with open(self.in_filename) as fin:
                 input_buffer = fin.read()
 
         cmd, rest = input_buffer.split("\n", 1) # split on the first \n only
-        self.cmd_buffer = rest
+        self.cmd_buffer = rest.rstrip()
         cmd = cmd.rstrip()
         return cmd
 
