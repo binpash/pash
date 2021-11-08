@@ -197,8 +197,13 @@ else
         fi
     }
 
-    # Don't fork if compilation faild. The script might have effects on the shell state.
-    if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_parallel_pipelines" -eq 0 ]; then
+    ## Check if there are traps set, and if so do not execute in parallel
+    ##
+    ## TODO: This might be an overkill but is conservative
+    traps_set=$(trap)
+    pash_redir_output echo "$$: (2) Traps set: $traps_set"
+    # Don't fork if compilation failed. The script might have effects on the shell state.
+    if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_parallel_pipelines" -eq 0 ] || [ ! -z "$traps_set" ]; then
         # Early clean up in case the script effects shell like "break" or "exec"
         # This is safe because the script is run sequentially and the shell 
         # won't be able to move forward until this is finished
@@ -226,6 +231,7 @@ else
         source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_current_set_state" "$pash_previous_set_status"
         pash_redir_output echo "$$: (5) Reverted to BaSh set state: $-"
 
+        ## TODO: This might not be necessary
         ## Recover the input arguments of the previous script
         ## Note: We don't need to care about wrap_vars arguments because we have stored all of them already.
         set -- $pash_input_args
