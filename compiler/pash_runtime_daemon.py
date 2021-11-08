@@ -123,7 +123,7 @@ class Scheduler:
         self.done = False
         self.cmd_buffer = ""
         self.reader = None
-        self.reader_pipes_are_blocking = False
+        self.reader_pipes_are_blocking = True
 
     def check_resources_safety(self, process_id):
         proc_input_resources, proc_output_resources = self.process_resources[process_id]
