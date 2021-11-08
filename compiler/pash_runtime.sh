@@ -136,9 +136,9 @@ else
     response_args=($daemon_response)
     process_id=${response_args[1]}
 
-    pash_redir_output echo "$$: Compiler exited with code: $pash_runtime_return_code"
+    pash_redir_output echo "$$: (2) Compiler exited with code: $pash_runtime_return_code"
     if [ "$pash_runtime_return_code" -ne 0 ] && [ "$pash_assert_compiler_success_flag" -eq 1 ]; then
-        pash_redir_output echo "$$: ERROR: Compiler failed with error code: $pash_runtime_return_code"
+        pash_redir_output echo "$$: ERROR: (2) Compiler failed with error code: $pash_runtime_return_code"
         exit 1
     fi
 
@@ -212,7 +212,26 @@ else
         # Might need more complex design if this end up being a problem
         run_parallel <&0 &
         pash_runtime_final_status=$?
-        pash_redir_output echo "$$: Running pipeline"
+        pash_redir_output echo "$$: (2) Running pipeline"
+
+        ## Here we need to also revert the state back to bash state 
+        ## since run_parallel will do that in a separate shell
+        ##
+        ## This happens right before we exit from pash_runtime!
+
+        ## Recover the `set` state of the previous shell
+        # pash_redir_output echo "$$: (3) Previous BaSh set state: $pash_previous_set_status"
+        # pash_redir_output echo "$$: (3) PaSh-internal set state of current shell: $-"
+        pash_current_set_state=$-
+        source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_current_set_state" "$pash_previous_set_status"
+        pash_redir_output echo "$$: (5) Reverted to BaSh set state: $-"
+
+        ## Recover the input arguments of the previous script
+        ## Note: We don't need to care about wrap_vars arguments because we have stored all of them already.
+        set -- $pash_input_args
+        pash_redir_output echo "$$: (5) Reverted to BaSh input arguments: $@"
+
+        ## TODO: We probably need to exit with the exit code here or something!
     fi
 fi
 
