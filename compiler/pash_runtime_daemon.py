@@ -121,6 +121,7 @@ class Scheduler:
         self.running_procs = 0
         self.unsafe_running = False
         self.done = False
+        self.cmd_buffer = ""
 
     def check_resources_safety(self, process_id):
         proc_input_resources, proc_output_resources = self.process_resources[process_id]
@@ -225,11 +226,18 @@ class Scheduler:
                 f'Unsupported command: {input_cmd}'))
 
     def wait_input(self):
-        input_cmd = ""
-        with open(self.in_filename) as fin:
-            input_cmd = fin.read()
-            input_cmd = input_cmd.rstrip()
-        return input_cmd
+        if self.cmd_buffer:
+            # Don't wait on fin if cmd buffer isn't empty
+            input_buffer = self.cmd_buffer
+        else:
+            input_buffer = ""
+            with open(self.in_filename) as fin:
+                input_buffer = fin.read()
+
+        cmd, rest = input_buffer.split("\n", 1) # split on the first \n only
+        self.cmd_buffer = rest
+        cmd = cmd.rstrip()
+        return cmd
 
     def send_output(self, message):
         """ This function should only be called if the output pipe is already opened. It will also close the opened fout pipe """
