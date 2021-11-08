@@ -123,6 +123,7 @@ class Scheduler:
         self.done = False
         self.cmd_buffer = ""
         self.reader = None
+        self.reader_pipes_are_blocking = True
 
     def check_resources_safety(self, process_id):
         proc_input_resources, proc_output_resources = self.process_resources[process_id]
@@ -148,7 +149,7 @@ class Scheduler:
 
         ast_or_ir = pash_runtime.compile_ir(
             input_ir_file, compiled_script_file, config.pash_args)
-
+        
         self.wait_unsafe()
         if ast_or_ir != None:
             compile_success = True
@@ -180,6 +181,7 @@ class Scheduler:
         self.send_output(response)
 
     def remove_process(self, process_id):
+        log("The following process exited:", process_id)
         if process_id in self.process_resources:
             del self.process_resources[process_id]
             # TODO: Should be improved to not rebuild inputs and outputs from scratch maybe use counters
@@ -195,6 +197,7 @@ class Scheduler:
         return self.next_id
 
     def wait_for_all(self):
+        log("Waiting for all process to finish:", self.running_procs)
         while self.running_procs > 0:
             input_cmd = self.wait_input()
             # must be exit command or something is wrong
@@ -229,7 +232,10 @@ class Scheduler:
 
     def wait_input(self):
         cmd = ""
-        while not cmd:
+        if not self.reader_pipes_are_blocking:
+            while not cmd:
+                cmd = self.reader.get_next_cmd()
+        else:
             cmd = self.reader.get_next_cmd()
         return cmd
 
@@ -251,7 +257,7 @@ class Scheduler:
             raise Exception(f'Parsing failure for line: {input}')
 
     def run(self, in_filename, out_filename):
-        self.reader = Reader(in_filename)
+        self.reader = UnixPipeReader(in_filename, self.reader_pipes_are_blocking)
         self.out_filename = out_filename
         while not self.done:
             # Process a single request
@@ -269,11 +275,13 @@ class Scheduler:
         shutdown()
 
 
-class Reader:
-    def __init__(self, in_filename):
+class UnixPipeReader:
+    def __init__(self, in_filename, blocking = True):
         self.in_filename = in_filename
         self.buffer = ""
-        self.fin = open(self.in_filename)
+        self.blocking = blocking
+        if not blocking:
+            self.fin = open(self.in_filename)
 
     def get_next_cmd(self):
         log("Previous cmd buffer:", self.buffer)
@@ -283,7 +291,11 @@ class Reader:
             # Don't wait on fin if cmd buffer isn't empty
             input_buffer = self.buffer
         else:
-            input_buffer = self.fin.read()
+            if self.blocking:
+                with open(self.in_filename) as fin:
+                    input_buffer = fin.read()
+            else:
+                input_buffer = self.fin.read()
 
         log("Input buffer:", input_buffer)
         if "\n" in input_buffer:
@@ -294,10 +306,12 @@ class Reader:
             self.buffer = ""
 
         cmd = cmd.rstrip()
+        log("Reader returned cmd:", cmd)
         return cmd
 
     def close(self):
-        self.fin.close()
+        if not self.blocking:
+            self.fin.close()
 
 def shutdown():
     ## There may be races since this is called through the signal handling
