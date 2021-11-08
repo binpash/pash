@@ -242,6 +242,12 @@ test_cat_hyphen()
     echo "pipi" | $shell -c 'cat /tmp/cat.in - /tmp/cat.in | grep pipi'
 }
 
+test_trap()
+{
+    local shell=$1
+    $shell trap.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -273,6 +279,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_cmd_sbst2
     run_test test_exec_redirections
     run_test test_cat_hyphen
+    run_test test_trap
 else
     for testname in $@
     do
