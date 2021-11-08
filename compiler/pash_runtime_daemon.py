@@ -123,7 +123,7 @@ class Scheduler:
         self.done = False
         self.cmd_buffer = ""
         self.reader = None
-        self.reader_pipes_are_blocking = True
+        self.reader_pipes_are_blocking = False
 
     def check_resources_safety(self, process_id):
         proc_input_resources, proc_output_resources = self.process_resources[process_id]
@@ -280,7 +280,7 @@ class UnixPipeReader:
         self.in_filename = in_filename
         self.buffer = ""
         self.blocking = blocking
-        if not blocking:
+        if not self.blocking:
             self.fin = open(self.in_filename)
 
     def get_next_cmd(self):
@@ -293,7 +293,11 @@ class UnixPipeReader:
         else:
             if self.blocking:
                 with open(self.in_filename) as fin:
-                    input_buffer = fin.read()
+                    while True:
+                        data = fin.read()
+                        if len(data) == 0:
+                            break
+                        input_buffer += data
             else:
                 input_buffer = self.fin.read()
 
