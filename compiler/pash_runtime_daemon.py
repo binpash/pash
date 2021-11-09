@@ -111,6 +111,10 @@ class Scheduler:
                     |   Exit process_id -> remove process_id from the list of running processes
 
                     |   Done -> no more pipelines -> wait for all processes to finish and exit
+
+    Notes:
+        The current design relies on the data being written atomicly to the pipe for the size of our input. This allows as to use only one pipe instead of a pipe per process.
+        Source: https://www.gnu.org/software/libc/manual/html_node/Pipe-Atomicity.html
     """
 
     def __init__(self):
@@ -281,18 +285,30 @@ class UnixPipeReader:
         self.buffer = ""
         self.blocking = blocking
         if not self.blocking:
+            # Non blocking mode shouldn't be used in production. It's only used experimentally.
+            log("Reader initialized in non-blocking mode")
             self.fin = open(self.in_filename)
+        else:
+            log("Reader initialized in blocking mode")
 
     def get_next_cmd(self):
-        log("Previous cmd buffer:", self.buffer)
-        log("Previous cmd buffer length:", len(self.buffer))
+        """
+        This method return depends on the reading mode. In blocking mode this method will
+        return the next full command and if there is no command it will wait until a full command is recieved.
+        In non blocking mode it would either a full command or an empty string if a full command isn't available yet.
+        This command keeps a state of the remaining data which is used in each subsequent call to this method.
+        """
         input_buffer = ""
         if self.buffer:
             # Don't wait on fin if cmd buffer isn't empty
+            log("Reader buffer isn't empty. Using it instead of reading new data for the next command")
             input_buffer = self.buffer
         else:
+            log("Reader buffer is empty. Reading new data from input fifo")
             if self.blocking:
                 with open(self.in_filename) as fin:
+                    # This seems to be necessary for reading the full data. 
+                    # It seems like slower/smaller machines might not read the full data in one read
                     while True:
                         data = fin.read()
                         if len(data) == 0:
@@ -314,6 +330,7 @@ class UnixPipeReader:
         return cmd
 
     def close(self):
+        log("Reader closed")
         if not self.blocking:
             self.fin.close()
 
