@@ -111,6 +111,10 @@ class Scheduler:
                     |   Exit process_id -> remove process_id from the list of running processes
 
                     |   Done -> no more pipelines -> wait for all processes to finish and exit
+
+    Notes:
+        The current design relies on the data being written atomicly to the pipe for the size of our input. This allows as to use only one pipe instead of a pipe per process.
+        Source: https://www.gnu.org/software/libc/manual/html_node/Pipe-Atomicity.html
     """
 
     def __init__(self):
@@ -121,6 +125,9 @@ class Scheduler:
         self.running_procs = 0
         self.unsafe_running = False
         self.done = False
+        self.cmd_buffer = ""
+        self.reader = None
+        self.reader_pipes_are_blocking = True
 
     def check_resources_safety(self, process_id):
         proc_input_resources, proc_output_resources = self.process_resources[process_id]
@@ -146,7 +153,7 @@ class Scheduler:
 
         ast_or_ir = pash_runtime.compile_ir(
             input_ir_file, compiled_script_file, config.pash_args)
-
+        
         self.wait_unsafe()
         if ast_or_ir != None:
             compile_success = True
@@ -178,6 +185,7 @@ class Scheduler:
         self.send_output(response)
 
     def remove_process(self, process_id):
+        log("The following process exited:", process_id)
         if process_id in self.process_resources:
             del self.process_resources[process_id]
             # TODO: Should be improved to not rebuild inputs and outputs from scratch maybe use counters
@@ -193,6 +201,7 @@ class Scheduler:
         return self.next_id
 
     def wait_for_all(self):
+        log("Waiting for all process to finish:", self.running_procs)
         while self.running_procs > 0:
             input_cmd = self.wait_input()
             # must be exit command or something is wrong
@@ -204,6 +213,7 @@ class Scheduler:
         self.unsafe_running = False
 
     def wait_unsafe(self):
+        log("Unsafe running:", self.unsafe_running)
         if self.unsafe_running:
             assert(self.running_procs == 1)
             self.wait_for_all()
@@ -225,11 +235,13 @@ class Scheduler:
                 f'Unsupported command: {input_cmd}'))
 
     def wait_input(self):
-        input_cmd = ""
-        with open(self.in_filename) as fin:
-            input_cmd = fin.read()
-            input_cmd = input_cmd.rstrip()
-        return input_cmd
+        cmd = ""
+        if not self.reader_pipes_are_blocking:
+            while not cmd:
+                cmd = self.reader.get_next_cmd()
+        else:
+            cmd = self.reader.get_next_cmd()
+        return cmd
 
     def send_output(self, message):
         """ This function should only be called if the output pipe is already opened. It will also close the opened fout pipe """
@@ -249,7 +261,7 @@ class Scheduler:
             raise Exception(f'Parsing failure for line: {input}')
 
     def run(self, in_filename, out_filename):
-        self.in_filename = in_filename
+        self.reader = UnixPipeReader(in_filename, self.reader_pipes_are_blocking)
         self.out_filename = out_filename
         while not self.done:
             # Process a single request
@@ -262,9 +274,65 @@ class Scheduler:
                 self.fout = open(out_filename, "w")
 
             self.parse_and_run_cmd(input_cmd)
-            
+        
+        self.reader.close()
         shutdown()
 
+
+class UnixPipeReader:
+    def __init__(self, in_filename, blocking = True):
+        self.in_filename = in_filename
+        self.buffer = ""
+        self.blocking = blocking
+        if not self.blocking:
+            # Non blocking mode shouldn't be used in production. It's only used experimentally.
+            log("Reader initialized in non-blocking mode")
+            self.fin = open(self.in_filename)
+        else:
+            log("Reader initialized in blocking mode")
+
+    def get_next_cmd(self):
+        """
+        This method return depends on the reading mode. In blocking mode this method will
+        return the next full command and if there is no command it will wait until a full command is recieved.
+        In non blocking mode it would either a full command or an empty string if a full command isn't available yet.
+        This command keeps a state of the remaining data which is used in each subsequent call to this method.
+        """
+        input_buffer = ""
+        if self.buffer:
+            # Don't wait on fin if cmd buffer isn't empty
+            log("Reader buffer isn't empty. Using it instead of reading new data for the next command")
+            input_buffer = self.buffer
+        else:
+            log("Reader buffer is empty. Reading new data from input fifo")
+            if self.blocking:
+                with open(self.in_filename) as fin:
+                    # This seems to be necessary for reading the full data. 
+                    # It seems like slower/smaller machines might not read the full data in one read
+                    while True:
+                        data = fin.read()
+                        if len(data) == 0:
+                            break
+                        input_buffer += data
+            else:
+                input_buffer = self.fin.read()
+
+        log("Input buffer:", input_buffer)
+        if "\n" in input_buffer:
+            cmd, rest = input_buffer.split("\n", 1) # split on the first \n only
+            self.buffer = rest
+        else:
+            cmd = input_buffer
+            self.buffer = ""
+
+        cmd = cmd.rstrip()
+        log("Reader returned cmd:", cmd)
+        return cmd
+
+    def close(self):
+        log("Reader closed")
+        if not self.blocking:
+            self.fin.close()
 
 def shutdown():
     ## There may be races since this is called through the signal handling
