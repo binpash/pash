@@ -135,3 +135,21 @@ fi
 export -f pash_redir_output
 export -f pash_redir_all_output
 export -f pash_redir_all_output_always_execute
+
+
+pash_send_to_daemon()
+{
+    local message="$1"
+    echo "$message" > "$RUNTIME_IN_FIFO"
+    pash_redir_output echo "Sent msg to daemon: $message"
+}
+
+pash_receive_from_daemon()
+{
+    daemon_response=$(cat "$RUNTIME_OUT_FIFO")
+    pash_redir_output echo "Got response from daemon: $daemon_response"
+    echo "$daemon_response"
+}
+
+export -f pash_send_to_daemon
+export -f pash_receive_from_daemon

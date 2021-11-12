@@ -119,11 +119,11 @@ else
     ## TODO: Have a more proper communication protocol
     ## TODO: Make a proper client for the daemon
     pash_redir_output echo "$$: (2) Before asking the daemon for compilation..."
-    echo "Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}| Input IR File:${pash_input_ir_file}" > "$RUNTIME_IN_FIFO"
-    pash_redir_output echo "$$: (2) asked the daemon: Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}| Input IR File:${pash_input_ir_file}"
+    ## Send and receive from daemon
+    pash_send_to_daemon "Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}| Input IR File:${pash_input_ir_file}"
+
     pash_redir_output echo "$$: (2) Waiting for the daemon to respond..."
-    daemon_response="$(cat $RUNTIME_OUT_FIFO)" # Blocking step, daemon will not send response until it's safe to continue
-    pash_redir_output echo "$$: (2) Daemon responds: $daemon_response"
+    daemon_response=$(pash_receive_from_daemon) # Blocking step, daemon will not send response until it's safe to continue
 
     if [[ "$daemon_response" == *"OK:"* ]]; then
         pash_runtime_return_code=0
@@ -165,7 +165,8 @@ else
     # ##
 
     function clean_up () {
-        echo "Exit:${process_id}" > "$RUNTIME_IN_FIFO"
+        ## Send to daemon
+        pash_send_to_daemon "Exit:${process_id}"
     } 
 
     function run_parallel() {

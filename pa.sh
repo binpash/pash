@@ -36,9 +36,9 @@ pash_exit_code=$?
 ## Only wait for daemon if it lives (it might be dead, rip)
 if ps -p $daemon_pid > /dev/null 
 then
-  echo "Done" > "$RUNTIME_IN_FIFO"
-  daemon_response=$(cat "$RUNTIME_OUT_FIFO")
-  # echo $daemon_response
+  ## Send and receive from daemon
+  pash_send_to_daemon "Done"
+  daemon_response=$(pash_receive_from_daemon)
   wait 2> /dev/null 1>&2 
 fi
 
