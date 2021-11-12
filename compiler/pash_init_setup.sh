@@ -72,9 +72,7 @@ do
     if [ "-d" == "$item" ] || [ "--debug" == "$item" ]; then
         pash_checking_debug_level=1
     fi
-
-    ## TODO: Add this flag in pash.py too so that it is printed in help.
-    if [ "--pash_parallel_pipelines" == "$item" ]; then
+    if [ "--parallel_pipelines" == "$item" ]; then
         export pash_parallel_pipelines=1
     fi
 
