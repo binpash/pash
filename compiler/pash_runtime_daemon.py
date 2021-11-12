@@ -27,7 +27,6 @@ def handler(signum, frame):
     log("Signal:", signum, "caught")
     shutdown()
 
-# Set the signal handler and a 5-second alarm
 signal.signal(signal.SIGTERM, handler)
 
 def parse_args():
@@ -182,7 +181,7 @@ class Scheduler:
             self.unsafe_running = True
 
         self.running_procs += 1
-        self.send_output(response)
+        return response
 
     def remove_process(self, process_id):
         log("The following process exited:", process_id)
@@ -203,7 +202,7 @@ class Scheduler:
     def wait_for_all(self):
         log("Waiting for all process to finish:", self.running_procs)
         while self.running_procs > 0:
-            input_cmd = self.wait_input()
+            input_cmd = self.get_input()
             # must be exit command or something is wrong
             if (input_cmd.startswith("Exit:")):
                 self.remove_process(int(input_cmd.split(":")[1]))
@@ -223,18 +222,23 @@ class Scheduler:
         if(input_cmd.startswith("Compile")):
             compiled_script_file, var_file, input_ir_file = self.__parse_compile_command(
                 input_cmd)
-            self.compile_and_add(compiled_script_file, var_file, input_ir_file)
+            response = self.compile_and_add(compiled_script_file, var_file, input_ir_file)
+            ## Send output to the specific command
+            self.send_output(response)
         elif (input_cmd.startswith("Exit")):
             self.remove_process(int(input_cmd.split(":")[1]))
         elif (input_cmd.startswith("Done")):
             self.wait_for_all()
+            ## We send output to the top level pash process
+            ## to signify that we are done
             self.send_output("All finished")
             self.done = True
         else:
             self.send_output(error_response(
                 f'Unsupported command: {input_cmd}'))
 
-    def wait_input(self):
+    ## This method calls the reader to get an input
+    def get_input(self):
         cmd = ""
         if not self.reader_pipes_are_blocking:
             while not cmd:
@@ -243,9 +247,9 @@ class Scheduler:
             cmd = self.reader.get_next_cmd()
         return cmd
 
+    ## This method sends output through the output fifo of the daemon
     def send_output(self, message):
-        """ This function should only be called if the output pipe is already opened. It will also close the opened fout pipe """
-        assert(not self.fout.closed)
+        self.fout = open(self.out_filename, "w")
         self.fout.write(message)
         self.fout.flush()
         self.fout.close()
@@ -265,14 +269,9 @@ class Scheduler:
         self.out_filename = out_filename
         while not self.done:
             # Process a single request
-            input_cmd = self.wait_input()
-            if not input_cmd:
-                continue
+            input_cmd = self.get_input()
 
-            # After exit we don't send anything to the client so we don't open the fout pipe
-            if (not input_cmd.startswith("Exit:")):
-                self.fout = open(out_filename, "w")
-
+            ## Parse the command (potentially also sending a response)
             self.parse_and_run_cmd(input_cmd)
         
         self.reader.close()
