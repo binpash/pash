@@ -18,7 +18,7 @@ export pash_checking_log_file=0
 export pash_checking_debug_level=0
 export pash_avoid_pash_runtime_completion_flag=0
 export pash_parallel_pipelines=0
-
+export pash_daemon_communicates_through_unix_pipes_flag=0
 for item in $@
 do
     if [ "$pash_checking_speculation" -eq 1 ]; then
@@ -76,6 +76,10 @@ do
     ## TODO: Add this flag in pash.py too so that it is printed in help.
     if [ "--pash_parallel_pipelines" == "$item" ]; then
         export pash_parallel_pipelines=1
+    fi
+
+    if [ "--daemon_communicates_through_unix_pipes" == "$item" ]; then
+        export pash_daemon_communicates_through_unix_pipes_flag=1
     fi
 done
 
@@ -137,31 +141,38 @@ export -f pash_redir_all_output
 export -f pash_redir_all_output_always_execute
 
 
-pash_send_to_daemon()
-{
-    local message="$1"
-    echo "$message" | nc -U "$DAEMON_SOCKET"
-    # echo "$message" > "$RUNTIME_IN_FIFO"
-    pash_redir_output echo "Sent msg to daemon: $message"
-}
+if [ "$pash_daemon_communicates_through_unix_pipes_flag" -eq 1 ]; then
+    pash_communicate_daemon()
+    {
+        local message=$1
+        pash_redir_output echo "Sending msg to daemon: $message"
+        echo "$message" > "$RUNTIME_IN_FIFO"
+        daemon_response=$(cat "$RUNTIME_OUT_FIFO")
+        pash_redir_output echo "Got response from daemon: $daemon_response"
+        echo "$daemon_response"
+    }
 
-pash_receive_from_daemon()
-{
-    daemon_response=$(cat "$RUNTIME_OUT_FIFO")
-    pash_redir_output echo "Got response from daemon: $daemon_response"
-    echo "$daemon_response"
-}
+    pash_communicate_daemon_just_send()
+    {
+        local message=$1
+        pash_redir_output echo "Sending msg to daemon: $message"
+        echo "$message" > "$RUNTIME_IN_FIFO"
+    }
+else
+    pash_communicate_daemon()
+    {
+        local message=$1
+        pash_redir_output echo "Sending msg to daemon: $message"
+        daemon_response=$(echo "$message" | nc -U "$DAEMON_SOCKET")
+        pash_redir_output echo "Got response from daemon: $daemon_response"
+        echo "$daemon_response"
+    }
 
-## TODO: Make sure to fix that for both pipes and sockets
-pash_communicate_daemon()
-{
-    local message=$1
-    pash_redir_output echo "Sending msg to daemon: $message"
-    daemon_response=$(echo "$message" | nc -U "$DAEMON_SOCKET")
-    pash_redir_output echo "Got response from daemon: $daemon_response"
-    echo "$daemon_response"
-}
+    pash_communicate_daemon_just_send()
+    {
+        pash_communicate_daemon $1
+    }
+fi
 
-export -f pash_send_to_daemon
-export -f pash_receive_from_daemon
 export -f pash_communicate_daemon
+export -f pash_communicate_daemon_just_send

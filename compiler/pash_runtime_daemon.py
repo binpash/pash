@@ -268,9 +268,11 @@ class Scheduler:
             raise Exception(f'Parsing failure for line: {input}')
 
     def run(self, in_filename, out_filename):
-        ## TODO: Check a flag to see which of the two to initialize
-        # self.connection_manager = UnixPipeReader(in_filename, out_filename, self.reader_pipes_are_blocking)
-        self.connection_manager = SocketManager()
+        ## By default communicate through sockets, except if the user wants to do it through pipes
+        if (config.pash_args.daemon_communicates_through_unix_pipes):
+            self.connection_manager = UnixPipeReader(in_filename, out_filename, self.reader_pipes_are_blocking)
+        else:
+            self.connection_manager = SocketManager()
         while not self.done:
             # Process a single request
             input_cmd = self.get_input()

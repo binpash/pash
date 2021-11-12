@@ -168,7 +168,7 @@ else
     function clean_up () {
         ## Send to daemon
         msg="Exit:${process_id}"
-        daemon_response=$(pash_communicate_daemon "$msg")
+        daemon_response=$(pash_communicate_daemon_just_send "$msg")
     } 
 
     function run_parallel() {
