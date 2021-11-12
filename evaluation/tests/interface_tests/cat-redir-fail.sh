@@ -1,1 +1,0 @@
-cat < no.such.file
