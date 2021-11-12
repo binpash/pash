@@ -255,6 +255,12 @@ test_set-dash()
     grep 'echo hello' set-dash-v-x.err | wc -l
 }
 
+test_cat_redir_fail()
+{
+    local shell=$1
+    $shell cat-redir-fail.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -288,6 +294,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_cat_hyphen
     run_test test_trap
     run_test test_set-dash
+    run_test test_cat_redir_fail
 else
     for testname in $@
     do
