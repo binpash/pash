@@ -240,6 +240,9 @@ class Scheduler:
             ## to signify that we are done.
             self.respond("All finished")
             self.done = True
+        elif (input_cmd == ""):
+            ## This happens when pa.sh first connects to daemon to see if it is on
+            self.close_last_connection()
         else:
             log(error_response(f'Error: Unsupported command: {input_cmd}'))
             raise Exception(f'Error: Unsupported command: {input_cmd}')
@@ -405,12 +408,14 @@ class SocketManager:
     def get_next_cmd(self):
         connection, client_address = self.sock.accept()
         data = connection.recv(self.buf_size)
-        ## TODO: Lift this requirement if needed
-        assert(data.endswith(b"\n"))
 
         ## TODO: This could be avoided for efficiency
         str_data = data.decode('utf-8')
         log("Received data:", str_data)
+        ## TODO: Lift this requirement if needed
+        ##
+        ## We need to ensure that we read a command at once or the command was empty (only relevant in the first invocation)
+        assert(str_data.endswith("\n") or str_data == "")
         
         self.connections.append(connection)
         return str_data

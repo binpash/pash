@@ -33,6 +33,11 @@ daemon_pid=$!
 ## Initialize all things necessary for pash to execute (logging/functions/etc)
 source "$PASH_TOP/compiler/pash_init_setup.sh" "$@"
 
+## Wait until daemon has established connection
+##
+## TODO: Can we get rid of the `sleep` in this wait?
+pash_wait_until_daemon_listening
+
 PASH_FROM_SH="pa.sh" python3 -S $PASH_TOP/compiler/pash.py "$@"
 pash_exit_code=$?
 

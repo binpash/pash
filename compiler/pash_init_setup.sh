@@ -158,6 +158,11 @@ if [ "$pash_daemon_communicates_through_unix_pipes_flag" -eq 1 ]; then
         pash_redir_output echo "Sending msg to daemon: $message"
         echo "$message" > "$RUNTIME_IN_FIFO"
     }
+
+    pash_wait_until_daemon_listening()
+    {
+        :
+    }
 else
     pash_communicate_daemon()
     {
@@ -172,7 +177,17 @@ else
     {
         pash_communicate_daemon $1
     }
+
+    pash_wait_until_daemon_listening()
+    {
+        while ! nc -z -U "$DAEMON_SOCKET" >/dev/null 2>&1 ; 
+        do 
+        ## TODO: Can we wait for the daemon in a better way?
+            sleep 0.01
+        done
+    }
 fi
 
 export -f pash_communicate_daemon
 export -f pash_communicate_daemon_just_send
+export -f pash_wait_until_daemon_listening
