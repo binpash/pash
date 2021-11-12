@@ -125,7 +125,7 @@ class Scheduler:
         self.unsafe_running = False
         self.done = False
         self.cmd_buffer = ""
-        self.reader = None
+        self.connection_manager = None
         self.reader_pipes_are_blocking = True
 
     def check_resources_safety(self, process_id):
@@ -224,35 +224,36 @@ class Scheduler:
                 input_cmd)
             response = self.compile_and_add(compiled_script_file, var_file, input_ir_file)
             ## Send output to the specific command
-            self.send_output(response)
+            self.respond(response)
         elif (input_cmd.startswith("Exit")):
             self.remove_process(int(input_cmd.split(":")[1]))
+            self.close_last_connection()
         elif (input_cmd.startswith("Done")):
             self.wait_for_all()
             ## We send output to the top level pash process
-            ## to signify that we are done
-            self.send_output("All finished")
+            ## to signify that we are done.
+            self.respond("All finished")
             self.done = True
         else:
-            self.send_output(error_response(
-                f'Unsupported command: {input_cmd}'))
+            ## TODO: Who is supposed to receive this output?
+            ##       If the command was a done, or an exit, then they won't be expecting a response.
+            # self.respond(error_response(
+            #     f'Unsupported command: {input_cmd}'))
+            log(error_response(f'Warning: Ignoring unsupported command: {input_cmd}'))
+            ## TODO: Crash PaSh if that happens. (How can we do that?)
+
 
     ## This method calls the reader to get an input
     def get_input(self):
-        cmd = ""
-        if not self.reader_pipes_are_blocking:
-            while not cmd:
-                cmd = self.reader.get_next_cmd()
-        else:
-            cmd = self.reader.get_next_cmd()
-        return cmd
+        return self.connection_manager.get_next_cmd()
 
-    ## This method sends output through the output fifo of the daemon
-    def send_output(self, message):
-        self.fout = open(self.out_filename, "w")
-        self.fout.write(message)
-        self.fout.flush()
-        self.fout.close()
+    ## This method responds to the last connection and closes it
+    def respond(self, message):
+        self.connection_manager.respond(message)
+
+    ## This method closes the last connection that we got input from
+    def close_last_connection(self):
+        pass
 
     def __parse_compile_command(self, input):
         try:
@@ -265,8 +266,8 @@ class Scheduler:
             raise Exception(f'Parsing failure for line: {input}')
 
     def run(self, in_filename, out_filename):
-        self.reader = UnixPipeReader(in_filename, self.reader_pipes_are_blocking)
-        self.out_filename = out_filename
+        ## TODO: Change the name of reader to connection manager.
+        self.connection_manager = UnixPipeReader(in_filename, out_filename, self.reader_pipes_are_blocking)
         while not self.done:
             # Process a single request
             input_cmd = self.get_input()
@@ -274,13 +275,14 @@ class Scheduler:
             ## Parse the command (potentially also sending a response)
             self.parse_and_run_cmd(input_cmd)
         
-        self.reader.close()
+        self.connection_manager.close()
         shutdown()
 
 
 class UnixPipeReader:
-    def __init__(self, in_filename, blocking = True):
+    def __init__(self, in_filename, out_filename, blocking = True):
         self.in_filename = in_filename
+        self.out_filename = out_filename
         self.buffer = ""
         self.blocking = blocking
         if not self.blocking:
@@ -290,7 +292,19 @@ class UnixPipeReader:
         else:
             log("Reader initialized in blocking mode")
 
+    ## This is necessary here to ensure that get_next_cmd is blocking een though the underlying API is non-blocking.
     def get_next_cmd(self):
+        cmd = ""
+        ## TODO: Remove the non-blocking control flow since it doesn't make sense to busy wait
+        if not self.blocking:
+            while not cmd:
+                cmd = self.get_next_cmd_aux()
+        else:
+            cmd = self.get_next_cmd_aux()
+        return cmd
+
+
+    def get_next_cmd_aux(self):
         """
         This method return depends on the reading mode. In blocking mode this method will
         return the next full command and if there is no command it will wait until a full command is recieved.
@@ -327,6 +341,21 @@ class UnixPipeReader:
         cmd = cmd.rstrip()
         log("Reader returned cmd:", cmd)
         return cmd
+
+    ## This method respond to the connection we last got input from
+    ## In the case of the UnixPipes, we don't have any state management here
+    ##   since all reads/writes go to/from the same fifos
+    def respond(self, message):
+        fout = open(self.out_filename, "w")
+        fout.write(message)
+        fout.flush()
+        fout.close()
+
+
+    ## This method doesn't do anything for unix pipe reader since we always read and write
+    ## to and from the same fifos
+    def close_last_connection(self):
+        pass
 
     def close(self):
         log("Reader closed")
