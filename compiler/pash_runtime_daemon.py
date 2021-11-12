@@ -32,10 +32,6 @@ signal.signal(signal.SIGTERM, handler)
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "input", help="the input fifo from which the daemon will read its input")
-    parser.add_argument(
-        "output", help="the output fifo to which the daemon will write its output")
     config.add_common_arguments(parser)
     args, unknown_args = parser.parse_known_args()
 
@@ -270,9 +266,11 @@ class Scheduler:
         except:
             raise Exception(f'Parsing failure for line: {input}')
 
-    def run(self, in_filename, out_filename):
+    def run(self):
         ## By default communicate through sockets, except if the user wants to do it through pipes
         if (config.pash_args.daemon_communicates_through_unix_pipes):
+            in_filename = os.getenv("RUNTIME_IN_FIFO")
+            out_filename = os.getenv("RUNTIME_OUT_FIFO")
             self.connection_manager = UnixPipeReader(in_filename, out_filename, self.reader_pipes_are_blocking)
         else:
             self.connection_manager = SocketManager()
@@ -377,8 +375,8 @@ class UnixPipeReader:
 ## TODO: SocketManager might need to handle errors more gracefully
 class SocketManager:
     def __init__(self):
-        ## TODO: Pass it as an argument
-        server_address = os.path.join(config.PASH_TMP_PREFIX, 'daemon_socket')
+        ## Configure them outside
+        server_address = os.getenv('DAEMON_SOCKET')
         self.buf_size = 8192
 
         # Make sure the socket does not already exist
@@ -455,7 +453,7 @@ def shutdown():
 def main():
     args = init()
     scheduler = Scheduler()
-    scheduler.run(in_filename=args.input, out_filename=args.output)
+    scheduler.run()
    
 
 if __name__ == "__main__":

@@ -27,7 +27,7 @@ mkfifo "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 ## TODO: Do those setups conditionally
 export DAEMON_SOCKET="${PASH_TMP_PREFIX}/daemon_socket"
 
-python3 -S "$PASH_TOP/compiler/pash_runtime_daemon.py" "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO" $@ &
+python3 -S "$PASH_TOP/compiler/pash_runtime_daemon.py" $@ &
 daemon_pid=$!
 
 ## Initialize all things necessary for pash to execute (logging/functions/etc)
