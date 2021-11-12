@@ -20,11 +20,11 @@ fi
 export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
 
 ## Create the input and output fifo that the runtime will use for communication
-export RUNTIME_IN_FIFO="$(mktemp -u ${PASH_TMP_PREFIX}/runtime_in_fifo_XXXX)"
-export RUNTIME_OUT_FIFO="$(mktemp -u ${PASH_TMP_PREFIX}/runtime_out_fifo_XXXX)"
+export RUNTIME_IN_FIFO="${PASH_TMP_PREFIX}/runtime_in_fifo"
+export RUNTIME_OUT_FIFO="${PASH_TMP_PREFIX}/runtime_out_fifo"
+## TODO: Get rid of these two commands if possible
 rm -f "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 mkfifo "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
-## TODO: Do those setups conditionally
 export DAEMON_SOCKET="${PASH_TMP_PREFIX}/daemon_socket"
 
 python3 -S "$PASH_TOP/compiler/pash_runtime_daemon.py" $@ &
