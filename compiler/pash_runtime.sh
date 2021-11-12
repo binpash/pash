@@ -121,10 +121,7 @@ else
     pash_redir_output echo "$$: (2) Before asking the daemon for compilation..."
     ## Send and receive from daemon
     msg="Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}| Input IR File:${pash_input_ir_file}"
-    daemon_response=$(pash_communicate_daemon "$msg")
-    # pash_send_to_daemon "$msg"
-    # pash_redir_output echo "$$: (2) Waiting for the daemon to respond..."
-    # daemon_response=$(pash_receive_from_daemon) # Blocking step, daemon will not send response until it's safe to continue
+    daemon_response=$(pash_communicate_daemon "$msg") # Blocking step, daemon will not send response until it's safe to continue
 
     if [[ "$daemon_response" == *"OK:"* ]]; then
         pash_runtime_return_code=0

@@ -45,8 +45,6 @@ pash_exit_code=$?
 if ps -p $daemon_pid > /dev/null 
 then
   ## Send and receive from daemon
-  # pash_send_to_daemon "Done"
-  # daemon_response=$(pash_receive_from_daemon)
   msg="Done"
   daemon_response=$(pash_communicate_daemon "$msg")
   wait 2> /dev/null 1>&2 
