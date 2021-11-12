@@ -120,10 +120,11 @@ else
     ## TODO: Make a proper client for the daemon
     pash_redir_output echo "$$: (2) Before asking the daemon for compilation..."
     ## Send and receive from daemon
-    pash_send_to_daemon "Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}| Input IR File:${pash_input_ir_file}"
-
-    pash_redir_output echo "$$: (2) Waiting for the daemon to respond..."
-    daemon_response=$(pash_receive_from_daemon) # Blocking step, daemon will not send response until it's safe to continue
+    msg="Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}| Input IR File:${pash_input_ir_file}"
+    daemon_response=$(pash_communicate_daemon "$msg")
+    # pash_send_to_daemon "$msg"
+    # pash_redir_output echo "$$: (2) Waiting for the daemon to respond..."
+    # daemon_response=$(pash_receive_from_daemon) # Blocking step, daemon will not send response until it's safe to continue
 
     if [[ "$daemon_response" == *"OK:"* ]]; then
         pash_runtime_return_code=0
@@ -166,7 +167,8 @@ else
 
     function clean_up () {
         ## Send to daemon
-        pash_send_to_daemon "Exit:${process_id}"
+        msg="Exit:${process_id}"
+        daemon_response=$(pash_communicate_daemon "$msg")
     } 
 
     function run_parallel() {

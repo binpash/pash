@@ -24,6 +24,9 @@ export RUNTIME_IN_FIFO="$(mktemp -u ${PASH_TMP_PREFIX}/runtime_in_fifo_XXXX)"
 export RUNTIME_OUT_FIFO="$(mktemp -u ${PASH_TMP_PREFIX}/runtime_out_fifo_XXXX)"
 rm -f "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 mkfifo "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
+## TODO: Do those setups conditionally
+export DAEMON_SOCKET="${PASH_TMP_PREFIX}/daemon_socket"
+
 python3 -S "$PASH_TOP/compiler/pash_runtime_daemon.py" "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO" $@ &
 daemon_pid=$!
 
@@ -37,8 +40,10 @@ pash_exit_code=$?
 if ps -p $daemon_pid > /dev/null 
 then
   ## Send and receive from daemon
-  pash_send_to_daemon "Done"
-  daemon_response=$(pash_receive_from_daemon)
+  # pash_send_to_daemon "Done"
+  # daemon_response=$(pash_receive_from_daemon)
+  msg="Done"
+  daemon_response=$(pash_communicate_daemon "$msg")
   wait 2> /dev/null 1>&2 
 fi
 

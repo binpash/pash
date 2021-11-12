@@ -140,7 +140,8 @@ export -f pash_redir_all_output_always_execute
 pash_send_to_daemon()
 {
     local message="$1"
-    echo "$message" > "$RUNTIME_IN_FIFO"
+    echo "$message" | nc -U "$DAEMON_SOCKET"
+    # echo "$message" > "$RUNTIME_IN_FIFO"
     pash_redir_output echo "Sent msg to daemon: $message"
 }
 
@@ -151,5 +152,16 @@ pash_receive_from_daemon()
     echo "$daemon_response"
 }
 
+## TODO: Make sure to fix that for both pipes and sockets
+pash_communicate_daemon()
+{
+    local message=$1
+    pash_redir_output echo "Sending msg to daemon: $message"
+    daemon_response=$(echo "$message" | nc -U "$DAEMON_SOCKET")
+    pash_redir_output echo "Got response from daemon: $daemon_response"
+    echo "$daemon_response"
+}
+
 export -f pash_send_to_daemon
 export -f pash_receive_from_daemon
+export -f pash_communicate_daemon
