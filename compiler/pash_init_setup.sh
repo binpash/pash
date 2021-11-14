@@ -18,7 +18,7 @@ export pash_checking_log_file=0
 export pash_checking_debug_level=0
 export pash_avoid_pash_runtime_completion_flag=0
 export pash_parallel_pipelines=0
-
+export pash_daemon_communicates_through_unix_pipes_flag=0
 for item in $@
 do
     if [ "$pash_checking_speculation" -eq 1 ]; then
@@ -76,6 +76,10 @@ do
     ## TODO: Add this flag in pash.py too so that it is printed in help.
     if [ "--pash_parallel_pipelines" == "$item" ]; then
         export pash_parallel_pipelines=1
+    fi
+
+    if [ "--daemon_communicates_through_unix_pipes" == "$item" ]; then
+        export pash_daemon_communicates_through_unix_pipes_flag=1
     fi
 done
 
@@ -135,3 +139,55 @@ fi
 export -f pash_redir_output
 export -f pash_redir_all_output
 export -f pash_redir_all_output_always_execute
+
+
+if [ "$pash_daemon_communicates_through_unix_pipes_flag" -eq 1 ]; then
+    pash_communicate_daemon()
+    {
+        local message=$1
+        pash_redir_output echo "Sending msg to daemon: $message"
+        echo "$message" > "$RUNTIME_IN_FIFO"
+        daemon_response=$(cat "$RUNTIME_OUT_FIFO")
+        pash_redir_output echo "Got response from daemon: $daemon_response"
+        echo "$daemon_response"
+    }
+
+    pash_communicate_daemon_just_send()
+    {
+        local message=$1
+        pash_redir_output echo "Sending msg to daemon: $message"
+        echo "$message" > "$RUNTIME_IN_FIFO"
+    }
+
+    pash_wait_until_daemon_listening()
+    {
+        :
+    }
+else
+    pash_communicate_daemon()
+    {
+        local message=$1
+        pash_redir_output echo "Sending msg to daemon: $message"
+        daemon_response=$(echo "$message" | nc -U "$DAEMON_SOCKET")
+        pash_redir_output echo "Got response from daemon: $daemon_response"
+        echo "$daemon_response"
+    }
+
+    pash_communicate_daemon_just_send()
+    {
+        pash_communicate_daemon $1
+    }
+
+    pash_wait_until_daemon_listening()
+    {
+        while ! nc -z -U "$DAEMON_SOCKET" >/dev/null 2>&1 ; 
+        do 
+        ## TODO: Can we wait for the daemon in a better way?
+            sleep 0.01
+        done
+    }
+fi
+
+export -f pash_communicate_daemon
+export -f pash_communicate_daemon_just_send
+export -f pash_wait_until_daemon_listening
