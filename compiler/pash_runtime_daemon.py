@@ -1,6 +1,7 @@
 import argparse
 import pexpect
 import signal
+import socket
 import subprocess
 import sys
 import traceback
@@ -27,15 +28,10 @@ def handler(signum, frame):
     log("Signal:", signum, "caught")
     shutdown()
 
-# Set the signal handler and a 5-second alarm
 signal.signal(signal.SIGTERM, handler)
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "input", help="the input fifo from which the daemon will read its input")
-    parser.add_argument(
-        "output", help="the output fifo to which the daemon will write its output")
     config.add_common_arguments(parser)
     args, unknown_args = parser.parse_known_args()
 
@@ -126,7 +122,7 @@ class Scheduler:
         self.unsafe_running = False
         self.done = False
         self.cmd_buffer = ""
-        self.reader = None
+        self.connection_manager = None
         self.reader_pipes_are_blocking = True
 
     def check_resources_safety(self, process_id):
@@ -182,7 +178,7 @@ class Scheduler:
             self.unsafe_running = True
 
         self.running_procs += 1
-        self.send_output(response)
+        return response
 
     def remove_process(self, process_id):
         log("The following process exited:", process_id)
@@ -203,14 +199,20 @@ class Scheduler:
     def wait_for_all(self):
         log("Waiting for all process to finish:", self.running_procs)
         while self.running_procs > 0:
-            input_cmd = self.wait_input()
+            input_cmd = self.get_input()
             # must be exit command or something is wrong
             if (input_cmd.startswith("Exit:")):
-                self.remove_process(int(input_cmd.split(":")[1]))
+                self.handle_exit(input_cmd)
             else:
                 raise Exception(
                     f"Command should be exit but it was {input_cmd}")
         self.unsafe_running = False
+
+    def handle_exit(self, input_cmd):
+        assert(input_cmd.startswith("Exit:"))
+        self.remove_process(int(input_cmd.split(":")[1]))
+        ## Necessary so that Exit doesn't block
+        self.close_last_connection()
 
     def wait_unsafe(self):
         log("Unsafe running:", self.unsafe_running)
@@ -223,32 +225,36 @@ class Scheduler:
         if(input_cmd.startswith("Compile")):
             compiled_script_file, var_file, input_ir_file = self.__parse_compile_command(
                 input_cmd)
-            self.compile_and_add(compiled_script_file, var_file, input_ir_file)
-        elif (input_cmd.startswith("Exit")):
-            self.remove_process(int(input_cmd.split(":")[1]))
+            response = self.compile_and_add(compiled_script_file, var_file, input_ir_file)
+            ## Send output to the specific command
+            self.respond(response)
+        elif (input_cmd.startswith("Exit:")):
+            self.handle_exit(input_cmd)
         elif (input_cmd.startswith("Done")):
             self.wait_for_all()
-            self.send_output("All finished")
+            ## We send output to the top level pash process
+            ## to signify that we are done.
+            self.respond("All finished")
             self.done = True
+        elif (input_cmd == ""):
+            ## This happens when pa.sh first connects to daemon to see if it is on
+            self.close_last_connection()
         else:
-            self.send_output(error_response(
-                f'Unsupported command: {input_cmd}'))
+            log(error_response(f'Error: Unsupported command: {input_cmd}'))
+            raise Exception(f'Error: Unsupported command: {input_cmd}')
 
-    def wait_input(self):
-        cmd = ""
-        if not self.reader_pipes_are_blocking:
-            while not cmd:
-                cmd = self.reader.get_next_cmd()
-        else:
-            cmd = self.reader.get_next_cmd()
-        return cmd
 
-    def send_output(self, message):
-        """ This function should only be called if the output pipe is already opened. It will also close the opened fout pipe """
-        assert(not self.fout.closed)
-        self.fout.write(message)
-        self.fout.flush()
-        self.fout.close()
+    ## This method calls the reader to get an input
+    def get_input(self):
+        return self.connection_manager.get_next_cmd()
+
+    ## This method responds to the last connection and closes it
+    def respond(self, message):
+        self.connection_manager.respond(message)
+
+    ## This method closes the last connection that we got input from
+    def close_last_connection(self):
+        self.connection_manager.close_last_connection()
 
     def __parse_compile_command(self, input):
         try:
@@ -260,28 +266,29 @@ class Scheduler:
         except:
             raise Exception(f'Parsing failure for line: {input}')
 
-    def run(self, in_filename, out_filename):
-        self.reader = UnixPipeReader(in_filename, self.reader_pipes_are_blocking)
-        self.out_filename = out_filename
+    def run(self):
+        ## By default communicate through sockets, except if the user wants to do it through pipes
+        if (config.pash_args.daemon_communicates_through_unix_pipes):
+            in_filename = os.getenv("RUNTIME_IN_FIFO")
+            out_filename = os.getenv("RUNTIME_OUT_FIFO")
+            self.connection_manager = UnixPipeReader(in_filename, out_filename, self.reader_pipes_are_blocking)
+        else:
+            self.connection_manager = SocketManager()
         while not self.done:
             # Process a single request
-            input_cmd = self.wait_input()
-            if not input_cmd:
-                continue
+            input_cmd = self.get_input()
 
-            # After exit we don't send anything to the client so we don't open the fout pipe
-            if (not input_cmd.startswith("Exit:")):
-                self.fout = open(out_filename, "w")
-
+            ## Parse the command (potentially also sending a response)
             self.parse_and_run_cmd(input_cmd)
         
-        self.reader.close()
+        self.connection_manager.close()
         shutdown()
 
 
 class UnixPipeReader:
-    def __init__(self, in_filename, blocking = True):
+    def __init__(self, in_filename, out_filename, blocking = True):
         self.in_filename = in_filename
+        self.out_filename = out_filename
         self.buffer = ""
         self.blocking = blocking
         if not self.blocking:
@@ -291,7 +298,19 @@ class UnixPipeReader:
         else:
             log("Reader initialized in blocking mode")
 
+    ## This is necessary here to ensure that get_next_cmd is blocking een though the underlying API is non-blocking.
     def get_next_cmd(self):
+        cmd = ""
+        ## TODO: Remove the non-blocking control flow since it doesn't make sense to busy wait
+        if not self.blocking:
+            while not cmd:
+                cmd = self.get_next_cmd_aux()
+        else:
+            cmd = self.get_next_cmd_aux()
+        return cmd
+
+
+    def get_next_cmd_aux(self):
         """
         This method return depends on the reading mode. In blocking mode this method will
         return the next full command and if there is no command it will wait until a full command is recieved.
@@ -329,10 +348,94 @@ class UnixPipeReader:
         log("Reader returned cmd:", cmd)
         return cmd
 
+    ## This method respond to the connection we last got input from
+    ## In the case of the UnixPipes, we don't have any state management here
+    ##   since all reads/writes go to/from the same fifos
+    def respond(self, message):
+        fout = open(self.out_filename, "w")
+        fout.write(message)
+        fout.flush()
+        fout.close()
+
+
+    ## This method doesn't do anything for unix pipe reader since we always read and write
+    ## to and from the same fifos
+    def close_last_connection(self):
+        pass
+
     def close(self):
         log("Reader closed")
         if not self.blocking:
             self.fin.close()
+
+
+## TODO: Instead of this, think of using a standard SocketServer
+##   see: https://docs.python.org/3/library/socketserver.html#module-socketserver
+##
+## TODO: SocketManager might need to handle errors more gracefully
+class SocketManager:
+    def __init__(self):
+        ## Configure them outside
+        server_address = os.getenv('DAEMON_SOCKET')
+        self.buf_size = 8192
+
+        # Make sure the socket does not already exist
+        ## TODO: Is this necessary?
+        try:
+            os.unlink(server_address)
+        except OSError:
+            if os.path.exists(server_address):
+                raise
+        log("SocketManager: Made sure that socket does not exist")
+
+        # Create a UDS socket
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        log("SocketManager: Created socket")
+
+        self.sock.bind(server_address)
+        log("SocketManager: Successfully bound to socket")    
+
+        ## TODO: Check if we need to configure the backlog
+        self.sock.listen()    
+        log("SocketManager: Listenting on socket")    
+
+        ## Connection stack
+        self.connections = []
+    
+
+    def get_next_cmd(self):
+        connection, client_address = self.sock.accept()
+        data = connection.recv(self.buf_size)
+
+        ## TODO: This could be avoided for efficiency
+        str_data = data.decode('utf-8')
+        log("Received data:", str_data)
+        ## TODO: Lift this requirement if needed
+        ##
+        ## We need to ensure that we read a command at once or the command was empty (only relevant in the first invocation)
+        assert(str_data.endswith("\n") or str_data == "")
+        
+        self.connections.append(connection)
+        return str_data
+
+    ## This method respond to the connection we last got input from
+    ## In the case of the UnixPipes, we don't have any state management here
+    ##   since all reads/writes go to/from the same fifos
+    def respond(self, message):
+        bytes_message = message.encode('utf-8')
+        self.connections[-1].sendall(bytes_message)
+        self.close_last_connection()
+
+    ## This method doesn't do anything for unix pipe reader since we always read and write
+    ## to and from the same fifos
+    def close_last_connection(self):
+        # Clean up the connection
+        last_connection = self.connections.pop()
+        last_connection.close()
+
+    def close(self):
+        self.sock.close()
+        log("SocketManager: Closed")
 
 def shutdown():
     ## There may be races since this is called through the signal handling
@@ -350,7 +453,7 @@ def shutdown():
 def main():
     args = init()
     scheduler = Scheduler()
-    scheduler.run(in_filename=args.input, out_filename=args.output)
+    scheduler.run()
    
 
 if __name__ == "__main__":

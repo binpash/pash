@@ -116,6 +116,9 @@ def add_common_arguments(parser):
                         help="(experimental) determine the termination behavior of the DFG. Defaults to cleanup after the last process dies, but can drain all streams until depletion",
                         choices=['clean_up_graph', 'drain_stream'],
                         default="clean_up_graph")
+    parser.add_argument("--daemon_communicates_through_unix_pipes",
+                        help="(experimental) the daemon communicates through unix pipes instead of sockets",
+                        action="store_true")
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")
@@ -149,6 +152,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--r_split"))
     if (pash_arguments.dgsh_tee):
         arguments.append(string_to_argument("--dgsh_tee"))
+    if (pash_arguments.daemon_communicates_through_unix_pipes):
+        arguments.append(string_to_argument("--daemon_communicates_through_unix_pipes"))
     arguments.append(string_to_argument("--r_split_batch_size"))
     arguments.append(string_to_argument(str(pash_arguments.r_split_batch_size)))
     if (pash_arguments.no_cat_split_vanish):
