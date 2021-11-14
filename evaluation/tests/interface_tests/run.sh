@@ -248,6 +248,13 @@ test_trap()
     $shell trap.sh
 }
 
+test_set-dash()
+{
+    local shell=$1
+    $shell -v -x set-dash-v-x.sh one two three four five > set-dash-v-x.out 2> set-dash-v-x.err
+    grep 'echo hello' set-dash-v-x.err | wc -l
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -280,6 +287,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_exec_redirections
     run_test test_cat_hyphen
     run_test test_trap
+    run_test test_set-dash
 else
     for testname in $@
     do

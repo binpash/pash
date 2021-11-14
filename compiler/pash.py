@@ -164,6 +164,14 @@ def parse_args():
                         action="store_true",
                         default=False)
     
+    ## These two are here for compatibility with respect to bash
+    parser.add_argument("-v",
+                        help="(experimental) prints shell input lines as they are read",
+                        action="store_true")
+    parser.add_argument("-x",
+                        help="(experimental) prints commands and their arguments as they execute",
+                        action="store_true")
+    
     config.add_common_arguments(parser)
     args = parser.parse_args()
     config.pash_args = args
@@ -224,13 +232,21 @@ def bash_prefix_args():
         subprocess_args.append("-a")
     else:
         subprocess_args.append("+a")
+    if config.pash_args.v:
+        subprocess_args.append("-v")
+    if config.pash_args.x:
+        subprocess_args.append("-x")
     return subprocess_args
 
 def bash_exec_string(shell_name):
-    a_flag = ''
+    flags = []
     if config.pash_args.a:
-        a_flag = '-a'
-    return "exec -a{} bash {} -s $@\n".format(shell_name, a_flag)
+        flags.append('-a')
+    if config.pash_args.v:
+        flags.append('-v')
+    if config.pash_args.x:
+        flags.append('-x')
+    return "exec -a{} bash {} -s $@\n".format(shell_name, " ".join(flags))
 
 def execute_script(compiled_script_filename, command, arguments, shell_name):
     new_env = shell_env(shell_name)
