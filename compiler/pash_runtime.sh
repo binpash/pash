@@ -116,26 +116,32 @@ if [ "$pash_speculation_flag" -eq 1 ]; then
     ## For now this will fail!!!
     exit 1
 else
-    ## TODO: Have a more proper communication protocol
-    ## TODO: Make a proper client for the daemon
-    pash_redir_output echo "$$: (2) Before asking the daemon for compilation..."
-    ## Send and receive from daemon
-    msg="Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}| Input IR File:${pash_input_ir_file}"
-    daemon_response=$(pash_communicate_daemon "$msg") # Blocking step, daemon will not send response until it's safe to continue
 
-    if [[ "$daemon_response" == *"OK:"* ]]; then
-        pash_runtime_return_code=0
-    elif [ -z "$daemon_response" ]; then
-        ## Trouble... Daemon crashed, rip
-        pash_redir_output echo "$$: ERROR: (2) Daemon crashed!"
-        exit 1
+    if [ "$pash_daemon" -eq 1 ]; then
+        ## TODO: Have a more proper communication protocol
+        ## TODO: Make a proper client for the daemon
+        pash_redir_output echo "$$: (2) Before asking the daemon for compilation..."
+        ## Send and receive from daemon
+        msg="Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}| Input IR File:${pash_input_ir_file}"
+        daemon_response=$(pash_communicate_daemon "$msg") # Blocking step, daemon will not send response until it's safe to continue
+
+        if [[ "$daemon_response" == *"OK:"* ]]; then
+            pash_runtime_return_code=0
+        elif [ -z "$daemon_response" ]; then
+            ## Trouble... Daemon crashed, rip
+            pash_redir_output echo "$$: ERROR: (2) Daemon crashed!"
+            exit 1
+        else
+            pash_runtime_return_code=1
+        fi
+        
+        # Get assigned process id
+        response_args=($daemon_response)
+        process_id=${response_args[1]}
     else
-        pash_runtime_return_code=1
+        pash_redir_all_output_always_execute python3 -S "$RUNTIME_DIR//pash_runtime.py" --var_file "${pash_runtime_shell_variables_file}" "${pash_compiled_script_file}" "${pash_input_ir_file}" $@
+        pash_runtime_return_code=$?
     fi
-    
-    # Get assigned process id
-    response_args=($daemon_response)
-    process_id=${response_args[1]}
 
     pash_redir_output echo "$$: (2) Compiler exited with code: $pash_runtime_return_code"
     if [ "$pash_runtime_return_code" -ne 0 ] && [ "$pash_assert_compiler_success_flag" -eq 1 ]; then
@@ -162,15 +168,18 @@ else
     # ## (4)
     # ##
 
+    ## TODO: It might make sense to move these functions in pash_init_setup to avoid the cost of redefining them here.
     function clean_up () {
-        ## Send to daemon
-        msg="Exit:${process_id}"
-        daemon_response=$(pash_communicate_daemon_just_send "$msg")
+        if [ "$pash_daemon" -eq 1 ]; then
+            ## Send to daemon
+            msg="Exit:${process_id}"
+            daemon_response=$(pash_communicate_daemon_just_send "$msg")
+        fi
     } 
 
     function run_parallel() {
         trap clean_up SIGTERM SIGINT EXIT
-        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id}
+        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute}
         internal_exec_status=$?
         final_steps
         clean_up
@@ -206,12 +215,15 @@ else
     traps_set=$(trap)
     pash_redir_output echo "$$: (2) Traps set: $traps_set"
     # Don't fork if compilation failed. The script might have effects on the shell state.
-    if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_parallel_pipelines" -eq 0 ] || [ ! -z "$traps_set" ]; then
+    if [ "$pash_runtime_return_code" -ne 0 ] || 
+       [ "$pash_parallel_pipelines" -eq 0 ] || 
+       [ ! -z "$traps_set" ] ||
+       [ "$pash_daemon" -eq 0 ]; then
         # Early clean up in case the script effects shell like "break" or "exec"
         # This is safe because the script is run sequentially and the shell 
         # won't be able to move forward until this is finished
         clean_up 
-        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute} ${process_id}
+        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute}
         pash_runtime_final_status=$?
         final_steps
     else 

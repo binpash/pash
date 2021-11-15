@@ -4,12 +4,12 @@ import pickle
 import traceback
 from datetime import datetime
 
+import config
 from ir import *
 from ast_to_ir import compile_asts
 from json_ast import *
 from ir_to_ast import to_shell
 from util import *
-import config
 
 from definitions.ir.aggregator_node import *
 
@@ -52,6 +52,8 @@ def main_body():
     ## Read any shell variables files if present
     config.read_vars_file(args.var_file)
 
+    log("Input:", args.input_ir, "Compiled file:", args.compiled_script_file)
+
     ## Call the main procedure
     compile_optimize_output_script(args.input_ir, args.compiled_script_file, args)
 
@@ -65,7 +67,7 @@ def parse_args():
                         help="determines the path of a file containing all shell variables.",
                         default=None)
     config.add_common_arguments(parser)
-    args = parser.parse_args()
+    args, unknown_args = parser.parse_known_args()
     return args
 
 

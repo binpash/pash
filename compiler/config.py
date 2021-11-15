@@ -98,6 +98,14 @@ def add_common_arguments(parser):
     parser.add_argument("--no_cat_split_vanish",
                         help="(experimental) disable the optimization that removes cat with N inputs that is followed by a split with N inputs",
                         action="store_true")
+    parser.add_argument("--no_daemon",
+                        help="Run the compiler everytime we need a compilation instead of using the daemon",
+                        action="store_true",
+                        default=False)
+    parser.add_argument("--parallel_pipelines",
+                        help="Run multiple pipelines in parallel if they are safe to run",
+                        action="store_true",
+                        default=False)
     parser.add_argument("--r_split",
                         help="(experimental) use round robin split, merge, wrap, and unwrap",
                         action="store_true")
@@ -149,6 +157,10 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--r_split"))
     if (pash_arguments.dgsh_tee):
         arguments.append(string_to_argument("--dgsh_tee"))
+    if (pash_arguments.no_daemon):
+        arguments.append(string_to_argument("--no_daemon"))
+    if (pash_arguments.parallel_pipelines):
+        arguments.append(string_to_argument("--parallel_pipelines"))
     if (pash_arguments.daemon_communicates_through_unix_pipes):
         arguments.append(string_to_argument("--daemon_communicates_through_unix_pipes"))
     arguments.append(string_to_argument("--r_split_batch_size"))
