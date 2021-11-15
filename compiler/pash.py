@@ -158,12 +158,7 @@ def parse_args():
     parser.add_argument("+a",
                         help="Disabling the `allexport` shell option",
                         action="store_false",
-                        default=False)
-    parser.add_argument("--pash_parallel_pipelines",
-                        help="Run multiple pipelines in parallel if they are safe to run",
-                        action="store_true",
-                        default=False)
-    
+                        default=False)    
     ## These two are here for compatibility with respect to bash
     parser.add_argument("-v",
                         help="(experimental) prints shell input lines as they are read",

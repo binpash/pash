@@ -4,7 +4,6 @@
 RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
 
 script_source="$1"
-process_id=$2
 
 #ONLY WAY OUT IS TO TREAT EXEC in special way
 
