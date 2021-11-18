@@ -31,7 +31,7 @@ def handler(signum, frame):
 signal.signal(signal.SIGTERM, handler)
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(add_help=False)
     config.add_common_arguments(parser)
     args, unknown_args = parser.parse_known_args()
 
