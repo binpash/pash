@@ -209,14 +209,20 @@ else
         fi
     }
 
+    ## TODO: Add a check that `set -e` is not on
+
     ## Check if there are traps set, and if so do not execute in parallel
     ##
     ## TODO: This might be an overkill but is conservative
     traps_set=$(trap)
     pash_redir_output echo "$$: (2) Traps set: $traps_set"
     # Don't fork if compilation failed. The script might have effects on the shell state.
-    if [ "$pash_runtime_return_code" -ne 0 ] || 
-       [ "$pash_parallel_pipelines" -eq 0 ] || 
+    if [ "$pash_runtime_return_code" -ne 0 ] ||
+       ## If parallel pipelines is not enabled we shouldn't fork 
+       [ "$pash_parallel_pipelines" -eq 0 ] ||
+       ## If parallel pipelines is explicitly disabled (e.g., due to context), no forking
+       [ "$pash_disable_parallel_pipelines" -eq 1 ] ||
+       ## If traps are set, no forking
        [ ! -z "$traps_set" ] ||
        [ "$pash_daemon" -eq 0 ]; then
         # Early clean up in case the script effects shell like "break" or "exec"
