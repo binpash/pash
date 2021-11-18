@@ -190,6 +190,11 @@ def make_background(body, redirections=[]):
     node = make_kv("Background", [lineno, body, redirections])
     return node
 
+def make_subshell(body, redirections=[]):
+    lineno = 0
+    node = make_kv("Subshell", [lineno, body, redirections])
+    return node
+
 def make_command(arguments, redirections=[], assignments=[]):
     lineno = 0
     node = make_kv("Command", [lineno, assignments, arguments, redirections])
