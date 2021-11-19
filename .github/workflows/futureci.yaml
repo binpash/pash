@@ -1,7 +1,7 @@
-name: Pash-CI-issue
+name: Pash-future-CI-issue
 on:
   # Trigger the workflow on push or pull request,
-  # but only for the main branch
+  # but only for the future branch
   push:
     branches:
       - future
@@ -11,7 +11,7 @@ on:
         - evaluation/**
         - annotations/**
 jobs:
-  pash-ci:
+  future-ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2 
