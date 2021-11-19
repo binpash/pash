@@ -1,0 +1,25 @@
+name: Pash-future-CI-issue
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the future branch
+  push:
+    branches:
+      - future
+    paths: 
+        - compiler/**
+        - runtime/**
+        - evaluation/**
+        - annotations/**
+jobs:
+  future-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2 
+      - name: Trigger Performance Tests
+        run: |
+          # fetch the commit hash
+          hash=$(git rev-parse --short HEAD | tr -d "\n")
+          # construct the url for performance and correctness
+          tests="http://ctrl.pash.ndr.md/job=issue&branch=future&benchmark=TIGHT-LOOP&commit=$hash"
+          # issue the tests for the future branch
+          curl -s "$tests"
