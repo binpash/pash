@@ -110,4 +110,4 @@ The compiler is outlined in the [EuroSys paper](https://arxiv.org/pdf/2007.09436
 * PaSh originally did not have a preprocessing component, and didn't handle variable expansion. It now does both, significantly improving its practical applicability since it can be used on scripts where the environment variables are modified throughout the script.
 
 * PaSh originally was using code in [parser](./parser) -- a port of [libdash](https://github.com/mgree/), the `dash` parser extended with OCaml bindings -- and specifically the `ocaml2json` and `json2ocaml` binaries to interface with PaSh. PaSh now uses a custom parser written in Python, avoiding any dependency to OCaml and simplifying dependency management.
-
+ 
