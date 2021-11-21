@@ -196,9 +196,9 @@ else
             sleep 0.01
             i=$((i+1))
             if [ $i -eq $maximum_retries ]; then
-                pash_redir_output echo "Error: Maximum retries: $maximum_retries exceeded when waiting for daemon to bind to socker!"
-                pash_redir_output echo "Exiting..."
-                break
+                echo "Error: Maximum retries: $maximum_retries exceeded when waiting for daemon to bind to socket!" 1>&2
+                echo "Exiting..." 1>&2
+                exit 1
             fi
         done
     }
