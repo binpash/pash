@@ -291,7 +291,7 @@ def read_vars_file(var_file_path):
 
         with open(var_file_path) as f:
             data = f.read()
-            tokens = shlex.split(data)
+            tokens = shlex.split(data, comments=True)
             # log(tokens)
 
         # MMG 2021-03-09 definitively breaking on newlines (e.g., IFS) and function outputs (i.e., `declare -f`)
