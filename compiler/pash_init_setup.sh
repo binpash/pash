@@ -184,10 +184,22 @@ else
 
     pash_wait_until_daemon_listening()
     {
+        ## Only wait for a limited amount of time.
+        ## If the daemon cannot start listening in ~ 1 second,
+        ##   then it must have crashed or so.
+        i=0
+        ## This is a magic number to make sure that we wait enough
+        maximum_retries=100
         while ! nc -z -U "$DAEMON_SOCKET" >/dev/null 2>&1 ; 
         do 
-        ## TODO: Can we wait for the daemon in a better way?
+            ## TODO: Can we wait for the daemon in a better way?
             sleep 0.01
+            i=$((i+1))
+            if [ $i -eq $maximum_retries ]; then
+                pash_redir_output echo "Error: Maximum retries: $maximum_retries exceeded when waiting for daemon to bind to socker!"
+                pash_redir_output echo "Exiting..."
+                break
+            fi
         done
     }
 fi
