@@ -1,15 +1,22 @@
 name: Pash-future-CI-issue
 on:
-  # Trigger the workflow on push or pull request,
-  # but only for the future branch
+  # Run the for-loop tests when pushing to future or when creating a new PR
   push:
     branches:
       - future
     paths: 
-        - compiler/**
-        - runtime/**
-        - evaluation/**
-        - annotations/**
+      - compiler/**
+      - runtime/**
+      - evaluation/**
+      - annotations/**
+  pull_request:
+    branches:
+      - future
+    paths: 
+      - compiler/**
+      - runtime/**
+      - evaluation/**
+      - annotations/**
 jobs:
   future-ci:
     runs-on: ubuntu-latest
