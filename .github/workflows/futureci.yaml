@@ -35,6 +35,7 @@ jobs:
           branch=$base
         else
           echo "We are doing a PR"
+          hash=${{ env.GITHUB_EVENT_PULL_REQUEST_HEAD_SHA_SHORT }}
         fi
         # construct the url for performance and correctness
         tests="http://ctrl.pash.ndr.md/job=issue&branch=$branch&benchmark=TIGHT-LOOP&commit=$hash"
