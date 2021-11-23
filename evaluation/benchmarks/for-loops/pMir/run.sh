@@ -2,6 +2,7 @@
 IN=${IN:-10000.txt}
 rm -f error.log
 pkg_count=0
+#TODO: figure out better way to do this
 MIR_BIN=/home/dkarnikis/.npm-packages/bin/mir-sa
 run_tests() {
     $MIR_BIN $1 -p >/dev/null 2>>error.log
