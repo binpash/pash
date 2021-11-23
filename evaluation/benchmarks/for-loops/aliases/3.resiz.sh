@@ -2,7 +2,6 @@
 
 # tag: resize image 
 set -e
-PASH_TOP=/home/tammam1/pash
 IN=${JPG:-$PASH_TOP/evaluation/benchmarks/aliases/input/jpg}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/aliases/input/out}
 # could we convert it to somelthing like this

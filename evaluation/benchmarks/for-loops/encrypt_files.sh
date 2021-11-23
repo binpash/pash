@@ -1,5 +1,5 @@
 # encrypt all files in a directory 
-PASH_TOP=/home/tammam1/pash
+
 IN=${IN:-./pcap/pcaps}
 OUT=${OUT:-./out}
 rm -rf logs_enc

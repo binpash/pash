@@ -2,7 +2,6 @@
 
 # tag: wav-to-mp3
 set -e
-PASH_TOP=/home/tammam1/pash
 IN=${WAV:-$PASH_TOP/evaluation/benchmarks/aliases/input/wav}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/aliases/input/out}
 # TODO: could we use something like this
