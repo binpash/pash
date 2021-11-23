@@ -29,6 +29,9 @@ do
         elif [ "quick_abort" == "$item" ]; then
             ## TODO: Fix how speculation interacts with dry_run, assert_compiler_success
             export pash_speculation_flag=1
+            echo "$$: Error: Speculation quick-abort is currently unmaintained!" 1>&2
+            echo "Exiting..." 1>&2
+            exit 1
         else
             echo "$$: Unknown value for option --speculation" 1>&2
             exit 1

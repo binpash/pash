@@ -27,7 +27,8 @@ compare_outputs(){
 }
 
 if [ "$EXPERIMENTAL" -eq 1 ]; then
-  export PASH_FLAGS="--speculation quick_abort --r_split --dgsh_tee --r_split_batch_size 1000000"
+  export PASH_FLAGS="--r_split --dgsh_tee --r_split_batch_size 1000000"
+  # --speculation quick_abort is not maintained at the moment 
 else
   export PASH_FLAGS=""
 fi
