@@ -16,3 +16,5 @@ for f in ${INPUT}/*; do
     logname=$OUT/$(basename $f .pcapng).log
     run_tests $f &> $logname
 done
+
+echo "done"
