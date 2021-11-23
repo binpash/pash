@@ -16,6 +16,7 @@ install() {
   done < "$file"
 }
 
+npm i -g @andromeda/mir-sa
 
 if [ "$#" -eq 1 ]; then
   mkdir -p $1.results
