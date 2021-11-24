@@ -1,6 +1,7 @@
 #!/bin/bash
+set -e
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/node_modules}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/output/mir}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/mir}
 MIR_BIN=${IN}/.bin/mir-sa
 mkdir -p ${OUT}/
 pkg_count=0

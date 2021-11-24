@@ -113,6 +113,6 @@ fi
 if [ ! -f ${IN}/packages ]; then
     cd ${IN}
     wget https://aur.archlinux.org/packages.gz
-    gunzip package.gz
+    gunzip packages.gz
     echo "Packages Extracted"
 fi

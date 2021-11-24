@@ -1,7 +1,8 @@
 #!/bin/bash
 # compress all files in a directory
+set -e
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/pcaps/}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/output/compress}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/compress}
 LOGS=${OUT}/logs
 mkdir -p ${OUT}/logs
 run_tests() {
