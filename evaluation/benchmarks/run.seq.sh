@@ -31,16 +31,16 @@ oneliners(){
   mkdir -p "$outputs_dir"
 
   scripts_inputs=(
-    "nfa-regex;100M.txt"
-    "sort;3G.txt"
-    "top-n;1G.txt"
-    "wf;3G.txt"
+#    "nfa-regex;100M.txt"
+#    "sort;3G.txt"
+#    "top-n;1G.txt"
+#    "wf;3G.txt"
     "spell;1G.txt"
-    "diff;3G.txt"
-    "bi-grams;1G.txt"
-    "set-diff;3G.txt"
-    "sort-sort;1G.txt"
-    "shortest-scripts;all_cmdsx100.txt"
+#    "diff;3G.txt"
+#    "bi-grams;1G.txt"
+#    "set-diff;3G.txt"
+#    "sort-sort;1G.txt"
+#    "shortest-scripts;all_cmdsx100.txt"
   )
 
   touch "$seq_times_file"
