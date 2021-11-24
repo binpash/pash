@@ -4,7 +4,7 @@ set_diff()
 }
 
 dict=$PASH_TOP/evaluation/tests/input/sorted_words
-IN=$PASH_TOP/evaluation/tests/input/10M.txt
+IN=$PASH_TOP/evaluation/tests/input/1M.txt
 
 cat $IN |
     # groff -t -e -mandoc -Tascii |  # remove formatting commands
