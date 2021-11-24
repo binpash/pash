@@ -195,7 +195,7 @@ else
         maximum_retries=100
         ## For some reason, `nc -z` doesn't work on livestar (it always returns error)
         ## and therefore we need to send something. 
-        until  echo "Daemon Start" | nc -U "$DAEMON_SOCKET" >/dev/null 2>&1 ; 
+        until  echo "Daemon Start" 2> /dev/null | nc -U "$DAEMON_SOCKET" >/dev/null 2>&1 ; 
         do 
             ## TODO: Can we wait for the daemon in a better way?
             sleep 0.01
