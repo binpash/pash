@@ -236,7 +236,7 @@ class Scheduler:
             ## to signify that we are done.
             self.respond("All finished")
             self.done = True
-        elif (input_cmd == ""):
+        elif (input_cmd.startswith("Daemon Start") or input_cmd == ""):
             ## This happens when pa.sh first connects to daemon to see if it is on
             self.close_last_connection()
         else:
