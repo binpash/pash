@@ -109,3 +109,10 @@ if [ ! -d ${IN}/node_modules ]; then
     install ${IN}/mir-packages.txt
     echo "Node modules downloaded"
 fi
+
+if [ ! -f ${IN}/packages ]; then
+    cd ${IN}
+    wget https://aur.archlinux.org/packages.gz
+    gunzip package.gz
+    echo "Packages Extracted"
+fi
