@@ -1,11 +1,12 @@
 #!/bin/bash
 # encrypt all files in a directory 
+set -e
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/pcap_data}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/output/encrypt}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/encrypt}
 LOGS=${OUT}/logs
-mkdir -p ${OUT} ${LOGS}
+mkdir -p ${LOGS}
 run_tests() {
-        echo 'key' | openssl enc -aes-256-cbc -e -md sha512 -in $item -out $OUT/$(basename $1).enc --pass stdin 
+    echo 'key' | openssl enc -aes-256-cbc -e -md sha512 -in $item -out $OUT/$(basename $1).enc --pass stdin 
 }
 
 export -f run_tests

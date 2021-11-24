@@ -1,11 +1,9 @@
 #!/bin/bash
-# exit on errors
 set -e
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/packages}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/output/packages}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/packages}
 LOGS=${OUT}/logs
 mkdir -p ${OUT} ${LOGS}
-
 
 info() { echo -e "\e[1m--> $@\e[0m"; }
 mkcd() { mkdir -p "$1" && cd "$1"; }

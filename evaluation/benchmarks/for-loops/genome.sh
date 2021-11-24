@@ -1,16 +1,16 @@
 #!/bin/bash
 # create bam files with regions
 ################### 1KG SAMPLES
-
+set -e
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/output/bio}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/bio}
 IN_NAME=${IN}/100G.txt
 GENE_LOCS=${IN}/Gene_locs.txt
 mkdir -p ${OUT}
 process_bio_s_line() {
     s_line=$1
     IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/}
-    OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/output/bio}
+    OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/bio}
     SAMTOOLS_BIN=${IN}/samtools-1.7/samtools
     echo $SAMTOOLS_BIN
     sample=$2 #(echo $s_line |cut -d " " -f 2);

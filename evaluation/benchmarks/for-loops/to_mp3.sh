@@ -1,9 +1,8 @@
 #!/bin/bash
-
 # tag: wav-to-mp3
 set -e
 IN=${WAV:-$PASH_TOP/evaluation/benchmarks/for-loops/input/wav}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/output/mp3}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/mp3}
 mkdir -p ${OUT}
 for FILE in $IN/*.wav ; 
 do 
