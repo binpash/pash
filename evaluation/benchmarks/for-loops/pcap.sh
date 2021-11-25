@@ -19,3 +19,5 @@ for f in ${IN}/*; do
     logname=$OUT/$(basename $f).log
     run_tests $f &> $logname
 done
+
+echo 'done';

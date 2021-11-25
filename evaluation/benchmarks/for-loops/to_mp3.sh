@@ -8,5 +8,7 @@ mkdir -p ${LOGS}
 
 for FILE in $IN/*.wav ; 
 do 
-    ffmpeg -y -i $FILE -f mp3 -ab 192000 $OUT/$(basename $FILE).mp3 > $LOGS/$(basename $FILE).log; 
+    ffmpeg -y -i $FILE -f mp3 -ab 192000 $OUT/$(basename $FILE).mp3 > $LOGS/$(basename $FILE).log  2> /dev/null
 done
+
+echo 'done';

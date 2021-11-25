@@ -9,14 +9,13 @@ if [[ -z "$PASH_TOP" ]]; then
 fi
 
 oneliners_pash(){
-  times_file="par.res"
-  outputs_suffix="par.out"
-  time_suffix="par.time"
+  par_times_file="par.res"
+  par_outputs_suffix="par.out"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
-  if [ -e "oneliners/$times_file" ]; then
-    echo "skipping oneliners/$times_file"
+  if [ -e "oneliners/$par_times_file" ]; then
+    echo "skipping oneliners/$par_times_file"
     return 0
   fi
   
@@ -30,21 +29,21 @@ oneliners_pash(){
   mkdir -p "$pash_logs_dir"
 
   scripts_inputs=(
-#    "nfa-regex;100M.txt"
-#    "sort;3G.txt"
-#    "top-n;1G.txt"
-#    "wf;3G.txt"
+    "nfa-regex;100M.txt"
+    "sort;3G.txt"
+    "top-n;1G.txt"
+    "wf;3G.txt"
     "spell;1G.txt"
-#    "diff;3G.txt"
-#    "bi-grams;1G.txt"
-#    "set-diff;3G.txt"
-#    "sort-sort;1G.txt"
-#    "shortest-scripts;all_cmdsx100.txt"
+    "diff;3G.txt"
+    "bi-grams;1G.txt"
+    "set-diff;3G.txt"
+    "sort-sort;1G.txt"
+    "shortest-scripts;all_cmdsx100.txt"
   )
 
-  touch "$times_file"
-  echo executing one-liners with pash $(date) | tee -a "$times_file"
-  echo '' >> "$times_file"
+  touch "$par_times_file"
+  echo executing one-liners with pash $(date) | tee -a "$par_times_file"
+  echo '' >> "$par_times_file"
 
   for script_input in ${scripts_inputs[@]}
   do
@@ -56,13 +55,10 @@ oneliners_pash(){
     padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:30}
 
-    outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+    par_outputs_file="${outputs_dir}/${script}.${par_outputs_suffix}"
     pash_log="${pash_logs_dir}/${script}.pash.log"
-    single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
-    echo -n "${padded_script}" | tee -a "$times_file"
-    time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file" 2> "${single_time_file}"
-    cat "${single_time_file}" | tee -a "$times_file"
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS  --log_file "${pash_log}" ${script}.sh > "$par_outputs_file"; } 2>&1) | tee -a "$par_times_file"
   done
 
   cd ..
@@ -71,7 +67,6 @@ oneliners_pash(){
 unix50_pash(){
   times_file="par.res"
   outputs_suffix="par.out"
-  time_suffix="par.time"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
@@ -106,11 +101,8 @@ unix50_pash(){
 
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
     pash_log="${pash_logs_dir}/${script}.pash.log"
-    single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
-    echo -n "${padded_script}" | tee -a "$times_file"
-    time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file" 2> "${single_time_file}"
-    cat "${single_time_file}" | tee -a "$times_file"
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
   done  
   cd ..
 }
@@ -118,7 +110,6 @@ unix50_pash(){
 web-index_pash(){
   times_file="par.res"
   outputs_suffix="par.out"
-  time_suffix="par.time"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
@@ -143,19 +134,15 @@ web-index_pash(){
   export WIKI=$PASH_TOP/evaluation/benchmarks/web-index/input/
   outputs_file="${outputs_dir}/web-index.${outputs_suffix}"
   pash_log="${pash_logs_dir}/web-index.pash.log"
-  single_time_file="${outputs_dir}/web-index.${time_suffix}"
 
   ## FIXME: There is a bug when running with r_split at the moment. r_wrap cannot execute bash_functions
-  echo -n "web-index.sh:" | tee -a "$times_file"
-  time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" web-index.sh > "$outputs_file" 2> "${single_time_file}"
-  cat "${single_time_file}" | tee -a "$times_file"
+  echo web-index.sh: $({ time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" web-index.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
   cd ..
 }
 
 max-temp_pash(){
   times_file="par.res"
   outputs_suffix="par.out"
-  time_suffix="par.time"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
@@ -173,18 +160,13 @@ max-temp_pash(){
   echo executing max temp with pash $(date) | tee -a "$times_file"
   outputs_file="${outputs_dir}/max-temp.${outputs_suffix}"
   pash_log="${pash_logs_dir}/max-temp.pash.log"
-  single_time_file="${outputs_dir}/max-temp.${time_suffix}"
-
-  echo -n "max-temp.sh:" | tee -a "$times_file"
-  time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" max-temp.sh > "$outputs_file" 2> "${single_time_file}"
-  cat "${single_time_file}" | tee -a "$times_file"
+  echo mex-temp.sh: $({ time time "$PASH_TOP/pa.sh"  -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" max-temp.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
   cd ..
 }
 
 analytics-mts_pash(){
   times_file="par.res"
   outputs_suffix="par.out"
-  time_suffix="par.time"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
@@ -217,11 +199,8 @@ analytics-mts_pash(){
     export IN="input/in.csv"
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
     pash_log="${pash_logs_dir}/${script}.pash.log"
-    single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
-    echo -n "${padded_script}" | tee -a "$times_file"
-    time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file" 2> "${single_time_file}"
-    cat "${single_time_file}" | tee -a "$times_file"
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
   done
   cd ..
 }
@@ -229,7 +208,6 @@ analytics-mts_pash(){
 poets_pash(){
   times_file="par.res"
   outputs_suffix="par.out"
-  time_suffix="par.time"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
@@ -289,11 +267,8 @@ poets_pash(){
 
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
     pash_log="${pash_logs_dir}/${script}.pash.log"
-    single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
-    echo -n "${padded_script}" | tee -a "$times_file"
-    time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file" 2> "${single_time_file}"
-    cat "${single_time_file}" | tee -a "$times_file"
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
   done
   cd ..
 }
@@ -307,7 +282,6 @@ dgsh_pash(){
 
   times_file="par.res"
   outputs_suffix="par.out"
-  time_suffix="par.time"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
@@ -369,11 +343,8 @@ dgsh_pash(){
 
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
     pash_log="${pash_logs_dir}/${script}.pash.log"
-    single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
-    echo -n "${padded_script}" | tee -a "$times_file"
-    time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file" 2> "${single_time_file}"
-    cat "${single_time_file}" | tee -a "$times_file"
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
   done
   cd ..
 }
@@ -383,7 +354,6 @@ aliases_pash(){
 
   times_file="par.res"
   outputs_suffix="par.out"
-  time_suffix="par.time"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
@@ -439,11 +409,8 @@ aliases_pash(){
 
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
     pash_log="${pash_logs_dir}/${script}.pash.log"
-    single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
-    echo -n "${padded_script}" | tee -a "$times_file"
-    time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file" 2> "${single_time_file}"
-    cat "${single_time_file}" | tee -a "$times_file"
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
   done
   cd ..
 }
@@ -454,7 +421,6 @@ posh_pash(){
 
   times_file="par.res"
   outputs_suffix="par.out"
-  time_suffix="par.time"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
@@ -495,11 +461,8 @@ posh_pash(){
 
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
     pash_log="${pash_logs_dir}/${script}.pash.log"
-    single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
-    echo -n "${padded_script}" | tee -a "$times_file"
-    time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file" 2> "${single_time_file}"
-    cat "${single_time_file}" | tee -a "$times_file"
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
   done
   cd ..
 }
@@ -508,7 +471,6 @@ bio_pash(){
 
   times_file="par.res"
   outputs_suffix="par.out"
-  time_suffix="par.time"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
@@ -546,11 +508,66 @@ bio_pash(){
 
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
     pash_log="${pash_logs_dir}/${script}.pash.log"
-    single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
-    echo -n "${padded_script}" | tee -a "$times_file"
-    time "$PASH_TOP/pa.sh" -d 1 -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file" 2> "${single_time_file}"
-    cat "${single_time_file}" | tee -a "$times_file"
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" -d 1 -w "${width}"  $PASH_FLAGS --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
+  done
+  cd ..
+}
+
+
+
+for-loops_pash() {
+    rm -rf for-loops/input/output
+  times_file="par.res"
+  outputs_suffix="par.out"
+  outputs_dir="outputs"
+  pash_logs_dir="pash_logs"
+  width=16
+  if [ -e "for-loops/${times_file}" ]; then
+    echo "skipping for-loops/${times_file}"
+    return 0
+  fi
+
+  cd for-loops/
+
+  cd input/
+  ./setup.sh
+  cd ..
+
+  mkdir -p "$outputs_dir"
+  mkdir -p "$pash_logs_dir"
+
+  names_scripts=(
+    "compress_files;compress_files"
+    "encrypt_files;encrypt_files"
+    "img_convert;img_convert"
+    "mir;mir"
+    "nginx;nginx"
+    "pcap;pcap"
+    "to_mp3;to_mp3"
+    "genome;genome"
+    "pacaur;pacaur"
+  )
+
+
+
+  touch "$times_file"
+  echo executing for-loops with pash $(date) | tee -a "$times_file"
+  echo '' >> "$times_file"
+
+  for name_script in ${names_scripts[@]}
+  do
+    IFS=";" read -r -a name_script_parsed <<< "${name_script}"
+    name="${name_script_parsed[0]}"
+    script="${name_script_parsed[1]}"
+    printf -v pad %30s
+    padded_script="${name}.sh:${pad}"
+    padded_script=${padded_script:0:30}
+
+    outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+    pash_log="${pash_logs_dir}/${script}.pash.log"
+
+    echo "${padded_script}" $({ time "$PASH_TOP/pa.sh" -d 1 -w "${width}"  $PASH_FLAGS --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
   done
   cd ..
 }

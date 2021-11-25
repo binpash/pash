@@ -9,3 +9,5 @@ do
     out=$OUT/$(basename -- $i)
     convert -resize 70% "$i" "$out"; 
 done
+
+echo 'done';
