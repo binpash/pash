@@ -3,18 +3,16 @@
 ################### 1KG SAMPLES
 set -e
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input}
+SAMTOOLS_BIN=${IN}/samtools-1.7/samtools
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/bio}
+LOGS=${OUT}/logs
 IN_NAME=${IN}/100G.txt
 GENE_LOCS=${IN}/Gene_locs.txt
-mkdir -p ${OUT}
-process_bio_s_line() {
-    s_line=$1
-    IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/}
-    OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/bio}
-    SAMTOOLS_BIN=${IN}/samtools-1.7/samtools
-    echo $SAMTOOLS_BIN
-    sample=$2 #(echo $s_line |cut -d " " -f 2);
+mkdir -p ${LOGS}
+run_tests() {
+    #s_line=$1
     pop=$1 #(echo $s_line |cut -f 1 -d " ");
+    sample=$2 #(echo $s_line |cut -d " " -f 2);
     link=$3 #(echo $s_line |cut -f 3 -d " ");
     ### correcting labeling of chromosomes so that all are 1,2,3.. instead of chr1,chr2 or chromosome1 etc
     echo 'Processing Sample '${IN}/bio/$sample' ';
@@ -33,5 +31,14 @@ process_bio_s_line() {
     done;
 }
 
-export -f process_bio_s_line
-cat ${IN_NAME} | xargs -n3 -I {} bash -c 'process_bio_s_line {}' 
+export -f run_tests
+data=$(head -n2 ${IN_NAME} | tr ' ' '@')
+for pkg in $data;
+do
+    arg0=$(echo $pkg | cut -d "@" -f 1);
+    arg1=$(echo $pkg | cut -d "@" -f 2);
+    arg2=$(echo $pkg | cut -d "@" -f 3);
+    run_tests $arg0 $arg1 $arg2 > ${LOGS}/$arg0.log
+done
+
+echo 'done';
