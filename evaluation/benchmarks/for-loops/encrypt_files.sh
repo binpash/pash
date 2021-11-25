@@ -13,9 +13,6 @@ pkg_count=0
 
 for item in ${IN}/*;
 do
-    if [ $pkg_count == 100 ]; then
-        break;
-    fi
     pkg_count=$((pkg_count + 1));
     run_tests $item > ${LOGS}/${pkg_count}.log
 done
