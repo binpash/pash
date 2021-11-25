@@ -1,6 +1,5 @@
 #!/bin/bash
 # tag: wav-to-mp3
-set -e
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/wav}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/mp3}
 LOGS=${OUT}/logs
