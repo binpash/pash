@@ -1,6 +1,5 @@
 #!/bin/bash
 # compress all files in a directory
-set -e
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/pcap_data/}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/compress}
 LOGS=${OUT}/logs

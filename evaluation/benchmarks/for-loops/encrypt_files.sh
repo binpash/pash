@@ -1,6 +1,5 @@
 #!/bin/bash
 # encrypt all files in a directory 
-set -e
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/pcap_data}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/encrypt}
 LOGS=${OUT}/logs
@@ -14,6 +13,9 @@ pkg_count=0
 
 for item in ${IN}/*;
 do
+    if [ $pkg_count == 100 ]; then
+        break;
+    fi
     pkg_count=$((pkg_count + 1));
     run_tests $item > ${LOGS}/${pkg_count}.log
 done

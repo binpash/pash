@@ -1,7 +1,6 @@
 #!/bin/bash
 # create bam files with regions
 ################### 1KG SAMPLES
-set -e
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input}
 SAMTOOLS_BIN=${IN}/samtools-1.7/samtools
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/bio}

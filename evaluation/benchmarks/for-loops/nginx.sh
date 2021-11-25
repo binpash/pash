@@ -1,6 +1,5 @@
 #!/bin/bash
 # tag: nginx logs
-set -e
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/log_data}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/nginx-logs}
 mkdir -p ${OUT}
