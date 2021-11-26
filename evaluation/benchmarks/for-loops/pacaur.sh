@@ -19,19 +19,22 @@ run_tests() {
     mkcd "${OUT}/$pkg"
 
     info "fetch PKGBUILD for $pkg"
-    curl --insecure -o  PKGBUILD "$pkgbuild=$pkg" || echo ' '
+    curl --insecure -o  PKGBUILD "$pkgbuild=$pkg" 2> /dev/null|| echo ' '
 
     #info "fetch required pgp keys from PKGBUILD"
     #gpg --recv-keys $(sed -n "s:^validpgpkeys=('\([0-9A-Fa-fx]\+\)').*$:\1:p" PKGBUILD)
     info "make and install ..."
-    timeout 100 makedeb-makepkg --format-makedeb -d || echo 'failed'
+    timeout 100 makedeb-makepkg --format-makedeb -d 2>/dev/null|| echo 'failed'
     cd -
 }
 
 export -f run_tests
+pkg_count=0
 # loop over required packages
-for pkg in $(cat ${IN} | tr '\n' ' ' ); do
-    run_tests $pkg > "${LOGS}"/"$pkg.log" 2> /dev/null
+for pkg in $(cat ${IN} | tr '\n' ' ' ); 
+do
+    pkg_count=$((pkg_count + 1))
+    run_tests $pkg > "${LOGS}"/"$pkg_count.log"
 done
 
 echo 'done';

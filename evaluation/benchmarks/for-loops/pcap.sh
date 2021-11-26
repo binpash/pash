@@ -14,10 +14,14 @@ run_tests() {
 }
 export -f run_tests
 
-for f in ${IN}/*; do
-    echo $f
-    logname=$OUT/$(basename $f).log
-    run_tests $f &> $logname
+pkg_count=0
+
+for item in ${IN}/*;
+do
+    pkg_count=$((pkg_count + 1));
+    run_tests $item > ${LOGS}/${pkg_count}.log
 done
+
+
 
 echo 'done';
