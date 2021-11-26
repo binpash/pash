@@ -9,10 +9,10 @@ IN_NAME=${IN}/100G.txt
 GENE_LOCS=${IN}/Gene_locs.txt
 mkdir -p ${LOGS}
 run_tests() {
-    #s_line=$1
-    pop=$1 #(echo $s_line |cut -f 1 -d " ");
-    sample=$2 #(echo $s_line |cut -d " " -f 2);
-    link=$3 #(echo $s_line |cut -f 3 -d " ");
+    s_line=$(echo $1 | tr '@' ' ')
+    pop=$(echo $s_line |cut -f 1 -d " ");
+    sample=$(echo $s_line |cut -d " " -f 2);
+    link=$(echo $s_line |cut -f 3 -d " ");
     ### correcting labeling of chromosomes so that all are 1,2,3.. instead of chr1,chr2 or chromosome1 etc
     echo 'Processing Sample '${IN}/bio/$sample' ';
     # uniform the chromosomes in the file due to inconsistencies
@@ -31,13 +31,12 @@ run_tests() {
 }
 
 export -f run_tests
-data=$(head -n2 ${IN_NAME} | tr ' ' '@')
-for pkg in $data;
+data=$(cat ${IN_NAME} | tr ' ' '@')
+pkg_count=0
+for item in $data;
 do
-    arg0=$(echo $pkg | cut -d "@" -f 1);
-    arg1=$(echo $pkg | cut -d "@" -f 2);
-    arg2=$(echo $pkg | cut -d "@" -f 3);
-    run_tests $arg0 $arg1 $arg2 > ${LOGS}/$arg0.log
+    pkg_count=$((pkg_count + 1));
+    run_tests $item > "${LOGS}"/"${pkg_count}.log"
 done
 
 echo 'done';
