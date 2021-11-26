@@ -17,16 +17,16 @@ run_tests() {
     echo 'Processing Sample '${IN}/bio/$sample' ';
     # uniform the chromosomes in the file due to inconsistencies
     $SAMTOOLS_BIN view -H "${IN}/bio/$sample".bam | sed -e 's/SN:\([0-9XY]\)/SN:chr\1/' -e 's/SN:MT/SN:chrM/' \
-        | $SAMTOOLS_BIN reheader - "${IN}/bio/$sample".bam > "${OUT}/$sample"_corrected.bam ;
+        | $SAMTOOLS_BIN reheader - "${IN}/bio/$sample".bam > "${OUT}/$sample"_corrected.bam  2> /dev/null
     # create bai file 
-    $SAMTOOLS_BIN index -b "${OUT}/$sample"_corrected.bam ;
+    $SAMTOOLS_BIN index -b "${OUT}/$sample"_corrected.bam 2> /dev/null
     ### Isolating each relevant chromosome based on Gen_locs
     cut -f 2 ${IN}/Gene_locs.txt |sort |uniq |while read chr;
     do  
         echo 'Isolating Chromosome '$chr' from sample '${OUT}/$sample',  ';
-        $SAMTOOLS_BIN view -b "${OUT}/$sample"_corrected.bam chr"$chr" > "${OUT}/$pop"_"$sample"_"$chr".bam ;
+        $SAMTOOLS_BIN view -b "${OUT}/$sample"_corrected.bam chr"$chr" > "${OUT}/$pop"_"$sample"_"$chr".bam 2> /dev/null
         echo 'Indexing Sample '$pop'_'${OUT}/$sample' ';
-        $SAMTOOLS_BIN index -b "${OUT}/$pop"_"$sample"_"$chr".bam;
+        $SAMTOOLS_BIN index -b "${OUT}/$pop"_"$sample"_"$chr".bam 2> /dev/null
     done;
 }
 
