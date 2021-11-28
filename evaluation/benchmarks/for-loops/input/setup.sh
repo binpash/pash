@@ -106,6 +106,7 @@ fi
 
 if [ ! -d ${IN}/node_modules ]; then
     npm i -g @andromeda/mir-sa
+    mv node_modules mir-sa
     install ${IN}/mir-packages.txt
     echo "Node modules downloaded"
 fi
@@ -114,5 +115,7 @@ if [ ! -f ${IN}/packages ]; then
     cd ${IN}
     wget https://aur.archlinux.org/packages.gz
     gunzip packages.gz
+    head -n 150 packages > t
+    mv t packages;
     echo "Packages Extracted"
 fi

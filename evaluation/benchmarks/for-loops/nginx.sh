@@ -1,6 +1,5 @@
 #!/bin/bash
 # tag: nginx logs
-set -e
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/log_data}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/nginx-logs}
 mkdir -p ${OUT}
@@ -18,7 +17,7 @@ run_tests() {
     # Who are requesting broken links (or URLs resulting in 502)
     awk -F\" '($2 ~ "/wp-admin/install.php"){print $1}' $IN | awk '{print $1}' | sort | uniq -c | sort -r  
     # 404 for php files -mostly hacking attempts
-    awk '($9 ~ /404/)' $IN | awk -F\" '($2 ~ "^GET .*\.php")' | awk '{print $7}' | sort | uniq -c | sort -r | head -n 20  
+    awk '($9 ~ /404/)' $IN | awk -F\" '($2 ~ "^GET .*.php")' | awk '{print $7}' | sort | uniq -c | sort -r | head -n 20  
     ##############################
     # Most requested URLs ########
     awk -F\" '{print $2}' $IN  | awk '{print $2}' | sort | uniq -c | sort -r  
@@ -33,3 +32,5 @@ for f in ${IN}/*; do
     logname=$OUT/$(basename $f)
     run_tests $f > $logname
 done
+
+echo 'done';
