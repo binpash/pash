@@ -606,8 +606,6 @@ for-loops_pash() {
 
     echo -n "${padded_script}" | tee -a "$times_file"
     time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file" 2> "${single_time_file}"
-    cat "${single_time_file}" | tee -a "$times_file"
   done
   cd ..
 }
-
