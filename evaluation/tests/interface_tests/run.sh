@@ -274,6 +274,12 @@ test_expand_u()
     $shell expand-u.sh
 }
 
+test_expand_u_positional()
+{
+    local shell=$1
+    $shell expand-u-positional.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -310,6 +316,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_cat_redir_fail
     run_test test_umask
     run_test test_expand_u
+    run_test test_expand_u_positional
 else
     for testname in $@
     do
