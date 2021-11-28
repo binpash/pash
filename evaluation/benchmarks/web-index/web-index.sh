@@ -113,6 +113,8 @@ extract_text()
     done
 }
 
+export -f extract_text
+
 cat $IN |
   sed "s#^#$WIKI#" |
   extract_text |
