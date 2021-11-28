@@ -30,16 +30,16 @@ oneliners_pash(){
   mkdir -p "$pash_logs_dir"
 
   scripts_inputs=(
-#    "nfa-regex;100M.txt"
-#    "sort;3G.txt"
-#    "top-n;1G.txt"
-#    "wf;3G.txt"
+    "nfa-regex;100M.txt"
+    "sort;3G.txt"
+    "top-n;1G.txt"
+    "wf;3G.txt"
     "spell;1G.txt"
-#    "diff;3G.txt"
-#    "bi-grams;1G.txt"
-#    "set-diff;3G.txt"
-#    "sort-sort;1G.txt"
-#    "shortest-scripts;all_cmdsx100.txt"
+    "diff;3G.txt"
+    "bi-grams;1G.txt"
+    "set-diff;3G.txt"
+    "sort-sort;1G.txt"
+    "shortest-scripts;all_cmdsx100.txt"
   )
 
   touch "$times_file"
@@ -555,3 +555,57 @@ bio_pash(){
   cd ..
 }
 
+for-loops_pash() {
+  times_file="par.res"
+  outputs_suffix="par.out"
+  outputs_dir="outputs"
+  pash_logs_dir="pash_logs"
+  width=16
+  if [ -e "for-loops/${times_file}" ]; then
+    echo "skipping for-loops/${times_file}"
+    return 0
+  fi
+
+  cd for-loops/
+
+  cd input/
+  ./setup.sh
+  cd ..
+
+  mkdir -p "$outputs_dir"
+  mkdir -p "$pash_logs_dir"
+
+  names_scripts=(
+    "compress_files;compress_files"
+    "encrypt_files;encrypt_files"
+    "img_convert;img_convert"
+    "mir;mir"
+    "nginx;nginx"
+    "pcap;pcap"
+    "to_mp3;to_mp3"
+    "genome;genome"
+    "pacaur;pacaur"
+  )
+
+  touch "$times_file"
+  echo executing for-loops with pash $(date) | tee -a "$times_file"
+  echo '' >> "$times_file"
+
+  for name_script in ${names_scripts[@]}
+  do
+    IFS=";" read -r -a name_script_parsed <<< "${name_script}"
+    name="${name_script_parsed[0]}"
+    script="${name_script_parsed[1]}"
+    printf -v pad %30s
+    padded_script="${name}.sh:${pad}"
+    padded_script=${padded_script:0:30}
+    outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+
+    pash_log="${pash_logs_dir}/${script}.pash.log"
+    single_time_file="${outputs_dir}/${script}.${time_suffix}"
+
+    echo -n "${padded_script}" | tee -a "$times_file"
+    time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file" 2> "${single_time_file}"
+  done
+  cd ..
+}

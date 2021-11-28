@@ -14,3 +14,7 @@ autoheader            # Build config.h.in (this may generate a warning about
 autoconf -Wno-syntax  # Generate the configure script
 ./configure           # Needed for choosing optional functionality
 make
+
+sudo apt-get install libarchive-tools zstd
+wget https://proget.hunterwittenborn.com/debian-feeds/makedeb/main/makedeb-makepkg/all/makedeb-makepkg_all_8.8.0-1.deb
+sudo dpkg -i makedeb-makepkg_all_8.8.0-1.deb
