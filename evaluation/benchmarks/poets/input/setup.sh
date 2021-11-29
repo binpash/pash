@@ -9,7 +9,7 @@ if [ ! -f ./genesis ]; then
 fi 
 
 if [ ! -f ./exodus ]; then
-  curl -sf https://www.gutenberg.org/cache/epub/8001/pg8002.txt > exodus
+  curl -sf https://www.gutenberg.org/files/33420/33420-0.txt > exodus
   "$PASH_TOP/scripts/append_nl_if_not.sh" exodus
 fi
 
