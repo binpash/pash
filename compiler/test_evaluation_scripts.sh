@@ -52,9 +52,9 @@ if [ "$EXPERIMENTAL" -eq 1 ]; then
         # "" # Commenting this out since the tests take a lot of time to finish
         "--r_split"
         "--dgsh_tee"
-        "--r_split --dgsh_tee"
+        # "--r_split --dgsh_tee"
         # "--speculation quick_abort"
-        "--pash_parallel_pipelines"
+        "--parallel_pipelines"
     )
 else
     configurations=(
