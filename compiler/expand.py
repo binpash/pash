@@ -268,6 +268,7 @@ def lookup_variable(var, _lookup_config):
             ## If there are not enough arguments -u is set we need to raise
             if is_u_set():
                 raise StuckExpansion("-u is set and positional argument wasn't set", var)
+
             expanded_var = ''
     elif(var == '0'):
         expanded_var = lookup_variable_inner('pash_shell_name')
