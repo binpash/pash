@@ -278,13 +278,29 @@ def lookup_variable(var, _lookup_config):
 
     return None, expanded_var
 
+## Looks up the variable and if it is unset it raises an error
 def lookup_variable_inner(varname):
+    value = lookup_variable_inner_unsafe(varname)
+    if value is None and is_u_set():
+        raise StuckExpansion("-u is set and variable was unset", varname)
+    return value
+
+
+def lookup_variable_inner_unsafe(varname):
     if config.pash_args.expand_using_bash_mirror:
         return config.query_expand_variable_bash_mirror(varname)
     else:
         ## TODO: Is it in there? If we have -u and it is in there.
         _type, value = config.config['shell_variables'].get(varname, [None, None])
         return value
+
+## This function checks if the -u flag is set
+def is_u_set():
+    ## This variable is set by pash and is exported and therefore will be in the variable file.
+    _type, value = config.config['shell_variables']["pash_previous_set_status"]
+    # log("Previous set status is:", value)
+    return "u" in value
+
 
 def invalidate_variable(var, reason, config):
     config['shell_variables'][var] = [None, InvalidVariable(var, reason)]

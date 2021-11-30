@@ -268,6 +268,12 @@ test_umask()
     $shell -c 'echo hi'
 }
 
+test_expand_u()
+{
+    local shell=$1
+    $shell expand-u.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -303,6 +309,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_set-dash
     run_test test_cat_redir_fail
     run_test test_umask
+    run_test test_expand_u
 else
     for testname in $@
     do
