@@ -282,6 +282,7 @@ def lookup_variable_inner(varname):
     if config.pash_args.expand_using_bash_mirror:
         return config.query_expand_variable_bash_mirror(varname)
     else:
+        ## TODO: Is it in there? If we have -u and it is in there.
         _type, value = config.config['shell_variables'].get(varname, [None, None])
         return value
 
