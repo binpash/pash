@@ -9,11 +9,11 @@ IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/8.1}
 mkdir -p "$OUT"
 ENTRIES=${ENTRIES:-1000}
-for input in $(ls ${IN} | head -n ${ENTRIES} | sed "s;^;$IN;")
+for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat "$input" | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u > "${OUT}/$(basename ${input}).words"
-    tr -sc '[AEIOUaeiou\012]' ' ' < "${OUT}/$(basename ${input}).words" | awk '{print NF}' > "${OUT}/$(basename ${input}).syl"
-    paste "${OUT}/$(basename ${input}).syl" "${OUT}/$(basename ${input}).words" | sort -nr | sed 5q
+    cat "$IN/$input" | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u > "${OUT}/${input}.words"
+    tr -sc '[AEIOUaeiou\012]' ' ' < "${OUT}/${input}.words" | awk '{print NF}' > "${OUT}/${input}.syl"
+    paste "${OUT}/${input}.syl" "${OUT}/${input}.words" | sort -nr | sed 5q > "${OUT}/${input}.out"
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT/;")

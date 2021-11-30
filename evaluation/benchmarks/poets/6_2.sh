@@ -12,10 +12,10 @@ mkdir -p "$OUT"
 #ls ${IN} | sed "s;^;$IN;"| xargs cat | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u | grep -c '^....$' 
 
 
-for input in $(ls ${IN} | head -n ${ENTRIES} | sed "s;^;$IN;")
+for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat "$input" | tr -sc '[A-Z][a-z]' '[\012*]' | grep -c '^....$' > "${OUT}/$(basename ${input})"
-    cat "$input" | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u | grep -c '^....$'  > "${OUT}/$(basename ${input})2"
+    cat "$IN/$input" | tr -sc '[A-Z][a-z]' '[\012*]' | grep -c '^....$' > "${OUT}/${input}.out0"
+    cat "$IN/$input" | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u | grep -c '^....$'  > "${OUT}/${input}.out1"
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT/;")

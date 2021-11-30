@@ -10,11 +10,11 @@ mkdir -p "$OUT"
 #ls ${IN} | sed "s;^;$IN;"| xargs cat | grep -c 'light.\*light'  
 #ls ${IN} | sed "s;^;$IN;"| xargs cat | grep -c 'light.\*light.\*light' 
 #ls ${IN} | sed "s;^;$IN;"| xargs cat | grep 'light.\*light' | grep -vc 'light.\*light.\*light'
-for input in $(ls ${IN} | head -n ${ENTRIES} | sed "s;^;$IN;")
+for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat "$input" | grep -c 'light.\*light'                                 > "${OUT}/$(basename ${input})"
-    cat "$input" | grep -c 'light.\*light.\*light'                         > "${OUT}/$(basename ${input})1"
-    cat "$input" | grep 'light.\*light' | grep -vc 'light.\*light.\*light' > "${OUT}/$(basename ${input})2"
+    cat "$IN/$input" | grep -c 'light.\*light'                                 > "${OUT}/${input}.out0"
+    cat "$IN/$input" | grep -c 'light.\*light.\*light'                         > "${OUT}/${input}.out1"
+    cat "$IN/$input" | grep 'light.\*light' | grep -vc 'light.\*light.\*light' > "${OUT}/${input}.out2"
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT;")

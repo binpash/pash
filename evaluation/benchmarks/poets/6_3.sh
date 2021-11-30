@@ -8,9 +8,9 @@ ENTRIES=${ENTRIES:-1000}
 mkdir -p "$OUT"
 
 #ls ${IN} | sed "s;^;$IN;"| xargs cat | tr -sc '[A-Z][a-z]' '[\012*]' | grep -vi '[aeiou]' | sort | uniq -c
-for input in $(ls ${IN} | head -n ${ENTRIES} | sed "s;^;$IN;")
+for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat "$input" | tr -sc '[A-Z][a-z]' '[\012*]' | grep -vi '[aeiou]' | sort | uniq -c > "${OUT}/$(basename ${input})"
+    cat "$IN/$input" | tr -sc '[A-Z][a-z]' '[\012*]' | grep -vi '[aeiou]' | sort | uniq -c > "${OUT}/${input}.out"
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT;")

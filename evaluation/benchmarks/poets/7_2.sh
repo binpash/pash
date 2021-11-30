@@ -8,9 +8,9 @@ OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/7_2}
 mkdir -p ${OUT}
 ENTRIES=${ENTRIES:-1000}
 mkdir -p "$OUT"
-for input in $(ls ${IN} | head -n ${ENTRIES} | sed "s;^;$IN;")
+for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat "$input" | tr '[a-z]' '[A-Z]' | tr -sc 'BCDFGHJKLMNPQRSTVWXYZ' '[\012*]' | sort | uniq -c > "${OUT}/$(basename ${input})"
+    cat "$IN/$input" | tr '[a-z]' '[A-Z]' | tr -sc 'BCDFGHJKLMNPQRSTVWXYZ' '[\012*]' | sort | uniq -c > "${OUT}/${input}.out"
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT/;")
