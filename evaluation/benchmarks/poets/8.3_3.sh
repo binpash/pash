@@ -11,11 +11,11 @@ INPUT2=${INPUT2:-$PASH_TOP/evaluation/benchmarks/poets/input/exodus}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/8.2_1}
 mkdir -p "$OUT"
 ENTRIES=${ENTRIES:-1000}
-for input in $(ls ${IN} | head -n ${ENTRIES} | sed "s;^;$IN;")
+for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat "$input" | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u > "${OUT}/$(basename ${input})1.types"
-    tr -sc '[A-Z][a-z]' '[\012*]' < ${INPUT2} | sort -u > "${OUT}/$(basename ${input})2.types"
-    sort "${OUT}/$(basename ${input})1.types" "${OUT}/$(basename ${input})2.types" "${OUT}/$(basename ${input})2.types" | uniq -c | head
+    cat "$IN/$input" | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u > "${OUT}/${input}1.types"
+    tr -sc '[A-Z][a-z]' '[\012*]' < ${INPUT2} | sort -u > "${OUT}/${input}2.types"
+    sort "${OUT}/${input}1.types" "${OUT}/${input}2.types" "${OUT}/${input}2.types" | uniq -c | head
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT/;")

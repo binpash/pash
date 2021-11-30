@@ -7,9 +7,9 @@ OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/6_5/}
 ENTRIES=${ENTRIES:-1000}
 mkdir -p "$OUT"
 #ls ${IN} | sed "s;^;$IN;"| xargs cat | tr -sc '[A-Z][a-z]' ' [\012*]' | grep -i '^[^aeiou]*[aeiou][^aeiou]*[aeiou][^aeiou]$' | sort | uniq -c | sed 5q
-for input in $(ls ${IN} | head -n ${ENTRIES} | sed "s;^;$IN;")
+for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat "$input"  | tr -sc '[A-Z][a-z]' ' [\012*]' | grep -i '^[^aeiou]*[aeiou][^aeiou]*[aeiou][^aeiou]$' | sort | uniq -c | sed 5q > "${OUT}/$(basename ${input})"
+    cat "$IN/$input"  | tr -sc '[A-Z][a-z]' ' [\012*]' | grep -i '^[^aeiou]*[aeiou][^aeiou]*[aeiou][^aeiou]$' | sort | uniq -c | sed 5q > "${OUT}/${input}.out"
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT;")
