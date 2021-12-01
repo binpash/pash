@@ -16,14 +16,14 @@ run_tests() {
     input=$1
     cat $IN/$input | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u > ${OUT}/${input}1.types
     tr -sc '[A-Z][a-z]' '[\012*]' < ${INPUT2} | sort -u > ${OUT}/${input}2.types
-    sort $OUT/${input}1.types ${OUT}/${input}2.types ${OUT}/${input}2.types | uniq -c | head > ${OUT}/${input}.out
+    sort $OUT/${input}1.types ${OUT}/${input}2.types ${OUT}/${input}2.types | uniq -c | head
     rm ${OUT}/*.types
 }
 
 export -f run_tests
 for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    run_tests $input
+    run_tests $input  > ${OUT}/${input}.out
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT;")
