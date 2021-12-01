@@ -1,11 +1,12 @@
 #include "r_split.h"
+#include "stdbool.h"
 
 void SplitByBytes(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned int numOutputFiles)
 {
-  int current = 0;
+  int current_file_id = 0;
   int64_t id = 0;
   size_t len = 0;
-  FILE *outputFile = outputFiles[current];
+  FILE *outputFile = outputFiles[current_file_id];
 
   char *buffer = malloc(batchSize + 1);
 
@@ -19,8 +20,8 @@ void SplitByBytes(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
     //write blocks
     fwrite(buffer, 1, len, outputFile);
 
-    current = (current + 1) % numOutputFiles;
-    outputFile = outputFiles[current];
+    current_file_id = (current_file_id + 1) % numOutputFiles;
+    outputFile = outputFiles[current_file_id];
     id += 1;
   }
 
@@ -34,20 +35,93 @@ void SplitByBytes(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
   free(buffer);
 }
 
-void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned int numOutputFiles, int8_t add_header)
+int find_new_line_pivot(char *buffer, int start_pos, int end_pos, bool backward) {
+  if (backward) {
+    for (int i = end_pos; i >= start_pos; i--) {
+      if (buffer[i] == '\n')
+        return i; 
+    }
+  }
+  else {
+    for (int i = start_pos; i <= end_pos; i++) {
+      if (buffer[i] == '\n')
+        return i; 
+    }
+  }
+  return -1;
+}
+
+void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned int numOutputFiles, bool add_header)
 {
-  int current = 0;
+  int current_file_id = 0;
   int64_t id = 0;
   size_t len = 0, headSize = 0, restSize = 0, prevRestSize = 0, blockSize = 0;
-  FILE *outputFile = outputFiles[current];
+  FILE *outputFile = outputFiles[current_file_id];
 
   char *buffer = malloc(batchSize + 1);
   char *incompleteLine = malloc(batchSize + 1);
+
+
+  // First read an initial batch of W * batchSize to make sure we split equally incase data size is small
+  size_t init_batch_size = batchSize * numOutputFiles;
+  char *init_buffer = malloc(init_batch_size + 1);
+  if((len = fread(init_buffer, 1, init_batch_size, inputFile)) > 0) {
+    int start_pos = 0;
+    bool is_last = true;
+    // Total file size is small enough that we need a smaller batchsize
+    if (len < init_batch_size) {
+      batchSize = len/numOutputFiles;
+    }
+    
+    for (current_file_id = 0; current_file_id < numOutputFiles; current_file_id++) {
+      outputFile = outputFiles[current_file_id];
+      int next_start = -1;
+      if (current_file_id < numOutputFiles - 1) {
+        // Process output for the first n - 1 nodes
+        int end_pos = (current_file_id + 1) * batchSize;
+        int pivot = find_new_line_pivot(init_buffer, start_pos, end_pos, true);
+        // If no newline in the range [start_pos, end_pos] then blocksize would be 0
+        blockSize = pivot - start_pos + 1;
+        next_start = pivot + 1;
+      } else {
+        // Process output for last node
+        blockSize = len - start_pos;
+        if (init_buffer[len - 1] == '\n' || feof(inputFile)) {
+          is_last = true;
+        } else {
+          is_last = false;
+        }
+          
+      }
+      
+      if (add_header)
+        writeHeader(outputFile, id, blockSize, is_last);
+
+      safeWriteWithFlush(init_buffer + start_pos, 1, blockSize, outputFile);
+      
+      start_pos = next_start;
+
+      if (is_last) {
+        id += 1;
+      }
+    }
+
+    // This will wrap around if the last chunk was complete 
+    // otherwise keep pointer on the last file
+    if (is_last) {
+      current_file_id = 0;
+    } else {
+      current_file_id = numOutputFiles - 1;
+    }
+  }
+  free(init_buffer);
 
   // Do round robin copying of the input file to the output files
   // Each block has a header of "ID blockSize\n"
   while ((len = fread(buffer, 1, batchSize, inputFile)) > 0)
   {
+    outputFile = outputFiles[current_file_id];
+
     //find pivot point for head and rest
     for (int i = len - 1; i >= (len - 1)/2; i--) //only search to the middle
     {
@@ -91,8 +165,7 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
       memcpy(incompleteLine, buffer + headSize, restSize);
 
       // Prepare next iteration
-      current = (current + 1) % numOutputFiles;
-      outputFile = outputFiles[current];
+      current_file_id = (current_file_id + 1) % numOutputFiles;
       prevRestSize = restSize;
       id += 1;
     }
@@ -120,17 +193,17 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
 
 void SplitByLinesRaw(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned int numOutputFiles)
 {
-  int current = 0, len = 0;
+  int current_file_id = 0, len = 0;
   size_t bufLen = 0;
-  FILE* outputFile = outputFiles[current];
+  FILE* outputFile = outputFiles[current_file_id];
 
   char* buffer = NULL;
 
   // Do round robin copying of the input file to the output files without any headers
   while ((len = getline(&buffer, &bufLen, inputFile)) > 0) {
       safeWrite(buffer, 1, len, outputFile);
-      current = (current + 1) % numOutputFiles;
-      outputFile = outputFiles[current];
+      current_file_id = (current_file_id + 1) % numOutputFiles;
+      outputFile = outputFiles[current_file_id];
   }
   //clean up
   free(buffer);
@@ -139,7 +212,7 @@ void SplitByLinesRaw(FILE *inputFile, int batchSize, FILE *outputFiles[], unsign
 
 
 
-void SplitInput(char *input, int batchSize, char *outputFileNames[], unsigned int numOutputFiles, int8_t useBytes, int8_t raw)
+void SplitInput(char *input, int batchSize, char *outputFileNames[], unsigned int numOutputFiles, bool useBytes, bool raw)
 {
   PRINTDBG("%s: will split input\n", __func__);
   //TODO: find better way?
@@ -207,7 +280,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "missing input!\n");
     exit(1);
   }
-  int8_t useBytes = 0, offset = 0, raw = 0;
+  bool useBytes = 0, offset = 0, raw = 0;
   size_t batchSize = 0;
   char **outputFileNames = NULL;
   char *inputFileName = NULL;
