@@ -27,3 +27,4 @@ do
 done
 
 echo 'done';
+rm -rf ${OUT}
