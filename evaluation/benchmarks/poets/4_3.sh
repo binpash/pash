@@ -4,7 +4,7 @@
 
 # Bigrams (contrary to our version, this uses intermediary files)
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/4_3}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/4_3/}
 ENTRIES=${ENTRIES:-1000}
 mkdir -p "$OUT"
 #ls ${IN} | sed "s;^;$IN;"| xargs cat | tr -sc '[A-Z][a-z]' '[\012*]' > ${OUT}.input.words
@@ -17,7 +17,7 @@ do
     paste ${OUT}/${input}.input.words ${OUT}/${input}.input.nextwords | sort | uniq -c > ${OUT}/${input}.input.bigrams
 done
 
-for output in $(ls ${OUT} | sed "s;^;$OUT/;")
+for output in $(ls ${OUT} | sed "s;^;$OUT;")
 do
     cat $output
 done
