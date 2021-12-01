@@ -11,7 +11,7 @@ mkdir -p "$OUT"
 
 for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat "$IN/$input" | tr '[a-z]' '[A-Z]' | tr -sc '[A-Z]' '[\012*]' | sort | uniq -c > "${OUT}/${input}.out"
+    cat $IN/$input | tr '[a-z]' '[A-Z]' | tr -sc '[A-Z]' '[\012*]' | sort | uniq -c > ${OUT}/${input}.out
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT;")

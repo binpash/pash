@@ -9,7 +9,7 @@ mkdir -p "$OUT"
 
 for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat "$IN/$input" | tr -sc '[A-Z][a-z]' '[\012*]' | sort | uniq -c > "${OUT}/${input}.out"
+    cat $IN/$input | tr -sc '[A-Z][a-z]' '[\012*]' | sort | uniq -c > ${OUT}/${input}.out
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT;")

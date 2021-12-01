@@ -12,9 +12,9 @@ mkdir -p "$OUT"
 #paste ${OUT}.input.words ${OUT}.input.nextwords | sort | uniq -c > ${OUT}.input.bigrams
 for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat "$IN/$input" | tr -sc '[A-Z][a-z]' '[\012*]' > "${OUT}/${input}.input.words"
-    tail +2  "${OUT}/${input}.input.words" > "${OUT}/${input}.input.nextwords"
-    paste "${OUT}/${input}.input.words" "${OUT}/${input}.input.nextwords" | sort | uniq -c > "${OUT}/${input}.input.bigrams"
+    cat $IN/$input | tr -sc '[A-Z][a-z]' '[\012*]' > ${OUT}/${input}.input.words
+    tail +2  ${OUT}/${input}.input.words > ${OUT}/${input}.input.nextwords
+    paste ${OUT}/${input}.input.words ${OUT}/${input}.input.nextwords | sort | uniq -c > ${OUT}/${input}.input.bigrams
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT/;")
