@@ -35,6 +35,9 @@ bash_mirror = None
 ## A cache containing variable values since variables are not meant to change while we compile one region
 variable_cache = {}
 
+## Increase the recursion limit (it seems that the parser/unparser needs it for bigger graphs)
+sys.setrecursionlimit(10000)
+
 def load_config(config_file_path=""):
     global config
     pash_config = {}
