@@ -63,26 +63,33 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
 
 
   // First read an initial batch of W * batchSize to make sure we split equally incase data size is small
-  size_t init_batch_size = batchSize * numOutputFiles;
-  char *init_buffer = malloc(init_batch_size + 1);
-  if((len = fread(init_buffer, 1, init_batch_size, inputFile)) > 0) {
+  size_t full_payload = batchSize * numOutputFiles;
+  char *init_buffer = malloc(full_payload + 1);
+  if((len = fread(init_buffer, 1, full_payload, inputFile)) > 0) {
     int start_pos = 0;
     bool is_last = true;
+    size_t init_batch_size = batchSize;
     // Total file size is small enough that we need a smaller batchsize
-    if (len < init_batch_size) {
-      batchSize = len/numOutputFiles;
+    if (len < full_payload) {
+      init_batch_size = len/numOutputFiles;
     }
     
     for (current_file_id = 0; current_file_id < numOutputFiles; current_file_id++) {
       outputFile = outputFiles[current_file_id];
-      int next_start = -1;
+      int next_start = 0;
       if (current_file_id < numOutputFiles - 1) {
         // Process output for the first n - 1 nodes
-        int end_pos = (current_file_id + 1) * batchSize;
+        int end_pos = (current_file_id + 1) * init_batch_size;
         int pivot = find_new_line_pivot(init_buffer, start_pos, end_pos, true);
         // If no newline in the range [start_pos, end_pos] then blocksize would be 0
-        blockSize = pivot - start_pos + 1;
-        next_start = pivot + 1;
+        if (pivot == -1) {
+          next_start = start_pos;
+          blockSize = 0;
+        } else {
+          next_start = pivot + 1;
+          blockSize = next_start - start_pos;
+        }
+        
       } else {
         // Process output for last node
         blockSize = len - start_pos;
