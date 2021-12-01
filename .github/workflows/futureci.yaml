@@ -41,3 +41,4 @@ jobs:
         tests="http://ctrl.pash.ndr.md/job=issue&branch=$branch&benchmark=TIGHT-LOOP&commit=$hash"
         # issue the tests for the future branch
         curl -s "$tests"
+        echo "$tests"
