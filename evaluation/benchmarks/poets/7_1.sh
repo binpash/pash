@@ -11,7 +11,7 @@ ENTRIES=${ENTRIES:-1000}
 mkdir -p "$OUT"
 for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat "$IN/$input" | sed 's/ly$/-ly/g' | sed 's/ .*//g' | sort | uniq -c > "${OUT}/${input}.out"
+    cat $IN/$input | sed 's/ly$/-ly/g' | sed 's/ .*//g' | sort | uniq -c > ${OUT}/${input}.out
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT/;")

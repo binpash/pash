@@ -10,7 +10,7 @@ mkdir -p "$OUT"
 #ls ${IN} | sed "s;^;$IN;"| xargs cat | tr -sc '[A-Z][a-z]' '[\012*]' | grep -vi '[aeiou]' | sort | uniq -c
 for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat "$IN/$input" | tr -sc '[A-Z][a-z]' '[\012*]' | grep -vi '[aeiou]' | sort | uniq -c > "${OUT}/${input}.out"
+    cat $IN/$input | tr -sc '[A-Z][a-z]' '[\012*]' | grep -vi '[aeiou]' | sort | uniq -c > ${OUT}/${input}.out
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT;")

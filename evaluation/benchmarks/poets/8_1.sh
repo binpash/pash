@@ -11,9 +11,9 @@ mkdir -p "$OUT"
 ENTRIES=${ENTRIES:-1000}
 for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat "$IN/$input" | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u > "${OUT}/${input}.words"
-    tr -sc '[AEIOUaeiou\012]' ' ' < "${OUT}/${input}.words" | awk '{print NF}' > "${OUT}/${input}.syl"
-    paste "${OUT}/${input}.syl" "${OUT}/${input}.words" | sort -nr | sed 5q > "${OUT}/${input}.out"
+    cat $IN/$input | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u > ${OUT}/${input}.words
+    tr -sc '[AEIOUaeiou\012]' ' ' < ${OUT}/${input}.words | awk '{print NF}' > ${OUT}/${input}.syl
+    paste ${OUT}/${input}.syl ${OUT}/${input}.words | sort -nr | sed 5q > ${OUT}/${input}.out
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT/;")

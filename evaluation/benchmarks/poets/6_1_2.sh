@@ -10,7 +10,7 @@ mkdir -p "$OUT"
 
 for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat "$IN/$input" | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u | grep -c '^[A-Z]' > "${OUT}/${input}.out"
+    cat $IN/$input | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u | grep -c '^[A-Z]' > ${OUT}/${input}.out
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT;")
