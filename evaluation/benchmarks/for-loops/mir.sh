@@ -1,7 +1,7 @@
 #!/bin/bash
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/node_modules}
+MIR_BIN=${MIR_BIN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/mir-sa/.bin/mir-sa}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/mir}
-MIR_BIN=${IN}/.bin/mir-sa
 mkdir -p ${OUT}/
 pkg_count=0
 run_tests() {
@@ -14,3 +14,5 @@ do
     pkg_count=$((pkg_count + 1));
     run_tests $item > ${OUT}/$pkg_count.log
 done
+
+echo 'done';
