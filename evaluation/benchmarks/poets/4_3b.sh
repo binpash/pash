@@ -12,13 +12,17 @@ mkdir -p "$OUT"
 #tail +3 ${OUT}.words > ${OUT}.nextwords2
 #paste ${OUT}.words ${OUT}.nextwords ${OUT}.nextwords2 |
 #sort | uniq -c  > ${OUT}.trigrams
-for input in $(ls ${IN} | head -n ${ENTRIES})
-do
+run_tests() {
     cat $IN/$input | tr -sc '[A-Z][a-z]' '[\012*]' > ${OUT}/${input}.words
     tail +2 ${OUT}/${input}.words > ${OUT}/${input}.nextwords
     tail +2 ${OUT}/${input}.words > ${OUT}/${input}.nextwords2
     paste ${OUT}/${input}.words ${OUT}/${input}.nextwords ${OUT}/${input}.nextwords2 |
-    sort | uniq -c  > ${OUT}/${input}.trigrams
+    sort | uniq -c 
+}
+export -f run_tests
+for input in $(ls ${IN} | head -n ${ENTRIES})
+do
+    run_tests $input > ${OUT}/${input}.trigrams
 done
 
 for output in $(ls ${OUT} | sed "s;^;$OUT/;")
