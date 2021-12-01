@@ -4,7 +4,7 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 # time: print real in seconds, to simplify parsing
 
 bash="bash"
-pash="$PASH_TOP/pa.sh --parallel_pipelines"
+pash="$PASH_TOP/pa.sh --parallel_pipelines --r_split --dgsh_tee"
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 mkdir -p "$output_dir"
@@ -261,6 +261,25 @@ test_cat_redir_fail()
     $shell cat-redir-fail.sh
 }
 
+test_umask()
+{
+    local shell=$1
+    umask u=rw,go-rwx
+    $shell -c 'echo hi'
+}
+
+test_expand_u()
+{
+    local shell=$1
+    $shell expand-u.sh
+}
+
+test_expand_u_positional()
+{
+    local shell=$1
+    $shell expand-u-positional.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -295,6 +314,9 @@ if [ "$#" -eq 0 ]; then
     run_test test_trap
     run_test test_set-dash
     run_test test_cat_redir_fail
+    run_test test_umask
+    run_test test_expand_u
+    run_test test_expand_u_positional
 else
     for testname in $@
     do

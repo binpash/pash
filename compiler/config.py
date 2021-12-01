@@ -35,6 +35,9 @@ bash_mirror = None
 ## A cache containing variable values since variables are not meant to change while we compile one region
 variable_cache = {}
 
+## Increase the recursion limit (it seems that the parser/unparser needs it for bigger graphs)
+sys.setrecursionlimit(10000)
+
 def load_config(config_file_path=""):
     global config
     pash_config = {}
@@ -111,8 +114,8 @@ def add_common_arguments(parser):
                         action="store_true")
     parser.add_argument("--r_split_batch_size",
                         type=int,
-                        help="(experimental) configure the batch size of r_splti (default: 100KB)",
-                        default=100000)
+                        help="(experimental) configure the batch size of r_split (default: 1MB)",
+                        default=1000000)
     parser.add_argument("--dgsh_tee",
                         help="(experimental) use dgsh-tee instead of eager",
                         action="store_true")

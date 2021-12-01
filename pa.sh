@@ -5,6 +5,12 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 # point to the local downloaded folders
 export PYTHONPATH=${PASH_TOP}/python_pkgs/
 
+## Save the umask to first create some files and then revert it
+old_umask=$(umask)
+
+## Restore the umask to create files etc
+umask u=rwx,g=rx,o=rx
+
 if [ "$#" -eq 1 ] && [ "$1" = "--init" ]; then
   $PASH_TOP/compiler/superoptimize.sh
   exit
@@ -40,6 +46,8 @@ if [ "$pash_daemon" -eq 1 ]; then
   pash_wait_until_daemon_listening
 fi
 
+## Restore the umask before executing
+umask ${old_umask}
 PASH_FROM_SH="pa.sh" python3 -S $PASH_TOP/compiler/pash.py "$@"
 pash_exit_code=$?
 
