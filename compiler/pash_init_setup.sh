@@ -17,6 +17,7 @@ export pash_checking_speculation=0
 export pash_checking_log_file=0
 export pash_checking_debug_level=0
 export pash_avoid_pash_runtime_completion_flag=0
+export pash_profile_driven_flag=1
 export pash_daemon=1
 export pash_parallel_pipelines=0
 export pash_daemon_communicates_through_unix_pipes_flag=0
@@ -71,6 +72,10 @@ do
 
     if [ "--avoid_pash_runtime_completion" == "$item" ]; then
         export pash_avoid_pash_runtime_completion_flag=1
+    fi
+
+    if [ "--profile_driven" == "$item" ]; then
+        export pash_profile_driven_flag=1
     fi
 
     if [ "-d" == "$item" ] || [ "--debug" == "$item" ]; then

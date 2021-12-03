@@ -161,6 +161,10 @@ class Scheduler:
     ##
     ##############################################################################
 
+    ## TODO: It is possible that there will be many process ids being gathered here.
+    ##       If that becomes an overhead, we need to consider removing old ones
+    ##         or keeping sketches of the information (instead of their raw numbers).
+
     def determine_compiler_config(self, input_ir_file):
         if config.pash_args.profile_driven:
             ## A default value
@@ -211,6 +215,9 @@ class Scheduler:
 
         all_proc_ids = self.input_ir_to_process_id_map[input_ir_file]
 
+        ## TODO: If that becomes an overhead, we need to add a new
+        ##       data structure to keep the latest averages (sum, len)
+        ##       to avoid recomputing every time.
         width_times = {}
         for proc_id in all_proc_ids:
             proc_info = self.process_id_input_ir_map[proc_id]
@@ -230,10 +237,18 @@ class Scheduler:
         
         return width_avgs
 
-    def add_time_measurement(self, process_id, exec_time):
+    ## This adds the time measurement, or just removes the entry if there is no exec_time (for space reclamation)
+    def handle_time_measurement(self, process_id, exec_time):
         ## TODO: Could put those behind the profile_driven check too to not fill memory
         assert(self.process_id_input_ir_map[process_id].exec_time is None)
-        self.process_id_input_ir_map[process_id].set_exec_time(exec_time)
+        
+        ## If we don't have the exec time we do Nothing
+        ##
+        ## TODO: Consider removing past entries that have no execution time.
+        if exec_time is None:
+            pass
+        else:
+            self.process_id_input_ir_map[process_id].set_exec_time(exec_time)
 
         # log("All measurements:", self.process_id_input_ir_map)
 
@@ -341,7 +356,7 @@ class Scheduler:
         except:
             exec_time = None
         log("Process:", process_id, "exited. Exec time was:", exec_time)
-        self.add_time_measurement(process_id, exec_time)
+        self.handle_time_measurement(process_id, exec_time)
         self.remove_process(process_id)
         ## Necessary so that Exit doesn't block
         self.close_last_connection()
