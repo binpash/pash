@@ -91,6 +91,23 @@ def error_response(string):
     return f'ERROR: {string}\n'
 
 
+##
+## This class holds information for each process id
+##
+class ProcIdInfo:
+    def __init__(self, input_ir, compiler_config, exec_time=None):
+        self.input_ir = input_ir
+        self.compiler_config = compiler_config
+        self.exec_time = exec_time
+        ## TODO: Extend it with other info from scheduler, like dependencies
+
+    def set_exec_time(self, exec_time):
+        self.exec_time = exec_time
+    
+    def __repr__(self):
+        return f'ProcIdInfo(InputIR:{self.input_ir}, CompConfig:{self.compiler_config}, ExecTime:{self.exec_time})'
+
+
 class Scheduler:
     """ Takes care of running processes in parallel if there is no conflict. 
     The scheduler relies on the fact that process will wait for a compilation response.
@@ -124,6 +141,12 @@ class Scheduler:
         self.cmd_buffer = ""
         self.connection_manager = None
         self.reader_pipes_are_blocking = True
+        ## TODO: Make that be a class or something
+        
+        ## A map that keeps mappings between proc_id and (input_ir, width, exec_time)
+        self.process_id_input_ir_map = {}
+        ## This is a map from input IRs, i.e., locations in the code, to a list of process_ids
+        self.input_ir_to_process_id_map = {}
 
     def check_resources_safety(self, process_id):
         proc_input_resources, proc_output_resources = self.process_resources[process_id]
@@ -131,6 +154,44 @@ class Scheduler:
         if self.output_resources.intersection(all_proc_resources) or self.input_resources.intersection(proc_output_resources):
             return False
         return True
+
+    ##############################################################################
+    ##
+    ## Profiling-based Compiler-config
+    ##
+    ##############################################################################
+
+    def determine_compiler_config(self, input_ir_file):
+        if config.pash_args.profile_driven:
+            ## TODO: Use self.input_ir_to_process_id_map to find all processes and then 
+            ##       check their measurements to see what width to pick
+            log("Using profiles to select width!")
+            selected_width = config.pash_args.width
+        else:
+            selected_width = config.pash_args.width
+
+        log("Selected width:", selected_width)
+        return pash_runtime.CompilerConfig(selected_width)
+
+    def add_time_measurement(self, process_id, exec_time):
+        ## TODO: Could put those behind the profile_driven check too to not fill memory
+        assert(self.process_id_input_ir_map[process_id].exec_time is None)
+        self.process_id_input_ir_map[process_id].set_exec_time(exec_time)
+
+        log("All measurements:", self.process_id_input_ir_map)
+
+    def add_proc_id_map(self, process_id, input_ir_file, compiler_config):
+        assert(not process_id in self.process_id_input_ir_map)
+        self.process_id_input_ir_map[process_id] = ProcIdInfo(input_ir_file, compiler_config)
+
+        ## Add the mapping from ir to process_id
+        try:
+            self.input_ir_to_process_id_map[input_ir_file].append(process_id)
+        except:
+            self.input_ir_to_process_id_map[input_ir_file] = [process_id]
+        log("All mappings from input_ir to proc_id:", self.input_ir_to_process_id_map)
+
+    ##############################################################################
 
     def compile_and_add(self, compiled_script_file, var_file, input_ir_file):
         process_id = self.get_next_id()
@@ -147,8 +208,13 @@ class Scheduler:
             ## Clean up the variable cache
             config.reset_variable_cache()
 
+        ## TODO: Make the compiler config based on profiling data
+        compiler_config = self.determine_compiler_config(input_ir_file)
+        ## Add the process_id -> input_ir mapping
+        self.add_proc_id_map(process_id, input_ir_file, compiler_config)
+
         ast_or_ir = pash_runtime.compile_ir(
-            input_ir_file, compiled_script_file, config.pash_args)
+            input_ir_file, compiled_script_file, config.pash_args, compiler_config)
         
         self.wait_unsafe()
         if ast_or_ir != None:
@@ -210,7 +276,16 @@ class Scheduler:
 
     def handle_exit(self, input_cmd):
         assert(input_cmd.startswith("Exit:"))
-        self.remove_process(int(input_cmd.split(":")[1]))
+        exit_part, time_part = input_cmd.split("|")
+        process_id = int(exit_part.split(":")[1])
+        log("Time part is:", time_part)
+        try:
+            exec_time = float(time_part.split(":")[1])
+        except:
+            exec_time = None
+        log("Process:", process_id, "exited. Exec time was:", exec_time)
+        self.add_time_measurement(process_id, exec_time)
+        self.remove_process(process_id)
         ## Necessary so that Exit doesn't block
         self.close_last_connection()
 

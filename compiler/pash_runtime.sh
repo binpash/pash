@@ -171,14 +171,26 @@ else
     ## TODO: It might make sense to move these functions in pash_init_setup to avoid the cost of redefining them here.
     function clean_up () {
         if [ "$pash_daemon" -eq 1 ]; then
+            if [ "$parallel_script_time_start" == "None" ]; then
+                exec_time=""
+            else
+                ## TODO: Put that in a flag
+                parallel_script_time_end=$(date +"%s%N")
+                parallel_script_time_ms=$(echo "scale = 3; ($parallel_script_time_end-$parallel_script_time_start)/1000000" | bc)
+                pash_redir_output echo " --- --- Execution time: $parallel_script_time_ms  ms"
+                exec_time=$parallel_script_time_ms
+            fi
             ## Send to daemon
-            msg="Exit:${process_id}"
+            ## TODO: Make sure that this works with empty time
+            msg="Exit:${process_id}|Time:$exec_time"
             daemon_response=$(pash_communicate_daemon_just_send "$msg")
         fi
     } 
 
     function run_parallel() {
         trap clean_up SIGTERM SIGINT EXIT
+        ## TODO: Put that in a flag
+        parallel_script_time_start=$(date +"%s%N")
         source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute}
         internal_exec_status=$?
         final_steps
@@ -228,6 +240,9 @@ else
         # Early clean up in case the script effects shell like "break" or "exec"
         # This is safe because the script is run sequentially and the shell 
         # won't be able to move forward until this is finished
+        
+        ## TODO: Put that in a flag
+        parallel_script_time_start=None
         clean_up 
         source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute}
         pash_runtime_final_status=$?
