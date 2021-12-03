@@ -163,22 +163,79 @@ class Scheduler:
 
     def determine_compiler_config(self, input_ir_file):
         if config.pash_args.profile_driven:
-            ## TODO: Use self.input_ir_to_process_id_map to find all processes and then 
-            ##       check their measurements to see what width to pick
-            log("Using profiles to select width!")
+            ## A default value
             selected_width = config.pash_args.width
+            # log("Using profiles to select width!")
+
+            ## Goal: Find the highest width that gives benefits
+            ##
+            ## Strategy, start trying lower widths, if the time seems to drop, keep trying lower.
+            ## 
+            width_avgs = self.get_averages_per_width(input_ir_file)
+            log("Width averages:", width_avgs)
+            widths = width_avgs.keys()
+            
+            ## If we have at least 1, with a specific width, 
+            ##   and the minimum width has the lowest average, then try one lower
+            if len(widths) > 0:
+                min_width = min(widths)
+                min_width_average = width_avgs[min_width]
+                # log("Minimum width:", min_width, "with average:", min_width_average)
+
+                best_width = min_width
+                best_width_average = min_width_average
+                for width, average in width_avgs.items():
+                    ## We find the width with the best average
+                    ## If that ends up being the minimum, then we also try one lower.
+                    if average < best_width_average:
+                        best_width = width
+                        best_width_average = average
+
+                if best_width == min_width and min_width > 1:
+                    ## Divide the min_width by 2 and try again
+                    selected_width = min_width // 2
+                    log("Best width is the lowest width, trying with width:", selected_width)
+                else:
+                    selected_width = best_width
+                    log("Best width is:", best_width, "We will keep executing with it.")
         else:
             selected_width = config.pash_args.width
 
         log("Selected width:", selected_width)
         return pash_runtime.CompilerConfig(selected_width)
 
+    def get_averages_per_width(self, input_ir_file):
+        ## If we haven't gathered any statistic yet
+        if not input_ir_file in self.input_ir_to_process_id_map:
+            return {}
+
+        all_proc_ids = self.input_ir_to_process_id_map[input_ir_file]
+
+        width_times = {}
+        for proc_id in all_proc_ids:
+            proc_info = self.process_id_input_ir_map[proc_id]
+            width = proc_info.compiler_config.width
+            exec_time = proc_info.exec_time
+
+            if exec_time is not None:
+                try:
+                    width_times[width].append(exec_time)
+                except:
+                    width_times[width] = [exec_time]
+        
+        ## We have gathered all times for each width
+        width_avgs = {}
+        for width, exec_times in width_times.items():
+            width_avgs[width] = sum(exec_times) / len(exec_times)
+        
+        return width_avgs
+
     def add_time_measurement(self, process_id, exec_time):
         ## TODO: Could put those behind the profile_driven check too to not fill memory
         assert(self.process_id_input_ir_map[process_id].exec_time is None)
         self.process_id_input_ir_map[process_id].set_exec_time(exec_time)
 
-        log("All measurements:", self.process_id_input_ir_map)
+        # log("All measurements:", self.process_id_input_ir_map)
 
     def add_proc_id_map(self, process_id, input_ir_file, compiler_config):
         assert(not process_id in self.process_id_input_ir_map)
@@ -189,7 +246,7 @@ class Scheduler:
             self.input_ir_to_process_id_map[input_ir_file].append(process_id)
         except:
             self.input_ir_to_process_id_map[input_ir_file] = [process_id]
-        log("All mappings from input_ir to proc_id:", self.input_ir_to_process_id_map)
+        # log("All mappings from input_ir to proc_id:", self.input_ir_to_process_id_map)
 
     ##############################################################################
 
