@@ -18,10 +18,10 @@ do
     cat $IN/$input | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u | grep -c '^....$'  > ${OUT}/${input}.out1
 done
 
-for output in $(ls ${OUT} | sed "s;^;$OUT;")
-do
-    cat $output
-done
+#for output in $(ls ${OUT} | sed "s;^;$OUT;")
+#do
+#    cat $output
+#done
 
 echo 'done';
 rm -rf "${OUT}"

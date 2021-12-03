@@ -12,10 +12,10 @@ do
     cat $IN/$input | tr -sc '[A-Z][a-z]' '[\012*]' | tr -sc 'AEIOUaeiou' '[\012*]' | sort | uniq -c | awk "\$1 >= 1000" > ${OUT}/${input}.out
 done
 
-for output in $(ls ${OUT} | sed "s;^;$OUT;")
-do
-    cat $output
-done
+#for output in $(ls ${OUT} | sed "s;^;$OUT;")
+#do
+#    cat $output
+#done
 
 echo 'done';
 rm -rf "${OUT}"

@@ -13,10 +13,10 @@ do
     cat $IN/$input | tr 'a-z' '[A-Z]' | tr -sc 'AEIOU' '[\012*]'| sort | uniq -c  > ${OUT}/${input}.out
 done
 
-for output in $(ls ${OUT} | sed "s;^;$OUT;")
-do
-    cat $output
-done
+#for output in $(ls ${OUT} | sed "s;^;$OUT;")
+#do
+#    cat $output
+#done
 
 echo 'done';
 rm -rf "${OUT}"

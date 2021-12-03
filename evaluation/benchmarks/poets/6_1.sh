@@ -34,10 +34,10 @@ do
     cat $IN"/"$input | grep 'And he said' | trigrams $IN/${input} | sort -nr | sed 5q > ${OUT}/${input}.out1
 done
 
-for output in $(ls ${OUT} | sed "s;^;$OUT;")
-do
-    cat $output
-done
+#for output in $(ls ${OUT} | sed "s;^;$OUT;")
+#do
+#    cat $output
+#done
 
 echo 'done';
 rm -rf "${OUT}"

@@ -25,10 +25,10 @@ do
     run_tests $input > ${OUT}/${input}.trigrams
 done
 
-for output in $(ls ${OUT} | sed "s;^;$OUT/;")
-do
-    cat $output
-done
+#for output in $(ls ${OUT} | sed "s;^;$OUT/;")
+#do
+#    cat $output
+#done
 
 echo 'done';
 rm -rf ${OUT}
