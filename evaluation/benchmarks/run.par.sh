@@ -600,12 +600,12 @@ for-loops_pash() {
     padded_script="${name}.sh:${pad}"
     padded_script=${padded_script:0:30}
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
-
     pash_log="${pash_logs_dir}/${script}.pash.log"
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
     echo -n "${padded_script}" | tee -a "$times_file"
     { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
+    cat "${single_time_file}" | tee -a "$times_file"
   done
   cd ..
 }
