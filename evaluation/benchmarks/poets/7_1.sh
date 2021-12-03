@@ -14,10 +14,10 @@ do
     cat $IN/$input | sed 's/ly$/-ly/g' | sed 's/ .*//g' | sort | uniq -c > ${OUT}/${input}.out
 done
 
-for output in $(ls ${OUT} | sed "s;^;$OUT;")
-do
-    cat $output
-done
+#for output in $(ls ${OUT} | sed "s;^;$OUT;")
+#do
+#    cat $output
+#done
 
 echo 'done';
 rm ${OUT}

@@ -24,10 +24,10 @@ do
     sort ${OUT}/${input}.types ${OUT}/${input}.types.rev | uniq -c | awk "\$1 >= 2 {print \$2}" > ${OUT}/${input}.out
 done
 
-for output in $(ls ${OUT} | sed "s;^;$OUT;")
-do
-    cat $output
-done
+#for output in $(ls ${OUT} | sed "s;^;$OUT;")
+#do
+#    cat $output
+#done
 
 echo 'done';
 rm -rf "${OUT}"
