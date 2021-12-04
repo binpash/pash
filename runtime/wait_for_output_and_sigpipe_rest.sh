@@ -12,15 +12,18 @@ export internal_exec_status=$?
 # Note: We need the || true after the grep so that it doesn't exit with error if it finds nothing.
 
 # now do different things depending on distro
-case "$distro" in
-    freebsd*)  
-        # not sure at all about this one
-        pids_to_kill="$(ps -efl $BASHPID |awk '{print $1}' | { grep -E '[0-9]' || true; } )"
-        ;;
-    *)
-        pids_to_kill="$(ps --ppid $BASHPID |awk '{print $1}' | { grep -E '[0-9]' || true; } )"
-        ;;
-esac
+
+## TODO: Delete this since it is very costly
+# case "$distro" in
+#     freebsd*)  
+#         # not sure at all about this one
+#         pids_to_kill="$(ps -efl $BASHPID |awk '{print $1}' | { grep -E '[0-9]' || true; } )"
+#         ;;
+#     *)
+#         pids_to_kill="$(ps --ppid $BASHPID |awk '{print $1}' | { grep -E '[0-9]' || true; } )"
+#         ;;
+# esac
+# pids_to_kill=""
 
 for pid in $pids_to_kill
 do

@@ -33,6 +33,8 @@ def ir2ast(ir, args):
 
     ## NOTE: We first need to make the main body because it might create additional ephemeral fids.
 
+    ## TODO: If we have just a single node maybe we should just instantiate that without anything else.
+
     ## Make the main body
     body = ir.to_ast(drain_streams)
 

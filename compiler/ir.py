@@ -346,6 +346,9 @@ class IR:
     def to_ast(self, drain_streams):
         asts = []
 
+        ## Initialize the pids_to_kill variable
+        asts.append(self.init_pids_to_kill())
+
         fileIdGen = self.get_file_id_gen()
 
         ## Redirect stdin
@@ -388,14 +391,36 @@ class IR:
             if(not node_id in sink_node_ids):
                 node_ast = node.to_ast(self.edges, drain_streams)
                 asts.append(make_background(node_ast))
+                ## Gather all pids
+                assignment = self.collect_pid_assignment()
+                asts.append(assignment)
 
         ## Put the output node in the end for wait to work.
         for node_id in sink_node_ids:
             node = self.get_node(node_id)
             node_ast = node.to_ast(self.edges, drain_streams)
             asts.append(make_background(node_ast))
+            ## Gather all pids
+            assignment = self.collect_pid_assignment()
+            asts.append(assignment)
 
         return asts
+    
+    def collect_pid_assignment(self):
+        ## Creates:
+        ## pids_to_kill="$! $pids_to_kill"
+        var_name = 'pids_to_kill'
+        rval = quote_arg([standard_var_ast('!'),
+                          char_to_arg_char(' '),
+                          standard_var_ast(var_name)])
+        return make_assignment(var_name, [rval])
+    
+    def init_pids_to_kill(self):
+        ## Creates:
+        ## pids_to_kill=""
+        var_name = 'pids_to_kill'
+        rval = quote_arg([])
+        return make_assignment(var_name, [rval])
 
     ## TODO: Delete this
     def set_ast(self, ast):
