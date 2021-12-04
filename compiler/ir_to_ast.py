@@ -34,6 +34,15 @@ def ir2ast(ir, args):
     ## NOTE: We first need to make the main body because it might create additional ephemeral fids.
 
     ## TODO: If we have just a single node maybe we should just instantiate that without anything else.
+    ## This is implemented below, but there is no need to turn it on now.
+    ##
+    ## If we only have a single node, then we don't need to make prologues, epilogues, etc
+    # if len(ir.nodes) == 1:
+    #     nodes = list(ir.nodes.values())
+    #     assert(len(nodes) == 1)
+    #     node = nodes[0]
+    #     body = [node.to_ast(ir.edges, drain_streams)]
+    #     return body
 
     ## Make the main body
     body = ir.to_ast(drain_streams)
