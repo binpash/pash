@@ -301,6 +301,8 @@ def read_vars_file(var_file_path):
             print_time_delta("Variable Reading", variable_reading_start_time, variable_reading_end_time)
 
             variable_tokenizing_start_time = datetime.now()
+            ## TODO: Can we replace this tokenizing process with our own code? This is very slow :'(
+            ##       It takes about 15ms on deathstar.
             tokens = shlex.split(data)
             variable_tokenizing_end_time = datetime.now()
             print_time_delta("Variable Tokenizing", variable_tokenizing_start_time, variable_tokenizing_end_time)
