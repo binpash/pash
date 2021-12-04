@@ -25,6 +25,7 @@ export internal_exec_status=$?
 # esac
 # pids_to_kill=""
 
+## TODO: Maybe send a signal to all pids at once
 for pid in $pids_to_kill
 do
     # wait $pid
