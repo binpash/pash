@@ -16,7 +16,7 @@ def pad(lst, index):
         lst += [None] * (index + 1 - len(lst))
     return lst
 
-def print_time_delta(prefix, start_time, end_time, args):
+def print_time_delta(prefix, start_time, end_time, args=None):
     ## Always output time in the log.
     time_difference = (end_time - start_time) / timedelta(milliseconds=1)
     log("{} time:".format(prefix), time_difference, " ms")

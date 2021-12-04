@@ -6,6 +6,8 @@ import subprocess
 import sys
 import traceback
 
+from datetime import datetime
+
 from annotations import *
 import config
 import pash_runtime
@@ -124,6 +126,7 @@ class Scheduler:
         self.cmd_buffer = ""
         self.connection_manager = None
         self.reader_pipes_are_blocking = True
+        self.request_processing_start_time = 0
 
     def check_resources_safety(self, process_id):
         proc_input_resources, proc_output_resources = self.process_resources[process_id]
@@ -226,6 +229,8 @@ class Scheduler:
             compiled_script_file, var_file, input_ir_file = self.__parse_compile_command(
                 input_cmd)
             response = self.compile_and_add(compiled_script_file, var_file, input_ir_file)
+            request_processing_end_time = datetime.now()
+            print_time_delta("Request handling", self.request_processing_start_time, request_processing_end_time)
             ## Send output to the specific command
             self.respond(response)
         elif (input_cmd.startswith("Exit:")):
@@ -277,6 +282,7 @@ class Scheduler:
         while not self.done:
             # Process a single request
             input_cmd = self.get_input()
+            self.request_processing_start_time = datetime.now()
 
             ## Parse the command (potentially also sending a response)
             self.parse_and_run_cmd(input_cmd)

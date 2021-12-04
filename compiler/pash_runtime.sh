@@ -82,6 +82,8 @@ pash_redir_output echo "$$: (1) Previous set state: $pash_previous_set_status"
 ## This is only needed by PaSh to expand.
 ##
 ## TODO: Maybe we can get rid of it since PaSh has access to the environment anyway?
+## TODO: Remove this call to pash_ptempfile_name.sh. Actually remove this file in general.
+##       PaSh should only generate temp files using $RANDOM$RANDOM$RANDOM
 # pash_runtime_shell_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
 pash_runtime_shell_variables_file="${PASH_TMP_PREFIX}/pash_$RANDOM$RANDOM$RANDOM"
 source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
