@@ -82,7 +82,8 @@ pash_redir_output echo "$$: (1) Previous set state: $pash_previous_set_status"
 ## This is only needed by PaSh to expand.
 ##
 ## TODO: Maybe we can get rid of it since PaSh has access to the environment anyway?
-pash_runtime_shell_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+# pash_runtime_shell_variables_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+pash_runtime_shell_variables_file="${PASH_TMP_PREFIX}/pash_$RANDOM$RANDOM$RANDOM"
 source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
 pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_variables_file"
 
@@ -105,7 +106,8 @@ pash_sequential_script_file=$1
 pash_input_ir_file=$2
 
 ## The parallel script will be saved in the following file if compilation is successful.
-pash_compiled_script_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+# pash_compiled_script_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+pash_compiled_script_file="${PASH_TMP_PREFIX}/pash_$RANDOM$RANDOM$RANDOM"
 
 
 if [ "$pash_speculation_flag" -eq 1 ]; then
