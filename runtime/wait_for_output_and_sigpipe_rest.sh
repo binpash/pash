@@ -11,6 +11,15 @@ export internal_exec_status=$?
 
 # Note: We need the || true after the grep so that it doesn't exit with error if it finds nothing.
 
+
+
+
+(> /dev/null 2>&1 kill -SIGPIPE $pids_to_kill || true)
+
+##
+## Old way of waiting, very inefficient.
+##
+
 # now do different things depending on distro
 
 ## TODO: Delete this since it is very costly
@@ -26,8 +35,8 @@ export internal_exec_status=$?
 # pids_to_kill=""
 
 ## TODO: Maybe send a signal to all pids at once
-for pid in $pids_to_kill
-do
-    # wait $pid
-    (> /dev/null 2>&1 kill -SIGPIPE $pid || true)
-done
+# for pid in $pids_to_kill
+# do
+#     # wait $pid
+#     (> /dev/null 2>&1 kill -SIGPIPE $pid || true)
+# done
