@@ -80,7 +80,8 @@ void SplitByLines(FILE *inputFile, int batchSize, FILE *outputFiles[], unsigned 
       if (current_file_id < numOutputFiles - 1) {
         // Process output for the first n - 1 nodes
         int end_pos = (current_file_id + 1) * init_batch_size;
-        int pivot = find_new_line_pivot(init_buffer, start_pos, end_pos, true);
+        int search_start_pos = current_file_id * init_batch_size;
+        int pivot = find_new_line_pivot(init_buffer, search_start_pos, end_pos, true);
         // If no newline in the range [start_pos, end_pos] then blocksize would be 0
         if (pivot == -1) {
           next_start = start_pos;
