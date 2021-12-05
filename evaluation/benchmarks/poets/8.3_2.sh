@@ -18,10 +18,9 @@ ENTRIES=${ENTRIES:-1000}
 
 for input in $(ls ${IN} | head -n ${ENTRIES})
 do
-    cat $IN/$input | tr -sc '[A-Z][a-z]' '[\012*]' > ${OUT}/${input}.words
-    cat ${OUT}/${input}.words | sort -u > ${OUT}/${input}.types
+    cat $IN/$input | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u > ${OUT}/${input}.types
     rev < ${OUT}/${input}.types > ${OUT}/${input}.types.rev
-    cat ${OUT}/${input}.types ${OUT}/${input}.types.rev | sort | uniq -c | awk "\$1 >= 2 {print \$2}" > ${OUT}/${input}.out
+    sort ${OUT}/${input}.types ${OUT}/${input}.types.rev | uniq -c | awk "\$1 >= 2 {print \$2}" > ${OUT}/${input}.out
 done
 
 #for output in $(ls ${OUT} | sed "s;^;$OUT;")
