@@ -6,6 +6,8 @@ import subprocess
 import sys
 import traceback
 
+from datetime import datetime
+
 from annotations import *
 import config
 import pash_runtime
@@ -141,6 +143,7 @@ class Scheduler:
         self.cmd_buffer = ""
         self.connection_manager = None
         self.reader_pipes_are_blocking = True
+        self.request_processing_start_time = 0
         ## TODO: Make that be a class or something
         
         ## A map that keeps mappings between proc_id and (input_ir, width, exec_time)
@@ -270,6 +273,7 @@ class Scheduler:
         run_parallel = False
         compile_success = False
 
+        variable_reading_start_time = datetime.now()
         # Read any shell variables files if present
         config.read_vars_file(var_file)
         if config.pash_args.expand_using_bash_mirror:
@@ -280,6 +284,10 @@ class Scheduler:
             ## Clean up the variable cache
             config.reset_variable_cache()
 
+        variable_reading_end_time = datetime.now()
+        print_time_delta("Variable Loading", variable_reading_start_time, variable_reading_end_time)
+
+        daemon_compile_start_time = datetime.now()
         ## TODO: Make the compiler config based on profiling data
         compiler_config = self.determine_compiler_config(input_ir_file)
         ## Add the process_id -> input_ir mapping
@@ -287,7 +295,9 @@ class Scheduler:
 
         ast_or_ir = pash_runtime.compile_ir(
             input_ir_file, compiled_script_file, config.pash_args, compiler_config)
-        
+        daemon_compile_end_time = datetime.now()
+        print_time_delta("Daemon Compile", daemon_compile_start_time, daemon_compile_end_time)
+
         self.wait_unsafe()
         if ast_or_ir != None:
             compile_success = True
@@ -373,6 +383,8 @@ class Scheduler:
             compiled_script_file, var_file, input_ir_file = self.__parse_compile_command(
                 input_cmd)
             response = self.compile_and_add(compiled_script_file, var_file, input_ir_file)
+            request_processing_end_time = datetime.now()
+            print_time_delta("Request handling", self.request_processing_start_time, request_processing_end_time)
             ## Send output to the specific command
             self.respond(response)
         elif (input_cmd.startswith("Exit:")):
@@ -424,6 +436,7 @@ class Scheduler:
         while not self.done:
             # Process a single request
             input_cmd = self.get_input()
+            self.request_processing_start_time = datetime.now()
 
             ## Parse the command (potentially also sending a response)
             self.parse_and_run_cmd(input_cmd)

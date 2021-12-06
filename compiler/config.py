@@ -4,6 +4,8 @@ import subprocess
 import math
 import shlex
 
+from datetime import datetime
+
 from ir_utils import *
 from util import *
 
@@ -298,8 +300,17 @@ def read_vars_file(var_file_path):
         #     lines = [line.rstrip() for line in f.readlines()]
 
         with open(var_file_path) as f:
+            variable_reading_start_time = datetime.now()
             data = f.read()
+            variable_reading_end_time = datetime.now()
+            print_time_delta("Variable Reading", variable_reading_start_time, variable_reading_end_time)
+
+            variable_tokenizing_start_time = datetime.now()
+            ## TODO: Can we replace this tokenizing process with our own code? This is very slow :'(
+            ##       It takes about 15ms on deathstar.
             tokens = shlex.split(data)
+            variable_tokenizing_end_time = datetime.now()
+            print_time_delta("Variable Tokenizing", variable_tokenizing_start_time, variable_tokenizing_end_time)
             # log(tokens)
 
         # MMG 2021-03-09 definitively breaking on newlines (e.g., IFS) and function outputs (i.e., `declare -f`)
