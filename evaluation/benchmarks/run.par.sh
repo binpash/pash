@@ -569,6 +569,7 @@ for-loops_pash() {
   cd for-loops/
 
   cd input/
+  rm -rf output/
   ./setup.sh
   cd ..
 

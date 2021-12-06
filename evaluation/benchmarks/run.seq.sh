@@ -478,6 +478,7 @@ for-loops() {
   cd for-loops/
 
   cd input/
+  rm -rf output/
   ./setup.sh
   cd ..
 
