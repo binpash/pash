@@ -36,4 +36,4 @@ cat "${data_file}" |
 cat "${data_file}" |
   cut -c 89-92 |
   grep -v 999 |
-  awk '{ total += $1; count++ } END { print total/count }' > average.txt 
+  awk "{ total += \$1; count++ } END { print total/count }" > average.txt 
