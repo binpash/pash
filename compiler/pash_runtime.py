@@ -32,6 +32,18 @@ def main():
         log("Compiler failed, no need to worry, executing original script...")
         log(traceback.format_exc())
         sys.exit(1)
+    finally:
+        shutdown()
+
+def shutdown():
+    if config.bash_mirror is not None:
+        ## TODO: Do we need force
+        ret = config.bash_mirror.terminate(force=True)
+            
+        ## The mirror was terminated successfully
+        assert(ret)
+
+        config.bash_mirror.wait()
 
 def main_body():
     global runtime_config
@@ -53,6 +65,21 @@ def main_body():
     config.read_vars_file(args.var_file)
 
     log("Input:", args.input_ir, "Compiled file:", args.compiled_script_file)
+
+    if config.pash_args.expand_using_bash_mirror:
+        ## Initialize a bash that is used for expanding
+        ##
+        ## TODO: Alternatively, we could set up a communication with the original bash 
+        ## (though this makes it difficult to have concurrent compilations and execution)
+        ## TODO: We actually need to discuss which arch is better.
+        config.init_bash_mirror_subprocess()
+
+        ## Update the bash mirror with the new variables
+        config.update_bash_mirror_vars(args.var_file)
+        ## TODO: Maybe we also need to update current directory of bash mirror for file-based expansion?
+
+        ## Clean up the variable cache
+        config.reset_variable_cache()
 
     ## Call the main procedure
     compiler_config = CompilerConfig(args.width)

@@ -48,13 +48,13 @@ run_pash()
     diff -q "$bash_outputs_file" "$par_outputs_file"
 }
 
-config="PaSh_no_daemon"
-PASH_FLAGS="--no_daemon"
+config="PaSh_no_daemon_bash_mirror"
+PASH_FLAGS="--no_daemon --expand_using_bash_mirror"
 
 run_pash "$config" "$PASH_FLAGS"
 
-config="PaSh_daemon_bash_mirror"
-PASH_FLAGS="--expand_using_bash_mirror"
+config="PaSh_no_daemon"
+PASH_FLAGS="--no_daemon"
 
 run_pash "$config" "$PASH_FLAGS"
 
@@ -63,17 +63,17 @@ PASH_FLAGS=""
 
 run_pash "$config" "$PASH_FLAGS"
 
-config="PaSh_daemon_fifos"
-PASH_FLAGS="--daemon_communicates_through_unix_pipes"
-
-run_pash "$config" "$PASH_FLAGS"
+#config="PaSh_daemon_fifos"
+#PASH_FLAGS="--daemon_communicates_through_unix_pipes"
+#
+#run_pash "$config" "$PASH_FLAGS"
 
 config="PaSh_daemon_par_pipelines"
 PASH_FLAGS="--parallel_pipelines"
 
 run_pash "$config" "$PASH_FLAGS"
 
-config="PaSh_daemon_par_pipelines_fifos"
-PASH_FLAGS="--parallel_pipelines --daemon_communicates_through_unix_pipes"
-
-run_pash "$config" "$PASH_FLAGS"
+#config="PaSh_daemon_par_pipelines_fifos"
+#PASH_FLAGS="--parallel_pipelines --daemon_communicates_through_unix_pipes"
+#
+#run_pash "$config" "$PASH_FLAGS"

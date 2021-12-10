@@ -1,5 +1,6 @@
 import json
 import os
+import pexpect
 import subprocess
 import math
 import shlex
@@ -61,6 +62,23 @@ def load_config(config_file_path=""):
 def getWidth():
     cpus = os.cpu_count()
     return math.floor(cpus / 8) if cpus >= 16 else 2
+
+def init_bash_mirror_subprocess():
+    global bash_mirror
+    global pash_args
+
+    ## Spawn a bash process to ask it for expansions
+    p = pexpect.spawn('/usr/bin/env', ['bash', '-i'], 
+                      encoding='utf-8',
+                      echo=False)
+    ## If we are in debug mode also log the bash's output
+    if (pash_args.debug >= 1):
+        _, file_to_save_output = ptempfile()
+        log("bash mirror log saved in:", file_to_save_output)
+        fout = open(file_to_save_output, "w")
+        p.logfile = fout
+    
+    bash_mirror = p
 
 ## These are arguments that are common to pash.py and pash_runtime.py
 def add_common_arguments(parser):
