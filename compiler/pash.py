@@ -149,7 +149,7 @@ def parse_args():
                         action="store_true")
     parser.add_argument("-c", "--command",
                         help="Evaluate the following as a script, rather than a file",
-                        default="")
+                        default=None)
     ## This is not the correct way to parse these, because more than one option can be given together, e.g., -ae
     parser.add_argument("-a",
                         help="Enabling the `allexport` shell option",
@@ -185,7 +185,7 @@ def parse_args():
     ## TODO: We might need to have a better default (like $0 of pa.sh)
     shell_name = "pash"
 
-    if args.command:
+    if args.command is not None:
         _, fname = ptempfile()
         with open(fname, 'w') as f:
             f.write(args.command)
