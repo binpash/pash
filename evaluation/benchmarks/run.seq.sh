@@ -235,7 +235,10 @@ poets(){
   echo executing Unix-for-poets $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
 
-    export IN="$PASH_TOP/evaluation/benchmarks/poets/input/pg/"
+  export IN="$PASH_TOP/evaluation/benchmarks/poets/input/pg/"
+  # 1% of the input
+  export ENTRIES=1060
+
   for name_script in ${names_scripts[@]}
   do
     IFS=";" read -r -a name_script_parsed <<< "${name_script}"
