@@ -145,8 +145,6 @@ def add_common_arguments(parser):
 
 def pass_common_arguments(pash_arguments):
     arguments = []
-    if (pash_arguments.version):
-        os.exit(0);
     if (pash_arguments.no_optimize):
         arguments.append(string_to_argument("--no_optimize"))
     if (pash_arguments.dry_run_compiler):
