@@ -12,6 +12,9 @@ import config
 import shutil
 
 def main():
+    ## Set the logging prefix
+    config.LOGGING_PREFIX = "PaSh Preprocessor: "
+
     ## Parse arguments
     args, shell_name = parse_args()
     ## If it is interactive we need a different execution mode
@@ -31,9 +34,6 @@ def main():
         ## Preprocess and execute the parsed ASTs
         return_code = preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell_name)
         
-        ## Delete the temp directory when not debugging
-        if(args.debug == 0):
-            shutil.rmtree(config.PASH_TMP_PREFIX)
         log("-" * 40) #log end marker
         ## Return the exit code of the executed script
         sys.exit(return_code)
@@ -125,10 +125,7 @@ def interactive(args, shell_name):
         ## Close the input and wait for the internal process to finish
         shell_proc.stdin.close()
         shell_proc.wait()
-    
-        ## Delete the temp directory when not debugging
-        if(args.debug == 0):
-            shutil.rmtree(config.PASH_TMP_PREFIX)
+        
         log("-" * 40) #log end marker
         ## Return the exit code of the executed script
         sys.exit(shell_proc.returncode)
@@ -152,7 +149,7 @@ def parse_args():
                         action="store_true")
     parser.add_argument("-c", "--command",
                         help="Evaluate the following as a script, rather than a file",
-                        default="")
+                        default=None)
     ## This is not the correct way to parse these, because more than one option can be given together, e.g., -ae
     parser.add_argument("-a",
                         help="Enabling the `allexport` shell option",
@@ -161,7 +158,14 @@ def parse_args():
     parser.add_argument("+a",
                         help="Disabling the `allexport` shell option",
                         action="store_false",
-                        default=False)
+                        default=False)    
+    ## These two are here for compatibility with respect to bash
+    parser.add_argument("-v",
+                        help="(experimental) prints shell input lines as they are read",
+                        action="store_true")
+    parser.add_argument("-x",
+                        help="(experimental) prints commands and their arguments as they execute",
+                        action="store_true")
     
     config.add_common_arguments(parser)
     args = parser.parse_args()
@@ -181,7 +185,7 @@ def parse_args():
     ## TODO: We might need to have a better default (like $0 of pa.sh)
     shell_name = "pash"
 
-    if args.command:
+    if args.command is not None:
         _, fname = ptempfile()
         with open(fname, 'w') as f:
             f.write(args.command)
@@ -223,13 +227,21 @@ def bash_prefix_args():
         subprocess_args.append("-a")
     else:
         subprocess_args.append("+a")
+    if config.pash_args.v:
+        subprocess_args.append("-v")
+    if config.pash_args.x:
+        subprocess_args.append("-x")
     return subprocess_args
 
 def bash_exec_string(shell_name):
-    a_flag = ''
+    flags = []
     if config.pash_args.a:
-        a_flag = '-a'
-    return "exec -a{} bash {} -s $@\n".format(shell_name, a_flag)
+        flags.append('-a')
+    if config.pash_args.v:
+        flags.append('-v')
+    if config.pash_args.x:
+        flags.append('-x')
+    return "exec -a{} bash {} -s $@\n".format(shell_name, " ".join(flags))
 
 def execute_script(compiled_script_filename, command, arguments, shell_name):
     new_env = shell_env(shell_name)
@@ -244,3 +256,5 @@ def execute_script(compiled_script_filename, command, arguments, shell_name):
 
 if __name__ == "__main__":
     main()
+   
+ 

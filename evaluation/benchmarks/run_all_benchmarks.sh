@@ -3,11 +3,16 @@
 ## Determines whether the experimental pash flags will be tested. 
 ## By default they are not.
 export EXPERIMENTAL=0
+export DEBUG=0
 
 for item in $@
 do
     if [ "--experimental" == "$item" ]; then
         export EXPERIMENTAL=1
+    fi
+
+    if [ "--debug" == "$item" ]; then
+        export DEBUG=1
     fi
 done
 
@@ -27,9 +32,15 @@ compare_outputs(){
 }
 
 if [ "$EXPERIMENTAL" -eq 1 ]; then
-  export PASH_FLAGS="--speculation quick_abort --r_split --dgsh_tee --r_split_batch_size 1000000"
+  export PASH_FLAGS="--r_split --dgsh_tee --r_split_batch_size 1000000"
+  # --speculation quick_abort is not maintained at the moment 
 else
   export PASH_FLAGS=""
+fi
+
+## Add the debug flag
+if [ "$DEBUG" -eq 1 ]; then
+  export PASH_FLAGS="$PASH_FLAGS -d 1"
 fi
 
 

@@ -1,0 +1,44 @@
+name: Pash-future-CI-issue
+on:
+  # Run the for-loop tests when pushing to future or when creating a new PR
+  push:
+    branches:
+      - future
+    paths: 
+      - compiler/**
+      - runtime/**
+      - evaluation/**
+      - annotations/**
+  pull_request:
+    branches:
+      - future
+    paths: 
+      - compiler/**
+      - runtime/**
+      - evaluation/**
+      - annotations/**
+jobs:
+  future-ci:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Inject slug/short variables
+      uses: rlespinasse/github-slug-action@v3.x
+    - name: Trigger Future CI
+      run: |
+        echo "Slug variables"
+        base=${{ env.GITHUB_REF_SLUG }}
+        branch=${{ env.GITHUB_HEAD_REF_SLUG }}
+        hash=${{ env.GITHUB_SHA_SHORT }}
+        if [[ $branch == '' ]]; then
+          echo "We are pushing directly to future"
+          branch=$base
+        else
+          echo "We are doing a PR"
+          hash=${{ env.GITHUB_EVENT_PULL_REQUEST_HEAD_SHA_SHORT }}
+        fi
+        # construct the url for performance and correctness
+        tests="http://ctrl.pash.ndr.md/job=issue&branch=$branch&benchmark=TIGHT-LOOP&commit=$hash"
+        # issue the tests for the future branch
+        curl -s "$tests"
+        echo "$tests"

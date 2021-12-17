@@ -176,6 +176,9 @@ def standard_var_ast(string):
 def make_quoted_variable(string):
     return make_kv("Q", [standard_var_ast(string)])
 
+def quote_arg(arg):
+    return make_kv("Q", arg)
+
 def redir_append_stderr_to_string_file(string):
     return make_kv("File",["Append",2,string_to_argument(string)])
 
@@ -190,13 +193,29 @@ def make_background(body, redirections=[]):
     node = make_kv("Background", [lineno, body, redirections])
     return node
 
+def make_subshell(body, redirections=[]):
+    lineno = 0
+    node = make_kv("Subshell", [lineno, body, redirections])
+    return node
+
 def make_command(arguments, redirections=[], assignments=[]):
     lineno = 0
     node = make_kv("Command", [lineno, assignments, arguments, redirections])
     return node
 
+def make_nop():
+    return make_command([string_to_argument(":")])
+
+def make_assignment(var, value):
+    lineno = 0
+    assignment=(var, value)
+    assignments=[assignment]
+    node = make_kv("Command", [lineno, assignments, [], []])
+    return node
+
 def make_semi_sequence(asts):
-    assert(len(asts) > 0)
+    if(len(asts) == 0):
+        return make_nop()
 
     if(len(asts) == 1):
         return asts[0]

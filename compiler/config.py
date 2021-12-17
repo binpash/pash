@@ -2,11 +2,15 @@ import json
 import os
 import subprocess
 import math
+import shlex
+
+from datetime import datetime
 
 from ir_utils import *
+from util import *
 
 ## Global
-__version__ = "0.5" # FIXME add libdash version
+__version__ = "0.6" # FIXME add libdash version
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'PASH_TOP' in os.environ:
     PASH_TOP = os.environ['PASH_TOP']
@@ -21,9 +25,20 @@ RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 assert(not os.getenv('PASH_TMP_PREFIX') is None)
 PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
 
+LOGGING_PREFIX = ""
+
 config = {}
 annotations = []
 pash_args = None
+
+## Contains a bash subprocess that is used for expanding
+bash_mirror = None
+
+## A cache containing variable values since variables are not meant to change while we compile one region
+variable_cache = {}
+
+## Increase the recursion limit (it seems that the parser/unparser needs it for bigger graphs)
+sys.setrecursionlimit(10000)
 
 def load_config(config_file_path=""):
     global config
@@ -65,6 +80,12 @@ def add_common_arguments(parser):
     parser.add_argument("--avoid_pash_runtime_completion",
                         help="avoid the pash_runtime execution completion (only relevant when --debug > 0)",
                         action="store_true")
+    parser.add_argument("--expand_using_bash_mirror",
+                        help="instead of expanding using the internal expansion code, expand using a bash mirror process (slow)",
+                        action="store_true")
+    parser.add_argument("--profile_driven",
+                        help="(experimental) use profiling information when optimizing",
+                        action="store_true")
     ## TODO: Delete that at some point, or make it have a different use (e.g., outputting time even without -d 1).
     parser.add_argument("-t", "--output_time", #FIXME: --time
                         help="(obsolete, time is always logged now) output the time it took for every step",
@@ -85,13 +106,21 @@ def add_common_arguments(parser):
     parser.add_argument("--no_cat_split_vanish",
                         help="(experimental) disable the optimization that removes cat with N inputs that is followed by a split with N inputs",
                         action="store_true")
+    parser.add_argument("--no_daemon",
+                        help="Run the compiler everytime we need a compilation instead of using the daemon",
+                        action="store_true",
+                        default=False)
+    parser.add_argument("--parallel_pipelines",
+                        help="Run multiple pipelines in parallel if they are safe to run",
+                        action="store_true",
+                        default=False)
     parser.add_argument("--r_split",
                         help="(experimental) use round robin split, merge, wrap, and unwrap",
                         action="store_true")
     parser.add_argument("--r_split_batch_size",
                         type=int,
-                        help="(experimental) configure the batch size of r_splti (default: 100KB)",
-                        default=100000)
+                        help="(experimental) configure the batch size of r_split (default: 1MB)",
+                        default=1000000)
     parser.add_argument("--dgsh_tee",
                         help="(experimental) use dgsh-tee instead of eager",
                         action="store_true")
@@ -103,12 +132,12 @@ def add_common_arguments(parser):
                         help="(experimental) determine the termination behavior of the DFG. Defaults to cleanup after the last process dies, but can drain all streams until depletion",
                         choices=['clean_up_graph', 'drain_stream'],
                         default="clean_up_graph")
+    parser.add_argument("--daemon_communicates_through_unix_pipes",
+                        help="(experimental) the daemon communicates through unix pipes instead of sockets",
+                        action="store_true")
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")
-    parser.add_argument("-v", "--version",
-                        action='version',
-                        version='%(prog)s {version}'.format(version=__version__))
     return
 
 def pass_common_arguments(pash_arguments):
@@ -121,6 +150,10 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--assert_compiler_success"))
     if (pash_arguments.avoid_pash_runtime_completion):
         arguments.append(string_to_argument("--avoid_pash_runtime_completion"))
+    if (pash_arguments.expand_using_bash_mirror):
+        arguments.append(string_to_argument("--expand_using_bash_mirror"))
+    if (pash_arguments.profile_driven):
+        arguments.append(string_to_argument("--profile_driven"))
     if (pash_arguments.output_time):
         arguments.append(string_to_argument("--output_time"))
     if (pash_arguments.output_optimized):
@@ -134,6 +167,12 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--r_split"))
     if (pash_arguments.dgsh_tee):
         arguments.append(string_to_argument("--dgsh_tee"))
+    if (pash_arguments.no_daemon):
+        arguments.append(string_to_argument("--no_daemon"))
+    if (pash_arguments.parallel_pipelines):
+        arguments.append(string_to_argument("--parallel_pipelines"))
+    if (pash_arguments.daemon_communicates_through_unix_pipes):
+        arguments.append(string_to_argument("--daemon_communicates_through_unix_pipes"))
     arguments.append(string_to_argument("--r_split_batch_size"))
     arguments.append(string_to_argument(str(pash_arguments.r_split_batch_size)))
     if (pash_arguments.no_cat_split_vanish):
@@ -157,6 +196,92 @@ def init_log_file():
         with open(pash_args.log_file, "w") as f:
             pass
 
+def wait_bash_mirror(bash_mirror):
+    r = bash_mirror.expect(r'EXPECT\$ ')
+    assert(r == 0)
+    output = bash_mirror.before
+
+    ## I am not sure why, but \r s are added before \n s
+    output = output.replace('\r\n', '\n')
+
+    log("Before the prompt!")
+    log(output)
+    return output
+
+
+def query_expand_variable_bash_mirror(variable):
+    global bash_mirror
+    
+    command = f'if [ -z ${{{variable}+foo}} ]; then echo -n "PASH_VAR_UNSET"; else echo -n "${variable}"; fi'
+    data = sync_run_line_command_mirror(command)
+
+    if data == "PASH_VAR_UNSET":
+        return None
+    else:
+        ## This is here because we haven't specified utf encoding when spawning bash mirror
+        # return data.decode('ascii')
+        return data
+    
+def query_expand_bash_mirror(string):
+    global bash_mirror
+
+    command = f'echo -n "{string}"'
+    return sync_run_line_command_mirror(command)
+
+def sync_run_line_command_mirror(command):
+    bash_command = f'{command}'
+    log("Executing bash command in mirror:", bash_command)
+
+    bash_mirror.sendline(bash_command)
+    
+    data = wait_bash_mirror(bash_mirror)
+    log("mirror done!")
+
+    return data
+
+
+def update_bash_mirror_vars(var_file_path):
+    global bash_mirror
+
+    assert(var_file_path != ""  and not var_file_path is None)
+
+    bash_mirror.sendline(f'PS1="EXPECT\$ "')
+    wait_bash_mirror(bash_mirror)
+    log("PS1 set!")
+
+    ## TODO: There is unnecessary write/read to this var file now.
+    bash_mirror.sendline(f'source {var_file_path}')
+    log("sent source to mirror")
+    wait_bash_mirror(bash_mirror)
+    log("mirror done!")
+
+def add_to_variable_cache(variable_name, value):
+    global variable_cache
+    variable_cache[variable_name] = value
+
+def get_from_variable_cache(variable_name):
+    global variable_cache
+    try:
+        return variable_cache[variable_name]
+    except:
+        return None
+
+def reset_variable_cache():
+    global variable_cache
+
+    variable_cache = {}
+
+
+## This finds the end of this variable/function
+def find_next_delimiter(tokens, i):
+    if (tokens[i] == "declare"):
+        return i + 3
+    else:
+        j = i + 1
+        while j < len(tokens) and (tokens[j] != "declare"):
+            j += 1
+        return j
+
 ##
 ## Read a shell variables file
 ##
@@ -164,20 +289,43 @@ def init_log_file():
 def read_vars_file(var_file_path):
     global config
 
+    log("Reading variables from:", var_file_path)
+
 
     config['shell_variables'] = None
     config['shell_variables_file_path'] = var_file_path
     if(not var_file_path is None):
         vars_dict = {}
+        # with open(var_file_path) as f:
+        #     lines = [line.rstrip() for line in f.readlines()]
+
         with open(var_file_path) as f:
-            lines = [line.rstrip() for line in f.readlines()]
+            variable_reading_start_time = datetime.now()
+            data = f.read()
+            variable_reading_end_time = datetime.now()
+            print_time_delta("Variable Reading", variable_reading_start_time, variable_reading_end_time)
+
+            variable_tokenizing_start_time = datetime.now()
+            ## TODO: Can we replace this tokenizing process with our own code? This is very slow :'(
+            ##       It takes about 15ms on deathstar.
+            tokens = shlex.split(data)
+            variable_tokenizing_end_time = datetime.now()
+            print_time_delta("Variable Tokenizing", variable_tokenizing_start_time, variable_tokenizing_end_time)
+            # log(tokens)
 
         # MMG 2021-03-09 definitively breaking on newlines (e.g., IFS) and function outputs (i.e., `declare -f`)
-        for line in lines:
-            words = line.split(' ')
+        # KK  2021-10-26 no longer breaking on newlines (probably)
+
+        ## At the start of each iteration token_i should point to a 'declare'
+        token_i = 0
+        while token_i < len(tokens):
             # FIXME is this assignment needed?
-            _export_or_typeset = words[0]
-            rest = " ".join(words[1:])
+            _export_or_typeset = tokens[token_i]
+
+            new_token_i = find_next_delimiter(tokens, token_i)
+            rest = " ".join(tokens[(token_i+1):new_token_i])
+            # log("Rest:", rest)
+            token_i = new_token_i
 
             space_index = rest.find(' ')
             eq_index = rest.find('=')

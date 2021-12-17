@@ -20,9 +20,12 @@ else
 fi
 cd $PASH_TOP
 
-LOG_DIR=$PWD/install_logs
+LOG_DIR=$PASH_TOP/install_logs
 mkdir -p $LOG_DIR
-PYTHON_PKG_DIR=$PWD/python_pkgs
+PYTHON_PKG_DIR=$PASH_TOP/python_pkgs
+# remove the folder in case it exists
+rm -rf $PYTHON_PKG_DIR
+# create the new folder
 mkdir -p $PYTHON_PKG_DIR
 
 echo "Building parser..."
@@ -77,10 +80,14 @@ echo "export distro=$distro" > ~/.pash_init
 cd ../
 
 echo "Installing python dependencies..."
-python3 -m pip install jsonpickle --root $PYTHON_PKG_DIR #&> $LOG_DIR/pip_install_jsonpickle.log
+python3 -m pip install jsonpickle --root $PYTHON_PKG_DIR --force-reinstall #&> $LOG_DIR/pip_install_jsonpickle.log
+python3 -m pip install pexpect --root $PYTHON_PKG_DIR --force-reinstall #&> $LOG_DIR/pip_install_pexpect.log
 python3 -m pip install numpy #&> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib #&> $LOG_DIR/pip_install_matplotlib.log
-
+# clean the python packages
+cd $PYTHON_PKG_DIR
+find . -name "site-packages" -type d | xargs -I '{}' mv $PYTHON_PKG_DIR/{}/ .
+mv site-packages/* . && rm -rf site-packages
 
 echo "Generating input files..."
 $PASH_TOP/evaluation/tests/input/setup.sh

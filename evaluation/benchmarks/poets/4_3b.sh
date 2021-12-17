@@ -3,9 +3,22 @@
 # set -e
 
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/input/output/}
-ls ${IN} | sed "s;^;$IN;"| xargs cat | tr -sc '[A-Z][a-z]' '[\012*]' > ${OUT}.words
-tail +2 ${OUT}.words > ${OUT}.nextwords
-tail +3 ${OUT}.words > ${OUT}.nextwords2
-paste ${OUT}.words ${OUT}.nextwords ${OUT}.nextwords2 |
-sort | uniq -c  > ${OUT}.trigrams
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/4_3b/}
+ENTRIES=${ENTRIES:-1000}
+mkdir -p "$OUT"
+
+run_tests() {
+    cat $IN/$input | tr -sc '[A-Z][a-z]' '[\012*]' > ${OUT}/${input}.words
+    tail +2 ${OUT}/${input}.words > ${OUT}/${input}.nextwords
+    tail +2 ${OUT}/${input}.words > ${OUT}/${input}.nextwords2
+    paste ${OUT}/${input}.words ${OUT}/${input}.nextwords ${OUT}/${input}.nextwords2 |
+    sort | uniq -c 
+}
+export -f run_tests
+for input in $(ls ${IN} | head -n ${ENTRIES})
+do
+    run_tests $input > ${OUT}/${input}.trigrams
+done
+
+echo 'done';
+rm -rf ${OUT}

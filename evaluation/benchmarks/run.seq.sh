@@ -235,7 +235,10 @@ poets(){
   echo executing Unix-for-poets $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
 
-    export IN="$PASH_TOP/evaluation/benchmarks/poets/input/pg/"
+  export IN="$PASH_TOP/evaluation/benchmarks/poets/input/pg/"
+  # 1% of the input
+  export ENTRIES=1060
+
   for name_script in ${names_scripts[@]}
   do
     IFS=";" read -r -a name_script_parsed <<< "${name_script}"
@@ -463,5 +466,54 @@ posh() {
       echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$seq_times_file"
     done
     cd ..
+}
+
+for-loops() {
+  rm -rf for-loops/input/output
+  seq_times_file="seq.res"
+  outputs_suffix="seq.out"
+  outputs_dir="outputs"
+  if [ -e "for-loops/${seq_times_file}" ]; then
+    echo "skipping for-loops/${seq_times_file}"
+    return 0
+  fi
+
+  cd for-loops/
+
+  cd input/
+  rm -rf output/
+  ./setup.sh
+  cd ..
+
+  mkdir -p "$outputs_dir"
+
+  names_scripts=(
+    "compress_files;compress_files"
+    "encrypt_files;encrypt_files"
+    "img_convert;img_convert"
+    "mir;mir"
+    "nginx;nginx"
+    "pcap;pcap"
+    "to_mp3;to_mp3"
+    "genome;genome"
+    "pacaur;pacaur"
+  )
+
+  touch "$seq_times_file"
+  echo executing for-loops $(date) | tee -a "$seq_times_file"
+  echo '' >> "$seq_times_file"
+
+  for name_script in ${names_scripts[@]}
+  do
+    IFS=";" read -r -a name_script_parsed <<< "${name_script}"
+    name="${name_script_parsed[0]}"
+    script="${name_script_parsed[1]}"
+    printf -v pad %30s
+    padded_script="${name}.sh:${pad}"
+    padded_script=${padded_script:0:30}
+    outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+    echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$seq_times_file"
+  done
+  cd ..
 }
 
