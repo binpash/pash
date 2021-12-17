@@ -53,7 +53,9 @@ do
     # if [ "--output_time" == "$item" ]; then
     #     pash_output_time_flag=1
     # fi
-
+    if [ "--version" == "$item" ]; then
+        export show_version=1
+    fi
     if [ "--dry_run_compiler" == "$item" ]; then
         export pash_dry_run_compiler_flag=1
     fi
