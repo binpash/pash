@@ -21,6 +21,7 @@ export pash_profile_driven_flag=1
 export pash_daemon=1
 export pash_parallel_pipelines=0
 export pash_daemon_communicates_through_unix_pipes_flag=0
+export show_version=0
 for item in $@
 do
     if [ "$pash_checking_speculation" -eq 1 ]; then
