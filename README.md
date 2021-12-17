@@ -29,7 +29,7 @@ docker build -t "pash/18.04" .
 docker run --name pash-play -it pash/18.04
 ```
 
-More installation instructions in [the tutorial](./docs/tutorial.md#installation).
+More installation instructions in [the tutorial](./docs/tutorial/tutorial.md#installation).
 Remember to `export` `PASH_TOP` in your startup scripts!
 
 ## Testing
