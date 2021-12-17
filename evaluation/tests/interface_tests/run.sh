@@ -4,7 +4,7 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 # time: print real in seconds, to simplify parsing
 
 bash="bash"
-pash="$PASH_TOP/pa.sh --interactive"
+pash="$PASH_TOP/pa.sh --parallel_pipelines --r_split --dgsh_tee --profile_driven"
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 mkdir -p "$output_dir"
@@ -118,11 +118,15 @@ test11()
     $shell incomplete-arith.sh
 }
 
+## This test checks the behavior of the shell when -v is set.
+##
+## We do not care about what exactly is in the log, but rather about whether it contains something.
 test12()
 {
     local shell=$1
     $shell set-v.sh 2> set-v.log
-    grep "echo hello" < set-v.log
+    grep "echo hello" < set-v.log > /dev/null
+    echo $?
 }
 
 test13()
@@ -166,6 +170,13 @@ test18()
     $shell escape-madness.sh
 }
 
+test_set()
+{
+    local shell=$1
+    $shell set.sh > /dev/null 2> set.sh.out
+    cat set.sh.out
+}
+
 test_set_e()
 {
     local shell=$1
@@ -196,6 +207,79 @@ test_unparsing()
     $shell unparsing-special-chars.sh
 }
 
+test_new_line_in_var()
+{
+    local shell=$1
+    $shell newline_in_var.sh
+}
+
+test_cmd_sbst()
+{
+    local shell=$1
+    `true; false; true; $shell cmd_sbst_subscript.sh`
+}
+
+test_cmd_sbst2()
+{
+    local shell=$1
+    $shell cmd_sbst.sh
+}
+
+test_exec_redirections()
+{
+    local shell=$1
+    $shell exec-redirections.sh
+    cat exec-redirections.out
+    [ -s exec-redirections.err ]
+}
+
+test_cat_hyphen()
+{
+    local shell=$1
+    echo popo > /tmp/cat.in
+    echo pipis >> /tmp/cat.in
+    echo papa >> /tmp/cat.in
+    echo "pipi" | $shell -c 'cat /tmp/cat.in - /tmp/cat.in | grep pipi'
+}
+
+test_trap()
+{
+    local shell=$1
+    $shell trap.sh
+}
+
+test_set-dash()
+{
+    local shell=$1
+    $shell -v -x set-dash-v-x.sh one two three four five > set-dash-v-x.out 2> set-dash-v-x.err
+    grep 'echo hello' set-dash-v-x.err | wc -l
+}
+
+test_cat_redir_fail()
+{
+    local shell=$1
+    $shell cat-redir-fail.sh
+}
+
+test_umask()
+{
+    local shell=$1
+    umask u=rw,go-rwx
+    $shell -c 'echo hi'
+}
+
+test_expand_u()
+{
+    local shell=$1
+    $shell expand-u.sh
+}
+
+test_expand_u_positional()
+{
+    local shell=$1
+    $shell expand-u-positional.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -216,11 +300,23 @@ if [ "$#" -eq 0 ]; then
     run_test test16
     run_test test17
     run_test test18
+    run_test test_set
     run_test test_set_e
     run_test test_redirect
     run_test test_unparsing
     run_test test_set_e_2
     run_test test_set_e_3
+    run_test test_new_line_in_var
+    run_test test_cmd_sbst
+    run_test test_cmd_sbst2
+    run_test test_exec_redirections
+    run_test test_cat_hyphen
+    run_test test_trap
+    run_test test_set-dash
+    run_test test_cat_redir_fail
+    run_test test_umask
+    run_test test_expand_u
+    run_test test_expand_u_positional
 else
     for testname in $@
     do

@@ -33,7 +33,10 @@ def create_split_file_id(fileIdGen):
 class FileIdGen:
     def __init__(self, next = 0, prefix = ""):
         self.next = next + 1
-        self.prefix = prefix
+        directory = f"{str(uuid.uuid4().hex)}"
+        self.prefix = f"{directory}/{prefix}"
+        directory_path = os.path.join(config.PASH_TMP_PREFIX, self.prefix)  
+        os.makedirs(directory_path)
 
     def next_file_id(self):
         fileId = FileId(self.next, self.prefix)
@@ -343,6 +346,9 @@ class IR:
     def to_ast(self, drain_streams):
         asts = []
 
+        ## Initialize the pids_to_kill variable
+        asts.append(self.init_pids_to_kill())
+
         fileIdGen = self.get_file_id_gen()
 
         ## Redirect stdin
@@ -385,14 +391,36 @@ class IR:
             if(not node_id in sink_node_ids):
                 node_ast = node.to_ast(self.edges, drain_streams)
                 asts.append(make_background(node_ast))
+                ## Gather all pids
+                assignment = self.collect_pid_assignment()
+                asts.append(assignment)
 
         ## Put the output node in the end for wait to work.
         for node_id in sink_node_ids:
             node = self.get_node(node_id)
             node_ast = node.to_ast(self.edges, drain_streams)
             asts.append(make_background(node_ast))
+            ## Gather all pids
+            assignment = self.collect_pid_assignment()
+            asts.append(assignment)
 
         return asts
+    
+    def collect_pid_assignment(self):
+        ## Creates:
+        ## pids_to_kill="$! $pids_to_kill"
+        var_name = 'pids_to_kill'
+        rval = quote_arg([standard_var_ast('!'),
+                          char_to_arg_char(' '),
+                          standard_var_ast(var_name)])
+        return make_assignment(var_name, [rval])
+    
+    def init_pids_to_kill(self):
+        ## Creates:
+        ## pids_to_kill=""
+        var_name = 'pids_to_kill'
+        rval = quote_arg([])
+        return make_assignment(var_name, [rval])
 
     ## TODO: Delete this
     def set_ast(self, ast):
@@ -545,13 +573,17 @@ class IR:
                           if to_node is None]
         return all_output_fids
 
-    ## Returns the sources of the IR (i.e. the nodes that has no
-    ## incoming edge)
+    ## Returns the sources of the IR.
+    ##   This includes both the nodes that have an incoming edge (file) that has no from_node,
+    ##     but also nodes that have no incoming edge (generator nodes). 
     def source_nodes(self):
         sources = set()
         for _edge_fid, from_node, to_node in self.edges.values():
             if(from_node is None and not to_node is None):
                 sources.add(to_node)
+        for node_id, node in self.nodes.items():
+            if len(node.get_input_list()) == 0:
+                sources.add(node_id)
         return list(sources)
 
     def sink_nodes(self):

@@ -4,12 +4,12 @@ import pickle
 import traceback
 from datetime import datetime
 
+import config
 from ir import *
 from ast_to_ir import compile_asts
 from json_ast import *
 from ir_to_ast import to_shell
 from util import *
-import config
 
 from definitions.ir.aggregator_node import *
 
@@ -52,8 +52,11 @@ def main_body():
     ## Read any shell variables files if present
     config.read_vars_file(args.var_file)
 
+    log("Input:", args.input_ir, "Compiled file:", args.compiled_script_file)
+
     ## Call the main procedure
-    compile_optimize_output_script(args.input_ir, args.compiled_script_file, args)
+    compiler_config = CompilerConfig(args.width)
+    compile_optimize_output_script(args.input_ir, args.compiled_script_file, args, compiler_config)
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -65,17 +68,40 @@ def parse_args():
                         help="determines the path of a file containing all shell variables.",
                         default=None)
     config.add_common_arguments(parser)
-    args = parser.parse_args()
+    args, unknown_args = parser.parse_known_args()
     return args
 
-def compile_optimize_output_script(ir_filename, compiled_script_file, args):
+## TODO: Add more fields from args in this
+class CompilerConfig:
+    def __init__(self, width):
+        self.width = width
+    
+    def __repr__(self):
+        return f'CompilerConfig(Width:{self.width})'
+
+def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
+    """
+    Return IR object for compilation success. None otherwise.
+    """
+    ret = None
+    try:
+        ret = compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config)
+    except Exception as e:
+        log(e)
+
+    return ret
+
+
+def compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config):
     global runtime_config
     
+    ret = None
+
     ## Load the df_region from a file
     candidate_df_region = load_df_region(ir_filename)
-
+    
     ## Compile it
-    optimized_ast_or_ir = compile_optimize_df_region(candidate_df_region, args)
+    optimized_ast_or_ir = compile_optimize_df_region(candidate_df_region, args, compiler_config)
 
     ## Call the backend that executes the optimized dataflow graph
     ## TODO: Should never be the case for now. This is obsolete.
@@ -94,8 +120,11 @@ def compile_optimize_output_script(ir_filename, compiled_script_file, args):
         with open(compiled_script_file, "w") as f:
                 f.write(script_to_execute)
 
+        ret = optimized_ast_or_ir
     else:
         raise Exception("Script failed to compile!")
+    
+    return ret
 
 def load_df_region(ir_filename):
     log("Retrieving candidate DF region: {} ... ".format(ir_filename), end='')
@@ -104,7 +133,7 @@ def load_df_region(ir_filename):
     log("Done!")
     return candidate_df_region
 
-def compile_optimize_df_region(df_region, args):
+def compile_optimize_df_region(df_region, args, compiler_config):
     ## Compile the candidate DF regions
     compilation_start_time = datetime.now()
     asts_and_irs = compile_candidate_df_region(df_region, config.config)
@@ -115,7 +144,7 @@ def compile_optimize_df_region(df_region, args):
     if(args.no_optimize):
         optimized_asts_and_irs = asts_and_irs
     else:
-        optimized_asts_and_irs = optimize_irs(asts_and_irs, args)
+        optimized_asts_and_irs = optimize_irs(asts_and_irs, args, compiler_config)
 
     ## TODO: Normally this could return more than one compiled ASTs (containing IRs in them).
     ##       To correctly handle that we would need to really replace the optimized IRs
@@ -157,7 +186,8 @@ def compile_candidate_df_region(candidate_df_region, config):
 
     return compiled_asts
 
-def optimize_irs(asts_and_irs, args):
+## TODO: Switch args to compiler_config
+def optimize_irs(asts_and_irs, args, compiler_config):
     global runtime_config
 
     optimization_start_time = datetime.now()
@@ -170,7 +200,7 @@ def optimize_irs(asts_and_irs, args):
 
             # log(ir_node)
             # with cProfile.Profile() as pr:
-            distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, args.width,
+            distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, compiler_config.width,
                                                                       runtime_config['batch_size'],
                                                                       args.no_cat_split_vanish,
                                                                       args.r_split, args.r_split_batch_size)

@@ -33,6 +33,17 @@ def ir2ast(ir, args):
 
     ## NOTE: We first need to make the main body because it might create additional ephemeral fids.
 
+    ## TODO: If we have just a single node maybe we should just instantiate that without anything else.
+    ## This is implemented below, but there is no need to turn it on now.
+    ##
+    ## If we only have a single node, then we don't need to make prologues, epilogues, etc
+    # if len(ir.nodes) == 1:
+    #     nodes = list(ir.nodes.values())
+    #     assert(len(nodes) == 1)
+    #     node = nodes[0]
+    #     body = [node.to_ast(ir.edges, drain_streams)]
+    #     return body
+
     ## Make the main body
     body = ir.to_ast(drain_streams)
 
@@ -110,8 +121,19 @@ def make_ir_epilogue(ephemeral_fids, clean_up_graph, log_file):
     ## Create an `rm -f` for each ephemeral fid
     call_rm_pash_funs = make_command([string_to_argument(RM_PASH_FIFOS_NAME)])
     asts.append(call_rm_pash_funs)
-    # asts += make_rms_f_prologue_epilogue(ephemeral_fids)
+
+    ## Make the following command: 
+    #    (exit $internal_exec_status)
+    exit_ec_ast = make_exit_ec_ast()
+    asts.append(exit_ec_ast)
     return asts
+
+def make_exit_ec_ast():
+    command = make_command([string_to_argument("exit"), 
+                            [make_quoted_variable("internal_exec_status")]])
+    ast = make_subshell(command)
+    return ast
+    
 
 def make_rm_f_ast(arguments):
     all_args = [string_to_argument("rm"), string_to_argument("-f")] + arguments

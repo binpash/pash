@@ -1,6 +1,7 @@
 #!/bin/bash
 # time: print real in seconds, to simplify parsing
 ## Necessary to set PASH_TOP
+cd $(dirname $0)
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 export DEBUG=0
 export PASH_LOG=1
@@ -51,12 +52,13 @@ if [ "$EXPERIMENTAL" -eq 1 ]; then
         # "" # Commenting this out since the tests take a lot of time to finish
         "--r_split"
         "--dgsh_tee"
-        "--r_split --dgsh_tee"
+        # "--r_split --dgsh_tee"
         # "--speculation quick_abort"
+        "--parallel_pipelines"
     )
 else
     configurations=(
-        ""
+        "--r_split --dgsh_tee --parallel_pipelines --profile_driven"
     )
 fi
 
@@ -105,7 +107,7 @@ execute_pash_and_check_diff() {
         diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
     else
         { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
-        b=$(cat $pash_time); 
+        b=$(cat "$pash_time"); 
         c=$(diff -s "$seq_output" "$pash_output" | head)
         echo "$c$b" > "${pash_time}"
     fi
@@ -176,7 +178,7 @@ execute_tests() {
                 # do we need to write the PaSh output ?
                 cat $stdin_redir |
                     execute_pash_and_check_diff -d $PASH_LOG $assert_correctness ${conf} --width "${n_in}" --output_time $script_to_execute                 
-                tail -n1 ${pash_time} >> "${results_time_pash}_${n_in}"
+                tail -n1 "${pash_time}" >> "${results_time_pash}_${n_in}"
 
             done
         done
