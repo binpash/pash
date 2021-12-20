@@ -1,4 +1,5 @@
 ## PaSh: Light-touch Data-Parallel Shell Processing
+
 > _A system for parallelizing POSIX shell scripts._
 
 Quick Jump: [Running PaSh](#running-pash) | [Installation](#installation) | [Testing](#testing) | [Repo Structure](#repo-structure) | [Community & More](#community--more)
@@ -9,7 +10,7 @@ To parallelize, say, `./evaluation/intro/hello-world.sh` with parallelization wi
 
 ```sh
 ./pa.sh ./evaluation/intro/hello-world.sh
-``` 
+```
 
 Run `./pa.sh --help` to get more information about the available commands.
 See [docs/tutorial](docs/tutorial/) for a longer tutorial.
@@ -21,6 +22,7 @@ Alternatively, you can clone the repo and run `./scripts/distro-deps.sh;
 ./scripts/setup-pash.sh`
 
 You can also built the Docker container from scratch by running
+
 ```sh
 git clone git@github.com:binpash/pash.git
 cd pash/scripts
@@ -47,13 +49,13 @@ This repo hosts the core `pash` development. The structure is as follows:
 * [annotations](./annotations/): DSL characterizing commands, parallelizability study, and associated annotations.
 * [compiler](./compiler): Shell-Dataflow translations and associated parallelization transformations.
 * [docs](./docs): Design documents, tutorials, installation instructions, etc.
-* [evaluation](./evaluation): Shell pipelines and example [scripts](./evaluation/scripts) used for the evaluation.
+* [evaluation](./evaluation): Shell pipelines and example [scripts](./evaluation/other/more-scripts) used for the evaluation.
 * [runtime](./runtime): Runtime component — e.g., `eager`, `split`, and assocaited combiners.
 * [scripts](./scripts): Scripts related to continuous integration, deployment, and testing.
 
 ## Community & More
 
-Mailing Lists: 
+Mailing Lists:
 * [pash-users](https://groups.google.com/g/pash-users): Join this mailing list for discussing all things `pash`
 * [pash-commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
 
