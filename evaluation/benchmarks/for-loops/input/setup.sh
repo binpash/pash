@@ -6,7 +6,7 @@
 
 IN=$PASH_TOP/evaluation/benchmarks/for-loops/input/
 OUT=$PASH_TOP/evaluation/benchmarks/for-loops/output/
-IN_NAME=${IN_N:-PASH_TOP/evaluation/benchmarks/foor-loops/input/100G.txt}
+IN_NAME=$PASH_TOP/evaluation/benchmarks/for-loops/input/100G.txt
 if [[ "$1" == "-c" ]]; then
 	rm -rf ${IN}/jpg
 	rm -rf ${IN}/rtf
@@ -81,11 +81,12 @@ if [ ! -d ${IN}/bio ]; then
 	cd ${IN}/bio
 	cat ${IN_NAME} |while read s_line;
 	do
+		echo ${IN_NAME}
 		sample=$(echo $s_line |cut -d " " -f 2);
 		if [[ ! -f $sample ]]; then
 			pop=$(echo $s_line |cut -f 1 -d " ");
 			link=$(echo $s_line |cut -f 3 -d " ");
-			wget -O "$PW/$sample".bam  "$link"; ##this part can be adjusted maybe
+			wget -O "$sample".bam  "$link"; ##this part can be adjusted maybe
 		fi
 	done;
 fi
