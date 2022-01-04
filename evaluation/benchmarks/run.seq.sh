@@ -469,7 +469,6 @@ posh() {
 }
 
 for-loops() {
-  rm -rf for-loops/input/output
   seq_times_file="seq.res"
   outputs_suffix="seq.out"
   outputs_dir="outputs"
