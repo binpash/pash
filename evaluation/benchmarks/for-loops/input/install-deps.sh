@@ -1,5 +1,5 @@
 # install dependencies
-pkgs='ffmpeg unrtf imagemagick libarchive-tools zstd liblzma-dev libbz2-dev zip unzip'
+pkgs='ffmpeg unrtf imagemagick libarchive-tools zstd liblzma-dev libbz2-dev zip unzip nodejs'
 sudo apt-get install $pkgs -y
 
 wget https://github.com/samtools/samtools/archive/refs/tags/1.7.zip
