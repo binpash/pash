@@ -171,7 +171,7 @@ execute_tests() {
         for conf in "${configurations[@]}"; do
             for n_in in "${n_inputs[@]}"; do
                 echo "|-- Executing with pash --width ${n_in} ${conf}..."
-                export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_${conf}.time"
+                export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_$(echo ${conf} | tr -d ' ').time"
                 export pash_output="${intermediary_dir}/${microbenchmark}_${n_in}_pash_output"
                 export script_conf=${microbenchmark}_${n_in}
                 echo '' > "${pash_time}"
