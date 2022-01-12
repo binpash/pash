@@ -3,29 +3,31 @@
 # exit when any command fails
 #set -e
 
-
 IN=$PASH_TOP/evaluation/benchmarks/for-loops/input/
 OUT=$PASH_TOP/evaluation/benchmarks/for-loops/output/
-IN_NAME=$PASH_TOP/evaluation/benchmarks/for-loops/input/100G.txt
-if [[ "$1" == "-c" ]]; then
+IN_NAME=$PASH_TOP/evaluation/benchmarks/for-loops/input/bio/100G.txt
+if [ "$1" == "-c" ]; then
 	rm -rf ${IN}/jpg
-	rm -rf ${IN}/rtf
+	rm -rf ${IN}/log_data
 	rm -rf ${IN}/wav
-	rm -rf ${IN}/linux
-	rm -rf ${IN}/logs
-	rm -rf ${IN}/bio
+	rm -rf ${IN}/nginx-logs
+	rm -rf ${IN}/node_modules
+	rm -rf ${IN}/pcap_data
+    rm -rf ${IN}/pcaps
+    rm -rf ${IN}/packages
+    rm -rf ${IN}/mir-sa
+    rm -rf ${IN}/deps
 	rm -rf ${OUT}
 	exit 
 fi
 
-if [[ ! -d ${IN}/wav  ]]; then
+if [ ! -d ${IN}/wav ]; then
 	mkdir -p ${IN}/wav
 	cd ${IN}/wav
 	wget https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_1MG.wav
 	wget https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_2MG.wav
 	wget https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_5MG.wav
 	wget https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_10MG.wav
-
 	for f in *.wav; do
 		FILE=$(basename "$f")
 		for i in {1..120}; do 
@@ -59,6 +61,7 @@ if [ ! -d ${IN}/log_data ]; then
 	cd $IN
 	wget http://pac-n4.csail.mit.edu:81/pash_data/nginx.zip
 	unzip nginx.zip 
+    rm nginx.zip
 	# generating analysis logs
 	mkdir -p ${IN}/log_data
 	for i in {1..84};do 
@@ -71,14 +74,13 @@ if [ ! -d ${IN}/log_data ]; then
 fi
 
 if [ ! -d ${IN}/bio ]; then
-	cd $IN
+	mkdir ${IN}/bio
+	cd ${IN}/bio
 	# download the file containing the links for the dataset
 	wget http://pac-n4.csail.mit.edu:81/pash_data/100G.txt
 	# download the Genome loc file
 	wget http://pac-n4.csail.mit.edu:81/pash_data/Gene_locs.txt
 	# start downloading the real dataset
-	mkdir ${IN}/bio
-	cd ${IN}/bio
 	cat ${IN_NAME} |while read s_line;
 	do
 		echo ${IN_NAME}
@@ -89,12 +91,15 @@ if [ ! -d ${IN}/bio ]; then
 			wget -O "$sample".bam  "$link"; ##this part can be adjusted maybe
 		fi
 	done;
+    echo "Genome data downloaded"
 fi
+
 # download the initial pcaps to populate the whole dataset
 if [ ! -d ${IN}/pcap_data ]; then
 	cd $IN
 	wget http://pac-n4.csail.mit.edu:81/pash_data/pcaps.zip
 	unzip pcaps.zip
+    rm pcaps.zip
 	mkdir ${IN}/pcap_data/
 	# generates 20G
 	for i in {1..15};do
@@ -111,9 +116,11 @@ if [ ! -d ${IN}/node_modules ]; then
 	cd $IN
 	wget http://pac-n4.csail.mit.edu:81/pash_data/node_modules.zip
 	unzip node_modules.zip 
+    rm node_modules.zip
 	# download the specific mir version
 	wget http://pac-n4.csail.mit.edu:81/pash_data/mir-sa.zip
 	unzip mir-sa.zip
+    rm mir-sa.zip
 	echo "Node modules generated"
 fi
 
