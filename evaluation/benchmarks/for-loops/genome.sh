@@ -2,11 +2,11 @@
 # create bam files with regions
 ################### 1KG SAMPLES
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input}
-SAMTOOLS_BIN=${IN}/samtools-1.7/samtools
+SAMTOOLS_BIN=${IN}/deps/samtools-1.7/samtools
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/bio}
 LOGS=${OUT}/logs
-IN_NAME=${IN}/100G.txt
-GENE_LOCS=${IN}/Gene_locs.txt
+IN_NAME=${IN}/bio/100G.txt
+GENE_LOCS=${IN}/bio/Gene_locs.txt
 mkdir -p ${LOGS}
 run_tests() {
     s_line=$(echo $1 | tr '@' ' ')
@@ -21,7 +21,7 @@ run_tests() {
     # create bai file 
     $SAMTOOLS_BIN index -b "${OUT}/$sample"_corrected.bam 2> /dev/null
     ### Isolating each relevant chromosome based on Gen_locs
-    cut -f 2 ${IN}/Gene_locs.txt |sort |uniq |while read chr;
+    cut -f 2 ${IN}/bio/Gene_locs.txt |sort |uniq |while read chr;
     do  
         echo 'Isolating Chromosome '$chr' from sample '${OUT}/$sample',  ';
         $SAMTOOLS_BIN view -b "${OUT}/$sample"_corrected.bam chr"$chr" > "${OUT}/$pop"_"$sample"_"$chr".bam 2> /dev/null
