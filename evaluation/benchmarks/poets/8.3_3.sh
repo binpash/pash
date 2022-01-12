@@ -5,7 +5,7 @@
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
 INPUT2=${INPUT2:-$PASH_TOP/evaluation/benchmarks/poets/input/exodus}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/8.3_3/}
-ENTRIES=${ENTRIES:-1000}
+ENTRIES=${ENTRIES:-1060}
 mkdir -p $OUT
 
 run_tests() {
