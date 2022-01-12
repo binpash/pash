@@ -22,9 +22,9 @@ do
     fi
 done
 
-microbenchmarks_dir="${PASH_TOP}/evaluation/tests/"
-intermediary_dir="${PASH_TOP}/evaluation/tests/test_intermediary/"
-test_results_dir="${PASH_TOP}/evaluation/tests/results/"
+microbenchmarks_dir="${PASH_TOP}/evaluation/tests"
+intermediary_dir="${PASH_TOP}/evaluation/tests/test_intermediary"
+test_results_dir="${PASH_TOP}/evaluation/tests/results"
 results_time="$test_results_dir/results.time"
 results_time_bash=${results_time}_bash
 results_time_pash=${results_time}_pash
@@ -106,10 +106,10 @@ execute_pash_and_check_diff() {
         { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
         diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
     else
-        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
-        b=$(cat "$pash_time"); 
-        c=$(diff -s "$seq_output" "$pash_output" | head)
-        echo "$c$b" > "${pash_time}"
+        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> "${pash_time}"
+        timer=$(cat "$pash_time"); 
+        difference=$(diff -s "$seq_output" "$pash_output" | head)
+        echo "$difference$timer" > "${pash_time}"
     fi
 }
 
@@ -179,7 +179,6 @@ execute_tests() {
                 cat $stdin_redir |
                     execute_pash_and_check_diff -d $PASH_LOG $assert_correctness ${conf} --width "${n_in}" --output_time $script_to_execute                 
                 tail -n1 "${pash_time}" >> "${results_time_pash}_${n_in}"
-
             done
         done
     done
