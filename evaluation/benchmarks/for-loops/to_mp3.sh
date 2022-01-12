@@ -11,13 +11,11 @@ run_tests(){
 
 export -f run_tests
 
-
 pkg_count=0
 for item in ${IN}/*;
 do
     pkg_count=$((pkg_count + 1));
     run_tests $item > ${LOGS}/${pkg_count}.log
 done
-
 
 echo 'done';
