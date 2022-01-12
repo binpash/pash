@@ -171,12 +171,12 @@ max-temp_pash(){
 
   touch "$times_file"
   echo executing max temp with pash $(date) | tee -a "$times_file"
-  outputs_file="${outputs_dir}/max-temp.${outputs_suffix}"
-  pash_log="${pash_logs_dir}/max-temp.pash.log"
-  single_time_file="${outputs_dir}/max-temp.${time_suffix}"
+  outputs_file="${outputs_dir}/temp-analytics.${outputs_suffix}"
+  pash_log="${pash_logs_dir}/temp-analytics.pash.log"
+  single_time_file="${outputs_dir}/temp-analytics.${time_suffix}"
 
-  echo -n "max-temp.sh:" | tee -a "$times_file"
-  { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" max-temp.sh > "$outputs_file"; } 2> "${single_time_file}"
+  echo -n "temp-analytics.sh:" | tee -a "$times_file"
+  { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS --log_file "${pash_log}" temp-analytics.sh > "$outputs_file"; } 2> "${single_time_file}"
   cat "${single_time_file}" | tee -a "$times_file"
   cd ..
 }

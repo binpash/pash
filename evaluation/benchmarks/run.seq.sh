@@ -146,8 +146,8 @@ max-temp(){
 
   touch "$times_file"
   echo executing max temp $(date) | tee -a "$times_file"
-  outputs_file="${outputs_dir}/max-temp.${outputs_suffix}"
-  echo mex-temp.sh: $({ time ./max-temp.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
+  outputs_file="${outputs_dir}/temp-analytics.${outputs_suffix}"
+  echo mex-temp.sh: $({ time ./temp-analytics.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
   cd ..
 }
 
@@ -515,4 +515,3 @@ for-loops() {
   done
   cd ..
 }
-
