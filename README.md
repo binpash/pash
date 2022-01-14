@@ -28,7 +28,20 @@ git clone git@github.com:binpash/pash.git
 cd pash/scripts
 docker build -t "pash/18.04" .
 # Then launch container:
-docker run --name pash-play -it pash/18.04
+```
+
+Then, depending on your OS, use this command to run the container. Changing `ubuntu` to `fedora` or `debian` as required.
+
+```sh
+docker run -f docker/ubuntu/Dockerfile --name pash-play -it pash:latest
+```
+
+```sh
+docker run -f docker/fedora/Dockerfile --name pash-play -it pash:latest
+```
+
+```sh
+docker run -f docker/debian/Dockerfile --name pash-play -it pash:latest
 ```
 
 More installation instructions in [the tutorial](./docs/tutorial/tutorial.md#installation).
