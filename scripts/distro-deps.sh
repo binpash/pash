@@ -31,7 +31,7 @@ case "$distro" in
      sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y # for g++-10
      sudo apt-get update &> $LOG_DIR/apt_update.log
      echo "|-- running apt install..."
-     sudo apt-get install -y git libtool m4 curl automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils g++-10 python3-testresources python3-setuptools &> $LOG_DIR/apt_install.log
+     sudo apt-get install -y git libtool m4 curl automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils g++-10 python3-testresources python3-setuptools netcat-openbsd &> $LOG_DIR/apt_install.log
      echo "|-- make g++-10 default..."
      sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
      sudo update-alternatives --set g++ /usr/bin/g++-10
