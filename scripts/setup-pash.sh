@@ -86,8 +86,9 @@ python3 -m pip install numpy #&> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib #&> $LOG_DIR/pip_install_matplotlib.log
 # clean the python packages
 cd $PYTHON_PKG_DIR
-find . -name "site-packages" -type d | xargs -I '{}' mv $PYTHON_PKG_DIR/{}/ .
-mv site-packages/* . && rm -rf site-packages
+# can we find a better alternative to that                                      
+pkg_path=$(find . \( -name "site-packages" -or -name "dist-packages" \) -type d)
+mv ${pkg_path}/* ${PYTHON_PKG_DIR}/                                             
 
 echo "Generating input files..."
 $PASH_TOP/evaluation/tests/input/setup.sh
