@@ -50,3 +50,14 @@ if [ "$#" -eq 1 ] && [ "$1" = "--gen-full" ]; then
     done
   done
 fi
+
+if [ "$#" -eq 1] && [ "$1" = "--smal" ]; then
+    # generate small inputs 
+    mkdir small -p
+    for file in *.txt; do
+        len=$(cat $file | wc -l)
+        nsize=$(( $len / 5 ))
+        echo $file $nsize
+        head -n $nsize $file > small/$file
+    done
+fi
