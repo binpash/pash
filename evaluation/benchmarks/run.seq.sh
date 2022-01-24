@@ -13,6 +13,8 @@ if [[ -z "$PASH_TOP" ]]; then
   exit 1
 fi
 
+source "$PASH_TOP/scripts/utils.sh"
+
 oneliners(){
   seq_times_file="seq.res"
   seq_outputs_suffix="seq.out"
@@ -23,10 +25,8 @@ oneliners(){
   fi
   
   cd oneliners/
-
-  cd ./input/
-    ./setup.sh --full
-  cd ..
+  # we need to download the whole dataset to generate the small input as well
+  download_dataset '--full'
 
   mkdir -p "$outputs_dir"
 
@@ -52,11 +52,8 @@ oneliners(){
     IFS=";" read -r -a script_input_parsed <<< "${script_input}"
     script="${script_input_parsed[0]}"
     input="${script_input_parsed[1]}"
-    if [[ "$1" == "--small" ]]; then
-        export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/small/$input"
-    else
-        export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/$input"
-    fi
+    # source the required variables from setup.sh
+    source_var $1 $input
     printf -v pad %30s
     padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:30}
@@ -80,13 +77,7 @@ unix50(){
 
   cd unix50/
 
-  cd input/
-  if [[ "$1" == "--small" ]]; then
-    ./setup.sh --small
-  else
-    ./setup.sh
-  fi
-  cd ..
+  download_dataset $1
 
   mkdir -p "$outputs_dir"
 
@@ -94,12 +85,7 @@ unix50(){
   echo executing Unix50 $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
 
-  if [[ "$1" == "--small" ]]; then
-    export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input/small
-  else
-    # FIXME this is the input prefix; do we want all to be IN 
-    export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input
-  fi
+  source_var $1
 
   for number in `seq 36`
   do
@@ -127,15 +113,9 @@ web-index(){
 
   cd web-index/
 
-  cd input/
-  if [[ "$1" == "--small" ]]; then
-    export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/500.txt
-    ./setup.sh --small
-  else
-    export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/1000.txt
-    ./setup.sh --full
-  fi
-  cd ..
+  download_dataset $1
+
+  source_var $1
 
   mkdir -p "$outputs_dir"
   
@@ -160,11 +140,11 @@ max-temp(){
   cd max-temp/
 
   mkdir -p "$outputs_dir"
-
+  export IN=
   touch "$times_file"
   echo executing max temp $(date) | tee -a "$times_file"
   outputs_file="${outputs_dir}/temp-analytics.${outputs_suffix}"
-  echo mex-temp.sh: $({ time ./temp-analytics.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
+  echo max-temp.sh: $({ time ./temp-analytics.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
   cd ..
 }
 
@@ -178,11 +158,10 @@ analytics-mts(){
   fi
 
   cd analytics-mts/
-
-  cd input/
-  ./setup.sh
-  cd ..
-
+  # small input is generated from the full input
+  # no need to pass any flag to setup.sh
+  download_dataset 
+ 
   mkdir -p "$outputs_dir"
 
   touch "$times_file"
@@ -196,12 +175,8 @@ analytics-mts(){
     printf -v pad %20s
     padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:20}
-
-    if [[ "$1" == "--small" ]]; then
-      export IN="input/in_small.csv"
-    else
-      export IN="input/in.csv"
-    fi    
+    # select the respective input
+    source_var $1
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
 
     echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
@@ -220,9 +195,7 @@ poets(){
 
   cd poets/
 
-  cd input/
-  ./setup.sh
-  cd ..
+  download_dataset
 
   mkdir -p "$outputs_dir"
 
@@ -258,12 +231,7 @@ poets(){
 
   export IN="$PASH_TOP/evaluation/benchmarks/poets/input/pg/"
 
-  if [[ "$1" == "--small" ]]; then
-    export ENTRIES=40
-  else
-    # 1% of the input
-    export ENTRIES=1060
-  fi
+  source_var $1
 
   for name_script in ${names_scripts[@]}
   do
@@ -447,10 +415,7 @@ dgsh() {
     cd ..
 }
 
-
-
 posh() {
-
     seq_times_file="seq.res"
     seq_outpus_suffix="seq.out"
     outputs_dir="outputs"
@@ -473,7 +438,6 @@ posh() {
       "raytracing;3"
       # "zannotate;4" where is zannotate binary
     )
-
 
     touch "$seq_times_file"
     echo executing posh $(date) | tee -a "$seq_times_file"
@@ -505,15 +469,8 @@ dependency_untangling() {
 
   cd dependency_untangling/
 
-  cd input/
-  rm -rf output/
-  if [[ "$1" == "--small" ]]; then
-    ./setup.sh --small
-  else
-    ./setup.sh
-  fi
-  cd ..
-
+  rm -rf input/output
+  download_dataset $1
   mkdir -p "$outputs_dir"
 
   names_scripts=(
@@ -528,11 +485,10 @@ dependency_untangling() {
     "FileEnc2;encrypt_files"
   )
 
-
   touch "$seq_times_file"
   echo executing dependency_untangling $(date) | tee -a "$seq_times_file"
   echo '' >> "$seq_times_file"
-
+  source_var 
   for name_script in ${names_scripts[@]}
   do
     IFS=";" read -r -a name_script_parsed <<< "${name_script}"
