@@ -106,7 +106,7 @@ if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
   #     cat 10G.txt >> 100G.txt
   #   done
   # fi
-elif [ "$#" -eq 1] && [ "$1" = "--smal" ]; then
+elif [ "$#" -eq 1 ] && [ "$1" = "--small" ]; then
     # generate small inputs 
     mkdir small -p
     for file in *.txt; do
