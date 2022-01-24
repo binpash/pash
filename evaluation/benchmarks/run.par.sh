@@ -88,7 +88,11 @@ unix50_pash(){
   cd unix50/
 
   cd input/
-  ./setup.sh
+  if [[ "$1" == "--small" ]]; then
+    ./setup.sh --small
+  else
+    ./setup.sh
+  fi
   cd ..
 
   mkdir -p "$outputs_dir"

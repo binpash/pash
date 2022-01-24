@@ -106,13 +106,12 @@ if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
   #     cat 10G.txt >> 100G.txt
   #   done
   # fi
-elif [ "$#" -eq 1 ] && [ "$1" = "--small" ]; then
-    # generate small inputs 
-    mkdir small -p
-    for file in *.txt; do
-        len=$(cat $file | wc -l)
-        nsize=$(( $len / 11))
-        echo $file $nsize
-        head -n $nsize $file > small/$file
-    done
+  # generate small inputs 
+  mkdir small -p
+  for file in *.txt; do
+      len=$(cat $file | wc -l)
+      nsize=$(( $len / 11))
+      echo $file $nsize
+      head -n $nsize $file > small/$file
+  done
 fi
