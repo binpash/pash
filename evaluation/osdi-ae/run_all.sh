@@ -2,6 +2,11 @@
 # go to benchmark directory
 cd ../benchmarks
 setup_flags='--small'
+echo 'Downloading Package Deps'
+# install the benchmark deps
+bash web-index/input/install-deps.sh 1> /dev/null 2> /dev/null
+bash dependency_untangling/input/install-deps.sh 1> /dev/null 2> /dev/null
+echo 'Deps downloaded'
 
 run_bash() {
     ## This script is necessary to ensure that sourcing happens with bash
