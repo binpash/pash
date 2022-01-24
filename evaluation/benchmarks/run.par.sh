@@ -30,16 +30,16 @@ oneliners_pash(){
   mkdir -p "$pash_logs_dir"
 
   scripts_inputs=(
-    "nfa-regex;100M.txt"
-    "sort;3G.txt"
-    "top-n;1G.txt"
-    "wf;3G.txt"
-    "spell;1G.txt"
-    "diff;3G.txt"
-    "bi-grams;1G.txt"
-    "set-diff;3G.txt"
-    "sort-sort;1G.txt"
-    "shortest-scripts;all_cmdsx100.txt"
+      "nfa-regex;100M.txt"
+      "sort;3G.txt"
+      "top-n;1G.txt"
+      "wf;3G.txt"
+      "spell;1G.txt"
+      "diff;3G.txt"
+      "bi-grams;1G.txt"
+      "set-diff;3G.txt"
+      "sort-sort;1G.txt"
+      "shortest-scripts;all_cmdsx100.txt"
   )
 
   touch "$times_file"
@@ -51,7 +51,12 @@ oneliners_pash(){
     IFS=";" read -r -a script_input_parsed <<< "${script_input}"
     script="${script_input_parsed[0]}"
     input="${script_input_parsed[1]}"
-    export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/$input"
+    if [[ "$1" == "--small" ]]; then
+        export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/small/$input"
+    else
+        export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/$input"
+    fi
+
     printf -v pad %30s
     padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:30}
@@ -92,9 +97,12 @@ unix50_pash(){
   touch "$times_file"
   echo executing Unix50 $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
-
-  # FIXME this is the input prefix; do we want all to be IN 
-  export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input
+  if [[ "$1" == "--small" ]]; then
+    export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input/small
+  else
+    # FIXME this is the input prefix; do we want all to be IN 
+    export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input
+  fi
 
   for number in `seq 36`
   do
@@ -130,15 +138,19 @@ web-index_pash(){
   cd web-index/
 
   cd input/
-  ./setup.sh
+  if [[ "$1" == "--small" ]]; then
+    export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/500.txt
+    ./setup.sh --small
+  else
+    export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/1000.txt
+    ./setup.sh --full
+  fi
   cd ..
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
-  
   touch "$times_file"
   echo executing web index with pash $(date) | tee -a "$times_file"
-  export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/1000.txt
   export WEB_INDEX_DIR=$PASH_TOP/evaluation/benchmarks/web-index/input
   export WIKI=$PASH_TOP/evaluation/benchmarks/web-index/input/
   outputs_file="${outputs_dir}/web-index.${outputs_suffix}"
@@ -171,12 +183,12 @@ max-temp_pash(){
 
   touch "$times_file"
   echo executing max temp with pash $(date) | tee -a "$times_file"
-  outputs_file="${outputs_dir}/max-temp.${outputs_suffix}"
-  pash_log="${pash_logs_dir}/max-temp.pash.log"
-  single_time_file="${outputs_dir}/max-temp.${time_suffix}"
+  outputs_file="${outputs_dir}/temp-analytics.${outputs_suffix}"
+  pash_log="${pash_logs_dir}/temp-analytics.pash.log"
+  single_time_file="${outputs_dir}/temp-analytics.${time_suffix}"
 
-  echo -n "max-temp.sh:" | tee -a "$times_file"
-  { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS   --log_file "${pash_log}" max-temp.sh > "$outputs_file"; } 2> "${single_time_file}"
+  echo -n "temp-analytics.sh:" | tee -a "$times_file"
+  { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS --log_file "${pash_log}" temp-analytics.sh > "$outputs_file"; } 2> "${single_time_file}"
   cat "${single_time_file}" | tee -a "$times_file"
   cd ..
 }
@@ -213,8 +225,11 @@ analytics-mts_pash(){
     printf -v pad %20s
     padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:20}
-
-    export IN="input/in.csv"
+    if [[ "$1" == "--small" ]]; then
+        export IN="input/in_small.csv"
+    else
+        export IN="input/in.csv"
+    fi
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
     pash_log="${pash_logs_dir}/${script}.pash.log"
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
@@ -277,8 +292,13 @@ poets_pash(){
   echo executing Unix-for-poets with pash $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
   export IN="$PASH_TOP/evaluation/benchmarks/poets/input/pg/"
-  # 1% of the input
-  export ENTRIES=1060
+  if [[ "$1" == "--small" ]]; then
+    export ENTRIES=40
+  else
+    # 1% of the input
+    export ENTRIES=1060
+  fi
+
   for name_script in ${names_scripts[@]}
   do
     IFS=";" read -r -a name_script_parsed <<< "${name_script}"
@@ -556,41 +576,45 @@ bio_pash(){
   cd ..
 }
 
-for-loops_pash() {
+dependency_untangling_pash() {
   times_file="par.res"
   outputs_suffix="par.out"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
-  if [ -e "for-loops/${times_file}" ]; then
-    echo "skipping for-loops/${times_file}"
+  if [ -e "dependency_untangling/${times_file}" ]; then
+    echo "skipping dependency_untangling/${times_file}"
     return 0
   fi
 
-  cd for-loops/
+  cd dependency_untangling/
 
   cd input/
   rm -rf output/
-  ./setup.sh
+  if [[ "$1" == "--small" ]]; then
+    ./setup.sh --small
+  else
+    ./setup.sh
+  fi
   cd ..
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
 
   names_scripts=(
-    "compress_files;compress_files"
-    "encrypt_files;encrypt_files"
-    "img_convert;img_convert"
-    "mir;mir"
-    "nginx;nginx"
-    "pcap;pcap"
-    "to_mp3;to_mp3"
-    "genome;genome"
-    "pacaur;pacaur"
+    "MediaConv1;img_convert"
+    "MediaConv2;to_mp3"
+    "Program_Inference;proginf"
+    "LogAnalysis1;nginx"
+    "LogAnalysis2;pcap"
+    "Genomics_Computation;genomics"
+    "AurPkg;pacaur"
+    "FileEnc1;compress_files"
+    "FileEnc2;encrypt_files"
   )
 
   touch "$times_file"
-  echo executing for-loops with pash $(date) | tee -a "$times_file"
+  echo executing dependency_untangling with pash $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
 
   for name_script in ${names_scripts[@]}

@@ -25,22 +25,22 @@ oneliners(){
   cd oneliners/
 
   cd ./input/
-  ./setup.sh --full
+    ./setup.sh --full
   cd ..
 
   mkdir -p "$outputs_dir"
 
   scripts_inputs=(
-    "nfa-regex;100M.txt"
-    "sort;3G.txt"
-    "top-n;1G.txt"
-    "wf;3G.txt"
-    "spell;1G.txt"
-    "diff;3G.txt"
-    "bi-grams;1G.txt"
-    "set-diff;3G.txt"
-    "sort-sort;1G.txt"
-    "shortest-scripts;all_cmdsx100.txt"
+      "nfa-regex;100M.txt"
+      "sort;3G.txt"
+      "top-n;1G.txt"
+      "wf;3G.txt"
+      "spell;1G.txt"
+      "diff;3G.txt"
+      "bi-grams;1G.txt"
+      "set-diff;3G.txt"
+      "sort-sort;1G.txt"
+      "shortest-scripts;all_cmdsx100.txt"
   )
 
   touch "$seq_times_file"
@@ -52,7 +52,11 @@ oneliners(){
     IFS=";" read -r -a script_input_parsed <<< "${script_input}"
     script="${script_input_parsed[0]}"
     input="${script_input_parsed[1]}"
-    export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/$input"
+    if [[ "$1" == "--small" ]]; then
+        export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/small/$input"
+    else
+        export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/$input"
+    fi
     printf -v pad %30s
     padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:30}
@@ -86,8 +90,12 @@ unix50(){
   echo executing Unix50 $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
 
-  # FIXME this is the input prefix; do we want all to be IN 
-  export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input
+  if [[ "$1" == "--small" ]]; then
+    export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input/small
+  else
+    # FIXME this is the input prefix; do we want all to be IN 
+    export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input
+  fi
 
   for number in `seq 36`
   do
@@ -116,14 +124,19 @@ web-index(){
   cd web-index/
 
   cd input/
-  ./setup.sh
+  if [[ "$1" == "--small" ]]; then
+    export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/500.txt
+    ./setup.sh --small
+  else
+    export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/1000.txt
+    ./setup.sh --full
+  fi
   cd ..
 
   mkdir -p "$outputs_dir"
   
   touch "$times_file"
   echo executing web index $(date) | tee -a "$times_file"
-  export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/1000.txt
   export WEB_INDEX_DIR=$PASH_TOP/evaluation/benchmarks/web-index/input
   export WIKI=$PASH_TOP/evaluation/benchmarks/web-index/input/
   outputs_file="${outputs_dir}/web-index.${outputs_suffix}"
@@ -146,8 +159,8 @@ max-temp(){
 
   touch "$times_file"
   echo executing max temp $(date) | tee -a "$times_file"
-  outputs_file="${outputs_dir}/max-temp.${outputs_suffix}"
-  echo mex-temp.sh: $({ time ./max-temp.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
+  outputs_file="${outputs_dir}/temp-analytics.${outputs_suffix}"
+  echo mex-temp.sh: $({ time ./temp-analytics.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
   cd ..
 }
 
@@ -180,7 +193,11 @@ analytics-mts(){
     padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:20}
 
-    export IN="input/in.csv"
+    if [[ "$1" == "--small" ]]; then
+      export IN="input/in_small.csv"
+    else
+      export IN="input/in.csv"
+    fi    
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
 
     echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
@@ -236,8 +253,13 @@ poets(){
   echo '' >> "$times_file"
 
   export IN="$PASH_TOP/evaluation/benchmarks/poets/input/pg/"
-  # 1% of the input
-  export ENTRIES=1060
+
+  if [[ "$1" == "--small" ]]; then
+    export ENTRIES=40
+  else
+    # 1% of the input
+    export ENTRIES=1060
+  fi
 
   for name_script in ${names_scripts[@]}
   do
@@ -468,38 +490,43 @@ posh() {
     cd ..
 }
 
-for-loops() {
+dependency_untangling() {
   seq_times_file="seq.res"
   outputs_suffix="seq.out"
   outputs_dir="outputs"
-  if [ -e "for-loops/${seq_times_file}" ]; then
-    echo "skipping for-loops/${seq_times_file}"
+  if [ -e "dependency_untangling/${seq_times_file}" ]; then
+    echo "skipping dependency_untangling/${seq_times_file}"
     return 0
   fi
 
-  cd for-loops/
+  cd dependency_untangling/
 
   cd input/
   rm -rf output/
-  ./setup.sh
+  if [[ "$1" == "--small" ]]; then
+    ./setup.sh --small
+  else
+    ./setup.sh
+  fi
   cd ..
 
   mkdir -p "$outputs_dir"
 
   names_scripts=(
-    "compress_files;compress_files"
-    "encrypt_files;encrypt_files"
-    "img_convert;img_convert"
-    "mir;mir"
-    "nginx;nginx"
-    "pcap;pcap"
-    "to_mp3;to_mp3"
-    "genome;genome"
-    "pacaur;pacaur"
+    "MediaConv1;img_convert"
+    "MediaConv2;to_mp3"
+    "Program_Inference;proginf"
+    "LogAnalysis1;nginx"
+    "LogAnalysis2;pcap"
+    "Genomics_Computation;genomics"
+    "AurPkg;pacaur"
+    "FileEnc1;compress_files"
+    "FileEnc2;encrypt_files"
   )
 
+
   touch "$seq_times_file"
-  echo executing for-loops $(date) | tee -a "$seq_times_file"
+  echo executing dependency_untangling $(date) | tee -a "$seq_times_file"
   echo '' >> "$seq_times_file"
 
   for name_script in ${names_scripts[@]}
@@ -515,4 +542,3 @@ for-loops() {
   done
   cd ..
 }
-

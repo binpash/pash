@@ -1,7 +1,7 @@
 #!/bin/bash
 # tag: nginx logs
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/log_data}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/nginx-logs}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/log_data}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/output/nginx-logs}
 mkdir -p ${OUT}
 
 run_tests() {

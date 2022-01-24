@@ -22,4 +22,7 @@ if [ ! -f ./in.csv ]; then
     exit 1
   fi
   "$PASH_TOP/scripts/append_nl_if_not.sh"  in.csv
+  len=$(cat in.csv | wc -l)
+  half_size=$(( $len / 4 ))
+  head -n $half_size in.csv > in_small.csv
 fi

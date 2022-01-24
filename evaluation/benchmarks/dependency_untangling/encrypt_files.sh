@@ -1,7 +1,7 @@
 #!/bin/bash
 # encrypt all files in a directory 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/pcap_data}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/encrypt}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/pcap_data}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/output/encrypt}
 LOGS=${OUT}/logs
 mkdir -p ${LOGS}
 run_tests() {

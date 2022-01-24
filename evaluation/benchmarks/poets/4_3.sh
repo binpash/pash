@@ -5,7 +5,7 @@
 # Bigrams (contrary to our version, this uses intermediary files)
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
 OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/4_3/}
-ENTRIES=${ENTRIES:-1000}
+ENTRIES=${ENTRIES:-1060}
 mkdir -p "$OUT"
 
 for input in $(ls ${IN} | head -n ${ENTRIES})
