@@ -3,9 +3,9 @@
 # exit when any command fails
 #set -e
 
-IN=$PASH_TOP/evaluation/benchmarks/for-loops/input/
-OUT=$PASH_TOP/evaluation/benchmarks/for-loops/output/
-IN_NAME=$PASH_TOP/evaluation/benchmarks/for-loops/input/100G.txt
+IN=$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/
+OUT=$PASH_TOP/evaluation/benchmarks/dependency_untangling/output/
+IN_NAME=$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/100G.txt
 
 if [ "$1" == "--small" ]; then
     LOG_DATA_FILES=6
@@ -35,6 +35,7 @@ if [ "$1" == "-c" ]; then
     rm -rf ${IN}/mir-sa
     rm -rf ${IN}/deps
     rm -rf ${IN}/bio
+    rm -rf ${IN}/output
     rm -rf ${OUT}
     exit 
 fi

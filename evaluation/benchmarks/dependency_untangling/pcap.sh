@@ -1,7 +1,7 @@
 #!/bin/bash
 #tag: pcap analysis
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/pcap_data}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/pcap-analysis}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/pcap_data}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/output/pcap-analysis}
 LOGS=${OUT}/logs
 mkdir -p ${LOGS}
 run_tests() {

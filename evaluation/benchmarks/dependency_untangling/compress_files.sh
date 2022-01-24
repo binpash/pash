@@ -1,7 +1,7 @@
 #!/bin/bash
 # compress all files in a directory
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/pcap_data/}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/compress}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/pcap_data/}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/output/compress}
 LOGS=${OUT}/logs
 mkdir -p ${OUT}/logs
 run_tests() {

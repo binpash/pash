@@ -1,6 +1,6 @@
 #!/bin/bash
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/packages}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/packages}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/packages}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/output/packages}
 LOGS=${OUT}/logs
 mkdir -p ${OUT} ${LOGS}
 

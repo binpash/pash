@@ -1,4 +1,4 @@
-IN=$PASH_TOP/evaluation/benchmarks/for-loops/input/
+IN=$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/
 mkdir -p ${IN}/deps/
 # install dependencies
 pkgs='ffmpeg unrtf imagemagick libarchive-tools zstd liblzma-dev libbz2-dev zip unzip nodejs'

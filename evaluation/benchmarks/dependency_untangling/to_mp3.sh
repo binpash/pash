@@ -1,7 +1,7 @@
 #!/bin/bash
 # tag: wav-to-mp3
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/for-loops/input/wav}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/for-loops/input/output/mp3}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/wav}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/output/mp3}
 LOGS=${OUT}/logs
 mkdir -p ${LOGS}
 run_tests(){

@@ -490,16 +490,16 @@ posh() {
     cd ..
 }
 
-for-loops() {
+dependency_untangling() {
   seq_times_file="seq.res"
   outputs_suffix="seq.out"
   outputs_dir="outputs"
-  if [ -e "for-loops/${seq_times_file}" ]; then
-    echo "skipping for-loops/${seq_times_file}"
+  if [ -e "dependency_untangling/${seq_times_file}" ]; then
+    echo "skipping dependency_untangling/${seq_times_file}"
     return 0
   fi
 
-  cd for-loops/
+  cd dependency_untangling/
 
   cd input/
   rm -rf output/
@@ -513,19 +513,20 @@ for-loops() {
   mkdir -p "$outputs_dir"
 
   names_scripts=(
-    "compress_files;compress_files"
-    "encrypt_files;encrypt_files"
-    "img_convert;img_convert"
-    "mir;mir"
-    "nginx;nginx"
-    "pcap;pcap"
-    "to_mp3;to_mp3"
-    "genome;genome"
-    "pacaur;pacaur"
+    "MediaConv1;img_convert"
+    "MediaConv2;to_mp3"
+    "Program_Inference;proginf"
+    "LogAnalysis1;nginx"
+    "LogAnalysis2;pcap"
+    "Genomics_Computation;genomics"
+    "AurPkg;pacaur"
+    "FileEnc1;compress_files"
+    "FileEnc2;encrypt_files"
   )
 
+
   touch "$seq_times_file"
-  echo executing for-loops $(date) | tee -a "$seq_times_file"
+  echo executing dependency_untangling $(date) | tee -a "$seq_times_file"
   echo '' >> "$seq_times_file"
 
   for name_script in ${names_scripts[@]}
