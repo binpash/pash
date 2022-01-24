@@ -51,7 +51,7 @@ if [ "$#" -eq 1 ] && [ "$1" = "--gen-full" ]; then
   done
 fi
 
-if [ "$#" -eq 1] && [ "$1" = "--smal" ]; then
+if [ "$#" -eq 1 ] && [ "$1" = "--small" ]; then
     # generate small inputs 
     mkdir small -p
     for file in *.txt; do
