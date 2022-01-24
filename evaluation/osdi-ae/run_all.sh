@@ -70,7 +70,7 @@ mkdir -p ${OUT}
 
 export PASH_ALL_FLAGS=(" "
                        "--r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven")
-export PASH_BENCHMARK=("oneliners" "unix50" "analytics-mts" "poets" "max-temp" "web-index" "for-loops")
+export PASH_BENCHMARK=("oneliners" "unix50" "analytics-mts" "poets" "max-temp" "web-index" "dependency_untangling")
 export PASH_MODE=("pash" 
                   "blish")
 
@@ -83,7 +83,7 @@ time run_bench
 ##### Figure 6
 export PASH_ALL_FLAGS=("--r_split --dgsh_tee --r_split_batch_size 1000000" 
                        "--r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines" )
-export PASH_BENCHMARK=("poets" "max-temp" "for-loops")
+export PASH_BENCHMARK=("poets" "max-temp" "dependency_untangling")
 export PASH_MODE=("blish_no_prof_no_du" 
                   "blish_no_prof")
 
