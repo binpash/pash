@@ -40,6 +40,8 @@ fi
 echo "|-- making libdash..."
 # convert to lowercase
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
+# save distro in the init file
+echo "export distro=$distro" > ~/.pash_init
 # now do different things depending on distro
 case "$distro" in
     freebsd*) 
@@ -56,11 +58,22 @@ case "$distro" in
         # Build runtime tools: eager, split
         cd ../../runtime/
         make &> $LOG_DIR/make.log
+        # if the script is spawned from docker
+        # export the required env variables
+        # this addresses all the Linux distro variants
+        if [[ $PASH_HOST == "docker" ]]; then
+            # issue with docker only
+            python3 -m pip install -U --force-reinstall pip
+            cp /opt/pash/pa.sh /usr/bin/
+            # add to the bashrc
+            echo "export PASH_TOP=/opt/pash" >> ~/.bashrc
+            # export to the local pash configuration file
+            echo "export LC_ALL=en_US.UTF-8" >> ~/.pash_init
+            echo "export LANG=en_US.UTF-8" >> ~/.pash_init
+            echo "export LANGUAGE=en_US.UTF-8" >> ~/.pash_init
+        fi
         ;;
 esac
-
-# save distro in the init file
-echo "export distro=$distro" > ~/.pash_init
 
 ## This was the old parser installation that required opam.
 # # Build the parser (requires libtool, m4, automake, opam)
@@ -80,10 +93,10 @@ echo "export distro=$distro" > ~/.pash_init
 cd ../
 
 echo "Installing python dependencies..."
-python3 -m pip install jsonpickle --root $PYTHON_PKG_DIR --force-reinstall #&> $LOG_DIR/pip_install_jsonpickle.log
-python3 -m pip install pexpect --root $PYTHON_PKG_DIR --force-reinstall #&> $LOG_DIR/pip_install_pexpect.log
-python3 -m pip install numpy #&> $LOG_DIR/pip_install_numpy.log
-python3 -m pip install matplotlib #&> $LOG_DIR/pip_install_matplotlib.log
+python3 -m pip install jsonpickle --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_jsonpickle.log
+python3 -m pip install pexpect --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_pexpect.log
+python3 -m pip install numpy --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_numpy.log
+python3 -m pip install matplotlib --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_matplotlib.log
 # clean the python packages
 cd $PYTHON_PKG_DIR
 # can we find a better alternative to that                                      
@@ -97,4 +110,3 @@ $PASH_TOP/evaluation/tests/input/setup.sh
 echo " * * * "
 echo "Do not forget to export PASH_TOP before using pash: \`export PASH_TOP=$PASH_TOP\`"
 echo '(optionally, you can update PATH to include it: `export PATH=$PATH:$PASH_TOP`)'
-
