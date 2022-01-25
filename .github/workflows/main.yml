@@ -19,12 +19,10 @@ jobs:
       runs-on: ${{ matrix.os }}
       if: github.event.pull_request.draft == false
       steps:
-            
         - uses: actions/checkout@v2 
           with:
             ref: ${{ github.event.pull_request.head.sha }}
         - name: Running-Pash-Benchmarks
-          uses: mxschmitt/action-tmate@v3   
           run: |
             sudo bash scripts/distro-deps.sh
             sudo chmod 777 install_logs
