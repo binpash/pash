@@ -24,7 +24,8 @@ jobs:
             ref: ${{ github.event.pull_request.head.sha }}
         - name: Running-Pash-Benchmarks
           run: |
-            bash scripts/distro-deps.sh
+            sudo bash scripts/distro-deps.sh
+            sudo chmod 777 install_logs
             bash scripts/setup-pash.sh
             export PASH_TOP=$PWD
             export PATH=$PATH:$PASH_TOP
