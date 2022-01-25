@@ -24,6 +24,7 @@ jobs:
             ref: ${{ github.event.pull_request.head.sha }}
         - name: Running-Pash-Benchmarks
           run: |
+            export PASH_HOST="docker"
             bash scripts/distro-deps.sh
             bash scripts/setup-pash.sh
             export PASH_TOP=$PWD
