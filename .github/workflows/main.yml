@@ -19,13 +19,15 @@ jobs:
       runs-on: ${{ matrix.os }}
       if: github.event.pull_request.draft == false
       steps:
+            
         - uses: actions/checkout@v2 
           with:
             ref: ${{ github.event.pull_request.head.sha }}
         - name: Running-Pash-Benchmarks
+          uses: mxschmitt/action-tmate@v3   
           run: |
-            export PASH_HOST="docker"
-            bash scripts/distro-deps.sh
+            bash scripts/distro-deps.sh >test || true
+            cat $test
             bash scripts/setup-pash.sh
             export PASH_TOP=$PWD
             export PATH=$PATH:$PASH_TOP
