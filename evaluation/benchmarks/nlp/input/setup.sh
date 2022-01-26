@@ -33,7 +33,7 @@ setup_dataset() {
   else
     wget http://pac-n4.csail.mit.edu:81/pash_data/nlp.zip
     unzip nlp.zip
-    mv data/* pg/
+    mv data/* .
     rm nlp.zip data -rf
   fi
     for f in *.txt; do
@@ -44,7 +44,6 @@ setup_dataset() {
 }
 
 source_var() {
-  export IN="$PASH_TOP/evaluation/benchmarks/nlp/input/pg/"
   if [[ "$1" == "--small" ]]; then
     export ENTRIES=40
   else
