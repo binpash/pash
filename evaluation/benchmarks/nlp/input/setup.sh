@@ -32,10 +32,10 @@ setup_dataset() {
     fi
     cat pg.tar.xz | tar -xJ
   else
-    wget http://pac-n4.csail.mit.edu:81/pash_data/poets.zip
-    unzip poets.zip
+    wget http://pac-n4.csail.mit.edu:81/pash_data/nlp.zip
+    unzip nlp.zip
     mv data/* pg/
-    rm poets.zip data -rf
+    rm nlp.zip data -rf
   fi
     for f in *.txt; do
       "$PASH_TOP/scripts/append_nl_if_not.sh" $f

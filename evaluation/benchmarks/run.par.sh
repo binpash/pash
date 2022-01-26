@@ -223,19 +223,19 @@ analytics-mts_pash(){
   cd ..
 }
 
-poets_pash(){
+nlp_pash(){
   times_file="par.res"
   outputs_suffix="par.out"
   time_suffix="par.time"
   outputs_dir="outputs"
   pash_logs_dir="pash_logs"
   width=16
-  if [ -e "poets/${times_file}" ]; then
-    echo "skipping poets/${times_file}"
+  if [ -e "nlp/${times_file}" ]; then
+    echo "skipping nlp/${times_file}"
     return 0
   fi
 
-  cd poets/
+  cd nlp/
 
   download_dataset
 
@@ -269,9 +269,9 @@ poets_pash(){
   )
 
   touch "$times_file"
-  echo executing Unix-for-poets with pash $(date) | tee -a "$times_file"
+  echo executing Unix-for-nlp with pash $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
-  export IN="$PASH_TOP/evaluation/benchmarks/poets/input/pg/"
+  export IN="$PASH_TOP/evaluation/benchmarks/nlp/input/pg/"
 
   source_var $1
 

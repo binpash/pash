@@ -2,8 +2,8 @@
 # tag: sort_words_by_folding
 # set -e
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/3_2/}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/nlp/input/pg/}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/nlp/output/3_2/}
 ENTRIES=${ENTRIES:-1060}
 mkdir -p "$OUT"
 

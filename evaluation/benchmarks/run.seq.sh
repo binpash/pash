@@ -184,16 +184,16 @@ analytics-mts(){
   cd ..
 }
 
-poets(){
+nlp(){
   times_file="seq.res"
   outputs_suffix="seq.out"
   outputs_dir="outputs"
-  if [ -e "poets/${times_file}" ]; then
-    echo "skipping poets/${times_file}"
+  if [ -e "nlp/${times_file}" ]; then
+    echo "skipping nlp/${times_file}"
     return 0
   fi
 
-  cd poets/
+  cd nlp/
 
   download_dataset
 
@@ -226,10 +226,10 @@ poets(){
   )
 
   touch "$times_file"
-  echo executing Unix-for-poets $(date) | tee -a "$times_file"
+  echo executing Unix-for-nlp $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
 
-  export IN="$PASH_TOP/evaluation/benchmarks/poets/input/pg/"
+  export IN="$PASH_TOP/evaluation/benchmarks/nlp/input/pg/"
 
   source_var $1
 

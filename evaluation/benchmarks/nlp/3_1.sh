@@ -2,8 +2,8 @@
 # tag: sort
 # set -e
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/3_1/}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/nlp/input/pg/}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/nlp/output/3_1/}
 ENTRIES=${ENTRIES:-1060}
 mkdir -p "$OUT"
 
