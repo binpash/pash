@@ -56,6 +56,6 @@ download_dataset() {
     # and the export variable function for IN, IN_PRE
     source setup.sh
     # fetch the dataset
-    setup_dataset $1
+    setup_dataset $1 > /dev/null
     cd ..
 }
