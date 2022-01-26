@@ -19,6 +19,7 @@ setup_dataset() {
   if [ ! -e ./pg ]; then
     mkdir pg
     cd pg
+  if [[ "$1" == "--gen-full" ]]; then
     echo 'N.b.: download/extraction will take about 10min'
     wget ndr.md/data/pg.tar.xz
     if [ $? -ne 0 ]; then
@@ -30,6 +31,12 @@ setup_dataset() {
     exit 1
     fi
     cat pg.tar.xz | tar -xJ
+  else
+    wget http://pac-n4.csail.mit.edu:81/pash_data/poets.zip
+    unzip poets.zip
+    mv data/* pg/
+    rm poets.zip data -rf
+  fi
     for f in *.txt; do
       "$PASH_TOP/scripts/append_nl_if_not.sh" $f
     done
