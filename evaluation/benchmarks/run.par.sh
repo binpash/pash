@@ -8,6 +8,8 @@ if [[ -z "$PASH_TOP" ]]; then
   exit 1
 fi
 
+source "$PASH_TOP/scripts/utils.sh"
+
 oneliners_pash(){
   times_file="par.res"
   outputs_suffix="par.out"
@@ -22,9 +24,7 @@ oneliners_pash(){
   
   cd oneliners/
 
-  cd ./input/
-  ./setup.sh --full
-  cd ..
+  download_dataset '--full'
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
@@ -87,13 +87,7 @@ unix50_pash(){
 
   cd unix50/
 
-  cd input/
-  if [[ "$1" == "--small" ]]; then
-    ./setup.sh --small
-  else
-    ./setup.sh
-  fi
-  cd ..
+  download_dataset $1
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
@@ -101,12 +95,8 @@ unix50_pash(){
   touch "$times_file"
   echo executing Unix50 $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
-  if [[ "$1" == "--small" ]]; then
-    export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input/small
-  else
-    # FIXME this is the input prefix; do we want all to be IN 
-    export IN_PRE=$PASH_TOP/evaluation/benchmarks/unix50/input
-  fi
+
+  source_var $1
 
   for number in `seq 36`
   do
@@ -141,15 +131,9 @@ web-index_pash(){
 
   cd web-index/
 
-  cd input/
-  if [[ "$1" == "--small" ]]; then
-    export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/500.txt
-    ./setup.sh --small
-  else
-    export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/1000.txt
-    ./setup.sh --full
-  fi
-  cd ..
+  download_dataset $1
+
+  source_var $1
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
@@ -184,7 +168,7 @@ max-temp_pash(){
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
-
+  export IN=
   touch "$times_file"
   echo executing max temp with pash $(date) | tee -a "$times_file"
   outputs_file="${outputs_dir}/temp-analytics.${outputs_suffix}"
@@ -211,9 +195,7 @@ analytics-mts_pash(){
 
   cd analytics-mts/
 
-  cd input/
-  ./setup.sh
-  cd ..
+  download_dataset 
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
@@ -229,11 +211,7 @@ analytics-mts_pash(){
     printf -v pad %20s
     padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:20}
-    if [[ "$1" == "--small" ]]; then
-        export IN="input/in_small.csv"
-    else
-        export IN="input/in.csv"
-    fi
+    source_var $1
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
     pash_log="${pash_logs_dir}/${script}.pash.log"
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
@@ -259,9 +237,7 @@ poets_pash(){
 
   cd poets/
 
-  cd input/
-  ./setup.sh
-  cd ..
+  download_dataset
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
@@ -296,12 +272,8 @@ poets_pash(){
   echo executing Unix-for-poets with pash $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
   export IN="$PASH_TOP/evaluation/benchmarks/poets/input/pg/"
-  if [[ "$1" == "--small" ]]; then
-    export ENTRIES=40
-  else
-    # 1% of the input
-    export ENTRIES=1060
-  fi
+
+  source_var $1
 
   for name_script in ${names_scripts[@]}
   do
@@ -593,14 +565,8 @@ dependency_untangling_pash() {
 
   cd dependency_untangling/
 
-  cd input/
-  rm -rf output/
-  if [[ "$1" == "--small" ]]; then
-    ./setup.sh --small
-  else
-    ./setup.sh
-  fi
-  cd ..
+  rm -rf input/output/
+  download_dataset $1
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
@@ -621,6 +587,7 @@ dependency_untangling_pash() {
   echo executing dependency_untangling with pash $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
 
+  source_var 
   for name_script in ${names_scripts[@]}
   do
     IFS=";" read -r -a name_script_parsed <<< "${name_script}"
