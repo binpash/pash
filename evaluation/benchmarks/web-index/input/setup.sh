@@ -35,6 +35,8 @@ setup_dataset() {
 }
 
 source_var() {
+  export WEB_INDEX_DIR=$PASH_TOP/evaluation/benchmarks/web-index/input
+  export WIKI=$PASH_TOP/evaluation/benchmarks/web-index/input/
   if [[ "$1" == "--small" ]]; then
     export IN=$PASH_TOP/evaluation/benchmarks/web-index/input/500.txt
   else

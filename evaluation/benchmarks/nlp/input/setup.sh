@@ -2,7 +2,6 @@
 
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 
-
 [[ "$1" == "-c" ]] && { rm -rf genesis exodus pg; exit; }
 
 setup_dataset() {
@@ -45,6 +44,7 @@ setup_dataset() {
 }
 
 source_var() {
+  export IN="$PASH_TOP/evaluation/benchmarks/nlp/input/pg/"
   if [[ "$1" == "--small" ]]; then
     export ENTRIES=40
   else

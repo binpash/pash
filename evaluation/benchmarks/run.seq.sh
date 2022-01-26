@@ -26,7 +26,7 @@ oneliners(){
   
   cd oneliners/
   # we need to download the whole dataset to generate the small input as well
-  download_dataset '--full'
+  install_deps_source_setup '--full'
 
   mkdir -p "$outputs_dir"
 
@@ -77,7 +77,7 @@ unix50(){
 
   cd unix50/
 
-  download_dataset $1
+  install_deps_source_setup $1
 
   mkdir -p "$outputs_dir"
 
@@ -113,7 +113,7 @@ web-index(){
 
   cd web-index/
 
-  download_dataset $1
+  install_deps_source_setup $1
 
   source_var $1
 
@@ -121,8 +121,6 @@ web-index(){
   
   touch "$times_file"
   echo executing web index $(date) | tee -a "$times_file"
-  export WEB_INDEX_DIR=$PASH_TOP/evaluation/benchmarks/web-index/input
-  export WIKI=$PASH_TOP/evaluation/benchmarks/web-index/input/
   outputs_file="${outputs_dir}/web-index.${outputs_suffix}"
   echo web-index.sh: $({ time ./web-index.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
   cd ..
@@ -136,11 +134,11 @@ max-temp(){
     echo "skipping max-temp/${times_file}"
     return 0
   fi
-
+  install_deps_source_setup
+  
   cd max-temp/
-
+  source_var 
   mkdir -p "$outputs_dir"
-  export IN=
   touch "$times_file"
   echo executing max temp $(date) | tee -a "$times_file"
   outputs_file="${outputs_dir}/temp-analytics.${outputs_suffix}"
@@ -160,7 +158,7 @@ analytics-mts(){
   cd analytics-mts/
   # small input is generated from the full input
   # no need to pass any flag to setup.sh
-  download_dataset 
+  install_deps_source_setup 
  
   mkdir -p "$outputs_dir"
 
@@ -195,7 +193,7 @@ nlp(){
 
   cd nlp/
 
-  download_dataset
+  install_deps_source_setup
 
   mkdir -p "$outputs_dir"
 
@@ -228,8 +226,6 @@ nlp(){
   touch "$times_file"
   echo executing Unix-for-nlp $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
-
-  export IN="$PASH_TOP/evaluation/benchmarks/nlp/input/pg/"
 
   source_var $1
 
@@ -470,7 +466,7 @@ dependency_untangling() {
   cd dependency_untangling/
 
   rm -rf input/output
-  download_dataset $1
+  install_deps_source_setup $1
   mkdir -p "$outputs_dir"
 
   names_scripts=(

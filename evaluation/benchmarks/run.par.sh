@@ -24,7 +24,7 @@ oneliners_pash(){
   
   cd oneliners/
 
-  download_dataset '--full'
+  install_deps_source_setup '--full'
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
@@ -51,12 +51,7 @@ oneliners_pash(){
     IFS=";" read -r -a script_input_parsed <<< "${script_input}"
     script="${script_input_parsed[0]}"
     input="${script_input_parsed[1]}"
-    if [[ "$1" == "--small" ]]; then
-        export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/small/$input"
-    else
-        export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/$input"
-    fi
-
+    source_var $1 $input
     printf -v pad %30s
     padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:30}
@@ -87,7 +82,7 @@ unix50_pash(){
 
   cd unix50/
 
-  download_dataset $1
+  install_deps_source_setup $1
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
@@ -131,7 +126,7 @@ web-index_pash(){
 
   cd web-index/
 
-  download_dataset $1
+  install_deps_source_setup $1
 
   source_var $1
 
@@ -139,8 +134,6 @@ web-index_pash(){
   mkdir -p "$pash_logs_dir"
   touch "$times_file"
   echo executing web index with pash $(date) | tee -a "$times_file"
-  export WEB_INDEX_DIR=$PASH_TOP/evaluation/benchmarks/web-index/input
-  export WIKI=$PASH_TOP/evaluation/benchmarks/web-index/input/
   outputs_file="${outputs_dir}/web-index.${outputs_suffix}"
   pash_log="${pash_logs_dir}/web-index.pash.log"
   single_time_file="${outputs_dir}/web-index.${time_suffix}"
@@ -164,11 +157,11 @@ max-temp_pash(){
     return 0
   fi
 
+  install_deps_source_setup
   cd max-temp/
-
+  source_var 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
-  export IN=
   touch "$times_file"
   echo executing max temp with pash $(date) | tee -a "$times_file"
   outputs_file="${outputs_dir}/temp-analytics.${outputs_suffix}"
@@ -195,7 +188,7 @@ analytics-mts_pash(){
 
   cd analytics-mts/
 
-  download_dataset 
+  install_deps_source_setup 
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
@@ -237,7 +230,7 @@ nlp_pash(){
 
   cd nlp/
 
-  download_dataset
+  install_deps_source_setup
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
@@ -271,7 +264,6 @@ nlp_pash(){
   touch "$times_file"
   echo executing Unix-for-nlp with pash $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
-  export IN="$PASH_TOP/evaluation/benchmarks/nlp/input/pg/"
 
   source_var $1
 
@@ -566,7 +558,7 @@ dependency_untangling_pash() {
   cd dependency_untangling/
 
   rm -rf input/output/
-  download_dataset $1
+  install_deps_source_setup $1
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"

@@ -43,7 +43,7 @@ append_nl_if_not(){
   fi
 }
 
-download_dataset() {
+install_deps_source_setup() {
     # move to the input directory
     cd input/
     # check if there are dependencies
