@@ -21,7 +21,13 @@ shift "$(( OPTIND - 1 ))"
 
 ## If option -p is set, also run the sudo
 if [ "$prepare_sudo_install_flag" -eq 1 ]; then
-  ./distro-deps.sh
+  # if we are within docker, we do not need to run sudo
+  if [[ $PASH_HOST == "docker" ]]; then
+    ./distro-deps.sh
+  else
+  # this is the default option for native installation
+    sudo ./distro-deps.sh
+  fi
 else
   echo "Requires libtool, m4, automake, opam, pkg-config, libffi-dev, python3, pip for python3, a dictionary, bc, bsdmainutils"
   echo "Ensure that you have them by running:"
