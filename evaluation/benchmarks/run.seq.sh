@@ -134,9 +134,10 @@ max-temp(){
     echo "skipping max-temp/${times_file}"
     return 0
   fi
+  cd max-temp/
+  
   install_deps_source_setup
   
-  cd max-temp/
   source_var 
   mkdir -p "$outputs_dir"
   touch "$times_file"
