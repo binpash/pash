@@ -12,13 +12,13 @@ PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 [ "$1" = "-c" ] && rm-files en/ *.7z *.tar  500.txt 1000.txt full small
 
 setup_dataset() {
-  rm -rf en
+  rm -rf en ../1-grams.txt ../2-grams.txt 
   if [ "$1" = "--small" ]; then
     # 500 entries
     wget http://pac-n4.csail.mit.edu:81/pash_data/small/web-index.small.zip
     unzip web-index.small.zip
     mv small/* .
-    rm -rf small
+    rm -rf small web-index.small.zip
   elif [ "$1" = "--gen-full" ]; then
     wget $wiki_archive || eexit "cannot fetch wikipedia"
     7za x wikipedia-en-html.tar.7z
@@ -30,7 +30,7 @@ setup_dataset() {
     wget http://pac-n4.csail.mit.edu:81/pash_data/full/web-index.full.zip
     unzip web-index.full.zip
     mv full/* .
-    rm -rf full
+    rm -rf full web-index.full.zip
   fi
 }
 
