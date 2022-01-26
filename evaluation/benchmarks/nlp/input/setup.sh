@@ -2,7 +2,6 @@
 
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 
-
 [[ "$1" == "-c" ]] && { rm -rf genesis exodus pg; exit; }
 
 setup_dataset() {
@@ -34,7 +33,7 @@ setup_dataset() {
   else
     wget http://pac-n4.csail.mit.edu:81/pash_data/nlp.zip
     unzip nlp.zip
-    mv data/* pg/
+    mv data/* .
     rm nlp.zip data -rf
   fi
     for f in *.txt; do
