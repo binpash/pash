@@ -1,8 +1,8 @@
 #!/bin/bash
 # tag: count_words
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/1_1/}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/nlp/input/pg/}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/nlp/output/1_1/}
 ENTRIES=${ENTRIES:-1060}
 mkdir -p "$OUT"
 

@@ -2,8 +2,8 @@
 # set -e
 # tag: count_consonant_sequences
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/7_2/}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/nlp/input/pg/}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/nlp/output/7_2/}
 ENTRIES=${ENTRIES:-1060}
 mkdir -p "$OUT"
 

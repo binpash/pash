@@ -2,8 +2,8 @@
 # tag: sort_words_by_num_of_syllables
 # set -e
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/8.1/}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/nlp/input/pg/}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/nlp/output/8.1/}
 ENTRIES=${ENTRIES:-1060}
 mkdir -p "$OUT"
 

@@ -2,8 +2,8 @@
 # tag: find_anagrams.sh
 # set -e
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/8.3_2/}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/nlp/input/pg/}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/nlp/output/8.3_2/}
 ENTRIES=${ENTRIES:-1060}
 mkdir -p "$OUT"
 

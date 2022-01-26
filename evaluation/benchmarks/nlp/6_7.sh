@@ -3,8 +3,8 @@
 # set -e
 # verses with 2 or more, 3 or more, exactly 2 instances of light.
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/6_7/}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/nlp/input/pg/}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/nlp/output/6_7/}
 ENTRIES=${ENTRIES:-1060}
 mkdir -p "$OUT"
 

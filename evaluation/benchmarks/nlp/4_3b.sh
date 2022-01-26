@@ -2,8 +2,8 @@
 #tag: count_trigrams.sh
 # set -e
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/4_3b/}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/nlp/input/pg/}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/nlp/output/4_3b/}
 ENTRIES=${ENTRIES:-1060}
 mkdir -p "$OUT"
 

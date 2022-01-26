@@ -3,8 +3,8 @@
 # set -e
 
 # Calculate the bigrams (based on 4_3.sh script)
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/8.2_2/}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/nlp/input/pg/}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/nlp/output/8.2_2/}
 ENTRIES=${ENTRIES:-1060}
 mkdir -p "$OUT"
 

@@ -2,9 +2,9 @@
 # tag: compare_exodus_genesis.sh
 # set -e
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/poets/input/pg/}
-INPUT2=${INPUT2:-$PASH_TOP/evaluation/benchmarks/poets/input/exodus}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/poets/output/8.3_3/}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/nlp/input/pg/}
+INPUT2=${INPUT2:-$PASH_TOP/evaluation/benchmarks/nlp/input/exodus}
+OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/nlp/output/8.3_3/}
 ENTRIES=${ENTRIES:-1060}
 mkdir -p $OUT
 
