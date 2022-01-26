@@ -1,12 +1,10 @@
 #!/bin/bash
 # go to benchmark directory
+RES_FOLDER=${PWD}/eval_results
+rm -rf ${RES_FOLDER}
+mkdir -p ${RES_FOLDER}
 cd ../benchmarks
 setup_flags='--small'
-echo 'Downloading Package Deps'
-# install the benchmark deps
-bash web-index/input/install-deps.sh 1> /dev/null 2> /dev/null
-bash dependency_untangling/input/install-deps.sh 1> /dev/null 2> /dev/null
-echo 'Deps downloaded'
 
 run_bash() {
     ## This script is necessary to ensure that sourcing happens with bash
@@ -15,15 +13,15 @@ run_bash() {
     array_len=$((${#PASH_ALL_FLAGS[@]} -1))
     for i in $(seq 0 $bench_len)
     do
-        export IN=""
-        export IN_PRE=""
+        export IN=
+        export IN_PRE=
         bench=${PASH_BENCHMARK[$i]}
         cd $bench
         # remove all the time files
         rm -rf outputs output pash_logs par.res
         cd ..
         echo 'Running bash:' ${bench}
-        bdir=${OUT}/bash/${bench}
+        bdir=${RES_FOLDER}/bash/${bench}
         mkdir -p ${bdir}
         # run the benchmark
         ${bench} ${setup_flags}
@@ -44,8 +42,8 @@ run_bench() {
     array_len=$((${#PASH_ALL_FLAGS[@]} -1))
     for i in $(seq 0 $bench_len)
     do
-        export IN=""
-        export IN_PRE=""
+        export IN=
+        export IN_PRE=
         bench=${PASH_BENCHMARK[$i]}
         cd $bench
         # remove all the time files
@@ -53,10 +51,12 @@ run_bench() {
         cd ..
         for j in $(seq 0 $array_len)
         do
+            export IN=
+            export IN_PRE=
             export mode=${PASH_MODE[$j]}
             export PASH_FLAGS=${PASH_ALL_FLAGS[$j]}
+            pdir=${RES_FOLDER}/${mode}/${bench}
             ${bench}_pash ${setup_flags}
-            pdir=${OUT}/${mode}/${bench}
             mkdir -p ${pdir}
             # move the folder to our dest
             mv ${bench}/outputs ${pdir}/
@@ -68,10 +68,6 @@ run_bench() {
         cd ..
     done
 }
-
-OUT=artifact/
-rm -rf ${OUT}
-mkdir -p ${OUT}
 
 export PASH_ALL_FLAGS=(" "
                        "--r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven")
