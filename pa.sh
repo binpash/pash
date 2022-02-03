@@ -5,6 +5,17 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 # point to the local downloaded folders
 export PYTHONPATH=${PASH_TOP}/python_pkgs/
 
+## Register the signal handlers, we can add more signals here
+trap kill_all SIGTERM SIGINT
+
+## In case we kill pash via signal, kill all the pending processes
+function kill_all() {
+    # common prefix for all the pash processes
+    pkill -f -9 tmp/pash
+    # needed for cleanup
+    kill -s SIGKILL 0
+}
+
 ## Save the umask to first create some files and then revert it
 old_umask=$(umask)
 
