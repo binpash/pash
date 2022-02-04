@@ -7,6 +7,7 @@ replace_string() {
 prepare_run_data() {
     DATA_FILE=$1.data.csv
     FILES=$1.log.dat
+    echo $1.tmp
     rm -f $DATA_FILE $FILES
 
     # gather all results
@@ -45,11 +46,13 @@ prepare_run_data() {
     rm $DATA_FILE rm -f $FILES
 }
 
+cd eval_results
 prepare_run_data run1
 prepare_run_data run2
 prepare_run_data run3
-# I am not good with this
-paste run1.tmp run1.tmp run1.tmp -d , | sed -s  's/,/ /g' | awk '{print $1,$2,$3, $4+$8+$12}' | awk ' {print $1','$2','$3','$4/3}' | tr ' ' ',' > .tmp
+# merge all the results
+paste run1.tmp run2.tmp run3.tmp -d , | sed -s  's/,/ /g' | awk '{print $1,$2,$3, $4+$8+$12}' | awk ' {print $1','$2','$3','$4/3}' | tr ' ' ',' > .tmp
+# cleanup
 replace_string dependency_untangling for-loops 
 replace_string nlp NLP
 replace_string oneliners Classics
@@ -60,8 +63,10 @@ replace_string max-temp AvgTemp
 replace_string temp-analytics AvgTemp
 replace_string Genomics_Computation Genomics
 replace_string Program_Inference ProgInf
-replace_string blish_no_prof_no_du 'blish -prof -par_pipe'
-replace_string blish_no_prof 'blish -prof'
+replace_string blish_no_prof_no_du 'pash_jit -prof -par_pipe'
+replace_string blish_no_prof 'pash_jit -prof'
+replace_string pash pash_aot
+replace_string blish pash_jit
 perf=''
 # calculate the ratios
 while read p; do
@@ -90,5 +95,4 @@ while read p; do
     echo $bench,$script,$mode,$ratio >> $DATA
 done < .tmp
 rm -f .tmp
-./generate_charts.R $DATA
-evince *.pdf
+mv $DATA ..

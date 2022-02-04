@@ -26,7 +26,7 @@ run_bash() {
     done
 }
 
-# run all the scripts using different configurations of pash/blish
+# run all the scripts using different configurations of PaSh JIT/PaSh AOT
 run_bench() {
     ## This script is necessary to ensure that sourcing happens with bash
     source run.par.sh
@@ -69,20 +69,20 @@ function run_all_benchmarks() {
   export PASH_ALL_FLAGS=(" "
                          "--r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven")
   export PASH_BENCHMARK=("oneliners" "unix50" "analytics-mts" "nlp" "max-temp" "web-index" "dependency_untangling")
-  export PASH_MODE=("pash" 
-                    "blish")
+  export PASH_MODE=("pash_aot" 
+                    "pash_jit")
 
   echo 'Running all benchmark for bash'
   time run_bash
-  echo 'Running Blish/Pash benchmarks'
+  echo 'Running PaSh JIT/PaSh AOT benchmarks'
   time run_bench 
 
   ##### Figure 6
   export PASH_ALL_FLAGS=("--r_split --dgsh_tee --r_split_batch_size 1000000" 
                          "--r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines" )
   export PASH_BENCHMARK=("nlp" "max-temp" "dependency_untangling")
-  export PASH_MODE=("blish_no_prof_no_du" 
-                    "blish_no_prof")
+  export PASH_MODE=("pash_jit_no_prof_no_du" 
+                    "pash_jit_no_prof")
 
   time run_bench 
 
@@ -91,7 +91,7 @@ function run_all_benchmarks() {
   #"--dgsh_tee  # omitted until it's fixed
   "--parallel_pipelines --profile_driven" )
   export PASH_BENCHMARK=("oneliners" "unix50" "analytics-mts" "max-temp" "web-index")
-  export PASH_MODE=("blish_no_comm")
+  export PASH_MODE=("pash_jit_no_comm")
 
   time run_bench 
 
