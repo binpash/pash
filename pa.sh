@@ -32,6 +32,7 @@ export RUNTIME_OUT_FIFO="${PASH_TMP_PREFIX}/runtime_out_fifo"
 rm -f "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 mkfifo "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 export DAEMON_SOCKET="${PASH_TMP_PREFIX}/daemon_socket"
+export DSPASH_SOCKET="${PASH_TMP_PREFIX}/dspash_socket"
 
 ## Initialize all things necessary for pash to execute (logging/functions/etc)
 source "$PASH_TOP/compiler/pash_init_setup.sh" "$@"
@@ -46,6 +47,12 @@ if [ "$pash_daemon" -eq 1 ] && [ "$show_version" -eq 0 ]; then
   pash_wait_until_daemon_listening
 fi
 
+if [ "$distributed_exec" -eq 1 ]; then
+  # TODO: start workers remotely?
+  python3 "$PASH_TOP/compiler/dspash/worker_manager.py" &
+  
+  worker_manager_pid=$!
+fi
 ## Restore the umask before executing
 umask ${old_umask}
 PASH_FROM_SH="pa.sh" python3 -S $PASH_TOP/compiler/pash.py "$@"
@@ -57,9 +64,15 @@ if [ "$pash_daemon" -eq 1 ] && [ "$show_version" -eq 0 ]; then
     ## Send and receive from daemon
     msg="Done"
     daemon_response=$(pash_communicate_daemon "$msg")
+    if [ "$distributed_exec" -eq 1 ]; then
+      # kill $worker_manager_pid
+      manager_response=$(pash_communicate_worker_manager "$msg")
+    fi
     wait 2> /dev/null 1>&2 
   fi
 fi
+
+
 
 ## Don't delete the temporary directory if we are debugging
 if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then

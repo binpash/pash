@@ -12,6 +12,7 @@ import definitions.ir.nodes.r_merge as r_merge
 import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_wrap as r_wrap
 import definitions.ir.nodes.r_unwrap as r_unwrap
+import definitions.ir.nodes.remote_exec as remote_exec
 
 from command_categories import *
 from ir_utils import *
@@ -199,7 +200,7 @@ def make_tee(input, outputs):
                    com_name, 
                    com_category)
 
-def make_map_node(node, new_inputs, new_outputs):
+def make_map_node(node, new_inputs, new_outputs, distributed_exec=False):
     ## Some nodes have special map commands
     if(not node.com_mapper is None):
         new_node = MapperNode(node, new_inputs, new_outputs)
@@ -207,21 +208,26 @@ def make_map_node(node, new_inputs, new_outputs):
         new_node = node.copy()
         new_node.inputs = new_inputs
         new_node.outputs = new_outputs
+
+    if distributed_exec:
+        new_node = remote_exec.make_remote_exec_node(new_node)
+
     return new_node
 
 ## Makes a wrap node that encloses a map parallel node.
 ##
 ## At the moment it only works with one input and one output since wrap cannot redirect input in the command.
-def make_wrap_map_node(node, new_inputs, new_outputs):
+def make_wrap_map_node(node, new_inputs, new_outputs, distributed_exec=False):
     # log("Inputs:", new_inputs)
     # log("Outputs:", new_outputs)
     assert(is_single_input(new_inputs))
     assert(len(new_outputs) == 1)
 
-    new_node = make_map_node(node, new_inputs, new_outputs)
+    new_node = make_map_node(node, new_inputs, new_outputs, False) # we add remote_exec at the end if needed
     wrap_node = r_wrap.wrap_node(new_node)
+    if distributed_exec:
+        wrap_node = remote_exec.make_remote_exec_node(wrap_node)
     return wrap_node
-
 
 
 ## Note: This might need more information. E.g. all the file
@@ -723,7 +729,7 @@ class IR:
     ## TODO: Eventually delete the fileIdGen from here and always use the graph internal one.
     ##
     ## TODO: Eventually this should be tunable to not happen for all inputs (but maybe for less)
-    def parallelize_node(self, node_id, fileIdGen):
+    def parallelize_node(self, node_id, fileIdGen, distributed_exec=False):
         node = self.get_node(node_id)
         assert(node.is_parallelizable())
 
@@ -828,7 +834,7 @@ class IR:
             if(r_merge_flag is True):
                 ## For stateless nodes we are in case (2) and we wrap them
                 if (node.is_stateless()):
-                    parallel_node = make_wrap_map_node(node, new_inputs, new_output_ids)
+                    parallel_node = make_wrap_map_node(node, new_inputs, new_output_ids, distributed_exec)
                     self.add_node(parallel_node)
                 else:
                     ## If we have a pure parallelizable node, then we have to unwrap, before parallelizing the node.
@@ -841,7 +847,7 @@ class IR:
                     ## Optimization: If the node before r_merge is an r_split, then we
                     ##               don't need to add unwrap, and we can just add -r to r_split.
                     if(r_split_before_r_merge_opt_flag):
-                        parallel_node = make_map_node(node, new_inputs, new_output_ids)
+                        parallel_node = make_map_node(node, new_inputs, new_output_ids, distributed_exec)
                         self.add_node(parallel_node)
                     else:
                         ## Make the edge between unwrap and the command
@@ -851,11 +857,15 @@ class IR:
 
                         ## TODO: Make an unwrap node and create new inputs
                         unwrap_node = r_unwrap.make_unwrap_node(new_inputs, unwrap_output_id)
+                        #TODO: create a decorator for adding distriubted exec instead
+                        if distributed_exec:
+                            unwrap_node = remote_exec.make_remote_exec_node(unwrap_node)
+
                         self.add_node(unwrap_node)
                         self.set_edge_from(unwrap_output_id, unwrap_node.get_id())
 
                         parallel_node_inputs = ([], [unwrap_output_id])
-                        parallel_node = make_map_node(node, parallel_node_inputs, new_output_ids)
+                        parallel_node = make_map_node(node, parallel_node_inputs, new_output_ids, distributed_exec)
                         self.add_node(parallel_node)
                         self.set_edge_to(unwrap_output_id, parallel_node.get_id())
 
@@ -863,7 +873,7 @@ class IR:
                         parallel_node = unwrap_node
             else:
                 ## If we are working with a `cat` (and not an r_merge), then we just make a parallel node
-                parallel_node = make_map_node(node, new_inputs, new_output_ids)
+                parallel_node = make_map_node(node, new_inputs, new_output_ids, distributed_exec)
                 self.add_node(parallel_node)
 
             parallel_node_id = parallel_node.get_id()
