@@ -13,9 +13,7 @@ void unwrap(FILE* inputFile) {
         size_t tot_read = 0, readSize = 0;
         while (tot_read < blockSize) {
             readSize = MIN(bufLen, blockSize-tot_read);
-            if (fread(buffer, 1, readSize, stdin) != readSize) {
-                err(2, "There is a problem with reading the block");
-            }
+            handle_reading(buffer, readSize, stdin);
             
             //Write to forked process
             safeWrite(buffer, 1, readSize, stdout);
