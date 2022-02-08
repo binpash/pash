@@ -116,3 +116,20 @@ void writeHeader(FILE *destFile, int64_t id, size_t blockSize, bool isLast)
   block_header header = {id, blockSize, isLast};
   safeWrite((char *)&header, sizeof(block_header), 1, destFile);
 }
+
+size_t handle_reading(char *buffer, size_t size, FILE* stream) {
+  size_t len = 0;
+  // size_t readSize = MIN(bufLen, blockSize-total_read);
+  if (size && (len = fread(buffer, 1, size, stream)) != size)
+  {   
+    // This fixes a problem that happens sometimes when pash kill signal effects the process we were reading from but not the current process
+    // Might need to extend this to gracefully exit if errno == SIGPIPE
+    if (feof(stream) && !errno) {
+        PRINTDBG("Pipe closed before the full block data was written")
+        exit(0);
+    } else {
+        err(2, "There is a problem with reading the block");
+    }
+  }
+  return len;
+}

@@ -88,10 +88,8 @@ void processCmd(char *args[])
             while (tot_read < blockSize || currWriteLen > 0 || !isLast)
             {
                 readSize = MIN(bufLen, blockSize - tot_read);
-                if (readSize && fread(buffer, 1, readSize, stdin) != readSize)
-                {
-                    err(2, "There is a problem with reading the block");
-                }
+                handle_reading(buffer, readSize, stdin);
+                
                 if ((currWriteLen + readSize) > writeBufLen) {
                     writeBufLen = 2*(currWriteLen + readSize);
                     writebuffer = realloc(writebuffer, writeBufLen+1);
