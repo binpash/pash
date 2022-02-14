@@ -4,16 +4,15 @@ export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 # point to the local downloaded folders
 export PYTHONPATH=${PASH_TOP}/python_pkgs/
-
 ## Register the signal handlers, we can add more signals here
 trap kill_all SIGTERM SIGINT
 
-## In case we kill pash via signal, kill all the pending processes
+## kill all the pending processes that are spawned by this shell
 function kill_all() {
-    # common prefix for all the pash processes
-    pkill -f -9 tmp/pash
-    # needed for cleanup
+    # kill all my subprocesses only
     kill -s SIGKILL 0
+    # kill pash_daemon
+    kill -s SIGKILL $daemon_pid
 }
 
 ## Save the umask to first create some files and then revert it
@@ -47,7 +46,7 @@ export DAEMON_SOCKET="${PASH_TMP_PREFIX}/daemon_socket"
 ## Initialize all things necessary for pash to execute (logging/functions/etc)
 source "$PASH_TOP/compiler/pash_init_setup.sh" "$@"
 
-if [ "$pash_daemon" -eq 1 ] && [ "$show_version" -eq 0 ]; then
+if [ "$pash_daemon" -eq 1 ]; then
   ## TODO: If possible, move the daemon start as easly as possible to reduce waiting
   python3 -S "$PASH_TOP/compiler/pash_runtime_daemon.py" $@ &
   daemon_pid=$!
@@ -61,7 +60,8 @@ fi
 umask ${old_umask}
 PASH_FROM_SH="pa.sh" python3 -S $PASH_TOP/compiler/pash.py "$@"
 pash_exit_code=$?
-if [ "$pash_daemon" -eq 1 ] && [ "$show_version" -eq 0 ]; then
+
+if [ "$pash_daemon" -eq 1 ]; then
   ## Only wait for daemon if it lives (it might be dead, rip)
   if ps -p $daemon_pid > /dev/null 
   then
