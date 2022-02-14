@@ -110,3 +110,28 @@ $PASH_TOP/evaluation/tests/input/setup.sh
 echo " * * * "
 echo "Do not forget to export PASH_TOP before using pash: \`export PASH_TOP=$PASH_TOP\`"
 echo '(optionally, you can update PATH to include it: `export PATH=$PATH:$PASH_TOP`)'
+echo " * * * "
+## append PASH Configuration paths to the respective rc files
+rc_configs=(~/.shrc ~/.bashrc  ~/.zshrc ~/.cshrc ~/.kshrc) # add more shell configs here
+for config in "${rc_configs[@]}"
+do
+    ## if the config exists
+    ## check if it contains an old entry of Pash
+    if [ -e "$config" ]; then
+        # get the shell name
+        shell_name=$(echo $(basename $config) | sed 's/rc//g' | sed 's/\.//g')
+        echo "Do you want to append \$PASH_TOP to $shell_name ($config) (y/n)?"
+        read answer
+        if [ "$answer" != "${answer#[Yy]}" ] ;then 
+            tmpfile=$(mktemp -u /tmp/tmp.XXXXXX)
+            # create a backup of the shell config
+            cp $config ${config}.backup
+            # remove all the entries pointing to PASH_TOP and PATH
+            cat $config | grep -v -e "export PASH_TOP" -e "export PATH" > $tmpfile
+            mv $tmpfile $config
+            ## there isn't a previous Pash installation, append the configuration
+            echo "export PASH_TOP="$PASH_TOP >> $config
+            echo "export PATH="$PATH:$PASH_TOP >> $config
+        fi
+    fi
+done
