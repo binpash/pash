@@ -138,6 +138,9 @@ def add_common_arguments(parser):
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")
+    parser.add_argument("--version",
+            action='version',
+            version='%(prog)s {version}'.format(version=__version__))
     return
 
 def pass_common_arguments(pash_arguments):

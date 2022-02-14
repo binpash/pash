@@ -1,8 +1,6 @@
 # install dependencies
-pkgs='ffmpeg unrtf imagemagick'
-if ! dpkg -s $pkgs >/dev/null 2>&1; then
-  sudo apt-get install $pkgs -y
-fi
+pkgs='ffmpeg unrtf imagemagick libarchive-tools zstd liblzma-dev libbz2-dev zip unzip nodejs'
+sudo apt-get install $pkgs -y
 
 wget https://github.com/samtools/samtools/archive/refs/tags/1.7.zip
 unzip 1.7.zip
@@ -15,6 +13,5 @@ autoconf -Wno-syntax  # Generate the configure script
 ./configure           # Needed for choosing optional functionality
 make
 
-sudo apt-get install libarchive-tools zstd
-wget https://proget.hunterwittenborn.com/debian-feeds/makedeb/main/makedeb-makepkg/all/makedeb-makepkg_all_8.8.0-1.deb
-sudo dpkg -i makedeb-makepkg_all_8.8.0-1.deb
+wget http://pac-n4.csail.mit.edu:81/pash_data/makedeb.deb
+sudo dpkg -i makedeb.deb
