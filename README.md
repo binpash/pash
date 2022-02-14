@@ -1,6 +1,7 @@
 ## PaSh: Light-touch Data-Parallel Shell Processing
 
 > _A system for parallelizing POSIX shell scripts._
+> _Hosted by the [Linux Foundation](https://linuxfoundation.org/press-release/linux-foundation-to-host-the-pash-project-accelerating-shell-scripting-with-automated-parallelization-for-industrial-use-cases/)._
 
 Quick Jump: [Running PaSh](#running-pash) | [Installation](#installation) | [Testing](#testing) | [Repo Structure](#repo-structure) | [Community & More](#community--more)
 
