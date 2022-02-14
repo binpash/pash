@@ -60,5 +60,5 @@ Mailing Lists:
 * [pash-commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
 
 Development/contributions:
-* Contribution guide: [docs/contrib](docs/contrib)
+* Contribution guide: [docs/contributing](docs/contributing/contrib.md)
 * Continuous Integration Server: [ci.binpa.sh](http://ci.binpa.sh)
