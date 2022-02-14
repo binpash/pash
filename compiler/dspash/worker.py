@@ -8,16 +8,18 @@ import os
 import asyncio
 import shlex
 import time
+import uuid
+import argparse
+
+PASH_TOP = os.environ['PASH_TOP']
+sys.path.append(os.path.join(PASH_TOP, "compiler"))
+
+import config
+from util import log
+
 # from ... import config
 HOST = '0.0.0.0'
 PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
-
-#TODO: figure how to import from top directory or move files up
-if 'PASH_TOP' in os.environ:
-    PASH_TOP = os.environ['PASH_TOP']
-else:
-    GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
-    PASH_TOP = subprocess.run(GIT_TOP_CMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).stdout.rstrip()
 
 EXEC_SCRIPT_PATH = f'{PASH_TOP}/compiler/dspash/remote_exec_script.sh'
 
@@ -98,9 +100,26 @@ def manage_connection(conn, addr):
     for rc in rcs:
         rc.wait()
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument("--port",
+                        type=int,
+                        help="port to use",
+                        default=65432)
+    config.add_common_arguments(parser)
+    args = parser.parse_args()
+    config.pash_args = args
+    ## Initialize the log file
+    config.init_log_file()
+    if not config.config:
+        config.load_config(args.config_path)
+    return args
+
 def main():
     connections = []
-    port = PORT if len(sys.argv) < 2 else int(sys.argv[1])
+    args = parse_args()
+    port = args.port
+    config.LOGGING_PREFIX = f"Worker {port}: "
     worker = Worker(port)
     worker.run()
 
