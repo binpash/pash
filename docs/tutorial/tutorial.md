@@ -103,7 +103,7 @@ In all the above cases, launching the container is done via:
 ```sh
 docker run --name pash-play -it pash
 ```
-PaSh can be found in the container's `/pash` directory, so run `cd pash; git pull` to fetch the latest updates.
+PaSh can be found in the container's `/opt/pash` directory, so run `cd pash; git pull` to fetch the latest updates.
 More information in the [pash-on-docker guide](../contributing/contrib.md#pash-on-docker-a-pocket-guide).
 
 #### Windows using WSL
@@ -113,7 +113,7 @@ A short tutorial is included in the [contributing](../contributing/contrib.md) g
 
 ## Running Scripts
 
-All scripts in this guide assume that `$PASH_TOP` is set to the top directory of the PaSh codebase (e.g., `/pash` on docker)
+All scripts in this guide assume that `$PASH_TOP` is set to the top directory of the PaSh codebase (e.g., `/opt/pash` on docker)
 
 **To run scripts in this section of the tutorial, make sure you are in the `intro` directory of the `evaluation`:**
 ```sh
