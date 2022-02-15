@@ -127,11 +127,23 @@ do
             # create a backup of the shell config
             cp $config ${config}.backup
             # remove all the entries pointing to PASH_TOP and PATH
-            cat $config | grep -v -e "export PASH_TOP" -e "export PATH" > $tmpfile
+            grep -ve "export PASH_TOP" $config > $tmpfile
             mv $tmpfile $config
+            path_ans=0
+            # check if PATH contains PASH_TOP reference
+            # we need to store it in a variable otherwise is messes up with the
+            # existing environment
+            var=$(grep -e "export PATH" $config | grep -e '$PASH_TOP') || path_ans=$?
+            # if the return code is 0 -> there is a reference of $PASH_TOP in 
+            # PATH, remove it
+            if [ "$path_ans" == 0 ]; then
+                # remove previous references to PASH_TOP from PATH
+                grep -v 'export PATH=$PATH:$PASH_TOP' $config > $tmpfile
+                mv $tmpfile $config
+            fi
             ## there isn't a previous Pash installation, append the configuration
             echo "export PASH_TOP="$PASH_TOP >> $config
-            echo "export PATH="$PATH:$PASH_TOP >> $config
+            echo 'export PATH=$PATH:$PASH_TOP' >> $config
         fi
     fi
 done
