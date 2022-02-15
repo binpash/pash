@@ -35,7 +35,7 @@ docker build -f ./docker/ubuntu/Dockerfile -t "pash:latest" .
 # docker build -f ./docker/debian/Dockerfile -t "pash:latest" .
 ```
 
-Finally, run the dockercontainer.
+Finally, run the docker container.
 ```sh
 docker run --name pash-play -it pash:latest
 ```
