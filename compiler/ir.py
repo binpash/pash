@@ -210,8 +210,8 @@ def make_map_node(node, new_inputs, new_outputs, distributed_exec=False):
         new_node.outputs = new_outputs
 
     if distributed_exec:
-        new_node = remote_exec.make_remote_exec_node(new_node)
-
+            new_node = remote_exec.make_remote_exec_node(new_node)
+        
     return new_node
 
 ## Makes a wrap node that encloses a map parallel node.
@@ -300,7 +300,7 @@ class IR:
             return self.edges[edge_id][1]
         else:
             return None
-
+       
     def get_stdin(self):
         stdin_id = self.get_stdin_id()
         stdin_fid = self.get_edge_fid(stdin_id)
@@ -328,7 +328,8 @@ class IR:
         for edge_id, (edge_fid, _from, _to) in self.edges.items():
             resource = edge_fid.get_resource()
             if(resource.is_stdout()):
-                assert(stdout_id is None)
+                # This is not true when using distributed_exec
+                # assert(stdout_id is None)
                 stdout_id = edge_id
         return stdout_id   
 
@@ -584,9 +585,14 @@ class IR:
     ##     but also nodes that have no incoming edge (generator nodes). 
     def source_nodes(self):
         sources = set()
+        sources_to_remove = set()
         for _edge_fid, from_node, to_node in self.edges.values():
+            if to_node in sources:
+                sources_to_remove.add(to_node)
             if(from_node is None and not to_node is None):
                 sources.add(to_node)
+        
+        sources = sources - sources_to_remove
         for node_id, node in self.nodes.items():
             if len(node.get_input_list()) == 0:
                 sources.add(node_id)
