@@ -16,6 +16,10 @@ sys.path.append(os.path.join(PASH_TOP, "compiler"))
 
 import config
 from util import log
+from annotations import load_annotation_files
+import pash_runtime
+from dspash.socket_utils import get_available_port, send_msg, recv_msg
+from dspash.ir_helper import graph_to_shell
 
 # from ... import config
 HOST = '0.0.0.0'
@@ -32,12 +36,22 @@ def send_success(conn, body, msg = ""):
         'body': body,
         'msg': msg
     }
-    conn.send(encode_request(request))
+    send_msg(conn, encode_request(request))
 
 def parse_exec_request(request):
     return request['cmd']
 
+def parse_exec_graph(request):
+    return request['graph'], request['shell_variables']
 
+def exec_graph(graph, shell_vars):
+    config.config['shell_variables'] = shell_vars
+    script_path = graph_to_shell(graph)
+
+    e = os.environ.copy()
+    e['PASH_TOP'] = PASH_TOP
+    rc = subprocess.Popen(['bash', script_path], env=e)
+    return rc
 class Worker:
     def __init__(self, port = None):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -61,41 +75,34 @@ class Worker:
         for t in connections:
             t.join()
 
-
-def get_available_port():
-    # There is a possible race condition using the returned port as it could be opened by a different process
-    cmd = "bash -c \"comm -23 <(seq 1100 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1\""
-    args = shlex.split(cmd)
-    p = subprocess.run(args, stdout=subprocess.PIPE, universal_newlines=True)
-    return p.stdout.rstrip()
-
-
 def manage_connection(conn, addr):
     rcs = []
     with conn:
         print('Connected by', addr)
         while True:
-            request = conn.recv(4096)
-            if not request:
+            data = recv_msg(conn)
+            if not data:
                 break
 
             print("got new request")
-            request = decode_request(request)
+            request = decode_request(data)      
             if request['type'] == 'exec':
                 cmd = parse_exec_request(request)
                 from_port = get_available_port()
                 to_port = get_available_port()
                 print(cmd, from_port, to_port)
                 args = ["bash", EXEC_SCRIPT_PATH, addr[0], from_port, to_port, cmd]
-                e = os.environ.copy()
-                e['PASH_TOP'] = PASH_TOP
-                rc = subprocess.Popen(args, env = e)
+                rc = subprocess.Popen(args)
                 body = {
                     'from_port': from_port,
                     'to_port': to_port
                 }
-                time.sleep(0.1) # kinda hacky but sometimes port is not open by time host gets response
-                send_success(conn, body)
+            elif request['type'] == 'Exec-Graph':
+                graph, shell_vars = parse_exec_graph(request)
+                exec_graph(graph, shell_vars)
+                body = {}
+            time.sleep(0.5) # kinda hacky but sometimes port is not open by time host gets response
+            send_success(conn, body)
     print("connection ended")
     for rc in rcs:
         rc.wait()
@@ -115,12 +122,16 @@ def parse_args():
         config.load_config(args.config_path)
     return args
 
-def main():
-    connections = []
+def init():
     args = parse_args()
-    port = args.port
-    config.LOGGING_PREFIX = f"Worker {port}: "
-    worker = Worker(port)
+    config.LOGGING_PREFIX = f"Worker {config.pash_args.port}: "
+    config.annotations = load_annotation_files(
+        config.config['distr_planner']['annotations_dir'])
+    pash_runtime.runtime_config = config.config['distr_planner']
+
+def main():
+    init()
+    worker = Worker(config.pash_args.port)
     worker.run()
 
 if __name__ == "__main__":

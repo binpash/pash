@@ -47,12 +47,6 @@ if [ "$pash_daemon" -eq 1 ] && [ "$show_version" -eq 0 ]; then
   pash_wait_until_daemon_listening
 fi
 
-if [ "$distributed_exec" -eq 1 ]; then
-  # TODO: start workers remotely?
-  python3 "$PASH_TOP/compiler/dspash/worker_manager.py" &
-  
-  worker_manager_pid=$!
-fi
 ## Restore the umask before executing
 umask ${old_umask}
 PASH_FROM_SH="pa.sh" python3 -S $PASH_TOP/compiler/pash.py "$@"

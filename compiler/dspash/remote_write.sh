@@ -1,0 +1,1 @@
+while ! nc $@ -v ; do sleep 1 ; done

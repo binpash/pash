@@ -1,12 +1,47 @@
 import socket
 import os
 import json
+import shlex
+import subprocess
+import pickle
+import struct
+
+def get_available_port():
+    # There is a possible race condition using the returned port as it could be opened by a different process
+    cmd = "bash -c \"comm -23 <(seq 1100 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1\""
+    args = shlex.split(cmd)
+    p = subprocess.run(args, stdout=subprocess.PIPE, universal_newlines=True)
+    return p.stdout.rstrip()
+
+def send_msg(sock, msg):
+    # Prefix each message with a 4-byte length (network byte order)
+    msg = struct.pack('>I', len(msg)) + msg
+    sock.sendall(msg)
+
+def recv_msg(sock):
+    # Read message length and unpack it into an integer
+    raw_msglen = recvall(sock, 4)
+    if not raw_msglen:
+        return None
+    msglen = struct.unpack('>I', raw_msglen)[0]
+    # Read the message data
+    return recvall(sock, msglen)
+
+def recvall(sock, n):
+    # Helper function to recv n bytes or return None if EOF is hit
+    data = bytearray()
+    while len(data) < n:
+        packet = sock.recv(n - len(data))
+        if not packet:
+            return None
+        data.extend(packet)
+    return data
 
 def encode_request(obj: dict):
-    return json.dumps(obj).encode('utf-8')
+    return pickle.dumps(obj)
 
 def decode_request(b: bytes):
-    return json.loads(b.decode('utf-8'))
+    return pickle.loads(b)
 
 ## TODO: SocketManager might need to handle errors more gracefully
 class SocketManager:
