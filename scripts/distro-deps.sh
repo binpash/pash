@@ -4,9 +4,10 @@ set -e
 
 cd $(dirname $0)
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
+optimized_agg_flag=${optimized_agg_flag:-0}
 cd $PASH_TOP
 
-LOG_DIR=$PWD/install_logs
+LOG_DIR=install_logs
 mkdir -p $LOG_DIR
 
 if [[ $(uname) == 'Darwin' ]]; then
@@ -28,14 +29,16 @@ case "$distro" in
         echo "Running preparation apt install:"
         echo "|-- running apt update..."
         apt-get update &> $LOG_DIR/apt_update.log
-        # needed for g++-10
-        apt-get install software-properties-common -y &> $LOG_DIR/apt_install.log
-        add-apt-repository ppa:ubuntu-toolchain-r/test -y # for g++-10
         echo "|-- running apt install..."
-        apt-get install -y git libtool m4 curl automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils g++-10 python3-testresources python3-setuptools locales locales-all wget netcat-openbsd &>> $LOG_DIR/apt_install.log
-        echo "|-- make g++-10 default..."
-        update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
-        update-alternatives --set g++ /usr/bin/g++-10
+        apt-get install -y git libtool m4 curl automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils python3-testresources python3-setuptools locales locales-all wget netcat-openbsd &>> $LOG_DIR/apt_install.log
+        if [[ "$optimized_agg_flag" == 1 ]];  then
+            echo "|-- installing g++-10..."
+            apt-get install software-properties-common -y &> $LOG_DIR/apt_install.log
+            add-apt-repository ppa:ubuntu-toolchain-r/test -y  &> $LOG_DIR/apt_install.log
+            apt-get install g++-10  &> $LOG_DIR/apt_install.log
+            update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100 &> $LOG_DIR/apt_install.log
+            update-alternatives --set g++ /usr/bin/g++-10 &> $LOG_DIR/apt_install.log
+        fi
         ;;
     debian*)
         echo "Running preparation apt install:"

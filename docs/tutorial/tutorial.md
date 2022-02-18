@@ -62,7 +62,7 @@ _Other distros_:
 Use the system's package manager to install the following packages (some of which might already be installed in your system):
 
 ```
-libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils
+git libtool m4 curl automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils python3-testresources python3-setuptools locales locales-all wget netcat-openbsd
 ```
 
 Then clone the PaSh repository and run `setup-pash.sh` as follows:
@@ -73,6 +73,20 @@ git clone git@github.com:binpash/pash.git
 ```
 
 As noted at the end of `setup-pash.sh`, make sure you set `PASH_TOP` pointing to the absolute path of the directory `pa.sh` resides (you can optionally place that in your `PATH`).
+
+_Installation Flags_:
+
+PaSh offers the following installation flags:
+* `-p/--prepare` that installs all the required dependencies if your system is supported
+* `-o/--opt-agg` that downloads g++-10 and builds an optimized version of some aggregators (not currently implemented in the main PaSh workflow)
+
+To use these flags, see the following installation procedure:
+```sh
+git clone git@github.com:binpash/pash.git
+cd pash/ && bash scripts/install.sh -p --opti-agg
+```
+
+This will install all the dependencies for PaSh on your machine (sudo is used) and the g++-10 toolchain, but also build the respective aggregators.
 
 #### Docker
 

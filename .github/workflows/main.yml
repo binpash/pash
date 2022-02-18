@@ -24,11 +24,8 @@ jobs:
             ref: ${{ github.event.pull_request.head.sha }}
         - name: Running-Pash-Benchmarks
           run: |
-            # install all deps
-            sudo bash scripts/distro-deps.sh
-            sudo chmod 777 install_logs
-            # auto append the env vars of pash
-            yes | bash scripts/setup-pash.sh
+            # install the pash and its deps using the optimized c++ aggregators
+            yes | bash scripts/install.sh -p -o
             export PASH_TOP=$PWD
             export PATH=$PATH:$PASH_TOP
             cd scripts
@@ -38,9 +35,9 @@ jobs:
             # get the timer
             d=$(LANG=en_us_88591; date)
             echo "VERSION<<EOF" >> $GITHUB_ENV
-            echo  "OS:${{matrix.os}}" >> $GITHUB_ENV
+            echo "OS:${{matrix.os}}" >> $GITHUB_ENV
             echo "$d" >> $GITHUB_ENV
-            # Parses the results and construct a github message post
+            # Parse the results and construct a github message post
             # we append the data to the global env
             cat results.log >> $GITHUB_ENV
             echo 'EOF' >> $GITHUB_ENV
