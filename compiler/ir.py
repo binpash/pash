@@ -300,7 +300,18 @@ class IR:
             return self.edges[edge_id][1]
         else:
             return None
-       
+
+    def replace_edge(self, old_edge_id, new_edge_fid):
+        assert(new_edge_fid not in self.all_fids())
+        new_edge_id = new_edge_fid.get_ident()
+        old_fid, from_node, to_node = self.edges[old_edge_id]
+        self.edges[new_edge_id] = (new_edge_fid, from_node, to_node)
+        if from_node:
+            self.get_node(from_node).replace_edge(old_edge_id, new_edge_id)
+        if to_node:
+            self.get_node(to_node).replace_edge(old_edge_id, new_edge_id)
+        del self.edges[old_edge_id]
+        
     def get_stdin(self):
         stdin_id = self.get_stdin_id()
         stdin_fid = self.get_edge_fid(stdin_id)
