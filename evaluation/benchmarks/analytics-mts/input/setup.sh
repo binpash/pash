@@ -23,9 +23,11 @@ setup_dataset() {
       exit 1
     fi
   elif [ ! -f ./in_small.csv ] && [ "$1" = "--small" ]; then
-      echo "Generating small-size inputs"
-      # FIXME PR: Do we need all of them?
+    if [ ! -f ./in_small.csv ]; then                                                       
+      echo "Generating small-size inputs"                                                  
+      # FIXME PR: Do we need all of them?                                                  
       curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/in_small.csv' > in_small.csv
+    fi                                                                                     
   fi
 }
 

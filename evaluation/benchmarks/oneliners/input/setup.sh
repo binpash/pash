@@ -14,14 +14,16 @@ if [[ "$1" == "-c" ]]; then
 fi
 
 setup_dataset() {
-    if [ "$#" -eq 1 ] && [ "$1" = "--small" ]; then
-        echo "Generating small-size inputs"
-        # FIXME PR: Do we need all of them?
-	curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/oneliners.zip' > oneliners.zip
-	unzip oneliners.zip
-	rm -f oneliners.zip
-	return 0
+  if [ "$#" -eq 1 ] && [ "$1" = "--small" ]; then
+    if [ ! -d ./small ]; then
+      echo "Generating small-size inputs"
+      # FIXME PR: Do we need all of them?
+      curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/oneliners.zip' > oneliners.zip
+      unzip oneliners.zip
+      rm -f oneliners.zip
     fi
+    return 0
+  fi
 
     if [ ! -f ./1M.txt ]; then
         curl -sf 'http://ndr.md/data/dummy/1M.txt' > 1M.txt

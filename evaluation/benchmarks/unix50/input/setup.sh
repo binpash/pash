@@ -22,14 +22,16 @@ fi
 setup_dataset() {
     # generate small inputs 
     if [ "$#" -eq 1 ] && [ "$1" = "--small" ]; then
-        echo "Generating small-size inputs"
-        # FIXME PR: Do we need all of them?
-	curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/unix50.zip' > unix50.zip
-	unzip unix50.zip
-	rm -f unix50.zip
-	return 0
+      if [ ! -d ./small ]; then                                                          
+        echo "Generating small-size inputs"                                             
+        # FIXME PR: Do we need all of them?                                             
+        curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/unix50.zip' > unix50.zip
+        unzip unix50.zip                                                                 
+        rm -f unix50.zip                                                                 
+      fi                                                                                 
+      return 0
     fi
-
+  
     for input in ${inputs[@]}
     do
         if [ ! -f "${input}.txt" ]; then
