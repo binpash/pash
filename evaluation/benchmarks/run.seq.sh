@@ -26,7 +26,7 @@ oneliners(){
   
   cd oneliners/
   # we need to download the whole dataset to generate the small input as well
-  install_deps_source_setup '--full'
+  install_deps_source_setup $1
 
   mkdir -p "$outputs_dir"
 
@@ -157,9 +157,7 @@ analytics-mts(){
   fi
 
   cd analytics-mts/
-  # small input is generated from the full input
-  # no need to pass any flag to setup.sh
-  install_deps_source_setup 
+  install_deps_source_setup $1
  
   mkdir -p "$outputs_dir"
 
