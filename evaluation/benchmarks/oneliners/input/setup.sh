@@ -109,7 +109,7 @@ setup_dataset() {
 source_var() {
     if [[ "$1" == "--small" ]]; then
         export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/small/$2"
-	export dict="$PASH_TOP/evaluation/benchmarks/oneliners/input/small/dict.txt"
+        export dict="$PASH_TOP/evaluation/benchmarks/oneliners/input/small/dict.txt"
     else
         export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/$2"
     fi
