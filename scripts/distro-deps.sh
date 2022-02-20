@@ -5,6 +5,7 @@ set -e
 cd $(dirname $0)
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 optimized_agg_flag=${optimized_agg_flag:-0}
+show_deps=${show_deps:-0}
 cd $PASH_TOP
 
 LOG_DIR=install_logs
@@ -26,11 +27,16 @@ distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 # now do different things depending on distro
 case "$distro" in
     ubuntu*)  
+        pkgs="git libtool m4 curl automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils python3-testresources python3-setuptools locales locales-all wget netcat-openbsd" 
+        if [[ "$show_deps" == 1 ]]; then
+            echo "$pkgs"
+            exit 0
+        fi      
         echo "Running preparation apt install:"
         echo "|-- running apt update..."
         apt-get update &> $LOG_DIR/apt_update.log
         echo "|-- running apt install..."
-        apt-get install -y git libtool m4 curl automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils python3-testresources python3-setuptools locales locales-all wget netcat-openbsd &>> $LOG_DIR/apt_install.log
+        apt-get install -y $pkgs &>> $LOG_DIR/apt_install.log
         if [[ "$optimized_agg_flag" == 1 ]];  then
             echo "|-- installing g++-10..."
             apt-get install software-properties-common -y &> $LOG_DIR/apt_install.log
@@ -41,28 +47,48 @@ case "$distro" in
         fi
         ;;
     debian*)
+        pkgs="git libtool curl sudo procps m4 automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils python3-testresources python3-setuptools netcat-openbsd locales locales-all wget"
+        if [[ "$show_deps" == 1 ]]; then
+            echo "$pkgs"
+            exit 0
+        fi
         echo "Running preparation apt install:"
         echo "|-- running apt update..."
         apt-get update &> $LOG_DIR/apt_update.log
         echo "|-- running apt install..."
-        apt-get install -y git libtool curl sudo procps m4 automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils python3-testresources python3-setuptools netcat-openbsd locales locales-all wget &> $LOG_DIR/apt_install.log
+        apt-get install -y $pkgs &> $LOG_DIR/apt_install.log
         ;;
     fedora*) 
+        pkgs="git gcc gcc-c++ python python3-pip make curl automake autoconf libtool hostname bc procps python3-testresources python3-setuptools diffutils python-devel pip python3-setuptools zlib-devel libjpeg-devel nc glibc-langpack-en"
+        if [[ "$show_deps" == 1 ]]; then
+            echo "$pkgs"
+            exit 0
+        fi
         echo "|-- running dnf install...."
-        dnf install git gcc gcc-c++ python python3-pip make curl automake autoconf libtool hostname bc procps python3-testresources python3-setuptools diffutils python-devel pip python3-setuptools zlib-devel libjpeg-devel nc glibc-langpack-en -y &> $LOG_DIR/dnf_install.log
+        dnf install -y $pkgs &> $LOG_DIR/dnf_install.log
         ;;
     arch*) 
+        pkgs="git libtool m4 automake curl pkg-config python python-pip libffi make autoconf gcc10 sudo inetutils bc openbsd-netcat"
+        if [[ "$show_deps" == 1 ]]; then
+            echo "$pkgs"
+            exit 0
+        fi
         echo "Updating mirrors"
         pacman -Sy &> $LOG_DIR/pacman_update.log
         echo "|-- running pacman install...."
-        yes | pacman -S git libtool m4 automake curl pkg-config python python-pip libffi make autoconf gcc10 sudo inetutils bc openbsd-netcat
+        yes | pacman -S $pkgs &> $LOG_DIR/pacman_install.log
         ;;
     freebsd*)
-        echo "Updating mirros"
+        pkgs="libtool m4 automake curl libffi py38-pip autoconf gcc gsed gmake"
+        if [[ "$show_deps" == 1 ]]; then
+            echo "$pkgs"
+            exit 0
+        fi
+        echo "Updating mirrors"
         pkg update &> $LOG_DIR/pkg_update.log
         echo "|-- running pkg install...."
         # TODO add python3-testresources dep
-        yes | pkg install libtool m4 automake curl libffi py38-pip autoconf gcc gsed gmake
+        yes | pkg install $pkgs
         ;;
     *)        echo "unknown distro: '$distro'" ; exit 1 ;;
 esac
