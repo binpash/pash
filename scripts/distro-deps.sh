@@ -30,7 +30,7 @@ case "$distro" in
         echo "|-- running apt update..."
         apt-get update &> $LOG_DIR/apt_update.log
         echo "|-- running apt install..."
-        apt-get install -y git libtool m4 curl automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils python3-testresources python3-setuptools locales locales-all wget netcat-openbsd &>> $LOG_DIR/apt_install.log
+        apt-get install -y git libtool m4 curl automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils python3-testresources python3-setuptools locales locales-all wget netcat-openbsd unzip &>> $LOG_DIR/apt_install.log
         if [[ "$optimized_agg_flag" == 1 ]];  then
             echo "|-- installing g++-10..."
             apt-get install software-properties-common -y &> $LOG_DIR/apt_install.log
@@ -45,17 +45,17 @@ case "$distro" in
         echo "|-- running apt update..."
         apt-get update &> $LOG_DIR/apt_update.log
         echo "|-- running apt install..."
-        apt-get install -y git libtool curl sudo procps m4 automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils python3-testresources python3-setuptools netcat-openbsd locales locales-all wget &> $LOG_DIR/apt_install.log
+        apt-get install -y git libtool curl sudo procps m4 automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils python3-testresources python3-setuptools netcat-openbsd locales locales-all wget unzip &> $LOG_DIR/apt_install.log
         ;;
     fedora*) 
         echo "|-- running dnf install...."
-        dnf install git gcc gcc-c++ python python3-pip make curl automake autoconf libtool hostname bc procps python3-testresources python3-setuptools diffutils python-devel pip python3-setuptools zlib-devel libjpeg-devel nc glibc-langpack-en -y &> $LOG_DIR/dnf_install.log
+        dnf install git gcc gcc-c++ python python3-pip make curl automake autoconf libtool hostname bc procps python3-testresources python3-setuptools diffutils python-devel pip python3-setuptools zlib-devel libjpeg-devel nc glibc-langpack-en unzip -y &> $LOG_DIR/dnf_install.log
         ;;
     arch*) 
         echo "Updating mirrors"
         pacman -Sy &> $LOG_DIR/pacman_update.log
         echo "|-- running pacman install...."
-        yes | pacman -S git libtool m4 automake curl pkg-config python python-pip libffi make autoconf gcc10 sudo inetutils bc openbsd-netcat
+        yes | pacman -S git libtool m4 automake curl pkg-config python python-pip libffi make autoconf gcc10 sudo inetutils bc openbsd-netcat unzip
         ;;
     freebsd*)
         echo "Updating mirros"

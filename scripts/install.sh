@@ -41,9 +41,9 @@ if [ "$prepare_sudo_install_flag" -eq 1 ]; then
     sudo ./distro-deps.sh $optimized_agg_flag
   fi
 else
-  echo "Requires libtool, m4, automake, opam, pkg-config, libffi-dev, python3, pip for python3, a dictionary, bc, bsdmainutils"
+  echo "Requires libtool, m4, automake, opam, pkg-config, libffi-dev, python3, pip for python3, a dictionary, bc, bsdmainutils unzip"
   echo "Ensure that you have them by running:"
-  echo "  sudo apt install libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils"
+  echo "  sudo apt install libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils unzip"
   echo -n "Press 'y' if you have these dependencies installed. "
   while : ; do
     read -n 1 k <&1
