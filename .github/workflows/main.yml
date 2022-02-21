@@ -24,8 +24,20 @@ jobs:
             ref: ${{ github.event.pull_request.head.sha }}
         - name: Running-Pash-Benchmarks
           run: |
-            # install the pash and its deps using the optimized c++ aggregators
-            yes | bash scripts/install.sh -p -o
+            # can't get to install directly via install.sh, so we build everything manually
+            # export the optimized c++ aggregators
+            export optimized_agg_flag=1
+            # install the system deps and pash the environment
+            sudo -E bash scripts/distro-deps.sh
+            # install pash
+            # the yes command actually fails for some weird Github Actions reason,
+            # but it doesn't affect the operation since it just writes PASH_TOP
+            # in the ~/*rc.sh files
+            yes | sudo -E bash scripts/setup-pash.sh
+            # build the aggregators manually
+            cd runtime/;
+            sudo -E make agg;
+            cd ../;
             export PASH_TOP=$PWD
             export PATH=$PATH:$PASH_TOP
             cd scripts
