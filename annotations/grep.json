@@ -39,7 +39,8 @@
             "predicate": "default",
             "class": "stateless",
             "inputs": ["args[:]"],
-            "outputs": ["stdout"]
+            "outputs": ["stdout"],
+            "comment": "This isn't _quite_ right---we need to identify a pattern somewhere and exclude it from `input`."
         }
     ],
     "comment": "For the stateless one we need to add -h|--no-filename as a requirement if it takes multiple files as input."
