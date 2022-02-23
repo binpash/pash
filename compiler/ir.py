@@ -942,13 +942,6 @@ class IR:
                         dot.edge(str(from_node), node_id)
             else:
                 dot.edge(str(from_node), str(to_node))
-        # input_file_fids = [fid for fid in self.all_input_fids()
-        #                    if fid.has_file_resource()]
-        # log("All input fids:", input_file_fids)
-            # 
-            # e.node('course')
-            # e.node('institute')
-            # e.node('student')
 
         return dot
 
