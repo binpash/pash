@@ -57,7 +57,9 @@ def main_body():
 
     ## Call the main procedure
     compiler_config = CompilerConfig(args.width)
-    compile_optimize_output_script(args.input_ir, args.compiled_script_file, args, compiler_config)
+    ast_or_ir = compile_optimize_output_script(args.input_ir, args.compiled_script_file, args, compiler_config)
+    maybe_generate_graphviz(ast_or_ir, args)
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -92,7 +94,6 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
 
     return ret
 
-
 def compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config):
     global runtime_config
     
@@ -120,8 +121,6 @@ def compile_optimize_output_script(ir_filename, compiled_script_file, args, comp
         log("Optimized script saved in:", compiled_script_file)
         with open(compiled_script_file, "w") as f:
                 f.write(script_to_execute)
-
-        maybe_generate_graphviz(optimized_ast_or_ir, args)
 
         ret = optimized_ast_or_ir
     else:

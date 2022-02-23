@@ -24,11 +24,11 @@ def init_graphviz_dir(args):
     
     log("Created graphviz dir:", graphviz_dir_path)
 
-def maybe_generate_graphviz(ir: IR, args):
+def maybe_generate_graphviz(ir: IR, args, name='dfg'):
     if not args.graphviz == "no":
-        generate_graphviz(ir, args)
+        generate_graphviz(ir, args, name=name)
 
-def generate_graphviz(ir: IR, args):
+def generate_graphviz(ir: IR, args, name='dfg'):
     ## TODO: It is unclear if importing in here (instead of in general)
     ##       improves startup cost of the pash_runtime when not using graphviz.
     import graphviz
@@ -39,6 +39,6 @@ def generate_graphviz(ir: IR, args):
     ## The option argument of graphviz contains the format
     dot.format = args.graphviz
 
-    dot.render(directory=DIR_NAME)
+    dot.render(directory=DIR_NAME, filename=name)
 
     log("Saved graph visualization in:", DIR_NAME)
