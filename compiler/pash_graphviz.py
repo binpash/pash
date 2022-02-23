@@ -39,6 +39,7 @@ def generate_graphviz(ir: IR, args, name='dfg'):
     ## The option argument of graphviz contains the format
     dot.format = args.graphviz
 
-    dot.render(directory=DIR_NAME, filename=name)
+    graphviz_dir_path = os.path.join(args.graphviz_dir, DIR_NAME)
+    dot.render(directory=graphviz_dir_path, filename=name)
 
-    log("Saved graph visualization in:", DIR_NAME)
+    log("Saved graph visualization in:", os.path.join(graphviz_dir_path, name))
