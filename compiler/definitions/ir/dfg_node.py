@@ -64,6 +64,20 @@ class DFGNode:
             self.outputs)
         return output
 
+    ## Generates a dot node for the DFG node
+    def add_dot_node(self, dot, node_id):
+        label = self.get_dot_label()
+        dot.node(str(node_id), label=label)
+        return dot
+
+    ## Get the label of the node. By default, it is simply the name
+    def get_dot_label(self) -> str:
+        ## The name could be a full path
+        name = self.com_name
+        basename = os.path.basename(str(name))
+        return basename
+
+
     def get_id(self):
         return self.id
 

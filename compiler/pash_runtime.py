@@ -9,6 +9,7 @@ from ir import *
 from ast_to_ir import compile_asts
 from json_ast import *
 from ir_to_ast import to_shell
+from pash_graphviz import maybe_generate_graphviz
 from util import *
 
 from definitions.ir.aggregator_node import *
@@ -87,7 +88,7 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
     try:
         ret = compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config)
     except Exception as e:
-        log(e)
+        log("Exception caught:", e)
 
     return ret
 
@@ -119,6 +120,8 @@ def compile_optimize_output_script(ir_filename, compiled_script_file, args, comp
         log("Optimized script saved in:", compiled_script_file)
         with open(compiled_script_file, "w") as f:
                 f.write(script_to_execute)
+
+        maybe_generate_graphviz(optimized_ast_or_ir, args)
 
         ret = optimized_ast_or_ir
     else:

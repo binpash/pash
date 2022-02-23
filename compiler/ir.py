@@ -909,7 +909,48 @@ class IR:
         
         return new_node_id
         
+    def generate_graphviz(self):
+        ## TODO: It is unclear if importing in here (instead of in general)
+        ##       improves startup cost of the pash_runtime when not using graphviz.
+        import graphviz
 
+        dot = graphviz.Digraph()
+
+        ## TODO: Could use subgraph for distribution etc
+
+        ## First generate all nodes
+        for node_id, node in self.nodes.items():
+            dot = node.add_dot_node(dot, node_id)
+
+        ## (I/O) File nodes should be boxes
+        dot.attr('node', shape='box')
+
+        ## Then generate all edges and input+output files
+        for fid, from_node, to_node in self.edges.values():
+            ## This means that this file is an ending or starting file
+            if from_node is None or to_node is None:
+                ## Sometimes some source or sink files might be ephemeral
+                ## TODO: We should investigate why this happens
+                if fid.has_file_resource():
+                    label = fid.serialize()
+                    node_id = f'file-{str(fid.get_ident())}'
+                    dot.node(node_id, label)
+
+                    if from_node is None:
+                        dot.edge(node_id, str(to_node))
+                    else:
+                        dot.edge(str(from_node), node_id)
+            else:
+                dot.edge(str(from_node), str(to_node))
+        # input_file_fids = [fid for fid in self.all_input_fids()
+        #                    if fid.has_file_resource()]
+        # log("All input fids:", input_file_fids)
+            # 
+            # e.node('course')
+            # e.node('institute')
+            # e.node('student')
+
+        return dot
 
     ## TODO: Also it should check that there are no unreachable edges
 
