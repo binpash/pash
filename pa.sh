@@ -25,6 +25,11 @@ fi
 ## Create a temporary directory where PaSh can use for temporary files and logs
 export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
 
+## Create a timestamp that PaSh can use for log directories 
+##   (should not be used to create critical directories/files, only logs/monitors/etc,
+##    all the cricial pash temp files should go in PASH_TMP_PREFIX)
+export PASH_TIMESTAMP="$(date +"%y-%m-%d-%T")"
+
 ## Create the input and output fifo that the runtime will use for communication
 export RUNTIME_IN_FIFO="${PASH_TMP_PREFIX}/runtime_in_fifo"
 export RUNTIME_OUT_FIFO="${PASH_TMP_PREFIX}/runtime_out_fifo"

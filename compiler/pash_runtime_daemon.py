@@ -10,6 +10,7 @@ from datetime import datetime
 
 from annotations import *
 import config
+from pash_graphviz import maybe_generate_graphviz
 import pash_runtime
 from util import *
 
@@ -298,9 +299,13 @@ class Scheduler:
         daemon_compile_end_time = datetime.now()
         print_time_delta("Daemon Compile", daemon_compile_start_time, daemon_compile_end_time)
 
+
         self.wait_unsafe()
         if ast_or_ir != None:
             compile_success = True
+
+            maybe_generate_graphviz(ast_or_ir, config.pash_args, name=f'dfg-{process_id}')
+
 
             proc_input_resources = set(map(lambda out: str(out.resource) if str(
                 out.resource) != "None" else out, ast_or_ir.all_input_fids()))
