@@ -44,6 +44,8 @@ else
   echo "Requires libtool, m4, automake, opam, pkg-config, libffi-dev, python3, pip for python3, a dictionary, bc, bsdmainutils"
   echo "Ensure that you have them by running:"
   echo "  sudo apt install libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils"
+  echo "  -or-"
+  echo "  sudo pacman -S libtool m4 automake pkg-config libffi python3 python-pip bc"
   echo -n "Press 'y' if you have these dependencies installed. "
   while : ; do
     read -n 1 k <&1
