@@ -7,6 +7,7 @@ from annotations import *
 from ast_to_ir import *
 from ir import *
 from parse import parse_shell_to_asts, parse_shell_to_asts_interactive, from_ast_objects_to_shell
+from pash_graphviz import maybe_init_graphviz_dir
 from util import *
 import config
 import shutil
@@ -175,6 +176,9 @@ def parse_args():
     config.init_log_file()
     if not config.config:
         config.load_config(args.config_path)
+
+    ## Initialize the graphviz directory
+    maybe_init_graphviz_dir(args)
 
     ## Print all the arguments before they are modified below
     log("Arguments:")
