@@ -14,8 +14,6 @@ def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, is_server):
     opt_count = 0
 
     if is_remote_read:
-        options.append((opt_count, Arg(string_to_argument("-d")))) # Don't read from stdin
-        opt_count += 1
         remote_pipe_bin = os.path.join(config.PASH_TOP, config.config['runtime']['remote_read_binary'])
     else:
         remote_pipe_bin = os.path.join(config.PASH_TOP, config.config['runtime']['remote_write_binary'])
@@ -26,9 +24,8 @@ def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, is_server):
         options.append((opt_count, Arg(string_to_argument("-l")))) # Don't read from stdin
         opt_count += 1
 
-    options.append((opt_count, Arg(string_to_argument("-N"))))
-    options.append((opt_count + 1, Arg(string_to_argument(host_ip))))
-    options.append((opt_count + 2, Arg(string_to_argument(str(port)))))
+    options.append((opt_count, Arg(string_to_argument(host_ip))))
+    options.append((opt_count + 1, Arg(string_to_argument(str(port)))))
     
     return RemotePipe(inputs,
                outputs,

@@ -18,12 +18,13 @@ import config
 from util import log
 from annotations import load_annotation_files
 import pash_runtime
-from dspash.socket_utils import get_available_port, send_msg, recv_msg
+from dspash.socket_utils import send_msg, recv_msg
 from dspash.ir_helper import graph_to_shell
 
 # from ... import config
 HOST = '0.0.0.0'
 PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
+
 
 EXEC_SCRIPT_PATH = f'{PASH_TOP}/compiler/dspash/remote_exec_script.sh'
 
@@ -52,6 +53,7 @@ def exec_graph(graph, shell_vars):
     e['PASH_TOP'] = PASH_TOP
     rc = subprocess.Popen(['bash', script_path], env=e)
     return rc
+
 class Worker:
     def __init__(self, port = None):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -86,22 +88,23 @@ def manage_connection(conn, addr):
 
             print("got new request")
             request = decode_request(data)      
-            if request['type'] == 'exec':
-                cmd = parse_exec_request(request)
-                from_port = get_available_port()
-                to_port = get_available_port()
-                print(cmd, from_port, to_port)
-                args = ["bash", EXEC_SCRIPT_PATH, addr[0], from_port, to_port, cmd]
-                rc = subprocess.Popen(args)
-                body = {
-                    'from_port': from_port,
-                    'to_port': to_port
-                }
-            elif request['type'] == 'Exec-Graph':
+            # if request['type'] == 'exec':
+            #     cmd = parse_exec_request(request)
+            #     from_port = get_available_port()
+            #     to_port = get_available_port()
+            #     print(cmd, from_port, to_port)
+            #     args = ["bash", EXEC_SCRIPT_PATH, addr[0], from_port, to_port, cmd]
+            #     rc = subprocess.Popen(args)
+            #     body = {
+            #         'from_port': from_port,
+            #         'to_port': to_port
+            #     }
+            if request['type'] == 'Exec-Graph':
                 graph, shell_vars = parse_exec_graph(request)
                 exec_graph(graph, shell_vars)
                 body = {}
-            time.sleep(0.5) # kinda hacky but sometimes port is not open by time host gets response
+            else:
+                print(f"Unsupported request {request}")
             send_success(conn, body)
     print("connection ended")
     for rc in rcs:

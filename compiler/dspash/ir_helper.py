@@ -26,9 +26,15 @@ import definitions.ir.nodes.remote_pipe as remote_pipe
 import shlex
 import subprocess
 import pash_runtime
-from dspash.socket_utils import get_available_port
+
 
 HOST = '0.0.0.0'
+
+def get_available_port():
+    # There is a possible race condition using the returned port as it could be opened by a different process
+    port = config.next_available_port
+    config.next_available_port += 1
+    return port
 
 def read_graph(filename):
     with open(filename, "rb") as ir_file:

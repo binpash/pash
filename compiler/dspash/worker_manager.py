@@ -4,13 +4,14 @@ import time
 import queue
 import pickle
 
-from dspash.socket_utils import SocketManager, encode_request, decode_request, get_available_port, send_msg, recv_msg
+from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
 from util import log
 from dspash.ir_helper import prepare_graph_for_remote_exec
 import config 
 
 HOST = '0.0.0.0'
 PORT = 65425        # Port to listen on (non-privileged ports are > 1023)
+START_PORT = 57000
 
 class WorkerConnection:
     def __init__(self, host, port):
@@ -50,7 +51,6 @@ class WorkerConnection:
         response_data = self.socket.recv(4096)
         if not response_data or decode_request(response_data)['status'] != "OK":
             raise Exception(f"didn't recieved ack on request {response_data}")
-            return False, -1, -1
         else:
             self.running_processes += 1 #TODO: decrease in case of failure or process ended
             response = decode_request(response_data)
@@ -92,6 +92,7 @@ class WorkerConnection:
 class WorkersManager():
     def __init__(self, workers: WorkerConnection = []):
         self.workers = workers
+        config.next_available_port = START_PORT # TODO: improve to per worker config
 
     def get_worker(self) -> WorkerConnection:
         best_worker = None  # Online worker with least work
@@ -135,8 +136,7 @@ class WorkersManager():
                 filename = request.split(':', 1)[1].strip()
                 graphs, shell_vars, final_ouput_port = prepare_graph_for_remote_exec(filename)
                 response_msg = f"OK {final_ouput_port}"
-                dspash_socket.respond(response_msg, conn)
-                time.sleep(0.5)      
+                dspash_socket.respond(response_msg, conn)  
                 for subgraph in reversed(graphs):
                     worker = workers_manager.get_worker()
                     worker.send_graph_exec_request(subgraph, shell_vars)

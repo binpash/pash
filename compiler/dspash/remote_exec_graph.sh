@@ -11,4 +11,4 @@ response=($(echo "Exec-Graph: $file" | nc -U "$DSPASH_SOCKET"))
 status=${response[0]} #do something if false
 final_output_port=${response[1]}
 
-$PASH_TOP/compiler/dspash/remote_read.sh -l -d -N 0.0.0.0 $final_output_port
+$PASH_TOP/compiler/dspash/remote_read.sh -l -p $final_output_port

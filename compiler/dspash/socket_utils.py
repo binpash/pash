@@ -6,13 +6,6 @@ import subprocess
 import pickle
 import struct
 
-def get_available_port():
-    # There is a possible race condition using the returned port as it could be opened by a different process
-    cmd = "bash -c \"comm -23 <(seq 1100 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1\""
-    args = shlex.split(cmd)
-    p = subprocess.run(args, stdout=subprocess.PIPE, universal_newlines=True)
-    return p.stdout.rstrip()
-
 def send_msg(sock, msg):
     # Prefix each message with a 4-byte length (network byte order)
     msg = struct.pack('>I', len(msg)) + msg
