@@ -6,62 +6,90 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/urfave/cli/v2"
 )
+
+var RETRY_INTERVAL time.Duration = 10 * time.Millisecond
+var DEFAULT_TIMEOUT int = 0 // In seconds
 
 func Port(ln net.Listener) string {
 	x := strings.Split(ln.Addr().String(), ":")
 	return x[1]
 }
 
-func get_conn(host string, port string, listen bool) net.Conn {
-	if listen {
-		ln, err := net.Listen("tcp4", host+":"+port)
-		defer ln.Close()
-		if err != nil {
-			log.Fatalln("Trying to connect to [%s]: ERROR: %s", ln.Addr(), err)
-		}
-		log.Println("Connected to %s waiting for a connection", ln.Addr())
-
-		con, err := ln.Accept()
-		if err != nil {
-			log.Fatalln("Trying to connect to [%s]: ERROR: %s", con.RemoteAddr(), err)
-		}
-		return con
-	} else {
-		con, err := net.Dial("tcp4", host+":"+port)
-		if err != nil {
-			log.Fatalln("Trying to connect to [%s]: ERROR: %s", con.RemoteAddr(), err)
-		}
-		return con
+func failOnError(err error, msg string, args ...interface{}) {
+	if err != nil {
+		log.Fatalf(msg, args...)
 	}
 }
 
-func Read(host string, port string, listen bool) {
-	//connect
-	con := get_conn(host, port, listen)
-	defer con.Close()
+func getConn(ctx *cli.Context) net.Conn {
+	protocol := "tcp4"
+	host := "0.0.0.0"
+	port := "0"
+	listen := ctx.Bool("listen")
+	var timeout time.Duration = time.Duration(ctx.Int("timeout")) * time.Second
 
-	//read
-	n, err := io.Copy(os.Stdout, con)
-	if err != nil {
-		log.Fatalln("Failed while reading socket data [%s]: ERROR: %s", con.RemoteAddr(), err)
+	if ctx.IsSet("host") {
+		host = ctx.String("host")
+	} else if ctx.Args().Get(0) != "" {
+		host = ctx.Args().Get(0)
 	}
+
+	if ctx.IsSet("port") {
+		port = ctx.String("port")
+	} else if ctx.Args().Get(1) != "" {
+		port = ctx.Args().Get(1)
+	}
+
+	log.Printf("connecting to %s:%s with protocol %s\n", host, port, protocol)
+
+	if listen {
+		ln, err := net.Listen(protocol, host+":"+port)
+		failOnError(err, "Failed to open listening socket on %s:%s\n", host, port)
+		defer ln.Close()
+
+		log.Printf("Connected to %s waiting for a connection\n", ln.Addr())
+
+		conn, err := ln.Accept()
+		failOnError(err, "Failed at accepting connection [%s]\n", ln.Addr())
+
+		return conn
+	} else {
+		totimer := time.NewTimer(timeout)
+		defer totimer.Stop()
+
+		for {
+			conn, err := net.Dial(protocol, host+":"+port)
+			if err == nil {
+				return conn
+			}
+			select {
+			case <-time.After(RETRY_INTERVAL):
+				log.Printf("Failed connecting to %s:%s\n retrying to connect\n", host, port)
+				continue
+			case <-totimer.C:
+				failOnError(err, "Failed connecting to %s:%s\n after %d ms", port, host, timeout)
+			}
+
+		}
+	}
+}
+
+func Read(conn net.Conn) {
+	//read
+	n, err := io.Copy(os.Stdout, conn)
+	failOnError(err, "Failed while reading socket data [%s]\n", conn.RemoteAddr())
 
 	log.Printf("Read %d bytes", n)
 }
 
-func Write(host string, port string, listen bool) {
-	//connect
-	con := get_conn(host, port, listen)
-	defer con.Close()
-
+func Write(conn net.Conn) {
 	//write
-	n, err := io.Copy(con, os.Stdin)
-	if err != nil {
-		log.Fatalln("Failed while writing socket data [%s]: ERROR: %s", con.RemoteAddr(), err)
-	}
+	n, err := io.Copy(conn, os.Stdin)
+	failOnError(err, "Failed while writing socket data [%s]", conn.RemoteAddr())
 
 	log.Printf("Wrote %d bytes", n)
 }
@@ -73,28 +101,15 @@ func main() {
 	app.Version = "0.1"
 	app.EnableBashCompletion = true
 
-	globalFlags := []cli.Flag{
-		&cli.BoolFlag{
-			Name:    "debug",
-			Aliases: []string{"d"},
-			Value:   false,
-			Usage:   "Turn on debugging, use --log_file to specify file",
-		},
-		&cli.StringFlag{
-			Name:    "log_file",
-			Aliases: []string{"lg"},
-			Value:   "",
-			EnvVars: []string{"LOG_FILE"},
-			Usage:   "Turn on debugging, use --log_file to specify file",
-		},
-	}
-	app.Flags = globalFlags
+	// globalFlags := []cli.Flag{}
+	// app.Flags = globalFlags
 
 	commandFlags := []cli.Flag{
 		&cli.IntFlag{
-			Name:  "timeout",
-			Value: 1,
-			Usage: "Timeout to wait for messages",
+			Name:    "timeout",
+			Aliases: []string{"t"},
+			Value:   DEFAULT_TIMEOUT,
+			Usage:   "Timeout to wait for messages",
 		},
 		&cli.BoolFlag{
 			Name:    "listen",
@@ -113,21 +128,33 @@ func main() {
 			Value:   "0",
 			Usage:   "Port number",
 		},
+		&cli.BoolFlag{
+			Name:    "debug",
+			Aliases: []string{"d"},
+			Value:   false,
+			Usage:   "Turn on debugging, use --log_file to specify file",
+		},
+		&cli.StringFlag{
+			Name:    "log_file",
+			Aliases: []string{"lg"},
+			Value:   "",
+			EnvVars: []string{"LOG_FILE"},
+			Usage:   "Turn on debugging, use --log_file to specify file",
+		},
 	}
 
-	app.Before = func(ctx *cli.Context) error {
+	prepare := func(ctx *cli.Context) {
 		if !ctx.Bool("debug") {
 			log.SetOutput(io.Discard)
-		}
-
-		if ctx.IsSet("log_file") {
-			file, err := os.OpenFile(ctx.String("log_file"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-			if err != nil {
-				log.Fatal(err)
+		} else {
+			if ctx.IsSet("log_file") {
+				file, err := os.OpenFile(ctx.String("log_file"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+				if err != nil {
+					log.Fatal(err)
+				}
+				log.SetOutput(file)
 			}
-			log.SetOutput(file)
 		}
-		return nil
 	}
 
 	app.Commands = []*cli.Command{
@@ -136,7 +163,10 @@ func main() {
 			Aliases: []string{"r"},
 			Usage:   "Read messages from socket",
 			Action: func(c *cli.Context) error {
-				Read(c.String("host"), c.String("port"), c.Bool("listen"))
+				prepare(c)
+				conn := getConn(c)
+				Read(conn)
+				conn.Close()
 				return nil
 			},
 			Flags: commandFlags,
@@ -146,7 +176,10 @@ func main() {
 			Aliases: []string{"w"},
 			Usage:   "Write to socket",
 			Action: func(c *cli.Context) error {
-				Write(c.String("host"), c.String("port"), c.Bool("listen"))
+				prepare(c)
+				conn := getConn(c)
+				Write(conn)
+				conn.Close()
 				return nil
 			},
 			Flags: commandFlags,

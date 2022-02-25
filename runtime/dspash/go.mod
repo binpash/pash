@@ -1,4 +1,4 @@
-module socket_pipe.go
+module socket_pipe
 
 go 1.17
 
