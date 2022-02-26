@@ -21,7 +21,44 @@ func Port(ln net.Listener) string {
 
 func failOnError(err error, msg string, args ...interface{}) {
 	if err != nil {
-		log.Fatalf(msg, args...)
+		log.Printf(msg, args...)
+		log.Fatalln(err)
+	}
+}
+
+func listen(protocol string, address string) (net.Conn, error) {
+	ln, err := net.Listen(protocol, address)
+	if err != nil {
+		return nil, err
+	}
+	defer ln.Close()
+
+	log.Printf("Connected to %s waiting for a connection to accept\n", ln.Addr())
+
+	conn, err := ln.Accept()
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, nil
+}
+
+func retry(method func(string, string) (net.Conn, error), protocol string, address string, timeout time.Duration) net.Conn {
+	totimer := time.NewTimer(timeout)
+	defer totimer.Stop()
+
+	for {
+		conn, err := method(protocol, address)
+		if err == nil {
+			return conn
+		}
+		select {
+		case <-time.After(RETRY_INTERVAL):
+			log.Printf("%s retrying to connect\n", err)
+			continue
+		case <-totimer.C:
+			failOnError(err, "Failed to establish connection after %s ms\n", timeout)
+		}
 	}
 }
 
@@ -29,7 +66,7 @@ func getConn(ctx *cli.Context) net.Conn {
 	protocol := "tcp4"
 	host := "0.0.0.0"
 	port := "0"
-	listen := ctx.Bool("listen")
+	listen_flag := ctx.Bool("listen")
 	var timeout time.Duration = time.Duration(ctx.Int("timeout")) * time.Second
 
 	if ctx.IsSet("host") {
@@ -44,38 +81,17 @@ func getConn(ctx *cli.Context) net.Conn {
 		port = ctx.Args().Get(1)
 	}
 
-	log.Printf("connecting to %s:%s with protocol %s\n", host, port, protocol)
+	address := host + ":" + port
 
-	if listen {
-		ln, err := net.Listen(protocol, host+":"+port)
-		failOnError(err, "Failed to open listening socket on %s:%s\n", host, port)
-		defer ln.Close()
+	log.Printf("Will try connecting to %s with %s protocol\n", address, protocol)
 
-		log.Printf("Connected to %s waiting for a connection\n", ln.Addr())
-
-		conn, err := ln.Accept()
-		failOnError(err, "Failed at accepting connection [%s]\n", ln.Addr())
-
-		return conn
+	var conn net.Conn
+	if listen_flag {
+		conn = retry(listen, protocol, address, timeout)
 	} else {
-		totimer := time.NewTimer(timeout)
-		defer totimer.Stop()
-
-		for {
-			conn, err := net.Dial(protocol, host+":"+port)
-			if err == nil {
-				return conn
-			}
-			select {
-			case <-time.After(RETRY_INTERVAL):
-				log.Printf("Failed connecting to %s:%s\n retrying to connect\n", host, port)
-				continue
-			case <-totimer.C:
-				failOnError(err, "Failed connecting to %s:%s\n after %d ms", port, host, timeout)
-			}
-
-		}
+		conn = retry(net.Dial, protocol, address, timeout)
 	}
+	return conn
 }
 
 func Read(conn net.Conn) {
