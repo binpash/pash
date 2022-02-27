@@ -1,7 +1,7 @@
 ## PaSh: Light-touch Data-Parallel Shell Processing
 > _A system for parallelizing POSIX shell scripts._
 
-Quick Jump: [Running PaSh](#running-pash) | [Installation](#installation) | [Testing](#testing) | [Repo Structure](#repo-structure) | [Community & More](#community--more)
+Quick Jump: [Running PaSh](#running-pash) | [Installation](#installation) | [Testing](#testing) | [Repo Structure](#repo-structure) | [Community & More](#community--more) | [Citing](#citing)
 
 ## Running PaSh
 
@@ -60,3 +60,24 @@ Mailing Lists:
 Development/contributions:
 * Contribution guide: [docs/contrib](docs/contrib)
 * Continuous Integration Server: [ci.binpa.sh](http://ci.binpa.sh)
+
+## Citing
+
+If you used PaSh, consider citing the following paper:
+```
+@inproceedings{pash2021eurosys,
+author = {Vasilakis, Nikos and Kallas, Konstantinos and Mamouras, Konstantinos and Benetopoulos, Achilles and Cvetkovi\'{c}, Lazar},
+title = {PaSh: Light-Touch Data-Parallel Shell Processing},
+year = {2021},
+isbn = {9781450383349},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3447786.3456228},
+doi = {10.1145/3447786.3456228},
+pages = {49–66},
+numpages = {18},
+keywords = {POSIX, Unix, pipelines, automatic parallelization, source-to-source compiler, shell},
+location = {Online Event, United Kingdom},
+series = {EuroSys '21}
+}
+```
