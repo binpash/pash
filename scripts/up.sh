@@ -31,7 +31,7 @@ set -e
 cd pash/scripts
 # git checkout s3 # FIXME only for testing while PR is up
 
-if [  $(groups $(whoami) | grep -c "sudo\|root\|admin") -ge 1 ]; then
+if [ $(groups $(whoami) | grep -c "sudo\|root\|admin") -ge 1 ]; then
   # only run this if we are in the sudo group (or it's doomed to fail)
   bash distro-deps.sh
 fi
