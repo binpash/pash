@@ -1,7 +1,8 @@
 # A Short PaSh Tutorial
-Quick jump: [Introduction](#introduction) | [Installation](#installation) | [Running Scripts](#running-scripts) | [What Next?](#what-next)
+Quick jump: [Introduction](#introduction) | [Running Scripts](#running-scripts) | [What Next?](#what-next)
 
 This short tutorial covers the `pash`'s main functionality.
+Before proceeding, make sure [you have installed PaSh](../install/)
 
 ## Introduction
 
@@ -46,84 +47,6 @@ Visually, the parallel script would look like this for 2x-parallelism (i.e., ass
 
 Given a script, PaSh converts it to a dataflow graph, performs a series of semantics-preserving program transformations that expose parallelism, and then converts the dataflow graph back into a POSIX script.
 The new parallel script has POSIX constructs added to explicitly guide parallelism, coupled with PaSh-provided Unix-aware runtime primitives for addressing performance- and correctness-related issues.
-
-## Installation
-
-#### Natively on Linux
-
-_Ubuntu, Fedora, Debian, Arch:_
-Use `up`:
-
-```sh
-curl up.binpa.sh | sh
-```
-
-_Other distros_:
-Use the system's package manager to install the following packages (some of which might already be installed in your system):
-
-```
-git libtool m4 curl automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils python3-testresources python3-setuptools locales locales-all wget netcat-openbsd
-```
-
-Then clone the PaSh repository and run `setup-pash.sh` as follows:
-
-```sh
-git clone git@github.com:binpash/pash.git
-./pash/scripts/setup-pash.sh
-```
-
-As noted at the end of `setup-pash.sh`, make sure you set `PASH_TOP` pointing to the absolute path of the directory `pa.sh` resides (you can optionally place that in your `PATH`).
-
-_Installation Flags_:
-
-PaSh offers the following installation flags:
-* `-p/--prepare` that installs all the required dependencies if your system is supported
-* `-o/--opt-agg` that downloads g++-10 and builds an optimized version of some aggregators (not currently implemented in the main PaSh workflow)
-
-To use these flags, see the following installation procedure:
-```sh
-git clone git@github.com:binpash/pash.git
-cd pash/ && bash scripts/install.sh -p --opti-agg
-```
-
-This will install all the dependencies for PaSh on your machine (sudo is used) and the g++-10 toolchain, but also build the respective aggregators.
-
-#### Docker
-
-PaSh on Docker is useful when native installation is not an option -- for example, to allow development on Windows or OS X.
-First [make sure you install Docker](https://docs.docker.com/get-docker/) on your machine.
-Note that, depending on the configuration, PaSh on Docker may or may not be able to exploit all available hardware resources.
-There are two main options for installing PaSh via Docker.
-
-_Major Releases:_
-The easiest is to `pull` the docker image [from Docker Hub](https://hub.docker.com/r/binpash/pash):
-```sh
-docker pull binpash/pash
-```
-We refresh this image (as well as other images) on every major release.
-
-[//]: # "TODO(@nvasilakis, @dkarnikis): Need to automate this per release."
-
-_Latest Commit:_
-To built the latest Docker container from scratch, run `docker build` in scripts:
-```sh
-git clone git@github.com:binpash/pash.git
-cd pash/scripts
-docker build -t "pash:latest" .
-```
-This will build a fresh Docker image using the latest commit---recommended for development.
-
-In all the above cases, launching the container is done via:
-```sh
-docker run --name pash-play -it pash
-```
-PaSh can be found in the container's `/opt/pash` directory, so run `cd pash; git pull` to fetch the latest updates.
-More information in the [pash-on-docker guide](../contributing/contrib.md#pash-on-docker-a-pocket-guide).
-
-#### Windows using WSL
-
-To run PaSh on windows without Docker, install [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
-A short tutorial is included in the [contributing](../contributing/contrib.md) guide.
 
 ## Running Scripts
 
@@ -245,7 +168,7 @@ The three main components are:
 
 * [annotations](../../annotations/): DSL characterizing commands, parallelizability study, and associated annotations. More specifically, (i) a lightweight annotation language allows command developers to express key parallelizability properties about their commands; (ii) an accompanying parallelizability study of POSIX and GNU commands. guides the annotation language and optimized aggregator library 
 
-* [compiler](../../compiler): Shell-Dataflow translations and associated parallelization transformations. Given a script, the PaSh compiler converts it to a dataflow graph, performs a series of semantics-preserving program transformations that expose parallelism, and then converts the dataflow graph back into a POSIX script. 
+* [compiler](../../compiler): Shell-dataflow translations and associated parallelization transformations. Given a script, the PaSh compiler converts it to a dataflow graph, performs a series of semantics-preserving program transformations that expose parallelism, and then converts the dataflow graph back into a POSIX script. 
 
 * [runtime](../../runtime): Runtime components such as `eager`, `split`, and associated combiners. Apart from POSIX constructs added to guide parallelism explicitly, PaSh provides Unix-aware runtime primitives for addressing performance- and correctness-related issues.
 
@@ -262,8 +185,11 @@ Academic [papers](../README.md#academic-papers--events) associated with PaSh off
 
 #### Useful Links
 
+Chat:
+* [Discord Server](ttps://discord.com/channels/947328962739187753/) ([Invite](http://chat.binpa.sh/))
+
 Mailing Lists: 
-* [Discussion](https://groups.google.com/g/pash-users): Join this mailing list for discussing all things `pash`
+* [Discussion](https://groups.google.com/g/pash-dev): Join this mailing list for discussing all things `pash`
 * [Commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
 
 Development/contributions:

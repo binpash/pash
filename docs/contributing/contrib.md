@@ -1,3 +1,11 @@
+## Commits & Commit Messages
+
+Add the `--signoff` or `-s` flag to `git commit`. This flag is intended to certify that you have created the patch in question, or that you certify that to the best of your knowledge, it was created under an appropriate open-source license, or that it has been provided to you by someone else under those terms.
+
+Strive for [clear and short commit messages](https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html).
+At a minimum, start with an 80-character summary, with verbs in present tense.
+
+
 ## PaSh on Docker: A Pocket Guide
 
 This is a pocket guide for running PaSh in a docker container.
@@ -152,11 +160,6 @@ git merge master           # fetch changes from main/master
 ```
 
 (You can use `rebase` instead of `merge` if your branch is local and hasn't been pushed to GitHub, but `merge` if your branch is already pushed.)
-
-## Commit Messages
-
-It's important to write [clear commit messages](https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html).
-At a minimum, a short single-line summary at the top with verbs in present tense:-)
 
 ## Process for Using EC2 Instance 
 
