@@ -186,7 +186,7 @@ Academic [papers](../README.md#academic-papers--events) associated with PaSh off
 #### Useful Links
 
 Chat:
-* [Discord Server](ttps://discord.com/channels/947328962739187753/) ([Invite](http://chat.binpa.sh/))
+* [Discord Server](ttps://discord.com/channels/947328962739187753/) ([Invite](http://join.binpa.sh/))
 
 Mailing Lists: 
 * [Discussion](https://groups.google.com/g/pash-dev): Join this mailing list for discussing all things `pash`
