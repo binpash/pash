@@ -146,4 +146,4 @@ do
 done
 
 # running simple test that everything installed fine
-$PASH_TOP/pa.sh -c 'PaSh Installation complete!'
+$PASH_TOP/pa.sh -c 'PaSh installation complete!'
