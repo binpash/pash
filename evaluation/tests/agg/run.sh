@@ -33,11 +33,11 @@ run_test()
         echo -n "$test exit code mismatch "
     fi
     if [ $test_diff_ec -ne 0 ] || [ $test_ec -ne 0 ]; then
-        echo -e "$test\tFAIL" >> $output_dir/result_status
+        echo "$test are not identical" >> $output_dir/result_status
         echo -e '\t\tFAIL'
         return 1
     else
-        echo -e "$test\tOK" >> $output_dir/result_status
+        echo "$test are identical" >> $output_dir/result_status
         echo -e '\t\tOK'
         return 0
     fi
@@ -70,15 +70,12 @@ esac
 echo "group,Bash,Pash" > $output_dir/results.time
 paste $output_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's/\t/,/' >> $output_dir/results.time
 
-column -t "$output_dir"/result_status > .tmp
-mv .tmp "$output_dir"/result_status
-
 echo "Below follow the identical outputs:"
-grep OK "$output_dir"/result_status
+grep "are identical" "$output_dir"/result_status | awk '{print $1}'
 
-echo "Below follow the non-identical outputs:"
-grep FAIL "$output_dir"/result_status
+echo "Below follow the non-identical outputs:"     
+grep "are not identical" "$output_dir"/result_status | awk '{print $1}'
 
 TOTAL_TESTS=$(cat "$output_dir"/result_status | wc -l)
-PASSED_TESTS=$(grep -c "OK" "$output_dir"/result_status)
+PASSED_TESTS=$(grep -c "are identical" "$output_dir"/result_status)
 echo "Summary: ${PASSED_TESTS}/${TOTAL_TESTS} tests passed."
