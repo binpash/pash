@@ -30,7 +30,7 @@ These scripts have been tested on Ubuntu, Fedora, Debian, and Arch.
 Use the system's package manager to install the following packages (some of which might already be installed in your system):
 
 ```
-git libtool m4 curl automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils python3-testresources python3-setuptools locales locales-all wget netcat-openbsd
+automake bc bsdmainutils curl gcc git libffi-dev libtool locales locales-all m4 netcat-openbsd pkg-config python python3 python3-pip python3-setuptools python3-testresources sudo wamerican-insane wget
 ```
 
 Then clone the PaSh repository and run `setup-pash.sh` as follows:
