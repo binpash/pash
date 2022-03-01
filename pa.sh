@@ -3,7 +3,6 @@
 export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 # point to the local downloaded folders
-export PYTHONPATH=${PASH_TOP}/python_pkgs/
 
 ## Save the umask to first create some files and then revert it
 old_umask=$(umask)
@@ -38,7 +37,7 @@ source "$PASH_TOP/compiler/pash_init_setup.sh" "$@"
 
 if [ "$pash_daemon" -eq 1 ]; then
   ## TODO: If possible, move the daemon start as easly as possible to reduce waiting
-  python3 -S "$PASH_TOP/compiler/pash_runtime_daemon.py" $@ &
+  python3 "$PASH_TOP/compiler/pash_runtime_daemon.py" $@ &
   daemon_pid=$!
   ## Wait until daemon has established connection
   ##
@@ -48,7 +47,7 @@ fi
 
 ## Restore the umask before executing
 umask ${old_umask}
-PASH_FROM_SH="pa.sh" python3 -S $PASH_TOP/compiler/pash.py "$@"
+PASH_FROM_SH="pa.sh" python3 $PASH_TOP/compiler/pash.py "$@"
 pash_exit_code=$?
 
 if [ "$pash_daemon" -eq 1 ]; then
