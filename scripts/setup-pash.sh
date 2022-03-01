@@ -19,6 +19,8 @@ else
     git clone https://github.com/angelhof/libdash/ $PASH_TOP/compiler/parser/libdash
 fi
 cd $PASH_TOP
+. "$PASH_TOP/scripts/utils.sh"
+read_cmd_args $@
 
 LOG_DIR=$PASH_TOP/install_logs
 mkdir -p $LOG_DIR
@@ -58,19 +60,10 @@ case "$distro" in
         # Build runtime tools: eager, split
         cd ../../runtime/
         make &> $LOG_DIR/make.log
-        # if the script is spawned from docker
-        # export the required env variables
-        # this addresses all the Linux distro variants
         if [[ $PASH_HOST == "docker" ]]; then
             # issue with docker only
             python3 -m pip install -U --force-reinstall pip
             cp /opt/pash/pa.sh /usr/bin/
-            # add to the bashrc
-            echo "export PASH_TOP=/opt/pash" >> ~/.bashrc
-            # export to the local pash configuration file
-            echo "export LC_ALL=en_US.UTF-8" >> ~/.pash_init
-            echo "export LANG=en_US.UTF-8" >> ~/.pash_init
-            echo "export LANGUAGE=en_US.UTF-8" >> ~/.pash_init
         fi
         ;;
 esac
@@ -111,6 +104,10 @@ echo " * * * "
 echo "Do not forget to export PASH_TOP before using pash: \`export PASH_TOP=$PASH_TOP\`"
 echo '(optionally, you can update PATH to include it: `export PATH=$PATH:$PASH_TOP`)'
 echo " * * * "
+# in case we are running on docker or CI, installation is complete at this moment
+if [[ "$PASH_HOST" != "" ]]; then
+    exit 0  
+fi
 ## append PASH Configuration paths to the respective rc files
 rc_configs=(~/.shrc ~/.bashrc  ~/.zshrc ~/.cshrc ~/.kshrc) # add more shell configs here
 for config in "${rc_configs[@]}"
@@ -147,3 +144,6 @@ do
         fi
     fi
 done
+
+# running simple test that everything installed fine
+$PASH_TOP/pa.sh -c 'PaSh installation complete!'
