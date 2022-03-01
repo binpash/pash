@@ -12,15 +12,13 @@ class CustomInstallCommand(install):
     def run(self):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         os.environ["PASH_TOP"] = dir_path
-        setup_cmd = "bash scripts/distro-deps.sh && bash scripts/setup-pip.sh"
 
-        for i, cmd in enumerate(["bash scripts/distro-deps.sh", "bash scripts/setup-pip.sh"]):
-            with open(f"/home/tammam/pash-setup/install{i}.log", "w") as f:
-                cmd = shlex.split(cmd)
-                ret = subprocess.run(cmd, stdout=f, universal_newlines=True)
-                if ret.returncode != 0:
-                    print(f"Setup script failed", file=sys.stderr)
-                    print("Make sure to have the following packages installed libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils", file=sys.stderr)
+        print("Make sure to have the following packages installed libtool m4 automake pkg-config libffi-dev python3 python3-pip wamerican-insane bc bsdmainutils", file=sys.stderr)
+        cmd = shlex.split("bash scripts/setup-pip.sh")
+        ret = subprocess.run(cmd, stdout=f, universal_newlines=True)
+        if ret.returncode != 0:
+            print(f"Setup script failed", file=sys.stderr)
+           
 
         install.run(self)
 
