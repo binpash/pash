@@ -1,0 +1,1 @@
+cat $PASH_TOP/evaluation/tests/input/10M.txt |  DICT=../in/dict.txt LC_COLLATE=C comm -23 - $DICT > out

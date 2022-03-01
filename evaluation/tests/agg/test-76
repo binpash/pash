@@ -1,0 +1,1 @@
+cat $PASH_TOP/evaluation/tests/input/10M.txt |  # echo 'and I am not' | ./cmd-75 grep -vwFf $(dirname $0)/deps/stopwords.txt > out

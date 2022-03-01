@@ -1,0 +1,1 @@
+cat $PASH_TOP/evaluation/tests/input/10M.txt |  # make sure input is sorted with LC_COLLATE=C IN=../in/dict.txt LC_COLLATE=C comm -2 - $IN > out
