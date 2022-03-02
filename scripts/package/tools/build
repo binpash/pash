@@ -1,0 +1,97 @@
+#! /usr/bin/env bash
+
+# Builds a specific package in the context of FPM's Docker container.
+# https://fpm.readthedocs.io/
+
+# Enforce preconditions
+set -ex
+version="$1"
+install_dir=/usr/lib/pash
+set +x -u; : "$version"
+shift # for remaining $@
+
+
+print_dotfpm() {
+    output_format="$1"
+    output_file="$2"
+    
+    # I/O rules, with Docker container paths
+    flag --chdir /src
+    flag --input-type dir
+    flag --output-type "$output_format"
+    flag --package "$output_file"
+    flag --log info
+    flag --verbose
+
+    # Discovery information
+    flag --name pash
+    flag --description "Parallelize POSIX shell scripts"
+    flag --license mit
+    flag --architecture all
+    flag --url 'https://github.com/binpash/pash'
+    flag --version "$version"
+    flag --epoch "$(date +%s)"
+
+    # System-level dependencies
+    flag --depends automake
+    flag --depends bash
+    flag --depends bc
+    flag --depends bsdmainutils
+    flag --depends curl
+    flag --depends git
+    flag --depends g++-10
+    flag --depends libffi-dev
+    flag --depends libtool
+    flag --depends locales
+    flag --depends locales-all
+    flag --depends m4
+    flag --depends netcat-openbsd
+    flag --depends pkg-config
+    flag --depends python # Redundant?
+    flag --depends python3
+    flag --depends python3-pip
+    flag --depends python3-setuptools
+    flag --depends python3-testresources
+    flag --depends wamerican-insane
+    flag --depends wget
+
+    # Handle requirements.txt with `python3 -m pip`
+    flag --python-bin /bin/python3
+    flag --python-obey-requirements-txt
+    flag --python-internal-pip
+
+    # Tell PaSh to set itself up on a target system.
+    flag --after-install "$PASH_TOP/scripts/package/after-install.sh"
+
+    # Map contents from here to target system.
+    for f in LICENSE pa.sh annotations compiler docs evaluation runtime scripts; do
+	printf "%s=%s\n" "$f" "$install_dir/$f"
+    done
+}
+
+flag() {
+    if [ "$#" -gt 1 ]; then
+	printf "%s '%s'\n" "$1" "$2"
+    else
+	printf "%s\n" "$1"
+    fi	    
+}
+
+trap 'rm -f .fpm' EXIT
+
+for output_format in "$@"; do
+    output_file="/out/pash-${version}"
+
+    # Map formats to extensions, when they differ.
+    case "$output_format" in
+	*)
+	    output_file="${output_file}.${output_format}"
+	    ;;
+    esac
+
+    print_dotfpm "$output_format" "$output_file" > .fpm
+    set +e
+    /fpm/bin/fpm && chmod 440 "$output_file"
+    set -e
+    printf '\n'
+done
