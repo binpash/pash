@@ -1,7 +1,8 @@
 #! /usr/bin/env bash
 # Source this in any new ~/pash-init.sh
 
-export distro="$(/usr/local/pash/scripts/distro.sh)"
+set -u
+export distro="$("$PASH_TOP/scripts/distro.sh")"
 
 # Adapt to Docker
 if [ -f /.dockerenv ]; then
