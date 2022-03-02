@@ -31,7 +31,7 @@ print_dotfpm() {
     flag --architecture all
     flag --url 'https://github.com/binpash/pash'
     flag --version "$version"
-    flag --epoch "$(date +%s)"
+
 
     # System-level dependencies
     flag --depends automake
