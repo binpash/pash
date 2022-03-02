@@ -66,6 +66,8 @@ print_dotfpm() {
 
     # Map contents from here to target system.
     flag --exclude '*.git*'
+    flag --exclude '*.pyc'
+    flag --exclude '__pycache__'
     flag --exclude '*package/output*'
     printf ".=%s\n" "$install_dir"
 }
