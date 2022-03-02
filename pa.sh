@@ -17,7 +17,7 @@ fi
 return 2>/dev/null
 
 
-rcfile=~/.pash-init
+rcfile=~/.pash_init
 if [ ! -f "$rcfile" ]; then
      printf '# Include system-level rules\n' > "$rcfile"
      printf ". '%s/scripts/pash-init.sh'\n" "$PASH_TOP" >> "$rcfile"
