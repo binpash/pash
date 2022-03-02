@@ -11,8 +11,10 @@ if ! docker image inspect fpm 2>&1 >/dev/null; then
     make -C fpm docker-release-everything
 fi
 
-cd "$(dirname "${BASH_SOURCE[0]}")" # Help limit filesystem writes to this directory.
-mkdir -p output
+here="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+PASH_TOP=$(readlink -f "$here/../..")
+mkdir -p "$here/output"
+echo $here
 
 main() {
     docker run \
@@ -21,8 +23,8 @@ main() {
 	   --tty \
 	   --rm \
 	   --user "$(id -u):$(id -g)" \
-	   --volume "$PASH_TOP/scripts/package/output:/out" \
-	   --volume "$PASH_TOP/scripts/package/tools:/tools" \
+	   --volume "$here/output:/out" \
+	   --volume "$here/tools:/tools" \
 	   --volume "$PASH_TOP:/src" \
 	   fpm --rcfile /tools/start "$@"
 }
