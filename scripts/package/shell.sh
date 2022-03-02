@@ -24,7 +24,7 @@ main() {
 	   --volume "$PASH_TOP/scripts/package/output:/out" \
 	   --volume "$PASH_TOP/scripts/package/tools:/tools" \
 	   --volume "$PASH_TOP:/src" \
-	   fpm --rcfile /tools/start -i
+	   fpm --rcfile /tools/start "$@"
 }
 
 # Only enter if script was not sourced
