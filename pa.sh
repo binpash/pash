@@ -2,13 +2,20 @@
 
 # Help out with shell configuration
 if [ -z "$PASH_TOP" ]; then
-    export PASH_TOP="$(readlink -f $(dirname "${BASH_SOURCE[0]}"))"
+    me="$(readlink -f "${BASH_SOURCE[0]}")"
+    export PASH_TOP="$(dirname "$me")"
     export PATH="$PASH_TOP:$PATH"
     printf '# Add this to your shell configuration.\n\n'
     printf "  export PASH_TOP='%s'\n" "$PASH_TOP"
     printf '  export PATH="$PASH_TOP:$PATH"\n\n'
-    printf '# If your shell supports process substitution (bash, zsh, etc.)\n'
-    printf '# run `. <(%s)` to use PaSh in this shell.\n' "$0"
+    printf '# If your shell supports process substitution (bash, zsh, etc.),\n'
+
+    preview="$(command -v pa.sh)"
+    if [ $? -eq 0 ]; then
+	preview='pa.sh'
+    fi
+
+    printf '# then run `. <(%s)` to use this config in your current shell.\n' "$preview"
     exit 0
 fi
 
