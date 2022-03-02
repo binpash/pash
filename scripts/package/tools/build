@@ -22,6 +22,7 @@ print_dotfpm() {
     flag --package "$output_file"
     flag --log info
     flag --verbose
+    flag --force
 
     # Discovery information
     flag --name pash
@@ -64,9 +65,8 @@ print_dotfpm() {
     flag --after-install "$PASH_TOP/scripts/package/after-install.sh"
 
     # Map contents from here to target system.
-    for f in LICENSE pa.sh annotations compiler docs evaluation runtime scripts; do
-	printf "%s=%s\n" "$f" "$install_dir/$f"
-    done
+    flag --exclude '*.git*'
+    printf ".=%s\n" "$install_dir"
 }
 
 flag() {
