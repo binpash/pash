@@ -6,20 +6,13 @@ set -euo pipefail
 pashd=/usr/lib/pash
 logd=/var/log/pash
 
-ln -s "$pashd/pa.sh" /usr/bin/pa.sh
-
-say() {
-    printf 'pash: after-install: '
-    printf $@
-    printf '\n'
-}
-
 say_task() {
-    say '%s (log: %s/%s)' "$1" "$logd" "$2"
+    printf 'pash: %s (log: %s/%s)\n' "$1" "$logd" "$2"
 }
 
-mkdir -p "$logd"
+mkdir -vp "$logd"
 cd "$pashd/compiler/parser"
+ln -fs "$pashd/pa.sh" /usr/bin/pa.sh
 
 case $(bash "$pashd/scripts/distro.sh") in
     freebsd*)
