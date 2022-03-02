@@ -9,13 +9,7 @@ if [ -z "$PASH_TOP" ]; then
     printf "  export PASH_TOP='%s'\n" "$PASH_TOP"
     printf '  export PATH="$PASH_TOP:$PATH"\n\n'
     printf '# If your shell supports process substitution (bash, zsh, etc.),\n'
-
-    preview="$(command -v pa.sh)"
-    if [ $? -eq 0 ]; then
-	preview='pa.sh'
-    fi
-
-    printf '# then run `. <(%s)` to use this config in your current shell.\n' "$preview"
+    printf '# then run `. <(%s)` to use this config in your current shell.\n' "$0"
     exit 0
 fi
 
