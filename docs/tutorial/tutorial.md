@@ -49,92 +49,93 @@ The new parallel script has POSIX constructs added to explicitly guide paralleli
 
 ## Installation
 
-#### Natively on Linux
+Regardless of your target platform, PaSh requires the `PASH_TOP`
+environment variable to point to a PaSh installation on disk.  The
+installation method impacts the value of this variable.
 
-_Ubuntu, Fedora, Debian, Arch:_
-Use `up`:
 
-```sh
-curl up.binpa.sh | sh
+### Unix-likes
+
+Download your preferred system package (all architectures).
+
+| Package                           | Install command               |
+|-----------------------------------|-------------------------------|
+| [Red Hat (`pash.rpm`)](#link-tbd) | `yum localinstall ./pash.rpm` |
+| [Debian (`pash.deb`)](#link-tbd)  | `apt install ./pash.deb`      |
+
+
+Run `pa.sh` to verify installation of the following paths.
+
+| Path             | Purpose                                 |
+|------------------|-----------------------------------------|
+| `/usr/bin/pa.sh` | symlink to `/opt/pash/pa.sh`            |
+| `/usr/lib/pash`  | source code (as seen in the repository) |
+| `/var/log/pash`  | package build logs                      |
+
+If something goes wrong, please submit your build logs with a bug
+report.
+
+
+### Source
+[FPM]: https://fpm.readthedocs.io/en/latest/cli-reference.html#general-options
+
+Source deployments start with a clone.
+
 ```
-
-_Other distros_:
-Use the system's package manager to install the following packages (some of which might already be installed in your system):
-
-```
-git libtool m4 curl automake pkg-config libffi-dev python python3 python3-pip wamerican-insane bc bsdmainutils python3-testresources python3-setuptools locales locales-all wget netcat-openbsd
-```
-
-Then clone the PaSh repository and run `setup-pash.sh` as follows:
-
-```sh
 git clone git@github.com:binpash/pash.git
-./pash/scripts/setup-pash.sh
 ```
 
-As noted at the end of `setup-pash.sh`, make sure you set `PASH_TOP` pointing to the absolute path of the directory `pa.sh` resides (you can optionally place that in your `PATH`).
+You can either use the source code to create a Docker image, or deploy
+PaSh on the current host. For Docker instructions, see the
+[pash-on-docker
+guide](../contributing/contrib.md#pash-on-docker-a-pocket-guide).
 
-_Installation Flags_:
+For native deployment, install [FPM][] to prepare native packages. For
+a Debian-based distribution (as an example), you can deploy PaSh on
+the current host for some label `X`.
 
-PaSh offers the following installation flags:
-* `-p/--prepare` that installs all the required dependencies if your system is supported
-* `-o/--opt-agg` that downloads g++-10 and builds an optimized version of some aggregators (not currently implemented in the main PaSh workflow)
-
-To use these flags, see the following installation procedure:
-```sh
-git clone git@github.com:binpash/pash.git
-cd pash/ && bash scripts/install.sh -p --opti-agg
+```
+./pash/scripts/package/build-packages.sh X
+sudo apt install ./pash/scripts/package/output/pash-X.deb
 ```
 
-This will install all the dependencies for PaSh on your machine (sudo is used) and the g++-10 toolchain, but also build the respective aggregators.
+RHEL is no different.
 
-#### Docker
-
-PaSh on Docker is useful when native installation is not an option -- for example, to allow development on Windows or OS X.
-First [make sure you install Docker](https://docs.docker.com/get-docker/) on your machine.
-Note that, depending on the configuration, PaSh on Docker may or may not be able to exploit all available hardware resources.
-There are two main options for installing PaSh via Docker.
-
-_Major Releases:_
-The easiest is to `pull` the docker image [from Docker Hub](https://hub.docker.com/r/binpash/pash):
-```sh
-docker pull binpash/pash
 ```
-We refresh this image (as well as other images) on every major release.
+./pash/scripts/package/build-packages.sh X
+sudo yum localinstall ./pash/scripts/package/output/pash-X.rpm
+```
+
+[`build-packages.sh`](../../scripts/package/build-packages.sh) defines
+supported systems and distribution-specific modifications.
+
+
+### Docker
+[Docker]: https://docs.docker.com/get-docker/
+
+In the context of a [Docker][] container, `PASH_TOP` is `/opt/pash`. The
+same directory holds is a copy of the Git repository. Use `git -C
+/opt/pash pull` to update the code in a container. PaSh may not be
+able to exploit all available hardware resources when used in a
+container.
+
+For instructions, see the [pash-on-docker
+guide](../contributing/contrib.md#pash-on-docker-a-pocket-guide).
 
 [//]: # "TODO(@nvasilakis, @dkarnikis): Need to automate this per release."
 
-_Latest Commit:_
-To built the latest Docker container from scratch, run `docker build` in scripts:
-```sh
-git clone git@github.com:binpash/pash.git
-cd pash/scripts
-docker build -t "pash:latest" .
-```
-This will build a fresh Docker image using the latest commit---recommended for development.
 
-In all the above cases, launching the container is done via:
-```sh
-docker run --name pash-play -it pash
-```
-PaSh can be found in the container's `/opt/pash` directory, so run `cd pash; git pull` to fetch the latest updates.
-More information in the [pash-on-docker guide](../contributing/contrib.md#pash-on-docker-a-pocket-guide).
-
-#### Windows using WSL
+### Windows using WSL
 
 To run PaSh on windows without Docker, install [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
 A short tutorial is included in the [contributing](../contributing/contrib.md) guide.
 
+
+
 ## Running Scripts
 
-All scripts in this guide assume that `$PASH_TOP` is set to the top directory of the PaSh codebase (e.g., `/opt/pash` on docker)
+To use this section, run `cd $PASH_TOP/evaluation/intro` first.
 
-**To run scripts in this section of the tutorial, make sure you are in the `intro` directory of the `evaluation`:**
-```sh
-cd $PASH_TOP/evaluation/intro
-```
-
-> In the following examples, you can avoid including `$PASH_TOP` before `pa.sh` by adding `PASH_TOP` in your `PATH`, which amounts to adding an `export PATH=$PATH:$PASH_TOP` in your shell configuration file.
 
 #### Intro: Hello, Parallel World!
 

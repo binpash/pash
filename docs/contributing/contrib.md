@@ -1,18 +1,35 @@
 ## PaSh on Docker: A Pocket Guide
 
-This is a pocket guide for running PaSh in a docker container.
+This is a pocket guide for running PaSh in a Docker container.
 
 ### Loading image
 
-The following will pull and launch the latest image (tag: `pash:latest`) using the name `pash-play`
+#### From Docker Hub
+
+The following will pull the latest Docker image (tag: `pash:latest`),
+and start a new container using the name `pash-play`.
 
 ```sh
 docker pull binpash/pash
 docker run --name pash-play -it pash
 ```
+
 This will use `pash-play` for the container (to be able to start/stop it later) and `-it` runs it interactively (subsuming the next command).
 
 To restart after you exit, run `docker start -i pash-play` (flag `-i` starts it interactively.)
+
+
+#### From source code
+
+If you want to use or develop PaSh for a specific commit, this will
+build the latest Docker image.
+
+```sh
+git clone git@github.com:binpash/pash.git
+cd pash/scripts
+docker build -t "pash:latest" .
+```
+
 
 ### Customizing image
 
