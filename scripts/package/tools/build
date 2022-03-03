@@ -68,6 +68,7 @@ print_dotfpm() {
     flag --exclude '*.git*'
     flag --exclude '*.pyc'
     flag --exclude '__pycache__'
+    flag --exclude '*compiler/parser/libdash*'
     flag --exclude '*package/output*'
     printf ".=%s\n" "$install_dir"
 }
