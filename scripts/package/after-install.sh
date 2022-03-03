@@ -15,6 +15,10 @@ mkdir -vp "$logd"
 cd "$pashd/compiler/parser"
 ln -fs "$pashd/pa.sh" /usr/bin/pa.sh
 
-cd "$pashd/compiler/parser"
+rm -rf libdash
 git clone https://github.com/angelhof/libdash/
 make libdash
+
+cd "$pashd/runtime"
+make clean
+make
