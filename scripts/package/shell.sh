@@ -14,7 +14,6 @@ fi
 here="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 PASH_TOP=$(readlink -f "$here/../..")
 mkdir -p "$here/output"
-echo $here
 
 main() {
     docker run \
