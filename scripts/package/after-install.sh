@@ -12,13 +12,19 @@ say_task() {
 }
 
 mkdir -vp "$logd"
+
+say_task "python dependencies" "install-python.log"
+"$pashd/scripts/install-python.sh" 2>&1 | tee "$logd/install-python.log"
+
 cd "$pashd/compiler/parser"
 ln -fs "$pashd/pa.sh" /usr/bin/pa.sh
 
+say_task "libdash" "libdash.log"
 rm -rf libdash
 git clone https://github.com/angelhof/libdash/
-make libdash
+make libdash 2>&1 | tee "$logd/libdash.log"
 
+say_task "runtime" "runtime.log"
 cd "$pashd/runtime"
 make clean
-make
+make 2>&1 | tee "$logd/runtime.log"
