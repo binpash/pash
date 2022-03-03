@@ -1,14 +1,13 @@
 FROM fedora:35
-RUN dnf install -y git sudo curl diffutils python-devel pip python3-setuptools zlib-devel libjpeg-devel gcc g++
-RUN python3 -m pip install wheel --upgrade Pillow
-# download PaSh
-RUN git clone https://github.com/binpash/pash.git /opt/pash
-# install PaSh
-RUN bash /opt/pash/scripts/install.sh -p
-# install to /usr/bin directory
-RUN cp /opt/pash/pa.sh /usr/bin/
-# add to the bashrc
-RUN echo "export PASH_TOP=/opt/pash" >> ~/.bashrc
-# export PaSh directory
+RUN dnf install git -y
+ENV PASH_HOST="docker"
 ENV PASH_TOP=/opt/pash
-ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
+# download PaSh
+RUN git clone https://github.com/binpash/pash.git /opt/pash --depth 1
+RUN bash /opt/pash/scripts/distro-deps.sh -o 
+RUN yes | bash /opt/pash/scripts/setup-pash.sh -o
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US.UTF-8
+ENV LC_COLLATE C
+ENV LC_ALL en_US.UTF-8
+CMD ["/bin/bash"]
