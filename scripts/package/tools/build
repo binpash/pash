@@ -2,6 +2,8 @@
 
 # Build a specific package in the context of FPM's Docker container.
 # https://fpm.readthedocs.io/
+#
+# Do not use any system package manager here.
 
 set -eo pipefail
 version="${1:-now}"
