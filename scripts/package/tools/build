@@ -1,25 +1,22 @@
 #! /usr/bin/env bash
 
-# Builds a specific package in the context of FPM's Docker container.
+# Build a specific package in the context of FPM's Docker container.
 # https://fpm.readthedocs.io/
 
-# Enforce preconditions
-set -ex
-version="$1"
+set -eo pipefail
+version="${1:-now}"
 install_dir=/usr/lib/pash
-set +x -u; : "$version"
-shift # for remaining $@
+if [ -n "$1" ]; then shift; fi
+set -u
 
 
 print_dotfpm() {
     output_format="$1"
-    output_file="$2"
-    
+
     # I/O rules, with Docker container paths
     flag --chdir /src
     flag --input-type dir
     flag --output-type "$output_format"
-    flag --package "$output_file"
     flag --log info
     flag --verbose
     flag --force
@@ -32,35 +29,35 @@ print_dotfpm() {
     flag --url 'https://github.com/binpash/pash'
     flag --version "$version"
 
-
-    # System-level dependencies
+    # Common system-level dependencies. Keep here only what every
+    # distribution can find in their respective package repositories.
     flag --depends automake
     flag --depends bash
     flag --depends bc
     flag --depends bsdmainutils
     flag --depends curl
     flag --depends git
-    flag --depends g++-10
-    flag --depends libffi-dev
     flag --depends libtool
-    flag --depends locales
-    flag --depends locales-all
     flag --depends m4
-    flag --depends netcat-openbsd
     flag --depends pkg-config
-    flag --depends python # Redundant?
     flag --depends python3
-    flag --depends python3-pip
-    flag --depends python3-setuptools
-    flag --depends python3-testresources
-    flag --depends wamerican-insane
     flag --depends wget
 
-    # [arch-ext]: FPM seems to think every tar binary supports --zstd
-    # at time of writing, so fall back to gzip on Arch.
-    #
-    # Update this with other [arch-ext] commented lines.
-    flag --pacman-compression gz
+    # Distribution specifics
+    case "$output_format" in
+	pacman)
+	    print_dotfpm_pacman
+	    ;;
+	deb)
+	    print_dotfpm_deb
+	    ;;
+	rpm)
+	    print_dotfpm_rpm
+	    ;;
+	*)
+	    print_dotfpm_other
+	    ;;
+    esac
 
     # Handle requirements.txt with `python3 -m pip`
     flag --python-bin /bin/python3
@@ -71,6 +68,10 @@ print_dotfpm() {
     flag --after-install "$PASH_TOP/scripts/package/after-install.sh"
 
     # Map contents from here to target system.
+    #
+    # TODO: Consider include-only approach.  This will pick up any
+    # junk not expressly excluded. Maybe couple to Git's tracked
+    # files.
     flag --exclude '*.git*'
     flag --exclude '*.pyc'
     flag --exclude '*__pycache__*'
@@ -78,7 +79,55 @@ print_dotfpm() {
     flag --exclude '*python_pkg*'
     flag --exclude '*package/output*'
     flag --exclude '*package/fpm*'
+
     printf ".=%s\n" "$install_dir"
+}
+
+
+#
+# These functions add distribution-specific flags.
+#
+
+print_dotfpm_pacman() {
+    # FPM seems to think every tar binary supports --zstd
+    # at time of writing, so fall back to gzip on Arch.
+    print_dotfpm_output_path .tar.gz
+    flag --pacman-compression gz
+    flag --depends openbsd-netcat
+}
+
+
+print_dotfpm_rpm() {
+    print_dotfpm_output_path .rpm
+}
+
+
+print_dotfpm_deb() {
+    print_dotfpm_output_path .deb
+
+    flag --depends libffi-dev
+    flag --depends locales
+    flag --depends locales-all
+    flag --depends netcat-openbsd
+    flag --depends python3-pip
+    flag --depends python3-setuptools
+    flag --depends python3-testresources
+    flag --depends wamerican-insane
+}
+
+
+print_dotfpm_other() {
+    print_dotfpm_output_path "$output_format"
+}
+
+
+#
+# The rest defines how the above works and actually does something.
+#
+
+print_dotfpm_output_path() {
+    output_file="${output_file_prefix}${1}"
+    flag --package "$output_file"
 }
 
 flag() {
@@ -86,29 +135,20 @@ flag() {
 	printf "%s '%s'\n" "$1" "$2"
     else
 	printf "%s\n" "$1"
-    fi	    
+    fi
 }
 
-trap 'rm -f .fpm' EXIT
+main() {
+    trap 'rm -f .fpm' EXIT
 
-for output_format in "$@"; do
-    output_file="/out/pash-${version}"
+    for output_format in "$@"; do
+	output_file_prefix="/out/pash-${version}"
+	print_dotfpm "$output_format" > .fpm
+	set +e
+	/fpm/bin/fpm && chmod 440 "$output_file"
+	set -e
+	printf '\n'
+    done
+}
 
-    # Map formats to extensions, when they differ.
-    case "$output_format" in
-	pacman)
-	    # [arch-ext]: Update this file extension when the other
-	    # [arch-ext]-commented line changes.
-	    output_file="${output_file}.tar.gz"
-	    ;;
-	*)
-	    output_file="${output_file}.${output_format}"
-	    ;;
-    esac
-
-    print_dotfpm "$output_format" "$output_file" > .fpm
-    set +e
-    /fpm/bin/fpm && chmod 440 "$output_file"
-    set -e
-    printf '\n'
-done
+main "$@"
