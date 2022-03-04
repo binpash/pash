@@ -1,9 +1,12 @@
 #! /usr/bin/env bash
 # Launch REPL for building PaSh system packages.
 
+here="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+PASH_TOP=$(readlink -f "$here/../..")
+
 # We need FPM's source code to build a key Docker image.
-if [ ! -d fpm ]; then
-    git clone --depth 1 git@github.com:jordansissel/fpm.git
+if [ ! -d "$here/fpm" ]; then
+    git clone --depth 1 git@github.com:jordansissel/fpm.git "$here/fpm"
 fi
 
 # Make a Docker image that knows about building packages.
@@ -11,8 +14,6 @@ if ! docker image inspect fpm 2>&1 >/dev/null; then
     make -C fpm docker-release-everything
 fi
 
-here="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
-PASH_TOP=$(readlink -f "$here/../..")
 mkdir -p "$here/output"
 
 main() {
