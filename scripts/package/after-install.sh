@@ -14,6 +14,11 @@ say_task() {
 mkdir -vp "$logd"
 
 say_task "python dependencies" "install-python.log"
+
+if ! command -v pip 2>&1 >/dev/null; then
+    /bin/python3 -m ensurepip --upgrade
+fi
+
 "$pashd/scripts/install-python.sh" 2>&1 | tee "$logd/install-python.log"
 
 cd "$pashd/compiler/parser"
