@@ -31,40 +31,28 @@ print_dotfpm() {
     flag --url 'https://github.com/binpash/pash'
     flag --version "$version"
 
-    # Common system-level dependencies. Keep here only what every
-    # distribution can find in their respective package repositories.
-    flag --depends automake
-    flag --depends bash
-    flag --depends bc
-    flag --depends bsdmainutils
-    flag --depends curl
-    flag --depends git
-    flag --depends libtool
-    flag --depends m4
-    flag --depends pkg-config
-    flag --depends python3
-    flag --depends wget
-
-    # Distribution specifics
+    # Target information
     case "$output_format" in
+	deb)
+	    print_dotfpm_deb
+	    ;;
+	freebsd)
+	    print_dotfpm_freebsd
+	    ;;
 	pacman)
 	    print_dotfpm_pacman
 	    ;;
-	deb)
-	    print_dotfpm_deb
+	python)
+	    print_dotfpm_python
 	    ;;
 	rpm)
 	    print_dotfpm_rpm
 	    ;;
 	*)
-	    print_dotfpm_other
+	    printf "Unsupported format: '%s'" "output_format" 1>&2
+	    exit 1
 	    ;;
     esac
-
-    # Handle requirements.txt with `python3 -m pip`
-    flag --python-bin /bin/python3
-    flag --python-obey-requirements-txt
-    flag --python-internal-pip
 
     # Tell PaSh to set itself up on a target system.
     flag --after-install "$PASH_TOP/scripts/package/after-install.sh"
@@ -72,8 +60,7 @@ print_dotfpm() {
     # Map contents from here to target system.
     #
     # TODO: Consider include-only approach.  This will pick up any
-    # junk not expressly excluded. Maybe couple to Git's tracked
-    # files.
+    # junk not expressly excluded. Maybe bind to Git's tracked files?
     flag --exclude '*.git*'
     flag --exclude '*.pyc'
     flag --exclude '*__pycache__*'
@@ -87,7 +74,7 @@ print_dotfpm() {
 
 
 #
-# These functions add distribution-specific flags.
+# Target-specific flags
 #
 
 print_dotfpm_pacman() {
@@ -95,42 +82,132 @@ print_dotfpm_pacman() {
     # at time of writing, so fall back to gzip on Arch.
     print_dotfpm_output_path .tar.gz
     flag --pacman-compression gz
+
+    flag --depends autoconf
+    flag --depends automake
+    flag --depends bash
+    flag --depends bc
+    flag --depends curl
+    flag --depends curl
+    flag --depends git
+    flag --depends inetutils
+    flag --depends libffi
+    flag --depends libtool
+    flag --depends libtool
+    flag --depends m4
+    flag --depends make
     flag --depends openbsd-netcat
+    flag --depends pkg-config
+    flag --depends python
+    flag --depends python-pip
+    flag --depends sudo
+    flag --depends wget
 }
 
 
 print_dotfpm_rpm() {
     print_dotfpm_output_path .rpm
+
+    flag --depends autoconf
+    flag --depends automake
+    flag --depends bash
+    flag --depends bc
+    flag --depends curl
+    flag --depends diffutils
+    flag --depends gcc
+    flag --depends gcc-c++
+    flag --depends git
+    flag --depends glibc-langpack-en
+    flag --depends hostname
+    flag --depends libjpeg-devel
+    flag --depends libtool
+    flag --depends libtool
+    flag --depends m4
+    flag --depends make
+    flag --depends nc
+    flag --depends pip
+    flag --depends pkg-config
+    flag --depends procps
+    flag --depends python
+    flag --depends python-devel
+    flag --depends python3
+    flag --depends python3-pip
+    flag --depends python3-setuptools
+    flag --depends python3-testresources
+    flag --depends wget
+    flag --depends zlib-devel
 }
 
 
 print_dotfpm_deb() {
     print_dotfpm_output_path .deb
 
+    flag --depends autoconf
+    flag --depends automake
+    flag --depends bash
+    flag --depends bc
+    flag --depends bsdmainutils
+    flag --depends curl
+    flag --depends git
     flag --depends libffi-dev
+    flag --depends libtool
     flag --depends locales
     flag --depends locales-all
+    flag --depends m4
     flag --depends netcat-openbsd
+    flag --depends pkg-config
     flag --depends python3-pip
     flag --depends python3-setuptools
     flag --depends python3-testresources
     flag --depends wamerican-insane
+    flag --depends wget
 }
 
 
-print_dotfpm_other() {
-    print_dotfpm_output_path "$output_format"
+print_dotfpm_python() {
+    # TODO: Is this extension correct?
+    print_dotfpm_output_path .tar
+
+    # Handle requirements.txt with `python3 -m pip`
+    # That is, the 'internal' pip.
+    flag --python-bin /bin/python3
+    flag --python-obey-requirements-txt
+    flag --python-internal-pip
 }
 
 
-#
-# The rest defines how the above works and actually does something.
-#
+print_dotfpm_freebsd() {
+    # TODO: Is this extension correct?
+    print_dotfpm_output_path .tar
+
+    flag --depends autoconf
+    flag --depends automake
+    flag --depends bash
+    flag --depends bc
+    flag --depends curl
+    flag --depends gcc
+    flag --depends git
+    flag --depends gmake
+    flag --depends gsed
+    flag --depends libffi
+    flag --depends libtool
+    flag --depends m4
+    flag --depends pkg-config
+    flag --depends py38-pip
+    flag --depends wget
+}
+
+
 
 print_dotfpm_output_path() {
     output_file="${output_file_prefix}${1}"
     flag --package "$output_file"
 }
+
+
+#
+# The rest defines how the above works.
+#
 
 flag() {
     if [ "$#" -gt 1 ]; then
