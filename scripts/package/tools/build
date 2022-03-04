@@ -218,7 +218,7 @@ flag() {
 }
 
 main() {
-    trap 'rm -f .fpm' EXIT
+    trap 'rm -vf .fpm' EXIT
 
     for output_format in "$@"; do
 	output_file_prefix="/out/pash-${version}"
