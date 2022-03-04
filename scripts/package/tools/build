@@ -56,6 +56,12 @@ print_dotfpm() {
     flag --depends wamerican-insane
     flag --depends wget
 
+    # [arch-ext]: FPM seems to think every tar binary supports --zstd
+    # at time of writing, so fall back to gzip on Arch.
+    #
+    # Update this with other [arch-ext] commented lines.
+    flag --pacman-compression gz
+
     # Handle requirements.txt with `python3 -m pip`
     flag --python-bin /bin/python3
     flag --python-obey-requirements-txt
@@ -88,6 +94,11 @@ for output_format in "$@"; do
 
     # Map formats to extensions, when they differ.
     case "$output_format" in
+	pacman)
+	    # [arch-ext]: Update this file extension when the other
+	    # [arch-ext]-commented line changes.
+	    output_file="${output_file}.tar.gz"
+	    ;;
 	*)
 	    output_file="${output_file}.${output_format}"
 	    ;;
