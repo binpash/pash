@@ -22,7 +22,7 @@ from dspash.socket_utils import send_msg, recv_msg
 from dspash.ir_helper import graph_to_shell
 
 # from ... import config
-HOST = '0.0.0.0'
+HOST = socket.gethostbyname(socket.gethostname())
 PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
 
@@ -62,7 +62,7 @@ class Worker:
             self.s.bind((HOST, 0))
         else:
             self.s.bind((HOST, port))
-        print(f"Worker running on port {self.s.getsockname()[1]}")
+        print(f"Worker running on {HOST}:{self.s.getsockname()[1]}")
 
     def run(self):
         connections = []
