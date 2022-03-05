@@ -1,2 +1,8 @@
 #! /usr/bin/env sh
+# $1 - Path to containing directory
+# $2 - Output format, as used in FPM
+# $3 - Package version
+#
+# Dispatch to script, such that the script can assume it runs for a
+# specific package format.
 "$1/$2" "$3"
