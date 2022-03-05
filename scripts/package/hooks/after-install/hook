@@ -27,21 +27,21 @@ post_install_current_target() {
     ln -fs "$PASH_TOP/pa.sh" /usr/bin/pa.sh
 
     export PASH_TOP
+
     (
 	post_install_python_project
 	post_install_libdash
 	post_install_runtime
 	[ -f "$recipe" ] && "$recipe" # -f, because I want non-executables to raise an error
-    ) > "$log_file"
+    ) | tee "$log_file"
 }
 
 
 post_install_python_project() {
     # Guarentee pip availability.
     #
-    # TODO: Guarentee parity between Python binary used here, and the
-    # one used for FPM Python output.
-    /bin/python3 -m ensurepip --upgrade
+    # TODO: Use same Python binary in FPM Python output.
+    python3 -m ensurepip --upgrade
 
     # PaSh is not organized for use as a Python package, so link
     # site-packages to a location the scripts understand.
