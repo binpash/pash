@@ -1,0 +1,2 @@
+#! /usr/bin/env sh
+sudo pacman -Uy "/package/pash-$1.tar.gz"

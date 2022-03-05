@@ -54,8 +54,14 @@ print_dotfpm() {
 	    ;;
     esac
 
-    # Tell PaSh to set itself up on a target system.
-    flag --after-install "$PASH_TOP/scripts/package/after-install.sh"
+    # Schedule post-install hook with format-specifier.
+    after_install="$(mktemp)"
+    (
+	printf '#! /usr/bin/env\n'
+	printf "\$PASH_TOP/scripts/package/fire-hook.sh 'after-install' '%s'\n" "$output_format"
+    ) >"$after_install"
+    flag --after-install "$after_install"
+
 
     # Map contents from here to target system.
     #
