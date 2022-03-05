@@ -149,6 +149,7 @@ print_dotfpm_deb() {
     flag --depends bc
     flag --depends bsdmainutils
     flag --depends curl
+    flag --depends g++-10
     flag --depends git
     flag --depends libffi-dev
     flag --depends libtool
