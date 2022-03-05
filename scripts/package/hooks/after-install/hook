@@ -29,10 +29,13 @@ post_install_current_target() {
     export PASH_TOP
 
     (
+	set -e
 	post_install_python_project
 	post_install_libdash
 	post_install_runtime
-	[ -f "$recipe" ] && "$recipe" # -f, so non-executables raise an error
+	if [ -f "$recipe" ]; then
+	    "$recipe" # -f, so non-executables raise an error
+	fi
     ) | tee "$log_file"
 }
 
@@ -63,4 +66,5 @@ post_install_runtime() {
     make
 }
 
-return 2>/dev/null || post_install_current_target "$@"
+
+post_install_current_target "$@"
