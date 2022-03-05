@@ -35,8 +35,10 @@ if [ -f /.dockerenv ]; then
     # Basic example must always work, no matter where we're going.
     [ -d "$PASH_TOP" ]
     test_script="${PASH_TOP}/evaluation/intro/hello-world.sh"
+    set -x
     time pa.sh "$test_script"
     time bash "$test_script"
+    set +x
 else
     image="$1"
     target_version="$2"
