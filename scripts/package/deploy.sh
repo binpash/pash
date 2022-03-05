@@ -56,6 +56,7 @@ else
     docker run \
 	   --interactive \
 	   --tty \
+	   --rm \
 	   --volume "${mydirname}:/package" \
 	   "$image" \
 	   "/package/${myname}" "$target_version" "$output_format"
