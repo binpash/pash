@@ -89,7 +89,7 @@ print_dotfpm_pacman() {
     flag --depends bash
     flag --depends bc
     flag --depends curl
-    flag --depends curl
+    flag --depends gcc
     flag --depends git
     flag --depends inetutils
     flag --depends libffi
