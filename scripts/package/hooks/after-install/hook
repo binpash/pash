@@ -38,16 +38,15 @@ post_install_current_target() {
 
 
 post_install_python_project() {
-    # Guarentee pip availability.
-    #
-    # TODO: Use same Python binary in FPM Python output.
-    python3 -m ensurepip --upgrade
-
-    # PaSh is not organized for use as a Python package, so link
-    # site-packages to a location the scripts understand.
-    local PYTHON_PKG_DIR="$PASH_TOP/python_pkg_root"
+    # PaSh is not organized for use as a Python package.
+    # This destructive operation compensates for that.
+    local PYTHON_PKG_DIR="$PASH_TOP/python_pkg"
+    rm -rf "$PYTHON_PKG_DIR"
+    mkdir "$PYTHON_PKG_DIR"
     python3 -m pip install --root "$PYTHON_PKG_DIR" --ignore-installed -r "$PASH_TOP/requirements.txt"
-    ln -frs "$(find "$PYTHON_PKG_DIR" -type d -name site-packages)" "$PASH_TOP/python_pkgs"
+    local pkg_path="$(find "$PYTHON_PKG_DIR" \( -name "site-packages" -or -name "dist-packages" \) -type d)"
+    cd "$pkg_path"
+    mv -v * "${PYTHON_PKG_DIR}/"
 }
 
 
