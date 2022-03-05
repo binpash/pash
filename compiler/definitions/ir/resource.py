@@ -1,6 +1,7 @@
 from definitions.ir.arg import *
 from util import *
 from ir_utils import *
+import socket
 
 ## TODO: Resources should probably be more elaborate than just a
 ## string and a line range. They could be URLs, and possibly other things.
@@ -20,6 +21,9 @@ class Resource:
     def is_stdout(self):
         return False
 
+    def is_available_on(self, host):
+        return False
+
     ## TODO: Make this check properly
     def __eq__(self, other):
         if isinstance(other, Resource):
@@ -32,12 +36,17 @@ class FileDescriptorResource(Resource):
                and len(fd) == 2
                and fd[0] == 'fd')
         self.uri = fd
+        # Assuming graph is expanded on the machine where the data is
+        self.data_hosts = [socket.gethostbyname(socket.gethostname())]
 
     def is_stdin(self):
         return (self.uri == ('fd', 0))
 
     def is_stdout(self):
         return (self.uri == ('fd', 1))
+
+    def is_available_on(self, host):
+        return host in self.data_hosts
 
 
 class FileResource(Resource):
@@ -46,13 +55,22 @@ class FileResource(Resource):
         assert(isinstance(path, Arg))
         ## TODO: Make sure that paths are normalized
         self.uri = path
+        # Assuming graph is expanded on the machine where the data is
+        self.data_hosts = [socket.gethostbyname(socket.gethostname())]
 
     def __eq__(self, other):
         if isinstance(other, FileResource):
             return self.uri == other.uri
         return False
+    
+    def is_available_on(self, host):
+        return host in self.data_hosts
 
 
 class EphemeralResource(Resource):
     def __init__(self):
         self.uri = None
+
+    def is_available_on(self, host):
+        return True
+
