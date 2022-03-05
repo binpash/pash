@@ -156,8 +156,6 @@ def add_remote_pipes(graphs, file_id_gen):
             assert(len(sink_nodes) == 1)
             
             for edge in sub_graph.get_node_output_fids(sink_nodes[0]):
-                stdin = file_id_gen.next_file_id()
-                stdin.set_resource(FileDescriptorResource(('fd', 0)))
                 stdout = file_id_gen.next_file_id()
                 stdout.set_resource(FileDescriptorResource(('fd', 1)))
                 sub_graph.add_edge(stdout)
@@ -188,10 +186,30 @@ def add_remote_pipes(graphs, file_id_gen):
     return write_port
 
 def prepare_graph_for_remote_exec(filename):
+    """
+    Reads the complete ir from filename and splits it
+    into subgraphs where ony the first subgraph represent a continues
+    segment (merger segment or branched segment) in the graph. 
+    Note: All subgraphs(except first one) read and write from remote pipes.
+        However, we had to add a fake stdout to avoid some problems when converting to shell code.
+
+    Returns: 
+        subgraphs: List of subgraphs
+        shell_vars: shell variables
+        last_port: The output port of the last remote write which is used to 
+        correctly redirct last stdout.
+    
+    TODO: change overall design to decouple all the subgraphs from the 
+    first stdin and last stdout. This will allow us to run the first segment
+    remotly instead of locally. This is only useful if first segment is longer 
+    than just a split could be worth it for some benchmarks.
+    """
     ir, shell_vars = read_graph(filename)
     graphs, final_output_port = split_ir(ir)
     # graphs, final_output_port = add_remote_pipes(graphs, file_id_gen)
     ret = []
+
+    # Flattening the graph
     for level in graphs:
         for sub_graph in level:
             ret.append(sub_graph)
