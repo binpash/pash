@@ -32,7 +32,7 @@ post_install_current_target() {
 	post_install_python_project
 	post_install_libdash
 	post_install_runtime
-	[ -f "$recipe" ] && "$recipe" # -f, because I want non-executables to raise an error
+	[ -f "$recipe" ] && "$recipe" # -f, so non-executables raise an error
     ) | tee "$log_file"
 }
 
