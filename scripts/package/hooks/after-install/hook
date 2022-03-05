@@ -1,10 +1,7 @@
 #! /usr/bin/env bash
 
 # This script is called by a system package manager to request on-site
-# setup on host.
-#
-# 'any.sh' means 'use for any target', so do not use
-# distribution-specific knowledge here.
+# setup on a host, after the package itself is installed.
 
 set -euo pipefail
 
