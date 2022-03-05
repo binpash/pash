@@ -211,7 +211,7 @@ print_dotfpm_output_path() {
 print_post_install_script() {
     local output_format="$1"
     printf '#! /usr/bin/env bash\n'
-    printf "\$PASH_TOP/scripts/package/fire-hook.sh 'after-install' '%s'\n" "$output_format"
+    printf "/usr/lib/pash/scripts/package/fire-hook.sh 'after-install' '%s'\n" "$output_format"
 }
 
 #
