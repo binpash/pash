@@ -1,2 +1,2 @@
 #! /usr/bin/env sh
-yum localinstall -y "/package/pash-$1.rpm"
+sudo yum localinstall "/package/output/pash-$1.rpm"
