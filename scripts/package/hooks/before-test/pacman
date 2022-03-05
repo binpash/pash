@@ -1,2 +1,4 @@
 #! /usr/bin/env sh
-sudo pacman -Uy "/package/pash-$1.tar.gz"
+set -eu
+pacman -Sy
+pacman -U "/package/output/pash-$1.tar.gz"
