@@ -1,2 +1,3 @@
 #! /usr/bin/env sh
-sudo apt install -y "/package/pash-$1.deb"
+apt update
+apt install -y "/package/output/pash-$1.deb"
