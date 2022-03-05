@@ -31,7 +31,6 @@ revision.tex
 node_modules
 
 python_pkgs
-python_pkg_root
 
 # local directory w/ related work
 bib.to
