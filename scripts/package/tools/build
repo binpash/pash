@@ -13,7 +13,8 @@ set -u
 
 
 print_dotfpm() {
-    output_format="$1"
+    local output_format="$1"
+    local after_install="$2"
 
     # I/O rules, with Docker container paths
     flag --chdir /src
@@ -30,6 +31,9 @@ print_dotfpm() {
     flag --architecture all
     flag --url 'https://github.com/binpash/pash'
     flag --version "$version"
+
+    # Pass control to PaSh after installation
+    flag --after-install "$after_install"
 
     # Target information
     case "$output_format" in
@@ -53,15 +57,6 @@ print_dotfpm() {
 	    exit 1
 	    ;;
     esac
-
-    # Schedule post-install hook with format-specifier.
-    after_install="$(mktemp)"
-    (
-	printf '#! /usr/bin/env\n'
-	printf "\$PASH_TOP/scripts/package/fire-hook.sh 'after-install' '%s'\n" "$output_format"
-    ) >"$after_install"
-    flag --after-install "$after_install"
-
 
     # Map contents from here to target system.
     #
@@ -210,6 +205,14 @@ print_dotfpm_output_path() {
     flag --package "$output_file"
 }
 
+# Post-installation steps depend on the target.  Rather than ask one
+# script to entertain every platform, dispatch to a specialized
+# script.
+print_post_install_script() {
+    local output_format="$1"
+    printf '#! /usr/bin/env bash\n'
+    printf "\$PASH_TOP/scripts/package/fire-hook.sh 'after-install' '%s'\n" "$output_format"
+}
 
 #
 # The rest defines how the above works.
@@ -223,14 +226,19 @@ flag() {
     fi
 }
 
-main() {
-    trap 'rm -vf .fpm' EXIT
 
+main() {
     for output_format in "$@"; do
+	after_install="$(mktemp)"
+        print_post_install_script "$output_format" > "$after_install"
+	cat "$after_install"
 	output_file_prefix="/out/pash-${version}"
-	print_dotfpm "$output_format" > .fpm
+
+	print_dotfpm "$output_format" "$after_install" > .fpm
+
 	set +e
 	/fpm/bin/fpm && chmod 440 "$output_file"
+	rm -vf "$after_install" .fpm
 	set -e
 	printf '\n'
     done

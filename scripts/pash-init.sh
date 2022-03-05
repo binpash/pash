@@ -6,7 +6,6 @@ export distro="$("$PASH_TOP/scripts/distro.sh")"
 
 # Adapt to Docker
 if [ -f /.dockerenv ]; then
-    export PASH_TOP=/opt/pash
     export LC_ALL='en_US.UTF-8'
     export LANG='en_US.UTF-8'
     export LANGUAGE='en_US.UTF-8'
