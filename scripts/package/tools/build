@@ -94,7 +94,6 @@ print_dotfpm_pacman() {
     flag --depends inetutils
     flag --depends libffi
     flag --depends libtool
-    flag --depends libtool
     flag --depends m4
     flag --depends make
     flag --depends openbsd-netcat
