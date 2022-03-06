@@ -51,7 +51,9 @@ def graph_to_shell(graph):
     for directory in dirs:
         os.makedirs(directory, exist_ok=True)
 
-    pash_runtime.add_eager_nodes(graph, config.pash_args.dgsh_tee)
+    if not config.pash_args.no_eager:
+        graph = pash_runtime.add_eager_nodes(graph, config.pash_args.dgsh_tee)
+
     script = to_shell(graph, config.pash_args)
     with open(filename, "w") as f:
         f.write(script)
@@ -95,11 +97,11 @@ def add_remote_pipes(graphs, file_id_gen):
 def split_ir(graph: IR):
     file_id_gen = graph.get_file_id_gen()
     source_node_ids = graph.source_nodes()
-    assert(len(source_node_ids) == 1)
-
-    level = [(source_node_ids[0], IR({}, {}))]
-    next_level = []
+    input_fifo_map = {}
     graphs = []
+    level = [(source, IR({}, {})) for source in source_node_ids]
+    next_level = []
+    
     while level:
         for old_node_id, sub_graph in level:
             node = graph.get_node(old_node_id).copy()
@@ -107,15 +109,16 @@ def split_ir(graph: IR):
             
             for idx, input_fid in enumerate(graph.get_node_input_fids(old_node_id)):
                 input_edge_id = None
-                # If subgraph is empty or edge isn't ephemeral the edge needs to be added
-                if not input_fid.is_ephemeral() or not sub_graph.sink_nodes():
+                # If subgraph is empty and edge isn't ephemeral the edge needs to be added
+                if not input_fid.get_ident() in sub_graph.edges:
                     new_fid = input_fid
                     sub_graph.add_to_edge(new_fid, node_id)
                     input_edge_id = new_fid.get_ident()
                 else:
                     input_edge_id = input_fid.get_ident()
                     sub_graph.set_edge_to(input_edge_id, node_id)
-            
+                # keep track  
+                input_fifo_map[input_edge_id] = sub_graph
             # Add edges coming out of the node
             for output_fid in graph.get_node_output_fids(old_node_id):
                 sub_graph.add_from_edge(node_id, output_fid)
@@ -142,48 +145,49 @@ def split_ir(graph: IR):
 
         level = next_level
         next_level = []
-    
-    write_port = add_remote_pipes(graphs, file_id_gen) 
-    
-    return graphs, write_port
 
-def add_remote_pipes(graphs, file_id_gen):
+    return graphs, file_id_gen, input_fifo_map
+
+def add_remote_pipes(graphs, file_id_gen, mapping):
     write_port = -1
+    # The graph to execute in the main pash_runtime
+    final_subgraph = IR({}, {})
     for idx, level in enumerate(graphs):
         for sub_graph in level:
             sink_nodes = sub_graph.sink_nodes()
-            
+            source_nodes = sub_graph.source_nodes()
             assert(len(sink_nodes) == 1)
+            assert(len(source_nodes) == 1)
             
+            # Transform output edges
             for edge in sub_graph.get_node_output_fids(sink_nodes[0]):
                 stdout = file_id_gen.next_file_id()
                 stdout.set_resource(FileDescriptorResource(('fd', 1)))
                 sub_graph.add_edge(stdout)
                 write_port = get_available_port()
-                if not edge.is_ephemeral():
-                    if edge.has_file_resource() or not edge.get_resource().is_stdout():
-                        raise NotImplementedError
-                    stdout.set_resource(edge.get_resource())
-                    edge.make_ephemeral()
+                edge_id = edge.get_ident()
                 
-                remote_write = remote_pipe.make_remote_pipe([edge.get_ident()], [stdout.get_ident()], HOST, write_port, False, False)
+                remote_write = remote_pipe.make_remote_pipe([edge_id], [stdout.get_ident()], HOST, write_port, False, False)
                 sub_graph.add_node(remote_write)
+                
+                new_edge = file_id_gen.next_file_id()
+                new_edge.set_resource(edge.get_resource())
 
-                if idx < len(graphs) - 1:
-                    matching_subgraph = None
-                    for sg in graphs[idx + 1]:
-                        if edge in sg.all_fids():
-                            matching_subgraph = sg
-                            break
-                    if matching_subgraph:
-                        new_edge = file_id_gen.next_ephemeral_file_id()
-                        matching_subgraph.replace_edge(edge.get_ident(), new_edge)
-                        remote_read = remote_pipe.make_remote_pipe([], [new_edge.get_ident()], HOST, write_port, True, True)
-                        matching_subgraph.add_node(remote_read)
-                    else:
-                        raise Exception("Error splitting graph: no corrosponding edge in following graphs")
+                # Get the subgraph which "edge" writes to
+                if edge_id in mapping:
+                    matching_subgraph = mapping[edge_id]
+                    matching_subgraph.replace_edge(edge.get_ident(), new_edge)
+                else:
+                    matching_subgraph = final_subgraph
+                    matching_subgraph.add_edge(new_edge)
+                
+                remote_read = remote_pipe.make_remote_pipe([], [new_edge.get_ident()], HOST, write_port, True, True)
+                matching_subgraph.add_node(remote_read)
 
-    return write_port
+                # Finally always make the edge (input edge to remote write) ephemeral
+                edge.make_ephemeral()
+
+    return final_subgraph
 
 def prepare_graph_for_remote_exec(filename):
     """
@@ -196,8 +200,9 @@ def prepare_graph_for_remote_exec(filename):
     Returns: 
         subgraphs: List of subgraphs
         shell_vars: shell variables
-        last_port: The output port of the last remote write which is used to 
-        correctly redirct last stdout.
+        final_graph_fname: filename of the script to execute on the master machine. 
+            This script will contain edges to correctly redict the original sink and source nodes
+
     
     TODO: change overall design to decouple all the subgraphs from the 
     first stdin and last stdout. This will allow us to run the first segment
@@ -205,8 +210,8 @@ def prepare_graph_for_remote_exec(filename):
     than just a split could be worth it for some benchmarks.
     """
     ir, shell_vars = read_graph(filename)
-    graphs, final_output_port = split_ir(ir)
-    # graphs, final_output_port = add_remote_pipes(graphs, file_id_gen)
+    graphs, file_id_gen, mapping = split_ir(ir)
+    final_subgraph = add_remote_pipes(graphs, file_id_gen, mapping) 
     ret = []
 
     # Flattening the graph
@@ -214,4 +219,6 @@ def prepare_graph_for_remote_exec(filename):
         for sub_graph in level:
             ret.append(sub_graph)
     
-    return ret, shell_vars, final_output_port
+    final_graph_fname = graph_to_shell(final_subgraph)
+
+    return ret, shell_vars, final_graph_fname

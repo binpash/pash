@@ -116,9 +116,10 @@ class WorkersManager():
                 break
             elif request.startswith("Exec-Graph"):
                 filename = request.split(':', 1)[1].strip()
-                graphs, shell_vars, final_ouput_port = prepare_graph_for_remote_exec(filename)
+                graphs, shell_vars, final_graph_file = prepare_graph_for_remote_exec(filename)
+                log("Master node graph stored in ", final_graph_file)
                 # Report to main shell where to read from
-                response_msg = f"OK {final_ouput_port}"
+                response_msg = f"OK {final_graph_file}"
                 dspash_socket.respond(response_msg, conn) 
                 # Execute subgraphs on workers
                 for i in range(len(graphs) - 1, -1, -1):
