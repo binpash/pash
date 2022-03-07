@@ -1,32 +1,6 @@
 #!/usr/bin/env bash
 
-# Help out with shell configuration
-if [ -z "$PASH_TOP" ]; then
-    me="$(readlink -f "${BASH_SOURCE[0]}")"
-    export PASH_TOP="$(dirname "$me")"
-    export PATH="$PASH_TOP:$PATH"
-    printf '# Add this to your shell configuration.\n\n'
-    printf "  export PASH_TOP='%s'\n" "$PASH_TOP"
-    printf '  export PATH="$PASH_TOP:$PATH"\n\n'
-    printf '# If your shell supports process substitution (bash, zsh, etc.),\n'
-    printf '# then run `. <(%s)` to use this config in your current shell.\n' "$0"
-    exit 0
-fi
-
-# Halt if script was sourced. The above is only a setup aid that
-# should not interfere with the script's normal operation.
-return 2>/dev/null
-
-
-rcfile=~/.pash_init
-if [ ! -f "$rcfile" ]; then
-     printf '# Include system-level rules\n' > "$rcfile"
-     printf ". '%s/scripts/pash-init.sh'\n" "$PASH_TOP" >> "$rcfile"
-     chmod +x "$rcfile"
-     printf 'Created %s\n' "$rcfile"
-fi
-
-
+export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 # point to the local downloaded folders
 export PYTHONPATH=${PASH_TOP}/python_pkgs/
