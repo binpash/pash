@@ -2,7 +2,9 @@
 # Source this in any new ~/pash-init.sh
 
 set -u
-export distro="$("$PASH_TOP/scripts/distro.sh")"
+. "$PASH_TOP/scripts/utils.sh"
+
+export distro="$(infer_unix_like_distro)"
 
 # Adapt to Docker
 if [ -f /.dockerenv ]; then
