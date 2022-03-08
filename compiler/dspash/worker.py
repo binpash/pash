@@ -19,7 +19,7 @@ from util import log
 from annotations import load_annotation_files
 import pash_runtime
 from dspash.socket_utils import send_msg, recv_msg
-from dspash.ir_helper import graph_to_shell
+from dspash.ir_helper import to_shell_file
 
 # from ... import config
 HOST = socket.gethostbyname(socket.gethostname())
@@ -47,7 +47,7 @@ def parse_exec_graph(request):
 
 def exec_graph(graph, shell_vars):
     config.config['shell_variables'] = shell_vars
-    script_path = graph_to_shell(graph)
+    script_path = to_shell_file(graph, config.pash_args)
 
     e = os.environ.copy()
     e['PASH_TOP'] = PASH_TOP

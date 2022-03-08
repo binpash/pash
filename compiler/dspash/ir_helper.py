@@ -44,7 +44,7 @@ def read_graph(filename):
         ir, shell_vars = pickle.load(ir_file)
     return ir, shell_vars
             
-def graph_to_shell(graph):
+def to_shell_file(graph, args):
     _, filename = ptempfile()
     
     dirs = set()
@@ -54,10 +54,10 @@ def graph_to_shell(graph):
     for directory in dirs:
         os.makedirs(directory, exist_ok=True)
 
-    if not config.pash_args.no_eager:
-        graph = pash_runtime.add_eager_nodes(graph, config.pash_args.dgsh_tee)
+    if not args.no_eager:
+        graph = pash_runtime.add_eager_nodes(graph, args.dgsh_tee)
 
-    script = to_shell(graph, config.pash_args)
+    script = to_shell(graph, args)
     with open(filename, "w") as f:
         f.write(script)
     return filename
@@ -218,8 +218,11 @@ def prepare_graph_for_remote_exec(filename):
     Returns: 
         subgraphs: List of subgraphs
         shell_vars: shell variables
-        final_graph_fname: filename of the script to execute on the master machine. 
-            This script will contain edges to correctly redict the original sink and source nodes
+        final_graph: The ir we need to execute on the main shell. 
+            This graph contains edges to correctly redirect the following to remote workers
+            - special pipes (stdin/stdout)
+            - named pipes reading and writing
+            - files reading and writing
 
     
     TODO: change overall design to decouple all the subgraphs from the 
@@ -231,8 +234,5 @@ def prepare_graph_for_remote_exec(filename):
     graphs, file_id_gen, mapping = split_ir(ir)
     final_subgraph = add_remote_pipes(graphs, file_id_gen, mapping) 
     ret = []
-    
 
-    final_graph_fname = graph_to_shell(final_subgraph)
-
-    return graphs, shell_vars, final_graph_fname
+    return graphs, shell_vars, final_subgraph

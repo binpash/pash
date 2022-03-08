@@ -6,8 +6,9 @@ import pickle
 
 from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
 from util import log
-from dspash.ir_helper import prepare_graph_for_remote_exec
+from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file
 import config 
+import copy
 
 PORT = 65425        # Port to listen on (non-privileged ports are > 1023)
 
@@ -77,7 +78,10 @@ class WorkersManager():
     def __init__(self, workers: WorkerConnection = []):
         self.workers = workers
         self.host = socket.gethostbyname(socket.gethostname())
-        
+        self.args = copy.copy(config.pash_args)
+        # Required to create a correct multi sink graph
+        self.args.termination = "" 
+
     def get_worker(self, fids) -> WorkerConnection:
         best_worker = None  # Online worker with least work
         for worker in self.workers:
@@ -113,11 +117,15 @@ class WorkersManager():
                 break
             elif request.startswith("Exec-Graph"):
                 filename = request.split(':', 1)[1].strip()
-                graphs, shell_vars, final_graph_file = prepare_graph_for_remote_exec(filename)
-                log("Master node graph stored in ", final_graph_file)
-                # Report to main shell where to read from
-                response_msg = f"OK {final_graph_file}"
-                dspash_socket.respond(response_msg, conn) 
+
+                graphs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename)
+                script_fname = to_shell_file(main_graph, self.args)
+                log("Master node graph stored in ", script_fname)
+
+                # Report to main shell a script to execute
+                response_msg = f"OK {script_fname}"
+                dspash_socket.respond(response_msg, conn)
+
                 # Execute subgraphs on workers
                 for i in range(len(graphs) - 1, -1, -1):
                     subgraph = graphs[i]
