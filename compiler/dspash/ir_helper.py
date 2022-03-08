@@ -29,7 +29,7 @@ import subprocess
 import pash_runtime
 from collections import deque, defaultdict
 
-HOST = '0.0.0.0'
+HOST = socket.gethostbyname(socket.gethostname())
 NEXT_PORT = 58000
 
 def get_available_port():
@@ -133,22 +133,26 @@ def split_ir(graph: IR):
                 queue.append((next_id, IR({}, {})))
         
     # print(list(map(lambda k : k.all_fids(), graphs)))
-    file_id_gen = graph.get_file_id_gen()
-    return graphs, file_id_gen, input_fifo_map
+    return graphs, input_fifo_map
 
-def add_stdout_fid(graph : IR, file_id_gen: FileIdGen):
+def add_stdout_fid(graph : IR, file_id_gen: FileIdGen) -> FileId:
     stdout = file_id_gen.next_file_id()
     stdout.set_resource(FileDescriptorResource(('fd', 1)))
     graph.add_edge(stdout)
     return stdout
 
-def add_remote_pipes(graphs:List[IR], file_id_gen: FileIdGen, mapping:Dict):
+# def add_remote_pipes(sub_graph:IR, file_id_gen: FileIdGen, mapping: Dict, worker, final_subgraph)
+def add_remote_pipes(graphs:List[IR], file_id_gen: FileIdGen, mapping:Dict, get_worker) -> IR:
     write_port = -1
     # The graph to execute in the main pash_runtime
     final_subgraph = IR({}, {})
+    worker_graph_pairs = []
 
     # Replace output edges and corrosponding input edges with remote read/write
     for sub_graph in graphs:
+        worker = get_worker([])
+        worker._running_processes += 1
+        worker_graph_pairs.append((worker, sub_graph))
         sink_nodes = sub_graph.sink_nodes()
         assert(len(sink_nodes) == 1)
         
@@ -162,7 +166,7 @@ def add_remote_pipes(graphs:List[IR], file_id_gen: FileIdGen, mapping:Dict):
             sub_graph.replace_edge(out_edge_id, ephemeral_edge)
 
             # Add remote-write node at the end of the subgraph
-            remote_write = remote_pipe.make_remote_pipe([ephemeral_edge.get_ident()], [stdout.get_ident()], HOST, write_port, False, False)
+            remote_write = remote_pipe.make_remote_pipe([ephemeral_edge.get_ident()], [stdout.get_ident()], worker.host(), write_port, False, True)
             sub_graph.add_node(remote_write)
             
             # Copy the old output edge resource
@@ -177,7 +181,7 @@ def add_remote_pipes(graphs:List[IR], file_id_gen: FileIdGen, mapping:Dict):
                 matching_subgraph = final_subgraph
                 matching_subgraph.add_edge(new_edge)
     
-            remote_read = remote_pipe.make_remote_pipe([], [new_edge.get_ident()], HOST, write_port, True, True)
+            remote_read = remote_pipe.make_remote_pipe([], [new_edge.get_ident()], worker.host(), write_port, True, False)
             matching_subgraph.add_node(remote_read)
 
     # Replace non ephemeral input edges with remote read/write
@@ -196,21 +200,22 @@ def add_remote_pipes(graphs:List[IR], file_id_gen: FileIdGen, mapping:Dict):
                     final_subgraph.add_edge(new_edge)
 
                     # Add remote write to main subgraph
-                    remote_write = remote_pipe.make_remote_pipe([new_edge.get_ident()], [stdout.get_ident()], HOST, write_port, False, False)
+                    remote_write = remote_pipe.make_remote_pipe([new_edge.get_ident()], [stdout.get_ident()], HOST, write_port, False, True)
                     final_subgraph.add_node(remote_write)
 
                     # Add remote read to current subgraph
                     ephemeral_edge = file_id_gen.next_ephemeral_file_id()
                     sub_graph.replace_edge(in_edge.get_ident(), ephemeral_edge)
 
-                    remote_read = remote_pipe.make_remote_pipe([], [ephemeral_edge.get_ident()], HOST, write_port, True, True)
+                    remote_read = remote_pipe.make_remote_pipe([], [ephemeral_edge.get_ident()], HOST, write_port, True, False)
                     sub_graph.add_node(remote_read)
                 else:
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
-                    continue 
-    return final_subgraph
+                    continue
 
-def prepare_graph_for_remote_exec(filename):
+    return final_subgraph, worker_graph_pairs
+
+def prepare_graph_for_remote_exec(filename, get_worker):
     """
     Reads the complete ir from filename and splits it
     into subgraphs where ony the first subgraph represent a continues
@@ -219,7 +224,7 @@ def prepare_graph_for_remote_exec(filename):
         However, we had to add a fake stdout to avoid some problems when converting to shell code.
 
     Returns: 
-        subgraphs: List of subgraphs
+        worker_graph_pairs: List of (worker, subgraph)
         shell_vars: shell variables
         final_graph: The ir we need to execute on the main shell. 
             This graph contains edges to correctly redirect the following to remote workers
@@ -228,8 +233,7 @@ def prepare_graph_for_remote_exec(filename):
             - files reading and writing
     """
     ir, shell_vars = read_graph(filename)
-    graphs, file_id_gen, mapping = split_ir(ir)
-    final_subgraph = add_remote_pipes(graphs, file_id_gen, mapping) 
-    ret = []
-
-    return graphs, shell_vars, final_subgraph
+    file_id_gen = ir.get_file_id_gen()
+    graphs, mapping = split_ir(ir)
+    main_graph, worker_graph_pairs = add_remote_pipes(graphs, file_id_gen, mapping, get_worker)
+    return worker_graph_pairs, shell_vars, main_graph

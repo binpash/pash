@@ -52,7 +52,7 @@ class WorkerConnection:
         if not response_data or decode_request(response_data)['status'] != "OK":
             raise Exception(f"didn't recieved ack on request {response_data}")
         else:
-            self._running_processes += 1 #TODO: decrease in case of failure or process ended
+            # self._running_processes += 1 #TODO: decrease in case of failure or process ended
             response = decode_request(response_data)
             return True
 
@@ -89,7 +89,6 @@ class WorkersManager():
                 continue
             # Can't use this worker if data is not availabe on it
             for fid in fids:
-                # TODO: Can this be optimized by only checking sink and source fids?
                 if not fid.is_available_on(worker.host()):
                     continue
 
@@ -118,7 +117,7 @@ class WorkersManager():
             elif request.startswith("Exec-Graph"):
                 filename = request.split(':', 1)[1].strip()
 
-                graphs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename)
+                worker_graph_pairs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename, self.get_worker)
                 script_fname = to_shell_file(main_graph, self.args)
                 log("Master node graph stored in ", script_fname)
 
@@ -127,10 +126,7 @@ class WorkersManager():
                 dspash_socket.respond(response_msg, conn)
 
                 # Execute subgraphs on workers
-                for i in range(len(graphs) - 1, -1, -1):
-                    subgraph = graphs[i]
-                    fids = subgraph.all_fids()
-                    worker = workers_manager.get_worker(fids)
+                for worker, subgraph in worker_graph_pairs:
                     worker.send_graph_exec_request(subgraph, shell_vars)
             else:
                 raise Exception(f"Unknown request: {request}")
