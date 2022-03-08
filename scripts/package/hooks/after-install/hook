@@ -59,4 +59,4 @@ post_install_runtime() {
 }
 
 
-post_install_current_target "$@"
+(return 2>/dev/null) || post_install_current_target "$@"
