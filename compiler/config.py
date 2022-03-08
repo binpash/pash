@@ -97,6 +97,17 @@ def add_common_arguments(parser):
                         type=int,
                         help="configure debug level; defaults to 0",
                         default=0)
+    parser.add_argument("--graphviz",
+                        help="generates graphical representations of the dataflow graphs. The option argument corresponds to the format. PaSh stores them in a timestamped directory in the argument of --graphviz_dir",
+                        choices=["no", "dot", "svg", "pdf", "png"],
+                        default="no")
+    ## TODO: To discuss: Do we maybe want to have graphviz to always be included 
+    ##       in the temp directory (under a graphviz subdirectory) instead of in its own?
+    ##   kk: I think that ideally we want a log-directory where we can put logs, graphviz, 
+    ##       and other observability and monitoring info (instead of putting them in the temp).
+    parser.add_argument("--graphviz_dir",
+                        help="the directory in which to store graphical representations",
+                        default="/tmp")
     parser.add_argument("--log_file",
                         help="configure where to write the log; defaults to stderr.",
                         default="")
@@ -165,6 +176,10 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--output_time"))
     if (pash_arguments.output_optimized):
         arguments.append(string_to_argument("--output_optimized"))
+    arguments.append(string_to_argument("--graphviz"))
+    arguments.append(string_to_argument(pash_arguments.graphviz))
+    arguments.append(string_to_argument("--graphviz_dir"))
+    arguments.append(string_to_argument(pash_arguments.graphviz_dir))
     if(not pash_arguments.log_file == ""):
         arguments.append(string_to_argument("--log_file"))
         arguments.append(string_to_argument(pash_arguments.log_file))

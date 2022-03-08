@@ -64,7 +64,7 @@ libdgsh_a_SOURCES = negotiate.c $(DGSH_ASSEMBLY_FILE)
 dgsh_tee_SOURCES = dgsh-tee.c
 
 dgsh-tee:
-	git clone https://github.com/tammam1998/dgsh.git;\
+	git clone https://github.com/binpash/dgsh.git;\
 	cd dgsh;\
 	git checkout pash;\
 	cd core-tools/src;\
