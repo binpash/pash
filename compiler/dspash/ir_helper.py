@@ -146,11 +146,12 @@ def add_remote_pipes(graphs:List[IR], file_id_gen: FileIdGen, mapping:Dict):
     write_port = -1
     # The graph to execute in the main pash_runtime
     final_subgraph = IR({}, {})
+
+    # Replace output edges and corrosponding input edges with remote read/write
     for sub_graph in graphs:
         sink_nodes = sub_graph.sink_nodes()
         assert(len(sink_nodes) == 1)
         
-        # Transform output edges
         for out_edge in sub_graph.get_node_output_fids(sink_nodes[0]):
             stdout = add_stdout_fid(sub_graph, file_id_gen)
             write_port = get_available_port()
@@ -179,32 +180,34 @@ def add_remote_pipes(graphs:List[IR], file_id_gen: FileIdGen, mapping:Dict):
             remote_read = remote_pipe.make_remote_pipe([], [new_edge.get_ident()], HOST, write_port, True, True)
             matching_subgraph.add_node(remote_read)
 
-            source_nodes = sub_graph.source_nodes()
-            for source in source_nodes:
-                for in_edge in sub_graph.get_node_input_fids(source):
-                    if in_edge.has_file_resource() or in_edge.has_file_descriptor_resource():
-                        # setup
-                        write_port = get_available_port()
-                        stdout = add_stdout_fid(final_subgraph, file_id_gen)
+    # Replace non ephemeral input edges with remote read/write
+    for sub_graph in graphs:
+        source_nodes = sub_graph.source_nodes()
+        for source in source_nodes:
+            for in_edge in sub_graph.get_node_input_fids(source):
+                if in_edge.has_file_resource() or in_edge.has_file_descriptor_resource():
+                    # setup
+                    write_port = get_available_port()
+                    stdout = add_stdout_fid(final_subgraph, file_id_gen)
 
-                        # Copy the old input edge resource
-                        new_edge = file_id_gen.next_file_id()
-                        new_edge.set_resource(in_edge.get_resource())
-                        final_subgraph.add_edge(new_edge)
+                    # Copy the old input edge resource
+                    new_edge = file_id_gen.next_file_id()
+                    new_edge.set_resource(in_edge.get_resource())
+                    final_subgraph.add_edge(new_edge)
 
-                        # Add remote write to main subgraph
-                        remote_write = remote_pipe.make_remote_pipe([new_edge.get_ident()], [stdout.get_ident()], HOST, write_port, False, False)
-                        final_subgraph.add_node(remote_write)
+                    # Add remote write to main subgraph
+                    remote_write = remote_pipe.make_remote_pipe([new_edge.get_ident()], [stdout.get_ident()], HOST, write_port, False, False)
+                    final_subgraph.add_node(remote_write)
 
-                        # Add remote read to current subgraph
-                        ephemeral_edge = file_id_gen.next_ephemeral_file_id()
-                        sub_graph.replace_edge(in_edge.get_ident(), ephemeral_edge)
+                    # Add remote read to current subgraph
+                    ephemeral_edge = file_id_gen.next_ephemeral_file_id()
+                    sub_graph.replace_edge(in_edge.get_ident(), ephemeral_edge)
 
-                        remote_read = remote_pipe.make_remote_pipe([], [ephemeral_edge.get_ident()], HOST, write_port, True, True)
-                        sub_graph.add_node(remote_read)
-                    else:
-                        assert(isinstance(sub_graph.get_node(source), remote_pipe.RemotePipe))
-    
+                    remote_read = remote_pipe.make_remote_pipe([], [ephemeral_edge.get_ident()], HOST, write_port, True, True)
+                    sub_graph.add_node(remote_read)
+                else:
+                    # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
+                    continue 
     return final_subgraph
 
 def prepare_graph_for_remote_exec(filename):
