@@ -12,7 +12,6 @@ import definitions.ir.nodes.r_merge as r_merge
 import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_wrap as r_wrap
 import definitions.ir.nodes.r_unwrap as r_unwrap
-import definitions.ir.nodes.remote_exec as remote_exec
 
 from command_categories import *
 from ir_utils import *
@@ -208,7 +207,6 @@ def make_map_node(node, new_inputs, new_outputs):
         new_node = node.copy()
         new_node.inputs = new_inputs
         new_node.outputs = new_outputs
-
     return new_node
 
 ## Makes a wrap node that encloses a map parallel node.
@@ -220,10 +218,10 @@ def make_wrap_map_node(node, new_inputs, new_outputs):
     assert(is_single_input(new_inputs))
     assert(len(new_outputs) == 1)
 
-    new_node = make_map_node(node, new_inputs, new_outputs) # we add remote_exec at the end if needed
+    new_node = make_map_node(node, new_inputs, new_outputs)
     wrap_node = r_wrap.wrap_node(new_node)
-   
     return wrap_node
+
 
 
 ## Note: This might need more information. E.g. all the file
@@ -335,6 +333,7 @@ class IR:
         for edge_id, (edge_fid, _from, _to) in self.edges.items():
             resource = edge_fid.get_resource()
             if(resource.is_stdout()):
+                # This is not true when using distributed_exec
                 # assert(stdout_id is None)
                 stdout_id = edge_id
         return stdout_id   
@@ -594,15 +593,6 @@ class IR:
         for _edge_fid, from_node, to_node in self.edges.values():
             if(from_node is None and not to_node is None):
                 sources.add(to_node)
-        
-        # In some cases like spell we end up with more than one sources
-        # if we don't clear nodes with a to_node
-        temp_sources = set()
-        for source in sources:
-            if not self.get_previous_nodes(source):   
-                temp_sources.add(source)
-        sources = temp_sources
-        
         for node_id, node in self.nodes.items():
             if len(node.get_input_list()) == 0:
                 sources.add(node_id)
@@ -873,7 +863,6 @@ class IR:
 
                         ## TODO: Make an unwrap node and create new inputs
                         unwrap_node = r_unwrap.make_unwrap_node(new_inputs, unwrap_output_id)
-
                         self.add_node(unwrap_node)
                         self.set_edge_from(unwrap_output_id, unwrap_node.get_id())
 
