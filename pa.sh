@@ -2,8 +2,14 @@
 
 export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
-# point to the local downloaded folders
-export PYTHONPATH=${PASH_TOP}/python_pkgs/
+
+# Until PaSh is set up in a way that naturally integrates with
+# Python's system-level paths, prefer local package installations.
+export PYTHONPATH="$(
+  find "$PASH_TOP" \
+       -type d \( -name site-packages -or -name dist-packages \) \
+       -printf '%p:'
+)$PASH_TOP/python_pkgs"
 
 ## Save the umask to first create some files and then revert it
 old_umask=$(umask)

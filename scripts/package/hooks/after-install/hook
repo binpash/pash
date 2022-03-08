@@ -38,15 +38,10 @@ post_install_current_target() {
 
 
 post_install_python_project() {
-    # PaSh is not organized for use as a Python package.
-    # This destructive operation compensates for that.
-    local PYTHON_PKG_DIR="$PASH_TOP/python_pkgs"
-    rm -rf "$PYTHON_PKG_DIR"
-    mkdir "$PYTHON_PKG_DIR"
-    python3 -m pip install --root "$PYTHON_PKG_DIR" --ignore-installed -r "$PASH_TOP/requirements.txt"
-    local pkg_path="$(find "$PYTHON_PKG_DIR" \( -name "site-packages" -or -name "dist-packages" \) -type d)"
-    cd "$pkg_path"
-    mv -v * "${PYTHON_PKG_DIR}/"
+    python3 -m pip install \
+	    --ignore-installed \
+	    --requirement "$PASH_TOP/requirements.txt" \
+	    --root "$PASH_TOP/python_pkgs"
 }
 
 
