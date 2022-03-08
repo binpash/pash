@@ -226,12 +226,6 @@ def prepare_graph_for_remote_exec(filename):
             - special pipes (stdin/stdout)
             - named pipes reading and writing
             - files reading and writing
-
-    
-    TODO: change overall design to decouple all the subgraphs from the 
-    first stdin and last stdout. This will allow us to run the first segment
-    remotly instead of locally. This is only useful if first segment is longer 
-    than just a split could be worth it for some benchmarks.
     """
     ir, shell_vars = read_graph(filename)
     graphs, file_id_gen, mapping = split_ir(ir)
