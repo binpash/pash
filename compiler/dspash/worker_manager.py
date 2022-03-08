@@ -3,6 +3,7 @@ import os
 import time
 import queue
 import pickle
+import json
 
 from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
 from util import log
@@ -103,10 +104,20 @@ class WorkersManager():
     def add_worker(self, host, port):
         self.workers.append(WorkerConnection(host, port))
 
+    def add_workers_from_cluster_config(self, config_path):
+        with open(config_path, 'r') as f:
+            cluster_config = json.load(f)
+
+        workers = cluster_config["workers"].values()
+        for worker in workers:
+            host = worker['host']
+            port = worker['port']
+            self.add_worker(host, port)
+            
+            
     def run(self):
         workers_manager = self
-        workers_manager.add_worker(self.host, 65432)
-        workers_manager.add_worker(self.host, 65431)
+        workers_manager.add_workers_from_cluster_config(os.path.join(config.PASH_TOP, 'cluster.json'))
 
         dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
         while True:
