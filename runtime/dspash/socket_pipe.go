@@ -181,8 +181,8 @@ func main() {
 			Action: func(c *cli.Context) error {
 				prepare(c)
 				conn := getConn(c)
+				defer conn.Close()
 				Read(conn)
-				conn.Close()
 				return nil
 			},
 			Flags: commandFlags,
@@ -194,8 +194,8 @@ func main() {
 			Action: func(c *cli.Context) error {
 				prepare(c)
 				conn := getConn(c)
+				defer conn.Close()
 				Write(conn)
-				conn.Close()
 				return nil
 			},
 			Flags: commandFlags,
