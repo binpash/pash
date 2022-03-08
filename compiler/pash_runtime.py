@@ -110,11 +110,9 @@ def compile_optimize_output_script(ir_filename, compiled_script_file, args, comp
     ## If the candidate DF region was indeed a DF region then we have an IR
     ## which should be translated to a parallel script.
     if(isinstance(optimized_ast_or_ir, IR)):
-        script_to_execute = to_shell(optimized_ast_or_ir, args)
-
         if args.distributed_exec:
-            _, ir_filename = ptempfile()
-            script_to_execute = f"$PASH_TOP/compiler/dspash/remote_exec_graph.sh {ir_filename}"
+            ir_filename = os.path.join(config.PASH_TMP_PREFIX, 'distributed_exec_ir.pkl')
+            script_to_execute = f"$PASH_TOP/compiler/dspash/remote_exec_graph.sh {ir_filename}\n"
             ## This might not be needed anymore (since the output script is output anyway)
             ## TODO: This is probably useless, remove
             maybe_log_optimized_script(script_to_execute, args)
@@ -122,7 +120,9 @@ def compile_optimize_output_script(ir_filename, compiled_script_file, args, comp
             with open(ir_filename, "wb") as f:
                 obj = (optimized_ast_or_ir, config.config['shell_variables'])
                 pickle.dump(obj, f)
-
+        else:
+            script_to_execute = to_shell(optimized_ast_or_ir, args)
+            
         log("Optimized script saved in:", compiled_script_file)
         with open(compiled_script_file, "w") as f:
             f.write(script_to_execute)
