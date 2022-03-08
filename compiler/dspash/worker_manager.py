@@ -10,7 +10,6 @@ from dspash.ir_helper import prepare_graph_for_remote_exec
 import config 
 
 PORT = 65425        # Port to listen on (non-privileged ports are > 1023)
-START_PORT = 57000
 
 class WorkerConnection:
     def __init__(self, host, port):
@@ -79,8 +78,6 @@ class WorkersManager():
         self.workers = workers
         self.host = socket.gethostbyname(socket.gethostname())
         
-        config.next_available_port = START_PORT # TODO: improve to per worker config
-
     def get_worker(self, fids) -> WorkerConnection:
         best_worker = None  # Online worker with least work
         for worker in self.workers:
