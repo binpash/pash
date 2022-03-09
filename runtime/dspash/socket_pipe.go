@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"io"
 	"log"
 	"net"
 	"os"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/urfave/cli/v2"
@@ -22,12 +24,25 @@ func Port(ln net.Listener) string {
 func failOnError(err error, msg string, args ...interface{}) {
 	if err != nil {
 		log.Printf(msg, args...)
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 }
 
 func listen(protocol string, address string) (net.Conn, error) {
-	ln, err := net.Listen(protocol, address)
+	// Used to set socket options
+	lc := net.ListenConfig{
+		Control: func(network, address string, conn syscall.RawConn) error {
+			var operr error
+			if err := conn.Control(func(fd uintptr) {
+				operr = syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+			}); err != nil {
+				return err
+			}
+			return operr
+		},
+	}
+
+	ln, err := lc.Listen(context.Background(), protocol, address)
 	if err != nil {
 		return nil, err
 	}
@@ -36,11 +51,24 @@ func listen(protocol string, address string) (net.Conn, error) {
 	log.Printf("Connected to %s waiting for a connection to accept\n", ln.Addr())
 
 	conn, err := ln.Accept()
-	if err != nil {
-		return nil, err
-	}
+	return conn, err
+}
 
-	return conn, nil
+func dial(protocol string, address string) (net.Conn, error) {
+	dialer := &net.Dialer{
+		Control: func(network, address string, conn syscall.RawConn) error {
+			var operr error
+			if err := conn.Control(func(fd uintptr) {
+				operr = syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.TCP_QUICKACK, 1)
+			}); err != nil {
+				return err
+			}
+			return operr
+		},
+	}
+	conn, err := dialer.Dial(protocol, address)
+
+	return conn, err
 }
 
 func retry(method func(string, string) (net.Conn, error), protocol string, address string, timeout time.Duration) net.Conn {
@@ -89,25 +117,23 @@ func getConn(ctx *cli.Context) net.Conn {
 	if listen_flag {
 		conn = retry(listen, protocol, address, timeout)
 	} else {
-		conn = retry(net.Dial, protocol, address, timeout)
+		conn = retry(dial, protocol, address, timeout)
 	}
 	return conn
 }
 
-func Read(conn net.Conn) {
+func Read(conn net.Conn) (int64, error) {
 	//read
 	n, err := io.Copy(os.Stdout, conn)
-	failOnError(err, "Failed while reading socket data [%s]\n", conn.RemoteAddr())
 
-	log.Printf("Read %d bytes", n)
+	return n, err
 }
 
-func Write(conn net.Conn) {
+func Write(conn net.Conn) (int64, error) {
 	//write
 	n, err := io.Copy(conn, os.Stdin)
-	failOnError(err, "Failed while writing socket data [%s]", conn.RemoteAddr())
 
-	log.Printf("Wrote %d bytes", n)
+	return n, err
 }
 
 func main() {
@@ -182,8 +208,9 @@ func main() {
 				prepare(c)
 				conn := getConn(c)
 				defer conn.Close()
-				Read(conn)
-				return nil
+				n, err := Read(conn)
+				log.Printf("Read %d bytes", n)
+				return err
 			},
 			Flags: commandFlags,
 		},
@@ -195,8 +222,9 @@ func main() {
 				prepare(c)
 				conn := getConn(c)
 				defer conn.Close()
-				Write(conn)
-				return nil
+				n, err := Write(conn)
+				log.Printf("Wrote %d bytes", n)
+				return err
 			},
 			Flags: commandFlags,
 		},
@@ -204,6 +232,6 @@ func main() {
 
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 }
