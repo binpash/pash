@@ -115,8 +115,9 @@ def make_ir_epilogue(ephemeral_fids, clean_up_graph, log_file):
         asts.append(com)
     else:
         ## Otherwise we just wait for all processes to die.
-        wait_com = make_command(string_to_argument('wait'))
-        asts.append(wait_com)
+        wait_com = make_command([string_to_argument('wait')])
+        exit_status = make_command([string_to_argument("internal_exec_status=$?")])
+        asts.extend([wait_com, exit_status])
 
     ## Create an `rm -f` for each ephemeral fid
     call_rm_pash_funs = make_command([string_to_argument(RM_PASH_FIFOS_NAME)])
