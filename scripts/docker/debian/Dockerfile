@@ -1,6 +1,5 @@
 FROM debian:10
 RUN apt-get update -y && apt-get install -y git
-ENV PASH_HOST="docker"
 ENV PASH_TOP=/opt/pash
 # download PaSh
 RUN git clone https://github.com/binpash/pash.git /opt/pash
