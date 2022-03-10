@@ -26,8 +26,6 @@ HOST = socket.gethostbyname(socket.gethostname())
 PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
 
-EXEC_SCRIPT_PATH = f'{PASH_TOP}/compiler/dspash/remote_exec_script.sh'
-
 def err_print(*args):
     print(*args, file=sys.stderr)
 
@@ -87,18 +85,7 @@ def manage_connection(conn, addr):
                 break
 
             print("got new request")
-            request = decode_request(data)      
-            # if request['type'] == 'exec':
-            #     cmd = parse_exec_request(request)
-            #     from_port = get_available_port()
-            #     to_port = get_available_port()
-            #     print(cmd, from_port, to_port)
-            #     args = ["bash", EXEC_SCRIPT_PATH, addr[0], from_port, to_port, cmd]
-            #     rc = subprocess.Popen(args)
-            #     body = {
-            #         'from_port': from_port,
-            #         'to_port': to_port
-            #     }
+            request = decode_request(data)
             if request['type'] == 'Exec-Graph':
                 graph, shell_vars = parse_exec_graph(request)
                 exec_graph(graph, shell_vars)
@@ -139,4 +126,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    

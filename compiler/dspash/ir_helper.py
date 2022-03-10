@@ -22,7 +22,6 @@ import definitions.ir.nodes.r_merge as r_merge
 import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_unwrap as r_unwrap
 import definitions.ir.nodes.dgsh_tee as dgsh_tee
-import definitions.ir.nodes.remote_exec as remote_exec
 import definitions.ir.nodes.remote_pipe as remote_pipe
 import shlex
 import subprocess
