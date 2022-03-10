@@ -1,6 +1,5 @@
 FROM fedora:35
 RUN dnf install git -y
-ENV PASH_HOST="docker"
 ENV PASH_TOP=/opt/pash
 # download PaSh
 RUN git clone https://github.com/binpash/pash.git /opt/pash
