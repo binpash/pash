@@ -2,18 +2,22 @@
 
 `scripts/package` packages PaSh into various formats. It is a suitable
 replacement for deployments depending on `install.sh`,
-`setup-pash.sh`, `up.sh`, `distro-deps.sh`, and/or `pkg.sh`
+`setup-pash.sh`, `up.sh`, `distro-deps.sh`, and/or `pkg.sh`.
 
 
 
 ## Building Packages
+[eef]: https://github.com/docker/cli/blob/master/experimental/README.md
 
 ```
   shell.sh
 ```
 
-Enter a Docker container for building packages. Run without arguments
-to enter a REPL and print usage information for the `build` command.
+To use this feature, [enable experimental features][eef] in Docker.
+
+`shell.sh` enters a Docker container for building packages. Run
+without arguments to enter a REPL and print usage information for the
+`build` command.
 
 Since `shell.sh` is just a Bash, you can pass it commands.  For
 example, `./shell.sh -ic 'build 0.0.1 deb'` launches an interactive
