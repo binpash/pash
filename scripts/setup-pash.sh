@@ -105,7 +105,7 @@ echo "Do not forget to export PASH_TOP before using pash: \`export PASH_TOP=$PAS
 echo '(optionally, you can update PATH to include it: `export PATH=$PATH:$PASH_TOP`)'
 echo " * * * "
 # in case we are running on docker or CI, installation is complete at this moment
-if [ -f /.dockerenv ]; then
+if [[ -f /.dockerenv || -f /.githubenv ]]; then
     exit 0  
 fi
 ## append PASH Configuration paths to the respective rc files
