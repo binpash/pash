@@ -118,10 +118,3 @@ class FileId:
 
     def get_ident(self):
         return self.ident
-
-    def is_available_on(self, host):
-        assert(self.has_resource())
-        # Slightly hacky but 'last stdout' is read from the master node always.
-        if self.resource.is_stdout():
-            return True
-        return self.resource.is_available_on(host)
