@@ -1,5 +1,6 @@
 import argparse
 import sys
+import socket
 import pickle
 import traceback
 from datetime import datetime
@@ -149,7 +150,7 @@ def add_remote_pipes(graphs:List[IR], file_id_gen: FileIdGen, mapping:Dict, get_
 
     # Replace output edges and corrosponding input edges with remote read/write
     for sub_graph in graphs:
-        worker = get_worker([])
+        worker = get_worker()
         worker._running_processes += 1
         worker_graph_pairs.append((worker, sub_graph))
         sink_nodes = sub_graph.sink_nodes()
