@@ -24,8 +24,7 @@ jobs:
             ref: ${{ github.event.pull_request.head.sha }}
         - name: Running-Pash-Benchmarks
           run: |
-            # inform the other pash scripts that we are not running natively
-            sudo touch /.dockerenv
+            sudo touch /.githubenv
             # install the system deps and pash the environment
             sudo -E bash scripts/distro-deps.sh -o
             # install pash
