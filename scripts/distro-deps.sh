@@ -17,7 +17,7 @@ LOG_DIR=install_logs
 mkdir -p $LOG_DIR
 
 # if we aren't running in docker, use sudo to install packages
-if [[ "$PASH_HOST" != "docker" ]]; then
+if [ ! -f /.dockerenv ]; then
     export SUDO="sudo"
 fi  
 
