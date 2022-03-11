@@ -22,18 +22,17 @@ do
     fi
 done
 
-microbenchmarks_dir="${PASH_TOP}/evaluation/tests/"
-intermediary_dir="${PASH_TOP}/evaluation/tests/test_intermediary/"
-test_results_dir="${PASH_TOP}/evaluation/tests/results/"
+microbenchmarks_dir="${PASH_TOP}/evaluation/tests"
+intermediary_dir="${PASH_TOP}/evaluation/tests/test_intermediary"
+test_results_dir="${PASH_TOP}/evaluation/tests/results"
 results_time="$test_results_dir/results.time"
 results_time_bash=${results_time}_bash
 results_time_pash=${results_time}_pash
 
-
 echo "Deleting eager intermediate files..."
-rm -f /tmp/eager*
-mkdir -p $intermediary_dir
 rm -rf "$test_results_dir"
+rm -rf "$intermediary_dir"
+mkdir -p $intermediary_dir
 mkdir -p "$test_results_dir"
 
 echo "Generating inputs..."
@@ -45,7 +44,6 @@ n_inputs=(
     2
     8
 )
-
 
 if [ "$EXPERIMENTAL" -eq 1 ]; then
     configurations=(
@@ -108,8 +106,16 @@ execute_pash_and_check_diff() {
     else
         { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
         b=$(cat "$pash_time"); 
-        c=$(diff -s "$seq_output" "$pash_output" | head)
+        test_diff_ec=0
+        $(diff "$seq_output" "$pash_output" || test_diff_ec=$?)
         echo "$c$b" > "${pash_time}"
+        # differ
+        script=$(basename $script_to_execute)
+        if [ $test_diff_ec -ne 0 ]; then
+            echo "$script are not identical" >> $test_results_dir/result_status
+        else
+            echo "$script are identical" >> $test_results_dir/result_status
+        fi
     fi
 }
 
@@ -135,7 +141,7 @@ execute_tests() {
         export seq_output="${intermediary_dir}/${microbenchmark}_seq_output"
         seq_time="$test_results_dir/${microbenchmark}_seq.time"
 
-        script_to_execute="${prefix}.sh"
+        export script_to_execute="${prefix}.sh"
         env_file="${prefix}_env_test.sh"
         funs_file="${prefix}_funs.sh"
         input_file="${prefix}_test.in"
@@ -179,7 +185,6 @@ execute_tests() {
                 cat $stdin_redir |
                     execute_pash_and_check_diff -d $PASH_LOG $assert_correctness ${conf} --width "${n_in}" --output_time $script_to_execute                 
                 tail -n1 "${pash_time}" >> "${results_time_pash}_${n_in}"
-
             done
         done
     done
@@ -215,13 +220,11 @@ echo "group,Bash,Pash2,Pash8" > ${results_time}
 paste -d'@' $test_results_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's\@\,\g' >> ${results_time}
 
 echo "Below follow the identical outputs:"
-grep --files-with-match "are identical" "$test_results_dir"/*_distr*.time |
-    sed "s,^$PASH_TOP/,,"
+grep "are identical" "$test_results_dir"/result_status | awk '{print $1}'
 
-echo "Below follow the non-identical outputs:"
-grep -L "are identical" "$test_results_dir"/*_distr*.time |
-    sed "s,^$PASH_TOP/,,"
+echo "Below follow the non-identical outputs:"     
+grep "are not identical" "$test_results_dir"/result_status | awk '{print $1}'
 
-TOTAL_TESTS=$(ls -la "$test_results_dir"/*_distr*.time | wc -l)
-PASSED_TESTS=$(grep --files-with-match "are identical" "$test_results_dir"/*_distr*.time | wc -l)
+TOTAL_TESTS=$(cat "$test_results_dir"/result_status | wc -l)
+PASSED_TESTS=$(grep -c "are identical" "$test_results_dir"/result_status)
 echo "Summary: ${PASSED_TESTS}/${TOTAL_TESTS} tests passed."

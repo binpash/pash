@@ -1,0 +1,1 @@
+cat $PASH_TOP/evaluation/tests/input/10M.txt |  fmt -w1 > out
