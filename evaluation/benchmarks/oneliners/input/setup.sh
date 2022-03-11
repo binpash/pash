@@ -2,21 +2,29 @@
 
 #set -e
 
-# call the script with its absolute name
-cd $(dirname $0)
-
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 
 # another solution for capturing HTTP status code
 # https://superuser.com/a/590170
-input_files="1M.txt 10M.txt 100M.txt 1G.txt dict.txt 3G.txt 10G.txt 100G.txt all_cmds.txt all_cmdsx100.txt"
+input_files="1M.txt 10M.txt 100M.txt 1G.txt dict.txt 3G.txt 10G.txt 100G.txt all_cmds.txt all_cmdsx100.txt small"
 
 if [[ "$1" == "-c" ]]; then
-    rm -f $input_files
+    rm -rf $input_files
     exit
 fi
 
 setup_dataset() {
+  if [ "$#" -eq 1 ] && [ "$1" = "--small" ]; then
+    if [ ! -d ./small ]; then
+      echo "Generating small-size inputs"
+      # FIXME PR: Do we need all of them?
+      curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/oneliners.zip' > oneliners.zip
+      unzip oneliners.zip
+      rm -f oneliners.zip
+    fi
+    return 0
+  fi
+
     if [ ! -f ./1M.txt ]; then
         curl -sf 'http://ndr.md/data/dummy/1M.txt' > 1M.txt
         if [ $? -ne 0 ]; then
@@ -97,28 +105,13 @@ setup_dataset() {
                 cat all_cmds.txt >> all_cmdsx100.txt
             done
         fi
-
-    # FIXME We might not need this
-    # if [ ! -f ./100G.txt ]; then
-    #   touch 100G.txt
-    #   for (( i = 0; i < 10; i++ )); do
-    #     cat 10G.txt >> 100G.txt
-    #   done
-    # fi
-    # generate small inputs 
-        mkdir small -p
-        for file in *.txt; do
-            len=$(cat $file | wc -l)
-            nsize=$(( $len / 11))
-            echo $file $nsize
-            head -n $nsize $file > small/$file
-        done
     fi
 }
 
 source_var() {
     if [[ "$1" == "--small" ]]; then
         export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/small/$2"
+        export dict="$PASH_TOP/evaluation/benchmarks/oneliners/input/small/dict.txt"
     else
         export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/$2"
     fi

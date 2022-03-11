@@ -24,7 +24,7 @@ oneliners_pash(){
   
   cd oneliners/
 
-  install_deps_source_setup '--full'
+  install_deps_source_setup $1
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
@@ -189,7 +189,7 @@ analytics-mts_pash(){
 
   cd analytics-mts/
 
-  install_deps_source_setup 
+  install_deps_source_setup $1
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"
