@@ -42,12 +42,8 @@ setup_dataset() {
   fi
   
   if [ ! -d ${IN}/wav ]; then
-      mkdir -p ${IN}/wav
-      cd ${IN}/wav
-      wget https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_1MG.wav
-      wget https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_2MG.wav
-      wget https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_5MG.wav
-      wget https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_10MG.wav
+      wget http://pac-n4.csail.mit.edu:81/pash_data/wav.zip
+      unzip wav.zip && cd wav/
       for f in *.wav; do
           FILE=$(basename "$f")
           for (( i = 0; i <= $WAV_DATA_FILES; i++)) do
