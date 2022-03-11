@@ -24,20 +24,23 @@ jobs:
             ref: ${{ github.event.pull_request.head.sha }}
         - name: Running-Pash-Benchmarks
           run: |
-            bash scripts/distro-deps.sh
-            bash scripts/setup-pash.sh
+            sudo touch /.githubenv
+            # install the system deps and pash the environment
+            sudo -E bash scripts/distro-deps.sh -o
+            # install pash
+            sudo -E bash scripts/setup-pash.sh -o
             export PASH_TOP=$PWD
             export PATH=$PATH:$PASH_TOP
-            cd scripts
-            bash run_tests.sh  
-            cd workflow
-            bash parse.sh > results.log 2>&1  
-            # get the timer in english
-            d=$(LANG=en_us_88591; date)
+            # run all the tests (INTRO, INTERFACE, COMPILER)
+            cd scripts && bash run_tests.sh  
+            # fetch the execution results of the passed/failed
+            cd workflow && bash parse.sh > results.log 2>&1  
+            # get the timer
+            timer=$(LANG=en_us_88591; date)
             echo "VERSION<<EOF" >> $GITHUB_ENV
-            echo  "OS:${{matrix.os}}" >> $GITHUB_ENV
-            echo "$d" >> $GITHUB_ENV
-            # Parses the results and construct a github message post
+            echo "OS:${{matrix.os}}" >> $GITHUB_ENV
+            echo "$timer" >> $GITHUB_ENV
+            # Parse the results and construct a github message post
             # we append the data to the global env
             cat results.log >> $GITHUB_ENV
             echo 'EOF' >> $GITHUB_ENV
@@ -54,5 +57,5 @@ jobs:
               })     
         - name: Exit-code
           run: |
-            cd scripts/workflow
-            bash exit_code.sh
+            # check if everything executed without errors
+            cd scripts/workflow && bash exit_code.sh
