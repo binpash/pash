@@ -54,10 +54,10 @@ unix50_pash
 
 compare_outputs "unix50/outputs"
 
-poets
-poets_pash
+nlp
+nlp_pash
 
-compare_outputs "poets/outputs"
+compare_outputs "nlp/outputs"
 
 web-index
 web-index_pash

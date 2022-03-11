@@ -104,6 +104,7 @@ execute_pash_and_check_diff() {
         { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
         diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
     else
+
         { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
         b=$(cat "$pash_time"); 
         test_diff_ec=0
@@ -116,6 +117,7 @@ execute_pash_and_check_diff() {
         else
             echo "$script are identical" >> $test_results_dir/result_status
         fi
+
     fi
 }
 
@@ -177,7 +179,7 @@ execute_tests() {
         for conf in "${configurations[@]}"; do
             for n_in in "${n_inputs[@]}"; do
                 echo "|-- Executing with pash --width ${n_in} ${conf}..."
-                export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_${conf}.time"
+                export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_$(echo ${conf} | tr -d ' ').time"
                 export pash_output="${intermediary_dir}/${microbenchmark}_${n_in}_pash_output"
                 export script_conf=${microbenchmark}_${n_in}
                 echo '' > "${pash_time}"

@@ -9,6 +9,7 @@ from ir import *
 from ast_to_ir import compile_asts
 from json_ast import *
 from ir_to_ast import to_shell
+from pash_graphviz import maybe_generate_graphviz
 from util import *
 
 from definitions.ir.aggregator_node import *
@@ -56,7 +57,9 @@ def main_body():
 
     ## Call the main procedure
     compiler_config = CompilerConfig(args.width)
-    compile_optimize_output_script(args.input_ir, args.compiled_script_file, args, compiler_config)
+    ast_or_ir = compile_optimize_output_script(args.input_ir, args.compiled_script_file, args, compiler_config)
+    maybe_generate_graphviz(ast_or_ir, args)
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -87,10 +90,9 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
     try:
         ret = compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config)
     except Exception as e:
-        log(e)
+        log("Exception caught:", e)
 
     return ret
-
 
 def compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config):
     global runtime_config
