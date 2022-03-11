@@ -1,6 +1,12 @@
-.PHONY: all eager-debug split-debug clean agg
-
+ifeq ($(optimized_agg_flag),1)
 all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee agg set-diff
+.PHONY: all eager-debug split-debug clean agg
+else
+all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee set-diff
+.PHONY: all eager-debug split-debug clean
+endif
+
+
 
 CFLAGS=-Wall
 

@@ -7,10 +7,9 @@ bash="bash"
 pash="$PASH_TOP/pa.sh --parallel_pipelines --r_split --dgsh_tee --profile_driven"
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
+rm -rf "$output_dir"
 mkdir -p "$output_dir"
 
-rm -f  $output_dir/results.time_bash
-rm -f  $output_dir/results.time_pash
 run_test()
 {
     local test=$1
@@ -40,11 +39,11 @@ run_test()
         echo -n "$test exit code mismatch "
     fi
     if [ $test_diff_ec -ne 0 ] || [ $test_ec -ne 0 ]; then
-        echo "are not identical" > $output_dir/${test}_distr.time
+        echo "$test are not identical" >> $output_dir/result_status
         echo -e '\t\tFAIL'
         return 1
     else
-        echo "are identical" > $output_dir/${test}_distr.time
+        echo "$test are identical" >> $output_dir/result_status
         echo -e '\t\tOK'
         return 0
     fi
@@ -347,11 +346,11 @@ echo "group,Bash,Pash-DRY_COMP" > $output_dir/results.time
 paste $output_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's/\t/,/' >> $output_dir/results.time
 
 echo "Below follow the identical outputs:"
-grep --files-with-match "are identical" "$output_dir"/*_distr*.time
+grep "are identical" "$output_dir"/result_status | awk '{print $1}'
 
-echo "Below follow the non-identical outputs:"
-grep -L "are identical" "$output_dir"/*_distr*.time
+echo "Below follow the non-identical outputs:"     
+grep "are not identical" "$output_dir"/result_status | awk '{print $1}'
 
-TOTAL_TESTS=$(ls -la "$output_dir"/*_distr*.time | wc -l)
-PASSED_TESTS=$(grep --files-with-match "are identical" "$output_dir"/*_distr*.time | wc -l)
+TOTAL_TESTS=$(cat "$output_dir"/result_status | wc -l)
+PASSED_TESTS=$(grep -c "are identical" "$output_dir"/result_status)
 echo "Summary: ${PASSED_TESTS}/${TOTAL_TESTS} tests passed."
