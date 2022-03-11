@@ -20,6 +20,18 @@ if [[ "$1" == "-c" ]]; then
 fi
 
 setup_dataset() {
+    # generate small inputs 
+    if [ "$#" -eq 1 ] && [ "$1" = "--small" ]; then
+      if [ ! -d ./small ]; then                                                          
+        echo "Generating small-size inputs"                                             
+        # FIXME PR: Do we need all of them?                                             
+        curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/unix50.zip' > unix50.zip
+        unzip unix50.zip                                                                 
+        rm -f unix50.zip                                                                 
+      fi                                                                                 
+      return 0
+    fi
+  
     for input in ${inputs[@]}
     do
         if [ ! -f "${input}.txt" ]; then
@@ -49,17 +61,6 @@ setup_dataset() {
             for (( i = 0; i < max ; i++ )); do
                 cat $file >> $new_file;
             done
-        done
-    fi
-
-    if [ "$#" -eq 1 ] && [ "$1" = "--small" ]; then
-        # generate small inputs 
-        mkdir small -p
-        for file in *.txt; do
-            len=$(cat $file | wc -l)
-            nsize=$(( $len / 5 ))
-            echo $file $nsize
-            head -n $nsize $file > small/$file
         done
     fi
 }
