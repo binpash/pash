@@ -60,7 +60,7 @@ case "$distro" in
         # Build runtime tools: eager, split
         cd ../../runtime/
         make &> $LOG_DIR/make.log
-        if [[ $PASH_HOST == "docker" ]]; then
+        if [ -f /.dockerenv ]; then
             # issue with docker only
             python3 -m pip install -U --force-reinstall pip
             cp /opt/pash/pa.sh /usr/bin/
@@ -105,7 +105,7 @@ echo "Do not forget to export PASH_TOP before using pash: \`export PASH_TOP=$PAS
 echo '(optionally, you can update PATH to include it: `export PATH=$PATH:$PASH_TOP`)'
 echo " * * * "
 # in case we are running on docker or CI, installation is complete at this moment
-if [[ "$PASH_HOST" != "" ]]; then
+if [[ -f /.dockerenv || -f /.githubenv ]]; then
     exit 0  
 fi
 ## append PASH Configuration paths to the respective rc files

@@ -43,6 +43,22 @@ append_nl_if_not(){
   fi
 }
 
+install_deps_source_setup() {
+    # move to the input directory
+    cd input/
+    # check if there are dependencies
+    if [ -e install-deps.sh ]; then
+        echo "Installing dependencies"
+        bash install-deps.sh
+    fi
+    # source the setup file
+    # it contains the fetch dataset function
+    # and the export variable function for IN, IN_PRE
+    source setup.sh
+    # fetch the dataset
+    setup_dataset $1 > /dev/null
+    cd ..
+}
 #########################
 # The command line help #
 #########################

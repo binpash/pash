@@ -1,0 +1,3 @@
+export DICT=../input/sorted_words
+export LC_COLLATE=C 
+cat $PASH_TOP/evaluation/tests/input/10M.txt | comm -23 - $DICT > out

@@ -2,8 +2,6 @@
 
 #set -e
 
-cd $(dirname $0)
-
 wiki_archive="https://dumps.wikimedia.org/other/static_html_dumps/current/en/wikipedia-en-html.tar.7z"
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 
@@ -12,13 +10,15 @@ PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 [ "$1" = "-c" ] && rm-files en/ *.7z *.tar  500.txt 1000.txt full small
 
 setup_dataset() {
-  rm -rf en ../1-grams.txt ../2-grams.txt 
+  rm -rf ../1-grams.txt ../2-grams.txt 
   if [ "$1" = "--small" ]; then
-    # 500 entries
-    wget http://pac-n4.csail.mit.edu:81/pash_data/small/web-index.small.zip
-    unzip web-index.small.zip
-    mv small/* .
-    rm -rf small web-index.small.zip
+    if [[ ! -d ./en ]]; then
+      # 500 entries
+      wget http://pac-n4.csail.mit.edu:81/pash_data/small/web-index.small.zip
+      unzip web-index.small.zip
+      mv small/* .
+      rm -rf small web-index.small.zip
+    fi
   elif [ "$1" = "--gen-full" ]; then
     wget $wiki_archive || eexit "cannot fetch wikipedia"
     7za x wikipedia-en-html.tar.7z

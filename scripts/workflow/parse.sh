@@ -15,5 +15,3 @@ while read p; do
       cat log_results/${f}_failed.log
     fi
 done < log_results/out
-
-
