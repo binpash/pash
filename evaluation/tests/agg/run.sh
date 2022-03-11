@@ -1,36 +1,38 @@
-#!/usr/bin/env bash
-# time: print real in seconds, to simplify parsing
+#!/bin/bash
 
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
+# time: print real in seconds, to simplify parsing
 
-## TODO: Make the compiler work too.
 bash="bash"
-pash="$PASH_TOP/pa.sh -w 2"
+pash="$PASH_TOP/pa.sh --r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven"
 
-output_dir="$PASH_TOP/evaluation/intro/output"
+output_dir="$PASH_TOP/evaluation/tests/agg/output"
 rm -rf "$output_dir"
 mkdir -p "$output_dir"
 
-( cd "$PASH_TOP/evaluation/intro/input"; ./setup.sh ) 
 run_test()
 {
     local test=$1
     echo -n "Running $test..."
-    TIMEFORMAT="${test%%.*}:%3R" # %3U %3S"
-    { time $bash "$test" > "$output_dir/$test.bash.out"; } 2>>  $output_dir/results.time_bash
+    TIMEFORMAT="${test%%.*}:%3R"
+    { time $bash $test > "$output_dir/$test.bash.out"; } 2>> $output_dir/results.time_bash
     test_bash_ec=$?
-    TIMEFORMAT="%3R" # %3U %3S"
-    { time $pash "$test" > "$output_dir/$test.pash.out"; } 2>>  $output_dir/results.time_pash
+    TIMEFORMAT="%3R"
+    { time $pash "$test" > "$output_dir/$test.pash.out"; } 2>> $output_dir/results.time_pash
     test_pash_ec=$?
     diff "$output_dir/$test.bash.out" "$output_dir/$test.pash.out"
     test_diff_ec=$?
+
+    ## Check if the two exit codes are both success or both error
+    { [ $test_bash_ec -eq 0 ] && [ $test_pash_ec -eq 0 ]; } || { [ $test_bash_ec -ne 0 ] && [ $test_pash_ec -ne 0 ]; }
+    test_ec=$?
     if [ $test_diff_ec -ne 0 ]; then
-        echo -n "$test output mismatch"
+        echo -n "$test output mismatch "
     fi
-    if [ $test_bash_ec -ne $test_pash_ec ]; then
-        echo -n "$test exit code mismatch"
+    if [ $test_ec -ne 0 ]; then
+        echo -n "$test exit code mismatch "
     fi
-    if [ $test_diff_ec -ne 0 ] || [ $test_bash_ec -ne $test_pash_ec ]; then
+    if [ $test_diff_ec -ne 0 ] || [ $test_ec -ne 0 ]; then
         echo "$test are not identical" >> $output_dir/result_status
         echo -e '\t\tFAIL'
         return 1
@@ -40,14 +42,16 @@ run_test()
         return 0
     fi
 }
-
-run_test "demo-spell.sh"
-run_test "hello-world.sh"
+## We run all tests composed with && to exit on the first that fails
+for testname in `ls test-* -v`
+do
+    run_test "$testname"
+done
 
 if type lsb_release >/dev/null 2>&1 ; then
-   distro=$(lsb_release -i -s)
+    distro=$(lsb_release -i -s)
 elif [ -e /etc/os-release ] ; then
-   distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
+    distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
 fi
 
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
@@ -63,7 +67,7 @@ case "$distro" in
         ;;
 esac
 
-echo "group,Bash,Pash2" > $output_dir/results.time
+echo "group,Bash,Pash" > $output_dir/results.time
 paste $output_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's/\t/,/' >> $output_dir/results.time
 
 echo "Below follow the identical outputs:"
