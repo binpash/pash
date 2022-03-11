@@ -1,1 +1,0 @@
-cat $PASH_TOP/evaluation/tests/input/10M.txt |  import subprocess with open('stuff.txt', 'r') as f: lines = f.readlines() for i, line in enumerate(lines): filename = 'cmd-%02d' % i with open(filename, 'w') as f: f.write(line) subprocess.call(['chmod', '0755', filename]) > out

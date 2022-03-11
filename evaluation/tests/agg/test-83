@@ -1,1 +1,0 @@
-cat $PASH_TOP/evaluation/tests/input/10M.txt |  # trim spaces left and right awk '{$1=$1};1' > out

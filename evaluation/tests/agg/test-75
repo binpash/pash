@@ -1,3 +1,0 @@
-cat $PASH_TOP/evaluation/tests/input/10M.txt |  # echo 'doing
-fostered
-programs' | ./cmd-74 $(dirname $0)/deps/stem-words.js > out
