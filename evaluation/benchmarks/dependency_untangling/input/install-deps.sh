@@ -1,7 +1,7 @@
 IN=$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/
 mkdir -p ${IN}/deps/
 # install dependencies
-pkgs='ffmpeg unrtf imagemagick libarchive-tools zstd liblzma-dev libbz2-dev zip unzip nodejs'
+pkgs='ffmpeg unrtf imagemagick libarchive-tools zstd liblzma-dev libbz2-dev zip unzip nodejs tcpdump'
 
 if ! dpkg -s $pkgs >/dev/null 2>&1 ; then
     sudo apt-get install $pkgs -y
