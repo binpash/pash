@@ -62,7 +62,8 @@ function run_all_benchmarks() {
   cd ${PASH_TOP}/evaluation/benchmarks
   # remove all res files from previous runs
   find . -type d -name "outputs" | xargs rm -rf
-  find . -type d -name "output" | xargs rm -rf
+  # do not remove any input from the node_modules dataset
+  find . -type d -not -path "*/node_modules/*" -name "output" | xargs rm -rf 
   find . -type d -name "pash_logs" | xargs rm -rf
   find . -type f -name "*.res" | xargs rm -f
   # start preparing from execution
