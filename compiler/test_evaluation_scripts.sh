@@ -221,8 +221,8 @@ esac
 echo "group,Bash,Pash2,Pash8" > ${results_time}
 paste -d'@' $test_results_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's\@\,\g' >> ${results_time}
 
-echo "Below follow the identical outputs:"
-grep "are identical" "$test_results_dir"/result_status | awk '{print $1}'
+#echo "Below follow the identical outputs:"
+#grep "are identical" "$test_results_dir"/result_status | awk '{print $1}'
 
 echo "Below follow the non-identical outputs:"     
 grep "are not identical" "$test_results_dir"/result_status | awk '{print $1}'
