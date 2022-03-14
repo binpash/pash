@@ -1,1 +1,1 @@
-cat $PASH_TOP/evaluation/tests/input/10M.txt |  paste - - > out
+cat $PASH_TOP/evaluation/tests/input/1M.txt |  paste - - > out
