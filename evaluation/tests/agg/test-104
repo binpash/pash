@@ -1,1 +1,1 @@
-cat $PASH_TOP/evaluation/tests/input/10M.txt |  tr [:upper:] [:lower:] > out
+cat $PASH_TOP/evaluation/tests/input/1M.txt |  tr [:upper:] [:lower:] > out
