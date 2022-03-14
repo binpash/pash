@@ -1,1 +1,1 @@
-cat $PASH_TOP/evaluation/tests/input/10M.txt |  cut -f2,5 > out
+cat $PASH_TOP/evaluation/tests/input/1M.txt |  cut -f2,5 > out
