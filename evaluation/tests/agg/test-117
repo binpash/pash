@@ -1,1 +1,1 @@
-cat $PASH_TOP/evaluation/tests/input/10M.txt |  wc -m > out
+cat $PASH_TOP/evaluation/tests/input/1M.txt |  wc -m > out
