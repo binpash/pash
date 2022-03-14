@@ -1,1 +1,1 @@
-cat $PASH_TOP/evaluation/tests/input/10M.txt |  col -bx > out
+cat $PASH_TOP/evaluation/tests/input/1M.txt |  col -bx > out

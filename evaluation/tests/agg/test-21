@@ -1,1 +1,1 @@
-cat $PASH_TOP/evaluation/tests/input/10M.txt |  grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' > out
+cat $PASH_TOP/evaluation/tests/input/1M.txt |  grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' > out
