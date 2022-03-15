@@ -153,6 +153,11 @@ else
         exit 1
     fi
 
+    if [ "$distributed_exec" -eq 1 ]; then
+        declared_functions="${PASH_TMP_PREFIX}/pash_$RANDOM$RANDOM$RANDOM"
+        declare -f > $declared_functions
+        export declared_functions
+    fi
     ##
     ## (3)
     ##
