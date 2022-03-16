@@ -15,7 +15,7 @@ jobs:
 
     - name: Inject slug/short variables
       uses: rlespinasse/github-slug-action@v3.x
-    - name: Trigger Future CI
+    - name: Trigger Posix CI
       run: |
         # get the currenet commit
         commit=${{ env.GITHUB_SHA_SHORT }}
