@@ -128,8 +128,8 @@ class WorkersManager():
                 args = request.split(':', 1)[1].strip()
                 filename, declared_functions_file = args.split()
 
-                # Split Graph
-                worker_graph_pairs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename, self.get_worker)
+                # Split graph
+                worker_subgraph_pairs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename, self.get_worker)
                 script_fname = to_shell_file(main_graph, self.args)
                 log("Master node graph stored in ", script_fname)
                 
@@ -142,7 +142,7 @@ class WorkersManager():
                 dspash_socket.respond(response_msg, conn)
 
                 # Execute subgraphs on workers
-                for worker, subgraph in worker_graph_pairs:
+                for worker, subgraph in worker_subgraph_pairs:
                     worker.send_graph_exec_request(subgraph, shell_vars, declared_functions)
             else:
                 raise Exception(f"Unknown request: {request}")
