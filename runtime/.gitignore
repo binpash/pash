@@ -5,5 +5,6 @@ r_merge
 r_unwrap
 r_wrap
 set-diff
+dspash/socket_pipe
 tests/perf*
 tests/*out
