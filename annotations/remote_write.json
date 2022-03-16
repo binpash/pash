@@ -1,0 +1,12 @@
+{
+    "command": "remote_write.sh",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"]
+        }
+    ]
+}

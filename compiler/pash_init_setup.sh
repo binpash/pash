@@ -22,6 +22,8 @@ export pash_daemon=1
 export pash_parallel_pipelines=0
 export pash_daemon_communicates_through_unix_pipes_flag=0
 export show_version=0
+export distributed_exec=0
+
 for item in $@
 do
     if [ "$pash_checking_speculation" -eq 1 ]; then
@@ -95,6 +97,10 @@ do
 
     if [ "--daemon_communicates_through_unix_pipes" == "$item" ]; then
         export pash_daemon_communicates_through_unix_pipes_flag=1
+    fi
+
+    if [ "--distributed_exec" == "$item" ]; then
+        export distributed_exec=1
     fi
 done
 
@@ -217,6 +223,16 @@ else
     }
 fi
 
+if [ "$distributed_exec" -eq 1 ]; then
+    pash_communicate_worker_manager()
+    {
+        local message=$1
+        pash_redir_output echo "Sending msg to worker manager: $message"
+        manager_response=$(echo "$message" | nc -U "$DSPASH_SOCKET")
+        pash_redir_output echo "Got response from worker manager: $manager_response"
+        echo "$manager_response"
+    }
+fi
 export -f pash_communicate_daemon
 export -f pash_communicate_daemon_just_send
 export -f pash_wait_until_daemon_listening
