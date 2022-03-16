@@ -252,7 +252,7 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
 
     return main_graph, worker_subgraph_pairs
 
-def prepare_graph_for_remote_exec(filename, get_worker):
+def prepare_graph_for_remote_exec(filename:str, get_worker:Callable):
     """
     Reads the complete ir from filename and splits it
     into subgraphs where ony the first subgraph represent a continues
@@ -263,7 +263,7 @@ def prepare_graph_for_remote_exec(filename, get_worker):
     Returns: 
         worker_graph_pairs: List of (worker, subgraph)
         shell_vars: shell variables
-        final_graph: The ir we need to execute on the main shell. 
+        main_graph: The ir we need to execute on the main shell. 
             This graph contains edges to correctly redirect the following to remote workers
             - special pipes (stdin/stdout)
             - named pipes reading and writing
