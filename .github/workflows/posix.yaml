@@ -17,8 +17,8 @@ jobs:
       uses: rlespinasse/github-slug-action@v3.x
     - name: Trigger Posix CI
       run: |
-        # get the currenet commit
-        commit=${{ env.GITHUB_SHA_SHORT }}
+        # get the current commit
+        commit=${{ env.GITHUB_EVENT_PULL_REQUEST_HEAD_SHA_SHORT }}
         # get the current branch
         branch=${{ env.GITHUB_HEAD_REF_SLUG }}
         echo "Status: $id $commit $branch"
