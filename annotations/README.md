@@ -1,5 +1,5 @@
 # Parallelizability Study & Annotation Language
-Quick Jump: [Parallelizability](#main-parallelizability-classes) | [study](#parallelizability-study-of-commands-in-gnu--posix) | [example 1](#a-simple-example-chmod) | [example 1](#another-example-cut) | [howto](#how-to-annotate-a-command) | [issues](#Issues)
+Quick Jump: [Parallelizability](#main-parallelizability-classes) | [study](#parallelizability-study-of-commands-in-gnu--posix) | [example 1](#a-simple-example-chmod) | [example 2](#another-example-cut) | [howto](#how-to-annotate-a-command) | [issues](#Issues)
 
 PaSh includes 
   (i) a parallelizability study of commands in POSIX and GNU Coreutils, and 
