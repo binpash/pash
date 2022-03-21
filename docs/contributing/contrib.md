@@ -55,6 +55,7 @@ docker cp A B                    # copy host<->container; A B can be `NN:/x/y/z`
 ```
 
 Useful options for `docker run`:
+
 * [Mount host storage](https://docs.docker.com/storage/bind-mounts/): `-v /HST:/IN/NN`
 * [Limit CPU/Mem](https://docs.docker.com/config/containers/resource_constraints/): `--cpus='.5' --mem=1g`
 * [Limit disk size](https://docs.docker.com/engine/reference/commandline/run/#set-storage-driver-options-per-container): `--storage-opt size=10G`
