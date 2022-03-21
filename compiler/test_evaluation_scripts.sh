@@ -42,7 +42,6 @@ cd -
 
 n_inputs=(
     2
-    8
 )
 
 if [ "$EXPERIMENTAL" -eq 1 ]; then
@@ -56,7 +55,7 @@ if [ "$EXPERIMENTAL" -eq 1 ]; then
     )
 else
     configurations=(
-        "--r_split --dgsh_tee --parallel_pipelines --profile_driven"
+        "--distributed_exec --no_eager"
     )
 fi
 
@@ -107,9 +106,7 @@ execute_pash_and_check_diff() {
 
         { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
         b=$(cat "$pash_time"); 
-        test_diff_ec=0
-        $(diff "$seq_output" "$pash_output" || test_diff_ec=$?)
-        echo "$c$b" > "${pash_time}"
+        test_diff_ec=$(cmp -s "$seq_output" "$pash_output" && echo 0 || echo 1)
         # differ
         script=$(basename $script_to_execute)
         if [ $test_diff_ec -ne 0 ]; then
