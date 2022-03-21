@@ -108,6 +108,7 @@ wsl --set-default-version 2
 ```
 
 Install one of the Linux distributions on which PaSh has been tested from the Microsoft Store:
+
 * [Ubuntu 18.04 LTS](https://www.microsoft.com/store/apps/9N9TNGVNDL3Q)
 * [Ubuntu 20.04 LTS](https://www.microsoft.com/store/apps/9n6svws3rx71)
 * [Debian GNU/Linux](https://www.microsoft.com/store/apps/9MSVKQC78PK6)
