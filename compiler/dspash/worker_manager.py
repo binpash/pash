@@ -83,10 +83,13 @@ class WorkersManager():
         # Required to create a correct multi sink graph
         self.args.termination = "" 
 
-    def get_worker(self) -> WorkerConnection:
+    def get_worker(self, fids = []) -> WorkerConnection:
         best_worker = None  # Online worker with least work
         for worker in self.workers:
             if not worker.is_online():
+                continue
+            
+            if any(map(lambda fid: not fid.is_available_on(worker.host()), fids)):
                 continue
 
             if best_worker is None or best_worker.get_running_processes() > worker.get_running_processes():
