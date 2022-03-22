@@ -118,3 +118,7 @@ class FileId:
 
     def get_ident(self):
         return self.ident
+
+    def is_available_on(self, host):
+        assert(self.has_resource())
+        return self.resource.is_available_on(host)

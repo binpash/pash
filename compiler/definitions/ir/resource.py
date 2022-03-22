@@ -1,6 +1,7 @@
 from definitions.ir.arg import *
 from util import *
 from ir_utils import *
+import socket
 
 ## TODO: Resources should probably be more elaborate than just a
 ## string and a line range. They could be URLs, and possibly other things.
@@ -26,6 +27,9 @@ class Resource:
             return self.uri == other.uri
         return False
     
+    def is_available_on(self, host):
+        return False
+    
 class FileDescriptorResource(Resource):
     def __init__(self, fd):
         assert(isinstance(fd, tuple)
@@ -39,6 +43,9 @@ class FileDescriptorResource(Resource):
     def is_stdout(self):
         return (self.uri == ('fd', 1))
 
+    def is_available_on(self, host):
+        return True
+
 
 class FileResource(Resource):
     ## The uri is the path of the file.
@@ -46,13 +53,20 @@ class FileResource(Resource):
         assert(isinstance(path, Arg))
         ## TODO: Make sure that paths are normalized
         self.uri = path
+        self.data_hosts = [socket.gethostbyname(socket.gethostname())]
 
     def __eq__(self, other):
         if isinstance(other, FileResource):
             return self.uri == other.uri
         return False
+    
+    def is_available_on(self, host):
+        return host in self.data_hosts
 
 
 class EphemeralResource(Resource):
     def __init__(self):
         self.uri = None
+
+    def is_available_on(self, host):
+        return True
