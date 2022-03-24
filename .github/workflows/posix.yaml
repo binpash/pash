@@ -8,6 +8,13 @@ on:
           - runtime/**
           - evaluation/**
           - annotations/**
+  pull_request_target:
+    types: [assigned, opened, synchronize, reopened, ready_for_review]
+    paths: 
+          - compiler/**
+          - runtime/**
+          - evaluation/**
+          - annotations/**
 jobs:
   issue-jobs:
     runs-on: ubuntu-latest
