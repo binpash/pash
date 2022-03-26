@@ -208,6 +208,15 @@ def compile_node_command(ast_node, fileIdGen, config):
 
     ## If there are no arguments, the command is just an
     ## assignment
+    ##
+    ## TODO: The if-branch of this conditional should never be possible since the preprocessor
+    ##       wouldn't replace a call without arguments (simple assignment).
+    ##
+    ##       Also the return is not in the correct indentation so probably it never gets called
+    ##       in our tests.
+    ##
+    ##       We should remove it and add the following assert:
+    ##         assert len(ast_node.arguments) > 0
     if(len(ast_node.arguments) == 0):
         ## Just compile the assignments. Specifically compile the
         ## assigned values, because they might have command
