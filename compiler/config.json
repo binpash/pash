@@ -7,6 +7,8 @@
         "r_wrap_binary": "runtime/r_wrap",
         "r_unwrap_binary": "runtime/r_unwrap",
         "dgsh_tee_binary": "runtime/dgsh_tee.sh",
+        "remote_read_binary": "runtime/dspash/remote_read.sh",
+        "remote_write_binary": "runtime/dspash/remote_write.sh",
         "clean_up_graph_binary": "runtime/wait_for_output_and_sigpipe_rest.sh",
         "redirect_stdin_binary": "runtime/redirect_stdin_to.sh",
         "immediate": "./.pash_immediate_command.sh",
