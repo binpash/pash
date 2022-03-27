@@ -73,7 +73,7 @@ def _getIPs(raw):
 if __name__ == "__main__":
     assert len(sys.argv) == 2
     filename = sys.argv[1]
-    info = getinfo(filename)
+    info = FileData(filename)
     print("Size = ", info.size)
     paths = info.paths()
     for i in range(len(paths)):
