@@ -70,3 +70,21 @@ class EphemeralResource(Resource):
 
     def is_available_on(self, host):
         return True
+
+class HDFSFileResource(Resource):
+    ## The uri is the path of the file.
+    def __init__(self, path, data_hosts):
+        ## TODO: Make sure that paths are normalized
+        self.uri = path
+        self.data_hosts = data_hosts
+
+    def __eq__(self, other):
+        if isinstance(other, FileResource):
+            return self.uri == other.uri
+        return False
+    
+    def is_available_on(self, host):
+        return host in self.data_hosts
+
+    def __str__(self):
+        return f"$HDFS_DATENODE_DIR/{self.uri}"
