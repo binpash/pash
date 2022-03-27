@@ -87,4 +87,4 @@ class HDFSFileResource(Resource):
         return host in self.data_hosts
 
     def __str__(self):
-        return f"$HDFS_DATENODE_DIR/{self.uri}"
+        return f"$HDFS_DATANODE_DIR/{self.uri}"
