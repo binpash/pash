@@ -73,16 +73,29 @@ class EphemeralResource(Resource):
 
 class HDFSFileResource(Resource):
     ## The uri is the path of the file.
-    def __init__(self, path, data_hosts):
+    def __init__(self, path, data_addr):
         ## TODO: Make sure that paths are normalized
         self.uri = path
-        self.data_hosts = data_hosts
+        self.data_hosts = self._process_hosts_addr(data_addr)
 
     def __eq__(self, other):
         if isinstance(other, FileResource):
             return self.uri == other.uri
         return False
     
+    def _process_hosts_addr(self, data_addr):
+        """
+        Removes port number if supplied in address and normalizes host address
+        Example1: datanode1 -> 172.18.0.3
+        Example2: 172.18.0.3:5555 -> 172.18.0.3
+        """
+        data_hosts = []
+        for addr in data_addr:
+            host = addr.rsplit(":", 1)[0]
+            normalized_host = socket.gethostbyaddr(host)[2][0]
+            data_hosts.append(normalized_host)
+        return data_hosts
+
     def is_available_on(self, host):
         return host in self.data_hosts
 
