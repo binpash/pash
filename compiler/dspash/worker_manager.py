@@ -85,6 +85,8 @@ class WorkersManager():
 
     def get_worker(self, fids = []) -> WorkerConnection:
         best_worker = None  # Online worker with least work
+        
+        fids = list(fids)
         for worker in self.workers:
             if not worker.is_online():
                 continue

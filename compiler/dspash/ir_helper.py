@@ -187,7 +187,7 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
 
     # Replace output edges and corrosponding input edges with remote read/write
     for subgraph in subgraphs:
-        worker = get_worker(subgraph.all_input_fids())
+        worker = get_worker(filter(lambda fid: fid.has_remote_file_resource(), subgraph.all_fids()))
         worker._running_processes += 1
         worker_subgraph_pairs.append((worker, subgraph))
         sink_nodes = subgraph.sink_nodes()
