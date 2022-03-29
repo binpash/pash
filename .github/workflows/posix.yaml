@@ -1,15 +1,8 @@
-name: Posix-CI
+name: Posix Correctness
 on:
-  push:
-    branches:
-      - main
-    paths: 
-          - compiler/**
-          - runtime/**
-          - evaluation/**
-          - annotations/**
   pull_request_target:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
+      # the paths that trigger the ci
     paths: 
           - compiler/**
           - runtime/**
@@ -37,7 +30,7 @@ jobs:
         # poll until we get the results
         while true; do
           echo "Sleeping"
-          sleep 30;
+          sleep 360;
           # fetch some of the latest results in case some other actions happened
           data=$(curl -s "ctrl.pash.ndr.md/job=fetch_runs&count=50");
           results=$(echo $data | jq '.rows | .[] | select(.commit=='\"$commit\"')')
