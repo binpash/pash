@@ -308,7 +308,7 @@ class DFGNode:
                 raise NotImplementedError()
 
 
-    ## This renames the from_id (wherever it exists in inputs ot outputs)
+    ## This renames the from_id (wherever it exists in inputs or outputs)
     ## to the to_id.
     ##
     ## TODO: Make sure we don't need to change redirections here.
