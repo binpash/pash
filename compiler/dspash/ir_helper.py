@@ -146,8 +146,7 @@ def split_ir(graph: IR) -> (List[IR], Dict[int, IR]):
         subgraph.add_node(node)
 
         next_ids = graph.get_next_nodes(old_node_id)
-        # Second condition makes sure we are not stepping into merger by mistake (eg set-diff)
-        if (len(input_fids) == len(next_ids) == 1) and (not output_fid.get_ident() in input_fifo_map):
+        if len(next_ids) == 1:
             queue.append((next_ids[0], subgraph))
         else:
             subgraphs.append(subgraph)
