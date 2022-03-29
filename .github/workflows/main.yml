@@ -1,4 +1,4 @@
-name: Pash-Correctness-Tests
+name: Tests
 on: 
   pull_request_target:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
