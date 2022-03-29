@@ -3,6 +3,8 @@
 > _A system for parallelizing POSIX shell scripts._
 > _Hosted by the [Linux Foundation](https://linuxfoundation.org/press-release/linux-foundation-to-host-the-pash-project-accelerating-shell-scripting-with-automated-parallelization-for-industrial-use-cases/)._
 
+[![Tests](https://github.com/binpash/pash/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/binpash/pash/actions/workflows/main.yml)
+
 Quick Jump: [Running PaSh](#running-pash) | [Installation](#installation) | [Testing](#testing) | [Repo Structure](#repo-structure) | [Community & More](#community--more) | [Citing](#citing)
 
 ## Running PaSh
