@@ -5,16 +5,14 @@ import socket
 import subprocess
 import sys
 import traceback
-from threading import Thread
+
 from datetime import datetime
-import queue
 
 from annotations import *
 import config
 from pash_graphviz import maybe_generate_graphviz
 import pash_runtime
 from util import *
-from dspash.worker_manager import WorkersManager
 
 ##
 # A Daemon responding to requests for compilation
@@ -298,7 +296,6 @@ class Scheduler:
 
         ast_or_ir = pash_runtime.compile_ir(
             input_ir_file, compiled_script_file, config.pash_args, compiler_config)
-
         daemon_compile_end_time = datetime.now()
         print_time_delta("Daemon Compile", daemon_compile_start_time, daemon_compile_end_time)
 
@@ -620,12 +617,6 @@ def shutdown():
 
 def main():
     args = init()
-    if args.distributed_exec:
-        worker_manager = WorkersManager()
-        config.worker_manager = worker_manager
-        worker_manager_thread = Thread(target=worker_manager.run)
-        worker_manager_thread.start()
-
     scheduler = Scheduler()
     scheduler.run()
    
