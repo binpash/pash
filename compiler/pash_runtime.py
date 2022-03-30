@@ -22,6 +22,8 @@ import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_unwrap as r_unwrap
 import definitions.ir.nodes.dgsh_tee as dgsh_tee
 
+# Distirbuted Exec
+import dspash.hdfs_utils as hdfs_utils 
 
 runtime_config = {}
 ## We want to catch all exceptions here so that they are logged correctly
@@ -360,6 +362,48 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_fl
 
     return new_merger
 
+def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
+    """
+    Replaces hdfs cat with a cat per block, each cat uses has an HDFSResource input fid
+    Returns: A normal Cat that merges the blocks (will be removed when parallizing next_node)
+    """
+    assert(isinstance(hdfs_cat, HDFSCat))
+
+    ## At the moment this only works for nodes that have one standard input.
+    if len(next_node.get_standard_inputs()) != 1:
+        return
+
+    hdfscat_input_id = hdfs_cat.get_standard_inputs()[0]
+    hdfs_fid = graph.get_edge_fid(hdfscat_input_id)
+    hdfs_filepath = str(hdfs_fid.get_resource())
+    output_ids = []
+
+    # Create a cat command per file block
+    file_blocks = hdfs_utils.get_file_blocks(hdfs_filepath)
+    for block, block_hosts in file_blocks:
+        resource = HDFSFileResource(block, block_hosts)
+        block_fid = fileIdGen.next_file_id()  
+        block_fid.set_resource(resource)
+        graph.add_edge(block_fid)
+
+        output_fid = fileIdGen.next_file_id()
+        output_fid.make_ephemeral()
+        output_ids.append(output_fid.get_ident())
+        graph.add_edge(output_fid)
+
+        cat_block = make_cat_node([block_fid.get_ident()], output_fid.get_ident())
+        graph.add_node(cat_block)
+
+    # Remove the HDFS Cat command as it's not used anymore
+    graph.remove_node(hdfs_cat.get_id())
+
+    ## input of next command is output of new merger.
+    input_id = next_node.get_standard_inputs()[0]
+    new_merger = make_cat_node(output_ids, input_id)
+    graph.add_node(new_merger)
+
+    return new_merger
+
 
 ## TODO: There needs to be some state to keep track of open r-split sessions
 ##       (that either end at r-merge or at r_unwrap before a commutative command).
@@ -402,9 +446,11 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
                     or next_node.is_stateless()))):
             ## If the current node is not a merger, it means that we need
             ## to generate a merger using a splitter (auto_split or r_split)
-
+            if (isinstance(curr, HDFSCat) and config.pash_args.distributed_exec):
+                new_curr = split_hdfs_cat_input(curr, next_node, graph, fileIdGen) # Cat merger
+                new_curr_id = new_curr.get_id()
             ## no_cat_split_vanish shortcircuits this and inserts a split even if the current node is a cat.
-            if(fan_out > 1
+            elif (fan_out > 1
                and (no_cat_split_vanish
                     or (not (isinstance(curr, Cat)
                              or isinstance(curr, r_merge.RMerge))
