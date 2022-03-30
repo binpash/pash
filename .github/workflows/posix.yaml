@@ -1,4 +1,4 @@
-name: Posix Correctness
+name: Posix Tests
 on:
   pull_request_target:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
@@ -18,9 +18,9 @@ jobs:
     - name: Trigger Posix CI
       run: |
         # get the current commit
-        commit=${{ env.GITHUB_EVENT_PULL_REQUEST_HEAD_SHA_SHORT }}
+        commit="6d8f7ef" #${{ env.GITHUB_EVENT_PULL_REQUEST_HEAD_SHA_SHORT }}
         # get the current branch
-        branch=${{ env.GITHUB_HEAD_REF_SLUG }}
+        branch="main" #${{ env.GITHUB_HEAD_REF_SLUG }}
         echo "Status: $id $commit $branch"
         # craft the execution request
         request="http://ctrl.pash.ndr.md/job=issue&branch=$branch&commit=$commit&benchmark=CORRECTNESS"
@@ -30,7 +30,7 @@ jobs:
         # poll until we get the results
         while true; do
           echo "Sleeping"
-          sleep 360;
+          sleep 30;
           # fetch some of the latest results in case some other actions happened
           data=$(curl -s "ctrl.pash.ndr.md/job=fetch_runs&count=50");
           results=$(echo $data | jq '.rows | .[] | select(.commit=='\"$commit\"')')
@@ -58,6 +58,7 @@ jobs:
         mkdir ~/artifact
         echo $results | jq -r 'select(.commit=='\"$commit\"') | .tests' | jq . | jq -r '.[].posix_log' > ~/artifact/posix.log
         mv t ~/artifact/all_tests.log
+        # zip the results
     - uses: actions/upload-artifact@v3
       with:
         name: correctness-artifact
