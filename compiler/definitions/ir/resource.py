@@ -60,10 +60,13 @@ class EphemeralResource(Resource):
 
 class RemoteFileResource(Resource):
     def __init__(self):
-        raise Exception("RemoteFileResource is an interface")
+        raise NotImplementedError("RemoteFileResource is an interface")
 
     def __str__(self):
-        raise Exception("RemoteFileResource is an interface")
+        raise NotImplementedError("RemoteFileResource is an interface")
+
+    def is_available_on(self, host):
+        raise NotImplementedError("RemoteFileResource is an interface")
 
     def _normalize_addr(self, addr):
         """
@@ -97,6 +100,6 @@ class HDFSFileResource(RemoteFileResource):
 
     def __repr__(self):
         return f'hdfs://{str(self.uri)}'
-        
+
     def __str__(self):
         return f"$HDFS_DATANODE_DIR/{str(self.uri)}"
