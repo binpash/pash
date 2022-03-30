@@ -2,13 +2,13 @@ import os
 import subprocess
 import sys
 
-
 class FileData(object):
-    def __init__(self):
+    def __init__(self, filename):
         self.blocknames = []
         self.dnodenames = []
         self.machines = []
         self.size = 0
+        self._getinfo(filename)
         # self.dnodepath = subprocess.check_output("hdfs getconf -confKey dfs.datanode.data.dir", shell=True).decode("utf-8").strip("\n")
         # if (self.dnodepath.startswith("file://")):
         #    self.dnodepath = self.dnodepath[len("file://"):]
@@ -32,8 +32,37 @@ class FileData(object):
             )
         return filepaths
 
+    def _getinfo(self, filename):
+        info = self
+        log = subprocess.check_output(
+            "hdfs fsck {0} -files -blocks -locations".format(filename), shell=True, stderr=subprocess.PIPE
+        )
+        count = 0
+        for line in log.splitlines():
+            wordarr = line.split()
+            if len(wordarr) > 0 and wordarr[0].decode("utf-8") == filename and count == 0:
+                info.size = int(wordarr[1])
+                count += 1
+            elif (
+                len(wordarr) > 0
+                and count > 0
+                and wordarr[0][:-1].isdigit()
+                and int(wordarr[0][:-1]) == count - 1
+            ):
+                count += 1
+                rawinfo = wordarr[1].decode("utf-8").split(":")
+                info.blocknames.append(rawinfo[1][0 : rawinfo[1].rfind("_")])
+                info.dnodenames.append(rawinfo[0])
+                stline = line.decode("utf-8")
+                info.machines.append(
+                    _getIPs(stline[stline.find("DatanodeInfoWithStorage") - 1 :])
+                )
+        assert len(info.blocknames) != 0
+        assert len(info.dnodenames) != 0
+        assert info.size > 0
+        return info
 
-def getIPs(raw):
+def _getIPs(raw):
     rawparts = raw.split(" ")
     ips = []
     for part in rawparts:
@@ -41,42 +70,10 @@ def getIPs(raw):
         ips.append(part[index + len("DatanodeInfoWithStorage") + 1 : part.find(",")])
     return ips
 
-
-def getinfo(filename):
-    info = FileData()
-    log = subprocess.check_output(
-        "hdfs fsck {0} -files -blocks -locations".format(filename), shell=True
-    )
-    count = 0
-    for line in log.splitlines():
-        wordarr = line.split()
-        if len(wordarr) > 0 and wordarr[0].decode("utf-8") == filename and count == 0:
-            info.size = int(wordarr[1])
-            count += 1
-        elif (
-            len(wordarr) > 0
-            and count > 0
-            and wordarr[0][:-1].isdigit()
-            and int(wordarr[0][:-1]) == count - 1
-        ):
-            count += 1
-            rawinfo = wordarr[1].decode("utf-8").split(":")
-            info.blocknames.append(rawinfo[1][0 : rawinfo[1].rfind("_")])
-            info.dnodenames.append(rawinfo[0])
-            stline = line.decode("utf-8")
-            info.machines.append(
-                getIPs(stline[stline.find("DatanodeInfoWithStorage") - 1 :])
-            )
-    assert len(info.blocknames) != 0
-    assert len(info.dnodenames) != 0
-    assert info.size > 0
-    return info
-
-
 if __name__ == "__main__":
     assert len(sys.argv) == 2
     filename = sys.argv[1]
-    info = getinfo(filename)
+    info = FileData(filename)
     print("Size = ", info.size)
     paths = info.paths()
     for i in range(len(paths)):
