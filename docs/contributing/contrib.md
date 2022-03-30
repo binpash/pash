@@ -55,6 +55,7 @@ docker cp A B                    # copy host<->container; A B can be `NN:/x/y/z`
 ```
 
 Useful options for `docker run`:
+
 * [Mount host storage](https://docs.docker.com/storage/bind-mounts/): `-v /HST:/IN/NN`
 * [Limit CPU/Mem](https://docs.docker.com/config/containers/resource_constraints/): `--cpus='.5' --mem=1g`
 * [Limit disk size](https://docs.docker.com/engine/reference/commandline/run/#set-storage-driver-options-per-container): `--storage-opt size=10G`
@@ -107,6 +108,7 @@ wsl --set-default-version 2
 ```
 
 Install one of the Linux distributions on which PaSh has been tested from the Microsoft Store:
+
 * [Ubuntu 18.04 LTS](https://www.microsoft.com/store/apps/9N9TNGVNDL3Q)
 * [Ubuntu 20.04 LTS](https://www.microsoft.com/store/apps/9n6svws3rx71)
 * [Debian GNU/Linux](https://www.microsoft.com/store/apps/9MSVKQC78PK6)
