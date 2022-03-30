@@ -103,7 +103,7 @@ class FileId:
         return (isinstance(self.resource, FileDescriptorResource))
 
     def has_remote_file_resource(self):
-        return isinstance(self.resource, HDFSFileResource)
+        return isinstance(self.resource, RemoteFileResource)
 
     def is_ephemeral(self):
         return (isinstance(self.resource, EphemeralResource))
