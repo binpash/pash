@@ -1,0 +1,41 @@
+name: Build
+on: 
+  pull_request_target:
+    types: [assigned, opened, synchronize, reopened, ready_for_review]
+    # the paths that trigger the ci
+    paths: 
+        - compiler/**
+        - runtime/**
+        - evaluation/**
+        - annotations/**
+  push:
+    branches:
+      - main
+      - future
+    paths: 
+        - compiler/**
+        - runtime/**
+        - evaluation/**
+        - annotations/**
+
+# Jobs section
+jobs:
+  build-pash:
+      runs-on: ubuntu-latest
+      if: github.event.pull_request.draft == false
+      steps:
+        - uses: actions/checkout@v2 
+          with:
+            ref: ${{ github.event.pull_request.head.sha }}
+        - name: Building Pash
+          run: |
+            set -e
+            sudo touch /.githubenv
+            # install the system deps and pash the environment
+            sudo -E bash scripts/distro-deps.sh -o
+            # install pash
+            sudo -E bash scripts/setup-pash.sh -o
+            export PASH_TOP=$PWD
+            export PATH=$PATH:$PASH_TOP
+            # run a simple command
+            $PASH_TOP/pa.sh -c 'echo done'

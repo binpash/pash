@@ -8,6 +8,16 @@ on:
         - runtime/**
         - evaluation/**
         - annotations/**
+  push:
+    branches:
+      - main
+      - future
+    paths: 
+        - compiler/**
+        - runtime/**
+        - evaluation/**
+        - annotations/**
+
 # Jobs section
 jobs:
     Pash-Tests:
@@ -22,7 +32,7 @@ jobs:
         - uses: actions/checkout@v2 
           with:
             ref: ${{ github.event.pull_request.head.sha }}
-        - name: Running-Pash-Benchmarks
+        - name: Running Correctness Tests
           run: |
             sudo touch /.githubenv
             # install the system deps and pash the environment
@@ -49,13 +59,18 @@ jobs:
           with:
             script: |
               let body = `${{ env.VERSION }}`
+              console.log(context)
+              // if we are directly pushing on main/future, we cannot push comments -> exit
+              if (context.eventName === "push" && (context.ref === "refs/heads/main" || context.ref === "refs/heads/future")) {
+                return 0;
+              }
               github.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body: body,
               })     
-        - name: Exit-code
+        - name: Exit Code
           run: |
             # check if everything executed without errors
             cd scripts/workflow && bash exit_code.sh
