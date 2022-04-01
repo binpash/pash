@@ -107,14 +107,15 @@ execute_pash_and_check_diff() {
 
         { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
         b=$(cat "$pash_time"); 
-        test_diff_ec=0
-        $(diff "$seq_output" "$pash_output" || test_diff_ec=$?)
-        echo "$c$b" > "${pash_time}"
+        test_diff_ec=$(cmp -s "$seq_output" "$pash_output" && echo 0 || echo 1)
         # differ
         script=$(basename $script_to_execute)
         if [ $test_diff_ec -ne 0 ]; then
+            c=$(diff -s "$seq_output" "$pash_output" | head)
+            echo "$c$b" > "${pash_time}"
             echo "$script are not identical" >> $test_results_dir/result_status
         else
+            echo "Files $seq_output and $pash_output are identical" > "${pash_time}"
             echo "$script are identical" >> $test_results_dir/result_status
         fi
 
@@ -221,8 +222,8 @@ esac
 echo "group,Bash,Pash2,Pash8" > ${results_time}
 paste -d'@' $test_results_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's\@\,\g' >> ${results_time}
 
-echo "Below follow the identical outputs:"
-grep "are identical" "$test_results_dir"/result_status | awk '{print $1}'
+#echo "Below follow the identical outputs:"
+#grep "are identical" "$test_results_dir"/result_status | awk '{print $1}'
 
 echo "Below follow the non-identical outputs:"     
 grep "are not identical" "$test_results_dir"/result_status | awk '{print $1}'

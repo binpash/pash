@@ -10,7 +10,7 @@ If on other environments or prefer manual setup, there are essentially three ste
 Most scripts support a `--help` flag that documents their options. These three steps are described in detail below, depending on the environment.
 
 
-Quick Jump: [Clone & Setup](#) | [Manual Setup](#) | [Docker Setup](#) | [Windows using WSL](#repo-structure) 
+Quick Jump: [Clone & Setup](#) | [Manual Setup](#manual-setup) | [Docker Setup](#docker-setup) | [Windows using WSL](#windows-using-wsl) :
 
 
 ### Clone & Setup
