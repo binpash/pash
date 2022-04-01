@@ -1,4 +1,4 @@
-name: Pash-future-CI-issue
+name: Tight-Loop Test
 on:
   # Run the for-loop tests when pushing to future or when creating a new PR
   push:
@@ -18,7 +18,7 @@ on:
       - evaluation/**
       - annotations/**
 jobs:
-  future-ci:
+  tight-loop:
     runs-on: ubuntu-latest
     steps:
 
