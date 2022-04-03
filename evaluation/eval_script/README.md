@@ -257,8 +257,24 @@ TODO
 
 ## Claim 3: Performance evaluation
 
+### Legend of terminology correspondence
+
+- Flag names, legend names, (paper and code)
+
+For example:
+- dependency untangling -- parallel_pipelines
+
+### Explain scripts, how much they are expected to take, and what do the figure that they produce look like (and why they are slightly different)
+
 TODO
 
+#### How to read Figures
+
+- Explain legend, lines
+
+Some results differences (with the paper):
+- Some results are slightly worse w.r.t. absolute speedup (relative benefits are still the same) because the inputs are smaller and there is less potential for parallelizability
+- In Figure 7, AvgTemp is faster in the artifact figure because we forgot to add parallel_pipeliens (dependency untangling) and profile driven in the paper. Now we added them and therefore results are slightly better (relative speedups are still similar)
 
 <!-- ## Experimental Evaluation
 
