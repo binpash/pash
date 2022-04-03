@@ -1,21 +1,28 @@
 # OSDI'22 PaSh Artifact
->  This file is permanatly hosted as a [private gist](XXXX). _Please do not share this file, as it includes account credentials to a server for running the experiments!_
+>  This file is permanatly hosted as a [private gist (TODO)](XXXX). _Please do not share this file, as it includes account credentials to a server for running the experiments!_
 
-This tutorial covers the `pash`'s main functionality and key contributions as presented in the EuroSys paper.
+## Questions/Notes/TODOs (for us -- delete before uploading):
+
+- Do we want a video tutorial?
+- Is the docker image pash:latest?
+- Add graphviz in the quickcheck
+- Shrink the current claim paragraphs and make them 1-2 sentences for each component and inline them in the list of components. KK: For now I have commented them out
+
+
+This tutorial covers the `pash-jit`'s main functionality and key contributions as presented in the OSDI paper.
 Here is the table of contents:
 
 1. [Quick check](#quick-check)
-2. [Video Tutorial](#video-tutorial)
-3. [Claims](#claims)
-4. [Claim 1: Interfacing with the Shell](#claim-1-interfacing-with-the-shell)
-5. [Claim 2: Stateful Parallelizing Compilation Server](#claim-2-a-stateful-parallelizing-compilation-server)
-6. [Claim 3: Commutativity-aware Optimization](#claim-3-commutativity-aware-optimization)
-7. [Experimental Evaluation](#experimental-evaluation)
-8. [Support & Epilogue](#support--epilogue)
+2. [Components and Claims](#components-and-claims-artifact-functional)
+3. [Claim 1: Interfacing with the Shell](#claim-1-interfacing-with-the-shell)
+4. [Claim 2: Stateful Parallelizing Compilation Server](#claim-2-a-stateful-parallelizing-compilation-server)
+5. [Claim 3: Commutativity-aware Optimization](#claim-3-commutativity-aware-optimization)
+6. [Experimental Evaluation](#experimental-evaluation)
+7. [Support & Epilogue](#support--epilogue)
 
 The recommended exploration path the following 
   (1) start with the [quick check](#quick-check), to confirm you can access everything (about 5 minutes)
-  (2) watch the [video walkthrough](./artifact-video.mp4) of the entire artifact (about 20 minutes)
+  <!-- (2) watch the [video walkthrough](./artifact-video.mp4) of the entire artifact (about 20 minutes) -->
   (3) then cover details in this tutorial as necessary (the [full experimental run](#experimental-evaluation) takes several hours)
 
 ## Quick check
@@ -24,7 +31,7 @@ Here is how to check that everything works on your chosen evaluation environment
 
 #### Requirements
 
-The `pash` artifact has the following requirements:
+The artifact has the following requirements:
 * Hardware: a modern multi-processor, to show performance results (the more cpus, the merrier)
 * Software: automake bc curl gcc git libtool m4 python sudo wget bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config python3 python3-pip python3-setuptools python3-testresources wamerican-insane
 
@@ -33,7 +40,7 @@ The `deathstar` server below meets all these requirements;
 
 #### Evaluation Server (deathstar)
 
-We have created a reviewer account on `deathstar`, the machine used for all the results reported in the paper. Here _reviewers have to coordinate themselves other to not run checks/experiments at the same time_. To use `deathstar`, run a quick check with:
+We have created a reviewer account on `deathstar`, the machine used for all the performance results reported in the paper. Here _reviewers have to coordinate themselves other to not run checks/experiments at the same time_. To use `deathstar`, run a quick check with:
 
 ```sh
 ssh osdi22@deathstar.ndr.md                         
@@ -49,7 +56,6 @@ docker pull binpash/pash; docker run --name pash-playground -it binpash/pash
 ./opt/pash/scripts/quickcheck.sh                                            # this is typed _in_ the container
 ```
 
-#### Confirm Artifact Structure
 
 #### A Minimal Run: Demo Spell
 
@@ -78,7 +84,7 @@ On `deathstar`, it takes about 41s.
 To execute it using `pash` with 2x-parallelism:
 
 ```sh
-time $PASH_TOP/pa.sh -w 2 --log_file pash.log demo-spell.sh > pash-spell.out
+time $PASH_TOP/pa.sh -w 2 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
 ``` 
 
 On `deathstar`, the 2x-parallel script takes about 28s.
@@ -91,7 +97,7 @@ diff spell.out pash-spell.out
 
 You could also execute it with 8x-parallelism using:
 ```sh
-time $PASH_TOP/pa.sh -w 8 --log_file pash.log demo-spell.sh > pash-spell.out
+time $PASH_TOP/pa.sh -w 8 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
 ``` 
 
 which takes about 14s.
@@ -170,23 +176,37 @@ rm_pash_fifos
 
 Note that most stages in the pipeline are repeated twice and proceed in parallel (i.e., using `&`). This completes the "quick-check".
 
-## Video Tutorial
+<!-- ## Video Tutorial -->
 
 
-## Claims
+## Components and Claims (Artifact Functional)
 
-Our paper claims the following contributions:
-* [Annotations](#claim-1-parallelizability-study--annotation-language): A study of the parallelizability of shell commands, and a lightweight annotation language for commands that are executable in a data-parallel manner.
+Our paper describes the following system components:
+<!-- kk: Here we should describe system components -->
+* [Preprocesor] ... TODO: Add link to preprocessor (pash.py) and single sentence of what it does
+* [Parsing library] ... TODO: Add link to parsing library
+* [JIT Engine] ... TODO: Add link to pash_runtime.sh
+* [Parallelizing Compilation Server] ... TODO: Add link to pash_runtime_daemon.py
+  - [Expansion] ... TODO: expansion.py
+  - [Dependency untangling] ... TODO: link to the code that does dependency untangling checks (TODO: Tammam)
+  - [Profile Driven] ... TODO: link to the code that does profile driven optimization
+* [Commutativity Awareness] ... TODO: Link to annotation that has commutative (I think sort), and link to the source code files of the primitives (c-split, c-wrap, etc) (TODO: Tammam)
+<!-- * [Annotations](#claim-1-parallelizability-study--annotation-language): A study of the parallelizability of shell commands, and a lightweight annotation language for commands that are executable in a data-parallel manner.
 * [Compiler](#claim-2-a-dataflow-based-parallelizing-compiler): A dataflow model and associated transformations that expose data parallelism while preserving the semantics of the sequential program.
 * [Runtime](#claim-3-runtime-primitives): A set of runtime components, addressing the correctness and performance challenges arising during the execution of parallel shell scripts.
 
-In the text below (but also more generally, in our discussions) we call first contribution "Annotations", the second contribution "Compiler", and the third contribution "Runtime".
+In the text below (but also more generally, in our discussions) we call first contribution "Annotations", the second contribution "Compiler", and the third contribution "Runtime". -->
 
-## Claim 1: Interfacing with the Shell
+And the following claims:
+* [Verification of Dep Untangling] Add a link to the spin file and how to run it (TODO: KK)
+* [Performance] ...
+* [Correctness] ...
+
+<!-- ## Claim 1: Interfacing with the Shell
 
 The first claim is related to interface with the shell and is broken down into three parts. The first part is related to dynamic interposition and 
 understanding the structure of ahead-of-time (AOT) parallization. The second part has to do with preprocessor and marking possible parallelizable regions 
-with code that dynammicaly determine wheter or not to invoke the compiler. The final part refers to PaSh-JIT parsing library during execution.
+with code that dynammicaly determine whether or not to invoke the compiler. The final part refers to PaSh-JIT parsing library during execution.
 
 #### Dynamic Interposition
 
@@ -223,10 +243,23 @@ and reimplements the unparsing routines—adding a total of 0.9K LOC of Python o
 ## Claim 2: Stateful, Parallelizing Compilation Server
 
 
-## Claim 3: Commutativity-aware Optimization
+## Claim 3: Commutativity-aware Optimization -->
+
+## Claim 1: Verification of Dependency Untangling
+
+TODO: KK
+
+## Claim 2: Correctness evaluation
+
+TODO
 
 
-## Experimental Evaluation
+## Claim 3: Performance evaluation
+
+TODO
+
+
+<!-- ## Experimental Evaluation
 
 This section provides detailed instructions on how to replicate parts of the experimental evaluation of the system.
 
@@ -452,13 +485,15 @@ There are two modes of execution:
 Note that this script executes sort --parallel with double the value of --width
 since we noticed that it grows slightly slower (as shown in the Figure in Section 6.5).
 
-_This script throws a warning that is expected: `Env file: .../evaluation/microbenchmarks/sort_env_small.sh could not be read.` The warning is expected and can be safely ignored._
+_This script throws a warning that is expected: `Env file: .../evaluation/microbenchmarks/sort_env_small.sh could not be read.` The warning is expected and can be safely ignored._ -->
 
 ## Support & Epilogue
 
-PaSh is open-source and we are continuously working on it, hoping that it will "escape" the research prototype orbit and be useful in practice. Feel free to submit issues on Github, join the mailing lists, and use PaSh to parallelize your long-running shell scripts :)
+PaSh is open-source and we are continuously working on it. Feel free to submit issues on Github, join the mailing lists, and use PaSh to parallelize your long-running shell scripts :)
 
 ### Useful Links:
+
+**Website: TODO**
 
 Mailing Lists: 
 * [Discussion](https://groups.google.com/g/pash-discuss): Join this mailing list for discussing all things `pash`
@@ -466,4 +501,4 @@ Mailing Lists:
 
 Development/contributions:
 * Contribution guide: [docs/contrib](docs/contrib.md)
-* Continuous Integration Server: [http://pash.ndr.md/](http://pash.ndr.md/)
+<!-- * Continuous Integration Server: [http://pash.ndr.md/](http://pash.ndr.md/) -->
