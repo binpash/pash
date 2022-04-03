@@ -14,10 +14,11 @@ Here is the table of contents:
 
 1. [Quick check](#quick-check)
 2. [Components and Claims](#components-and-claims-artifact-functional)
-3. [Claim 1: Interfacing with the Shell](#claim-1-interfacing-with-the-shell)
+3. TODO ...
+<!-- 3. [Claim 1: Interfacing with the Shell](#claim-1-interfacing-with-the-shell)
 4. [Claim 2: Stateful Parallelizing Compilation Server](#claim-2-a-stateful-parallelizing-compilation-server)
 5. [Claim 3: Commutativity-aware Optimization](#claim-3-commutativity-aware-optimization)
-6. [Experimental Evaluation](#experimental-evaluation)
+6. [Experimental Evaluation](#experimental-evaluation) -->
 7. [Support & Epilogue](#support--epilogue)
 
 The recommended exploration path the following 
