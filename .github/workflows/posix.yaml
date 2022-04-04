@@ -11,8 +11,8 @@ on:
 jobs:
   issue-jobs:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     steps:
-
     - name: Inject slug/short variables
       uses: rlespinasse/github-slug-action@v3.x
     - name: Trigger Posix CI
