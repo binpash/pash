@@ -83,7 +83,9 @@ class HDFSFileResource(RemoteFileResource):
     def __init__(self, uri, resource_hosts):
         """
         Params:
-            uri: Usually the path to the file
+            uri: Usually the path to the file. The path doesn't include the top directory 
+            which is different between hosts. The str function adds the prefix $HDFS_DATANODE_DIR/ 
+            which should be defined on host machine worker environment.
             resource_hosts: the addresses of all the machines containing 
             the resource.
         """
@@ -99,7 +101,7 @@ class HDFSFileResource(RemoteFileResource):
         return host in self.hosts
 
     def __repr__(self):
-        return f'hdfs://{str(self.uri)}'
+        return f'hdfs://{self.uri}'
 
     def __str__(self):
-        return f"$HDFS_DATANODE_DIR/{str(self.uri)}"
+        return f"$HDFS_DATANODE_DIR/{self.uri}"
