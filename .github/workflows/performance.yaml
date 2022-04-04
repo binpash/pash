@@ -11,21 +11,15 @@ on:
         - evaluation/**
         - annotations/**
 jobs:
-  pash-ci:
+  performance:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2 
       - name: Trigger Performance Tests
         run: |
-          # build the new docker images
-          curl -s "http://ctrl.pash.ndr.md/job=build_docker"
           # fetch the commit hash
           hash=$(git rev-parse --short HEAD | tr -d "\n")
           # construct the url for performance and correctness
           perf="http://ctrl.pash.ndr.md/job=issue&branch=main&benchmark=PERFORMANCE&commit=$hash"
-          #cor="http://ctrl.pash.ndr.md/job=issue&branch=main&benchmark=CORRECTNESS&commit=$hash"
-          # issue the correctness tests
-          #curl -s "$cor"
           # issue the performance tests
           curl -s "$perf"
-
