@@ -102,6 +102,9 @@ class FileId:
     def has_file_descriptor_resource(self):
         return (isinstance(self.resource, FileDescriptorResource))
 
+    def has_remote_file_resource(self):
+        return isinstance(self.resource, RemoteFileResource)
+
     def is_ephemeral(self):
         return (isinstance(self.resource, EphemeralResource))
 
@@ -118,3 +121,13 @@ class FileId:
 
     def get_ident(self):
         return self.ident
+
+    def is_available_on(self, host):
+        if self.is_ephemeral():
+            return True
+        elif self.has_remote_file_resource():
+            return self.resource.is_available_on(host)
+        else:
+            # Currently any other resource types should
+            # be part of the main shell graph.
+            return False
