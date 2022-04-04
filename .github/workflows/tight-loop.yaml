@@ -4,41 +4,53 @@ on:
   push:
     branches:
       - future
+      - main
     paths: 
       - compiler/**
       - runtime/**
       - evaluation/**
       - annotations/**
-  pull_request:
-    branches:
-      - future
-    paths: 
-      - compiler/**
-      - runtime/**
-      - evaluation/**
-      - annotations/**
-jobs:
-  tight-loop:
-    runs-on: ubuntu-latest
-    steps:
 
-    - name: Inject slug/short variables
-      uses: rlespinasse/github-slug-action@v3.x
-    - name: Trigger Future CI
-      run: |
-        echo "Slug variables"
-        base=${{ env.GITHUB_REF_SLUG }}
-        branch=${{ env.GITHUB_HEAD_REF_SLUG }}
-        hash=${{ env.GITHUB_SHA_SHORT }}
-        if [[ $branch == '' ]]; then
-          echo "We are pushing directly to future"
-          branch=$base
-        else
-          echo "We are doing a PR"
-          hash=${{ env.GITHUB_EVENT_PULL_REQUEST_HEAD_SHA_SHORT }}
-        fi
-        # construct the url for performance and correctness
-        tests="http://ctrl.pash.ndr.md/job=issue&branch=$branch&benchmark=TIGHT-LOOP&commit=$hash"
-        # issue the tests for the future branch
-        curl -s "$tests"
-        echo "$tests"
+  pull_request_target:
+    types: [assigned, opened, synchronize, reopened, ready_for_review]
+      # the paths that trigger the ci
+    paths: 
+          - compiler/**
+          - runtime/**
+          - evaluation/**
+          - annotations/**
+
+# Jobs section
+jobs:
+  build-pash:
+      runs-on: ubuntu-latest
+      if: github.event.pull_request.draft == false
+      steps:
+        - uses: actions/checkout@v2 
+          with:
+            ref: ${{ github.event.pull_request.head.sha }}
+        - name: Building Pash
+          run: |
+            set -e
+            sudo touch /.githubenv
+            # install the system deps and pash the environment
+            sudo -E bash scripts/distro-deps.sh -o
+            # install pash
+            sudo -E bash scripts/setup-pash.sh -o
+            export PASH_TOP=$PWD
+            export PATH=$PATH:$PASH_TOP
+            # run a simple command
+            $PASH_TOP/pa.sh -c 'echo done'
+
+        - name: Running Tight-Loop Tests
+          run: |
+            export PASH_TOP=$PWD
+            export PATH=$PATH:$PASH_TOP
+            cd evaluation/benchmarks/runtime-overhead
+            results=$(bash run.sh)
+            mkdir ~/artifact
+            echo "$results" > ~/artifact/results.log
+        - uses: actions/upload-artifact@v3
+          with:
+            name: tight-loop-artifact
+            path: ~/artifact
