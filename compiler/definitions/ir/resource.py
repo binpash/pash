@@ -1,6 +1,7 @@
 from definitions.ir.arg import *
 from util import *
 from ir_utils import *
+import socket
 
 ## TODO: Resources should probably be more elaborate than just a
 ## string and a line range. They could be URLs, and possibly other things.
@@ -56,3 +57,51 @@ class FileResource(Resource):
 class EphemeralResource(Resource):
     def __init__(self):
         self.uri = None
+
+class RemoteFileResource(Resource):
+    def __init__(self):
+        raise NotImplementedError("RemoteFileResource is an interface")
+
+    def __str__(self):
+        raise NotImplementedError("RemoteFileResource is an interface")
+
+    def is_available_on(self, host):
+        raise NotImplementedError("RemoteFileResource is an interface")
+
+    def _normalize_addr(self, addr):
+        """
+        Helper, removes port number if supplied in address and normalizes host address
+        Example1: datanode1 -> 172.18.0.3
+        Example2: 172.18.0.3:5555 -> 172.18.0.3
+        """
+        host = addr.rsplit(":", 1)[0]
+        normalized_host = socket.gethostbyaddr(host)[2][0]
+        return normalized_host
+
+class HDFSFileResource(RemoteFileResource):
+    ## The uri is the path of the file.
+    def __init__(self, uri, resource_hosts):
+        """
+        Params:
+            uri: Usually the path to the file. The path doesn't include the top directory 
+            which is different between hosts. The str function adds the prefix $HDFS_DATANODE_DIR/ 
+            which should be defined on host machine worker environment.
+            resource_hosts: the addresses of all the machines containing 
+            the resource.
+        """
+        self.uri = uri
+        self.hosts = list(map(self._normalize_addr, resource_hosts))
+
+    def __eq__(self, other):
+        if isinstance(other, HDFSFileResource):
+            return self.uri == other.uri
+        return False
+
+    def is_available_on(self, host):
+        return host in self.hosts
+
+    def __repr__(self):
+        return f'hdfs://{self.uri}'
+
+    def __str__(self):
+        return f"$HDFS_DATANODE_DIR/{self.uri}"

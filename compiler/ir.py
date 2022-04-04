@@ -6,6 +6,7 @@ from definitions.ir.aggregator_node import *
 from definitions.ir.file_id import *
 from definitions.ir.resource import *
 from definitions.ir.nodes.cat import *
+from definitions.ir.nodes.hdfs_cat import HDFSCat
 
 import definitions.ir.nodes.pash_split as pash_split
 import definitions.ir.nodes.r_merge as r_merge
@@ -137,6 +138,14 @@ def compile_command_to_DFG(fileIdGen, command, options,
                        com_options=dfg_options,
                        com_redirs=com_redirs,
                        com_assignments=com_assignments)
+    elif(str(com_name) == "hdfs" and str(dfg_options[0][1]) == "dfs" and str(dfg_options[1][1]) == "-cat"):
+        dfg_node = HDFSCat(dfg_inputs,
+                        dfg_outputs,
+                        com_name,
+                        com_category,
+                        com_options=dfg_options,
+                        com_redirs=com_redirs,
+                        com_assignments=com_assignments)
     else:
         ## Assume: Everything must be completely expanded
         ## TODO: Add an assertion about that.
