@@ -73,7 +73,7 @@ function run_all_benchmarks() {
   export PASH_MODE=("pash_aot" 
                     "pash_jit")
 
-  echo 'Running all benchmark for bash'
+  echo 'Running all bash benchmarks'
   time run_bash
   echo 'Running PaSh JIT/PaSh AOT benchmarks'
   time run_bench 
@@ -99,9 +99,5 @@ function run_all_benchmarks() {
   # kill the hanging processes 
   pkill -f cat
 }
-out_folder=${RES_FOLDER}
-# run all the tests three times
-# the results will be stored at: $PASH_TOP/evaluation/eval_results/run{1,2,3}
-run_all_benchmarks ${out_folder}1
-run_all_benchmarks ${out_folder}2
-run_all_benchmarks ${out_folder}3
+# run all the tests and store the results $RES_FOLDER
+run_all_benchmarks ${RES_FOLDER}

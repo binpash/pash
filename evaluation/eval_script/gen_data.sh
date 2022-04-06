@@ -47,11 +47,9 @@ prepare_run_data() {
 }
 
 cd eval_results
-prepare_run_data run1
-prepare_run_data run2
-prepare_run_data run3
+prepare_run_data run
 # merge all the results
-paste run1.tmp run2.tmp run3.tmp -d , | sed -s  's/,/ /g' | awk '{print $1,$2,$3, $4+$8+$12}' | awk ' {print $1','$2','$3','$4/3}' | tr ' ' ',' > .tmp
+cat run.tmp | sed -s  's/,/ /g' | awk '{print $1,$2,$3,$4}' | awk ' {print $1','$2','$3','$4}' | tr ' ' ',' > .tmp
 # cleanup
 replace_string dependency_untangling for-loops 
 replace_string nlp NLP
