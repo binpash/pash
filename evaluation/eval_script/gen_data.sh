@@ -61,8 +61,8 @@ replace_string max-temp AvgTemp
 replace_string temp-analytics AvgTemp
 replace_string Genomics_Computation Genomics
 replace_string Program_Inference ProgInf
-replace_string blish_no_prof_no_du 'pash_jit -prof -par_pipe'
-replace_string blish_no_prof 'pash_jit -prof'
+replace_string pash_jit_no_prof_no_du 'pash_jit -prof -par_pipe'
+replace_string pash_jit_no_prof 'pash_jit -prof'
 replace_string blish pash_jit
 perf=''
 # calculate the ratios

@@ -12,9 +12,9 @@ text <- element_text(family='Times', size=17)
 
 box_order <- c('Classics', 'Unix50', 'COVID-mts', 'NLP')
 boxes <- 
-  ggplot(bench[bench$shell %in% c('pash_aot', 'pash_jit') & !(bench$suite %in% c('for-loops', 'AvgTemp', 'WebIndex')),], 
+  ggplot(bench[bench$shell %in% c('pash_jit', 'pash_aot') & !(bench$suite %in% c('for-loops', 'AvgTemp', 'WebIndex')),], 
          aes(x=factor(suite, level=box_order), y=as.double(speedup), fill=factor(shell))) +
-  geom_boxplot() +# ge(aes(color=factor(shell))) +
+  geom_boxplot() + #geom(aes(color=factor(shell))) +
   geom_hline(yintercept = 1) +
   scale_y_log10() + 
   theme(axis.text.x = element_text(angle = 45, hjust=1),
@@ -23,43 +23,19 @@ boxes <-
   labs(y = "Speedup vs. bash (log on left)", x = "", color = "Shell")
 bar_order <- c('AvgTemp', 'WebIndex', 'MediaConv1', 'MediaConv2', 'ProgInf', 'LogAnalysis1', 'LogAnalysis2', 'Genomics', 'AurPkg', 'FileEnc1', 'FileEnc2')
 bars <- 
-  ggplot(bench[bench$shell %in% c('pash_aot', 'pash_jit') & bench$suite %in% c('for-loops', 'AvgTemp', 'WebIndex'),],
+  ggplot(bench[bench$shell %in% c('pash_jit', 'pash_aot') & bench$suite %in% c('for-loops', 'AvgTemp', 'WebIndex'),],
          aes(x=factor(script, level=bar_order), y=as.double(speedup), fill=factor(shell))) +
   geom_col(position=position_dodge2(reverse=TRUE)) +
   geom_hline(yintercept = 1) +
   labs(y = "", x = "", fill = "") +
-  scale_fill_discrete(labels = c('PaSh JIT', 'PaSh AOT')) +
+  scale_fill_discrete(labels = c('PaSh AOT', 'PaSh JIT')) +
   theme(axis.text.x = element_text(angle = 45, hjust=1),
         text = element_text(family='Times'),
         legend.position = c(0.9, 0.81),
-        legend.title = element_blank())
+        legend.title = element_blank()) + 
+      guides(fill = guide_legend(reverse = TRUE))
 p <- grid.arrange(boxes, bars, nrow=1, ncol=2)
-ggsave(gsub(".csv","_both_wide.pdf",args[1]), p, width=11, height=3)
-
-boxes <- 
-  ggplot(bench[bench$shell %in% c('pash_aot', 'pash_jit') & !(bench$suite %in% c('for-loops', 'AvgTemp', 'WebIndex')),], 
-         aes(x=factor(suite, level=box_order), y=as.double(speedup), fill=factor(shell))) +
-  geom_boxplot() +# ge(aes(color=factor(shell))) +
-  geom_hline(yintercept = 1) +
-  scale_y_log10() + 
-  theme(axis.text.x = element_text(angle = 45, hjust=1),
-        text = text,
-        legend.position = 'none') +
-  labs(y = "Speedup vs. bash (log on left)", x = "", color = "Shell")
-bars <- 
-  ggplot(bench[bench$shell %in% c('pash_aot', 'pash_jit') & bench$suite %in% c('for-loops', 'AvgTemp', 'WebIndex'),],
-         aes(x=factor(script, level=bar_order), y=as.double(speedup), fill=factor(shell))) +
-  geom_col(position=position_dodge2(reverse=TRUE)) +
-  geom_hline(yintercept = 1) +
-  labs(y = "", x = "", fill = "") +
-  scale_fill_discrete(labels = c('PaSh JIT', 'PaSh AOT')) +
-  theme(axis.text.x = element_text(angle = 45, hjust=1),
-        text = text,
-        legend.position = c(0.84, 0.83),
-        legend.title = element_blank())
-p <- grid.arrange(boxes, bars, nrow=1, ncol=2)
-ggsave(gsub(".csv","_both.pdf",args[1]), p, width=8, height=4)
-
+ggsave("figure5.pdf", p, width=11, height=3)
 
 boxes <-
   ggplot(bench[bench$shell %in% c('pash_jit', 'pash_jit -prof -par_pipe', 'pash_jit -prof') & bench$suite %in% c('NLP'),],
@@ -84,7 +60,9 @@ bars <-
         legend.position = c(0.79, 0.80),
         legend.title = element_blank())
 p <- grid.arrange(boxes, bars, nrow=1, ncol=2, widths = c(1,4))
-ggsave(gsub(".csv","_dynamic_both.pdf",args[1]), p, width=8, height=4)
+ggsave("figure6.pdf", p, width=8, height=4)
+
+
 
 # data munging to get the right names
 bench$cshell <- bench$shell
@@ -114,5 +92,5 @@ bars <-
         legend.position = c(0.27, 0.82),
         legend.title = element_blank())
 p <- grid.arrange(boxes, bars, nrow=1, ncol=2)
-ggsave(gsub(".csv","_comm_both.pdf",args[1]), p, width=8, height=4)
+ggsave("figure7.pdf", p, width=8, height=4)
 
