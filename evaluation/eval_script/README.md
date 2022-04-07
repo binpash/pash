@@ -184,12 +184,14 @@ Note that most stages in the pipeline are repeated twice and proceed in parallel
 
 Our paper describes the following system components:
 <!-- kk: Here we should describe system components -->
-* [Preprocesor] ... TODO: Add link to preprocessor (pash.py) and single sentence of what it does
 * [Parsing library] ... TODO: Add link to parsing library
-* [JIT Engine] ... TODO: Add link to pash_runtime.sh
-* [Parallelizing Compilation Server] ... TODO: Add link to pash_runtime_daemon.py
-  - [Expansion] ... TODO: expansion.py
-  - [Dependency untangling] ... TODO: link to the code that does dependency untangling checks (TODO: Tammam)
+* [Preprocesor] -- The preprocessor [compiler/pash_runtime.sh](https://link-url-here.org) instruments the shell script identified regions with calls to the [compiler/pash_runtime.sh](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh) .
+* [JIT Engine] ... The JIT engine works through the interaction of the [compiler/pash_runtime.sh](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh) instrumented and the stateful long lived compilation server. The runtime sends compilation requests to server and waits for a response:
+  - If the server succeeds at compiling and parallizing the script, then the runtime runs the parallel shell script.
+  - If the server fails, then it's not safe to parallize this region of the script and the runtime runs the original code.
+* [Parallelizing Compilation Server] --  [compiler/pash_daemon.sh](https://github.com/binpash/pash/blob/main/compiler/pash_daemon.sh) handles requests from the compiler runtime to compile and parallize regions of the script. The server consists of the following main components:
+  - [Expansion] -- [compiler/expand.sh](https://github.com/binpash/pash/blob/main/compiler/expand.sh)
+  - [Dependency untangling] -- [here](https://github.com/binpash/pash/blob/main/compiler/pash_runtime_daemon.py#:~:text=def-,check_resources_safety,-(self%2C%20process_id)%3A)
   - [Profile Driven] ... TODO: link to the code that does profile driven optimization
 * [Commutativity Awareness] ... TODO: Link to annotation that has commutative (I think sort), and link to the source code files of the primitives (c-split, c-wrap, etc) (TODO: Tammam)
 <!-- * [Annotations](#claim-1-parallelizability-study--annotation-language): A study of the parallelizability of shell commands, and a lightweight annotation language for commands that are executable in a data-parallel manner.
