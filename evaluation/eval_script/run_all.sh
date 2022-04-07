@@ -4,6 +4,12 @@ RES_FOLDER=${PWD}/eval_results/run
 cd ${PASH_TOP}/evaluation/benchmarks
 # use the small input for the benchmarks
 setup_flags='--small'
+if [ "$1" = "--full" ]; then
+    setup_flags="--full"
+    echo "Using full input"
+else
+    echo "Using small input"
+fi
 
 # run all the scripts using bash
 run_bash() {
