@@ -19,7 +19,7 @@ setup_dataset() {
       mv small/* .
       rm -rf small web-index.small.zip
     fi
-  elif [ "$1" = "--gen-full" ]; then
+  elif [ "$1" = "--full" ]; then
     wget $wiki_archive || eexit "cannot fetch wikipedia"
     7za x wikipedia-en-html.tar.7z
     tar -xvf wikipedia-en-html.tar
