@@ -10,7 +10,7 @@ echo pash executable: $PASH_TOP/pa.sh
 
 # SMALL=$PASH_TOP/evaluation/scripts/input/3M.txt
 echo 'Inputs:'
-ls -lh $PASH_TOP/evaluation/scripts/input/* | awk '{print $5,$9}'
+ls -lh $PASH_TOP/evaluation/tests/input/* | awk '{print $5,$9}'
 
 
 echo

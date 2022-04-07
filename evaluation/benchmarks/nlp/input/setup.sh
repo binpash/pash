@@ -18,7 +18,7 @@ setup_dataset() {
   if [ ! -e ./pg ]; then
     mkdir pg
     cd pg
-  if [[ "$1" == "--gen-full" ]]; then
+  if [[ "$1" == "--full" ]]; then
     echo 'N.b.: download/extraction will take about 10min'
     wget ndr.md/data/pg.tar.xz
     if [ $? -ne 0 ]; then
