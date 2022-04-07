@@ -187,8 +187,8 @@ Our paper describes the following system components:
 * [Parsing library] ... TODO: Add link to parsing library
 * [Preprocesor] -- The preprocessor [compiler/pash.py](https://github.com/binpash/pash/blob/main/compiler/pash.py) parses the shell script and instruments it with calls to [compiler/pash_runtime.sh](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh).
 * [JIT Engine] ... The JIT engine works through the interaction of the [compiler/pash_runtime.sh](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh) instrumented calls and the stateful long lived compilation server. The runtime sends compilation requests to server and waits for a response:
-  - If the server succeeds at compiling and parallizing the script, then the runtime runs the parallel shell script.
-  - If the server fails, then it's not safe to parallize this region of the script and the runtime runs the original code.
+  - If the server succeeds at compiling and parallelizing the requested region, then the runtime runs the parallel shell script.
+  - If the server fails, then it's not safe to parallelize this region and the runtime runs the original code.
 * [Parallelizing Compilation Server] --  [compiler/pash_runtime_daemon.py](https://github.com/binpash/pash/blob/main/compiler/pash_runtime_daemon.py) handles compilation requests for parallelizing regions of the script. The compiler does hte following:
   - [Expansion] -- [compiler/expand.py](https://github.com/binpash/pash/blob/main/compiler/expand.py)
   - [Dependency untangling] -- If `--parallel_pipelines` flag is used, then the JIT Engine allows for running multiple regions at the same time which increases the amount of parallelization that can be extracted from the script. The safety check for running a new region is implemented [here](https://github.com/binpash/pash/blob/main/compiler/pash_runtime_daemon.py#:~:text=def-,check_resources_safety,-(self%2C%20process_id)%3A)
