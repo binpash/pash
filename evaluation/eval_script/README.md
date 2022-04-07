@@ -189,11 +189,14 @@ Our paper describes the following system components:
 * [JIT Engine] ... The JIT engine works through the interaction of the [compiler/pash_runtime.sh](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh) instrumented and the stateful long lived compilation server. The runtime sends compilation requests to server and waits for a response:
   - If the server succeeds at compiling and parallizing the script, then the runtime runs the parallel shell script.
   - If the server fails, then it's not safe to parallize this region of the script and the runtime runs the original code.
-* [Parallelizing Compilation Server] --  [compiler/pash_daemon.sh](https://github.com/binpash/pash/blob/main/compiler/pash_daemon.sh) handles requests from the compiler runtime to compile and parallize regions of the script. The server consists of the following main components:
+* [Parallelizing Compilation Server] --  [compiler/pash_daemon.sh](https://github.com/binpash/pash/blob/main/compiler/pash_daemon.sh) handles compilation requests for parallizing regions of the script. The server consists of the following main components:
   - [Expansion] -- [compiler/expand.sh](https://github.com/binpash/pash/blob/main/compiler/expand.sh)
-  - [Dependency untangling] -- [here](https://github.com/binpash/pash/blob/main/compiler/pash_runtime_daemon.py#:~:text=def-,check_resources_safety,-(self%2C%20process_id)%3A)
-  - [Profile Driven] ... TODO: link to the code that does profile driven optimization
-* [Commutativity Awareness] ... TODO: Link to annotation that has commutative (I think sort), and link to the source code files of the primitives (c-split, c-wrap, etc) (TODO: Tammam)
+  - [Dependency untangling] -- If `--parallel_pipelines` flag is used, then the JIT Engine allows for running multiple regions at the same time. Thus, increasing the amount of parallelzing that can be extracted from the script. The safety check for running a new region is implemented [here](https://github.com/binpash/pash/blob/main/compiler/pash_runtime_daemon.py#:~:text=def-,check_resources_safety,-(self%2C%20process_id)%3A)
+  - [Profile Driven] -- If `--profile-driven` flag is used then the compiler adjusts the width based based on previous execution times. The responsible code for determining the configuration to use can be found [here](https://github.com/binpash/pash/blob/main/compiler/pash_runtime_daemon.py#:~:text=def-,determine_compiler_config,-(self%2C%20input_ir_file)%3A)
+* [Commutativity Awareness] -- Consists of the following main components:
+  - The annotations allow for adding the commutative property (e.g. [sort](https://github.com/binpash/pash/blob/main/annotations/sort.json))
+  - The runtime nodes which are implemented in C for performance [c-split](https://github.com/binpash/pash/blob/main/runtime/r_split.c), [c-wrap](https://github.com/binpash/pash/blob/main/runtime/r_wrap.c), [c-strip](https://github.com/binpash/pash/blob/main/runtime/r_unwrap.c), and [c-merge](https://github.com/binpash/pash/blob/main/runtime/r_merge.c).
+  - TODO: Should we have also the runtime.py commutativty changes to the transformation here?
 <!-- * [Annotations](#claim-1-parallelizability-study--annotation-language): A study of the parallelizability of shell commands, and a lightweight annotation language for commands that are executable in a data-parallel manner.
 * [Compiler](#claim-2-a-dataflow-based-parallelizing-compiler): A dataflow model and associated transformations that expose data parallelism while preserving the semantics of the sequential program.
 * [Runtime](#claim-3-runtime-primitives): A set of runtime components, addressing the correctness and performance challenges arising during the execution of parallel shell scripts.
