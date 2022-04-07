@@ -185,7 +185,7 @@ Note that most stages in the pipeline are repeated twice and proceed in parallel
 Our paper describes the following system components:
 <!-- kk: Here we should describe system components -->
 * [Parsing library] ... TODO: Add link to parsing library
-* [Preprocesor] -- The preprocessor [compiler/pash_runtime.sh](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh) parses the shell script and instruments it with calls to [compiler/pash_runtime.sh](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh).
+* [Preprocesor] -- The preprocessor [compiler/pash.py](https://github.com/binpash/pash/blob/main/compiler/pash.py) parses the shell script and instruments it with calls to [compiler/pash_runtime.sh](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh).
 * [JIT Engine] ... The JIT engine works through the interaction of the [compiler/pash_runtime.sh](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh) instrumented calls and the stateful long lived compilation server. The runtime sends compilation requests to server and waits for a response:
   - If the server succeeds at compiling and parallizing the script, then the runtime runs the parallel shell script.
   - If the server fails, then it's not safe to parallize this region of the script and the runtime runs the original code.
