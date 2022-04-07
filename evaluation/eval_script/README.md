@@ -257,7 +257,27 @@ TODO
 
 ## Claim 3: Performance evaluation
 
+
+
 ### Legend of terminology correspondence
+
+Legend name correspondence between the paper and the artifact are seen below:
+ - PaSh JIT               # OSDI: Blish
+ - PaSh AOT               # OSDI: PaSh
+ - PaSh JIT no_prof       # OSDI: Blish no_prof
+ - PaSh JIT no_prof no_du # OSDI: Blish no_prof no_du
+ - PaSh JIT no_comm       # OSDI: Blish no_comm
+
+Flag name correspondence between the paper and the artifact are seen below:
+ - PaSh JIT               # -w 16 --r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven
+ - PaSh AOT               # -w 16
+ - PaSh JIT no_prof       # -w 16 --r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines
+ - PaSh JIT no_prof no_du # -w 16 --r_split --dgsh_tee --r_split_batch_size 1000000
+ - PaSh JIT no_comm       # --parallel_pipelines --profile_driven
+
+
+
+TODO: Maybe we could put that in a table?
 
 - Flag names, legend names, (paper and code)
 
@@ -266,7 +286,55 @@ For example:
 
 ### Explain scripts, how much they are expected to take, and what do the figure that they produce look like (and why they are slightly different)
 
-TODO
+We offer two different input loads to test and evaluate the system; `--small` which corresponds to smaller inputs thus smaller execution time (4-5 hours) and `--full` input sizes that are used
+in the paper (~20 hours; TODO we should verify that)
+
+This section provides detailed instructions on how to replicate the figures of the experimental evaluation of the system as described in Table 1 from the paper (2-13).
+
+![img](./imgs/table.png)
+
+
+```sh
+cd $PASH_TOP/evaluation/eval_script/
+# There are two options here, either use --full as argument (default option) or --small (default option).
+# This is the script that runs bash and PaSh JIT/AOT with several configuration. It runs all the benchmark described
+# in Table 1 of the paper and gathers the execution times
+bash run_all.sh --small
+# after the execution is finished, you may view the raw data timers.
+cat eval_results/run.tmp
+# This will calculate the ratios of all the configurations in comparison with the bash execution timers (bash being the 
+# baseline). It will produce the data_final.csv that will be used for generating the figures
+bash gen_data.sh 
+# this will produce figure{5,6,7}.pdf similar to the paper
+./generate_charts.R data_final.csv
+```
+
+We have included in this repo sample data of the raw data timers (run.tmp), the final source data (data_final.csv) 
+and the three output figures.
+
+#### Pdfs
+- [figure5](./pdfs/figure5.pdf)
+- [figure6](./pdfs/figure6.pdf)
+- [figure7](./pdfs/figure7.pdf)
+ 
+#### Logs
+ - [run.tmp](./logs/run.tmp)
+ - [data_final.csv](./logs/data_final.csv)
+
+#### Plot Generation
+
+For the figures, additional packages are required (they are already available on `deathstar`):
+```sh
+# install the R environment and libraries
+# follow the guide here https://cran.r-project.org/bin/linux/ubuntu/
+
+# install ggplot2 for R
+# needed for generating the pdf
+sudo R
+> install.packages('ggplot2', dep = TRUE)
+> q()
+> n
+```
 
 #### How to read Figures
 
@@ -274,7 +342,7 @@ TODO
 
 Some results differences (with the paper):
 - Some results are slightly worse w.r.t. absolute speedup (relative benefits are still the same) because the inputs are smaller and there is less potential for parallelizability
-- In Figure 7, AvgTemp is faster in the artifact figure because we forgot to add parallel_pipeliens (dependency untangling) and profile driven in the paper. Now we added them and therefore results are slightly better (relative speedups are still similar)
+- In Figure 7, AvgTemp is faster in the artifact figure because we forgot to add parallel_pipelines (dependency untangling) and profile driven in the paper. Now we added them and therefore results are slightly better (relative speedups are still similar)
 
 <!-- ## Experimental Evaluation
 
