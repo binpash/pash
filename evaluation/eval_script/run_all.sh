@@ -7,7 +7,7 @@ setup_flags='--small'
 if [ "$1" = "--full" ]; then
     setup_flags="--full"
     echo "Using full input"
-else
+elif [ "$1" = "--small" ] || [ "$#" -eq "0" ]; then
     echo "Using small input"
 fi
 
