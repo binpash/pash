@@ -93,3 +93,19 @@ while read p; do
 done < .tmp
 rm -f .tmp
 mv $DATA ..
+
+# in docker container, we are running with the CI
+if [ -f /.dockerenv ]; then
+    exit 0
+fi
+cd ..
+# replace all the lines that are not needed in figure5
+sed 's/for-loops,AurPkg,pash_aot,.*/for-loops,AurPkg,pash_aot,0/g' $DATA > data_final.csv
+sed -i 's/for-loops,FileEnc1,pash_aot,.*/for-loops,FileEnc1,pash_aot,0/g' data_final.csv 
+sed -i 's/for-loops,FileEnc2,pash_aot,.*/for-loops,FileEnc2,pash_aot,0/g' data_final.csv 
+sed -i 's/for-loops,LogAnalysis1,pash_aot,.*/for-loops,LogAnalysis1,pash_aot,0/g' data_final.csv
+sed -i 's/for-loops,LogAnalysis2,pash_aot,.*/for-loops,LogAnalysis2,pash_aot,0/g' data_final.csv
+sed -i 's/for-loops,MediaConv1,pash_aot,.*/for-loops,MediaConv1,pash_aot,0/g' data_final.csv
+sed -i 's/for-loops,MediaConv2,pash_aot,.*/for-loops,MediaConv2,pash_aot,0/g' data_final.csv
+sed -i 's/for-loops,ProgInf,pash_aot,.*/for-loops,ProgInf,pash_aot,0/g' data_final.csv
+sed -i 's/for-loops,Genomics,pash_aot,.*/for-loops,Genomics,pash_aot,0/g' data_final.csv
