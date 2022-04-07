@@ -585,5 +585,5 @@ Mailing Lists:
 * [Commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
 
 Development/contributions:
-* Contribution guide: [docs/contrib](docs/contrib.md)
+* Contribution guide: [docs/contrib](../../docs/contributing/contrib.md)
 <!-- * Continuous Integration Server: [http://pash.ndr.md/](http://pash.ndr.md/) -->
