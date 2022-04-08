@@ -39,6 +39,10 @@ The artifact has the following requirements:
 The `deathstar` server below meets all these requirements; 
   the `binpash/pash:latest` docker image is the next-best option, which meets all the software requirements.
 
+#### Private Key Installation
+
+TODO add instructions on how to install the private ssh key
+
 #### Evaluation Server (deathstar)
 
 We have created a reviewer account on `deathstar`, the machine used for all the performance results reported in the paper. Here _reviewers have to coordinate themselves other to not run checks/experiments at the same time_. To use `deathstar`, run a quick check with:
@@ -352,6 +356,39 @@ sudo R
 Some results differences (with the paper):
 - Some results are slightly worse w.r.t. absolute speedup (relative benefits are still the same) because the inputs are smaller and there is less potential for parallelizability
 - In Figure 7, AvgTemp is faster in the artifact figure because we forgot to add parallel_pipelines (dependency untangling) and profile driven in the paper. Now we added them and therefore results are slightly better (relative speedups are still similar)
+
+
+
+#### POSIX evaluation
+
+```sh
+# ssh to antikythera.csail.mit.edu using the provided private key
+# inside the machine, run
+docker run -it posix /bin/bash
+# this will spawn a clean docker instance to run the posix tests using bash and pash
+# you should then be greeted with this message:
+# osdi22@antikythera:~$ docker run -it posix /bin/bash
+# using TET_ROOT = /home/runner/tet3.8
+# VSC environment setup is successful
+# setup the posix tests using pash configuration
+bash ~/prepare_pash.sh
+cd ~/tet3.8/vsc
+# then start the test execution
+tcc -bp vsc posix_shell
+# this will take about ~5 minutes
+tcc -ep vsc posix_shell
+# to view the pash results
+bash ~/results/summarize_journal.sh ~/tet3.8/vsc/results/0002e/journal
+# to setup the posix tests using bash config
+bash ~/prepare_bash.sh
+cd ~/tet3.8/vsc
+# then start the test execution
+tcc -bp vsc posix_shell
+# this will take about ~5 minutes
+tcc -ep vsc posix_shell
+# to view the bash results
+bash ~/results/summarize_journal.sh ~/tet3.8/vsc/results/0004e/journal
+```
 
 <!-- ## Experimental Evaluation
 
