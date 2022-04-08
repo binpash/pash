@@ -49,8 +49,7 @@ We have created a reviewer account on `deathstar`, the machine used for all the 
 
 ```sh
 ssh osdi22@deathstar.ndr.md
-# this will print information regarding pash installation and generation a graph in pdf format
-# the graph will be place in a directory similar to pash_graphviz_TIMESTAMP/                        
+# this will print information regarding pash installation
 ./pash/scripts/quickcheck.sh                                           
 ```
 
@@ -116,6 +115,15 @@ To view the parallel code emitted by the compiler, you can inspect the log:
 ```sh
 vim pash.log
 ```
+
+To visualize the graph for this script, you can:
+
+```sh
+# this will generate the graph in a directory similar to pash_graphviz_TIMESTAMP/                        
+$PASH_TOP/pa.sh demo-spell.sh -w 8 --graphviz pdf --graphviz_dir . > pash-spell.out
+```
+
+A sample graph may be viewed [here](./pdfs/dfg.pdf).
 
 The contents of the parallel script are shown after the line `(4) Will execute script in ...` and for 2x parallelism (`--width 2`) they should look like this:
 ```sh
@@ -265,8 +273,34 @@ TODO: KK
 
 ## Claim 2: Correctness evaluation
 
-TODO
-
+```sh
+# ssh to antikythera.csail.mit.edu using the provided private key
+# inside the machine, run
+docker run -it --sig-proxy=false posix /bin/bash
+# this will spawn a clean docker instance to run the posix tests using bash and pash
+# you should then be greeted with this message:
+# osdi22@antikythera:~$ docker run -it posix /bin/bash
+# using TET_ROOT = /home/runner/tet3.8
+# VSC environment setup is successful
+# setup the posix tests using pash configuration
+bash ~/prepare_pash.sh
+cd ~/tet3.8/vsc
+# then start the test execution
+tcc -bp vsc posix_shell
+# this will take about ~5 minutes
+tcc -ep vsc posix_shell
+# to view the pash results
+bash ~/results/summarize_journal.sh ~/tet3.8/vsc/results/0002e/journal
+# to setup the posix tests using bash config
+bash ~/prepare_bash.sh
+cd ~/tet3.8/vsc
+# then start the test execution
+tcc -bp vsc posix_shell
+# this will take about ~5 minutes
+tcc -ep vsc posix_shell
+# to view the bash results
+bash ~/results/summarize_journal.sh ~/tet3.8/vsc/results/0004e/journal
+```
 
 ## Claim 3: Performance evaluation
 
@@ -356,39 +390,6 @@ sudo R
 Some results differences (with the paper):
 - Some results are slightly worse w.r.t. absolute speedup (relative benefits are still the same) because the inputs are smaller and there is less potential for parallelizability
 - In Figure 7, AvgTemp is faster in the artifact figure because we forgot to add parallel_pipelines (dependency untangling) and profile driven in the paper. Now we added them and therefore results are slightly better (relative speedups are still similar)
-
-
-
-#### POSIX evaluation
-
-```sh
-# ssh to antikythera.csail.mit.edu using the provided private key
-# inside the machine, run
-docker run -it posix /bin/bash
-# this will spawn a clean docker instance to run the posix tests using bash and pash
-# you should then be greeted with this message:
-# osdi22@antikythera:~$ docker run -it posix /bin/bash
-# using TET_ROOT = /home/runner/tet3.8
-# VSC environment setup is successful
-# setup the posix tests using pash configuration
-bash ~/prepare_pash.sh
-cd ~/tet3.8/vsc
-# then start the test execution
-tcc -bp vsc posix_shell
-# this will take about ~5 minutes
-tcc -ep vsc posix_shell
-# to view the pash results
-bash ~/results/summarize_journal.sh ~/tet3.8/vsc/results/0002e/journal
-# to setup the posix tests using bash config
-bash ~/prepare_bash.sh
-cd ~/tet3.8/vsc
-# then start the test execution
-tcc -bp vsc posix_shell
-# this will take about ~5 minutes
-tcc -ep vsc posix_shell
-# to view the bash results
-bash ~/results/summarize_journal.sh ~/tet3.8/vsc/results/0004e/journal
-```
 
 <!-- ## Experimental Evaluation
 

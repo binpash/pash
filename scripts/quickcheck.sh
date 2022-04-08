@@ -12,4 +12,4 @@ echo
 $PASH_TOP/pa.sh --help
 
 echo "Testing graph generation"
-$PASH_TOP/pa.sh evaluation/intro/hello-world.sh --graphviz pdf --graphviz_dir scripts/ > /dev/null
+$PASH_TOP/pa.sh -c 'echo Pash Installation is complete!'
