@@ -8,10 +8,8 @@ echo Git commit ID: $(git rev-parse --short HEAD)
 echo \$PASH_TOP: $(echo $PASH_TOP)
 echo pash executable: $PASH_TOP/pa.sh
 
-# SMALL=$PASH_TOP/evaluation/scripts/input/3M.txt
-echo 'Inputs:'
-ls -lh $PASH_TOP/evaluation/tests/input/* | awk '{print $5,$9}'
-
-
 echo
 $PASH_TOP/pa.sh --help
+
+echo "Testing graph generation"
+$PASH_TOP/pa.sh evaluation/intro/hello-world.sh --graphviz pdf --graphviz_dir scripts/ > /dev/null

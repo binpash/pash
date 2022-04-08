@@ -4,7 +4,7 @@
 ## Questions/Notes/TODOs (for us -- delete before uploading):
 
 - Do we want a video tutorial?
-- Is the docker image pash:latest?
+- Is the docker image pash:latest? No, Docker images update automatically on each new release. I could try updating them manually
 - Add graphviz in the quickcheck
 - Shrink the current claim paragraphs and make them 1-2 sentences for each component and inline them in the list of components. KK: For now I have commented them out
 
@@ -44,7 +44,9 @@ The `deathstar` server below meets all these requirements;
 We have created a reviewer account on `deathstar`, the machine used for all the performance results reported in the paper. Here _reviewers have to coordinate themselves other to not run checks/experiments at the same time_. To use `deathstar`, run a quick check with:
 
 ```sh
-ssh osdi22@deathstar.ndr.md                         
+ssh osdi22@deathstar.ndr.md
+# this will print information regarding pash installation and generation a graph in pdf format
+# the graph will be place in a directory similar to pash_graphviz_TIMESTAMP/                        
 ./pash/scripts/quickcheck.sh                                           
 ```
 
@@ -76,6 +78,8 @@ The script streams the input file into a pipeline that converts characters to lo
 Next, let's run it on sequential inputs:
 
 ```sh
+# download the input data
+cd input && bash setup.sh && cd ../
 time ./demo-spell.sh > spell.out
 ```
 
@@ -93,7 +97,7 @@ On `deathstar`, the 2x-parallel script takes about 28s.
 You can check that the results are correct by:
 
 ```sh
-diff spell.out pash-spell.out
+cmp spell.out pash-spell.out && echo "Files are identical"
 ```
 
 You could also execute it with 8x-parallelism using:
