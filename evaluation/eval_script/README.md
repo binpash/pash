@@ -314,7 +314,7 @@ Flag name correspondence between the paper and the artifact are seen below:
  - PaSh JIT no_comm       # --parallel_pipelines --profile_driven
 
 
-### Explain scripts, how much they are expected to take, and what do the figure that they produce look like (and why they are slightly different)
+### Executing the evaluation and plotting the results
 
 We offer two different input loads to test and evaluate the system; `--small` which corresponds to smaller inputs thus smaller execution time (4-5 hours) and `--full` input sizes that are used
 in the paper (>20 hours). Running the small results returns results that are very close to the ones shown in the paper, and all differences between configurations are evident. The only difference is that a few speedups are slightly smaller (for scripts that are too small to get meaningful benefits from parallelization).
@@ -346,9 +346,9 @@ We have included in this repo sample data of the raw data timers (run.tmp), the 
 and the three output figures.
 
 #### Pdfs
-- [figure5](./pdfs/figure5.pdf)
-- [figure6](./pdfs/figure6.pdf)
-- [figure7](./pdfs/figure7.pdf)
+- [Paper, Figure 5](./pdfs/figure5.pdf)
+- [Paper, Figure 6](./pdfs/figure6.pdf)
+- [Paper, Figure 7](./pdfs/figure7.pdf)
  
 #### Logs
  - [run.tmp](./logs/run.tmp)
@@ -357,10 +357,9 @@ and the three output figures.
 
 #### Interpreting the figures
 
-Some results differences (with the paper):
-- Some results are slightly worse w.r.t. absolute speedup (relative benefits are still the same) because the inputs are smaller and there is less potential for parallelizability
-- In Figure 7, AvgTemp is faster in the artifact figure because we forgot to add parallel_pipelines (dependency untangling) and profile driven in the paper. Now we added them and therefore results are slightly better (relative speedups are still similar)
-
+The figures are slightly different from the ones shown in the paper for the following two reasons:
+- For some benchmarks, the smaller input leads to a more pronounced cost of one-time overheads and therefore smaller absolute speedup for all PaSh configurations (JIT, AOT, etc). However, the relative benefits between configurations are still the same.
+- In Figure 7, AvgTemp is faster in the artifact figure because in the paper we forgot to use `--parallel_pipelines` (dependency untangling) and `--profile_driven` when we run the experiment for the paper. Now we added them and therefore results are slightly better (relative speedups are still similar).
 
 ## Claim 3: Verification of Dependency Untangling
 
