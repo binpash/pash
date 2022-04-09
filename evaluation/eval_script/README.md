@@ -30,9 +30,11 @@ The recommended artifact evaluation path is the following:
 2. Read a brief overview of the [system components](#components-artifact-functional) that includes pointers to the code that implements them.
 
 3. Evaluate the three evaluation claims that are made in the paper, namely 
-  (i) the [correctness evaluation](#claim-1-correctness-evaluation)
-  (ii) the [performance evaluation](#claim-2-performance-evaluation) (takes multiple hours), and
-  (iii) the [verificaton of the dependency untangling algorithm](#claim-3-verification-of-dependency-untangling).
+  (i) the [correctness evaluation](#claim-1-correctness-evaluation), 
+    which corresponds to Paper Section 7.1,
+  (ii) the [performance evaluation](#claim-2-performance-evaluation) (takes multiple hours), 
+    which corresponds to Paper Section 7.2, and
+  (iii) the [verificaton of the dependency untangling algorithm](#claim-3-verification-of-dependency-untangling), which is mentioned in the end of Section 5.2.
 
 ## Quick check
 
@@ -42,14 +44,19 @@ Here is how to check that everything works on your chosen evaluation environment
 
 #### Requirements
 
-The performance evaluation components of the artifact has the following requirements:
-* Hardware: a modern multi-processor, to show performance results (the more cpus, the merrier)
-* Software: automake bc curl gcc git libtool m4 python sudo wget bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config python3 python3-pip python3-setuptools python3-testresources wamerican-insane
+The artifact makes three claims, each of which has different hardware/software requirements:
+- Claim 1 requires access to one of our machines in order to run the POSIX test suite because it cannot be shared publicly.
+- Claim 2 has the following requirements, which are met by a server that we give you access to, or can be met using the `binpash/pash:latest` docker image (but you would have to run it on your own infrastructure):
+  * Hardware: a modern multi-processor, to show performance results (the more cpus, the merrier)
+  * Software: automake bc curl gcc git libtool m4 python sudo wget bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config python3 python3-pip python3-setuptools python3-testresources wamerican-insane
+- Claim 3 requires **TODO**
 
-The `deathstar` server below meets all these requirements; 
-  the `binpash/pash:latest` docker image is the next-best option, which meets all the software requirements (but you would have to run it on your own infrastructure).
 
-#### Evaluation Server (deathstar)
+#### Correctness Evaluation Server (antikythera)
+
+**TODO: Dimitris** Have a section that runs quickcheck (or something small like `./pa.sh -c 'echo hi'`) here (together with instructions for keys).
+
+#### Performance Evaluation Server (deathstar)
 
 We have created a reviewer account on `deathstar`, the machine used for all the performance results reported in the paper. Here _reviewers have to coordinate themselves other to not run checks/experiments at the same time_. To use `deathstar`, run a quick check with:
 
@@ -74,6 +81,21 @@ Information about docker installation may be found in [here](https://github.com/
 ```sh
 docker pull binpash/pash; docker run --name pash-playground -it binpash/pash
 ./opt/pash/scripts/quickcheck.sh                                            # this is typed _in_ the container
+```
+
+##### Plot Generation
+
+In order to generate the performance evaluation figures, additional packages are required (they are already available on `deathstar` but not on the docker image):
+```sh
+# install the R environment and libraries
+# follow the guide here https://cran.r-project.org/bin/linux/ubuntu/
+
+# install ggplot2 for R
+# needed for generating the pdf
+sudo R
+> install.packages('ggplot2', dep = TRUE)
+> q()
+> n
 ```
 
 
@@ -198,47 +220,91 @@ Our paper describes the following system components. An overview of how they all
 
 ## Claim 1: Correctness evaluation
 
+This corresponds to Section 7.1 of the paper.
+
+### Requirements
+
+In order to run the correctness evaluation, you need to login the `antikythera` machine since the POSIX test suite cannot be shared publicly.
+
+We have already installed PaSh and the POSIX suite in a docker image there that you can use to run the tests and validate the correctness results.
+
+**TODO: Dimitris** Add command/instructions to ssh into antikythera with the key `-i ...`.
+
 ```sh
 # ssh to antikythera.csail.mit.edu using the provided private key
 # inside the machine, run
 docker run -it --sig-proxy=false posix /bin/bash
 # this will spawn a clean docker instance to run the posix tests using bash and pash
 # you should then be greeted with this message:
-# osdi22@antikythera:~$ docker run -it posix /bin/bash
+# osdi22@antikythera:~$ docker run -it --sig-proxy=false posix /bin/bash
 # using TET_ROOT = /home/runner/tet3.8
 # VSC environment setup is successful
-# setup the posix tests using pash configuration
+
+# First, setup the posix tests to pash configuration
 bash ~/prepare_pash.sh
 cd ~/tet3.8/vsc
-# then start the test execution
+# Prepare the tests
 tcc -bp vsc posix_shell
-# this will take about ~5 minutes
+# Run the tests (~10 minutes)
 tcc -ep vsc posix_shell
-# to view the pash results
+
+# You can use the following script to view the detailed results
 bash ~/results/summarize_journal.sh ~/tet3.8/vsc/results/0002e/journal
-# to setup the posix tests using bash config
+
+## Which should finish like this:
+
+#  ...
+#  ...
+# ========================================================================
+#  494 tests:
+#  375         passed
+#   41         failed
+#   31       untested
+#    6     unresolved
+#   40    unsupported
+#    1     not in use
+#    0   other status
+
+# Then, setup the posix tests to use bash
 bash ~/prepare_bash.sh
 cd ~/tet3.8/vsc
-# then start the test execution
+# Prepare the tests
 tcc -bp vsc posix_shell
-# this will take about ~5 minutes
+# Run the tests (~10 minutes)
 tcc -ep vsc posix_shell
-# to view the bash results
+
+# You can use the following script to view the generated bash results
 bash ~/results/summarize_journal.sh ~/tet3.8/vsc/results/0004e/journal
+
+## Which should finish like this:
+
+#  ...
+#  ...
+# ========================================================================
+#  494 tests:
+#  377         passed
+#   39         failed
+#   31       untested
+#    6     unresolved
+#   40    unsupported
+#    1     not in use
+#    0   other status
+
+## You can then run the following command to see the difference of two tests:
+comm -13 <(../../results/summarize_journal.sh results/0002e/journal | grep "Assertion #" | sort) <(../../results/summarize_journal.sh results/0004e/journal | grep "Assertion
+#" | sort)
+## This should return the following
+# Assertion #430 (A): When a command fails during word expansion or redirection, then
+# Assertion #691 (A): When the shell is not executing interactively, then the 'set -u'
+
+## which are exactly the tests mentioned in 
 ```
 
 ## Claim 2: Performance evaluation
 
-
+This corresponds to the section 7.2 of the paper.
 
 ### Legend of terminology correspondence
-
-Legend name correspondence between the paper and the artifact are seen below:
- - PaSh JIT               # OSDI: Blish
- - PaSh AOT               # OSDI: PaSh
- - PaSh JIT no_prof       # OSDI: Blish no_prof
- - PaSh JIT no_prof no_du # OSDI: Blish no_prof no_du
- - PaSh JIT no_comm       # OSDI: Blish no_comm
 
 Flag name correspondence between the paper and the artifact are seen below:
  - PaSh JIT               # -w 16 --r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven
@@ -248,29 +314,24 @@ Flag name correspondence between the paper and the artifact are seen below:
  - PaSh JIT no_comm       # --parallel_pipelines --profile_driven
 
 
-
-TODO: Maybe we could put that in a table?
-
-- Flag names, legend names, (paper and code)
-
-For example:
-- dependency untangling -- parallel_pipelines
-
 ### Explain scripts, how much they are expected to take, and what do the figure that they produce look like (and why they are slightly different)
 
 We offer two different input loads to test and evaluate the system; `--small` which corresponds to smaller inputs thus smaller execution time (4-5 hours) and `--full` input sizes that are used
-in the paper (~20 hours; TODO we should verify that)
+in the paper (>20 hours). Running the small results returns results that are very close to the ones shown in the paper, and all differences between configurations are evident. The only difference is that a few speedups are slightly smaller (for scripts that are too small to get meaningful benefits from parallelization).
 
 This section provides detailed instructions on how to replicate the figures of the experimental evaluation of the system as described in Table 1 from the paper (2-13).
 
 ![img](./imgs/table.png)
 
+**TODO: Dimitris** Point to each script from the table to a source file.
 
 ```sh
 cd $PASH_TOP/evaluation/eval_script/
-# There are two options here, either use --full as argument (default option) or --small (default option).
+# There are two options here, either use --small or --full as an argument to determine the input size.
 # This is the script that runs bash and PaSh JIT/AOT with several configuration. It runs all the benchmark described
 # in Table 1 of the paper and gathers the execution times
+
+# We suggest that you use `tmux/screen` to run this script so that you can leave it running in the background and see the results after it is done.
 bash run_all.sh --small
 # after the execution is finished, you may view the raw data timers.
 cat eval_results/run.tmp
@@ -293,24 +354,8 @@ and the three output figures.
  - [run.tmp](./logs/run.tmp)
  - [data_final.csv](./logs/data_final.csv)
 
-#### Plot Generation
 
-For the figures, additional packages are required (they are already available on `deathstar`):
-```sh
-# install the R environment and libraries
-# follow the guide here https://cran.r-project.org/bin/linux/ubuntu/
-
-# install ggplot2 for R
-# needed for generating the pdf
-sudo R
-> install.packages('ggplot2', dep = TRUE)
-> q()
-> n
-```
-
-#### How to read Figures
-
-- Explain legend, lines
+#### Interpreting the figures
 
 Some results differences (with the paper):
 - Some results are slightly worse w.r.t. absolute speedup (relative benefits are still the same) because the inputs are smaller and there is less potential for parallelizability
