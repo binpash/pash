@@ -49,7 +49,7 @@ The artifact makes three claims, each of which has different hardware/software r
 - Claim 2 has the following requirements, which are met by a server that we give you access to, or can be met using the `binpash/pash:latest` docker image (but you would have to run it on your own infrastructure):
   * Hardware: a modern multi-processor, to show performance results (the more cpus, the merrier)
   * Software: automake bc curl gcc git libtool m4 python sudo wget bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config python3 python3-pip python3-setuptools python3-testresources wamerican-insane
-- Claim 3 requires **TODO: KK**
+- Claim 3 requires an installation of [Spin](https://spinroot.com).
 
 
 #### Correctness Evaluation Server (antikythera)
@@ -363,7 +363,70 @@ The figures are slightly different from the ones shown in the paper for the foll
 
 ## Claim 3: Verification of Dependency Untangling
 
-TODO: KK
+The modeling of the dependency untangling algorithm in Promela (SPIN's language) can be found in [algorithm.pml](https://github.com/binpash/pash/tree/fixes/evaluation/eval_script/algorithm.pml).
+
+The model captures compilation requests of regions with non-deterministic read/write dependencies, and ensures that no two regions with dependencies are running together, while also ensuring that both the server and the engine eventually terminate. 
+
+To verify it using Spin, simply clone the Github repo, build Spin, and run it. The following commands work on a clean Ubuntu 18.04 machine and do not require any sudo access.
+
+```sh
+## Clone the Spin repo
+git clone git@github.com:nimble-code/Spin.git
+
+## Build Spin (should have no errors)
+cd Spin; make
+cd ../
+
+## Check the spin version
+./Spin/Src/spin -V 
+## Our results were verified with `Spin Version 6.5.1 -- 3 June 2021`
+
+## Run the verifier:
+./Spin/Src/spin -run algorithm.pml
+## Should return something like this:
+# ltl invariant: (<> ((daemon@end))) && (<> ((runtime@end)))
+
+# (Spin Version 6.5.1 -- 3 June 2021)
+#         + Partial Order Reduction
+
+# Full statespace search for:
+#         never claim             + (invariant)
+#         assertion violations    + (if within scope of claim)
+#         acceptance   cycles     + (fairness disabled)
+#         invalid end states      - (disabled by never claim)
+
+# State-vector 244 byte, depth reached 570, errors: 0
+#    453335 states, stored (906670 visited)
+#   1222058 states, matched
+#   2128728 transitions (= visited+matched)
+#         0 atomic steps
+# hash conflicts:     10172 (resolved)
+
+# Stats on memory usage (in Megabytes):
+#   117.595       equivalent memory usage for states (stored*(State-vector + overhead))
+#    46.986       actual memory usage for states (compression: 39.96%)
+#                 state-vector as stored = 81 byte + 28 byte overhead
+#   128.000       memory used for hash table (-w24)
+#     0.534       memory used for DFS stack (-m10000)
+#   175.409       total actual memory usage
+
+
+# unreached in proctype daemon
+#         algorithm.pml:78, state 33, "-end-"
+#         (1 of 33 states)
+# unreached in proctype runtime
+#         (0 of 25 states)
+# unreached in proctype Proc
+#         (0 of 5 states)
+# unreached in claim invariant
+#         _spin_nvr.tmp:17, state 18, "-end-"
+#         (1 of 18 states)
+
+# pan: elapsed time 0.68 seconds
+# pan: rate 1333338.2 states/second
+```
+
+The important part of the output is that there were 0 errors, and therefore all assertions and the linear temporal logic invariant are satisfied by all executions of this model.
 
 
 ## Support & Epilogue
