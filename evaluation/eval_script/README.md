@@ -5,13 +5,13 @@
 
 - Move this to a private gist and add the keys.
 
-- Is the docker image pash:latest? No, Docker images update automatically on each new release. I could try updating them manually
+- Have the correct image of the docker image in the local installation section (pash:latest is main and not the correct branch).
 
 - Make a new branch with these fixes (called osdi22) and freeze it. We can then merge this branch to `future`. Once we do that, we also need to fix links to the `fixes` branch to point to the new branch.
 
 - In general check all links once we are done. This will be a gist so relative links won't work.
 
-- **Thurston:** Check that the link/description of the parsing library are OK.
+- **TODO: Thurston** Check that the link/description of the parsing library are OK.
 
 This artifact covers the `PaSh-JIT`'s main functionality and key contributions as presented in the OSDI paper.
 Here is the table of contents of this README file:
@@ -49,7 +49,7 @@ The artifact makes three claims, each of which has different hardware/software r
 - Claim 2 has the following requirements, which are met by a server that we give you access to, or can be met using the `binpash/pash:latest` docker image (but you would have to run it on your own infrastructure):
   * Hardware: a modern multi-processor, to show performance results (the more cpus, the merrier)
   * Software: automake bc curl gcc git libtool m4 python sudo wget bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config python3 python3-pip python3-setuptools python3-testresources wamerican-insane
-- Claim 3 requires **TODO**
+- Claim 3 requires **TODO: KK**
 
 
 #### Correctness Evaluation Server (antikythera)
@@ -66,7 +66,7 @@ ssh osdi22@deathstar.ndr.md
 ./pash/scripts/quickcheck.sh                                           
 ```
 
-**TODO:** What information will this print? Can we paste some (all) of it here?
+**TODO: Dimitris/Tammam** What information will this print? Can we paste some (all) of it here?
 
 ##### Private Key Installation
 
