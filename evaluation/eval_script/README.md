@@ -56,6 +56,7 @@ The artifact makes three claims, each of which has different hardware/software r
 
 **TODO: Dimitris** Have a section that runs quickcheck (or something small like `./pa.sh -c 'echo hi'`) here (together with instructions for keys).
 
+
 #### Performance Evaluation Server (deathstar)
 
 We have created a reviewer account on `deathstar`, the machine used for all the performance results reported in the paper. Here _reviewers have to coordinate themselves other to not run checks/experiments at the same time_. To use `deathstar`, run a quick check with:
@@ -70,10 +71,14 @@ ssh osdi22@deathstar.ndr.md
 
 ##### Private Key Installation
 
-**TODO: Dimitris** add instructions on how to install the private ssh key
-
-
-
+```sh
+# download the key from the private gist
+wget TODO -O ~/.ssh/pash.key
+# fix the permissions for the key
+chmod 600 ~/.ssh/pash.key
+# connect to the remote servers deathstar/antikythera
+ssh osdi22@deathstar.ndr.md -i ~/.ssh/pash.key
+```
 #### Docker Container (local)
 
 Another way to try PaSh is locally through a Docker container, running a pre-setup ubuntu Linux.
@@ -228,10 +233,9 @@ In order to run the correctness evaluation, you need to login the `antikythera` 
 
 We have already installed PaSh and the POSIX suite in a docker image there that you can use to run the tests and validate the correctness results.
 
-**TODO: Dimitris** Add command/instructions to ssh into antikythera with the key `-i ...`.
-
 ```sh
 # ssh to antikythera.csail.mit.edu using the provided private key
+ssh antikythera.csail.mit.edu -i ~/.ssh/pash.key
 # inside the machine, run
 docker run -it --sig-proxy=false posix /bin/bash
 # this will spawn a clean docker instance to run the posix tests using bash and pash
@@ -323,8 +327,23 @@ This section provides detailed instructions on how to replicate the figures of t
 
 ![img](./imgs/table.png)
 
-**TODO: Dimitris** Point to each script from the table to a source file.
-
+Benchmark correspondence between the paper and the artifact are seen below:
+  - [Common & Classic One-liners](https://github.com/binpash/pash/tree/fixes/evaluation/benchmarks/oneliners)
+  - [Bell Labs Unix50](https://github.com/binpash/pash/tree/fixes/evaluation/benchmarks/unix50)
+  - [COVID-19 Transit Analytics](https://github.com/binpash/pash/tree/fixes/evaluation/benchmarks/analytics-mts)
+  - [Natural-Language Processing](https://github.com/binpash/pash/tree/fixes/evaluation/benchmarks/nlp)
+  - [NOAA Weather Analysis](https://github.com/binpash/pash/tree/fixes/evaluation/benchmarks/max-temp)
+  - [Wikipedia Web Indexing](https://github.com/binpash/pash/tree/fixes/evaluation/benchmarks/web-index)
+  - [Video Processing](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/img_convert.sh)
+  - [Audio Processing](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/to_mp3.sh)
+  - [Program Inference](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/proginf.sh)
+  - [Traffic Log Analysis](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/nginx.sh)
+  - [PCAP Log Analysis](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/pcap.sh)
+  - [Genomics Computations](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/genomics.sh)
+  - [Aur Package Compilation](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/pacaur.sh)
+  - [Encryption](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/encrypt_files.sh) 
+  - [Compression](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/compress_files.sh)
+  - Microbenchmarks # TODO i don't know the link here
 ```sh
 cd $PASH_TOP/evaluation/eval_script/
 # There are two options here, either use --small or --full as an argument to determine the input size.
