@@ -55,7 +55,7 @@ The artifact makes three claims, each of which has different hardware/software r
 #### Correctness Evaluation Server (antikythera)
 
 **TODO: Dimitris** Have a section that runs quickcheck (or something small like `./pa.sh -c 'echo hi'`) here (together with instructions for keys).
-
+To verify that PaSh is running correctly, run a quick check with:
 
 #### Performance Evaluation Server (deathstar)
 
@@ -63,11 +63,9 @@ We have created a reviewer account on `deathstar`, the machine used for all the 
 
 ```sh
 ssh osdi22@deathstar.ndr.md
-# this will print information regarding pash installation
-./pash/scripts/quickcheck.sh                                           
+# run a simple command with pash. This should run without any issue
+$PASH_TOP/pa.sh -c 'echo Hello World!'
 ```
-
-**TODO: Dimitris/Tammam** What information will this print? Can we paste some (all) of it here?
 
 ##### Private Key Installation
 
@@ -85,7 +83,7 @@ Another way to try PaSh is locally through a Docker container, running a pre-set
 Information about docker installation may be found in [here](https://github.com/binpash/pash/tree/fixes/docs/install#docker-setup).
 ```sh
 docker pull binpash/pash; docker run --name pash-playground -it binpash/pash
-./opt/pash/scripts/quickcheck.sh                                            # this is typed _in_ the container
+$PASH_TOP/pa.sh -c 'echo Hello World!'         # this is typed _in_ the container
 ```
 
 ##### Plot Generation
