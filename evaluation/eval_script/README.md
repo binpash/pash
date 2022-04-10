@@ -1,17 +1,88 @@
-# OSDI'22 PaSh Artifact
->  This file is permanently hosted as a [private gist (TODO)](XXXX). _Please do not share this file, as it includes account credentials to a server for running the experiments!_
+# Getting Started Instructions
 
-## TODOs (for us -- delete before uploading):
+The structure of this document mirrors [the OSDI22 artifact "evaluation process"](https://www.usenix.org/conference/osdi21/call-for-artifacts). At a glance:
 
-- Move this to a private gist and add the keys.
+[x] [Artifact available](): Pointers to GitHub, Dockerhub, and the Linux Foundation
+[x] [Artifact functional](): Documentation, completeness wrt to claims in paper, and exercisability
+[x] [Results reproducible](): Correctness (§7.1) performance (§7.2), microbenchmarks (§7.3)
 
-- Have the correct image of the docker image in the local installation section (pash:latest is main and not the correct branch).
+To "kick the tires" for this artifact:
+* skim this README file to get an idea of the structure (2 minutes) and possible setup options (e.g., accounts on `deathstar` and `antikythera`; and Docker VM);
+* jump straight into the "[Exercisability"]() section of the README file (13 minutes).
 
-- Make a new branch with these fixes (called osdi22) and freeze it. We can then merge this branch to `future`. Once we do that, we also need to fix links to the `fixes` branch to point to the new branch.
+# Artifact available
 
-- In general check all links once we are done. This will be a gist so relative links won't work.
+The implementation described in the OSDI paper (PaSh-JIT) has been incorporated into PaSh, an MIT-licensed open-source software available by the Linux Foundation. Below are some relevant links:
 
-- **TODO: Thurston** Check that the link/description of the parsing library are OK.
+* PaSh is permanantely hosted on the GitHub [binpash](https://github.com/binpash/) organization.
+* The PaSh website is available at [binpa.sh](https://binpa.sh) and [https://binpash.github.io/web/](https://binpash.github.io/web/).
+* PaSh has joined [the Linux Foundation](https://www.linuxfoundation.org/press-release/linux-foundation-to-host-the-pash-project-accelerating-shell-scripting-with-automated-parallelization-for-industrial-use-cases/) and is available via [Dockerhub]()
+* PaSh developers hang out on the [pash-discuss](https://groups.google.com/g/pash-discuss) mailing list and [discord](https://discord.com/channels/947328962739187753).
+
+PaSh is  developed actively, forms the foundation of further research on the shell, and has received open-source contributions from developers outside the core development team.
+
+# Artifact functional
+
+## Documentation
+
+## Completeness 
+
+Our paper describes several system components. Fig. 1 of the paper gives an overview of their interaction and correspondence to sections. Below we provide links to the source code implementing them.
+
+* *Preprocesor (§3.1 and §3.2):* The [preprocessor](https://github.com/binpash/pash/blob/main/compiler/pash.py) uses the parser (below) to instrument the AST with calls to the [JIT Engine](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh). Note here that the terminology in the paper is somewhat different from the code; we hope to align the two soon.
+
+* *Parsing library (§3.3):* The [parsing library](https://github.com/binpash/pash/blob/main/compiler/parser/ceda/) contains Python bindings for the dash parser (e.g., [ast2a.py](https://github.com/binpash/pash/blob/main/compiler/parser/ceda/ast2a.py) translates dash's AST to a Python AST) and a complete [unparser implementation](https://github.com/binpash/pash/blob/main/compiler/parser/ceda/ast2shell.py).
+
+* *JIT engine (§4):* The [JIT engine](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh) transitions between shell and PaSh mode and interacts with the the stateful compilation server. The engine sends compilation requests to the compilation server (below) and waits for a response: If the server succeeds at compiling and parallelizing the requested region, then the engine runs the parallel shell script; if the server fails, then it's not safe to parallelize this region and the engine runs the original code.
+
+* *Parallelizing compilation server (§5):* The [parallelizing compilation server](https://github.com/binpash/pash/blob/main/compiler/pash_runtime_daemon.py) handles compilation requests for parallelizing regions of the script. The server contains the following subcomponents: (i)The [expansion component](https://github.com/binpash/pash/blob/main/compiler/expand.py), which expands script fragments; (ii) the dependency untangling component (§5.2) invoked with `--parallel_pipelines` and extracting additional parallelization consists of a [check for detecting dependencies between fragments](https://github.com/binpash/pash/blob/ebe379427a42040c1c00b01bcdcadb1fdbfb0281/compiler/pash_runtime_daemon.py#L155) after [compilation succeeds](https://github.com/binpash/pash/blob/d836bfd32a58c848dccc2b157e72237f412c6ff5/compiler/pash_runtime_daemon.py#L317) [executing the optimized script in parallel](https://github.com/binpash/pash/blob/d836bfd32a58c848dccc2b157e72237f412c6ff5/compiler/pash_runtime.sh#L257); and (iii) the [profile-driven optimization component](https://github.com/binpash/pash/blob/ebe379427a42040c1c00b01bcdcadb1fdbfb0281/compiler/pash_runtime_daemon.py#L172) (§5.3), invoked with `--profile-driven`, adjusting the parallelization factor based on previous execution times.
+ 
+* *Commutativity awareness (§6):* It consists of the following components: (i) annotations indicating whether a command is commutative (e.g., [sort](https://github.com/binpash/pash/blob/ebe379427a42040c1c00b01bcdcadb1fdbfb0281/annotations/sort.json#L18)) and (ii) dataflow nodes for orchestrating commutativity-aware concurrency — e.g., [c-split](https://github.com/binpash/pash/blob/main/runtime/r_split.c), [c-wrap](https://github.com/binpash/pash/blob/main/runtime/r_wrap.c), [c-strip](https://github.com/binpash/pash/blob/main/runtime/r_unwrap.c), and [c-merge](https://github.com/binpash/pash/blob/main/runtime/r_merge.c).
+
+
+## Exercisability
+
+# Results reproducible
+
+> Make sure you have completed  "Exercisability", which serves also as a quick, kick-the-tires requirement of this section.
+
+The paper contains three classes of experiments, focusing on:
+
+* correctness/compatibility, using the entire POSIX test suite as well as additional scripts (§7.1).
+* performance gains achieved by PASH-JIT’s parallelization, evaluated using a variety of benchmarks and workloads (§7.2).
+* PASH-JIT-internal overheads and associated optimizations (§7.3).
+
+## Correctness/compatibility (§7.1)
+
+> Important: some of these POSIX benchmarks are from the Open Standards Group and **cannot be shared outside the Docker container on the `antikythera` machine**.
+
+## Performance (§7.2)
+
+## Microbenchmarks (§7.3)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 This artifact covers the `PaSh-JIT`'s main functionality and key contributions as presented in the OSDI paper.
 Here is the table of contents of this README file:
@@ -67,16 +138,6 @@ ssh osdi22@deathstar.ndr.md
 $PASH_TOP/pa.sh -c 'echo Hello World!'
 ```
 
-##### Private Key Installation
-
-```sh
-# download the key from the private gist
-wget TODO -O ~/.ssh/pash.key
-# fix the permissions for the key
-chmod 600 ~/.ssh/pash.key
-# connect to the remote servers deathstar/antikythera
-ssh osdi22@deathstar.ndr.md -i ~/.ssh/pash.key
-```
 #### Docker Container (local)
 
 Another way to try PaSh is locally through a Docker container, running a pre-setup ubuntu Linux.
@@ -202,23 +263,6 @@ rm_pash_fifos
 ```
 
 Note that most stages in the pipeline are repeated twice and proceed in parallel (i.e., using `&`). This completes the "quick-check".
-
-
-## Components (Artifact Functional)
-
-Our paper describes the following system components. An overview of how they all interact can be found in the Paper Figure 1.
-* **Parsing library:** The parsing library (Paper Section 3.3) contains Python bindings for the dash parser (e.g., [ast2a.py](https://github.com/binpash/pash/blob/main/compiler/parser/ceda/ast2a.py) translates dash's AST to a Python AST) and a complete [unparser implementation](https://github.com/binpash/pash/blob/main/compiler/parser/ceda/ast2shell.py).
-* **Preprocesor:** The preprocessor [compiler/pash.py](https://github.com/binpash/pash/blob/main/compiler/pash.py) (Paper Section 3.2) uses the parser and then instruments the AST with calls to the [JIT Engine](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh).
-* **JIT Engine:** The JIT engine (Paper Section 4) [compiler/pash_runtime.sh](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh) transitions between shell and PaSh mode and interacts with the the stateful compilation server. The engine sends compilation requests to server and waits for a response:
-  - If the server succeeds at compiling and parallelizing the requested region, then the engine runs the parallel shell script.
-  - If the server fails, then it's not safe to parallelize this region and the engine runs the original code.
-* **Parallelizing Compilation Server:** The parallelizing compilation server (Paper Section 5) [compiler/pash_runtime_daemon.py](https://github.com/binpash/pash/blob/main/compiler/pash_runtime_daemon.py) handles compilation requests for parallelizing regions of the script. The server contains the following subcomponents:
-  - **Expansion:** The expansion module (Paper Section 5.1) that expands script fragments [compiler/expand.py](https://github.com/binpash/pash/blob/main/compiler/expand.py).
-  - **Dependency untangling:** The dependency untangling component (Paper Section 5.2) is invoked using the `--parallel_pipelines` flag. When enabled, the JIT Engine allows for running multiple regions at the same time; This increases the amount of parallelization that can be extracted from the script. The safety check for detecting dependencies between fragments [pash_runtime_daemon.py, L155](https://github.com/binpash/pash/blob/ebe379427a42040c1c00b01bcdcadb1fdbfb0281/compiler/pash_runtime_daemon.py#L155) is called after compilation succeeds [pash_runtime_daemon.py, L317](https://github.com/binpash/pash/blob/d836bfd32a58c848dccc2b157e72237f412c6ff5/compiler/pash_runtime_daemon.py#L317). Finally, the code responsible for executing the optimized script in parallel is in the JIT Engine [pash_runtime.sh, L257](https://github.com/binpash/pash/blob/d836bfd32a58c848dccc2b157e72237f412c6ff5/compiler/pash_runtime.sh#L257)
-  - **Profile Driven Configuration:** The profile driven component (Paper Section 5.3) is invoked using the `--profile-driven`. When enabled, the compiler adjusts the parallelization factor based on previous execution times. The code that determines the parallelization based on profiles is in [pash_runtime_daemon.py, L172](https://github.com/binpash/pash/blob/ebe379427a42040c1c00b01bcdcadb1fdbfb0281/compiler/pash_runtime_daemon.py#L172).
-* **Commutativity Awareness:** The commutativity-aware components of PaSh-JIT (Paper Section 6) consist of the following main components:
-  - The annotations allow for indicating that a command is commutative (e.g., [sort](https://github.com/binpash/pash/blob/ebe379427a42040c1c00b01bcdcadb1fdbfb0281/annotations/sort.json#L18))
-  - The dataflow nodes for orchestrating commutativity-aware concurrency are [c-split](https://github.com/binpash/pash/blob/main/runtime/r_split.c), [c-wrap](https://github.com/binpash/pash/blob/main/runtime/r_wrap.c), [c-strip](https://github.com/binpash/pash/blob/main/runtime/r_unwrap.c), and [c-merge](https://github.com/binpash/pash/blob/main/runtime/r_merge.c).
 
 
 ## Claim 1: Correctness evaluation
@@ -445,19 +489,3 @@ cd ../
 
 The important part of the output is that there were 0 errors, and therefore all assertions and the linear temporal logic invariant are satisfied by all executions of this model.
 
-
-## Support & Epilogue
-
-PaSh is open-source and we are continuously working on it. Feel free to submit issues on Github, join the mailing lists, and use PaSh to parallelize your long-running shell scripts :)
-
-### Useful Links:
-
-Website: [binpa.sh](https://binpa.sh)
-
-Mailing Lists: 
-* [Discussion](https://groups.google.com/g/pash-discuss): Join this mailing list for discussing all things `pash`
-* [Commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
-
-Development/contributions:
-* Contribution guide: [docs/contrib](../../docs/contributing/contrib.md)
-<!-- * Continuous Integration Server: [http://pash.ndr.md/](http://pash.ndr.md/) -->
