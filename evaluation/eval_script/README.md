@@ -38,7 +38,7 @@ Fig. 1 of the paper gives an overview of the interaction bertween different comp
 
 * *Preprocesor (§3.1 and §3.2):* The [preprocessor](https://github.com/binpash/pash/blob/main/compiler/pash.py) uses the parser (below) to instrument the AST with calls to the [JIT Engine](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh). Note here that the terminology in the paper is somewhat different from the code; we hope to align the two soon.
 
-* *Parsing library (§3.3):* The [parsing library](https://github.com/binpash/pash/blob/main/compiler/parser/ceda/) contains Python bindings for the dash parser (e.g., [ast2a.py](https://github.com/binpash/pash/blob/main/compiler/parser/ceda/ast2a.py) translates dash's AST to a Python AST) and a complete [unparser implementation](https://github.com/binpash/pash/blob/main/compiler/parser/ceda/ast2shell.py).
+* *Parsing library (§3.3):* The [parsing library](https://github.com/binpash/pash/blob/main/compiler/parser/ceda/) contains Python bindings for the dash [parser](https://github.com/binpash/pash/tree/main/compiler/parser) translates dash's AST to a Python AST) and a complete [unparser implementation](https://github.com/binpash/pash/blob/main/compiler/parser/ceda/ast2shell.py).
 
 * *JIT engine (§4):* The [JIT engine](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh) transitions between shell and PaSh mode and interacts with the the stateful compilation server. The engine sends compilation requests to the compilation server (below) and waits for a response: If the server succeeds at compiling and parallelizing the requested region, then the engine runs the parallel shell script; if the server fails, then it's not safe to parallelize this region and the engine runs the original code.
 
@@ -343,8 +343,8 @@ bash gen_data.sh
 We have included in this repo sample data of the raw data timers (run.tmp), the final source data (data_final.csv) 
 and the three output figures.
 
-**Plots and logs**
-Here are the plots from the evaluation:
+**Plots and logs.**
+Here are the plots and logs generated from a run of the artifact evaluation script. After running the evaluation scripts, you should generate similar figures and execution logs.
 
 * [Paper, Figure 5](./pdfs/figure5.pdf)
 * [Paper, Figure 6](./pdfs/figure6.pdf)
