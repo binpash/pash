@@ -80,7 +80,6 @@ $PASH_TOP/pa.sh -c 'echo Hello World!'
 ```
 
 **Local installation (Docker):**
-
 PaSh is an open-source project and can be installed on a variety of platforms. For example, another way to try PaSh is locally through a Docker container, running a pre-setup ubuntu Linux.
 Information about docker installation may be found in [here](https://github.com/binpash/pash/tree/fixes/docs/install#docker-setup).
 
@@ -151,8 +150,6 @@ which takes about 14s.
 The `--graphviz` option generates a graph in a directory `./pash_graphviz_<TIMESTAMP>`.
 
 A sample graph may be viewed [here](./pdfs/dfg.pdf).
-
-
 
 To view the actual parallel shell code emitted by the compiler, you can inspect the log by running:
 
