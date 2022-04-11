@@ -2,14 +2,14 @@
 
 The structure of this document mirrors [the OSDI22 artifact "evaluation process"](https://www.usenix.org/conference/osdi21/call-for-artifacts). At a glance:
 
-* [x] [Artifact available](): Pointers to GitHub, Dockerhub, and the Linux Foundation
-* [x] [Artifact functional](): Documentation, completeness wrt to claims in paper, and exercisability
-* [x] [Results reproducible](): Correctness (§7.1) performance (§7.2), microbenchmarks (§7.3)
+* [x] [Artifact available](#artifact-available): Pointers to GitHub, Dockerhub, and the Linux Foundation
+* [x] [Artifact functional](#artifact-functional): Documentation, completeness wrt to claims in paper, and exercisability
+* [x] [Results reproducible](#results-reproducible): Correctness (§7.1) performance (§7.2), microbenchmarks (§7.3)
 
 To "kick the tires" for this artifact:
 
 * skim this README file to get an idea of the structure (2 minutes) and possible setup options (e.g., accounts on `deathstar` and `antikythera`; and Docker VM);
-* jump straight into the "[Exercisability"]() section of the README file (13 minutes).
+* jump straight into the "[Exercisability"](#exercisability) section of the README file (13 minutes).
 
 # Artifact available
 
@@ -17,7 +17,7 @@ The implementation described in the OSDI paper (PaSh-JIT) has been incorporated 
 
 * PaSh is permanantely hosted on the GitHub [binpash](https://github.com/binpash/) organization.
 * The PaSh website is available at [binpa.sh](https://binpa.sh) and [https://binpash.github.io/web/](https://binpash.github.io/web/).
-* PaSh has joined [the Linux Foundation](https://www.linuxfoundation.org/press-release/linux-foundation-to-host-the-pash-project-accelerating-shell-scripting-with-automated-parallelization-for-industrial-use-cases/) and is available via [Dockerhub]()
+* PaSh has joined [the Linux Foundation](https://www.linuxfoundation.org/press-release/linux-foundation-to-host-the-pash-project-accelerating-shell-scripting-with-automated-parallelization-for-industrial-use-cases/) and is available via [Dockerhub](https://hub.docker.com/r/binpash/pash)
 * PaSh developers hang out on the [pash-discuss](https://groups.google.com/g/pash-discuss) mailing list and [discord](https://discord.com/channels/947328962739187753).
 
 PaSh is  developed actively, forms the foundation of further research on the shell, and has received open-source contributions from developers outside the core development team.
