@@ -20,13 +20,30 @@ The implementation described in the OSDI paper (PaSh-JIT) has been incorporated 
 * PaSh has joined [the Linux Foundation](https://www.linuxfoundation.org/press-release/linux-foundation-to-host-the-pash-project-accelerating-shell-scripting-with-automated-parallelization-for-industrial-use-cases/) and is available via [Dockerhub](https://hub.docker.com/r/binpash/pash)
 * PaSh developers hang out on the [pash-discuss](https://groups.google.com/g/pash-discuss) mailing list and [discord](https://discord.com/channels/947328962739187753).
 
-PaSh is  developed actively, forms the foundation of further research on the shell, and has received open-source contributions from developers outside the core development team.
+PaSh is developed actively, forms the foundation of further research on the shell, and has received open-source contributions from developers outside the core development team.
 
 # Artifact functional
 
 ## Documentation
 
-
+* [Repo README](https://github.com/binpash/pash)
+  * [Annotations](https://github.com/binpash/pash/tree/main/annotations): DSL characterizing commands, parallelizability study, and associated annotations
+    * [C Stats](https://github.com/binpash/pash/tree/main/annotations/c_stats)
+    * [P Stats](https://github.com/binpash/pash/tree/main/annotations/p_stats)
+  * [Compiler](https://github.com/binpash/pash/blob/main/compiler): Shell-dataflow translations and associated parallelization transformations
+    * [Parser Library](https://github.com/binpash/pash/tree/main/compiler/parser)
+    * [Parser Library Internals](https://github.com/binpash/pash/tree/main/compiler/parser/ceda)
+  * [Docs](https://github.com/binpash/pash/tree/main/docs): Design documents, tutorials, installation instructions, etc.
+    * [Contributing Guide](https://github.com/binpash/pash/blob/main/docs/contributing/contrib.md)
+    * [Installation Instructions](https://github.com/binpash/pash/tree/main/docs/install)
+      * [Installing on Windows](https://github.com/binpash/pash/blob/main/docs/contributing/contrib.md#installing-wsl-on-windows)
+    * [Short Tutorial](https://github.com/binpash/pash/blob/main/docs/tutorial/tutorial.md)
+  * [Benchmarks](https://github.com/binpash/pash/tree/main/evaluation/benchmarks)
+  * [Runtime](https://github.com/binpash/pash/blob/main/runtime): Runtime component — e.g., eager, split, and associated combiners.
+    * [Aggregators](https://github.com/binpash/pash/tree/main/runtime/agg)
+  * [Scripts](https://github.com/binpash/pash/blob/main/scripts): Scripts related to continuous integration, deployment, and testing.
+    * [Docker Support](https://github.com/binpash/pash/tree/main/scripts/docker)
+  
 
 ## Completeness 
 
@@ -36,7 +53,7 @@ At a high level, the paper claims three contributions (page 2)
 2. A stateful, parallelizing compilation server (§5)
 3. Commutativity-aware optimization (§6)
 
-Fig. 1 of the paper gives an overview of the interaction bertween different components and the correspondence of system components to sections. Below we provide links to the source code implementing them.
+Fig. 1 of the paper gives an overview of the interaction between different components and the correspondence of system components to sections. Below we provide links to the source code implementing them.
 
 * *Preprocesor (§3.1 and §3.2):* The [preprocessor](https://github.com/binpash/pash/blob/main/compiler/pash.py) uses the parser (below) to instrument the AST with calls to the [JIT Engine](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh). Note here that the terminology in the paper is somewhat different from the code; we hope to align the two soon.
 
@@ -323,8 +340,7 @@ Benchmark correspondence between the paper and the artifact are seen below:
   - [Aur Package Compilation](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/pacaur.sh)
   - [Encryption](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/encrypt_files.sh) 
   - [Compression](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/compress_files.sh)
-  - Microbenchmarks # TODO i don't know the link here
-  - 
+  - [Microbenchmarks](https://github.com/binpash/pash/blob/main/evaluation/benchmarks/runtime-overhead/for-echo.sh)
 ```sh
 cd $PASH_TOP/evaluation/eval_script/
 # There are two options here, either use --small or --full as an argument to determine the input size.
