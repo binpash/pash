@@ -40,7 +40,7 @@ This repo hosts the core `pash` development. The structure is as follows:
 * [compiler](./compiler): Shell-dataflow translations and associated parallelization transformations.
 * [docs](./docs): Design documents, tutorials, installation instructions, etc.
 * [evaluation](./evaluation): Shell pipelines and example [scripts](./evaluation/other/more-scripts) used for the evaluation.
-* [runtime](./runtime): Runtime component — e.g., `eager`, `split`, and assocaited combiners.
+* [runtime](./runtime): Runtime component — e.g., `eager`, `split`, and associated combiners.
 * [scripts](./scripts): Scripts related to continuous integration, deployment, and testing.
 
 ## Community & More
