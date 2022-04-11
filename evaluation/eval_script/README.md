@@ -2,11 +2,12 @@
 
 The structure of this document mirrors [the OSDI22 artifact "evaluation process"](https://www.usenix.org/conference/osdi21/call-for-artifacts). At a glance:
 
-[x] [Artifact available](): Pointers to GitHub, Dockerhub, and the Linux Foundation
-[x] [Artifact functional](): Documentation, completeness wrt to claims in paper, and exercisability
-[x] [Results reproducible](): Correctness (§7.1) performance (§7.2), microbenchmarks (§7.3)
+* [x] [Artifact available](): Pointers to GitHub, Dockerhub, and the Linux Foundation
+* [x] [Artifact functional](): Documentation, completeness wrt to claims in paper, and exercisability
+* [x] [Results reproducible](): Correctness (§7.1) performance (§7.2), microbenchmarks (§7.3)
 
 To "kick the tires" for this artifact:
+
 * skim this README file to get an idea of the structure (2 minutes) and possible setup options (e.g., accounts on `deathstar` and `antikythera`; and Docker VM);
 * jump straight into the "[Exercisability"]() section of the README file (13 minutes).
 
@@ -27,7 +28,13 @@ PaSh is  developed actively, forms the foundation of further research on the she
 
 ## Completeness 
 
-Our paper describes several system components. Fig. 1 of the paper gives an overview of their interaction and correspondence to sections. Below we provide links to the source code implementing them.
+At a high level, the paper claims three contributions (page 2)
+
+1. A dynamic interposition framework for the shell (§3, 4)
+2. A stateful, parallelizing compilation server (§5)
+3. Commutativity-aware optimization (§6)
+
+Fig. 1 of the paper gives an overview of the interaction bertween different components and the correspondence of system components to sections. Below we provide links to the source code implementing them.
 
 * *Preprocesor (§3.1 and §3.2):* The [preprocessor](https://github.com/binpash/pash/blob/main/compiler/pash.py) uses the parser (below) to instrument the AST with calls to the [JIT Engine](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh). Note here that the terminology in the paper is somewhat different from the code; we hope to align the two soon.
 
@@ -39,98 +46,32 @@ Our paper describes several system components. Fig. 1 of the paper gives an over
  
 * *Commutativity awareness (§6):* It consists of the following components: (i) annotations indicating whether a command is commutative (e.g., [sort](https://github.com/binpash/pash/blob/ebe379427a42040c1c00b01bcdcadb1fdbfb0281/annotations/sort.json#L18)) and (ii) dataflow nodes for orchestrating commutativity-aware concurrency — e.g., [c-split](https://github.com/binpash/pash/blob/main/runtime/r_split.c), [c-wrap](https://github.com/binpash/pash/blob/main/runtime/r_wrap.c), [c-strip](https://github.com/binpash/pash/blob/main/runtime/r_unwrap.c), and [c-merge](https://github.com/binpash/pash/blob/main/runtime/r_merge.c).
 
+* The paper additionally claims that core of the server has been *modelled and formally verified using SPIN*. The modeling of the dependency untangling algorithm in Promela (SPIN's language) can be found in [algorithm.pml](https://github.com/binpash/pash/tree/fixes/evaluation/eval_script/algorithm.pml). The model captures compilation requests of regions with non-deterministic read/write dependencies, and ensures that no two regions with dependencies are running together, while also ensuring that both the server and the engine eventually terminate.
+
 
 ## Exercisability
 
-# Results reproducible
-
-> Make sure you have completed  "Exercisability", which serves also as a quick, kick-the-tires requirement of this section.
-
-The paper contains three classes of experiments, focusing on:
-
-* correctness/compatibility, using the entire POSIX test suite as well as additional scripts (§7.1).
-* performance gains achieved by PASH-JIT’s parallelization, evaluated using a variety of benchmarks and workloads (§7.2).
-* PASH-JIT-internal overheads and associated optimizations (§7.3).
-
-## Correctness/compatibility (§7.1)
-
-> Important: some of these POSIX benchmarks are from the Open Standards Group and **cannot be shared outside the Docker container on the `antikythera` machine**.
-
-## Performance (§7.2)
-
-## Microbenchmarks (§7.3)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-This artifact covers the `PaSh-JIT`'s main functionality and key contributions as presented in the OSDI paper.
-Here is the table of contents of this README file:
-
-1. [Quick check](#quick-check)
-2. [System Components](#components-artifact-functional)
-3. [Claim 1 -- Correctness Evaluation](#claim-1-correctness-evaluation)
-4. [Claim 2 -- Performance Evaluation](#claim-2-performance-evaluation)
-5. [Claim 3 -- Dependency Untangling Verification](#claim-3-verification-of-dependency-untangling)
-6. [Support & Epilogue](#support--epilogue)
-
-The recommended artifact evaluation path is the following:
-
-1. Start with the [quick check](#quick-check), to confirm you can access everything (less than 20 minutes).
-
-2. Read a brief overview of the [system components](#components-artifact-functional) that includes pointers to the code that implements them.
-
-3. Evaluate the three evaluation claims that are made in the paper, namely 
-  (i) the [correctness evaluation](#claim-1-correctness-evaluation), 
-    which corresponds to Paper Section 7.1,
-  (ii) the [performance evaluation](#claim-2-performance-evaluation) (takes multiple hours), 
-    which corresponds to Paper Section 7.2, and
-  (iii) the [verificaton of the dependency untangling algorithm](#claim-3-verification-of-dependency-untangling), which is mentioned in the end of Section 5.2.
-
-## Quick check
-
-Here is how to check that everything works on your chosen evaluation environment:
-
-### Installation/Infrastructure
-
-#### Requirements
-
-The artifact makes three claims, each of which has different hardware/software requirements:
-- Claim 1 requires access to one of our machines in order to run the POSIX test suite because it cannot be shared publicly.
-- Claim 2 has the following requirements, which are met by a server that we give you access to, or can be met using the `binpash/pash:latest` docker image (but you would have to run it on your own infrastructure):
+**Requirements**
+For the "results reproducible" badge, the artifact has a few different hardware/software requirements. 
+- Performance has the following requirements, which are met by a server that we give you access to, or can be met using the `binpash/pash:latest` docker image (but you would have to run it on your own infrastructure):
   * Hardware: a modern multi-processor, to show performance results (the more cpus, the merrier)
   * Software: automake bc curl gcc git libtool m4 python sudo wget bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config python3 python3-pip python3-setuptools python3-testresources wamerican-insane
-- Claim 3 requires an installation of [Spin](https://spinroot.com).
+
+The modelling and formal verification of the dependency untangling algorithm requires [Spin](https://spinroot.com).
 
 
-#### Correctness Evaluation Server (antikythera)
+**Remote servrers used to evaluate PaSh:**
+We have created a `osdi22` account on the machines used to evaluate PaSh:
 
-**TODO: Dimitris** Have a section that runs quickcheck (or something small like `./pa.sh -c 'echo hi'`) here (together with instructions for keys).
-To verify that PaSh is running correctly, run a quick check with:
+* `antikythera.csail.mit.edu`: a server hosting the POSIX test suite for correctness/compability results (§7.1); the POSIX test suite cannot be shared publicly.
 
-#### Performance Evaluation Server (deathstar)
+* `deathstar.ndr.md`: a large multiprocessor used for performance results (§7.2, 7.3). 
 
-We have created a reviewer account on `deathstar`, the machine used for all the performance results reported in the paper. Here _reviewers have to coordinate themselves other to not run checks/experiments at the same time_. To use `deathstar`, run a quick check with:
+> Here _reviewers have to coordinate themselves other to not run checks/experiments at the same time_. 
+
+To connect to these machines, use:
+
+**FIXME Dimitris: Add a quickcheck for both machines below**
 
 ```sh
 ssh osdi22@deathstar.ndr.md
@@ -138,32 +79,29 @@ ssh osdi22@deathstar.ndr.md
 $PASH_TOP/pa.sh -c 'echo Hello World!'
 ```
 
-#### Docker Container (local)
+**Local installation (Docker):**
 
-Another way to try PaSh is locally through a Docker container, running a pre-setup ubuntu Linux.
+PaSh is an open-source project and can be installed on a variety of platforms. For example, another way to try PaSh is locally through a Docker container, running a pre-setup ubuntu Linux.
 Information about docker installation may be found in [here](https://github.com/binpash/pash/tree/fixes/docs/install#docker-setup).
+
+> We do not recommend local installation for the "results reproducible" badge.
+
 ```sh
 docker pull binpash/pash; docker run --name pash-playground -it binpash/pash
 $PASH_TOP/pa.sh -c 'echo Hello World!'         # this is typed _in_ the container
 ```
 
-##### Plot Generation
-
-In order to generate the performance evaluation figures, additional packages are required (they are already available on `deathstar` but not on the docker image):
+To generate the performance figures, [install the R environment](https://cran.r-project.org/bin/linux/ubuntu/) and then install ggplot2 for R:
 ```sh
-# install the R environment and libraries
-# follow the guide here https://cran.r-project.org/bin/linux/ubuntu/
-
-# install ggplot2 for R
-# needed for generating the pdf
 sudo R
 > install.packages('ggplot2', dep = TRUE)
 > q()
 > n
 ```
 
+## A Minimal Run: Demo Spell
 
-### A Minimal Run: Demo Spell
+On any of the environments above (`antikythera`, `deathstar`, or local)
 
 All scripts in this guide assume that `$PASH_TOP` is set to the top directory of the PaSh codebase (i.e., `~/pash` on `deathstar` or `/opt/pash` in docker)
 
@@ -265,13 +203,19 @@ rm_pash_fifos
 Note that most stages in the pipeline are repeated twice and proceed in parallel (i.e., using `&`). This completes the "quick-check".
 
 
-## Claim 1: Correctness evaluation
+# Results reproducible
 
-This corresponds to Section 7.1 of the paper.
+> Make sure you have completed  "Exercisability", which serves also as a quick, kick-the-tires requirement of this section.
 
-### Requirements
+The paper contains three classes of experiments, focusing on:
 
-In order to run the correctness evaluation, you need to login the `antikythera` machine since the POSIX test suite cannot be shared publicly.
+* correctness/compatibility, using the entire POSIX test suite as well as additional scripts (§7.1).
+* performance gains achieved by PASH-JIT’s parallelization, evaluated using a variety of benchmarks and workloads (§7.2).
+* PASH-JIT-internal overheads and associated optimizations (§7.3).
+
+## Correctness/compatibility (§7.1)
+
+> Important: some of these POSIX benchmarks are from the Open Standards Group and **cannot be shared outside the Docker container on the `antikythera` machine**.
 
 We have already installed PaSh and the POSIX suite in a docker image there that you can use to run the tests and validate the correctness results.
 
@@ -346,22 +290,17 @@ comm -13 <(../../results/summarize_journal.sh results/0002e/journal | grep "Asse
 ## which are exactly the tests mentioned in 
 ```
 
-## Claim 2: Performance evaluation
+## Performance (§7.2)
 
-This corresponds to the section 7.2 of the paper.
+**Terminology correspondence.**
+Here is the correspondence of flag names between the paper and the artifact:
+* PaSh JIT               `-w 16 --r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven`
+* PaSh AOT               `-w 16`
+* PaSh JIT no_prof       `-w 16 --r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines`
+* PaSh JIT no_prof no_du `-w 16 --r_split --dgsh_tee --r_split_batch_size 1000000`
+* PaSh JIT no_comm       `--parallel_pipelines --profile_driven`
 
-### Legend of terminology correspondence
-
-Flag name correspondence between the paper and the artifact are seen below:
- - PaSh JIT               # -w 16 --r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven
- - PaSh AOT               # -w 16
- - PaSh JIT no_prof       # -w 16 --r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines
- - PaSh JIT no_prof no_du # -w 16 --r_split --dgsh_tee --r_split_batch_size 1000000
- - PaSh JIT no_comm       # --parallel_pipelines --profile_driven
-
-
-### Executing the evaluation and plotting the results
-
+**Execution and plotting.**
 We offer two different input loads to test and evaluate the system; `--small` which corresponds to smaller inputs thus smaller execution time (4-5 hours) and `--full` input sizes that are used
 in the paper (>20 hours). Running the small results returns results that are very close to the ones shown in the paper, and all differences between configurations are evident. The only difference is that a few speedups are slightly smaller (for scripts that are too small to get meaningful benefits from parallelization).
 
@@ -386,6 +325,7 @@ Benchmark correspondence between the paper and the artifact are seen below:
   - [Encryption](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/encrypt_files.sh) 
   - [Compression](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/compress_files.sh)
   - Microbenchmarks # TODO i don't know the link here
+  - 
 ```sh
 cd $PASH_TOP/evaluation/eval_script/
 # There are two options here, either use --small or --full as an argument to determine the input size.
@@ -406,23 +346,20 @@ bash gen_data.sh
 We have included in this repo sample data of the raw data timers (run.tmp), the final source data (data_final.csv) 
 and the three output figures.
 
-#### Pdfs
-- [Paper, Figure 5](./pdfs/figure5.pdf)
-- [Paper, Figure 6](./pdfs/figure6.pdf)
-- [Paper, Figure 7](./pdfs/figure7.pdf)
+**Plots and logs**
+Here are the plots from the evaluation:
+
+* [Paper, Figure 5](./pdfs/figure5.pdf)
+* [Paper, Figure 6](./pdfs/figure6.pdf)
+* [Paper, Figure 7](./pdfs/figure7.pdf)
  
-#### Logs
- - [run.tmp](./logs/run.tmp)
- - [data_final.csv](./logs/data_final.csv)
+* [run.tmp](./logs/run.tmp)
+* [data_final.csv](./logs/data_final.csv)
 
 
-#### Interpreting the figures
+The figures are slightly different from the ones shown in the paper for a few different reasons. For some benchmarks, the smaller input leads to a more pronounced cost of one-time overheads and therefore smaller absolute speedup for all PaSh configurations (JIT, AOT, etc). However, the relative benefits between configurations are still the same. In Figure 7, AvgTemp is faster in the artifact figure because in the paper we forgot to use `--parallel_pipelines` (dependency untangling) and `--profile_driven` when we run the experiment for the paper. Now we added them and therefore results are slightly better (relative speedups are still similar).
 
-The figures are slightly different from the ones shown in the paper for the following two reasons:
-- For some benchmarks, the smaller input leads to a more pronounced cost of one-time overheads and therefore smaller absolute speedup for all PaSh configurations (JIT, AOT, etc). However, the relative benefits between configurations are still the same.
-- In Figure 7, AvgTemp is faster in the artifact figure because in the paper we forgot to use `--parallel_pipelines` (dependency untangling) and `--profile_driven` when we run the experiment for the paper. Now we added them and therefore results are slightly better (relative speedups are still similar).
-
-## Claim 3: Verification of Dependency Untangling
+## Additional artifact evaluation: SPIN Verification of Dependency Untangling
 
 The modeling of the dependency untangling algorithm in Promela (SPIN's language) can be found in [algorithm.pml](https://github.com/binpash/pash/tree/fixes/evaluation/eval_script/algorithm.pml).
 
