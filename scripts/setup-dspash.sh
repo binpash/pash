@@ -21,7 +21,7 @@ rm go1.17.7.linux-amd64.tar.gz
 GO111MODULE=on go get github.com/urfave/cli/v2
 
 # Protobuf
-apt-get install -y zip
+apt-get update && apt-get install -y zip
 PB_REL="https://github.com/protocolbuffers/protobuf/releases"
 PROTOBUF_VER="3.15.8"
 PROTOBUF_PACKAGE="protoc-$PROTOBUF_VER-linux-x86_64.zip"
