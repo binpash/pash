@@ -55,7 +55,7 @@ At a high level, the paper claims three contributions (page 2)
 
 Fig. 1 of the paper gives an overview of the interaction between different components and the correspondence of system components to sections. Below we provide links to the source code implementing them.
 
-* *Preprocesor (§3.1 and §3.2):* The [preprocessor](https://github.com/binpash/pash/blob/main/compiler/pash.py) uses the parser (below) to instrument the AST with calls to the [JIT Engine](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh). Note here that the terminology in the paper is somewhat different from the code; we hope to align the two soon.
+* *Preprocessor (§3.1 and §3.2):* The [preprocessor](https://github.com/binpash/pash/blob/main/compiler/pash.py) uses the parser (below) to instrument the AST with calls to the [JIT Engine](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh). Note here that the terminology in the paper is somewhat different from the code; we hope to align the two soon.
 
 * *Parsing library (§3.3):* The [parsing library](https://github.com/binpash/pash/blob/main/compiler/parser/ceda/) contains Python bindings for the dash [parser](https://github.com/binpash/pash/tree/main/compiler/parser) translates dash's AST to a Python AST) and a complete [unparser implementation](https://github.com/binpash/pash/blob/main/compiler/parser/ceda/ast2shell.py).
 
