@@ -93,8 +93,16 @@ To connect to these machines, use:
 **FIXME Dimitris: Add a quickcheck for both machines below**
 
 ```sh
-ssh osdi22@deathstar.ndr.md
+ssh osdi22@deathstar.ndr.md -i ~/.ssh/pash.key
 # run a simple command with pash. This should run without any issue
+$PASH_TOP/pa.sh -c 'echo Hello World!'
+```
+
+```sh
+ssh antikythera@csail.mit.edu -i ~/.ssh/pash.key
+# create a new instance of the container
+docker run -it --sig-proxy=false posix /bin/bash
+# run a simple command
 $PASH_TOP/pa.sh -c 'echo Hello World!'
 ```
 
@@ -242,7 +250,6 @@ ssh antikythera.csail.mit.edu -i ~/.ssh/pash.key
 docker run -it --sig-proxy=false posix /bin/bash
 # this will spawn a clean docker instance to run the posix tests using bash and pash
 # you should then be greeted with this message:
-# osdi22@antikythera:~$ docker run -it --sig-proxy=false posix /bin/bash
 # using TET_ROOT = /home/runner/tet3.8
 # VSC environment setup is successful
 
