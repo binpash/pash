@@ -19,7 +19,7 @@ from util import log
 from annotations import load_annotation_files
 import pash_runtime
 from dspash.socket_utils import send_msg, recv_msg
-from dspash.ir_helper import to_shell_file
+from dspash.ir_helper import save_configs, to_shell_file
 
 # from ... import config
 HOST = socket.gethostbyname(socket.gethostname())
@@ -79,6 +79,7 @@ def manage_connection(conn, addr):
     rcs = []
     with conn:
         print('Connected by', addr)
+        dfs_configs_paths = {}
         while True:
             data = recv_msg(conn)
             if not data:
@@ -88,6 +89,7 @@ def manage_connection(conn, addr):
             request = decode_request(data)
             if request['type'] == 'Exec-Graph':
                 graph, shell_vars = parse_exec_graph(request)
+                save_configs(graph, dfs_configs_paths)
                 exec_graph(graph, shell_vars)
                 body = {}
             else:

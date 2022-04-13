@@ -1,4 +1,4 @@
-from dspash.hdfs_file_data import get_hdfs_file_data, FileData
+from dspash.hdfs_file_data import get_hdfs_file_data, FileData, HDFSFileConfig
 from typing import List, Tuple
 
 def get_cmd_output(cmd:str):
@@ -18,12 +18,7 @@ def get_datanode_dir() -> str:
 def get_file_data(filename: str) -> FileData:
     return get_hdfs_file_data(filename)
 
-def get_file_blocks(filename: str) -> List[Tuple[str, List[str]]]:
-    """
-    Returns ordered list of (block_path, [host machines])
-    """
+def get_file_config(filename: str) -> HDFSFileConfig:
     filedata = get_file_data(filename)
-    file_blocks = []
-    for i, block in enumerate(filedata.paths()):
-        file_blocks.append((block, filedata.machines[i]))
-    return file_blocks
+    return HDFSFileConfig(filedata)
+
