@@ -381,7 +381,7 @@ Here are the plots and logs generated from a run of the artifact evaluation scri
 * [data_final.csv](./logs/data_final.csv)
 
 
-The figures are slightly different from the ones shown in the paper for a few different reasons. For some benchmarks, the smaller input with `--small` leads to a more pronounced cost of one-time overheads and therefore smaller absolute speedup for all PaSh configurations (JIT, AOT, etc). However, the relative benefits between configurations are still the same. In Figure 7, AvgTemp is faster in the artifact figure because in the paper we forgot to use `--parallel_pipelines` (dependency untangling) and `--profile_driven` when we run the experiment for the paper. Now we added them and therefore results are slightly better (relative speedups are still similar).
+The figures are slightly different from the ones shown in the paper for a few different reasons. For some benchmarks, the smaller input with `--small` leads to a more pronounced cost of one-time overheads and therefore smaller absolute speedup for all PaSh configurations (JIT, AOT, etc). However, the relative benefits between configurations are still the same. In Figure 7, AvgTemp is faster in the artifact figure because in the paper we forgot to use `--parallel_pipelines` (dependency untangling) and `--profile_driven` when we ran the experiment for the paper. Adding these flags back yields slightly better results, though relative speedups are still similar.
 
 ## Additional artifact evaluation: SPIN Verification of Dependency Untangling
 
