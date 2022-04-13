@@ -65,7 +65,7 @@ Fig. 1 of the paper gives an overview of the interaction between different compo
  
 * *Commutativity awareness (§6):* It consists of the following components: (i) annotations indicating whether a command is commutative (e.g., [sort](https://github.com/binpash/pash/blob/main/annotations/sort.json#L18)) and (ii) dataflow nodes for orchestrating commutativity-aware concurrency — e.g., [c-split](https://github.com/binpash/pash/blob/main/runtime/r_split.c), [c-wrap](https://github.com/binpash/pash/blob/main/runtime/r_wrap.c), [c-strip](https://github.com/binpash/pash/blob/main/runtime/r_unwrap.c), and [c-merge](https://github.com/binpash/pash/blob/main/runtime/r_merge.c).
 
-* The paper additionally claims that core of the server has been *modelled and formally verified using SPIN*. The modeling of the dependency untangling algorithm in Promela (SPIN's language) can be found in [algorithm.pml](https://github.com/binpash/pash/tree/fixes/evaluation/eval_script/algorithm.pml). The model captures compilation requests of regions with non-deterministic read/write dependencies, and ensures that no two regions with dependencies are running together, while also ensuring that both the server and the engine eventually terminate.
+* The paper additionally claims that core of the server has been *modelled and formally verified using SPIN*. The modeling of the dependency untangling algorithm in Promela (SPIN's language) can be found in [algorithm.pml](https://github.com/binpash/pash/tree/osdi22-ae/evaluation/osdi22-eval/algorithm.pml). The model captures compilation requests of regions with non-deterministic read/write dependencies, and ensures that no two regions with dependencies are running together, while also ensuring that both the server and the engine eventually terminate.
 
 
 ## Exercisability
@@ -100,7 +100,7 @@ $PASH_TOP/pa.sh -c 'echo Hello World!'
 
 **Local installation (Docker):**
 PaSh is an open-source project and can be installed on a variety of platforms. For example, another way to try PaSh is locally through a Docker container, running a pre-setup ubuntu Linux.
-Information about docker installation may be found in [here](https://github.com/binpash/pash/tree/fixes/docs/install#docker-setup).
+Information about docker installation may be found in [here](https://github.com/binpash/pash/tree/main/docs/install#docker-setup).
 
 > We do not recommend local installation for the "results reproducible" badge.
 
@@ -325,24 +325,24 @@ This section provides detailed instructions on how to replicate the figures of t
 ![img](./imgs/table.png)
 
 Benchmark correspondence between the paper and the artifact are seen below:
-  - [Common & Classic One-liners](https://github.com/binpash/pash/tree/fixes/evaluation/benchmarks/oneliners)
-  - [Bell Labs Unix50](https://github.com/binpash/pash/tree/fixes/evaluation/benchmarks/unix50)
-  - [COVID-19 Transit Analytics](https://github.com/binpash/pash/tree/fixes/evaluation/benchmarks/analytics-mts)
-  - [Natural-Language Processing](https://github.com/binpash/pash/tree/fixes/evaluation/benchmarks/nlp)
-  - [NOAA Weather Analysis](https://github.com/binpash/pash/tree/fixes/evaluation/benchmarks/max-temp)
-  - [Wikipedia Web Indexing](https://github.com/binpash/pash/tree/fixes/evaluation/benchmarks/web-index)
-  - [Video Processing](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/img_convert.sh)
-  - [Audio Processing](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/to_mp3.sh)
-  - [Program Inference](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/proginf.sh)
-  - [Traffic Log Analysis](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/nginx.sh)
-  - [PCAP Log Analysis](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/pcap.sh)
-  - [Genomics Computations](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/genomics.sh)
-  - [Aur Package Compilation](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/pacaur.sh)
-  - [Encryption](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/encrypt_files.sh) 
-  - [Compression](https://github.com/binpash/pash/blob/fixes/evaluation/benchmarks/dependency_untangling/compress_files.sh)
+  - [Common & Classic One-liners](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/oneliners)
+  - [Bell Labs Unix50](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/unix50)
+  - [COVID-19 Transit Analytics](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/analytics-mts)
+  - [Natural-Language Processing](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/nlp)
+  - [NOAA Weather Analysis](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/max-temp)
+  - [Wikipedia Web Indexing](https://github.com/binpash/pash/tree/main/evaluation/benchmarks/web-index)
+  - [Video Processing](https://github.com/binpash/pash/blob/main/evaluation/benchmarks/dependency_untangling/img_convert.sh)
+  - [Audio Processing](https://github.com/binpash/pash/blob/main/evaluation/benchmarks/dependency_untangling/to_mp3.sh)
+  - [Program Inference](https://github.com/binpash/pash/blob/main/evaluation/benchmarks/dependency_untangling/proginf.sh)
+  - [Traffic Log Analysis](https://github.com/binpash/pash/blob/main/evaluation/benchmarks/dependency_untangling/nginx.sh)
+  - [PCAP Log Analysis](https://github.com/binpash/pash/blob/main/evaluation/benchmarks/dependency_untangling/pcap.sh)
+  - [Genomics Computations](https://github.com/binpash/pash/blob/main/evaluation/benchmarks/dependency_untangling/genomics.sh)
+  - [Aur Package Compilation](https://github.com/binpash/pash/blob/main/evaluation/benchmarks/dependency_untangling/pacaur.sh)
+  - [Encryption](https://github.com/binpash/pash/blob/main/evaluation/benchmarks/dependency_untangling/encrypt_files.sh) 
+  - [Compression](https://github.com/binpash/pash/blob/main/evaluation/benchmarks/dependency_untangling/compress_files.sh)
   - [Microbenchmarks](https://github.com/binpash/pash/blob/main/evaluation/benchmarks/runtime-overhead/for-echo.sh)
 ```sh
-cd $PASH_TOP/evaluation/eval_script/
+cd $PASH_TOP/evaluation/osdi22-eval/
 # There are two options here, either use --small or --full as an argument to determine the input size.
 # This is the script that runs bash and PaSh JIT/AOT with several configuration. It runs all the benchmark described
 # in Table 1 of the paper and gathers the execution times
@@ -376,7 +376,7 @@ The figures are slightly different from the ones shown in the paper for a few di
 
 ## Additional artifact evaluation: SPIN Verification of Dependency Untangling
 
-The modeling of the dependency untangling algorithm in Promela (SPIN's language) can be found in [algorithm.pml](https://github.com/binpash/pash/tree/fixes/evaluation/eval_script/algorithm.pml).
+The modeling of the dependency untangling algorithm in Promela (SPIN's language) can be found in [algorithm.pml](https://github.com/binpash/pash/tree/osdi22-ae/evaluation/osdi22-eval/algorithm.pml).
 
 The model captures compilation requests of regions with non-deterministic read/write dependencies, and ensures that no two regions with dependencies are running together, while also ensuring that both the server and the engine eventually terminate. 
 
