@@ -63,6 +63,6 @@ func main() {
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
 	pb.RegisterFileReaderServer(grpcServer, newServer())
-	fmt.Printf("running on %v\n", lis.Addr())
+	fmt.Printf("File server running on %v\n", lis.Addr())
 	grpcServer.Serve(lis)
 }

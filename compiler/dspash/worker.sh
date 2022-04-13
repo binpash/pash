@@ -24,4 +24,5 @@ function cleanup() {
         rm -rf $PASH_TMP_PREFIX
 }
 
+$PASH_TOP/runtime/dspash/file_reader/filereader_server &
 python3 "$PASH_TOP/compiler/dspash/worker.py" $@

@@ -40,3 +40,6 @@ export PATH="$PATH:$(go env GOPATH)/bin"
 # Compile runtime
 cd $PASH_TOP/runtime/dspash
 go build socket_pipe.go
+cd file_reader
+go build client/dfs_split_reader.go
+go build -o filereader_server server/server.go
