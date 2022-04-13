@@ -310,7 +310,7 @@ comm -13 <(../../results/summarize_journal.sh results/0002e/journal | grep "Asse
 # Assertion #430 (A): When a command fails during word expansion or redirection, then
 # Assertion #691 (A): When the shell is not executing interactively, then the 'set -u'
 
-## which are exactly the tests mentioned in 
+## which are exactly the tests mentioned in Section 7.1 of the paper
 ```
 
 ## Performance (§7.2)
