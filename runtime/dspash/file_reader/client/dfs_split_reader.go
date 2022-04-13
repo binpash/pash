@@ -20,20 +20,22 @@ var (
 	config     = flag.String("config", "", "File to read")
 	splitNum   = flag.Int("split", 0, "The logical split number")
 	serverAddr = flag.String("addr", "localhost:50051", "The server address in the format of host:port")
-	prefix     = flag.String("prefix", "$HDFS_DATANODE_DIR/", "The top directory for hdfs blocks")
+	prefix     = flag.String("prefix", "", "The top directory")
 )
 
-type HDFSBlock struct {
+// Distrubted file system block
+type DFSBlock struct {
 	Path  string
 	Hosts []string
 }
 
-type HDFSConfig struct {
-	Blocks []HDFSBlock
+// Distributed file system config
+type DFSConfig struct {
+	Blocks []DFSBlock
 }
 
 // TODO: improve so that we don't use network is block is replicated on the same machine
-func readFirstLine(block HDFSBlock, writer *bufio.Writer) (ok bool, e error) {
+func readFirstLine(block DFSBlock, writer *bufio.Writer) (ok bool, e error) {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	ctx, cancel := context.WithCancel(context.Background())
@@ -43,6 +45,7 @@ func readFirstLine(block HDFSBlock, writer *bufio.Writer) (ok bool, e error) {
 	e = errors.New("Failed to read newline from all replicas")
 	for _, addr := range block.Hosts {
 		conn, err := grpc.Dial(addr, opts...)
+
 		if err != nil {
 			continue // try next addr
 		}
@@ -108,7 +111,7 @@ func readLocalFile(p string, skipFirstLine bool, writer *bufio.Writer) error {
 func readUntilDelim(reader *bufio.Reader, writer *bufio.Writer) {
 }
 
-func readHDFSLogicalSplit(conf HDFSConfig, split int) error {
+func readDFSLogicalSplit(conf DFSConfig, split int) error {
 
 	skipFirstLine := true
 	writer := bufio.NewWriter(os.Stdout)
@@ -140,8 +143,8 @@ func readHDFSLogicalSplit(conf HDFSConfig, split int) error {
 
 }
 
-func serialize_conf(p string) HDFSConfig {
-	conf := HDFSConfig{}
+func serialize_conf(p string) DFSConfig {
+	conf := DFSConfig{}
 	byt, err := os.ReadFile(p)
 	if err != nil {
 		log.Fatalln(err)
@@ -155,11 +158,11 @@ func serialize_conf(p string) HDFSConfig {
 func main() {
 	flag.Parse()
 	if *config == "" {
-		log.Fatalln("HDFS config or top directory are not provided")
+		log.Fatalln("DFS config not provided")
 	}
 
 	conf := serialize_conf(*config)
-	err := readHDFSLogicalSplit(conf, *splitNum)
+	err := readDFSLogicalSplit(conf, *splitNum)
 	if err != nil {
 		log.Fatalln(err)
 	}
