@@ -13,7 +13,7 @@ To "kick the tires" for this artifact:
 
 # Artifact available
 
-The implementation described in the OSDI paper (PaSh-JIT) has been incorporated into PaSh, an MIT-licensed open-source software available by the Linux Foundation. Below are some relevant links:
+The implementation described in the OSDI paper (PaSh-JIT) has been incorporated into PaSh, MIT-licensed open-source software supported by the Linux Foundation. Below are some relevant links:
 
 * PaSh is permanantely hosted on the GitHub [binpash](https://github.com/binpash/) organization.
 * The PaSh website is available at [binpa.sh](https://binpa.sh) and [https://binpash.github.io/web/](https://binpash.github.io/web/).
@@ -28,8 +28,8 @@ PaSh is developed actively, forms the foundation of further research on the shel
 
 * [Repo README](https://github.com/binpash/pash)
   * [Annotations](https://github.com/binpash/pash/tree/main/annotations): DSL characterizing commands, parallelizability study, and associated annotations
-    * [C Stats](https://github.com/binpash/pash/tree/main/annotations/c_stats)
-    * [P Stats](https://github.com/binpash/pash/tree/main/annotations/p_stats)
+    * [C Stats](https://github.com/binpash/pash/tree/main/annotations/c_stats): command statistics
+    * [P Stats](https://github.com/binpash/pash/tree/main/annotations/p_stats): parallelizability statistics
   * [Compiler](https://github.com/binpash/pash/blob/main/compiler): Shell-dataflow translations and associated parallelization transformations
     * [Parser Library](https://github.com/binpash/pash/tree/main/compiler/parser)
     * [Parser Library Internals](https://github.com/binpash/pash/tree/main/compiler/parser/ceda)
@@ -59,7 +59,7 @@ Fig. 1 of the paper gives an overview of the interaction between different compo
 
 * *Parsing library (§3.3):* The [parsing library](https://github.com/binpash/pash/blob/main/compiler/parser/ceda/) contains Python bindings for the dash [parser](https://github.com/binpash/pash/tree/main/compiler/parser) translates dash's AST to a Python AST) and a complete [unparser implementation](https://github.com/binpash/pash/blob/main/compiler/parser/ceda/ast2shell.py).
 
-* *JIT engine (§4):* The [JIT engine](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh) transitions between shell and PaSh mode and interacts with the the stateful compilation server. The engine sends compilation requests to the compilation server (below) and waits for a response: If the server succeeds at compiling and parallelizing the requested region, then the engine runs the parallel shell script; if the server fails, then it's not safe to parallelize this region and the engine runs the original code.
+* *JIT engine (§4):* The [JIT engine](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh) transitions between shell and PaSh mode and interacts with the the stateful compilation server. The engine sends compilation requests to the parallelizing compilation server (below) and waits for a response: If the server succeeds at compiling and parallelizing the requested region, then the engine runs the parallel shell script; if the server fails, then it's not safe to parallelize this region and the engine runs the original code.
 
 * *Parallelizing compilation server (§5):* The [parallelizing compilation server](https://github.com/binpash/pash/blob/main/compiler/pash_runtime_daemon.py) handles compilation requests for parallelizing regions of the script. The server contains the following subcomponents: (i)The [expansion component](https://github.com/binpash/pash/blob/main/compiler/expand.py), which expands script fragments; (ii) the dependency untangling component (§5.2) invoked with `--parallel_pipelines` and extracting additional parallelization consists of a [check for detecting dependencies between fragments](https://github.com/binpash/pash/blob/main/compiler/pash_runtime_daemon.py#L155) after [compilation succeeds](https://github.com/binpash/pash/blob/main/compiler/pash_runtime_daemon.py#L317) [executing the optimized script in parallel](https://github.com/binpash/pash/blob/main/compiler/pash_runtime.sh#L257); and (iii) the [profile-driven optimization component](https://github.com/binpash/pash/blob/main/compiler/pash_runtime_daemon.py#L172) (§5.3), invoked with `--profile-driven`, adjusting the parallelization factor based on previous execution times.
  
@@ -79,14 +79,14 @@ For the "results reproducible" badge, the artifact has a few different hardware/
 The modelling and formal verification of the dependency untangling algorithm requires [Spin](https://spinroot.com).
 
 
-**Remote servrers used to evaluate PaSh:**
+**Remote servers used to evaluate PaSh:**
 We have created a `osdi22` account on the machines used to evaluate PaSh:
 
 * `antikythera.csail.mit.edu`: a server hosting the POSIX test suite for correctness/compability results (§7.1); the POSIX test suite cannot be shared publicly.
 
 * `deathstar.ndr.md`: a large multiprocessor used for performance results (§7.2, 7.3). 
 
-> Here _reviewers have to coordinate themselves other to not run checks/experiments at the same time_. 
+> _Reviewers should coordinate to not run checks/experiments at the same time_. 
 
 To connect to these machines, use:
 
@@ -117,7 +117,7 @@ docker pull binpash/pash; docker run --name pash-playground -it binpash/pash
 $PASH_TOP/pa.sh -c 'echo Hello World!'         # this is typed _in_ the container
 ```
 
-To generate the performance figures, [install the R environment](https://cran.r-project.org/bin/linux/ubuntu/) and then install ggplot2 for R:
+In order to later generate the performance figures, [install the R environment](https://cran.r-project.org/bin/linux/ubuntu/) and then install ggplot2 for R:
 ```sh
 sudo R
 > install.packages('ggplot2', dep = TRUE)
@@ -127,9 +127,9 @@ sudo R
 
 ## A Minimal Run: Demo Spell
 
-On any of the environments above (`antikythera`, `deathstar`, or local)
+> These instructions should work on any of the environments above (`antikythera`, `deathstar`, or locally in Docker)
 
-All scripts in this guide assume that `$PASH_TOP` is set to the top directory of the PaSh codebase (i.e., `~/pash` on `deathstar` or `/opt/pash` in docker)
+All scripts in this guide assume that `$PASH_TOP` is set to the top directory of the PaSh codebase (i.e., `~/pash` on `deathstar` or `/opt/pash` in docker). This variable should be correctly configured already.
 
 We will use `demo-spell.sh` --- a pipeline based [on the original Unix spell program](https://dl.acm.org/doi/10.1145/3532.315102) by Johnson --- to confirm that the infrastructure works as expected.
 
@@ -367,6 +367,8 @@ bash gen_data.sh
 
 We have included in this repo sample data of the raw data timers (run.tmp), the final source data (data_final.csv) 
 and the three output figures.
+
+If `generate_charts.R` fails in the Docker container, make sure you've installed ggplot2 as described above.
 
 **Plots and logs.**
 Here are the plots and logs generated from a run of the artifact evaluation script. After running the evaluation scripts, you should generate similar figures and execution logs.
