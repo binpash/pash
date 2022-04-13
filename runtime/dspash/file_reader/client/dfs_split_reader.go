@@ -157,8 +157,11 @@ func serialize_conf(p string) DFSConfig {
 
 func main() {
 	flag.Parse()
-	if *config == "" {
-		log.Fatalln("DFS config not provided")
+	if flag.NArg() < 1 && *config == "" {
+		flag.Usage()
+		os.Exit(0)
+	} else if *config == "" {
+		*config = flag.Arg(0)
 	}
 
 	conf := serialize_conf(*config)
