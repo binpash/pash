@@ -35,7 +35,7 @@ type DFSConfig struct {
 	Blocks []DFSBlock
 }
 
-// TODO: improve so that we don't use network is block is replicated on the same machine
+// TODO: improve so that we don't use network if block is replicated on the same machine
 func readFirstLine(block DFSBlock, writer *bufio.Writer) (ok bool, e error) {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -159,7 +159,6 @@ func serialize_conf(p string) DFSConfig {
 
 func main() {
 	flag.Parse()
-	fmt.Printf("%v %v\n", *splitNum, *prefix)
 	if flag.NArg() < 1 && *config == "" {
 		flag.Usage()
 		os.Exit(0)
@@ -168,7 +167,6 @@ func main() {
 	}
 
 	conf := serialize_conf(*config)
-	fmt.Printf("%v %v", *splitNum, *prefix)
 	err := readDFSLogicalSplit(conf, *splitNum)
 	if err != nil {
 		log.Fatalln(err)
