@@ -55,7 +55,7 @@ func readFirstLine(block DFSBlock, writer *bufio.Writer) (ok bool, e error) {
 
 		client := pb.NewFileReaderClient(conn)
 
-		stream, err := client.ReadFile(ctx, &pb.FileRequest{Path: block.Path})
+		stream, err := client.ReadFile(ctx, &pb.FileRequest{Path: *prefix + block.Path})
 		if err != nil {
 			continue
 		}
