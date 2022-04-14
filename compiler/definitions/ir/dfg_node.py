@@ -6,6 +6,12 @@ from ir_utils import *
 from definitions.ir.redirection import *
 from definitions.ir.resource import *
 
+# BEGIN ANNO
+import sys
+sys.path.insert(1, "/home/felix/git-repos/MIT/annotations")
+from util_new import return_empty_list_if_none_else_itself
+# END ANNO
+
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions
 class DFGNode:
@@ -29,7 +35,15 @@ class DFGNode:
                  com_aggregator = None,
                  com_options = [],
                  com_redirs = [],
-                 com_assignments=[]):
+                 com_assignments=[],
+                 positional_config_list=None,
+                 positional_input_list=None,
+                 positional_output_list=None,
+                 implicit_use_of_stdin=False,
+                 implicit_use_of_stdout=False,
+                 parallelizer_list=None,
+                 cmd_related_properties=None,
+                 ):
         ## Add a unique identifier to each DFGNode since id() is not guaranteed to be unique for objects that have different lifetimes.
         ## This leads to issues when nodes are deleted and new ones are created, leading to id() clashes between them
         self.id = DFGNode.next_id
@@ -45,6 +59,17 @@ class DFGNode:
         self.com_options = com_options
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
         self.com_assignments = com_assignments
+        # BEGIN ANNO
+        # TO KEEP: com_name: str, com_options: OptionArgPosConfigType
+        # ?? com_redirs, com_assignments
+        self.positional_config_list = return_empty_list_if_none_else_itself(positional_config_list)
+        self.positional_input_list = return_empty_list_if_none_else_itself(positional_input_list)
+        self.positional_output_list = return_empty_list_if_none_else_itself(positional_output_list)
+        self.implicit_use_of_stdin = implicit_use_of_stdin
+        self.implicit_use_of_stdout = implicit_use_of_stdout
+        self.parallelizer_list = return_empty_list_if_none_else_itself(parallelizer_list)
+        self.cmd_related_properties = cmd_related_properties # TODO: set default values
+        # END ANNO
 
         # log("Node created:", self.id, self)
 
@@ -90,7 +115,9 @@ class DFGNode:
 
     ## TODO: Make that a proper class.
     def set_inputs(self, inputs):
+        print(f'inputs in set_inputs: {inputs}')
         if(isinstance(inputs, list)):
+            print(f'inputs in set: {inputs}')
             self.inputs = ([], inputs)
         elif(isinstance(inputs, tuple)):
             self.inputs = inputs

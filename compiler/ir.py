@@ -1,4 +1,16 @@
-import os
+# BEGIN ANNO
+import sys
+sys.path.insert(1, "/home/felix/git-repos/MIT/annotations")
+# for typing
+from datatypes_new.CommandInvocation import CommandInvocation
+from annotation_generation_new.datatypes.InputOutputInfo import InputOutputInfo
+from annotation_generation_new.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
+# for use
+# --
+
+from util_new_parsing import get_command_invocation
+from util_new_annotations import get_input_output_info_from_cmd_invocation_util, get_parallelizability_info_from_cmd_invocation_util
+# END ANNO
 
 from definitions.ir.arg import *
 from definitions.ir.dfg_node import *
@@ -103,7 +115,18 @@ def find_input_edges(inputs, dfg_edges, options, fileIdGen):
 ## This function creates a DFG with a single node given a command.
 def compile_command_to_DFG(fileIdGen, command, options,
                            redirections=[]):
-    ## TODO: There is no need for this redirection here. We can just straight 
+    # BEGIN ANNO
+    command_invocation: CommandInvocation = get_command_invocation(command, options)
+    io_info: InputOutputInfo = get_input_output_info_from_cmd_invocation_util(command_invocation)
+    positional_config_list, positional_input_list, positional_output_list, \
+        implicit_use_of_stdin, implicit_use_of_stdout, multiple_inputs_possible = \
+        io_info.unpack_info()
+    para_info: ParallelizabilityInfo = get_parallelizability_info_from_cmd_invocation_util(command_invocation)
+    parallelizer_list, round_robin_compatible_with_cat, is_commutative = para_info.unpack_info()
+    # TODO: store some properties in some container
+    cmd_related_properties = (multiple_inputs_possible, round_robin_compatible_with_cat, is_commutative)
+    # END ANNO
+    ## TODO: There is no need for this redirection here. We can just straight
     ##       come up with inputs, outputs, options
     inputs, out_stream, opt_indices = find_command_input_output(command, options)
     # log("Opt indices:", opt_indices, "options:", options)
@@ -115,7 +138,11 @@ def compile_command_to_DFG(fileIdGen, command, options,
 
     dfg_edges = {}
     ## Add all inputs and outputs to the DFG edges
+    print(f'inputs: {inputs}')
+    print(f'outstreams: {out_stream}')
+    # TBC: what does this do?
     dfg_inputs = find_input_edges(inputs, dfg_edges, options, fileIdGen)
+    # TBC: what does this do?
     dfg_outputs = create_edges_from_opt_or_fd_list(out_stream, dfg_edges, options, fileIdGen)
 
     com_name = Arg(command)
@@ -137,7 +164,17 @@ def compile_command_to_DFG(fileIdGen, command, options,
                        com_category,
                        com_options=dfg_options,
                        com_redirs=com_redirs,
-                       com_assignments=com_assignments)
+                       com_assignments=com_assignments,
+                       # BEGIN ANNO
+                       positional_config_list=positional_config_list,
+                       positional_input_list=positional_input_list,
+                       positional_output_list=positional_output_list,
+                       implicit_use_of_stdin=implicit_use_of_stdin,
+                       implicit_use_of_stdout=implicit_use_of_stdout,
+                       parallelizer_list=parallelizer_list,
+                       cmd_related_properties=cmd_related_properties
+                       # END ANNO
+                       )
     elif(str(com_name) == "hdfs" and str(dfg_options[0][1]) == "dfs" and str(dfg_options[1][1]) == "-cat"):
         dfg_node = HDFSCat(dfg_inputs,
                         dfg_outputs,
@@ -158,7 +195,17 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            com_aggregator=com_aggregator,
                            com_options=dfg_options,
                            com_redirs=com_redirs,
-                           com_assignments=com_assignments)
+                           com_assignments=com_assignments,
+                           # BEGIN ANNO
+                           positional_config_list=positional_config_list,
+                           positional_input_list=positional_input_list,
+                           positional_output_list=positional_output_list,
+                           implicit_use_of_stdin=implicit_use_of_stdin,
+                           implicit_use_of_stdout=implicit_use_of_stdout,
+                           parallelizer_list=parallelizer_list,
+                           cmd_related_properties=cmd_related_properties
+                           # END ANNO
+                           )
     
     if(not dfg_node.is_at_most_pure()):
         raise ValueError()
@@ -167,7 +214,12 @@ def compile_command_to_DFG(fileIdGen, command, options,
 
     ## Assign the from, to node in edges
     for fid_id in dfg_node.get_input_list():
+        print(f'dfg_node: {dfg_node}')
+        print(f'node_id: {node_id}')
+        print(f'fid_id: {fid_id}')
         fid, from_node, to_node = dfg_edges[fid_id]
+        print(f'from_node: {from_node}')
+        print(f'to_node: {to_node}')
         assert(to_node is None)
         dfg_edges[fid_id] = (fid, from_node, node_id)
     
@@ -1010,4 +1062,3 @@ class IR:
                 #  or (not self.is_in_background()
                 #      and not self.get_stdin() is None 
                 #      and not self.get_stdout() is None)))
-

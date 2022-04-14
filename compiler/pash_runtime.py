@@ -92,8 +92,8 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
     try:
         ret = compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config)
     except Exception as e:
+        print(f'Exception caught: {e}')
         log("Exception caught:", e)
-
     return ret
 
 def compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config):
