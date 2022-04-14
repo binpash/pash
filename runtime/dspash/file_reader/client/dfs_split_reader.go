@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -19,7 +20,7 @@ import (
 var (
 	config     = flag.String("config", "", "File to read")
 	splitNum   = flag.Int("split", 0, "The logical split number")
-	serverAddr = flag.String("addr", "localhost:50051", "The server address in the format of host:port")
+	serverPort = flag.Int("port", 50051, "The server port, all machines should use same port")
 	prefix     = flag.String("prefix", "", "The top directory")
 )
 
@@ -43,7 +44,8 @@ func readFirstLine(block DFSBlock, writer *bufio.Writer) (ok bool, e error) {
 
 	ok = false
 	e = errors.New("Failed to read newline from all replicas")
-	for _, addr := range block.Hosts {
+	for _, host := range block.Hosts {
+		addr := fmt.Sprintf("%s:%d", host, *serverPort)
 		conn, err := grpc.Dial(addr, opts...)
 
 		if err != nil {
@@ -157,6 +159,7 @@ func serialize_conf(p string) DFSConfig {
 
 func main() {
 	flag.Parse()
+	fmt.Printf("%v %v\n", *splitNum, *prefix)
 	if flag.NArg() < 1 && *config == "" {
 		flag.Usage()
 		os.Exit(0)
@@ -165,6 +168,7 @@ func main() {
 	}
 
 	conf := serialize_conf(*config)
+	fmt.Printf("%v %v", *splitNum, *prefix)
 	err := readDFSLogicalSplit(conf, *splitNum)
 	if err != nil {
 		log.Fatalln(err)
