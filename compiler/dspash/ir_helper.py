@@ -52,8 +52,9 @@ def save_configs(graph:IR, dfs_configs_paths: Dict[HDFSFileConfig, str]):
             config: HDFSFileConfig = resource.config
             if config not in dfs_configs_paths:
                 _, config_path = ptempfile()
-                config.dump(config_path)
-                dfs_configs_paths[config_path] = config_path
+                with open(config_path, "w") as f:
+                    f.write(config)
+                dfs_configs_paths[config] = config_path
             else:
                 config_path = dfs_configs_paths[config]
 
@@ -266,7 +267,7 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
                 else:
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
                     continue
-                
+
     return main_graph, worker_subgraph_pairs
 
 def prepare_graph_for_remote_exec(filename:str, get_worker:Callable):

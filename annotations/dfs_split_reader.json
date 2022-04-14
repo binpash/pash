@@ -1,5 +1,5 @@
 {
-    "command": "dfs_split_reader",
+    "command": "dfs_split_reader.sh",
     "cases":
     [
         {

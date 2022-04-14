@@ -18,7 +18,7 @@ def make_dfs_split_reader_node(inputs, output, split_num, prefix):
     com_name = Arg(string_to_argument(split_reader_bin))
     com_category = "pure"
     options = []
-    options.append((1, Arg(string_to_argument(f"--prefix {prefix}"))))
+    options.append((1, Arg(string_to_argument(f"--prefix '{prefix}'"))))
     options.append((2, Arg(string_to_argument(f"--split {split_num}"))))
 
     return DFSSplitReader(inputs,
