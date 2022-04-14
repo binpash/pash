@@ -121,5 +121,4 @@ class DFSSplitResource(RemoteFileResource):
         self.config_path = config_path
         
     def __str__(self):
-        assert(self.config_path)
         return self.config_path

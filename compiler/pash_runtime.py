@@ -380,10 +380,9 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
 
     # Create a cat command per file block
     file_config = hdfs_utils.get_file_config(hdfs_filepath)
-    _, config_path = ptempfile()
-    file_config.dump(config_path)
+    _, dummy_config_path = ptempfile() # Dummy config file, should be updated by workers
     for split_num, block in enumerate(file_config.blocks):
-        resource = DFSSplitResource(file_config.dumps(), config_path, split_num, block.hosts)
+        resource = DFSSplitResource(file_config.dumps(), dummy_config_path, split_num, block.hosts)
         block_fid = fileIdGen.next_file_id()
         block_fid.set_resource(resource)
         graph.add_edge(block_fid)
