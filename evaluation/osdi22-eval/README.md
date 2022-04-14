@@ -99,7 +99,7 @@ $PASH_TOP/pa.sh -c 'echo Hello World!'
 ```
 
 ```sh
-ssh antikythera@csail.mit.edu -i ~/.ssh/pash.key
+ssh  osdi22@antikythera@csail.mit.edu -i ~/.ssh/pash.key
 # create a new instance of the container
 docker run -it --sig-proxy=false posix /bin/bash
 # run a simple command
@@ -304,8 +304,8 @@ bash ~/results/summarize_journal.sh ~/tet3.8/vsc/results/0004e/journal
 #    0   other status
 
 ## You can then run the following command to see the difference of two tests:
-comm -13 <(../../results/summarize_journal.sh results/0002e/journal | grep "Assertion #" | sort) <(../../results/summarize_journal.sh results/0004e/journal | grep "Assertion
-#" | sort)
+comm -13 <(../../results/summarize_journal.sh results/0004e/journal | grep "Assertion #" | sort) <(../../results/summarize_journal.sh results/0002e/journal | grep "Assertion #" | sort)
+
 ## This should return the following
 # Assertion #430 (A): When a command fails during word expansion or redirection, then
 # Assertion #691 (A): When the shell is not executing interactively, then the 'set -u'
