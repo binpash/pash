@@ -67,11 +67,11 @@ function run_all_benchmarks() {
   mkdir -p ${RES_FOLDER}
   cd ${PASH_TOP}/evaluation/benchmarks
   # remove all res files from previous runs
-  find . -type d -name "outputs" | xargs rm -rf
+  find . -type d -name "outputs" 2> /dev/null | xargs rm -rf
   # do not remove any input from the node_modules dataset
-  find . -type d -not -path "*/node_modules/*" -name "output" | xargs rm -rf 
-  find . -type d -name "pash_logs" | xargs rm -rf
-  find . -type f -name "*.res" | xargs rm -f
+  find . -type d -not -path "*/node_modules/*" -name "output" 2> /dev/null | xargs rm -rf
+  find . -type d -name "pash_logs" 2> /dev/null | xargs rm -rf
+  find . -type f -name "*.res" 2> /dev/null | xargs rm -f
   # start preparing from execution
   export PASH_ALL_FLAGS=(" "
                          "--r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven")
