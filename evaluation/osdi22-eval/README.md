@@ -355,6 +355,7 @@ cd $PASH_TOP/evaluation/osdi22-eval/
 # in Table 1 of the paper and gathers the execution times
 
 # We suggest that you use `tmux/screen` to run this script so that you can leave it running in the background and see the results after it is done.
+# Note: It's normal to see some `pkill: Operation not permitted` messages at the end of the run.
 bash run_all.sh --small
 # after the execution is finished, you may view the raw data timers.
 cat eval_results/run.tmp
