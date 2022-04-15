@@ -90,8 +90,6 @@ We have created a `osdi22` account on the machines used to evaluate PaSh:
 
 To connect to these machines, use:
 
-**FIXME Dimitris: Add a quickcheck for both machines below**
-
 ```sh
 ssh osdi22@deathstar.ndr.md -i ~/.ssh/pash.key
 # run a simple command with pash. This should run without any issue
@@ -110,7 +108,7 @@ $PASH_TOP/pa.sh -c 'echo Hello World!'
 PaSh is an open-source project and can be installed on a variety of platforms. For example, another way to try PaSh is locally through a Docker container, running a pre-setup ubuntu Linux.
 Information about docker installation may be found in [here](https://github.com/binpash/pash/tree/main/docs/install#docker-setup).
 
-> We do not recommend local installation for the "results reproducible" badge.
+> We do not recommend local installation for evaluating the "results reproducible" badge due to docker overheads and hardware differences.
 
 ```sh
 docker pull binpash/pash; docker run --name pash-playground -it binpash/pash
