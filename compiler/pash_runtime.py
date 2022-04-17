@@ -90,7 +90,6 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
     """
     ret = None
     try:
-        raise Exception('something before try block')
         ret = compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config)
     except Exception as e:
         log("Exception caught:", e)
