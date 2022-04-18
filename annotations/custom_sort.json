@@ -17,7 +17,12 @@
             "class": "parallelizable_pure",
             "properties": ["commutative"],
             "inputs": ["stdin"],
-            "outputs": ["stdout"]
+            "outputs": ["stdout"],
+            "aggregator":
+            {
+                "name": "sort",
+                "options": ["-m"]
+            }
         }
     ],
     "comment": "TODO: This is not correct. To assign arguments correctly, we need to check if there is any file argument. If not, then we can read from stdin, otherwise we have to read from input files."
