@@ -8,6 +8,7 @@ import json
 from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
 from util import log
 from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file
+from dspash.utils import read_file
 import config 
 import copy
 
@@ -40,9 +41,10 @@ class WorkerConnection:
         #     answer = self.socket.recv(1024)
         return self._running_processes
 
-    def send_graph_exec_request(self, graph, shell_vars) -> bool:
+    def send_graph_exec_request(self, graph, shell_vars, functions) -> bool:
         request_dict = { 'type': 'Exec-Graph',
-                        'graph': graph,   
+                        'graph': graph,
+                        'functions': functions,
                         'shell_variables': None # Doesn't seem needed for now     
                     }
         request = encode_request(request_dict)
@@ -129,11 +131,16 @@ class WorkersManager():
                 dspash_socket.close()
                 break
             elif request.startswith("Exec-Graph"):
-                filename = request.split(':', 1)[1].strip()
+                args = request.split(':', 1)[1].strip()
+                filename, declared_functions_file = args.split()
 
                 worker_subgraph_pairs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename, self.get_worker)
                 script_fname = to_shell_file(main_graph, self.args)
                 log("Master node graph stored in ", script_fname)
+
+                # Read functions
+                log("Functions stored in ", declared_functions_file)
+                declared_functions = read_file(declared_functions_file)
 
                 # Report to main shell a script to execute
                 response_msg = f"OK {script_fname}"
@@ -141,7 +148,7 @@ class WorkersManager():
 
                 # Execute subgraphs on workers
                 for worker, subgraph in worker_subgraph_pairs:
-                    worker.send_graph_exec_request(subgraph, shell_vars)
+                    worker.send_graph_exec_request(subgraph, shell_vars, declared_functions)
             else:
                 raise Exception(f"Unknown request: {request}")
         

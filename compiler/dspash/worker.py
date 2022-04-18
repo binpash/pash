@@ -20,6 +20,7 @@ from annotations import load_annotation_files
 import pash_runtime
 from dspash.socket_utils import send_msg, recv_msg
 from dspash.ir_helper import to_shell_file
+from dspash.utils import create_filename, write_file
 
 # from ... import config
 HOST = socket.gethostbyname(socket.gethostname())
@@ -41,15 +42,20 @@ def parse_exec_request(request):
     return request['cmd']
 
 def parse_exec_graph(request):
-    return request['graph'], request['shell_variables']
+    return request['graph'], request['shell_variables'], request['functions']
 
-def exec_graph(graph, shell_vars):
+def exec_graph(graph, shell_vars, functions):
     config.config['shell_variables'] = shell_vars
     script_path = to_shell_file(graph, config.pash_args)
 
     e = os.environ.copy()
     e['PASH_TOP'] = PASH_TOP
-    rc = subprocess.Popen(['bash', script_path], env=e)
+
+    # store functions
+    functions_file = create_filename(dir=config.PASH_TMP_PREFIX, prefix='pashFuncs')
+    write_file(functions_file, functions)
+    cmd = f"source {functions_file}; source {script_path}"
+    rc = subprocess.Popen(cmd, env=e, executable="/bin/bash", shell=True)
     return rc
 
 class Worker:
@@ -87,8 +93,8 @@ def manage_connection(conn, addr):
             print("got new request")
             request = decode_request(data)
             if request['type'] == 'Exec-Graph':
-                graph, shell_vars = parse_exec_graph(request)
-                exec_graph(graph, shell_vars)
+                graph, shell_vars, functions = parse_exec_graph(request)
+                exec_graph(graph, shell_vars, functions)
                 body = {}
             else:
                 print(f"Unsupported request {request}")
