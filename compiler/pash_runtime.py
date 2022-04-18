@@ -92,7 +92,8 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
     try:
         ret = compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config)
     except Exception as e:
-        log("Exception caught:", e)
+        log("WARNING: Exception caught:", e)
+        # traceback.print_exc()
 
     return ret
 
@@ -580,9 +581,7 @@ def parallelize_dfg_node(old_merger_id, node_id, graph, fileIdGen):
 ##
 ## TODO: Make that generic to work through annotations
 def create_merge_commands(curr, new_output_ids, fileIdGen):
-    if(str(curr.com_name) == "custom_sort"):
-        return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
-    elif(str(curr.com_name) == "uniq"):
+    if(str(curr.com_name) == "uniq"):
         return create_uniq_merge_commands(curr, new_output_ids, fileIdGen)
     else:
         return create_generic_aggregator_tree(curr, new_output_ids, fileIdGen)
