@@ -105,3 +105,20 @@ class HDFSFileResource(RemoteFileResource):
 
     def __str__(self):
         return f"$HDFS_DATANODE_DIR/{self.uri}"
+
+# DFS logical split resource
+class DFSSplitResource(RemoteFileResource):
+    def __init__(self, config, config_path, split_num, hosts):
+        self.config = config
+        self.config_path = config_path
+        self.split_num = split_num
+        self.hosts = list(map(self._normalize_addr, hosts))
+
+    def is_available_on(self, host):
+        return host in self.hosts
+
+    def set_config_path(self, config_path):
+        self.config_path = config_path
+        
+    def __str__(self):
+        return self.config_path

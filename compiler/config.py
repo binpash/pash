@@ -27,6 +27,8 @@ PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
 
 LOGGING_PREFIX = ""
 
+HDFS_PREFIX = "$HDFS_DATANODE_DIR/"
+
 config = {}
 annotations = []
 pash_args = None

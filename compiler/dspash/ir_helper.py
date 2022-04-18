@@ -13,6 +13,7 @@ from ast_to_ir import compile_asts
 from json_ast import *
 from ir_to_ast import to_shell
 from util import *
+from dspash.hdfs_utils import HDFSFileConfig
 
 from definitions.ir.aggregator_node import *
 
@@ -43,14 +44,30 @@ def read_graph(filename):
     with open(filename, "rb") as ir_file:
         ir, shell_vars = pickle.load(ir_file)
     return ir, shell_vars
-            
-def to_shell_file(graph, args) -> str:
+
+def save_configs(graph:IR, dfs_configs_paths: Dict[HDFSFileConfig, str]):
+    for edge in graph.all_fids():
+        if isinstance(edge.get_resource(), DFSSplitResource):
+            resource : DFSSplitResource = edge.get_resource()
+            config: HDFSFileConfig = resource.config
+            if config not in dfs_configs_paths:
+                _, config_path = ptempfile()
+                with open(config_path, "w") as f:
+                    f.write(config)
+                dfs_configs_paths[config] = config_path
+            else:
+                config_path = dfs_configs_paths[config]
+
+            resource.set_config_path(config_path)
+
+def to_shell_file(graph: IR, args) -> str:
     _, filename = ptempfile()
     
     dirs = set()
     for edge in graph.all_fids():
         directory = os.path.join(config.PASH_TMP_PREFIX, edge.prefix)
         dirs.add(directory)
+        
     for directory in dirs:
         os.makedirs(directory, exist_ok=True)
 
@@ -62,7 +79,7 @@ def to_shell_file(graph, args) -> str:
         f.write(script)
     return filename
 
-def split_ir(graph: IR) -> (List[IR], Dict[int, IR]):
+def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
     """ Takes an optimized IR and splits it subgraphs. Every subgraph
     is a continues section between a splitter and a merger.
     

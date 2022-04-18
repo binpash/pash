@@ -21,7 +21,7 @@ import definitions.ir.nodes.r_merge as r_merge
 import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_unwrap as r_unwrap
 import definitions.ir.nodes.dgsh_tee as dgsh_tee
-
+import definitions.ir.nodes.dfs_split_reader as dfs_split_reader
 # Distirbuted Exec
 import dspash.hdfs_utils as hdfs_utils 
 
@@ -380,10 +380,11 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
     output_ids = []
 
     # Create a cat command per file block
-    file_blocks = hdfs_utils.get_file_blocks(hdfs_filepath)
-    for block, block_hosts in file_blocks:
-        resource = HDFSFileResource(block, block_hosts)
-        block_fid = fileIdGen.next_file_id()  
+    file_config = hdfs_utils.get_file_config(hdfs_filepath)
+    _, dummy_config_path = ptempfile() # Dummy config file, should be updated by workers
+    for split_num, block in enumerate(file_config.blocks):
+        resource = DFSSplitResource(file_config.dumps(), dummy_config_path, split_num, block.hosts)
+        block_fid = fileIdGen.next_file_id()
         block_fid.set_resource(resource)
         graph.add_edge(block_fid)
 
@@ -392,8 +393,8 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
         output_ids.append(output_fid.get_ident())
         graph.add_edge(output_fid)
 
-        cat_block = make_cat_node([block_fid.get_ident()], output_fid.get_ident())
-        graph.add_node(cat_block)
+        split_reader_node = dfs_split_reader.make_dfs_split_reader_node([block_fid.get_ident()], output_fid.get_ident(), split_num, config.HDFS_PREFIX)
+        graph.add_node(split_reader_node)
 
     # Remove the HDFS Cat command as it's not used anymore
     graph.remove_node(hdfs_cat.get_id())
