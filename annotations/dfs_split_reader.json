@@ -1,0 +1,12 @@
+{
+    "command": "dfs_split_reader.sh",
+    "cases":
+    [
+        {
+            "predicate": "default",
+            "class": "pure",
+            "inputs": ["args[0]"],
+            "outputs": ["stdout"]
+        }
+    ]
+}

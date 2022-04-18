@@ -1,6 +1,12 @@
 import os
 import subprocess
 import sys
+from collections import namedtuple
+import json
+from typing import List, Tuple
+
+HDFSBlock = namedtuple("HDFSBlock", "path hosts")
+
 
 class FileData(object):
     def __init__(self, filename):
@@ -31,6 +37,33 @@ class FileData(object):
                 )
             )
         return filepaths
+
+class HDFSFileConfig:
+    def __init__(self, filedata: FileData):
+        self.blocks : List[HDFSBlock] = []
+        for i, block_path in enumerate(filedata.paths()):
+            hosts = list(map(lambda addr: addr.rsplit(":", 1)[0], filedata.machines[i]))
+            self.blocks.append(HDFSBlock(block_path, hosts))
+    
+    def _serialize(self):
+        data = {"blocks": []}
+        for path, hosts in self.blocks:
+            data["blocks"].append({"path": path, "hosts": hosts})
+        return data
+
+    def dumps(self):
+        data = self._serialize()
+        return json.dumps(data)
+
+    def dump(self, filepath):
+        data = self._serialize()
+        with open(filepath, 'w') as f:
+            json.dump(data, f)
+
+    def __eq__(self, __o: object) -> bool:
+        if not isinstance(__o, HDFSFileConfig):
+            return False
+        return self.blocks == __o.blocks
 
 def get_hdfs_file_data(filename):
     info = FileData(filename)
