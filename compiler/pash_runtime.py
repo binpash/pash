@@ -116,7 +116,7 @@ def compile_optimize_output_script(ir_filename, compiled_script_file, args, comp
     ## which should be translated to a parallel script.
     if(isinstance(optimized_ast_or_ir, IR)):
         if args.distributed_exec:
-            ir_filename = os.path.join(config.PASH_TMP_PREFIX, 'distributed_exec_ir.pkl')
+            _, ir_filename = ptempfile()
             script_to_execute = f"$PASH_TOP/compiler/dspash/remote_exec_graph.sh {ir_filename}\n"
             ## This might not be needed anymore (since the output script is output anyway)
             ## TODO: This is probably useless, remove
