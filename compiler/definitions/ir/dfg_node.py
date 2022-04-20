@@ -123,9 +123,7 @@ class DFGNode:
 
     ## TODO: Make that a proper class.
     def set_inputs(self, inputs):
-        print(f'inputs in set_inputs: {inputs}')
         if(isinstance(inputs, list)):
-            print(f'inputs in set: {inputs}')
             self.inputs = ([], inputs)
         elif(isinstance(inputs, tuple)):
             self.inputs = inputs
@@ -175,6 +173,9 @@ class DFGNode:
     ##
     ## TODO: Abstract this function away to annotations 2.0
     def special_to_ast(self, edges):
+        # BEGIN ANNO
+        return None
+        # END ANNO
         ## Every argument should be completely expanded so making it a string should be fine
         if str(self.com_name) == "cat":
             redirs = self._to_ast_aux_get_redirs()

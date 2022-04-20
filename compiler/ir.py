@@ -11,6 +11,7 @@ from annotation_generation_new.datatypes.ParallelizabilityInfo import Paralleliz
 from util_new_parsing import get_command_invocation
 from util_new_annotations import get_input_output_info_from_cmd_invocation_util, get_parallelizability_info_from_cmd_invocation_util
 from util_new_mapper import get_mapper_as_dfg_node_from_node
+from util_new_aggregator import get_aggregator_as_dfg_node_from_node
 # END ANNO
 
 from definitions.ir.arg import *
@@ -140,8 +141,6 @@ def compile_command_to_DFG(fileIdGen, command, options,
 
     dfg_edges = {}
     ## Add all inputs and outputs to the DFG edges
-    print(f'inputs: {inputs}')
-    print(f'outstreams: {out_stream}')
     dfg_inputs = find_input_edges(inputs, dfg_edges, options, fileIdGen)
     dfg_outputs = create_edges_from_opt_or_fd_list(out_stream, dfg_edges, options, fileIdGen)
 
@@ -216,12 +215,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
 
     ## Assign the from, to node in edges
     for fid_id in dfg_node.get_input_list():
-        print(f'dfg_node: {dfg_node}')
-        print(f'node_id: {node_id}')
-        print(f'fid_id: {fid_id}')
         fid, from_node, to_node = dfg_edges[fid_id]
-        print(f'from_node: {from_node}')
-        print(f'to_node: {to_node}')
         assert(to_node is None)
         dfg_edges[fid_id] = (fid, from_node, node_id)
     
@@ -977,11 +971,15 @@ class IR:
             else:
                 # BEGIN ANNO
                 # OLD
-                new_merger = make_cat_node(flatten_list(all_map_output_ids), node_output_edge_id)
+                # new_merger = make_cat_node(flatten_list(all_map_output_ids), node_output_edge_id)
+                # log(f'old_new_merger: {new_merger}')
                 # NEW
-                # TODO?
+                log(f'node: {node}')
+                log(f'rr_parallelizer: {rr_parallelizer}')
+                new_merger = get_aggregator_as_dfg_node_from_node(node, rr_parallelizer, flatten_list(all_map_output_ids), [node_output_edge_id])
+                log(f'new_new_merger: {new_merger}')
                 # END ANNO
-            
+
             self.add_node(new_merger)
             new_nodes.append(new_merger)
             self.set_edge_from(node_output_edge_id, new_merger.get_id())

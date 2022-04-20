@@ -19,6 +19,5 @@ def get_command_invocation(command, options) -> CommandInvocation:
     command_as_string: str = format_arg_chars(command)
     options_and_operands_as_string: str = merge_to_single_string_with_space([format_arg_chars(option) for option in options])
     command_invocation_as_string: str = f'{command_as_string} {options_and_operands_as_string}'
-    print(f'cmd_inv_str: {command_invocation_as_string}')
     command_invocation: CommandInvocation = parse(command_invocation_as_string)
     return command_invocation
