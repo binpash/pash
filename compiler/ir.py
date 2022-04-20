@@ -10,6 +10,7 @@ from annotation_generation_new.datatypes.ParallelizabilityInfo import Paralleliz
 
 from util_new_parsing import get_command_invocation
 from util_new_annotations import get_input_output_info_from_cmd_invocation_util, get_parallelizability_info_from_cmd_invocation_util
+from util_new_mapper import get_mapper_as_dfg_node_from_node
 # END ANNO
 
 from definitions.ir.arg import *
@@ -117,6 +118,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            redirections=[]):
     # BEGIN ANNO
     command_invocation: CommandInvocation = get_command_invocation(command, options)
+    flag_option_list = command_invocation.flag_option_list
     io_info: InputOutputInfo = get_input_output_info_from_cmd_invocation_util(command_invocation)
     positional_config_list, positional_input_list, positional_output_list, \
         implicit_use_of_stdin, implicit_use_of_stdout, multiple_inputs_possible = \
@@ -140,9 +142,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
     ## Add all inputs and outputs to the DFG edges
     print(f'inputs: {inputs}')
     print(f'outstreams: {out_stream}')
-    # TBC: what does this do?
     dfg_inputs = find_input_edges(inputs, dfg_edges, options, fileIdGen)
-    # TBC: what does this do?
     dfg_outputs = create_edges_from_opt_or_fd_list(out_stream, dfg_edges, options, fileIdGen)
 
     com_name = Arg(command)
@@ -166,6 +166,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
                        com_redirs=com_redirs,
                        com_assignments=com_assignments,
                        # BEGIN ANNO
+                       flag_option_list=flag_option_list,
                        positional_config_list=positional_config_list,
                        positional_input_list=positional_input_list,
                        positional_output_list=positional_output_list,
@@ -197,6 +198,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            com_redirs=com_redirs,
                            com_assignments=com_assignments,
                            # BEGIN ANNO
+                           flag_option_list=flag_option_list,
                            positional_config_list=positional_config_list,
                            positional_input_list=positional_input_list,
                            positional_output_list=positional_output_list,
@@ -260,15 +262,21 @@ def make_tee(input, outputs):
                    com_name, 
                    com_category)
 
-def make_map_node(node, new_inputs, new_outputs):
+def make_map_node(node, new_inputs, new_outputs, parallelizer):
+    dfg_node = get_mapper_as_dfg_node_from_node(node, parallelizer, new_inputs, new_outputs)
     ## Some nodes have special map commands
-    if(not node.com_mapper is None):
-        new_node = MapperNode(node, new_inputs, new_outputs)
-    else:
-        new_node = node.copy()
-        new_node.inputs = new_inputs
-        new_node.outputs = new_outputs
-    return new_node
+    # BEGIN ANNO
+    # OLD
+    # if(not node.com_mapper is None):
+    #     new_node = MapperNode(node, new_inputs, new_outputs)
+    # else:
+    #     new_node = node.copy()
+    #     new_node.inputs = new_inputs
+    #     new_node.outputs = new_outputs
+    # return new_node
+    # NEW
+    return dfg_node
+    # END ANNO
 
 ## Makes a wrap node that encloses a map parallel node.
 ##
@@ -798,7 +806,16 @@ class IR:
     ## TODO: Eventually this should be tunable to not happen for all inputs (but maybe for less)
     def parallelize_node(self, node_id, fileIdGen):
         node = self.get_node(node_id)
-        assert(node.is_parallelizable())
+        log(f'we are here something whatever: {node.com_name}')
+        # BEGIN ANNO
+        # OLD
+        # assert(node.is_parallelizable())
+        # NEW
+        log(f'parallelizers: {node.parallelizer_list}')
+        rr_parallelizer_list = [parallelizer for parallelizer in node.parallelizer_list if parallelizer.splitter.is_splitter_round_robin()]
+        assert(len(rr_parallelizer_list) == 1)
+        rr_parallelizer = rr_parallelizer_list[0]
+        # END ANNO
 
         ## Initialize the new_node list
         new_nodes = []
@@ -820,6 +837,7 @@ class IR:
         ## If the previous node of r_merge is an r_split, then we need to replace it with -r, 
         ## instead of doing unwraps.
         if(r_merge_flag):
+            assert(False)
             assert(isinstance(previous_node, r_merge.RMerge))
             r_merge_prev_node_ids = self.get_previous_nodes(previous_node_id)
 
@@ -866,6 +884,7 @@ class IR:
         parallel_configuration_ids = [[] for _ in range(parallelism)]
         node_conf_inputs = node.get_configuration_inputs()
         for conf_edge_id in node_conf_inputs:
+            assert(False)
             ## TODO: For now this does not work for r_merge
             assert(not r_merge_flag)
             # self.set_edge_to(conf_edge_id, None)
@@ -876,12 +895,14 @@ class IR:
         
         ## Create a temporary output edge for each parallel command.
         map_output_fids = node.get_map_output_files(parallel_input_ids, fileIdGen)
+        assert(len(map_output_fids) == len(parallel_input_ids))
 
         all_map_output_ids = []
         ## For each parallel input, create a parallel command
         for index in range(parallelism):
             ## Gather inputs and outputs
             conf_ins = parallel_configuration_ids[index]
+            assert(len(conf_ins) == 0)
             standard_in = parallel_input_ids[index]
             new_inputs = (conf_ins, [standard_in])
             map_output_fid = map_output_fids[index]
@@ -899,6 +920,7 @@ class IR:
             ## If the previous merger is r_merge we need to put wrap around the nodes 
             ## or unwrap before a commutative command
             if(r_merge_flag is True):
+                assert(False)
                 ## For stateless nodes we are in case (2) and we wrap them
                 if (node.is_stateless()):
                     parallel_node = make_wrap_map_node(node, new_inputs, new_output_ids)
@@ -936,22 +958,29 @@ class IR:
                         parallel_node = unwrap_node
             else:
                 ## If we are working with a `cat` (and not an r_merge), then we just make a parallel node
-                parallel_node = make_map_node(node, new_inputs, new_output_ids)
+                parallel_node = make_map_node(node, new_inputs, new_output_ids, rr_parallelizer)
                 self.add_node(parallel_node)
 
             parallel_node_id = parallel_node.get_id()
 
             ## Set the to of all input edges
             for conf_in in conf_ins:
+                assert(False)
                 self.set_edge_to(conf_in, parallel_node_id)
             self.set_edge_to(standard_in, parallel_node_id)
 
 
         if (node.com_category == "stateless"):
             if(r_merge_flag is True):
+                assert(False)
                 new_merger = r_merge.make_r_merge_node(flatten_list(all_map_output_ids), node_output_edge_id)
             else:
+                # BEGIN ANNO
+                # OLD
                 new_merger = make_cat_node(flatten_list(all_map_output_ids), node_output_edge_id)
+                # NEW
+                # TODO?
+                # END ANNO
             
             self.add_node(new_merger)
             new_nodes.append(new_merger)

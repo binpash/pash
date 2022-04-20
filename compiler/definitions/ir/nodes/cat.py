@@ -4,6 +4,7 @@ class Cat(DFGNode):
     def __init__(self, inputs, outputs, com_name, com_category,
                  com_options = [], com_redirs = [], com_assignments=[],
                  # BEGIN ANNO
+                 flag_option_list = None,
                  positional_config_list = None,
                  positional_input_list = None,
                  positional_output_list = None,
@@ -19,6 +20,7 @@ class Cat(DFGNode):
                          com_options=com_options, 
                          com_redirs=com_redirs, 
                          com_assignments=com_assignments,
+                         flag_option_list=flag_option_list,
                          positional_config_list=positional_config_list,
                          positional_input_list=positional_input_list,
                          positional_output_list=positional_output_list,

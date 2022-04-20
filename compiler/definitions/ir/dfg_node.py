@@ -29,13 +29,19 @@ class DFGNode:
     ## com_options : list of tuples with the option index and the argument Arg
     ## com_redirs : list of redirections
     ## com_assignments : list of assignments
-    def __init__(self, inputs, outputs, com_name, com_category,
+    def __init__(self,
+                 inputs,
+                 outputs,
+                 com_name,
+                 com_category = None,
                  com_properties = [],
                  com_mapper = None,
                  com_aggregator = None,
-                 com_options = [],
+                 com_options = [],  # FS: TODO: update to version of CMD_invocation
                  com_redirs = [],
                  com_assignments=[],
+                 # BEGIN ANNO
+                 flag_option_list=None,
                  positional_config_list=None,
                  positional_input_list=None,
                  positional_output_list=None,
@@ -43,6 +49,7 @@ class DFGNode:
                  implicit_use_of_stdout=False,
                  parallelizer_list=None,
                  cmd_related_properties=None,
+                 # END ANNO
                  ):
         ## Add a unique identifier to each DFGNode since id() is not guaranteed to be unique for objects that have different lifetimes.
         ## This leads to issues when nodes are deleted and new ones are created, leading to id() clashes between them
@@ -60,8 +67,9 @@ class DFGNode:
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
         self.com_assignments = com_assignments
         # BEGIN ANNO
-        # TO KEEP: com_name: str, com_options: OptionArgPosConfigType
+        # TO KEEP: com_name: str,
         # ?? com_redirs, com_assignments
+        self.flag_option_list = return_empty_list_if_none_else_itself(flag_option_list)
         self.positional_config_list = return_empty_list_if_none_else_itself(positional_config_list)
         self.positional_input_list = return_empty_list_if_none_else_itself(positional_input_list)
         self.positional_output_list = return_empty_list_if_none_else_itself(positional_output_list)
