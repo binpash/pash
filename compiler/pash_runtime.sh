@@ -149,7 +149,7 @@ else
 
     pash_redir_output echo "$$: (2) Compiler exited with code: $pash_runtime_return_code"
     if [ "$pash_runtime_return_code" -ne 0 ] && [ "$pash_assert_compiler_success_flag" -eq 1 ]; then
-        pash_redir_output echo "$$: ERROR: (2) Compiler failed with error code: $pash_runtime_return_code"
+        pash_redir_output echo "$$: ERROR: (2) Compiler failed with error code: $pash_runtime_return_code while assert_compiler_success was enabled! Exiting PaSh..."
         exit 1
     fi
 

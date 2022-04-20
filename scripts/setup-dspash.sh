@@ -37,6 +37,23 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 echo -e "\nexport PATH=\$PATH:$(go env GOPATH)/bin" >> ~/.bashrc
 export PATH="$PATH:$(go env GOPATH)/bin"
 
+# Protobuf
+apt-get update && apt-get install -y zip
+PB_REL="https://github.com/protocolbuffers/protobuf/releases"
+PROTOBUF_VER="3.15.8"
+PROTOBUF_PACKAGE="protoc-$PROTOBUF_VER-linux-x86_64.zip"
+curl -LO $PB_REL/download/v$PROTOBUF_VER/$PROTOBUF_PACKAGE
+unzip $PROTOBUF_PACKAGE -d $HOME/.local
+rm $PROTOBUF_PACKAGE
+export PATH="$PATH:$HOME/.local/bin"
+echo -e "\nPATH=\$PATH:$HOME/.local/bin" >> ~/.bashrc
+
+# Go protobuf deps
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+echo -e "\nexport PATH=\$PATH:$(go env GOPATH)/bin" >> ~/.bashrc
+export PATH="$PATH:$(go env GOPATH)/bin"
+
 # Compile runtime
 cd $PASH_TOP/runtime/dspash
 go build socket_pipe.go
