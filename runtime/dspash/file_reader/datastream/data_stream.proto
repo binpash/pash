@@ -6,6 +6,8 @@ service Discovery {
     rpc PutAddr(PutAddrMsg) returns (Status) {}
     rpc GetAddr(AddrReq) returns(GetAddrReply) {}
     rpc RemoveAddr(AddrReq) returns (Status) {}
+    rpc readStream(AddrReq) returns (stream Data) {}
+    rpc writeStream(stream Data) returns (Status) {}
 }
 
 message PutAddrMsg {
@@ -24,4 +26,9 @@ message GetAddrReply {
 
 message Status {
     bool Success = 1;
+}
+
+message Data {
+    bytes buffer = 1;
+    string Id = 2; // only sent with first message
 }

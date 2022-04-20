@@ -25,6 +25,8 @@ type DiscoveryClient interface {
 	PutAddr(ctx context.Context, in *PutAddrMsg, opts ...grpc.CallOption) (*Status, error)
 	GetAddr(ctx context.Context, in *AddrReq, opts ...grpc.CallOption) (*GetAddrReply, error)
 	RemoveAddr(ctx context.Context, in *AddrReq, opts ...grpc.CallOption) (*Status, error)
+	ReadStream(ctx context.Context, in *AddrReq, opts ...grpc.CallOption) (Discovery_ReadStreamClient, error)
+	WriteStream(ctx context.Context, opts ...grpc.CallOption) (Discovery_WriteStreamClient, error)
 }
 
 type discoveryClient struct {
@@ -62,6 +64,72 @@ func (c *discoveryClient) RemoveAddr(ctx context.Context, in *AddrReq, opts ...g
 	return out, nil
 }
 
+func (c *discoveryClient) ReadStream(ctx context.Context, in *AddrReq, opts ...grpc.CallOption) (Discovery_ReadStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Discovery_ServiceDesc.Streams[0], "/Discovery/readStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &discoveryReadStreamClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Discovery_ReadStreamClient interface {
+	Recv() (*Data, error)
+	grpc.ClientStream
+}
+
+type discoveryReadStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *discoveryReadStreamClient) Recv() (*Data, error) {
+	m := new(Data)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *discoveryClient) WriteStream(ctx context.Context, opts ...grpc.CallOption) (Discovery_WriteStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Discovery_ServiceDesc.Streams[1], "/Discovery/writeStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &discoveryWriteStreamClient{stream}
+	return x, nil
+}
+
+type Discovery_WriteStreamClient interface {
+	Send(*Data) error
+	CloseAndRecv() (*Status, error)
+	grpc.ClientStream
+}
+
+type discoveryWriteStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *discoveryWriteStreamClient) Send(m *Data) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *discoveryWriteStreamClient) CloseAndRecv() (*Status, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(Status)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // DiscoveryServer is the server API for Discovery service.
 // All implementations must embed UnimplementedDiscoveryServer
 // for forward compatibility
@@ -69,6 +137,8 @@ type DiscoveryServer interface {
 	PutAddr(context.Context, *PutAddrMsg) (*Status, error)
 	GetAddr(context.Context, *AddrReq) (*GetAddrReply, error)
 	RemoveAddr(context.Context, *AddrReq) (*Status, error)
+	ReadStream(*AddrReq, Discovery_ReadStreamServer) error
+	WriteStream(Discovery_WriteStreamServer) error
 	mustEmbedUnimplementedDiscoveryServer()
 }
 
@@ -84,6 +154,12 @@ func (UnimplementedDiscoveryServer) GetAddr(context.Context, *AddrReq) (*GetAddr
 }
 func (UnimplementedDiscoveryServer) RemoveAddr(context.Context, *AddrReq) (*Status, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveAddr not implemented")
+}
+func (UnimplementedDiscoveryServer) ReadStream(*AddrReq, Discovery_ReadStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method ReadStream not implemented")
+}
+func (UnimplementedDiscoveryServer) WriteStream(Discovery_WriteStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method WriteStream not implemented")
 }
 func (UnimplementedDiscoveryServer) mustEmbedUnimplementedDiscoveryServer() {}
 
@@ -152,6 +228,53 @@ func _Discovery_RemoveAddr_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Discovery_ReadStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(AddrReq)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(DiscoveryServer).ReadStream(m, &discoveryReadStreamServer{stream})
+}
+
+type Discovery_ReadStreamServer interface {
+	Send(*Data) error
+	grpc.ServerStream
+}
+
+type discoveryReadStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *discoveryReadStreamServer) Send(m *Data) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Discovery_WriteStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(DiscoveryServer).WriteStream(&discoveryWriteStreamServer{stream})
+}
+
+type Discovery_WriteStreamServer interface {
+	SendAndClose(*Status) error
+	Recv() (*Data, error)
+	grpc.ServerStream
+}
+
+type discoveryWriteStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *discoveryWriteStreamServer) SendAndClose(m *Status) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *discoveryWriteStreamServer) Recv() (*Data, error) {
+	m := new(Data)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // Discovery_ServiceDesc is the grpc.ServiceDesc for Discovery service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -172,6 +295,17 @@ var Discovery_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Discovery_RemoveAddr_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "readStream",
+			Handler:       _Discovery_ReadStream_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "writeStream",
+			Handler:       _Discovery_WriteStream_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "data_stream.proto",
 }

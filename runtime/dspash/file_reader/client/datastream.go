@@ -1,13 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"context"
-	"errors"
 	"flag"
 	"io"
 	"log"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	pb "dspash/datastream"
@@ -21,10 +22,11 @@ var (
 	serverAddr = flag.String("addr", "localhost:50052", "The server address in the format of host:port")
 	streamId   = flag.String("id", "", "The id of the stream")
 	debug      = flag.Bool("d", false, "Turn on debugging messages")
+	chunkSize  = flag.Int("chunk_size", 4*1024, "The chunk size for the rpc stream")
 )
 
 func getAddr(client pb.DiscoveryClient, timeout time.Duration) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	totimer := time.NewTimer(timeout)
@@ -32,6 +34,7 @@ func getAddr(client pb.DiscoveryClient, timeout time.Duration) (string, error) {
 	for {
 		reply, err := client.GetAddr(ctx, &pb.AddrReq{Id: *streamId})
 		if err == nil {
+			log.Printf("GetAddr: found %v\n", reply)
 			return reply.Addr, nil
 		}
 		select {
@@ -51,7 +54,7 @@ func removeAddr(client pb.DiscoveryClient) {
 	client.RemoveAddr(ctx, &pb.AddrReq{Id: *streamId})
 }
 
-func read(client pb.DiscoveryClient) (int64, error) {
+func read(client pb.DiscoveryClient) (int, error) {
 	timeout := 10 * time.Second
 	addr, err := getAddr(client, timeout)
 	if err != nil {
@@ -64,18 +67,17 @@ func read(client pb.DiscoveryClient) (int64, error) {
 	}
 	defer conn.Close()
 
-	n, err := io.Copy(os.Stdout, conn)
-	return n, err
+	reader := bufio.NewReader(conn)
+	n, err := reader.WriteTo(os.Stdout)
+
+	return int(n), err
 }
 
-func write(client pb.DiscoveryClient) (int64, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+func write(client pb.DiscoveryClient) (int, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	host, err := getMyIP()
-	if err != nil {
-		return 0, err
-	}
+	host := strings.Split(*serverAddr, ":")[0]
 
 	ln, err := net.Listen("tcp4", host+":0") // connect to random port
 	if err != nil {
@@ -96,26 +98,70 @@ func write(client pb.DiscoveryClient) (int64, error) {
 	}
 	defer conn.Close()
 
-	n, err := io.Copy(conn, os.Stdin)
+	writer := bufio.NewWriter(conn)
+	defer writer.Flush()
 
-	return n, err
+	n, err := writer.ReadFrom(os.Stdin)
+
+	return int(n), err
 }
 
-func getMyIP() (string, error) {
-	addrs, err := net.InterfaceAddrs()
+// TODO: readStream/writeStream are buggy but also not used so low priority.
+func readStream(client pb.DiscoveryClient) (n int, err error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	n = 0
+	stream, err := client.ReadStream(ctx, &pb.AddrReq{Id: *streamId})
 	if err != nil {
-		return "", err
+		return
 	}
 
-	for _, a := range addrs {
-		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String(), nil
-			}
+	writer := bufio.NewWriter(os.Stdout)
+	defer writer.Flush()
+
+	for {
+		reply, err := stream.Recv()
+		if err == io.EOF {
+			return n, nil
 		}
+
+		if err != nil {
+			return n, err
+		}
+
+		nn, err := writer.Write(reply.Buffer)
+		n += nn
 	}
 
-	return "", errors.New("Couldn't figure local machine ip")
+	return
+}
+
+func writeStream(client pb.DiscoveryClient) (n int, err error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	n = 0
+	stream, err := client.WriteStream(ctx)
+	if err != nil {
+		return
+	}
+	// First message
+	stream.Send(&pb.Data{Id: *streamId})
+
+	reader := bufio.NewReader(os.Stdin)
+	buffer := make([]byte, *chunkSize)
+	for {
+		nn, err := reader.Read(buffer)
+		if err != nil {
+			if err == io.EOF {
+				_, err = stream.CloseAndRecv()
+			}
+			return n, err
+		}
+		stream.Send(&pb.Data{Buffer: buffer})
+		n += nn
+	}
 }
 
 func main() {
@@ -146,7 +192,7 @@ func main() {
 	client := pb.NewDiscoveryClient(conn)
 
 	var reqerr error
-	var n int64
+	var n int
 	if *streamType == "read" {
 		n, reqerr = read(client)
 	} else if *streamType == "write" {
