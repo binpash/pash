@@ -128,13 +128,27 @@ def find_input_edges(positional_input_list, implicit_use_of_stdin, dfg_edges, fi
     else:
         resources = [resource_from_file_descriptor(input_el) for input_el in positional_input_list]
     file_ids = [create_file_id_for_resource(resource, fileIdGen) for resource in resources]
-    log(f'file_ids: {file_ids}')
+    return get_edge_list_from_file_id_list(dfg_edges, file_ids)
+
+
+def find_output_edges(positional_output_list, implicit_use_of_stdout, dfg_edges, fileIdGen) -> List[int]:
+    assert (not implicit_use_of_stdout or len(positional_output_list) == 0)
+    if implicit_use_of_stdout:
+        resources = [FileDescriptorResource(("fd", 1))]
+    else:
+        resources = [resource_from_file_descriptor(input_el) for input_el in positional_output_list]
+    file_ids = [create_file_id_for_resource(resource, fileIdGen) for resource in resources]
+    return get_edge_list_from_file_id_list(dfg_edges, file_ids)
+
+
+def get_edge_list_from_file_id_list(dfg_edges, file_ids):
     new_edge_list = []
     for file_id in file_ids:
         fid_id = file_id.get_ident()
         dfg_edges[fid_id] = (file_id, None, None)
         new_edge_list.append(fid_id)
     return new_edge_list
+
 # END ANNO
 
 ## This function creates a DFG with a single node given a command.
@@ -157,10 +171,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
     ## TODO: There is no need for this redirection here. We can just straight
     ##       come up with inputs, outputs, options
     # this function should be completely deleted once we have moved to new annotations
-    _inputs, out_stream, opt_indices = find_command_input_output(command, options)
-    log(f'out_stream: {out_stream}')
-    log(f'io_info: {io_info}')
-    log(f'positional_input_list: {positional_input_list}')
+    _inputs, _out_stream, opt_indices = find_command_input_output(command, options)
     # log("Opt indices:", opt_indices, "options:", options)
     category = find_command_category(command, options)
     com_properties = find_command_properties(command, options)
@@ -173,7 +184,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
     # TODO: add filenames in flag_option_list arguments
     dfg_inputs = find_input_edges(positional_input_list, implicit_use_of_stdin, dfg_edges, fileIdGen)
     log(f'dfg_inputs: {dfg_inputs}')
-    dfg_outputs = create_edges_from_opt_or_fd_list(out_stream, dfg_edges, options, fileIdGen)
+    dfg_outputs = find_output_edges(positional_output_list, implicit_use_of_stdout, dfg_edges, fileIdGen)
 
     com_name = Arg(command)
     com_category = category

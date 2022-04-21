@@ -130,8 +130,6 @@ class DFGNode:
     def set_inputs(self, inputs):
         if(isinstance(inputs, list)):
             self.inputs = ([], inputs)
-            # BEGIN ANNO
-            # END ANNO
         elif(isinstance(inputs, tuple)):
             self.inputs = inputs
         else:
@@ -370,7 +368,7 @@ class DFGNode:
         new_config_inputs = self.replace_edge_in_list(self.inputs[0], from_id, to_id)
         new_standard_inputs = self.replace_edge_in_list(self.inputs[1], from_id, to_id)
         new_outputs = self.replace_edge_in_list(self.outputs, from_id, to_id)
-        
+
         self.set_inputs((new_config_inputs, new_standard_inputs))
         self.outputs = new_outputs
 
