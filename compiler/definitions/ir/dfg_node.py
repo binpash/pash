@@ -65,7 +65,7 @@ class DFGNode:
         self.com_category = com_category
         self.com_properties = com_properties # to remove
         # self.com_mapper = com_mapper # 1st to remove
-        self.com_aggregator = com_aggregator
+        # self.com_aggregator = com_aggregator
         self.com_options = com_options
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
         self.com_assignments = com_assignments
@@ -382,3 +382,10 @@ class DFGNode:
                 new_edge_id = id
             new_edge_ids.append(new_edge_id)
         return new_edge_ids
+
+    def set_used_parallelizer(self, parallelizer):
+        # TODO: instantiate in __init__ already in some way
+        self.used_parallelizer = parallelizer
+
+    def get_used_parallelizer(self):
+        return self.used_parallelizer

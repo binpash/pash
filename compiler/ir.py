@@ -167,15 +167,18 @@ def compile_command_to_DFG(fileIdGen, command, options,
                      ('round_robin_compatible_with_cat', round_robin_compatible_with_cat),
                      ('is_commutative', is_commutative)]
     cmd_related_properties = construct_property_container_from_list_of_properties(property_list)
-    # END ANNO
     ## TODO: There is no need for this redirection here. We can just straight
     ##       come up with inputs, outputs, options
     # this function should be completely deleted once we have moved to new annotations
-    _inputs, _out_stream, opt_indices = find_command_input_output(command, options)
-    # log("Opt indices:", opt_indices, "options:", options)
-    category = find_command_category(command, options)
+    # _inputs, _out_stream, _opt_indices = find_command_input_output(command, options)
+    # we recompute opt_indices with positional_config_list and flag_option_list
+    opt_indices = [('option', i) for i in range(len(flag_option_list) + len(positional_config_list))]
+    # END ANNO
+    com_category = find_command_category(command, options)
     com_properties = find_command_properties(command, options)
-    com_mapper, com_aggregator = find_command_mapper_aggregator(command, options)
+    _com_mapper, com_aggregator = find_command_mapper_aggregator(command, options)
+
+    com_name = Arg(command)
 
     ## TODO: Make an empty IR and add edges and nodes incrementally (using the methods defined in IR).
 
@@ -183,15 +186,13 @@ def compile_command_to_DFG(fileIdGen, command, options,
     ## Add all inputs and outputs to the DFG edges
     # TODO: add filenames in flag_option_list arguments
     dfg_inputs = find_input_edges(positional_input_list, implicit_use_of_stdin, dfg_edges, fileIdGen)
-    log(f'dfg_inputs: {dfg_inputs}')
     dfg_outputs = find_output_edges(positional_output_list, implicit_use_of_stdout, dfg_edges, fileIdGen)
 
-    com_name = Arg(command)
-    com_category = category
 
     ## Get the options
     dfg_options = [get_option(opt_or_fd, options, fileIdGen)
                    for opt_or_fd in opt_indices]
+    log(f'dfg_options: {dfg_options}')
     com_redirs = redirections
     ## TODO: Add assignments
     com_assignments = []
@@ -233,7 +234,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            com_name,
                            com_category,
                            com_properties=com_properties,
-                           com_mapper=com_mapper,
+                           com_mapper=None,
                            com_aggregator=com_aggregator,
                            com_options=dfg_options,
                            com_redirs=com_redirs,
@@ -851,6 +852,8 @@ class IR:
         rr_parallelizer_list = [parallelizer for parallelizer in node.parallelizer_list if parallelizer.splitter.is_splitter_round_robin()]
         assert(len(rr_parallelizer_list) == 1)
         rr_parallelizer = rr_parallelizer_list[0]
+        # to have this info later when the merger is created in a reduce tree
+        node.set_used_parallelizer(rr_parallelizer)
         # END ANNO
 
         ## Initialize the new_node list

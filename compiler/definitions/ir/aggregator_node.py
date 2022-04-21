@@ -1,4 +1,7 @@
 from definitions.ir.dfg_node import *
+# from definitions.ir.nodes.arg import Arg
+from util_new_cmd_invocations import get_command_invocation_prefix_from_dfg_node
+
 
 ## This class corresponds to a generic n-ary aggregator
 ##
@@ -17,30 +20,64 @@ class MapperAggregatorNode(DFGNode):
         super().__init__(input_ids,
                          output_ids, 
                          name,
-                         com_category, 
-                         com_options=old_node.com_options, 
+                         com_category,
+                         # BEGIN ANNO
+                         # OLD
+                         # com_options=old_node.com_options,
+                         # NEW
+                         com_options=new_options, # changed that all are already in there and not appended
+                         # END ANNO
                          com_redirs=com_redirs, 
                          com_assignments=old_node.com_assignments)
         
         ## TODO: This assumes that all options from the old function are copied to the new.
         ##
         ## TODO: If we need a behavior where we don't keep the old flags, we can extend this
-        self.append_options(new_options)
+        # BEGIN ANNO
+        # OLD
+        # self.append_options(new_options)
+        # END ANNO
 
 
 class AggregatorNode(MapperAggregatorNode):
     def __init__(self, old_node, input_ids, output_ids):
 
+        # BEGIN ANNO
+        used_parallelizer = old_node.get_used_parallelizer()
+        cmd_inv_pref = get_command_invocation_prefix_from_dfg_node(old_node)
+        used_aggregator = used_parallelizer.get_actual_aggregator(cmd_inv_pref)
+        log(f'used_agg: {used_aggregator}')
+        log(f'old_node: {old_node}')
+        # END ANNO
+
         ## Check if an aggregator can be instantiated from the node
-        if(old_node.com_aggregator is None):
+        # BEGIN ANNO
+        # OLD
+        # if(old_node.com_aggregator is None):
+        # NEW
+        if(used_aggregator is None):
+        # END ANNO
             log("Error: Node:", old_node, "does not contain information to instantiate an aggregator!")
             raise Exception('No information to instantiate aggregator')
 
         ## The name of the aggregator command
-        agg_name_string = old_node.com_aggregator.name
-        new_options = old_node.com_aggregator.options
+        # BEGIN ANNO
+        # OLD
+        # agg_name_string = old_node.com_aggregator.name
+        # new_options = old_node.com_aggregator.options
+        # NEW
+        agg_name_string = used_aggregator.cmd_name
+        all_options_incl_new = [Arg.string_to_arg(el.get_name()) for el in used_aggregator.flag_option_list + used_aggregator.positional_config_list]
+        # TODO: zip is nicer
+        all_options_incl_new_right_format = [(i, all_options_incl_new[i]) for i in range(len(all_options_incl_new))]
+        # END ANNO
 
-        super().__init__(old_node, input_ids, output_ids, agg_name_string, new_options)
+        # BEGIN ANNO
+        # OLD
+        # super().__init__(old_node, input_ids, output_ids, agg_name_string, new_options)
+        # NEW
+        super().__init__(old_node, input_ids, output_ids, agg_name_string, all_options_incl_new_right_format)
+        # END ANNO
 
         log("Generic Aggregator Created:", self)
 
