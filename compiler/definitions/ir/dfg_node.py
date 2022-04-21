@@ -7,9 +7,12 @@ from definitions.ir.redirection import *
 from definitions.ir.resource import *
 
 # BEGIN ANNO
+from util_new_annotations import construct_property_container_from_list_of_properties
+
+
 import sys
 sys.path.insert(1, "/home/felix/git-repos/MIT/annotations")
-from util_new import return_empty_list_if_none_else_itself
+from util_new import return_empty_list_if_none_else_itself, return_default_if_none_else_itself
 # END ANNO
 
 ## Assumption: Everything related to a DFGNode must be already expanded.
@@ -60,8 +63,8 @@ class DFGNode:
         self.outputs = outputs
         self.com_name = com_name
         self.com_category = com_category
-        self.com_properties = com_properties
-        self.com_mapper = com_mapper
+        self.com_properties = com_properties # to remove
+        # self.com_mapper = com_mapper # 1st to remove
         self.com_aggregator = com_aggregator
         self.com_options = com_options
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
@@ -76,7 +79,8 @@ class DFGNode:
         self.implicit_use_of_stdin = implicit_use_of_stdin
         self.implicit_use_of_stdout = implicit_use_of_stdout
         self.parallelizer_list = return_empty_list_if_none_else_itself(parallelizer_list)
-        self.cmd_related_properties = cmd_related_properties # TODO: set default values
+        default_cmd_properties = construct_property_container_from_list_of_properties([])
+        self.cmd_related_properties = return_default_if_none_else_itself(cmd_related_properties, default_cmd_properties)
         # END ANNO
 
         # log("Node created:", self.id, self)
@@ -152,7 +156,16 @@ class DFGNode:
         return (self.com_category == "parallelizable_pure")
 
     def is_commutative(self):
+        # BEGIN ANNO
+        # OLD
         return ('commutative' in self.com_properties)
+        # NEW
+        # val = self.cmd_related_properties.get_property_value('commutative')
+        # if val is not None:
+        #     return val
+        # else:
+        #     return False
+        # END ANNO
 
     ## kk: 2021-07-23 Not totally sure if that is generally correct. Tests will say ¯\_(ツ)_/¯
     ##     I think it assumes that new options can be added in the beginning if there are no options already
@@ -368,34 +381,3 @@ class DFGNode:
                 new_edge_id = id
             new_edge_ids.append(new_edge_id)
         return new_edge_ids
-
-    ## Get the file names of the outputs of the map commands. This
-    ## differs if the command is stateless, pure that can be
-    ## written as a map and a reduce, and a pure that can be
-    ## written as a generalized map and reduce.
-    def get_map_output_files(self, input_edge_ids, fileIdGen):
-        assert(self.is_parallelizable())
-        if(self.com_category == "stateless"):
-            map_output_fids = [fileIdGen.next_ephemeral_file_id() for in_fid in input_edge_ids]
-        elif(self.is_pure_parallelizable()):
-            map_output_fids = self.pure_get_map_output_files(input_edge_ids, fileIdGen)
-        else:
-            log("Unreachable code reached :(")
-            assert(False)
-            ## This should be unreachable
-        
-        return map_output_fids
-
-    ## TODO: Fix this somewhere in the annotations and not in the code
-    def pure_get_map_output_files(self, input_edge_ids, fileIdGen):
-        assert(self.is_pure_parallelizable())
-        
-        ## The number of the mapper outputs defaults to 1
-        if(self.com_mapper is None):
-            number_outputs = 1
-        else:
-            number_outputs = self.com_mapper.num_outputs
-
-        new_output_fids = [[fileIdGen.next_ephemeral_file_id() for i in range(number_outputs)] 
-                           for in_fid in input_edge_ids]
-        return new_output_fids

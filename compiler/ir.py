@@ -9,8 +9,9 @@ from annotation_generation_new.datatypes.ParallelizabilityInfo import Paralleliz
 # --
 
 from util_new_parsing import get_command_invocation
-from util_new_annotations import get_input_output_info_from_cmd_invocation_util, get_parallelizability_info_from_cmd_invocation_util
-from util_new_mapper import get_mapper_as_dfg_node_from_node
+from util_new_annotations import get_input_output_info_from_cmd_invocation_util, get_parallelizability_info_from_cmd_invocation_util, \
+                                 construct_property_container_from_list_of_properties
+from util_new_mapper import get_mapper_as_dfg_node_from_node, get_map_output_files
 from util_new_aggregator import get_aggregator_as_dfg_node_from_node
 # END ANNO
 
@@ -126,8 +127,10 @@ def compile_command_to_DFG(fileIdGen, command, options,
         io_info.unpack_info()
     para_info: ParallelizabilityInfo = get_parallelizability_info_from_cmd_invocation_util(command_invocation)
     parallelizer_list, round_robin_compatible_with_cat, is_commutative = para_info.unpack_info()
-    # TODO: store some properties in some container
-    cmd_related_properties = (multiple_inputs_possible, round_robin_compatible_with_cat, is_commutative)
+    property_list = [('multiple_inputs_possible', multiple_inputs_possible),
+                     ('round_robin_compatible_with_cat', round_robin_compatible_with_cat),
+                     ('is_commutative', is_commutative)]
+    cmd_related_properties = construct_property_container_from_list_of_properties(property_list)
     # END ANNO
     ## TODO: There is no need for this redirection here. We can just straight
     ##       come up with inputs, outputs, options
@@ -888,7 +891,12 @@ class IR:
                 parallel_configuration_ids[i].append(tee_node.outputs[i])
         
         ## Create a temporary output edge for each parallel command.
-        map_output_fids = node.get_map_output_files(parallel_input_ids, fileIdGen)
+        # BEGIN ANNO
+        # OLD
+        # map_output_fids = node.get_map_output_files(parallel_input_ids, fileIdGen)
+        # NEW (added parameter)
+        map_output_fids = get_map_output_files(node, parallel_input_ids, fileIdGen, rr_parallelizer)
+        # END ANNO
         assert(len(map_output_fids) == len(parallel_input_ids))
 
         all_map_output_ids = []

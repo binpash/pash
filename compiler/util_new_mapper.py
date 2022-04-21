@@ -9,9 +9,12 @@ from definitions.ir.dfg_node import DFGNode
 from util_new_cmd_invocations import get_command_invocation_prefix_from_dfg_node
 from util import log
 
-def get_mapper_as_dfg_node_from_node(node, parallelizer, inputs, outputs) -> DFGNode:
+def get_actual_mapper_from_node(node, parallelizer) -> Mapper:
     cmd_inv_pref = get_command_invocation_prefix_from_dfg_node(node)
-    mapper = parallelizer.get_actual_mapper(cmd_inv_pref)
+    return parallelizer.get_actual_mapper(cmd_inv_pref)
+
+def get_mapper_as_dfg_node_from_node(node, parallelizer, inputs, outputs) -> DFGNode:
+    mapper = get_actual_mapper_from_node(node, parallelizer)
     log(f'node.com_options: {node.com_options}')
     return DFGNode(inputs=inputs,
                 outputs=outputs,
@@ -31,7 +34,56 @@ def get_mapper_as_dfg_node_from_node(node, parallelizer, inputs, outputs) -> DFG
             # cmd_related_properties = None,
     )
 
+## MOVED from dfg_node
+## Get the file names of the outputs of the map commands. This
+## differs if the command is stateless, pure that can be
+## written as a map and a reduce, and a pure that can be
+## written as a generalized map and reduce.
+# BEGIN ANNO
+# OLD
+# def get_map_output_files(node, input_edge_ids, fileIdGen):
+# NEW
+def get_map_output_files(node, input_edge_ids, fileIdGen, parallelizer):
+    # END ANNO
+    assert (node.is_parallelizable())
+    if (node.com_category == "stateless"):
+        map_output_fids = [fileIdGen.next_ephemeral_file_id() for in_fid in input_edge_ids]
+    elif (node.is_pure_parallelizable()):
+        # BEGIN ANNO
+        # OLD
+        # map_output_fids = node.pure_get_map_output_files(input_edge_ids, fileIdGen)
+        # NEW
+        map_output_fids = pure_get_map_output_files(node, input_edge_ids, fileIdGen, parallelizer)
+        # END ANNO
+    else:
+        log("Unreachable code reached :(")
+        assert (False)
+        ## This should be unreachable
 
+    return map_output_fids
 
+## TODO: Fix this somewhere in the annotations and not in the code
+# BEGIN ANNO
+# OLD
+# def pure_get_map_output_files(node, input_edge_ids, fileIdGen):
+# NEW
+def pure_get_map_output_files(node, input_edge_ids, fileIdGen, parallelizer):
+    assert (node.is_pure_parallelizable())
+    # BEGIN ANNO
+    # OLD
+    ## The number of the mapper outputs defaults to 1
+    # if(node.com_mapper is None):
+    #     number_outputs = 1
+    # else:
+    #     number_outputs = node.com_mapper.num_outputs
+    # NEW
+    # TODO: which parallelizer did we choose?
+    actual_mapper = get_actual_mapper_from_node(node, parallelizer)
+    number_outputs = actual_mapper.num_outputs  # defaults to 1 in class Mapper
+    # END ANNO
+
+    new_output_fids = [[fileIdGen.next_ephemeral_file_id() for i in range(number_outputs)]
+                       for in_fid in input_edge_ids]
+    return new_output_fids
 
 
