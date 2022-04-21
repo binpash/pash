@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ir_utils import *
 from util import *
 
@@ -29,3 +30,9 @@ class Arg:
         space = [['C', 32]]
         self.arg_char_list.extend(space)
         self.arg_char_list.extend(other.arg_char_list)
+
+    @staticmethod
+    def string_to_arg(string) -> Arg:
+        return Arg(string_to_argument(string))
+
+

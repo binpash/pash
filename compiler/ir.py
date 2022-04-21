@@ -1,5 +1,7 @@
 # BEGIN ANNO
 import sys
+from typing import List
+
 sys.path.insert(1, "/home/felix/git-repos/MIT/annotations")
 # for typing
 from datatypes_new.CommandInvocation import CommandInvocation
@@ -13,6 +15,7 @@ from util_new_annotations import get_input_output_info_from_cmd_invocation_util,
                                  construct_property_container_from_list_of_properties
 from util_new_mapper import get_mapper_as_dfg_node_from_node, get_map_output_files
 from util_new_aggregator import get_aggregator_as_dfg_node_from_node
+from util_new_file_descriptors import resource_from_file_descriptor
 # END ANNO
 
 from definitions.ir.arg import *
@@ -105,15 +108,34 @@ def create_edges_from_opt_or_fd_list(opt_or_fd_list, edges_dict, options, fileId
         new_edge_list.append(fid_id)
     return new_edge_list
 
-def find_input_edges(inputs, dfg_edges, options, fileIdGen):
-    if(isinstance(inputs, list)):
-        return create_edges_from_opt_or_fd_list(inputs, dfg_edges, options, fileIdGen)
-    elif(isinstance(inputs, tuple)):
-        config_inputs = create_edges_from_opt_or_fd_list(inputs[0], dfg_edges, options, fileIdGen)
-        standard_inputs = create_edges_from_opt_or_fd_list(inputs[1], dfg_edges, options, fileIdGen)
-        return (config_inputs, standard_inputs)
+# BEGIN ANNO
+# OLD
+# def find_input_edges(inputs, dfg_edges, options, fileIdGen):
+#     if(isinstance(inputs, list)):
+#         return create_edges_from_opt_or_fd_list(inputs, dfg_edges, options, fileIdGen)
+#     elif(isinstance(inputs, tuple)):
+#         assert(False)
+#         config_inputs = create_edges_from_opt_or_fd_list(inputs[0], dfg_edges, options, fileIdGen)
+#         standard_inputs = create_edges_from_opt_or_fd_list(inputs[1], dfg_edges, options, fileIdGen)
+#         return (config_inputs, standard_inputs)
+#     else:
+#         raise NotImplementedError()
+# NEW
+def find_input_edges(positional_input_list, implicit_use_of_stdin, dfg_edges, fileIdGen) -> List[int]:
+    assert (not implicit_use_of_stdin or len(positional_input_list) == 0)
+    if implicit_use_of_stdin:
+        resources = [FileDescriptorResource(("fd", 0))]
     else:
-        raise NotImplementedError()
+        resources = [resource_from_file_descriptor(input_el) for input_el in positional_input_list]
+    file_ids = [create_file_id_for_resource(resource, fileIdGen) for resource in resources]
+    log(f'file_ids: {file_ids}')
+    new_edge_list = []
+    for file_id in file_ids:
+        fid_id = file_id.get_ident()
+        dfg_edges[fid_id] = (file_id, None, None)
+        new_edge_list.append(fid_id)
+    return new_edge_list
+# END ANNO
 
 ## This function creates a DFG with a single node given a command.
 def compile_command_to_DFG(fileIdGen, command, options,
@@ -134,7 +156,11 @@ def compile_command_to_DFG(fileIdGen, command, options,
     # END ANNO
     ## TODO: There is no need for this redirection here. We can just straight
     ##       come up with inputs, outputs, options
-    inputs, out_stream, opt_indices = find_command_input_output(command, options)
+    # this function should be completely deleted once we have moved to new annotations
+    _inputs, out_stream, opt_indices = find_command_input_output(command, options)
+    log(f'out_stream: {out_stream}')
+    log(f'io_info: {io_info}')
+    log(f'positional_input_list: {positional_input_list}')
     # log("Opt indices:", opt_indices, "options:", options)
     category = find_command_category(command, options)
     com_properties = find_command_properties(command, options)
@@ -144,7 +170,9 @@ def compile_command_to_DFG(fileIdGen, command, options,
 
     dfg_edges = {}
     ## Add all inputs and outputs to the DFG edges
-    dfg_inputs = find_input_edges(inputs, dfg_edges, options, fileIdGen)
+    # TODO: add filenames in flag_option_list arguments
+    dfg_inputs = find_input_edges(positional_input_list, implicit_use_of_stdin, dfg_edges, fileIdGen)
+    log(f'dfg_inputs: {dfg_inputs}')
     dfg_outputs = create_edges_from_opt_or_fd_list(out_stream, dfg_edges, options, fileIdGen)
 
     com_name = Arg(command)

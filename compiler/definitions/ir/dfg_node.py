@@ -38,7 +38,7 @@ class DFGNode:
                  com_name,
                  com_category = None,
                  com_properties = [],
-                 com_mapper = None,
+                 com_mapper = None, # TODO: remove
                  com_aggregator = None,
                  com_options = [],  # FS: TODO: update to version of CMD_invocation
                  com_redirs = [],
@@ -73,6 +73,7 @@ class DFGNode:
         # TO KEEP: com_name: str,
         # ?? com_redirs, com_assignments
         self.flag_option_list = return_empty_list_if_none_else_itself(flag_option_list)
+        # Assumption: config_list and option arguments only contains strings, i.e. of type ArgStringType
         self.positional_config_list = return_empty_list_if_none_else_itself(positional_config_list)
         self.positional_input_list = return_empty_list_if_none_else_itself(positional_input_list)
         self.positional_output_list = return_empty_list_if_none_else_itself(positional_output_list)
@@ -129,6 +130,8 @@ class DFGNode:
     def set_inputs(self, inputs):
         if(isinstance(inputs, list)):
             self.inputs = ([], inputs)
+            # BEGIN ANNO
+            # END ANNO
         elif(isinstance(inputs, tuple)):
             self.inputs = inputs
         else:
