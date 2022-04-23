@@ -126,7 +126,7 @@ def init():
     config.annotations = load_annotation_files(
         config.config['distr_planner']['annotations_dir'])
     pash_runtime.runtime_config = config.config['distr_planner']
-    pash_runtime.termination = ""
+    # pash_runtime.termination = ""
 
 def main():
     init()
