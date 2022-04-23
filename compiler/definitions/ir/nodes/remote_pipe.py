@@ -8,7 +8,7 @@ class RemotePipe(DFGNode):
                          com_redirs=com_redirs, 
                          com_assignments=com_assignments)
 
-def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, is_server):
+def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, id):
     com_category = "pure"
     options = []
     opt_count = 0
@@ -20,13 +20,9 @@ def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, is_server):
 
     com_name = Arg(string_to_argument(remote_pipe_bin))
 
-    if is_server:
-        options.append((opt_count, Arg(string_to_argument("-l")))) # Don't read from stdin
-        opt_count += 1
+    options.append((opt_count, Arg(string_to_argument(f"--addr {host_ip}:{port}"))))
+    options.append((opt_count + 1, Arg(string_to_argument(f"--id {id}"))))
 
-    options.append((opt_count, Arg(string_to_argument(host_ip))))
-    options.append((opt_count + 1, Arg(string_to_argument(str(port)))))
-    
     return RemotePipe(inputs,
                outputs,
                com_name, 
