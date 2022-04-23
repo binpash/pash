@@ -1,1 +1,1 @@
-$PASH_TOP/runtime/dspash/socket_pipe write -t 10 $@
+$PASH_TOP/runtime/dspash/file_reader/datastream_client --type write $@
