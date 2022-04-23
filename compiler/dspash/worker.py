@@ -19,8 +19,8 @@ from util import log
 from annotations import load_annotation_files
 import pash_runtime
 from dspash.socket_utils import send_msg, recv_msg
-from dspash.utils import create_filename, write_file
 from dspash.ir_helper import save_configs, to_shell_file
+from dspash.utils import create_filename, write_file
 
 # from ... import config
 HOST = socket.gethostbyname(socket.gethostname())
