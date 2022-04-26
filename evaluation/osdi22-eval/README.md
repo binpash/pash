@@ -97,7 +97,7 @@ $PASH_TOP/pa.sh -c 'echo Hello World!'
 ```
 
 ```sh
-ssh  osdi22@antikythera@csail.mit.edu -i ~/.ssh/pash.key
+ssh  osdi22@antikythera.csail.mit.edu -i ~/.ssh/pash.key
 # create a new instance of the container
 docker run -it --sig-proxy=false posix /bin/bash
 # run a simple command
