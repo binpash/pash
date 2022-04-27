@@ -39,15 +39,22 @@ class FileId:
         return output
 
     def serialize(self):
-        if(isinstance(self.resource, EphemeralResource)):
+        if(isinstance(self.resource, TemporaryFileResource)):
+            output = self.get_temporary_file_suffix()
+        elif(isinstance(self.resource, EphemeralResource)):
             output = self.get_fifo_suffix()
         else:
             output = "{}".format(self.resource)
         return output
 
+    def get_temporary_file_suffix(self):
+        tempfile_name = "{}{}".format(self.prefix, self.ident)
+        return tempfile_name
+
     def get_fifo_suffix(self):
         fifo_name = "{}#fifo{}".format(self.prefix, self.ident)
         return fifo_name
+
     ## Serialize as an option for the JSON serialization when sent to
     ## the backend. This is needed as options can either be files or
     ## arguments, and in each case there needs to be a different
@@ -66,7 +73,11 @@ class FileId:
         ##       check if a file id refers to a pipe
         ##
         ## TODO: I am not sure about the FileDescriptor resource
-        if(isinstance(self.resource, EphemeralResource)):
+        if(isinstance(self.resource, TemporaryFileResource)):
+            suffix = self.get_temporary_file_suffix()
+            string = os.path.join(config.PASH_TMP_PREFIX, suffix)
+            argument = string_to_argument(string)
+        elif(isinstance(self.resource, EphemeralResource)):
             suffix = self.get_fifo_suffix()
             string = os.path.join(config.PASH_TMP_PREFIX, suffix)     
             ## Quote the argument
@@ -107,6 +118,9 @@ class FileId:
 
     def is_ephemeral(self):
         return (isinstance(self.resource, EphemeralResource))
+
+    def make_temporary_file(self):
+        self.resource = TemporaryFileResource()
 
     ## Removes a resource from an FID, making it ephemeral
     def make_ephemeral(self):
