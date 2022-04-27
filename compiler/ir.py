@@ -44,9 +44,13 @@ class FileIdGen:
         self.next += 1
         return fileId
 
+    def next_temporary_file_id(self):
+        fileId = self.next_file_id()
+        fileId.make_temporary_file()
+        return fileId
+
     def next_ephemeral_file_id(self):
-        fileId = FileId(self.next, self.prefix)
-        self.next += 1
+        fileId = self.next_file_id()
         fileId.make_ephemeral()
         return fileId
 

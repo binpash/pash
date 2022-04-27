@@ -53,7 +53,11 @@ class FileResource(Resource):
             return self.uri == other.uri
         return False
 
+class TemporaryFileResource(Resource):
+    def __init__(self):
+        self.uri = None
 
+# A FIFO.
 class EphemeralResource(Resource):
     def __init__(self):
         self.uri = None
