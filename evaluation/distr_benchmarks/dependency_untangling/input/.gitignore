@@ -1,0 +1,4 @@
+*
+!.gitignore
+!setup.sh
+!install-deps.sh
