@@ -3,10 +3,12 @@
 #set -e
 
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
+REPLICATION_FACTOR=2
 
 # another solution for capturing HTTP status code
 # https://superuser.com/a/590170
-input_files="1M.txt 10M.txt 100M.txt 1G.txt dict.txt 3G.txt 10G.txt 100G.txt all_cmds.txt all_cmdsx100.txt small"
+input_files=("1M.txt" "10M.txt" "100M.txt" "1G.txt" "all_cmds.txt" "all_cmdsx100.txt")
+local_fils=("dict.txt")
 
 if [ ! -f ./1M.txt ]; then
     curl -sf 'http://ndr.md/data/dummy/1M.txt' > 1M.txt
@@ -55,37 +57,37 @@ if [ ! -f ./all_cmds.txt ]; then
     fi
 fi
 
-hdfs dfs -put ./10M.txt /10M.txt
-hdfs dfs -put ./100M.txt /100M.txt 
-hdfs dfs -put ./1G.txt /1G.txt 
-hdfs dfs -put ./all_cmds.txt
-
-
-if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
-    echo "Generating full-size inputs"
-    # FIXME PR: Do we need all of them?
-
-    # if [ ! -f ./3G.txt ]; then
-    #     touch 3G.txt
-    #     for (( i = 0; i < 3; i++ )); do
-    #         cat 1G.txt >> 3G.txt
-    #     done
-    # fi
-    # hdfs dfs -put ./3G.txt /3G.txt
-
-    # if [ ! -f ./10G.txt ]; then
-    #     touch 10G.txt
-    #     for (( i = 0; i < 10; i++ )); do
-    #         cat 1G.txt >> 10G.txt
-    #     done
-    # fi
-    # hdfs dfs -put ./10G.txt /10G.txt 
-
-    if [ ! -f ./all_cmdsx100.txt ]; then
+if [ ! -f ./all_cmdsx100.txt ]; then
         touch all_cmdsx100.txt
         for (( i = 0; i < 100; i++ )); do
             cat all_cmds.txt >> all_cmdsx100.txt
         done
-    fi
-    hdfs dfs -put ./all_cmdsx100.txt /all_cmdsx100.txt 
 fi
+
+
+if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
+    echo "Generating full-size inputs"
+
+
+    if [ ! -f ./3G.txt ]; then
+        touch 3G.txt
+        for (( i = 0; i < 3; i++ )); do
+            cat 1G.txt >> 3G.txt
+        done
+    fi
+    input_files+=("3G.txt")
+
+    if [ ! -f ./10G.txt ]; then
+        touch 10G.txt
+        for (( i = 0; i < 10; i++ )); do
+            cat 1G.txt >> 10G.txt
+        done
+    fi
+    input_files+=("10G.txt")
+fi
+
+
+for file in "${input_files[@]}"; do
+    hdfs dfs -Ddfs.replication=$REPLICATION_FACTOR  -put $file /$file
+    rm $file # remove local file after putting it into hdfs
+done
