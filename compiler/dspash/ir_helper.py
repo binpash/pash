@@ -237,6 +237,10 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
         source_nodes = subgraph.source_nodes()
         for source in source_nodes:
             for in_edge in subgraph.get_node_input_fids(source):
+                # If we didn't expand HDFSCat then we shouldn't modify it's input fids
+                # We might need annotation changes if we need to be more general
+                if isinstance(subgraph.get_node(source), HDFSCat):
+                    continue
                 if in_edge.has_file_resource() or in_edge.has_file_descriptor_resource():
                     # setup
                     stdout = add_stdout_fid(main_graph, file_id_gen)

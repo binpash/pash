@@ -692,7 +692,7 @@ def add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_
     else:
         ## TODO: Remove the line below if eager creates its intermediate file
         ##       on its own.
-        intermediate_fid = intermediateFileIdGen.next_ephemeral_file_id()
+        intermediate_fid = intermediateFileIdGen.next_temporary_file_id()
 
         eager_exec_path = '{}/{}'.format(config.PASH_TOP, runtime_config['eager_executable_path'])
 
