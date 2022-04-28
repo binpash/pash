@@ -1,4 +1,5 @@
 from definitions.ir.dfg_node import *
+NEXT_PORT = 58000
 
 class RemotePipe(DFGNode):
     def __init__(self, inputs, outputs, com_name, com_category,
@@ -9,6 +10,8 @@ class RemotePipe(DFGNode):
                          com_assignments=com_assignments)
 
 def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, id):
+    global NEXT_PORT
+    
     com_category = "pure"
     options = []
     opt_count = 0
@@ -20,8 +23,9 @@ def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, id):
 
     com_name = Arg(string_to_argument(remote_pipe_bin))
 
-    options.append((opt_count, Arg(string_to_argument(f"--addr {host_ip}:{port}"))))
-    options.append((opt_count + 1, Arg(string_to_argument(f"--id {id}"))))
+    options.append((opt_count, Arg(string_to_argument(host_ip))))
+    options.append((opt_count + 1, Arg(string_to_argument(str(NEXT_PORT)))))
+    NEXT_PORT += 1
 
     return RemotePipe(inputs,
                outputs,
