@@ -4,6 +4,7 @@ import sys
 from collections import namedtuple
 import json
 from typing import List, Tuple
+import requests
 
 HDFSBlock = namedtuple("HDFSBlock", "path hosts")
 
@@ -65,15 +66,23 @@ class HDFSFileConfig:
             return False
         return self.blocks == __o.blocks
 
-def get_hdfs_file_data(filename):
-    info = FileData(filename)
-    log = subprocess.check_output(
-        "hdfs fsck {0} -files -blocks -locations".format(filename), shell=True, stderr=subprocess.PIPE
-    )
+def get_hdfs_file_data(filepath):
+    # Use webhdfs to get the block data as it's much faster
+    url = f"http://namenode:9870/fsck"
+    params = {
+        'ugi': 'root',
+        'files': '1',
+        'blocks': '1',
+        'locations': '1',
+        'path': filepath
+    }
+    info = FileData(filepath)
+    r = requests.get(url = url, params = params)
+
     count = 0
-    for line in log.splitlines():
+    for line in r.text.splitlines():
         wordarr = line.split()
-        if len(wordarr) > 0 and wordarr[0].decode("utf-8") == filename and count == 0:
+        if len(wordarr) > 0 and wordarr[0] == filename and count == 0:
             info.size = int(wordarr[1])
             count += 1
         elif (
@@ -83,10 +92,10 @@ def get_hdfs_file_data(filename):
             and int(wordarr[0][:-1]) == count - 1
         ):
             count += 1
-            rawinfo = wordarr[1].decode("utf-8").split(":")
+            rawinfo = wordarr[1].split(":")
             info.blocknames.append(rawinfo[1][0 : rawinfo[1].rfind("_")])
             info.dnodenames.append(rawinfo[0])
-            stline = line.decode("utf-8")
+            stline = line
             info.machines.append(
                 _getIPs(stline[stline.find("DatanodeInfoWithStorage") - 1 :])
             )
