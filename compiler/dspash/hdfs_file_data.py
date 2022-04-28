@@ -82,7 +82,7 @@ def get_hdfs_file_data(filepath):
     count = 0
     for line in r.text.splitlines():
         wordarr = line.split()
-        if len(wordarr) > 0 and wordarr[0] == filename and count == 0:
+        if len(wordarr) > 0 and wordarr[0] == filepath and count == 0:
             info.size = int(wordarr[1])
             count += 1
         elif (
