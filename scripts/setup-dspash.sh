@@ -9,7 +9,7 @@ fi
 
 
 # TODO: install any extra needed python debs
-pip3 install requests
+pip install --target=${PASH_TOP}/python_pkgs/ requests
 
 # Install Go
 wget https://go.dev/dl/go1.17.7.linux-amd64.tar.gz
