@@ -1,5 +1,3 @@
-
-
 # Get PASH_TOP
 if git rev-parse --git-dir > /dev/null 2>&1; then
     # set PASH_TOP
@@ -11,8 +9,7 @@ fi
 
 
 # TODO: install any extra needed python debs
-PYTHON_PKG_DIR=$PASH_TOP/python_pkgs
-python3 -m pip install requests --root $PYTHON_PKG_DIR --ignore-installed
+pip3 install requests
 
 # Install Go
 wget https://go.dev/dl/go1.17.7.linux-amd64.tar.gz
