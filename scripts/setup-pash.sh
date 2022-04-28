@@ -91,6 +91,7 @@ python3 -m pip install jsonpickle --root $PYTHON_PKG_DIR --ignore-installed #&> 
 python3 -m pip install pexpect --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_pexpect.log
 python3 -m pip install numpy --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_matplotlib.log
+python3 -m pip install requests --root $PYTHON_PKG_DIR --ignore-installed
 
 # clean the python packages
 cd $PYTHON_PKG_DIR
