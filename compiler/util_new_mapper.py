@@ -15,11 +15,12 @@ def get_actual_mapper_from_node(node, parallelizer) -> Mapper:
 
 def get_mapper_as_dfg_node_from_node(node, parallelizer, inputs, outputs) -> DFGNode:
     mapper = get_actual_mapper_from_node(node, parallelizer)
-    log(f'node.com_options: {node.com_options}')
+    log(f'mapper for cmd_name: {node.com_name}')
+    log(f'here mapper: {mapper}')
     return DFGNode(inputs=inputs,
                 outputs=outputs,
                 com_name=mapper.cmd_name,
-                com_options=node.com_options,
+                # com_options=node.com_options,
                 com_redirs=node.com_redirs,
                 com_assignments=node.com_assignments,
                 flag_option_list=mapper.flag_option_list,

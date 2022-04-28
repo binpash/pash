@@ -284,6 +284,7 @@ def get_command_properties_from_annotations(command, options, annotations):
         return command_ann['properties']
 
 def get_command_aggregator_from_annotations(command, options, annotations):
+    log(f'still used')
     command_ann = get_command_from_annotations(command, options, annotations)
     if(command_ann
        and 'aggregator' in command_ann):

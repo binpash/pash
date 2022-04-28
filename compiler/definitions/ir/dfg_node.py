@@ -8,6 +8,8 @@ from definitions.ir.resource import *
 
 # BEGIN ANNO
 from util_new_annotations import construct_property_container_from_list_of_properties
+from util_new_parsing import get_ast_for_flagoption, get_ast_for_argstringtype, fix_parsing_newline
+# from util_new_cmd_invocations import get_command_invocation_prefix_from_dfg_node
 
 
 import sys
@@ -40,7 +42,7 @@ class DFGNode:
                  com_properties = [],
                  com_mapper = None, # TODO: remove
                  com_aggregator = None,
-                 com_options = [],  # FS: TODO: update to version of CMD_invocation
+                 com_options = [],
                  com_redirs = [],
                  com_assignments=[],
                  # BEGIN ANNO
@@ -66,14 +68,17 @@ class DFGNode:
         self.com_properties = com_properties # to remove
         # self.com_mapper = com_mapper # 1st to remove
         # self.com_aggregator = com_aggregator
-        self.com_options = com_options
+        self.com_options = com_options # used for Mp/Agg and in to_ast
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
         self.com_assignments = com_assignments
         # BEGIN ANNO
+        log(f'init com_options: {com_options}')
+        log(f'init flag_option_list: {flag_option_list}')
         # TO KEEP: com_name: str,
         # ?? com_redirs, com_assignments
-        self.flag_option_list = return_empty_list_if_none_else_itself(flag_option_list)
         # Assumption: config_list and option arguments only contains strings, i.e. of type ArgStringType
+        # try to turn towards options list without positional config list args
+        self.flag_option_list = return_empty_list_if_none_else_itself(flag_option_list)
         self.positional_config_list = return_empty_list_if_none_else_itself(positional_config_list)
         self.positional_input_list = return_empty_list_if_none_else_itself(positional_input_list)
         self.positional_output_list = return_empty_list_if_none_else_itself(positional_output_list)
@@ -171,6 +176,7 @@ class DFGNode:
     ## kk: 2021-07-23 Not totally sure if that is generally correct. Tests will say ¯\_(ツ)_/¯
     ##     I think it assumes that new options can be added in the beginning if there are no options already
     def append_options(self, new_options):
+        assert(False)
         if(len(self.com_options) > 0):
             max_opt_index = max([i for i, _opt in self.com_options])
         else:
@@ -271,10 +277,35 @@ class DFGNode:
             assignments = self.com_assignments
             ## Start filling in the arguments
             opt_arguments = []
-            for i, opt in self.com_options:
-                ## Pad the argument list with None 
-                opt_arguments = pad(opt_arguments, i)
-                opt_arguments[i] = opt.to_ast()
+            # BEGIN ANNO
+            # get_command_invocation_prefix_from_dfg_node
+            log(f'com_name: {self.com_name}')
+            # log(f'edges: {edges}')
+            # log(f'inputs: {self.inputs}')
+            # log(f'outputs: {self.outputs}')
+            # log(f'com_redirs: {self.com_redirs}')
+            log(f'pos config: {self.positional_config_list}')
+            log(f'pos input: {self.positional_input_list}')
+            log(f'pos output: {self.positional_output_list}')
+            log(f'com_options: {self.com_options}')
+            log(f'flag_option_list: {self.flag_option_list}')
+
+            # if self.implicit_use_of_stdin: # need to recompute
+                # cat a list of inputs into it; redirect a single one
+            # else:
+
+            #OLD
+            # for i, opt in self.com_options:
+            #     ## Pad the argument list with None
+            #     opt_arguments = pad(opt_arguments, i)
+            #     opt_arguments[i] = opt.to_ast()
+            # log(f'opt_arguments: {format_args([val for val in opt_arguments if val is not None])}')
+            # NEW
+            opt_arguments = [get_ast_for_flagoption(flagoption) for flagoption in self.flag_option_list]
+            positional_config_fixed_parsing_newline = [fix_parsing_newline(arg) for arg in self.positional_config_list]
+            opt_arguments += [get_ast_for_argstringtype(arg) for arg in positional_config_fixed_parsing_newline]
+            log(f'opt_arguments_new: {format_args(opt_arguments)}')
+            # END ANNO
 
             com_name_ast = self.com_name.to_ast()
             option_asts = [opt.to_ast() for _, opt in self.com_options]
@@ -300,11 +331,20 @@ class DFGNode:
             rest_arguments = [fid.to_ast()
                               for fid in rest_argument_fids
                               if not fid is None]
+            log(f'rest_arguments: {format_args(rest_arguments)}')
 
             ## Interleave the arguments since options args might contain gaps.
-            arguments = interleave_args(opt_arguments, rest_arguments) 
+            # BEGIN ANNO
+            # OLD
+            # arguments = interleave_args(opt_arguments, rest_arguments)
+            # NEW
+            arguments = opt_arguments + rest_arguments
+            # log(f'arguments: {format_args(arguments)}')
+            # END ANNO
 
             all_arguments = [com_name_ast] + arguments
+            log(f'all arguments: {format_args(all_arguments)}')
+            log(f'\n\n')
             all_redirs = redirs + new_redirs
 
             node = make_command(all_arguments, redirections=all_redirs, assignments=assignments)

@@ -17,10 +17,10 @@ class Cat(DFGNode):
         assert(str(com_name) == "cat")
         assert(com_category == "stateless")
         super().__init__(inputs, outputs, com_name, com_category,
-                         com_options=com_options, 
-                         com_redirs=com_redirs, 
-                         com_assignments=com_assignments,
+                         com_options=com_options,
                          flag_option_list=flag_option_list,
+                         com_redirs=com_redirs,
+                         com_assignments=com_assignments,
                          positional_config_list=positional_config_list,
                          positional_input_list=positional_input_list,
                          positional_output_list=positional_output_list,

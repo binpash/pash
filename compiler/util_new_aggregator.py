@@ -14,11 +14,11 @@ from definitions.ir.arg import Arg
 
 def get_aggregator_as_dfg_node_from_node(node, parallelizer, inputs, outputs) -> DFGNode:
     cmd_inv_pref = get_command_invocation_prefix_from_dfg_node(node)
+    log(f'cmdinvpref for agg: {cmd_inv_pref}')
     aggregator = parallelizer.get_actual_aggregator(cmd_inv_pref)
-    log(f'agg: {aggregator}')
+    log(f'here agg: {aggregator}')
     # TODO: this could be simplified once we use the new attributes
     if aggregator.cmd_name == 'cat':
-        log(f'original node: {node, node.com_options}')
         return Cat(inputs=inputs,
                     outputs=outputs,
                     com_name=Arg(string_to_argument(aggregator.cmd_name)),
@@ -38,6 +38,8 @@ def get_aggregator_as_dfg_node_from_node(node, parallelizer, inputs, outputs) ->
                 # cmd_related_properties = None,
         )
     else:
+        log(f'agg_com_name: {aggregator.cmd_name}')
+        log(f'agg_flag_option_list: {aggregator.flag_option_list}')
         return DFGNode(inputs=inputs,
                        outputs=outputs,
                        com_name=Arg(string_to_argument(aggregator.cmd_name)),
@@ -55,8 +57,3 @@ def get_aggregator_as_dfg_node_from_node(node, parallelizer, inputs, outputs) ->
                        # parallelizer_list = None,
                        # cmd_related_properties = None,
                        )
-
-
-
-
-

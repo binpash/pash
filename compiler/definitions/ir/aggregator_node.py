@@ -7,7 +7,7 @@ from util_new_cmd_invocations import get_command_invocation_prefix_from_dfg_node
 ##
 ## TODO: Do we need to do anything special for binary aggregators?
 class MapperAggregatorNode(DFGNode):
-    def __init__(self, old_node, input_ids, output_ids, name_string, new_options):
+    def __init__(self, old_node, input_ids, output_ids, name_string, new_options, flag_option_list):
 
         ## The name of the aggregator command
         name = Arg(string_to_argument(name_string))
@@ -26,10 +26,11 @@ class MapperAggregatorNode(DFGNode):
                          # com_options=old_node.com_options,
                          # NEW
                          com_options=new_options, # changed that all are already in there and not appended
+                         flag_option_list=flag_option_list,
                          # END ANNO
                          com_redirs=com_redirs, 
                          com_assignments=old_node.com_assignments)
-        
+
         ## TODO: This assumes that all options from the old function are copied to the new.
         ##
         ## TODO: If we need a behavior where we don't keep the old flags, we can extend this
@@ -76,7 +77,8 @@ class AggregatorNode(MapperAggregatorNode):
         # OLD
         # super().__init__(old_node, input_ids, output_ids, agg_name_string, new_options)
         # NEW
-        super().__init__(old_node, input_ids, output_ids, agg_name_string, all_options_incl_new_right_format)
+        super().__init__(old_node, input_ids, output_ids, agg_name_string, all_options_incl_new_right_format,
+                         flag_option_list=used_aggregator.flag_option_list)
         # END ANNO
 
         log("Generic Aggregator Created:", self)
@@ -84,6 +86,7 @@ class AggregatorNode(MapperAggregatorNode):
 class MapperNode(MapperAggregatorNode):
     def __init__(self, old_node, input_ids, output_ids):
 
+        assert(False)
         ## Check if an mapper can be instantiated from the node
         if(old_node.com_mapper is None):
             log("Error: Node:", old_node, "does not contain information to instantiate a mapper!")

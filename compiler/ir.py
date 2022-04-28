@@ -176,7 +176,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
     # END ANNO
     com_category = find_command_category(command, options)
     com_properties = find_command_properties(command, options)
-    _com_mapper, com_aggregator = find_command_mapper_aggregator(command, options)
+    # _com_mapper, _com_aggregator = find_command_mapper_aggregator(command, options)
 
     com_name = Arg(command)
 
@@ -235,7 +235,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            com_category,
                            com_properties=com_properties,
                            com_mapper=None,
-                           com_aggregator=com_aggregator,
+                           com_aggregator=None, #_com_aggregator,
                            com_options=dfg_options,
                            com_redirs=com_redirs,
                            com_assignments=com_assignments,
