@@ -21,7 +21,9 @@ import definitions.ir.nodes.r_merge as r_merge
 import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_unwrap as r_unwrap
 import definitions.ir.nodes.dgsh_tee as dgsh_tee
-
+import definitions.ir.nodes.dfs_split_reader as dfs_split_reader
+# Distirbuted Exec
+import dspash.hdfs_utils as hdfs_utils 
 
 runtime_config = {}
 ## We want to catch all exceptions here so that they are logged correctly
@@ -90,7 +92,8 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
     try:
         ret = compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config)
     except Exception as e:
-        log("Exception caught:", e)
+        log("WARNING: Exception caught:", e)
+        # traceback.print_exc()
 
     return ret
 
@@ -112,16 +115,23 @@ def compile_optimize_output_script(ir_filename, compiled_script_file, args, comp
     ## If the candidate DF region was indeed a DF region then we have an IR
     ## which should be translated to a parallel script.
     if(isinstance(optimized_ast_or_ir, IR)):
-        script_to_execute = to_shell(optimized_ast_or_ir, args)
+        if args.distributed_exec:
+            _, ir_filename = ptempfile()
+            script_to_execute = f"$PASH_TOP/compiler/dspash/remote_exec_graph.sh {ir_filename}\n"
+            ## This might not be needed anymore (since the output script is output anyway)
+            ## TODO: This is probably useless, remove
+            maybe_log_optimized_script(script_to_execute, args)
 
-        ## This might not be needed anymore (since the output script is output anyway)
-        ## TODO: This is probably useless, remove
-        maybe_log_optimized_script(script_to_execute, args)
-
+            with open(ir_filename, "wb") as f:
+                obj = (optimized_ast_or_ir, config.config['shell_variables'])
+                pickle.dump(obj, f)
+        else:
+            script_to_execute = to_shell(optimized_ast_or_ir, args)
+            
         log("Optimized script saved in:", compiled_script_file)
         with open(compiled_script_file, "w") as f:
-                f.write(script_to_execute)
-
+            f.write(script_to_execute)
+    
         ret = optimized_ast_or_ir
     else:
         raise Exception("Script failed to compile!")
@@ -174,7 +184,7 @@ def maybe_log_optimized_script(script_to_execute, args):
 def compile_candidate_df_region(candidate_df_region, config):
     ## This is for the files in the IR
     fileIdGen = FileIdGen()
-
+    
     ## If the candidate DF region is not from the top level then
     ## it won't be a list and thus we need to make it into a list to compile it.
     if(not isinstance(candidate_df_region, list)):
@@ -208,8 +218,9 @@ def optimize_irs(asts_and_irs, args, compiler_config):
                                                                       args.r_split, args.r_split_batch_size)
             # pr.print_stats()
             # log(distributed_graph)
-
-            if(not args.no_eager):
+            
+            # Eagers are added in remote notes when using distributed exec
+            if(not args.no_eager and not args.distributed_exec): 
                 eager_distributed_graph = add_eager_nodes(distributed_graph, args.dgsh_tee)
             else:
                 eager_distributed_graph = distributed_graph
@@ -352,6 +363,49 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_fl
 
     return new_merger
 
+def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
+    """
+    Replaces hdfs cat with a cat per block, each cat uses has an HDFSResource input fid
+    Returns: A normal Cat that merges the blocks (will be removed when parallizing next_node)
+    """
+    assert(isinstance(hdfs_cat, HDFSCat))
+
+    ## At the moment this only works for nodes that have one standard input.
+    if len(next_node.get_standard_inputs()) != 1:
+        return
+
+    hdfscat_input_id = hdfs_cat.get_standard_inputs()[0]
+    hdfs_fid = graph.get_edge_fid(hdfscat_input_id)
+    hdfs_filepath = str(hdfs_fid.get_resource())
+    output_ids = []
+
+    # Create a cat command per file block
+    file_config = hdfs_utils.get_file_config(hdfs_filepath)
+    _, dummy_config_path = ptempfile() # Dummy config file, should be updated by workers
+    for split_num, block in enumerate(file_config.blocks):
+        resource = DFSSplitResource(file_config.dumps(), dummy_config_path, split_num, block.hosts)
+        block_fid = fileIdGen.next_file_id()
+        block_fid.set_resource(resource)
+        graph.add_edge(block_fid)
+
+        output_fid = fileIdGen.next_file_id()
+        output_fid.make_ephemeral()
+        output_ids.append(output_fid.get_ident())
+        graph.add_edge(output_fid)
+
+        split_reader_node = dfs_split_reader.make_dfs_split_reader_node([block_fid.get_ident()], output_fid.get_ident(), split_num, config.HDFS_PREFIX)
+        graph.add_node(split_reader_node)
+
+    # Remove the HDFS Cat command as it's not used anymore
+    graph.remove_node(hdfs_cat.get_id())
+
+    ## input of next command is output of new merger.
+    input_id = next_node.get_standard_inputs()[0]
+    new_merger = make_cat_node(output_ids, input_id)
+    graph.add_node(new_merger)
+
+    return new_merger
+
 
 ## TODO: There needs to be some state to keep track of open r-split sessions
 ##       (that either end at r-merge or at r_unwrap before a commutative command).
@@ -394,9 +448,11 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
                     or next_node.is_stateless()))):
             ## If the current node is not a merger, it means that we need
             ## to generate a merger using a splitter (auto_split or r_split)
-
+            if (isinstance(curr, HDFSCat) and config.pash_args.distributed_exec):
+                new_curr = split_hdfs_cat_input(curr, next_node, graph, fileIdGen) # Cat merger
+                new_curr_id = new_curr.get_id()
             ## no_cat_split_vanish shortcircuits this and inserts a split even if the current node is a cat.
-            if(fan_out > 1
+            elif (fan_out > 1
                and (no_cat_split_vanish
                     or (not (isinstance(curr, Cat)
                              or isinstance(curr, r_merge.RMerge))
@@ -526,9 +582,7 @@ def parallelize_dfg_node(old_merger_id, node_id, graph, fileIdGen):
 ##
 ## TODO: Make that generic to work through annotations
 def create_merge_commands(curr, new_output_ids, fileIdGen):
-    if(str(curr.com_name) == "custom_sort"):
-        return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
-    elif(str(curr.com_name) == "uniq"):
+    if(str(curr.com_name) == "uniq"):
         return create_uniq_merge_commands(curr, new_output_ids, fileIdGen)
     else:
         return create_generic_aggregator_tree(curr, new_output_ids, fileIdGen)
@@ -638,7 +692,7 @@ def add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_
     else:
         ## TODO: Remove the line below if eager creates its intermediate file
         ##       on its own.
-        intermediate_fid = intermediateFileIdGen.next_ephemeral_file_id()
+        intermediate_fid = intermediateFileIdGen.next_temporary_file_id()
 
         eager_exec_path = '{}/{}'.format(config.PASH_TOP, runtime_config['eager_executable_path'])
 

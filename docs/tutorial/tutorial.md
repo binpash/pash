@@ -176,6 +176,7 @@ These three components implement the contributions presented [in the EuroSys pap
 They are expected to be usable with minimal effort, through a few different installation means presented below.
 
 The auxiliary directories are:
+
 * [docs](../../docs): Design documents, tutorials, installation instructions, etc.
 * [evaluation](../../evaluation): Shell pipelines and script used for the evaluation of `pash`.
 
@@ -186,13 +187,16 @@ Academic [papers](../README.md#academic-papers--events) associated with PaSh off
 #### Useful Links
 
 Chat:
-* [Discord Server](ttps://discord.com/channels/947328962739187753/) ([Invite](http://join.binpa.sh/))
+
+* [Discord Server](https://discord.com/channels/947328962739187753/) ([Invite](http://join.binpa.sh/))
 
 Mailing Lists: 
+
 * [Discussion](https://groups.google.com/g/pash-dev): Join this mailing list for discussing all things `pash`
 * [Commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
 
 Development/contributions:
+
 * Contribution guide: [docs/contrib](../../docs/contributing/contrib.md)
 * Continuous Integration Server: [http://ci.binpa.sh/](http://ci.binpa.sh/)
 
