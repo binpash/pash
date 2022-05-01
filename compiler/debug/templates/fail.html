@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% from "macros.jinja" import log_card %}
+
+{% block content %}
+    <div style="display: flex;">
+        <h1>Failed processes</h1>
+        <button class="btn align-self-end ml-auto" id="toggleAll" type="button" style="float: right; font-size:40px;" onclick="toggleAll()"> - </button>
+    </div>
+    
+    {% for log in logs %}
+        <div class="border-top rounded" >   
+        <h3> {{log['worker']}} </h3>     
+        {{ log_card(log) }}
+        </div>
+    {% endfor %}
+{% endblock %}
+
