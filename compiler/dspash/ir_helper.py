@@ -267,6 +267,11 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
 
     return main_graph, worker_subgraph_pairs
 
+def add_debug_flags(graph: IR):
+    for node in graph.nodes.values():
+        if isinstance(node, remote_pipe.RemotePipe):
+            node.add_debug_flag()
+
 def prepare_graph_for_remote_exec(filename:str, get_worker:Callable):
     """
     Reads the complete ir from filename and splits it

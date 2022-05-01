@@ -1,3 +1,4 @@
+from re import sub
 import socket, pickle
 from threading import Thread
 from socket_utils import encode_request, decode_request
@@ -10,6 +11,7 @@ import shlex
 import time
 import uuid
 import argparse
+import requests
 
 PASH_TOP = os.environ['PASH_TOP']
 sys.path.append(os.path.join(PASH_TOP, "compiler"))
@@ -19,7 +21,7 @@ from util import log
 from annotations import load_annotation_files
 import pash_runtime
 from dspash.socket_utils import send_msg, recv_msg
-from dspash.ir_helper import save_configs, to_shell_file
+from dspash.ir_helper import save_configs, to_shell_file, to_shell, add_debug_flags
 from dspash.utils import create_filename, write_file
 
 # from ... import config
@@ -44,8 +46,15 @@ def parse_exec_request(request):
 def parse_exec_graph(request):
     return request['graph'], request['shell_variables'], request['functions']
 
-def exec_graph(graph, shell_vars, functions):
+def exec_graph(graph, shell_vars, functions, debug=False):
     config.config['shell_variables'] = shell_vars
+    if debug:
+        print('debug is on')
+        add_debug_flags(graph)
+        stderr =subprocess.PIPE
+    else:
+        stderr = None
+        
     script_path = to_shell_file(graph, config.pash_args)
 
     e = os.environ.copy()
@@ -55,7 +64,8 @@ def exec_graph(graph, shell_vars, functions):
     functions_file = create_filename(dir=config.PASH_TMP_PREFIX, prefix='pashFuncs')
     write_file(functions_file, functions)
     cmd = f"source {functions_file}; source {script_path}"
-    rc = subprocess.Popen(cmd, env=e, executable="/bin/bash", shell=True)
+
+    rc = subprocess.Popen(cmd, env=e, executable="/bin/bash", shell=True, stderr=stderr)
     return rc
 
 class Worker:
@@ -81,6 +91,26 @@ class Worker:
         for t in connections:
             t.join()
 
+def send_log(rc: subprocess.Popen, request):
+    name = request['debug']['name']
+    url = request['debug']['url']
+    shell_script = to_shell(request['graph'], config.pash_args)
+
+    try:
+        _, err = rc.communicate(timeout=100) # timeout is set to 100s for debuggin
+    except:
+        err = b'timeout'
+
+    response = {
+        'name': name,
+        'returncode': rc.returncode,
+        'stderr': err,
+        'shellscript': shell_script,
+    }
+    
+    requests.post(url=url, json=response)
+
+
 def manage_connection(conn, addr):
     rcs = []
     with conn:
@@ -90,20 +120,28 @@ def manage_connection(conn, addr):
             data = recv_msg(conn)
             if not data:
                 break
-
+            
             print("got new request")
-            request = decode_request(data)
+            request = decode_request(data) 
+
             if request['type'] == 'Exec-Graph':
                 graph, shell_vars, functions = parse_exec_graph(request)
+                debug = True if request['debug'] else False
                 save_configs(graph, dfs_configs_paths)
-                exec_graph(graph, shell_vars, functions)
+                rc = exec_graph(graph, shell_vars, functions, debug)
+                rcs.append((rc, request))
                 body = {}
             else:
                 print(f"Unsupported request {request}")
             send_success(conn, body)
     print("connection ended")
-    for rc in rcs:
-        rc.wait()
+
+    for rc, request in rcs:
+        if request['debug']:
+            send_log(rc, request)
+        else:
+            rc.wait()
+        
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Process some integers.')
