@@ -86,8 +86,9 @@ if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
     input_files+=("10G.txt")
 fi
 
-
+# Add files with different replication factors
 for file in "${input_files[@]}"; do
-    hdfs dfs -Ddfs.replication=$REPLICATION_FACTOR  -put $file /$file
+    hdfs dfs -Ddfs.replication=1  -put $file /rep1_$file
+    hdfs dfs -Ddfs.replication=3  -put $file /rep3_$file
     rm $file # remove local file after putting it into hdfs
 done
