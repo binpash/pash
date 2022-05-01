@@ -11,11 +11,15 @@ from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file
 from dspash.utils import read_file
 import config 
 import copy
+import requests
 
 PORT = 65425        # Port to listen on (non-privileged ports are > 1023)
+# TODO: get the url from the environment or config
+DEBUG_URL = f'http://{socket.getfqdn()}:5001' 
 
 class WorkerConnection:
-    def __init__(self, host, port):
+    def __init__(self, name, host, port):
+        self.name = name
         self._host = socket.gethostbyaddr(host)[2][0] # get ip address in case host needs resolving
         self._port = port
         self._running_processes = 0
@@ -41,12 +45,16 @@ class WorkerConnection:
         #     answer = self.socket.recv(1024)
         return self._running_processes
 
-    def send_graph_exec_request(self, graph, shell_vars, functions) -> bool:
+    def send_graph_exec_request(self, graph, shell_vars, functions, debug=False) -> bool:
         request_dict = { 'type': 'Exec-Graph',
                         'graph': graph,
                         'functions': functions,
-                        'shell_variables': None # Doesn't seem needed for now     
+                        'shell_variables': None, # Doesn't seem needed for now
+                        'debug': None     
                     }
+        if debug:
+            request_dict['debug'] = {'name': self.name, 'url': f'{DEBUG_URL}/putlog'}
+
         request = encode_request(request_dict)
         #TODO: do I need to open and close connection?
         send_msg(self._socket, request)
@@ -106,23 +114,25 @@ class WorkersManager():
 
         return best_worker
 
-    def add_worker(self, host, port):
-        self.workers.append(WorkerConnection(host, port))
+    def add_worker(self, name, host, port):
+        self.workers.append(WorkerConnection(name, host, port))
 
     def add_workers_from_cluster_config(self, config_path):
         with open(config_path, 'r') as f:
             cluster_config = json.load(f)
 
-        workers = cluster_config["workers"].values()
-        for worker in workers:
+        workers = cluster_config["workers"]
+        for name, worker in workers.items():
             host = worker['host']
             port = worker['port']
-            self.add_worker(host, port)
+            self.add_worker(name, host, port)
             
             
     def run(self):
         workers_manager = self
         workers_manager.add_workers_from_cluster_config(os.path.join(config.PASH_TOP, 'cluster.json'))
+        if workers_manager.args.debug:
+            requests.post(f'{DEBUG_URL}/clearall') # clears all the debug server logs
 
         dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
         while True:
@@ -134,8 +144,8 @@ class WorkersManager():
                 args = request.split(':', 1)[1].strip()
                 filename, declared_functions_file = args.split()
 
-                worker_subgraph_pairs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename, self.get_worker)
-                script_fname = to_shell_file(main_graph, self.args)
+                worker_subgraph_pairs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename, workers_manager.get_worker)
+                script_fname = to_shell_file(main_graph, workers_manager.args)
                 log("Master node graph stored in ", script_fname)
 
                 # Read functions
@@ -148,7 +158,7 @@ class WorkersManager():
 
                 # Execute subgraphs on workers
                 for worker, subgraph in worker_subgraph_pairs:
-                    worker.send_graph_exec_request(subgraph, shell_vars, declared_functions)
+                    worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args.debug)
             else:
                 raise Exception(f"Unknown request: {request}")
         

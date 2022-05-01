@@ -1,5 +1,11 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>{% block title %} Welcome to FlaskBlog {% endblock %}</h1>
+    <h1>{% block title %} Workers {% endblock %}</h1>
+    {% for row in workers %}
+        <a href="{{ url_for('worker_log', worker=row['worker']) }}">
+            <h2>{{ row['worker'] }} log</h2>
+        </a>
+        <hr>
+    {% endfor %}
 {% endblock %}

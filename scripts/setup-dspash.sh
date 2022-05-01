@@ -1,6 +1,3 @@
-
-# TODO: install any extra needed python debs
-
 # Get PASH_TOP
 if git rev-parse --git-dir > /dev/null 2>&1; then
     # set PASH_TOP
@@ -9,6 +6,10 @@ else
     # set PASH_TOP to the root folder of the project if it is not available
     PASH_TOP=${PASH_TOP:-$PWD/..}
 fi
+
+# TODO: install any extra needed python debs
+pip3 install flask
+pip3 install requests --target "$PASH_TOP/python_pkgs/"
 
 # Install Go
 wget https://go.dev/dl/go1.17.7.linux-amd64.tar.gz

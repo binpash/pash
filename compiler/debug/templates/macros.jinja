@@ -1,0 +1,48 @@
+{% macro log_card(log) %}
+<script>
+  function toggleAll() {
+      elem = document.getElementById('toggleAll')
+      if (elem.innerHTML == "+") {
+          elem.innerHTML = '-'
+          $('.collapse').collapse('show')
+      } else {
+          elem.innerHTML = '+'
+          $('.collapse').collapse('hide')
+      }
+  }
+</script>
+
+<div class="accordion" id="accordionDiv_{{ log.id }}">
+    <div class="card">
+      <div class="card-header" id="headingOne_{{ log.id }}">
+        <h2 class="mb-0">
+          <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#stderr_{{ log.id }}" aria-expanded="true" aria-controls="stderr_{{ log.id }}">
+            Standard Error
+          </button>
+        </h2>
+      </div>
+  
+      <div id="stderr_{{ log.id }}" class="collapse show" aria-labelledby="headingOne_{{ log.id }}" data-parent="#accordionDiv_{{ log.id }}">
+        <div class="card-body">
+            {{ log['stderr'] | safe }}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" id="headingTwo_{{ log.id }}">
+          <h2 class="mb-0">
+            <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#shellscript_{{ log.id }}" aria-expanded="true" aria-controls="shellscript_{{ log.id }}">
+              Shell Script
+            </button>
+          </h2>
+        </div>
+    
+        <div id="shellscript_{{ log.id }}" class="collapse hide" aria-labelledby="headingTwo_{{ log.id }}" data-parent="#accordionDiv_{{ log.id }}">
+          <div class="card-body">
+            <pre></pre><code>{{ log['shellscript'] | safe }}</code></pre>
+          </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

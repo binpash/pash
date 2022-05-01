@@ -8,6 +8,11 @@ class RemotePipe(DFGNode):
                          com_redirs=com_redirs, 
                          com_assignments=com_assignments)
 
+
+    def add_debug_flag(self):
+        opt_count = len(self.com_options)
+        self.com_options.append((opt_count, Arg(string_to_argument(f"-d"))))
+
 def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, id):
     com_category = "pure"
     options = []
