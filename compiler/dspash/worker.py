@@ -104,7 +104,7 @@ def send_log(rc: subprocess.Popen, request):
     response = {
         'name': name,
         'returncode': rc.returncode,
-        'stderr': err,
+        'stderr': err.decode("UTF-8"),
         'shellscript': shell_script,
     }
     
