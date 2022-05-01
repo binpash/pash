@@ -19,6 +19,7 @@ oneliners_bash() {
     seq_times_file="seq.res"
     seq_outputs_suffix="seq.out"
     outputs_dir="outputs"
+    rep=${3:-rep3}
 
     mkdir -p "$outputs_dir"
 
@@ -33,7 +34,7 @@ oneliners_bash() {
     script="${script_input_parsed[0]}"
     input="${script_input_parsed[1]}"
 
-    export IN="/$input"
+    export IN="/$rep\_$input"
 
     printf -v pad %30s
     padded_script="${script}${pad}"
@@ -48,6 +49,8 @@ oneliners_bash() {
 oneliners_pash(){
   flags=${1:-$PASH_FLAGS}
   prefix=${2:-par}
+  rep=${3:-rep3}
+  prefix=$prefix\_$rep
 
   times_file="$prefix.res"
   outputs_suffix="$prefix.out"
@@ -60,7 +63,7 @@ oneliners_pash(){
 
   touch "$times_file"
   cat $times_file > $times_file.d
-  echo executing one-liners with $prefix pash $(date) | tee -a "$times_file"
+  echo executing one-liners with $prefix pash with data $rep $(date) | tee -a "$times_file"
   echo '' > "$times_file"
 
   for script_input in ${scripts_inputs[@]}
@@ -69,7 +72,7 @@ oneliners_pash(){
     script="${script_input_parsed[0]}"
     input="${script_input_parsed[1]}"
 
-    export IN="/$input"
+    export IN="/$rep\_$input"
 
     printf -v pad %30s
     padded_script="${script}${pad}"
@@ -85,6 +88,11 @@ oneliners_pash(){
   done
 }
 
-# oneliners_bash
-oneliners_pash "$PASH_FLAGS" "par"
-oneliners_pash "$PASH_FLAGS --distributed_exec" "distr"
+oneliners_bash "rep1"
+oneliners_bash "rep3"
+
+oneliners_pash "$PASH_FLAGS" "par" "rep1"
+oneliners_pash "$PASH_FLAGS" "par" "rep3"
+
+oneliners_pash "$PASH_FLAGS --distributed_exec" "distr" "rep1"
+oneliners_pash "$PASH_FLAGS --distributed_exec" "distr" "rep3"
