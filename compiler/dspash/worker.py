@@ -97,9 +97,11 @@ def send_log(rc: subprocess.Popen, request):
     shell_script = to_shell(request['graph'], config.pash_args)
 
     try:
-        _, err = rc.communicate(timeout=100) # timeout is set to 100s for debuggin
+        _, err = rc.communicate(timeout=10) # timeout is set to 10s for debuggin
     except:
-        err = b'timeout'
+        print("process timedout")
+        rc.kill()
+        _, err = rc.communicate()
 
     response = {
         'name': name,
