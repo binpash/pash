@@ -132,7 +132,11 @@ class WorkersManager():
         workers_manager = self
         workers_manager.add_workers_from_cluster_config(os.path.join(config.PASH_TOP, 'cluster.json'))
         if workers_manager.args.debug:
-            requests.post(f'{DEBUG_URL}/clearall') # clears all the debug server logs
+            try:
+                requests.post(f'{DEBUG_URL}/clearall') # clears all the debug server logs
+            except Exception as e:
+                log(f"Failed to connect to debug server with error {e}\n")
+                workers_manager.args.debug = False # Turn off debugging
 
         dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
         while True:
