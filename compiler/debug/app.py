@@ -31,9 +31,10 @@ def index():
 def fail():
     conn = get_db_connection()
     logs = conn.execute('SELECT * FROM logs WHERE returncode != 0').fetchall()
+    conn.close()
+    
     if logs is None:
         abort(404)
-    conn.close()
     return render_template('fail.html', logs=logs)
 
 @app.route('/worker/<string:worker>')
