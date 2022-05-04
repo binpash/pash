@@ -261,8 +261,6 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
         worker._running_processes += 1
         worker_subgraph_pairs.append((worker, subgraph))
         sink_nodes = subgraph.sink_nodes()
-        # print(sink_nodes)
-        # assert(len(sink_nodes) == 1)
         
         for sink_node in sink_nodes:
             for out_edge in subgraph.get_node_output_fids(sink_node):
