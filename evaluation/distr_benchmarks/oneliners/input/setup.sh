@@ -1,14 +1,17 @@
 #!/bin/bash
-
 #set -e
 
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
-REPLICATION_FACTOR=2
 
 # another solution for capturing HTTP status code
 # https://superuser.com/a/590170
 input_files=("1M.txt" "10M.txt" "100M.txt" "1G.txt" "all_cmds.txt" "all_cmdsx100.txt")
 local_fils=("dict.txt")
+
+if [[ "$1" == "-c" ]]; then
+    rm -f $input_files "3G.txt" "10G.txt"
+    exit
+fi
 
 if [ ! -f ./1M.txt ]; then
     curl -sf 'http://ndr.md/data/dummy/1M.txt' > 1M.txt
@@ -90,5 +93,4 @@ fi
 for file in "${input_files[@]}"; do
     hdfs dfs -Ddfs.replication=1  -put $file /rep1_$file
     hdfs dfs -Ddfs.replication=3  -put $file /rep3_$file
-    rm $file # remove local file after putting it into hdfs
 done
