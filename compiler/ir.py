@@ -308,6 +308,12 @@ class IR:
         else:
             return None
 
+    def get_edge_to(self, edge_id):
+        if(edge_id in self.edges):
+            return self.edges[edge_id][2]
+        else:
+            return None
+
     def replace_edge(self, old_edge_id, new_edge_fid):
         assert(new_edge_fid not in self.all_fids())
         new_edge_id = new_edge_fid.get_ident()
