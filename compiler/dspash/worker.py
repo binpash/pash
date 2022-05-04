@@ -1,15 +1,9 @@
-from re import sub
-import socket, pickle
+import socket
 from threading import Thread
 from socket_utils import encode_request, decode_request
 import subprocess
-import json
 import sys
 import os
-import asyncio
-import shlex
-import time
-import uuid
 import argparse
 import requests
 
@@ -166,7 +160,7 @@ def init():
     config.annotations = load_annotation_files(
         config.config['distr_planner']['annotations_dir'])
     pash_runtime.runtime_config = config.config['distr_planner']
-    # pash_runtime.termination = ""
+    config.pash_args.termination = "" # needed because graphs could have multiples sinks
 
 def main():
     init()

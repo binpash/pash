@@ -363,7 +363,7 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_fl
 
     return new_merger
 
-def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
+def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen, fan_out, r_split_flag, r_split_batch_size ):
     """
     Replaces hdfs cat with a cat per block, each cat uses has an HDFSResource input fid
     Returns: A normal Cat that merges the blocks (will be removed when parallizing next_node)
@@ -374,27 +374,30 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
     if len(next_node.get_standard_inputs()) != 1:
         return
 
-    hdfscat_input_id = hdfs_cat.get_standard_inputs()[0]
-    hdfs_fid = graph.get_edge_fid(hdfscat_input_id)
-    hdfs_filepath = str(hdfs_fid.get_resource())
-    output_ids = []
+    output_ids = [] # Stores all the output edges from splitting to blocks
 
-    # Create a cat command per file block
-    file_config = hdfs_utils.get_file_config(hdfs_filepath)
-    _, dummy_config_path = ptempfile() # Dummy config file, should be updated by workers
-    for split_num, block in enumerate(file_config.blocks):
-        resource = DFSSplitResource(file_config.dumps(), dummy_config_path, split_num, block.hosts)
-        block_fid = fileIdGen.next_file_id()
-        block_fid.set_resource(resource)
-        graph.add_edge(block_fid)
+    # The for loop handles the case of multiple inputs to cat (i.e hdfscat A B)
+    for hdfscat_input_id in hdfs_cat.get_standard_inputs():
+        hdfs_fid = graph.get_edge_fid(hdfscat_input_id)
+        hdfs_filepath = str(hdfs_fid.get_resource())
+    
 
-        output_fid = fileIdGen.next_file_id()
-        output_fid.make_ephemeral()
-        output_ids.append(output_fid.get_ident())
-        graph.add_edge(output_fid)
+        # Create a cat command per file block
+        file_config = hdfs_utils.get_file_config(hdfs_filepath)
+        _, dummy_config_path = ptempfile() # Dummy config file, should be updated by workers
+        for split_num, block in enumerate(file_config.blocks):
+            resource = DFSSplitResource(file_config.dumps(), dummy_config_path, split_num, block.hosts)
+            block_fid = fileIdGen.next_file_id()
+            block_fid.set_resource(resource)
+            graph.add_edge(block_fid)
 
-        split_reader_node = dfs_split_reader.make_dfs_split_reader_node([block_fid.get_ident()], output_fid.get_ident(), split_num, config.HDFS_PREFIX)
-        graph.add_node(split_reader_node)
+            output_fid = fileIdGen.next_file_id()
+            output_fid.make_ephemeral()
+            output_ids.append(output_fid.get_ident())
+            graph.add_edge(output_fid)
+
+            split_reader_node = dfs_split_reader.make_dfs_split_reader_node([block_fid.get_ident()], output_fid.get_ident(), split_num, config.HDFS_PREFIX)
+            graph.add_node(split_reader_node)
 
     # Remove the HDFS Cat command as it's not used anymore
     graph.remove_node(hdfs_cat.get_id())
@@ -403,6 +406,10 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
     input_id = next_node.get_standard_inputs()[0]
     new_merger = make_cat_node(output_ids, input_id)
     graph.add_node(new_merger)
+
+    # If the file is only one block, we follow by a normal split
+    if (len(output_ids) == 1):
+        new_merger = split_command_input(next_node, graph, fileIdGen, fan_out, "unused", r_split_flag, r_split_batch_size)
 
     return new_merger
 
@@ -449,7 +456,7 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
             ## If the current node is not a merger, it means that we need
             ## to generate a merger using a splitter (auto_split or r_split)
             if (isinstance(curr, HDFSCat) and config.pash_args.distributed_exec):
-                new_curr = split_hdfs_cat_input(curr, next_node, graph, fileIdGen) # Cat merger
+                new_curr = split_hdfs_cat_input(curr, next_node, graph, fileIdGen, fan_out, r_split_flag, r_split_batch_size) # Cat merger
                 new_curr_id = new_curr.get_id()
             ## no_cat_split_vanish shortcircuits this and inserts a split even if the current node is a cat.
             elif (fan_out > 1
