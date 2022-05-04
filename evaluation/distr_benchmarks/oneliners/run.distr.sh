@@ -1,9 +1,9 @@
-PASH_FLAGS='--width 6 --r_split'
+PASH_FLAGS='--width 8 --r_split'
 export TIMEFORMAT=%R
 export dict="$PASH_TOP/evaluation/benchmarks/oneliners/input/dict.txt"
 
 scripts_inputs=(
-      "nfa-regex;100M.txt"
+      "nfa-regex;1G.txt"
       "sort;3G.txt"
       "top-n;3G.txt"
       "wf;3G.txt"
@@ -16,10 +16,10 @@ scripts_inputs=(
   )
 
 oneliners_bash() {
-    seq_times_file="seq.res"
-    seq_outputs_suffix="seq.out"
     outputs_dir="outputs"
-    rep=${3:-rep3}
+    rep=${1:-rep3}
+    seq_times_file="$rep\_seq.res"
+    seq_outputs_suffix="$rep\_seq.out"
 
     mkdir -p "$outputs_dir"
 
@@ -35,6 +35,7 @@ oneliners_bash() {
     input="${script_input_parsed[1]}"
 
     export IN="/$rep\_$input"
+    export dict=
 
     printf -v pad %30s
     padded_script="${script}${pad}"
@@ -73,6 +74,7 @@ oneliners_pash(){
     input="${script_input_parsed[1]}"
 
     export IN="/$rep\_$input"
+    export dict=
 
     printf -v pad %30s
     padded_script="${script}${pad}"
