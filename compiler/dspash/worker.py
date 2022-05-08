@@ -1,5 +1,5 @@
 import socket
-from threading import Thread
+from multiprocessing import Process
 from socket_utils import encode_request, decode_request
 import subprocess
 import sys
@@ -79,7 +79,7 @@ class Worker:
             while(True):
                 conn, addr = self.s.accept()
                 print(f"got new connection")     
-                t = Thread(target=manage_connection, args=[conn, addr])
+                t = Process(target=manage_connection, args=[conn, addr])
                 t.start()
                 connections.append(t)
         for t in connections:
