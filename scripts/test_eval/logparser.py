@@ -1,6 +1,5 @@
+from ast import parse
 import pandas as pd
-import argparse
-import re
 import os
 from sys import argv
 
@@ -56,44 +55,28 @@ class LogParser:
             A single entry pandas dataframe, or None if failed
         """
         
-        border = "-"*40
-        argslog, pashlog, timelog = log.split(border)
-
-        args_of_interest = set(["input", "width", "output_time", "no_eager", "r_split", "r_split_batch_size", "IN", "dgsh_tee"])
-        parsed_args = self.__parse_args__(argslog, args_of_interest)
-
-        tags_of_interest = set(["Execution time", "Backend time", "Compilation time", "Preprocessing time", "Eager nodes", "Compiler exited with code"])
-        parsed_log = self.__parse_pash_log__(pashlog, tags_of_interest)
+        timelog = log
 
         #can be empty
         parsed_time = self.__parse_time_log__(timelog)
 
-        if not parsed_args["input"]:
-            return None
+        # if not parsed_args["input"]:
+        #     return None
 
         df = pd.DataFrame()
 
-        test_name = os.path.basename(parsed_args["input"]).replace(".sh", "")
-        split_type = "r-split" if parsed_args["r_split"] else "auto-split"
-
+        parsed_cmd = self.parse_command(parsed_time["command"])
+        
         data = {
+            # From command
+            "test_name" : parsed_cmd["test_name"],
+            "split_type" : parsed_cmd["split_type"],
+            "no_eager" : parsed_cmd['no_eager'],
+            "width": parsed_cmd['width'],
+            "dgsh_tee": parsed_cmd['dgsh_tee'],
+            "r_split_batch_size": parsed_cmd['r_split_batch_size'],
             #From Args
-            "test_name" : test_name,
-            "IN": os.path.basename(parsed_args["IN"]),
-            "split_type" : split_type,
-            "no_eager" : parsed_args["no_eager"],
-            "width": int(parsed_args["width"]),
-            "r_split_batch_size": int(parsed_args["r_split_batch_size"]),
-            "dgsh_tee": parsed_args["dgsh_tee"],
-            #From pash log
-            "exec_time": parsed_log["Execution time"],
-            "backend_time": parsed_log["Backend time"],
-            "compilation_time": parsed_log["Compilation time"],
-            "preprocess_time": parsed_log["Preprocessing time"],
-            "eager_nodes": int(parsed_log["Eager nodes"]),
-            "compiler_exit" : parsed_log["Compiler exited with code"],
-            #From time
-            "gnu_real": parsed_time["gnu_real"], 
+            "gnu_real": get_sec(parsed_time["gnu_real"]), 
             "gnu_usr": parsed_time["user"],
             "gnu_sys": parsed_time["sys"],
             "cpu%": parsed_time["cpu%"],
@@ -108,6 +91,7 @@ class LogParser:
         self.df = self.df.append(data, ignore_index=True)
 
         return df
+
     def parse_file(self, log_file: str)->pd.DataFrame:
         """
         Parses a pa.sh log with path file_path
@@ -146,6 +130,37 @@ class LogParser:
         self.df["r_split_batch_size"] = self.df["r_split_batch_size"].astype(int)
         self.df["dgsh_tee"] = self.df["dgsh_tee"].astype(bool)
         return self.df
+
+    def parse_command(self, cmd:str):
+        # TODO: Ideally import argparse setup from the compiler and parse the command
+        args = cmd.strip("\"").split(" ")
+        parsed_cmd = {
+            'split_type': "auto-split",
+            "width": 2,
+            "no_eager": False,
+            "test_name": "TEST_NAME_NOT_FOUND",
+            "dgsh_tee": False,
+            "r_split_batch_size": 1000000
+        }
+        
+        for i in range(1, len(args)):
+            if args[i] == "--r_split":
+                i += 1
+                parsed_cmd["split_type"] = "r-split"
+            elif args[i] == '-w' or args[i] == '--width':
+                i += 1
+                parsed_cmd["width"] = int(args[i])
+            elif args[i] == '--no_eager':
+                parsed_cmd["no_eager"] = True
+            elif args[i] == '--dgsh_tee':
+                parsed_cmd["dgsh_tee"] = True
+            elif args[i] == 'r_split_batch_size':
+                i += 1
+                parsed_cmd['r_split_batch_size'] = int(args[i])
+            elif not args[i].startswith("-") and args[i].endswith(".sh"):
+                parsed_cmd["test_name"] = os.path.basename(args[i]).replace(".sh", "")
+        return parsed_cmd
+
 
     def __parse_args__(self, args: str, args_of_interest):
         lines = args.split("\n")
@@ -198,6 +213,15 @@ class LogParser:
             "exit_status" : lines[22]
         }
         return data
+
+def get_sec(time_str):
+    """Get seconds from time."""
+    try:
+        h, m, s = time_str.split(':')
+    except:
+        h = 0
+        m, s = time_str.split(':')
+    return (int(h) * 3600 + int(m) * 60 + float(s)) * 1000
 
 #can be used in case we only can parse the time (default commands)
 def process_gnu_time(time_data):

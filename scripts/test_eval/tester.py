@@ -12,7 +12,7 @@ else:
     PASH_TOP = run(GIT_TOP_CMD, stdout=PIPE, stderr=PIPE, universal_newlines=True).stdout.rstrip()
 
 class Tests(LogParser):
-    def __init__(self, in_file = None, batch_sz = 100000):
+    def __init__(self, in_file = None, batch_sz = 1000000):
         self.in_file = in_file
         self.batch_sz = str(batch_sz)
         self.log_parser = LogParser()
@@ -37,7 +37,7 @@ class Tests(LogParser):
         new_env["IN"] = in_file
         new_env["PASH_TOP"] = PASH_TOP
         
-        command = [f"{PASH_TOP}/pa.sh", test_path, "--output_time", f"-w {width}", "-d 1"]
+        command = [f"{PASH_TOP}/pa.sh", test_path, "--output_time", f"-w {width}"]
 
         if r_split:
             command.append("--r_split")

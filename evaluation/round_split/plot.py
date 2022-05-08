@@ -62,7 +62,7 @@ def plot_barchart(df, y_axis="exec_time", test_names=None, save_file="output.png
 
 #This function only compares between folders
 #dfs is tuple: (df_name, pd.df)
-def plot_barchart_against(dfs: list, y_axis="exec_time", test_names=None, save_file="output.png"):
+def plot_barchart_against(dfs: list, y_axis="gnu_real", test_names=None, save_file="output.png"):
     print(test_names)
     df1 = dfs[0][1]
     if test_names is not None:
@@ -76,7 +76,8 @@ def plot_barchart_against(dfs: list, y_axis="exec_time", test_names=None, save_f
 
     rects = []
     for df_name, df in dfs:
-        df = df[(df.split_type == "r-split") & (df.no_eager == False) & (df.dgsh_tee == True)]
+        # Set filters here
+        # df = df[(df.no_eager == False) & (df.dgsh_tee == True)]
         rects.append(df)
 
     bar_height = [[] for i in range(len(rects))]
@@ -113,14 +114,13 @@ def plot_barchart_against(dfs: list, y_axis="exec_time", test_names=None, save_f
 
 if __name__ == '__main__':
     #sample execution
-    
     log_dfs = []
     if len(argv) > 1:
         for folder in argv[1:]:
             log_parser = LogParser()
             df = log_parser.parse_folder(folder)
             log_dfs.append((folder, df))
-    # parse more directories if needed
-    # df = log_parser.parse_folder("tmp2_1G_width4bbackup")
-
-    plot_barchart_against(log_dfs, save_file="compare" + ".png")
+    else:
+        print("Usage: python3 plot.py [LOG FOLDER1] [LOG FOLDER2]...")
+        os.exit(1)
+    plot_barchart_against(log_dfs, test_names=['spell', 'set-diff', 'top-n', 'sort', 'bi-grams', 'sort-sort', 'diff', 'wf'], save_file="compare" + ".png")
