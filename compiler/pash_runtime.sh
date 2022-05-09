@@ -156,7 +156,7 @@ else
     # store functions for distributed execution
     if [ "$distributed_exec" -eq 1 ]; then
         declared_functions="${PASH_TMP_PREFIX}/pash_$RANDOM$RANDOM$RANDOM"
-        declare -f > $declared_functions
+        declare -f > "$declared_functions"
         export declared_functions
     fi
 
@@ -201,7 +201,7 @@ else
         if [ "$pash_profile_driven_flag" -eq 1 ]; then
             parallel_script_time_start=$(date +"%s%N")
         fi
-        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute}
+        source "$RUNTIME_DIR/pash_wrap_vars.sh" "$pash_script_to_execute"
         internal_exec_status=$?
         final_steps
         clean_up
@@ -216,13 +216,13 @@ else
             ##
 
             ## Prepare a file for the output shell variables to be saved in
-            pash_output_var_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+            pash_output_var_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
             # pash_redir_output echo "$$: Output vars: $pash_output_var_file"
 
             ## Prepare a file for the `set` state of the inner shell to be output
-            pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+            pash_output_set_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
 
-            source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_var_file} ${pash_output_set_file}
+            source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" "$pash_output_var_file" "$pash_output_set_file"
 
             ##
             ## (6)
@@ -254,7 +254,7 @@ else
         ## Needed to clear up any past script time start execution times.        
         parallel_script_time_start=None
         clean_up 
-        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute}
+        source "$RUNTIME_DIR/pash_wrap_vars.sh" "$pash_script_to_execute"
         pash_runtime_final_status=$?
         final_steps
     else 
@@ -280,7 +280,7 @@ else
         ## TODO: This might not be necessary
         ## Recover the input arguments of the previous script
         ## Note: We don't need to care about wrap_vars arguments because we have stored all of them already.
-        set -- $pash_input_args
+        set -- "$pash_input_args"
         pash_redir_output echo "$$: (5) Reverted to BaSh input arguments: $@"
 
         ## TODO: We probably need to exit with the exit code here or something!

@@ -24,7 +24,7 @@ export pash_daemon_communicates_through_unix_pipes_flag=0
 export show_version=0
 export distributed_exec=0
 
-for item in $@
+for item in "$@"
 do
     if [ "$pash_checking_speculation" -eq 1 ]; then
         export pash_checking_speculation=0
@@ -196,7 +196,7 @@ else
 
     pash_communicate_daemon_just_send()
     {
-        pash_communicate_daemon $1
+        pash_communicate_daemon "$1"
     }
 
     pash_wait_until_daemon_listening()
