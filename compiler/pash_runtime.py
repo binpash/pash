@@ -21,6 +21,7 @@ import definitions.ir.nodes.r_merge as r_merge
 import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_unwrap as r_unwrap
 import definitions.ir.nodes.dgsh_tee as dgsh_tee
+import definitions.ir.nodes.remote_pipe as remote_pipe
 import definitions.ir.nodes.dfs_split_reader as dfs_split_reader
 # Distirbuted Exec
 import dspash.hdfs_utils as hdfs_utils 
@@ -767,6 +768,12 @@ def add_eager_nodes(graph, use_dgsh_tee):
 
             ## Add an eager after r_split
             if(isinstance(curr, r_split.RSplit)):
+                eager_input_ids = curr.outputs
+                for edge_id in eager_input_ids:
+                    add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
+
+            ## Add an eager after remote_pipe
+            if(isinstance(curr, remote_pipe.RemotePipe)):
                 eager_input_ids = curr.outputs
                 for edge_id in eager_input_ids:
                     add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
