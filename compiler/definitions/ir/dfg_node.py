@@ -29,8 +29,6 @@ class DFGNode:
     ## com_category : string denoting category
     ## input_consumption_mode : enumeration
     ## com_properties : properties such as commutativity
-    ## com_mapper : a class that contains necessary information to instantiate a mapper (by defaule this corresponds to the command)
-    ## com_aggregator : a class that contains necessary information to instantiate an aggregator
     ## com_options : list of tuples with the option index and the argument Arg
     ## com_redirs : list of redirections
     ## com_assignments : list of assignments
@@ -40,8 +38,6 @@ class DFGNode:
                  com_name,
                  com_category = None,
                  com_properties = [],
-                 com_mapper = None, # TODO: remove
-                 com_aggregator = None,
                  com_options = [],
                  com_redirs = [],
                  com_assignments=[],
@@ -66,14 +62,12 @@ class DFGNode:
         self.com_name = com_name
         self.com_category = com_category
         self.com_properties = com_properties # to remove
-        # self.com_mapper = com_mapper # 1st to remove
-        # self.com_aggregator = com_aggregator
         self.com_options = com_options # used for Mp/Agg and in to_ast
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
         self.com_assignments = com_assignments
         # BEGIN ANNO
-        log(f'init com_options: {com_options}')
-        log(f'init flag_option_list: {flag_option_list}')
+        # log(f'init com_options: {com_options}')
+        # log(f'init flag_option_list: {flag_option_list}')
         # TO KEEP: com_name: str,
         # ?? com_redirs, com_assignments
         # Assumption: config_list and option arguments only contains strings, i.e. of type ArgStringType
@@ -92,20 +86,26 @@ class DFGNode:
         # log("Node created:", self.id, self)
 
     def __repr__(self):
-        prefix = "Node"
-        if (self.com_category == "stateless"):
-            prefix = "Stateless"
-        elif (self.com_category == "pure"):
-            prefix = "Pure"
-        elif (self.is_pure_parallelizable()):
-            prefix = "Par. Pure"
-        if (self.is_commutative()):
-            prefix = 'Commutative ' + prefix
-        output = "{}: \"{}\" in:{} out:{}".format(
-            prefix, self.com_name, 
-            self.get_input_list(),
-            self.outputs)
-        return output
+        ## BEGIN ANNO
+        # NEW
+        # TODO ANNO
+        return ""
+        # OLD
+        # # prefix = "Node"
+        # # if (self.com_category == "stateless"):
+        # #     prefix = "Stateless"
+        # # elif (self.com_category == "pure"):
+        # #     prefix = "Pure"
+        # # elif (self.is_pure_parallelizable()):
+        # #     prefix = "Par. Pure"
+        # # if (self.is_commutative()):
+        # #     prefix = 'Commutative ' + prefix
+        # # output = "{}: \"{}\" in:{} out:{}".format(
+        # #     prefix, self.com_name,
+        # #     self.get_input_list(),
+        # #     self.outputs)
+        # return output
+        ## END ANNO
 
     ## Generates a dot node for the DFG node
     def add_dot_node(self, dot, node_id):
@@ -151,6 +151,7 @@ class DFGNode:
 
     def is_at_most_pure(self):
         return (self.com_category in ["stateless", "pure", "parallelizable_pure"])
+    ## BEGIN ANNO
 
     def is_parallelizable(self):
         return (self.is_pure_parallelizable() or self.is_stateless())
@@ -160,6 +161,7 @@ class DFGNode:
 
     def is_pure_parallelizable(self):
         return (self.com_category == "parallelizable_pure")
+    # END ANNO
 
     def is_commutative(self):
         # BEGIN ANNO
@@ -278,22 +280,17 @@ class DFGNode:
             ## Start filling in the arguments
             opt_arguments = []
             # BEGIN ANNO
-            # get_command_invocation_prefix_from_dfg_node
-            log(f'com_name: {self.com_name}')
+            # LOG
+            # log(f'com_name: {self.com_name}')
             # log(f'edges: {edges}')
             # log(f'inputs: {self.inputs}')
             # log(f'outputs: {self.outputs}')
             # log(f'com_redirs: {self.com_redirs}')
-            log(f'pos config: {self.positional_config_list}')
-            log(f'pos input: {self.positional_input_list}')
-            log(f'pos output: {self.positional_output_list}')
-            log(f'com_options: {self.com_options}')
-            log(f'flag_option_list: {self.flag_option_list}')
-
-            # if self.implicit_use_of_stdin: # need to recompute
-                # cat a list of inputs into it; redirect a single one
-            # else:
-
+            # log(f'pos config: {self.positional_config_list}')
+            # log(f'pos input: {self.positional_input_list}')
+            # log(f'pos output: {self.positional_output_list}')
+            # log(f'com_options: {self.com_options}')
+            # log(f'flag_option_list: {self.flag_option_list}')
             #OLD
             # for i, opt in self.com_options:
             #     ## Pad the argument list with None

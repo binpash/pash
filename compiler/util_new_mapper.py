@@ -45,8 +45,8 @@ def get_mapper_as_dfg_node_from_node(node, parallelizer, inputs, outputs) -> DFG
 # def get_map_output_files(node, input_edge_ids, fileIdGen):
 # NEW
 def get_map_output_files(node, input_edge_ids, fileIdGen, parallelizer):
-    # END ANNO
     assert (node.is_parallelizable())
+    # TODO ANNO: How to substitute? @KK
     if (node.com_category == "stateless"):
         map_output_fids = [fileIdGen.next_ephemeral_file_id() for in_fid in input_edge_ids]
     elif (node.is_pure_parallelizable()):

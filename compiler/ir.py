@@ -176,7 +176,6 @@ def compile_command_to_DFG(fileIdGen, command, options,
     # END ANNO
     com_category = find_command_category(command, options)
     com_properties = find_command_properties(command, options)
-    # _com_mapper, _com_aggregator = find_command_mapper_aggregator(command, options)
 
     com_name = Arg(command)
 
@@ -234,8 +233,6 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            com_name,
                            com_category,
                            com_properties=com_properties,
-                           com_mapper=None,
-                           com_aggregator=None, #_com_aggregator,
                            com_options=dfg_options,
                            com_redirs=com_redirs,
                            com_assignments=com_assignments,
@@ -250,7 +247,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            cmd_related_properties=cmd_related_properties
                            # END ANNO
                            )
-    
+
     if(not dfg_node.is_at_most_pure()):
         raise ValueError()
 
@@ -774,7 +771,7 @@ class IR:
         ## Remove the node in the edges dictionary
         for in_id in node.get_input_list():
             self.set_edge_to(in_id, None)
-        
+
         for out_id in node.outputs:
             self.set_edge_from(out_id, None)
 
@@ -785,7 +782,7 @@ class IR:
         ## Add the node in the edges dictionary
         for in_id in node.get_input_list():
             self.set_edge_to(in_id, node_id)
-        
+
         for out_id in node.outputs:
             self.set_edge_from(out_id, node_id)
 
@@ -793,7 +790,7 @@ class IR:
     def add_edges(self, edge_fids):
         for edge_fid in edge_fids:
             self.add_edge(edge_fid)
-    
+
     def add_edge(self, edge_fid):
         fid_id = edge_fid.get_ident()
         assert(not fid_id in self.edges)
@@ -810,7 +807,7 @@ class IR:
     ## There are several combinations that it can handle:
     ##   1. cat -> parallelizable node
     ##   2. r_merge -> stateless node without conf_input
-    ##   3. r_merge -> commutative pure parallelizable node 
+    ##   3. r_merge -> commutative pure parallelizable node
     ##
     ## 1. cat followed by a parallelizable node
     ##
@@ -836,8 +833,8 @@ class IR:
     ##
     ## In this case the stateless command is wrapped with wrap so we cannot actually tee the input (since we do not know apriori how many forks we have).
     ## However, we can actually write it to a file (not always worth performance wise) and then read it from all at once.
-    ## 
-    ## 
+    ##
+    ##
     ## TODO: Eventually delete the fileIdGen from here and always use the graph internal one.
     ##
     ## TODO: Eventually this should be tunable to not happen for all inputs (but maybe for less)
@@ -869,11 +866,11 @@ class IR:
         previous_node = self.get_node(previous_node_id)
         assert(isinstance(previous_node, Cat)
                or isinstance(previous_node, r_merge.RMerge))
-        
+
         ## Determine if the previous node is r_merge to determine which of the three parallelization cases to follow
         r_merge_flag = isinstance(previous_node, r_merge.RMerge)
 
-        ## If the previous node of r_merge is an r_split, then we need to replace it with -r, 
+        ## If the previous node of r_merge is an r_split, then we need to replace it with -r,
         ## instead of doing unwraps.
         if(r_merge_flag):
             assert(False)
@@ -889,16 +886,16 @@ class IR:
             r_split_before_r_merge_opt_flag = all([isinstance(self.get_node(node_id), r_split.RSplit)
                                                    for node_id in r_merge_prev_node_ids])
 
-            ## If r_split was right before the r_merge, and the node is pure parallelizable, 
+            ## If r_split was right before the r_merge, and the node is pure parallelizable,
             ## this means that we will not add unwraps, and therefore we need to add the -r flag to r_split.
             if (r_split_before_r_merge_opt_flag
                 and node.is_pure_parallelizable()):
                 assert(node.is_commutative())
                 r_split_id = r_merge_prev_node_ids[0]
                 r_split_node = self.get_node(r_split_id)
-                
+
                 ## Add -r flag in r_split
-                r_split_node.add_r_flag()            
+                r_split_node.add_r_flag()
         else:
             r_split_before_r_merge_opt_flag = False
 
@@ -931,7 +928,7 @@ class IR:
             tee_node = self.get_node(tee_id)
             for i in range(parallelism):
                 parallel_configuration_ids[i].append(tee_node.outputs[i])
-        
+
         ## Create a temporary output edge for each parallel command.
         # BEGIN ANNO
         # OLD
@@ -961,7 +958,7 @@ class IR:
             for output_fid in output_fid_list:
                 self.add_edge(output_fid)
 
-            ## If the previous merger is r_merge we need to put wrap around the nodes 
+            ## If the previous merger is r_merge we need to put wrap around the nodes
             ## or unwrap before a commutative command
             if(r_merge_flag is True):
                 assert(False)
