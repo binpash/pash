@@ -120,39 +120,39 @@ if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
 
     pash_redir_all_output_always_execute()
     {
-        > /dev/null 2>&1 $@
+        > /dev/null 2>&1 "$@"
     }
 
 else
     if [ "$PASH_REDIR" == '&2' ]; then
         pash_redir_output()
         {
-            >&2 $@
+            >&2 "$@"
         }
 
         pash_redir_all_output()
         {
-            >&2 $@
+            >&2 "$@"
         }
 
         pash_redir_all_output_always_execute()
         {
-            >&2 $@
+            >&2 "$@"
         }
     else
         pash_redir_output()
         {
-            >>"$PASH_REDIR" $@
+            >>"$PASH_REDIR" "$@"
         }
 
         pash_redir_all_output()
         {
-            >>"$PASH_REDIR" 2>&1 $@
+            >>"$PASH_REDIR" 2>&1 "$@"
         }
 
         pash_redir_all_output_always_execute()
         {
-            >>"$PASH_REDIR" 2>&1 $@
+            >>"$PASH_REDIR" 2>&1 "$@"
         }
     fi
 fi

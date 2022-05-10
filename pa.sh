@@ -12,7 +12,7 @@ function kill_all() {
     # kill all my subprocesses only
     kill -s SIGKILL 0
     # kill pash_daemon
-    kill -s SIGKILL $daemon_pid
+    kill -s SIGKILL "$daemon_pid"
 }
 ## Save the umask to first create some files and then revert it
 old_umask=$(umask)
@@ -21,7 +21,7 @@ old_umask=$(umask)
 umask u=rwx,g=rx,o=rx
 
 if [ "$#" -eq 1 ] && [ "$1" = "--init" ]; then
-  $PASH_TOP/compiler/superoptimize.sh
+  "$PASH_TOP"/compiler/superoptimize.sh
   exit
 fi
 

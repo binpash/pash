@@ -83,11 +83,22 @@ jobs:
 
         - uses: ludeeus/action-shellcheck@master
           env:
-            # Only check "Double quote to prevent globbing and word splitting."
-            # now, but we should check others in the future.
-            # https://github.com/koalaman/shellcheck/wiki/Sc2086
-            SHELLCHECK_OPTS: -i SC2086
+            # Only check some field splitting problems now, but we should check
+            # others in the future.
+            SHELLCHECK_OPTS:
+              -i SC2046
+              -i SC2048
+              -i SC2053
+              -i SC2068
+              -i SC2086
+              -i SC2206
+              -i SC2254
           with:
             ignore_paths:
+              annotations
               compiler/parser/libdash
               compiler/tests
+              evaluation
+              python_pkgs
+              runtime/agg/cpp/tests
+              scripts
