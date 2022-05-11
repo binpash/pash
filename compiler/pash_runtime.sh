@@ -140,7 +140,10 @@ else
         fi
         
         # Get assigned process id
-        response_args=("$daemon_response")
+        # We need to split the daemon response into elements of an array by
+        # shell's field splitting.
+        # shellcheck disable=SC2206
+        response_args=($daemon_response)
         process_id=${response_args[1]}
     else
         pash_redir_all_output_always_execute python3 -S "$RUNTIME_DIR//pash_runtime.py" --var_file "${pash_runtime_shell_variables_file}" "${pash_compiled_script_file}" "${pash_input_ir_file}" "$@"
