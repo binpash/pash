@@ -1,7 +1,7 @@
 #!/bin/bash
 # time: print real in seconds, to simplify parsing
 ## Necessary to set PASH_TOP
-cd "$(dirname "$0")"
+cd $(dirname $0)
 export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-working-tree)}
 export DEBUG=0
 export PASH_LOG=1
@@ -9,7 +9,7 @@ export PASH_LOG=1
 ## Determines whether the experimental pash flags will be tested. 
 ## By default they are not.
 export EXPERIMENTAL=0
-for item in "$@"
+for item in $@
 do
     if [ "--debug" == "$item" ] || [ "-d" == "$item" ]; then
         export DEBUG=1
@@ -32,7 +32,7 @@ results_time_pash=${results_time}_pash
 echo "Deleting eager intermediate files..."
 rm -rf "$test_results_dir"
 rm -rf "$intermediary_dir"
-mkdir -p "$intermediary_dir"
+mkdir -p $intermediary_dir
 mkdir -p "$test_results_dir"
 
 echo "Generating inputs..."
@@ -101,22 +101,22 @@ pipeline_microbenchmarks=(
 execute_pash_and_check_diff() {
     TIMEFORMAT="%3R" # %3U %3S"
     if [ "$DEBUG" -eq 1 ]; then
-        { time "$PASH_TOP/pa.sh" "$@" ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
+        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2> >(tee -a "${pash_time}" >&2) &&
         diff -s "$seq_output" "$pash_output" | head | tee -a "${pash_time}" >&2
     else
 
-        { time "$PASH_TOP/pa.sh" "$@" ; } 1> "$pash_output" 2>> "${pash_time}" &&
+        { time "$PASH_TOP/pa.sh" $@ ; } 1> "$pash_output" 2>> "${pash_time}" &&
         b=$(cat "$pash_time"); 
         test_diff_ec=$(cmp -s "$seq_output" "$pash_output" && echo 0 || echo 1)
         # differ
-        script=$(basename "$script_to_execute")
-        if [ "$test_diff_ec" -ne 0 ]; then
+        script=$(basename $script_to_execute)
+        if [ $test_diff_ec -ne 0 ]; then
             c=$(diff -s "$seq_output" "$pash_output" | head)
             echo "$c$b" > "${pash_time}"
-            echo "$script are not identical" >> "$test_results_dir/result_status"
+            echo "$script are not identical" >> $test_results_dir/result_status
         else
             echo "Files $seq_output and $pash_output are identical" > "${pash_time}"
-            echo "$script are identical" >> "$test_results_dir/result_status"
+            echo "$script are identical" >> $test_results_dir/result_status
         fi
 
     fi
@@ -150,10 +150,10 @@ execute_tests() {
         input_file="${prefix}_test.in"
 
         if [ -f "$env_file" ]; then
-            . "$env_file"
-            vars_to_export=$(cut -d= -f1 "$env_file")
+            . $env_file
+            vars_to_export=$(cut -d= -f1 $env_file)
             if [ ! -z "$vars_to_export" ]; then
-                export "$vars_to_export"
+                export $vars_to_export
             fi
         else
             echo "|-- Does not have env file"
@@ -161,7 +161,7 @@ execute_tests() {
 
         ## Export necessary functions
         if [ -f "$funs_file" ]; then
-            source "$funs_file"
+            source $funs_file
         fi
 
         ## Redirect the input if there is an input file
@@ -173,19 +173,20 @@ execute_tests() {
 
         TIMEFORMAT="${microbenchmark%%.*}:%3R" # %3U %3S"
         echo -n "|-- Executing the script with bash..."
-        { time /bin/bash "$script_to_execute" > "$seq_output" ; } \
+        { time /bin/bash "$script_to_execute" > $seq_output ; } \
             < "$stdin_redir" 2>> "${seq_time}"
         echo "   exited with $?"
-        tail -n1 "$seq_time" >> "$results_time_bash"
+        tail -n1 ${seq_time} >> ${results_time_bash}
         for conf in "${configurations[@]}"; do
             for n_in in "${n_inputs[@]}"; do
                 echo "|-- Executing with pash --width ${n_in} ${conf}..."
-                export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_$(echo "$conf" | tr -d ' ').time"
+                export pash_time="${test_results_dir}/${microbenchmark}_${n_in}_distr_$(echo ${conf} | tr -d ' ').time"
                 export pash_output="${intermediary_dir}/${microbenchmark}_${n_in}_pash_output"
                 export script_conf=${microbenchmark}_${n_in}
                 echo '' > "${pash_time}"
                 # do we need to write the PaSh output ?
-                execute_pash_and_check_diff -d "$PASH_LOG" "$assert_correctness" "$conf" --width "$n_in" --output_time "$script_to_execute" <"$stdin_redir"
+                cat $stdin_redir |
+                    execute_pash_and_check_diff -d $PASH_LOG $assert_correctness ${conf} --width "${n_in}" --output_time $script_to_execute                 
                 tail -n1 "${pash_time}" >> "${results_time_pash}_${n_in}"
             done
         done
@@ -211,15 +212,15 @@ case "$distro" in
     freebsd*)  
         # change sed to gsed
         sed () {
-            gsed "$@"
+            gsed $@
         }
         ;;
     *)
         ;;
 esac
 
-echo "group,Bash,Pash2,Pash8" > "$results_time"
-paste -d'@' "$test_results_dir"/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's\@\,\g' >> "$results_time"
+echo "group,Bash,Pash2,Pash8" > ${results_time}
+paste -d'@' $test_results_dir/results.time_*  | sed 's\,\.\g' | sed 's\:\,\g' | sed 's\@\,\g' >> ${results_time}
 
 #echo "Below follow the identical outputs:"
 #grep "are identical" "$test_results_dir"/result_status | awk '{print $1}'
