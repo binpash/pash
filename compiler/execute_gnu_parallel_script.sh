@@ -32,21 +32,21 @@ seq_output="${intermediary_directory}/${microbenchmark}_seq_output"
 gnu_parallel_output="${intermediary_directory}/${microbenchmark}_gnu_parallel_output"
 
 echo "Environment:"
-cat $env_file
-. $env_file
-export $(cut -d= -f1 $env_file)
+cat "$env_file"
+. "$env_file"
+export "$(cut -d= -f1 "$env_file")"
 
 ## Export necessary functions
-if [ -f $funs_file ]; then
-    source $funs_file
+if [ -f "$funs_file" ]; then
+    source "$funs_file"
 fi
 
 gnu_parallel_result_filename="${results}${experiment}_gnu_parallel.time"
 
 echo "GNU Parallel:"
-cat $gnu_parallel_script
-{ time /bin/bash $gnu_parallel_script > $gnu_parallel_output ; } 2> >(tee "${gnu_parallel_result_filename}" >&2)
+cat "$gnu_parallel_script"
+{ time /bin/bash "$gnu_parallel_script" > "$gnu_parallel_output" ; } 2> >(tee "$gnu_parallel_result_filename" >&2)
 
 echo "Checking for equivalence..."
-diff -s $seq_output $gnu_parallel_output | tee -a "${gnu_parallel_result_filename}"
+diff -s "$seq_output" "$gnu_parallel_output" | tee -a "$gnu_parallel_result_filename"
 

@@ -6,4 +6,4 @@
 A=${1:-1.txt}
 B=${1:-2.txt}
 C=${1:-3.txt}
-awk '{ count[$2] += $1 } END { for(e in count) print count[e], e }' $A $B $C
+awk '{ count[$2] += $1 } END { for(e in count) print count[e], e }' "$A" "$B" "$C"

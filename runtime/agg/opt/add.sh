@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-paste -d+ $* | bc
+paste -d+ "$@" | bc

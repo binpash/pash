@@ -35,7 +35,7 @@ spawn_eager()
     local name=$1
     local input=$2
     local output=$3
-    local eager_file="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    local eager_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh")
     ## Note: Using eager actually leads to some deadlock issues. It must have to do with eagers behavior when
     ##       its input or output closes.
     # "$RUNTIME_DIR/../runtime/eager" "$input" "$output" "$eager_file" </dev/null 1>/dev/null 2>/dev/null &
@@ -111,7 +111,7 @@ kill_wait_pg()
 if [ "$pash_execute_flag" -eq 1 ]; then
     # set -x
     ## (A) Redirect stdin to `tee`
-    pash_tee_stdin="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    pash_tee_stdin=$("$RUNTIME_DIR/pash_ptempfile_name.sh")
     mkfifo "$pash_tee_stdin"
     ## The redirections below are necessary to ensure that the background `cat` reads from stdin.
     { setsid cat > "$pash_tee_stdin" <&3 3<&- & } 3<&0
@@ -119,40 +119,40 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     log "Spawned input cat with pid: $pash_input_cat_pid"
 
     ## (B) A `tee` that duplicates input to both the sequential and parallel
-    pash_tee_stdout1="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
-    pash_tee_stdout2="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    pash_tee_stdout1=$("$RUNTIME_DIR/pash_ptempfile_name.sh")
+    pash_tee_stdout2=$("$RUNTIME_DIR/pash_ptempfile_name.sh")
     mkfifo "$pash_tee_stdout1" "$pash_tee_stdout2"
     tee "$pash_tee_stdout1" > "$pash_tee_stdout2" < "$pash_tee_stdin" &
 
     ## (C) The sequential input eager
-    pash_seq_eager_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    pash_seq_eager_output=$("$RUNTIME_DIR/pash_ptempfile_name.sh")
     mkfifo "$pash_seq_eager_output"
     seq_input_eager_pid=$(spawn_eager "sequential input" "$pash_tee_stdout1" "$pash_seq_eager_output")
 
     ## (D) Sequential command
-    pash_seq_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    pash_seq_output=$("$RUNTIME_DIR/pash_ptempfile_name.sh")
     mkfifo "$pash_seq_output"
     setsid "$RUNTIME_DIR/pash_wrap_vars.sh" \
-        $pash_runtime_shell_variables_file \
-        $pash_output_variables_file \
-        ${pash_output_set_file} \
-        ${pash_sequential_script_file} \
+        "$pash_runtime_shell_variables_file" \
+        "$pash_output_variables_file" \
+        "$pash_output_set_file" \
+        "$pash_sequential_script_file" \
         > "$pash_seq_output" < "$pash_seq_eager_output" &
     pash_seq_pid=$!
     log "Sequential pid: $pash_seq_pid"
 
     ## (E) The sequential output eager
-    pash_seq_eager2_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    pash_seq_eager2_output=$("$RUNTIME_DIR/pash_ptempfile_name.sh")
     mkfifo "$pash_seq_eager2_output"
     seq_output_eager_pid=$(spawn_eager "sequential output" "$pash_seq_output" "$pash_seq_eager2_output")
 
     ## (F) Second eager
-    pash_par_eager_output="$($RUNTIME_DIR/pash_ptempfile_name.sh)"
+    pash_par_eager_output=$("$RUNTIME_DIR/pash_ptempfile_name.sh")
     mkfifo "$pash_par_eager_output"
     par_eager_pid=$(spawn_eager "parallel input" "$pash_tee_stdout2" "$pash_par_eager_output")
 
     ## Run the compiler
-    setsid python3 "$RUNTIME_DIR/pash_runtime.py" ${pash_compiled_script_file} --var_file "${pash_runtime_shell_variables_file}" "${@:2}" &
+    setsid python3 "$RUNTIME_DIR/pash_runtime.py" "$pash_compiled_script_file" --var_file "$pash_runtime_shell_variables_file" "${@:2}" &
     pash_compiler_pid=$!
     log "Compiler pid: $pash_compiler_pid"
 
@@ -205,10 +205,10 @@ if [ "$pash_execute_flag" -eq 1 ]; then
                 log "  -- Input: $pash_par_eager_output"
 
                 "$RUNTIME_DIR/pash_wrap_vars.sh" \
-                    $pash_runtime_shell_variables_file \
-                    $pash_output_variables_file \
-                    ${pash_output_set_file} \
-                    ${pash_compiled_script_file} \
+                    "$pash_runtime_shell_variables_file" \
+                    "$pash_output_variables_file" \
+                    "$pash_output_set_file" \
+                    "$pash_compiled_script_file" \
                     < "$pash_par_eager_output" &
                 ## Note: For some reason the above redirection used to create some issues,
                 ##       but no more after we started using dgsh-tee
@@ -275,7 +275,7 @@ if [ "$pash_execute_flag" -eq 1 ]; then
     still_alive_pids="$(still_alive)"
     log "Killing all the still alive: $still_alive_pids"
     kill -15 "$still_alive_pids" 2> /dev/null
-    wait $still_alive_pids 2> /dev/null
+    wait "$still_alive_pids" 2> /dev/null
     log "All the alive pids died: $still_alive_pids"
     
     ## Return the exit code

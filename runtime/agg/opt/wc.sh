@@ -7,4 +7,4 @@ for i in "$@"; do
 done
 A="$A | bc | tr -s '\n'  ' ' | sed 's/^/   /' | sed 's/$/\n /'"
 
-eval $A
+eval "$A"

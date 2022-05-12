@@ -11,16 +11,16 @@
 
 filter_vars_file()
 {
-    cat $1 | grep -v "^declare -\([A-Za-z]\|-\)* \(pash\|BASH\|LINENO\|EUID\|GROUPS\)"    
+    cat "$1" | grep -v "^declare -\([A-Za-z]\|-\)* \(pash\|BASH\|LINENO\|EUID\|GROUPS\)"
 }
 
 ## TODO: Error handling if the argument is empty?
 if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
-        > /dev/null 2>&1 $@
+        > /dev/null 2>&1 "$@"
 else
     if [ "$PASH_REDIR" == '&2' ]; then
-        >&2 source <(filter_vars_file $1)
+        >&2 source <(filter_vars_file "$1")
     else
-        >>"$PASH_REDIR" 2>&1 source <(filter_vars_file $1)
+        >>"$PASH_REDIR" 2>&1 source <(filter_vars_file "$1")
     fi
 fi

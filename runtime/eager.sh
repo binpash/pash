@@ -17,5 +17,5 @@ PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 # $PASH_TOP/runtime/eager "$input" "$output" "$intermediate_file" &
 # eager_pid=$!
 # wait $eager_pid
-$PASH_TOP/runtime/eager "$input" "$output" "$intermediate_file"
+"$PASH_TOP"/runtime/eager "$input" "$output" "$intermediate_file"
 rm "$intermediate_file"
