@@ -2,4 +2,4 @@
 
 distr_output_dir=$1
 
-cat $distr_output_dir/*
+cat "$distr_output_dir"/*

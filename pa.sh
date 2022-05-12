@@ -12,7 +12,7 @@ function kill_all() {
     # kill all my subprocesses only
     kill -s SIGKILL 0
     # kill pash_daemon
-    kill -s SIGKILL $daemon_pid
+    kill -s SIGKILL "$daemon_pid"
 }
 ## Save the umask to first create some files and then revert it
 old_umask=$(umask)
@@ -21,7 +21,7 @@ old_umask=$(umask)
 umask u=rwx,g=rx,o=rx
 
 if [ "$#" -eq 1 ] && [ "$1" = "--init" ]; then
-  $PASH_TOP/compiler/superoptimize.sh
+  "$PASH_TOP"/compiler/superoptimize.sh
   exit
 fi
 
@@ -53,7 +53,7 @@ source "$PASH_TOP/compiler/pash_init_setup.sh" "$@"
 
 if [ "$pash_daemon" -eq 1 ] && [ "$show_version" -eq 0 ]; then
   ## TODO: If possible, move the daemon start as easly as possible to reduce waiting
-  python3 -S "$PASH_TOP/compiler/pash_runtime_daemon.py" $@ &
+  python3 -S "$PASH_TOP/compiler/pash_runtime_daemon.py" "$@" &
   daemon_pid=$!
   ## Wait until daemon has established connection
   ##
@@ -62,12 +62,12 @@ if [ "$pash_daemon" -eq 1 ] && [ "$show_version" -eq 0 ]; then
 fi
 
 ## Restore the umask before executing
-umask ${old_umask}
-PASH_FROM_SH="pa.sh" python3 -S $PASH_TOP/compiler/pash.py "$@"
+umask "$old_umask"
+PASH_FROM_SH="pa.sh" python3 -S "$PASH_TOP/compiler/pash.py" "$@"
 pash_exit_code=$?
 if [ "$pash_daemon" -eq 1 ] && [ "$show_version" -eq 0 ]; then
   ## Only wait for daemon if it lives (it might be dead, rip)
-  if ps -p $daemon_pid > /dev/null 
+  if ps -p "$daemon_pid" > /dev/null
   then
     ## Send and receive from daemon
     msg="Done"
@@ -87,4 +87,4 @@ if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
   rm -rf "${PASH_TMP_PREFIX}"
 fi
 
-(exit $pash_exit_code)
+(exit "$pash_exit_code")

@@ -24,7 +24,7 @@ export pash_daemon_communicates_through_unix_pipes_flag=0
 export show_version=0
 export distributed_exec=0
 
-for item in $@
+for item in "$@"
 do
     if [ "$pash_checking_speculation" -eq 1 ]; then
         export pash_checking_speculation=0
@@ -120,39 +120,39 @@ if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
 
     pash_redir_all_output_always_execute()
     {
-        > /dev/null 2>&1 $@
+        > /dev/null 2>&1 "$@"
     }
 
 else
     if [ "$PASH_REDIR" == '&2' ]; then
         pash_redir_output()
         {
-            >&2 $@
+            >&2 "$@"
         }
 
         pash_redir_all_output()
         {
-            >&2 $@
+            >&2 "$@"
         }
 
         pash_redir_all_output_always_execute()
         {
-            >&2 $@
+            >&2 "$@"
         }
     else
         pash_redir_output()
         {
-            >>"$PASH_REDIR" $@
+            >>"$PASH_REDIR" "$@"
         }
 
         pash_redir_all_output()
         {
-            >>"$PASH_REDIR" 2>&1 $@
+            >>"$PASH_REDIR" 2>&1 "$@"
         }
 
         pash_redir_all_output_always_execute()
         {
-            >>"$PASH_REDIR" 2>&1 $@
+            >>"$PASH_REDIR" 2>&1 "$@"
         }
     fi
 fi
@@ -196,7 +196,7 @@ else
 
     pash_communicate_daemon_just_send()
     {
-        pash_communicate_daemon $1
+        pash_communicate_daemon "$1"
     }
 
     pash_wait_until_daemon_listening()

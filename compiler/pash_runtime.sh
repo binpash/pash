@@ -140,10 +140,13 @@ else
         fi
         
         # Get assigned process id
+        # We need to split the daemon response into elements of an array by
+        # shell's field splitting.
+        # shellcheck disable=SC2206
         response_args=($daemon_response)
         process_id=${response_args[1]}
     else
-        pash_redir_all_output_always_execute python3 -S "$RUNTIME_DIR//pash_runtime.py" --var_file "${pash_runtime_shell_variables_file}" "${pash_compiled_script_file}" "${pash_input_ir_file}" $@
+        pash_redir_all_output_always_execute python3 -S "$RUNTIME_DIR//pash_runtime.py" --var_file "${pash_runtime_shell_variables_file}" "${pash_compiled_script_file}" "${pash_input_ir_file}" "$@"
         pash_runtime_return_code=$?
     fi
 
@@ -156,7 +159,7 @@ else
     # store functions for distributed execution
     if [ "$distributed_exec" -eq 1 ]; then
         declared_functions="${PASH_TMP_PREFIX}/pash_$RANDOM$RANDOM$RANDOM"
-        declare -f > $declared_functions
+        declare -f > "$declared_functions"
         export declared_functions
     fi
 
@@ -201,7 +204,7 @@ else
         if [ "$pash_profile_driven_flag" -eq 1 ]; then
             parallel_script_time_start=$(date +"%s%N")
         fi
-        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute}
+        source "$RUNTIME_DIR/pash_wrap_vars.sh" "$pash_script_to_execute"
         internal_exec_status=$?
         final_steps
         clean_up
@@ -216,13 +219,13 @@ else
             ##
 
             ## Prepare a file for the output shell variables to be saved in
-            pash_output_var_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+            pash_output_var_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
             # pash_redir_output echo "$$: Output vars: $pash_output_var_file"
 
             ## Prepare a file for the `set` state of the inner shell to be output
-            pash_output_set_file="$($RUNTIME_DIR/pash_ptempfile_name.sh $distro)"
+            pash_output_set_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
 
-            source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" ${pash_output_var_file} ${pash_output_set_file}
+            source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" "$pash_output_var_file" "$pash_output_set_file"
 
             ##
             ## (6)
@@ -254,7 +257,7 @@ else
         ## Needed to clear up any past script time start execution times.        
         parallel_script_time_start=None
         clean_up 
-        source "$RUNTIME_DIR/pash_wrap_vars.sh" ${pash_script_to_execute}
+        source "$RUNTIME_DIR/pash_wrap_vars.sh" "$pash_script_to_execute"
         pash_runtime_final_status=$?
         final_steps
     else 
@@ -280,6 +283,11 @@ else
         ## TODO: This might not be necessary
         ## Recover the input arguments of the previous script
         ## Note: We don't need to care about wrap_vars arguments because we have stored all of them already.
+        #
+        # This variable stores arguments as a space-separated stirng, so we
+        # need to unquote it and to split it into multiple strings by shell's
+        # field splitting.
+        # shellcheck disable=SC2086
         set -- $pash_input_args
         pash_redir_output echo "$$: (5) Reverted to BaSh input arguments: $@"
 
