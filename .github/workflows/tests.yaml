@@ -97,9 +97,10 @@ jobs:
             ignore_paths:
               annotations
               compiler/parser/libdash
-              compiler/test_evaluation_scripts.sh
               compiler/tests
               evaluation
               python_pkgs
               runtime/agg/cpp/tests
               scripts
+            ignore_names:
+              compiler/test_evaluation_scripts.sh
