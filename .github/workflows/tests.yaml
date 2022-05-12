@@ -74,3 +74,32 @@ jobs:
           run: |
             # check if everything executed without errors
             cd scripts/workflow && bash exit_code.sh
+
+    shellcheck:
+      runs-on: ubuntu-latest
+      if: github.event.pull_request.draft == false
+      steps:
+        - uses: actions/checkout@v3
+
+        - uses: ludeeus/action-shellcheck@master
+          env:
+            # Only check some field splitting problems now, but we should check
+            # others in the future.
+            SHELLCHECK_OPTS:
+              -i SC2046
+              -i SC2048
+              -i SC2053
+              -i SC2068
+              -i SC2086
+              -i SC2206
+              -i SC2254
+          with:
+            ignore_paths:
+              annotations
+              compiler/parser/libdash
+              compiler/test_evaluation_scripts.sh
+              compiler/tests
+              evaluation
+              python_pkgs
+              runtime/agg/cpp/tests
+              scripts
