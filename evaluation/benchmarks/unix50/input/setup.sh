@@ -34,10 +34,11 @@ setup_dataset() {
   
     for input in ${inputs[@]}
     do
-        if [ ! -f "${input}.txt" ]; then
-            wget "http://ndr.md/data/unix50/${input}.txt"
-            "$PASH_TOP/scripts/append_nl_if_not.sh" "${input}.txt"
-        fi
+	# To get idempotence
+        #if [ ! -f "${input}.txt" ]; then
+        wget "http://ndr.md/data/unix50/${input}.txt"
+        "$PASH_TOP/scripts/append_nl_if_not.sh" "${input}.txt"
+        #fi
     done
 
     ## FIXME: Calling this script with --full is not idempotent.
