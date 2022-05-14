@@ -19,12 +19,12 @@ setup_dataset() {
       mv small/* .
       rm -rf small web-index.small.zip
     fi
-  elif [ "$1" = "--full" ]; then
+  else
+    # elif [ "$1" = "--full" ]; then
     wget $wiki_archive || eexit "cannot fetch wikipedia"
     7za x wikipedia-en-html.tar.7z
     tar -xvf wikipedia-en-html.tar
     wget http://ndr.md/data/wikipedia/index.txt || eexit "cannot fetch wiki indices"
-  else
     # the default full 
     # 1000 entries
     wget http://pac-n4.csail.mit.edu:81/pash_data/full/web-index.full.zip
