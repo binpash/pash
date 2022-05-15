@@ -22,13 +22,11 @@ setup_dataset() {
   fi
 
   if [ "$1" = "--small" ]; then
-    if [[ ! -d ./en ]]; then
-      # 500 entries
-      wget http://pac-n4.csail.mit.edu:81/pash_data/small/web-index.small.zip
-      unzip web-index.small.zip
-      mv small/500.txt .
-      rm -rf small web-index.small.zip
-    fi
+    # 500 entries
+    wget http://pac-n4.csail.mit.edu:81/pash_data/small/web-index.small.zip
+    unzip web-index.small.zip
+    mv small/500.txt .
+    rm -rf small web-index.small.zip
   else
     # elif [ "$1" = "--full" ]; then
     # the default full 
