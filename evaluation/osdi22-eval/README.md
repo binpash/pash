@@ -110,6 +110,8 @@ Information about docker installation may be found in [here](https://github.com/
 
 > We do not recommend local installation for evaluating the "results reproducible" badge due to docker overheads and hardware differences.
 
+If you want to simply run the latest stable version of PaSh, you can use the following:
+
 ```sh
 docker pull binpash/pash; docker run --name pash-playground -it binpash/pash
 $PASH_TOP/pa.sh -c 'echo Hello World!'         # this is typed _in_ the container
@@ -121,6 +123,28 @@ sudo R
 > install.packages('ggplot2', dep = TRUE)
 > q()
 > n
+```
+
+If you are interested in using the version of PaSh when it was submitted to OSDI 2022, you could install PaSh on a fresh docker container using the following instructions:
+
+```sh:
+docker run -it ubuntu:18.04 /bin/bash
+
+##
+## In docker
+##
+
+apt update
+apt install sudo git libjpeg-dev zlib1g-dev unzip
+sudo apt remove nodejs
+
+git clone https://github.com/binpash/pash.git
+cd pash
+git checkout osdi22-ae
+./scripts/distro-deps.sh
+./scripts/setup-pash.sh
+export PASH_TOP=/pash
+$PASH_TOP/pa.sh -c 'echo Hello World!'
 ```
 
 ## A Minimal Run: Demo Spell
