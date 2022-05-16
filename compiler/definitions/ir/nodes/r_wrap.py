@@ -3,11 +3,21 @@ from ir_utils import *
 
 class RWrap(DFGNode):
     def __init__(self, inputs, outputs, com_name, com_category,
-                 com_options = [], com_redirs = [], com_assignments=[]):
+                 com_options = [], com_redirs = [], com_assignments=[], wrapped_node_name=None):
         super().__init__(inputs, outputs, com_name, com_category,
                          com_options=com_options, 
                          com_redirs=com_redirs, 
                          com_assignments=com_assignments)
+        self.wrapped_node_name = wrapped_node_name
+    
+    ## Get the label of the node. By default, it is simply the name
+    def get_dot_label(self) -> str:
+        ## The name could be a full path
+        name = self.com_name
+        basename = os.path.basename(str(name))
+
+        wrapped_node_name = self.wrapped_node_name
+        return f'{basename}({wrapped_node_name})'
 
 def wrap_node(node):
     r_wrap_bin = os.path.join(config.PASH_TOP, config.config['runtime']['r_wrap_binary'])
@@ -52,4 +62,5 @@ def wrap_node(node):
                  com_category,
                  com_options=options,
                  com_redirs=redirs,
-                 com_assignments=assignments)
+                 com_assignments=assignments,
+                 wrapped_node_name=node.com_name)

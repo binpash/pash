@@ -1,0 +1,25 @@
+name: Performance
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the main branch
+  push:
+    branches:
+      - main
+    paths: 
+        - compiler/**
+        - runtime/**
+        - evaluation/**
+        - annotations/**
+jobs:
+  performance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2 
+      - name: Trigger Performance Tests
+        run: |
+          # fetch the commit hash
+          hash=$(git rev-parse --short HEAD | tr -d "\n")
+          # construct the url for performance and correctness
+          perf="http://ctrl.pash.ndr.md/job=issue&branch=main&benchmark=PERFORMANCE&commit=$hash"
+          # issue the performance tests
+          curl -s "$perf"

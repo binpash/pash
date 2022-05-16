@@ -2,7 +2,7 @@
 
 set -e
 
-cd $(dirname $0)
+cd "$(dirname "$0")"
 # check the git status of the project
 if git rev-parse --git-dir > /dev/null 2>&1; then
     # we have cloned from the git repo, so all the .git related files/metadata are available
@@ -19,6 +19,8 @@ else
     git clone https://github.com/angelhof/libdash/ $PASH_TOP/compiler/parser/libdash
 fi
 cd $PASH_TOP
+. "$PASH_TOP/scripts/utils.sh"
+read_cmd_args $@
 
 LOG_DIR=$PASH_TOP/install_logs
 mkdir -p $LOG_DIR
@@ -40,6 +42,8 @@ fi
 echo "|-- making libdash..."
 # convert to lowercase
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
+# save distro in the init file
+echo "export distro=$distro" > ~/.pash_init
 # now do different things depending on distro
 case "$distro" in
     freebsd*) 
@@ -56,11 +60,13 @@ case "$distro" in
         # Build runtime tools: eager, split
         cd ../../runtime/
         make &> $LOG_DIR/make.log
+        if [ -f /.dockerenv ]; then
+            # issue with docker only
+            python3 -m pip install -U --force-reinstall pip
+            cp /opt/pash/pa.sh /usr/bin/
+        fi
         ;;
 esac
-
-# save distro in the init file
-echo "export distro=$distro" > ~/.pash_init
 
 ## This was the old parser installation that required opam.
 # # Build the parser (requires libtool, m4, automake, opam)
@@ -80,14 +86,17 @@ echo "export distro=$distro" > ~/.pash_init
 cd ../
 
 echo "Installing python dependencies..."
-python3 -m pip install jsonpickle --root $PYTHON_PKG_DIR --force-reinstall #&> $LOG_DIR/pip_install_jsonpickle.log
-python3 -m pip install pexpect --root $PYTHON_PKG_DIR --force-reinstall #&> $LOG_DIR/pip_install_pexpect.log
-python3 -m pip install numpy #&> $LOG_DIR/pip_install_numpy.log
-python3 -m pip install matplotlib #&> $LOG_DIR/pip_install_matplotlib.log
+
+python3 -m pip install jsonpickle --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_jsonpickle.log
+python3 -m pip install pexpect --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_pexpect.log
+python3 -m pip install numpy --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_numpy.log
+python3 -m pip install matplotlib --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_matplotlib.log
+
 # clean the python packages
 cd $PYTHON_PKG_DIR
-find . -name "site-packages" -type d | xargs -I '{}' mv $PYTHON_PKG_DIR/{}/ .
-mv site-packages/* . && rm -rf site-packages
+# can we find a better alternative to that                                      
+pkg_path=$(find . \( -name "site-packages" -or -name "dist-packages" \) -type d)
+mv ${pkg_path}/* ${PYTHON_PKG_DIR}/                                             
 
 echo "Generating input files..."
 $PASH_TOP/evaluation/tests/input/setup.sh
@@ -96,4 +105,47 @@ $PASH_TOP/evaluation/tests/input/setup.sh
 echo " * * * "
 echo "Do not forget to export PASH_TOP before using pash: \`export PASH_TOP=$PASH_TOP\`"
 echo '(optionally, you can update PATH to include it: `export PATH=$PATH:$PASH_TOP`)'
+echo " * * * "
+# in case we are running on docker or CI, installation is complete at this moment
+if [[ -f /.dockerenv || -f /.githubenv ]]; then
+    exit 0  
+fi
+## append PASH Configuration paths to the respective rc files
+rc_configs=(~/.shrc ~/.bashrc  ~/.zshrc ~/.cshrc ~/.kshrc) # add more shell configs here
+for config in "${rc_configs[@]}"
+do
+    ## if the config exists
+    ## check if it contains an old entry of Pash
+    if [ -e "$config" ]; then
+        # get the shell name
+        shell_name=$(echo $(basename $config) | sed 's/rc//g' | sed 's/\.//g')
+        echo "Do you want to append \$PASH_TOP to $shell_name ($config) (y/n)?"
+        read answer
+        if [ "$answer" != "${answer#[Yy]}" ] ;then 
+            tmpfile=$(mktemp -u /tmp/tmp.XXXXXX)
+            # create a backup of the shell config
+            cp $config ${config}.backup
+            # remove all the entries pointing to PASH_TOP and PATH
+            grep -ve "export PASH_TOP" $config > $tmpfile
+            mv $tmpfile $config
+            path_ans=0
+            # check if PATH contains PASH_TOP reference
+            # we need to store it in a variable otherwise is messes up with the
+            # existing environment
+            var=$(grep -e "export PATH" $config | grep -e '$PASH_TOP') || path_ans=$?
+            # if the return code is 0 -> there is a reference of $PASH_TOP in 
+            # PATH, remove it
+            if [ "$path_ans" == 0 ]; then
+                # remove previous references to PASH_TOP from PATH
+                grep -v 'export PATH=$PATH:$PASH_TOP' $config > $tmpfile
+                mv $tmpfile $config
+            fi
+            ## there isn't a previous Pash installation, append the configuration
+            echo "export PASH_TOP="$PASH_TOP >> $config
+            echo 'export PATH=$PATH:$PASH_TOP' >> $config
+        fi
+    fi
+done
 
+# running simple test that everything installed fine
+$PASH_TOP/pa.sh -c 'echo PaSh installation complete!'

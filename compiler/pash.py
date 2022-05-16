@@ -7,6 +7,7 @@ from annotations import *
 from ast_to_ir import *
 from ir import *
 from parse import parse_shell_to_asts, parse_shell_to_asts_interactive, from_ast_objects_to_shell
+from pash_graphviz import maybe_init_graphviz_dir
 from util import *
 import config
 import shutil
@@ -149,7 +150,7 @@ def parse_args():
                         action="store_true")
     parser.add_argument("-c", "--command",
                         help="Evaluate the following as a script, rather than a file",
-                        default="")
+                        default=None)
     ## This is not the correct way to parse these, because more than one option can be given together, e.g., -ae
     parser.add_argument("-a",
                         help="Enabling the `allexport` shell option",
@@ -176,6 +177,9 @@ def parse_args():
     if not config.config:
         config.load_config(args.config_path)
 
+    ## Initialize the graphviz directory
+    maybe_init_graphviz_dir(args)
+
     ## Print all the arguments before they are modified below
     log("Arguments:")
     for arg_name, arg_val in vars(args).items():
@@ -185,7 +189,7 @@ def parse_args():
     ## TODO: We might need to have a better default (like $0 of pa.sh)
     shell_name = "pash"
 
-    if args.command:
+    if args.command is not None:
         _, fname = ptempfile()
         with open(fname, 'w') as f:
             f.write(args.command)
@@ -256,5 +260,5 @@ def execute_script(compiled_script_filename, command, arguments, shell_name):
 
 if __name__ == "__main__":
     main()
-   
- 
+
+  

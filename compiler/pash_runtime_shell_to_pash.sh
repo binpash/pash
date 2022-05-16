@@ -24,6 +24,6 @@ pash_redir_output echo "$$: (5) Reverted to PaSh set state to: $-"
 
 
 ## Save the current variables
-source "$RUNTIME_DIR/pash_declare_vars.sh" $output_vars_file
+source "$RUNTIME_DIR/pash_declare_vars.sh" "$output_vars_file"
 # pash_redir_output echo "$$: (5) Exiting from BaSh with BaSh status: $pash_exec_status"
 # (exit "$pash_exec_status")
