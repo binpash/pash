@@ -285,6 +285,12 @@ test_quoting()
     echo "ababa" | $shell -c 'tr -dc abc'
 }
 
+test_var_assgn_default()
+{
+    local shell=$1
+    $shell var_assgn.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -323,6 +329,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_expand_u
     run_test test_expand_u_positional
     run_test test_quoting
+    run_test test_var_assgn_default
 else
     for testname in $@
     do
