@@ -773,10 +773,10 @@ def add_eager_nodes(graph, use_dgsh_tee):
                     add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
 
             ## Add an eager after remote_pipe
-            if(isinstance(curr, remote_pipe.RemotePipe)):
-                eager_input_ids = curr.outputs
-                for edge_id in eager_input_ids:
-                    add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
+            # if(isinstance(curr, remote_pipe.RemotePipe)):
+            #     eager_input_ids = curr.outputs
+            #     for edge_id in eager_input_ids:
+            #         add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
 
     return graph
 
