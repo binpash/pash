@@ -729,14 +729,20 @@ def add_eager_nodes(graph, use_dgsh_tee):
     intermediateFileIdGen = FileIdGen(0, runtime_config['eager_intermediate_prefix'])
 
     ## Get the next nodes
-    workset = [node for source_node_id in source_node_ids for node in graph.get_next_nodes(source_node_id)]
+    workset = source_node_ids
     visited = set()
     while (len(workset) > 0):
         curr_id = workset.pop(0)
         curr = graph.get_node(curr_id)
+
         if (not curr_id in visited):
             visited.add(curr_id)
             next_node_ids = graph.get_next_nodes(curr_id)
+            
+            # Skip if this is the last node
+            if not next_node_ids:
+                continue
+
             workset += next_node_ids
 
             ## TODO: Make sure that we don't add duplicate eager nodes
@@ -773,10 +779,10 @@ def add_eager_nodes(graph, use_dgsh_tee):
                     add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
 
             ## Add an eager after remote_pipe
-            # if(isinstance(curr, remote_pipe.RemotePipe)):
-            #     eager_input_ids = curr.outputs
-            #     for edge_id in eager_input_ids:
-            #         add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
+            if(isinstance(curr, remote_pipe.RemotePipe) and curr.is_remote_read()):
+                eager_input_ids = curr.outputs
+                for edge_id in eager_input_ids:
+                    add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
 
     return graph
 
