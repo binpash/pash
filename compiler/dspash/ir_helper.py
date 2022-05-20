@@ -68,6 +68,10 @@ def to_shell_file(graph: IR, args) -> str:
         os.makedirs(directory, exist_ok=True)
 
     if not args.no_eager:
+        # Set DFGNode next id to not clash with already existing ids
+        # TODO: ideally we should get the next_id from the graph object
+        #   to avoid conflicts across parallel processes
+        DFGNode.next_id = max(DFGNode.next_id , max(graph.nodes.keys()) + 1)
         graph = pash_runtime.add_eager_nodes(graph, args.dgsh_tee)
 
     script = to_shell(graph, args)
@@ -329,6 +333,9 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
                 else:
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
                     continue
+
+    # for worker, graph in worker_subgraph_pairs:
+    #     print(to_shell(graph, config.pash_args), file=sys.stderr)
 
     return main_graph, worker_subgraph_pairs
 
