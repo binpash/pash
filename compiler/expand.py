@@ -189,6 +189,11 @@ class StuckExpansion(RuntimeError):
         self.reason = reason
         self.info = info
 
+class ImpureExpansion(RuntimeError):
+    def __init__(self, reason, *info):
+        self.reason = reason
+        self.info = info
+
 class Unimplemented(RuntimeError):
     def __init__(self, msg, ast):
         self.msg = msg
@@ -428,7 +433,7 @@ def expand_arg_char(arg_char, quoted, config):
         return expand_var(fmt, null, var, arg, quoted, config)
     elif key == 'B':
         # TODO 2020-12-10 run commands?
-        raise Unimplemented("command substitution", arg_char)
+        raise ImpureExpansion("command substitution", arg_char)
     else:
         raise Unimplemented("weird key", key)
 
@@ -459,9 +464,10 @@ def expand_var(fmt, null, var, arg, quoted, config):
             return value
     elif fmt == 'Assign':
         if value is None or (null and value == ""):
-            new = expand_arg(arg, config, quoted = quoted)
-            config = try_set_variable(var, new, config)
-            return new
+            raise ImpureExpansion("assignment format on unset/null variable", value, arg)
+#            new = expand_arg(arg, config, quoted = quoted)
+#            config = try_set_variable(var, new, config)
+#            return new
         else:
             return value
     elif fmt == 'Plus':
@@ -527,25 +533,29 @@ def expand_simple(node, config):
     # TODO 2020-11-25 MMG is this the order bash does?
     node.redir_list = expand_redir_list(node.redir_list, config)
 
-    settable = dict()
-    for (i, [x, arg]) in enumerate(node.assignments):
-        exp = expand_arg(arg, config)
-        node.assignments[i] = [x, exp]
-
-        # assignment visibility:
-        #
-        # assignments are immediately done when no command...
-        if len(node.arguments) == 0:
-            config = try_set_variable(x, exp, config)
-        else:
-            # or deferred until later when there is one
-            settable[x] = exp
-
-    # once all values are found, _then_ set them before the command
-    # TODO 2020-11-25 if node.arguments[0] is a special builtin, these things are global
-    # if not... then the settings are just for the command, and shouldn't go in the config
-    for (x,exp) in settable:
-        try_set_variable(x, exp, config)
+    if len(node.assignments) > 0:
+        raise ImpureExpansion('assignment', node.assignments)
+    
+    #settable = dict()
+    #
+    #for (i, [x, arg]) in enumerate(node.assignments):
+    #    exp = expand_arg(arg, config)
+    #    node.assignments[i] = [x, exp]
+    #
+    #    # assignment visibility:
+    #    #
+    #    # assignments are immediately done when no command...
+    #    if len(node.arguments) == 0:
+    #        config = try_set_variable(x, exp, config)
+    #    else:
+    #        # or deferred until later when there is one
+    #        settable[x] = exp
+    #
+    ## once all values are found, _then_ set them before the command
+    ## TODO 2020-11-25 if node.arguments[0] is a special builtin, these things are global
+    ## if not... then the settings are just for the command, and shouldn't go in the config
+    #for (x,exp) in settable:
+    #    try_set_variable(x, exp, config)
 
     node.arguments = expand_args(node.arguments, config)
 
