@@ -71,7 +71,7 @@ def to_shell_file(graph: IR, args) -> str:
         # Set DFGNode next id to not clash with already existing ids
         # TODO: ideally we should get the next_id from the graph object
         #   to avoid conflicts across parallel processes
-        DFGNode.next_id = max(DFGNode.next_id , graph.nodes.keys()+ 1)
+        DFGNode.next_id = max(DFGNode.next_id , max(graph.nodes.keys()) + 1)
         graph = pash_runtime.add_eager_nodes(graph, args.dgsh_tee)
 
     script = to_shell(graph, args)
