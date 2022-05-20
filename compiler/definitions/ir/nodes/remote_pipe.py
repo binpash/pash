@@ -8,6 +8,11 @@ class RemotePipe(DFGNode):
                          com_redirs=com_redirs, 
                          com_assignments=com_assignments)
 
+    def is_remote_read(self):
+        com_name = self.com_name.opt_serialize()
+        read_com = config.config['runtime']['remote_read_binary']
+        return read_com in com_name
+
 def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, id):
     com_category = "pure"
     options = []
