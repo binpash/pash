@@ -65,14 +65,18 @@ ggsave("figure6.pdf", p, width=8, height=4)
 
 
 # data munging to get the right names
-bench$cshell <- bench$shell
-bench[!(bench$cshell %in% c('pash_jit', 'pash_jit_no_comm')),]$cshell <- 'ignore'
-bench[bench$shell == 'pash_jit_no_comm',]$cshell <- 'pash_jit no_comm'
-bench[bench$shell == 'pash_jit',]$cshell <- 'pash_jit'
+# bench$cshell <- bench$shell
+# bench[!(bench$cshell %in% c('pash_jit', 'pash_jit_no_comm')),]$cshell <- 'ignore'
+# bench[bench$shell == 'pash_jit_no_comm',]$cshell <- 'pash_jit no_comm'
+# bench[bench$shell == 'pash_jit',]$cshell <- 'pash_jit'
+
+# bench$shell %in% c('pash_jit', 'pash_jit -prof -par_pipe', 'pash_jit -prof')
 
 boxes <- 
-  ggplot(bench[bench$cshell != 'ignore' & bench$suite %in% c('Classics','Unix50','COVID-mts'),],
-         aes(y=as.double(speedup), fill=factor(cshell))) +
+  ggplot(bench[bench$shell %in% c('pash_jit', 'pash_jit_no_comm') & bench$suite %in% c('Classics','Unix50','COVID-mts'),],
+         aes(y=as.double(speedup), fill=factor(shell))) +
+#   ggplot(bench[bench$cshell != 'ignore' & bench$suite %in% c('Classics','Unix50','COVID-mts'),],
+#          aes(y=as.double(speedup), fill=factor(cshell))) +
   geom_boxplot(aes(x=factor(suite, level=box_order)), position=position_dodge2(reverse=TRUE)) +
   #geom_point(aes(x=factor(suite, level=box_order), color=factor(cshell)), position = position_dodge2(width=0.75, reverse=TRUE)) +
   geom_hline(yintercept = 1) +
@@ -81,8 +85,10 @@ boxes <-
         text = text,
         legend.position = 'none')
 bars <- 
-  ggplot(bench[bench$cshell != 'ignore' & bench$suite %in% c('AvgTemp','WebIndex'),],
-         aes(x=factor(script, level=bar_order), y=as.double(speedup), fill=factor(cshell))) +
+  ggplot(bench[bench$shell %in% c('pash_jit', 'pash_jit_no_comm') & bench$suite %in% c('AvgTemp','WebIndex'),],
+         aes(x=factor(script, level=bar_order), y=as.double(speedup), fill=factor(shell))) +
+#   ggplot(bench[bench$cshell != 'ignore' & bench$suite %in% c('AvgTemp','WebIndex'),],
+#          aes(x=factor(script, level=bar_order), y=as.double(speedup), fill=factor(cshell))) +
   geom_col(position=position_dodge2(reverse=TRUE)) +
   geom_hline(yintercept = 1) +
   scale_fill_discrete(labels = c('PaSh JIT', 'PaSh JIT no_comm')) +
