@@ -15,7 +15,7 @@ prepare_run_data() {
 
     # read each line of the file
     while read p; do
-        echo "Fixing: $p"
+        # echo "Fixing: $p"
         python3 ../prep_temp.py $p > .tmp
         # break        
         # lines=$(cat $p | wc -l)
@@ -33,7 +33,7 @@ prepare_run_data() {
         # echo "$file" > .tmp
         bench=$(echo $p | awk -F '/' '{print $3}')
         mode=$(echo $p | awk -F'/' '{print $2}')
-        echo "Bench: $bench, mode: $mode"
+        # echo "Bench: $bench, mode: $mode"
         # if [[ $bench == max-temp ]]; then
         # cat .tmp | sed -E 's/^([a-zA-Z_0-9\-]+):.*([0-9]+.[0-9]+\n)$/\1\t\2/g' #| cut -f 1 
         # fi
