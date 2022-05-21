@@ -15,15 +15,28 @@ prepare_run_data() {
 
     # read each line of the file
     while read p; do
-        lines=$(cat $p | wc -l)
-        if [[ $lines -gt 3 ]]; then
-            file="$(tail -n +3 $p)"
-        else
-            file="$(tail -n +2 $p)"
-        fi
-        echo "$file" > .tmp
+        echo "Fixing: $p"
+        python3 ../prep_temp.py $p > .tmp
+        # break        
+        # lines=$(cat $p | wc -l)
+        # if [[ $lines -gt 3 ]]; then
+        #     echo "Head1:"
+        #     tail -n +2 $p | head
+        #     file="$(tail -n +2 $p)"
+        # else
+        #     echo "Head2:"
+        #     tail -n +2 $p | head
+        #     file="$(tail -n +2 $p)"
+        # fi
+        # file="$(tail -n +2 $p)"
+        # echo "file: $file"
+        # echo "$file" > .tmp
         bench=$(echo $p | awk -F '/' '{print $3}')
         mode=$(echo $p | awk -F'/' '{print $2}')
+        echo "Bench: $bench, mode: $mode"
+        # if [[ $bench == max-temp ]]; then
+        # cat .tmp | sed -E 's/^([a-zA-Z_0-9\-]+):.*([0-9]+.[0-9]+\n)$/\1\t\2/g' #| cut -f 1 
+        # fi
         # read the contents of each execution file
         while read l; do
             #l=$(echo $l | sed 's/ //g')
@@ -31,6 +44,7 @@ prepare_run_data() {
             res=$?
             if [[ $res == 1 ]]; then
                 perf=$(echo $l | grep -Eo '[0-9]+.[0-9]+$')
+                # echo "Perf 1: $perf"
                 script=$(echo $l | sed -e 's/'$perf'//g')
             else
                 # get script name and performance
@@ -38,6 +52,7 @@ prepare_run_data() {
                 script=$(echo $l | awk -F ':' '{print $1}' | sed 's/...$//')
                 # get the execution time
                 perf=$(echo $l | awk -F ':' '{print $2}')
+                # echo "Perf 2: $perf"
             fi
             echo $bench,$script,$mode,$perf | sed 's/ //g'>> $DATA_FILE
         done < .tmp
