@@ -58,6 +58,17 @@ execute_step()
     echo "$step_desc completed."
 }
 
+## Issues:
+##
+## - An overarching problem is that these take time in general, 
+##   and therefore testing them out is not really feasible.
+## - Another problem is that by doing that manually, 
+##   we cannot get completely fine-grained. For example, we could
+##   only copy the missing file _a la_ Rattle, instead of running
+##   the whole step.
+## - Another problem is that idempotence checking is hard to do manually.
+## - Another issue is that generating the checks is cumbersome and error-prone.
+## 
 
 ## Q: Can these checks be generated automatically?
 wav_step_1_done_check()
