@@ -8,52 +8,132 @@ OUT=$PASH_TOP/evaluation/benchmarks/dependency_untangling/output/
 IN_NAME=$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/100G.txt
 
 if [ "$1" == "-c" ]; then
-    rm -rf ${IN}/jpg
-    rm -rf ${IN}/log_data
-    rm -rf ${IN}/wav
-    rm -rf ${IN}/nginx-logs
-    rm -rf ${IN}/node_modules
-    rm -rf ${IN}/pcap_data
-    rm -rf ${IN}/pcaps
-    rm -rf ${IN}/packages
-    rm -rf ${IN}/mir-sa
-    rm -rf ${IN}/deps
-    rm -rf ${IN}/bio
-    rm -rf ${IN}/output
-    rm -rf ${OUT}
+    rm -rf "${IN}/jpg"
+    rm -rf "${IN}/log_data"
+    rm -rf "${IN}/wav"
+    rm -rf "${IN}/nginx-logs"
+    rm -rf "${IN}/node_modules"
+    rm -rf "${IN}/pcap_data"
+    rm -rf "${IN}/pcaps"
+    rm -rf "${IN}/packages"
+    rm -rf "${IN}/mir-sa"
+    rm -rf "${IN}/deps"
+    rm -rf "${IN}/bio"
+    rm -rf "${IN}/output"
+    rm -rf "${OUT}"
     exit 
 fi
+
+##
+## This function checks if all the files in the arguments exist
+## It returns 0 if all files exist, or 1 otherwise
+##
+files_exist_done_check()
+{
+    for file in "$@"; do
+        if [ ! -f "$file" ]; then
+            return 1
+        fi
+    done
+    return 0
+}
+
+##
+## This function executes a single idempotent step only if its check fails
+##
+execute_step()
+{
+    local step_fun=$1
+    local step_done_check_fun=$2
+    local step_desc=${3:-"Execution step"}
+
+    # shellcheck disable=SC2086
+    if ! eval $step_done_check_fun; then
+        echo "$step_desc is not done, executing..."
+        # shellcheck disable=SC2086
+        eval $step_fun
+        # shellcheck disable=SC2086
+        eval $step_done_check_fun || { echo "ERROR: $step_desc failed!"; exit 1; }
+    fi
+    echo "$step_desc completed."
+}
+
+
+## Q: Can these checks be generated automatically?
+wav_step_1_done_check()
+{
+    local prefix="wav/file_example_WAV"
+    files_exist_done_check "${prefix}_1MG.wav.kernel" "${prefix}_2MG.wav.kernel" "${prefix}_5MG.wav.kernel" "${prefix}_10MG.wav.kernel"
+    return $?
+}
+
+## Q: Can we automatically check that this is idempotent?
+## For example, in the step below there were 2 non-idempotence issues:
+## - wget downloads wav.zip.2 if wav.zip already exists, so we need to use -O flag
+## - wav files need to be saved with .kernel suffix to make step 2 idempotent
+wav_step_1()
+{
+    ## wget 
+    wget -O wav.zip http://pac-n4.csail.mit.edu:81/pash_data/wav.zip
+    unzip wav.zip
+    local prefix="wav/file_example_WAV"
+    ## Necessary so that the iteration in step 2 is idempotent
+    for f in "${prefix}_1MG.wav" "${prefix}_2MG.wav" "${prefix}_5MG.wav" "${prefix}_10MG.wav"; do
+        mv $f $f.kernel
+    done
+}
+export -f wav_step_1_done_check
+export -f wav_step_1
+
+wav_step_2_done_check()
+{
+    local prefix="wav/file_example_WAV"
+    for i in $(seq 0 "$WAV_DATA_FILES"); do
+        if ! files_exist_done_check "${prefix}_1MG.wav$i.wav" "${prefix}_2MG.wav$i.wav" "${prefix}_5MG.wav$i.wav" "${prefix}_10MG.wav$i.wav"; then
+            return 1
+        fi
+    done
+    echo "Done"
+    return 0
+}
+
+wav_step_2()
+{
+    for f in wav/*.kernel; do
+        for (( i = 0; i <= $WAV_DATA_FILES; i++)) do
+            echo copying to "$base_f$i.wav"
+            base_f=wav/$(basename "$f" .kernel)
+            cp "$f" "$base_f$i.wav"
+        done
+    done
+}
+export -f wav_step_2_done_check
+export -f wav_step_2
+
 
 setup_dataset() {
   if [ "$1" == "--small" ]; then
       LOG_DATA_FILES=6
-      WAV_DATA_FILES=20
+      export WAV_DATA_FILES=2
       NODE_MODULE_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/node_modules.zip
       BIO_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/bio.zip
       JPG_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/jpg.zip
       PCAP_DATA_FILES=1
   else
       LOG_DATA_FILES=84
-      WAV_DATA_FILES=120
+      export WAV_DATA_FILES=120
       NODE_MODULE_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/node_modules.zip
       BIO_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/bio.zip
       JPG_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/jpg.zip
       PCAP_DATA_FILES=15
   fi
   
-  if [ ! -d ${IN}/wav ]; then
-      wget http://pac-n4.csail.mit.edu:81/pash_data/wav.zip
-      unzip wav.zip && cd wav/
-      for f in *.wav; do
-          FILE=$(basename "$f")
-          for (( i = 0; i <= $WAV_DATA_FILES; i++)) do
-              echo copying to $f$i.wav
-              cp $f $f$i.wav
-          done
-      done
-      echo "WAV Generated"
-  fi
-  
+  ## Step 1
+  execute_step wav_step_1 wav_step_1_done_check "WAV zip download"
+
+  ## Step 2
+  execute_step wav_step_2 wav_step_2_done_check "WAV file generation download"
+
   if [ ! -d ${IN}/jpg ]; then
       cd ${IN}
       wget $JPG_DATA_LINK
