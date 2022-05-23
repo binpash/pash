@@ -41,6 +41,10 @@ files_exist_done_check()
 ##
 ## This function executes a single idempotent step only if its check fails
 ##
+## Requirements:
+## - The step needs to be idempotent
+## - The check needs to also check file sizes if there is concern of non-idempotence or failed download
+##
 execute_step()
 {
     local step_fun=$1
