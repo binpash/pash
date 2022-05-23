@@ -88,8 +88,7 @@ wav_step_1_done_check()
 ## - wav files need to be saved with .kernel suffix to make step 2 idempotent
 wav_step_1()
 {
-    ## wget 
-    wget -O wav.zip http://pac-n4.csail.mit.edu:81/pash_data/wav.zip
+    curl -C - -o wav.zip http://pac-n4.csail.mit.edu:81/pash_data/wav.zip
     unzip wav.zip
     local prefix="wav/file_example_WAV"
     ## Necessary so that the iteration in step 2 is idempotent
