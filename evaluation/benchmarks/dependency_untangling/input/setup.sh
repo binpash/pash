@@ -72,9 +72,12 @@ execute_step()
 ##   the whole step.
 ## - Another problem is that idempotence checking is hard to do manually.
 ## - Another issue is that generating the checks is cumbersome and error-prone.
+##   Users need to think whether they need file_exists/number_of_files/size checks,
+##   and if they are downloading, they need to first download and then determine the check.
 ## 
 
-## Q: Can these checks be generated automatically?
+## Q: Can these checks be generated automatically? This would be great if
+##    the user just ran the command, and then if it succeeded, the test is generated.
 wav_step_1_done_check()
 {
     local prefix="wav/file_example_WAV"
@@ -131,14 +134,14 @@ setup_dataset() {
       export WAV_DATA_FILES=2
       NODE_MODULE_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/node_modules.zip
       BIO_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/bio.zip
-      JPG_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/jpg.zip
+      export JPG_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/jpg.zip
       PCAP_DATA_FILES=1
   else
       LOG_DATA_FILES=84
       export WAV_DATA_FILES=120
       NODE_MODULE_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/node_modules.zip
       BIO_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/bio.zip
-      JPG_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/jpg.zip
+      export JPG_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/jpg.zip
       PCAP_DATA_FILES=15
   fi
   
@@ -146,11 +149,11 @@ setup_dataset() {
   execute_step wav_step_1 wav_step_1_done_check "WAV zip download"
 
   ## Step 2
-  execute_step wav_step_2 wav_step_2_done_check "WAV file generation download"
+  execute_step wav_step_2 wav_step_2_done_check "WAV file generation"
 
   if [ ! -d ${IN}/jpg ]; then
       cd ${IN}
-      wget $JPG_DATA_LINK
+      curl -C - -o jpg.zip $JPG_DATA_LINK
       unzip jpg.zip
       echo "JPG Generated"
       rm -rf ${IN}/jpg.zip
