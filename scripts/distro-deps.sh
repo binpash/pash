@@ -30,7 +30,7 @@ fi
 # convert to lowercase
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 # compile the list of the shared required packages
-pkgs="automake bc curl gcc git libtool m4 python sudo wget"
+pkgs="automake bc curl gcc git graphviz libtool m4 python sudo wget"
 # now do different things depending on distro
 case "$distro" in
     ubuntu*)  
