@@ -16,18 +16,18 @@ then
     export HDFS_DATANODE_DIR=${datanode_dir#"file://"} # removes file:// prefix
 fi
 
-source "$PASH_TOP/compiler/pash_init_setup.sh" $@ --distributed_exec
+source "$PASH_TOP/compiler/pash_init_setup.sh" "$@" --distributed_exec
 
 export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
 
 function cleanup() {
-        kill $FILEREADER_PID $DISCOVERY_PID
-        wait $FILEREADER_PID $DISCOVERY_PID 2>/dev/null
-        rm -rf $PASH_TMP_PREFIX
+        kill "$FILEREADER_PID" "$DISCOVERY_PID"
+        wait "$FILEREADER_PID" "$DISCOVERY_PID" 2>/dev/null
+        rm -rf "$PASH_TMP_PREFIX"
 }
 
-$PASH_TOP/runtime/dspash/file_reader/filereader_server &
+"$PASH_TOP/runtime/dspash/file_reader/filereader_server" &
 FILEREADER_PID=$!
-$PASH_TOP/runtime/dspash/file_reader/discovery_server &
+"$PASH_TOP/runtime/dspash/file_reader/discovery_server" &
 DISCOVERY_PID=$!
-python3 "$PASH_TOP/compiler/dspash/worker.py" $@
+python3 "$PASH_TOP/compiler/dspash/worker.py" "$@"

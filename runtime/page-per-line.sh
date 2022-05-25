@@ -4,7 +4,7 @@
 # It also prefixes with the URL
 
 page_per_line () {
-  curl -s $1 | tr -d "\n\r" | tr -d '\n' | sed "s/^/$0 /" | sed -e '/.$/a\'
+  curl -s "$1" | tr -d "\n\r" | tr -d '\n' | sed "s/^/$0 /" | sed -e '/.$/a\'
 }
 
 export -f page_per_line
