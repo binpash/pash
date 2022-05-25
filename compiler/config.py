@@ -127,6 +127,10 @@ def add_common_arguments(parser):
                         help="Run multiple pipelines in parallel if they are safe to run",
                         action="store_true",
                         default=False)
+    parser.add_argument("--parallel_pipelines_limit",
+                        type=int,
+                        help="Configure the limit for the number of parallel pipelines at one time (default: cpu count, 0 is turns parallel pipelines off)",
+                        default=os.cpu_count())
     parser.add_argument("--r_split",
                         help="(experimental) use round robin split, merge, wrap, and unwrap",
                         action="store_true")
@@ -197,6 +201,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--distributed_exec"))
     if (pash_arguments.parallel_pipelines):
         arguments.append(string_to_argument("--parallel_pipelines"))
+        arguments.append(string_to_argument("--parallel_pipelines_limit"))
+        arguments.append(string_to_argument(str(pash_arguments.parallel_pipelines_limit)))
     if (pash_arguments.daemon_communicates_through_unix_pipes):
         arguments.append(string_to_argument("--daemon_communicates_through_unix_pipes"))
     arguments.append(string_to_argument("--r_split_batch_size"))
