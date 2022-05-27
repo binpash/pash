@@ -63,7 +63,7 @@ case "$distro" in
         if [ -f /.dockerenv ]; then
             # issue with docker only
             python3 -m pip install -U --force-reinstall pip
-            cp /opt/pash/pa.sh /usr/bin/
+            cp "$PASH_TOP"/pa.sh /usr/bin/
         fi
         ;;
 esac

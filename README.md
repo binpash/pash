@@ -3,6 +3,7 @@
 > _A system for parallelizing POSIX shell scripts._
 > _Hosted by the [Linux Foundation](https://linuxfoundation.org/press-release/linux-foundation-to-host-the-pash-project-accelerating-shell-scripting-with-automated-parallelization-for-industrial-use-cases/)._
 
+
 | Service      | Main | Develop |
 | :---         |    :----:   |          :----: |
 | Tests      | [![Tests](https://github.com/binpash/pash/actions/workflows/tests.yaml/badge.svg?branch=main&event=push)](https://github.com/binpash/pash/actions/workflows/tests.yaml?query=branch%3Amain++)     | [![Tests](https://github.com/binpash/pash/actions/workflows/tests.yaml/badge.svg?branch=future&event=push)](https://github.com/binpash/pash/actions/workflows/tests.yaml?query=branch%3Afuture++)   |
@@ -45,7 +46,7 @@ This repo hosts the core `pash` development. The structure is as follows:
 * [compiler](./compiler): Shell-dataflow translations and associated parallelization transformations.
 * [docs](./docs): Design documents, tutorials, installation instructions, etc.
 * [evaluation](./evaluation): Shell pipelines and example [scripts](./evaluation/other/more-scripts) used for the evaluation.
-* [runtime](./runtime): Runtime component — e.g., `eager`, `split`, and assocaited combiners.
+* [runtime](./runtime): Runtime component — e.g., `eager`, `split`, and associated combiners.
 * [scripts](./scripts): Scripts related to continuous integration, deployment, and testing.
 
 ## Community & More
