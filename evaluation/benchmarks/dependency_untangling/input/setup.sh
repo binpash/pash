@@ -96,17 +96,18 @@ setup_dataset() {
           wget http://pac-n4.csail.mit.edu:81/pash_data/100G.txt                   
           # download the Genome loc file                                           
           wget http://pac-n4.csail.mit.edu:81/pash_data/Gene_locs.txt              
-          # start downloading the real dataset                                     
+          # start downloading the real dataset  
+          IN_NAME=$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/bio/100G.txt
           cat ${IN_NAME} |while read s_line;                                       
-      do                                                                       
-          echo ${IN_NAME}                                                      
-          sample=$(echo $s_line |cut -d " " -f 2);                             
-          if [[ ! -f $sample ]]; then                                          
-              pop=$(echo $s_line |cut -f 1 -d " ");                            
-              link=$(echo $s_line |cut -f 3 -d " ");                           
-              wget -O "$sample".bam  "$link"; ##this part can be adjusted maybe
-          fi                                                                   
-      done;    
+          do                                                                       
+            echo ${IN_NAME}                                                      
+            sample=$(echo $s_line |cut -d " " -f 2);                             
+            if [[ ! -f $sample ]]; then                                          
+                pop=$(echo $s_line |cut -f 1 -d " ");                            
+                link=$(echo $s_line |cut -f 3 -d " ");                           
+                wget -O "$sample".bam  "$link"; ##this part can be adjusted maybe
+            fi                                                                   
+          done;    
       fi                                                                           
       echo "Genome data downloaded"
   fi                                                                           

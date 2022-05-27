@@ -1,7 +1,7 @@
 IN=$PASH_TOP/evaluation/benchmarks/dependency_untangling/input/
 mkdir -p ${IN}/deps/
 # install dependencies
-pkgs='ffmpeg unrtf imagemagick libarchive-tools zstd liblzma-dev libbz2-dev zip unzip nodejs tcpdump'
+pkgs='ffmpeg unrtf imagemagick libarchive-tools libncurses5-dev libncursesw5-dev zstd liblzma-dev libbz2-dev zip unzip nodejs tcpdump'
 
 if ! dpkg -s $pkgs >/dev/null 2>&1 ; then
     sudo apt-get install $pkgs -y
@@ -25,10 +25,9 @@ if [ ! -d ${IN}/deps/samtools-1.7 ]; then
     echo 'Samtools installed'
 fi
 
-if [ ! -f ${IN}/deps/makedeb.deb ]; then
+if ! dpkg -s "makedeb-makepkg" >/dev/null 2>&1 ; then
     cd ${IN}/deps/
     wget http://pac-n4.csail.mit.edu:81/pash_data/makedeb.deb
     sudo dpkg -i makedeb.deb
     echo 'Makedeb installed'
 fi
-
