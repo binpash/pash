@@ -6,5 +6,5 @@ for script in "$SCRIPTS_DIR"*.sh
 do
     echo "Parsing $script..."
     output=${script/"scripts"/"scripts/json"}.json
-    ./parse_to_json.native $script > "$output"
+    ./parse_to_json.native "$script" > "$output"
 done
