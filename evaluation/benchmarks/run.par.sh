@@ -231,7 +231,7 @@ nlp_pash(){
 
   cd nlp/
 
-  install_deps_source_setup
+  install_deps_source_setup $1
 
   mkdir -p "$outputs_dir"
   mkdir -p "$pash_logs_dir"

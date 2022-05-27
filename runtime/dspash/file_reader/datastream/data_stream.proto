@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+option go_package = "dspash/datastream";
+
+service Discovery {
+    rpc PutAddr(PutAddrMsg) returns (Status) {}
+    rpc GetAddr(AddrReq) returns(GetAddrReply) {}
+    rpc RemoveAddr(AddrReq) returns (Status) {}
+    rpc readStream(AddrReq) returns (stream Data) {}
+    rpc writeStream(stream Data) returns (Status) {}
+}
+
+message PutAddrMsg {
+    string Id = 1;
+    string Addr = 2;
+}
+
+message AddrReq {
+    string Id = 1;
+}
+
+message GetAddrReply {
+    bool Success = 1;
+    string Addr = 2;
+}
+
+message Status {
+    bool Success = 1;
+}
+
+message Data {
+    bytes buffer = 1;
+    string Id = 2; // only sent with first message
+}
