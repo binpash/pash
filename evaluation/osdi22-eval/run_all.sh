@@ -4,6 +4,12 @@ RES_FOLDER=${PWD}/eval_results/run
 cd ${PASH_TOP}/evaluation/benchmarks
 # use the small input for the benchmarks
 setup_flags='--small'
+if [ "$1" = "--full" ]; then
+    setup_flags="--full"
+    echo "Using full input"
+elif [ "$1" = "--small" ] || [ "$#" -eq "0" ]; then
+    echo "Using small input"
+fi
 
 # run all the scripts using bash
 run_bash() {
@@ -61,11 +67,11 @@ function run_all_benchmarks() {
   mkdir -p ${RES_FOLDER}
   cd ${PASH_TOP}/evaluation/benchmarks
   # remove all res files from previous runs
-  find . -type d -name "outputs" | xargs rm -rf
+  find . -type d -name "outputs" 2> /dev/null | xargs rm -rf
   # do not remove any input from the node_modules dataset
-  find . -type d -not -path "*/node_modules/*" -name "output" | xargs rm -rf 
-  find . -type d -name "pash_logs" | xargs rm -rf
-  find . -type f -name "*.res" | xargs rm -f
+  find . -type d -not -path "*/node_modules/*" -name "output" 2> /dev/null | xargs rm -rf
+  find . -type d -name "pash_logs" 2> /dev/null | xargs rm -rf
+  find . -type f -name "*.res" 2> /dev/null | xargs rm -f
   # start preparing from execution
   export PASH_ALL_FLAGS=(" "
                          "--r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven")
@@ -73,7 +79,7 @@ function run_all_benchmarks() {
   export PASH_MODE=("pash_aot" 
                     "pash_jit")
 
-  echo 'Running all benchmark for bash'
+  echo 'Running all bash benchmarks'
   time run_bash
   echo 'Running PaSh JIT/PaSh AOT benchmarks'
   time run_bench 
@@ -99,9 +105,5 @@ function run_all_benchmarks() {
   # kill the hanging processes 
   pkill -f cat
 }
-out_folder=${RES_FOLDER}
-# run all the tests three times
-# the results will be stored at: $PASH_TOP/evaluation/eval_results/run{1,2,3}
-run_all_benchmarks ${out_folder}1
-run_all_benchmarks ${out_folder}2
-run_all_benchmarks ${out_folder}3
+# run all the tests and store the results $RES_FOLDER
+run_all_benchmarks ${RES_FOLDER}
