@@ -5,7 +5,7 @@
         {
             "predicate": "default",
             "class": "pure",
-            "inputs": ["stdin"],
+            "inputs": [],
             "outputs": ["stdout"]
         }
     ]

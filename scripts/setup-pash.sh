@@ -2,7 +2,7 @@
 
 set -e
 
-cd $(dirname $0)
+cd "$(dirname "$0")"
 # check the git status of the project
 if git rev-parse --git-dir > /dev/null 2>&1; then
     # we have cloned from the git repo, so all the .git related files/metadata are available
@@ -63,7 +63,7 @@ case "$distro" in
         if [ -f /.dockerenv ]; then
             # issue with docker only
             python3 -m pip install -U --force-reinstall pip
-            cp /opt/pash/pa.sh /usr/bin/
+            cp "$PASH_TOP"/pa.sh /usr/bin/
         fi
         ;;
 esac

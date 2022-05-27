@@ -10,7 +10,7 @@ from ir_utils import *
 from util import *
 
 ## Global
-__version__ = "0.7.2" # FIXME add libdash version
+__version__ = "0.8" # FIXME add libdash version
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'PASH_TOP' in os.environ:
     PASH_TOP = os.environ['PASH_TOP']
@@ -26,6 +26,8 @@ assert(not os.getenv('PASH_TMP_PREFIX') is None)
 PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
 
 LOGGING_PREFIX = ""
+
+HDFS_PREFIX = "$HDFS_DATANODE_DIR/"
 
 config = {}
 annotations = []
@@ -146,6 +148,10 @@ def add_common_arguments(parser):
     parser.add_argument("--daemon_communicates_through_unix_pipes",
                         help="(experimental) the daemon communicates through unix pipes instead of sockets",
                         action="store_true")
+    parser.add_argument("--distributed_exec",
+                        help="(experimental) execute the script in a distributed environment. Remote machines should be configured and ready",
+                        action="store_true",
+                        default=False)
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")
@@ -187,6 +193,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--dgsh_tee"))
     if (pash_arguments.no_daemon):
         arguments.append(string_to_argument("--no_daemon"))
+    if (pash_arguments.distributed_exec):
+        arguments.append(string_to_argument("--distributed_exec"))
     if (pash_arguments.parallel_pipelines):
         arguments.append(string_to_argument("--parallel_pipelines"))
     if (pash_arguments.daemon_communicates_through_unix_pipes):
