@@ -4,5 +4,5 @@
 
 IN=${IN:-/1G.txt}
 
-hdfs dfs -cat $IN | tr -cs A-Za-z '\n' | tr A-Z a-z | sort | uniq -c | sort -rn | sed 100q
+hdfs dfs -cat $IN | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | tr A-Z a-z | sort | uniq -c | sort -rn | sed 100q
 
