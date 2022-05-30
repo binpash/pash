@@ -96,7 +96,7 @@ nlp_pash(){
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
     echo -n "${padded_script}" | tee -a "$times_file"
-    { time "$PASH_TOP/pa.sh" $PASH_FLAGS --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
+    { time "$PASH_TOP/pa.sh" $flags --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
     cat "${single_time_file}" | tee -a "$times_file"
   done
   cd ..
@@ -106,7 +106,7 @@ nlp_pash(){
 bash_nlp "rep3"
 
 # nlp_pash "$PASH_FLAGS" "par" "rep1"
-nlp_pash "$PASH_FLAGS --parallel_pipelines_limit 6" "par" "rep3"
+nlp_pash "$PASH_FLAGS --parallel_pipelines_limit 8" "par" "rep3"
 
 # nlp_pash "$PASH_FLAGS --distributed_exec" "distr" "rep1"
 nlp_pash "$PASH_FLAGS --distributed_exec --parallel_pipelines_limit 24" "distr" "rep3"
