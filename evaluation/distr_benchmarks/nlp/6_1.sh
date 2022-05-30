@@ -3,7 +3,7 @@
 # set -e
 
 IN=${IN:-/nlp/pg/}
-OUT=${OUT:-$PASH_TOP/evaluation/benchmarks/nlp/output/6_1/}
+OUT=${OUT:-$PASH_TOP/evaluation/distr_benchmarks/nlp/output/6_1/}
 ENTRIES=${ENTRIES:-1060}
 mkdir -p "$OUT"
 

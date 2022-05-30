@@ -10,8 +10,8 @@ mkdir -p "$OUT"
 
 for input in $(hdfs dfs -ls -C ${IN} | head -n ${ENTRIES} | xargs -n 1 -I arg1 basename arg1)
 do
-    hdfs dfs -cat $IN/$input | tr -sc '[A-Z][a-z]' '[\012*]' | grep -c '^....$' > ${OUT}/${input}.out0
-    hdfs dfs -cat $IN/$input | tr -sc '[A-Z][a-z]' '[\012*]' | sort -u | grep -c '^....$'  > ${OUT}/${input}.out1
+    hdfs dfs -cat $IN/$input | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | grep -c '^....$' > ${OUT}/${input}.out0
+    hdfs dfs -cat $IN/$input | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | sort -u | grep -c '^....$'  > ${OUT}/${input}.out1
 done
 
 echo 'done';
