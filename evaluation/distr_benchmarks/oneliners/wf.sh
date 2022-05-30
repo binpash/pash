@@ -1,6 +1,6 @@
 #!/bin/bash
 # Calculate the frequency of each word in the document, and sort by frequency
 
-IN=${IN:-/10M.txt}
+IN=${IN:-/rep3_10M.txt}
 
-hdfs dfs -cat $IN |  tr -cs A-Za-z '\n' | tr A-Z a-z | sort | uniq -c | sort -rn 
+hdfs dfs -cat $IN | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | tr A-Z a-z | sort | uniq -c | sort -rn 
