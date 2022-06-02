@@ -10,10 +10,12 @@ mkdir -p "$OUT"
 
 pure_func() {
     input=$1
-    cat > ${OUT}/${input}.input.words
-    tail +2 ${OUT}/${input}.input.words > ${OUT}/${input}.input.nextwords
-    paste ${OUT}/${input}.input.words ${OUT}/${input}.input.nextwords | sort | uniq -c > ${OUT}/${input}.input.bigrams
-    awk "\$1 == 2 {print \$2, \$3}" ${OUT}/${input}.input.bigrams
+    TEMPDIR=$(mktemp -d)
+    cat > ${TEMPDIR}/${input}.input.words
+    tail +2 ${TEMPDIR}/${input}.input.words > ${TEMPDIR}/${input}.input.nextwords
+    paste ${TEMPDIR}/${input}.input.words ${TEMPDIR}/${input}.input.nextwords | sort | uniq -c > ${TEMPDIR}/${input}.input.bigrams
+    awk "\$1 == 2 {print \$2, \$3}" ${TEMPDIR}/${input}.input.bigrams
+    rm -rf {TEMPDIR}
 }
 
 export -f pure_func

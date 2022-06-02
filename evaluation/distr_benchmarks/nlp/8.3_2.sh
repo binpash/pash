@@ -9,9 +9,11 @@ mkdir -p "$OUT"
 
 pure_func() {
     input=$1
-    sort -u > ${OUT}/${input}.types
-    rev < ${OUT}/${input}.types > ${OUT}/${input}.types.rev
-    sort ${OUT}/${input}.types ${OUT}/${input}.types.rev | uniq -c | awk "\$1 >= 2 {print \$2}"
+    TEMPDIR=$(mktemp -d)
+    sort -u > ${TEMPDIR}/${input}.types
+    rev < ${TEMPDIR}/${input}.types > ${TEMPDIR}/${input}.types.rev
+    sort ${TEMPDIR}/${input}.types ${TEMPDIR}/${input}.types.rev | uniq -c | awk "\$1 >= 2 {print \$2}"
+    rm -rf ${TEMPDIR}
 }
 
 export -f pure_func

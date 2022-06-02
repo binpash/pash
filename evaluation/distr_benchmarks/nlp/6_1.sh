@@ -9,11 +9,13 @@ mkdir -p "$OUT"
 
 trigrams() {
     input=$1
-    tr -sc '[A-Z][a-z]' '[\012*]' > ${OUT}/${input}.words
-    tail +2 ${OUT}/${input}.words > ${OUT}/${input}.nextwords
-    tail +3 ${OUT}/${input}.words > ${OUT}/${input}.nextwords2
-    paste ${OUT}/${input}.words ${OUT}/${input}.nextwords ${OUT}/${input}.nextwords2 | sort | uniq -c
-    rm -f ${OUT}/${input}.words ${OUT}/${input}.nextwords ${OUT}/${input}.nextwords2
+    TEMPDIR=$(mktemp -d)
+    tr -sc '[A-Z][a-z]' '[\012*]' > ${TEMPDIR}/${input}.words
+    tail +2 ${TEMPDIR}/${input}.words > ${TEMPDIR}/${input}.nextwords
+    tail +3 ${TEMPDIR}/${input}.words > ${TEMPDIR}/${input}.nextwords2
+    paste ${TEMPDIR}/${input}.words ${TEMPDIR}/${input}.nextwords ${TEMPDIR}/${input}.nextwords2 | sort | uniq -c
+    rm -f ${TEMPDIR}/${input}.words ${TEMPDIR}/${input}.nextwords ${TEMPDIR}/${input}.nextwords2
+    rm -rf ${TEMPDIR}
 }
 export -f trigrams
 

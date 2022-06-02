@@ -9,11 +9,13 @@ mkdir -p "$OUT"
 
 pure_func() {
     input=$1
-    cat > ${OUT}/${input}.words
-    tail +2 ${OUT}/${input}.words > ${OUT}/${input}.nextwords
-    tail +2 ${OUT}/${input}.words > ${OUT}/${input}.nextwords2
-    paste ${OUT}/${input}.words ${OUT}/${input}.nextwords ${OUT}/${input}.nextwords2 |
+    TEMPDIR=$(mktemp -d)
+    cat > ${TEMPDIR}/${input}.words
+    tail +2 ${TEMPDIR}/${input}.words > ${TEMPDIR}/${input}.nextwords
+    tail +2 ${TEMPDIR}/${input}.words > ${TEMPDIR}/${input}.nextwords2
+    paste ${TEMPDIR}/${input}.words ${TEMPDIR}/${input}.nextwords ${TEMPDIR}/${input}.nextwords2 |
     sort | uniq -c 
+    rm -rf ${TEMPDIR}
 }
 export -f pure_func
 for input in $(hdfs dfs -ls -C ${IN} | head -n ${ENTRIES} | xargs -n 1 -I arg1 basename arg1)
