@@ -27,8 +27,8 @@ oneliners_bash() {
 
     touch "$seq_times_file"
     cat $seq_times_file > $seq_times_file.d
-    echo executing one-liners $(date) | tee -a "$seq_times_file"
-    echo '' > "$seq_times_file"
+    echo executing one-liners $(date) | tee "$seq_times_file"
+    echo '' >> "$seq_times_file"
 
     for script_input in ${scripts_inputs[@]}
     do
@@ -66,8 +66,8 @@ oneliners_pash(){
 
   touch "$times_file"
   cat $times_file > $times_file.d
-  echo executing one-liners with $prefix pash with data $rep $(date) | tee -a "$times_file"
-  echo '' > "$times_file"
+  echo executing one-liners with $prefix pash with data $rep $(date) | tee "$times_file"
+  echo '' >> "$times_file"
 
   for script_input in ${scripts_inputs[@]}
   do
@@ -92,11 +92,11 @@ oneliners_pash(){
   done
 }
 
-oneliners_bash "rep1"
+# oneliners_bash "rep1"
 oneliners_bash "rep3"
 
-oneliners_pash "$PASH_FLAGS" "par" "rep1"
+# oneliners_pash "$PASH_FLAGS" "par" "rep1"
 oneliners_pash "$PASH_FLAGS" "par" "rep3"
 
-oneliners_pash "$PASH_FLAGS --distributed_exec" "distr" "rep1"
+# oneliners_pash "$PASH_FLAGS --distributed_exec" "distr" "rep1"
 oneliners_pash "$PASH_FLAGS --distributed_exec" "distr" "rep3"
