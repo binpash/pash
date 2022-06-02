@@ -14,8 +14,12 @@ if ! dpkg -s pandoc > /dev/null 2>&1 ; then
   rm ./pandoc-2.2.1-1-$(dpkg --print-architecture).deb 
 fi
 
+if ! dpkg -s nodejs > /dev/null 2>&1 ; then
+    # node version 10+ does not need external npm
+    curl -fsSL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+fi
+
 if [ ! -d node_modules ]; then
-  # node version 10+ does not need external npm
-  curl -fsSL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-  npm install
+    npm install
 fi

@@ -63,7 +63,7 @@ case "$distro" in
         if [ -f /.dockerenv ]; then
             # issue with docker only
             python3 -m pip install -U --force-reinstall pip
-            cp /opt/pash/pa.sh /usr/bin/
+            cp "$PASH_TOP"/pa.sh /usr/bin/
         fi
         ;;
 esac
@@ -89,6 +89,7 @@ echo "Installing python dependencies..."
 
 python3 -m pip install jsonpickle --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_jsonpickle.log
 python3 -m pip install pexpect --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_pexpect.log
+python3 -m pip install graphviz --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_graphviz.log
 python3 -m pip install numpy --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_matplotlib.log
 python3 -m pip install requests --root $PYTHON_PKG_DIR --ignore-installed

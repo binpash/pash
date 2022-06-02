@@ -1021,3 +1021,4 @@ class IR:
                 #      and not self.get_stdin() is None 
                 #      and not self.get_stdout() is None)))
 
+
