@@ -39,6 +39,22 @@ files_exist_done_check()
 }
 
 ##
+## This function checks if number of files in a sequence of directories
+## is correct.
+## Returns 0 if number is correct, or 1 otherwise
+##
+number_of_files_in_dir()
+{
+    local expected_number=$1
+    local actual_number=$(ls "${@:2}" | wc -l)
+    if [ $expected_number -eq $actual_number ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+##
 ## This function executes a single idempotent step only if its check fails
 ##
 ## Requirements:
@@ -128,13 +144,28 @@ export -f wav_step_2_done_check
 export -f wav_step_2
 
 
+jpg_step()
+{
+    curl -C - -o jpg.zip $JPG_DATA_LINK
+    unzip jpg.zip
+    rm -rf ${IN}/jpg.zip
+}
+
+jpg_step_done_check()
+{
+    number_of_files_in_dir $JPG_NUMBER jpg
+}
+export -f jpg_step
+export -f jpg_step_done_check
+
 setup_dataset() {
   if [ "$1" == "--small" ]; then
       LOG_DATA_FILES=6
-      export WAV_DATA_FILES=2
+      export WAV_DATA_FILES=20
       NODE_MODULE_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/node_modules.zip
       BIO_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/bio.zip
       export JPG_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/jpg.zip
+      export JPG_NUMBER=508
       PCAP_DATA_FILES=1
   else
       LOG_DATA_FILES=84
@@ -142,22 +173,16 @@ setup_dataset() {
       NODE_MODULE_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/node_modules.zip
       BIO_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/bio.zip
       export JPG_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/jpg.zip
+      export JPG_NUMBER=1624
       PCAP_DATA_FILES=15
   fi
   
-  ## Step 1
+  ## WAV
   execute_step wav_step_1 wav_step_1_done_check "WAV zip download"
-
-  ## Step 2
   execute_step wav_step_2 wav_step_2_done_check "WAV file generation"
 
-  if [ ! -d ${IN}/jpg ]; then
-      cd ${IN}
-      curl -C - -o jpg.zip $JPG_DATA_LINK
-      unzip jpg.zip
-      echo "JPG Generated"
-      rm -rf ${IN}/jpg.zip
-  fi
+  ## JPG
+  execute_step jpg_step jpg_step_done_check "JPG Downloading"
   
   # download the input for the nginx logs and populate the dataset
   if [ ! -d ${IN}/log_data ]; then
