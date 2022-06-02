@@ -15,7 +15,6 @@ pure_func() {
     cat > ${TEMPDIR}/${input}.input.words
     tail +2 ${TEMPDIR}/${input}.input.words > ${TEMPDIR}/${input}.input.nextwords
     paste ${TEMPDIR}/${input}.input.words ${TEMPDIR}/${input}.input.nextwords
-
     rm -rf ${TEMPDIR}
 }
 export -f pure_func

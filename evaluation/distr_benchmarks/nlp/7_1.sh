@@ -13,4 +13,4 @@ do
 done
 
 echo 'done';
-rm ${OUT}
+rm -rf ${OUT}

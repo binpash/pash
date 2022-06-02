@@ -14,7 +14,6 @@ trigrams() {
     tail +2 ${TEMPDIR}/${input}.words > ${TEMPDIR}/${input}.nextwords
     tail +3 ${TEMPDIR}/${input}.words > ${TEMPDIR}/${input}.nextwords2
     paste ${TEMPDIR}/${input}.words ${TEMPDIR}/${input}.nextwords ${TEMPDIR}/${input}.nextwords2 | sort | uniq -c
-    rm -f ${TEMPDIR}/${input}.words ${TEMPDIR}/${input}.nextwords ${TEMPDIR}/${input}.nextwords2
     rm -rf ${TEMPDIR}
 }
 export -f trigrams
