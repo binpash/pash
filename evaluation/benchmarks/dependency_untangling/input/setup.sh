@@ -158,9 +158,61 @@ jpg_step_done_check()
 export -f jpg_step
 export -f jpg_step_done_check
 
+nginx_logs_step_1()
+{
+    curl -C - -o nginx.zip http://pac-n4.csail.mit.edu:81/pash_data/nginx.zip
+    unzip nginx.zip
+    rm nginx.zip
+}
+
+nginx_logs_step_1_done_check()
+{
+    local prefix="nginx-logs/log"
+    for i in $(seq 0 7); do
+        if ! files_exist_done_check "${prefix}$i"; then
+            return 1
+        fi
+    done
+    return $?
+}
+
+export -f nginx_logs_step_1
+export -f nginx_logs_step_1_done_check
+
+nginx_logs_step_2()
+{
+    # generating analysis logs
+    mkdir -p ${IN}/log_data
+    for (( i = 1; i <=$LOG_DATA_FILES; i++)) do
+        for j in nginx-logs/*;do
+            n=$(basename $j)
+            cp $j  log_data/log${i}_${n}.log; 
+        done
+    done
+}
+
+
+nginx_logs_step_2_done_check()
+{
+    local prefix="log_data/log"
+    for j in $(seq 0 7); do
+        for i in $(seq 1 "$LOG_DATA_FILES"); do
+            if ! files_exist_done_check "${prefix}${i}_log${j}.log"; then
+                return 1
+            fi
+        done
+    done
+    echo "Done"
+    return 0
+}
+
+export -f nginx_logs_step_2_done_check
+export -f nginx_logs_step_2
+
+
 setup_dataset() {
   if [ "$1" == "--small" ]; then
-      LOG_DATA_FILES=6
+      export LOG_DATA_FILES=6
       export WAV_DATA_FILES=20
       NODE_MODULE_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/node_modules.zip
       BIO_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/small/bio.zip
@@ -168,7 +220,7 @@ setup_dataset() {
       export JPG_NUMBER=508
       PCAP_DATA_FILES=1
   else
-      LOG_DATA_FILES=84
+      export LOG_DATA_FILES=84
       export WAV_DATA_FILES=120
       NODE_MODULE_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/node_modules.zip
       BIO_DATA_LINK=http://pac-n4.csail.mit.edu:81/pash_data/full/bio.zip
@@ -184,22 +236,9 @@ setup_dataset() {
   ## JPG
   execute_step jpg_step jpg_step_done_check "JPG Downloading"
   
-  # download the input for the nginx logs and populate the dataset
-  if [ ! -d ${IN}/log_data ]; then
-      cd $IN
-      wget http://pac-n4.csail.mit.edu:81/pash_data/nginx.zip
-      unzip nginx.zip 
-      rm nginx.zip
-      # generating analysis logs
-      mkdir -p ${IN}/log_data
-      for (( i = 1; i <=$LOG_DATA_FILES; i++)) do
-          for j in nginx-logs/*;do
-              n=$(basename $j)
-              cat $j > log_data/log${i}_${n}.log; 
-          done
-      done
-      echo "Logs Generated"
-  fi
+  ## nginx logs
+  execute_step nginx_logs_step_1 nginx_logs_step_1_done_check "NGINX logs Downloading"
+  execute_step nginx_logs_step_2 nginx_logs_step_2_done_check "NGINX logs generated"
   
   if [ ! -d ${IN}/bio ]; then                                                  
       if [ "$1" = "--small" ]; then
