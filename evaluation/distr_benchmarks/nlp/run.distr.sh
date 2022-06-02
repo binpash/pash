@@ -1,12 +1,12 @@
-PASH_FLAGS='--width 8 --r_split --parallel_pipelines'
+PASH_FLAGS='--width 8 --r_split'
 export TIMEFORMAT=%R
 
-if [[ "$1" == "--small" ]]; then
-    echo "Using small input"
-    export ENTRIES=40
+if [[ "$1" == "--full" ]]; then
+   echo "Using full input"
+  export ENTRIES=1060
 else
-    echo "Using full input"
-    export ENTRIES=1060
+  echo "Using small input"
+  export ENTRIES=120
 fi
 
 names_scripts=(
@@ -14,7 +14,7 @@ names_scripts=(
     "2syllable_words;6_5"
     "4letter_words;6_2"
     "bigrams_appear_twice;8.2_2"
-    "bigrams;4_3"
+    # "bigrams;4_3"
     "compare_exodus_genesis;8.3_3"
     "count_consonant_seq;7_2"
     # "count_morphs;7_1"
@@ -37,14 +37,14 @@ names_scripts=(
 
 bash_nlp(){
   outputs_dir="outputs"
-  rep=${1:-rep3}
-  times_file=$rep"_seq.res"
-  outputs_suffix=$rep"_seq.out"
+  times_file="seq.res"
+  outputs_suffix="seq.out"
 
   mkdir -p "$outputs_dir"
 
   touch "$times_file"
-  echo executing Unix-for-nlp $(date) | tee -a "$times_file"
+  cat "$times_file" > "$times_file".d
+  echo executing Unix-for-nlp $(date) | tee "$times_file"
   echo '' >> "$times_file"
 
   for name_script in ${names_scripts[@]}
@@ -60,14 +60,11 @@ bash_nlp(){
 
     echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
   done
-  cd ..
 }
 
 nlp_pash(){
   flags=${1:-$PASH_FLAGS}
   prefix=${2:-par}
-  rep=${3:-rep3}
-  prefix=$prefix\_$rep
 
   times_file="$prefix.res"
   outputs_suffix="$prefix.out"
@@ -79,7 +76,8 @@ nlp_pash(){
   mkdir -p "$pash_logs_dir"
 
   touch "$times_file"
-  echo executing Unix-for-nlp with pash $(date) | tee -a "$times_file"
+  cat "$times_file" > "$times_file".d
+  echo executing Unix-for-nlp with $prefix pash $(date) | tee "$times_file"
   echo '' >> "$times_file"
 
   for name_script in ${names_scripts[@]}
@@ -99,14 +97,14 @@ nlp_pash(){
     { time "$PASH_TOP/pa.sh" $flags --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
     cat "${single_time_file}" | tee -a "$times_file"
   done
-  cd ..
 }
 
-# bash_nlp "rep1"
-bash_nlp "rep3"
+bash_nlp
 
-# nlp_pash "$PASH_FLAGS" "par" "rep1"
-nlp_pash "$PASH_FLAGS --parallel_pipelines_limit 8" "par" "rep3"
+nlp_pash "$PASH_FLAGS" "par_no_du"
 
-# nlp_pash "$PASH_FLAGS --distributed_exec" "distr" "rep1"
-nlp_pash "$PASH_FLAGS --distributed_exec --parallel_pipelines_limit 24" "distr" "rep3"
+nlp_pash "$PASH_FLAGS --parallel_pipelines --parallel_pipelines_limit 24" "par"
+
+nlp_pash "$PASH_FLAGS --distributed_exec" "distr_no_du"
+
+nlp_pash "$PASH_FLAGS --parallel_pipelines --distributed_exec --parallel_pipelines_limit 24" "distr"
