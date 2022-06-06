@@ -20,8 +20,8 @@ export -f pure_func
 
 for input in $(hdfs dfs -ls -C ${IN} | head -n ${ENTRIES} | xargs -n 1 -I arg1 basename arg1)
 do
-    hdfs dfs -cat $IN"/"$input | grep 'the land of' | pure_func ${input} | sort -nr | sed 5q > ${OUT}/${input}.out0
-    hdfs dfs -cat $IN"/"$input | grep 'And he said' | pure_func ${input} | sort -nr | sed 5q > ${OUT}/${input}.out1
+    hdfs dfs -cat $IN/$input | grep 'the land of' | pure_func ${input} | sort -nr | sed 5q > ${OUT}/${input}.out0
+    hdfs dfs -cat $IN/$input | grep 'And he said' | pure_func ${input} | sort -nr | sed 5q > ${OUT}/${input}.out1
 done
 
 echo 'done';

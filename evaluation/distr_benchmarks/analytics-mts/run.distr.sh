@@ -2,9 +2,9 @@ PASH_FLAGS='--width 8 --r_split'
 export TIMEFORMAT=%R
 
 if [[ "$1" == "--small" ]]; then
-    export IN="input/in_small.csv"
+    export IN="/analytics-mts/in_small.csv"
 else
-    export IN="input/in.csv"
+    export IN="/analytics-mts/in.csv"
 fi
 
 analytics-mts_bash(){

@@ -42,7 +42,7 @@ setup_dataset() {
             wget "http://ndr.md/data/unix50/${input}.txt"
             "$PASH_TOP/scripts/append_nl_if_not.sh" "${input}.txt"
         fi
-        hdfs dfs -put $file /unix50/$file
+        hdfs dfs -put "${input}.txt" /unix50/"${input}.txt"
     done
 
     # increase the original input size 10x
