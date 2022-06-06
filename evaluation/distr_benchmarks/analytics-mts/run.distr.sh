@@ -2,9 +2,9 @@ PASH_FLAGS='--width 8 --r_split'
 export TIMEFORMAT=%R
 
 if [[ "$1" == "--small" ]]; then
-    export IN="input/in_small.csv"
+    export IN="/analytics-mts/in_small.csv"
 else
-    export IN="input/in.csv"
+    export IN="/analytics-mts/in.csv"
 fi
 
 analytics-mts_bash(){
@@ -15,7 +15,7 @@ analytics-mts_bash(){
   mkdir -p "$outputs_dir"
 
   touch "$times_file"
-  cat "$times_file" > "$times_file".d
+  cat "$times_file" >> "$times_file".d
   echo executing MTS analytics $(date) | tee "$times_file"
   echo '' >> "$times_file"
   ## FIXME 5.sh is not working yet
@@ -47,7 +47,7 @@ analytics-mts_pash(){
   mkdir -p "$pash_logs_dir"
 
   touch "$times_file"
-  cat "$times_file" > "$times_file".d
+  cat "$times_file" >> "$times_file".d
   echo executing MTS analytics with pash $(date) | tee "$times_file"
   echo '' >> "$times_file"
   ## FIXME 5.sh is not working yet

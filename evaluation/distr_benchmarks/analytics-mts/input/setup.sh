@@ -15,7 +15,7 @@ fi
 
 setup_dataset() {
   hdfs dfs -mkdir /analytics-mts
-  if [ ! -f ./in.csv ] && [ "$1" = "--full" ]; then
+  if [ ! -f ./in.csv ] && [ "$1" != "--small" ];; then
     # yesterday=$(date --date='1 days ago' +'%y-%m-%d')
     # curl https://www.balab.aueb.gr/~dds/oasa-$yesterday.bz2 |
     curl -sf 'https://www.balab.aueb.gr/~dds/oasa-2021-01-08.bz2' | bzip2 -d > in.csv
@@ -36,8 +36,8 @@ setup_dataset() {
 
 source_var() {
   if [[ "$1" == "--small" ]]; then
-    export IN="input/in_small.csv"
+    export IN="analytics-mts/in_small.csv"
   else
-    export IN="input/in.csv"
+    export IN="analytics-mts/in.csv"
   fi    
 }
