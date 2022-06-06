@@ -35,7 +35,7 @@ names_scripts=(
     "words_no_vowels;6_3"
   )
 
-bash_nlp(){
+nlp_bash(){
   outputs_dir="outputs"
   times_file="seq.res"
   outputs_suffix="seq.out"
@@ -43,7 +43,7 @@ bash_nlp(){
   mkdir -p "$outputs_dir"
 
   touch "$times_file"
-  cat "$times_file" > "$times_file".d
+  cat "$times_file" >> "$times_file".d
   echo executing Unix-for-nlp $(date) | tee "$times_file"
   echo '' >> "$times_file"
 
@@ -76,7 +76,7 @@ nlp_pash(){
   mkdir -p "$pash_logs_dir"
 
   touch "$times_file"
-  cat "$times_file" > "$times_file".d
+  cat "$times_file" >> "$times_file".d
   echo executing Unix-for-nlp with $prefix pash $(date) | tee "$times_file"
   echo '' >> "$times_file"
 
@@ -99,7 +99,7 @@ nlp_pash(){
   done
 }
 
-bash_nlp
+nlp_bash
 
 nlp_pash "$PASH_FLAGS" "par_no_du"
 

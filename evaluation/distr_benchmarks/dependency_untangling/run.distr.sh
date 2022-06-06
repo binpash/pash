@@ -22,7 +22,7 @@ dependency_untangling_bash() {
   mkdir -p "$outputs_dir"
 
   touch "$times_file"
-  cat "$times_file" > "$times_file".d
+  cat "$times_file" >> "$times_file".d
   echo executing dependency_untangling $(date) | tee "$times_file"
   echo '' >> "$times_file"
   
@@ -57,7 +57,7 @@ dependency_untangling_pash() {
   mkdir -p "$pash_logs_dir"
 
   touch "$times_file"
-  cat "$times_file" > "$times_file".d
+  cat "$times_file" >> "$times_file".d
   echo executing dependency_untangling with pash $(date) | tee "$times_file"
   echo '' >> "$times_file"
   

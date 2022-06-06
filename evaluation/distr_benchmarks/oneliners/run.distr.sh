@@ -26,7 +26,7 @@ oneliners_bash() {
     mkdir -p "$outputs_dir"
 
     touch "$seq_times_file"
-    cat $seq_times_file > $seq_times_file.d
+    cat $seq_times_file >> $seq_times_file.d
     echo executing one-liners $(date) | tee "$seq_times_file"
     echo '' >> "$seq_times_file"
 
@@ -65,7 +65,7 @@ oneliners_pash(){
   mkdir -p "$pash_logs_dir"
 
   touch "$times_file"
-  cat $times_file > $times_file.d
+  cat $times_file >> $times_file.d
   echo executing one-liners with $prefix pash with data $rep $(date) | tee "$times_file"
   echo '' >> "$times_file"
 

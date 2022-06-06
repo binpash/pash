@@ -15,7 +15,7 @@ analytics-mts_bash(){
   mkdir -p "$outputs_dir"
 
   touch "$times_file"
-  cat "$times_file" > "$times_file".d
+  cat "$times_file" >> "$times_file".d
   echo executing MTS analytics $(date) | tee "$times_file"
   echo '' >> "$times_file"
   ## FIXME 5.sh is not working yet
@@ -47,7 +47,7 @@ analytics-mts_pash(){
   mkdir -p "$pash_logs_dir"
 
   touch "$times_file"
-  cat "$times_file" > "$times_file".d
+  cat "$times_file" >> "$times_file".d
   echo executing MTS analytics with pash $(date) | tee "$times_file"
   echo '' >> "$times_file"
   ## FIXME 5.sh is not working yet

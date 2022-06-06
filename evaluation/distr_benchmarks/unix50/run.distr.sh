@@ -16,7 +16,7 @@ unix50_bash(){
   mkdir -p "$outputs_dir"
 
   touch "$times_file"
-  cat "$times_file" > "$times_file".d
+  cat "$times_file" >> "$times_file".d
   echo executing Unix50 $(date) | tee "$times_file"
   echo '' >> "$times_file"
 
@@ -49,7 +49,7 @@ unix50_pash(){
   mkdir -p "$pash_logs_dir"
 
   touch "$times_file"
-  cat "$times_file" > "$times_file".d
+  cat "$times_file" >> "$times_file".d
   echo executing Unix50 $(date) | tee "$times_file"
   echo '' >> "$times_file"
 
