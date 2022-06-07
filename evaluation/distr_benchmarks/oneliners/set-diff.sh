@@ -2,7 +2,7 @@
 # Show the set-difference between two streams (i.e., elements in the first that are not in the second).
 # https://stackoverflow.com/questions/2509533/bash-linux-set-difference-between-two-text-files
 
-IN=${IN:-/1G.txt}
+IN=${IN:-/oneliners/1G.txt}
 
 mkfifo s1 s2
 

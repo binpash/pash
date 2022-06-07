@@ -13,31 +13,21 @@ if [[ "$1" == "-c" ]]; then
     exit
 fi
 
-setup_dataset() {
-  hdfs dfs -mkdir /analytics-mts
-  if [ ! -f ./in.csv ] && [ "$1" != "--small" ];; then
-    # yesterday=$(date --date='1 days ago' +'%y-%m-%d')
-    # curl https://www.balab.aueb.gr/~dds/oasa-$yesterday.bz2 |
-    curl -sf 'https://www.balab.aueb.gr/~dds/oasa-2021-01-08.bz2' | bzip2 -d > in.csv
-    if [ $? -ne 0 ]; then
-      echo "oasa-2021-01-08.bz2 / bzip2 not available, contact the pash authors"
-      exit 1
-    fi
-    hdfs dfs -put in.csv  /analytics-mts/in.csv
-  elif [ ! -f ./in_small.csv ] && [ "$1" = "--small" ]; then
-    if [ ! -f ./in_small.csv ]; then                                                       
-      echo "Generating small-size inputs"                                                  
-      # FIXME PR: Do we need all of them?                                                  
-      curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/in_small.csv' > in_small.csv
-    fi
-    hdfs dfs -put in_small.csv  /analytics-mts/in_small.csv                                                                                     
+hdfs dfs -mkdir /analytics-mts
+if [ ! -f ./in.csv ] && [ "$1" != "--small" ]; then
+  # yesterday=$(date --date='1 days ago' +'%y-%m-%d')
+  # curl https://www.balab.aueb.gr/~dds/oasa-$yesterday.bz2 |
+  curl -sf 'https://www.balab.aueb.gr/~dds/oasa-2021-01-08.bz2' | bzip2 -d > in.csv
+  if [ $? -ne 0 ]; then
+    echo "oasa-2021-01-08.bz2 / bzip2 not available, contact the pash authors"
+    exit 1
   fi
-}
-
-source_var() {
-  if [[ "$1" == "--small" ]]; then
-    export IN="analytics-mts/in_small.csv"
-  else
-    export IN="analytics-mts/in.csv"
-  fi    
-}
+  hdfs dfs -put in.csv  /analytics-mts/in.csv
+elif [ ! -f ./in_small.csv ] && [ "$1" = "--small" ]; then
+  if [ ! -f ./in_small.csv ]; then                                                       
+    echo "Generating small-size inputs"                                                  
+    # FIXME PR: Do we need all of them?                                                  
+    curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/in_small.csv' > in_small.csv
+  fi
+  hdfs dfs -put in_small.csv  /analytics-mts/in_small.csv                                                                                     
+fi
