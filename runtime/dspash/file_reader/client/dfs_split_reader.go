@@ -133,7 +133,6 @@ func readDFSLogicalSplit(conf DFSConfig, split int) error {
 		return err
 	}
 
-	fmt.Println(filepath)
 	err = readLocalFile(filepath, skipFirstLine, writer)
 	if err != nil {
 		return err
