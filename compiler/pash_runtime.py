@@ -397,7 +397,7 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen, fan_out, r_split
             output_ids.append(output_fid.get_ident())
             graph.add_edge(output_fid)
 
-            split_reader_node = dfs_split_reader.make_dfs_split_reader_node([block_fid.get_ident()], output_fid.get_ident(), split_num, config.HDFS_PREFIX)
+            split_reader_node = dfs_split_reader.make_dfs_split_reader_node([block_fid.get_ident()], output_fid.get_ident(), split_num)
             graph.add_node(split_reader_node)
 
     # Remove the HDFS Cat command as it's not used anymore
