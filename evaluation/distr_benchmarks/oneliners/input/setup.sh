@@ -13,6 +13,8 @@ if [[ "$1" == "-c" ]]; then
     exit
 fi
 
+hdfs dfs -mkdir /oneliners
+
 if [ ! -f ./1M.txt ]; then
     curl -sf 'http://ndr.md/data/dummy/1M.txt' > 1M.txt
     if [ $? -ne 0 ]; then
@@ -67,30 +69,16 @@ if [ ! -f ./all_cmdsx100.txt ]; then
         done
 fi
 
-
-if [ "$#" -eq 1 ] && [ "$1" = "--full" ]; then
-    echo "Generating full-size inputs"
-
-
-    if [ ! -f ./3G.txt ]; then
-        touch 3G.txt
-        for (( i = 0; i < 3; i++ )); do
-            cat 1G.txt >> 3G.txt
-        done
-    fi
-    input_files+=("3G.txt")
-
-    if [ ! -f ./10G.txt ]; then
-        touch 10G.txt
-        for (( i = 0; i < 10; i++ )); do
-            cat 1G.txt >> 10G.txt
-        done
-    fi
-    input_files+=("10G.txt")
+if [ ! -f ./3G.txt ]; then
+    touch 3G.txt
+    for (( i = 0; i < 3; i++ )); do
+        cat 1G.txt >> 3G.txt
+    done
 fi
+input_files+=("3G.txt")
 
 # Add files with different replication factors
 for file in "${input_files[@]}"; do
-    hdfs dfs -Ddfs.replication=1  -put $file /rep1_$file
-    hdfs dfs -Ddfs.replication=3  -put $file /rep3_$file
+    hdfs dfs -put $file /oneliners/$file
+    rm -f $file
 done
