@@ -7,7 +7,8 @@ from typing import List, Tuple
 import requests
 
 HDFSBlock = namedtuple("HDFSBlock", "path hosts")
-
+# The Bash helper function name (defind in hdfs_utils.sh) for getting the local block path
+HDFS_BLOCK_PATH_FUNC = "get_hdfs_block_path" 
 
 class FileData(object):
     def __init__(self, filename):
@@ -28,13 +29,7 @@ class FileData(object):
         for i in range(len(self.blocknames)):
             filepaths.append(
                 os.path.join(
-                    "current",
-                    self.dnodenames[i],
-                    "current",
-                    "finalized",
-                    "subdir0",
-                    "subdir0",
-                    self.blocknames[i],
+                    f"$({HDFS_BLOCK_PATH_FUNC} {self.dnodenames[i]} {self.blocknames[i]})"
                 )
             )
         return filepaths
