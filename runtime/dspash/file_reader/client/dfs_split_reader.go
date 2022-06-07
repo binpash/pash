@@ -10,7 +10,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -85,15 +84,6 @@ func readFirstLine(block DFSBlock, writer *bufio.Writer) (ok bool, e error) {
 	return
 }
 
-func getAbsPath(s string) (string, error) {
-	// Hacky but should work for now
-	out, err := exec.Command("bash", "-c", fmt.Sprintf("echo -n %s", s)).Output()
-	if err != nil {
-		return "", err
-	}
-	return string(out), nil
-}
-
 func readLocalFile(p string, skipFirstLine bool, writer *bufio.Writer) error {
 	file, err := os.Open(p)
 	if err != nil {
@@ -128,7 +118,7 @@ func readDFSLogicalSplit(conf DFSConfig, split int) error {
 		skipFirstLine = false
 	}
 
-	filepath, err := getAbsPath(conf.Blocks[split].Path)
+	filepath, err := pb.GetAbsPath(conf.Blocks[split].Path)
 	if err != nil {
 		return err
 	}

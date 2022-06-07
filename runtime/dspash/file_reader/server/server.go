@@ -8,7 +8,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"os/exec"
 
 	"google.golang.org/grpc"
 
@@ -24,17 +23,8 @@ type fileReaderServer struct {
 	pb.UnimplementedFileReaderServer
 }
 
-func getAbsPath(s string) (string, error) {
-	// Hacky but should work for now
-	out, err := exec.Command("bash", "-c", fmt.Sprintf("echo %s", s)).Output()
-	if err != nil {
-		return "", err
-	}
-	return string(out), nil
-}
-
 func (s *fileReaderServer) ReadFile(req *pb.FileRequest, stream pb.FileReader_ReadFileServer) error {
-	filename, err := getAbsPath(req.path)
+	filename, err := pb.GetAbsPath(req.Path)
 	if err != nil {
 		log.Println(err)
 		return err
