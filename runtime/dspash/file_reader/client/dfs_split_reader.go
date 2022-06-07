@@ -87,7 +87,7 @@ func readFirstLine(block DFSBlock, writer *bufio.Writer) (ok bool, e error) {
 
 func getAbsPath(s string) (string, error) {
 	// Hacky but should work for now
-	out, err := exec.Command("bash", "-c", fmt.Sprintf("echo %s", s)).Output()
+	out, err := exec.Command("bash", "-c", fmt.Sprintf("echo -n %s", s)).Output()
 	if err != nil {
 		return "", err
 	}
@@ -133,6 +133,7 @@ func readDFSLogicalSplit(conf DFSConfig, split int) error {
 		return err
 	}
 
+	fmt.Println(filepath)
 	err = readLocalFile(filepath, skipFirstLine, writer)
 	if err != nil {
 		return err
