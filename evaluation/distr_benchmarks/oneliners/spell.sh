@@ -1,7 +1,7 @@
 #!/bin/bash
 # Calculate mispelled words in an input
 # https://dl.acm.org/doi/10.1145/3532.315102
-IN=${IN:-/1G.txt}
+IN=${IN:-/oneliners/1G.txt}
 dict=${dict:-$PASH_TOP/evaluation/distr_benchmarks/oneliners/input/dict.txt}
 
 hdfs dfs -cat $IN |
