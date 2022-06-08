@@ -8,4 +8,3 @@ hadoop jar $jarpath -files sort.sh -D mapred.reduce.tasks=0 -input $basepath/1G.
 hadoop jar $jarpath -files spell_map.sh,spell_reduce.sh -input $basepath/1G.txt -output $outputs_dir/spell -mapper spell_map.sh -reducer spell_reduce.sh # spell_reduce
 hadoop jar $jarpath -files top-n_map.sh,top-n_reduce.sh -input $basepath/1G.txt -output $outputs_dir/top-n -mapper top-n_map.sh -reducer top-n_reduce.sh # top-n
 hadoop jar $jarpath -files wf_map.sh,wf_reduce.sh -input $basepath/1G.txt -output $outputs_dir/wf -mapper wf_map.sh -reducer wf_reduce.sh # wf
-

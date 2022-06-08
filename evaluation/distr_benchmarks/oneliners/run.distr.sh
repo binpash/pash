@@ -111,8 +111,7 @@ oneliners_hadoopstreaming(){
 
   while IFS= read -r line; do
       printf -v pad %20s
-      name=""
-      cut -d "#" -f2- <<< "$name"
+      name=$(cut -d "#" -f2- <<< "$line")
       name=$(sed "s/ //g" <<< $name)
       padded_script="${name}.sh:${pad}"
       padded_script=${padded_script:0:20} 
