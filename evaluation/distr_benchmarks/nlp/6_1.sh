@@ -7,20 +7,21 @@ OUT=${OUT:-$PASH_TOP/evaluation/distr_benchmarks/nlp/output/6_1/}
 ENTRIES=${ENTRIES:-1060}
 mkdir -p "$OUT"
 
-trigrams() {
+pure_func() {
     input=$1
-    tr -sc '[A-Z][a-z]' '[\012*]' > ${OUT}/${input}.words
-    tail +2 ${OUT}/${input}.words > ${OUT}/${input}.nextwords
-    tail +3 ${OUT}/${input}.words > ${OUT}/${input}.nextwords2
-    paste ${OUT}/${input}.words ${OUT}/${input}.nextwords ${OUT}/${input}.nextwords2 | sort | uniq -c
-    rm -f ${OUT}/${input}.words ${OUT}/${input}.nextwords ${OUT}/${input}.nextwords2
+    TEMPDIR=$(mktemp -d)
+    tr -sc '[A-Z][a-z]' '[\012*]' > ${TEMPDIR}/${input}.words
+    tail +2 ${TEMPDIR}/${input}.words > ${TEMPDIR}/${input}.nextwords
+    tail +3 ${TEMPDIR}/${input}.words > ${TEMPDIR}/${input}.nextwords2
+    paste ${TEMPDIR}/${input}.words ${TEMPDIR}/${input}.nextwords ${TEMPDIR}/${input}.nextwords2 | sort | uniq -c
+    rm -rf ${TEMPDIR}
 }
-export -f trigrams
+export -f pure_func
 
 for input in $(hdfs dfs -ls -C ${IN} | head -n ${ENTRIES} | xargs -n 1 -I arg1 basename arg1)
 do
-    hdfs dfs -cat $IN"/"$input | grep 'the land of' | trigrams ${input} | sort -nr | sed 5q > ${OUT}/${input}.out0
-    hdfs dfs -cat $IN"/"$input | grep 'And he said' | trigrams ${input} | sort -nr | sed 5q > ${OUT}/${input}.out1
+    hdfs dfs -cat $IN/$input | grep 'the land of' | pure_func ${input} | sort -nr | sed 5q > ${OUT}/${input}.out0
+    hdfs dfs -cat $IN/$input | grep 'And he said' | pure_func ${input} | sort -nr | sed 5q > ${OUT}/${input}.out1
 done
 
 echo 'done';

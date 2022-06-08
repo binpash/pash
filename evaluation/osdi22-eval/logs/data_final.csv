@@ -1,0 +1,360 @@
+COVID-mts,1,bash,83.530
+COVID-mts,1,pash_aot,5.31733
+COVID-mts,1,pash_jit,9.50934
+COVID-mts,1,pash_jit_no_comm,5.51572
+COVID-mts,2,bash,83.870
+COVID-mts,2,pash_aot,5.09569
+COVID-mts,2,pash_jit,8.47257
+COVID-mts,2,pash_jit_no_comm,5.14382
+COVID-mts,3,bash,100.297
+COVID-mts,3,pash_aot,5.34632
+COVID-mts,3,pash_jit,8.22579
+COVID-mts,3,pash_jit_no_comm,5.3793
+COVID-mts,4,bash,25.550
+COVID-mts,4,pash_aot,2.1583
+COVID-mts,4,pash_jit,3.90195
+COVID-mts,4,pash_jit_no_comm,2.16911
+for-loops,AurPkg,bash,112.913
+for-loops,AurPkg,pash_aot,0
+for-loops,AurPkg,pash_jit,3.53217
+for-loops,AurPkg,pash_jit -prof,3.78331
+for-loops,AurPkg,pash_jit -prof -par_pipe,1.0518
+for-loops,FileEnc1,bash,71.650
+for-loops,FileEnc1,pash_aot,0
+for-loops,FileEnc1,pash_jit,4.25223
+for-loops,FileEnc1,pash_jit -prof,4.18688
+for-loops,FileEnc1,pash_jit -prof -par_pipe,0.960031
+for-loops,FileEnc2,bash,11.960
+for-loops,FileEnc2,pash_aot,0
+for-loops,FileEnc2,pash_jit,3.03015
+for-loops,FileEnc2,pash_jit -prof,3.05882
+for-loops,FileEnc2,pash_jit -prof -par_pipe,0.719875
+for-loops,Genomics,bash,244.974
+for-loops,Genomics,pash_aot,0
+for-loops,Genomics,pash_jit,5.56443
+for-loops,Genomics,pash_jit -prof,5.54641
+for-loops,Genomics,pash_jit -prof -par_pipe,0.999988
+for-loops,LogAnalysis1,bash,60.566
+for-loops,LogAnalysis1,pash_aot,0
+for-loops,LogAnalysis1,pash_jit,6.25101
+for-loops,LogAnalysis1,pash_jit -prof,6.26458
+for-loops,LogAnalysis1,pash_jit -prof -par_pipe,0.945886
+for-loops,LogAnalysis2,bash,291.768
+for-loops,LogAnalysis2,pash_aot,0
+for-loops,LogAnalysis2,pash_jit,3.12881
+for-loops,LogAnalysis2,pash_jit -prof,3.16486
+for-loops,LogAnalysis2,pash_jit -prof -par_pipe,0.995364
+for-loops,MediaConv1,bash,158.824
+for-loops,MediaConv1,pash_aot,0
+for-loops,MediaConv1,pash_jit,6.83085
+for-loops,MediaConv1,pash_jit -prof,6.81882
+for-loops,MediaConv1,pash_jit -prof -par_pipe,0.835458
+for-loops,MediaConv2,bash,117.477
+for-loops,MediaConv2,pash_aot,0
+for-loops,MediaConv2,pash_jit,22.9761
+for-loops,MediaConv2,pash_jit -prof,23.8435
+for-loops,MediaConv2,pash_jit -prof -par_pipe,0.947487
+for-loops,ProgInf,bash,85.915
+for-loops,ProgInf,pash_aot,0
+for-loops,ProgInf,pash_jit,2.75166
+for-loops,ProgInf,pash_jit -prof,2.70854
+for-loops,ProgInf,pash_jit -prof -par_pipe,0.619158
+AvgTemp,AvgTemp,bash,1217.242
+AvgTemp,AvgTemp,pash_aot,0.870316
+AvgTemp,AvgTemp,pash_jit,3.46251
+AvgTemp,AvgTemp,pash_jit_no_comm,1.94682
+AvgTemp,AvgTemp,pash_jit -prof,3.27923
+AvgTemp,AvgTemp,pash_jit -prof -par_pipe,2.27543
+NLP,1syllable_words,bash,22.818
+NLP,1syllable_words,pash_aot,0.435325
+NLP,1syllable_words,pash_jit,3.93482
+NLP,1syllable_words,pash_jit -prof,2.74156
+NLP,1syllable_words,pash_jit -prof -par_pipe,0.363535
+NLP,2syllable_words,bash,19.568
+NLP,2syllable_words,pash_aot,0.375564
+NLP,2syllable_words,pash_jit,3.41501
+NLP,2syllable_words,pash_jit -prof,2.34123
+NLP,2syllable_words,pash_jit -prof -par_pipe,0.316675
+NLP,4letter_words,bash,25.498
+NLP,4letter_words,pash_aot,0.480415
+NLP,4letter_words,pash_jit,3.12055
+NLP,4letter_words,pash_jit -prof,3.09367
+NLP,4letter_words,pash_jit -prof -par_pipe,0.482031
+NLP,bigrams_appear_twice,bash,32.584
+NLP,bigrams_appear_twice,pash_aot,0.916104
+NLP,bigrams_appear_twice,pash_jit,2.38921
+NLP,bigrams_appear_twice,pash_jit -prof,2.43073
+NLP,bigrams_appear_twice,pash_jit -prof -par_pipe,0.916491
+NLP,bigrams,bash,30.274
+NLP,bigrams,pash_aot,0.500488
+NLP,bigrams,pash_jit,1.25696
+NLP,bigrams,pash_jit -prof,0.685956
+NLP,bigrams,pash_jit -prof -par_pipe,0.524834
+NLP,compare_exodus_genesis,bash,42.879
+NLP,compare_exodus_genesis,pash_aot,0.930675
+NLP,compare_exodus_genesis,pash_jit,3.63043
+NLP,compare_exodus_genesis,pash_jit -prof,3.6555
+NLP,compare_exodus_genesis,pash_jit -prof -par_pipe,0.93563
+NLP,count_consonant_seq,bash,89.127
+NLP,count_consonant_seq,pash_aot,1.02538
+NLP,count_consonant_seq,pash_jit,6.03351
+NLP,count_consonant_seq,pash_jit -prof,7.38234
+NLP,count_consonant_seq,pash_jit -prof -par_pipe,1.07871
+NLP,count_trigrams,bash,32.969
+NLP,count_trigrams,pash_aot,0.913016
+NLP,count_trigrams,pash_jit,2.40825
+NLP,count_trigrams,pash_jit -prof,2.44197
+NLP,count_trigrams,pash_jit -prof -par_pipe,0.914409
+NLP,count_vowel_seq,bash,47.931
+NLP,count_vowel_seq,pash_aot,0.595143
+NLP,count_vowel_seq,pash_jit,4.43929
+NLP,count_vowel_seq,pash_jit -prof,4.31306
+NLP,count_vowel_seq,pash_jit -prof -par_pipe,0.60756
+NLP,count_words,bash,22.490
+NLP,count_words,pash_aot,0.466627
+NLP,count_words,pash_jit,3.96719
+NLP,count_words,pash_jit -prof,3.32348
+NLP,count_words,pash_jit -prof -par_pipe,0.472717
+NLP,find_anagrams,bash,72.780
+NLP,find_anagrams,pash_aot,0.968824
+NLP,find_anagrams,pash_jit,2.2692
+NLP,find_anagrams,pash_jit -prof,2.25165
+NLP,find_anagrams,pash_jit -prof -par_pipe,0.958552
+NLP,merge_upper,bash,21.780
+NLP,merge_upper,pash_aot,0.305628
+NLP,merge_upper,pash_jit,2.99464
+NLP,merge_upper,pash_jit -prof,2.40026
+NLP,merge_upper,pash_jit -prof -par_pipe,0.29325
+NLP,sort,bash,39.370
+NLP,sort,pash_aot,0.442504
+NLP,sort,pash_jit,4.29803
+NLP,sort,pash_jit -prof,3.44988
+NLP,sort,pash_jit -prof -par_pipe,0.44162
+NLP,sort_words_by_folding,bash,49.687
+NLP,sort_words_by_folding,pash_aot,0.559601
+NLP,sort_words_by_folding,pash_jit,4.6773
+NLP,sort_words_by_folding,pash_jit -prof,4.14231
+NLP,sort_words_by_folding,pash_jit -prof -par_pipe,0.544587
+NLP,sort_words_by_num_of_syllables,bash,37.680
+NLP,sort_words_by_num_of_syllables,pash_aot,0.925617
+NLP,sort_words_by_num_of_syllables,pash_jit,2.34226
+NLP,sort_words_by_num_of_syllables,pash_jit -prof,2.34825
+NLP,sort_words_by_num_of_syllables,pash_jit -prof -par_pipe,0.930233
+NLP,sort_words_by_rhyming,bash,84.342
+NLP,sort_words_by_rhyming,pash_aot,0.962204
+NLP,sort_words_by_rhyming,pash_jit,0.941779
+NLP,sort_words_by_rhyming,pash_jit -prof,0.970631
+NLP,sort_words_by_rhyming,pash_jit -prof -par_pipe,0.971525
+NLP,uppercase_by_token,bash,3.490
+NLP,uppercase_by_token,pash_aot,0.488659
+NLP,uppercase_by_token,pash_jit,1.3081
+NLP,uppercase_by_token,pash_jit -prof,1.31006
+NLP,uppercase_by_token,pash_jit -prof -par_pipe,0.480253
+NLP,uppercase_by_type,bash,24.565
+NLP,uppercase_by_type,pash_aot,0.544377
+NLP,uppercase_by_type,pash_jit,3.38547
+NLP,uppercase_by_type,pash_jit -prof,3.55191
+NLP,uppercase_by_type,pash_jit -prof -par_pipe,0.50613
+NLP,verses_2om_3om_2instances,bash,2.384
+NLP,verses_2om_3om_2instances,pash_aot,0.0544044
+NLP,verses_2om_3om_2instances,pash_jit,0.354815
+NLP,verses_2om_3om_2instances,pash_jit -prof,0.245799
+NLP,verses_2om_3om_2instances,pash_jit -prof -par_pipe,0.0522761
+NLP,vowel_sequencies_gr_1K,bash,53.073
+NLP,vowel_sequencies_gr_1K,pash_aot,1.03104
+NLP,vowel_sequencies_gr_1K,pash_jit,3.78147
+NLP,vowel_sequencies_gr_1K,pash_jit -prof,6.01394
+NLP,vowel_sequencies_gr_1K,pash_jit -prof -par_pipe,0.983835
+NLP,words_no_vowels,bash,1.181
+NLP,words_no_vowels,pash_aot,0.0245775
+NLP,words_no_vowels,pash_jit,0.261573
+NLP,words_no_vowels,pash_jit -prof,0.141964
+NLP,words_no_vowels,pash_jit -prof -par_pipe,0.0189217
+Classics,bi-grams,bash,66.539
+Classics,bi-grams,pash_aot,3.69743
+Classics,bi-grams,pash_jit,6.39491
+Classics,bi-grams,pash_jit_no_comm,3.64997
+Classics,diff,bash,40.072
+Classics,diff,pash_aot,2.44416
+Classics,diff,pash_jit,2.71399
+Classics,diff,pash_jit_no_comm,2.50528
+Classics,nfa-regex,bash,43.451
+Classics,nfa-regex,pash_aot,9.33026
+Classics,nfa-regex,pash_jit,10.8546
+Classics,nfa-regex,pash_jit_no_comm,9.88646
+Classics,set-diff,bash,88.977
+Classics,set-diff,pash_aot,4.7868
+Classics,set-diff,pash_jit,5.23918
+Classics,set-diff,pash_jit_no_comm,4.76144
+Classics,shortest-scripts,bash,5.145
+Classics,shortest-scripts,pash_aot,1.74053
+Classics,shortest-scripts,pash_jit,1.61538
+Classics,shortest-scripts,pash_jit_no_comm,1.75
+Classics,sort,bash,33.711
+Classics,sort,pash_aot,3.86417
+Classics,sort,pash_jit,4.91199
+Classics,sort,pash_jit_no_comm,3.97207
+Classics,sort-sort,bash,16.998
+Classics,sort-sort,pash_aot,2.45742
+Classics,sort-sort,pash_jit,2.88591
+Classics,sort-sort,pash_jit_no_comm,2.49567
+Classics,spell,bash,43.656
+Classics,spell,pash_aot,3.17683
+Classics,spell,pash_jit,5.13479
+Classics,spell,pash_jit_no_comm,3.16027
+Classics,top-n,bash,36.379
+Classics,top-n,pash_aot,3.73156
+Classics,top-n,pash_jit,4.45548
+Classics,top-n,pash_jit_no_comm,3.70609
+Classics,wf,bash,118.657
+Classics,wf,pash_aot,4.77666
+Classics,wf,pash_jit,6.42605
+Classics,wf,pash_jit_no_comm,4.78784
+Unix50,10,bash,4.672
+Unix50,10,pash_aot,0.798906
+Unix50,10,pash_jit,0.957966
+Unix50,10,pash_jit_no_comm,0.812663
+Unix50,11,bash,5.395
+Unix50,11,pash_aot,0.877378
+Unix50,11,pash_jit,1.07001
+Unix50,11,pash_jit_no_comm,0.897372
+Unix50,12,bash,23.934
+Unix50,12,pash_aot,2.59222
+Unix50,12,pash_jit,4.00033
+Unix50,12,pash_jit_no_comm,2.60492
+Unix50,13,bash,1.805
+Unix50,13,pash_aot,0.394449
+Unix50,13,pash_jit,0.837976
+Unix50,13,pash_jit_no_comm,0.39137
+Unix50,14,bash,28.044
+Unix50,14,pash_aot,1.86042
+Unix50,14,pash_jit,2.62069
+Unix50,14,pash_jit_no_comm,1.88772
+Unix50,15,bash,1.188
+Unix50,15,pash_aot,0.326374
+Unix50,15,pash_jit,0.604888
+Unix50,15,pash_jit_no_comm,0.322213
+Unix50,16,bash,16.795
+Unix50,16,pash_aot,2.52443
+Unix50,16,pash_jit,3.12581
+Unix50,16,pash_jit_no_comm,2.58823
+Unix50,17,bash,7.502
+Unix50,17,pash_aot,1.12406
+Unix50,17,pash_jit,1.56618
+Unix50,17,pash_jit_no_comm,1.15362
+Unix50,18,bash,1.593
+Unix50,18,pash_aot,0.425708
+Unix50,18,pash_jit,0.819444
+Unix50,18,pash_jit_no_comm,0.44042
+Unix50,19,bash,1.077
+Unix50,19,pash_aot,0.263777
+Unix50,19,pash_jit,0.456163
+Unix50,19,pash_jit_no_comm,0.266189
+Unix50,1,bash,2.692
+Unix50,1,pash_aot,0.706376
+Unix50,1,pash_jit,1.51919
+Unix50,1,pash_jit_no_comm,0.669152
+Unix50,20,bash,0.011
+Unix50,20,pash_aot,0.00481822
+Unix50,20,pash_jit,0.00753941
+Unix50,20,pash_jit_no_comm,0.00507614
+Unix50,21,bash,94.797
+Unix50,21,pash_aot,5.60233
+Unix50,21,pash_jit,6.00665
+Unix50,21,pash_jit_no_comm,5.59935
+Unix50,22,bash,0.005
+Unix50,22,pash_aot,0.0142857
+Unix50,22,pash_jit,0.0144928
+Unix50,22,pash_jit_no_comm,0.0138504
+Unix50,23,bash,22.855
+Unix50,23,pash_aot,3.49893
+Unix50,23,pash_jit,5.24558
+Unix50,23,pash_jit_no_comm,3.59695
+Unix50,24,bash,0.974
+Unix50,24,pash_aot,0.267803
+Unix50,24,pash_jit,0.560092
+Unix50,24,pash_jit_no_comm,0.274444
+Unix50,25,bash,1.086
+Unix50,25,pash_aot,0.303267
+Unix50,25,pash_jit,0.618451
+Unix50,25,pash_jit_no_comm,0.309402
+Unix50,26,bash,3.250
+Unix50,26,pash_aot,0.480485
+Unix50,26,pash_jit,0.716332
+Unix50,26,pash_jit_no_comm,0.491977
+Unix50,27,bash,0.005
+Unix50,27,pash_aot,0.0144928
+Unix50,27,pash_jit,0.0143266
+Unix50,27,pash_jit_no_comm,0.0137363
+Unix50,28,bash,18.091
+Unix50,28,pash_aot,1.68759
+Unix50,28,pash_jit,3.18504
+Unix50,28,pash_jit_no_comm,1.74691
+Unix50,29,bash,1.371
+Unix50,29,pash_aot,0.323578
+Unix50,29,pash_jit,0.425909
+Unix50,29,pash_jit_no_comm,0.318097
+Unix50,2,bash,26.903
+Unix50,2,pash_aot,3.34656
+Unix50,2,pash_jit,4.50788
+Unix50,2,pash_jit_no_comm,3.39899
+Unix50,30,bash,24.140
+Unix50,30,pash_aot,2.6674
+Unix50,30,pash_jit,4.42368
+Unix50,30,pash_jit_no_comm,2.67302
+Unix50,31,bash,19.927
+Unix50,31,pash_aot,2.41803
+Unix50,31,pash_jit,3.78624
+Unix50,31,pash_jit_no_comm,2.3839
+Unix50,32,bash,0.776
+Unix50,32,pash_aot,0.214187
+Unix50,32,pash_jit,0.306598
+Unix50,32,pash_jit_no_comm,0.208939
+Unix50,33,bash,0.790
+Unix50,33,pash_aot,0.213283
+Unix50,33,pash_jit,0.313119
+Unix50,33,pash_jit_no_comm,0.215318
+Unix50,34,bash,0.010
+Unix50,34,pash_aot,0.00275634
+Unix50,34,pash_jit,0.00354736
+Unix50,34,pash_jit_no_comm,0.00280899
+Unix50,35,bash,0.945
+Unix50,35,pash_aot,0.259758
+Unix50,35,pash_jit,0.494247
+Unix50,35,pash_jit_no_comm,0.263819
+Unix50,36,bash,3.068
+Unix50,36,pash_aot,0.50527
+Unix50,36,pash_jit,0.664645
+Unix50,36,pash_jit_no_comm,0.51563
+Unix50,3,bash,0.009
+Unix50,3,pash_aot,0.00883219
+Unix50,3,pash_jit,0.00832562
+Unix50,3,pash_jit_no_comm,0.00832562
+Unix50,4,bash,26.994
+Unix50,4,pash_aot,3.12684
+Unix50,4,pash_jit,4.14145
+Unix50,4,pash_jit_no_comm,3.16237
+Unix50,5,bash,1.543
+Unix50,5,pash_aot,0.418384
+Unix50,5,pash_jit,0.794542
+Unix50,5,pash_jit_no_comm,0.433062
+Unix50,6,bash,2.215
+Unix50,6,pash_aot,0.446303
+Unix50,6,pash_jit,0.780479
+Unix50,6,pash_jit_no_comm,0.45755
+Unix50,7,bash,4.123
+Unix50,7,pash_aot,1.23851
+Unix50,7,pash_jit,2.08338
+Unix50,7,pash_jit_no_comm,1.27687
+Unix50,8,bash,2.439
+Unix50,8,pash_aot,0.706752
+Unix50,8,pash_jit,1.13231
+Unix50,8,pash_jit_no_comm,0.70471
+Unix50,9,bash,2.453
+Unix50,9,pash_aot,0.636316
+Unix50,9,pash_jit,0.965368
+Unix50,9,pash_jit_no_comm,0.662436
+WebIndex,WebIndex,bash,52.846
+WebIndex,WebIndex,pash_aot,3.05857
+WebIndex,WebIndex,pash_jit,3.43022
+WebIndex,WebIndex,pash_jit_no_comm,3.0415

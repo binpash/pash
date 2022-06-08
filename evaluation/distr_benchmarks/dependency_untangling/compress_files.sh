@@ -1,21 +1,19 @@
 #!/bin/bash
 # compress all files in a directory
-IN=${IN:-$PASH_TOP/evaluation/distr_benchmarks/dependency_untangling/input/pcap_data/}
+IN=${IN:-/dependency_untangling/pcap_data/}
 OUT=${OUT:-$PASH_TOP/evaluation/distr_benchmarks/dependency_untangling/input/output/compress}
-LOGS=${OUT}/logs
-mkdir -p ${OUT}/logs
-run_tests() {
-    name=$(basename $1).zip
-    zip -r ${OUT}/$name $1
+
+mkdir -p ${OUT}
+pure_func() {
+    zip -r --
 }
 
-export -f run_tests
+export -f pure_func
 
-pkg_count=0
-for item in ${IN}/*;
+for item in $(hdfs dfs -ls -C ${IN});
 do
-    pkg_count=$((pkg_count + 1));
-    run_tests $item > "${LOGS}"/"$pkg_count.log"
+    output_name=$(basename $item).zip
+    hdfs dfs -cat $item | pure_func > $OUT/$output_name
 done
 
 echo 'done';

@@ -1,20 +1,18 @@
 #!/bin/bash
 # encrypt all files in a directory 
-IN=${IN:-$PASH_TOP/evaluation/distr_benchmarks/dependency_untangling/input/pcap_data}
+IN=${IN:-/dependency_untangling/pcap_data}
 OUT=${OUT:-$PASH_TOP/evaluation/distr_benchmarks/dependency_untangling/input/output/encrypt}
-LOGS=${OUT}/logs
-mkdir -p ${LOGS}
-run_tests() {
-    openssl enc -aes-256-cbc -pbkdf2 -iter 20000 -in $1 -out $OUT/$(basename $1).enc -k 'key'
+mkdir -p ${OUT}
+
+pure_func() {
+    openssl enc -aes-256-cbc -pbkdf2 -iter 20000 -k 'key'
 }
+export -f pure_func
 
-export -f run_tests
-pkg_count=0
-
-for item in ${IN}/*;
+for item in $(hdfs dfs -ls -C ${IN});
 do
-    pkg_count=$((pkg_count + 1));
-    run_tests $item > ${LOGS}/${pkg_count}.log
+    output_name=$(basename $item).enc
+    hdfs dfs -cat $item | pure_func > $OUT/$output_name
 done
 
 echo 'done';

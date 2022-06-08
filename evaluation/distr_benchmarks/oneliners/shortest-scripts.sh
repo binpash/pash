@@ -6,6 +6,6 @@
 
 # FIX: Input here should be a set of commands, more precisely, the ones on this specific machine.
 
-IN=${IN:-/all_cmdsx100.txt}
+IN=${IN:-/oneliners/all_cmdsx100.txt}
 
 hdfs dfs -cat $IN | xargs file | grep "shell script" | cut -d: -f1 | xargs -L 1 wc -l | grep -v '^0$' | sort -n | head -15
