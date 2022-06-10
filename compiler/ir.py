@@ -589,19 +589,20 @@ class IR:
 
     ## Returns all the file identifiers in the IR.
     def all_fids(self):
-        all_fids = [fid for fid, _from_node, _to_node in self.edges.values()]
+        all_fids = [fid for fid, from_node, to_node in self.edges.values() 
+                        if (from_node is not None or to_node is not None)]
         return all_fids
 
     ## Returns all input fids of the IR
     def all_input_fids(self):
-        all_input_fids = [fid for fid, from_node, _to_node in self.edges.values()
-                          if from_node is None]
+        all_input_fids = [fid for fid, from_node, to_node in self.edges.values()
+                          if from_node is None and to_node is not None]
         return all_input_fids
 
     ## Returns all output fids of the IR
     def all_output_fids(self):
-        all_output_fids = [fid for fid, _from_node, to_node in self.edges.values()
-                          if to_node is None]
+        all_output_fids = [fid for fid, from_node, to_node in self.edges.values()
+                          if to_node is None and from_node is not None]
         return all_output_fids
 
     ## Returns the sources of the IR.
