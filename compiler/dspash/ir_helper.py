@@ -30,6 +30,7 @@ import shlex
 import subprocess
 import pash_runtime
 from collections import deque, defaultdict
+import stat, os
 
 HOST = socket.gethostbyname(socket.gethostname())
 NEXT_PORT = 58000
@@ -75,6 +76,26 @@ def to_shell_file(graph: IR, args) -> str:
         f.write(script)
     return filename
 
+def optimize_named_fifos(graph):
+    """
+    Replaces named fifos with ephemeral fifos when we
+    know both the read and write ends of the named fifo
+    """
+    named_fifos = set()
+    for fid in graph.all_fids():
+        path = str(fid.get_resource())
+        try:
+            if fid.has_file_resource() and stat.S_ISFIFO(os.stat(path).st_mode):
+                _, from_node, to_node = graph.edges[fid.ident]
+                if from_node != None and to_node != None:
+                    named_fifos.add(fid)
+        except:
+            pass
+    for named_fifo in named_fifos:
+        named_fifo.make_ephemeral()
+
+    return graph
+
 def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
     """ Takes an optimized IR and splits it subgraphs. Every subgraph
     is a continues section between a splitter and a merger.
@@ -100,6 +121,8 @@ def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
     """
     source_node_ids = graph.source_nodes()
     input_fifo_map = defaultdict(list)
+    
+    graph = optimize_named_fifos(graph)
     
     subgraphs = set()
     queue = deque([(source, IR({}, {})) for source in source_node_ids])
