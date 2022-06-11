@@ -12,7 +12,7 @@ max-temp_bash(){
   touch "$times_file"
   echo executing max temp $(date) | tee -a "$times_file"
   outputs_file="${outputs_dir}/temp-analytics.${outputs_suffix}"
-  echo "max-temp.sh: " $({ time ./temp-analytics.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
+  echo "temp-analytics.sh: " $({ time ./temp-analytics.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
 }
 
 max-temp_pash(){
