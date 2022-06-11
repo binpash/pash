@@ -62,7 +62,12 @@ class HDFSFileConfig:
         return self.blocks == __o.blocks
 
 def get_hdfs_file_data(filepath):
+    # Workaround included quotation marks when cat is called with this notation"${IN}"
+    # TODO: this should be fixed somewhere higher in the stack
+    filepath = filepath.lstrip("\"").rstrip("\"")
+
     # Use webhdfs to get the block data as it's much faster
+    # TODO: don't harcode the namenode address   
     url = f"http://namenode:9870/fsck"
     params = {
         'ugi': 'root',
@@ -94,6 +99,7 @@ def get_hdfs_file_data(filepath):
             info.machines.append(
                 _getIPs(stline[stline.find("DatanodeInfoWithStorage") - 1 :])
             )
+
     assert len(info.blocknames) != 0
     assert len(info.dnodenames) != 0
     assert info.size > 0
