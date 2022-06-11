@@ -12,3 +12,6 @@ bash run.distr.sh
 
 cd $PASH_TOP/evaluation/distr_benchmarks/dependency_untangling
 bash run.distr.sh
+
+cd $PASH_TOP/evaluation/distr_benchmarks/max-temp
+bash run.distr.sh
