@@ -20,7 +20,7 @@ hadoop jar $jarpath -files 19.sh -D mapred.reduce.tasks=0 -input $basepath/8.txt
 # 20 operates on a single line - mapreduce doesn't make sense
 # hadoop jar $jarpath -files 21_map.sh,21_reduce.sh -input $basepath/8.txt -output /unix5021 -mapper 21_maps.h -reducer 21_reduce.sh
 # 22 Commented out in PaSh
-# 23
+hadoop jar $jarpath -files 23.sh -D mapred.reduce.tasks=0 -input $basepath/9.1.txt -output $outputs_dir/unix5023_tmp -mapper 23.sh && hadoop fs -mkdir -p $outputs_dir/unix5023 && hadoop fs -cat $outputs_dir/unix5023_tmp/part-00000 $outputs_dir/unix5023_tmp/part-00001 | sed 's/[[:space:]]*$//' | tr -d '\n' | cut -c 1-4 | hadoop fs -put - $outputs_dir/unix5023/part-00000
 hadoop jar $jarpath -files 24.sh -D mapred.reduce.tasks=0 -input $basepath/9.2.txt -output $outputs_dir/unix5024 -mapper 24.sh
 hadoop jar $jarpath -files 25.sh -D mapred.reduce.tasks=0 -input $basepath/9.3.txt -output $outputs_dir/unix5025 -mapper 25.sh
 hadoop jar $jarpath -files 26.sh -D mapred.reduce.tasks=0 -input $basepath/9.4.txt -output $outputs_dir/unix5026 -mapper 26.sh
