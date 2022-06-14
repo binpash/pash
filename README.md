@@ -55,7 +55,7 @@ Chat:
 * [Discord Server](ttps://discord.com/channels/947328962739187753/) ([Invite](http://join.binpa.sh/))
 
 Mailing Lists:
-* [pash-dev](https://groups.google.com/g/pash-dev): Join this mailing list for discussing all things `pash`
+* [pash-devs](https://groups.google.com/g/pash-devs): Join this mailing list for discussing all things `pash`
 * [pash-commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
 
 Development/contributions:
