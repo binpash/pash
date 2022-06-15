@@ -1,6 +1,6 @@
 hadoop jar $jarpath -files 1.sh -D mapred.reduce.tasks=0 -input $basepath/1.txt -output $outputs_dir/unix501 -mapper 1.sh
 hadoop jar $jarpath -files 2.sh -input $basepath/1.txt -output $outputs_dir/unix502 -mapper 2.sh
-# 3 operates on a single line - mapreduce doesn't make sense
+hadoop jar $jarpath -files 3.sh -D mapred.reduce.tasks=0 -input $basepath/1.txt -output $outputs_dir/unix503 -mapper 3.sh && hadoop fs -cat $outputs_dir/unix503/part-* | head -n 2 | cut -d ' ' -f 2 > unix503_out.txt
 hadoop jar $jarpath -files 4_map.sh,4_reduce.sh -input $basepath/1.txt -output $outputs_dir/unix504 -mapper 4_map.sh -reducer 4_reduce.sh
 hadoop jar $jarpath -files 5.sh -D mapred.reduce.tasks=0 -input $basepath/2.txt -output $outputs_dir/unix505 -mapper 5.sh
 hadoop jar $jarpath -files 6.sh -D mapred.reduce.tasks=0 -input $basepath/3.txt -output $outputs_dir/unix506 -mapper 6.sh
@@ -17,8 +17,8 @@ hadoop jar $jarpath -files 16_map.sh,16_reduce.sh -input $basepath/7.txt -output
 hadoop jar $jarpath -files 17_map.sh,17_reduce.sh -input $basepath/7.txt -output $outputs_dir/unix5017 -mapper 17_map.sh -reducer 17_reduce.sh
 hadoop jar $jarpath -files 18_map.sh,18_reduce.sh -input $basepath/8.txt -output $outputs_dir/unix5018 -mapper 18_map.sh -reducer 18_reduce.sh
 hadoop jar $jarpath -files 19.sh -D mapred.reduce.tasks=0 -input $basepath/8.txt -output $outputs_dir/unix5019 -mapper 19.sh
-# 20 operates on a single line - mapreduce doesn't make sense
-# hadoop jar $jarpath -files 21_map.sh,21_reduce.sh -input $basepath/8.txt -output /unix5021 -mapper 21_maps.h -reducer 21_reduce.sh
+hadoop jar $jarpath -files 20.sh -D mapred.reduce.tasks=0 -input $basepath/8.txt -output $outputs_dir/unix5020 -mapper 20.sh && hadoop fs -cat $outputs_dir/unix5020/part-* | head -n 1 > unix5020_out.txt
+hadoop jar $jarpath -files 21_map.sh,21_reduce.sh -input $basepath/8.txt -output $outputs_dir/unix5021 -mapper 21_map.sh -reducer 21_reduce.sh
 # 22 Commented out in PaSh
 hadoop jar $jarpath -files 23.sh -D mapred.reduce.tasks=0 -input $basepath/9.1.txt -output $outputs_dir/unix5023_tmp -mapper 23.sh && hadoop fs -mkdir -p $outputs_dir/unix5023 && hadoop fs -cat $outputs_dir/unix5023_tmp/part-00000 $outputs_dir/unix5023_tmp/part-00001 | sed 's/[[:space:]]*$//' | tr -d '\n' | cut -c 1-4 > unix5023_out.txt
 hadoop jar $jarpath -files 24.sh -D mapred.reduce.tasks=0 -input $basepath/9.2.txt -output $outputs_dir/unix5024 -mapper 24.sh
@@ -31,6 +31,6 @@ hadoop jar $jarpath -files 30.sh -D mapred.reduce.tasks=0 -input $basepath/9.8.t
 hadoop jar $jarpath -files 31.sh -D mapred.reduce.tasks=0 -input $basepath/9.9.txt -output $outputs_dir/unix5031 -mapper 31.sh
 hadoop jar $jarpath -files 32_map.sh,32_reduce.sh -input $basepath/10.txt -output $outputs_dir/unix5032 -mapper 32_map.sh -reducer 32_reduce.sh
 hadoop jar $jarpath -files 33.sh -D mapred.reduce.tasks=0 -input $basepath/10.txt -output $outputs_dir/unix5033 -mapper 33.sh
-# 34 operateso on a single line - mapreduce doesn't make sense
+hadoop jar $jarpath -files 34.sh -D mapred.reduce.tasks=0 -input $basepath/10.txt -output $outputs_dir/unix5034 -mapper 34.sh && hadoop fs -cat $outputs_dir/unix5034/part-* | head -n 1 | fmt -w1 | cut -c 1-1 | tr -d '\n' | tr '[A-Z]' '[a-z]' > unix5034_out.txt
 hadoop jar $jarpath -files 35.sh -D mapred.reduce.tasks=0 -input $basepath/11.txt -output $outputs_dir/unix5035 -mapper 35.sh
 hadoop jar $jarpath -files 36_map.sh,36_reduce.sh -input $basepath/11.txt -output $outputs_dir/unix5036 -mapper 36_map.sh -reducer 36_reduce.sh
