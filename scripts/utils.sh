@@ -73,6 +73,24 @@ use_alternative_debian_gpp10() {
 # end merge from https://github.com/zyrolasting/pash/pull/2
 
 
+install_deps_source_setup() {
+    # move to the input directory
+    cd input/
+    # check if there are dependencies
+    if [ -e install-deps.sh ]; then
+        echo "Installing dependencies"
+        bash install-deps.sh
+    fi
+    # source the setup file
+    # it contains the fetch dataset function
+    # and the export variable function for IN, IN_PRE
+    source setup.sh
+    # fetch the dataset
+    setup_dataset $1 > /dev/null
+    cd ..
+}
+
+
 #########################
 # The command line help #
 #########################

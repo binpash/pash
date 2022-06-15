@@ -6,6 +6,7 @@ from definitions.ir.aggregator_node import *
 from definitions.ir.file_id import *
 from definitions.ir.resource import *
 from definitions.ir.nodes.cat import *
+from definitions.ir.nodes.hdfs_cat import HDFSCat
 
 import definitions.ir.nodes.pash_split as pash_split
 import definitions.ir.nodes.r_merge as r_merge
@@ -43,9 +44,13 @@ class FileIdGen:
         self.next += 1
         return fileId
 
+    def next_temporary_file_id(self):
+        fileId = self.next_file_id()
+        fileId.make_temporary_file()
+        return fileId
+
     def next_ephemeral_file_id(self):
-        fileId = FileId(self.next, self.prefix)
-        self.next += 1
+        fileId = self.next_file_id()
         fileId.make_ephemeral()
         return fileId
 
@@ -137,6 +142,14 @@ def compile_command_to_DFG(fileIdGen, command, options,
                        com_options=dfg_options,
                        com_redirs=com_redirs,
                        com_assignments=com_assignments)
+    elif(str(com_name) == "hdfs" and str(dfg_options[0][1]) == "dfs" and str(dfg_options[1][1]) == "-cat"):
+        dfg_node = HDFSCat(dfg_inputs,
+                        dfg_outputs,
+                        com_name,
+                        com_category,
+                        com_options=dfg_options,
+                        com_redirs=com_redirs,
+                        com_assignments=com_assignments)
     else:
         ## Assume: Everything must be completely expanded
         ## TODO: Add an assertion about that.
@@ -295,6 +308,17 @@ class IR:
         else:
             return None
 
+    def replace_edge(self, old_edge_id, new_edge_fid):
+        assert(new_edge_fid not in self.all_fids())
+        new_edge_id = new_edge_fid.get_ident()
+        old_fid, from_node, to_node = self.edges[old_edge_id]
+        self.edges[new_edge_id] = (new_edge_fid, from_node, to_node)
+        if from_node:
+            self.get_node(from_node).replace_edge(old_edge_id, new_edge_id)
+        if to_node:
+            self.get_node(to_node).replace_edge(old_edge_id, new_edge_id)
+        del self.edges[old_edge_id]
+        
     def get_stdin(self):
         stdin_id = self.get_stdin_id()
         stdin_fid = self.get_edge_fid(stdin_id)
@@ -322,7 +346,8 @@ class IR:
         for edge_id, (edge_fid, _from, _to) in self.edges.items():
             resource = edge_fid.get_resource()
             if(resource.is_stdout()):
-                assert(stdout_id is None)
+                # This is not true when using distributed_exec
+                # assert(stdout_id is None)
                 stdout_id = edge_id
         return stdout_id   
 
@@ -909,7 +934,41 @@ class IR:
         
         return new_node_id
         
+    def generate_graphviz(self):
+        ## TODO: It is unclear if importing in here (instead of in general)
+        ##       improves startup cost of the pash_runtime when not using graphviz.
+        import graphviz
 
+        dot = graphviz.Digraph()
+
+        ## TODO: Could use subgraph for distribution etc
+
+        ## First generate all nodes
+        for node_id, node in self.nodes.items():
+            dot = node.add_dot_node(dot, node_id)
+
+        ## (I/O) File nodes should be boxes
+        dot.attr('node', shape='box')
+
+        ## Then generate all edges and input+output files
+        for fid, from_node, to_node in self.edges.values():
+            ## This means that this file is an ending or starting file
+            if from_node is None or to_node is None:
+                ## Sometimes some source or sink files might be ephemeral
+                ## TODO: We should investigate why this happens
+                if fid.has_file_resource():
+                    label = fid.serialize()
+                    node_id = f'file-{str(fid.get_ident())}'
+                    dot.node(node_id, label)
+
+                    if from_node is None:
+                        dot.edge(node_id, str(to_node))
+                    else:
+                        dot.edge(str(from_node), node_id)
+            else:
+                dot.edge(str(from_node), str(to_node))
+
+        return dot
 
     ## TODO: Also it should check that there are no unreachable edges
 
@@ -955,4 +1014,5 @@ class IR:
                 #  or (not self.is_in_background()
                 #      and not self.get_stdin() is None 
                 #      and not self.get_stdout() is None)))
+
 

@@ -21,7 +21,10 @@ export pash_profile_driven_flag=1
 export pash_daemon=1
 export pash_parallel_pipelines=0
 export pash_daemon_communicates_through_unix_pipes_flag=0
-for item in $@
+export show_version=0
+export distributed_exec=0
+
+for item in "$@"
 do
     if [ "$pash_checking_speculation" -eq 1 ]; then
         export pash_checking_speculation=0
@@ -53,7 +56,9 @@ do
     # if [ "--output_time" == "$item" ]; then
     #     pash_output_time_flag=1
     # fi
-
+    if [ "--version" == "$item" ]; then
+        export show_version=1
+    fi
     if [ "--dry_run_compiler" == "$item" ]; then
         export pash_dry_run_compiler_flag=1
     fi
@@ -93,6 +98,10 @@ do
     if [ "--daemon_communicates_through_unix_pipes" == "$item" ]; then
         export pash_daemon_communicates_through_unix_pipes_flag=1
     fi
+
+    if [ "--distributed_exec" == "$item" ]; then
+        export distributed_exec=1
+    fi
 done
 
 ## `pash_redir_output` and `pash_redir_all_output` are strictly for logging.
@@ -111,39 +120,39 @@ if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
 
     pash_redir_all_output_always_execute()
     {
-        > /dev/null 2>&1 $@
+        > /dev/null 2>&1 "$@"
     }
 
 else
     if [ "$PASH_REDIR" == '&2' ]; then
         pash_redir_output()
         {
-            >&2 $@
+            >&2 "$@"
         }
 
         pash_redir_all_output()
         {
-            >&2 $@
+            >&2 "$@"
         }
 
         pash_redir_all_output_always_execute()
         {
-            >&2 $@
+            >&2 "$@"
         }
     else
         pash_redir_output()
         {
-            >>"$PASH_REDIR" $@
+            >>"$PASH_REDIR" "$@"
         }
 
         pash_redir_all_output()
         {
-            >>"$PASH_REDIR" 2>&1 $@
+            >>"$PASH_REDIR" 2>&1 "$@"
         }
 
         pash_redir_all_output_always_execute()
         {
-            >>"$PASH_REDIR" 2>&1 $@
+            >>"$PASH_REDIR" 2>&1 "$@"
         }
     fi
 fi
@@ -187,7 +196,7 @@ else
 
     pash_communicate_daemon_just_send()
     {
-        pash_communicate_daemon $1
+        pash_communicate_daemon "$1"
     }
 
     pash_wait_until_daemon_listening()
@@ -214,6 +223,16 @@ else
     }
 fi
 
+if [ "$distributed_exec" -eq 1 ]; then
+    pash_communicate_worker_manager()
+    {
+        local message=$1
+        pash_redir_output echo "Sending msg to worker manager: $message"
+        manager_response=$(echo "$message" | nc -U "$DSPASH_SOCKET")
+        pash_redir_output echo "Got response from worker manager: $manager_response"
+        echo "$manager_response"
+    }
+fi
 export -f pash_communicate_daemon
 export -f pash_communicate_daemon_just_send
 export -f pash_wait_until_daemon_listening

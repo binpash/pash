@@ -5,13 +5,16 @@ import socket
 import subprocess
 import sys
 import traceback
-
+from threading import Thread
 from datetime import datetime
+import queue
 
 from annotations import *
 import config
+from pash_graphviz import maybe_generate_graphviz
 import pash_runtime
 from util import *
+from dspash.worker_manager import WorkersManager
 
 ##
 # A Daemon responding to requests for compilation
@@ -295,12 +298,17 @@ class Scheduler:
 
         ast_or_ir = pash_runtime.compile_ir(
             input_ir_file, compiled_script_file, config.pash_args, compiler_config)
+
         daemon_compile_end_time = datetime.now()
         print_time_delta("Daemon Compile", daemon_compile_start_time, daemon_compile_end_time)
+
 
         self.wait_unsafe()
         if ast_or_ir != None:
             compile_success = True
+
+            maybe_generate_graphviz(ast_or_ir, config.pash_args, name=f'dfg-{process_id}')
+
 
             proc_input_resources = set(map(lambda out: str(out.resource) if str(
                 out.resource) != "None" else out, ast_or_ir.all_input_fids()))
@@ -325,7 +333,12 @@ class Scheduler:
             response = error_response(f'{process_id} failed to compile')
             self.unsafe_running = True
 
-        self.running_procs += 1
+        ## Do not increase the running procs if assert_compiler_success is enabled
+        ##  and compilation failed, since nothing will run then.
+        if not compile_success and config.pash_args.assert_compiler_success:
+            pass
+        else:
+            self.running_procs += 1
         return response
 
     def remove_process(self, process_id):
@@ -345,7 +358,7 @@ class Scheduler:
         return self.next_id
 
     def wait_for_all(self):
-        log("Waiting for all process to finish:", self.running_procs)
+        log("Waiting for all processes to finish. There are", self.running_procs, "processes remaining.")
         while self.running_procs > 0:
             input_cmd = self.get_input()
             # must be exit command or something is wrong
@@ -612,6 +625,12 @@ def shutdown():
 
 def main():
     args = init()
+    if args.distributed_exec:
+        worker_manager = WorkersManager()
+        config.worker_manager = worker_manager
+        worker_manager_thread = Thread(target=worker_manager.run)
+        worker_manager_thread.start()
+
     scheduler = Scheduler()
     scheduler.run()
    

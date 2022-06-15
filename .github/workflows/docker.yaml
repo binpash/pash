@@ -1,0 +1,37 @@
+name: DockerHub Image Build & Push
+on:
+  release:
+    types: [published]
+
+jobs:
+  login:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2 
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & Push Debian Image
+        run: |
+            cd scripts/docker/debian
+            docker build -t binpash/pash:debian-10 .
+            docker push binpash/pash:debian-10
+
+      - name: Build & Push Ubuntu Image
+        run: |
+            cd scripts/docker/ubuntu
+            docker build -t binpash/pash:ubuntu-18.04 . 
+            docker push binpash/pash:ubuntu-18.04
+            docker tag binpash/pash:ubuntu-18.04 binpash/pash:latest
+            docker push binpash/pash:latest
+
+      - name: Build & Push Fedora Image
+        run: |
+            cd scripts/docker/fedora
+            docker build -t binpash/pash:fedora-35 .
+            docker push binpash/pash:fedora-35

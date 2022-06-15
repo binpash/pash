@@ -12,52 +12,26 @@
 #define PRINTDBG(fmt, ...)
 #endif
 
-unsigned int NextFile(FILE** currentFile, char* outputFileNames[], unsigned int numOutputFiles) {
-  static int current = -1;
-
-  if (!currentFile) {
-    PRINTDBG("%s: Invalid file pointer, aborting\n", __func__);
-    exit(1);
-  }
-
-  if (++current >= numOutputFiles) {
-    return numOutputFiles;
-  }
-
-  // the order of the ifs here means that NextFile will close all files but the last one,
-  // which the caller will be responsible for.
-  if (*currentFile) {
-    if (current >= 0) {
-      PRINTDBG("%s: Will close %s output file\n", __func__, outputFileNames[current - 1]);
-    }
-    fclose(*currentFile);
-    *currentFile = NULL;
-  }
-
-  PRINTDBG("%s: Will open %s output file\n", __func__, outputFileNames[current]);
-  FILE* nextFile = fopen(outputFileNames[current], "w");
-  if (!nextFile) {
-    perror(LOC);
-    exit(1);
-  }
-
-  PRINTDBG("%s: Successfully opened %s output file\n", __func__, outputFileNames[current]);
-  *currentFile = nextFile;
-
-  return current;
-}
-
 void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned int numOutputFiles) {
   PRINTDBG("%s: will split input\n", __func__);
-  FILE* outputFile = NULL;
-  NextFile(&outputFile, outputFileNames, numOutputFiles);
-  if (!outputFile) {
-    PRINTDBG("%s: No output file in list, quitting\n", __func__);
-    return;
-  }
 
-  FILE* inputFile = fopen(input, "r");
-  if (!inputFile) {
+  PRINTDBG("%s: Openning output files\n", __func__);
+  int current = 0;
+  FILE **outputFiles = malloc(sizeof(FILE *) * numOutputFiles);
+  for (int i = 0; i < numOutputFiles; i++)
+  {
+    outputFiles[i] = fopen(outputFileNames[i], "w");
+    if (!outputFiles[i])
+    {
+      perror(LOC);
+      exit(1);
+    }
+  }
+  FILE* outputFile = outputFiles[current];
+  
+  FILE *inputFile = fopen(input, "r");
+  if (!inputFile)
+  {
     perror(LOC);
     exit(1);
   }
@@ -67,16 +41,14 @@ void SplitInput(char* input, int batchSize, char* outputFileNames[], unsigned in
   unsigned int readLines = 0;
 
   size_t len = 0;
-  while (getline(&inputBuffer, &len, inputFile) > 0) {
-    if (++readLines == batchSize) {
+  while (getline(&inputBuffer, &len, inputFile) > 0 && !ferror(outputFile)) {
+    if (++readLines == batchSize && current < numOutputFiles - 1) {
       readLines = 0;
-      NextFile(&outputFile, outputFileNames, numOutputFiles);
+      fclose(outputFile);
+      current += 1;
+      outputFile = outputFiles[current];
     }
     fputs(inputBuffer, outputFile);
-  }
-
-  // need to exhaust our output files list
-  while (NextFile(&outputFile, outputFileNames, numOutputFiles) < numOutputFiles) {
   }
 
   PRINTDBG("%s: Done splitting input %s, will clean up\n", __func__, input);
