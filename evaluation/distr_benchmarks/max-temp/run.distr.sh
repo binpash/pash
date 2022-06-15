@@ -43,6 +43,22 @@ max-temp_pash(){
   cat "${single_time_file}" | tee -a "$times_file"
 }
 
+max-temp_hadoop_streaming(){
+    jarpath="/opt/hadoop-3.2.2/share/hadoop/tools/lib/hadoop-streaming-3.2.2.jar" # Adjust as required
+    infile="$IN"
+    output_dirs="/outputs/hadoop-streaming/max-temp"
+    times_file="hadoopstreaming.res"
+
+    hadoop fs -rm -r $output_dirs/max
+    hadoop fs -rm -r $output_dirs/min
+    hadoop fs -rm -r $output_dirs/average
+
+    cd "hadoop-streaming/"
+    echo "temp-analytics.sh: " $({ time . run_all.sh &> /dev/null; } 2>&1) | tee -a "$times_file"
+    cd ".."
+    mv "hadoop-streaming/$times_file" .
+}
+
 max-temp_bash
 
 max-temp_pash "$PASH_FLAGS" "par_no_du"
@@ -52,3 +68,5 @@ max-temp_pash "$PASH_FLAGS --parallel_pipelines --parallel_pipelines_limit 24" "
 max-temp_pash "$PASH_FLAGS --distributed_exec" "distr_no_du"
 
 max-temp_pash "$PASH_FLAGS --parallel_pipelines --distributed_exec --parallel_pipelines_limit 24" "distr"
+
+max-temp_hadoop_streaming
