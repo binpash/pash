@@ -15,6 +15,5 @@ With regards to FPM's CLI:
   - VERSION is the value of --version.
   - OUTPUT_FORMAT is some value of -t/--output-type
 
-Ownership of result goes to host user and group, not the container's.
-
-Run `build_help` to repeat this message.
+Ownership of output files goes to host user and group, not the
+container's.

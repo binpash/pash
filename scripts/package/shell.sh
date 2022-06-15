@@ -5,6 +5,7 @@ here="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 PASH_TOP=$(readlink -f "$here/../..")
 
 # We need FPM's source code to build a key Docker image.
+printf "COMPARE\n  >$here\n  >%s\n " "$(pwd)"
 if [ ! -d "$here/fpm" ]; then
     git clone --depth 1 git@github.com:jordansissel/fpm.git "$here/fpm"
 fi
@@ -17,16 +18,27 @@ fi
 mkdir -p "$here/output"
 
 main() {
+    local docker_interactive_flags=''
+    local entrypoint_interactive_flags=''
+
+    if [[ $- == *i* ]]; then
+        set -x
+        docker_interactive_flags='--interactive --tty'
+        entrypoint_interactive_flags='--rcfile'
+        set +x
+    fi
+
     docker run \
 	   --entrypoint /bin/bash \
-	   --interactive \
-	   --tty \
 	   --rm \
 	   --user "$(id -u):$(id -g)" \
 	   --volume "$here/output:/out" \
 	   --volume "$here/tools:/tools" \
 	   --volume "$PASH_TOP:/src" \
-	   fpm --rcfile /tools/start "$@"
+           $docker_interactive_flags \
+           fpm \
+           $entrypoint_interactive_flags \
+           /tools/start "$@"
 }
 
 # Only enter if script was not sourced

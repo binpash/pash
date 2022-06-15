@@ -53,7 +53,7 @@ print_dotfpm() {
 	    print_dotfpm_rpm
 	    ;;
 	*)
-	    printf "Unsupported format: '%s'" "output_format" 1>&2
+	    printf "Unsupported format: '%s'\n" "$output_format" 1>&2
 	    exit 1
 	    ;;
     esac

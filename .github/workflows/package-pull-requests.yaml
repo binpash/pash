@@ -1,0 +1,17 @@
+name: Package Public Pull Requests (always 0.0.0)
+on:
+  pull_request:
+    branches:
+        - main
+        - future
+jobs:
+  build-packages:
+    if: ${{ github.event.pull_request.draft == false }}
+    uses: zyrolasting/pash/.github/workflows/package-build.yaml@main
+    with:
+      # TODO: consider using version files in the repository
+      # 0.0.0 has been tested to work in Fedora, Ubuntu, Debian, and Arch,
+      # which does not imply compatibility with all package formats.
+      fallback_version: '0.0.0'
+      git_ref: ${{ github.event.pull_request.head.sha }}
+    secrets: inherit

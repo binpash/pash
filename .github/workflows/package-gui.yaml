@@ -1,0 +1,35 @@
+# For use in GitHub's Actions GUI
+# https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/
+name: On-demand Packaging
+on:
+  workflow_dispatch:
+    inputs:
+      fallback_version:
+        # TODO: The comment in ./package-pull-requests.yaml
+        # impacts whether this is good for the user to read.
+        description: 'What fallback version string can I use in any package format? Use 0.0.0 for throwaway prototypes. Compatibility not guarenteed for all package formats.'
+        default: '0.0.0'
+        required: true
+      git_ref:
+        description: 'Git reference, like a branch name or commit hash'
+        default: 'main'
+        required: true
+      deb_version:
+        description: "What version string should I use in .deb format packages, if not the fallback?"
+        required: false
+      rpm_version:
+        description: '.rpm?'
+        required: false
+      pacman_tgz_version:
+        description: "pacman's .tar.gz?"
+        required: false
+jobs:
+  build-packages:
+    uses: zyrolasting/pash/.github/workflows/package-build.yaml@main
+    with:
+      fallback_version: ${{ inputs.fallback_version }}
+      deb_version: ${{ inputs.deb_version }}
+      rpm_version: ${{ inputs.rpm_version }}
+      pacman_tgz_version: ${{ inputs.pacman_tgz_version }}
+      git_ref: ${{ inputs.git_ref }}
+    secrets: inherit

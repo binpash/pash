@@ -1,13 +1,6 @@
 #! /usr/bin/env bash
-. ~/.bashrc
-
-build_help() {
-    cat /tools/help
-}
-
 export PASH_TOP="/src"
-export PS1='pkg> '
 export PATH="/tools:$PATH"
-export -f build_help
 
-build_help
+# Non-interactive shells are used to build packages, namely via CI.
+[[ $- == *i* ]] || build "$@"

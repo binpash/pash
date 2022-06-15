@@ -45,7 +45,7 @@ else
     output_format="$3"
 
     # Perform a one-off build for the package.
-    "$mydirname/shell.sh" -ic "build '$target_version' '$output_format'"
+    "$mydirname/shell.sh" "$target_version" "$output_format"
 
     # It's important to use Docker hub here because we want to verify
     # PaSh's behavior against other people's work, namely official OS
@@ -54,8 +54,6 @@ else
 
     # Invoke self in the container.
     docker run \
-	   --interactive \
-	   --tty \
 	   --rm \
 	   --volume "${mydirname}:/package" \
 	   "$image" \
