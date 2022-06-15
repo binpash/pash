@@ -70,7 +70,6 @@ analytics-mts_pash(){
 
 analytics-mts_hadoopstreaming(){
   jarpath="/opt/hadoop-3.2.2/share/hadoop/tools/lib/hadoop-streaming-3.2.2.jar" # Adjust as required
-  basepath="" # Adjust as required
   times_file="hadoopstreaming.res"
   outputs_suffix="hadoopstreaming.out"
   outputs_dir="/outputs/hadoop-streaming/analytics-mts"
@@ -90,7 +89,7 @@ analytics-mts_hadoopstreaming(){
       printf -v pad %20s
       padded_script="${COUNTER}.sh:${pad}"
       padded_script=${padded_script:0:20}
-      echo "$(eval $line)"
+
       echo "${padded_script}" $({ time eval $line &> /dev/null; } 2>&1) | tee -a "$times_file"
       COUNTER=$(( COUNTER + 1 ))
   done <"run_all.sh"
