@@ -7,7 +7,6 @@ IN=${IN:-/nlp/pg/}
 OUT=${OUT:-$PASH_TOP/evaluation/distr_benchmarks/nlp/output/4_3/}
 ENTRIES=${ENTRIES:-1060}
 mkdir -p "$OUT"
-echo $ENTRIES
 
 pure_func() {
     input=$1

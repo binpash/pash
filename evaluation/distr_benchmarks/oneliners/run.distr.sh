@@ -39,7 +39,7 @@ oneliners_bash() {
     export dict=
 
     printf -v pad %30s
-    padded_script="${script}${pad}"
+    padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:30}
 
     seq_outputs_file="${outputs_dir}/${script}.${seq_outputs_suffix}"
@@ -77,7 +77,7 @@ oneliners_pash(){
     export dict=
 
     printf -v pad %30s
-    padded_script="${script}${pad}"
+    padded_script="${script}.sh:${pad}"
     padded_script=${padded_script:0:30}
 
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
