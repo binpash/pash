@@ -52,9 +52,9 @@ nlp_bash(){
     IFS=";" read -r -a name_script_parsed <<< "${name_script}"
     name="${name_script_parsed[0]}"
     script="${name_script_parsed[1]}"
-    printf -v pad %30s
-    padded_script="${name}.sh:${pad}"
-    padded_script=${padded_script:0:30}
+    printf -v pad %40s
+    padded_script="${name}.sh: ${pad}"
+    padded_script=${padded_script:0:40}
 
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
 
@@ -85,9 +85,9 @@ nlp_pash(){
     IFS=";" read -r -a name_script_parsed <<< "${name_script}"
     name="${name_script_parsed[0]}"
     script="${name_script_parsed[1]}"
-    printf -v pad %30s
-    padded_script="${name}.sh:${pad}"
-    padded_script=${padded_script:0:30}
+    printf -v pad %40s
+    padded_script="${name}.sh: ${pad}"
+    padded_script=${padded_script:0:40}
 
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
     pash_log="${pash_logs_dir}/${script}.pash.log"

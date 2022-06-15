@@ -1,6 +1,11 @@
 PASH_FLAGS='--width 8 --r_split'
 export TIMEFORMAT=%R
-
+names_scripts=(
+    1 2 3 4 5 6 7 8 9 10
+    11 12 13 14 15 16 17 18 19 20 
+    21 23 24 25 26 28 29
+    30 31 32 33 34 35 36
+  )
 if [[ "$1" == "--extended" ]]; then
     echo "Using extended input"
     export IN_PRE=/unix50/extended_input
@@ -20,7 +25,7 @@ unix50_bash(){
   echo executing Unix50 $(date) | tee "$times_file"
   echo '' >> "$times_file"
 
-  for number in `seq 36`
+  for number in ${names_scripts[@]}
   do
     script="${number}"
     
@@ -30,7 +35,7 @@ unix50_bash(){
 
     outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
 
-    echo "${padded_script}" $({ time ./${script}.sh > "$outputs_file"; } 2>&1) | tee -a "$times_file"
+    echo "${padded_script}" $({ time ./${script}.sh 2> /dev/null > "$outputs_file"; } 2>&1) | tee -a "$times_file"
   done
 }
 
@@ -53,7 +58,7 @@ unix50_pash(){
   echo executing Unix50 $(date) | tee "$times_file"
   echo '' >> "$times_file"
 
-  for number in `seq 36`
+  for number in ${names_scripts[@]}
   do
     script="${number}"
     
@@ -66,7 +71,7 @@ unix50_pash(){
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
     echo -n "${padded_script}" | tee -a "$times_file"
-    { time "$PASH_TOP/pa.sh" $flags --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
+    { time "$PASH_TOP/pa.sh" $flags --log_file "${pash_log}" ${script}.sh 2> /dev/null > "$outputs_file"; } 2> "${single_time_file}"
     cat "${single_time_file}" | tee -a "$times_file"
   done  
 }

@@ -6,8 +6,8 @@ mkdir -p $OUT
 
 pure_func() {
     tempfile=$(mktemp)
-
-    tee $tempfile | tcpdump -nn -r '-' -A 'port 53' 2> /dev/null | sort | uniq |grep -Ev '(com|net|org|gov|mil|arpa)' 2> /dev/null
+    cat > $tempfile 
+    tcpdump -nn -r $tempfile -A 'port 53' 2> /dev/null | sort | uniq |grep -Ev '(com|net|org|gov|mil|arpa)' 2> /dev/null
     # extract URL
     tcpdump -nn -r $tempfile -s 0 -v -n -l 2> /dev/null | egrep -i "POST /|GET /|Host:" 2> /dev/null
     # extract passwords
