@@ -93,13 +93,16 @@ unix50_hadoopstreaming(){
   echo executing Unix50 $(date) | tee "$times_file"
   echo '' >> "$times_file"
 
-  COUNTER=1
+  COUNTER=0
   while IFS= read -r line; do
+      COUNTER=$(( COUNTER + 1 ))
+      if [[ ! " ${names_scripts[*]} " =~ " ${COUNTER} " ]]; then
+        continue # skip if array doesn't have this value
+      fi
       printf -v pad %20s
       padded_script="${COUNTER}.sh:${pad}"
       padded_script=${padded_script:0:20} 
       echo "${padded_script}" $({ time eval $line &> /dev/null; } 2>&1) | tee -a "$times_file"
-      COUNTER=$(( COUNTER + 1 ))
   done <"run_all.sh"
   cd ".."
   mv "hadoop-streaming/$times_file" .
