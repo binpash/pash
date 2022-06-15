@@ -76,8 +76,39 @@ unix50_pash(){
   done  
 }
 
+unix50_hadoopstreaming(){
+  jarpath="/opt/hadoop-3.2.2/share/hadoop/tools/lib/hadoop-streaming-3.2.2.jar" # Adjust as required
+  basepath="/unix50in" # Adjust as required
+  times_file="hadoopstreaming.res"
+  outputs_suffix="hadoopstreaming.out"
+  outputs_dir="/outputs/hadoop-streaming/unix50"
+
+  cd "hadoop-streaming/"
+
+  hdfs dfs -rm -r "$outputs_dir"
+  hdfs dfs -mkdir -p "$outputs_dir"
+
+  touch "$times_file"
+  cat "$times_file" >> "$times_file".d
+  echo executing Unix50 $(date) | tee "$times_file"
+  echo '' >> "$times_file"
+
+  COUNTER=1
+  while IFS= read -r line; do
+      printf -v pad %20s
+      padded_script="${COUNTER}.sh:${pad}"
+      padded_script=${padded_script:0:20} 
+      echo "${padded_script}" $({ time eval $line &> /dev/null; } 2>&1) | tee -a "$times_file"
+      COUNTER=$(( COUNTER + 1 ))
+  done <"run_all.sh"
+  cd ".."
+  mv "hadoop-streaming/$times_file" .
+}
+
 unix50_bash
 
 unix50_pash "$PASH_FLAGS" "par"
 
 unix50_pash "$PASH_FLAGS --distributed_exec" "distr"
+
+unix50_hadoopstreaming
