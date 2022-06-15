@@ -1,0 +1,62 @@
+#! /usr/bin/env bash
+
+# This script is called by a system package manager to request on-site
+# setup on a host, after the package itself is installed.
+
+set -euo pipefail
+
+PASH_LOG=/var/log/pash
+PASH_TOP=/usr/lib/pash
+
+post_install_current_target() {
+    this_directory="$1"
+    output_format="$2"
+    recipe="${this_directory}/${output_format}"
+
+    # Give the user a place to look when things go wrong.
+    log_file="$PASH_LOG/post-install.log"
+    mkdir -vp "$PASH_LOG"
+    printf "pash: post-install log: '%s'\n" "$log_file" 1>&2
+
+    # Put pa.sh in PATH, replacing any existing link. -f helps if a
+    # distribution leaves the link after uninstallation, but adds the
+    # risk of breaking a working link.
+    ln -fs "$PASH_TOP/pa.sh" /usr/bin/pa.sh
+
+    export PASH_TOP
+
+    (
+	set -e
+	post_install_python_project
+	post_install_libdash
+	post_install_runtime
+	if [ -f "$recipe" ]; then
+	    "$recipe" # -f, so non-executables raise an error
+	fi
+    ) | tee "$log_file"
+}
+
+
+post_install_python_project() {
+    python3 -m pip install \
+	    --ignore-installed \
+	    --requirement "$PASH_TOP/requirements.txt" \
+	    --root "$PASH_TOP/python_pkgs"
+}
+
+
+post_install_libdash() {
+    cd "$PASH_TOP/compiler/parser"
+    rm -rf libdash # might have survived uninstallation, and I don't trust the make cache.
+    git clone https://github.com/angelhof/libdash/
+    make libdash
+}
+
+post_install_runtime() {
+    cd "$PASH_TOP/runtime"
+    make clean
+    make
+}
+
+
+(return 2>/dev/null) || post_install_current_target "$@"

@@ -1,0 +1,7 @@
+#! /usr/bin/env sh
+apt update
+
+# Suppress mid-installation timezone prompt
+DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+
+apt install -y "/package/output/pash-$1.deb"

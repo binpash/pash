@@ -2,9 +2,15 @@
 
 export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
-# point to the local downloaded folders
-export PYTHONPATH=${PASH_TOP}/python_pkgs/
-## Register the signal handlers, we can add more signals here
+
+# Until PaSh is set up in a way that naturally integrates with
+# Python's system-level paths, prefer local package installations.
+export PYTHONPATH="$(
+  find "$PASH_TOP" \
+       -type d \( -name site-packages -or -name dist-packages \) \
+       -printf '%p:'
+)$PASH_TOP/python_pkgs"
+
 trap kill_all SIGTERM SIGINT
 
 ## kill all the pending processes that are spawned by this shell
@@ -14,6 +20,7 @@ function kill_all() {
     # kill pash_daemon
     kill -s SIGKILL "$daemon_pid"
 }
+
 ## Save the umask to first create some files and then revert it
 old_umask=$(umask)
 

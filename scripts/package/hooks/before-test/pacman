@@ -1,0 +1,4 @@
+#! /usr/bin/env sh
+set -eu
+pacman -Sy
+LC_ALL=en_US.UTF-8 pacman --noconfirm -U "/package/output/pash-$1.tar.gz"
