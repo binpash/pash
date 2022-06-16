@@ -102,7 +102,7 @@ unix50_hadoopstreaming(){
       printf -v pad %20s
       padded_script="${COUNTER}.sh:${pad}"
       padded_script=${padded_script:0:20} 
-      echo "${padded_script}" $({ time eval $line &> /dev/null; } 2>&1) | tee -a "$times_file"
+      echo "${padded_script}" $({ time { eval $line &> /dev/null; } } 2>&1) | tee -a "$times_file"
   done <"run_all.sh"
   cd ".."
   mv "hadoop-streaming/$times_file" .
