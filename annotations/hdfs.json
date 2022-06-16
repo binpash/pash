@@ -14,6 +14,17 @@
 			"comments": "This represents hdfs dfs -cat <path>. Slightly hacky since we only check for -cat"
         },
         {
+            "predicate":
+            {
+                "operator": "exists",
+                "operands": ["-put"]
+            },
+            "class": "pure",
+            "inputs": ["stdin"],
+            "outputs": ["stdout"],
+			"comments": "Ideally we would use stdin-hyphen but unfortunatly hdfs put deadlocks on fifo"
+        },
+        {
             "predicate": "default",
             "class": "side-effectful",
             "inputs": ["stdin"],
