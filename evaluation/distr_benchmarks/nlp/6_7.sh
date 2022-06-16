@@ -10,9 +10,9 @@ mkdir -p "$OUT"
 
 for input in $(hdfs dfs -ls -C ${IN} | head -n ${ENTRIES} | xargs -n 1 -I arg1 basename arg1)
 do
-    hdfs dfs -cat $IN/$input | grep -c 'light.\*light'                                 > ${OUT}/${input}.out0
-    hdfs dfs -cat $IN/$input | grep -c 'light.\*light.\*light'                         > ${OUT}/${input}.out1
-    hdfs dfs -cat $IN/$input | grep 'light.\*light' | grep -vc 'light.\*light.\*light' > ${OUT}/${input}.out2
+    hdfs dfs -cat -ignoreCrc $IN/$input | grep -c 'light.\*light'                                 > ${OUT}/${input}.out0
+    hdfs dfs -cat -ignoreCrc $IN/$input | grep -c 'light.\*light.\*light'                         > ${OUT}/${input}.out1
+    hdfs dfs -cat -ignoreCrc $IN/$input | grep 'light.\*light' | grep -vc 'light.\*light.\*light' > ${OUT}/${input}.out2
 done
 
 echo 'done';

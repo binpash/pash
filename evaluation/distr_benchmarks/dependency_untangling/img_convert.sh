@@ -12,7 +12,7 @@ export -f pure_func
 for i in $(hdfs dfs -ls -C ${IN}/*.jpg); 
 do 
     out=$OUT/$(basename -- $i)
-    hdfs dfs -cat $i | pure_func > $out; 
+    hdfs dfs -cat -ignoreCrc $i | pure_func > $out; 
 done
 
 echo 'done';

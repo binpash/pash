@@ -7,12 +7,12 @@ IN=${IN:-/oneliners/1G.txt}
 
 mkfifo s1 s2
 
-hdfs dfs -cat $IN |
+hdfs dfs -cat -ignoreCrc $IN |
   # shuf |
   tr [:lower:] [:upper:] |
   sort > s1 &
 
-hdfs dfs -cat $IN |
+hdfs dfs -cat -ignoreCrc $IN |
   # shuf |
   tr [:upper:] [:lower:] |
   sort > s2 &

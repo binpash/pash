@@ -13,7 +13,7 @@ for item in $(hdfs dfs -ls -C $IN);
 do
     pkg_count=$((pkg_count + 1));
     out="$OUT/$(basename $item).mp3"
-    hdfs dfs -cat $item | pure_func > $out
+    hdfs dfs -cat -ignoreCrc $item | pure_func > $out
 done
 
 echo 'done';

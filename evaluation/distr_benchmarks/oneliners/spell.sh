@@ -4,7 +4,7 @@
 IN=${IN:-/oneliners/1G.txt}
 dict=${dict:-$PASH_TOP/evaluation/distr_benchmarks/oneliners/input/dict.txt}
 
-hdfs dfs -cat $IN |
+hdfs dfs -cat -ignoreCrc $IN |
     iconv -f utf-8 -t ascii//translit | # remove non utf8 characters
     # groff -t -e -mandoc -Tascii |  # remove formatting commands
     col -bx |                      # remove backspaces / linefeeds

@@ -5,7 +5,7 @@ IN=${IN:-/oneliners/1G.txt}
 
 . bi-gram.aux.sh
 
-hdfs dfs -cat $IN |
+hdfs dfs -cat -ignoreCrc $IN |
   tr -c 'A-Za-z' '[\n*]' | 
   grep -v "^\s*$" |
   tr A-Z a-z |
