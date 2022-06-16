@@ -91,7 +91,7 @@ class WorkersManager():
         self.host = socket.gethostbyname(socket.gethostname())
         self.args = copy.copy(config.pash_args)
         # Required to create a correct multi sink graph
-        self.args.termination = "" 
+        # self.args.termination = "" 
 
     def get_worker(self, fids = None) -> WorkerConnection:
         if not fids:

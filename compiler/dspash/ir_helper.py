@@ -26,6 +26,7 @@ import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_unwrap as r_unwrap
 import definitions.ir.nodes.dgsh_tee as dgsh_tee
 import definitions.ir.nodes.remote_pipe as remote_pipe
+import definitions.ir.nodes.dfs_split_reader as dfs_split_reader
 import shlex
 import subprocess
 import pash_runtime
@@ -130,10 +131,11 @@ def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
     
     subgraphs = set()
     queue = deque([(source, IR({}, {})) for source in source_node_ids])
-
+    main_graph = IR({}, {})
     # Set next_graph_policy to the wanted policy
-    combine_after_merge_policy = lambda combining_subgraph=queue[0][1]: combining_subgraph
-    next_graph_policy = combine_after_merge_policy
+    # combine_after_merge_policy = lambda combining_subgraph=queue[0][1]: combining_subgraph
+    combine_on_client_policy = lambda combining_subgraph=main_graph: combining_subgraph
+    next_graph_policy = combine_on_client_policy
     # Comment the above and uncomment below to change graph splitting policy
     # new_graph_policy: lambda : IR({}, {})
     # next_graph_policy = new_graph_policy
@@ -203,7 +205,7 @@ def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
     # for graph in subgraphs:
     #     print(to_shell(graph, config.pash_args), file=sys.stderr)
      
-    return subgraphs, input_fifo_map
+    return subgraphs, input_fifo_map, main_graph
 
 def add_stdout_fid(graph : IR, file_id_gen: FileIdGen) -> FileId:
     stdout = file_id_gen.next_file_id()
@@ -260,7 +262,7 @@ def create_remote_pipe_from_input_edge(from_subgraph: IR, to_subgraph: IR, edge:
     remote_read = remote_pipe.make_remote_pipe([], [ephemeral_edge.get_ident()], HOST, DISCOVERY_PORT, True, edge_uid)
     to_subgraph.add_node(remote_read)
 
-def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], get_worker: Callable) -> Tuple[IR, List]:
+def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], get_worker: Callable, main_graph=None) -> Tuple[IR, List]:
     """ Takes a list of subgraphs and assigns a worker to each subgraph and augment
     the subgraphs with the necessary remote read/write nodes for data movement 
     between workers. This function also produces graph that should run in 
@@ -278,7 +280,8 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
             each subgraph should be executed on.
     """
     # The graph to execute in the main pash_runtime
-    main_graph = IR({}, {})
+    if main_graph is None:
+        main_graph = IR({}, {})
     worker_subgraph_pairs = []
 
     # Replace output edges and corrosponding input edges with remote read/write
@@ -386,6 +389,11 @@ def prepare_graph_for_remote_exec(filename:str, get_worker:Callable):
     """
     ir, shell_vars = read_graph(filename)
     file_id_gen = ir.get_file_id_gen()
-    subgraphs, mapping = split_ir(ir)
-    main_graph, worker_graph_pairs = assign_workers_to_subgraphs(subgraphs, file_id_gen, mapping, get_worker)
-    return worker_graph_pairs, shell_vars, main_graph
+    if any([fid.has_remote_file_resource() for fid in ir.all_fids()]):
+        subgraphs, mapping, main_graph = split_ir(ir)
+        main_graph, worker_graph_pairs = assign_workers_to_subgraphs(subgraphs, file_id_gen, mapping, get_worker, main_graph)
+        return worker_graph_pairs, shell_vars, main_graph
+    else:
+        return [], shell_vars, ir
+
+   
