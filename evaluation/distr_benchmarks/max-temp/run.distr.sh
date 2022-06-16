@@ -54,6 +54,8 @@ max-temp_hadoop_streaming(){
     hadoop fs -rm -r $output_dirs/average
 
     cd "hadoop-streaming/"
+    echo executing max-temp with hadoopstreaming $(date) | tee "$times_file"
+    echo '' >> "$times_file"
     echo "temp-analytics.sh: " $({ time . run_all.sh &> /dev/null; } 2>&1) | tee -a "$times_file"
     cd ".."
     mv "hadoop-streaming/$times_file" .
