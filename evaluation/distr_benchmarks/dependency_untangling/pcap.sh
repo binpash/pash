@@ -20,7 +20,7 @@ export -f pure_func
 for item in $(hdfs dfs -ls -C ${IN});
 do
     logname=$OUT/$(basename $item).log;
-    hdfs dfs -cat $item | pure_func > $logname
+    hdfs dfs -cat -ignoreCrc $item | pure_func > $logname
 done
 
 echo 'done';

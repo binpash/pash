@@ -12,7 +12,7 @@ export -f pure_func
 for item in $(hdfs dfs -ls -C ${IN});
 do
     output_name=$(basename $item).enc
-    hdfs dfs -cat $item | pure_func > $OUT/$output_name
+    hdfs dfs -cat -ignoreCrc $item | pure_func > $OUT/$output_name
 done
 
 echo 'done';

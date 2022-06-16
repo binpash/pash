@@ -8,7 +8,7 @@ mkdir -p ${OUT}
 for item in $(hdfs dfs -ls -C ${IN});
 do
     output_name=$(basename $item).zip
-    hdfs dfs -cat $item | gzip -c > $OUT/$output_name
+    hdfs dfs -cat -ignoreCrc $item | gzip -c > $OUT/$output_name
 done
 
 echo 'done';
