@@ -96,6 +96,7 @@ oneliners_hadoopstreaming(){
   times_file="hadoopstreaming.res"
   outputs_suffix="hadoopstreaming.out"
   outputs_dir="/outputs/hadoop-streaming/oneliners"
+  . bi-gram.aux.sh
 
   cd "hadoop-streaming/"
 
@@ -113,7 +114,7 @@ oneliners_hadoopstreaming(){
       name=$(sed "s/ //g" <<< $name)
       padded_script="${name}.sh:${pad}"
       padded_script=${padded_script:0:20} 
-      echo "${padded_script}" $({ time eval $line &> /dev/null; } 2>&1) | tee -a "$times_file"
+      echo "${padded_script}" $({ time { eval $line &> /dev/null; } } 2>&1) | tee -a "$times_file"
   done <"run_all.sh"
   cd ".."
   mv "hadoop-streaming/$times_file" .
