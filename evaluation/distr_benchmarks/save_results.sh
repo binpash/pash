@@ -23,7 +23,7 @@ fi
 
 save_to_dir=$1
 
-echo savign to $save_to_dir
+echo saving to $save_to_dir
 
 mkdir -p $save_to_dir
 
