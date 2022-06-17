@@ -11,7 +11,7 @@ hadoop jar $jarpath -files 10_map.sh,10_reduce.sh -D dfs.checksum.type=NULL -inp
 hadoop jar $jarpath -files 11_map.sh,11_reduce.sh -D dfs.checksum.type=NULL -input $basepath/4.txt -output $outputs_dir/unix5011 -mapper 11_map.sh -reducer 11_reduce.sh
 hadoop jar $jarpath -files 12_map.sh,12_reduce.sh -D dfs.checksum.type=NULL -input $basepath/4.txt -output $outputs_dir/unix5012 -mapper 12_map.sh -reducer 12_reduce.sh
 hadoop jar $jarpath -files 13.sh -D mapred.reduce.tasks=0 -D dfs.checksum.type=NULL -input $basepath/5.txt -output $outputs_dir/unix5013 -mapper 13.sh
-hadoop jar $jarpath -files 14.sh -D mapred.reduce.tasks=0 -D dfs.checksum.type=NULL -input $basepath/6.txt -output $outputs_dir/unix5014 -mapper 14.sh
+hadoop jar $jarpath -files 14_map.sh,14_reduce.sh -D dfs.checksum.type=NULL -input $basepath/6.txt -output $outputs_dir/unix5014 -mapper 14_map.sh -reducer 14_reduce.sh
 hadoop jar $jarpath -files 15_map.sh,15_reduce.sh -D dfs.checksum.type=NULL -input $basepath/7.txt -output $outputs_dir/unix5015 -mapper 15_map.sh -reducer 15_reduce.sh
 hadoop jar $jarpath -files 16_map.sh,16_reduce.sh -D dfs.checksum.type=NULL -input $basepath/7.txt -output $outputs_dir/unix5016 -mapper 16_map.sh -reducer 16_reduce.sh
 hadoop jar $jarpath -files 17_map.sh,17_reduce.sh -D dfs.checksum.type=NULL -input $basepath/7.txt -output $outputs_dir/unix5017 -mapper 17_map.sh -reducer 17_reduce.sh
