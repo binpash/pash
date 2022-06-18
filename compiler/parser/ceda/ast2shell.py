@@ -332,9 +332,9 @@ def string_of_arg_char (c, is_quoted=False):
 
         ## MMG 2021-09-20 It might be safe to move everything except for " in the second list, but no need to do it if the tests pass 
         ## Chars to escape unconditionally
-        chars_to_escape = ["'", '"', '`', '(', ')', '{', '}', '$', '!', '&', '|', ';']
+        chars_to_escape = ["'", '"', '`', '(', ')', '{', '}', '$', '&', '|', ';']
         ## Chars to escape only when not quoted
-        chars_to_escape_when_no_quotes = ['*', '?', '[', ']', '#', '<', '>', '~', ' ']
+        chars_to_escape_when_no_quotes = ['*', '?', '[', ']', '#', '<', '>', '~', '!', ' ']
         if char in chars_to_escape:
             return '\\' + char
         elif char in chars_to_escape_when_no_quotes and not is_quoted:
@@ -393,7 +393,7 @@ def string_of_arg_char (c, is_quoted=False):
 #   | [] -> ""
 #   | c :: a -> string_of_arg_char c ^ string_of_arg a
 def string_of_arg (args, is_quoted=False):
-    # print (args);
+    # print ("Unparsing:", args, " -- is quoted:", is_quoted)
 
     i = 0
     text = []
@@ -414,7 +414,9 @@ def string_of_arg (args, is_quoted=False):
     
     text = "".join(text)
 
-    return (text);
+    # print("To text:", text)
+
+    return (text)
 
 
 # and string_of_assign (v,a) = v ^ "=" ^ string_of_arg a
