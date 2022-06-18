@@ -116,7 +116,7 @@ def compile_optimize_output_script(ir_filename, compiled_script_file, args, comp
     ## which should be translated to a parallel script.
     if(isinstance(optimized_ast_or_ir, IR)):
         if args.distributed_exec:
-            _, ir_filename = ptempfile()
+            ir_filename = ptempfile()
             script_to_execute = f"$PASH_TOP/compiler/dspash/remote_exec_graph.sh {ir_filename}\n"
             ## This might not be needed anymore (since the output script is output anyway)
             ## TODO: This is probably useless, remove
@@ -381,7 +381,7 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
 
     # Create a cat command per file block
     file_config = hdfs_utils.get_file_config(hdfs_filepath)
-    _, dummy_config_path = ptempfile() # Dummy config file, should be updated by workers
+    dummy_config_path = ptempfile() # Dummy config file, should be updated by workers
     for split_num, block in enumerate(file_config.blocks):
         resource = DFSSplitResource(file_config.dumps(), dummy_config_path, split_num, block.hosts)
         block_fid = fileIdGen.next_file_id()

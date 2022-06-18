@@ -863,7 +863,7 @@ def preprocess_node_case(ast_node, irFileGen, config, last_object=False):
 ## If we are need to disable parallel pipelines, e.g., if we are in the context of an if,
 ## or if we are in the end of a script, then we set a variable.
 def replace_df_region(asts, irFileGen, config, disable_parallel_pipelines=False, ast_text=None):
-    _, ir_filename = ptempfile()
+    ir_filename = ptempfile()
 
     ## Serialize the node in a file
     with open(ir_filename, "wb") as ir_file:
@@ -871,7 +871,7 @@ def replace_df_region(asts, irFileGen, config, disable_parallel_pipelines=False,
 
     ## Serialize the candidate df_region asts back to shell
     ## so that the sequential script can be run in parallel to the compilation.
-    _, sequential_script_file_name = ptempfile()
+    sequential_script_file_name = ptempfile()
     ## If we don't have the original ast text, we need to unparse the ast
     if (ast_text is None):
         kv_asts = [ast_node_to_untyped_deep(ast) for ast in asts]
