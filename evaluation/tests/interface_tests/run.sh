@@ -291,6 +291,12 @@ test_var_assgn_default()
     $shell var_assgn.sh
 }
 
+test_exclam()
+{
+    local shell=$1
+    $shell test-exclam.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -330,6 +336,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_expand_u_positional
     run_test test_quoting
     run_test test_var_assgn_default
+    run_test test_exclam
 else
     for testname in $@
     do
