@@ -63,7 +63,7 @@ def preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell
     preprocessed_shell_script = preprocess_ast(ast_objects, args)
     
     ## Write the new shell script to a file to execute
-    _, fname = ptempfile()
+    fname = ptempfile()
     log("Preprocessed script stored in:", fname)
     with open(fname, 'w') as new_shell_file:
         new_shell_file.write(preprocessed_shell_script)
@@ -190,7 +190,7 @@ def parse_args():
     shell_name = "pash"
 
     if args.command is not None:
-        _, fname = ptempfile()
+        fname = ptempfile()
         with open(fname, 'w') as f:
             f.write(args.command)
         ## If the shell is invoked with -c and arguments after it, then these arguments

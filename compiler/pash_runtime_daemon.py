@@ -82,7 +82,7 @@ def init_bash_mirror_subprocess():
                       echo=False)
     ## If we are in debug mode also log the bash's output
     if (config.pash_args.debug >= 1):
-        _, file_to_save_output = ptempfile()
+        file_to_save_output = ptempfile()
         log("bash mirror log saved in:", file_to_save_output)
         fout = open(file_to_save_output, "w")
         p.logfile = fout
