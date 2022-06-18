@@ -915,8 +915,14 @@ def make_call_to_runtime(ir_filename, sequential_script_file_name,
     ## ```
     assignments = [["pash_input_args",
                     [make_quoted_variable("@")]]]
-    input_args_command = make_command([],
-                                      assignments=assignments)
+    # input_args_command = make_command([],
+    #                                   assignments=assignments)
+    arguments = [string_to_argument("source"),
+                 string_to_argument(config.SAVE_ARGS_EXECUTABLE),
+                 [make_quoted_variable("@")]]
+    ## Pass a relevant argument to the planner
+    # arguments += config.pass_common_arguments(config.pash_args)
+    input_args_command = make_command(arguments)
 
     ## Disable parallel pipelines if we are in the last command of the script.
     ## ```
@@ -946,9 +952,18 @@ def make_call_to_runtime(ir_filename, sequential_script_file_name,
     ## ```
     ##
     ## TODO: Maybe we need to only do this if there is a change.
+    ## 
+    ## TODO: We have to go through this backquote nightmare (which also leads to issues),
+    ##       because the preprocessed script needs to be POSIX compliant 
+    ##       (since it goes through our unparser) and therefore we cannot do the
+    ##       straightforward array expansion.
+    arguments = [string_to_argument("source"),
+                 string_to_argument(config.RESTORE_ARGS_EXECUTABLE)]
+    ## Pass a relevant argument to the planner
+    restore_args_command_node = make_command(arguments)
     set_arguments = [string_to_argument("set"),
                      string_to_argument("--"),
-                     [standard_var_ast("pash_input_args")]]
+                     [make_backquote(restore_args_command_node)]]
     set_args_node = make_command(set_arguments)
 
     ## Restore the exit code (since now we have executed `set` last)
