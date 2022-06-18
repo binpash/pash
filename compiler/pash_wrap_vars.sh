@@ -20,8 +20,15 @@ pash_redir_output echo "$$: (3) Reverted to BaSh set state: $-"
 # This variable stores arguments as a space-separated stirng, so we need to
 # unquote it and to split it into multiple strings by shell's field splitting.
 # shellcheck disable=SC2086
-set -- $pash_input_args
+pash_redir_output echo "$$: (3) Array: ${pash_input_args[@]}"
+pash_redir_output echo "$$: (3) Number of arguments: ${#pash_input_args[@]}"
+myArray=("$pash_input_args") 
+pash_redir_output echo "$$: (3) Array: ${myArray[@]}"
+pash_redir_output echo "$$: (3) Number of arguments: ${#myArray[@]}"
+# set -- $pash_input_args
+set -- "${pash_input_args[@]}"
 pash_redir_output echo "$$: (3) Reverted to BaSh input arguments: $@"
+pash_redir_output echo "$$: (3) Number of arguments: $#"
 
 ## Execute the script
 pash_redir_output echo "$$: (4) Restoring previous exit code: ${pash_previous_exit_status}"
@@ -35,7 +42,7 @@ then
     source "${script_source}"
     internal_exec_status=$?
     ## Make sure that any input argument changes are propagated outside
-    export pash_input_args="$@"
+    export pash_input_args=( "$@" )
     (exit "$internal_exec_status")
 }
 else 
@@ -43,7 +50,7 @@ else
     source "${script_source}"
     internal_exec_status=$?
     ## Make sure that any input argument changes are propagated outside
-    export pash_input_args="$@"
+    export pash_input_args=( "$@" )
     (exit "$internal_exec_status")
 }
 fi
