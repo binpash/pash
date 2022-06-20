@@ -1,12 +1,15 @@
 # BEGIN ANNO
 import sys
-from typing import List
 
 sys.path.insert(1, "/home/felix/git-repos/MIT/annotations")
 # for typing
-from datatypes_new.CommandInvocation import CommandInvocation
+from datatypes_new.CommandInvocationInitial import CommandInvocationInitial
+from datatypes_new.BasicDatatypes import Flag, ArgStringType, FileName, StdDescriptor, FileNameOrStdDescriptor
+from datatypes_new.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptorWithIOInfo, FileNameOrStdDescriptorWithIOInfo
 from annotation_generation_new.datatypes.InputOutputInfo import InputOutputInfo
 from annotation_generation_new.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
+from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+
 # for use
 # --
 
@@ -18,9 +21,17 @@ from util_new_aggregator import get_aggregator_as_dfg_node_from_node
 from util_new_file_descriptors import resource_from_file_descriptor
 # END ANNO
 
+# BEGIN REMODEL
+from definitions.remodel.IOVar import IOVar
+from definitions.remodel.OptionDFG import OptionDFG
+from datatypes_new.BasicDatatypes import Flag, Option, ArgStringType
+from datatypes_new.AccessKind import AccessKind
+from typing import Dict, Any
+
+# END REMODEL
+
 from definitions.ir.arg import *
 from definitions.ir.dfg_node import *
-from definitions.ir.aggregator_node import *
 from definitions.ir.file_id import *
 from definitions.ir.resource import *
 from definitions.ir.nodes.cat import *
@@ -86,7 +97,7 @@ def get_option_or_fd(opt_or_fd, options, fileIdGen):
         else:
             raise NotImplementedError()
         resource = FileDescriptorResource(resource)
-    
+
     fid = create_file_id_for_resource(resource, fileIdGen)
     return fid
 
@@ -152,19 +163,84 @@ def get_edge_list_from_file_id_list(dfg_edges, file_ids):
 # END ANNO
 
 ## This function creates a DFG with a single node given a command.
+## TODO: REMODEL
+def get_variable_for_filedescriptor_arg_rem(option_arg, fileIdGen):
+    file_id = fileIdGen.next_file_id()
+    # TODO: make types match with _with_IOInfo
+    option_arg_resource = option_arg.resource
+    option_arg_access = option_arg.access
+    if isinstance(option_arg.name, StdDescriptor):
+        resource = FileDescriptorResource(('fd', option_arg.name)) # name is an Enum which translates to the right number
+    elif isinstance(option_arg.name, FileName):
+        resource = FileResource(Arg.string_to_arg(option_arg.name))
+    file_id.set_resource(resource)
+
+
+def get_flagoption_rem(flagoption, fileIdGen):
+    if isinstance(flagoption, Flag):
+        return flagoption
+    elif isinstance(flagoption, Option) and flagoption.is_arg_of_type_string(): # exploits short-circuiting
+        return flagoption
+    elif isinstance(flagoption, Option) and flagoption.is_arg_of_type_filename_or_stddescriptor(): # exploits short-circuiting
+        option_arg = flagoption.get_arg()
+        # TODO: implement function but should know whether input or output
+        arg_var, access = get_variable_for_filedescriptor_arg_rem(option_arg, fileIdGen)
+        return OptionDFG(flagoption.get_name(), arg_var)
+    else:
+        raise Exception()
+
+
+def add_file_id_vars(command_invocation_with_io, fileIdGen):
+    # make pass over everything and create file_id for everything
+    # only for operands for now:
+    dfg_edges = {}
+    new_operand_list = []
+    access_map = dict()
+
+    def add_var_for_descriptor(operand):
+        resource = resource_from_file_descriptor(operand)
+        file_id = create_file_id_for_resource(resource, fileIdGen)
+        fid_id = file_id.get_ident()
+        dfg_edges[fid_id] = (file_id, None, None)
+        access_map[fid_id] = operand.get_access()
+        return fid_id
+
+    for i in range(len(command_invocation_with_io.operand_list)):
+        operand = command_invocation_with_io.operand_list[i]
+        if isinstance(operand, FileNameWithIOInfo) or isinstance(operand, StdDescriptorWithIOInfo):
+            fid_id = add_var_for_descriptor(operand)
+            new_operand_list.append(fid_id)
+        else:
+            new_operand_list.append(operand)
+    if command_invocation_with_io.implicit_use_of_streaming_input:
+        new_implicit_use_of_streaming_input = add_var_for_descriptor(command_invocation_with_io.implicit_use_of_streaming_input)
+    else:
+        new_implicit_use_of_streaming_input = None
+    if command_invocation_with_io.implicit_use_of_streaming_output:
+        new_implicit_use_of_streaming_output = add_var_for_descriptor(command_invocation_with_io.implicit_use_of_streaming_output)
+    else:
+        new_implicit_use_of_streaming_output = None
+
+    # this shall become copy-based
+    print(dfg_edges)
+    command_invocation_with_io_vars = CommandInvocationWithIOVars.get_from_without_vars(command_invocation_with_io, access_map)
+    command_invocation_with_io_vars.operand_list = new_operand_list
+    command_invocation_with_io_vars.implicit_use_of_streaming_input = new_implicit_use_of_streaming_input
+    command_invocation_with_io_vars.implicit_use_of_streaming_output = new_implicit_use_of_streaming_output
+    return command_invocation_with_io_vars, dfg_edges
+
+
 def compile_command_to_DFG(fileIdGen, command, options,
                            redirections=[]):
     # BEGIN ANNO
-    command_invocation: CommandInvocation = get_command_invocation(command, options)
-    flag_option_list = command_invocation.flag_option_list
+    command_invocation: CommandInvocationInitial = get_command_invocation(command, options)
+    print(command_invocation)
+    # flag_option_list = command_invocation.flag_option_list
     io_info: InputOutputInfo = get_input_output_info_from_cmd_invocation_util(command_invocation)
-    positional_config_list, positional_input_list, positional_output_list, \
-        implicit_use_of_stdin, implicit_use_of_stdout, multiple_inputs_possible = \
-        io_info.unpack_info()
     para_info: ParallelizabilityInfo = get_parallelizability_info_from_cmd_invocation_util(command_invocation)
+    command_invocation_with_io = io_info.apply_input_output_info_to_command_invocation(command_invocation)
     parallelizer_list, round_robin_compatible_with_cat, is_commutative = para_info.unpack_info()
-    property_list = [('multiple_inputs_possible', multiple_inputs_possible),
-                     ('round_robin_compatible_with_cat', round_robin_compatible_with_cat),
+    property_list = [('round_robin_compatible_with_cat', round_robin_compatible_with_cat),
                      ('is_commutative', is_commutative)]
     cmd_related_properties = construct_property_container_from_list_of_properties(property_list)
     ## TODO: There is no need for this redirection here. We can just straight
@@ -172,94 +248,92 @@ def compile_command_to_DFG(fileIdGen, command, options,
     # this function should be completely deleted once we have moved to new annotations
     # _inputs, _out_stream, _opt_indices = find_command_input_output(command, options)
     # we recompute opt_indices with positional_config_list and flag_option_list
-    opt_indices = [('option', i) for i in range(len(flag_option_list) + len(positional_config_list))]
+    # opt_indices = [('option', i) for i in range(len(flag_option_list) + len(positional_config_list))]
+    # com_category = find_command_category(command, options)
     # END ANNO
-    com_category = find_command_category(command, options)
-    com_properties = find_command_properties(command, options)
 
-    com_name = Arg(command)
+    # com_name = Arg(command)
 
     ## TODO: Make an empty IR and add edges and nodes incrementally (using the methods defined in IR).
 
-    dfg_edges = {}
     ## Add all inputs and outputs to the DFG edges
-    # TODO: add filenames in flag_option_list arguments
-    dfg_inputs = find_input_edges(positional_input_list, implicit_use_of_stdin, dfg_edges, fileIdGen)
-    dfg_outputs = find_output_edges(positional_output_list, implicit_use_of_stdout, dfg_edges, fileIdGen)
+    cmd_invocation_with_io_vars, dfg_edges = add_file_id_vars(command_invocation_with_io, fileIdGen)
 
 
-    ## Get the options
-    dfg_options = [get_option(opt_or_fd, options, fileIdGen)
-                   for opt_or_fd in opt_indices]
-    log(f'dfg_options: {dfg_options}')
+    # ## Get the options
+    # dfg_options = [get_option(opt_or_fd, options, fileIdGen)
+    #                for opt_or_fd in opt_indices]
+    # log(f'dfg_options: {dfg_options}')
     com_redirs = redirections
     ## TODO: Add assignments
     com_assignments = []
 
     ## TODO: Combine them both in a constructor that decided whether to instantiate Cat or DFGNode
-    if(str(com_name) == "cat"):
-        dfg_node = Cat(dfg_inputs,
-                       dfg_outputs,
-                       com_name,
-                       ## TODO: We don't really need to pass category, name, or input_consumption for Cat
-                       com_category,
-                       com_options=dfg_options,
-                       com_redirs=com_redirs,
-                       com_assignments=com_assignments,
-                       # BEGIN ANNO
-                       flag_option_list=flag_option_list,
-                       positional_config_list=positional_config_list,
-                       positional_input_list=positional_input_list,
-                       positional_output_list=positional_output_list,
-                       implicit_use_of_stdin=implicit_use_of_stdin,
-                       implicit_use_of_stdout=implicit_use_of_stdout,
-                       parallelizer_list=parallelizer_list,
-                       cmd_related_properties=cmd_related_properties
-                       # END ANNO
-                       )
-    elif(str(com_name) == "hdfs" and str(dfg_options[0][1]) == "dfs" and str(dfg_options[1][1]) == "-cat"):
-        dfg_node = HDFSCat(dfg_inputs,
-                        dfg_outputs,
-                        com_name,
-                        com_category,
-                        com_options=dfg_options,
-                        com_redirs=com_redirs,
-                        com_assignments=com_assignments)
-    else:
+    # if(str(com_name) == "cat"):
+    #     dfg_node = Cat(dfg_inputs,
+    #                    dfg_outputs,
+    #                    com_name,
+    #                    ## TODO: We don't really need to pass category, name, or input_consumption for Cat
+    #                    com_category,
+    #                    com_options=dfg_options,
+    #                    com_redirs=com_redirs,
+    #                    com_assignments=com_assignments,
+    #                    # BEGIN ANNO
+    #                    flag_option_list=flag_option_list,
+    #                    positional_config_list=positional_config_list,
+    #                    positional_input_list=positional_input_list,
+    #                    positional_output_list=positional_output_list,
+    #                    implicit_use_of_stdin=implicit_use_of_stdin,
+    #                    implicit_use_of_stdout=implicit_use_of_stdout,
+    #                    parallelizer_list=parallelizer_list,
+    #                    cmd_related_properties=cmd_related_properties
+    #                    # END ANNO
+    #                    )
+    # elif(str(com_name) == "hdfs" and str(dfg_options[0][1]) == "dfs" and str(dfg_options[1][1]) == "-cat"):
+    #     dfg_node = HDFSCat(dfg_inputs,
+    #                     dfg_outputs,
+    #                     com_name,
+    #                     com_category,
+    #                     com_options=dfg_options,
+    #                     com_redirs=com_redirs,
+    #                     com_assignments=com_assignments)
+    # else:
+    if(True):
         ## Assume: Everything must be completely expanded
         ## TODO: Add an assertion about that.
-        dfg_node = DFGNode(dfg_inputs, 
-                           dfg_outputs, 
-                           com_name,
-                           com_category,
-                           com_properties=com_properties,
-                           com_options=dfg_options,
+        dfg_node = DFGNode(cmd_invocation_with_io_vars,
+                           #dfg_inputs,
+                           # dfg_outputs,
+                           # com_name,
+                           # com_category,
+                           # com_options=dfg_options,
                            com_redirs=com_redirs,
                            com_assignments=com_assignments,
                            # BEGIN ANNO
-                           flag_option_list=flag_option_list,
-                           positional_config_list=positional_config_list,
-                           positional_input_list=positional_input_list,
-                           positional_output_list=positional_output_list,
-                           implicit_use_of_stdin=implicit_use_of_stdin,
-                           implicit_use_of_stdout=implicit_use_of_stdout,
+                           # flag_option_list=flag_option_list,
+                           # positional_config_list=positional_config_list,
+                           # positional_input_list=positional_input_list,
+                           # positional_output_list=positional_output_list,
+                           # implicit_use_of_stdin=implicit_use_of_stdin,
+                           # implicit_use_of_stdout=implicit_use_of_stdout,
                            parallelizer_list=parallelizer_list,
                            cmd_related_properties=cmd_related_properties
                            # END ANNO
                            )
 
-    if(not dfg_node.is_at_most_pure()):
-        raise ValueError()
+    # if(not dfg_node.is_at_most_pure()):
+    #     raise ValueError()
 
     node_id = dfg_node.get_id()
 
     ## Assign the from, to node in edges
     for fid_id in dfg_node.get_input_list():
+        print(fid_id)
         fid, from_node, to_node = dfg_edges[fid_id]
         assert(to_node is None)
         dfg_edges[fid_id] = (fid, from_node, node_id)
     
-    for fid_id in dfg_node.outputs:
+    for fid_id in dfg_node.get_output_list():
         fid, from_node, to_node = dfg_edges[fid_id]
         assert(from_node is None)
         dfg_edges[fid_id] = (fid, node_id, to_node)
@@ -434,6 +508,7 @@ class IR:
         ## ASSERT: There must be only one
         stdout_id = None
         for edge_id, (edge_fid, _from, _to) in self.edges.items():
+            print(edge_id, edge_fid)
             resource = edge_fid.get_resource()
             if(resource.is_stdout()):
                 # This is not true when using distributed_exec
@@ -566,6 +641,8 @@ class IR:
         ##           both self and other are not empty.
         my_out = self.get_stdout_id()
         other_in = other.get_stdin_id()
+        print(self.nodes)
+        print(other.nodes)
         assert(not my_out is None)
         assert(not other_in is None)
 
@@ -713,7 +790,7 @@ class IR:
         return input_edge_ids
 
     def get_node_outputs(self, node_id):
-        output_edge_ids = self.nodes[node_id].outputs
+        output_edge_ids = self.nodes[node_id].get_output_list()
         return output_edge_ids
 
     def get_next_nodes(self, node_id):
@@ -748,7 +825,7 @@ class IR:
 
     def get_node_output_ids_fids(self, node_id):
         node = self.get_node(node_id)
-        return [(output_edge_id, self.edges[output_edge_id][0]) for output_edge_id in node.outputs]
+        return [(output_edge_id, self.edges[output_edge_id][0]) for output_edge_id in node.get_output_list()]
 
     def get_node_output_ids(self, node_id):
         return [fid_id for fid_id, _fid in self.get_node_output_ids_fids(node_id)]
@@ -1099,7 +1176,7 @@ class IR:
         for edge_id, (_, from_node_id, to_node_id) in self.edges.items():
             if (not from_node_id is None):
                 from_node = self.get_node(from_node_id)
-                if(not (edge_id in from_node.outputs)):
+                if(not (edge_id in from_node.get_output_list())):
                     log("Consistency Error: Edge id:", edge_id, "is not in the node outputs:", from_node)
                     return False
             if (not to_node_id is None):
@@ -1114,7 +1191,7 @@ class IR:
                 if(not (to_node_id == node_id)):
                     log("Consistency Error: The to_node_id of the input_edge:", edge_id, "of the node:", node, "is equal to:", to_node_id)
                     return False
-            for edge_id in node.outputs:
+            for edge_id in node.get_output_list():
                 _, from_node_id, _ = self.edges[edge_id]
                 if(not (from_node_id == node_id)):
                     log("Consistency Error: The from_node_id of the output_edge:", edge_id, "of the node:", node, "is equal to:", from_node_id)

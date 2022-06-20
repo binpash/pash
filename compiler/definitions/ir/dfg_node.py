@@ -9,6 +9,7 @@ from definitions.ir.resource import *
 # BEGIN ANNO
 from util_new_annotations import construct_property_container_from_list_of_properties
 from util_new_parsing import get_ast_for_flagoption, get_ast_for_argstringtype, fix_parsing_newline
+from datatypes_new.BasicDatatypes import Flag, ArgStringType
 # from util_new_cmd_invocations import get_command_invocation_prefix_from_dfg_node
 
 
@@ -16,6 +17,13 @@ import sys
 sys.path.insert(1, "/home/felix/git-repos/MIT/annotations")
 from util_new import return_empty_list_if_none_else_itself, return_default_if_none_else_itself
 # END ANNO
+
+# BEGIN REMODEL
+from definitions.remodel.IOVar import IOVar
+from definitions.remodel.OptionDFG import OptionDFG
+from typing import List, Union, Optional
+
+# END REMODEL
 
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions
@@ -33,54 +41,55 @@ class DFGNode:
     ## com_redirs : list of redirections
     ## com_assignments : list of assignments
     def __init__(self,
-                 inputs,
-                 outputs,
-                 com_name,
-                 com_category = None,
-                 com_properties = [],
-                 com_options = [],
+                 cmd_invocation_with_io,
+                 # inputs,
+                 # outputs,
+                 # com_name,
+                 # # com_category = None,
+                 # com_options = [],
                  com_redirs = [],
                  com_assignments=[],
-                 # BEGIN ANNO
-                 flag_option_list=None,
-                 positional_config_list=None,
-                 positional_input_list=None,
-                 positional_output_list=None,
-                 implicit_use_of_stdin=False,
-                 implicit_use_of_stdout=False,
+                 # # BEGIN ANNO
+                 # flag_option_list=None,
+                 # positional_config_list=None,
+                 # positional_input_list=None,
+                 # positional_output_list=None,
+                 # implicit_use_of_stdin=False,
+                 # implicit_use_of_stdout=False,
                  parallelizer_list=None,
                  cmd_related_properties=None,
-                 # END ANNO
+                 # # END ANNO
+                 # # BEGIN REMODEL
+                 # stdin_used_rem : Optional[IOVar] = None,
+                 # stdout_used_rem : Optional[IOVar] = None,
+                 # flag_option_list_rem : List[Union[Flag, OptionDFG]] = None,
+                 # operand_list_rem : List[Union[ArgStringType, IOVar]] = None
+                 # # END REMODEL
                  ):
         ## Add a unique identifier to each DFGNode since id() is not guaranteed to be unique for objects that have different lifetimes.
         ## This leads to issues when nodes are deleted and new ones are created, leading to id() clashes between them
         self.id = DFGNode.next_id
         DFGNode.next_id += 1
 
-        self.set_inputs(inputs)
-        self.outputs = outputs
-        self.com_name = com_name
-        self.com_category = com_category
-        self.com_properties = com_properties # to remove
-        self.com_options = com_options # used for Mp/Agg and in to_ast
+        # self.set_inputs(inputs)
+        # self.outputs = outputs
+        # self.com_name = com_name
+        # self.com_category = com_category
+        # self.com_options = com_options # used for Mp/Agg and in to_ast
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
         self.com_assignments = com_assignments
         # BEGIN ANNO
-        # log(f'init com_options: {com_options}')
-        # log(f'init flag_option_list: {flag_option_list}')
-        # TO KEEP: com_name: str,
-        # ?? com_redirs, com_assignments
         # Assumption: config_list and option arguments only contains strings, i.e. of type ArgStringType
-        # try to turn towards options list without positional config list args
-        self.flag_option_list = return_empty_list_if_none_else_itself(flag_option_list)
-        self.positional_config_list = return_empty_list_if_none_else_itself(positional_config_list)
-        self.positional_input_list = return_empty_list_if_none_else_itself(positional_input_list)
-        self.positional_output_list = return_empty_list_if_none_else_itself(positional_output_list)
-        self.implicit_use_of_stdin = implicit_use_of_stdin
-        self.implicit_use_of_stdout = implicit_use_of_stdout
+        # self.flag_option_list = return_empty_list_if_none_else_itself(flag_option_list)
+        # self.positional_config_list = return_empty_list_if_none_else_itself(positional_config_list)
+        # self.positional_input_list = return_empty_list_if_none_else_itself(positional_input_list)
+        # self.positional_output_list = return_empty_list_if_none_else_itself(positional_output_list)
+        # self.implicit_use_of_stdin = implicit_use_of_stdin
+        # self.implicit_use_of_stdout = implicit_use_of_stdout
         self.parallelizer_list = return_empty_list_if_none_else_itself(parallelizer_list)
         default_cmd_properties = construct_property_container_from_list_of_properties([])
         self.cmd_related_properties = return_default_if_none_else_itself(cmd_related_properties, default_cmd_properties)
+        self.cmd_invocation_with_io_vars = cmd_invocation_with_io
         # END ANNO
 
         # log("Node created:", self.id, self)
@@ -89,7 +98,7 @@ class DFGNode:
         ## BEGIN ANNO
         # NEW
         # TODO ANNO
-        return ""
+        return str(self.cmd_invocation_with_io_vars)
         # OLD
         # # prefix = "Node"
         # # if (self.com_category == "stateless"):
@@ -141,17 +150,21 @@ class DFGNode:
             raise NotImplementedError()
 
     def get_input_list(self):
-        return (self.inputs[0] + self.inputs[1])
-    
+        inputs = self.cmd_invocation_with_io_vars.generate_inputs()
+        return inputs.get_all_inputs()
+
+    def get_output_list(self):
+        return self.cmd_invocation_with_io_vars.generate_outputs()
+
     def get_standard_inputs(self):
         return self.inputs[1]
     
     def get_configuration_inputs(self):
         return self.inputs[0]
 
-    def is_at_most_pure(self):
-        return (self.com_category in ["stateless", "pure", "parallelizable_pure"])
     ## BEGIN ANNO
+    # def is_at_most_pure(self):
+    #     return (self.com_category in ["stateless", "pure", "parallelizable_pure"])
 
     def is_parallelizable(self):
         return (self.is_pure_parallelizable() or self.is_stateless())
@@ -166,13 +179,13 @@ class DFGNode:
     def is_commutative(self):
         # BEGIN ANNO
         # OLD
-        return ('commutative' in self.com_properties)
+        # return ('commutative' in self.com_properties)
         # NEW
-        # val = self.cmd_related_properties.get_property_value('commutative')
-        # if val is not None:
-        #     return val
-        # else:
-        #     return False
+        val = self.cmd_related_properties.get_property_value('commutative')
+        if val is not None:
+            return val
+        else:
+            return False
         # END ANNO
 
     ## kk: 2021-07-23 Not totally sure if that is generally correct. Tests will say ¯\_(ツ)_/¯
@@ -298,6 +311,7 @@ class DFGNode:
             #     opt_arguments[i] = opt.to_ast()
             # log(f'opt_arguments: {format_args([val for val in opt_arguments if val is not None])}')
             # NEW
+            # TODO: FIX this?!
             opt_arguments = [get_ast_for_flagoption(flagoption) for flagoption in self.flag_option_list]
             positional_config_fixed_parsing_newline = [fix_parsing_newline(arg) for arg in self.positional_config_list]
             opt_arguments += [get_ast_for_argstringtype(arg) for arg in positional_config_fixed_parsing_newline]
@@ -305,7 +319,6 @@ class DFGNode:
             # END ANNO
 
             com_name_ast = self.com_name.to_ast()
-            option_asts = [opt.to_ast() for _, opt in self.com_options]
 
             ##
             ## 1. Find the input and output fids
@@ -313,6 +326,8 @@ class DFGNode:
             ##    the command IO
             input_fids = [edges[in_id][0] for in_id in self.get_input_list()]
             output_fids = [edges[out_id][0] for out_id in self.outputs]
+            ## FS: com_option is still used but with new model for nodes, this function shall go
+            option_asts = [opt.to_ast() for _, opt in self.com_options]
             rest_argument_fids, new_redirs = create_command_arguments_redirs(com_name_ast,
                                                                              option_asts,
                                                                              input_fids,
@@ -402,12 +417,13 @@ class DFGNode:
     ##
     ## TODO: Make this a method of graph to change the from, to too.
     def replace_edge(self, from_id, to_id):
-        new_config_inputs = self.replace_edge_in_list(self.inputs[0], from_id, to_id)
-        new_standard_inputs = self.replace_edge_in_list(self.inputs[1], from_id, to_id)
-        new_outputs = self.replace_edge_in_list(self.outputs, from_id, to_id)
+        self.cmd_invocation_with_io_vars.replace_var(from_id, to_id)
+        # new_config_inputs = self.replace_edge_in_list(self.inputs[0], from_id, to_id)
+        # new_standard_inputs = self.replace_edge_in_list(self.inputs[1], from_id, to_id)
+        # new_outputs = self.replace_edge_in_list(self.outputs, from_id, to_id)
 
-        self.set_inputs((new_config_inputs, new_standard_inputs))
-        self.outputs = new_outputs
+        # self.set_inputs((new_config_inputs, new_standard_inputs))
+        # self.outputs = new_outputs
 
     ## TODO: There must be a lib function to do this.
     def replace_edge_in_list(self, edge_ids, from_id, to_id):

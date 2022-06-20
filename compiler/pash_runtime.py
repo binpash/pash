@@ -151,7 +151,7 @@ def compile_optimize_df_region(df_region, args, compiler_config):
     print_time_delta("Compilation", compilation_start_time, compilation_end_time, args)
 
     ## Optimize all the IRs that can be optimized
-    if(args.no_optimize):
+    if(args.no_optimize) or True:
         optimized_asts_and_irs = asts_and_irs
     else:
         optimized_asts_and_irs = optimize_irs(asts_and_irs, args, compiler_config)
