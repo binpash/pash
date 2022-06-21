@@ -14,6 +14,7 @@ from util import *
 
 from definitions.ir.aggregator_node import *
 
+from definitions.ir.dfg_node import DFGNode
 from definitions.ir.nodes.eager import *
 from definitions.ir.nodes.pash_split import *
 
@@ -151,7 +152,7 @@ def compile_optimize_df_region(df_region, args, compiler_config):
     print_time_delta("Compilation", compilation_start_time, compilation_end_time, args)
 
     ## Optimize all the IRs that can be optimized
-    if(args.no_optimize) or True:
+    if(args.no_optimize):
         optimized_asts_and_irs = asts_and_irs
     else:
         optimized_asts_and_irs = optimize_irs(asts_and_irs, args, compiler_config)
@@ -423,65 +424,123 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
     curr = graph.get_node(curr_id)
     new_nodes_for_workset = []
 
-    # log("Check to parallelize curr:", curr)
+    log("curr node", curr)
 
-    ## Get next nodes in the graph
-    next_node_ids = graph.get_next_nodes(curr_id)
+    assert(r_split_flag)
 
-    ## We try to parallelize for all the edges that go out from the current node and into another node
-    for next_node_id in next_node_ids:
-        next_node = graph.get_node(next_node_id)
-        # log("|-- its next node is:", next_node)
-        new_curr = curr
-        new_curr_id = curr_id
+    option_parallelizer_rr = curr.get_option_round_robin_parallelizer()
 
-        ## If the next node can be parallelized, then we should try to parallelize
-        ##
-        ## If the user has provided the r_split flag (they want to use r_split), 
-        ## then parallelizability depends on commutativity (if a command is pure parallelizable but not commutative)
-        ## then it can't be parallelized. Therefore we do not parallelize non-commutative pure parallelizable commands.
-        ##
-        ## TODO: We need to extend PaSh to have a mode where it can have both r_splits and auto_split if a command is not
-        ##       commutative. This can be added as an option to the r_split flag, e.g., r_split="no" | "yes" | "optimal".
-        if(next_node.is_parallelizable()
-           and not isinstance(next_node, Cat)
-           and (not r_split_flag
-                or (next_node.is_commutative()
-                    or next_node.is_stateless()))):
-            ## If the current node is not a merger, it means that we need
-            ## to generate a merger using a splitter (auto_split or r_split)
-            if (isinstance(curr, HDFSCat) and config.pash_args.distributed_exec):
-                new_curr = split_hdfs_cat_input(curr, next_node, graph, fileIdGen) # Cat merger
-                new_curr_id = new_curr.get_id()
-            ## no_cat_split_vanish shortcircuits this and inserts a split even if the current node is a cat.
-            elif (fan_out > 1
-               and (no_cat_split_vanish
-                    or (not (isinstance(curr, Cat)
-                             or isinstance(curr, r_merge.RMerge))
-                        or ((isinstance(curr, Cat)
-                             or isinstance(curr, r_merge.RMerge))
-                            and len(curr.get_input_list()) < fan_out)))):
-                new_merger = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size, r_split_flag, r_split_batch_size)
-                ## After split has succeeded we know that the curr node (previous of the next)
-                ## has changed. Therefore we need to retrieve it again.
-                if (not new_merger is None):
-                    new_curr_id = new_merger.get_id()
-                    new_curr = new_merger
-                    assert(isinstance(new_curr, Cat)
-                           or isinstance(new_curr, r_merge.RMerge))
+    if option_parallelizer_rr is not None:
+        # TODO: this whole fragment could be moved to the graph after picking a parallelizer
+        parallelizer_rr = option_parallelizer_rr
+        log("parallelizer rr", option_parallelizer_rr)
+        streaming_inputs = curr.get_streaming_inputs()
+        assert(len(streaming_inputs) == 1)
+        streaming_input = streaming_inputs[0]
+        configuration_inputs = curr.get_configuration_inputs()
+        assert(len(configuration_inputs) == 0)
+        streaming_outputs = curr.get_output_list()
+        assert(len(streaming_outputs) == 1)
+        streaming_output = streaming_outputs[0]
 
-            ## If curr is cat, it means that split suceeded, or it was
-            ## already a cat. In any case, we can proceed with the
-            ## parallelization.
-            ##
-            ## Both Cat and RMerge can be "commuted" with parallelizable nodes
-            if(isinstance(new_curr, Cat)
-               or isinstance(new_curr, r_merge.RMerge)):
-                new_nodes = check_parallelize_dfg_node(new_curr_id, next_node_id, graph, fileIdGen)
-                # log("New nodes:", new_nodes)
-                new_nodes_for_workset += new_nodes
+        out_split_ids = graph.generate_edges(fileIdGen, fan_out)
+        splitter = r_split.make_r_split(streaming_input, out_split_ids, r_split_batch_size)
+        graph.set_edge_to(streaming_input, splitter.get_id())
+        for out_split_id in out_split_ids:
+            graph.set_edge_from(out_split_id, splitter.get_id())
+
+
+        in_mapper_ids = out_split_ids
+        out_mapper_ids = graph.generate_edges(fileIdGen, fan_out)
+        zip_mapper_in_out_ids = zip(in_mapper_ids, out_mapper_ids)
+
+        all_mappers = []
+        for (in_id, out_id) in zip_mapper_in_out_ids:
+            # BEGIN: these 4 lines could be refactored to be a function in graph such that
+            # creating end point of edges and the creation of edges is not decoupled
+            mapper_cmd_inv = parallelizer_rr.get_actual_mapper(curr.cmd_invocation_with_io_vars, in_id, out_id)
+            mapper = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(mapper_cmd_inv)
+            graph.set_edge_to(in_id, mapper.get_id())
+            graph.set_edge_from(out_id, mapper.get_id())
+            # END
+            all_mappers.append(mapper)
+
+        in_aggregator_ids = out_mapper_ids
+        out_aggregator_id = streaming_output
+        ## TODO: This could potentially be an aggregator tree (at least in the old PaSh versions)
+        ##       We need to extend the annotations/parallelizers to support this (e.g., for sort)
+        aggregator_cmd_inv = parallelizer_rr.get_actual_aggregator(curr.cmd_invocation_with_io_vars, in_aggregator_ids, out_aggregator_id)
+        aggregator = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(aggregator_cmd_inv)
+        for in_aggregator_id in in_aggregator_ids:
+            graph.set_edge_to(in_aggregator_id, aggregator.get_id())
+        graph.set_edge_from(streaming_output, aggregator.get_id())
+
+        ## Add the merge commands in the graph
+        new_nodes = [splitter, aggregator] + all_mappers
+        for new_node in new_nodes:
+            graph.add_node(new_node)
 
     return new_nodes_for_workset
+
+    # # log("Check to parallelize curr:", curr)
+    #
+    # ## Get next nodes in the graph
+    # next_node_ids = graph.get_next_nodes(curr_id)
+    #
+    # ## We try to parallelize for all the edges that go out from the current node and into another node
+    # for next_node_id in next_node_ids:
+    #     next_node = graph.get_node(next_node_id)
+    #     # log("|-- its next node is:", next_node)
+    #     new_curr = curr
+    #     new_curr_id = curr_id
+    #
+    #     ## If the next node can be parallelized, then we should try to parallelize
+    #     ##
+    #     ## If the user has provided the r_split flag (they want to use r_split),
+    #     ## then parallelizability depends on commutativity (if a command is pure parallelizable but not commutative)
+    #     ## then it can't be parallelized. Therefore we do not parallelize non-commutative pure parallelizable commands.
+    #     ##
+    #     ## TODO: We need to extend PaSh to have a mode where it can have both r_splits and auto_split if a command is not
+    #     ##       commutative. This can be added as an option to the r_split flag, e.g., r_split="no" | "yes" | "optimal".
+    #     if(next_node.is_parallelizable()
+    #        and not isinstance(next_node, Cat)
+    #        and (not r_split_flag
+    #             or (next_node.is_commutative()
+    #                 or next_node.is_stateless()))):
+    #         ## If the current node is not a merger, it means that we need
+    #         ## to generate a merger using a splitter (auto_split or r_split)
+    #         if (isinstance(curr, HDFSCat) and config.pash_args.distributed_exec):
+    #             new_curr = split_hdfs_cat_input(curr, next_node, graph, fileIdGen) # Cat merger
+    #             new_curr_id = new_curr.get_id()
+    #         ## no_cat_split_vanish shortcircuits this and inserts a split even if the current node is a cat.
+    #         elif (fan_out > 1
+    #            and (no_cat_split_vanish
+    #                 or (not (isinstance(curr, Cat)
+    #                          or isinstance(curr, r_merge.RMerge))
+    #                     or ((isinstance(curr, Cat)
+    #                          or isinstance(curr, r_merge.RMerge))
+    #                         and len(curr.get_input_list()) < fan_out)))):
+    #             new_merger = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size, r_split_flag, r_split_batch_size)
+    #             ## After split has succeeded we know that the curr node (previous of the next)
+    #             ## has changed. Therefore we need to retrieve it again.
+    #             if (not new_merger is None):
+    #                 new_curr_id = new_merger.get_id()
+    #                 new_curr = new_merger
+    #                 assert(isinstance(new_curr, Cat)
+    #                        or isinstance(new_curr, r_merge.RMerge))
+    #
+    #         ## If curr is cat, it means that split suceeded, or it was
+    #         ## already a cat. In any case, we can proceed with the
+    #         ## parallelization.
+    #         ##
+    #         ## Both Cat and RMerge can be "commuted" with parallelizable nodes
+    #         if(isinstance(new_curr, Cat)
+    #            or isinstance(new_curr, r_merge.RMerge)):
+    #             new_nodes = check_parallelize_dfg_node(new_curr_id, next_node_id, graph, fileIdGen)
+    #             # log("New nodes:", new_nodes)
+    #             new_nodes_for_workset += new_nodes
+    #
+    # return new_nodes_for_workset
 
 ## TODO: Instead of moving a cat after a node, we need to parallelize cat,
 ##       then remove cat (since it takes a single input to a single output),

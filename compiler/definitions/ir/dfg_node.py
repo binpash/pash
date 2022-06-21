@@ -42,7 +42,7 @@ class DFGNode:
     ## com_redirs : list of redirections
     ## com_assignments : list of assignments
     def __init__(self,
-                 cmd_invocation_with_io,
+                 cmd_invocation_with_io_vars,
                  # inputs,
                  # outputs,
                  # com_name,
@@ -90,7 +90,7 @@ class DFGNode:
         self.parallelizer_list = return_empty_list_if_none_else_itself(parallelizer_list)
         default_cmd_properties = construct_property_container_from_list_of_properties([])
         self.cmd_related_properties = return_default_if_none_else_itself(cmd_related_properties, default_cmd_properties)
-        self.cmd_invocation_with_io_vars = cmd_invocation_with_io
+        self.cmd_invocation_with_io_vars = cmd_invocation_with_io_vars
         # END ANNO
 
         # log("Node created:", self.id, self)
@@ -157,11 +157,13 @@ class DFGNode:
     def get_output_list(self):
         return self.cmd_invocation_with_io_vars.generate_outputs()
 
-    def get_standard_inputs(self):
-        return self.inputs[1]
-    
+    def get_streaming_inputs(self):
+        inputs = self.cmd_invocation_with_io_vars.generate_inputs()
+        return inputs.get_streaming_inputs()
+
     def get_configuration_inputs(self):
-        return self.inputs[0]
+        inputs = self.cmd_invocation_with_io_vars.generate_inputs()
+        return inputs.get_config_inputs()
 
     ## BEGIN ANNO
     # def is_at_most_pure(self):
@@ -446,3 +448,14 @@ class DFGNode:
 
     def get_used_parallelizer(self):
         return self.used_parallelizer
+
+    def get_option_round_robin_parallelizer(self):
+        for parallelizer in self.parallelizer_list:
+            splitter = parallelizer.get_splitter()
+            if splitter.is_splitter_round_robin():
+                return parallelizer
+        return None
+
+    @staticmethod
+    def make_simple_dfg_node_from_cmd_inv_with_io_vars(cmd_inv_with_io_vars):
+        return DFGNode(cmd_inv_with_io_vars)

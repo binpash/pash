@@ -865,6 +865,10 @@ class IR:
         for out_id in node.outputs:
             self.set_edge_from(out_id, node_id)
 
+    def generate_edges(self, fileIdGen, num_of_edges):
+        file_ids = [fileIdGen.next_file_id() for _ in range(num_of_edges)]
+        self.add_edges(file_ids)
+        return [edge_fid.get_ident() for edge_fid in file_ids]
 
     def add_edges(self, edge_fids):
         for edge_fid in edge_fids:
