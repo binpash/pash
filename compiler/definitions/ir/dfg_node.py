@@ -8,6 +8,7 @@ from definitions.ir.resource import *
 
 # BEGIN ANNO
 from util_new_annotations import construct_property_container_from_list_of_properties
+from util_new_cmd_invocations import to_node_cmd_inv_with_io_vars
 from util_new_parsing import get_ast_for_flagoption, get_ast_for_argstringtype, fix_parsing_newline
 from datatypes_new.BasicDatatypes import Flag, ArgStringType
 # from util_new_cmd_invocations import get_command_invocation_prefix_from_dfg_node
@@ -291,7 +292,7 @@ class DFGNode:
             redirs = self._to_ast_aux_get_redirs()
             assignments = self.com_assignments
             ## Start filling in the arguments
-            opt_arguments = []
+            # opt_arguments = []
             # BEGIN ANNO
             # LOG
             # log(f'com_name: {self.com_name}')
@@ -312,26 +313,29 @@ class DFGNode:
             # log(f'opt_arguments: {format_args([val for val in opt_arguments if val is not None])}')
             # NEW
             # TODO: FIX this?!
-            opt_arguments = [get_ast_for_flagoption(flagoption) for flagoption in self.flag_option_list]
-            positional_config_fixed_parsing_newline = [fix_parsing_newline(arg) for arg in self.positional_config_list]
-            opt_arguments += [get_ast_for_argstringtype(arg) for arg in positional_config_fixed_parsing_newline]
-            log(f'opt_arguments_new: {format_args(opt_arguments)}')
+            # opt_arguments = [get_ast_for_flagoption(flagoption) for flagoption in self.flag_option_list]
+            # positional_config_fixed_parsing_newline = [fix_parsing_newline(arg) for arg in self.positional_config_list]
+            # opt_arguments += [get_ast_for_argstringtype(arg) for arg in positional_config_fixed_parsing_newline]
+            # log(f'opt_arguments_new: {format_args(opt_arguments)}')
             # END ANNO
 
-            com_name_ast = self.com_name.to_ast()
+            node = to_node_cmd_inv_with_io_vars(self.cmd_invocation_with_io_vars, edges, redirs, assignments)
+            # TODO: think about redirections
+
+            # com_name_ast = self.com_name.to_ast()
 
             ##
             ## 1. Find the input and output fids
             ## 2. Construct the rest of the arguments and input/output redirections according to
             ##    the command IO
-            input_fids = [edges[in_id][0] for in_id in self.get_input_list()]
-            output_fids = [edges[out_id][0] for out_id in self.outputs]
+            # input_fids = [edges[in_id][0] for in_id in self.get_input_list()]
+            # output_fids = [edges[out_id][0] for out_id in self.outputs]
             ## FS: com_option is still used but with new model for nodes, this function shall go
-            option_asts = [opt.to_ast() for _, opt in self.com_options]
-            rest_argument_fids, new_redirs = create_command_arguments_redirs(com_name_ast,
-                                                                             option_asts,
-                                                                             input_fids,
-                                                                             output_fids)
+            # option_asts = [opt.to_ast() for _, opt in self.com_options]
+            # rest_argument_fids, new_redirs = create_command_arguments_redirs(com_name_ast,
+            #                                                                  option_asts,
+            #                                                                  input_fids,
+            #                                                                  output_fids)
             
             ## Transform the rest of the argument fids to arguments
             ## Since some of the rest_arguments can be None (they only contain inputs and outputs)
@@ -340,26 +344,26 @@ class DFGNode:
             ## The None fields need to be filtered out because they are taken care of by the interleave function.
             ##
             ## TODO: Is this actually OK?
-            rest_arguments = [fid.to_ast()
-                              for fid in rest_argument_fids
-                              if not fid is None]
-            log(f'rest_arguments: {format_args(rest_arguments)}')
+            # rest_arguments = [fid.to_ast()
+            #                   for fid in rest_argument_fids
+            #                   if not fid is None]
+            # log(f'rest_arguments: {format_args(rest_arguments)}')
 
             ## Interleave the arguments since options args might contain gaps.
             # BEGIN ANNO
             # OLD
             # arguments = interleave_args(opt_arguments, rest_arguments)
             # NEW
-            arguments = opt_arguments + rest_arguments
+            # arguments = opt_arguments + rest_arguments
             # log(f'arguments: {format_args(arguments)}')
             # END ANNO
 
-            all_arguments = [com_name_ast] + arguments
-            log(f'all arguments: {format_args(all_arguments)}')
-            log(f'\n\n')
-            all_redirs = redirs + new_redirs
+            # all_arguments = [com_name_ast] + arguments
+            # log(f'all arguments: {format_args(all_arguments)}')
+            # log(f'\n\n')
+            # all_redirs = redirs + new_redirs
 
-            node = make_command(all_arguments, redirections=all_redirs, assignments=assignments)
+            # node = make_command(all_arguments, redirections=all_redirs, assignments=assignments)
         return node
 
     ## This method applies the redirections to get the correct, inputs, outputs of a node.

@@ -13,7 +13,7 @@ from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVar
 # for use
 # --
 
-from util_new_parsing import get_command_invocation
+from util_new_parsing import get_command_invocation, parse_arg_list_to_command_invocation
 from util_new_annotations import get_input_output_info_from_cmd_invocation_util, get_parallelizability_info_from_cmd_invocation_util, \
                                  construct_property_container_from_list_of_properties
 from util_new_mapper import get_mapper_as_dfg_node_from_node, get_map_output_files
@@ -222,7 +222,7 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
         new_implicit_use_of_streaming_output = None
 
     # this shall become copy-based
-    print(dfg_edges)
+    log(dfg_edges)
     command_invocation_with_io_vars = CommandInvocationWithIOVars.get_from_without_vars(command_invocation_with_io, access_map)
     command_invocation_with_io_vars.operand_list = new_operand_list
     command_invocation_with_io_vars.implicit_use_of_streaming_input = new_implicit_use_of_streaming_input
@@ -233,8 +233,10 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
 def compile_command_to_DFG(fileIdGen, command, options,
                            redirections=[]):
     # BEGIN ANNO
-    command_invocation: CommandInvocationInitial = get_command_invocation(command, options)
-    print(command_invocation)
+    command_invocation: CommandInvocationInitial = parse_arg_list_to_command_invocation(command, options)
+    log("command: ", command)
+    log("options: ", options)
+    log(command_invocation)
     # flag_option_list = command_invocation.flag_option_list
     io_info: InputOutputInfo = get_input_output_info_from_cmd_invocation_util(command_invocation)
     para_info: ParallelizabilityInfo = get_parallelizability_info_from_cmd_invocation_util(command_invocation)
@@ -328,7 +330,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
 
     ## Assign the from, to node in edges
     for fid_id in dfg_node.get_input_list():
-        print(fid_id)
+        log(fid_id)
         fid, from_node, to_node = dfg_edges[fid_id]
         assert(to_node is None)
         dfg_edges[fid_id] = (fid, from_node, node_id)
@@ -508,7 +510,7 @@ class IR:
         ## ASSERT: There must be only one
         stdout_id = None
         for edge_id, (edge_fid, _from, _to) in self.edges.items():
-            print(edge_id, edge_fid)
+            log(edge_id, edge_fid)
             resource = edge_fid.get_resource()
             if(resource.is_stdout()):
                 # This is not true when using distributed_exec
@@ -641,8 +643,8 @@ class IR:
         ##           both self and other are not empty.
         my_out = self.get_stdout_id()
         other_in = other.get_stdin_id()
-        print(self.nodes)
-        print(other.nodes)
+        log(self.nodes)
+        log(other.nodes)
         assert(not my_out is None)
         assert(not other_in is None)
 

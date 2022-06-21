@@ -13,11 +13,11 @@ from datatypes_new.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptor
 
 def resource_from_file_descriptor(file_descriptor) -> Resource:
     if isinstance(file_descriptor, FileNameWithIOInfo):
-        arg = Arg.string_to_arg(file_descriptor.get_name())
+        arg = file_descriptor.get_name()
         log(f'filedes name: {file_descriptor.get_name()}')
         log(f'filedes name type: {type(file_descriptor.get_name())}')
         log(f'arg: {arg}')
-        return FileResource(Arg.string_to_arg(file_descriptor.get_name()))
+        return FileResource(file_descriptor.get_name())
     elif isinstance(file_descriptor, StdDescriptorWithIOInfo):
         resource = ("fd", file_descriptor.get_type().value)
         return FileDescriptorResource(resource)
