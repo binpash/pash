@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# TODO: this should be ran before cloning---otherwise cloning fails.
+# It should also set up words etc.
+
 set -e
 cd $(dirname $0)
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
