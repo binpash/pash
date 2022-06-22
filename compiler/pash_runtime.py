@@ -424,16 +424,16 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
     curr = graph.get_node(curr_id)
     new_nodes_for_workset = []
 
-    log("curr node", curr)
+    # log("curr node", curr)
 
     assert(r_split_flag)
 
-    option_parallelizer_rr = curr.get_option_round_robin_parallelizer()
+    option_parallelizer_rr = curr.get_option_implemented_round_robin_parallelizer()
 
     if option_parallelizer_rr is not None:
         # TODO: this whole fragment could be moved to the graph after picking a parallelizer
+        # TODO: we only do consecutive chunks here but from a rr splitter
         parallelizer_rr = option_parallelizer_rr
-        log("parallelizer rr", option_parallelizer_rr)
         streaming_inputs = curr.get_streaming_inputs()
         assert(len(streaming_inputs) == 1)
         streaming_input = streaming_inputs[0]
@@ -442,23 +442,28 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
         streaming_outputs = curr.get_output_list()
         assert(len(streaming_outputs) == 1)
         streaming_output = streaming_outputs[0]
+        original_cmd_invocation_with_io_vars = curr.cmd_invocation_with_io_vars
 
-        out_split_ids = graph.generate_edges(fileIdGen, fan_out)
-        splitter = r_split.make_r_split(streaming_input, out_split_ids, r_split_batch_size)
+        graph.remove_node(curr_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
+
+
+        out_split_ids = graph.generate_ephemeral_edges(fileIdGen, fan_out)
+        log("graph edges", graph.edges)
+        splitter = pash_split.make_split_file(streaming_input, out_split_ids)
         graph.set_edge_to(streaming_input, splitter.get_id())
         for out_split_id in out_split_ids:
             graph.set_edge_from(out_split_id, splitter.get_id())
 
 
         in_mapper_ids = out_split_ids
-        out_mapper_ids = graph.generate_edges(fileIdGen, fan_out)
+        out_mapper_ids = graph.generate_ephemeral_edges(fileIdGen, fan_out)
         zip_mapper_in_out_ids = zip(in_mapper_ids, out_mapper_ids)
 
         all_mappers = []
         for (in_id, out_id) in zip_mapper_in_out_ids:
             # BEGIN: these 4 lines could be refactored to be a function in graph such that
             # creating end point of edges and the creation of edges is not decoupled
-            mapper_cmd_inv = parallelizer_rr.get_actual_mapper(curr.cmd_invocation_with_io_vars, in_id, out_id)
+            mapper_cmd_inv = parallelizer_rr.get_actual_mapper(original_cmd_invocation_with_io_vars, in_id, out_id)
             mapper = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(mapper_cmd_inv)
             graph.set_edge_to(in_id, mapper.get_id())
             graph.set_edge_from(out_id, mapper.get_id())
@@ -469,14 +474,14 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
         out_aggregator_id = streaming_output
         ## TODO: This could potentially be an aggregator tree (at least in the old PaSh versions)
         ##       We need to extend the annotations/parallelizers to support this (e.g., for sort)
-        aggregator_cmd_inv = parallelizer_rr.get_actual_aggregator(curr.cmd_invocation_with_io_vars, in_aggregator_ids, out_aggregator_id)
+        aggregator_cmd_inv = parallelizer_rr.get_actual_aggregator(original_cmd_invocation_with_io_vars, in_aggregator_ids, out_aggregator_id)
         aggregator = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(aggregator_cmd_inv)
         for in_aggregator_id in in_aggregator_ids:
             graph.set_edge_to(in_aggregator_id, aggregator.get_id())
         graph.set_edge_from(streaming_output, aggregator.get_id())
 
         ## Add the merge commands in the graph
-        new_nodes = [splitter, aggregator] + all_mappers
+        new_nodes = [splitter] + all_mappers + [aggregator]
         for new_node in new_nodes:
             graph.add_node(new_node)
 

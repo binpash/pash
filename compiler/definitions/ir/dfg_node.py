@@ -449,10 +449,12 @@ class DFGNode:
     def get_used_parallelizer(self):
         return self.used_parallelizer
 
-    def get_option_round_robin_parallelizer(self):
+    def get_option_implemented_round_robin_parallelizer(self):
         for parallelizer in self.parallelizer_list:
             splitter = parallelizer.get_splitter()
-            if splitter.is_splitter_round_robin():
+            mapper_spec = parallelizer.get_mapper_spec()
+            aggregator_spec = parallelizer.get_aggregator_spec()
+            if splitter.is_splitter_round_robin() and mapper_spec.is_implemented and aggregator_spec.is_implemented:
                 return parallelizer
         return None
 
