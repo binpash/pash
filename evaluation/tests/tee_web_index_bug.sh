@@ -1,4 +1,4 @@
-IN=../evaluation/tests/input/1M.txt
+IN=$PASH_TOP/evaluation/tests/input/1M.txt
 
 mkfifo {1,2,3}grams
 
@@ -22,4 +22,4 @@ cat 3grams |
     uniq -c |
     sort -rn # >> 3-grams.txt
 
-rm {1,2,3}grams
+rm {1,2,3}grams {1,2,3}-grams.txt

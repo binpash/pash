@@ -1,6 +1,4 @@
 import json
-import os
-import re
 import config
 from definitions.ast_node import CustomJSONEncoder
 from subprocess import run, PIPE

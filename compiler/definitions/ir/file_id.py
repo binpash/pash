@@ -3,6 +3,7 @@ import os
 
 from ir_utils import *
 from util import *
+import uuid
 
 from definitions.ir.resource import *
 
@@ -32,17 +33,27 @@ class FileId:
 
     def __repr__(self):
         if(isinstance(self.resource, EphemeralResource)):
-            output = "{}#fifo{}".format(self.prefix, self.ident)
+            output = self.get_fifo_suffix()
         else:
             output = "fid:{}:{}".format(self.ident, self.resource)
         return output
 
     def serialize(self):
-        if(isinstance(self.resource, EphemeralResource)):
-            output = "{}#fifo{}".format(self.prefix, self.ident)
+        if(isinstance(self.resource, TemporaryFileResource)):
+            output = self.get_temporary_file_suffix()
+        elif(isinstance(self.resource, EphemeralResource)):
+            output = self.get_fifo_suffix()
         else:
             output = "{}".format(self.resource)
         return output
+
+    def get_temporary_file_suffix(self):
+        tempfile_name = "{}{}".format(self.prefix, self.ident)
+        return tempfile_name
+
+    def get_fifo_suffix(self):
+        fifo_name = "{}#fifo{}".format(self.prefix, self.ident)
+        return fifo_name
 
     ## Serialize as an option for the JSON serialization when sent to
     ## the backend. This is needed as options can either be files or
@@ -53,19 +64,29 @@ class FileId:
 
     ## Returns a shell AST from this file identifier.
     ## TODO: Once the python libdash bindings are done we could use those instead.
-    def to_ast(self):
+    ##
+    ## If stdin_dash is True, then we can turn stdin to `-` since the
+    ##   context in which we are using it is a command for which `-` means stdin.
+    def to_ast(self, stdin_dash=False):
         ## TODO: This here is supposed to identify fifos, but real fifos have a resource
         ##       but are fifos. Therefore eventually we want to have this check correctly
         ##       check if a file id refers to a pipe
         ##
         ## TODO: I am not sure about the FileDescriptor resource
-        if(isinstance(self.resource, EphemeralResource)):
-            suffix = "{}#fifo{}".format(self.prefix, self.ident)
+        if(isinstance(self.resource, TemporaryFileResource)):
+            suffix = self.get_temporary_file_suffix()
             string = os.path.join(config.PASH_TMP_PREFIX, suffix)
+            argument = string_to_argument(string)
+        elif(isinstance(self.resource, EphemeralResource)):
+            suffix = self.get_fifo_suffix()
+            string = os.path.join(config.PASH_TMP_PREFIX, suffix)     
             ## Quote the argument
             argument = [make_kv('Q', string_to_argument(string))]
         elif(isinstance(self.resource, FileDescriptorResource)):
-            raise NotImplementedError()
+            if (self.resource.is_stdin() and stdin_dash):
+                argument = string_to_argument("-")
+            else:
+                raise NotImplementedError()
         else:
             string = "{}".format(self.resource)
             argument = string_to_argument(string)
@@ -92,8 +113,14 @@ class FileId:
     def has_file_descriptor_resource(self):
         return (isinstance(self.resource, FileDescriptorResource))
 
+    def has_remote_file_resource(self):
+        return isinstance(self.resource, RemoteFileResource)
+
     def is_ephemeral(self):
         return (isinstance(self.resource, EphemeralResource))
+
+    def make_temporary_file(self):
+        self.resource = TemporaryFileResource()
 
     ## Removes a resource from an FID, making it ephemeral
     def make_ephemeral(self):
@@ -108,3 +135,13 @@ class FileId:
 
     def get_ident(self):
         return self.ident
+
+    def is_available_on(self, host):
+        if self.is_ephemeral():
+            return True
+        elif self.has_remote_file_resource():
+            return self.resource.is_available_on(host)
+        else:
+            # Currently any other resource types should
+            # be part of the main shell graph.
+            return False

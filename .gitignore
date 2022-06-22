@@ -30,6 +30,8 @@ revision.tex
 # Node.js
 node_modules
 
+python_pkgs
+
 # local directory w/ related work
 bib.to
 pldi/draft.synctex.gz
@@ -49,3 +51,8 @@ compiler/1-grams.txt
 compiler/2-grams.txt
 runtime/dgsh-tee
 *.res
+
+# IDE files
+.vscode/*
+.idea/*
+.vs/*

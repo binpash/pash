@@ -1,0 +1,35 @@
+{
+    "runtime": {
+        "split_binary": "runtime/split",
+        "auto_split_binary": "runtime/auto-split.sh",
+        "r_split_binary": "runtime/r_split",
+        "r_merge_binary": "runtime/r_merge",
+        "r_wrap_binary": "runtime/r_wrap",
+        "r_unwrap_binary": "runtime/r_unwrap",
+        "dgsh_tee_binary": "runtime/dgsh_tee.sh",
+        "remote_read_binary": "runtime/dspash/remote_read.sh",
+        "remote_write_binary": "runtime/dspash/remote_write.sh",
+        "dfs_split_reader_binary": "runtime/dspash/dfs_split_reader.sh",
+        "clean_up_graph_binary": "runtime/wait_for_output_and_sigpipe_rest.sh",
+        "redirect_stdin_binary": "runtime/redirect_stdin_to.sh",
+        "immediate": "./.pash_immediate_command.sh",
+        "dgsh_buffer_size": "5M"
+    },
+    "distr_planner": {
+        "optimized_script_filename": "/tmp/optimized_script.sh",
+        "temp_ir_prefix": "/tmp/pash_temp_ir",
+        "eager_intermediate_prefix": "pash_eager_intermediate_",
+        "eager_executable_path": "runtime/eager.sh",
+        "drain_stream_executable_path": "runtime/drain_stream.sh",
+        "output_dir": "/tmp/distr_output",
+        "annotations_dir": "annotations",
+        "batch_size": 1000,
+        "distr_backend": false,
+        "nodes": [
+            "127.0.0.1",
+            "158.130.4.113",
+            "158.130.4.114",
+            "158.130.4.120"
+        ]
+    }
+}

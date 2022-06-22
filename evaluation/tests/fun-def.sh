@@ -10,6 +10,6 @@ custom_tr() {
 
 export -f custom_tr
 
-FILES="../evaluation/tests/input/1M.txt ../evaluation/tests/input/1M.txt"
+FILES="$PASH_TOP/evaluation/tests/input/1M.txt ../evaluation/tests/input/1M.txt"
 
 cat $FILES | custom_tr | custom_sort

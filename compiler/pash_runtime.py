@@ -1,25 +1,19 @@
-import cProfile
-import os
 import argparse
 import sys
 import pickle
-import subprocess
-import jsonpickle
 import traceback
 from datetime import datetime
 
+import config
 from ir import *
 from ast_to_ir import compile_asts
 from json_ast import *
 from ir_to_ast import to_shell
+from pash_graphviz import maybe_generate_graphviz
 from util import *
-import config
 
 from definitions.ir.aggregator_node import *
 
-from definitions.ir.nodes.alt_bigram_g_reduce import *
-from definitions.ir.nodes.bigram_g_map import *
-from definitions.ir.nodes.bigram_g_reduce import *
 from definitions.ir.nodes.eager import *
 from definitions.ir.nodes.pash_split import *
 
@@ -27,7 +21,9 @@ import definitions.ir.nodes.r_merge as r_merge
 import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_unwrap as r_unwrap
 import definitions.ir.nodes.dgsh_tee as dgsh_tee
-
+import definitions.ir.nodes.dfs_split_reader as dfs_split_reader
+# Distirbuted Exec
+import dspash.hdfs_utils as hdfs_utils 
 
 runtime_config = {}
 ## We want to catch all exceptions here so that they are logged correctly
@@ -38,19 +34,34 @@ def main():
     except Exception:
         log("Compiler failed, no need to worry, executing original script...")
         log(traceback.format_exc())
-        exit(1)
+        sys.exit(1)
 
 def main_body():
+    global runtime_config
+
     ## Parse arguments
     args = parse_args()
     config.pash_args = args
 
-    ## Ensure that PASH_TMP_PREFIX is set by pash.py
-    assert(not os.getenv('PASH_TMP_PREFIX') is None)
-    config.PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
+    ## Load the configuration
+    if not config.config:
+        config.load_config(args.config_path)
+
+    ## Load annotations
+    config.annotations = load_annotation_files(config.config['distr_planner']['annotations_dir'])
+
+    runtime_config = config.config['distr_planner']
+
+    ## Read any shell variables files if present
+    config.read_vars_file(args.var_file)
+
+    log("Input:", args.input_ir, "Compiled file:", args.compiled_script_file)
 
     ## Call the main procedure
-    compile_optimize_script(args.input_ir, args.compiled_script_file, args)
+    compiler_config = CompilerConfig(args.width)
+    ast_or_ir = compile_optimize_output_script(args.input_ir, args.compiled_script_file, args, compiler_config)
+    maybe_generate_graphviz(ast_or_ir, args)
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -62,30 +73,82 @@ def parse_args():
                         help="determines the path of a file containing all shell variables.",
                         default=None)
     config.add_common_arguments(parser)
-    args = parser.parse_args()
+    args, unknown_args = parser.parse_known_args()
     return args
 
-def compile_optimize_script(ir_filename, compiled_script_file, args):
+## TODO: Add more fields from args in this
+class CompilerConfig:
+    def __init__(self, width):
+        self.width = width
+    
+    def __repr__(self):
+        return f'CompilerConfig(Width:{self.width})'
+
+def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
+    """
+    Return IR object for compilation success. None otherwise.
+    """
+    ret = None
+    try:
+        ret = compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config)
+    except Exception as e:
+        log("WARNING: Exception caught:", e)
+        # traceback.print_exc()
+
+    return ret
+
+def compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config):
     global runtime_config
-    if not config.config:
-        config.load_config(args.config_path)
+    
+    ret = None
 
-    ## Load annotations
-    config.annotations = load_annotation_files(config.config['distr_planner']['annotations_dir'])
+    ## Load the df_region from a file
+    candidate_df_region = load_df_region(ir_filename)
+    
+    ## Compile it
+    optimized_ast_or_ir = compile_optimize_df_region(candidate_df_region, args, compiler_config)
 
-    runtime_config = config.config['distr_planner']
+    ## Call the backend that executes the optimized dataflow graph
+    ## TODO: Should never be the case for now. This is obsolete.
+    assert(not runtime_config['distr_backend'])
 
+    ## If the candidate DF region was indeed a DF region then we have an IR
+    ## which should be translated to a parallel script.
+    if(isinstance(optimized_ast_or_ir, IR)):
+        if args.distributed_exec:
+            _, ir_filename = ptempfile()
+            script_to_execute = f"$PASH_TOP/compiler/dspash/remote_exec_graph.sh {ir_filename}\n"
+            ## This might not be needed anymore (since the output script is output anyway)
+            ## TODO: This is probably useless, remove
+            maybe_log_optimized_script(script_to_execute, args)
+
+            with open(ir_filename, "wb") as f:
+                obj = (optimized_ast_or_ir, config.config['shell_variables'])
+                pickle.dump(obj, f)
+        else:
+            script_to_execute = to_shell(optimized_ast_or_ir, args)
+            
+        log("Optimized script saved in:", compiled_script_file)
+        with open(compiled_script_file, "w") as f:
+            f.write(script_to_execute)
+    
+        ret = optimized_ast_or_ir
+    else:
+        raise Exception("Script failed to compile!")
+    
+    return ret
+
+def load_df_region(ir_filename):
     log("Retrieving candidate DF region: {} ... ".format(ir_filename), end='')
     with open(ir_filename, "rb") as ir_file:
         candidate_df_region = pickle.load(ir_file)
     log("Done!")
+    return candidate_df_region
 
-    ## Read any shell variables files if present
-    config.read_vars_file(args.var_file)
-
+def compile_optimize_df_region(df_region, args, compiler_config):
     ## Compile the candidate DF regions
     compilation_start_time = datetime.now()
-    asts_and_irs = compile_candidate_df_region(candidate_df_region, config.config)
+    asts_and_irs = compile_candidate_df_region(df_region, config.config)
     compilation_end_time = datetime.now()
     print_time_delta("Compilation", compilation_start_time, compilation_end_time, args)
 
@@ -93,7 +156,7 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
     if(args.no_optimize):
         optimized_asts_and_irs = asts_and_irs
     else:
-        optimized_asts_and_irs = optimize_irs(asts_and_irs, args)
+        optimized_asts_and_irs = optimize_irs(asts_and_irs, args, compiler_config)
 
     ## TODO: Normally this could return more than one compiled ASTs (containing IRs in them).
     ##       To correctly handle that we would need to really replace the optimized IRs
@@ -105,41 +168,23 @@ def compile_optimize_script(ir_filename, compiled_script_file, args):
     ##       It might complicate things having a script whose half is compiled to a graph and its other half not.
     assert(len(optimized_asts_and_irs) == 1)
     optimized_ast_or_ir = optimized_asts_and_irs[0]
+    
+    return optimized_ast_or_ir
 
-    ## Call the backend that executes the optimized dataflow graph
-    output_script_path = runtime_config['optimized_script_filename']
-    ## TODO: Should never be the case for now. This is obsolete.
-    assert(not runtime_config['distr_backend'])
-
-    ## If the candidate DF region was indeed a DF region then we have an IR
-    ## which should be translated to a parallel script.
-    if(isinstance(optimized_ast_or_ir, IR)):
-        script_to_execute = to_shell(optimized_ast_or_ir,
-                                     runtime_config['output_dir'], args)
-
-        log("Optimized script saved in:", compiled_script_file)
-
-        ## TODO: Merge this write with the one below. Maybe even move this logic in `pash_runtime.sh`
-        ## Output the optimized shell script for inspection
-        if(args.output_optimized):
-            with open(output_script_path, "w") as output_script_file:
-                log("Optimized script:")
-                log(script_to_execute)
-                output_script_file.write(script_to_execute)
-
-        with open(compiled_script_file, "w") as f:
-                f.write(script_to_execute)
-
-    else:
-        ## Instead of outputing the script here, we just want to exit with a specific exit code
-        ## TODO: Figure out the code and save it somewhere
-        exit(120)
-
+def maybe_log_optimized_script(script_to_execute, args):
+    ## TODO: Merge this write with the one below. Maybe even move this logic in `pash_runtime.sh`
+    ## Output the optimized shell script for inspection
+    if(args.output_optimized):
+        output_script_path = runtime_config['optimized_script_filename']
+        with open(output_script_path, "w") as output_script_file:
+            log("Optimized script:")
+            log(script_to_execute)
+            output_script_file.write(script_to_execute)
 
 def compile_candidate_df_region(candidate_df_region, config):
     ## This is for the files in the IR
     fileIdGen = FileIdGen()
-
+    
     ## If the candidate DF region is not from the top level then
     ## it won't be a list and thus we need to make it into a list to compile it.
     if(not isinstance(candidate_df_region, list)):
@@ -153,7 +198,8 @@ def compile_candidate_df_region(candidate_df_region, config):
 
     return compiled_asts
 
-def optimize_irs(asts_and_irs, args):
+## TODO: Switch args to compiler_config
+def optimize_irs(asts_and_irs, args, compiler_config):
     global runtime_config
 
     optimization_start_time = datetime.now()
@@ -166,14 +212,15 @@ def optimize_irs(asts_and_irs, args):
 
             # log(ir_node)
             # with cProfile.Profile() as pr:
-            distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, args.width,
+            distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, compiler_config.width,
                                                                       runtime_config['batch_size'],
                                                                       args.no_cat_split_vanish,
                                                                       args.r_split, args.r_split_batch_size)
             # pr.print_stats()
             # log(distributed_graph)
-
-            if(not args.no_eager):
+            
+            # Eagers are added in remote notes when using distributed exec
+            if(not args.no_eager and not args.distributed_exec): 
                 eager_distributed_graph = add_eager_nodes(distributed_graph, args.dgsh_tee)
             else:
                 eager_distributed_graph = distributed_graph
@@ -316,6 +363,49 @@ def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_fl
 
     return new_merger
 
+def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
+    """
+    Replaces hdfs cat with a cat per block, each cat uses has an HDFSResource input fid
+    Returns: A normal Cat that merges the blocks (will be removed when parallizing next_node)
+    """
+    assert(isinstance(hdfs_cat, HDFSCat))
+
+    ## At the moment this only works for nodes that have one standard input.
+    if len(next_node.get_standard_inputs()) != 1:
+        return
+
+    hdfscat_input_id = hdfs_cat.get_standard_inputs()[0]
+    hdfs_fid = graph.get_edge_fid(hdfscat_input_id)
+    hdfs_filepath = str(hdfs_fid.get_resource())
+    output_ids = []
+
+    # Create a cat command per file block
+    file_config = hdfs_utils.get_file_config(hdfs_filepath)
+    _, dummy_config_path = ptempfile() # Dummy config file, should be updated by workers
+    for split_num, block in enumerate(file_config.blocks):
+        resource = DFSSplitResource(file_config.dumps(), dummy_config_path, split_num, block.hosts)
+        block_fid = fileIdGen.next_file_id()
+        block_fid.set_resource(resource)
+        graph.add_edge(block_fid)
+
+        output_fid = fileIdGen.next_file_id()
+        output_fid.make_ephemeral()
+        output_ids.append(output_fid.get_ident())
+        graph.add_edge(output_fid)
+
+        split_reader_node = dfs_split_reader.make_dfs_split_reader_node([block_fid.get_ident()], output_fid.get_ident(), split_num, config.HDFS_PREFIX)
+        graph.add_node(split_reader_node)
+
+    # Remove the HDFS Cat command as it's not used anymore
+    graph.remove_node(hdfs_cat.get_id())
+
+    ## input of next command is output of new merger.
+    input_id = next_node.get_standard_inputs()[0]
+    new_merger = make_cat_node(output_ids, input_id)
+    graph.add_node(new_merger)
+
+    return new_merger
+
 
 ## TODO: There needs to be some state to keep track of open r-split sessions
 ##       (that either end at r-merge or at r_unwrap before a commutative command).
@@ -358,9 +448,11 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
                     or next_node.is_stateless()))):
             ## If the current node is not a merger, it means that we need
             ## to generate a merger using a splitter (auto_split or r_split)
-
+            if (isinstance(curr, HDFSCat) and config.pash_args.distributed_exec):
+                new_curr = split_hdfs_cat_input(curr, next_node, graph, fileIdGen) # Cat merger
+                new_curr_id = new_curr.get_id()
             ## no_cat_split_vanish shortcircuits this and inserts a split even if the current node is a cat.
-            if(fan_out > 1
+            elif (fan_out > 1
                and (no_cat_split_vanish
                     or (not (isinstance(curr, Cat)
                              or isinstance(curr, r_merge.RMerge))
@@ -490,13 +582,7 @@ def parallelize_dfg_node(old_merger_id, node_id, graph, fileIdGen):
 ##
 ## TODO: Make that generic to work through annotations
 def create_merge_commands(curr, new_output_ids, fileIdGen):
-    if(str(curr.com_name) == "custom_sort"):
-        return create_sort_merge_commands(curr, new_output_ids, fileIdGen)
-    elif(str(curr.com_name) == "bigrams_aux"):
-        return create_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen)
-    elif(str(curr.com_name) == "alt_bigrams_aux"):
-        return create_alt_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen)
-    elif(str(curr.com_name) == "uniq"):
+    if(str(curr.com_name) == "uniq"):
         return create_uniq_merge_commands(curr, new_output_ids, fileIdGen)
     else:
         return create_generic_aggregator_tree(curr, new_output_ids, fileIdGen)
@@ -504,7 +590,7 @@ def create_merge_commands(curr, new_output_ids, fileIdGen):
 ## This is a function that creates a reduce tree for a generic function
 def create_generic_aggregator_tree(curr, new_output_ids, fileIdGen):
     ## The Aggregator node takes a sequence of input ids and an output id
-    output = create_reduce_tree(lambda ids: AggregatorNode(curr, ids[:-1], ids[-1]),
+    output = create_reduce_tree(lambda in_ids, out_ids: AggregatorNode(curr, in_ids, out_ids),
                                 new_output_ids, fileIdGen)
     return output
 
@@ -513,16 +599,6 @@ def create_generic_aggregator_tree(curr, new_output_ids, fileIdGen):
 ## TODO: Find a better place to put these functions
 def create_sort_merge_commands(curr, new_output_ids, fileIdGen):
     output = create_reduce_tree(lambda ids: SortGReduce(curr, ids),
-                                new_output_ids, fileIdGen)
-    return output
-
-def create_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen):
-    output = create_reduce_tree(lambda ids: BigramGReduce(curr, ids),
-                                new_output_ids, fileIdGen)
-    return output
-
-def create_alt_bigram_aux_merge_commands(curr, new_output_ids, fileIdGen):
-    output = create_reduce_tree(lambda ids: AltBigramGReduce(curr, ids),
                                 new_output_ids, fileIdGen)
     return output
 
@@ -602,7 +678,7 @@ def create_reduce_tree_level(init_func, input_ids, fileIdGen):
 
 ## This function creates one node of the reduce tree
 def create_reduce_node(init_func, input_ids, output_ids):
-    return init_func(flatten_list(input_ids) + output_ids)
+    return init_func(flatten_list(input_ids), output_ids)
 
 
 ## This functions adds an eager on a given edge.
@@ -616,7 +692,7 @@ def add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_
     else:
         ## TODO: Remove the line below if eager creates its intermediate file
         ##       on its own.
-        intermediate_fid = intermediateFileIdGen.next_ephemeral_file_id()
+        intermediate_fid = intermediateFileIdGen.next_temporary_file_id()
 
         eager_exec_path = '{}/{}'.format(config.PASH_TOP, runtime_config['eager_executable_path'])
 

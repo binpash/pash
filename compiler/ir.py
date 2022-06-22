@@ -1,13 +1,12 @@
-import json
-import yaml
 import os
 
 from definitions.ir.arg import *
 from definitions.ir.dfg_node import *
+from definitions.ir.aggregator_node import *
 from definitions.ir.file_id import *
 from definitions.ir.resource import *
 from definitions.ir.nodes.cat import *
-from definitions.ir.nodes.bigram_g_map import *
+from definitions.ir.nodes.hdfs_cat import HDFSCat
 
 import definitions.ir.nodes.pash_split as pash_split
 import definitions.ir.nodes.r_merge as r_merge
@@ -35,16 +34,23 @@ def create_split_file_id(fileIdGen):
 class FileIdGen:
     def __init__(self, next = 0, prefix = ""):
         self.next = next + 1
-        self.prefix = prefix
+        directory = f"{str(uuid.uuid4().hex)}"
+        self.prefix = f"{directory}/{prefix}"
+        directory_path = os.path.join(config.PASH_TMP_PREFIX, self.prefix)  
+        os.makedirs(directory_path)
 
     def next_file_id(self):
         fileId = FileId(self.next, self.prefix)
         self.next += 1
         return fileId
 
+    def next_temporary_file_id(self):
+        fileId = self.next_file_id()
+        fileId.make_temporary_file()
+        return fileId
+
     def next_ephemeral_file_id(self):
-        fileId = FileId(self.next, self.prefix)
-        self.next += 1
+        fileId = self.next_file_id()
         fileId.make_ephemeral()
         return fileId
 
@@ -107,7 +113,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
     # log("Opt indices:", opt_indices, "options:", options)
     category = find_command_category(command, options)
     com_properties = find_command_properties(command, options)
-    com_aggregator = find_command_aggregator(command, options)
+    com_mapper, com_aggregator = find_command_mapper_aggregator(command, options)
 
     ## TODO: Make an empty IR and add edges and nodes incrementally (using the methods defined in IR).
 
@@ -136,6 +142,14 @@ def compile_command_to_DFG(fileIdGen, command, options,
                        com_options=dfg_options,
                        com_redirs=com_redirs,
                        com_assignments=com_assignments)
+    elif(str(com_name) == "hdfs" and str(dfg_options[0][1]) == "dfs" and str(dfg_options[1][1]) == "-cat"):
+        dfg_node = HDFSCat(dfg_inputs,
+                        dfg_outputs,
+                        com_name,
+                        com_category,
+                        com_options=dfg_options,
+                        com_redirs=com_redirs,
+                        com_assignments=com_assignments)
     else:
         ## Assume: Everything must be completely expanded
         ## TODO: Add an assertion about that.
@@ -144,6 +158,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            com_name,
                            com_category,
                            com_properties=com_properties,
+                           com_mapper=com_mapper,
                            com_aggregator=com_aggregator,
                            com_options=dfg_options,
                            com_redirs=com_redirs,
@@ -197,16 +212,10 @@ def make_tee(input, outputs):
                    com_name, 
                    com_category)
 
-## TODO: Move it somewhere else, but where?
 def make_map_node(node, new_inputs, new_outputs):
     ## Some nodes have special map commands
-    ##
-    ## TODO: Make this more general instead of hardcoded
-    if(str(node.com_name) == "bigrams_aux"):
-        ## Ensure that the inputs have the correct size for this
-        assert(len(new_inputs[0]) == 0)
-        assert(len(new_inputs[1]) == 1)
-        new_node = BigramGMap(new_inputs[1][0], new_outputs)
+    if(not node.com_mapper is None):
+        new_node = MapperNode(node, new_inputs, new_outputs)
     else:
         new_node = node.copy()
         new_node.inputs = new_inputs
@@ -299,6 +308,17 @@ class IR:
         else:
             return None
 
+    def replace_edge(self, old_edge_id, new_edge_fid):
+        assert(new_edge_fid not in self.all_fids())
+        new_edge_id = new_edge_fid.get_ident()
+        old_fid, from_node, to_node = self.edges[old_edge_id]
+        self.edges[new_edge_id] = (new_edge_fid, from_node, to_node)
+        if from_node:
+            self.get_node(from_node).replace_edge(old_edge_id, new_edge_id)
+        if to_node:
+            self.get_node(to_node).replace_edge(old_edge_id, new_edge_id)
+        del self.edges[old_edge_id]
+        
     def get_stdin(self):
         stdin_id = self.get_stdin_id()
         stdin_fid = self.get_edge_fid(stdin_id)
@@ -326,7 +346,8 @@ class IR:
         for edge_id, (edge_fid, _from, _to) in self.edges.items():
             resource = edge_fid.get_resource()
             if(resource.is_stdout()):
-                assert(stdout_id is None)
+                # This is not true when using distributed_exec
+                # assert(stdout_id is None)
                 stdout_id = edge_id
         return stdout_id   
 
@@ -349,6 +370,9 @@ class IR:
 
     def to_ast(self, drain_streams):
         asts = []
+
+        ## Initialize the pids_to_kill variable
+        asts.append(self.init_pids_to_kill())
 
         fileIdGen = self.get_file_id_gen()
 
@@ -392,14 +416,36 @@ class IR:
             if(not node_id in sink_node_ids):
                 node_ast = node.to_ast(self.edges, drain_streams)
                 asts.append(make_background(node_ast))
+                ## Gather all pids
+                assignment = self.collect_pid_assignment()
+                asts.append(assignment)
 
         ## Put the output node in the end for wait to work.
         for node_id in sink_node_ids:
             node = self.get_node(node_id)
             node_ast = node.to_ast(self.edges, drain_streams)
             asts.append(make_background(node_ast))
+            ## Gather all pids
+            assignment = self.collect_pid_assignment()
+            asts.append(assignment)
 
         return asts
+    
+    def collect_pid_assignment(self):
+        ## Creates:
+        ## pids_to_kill="$! $pids_to_kill"
+        var_name = 'pids_to_kill'
+        rval = quote_arg([standard_var_ast('!'),
+                          char_to_arg_char(' '),
+                          standard_var_ast(var_name)])
+        return make_assignment(var_name, [rval])
+    
+    def init_pids_to_kill(self):
+        ## Creates:
+        ## pids_to_kill=""
+        var_name = 'pids_to_kill'
+        rval = quote_arg([])
+        return make_assignment(var_name, [rval])
 
     ## TODO: Delete this
     def set_ast(self, ast):
@@ -552,13 +598,17 @@ class IR:
                           if to_node is None]
         return all_output_fids
 
-    ## Returns the sources of the IR (i.e. the nodes that has no
-    ## incoming edge)
+    ## Returns the sources of the IR.
+    ##   This includes both the nodes that have an incoming edge (file) that has no from_node,
+    ##     but also nodes that have no incoming edge (generator nodes). 
     def source_nodes(self):
         sources = set()
         for _edge_fid, from_node, to_node in self.edges.values():
             if(from_node is None and not to_node is None):
                 sources.add(to_node)
+        for node_id, node in self.nodes.items():
+            if len(node.get_input_list()) == 0:
+                sources.add(node_id)
         return list(sources)
 
     def sink_nodes(self):
@@ -884,7 +934,41 @@ class IR:
         
         return new_node_id
         
+    def generate_graphviz(self):
+        ## TODO: It is unclear if importing in here (instead of in general)
+        ##       improves startup cost of the pash_runtime when not using graphviz.
+        import graphviz
 
+        dot = graphviz.Digraph()
+
+        ## TODO: Could use subgraph for distribution etc
+
+        ## First generate all nodes
+        for node_id, node in self.nodes.items():
+            dot = node.add_dot_node(dot, node_id)
+
+        ## (I/O) File nodes should be boxes
+        dot.attr('node', shape='box')
+
+        ## Then generate all edges and input+output files
+        for fid, from_node, to_node in self.edges.values():
+            ## This means that this file is an ending or starting file
+            if from_node is None or to_node is None:
+                ## Sometimes some source or sink files might be ephemeral
+                ## TODO: We should investigate why this happens
+                if fid.has_file_resource():
+                    label = fid.serialize()
+                    node_id = f'file-{str(fid.get_ident())}'
+                    dot.node(node_id, label)
+
+                    if from_node is None:
+                        dot.edge(node_id, str(to_node))
+                    else:
+                        dot.edge(str(from_node), node_id)
+            else:
+                dot.edge(str(from_node), str(to_node))
+
+        return dot
 
     ## TODO: Also it should check that there are no unreachable edges
 
@@ -930,4 +1014,5 @@ class IR:
                 #  or (not self.is_in_background()
                 #      and not self.get_stdin() is None 
                 #      and not self.get_stdout() is None)))
+
 

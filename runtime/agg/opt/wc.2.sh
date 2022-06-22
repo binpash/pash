@@ -4,11 +4,11 @@
 # FIXME needs correct padding
 
 paste -d '+'
-    <(cat $1 |
+    <(cat "$1" |
       wc |
       tr -s ' '  '\n' |
       tail -n +2)
-    <(cat $2 |
+    <(cat "$2" |
       wc |
       tr -s ' '  '\n' |
       tail -n +2) |

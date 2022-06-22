@@ -1,6 +1,12 @@
-.PHONY: all eager-debug split-debug
+ifeq ($(optimized_agg_flag),1)
+all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee agg set-diff
+.PHONY: all eager-debug split-debug clean agg
+else
+all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee set-diff
+.PHONY: all eager-debug split-debug clean
+endif
 
-all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee
+
 
 CFLAGS=-Wall
 
@@ -50,12 +56,15 @@ r-wrap: r_wrap.c r_split.h
 r-unwrap: r_unwrap.c r_split.h
 	gcc ${CFLAGS} r_unwrap.c -o r_unwrap
 
+set-diff: set-diff.c
+	gcc ${CFLAGS} set-diff.c -o set-diff
+
 
 libdgsh_a_SOURCES = negotiate.c $(DGSH_ASSEMBLY_FILE)
 dgsh_tee_SOURCES = dgsh-tee.c
 
 dgsh-tee:
-	git clone https://github.com/tammam1998/dgsh.git;\
+	git clone https://github.com/binpash/dgsh.git;\
 	cd dgsh;\
 	git checkout pash;\
 	cd core-tools/src;\
@@ -63,6 +72,10 @@ dgsh-tee:
 	cp dgsh-tee ../../../dgsh-tee;
 	rm -rf dgsh/
 	
+agg:
+	$(MAKE) -C agg/cpp
+
 clean:
 	rm -f eager split r_split r_wrap r_unwrap dgsh-tee
 	rm -rf dgsh
+	$(MAKE) -C agg/cpp clean

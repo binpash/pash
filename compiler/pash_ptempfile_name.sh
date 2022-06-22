@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
 
-echo "$(mktemp --tmpdir="$PASH_TMP_PREFIX" -u pash_XXXXXXXXXX)"
+distro=${1??Distro not given}
+# echo "$PASH_TMP_PREFIX/pash_$RANDOM$RANDOM$RANDOM"
+mktemp -u "$PASH_TMP_PREFIX/pash_XXXXXXXXXX"

@@ -1,12 +1,11 @@
 import copy
-from typing import NoReturn
+
 from definitions.ast_node import *
 from definitions.ast_node_c import *
 
-from util import log
-
 import ast_to_ir
 import config
+import parse
 
 ################################################################################
 # SAFE EXPANSION ANALYSIS
@@ -190,6 +189,11 @@ class StuckExpansion(RuntimeError):
         self.reason = reason
         self.info = info
 
+class ImpureExpansion(RuntimeError):
+    def __init__(self, reason, *info):
+        self.reason = reason
+        self.info = info
+
 class Unimplemented(RuntimeError):
     def __init__(self, msg, ast):
         self.msg = msg
@@ -200,8 +204,112 @@ class InvalidVariable(RuntimeError):
         self.var = var
         self.reason = reason
 
-def lookup_variable(var, config):
-    return config['shell_variables'].get(var, [None, None])
+## TODO: Figure out if there is a way to batch calls to bash and ask it 
+##       to expand everything at once! We would need to make variable lookups asynchronous.
+##
+## TODO: `config` doesn't need to be passed down since it is imported
+def lookup_variable(var, _lookup_config):
+    ## If the variable is input arguments then get it from pash_input_args.
+    ##
+    ## TODO KK PR#246 Do we need to split using IFS or is it always spaces?
+    ##
+    ## TODO KK PR#246 Maybe instead of this we could do this setup
+    ##      once during initialization and leave lookup unaltered?
+    ##
+    ## TODO MMG this isn't quite adequate: if pash_input_args contains
+    ##      spaces, we'll miscount. KK and I wrote a test
+    ##      evaluation/tests/interface_tests that's disabled as of PR#246.
+    ##
+    ##      the right solution here is:
+    ##
+    ##         - positional arguments get their own field in the
+    ##           config---they're not store with ordinary shell
+    ##           variables
+    ##
+    ##         - we save those separately, probably in a separate file
+    ##
+    ##           ```
+    ##           echo pash_argc=$# >pash_positional_args
+    ##           for i in $(seq 0 $#)
+    ##           do
+    ##             echo "pash_arg$i=\"$i\"" >pash_positional_args
+    ##           done
+    ##           ```
+    ##
+    ##         - we load these separately. pretty annoying; here's a sketch
+    ##
+    ##           ```
+    ##           cmd="set --"
+    ##           for i in $(seq 0 $pash_argc)
+    ##           do
+    ##             cmd="$cmd \"\$pash_arg$i\""
+    ##           done
+    ##           eval "$cmd"
+
+
+    ## Only check the cache if we are using bash mirror
+    if config.pash_args.expand_using_bash_mirror:
+        ## If we find the value in the cache just use it
+        var_value = config.get_from_variable_cache(var)
+        if var_value is not None:
+            return None, var_value
+
+    if(var == '@'):
+        expanded_var = lookup_variable_inner('pash_input_args')
+    elif(var == '?'):
+        expanded_var = lookup_variable_inner('pash_previous_exit_status')
+    elif(var == '-'):
+        expanded_var = lookup_variable_inner('pash_previous_set_status')
+    elif(var == '#'):
+        input_args = lookup_variable_inner('pash_input_args')
+        expanded_var = str(len(input_args.split()))
+    elif(var.isnumeric() and int(var) >= 1):
+        input_args = lookup_variable_inner('pash_input_args')
+        split_args = input_args.split()
+        index = int(var) - 1
+        try:
+            expanded_var = split_args[index]
+        except:
+            ## If there are not enough arguments -u is set we need to raise
+            if is_u_set():
+                raise StuckExpansion("-u is set and positional argument wasn't set", var)
+
+            expanded_var = ''
+    elif(var == '0'):
+        expanded_var = lookup_variable_inner('pash_shell_name')
+    else:
+        ## TODO: We can pull this to expand any string.
+        expanded_var = lookup_variable_inner(var)
+    
+    ## Add it to the cache to find it next time
+    if config.pash_args.expand_using_bash_mirror:
+        config.add_to_variable_cache(var, expanded_var)
+
+    return None, expanded_var
+
+## Looks up the variable and if it is unset it raises an error
+def lookup_variable_inner(varname):
+    value = lookup_variable_inner_unsafe(varname)
+    if value is None and is_u_set():
+        raise StuckExpansion("-u is set and variable was unset", varname)
+    return value
+
+
+def lookup_variable_inner_unsafe(varname):
+    if config.pash_args.expand_using_bash_mirror:
+        return config.query_expand_variable_bash_mirror(varname)
+    else:
+        ## TODO: Is it in there? If we have -u and it is in there.
+        _type, value = config.config['shell_variables'].get(varname, [None, None])
+        return value
+
+## This function checks if the -u flag is set
+def is_u_set():
+    ## This variable is set by pash and is exported and therefore will be in the variable file.
+    _type, value = config.config['shell_variables']["pash_previous_set_status"]
+    # log("Previous set status is:", value)
+    return "u" in value
+
 
 def invalidate_variable(var, reason, config):
     config['shell_variables'][var] = [None, InvalidVariable(var, reason)]
@@ -228,6 +336,9 @@ def try_set_variable(var, expanded, config):
 
     return config
 
+## TODO: Replace this with an expansion that happens in the bash mirror
+##
+## TODO: If there is any potential side-effect, exit early
 def expand_args(args, config, quoted = False):
     res = []
     for arg in args:
@@ -274,6 +385,8 @@ def char_code(c):
     return [type, ord(c)]
 
 def expand_arg(arg_chars, config, quoted = False):
+    # log("expanding arg", arg_chars)
+    # log("unparsed_string:", parse.pash_string_of_arg(arg_chars))
     res = []
     for arg_char in arg_chars:
         new = expand_arg_char(arg_char, quoted, config)
@@ -287,13 +400,15 @@ def expand_arg(arg_chars, config, quoted = False):
 
 def expand_arg_char(arg_char, quoted, config):
     key, val = get_kv(arg_char)
-
     if key == 'C':
         if val in ['*', '?', '{', '}', '[', ']'] and not quoted:
             raise Unimplemented("globbing", arg_char)
 
         return [arg_char]
     elif key == 'E':
+        ## 2021-09-15 MMG Just guessing here
+        if val in ['*', '?', '{', '}', '[', ']'] and not quoted:
+            raise Unimplemented("globbing", arg_char)
         return [arg_char]
     elif key == 'T':
         if val is None or val == "" or val == "None":
@@ -318,7 +433,7 @@ def expand_arg_char(arg_char, quoted, config):
         return expand_var(fmt, null, var, arg, quoted, config)
     elif key == 'B':
         # TODO 2020-12-10 run commands?
-        raise Unimplemented("command substitution", arg_char)
+        raise ImpureExpansion("command substitution", arg_char)
     else:
         raise Unimplemented("weird key", key)
 
@@ -326,6 +441,8 @@ def expand_var(fmt, null, var, arg, quoted, config):
     # TODO 2020-12-10 special variables
 
     _type, value = lookup_variable(var, config)
+
+    log("Var:", var, "value:", value)
 
     if isinstance(value, InvalidVariable):
         raise StuckExpansion("couldn't expand invalid variable", value)
@@ -347,9 +464,10 @@ def expand_var(fmt, null, var, arg, quoted, config):
             return value
     elif fmt == 'Assign':
         if value is None or (null and value == ""):
-            new = expand_arg(arg, config, quoted = quoted)
-            config = try_set_variable(var, new, config)
-            return new
+            raise ImpureExpansion("assignment format on unset/null variable", value, arg)
+#            new = expand_arg(arg, config, quoted = quoted)
+#            config = try_set_variable(var, new, config)
+#            return new
         else:
             return value
     elif fmt == 'Plus':
@@ -415,25 +533,29 @@ def expand_simple(node, config):
     # TODO 2020-11-25 MMG is this the order bash does?
     node.redir_list = expand_redir_list(node.redir_list, config)
 
-    settable = dict()
-    for (i, [x, arg]) in enumerate(node.assignments):
-        exp = expand_arg(arg, config)
-        node.assignments[i] = [x, exp]
-
-        # assignment visibility:
-        #
-        # assignments are immediately done when no command...
-        if len(node.arguments) == 0:
-            config = try_set_variable(x, exp, config)
-        else:
-            # or deferred until later when there is one
-            settable[x] = exp
-
-    # once all values are found, _then_ set them before the command
-    # TODO 2020-11-25 if node.arguments[0] is a special builtin, these things are global
-    # if not... then the settings are just for the command, and shouldn't go in the config
-    for (x,exp) in settable:
-        try_set_variable(x, exp, config)
+    if len(node.assignments) > 0:
+        raise ImpureExpansion('assignment', node.assignments)
+    
+    #settable = dict()
+    #
+    #for (i, [x, arg]) in enumerate(node.assignments):
+    #    exp = expand_arg(arg, config)
+    #    node.assignments[i] = [x, exp]
+    #
+    #    # assignment visibility:
+    #    #
+    #    # assignments are immediately done when no command...
+    #    if len(node.arguments) == 0:
+    #        config = try_set_variable(x, exp, config)
+    #    else:
+    #        # or deferred until later when there is one
+    #        settable[x] = exp
+    #
+    ## once all values are found, _then_ set them before the command
+    ## TODO 2020-11-25 if node.arguments[0] is a special builtin, these things are global
+    ## if not... then the settings are just for the command, and shouldn't go in the config
+    #for (x,exp) in settable:
+    #    try_set_variable(x, exp, config)
 
     node.arguments = expand_args(node.arguments, config)
 

@@ -5,7 +5,7 @@
 	    {
 		"predicate": "default",
 		"class": "pure", "comment": "No input so f(a++b) != f(a) ++ f(b)",
-		"inputs": ["args[:]"],
+		"inputs": [ ],
 		"outputs": ["stdout"]
 	    }
 	]

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "dspash/filereader";
+
+service FileReader {
+    rpc ReadFile(FileRequest) returns (stream ReadReply) {}
+}
+
+message FileRequest {
+    string path = 1;
+}
+
+message ReadReply {
+    bytes buffer = 1;
+}

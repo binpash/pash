@@ -1,12 +1,10 @@
 import copy
+import annotations
 from command_categories import *
 from util import *
 from ir_utils import *
-
 from definitions.ir.redirection import *
 from definitions.ir.resource import *
-
-import config
 
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions
@@ -20,12 +18,14 @@ class DFGNode:
     ## com_category : string denoting category
     ## input_consumption_mode : enumeration
     ## com_properties : properties such as commutativity
+    ## com_mapper : a class that contains necessary information to instantiate a mapper (by defaule this corresponds to the command)
     ## com_aggregator : a class that contains necessary information to instantiate an aggregator
     ## com_options : list of tuples with the option index and the argument Arg
     ## com_redirs : list of redirections
     ## com_assignments : list of assignments
     def __init__(self, inputs, outputs, com_name, com_category,
                  com_properties = [],
+                 com_mapper = None,
                  com_aggregator = None,
                  com_options = [],
                  com_redirs = [],
@@ -40,6 +40,7 @@ class DFGNode:
         self.com_name = com_name
         self.com_category = com_category
         self.com_properties = com_properties
+        self.com_mapper = com_mapper
         self.com_aggregator = com_aggregator
         self.com_options = com_options
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
@@ -53,6 +54,8 @@ class DFGNode:
             prefix = "Stateless"
         elif (self.com_category == "pure"):
             prefix = "Pure"
+        elif (self.is_pure_parallelizable()):
+            prefix = "Par. Pure"
         if (self.is_commutative()):
             prefix = 'Commutative ' + prefix
         output = "{}: \"{}\" in:{} out:{}".format(
@@ -60,6 +63,20 @@ class DFGNode:
             self.get_input_list(),
             self.outputs)
         return output
+
+    ## Generates a dot node for the DFG node
+    def add_dot_node(self, dot, node_id):
+        label = self.get_dot_label()
+        dot.node(str(node_id), label=label)
+        return dot
+
+    ## Get the label of the node. By default, it is simply the name
+    def get_dot_label(self) -> str:
+        ## The name could be a full path
+        name = self.com_name
+        basename = os.path.basename(str(name))
+        return basename
+
 
     def get_id(self):
         return self.id
@@ -99,10 +116,7 @@ class DFGNode:
         return (self.com_category == "stateless")
 
     def is_pure_parallelizable(self):
-        return (self.com_category == "parallelizable_pure" or
-                (self.com_category == "pure"
-                 and str(self.com_name) in list(map(get_command_from_definition,
-                                                    config.parallelizable_pure_commands))))
+        return (self.com_category == "parallelizable_pure")
 
     def is_commutative(self):
         return ('commutative' in self.com_properties)
@@ -118,6 +132,78 @@ class DFGNode:
                            for i, opt in enumerate(new_options)]
         self.com_options = self.com_options + new_com_options
 
+    ## This method handles special DFG nodes specially when it has to do
+    ## with turning them to commands.
+    ##
+    ## The goal would be for this function to be developed for more and more nodes
+    ## so as to guide the second version of the annotations.
+    ##
+    ## TODO: Abstract this function away to annotations 2.0
+    def special_to_ast(self, edges):
+        ## Every argument should be completely expanded so making it a string should be fine
+        if str(self.com_name) == "cat":
+            redirs = self._to_ast_aux_get_redirs()
+            assignments = self.com_assignments
+            com_name_ast = self.com_name.to_ast()
+            option_asts = [opt.to_ast() for _, opt in self.com_options]
+
+            ## We simply turn inputs to arguments by appending them to the options
+            input_arguments = self._to_ast_aux_inputs_as_args(edges, stdin_dash=True)
+
+            ## TODO: Make sure a library of useful constructs that create
+            ##       a command from a DFG node.
+
+            ## We simply send output to stdout (as redir if needed)
+            output_redir = self._to_ast_aux_single_stdout_fid(edges)
+
+            all_arguments = [com_name_ast] + option_asts + input_arguments
+            all_redirs = redirs + output_redir
+
+            node = make_command(all_arguments, redirections=all_redirs, assignments=assignments)
+            return node
+        else:
+            return None
+
+    ## This function handles the input fids as arguments.
+    def _to_ast_aux_inputs_as_args(self, edges, stdin_dash=False):
+        input_fids = [edges[in_id][0] for in_id in self.get_input_list()]
+
+        input_arguments = [fid.to_ast(stdin_dash=stdin_dash)
+                            for fid in input_fids]
+        return input_arguments
+
+    ## This function handles the redirections when a command has a single output
+    ##   and it can always be stdout.
+    def _to_ast_aux_single_stdout_fid(self, edges):
+        output_fids = [edges[out_id][0] for out_id in self.outputs]
+        assert len(output_fids) == 1
+        output_fid = output_fids[0]
+        # log("output fid:", output_fid)
+
+        output_redir = redirect_to_stdout_if_not_already(output_fid)
+        # log("Redir:", output_redir)
+        return output_redir
+
+    ## Auxiliary method that returns any necessary redirections,
+    ##   at the moment it doesn't look necessary.
+    def _to_ast_aux_get_redirs(self):
+        ## TODO: Properly handle redirections
+        ##
+        ## TODO: If one of the redirected outputs or inputs is changed in the IR 
+        ##       (e.g. `cat < s1` was changed to read from an ephemeral file `cat < "#file5"`)
+        ##       this needs to be changed in the redirections too. Maybe we can modify redirections
+        ##       when replacing fid.
+        ##
+        ## It seems that if we have already applied redirections we might not need to
+        ## care about them anymore (since they will be created in new_redirs.)
+        ##
+        ## redirs = [redir.to_ast() for redir in self.com_redirs]
+        ##
+        ## At the moment we do not reprint redirections here (we only produce redirections
+        ## where we recreate arguments and redirections).
+        return []
+
+
     ## TODO: Improve this functio to be separately implemented for different special nodes,
     ##       such as cat, eager, split, etc...
     def to_ast(self, edges, drain_streams):    
@@ -125,21 +211,13 @@ class DFGNode:
         if (drain_streams):
             raise NotImplementedError()
         else:
-            ## TODO: Properly handle redirections
-            ##
-            ## TODO: If one of the redirected outputs or inputs is changed in the IR 
-            ##       (e.g. `cat < s1` was changed to read from an ephemeral file `cat < "#file5"`)
-            ##       this needs to be changed in the redirections too. Maybe we can modify redirections
-            ##       when replacing fid.
-            ##
-            ## It seems that if we have already applied redirections we might not need to
-            ## care about them anymore (since they will be created in new_redirs.)
-            ##
-            ## redirs = [redir.to_ast() for redir in self.com_redirs]
-            ##
-            ## At the moment we do not reprint redirections here (we only produce redirections
-            ## where we recreate arguments and redirections).
-            redirs = []
+            ## Handle special node to ast here
+            node = self.special_to_ast(edges)
+            if node is not None:
+                return node
+            
+
+            redirs = self._to_ast_aux_get_redirs()
             assignments = self.com_assignments
             ## Start filling in the arguments
             opt_arguments = []
@@ -230,7 +308,7 @@ class DFGNode:
                 raise NotImplementedError()
 
 
-    ## This renames the from_id (wherever it exists in inputs ot outputs)
+    ## This renames the from_id (wherever it exists in inputs or outputs)
     ## to the to_id.
     ##
     ## TODO: Make sure we don't need to change redirections here.
@@ -275,19 +353,13 @@ class DFGNode:
     ## TODO: Fix this somewhere in the annotations and not in the code
     def pure_get_map_output_files(self, input_edge_ids, fileIdGen):
         assert(self.is_pure_parallelizable())
-        if(str(self.com_name) == "sort"):
-            new_output_fids = [[fileIdGen.next_ephemeral_file_id()] for in_fid in input_edge_ids]
-        elif(str(self.com_name) == "custom_sort"):
-            new_output_fids = [[fileIdGen.next_ephemeral_file_id()] for in_fid in input_edge_ids]
-        elif(str(self.com_name) == "bigrams_aux"):
-            new_output_fids = [[fileIdGen.next_ephemeral_file_id()
-                                for i in range(config.bigram_g_map_num_outputs)]
-                               for in_fid in input_edge_ids]
-        elif(str(self.com_name) == "alt_bigrams_aux"):
-            new_output_fids = [[fileIdGen.next_ephemeral_file_id()] for in_fid in input_edge_ids]
-        elif(str(self.com_name) == "uniq"):
-            new_output_fids = [[fileIdGen.next_ephemeral_file_id()] for in_fid in input_edge_ids]
+        
+        ## The number of the mapper outputs defaults to 1
+        if(self.com_mapper is None):
+            number_outputs = 1
         else:
-            log("Error: Map outputs for command:", self.com_name, "were not found!")
-            raise NotImplementedError()
+            number_outputs = self.com_mapper.num_outputs
+
+        new_output_fids = [[fileIdGen.next_ephemeral_file_id() for i in range(number_outputs)] 
+                           for in_fid in input_edge_ids]
         return new_output_fids

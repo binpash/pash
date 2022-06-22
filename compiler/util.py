@@ -1,8 +1,5 @@
-import random
-import string
 from datetime import timedelta
 import sys
-
 import config
 import tempfile
 
@@ -19,10 +16,14 @@ def pad(lst, index):
         lst += [None] * (index + 1 - len(lst))
     return lst
 
-def print_time_delta(prefix, start_time, end_time, args):
+def print_time_delta(prefix, start_time, end_time, args=None):
     ## Always output time in the log.
     time_difference = (end_time - start_time) / timedelta(milliseconds=1)
-    log("{} time:".format(prefix), time_difference, " ms")
+    ## If output_time flag is set, log the time
+    if (config.pash_args.output_time == 1):
+        log("{} time:".format(prefix), time_difference, " ms", level=0)
+    else:
+        log("{} time:".format(prefix), time_difference, " ms")
 
 ## This is a wrapper for prints
 ##
@@ -33,10 +34,10 @@ def log(*args, end='\n', level=1):
     ## as high as this log message.
     if (config.pash_args.debug >= level):
         if(config.pash_args.log_file == ""):
-            print(*args, file=sys.stderr, end=end, flush=True)
+            print(config.LOGGING_PREFIX, *args, file=sys.stderr, end=end, flush=True)
         else:
             with open(config.pash_args.log_file, "a") as f:
-                print(*args, file=f, end=end, flush=True)
+                print(config.LOGGING_PREFIX, *args, file=f, end=end, flush=True)
 
 def ptempfile():
     return tempfile.mkstemp(dir=config.PASH_TMP_PREFIX)

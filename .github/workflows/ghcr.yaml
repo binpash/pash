@@ -1,0 +1,69 @@
+name: Github Registry Image Build & Push
+
+on:   
+  release:
+    types: [published]
+
+env:
+  DEBIAN: pash/debian-10
+  UBUNTU: pash/ubuntu-18.04
+  FEDORA: pash/fedora-35
+  IMAGENAME: pash/pash
+
+jobs:
+  # Push image to GitHub Packages.
+  # See also https://docs.docker.com/docker-hub/builds/
+  push:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Log in to registry
+        # This is where you will update the PAT to GITHUB_TOKEN
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+
+      - name: Build & Push Ubuntu Image
+        run: |
+          docker build --tag $UBUNTU --label "runnumber=${GITHUB_RUN_ID}" -f scripts/docker/ubuntu/Dockerfile .
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGENAME
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          docker tag $UBUNTU $IMAGE_ID
+          docker push $IMAGE_ID
+
+##
+## Old pushing of different images per operating system but we don't need to do
+## that anymore. A single image is fine. If someone wants to build a docker image with fedora
+## they can do it manually. For out testing purposes, we should be able to build and test them,
+## but no need to make them publicly available.
+##
+
+      # - name: Build & Push Debian Image
+      #   run: |
+      #     docker build --tag $DEBIAN --label "runnumber=${GITHUB_RUN_ID}" -f scripts/docker/debian/Dockerfile .
+      #     IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$DEBIAN
+      #     # Change all uppercase to lowercase
+      #     IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+      #     docker tag $DEBIAN $IMAGE_ID
+      #     docker push $IMAGE_ID
+
+      # - name: Build & Push Ubuntu Image
+      #   run: |
+      #     docker build --tag $UBUNTU --label "runnumber=${GITHUB_RUN_ID}" -f scripts/docker/ubuntu/Dockerfile .
+      #     IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$UBUNTU
+      #     # Change all uppercase to lowercase
+      #     IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+      #     docker tag $UBUNTU $IMAGE_ID
+      #     docker push $IMAGE_ID
+
+      # - name: Build & Push Fedora Image
+      #   run: |
+      #     docker build --tag $FEDORA --label "runnumber=${GITHUB_RUN_ID}" -f scripts/docker/fedora/Dockerfile .
+      #     IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$FEDORA
+      #     # Change all uppercase to lowercase
+      #     IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+      #     docker tag $FEDORA $IMAGE_ID
+      #     docker push $IMAGE_ID

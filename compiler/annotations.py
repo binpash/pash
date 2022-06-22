@@ -68,6 +68,13 @@ def args_redirs_from_io_list(io_list, fids, ann_options, args, redirs):
     assert(len(rem_fids) == 0)
     return args, redirs
 
+## This function redirects an fid to stdout if it is not already stdout
+def redirect_to_stdout_if_not_already(fid):
+    if (fid.has_file_descriptor_resource() and fid.resource.is_stdout()):
+        return []
+    else:
+        return [redir_stdout_to_file(fid.to_ast())]
+
 ## TODO: We need to handle args[:] followed by stdin by having a look-ahead.
 ##       It might not be necessary actually. Since it is valid to have them all in
 ##       args then.
@@ -85,13 +92,8 @@ def args_redirs_from_io_list_el(io, fids, ann_options, args, redirs):
     elif(io == "stdout"):
         fid = fids[0]
         rem_fids = fids[1:]
-        ## Do not redirect if it is for stdout
-        if (fid.has_file_descriptor_resource() and fid.resource.is_stdout()):
-            return args, redirs, rem_fids
-        else:
-            new_redirs = redirs
-            new_redirs.append(redir_stdout_to_file(fid.to_ast()))
-            return args, new_redirs, rem_fids
+        new_redirs = redirs + redirect_to_stdout_if_not_already(fid)
+        return args, new_redirs, rem_fids
     else:
         assert(io.startswith("args"))
         indices = io.split("[")[1].split("]")[0]
@@ -286,6 +288,12 @@ def get_command_aggregator_from_annotations(command, options, annotations):
     if(command_ann
        and 'aggregator' in command_ann):
         return command_ann['aggregator']
+
+def get_command_mapper_from_annotations(command, options, annotations):
+    command_ann = get_command_from_annotations(command, options, annotations)
+    if(command_ann
+       and 'mapper' in command_ann):
+        return command_ann['mapper']
 
 ## TODO: Find a general way to handle arbitrary paths etc
 def get_command_from_annotations(command_path, options, annotations):

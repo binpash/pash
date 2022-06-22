@@ -1,14 +1,12 @@
 FROM fedora:35
-
-# ARG CACHEBUST=1
-
-RUN dnf install -y git sudo curl diffutils python-devel pip python3-setuptools zlib-devel libjpeg-devel gcc g++
-RUN python3 -m pip install wheel --upgrade Pillow
-
-RUN git clone https://github.com/andromeda/pash.git 
-RUN sudo bash /pash/scripts/install.sh -p 
-
-ENV PASH_TOP=/pash
-ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
-
+RUN dnf install git -y
+ENV PASH_TOP=/opt/pash
+# download PaSh
+RUN git clone https://github.com/binpash/pash.git /opt/pash
+RUN bash /opt/pash/scripts/distro-deps.sh -o 
+RUN yes | bash /opt/pash/scripts/setup-pash.sh -o
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US.UTF-8
+ENV LC_COLLATE C
+ENV LC_ALL en_US.UTF-8
 CMD ["/bin/bash"]

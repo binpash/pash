@@ -34,7 +34,7 @@ class AstNode:
             self.right_operand = args[1]
         elif self.construct is AstNodeConstructor.NOT:
             self.body = args
-        elif self.construct in [AstNodeConstructor.REDIR, AstNodeConstructor.SUBSHELL, AstNodeConstructor.BACKGROUND]:
+        elif self.construct in [AstNodeConstructor.REDIR, AstNodeConstructor.BACKGROUND]:
             self.line_number = args[0]
             # TODO maybe pick a better name?
             self.node = args[1]
@@ -116,6 +116,11 @@ class AstNode:
                                    self.assignments,
                                    self.arguments,
                                    self.redir_list])
+        elif self.construct is AstNodeConstructor.REDIR:
+            json_output = make_kv(self.construct.value,
+                                  [self.line_number,
+                                   self.node,
+                                   self.redir_list])
         elif self.construct is AstNodeConstructor.BACKGROUND:
             json_output = make_kv(self.construct.value,
                                   [self.line_number,
@@ -191,5 +196,9 @@ def ast_node_to_untyped_deep(node):
         return [json_key, untyped_json_val]
     elif(isinstance(node, list)):
         return [ast_node_to_untyped_deep(obj) for obj in node]
+    elif(isinstance(node, tuple)):
+        return [ast_node_to_untyped_deep(obj) for obj in node]
+    elif(isinstance(node, dict)):
+        return {k: ast_node_to_untyped_deep(v) for k, v in node.items()}
     else:
         return node

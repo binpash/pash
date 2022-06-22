@@ -17,7 +17,7 @@ if [ "$PLATFORM" = "darwin" ]; then
 fi
 
 set +e
-git clone git@github.com:andromeda/pash.git
+git clone git@github.com:binpash/pash.git
 if [ $? -ne 0 ]; then
   echo 'SSH clone failed; attempting HTTPS'
   git clone https://github.com/andromeda/pash.git
@@ -26,7 +26,7 @@ set -e
 
 cd pash/scripts
 
-if [  $(groups $(whoami) | grep -c "sudo\|root\|admin") -ge 1 ]; then
+if [ $(groups $(whoami) | grep -c "sudo\|root\|admin") -ge 1 ]; then
   # only run this if we are in the sudo group (or it's doomed to fail)
   bash distro-deps.sh
 fi
