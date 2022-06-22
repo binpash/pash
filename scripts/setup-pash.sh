@@ -97,7 +97,10 @@ python3 -m pip install matplotlib --root $PYTHON_PKG_DIR --ignore-installed #&> 
 cd $PYTHON_PKG_DIR
 # can we find a better alternative to that                                      
 pkg_path=$(find . \( -name "site-packages" -or -name "dist-packages" \) -type d)
-mv ${pkg_path}/* ${PYTHON_PKG_DIR}/                                             
+for directory in $pkg_path; do
+  # using which to avoid the `-i` alias in many distros
+  $(which cp) -r $directory/* ${PYTHON_PKG_DIR}/
+done
 
 echo "Generating input files..."
 $PASH_TOP/evaluation/tests/input/setup.sh
