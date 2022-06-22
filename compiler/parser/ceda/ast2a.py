@@ -163,25 +163,25 @@ def mk_file (ty, n):
     return ["File", [ty, n.nfile.fd, arg]];
 
 
-def mk_dup (ty, n):
-    ndup = n.ndup;
-    vname = ndup.vname;
-
-    tgt = [];
+def mk_dup(ty, n):
+    ndup = n.ndup
+    vname = ndup.vname
+    
+    tgt = []
 
     if (not vname):
-        dupfd = ndup.dupfd;
+        dupfd = ndup.dupfd
         if (dupfd == -1):
-            tgt.append (["C", ORD_MINUS]);
+            tgt.append(["C", ORD_MINUS])
         else:
-            dupfd_str = str (dupfd);
+            dupfd_str = str(dupfd)
 
-            for i in range (len (dupfd_str)):
-                tgt.append (["C", ord (dupfd_str [i])]);
+            for i in range(len(dupfd_str)):
+                tgt.append(["C", ord(dupfd_str[i])])
     else:
-        tgt = to_arg (vname.narg);
+        tgt = to_arg(vname.contents.narg)
 
-    return (["Dup", [ty, ndup.fd, tgt]]);
+    return (["Dup", [ty, ndup.fd, tgt]])
 
 
 def mk_here (ty, n):
