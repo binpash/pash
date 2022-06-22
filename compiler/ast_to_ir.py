@@ -990,3 +990,4 @@ def ast_match(ast_node, cases, *args):
         return ast_match_untyped(ast_node, cases, *args)
 
     return cases[ast_node.construct.value](*args)(ast_node)
+
