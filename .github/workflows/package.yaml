@@ -1,0 +1,27 @@
+name: Packaging
+on: 
+  pull_request:
+    branches:
+        - main
+        - future
+
+jobs:
+  package-pash:
+      runs-on: ubuntu-latest
+      if: github.event.pull_request.draft == false
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2 
+          with:
+            ref: ${{ github.event.pull_request.head.sha }}
+        - name: Make .deb
+          run: bash scripts/package/deploy.sh ubuntu "$GITHUB_HEAD_REF" deb
+        - name: Make .rpm
+          run: bash scripts/package/deploy.sh fedora "$GITHUB_HEAD_REF" rpm
+        - name: Make .tar.gz (Pacman)
+          run: bash scripts/package/deploy.sh archlinux "$GITHUB_HEAD_REF" pacman
+        - name: Upload Packages as Artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: Packages
+            path: scripts/package/output
