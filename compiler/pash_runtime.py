@@ -426,7 +426,7 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
 
     # log("curr node", curr)
 
-    assert(r_split_flag)
+    # assert(r_split_flag)
 
     option_parallelizer_rr = curr.get_option_implemented_round_robin_parallelizer()
 
