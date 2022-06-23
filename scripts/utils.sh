@@ -44,25 +44,6 @@ append_nl_if_not(){
 }
 
 
-# Begin merge from https://github.com/zyrolasting/pash/pull/2 Note
-# from @zyrolasting: This code appeared while usage() was being
-# authored, causing a merge conflict.  I am only merging
-# infer_unix_like_distro and use_alternative_debian_gpp10
-# to fix the conflict.
-#
-# TODO: This logic appears verbatim in a few places.
-# Deduplicate by having other scripts call this one.
-infer_unix_like_distro() {
-    if type lsb_release >/dev/null 2>&1 ; then
-	distro=$(lsb_release -i -s)
-    elif [ -e /etc/os-release ] ; then
-	distro=$(awk -F= '$1 == "ID" {print $2}' /etc/os-release)
-    fi
-
-    printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]'
-}
-
-
 use_alternative_debian_gpp10() {
     apt-get install software-properties-common -y
     add-apt-repository ppa:ubuntu-toolchain-r/test -y
@@ -70,7 +51,6 @@ use_alternative_debian_gpp10() {
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
     update-alternatives --set g++ /usr/bin/g++-10
 }
-# end merge from https://github.com/zyrolasting/pash/pull/2
 
 
 install_deps_source_setup() {
