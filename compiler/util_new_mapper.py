@@ -1,6 +1,7 @@
 # imports from annotation framework
 import sys
-sys.path.insert(1, "/home/felix/git-repos/MIT/annotations")
+from definitions.definition_path_for_annotation_repo import get_path_annotation_repo
+sys.path.insert(1, get_path_annotation_repo())
 # for typing
 # for use
 from annotation_generation_new.datatypes.parallelizability.Mapper import Mapper

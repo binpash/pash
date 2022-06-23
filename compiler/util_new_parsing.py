@@ -5,7 +5,8 @@ from typing import Set, List, Any
 
 from definitions.ir.arg import Arg
 
-sys.path.insert(1, "/home/felix/git-repos/MIT/annotations")
+from definitions.definition_path_for_annotation_repo import get_path_annotation_repo
+sys.path.insert(1, get_path_annotation_repo())
 # for typing
 from datatypes_new.CommandInvocationInitial import CommandInvocationInitial
 # for use
