@@ -30,7 +30,7 @@ LOGGING_PREFIX = ""
 HDFS_PREFIX = "$HDFS_DATANODE_DIR/"
 
 # move this to `config.json` if possible
-PATH_ANNOTATION_REPO=None
+PATH_ANNOTATION_REPO="/home/felix/git-repos/MIT/annotations"
 
 def get_path_annotation_repo():
     if PATH_ANNOTATION_REPO is None:

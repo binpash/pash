@@ -15,7 +15,8 @@ from datatypes_new.BasicDatatypes import Flag, ArgStringType
 
 
 import sys
-sys.path.insert(1, "/home/felix/git-repos/MIT/annotations")
+from config import get_path_annotation_repo
+sys.path.insert(1, get_path_annotation_repo())
 from util_new import return_empty_list_if_none_else_itself, return_default_if_none_else_itself
 # END ANNO
 
