@@ -74,9 +74,13 @@ class FileIdGen:
         self.next += 1
         return fileId
 
+    def next_temporary_file_id(self):
+        fileId = self.next_file_id()
+        fileId.make_temporary_file()
+        return fileId
+
     def next_ephemeral_file_id(self):
-        fileId = FileId(self.next, self.prefix)
-        self.next += 1
+        fileId = self.next_file_id()
         fileId.make_ephemeral()
         return fileId
 
@@ -98,7 +102,7 @@ def get_option_or_fd(opt_or_fd, options, fileIdGen):
         else:
             raise NotImplementedError()
         resource = FileDescriptorResource(resource)
-
+    
     fid = create_file_id_for_resource(resource, fileIdGen)
     return fid
 
@@ -329,7 +333,6 @@ def compile_command_to_DFG(fileIdGen, command, options,
 
     ## Assign the from, to node in edges
     for fid_id in dfg_node.get_input_list():
-        # log(fid_id)
         fid, from_node, to_node = dfg_edges[fid_id]
         assert(to_node is None)
         dfg_edges[fid_id] = (fid, from_node, node_id)
@@ -509,7 +512,6 @@ class IR:
         ## ASSERT: There must be only one
         stdout_id = None
         for edge_id, (edge_fid, _from, _to) in self.edges.items():
-            # log(edge_id, edge_fid)
             resource = edge_fid.get_resource()
             if(resource.is_stdout()):
                 # This is not true when using distributed_exec
@@ -535,8 +537,6 @@ class IR:
 
 
     def to_ast(self, drain_streams):
-        log("edges", self.edges)
-        log("nodes", self.nodes)
         asts = []
 
         ## Initialize the pids_to_kill variable
@@ -866,7 +866,6 @@ class IR:
 
     def generate_ephemeral_edges(self, fileIdGen, num_of_edges):
         file_ids = [fileIdGen.next_ephemeral_file_id() for _ in range(num_of_edges)]
-        log("file_ids in generation", file_ids)
         self.add_edges(file_ids)
         return [edge_fid.get_ident() for edge_fid in file_ids]
 
@@ -890,7 +889,7 @@ class IR:
     ## There are several combinations that it can handle:
     ##   1. cat -> parallelizable node
     ##   2. r_merge -> stateless node without conf_input
-    ##   3. r_merge -> commutative pure parallelizable node
+    ##   3. r_merge -> commutative pure parallelizable node 
     ##
     ## 1. cat followed by a parallelizable node
     ##
@@ -923,7 +922,6 @@ class IR:
     ## TODO: Eventually this should be tunable to not happen for all inputs (but maybe for less)
     def parallelize_node(self, node_id, fileIdGen):
         node = self.get_node(node_id)
-        log(f'we are here something whatever: {node.com_name}')
         # BEGIN ANNO
         # OLD
         # assert(node.is_parallelizable())
@@ -1219,3 +1217,4 @@ class IR:
                 #  or (not self.is_in_background()
                 #      and not self.get_stdin() is None 
                 #      and not self.get_stdout() is None)))
+

@@ -192,7 +192,7 @@ nlp(){
 
   cd nlp/
 
-  install_deps_source_setup
+  install_deps_source_setup $1
 
   mkdir -p "$outputs_dir"
 
@@ -243,7 +243,6 @@ nlp(){
   done
   cd ..
 }
-
 
 aliases(){
   seq_times_file="seq.res"

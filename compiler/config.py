@@ -10,7 +10,7 @@ from ir_utils import *
 from util import *
 
 ## Global
-__version__ = "0.7" # FIXME add libdash version
+__version__ = "0.8" # FIXME add libdash version
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'PASH_TOP' in os.environ:
     PASH_TOP = os.environ['PASH_TOP']
@@ -26,6 +26,8 @@ assert(not os.getenv('PASH_TMP_PREFIX') is None)
 PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
 
 LOGGING_PREFIX = ""
+
+HDFS_PREFIX = "$HDFS_DATANODE_DIR/"
 
 config = {}
 annotations = []

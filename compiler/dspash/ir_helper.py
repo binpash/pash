@@ -5,6 +5,7 @@ import pickle
 import traceback
 from datetime import datetime
 from typing import List, Set, Tuple, Dict, Callable
+from uuid import uuid4
 sys.path.append("/pash/compiler")
 
 import config
@@ -13,6 +14,7 @@ from ast_to_ir import compile_asts
 from json_ast import *
 from ir_to_ast import to_shell
 from util import *
+from dspash.hdfs_utils import HDFSFileConfig
 
 from definitions.ir.aggregator_node import *
 
@@ -31,26 +33,37 @@ from collections import deque, defaultdict
 
 HOST = socket.gethostbyname(socket.gethostname())
 NEXT_PORT = 58000
+DISCOVERY_PORT = 50052
 
-def get_available_port():
-    # There is a possible race condition using the returned port as it could be opened by a different process
-    global NEXT_PORT
-    port = NEXT_PORT
-    NEXT_PORT += 1
-    return port
 
 def read_graph(filename):
     with open(filename, "rb") as ir_file:
         ir, shell_vars = pickle.load(ir_file)
     return ir, shell_vars
-            
-def to_shell_file(graph, args) -> str:
-    _, filename = ptempfile()
+
+def save_configs(graph:IR, dfs_configs_paths: Dict[HDFSFileConfig, str]):
+    for edge in graph.all_fids():
+        if isinstance(edge.get_resource(), DFSSplitResource):
+            resource : DFSSplitResource = edge.get_resource()
+            config: HDFSFileConfig = resource.config
+            if config not in dfs_configs_paths:
+                config_path = ptempfile()
+                with open(config_path, "w") as f:
+                    f.write(config)
+                dfs_configs_paths[config] = config_path
+            else:
+                config_path = dfs_configs_paths[config]
+
+            resource.set_config_path(config_path)
+
+def to_shell_file(graph: IR, args) -> str:
+    filename = ptempfile()
     
     dirs = set()
     for edge in graph.all_fids():
         directory = os.path.join(config.PASH_TMP_PREFIX, edge.prefix)
         dirs.add(directory)
+        
     for directory in dirs:
         os.makedirs(directory, exist_ok=True)
 
@@ -62,7 +75,7 @@ def to_shell_file(graph, args) -> str:
         f.write(script)
     return filename
 
-def split_ir(graph: IR) -> (List[IR], Dict[int, IR]):
+def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
     """ Takes an optimized IR and splits it subgraphs. Every subgraph
     is a continues section between a splitter and a merger.
     
@@ -146,8 +159,7 @@ def split_ir(graph: IR) -> (List[IR], Dict[int, IR]):
         subgraph.add_node(node)
 
         next_ids = graph.get_next_nodes(old_node_id)
-        # Second condition makes sure we are not stepping into merger by mistake (eg set-diff)
-        if (len(input_fids) == len(next_ids) == 1) and (not output_fid.get_ident() in input_fifo_map):
+        if len(next_ids) == 1:
             queue.append((next_ids[0], subgraph))
         else:
             subgraphs.append(subgraph)
@@ -180,7 +192,6 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
         worker_subgraph_pairs: A list of pairs representing which worker
             each subgraph should be executed on.
     """
-    write_port = -1
     # The graph to execute in the main pash_runtime
     main_graph = IR({}, {})
     worker_subgraph_pairs = []
@@ -196,15 +207,14 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
         
         for out_edge in subgraph.get_node_output_fids(sink_nodes[0]):
             stdout = add_stdout_fid(subgraph, file_id_gen)
-            write_port = get_available_port()
             out_edge_id = out_edge.get_ident()
             # Replace the old edge with an ephemeral edge in case it isn't and
             # to avoid modifying the edge in case it's used in some other subgraph
             ephemeral_edge = file_id_gen.next_ephemeral_file_id()
             subgraph.replace_edge(out_edge_id, ephemeral_edge)
-
+            edge_uid = uuid4()
             # Add remote-write node at the end of the subgraph
-            remote_write = remote_pipe.make_remote_pipe([ephemeral_edge.get_ident()], [stdout.get_ident()], worker.host(), write_port, False, True)
+            remote_write = remote_pipe.make_remote_pipe([ephemeral_edge.get_ident()], [stdout.get_ident()], worker.host(), DISCOVERY_PORT, False, edge_uid)
             subgraph.add_node(remote_write)
             
             # Copy the old output edge resource
@@ -219,7 +229,7 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
                 matching_subgraph = main_graph
                 matching_subgraph.add_edge(new_edge)
     
-            remote_read = remote_pipe.make_remote_pipe([], [new_edge.get_ident()], worker.host(), write_port, True, False)
+            remote_read = remote_pipe.make_remote_pipe([], [new_edge.get_ident()], worker.host(), DISCOVERY_PORT, True, edge_uid)
             matching_subgraph.add_node(remote_read)
 
     # Replace non ephemeral input edges with remote read/write
@@ -229,7 +239,6 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
             for in_edge in subgraph.get_node_input_fids(source):
                 if in_edge.has_file_resource() or in_edge.has_file_descriptor_resource():
                     # setup
-                    write_port = get_available_port()
                     stdout = add_stdout_fid(main_graph, file_id_gen)
 
                     # Copy the old input edge resource
@@ -238,14 +247,15 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
                     main_graph.add_edge(new_edge)
 
                     # Add remote write to main subgraph
-                    remote_write = remote_pipe.make_remote_pipe([new_edge.get_ident()], [stdout.get_ident()], HOST, write_port, False, True)
+                    edge_uid = uuid4()
+                    remote_write = remote_pipe.make_remote_pipe([new_edge.get_ident()], [stdout.get_ident()], HOST, DISCOVERY_PORT, False, edge_uid)
                     main_graph.add_node(remote_write)
 
                     # Add remote read to current subgraph
                     ephemeral_edge = file_id_gen.next_ephemeral_file_id()
                     subgraph.replace_edge(in_edge.get_ident(), ephemeral_edge)
 
-                    remote_read = remote_pipe.make_remote_pipe([], [ephemeral_edge.get_ident()], HOST, write_port, True, False)
+                    remote_read = remote_pipe.make_remote_pipe([], [ephemeral_edge.get_ident()], HOST, DISCOVERY_PORT, True, edge_uid)
                     subgraph.add_node(remote_read)
                 else:
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
