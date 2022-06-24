@@ -286,9 +286,9 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_spl
             workset += next_node_ids
 
             # function application has side effects on graphs
-            new_nodes = parallelize_cat(curr_id, graph, fileIdGen,
-                                        fan_out, batch_size, no_cat_split_vanish,
-                                        r_split_flag, r_split_batch_size)
+            new_nodes = parallelize_node(curr_id, graph, fileIdGen,
+                                         fan_out, batch_size, no_cat_split_vanish,
+                                         r_split_flag, r_split_batch_size)
 
             ## Assert that the graph stayed valid after the transformation
             ## TODO: Do not run this everytime in the loop if we are not in debug mode.
@@ -418,8 +418,8 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
 ## If the current command is a cat, and is followed by a node that
 ## is either stateless or pure parallelizable, commute the cat
 ## after the node.
-def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
-                    batch_size, no_cat_split_vanish, r_split_flag, r_split_batch_size):
+def parallelize_node(curr_id, graph, fileIdGen, fan_out,
+                     batch_size, no_cat_split_vanish, r_split_flag, r_split_batch_size):
     curr = graph.get_node(curr_id)
     new_nodes_for_workset = []
 

@@ -19,13 +19,6 @@ sys.path.insert(1, "/home/felix/git-repos/MIT/annotations")
 from util_new import return_empty_list_if_none_else_itself, return_default_if_none_else_itself
 # END ANNO
 
-# BEGIN REMODEL
-from definitions.remodel.IOVar import IOVar
-from definitions.remodel.OptionDFG import OptionDFG
-from typing import List, Union, Optional
-
-# END REMODEL
-
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions
 class DFGNode:

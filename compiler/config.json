@@ -31,5 +31,6 @@
             "158.130.4.114",
             "158.130.4.120"
         ]
-    }
+    },
+    "path_for_annotation_repo": "/home/felix/git-repos/MIT/annotations"
 }

@@ -4,7 +4,7 @@ from definitions.ir.resource import FileResource, Resource, FileDescriptorResour
 from definitions.ir.arg import Arg
 # imports from annotation framework
 import sys
-from definitions.definition_path_for_annotation_repo import get_path_annotation_repo
+from config import get_path_annotation_repo
 sys.path.insert(1, get_path_annotation_repo())
 # for typing
 # --

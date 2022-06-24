@@ -1,7 +1,7 @@
 # BEGIN ANNO
 import sys
-from definitions.definition_path_for_annotation_repo import get_path_annotation_repo
 
+from config import get_path_annotation_repo
 sys.path.insert(1, get_path_annotation_repo())
 # for typing
 from datatypes_new.CommandInvocationInitial import CommandInvocationInitial
@@ -23,8 +23,6 @@ from util_new_file_descriptors import resource_from_file_descriptor
 # END ANNO
 
 # BEGIN REMODEL
-from definitions.remodel.IOVar import IOVar
-from definitions.remodel.OptionDFG import OptionDFG
 from datatypes_new.BasicDatatypes import Flag, Option, ArgStringType
 from datatypes_new.AccessKind import AccessKind
 from typing import Dict, Any
