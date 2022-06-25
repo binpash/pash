@@ -365,14 +365,11 @@ def parse_array_variable(tokens, i):
             item_index_raw = array_item[:first_equal_index]
             item_value = array_item[first_equal_index+1:]
 
-            ## Sometimes the value starts with a dollar mark
-            ## KK: It happened when the value contained a new line (not sure why)
-            ## TODO: Figure it out and what is the right way to deal with it
-            ##
+            ## Sometimes the value starts with a dollar mark, see Bash ANSI-C quoting:
             ## https://www.gnu.org/software/bash/manual/html_node/ANSI_002dC-Quoting.html#ANSI_002dC-Quoting
             if item_value.startswith("$"):
+                ## TODO: Figure out if this is adequate
                 item_value = ansi_c_expand(item_value[1:])
-                ## TODO: This is not the right way to deal with it, we also need to expand things somehow
 
             item_index = int(item_index_raw[1:-1])
             
