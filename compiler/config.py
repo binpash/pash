@@ -299,16 +299,102 @@ def reset_variable_cache():
 
     variable_cache = {}
 
+def is_array_variable(token):
+    return ('a' in token)
+
+## Based on the following:
+## https://www.gnu.org/software/bash/manual/html_node/ANSI_002dC-Quoting.html#ANSI_002dC-Quoting
+##
+## TODO: Implement all
+def ansi_c_expand(string):
+    new_string = string.replace("\\n", "\n")
+    return new_string 
 
 ## This finds the end of this variable/function
 def find_next_delimiter(tokens, i):
     if (tokens[i] == "declare"):
         return i + 3
     else:
+        ## TODO: When is this case actually useful?
         j = i + 1
         while j < len(tokens) and (tokens[j] != "declare"):
             j += 1
         return j
+
+def parse_array_variable(tokens, i):
+    ## The `declare` keyword
+    _declare = tokens[i]
+    ## The type
+    declare_type = tokens[i+1]
+    assert(is_array_variable(declare_type))
+
+    ## The variable name and first argument
+    ## TODO: Test with empty array and single value array
+    name_and_start=tokens[i+2]
+    first_equal_index = name_and_start.find('=')
+
+    ## If it doesn't contain any = then it is empty
+    if first_equal_index == -1:
+        ## Then the name is the whole token,
+        ##  the type is None (TODO)
+        ##  and the value is empty
+        return name_and_start, None, "", i+3
+
+    var_name = name_and_start[:first_equal_index]
+    array_start = name_and_start[first_equal_index+1:]
+
+    var_values = []
+    if array_start == "()":
+        next_i = i+3
+    else:
+        ## Remove the opening parenthesis
+        array_item = array_start[1:]
+
+        ## Set the index that points to array items
+        curr_i = i+2
+
+        done = False
+        while not done:
+            ## TODO: Is this check adequate? Or could it miss the end 
+            ##       (or be misleaded into an earlier end by the item value?)
+            if array_item.endswith(")"):
+                done = True
+                array_item = array_item[:-1]
+
+            first_equal_index = array_item.find('=')
+            ## Find the index and value of the array item
+            item_index_raw = array_item[:first_equal_index]
+            item_value = array_item[first_equal_index+1:]
+
+            ## Sometimes the value starts with a dollar mark
+            ## KK: It happened when the value contained a new line (not sure why)
+            ## TODO: Figure it out and what is the right way to deal with it
+            ##
+            ## https://www.gnu.org/software/bash/manual/html_node/ANSI_002dC-Quoting.html#ANSI_002dC-Quoting
+            if item_value.startswith("$"):
+                item_value = ansi_c_expand(item_value[1:])
+                ## TODO: This is not the right way to deal with it, we also need to expand things somehow
+
+            item_index = int(item_index_raw[1:-1])
+            
+            ## Add None values if the index is larger than the next item (see Bash sparse arrays)
+            ## TODO: Keep bash array values as maps to avoid sparse costs 
+            var_values += [None] * (item_index - len(var_values))
+            ## Set the next item
+            var_values.append(item_value)
+
+            
+
+            ## Get next array_item
+            curr_i += 1
+            array_item = tokens[curr_i]
+        
+        next_i = curr_i
+
+    ## TODO: Michael?
+    var_type = None
+
+    return var_name, var_type, var_values, next_i
 
 ##
 ## Read a shell variables file
@@ -339,7 +425,7 @@ def read_vars_file(var_file_path):
             tokens = shlex.split(data)
             variable_tokenizing_end_time = datetime.now()
             print_time_delta("Variable Tokenizing", variable_tokenizing_start_time, variable_tokenizing_end_time)
-            # log(tokens)
+            log("Tokens:", tokens)
 
         # MMG 2021-03-09 definitively breaking on newlines (e.g., IFS) and function outputs (i.e., `declare -f`)
         # KK  2021-10-26 no longer breaking on newlines (probably)
@@ -348,11 +434,17 @@ def read_vars_file(var_file_path):
         token_i = 0
         while token_i < len(tokens):
             # FIXME is this assignment needed?
-            _export_or_typeset = tokens[token_i]
+            export_or_typeset = tokens[token_i]
+
+            ## Array variables require special parsing treatment
+            if (export_or_typeset == "declare" and is_array_variable(tokens[token_i+1])):
+                var_name, var_type, var_value, new_token_i = parse_array_variable(tokens, token_i)
+                vars_dict[var_name] = (var_type, var_value)
+                token_i = new_token_i
+                continue
 
             new_token_i = find_next_delimiter(tokens, token_i)
             rest = " ".join(tokens[(token_i+1):new_token_i])
-            # log("Rest:", rest)
             token_i = new_token_i
 
             space_index = rest.find(' ')
