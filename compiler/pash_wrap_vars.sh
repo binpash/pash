@@ -22,11 +22,7 @@ pash_redir_output echo "$$: (3) Reverted to BaSh set state: $-"
 # shellcheck disable=SC2086
 pash_redir_output echo "$$: (3) Array: ${pash_input_args[@]}"
 pash_redir_output echo "$$: (3) Number of arguments: ${#pash_input_args[@]}"
-myArray=("$pash_input_args") 
-pash_redir_output echo "$$: (3) Array: ${myArray[@]}"
-pash_redir_output echo "$$: (3) Number of arguments: ${#myArray[@]}"
-# set -- $pash_input_args
-set -- "${pash_input_args[@]}"
+eval "set -- \"\${pash_input_args[@]}\""
 pash_redir_output echo "$$: (3) Reverted to BaSh input arguments: $@"
 pash_redir_output echo "$$: (3) Number of arguments: $#"
 

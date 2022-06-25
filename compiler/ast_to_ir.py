@@ -957,14 +957,20 @@ def make_call_to_runtime(ir_filename, sequential_script_file_name,
     ##       because the preprocessed script needs to be POSIX compliant 
     ##       (since it goes through our unparser) and therefore we cannot do the
     ##       straightforward array expansion.
-    arguments = [string_to_argument("source"),
-                 string_to_argument(config.RESTORE_ARGS_EXECUTABLE)]
+    ## Old alternative that didn't work
+    # arguments = [string_to_argument("source"),
+    #              string_to_argument(config.RESTORE_ARGS_EXECUTABLE)]
     ## Pass a relevant argument to the planner
-    restore_args_command_node = make_command(arguments)
-    set_arguments = [string_to_argument("set"),
-                     string_to_argument("--"),
-                     [make_backquote(restore_args_command_node)]]
+    # restore_args_command_node = make_command(arguments)
+    # set_arguments = [string_to_argument("set"),
+    #                  string_to_argument("--"),
+    #                  [make_backquote(restore_args_command_node)]]
+    ## Solution:
+    # eval "set -- \"\${pash_input_args[@]}\""
+    set_arguments = [string_to_argument("eval"),
+                     [['Q', string_to_argument('set -- \\"\\${pash_input_args[@]}\\"')]]]
     set_args_node = make_command(set_arguments)
+
 
     ## Restore the exit code (since now we have executed `set` last)
     ## ```
