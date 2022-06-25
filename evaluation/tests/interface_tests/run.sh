@@ -300,7 +300,8 @@ test_exclam()
 test_star()
 {
     local shell=$1
-    $shell test-star.sh foo '*' baz 'hi michael'
+    $shell test-star.sh foo '*' baz 'hi michael' "abc
+     dfg"
 }
 
 ## We run all tests composed with && to exit on the first that fails
