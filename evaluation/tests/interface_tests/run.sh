@@ -297,6 +297,12 @@ test_exclam()
     $shell test-exclam.sh
 }
 
+test_redir_var_test()
+{
+    local shell=$1
+    $shell redir-var-test.sh
+}
+
 test_star()
 {
     local shell=$1
@@ -344,6 +350,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_quoting
     run_test test_var_assgn_default
     run_test test_exclam
+    run_test test_redir_var_test
     run_test test_star
 else
     for testname in $@
