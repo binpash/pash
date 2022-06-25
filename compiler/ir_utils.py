@@ -61,9 +61,7 @@ def get_command_from_definition(command_definition):
     return ''
 
 def format_args(args):
-    log("Before formatting:", args)
     formatted_args = [format_arg_chars(arg_chars) for arg_chars in args]
-    log("After formatting:", formatted_args)
     return formatted_args
 
 def format_arg_chars(arg_chars):
@@ -111,9 +109,7 @@ def format_arg_char(arg_char):
 ## This function finds the first raw character in an argument.
 ## It needs to be called on an expanded string.
 def format_expanded_arg_chars(arg_chars):
-    log("Before formatting 2:", arg_chars)
     chars = [format_expanded_arg_char(arg_char) for arg_char in arg_chars]
-    log("After formatting 2:", chars)
     return "".join(chars)
 
 def format_expanded_arg_char(arg_char):
@@ -166,9 +162,7 @@ def string_to_arguments(string):
     return [string_to_argument(word) for word in string.split(" ")]
 
 def string_to_argument(string):
-    log(" -- -- -- Before turning to argument:", string)
     ret = [char_to_arg_char(char) for char in string]
-    log(" -- -- -- After turning to argument:", ret)
     return ret
 
 ## FIXME: This is certainly not complete. It is used to generate the

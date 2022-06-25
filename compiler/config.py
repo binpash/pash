@@ -21,7 +21,6 @@ PYTHON_VERSION = "python3"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 SAVE_ARGS_EXECUTABLE = os.path.join(PASH_TOP, "runtime/save_args.sh")
-RESTORE_ARGS_EXECUTABLE = os.path.join(PASH_TOP, "runtime/restore_args.sh")
 
 ## Ensure that PASH_TMP_PREFIX is set by pa.sh
 assert(not os.getenv('PASH_TMP_PREFIX') is None)
@@ -425,7 +424,7 @@ def read_vars_file(var_file_path):
             tokens = shlex.split(data)
             variable_tokenizing_end_time = datetime.now()
             print_time_delta("Variable Tokenizing", variable_tokenizing_start_time, variable_tokenizing_end_time)
-            log("Tokens:", tokens)
+            # log("Tokens:", tokens)
 
         # MMG 2021-03-09 definitively breaking on newlines (e.g., IFS) and function outputs (i.e., `declare -f`)
         # KK  2021-10-26 no longer breaking on newlines (probably)
