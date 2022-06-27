@@ -72,6 +72,10 @@ class FileIdGen:
         fileId.make_ephemeral()
         return fileId
 
+    def bump_counter_to_value_of(self, OtherFileIdGen):
+        # TODO: find a better solution to make unique numbers, currently: set to max-value + 1
+        self.next = OtherFileIdGen.next + 1
+
 ## Returns the resource or file descriptor related to this specific opt_or_fd
 ## NOTE: Assumes that everything is expanded. 
 def get_option_or_fd(opt_or_fd, options, fileIdGen):
