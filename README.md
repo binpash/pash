@@ -1,5 +1,11 @@
 ## PaSh: Light-touch Data-Parallel Shell Processing
 
+**TODO before testing new annotations (temporary fix):**
+
+Connect the new annotations repository to PaSh in the `future_annotations`-branch:
+- clone the `connect_to_pash` branch from the new repository for annotations: git@github.com:binpash/annotations.git 
+- Specify the path in `compiler/config.py`
+
 > _A system for parallelizing POSIX shell scripts._
 > _Hosted by the [Linux Foundation](https://linuxfoundation.org/press-release/linux-foundation-to-host-the-pash-project-accelerating-shell-scripting-with-automated-parallelization-for-industrial-use-cases/)._
 

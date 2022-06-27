@@ -1,4 +1,6 @@
 from datetime import timedelta
+from typing import Optional, TypeVar, Union, List, Any
+TType = TypeVar("TType")
 import os
 import sys
 import config
@@ -45,3 +47,16 @@ def ptempfile():
     ## TODO: Get a name without opening the fd too if possible
     os.close(fd)
     return name
+
+def return_empty_list_if_none_else_itself(arg: Optional[TType]) -> Union[TType, List[Any]]: #list always empty
+    if arg is None:
+        return []
+    else:
+        return arg
+
+def return_default_if_none_else_itself(arg: Optional[TType], default: TType) -> TType:
+    if arg is None:
+        return default
+    else:
+        return arg
+
