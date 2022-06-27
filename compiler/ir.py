@@ -289,8 +289,6 @@ def make_map_node(node, new_inputs, new_outputs, parallelizer):
 ##
 ## At the moment it only works with one input and one output since wrap cannot redirect input in the command.
 def make_wrap_map_node(node, new_inputs, new_outputs):
-    # log("Inputs:", new_inputs)
-    # log("Outputs:", new_outputs)
     assert(is_single_input(new_inputs))
     assert(len(new_outputs) == 1)
 
@@ -318,8 +316,6 @@ class IR:
         self.nodes = nodes
         self.edges = edges
         self.background = background
-        # log("Nodes:", self.nodes)
-        # log("Edges:", self.edges)
 
         ## Apply the redirections for each separate node.
         ## This needs to be called here because nodes do not
@@ -822,7 +818,6 @@ class IR:
         # OLD
         # assert(node.is_parallelizable())
         # NEW
-        log(f'parallelizers: {node.parallelizer_list}')
         rr_parallelizer_list = [parallelizer for parallelizer in node.parallelizer_list if parallelizer.splitter.is_splitter_round_robin()]
         assert(len(rr_parallelizer_list) == 1)
         rr_parallelizer = rr_parallelizer_list[0]
@@ -997,12 +992,8 @@ class IR:
                 # BEGIN ANNO
                 # OLD
                 # new_merger = make_cat_node(flatten_list(all_map_output_ids), node_output_edge_id)
-                # log(f'old_new_merger: {new_merger}')
                 # NEW
-                log(f'node: {node}')
-                log(f'rr_parallelizer: {rr_parallelizer}')
                 new_merger = get_aggregator_as_dfg_node_from_node(node, rr_parallelizer, flatten_list(all_map_output_ids), [node_output_edge_id])
-                log(f'new_new_merger: {new_merger}')
                 # END ANNO
 
             self.add_node(new_merger)
@@ -1131,9 +1122,6 @@ class IR:
         for new_node in all_aggregators:
             self.add_node(new_node)
 
-        log("nodes", self.nodes)
-        log("edges", self.edges)
-        log("final output id", final_output_id)
         ## Replace the previous final_output_id with the previous id
         node_output_edge_id = out_aggregator_id
         final_merge_node_id = self.edges[final_output_id][1]

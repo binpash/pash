@@ -9,8 +9,6 @@ from annotation_generation_new.datatypes.CommandProperties import CommandPropert
 from annotation_generation_new.AnnotationGeneration import get_input_output_info_from_cmd_invocation, \
     get_parallelizability_info_from_cmd_invocation
 
-from util import log
-
 from config import get_path_annotation_repo
 sys.path.insert(1, get_path_annotation_repo())
 
@@ -26,18 +24,11 @@ def get_command_invocation_prefix_from_dfg_node(dfg_node):
 
 # TODO: ideally methods in the respective classes but requires refactoring of parsing infrastructure
 def to_node_cmd_inv_with_io_vars(cmd_inv, edges, redirs, assignments):
-    log("edges", edges)
     ast_cmd_name = string_to_argument(cmd_inv.cmd_name)
-    log("ast_cmd_name", ast_cmd_name)
     ast_flagoptions = []
     for flagoption in cmd_inv.flag_option_list:
         ast_flagoptions += to_ast_flagoption(flagoption, edges)
-    log("flagoptions", cmd_inv.flag_option_list)
-    log("ast_flagoptions", ast_flagoptions)
     ast_operands = [to_ast_operand(operand, edges) for operand in cmd_inv.operand_list]
-    log("operands", cmd_inv.operand_list)
-    log("ast_operands", ast_operands)
-    # log("type of ast_operands [0]", type(ast_operands[0])) # can only be used if there are operands
     cmd_asts = [ast_cmd_name] + ast_flagoptions + ast_operands
 
     # TODO: check for actual stdin
@@ -56,7 +47,6 @@ def to_node_cmd_inv_with_io_vars(cmd_inv, edges, redirs, assignments):
 
     new_redirs = redirs + stdin_redir + stdout_redir
     node = make_command(cmd_asts, redirections=new_redirs, assignments=assignments)
-    log("node", node)
     return node
 
 def to_ast_flagoption(flagoption, _edges):
@@ -82,7 +72,6 @@ def to_ast_arg_string_type(arg_string_type):
 # assumes io_var is an edge id
 def dereference_io_var(io_var, edges):
     fid, _, _ = edges[io_var]
-    log(fid)
     return fid.to_ast()
 
 def get_input_output_info_from_cmd_invocation_util(cmd_invocationInitial : CommandInvocationInitial) -> InputOutputInfo:
