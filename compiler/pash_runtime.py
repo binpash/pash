@@ -4,6 +4,8 @@ import pickle
 import traceback
 from datetime import datetime
 
+from annotation_generation_new.datatypes.parallelizability.AggregatorKind import AggregatorKindEnum
+
 import config
 from ir import *
 from ast_to_ir import compile_asts
@@ -442,7 +444,7 @@ def parallelize_node(curr_id, graph, fileIdGen, fan_out,
         graph.set_edge_to(streaming_input, splitter.get_id())
         for out_split_id in out_split_ids:
             graph.set_edge_from(out_split_id, splitter.get_id())
-
+        graph.add_node(splitter)
 
         in_mapper_ids = out_split_ids
         out_mapper_ids = graph.generate_ephemeral_edges(fileIdGen, fan_out)
@@ -458,21 +460,32 @@ def parallelize_node(curr_id, graph, fileIdGen, fan_out,
             graph.set_edge_from(out_id, mapper.get_id())
             # END
             all_mappers.append(mapper)
+        for new_node in all_mappers:
+            graph.add_node(new_node)
 
         in_aggregator_ids = out_mapper_ids
         out_aggregator_id = streaming_output
         ## TODO: This could potentially be an aggregator tree (at least in the old PaSh versions)
         ##       We need to extend the annotations/parallelizers to support this (e.g., for sort)
-        aggregator_cmd_inv = parallelizer_rr.get_actual_aggregator(original_cmd_invocation_with_io_vars, in_aggregator_ids, out_aggregator_id)
-        aggregator = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(aggregator_cmd_inv)
-        for in_aggregator_id in in_aggregator_ids:
-            graph.set_edge_to(in_aggregator_id, aggregator.get_id())
-        graph.set_edge_from(streaming_output, aggregator.get_id())
+        aggregator_spec = parallelizer_rr.get_aggregator_spec()
+        aggregator_kind = aggregator_spec.get_kind()
+        if aggregator_kind == AggregatorKindEnum.CONCATENATE or aggregator_kind == AggregatorKindEnum.CUSTOM_N_ARY:
+            aggregator_cmd_inv = parallelizer_rr.get_actual_aggregator(original_cmd_invocation_with_io_vars, in_aggregator_ids, out_aggregator_id)
+            aggregator = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(aggregator_cmd_inv)
+            for in_aggregator_id in in_aggregator_ids:
+                graph.set_edge_to(in_aggregator_id, aggregator.get_id())
+            graph.set_edge_from(streaming_output, aggregator.get_id())
+            all_aggregators = [aggregator]
+            ## Add the merge commands in the graph
+            for new_node in all_aggregators:
+                graph.add_node(new_node)
+        elif aggregator_kind == AggregatorKindEnum.CUSTOM_2_ARY:
+            # TODO: we simplify and assume that every mapper produces a single output for now:
+            map_in_aggregator_ids = [[id] for id in in_aggregator_ids]
+            graph.create_generic_aggregator_tree(curr, parallelizer_rr, map_in_aggregator_ids, out_aggregator_id, fileIdGen)
+        else:
+            raise Exception("aggregator kind not yet implemented")
 
-        ## Add the merge commands in the graph
-        new_nodes = [splitter] + all_mappers + [aggregator]
-        for new_node in new_nodes:
-            graph.add_node(new_node)
 
     return new_nodes_for_workset
 
@@ -579,28 +592,24 @@ def parallelize_dfg_node(old_merger_id, node_id, graph, fileIdGen):
 ##
 ## TODO: Make that generic to work through annotations
 def create_merge_commands(curr, new_output_ids, fileIdGen):
+    assert(False)
     if(str(curr.com_name) == "uniq"):
         return create_uniq_merge_commands(curr, new_output_ids, fileIdGen)
     else:
         return create_generic_aggregator_tree(curr, new_output_ids, fileIdGen)
 
-## This is a function that creates a reduce tree for a generic function
-def create_generic_aggregator_tree(curr, new_output_ids, fileIdGen):
-    ## The Aggregator node takes a sequence of input ids and an output id
-    output = create_reduce_tree(lambda in_ids, out_ids: AggregatorNode(curr, in_ids, out_ids),
-                                new_output_ids, fileIdGen)
-    return output
-
 ## TODO: These must be generated using some file information
 ##
 ## TODO: Find a better place to put these functions
 def create_sort_merge_commands(curr, new_output_ids, fileIdGen):
+    assert(False)
     output = create_reduce_tree(lambda ids: SortGReduce(curr, ids),
                                 new_output_ids, fileIdGen)
     return output
 
 ## Instead of creating a tree, we just create a single level reducer for uniq
 def create_uniq_merge_commands(curr, new_output_ids, fileIdGen):
+    assert(False)
     ## Make an intermediate cat node
     intermediate_fid = fileIdGen.next_ephemeral_file_id()
     intermediate_id = intermediate_fid.get_ident()
@@ -621,61 +630,6 @@ def create_uniq_merge_commands(curr, new_output_ids, fileIdGen):
                    com_category)
 
     return ([new_cat, node], [intermediate_fid, new_out_fid], new_out_id)
-
-## This function creates the reduce tree. Both input and output file
-## ids must be lists of lists, as the input file ids and the output
-## file ids might contain auxiliary files.
-def create_reduce_tree(init_func, input_ids, fileIdGen):
-    tree = []
-    new_edges = []
-    curr_ids = input_ids
-    while(len(curr_ids) > 1):
-        new_level, curr_ids, new_fids = create_reduce_tree_level(init_func, curr_ids, fileIdGen)
-        tree += new_level
-        new_edges += new_fids
-
-    ## Find the final output
-    final_output_id = curr_ids[0][0]
-
-    ## Drain the final auxiliary outputs
-    final_auxiliary_outputs = curr_ids[0][1:]
-    drain_fids = [fileIdGen.next_file_id()
-                  for final_auxiliary_output in final_auxiliary_outputs]
-    for drain_fid in drain_fids:
-        drain_fid.set_resource(FileResource(Arg(string_to_argument('/dev/null'))))
-        new_edges.append(drain_fid)
-    drain_ids = [fid.get_ident() for fid in drain_fids]
-
-    drain_cat_commands = [make_cat_node([final_auxiliary_output], drain_id)
-                          for final_auxiliary_output, drain_id in zip(final_auxiliary_outputs, drain_ids)]
-    return (tree + drain_cat_commands), new_edges, final_output_id
-
-
-## This function creates a level of the reduce tree. Both input and
-## output file ids must be lists of lists, as the input file ids and
-## the output file ids might contain auxiliary files.
-def create_reduce_tree_level(init_func, input_ids, fileIdGen):
-    if(len(input_ids) % 2 == 0):
-        output_ids = []
-        even_input_ids = input_ids
-    else:
-        output_ids = [input_ids[0]]
-        even_input_ids = input_ids[1:]
-
-    new_fids = []
-    level = []
-    for i in range(0, len(even_input_ids), 2):
-        new_out_fids = [fileIdGen.next_ephemeral_file_id() for _ in input_ids[i]]
-        new_fids += new_out_fids
-        new_out_ids = [fid.get_ident() for fid in new_out_fids]
-        output_ids.append(new_out_ids)
-        new_node = create_reduce_node(init_func, even_input_ids[i:i+2], new_out_ids)
-        level.append(new_node)
-    return (level, output_ids, new_fids)
-
-## This function creates one node of the reduce tree
-def create_reduce_node(init_func, input_ids, output_ids):
-    return init_func(flatten_list(input_ids), output_ids)
 
 
 ## This functions adds an eager on a given edge.
