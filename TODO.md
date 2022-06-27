@@ -1,6 +1,5 @@
 ## TODOs before merging to `future`
 
-- eager
 - aggregation trees
 - r_split
 - cat-split fusion
