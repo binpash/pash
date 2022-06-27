@@ -1073,6 +1073,7 @@ class IR:
         for edge_id, (_, from_node_id, to_node_id) in self.edges.items():
             if (not from_node_id is None):
                 from_node = self.get_node(from_node_id)
+                # print("from_node", from_node)
                 if(not (edge_id in from_node.get_output_list())):
                     log("Consistency Error: Edge id:", edge_id, "is not in the node outputs:", from_node)
                     return False
