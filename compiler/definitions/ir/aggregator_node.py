@@ -1,6 +1,6 @@
 from definitions.ir.dfg_node import *
 # from definitions.ir.nodes.arg import Arg
-from util_new_cmd_invocations import get_command_invocation_prefix_from_dfg_node
+from annotations_utils.util_cmd_invocations import get_command_invocation_prefix_from_dfg_node
 
 
 ## This class corresponds to a generic n-ary aggregator

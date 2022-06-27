@@ -1,24 +1,15 @@
 import copy
-import annotations
 from command_categories import *
-from util import *
-from ir_utils import *
 from definitions.ir.redirection import *
 from definitions.ir.resource import *
 
-# BEGIN ANNO
-from util_new_annotations import construct_property_container_from_list_of_properties
-from util_new_cmd_invocations import to_node_cmd_inv_with_io_vars
-from util_new_parsing import get_ast_for_flagoption, get_ast_for_argstringtype, fix_parsing_newline
-from datatypes_new.BasicDatatypes import Flag, ArgStringType
-# from util_new_cmd_invocations import get_command_invocation_prefix_from_dfg_node
-
+from annotations_utils.util_cmd_invocations import to_node_cmd_inv_with_io_vars, construct_property_container_from_list_of_properties
 
 import sys
 from config import get_path_annotation_repo
 sys.path.insert(1, get_path_annotation_repo())
-from util_new import return_empty_list_if_none_else_itself, return_default_if_none_else_itself
-# END ANNO
+
+from util import return_empty_list_if_none_else_itself, return_default_if_none_else_itself
 
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions
@@ -26,90 +17,37 @@ class DFGNode:
     ## Unique identifier for nodes
     next_id = 0
 
-    ## inputs : tuple of lists of fid_ids (that can be used to retrieve fid from edges)
-    ## outputs : list of fid_ids 
-    ## com_name : command name Arg
-    ## com_category : string denoting category
-    ## input_consumption_mode : enumeration
-    ## com_properties : properties such as commutativity
-    ## com_options : list of tuples with the option index and the argument Arg
+    ## cmd_invocation_with_io_vars : command invocation data structure with edge ids as symbolic variables for filenames etc.
     ## com_redirs : list of redirections
     ## com_assignments : list of assignments
+    ## parallelizer_list : list of parallelizers for this DFGNode
+    ## cmd_related_properties : dict to store properties like commutativity
     def __init__(self,
                  cmd_invocation_with_io_vars,
-                 # inputs,
-                 # outputs,
-                 # com_name,
-                 # # com_category = None,
-                 # com_options = [],
                  com_redirs = [],
                  com_assignments=[],
-                 # # BEGIN ANNO
-                 # flag_option_list=None,
-                 # positional_config_list=None,
-                 # positional_input_list=None,
-                 # positional_output_list=None,
-                 # implicit_use_of_stdin=False,
-                 # implicit_use_of_stdout=False,
                  parallelizer_list=None,
                  cmd_related_properties=None,
-                 # # END ANNO
-                 # # BEGIN REMODEL
-                 # stdin_used_rem : Optional[IOVar] = None,
-                 # stdout_used_rem : Optional[IOVar] = None,
-                 # flag_option_list_rem : List[Union[Flag, OptionDFG]] = None,
-                 # operand_list_rem : List[Union[ArgStringType, IOVar]] = None
-                 # # END REMODEL
                  ):
+        # TODO []: default parameters!
+
+        ## @KK: can this be deleted? Was there another id in the member attributes before?
         ## Add a unique identifier to each DFGNode since id() is not guaranteed to be unique for objects that have different lifetimes.
         ## This leads to issues when nodes are deleted and new ones are created, leading to id() clashes between them
         self.id = DFGNode.next_id
         DFGNode.next_id += 1
 
-        # self.set_inputs(inputs)
-        # self.outputs = outputs
-        # self.com_name = com_name
-        # self.com_category = com_category
-        # self.com_options = com_options # used for Mp/Agg and in to_ast
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
         self.com_assignments = com_assignments
-        # BEGIN ANNO
-        # Assumption: config_list and option arguments only contains strings, i.e. of type ArgStringType
-        # self.flag_option_list = return_empty_list_if_none_else_itself(flag_option_list)
-        # self.positional_config_list = return_empty_list_if_none_else_itself(positional_config_list)
-        # self.positional_input_list = return_empty_list_if_none_else_itself(positional_input_list)
-        # self.positional_output_list = return_empty_list_if_none_else_itself(positional_output_list)
-        # self.implicit_use_of_stdin = implicit_use_of_stdin
-        # self.implicit_use_of_stdout = implicit_use_of_stdout
         self.parallelizer_list = return_empty_list_if_none_else_itself(parallelizer_list)
         default_cmd_properties = construct_property_container_from_list_of_properties([])
         self.cmd_related_properties = return_default_if_none_else_itself(cmd_related_properties, default_cmd_properties)
         self.cmd_invocation_with_io_vars = cmd_invocation_with_io_vars
-        # END ANNO
-
         # log("Node created:", self.id, self)
 
     def __repr__(self):
-        ## BEGIN ANNO
-        # NEW
-        # TODO ANNO
+        # TODO: add other attributes
         return str(self.cmd_invocation_with_io_vars)
-        # OLD
-        # # prefix = "Node"
-        # # if (self.com_category == "stateless"):
-        # #     prefix = "Stateless"
-        # # elif (self.com_category == "pure"):
-        # #     prefix = "Pure"
-        # # elif (self.is_pure_parallelizable()):
-        # #     prefix = "Par. Pure"
-        # # if (self.is_commutative()):
-        # #     prefix = 'Commutative ' + prefix
-        # # output = "{}: \"{}\" in:{} out:{}".format(
-        # #     prefix, self.com_name,
-        # #     self.get_input_list(),
-        # #     self.outputs)
-        # return output
-        ## END ANNO
 
     ## Generates a dot node for the DFG node
     def add_dot_node(self, dot, node_id):
@@ -120,7 +58,7 @@ class DFGNode:
     ## Get the label of the node. By default, it is simply the name
     def get_dot_label(self) -> str:
         ## The name could be a full path
-        name = self.com_name
+        name = self.cmd_invocation_with_io_vars.cmd_name
         basename = os.path.basename(str(name))
         return basename
 
@@ -137,6 +75,7 @@ class DFGNode:
 
     ## TODO: Make that a proper class.
     def set_inputs(self, inputs):
+        assert(False)
         if(isinstance(inputs, list)):
             self.inputs = ([], inputs)
         elif(isinstance(inputs, tuple)):
@@ -159,19 +98,17 @@ class DFGNode:
         inputs = self.cmd_invocation_with_io_vars.generate_inputs()
         return inputs.get_config_inputs()
 
-    ## BEGIN ANNO
     # def is_at_most_pure(self):
     #     return (self.com_category in ["stateless", "pure", "parallelizable_pure"])
 
-    def is_parallelizable(self):
-        return (self.is_pure_parallelizable() or self.is_stateless())
+    # def is_parallelizable(self):
+    #     return (self.is_pure_parallelizable() or self.is_stateless())
 
-    def is_stateless(self):
-        return (self.com_category == "stateless")
+    # def is_stateless(self):
+    #     return (self.com_category == "stateless")
 
-    def is_pure_parallelizable(self):
-        return (self.com_category == "parallelizable_pure")
-    # END ANNO
+    # def is_pure_parallelizable(self):
+    #     return (self.com_category == "parallelizable_pure")
 
     def is_commutative(self):
         # BEGIN ANNO
@@ -188,7 +125,7 @@ class DFGNode:
     ## kk: 2021-07-23 Not totally sure if that is generally correct. Tests will say ¯\_(ツ)_/¯
     ##     I think it assumes that new options can be added in the beginning if there are no options already
     def append_options(self, new_options):
-        assert(False)
+        assert(False) # unreachable
         if(len(self.com_options) > 0):
             max_opt_index = max([i for i, _opt in self.com_options])
         else:
@@ -205,6 +142,7 @@ class DFGNode:
     ##
     ## TODO: Abstract this function away to annotations 2.0
     def special_to_ast(self, edges):
+        assert(False) # unreachable
         # BEGIN ANNO
         return None
         # END ANNO
@@ -234,6 +172,7 @@ class DFGNode:
 
     ## This function handles the input fids as arguments.
     def _to_ast_aux_inputs_as_args(self, edges, stdin_dash=False):
+        assert(False) # unreachable
         input_fids = [edges[in_id][0] for in_id in self.get_input_list()]
 
         input_arguments = [fid.to_ast(stdin_dash=stdin_dash)
@@ -243,6 +182,7 @@ class DFGNode:
     ## This function handles the redirections when a command has a single output
     ##   and it can always be stdout.
     def _to_ast_aux_single_stdout_fid(self, edges):
+        assert(False) # unreachable
         output_fids = [edges[out_id][0] for out_id in self.outputs]
         assert len(output_fids) == 1
         output_fid = output_fids[0]
@@ -255,6 +195,7 @@ class DFGNode:
     ## Auxiliary method that returns any necessary redirections,
     ##   at the moment it doesn't look necessary.
     def _to_ast_aux_get_redirs(self):
+        ## still used in to_ast
         ## TODO: Properly handle redirections
         ##
         ## TODO: If one of the redirected outputs or inputs is changed in the IR 
@@ -272,94 +213,30 @@ class DFGNode:
         return []
 
 
-    ## TODO: Improve this functio to be separately implemented for different special nodes,
+    ## TODO: Improve this function to be separately implemented for different special nodes,
     ##       such as cat, eager, split, etc...
-    def to_ast(self, edges, drain_streams):    
+    ## I do not think this is reasonable anymore since we remodelled nodes in a way that the back-translation is trivial
+    def to_ast(self, edges, drain_streams):
         ## TODO: We might not want to implement this at all actually
         if (drain_streams):
             raise NotImplementedError()
         else:
+            # commented since "see above"
             ## Handle special node to ast here
-            node = self.special_to_ast(edges)
-            if node is not None:
-                return node
-            
+            # node = self.special_to_ast(edges)
+            # if node is not None:
+            #     return node
 
             redirs = self._to_ast_aux_get_redirs()
             assignments = self.com_assignments
-            ## Start filling in the arguments
-            # opt_arguments = []
-            # BEGIN ANNO
-            # LOG
-            # log(f'com_name: {self.com_name}')
-            # log(f'edges: {edges}')
-            # log(f'inputs: {self.inputs}')
-            # log(f'outputs: {self.outputs}')
-            # log(f'com_redirs: {self.com_redirs}')
-            # log(f'pos config: {self.positional_config_list}')
-            # log(f'pos input: {self.positional_input_list}')
-            # log(f'pos output: {self.positional_output_list}')
-            # log(f'com_options: {self.com_options}')
-            # log(f'flag_option_list: {self.flag_option_list}')
-            #OLD
-            # for i, opt in self.com_options:
-            #     ## Pad the argument list with None
-            #     opt_arguments = pad(opt_arguments, i)
-            #     opt_arguments[i] = opt.to_ast()
-            # log(f'opt_arguments: {format_args([val for val in opt_arguments if val is not None])}')
-            # NEW
-            # TODO: FIX this?!
-            # opt_arguments = [get_ast_for_flagoption(flagoption) for flagoption in self.flag_option_list]
-            # positional_config_fixed_parsing_newline = [fix_parsing_newline(arg) for arg in self.positional_config_list]
-            # opt_arguments += [get_ast_for_argstringtype(arg) for arg in positional_config_fixed_parsing_newline]
-            # log(f'opt_arguments_new: {format_args(opt_arguments)}')
-            # END ANNO
 
             node = to_node_cmd_inv_with_io_vars(self.cmd_invocation_with_io_vars, edges, redirs, assignments)
             # TODO: think about redirections
-
-            # com_name_ast = self.com_name.to_ast()
-
-            ##
-            ## 1. Find the input and output fids
-            ## 2. Construct the rest of the arguments and input/output redirections according to
-            ##    the command IO
-            # input_fids = [edges[in_id][0] for in_id in self.get_input_list()]
-            # output_fids = [edges[out_id][0] for out_id in self.outputs]
-            ## FS: com_option is still used but with new model for nodes, this function shall go
-            # option_asts = [opt.to_ast() for _, opt in self.com_options]
+            # old code for this:
             # rest_argument_fids, new_redirs = create_command_arguments_redirs(com_name_ast,
             #                                                                  option_asts,
             #                                                                  input_fids,
             #                                                                  output_fids)
-            
-            ## Transform the rest of the argument fids to arguments
-            ## Since some of the rest_arguments can be None (they only contain inputs and outputs)
-            ## we need to make sure that we don't turn None objects to asts.
-            ##
-            ## The None fields need to be filtered out because they are taken care of by the interleave function.
-            ##
-            ## TODO: Is this actually OK?
-            # rest_arguments = [fid.to_ast()
-            #                   for fid in rest_argument_fids
-            #                   if not fid is None]
-            # log(f'rest_arguments: {format_args(rest_arguments)}')
-
-            ## Interleave the arguments since options args might contain gaps.
-            # BEGIN ANNO
-            # OLD
-            # arguments = interleave_args(opt_arguments, rest_arguments)
-            # NEW
-            # arguments = opt_arguments + rest_arguments
-            # log(f'arguments: {format_args(arguments)}')
-            # END ANNO
-
-            # all_arguments = [com_name_ast] + arguments
-            # log(f'all arguments: {format_args(all_arguments)}')
-            # log(f'\n\n')
-            # all_redirs = redirs + new_redirs
-
-            # node = make_command(all_arguments, redirections=all_redirs, assignments=assignments)
         return node
 
     ## This method applies the redirections to get the correct, inputs, outputs of a node.
@@ -382,8 +259,8 @@ class DFGNode:
                 # log(redirection)
                 file_resource = FileResource(redirection.file_arg)
                 success = False
-                for i in range(len(self.outputs)):
-                    output_edge_id = self.outputs[i]
+                for i in range(len(self.get_output_list())):
+                    output_edge_id = self.get_output_list()[i]
                     output_fid = edges[output_edge_id][0]
                     if(output_fid.has_file_descriptor_resource()
                        and output_fid.resource.is_stdout()):
@@ -418,12 +295,6 @@ class DFGNode:
     ## TODO: Make this a method of graph to change the from, to too.
     def replace_edge(self, from_id, to_id):
         self.cmd_invocation_with_io_vars.replace_var(from_id, to_id)
-        # new_config_inputs = self.replace_edge_in_list(self.inputs[0], from_id, to_id)
-        # new_standard_inputs = self.replace_edge_in_list(self.inputs[1], from_id, to_id)
-        # new_outputs = self.replace_edge_in_list(self.outputs, from_id, to_id)
-
-        # self.set_inputs((new_config_inputs, new_standard_inputs))
-        # self.outputs = new_outputs
 
     ## TODO: There must be a lib function to do this.
     def replace_edge_in_list(self, edge_ids, from_id, to_id):
@@ -437,10 +308,12 @@ class DFGNode:
         return new_edge_ids
 
     def set_used_parallelizer(self, parallelizer):
+        assert(False)
         # TODO: instantiate in __init__ already in some way
         self.used_parallelizer = parallelizer
 
     def get_used_parallelizer(self):
+        assert(False)
         return self.used_parallelizer
 
     def get_option_implemented_round_robin_parallelizer(self):

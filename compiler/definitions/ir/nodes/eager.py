@@ -21,9 +21,9 @@ class Eager(DFGNode):
             raise NotImplementedError()
         else:
             ## Handle special node to ast here
-            node = self.special_to_ast(edges)
-            if node is not None:
-                return node
+            # node = self.special_to_ast(edges)
+            # if node is not None:
+            #     return node
 
             redirs = self._to_ast_aux_get_redirs()
             assignments = self.com_assignments

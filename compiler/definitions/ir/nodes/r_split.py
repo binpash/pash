@@ -17,18 +17,13 @@ class RSplit(DFGNode):
                  com_assignments=[],
                  parallelizer_list=None,
                  cmd_related_properties=None):
-                 # inputs, outputs, com_name, com_category, com_options = [],
-                 # com_redirs = [], com_assignments=[]):
+        # TODO []: default arguments!
         super().__init__(cmd_invocation_with_io_vars=cmd_invocation_with_io_vars,
                          com_redirs=com_redirs,
                          com_assignments=com_assignments,
                          parallelizer_list=parallelizer_list,
                          cmd_related_properties=cmd_related_properties)
-                         # inputs, outputs, com_name, com_category,
-                         # com_options=com_options,
-                         # com_redirs=com_redirs,
-                         # com_assignments=com_assignments)
-    
+
     ## TODO: Generalize this code (for this and SortGReduce) to be able to add an option to any command.
     def add_r_flag(self):
         assert(False)
@@ -46,7 +41,6 @@ class RSplit(DFGNode):
         return ("-r" in option_strings)
 
 
-## TODO: Make a proper splitter subclass of Node
 def make_r_split(input_id, out_ids, r_split_batch_size):
     r_split_bin = os.path.join(config.PASH_TOP, config.config['runtime']['r_split_binary'])
     operand_list = [input_id,
@@ -62,11 +56,3 @@ def make_r_split(input_id, out_ids, r_split_batch_size):
                     implicit_use_of_streaming_output=None,
                     access_map=access_map)
     return RSplit(cmd_inv_with_io_vars)
-    # com_name = Arg(string_to_argument(r_split_bin))
-    # com_category = "pure"
-    # com_option = (1, Arg(string_to_argument(str(r_split_batch_size))))
-    # return RSplit([input_id],
-    #              out_ids,
-    #              com_name,
-    #              com_category,
-    #              com_options=[com_option])

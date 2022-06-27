@@ -1,8 +1,13 @@
-# imports from annotation framework
 import sys
 
 from datatypes_new.BasicDatatypes import Flag
 from datatypes_new.BasicDatatypesWithIO import OptionWithIO
+from datatypes_new.CommandInvocationInitial import CommandInvocationInitial
+from annotation_generation_new.datatypes.InputOutputInfo import InputOutputInfo
+from annotation_generation_new.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
+from annotation_generation_new.datatypes.CommandProperties import CommandProperties
+from annotation_generation_new.AnnotationGeneration import get_input_output_info_from_cmd_invocation, \
+    get_parallelizability_info_from_cmd_invocation
 
 from util import log
 
@@ -72,8 +77,6 @@ def translate_io_var_if_applicable(pot_io_var, edges):
         return to_ast_arg_string_type(pot_io_var)
 
 def to_ast_arg_string_type(arg_string_type):
-    # log("arg_string_type", arg_string_type.get_name())
-    # log("arg_string_type type", type(arg_string_type.get_name()))
     return arg_string_type.get_name().arg_char_list # is of type Arg
 
 # assumes io_var is an edge id
@@ -82,5 +85,12 @@ def dereference_io_var(io_var, edges):
     log(fid)
     return fid.to_ast()
 
+def get_input_output_info_from_cmd_invocation_util(cmd_invocationInitial : CommandInvocationInitial) -> InputOutputInfo:
+    return get_input_output_info_from_cmd_invocation(cmd_invocationInitial)
 
-# copied from annotations.py
+def get_parallelizability_info_from_cmd_invocation_util(cmd_invocationInitial : CommandInvocationInitial) -> ParallelizabilityInfo:
+    return get_parallelizability_info_from_cmd_invocation(cmd_invocationInitial)
+
+def construct_property_container_from_list_of_properties(list_properties):
+    return CommandProperties(dict(list_properties))
+

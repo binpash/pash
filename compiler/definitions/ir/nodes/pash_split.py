@@ -15,13 +15,13 @@ class Split(DFGNode):
                  com_assignments=[],
                  parallelizer_list=None,
                  cmd_related_properties=None):
+        # TODO []: default arguments!
         super().__init__(cmd_invocation_with_io_vars=cmd_invocation_with_io_vars,
                          com_redirs=com_redirs,
                          com_assignments=com_assignments,
                          parallelizer_list=parallelizer_list,
                          cmd_related_properties=cmd_related_properties)
 
-## TODO: Make a proper splitter subclass of Node
 def make_split_file(input_id, out_ids):
     auto_split_bin = os.path.join(config.PASH_TOP, config.config['runtime']['auto_split_binary'])
     operand_list = [input_id]
@@ -36,10 +36,3 @@ def make_split_file(input_id, out_ids):
         implicit_use_of_streaming_output=None,
         access_map=access_map)
     return Split(cmd_inv_with_io_vars)
-    # auto_split_bin = os.path.join(config.PASH_TOP, config.config['runtime']['auto_split_binary'])
-    # com_name = Arg(string_to_argument(auto_split_bin))
-    # com_category = "pure"
-    # return Split([input_id],
-    #              out_ids,
-    #              com_name,
-    #              com_category)

@@ -1,15 +1,11 @@
-# imports from annotation framework
 import sys
-from shlex import shlex
 from typing import Set, List, Any
 
 from definitions.ir.arg import Arg
 
 from config import get_path_annotation_repo
 sys.path.insert(1, get_path_annotation_repo())
-# for typing
 from datatypes_new.CommandInvocationInitial import CommandInvocationInitial
-# for use
 from datatypes_new.BasicDatatypes import Option, ArgStringType, Flag, Operand
 from parser_new.parser import parse, get_set_of_all_flags, get_dict_flag_to_primary_repr, get_set_of_all_options, \
     get_dict_option_to_primary_repr, are_all_individually_flags

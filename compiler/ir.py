@@ -5,8 +5,7 @@ from config import get_path_annotation_repo
 sys.path.insert(1, get_path_annotation_repo())
 # for typing
 from datatypes_new.CommandInvocationInitial import CommandInvocationInitial
-from datatypes_new.BasicDatatypes import Flag, ArgStringType, FileName, StdDescriptor, FileNameOrStdDescriptor
-from datatypes_new.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptorWithIOInfo, FileNameOrStdDescriptorWithIOInfo
+from datatypes_new.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptorWithIOInfo
 from annotation_generation_new.datatypes.InputOutputInfo import InputOutputInfo
 from annotation_generation_new.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
 from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
@@ -14,27 +13,19 @@ from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVar
 # for use
 # --
 
-from util_new_parsing import get_command_invocation, parse_arg_list_to_command_invocation
-from util_new_annotations import get_input_output_info_from_cmd_invocation_util, get_parallelizability_info_from_cmd_invocation_util, \
-                                 construct_property_container_from_list_of_properties
-from util_new_mapper import get_mapper_as_dfg_node_from_node, get_map_output_files
-from util_new_aggregator import get_aggregator_as_dfg_node_from_node
-from util_new_file_descriptors import resource_from_file_descriptor
+from annotations_utils.util_parsing import parse_arg_list_to_command_invocation
+from annotations_utils.util_cmd_invocations import get_input_output_info_from_cmd_invocation_util, get_parallelizability_info_from_cmd_invocation_util
+from annotations_utils.util_mapper import get_mapper_as_dfg_node_from_node, get_map_output_files
+from annotations_utils.util_aggregator import get_aggregator_as_dfg_node_from_node
+from annotations_utils.util_file_descriptors import resource_from_file_descriptor
 # END ANNO
 
 # BEGIN REMODEL
-from datatypes_new.BasicDatatypes import Flag, Option, ArgStringType
-from datatypes_new.AccessKind import AccessKind
-from typing import Dict, Any
 
 # END REMODEL
 
-from definitions.ir.arg import *
-from definitions.ir.dfg_node import *
 from definitions.ir.file_id import *
-from definitions.ir.resource import *
 from definitions.ir.nodes.cat import *
-from definitions.ir.nodes.hdfs_cat import HDFSCat
 
 import definitions.ir.nodes.pash_split as pash_split
 import definitions.ir.nodes.r_merge as r_merge
@@ -42,7 +33,6 @@ import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_wrap as r_wrap
 import definitions.ir.nodes.r_unwrap as r_unwrap
 
-from command_categories import *
 from ir_utils import *
 from util import *
 
@@ -122,19 +112,7 @@ def create_edges_from_opt_or_fd_list(opt_or_fd_list, edges_dict, options, fileId
         new_edge_list.append(fid_id)
     return new_edge_list
 
-# BEGIN ANNO
-# OLD
-# def find_input_edges(inputs, dfg_edges, options, fileIdGen):
-#     if(isinstance(inputs, list)):
-#         return create_edges_from_opt_or_fd_list(inputs, dfg_edges, options, fileIdGen)
-#     elif(isinstance(inputs, tuple)):
-#         assert(False)
-#         config_inputs = create_edges_from_opt_or_fd_list(inputs[0], dfg_edges, options, fileIdGen)
-#         standard_inputs = create_edges_from_opt_or_fd_list(inputs[1], dfg_edges, options, fileIdGen)
-#         return (config_inputs, standard_inputs)
-#     else:
-#         raise NotImplementedError()
-# NEW
+
 def find_input_edges(positional_input_list, implicit_use_of_stdin, dfg_edges, fileIdGen) -> List[int]:
     assert (not implicit_use_of_stdin or len(positional_input_list) == 0)
     if implicit_use_of_stdin:
@@ -162,35 +140,6 @@ def get_edge_list_from_file_id_list(dfg_edges, file_ids):
         dfg_edges[fid_id] = (file_id, None, None)
         new_edge_list.append(fid_id)
     return new_edge_list
-
-# END ANNO
-
-## This function creates a DFG with a single node given a command.
-## TODO: REMODEL
-def get_variable_for_filedescriptor_arg_rem(option_arg, fileIdGen):
-    file_id = fileIdGen.next_file_id()
-    # TODO: make types match with _with_IOInfo
-    option_arg_resource = option_arg.resource
-    option_arg_access = option_arg.access
-    if isinstance(option_arg.name, StdDescriptor):
-        resource = FileDescriptorResource(('fd', option_arg.name)) # name is an Enum which translates to the right number
-    elif isinstance(option_arg.name, FileName):
-        resource = FileResource(Arg.string_to_arg(option_arg.name))
-    file_id.set_resource(resource)
-
-
-def get_flagoption_rem(flagoption, fileIdGen):
-    if isinstance(flagoption, Flag):
-        return flagoption
-    elif isinstance(flagoption, Option) and flagoption.is_arg_of_type_string(): # exploits short-circuiting
-        return flagoption
-    elif isinstance(flagoption, Option) and flagoption.is_arg_of_type_filename_or_stddescriptor(): # exploits short-circuiting
-        option_arg = flagoption.get_arg()
-        # TODO: implement function but should know whether input or output
-        arg_var, access = get_variable_for_filedescriptor_arg_rem(option_arg, fileIdGen)
-        return OptionDFG(flagoption.get_name(), arg_var)
-    else:
-        raise Exception()
 
 
 def add_file_id_vars(command_invocation_with_io, fileIdGen):
@@ -225,7 +174,6 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
         new_implicit_use_of_streaming_output = None
 
     # this shall become copy-based
-    # log(dfg_edges)
     command_invocation_with_io_vars = CommandInvocationWithIOVars.get_from_without_vars(command_invocation_with_io, access_map)
     command_invocation_with_io_vars.operand_list = new_operand_list
     command_invocation_with_io_vars.implicit_use_of_streaming_input = new_implicit_use_of_streaming_input
@@ -235,10 +183,7 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
 
 def compile_command_to_DFG(fileIdGen, command, options,
                            redirections=[]):
-    # BEGIN ANNO
     command_invocation: CommandInvocationInitial = parse_arg_list_to_command_invocation(command, options)
-    # log(command_invocation)
-    # flag_option_list = command_invocation.flag_option_list
     io_info: InputOutputInfo = get_input_output_info_from_cmd_invocation_util(command_invocation)
     para_info: ParallelizabilityInfo = get_parallelizability_info_from_cmd_invocation_util(command_invocation)
     command_invocation_with_io = io_info.apply_input_output_info_to_command_invocation(command_invocation)
@@ -246,27 +191,11 @@ def compile_command_to_DFG(fileIdGen, command, options,
     property_list = [('round_robin_compatible_with_cat', round_robin_compatible_with_cat),
                      ('is_commutative', is_commutative)]
     cmd_related_properties = construct_property_container_from_list_of_properties(property_list)
-    ## TODO: There is no need for this redirection here. We can just straight
-    ##       come up with inputs, outputs, options
-    # this function should be completely deleted once we have moved to new annotations
-    # _inputs, _out_stream, _opt_indices = find_command_input_output(command, options)
-    # we recompute opt_indices with positional_config_list and flag_option_list
-    # opt_indices = [('option', i) for i in range(len(flag_option_list) + len(positional_config_list))]
-    # com_category = find_command_category(command, options)
-    # END ANNO
-
-    # com_name = Arg(command)
 
     ## TODO: Make an empty IR and add edges and nodes incrementally (using the methods defined in IR).
 
     ## Add all inputs and outputs to the DFG edges
     cmd_invocation_with_io_vars, dfg_edges = add_file_id_vars(command_invocation_with_io, fileIdGen)
-
-
-    # ## Get the options
-    # dfg_options = [get_option(opt_or_fd, options, fileIdGen)
-    #                for opt_or_fd in opt_indices]
-    # log(f'dfg_options: {dfg_options}')
     com_redirs = redirections
     ## TODO: Add assignments
     com_assignments = []
@@ -281,16 +210,6 @@ def compile_command_to_DFG(fileIdGen, command, options,
     #                    com_options=dfg_options,
     #                    com_redirs=com_redirs,
     #                    com_assignments=com_assignments,
-    #                    # BEGIN ANNO
-    #                    flag_option_list=flag_option_list,
-    #                    positional_config_list=positional_config_list,
-    #                    positional_input_list=positional_input_list,
-    #                    positional_output_list=positional_output_list,
-    #                    implicit_use_of_stdin=implicit_use_of_stdin,
-    #                    implicit_use_of_stdout=implicit_use_of_stdout,
-    #                    parallelizer_list=parallelizer_list,
-    #                    cmd_related_properties=cmd_related_properties
-    #                    # END ANNO
     #                    )
     # elif(str(com_name) == "hdfs" and str(dfg_options[0][1]) == "dfs" and str(dfg_options[1][1]) == "-cat"):
     #     dfg_node = HDFSCat(dfg_inputs,
@@ -305,26 +224,13 @@ def compile_command_to_DFG(fileIdGen, command, options,
         ## Assume: Everything must be completely expanded
         ## TODO: Add an assertion about that.
         dfg_node = DFGNode(cmd_invocation_with_io_vars,
-                           #dfg_inputs,
-                           # dfg_outputs,
-                           # com_name,
-                           # com_category,
-                           # com_options=dfg_options,
                            com_redirs=com_redirs,
                            com_assignments=com_assignments,
-                           # BEGIN ANNO
-                           # flag_option_list=flag_option_list,
-                           # positional_config_list=positional_config_list,
-                           # positional_input_list=positional_input_list,
-                           # positional_output_list=positional_output_list,
-                           # implicit_use_of_stdin=implicit_use_of_stdin,
-                           # implicit_use_of_stdout=implicit_use_of_stdout,
                            parallelizer_list=parallelizer_list,
                            cmd_related_properties=cmd_related_properties
-                           # END ANNO
                            )
 
-    # if(not dfg_node.is_at_most_pure()):
+    # if(not dfg_node.is_at_most_pure()): # which consequences has this check had?
     #     raise ValueError()
 
     node_id = dfg_node.get_id()
@@ -373,20 +279,7 @@ def make_tee(input, outputs):
                    com_category)
 
 def make_map_node(node, new_inputs, new_outputs, parallelizer):
-    dfg_node = get_mapper_as_dfg_node_from_node(node, parallelizer, new_inputs, new_outputs)
-    ## Some nodes have special map commands
-    # BEGIN ANNO
-    # OLD
-    # if(not node.com_mapper is None):
-    #     new_node = MapperNode(node, new_inputs, new_outputs)
-    # else:
-    #     new_node = node.copy()
-    #     new_node.inputs = new_inputs
-    #     new_node.outputs = new_outputs
-    # return new_node
-    # NEW
-    return dfg_node
-    # END ANNO
+    return get_mapper_as_dfg_node_from_node(node, parallelizer, new_inputs, new_outputs)
 
 ## Makes a wrap node that encloses a map parallel node.
 ##
@@ -919,6 +812,7 @@ class IR:
     ##
     ## TODO: Eventually this should be tunable to not happen for all inputs (but maybe for less)
     def parallelize_node(self, node_id, fileIdGen):
+        assert(False)
         node = self.get_node(node_id)
         # BEGIN ANNO
         # OLD
@@ -984,7 +878,7 @@ class IR:
         parallelism = len(parallel_input_ids)
 
         ## Identify the output.
-        node_output_edge_ids = node.outputs
+        node_output_edge_ids = node.get_output_list()
         assert(len(node_output_edge_ids) == 1)
         node_output_edge_id = node_output_edge_ids[0]
 
@@ -1006,6 +900,7 @@ class IR:
             tee_id = self.tee_edge(conf_edge_id, parallelism, fileIdGen)
             tee_node = self.get_node(tee_id)
             for i in range(parallelism):
+                # TODO outputs probably non-existent
                 parallel_configuration_ids[i].append(tee_node.outputs[i])
 
         ## Create a temporary output edge for each parallel command.

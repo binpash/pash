@@ -1,20 +1,18 @@
-# imports from annotation framework
+# TODO: this file can properly be deleted
+
 import sys
 from config import get_path_annotation_repo
 sys.path.insert(1, get_path_annotation_repo())
 
-# for typing
-# for use
-from annotation_generation_new.datatypes.parallelizability.Aggregator import Aggregator
-
 from definitions.ir.dfg_node import DFGNode
 from definitions.ir.nodes.cat import Cat
-from util_new_cmd_invocations import get_command_invocation_prefix_from_dfg_node
+from annotations_utils.util_cmd_invocations import get_command_invocation_prefix_from_dfg_node
 from util import log
 from ir_utils import string_to_argument
 from definitions.ir.arg import Arg
 
 def get_aggregator_as_dfg_node_from_node(node, parallelizer, inputs, outputs) -> DFGNode:
+    assert(False)
     cmd_inv_pref = get_command_invocation_prefix_from_dfg_node(node)
     log(f'cmdinvpref for agg: {cmd_inv_pref}')
     aggregator = parallelizer.get_actual_aggregator(cmd_inv_pref)

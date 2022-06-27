@@ -415,17 +415,11 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
 ## TODO: At the moment we greedily try to add r-splits if possible, so we need to have a better procedure of deciding whether to put them or not.
 ##       For example for non-commutative pure commands.
 
-## If the current command is a cat, and is followed by a node that
-## is either stateless or pure parallelizable, commute the cat
-## after the node.
+## This function takes a node (id) and parallelizes it
 def parallelize_node(curr_id, graph, fileIdGen, fan_out,
                      batch_size, no_cat_split_vanish, r_split_flag, r_split_batch_size):
     curr = graph.get_node(curr_id)
     new_nodes_for_workset = []
-
-    # log("curr node", curr)
-
-    # assert(r_split_flag)
 
     option_parallelizer_rr = curr.get_option_implemented_round_robin_parallelizer()
 
@@ -445,9 +439,7 @@ def parallelize_node(curr_id, graph, fileIdGen, fan_out,
 
         graph.remove_node(curr_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
 
-
         out_split_ids = graph.generate_ephemeral_edges(fileIdGen, fan_out)
-        log("graph edges", graph.edges)
         splitter = pash_split.make_split_file(streaming_input, out_split_ids)
         graph.set_edge_to(streaming_input, splitter.get_id())
         for out_split_id in out_split_ids:
@@ -486,66 +478,6 @@ def parallelize_node(curr_id, graph, fileIdGen, fan_out,
 
     return new_nodes_for_workset
 
-    # # log("Check to parallelize curr:", curr)
-    #
-    # ## Get next nodes in the graph
-    # next_node_ids = graph.get_next_nodes(curr_id)
-    #
-    # ## We try to parallelize for all the edges that go out from the current node and into another node
-    # for next_node_id in next_node_ids:
-    #     next_node = graph.get_node(next_node_id)
-    #     # log("|-- its next node is:", next_node)
-    #     new_curr = curr
-    #     new_curr_id = curr_id
-    #
-    #     ## If the next node can be parallelized, then we should try to parallelize
-    #     ##
-    #     ## If the user has provided the r_split flag (they want to use r_split),
-    #     ## then parallelizability depends on commutativity (if a command is pure parallelizable but not commutative)
-    #     ## then it can't be parallelized. Therefore we do not parallelize non-commutative pure parallelizable commands.
-    #     ##
-    #     ## TODO: We need to extend PaSh to have a mode where it can have both r_splits and auto_split if a command is not
-    #     ##       commutative. This can be added as an option to the r_split flag, e.g., r_split="no" | "yes" | "optimal".
-    #     if(next_node.is_parallelizable()
-    #        and not isinstance(next_node, Cat)
-    #        and (not r_split_flag
-    #             or (next_node.is_commutative()
-    #                 or next_node.is_stateless()))):
-    #         ## If the current node is not a merger, it means that we need
-    #         ## to generate a merger using a splitter (auto_split or r_split)
-    #         if (isinstance(curr, HDFSCat) and config.pash_args.distributed_exec):
-    #             new_curr = split_hdfs_cat_input(curr, next_node, graph, fileIdGen) # Cat merger
-    #             new_curr_id = new_curr.get_id()
-    #         ## no_cat_split_vanish shortcircuits this and inserts a split even if the current node is a cat.
-    #         elif (fan_out > 1
-    #            and (no_cat_split_vanish
-    #                 or (not (isinstance(curr, Cat)
-    #                          or isinstance(curr, r_merge.RMerge))
-    #                     or ((isinstance(curr, Cat)
-    #                          or isinstance(curr, r_merge.RMerge))
-    #                         and len(curr.get_input_list()) < fan_out)))):
-    #             new_merger = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size, r_split_flag, r_split_batch_size)
-    #             ## After split has succeeded we know that the curr node (previous of the next)
-    #             ## has changed. Therefore we need to retrieve it again.
-    #             if (not new_merger is None):
-    #                 new_curr_id = new_merger.get_id()
-    #                 new_curr = new_merger
-    #                 assert(isinstance(new_curr, Cat)
-    #                        or isinstance(new_curr, r_merge.RMerge))
-    #
-    #         ## If curr is cat, it means that split suceeded, or it was
-    #         ## already a cat. In any case, we can proceed with the
-    #         ## parallelization.
-    #         ##
-    #         ## Both Cat and RMerge can be "commuted" with parallelizable nodes
-    #         if(isinstance(new_curr, Cat)
-    #            or isinstance(new_curr, r_merge.RMerge)):
-    #             new_nodes = check_parallelize_dfg_node(new_curr_id, next_node_id, graph, fileIdGen)
-    #             # log("New nodes:", new_nodes)
-    #             new_nodes_for_workset += new_nodes
-    #
-    # return new_nodes_for_workset
-
 ## TODO: Instead of moving a cat after a node, we need to parallelize cat,
 ##       then remove cat (since it takes a single input to a single output),
 ##       then parallelize the next node. This will allow us to handle `comm -23 p1 p2`
@@ -556,6 +488,7 @@ def parallelize_node(curr_id, graph, fileIdGen, fan_out,
 ##
 ## TODO: We need to check if the previous node is a cat or a merge
 def check_parallelize_dfg_node(merger_id, node_id, graph, fileIdGen):
+    assert(False)
 
     ## Get merger inputs (cat or r_merge).
     merger_input_edge_ids = graph.get_node_input_ids(merger_id)
@@ -576,6 +509,7 @@ def check_parallelize_dfg_node(merger_id, node_id, graph, fileIdGen):
     return new_nodes
 
 def parallelize_dfg_node(old_merger_id, node_id, graph, fileIdGen):
+    assert(False)
     node = graph.get_node(node_id)
     assert(node.is_parallelizable())
 
@@ -814,18 +748,18 @@ def add_eager_nodes(graph, use_dgsh_tee):
                         add_eager(curr_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
 
             if(isinstance(curr, Split)):
-                eager_input_ids = curr.outputs[:-1]
+                eager_input_ids = curr.get_output_list()[:-1]
                 for edge_id in eager_input_ids:
                     add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
 
             ## Add an eager after r_unwrap            
             if(isinstance(curr, r_unwrap.RUnwrap)):
-                eager_input_id = curr.outputs[0]
+                eager_input_id = curr.get_output_list()[0]
                 add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
 
             ## Add an eager after r_split
             if(isinstance(curr, r_split.RSplit)):
-                eager_input_ids = curr.outputs
+                eager_input_ids = curr.get_output_list()
                 for edge_id in eager_input_ids:
                     add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
 

@@ -14,6 +14,7 @@ class Cat(DFGNode):
                  cmd_related_properties = None
                  # END ANNO
                  ):
+        assert(False)
         assert(str(com_name) == "cat")
         assert(com_category == "stateless")
         super().__init__(inputs, outputs, com_name, com_category,
