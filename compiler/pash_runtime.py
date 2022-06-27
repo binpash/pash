@@ -218,7 +218,6 @@ def optimize_irs(asts_and_irs, args, compiler_config):
                                                                       args.no_cat_split_vanish,
                                                                       args.r_split, args.r_split_batch_size)
             # pr.print_stats()
-            # log(distributed_graph)
 
             # Eagers are added in remote notes when using distributed exec
             if(not args.no_eager and not args.distributed_exec): 
@@ -226,14 +225,11 @@ def optimize_irs(asts_and_irs, args, compiler_config):
             else:
                 eager_distributed_graph = distributed_graph
 
-            # print("graph", eager_distributed_graph)
-
             ## Assert that the graph stayed valid after all transformations
             assert(eager_distributed_graph.valid())
 
             ## Print statistics of output nodes
             print_graph_statistics(eager_distributed_graph)
-            # log(eager_distributed_graph)
 
             optimized_asts_and_irs.append(eager_distributed_graph)
         else:
@@ -695,12 +691,11 @@ def add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_
         ## TODO: Remove the line below if eager creates its intermediate file
         ##       on its own.
         # TODO: find a better solution to make unique numbers, currently: set to max-value + 1
-        max_old_plus_1 = fileIdGen.next + 1
-        intermediateFileIdGen.next = max_old_plus_1
+        intermediateFileIdGen.bump_counter_to_value_of(fileIdGen)
         intermediate_fid = intermediateFileIdGen.next_temporary_file_id()
         # TODO: this edge will never have to since eager is set to output even though it reads from it
         graph.add_edge(intermediate_fid)
-        fileIdGen.next = max_old_plus_1 + 1 # maybe we skip one but not too bad
+        fileIdGen.bump_counter_to_value_of(intermediateFileIdGen)
 
         eager_exec_path = '{}/{}'.format(config.PASH_TOP, runtime_config['eager_executable_path'])
 
