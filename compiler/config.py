@@ -30,6 +30,15 @@ LOGGING_PREFIX = ""
 
 HDFS_PREFIX = "$HDFS_DATANODE_DIR/"
 
+# move this to `config.json` if possible
+PATH_ANNOTATION_REPO="/home/felix/git-repos/MIT/annotations"
+
+def get_path_annotation_repo():
+    if PATH_ANNOTATION_REPO is None:
+        log("No path for annotation repository given! Specify it in compiler/config.py")
+        raise Exception("No path for annotation repository given! Specify it in compiler/config.py")
+    return PATH_ANNOTATION_REPO
+
 config = {}
 annotations = []
 pash_args = None

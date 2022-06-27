@@ -44,6 +44,7 @@ class FileDescriptorResource(Resource):
 class FileResource(Resource):
     ## The uri is the path of the file.
     def __init__(self, path):
+        log("class of path", type(path))
         assert(isinstance(path, Arg))
         ## TODO: Make sure that paths are normalized
         self.uri = path
