@@ -1,9 +1,9 @@
 ## TODOs before merging to `future`
 
-- eager
 - aggregation trees
 - r_split
 - cat-split fusion
+- dgsh_tee
 - working on all tests
 - Adding annotation library installation and removing ad-hoc import of the latter
 - clean up utils for annotations
