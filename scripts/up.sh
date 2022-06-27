@@ -17,10 +17,10 @@ if [ "$PLATFORM" = "darwin" ]; then
 fi
 
 set +e
-git clone git@github.com:binpash/pash.git
+git clone --depth 1 git@github.com:binpash/pash.git
 if [ $? -ne 0 ]; then
   echo 'SSH clone failed; attempting HTTPS'
-  git clone https://github.com/andromeda/pash.git
+  git clone --depth 1 https://github.com/andromeda/pash.git
 fi
 set -e
 
