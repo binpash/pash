@@ -1,6 +1,5 @@
 ## TODOs before merging to `future`
 
-- aggregation trees
 - r_split
 - cat-split fusion
 - dgsh_tee
