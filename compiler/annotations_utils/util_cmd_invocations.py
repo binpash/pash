@@ -1,6 +1,6 @@
 import sys
 
-from datatypes_new.BasicDatatypes import Flag
+from datatypes_new.BasicDatatypes import Flag, ArgStringType, Operand
 from datatypes_new.BasicDatatypesWithIO import OptionWithIO
 from datatypes_new.CommandInvocationInitial import CommandInvocationInitial
 from annotation_generation_new.datatypes.InputOutputInfo import InputOutputInfo
@@ -8,8 +8,11 @@ from annotation_generation_new.datatypes.ParallelizabilityInfo import Paralleliz
 from annotation_generation_new.datatypes.CommandProperties import CommandProperties
 from annotation_generation_new.AnnotationGeneration import get_input_output_info_from_cmd_invocation, \
     get_parallelizability_info_from_cmd_invocation
+from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 from config import get_path_annotation_repo
+from definitions.ir.arg import Arg
+
 sys.path.insert(1, get_path_annotation_repo())
 
 # for typing
@@ -23,6 +26,7 @@ def get_command_invocation_prefix_from_dfg_node(dfg_node):
                                    positional_config_list = dfg_node.positional_config_list)
 
 # TODO: ideally methods in the respective classes but requires refactoring of parsing infrastructure
+# TODO: isn't this `to_ast`?
 def to_node_cmd_inv_with_io_vars(cmd_inv, edges, redirs, assignments):
     ast_cmd_name = string_to_argument(cmd_inv.cmd_name)
     ast_flagoptions = []
@@ -58,13 +62,24 @@ def to_ast_flagoption(flagoption, _edges):
         return [opt_name_ast, opt_arg_ast]
 
 def to_ast_operand(operand, edges):
+    if isinstance(operand, Operand):
+        return translate_io_var_if_applicable(operand.get_name(), edges)
     return translate_io_var_if_applicable(operand, edges)
 
 def translate_io_var_if_applicable(pot_io_var, edges):
+    # TODO: this is currently a hack but eventually every possible type gets their own to_ast-function
     if isinstance(pot_io_var, int):
         return dereference_io_var(pot_io_var, edges)
-    else:
+    elif isinstance(pot_io_var, ArgStringType):
         return to_ast_arg_string_type(pot_io_var)
+    elif isinstance(pot_io_var, CommandInvocationWithIOVars):
+        assert(False)
+        # only happens as r-wrapped node
+        return to_node_cmd_inv_with_io_vars(pot_io_var, edges, [], [])
+    elif isinstance(pot_io_var, Arg):
+        return pot_io_var.to_ast()
+    else:
+        raise Exception("Unhandled type for operand in to_ast!")
 
 def to_ast_arg_string_type(arg_string_type):
     return arg_string_type.get_name().arg_char_list # is of type Arg
@@ -83,3 +98,41 @@ def get_parallelizability_info_from_cmd_invocation_util(cmd_invocationInitial : 
 def construct_property_container_from_list_of_properties(list_properties):
     return CommandProperties(dict(list_properties))
 
+# this function is needed to wrap a node in `r_wrap`
+def to_arg_from_cmd_inv_with_io_vars_without_streaming_inputs_or_outputs_for_wrapping(cmd_inv, edges):
+    # we already expand here
+    whole_cmd = Arg(string_to_argument("\'"))
+    arg_cmd_name = Arg(string_to_argument(cmd_inv.cmd_name))
+    arg_flagoptions = []
+    for flagoption in cmd_inv.flag_option_list:
+        arg_flagoptions += to_arg_flagoption(flagoption, edges)
+    arg_operands = [to_arg_operand(operand, edges) for operand in cmd_inv.operand_list]
+    all_cmd_parts_arg = [arg_cmd_name]
+    all_cmd_parts_arg.extend(arg_flagoptions)
+    all_cmd_parts_arg.extend(arg_operands)
+    for part in all_cmd_parts_arg:
+        whole_cmd.concatenate(part)
+    whole_cmd.concatenate(Arg(string_to_argument("\'")))
+    return whole_cmd
+
+def to_arg_flagoption(flagoption, _edges):
+    if isinstance(flagoption, Flag):
+        return [Arg(string_to_argument(flagoption.get_name()))]
+    elif isinstance(flagoption, OptionWithIO):
+        opt_name_arg = Arg(string_to_argument(flagoption.get_name()))
+        opt_arg_arg = translate_io_var_to_arg_if_applicable(flagoption.get_arg())
+        return [opt_name_arg, opt_arg_arg]
+
+def to_arg_operand(operand, edges):
+    if isinstance(operand, Operand):
+        return translate_io_var_to_arg_if_applicable(operand.get_name(), edges)
+    return translate_io_var_to_arg_if_applicable(operand, edges)
+
+def translate_io_var_to_arg_if_applicable(pot_io_var, edges):
+    if isinstance(pot_io_var, int):
+        return Arg(dereference_io_var(pot_io_var, edges))
+    elif isinstance(pot_io_var, ArgStringType):
+        result = pot_io_var.get_name()  # is of type Arg
+        return result
+    else:
+        raise Exception("Unhandled type for operand in to_arg!")
