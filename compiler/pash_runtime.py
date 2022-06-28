@@ -426,32 +426,32 @@ def parallelize_node(curr_id, graph, fileIdGen, fan_out,
     # for now, we use the `r_split_flag` here again:
     if r_split_flag and option_parallelizer_rr is not None:
         parallelizer_rr = option_parallelizer_rr
-        streaming_inputs = curr.get_streaming_inputs()
-        assert(len(streaming_inputs) == 1)
-        streaming_input = streaming_inputs[0]
-        configuration_inputs = curr.get_configuration_inputs()
-        assert(len(configuration_inputs) == 0)
-        streaming_outputs = curr.get_output_list()
-        assert(len(streaming_outputs) == 1)
-        streaming_output = streaming_outputs[0]
-        original_cmd_invocation_with_io_vars = curr.cmd_invocation_with_io_vars
-
-        graph.remove_node(curr_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
-
-        out_split_ids = graph.generate_ephemeral_edges(fileIdGen, fan_out)
-        splitter = r_split.make_r_split(streaming_input, out_split_ids, r_split_batch_size)
-        graph.set_edge_to(streaming_input, splitter.get_id())
-        for out_split_id in out_split_ids:
-            graph.set_edge_from(out_split_id, splitter.get_id())
-        graph.add_node(splitter)
-
-        in_mapper_ids = out_split_ids
-        out_mapper_ids = graph.generate_ephemeral_edges(fileIdGen, fan_out)
-        zip_mapper_in_out_ids = zip(in_mapper_ids, out_mapper_ids)
-
         aggregator_spec = parallelizer_rr.get_aggregator_spec()
         aggregator_kind = aggregator_spec.get_kind()
         if aggregator_kind == AggregatorKindEnum.CONCATENATE: # is turned into an r_merge
+            streaming_inputs = curr.get_streaming_inputs()
+            assert(len(streaming_inputs) == 1)
+            streaming_input = streaming_inputs[0]
+            configuration_inputs = curr.get_configuration_inputs()
+            assert(len(configuration_inputs) == 0)
+            streaming_outputs = curr.get_output_list()
+            assert(len(streaming_outputs) == 1)
+            streaming_output = streaming_outputs[0]
+            original_cmd_invocation_with_io_vars = curr.cmd_invocation_with_io_vars
+
+            graph.remove_node(curr_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
+
+            out_split_ids = graph.generate_ephemeral_edges(fileIdGen, fan_out)
+            splitter = r_split.make_r_split(streaming_input, out_split_ids, r_split_batch_size)
+            graph.set_edge_to(streaming_input, splitter.get_id())
+            for out_split_id in out_split_ids:
+                graph.set_edge_from(out_split_id, splitter.get_id())
+            graph.add_node(splitter)
+
+            in_mapper_ids = out_split_ids
+            out_mapper_ids = graph.generate_ephemeral_edges(fileIdGen, fan_out)
+            zip_mapper_in_out_ids = zip(in_mapper_ids, out_mapper_ids)
+
             all_mappers = []
             for (in_id, out_id) in zip_mapper_in_out_ids:
                 # BEGIN: these 4 lines could be refactored to be a function in graph such that
@@ -477,38 +477,6 @@ def parallelize_node(curr_id, graph, fileIdGen, fan_out,
             ## Add the merge commands in the graph
             for new_node in all_aggregators:
                 graph.add_node(new_node)
-        elif curr.is_commutative(): # we can apply RR and do r_unwrap before the aggregator
-            all_mappers = []
-            for (in_id, out_id) in zip_mapper_in_out_ids:
-                # generate ephemeral edge for wrap to unwrap
-                [wrap_to_unwrap_id] = graph.generate_ephemeral_edges(fileIdGen, 1)
-                # BEGIN: these 4 lines could be refactored to be a function in graph such that
-                # creating end point of edges and the creation of edges is not decoupled
-                mapper_cmd_inv = parallelizer_rr.get_actual_mapper(original_cmd_invocation_with_io_vars, in_id, wrap_to_unwrap_id)
-                mapper = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(mapper_cmd_inv)
-                # add r_wrap here:
-                mapper_r_wrapped = r_wrap.wrap_node(mapper, graph.edges)
-                graph.set_edge_to(in_id, mapper_r_wrapped.get_id())
-                graph.set_edge_from(wrap_to_unwrap_id, mapper_r_wrapped.get_id())
-                # add unwrap as the command is commutative
-                unwrap = r_unwrap.make_unwrap_node([wrap_to_unwrap_id], out_id)
-                graph.set_edge_to(wrap_to_unwrap_id, unwrap.get_id())
-                graph.set_edge_from(out_id, unwrap.get_id())
-                # END
-                all_mappers.append(mapper_r_wrapped)
-                all_mappers.append(unwrap)
-            for new_node in all_mappers:
-                graph.add_node(new_node)
-
-            in_aggregator_ids = out_mapper_ids
-            out_aggregator_id = streaming_output
-            if aggregator_kind == AggregatorKindEnum.CUSTOM_2_ARY:
-                # TODO: we simplify and assume that every mapper produces a single output for now:
-                map_in_aggregator_ids = [[id] for id in in_aggregator_ids]
-                graph.create_generic_aggregator_tree(curr, parallelizer_rr, map_in_aggregator_ids, out_aggregator_id,
-                                                     fileIdGen)
-        else:
-            raise Exception("aggregator kind not yet implemented")
     elif option_parallelizer_rr is not None: # do consecutive chunks
         # TODO: we do consecutive chunks here but from a rr splitter
         parallelizer_rr = option_parallelizer_rr
