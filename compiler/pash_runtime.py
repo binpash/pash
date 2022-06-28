@@ -688,7 +688,6 @@ def add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_
     new_id = new_fid.get_ident()
 
     if use_dgsh_tee:
-        assert(False)
         ## TODO: seperate to better use dgsh-tee params and maybe deprecate eager
         eager_node = dgsh_tee.make_dgsh_tee_node(eager_input_id, new_id)
     else:

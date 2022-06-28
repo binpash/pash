@@ -53,12 +53,12 @@ def to_node_cmd_inv_with_io_vars(cmd_inv, edges, redirs, assignments):
     node = make_command(cmd_asts, redirections=new_redirs, assignments=assignments)
     return node
 
-def to_ast_flagoption(flagoption, _edges):
+def to_ast_flagoption(flagoption, edges):
     if isinstance(flagoption, Flag):
         return [string_to_argument(flagoption.get_name())]
     elif isinstance(flagoption, OptionWithIO): # retype to IOVar
         opt_name_ast = string_to_argument(flagoption.get_name())
-        opt_arg_ast = translate_io_var_if_applicable(flagoption.get_arg())
+        opt_arg_ast = translate_io_var_if_applicable(flagoption.get_arg(), edges)
         return [opt_name_ast, opt_arg_ast]
 
 def to_ast_operand(operand, edges):
