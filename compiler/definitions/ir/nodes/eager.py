@@ -9,8 +9,7 @@ class Eager(DFGNode):
                  com_redirs=[], com_assignments=[]
                  ):
         # TODO []: default
-        super().__init__(
-                         cmd_invocation_with_io_vars,
+        super().__init__(cmd_invocation_with_io_vars,
                          com_redirs=com_redirs,
                          com_assignments=com_assignments)
 

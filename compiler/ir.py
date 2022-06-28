@@ -289,7 +289,7 @@ def make_map_node(node, new_inputs, new_outputs, parallelizer):
 ##
 ## At the moment it only works with one input and one output since wrap cannot redirect input in the command.
 def make_wrap_map_node(node, new_inputs, new_outputs):
-    assert(is_single_input(new_inputs))
+    assert(len(new_inputs) == 1)
     assert(len(new_outputs) == 1)
 
     new_node = make_map_node(node, new_inputs, new_outputs)
