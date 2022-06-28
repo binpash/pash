@@ -145,6 +145,7 @@ def format_expanded_arg_char(arg_char):
 
 ## These functions check tuple inputs (configuration and streaming ones)
 def is_single_input(inputs):
+    assert(False)
     assert(isinstance(inputs, tuple))
     conf_inputs = inputs[0]
     streaming_inputs = inputs[1]
