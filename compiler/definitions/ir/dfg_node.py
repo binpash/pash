@@ -111,16 +111,11 @@ class DFGNode:
     #     return (self.com_category == "parallelizable_pure")
 
     def is_commutative(self):
-        # BEGIN ANNO
-        # OLD
-        # return ('commutative' in self.com_properties)
-        # NEW
-        val = self.cmd_related_properties.get_property_value('commutative')
+        val = self.cmd_related_properties.get_property_value('is_commutative')
         if val is not None:
             return val
         else:
             return False
-        # END ANNO
 
     ## kk: 2021-07-23 Not totally sure if that is generally correct. Tests will say ¯\_(ツ)_/¯
     ##     I think it assumes that new options can be added in the beginning if there are no options already
@@ -215,7 +210,9 @@ class DFGNode:
 
     ## TODO: Improve this function to be separately implemented for different special nodes,
     ##       such as cat, eager, split, etc...
-    ## I do not think this is reasonable anymore since we remodelled nodes in a way that the back-translation is trivial
+    ## I do not think this separation is reasonable anymore since we remodelled nodes in a way that the back-translation is trivial
+    ## One exception: r_wrap; currently, the wrapped command is translated at creation of the r_wrap already and
+    ## hence assumes that non-streaming inputs/outputs will not change
     def to_ast(self, edges, drain_streams):
         ## TODO: We might not want to implement this at all actually
         if (drain_streams):
