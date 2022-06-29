@@ -211,10 +211,9 @@ class DFGNode:
     ## TODO: Improve this function to be separately implemented for different special nodes,
     ##       such as cat, eager, split, etc...
     ## I do not think this separation is reasonable anymore since we remodelled nodes in a way that the back-translation is trivial
-    ## Two exceptions:
+    ## One exception:
     ##  - r_wrap; currently, the wrapped command is translated at creation of the r_wrap already and
-    ##    hence assumes that non-streaming inputs/outputs will not change
-    ##  - dgsh_tee: it requires the operands to appear before the flags/options (not XBD standard compliant)
+    ##    hence assumes that non-streaming inputs/outputs will not change; with a special to_ast, we could circumvent this
     def to_ast(self, edges, drain_streams):
         ## TODO: We might not want to implement this at all actually
         if (drain_streams):
