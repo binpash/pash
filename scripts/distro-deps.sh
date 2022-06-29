@@ -46,7 +46,19 @@ case "$distro" in
         echo "|-- running apt update..."
         $SUDO apt-get update &> $LOG_DIR/apt_update.log
         echo "|-- running apt install..."
-        $SUDO apt-get install -y $pkgs &>> $LOG_DIR/apt_install.log
+	# Forming an array and installing one by one
+	pkgs=($(echo "$pkgs" | awk '{print $0}'))
+
+	for pkg in ${pkgs[@]}
+	do
+		echo $pkg
+		if [[ "$pkg" == "python" ]]; then
+			echo "This package is outdated and not being installed."
+			continue
+		fi
+        	$SUDO apt-get install -y $pkg &>> $LOG_DIR/apt_install.log
+	done
+
         if [[ "$optimized_agg_flag" == 1 ]];  then
             echo "|-- installing g++-10..."
             $SUDO apt-get install software-properties-common -y &> $LOG_DIR/apt_install.log
