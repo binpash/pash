@@ -6,7 +6,7 @@
         "r_merge_binary": "runtime/r_merge",
         "r_wrap_binary": "runtime/r_wrap",
         "r_unwrap_binary": "runtime/r_unwrap",
-        "dgsh_tee_binary": "runtime/dgsh_tee.sh",
+        "dgsh_tee_binary": "runtime/dgsh-tee",
         "remote_read_binary": "runtime/dspash/remote_read.sh",
         "remote_write_binary": "runtime/dspash/remote_write.sh",
         "dfs_split_reader_binary": "runtime/dspash/dfs_split_reader.sh",
