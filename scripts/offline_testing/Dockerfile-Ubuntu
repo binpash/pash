@@ -1,0 +1,11 @@
+FROM ubuntu:18.04
+
+ADD pash.tar .
+RUN apt-get -y update && \
+    apt-get -y install git && \
+    apt-get -y install sudo && \
+    git config --global --add safe.directory '*' && \
+    ./pash/scripts/distro-deps.sh && \
+    alias python="python3" && \
+    ./pash/scripts/setup-pash.sh && \
+    ./pash/pa.sh ./pash/evaluation/intro/hello-world.sh

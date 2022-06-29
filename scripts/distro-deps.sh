@@ -33,28 +33,41 @@ fi
 # convert to lowercase
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 # compile the list of the shared required packages
-pkgs="automake bc curl gcc git graphviz libtool m4 python sudo wget"
+pkgs="automake bc curl gcc git libtool m4 sudo wget" #graphviz"
 # now do different things depending on distro
 case "$distro" in
     ubuntu*)  
-        pkgs="$pkgs bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config python3 python3-pip python3-setuptools python3-testresources wamerican-insane"
+        pkgs="$pkgs bsdmainutils libffi-dev locales locales-all netcat-openbsd python3 python3-pip python3-setuptools python3-testresources wamerican-insane python-is-python3" #pkg-config"
         if [[ "$show_deps" == 1 ]]; then
             echo "$pkgs" | sort
             exit 0
         fi      
+
         echo "Running preparation apt install:"
         echo "|-- running apt update..."
         $SUDO apt-get update &> $LOG_DIR/apt_update.log
         echo "|-- running apt install..."
-        $SUDO apt-get install -y $pkgs &>> $LOG_DIR/apt_install.log
-        if [[ "$optimized_agg_flag" == 1 ]];  then
-            echo "|-- installing g++-10..."
-            $SUDO apt-get install software-properties-common -y &> $LOG_DIR/apt_install.log
-            $SUDO add-apt-repository ppa:ubuntu-toolchain-r/test -y  &> $LOG_DIR/apt_install.log
-            $SUDO apt-get install g++-10 -y &> $LOG_DIR/apt_install.log
-            $SUDO update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100 &> $LOG_DIR/apt_install.log
-            $SUDO update-alternatives --set g++ /usr/bin/g++-10 &> $LOG_DIR/apt_install.log
-        fi
+
+	# Forming an array for packages and installing one by one
+	pkgs=($(echo "$pkgs" | awk '{print $0}'))
+
+	# Install packages one by one.
+	for pkg in ${pkgs[@]}
+	do
+		# noninteractive for Debian Frontend is for some packages like graphviz not stuck on interactive panel.
+   echo "$pkg"
+   if ! DEBIAN_FRONTEND=noninteractive $SUDO apt-get install -y $pkg &>> $LOG_DIR/apt_install.log;then
+        echo "$pkg is not being installed."
+   fi
+	done
+  if [[ "$optimized_agg_flag" == 1 ]];  then
+      echo "|-- installing g++-10..."
+      $SUDO apt-get install software-properties-common -y &> $LOG_DIR/apt_install.log
+      $SUDO add-apt-repository ppa:ubuntu-toolchain-r/test -y  &> $LOG_DIR/apt_install.log
+      $SUDO apt-get install g++-10 -y &> $LOG_DIR/apt_install.log
+      $SUDO update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100 &> $LOG_DIR/apt_install.log
+      $SUDO update-alternatives --set g++ /usr/bin/g++-10 &> $LOG_DIR/apt_install.log
+ fi
         ;;
     debian*)
         pkgs="$pkgs bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config procps python3 python3-pip python3-setuptools python3-testresources wamerican-insane"
@@ -66,16 +79,28 @@ case "$distro" in
         echo "|-- running apt update..."
         $SUDO apt-get update &> $LOG_DIR/apt_update.log
         echo "|-- running apt install..."
-        $SUDO apt-get install -y $pkgs &> $LOG_DIR/apt_install.log
+	      pkgs=($(echo "$pkgs" | awk '{print $0}'))
+        for pkg in ${pkgs[@]}
+        do
+            if ! DEBIAN_FRONTEND=noninteractive $SUDO apt-get install -y $pkg &>> $LOG_DIR/apt_install.log;then
+                echo "$pkg is not being installed."
+            fi
+        done
         ;;
     fedora*) 
-        pkgs="$pkgs autoconf diffutils gcc-c++ glibc-langpack-en hostname libjpeg-devel make nc pip procps python-devel python3-pip python3-setuptools python3-setuptools python3-testresources zlib-devel"
+        pkgs="$pkgs python which autoconf diffutils gcc-c++ glibc-langpack-en hostname libjpeg-devel make nc pip procps python-devel python3-pip python3-setuptools python3-setuptools python3-testresources zlib-devel words"
         if [[ "$show_deps" == 1 ]]; then
             echo "$pkgs" | sort
             exit 0
         fi
         echo "|-- running dnf install...."
-        $SUDO dnf install -y $pkgs &> $LOG_DIR/dnf_install.log
+	      pkgs=($(echo "$pkgs" | awk '{print $0}'))
+        for pkg in ${pkgs[@]}
+        do
+            if ! $SUDO dnf install -y $pkg &> $LOG_DIR/dnf_install.log;then
+                echo "$pkg is not being installed."
+            fi
+        done
         ;;
     arch*) 
         pkgs="$pkgs autoconf inetutils libffi make openbsd-netcat pkg-config python-pip"

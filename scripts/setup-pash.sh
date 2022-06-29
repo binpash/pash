@@ -86,13 +86,13 @@ esac
 cd ../
 
 echo "Installing python dependencies..."
-
+python3 -m pip install --upgrade pip
 python3 -m pip install jsonpickle --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_jsonpickle.log
 python3 -m pip install pexpect --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_pexpect.log
 python3 -m pip install graphviz --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_graphviz.log
 python3 -m pip install numpy --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_numpy.log
+python3 -m pip install --upgrade Pillow --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_Pillow.log
 python3 -m pip install matplotlib --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_matplotlib.log
-
 # clean the python packages
 cd $PYTHON_PKG_DIR
 # can we find a better alternative to that                                      
@@ -124,7 +124,8 @@ do
         # get the shell name
         shell_name=$(echo $(basename $config) | sed 's/rc//g' | sed 's/\.//g')
         echo "Do you want to append \$PASH_TOP to $shell_name ($config) (y/n)?"
-        read answer
+        #read answer
+        answer=n
         if [ "$answer" != "${answer#[Yy]}" ] ;then 
             tmpfile=$(mktemp -u /tmp/tmp.XXXXXX)
             # create a backup of the shell config
