@@ -283,13 +283,19 @@ def choose_parallelizing_transformations(graph, r_split_flag): # shall return ma
 
 
 def choose_parallelizing_transformation(curr_id, graph, r_split_flag): # shall return map entry
-    # TODO: here we can implement more sophisticated techniques to decide how to parallelize
+    # here we can implement more sophisticated techniques to decide how to parallelize
     curr = graph.get_node(curr_id)
-    if r_split_flag:
-        option_parallelizer = curr.get_option_implemented_round_robin_parallelizer()
-    else:
-        option_parallelizer = curr.get_option_implemented_consecutive_chunks_parallelizer()
-    return option_parallelizer
+    # we ignore `r_split_flag` here as we want to exploit r_merge followed by commutative command
+    # which only works if the a parallelizer for the latter is chosen (sort does not have RR-parallelizer)
+    # we prioritize round robin over consecutive chunks:
+    return return_default_if_none_else_itself(curr.get_option_implemented_round_robin_parallelizer(),
+                                       curr.get_option_implemented_consecutive_chunks_parallelizer())
+    # When `r_split_flag` should be used:
+    # if r_split_flag:
+    #     option_parallelizer = curr.get_option_implemented_round_robin_parallelizer()
+    # else:
+    #     option_parallelizer = curr.get_option_implemented_consecutive_chunks_parallelizer()
+    # return option_parallelizer
 
 
 def apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, no_cat_split_vanish,

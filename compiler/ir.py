@@ -836,11 +836,17 @@ class IR:
         # remove node to be parallelized
         self.remove_node(node_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
 
-        # TODO: change to check on Node (first_pred_node) and not cmd_inv
+        # TODO: change first check to first_pred_node and not cmd_inv
         if len(prev_nodes) == 1 and first_pred_cmd_inv.is_aggregator_concatenate():
             # can be fused
             self.remove_node(prev_nodes[0]) # also sets respective edge to's and from's to None
             in_mapper_ids = first_pred_cmd_inv.operand_list
+        elif len(prev_nodes) == 1 and isinstance(first_pred_node, r_merge.RMerge) and node.is_commutative():
+            self.remove_node(prev_nodes[0]) # also sets respective edge to's and from's to None
+
+            in_unwrap_ids = first_pred_cmd_inv.operand_list
+            out_unwrap_ids = self.introduce_unwraps(fileIdGen, in_unwrap_ids)
+            in_mapper_ids = out_unwrap_ids
         else: # cannot be fused so introduce splitter
             # splitter
             consec_chunks_splitter_generator = lambda input_id, output_ids: pash_split.make_split_file(input_id,
@@ -899,6 +905,17 @@ class IR:
         for new_node in all_mappers:
             self.add_node(new_node)
         return out_mapper_ids
+
+    def introduce_unwraps(self, fileIdGen, in_unwrap_ids):
+        unwrap_to_commutative_mappers_ids = self.generate_ephemeral_edges(fileIdGen, len(in_unwrap_ids))
+        in_out_unwrap_ids = zip(in_unwrap_ids, unwrap_to_commutative_mappers_ids)
+        for in_unwrap, out_unwrap in in_out_unwrap_ids:
+            unwrap = r_unwrap.make_unwrap_node([in_unwrap], out_unwrap)
+            self.add_node(unwrap)
+            self.set_edge_to(in_unwrap, unwrap.get_id())  # from are still (wrapped) mappers
+            self.set_edge_from(out_unwrap, unwrap.get_id())  # to will be set to mappers of current node
+        in_mapper_ids = unwrap_to_commutative_mappers_ids
+        return in_mapper_ids
 
     def introduce_aggregators_for_consec_chunks(self, fileIdGen, in_aggregator_ids,
                                                 original_cmd_invocation_with_io_vars, out_aggregator_id, parallelizer,
