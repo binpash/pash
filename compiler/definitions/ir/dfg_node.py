@@ -43,7 +43,6 @@ class DFGNode:
         default_cmd_properties = construct_property_container_from_list_of_properties([])
         self.cmd_related_properties = return_default_if_none_else_itself(cmd_related_properties, default_cmd_properties)
         self.cmd_invocation_with_io_vars = cmd_invocation_with_io_vars
-        self.used_parallelizer = None
         # log("Node created:", self.id, self)
 
     def __repr__(self):
@@ -305,12 +304,6 @@ class DFGNode:
                 new_edge_id = id
             new_edge_ids.append(new_edge_id)
         return new_edge_ids
-
-    def set_used_parallelizer(self, parallelizer):
-        self.used_parallelizer = parallelizer
-
-    def get_used_parallelizer(self):
-        return self.used_parallelizer
 
     def get_option_implemented_round_robin_parallelizer(self):
         for parallelizer in self.parallelizer_list:
