@@ -8,6 +8,10 @@ set -euo pipefail
 PASH_LOG=/var/log/pash
 PASH_TOP=/usr/lib/pash
 
+# We don't want the entry point to set its own environment variable,
+# because that would entail checks that cannot be optimized.
+sed -i "s@^export[[:space:]]\{1,\}PASH_TOP=.*@export PASH_TOP='$PASH_TOP'@" "${PASH_TOP}/pa.sh"
+
 post_install_current_target() {
     this_directory="$1"
     output_format="$2"
