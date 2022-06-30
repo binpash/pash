@@ -17,11 +17,12 @@ pash_redir_output echo "$$: (3) Reverted to BaSh set state: $-"
 ## Recover the input arguments of the previous script
 ## Note: We don't need to care about wrap_vars arguments because we have stored all of them already.
 #
-# This variable stores arguments as a space-separated stirng, so we need to
-# unquote it and to split it into multiple strings by shell's field splitting.
 # shellcheck disable=SC2086
-set -- $pash_input_args
+pash_redir_output echo "$$: (3) Array: ${pash_input_args[@]}"
+pash_redir_output echo "$$: (3) Number of arguments: ${#pash_input_args[@]}"
+eval "set -- \"\${pash_input_args[@]}\""
 pash_redir_output echo "$$: (3) Reverted to BaSh input arguments: $@"
+pash_redir_output echo "$$: (3) Number of arguments: $#"
 
 ## Execute the script
 pash_redir_output echo "$$: (4) Restoring previous exit code: ${pash_previous_exit_status}"
@@ -35,7 +36,7 @@ then
     source "${script_source}"
     internal_exec_status=$?
     ## Make sure that any input argument changes are propagated outside
-    export pash_input_args="$@"
+    export pash_input_args=( "$@" )
     (exit "$internal_exec_status")
 }
 else 
@@ -43,7 +44,7 @@ else
     source "${script_source}"
     internal_exec_status=$?
     ## Make sure that any input argument changes are propagated outside
-    export pash_input_args="$@"
+    export pash_input_args=( "$@" )
     (exit "$internal_exec_status")
 }
 fi
