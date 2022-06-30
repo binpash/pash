@@ -287,9 +287,11 @@ def choose_parallelizing_transformation(curr_id, graph, r_split_flag): # shall r
     curr = graph.get_node(curr_id)
     # we ignore `r_split_flag` here as we want to exploit r_merge followed by commutative command
     # which only works if the a parallelizer for the latter is chosen (sort does not have RR-parallelizer)
-    # we prioritize round robin over consecutive chunks:
-    return return_default_if_none_else_itself(curr.get_option_implemented_round_robin_parallelizer(),
-                                       curr.get_option_implemented_consecutive_chunks_parallelizer())
+    # we prioritize round robin over round robin with unwrap over consecutive chunks:
+    list_all_parallelizers_in_priority = [curr.get_option_implemented_round_robin_parallelizer(),
+                                          curr.get_option_implemented_round_robin_with_unwrap_parallelizer(),
+                                          curr.get_option_implemented_consecutive_chunks_parallelizer()]
+    return next((item for item in list_all_parallelizers_in_priority if item is not None), None)
     # When `r_split_flag` should be used:
     # if r_split_flag:
     #     option_parallelizer = curr.get_option_implemented_round_robin_parallelizer()

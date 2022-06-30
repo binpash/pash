@@ -1,7 +1,7 @@
 import os
 
 from datatypes_new.AccessKind import AccessKind
-from datatypes_new.BasicDatatypes import Operand
+from datatypes_new.BasicDatatypes import Operand, Flag
 from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 import config
@@ -24,21 +24,8 @@ class RSplit(DFGNode):
                          parallelizer_list=parallelizer_list,
                          cmd_related_properties=cmd_related_properties)
 
-    ## TODO: Generalize this code (for this and SortGReduce) to be able to add an option to any command.
     def add_r_flag(self):
-        assert(False)
-        assert(len(self.com_options) <= 1)
-            
-        ## Add -r in r_split
-        new_opt = (0, Arg(string_to_argument("-r")))
-        shifted_options = [(i+1, opt) for i, opt in self.com_options]
-        self.com_options = [new_opt] + shifted_options
-
-    ## This is not a proper option check. It just works if the r_flag is added as a separate option.
-    def has_r_flag(self):
-        assert(False)
-        option_strings = [str(opt) for i, opt in self.com_options]
-        return ("-r" in option_strings)
+        self.cmd_invocation_with_io_vars.flag_option_list.append(Flag("-r"))
 
 
 def make_r_split(input_id, out_ids, r_split_batch_size):
@@ -56,3 +43,8 @@ def make_r_split(input_id, out_ids, r_split_batch_size):
                     implicit_use_of_streaming_output=None,
                     access_map=access_map)
     return RSplit(cmd_inv_with_io_vars)
+
+def make_r_split_with_unwrap_flag(input_id, out_ids, r_split_batch_size):
+    standard_r_split = make_r_split(input_id, out_ids, r_split_batch_size)
+    standard_r_split.add_r_flag()
+    return standard_r_split
