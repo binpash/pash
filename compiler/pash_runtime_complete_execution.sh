@@ -31,7 +31,7 @@ pash_redir_output echo "$$: (7) Current BaSh set state: $(cat "$pash_output_set_
 pash_previous_set_status=$(cat "$pash_output_set_file")
 
 export pash_input_args
-pash_redir_output echo "$$: (7) Arguments (might) have been updated to be: $pash_input_args"
+pash_redir_output echo "$$: (7) Arguments (might) have been updated to be: ${pash_input_args[@]}"
 
 ## Propagate the `set` state after running the script to the outer script
 ## TODO: Maybe move this to the end to avoid spurious failures
