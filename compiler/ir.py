@@ -774,6 +774,147 @@ class IR:
     def empty(self):
         return (len(self.nodes) == 0)
 
+    def apply_parallelization_to_node(self, node_id, parallelizer, fileIdGen, fan_out,
+                                            batch_size, no_cat_split_vanish, r_split_batch_size):
+        splitter = parallelizer.get_splitter()
+        if splitter.is_splitter_round_robin():
+            # TODO: for both functions, check which parameters are needed
+            self.apply_round_robin_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out,
+                                            batch_size, no_cat_split_vanish, r_split_batch_size)
+        elif splitter.is_splitter_consec_chunks():
+            self.apply_consecutive_chunks_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out,
+                                                                 batch_size, no_cat_split_vanish, r_split_batch_size)
+        else:
+            raise Exception("Splitter not yet implemented")
+
+    def apply_round_robin_parallelization_to_node(self, node_id, parallelizer, fileIdGen, fan_out,
+                                                        batch_size, no_cat_split_vanish, r_split_batch_size):
+        # TODO: this control flow should move done to aggregators once we implement them;
+        #  currently, this cannot be done since splitter etc. would be added...
+        aggregator_spec = parallelizer.get_aggregator_spec()
+        if aggregator_spec.is_aggregator_spec_adj_lines_merge():
+            raise Exception("adj_lines_merge not yet implemented in PaSh")
+        elif aggregator_spec.is_aggregator_spec_adj_lines_seq():
+            raise Exception("adj_lines_seq not yet implemented in PaSh")
+        elif aggregator_spec.is_aggregator_spec_adj_lines_func():
+            raise Exception("adj_lines_func not yet implemented in PaSh")
+        # END of what to move
+
+        node = self.get_node(node_id)
+        # get info from node, and delete it from graph
+        streaming_input, streaming_output, configuration_inputs = \
+            node.get_single_streaming_input_single_output_and_configuration_inputs_of_node_for_parallelization()
+        original_cmd_invocation_with_io_vars = node.cmd_invocation_with_io_vars
+        self.remove_node(node_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
+
+        # splitter
+        round_robin_splitter_generator = lambda input_id, output_ids: r_split.make_r_split(input_id, output_ids, r_split_batch_size)
+        out_split_ids = self.introduce_splitter(round_robin_splitter_generator, fan_out, fileIdGen, streaming_input)
+
+        # mappers
+        in_mapper_ids = out_split_ids
+        out_mapper_ids = self.introduce_mappers(fan_out, fileIdGen, in_mapper_ids, original_cmd_invocation_with_io_vars,
+                                                parallelizer)
+
+        # aggregator(s)
+        self.introduce_aggregator_for_round_robin(out_mapper_ids, parallelizer, streaming_output)
+
+    def apply_consecutive_chunks_parallelization_to_node(self, node_id, parallelizer, fileIdGen, fan_out,
+                                                               batch_size, no_cat_split_vanish, r_split_batch_size):
+        node = self.get_node(node_id)
+        streaming_input, streaming_output, configuration_inputs = \
+            node.get_single_streaming_input_single_output_and_configuration_inputs_of_node_for_parallelization()
+        original_cmd_invocation_with_io_vars = node.cmd_invocation_with_io_vars
+        self.remove_node(node_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
+
+        # splitter
+        consec_chunks_splitter_generator = lambda input_id, output_ids: pash_split.make_split_file(input_id, output_ids)
+        out_split_ids = self.introduce_splitter(consec_chunks_splitter_generator, fan_out, fileIdGen, streaming_input)
+
+        # mappers
+        in_mapper_ids = out_split_ids
+        out_mapper_ids = self.introduce_mappers(fan_out, fileIdGen, in_mapper_ids, original_cmd_invocation_with_io_vars,
+                                                parallelizer)
+
+        # aggregators
+        in_aggregator_ids = out_mapper_ids
+        out_aggregator_id = streaming_output
+        self.introduce_aggregators_for_consec_chunks(fileIdGen, in_aggregator_ids,
+                                                     original_cmd_invocation_with_io_vars, out_aggregator_id, parallelizer,
+                                                     streaming_output)
+
+    def introduce_splitter(self, splitter_generator, fan_out, fileIdGen, streaming_input):
+        out_split_ids = self.generate_ephemeral_edges(fileIdGen, fan_out)
+        splitter = splitter_generator(streaming_input, out_split_ids)
+        self.set_edge_to(streaming_input, splitter.get_id())
+        for out_split_id in out_split_ids:
+            self.set_edge_from(out_split_id, splitter.get_id())
+        self.add_node(splitter)
+        return out_split_ids
+
+    def introduce_mappers(self, fan_out, fileIdGen, in_mapper_ids, original_cmd_invocation_with_io_vars, parallelizer):
+        out_mapper_ids = self.generate_ephemeral_edges(fileIdGen, fan_out)
+        zip_mapper_in_out_ids = zip(in_mapper_ids, out_mapper_ids)
+        all_mappers = []
+        for (in_id, out_id) in zip_mapper_in_out_ids:
+            # BEGIN: these 4 lines could be refactored to be a function in graph such that
+            # creating end point of edges and the creation of edges is not decoupled
+            mapper_cmd_inv = parallelizer.get_actual_mapper(original_cmd_invocation_with_io_vars, in_id, out_id)
+            mapper = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(mapper_cmd_inv)
+            self.set_edge_to(in_id, mapper.get_id())
+            self.set_edge_from(out_id, mapper.get_id())
+            # END
+            splitter = parallelizer.get_splitter()
+            if splitter.is_splitter_round_robin():
+                mapper_r_wrapped = r_wrap.wrap_node(mapper, self.edges)
+                self.set_edge_to(in_id, mapper_r_wrapped.get_id())
+                self.set_edge_from(out_id, mapper_r_wrapped.get_id())
+                mapper = mapper_r_wrapped
+            all_mappers.append(mapper)
+        for new_node in all_mappers:
+            self.add_node(new_node)
+        return out_mapper_ids
+
+    def introduce_aggregators_for_consec_chunks(self, fileIdGen, in_aggregator_ids,
+                                                original_cmd_invocation_with_io_vars, out_aggregator_id, parallelizer,
+                                                streaming_output):
+        aggregator_spec = parallelizer.get_aggregator_spec()
+        if aggregator_spec.is_aggregator_spec_concatenate() or aggregator_spec.is_aggregator_spec_custom_n_ary():
+            aggregator_cmd_inv = parallelizer.get_actual_aggregator(original_cmd_invocation_with_io_vars,
+                                                                    in_aggregator_ids, out_aggregator_id)
+            aggregator = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(aggregator_cmd_inv)
+            for in_aggregator_id in in_aggregator_ids:
+                self.set_edge_to(in_aggregator_id, aggregator.get_id())
+            self.set_edge_from(streaming_output, aggregator.get_id())
+            all_aggregators = [aggregator]
+            ## Add the merge commands in the graph
+            for new_node in all_aggregators:
+                self.add_node(new_node)
+        elif aggregator_spec.is_aggregator_spec_custom_2_ary():
+            # TODO: we simplify and assume that every mapper produces a single output for now
+            map_in_aggregator_ids = [[id] for id in in_aggregator_ids]
+            # TODO: turn node into cmd_invocation_with_io_vars since this is the only thing required in this function
+            self.create_generic_aggregator_tree(original_cmd_invocation_with_io_vars, parallelizer, map_in_aggregator_ids, out_aggregator_id, fileIdGen)
+        else:
+            raise Exception("aggregator kind not yet implemented")
+
+    def introduce_aggregator_for_round_robin(self, out_mapper_ids, parallelizer, streaming_output):
+        aggregator_spec = parallelizer.get_aggregator_spec()
+        if aggregator_spec.is_aggregator_spec_concatenate():
+            in_aggregator_ids = out_mapper_ids
+            out_aggregator_id = streaming_output
+            aggregator = r_merge.make_r_merge_node(in_aggregator_ids, out_aggregator_id)
+            for in_aggregator_id in in_aggregator_ids:
+                self.set_edge_to(in_aggregator_id, aggregator.get_id())
+            self.set_edge_from(streaming_output, aggregator.get_id())
+            all_aggregators = [aggregator]
+            ## Add the aggregator node(s) in the graph
+            for new_node in all_aggregators:
+                self.add_node(new_node)
+        else:
+            # TODO: this is where the other cases for aggregators need to be added
+            pass
+
 
     ## This function parallelizes a merger followed by a parallelizable node
     ##
@@ -1107,10 +1248,10 @@ class IR:
                 #      and not self.get_stdout() is None)))
 
     ## This is a function that creates a reduce tree for a given node
-    def create_generic_aggregator_tree(self, curr_node, parallelizer, input_ids_for_aggregators, out_aggregator_id, fileIdGen):
+    def create_generic_aggregator_tree(self, cmd_invocation_with_io_vars, parallelizer, input_ids_for_aggregators, out_aggregator_id, fileIdGen):
         def function_to_get_binary_aggregator(in_ids, out_ids):
             assert(len(out_ids) == 1)
-            aggregator_cmd_inv = parallelizer.get_actual_aggregator(curr_node.cmd_invocation_with_io_vars, in_ids, out_ids[0])
+            aggregator_cmd_inv = parallelizer.get_actual_aggregator(cmd_invocation_with_io_vars, in_ids, out_ids[0])
             aggregator = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(aggregator_cmd_inv)
             return aggregator
         ## The Aggregator node takes a sequence of input ids and an output id

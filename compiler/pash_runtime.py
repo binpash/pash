@@ -215,7 +215,7 @@ def optimize_irs(asts_and_irs, args, compiler_config):
 
             # log(ir_node)
             # with cProfile.Profile() as pr:
-            distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, compiler_config.width,
+            distributed_graph = choose_and_apply_parallelizing_transformations(ast_or_ir, compiler_config.width,
                                                                       runtime_config['batch_size'],
                                                                       args.no_cat_split_vanish,
                                                                       args.r_split, args.r_split_batch_size)
@@ -252,6 +252,54 @@ def print_graph_statistics(graph):
     log("Cat nodes:", len(cat_nodes))
     log("Eager nodes:", len(eager_nodes))
 
+
+def choose_and_apply_parallelizing_transformations(graph, fan_out, batch_size, no_cat_split_vanish,
+                                                   r_split_flag, r_split_batch_size):
+    parallelizer_map = choose_parallelizing_transformations(graph, r_split_flag)
+    apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, no_cat_split_vanish,
+                                                   r_split_flag, r_split_batch_size)
+    return graph
+
+
+def choose_parallelizing_transformations(graph, r_split_flag): # shall return map
+    source_node_ids = graph.source_nodes()
+    parallelizer_map = {}
+    workset = source_node_ids
+    visited = set()
+    # We apply a modified BFS such that we ensure that we know which parallelizer was chosen for all previous nodes
+    # and assume that the decision for any subsequent node will exploit any potential synergy effects
+    while (len(workset) > 0):
+        curr_id = workset.pop(0)
+        assert(isinstance(curr_id, int))
+        all_previous_nodes_visited = all(prev in visited for prev in graph.get_previous_nodes(curr_id))
+        if not all_previous_nodes_visited:
+            workset.append(curr_id)
+        elif not curr_id in visited:
+            next_node_ids = graph.get_next_nodes(curr_id)
+            workset += next_node_ids
+            parallelizer_map[curr_id] = choose_parallelizing_transformation(curr_id, graph, r_split_flag)
+            visited.add(curr_id)
+    return parallelizer_map
+
+
+def choose_parallelizing_transformation(curr_id, graph, r_split_flag): # shall return map entry
+    # TODO: here we can implement more sophisticated techniques to decide how to parallelize
+    curr = graph.get_node(curr_id)
+    if r_split_flag:
+        option_parallelizer = curr.get_option_implemented_round_robin_parallelizer()
+    else:
+        option_parallelizer = curr.get_option_implemented_consecutive_chunks_parallelizer()
+    return option_parallelizer
+
+
+def apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, no_cat_split_vanish,
+                                        r_split_flag, r_split_batch_size):
+    fileIdGen = graph.get_file_id_gen()
+    node_id_non_none_parallelizer_list = [(node_id, parallelizer) for (node_id, parallelizer) in parallelizer_map.items()
+                                                                  if parallelizer is not None]
+    for (node_id, parallelizer) in node_id_non_none_parallelizer_list:
+        graph.apply_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out,
+                                            batch_size, no_cat_split_vanish, r_split_batch_size)
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
 ## planner starts from the sources of the graph, and pushes
@@ -261,6 +309,7 @@ def print_graph_statistics(graph):
 ## be scheduled depending on the available computational resources.
 def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_split_vanish,
                                           r_split_flag, r_split_batch_size):
+    assert(False)
     source_node_ids = graph.source_nodes()
 
     ## Generate a fileIdGen from a graph, that doesn't clash with the
@@ -418,6 +467,7 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
 ## This function takes a node (id) and parallelizes it
 def parallelize_node(curr_id, graph, fileIdGen, fan_out,
                      batch_size, no_cat_split_vanish, r_split_flag, r_split_batch_size):
+    assert(False)
     curr = graph.get_node(curr_id)
     new_nodes_for_workset = []
 
@@ -533,7 +583,7 @@ def parallelize_node(curr_id, graph, fileIdGen, fan_out,
         elif aggregator_kind == AggregatorKindEnum.CUSTOM_2_ARY:
             # TODO: we simplify and assume that every mapper produces a single output for now:
             map_in_aggregator_ids = [[id] for id in in_aggregator_ids]
-            graph.create_generic_aggregator_tree(curr, parallelizer_rr, map_in_aggregator_ids, out_aggregator_id, fileIdGen)
+            graph.create_generic_aggregator_tree(original_cmd_invocation_with_io_vars, parallelizer_rr, map_in_aggregator_ids, out_aggregator_id, fileIdGen)
         else:
             raise Exception("aggregator kind not yet implemented")
 
