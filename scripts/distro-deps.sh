@@ -57,14 +57,8 @@ case "$distro" in
 			continue
 		fi
 
-		if [[ "$pkg" == "graphviz" ]]; then
-			continue
-		fi
-
-        	$SUDO apt-get install -y $pkg &>> $LOG_DIR/apt_install.log
+        	DEBIAN_FRONTEND=noninteractive $SUDO apt-get install -y $pkg &>> $LOG_DIR/apt_install.log
 	done
-      	$SUDO apt-get install -y graphviz &>> $LOG_DIR/apt_install.log
-	echo "graphviz again"
         if [[ "$optimized_agg_flag" == 1 ]];  then
             echo "|-- installing g++-10..."
             $SUDO apt-get install software-properties-common -y &> $LOG_DIR/apt_install.log
