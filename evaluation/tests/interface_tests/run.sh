@@ -303,6 +303,13 @@ test_redir_var_test()
     $shell redir-var-test.sh
 }
 
+test_star()
+{
+    local shell=$1
+    $shell test-star.sh foo '*' baz 'hi michael' "abc
+     dfg"
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -344,6 +351,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_var_assgn_default
     run_test test_exclam
     run_test test_redir_var_test
+    run_test test_star
 else
     for testname in $@
     do
