@@ -771,6 +771,9 @@ class IR:
             # TODO: for both functions, check which parameters are needed
             self.apply_round_robin_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out,
                                             batch_size, no_cat_split_vanish, r_split_batch_size)
+        elif splitter.is_splitter_round_robin_with_unwrap_flag():
+            self.apply_round_robin_with_unwrap_flag_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out,
+                                                           batch_size, no_cat_split_vanish, r_split_batch_size)
         elif splitter.is_splitter_consec_chunks():
             self.apply_consecutive_chunks_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out,
                                                                  batch_size, no_cat_split_vanish, r_split_batch_size)
@@ -819,6 +822,45 @@ class IR:
         # aggregator
         self.introduce_aggregator_for_round_robin(out_mapper_ids, parallelizer, streaming_output)
 
+    def apply_round_robin_with_unwrap_flag_parallelization_to_node(self, node_id, parallelizer, fileIdGen, fan_out,
+                                                  batch_size, no_cat_split_vanish, r_split_batch_size):
+        # round robin with unwrap flag is an inferred parallelizer which ensures that
+        # the command is commutative and has an aggregator for consecutive chunks;
+        # thus we can check whether we can re-open a previous "RR"-parallelization ending with `r_merge`
+        node = self.get_node(node_id)
+        streaming_input, streaming_output, configuration_inputs = \
+            node.get_single_streaming_input_single_output_and_configuration_inputs_of_node_for_parallelization()
+        original_cmd_invocation_with_io_vars = node.cmd_invocation_with_io_vars
+
+        prev_nodes = self.get_previous_nodes(node_id)
+        first_pred_node, first_pred_cmd_inv = self.get_first_previous_node_and_first_previous_cmd_invocation(prev_nodes)
+
+        # remove node to be parallelized
+        self.remove_node(node_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
+
+        if len(prev_nodes) == 1 and isinstance(first_pred_node, r_merge.RMerge):
+                              # and node.is_commutative(): implied by how this kind of splitter is inferred
+            self.remove_node(prev_nodes[0]) # also sets respective edge to's and from's to None
+
+            in_unwrap_ids = first_pred_cmd_inv.operand_list
+            out_unwrap_ids = self.introduce_unwraps(fileIdGen, in_unwrap_ids)
+            in_mapper_ids = out_unwrap_ids
+        else:
+            # splitter
+            round_robin_with_unwrap_flag_splitter_generator = lambda input_id, output_ids: r_split.make_r_split_with_unwrap_flag(input_id, output_ids, r_split_batch_size)
+            out_split_ids = self.introduce_splitter(round_robin_with_unwrap_flag_splitter_generator, fan_out, fileIdGen, streaming_input)
+            in_mapper_ids = out_split_ids
+
+        # mappers
+        out_mapper_ids = self.introduce_mappers(fan_out, fileIdGen, in_mapper_ids, original_cmd_invocation_with_io_vars,
+                                                parallelizer)
+
+        in_aggregator_ids = out_mapper_ids
+        out_aggregator_id = streaming_output
+        self.introduce_aggregators_for_consec_chunks(fileIdGen, in_aggregator_ids,
+                                                     original_cmd_invocation_with_io_vars, out_aggregator_id, parallelizer,
+                                                     streaming_output)
+
     def apply_consecutive_chunks_parallelization_to_node(self, node_id, parallelizer, fileIdGen, fan_out,
                                                                batch_size, no_cat_split_vanish, r_split_batch_size):
         # check whether we can fuse with previous node's parallelization:
@@ -841,12 +883,6 @@ class IR:
             # can be fused
             self.remove_node(prev_nodes[0]) # also sets respective edge to's and from's to None
             in_mapper_ids = first_pred_cmd_inv.operand_list
-        elif len(prev_nodes) == 1 and isinstance(first_pred_node, r_merge.RMerge) and node.is_commutative():
-            self.remove_node(prev_nodes[0]) # also sets respective edge to's and from's to None
-
-            in_unwrap_ids = first_pred_cmd_inv.operand_list
-            out_unwrap_ids = self.introduce_unwraps(fileIdGen, in_unwrap_ids)
-            in_mapper_ids = out_unwrap_ids
         else: # cannot be fused so introduce splitter
             # splitter
             consec_chunks_splitter_generator = lambda input_id, output_ids: pash_split.make_split_file(input_id,
