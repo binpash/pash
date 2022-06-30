@@ -312,6 +312,14 @@ class DFGNode:
                 return parallelizer
         return None
 
+    def get_option_implemented_round_robin_with_unwrap_parallelizer(self):
+        for parallelizer in self.parallelizer_list:
+            splitter = parallelizer.get_splitter()
+            if splitter.is_splitter_round_robin_with_unwrap_flag() and parallelizer.are_all_parts_implemented():
+                return parallelizer
+        return None
+
+
     def get_option_implemented_consecutive_chunks_parallelizer(self):
         for parallelizer in self.parallelizer_list:
             splitter = parallelizer.get_splitter()
