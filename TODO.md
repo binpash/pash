@@ -1,7 +1,6 @@
 ## TODOs before merging to `future`
 
-- cat-split fusion
-- r-unwrap-commutative fusion
+- support for RR with unwrap for commutative commands
 - working on all tests
 - Adding annotation library installation and removing ad-hoc import of the latter
 - clean up utils for annotations
