@@ -16,7 +16,7 @@ else
     # remove previous installation if it exists
     rm -rf $PASH_TOP/compiler/parser/libdash
     # we are in package mode, no .git information is available
-    git clone https://github.com/angelhof/libdash/ $PASH_TOP/compiler/parser/libdash
+    git clone --depth 1 https://github.com/angelhof/libdash/ $PASH_TOP/compiler/parser/libdash
 fi
 cd $PASH_TOP
 . "$PASH_TOP/scripts/utils.sh"
