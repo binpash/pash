@@ -1,28 +1,18 @@
-# BEGIN ANNO
 import sys
 
 from config import get_path_annotation_repo
 sys.path.insert(1, get_path_annotation_repo())
-# for typing
 from datatypes_new.CommandInvocationInitial import CommandInvocationInitial
 from datatypes_new.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptorWithIOInfo
 from annotation_generation_new.datatypes.InputOutputInfo import InputOutputInfo
 from annotation_generation_new.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
 from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
-# for use
-# --
-
 from annotations_utils.util_parsing import parse_arg_list_to_command_invocation
 from annotations_utils.util_cmd_invocations import get_input_output_info_from_cmd_invocation_util, get_parallelizability_info_from_cmd_invocation_util
 from annotations_utils.util_mapper import get_mapper_as_dfg_node_from_node, get_map_output_files
 from annotations_utils.util_aggregator import get_aggregator_as_dfg_node_from_node
 from annotations_utils.util_file_descriptors import resource_from_file_descriptor
-# END ANNO
-
-# BEGIN REMODEL
-
-# END REMODEL
 
 from definitions.ir.file_id import *
 from definitions.ir.nodes.cat import *
@@ -816,23 +806,43 @@ class IR:
         out_mapper_ids = self.introduce_mappers(fan_out, fileIdGen, in_mapper_ids, original_cmd_invocation_with_io_vars,
                                                 parallelizer)
 
-        # aggregator(s)
+        # aggregator
         self.introduce_aggregator_for_round_robin(out_mapper_ids, parallelizer, streaming_output)
 
     def apply_consecutive_chunks_parallelization_to_node(self, node_id, parallelizer, fileIdGen, fan_out,
                                                                batch_size, no_cat_split_vanish, r_split_batch_size):
+        # check whether we can fuse with previous node's parallelization:
+        # we can do so if the previous node's parallelization is the same, and the aggregator is concatenation
+        # Assumption: it suffices to check that the previous node is an aggregator node of type concatenate
+        #  as this is unique for consecutive chunk parallelization (for now, this is true)
         node = self.get_node(node_id)
         streaming_input, streaming_output, configuration_inputs = \
             node.get_single_streaming_input_single_output_and_configuration_inputs_of_node_for_parallelization()
         original_cmd_invocation_with_io_vars = node.cmd_invocation_with_io_vars
+
+        prev_nodes = self.get_previous_nodes(node_id)
+        assert(len(prev_nodes) > 0)
+        # get info about first one but also ensure that it is the only one if we fuse
+        first_pred_id = prev_nodes[0]
+        first_pred_node = self.get_node(first_pred_id)
+        first_pred_cmd_inv = first_pred_node.cmd_invocation_with_io_vars
+
+        # remove node to be parallelized
         self.remove_node(node_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
 
-        # splitter
-        consec_chunks_splitter_generator = lambda input_id, output_ids: pash_split.make_split_file(input_id, output_ids)
-        out_split_ids = self.introduce_splitter(consec_chunks_splitter_generator, fan_out, fileIdGen, streaming_input)
+        if len(prev_nodes) == 1 and first_pred_cmd_inv.is_aggregator_concatenate():
+            # can be fused
+            self.remove_node(first_pred_id) # also sets respective edge to's and from's to None
+            in_mapper_ids = first_pred_cmd_inv.operand_list
+        else: # cannot be fused so introduce splitter
+            # splitter
+            consec_chunks_splitter_generator = lambda input_id, output_ids: pash_split.make_split_file(input_id,
+                                                                                                       output_ids)
+            out_split_ids = self.introduce_splitter(consec_chunks_splitter_generator, fan_out, fileIdGen,
+                                                    streaming_input)
+            in_mapper_ids = out_split_ids
 
         # mappers
-        in_mapper_ids = out_split_ids
         out_mapper_ids = self.introduce_mappers(fan_out, fileIdGen, in_mapper_ids, original_cmd_invocation_with_io_vars,
                                                 parallelizer)
 
@@ -1222,6 +1232,8 @@ class IR:
             for edge_id in node.get_input_list():
                 _, _, to_node_id = self.edges[edge_id]
                 if(not (to_node_id == node_id)):
+                    log("nodes", self.nodes)
+                    log("edges", self.edges)
                     log("Consistency Error: The to_node_id of the input_edge:", edge_id, "of the node:", node, "is equal to:", to_node_id)
                     return False
             for edge_id in node.get_output_list():

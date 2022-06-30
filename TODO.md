@@ -1,6 +1,5 @@
 ## TODOs before merging to `future`
 
-- separate checking and application of parallelization
 - cat-split fusion
 - r-unwrap-commutative fusion
 - working on all tests
