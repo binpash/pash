@@ -1,5 +1,3 @@
-import sys
-
 from datatypes_new.BasicDatatypes import Flag, ArgStringType, Operand
 from datatypes_new.BasicDatatypesWithIO import OptionWithIO
 from datatypes_new.CommandInvocationInitial import CommandInvocationInitial
@@ -10,10 +8,7 @@ from annotation_generation_new.AnnotationGeneration import get_input_output_info
     get_parallelizability_info_from_cmd_invocation
 from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
-from config import get_path_annotation_repo
 from definitions.ir.arg import Arg
-
-sys.path.insert(1, get_path_annotation_repo())
 
 # for typing
 from datatypes_new.CommandInvocationPrefix import CommandInvocationPrefix
