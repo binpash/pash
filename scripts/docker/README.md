@@ -21,7 +21,7 @@ To restart after you exit, run `docker start -i pash-play`
 ## From PaSh's Official docker
 
 ```sh
-git clone git@github.com:binpash/pash.git
+git clone --depth 1 git@github.com:binpash/pash.git
 cd pash/scripts/docker
 docker build -t "pash:latest" .
 ```
