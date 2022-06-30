@@ -795,14 +795,24 @@ class IR:
         streaming_input, streaming_output, configuration_inputs = \
             node.get_single_streaming_input_single_output_and_configuration_inputs_of_node_for_parallelization()
         original_cmd_invocation_with_io_vars = node.cmd_invocation_with_io_vars
+
+        prev_nodes = self.get_previous_nodes(node_id)
+        first_pred_node, first_pred_cmd_inv = self.get_first_previous_node_and_first_previous_cmd_invocation(prev_nodes)
+
+        # remove node to be parallelized
         self.remove_node(node_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
 
-        # splitter
-        round_robin_splitter_generator = lambda input_id, output_ids: r_split.make_r_split(input_id, output_ids, r_split_batch_size)
-        out_split_ids = self.introduce_splitter(round_robin_splitter_generator, fan_out, fileIdGen, streaming_input)
+        if len(prev_nodes) == 1 and isinstance(first_pred_node, r_merge.RMerge):
+            # can be fused
+            self.remove_node(prev_nodes[0]) # also sets respective edge to's and from's to None
+            in_mapper_ids = first_pred_cmd_inv.operand_list
+        else: # cannot be fused so introduce splitter
+            # splitter
+            round_robin_splitter_generator = lambda input_id, output_ids: r_split.make_r_split(input_id, output_ids, r_split_batch_size)
+            out_split_ids = self.introduce_splitter(round_robin_splitter_generator, fan_out, fileIdGen, streaming_input)
+            in_mapper_ids = out_split_ids
 
         # mappers
-        in_mapper_ids = out_split_ids
         out_mapper_ids = self.introduce_mappers(fan_out, fileIdGen, in_mapper_ids, original_cmd_invocation_with_io_vars,
                                                 parallelizer)
 
@@ -821,18 +831,15 @@ class IR:
         original_cmd_invocation_with_io_vars = node.cmd_invocation_with_io_vars
 
         prev_nodes = self.get_previous_nodes(node_id)
-        assert(len(prev_nodes) > 0)
-        # get info about first one but also ensure that it is the only one if we fuse
-        first_pred_id = prev_nodes[0]
-        first_pred_node = self.get_node(first_pred_id)
-        first_pred_cmd_inv = first_pred_node.cmd_invocation_with_io_vars
+        first_pred_node, first_pred_cmd_inv = self.get_first_previous_node_and_first_previous_cmd_invocation(prev_nodes)
 
         # remove node to be parallelized
         self.remove_node(node_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
 
+        # TODO: change to check on Node (first_pred_node) and not cmd_inv
         if len(prev_nodes) == 1 and first_pred_cmd_inv.is_aggregator_concatenate():
             # can be fused
-            self.remove_node(first_pred_id) # also sets respective edge to's and from's to None
+            self.remove_node(prev_nodes[0]) # also sets respective edge to's and from's to None
             in_mapper_ids = first_pred_cmd_inv.operand_list
         else: # cannot be fused so introduce splitter
             # splitter
@@ -852,6 +859,14 @@ class IR:
         self.introduce_aggregators_for_consec_chunks(fileIdGen, in_aggregator_ids,
                                                      original_cmd_invocation_with_io_vars, out_aggregator_id, parallelizer,
                                                      streaming_output)
+
+    def get_first_previous_node_and_first_previous_cmd_invocation(self, prev_nodes):
+        assert (len(prev_nodes) > 0)
+        # get info about first one but also ensure that it is the only one if we fuse
+        first_pred_id = prev_nodes[0]
+        first_pred_node = self.get_node(first_pred_id)
+        first_pred_cmd_inv = first_pred_node.cmd_invocation_with_io_vars
+        return first_pred_node, first_pred_cmd_inv
 
     def introduce_splitter(self, splitter_generator, fan_out, fileIdGen, streaming_input):
         out_split_ids = self.generate_ephemeral_edges(fileIdGen, fan_out)
