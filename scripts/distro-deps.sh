@@ -46,17 +46,22 @@ case "$distro" in
         echo "|-- running apt update..."
         $SUDO apt-get update &> $LOG_DIR/apt_update.log
         echo "|-- running apt install..."
-	# Forming an array and installing one by one
+
+	# Forming an array for packages and installing one by one
 	pkgs=($(echo "$pkgs" | awk '{print $0}'))
 
+	# Install packages one by one.(When meet python, skip it)
 	for pkg in ${pkgs[@]}
 	do
 		echo $pkg
+
+		# When meet python, skip it.
 		if [[ "$pkg" == "python" ]]; then
 			echo "This package is outdated and not being installed."
 			continue
 		fi
 
+		# noninteractive for Debian Frontend is for some packages like graphviz not stuck on interactive panel.
         	DEBIAN_FRONTEND=noninteractive $SUDO apt-get install -y $pkg &>> $LOG_DIR/apt_install.log
 	done
         if [[ "$optimized_agg_flag" == 1 ]];  then
