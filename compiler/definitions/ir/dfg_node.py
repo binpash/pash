@@ -305,24 +305,31 @@ class DFGNode:
             new_edge_ids.append(new_edge_id)
         return new_edge_ids
 
-    def set_used_parallelizer(self, parallelizer):
-        assert(False)
-        # TODO: instantiate in __init__ already in some way
-        self.used_parallelizer = parallelizer
-
-    def get_used_parallelizer(self):
-        assert(False)
-        return self.used_parallelizer
-
     def get_option_implemented_round_robin_parallelizer(self):
         for parallelizer in self.parallelizer_list:
             splitter = parallelizer.get_splitter()
-            mapper_spec = parallelizer.get_mapper_spec()
-            aggregator_spec = parallelizer.get_aggregator_spec()
-            if splitter.is_splitter_round_robin() and mapper_spec.is_implemented and aggregator_spec.is_implemented:
+            if splitter.is_splitter_round_robin() and parallelizer.are_all_parts_implemented():
+                return parallelizer
+        return None
+
+    def get_option_implemented_consecutive_chunks_parallelizer(self):
+        for parallelizer in self.parallelizer_list:
+            splitter = parallelizer.get_splitter()
+            if splitter.is_splitter_consec_chunks() and parallelizer.are_all_parts_implemented():
                 return parallelizer
         return None
 
     @staticmethod
     def make_simple_dfg_node_from_cmd_inv_with_io_vars(cmd_inv_with_io_vars):
         return DFGNode(cmd_inv_with_io_vars)
+
+    def get_single_streaming_input_single_output_and_configuration_inputs_of_node_for_parallelization(self):
+        streaming_inputs = self.get_streaming_inputs()
+        assert (len(streaming_inputs) == 1)
+        streaming_input = streaming_inputs[0]
+        configuration_inputs = self.get_configuration_inputs()
+        assert (len(configuration_inputs) == 0)
+        streaming_outputs = self.get_output_list()
+        assert (len(streaming_outputs) == 1)
+        streaming_output = streaming_outputs[0]
+        return streaming_input, streaming_output, configuration_inputs
