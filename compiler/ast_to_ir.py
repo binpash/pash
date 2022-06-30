@@ -945,6 +945,14 @@ def make_call_to_runtime(ir_filename, sequential_script_file_name,
     ## eval "set -- \"\${pash_input_args[@]}\""
     ## ```
     ##
+    ## Alternative Solution: (TODO if we need extra performance -- avoiding eval) 
+    ## Implement an AST node that accepts and returns a literal string
+    ## bypassing unparsing. This would make this simpler and also more
+    ## efficient (avoiding eval).
+    ## However, it would require some work because we would need to implement
+    ## support for this node in various places of PaSh and the unparser.
+    ##      
+    ##
     ## TODO: Maybe we need to only do this if there is a change.
     ## 
     set_arguments = [string_to_argument("eval"),

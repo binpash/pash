@@ -303,11 +303,8 @@ def is_array_variable(token):
 
 ## Based on the following:
 ## https://www.gnu.org/software/bash/manual/html_node/ANSI_002dC-Quoting.html#ANSI_002dC-Quoting
-##
-## TODO: Implement all
 def ansi_c_expand(string):
-    new_string = string.replace("\\n", "\n")
-    return new_string 
+    return bytes(string, "utf-8").decode("unicode_escape")
 
 ## This finds the end of this variable/function
 def find_next_delimiter(tokens, i):
