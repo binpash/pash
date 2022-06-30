@@ -1232,8 +1232,6 @@ class IR:
             for edge_id in node.get_input_list():
                 _, _, to_node_id = self.edges[edge_id]
                 if(not (to_node_id == node_id)):
-                    log("nodes", self.nodes)
-                    log("edges", self.edges)
                     log("Consistency Error: The to_node_id of the input_edge:", edge_id, "of the node:", node, "is equal to:", to_node_id)
                     return False
             for edge_id in node.get_output_list():
