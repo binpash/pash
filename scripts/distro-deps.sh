@@ -86,7 +86,7 @@ case "$distro" in
         $SUDO apt-get install -y $pkgs &> $LOG_DIR/apt_install.log
         ;;
     fedora*) 
-        pkgs="$pkgs which autoconf diffutils gcc-c++ glibc-langpack-en hostname libjpeg-devel make nc pip procps python-devel python3-pip python3-setuptools python3-setuptools python3-testresources zlib-devel"
+        pkgs="$pkgs which autoconf diffutils gcc-c++ glibc-langpack-en hostname libjpeg-devel make nc pip procps python-devel python3-pip python3-setuptools python3-setuptools python3-testresources zlib-devel words"
         if [[ "$show_deps" == 1 ]]; then
             echo "$pkgs" | sort
             exit 0
