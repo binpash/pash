@@ -20,7 +20,7 @@ source "$PASH_TOP/compiler/pash_init_setup.sh" "$@" --distributed_exec
 
 export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
 
-function cleanup() {
+cleanup() {
         kill "$FILEREADER_PID" "$DISCOVERY_PID"
         wait "$FILEREADER_PID" "$DISCOVERY_PID" 2>/dev/null
         rm -rf "$PASH_TMP_PREFIX"
