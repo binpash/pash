@@ -1,9 +1,6 @@
 # TODO: this file can properly be deleted
 
 # imports from annotation framework
-import sys
-from config import get_path_annotation_repo
-sys.path.insert(1, get_path_annotation_repo())
 # for typing
 # for use
 from annotation_generation_new.datatypes.parallelizability.Mapper import Mapper

@@ -1,9 +1,5 @@
 # TODO: this file can properly be deleted
 
-import sys
-from config import get_path_annotation_repo
-sys.path.insert(1, get_path_annotation_repo())
-
 from definitions.ir.dfg_node import DFGNode
 from definitions.ir.nodes.cat import Cat
 from annotations_utils.util_cmd_invocations import get_command_invocation_prefix_from_dfg_node

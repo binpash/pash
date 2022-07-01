@@ -93,6 +93,10 @@ python3 -m pip install graphviz --root $PYTHON_PKG_DIR --ignore-installed #&> $L
 python3 -m pip install numpy --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_numpy.log
 python3 -m pip install matplotlib --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_matplotlib.log
 
+## TODO: Fix a specific version somehow, maybe commit?
+git clone https://github.com/binpash/annotations.git ./annotations_repo
+python3 -m pip install ./annotations_repo --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_annotations.log
+
 # clean the python packages
 cd $PYTHON_PKG_DIR
 # can we find a better alternative to that                                      
