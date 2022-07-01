@@ -1,8 +1,5 @@
 from util import log
 from definitions.ir.resource import FileResource, Resource, FileDescriptorResource
-import sys
-from config import get_path_annotation_repo
-sys.path.insert(1, get_path_annotation_repo())
 from datatypes_new.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptorWithIOInfo
 
 

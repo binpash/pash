@@ -6,8 +6,6 @@ from definitions.ir.resource import *
 from annotations_utils.util_cmd_invocations import to_node_cmd_inv_with_io_vars, construct_property_container_from_list_of_properties
 
 import sys
-from config import get_path_annotation_repo
-sys.path.insert(1, get_path_annotation_repo())
 
 from util import return_empty_list_if_none_else_itself, return_default_if_none_else_itself
 
