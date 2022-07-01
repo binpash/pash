@@ -15,7 +15,7 @@ log()
 
 # Taken from: https://stackoverflow.com/a/20473191
 # list_include_item "10 11 12" "2"
-function list_include_item {
+list_include_item {
   local list="$1"
   local item="$2"
   if [[ $list =~ (^|[[:space:]])"$item"($|[[:space:]]) ]] ; then
