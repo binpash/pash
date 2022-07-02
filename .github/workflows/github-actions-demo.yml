@@ -7,7 +7,7 @@ jobs:
       - uses: actions/checkout@v2
       - run: |
             set -e
-            sudo touch /.githubenv$
+            sudo touch /.githubenv
             sudo -E ./scripts/distro-deps.sh -o
             sudo -E ./scripts/setup-pash.sh -o
             ./pash.sh ./evaluation/intro/hello-world.sh 
