@@ -4,4 +4,4 @@ jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
     steps:
-      - run: sudo -E bash ./scripts/distro-deps.sh -o 
+      - run: ls -la
