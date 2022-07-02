@@ -18,7 +18,7 @@ jobs:
     steps:
         - uses: actions/checkout@v2
         - run: |
-            sudo docker build -f pash/scripts/docker/fedora-two/Dockerfile -t testing .
+            sudo docker build -f scripts/docker/fedora-two/Dockerfile -t testing .
             
             
 
