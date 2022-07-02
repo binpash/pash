@@ -1,19 +1,15 @@
 name: GitHub Actions Demo
 on: [push]
 jobs:
-  Explore-GitHub-Actions:
+  Pash compatibility check
     strategy:
       matrix:
-        os: [ubuntu-18.04, ubuntu-latest]
+        os: [fedora-latest]
     runs-on: ${{ matrix.os }}
     steps:
-   #   - name: Compatibility on ${{ matrix.os }}
       - uses: actions/checkout@v2
       - run: |
-           # set -e
             sudo touch /.githubenv
             sudo -E ./scripts/distro-deps.sh -o
             sudo -E ./scripts/setup-pash.sh -o
             ./pa.sh ./evaluation/intro/hello-world.sh 
-#            export PASH_TOP=$PWD$
-#            export PATH=$PATH:$PASH_TOP$
