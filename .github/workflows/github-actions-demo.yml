@@ -1,8 +1,7 @@
 name: GitHub Actions Demo
 on: [push]
 jobs:
-  Pash-Compatibility-Check
-  #Explore-GitHub-Actions:
+  Pash-Compatibility-Check:
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04, ubuntu-22.04]
@@ -13,4 +12,4 @@ jobs:
             sudo touch /.githubenv
             sudo -E ./scripts/distro-deps.sh -o
             sudo -E ./scripts/setup-pash.sh -o
-            ./pa.sh ./evaluation/intro/hello-world.sh 
+            ./pa.sh ./evaluation/intro/hello-world.sh
