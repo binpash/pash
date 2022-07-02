@@ -6,6 +6,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-            ./scripts/distro-deps.sh
-            ./scripts/setup-pash.sh
+            ./scripts/distro-deps.sh -o
+            ./scripts/setup-pash.sh -o
             ./pash.sh ./evaluation/intro/hello-world.sh 
