@@ -6,7 +6,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-            set -e
+           # set -e
             sudo touch /.githubenv
             sudo -E ./scripts/distro-deps.sh -o
             sudo -E ./scripts/setup-pash.sh -o
