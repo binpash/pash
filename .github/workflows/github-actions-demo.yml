@@ -5,4 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: sudo -E ./scripts/distro-deps.sh
+      - run: |
+            sudo -E ./scripts/distro-deps.sh
+            sudo -E ./scripts/setup-pash.sh
+            ./pash.sh ./evaluation/intro/hello-world.sh 
