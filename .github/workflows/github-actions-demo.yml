@@ -8,8 +8,10 @@ jobs:
       - run: |
            # set -e
             sudo touch /.githubenv
-            sudo -E ./scripts/distro-deps.sh -o
-            sudo -E ./scripts/setup-pash.sh -o
+#            sudo -E ./scripts/distro-deps.sh -o
+#            sudo -E ./scripts/setup-pash.sh -o
+            ./scripts/distro-deps.sh
+            ./scripts/setup-pash.sh
             ./pa.sh ./evaluation/intro/hello-world.sh 
-            export PASH_TOP=$PWD$
-            export PATH=$PATH:$PASH_TOP$
+#            export PASH_TOP=$PWD$
+#            export PATH=$PATH:$PASH_TOP$
