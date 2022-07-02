@@ -1,7 +1,7 @@
 name: GitHub Actions Demo
 on: [push]
 jobs:
-  Pash compatibility check
+  Pash-Compatibility-Check
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04, ubuntu-22.04]
