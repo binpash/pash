@@ -10,7 +10,7 @@
             	[
             	    {
             		"operator": "exists",
-            		"operands": ["-T, --omit-pagination"],
+            		"operands": ["-T, --omit-pagination"]
             	    },
             	    {
             		"operator": "!exists",
