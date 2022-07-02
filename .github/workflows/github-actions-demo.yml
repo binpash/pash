@@ -2,9 +2,13 @@ name: GitHub Actions Demo
 on: [push]
 jobs:
   Explore-GitHub-Actions:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-latest]
+    runs-on: 
     steps:
       - uses: actions/checkout@v2
+      - name: Compatibility on ${{ matrix.os }}
       - run: |
            # set -e
             sudo touch /.githubenv
