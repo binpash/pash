@@ -7,6 +7,7 @@ PASH_TOP=$(readlink -f "$here/../..")
 # We need FPM's source code to build a key Docker image.
 if [ ! -d "$here/fpm" ]; then
     git clone --depth 1 git@github.com:jordansissel/fpm.git "$here/fpm"
+    sed -i 's/--squash//g' "$here/fpm/Makefile"
 fi
 
 # Make a Docker image that knows about building packages.
