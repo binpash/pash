@@ -103,15 +103,25 @@ case "$distro" in
         done
         ;;
     arch*) 
-        pkgs="$pkgs autoconf inetutils libffi make openbsd-netcat pkg-config python-pip"
+        pkgs="$pkgs autoconf inetutils libffi make openbsd-netcat pkg-config python-pip which"
+        echo "Arch Installing..."
         if [[ "$show_deps" == 1 ]]; then
             echo "$pkgs" | sort
             exit 0
         fi
         echo "Updating mirrors"
-        $SUDO pacman -Sy &> $LOG_DIR/pacman_update.log
+        #$SUDO pacman -Sy &> $LOG_DIR/pacman_update.log
         echo "|-- running pacman install...."
-        yes | $SUDO pacman -S $pkgs &> $LOG_DIR/pacman_install.log
+	      # Install packages one by one.
+        pkgs=($(echo "$pkgs" | awk '{print $0}'))
+        for pkg in ${pkgs[@]}
+	      do
+		        # noninteractive for Debian Frontend is for some packages like graphviz not stuck on interactive panel.
+            echo "$pkg"
+            if ! $SUDO pacman -S --noconfirm $pkg &> $LOG_DIR/pacman_install.log; then
+                echo "$pkg is not being installed."
+            fi
+        done
         ;;
     freebsd*)
         pkgs="$pkgs autoconf gmake gsed libffi py38-pip"

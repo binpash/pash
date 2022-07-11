@@ -29,4 +29,15 @@ do
 	sudo docker build -t testing .
 	sudo docker image rm testing
 done
+
+cp Dockerfile-Arch Dockerfile
+versions=(archlinux:latest)
+for version in ${versions[@]}
+do
+  sed -i "" "s/FROM.*/FROM $version\n/g" Dockerfile
+	echo "${version}"
+	sudo docker build -t testing .
+	sudo docker image rm testing
+done
 rm Dockerfile
+rm pash.tar

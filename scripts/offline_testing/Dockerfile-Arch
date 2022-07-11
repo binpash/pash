@@ -1,0 +1,11 @@
+FROM  archlinux:latest
+
+ADD pash.tar .
+RUN pacman -Sy && \
+    pacman -S --noconfirm git && \
+    pacman -S --noconfirm sudo && \
+    git config --global --add safe.directory '*' 
+RUN ./pash/scripts/distro-deps.sh && \
+    alias python="python3" && \
+    ./pash/scripts/setup-pash.sh && \
+    ./pash/pa.sh ./pash/evaluation/intro/hello-world.sh

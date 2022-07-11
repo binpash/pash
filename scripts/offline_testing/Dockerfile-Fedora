@@ -1,11 +1,9 @@
 FROM fedora:latest
 
-
-
 USER root
-
+ADD pash.tar .
 RUN dnf install -y git && \
-    git clone -b studying-actions https://github.com/qishenli/pash.git && \
+    git config --global --add safe.directory '*' && \
     ./pash/scripts/distro-deps.sh && \
     ./pash/scripts/setup-pash.sh && \
     ./pash/pa.sh ./pash/evaluation/intro/hello-world.sh
