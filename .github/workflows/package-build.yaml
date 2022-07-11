@@ -56,8 +56,8 @@ jobs:
         - name: Generate build script
           run: |
             cat >ci-build.sh <<'EOF'
-            ls
-            ./scripts/package/deploy.sh "$1" "${2:-'${{ inputs.fallback_version }}'}" "$3"
+            cd scripts/package
+            ./deploy.sh "$1" "${2:-'${{ inputs.fallback_version }}'}" "$3"
             EOF
             chmod +x ci-build.sh
         - name: Make .deb
