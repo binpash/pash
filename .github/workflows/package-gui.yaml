@@ -3,6 +3,8 @@
 name: On-demand Packaging
 on:
   workflow_dispatch:
+    branches:
+      - '*'
     inputs:
       fallback_version:
         # TODO: The comment in ./package-pull-requests.yaml
