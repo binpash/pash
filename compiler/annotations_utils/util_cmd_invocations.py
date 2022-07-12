@@ -110,12 +110,12 @@ def to_arg_from_cmd_inv_with_io_vars_without_streaming_inputs_or_outputs_for_wra
     whole_cmd.concatenate(Arg(string_to_argument("\'")))
     return whole_cmd
 
-def to_arg_flagoption(flagoption, _edges):
+def to_arg_flagoption(flagoption, edges):
     if isinstance(flagoption, Flag):
         return [Arg(string_to_argument(flagoption.get_name()))]
     elif isinstance(flagoption, OptionWithIO):
         opt_name_arg = Arg(string_to_argument(flagoption.get_name()))
-        opt_arg_arg = translate_io_var_to_arg_if_applicable(flagoption.get_arg())
+        opt_arg_arg = translate_io_var_to_arg_if_applicable(flagoption.get_arg(), edges)
         return [opt_name_arg, opt_arg_arg]
 
 def to_arg_operand(operand, edges):
