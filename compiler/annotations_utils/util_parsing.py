@@ -70,6 +70,8 @@ def parse_arg_list_to_command_invocation(command, flags_options_operands) -> Com
             option = Option(option_name_as_string, option_arg_as_arg)
             flag_option_list.append(option)
             i += 1  # since we consumed another term for the argument
+        elif potential_flag_or_option_name == "-": # switch to operand mode
+            break
         elif are_all_individually_flags(potential_flag_or_option_name, set_of_all_flags):
             for split_el in list(potential_flag_or_option_name[1:]):
                 flag: Flag = Flag(f'-{split_el}')
