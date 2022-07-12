@@ -1,4 +1,4 @@
-from datatypes_new.AccessKind import AccessKind
+from datatypes_new.AccessKind import AccessKind, make_stream_output, make_stream_input, make_other_output
 from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 from definitions.ir.dfg_node import *
@@ -18,9 +18,9 @@ def make_eager_node(input_id, output_id, intermediate_file_id, eager_exec_path):
     eager_name = eager_exec_path
     intermediate_file_id_id = intermediate_file_id.get_ident()
     operand_list = [input_id, output_id, intermediate_file_id_id]
-    access_map = {output_id: AccessKind.make_stream_output(),
-                  input_id: AccessKind.make_stream_input(),
-                  intermediate_file_id_id: AccessKind.make_other_output()}
+    access_map = {output_id: make_stream_output(),
+                  input_id: make_stream_input(),
+                  intermediate_file_id_id: make_other_output()}
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=eager_name,
         flag_option_list=[],
