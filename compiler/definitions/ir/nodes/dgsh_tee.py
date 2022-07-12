@@ -1,4 +1,4 @@
-from datatypes_new.AccessKind import AccessKind
+from datatypes_new.AccessKind import make_stream_output, make_stream_input
 from datatypes_new.BasicDatatypes import Flag, ArgStringType
 from datatypes_new.BasicDatatypesWithIO import OptionWithIO
 from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
@@ -19,8 +19,8 @@ class DGSHTee(DFGNode):
 def make_dgsh_tee_node(input_id, output_id):
     dgsh_tee_bin = os.path.join(config.PASH_TOP, config.config['runtime']['dgsh_tee_binary'])
 
-    access_map = {output_id: AccessKind.make_stream_output(),
-                  input_id: AccessKind.make_stream_input()}
+    access_map = {output_id: make_stream_output(),
+                  input_id: make_stream_input()}
 
     flag_option_list = [OptionWithIO("-i", input_id),
                         OptionWithIO("-o", output_id),

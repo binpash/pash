@@ -1,4 +1,4 @@
-from datatypes_new.AccessKind import AccessKind
+from datatypes_new.AccessKind import make_stream_input, make_stream_output
 from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 from definitions.ir.dfg_node import *
@@ -20,8 +20,8 @@ class RMerge(DFGNode):
 def make_r_merge_node(inputs, output):
     r_merge_bin = os.path.join(config.PASH_TOP, config.config['runtime']['r_merge_binary'])
     # TODO: assume that the inputs and output is provided as operands
-    access_map = {input_id: AccessKind.make_stream_input() for input_id in inputs}
-    access_map[output] = AccessKind.make_stream_output()
+    access_map = {input_id: make_stream_input() for input_id in inputs}
+    access_map[output] = make_stream_output()
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=r_merge_bin,
         flag_option_list=[],
