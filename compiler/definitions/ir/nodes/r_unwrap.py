@@ -1,4 +1,4 @@
-from datatypes_new.AccessKind import AccessKind
+from datatypes_new.AccessKind import make_stream_input, make_stream_output
 from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 from definitions.ir.dfg_node import *
@@ -21,7 +21,7 @@ class RUnwrap(DFGNode):
 def make_unwrap_node(inputs, output):
     assert(len(inputs) == 1)
     input_id = inputs[0]
-    access_map = {input_id: AccessKind.make_stream_input(), output: AccessKind.make_stream_output()}
+    access_map = {input_id: make_stream_input(), output: make_stream_output()}
     r_unwrap_bin = os.path.join(config.PASH_TOP, config.config['runtime']['r_unwrap_binary'])
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=r_unwrap_bin,

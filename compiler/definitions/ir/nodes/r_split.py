@@ -1,6 +1,6 @@
 import os
 
-from datatypes_new.AccessKind import AccessKind
+from datatypes_new.AccessKind import AccessKind, make_stream_input, make_stream_output
 from datatypes_new.BasicDatatypes import Operand, Flag
 from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
@@ -33,8 +33,8 @@ def make_r_split(input_id, out_ids, r_split_batch_size):
     operand_list = [input_id,
                     Operand(Arg(string_to_argument(str(r_split_batch_size))))]
     operand_list.extend(out_ids)
-    access_map = {output_id: AccessKind.make_stream_output() for output_id in out_ids}
-    access_map[input_id] = AccessKind.make_stream_input()
+    access_map = {output_id: make_stream_output() for output_id in out_ids}
+    access_map[input_id] = make_stream_input()
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
                     cmd_name=r_split_bin,
                     flag_option_list=[],

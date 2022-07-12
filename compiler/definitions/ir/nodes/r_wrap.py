@@ -1,4 +1,4 @@
-from datatypes_new.AccessKind import AccessKind
+from datatypes_new.AccessKind import make_stream_output, make_stream_input
 from datatypes_new.BasicDatatypes import ArgStringType
 from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
@@ -45,7 +45,7 @@ def wrap_node(node: DFGNode, edges):
     ## TODO: changed this from <= to == 1 to simplify reasoning later for now
     assert(len(outputs) == 1)
     output_id = outputs[0]
-    access_map = {input_id: AccessKind.make_stream_input(), output_id: AccessKind.make_stream_output()}
+    access_map = {input_id: make_stream_input(), output_id: make_stream_output()}
 
     #create bash -c argument
     cmd_inv_with_io_vars: CommandInvocationWithIOVars = node.cmd_invocation_with_io_vars
