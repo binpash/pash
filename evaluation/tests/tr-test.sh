@@ -12,7 +12,7 @@ cat $FILE | tr -c "[a-z][A-Z]" '\n'
 cat $FILE | tr ' ' '\n'
 cat $FILE | tr '[a-z]' '\n'
 ## This is a bit tricky but `tr -d '\n'` is pure because after it is done there is only one line.
-cat $FILE | tr -d '\n' | grep "the"
+# cat $FILE | tr -d '\n' | grep "the"
 cat $FILE | tr -c '[A-Z]' '\n'
 cat $FILE | tr " " " "
 cat $FILE | tr -cs A-Za-z '\n'
