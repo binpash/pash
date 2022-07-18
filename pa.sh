@@ -8,7 +8,7 @@ export PYTHONPATH="${PASH_TOP}/python_pkgs/:${PYTHONPATH}"
 trap kill_all SIGTERM SIGINT
 
 ## kill all the pending processes that are spawned by this shell
-function kill_all() {
+kill_all() {
     # kill all my subprocesses only
     kill -s SIGKILL 0
     # kill pash_daemon

@@ -284,11 +284,8 @@ else
         ## Recover the input arguments of the previous script
         ## Note: We don't need to care about wrap_vars arguments because we have stored all of them already.
         #
-        # This variable stores arguments as a space-separated stirng, so we
-        # need to unquote it and to split it into multiple strings by shell's
-        # field splitting.
         # shellcheck disable=SC2086
-        set -- $pash_input_args
+        eval "set -- \"\${pash_input_args[@]}\""
         pash_redir_output echo "$$: (5) Reverted to BaSh input arguments: $@"
 
         ## TODO: We probably need to exit with the exit code here or something!

@@ -47,7 +47,7 @@ def save_configs(graph:IR, dfs_configs_paths: Dict[HDFSFileConfig, str]):
             resource : DFSSplitResource = edge.get_resource()
             config: HDFSFileConfig = resource.config
             if config not in dfs_configs_paths:
-                _, config_path = ptempfile()
+                config_path = ptempfile()
                 with open(config_path, "w") as f:
                     f.write(config)
                 dfs_configs_paths[config] = config_path
@@ -57,7 +57,7 @@ def save_configs(graph:IR, dfs_configs_paths: Dict[HDFSFileConfig, str]):
             resource.set_config_path(config_path)
 
 def to_shell_file(graph: IR, args) -> str:
-    _, filename = ptempfile()
+    filename = ptempfile()
     
     dirs = set()
     for edge in graph.all_fids():

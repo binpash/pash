@@ -863,7 +863,7 @@ def preprocess_node_case(ast_node, irFileGen, config, last_object=False):
 ## If we are need to disable parallel pipelines, e.g., if we are in the context of an if,
 ## or if we are in the end of a script, then we set a variable.
 def replace_df_region(asts, irFileGen, config, disable_parallel_pipelines=False, ast_text=None):
-    _, ir_filename = ptempfile()
+    ir_filename = ptempfile()
 
     ## Serialize the node in a file
     with open(ir_filename, "wb") as ir_file:
@@ -871,7 +871,7 @@ def replace_df_region(asts, irFileGen, config, disable_parallel_pipelines=False,
 
     ## Serialize the candidate df_region asts back to shell
     ## so that the sequential script can be run in parallel to the compilation.
-    _, sequential_script_file_name = ptempfile()
+    sequential_script_file_name = ptempfile()
     ## If we don't have the original ast text, we need to unparse the ast
     if (ast_text is None):
         kv_asts = [ast_node_to_untyped_deep(ast) for ast in asts]
@@ -911,12 +911,12 @@ def make_call_to_runtime(ir_filename, sequential_script_file_name,
 
     ## Save the input arguments
     ## ```
-    ## pash_input_args="$@"
+    ## source $PASH_TOP/runtime/save_args.sh "${@}"
     ## ```
-    assignments = [["pash_input_args",
-                    [make_quoted_variable("@")]]]
-    input_args_command = make_command([],
-                                      assignments=assignments)
+    arguments = [string_to_argument("source"),
+                 string_to_argument(config.SAVE_ARGS_EXECUTABLE),
+                 [make_quoted_variable("@")]]
+    input_args_command = make_command(arguments)
 
     ## Disable parallel pipelines if we are in the last command of the script.
     ## ```
@@ -942,14 +942,23 @@ def make_call_to_runtime(ir_filename, sequential_script_file_name,
 
     ## Restore the arguments to propagate internal changes, e.g., from `shift` outside.
     ## ```
-    ## set -- $pash_input_args
+    ## eval "set -- \"\${pash_input_args[@]}\""
     ## ```
     ##
+    ## Alternative Solution: (TODO if we need extra performance -- avoiding eval) 
+    ## Implement an AST node that accepts and returns a literal string
+    ## bypassing unparsing. This would make this simpler and also more
+    ## efficient (avoiding eval).
+    ## However, it would require some work because we would need to implement
+    ## support for this node in various places of PaSh and the unparser.
+    ##      
+    ##
     ## TODO: Maybe we need to only do this if there is a change.
-    set_arguments = [string_to_argument("set"),
-                     string_to_argument("--"),
-                     [standard_var_ast("pash_input_args")]]
+    ## 
+    set_arguments = [string_to_argument("eval"),
+                     [['Q', string_to_argument('set -- \\"\\${pash_input_args[@]}\\"')]]]
     set_args_node = make_command(set_arguments)
+
 
     ## Restore the exit code (since now we have executed `set` last)
     ## ```
