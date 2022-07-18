@@ -59,7 +59,7 @@ run_bench() {
     done
 }
 
-function run_all_benchmarks() {
+run_all_benchmarks() {
   # generate output folder for each run
   export RES_FOLDER=$1
   # clean previous runs

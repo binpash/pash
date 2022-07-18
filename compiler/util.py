@@ -1,4 +1,5 @@
 from datetime import timedelta
+import os
 import sys
 import config
 import tempfile
@@ -40,4 +41,7 @@ def log(*args, end='\n', level=1):
                 print(config.LOGGING_PREFIX, *args, file=f, end=end, flush=True)
 
 def ptempfile():
-    return tempfile.mkstemp(dir=config.PASH_TMP_PREFIX)
+    fd, name = tempfile.mkstemp(dir=config.PASH_TMP_PREFIX)
+    ## TODO: Get a name without opening the fd too if possible
+    os.close(fd)
+    return name
