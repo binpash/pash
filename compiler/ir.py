@@ -177,6 +177,10 @@ def compile_command_to_DFG(fileIdGen, command, options,
                            redirections=[]):
     command_invocation: CommandInvocationInitial = parse_arg_list_to_command_invocation(command, options)
     io_info: InputOutputInfo = get_input_output_info_from_cmd_invocation_util(command_invocation)
+    if io_info is None:
+        raise Exception(f"InputOutputInformation for {format_arg_chars(command)} not provided so considered side-effectful.")
+    if io_info.has_other_outputs():
+        raise Exception(f"Command {format_arg_chars(command)} has outputs other than streaming.")
     para_info: ParallelizabilityInfo = get_parallelizability_info_from_cmd_invocation_util(command_invocation)
     command_invocation_with_io = io_info.apply_input_output_info_to_command_invocation(command_invocation)
     parallelizer_list, round_robin_compatible_with_cat, is_commutative = para_info.unpack_info()
@@ -797,14 +801,19 @@ class IR:
             node.get_single_streaming_input_single_output_and_configuration_inputs_of_node_for_parallelization()
         original_cmd_invocation_with_io_vars = node.cmd_invocation_with_io_vars
 
+
+        can_be_fused_with_prev = False
         prev_nodes = self.get_previous_nodes(node_id)
-        first_pred_node, first_pred_cmd_inv = self.get_first_previous_node_and_first_previous_cmd_invocation(prev_nodes)
+        if len(prev_nodes) == 1:
+            first_pred_node, first_pred_cmd_inv = \
+                self.get_only_previous_node_and_only_previous_cmd_invocation(prev_nodes)
+            if isinstance(first_pred_node, r_merge.RMerge):
+                can_be_fused_with_prev = True
 
         # remove node to be parallelized
         self.remove_node(node_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
 
-        if len(prev_nodes) == 1 and isinstance(first_pred_node, r_merge.RMerge):
-            # can be fused
+        if can_be_fused_with_prev:
             self.remove_node(prev_nodes[0]) # also sets respective edge to's and from's to None
             in_mapper_ids = first_pred_cmd_inv.operand_list
         else: # cannot be fused so introduce splitter
@@ -831,11 +840,12 @@ class IR:
         original_cmd_invocation_with_io_vars = node.cmd_invocation_with_io_vars
 
         prev_nodes = self.get_previous_nodes(node_id)
-        first_pred_node, first_pred_cmd_inv = self.get_first_previous_node_and_first_previous_cmd_invocation(prev_nodes)
+        first_pred_node, first_pred_cmd_inv = self.get_only_previous_node_and_only_previous_cmd_invocation(prev_nodes)
 
         # remove node to be parallelized
         self.remove_node(node_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
 
+        # TODO: change as previous method for better CF
         if len(prev_nodes) == 1 and isinstance(first_pred_node, r_merge.RMerge):
                               # and node.is_commutative(): implied by how this kind of splitter is inferred
             self.remove_node(prev_nodes[0]) # also sets respective edge to's and from's to None
@@ -871,11 +881,12 @@ class IR:
         original_cmd_invocation_with_io_vars = node.cmd_invocation_with_io_vars
 
         prev_nodes = self.get_previous_nodes(node_id)
-        first_pred_node, first_pred_cmd_inv = self.get_first_previous_node_and_first_previous_cmd_invocation(prev_nodes)
+        first_pred_node, first_pred_cmd_inv = self.get_only_previous_node_and_only_previous_cmd_invocation(prev_nodes)
 
         # remove node to be parallelized
         self.remove_node(node_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
 
+        # TODO: change as previous method for better CF
         # TODO: change first check to first_pred_node and not cmd_inv
         if len(prev_nodes) == 1 and first_pred_cmd_inv.is_aggregator_concatenate():
             # can be fused
@@ -900,9 +911,9 @@ class IR:
                                                      original_cmd_invocation_with_io_vars, out_aggregator_id, parallelizer,
                                                      streaming_output)
 
-    def get_first_previous_node_and_first_previous_cmd_invocation(self, prev_nodes):
-        assert (len(prev_nodes) > 0)
+    def get_only_previous_node_and_only_previous_cmd_invocation(self, prev_nodes):
         # get info about first one but also ensure that it is the only one if we fuse
+        assert len(prev_nodes) == 1
         first_pred_id = prev_nodes[0]
         first_pred_node = self.get_node(first_pred_id)
         first_pred_cmd_inv = first_pred_node.cmd_invocation_with_io_vars
