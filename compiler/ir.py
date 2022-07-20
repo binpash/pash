@@ -770,7 +770,6 @@ class IR:
                                             batch_size, no_cat_split_vanish, r_split_batch_size):
         splitter = parallelizer.get_splitter()
         if splitter.is_splitter_round_robin():
-            # TODO: for both functions, check which parameters are needed
             self.apply_round_robin_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out,
                                             batch_size, no_cat_split_vanish, r_split_batch_size)
         elif splitter.is_splitter_round_robin_with_unwrap_flag():
@@ -839,17 +838,19 @@ class IR:
             node.get_single_streaming_input_single_output_and_configuration_inputs_of_node_for_parallelization()
         original_cmd_invocation_with_io_vars = node.cmd_invocation_with_io_vars
 
+        can_be_fused_with_prev = False
         prev_nodes = self.get_previous_nodes(node_id)
-        first_pred_node, first_pred_cmd_inv = self.get_only_previous_node_and_only_previous_cmd_invocation(prev_nodes)
+        if len(prev_nodes) == 1:
+            first_pred_node, first_pred_cmd_inv = \
+                self.get_only_previous_node_and_only_previous_cmd_invocation(prev_nodes)
+            if isinstance(first_pred_node, r_merge.RMerge):
+                can_be_fused_with_prev = True
 
         # remove node to be parallelized
         self.remove_node(node_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
 
-        # TODO: change as previous method for better CF
-        if len(prev_nodes) == 1 and isinstance(first_pred_node, r_merge.RMerge):
-                              # and node.is_commutative(): implied by how this kind of splitter is inferred
+        if can_be_fused_with_prev: # and node.is_commutative(): implied by how this kind of splitter is inferred
             self.remove_node(prev_nodes[0]) # also sets respective edge to's and from's to None
-
             in_unwrap_ids = first_pred_cmd_inv.operand_list
             out_unwrap_ids = self.introduce_unwraps(fileIdGen, in_unwrap_ids)
             in_mapper_ids = out_unwrap_ids
@@ -880,24 +881,24 @@ class IR:
             node.get_single_streaming_input_single_output_and_configuration_inputs_of_node_for_parallelization()
         original_cmd_invocation_with_io_vars = node.cmd_invocation_with_io_vars
 
+        can_be_fused_with_prev = False
         prev_nodes = self.get_previous_nodes(node_id)
-        first_pred_node, first_pred_cmd_inv = self.get_only_previous_node_and_only_previous_cmd_invocation(prev_nodes)
+        if len(prev_nodes) == 1:
+            first_pred_node, first_pred_cmd_inv = \
+                self.get_only_previous_node_and_only_previous_cmd_invocation(prev_nodes)
+            if first_pred_cmd_inv.is_aggregator_concatenate():
+                can_be_fused_with_prev = True
 
         # remove node to be parallelized
         self.remove_node(node_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
 
-        # TODO: change as previous method for better CF
-        # TODO: change first check to first_pred_node and not cmd_inv
-        if len(prev_nodes) == 1 and first_pred_cmd_inv.is_aggregator_concatenate():
-            # can be fused
+        if can_be_fused_with_prev:
             self.remove_node(prev_nodes[0]) # also sets respective edge to's and from's to None
             in_mapper_ids = first_pred_cmd_inv.operand_list
         else: # cannot be fused so introduce splitter
             # splitter
-            consec_chunks_splitter_generator = lambda input_id, output_ids: pash_split.make_split_file(input_id,
-                                                                                                       output_ids)
-            out_split_ids = self.introduce_splitter(consec_chunks_splitter_generator, fan_out, fileIdGen,
-                                                    streaming_input)
+            consec_chunks_splitter_generator = lambda input_id, output_ids: pash_split.make_split_file(input_id, output_ids)
+            out_split_ids = self.introduce_splitter(consec_chunks_splitter_generator, fan_out, fileIdGen, streaming_input)
             in_mapper_ids = out_split_ids
 
         # mappers

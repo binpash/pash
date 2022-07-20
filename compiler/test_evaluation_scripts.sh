@@ -42,7 +42,7 @@ cd -
 
 n_inputs=(
     2
-#    8
+    8
 )
 
 if [ "$EXPERIMENTAL" -eq 1 ]; then
