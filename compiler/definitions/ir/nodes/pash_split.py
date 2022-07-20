@@ -1,4 +1,4 @@
-from datatypes_new.AccessKind import AccessKind
+from datatypes_new.AccessKind import make_stream_input, make_stream_output
 from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 from definitions.ir.file_id import *
@@ -26,8 +26,8 @@ def make_split_file(input_id, out_ids):
     auto_split_bin = os.path.join(config.PASH_TOP, config.config['runtime']['auto_split_binary'])
     operand_list = [input_id]
     operand_list.extend(out_ids)
-    access_map = {output_id: AccessKind.make_stream_output() for output_id in out_ids}
-    access_map[input_id] = AccessKind.make_stream_input()
+    access_map = {output_id: make_stream_output() for output_id in out_ids}
+    access_map[input_id] = make_stream_input()
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=auto_split_bin,
         flag_option_list=[],
