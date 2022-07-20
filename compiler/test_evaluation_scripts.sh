@@ -42,7 +42,7 @@ cd -
 
 n_inputs=(
     2
-    8
+#    8
 )
 
 if [ "$EXPERIMENTAL" -eq 1 ]; then
@@ -82,15 +82,15 @@ pipeline_microbenchmarks=(
     wf                   # One-liner
     spell                # One-liner
     shortest_scripts     # One-liner
-      alt_bigrams          # One-liner
+    alt_bigrams          # One-liner
     deadlock_test        # Test to check deadlock prevention using drain_stream
     double_sort          # Checks maximum peformance gains from split
     no_in_script         # Tests whether a script can be executed by our infrastructure without having its input in a file called $IN
     for_loop_simple      # Tests whether PaSh can handle a for loop where the body is parallelizable
-      minimal_grep_stdin   # Tests whether PaSh can handle a script that reads from stdin
+    minimal_grep_stdin   # Tests whether PaSh can handle a script that reads from stdin
     micro_10             # A small version of the pipeline above for debugging.
     sed-test             # Tests all sed occurences in our evaluation to make sure that they work
-      tr-test              # Tests all possible behaviors of tr that exist in our evaluation
+    tr-test              # Tests all possible behaviors of tr that exist in our evaluation
     grep-test            # Tests some interesting grep invocations
     ann-agg              # Tests custom aggregators in annotations
     # # # # micro_1000           # Not being run anymore, as it is very slow. Tests whether the compiler is fast enough. It is a huge pipeline without any computation.
