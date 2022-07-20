@@ -3,8 +3,6 @@ set_diff()
     grep -vx -f $1 -
 }
 
-export -f set_diff
-
 dict=$PASH_TOP/evaluation/tests/input/sorted_words
 IN=$PASH_TOP/evaluation/tests/input/1M.txt
 
@@ -16,5 +14,4 @@ cat $IN |
     tr -d '[:punct:]' |            # remove punctuation
     sort |                         # put words in alphabetical order
     uniq |                         # remove duplicate words
-    set_diff $dict |                 # report words not in dictionary 
-    cat
+    set_diff $dict                 # report words not in dictionary 
