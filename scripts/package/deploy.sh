@@ -47,6 +47,11 @@ else
     # Perform a one-off build for the package.
     "$mydirname/shell.sh" "$target_version" "$output_format"
 
+    if [ -n "$DOCKERHUB_PASSWORD" ]; then
+        echo "$DOCKERHUB_PASSWORD" | \
+            docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+    fi
+
     # It's important to use Docker hub here because we want to verify
     # PaSh's behavior against other people's work, namely official OS
     # images.
