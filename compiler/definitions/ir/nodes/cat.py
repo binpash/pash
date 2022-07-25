@@ -1,4 +1,5 @@
-from definitions.ir.dfg_node import *
+from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+from definitions.ir.dfg_node import DFGNode
 
 class Cat(DFGNode):
     def __init__(self, inputs, outputs, com_name, com_category,
@@ -32,9 +33,5 @@ class Cat(DFGNode):
                          )
 
 def make_cat_node(inputs, output):
-    com_name = Arg(string_to_argument("cat"))
-    com_category = "stateless"
-    return Cat(inputs,
-               [output],
-               com_name, 
-               com_category)
+    cmd_inv_cat = CommandInvocationWithIOVars.make_cat_command_invocation_with_io_vars(inputs, output)
+    return DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(cmd_inv_cat)
