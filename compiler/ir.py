@@ -183,6 +183,8 @@ def compile_command_to_DFG(fileIdGen, command, options,
     if io_info.has_other_outputs():
         raise Exception(f"Command {format_arg_chars(command)} has outputs other than streaming.")
     para_info: ParallelizabilityInfo = get_parallelizability_info_from_cmd_invocation_util(command_invocation)
+    if para_info is None:
+        para_info = ParallelizabilityInfo() # defaults to no parallelizer's and all properties False
     command_invocation_with_io = io_info.apply_input_output_info_to_command_invocation(command_invocation)
     parallelizer_list, round_robin_compatible_with_cat, is_commutative = para_info.unpack_info()
     property_dict = [{'round_robin_compatible_with_cat': round_robin_compatible_with_cat,
