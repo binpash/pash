@@ -31,7 +31,7 @@ if [ -f /.dockerenv ]; then
     export PASH_TOP=/usr/lib/pash
 
     "$mydirname/fire-hook.sh" "before-test" "$output_format" "$target_version"
- 
+
     # Basic example must always work, no matter where we're going.
     [ -d "$PASH_TOP" ]
     test_script="${PASH_TOP}/evaluation/intro/hello-world.sh"
