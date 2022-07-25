@@ -180,6 +180,8 @@ def compile_command_to_DFG(fileIdGen, command, options,
     command_invocation: CommandInvocationInitial = parse_arg_list_to_command_invocation(command, options)
     io_info: InputOutputInfo = get_input_output_info_from_cmd_invocation_util(command_invocation)
     para_info: ParallelizabilityInfo = get_parallelizability_info_from_cmd_invocation_util(command_invocation)
+    if para_info is None:
+        para_info = ParallelizabilityInfo() # defaults to no parallelizer's and all properties False
     command_invocation_with_io = io_info.apply_input_output_info_to_command_invocation(command_invocation)
     parallelizer_list, round_robin_compatible_with_cat, is_commutative = para_info.unpack_info()
     property_list = [('round_robin_compatible_with_cat', round_robin_compatible_with_cat),
