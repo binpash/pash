@@ -4,6 +4,7 @@ from datatypes_new.CommandInvocationInitial import CommandInvocationInitial
 from datatypes_new.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptorWithIOInfo
 from annotation_generation_new.datatypes.InputOutputInfo import InputOutputInfo
 from annotation_generation_new.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
+from annotation_generation_new.datatypes.CommandProperties import CommandProperties
 from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 from annotations_utils.util_parsing import parse_arg_list_to_command_invocation
@@ -184,9 +185,9 @@ def compile_command_to_DFG(fileIdGen, command, options,
     para_info: ParallelizabilityInfo = get_parallelizability_info_from_cmd_invocation_util(command_invocation)
     command_invocation_with_io = io_info.apply_input_output_info_to_command_invocation(command_invocation)
     parallelizer_list, round_robin_compatible_with_cat, is_commutative = para_info.unpack_info()
-    property_list = [('round_robin_compatible_with_cat', round_robin_compatible_with_cat),
-                     ('is_commutative', is_commutative)]
-    cmd_related_properties = construct_property_container_from_list_of_properties(property_list)
+    property_dict = [{'round_robin_compatible_with_cat': round_robin_compatible_with_cat,
+                     'is_commutative': is_commutative}]
+    cmd_related_properties = CommandProperties(property_dict)
 
     ## TODO: Make an empty IR and add edges and nodes incrementally (using the methods defined in IR).
 
@@ -824,6 +825,7 @@ class IR:
         # mappers
         out_mapper_ids = self.introduce_mappers(fan_out, fileIdGen, in_mapper_ids, original_cmd_invocation_with_io_vars,
                                                 parallelizer)
+        out_mapper_ids = [out_ids[0] for out_ids in out_mapper_ids] # since we get list of list back for potential aux info
 
         # aggregator
         self.introduce_aggregator_for_round_robin(out_mapper_ids, parallelizer, streaming_output)
@@ -913,6 +915,7 @@ class IR:
                                                      streaming_output)
 
     def get_only_previous_node_and_only_previous_cmd_invocation(self, prev_nodes):
+        assert (len(prev_nodes) > 0)
         # get info about first one but also ensure that it is the only one if we fuse
         assert len(prev_nodes) == 1
         first_pred_id = prev_nodes[0]
@@ -930,16 +933,26 @@ class IR:
         return out_split_ids
 
     def introduce_mappers(self, fan_out, fileIdGen, in_mapper_ids, original_cmd_invocation_with_io_vars, parallelizer):
-        out_mapper_ids = self.generate_ephemeral_edges(fileIdGen, fan_out)
+        # -> [[input, aux1, aux2], [...], [...], ...]
+        num_aux_mapper_to_aggregator = parallelizer.info_mapper_aggregator
+        out_mapper_ids = []
+        for _ in range(0,fan_out):
+            out_mapper_ids.append(self.generate_ephemeral_edges(fileIdGen, num_aux_mapper_to_aggregator+1))
+        # TODO: Fix that we use different ones here!
+        # list of output, aux_output_1, aux_output_2, ...
         zip_mapper_in_out_ids = zip(in_mapper_ids, out_mapper_ids)
         all_mappers = []
-        for (in_id, out_id) in zip_mapper_in_out_ids:
+        for (in_id, out_ids) in zip_mapper_in_out_ids:
             # BEGIN: these 4 lines could be refactored to be a function in graph such that
             # creating end point of edges and the creation of edges is not decoupled
-            mapper_cmd_inv = parallelizer.get_actual_mapper(original_cmd_invocation_with_io_vars, in_id, out_id)
+            out_id = out_ids[0]
+            aux_out_ids = out_ids[1:]
+            mapper_cmd_inv = parallelizer.get_actual_mapper(original_cmd_invocation_with_io_vars, in_id, out_id, aux_out_ids)
             mapper = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(mapper_cmd_inv)
             self.set_edge_to(in_id, mapper.get_id())
             self.set_edge_from(out_id, mapper.get_id())
+            for aux_out_id in aux_out_ids:
+                self.set_edge_from(aux_out_id, mapper.get_id())
             # END
             splitter = parallelizer.get_splitter()
             if splitter.is_splitter_round_robin():
@@ -966,25 +979,34 @@ class IR:
     def introduce_aggregators_for_consec_chunks(self, fileIdGen, in_aggregator_ids,
                                                 original_cmd_invocation_with_io_vars, out_aggregator_id, parallelizer,
                                                 streaming_output):
-        aggregator_spec = parallelizer.get_aggregator_spec()
-        if aggregator_spec.is_aggregator_spec_concatenate() or aggregator_spec.is_aggregator_spec_custom_n_ary():
-            aggregator_cmd_inv = parallelizer.get_actual_aggregator(original_cmd_invocation_with_io_vars,
-                                                                    in_aggregator_ids, out_aggregator_id)
-            aggregator = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(aggregator_cmd_inv)
-            for in_aggregator_id in in_aggregator_ids:
-                self.set_edge_to(in_aggregator_id, aggregator.get_id())
-            self.set_edge_from(streaming_output, aggregator.get_id())
-            all_aggregators = [aggregator]
-            ## Add the merge commands in the graph
-            for new_node in all_aggregators:
-                self.add_node(new_node)
-        elif aggregator_spec.is_aggregator_spec_custom_2_ary():
-            # TODO: we simplify and assume that every mapper produces a single output for now
-            map_in_aggregator_ids = [[id] for id in in_aggregator_ids]
-            # TODO: turn node into cmd_invocation_with_io_vars since this is the only thing required in this function
-            self.create_generic_aggregator_tree(original_cmd_invocation_with_io_vars, parallelizer, map_in_aggregator_ids, out_aggregator_id, fileIdGen)
-        else:
-            raise Exception("aggregator kind not yet implemented")
+        # in_aggregator_ids: [[input, aux1, aux2, ...], [...], [...], ...]
+        if parallelizer.info_mapper_aggregator == 0:
+            in_aggregator_ids = [in_ids[0] for in_ids in in_aggregator_ids]  # since we get list of list back for potential aux info
+            aggregator_spec = parallelizer.get_aggregator_spec()
+            if aggregator_spec.is_aggregator_spec_concatenate() or aggregator_spec.is_aggregator_spec_custom_n_ary():
+                aggregator_cmd_inv = parallelizer.get_actual_aggregator(original_cmd_invocation_with_io_vars,
+                                                                        in_aggregator_ids, out_aggregator_id)
+                aggregator = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(aggregator_cmd_inv)
+                for in_aggregator_id in in_aggregator_ids:
+                    self.set_edge_to(in_aggregator_id, aggregator.get_id())
+                self.set_edge_from(streaming_output, aggregator.get_id())
+                all_aggregators = [aggregator]
+                ## Add the merge commands in the graph
+                for new_node in all_aggregators:
+                    self.add_node(new_node)
+            elif aggregator_spec.is_aggregator_spec_custom_2_ary():
+                # TODO: we simplify and assume that every mapper produces a single output for now
+                map_in_aggregator_ids = [[id] for id in in_aggregator_ids]
+                # TODO: turn node into cmd_invocation_with_io_vars since this is the only thing required in this function
+                self.create_generic_aggregator_tree(original_cmd_invocation_with_io_vars, parallelizer, map_in_aggregator_ids, out_aggregator_id, fileIdGen)
+            else:
+                raise Exception("aggregator kind not yet implemented")
+        else: # we got auxiliary information
+            assert(parallelizer.core_aggregator_spec.is_aggregator_spec_custom_2_ary())
+            map_in_aggregator_ids = in_aggregator_ids
+            self.create_generic_aggregator_tree(original_cmd_invocation_with_io_vars, parallelizer,
+                                                map_in_aggregator_ids, out_aggregator_id, fileIdGen)
+
 
     def introduce_aggregator_for_round_robin(self, out_mapper_ids, parallelizer, streaming_output):
         aggregator_spec = parallelizer.get_aggregator_spec()
@@ -1338,10 +1360,25 @@ class IR:
     ## This is a function that creates a reduce tree for a given node
     def create_generic_aggregator_tree(self, cmd_invocation_with_io_vars, parallelizer, input_ids_for_aggregators, out_aggregator_id, fileIdGen):
         def function_to_get_binary_aggregator(in_ids, out_ids):
-            assert(len(out_ids) == 1)
-            aggregator_cmd_inv = parallelizer.get_actual_aggregator(cmd_invocation_with_io_vars, in_ids, out_ids[0])
-            aggregator = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(aggregator_cmd_inv)
-            return aggregator
+            if len(out_ids) == 1:
+                aggregator_cmd_inv = parallelizer.get_actual_aggregator(cmd_invocation_with_io_vars, in_ids, out_ids[0])
+                aggregator = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(aggregator_cmd_inv)
+                return aggregator
+            else:
+                # list has been flattened ...
+                num_input_ids = len(in_ids)
+                assert(num_input_ids % 2 == 0)
+                fst_normal_input = in_ids[0]
+                fst_aux_inputs_from = in_ids[1:int(num_input_ids/2)]
+                snd_normal_input = in_ids[int(num_input_ids/2)]
+                snd_aux_inputs_from = in_ids[int(num_input_ids/2)+1:]
+                output_to = out_ids[0]
+                aux_outputs_to = out_ids[1:]
+                aggregator_cmd_inv = parallelizer.get_actual_2_ary_aggregator_with_aux(
+                    fst_normal_input, fst_aux_inputs_from, snd_normal_input, snd_aux_inputs_from,
+                    output_to, aux_outputs_to)
+                aggregator = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(aggregator_cmd_inv)
+                return aggregator
         ## The Aggregator node takes a sequence of input ids and an output id
         all_aggregators, new_edges, final_output_id = self.create_reduce_tree(lambda in_ids, out_ids: function_to_get_binary_aggregator(in_ids, out_ids),
                                     input_ids_for_aggregators, fileIdGen)
