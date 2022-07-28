@@ -27,7 +27,7 @@ on:
         required: false
 jobs:
   build-packages:
-    uses: zyrolasting/pash/.github/workflows/package-build.yaml@main
+    uses: zyrolasting/pash/.github/workflows/package-build.yaml@fpm
     with:
       fallback_version: ${{ inputs.fallback_version }}
       deb_version: ${{ inputs.deb_version }}
