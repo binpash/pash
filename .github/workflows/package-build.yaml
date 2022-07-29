@@ -62,4 +62,4 @@ jobs:
           uses: actions/upload-artifact@v3
           with:
             name: Packages
-            path: package/output
+            path: scripts/package/output

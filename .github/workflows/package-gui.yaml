@@ -9,8 +9,8 @@ on:
       fallback_version:
         # TODO: The comment in ./package-pull-requests.yaml
         # impacts whether this is good for the user to read.
-        description: 'What fallback version string can I use in any package format? Use 0.0.0 for throwaway prototypes. Compatibility not guarenteed for all package formats.'
-        default: '0.0.0'
+        description: 'What fallback version string can I use for some package format? Compatibility not guarenteed for all package formats.'
+        default: '0.0.1'
         required: true
       git_ref:
         description: 'Git reference, like a branch name or commit hash'
