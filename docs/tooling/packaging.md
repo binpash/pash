@@ -32,12 +32,16 @@ CLI](https://fpm.readthedocs.io/en/v1.14.2/cli-reference.html):
   deploy.sh IMAGE VERSION FORMAT
 ```
 
-`deploy.sh` runs `build.sh VERSION FORMAT`, then installs PaSh in a
-Docker container based on a `IMAGE` from DockerHub.
+Performs a test deployment of PaSh, as follows:
 
-In this example, `deploy.sh` installs a `pacman`/`.tar.gz` package
-deploys in Arch, a `.deb` package for Debian and Ubuntu, and an RPM
-package for Fedora.
+1. Run `build.sh VERSION FORMAT`
+2. Start Docker container based on `docker pull IMAGE`
+3. Install the package from Step 1 in the container from Step 2.
+4. Run the newly-installed `pa.sh` against a bundled `evaluation/intro/hello-world.sh` example.
+
+Here, `deploy.sh` installs a `pacman`/`.tar.gz` package deploys in
+Arch, a `.deb` package for Debian and Ubuntu, and an RPM package for
+Fedora.
 
 ```
 $ version=0.0.1
