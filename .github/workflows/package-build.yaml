@@ -51,7 +51,7 @@ jobs:
             build() {
               ./deploy.sh "$1" "${2:-'${{ inputs.fallback_version }}'}" "$3";
             }
-            echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin;
+            echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin;
             build ubuntu '${{ inputs.deb_version }}' deb;
             build fedora '${{ inputs.rpm_version }}' rpm;
             build archlinux '${{ inputs.pacman_tgz_version }}' pacman;
