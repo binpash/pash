@@ -10,18 +10,17 @@ replacement for deployments depending on `install.sh`,
 [eef]: https://github.com/docker/cli/blob/master/experimental/README.md
 
 ```
-  shell.sh
+build.sh VERSION [OUTPUT_FORMAT ...]
 ```
 
-To use this feature, [enable experimental features][eef] in Docker.
+Creates new package files using the repository's current content, each
+with mode 440. All output files appear in `scripts/package/output`.
 
-`shell.sh` enters a Docker container for building packages. Run
-without arguments to enter a REPL and print usage information for the
-`build` command.
+Command-line arguments correspond to those found in [FPM's
+CLI](https://fpm.readthedocs.io/en/v1.14.2/cli-reference.html):
 
-Since `shell.sh` is just a Bash, you can pass it commands.  For
-example, `./shell.sh -ic 'build 0.0.1 deb'` launches an interactive
-shell that builds a Debian package using version `0.0.1`.
+  - `VERSION` is the value of `--version`.
+  - `OUTPUT_FORMAT` is some value for `--output-type`
 
 
 ## Testing Packages
@@ -30,11 +29,11 @@ shell that builds a Debian package using version `0.0.1`.
   deploy.sh IMAGE VERSION FORMAT
 ```
 
-`deploy.sh` runs `./shell.sh -ic 'build VERSION FORMAT'`, then
-installs PaSh in a Docker container based on a `IMAGE` from DockerHub.
+`deploy.sh` runs `build.sh VERSION FORMAT`, then installs PaSh in a
+Docker container based on a `IMAGE` from DockerHub.
 
-Here's an example that builds a `pacman`/`.tar.gz` package for
-deployment in Arch, a `.deb` package for Debian and Ubuntu, and an RPM
+In this example, `deploy.sh` installs a `pacman`/`.tar.gz` package
+deploys in Arch, a `.deb` package for Debian and Ubuntu, and an RPM
 package for Fedora.
 
 ```
@@ -52,4 +51,14 @@ $ deploy.sh fedora $version rpm
   iterate.sh IMAGE FORMAT
 ```
 
-Run `deploy.sh IMAGE 0.0.1 FORMAT`, then prompt to repeat.
+Runs `deploy.sh IMAGE 0.0.1 FORMAT`, then prompts to repeat.
+
+
+## GitHub Actions
+
+The source code repository defines workflows for GitHub actions.  The
+workflows for packaging all use `deploy.sh` to build and run PaSh's
+"Hello, World" example.
+
+**On-Demand Packaging** is the only workflow that can be directly
+used in the GitHub GUI.
