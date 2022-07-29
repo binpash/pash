@@ -48,7 +48,7 @@ jobs:
         - name: Build packages
           run: |
             build() {
-              ./deploy.sh "$1" "${2:-'${{ inputs.fallback_version }}'}" "$3";
+              ./deploy.sh "$1" "${2:-${{ inputs.fallback_version }}}" "$3";
             }
             cd scripts/package
             sed -i 's/--squash//g' ./fpm/Makefile
