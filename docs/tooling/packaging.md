@@ -15,6 +15,10 @@ build.sh VERSION [OUTPUT_FORMAT ...]
 Creates new package files using the repository's current content, each
 with mode 440. All output files appear in `scripts/package/output`.
 
+**Clean up junk files and new test results!** The scripts use a
+reasonable ignore list, but otherwise defaults to including files
+within the PaSh repository.
+
 Command-line arguments correspond to those found in [FPM's
 CLI](https://fpm.readthedocs.io/en/v1.14.2/cli-reference.html):
 
