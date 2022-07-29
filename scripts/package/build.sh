@@ -12,7 +12,6 @@ fi
 
 # Make a Docker image that knows about building packages.
 if ! docker image inspect fpm 2>&1 >/dev/null; then
-    sed -i 's/--squash//g' "$here/fpm/Makefile"
     make -C "$here/fpm" docker-release-everything
 fi
 

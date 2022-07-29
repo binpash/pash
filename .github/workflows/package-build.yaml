@@ -51,6 +51,7 @@ jobs:
               ./deploy.sh "$1" "${2:-${{ inputs.fallback_version }}}" "$3";
             }
             cd scripts/package
+            sed -i 's/--squash//g' fpm/Makefile
             DOCKERHUB_TOKEN='${{ secrets.DOCKERHUB_TOKEN }}'
             DOCKERHUB_USERNAME='${{ secrets.DOCKERHUB_USERNAME }}'
             echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin;
