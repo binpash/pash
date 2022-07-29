@@ -1,9 +1,8 @@
 # Packaging PaSh
 
-`scripts/package` packages PaSh into various formats. It is a suitable
+`scripts/package` packages PaSh into various formats. The software inside is a suitable
 replacement for deployments depending on `install.sh`,
 `setup-pash.sh`, `up.sh`, `distro-deps.sh`, and/or `pkg.sh`.
-
 
 
 ## Building Packages
@@ -58,7 +57,11 @@ Runs `deploy.sh IMAGE 0.0.1 FORMAT`, then prompts to repeat.
 
 The source code repository defines workflows for GitHub actions.  The
 workflows for packaging all use `deploy.sh` to build and run PaSh's
-"Hello, World" example.
+"Hello, World" example. One workflow responds to new pull requests.
 
 **On-Demand Packaging** is the only workflow that can be directly
-used in the GitHub GUI.
+used in the GitHub GUI. You can find it under the **Actions** tab.
+
+![image](https://user-images.githubusercontent.com/1312121/181671950-89ec5f57-5b9f-4fdb-90a2-6d1099257ad1.png)
+
+Click "Run Workflow" and fill out the form. The form defines what commit of PaSh gets packaged, and each package format may have its own version string.
