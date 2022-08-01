@@ -9,22 +9,21 @@ from definitions.ast_node import *
 
 sys.path.append(os.path.join(config.PASH_TOP, "compiler/parser/ceda"))
 
-from ast2shell import *
-from parse_to_ast2 import parse_to_ast, ParsingException
-#from json_to_shell2 import json_to_shell_string, json_string_to_shell_string
+import libdash.parser
+import libdash.printer
 
 ## Parses straight a shell script to an AST
 ## through python without calling it as an executable
 def parse_shell_to_asts(input_script_path):
     try:
-        new_ast_objects = parse_to_ast(input_script_path)
+        new_ast_objects = libdash.parser.parse(input_script_path)
         return list(new_ast_objects)
-    except ParsingException as e:
+    except libdash.parser.ParsingException as e:
         log("Parsing error!", e)
         sys.exit(1)
 
 def parse_shell_to_asts_interactive(input_script_path: str):
-    return parse_to_ast(input_script_path)
+    return libdash.parser.parse(input_script_path)
 
 def from_ast_objects_to_shell(asts):
     shell_list = []
@@ -64,7 +63,7 @@ def parse_shell(input_script_path):
 
 ## Simply wraps the ceda string_of_arg
 def pash_string_of_arg(arg, quoted=False):
-    return string_of_arg(arg, quoted)
+    return libdash.printer.string_of_arg(arg, quoted)
 
 ### Legacy
 
