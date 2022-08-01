@@ -42,7 +42,7 @@ def from_ast_objects_to_shell(asts):
             else:
                 serialized_ast = ast
 
-            shell_list.append(to_string(serialized_ast))
+            shell_list.append(libdash.printer.to_string(serialized_ast))
     return "\n".join(shell_list) + "\n"
 
 def from_ast_objects_to_shell_file(asts, new_shell_filename):
