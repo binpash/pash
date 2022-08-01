@@ -3,7 +3,9 @@
 set -e
 
 cd "$(dirname "$0")"
-# check the git status of the project
+# set PASH_TOP
+PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
+
 cd $PASH_TOP
 . "$PASH_TOP/scripts/utils.sh"
 read_cmd_args $@
