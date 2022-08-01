@@ -1,3 +1,0 @@
-[submodule "parser/libdash"]
-	path = compiler/parser/libdash
-	url = https://github.com/angelhof/libdash/

@@ -3,7 +3,7 @@
 On Ubuntu, Fedora, Debian, or Arch, run `curl up.pash.ndr.md | sh` to get PaSh up and running.
 
 If on other environments or prefer manual setup, there are essentially three steps required to set PaSh up:
-1. Clone repo: `git clone --depth 1 git@github.com:binpash/pash.git`
+1. Clone repo: `git clone git@github.com:binpash/pash.git`
 2. Run `distro-deps.sh` (with `sudo`) and `setup-pash.sh`
 3. Export `PASH_TOP` and, optionally, add it to your `PATH`
 
@@ -18,7 +18,7 @@ Quick Jump: [Clone & Setup](#) | [Manual Setup](#manual-setup) | [Docker Setup](
 The following steps clone the repo, set up dependencies (e.g., compilers), and then build PaSh:
 
 ```sh
-git clone --depth 1 git@github.com:binpash/pash.git
+git clone git@github.com:binpash/pash.git
 sudo pash/scripts/distro-deps.sh
 ./pash/scripts/setup-pash.sh
 ```
@@ -36,7 +36,7 @@ automake bc bsdmainutils curl gcc git libffi-dev libtool locales locales-all m4 
 Then clone the PaSh repository and run `setup-pash.sh` as follows:
 
 ```sh
-git clone --depth 1 git@github.com:binpash/pash.git
+git clone git@github.com:binpash/pash.git
 ./pash/scripts/setup-pash.sh
 ```
 
@@ -60,7 +60,7 @@ We refresh this image (as well as other images) on every major release.
 _Build Image (Latest Commit):_
 To build the latest Docker container, run `docker build` in [scripts/docker](https://github.com/binpash/pash/tree/main/scripts/docker):
 ```sh
-git clone --depth 1 git@github.com:binpash/pash.git
+git clone git@github.com:binpash/pash.git
 cd pash/scripts/docker/
 docker build -f ./ubuntu/Dockerfile -t "pash:latest" .
 ```
