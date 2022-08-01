@@ -1,5 +1,5 @@
 # source the local pash config
-source ~/.pash_init
+[ -f ~/.pash_init ] && source ~/.pash_init
 ## File directory
 export RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
 ## TODO: Is there a better way to do this?
