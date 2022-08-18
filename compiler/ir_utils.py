@@ -171,6 +171,9 @@ def string_to_argument(string):
 def char_to_arg_char(char):
     return ['C' , ord(char)]
 
+def escaped_char(char):
+    return ['E' , ord(char)]
+
 def standard_var_ast(string):
     return make_kv("V", ["Normal", False, string, []])
 
