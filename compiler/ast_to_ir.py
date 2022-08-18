@@ -956,7 +956,10 @@ def make_call_to_runtime(ir_filename, sequential_script_file_name,
     ## TODO: Maybe we need to only do this if there is a change.
     ## 
     set_arguments = [string_to_argument("eval"),
-                     [['Q', string_to_argument('set -- \\"\\${pash_input_args[@]}\\"')]]]
+                     [['Q', string_to_argument('set -- ') +
+                            [escaped_char('"')] + # The escaped quote
+                            string_to_argument('\\${pash_input_args[@]}') +
+                            [escaped_char('"')]]]]
     set_args_node = make_command(set_arguments)
 
 
