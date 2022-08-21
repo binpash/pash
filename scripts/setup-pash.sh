@@ -37,9 +37,10 @@ for directory in $pkg_path; do
   $(which cp) -r $directory/* ${PYTHON_PKG_DIR}/
 done
 
+
 # Build runtime tools: eager, split
 echo "Building runtime tools..."
-cd runtime/
+cd "$PASH_TOP/runtime/"
 case "$distro" in
     freebsd*) 
         gmake &> $LOG_DIR/make.log
