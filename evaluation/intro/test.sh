@@ -15,6 +15,7 @@ mkdir -p "$output_dir"
 run_test()
 {
     local test=$1
+    echo "..."
     echo -n "Running $test..."
     TIMEFORMAT="${test%%.*}:%3R" # %3U %3S"
     { time $bash "$test" > "$output_dir/$test.bash.out"; } 2>>  $output_dir/results.time_bash
