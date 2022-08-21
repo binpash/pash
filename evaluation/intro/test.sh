@@ -5,7 +5,7 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 
 ## TODO: Make the compiler work too.
 bash="bash"
-pash="$PASH_TOP/pa.sh -w 2 -d 1"
+pash="$PASH_TOP/pa.sh -w 2"
 
 output_dir="$PASH_TOP/evaluation/intro/output"
 rm -rf "$output_dir"
@@ -15,7 +15,6 @@ mkdir -p "$output_dir"
 run_test()
 {
     local test=$1
-    echo "..."
     echo -n "Running $test..."
     TIMEFORMAT="${test%%.*}:%3R" # %3U %3S"
     { time $bash "$test" > "$output_dir/$test.bash.out"; } 2> >(tee -a $output_dir/results.time_bash)
