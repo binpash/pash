@@ -37,6 +37,23 @@ for directory in $pkg_path; do
   $(which cp) -r $directory/* ${PYTHON_PKG_DIR}/
 done
 
+# Build runtime tools: eager, split
+echo "Building runtime tools..."
+cd runtime/
+case "$distro" in
+    freebsd*) 
+        gmake &> $LOG_DIR/make.log
+        ;;
+    *)
+        make &> $LOG_DIR/make.log
+        if [ -f /.dockerenv ]; then
+            # issue with docker only
+            python3 -m pip install -U --force-reinstall pip
+            cp "$PASH_TOP"/pa.sh /usr/bin/
+        fi
+        ;;
+esac
+
 echo "Generating input files..."
 $PASH_TOP/evaluation/tests/input/setup.sh
 
