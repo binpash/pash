@@ -26,7 +26,7 @@ jobs:
         # TODO: Not clear if the best is to use $commit or $branch here
         wget "https://raw.githubusercontent.com/binpash/pash/$commit/scripts/ws-client.py"
         # Install its dependency
-        python3 -m pip install websocket
+        python3 -m pip install websocket-client
         # Issue the request and wait for it to end 
         python3 ws-client.py -m run -c "$commit" -b "$branch" > results.txt
         results=$(cat results.txt)
