@@ -28,7 +28,7 @@ jobs:
         # Install its dependency
         python3 -m pip install websocket-client
         # Issue the request and wait for it to end 
-        python3 ws-client.py -m run -c "$commit" -b "$branch" > results.txt
+        python3 ws-client.py -m run -c "$commit" -b "$branch" | tee results.txt
         results=$(cat results.txt)
         # Process the results
         data_result="$(echo $results | jq -r 'select(.commit=='\"$commit\"') | .tests' | jq . | jq -r '.[].csv' | sed 's/# //g')"
