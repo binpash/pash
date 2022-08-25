@@ -63,9 +63,9 @@ def wait_for_result(websocket, target_commit):
         for row in result_rows:
             # print(row["commit"], row["bench"], file=sys.stderr)
             if row["commit"] == target_commit and row["bench"] == "CORRECTNESS":
-                print("FOUND COMMIT:", target_commit)
+                print("FOUND COMMIT:", target_commit, file=sys.stderr)
                 found = True
-                result_row = row
+                result_row = json.dumps(row)
 
         if not found:
             print("Results not present for commit:", target_commit, file=sys.stderr)
