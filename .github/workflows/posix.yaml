@@ -22,23 +22,13 @@ jobs:
         # get the current branch
         branch=${{ env.GITHUB_HEAD_REF_SLUG }}
         echo "Status: $id $commit $branch"
-        # craft the execution request
-        request="http://ctrl.pash.ndr.md/job=issue&branch=$branch&commit=$commit&benchmark=CORRECTNESS"
-        echo "$request"
-        # issue the request
-        curl -s "$request"
-        # poll until we get the results
-        while true; do
-          echo "Sleeping"
-          sleep 360;
-          # fetch some of the latest results in case some other actions happened
-          data=$(curl -s "ctrl.pash.ndr.md/job=fetch_runs&count=50");
-          results=$(echo $data | jq '.rows | .[] | select((.commit=='\"$commit\"') and .bench=="CORRECTNESS")')
-          if [ ! -z "$results" ]; then
-              # results are found
-              break;
-          fi
-        done
+        # Get the client script
+        # TODO: Not clear if the best is to use $commit or $branch here
+        wget "https://raw.githubusercontent.com/binpash/pash/$commit/scripts/ws-client.py"
+        # Issue the request and wait for it to end 
+        python3 ws-client.py -m run -c "$commit" -b "$branch" > results.txt
+        results=$(cat results.txt)
+        # Process the results
         data_result="$(echo $results | jq -r 'select(.commit=='\"$commit\"') | .tests' | jq . | jq -r '.[].csv' | sed 's/# //g')"
         os=$(echo $results | jq -r ' select(.commit=='\"$commit\"') | .specs.os')
         ram=$(echo $results | jq -r ' select(.commit=='\"$commit\"') | .specs.ram')
