@@ -1,7 +1,8 @@
 import sys
 
 from datatypes_new.CommandInvocationInitial import CommandInvocationInitial
-from datatypes_new.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptorWithIOInfo
+from datatypes_new.BasicDatatypes import ArgStringType
+from datatypes_new.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptorWithIOInfo, OptionWithIO
 from annotation_generation_new.datatypes.InputOutputInfo import InputOutputInfo
 from annotation_generation_new.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
 from annotation_generation_new.datatypes.CommandProperties import CommandProperties
@@ -139,6 +140,7 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
     # make pass over everything and create file_id for everything
     # only for operands for now:
     dfg_edges = {}
+    new_flagoption_list = []
     new_operand_list = []
     access_map = dict()
 
@@ -149,6 +151,15 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
         dfg_edges[fid_id] = (file_id, None, None)
         access_map[fid_id] = operand.get_access()
         return fid_id
+
+    for i in range(len(command_invocation_with_io.flag_option_list)):
+        flagoption = command_invocation_with_io.flag_option_list[i]
+        if isinstance(flagoption, OptionWithIO) and not isinstance(flagoption.option_arg, ArgStringType):
+            fid_id = add_var_for_descriptor(flagoption.option_arg)
+            new_option = OptionWithIOVar(flagoption.name, fid_id)
+            new_flagoption_list.append(new_option)
+        else: # Flag
+            new_flagoption_list.append(flagoption)
 
     for i in range(len(command_invocation_with_io.operand_list)):
         operand = command_invocation_with_io.operand_list[i]
@@ -166,11 +177,12 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
     else:
         new_implicit_use_of_streaming_output = None
 
-    # this shall become copy-based
-    command_invocation_with_io_vars = CommandInvocationWithIOVars.get_from_without_vars(command_invocation_with_io, access_map)
-    command_invocation_with_io_vars.operand_list = new_operand_list
-    command_invocation_with_io_vars.implicit_use_of_streaming_input = new_implicit_use_of_streaming_input
-    command_invocation_with_io_vars.implicit_use_of_streaming_output = new_implicit_use_of_streaming_output
+    command_invocation_with_io_vars = CommandInvocationWithIOVars(cmd_name=command_invocation_with_io.cmd_name,
+                                       flag_option_list=new_flagoption_list,
+                                       operand_list=new_operand_list,
+                                       implicit_use_of_streaming_input=new_implicit_use_of_streaming_input,
+                                       implicit_use_of_streaming_output=new_implicit_use_of_streaming_output,
+                                       access_map=access_map)
     return command_invocation_with_io_vars, dfg_edges
 
 
@@ -186,6 +198,8 @@ def compile_command_to_DFG(fileIdGen, command, options,
     if para_info is None:
         para_info = ParallelizabilityInfo() # defaults to no parallelizer's and all properties False
     command_invocation_with_io = io_info.apply_input_output_info_to_command_invocation(command_invocation)
+    if para_info is None:
+        para_info = ParallelizabilityInfo()  # defaults to no parallelizer's and all properties False
     parallelizer_list, round_robin_compatible_with_cat, is_commutative = para_info.unpack_info()
     property_dict = [{'round_robin_compatible_with_cat': round_robin_compatible_with_cat,
                      'is_commutative': is_commutative}]
