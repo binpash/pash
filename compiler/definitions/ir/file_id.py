@@ -88,8 +88,8 @@ class FileId:
             else:
                 raise NotImplementedError()
         else:
-            string = "{}".format(self.resource)
-            argument = string_to_argument(string)
+            ## The resource holds an Argument, and we need to get its argument list
+            argument = self.resource.uri.to_ast()
 
         return argument
 

@@ -17,10 +17,10 @@ run_test()
     local test=$1
     echo -n "Running $test..."
     TIMEFORMAT="${test%%.*}:%3R" # %3U %3S"
-    { time $bash "$test" > "$output_dir/$test.bash.out"; } 2>>  $output_dir/results.time_bash
+    { time $bash "$test" > "$output_dir/$test.bash.out"; } 2> >(tee -a $output_dir/results.time_bash)
     test_bash_ec=$?
     TIMEFORMAT="%3R" # %3U %3S"
-    { time $pash "$test" > "$output_dir/$test.pash.out"; } 2>>  $output_dir/results.time_pash
+    { time $pash "$test" > "$output_dir/$test.pash.out"; } 2> >(tee -a $output_dir/results.time_pash)
     test_pash_ec=$?
     diff "$output_dir/$test.bash.out" "$output_dir/$test.pash.out"
     test_diff_ec=$?
