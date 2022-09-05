@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 microbenchmark=$1
 n_in=$2
 results_subdir="gnu_parallel"

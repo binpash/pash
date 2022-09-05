@@ -121,3 +121,56 @@ read_cmd_args() {
         esac
     done
 }
+
+
+confirm_installation_works() {
+# If installation  hasn't worked, it is difficult to provide a meaningful
+# action---apart from checking the logs, which are currently not comprehensive
+  echo "Confirming installation works.."
+  set +e
+  $PASH_TOP/pa.sh $PASH_TOP/evaluation/intro/hello-world.sh
+  if [ $? -ne 0 ]; then
+    echo "Something failed, please check logs"
+  fi
+  set -e
+}
+
+
+append_pash_to_rc() {
+  # FIXME: The right files are not entirely clear yet
+  rc_configs=(~/.shrc ~/.bashrc  ~/.zshrc ~/.cshrc ~/.kshrc) # add more shell configs here
+  for config in "${rc_configs[@]}"
+  do
+      ## if the config exists
+      ## check if it contains an old entry of Pash
+      if [ -e "$config" ]; then
+          # get the shell name
+          shell_name=$(echo $(basename $config) | sed 's/rc//g' | sed 's/\.//g')
+          echo "Do you want to append \$PASH_TOP to $shell_name ($config) (y/n)?"
+          read answer
+          if [ "$answer" != "${answer#[Yy]}" ] ;then 
+              tmpfile=$(mktemp -u /tmp/tmp.XXXXXX)
+              # create a backup of the shell config
+              cp $config ${config}.backup
+              # remove all the entries pointing to PASH_TOP and PATH
+              grep -ve "export PASH_TOP" $config > $tmpfile
+              mv $tmpfile $config
+              path_ans=0
+              # check if PATH contains PASH_TOP reference
+              # we need to store it in a variable otherwise is messes up with the
+              # existing environment
+              var=$(grep -e "export PATH" $config | grep -e '$PASH_TOP') || path_ans=$?
+              # if the return code is 0 -> there is a reference of $PASH_TOP in 
+              # PATH, remove it
+              if [ "$path_ans" == 0 ]; then
+                  # remove previous references to PASH_TOP from PATH
+                  grep -v 'export PATH=$PATH:$PASH_TOP' $config > $tmpfile
+                  mv $tmpfile $config
+              fi
+              ## there isn't a previous Pash installation, append the configuration
+              echo "export PASH_TOP="$PASH_TOP >> $config
+              echo 'export PATH=$PATH:$PASH_TOP' >> $config
+          fi
+      fi
+  done
+}

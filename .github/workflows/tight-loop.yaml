@@ -49,7 +49,7 @@ jobs:
             cd evaluation/benchmarks/runtime-overhead
             results=$(bash run.sh)
             mkdir ~/artifact
-            echo "$results" > ~/artifact/results.log
+            echo "$results" | tee ~/artifact/results.log
         - uses: actions/upload-artifact@v3
           with:
             name: tight-loop-artifact

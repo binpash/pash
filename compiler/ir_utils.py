@@ -163,13 +163,17 @@ def string_to_arguments(string):
     return [string_to_argument(word) for word in string.split(" ")]
 
 def string_to_argument(string):
-    return [char_to_arg_char(char) for char in string]
+    ret = [char_to_arg_char(char) for char in string]
+    return ret
 
 ## FIXME: This is certainly not complete. It is used to generate the
 ## AST for the call to the distributed planner. It only handles simple
 ## characters
 def char_to_arg_char(char):
     return ['C' , ord(char)]
+
+def escaped_char(char):
+    return ['E' , ord(char)]
 
 def standard_var_ast(string):
     return make_kv("V", ["Normal", False, string, []])
@@ -192,6 +196,10 @@ def redir_file_to_stdin(arg):
 def make_background(body, redirections=[]):
     lineno = 0
     node = make_kv("Background", [lineno, body, redirections])
+    return node
+
+def make_backquote(node):
+    node = make_kv("B", node)
     return node
 
 def make_subshell(body, redirections=[]):

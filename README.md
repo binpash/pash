@@ -32,17 +32,9 @@ Jump to [docs/tutorial](docs/tutorial/) for a longer tutorial.
 
 ## Installation
 
-On Ubuntu, Fedora, Debian, or Arch, run `curl up.pash.ndr.md | sh` to set up PaSh.
+On Ubuntu, Fedora, and Debian run `curl up.binpa.sh | sh` to set up PaSh.
 
 For more details, manual installation, or other platforms see [installation instructions](./docs/install).
-
-## Testing
-
-To execute the current tests before committing and pushing code, simply run:
-
-```sh
-./scripts/run_tests.sh
-```
 
 ## Repo Structure
 
@@ -61,7 +53,7 @@ Chat:
 * [Discord Server](ttps://discord.com/channels/947328962739187753/) ([Invite](http://join.binpa.sh/))
 
 Mailing Lists:
-* [pash-dev](https://groups.google.com/g/pash-dev): Join this mailing list for discussing all things `pash`
+* [pash-devs](https://groups.google.com/g/pash-devs): Join this mailing list for discussing all things `pash`
 * [pash-commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications
 
 Development/contributions:

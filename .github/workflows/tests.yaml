@@ -22,9 +22,9 @@ on:
 jobs:
     Pash-Tests:
       strategy:
+        fail-fast: false
         matrix:
           os: 
-            - ubuntu-18.04
             - ubuntu-20.04
       runs-on: ${{ matrix.os }}
       if: github.event.pull_request.draft == false

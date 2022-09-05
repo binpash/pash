@@ -3,12 +3,12 @@
 export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 # point to the local downloaded folders
-export PYTHONPATH=${PASH_TOP}/python_pkgs/
+export PYTHONPATH="${PASH_TOP}/python_pkgs/:${PYTHONPATH}"
 ## Register the signal handlers, we can add more signals here
 trap kill_all SIGTERM SIGINT
 
 ## kill all the pending processes that are spawned by this shell
-function kill_all() {
+kill_all() {
     # kill all my subprocesses only
     kill -s SIGKILL 0
     # kill pash_daemon

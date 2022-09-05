@@ -255,20 +255,21 @@ def lookup_variable(var, _lookup_config):
             return None, var_value
 
     if(var == '@'):
-        expanded_var = lookup_variable_inner('pash_input_args')
+        argument_values = lookup_variable_inner_core('pash_input_args')
+        expanded_var = " ".join(argument_values)
     elif(var == '?'):
         expanded_var = lookup_variable_inner('pash_previous_exit_status')
     elif(var == '-'):
         expanded_var = lookup_variable_inner('pash_previous_set_status')
     elif(var == '#'):
-        input_args = lookup_variable_inner('pash_input_args')
-        expanded_var = str(len(input_args.split()))
+        argument_values = lookup_variable_inner_core('pash_input_args')
+        expanded_var = str(len(argument_values))
     elif(var.isnumeric() and int(var) >= 1):
-        input_args = lookup_variable_inner('pash_input_args')
-        split_args = input_args.split()
+        input_args = lookup_variable_inner_core('pash_input_args')
+        # split_args = input_args.split()
         index = int(var) - 1
         try:
-            expanded_var = split_args[index]
+            expanded_var = input_args[index]
         except:
             ## If there are not enough arguments -u is set we need to raise
             if is_u_set():
@@ -287,8 +288,18 @@ def lookup_variable(var, _lookup_config):
 
     return None, expanded_var
 
-## Looks up the variable and if it is unset it raises an error
+## Looksup a variable and flattens it if it is an array 
 def lookup_variable_inner(varname):
+    value = lookup_variable_inner_core(varname)
+    if value is not None and not isinstance(value, str):
+        ## TODO: This is not handled at the moment (and it is unclear if it should be).
+        ##
+        ## This is only returned when we are in an array
+        raise Unimplemented("Expanded value is not None or a string", (varname, value))
+    return value
+
+## Looks up the variable and if it is unset it raises an error
+def lookup_variable_inner_core(varname):
     value = lookup_variable_inner_unsafe(varname)
     if value is None and is_u_set():
         raise StuckExpansion("-u is set and variable was unset", varname)
