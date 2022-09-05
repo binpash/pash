@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-set -e
+# TODO: this should be ran before cloning---otherwise cloning fails.
+# It should also set up words etc.
+
 cd $(dirname $0)
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 . "$PASH_TOP/scripts/utils.sh"
@@ -30,7 +32,8 @@ fi
 # convert to lowercase
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 # compile the list of the shared required packages
-pkgs="automake bc curl gcc git graphviz libtool m4 python sudo wget"
+pkgs="bc curl git graphviz python sudo wget"
+#libdash_pkgs="automake gcc libtool m4"
 # now do different things depending on distro
 case "$distro" in
     ubuntu*)  
@@ -41,14 +44,14 @@ case "$distro" in
         fi      
         echo "Running preparation apt install:"
         echo "|-- running apt update..."
-        $SUDO apt-get update &> $LOG_DIR/apt_update.log
+        $SUDO apt update &> $LOG_DIR/apt_update.log
         echo "|-- running apt install..."
-        $SUDO apt-get install -y $pkgs &>> $LOG_DIR/apt_install.log
+        $SUDO apt install -y $pkgs &>> $LOG_DIR/apt_install.log
         if [[ "$optimized_agg_flag" == 1 ]];  then
             echo "|-- installing g++-10..."
-            $SUDO apt-get install software-properties-common -y &> $LOG_DIR/apt_install.log
+            $SUDO apt install software-properties-common -y &> $LOG_DIR/apt_install.log
             $SUDO add-apt-repository ppa:ubuntu-toolchain-r/test -y  &> $LOG_DIR/apt_install.log
-            $SUDO apt-get install g++-10 -y &> $LOG_DIR/apt_install.log
+            $SUDO apt install g++-10 -y &> $LOG_DIR/apt_install.log
             $SUDO update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100 &> $LOG_DIR/apt_install.log
             $SUDO update-alternatives --set g++ /usr/bin/g++-10 &> $LOG_DIR/apt_install.log
         fi

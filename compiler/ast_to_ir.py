@@ -911,12 +911,12 @@ def make_call_to_runtime(ir_filename, sequential_script_file_name,
 
     ## Save the input arguments
     ## ```
-    ## pash_input_args="$@"
+    ## source $PASH_TOP/runtime/save_args.sh "${@}"
     ## ```
-    assignments = [["pash_input_args",
-                    [make_quoted_variable("@")]]]
-    input_args_command = make_command([],
-                                      assignments=assignments)
+    arguments = [string_to_argument("source"),
+                 string_to_argument(config.SAVE_ARGS_EXECUTABLE),
+                 [make_quoted_variable("@")]]
+    input_args_command = make_command(arguments)
 
     ## Disable parallel pipelines if we are in the last command of the script.
     ## ```
@@ -942,14 +942,26 @@ def make_call_to_runtime(ir_filename, sequential_script_file_name,
 
     ## Restore the arguments to propagate internal changes, e.g., from `shift` outside.
     ## ```
-    ## set -- $pash_input_args
+    ## eval "set -- \"\${pash_input_args[@]}\""
     ## ```
     ##
+    ## Alternative Solution: (TODO if we need extra performance -- avoiding eval) 
+    ## Implement an AST node that accepts and returns a literal string
+    ## bypassing unparsing. This would make this simpler and also more
+    ## efficient (avoiding eval).
+    ## However, it would require some work because we would need to implement
+    ## support for this node in various places of PaSh and the unparser.
+    ##      
+    ##
     ## TODO: Maybe we need to only do this if there is a change.
-    set_arguments = [string_to_argument("set"),
-                     string_to_argument("--"),
-                     [standard_var_ast("pash_input_args")]]
+    ## 
+    set_arguments = [string_to_argument("eval"),
+                     [['Q', string_to_argument('set -- ') +
+                            [escaped_char('"')] + # The escaped quote
+                            string_to_argument('\\${pash_input_args[@]}') +
+                            [escaped_char('"')]]]]
     set_args_node = make_command(set_arguments)
+
 
     ## Restore the exit code (since now we have executed `set` last)
     ## ```
@@ -990,3 +1002,4 @@ def ast_match(ast_node, cases, *args):
         return ast_match_untyped(ast_node, cases, *args)
 
     return cases[ast_node.construct.value](*args)(ast_node)
+
