@@ -28,6 +28,10 @@ python3 -m pip install matplotlib --root $PYTHON_PKG_DIR --ignore-installed #&> 
 # TODO 2022-08-01 if libdash wheel isn't available, we need autmake etc.
 python3 -m pip install libdash --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_libdash.log
 
+## TODO: Fix a specific version somehow, maybe commit?
+git clone https://github.com/binpash/annotations.git ./annotations_repo
+python3 -m pip install ./annotations_repo --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_annotations.log
+
 # clean the python packages
 cd $PYTHON_PKG_DIR
 # can we find a better alternative to that                                      
