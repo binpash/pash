@@ -64,9 +64,9 @@ case "$distro" in
         fi
         echo "Running preparation apt install:"
         echo "|-- running apt update..."
-        $SUDO apt-get update &> $LOG_DIR/apt_update.log
+        $SUDO apt-get update #&> $LOG_DIR/apt_update.log
         echo "|-- running apt install..."
-        $SUDO apt-get install -y $pkgs &> $LOG_DIR/apt_install.log
+        $SUDO apt-get install -y $pkgs #&> $LOG_DIR/apt_install.log
         ;;
     fedora*) 
         pkgs="$pkgs autoconf diffutils gcc-c++ glibc-langpack-en hostname libjpeg-devel make nc pip procps python-devel python3-pip python3-setuptools python3-setuptools python3-testresources zlib-devel"
