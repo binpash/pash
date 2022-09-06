@@ -22,10 +22,7 @@ mkdir -p $PYTHON_PKG_DIR
 
 echo "Installing python dependencies..."
 
-## TODO: Remove pexpect from the installation since it was only used for some experiments
-python3 -m pip install pexpect --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_pexpect.log
 python3 -m pip install graphviz --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_graphviz.log
-
 # TODO 2022-08-01 if libdash wheel isn't available, we need autmake etc.
 python3 -m pip install libdash --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_libdash.log
 
