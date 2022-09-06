@@ -1,8 +1,6 @@
 import argparse
-import pexpect
 import signal
 import socket
-import subprocess
 import sys
 import traceback
 from threading import Thread
@@ -62,31 +60,8 @@ def init():
 
     pash_runtime.runtime_config = config.config['distr_planner']
 
-    if config.pash_args.expand_using_bash_mirror:
-        ## Initialize a bash that is used for expanding
-        ##
-        ## TODO: Alternatively, we could set up a communication with the original bash 
-        ## (though this makes it difficult to have concurrent compilations and execution)
-        ## TODO: We actually need to discuss which arch is better.
-        bash_mirror = init_bash_mirror_subprocess()
-
-        ## Is it OK to save it in config?
-        config.bash_mirror = bash_mirror
-
     return args
 
-def init_bash_mirror_subprocess():
-    ## Spawn a bash process to ask it for expansions
-    p = pexpect.spawn('/usr/bin/env', ['bash', '-i'], 
-                      encoding='utf-8',
-                      echo=False)
-    ## If we are in debug mode also log the bash's output
-    if (config.pash_args.debug >= 1):
-        file_to_save_output = ptempfile()
-        log("bash mirror log saved in:", file_to_save_output)
-        fout = open(file_to_save_output, "w")
-        p.logfile = fout
-    return p
 
 def success_response(string):
     return f'OK: {string}\n'
@@ -279,13 +254,6 @@ class Scheduler:
         variable_reading_start_time = datetime.now()
         # Read any shell variables files if present
         config.read_vars_file(var_file)
-        if config.pash_args.expand_using_bash_mirror:
-            ## Update the bash mirror with the new variables
-            config.update_bash_mirror_vars(var_file)
-            ## TODO: Maybe we also need to update current directory of bash mirror for file-based expansion?
-
-            ## Clean up the variable cache
-            config.reset_variable_cache()
 
         variable_reading_end_time = datetime.now()
         print_time_delta("Variable Loading", variable_reading_start_time, variable_reading_end_time)
@@ -613,14 +581,6 @@ class SocketManager:
 def shutdown():
     ## There may be races since this is called through the signal handling
     log("PaSh daemon is shutting down...")
-    if config.bash_mirror is not None:
-        ## TODO: Do we need force
-        ret = config.bash_mirror.terminate(force=True)
-        
-        ## The mirror was terminated successfully
-        assert(ret)
-
-        config.bash_mirror.wait()
     log("PaSh daemon shut down successfully...")
 
 def main():
