@@ -247,13 +247,6 @@ def lookup_variable(var, _lookup_config):
     ##           eval "$cmd"
 
 
-    ## Only check the cache if we are using bash mirror
-    if config.pash_args.expand_using_bash_mirror:
-        ## If we find the value in the cache just use it
-        var_value = config.get_from_variable_cache(var)
-        if var_value is not None:
-            return None, var_value
-
     if(var == '@'):
         argument_values = lookup_variable_inner_core('pash_input_args')
         expanded_var = " ".join(argument_values)
@@ -282,10 +275,6 @@ def lookup_variable(var, _lookup_config):
         ## TODO: We can pull this to expand any string.
         expanded_var = lookup_variable_inner(var)
     
-    ## Add it to the cache to find it next time
-    if config.pash_args.expand_using_bash_mirror:
-        config.add_to_variable_cache(var, expanded_var)
-
     return None, expanded_var
 
 ## Looksup a variable and flattens it if it is an array 
@@ -307,12 +296,9 @@ def lookup_variable_inner_core(varname):
 
 
 def lookup_variable_inner_unsafe(varname):
-    if config.pash_args.expand_using_bash_mirror:
-        return config.query_expand_variable_bash_mirror(varname)
-    else:
-        ## TODO: Is it in there? If we have -u and it is in there.
-        _type, value = config.config['shell_variables'].get(varname, [None, None])
-        return value
+    ## TODO: Is it in there? If we have -u and it is in there.
+    _type, value = config.config['shell_variables'].get(varname, [None, None])
+    return value
 
 ## This function checks if the -u flag is set
 def is_u_set():
