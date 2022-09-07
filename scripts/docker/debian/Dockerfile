@@ -1,7 +1,8 @@
 FROM debian:10
-
 SHELL ["/bin/bash", "-c"]
-RUN apt-get update -y && apt-get install -y git sudo
+## Necessary to avoid interactive responses in installations
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -y && apt-get install -y git
 
 ## Install pyenv to install python3.8
 RUN apt install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl
