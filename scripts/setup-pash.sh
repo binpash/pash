@@ -2,6 +2,8 @@
 
 set -e
 
+## TODO: Maybe hide stdout and stderr to logs by default and only if debug flag exists show
+
 cd "$(dirname "$0")"
 # set PASH_TOP
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
@@ -20,12 +22,15 @@ mkdir -p $PYTHON_PKG_DIR
 
 echo "Installing python dependencies..."
 
-python3 -m pip install jsonpickle --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_jsonpickle.log
 python3 -m pip install graphviz --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_graphviz.log
-python3 -m pip install numpy --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_numpy.log
-python3 -m pip install matplotlib --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_matplotlib.log
 # TODO 2022-08-01 if libdash wheel isn't available, we need autmake etc.
 python3 -m pip install libdash --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_libdash.log
+
+## numpy and matplotlib are only needed to generate the evaluation plots so they should not be in the main path
+if [[ "$install_eval" == 1 ]];  then
+    python3 -m pip install numpy --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_numpy.log
+    python3 -m pip install matplotlib --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_matplotlib.log
+fi
 
 # clean the python packages
 cd $PYTHON_PKG_DIR
@@ -42,10 +47,10 @@ echo "Building runtime tools..."
 cd "$PASH_TOP/runtime/"
 case "$distro" in
     freebsd*) 
-        gmake &> $LOG_DIR/make.log
+        gmake #&> $LOG_DIR/make.log
         ;;
     *)
-        make &> $LOG_DIR/make.log
+        make #&> $LOG_DIR/make.log
         if [ -f /.dockerenv ]; then
             # issue with docker only
             python3 -m pip install -U --force-reinstall pip
