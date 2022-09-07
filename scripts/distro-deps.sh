@@ -14,9 +14,10 @@ read_cmd_args $@
 cd $PASH_TOP
 
 # if we aren't running in docker, use sudo to install packages
-if [ ! -f /.dockerenv ]; then
-    export SUDO="sudo"
-fi  
+if ! ( isDockerBuildkit || isDocker || isDockerContainer )
+then
+  export SUDO="sudo"
+fi
 
 if type lsb_release >/dev/null 2>&1 ; then
     distro=$(lsb_release -i -s)

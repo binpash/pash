@@ -174,3 +174,17 @@ append_pash_to_rc() {
       fi
   done
 }
+
+isDocker(){
+    local cgroup=/proc/1/cgroup
+    test -f $cgroup && [[ "$(<$cgroup)" = *:cpuset:/docker/* ]]
+}
+
+isDockerBuildkit(){
+    local cgroup=/proc/1/cgroup
+    test -f $cgroup && [[ "$(<$cgroup)" = *:cpuset:/docker/buildkit/* ]]
+}
+
+isDockerContainer(){
+    [ -e /.dockerenv ]
+}
