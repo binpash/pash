@@ -167,7 +167,12 @@ def parse_args():
     parser.add_argument("-x",
                         help="(experimental) prints commands and their arguments as they execute",
                         action="store_true")
-    
+    ## Deprecated argument... keeping here just to output the message
+    ## TODO: Do that with a custom argparse Action (KK: I tried and failed)
+    parser.add_argument("--expand_using_bash_mirror",
+                        help="DEPRECATED: instead of expanding using the internal expansion code, expand using a bash mirror process (slow)",
+                        action="store_true")
+
     config.add_common_arguments(parser)
     args = parser.parse_args()
     config.pash_args = args
@@ -185,6 +190,10 @@ def parse_args():
     for arg_name, arg_val in vars(args).items():
         log(arg_name, arg_val)
     log("-" * 40)
+
+    ## Print the deprecated argument
+    if args.expand_using_bash_mirror:
+        log("WARNING: Option --expand_using_bash_mirror is deprecated and is *ignored*.", level=0)
 
     ## TODO: We might need to have a better default (like $0 of pa.sh)
     shell_name = "pash"
