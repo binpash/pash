@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
-# TODO: this should be ran before cloning---otherwise cloning fails.
-# It should also set up words etc.
-
 cd $(dirname $0)
+
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 . "$PASH_TOP/scripts/utils.sh"
 
@@ -15,13 +13,11 @@ fi
 read_cmd_args $@
 cd $PASH_TOP
 
-LOG_DIR=install_logs
-mkdir -p $LOG_DIR
-
 # if we aren't running in docker, use sudo to install packages
-if [ ! -f /.dockerenv ]; then
-    export SUDO="sudo"
-fi  
+if ! ( isDockerBuildkit || isDocker || isDockerContainer )
+then
+  export SUDO="sudo"
+fi
 
 if type lsb_release >/dev/null 2>&1 ; then
     distro=$(lsb_release -i -s)
@@ -33,7 +29,6 @@ fi
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 # compile the list of the shared required packages
 pkgs="bc curl git graphviz python sudo wget"
-#libdash_pkgs="automake gcc libtool m4"
 # now do different things depending on distro
 case "$distro" in
     ubuntu*)  
@@ -44,16 +39,16 @@ case "$distro" in
         fi      
         echo "Running preparation apt install:"
         echo "|-- running apt update..."
-        $SUDO apt update &> $LOG_DIR/apt_update.log
+        $SUDO apt update
         echo "|-- running apt install..."
-        $SUDO apt install -y $pkgs &>> $LOG_DIR/apt_install.log
+        $SUDO apt install -y $pkgs
         if [[ "$optimized_agg_flag" == 1 ]];  then
             echo "|-- installing g++-10..."
-            $SUDO apt install software-properties-common -y &> $LOG_DIR/apt_install.log
-            $SUDO add-apt-repository ppa:ubuntu-toolchain-r/test -y  &> $LOG_DIR/apt_install.log
-            $SUDO apt install g++-10 -y &> $LOG_DIR/apt_install.log
-            $SUDO update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100 &> $LOG_DIR/apt_install.log
-            $SUDO update-alternatives --set g++ /usr/bin/g++-10 &> $LOG_DIR/apt_install.log
+            $SUDO apt install software-properties-common -y
+            $SUDO add-apt-repository ppa:ubuntu-toolchain-r/test -y
+            $SUDO apt install g++-10 -y
+            $SUDO update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
+            $SUDO update-alternatives --set g++ /usr/bin/g++-10
         fi
         ;;
     debian*)
@@ -64,9 +59,9 @@ case "$distro" in
         fi
         echo "Running preparation apt install:"
         echo "|-- running apt update..."
-        $SUDO apt-get update &> $LOG_DIR/apt_update.log
+        $SUDO apt-get update
         echo "|-- running apt install..."
-        $SUDO apt-get install -y $pkgs &> $LOG_DIR/apt_install.log
+        $SUDO apt-get install -y $pkgs
         ;;
     fedora*) 
         pkgs="$pkgs autoconf diffutils gcc-c++ glibc-langpack-en hostname libjpeg-devel make nc pip procps python-devel python3-pip python3-setuptools python3-setuptools python3-testresources zlib-devel"
@@ -75,7 +70,7 @@ case "$distro" in
             exit 0
         fi
         echo "|-- running dnf install...."
-        $SUDO dnf install -y $pkgs &> $LOG_DIR/dnf_install.log
+        $SUDO dnf install -y $pkgs
         ;;
     arch*) 
         pkgs="$pkgs autoconf inetutils libffi make openbsd-netcat pkg-config python-pip"
@@ -84,9 +79,9 @@ case "$distro" in
             exit 0
         fi
         echo "Updating mirrors"
-        $SUDO pacman -Sy &> $LOG_DIR/pacman_update.log
+        $SUDO pacman -Sy
         echo "|-- running pacman install...."
-        yes | $SUDO pacman -S $pkgs &> $LOG_DIR/pacman_install.log
+        yes | $SUDO pacman -S $pkgs
         ;;
     freebsd*)
         pkgs="$pkgs autoconf gmake gsed libffi py38-pip"
@@ -95,7 +90,7 @@ case "$distro" in
             exit 0
         fi
         echo "Updating mirrors"
-        $SUDO pkg update &> $LOG_DIR/pkg_update.log
+        $SUDO pkg update
         echo "|-- running pkg install...."
         # TODO add python3-testresources dep
         yes | $SUDO pkg install $pkgs
