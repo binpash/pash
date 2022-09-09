@@ -26,6 +26,10 @@ python3 -m pip install graphviz --root $PYTHON_PKG_DIR --ignore-installed #&> $L
 # TODO 2022-08-01 if libdash wheel isn't available, we need autmake etc.
 python3 -m pip install libdash --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_libdash.log
 
+## TODO: Fix a specific version somehow, maybe commit?
+git clone https://github.com/binpash/annotations.git ./annotations_repo
+python3 -m pip install ./annotations_repo --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_annotations.log
+
 ## numpy and matplotlib are only needed to generate the evaluation plots so they should not be in the main path
 if [[ "$install_eval" == 1 ]];  then
     python3 -m pip install numpy --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_numpy.log

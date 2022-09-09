@@ -4,6 +4,8 @@ import pickle
 import traceback
 from datetime import datetime
 
+from annotation_generation_new.datatypes.parallelizability.AggregatorKind import AggregatorKindEnum
+
 import config
 from ir import *
 from ast_to_ir import compile_asts
@@ -14,6 +16,7 @@ from util import *
 
 from definitions.ir.aggregator_node import *
 
+from definitions.ir.dfg_node import DFGNode
 from definitions.ir.nodes.eager import *
 from definitions.ir.nodes.pash_split import *
 
@@ -212,13 +215,12 @@ def optimize_irs(asts_and_irs, args, compiler_config):
 
             # log(ir_node)
             # with cProfile.Profile() as pr:
-            distributed_graph = naive_parallelize_stateless_nodes_bfs(ast_or_ir, compiler_config.width,
+            distributed_graph = choose_and_apply_parallelizing_transformations(ast_or_ir, compiler_config.width,
                                                                       runtime_config['batch_size'],
                                                                       args.no_cat_split_vanish,
                                                                       args.r_split, args.r_split_batch_size)
             # pr.print_stats()
-            # log(distributed_graph)
-            
+
             # Eagers are added in remote notes when using distributed exec
             if(not args.no_eager and not args.distributed_exec): 
                 eager_distributed_graph = add_eager_nodes(distributed_graph, args.dgsh_tee)
@@ -230,7 +232,6 @@ def optimize_irs(asts_and_irs, args, compiler_config):
 
             ## Print statistics of output nodes
             print_graph_statistics(eager_distributed_graph)
-            # log(eager_distributed_graph)
 
             optimized_asts_and_irs.append(eager_distributed_graph)
         else:
@@ -251,6 +252,62 @@ def print_graph_statistics(graph):
     log("Cat nodes:", len(cat_nodes))
     log("Eager nodes:", len(eager_nodes))
 
+
+def choose_and_apply_parallelizing_transformations(graph, fan_out, batch_size, no_cat_split_vanish,
+                                                   r_split_flag, r_split_batch_size):
+    parallelizer_map = choose_parallelizing_transformations(graph, r_split_flag)
+    apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, no_cat_split_vanish,
+                                                   r_split_flag, r_split_batch_size)
+    return graph
+
+
+def choose_parallelizing_transformations(graph, r_split_flag): # shall return map
+    source_node_ids = graph.source_nodes()
+    parallelizer_map = {}
+    workset = source_node_ids
+    visited = set()
+    # We apply a modified BFS such that we ensure that we know which parallelizer was chosen for all previous nodes
+    # and assume that the decision for any subsequent node will exploit any potential synergy effects
+    while (len(workset) > 0):
+        curr_id = workset.pop(0)
+        assert(isinstance(curr_id, int))
+        all_previous_nodes_visited = all(prev in visited for prev in graph.get_previous_nodes(curr_id))
+        if not all_previous_nodes_visited:
+            workset.append(curr_id)
+        elif not curr_id in visited:
+            next_node_ids = graph.get_next_nodes(curr_id)
+            workset += next_node_ids
+            parallelizer_map[curr_id] = choose_parallelizing_transformation(curr_id, graph, r_split_flag)
+            visited.add(curr_id)
+    return parallelizer_map
+
+
+def choose_parallelizing_transformation(curr_id, graph, r_split_flag): # shall return map entry
+    # here we can implement more sophisticated techniques to decide how to parallelize
+    curr = graph.get_node(curr_id)
+    # we ignore `r_split_flag` here as we want to exploit r_merge followed by commutative command
+    # which only works if the a parallelizer for the latter is chosen (sort does not have RR-parallelizer)
+    # we prioritize round robin over round robin with unwrap over consecutive chunks:
+    list_all_parallelizers_in_priority = [curr.get_option_implemented_round_robin_parallelizer(),
+                                          curr.get_option_implemented_round_robin_with_unwrap_parallelizer(),
+                                          curr.get_option_implemented_consecutive_chunks_parallelizer()]
+    return next((item for item in list_all_parallelizers_in_priority if item is not None), None)
+    # When `r_split_flag` should be used:
+    # if r_split_flag:
+    #     option_parallelizer = curr.get_option_implemented_round_robin_parallelizer()
+    # else:
+    #     option_parallelizer = curr.get_option_implemented_consecutive_chunks_parallelizer()
+    # return option_parallelizer
+
+
+def apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, no_cat_split_vanish,
+                                        r_split_flag, r_split_batch_size):
+    fileIdGen = graph.get_file_id_gen()
+    node_id_non_none_parallelizer_list = [(node_id, parallelizer) for (node_id, parallelizer) in parallelizer_map.items()
+                                                                  if parallelizer is not None]
+    for (node_id, parallelizer) in node_id_non_none_parallelizer_list:
+        graph.apply_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out,
+                                            batch_size, no_cat_split_vanish, r_split_batch_size)
 ## This is a simplistic planner, that pushes the available
 ## parallelization from the inputs in file stateless commands. The
 ## planner starts from the sources of the graph, and pushes
@@ -260,6 +317,7 @@ def print_graph_statistics(graph):
 ## be scheduled depending on the available computational resources.
 def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_split_vanish,
                                           r_split_flag, r_split_batch_size):
+    assert(False)
     source_node_ids = graph.source_nodes()
 
     ## Generate a fileIdGen from a graph, that doesn't clash with the
@@ -284,9 +342,10 @@ def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_spl
             next_node_ids = graph.get_next_nodes(curr_id)
             workset += next_node_ids
 
-            new_nodes = parallelize_cat(curr_id, graph, fileIdGen,
-                                        fan_out, batch_size, no_cat_split_vanish,
-                                        r_split_flag, r_split_batch_size)
+            # function application has side effects on graphs
+            new_nodes = parallelize_node(curr_id, graph, fileIdGen,
+                                         fan_out, batch_size, no_cat_split_vanish,
+                                         r_split_flag, r_split_batch_size)
 
             ## Assert that the graph stayed valid after the transformation
             ## TODO: Do not run this everytime in the loop if we are not in debug mode.
@@ -413,71 +472,128 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
 ## TODO: At the moment we greedily try to add r-splits if possible, so we need to have a better procedure of deciding whether to put them or not.
 ##       For example for non-commutative pure commands.
 
-## If the current command is a cat, and is followed by a node that
-## is either stateless or pure parallelizable, commute the cat
-## after the node.
-def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
-                    batch_size, no_cat_split_vanish, r_split_flag, r_split_batch_size):
+## This function takes a node (id) and parallelizes it
+def parallelize_node(curr_id, graph, fileIdGen, fan_out,
+                     batch_size, no_cat_split_vanish, r_split_flag, r_split_batch_size):
+    assert(False)
     curr = graph.get_node(curr_id)
     new_nodes_for_workset = []
 
-    # log("Check to parallelize curr:", curr)
+    # TODO: this whole fragment could be moved to the graph after picking a parallelizer
+    option_parallelizer_rr = curr.get_option_implemented_round_robin_parallelizer()
+    # for now, we use the `r_split_flag` here again:
+    if r_split_flag and option_parallelizer_rr is not None:
+        parallelizer_rr = option_parallelizer_rr
+        aggregator_spec = parallelizer_rr.get_aggregator_spec()
+        aggregator_kind = aggregator_spec.get_kind()
+        if aggregator_kind == AggregatorKindEnum.CONCATENATE: # is turned into an r_merge
+            streaming_inputs = curr.get_streaming_inputs()
+            assert(len(streaming_inputs) == 1)
+            streaming_input = streaming_inputs[0]
+            configuration_inputs = curr.get_configuration_inputs()
+            assert(len(configuration_inputs) == 0)
+            streaming_outputs = curr.get_output_list()
+            assert(len(streaming_outputs) == 1)
+            streaming_output = streaming_outputs[0]
+            original_cmd_invocation_with_io_vars = curr.cmd_invocation_with_io_vars
 
-    ## Get next nodes in the graph
-    next_node_ids = graph.get_next_nodes(curr_id)
+            graph.remove_node(curr_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
 
-    ## We try to parallelize for all the edges that go out from the current node and into another node
-    for next_node_id in next_node_ids:
-        next_node = graph.get_node(next_node_id)
-        # log("|-- its next node is:", next_node)
-        new_curr = curr
-        new_curr_id = curr_id
+            out_split_ids = graph.generate_ephemeral_edges(fileIdGen, fan_out)
+            splitter = r_split.make_r_split(streaming_input, out_split_ids, r_split_batch_size)
+            graph.set_edge_to(streaming_input, splitter.get_id())
+            for out_split_id in out_split_ids:
+                graph.set_edge_from(out_split_id, splitter.get_id())
+            graph.add_node(splitter)
 
-        ## If the next node can be parallelized, then we should try to parallelize
-        ##
-        ## If the user has provided the r_split flag (they want to use r_split), 
-        ## then parallelizability depends on commutativity (if a command is pure parallelizable but not commutative)
-        ## then it can't be parallelized. Therefore we do not parallelize non-commutative pure parallelizable commands.
-        ##
-        ## TODO: We need to extend PaSh to have a mode where it can have both r_splits and auto_split if a command is not
-        ##       commutative. This can be added as an option to the r_split flag, e.g., r_split="no" | "yes" | "optimal".
-        if(next_node.is_parallelizable()
-           and not isinstance(next_node, Cat)
-           and (not r_split_flag
-                or (next_node.is_commutative()
-                    or next_node.is_stateless()))):
-            ## If the current node is not a merger, it means that we need
-            ## to generate a merger using a splitter (auto_split or r_split)
-            if (isinstance(curr, HDFSCat) and config.pash_args.distributed_exec):
-                new_curr = split_hdfs_cat_input(curr, next_node, graph, fileIdGen) # Cat merger
-                new_curr_id = new_curr.get_id()
-            ## no_cat_split_vanish shortcircuits this and inserts a split even if the current node is a cat.
-            elif (fan_out > 1
-               and (no_cat_split_vanish
-                    or (not (isinstance(curr, Cat)
-                             or isinstance(curr, r_merge.RMerge))
-                        or ((isinstance(curr, Cat)
-                             or isinstance(curr, r_merge.RMerge))
-                            and len(curr.get_input_list()) < fan_out)))):
-                new_merger = split_command_input(next_node, graph, fileIdGen, fan_out, batch_size, r_split_flag, r_split_batch_size)
-                ## After split has succeeded we know that the curr node (previous of the next)
-                ## has changed. Therefore we need to retrieve it again.
-                if (not new_merger is None):
-                    new_curr_id = new_merger.get_id()
-                    new_curr = new_merger
-                    assert(isinstance(new_curr, Cat)
-                           or isinstance(new_curr, r_merge.RMerge))
+            in_mapper_ids = out_split_ids
+            out_mapper_ids = graph.generate_ephemeral_edges(fileIdGen, fan_out)
+            zip_mapper_in_out_ids = zip(in_mapper_ids, out_mapper_ids)
 
-            ## If curr is cat, it means that split suceeded, or it was
-            ## already a cat. In any case, we can proceed with the
-            ## parallelization.
-            ##
-            ## Both Cat and RMerge can be "commuted" with parallelizable nodes
-            if(isinstance(new_curr, Cat)
-               or isinstance(new_curr, r_merge.RMerge)):
-                new_nodes = check_parallelize_dfg_node(new_curr_id, next_node_id, graph, fileIdGen)
-                # log("New nodes:", new_nodes)
-                new_nodes_for_workset += new_nodes
+            all_mappers = []
+            for (in_id, out_id) in zip_mapper_in_out_ids:
+                # BEGIN: these 4 lines could be refactored to be a function in graph such that
+                # creating end point of edges and the creation of edges is not decoupled
+                mapper_cmd_inv = parallelizer_rr.get_actual_mapper(original_cmd_invocation_with_io_vars, in_id, out_id)
+                mapper = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(mapper_cmd_inv)
+                # add r_wrap here:
+                mapper_r_wrapped = r_wrap.wrap_node(mapper, graph.edges)
+                graph.set_edge_to(in_id, mapper_r_wrapped.get_id())
+                graph.set_edge_from(out_id, mapper_r_wrapped.get_id())
+                # END
+                all_mappers.append(mapper_r_wrapped)
+            for new_node in all_mappers:
+                graph.add_node(new_node)
+
+            in_aggregator_ids = out_mapper_ids
+            out_aggregator_id = streaming_output
+            aggregator = r_merge.make_r_merge_node(in_aggregator_ids, out_aggregator_id)
+            for in_aggregator_id in in_aggregator_ids:
+                graph.set_edge_to(in_aggregator_id, aggregator.get_id())
+            graph.set_edge_from(streaming_output, aggregator.get_id())
+            all_aggregators = [aggregator]
+            ## Add the merge commands in the graph
+            for new_node in all_aggregators:
+                graph.add_node(new_node)
+    elif option_parallelizer_rr is not None: # do consecutive chunks
+        # TODO: we do consecutive chunks here but from a rr splitter
+        parallelizer_rr = option_parallelizer_rr
+        streaming_inputs = curr.get_streaming_inputs()
+        assert(len(streaming_inputs) == 1)
+        streaming_input = streaming_inputs[0]
+        configuration_inputs = curr.get_configuration_inputs()
+        assert(len(configuration_inputs) == 0)
+        streaming_outputs = curr.get_output_list()
+        assert(len(streaming_outputs) == 1)
+        streaming_output = streaming_outputs[0]
+        original_cmd_invocation_with_io_vars = curr.cmd_invocation_with_io_vars
+
+        graph.remove_node(curr_id) # remove it here already as as we need to remove edge end points ow. to avoid disconnecting graph to avoid disconnecting graph
+
+        out_split_ids = graph.generate_ephemeral_edges(fileIdGen, fan_out)
+        splitter = pash_split.make_split_file(streaming_input, out_split_ids)
+        graph.set_edge_to(streaming_input, splitter.get_id())
+        for out_split_id in out_split_ids:
+            graph.set_edge_from(out_split_id, splitter.get_id())
+        graph.add_node(splitter)
+
+        in_mapper_ids = out_split_ids
+        out_mapper_ids = graph.generate_ephemeral_edges(fileIdGen, fan_out)
+        zip_mapper_in_out_ids = zip(in_mapper_ids, out_mapper_ids)
+
+        all_mappers = []
+        for (in_id, out_id) in zip_mapper_in_out_ids:
+            # BEGIN: these 4 lines could be refactored to be a function in graph such that
+            # creating end point of edges and the creation of edges is not decoupled
+            mapper_cmd_inv = parallelizer_rr.get_actual_mapper(original_cmd_invocation_with_io_vars, in_id, out_id)
+            mapper = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(mapper_cmd_inv)
+            graph.set_edge_to(in_id, mapper.get_id())
+            graph.set_edge_from(out_id, mapper.get_id())
+            # END
+            all_mappers.append(mapper)
+        for new_node in all_mappers:
+            graph.add_node(new_node)
+
+        in_aggregator_ids = out_mapper_ids
+        out_aggregator_id = streaming_output
+        aggregator_spec = parallelizer_rr.get_aggregator_spec()
+        aggregator_kind = aggregator_spec.get_kind()
+        if aggregator_kind == AggregatorKindEnum.CONCATENATE or aggregator_kind == AggregatorKindEnum.CUSTOM_N_ARY:
+            aggregator_cmd_inv = parallelizer_rr.get_actual_aggregator(original_cmd_invocation_with_io_vars, in_aggregator_ids, out_aggregator_id)
+            aggregator = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(aggregator_cmd_inv)
+            for in_aggregator_id in in_aggregator_ids:
+                graph.set_edge_to(in_aggregator_id, aggregator.get_id())
+            graph.set_edge_from(streaming_output, aggregator.get_id())
+            all_aggregators = [aggregator]
+            ## Add the merge commands in the graph
+            for new_node in all_aggregators:
+                graph.add_node(new_node)
+        elif aggregator_kind == AggregatorKindEnum.CUSTOM_2_ARY:
+            # TODO: we simplify and assume that every mapper produces a single output for now:
+            map_in_aggregator_ids = [[id] for id in in_aggregator_ids]
+            graph.create_generic_aggregator_tree(original_cmd_invocation_with_io_vars, parallelizer_rr, map_in_aggregator_ids, out_aggregator_id, fileIdGen)
+        else:
+            raise Exception("aggregator kind not yet implemented")
 
     return new_nodes_for_workset
 
@@ -491,6 +607,7 @@ def parallelize_cat(curr_id, graph, fileIdGen, fan_out,
 ##
 ## TODO: We need to check if the previous node is a cat or a merge
 def check_parallelize_dfg_node(merger_id, node_id, graph, fileIdGen):
+    assert(False)
 
     ## Get merger inputs (cat or r_merge).
     merger_input_edge_ids = graph.get_node_input_ids(merger_id)
@@ -511,6 +628,7 @@ def check_parallelize_dfg_node(merger_id, node_id, graph, fileIdGen):
     return new_nodes
 
 def parallelize_dfg_node(old_merger_id, node_id, graph, fileIdGen):
+    assert(False)
     node = graph.get_node(node_id)
     assert(node.is_parallelizable())
 
@@ -582,28 +700,24 @@ def parallelize_dfg_node(old_merger_id, node_id, graph, fileIdGen):
 ##
 ## TODO: Make that generic to work through annotations
 def create_merge_commands(curr, new_output_ids, fileIdGen):
+    assert(False)
     if(str(curr.com_name) == "uniq"):
         return create_uniq_merge_commands(curr, new_output_ids, fileIdGen)
     else:
         return create_generic_aggregator_tree(curr, new_output_ids, fileIdGen)
 
-## This is a function that creates a reduce tree for a generic function
-def create_generic_aggregator_tree(curr, new_output_ids, fileIdGen):
-    ## The Aggregator node takes a sequence of input ids and an output id
-    output = create_reduce_tree(lambda in_ids, out_ids: AggregatorNode(curr, in_ids, out_ids),
-                                new_output_ids, fileIdGen)
-    return output
-
 ## TODO: These must be generated using some file information
 ##
 ## TODO: Find a better place to put these functions
 def create_sort_merge_commands(curr, new_output_ids, fileIdGen):
+    assert(False)
     output = create_reduce_tree(lambda ids: SortGReduce(curr, ids),
                                 new_output_ids, fileIdGen)
     return output
 
 ## Instead of creating a tree, we just create a single level reducer for uniq
 def create_uniq_merge_commands(curr, new_output_ids, fileIdGen):
+    assert(False)
     ## Make an intermediate cat node
     intermediate_fid = fileIdGen.next_ephemeral_file_id()
     intermediate_id = intermediate_fid.get_ident()
@@ -625,61 +739,6 @@ def create_uniq_merge_commands(curr, new_output_ids, fileIdGen):
 
     return ([new_cat, node], [intermediate_fid, new_out_fid], new_out_id)
 
-## This function creates the reduce tree. Both input and output file
-## ids must be lists of lists, as the input file ids and the output
-## file ids might contain auxiliary files.
-def create_reduce_tree(init_func, input_ids, fileIdGen):
-    tree = []
-    new_edges = []
-    curr_ids = input_ids
-    while(len(curr_ids) > 1):
-        new_level, curr_ids, new_fids = create_reduce_tree_level(init_func, curr_ids, fileIdGen)
-        tree += new_level
-        new_edges += new_fids
-
-    ## Find the final output
-    final_output_id = curr_ids[0][0]
-
-    ## Drain the final auxiliary outputs
-    final_auxiliary_outputs = curr_ids[0][1:]
-    drain_fids = [fileIdGen.next_file_id()
-                  for final_auxiliary_output in final_auxiliary_outputs]
-    for drain_fid in drain_fids:
-        drain_fid.set_resource(FileResource(Arg(string_to_argument('/dev/null'))))
-        new_edges.append(drain_fid)
-    drain_ids = [fid.get_ident() for fid in drain_fids]
-
-    drain_cat_commands = [make_cat_node([final_auxiliary_output], drain_id)
-                          for final_auxiliary_output, drain_id in zip(final_auxiliary_outputs, drain_ids)]
-    return (tree + drain_cat_commands), new_edges, final_output_id
-
-
-## This function creates a level of the reduce tree. Both input and
-## output file ids must be lists of lists, as the input file ids and
-## the output file ids might contain auxiliary files.
-def create_reduce_tree_level(init_func, input_ids, fileIdGen):
-    if(len(input_ids) % 2 == 0):
-        output_ids = []
-        even_input_ids = input_ids
-    else:
-        output_ids = [input_ids[0]]
-        even_input_ids = input_ids[1:]
-
-    new_fids = []
-    level = []
-    for i in range(0, len(even_input_ids), 2):
-        new_out_fids = [fileIdGen.next_ephemeral_file_id() for _ in input_ids[i]]
-        new_fids += new_out_fids
-        new_out_ids = [fid.get_ident() for fid in new_out_fids]
-        output_ids.append(new_out_ids)
-        new_node = create_reduce_node(init_func, even_input_ids[i:i+2], new_out_ids)
-        level.append(new_node)
-    return (level, output_ids, new_fids)
-
-## This function creates one node of the reduce tree
-def create_reduce_node(init_func, input_ids, output_ids):
-    return init_func(flatten_list(input_ids), output_ids)
-
 
 ## This functions adds an eager on a given edge.
 def add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee):
@@ -692,7 +751,12 @@ def add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_
     else:
         ## TODO: Remove the line below if eager creates its intermediate file
         ##       on its own.
+        # TODO: find a better solution to make unique numbers, currently: set to max-value + 1
+        intermediateFileIdGen.bump_counter_to_value_of(fileIdGen)
         intermediate_fid = intermediateFileIdGen.next_temporary_file_id()
+        # TODO: this edge will never have to since eager is set to output even though it reads from it
+        graph.add_edge(intermediate_fid)
+        fileIdGen.bump_counter_to_value_of(intermediateFileIdGen)
 
         eager_exec_path = '{}/{}'.format(config.PASH_TOP, runtime_config['eager_executable_path'])
 
@@ -749,18 +813,18 @@ def add_eager_nodes(graph, use_dgsh_tee):
                         add_eager(curr_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
 
             if(isinstance(curr, Split)):
-                eager_input_ids = curr.outputs[:-1]
+                eager_input_ids = curr.get_output_list()[:-1]
                 for edge_id in eager_input_ids:
                     add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
 
             ## Add an eager after r_unwrap            
             if(isinstance(curr, r_unwrap.RUnwrap)):
-                eager_input_id = curr.outputs[0]
+                eager_input_id = curr.get_output_list()[0]
                 add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
 
             ## Add an eager after r_split
             if(isinstance(curr, r_split.RSplit)):
-                eager_input_ids = curr.outputs
+                eager_input_ids = curr.get_output_list()
                 for edge_id in eager_input_ids:
                     add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
 
