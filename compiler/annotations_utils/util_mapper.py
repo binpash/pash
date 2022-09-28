@@ -3,7 +3,7 @@
 # imports from annotation framework
 # for typing
 # for use
-from annotation_generation_new.datatypes.parallelizability.Mapper import Mapper
+from pash_annotations.annotation_generation.datatypes.parallelizability.Mapper import Mapper
 
 from definitions.ir.dfg_node import DFGNode
 from annotations_utils.util_cmd_invocations import get_command_invocation_prefix_from_dfg_node

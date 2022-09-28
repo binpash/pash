@@ -1,5 +1,5 @@
-from datatypes_new.AccessKind import AccessKind, make_stream_output, make_stream_input, make_other_output
-from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+from pash_annotations.datatypes.AccessKind import AccessKind, make_stream_output, make_stream_input, make_other_output
+from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 from definitions.ir.dfg_node import *
 
