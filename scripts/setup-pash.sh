@@ -27,8 +27,7 @@ python3 -m pip install graphviz --root $PYTHON_PKG_DIR --ignore-installed #&> $L
 python3 -m pip install libdash --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_libdash.log
 
 ## TODO: Fix a specific version somehow, maybe commit?
-git clone https://github.com/binpash/annotations.git ./annotations_repo
-python3 -m pip install ./annotations_repo --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_annotations.log
+python3 -m pip install pash-annotations --root $PYTHON_PKG_DIR --ignore-installed #&> $LOG_DIR/pip_install_libdash.log
 
 ## numpy and matplotlib are only needed to generate the evaluation plots so they should not be in the main path
 if [[ "$install_eval" == 1 ]];  then
