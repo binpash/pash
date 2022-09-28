@@ -1,4 +1,4 @@
-from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 from definitions.ir.dfg_node import DFGNode
 
 class Cat(DFGNode):

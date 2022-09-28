@@ -1,8 +1,8 @@
 import os
 
-from datatypes_new.AccessKind import AccessKind, make_stream_input, make_stream_output
-from datatypes_new.BasicDatatypes import Operand, Flag
-from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+from pash_annotations.datatypes.AccessKind import AccessKind, make_stream_input, make_stream_output
+from pash_annotations.datatypes.BasicDatatypes import Operand, Flag
+from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 import config
 
