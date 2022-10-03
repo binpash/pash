@@ -44,7 +44,7 @@ This repo hosts the core `pash` development. The structure is as follows:
 ## Community & More
 
 Chat:
-* [Discord Server](ttps://discord.com/channels/947328962739187753/) ([Invite](http://join.binpa.sh/))
+* [Discord Server](ttps://discord.com/channels/947328962739187753/) ([Invite](https://discord.gg/6vS9TB97be))
 
 Mailing Lists:
 * [pash-devs](https://groups.google.com/g/pash-devs): Join this mailing list for discussing all things `pash`
