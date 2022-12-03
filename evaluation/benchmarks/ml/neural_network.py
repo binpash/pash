@@ -13,13 +13,25 @@ OUTPUT_SIZE  = 10
 
 # Neural network characteristics
 HIDDEN_LAYER_SIZES = [128, 64]
-BATCH_SIZE = 64
+BATCH_SIZE = 256
 EPOCHS = 15
 
 # Paths for storing datasets (to not re-download it every time)
 DATASETS_PATH = pathlib.Path(__file__).parent.resolve() / 'datasets'
 TRAINSET_PATH = DATASETS_PATH / 'train.txt' 
-TESTSET_PATH = DATASETS_PATH / 'train.txt' 
+TESTSET_PATH = DATASETS_PATH / 'train.txt'
+
+USE_GPU = True
+
+def set_device():
+    if torch.cuda.is_available() and USE_GPU:
+        print('Using Cuda')
+        return torch.device('cuda:0')
+    else:
+        print('Using CPU')
+        return torch.device('cpu')
+
+DEVICE = set_device()
 
 def load_data(batch_size: int):
     """downloads and processes the MNIST handwriting dataset
@@ -54,7 +66,6 @@ def train_batch(batch, labels):
     Returns:
         float: the loss value from training this batch
     
-    TODO: implement GPU utilization
     Currently relies on global variables for convenience. Should consider taking
     them as arguments if this were to be a separate script
     """
@@ -74,13 +85,14 @@ def train_batch(batch, labels):
     optimizer.step()
 
     return loss.item()
+
 # Set up the model
 model = nn.Sequential(nn.Linear(INPUT_SIZE, HIDDEN_LAYER_SIZES[0]), 
                       nn.ReLU(),
                       nn.Linear(HIDDEN_LAYER_SIZES[0], HIDDEN_LAYER_SIZES[1]),
                       nn.ReLU(),
                       nn.Linear(HIDDEN_LAYER_SIZES[1], OUTPUT_SIZE),
-                      nn.LogSoftmax(dim=1))
+                      nn.LogSoftmax(dim=1)).to(device=DEVICE)
 # negative log-likelihood loss
 criterion = nn.NLLLoss()
 optimizer = optim.SGD(model.parameters(), lr=0.004, momentum=0.9)
@@ -93,21 +105,25 @@ for n in range(EPOCHS):
     running_loss = 0
     # iterates over each batch in the train dataset
     for images, labels in train_loader:
-        running_loss += train_batch(batch=images, labels=labels)
+        running_loss += train_batch(batch=images.to(device=DEVICE), 
+                                    labels=labels.to(device=DEVICE))
     print(f'Epoch {n} Loss: {running_loss / len(train_loader)}')
-    print(f'Training time: {time() - time_0}')
+print(f'Training time: {time() - time_0}')
 
 correct_count, all_count = 0, 0
 for images, labels in test_loader:
+    images = images.to(device=DEVICE)
+    labels = labels.to(device=DEVICE)
+
     for i, image in enumerate(images):
         image = image.view(1, 784)
         with torch.no_grad():
-            logps = model(image)
+            log_probabilities = model(image)
         
-        ps = torch.exp(logps)
-        probability = list(ps.numpy()[0])
+        probabilities = torch.exp(log_probabilities)
+        probability = list(probabilities.cpu().numpy()[0])
         predicted_label = probability.index(max(probability))
-        true_label = labels.numpy()[i]
+        true_label = labels.cpu().numpy()[i]
         if (true_label == predicted_label):
             correct_count += 1
         all_count += 1
