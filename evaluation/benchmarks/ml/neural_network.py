@@ -1,7 +1,7 @@
 import torch
+import sys
 
 from time import time
-
 
 import data_loader
 import network_generator
@@ -44,37 +44,18 @@ def train_batch(batch: torch.Tensor, labels: torch.Tensor, print_time) -> float:
     Currently relies on global variables for convenience. Should consider taking
     them as arguments if this were to be a separate script
     """
-    batch_start_time = time()
-
     # flattens size 28*28 matrix to length 784 array
     batch = batch.view(batch.shape[0], -1)
-    flatten_batch_time = time()
 
     # zero out gradients left over from previous iteration
     optimizer.zero_grad()
-    zero_grad_time = time()
-
     # potential for pipelining
     output = model(batch)
-    output_time = time()
     loss = criterion(output, labels)
-    loss_time = time()
-
     # back propagation
     loss.backward()
-    back_prop_time = time()
-
     # weight optimization
     optimizer.step()
-    optimizer_time = time()
-
-    if print_time:
-        print(f'flatten_batch_time: {flatten_batch_time - batch_start_time}')
-        print(f'zero_grad_time: {zero_grad_time - flatten_batch_time}')
-        print(f'output_time: {output_time - zero_grad_time}')
-        print(f'loss_time: {loss_time - output_time}')
-        print(f'back_prop_time: {back_prop_time - loss_time}')
-        print(f'optimizer_time: {optimizer_time - back_prop_time}')
 
     return loss.item()
 
@@ -90,7 +71,8 @@ def train_epoch(n: int, train_loader: torch.Tensor):
 def main():
     global model, criterion, optimizer, device
     device = set_device()
-    model, criterion, optimizer = network_generator.prepare_environment()
+
+    model, criterion, optimizer = network_generator.generate_network()
     train_loader, test_loader = data_loader.load_data(BATCH_SIZE)
 
     time_0 = time()
