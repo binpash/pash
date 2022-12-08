@@ -7,4 +7,3 @@ batch = batch.view(batch.shape[0], -1)
 
 output = model(batch)
 save(output, 'output.pt')
-print('output.pt')
