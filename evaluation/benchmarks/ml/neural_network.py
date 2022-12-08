@@ -1,6 +1,4 @@
 import torch
-import sys
-
 from time import time
 
 import data_loader
@@ -31,7 +29,7 @@ def set_device() -> torch.device:
         print('Using CPU')
         return torch.device('cpu')
 
-def train_batch(batch: torch.Tensor, labels: torch.Tensor, print_time) -> float:
+def train_batch(batch: torch.Tensor, labels: torch.Tensor) -> float:
     """ Trains the model for a batch of training data.
 
     Args:
@@ -46,7 +44,6 @@ def train_batch(batch: torch.Tensor, labels: torch.Tensor, print_time) -> float:
     """
     # flattens size 28*28 matrix to length 784 array
     batch = batch.view(batch.shape[0], -1)
-
     # zero out gradients left over from previous iteration
     optimizer.zero_grad()
     # potential for pipelining
@@ -56,7 +53,7 @@ def train_batch(batch: torch.Tensor, labels: torch.Tensor, print_time) -> float:
     loss.backward()
     # weight optimization
     optimizer.step()
-
+    
     return loss.item()
 
 def train_epoch(n: int, train_loader: torch.Tensor):
@@ -71,8 +68,10 @@ def train_epoch(n: int, train_loader: torch.Tensor):
 def main():
     global model, criterion, optimizer, device
     device = set_device()
-
     model, criterion, optimizer = network_generator.generate_network()
+    model = model.to(device=device)
+    criterion = criterion.to(device=device)
+    
     train_loader, test_loader = data_loader.load_data(BATCH_SIZE)
 
     time_0 = time()

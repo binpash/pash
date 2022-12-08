@@ -36,7 +36,7 @@ def main():
         exit(1)
     
     model, criterion, optimizer = generate_network()
-    save_network(model, criterion, optimizer, sys.argv[1])
+    save_network(model, criterion, optimizer, dest_dir=sys.argv[1])
 
 if (__name__ == '__main__'):
     main()
