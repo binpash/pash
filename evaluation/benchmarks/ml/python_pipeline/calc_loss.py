@@ -6,4 +6,6 @@ labels = load(sys.argv[2])
 criterion = load(sys.argv[3])
 loss_path = sys.argv[4]
 
-save(criterion(output, labels).backward(), loss_path)
+loss = criterion(output, labels)
+loss.backward()
+save(loss, loss_path)
