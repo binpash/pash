@@ -1,33 +1,37 @@
-n_epoch=$1
-intermediate_directory=$2
-python=`which python`
+#!/bin/bash
+set -e
 
-optimizer=${intermediate_directory}optimizer.pt
-model=${intermediate_directory}model.pt
-criterion=${intermediate_directory}criterion.pt
-output=${intermediate_directory}output.pt
-loss=${intermediate_directory}loss.pt
+N_EPOCH=${N_EPOCH:-15}
+INTERMED_DIR=${INTERMED_DIR:-$PASH_TOP/evaluation/benchmarks/ml/intermed/}
+SCRIPTS_DIR=${SCRIPTS_DIR:-$PASH_TOP/evaluation/benchmarks/ml/python_pipeline/}
 
-batches_dir=${intermediate_directory}batches/
-labels_dir=${intermediate_directory}labels/
+PYTHON=${PYTHON:-`which python`}
 
-scripts_dir=./python_pipeline/
+OPTIMIZER=${INTERMED_DIR}optimizer.pt
+MODEL=${INTERMED_DIR}model.pt
+CRITERION=${INTERMED_DIR}criterion.pt
+OUTPUT=${INTERMED_DIR}output.pt
+LOSS=${INTERMED_DIR}loss.pt
+BATCHES_DIR=${INTERMED_DIR}batches/
+LABELS_DIR=${INTERMED_DIR}labels/
 
-n_batches=`ls -v $batches_dir | tail -1 | tr -dc [:digit:]`
+
+N_BATCHES=`ls -v $BATCHES_DIR | tail -1 | tr -dc [:digit:]`
 
 train_batch() {
-    $python ${scripts_dir}zero_grad.py $optimizer
-    $python ${scripts_dir}feed_batch_to_model.py $model $1 $output
-    $python ${scripts_dir}calc_loss.py $output $2 $criterion $loss
-    $python ${scripts_dir}step_optimizer.py $optimizer
+    $PYTHON ${SCRIPTS_DIR}zero_grad.py $OPTIMIZER
+    $PYTHON ${SCRIPTS_DIR}feed_batch_to_model.py $MODEL $1 $OUTPUT
+    $PYTHON ${SCRIPTS_DIR}calc_loss.py $output $2 $CRITERION $LOSS
+    $PYTHON ${SCRIPTS_DIR}step_optimizer.py $OPTIMIZER
 }
 
-for epoch in $(seq 1 $n_epoch)
+for epoch in $(seq 1 $N_EPOCH)
 do   
     echo Epoch $epoch
-    for i in $(seq 1 $n_batches)
+    for i in $(seq 1 $N_BATCHES)
     do
-        echo $i
-        train_batch ${batches_dir}batch_$i.pt ${labels_dir}labels_$i.pt
+        train_batch ${BATCHES_DIR}batch_$i.pt ${LABELS_DIR}labels_$i.pt
     done
 done
+
+echo 'done'
