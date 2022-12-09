@@ -1,12 +1,9 @@
-import numpy as np
-import tensorflow
 from tensorflow import keras
 from keras import layers
 
 def generate_model():
     inputs = keras.Input(shape=(784,))
-    dense = layers.Dense(128, activation='relu')
-    x = dense(inputs)
+    x = layers.Dense(128, activation='relu')(inputs)
     x = layers.Dense(64, activation='relu')(x)
     outputs = layers.Dense(10)(x)
 
