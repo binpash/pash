@@ -1,8 +1,13 @@
-intermediate_directory=$1
-train_loader=./dataloader/train.pt
-python=`which python`
+#!/bin/bash
+set -e
 
-$python network_generator.py $intermediate_directory
-echo Finished generating network elements
+INTERMED_DIR=${INTERMED_DIR:-$PASH_TOP/evaluation/benchmarks/ml/intermed/}
 
-$python batchify.py $train_loader
+TRAIN_LOADER=${TRAIN_LOADER:-$PASH_TOP/evaluation/benchmarks/ml/dataloader/train.pt}
+PYTHON=${PYTHON:-`which python`}
+
+$PYTHON network_generator.py $INTERMED_DIR
+echo 'Finished generating network elements'
+
+$PYTHON batchify.py $TRAIN_LOADER
+echo 'Produced batches'
