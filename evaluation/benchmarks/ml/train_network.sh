@@ -21,7 +21,7 @@ N_BATCHES=`ls -v $BATCHES_DIR | tail -1 | tr -dc [:digit:]`
 train_batch() {
     $PYTHON ${SCRIPTS_DIR}zero_grad.py $OPTIMIZER
     $PYTHON ${SCRIPTS_DIR}feed_batch_to_model.py $MODEL $1 $OUTPUT
-    $PYTHON ${SCRIPTS_DIR}calc_loss.py $output $2 $CRITERION $LOSS
+    $PYTHON ${SCRIPTS_DIR}calc_loss.py $OUTPUT $2 $CRITERION $LOSS
     $PYTHON ${SCRIPTS_DIR}step_optimizer.py $OPTIMIZER
 }
 
