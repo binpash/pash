@@ -4,9 +4,7 @@ import warnings
 import numpy as np
 
 class MyLogisticRegression(_logistic.LogisticRegression):
-    def fit(self, X, y, sample_weight=None):
-        solver = _logistic._check_solver(self.solver, self.penalty, self.dual)
-
+    def warning_checks(self):
         if not isinstance(self.C, _logistic.numbers.Number) or self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)" % self.C)
         if self.penalty == "elasticnet":
@@ -46,56 +44,17 @@ class MyLogisticRegression(_logistic.LogisticRegression):
                 "Tolerance for stopping criteria must be positive; got (tol=%r)"
                 % self.tol
             )
+        return C_, penalty
 
-        if solver == "lbfgs":
-            _dtype = np.float64
-        else:
-            _dtype = [np.float64, np.float32]
-
-        X, y = self._validate_data(
-            X,
-            y,
-            accept_sparse="csr",
-            dtype=_dtype,
-            order="C",
-            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
-        )
-        _logistic.check_classification_targets(y)
-        self.classes_ = np.unique(y)
-
-        multi_class = _logistic._check_multi_class(self.multi_class, solver, len(self.classes_))
-
-        if solver == "liblinear":
-            if _logistic.effective_n_jobs(self.n_jobs) != 1:
-                warnings.warn(
-                    "'n_jobs' > 1 does not have any effect when"
-                    " 'solver' is set to 'liblinear'. Got 'n_jobs'"
-                    " = {}.".format(_logistic.effective_n_jobs(self.n_jobs))
-                )
-            self.coef_, self.intercept_, self.n_iter_ = _logistic._fit_liblinear(
-                X,
-                y,
-                self.C,
-                self.fit_intercept,
-                self.intercept_scaling,
-                self.class_weight,
-                self.penalty,
-                self.dual,
-                self.verbose,
-                self.max_iter,
-                self.tol,
-                self.random_state,
-                sample_weight=sample_weight,
-            )
-            return self
-
+    def set_max_squared_sum(solver, X):
         if solver in ["sag", "saga"]:
-            max_squared_sum = _logistic.row_norms(X, squared=True).max()
+            return _logistic.row_norms(X, squared=True).max()
         else:
-            max_squared_sum = None
+            return None
 
-        n_classes = len(self.classes_)
-        classes_ = self.classes_
+    def set_classes(self_classes):
+        n_classes = len(self_classes)
+        classes_ = self_classes
         if n_classes < 2:
             raise ValueError(
                 "This solver needs samples of at least 2 classes"
@@ -104,49 +63,14 @@ class MyLogisticRegression(_logistic.LogisticRegression):
                 % classes_[0]
             )
 
-        if len(self.classes_) == 2:
+        if len(self_classes) == 2:
             n_classes = 1
             classes_ = classes_[1:]
+        
+        return n_classes, classes_
 
-        if self.warm_start:
-            warm_start_coef = getattr(self, "coef_", None)
-        else:
-            warm_start_coef = None
-        if warm_start_coef is not None and self.fit_intercept:
-            warm_start_coef = np.append(
-                warm_start_coef, self.intercept_[:, np.newaxis], axis=1
-            )
-
-        # Hack so that we iterate only once for the multinomial case.
-        if multi_class == "multinomial":
-            classes_ = [None]
-            warm_start_coef = [warm_start_coef]
-        if warm_start_coef is None:
-            warm_start_coef = [None] * n_classes
-
+    def set_fold_coef(self, X, y, C_, classes_, warm_start_coef, prefer, max_squared_sum, multi_class, solver, penalty, sample_weight, n_threads):
         path_func = _logistic.delayed(_logistic._logistic_regression_path)
-
-        # The SAG solver releases the GIL so it's more efficient to use
-        # threads for this solver.
-        if solver in ["sag", "saga"]:
-            prefer = "threads"
-        else:
-            prefer = "processes"
-
-        # TODO: Refactor this to avoid joblib parallelism entirely when doing binary
-        # and multinomial multiclass classification and use joblib only for the
-        # one-vs-rest multiclass case.
-        if (
-            solver in ["lbfgs", "newton-cg"]
-            and len(classes_) == 1
-            and _logistic.effective_n_jobs(self.n_jobs) == 1
-        ):
-            # In the future, we would like n_threads = _openmp_effective_n_threads()
-            # For the time being, we just do
-            n_threads = 1
-        else:
-            n_threads = 1
-
         fold_coefs_ = _logistic.Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer=prefer)(
             path_func(
                 X,
@@ -171,6 +95,100 @@ class MyLogisticRegression(_logistic.LogisticRegression):
             )
             for class_, warm_start_coef_ in zip(classes_, warm_start_coef)
         )
+
+        return fold_coefs_
+
+    def fit(self, X, y, sample_weight=None):
+        solver = _logistic._check_solver(self.solver, self.penalty, self.dual)
+        C_, penalty = self.warning_checks()
+
+        if solver == "lbfgs":
+            _dtype = np.float64
+        else:
+            _dtype = [np.float64, np.float32]
+
+        X, y = self._validate_data(
+            X,
+            y,
+            accept_sparse="csr",
+            dtype=_dtype,
+            order="C",
+            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
+        )
+        _logistic.check_classification_targets(y)
+        self.classes_ = np.unique(y)
+
+        multi_class = _logistic._check_multi_class(self.multi_class, solver, len(self.classes_))
+
+        # Good for small datasets - maybe don't focus as much on this
+        if solver == "liblinear":
+            if _logistic.effective_n_jobs(self.n_jobs) != 1:
+                warnings.warn(
+                    "'n_jobs' > 1 does not have any effect when"
+                    " 'solver' is set to 'liblinear'. Got 'n_jobs'"
+                    " = {}.".format(_logistic.effective_n_jobs(self.n_jobs))
+                )
+            self.coef_, self.intercept_, self.n_iter_ = _logistic._fit_liblinear(
+                X,
+                y,
+                self.C,
+                self.fit_intercept,
+                self.intercept_scaling,
+                self.class_weight,
+                self.penalty,
+                self.dual,
+                self.verbose,
+                self.max_iter,
+                self.tol,
+                self.random_state,
+                sample_weight=sample_weight,
+            )
+            return self
+
+        max_squared_sum = self.set_max_squared_sum(solver, X)
+        n_classes, classes_ = self.set_classes(self.classes_)
+
+        if self.warm_start:
+            warm_start_coef = getattr(self, "coef_", None)
+        else:
+            warm_start_coef = None
+        if warm_start_coef is not None and self.fit_intercept:
+            warm_start_coef = np.append(
+                warm_start_coef, self.intercept_[:, np.newaxis], axis=1
+            )
+
+        # Hack so that we iterate only once for the multinomial case.
+        if multi_class == "multinomial":
+            classes_ = [None]
+            warm_start_coef = [warm_start_coef]
+        if warm_start_coef is None:
+            warm_start_coef = [None] * n_classes
+
+        # The SAG solver releases the GIL so it's more efficient to use
+        # threads for this solver.
+        if solver in ["sag", "saga"]:
+            prefer = "threads"
+        else:
+            prefer = "processes"
+
+        # TODO: Refactor this to avoid joblib parallelism entirely when doing binary
+        # and multinomial multiclass classification and use joblib only for the
+        # one-vs-rest multiclass case.
+        if (
+            solver in ["lbfgs", "newton-cg"]
+            and len(classes_) == 1
+            and _logistic.effective_n_jobs(self.n_jobs) == 1
+        ):
+            # In the future, we would like n_threads = _openmp_effective_n_threads()
+            # For the time being, we just do
+            n_threads = 1
+        else:
+            n_threads = 1
+
+        fold_coefs_ = self.set_fold_coef(X, y, C_, classes_, warm_start_coef, 
+                                         prefer, max_squared_sum, multi_class, 
+                                         solver, penalty, sample_weight, \
+                                         n_threads)
 
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
         self.n_iter_ = np.asarray(n_iter_, dtype=np.int32)[:, 0]
