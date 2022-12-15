@@ -6,61 +6,40 @@ from datetime import datetime
 from annotations import *
 from ast_to_ir import *
 from ir import *
-from parse import parse_shell_to_asts, parse_shell_to_asts_interactive, from_ast_objects_to_shell
+from parse import parse_shell_to_asts_interactive
 from pash_graphviz import maybe_init_graphviz_dir
+from preprocessor import preprocess
 from util import *
 import config
 import shutil
 
-def main():
-    ## Set the logging prefix
-    config.LOGGING_PREFIX = "PaSh Preprocessor: "
+LOGGING_PREFIX = "PaSh: "
 
+@logging_prefix(LOGGING_PREFIX)
+def main():
     ## Parse arguments
     args, shell_name = parse_args()
     ## If it is interactive we need a different execution mode
     ##
     ## The user can also ask for an interactive mode irregardless of whether pash was invoked in interactive mode. 
     if(len(args.input) == 0 or args.interactive):
+        log("ERROR: --interactive option is not supported!", level=0)
+        assert(False)
+        ## This should never be used!
         interactive(args, shell_name)
     else:
-        ## 1. Execute the POSIX shell parser that returns the AST in JSON
         input_script_path = args.input[0]
         input_script_arguments = args.input[1:]
-        preprocessing_parsing_start_time = datetime.now()
-        ast_objects = parse_shell_to_asts(input_script_path)
-        preprocessing_parsing_end_time = datetime.now()
-        print_time_delta("Preprocessing -- Parsing", preprocessing_parsing_start_time, preprocessing_parsing_end_time, args)
 
         ## Preprocess and execute the parsed ASTs
-        return_code = preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell_name)
+        return_code = preprocess_and_execute_asts(input_script_path, args, input_script_arguments, shell_name)
         
         log("-" * 40) #log end marker
         ## Return the exit code of the executed script
         sys.exit(return_code)
 
-def preprocess_ast(ast_objects, args):
-    ## 2. Preprocess ASTs by replacing possible candidates for compilation
-    ##    with calls to the PaSh runtime.
-    preprocessing_pash_start_time = datetime.now()
-    preprocessed_asts = preprocess(ast_objects, config.config)
-    preprocessing_pash_end_time = datetime.now()
-    print_time_delta("Preprocessing -- PaSh", preprocessing_pash_start_time, preprocessing_pash_end_time, args)
-
-    ## 3. Translate the new AST back to shell syntax
-    preprocessing_unparsing_start_time = datetime.now()
-    preprocessed_shell_script = from_ast_objects_to_shell(preprocessed_asts)
-    if(args.output_preprocessed):
-        log("Preprocessed script:")
-        log(preprocessed_shell_script)
-    
-    preprocessing_unparsing_end_time = datetime.now()
-    print_time_delta("Preprocessing -- Unparsing", preprocessing_unparsing_start_time, preprocessing_unparsing_end_time, args)
-    return preprocessed_shell_script
-
-
-def preprocess_and_execute_asts(ast_objects, args, input_script_arguments, shell_name):
-    preprocessed_shell_script = preprocess_ast(ast_objects, args)
+def preprocess_and_execute_asts(input_script_path, args, input_script_arguments, shell_name):
+    preprocessed_shell_script = preprocess(input_script_path, args)
     
     ## Write the new shell script to a file to execute
     fname = ptempfile()
@@ -117,7 +96,7 @@ def interactive(args, shell_name):
         ast_objects = parse_shell_to_asts_interactive(input_script_path)
         for ast_object in ast_objects:
             ## Preprocess each ast object and produce a preprocessed shell script fragment
-            preprocessed_shell_script = preprocess_ast([ast_object], args)
+            preprocessed_shell_script = preprocess([ast_object], args)
             log("Sending script to shell process...")
             ## Send the preprocessed script fragment to the shell process
             shell_proc.stdin.write(preprocessed_shell_script)
@@ -175,7 +154,7 @@ def parse_args():
 
     config.add_common_arguments(parser)
     args = parser.parse_args()
-    config.pash_args = args
+    config.set_config_globals_from_pash_args(args)
 
     ## Initialize the log file
     config.init_log_file()
@@ -214,17 +193,6 @@ def parse_args():
 
 
     return args, shell_name
-
-def preprocess(ast_objects, config):
-    ## This is ids for the temporary files that we will save the IRs in
-    irFileGen = FileIdGen()
-
-    ## Preprocess ASTs by replacing AST regions with calls to PaSh's runtime.
-    ## Then the runtime will do the compilation and optimization with additional
-    ## information.
-    preprocessed_asts = replace_ast_regions(ast_objects, irFileGen, config)
-
-    return preprocessed_asts
 
 def shell_env(shell_name: str):
     new_env = os.environ.copy()

@@ -26,7 +26,14 @@ SAVE_ARGS_EXECUTABLE = os.path.join(PASH_TOP, "runtime/save_args.sh")
 assert(not os.getenv('PASH_TMP_PREFIX') is None)
 PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
 
+##
+## Global configuration used by all pash components
+##
 LOGGING_PREFIX = ""
+OUTPUT_TIME = False
+DEBUG_LEVEL = 0
+LOG_FILE = ""
+
 
 HDFS_PREFIX = "$HDFS_DATANODE_DIR/"
 
@@ -34,6 +41,18 @@ HDFS_PREFIX = "$HDFS_DATANODE_DIR/"
 config = {}
 annotations = []
 pash_args = None
+
+
+## This function sets the global configuration
+##
+## TODO: Actually move everything outside of pash_args to configuration.
+def set_config_globals_from_pash_args(given_pash_args):
+    global pash_args, OUTPUT_TIME, DEBUG_LEVEL, LOG_FILE
+    pash_args = given_pash_args
+    OUTPUT_TIME = pash_args.output_time
+    DEBUG_LEVEL = pash_args.debug
+    LOG_FILE = pash_args.log_file
+
 
 ## Increase the recursion limit (it seems that the parser/unparser needs it for bigger graphs)
 sys.setrecursionlimit(10000)
@@ -60,8 +79,23 @@ def getWidth():
     cpus = os.cpu_count()
     return math.floor(cpus / 8) if cpus >= 16 else 2
 
+def add_general_config_arguments(parser):
+    ## TODO: Delete that at some point, or make it have a different use (e.g., outputting time even without -d 1).
+    parser.add_argument("-t", "--output_time", #FIXME: --time
+                        help="(obsolete, time is always logged now) output the time it took for every step",
+                        action="store_true")
+    parser.add_argument("-d", "--debug",
+                        type=int,
+                        help="configure debug level; defaults to 0",
+                        default=0)
+    parser.add_argument("--log_file",
+                        help="configure where to write the log; defaults to stderr.",
+                        default="")
+
 ## These are arguments that are common to pash.py and pash_runtime.py
 def add_common_arguments(parser):
+    add_general_config_arguments(parser)
+
     parser.add_argument("-w", "--width",
                         type=int,
                         default=getWidth(),
@@ -81,17 +115,9 @@ def add_common_arguments(parser):
     parser.add_argument("--profile_driven",
                         help="(experimental) use profiling information when optimizing",
                         action="store_true")
-    ## TODO: Delete that at some point, or make it have a different use (e.g., outputting time even without -d 1).
-    parser.add_argument("-t", "--output_time", #FIXME: --time
-                        help="(obsolete, time is always logged now) output the time it took for every step",
-                        action="store_true")
     parser.add_argument("-p", "--output_optimized", # FIXME: --print
                         help="output the parallel shell script for inspection",
                         action="store_true")
-    parser.add_argument("-d", "--debug",
-                        type=int,
-                        help="configure debug level; defaults to 0",
-                        default=0)
     parser.add_argument("--graphviz",
                         help="generates graphical representations of the dataflow graphs. The option argument corresponds to the format. PaSh stores them in a timestamped directory in the argument of --graphviz_dir",
                         choices=["no", "dot", "svg", "pdf", "png"],
@@ -103,9 +129,6 @@ def add_common_arguments(parser):
     parser.add_argument("--graphviz_dir",
                         help="the directory in which to store graphical representations",
                         default="/tmp")
-    parser.add_argument("--log_file",
-                        help="configure where to write the log; defaults to stderr.",
-                        default="")
     parser.add_argument("--no_eager",
                         help="(experimental) disable eager nodes before merging nodes",
                         action="store_true")
@@ -208,9 +231,9 @@ def pass_common_arguments(pash_arguments):
     return arguments
 
 def init_log_file():
-    global pash_args
-    if(not pash_args.log_file == ""):
-        with open(pash_args.log_file, "w") as f:
+    global LOG_FILE
+    if(not LOG_FILE == ""):
+        with open(LOG_FILE, "w") as f:
             pass
 
 
