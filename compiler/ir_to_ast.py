@@ -18,7 +18,7 @@ def to_shell(ir, args):
     output_script = from_ast_objects_to_shell(output_asts)
 
     backend_end_time = datetime.now()
-    print_time_delta("Backend", backend_start_time, backend_end_time, args)
+    print_time_delta("Backend", backend_start_time, backend_end_time)
 
     return output_script
 
