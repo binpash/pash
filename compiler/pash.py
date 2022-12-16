@@ -4,7 +4,7 @@ import subprocess
 import argparse
 from datetime import datetime
 from annotations import *
-from ast_to_ir import *
+import ast_to_ast
 from ir import *
 from parse import parse_shell_to_asts_interactive
 from pash_graphviz import maybe_init_graphviz_dir
@@ -39,7 +39,11 @@ def main():
         sys.exit(return_code)
 
 def preprocess_and_execute_asts(input_script_path, args, input_script_arguments, shell_name):
-    preprocessed_shell_script = preprocess(input_script_path, args)
+    mode = ast_to_ast.TransformationType('pash')
+    preprocessed_shell_script = preprocess(input_script_path, args, mode)
+    if(args.output_preprocessed):
+        log("Preprocessed script:")
+        log(preprocessed_shell_script)
     
     ## Write the new shell script to a file to execute
     fname = ptempfile()
