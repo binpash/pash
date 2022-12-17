@@ -44,13 +44,7 @@ class MyLogisticRegression(_logistic.LogisticRegression):
                 "Tolerance for stopping criteria must be positive; got (tol=%r)"
                 % self.tol
             )
-        return C_, penalty
-
-    def set_max_squared_sum(solver, X):
-        if solver in ["sag", "saga"]:
-            return _logistic.row_norms(X, squared=True).max()
-        else:
-            return None
+        return C_, penalty   
 
     def set_classes(self_classes):
         n_classes = len(self_classes)
@@ -145,7 +139,7 @@ class MyLogisticRegression(_logistic.LogisticRegression):
             )
             return self
 
-        max_squared_sum = self.set_max_squared_sum(solver, X)
+        max_squared_sum = _logistic.row_norms(X, squared=True).max() if solver in ["sag", "saga"] else None
         n_classes, classes_ = self.set_classes(self.classes_)
 
         if self.warm_start:
@@ -171,19 +165,7 @@ class MyLogisticRegression(_logistic.LogisticRegression):
         else:
             prefer = "processes"
 
-        # TODO: Refactor this to avoid joblib parallelism entirely when doing binary
-        # and multinomial multiclass classification and use joblib only for the
-        # one-vs-rest multiclass case.
-        if (
-            solver in ["lbfgs", "newton-cg"]
-            and len(classes_) == 1
-            and _logistic.effective_n_jobs(self.n_jobs) == 1
-        ):
-            # In the future, we would like n_threads = _openmp_effective_n_threads()
-            # For the time being, we just do
-            n_threads = 1
-        else:
-            n_threads = 1
+        n_threads = 1
 
         fold_coefs_ = self.set_fold_coef(X, y, C_, classes_, warm_start_coef, 
                                          prefer, max_squared_sum, multi_class, 
