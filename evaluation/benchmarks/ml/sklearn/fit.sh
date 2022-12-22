@@ -14,3 +14,7 @@ $PYTHON warm_start.py # takes model, multi_class, n_classes; returns warm_start_
 # multi_class, solver, penalty, sample_weight, n_threads)
 # returns fold_coef
 $PYTHON fold_coef.py
+$PYTHON zip_coef.py # takes fold_coef, returns fold_coef, n_iter
+$PYTHON multiclass_coef.py # takes X, multi_class, fold_coef, fit_intercept
+$PYTHON fit_intercept.py # takes fit_intercept, returns intercept and coef or zeroes
+$PYTHON fit_model.py
