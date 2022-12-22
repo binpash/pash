@@ -1,5 +1,4 @@
 import sys
-import numpy as np
 from pickle import dumps, load
 
 reg = load(sys.stdin)
