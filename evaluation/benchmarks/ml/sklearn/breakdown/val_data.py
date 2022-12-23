@@ -15,3 +15,6 @@ X, y = reg._validate_data(
     order="C",
     accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
 )
+
+sys.stdout.buffer.write(dumps(X))
+sys.stdout.buffer.write(dumps(y))
