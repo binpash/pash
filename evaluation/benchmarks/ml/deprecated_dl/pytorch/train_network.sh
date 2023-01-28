@@ -2,8 +2,8 @@
 set -e
 
 N_EPOCH=${N_EPOCH:-15}
-INTERMED_DIR=${INTERMED_DIR:-$PASH_TOP/evaluation/benchmarks/ml/intermed/}
-SCRIPTS_DIR=${SCRIPTS_DIR:-$PASH_TOP/evaluation/benchmarks/ml/python_pipeline/}
+INTERMED_DIR=${INTERMED_DIR:-$PASH_TOP/evaluation/benchmarks/ml/pytorch/intermed/}
+SCRIPTS_DIR=${SCRIPTS_DIR:-$PASH_TOP/evaluation/benchmarks/ml/pytorch/python_pipeline/}
 
 PYTHON=${PYTHON:-`which python`}
 

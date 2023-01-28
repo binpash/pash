@@ -1,0 +1,1 @@
+Running fit.sh will generate temporary files in a ./tmp folder
