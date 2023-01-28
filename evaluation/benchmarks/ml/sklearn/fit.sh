@@ -1,4 +1,6 @@
-PASH_TOP=~/repos/research/pash # TODO: remove
+# TODO: figure out a way to set PASH_TOP in the python subprocess module
+# so that I can delete the line below
+PASH_TOP=~/repos/research/pash 
 
 PYTHON=${PYTHON:-`which python`}
 DIR=$PASH_TOP/evaluation/benchmarks/ml/sklearn
