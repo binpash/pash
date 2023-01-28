@@ -11,7 +11,7 @@ with open(sys.argv[2], 'rb') as file:
     X = pickle.load(file)
     n_features = X.shape[1]
 
-with open(sys.argv[1], 'r+b') as file:
+with open(sys.argv[1], 'rb') as file:
     model = pickle.load(file)
     if multi_class == "multinomial":
         model.coef_ = fold_coefs_[0][0]
@@ -27,4 +27,5 @@ with open(sys.argv[1], 'r+b') as file:
     else:
         model.intercept_ = np.zeros(n_classes)
 
+with open('./trained_model.obj', 'w+b') as file:
     pickle.dump(model, file)

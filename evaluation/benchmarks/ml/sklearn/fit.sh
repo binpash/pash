@@ -25,13 +25,13 @@ $PYTHON $SCRIPTS/gen_samples.py
 # If not they will raise an error. Otherwise, they do not mutate the data.
 $PYTHON $SCRIPTS/check_solver.py $MODEL
 penalty=$($PYTHON $SCRIPTS/penalty.py $MODEL)
-$PYTHON $SCRIPTS/val_data.py $X $y $MODEL
-$PYTHON $SCRIPTS/classes.py $y # This should return a classes with just the unique classes in y
-multiclass=$($PYTHON $SCRIPTS/check_multiclass.py $MODEL $CLASSES)
+$PYTHON $SCRIPTS/val_data.py $MODEL $X $y 
+$PYTHON $SCRIPTS/classes.py $MODEL $y # This should return a classes with just the unique classes in y
+multiclass=$($PYTHON $SCRIPTS/check_multiclass.py $MODEL)
 
 # Calculations functions
 $PYTHON $SCRIPTS/rownorm.py $X
-n_classes=$($PYTHON $SCRIPTS/reshape_classes.py $CLASSES)
+n_classes=$($PYTHON $SCRIPTS/reshape_classes.py $MODEL $CLASSES)
 $PYTHON $SCRIPTS/warm_start.py $MODEL $multiclass $n_classes | # pipes coefficients
 $PYTHON $SCRIPTS/fold_coef.py $MODEL $X $y $C_ $CLASSES $WARM_COEF $MAX_SQ_SUM $multiclass $penalty |
 $PYTHON $SCRIPTS/zip_coef.py $MODEL |
