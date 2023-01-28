@@ -3,13 +3,15 @@ import sys
 import numpy as np
 import pickle
 
-with open(sys.argv[1], 'rb') as file:
+with open(sys.argv[2], 'rb') as file:
     y = pickle.load(file)
 
 try:
     _logistic.check_classification_targets(y)
-    with open('./tmp/classes.obj', 'w+b') as file:
-        pickle.dump(np.unique(y), file)
-    exit(0)
+    with open(sys.argv[1], 'rb') as file:
+        model = pickle.load(file)
+        model.classes_ = np.unique(y)
+    with open(sys.argv[1], 'wb') as file:
+        pickle.dump(model, file)
 except:
     exit(1)
