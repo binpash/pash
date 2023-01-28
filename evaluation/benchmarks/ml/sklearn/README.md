@@ -1,1 +1,1 @@
-fit.sh must be executed with breakdown as the root
+Running fit.sh will generate temporary files in a ./tmp folder
