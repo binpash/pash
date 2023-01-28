@@ -1,10 +1,11 @@
 from sklearn.linear_model import _logistic
 import sys
-from pickle import dumps, load
+import pickle
 
-reg = load(sys.stdin)
-solver = load(sys.stdin)
-classes = load(sys.stdin)
+with open(sys.argv[1], 'rb') as file:
+    model = pickle.load(file)
+with open(sys.argv[2], 'rb') as file:
+    classes = pickle.load(file)
 
-multi_class = _logistic._check_multi_class(reg.multi_class, solver, len(reg.classes_))
-sys.stdout.buffer.write(dumps(multi_class))
+multi_class = _logistic._check_multi_class(model.multi_class, model.solver, len(classes))
+print(multi_class)
