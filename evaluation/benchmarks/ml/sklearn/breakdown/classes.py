@@ -1,9 +1,15 @@
 from sklearn.linear_model import _logistic
 import sys
 import numpy as np
-from pickle import dumps, load
+import pickle
 
-y = load(sys.stdin)
+with open(sys.argv[1], 'rb') as file:
+    y = pickle.load(file)
 
-_logistic.check_classification_targets(y)
-sys.stdout.buffer.write(dumps(np.unique(y)))
+try:
+    _logistic.check_classification_targets(y)
+    with open('./tmp/classes.obj', 'w+b') as file:
+        pickle.dump(np.unique(y), file)
+    exit(0)
+except:
+    exit(1)
