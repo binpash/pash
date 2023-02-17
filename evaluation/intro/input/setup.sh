@@ -10,15 +10,12 @@ cd $(dirname $0)
 if [ ! -f ./100M.txt ]; then
   curl -sf --connect-timeout 10 'ndr.md/data/dummy/100M.txt' > 100M.txt
   if [ $? -ne 0 ]; then
-    curl -sf 'https://zenodo.org/record/7650885/files/100M.txt' > 100M.txt
-    if [ $? -ne 0 ]; then
-      curl -f 'http://www.gutenberg.org/files/2600/2600-0.txt' | head -c 1M > 1M.txt
-      [ $? -ne 0 ] && eexit 'cannot find 1M.txt'
-      touch 100M.txt
-      for (( i = 0; i < 100; i++ )); do
-        cat 1M.txt >> 100M.txt
-      done
-    fi
+    curl -f 'http://www.gutenberg.org/files/2600/2600-0.txt' | head -c 1M > 1M.txt
+    [ $? -ne 0 ] && eexit 'cannot find 1M.txt'
+    touch 100M.txt
+    for (( i = 0; i < 100; i++ )); do
+      cat 1M.txt >> 100M.txt
+    done
   fi
   append_nl_if_not ./100M.txt
 fi
