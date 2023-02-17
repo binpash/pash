@@ -19,6 +19,9 @@ C_=$TMP/C_.obj
 
 echo Destination: $1
 
+# TODO: Try this out on a larger dataset
+# TODO: Benchmark each phase
+
 # Generating model & samples
 $PYTHON $SCRIPTS/gen_model.py
 $PYTHON $SCRIPTS/gen_samples.py
@@ -31,6 +34,9 @@ penalty=$($PYTHON $SCRIPTS/penalty.py $MODEL)
 $PYTHON $SCRIPTS/val_data.py $MODEL $X $y 
 $PYTHON $SCRIPTS/classes.py $MODEL $y # This should return a classes with just the unique classes in y
 multiclass=$($PYTHON $SCRIPTS/check_multiclass.py $MODEL)
+
+# TODO: Benchmark each step of the pipeline
+# Make a modified pipeline where each step writes its output to a file
 
 # Calculations functions
 $PYTHON $SCRIPTS/rownorm.py $X
