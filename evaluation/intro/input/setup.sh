@@ -8,9 +8,9 @@ cd $(dirname $0)
 
 
 if [ ! -f ./100M.txt ]; then
-  curl -f 'ndr.md/data/dummy/100M.txt' > 100M.txt
+  curl -sf --connect-timeout 10 'ndr.md/data/dummy/100M.txt' > 100M.txt
   if [ $? -ne 0 ]; then
-    curl -f 'https://zenodo.org/record/7650885/files/100M.txt' > 100M.txt
+    curl -sf 'https://zenodo.org/record/7650885/files/100M.txt' > 100M.txt
     if [ $? -ne 0 ]; then
       curl -f 'http://www.gutenberg.org/files/2600/2600-0.txt' | head -c 1M > 1M.txt
       [ $? -ne 0 ] && eexit 'cannot find 1M.txt'
@@ -24,9 +24,9 @@ if [ ! -f ./100M.txt ]; then
 fi
 
 if [ ! -f ./words ]; then
-  curl -f 'http://ndr.md/data/dummy/words' > words
+  curl -sf --connect-timeout 10 'http://ndr.md/data/dummy/words' > words
   if [ $? -ne 0 ]; then
-    curl -f 'https://zenodo.org/record/7650885/files/words' > words
+    curl -sf 'https://zenodo.org/record/7650885/files/words' > words
     if [ $? -ne 0 ]; then
       if [ $(uname) = 'Darwin' ]; then
         cp /usr/share/dict/web2 words || eexit "cannot find dict file"
