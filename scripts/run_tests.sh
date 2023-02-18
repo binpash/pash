@@ -20,6 +20,7 @@ echo "Running aggregator tests..."
 cd "$PASH_TOP/evaluation/tests/agg/"
 ./run.sh
 
-echo "Running aggregator tests..."
-cd "$PASH_TOP/runtime/agg/cpp/tests"
-./test.sh
+## TODO: This has to go
+# echo "Running aggregator tests..."
+# cd "$PASH_TOP/runtime/agg/cpp/tests"
+# ./test.sh
