@@ -4,7 +4,7 @@ import pickle
 import traceback
 from datetime import datetime
 
-from annotation_generation_new.datatypes.parallelizability.AggregatorKind import AggregatorKindEnum
+from pash_annotations.annotation_generation.datatypes.parallelizability.AggregatorKind import AggregatorKindEnum
 
 import config
 from ir import *

@@ -1,7 +1,7 @@
-from datatypes_new.AccessKind import make_stream_output, make_stream_input
-from datatypes_new.BasicDatatypes import Flag, ArgStringType
-from datatypes_new.BasicDatatypesWithIO import OptionWithIO
-from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+from pash_annotations.datatypes.AccessKind import make_stream_output, make_stream_input
+from pash_annotations.datatypes.BasicDatatypes import Flag, ArgStringType
+from pash_annotations.datatypes.BasicDatatypesWithIO import OptionWithIO
+from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 from annotations_utils.util_cmd_invocations import to_ast_flagoption, to_ast_operand
 from definitions.ir.dfg_node import *

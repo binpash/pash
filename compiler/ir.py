@@ -1,12 +1,13 @@
 import sys
+import pash_annotations.datatypes
 
-from datatypes_new.CommandInvocationInitial import CommandInvocationInitial
-from datatypes_new.BasicDatatypes import ArgStringType
-from datatypes_new.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptorWithIOInfo, OptionWithIO
-from annotation_generation_new.datatypes.InputOutputInfo import InputOutputInfo
-from annotation_generation_new.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
-from annotation_generation_new.datatypes.CommandProperties import CommandProperties
-from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+from pash_annotations.datatypes.CommandInvocationInitial import CommandInvocationInitial
+from pash_annotations.datatypes.BasicDatatypes import ArgStringType
+from pash_annotations.datatypes.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptorWithIOInfo, OptionWithIO
+from pash_annotations.annotation_generation.datatypes.InputOutputInfo import InputOutputInfo
+from pash_annotations.annotation_generation.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
+from pash_annotations.annotation_generation.datatypes.CommandProperties import CommandProperties
+from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 from annotations_utils.util_parsing import parse_arg_list_to_command_invocation
 from annotations_utils.util_cmd_invocations import get_input_output_info_from_cmd_invocation_util, get_parallelizability_info_from_cmd_invocation_util
@@ -1468,4 +1469,5 @@ class IR:
     def create_reduce_node(init_func, input_ids, output_ids):
         return init_func(flatten_list(input_ids), output_ids)
     # TODO: this is where we need to use our aggregator spec/node
+
 
