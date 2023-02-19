@@ -1,17 +1,17 @@
-from datatypes_new.BasicDatatypes import Flag, ArgStringType, Operand
-from datatypes_new.BasicDatatypesWithIO import OptionWithIO
-from datatypes_new.CommandInvocationInitial import CommandInvocationInitial
-from annotation_generation_new.datatypes.InputOutputInfo import InputOutputInfo
-from annotation_generation_new.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
-from annotation_generation_new.datatypes.CommandProperties import CommandProperties
-from annotation_generation_new.AnnotationGeneration import get_input_output_info_from_cmd_invocation, \
+from pash_annotations.datatypes.BasicDatatypes import Flag, ArgStringType, Operand
+from pash_annotations.datatypes.BasicDatatypesWithIO import OptionWithIO
+from pash_annotations.datatypes.CommandInvocationInitial import CommandInvocationInitial
+from pash_annotations.annotation_generation.datatypes.InputOutputInfo import InputOutputInfo
+from pash_annotations.annotation_generation.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
+from pash_annotations.annotation_generation.datatypes.CommandProperties import CommandProperties
+from pash_annotations.annotation_generation.AnnotationGeneration import get_input_output_info_from_cmd_invocation, \
     get_parallelizability_info_from_cmd_invocation
-from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 from definitions.ir.arg import Arg
 
 # for typing
-from datatypes_new.CommandInvocationPrefix import CommandInvocationPrefix
+from pash_annotations.datatypes.CommandInvocationPrefix import CommandInvocationPrefix
 
 from ir_utils import string_to_argument, redir_stdout_to_file, redir_file_to_stdin, make_command
 

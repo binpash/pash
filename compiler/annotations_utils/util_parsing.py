@@ -2,11 +2,11 @@ from typing import Set, List, Any
 
 from definitions.ir.arg import Arg
 
-from datatypes_new.CommandInvocationInitial import CommandInvocationInitial
-from datatypes_new.BasicDatatypes import Option, ArgStringType, Flag, Operand
-from parser_new.parser import parse, get_set_of_all_flags, get_dict_flag_to_primary_repr, get_set_of_all_options, \
+from pash_annotations.datatypes.CommandInvocationInitial import CommandInvocationInitial
+from pash_annotations.datatypes.BasicDatatypes import Option, ArgStringType, Flag, Operand
+from pash_annotations.parser.parser import parse, get_set_of_all_flags, get_dict_flag_to_primary_repr, get_set_of_all_options, \
     get_dict_option_to_primary_repr, are_all_individually_flags
-from parser_new.util_parser import get_json_data
+from pash_annotations.parser.util_parser import get_json_data
 
 
 from ir_utils import format_arg_chars, string_to_argument, log

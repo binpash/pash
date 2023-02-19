@@ -1,6 +1,6 @@
 from util import log
 from definitions.ir.resource import FileResource, Resource, FileDescriptorResource
-from datatypes_new.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptorWithIOInfo
+from pash_annotations.datatypes.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptorWithIOInfo
 
 
 def resource_from_file_descriptor(file_descriptor) -> Resource:

@@ -1,6 +1,6 @@
-from datatypes_new.AccessKind import make_stream_output, make_stream_input
-from datatypes_new.BasicDatatypes import ArgStringType
-from datatypes_new.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+from pash_annotations.datatypes.AccessKind import make_stream_output, make_stream_input
+from pash_annotations.datatypes.BasicDatatypes import ArgStringType
+from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 from annotations_utils.util_cmd_invocations import to_arg_from_cmd_inv_with_io_vars_without_streaming_inputs_or_outputs_for_wrapping
 from definitions.ir.dfg_node import *
