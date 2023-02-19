@@ -24,3 +24,4 @@ cd "$PASH_TOP/evaluation/tests/agg/"
 # echo "Running aggregator tests..."
 # cd "$PASH_TOP/runtime/agg/cpp/tests"
 # ./test.sh
+
