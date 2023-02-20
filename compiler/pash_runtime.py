@@ -6,6 +6,7 @@ from datetime import datetime
 
 from pash_annotations.annotation_generation.datatypes.parallelizability.AggregatorKind import AggregatorKindEnum
 
+import annotations
 import config
 from ir import *
 from ast_to_ir import compile_asts
@@ -51,7 +52,7 @@ def main_body():
         config.load_config(args.config_path)
 
     ## Load annotations
-    config.annotations = load_annotation_files(config.config['distr_planner']['annotations_dir'])
+    config.annotations = annotations.load_annotation_files(config.config['distr_planner']['annotations_dir'])
 
     runtime_config = config.config['distr_planner']
 
@@ -218,7 +219,7 @@ def optimize_irs(asts_and_irs, args, compiler_config):
             distributed_graph = choose_and_apply_parallelizing_transformations(ast_or_ir, compiler_config.width,
                                                                       runtime_config['batch_size'],
                                                                       args.no_cat_split_vanish,
-                                                                      args.r_split, args.r_split_batch_size)
+                                                                      args.r_split_batch_size)
             # pr.print_stats()
 
             # Eagers are added in remote notes when using distributed exec
@@ -252,14 +253,15 @@ def print_graph_statistics(graph):
 
 
 def choose_and_apply_parallelizing_transformations(graph, fan_out, batch_size, no_cat_split_vanish,
-                                                   r_split_flag, r_split_batch_size):
-    parallelizer_map = choose_parallelizing_transformations(graph, r_split_flag)
-    apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, no_cat_split_vanish,
-                                                   r_split_flag, r_split_batch_size)
+                                                   r_split_batch_size):
+    parallelizer_map = choose_parallelizing_transformations(graph)
+    apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, 
+                                        no_cat_split_vanish,
+                                        r_split_batch_size)
     return graph
 
 
-def choose_parallelizing_transformations(graph, r_split_flag): # shall return map
+def choose_parallelizing_transformations(graph): # shall return map
     source_node_ids = graph.source_nodes()
     parallelizer_map = {}
     workset = source_node_ids
@@ -275,149 +277,32 @@ def choose_parallelizing_transformations(graph, r_split_flag): # shall return ma
         elif not curr_id in visited:
             next_node_ids = graph.get_next_nodes(curr_id)
             workset += next_node_ids
-            parallelizer_map[curr_id] = choose_parallelizing_transformation(curr_id, graph, r_split_flag)
+            parallelizer_map[curr_id] = choose_parallelizing_transformation(curr_id, graph)
             visited.add(curr_id)
     return parallelizer_map
 
 
-def choose_parallelizing_transformation(curr_id, graph, r_split_flag): # shall return map entry
-    # here we can implement more sophisticated techniques to decide how to parallelize
+## This currently chooses the best parallelization based on priority:
+## 1. The round robin
+## 2. The round robin after having performed unwrap (not sure why this is the second priority)
+## 3. The consecutive chunks
+## 
+## TODO: In the future, we could develop more complex strategies      
+def choose_parallelizing_transformation(curr_id, graph): # shall return map entry
     curr = graph.get_node(curr_id)
-    # we ignore `r_split_flag` here as we want to exploit r_merge followed by commutative command
-    # which only works if the a parallelizer for the latter is chosen (sort does not have RR-parallelizer)
-    # we prioritize round robin over round robin with unwrap over consecutive chunks:
     list_all_parallelizers_in_priority = [curr.get_option_implemented_round_robin_parallelizer(),
                                           curr.get_option_implemented_round_robin_with_unwrap_parallelizer(),
                                           curr.get_option_implemented_consecutive_chunks_parallelizer()]
     return next((item for item in list_all_parallelizers_in_priority if item is not None), None)
-    # When `r_split_flag` should be used:
-    # if r_split_flag:
-    #     option_parallelizer = curr.get_option_implemented_round_robin_parallelizer()
-    # else:
-    #     option_parallelizer = curr.get_option_implemented_consecutive_chunks_parallelizer()
-    # return option_parallelizer
 
 
 def apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, no_cat_split_vanish,
-                                        r_split_flag, r_split_batch_size):
+                                        r_split_batch_size):
     fileIdGen = graph.get_file_id_gen()
     node_id_non_none_parallelizer_list = [(node_id, parallelizer) for (node_id, parallelizer) in parallelizer_map.items()
                                                                   if parallelizer is not None]
     for (node_id, parallelizer) in node_id_non_none_parallelizer_list:
-        graph.apply_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out,
-                                            batch_size, no_cat_split_vanish, r_split_batch_size)
-## This is a simplistic planner, that pushes the available
-## parallelization from the inputs in file stateless commands. The
-## planner starts from the sources of the graph, and pushes
-## file parallelization as far as possible.
-##
-## It returns a maximally expanded (regarding files) graph, that can
-## be scheduled depending on the available computational resources.
-def naive_parallelize_stateless_nodes_bfs(graph, fan_out, batch_size, no_cat_split_vanish,
-                                          r_split_flag, r_split_batch_size):
-    assert(False)
-    source_node_ids = graph.source_nodes()
-
-    ## Generate a fileIdGen from a graph, that doesn't clash with the
-    ## current graph fileIds.
-    fileIdGen = graph.get_file_id_gen()
-
-    ## Starting from the sources of the graph traverse the whole graph using a
-    ## node_id workset. Every iteration we add the next nodes to the workset as
-    ## well as any newly added nodes due to optimizations.
-    workset = source_node_ids
-    visited = set()
-    while (len(workset) > 0):
-        curr_id = workset.pop(0)
-        assert(isinstance(curr_id, int))
-        ## Node must not be in visited, but must also be in the graph
-        ## (because it might have been deleted after some
-        ## optimization).
-        if(not curr_id in visited
-           and curr_id in graph.nodes):
-            # log("Curr id:", curr_id)
-            visited.add(curr_id)
-            next_node_ids = graph.get_next_nodes(curr_id)
-            workset += next_node_ids
-
-            # function application has side effects on graphs
-            new_nodes = parallelize_node(curr_id, graph, fileIdGen,
-                                         fan_out, batch_size, no_cat_split_vanish,
-                                         r_split_flag, r_split_batch_size)
-
-            ## Assert that the graph stayed valid after the transformation
-            ## TODO: Do not run this everytime in the loop if we are not in debug mode.
-            # log("Graph nodes:", graph.nodes)
-            # log("Graph edges:", graph.edges)
-            # assert(graph.valid())
-
-            ## Add new nodes to the workset depending on the optimization.
-            ##
-            ## WARNING: There is an assumption here that if there are new
-            ## nodes there was an optimization that happened and these new
-            ## nodes should ALL be added to the workset. Even if that is
-            ## correct, that is certainly non-optimal.
-            ##
-            ## TODO: Fix that
-            if(len(new_nodes) > 0):
-                # log("New nodes:", new_nodes)
-                workset += [node.get_id() for node in new_nodes]
-
-    return graph
-
-
-## Optimizes several commands by splitting its input
-def split_command_input(curr, graph, fileIdGen, fan_out, _batch_size, r_split_flag, r_split_batch_size):
-    assert(curr.is_parallelizable())
-    assert(fan_out > 1)
-
-    ## At the moment this only works for nodes that have one standard input.
-    standard_input_ids = curr.get_standard_inputs()
-    new_merger = None
-    if (len(standard_input_ids) == 1):
-        ## If the previous command is either a cat with one input, or
-        ## if it something else
-        
-        input_id = standard_input_ids[0]
-
-        ## First we have to make the split file commands.
-        split_file_commands, output_fids = make_split_files(input_id, fan_out, fileIdGen, r_split_flag, r_split_batch_size)
-        for output_fid in output_fids:
-            output_fid.make_ephemeral()
-            graph.add_edge(output_fid)
-
-        for split_file_command in split_file_commands:
-            graph.add_node(split_file_command)
-
-        ## With the split file commands in place and their output
-        ## fids (and this commands new input ids, we have to
-        ## create a new Cat node (or modify the existing one) to
-        ## have these as inputs, and connect its output to our
-        ## input.
-
-        ## Generate a new file id for the input of the current command.
-        new_input_fid = fileIdGen.next_file_id()
-        new_input_fid.make_ephemeral()
-        graph.add_edge(new_input_fid)
-        new_input_id = new_input_fid.get_ident()
-
-        output_ids = [fid.get_ident() for fid in output_fids]
-
-        ## If we add r_split, then the merger is actually an r_merge
-        if(r_split_flag):
-            new_merger = r_merge.make_r_merge_node(output_ids, new_input_id)
-        else:
-            new_merger = make_cat_node(output_ids, new_input_id)
-        graph.add_node(new_merger)
-
-        ## Replace the previous input edge with the new input edge that is after the cat.
-        curr.replace_edge(input_id, new_input_id)
-        graph.set_edge_to(new_input_id, curr.get_id())
-
-        # log("graph nodes:", graph.nodes)
-        # log("graph edges:", graph.edges)
-
-    return new_merger
+        graph.apply_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out, r_split_batch_size)
 
 def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
     """
@@ -554,50 +439,6 @@ def add_eager_nodes(graph, use_dgsh_tee):
 
     return graph
 
-
-
-
-
-
-    ## TODO: In order to be able to execute it, we either have to
-    ## execute it in the starting shell (so that we have its state),
-    ## or we should somehow pass the parent shell's state to the the
-    ## distribution planner, and then the implementation environment.
-    ## In general, we probably have to find a way to pass around a
-    ## shell's state, as this will be essential for the distributed
-    ## setting too.
-    ##
-    ## Note: A way to do this is by using set > temp_file. Source:
-    ## https://arstechnica.com/civis/viewtopic.php?f=16&t=805521
-
-    ## TODO: We have to handle xargs in a special way. First of all,
-    ## in order to parallelize the command that xarg runs, we have to
-    ## do xargs -L 1 (or some other number) so that for every -L
-    ## lines, it calls a different instance of the command. Then it
-    ## will be parallelizable. In addition, we have to somehow
-    ## statically decide how much we will parallelize xarg, and how
-    ## many lines are going to be sent to each operator.
-    ##
-    ## This can probably be solved if we allow partial files in files
-    ## without resources.
-
-    ## TODO: There is slight problem with *, and other expansions in
-    ## the shell. The normal shell semantics is to expand the strings
-    ## in a command that is in a pipeline after the different
-    ## subshells have been spawned. However, we would like to have all
-    ## strings expanded as much as possible, so that we can statically
-    ## make choices about how much to distribute each command.
-    ##
-    ## Maybe we should run expansions on our own, before calling the
-    ## distribution planner? Or in the distribution planner itself? It
-    ## seems that the distribution planner should be able to do some
-    ## expansion itself though
-
-    ## TODO: There is a problem when given an unexpanded string. It
-    ## might be many files, so spliting the file up in different
-    ## pieces might be wrong.
-
-    ## BIG TODO: Extend the file class so that it supports tee etc.
 
 if __name__ == "__main__":
     main()

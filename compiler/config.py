@@ -120,12 +120,9 @@ def add_common_arguments(parser):
                         help="Run multiple pipelines in parallel if they are safe to run",
                         action="store_true",
                         default=False)
-    parser.add_argument("--r_split",
-                        help="(experimental) use round robin split, merge, wrap, and unwrap",
-                        action="store_true")
     parser.add_argument("--r_split_batch_size",
                         type=int,
-                        help="(experimental) configure the batch size of r_split (default: 1MB)",
+                        help="configure the batch size of r_split (default: 1MB)",
                         default=1000000)
     parser.add_argument("--dgsh_tee",
                         help="(experimental) use dgsh-tee instead of eager",
@@ -178,8 +175,6 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument(pash_arguments.log_file))
     if (pash_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
-    if (pash_arguments.r_split):
-        arguments.append(string_to_argument("--r_split"))
     if (pash_arguments.dgsh_tee):
         arguments.append(string_to_argument("--dgsh_tee"))
     if (pash_arguments.no_daemon):
