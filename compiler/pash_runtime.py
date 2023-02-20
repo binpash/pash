@@ -218,7 +218,6 @@ def optimize_irs(asts_and_irs, args, compiler_config):
             # with cProfile.Profile() as pr:
             distributed_graph = choose_and_apply_parallelizing_transformations(ast_or_ir, compiler_config.width,
                                                                       runtime_config['batch_size'],
-                                                                      args.no_cat_split_vanish,
                                                                       args.r_split_batch_size)
             # pr.print_stats()
 
@@ -252,11 +251,9 @@ def print_graph_statistics(graph):
     log("Eager nodes:", len(eager_nodes))
 
 
-def choose_and_apply_parallelizing_transformations(graph, fan_out, batch_size, no_cat_split_vanish,
-                                                   r_split_batch_size):
+def choose_and_apply_parallelizing_transformations(graph, fan_out, batch_size, r_split_batch_size):
     parallelizer_map = choose_parallelizing_transformations(graph)
     apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, 
-                                        no_cat_split_vanish,
                                         r_split_batch_size)
     return graph
 
@@ -296,8 +293,7 @@ def choose_parallelizing_transformation(curr_id, graph): # shall return map entr
     return next((item for item in list_all_parallelizers_in_priority if item is not None), None)
 
 
-def apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, no_cat_split_vanish,
-                                        r_split_batch_size):
+def apply_parallelizing_transformations(graph, parallelizer_map, fan_out, batch_size, r_split_batch_size):
     fileIdGen = graph.get_file_id_gen()
     node_id_non_none_parallelizer_list = [(node_id, parallelizer) for (node_id, parallelizer) in parallelizer_map.items()
                                                                   if parallelizer is not None]
