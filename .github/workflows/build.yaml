@@ -8,6 +8,7 @@ on:
         - runtime/**
         - evaluation/**
         - annotations/**
+        - scripts/**
   push:
     branches:
       - main
@@ -17,6 +18,7 @@ on:
         - runtime/**
         - evaluation/**
         - annotations/**
+        - scripts/**
 
 # Jobs section
 jobs:
