@@ -121,8 +121,11 @@ def add_common_arguments(parser):
                         type=int,
                         help="configure the batch size of r_split (default: 1MB)",
                         default=1000000)
+    parser.add_argument("--r_split",
+                        help="does nothing -- only here for old interfaces (not used anywhere in the code)",
+                        action="store_true")
     parser.add_argument("--dgsh_tee",
-                        help="(experimental) use dgsh-tee instead of eager",
+                        help="does nothing -- only here for old interfaces (not used anywhere in the code)",
                         action="store_true")
     parser.add_argument("--speculation",
                         help="(experimental) run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
@@ -172,8 +175,6 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument(pash_arguments.log_file))
     if (pash_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
-    if (pash_arguments.dgsh_tee):
-        arguments.append(string_to_argument("--dgsh_tee"))
     if (pash_arguments.no_daemon):
         arguments.append(string_to_argument("--no_daemon"))
     if (pash_arguments.distributed_exec):

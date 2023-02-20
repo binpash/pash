@@ -223,7 +223,7 @@ def optimize_irs(asts_and_irs, args, compiler_config):
 
             # Eagers are added in remote notes when using distributed exec
             if(not args.no_eager and not args.distributed_exec): 
-                eager_distributed_graph = add_eager_nodes(distributed_graph, args.dgsh_tee)
+                eager_distributed_graph = add_eager_nodes(distributed_graph)
             else:
                 eager_distributed_graph = distributed_graph
 
@@ -346,26 +346,12 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen):
 
 
 ## This functions adds an eager on a given edge.
-def add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee):
+def add_eager(eager_input_id, graph, fileIdGen):
     new_fid = fileIdGen.next_ephemeral_file_id()
     new_id = new_fid.get_ident()
 
-    if use_dgsh_tee:
-        ## TODO: seperate to better use dgsh-tee params and maybe deprecate eager
-        eager_node = dgsh_tee.make_dgsh_tee_node(eager_input_id, new_id)
-    else:
-        ## TODO: Remove the line below if eager creates its intermediate file
-        ##       on its own.
-        # TODO: find a better solution to make unique numbers, currently: set to max-value + 1
-        intermediateFileIdGen.bump_counter_to_value_of(fileIdGen)
-        intermediate_fid = intermediateFileIdGen.next_temporary_file_id()
-        # TODO: this edge will never have to since eager is set to output even though it reads from it
-        graph.add_edge(intermediate_fid)
-        fileIdGen.bump_counter_to_value_of(intermediateFileIdGen)
-
-        eager_exec_path = '{}/{}'.format(config.PASH_TOP, runtime_config['eager_executable_path'])
-
-        eager_node = make_eager_node(eager_input_id, new_id, intermediate_fid, eager_exec_path)
+    ## TODO: seperate to better use dgsh-tee params and maybe deprecate eager
+    eager_node = dgsh_tee.make_dgsh_tee_node(eager_input_id, new_id)
 
     ## Add the edges and the nodes to the graph
     graph.add_edge(new_fid)
@@ -382,12 +368,11 @@ def add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_
 
 ## This function adds eager nodes wherever the width of graph is
 ## becoming smaller.
-def add_eager_nodes(graph, use_dgsh_tee):
+def add_eager_nodes(graph):
     source_node_ids = graph.source_nodes()
 
     ## Generate a fileIdGen that doesnt clash with graph fids.
     fileIdGen = graph.get_file_id_gen()
-    intermediateFileIdGen = FileIdGen(0, runtime_config['eager_intermediate_prefix'])
 
     ## Get the next nodes
     workset = [node for source_node_id in source_node_ids for node in graph.get_next_nodes(source_node_id)]
@@ -415,23 +400,23 @@ def add_eager_nodes(graph, use_dgsh_tee):
                     assert(to_node == curr_id)
                     ## If the edge is an input edge, then we don't want to put eager.
                     if(not from_node is None):
-                        add_eager(curr_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
+                        add_eager(curr_input_id, graph, fileIdGen)
 
             if(isinstance(curr, Split)):
                 eager_input_ids = curr.get_output_list()[:-1]
                 for edge_id in eager_input_ids:
-                    add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
+                    add_eager(edge_id, graph, fileIdGen)
 
             ## Add an eager after r_unwrap            
             if(isinstance(curr, r_unwrap.RUnwrap)):
                 eager_input_id = curr.get_output_list()[0]
-                add_eager(eager_input_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
+                add_eager(eager_input_id, graph, fileIdGen)
 
             ## Add an eager after r_split
             if(isinstance(curr, r_split.RSplit)):
                 eager_input_ids = curr.get_output_list()
                 for edge_id in eager_input_ids:
-                    add_eager(edge_id, graph, fileIdGen, intermediateFileIdGen, use_dgsh_tee)
+                    add_eager(edge_id, graph, fileIdGen)
 
     return graph
 
