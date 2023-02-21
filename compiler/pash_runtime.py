@@ -45,7 +45,7 @@ def main_body():
 
     ## Parse arguments
     args = parse_args()
-    config.pash_args = args
+    config.set_config_globals_from_pash_args(args)
 
     ## Load the configuration
     if not config.config:
@@ -154,7 +154,7 @@ def compile_optimize_df_region(df_region, args, compiler_config):
     compilation_start_time = datetime.now()
     asts_and_irs = compile_candidate_df_region(df_region, config.config)
     compilation_end_time = datetime.now()
-    print_time_delta("Compilation", compilation_start_time, compilation_end_time, args)
+    print_time_delta("Compilation", compilation_start_time, compilation_end_time)
 
     ## Optimize all the IRs that can be optimized
     if(args.no_optimize):
@@ -238,7 +238,7 @@ def optimize_irs(asts_and_irs, args, compiler_config):
             optimized_asts_and_irs.append(ast_or_ir)
 
     optimization_end_time = datetime.now()
-    print_time_delta("Optimization", optimization_start_time, optimization_end_time, args)
+    print_time_delta("Optimization", optimization_start_time, optimization_end_time)
 
     return optimized_asts_and_irs
 

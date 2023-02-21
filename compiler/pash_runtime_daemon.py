@@ -43,7 +43,7 @@ def init():
     config.LOGGING_PREFIX = "Daemon: "
     
     args = parse_args()
-    config.pash_args = args
+    config.set_config_globals_from_pash_args(args)
 
     # Load the configuration
     if not config.config:

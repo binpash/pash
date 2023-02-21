@@ -113,7 +113,7 @@ def parse_args():
                         default=65432)
     config.add_common_arguments(parser)
     args = parser.parse_args()
-    config.pash_args = args
+    config.set_config_globals_from_pash_args(args)
     ## Initialize the log file
     config.init_log_file()
     if not config.config:
