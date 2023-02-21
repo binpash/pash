@@ -5,6 +5,8 @@ import time
 
 from websocket import create_connection
 
+RESULT_POLLING_FREQUENCY=60
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-b", "--target_branch", 
@@ -51,7 +53,7 @@ def current_task(websocket):
 
 def wait_for_result(websocket, target_commit):
     found = False
-    sleep_duration = 360
+    sleep_duration = RESULT_POLLING_FREQUENCY
 
     while not found:
 

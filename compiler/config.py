@@ -132,9 +132,6 @@ def add_common_arguments(parser):
     parser.add_argument("--no_eager",
                         help="(experimental) disable eager nodes before merging nodes",
                         action="store_true")
-    parser.add_argument("--no_cat_split_vanish",
-                        help="(experimental) disable the optimization that removes cat with N inputs that is followed by a split with N inputs",
-                        action="store_true")
     parser.add_argument("--no_daemon",
                         help="Run the compiler everytime we need a compilation instead of using the daemon",
                         action="store_true",
@@ -143,15 +140,15 @@ def add_common_arguments(parser):
                         help="Run multiple pipelines in parallel if they are safe to run",
                         action="store_true",
                         default=False)
-    parser.add_argument("--r_split",
-                        help="(experimental) use round robin split, merge, wrap, and unwrap",
-                        action="store_true")
     parser.add_argument("--r_split_batch_size",
                         type=int,
-                        help="(experimental) configure the batch size of r_split (default: 1MB)",
+                        help="configure the batch size of r_split (default: 1MB)",
                         default=1000000)
+    parser.add_argument("--r_split",
+                        help="does nothing -- only here for old interfaces (not used anywhere in the code)",
+                        action="store_true")
     parser.add_argument("--dgsh_tee",
-                        help="(experimental) use dgsh-tee instead of eager",
+                        help="does nothing -- only here for old interfaces (not used anywhere in the code)",
                         action="store_true")
     parser.add_argument("--speculation",
                         help="(experimental) run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
@@ -201,10 +198,6 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument(pash_arguments.log_file))
     if (pash_arguments.no_eager):
         arguments.append(string_to_argument("--no_eager"))
-    if (pash_arguments.r_split):
-        arguments.append(string_to_argument("--r_split"))
-    if (pash_arguments.dgsh_tee):
-        arguments.append(string_to_argument("--dgsh_tee"))
     if (pash_arguments.no_daemon):
         arguments.append(string_to_argument("--no_daemon"))
     if (pash_arguments.distributed_exec):
@@ -215,8 +208,6 @@ def pass_common_arguments(pash_arguments):
         arguments.append(string_to_argument("--daemon_communicates_through_unix_pipes"))
     arguments.append(string_to_argument("--r_split_batch_size"))
     arguments.append(string_to_argument(str(pash_arguments.r_split_batch_size)))
-    if (pash_arguments.no_cat_split_vanish):
-        arguments.append(string_to_argument("--no_cat_split_vanish"))
     arguments.append(string_to_argument("--debug"))
     arguments.append(string_to_argument(str(pash_arguments.debug)))
     arguments.append(string_to_argument("--termination"))

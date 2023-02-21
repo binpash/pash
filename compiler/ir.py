@@ -1,4 +1,3 @@
-import sys
 import pash_annotations.datatypes
 
 from pash_annotations.datatypes.CommandInvocationInitial import CommandInvocationInitial
@@ -11,8 +10,6 @@ from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvoca
 
 from annotations_utils.util_parsing import parse_arg_list_to_command_invocation
 from annotations_utils.util_cmd_invocations import get_input_output_info_from_cmd_invocation_util, get_parallelizability_info_from_cmd_invocation_util
-from annotations_utils.util_mapper import get_mapper_as_dfg_node_from_node, get_map_output_files
-from annotations_utils.util_aggregator import get_aggregator_as_dfg_node_from_node
 from annotations_utils.util_file_descriptors import resource_from_file_descriptor
 
 from definitions.ir.file_id import *
@@ -214,38 +211,14 @@ def compile_command_to_DFG(fileIdGen, command, options,
     ## TODO: Add assignments
     com_assignments = []
 
-    ## TODO: Combine them both in a constructor that decided whether to instantiate Cat or DFGNode
-    # if(str(com_name) == "cat"):
-    #     dfg_node = Cat(dfg_inputs,
-    #                    dfg_outputs,
-    #                    com_name,
-    #                    ## TODO: We don't really need to pass category, name, or input_consumption for Cat
-    #                    com_category,
-    #                    com_options=dfg_options,
-    #                    com_redirs=com_redirs,
-    #                    com_assignments=com_assignments,
-    #                    )
-    # elif(str(com_name) == "hdfs" and str(dfg_options[0][1]) == "dfs" and str(dfg_options[1][1]) == "-cat"):
-    #     dfg_node = HDFSCat(dfg_inputs,
-    #                     dfg_outputs,
-    #                     com_name,
-    #                     com_category,
-    #                     com_options=dfg_options,
-    #                     com_redirs=com_redirs,
-    #                     com_assignments=com_assignments)
-    # else:
-    if(True):
-        ## Assume: Everything must be completely expanded
-        ## TODO: Add an assertion about that.
-        dfg_node = DFGNode(cmd_invocation_with_io_vars,
-                           com_redirs=com_redirs,
-                           com_assignments=com_assignments,
-                           parallelizer_list=parallelizer_list,
-                           cmd_related_properties=cmd_related_properties
-                           )
-
-    # if(not dfg_node.is_at_most_pure()): # which consequences has this check had?
-    #     raise ValueError()
+    ## Assume: Everything must be completely expanded
+    ## TODO: Add an assertion about that.
+    dfg_node = DFGNode(cmd_invocation_with_io_vars,
+                        com_redirs=com_redirs,
+                        com_assignments=com_assignments,
+                        parallelizer_list=parallelizer_list,
+                        cmd_related_properties=cmd_related_properties
+                        )
 
     node_id = dfg_node.get_id()
 
@@ -265,21 +238,6 @@ def compile_command_to_DFG(fileIdGen, command, options,
     return dfg
 
 
-def make_split_files(input_id, fan_out, fileIdGen, r_split_flag, r_split_batch_size):
-    assert(fan_out > 1)
-    ## Generate the split file ids
-    out_fids = [fileIdGen.next_file_id() for i in range(fan_out)]
-    out_ids = [fid.get_ident() for fid in out_fids]
-    split_com = make_split_file(input_id, out_ids, r_split_flag, r_split_batch_size)
-    return [split_com], out_fids
-
-def make_split_file(input_id, out_ids, r_split_flag, r_split_batch_size):
-    if(r_split_flag):
-        split_com = r_split.make_r_split(input_id, out_ids, r_split_batch_size)
-    else:
-        split_com = pash_split.make_split_file(input_id, out_ids)
-    return split_com
-
 ##
 ## Node builder functions
 ##
@@ -291,21 +249,6 @@ def make_tee(input, outputs):
                    outputs,
                    com_name, 
                    com_category)
-
-def make_map_node(node, new_inputs, new_outputs, parallelizer):
-    return get_mapper_as_dfg_node_from_node(node, parallelizer, new_inputs, new_outputs)
-
-## Makes a wrap node that encloses a map parallel node.
-##
-## At the moment it only works with one input and one output since wrap cannot redirect input in the command.
-def make_wrap_map_node(node, new_inputs, new_outputs):
-    assert(len(new_inputs) == 1)
-    assert(len(new_outputs) == 1)
-
-    new_node = make_map_node(node, new_inputs, new_outputs)
-    wrap_node = r_wrap.wrap_node(new_node)
-    return wrap_node
-
 
 
 ## Note: This might need more information. E.g. all the file
@@ -784,23 +727,21 @@ class IR:
     def empty(self):
         return (len(self.nodes) == 0)
 
-    def apply_parallelization_to_node(self, node_id, parallelizer, fileIdGen, fan_out,
-                                            batch_size, no_cat_split_vanish, r_split_batch_size):
+    def apply_parallelization_to_node(self, node_id, parallelizer, fileIdGen, fan_out, r_split_batch_size):
         splitter = parallelizer.get_splitter()
         if splitter.is_splitter_round_robin():
             self.apply_round_robin_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out,
-                                            batch_size, no_cat_split_vanish, r_split_batch_size)
+                                                           r_split_batch_size)
         elif splitter.is_splitter_round_robin_with_unwrap_flag():
             self.apply_round_robin_with_unwrap_flag_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out,
-                                                           batch_size, no_cat_split_vanish, r_split_batch_size)
+                                                                            r_split_batch_size)
         elif splitter.is_splitter_consec_chunks():
-            self.apply_consecutive_chunks_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out,
-                                                                 batch_size, no_cat_split_vanish, r_split_batch_size)
+            self.apply_consecutive_chunks_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out)
         else:
             raise Exception("Splitter not yet implemented")
 
     def apply_round_robin_parallelization_to_node(self, node_id, parallelizer, fileIdGen, fan_out,
-                                                        batch_size, no_cat_split_vanish, r_split_batch_size):
+                                                  r_split_batch_size):
         # TODO: this control flow should move done to aggregators once we implement them;
         #  currently, this cannot be done since splitter etc. would be added...
         aggregator_spec = parallelizer.get_aggregator_spec()
@@ -848,7 +789,7 @@ class IR:
         self.introduce_aggregator_for_round_robin(out_mapper_ids, parallelizer, streaming_output)
 
     def apply_round_robin_with_unwrap_flag_parallelization_to_node(self, node_id, parallelizer, fileIdGen, fan_out,
-                                                  batch_size, no_cat_split_vanish, r_split_batch_size):
+                                                                   r_split_batch_size):
         # round robin with unwrap flag is an inferred parallelizer which ensures that
         # the command is commutative and has an aggregator for consecutive chunks;
         # thus we can check whether we can re-open a previous "RR"-parallelization ending with `r_merge`
@@ -889,8 +830,7 @@ class IR:
                                                      original_cmd_invocation_with_io_vars, out_aggregator_id, parallelizer,
                                                      streaming_output)
 
-    def apply_consecutive_chunks_parallelization_to_node(self, node_id, parallelizer, fileIdGen, fan_out,
-                                                               batch_size, no_cat_split_vanish, r_split_batch_size):
+    def apply_consecutive_chunks_parallelization_to_node(self, node_id, parallelizer, fileIdGen, fan_out):
         # check whether we can fuse with previous node's parallelization:
         # we can do so if the previous node's parallelization is the same, and the aggregator is concatenation
         # Assumption: it suffices to check that the previous node is an aggregator node of type concatenate
@@ -1043,235 +983,7 @@ class IR:
             pass
 
 
-    ## This function parallelizes a merger followed by a parallelizable node
-    ##
-    ## There are several combinations that it can handle:
-    ##   1. cat -> parallelizable node
-    ##   2. r_merge -> stateless node without conf_input
-    ##   3. r_merge -> commutative pure parallelizable node 
-    ##
-    ## 1. cat followed by a parallelizable node
-    ##
-    ##    (conf_input) ----+
-    ##                      \
-    ##    (in1) --- cat ---- node ---(out)---
-    ##             /
-    ##    (in2) --+
-    ##
-    ## is transformed to
-    ##
-    ##    (conf_input) -- tee ------------+
-    ##                       \             \
-    ##                        \   (in1) --- node --- agg ---(out)---
-    ##                         \                    /
-    ##                (in2) --- node --------------+
-    ##
-    ## where edges are named with parenthesis and nodes are named without them.
-    ##
-    ## 2. r_merge followed by a stateless node without conf_input
-    ##
-    ## TODO: Add visual representation
-    ##
-    ## In this case the stateless command is wrapped with wrap so we cannot actually tee the input (since we do not know apriori how many forks we have).
-    ## However, we can actually write it to a file (not always worth performance wise) and then read it from all at once.
-    ##
-    ##
-    ## TODO: Eventually delete the fileIdGen from here and always use the graph internal one.
-    ##
-    ## TODO: Eventually this should be tunable to not happen for all inputs (but maybe for less)
-    def parallelize_node(self, node_id, fileIdGen):
-        assert(False)
-        node = self.get_node(node_id)
-        # BEGIN ANNO
-        # OLD
-        # assert(node.is_parallelizable())
-        # NEW
-        rr_parallelizer_list = [parallelizer for parallelizer in node.parallelizer_list if parallelizer.splitter.is_splitter_round_robin()]
-        assert(len(rr_parallelizer_list) == 1)
-        rr_parallelizer = rr_parallelizer_list[0]
-        # to have this info later when the merger is created in a reduce tree
-        node.set_used_parallelizer(rr_parallelizer)
-        # END ANNO
 
-        ## Initialize the new_node list
-        new_nodes = []
-
-        ## Identify the previous merger node (cat or r_merge)
-        ##
-        ## TODO: This should also work for no cat (all inputs are part of the node)
-        node_input_ids = node.get_standard_inputs()
-        assert(len(node_input_ids) == 1)
-        node_input_id = node_input_ids[0]
-        previous_node_id = self.edges[node_input_id][1]
-        previous_node = self.get_node(previous_node_id)
-        assert(isinstance(previous_node, Cat)
-               or isinstance(previous_node, r_merge.RMerge))
-
-        ## Determine if the previous node is r_merge to determine which of the three parallelization cases to follow
-        r_merge_flag = isinstance(previous_node, r_merge.RMerge)
-
-        ## If the previous node of r_merge is an r_split, then we need to replace it with -r,
-        ## instead of doing unwraps.
-        if(r_merge_flag):
-            assert(False)
-            assert(isinstance(previous_node, r_merge.RMerge))
-            r_merge_prev_node_ids = self.get_previous_nodes(previous_node_id)
-
-            ## If all the previous nodes are r_split this means that they are the same
-            ##
-            ## Q: Could that ever not be true?
-            ##
-            ## TODO: If we ever want to measure the benefit from this optimization we need
-            ##       to make a conjunction in this flag here.
-            r_split_before_r_merge_opt_flag = all([isinstance(self.get_node(node_id), r_split.RSplit)
-                                                   for node_id in r_merge_prev_node_ids])
-
-            ## If r_split was right before the r_merge, and the node is pure parallelizable,
-            ## this means that we will not add unwraps, and therefore we need to add the -r flag to r_split.
-            if (r_split_before_r_merge_opt_flag
-                and node.is_pure_parallelizable()):
-                assert(node.is_commutative())
-                r_split_id = r_merge_prev_node_ids[0]
-                r_split_node = self.get_node(r_split_id)
-
-                ## Add -r flag in r_split
-                r_split_node.add_r_flag()
-        else:
-            r_split_before_r_merge_opt_flag = False
-
-
-        ## Identify the parallel inputs, each of which will be given to a different copy of the node.
-        parallel_input_ids = previous_node.get_input_list()
-        parallelism = len(parallel_input_ids)
-
-        ## Identify the output.
-        node_output_edge_ids = node.get_output_list()
-        assert(len(node_output_edge_ids) == 1)
-        node_output_edge_id = node_output_edge_ids[0]
-
-        ## Remove the original node and the cat node before it
-        ## This also unplugs all the inputs
-        self.remove_node(node_id)
-        self.remove_node(previous_node_id)
-
-        ## TODO: This does not work at the moment. There seem to be some issues with tee.
-        ##       It probably has to do with a misunderstanding of how configuration inputs work
-        ## Unplug the configuration inputs from the node and tee it
-        parallel_configuration_ids = [[] for _ in range(parallelism)]
-        node_conf_inputs = node.get_configuration_inputs()
-        for conf_edge_id in node_conf_inputs:
-            assert(False)
-            ## TODO: For now this does not work for r_merge
-            assert(not r_merge_flag)
-            # self.set_edge_to(conf_edge_id, None)
-            tee_id = self.tee_edge(conf_edge_id, parallelism, fileIdGen)
-            tee_node = self.get_node(tee_id)
-            for i in range(parallelism):
-                # TODO outputs probably non-existent
-                parallel_configuration_ids[i].append(tee_node.outputs[i])
-
-        ## Create a temporary output edge for each parallel command.
-        # BEGIN ANNO
-        # OLD
-        # map_output_fids = node.get_map_output_files(parallel_input_ids, fileIdGen)
-        # NEW (added parameter)
-        map_output_fids = get_map_output_files(node, parallel_input_ids, fileIdGen, rr_parallelizer)
-        # END ANNO
-        assert(len(map_output_fids) == len(parallel_input_ids))
-
-        all_map_output_ids = []
-        ## For each parallel input, create a parallel command
-        for index in range(parallelism):
-            ## Gather inputs and outputs
-            conf_ins = parallel_configuration_ids[index]
-            assert(len(conf_ins) == 0)
-            standard_in = parallel_input_ids[index]
-            new_inputs = (conf_ins, [standard_in])
-            map_output_fid = map_output_fids[index]
-            if(not isinstance(map_output_fid, list)):
-                output_fid_list = [map_output_fid]
-            else:
-                output_fid_list = map_output_fid
-            new_output_ids = [fid.get_ident() for fid in output_fid_list]
-            all_map_output_ids.append(new_output_ids)
-
-            ## Add the map_output_edges to the graph
-            for output_fid in output_fid_list:
-                self.add_edge(output_fid)
-
-            ## If the previous merger is r_merge we need to put wrap around the nodes
-            ## or unwrap before a commutative command
-            if(r_merge_flag is True):
-                assert(False)
-                ## For stateless nodes we are in case (2) and we wrap them
-                if (node.is_stateless()):
-                    parallel_node = make_wrap_map_node(node, new_inputs, new_output_ids)
-                    self.add_node(parallel_node)
-                else:
-                    ## If we have a pure parallelizable node, then we have to unwrap, before parallelizing the node.
-                    ##
-                    ## This can only work if the node is actually commutative
-                    assert(node.is_pure_parallelizable())
-                    assert(is_single_input(new_inputs))
-                    assert(node.is_commutative())
-
-                    ## Optimization: If the node before r_merge is an r_split, then we
-                    ##               don't need to add unwrap, and we can just add -r to r_split.
-                    if(r_split_before_r_merge_opt_flag):
-                        parallel_node = make_map_node(node, new_inputs, new_output_ids)
-                        self.add_node(parallel_node)
-                    else:
-                        ## Make the edge between unwrap and the command
-                        unwrap_output_fid = fileIdGen.next_ephemeral_file_id()
-                        unwrap_output_id = unwrap_output_fid.get_ident()
-                        self.add_edge(unwrap_output_fid)
-
-                        ## TODO: Make an unwrap node and create new inputs
-                        unwrap_node = r_unwrap.make_unwrap_node(new_inputs, unwrap_output_id)
-                        self.add_node(unwrap_node)
-                        self.set_edge_from(unwrap_output_id, unwrap_node.get_id())
-
-                        parallel_node_inputs = ([], [unwrap_output_id])
-                        parallel_node = make_map_node(node, parallel_node_inputs, new_output_ids)
-                        self.add_node(parallel_node)
-                        self.set_edge_to(unwrap_output_id, parallel_node.get_id())
-
-                        ## Note: unwrap needs to be set as the parallel node since below the inputs are set to point to it.
-                        parallel_node = unwrap_node
-            else:
-                ## If we are working with a `cat` (and not an r_merge), then we just make a parallel node
-                parallel_node = make_map_node(node, new_inputs, new_output_ids, rr_parallelizer)
-                self.add_node(parallel_node)
-
-            parallel_node_id = parallel_node.get_id()
-
-            ## Set the to of all input edges
-            for conf_in in conf_ins:
-                assert(False)
-                self.set_edge_to(conf_in, parallel_node_id)
-            self.set_edge_to(standard_in, parallel_node_id)
-
-
-        if (node.com_category == "stateless"):
-            if(r_merge_flag is True):
-                assert(False)
-                new_merger = r_merge.make_r_merge_node(flatten_list(all_map_output_ids), node_output_edge_id)
-            else:
-                # BEGIN ANNO
-                # OLD
-                # new_merger = make_cat_node(flatten_list(all_map_output_ids), node_output_edge_id)
-                # NEW
-                new_merger = get_aggregator_as_dfg_node_from_node(node, rr_parallelizer, flatten_list(all_map_output_ids), [node_output_edge_id])
-                # END ANNO
-
-            self.add_node(new_merger)
-            new_nodes.append(new_merger)
-            self.set_edge_from(node_output_edge_id, new_merger.get_id())
-        else:
-            ## TODO: Create an aggregator here. At the moment it happens in `pash_runtime.py`.
-            pass
-
-        return new_nodes, all_map_output_ids
 
     ## Replicates an edge using tee and returns the new node_id.
     def tee_edge(self, edge_id, times, fileIdGen):
@@ -1469,4 +1181,5 @@ class IR:
     def create_reduce_node(init_func, input_ids, output_ids):
         return init_func(flatten_list(input_ids), output_ids)
     # TODO: this is where we need to use our aggregator spec/node
+
 

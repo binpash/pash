@@ -10,6 +10,7 @@ on:
       - runtime/**
       - evaluation/**
       - annotations/**
+      - scripts/**
 
   pull_request_target:
     types: [assigned, opened, synchronize, reopened, ready_for_review]
@@ -19,6 +20,7 @@ on:
           - runtime/**
           - evaluation/**
           - annotations/**
+          - scripts/**
 
 # Jobs section
 jobs:
