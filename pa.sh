@@ -49,7 +49,7 @@ export DAEMON_SOCKET="${PASH_TMP_PREFIX}/daemon_socket"
 export DSPASH_SOCKET="${PASH_TMP_PREFIX}/dspash_socket"
 
 ## Initialize all things necessary for pash to execute (logging/functions/etc)
-source "$PASH_TOP/compiler/pash_init_setup.sh" "$@"
+source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "$@"
 
 if [ "$pash_daemon" -eq 1 ] && [ "$show_version" -eq 0 ]; then
   ## TODO: If possible, move the daemon start as easly as possible to reduce waiting
