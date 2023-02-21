@@ -4,8 +4,9 @@ import subprocess
 import sys
 
 from shell_ast.ast_util import UnparsedScript
+from shell_ast.ast_node import AstNode, ast_node_to_untyped_deep
+
 from util import *
-from definitions.ast_node import AstNode, ast_node_to_untyped_deep
 
 import libdash.parser
 import libdash.printer
