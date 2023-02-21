@@ -59,6 +59,9 @@ def main():
     ## Initialize the log file
     ## TODO: Can we move this somewhere where there is no need for copy paste?
     config.init_log_file()
+
+    ## TODO: Modify this to allow for multiple different transformation types 
+    ##       (and potentially being more loosely coupled with PaSh).
     mode = ast_to_ast.TransformationType('spec')
     preprocessed_shell_script = preprocess(args.input, args, mode)
     print(preprocessed_shell_script)
