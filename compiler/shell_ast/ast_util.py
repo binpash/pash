@@ -1,64 +1,61 @@
-### Utils
 
+from shell_ast.ast_node import *
 from util import *
 
+
+## This class is used by the preprocessor in ast_to_ir
+class PreprocessedAST:
+    def __init__(self, ast, replace_whole, non_maximal, something_replaced=True, last_ast=False):
+        assert(isinstance(ast, AstNode))
+        self.ast = ast
+        self.replace_whole = replace_whole
+        self.non_maximal = non_maximal
+        self.something_replaced = something_replaced
+        self.last_ast = last_ast
+
+    def should_replace_whole_ast(self):
+        return self.replace_whole
+
+    def is_non_maximal(self):
+        return self.non_maximal
+    
+    def will_anything_be_replaced(self):
+        return self.something_replaced
+
+    def is_last_ast(self):
+        return self.last_ast
+
+## This class represents text that was not modified at all by preprocessing, and therefore does not
+## need to be unparsed.
+class UnparsedScript:
+    def __init__(self, text):
+        self.text = text
+
+
 ##
-## Separate the option from the non-option command arguments
+## Pattern matching for the AST
 ##
 
-def option_args(options):
-    option_args_inds = option_args_indices(options)
-    args = [option for option, i in option_args_inds]
-    return args
+def check_if_ast_is_supported(construct, arguments, **kwargs):
+    return
 
-def option_args_indices(options):
-    non_option_indices = [i for _, i in non_option_args_indices(options)]
-    non_option_indices_set = set(non_option_indices)
+def ast_match_untyped(untyped_ast_object, cases, *args):
+    ## TODO: This should construct the complete AstNode object (not just the surface level)
+    ## TODO: Remove this and then at some point make real proper use of the AstNode
+    ast_node = AstNode(untyped_ast_object)
+    if ast_node.construct is AstNodeConstructor.PIPE:
+        ast_node.check(children_count = lambda : len(ast_node.items) >= 2)
+    return ast_match(ast_node, cases, *args)
 
-    ## Find the option args by finding the complement of the
-    ## non-option args
-    formated_options = [format_arg_chars(opt) for opt in options]
-    option_args = [(option, i) for i, option in enumerate(formated_options)
-                   if not i in non_option_indices_set]
-    return option_args
+def ast_match(ast_node, cases, *args):
+    ## TODO: Remove that once `ast_match_untyped` is fixed to
+    ##       construct the whole AstNode object.
+    if(not isinstance(ast_node, AstNode)):
+        return ast_match_untyped(ast_node, cases, *args)
 
-def non_option_args(options):
-    non_option_args_inds = non_option_args_indices(options)
-    args = [option for option, i in non_option_args_inds]
-    return args
+    return cases[ast_node.construct.value](*args)(ast_node)
 
-def non_option_args_indices(options):
-    formated_options = [format_arg_chars(opt) for opt in options]
-    # log(formated_options)
 
-    ## TODO: This might need to become more general
-    ##
-    ## WARNING: Handling `-` as stdin should not be done for all
-    ## commands but only for those that have the stdin-hyphen option.
-    args = [(option, i) for i, option in enumerate(formated_options)
-            if not option.startswith("-") or option == "-"]
-    return args
-
-## This function interleaves option arguments (that might contain Nones)
-## with the rest of the arguments
-##
-## Assumption: rest_arguments does not contain Nones
-def interleave_args(opt_arguments, rest_arguments):
-    assert(all([arg for arg in rest_arguments if not arg is None]))
-    arguments = opt_arguments
-    for i in range(len(arguments)):
-        if(arguments[i] is None):
-            rest_arg = rest_arguments.pop(0)
-            arguments[i] = rest_arg
-    arguments += rest_arguments
-    return arguments
-
-def get_command_from_definition(command_definition):
-    if 'command' in command_definition:
-        return command_definition['command']
-
-    log('Possible issue with definition file: Missing command in command definition {}'.format(command_definition))
-    return ''
 
 def format_args(args):
     formatted_args = [format_arg_chars(arg_chars) for arg_chars in args]
@@ -143,21 +140,7 @@ def format_expanded_arg_char(arg_char):
         ## TODO: Make this correct
         raise ValueError
 
-## These functions check tuple inputs (configuration and streaming ones)
-def is_single_input(inputs):
-    assert(False)
-    assert(isinstance(inputs, tuple))
-    conf_inputs = inputs[0]
-    streaming_inputs = inputs[1]
-    return (len(conf_inputs) == 0
-            and len(streaming_inputs) == 1)
 
-## This function gets a key and a value from the ast json format
-def get_kv(dic):
-    return (dic[0], dic[1])
-
-def make_kv(key, val):
-    return [key, val]
 
 def string_to_arguments(string):
     return [string_to_argument(word) for word in string.split(" ")]
@@ -241,3 +224,36 @@ def make_defun(name, body):
     node = make_kv("Defun", [lineno, name, body])
     return node
 
+##
+## Make some nodes
+##
+
+def make_echo_ast(argument, var_file_path):
+    nodes = []
+    ## Source variables if present
+    if(not var_file_path is None):
+        arguments = [string_to_argument("source"), string_to_argument(var_file_path)]
+
+        line_number = 0
+        node = make_kv('Command', [line_number, [], arguments, []])
+        nodes.append(node)
+
+    ## Reset the exit status
+    variable_arg = make_kv('V', ['Normal', "false", 'pash_previous_exit_status', []])
+    arguments = [string_to_argument("exit"), [variable_arg]]
+    exit_node = make_kv('Command', [0, [], arguments, []])
+    node = make_kv('Subshell', [0, exit_node, []])
+    nodes.append(node)
+
+    ## Reset the input arguments
+    variable_arg = make_kv('V', ['Normal', "false", 'pash_input_args', []])
+    arguments = [string_to_argument("set"), string_to_argument("--"), [variable_arg]]
+    set_node = make_kv('Command', [0, [], arguments, []])
+    nodes.append(set_node)
+
+    arguments = [string_to_argument("echo"), string_to_argument("-n"), argument]
+
+    line_number = 0
+    node = make_kv('Command', [line_number, [], arguments, []])
+    nodes.append(node)
+    return nodes

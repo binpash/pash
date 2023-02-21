@@ -75,3 +75,9 @@ def return_default_if_none_else_itself(arg: Optional[TType], default: TType) -> 
     else:
         return arg
 
+## This function gets a key and a value from the ast json format
+def get_kv(dic):
+    return (dic[0], dic[1])
+
+def make_kv(key, val):
+    return [key, val]

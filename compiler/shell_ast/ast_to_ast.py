@@ -3,7 +3,7 @@ import pickle
 
 import config
 
-from ast_util import *
+from shell_ast.ast_util import *
 from parse import from_ast_objects_to_shell_file
 
 
@@ -519,7 +519,8 @@ def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
                  string_to_argument(sequential_script_file_name),
                  string_to_argument(ir_filename)]
     ## Pass a relevant argument to the planner
-    arguments += config.pass_common_arguments(config.pash_args)
+    common_arguments_strings = config.pass_common_arguments(config.pash_args)
+    arguments += [string_to_argument(string) for string in common_arguments_strings]
     runtime_node = make_command(arguments)
 
     ## Restore the arguments to propagate internal changes, e.g., from `shift` outside.
