@@ -1,4 +1,6 @@
 from definitions.ast_node import *
+## TODO: These calls need to be moved here, they don't make sense in ir_utils
+from ir_utils import string_to_argument, make_kv
 
 ## This class is used by the preprocessor in ast_to_ir
 class PreprocessedAST:
@@ -51,3 +53,37 @@ def ast_match(ast_node, cases, *args):
         return ast_match_untyped(ast_node, cases, *args)
 
     return cases[ast_node.construct.value](*args)(ast_node)
+
+##
+## Make some nodes
+##
+
+def make_echo_ast(argument, var_file_path):
+    nodes = []
+    ## Source variables if present
+    if(not var_file_path is None):
+        arguments = [string_to_argument("source"), string_to_argument(var_file_path)]
+
+        line_number = 0
+        node = make_kv('Command', [line_number, [], arguments, []])
+        nodes.append(node)
+
+    ## Reset the exit status
+    variable_arg = make_kv('V', ['Normal', "false", 'pash_previous_exit_status', []])
+    arguments = [string_to_argument("exit"), [variable_arg]]
+    exit_node = make_kv('Command', [0, [], arguments, []])
+    node = make_kv('Subshell', [0, exit_node, []])
+    nodes.append(node)
+
+    ## Reset the input arguments
+    variable_arg = make_kv('V', ['Normal', "false", 'pash_input_args', []])
+    arguments = [string_to_argument("set"), string_to_argument("--"), [variable_arg]]
+    set_node = make_kv('Command', [0, [], arguments, []])
+    nodes.append(set_node)
+
+    arguments = [string_to_argument("echo"), string_to_argument("-n"), argument]
+
+    line_number = 0
+    node = make_kv('Command', [line_number, [], arguments, []])
+    nodes.append(node)
+    return nodes

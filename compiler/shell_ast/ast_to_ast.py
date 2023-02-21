@@ -3,7 +3,7 @@ import pickle
 
 import config
 
-from ast_util import *
+from shell_ast.ast_util import *
 from parse import from_ast_objects_to_shell_file
 
 

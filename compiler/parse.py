@@ -3,11 +3,9 @@ import config
 import subprocess
 import sys
 
-from ast_util import *
+from shell_ast.ast_util import UnparsedScript
 from util import *
-from definitions.ast_node import *
-
-sys.path.append(os.path.join(config.PASH_TOP, "compiler/parser/ceda"))
+from definitions.ast_node import AstNode, ast_node_to_untyped_deep
 
 import libdash.parser
 import libdash.printer
