@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+##
+## This is the wrapper for the PaSh preprocessor.
+## The preprocessor should never be used on its own except if you really know what you are doing.
+##
+
+## TODO: Move this and all the preprocessor source files in their own directory etc
+
+export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
+# point to the local downloaded folders
+export PYTHONPATH="${PASH_TOP}/compiler/:${PASH_TOP}/python_pkgs/:${PYTHONPATH}"
+
+## Create a temporary directory where PaSh can use for temporary files and logs
+export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
+
+python3 "$PASH_TOP/compiler/preprocessor/preprocessor.py" "$@"

@@ -142,13 +142,10 @@ test14()
     $shell +a readonly.sh
 }
 
-## Checks interactivity
-##
-## TODO: Make the interactivity script more elaborate (variable dependencies)
 test15()
 {
     local shell=$1
-    $shell < readonly.sh 
+    $shell readonly.sh 
 }
 
 test16()

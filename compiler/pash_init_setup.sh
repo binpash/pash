@@ -206,7 +206,7 @@ else
         ##   then it must have crashed or so.
         i=0
         ## This is a magic number to make sure that we wait enough
-        maximum_retries=100
+        maximum_retries=1000
         ## For some reason, `nc -z` doesn't work on livestar (it always returns error)
         ## and therefore we need to send something. 
         until  echo "Daemon Start" 2> /dev/null | nc -U "$DAEMON_SOCKET" >/dev/null 2>&1 ; 

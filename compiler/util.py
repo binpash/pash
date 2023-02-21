@@ -1,4 +1,5 @@
 from datetime import timedelta
+import functools
 from typing import Optional, TypeVar, Union, List, Any
 TType = TypeVar("TType")
 import os
@@ -19,14 +20,28 @@ def pad(lst, index):
         lst += [None] * (index + 1 - len(lst))
     return lst
 
-def print_time_delta(prefix, start_time, end_time, args=None):
+def print_time_delta(prefix, start_time, end_time):
     ## Always output time in the log.
     time_difference = (end_time - start_time) / timedelta(milliseconds=1)
     ## If output_time flag is set, log the time
-    if (config.pash_args.output_time == 1):
+    if (config.OUTPUT_TIME):
         log("{} time:".format(prefix), time_difference, " ms", level=0)
     else:
         log("{} time:".format(prefix), time_difference, " ms")
+
+
+## This function decorates a function to add the logging prefix (without missing the old prefix)
+def logging_prefix(logging_prefix):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            old_prefix = config.LOGGING_PREFIX
+            config.LOGGING_PREFIX = logging_prefix
+            result = func(*args, **kwargs)
+            config.LOGGING_PREFIX = old_prefix
+            return result
+        return wrapper
+    return decorator
 
 ## This is a wrapper for prints
 ##
@@ -35,11 +50,11 @@ def print_time_delta(prefix, start_time, end_time, args=None):
 def log(*args, end='\n', level=1):
     ## If the debug logging level is at least
     ## as high as this log message.
-    if (config.pash_args.debug >= level):
-        if(config.pash_args.log_file == ""):
+    if (config.DEBUG_LEVEL >= level):
+        if(config.LOG_FILE == ""):
             print(config.LOGGING_PREFIX, *args, file=sys.stderr, end=end, flush=True)
         else:
-            with open(config.pash_args.log_file, "a") as f:
+            with open(config.LOG_FILE, "a") as f:
                 print(config.LOGGING_PREFIX, *args, file=f, end=end, flush=True)
 
 def ptempfile():
