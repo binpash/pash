@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 
 import config
-import ast_to_ast
+from shell_ast import ast_to_ast
 from ir import FileIdGen
 from parse import parse_shell_to_asts, from_ast_objects_to_shell
 from util import *
