@@ -68,7 +68,7 @@ def to_shell_file(graph: IR, args) -> str:
         os.makedirs(directory, exist_ok=True)
 
     if not args.no_eager:
-        graph = pash_runtime.add_eager_nodes(graph, args.dgsh_tee)
+        graph = pash_runtime.add_eager_nodes(graph)
 
     script = to_shell(graph, args)
     with open(filename, "w") as f:
