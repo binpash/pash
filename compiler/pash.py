@@ -3,7 +3,6 @@ import os
 import subprocess
 import argparse
 from datetime import datetime
-from annotations import *
 import ast_to_ast
 from ir import *
 from parse import parse_shell_to_asts_interactive
