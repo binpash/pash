@@ -9,7 +9,7 @@ from datetime import datetime
 
 import config
 from pash_graphviz import maybe_generate_graphviz
-import pash_runtime
+import pash_compiler
 from util import *
 from dspash.worker_manager import WorkersManager
 
@@ -17,8 +17,6 @@ from dspash.worker_manager import WorkersManager
 ## A Daemon (not with the strict Unix sense) 
 ## that responds to requests for compilation
 ##
-
-# TODO: Rename the pash_runtime to pash_compiler and this to pash_daemon
 
 
 def handler(signum, frame):
@@ -48,7 +46,7 @@ def init():
     if not config.config:
         config.load_config(args.config_path)
 
-    pash_runtime.runtime_config = config.config['distr_planner']
+    pash_compiler.runtime_config = config.config['distr_planner']
 
     return args
 
@@ -177,7 +175,7 @@ class Scheduler:
             selected_width = config.pash_args.width
 
         log("Selected width:", selected_width)
-        return pash_runtime.CompilerConfig(selected_width)
+        return pash_compiler.CompilerConfig(selected_width)
 
     def get_averages_per_width(self, input_ir_file):
         ## If we haven't gathered any statistic yet
@@ -254,7 +252,7 @@ class Scheduler:
         ## Add the process_id -> input_ir mapping
         self.add_proc_id_map(process_id, input_ir_file, compiler_config)
 
-        ast_or_ir = pash_runtime.compile_ir(
+        ast_or_ir = pash_compiler.compile_ir(
             input_ir_file, compiled_script_file, config.pash_args, compiler_config)
 
         daemon_compile_end_time = datetime.now()

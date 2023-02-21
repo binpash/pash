@@ -16,7 +16,7 @@ sys.path.append(os.path.join(PASH_TOP, "compiler"))
 
 import config
 from util import log
-import pash_runtime
+import pash_compiler
 from dspash.socket_utils import send_msg, recv_msg
 from dspash.ir_helper import save_configs, to_shell_file
 from dspash.utils import create_filename, write_file
@@ -125,8 +125,8 @@ def init():
     ## KK: 2023-02-21 Commenting this out, we need to figure out if the new annotations work with the distribution package
     # config.annotations = load_annotation_files(
     #     config.config['distr_planner']['annotations_dir'])
-    pash_runtime.runtime_config = config.config['distr_planner']
-    pash_runtime.termination = ""
+    pash_compiler.runtime_config = config.config['distr_planner']
+    pash_compiler.termination = ""
 
 def main():
     init()
