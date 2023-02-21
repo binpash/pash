@@ -6,7 +6,6 @@ from datetime import datetime
 
 from pash_annotations.annotation_generation.datatypes.parallelizability.AggregatorKind import AggregatorKindEnum
 
-import annotations
 import config
 from ir import *
 from ast_to_ir import compile_asts
@@ -50,9 +49,6 @@ def main_body():
     ## Load the configuration
     if not config.config:
         config.load_config(args.config_path)
-
-    ## Load annotations
-    config.annotations = annotations.load_annotation_files(config.config['distr_planner']['annotations_dir'])
 
     runtime_config = config.config['distr_planner']
 
