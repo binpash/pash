@@ -2,63 +2,7 @@
 
 from util import *
 
-##
-## Separate the option from the non-option command arguments
-##
-
-def option_args(options):
-    option_args_inds = option_args_indices(options)
-    args = [option for option, i in option_args_inds]
-    return args
-
-def option_args_indices(options):
-    non_option_indices = [i for _, i in non_option_args_indices(options)]
-    non_option_indices_set = set(non_option_indices)
-
-    ## Find the option args by finding the complement of the
-    ## non-option args
-    formated_options = [format_arg_chars(opt) for opt in options]
-    option_args = [(option, i) for i, option in enumerate(formated_options)
-                   if not i in non_option_indices_set]
-    return option_args
-
-def non_option_args(options):
-    non_option_args_inds = non_option_args_indices(options)
-    args = [option for option, i in non_option_args_inds]
-    return args
-
-def non_option_args_indices(options):
-    formated_options = [format_arg_chars(opt) for opt in options]
-    # log(formated_options)
-
-    ## TODO: This might need to become more general
-    ##
-    ## WARNING: Handling `-` as stdin should not be done for all
-    ## commands but only for those that have the stdin-hyphen option.
-    args = [(option, i) for i, option in enumerate(formated_options)
-            if not option.startswith("-") or option == "-"]
-    return args
-
-## This function interleaves option arguments (that might contain Nones)
-## with the rest of the arguments
-##
-## Assumption: rest_arguments does not contain Nones
-def interleave_args(opt_arguments, rest_arguments):
-    assert(all([arg for arg in rest_arguments if not arg is None]))
-    arguments = opt_arguments
-    for i in range(len(arguments)):
-        if(arguments[i] is None):
-            rest_arg = rest_arguments.pop(0)
-            arguments[i] = rest_arg
-    arguments += rest_arguments
-    return arguments
-
-def get_command_from_definition(command_definition):
-    if 'command' in command_definition:
-        return command_definition['command']
-
-    log('Possible issue with definition file: Missing command in command definition {}'.format(command_definition))
-    return ''
+## TODO: Move everything to ast_util
 
 def format_args(args):
     formatted_args = [format_arg_chars(arg_chars) for arg_chars in args]
