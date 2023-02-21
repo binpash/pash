@@ -9,7 +9,7 @@ from pash_annotations.parser.parser import parse, get_set_of_all_flags, get_dict
 from pash_annotations.parser.util_parser import get_json_data
 
 
-from ir_utils import format_arg_chars, string_to_argument, log
+from shell_ast.ast_util import format_arg_chars, string_to_argument
 
 
 def merge_to_single_string_with_space(list_str):
