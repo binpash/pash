@@ -48,7 +48,6 @@ n_inputs=(
 if [ "$EXPERIMENTAL" -eq 1 ]; then
     configurations=(
         # "" # Commenting this out since the tests take a lot of time to finish
-        # "--speculation quick_abort"
         "--parallel_pipelines"
     )
 else
