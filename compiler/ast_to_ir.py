@@ -4,7 +4,7 @@ from definitions.ast_node import *
 from definitions.ast_node_c import *
 from util import *
 from parse import from_ast_objects_to_shell
-from expand import *
+from shell_ast.expand import *
 import subprocess
 import config
 
