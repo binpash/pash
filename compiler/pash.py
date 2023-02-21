@@ -8,7 +8,7 @@ import ast_to_ast
 from ir import *
 from parse import parse_shell_to_asts_interactive
 from pash_graphviz import maybe_init_graphviz_dir
-from preprocessor import preprocess
+from preprocessor.preprocessor import preprocess
 from util import *
 import config
 import shutil

@@ -15,4 +15,4 @@ export PYTHONPATH="${PASH_TOP}/python_pkgs/:${PYTHONPATH}"
 ## Create a temporary directory where PaSh can use for temporary files and logs
 export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
 
-python3 "$PASH_TOP/compiler/preprocessor.py" "$@"
+python3 "$PASH_TOP/preprocessor/preprocessor.py" "$@"
