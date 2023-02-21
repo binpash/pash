@@ -39,7 +39,6 @@ HDFS_PREFIX = "$HDFS_DATANODE_DIR/"
 
 
 config = {}
-annotations = []
 pash_args = None
 
 
