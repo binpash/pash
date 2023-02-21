@@ -1,5 +1,5 @@
 from definitions.ir.arg import *
-from ir_utils import *
+from shell_ast.ast_util import *
 
 class Redirection():
     def __init__(self, redirection):

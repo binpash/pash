@@ -6,7 +6,6 @@ import shlex
 
 from datetime import datetime
 
-from ir_utils import *
 from util import *
 
 ## Global
@@ -175,49 +174,49 @@ def add_common_arguments(parser):
 def pass_common_arguments(pash_arguments):
     arguments = []
     if (pash_arguments.no_optimize):
-        arguments.append(string_to_argument("--no_optimize"))
+        arguments.append("--no_optimize")
     if (pash_arguments.dry_run_compiler):
-        arguments.append(string_to_argument("--dry_run_compiler"))
+        arguments.append("--dry_run_compiler")
     if (pash_arguments.assert_compiler_success):
-        arguments.append(string_to_argument("--assert_compiler_success"))
+        arguments.append("--assert_compiler_success")
     if (pash_arguments.avoid_pash_runtime_completion):
-        arguments.append(string_to_argument("--avoid_pash_runtime_completion"))
+        arguments.append("--avoid_pash_runtime_completion")
     if (pash_arguments.profile_driven):
-        arguments.append(string_to_argument("--profile_driven"))
+        arguments.append("--profile_driven")
     if (pash_arguments.output_time):
-        arguments.append(string_to_argument("--output_time"))
+        arguments.append("--output_time")
     if (pash_arguments.output_optimized):
-        arguments.append(string_to_argument("--output_optimized"))
-    arguments.append(string_to_argument("--graphviz"))
-    arguments.append(string_to_argument(pash_arguments.graphviz))
-    arguments.append(string_to_argument("--graphviz_dir"))
-    arguments.append(string_to_argument(pash_arguments.graphviz_dir))
+        arguments.append("--output_optimized")
+    arguments.append("--graphviz")
+    arguments.append(pash_arguments.graphviz)
+    arguments.append("--graphviz_dir")
+    arguments.append(pash_arguments.graphviz_dir)
     if(not pash_arguments.log_file == ""):
-        arguments.append(string_to_argument("--log_file"))
-        arguments.append(string_to_argument(pash_arguments.log_file))
+        arguments.append("--log_file")
+        arguments.append(pash_arguments.log_file)
     if (pash_arguments.no_eager):
-        arguments.append(string_to_argument("--no_eager"))
+        arguments.append("--no_eager")
     if (pash_arguments.no_daemon):
-        arguments.append(string_to_argument("--no_daemon"))
+        arguments.append("--no_daemon")
     if (pash_arguments.distributed_exec):
-        arguments.append(string_to_argument("--distributed_exec"))
+        arguments.append("--distributed_exec")
     if (pash_arguments.parallel_pipelines):
-        arguments.append(string_to_argument("--parallel_pipelines"))
+        arguments.append("--parallel_pipelines")
     if (pash_arguments.daemon_communicates_through_unix_pipes):
-        arguments.append(string_to_argument("--daemon_communicates_through_unix_pipes"))
-    arguments.append(string_to_argument("--r_split_batch_size"))
-    arguments.append(string_to_argument(str(pash_arguments.r_split_batch_size)))
-    arguments.append(string_to_argument("--debug"))
-    arguments.append(string_to_argument(str(pash_arguments.debug)))
-    arguments.append(string_to_argument("--termination"))
-    arguments.append(string_to_argument(pash_arguments.termination))
-    arguments.append(string_to_argument("--speculation"))
-    arguments.append(string_to_argument(pash_arguments.speculation))
-    arguments.append(string_to_argument("--width"))
-    arguments.append(string_to_argument(str(pash_arguments.width)))
+        arguments.append("--daemon_communicates_through_unix_pipes")
+    arguments.append("--r_split_batch_size")
+    arguments.append(str(pash_arguments.r_split_batch_size))
+    arguments.append("--debug")
+    arguments.append(str(pash_arguments.debug))
+    arguments.append("--termination")
+    arguments.append(pash_arguments.termination)
+    arguments.append("--speculation")
+    arguments.append(pash_arguments.speculation)
+    arguments.append("--width")
+    arguments.append(str(pash_arguments.width))
     if(not pash_arguments.config_path == ""):
-        arguments.append(string_to_argument("--config_path"))
-        arguments.append(string_to_argument(pash_arguments.config_path))
+        arguments.append("--config_path")
+        arguments.append(pash_arguments.config_path)
     return arguments
 
 def init_log_file():

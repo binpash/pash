@@ -3,7 +3,6 @@ from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvoca
 
 from definitions.ir.file_id import *
 from definitions.ir.dfg_node import *
-from ir_utils import string_to_argument
 
 import config
 import os

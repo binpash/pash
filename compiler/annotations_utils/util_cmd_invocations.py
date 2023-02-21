@@ -13,7 +13,7 @@ from definitions.ir.arg import Arg
 # for typing
 from pash_annotations.datatypes.CommandInvocationPrefix import CommandInvocationPrefix
 
-from ir_utils import string_to_argument, redir_stdout_to_file, redir_file_to_stdin, make_command
+from shell_ast.ast_util import  string_to_argument, redir_stdout_to_file, redir_file_to_stdin, make_command
 
 def get_command_invocation_prefix_from_dfg_node(dfg_node):
     return CommandInvocationPrefix(cmd_name = dfg_node.com_name,

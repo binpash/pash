@@ -1,5 +1,5 @@
 from __future__ import annotations
-from ir_utils import *
+from shell_ast.ast_util import *
 from util import *
 
 class Arg:

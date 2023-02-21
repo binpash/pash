@@ -21,7 +21,7 @@ import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_wrap as r_wrap
 import definitions.ir.nodes.r_unwrap as r_unwrap
 
-from ir_utils import *
+from shell_ast.ast_util import *
 from util import *
 
 import config
