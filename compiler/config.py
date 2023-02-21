@@ -17,7 +17,7 @@ else:
     PASH_TOP = subprocess.run(GIT_TOP_CMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).stdout.rstrip()
 
 PYTHON_VERSION = "python3"
-PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
+PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_compiler.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 SAVE_ARGS_EXECUTABLE = os.path.join(PASH_TOP, "runtime/save_args.sh")
 
@@ -90,7 +90,7 @@ def add_general_config_arguments(parser):
                         help="configure where to write the log; defaults to stderr.",
                         default="")
 
-## These are arguments that are common to pash.py and pash_runtime.py
+## These are arguments that are common to pash.py and pash_compiler.py
 def add_common_arguments(parser):
     add_general_config_arguments(parser)
 

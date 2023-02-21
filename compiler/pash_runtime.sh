@@ -146,7 +146,7 @@ else
         response_args=($daemon_response)
         process_id=${response_args[1]}
     else
-        pash_redir_all_output_always_execute python3 -S "$RUNTIME_DIR//pash_runtime.py" --var_file "${pash_runtime_shell_variables_file}" "${pash_compiled_script_file}" "${pash_input_ir_file}" "$@"
+        pash_redir_all_output_always_execute python3 -S "$PASH_TOP/compiler/pash_compiler.py" --var_file "${pash_runtime_shell_variables_file}" "${pash_compiled_script_file}" "${pash_input_ir_file}" "$@"
         pash_runtime_return_code=$?
     fi
 
