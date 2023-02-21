@@ -1,6 +1,6 @@
 import json
 import config
-from definitions.ast_node import CustomJSONEncoder
+from shell_ast.ast_node import CustomJSONEncoder
 from subprocess import run, PIPE
 
 from util import *

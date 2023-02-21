@@ -1,5 +1,5 @@
 
-from definitions.ast_node import *
+from shell_ast.ast_node import *
 from util import *
 
 
@@ -141,14 +141,6 @@ def format_expanded_arg_char(arg_char):
         raise ValueError
 
 
-## TODO: This seems like it should go to ast_util
-
-## This function gets a key and a value from the ast json format
-def get_kv(dic):
-    return (dic[0], dic[1])
-
-def make_kv(key, val):
-    return [key, val]
 
 def string_to_arguments(string):
     return [string_to_argument(word) for word in string.split(" ")]
