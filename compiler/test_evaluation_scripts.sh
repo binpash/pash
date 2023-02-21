@@ -48,15 +48,12 @@ n_inputs=(
 if [ "$EXPERIMENTAL" -eq 1 ]; then
     configurations=(
         # "" # Commenting this out since the tests take a lot of time to finish
-        "--r_split"
-        "--dgsh_tee"
-        # "--r_split --dgsh_tee"
         # "--speculation quick_abort"
         "--parallel_pipelines"
     )
 else
     configurations=(
-        "--r_split --dgsh_tee --parallel_pipelines --profile_driven"
+        "--parallel_pipelines --profile_driven"
     )
 fi
 
