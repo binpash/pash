@@ -1,11 +1,8 @@
 import copy
-from command_categories import *
 from definitions.ir.redirection import *
 from definitions.ir.resource import *
 
 from annotations_utils.util_cmd_invocations import to_node_cmd_inv_with_io_vars, construct_property_container_from_list_of_properties
-
-import sys
 
 from util import return_empty_list_if_none_else_itself, return_default_if_none_else_itself
 
@@ -71,16 +68,6 @@ class DFGNode:
         DFGNode.next_id += 1
         return node_copy
 
-    ## TODO: Make that a proper class.
-    def set_inputs(self, inputs):
-        assert(False)
-        if(isinstance(inputs, list)):
-            self.inputs = ([], inputs)
-        elif(isinstance(inputs, tuple)):
-            self.inputs = inputs
-        else:
-            raise NotImplementedError()
-
     def get_input_list(self):
         inputs = self.cmd_invocation_with_io_vars.generate_inputs()
         return inputs.get_all_inputs()
@@ -96,18 +83,6 @@ class DFGNode:
         inputs = self.cmd_invocation_with_io_vars.generate_inputs()
         return inputs.get_config_inputs()
 
-    # def is_at_most_pure(self):
-    #     return (self.com_category in ["stateless", "pure", "parallelizable_pure"])
-
-    # def is_parallelizable(self):
-    #     return (self.is_pure_parallelizable() or self.is_stateless())
-
-    # def is_stateless(self):
-    #     return (self.com_category == "stateless")
-
-    # def is_pure_parallelizable(self):
-    #     return (self.com_category == "parallelizable_pure")
-
     def is_commutative(self):
         val = self.cmd_related_properties.get_property_value('is_commutative')
         if val is not None:
@@ -115,75 +90,6 @@ class DFGNode:
         else:
             return False
 
-    ## kk: 2021-07-23 Not totally sure if that is generally correct. Tests will say ¯\_(ツ)_/¯
-    ##     I think it assumes that new options can be added in the beginning if there are no options already
-    def append_options(self, new_options):
-        assert(False) # unreachable
-        if(len(self.com_options) > 0):
-            max_opt_index = max([i for i, _opt in self.com_options])
-        else:
-            max_opt_index = -1
-        new_com_options = [(max_opt_index + 1 + i, Arg(string_to_argument(opt))) 
-                           for i, opt in enumerate(new_options)]
-        self.com_options = self.com_options + new_com_options
-
-    ## This method handles special DFG nodes specially when it has to do
-    ## with turning them to commands.
-    ##
-    ## The goal would be for this function to be developed for more and more nodes
-    ## so as to guide the second version of the annotations.
-    ##
-    ## TODO: Abstract this function away to annotations 2.0
-    def special_to_ast(self, edges):
-        assert(False) # unreachable
-        # BEGIN ANNO
-        return None
-        # END ANNO
-        ## Every argument should be completely expanded so making it a string should be fine
-        if str(self.com_name) == "cat":
-            redirs = self._to_ast_aux_get_redirs()
-            assignments = self.com_assignments
-            com_name_ast = self.com_name.to_ast()
-            option_asts = [opt.to_ast() for _, opt in self.com_options]
-
-            ## We simply turn inputs to arguments by appending them to the options
-            input_arguments = self._to_ast_aux_inputs_as_args(edges, stdin_dash=True)
-
-            ## TODO: Make sure a library of useful constructs that create
-            ##       a command from a DFG node.
-
-            ## We simply send output to stdout (as redir if needed)
-            output_redir = self._to_ast_aux_single_stdout_fid(edges)
-
-            all_arguments = [com_name_ast] + option_asts + input_arguments
-            all_redirs = redirs + output_redir
-
-            node = make_command(all_arguments, redirections=all_redirs, assignments=assignments)
-            return node
-        else:
-            return None
-
-    ## This function handles the input fids as arguments.
-    def _to_ast_aux_inputs_as_args(self, edges, stdin_dash=False):
-        assert(False) # unreachable
-        input_fids = [edges[in_id][0] for in_id in self.get_input_list()]
-
-        input_arguments = [fid.to_ast(stdin_dash=stdin_dash)
-                            for fid in input_fids]
-        return input_arguments
-
-    ## This function handles the redirections when a command has a single output
-    ##   and it can always be stdout.
-    def _to_ast_aux_single_stdout_fid(self, edges):
-        assert(False) # unreachable
-        output_fids = [edges[out_id][0] for out_id in self.outputs]
-        assert len(output_fids) == 1
-        output_fid = output_fids[0]
-        # log("output fid:", output_fid)
-
-        output_redir = redirect_to_stdout_if_not_already(output_fid)
-        # log("Redir:", output_redir)
-        return output_redir
 
     ## Auxiliary method that returns any necessary redirections,
     ##   at the moment it doesn't look necessary.

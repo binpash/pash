@@ -5,9 +5,9 @@ import sys
 import traceback
 from threading import Thread
 from datetime import datetime
-import queue
+# import queue
 
-from annotations import *
+import annotations
 import config
 from pash_graphviz import maybe_generate_graphviz
 import pash_runtime
@@ -15,16 +15,11 @@ from util import *
 from dspash.worker_manager import WorkersManager
 
 ##
-# A Daemon responding to requests for compilation
-##
-# Note: Not an actual daemon with the strict Unix sense
+## A Daemon (not with the strict Unix sense) 
+## that responds to requests for compilation
 ##
 
 # TODO: Rename the pash_runtime to pash_compiler and this to pash_daemon
-
-# TODO: Should we maybe use sockets instead of fifos?
-
-# TODO: Fix the daemon logging.
 
 
 def handler(signum, frame):
@@ -55,7 +50,7 @@ def init():
         config.load_config(args.config_path)
 
     # Load annotations
-    config.annotations = load_annotation_files(
+    config.annotations = annotations.load_annotation_files(
         config.config['distr_planner']['annotations_dir'])
 
     pash_runtime.runtime_config = config.config['distr_planner']
