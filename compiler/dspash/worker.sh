@@ -16,7 +16,7 @@ then
     export HDFS_DATANODE_DIR=${datanode_dir#"file://"} # removes file:// prefix
 fi
 
-source "$PASH_TOP/compiler/pash_init_setup.sh" "$@" --distributed_exec
+source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "$@" --distributed_exec
 
 export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
 
