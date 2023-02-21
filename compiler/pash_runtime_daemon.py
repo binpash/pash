@@ -7,7 +7,6 @@ from threading import Thread
 from datetime import datetime
 # import queue
 
-import annotations
 import config
 from pash_graphviz import maybe_generate_graphviz
 import pash_runtime
@@ -48,10 +47,6 @@ def init():
     # Load the configuration
     if not config.config:
         config.load_config(args.config_path)
-
-    # Load annotations
-    config.annotations = annotations.load_annotation_files(
-        config.config['distr_planner']['annotations_dir'])
 
     pash_runtime.runtime_config = config.config['distr_planner']
 

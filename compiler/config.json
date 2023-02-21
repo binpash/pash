@@ -22,7 +22,6 @@
         "eager_executable_path": "runtime/eager.sh",
         "drain_stream_executable_path": "runtime/drain_stream.sh",
         "output_dir": "/tmp/distr_output",
-        "annotations_dir": "annotations",
         "batch_size": 1000,
         "distr_backend": false,
         "nodes": [
