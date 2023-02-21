@@ -53,7 +53,7 @@ source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "$@"
 
 if [ "$pash_daemon" -eq 1 ] && [ "$show_version" -eq 0 ]; then
   ## TODO: If possible, move the daemon start as easly as possible to reduce waiting
-  python3 -S "$PASH_TOP/compiler/pash_runtime_daemon.py" "$@" &
+  python3 -S "$PASH_TOP/compiler/pash_compilation_server.py" "$@" &
   daemon_pid=$!
   ## Wait until daemon has established connection
   ##
