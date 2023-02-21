@@ -1,7 +1,7 @@
 import config
 import os
 
-from ir_utils import *
+from shell_ast.ast_util import *
 from util import *
 import uuid
 

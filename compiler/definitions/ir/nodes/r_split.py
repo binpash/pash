@@ -8,7 +8,7 @@ import config
 
 from definitions.ir.dfg_node import *
 from definitions.ir.file_id import *
-from ir_utils import string_to_argument
+from shell_ast.ast_util import string_to_argument
 
 class RSplit(DFGNode):
     def __init__(self,

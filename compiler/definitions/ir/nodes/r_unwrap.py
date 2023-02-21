@@ -2,7 +2,6 @@ from pash_annotations.datatypes.AccessKind import make_stream_input, make_stream
 from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 from definitions.ir.dfg_node import *
-from ir_utils import *
 
 class RUnwrap(DFGNode):
     def __init__(self,
