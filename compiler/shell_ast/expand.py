@@ -5,7 +5,8 @@ from definitions.ast_node_c import *
 
 import ast_to_ir
 import config
-import parse
+## Could be useful for debugging
+# import parse
 
 ################################################################################
 # SAFE EXPANSION ANALYSIS
