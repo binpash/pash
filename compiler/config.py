@@ -6,11 +6,10 @@ import shlex
 
 from datetime import datetime
 
-from ir_utils import *
 from util import *
 
 ## Global
-__version__ = "0.10" # FIXME add libdash version
+__version__ = "0.11" # FIXME add libdash version
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'PASH_TOP' in os.environ:
     PASH_TOP = os.environ['PASH_TOP']
@@ -18,7 +17,7 @@ else:
     PASH_TOP = subprocess.run(GIT_TOP_CMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).stdout.rstrip()
 
 PYTHON_VERSION = "python3"
-PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.py")
+PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_compiler.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 SAVE_ARGS_EXECUTABLE = os.path.join(PASH_TOP, "runtime/save_args.sh")
 
@@ -26,13 +25,32 @@ SAVE_ARGS_EXECUTABLE = os.path.join(PASH_TOP, "runtime/save_args.sh")
 assert(not os.getenv('PASH_TMP_PREFIX') is None)
 PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
 
+##
+## Global configuration used by all pash components
+##
 LOGGING_PREFIX = ""
+OUTPUT_TIME = False
+DEBUG_LEVEL = 0
+LOG_FILE = ""
+
 
 HDFS_PREFIX = "$HDFS_DATANODE_DIR/"
 
+
 config = {}
-annotations = []
 pash_args = None
+
+
+## This function sets the global configuration
+##
+## TODO: Actually move everything outside of pash_args to configuration.
+def set_config_globals_from_pash_args(given_pash_args):
+    global pash_args, OUTPUT_TIME, DEBUG_LEVEL, LOG_FILE
+    pash_args = given_pash_args
+    OUTPUT_TIME = pash_args.output_time
+    DEBUG_LEVEL = pash_args.debug
+    LOG_FILE = pash_args.log_file
+
 
 ## Increase the recursion limit (it seems that the parser/unparser needs it for bigger graphs)
 sys.setrecursionlimit(10000)
@@ -59,8 +77,23 @@ def getWidth():
     cpus = os.cpu_count()
     return math.floor(cpus / 8) if cpus >= 16 else 2
 
-## These are arguments that are common to pash.py and pash_runtime.py
+def add_general_config_arguments(parser):
+    ## TODO: Delete that at some point, or make it have a different use (e.g., outputting time even without -d 1).
+    parser.add_argument("-t", "--output_time", #FIXME: --time
+                        help="(obsolete, time is always logged now) output the time it took for every step",
+                        action="store_true")
+    parser.add_argument("-d", "--debug",
+                        type=int,
+                        help="configure debug level; defaults to 0",
+                        default=0)
+    parser.add_argument("--log_file",
+                        help="configure where to write the log; defaults to stderr.",
+                        default="")
+
+## These are arguments that are common to pash.py and pash_compiler.py
 def add_common_arguments(parser):
+    add_general_config_arguments(parser)
+
     parser.add_argument("-w", "--width",
                         type=int,
                         default=getWidth(),
@@ -80,17 +113,9 @@ def add_common_arguments(parser):
     parser.add_argument("--profile_driven",
                         help="(experimental) use profiling information when optimizing",
                         action="store_true")
-    ## TODO: Delete that at some point, or make it have a different use (e.g., outputting time even without -d 1).
-    parser.add_argument("-t", "--output_time", #FIXME: --time
-                        help="(obsolete, time is always logged now) output the time it took for every step",
-                        action="store_true")
     parser.add_argument("-p", "--output_optimized", # FIXME: --print
                         help="output the parallel shell script for inspection",
                         action="store_true")
-    parser.add_argument("-d", "--debug",
-                        type=int,
-                        help="configure debug level; defaults to 0",
-                        default=0)
     parser.add_argument("--graphviz",
                         help="generates graphical representations of the dataflow graphs. The option argument corresponds to the format. PaSh stores them in a timestamped directory in the argument of --graphviz_dir",
                         choices=["no", "dot", "svg", "pdf", "png"],
@@ -102,14 +127,8 @@ def add_common_arguments(parser):
     parser.add_argument("--graphviz_dir",
                         help="the directory in which to store graphical representations",
                         default="/tmp")
-    parser.add_argument("--log_file",
-                        help="configure where to write the log; defaults to stderr.",
-                        default="")
     parser.add_argument("--no_eager",
                         help="(experimental) disable eager nodes before merging nodes",
-                        action="store_true")
-    parser.add_argument("--no_cat_split_vanish",
-                        help="(experimental) disable the optimization that removes cat with N inputs that is followed by a split with N inputs",
                         action="store_true")
     parser.add_argument("--no_daemon",
                         help="Run the compiler everytime we need a compilation instead of using the daemon",
@@ -119,15 +138,15 @@ def add_common_arguments(parser):
                         help="Run multiple pipelines in parallel if they are safe to run",
                         action="store_true",
                         default=False)
-    parser.add_argument("--r_split",
-                        help="(experimental) use round robin split, merge, wrap, and unwrap",
-                        action="store_true")
     parser.add_argument("--r_split_batch_size",
                         type=int,
-                        help="(experimental) configure the batch size of r_split (default: 1MB)",
+                        help="configure the batch size of r_split (default: 1MB)",
                         default=1000000)
+    parser.add_argument("--r_split",
+                        help="does nothing -- only here for old interfaces (not used anywhere in the code)",
+                        action="store_true")
     parser.add_argument("--dgsh_tee",
-                        help="(experimental) use dgsh-tee instead of eager",
+                        help="does nothing -- only here for old interfaces (not used anywhere in the code)",
                         action="store_true")
     parser.add_argument("--speculation",
                         help="(experimental) run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
@@ -155,61 +174,55 @@ def add_common_arguments(parser):
 def pass_common_arguments(pash_arguments):
     arguments = []
     if (pash_arguments.no_optimize):
-        arguments.append(string_to_argument("--no_optimize"))
+        arguments.append("--no_optimize")
     if (pash_arguments.dry_run_compiler):
-        arguments.append(string_to_argument("--dry_run_compiler"))
+        arguments.append("--dry_run_compiler")
     if (pash_arguments.assert_compiler_success):
-        arguments.append(string_to_argument("--assert_compiler_success"))
+        arguments.append("--assert_compiler_success")
     if (pash_arguments.avoid_pash_runtime_completion):
-        arguments.append(string_to_argument("--avoid_pash_runtime_completion"))
+        arguments.append("--avoid_pash_runtime_completion")
     if (pash_arguments.profile_driven):
-        arguments.append(string_to_argument("--profile_driven"))
+        arguments.append("--profile_driven")
     if (pash_arguments.output_time):
-        arguments.append(string_to_argument("--output_time"))
+        arguments.append("--output_time")
     if (pash_arguments.output_optimized):
-        arguments.append(string_to_argument("--output_optimized"))
-    arguments.append(string_to_argument("--graphviz"))
-    arguments.append(string_to_argument(pash_arguments.graphviz))
-    arguments.append(string_to_argument("--graphviz_dir"))
-    arguments.append(string_to_argument(pash_arguments.graphviz_dir))
+        arguments.append("--output_optimized")
+    arguments.append("--graphviz")
+    arguments.append(pash_arguments.graphviz)
+    arguments.append("--graphviz_dir")
+    arguments.append(pash_arguments.graphviz_dir)
     if(not pash_arguments.log_file == ""):
-        arguments.append(string_to_argument("--log_file"))
-        arguments.append(string_to_argument(pash_arguments.log_file))
+        arguments.append("--log_file")
+        arguments.append(pash_arguments.log_file)
     if (pash_arguments.no_eager):
-        arguments.append(string_to_argument("--no_eager"))
-    if (pash_arguments.r_split):
-        arguments.append(string_to_argument("--r_split"))
-    if (pash_arguments.dgsh_tee):
-        arguments.append(string_to_argument("--dgsh_tee"))
+        arguments.append("--no_eager")
     if (pash_arguments.no_daemon):
-        arguments.append(string_to_argument("--no_daemon"))
+        arguments.append("--no_daemon")
     if (pash_arguments.distributed_exec):
-        arguments.append(string_to_argument("--distributed_exec"))
+        arguments.append("--distributed_exec")
     if (pash_arguments.parallel_pipelines):
-        arguments.append(string_to_argument("--parallel_pipelines"))
+        arguments.append("--parallel_pipelines")
     if (pash_arguments.daemon_communicates_through_unix_pipes):
-        arguments.append(string_to_argument("--daemon_communicates_through_unix_pipes"))
-    arguments.append(string_to_argument("--r_split_batch_size"))
-    arguments.append(string_to_argument(str(pash_arguments.r_split_batch_size)))
-    if (pash_arguments.no_cat_split_vanish):
-        arguments.append(string_to_argument("--no_cat_split_vanish"))
-    arguments.append(string_to_argument("--debug"))
-    arguments.append(string_to_argument(str(pash_arguments.debug)))
-    arguments.append(string_to_argument("--termination"))
-    arguments.append(string_to_argument(pash_arguments.termination))
-    arguments.append(string_to_argument("--speculation"))
-    arguments.append(string_to_argument(pash_arguments.speculation))
-    arguments.append(string_to_argument("--width"))
-    arguments.append(string_to_argument(str(pash_arguments.width)))
+        arguments.append("--daemon_communicates_through_unix_pipes")
+    arguments.append("--r_split_batch_size")
+    arguments.append(str(pash_arguments.r_split_batch_size))
+    arguments.append("--debug")
+    arguments.append(str(pash_arguments.debug))
+    arguments.append("--termination")
+    arguments.append(pash_arguments.termination)
+    arguments.append("--speculation")
+    arguments.append(pash_arguments.speculation)
+    arguments.append("--width")
+    arguments.append(str(pash_arguments.width))
     if(not pash_arguments.config_path == ""):
-        arguments.append(string_to_argument("--config_path"))
-        arguments.append(string_to_argument(pash_arguments.config_path))
+        arguments.append("--config_path")
+        arguments.append(pash_arguments.config_path)
     return arguments
 
 def init_log_file():
-    global pash_args
-    if(not pash_args.log_file == ""):
-        with open(pash_args.log_file, "w") as f:
+    global LOG_FILE
+    if(not LOG_FILE == ""):
+        with open(LOG_FILE, "w") as f:
             pass
 
 

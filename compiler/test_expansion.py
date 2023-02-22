@@ -1,6 +1,6 @@
 import parse
 import config
-import expand
+from shell_ast import expand
 import json_ast
 
 import copy

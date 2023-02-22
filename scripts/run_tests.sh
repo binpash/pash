@@ -13,13 +13,10 @@ cd "$PASH_TOP/evaluation/tests/interface_tests"
 ./run.sh
 
 echo "Running compiler tests..."
-cd "$PASH_TOP/compiler"
+cd "$PASH_TOP/evaluation/tests/"
 ./test_evaluation_scripts.sh
 
 echo "Running aggregator tests..."
 cd "$PASH_TOP/evaluation/tests/agg/"
 ./run.sh
 
-echo "Running aggregator tests..."
-cd "$PASH_TOP/runtime/agg/cpp/tests"
-./test.sh

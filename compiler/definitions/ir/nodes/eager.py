@@ -1,20 +1,31 @@
+from pash_annotations.datatypes.AccessKind import AccessKind, make_stream_output, make_stream_input, make_other_output
+from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+
 from definitions.ir.dfg_node import *
 
 class Eager(DFGNode):
-    def __init__(self, inputs, outputs, com_name, com_category, com_options = [], 
-                 com_redirs = [], com_assignments=[]):
-        super().__init__(inputs, outputs, com_name, com_category, 
-                         com_options=com_options, 
-                         com_redirs=com_redirs, 
+    def __init__(self,
+                 cmd_invocation_with_io_vars,
+                 com_redirs=[], com_assignments=[]
+                 ):
+        # TODO []: default
+        super().__init__(cmd_invocation_with_io_vars,
+                         com_redirs=com_redirs,
                          com_assignments=com_assignments)
 
+
 def make_eager_node(input_id, output_id, intermediate_file_id, eager_exec_path):
-    com_name = Arg(string_to_argument(eager_exec_path))
-    com_category = "pure"
-    ## TODO: In theory the intermediate file id is also an output...
-    com_options = [(2, Arg(intermediate_file_id.to_ast()))]
-    return Eager([input_id],
-                 [output_id],
-                 com_name, 
-                 com_category,
-                 com_options=com_options)
+    eager_name = eager_exec_path
+    intermediate_file_id_id = intermediate_file_id.get_ident()
+    operand_list = [input_id, output_id, intermediate_file_id_id]
+    access_map = {output_id: make_stream_output(),
+                  input_id: make_stream_input(),
+                  intermediate_file_id_id: make_other_output()}
+    cmd_inv_with_io_vars = CommandInvocationWithIOVars(
+        cmd_name=eager_name,
+        flag_option_list=[],
+        operand_list=operand_list,
+        implicit_use_of_streaming_input=None,
+        implicit_use_of_streaming_output=None,
+        access_map=access_map)
+    return Eager(cmd_inv_with_io_vars)

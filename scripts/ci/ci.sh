@@ -34,7 +34,7 @@ build_runtime() {
 }
 
 pash_tests() {
-  cd ../compiler 
+  cd ../evaluation/tests/ 
   ./test_evaluation_scripts.sh | tee  >(grep '^Summary' | cut -d ' ' -f2 > pash_tests.sum)
   PASH_RESULTS=$(cat pash_tests.sum)
   cd $PASH_TOP/scripts

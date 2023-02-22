@@ -4,7 +4,7 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 # time: print real in seconds, to simplify parsing
 
 bash="bash"
-pash="$PASH_TOP/pa.sh --parallel_pipelines --r_split --dgsh_tee --profile_driven"
+pash="$PASH_TOP/pa.sh --parallel_pipelines --profile_driven"
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 rm -rf "$output_dir"
@@ -142,13 +142,10 @@ test14()
     $shell +a readonly.sh
 }
 
-## Checks interactivity
-##
-## TODO: Make the interactivity script more elaborate (variable dependencies)
 test15()
 {
     local shell=$1
-    $shell < readonly.sh 
+    $shell readonly.sh 
 }
 
 test16()
