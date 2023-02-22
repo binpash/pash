@@ -1,27 +1,38 @@
+from pash_annotations.datatypes.AccessKind import make_stream_output, make_stream_input
+from pash_annotations.datatypes.BasicDatatypes import Flag, ArgStringType
+from pash_annotations.datatypes.BasicDatatypesWithIO import OptionWithIO
+from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+
+from annotations_utils.util_cmd_invocations import to_ast_flagoption, to_ast_operand
 from definitions.ir.dfg_node import *
 
 class DGSHTee(DFGNode):
-    def __init__(self, inputs, outputs, com_name, com_category, com_options = [], 
-                 com_redirs = [], com_assignments=[]):
-        super().__init__(inputs, outputs, com_name, com_category, 
-                         com_options=com_options, 
-                         com_redirs=com_redirs, 
+    def __init__(self,
+                 cmd_invocation_with_io_vars,
+                 com_redirs=[], com_assignments=[]
+                 ):
+        # TODO []: default
+        super().__init__(cmd_invocation_with_io_vars,
+                         com_redirs=com_redirs,
                          com_assignments=com_assignments)
 
 def make_dgsh_tee_node(input_id, output_id):
     dgsh_tee_bin = os.path.join(config.PASH_TOP, config.config['runtime']['dgsh_tee_binary'])
-    com_name = Arg(string_to_argument(dgsh_tee_bin))
 
-    com_category = "pure"
+    access_map = {output_id: make_stream_output(),
+                  input_id: make_stream_input()}
 
-    ## TODO: add as command line arguments
-    com_options = [(2, Arg(string_to_argument("-I")))] # Eager functionality
-    com_options.append((3, Arg(string_to_argument("-f")))) # use file on disk when buffer reaches maximum
-    com_options.append((4, Arg(string_to_argument(f"-b {config.config['runtime']['dgsh_buffer_size']}")))) # set buffer size
-    # com_options.append(4, Arg(string_to_argument("−m batch_size"))) # set the 
+    flag_option_list = [OptionWithIO("-i", input_id),
+                        OptionWithIO("-o", output_id),
+                        Flag("-I"),
+                        Flag("-f"),
+                        OptionWithIO("-b", ArgStringType(Arg(string_to_argument(str(config.config['runtime']['dgsh_buffer_size'])))))]
 
-    return DGSHTee([input_id],
-                 [output_id],
-                 com_name, 
-                 com_category,
-                 com_options=com_options)
+    cmd_inv_with_io_vars = CommandInvocationWithIOVars(
+        cmd_name=dgsh_tee_bin,
+        flag_option_list=flag_option_list,
+        operand_list=[],
+        implicit_use_of_streaming_input=None,
+        implicit_use_of_streaming_output=None,
+        access_map=access_map)
+    return DGSHTee(cmd_inv_with_io_vars)

@@ -1,66 +1,76 @@
+from pash_annotations.datatypes.AccessKind import make_stream_output, make_stream_input
+from pash_annotations.datatypes.BasicDatatypes import ArgStringType
+from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+
+from annotations_utils.util_cmd_invocations import to_arg_from_cmd_inv_with_io_vars_without_streaming_inputs_or_outputs_for_wrapping
 from definitions.ir.dfg_node import *
-from ir_utils import *
+from shell_ast.ast_util import *
 
 class RWrap(DFGNode):
-    def __init__(self, inputs, outputs, com_name, com_category,
-                 com_options = [], com_redirs = [], com_assignments=[], wrapped_node_name=None):
-        super().__init__(inputs, outputs, com_name, com_category,
-                         com_options=com_options, 
-                         com_redirs=com_redirs, 
-                         com_assignments=com_assignments)
+    def __init__(self,
+                 cmd_invocation_with_io_vars,
+                 com_redirs=[],
+                 com_assignments=[],
+                 parallelizer_list=None,
+                 cmd_related_properties=None,
+                 wrapped_node_name=None):
+        # TODO []: default
         self.wrapped_node_name = wrapped_node_name
-    
+        super().__init__(cmd_invocation_with_io_vars,
+                         com_redirs=com_redirs,
+                         com_assignments=com_assignments,
+                         parallelizer_list=parallelizer_list,
+                         cmd_related_properties=cmd_related_properties)
+
     ## Get the label of the node. By default, it is simply the name
     def get_dot_label(self) -> str:
         ## The name could be a full path
-        name = self.com_name
+        name = self.cmd_invocation_with_io_vars.cmd_name
         basename = os.path.basename(str(name))
 
         wrapped_node_name = self.wrapped_node_name
         return f'{basename}({wrapped_node_name})'
 
-def wrap_node(node):
+def wrap_node(node: DFGNode, edges):
     r_wrap_bin = os.path.join(config.PASH_TOP, config.config['runtime']['r_wrap_binary'])
-    com_name = Arg(string_to_argument(r_wrap_bin))
-    ## TODO: Is it actually pure? What is it?
-    com_category = "pure"
-    ## At the moment we can only wrap a node that takes its input from stdin 
+
+    ## At the moment we can only wrap a node that takes its input from stdin
     ## and outputs to stdout. Therefore the node needs to have only one input and one output.
-    inputs = node.inputs
-    assert(is_single_input(inputs))
-
-    outputs = node.outputs
+    ## TO CHECK: with the remodelling also other cases should be handled
+    inputs = node.get_input_list()
+    assert(len(inputs) == 1)
+    input_id = inputs[0]
+    outputs = node.get_output_list()
     ## TODO: Would it make sense for outputs to be less than one?
-    assert(len(outputs) <= 1)
-
-    ## TODO: For now we can only wrap stateless commands
-    assert(node.com_category == "stateless")
-
-    ## TODO: All arguments must be options, otherwise there must be
-    ##       special handling in the wrap node2ast code. 
-    single_quote = Arg(string_to_argument("\'"))
-    cmd = Arg(string_to_argument(""))
+    ## TODO: changed this from <= to == 1 to simplify reasoning later for now
+    assert(len(outputs) == 1)
+    output_id = outputs[0]
+    access_map = {input_id: make_stream_input(), output_id: make_stream_output()}
 
     #create bash -c argument
-    cmd.concatenate(single_quote)
-    cmd.concatenate(node.com_name)
-    for i, opt in node.com_options:
-        cmd.concatenate(opt)
-    cmd.concatenate(single_quote)
+    cmd_inv_with_io_vars: CommandInvocationWithIOVars = node.cmd_invocation_with_io_vars
+    # do we need to copy here? currently, it seems fine
+    cmd_inv_with_io_vars.remove_streaming_inputs()
+    cmd_inv_with_io_vars.remove_streaming_outputs()
+    # any non-streaming inputs or outputs are converted here already!
+    cmd = to_arg_from_cmd_inv_with_io_vars_without_streaming_inputs_or_outputs_for_wrapping(cmd_inv_with_io_vars, edges)
 
-    wrapped_command_arg = [(1, cmd)]
-    bash_command_arg = [(0, Arg(string_to_argument("bash -c")))]
-    options = bash_command_arg +  wrapped_command_arg
+    bash_command_arg = [Arg(string_to_argument("bash -c"))]
+    operand_list = bash_command_arg + [cmd]
+
+    cmd_inv_with_io_vars = CommandInvocationWithIOVars(
+        cmd_name=r_wrap_bin,
+        flag_option_list=[],
+        operand_list=operand_list,
+        implicit_use_of_streaming_input=input_id,
+        implicit_use_of_streaming_output=output_id,
+        access_map=access_map)
 
     ## TODO: It is not clear if it is safe to just pass redirections and assignments down the line as is
     redirs = node.com_redirs
     assignments = node.com_assignments
 
-    return RWrap(inputs,
-                 outputs,
-                 com_name, 
-                 com_category,
-                 com_options=options,
+    return RWrap(cmd_inv_with_io_vars,
                  com_redirs=redirs,
                  com_assignments=assignments,
-                 wrapped_node_name=node.com_name)
+                 wrapped_node_name=node.cmd_invocation_with_io_vars.cmd_name)

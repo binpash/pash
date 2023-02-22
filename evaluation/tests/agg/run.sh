@@ -4,7 +4,7 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 # time: print real in seconds, to simplify parsing
 
 bash="bash"
-pash="$PASH_TOP/pa.sh --r_split --dgsh_tee --r_split_batch_size 1000000 --parallel_pipelines --profile_driven"
+pash="$PASH_TOP/pa.sh --r_split_batch_size 1000000 --parallel_pipelines --profile_driven"
 
 output_dir="$PASH_TOP/evaluation/tests/agg/output"
 rm -rf "$output_dir"

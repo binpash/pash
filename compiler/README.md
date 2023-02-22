@@ -9,20 +9,19 @@ A high-level diagram of PaSh's end-to-end operation is shown below:
 
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vSIuacgBR_QFOzawoAdJMmTjgsdnDUkp1DbSjLVlrowlhL6kxqckXXsL7SPoRXKfaC1hw9HQzJitmDP/pub?w=1364&amp;h=454">
 
-PaSh pre-processes a sequential script to insert calls to the `pash_runtime.py`.
+PaSh pre-processes a sequential script to insert calls to the `pash_compiler.py`.
 It then invokes the script, switching between evaluation, execution, and parallelization at runtime:
 (i) it first parses the script, creating an abstact syntax tree (AST); 
 (ii) it then expands the nodes of the AST, often calling the shell which performs that expansion;
 (iii) it compiles dataflow regions, parts of the AST that are potentially parallelizable, through an iterative optimization proceedure applied over a dataflow graph (DFG); and
 (iv) finally emits the parallel script by translating the DFG to AST and unparsing the AST back to a shell script.
-The compilation takes into account information about individual commands through [annotations](../annotations), and the emitted parallel script uses additional constructs provided by PaSh's [runtime library](../runtime).
+The compilation takes into account information about individual commands through annotations, and the emitted parallel script uses additional constructs provided by PaSh's [runtime library](../runtime).
 
 A correspondence between blocks in the diagram and Python modules is shown below:
 
 - Preprocessing: [pash.py](./pash.py)
 - Expansion and compilation: [ast_to_ir.py](./ast_to_ir.py)
-- Dealing with annotations: [annotations.py](./annotations.py), [command_categories.py](./command_categories.py)
-- Optimization: [pash_runtime.py](./pash_runtime.py)
+- Optimization: [pash_compiler.py](./pash_compiler.py)
 
 ## Compiler Overview
 
@@ -36,12 +35,12 @@ The [pash_runtime.sh](./pash_runtime.sh) script simply invokes the [pash.py](./p
 
 The compiler has several stages:
 
-1. It expands words in the AST and then it turns it into our dataflow model (guided by [annotations](../annotations))
+1. It expands words in the AST and then it turns it into our dataflow model (guided by annotations)
    - The expansion and translation happens in [ast_to_ir.py](./ast_to_ir.py)
    - The dataflow model is defined mostly in [ir.py](./ir.py)
-   - The annotations are processed in [annotations.py](./annotations.py) and [command_categories.py](./command_categories.py)
+   - The annotations are processed in [binpash/annotations](https://github.com/binpash/annotations)
 2. It performs transformations on the dataflow graph to expose parallelism (guided by annotations)
-   - Translations happen in [pash_runtime.py](./pash_runtime.py)
+   - Translations happen in [pash_compiler.py](./pash_compiler.py)
 3. It then translates the dataflow graph back to a shell script to execute it with bash
    - The `dfg2shell` translation happens in [ir_to_ast.py](./ir_to_ast.py)
 

@@ -1,12 +1,5 @@
-ifeq ($(optimized_agg_flag),1)
-all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee agg set-diff
-.PHONY: all eager-debug split-debug clean agg
-else
 all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee set-diff
 .PHONY: all eager-debug split-debug clean
-endif
-
-
 
 CFLAGS=-Wall
 
@@ -71,11 +64,8 @@ dgsh-tee:
 	gcc ${CFLAGS} $(dgsh_tee_SOURCES) $(libdgsh_a_SOURCES) -o $@; \
 	cp dgsh-tee ../../../dgsh-tee;
 	rm -rf dgsh/
-	
-agg:
-	$(MAKE) -C agg/cpp
+
 
 clean:
 	rm -f eager split r_split r_wrap r_unwrap dgsh-tee
 	rm -rf dgsh
-	$(MAKE) -C agg/cpp clean
