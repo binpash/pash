@@ -2,7 +2,8 @@ import sys
 import pickle
 import numpy as np
 
-fold_coefs_ = pickle.load(sys.stdin.buffer)
+with open('./tmp/fold_coef.obj', 'rb') as file:
+    fold_coefs_ = pickle.load(file)
 
 model_file, X_file, multi_class, n_classes, destination = sys.argv[1:6]
 
