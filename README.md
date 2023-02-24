@@ -34,7 +34,6 @@ For more details, manual installation, or other platforms see [installation inst
 
 This repo hosts the core `pash` development. The structure is as follows:
 
-* [annotations](./annotations/): DSL characterizing commands, parallelizability study, and associated annotations.
 * [compiler](./compiler): Shell-dataflow translations and associated parallelization transformations.
 * [docs](./docs): Design documents, tutorials, installation instructions, etc.
 * [evaluation](./evaluation): Shell pipelines and example [scripts](./evaluation/other/more-scripts) used for the evaluation.
