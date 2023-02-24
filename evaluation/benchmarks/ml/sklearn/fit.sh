@@ -26,6 +26,8 @@ echo Destination: $1
 $PYTHON $SCRIPTS/gen_model.py
 $PYTHON $SCRIPTS/gen_samples.py
 
+echo Step 1 end
+
 # Validity checking functions
 # These functions just check to make sure that the input is valid. 
 # If not they will raise an error. Otherwise, they do not mutate the data.
@@ -35,13 +37,23 @@ $PYTHON $SCRIPTS/val_data.py $MODEL $X $y
 $PYTHON $SCRIPTS/classes.py $MODEL $y # This should return a classes with just the unique classes in y
 multiclass=$($PYTHON $SCRIPTS/check_multiclass.py $MODEL)
 
+echo Step 2 end
+
 # TODO: Benchmark each step of the pipeline
 # Make a modified pipeline where each step writes its output to a file
 
 # Calculations functions
 $PYTHON $SCRIPTS/rownorm.py $X
+echo rownorm
 n_classes=$($PYTHON $SCRIPTS/reshape_classes.py $MODEL $CLASSES)
-$PYTHON $SCRIPTS/warm_start.py $MODEL $multiclass $n_classes | # pipes coefficients
-$PYTHON $SCRIPTS/fold_coef.py $MODEL $X $y $C_ $CLASSES $WARM_COEF $MAX_SQ_SUM $multiclass $penalty |
-$PYTHON $SCRIPTS/zip_coef.py $MODEL |
+echo reshape
+$PYTHON $SCRIPTS/warm_start.py $MODEL $multiclass $n_classes # pipes coefficients
+echo warm_start
+$PYTHON $SCRIPTS/fold_coef.py $MODEL $X $y $C_ $CLASSES $WARM_COEF $MAX_SQ_SUM $multiclass $penalty
+echo fold_coef
+$PYTHON $SCRIPTS/zip_coef.py $MODEL
+echo zip_coef
 $PYTHON $SCRIPTS/adjust_coef.py $MODEL $X $multiclass $n_classes $1
+echo adjust_coef
+
+echo Step 3 end

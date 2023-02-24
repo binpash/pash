@@ -60,4 +60,5 @@ fold_coefs_ = _logistic.Parallel(n_jobs=model.n_jobs, verbose=model.verbose, pre
     for class_, warm_start_coef_ in zip(classes, warm_start_coef)
 )
 
-sys.stdout.buffer.write(pickle.dumps(fold_coefs_))
+with open('./tmp/fold_coef.obj', 'w+b') as file:
+    pickle.dump(fold_coefs_, file)
