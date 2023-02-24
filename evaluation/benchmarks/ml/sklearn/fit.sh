@@ -24,7 +24,7 @@ echo Destination: $1
 
 # Generating model & samples
 $PYTHON $SCRIPTS/gen_model.py
-$PYTHON $SCRIPTS/gen_samples.py
+$PYTHON $SCRIPTS/gen_samples.py $2
 
 echo Step 1 end
 
