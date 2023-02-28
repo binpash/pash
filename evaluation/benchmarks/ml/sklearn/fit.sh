@@ -23,7 +23,7 @@ echo Destination: $1
 # TODO: Benchmark each phase
 
 # Generating model & samples
-$PYTHON $SCRIPTS/gen_model.py
+$PYTHON $SCRIPTS/gen_model.py $3
 $PYTHON $SCRIPTS/gen_samples.py $2
 
 echo Step 1 end
