@@ -36,8 +36,6 @@ def preprocess(input_script_path, args):
 
 
 def preprocess_asts(ast_objects, args):
-
-    
     trans_options = ast_to_ast.TransformationOptions(args)
 
     if trans_options.get_mode() is ast_to_ast.TransformationType.SPECULATIVE:
@@ -63,7 +61,7 @@ def main():
     parser_pash = subparsers.add_parser('pash', help='Preprocess the script so that it can be run with PaSh')
     config.add_common_arguments(parser_pash)
     parser_pash.add_argument("input", help="the script to be preprocessed")
-    parser_pash.set_defaults(mode='pash')
+    parser_pash.set_defaults(preprocess_mode='pash')
 
     # create the parser for the "b" command
     parser_spec = subparsers.add_parser('spec', help='Preprocess the script so that it can be run with speculation')
@@ -71,7 +69,7 @@ def main():
 
     ## TODO: When we better integrate, this should be automatically set.
     parser_spec.add_argument("partial_order_file", help="the file to store the partial order (currently just a sequence)")
-    parser_spec.set_defaults(mode='spec')
+    parser_spec.set_defaults(preprocess_mode='spec')
     
     args = parser.parse_args()
     config.set_config_globals_from_pash_args(args)
@@ -81,7 +79,7 @@ def main():
     config.init_log_file()
 
     ## Choose the transformation node based on the argument given
-    log("Preprocesing mode:", args.mode)
+    log("Preprocesing mode:", args.preprocess_mode)
     preprocessed_shell_script = preprocess(args.input, args)
     print(preprocessed_shell_script)
 
