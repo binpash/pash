@@ -40,8 +40,7 @@ def main():
         sys.exit(return_code)
 
 def preprocess_and_execute_asts(input_script_path, args, input_script_arguments, shell_name):
-    mode = ast_to_ast.TransformationType('pash')
-    preprocessed_shell_script = preprocess(input_script_path, args, mode)
+    preprocessed_shell_script = preprocess(input_script_path, args)
     if(args.output_preprocessed):
         log("Preprocessed script:")
         log(preprocessed_shell_script)
@@ -156,6 +155,9 @@ def parse_args():
     parser.add_argument("--expand_using_bash_mirror",
                         help="DEPRECATED: instead of expanding using the internal expansion code, expand using a bash mirror process (slow)",
                         action="store_true")
+
+    ## Set the preprocessing mode to PaSh
+    parser.set_defaults(preprocess_mode='pash')
 
     config.add_common_arguments(parser)
     args = parser.parse_args()

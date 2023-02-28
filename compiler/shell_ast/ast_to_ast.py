@@ -16,7 +16,7 @@ class TransformationType(Enum):
 ## trasnformation.
 class TransformationOptions:
     def __init__(self, args):
-        self.mode = TransformationType(args.mode)
+        self.mode = TransformationType(args.preprocess_mode)
         if self.mode is TransformationType.SPECULATIVE:
             self.partial_order_file = args.partial_order_file
     
