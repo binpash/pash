@@ -5,7 +5,7 @@ import config
 
 from shell_ast.ast_util import *
 from parse import from_ast_objects_to_shell
-
+from speculative import util_spec
 
 ## There are two types of ast_to_ast transformations
 class TransformationType(Enum):
@@ -459,16 +459,27 @@ def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast
         with open(sequential_script_file_name, "w") as script_file:
             script_file.write(text_to_output)
         replaced_node = make_call_to_pash_runtime(ir_filename, sequential_script_file_name, disable_parallel_pipelines)
-    else:
+    elif transformation_mode is TransformationType.SPECULATIVE:
         ## TODO: This currently writes each command on its own line,
         ##       though it should be improved to better serialize each command in its own file
         ##       and then only saving the ids of each command in the partial order file.
         text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
-        partial_order_file_path = trans_options.get_partial_order_file()
-        with open(partial_order_file_path, "a") as po_file:
-            po_file.write(text_to_output)
-
+        ## Generate an ID
+        df_region_id = util_spec.get_next_id()
+        ## Determine its predecessors
+        ## TODO: To make this properly work, we should keep some state
+        ##       in the AST traversal to be able to determine predecessors.
+        if df_region_id == 0:
+            predecessors = []
+        else:
+            predecessors = [df_region_id - 1]
+        ## Write to a file indexed by its ID
+        util_spec.save_df_region(text_to_output, trans_options, df_region_id, predecessors)
+        ## TODO: Add an entry point to spec through normal PaSh
         replaced_node = make_call_to_spec_runtime()
+    else:
+        ## Unreachable
+        assert(False)
 
     return replaced_node
 
