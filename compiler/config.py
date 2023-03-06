@@ -148,6 +148,11 @@ def add_common_arguments(parser):
     parser.add_argument("--dgsh_tee",
                         help="(obsolete) does nothing -- only here for old interfaces (not used anywhere in the code)",
                         action="store_true")
+    parser.add_argument("--speculative",
+                        help="(experimental) use the speculative execution preprocessing and runtime (NOTE: this has nothing to do with --speculation, which is actually misnamed, and should be named concurrent compilation/execution and is now obsolete)",
+                        action="store_true",
+                        default=False)
+    ## This is misnamed, it should be named concurrent compilation/execution
     parser.add_argument("--speculation",
                         help="(obsolete) does nothing -- run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
                         choices=['no_spec', 'quick_abort'],
@@ -198,6 +203,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append("--no_eager")
     if (pash_arguments.distributed_exec):
         arguments.append("--distributed_exec")
+    if (pash_arguments.speculative):
+        arguments.append("--speculative")
     if (pash_arguments.parallel_pipelines):
         arguments.append("--parallel_pipelines")
     if (pash_arguments.daemon_communicates_through_unix_pipes):

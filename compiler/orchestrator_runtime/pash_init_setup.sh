@@ -18,6 +18,7 @@ export pash_avoid_pash_runtime_completion_flag=0
 export pash_profile_driven_flag=1
 export pash_parallel_pipelines=0
 export pash_daemon_communicates_through_unix_pipes_flag=0
+export pash_speculative_flag=0
 export show_version=0
 export distributed_exec=0
 
@@ -71,6 +72,10 @@ do
 
     if [ "--daemon_communicates_through_unix_pipes" == "$item" ]; then
         export pash_daemon_communicates_through_unix_pipes_flag=1
+    fi
+
+    if [ "--speculative" == "$item" ]; then
+        export pash_speculative_flag=1
     fi
 
     if [ "--distributed_exec" == "$item" ]; then
@@ -135,6 +140,8 @@ export -f pash_redir_output
 export -f pash_redir_all_output
 export -f pash_redir_all_output_always_execute
 
+source "$PASH_TOP/compiler/orchestrator_runtime/pash_orch_lib.sh"
+
 
 if [ "$pash_daemon_communicates_through_unix_pipes_flag" -eq 1 ]; then
     pash_communicate_daemon()
@@ -162,10 +169,7 @@ else
     pash_communicate_daemon()
     {
         local message=$1
-        pash_redir_output echo "Sending msg to daemon: $message"
-        daemon_response=$(echo "$message" | nc -U "$DAEMON_SOCKET")
-        pash_redir_output echo "Got response from daemon: $daemon_response"
-        echo "$daemon_response"
+        pash_communicate_unix_socket "compilation-server" "${DAEMON_SOCKET}" "${message}"
     }
 
     pash_communicate_daemon_just_send()
@@ -175,27 +179,13 @@ else
 
     pash_wait_until_daemon_listening()
     {
-        ## Only wait for a limited amount of time.
-        ## If the daemon cannot start listening in ~ 1 second,
-        ##   then it must have crashed or so.
-        i=0
-        ## This is a magic number to make sure that we wait enough
-        maximum_retries=1000
-        ## For some reason, `nc -z` doesn't work on livestar (it always returns error)
-        ## and therefore we need to send something. 
-        until  echo "Daemon Start" 2> /dev/null | nc -U "$DAEMON_SOCKET" >/dev/null 2>&1 ; 
-        do 
-            ## TODO: Can we wait for the daemon in a better way?
-            sleep 0.01
-            i=$((i+1))
-            if [ $i -eq $maximum_retries ]; then
-                echo "Error: Maximum retries: $maximum_retries exceeded when waiting for daemon to bind to socket!" 1>&2
-                echo "Exiting..." 1>&2
-                exit 1
-            fi
-        done
+        pash_wait_until_unix_socket_listening "compilation-server" "${DAEMON_SOCKET}"
     }
 fi
+export -f pash_communicate_daemon
+export -f pash_communicate_daemon_just_send
+export -f pash_wait_until_daemon_listening
+
 
 if [ "$distributed_exec" -eq 1 ]; then
     pash_communicate_worker_manager()
@@ -207,6 +197,35 @@ if [ "$distributed_exec" -eq 1 ]; then
         echo "$manager_response"
     }
 fi
-export -f pash_communicate_daemon
-export -f pash_communicate_daemon_just_send
-export -f pash_wait_until_daemon_listening
+
+if [ "${pash_speculative_flag}" -eq 1 ]; then
+    source "$RUNTIME_DIR/speculative/pash_spec_init_setup.sh"
+else
+    ## Normal PaSh mode
+    ## Exports $daemon_pid
+    start_server()
+    {
+        python3 -S "$PASH_TOP/compiler/pash_compilation_server.py" "$@" &
+        export daemon_pid=$!
+        ## Wait until daemon has established connection
+        pash_wait_until_daemon_listening
+    }
+
+    cleanup_server()
+    {
+        local daemon_pid=$1
+        ## Only wait for daemon if it lives (it might be dead, rip)
+        if ps -p "$daemon_pid" > /dev/null
+        then
+            ## Send and receive from daemon
+            msg="Done"
+            daemon_response=$(pash_communicate_daemon "$msg")
+            if [ "$distributed_exec" -eq 1 ]; then
+                # kill $worker_manager_pid
+                manager_response=$(pash_communicate_worker_manager "$msg")
+            fi
+            wait 2> /dev/null 1>&2 
+        fi
+    }
+fi
+

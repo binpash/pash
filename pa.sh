@@ -51,14 +51,10 @@ export DSPASH_SOCKET="${PASH_TMP_PREFIX}/dspash_socket"
 ## Initialize all things necessary for pash to execute (logging/functions/etc)
 source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "$@"
 
+## This starts a different server depending on the configuration
 if [ "$show_version" -eq 0 ]; then
-  ## TODO: If possible, move the daemon start as easly as possible to reduce waiting
-  python3 -S "$PASH_TOP/compiler/pash_compilation_server.py" "$@" &
-  daemon_pid=$!
-  ## Wait until daemon has established connection
-  ##
-  ## TODO: Can we get rid of the `sleep` in this wait?
-  pash_wait_until_daemon_listening
+  ## Exports $daemon_pid
+  start_server "$@"
 fi
 
 ## Restore the umask before executing
@@ -66,21 +62,8 @@ umask "$old_umask"
 PASH_FROM_SH="pa.sh" python3 -S "$PASH_TOP/compiler/pash.py" "$@"
 pash_exit_code=$?
 if [ "$show_version" -eq 0 ]; then
-  ## Only wait for daemon if it lives (it might be dead, rip)
-  if ps -p "$daemon_pid" > /dev/null
-  then
-    ## Send and receive from daemon
-    msg="Done"
-    daemon_response=$(pash_communicate_daemon "$msg")
-    if [ "$distributed_exec" -eq 1 ]; then
-      # kill $worker_manager_pid
-      manager_response=$(pash_communicate_worker_manager "$msg")
-    fi
-    wait 2> /dev/null 1>&2 
-  fi
+  cleanup_server "${daemon_pid}"
 fi
-
-
 
 ## Don't delete the temporary directory if we are debugging
 if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
