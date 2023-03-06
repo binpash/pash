@@ -5,7 +5,7 @@ source "$PASH_TOP/compiler/orchestrator_runtime/pash_orch_lib.sh"
 pash_spec_communicate_scheduler()
 {
     local message=$1
-    pash_communicate_unix_socket "PaSh-Spec-scheduler" "${PASH_SCHEDULER_SOCKET}" "${message}"
+    pash_communicate_unix_socket "PaSh-Spec-scheduler" "${PASH_SPEC_SCHEDULER_SOCKET}" "${message}"
 }
 
 pash_spec_communicate_scheduler_just_send()
@@ -15,7 +15,7 @@ pash_spec_communicate_scheduler_just_send()
 
 pash_spec_wait_until_scheduler_listening()
 {
-    pash_wait_until_unix_socket_listening "PaSh-Spec-scheduler" "${PASH_SCHEDULER_SOCKET}"
+    pash_wait_until_unix_socket_listening "PaSh-Spec-scheduler" "${PASH_SPEC_SCHEDULER_SOCKET}"
 }
 
 
