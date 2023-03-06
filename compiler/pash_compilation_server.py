@@ -1,7 +1,5 @@
 import argparse
 import signal
-import socket
-import sys
 import traceback
 from threading import Thread
 from datetime import datetime
@@ -12,6 +10,7 @@ from pash_graphviz import maybe_generate_graphviz
 import pash_compiler
 from util import *
 from dspash.worker_manager import WorkersManager
+import server_util
 
 ##
 ## A Daemon (not with the strict Unix sense) 
@@ -50,13 +49,6 @@ def init():
 
     return args
 
-
-def success_response(string):
-    return f'OK: {string}\n'
-
-
-def error_response(string):
-    return f'ERROR: {string}\n'
 
 
 ##
@@ -283,10 +275,10 @@ class Scheduler:
             self.wait_for_all()
             
         if compile_success:
-            response = success_response(
+            response = server_util.success_response(
                 f'{process_id} {compiled_script_file} {var_file} {input_ir_file}')
         else:
-            response = error_response(f'{process_id} failed to compile')
+            response = server_util.error_response(f'{process_id} failed to compile')
             self.unsafe_running = True
 
         ## Do not increase the running procs if assert_compiler_success is enabled
@@ -368,7 +360,7 @@ class Scheduler:
             ## This happens when pa.sh first connects to daemon to see if it is on
             self.close_last_connection()
         else:
-            log(error_response(f'Error: Unsupported command: {input_cmd}'))
+            log(server_util.error_response(f'Error: Unsupported command: {input_cmd}'))
             raise Exception(f'Error: Unsupported command: {input_cmd}')
 
 
@@ -399,9 +391,9 @@ class Scheduler:
         if (config.pash_args.daemon_communicates_through_unix_pipes):
             in_filename = os.getenv("RUNTIME_IN_FIFO")
             out_filename = os.getenv("RUNTIME_OUT_FIFO")
-            self.connection_manager = UnixPipeReader(in_filename, out_filename, self.reader_pipes_are_blocking)
+            self.connection_manager = server_util.UnixPipeReader(in_filename, out_filename, self.reader_pipes_are_blocking)
         else:
-            self.connection_manager = SocketManager()
+            self.connection_manager = server_util.SocketManager(os.getenv('DAEMON_SOCKET'))
         while not self.done:
             # Process a single request
             input_cmd = self.get_input()
@@ -414,157 +406,6 @@ class Scheduler:
         shutdown()
 
 
-class UnixPipeReader:
-    def __init__(self, in_filename, out_filename, blocking = True):
-        self.in_filename = in_filename
-        self.out_filename = out_filename
-        self.buffer = ""
-        self.blocking = blocking
-        if not self.blocking:
-            # Non blocking mode shouldn't be used in production. It's only used experimentally.
-            log("Reader initialized in non-blocking mode")
-            self.fin = open(self.in_filename)
-        else:
-            log("Reader initialized in blocking mode")
-
-    ## This is necessary here to ensure that get_next_cmd is blocking een though the underlying API is non-blocking.
-    def get_next_cmd(self):
-        cmd = ""
-        ## TODO: Remove the non-blocking control flow since it doesn't make sense to busy wait
-        if not self.blocking:
-            while not cmd:
-                cmd = self.get_next_cmd_aux()
-        else:
-            cmd = self.get_next_cmd_aux()
-        return cmd
-
-
-    def get_next_cmd_aux(self):
-        """
-        This method return depends on the reading mode. In blocking mode this method will
-        return the next full command and if there is no command it will wait until a full command is recieved.
-        In non blocking mode it would either a full command or an empty string if a full command isn't available yet.
-        This command keeps a state of the remaining data which is used in each subsequent call to this method.
-        """
-        input_buffer = ""
-        if self.buffer:
-            # Don't wait on fin if cmd buffer isn't empty
-            log("Reader buffer isn't empty. Using it instead of reading new data for the next command")
-            input_buffer = self.buffer
-        else:
-            log("Reader buffer is empty. Reading new data from input fifo")
-            if self.blocking:
-                with open(self.in_filename) as fin:
-                    # This seems to be necessary for reading the full data. 
-                    # It seems like slower/smaller machines might not read the full data in one read
-                    while True:
-                        data = fin.read()
-                        if len(data) == 0:
-                            break
-                        input_buffer += data
-            else:
-                input_buffer = self.fin.read()
-
-        log("Input buffer:", input_buffer)
-        if "\n" in input_buffer:
-            cmd, rest = input_buffer.split("\n", 1) # split on the first \n only
-            self.buffer = rest
-        else:
-            cmd = input_buffer
-            self.buffer = ""
-
-        cmd = cmd.rstrip()
-        log("Reader returned cmd:", cmd)
-        return cmd
-
-    ## This method respond to the connection we last got input from
-    ## In the case of the UnixPipes, we don't have any state management here
-    ##   since all reads/writes go to/from the same fifos
-    def respond(self, message):
-        fout = open(self.out_filename, "w")
-        fout.write(message)
-        fout.flush()
-        fout.close()
-
-
-    ## This method doesn't do anything for unix pipe reader since we always read and write
-    ## to and from the same fifos
-    def close_last_connection(self):
-        pass
-
-    def close(self):
-        log("Reader closed")
-        if not self.blocking:
-            self.fin.close()
-
-
-## TODO: Instead of this, think of using a standard SocketServer
-##   see: https://docs.python.org/3/library/socketserver.html#module-socketserver
-##
-## TODO: SocketManager might need to handle errors more gracefully
-class SocketManager:
-    def __init__(self):
-        ## Configure them outside
-        server_address = os.getenv('DAEMON_SOCKET')
-        self.buf_size = 8192
-
-        # Make sure the socket does not already exist
-        ## TODO: Is this necessary?
-        try:
-            os.unlink(server_address)
-        except OSError:
-            if os.path.exists(server_address):
-                raise
-        log("SocketManager: Made sure that socket does not exist")
-
-        # Create a UDS socket
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        log("SocketManager: Created socket")
-
-        self.sock.bind(server_address)
-        log("SocketManager: Successfully bound to socket")    
-
-        ## TODO: Check if we need to configure the backlog
-        self.sock.listen()    
-        log("SocketManager: Listenting on socket")    
-
-        ## Connection stack
-        self.connections = []
-    
-
-    def get_next_cmd(self):
-        connection, client_address = self.sock.accept()
-        data = connection.recv(self.buf_size)
-
-        ## TODO: This could be avoided for efficiency
-        str_data = data.decode('utf-8')
-        log("Received data:", str_data)
-        ## TODO: Lift this requirement if needed
-        ##
-        ## We need to ensure that we read a command at once or the command was empty (only relevant in the first invocation)
-        assert(str_data.endswith("\n") or str_data == "")
-        
-        self.connections.append(connection)
-        return str_data
-
-    ## This method respond to the connection we last got input from
-    ## In the case of the UnixPipes, we don't have any state management here
-    ##   since all reads/writes go to/from the same fifos
-    def respond(self, message):
-        bytes_message = message.encode('utf-8')
-        self.connections[-1].sendall(bytes_message)
-        self.close_last_connection()
-
-    ## This method doesn't do anything for unix pipe reader since we always read and write
-    ## to and from the same fifos
-    def close_last_connection(self):
-        # Clean up the connection
-        last_connection = self.connections.pop()
-        last_connection.close()
-
-    def close(self):
-        self.sock.close()
-        log("SocketManager: Closed")
 
 def shutdown():
     ## There may be races since this is called through the signal handling

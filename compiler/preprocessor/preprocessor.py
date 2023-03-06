@@ -36,10 +36,13 @@ def preprocess(input_script_path, args):
 
 
 def preprocess_asts(ast_objects, args):
-    trans_options = ast_to_ast.TransformationOptions(args)
-
-    if trans_options.get_mode() is ast_to_ast.TransformationType.SPECULATIVE:
+    trans_mode = ast_to_ast.TransformationType(args.preprocess_mode)
+    if trans_mode is ast_to_ast.TransformationType.SPECULATIVE:
+        trans_options = ast_to_ast.SpeculativeTransformationState(mode=trans_mode,
+                                                                  po_file=args.partial_order_file)
         util_spec.initialize(trans_options)
+    else:
+        trans_options = ast_to_ast.TransformationOptions(mode=trans_mode)
 
     ## Preprocess ASTs by replacing AST regions with calls to PaSh's runtime.
     ## Then the runtime will do the compilation and optimization with additional
