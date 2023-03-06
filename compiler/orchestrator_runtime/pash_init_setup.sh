@@ -10,15 +10,12 @@ export PASH_DEBUG_LEVEL=0
 ## Check flags
 export pash_output_time_flag=1
 export pash_execute_flag=1
-export pash_speculation_flag=0 # By default there is no speculation
 export pash_dry_run_compiler_flag=0
 export pash_assert_compiler_success_flag=0
-export pash_checking_speculation=0
 export pash_checking_log_file=0
 export pash_checking_debug_level=0
 export pash_avoid_pash_runtime_completion_flag=0
 export pash_profile_driven_flag=1
-export pash_daemon=1
 export pash_parallel_pipelines=0
 export pash_daemon_communicates_through_unix_pipes_flag=0
 export show_version=0
@@ -26,21 +23,6 @@ export distributed_exec=0
 
 for item in "$@"
 do
-    if [ "$pash_checking_speculation" -eq 1 ]; then
-        export pash_checking_speculation=0
-        if [ "no_spec" == "$item" ]; then
-            export pash_speculation_flag=0
-        elif [ "quick_abort" == "$item" ]; then
-            ## TODO: Fix how speculation interacts with dry_run, assert_compiler_success
-            export pash_speculation_flag=1
-            echo "$$: Error: Speculation quick-abort is currently unmaintained!" 1>&2
-            echo "Exiting..." 1>&2
-            exit 1
-        else
-            echo "$$: Unknown value for option --speculation" 1>&2
-            exit 1
-        fi
-    fi
 
     if [ "$pash_checking_log_file" -eq 1 ]; then
         export pash_checking_log_file=0
@@ -67,10 +49,6 @@ do
         export pash_assert_compiler_success_flag=1
     fi
 
-    if [ "--speculation" == "$item" ]; then
-        pash_checking_speculation=1
-    fi
-
     if [ "--log_file" == "$item" ]; then
         pash_checking_log_file=1
     fi
@@ -85,10 +63,6 @@ do
 
     if [ "-d" == "$item" ] || [ "--debug" == "$item" ]; then
         pash_checking_debug_level=1
-    fi
-
-    if [ "--no_daemon" == "$item" ]; then
-        export pash_daemon=0
     fi
 
     if [ "--parallel_pipelines" == "$item" ]; then

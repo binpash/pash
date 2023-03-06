@@ -51,7 +51,7 @@ export DSPASH_SOCKET="${PASH_TMP_PREFIX}/dspash_socket"
 ## Initialize all things necessary for pash to execute (logging/functions/etc)
 source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "$@"
 
-if [ "$pash_daemon" -eq 1 ] && [ "$show_version" -eq 0 ]; then
+if [ "$show_version" -eq 0 ]; then
   ## TODO: If possible, move the daemon start as easly as possible to reduce waiting
   python3 -S "$PASH_TOP/compiler/pash_compilation_server.py" "$@" &
   daemon_pid=$!
@@ -65,7 +65,7 @@ fi
 umask "$old_umask"
 PASH_FROM_SH="pa.sh" python3 -S "$PASH_TOP/compiler/pash.py" "$@"
 pash_exit_code=$?
-if [ "$pash_daemon" -eq 1 ] && [ "$show_version" -eq 0 ]; then
+if [ "$show_version" -eq 0 ]; then
   ## Only wait for daemon if it lives (it might be dead, rip)
   if ps -p "$daemon_pid" > /dev/null
   then
