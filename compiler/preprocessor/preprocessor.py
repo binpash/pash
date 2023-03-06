@@ -7,7 +7,7 @@ from shell_ast import ast_to_ast
 from ir import FileIdGen
 from parse import parse_shell_to_asts, from_ast_objects_to_shell
 from util import *
-from util_spec import *
+from speculative import util_spec
 
 LOGGING_PREFIX = "PaSh Preprocessor: "
 
@@ -39,7 +39,7 @@ def preprocess_asts(ast_objects, args):
     trans_options = ast_to_ast.TransformationOptions(args)
 
     if trans_options.get_mode() is ast_to_ast.TransformationType.SPECULATIVE:
-        initialize_po_file(trans_options)
+        util_spec.initialize(trans_options)
 
     ## Preprocess ASTs by replacing AST regions with calls to PaSh's runtime.
     ## Then the runtime will do the compilation and optimization with additional
