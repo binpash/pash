@@ -4,8 +4,8 @@ import pickle
 import config
 
 from shell_ast.ast_util import *
-from parse import from_ast_objects_to_shell_file
-
+from parse import from_ast_objects_to_shell
+from speculative import util_spec
 
 ## There are two types of ast_to_ast transformations
 class TransformationType(Enum):
@@ -15,11 +15,26 @@ class TransformationType(Enum):
 ## Use this object to pass options inside the preprocessing
 ## trasnformation.
 class TransformationOptions:
-    def __init__(self, mode):
-        self.mode = TransformationType(mode)
-    
+    def __init__(self, mode: TransformationType):
+        self.mode = mode
+            
     def get_mode(self):
         return self.mode
+
+
+## TODO: Turn it into a Transformation State class, and make a subclass for
+##       each of the two transformations. It is important for it to be state, because
+##       it will need to be passed around while traversing the tree.
+class SpeculativeTransformationState(TransformationOptions):
+    def __init__(self, mode: TransformationType, po_file: str):
+        super().__init__(mode)
+        assert(self.mode is TransformationType.SPECULATIVE)
+        self.partial_order_file = po_file
+
+    def get_partial_order_file(self):
+        assert(self.mode is TransformationType.SPECULATIVE)
+        return self.partial_order_file
+
 
 
 ##
@@ -68,9 +83,7 @@ preprocess_cases = {
 
 
 ## Replace candidate dataflow AST regions with calls to PaSh's runtime.
-def replace_ast_regions(ast_objects, mode):
-
-    trans_options = TransformationOptions(mode)
+def replace_ast_regions(ast_objects, trans_options):
 
     preprocessed_asts = []
     candidate_dataflow_region = []
@@ -439,50 +452,72 @@ def preprocess_node_case(ast_node, trans_options, last_object=False):
 ## If we are need to disable parallel pipelines, e.g., if we are in the context of an if,
 ## or if we are in the end of a script, then we set a variable.
 def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast_text=None):
-    ir_filename = ptempfile()
-
-    ## Serialize the node in a file
-    with open(ir_filename, "wb") as ir_file:
-        pickle.dump(asts, ir_file)
-
-    ## Serialize the candidate df_region asts back to shell
-    ## so that the sequential script can be run in parallel to the compilation.
-    sequential_script_file_name = ptempfile()
-    ## If we don't have the original ast text, we need to unparse the ast
-    if (ast_text is None):
-        kv_asts = [ast_node_to_untyped_deep(ast) for ast in asts]
-        from_ast_objects_to_shell_file(kv_asts, sequential_script_file_name)
-    else:
-        ## However, if we have the original ast text, then we can simply output that.
-        with open(sequential_script_file_name, "w") as script_file:
-            script_file.write(ast_text)
-
-    ## Replace it with a command that calls the distribution
-    ## planner with the name of the file.
-    ##
-    ## TODO: Modify this here to be conditional based on an argument on the call
     transformation_mode = trans_options.get_mode()
     if transformation_mode is TransformationType.PASH:
+        ir_filename = ptempfile()
+
+        ## Serialize the node in a file
+        with open(ir_filename, "wb") as ir_file:
+            pickle.dump(asts, ir_file)
+
+        ## Serialize the candidate df_region asts back to shell
+        ## so that the sequential script can be run in parallel to the compilation.
+        sequential_script_file_name = ptempfile()
+        text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
+        ## However, if we have the original ast text, then we can simply output that.
+        with open(sequential_script_file_name, "w") as script_file:
+            script_file.write(text_to_output)
         replaced_node = make_call_to_pash_runtime(ir_filename, sequential_script_file_name, disable_parallel_pipelines)
+    elif transformation_mode is TransformationType.SPECULATIVE:
+        ## TODO: This currently writes each command on its own line,
+        ##       though it should be improved to better serialize each command in its own file
+        ##       and then only saving the ids of each command in the partial order file.
+        text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
+        ## Generate an ID
+        df_region_id = util_spec.get_next_id()
+        ## Determine its predecessors
+        ## TODO: To make this properly work, we should keep some state
+        ##       in the AST traversal to be able to determine predecessors.
+        if df_region_id == 0:
+            predecessors = []
+        else:
+            predecessors = [df_region_id - 1]
+        ## Write to a file indexed by its ID
+        util_spec.save_df_region(text_to_output, trans_options, df_region_id, predecessors)
+        ## TODO: Add an entry point to spec through normal PaSh
+        replaced_node = make_call_to_spec_runtime(df_region_id)
     else:
-        replaced_node = make_call_to_spec_runtime(ir_filename, sequential_script_file_name)
+        ## Unreachable
+        assert(False)
 
     return replaced_node
 
-## This function makes a command that calls the pash runtime
-## together with the name of the file containing an IR. Then the
-## pash runtime should read from this file and continue
-## execution.
-##
-## TODO: At the moment this is written in python but it is in essense a simple shell script.
-##       Is it possible to make it be a simple string instead of manually creating the AST?
-##
-## (MAYBE) TODO: The way I did it, is by calling the parser once, and seeing
-## what it returns. Maybe it would make sense to call the parser on
-## the fly to have a cleaner implementation here?
-def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
-                              disable_parallel_pipelines) -> AstNode:
 
+def get_shell_from_ast(asts, ast_text=None) -> str:
+    ## If we don't have the original ast text, we need to unparse the ast
+    if (ast_text is None):
+        kv_asts = [ast_node_to_untyped_deep(ast) for ast in asts]
+        text_to_output = from_ast_objects_to_shell(kv_asts)
+    else:
+        text_to_output = ast_text
+    return text_to_output
+
+
+##
+## Code that constructs the preprocessed ASTs
+##
+
+def make_pre_runtime_nodes():
+    previous_status_command = make_previous_status_command()
+    input_args_command = make_input_args_command()
+    return [previous_status_command, input_args_command]
+
+def make_post_runtime_nodes():
+    set_args_node = restore_arguments_command()
+    set_exit_status_node = restore_exit_code_node()
+    return [set_args_node, set_exit_status_node]
+
+def make_previous_status_command():
     ## Save the previous exit state:
     ## ```
     ## pash_previous_exit_status="$?"
@@ -490,7 +525,9 @@ def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
     assignments = [["pash_previous_exit_status",
                     [make_quoted_variable("?")]]]
     previous_status_command = make_command([], assignments=assignments)
+    return previous_status_command
 
+def make_input_args_command():
     ## Save the input arguments
     ## ```
     ## source $PASH_TOP/runtime/save_args.sh "${@}"
@@ -499,30 +536,9 @@ def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
                  string_to_argument(config.SAVE_ARGS_EXECUTABLE),
                  [make_quoted_variable("@")]]
     input_args_command = make_command(arguments)
+    return input_args_command
 
-    ## Disable parallel pipelines if we are in the last command of the script.
-    ## ```
-    ## pash_disable_parallel_pipelines=1
-    ## ```
-    if(disable_parallel_pipelines):
-        assignments = [["pash_disable_parallel_pipelines",
-                        string_to_argument("1")]]
-    else:
-        assignments = [["pash_disable_parallel_pipelines",
-                        string_to_argument("0")]]
-    disable_parallel_pipelines_command = make_command([],
-                                                      assignments=assignments)
-
-    ## Call the runtime
-    arguments = [string_to_argument("source"),
-                 string_to_argument(config.RUNTIME_EXECUTABLE),
-                 string_to_argument(sequential_script_file_name),
-                 string_to_argument(ir_filename)]
-    ## Pass a relevant argument to the planner
-    common_arguments_strings = config.pass_common_arguments(config.pash_args)
-    arguments += [string_to_argument(string) for string in common_arguments_strings]
-    runtime_node = make_command(arguments)
-
+def restore_arguments_command():
     ## Restore the arguments to propagate internal changes, e.g., from `shift` outside.
     ## ```
     ## eval "set -- \"\${pash_input_args[@]}\""
@@ -544,8 +560,9 @@ def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
                             string_to_argument('\\${pash_input_args[@]}') +
                             [escaped_char('"')]]]]
     set_args_node = make_command(set_arguments)
+    return set_args_node
 
-
+def restore_exit_code_node():
     ## Restore the exit code (since now we have executed `set` last)
     ## ```
     ## ( exit "$pash_runtime_final_status")
@@ -554,22 +571,66 @@ def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
                                          [make_quoted_variable("pash_runtime_final_status")]]
     set_exit_status_command = make_command(set_exit_status_command_arguments)
     set_exit_status_node = make_kv('Subshell', [0, set_exit_status_command, []])
+    return set_exit_status_node
 
-    sequence = make_semi_sequence([previous_status_command,
-                                   input_args_command,
-                                   disable_parallel_pipelines_command,
-                                   runtime_node,
-                                   set_args_node,
-                                   set_exit_status_node])
-    return sequence
+## This function makes a command that calls the pash runtime
+## together with the name of the file containing an IR. Then the
+## pash runtime should read from this file and continue
+## execution.
+##
+## TODO: At the moment this is written in python but it is in essense a simple shell script.
+##       Is it possible to make it be a simple string instead of manually creating the AST?
+##
+## (MAYBE) TODO: The way I did it, is by calling the parser once, and seeing
+## what it returns. Maybe it would make sense to call the parser on
+## the fly to have a cleaner implementation here?
+def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
+                              disable_parallel_pipelines) -> AstNode:
 
-## TODO: Make that an actual call to the spec runtime
-def make_call_to_spec_runtime(ir_filename, sequential_script_file_name) -> AstNode:
+    ## Disable parallel pipelines if we are in the last command of the script.
+    ## ```
+    ## pash_disable_parallel_pipelines=1
+    ## ```
+    if(disable_parallel_pipelines):
+        assignments = [["pash_disable_parallel_pipelines",
+                        string_to_argument("1")]]
+    else:
+        assignments = [["pash_disable_parallel_pipelines",
+                        string_to_argument("0")]]
+    disable_parallel_pipelines_command = make_command([],
+                                                      assignments=assignments)
+
     ## Call the runtime
     arguments = [string_to_argument("source"),
                  string_to_argument(config.RUNTIME_EXECUTABLE),
                  string_to_argument(sequential_script_file_name),
                  string_to_argument(ir_filename)]
-    ## Pass a relevant argument to the planner
+    ## Pass all relevant argument to the planner
+    common_arguments_strings = config.pass_common_arguments(config.pash_args)
+    arguments += [string_to_argument(string) for string in common_arguments_strings]
     runtime_node = make_command(arguments)
-    return runtime_node
+
+    ## Create generic wrapper commands
+    pre_runtime_nodes = make_pre_runtime_nodes()
+    post_runtime_nodes = make_post_runtime_nodes()
+    nodes = pre_runtime_nodes + [disable_parallel_pipelines_command, runtime_node] + post_runtime_nodes
+    sequence = make_semi_sequence(nodes)
+    return sequence
+
+## TODO: Make that an actual call to the spec runtime
+def make_call_to_spec_runtime(command_id: str) -> AstNode:
+    ## Call the runtime
+    arguments = [string_to_argument("source"),
+                 string_to_argument(config.RUNTIME_EXECUTABLE),
+                 string_to_argument(str(command_id))]
+    ## Pass all relevant argument to the planner
+    common_arguments_strings = config.pass_common_arguments(config.pash_args)
+    arguments += [string_to_argument(string) for string in common_arguments_strings]
+    runtime_node = make_command(arguments)
+
+    ## Create generic wrapper commands
+    pre_runtime_nodes = make_pre_runtime_nodes()
+    post_runtime_nodes = make_post_runtime_nodes()
+    nodes = pre_runtime_nodes + [runtime_node] + post_runtime_nodes
+    sequence = make_semi_sequence(nodes)
+    return sequence
