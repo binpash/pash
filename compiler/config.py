@@ -9,7 +9,7 @@ from datetime import datetime
 from util import *
 
 ## Global
-__version__ = "0.11" # FIXME add libdash version
+__version__ = "0.12" # FIXME add libdash version
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'PASH_TOP' in os.environ:
     PASH_TOP = os.environ['PASH_TOP']
@@ -131,7 +131,7 @@ def add_common_arguments(parser):
                         help="(experimental) disable eager nodes before merging nodes",
                         action="store_true")
     parser.add_argument("--no_daemon",
-                        help="Run the compiler everytime we need a compilation instead of using the daemon",
+                        help="(obsolete) does nothing -- Run the compiler everytime we need a compilation instead of using the daemon",
                         action="store_true",
                         default=False)
     parser.add_argument("--parallel_pipelines",
@@ -143,13 +143,18 @@ def add_common_arguments(parser):
                         help="configure the batch size of r_split (default: 1MB)",
                         default=1000000)
     parser.add_argument("--r_split",
-                        help="does nothing -- only here for old interfaces (not used anywhere in the code)",
+                        help="(obsolete) does nothing -- only here for old interfaces (not used anywhere in the code)",
                         action="store_true")
     parser.add_argument("--dgsh_tee",
-                        help="does nothing -- only here for old interfaces (not used anywhere in the code)",
+                        help="(obsolete) does nothing -- only here for old interfaces (not used anywhere in the code)",
                         action="store_true")
+    parser.add_argument("--speculative",
+                        help="(experimental) use the speculative execution preprocessing and runtime (NOTE: this has nothing to do with --speculation, which is actually misnamed, and should be named concurrent compilation/execution and is now obsolete)",
+                        action="store_true",
+                        default=False)
+    ## This is misnamed, it should be named concurrent compilation/execution
     parser.add_argument("--speculation",
-                        help="(experimental) run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
+                        help="(obsolete) does nothing -- run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
                         choices=['no_spec', 'quick_abort'],
                         default='no_spec')
     parser.add_argument("--termination",
@@ -196,10 +201,10 @@ def pass_common_arguments(pash_arguments):
         arguments.append(pash_arguments.log_file)
     if (pash_arguments.no_eager):
         arguments.append("--no_eager")
-    if (pash_arguments.no_daemon):
-        arguments.append("--no_daemon")
     if (pash_arguments.distributed_exec):
         arguments.append("--distributed_exec")
+    if (pash_arguments.speculative):
+        arguments.append("--speculative")
     if (pash_arguments.parallel_pipelines):
         arguments.append("--parallel_pipelines")
     if (pash_arguments.daemon_communicates_through_unix_pipes):
@@ -210,8 +215,6 @@ def pass_common_arguments(pash_arguments):
     arguments.append(str(pash_arguments.debug))
     arguments.append("--termination")
     arguments.append(pash_arguments.termination)
-    arguments.append("--speculation")
-    arguments.append(pash_arguments.speculation)
     arguments.append("--width")
     arguments.append(str(pash_arguments.width))
     if(not pash_arguments.config_path == ""):

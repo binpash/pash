@@ -40,8 +40,7 @@ def main():
         sys.exit(return_code)
 
 def preprocess_and_execute_asts(input_script_path, args, input_script_arguments, shell_name):
-    mode = ast_to_ast.TransformationType('pash')
-    preprocessed_shell_script = preprocess(input_script_path, args, mode)
+    preprocessed_shell_script = preprocess(input_script_path, args)
     if(args.output_preprocessed):
         log("Preprocessed script:")
         log(preprocessed_shell_script)
@@ -157,9 +156,19 @@ def parse_args():
                         help="DEPRECATED: instead of expanding using the internal expansion code, expand using a bash mirror process (slow)",
                         action="store_true")
 
+    ## Set the preprocessing mode to PaSh
+    parser.set_defaults(preprocess_mode='pash')
+
     config.add_common_arguments(parser)
     args = parser.parse_args()
     config.set_config_globals_from_pash_args(args)
+
+    ## Modify the preprocess mode and the partial order file if we are in speculative mode
+    if args.speculative:
+        log("PaSh is running in speculative mode...")
+        args.__dict__["preprocess_mode"] = "spec"
+        args.__dict__["partial_order_file"] = ptempfile()
+        log(" -- Its partial order file will be stored in:", args.partial_order_file)
 
     ## Initialize the log file
     config.init_log_file()
