@@ -26,7 +26,14 @@ Jump to [docs/tutorial](docs/tutorial/) for a longer tutorial.
 
 ## Installation
 
-On Ubuntu, Fedora, and Debian run `curl up.binpa.sh | sh` to set up PaSh.
+On Ubuntu, Fedora, and Debian run the following to set up PaSh.
+```sh
+wget https://raw.githubusercontent.com/binpash/pash/main/scripts/up.sh
+sh up.sh
+export PASH_TOP="$PWD/pash/"
+## Run PaSh with echo hi
+"$PASH_TOP/pa.sh" -c "echo hi"
+```
 
 For more details, manual installation, or other platforms see [installation instructions](./docs/install).
 
