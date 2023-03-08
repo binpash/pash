@@ -9,7 +9,7 @@ from datetime import datetime
 from util import *
 
 ## Global
-__version__ = "0.12.1" # FIXME add libdash version
+__version__ = "0.12.2" # FIXME add libdash version
 GIT_TOP_CMD = [ 'git', 'rev-parse', '--show-toplevel', '--show-superproject-working-tree']
 if 'PASH_TOP' in os.environ:
     PASH_TOP = os.environ['PASH_TOP']
