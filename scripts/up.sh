@@ -23,6 +23,8 @@ curl -s https://api.github.com/repos/binpash/pash/releases/latest |
 pash_dir_name=`tar -tzf pash.tar.gz | head -1 | cut -f1 -d"/"`
 tar -xzf pash.tar.gz
 mv "$pash_dir_name" pash
+# Alternative:
+# git clone https://github.com/binpash/pash.git
 
 if [ $(groups $(whoami) | grep -c "sudo\|root\|admin") -ge 1 ]; then
   # only run this if we are in the sudo group (or it's doomed to fail)
