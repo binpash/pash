@@ -1,6 +1,13 @@
 # Installation
 
-On Ubuntu, Fedora, Debian, or Arch, run `curl up.pash.ndr.md | sh` to get PaSh up and running.
+On Ubuntu, Fedora, Debian, or Arch, run the following to get PaSh up and running.
+```sh
+wget https://raw.githubusercontent.com/binpash/pash/main/scripts/up.sh
+sh up.sh
+export PASH_TOP="$PWD/pash/"
+## Run PaSh with echo hi
+"$PASH_TOP/pa.sh" -c "echo hi"
+```
 
 If on other environments or prefer manual setup, there are essentially three steps required to set PaSh up:
 1. Clone repo: `git clone git@github.com:binpash/pash.git`
@@ -19,28 +26,12 @@ The following steps clone the repo, set up dependencies (e.g., compilers), and t
 
 ```sh
 git clone git@github.com:binpash/pash.git
-sudo pash/scripts/distro-deps.sh
+./pash/scripts/distro-deps.sh
 ./pash/scripts/setup-pash.sh
 ```
 
 These scripts have been tested on Ubuntu, Fedora, Debian, and Arch.
 
-### Manual Setup
-
-Use the system's package manager to install the following packages (some of which might already be installed in your system):
-
-```
-automake bc bsdmainutils curl gcc git libffi-dev libtool locales locales-all m4 netcat-openbsd pkg-config python python3 python3-pip python3-setuptools python3-testresources sudo wamerican-insane wget
-```
-
-Then clone the PaSh repository and run `setup-pash.sh` as follows:
-
-```sh
-git clone git@github.com:binpash/pash.git
-./pash/scripts/setup-pash.sh
-```
-
-As noted at the end of `setup-pash.sh`, make sure you set `PASH_TOP` pointing to the absolute path of the directory `pa.sh` resides (you can optionally place that in your `PATH`).
 
 ### Docker Setup
 
