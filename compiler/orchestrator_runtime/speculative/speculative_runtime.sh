@@ -16,6 +16,7 @@ daemon_response=$(pash_spec_communicate_scheduler "$msg") # Blocking step, daemo
 
 ## Receive an exit code
 if [[ "$daemon_response" == *"OK:"* ]]; then
+    # shellcheck disable=SC2206
     response_args=($daemon_response)
     cmd_exit_code=${response_args[1]}
 elif [ -z "$daemon_response" ]; then

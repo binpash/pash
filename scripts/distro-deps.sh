@@ -28,11 +28,11 @@ fi
 # convert to lowercase
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 # compile the list of the shared required packages
-pkgs="bc curl git graphviz python sudo wget"
+pkgs="bc curl git graphviz python3 sudo wget"
 # now do different things depending on distro
 case "$distro" in
     ubuntu*)  
-        pkgs="$pkgs bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config python3 python3-pip python3-setuptools python3-testresources wamerican-insane"
+        pkgs="$pkgs bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config python3-pip python3-setuptools python3-testresources wamerican-insane"
         if [[ "$show_deps" == 1 ]]; then
             echo "$pkgs" | sort
             exit 0
@@ -52,7 +52,7 @@ case "$distro" in
         fi
         ;;
     debian*)
-        pkgs="$pkgs bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config procps python3 python3-pip python3-setuptools python3-testresources wamerican-insane"
+        pkgs="$pkgs bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config procps python3-pip python3-setuptools python3-testresources wamerican-insane"
         if [[ "$show_deps" == 1 ]]; then
             echo "$pkgs" | sort
             exit 0
