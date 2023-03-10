@@ -10,6 +10,7 @@ from ir import *
 from parse import parse_shell_to_asts_interactive
 from pash_graphviz import maybe_init_graphviz_dir
 from preprocessor.preprocessor import preprocess
+from speculative import util_spec
 from util import *
 import config
 import shutil
@@ -167,7 +168,7 @@ def parse_args():
     if args.speculative:
         log("PaSh is running in speculative mode...")
         args.__dict__["preprocess_mode"] = "spec"
-        args.__dict__["partial_order_file"] = ptempfile()
+        args.__dict__["partial_order_file"] = util_spec.partial_order_file_path()
         log(" -- Its partial order file will be stored in:", args.partial_order_file)
 
     ## Initialize the log file

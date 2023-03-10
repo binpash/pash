@@ -31,6 +31,8 @@ def initialize(trans_options) -> None:
 def partial_order_directory() -> str:
     return f'{config.PASH_TMP_PREFIX}/speculative/partial_order/'
 
+def partial_order_file_path():
+    return f'{config.PASH_TMP_PREFIX}/speculative/partial_order_file'
 
 def initialize_po_file(trans_options, dir_path) -> None:
     ## Initializae the partial order file
