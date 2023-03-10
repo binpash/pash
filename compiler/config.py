@@ -25,6 +25,9 @@ SAVE_ARGS_EXECUTABLE = os.path.join(PASH_TOP, "runtime/save_args.sh")
 assert(not os.getenv('PASH_TMP_PREFIX') is None)
 PASH_TMP_PREFIX = os.getenv('PASH_TMP_PREFIX')
 
+SOCKET_BUF_SIZE = 8192
+
+
 ##
 ## Global configuration used by all pash components
 ##

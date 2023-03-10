@@ -15,6 +15,9 @@ class IdGen:
         new_id = self.counter
         self.counter += 1
         return new_id
+    
+    def get_number_of_ids(self):
+        return self.counter
 
 ## TODO: Should we move this to the trans_options class 
 ##       (which we could rename to trans_config) and make a subclass for
@@ -31,12 +34,19 @@ def initialize(trans_options) -> None:
 def partial_order_directory() -> str:
     return f'{config.PASH_TMP_PREFIX}/speculative/partial_order/'
 
+def partial_order_file_path():
+    return f'{config.PASH_TMP_PREFIX}/speculative/partial_order_file'
 
 def initialize_po_file(trans_options, dir_path) -> None:
     ## Initializae the partial order file
     with open(trans_options.get_partial_order_file(), 'w') as f:
         f.write(f'# Partial order files path:\n')
         f.write(f'{dir_path}\n')
+
+## TODO: Figure out a way to put all serialization/deserialization of messages
+##       and parsing/unparsing in a specific module.
+def scheduler_server_init_po_msg(partial_order_file: str) -> str:
+    return f'Init:{partial_order_file}'
 
 def get_next_id():
     global ID_GENERATOR
@@ -56,5 +66,15 @@ def save_df_region(text_to_output: str, trans_options, df_region_id: int, predec
         for predecessor in predecessor_ids:
             po_file.write(serialize_edge(predecessor, df_region_id))
 
-def serialize_edge(from_id, to_id):
+def serialize_edge(from_id: int, to_id: int) -> str:
     return f'{from_id} -> {to_id}\n'
+
+def serialize_number_of_nodes(number_of_ids: int) -> str:
+    return f'{number_of_ids}\n'
+
+## TODO: Eventually we might want to retrieve the number_of_ids from trans_options
+def save_number_of_nodes(trans_options):
+    number_of_ids = ID_GENERATOR.get_number_of_ids()
+    partial_order_file_path = trans_options.get_partial_order_file()
+    with open(partial_order_file_path, "a") as po_file:
+        po_file.write(serialize_number_of_nodes(number_of_ids))
