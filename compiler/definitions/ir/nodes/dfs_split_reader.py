@@ -1,27 +1,30 @@
 import os
 from definitions.ir.dfg_node import *
 
+
 class DFSSplitReader(DFGNode):
-    def __init__(self, inputs, outputs, com_name, com_category, 
-                 com_options = [], com_redirs = [], com_assignments=[]):
-        
+    def __init__(self, inputs, outputs, com_name, com_category,
+                 com_options=[], com_redirs=[], com_assignments=[]):
+
         super().__init__(inputs, outputs, com_name, com_category,
-                         com_options=com_options, 
-                         com_redirs=com_redirs, 
+                         com_options=com_options,
+                         com_redirs=com_redirs,
                          com_assignments=com_assignments)
 
-    def set_server_address(self, addr): # ex addr: 127.0.0.1:50051
-         self.com_options.append((3, Arg(string_to_argument(f"--addr {addr}"))))
+    def set_server_address(self, addr):  # ex addr: 127.0.0.1:50051
+        self.com_options.append((3, Arg(string_to_argument(f"--addr {addr}"))))
+
 
 def make_dfs_split_reader_node(inputs, output, split_num):
-    split_reader_bin = os.path.join(config.PASH_TOP, config.config['runtime']['dfs_split_reader_binary'])
+    split_reader_bin = os.path.join(
+        config.DISH_TOP, config.config['runtime']['dfs_split_reader_binary'])
     com_name = Arg(string_to_argument(split_reader_bin))
     com_category = "pure"
     options = []
     options.append((1, Arg(string_to_argument(f"--split {split_num}"))))
 
     return DFSSplitReader(inputs,
-               [output],
-               com_name, 
-               com_category,
-               options)
+                          [output],
+                          com_name,
+                          com_category,
+                          options)

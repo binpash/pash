@@ -3,7 +3,8 @@
 # trap ctrl-c and call ctrl_c()
 trap cleanup INT
 
-export PASH_TOP=${PASH_TOP:-${BASH_SOURCE%/*}}
+export DISH_TOP=${DISH_TOP:-${BASH_SOURCE%/*}}
+export PASH_TOP=${PASH_TOP:-${DISH_TOP}/pash/}
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 # point to the local downloaded folders
 export PYTHONPATH=${PASH_TOP}/python_pkgs/
@@ -25,8 +26,8 @@ function cleanup() {
         rm -rf "$PASH_TMP_PREFIX"
 }
 
-"$PASH_TOP/runtime/dspash/file_reader/filereader_server" &
+"$DISH_TOP/runtime/dspash/file_reader/filereader_server" &
 FILEREADER_PID=$!
-"$PASH_TOP/runtime/dspash/file_reader/discovery_server" &
+"$DISH_TOP/runtime/dspash/file_reader/discovery_server" &
 DISCOVERY_PID=$!
-python3 "$PASH_TOP/compiler/dspash/worker.py" "$@"
+python3 "$DISH_TOP/pash/compiler/dspash/worker.py" "$@"
