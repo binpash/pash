@@ -49,8 +49,11 @@ n_classes=$($PYTHON $SCRIPTS/reshape_classes.py $MODEL $CLASSES)
 echo reshape
 $PYTHON $SCRIPTS/warm_start.py $MODEL $multiclass $n_classes # pipes coefficients
 echo warm_start
-$PYTHON $SCRIPTS/fold_coef.py $MODEL $X $y $C_ $CLASSES $WARM_COEF $MAX_SQ_SUM $multiclass $penalty
+
+# We need to run this (n_classes) times and gather the results from all
+$PYTHON $SCRIPTs/parallel.py $MODEL $X $y $C_ $CLASS $WARM_COEF $MAX_SQ_SUM $multiclass $penalty
 echo fold_coef
+
 $PYTHON $SCRIPTS/zip_coef.py $MODEL
 echo zip_coef
 $PYTHON $SCRIPTS/adjust_coef.py $MODEL $X $multiclass $n_classes $1

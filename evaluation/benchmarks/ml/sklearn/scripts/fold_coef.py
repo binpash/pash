@@ -34,6 +34,8 @@ if (
 else:
     n_threads = 1
 
+print(classes)
+
 fold_coefs_ = _logistic.Parallel(n_jobs=model.n_jobs, verbose=model.verbose, prefer=prefer)(
     path_func(
         X,
