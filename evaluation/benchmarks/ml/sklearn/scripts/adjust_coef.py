@@ -7,6 +7,8 @@ with open('./tmp/fold_coef.obj', 'rb') as file:
 
 model_file, X_file, multi_class, n_classes, destination = sys.argv[1:6]
 
+n_classes = int(n_classes)
+
 with open(X_file, 'rb') as file:
     X = pickle.load(file)
     n_features = X.shape[1]
