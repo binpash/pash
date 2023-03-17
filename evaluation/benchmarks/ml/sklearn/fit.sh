@@ -50,8 +50,14 @@ echo reshape
 $PYTHON $SCRIPTS/warm_start.py $MODEL $multiclass $n_classes # pipes coefficients
 echo warm_start
 
-# We need to run this (n_classes) times and gather the results from all
-$PYTHON $SCRIPTs/parallel.py $MODEL $X $y $C_ $CLASS $WARM_COEF $MAX_SQ_SUM $multiclass $penalty
+# Covtype dataset has 7 classes
+$PYTHON $SCRIPTS/parallel.py $MODEL $X $y $C_ $WARM_COEF $MAX_SQ_SUM $multiclass $penalty 1
+$PYTHON $SCRIPTS/parallel.py $MODEL $X $y $C_ $WARM_COEF $MAX_SQ_SUM $multiclass $penalty 2
+$PYTHON $SCRIPTS/parallel.py $MODEL $X $y $C_ $WARM_COEF $MAX_SQ_SUM $multiclass $penalty 3
+$PYTHON $SCRIPTS/parallel.py $MODEL $X $y $C_ $WARM_COEF $MAX_SQ_SUM $multiclass $penalty 4
+$PYTHON $SCRIPTS/parallel.py $MODEL $X $y $C_ $WARM_COEF $MAX_SQ_SUM $multiclass $penalty 5
+$PYTHON $SCRIPTS/parallel.py $MODEL $X $y $C_ $WARM_COEF $MAX_SQ_SUM $multiclass $penalty 6
+$PYTHON $SCRIPTS/parallel.py $MODEL $X $y $C_ $WARM_COEF $MAX_SQ_SUM $multiclass $penalty 7
 echo fold_coef
 
 $PYTHON $SCRIPTS/zip_coef.py $MODEL

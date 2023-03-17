@@ -3,15 +3,16 @@ import pickle
 import sys
 
 file_args = []
-for file_name in sys.argv[1:8]:
+for file_name in sys.argv[1:7]:
     with open(file_name, 'rb') as file:
         file_args.append(pickle.load(file))
-model, X, y, C_, class_, warm_start_coef_, max_squared_sum = file_args
-multi_class = sys.argv[8]
-penalty = sys.argv[9]
+model, X, y, C_, warm_start_coef_, max_squared_sum = file_args
 
-path_func = _logistic.delayed(_logistic._logistic_regression_path)
-result = path_func(
+multi_class = sys.argv[7]
+penalty = sys.argv[8]
+class_ = int(sys.argv[9])
+
+result = _logistic._logistic_regression_path(
     X,
     y,
     pos_class=class_,
@@ -26,11 +27,11 @@ result = path_func(
     class_weight=model.class_weight,
     check_input=False,
     random_state=model.random_state,
-    coef=warm_start_coef_,
+    coef=None, #Leave as None for now, consider changing to warm_start_coef_ later
     penalty=penalty,
     max_squared_sum=max_squared_sum,
     sample_weight=None,
 )
 
-with open(f'./tmp/result_{class_}', 'wb') as file:
+with open(f'./tmp/result_{class_}.obj', 'wb') as file:
     pickle.dump(result, file)
