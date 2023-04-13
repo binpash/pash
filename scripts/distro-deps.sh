@@ -34,7 +34,7 @@ pkgs="automake bc curl gcc git graphviz libtool m4 python sudo wget"
 # now do different things depending on distro
 case "$distro" in
     ubuntu*)  
-        pkgs="$pkgs bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config python3 python3-pip python3-setuptools python3-testresources wamerican-insane zlib1g zlib1g-dev"
+        pkgs="$pkgs bsdmainutils libffi-dev libjpeg-dev locales locales-all netcat-openbsd pkg-config python3 python3-pip python3-setuptools python3-testresources wamerican-insane zlib1g zlib1g-dev"
         if [[ "$show_deps" == 1 ]]; then
             echo "$pkgs" | sort
             exit 0
@@ -54,7 +54,7 @@ case "$distro" in
         fi
         ;;
     debian*)
-        pkgs="$pkgs bsdmainutils libffi-dev locales locales-all netcat-openbsd pkg-config procps python3 python3-pip python3-setuptools python3-testresources wamerican-insane zlib1g zlib1g-dev"
+        pkgs="$pkgs bsdmainutils libffi-dev libjpeg-dev locales locales-all netcat-openbsd pkg-config procps python3 python3-pip python3-setuptools python3-testresources wamerican-insane zlib1g zlib1g-dev"
         if [[ "$show_deps" == 1 ]]; then
             echo "$pkgs" | sort
             exit 0
