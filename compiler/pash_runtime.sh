@@ -189,21 +189,19 @@ else
         # This is safe because the script is run sequentially and the shell 
         # won't be able to move forward until this is finished
 
-        ## Inform the daemon before we run
-        ## TODO: Why not inform the daemon after? It should probably be after if we want to be correct
-        inform_daemon_exit 
+        ## Run the script
         source "$RUNTIME_DIR/pash_wrap_vars.sh" "$pash_script_to_execute"
+        ## This is the only difference between the sequential and the parallel
         source "$RUNTIME_DIR/save_shell_state.sh"
         pash_runtime_final_status="$PREVIOUS_SHELL_EC"
         export pash_previous_set_status="$PREVIOUS_SET_STATUS"
 
+        ## Inform the daemon 
+        inform_daemon_exit 
+
         pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_runtime_final_status"
         pash_redir_output echo "$$: (5) Current BaSh shell: $pash_previous_set_status"
         pash_redir_output echo "$$: (5) Reverted to PaSh set state to: $-"
-
-        ## Complete the execution if we are in debug
-        ## TODO: Delete if unnecessary
-        # source "$RUNTIME_DIR/pash_runtime_debug_complete_execution.sh"
     else 
         # Should we redirect errors aswell?
         # TODO: capturing the return state here isn't completely correct. 
