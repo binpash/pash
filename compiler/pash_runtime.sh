@@ -66,32 +66,36 @@
 ## (1)
 ##
 
-## Store the previous exit status to propagate to the compiler
-## export pash_previous_exit_status=$?
-## The assignment now happens outside
-export pash_previous_exit_status
+## TODO: Replace these exports completely (and only leave the debug prints)
+export pash_previous_exit_status=$PREVIOUS_SHELL_EC
+# export pash_input_args=( "${PREVIOUS_SHELL_ARGS[@]}" )
+export pash_previous_set_status=$PREVIOUS_SET_STATUS
+export pash_runtime_shell_variables_file=$PREVIOUS_VARIABLES_FILE
 
-## Store the current `set` status to pash to the inside script 
-export pash_previous_set_status=$-
+# ## Store the current `set` status to pash to the inside script 
+# export pash_previous_set_status=$-
 
+## TODO: replace the variable names here
 pash_redir_output echo "$$: (1) Previous exit status: $pash_previous_exit_status"
 pash_redir_output echo "$$: (1) Previous set state: $pash_previous_set_status"
+
+## TODO: Move everything in (1) in the save state file
 
 ## Prepare a file with all shell variables
 ##
 ## This is only needed by PaSh to expand.
 ##
 ## TODO: Maybe we can get rid of it since PaSh has access to the environment anyway?
-pash_runtime_shell_variables_file="${PASH_TMP_PREFIX}/pash_$RANDOM$RANDOM$RANDOM"
-source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
+# pash_runtime_shell_variables_file="${PASH_TMP_PREFIX}/pash_$RANDOM$RANDOM$RANDOM"
+# source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
 pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_variables_file"
 
-## Abort script if variable is unset
-pash_default_set_state="huB"
+# ## Abort script if variable is unset
+# pash_default_set_state="huB"
 
-## Revert the `set` state to not have spurious failures 
-pash_redir_output echo "$$: (1) Bash set state at start of execution: $pash_previous_set_status"
-source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_previous_set_status" "$pash_default_set_state"
+# ## Revert the `set` state to not have spurious failures 
+# pash_redir_output echo "$$: (1) Bash set state at start of execution: $pash_previous_set_status"
+# source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_previous_set_status" "$pash_default_set_state"
 pash_redir_output echo "$$: (1) Set state reverted to PaSh-internal set state: $-"
 
 ##
