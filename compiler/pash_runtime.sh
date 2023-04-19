@@ -167,38 +167,8 @@ else
     function run_parallel() {
         trap inform_daemon_exit SIGTERM SIGINT EXIT
         source "$RUNTIME_DIR/pash_wrap_vars.sh" "$pash_script_to_execute"
-        # internal_exec_status=$?
-        ## TODO: Why do these need to happen here?
-        # final_steps
         inform_daemon_exit
-        ## TODO: Why do we need this to happen here?
-        # (exit $internal_exec_status)
     }
-
-    ## TODO: Delete this if useless
-    ## We only want to execute (5) and (6) if we are in debug mode and it is not explicitly avoided
-    # function final_steps() {
-    #     if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
-    #         ##
-    #         ## (5)
-    #         ##
-
-    #         ## Prepare a file for the output shell variables to be saved in
-    #         pash_output_var_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
-    #         # pash_redir_output echo "$$: Output vars: $pash_output_var_file"
-
-    #         ## Prepare a file for the `set` state of the inner shell to be output
-    #         pash_output_set_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
-
-    #         ## TODO: This can be turned to save_shell_state
-    #         source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" "$pash_output_var_file" "$pash_output_set_file"
-
-    #         ##
-    #         ## (6)
-    #         ##
-    #         source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
-    #     fi
-    # }
 
     ## TODO: Add a check that `set -e` is not on
 
@@ -227,33 +197,13 @@ else
         pash_runtime_final_status="$PREVIOUS_SHELL_EC"
         export pash_previous_set_status="$PREVIOUS_SET_STATUS"
 
-        ## TODO: Move all this if/then/else in a different script
-        if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
-            ##
-            ## (5)
-            ##
-            pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_runtime_final_status"
-            pash_redir_output echo "$$: (5) Current BaSh shell: $pash_previous_set_status"
-            pash_redir_output echo "$$: (5) Reverted to PaSh set state to: $-"
+        pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_runtime_final_status"
+        pash_redir_output echo "$$: (5) Current BaSh shell: $pash_previous_set_status"
+        pash_redir_output echo "$$: (5) Reverted to PaSh set state to: $-"
 
-            ## Prepare a file for the output shell variables to be saved in
-            pash_output_var_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
-            # pash_redir_output echo "$$: Output vars: $pash_output_var_file"
-            source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_output_var_file"
-
-            ## Prepare a file for the `set` state of the inner shell to be output
-            pash_output_set_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
-            pash_redir_output echo "$$: (5) Writing current BaSh set state to: $pash_output_set_file"
-            echo "$pash_previous_set_status" > "$pash_output_set_file"
-
-            ##
-            ## (6)
-            ##
-            source "$RUNTIME_DIR/pash_runtime_debug_complete_execution.sh"
-
-            ## Restore the set state from a file because it has been rewritten by sourcing variables
-            export pash_previous_set_status="$(cat "$pash_output_set_file")"
-        fi
+        ## Complete the execution if we are in debug
+        ## TODO: Delete if unnecessary
+        # source "$RUNTIME_DIR/pash_runtime_debug_complete_execution.sh"
     else 
         # Should we redirect errors aswell?
         # TODO: capturing the return state here isn't completely correct. 
@@ -263,7 +213,8 @@ else
         pash_redir_output echo "$$: (2) Running pipeline..."
 
         ## The only thing we can recover here is the set state:
-        ##   arguments, variables, and exit code cannot be returned
+        ##  - arguments and variables are not modified since it is run in parallel and thus is pure
+        ##  - exit code cannot be returned
     fi
     ## Set the shell state before exiting
     pash_redir_output echo "$$: (7) Current PaSh set state: $-"
