@@ -12,6 +12,7 @@ output_set_file=${2?Output set file not given}
 pash_exec_status=${internal_exec_status}
 pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_exec_status"
 
+## TODO: This can be done in the final execution steps and this can become save_state
 ## Save the current set options to a file so that they can be recovered
 pash_final_set_vars=$-
 pash_redir_output echo "$$: (5) Writing current BaSh set state to: $output_set_file"

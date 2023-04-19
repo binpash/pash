@@ -14,7 +14,6 @@
 ## (3) Then it should make sure to revert the exit code and `set` state to the saved values.
 ##
 ## (4) Then it should execute the inside script (either original or parallel)
-##     TODO: Figure out what could be different before (1), during (4), and after (7) 
 ##
 ## (5) Then it save all necessary state and revert to pash-internal state. 
 ##     (At the moment this happens automatically because the script is ran in a subshell.)
@@ -45,58 +44,30 @@
 ##      /----(7)----/
 ##    ...     |
 
-## TODO: Make a list/properly define what needs to be saved at (1), (3), (5), (7)
-##
-## Necessary for pash:
-## - PATH important for PaSh but might be changed in bash
-## - IFS has to be kept default for PaSh to work
 ##
 ## Necessary for bash:
-## - Last PID $! (TODO)
 ## - Last exit code $?
 ## - set state $-
-## - File descriptors (TODO)
-## - Loop state (?) Maybe `source` is adequate for this (TODO)
-## - Traos (TODO)
 ##
-## (maybe) TODO: After that, maybe we can create cleaner functions for (1), (3), (5), (7). 
-##               E.g. we can have a correspondence between variable names and revert them using them 
 
 ##
 ## (1)
 ##
 
 ## TODO: Replace these exports completely (and only leave the debug prints)
-export pash_previous_exit_status=$PREVIOUS_SHELL_EC
+export pash_previous_exit_status="$PREVIOUS_SHELL_EC"
 # export pash_input_args=( "${PREVIOUS_SHELL_ARGS[@]}" )
-export pash_previous_set_status=$PREVIOUS_SET_STATUS
-export pash_runtime_shell_variables_file=$PREVIOUS_VARIABLES_FILE
+export pash_previous_set_status="$PREVIOUS_SET_STATUS"
 
-# ## Store the current `set` status to pash to the inside script 
-# export pash_previous_set_status=$-
-
-## TODO: replace the variable names here
 pash_redir_output echo "$$: (1) Previous exit status: $pash_previous_exit_status"
 pash_redir_output echo "$$: (1) Previous set state: $pash_previous_set_status"
-
-## TODO: Move everything in (1) in the save state file
-
-## Prepare a file with all shell variables
-##
-## This is only needed by PaSh to expand.
-##
-## TODO: Maybe we can get rid of it since PaSh has access to the environment anyway?
-# pash_runtime_shell_variables_file="${PASH_TMP_PREFIX}/pash_$RANDOM$RANDOM$RANDOM"
-# source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
-pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_variables_file"
-
-# ## Abort script if variable is unset
-# pash_default_set_state="huB"
-
-# ## Revert the `set` state to not have spurious failures 
-# pash_redir_output echo "$$: (1) Bash set state at start of execution: $pash_previous_set_status"
-# source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_previous_set_status" "$pash_default_set_state"
 pash_redir_output echo "$$: (1) Set state reverted to PaSh-internal set state: $-"
+
+
+## Save the shell variables to a file
+export pash_runtime_shell_variables_file="${PASH_TMP_PREFIX}/variables_$RANDOM$RANDOM$RANDOM"
+source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
+pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_variables_file"
 
 ##
 ## (2)
@@ -182,59 +153,52 @@ else
         pash_script_to_execute="${pash_compiled_script_file}"
     fi
 
-    # ##
-    # ## (4)
-    # ##
+    ##
+    ## (4)
+    ##
 
-    ## TODO: It might make sense to move these functions in pash_init_setup to avoid the cost of redefining them here.
-    function clean_up () {
-        if [ "$parallel_script_time_start" == "None" ] || [ "$pash_profile_driven_flag" -eq 0 ]; then
-            exec_time=""
-        else
-            parallel_script_time_end=$(date +"%s%N")
-            parallel_script_time_ms=$(echo "scale = 3; ($parallel_script_time_end-$parallel_script_time_start)/1000000" | bc)
-            pash_redir_output echo " --- --- Execution time: $parallel_script_time_ms  ms"
-            exec_time=$parallel_script_time_ms
-        fi
+    ## Let daemon know that this region is done
+    function inform_daemon_exit () {
         ## Send to daemon
-        msg="Exit:${process_id}|Time:$exec_time"
+        msg="Exit:${process_id}"
         daemon_response=$(pash_communicate_daemon_just_send "$msg")
     } 
 
     function run_parallel() {
-        trap clean_up SIGTERM SIGINT EXIT
-        if [ "$pash_profile_driven_flag" -eq 1 ]; then
-            parallel_script_time_start=$(date +"%s%N")
-        fi
+        trap inform_daemon_exit SIGTERM SIGINT EXIT
         source "$RUNTIME_DIR/pash_wrap_vars.sh" "$pash_script_to_execute"
-        internal_exec_status=$?
-        final_steps
-        clean_up
-        (exit $internal_exec_status)
+        # internal_exec_status=$?
+        ## TODO: Why do these need to happen here?
+        # final_steps
+        inform_daemon_exit
+        ## TODO: Why do we need this to happen here?
+        # (exit $internal_exec_status)
     }
 
+    ## TODO: Delete this if useless
     ## We only want to execute (5) and (6) if we are in debug mode and it is not explicitly avoided
-    function final_steps() {
-        if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
-            ##
-            ## (5)
-            ##
+    # function final_steps() {
+    #     if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
+    #         ##
+    #         ## (5)
+    #         ##
 
-            ## Prepare a file for the output shell variables to be saved in
-            pash_output_var_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
-            # pash_redir_output echo "$$: Output vars: $pash_output_var_file"
+    #         ## Prepare a file for the output shell variables to be saved in
+    #         pash_output_var_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
+    #         # pash_redir_output echo "$$: Output vars: $pash_output_var_file"
 
-            ## Prepare a file for the `set` state of the inner shell to be output
-            pash_output_set_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
+    #         ## Prepare a file for the `set` state of the inner shell to be output
+    #         pash_output_set_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
 
-            source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" "$pash_output_var_file" "$pash_output_set_file"
+    #         ## TODO: This can be turned to save_shell_state
+    #         source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" "$pash_output_var_file" "$pash_output_set_file"
 
-            ##
-            ## (6)
-            ##
-            source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
-        fi
-    }
+    #         ##
+    #         ## (6)
+    #         ##
+    #         source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
+    #     fi
+    # }
 
     ## TODO: Add a check that `set -e` is not on
 
@@ -255,40 +219,77 @@ else
         # This is safe because the script is run sequentially and the shell 
         # won't be able to move forward until this is finished
 
-        ## Needed to clear up any past script time start execution times.        
-        parallel_script_time_start=None
-        clean_up 
+        ## Inform the daemon before we run
+        ## TODO: Why not inform the daemon after? It should probably be after if we want to be correct
+        inform_daemon_exit 
         source "$RUNTIME_DIR/pash_wrap_vars.sh" "$pash_script_to_execute"
-        pash_runtime_final_status=$?
-        final_steps
+        source "$RUNTIME_DIR/save_shell_state.sh"
+        pash_runtime_final_status="$PREVIOUS_SHELL_EC"
+        export pash_previous_set_status="$PREVIOUS_SET_STATUS"
+
+        ## TODO: Move all this if/then/else in a different script
+        if [ "$PASH_DEBUG_LEVEL" -ne 0 ] && [ "$pash_avoid_pash_runtime_completion_flag" -ne 1 ]; then
+            ##
+            ## (5)
+            ##
+            pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_runtime_final_status"
+            pash_redir_output echo "$$: (5) Current BaSh shell: $pash_previous_set_status"
+            pash_redir_output echo "$$: (5) Reverted to PaSh set state to: $-"
+
+            ## Prepare a file for the output shell variables to be saved in
+            pash_output_var_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
+            # pash_redir_output echo "$$: Output vars: $pash_output_var_file"
+            source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_output_var_file"
+
+            ## Prepare a file for the `set` state of the inner shell to be output
+            pash_output_set_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
+            pash_redir_output echo "$$: (5) Writing current BaSh set state to: $output_set_file"
+            echo "$pash_previous_set_status" > "$pash_output_set_file"
+
+            ## TODO: This can be turned to save_shell_state (together with the gathering of the final status)
+            # source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" "$pash_output_var_file" "$pash_output_set_file"
+            ## TODO: Delete this script after we are done
+
+            ##
+            ## (6)
+            ##
+            source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
+
+            ## Restore the set state from a file because it has been rewritten by sourcing variables
+            export pash_previous_set_status="$(cat "$pash_output_set_file")"
+        fi
+        #         ## TODO: Refactor this commonly if possible
+        # pash_redir_output echo "$$: (7) Current PaSh set state: $-"
+        # source "$RUNTIME_DIR/pash_set_from_to.sh" "$-" "$pash_previous_set_status"
+        # pash_redir_output echo "$$: (7) Reverted to BaSh set state before exiting: $-"
     else 
         # Should we redirect errors aswell?
         # TODO: capturing the return state here isn't completely correct. 
-        # Might need more complex design if this end up being a problem
         run_parallel <&0 &
         pash_runtime_final_status=$?
-        pash_redir_output echo "$$: (2) Running pipeline"
+        ## Can't we just set the above value to 0 always?
+        pash_redir_output echo "$$: (2) Running pipeline..."
 
-        ## Here we need to also revert the state back to bash state 
-        ## since run_parallel will do that in a separate shell
-        ##
-        ## This happens right before we exit from pash_runtime!
+        ## The only thing we can recover here is the set state:
+        ##   arguments, variables, and exit code cannot be returned
+
+
 
         ## Recover the `set` state of the previous shell
-        # pash_redir_output echo "$$: (3) Previous BaSh set state: $pash_previous_set_status"
-        # pash_redir_output echo "$$: (3) PaSh-internal set state of current shell: $-"
-        pash_current_set_state=$-
-        source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_current_set_state" "$pash_previous_set_status"
-        pash_redir_output echo "$$: (5) Reverted to BaSh set state: $-"
+        # pash_current_set_state=$-
+        # source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_current_set_state" "$pash_previous_set_status"
+        # pash_redir_output echo "$$: (5) Reverted to BaSh set state: $-"
 
         ## TODO: This might not be necessary
         ## Recover the input arguments of the previous script
         ## Note: We don't need to care about wrap_vars arguments because we have stored all of them already.
         #
         # shellcheck disable=SC2086
-        eval "set -- \"\${pash_input_args[@]}\""
-        pash_redir_output echo "$$: (5) Reverted to BaSh input arguments: $@"
-
-        ## TODO: We probably need to exit with the exit code here or something!
+        # eval "set -- \"\${pash_input_args[@]}\""
+        # pash_redir_output echo "$$: (5) Reverted to BaSh input arguments: $@"
     fi
+    ## Set the shell state before exiting
+    pash_redir_output echo "$$: (7) Current PaSh set state: $-"
+    source "$RUNTIME_DIR/pash_set_from_to.sh" "$-" "$pash_previous_set_status"
+    pash_redir_output echo "$$: (7) Reverted to BaSh set state before exiting: $-"
 fi
