@@ -187,15 +187,20 @@ else
         # This is safe because the script is run sequentially and the shell 
         # won't be able to move forward until this is finished
 
+        ## Inform the daemon (this happens before because otherwise when set -e is set we don't send the inform exit)
+        ## However, this doesn't allow the compiler to get the proper execution time for a command
+        ## TODO: Properly set and restore traps and then move inform afterwards
+        ##       First make a test that has set traps and set -e to exit (check set-e.sh)
+        inform_daemon_exit 
+        # echo $traps_set
+
+
         ## Run the script
         source "$RUNTIME_DIR/pash_wrap_vars.sh" "$pash_script_to_execute"
         ## This is the only difference between the sequential and the parallel
         source "$RUNTIME_DIR/save_shell_state.sh"
         pash_runtime_final_status="$PREVIOUS_SHELL_EC"
         export pash_previous_set_status="$PREVIOUS_SET_STATUS"
-
-        ## Inform the daemon 
-        inform_daemon_exit 
 
         pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_runtime_final_status"
         pash_redir_output echo "$$: (5) Current BaSh shell: $pash_previous_set_status"
