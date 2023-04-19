@@ -44,17 +44,9 @@ then
     ## This works w.r.t. arguments because source does not change them if there are no arguments
     ## being given.
     source "${SCRIPT_TO_EXECUTE}"
-    internal_exec_status=$?
-    ## Make sure that any input argument changes are propagated outside
-    # export pash_input_args=( "$@" )
-    (exit "$internal_exec_status")
 }
 else 
 {
     source "${SCRIPT_TO_EXECUTE}"
-    internal_exec_status=$?
-    ## Make sure that any input argument changes are propagated outside
-    # export pash_input_args=( "$@" )
-    (exit "$internal_exec_status")
 }
 fi

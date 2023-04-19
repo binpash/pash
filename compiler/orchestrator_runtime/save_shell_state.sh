@@ -8,6 +8,13 @@
 ## DEFAULT_SET_STATE: Set this variable to determine the safe set state "huB"
 ##
 
+##
+## Necessary for bash:
+## - Last exit code $?
+## - set state $-
+##
+
+
 ## Save the previous exit code
 export PREVIOUS_SHELL_EC="$?"
 

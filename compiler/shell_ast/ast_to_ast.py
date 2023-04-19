@@ -509,16 +509,15 @@ def get_shell_from_ast(asts, ast_text=None) -> str:
 
 ## TODO: Replace this with the save state
 def make_pre_runtime_nodes():
-    input_args_command = make_input_args_command()
     save_shell_state_command = make_save_shell_state_command()
-    return [save_shell_state_command]
+    return []
 
 def make_post_runtime_nodes():
     ## TODO: Remove this once pash_runtime is sourced with the same arguments
-    set_args_node = restore_arguments_command()
     set_exit_status_node = restore_exit_code_node()
-    return [set_exit_status_node]
+    return []
 
+## TODO: Delete this
 def make_input_args_command():
     ## Save the input arguments
     ## ```
@@ -540,6 +539,7 @@ def make_save_shell_state_command():
     input_args_command = make_command(arguments)
     return input_args_command
 
+## We don;t need this normally
 def restore_arguments_command():
     ## Restore the arguments to propagate internal changes, e.g., from `shift` outside.
     ## ```
@@ -603,25 +603,17 @@ def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
                         string_to_argument(sequential_script_file_name)])
     assignments.append(["pash_input_ir_file", 
                         string_to_argument(ir_filename)])
-    disable_parallel_pipelines_command = make_command([],
-                                                      assignments=assignments)
 
     ## Call the runtime
     arguments = [string_to_argument("source"),
                  string_to_argument(config.RUNTIME_EXECUTABLE)]
-    # ,
-    #              string_to_argument(sequential_script_file_name),
-    #              string_to_argument(ir_filename)]
-    ## Pass all relevant argument to the planner
-    ## TODO: Remove those
-    # common_arguments_strings = config.pass_common_arguments(config.pash_args)
-    # arguments += [string_to_argument(string) for string in common_arguments_strings]
-    runtime_node = make_command(arguments)
+    runtime_node = make_command(arguments,
+                                assignments=assignments)
 
     ## Create generic wrapper commands
     pre_runtime_nodes = make_pre_runtime_nodes()
     post_runtime_nodes = make_post_runtime_nodes()
-    nodes = pre_runtime_nodes + [disable_parallel_pipelines_command, runtime_node] + post_runtime_nodes
+    nodes = pre_runtime_nodes + [runtime_node] + post_runtime_nodes
     sequence = make_semi_sequence(nodes)
     return sequence
 
