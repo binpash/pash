@@ -330,14 +330,9 @@ class Scheduler:
 
     def handle_exit(self, input_cmd):
         assert(input_cmd.startswith("Exit:"))
-        # exit_part, time_part = input_cmd.split("|")
         process_id = int(input_cmd.split(":")[1])
-        # log("Time part is:", time_part)
-        # try:
-        #     exec_time = float(time_part.split(":")[1])
-        # except:
-        #     exec_time = None
-        
+
+        ## Get the execution time        
         command_finish_exec_time = datetime.now()
         command_start_exec_time = self.process_id_input_ir_map[process_id].get_start_exec_time()
         exec_time = (command_finish_exec_time - command_start_exec_time) / timedelta(milliseconds=1)

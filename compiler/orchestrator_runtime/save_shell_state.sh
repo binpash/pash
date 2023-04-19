@@ -32,9 +32,4 @@ export PREVIOUS_SHELL_EC="$?"
 
 ## Store the current `set` status 
 export PREVIOUS_SET_STATUS=$-
-
-
-## TODO: Rename declare_vars to something else and maybe remove RUNTIME_DIR
-# echo "$$: (1) Bash set state at start of execution: $pash_previous_set_status"
 source "$RUNTIME_DIR/pash_set_from_to.sh" "$PREVIOUS_SET_STATUS" "${DEFAULT_SET_STATE:-huB}"
-# echo "$$: (1) Set state reverted to PaSh-internal set state: $-"

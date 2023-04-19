@@ -509,28 +509,14 @@ def get_shell_from_ast(asts, ast_text=None) -> str:
 
 ## TODO: Replace this with the save state
 def make_pre_runtime_nodes():
-    # previous_status_command = make_previous_status_command()
     input_args_command = make_input_args_command()
-    # return [previous_status_command, input_args_command]
     save_shell_state_command = make_save_shell_state_command()
-    # debug_command = make_command([string_to_argument("echo"), [make_quoted_variable("@")]])
     return [save_shell_state_command, input_args_command]
 
 def make_post_runtime_nodes():
     set_args_node = restore_arguments_command()
-    ## TODO: No need to do this if we just end the source with the right exit code
     set_exit_status_node = restore_exit_code_node()
     return [set_args_node, set_exit_status_node]
-
-def make_previous_status_command():
-    ## Save the previous exit state:
-    ## ```
-    ## pash_previous_exit_status="$?"
-    ## ```
-    assignments = [["pash_previous_exit_status",
-                    [make_quoted_variable("?")]]]
-    previous_status_command = make_command([], assignments=assignments)
-    return previous_status_command
 
 def make_input_args_command():
     ## Save the input arguments

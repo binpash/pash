@@ -54,9 +54,7 @@
 ## (1)
 ##
 
-## TODO: Replace these exports completely (and only leave the debug prints)
 export pash_previous_exit_status="$PREVIOUS_SHELL_EC"
-# export pash_input_args=( "${PREVIOUS_SHELL_ARGS[@]}" )
 export pash_previous_set_status="$PREVIOUS_SET_STATUS"
 
 pash_redir_output echo "$$: (1) Previous exit status: $pash_previous_exit_status"
