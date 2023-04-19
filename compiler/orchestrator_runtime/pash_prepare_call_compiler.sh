@@ -2,6 +2,9 @@
 
 ## When it completes it sets "$pash_script_to_execute"
 
+## Only needed for expansion
+export pash_input_args=( "$@" )
+
 ## Save the shell variables to a file (necessary for expansion)
 export pash_runtime_shell_variables_file="${PASH_TMP_PREFIX}/variables_$RANDOM$RANDOM$RANDOM"
 source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"

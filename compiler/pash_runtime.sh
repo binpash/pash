@@ -71,16 +71,11 @@
 source "$RUNTIME_DIR/save_shell_state.sh"
 ## Rename variables to pash specific names
 export pash_previous_exit_status="$PREVIOUS_SHELL_EC"
-## We only set arguments for expansion
-## TODO: If we don't need that either we can get rid of it completely
-export pash_input_args=( "${PREVIOUS_SHELL_ARGS[@]}" )
 export pash_previous_set_status="$PREVIOUS_SET_STATUS"
 
 pash_redir_output echo "$$: (1) Previous exit status: $pash_previous_exit_status"
 pash_redir_output echo "$$: (1) Previous set state: $pash_previous_set_status"
 pash_redir_output echo "$$: (1) Set state reverted to PaSh-internal set state: $-"
-
-pash_redir_output echo "$$: Runtime arguments: $@"
 
 ##
 ## (2)
@@ -105,7 +100,7 @@ if [ "$pash_speculative_flag" -eq 1 ]; then
     ## TODO: (Future) We might not need all the set state and other config done in (1) and (3) for speculative
 else
     ## Invoke the compiler and make any necessary preparations
-    source "$RUNTIME_DIR/pash_prepare_call_compiler.sh" "$pash_sequential_script_file" "$pash_input_ir_file"
+    source "$RUNTIME_DIR/pash_prepare_call_compiler.sh"
 
     function run_parallel() {
         trap inform_daemon_exit SIGTERM SIGINT EXIT

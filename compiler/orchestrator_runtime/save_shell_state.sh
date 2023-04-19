@@ -18,9 +18,6 @@
 ## Save the previous exit code
 export PREVIOUS_SHELL_EC="$?"
 
-## TODO: Once I am done with this refactoring this should only be necessary for expansion
-export PREVIOUS_SHELL_ARGS=( "$@" )
-
 ## Store the current `set` status 
 export PREVIOUS_SET_STATUS=$-
 source "$RUNTIME_DIR/pash_set_from_to.sh" "$PREVIOUS_SET_STATUS" "${DEFAULT_SET_STATE:-huB}"

@@ -507,73 +507,6 @@ def get_shell_from_ast(asts, ast_text=None) -> str:
 ## Code that constructs the preprocessed ASTs
 ##
 
-## TODO: Replace this with the save state
-def make_pre_runtime_nodes():
-    save_shell_state_command = make_save_shell_state_command()
-    return []
-
-def make_post_runtime_nodes():
-    ## TODO: Remove this once pash_runtime is sourced with the same arguments
-    set_exit_status_node = restore_exit_code_node()
-    return []
-
-## TODO: Delete this
-def make_input_args_command():
-    ## Save the input arguments
-    ## ```
-    ## source $PASH_TOP/runtime/save_args.sh "${@}"
-    ## ```
-    arguments = [string_to_argument("source"),
-                 string_to_argument(config.SAVE_ARGS_EXECUTABLE),
-                 [make_quoted_variable("@")]]
-    input_args_command = make_command(arguments)
-    return input_args_command
-
-def make_save_shell_state_command():
-    ## Save the shell state
-    ## ```
-    ## source $PASH_TOP/compiler/orchestration_runtime/save_shell_state.sh
-    ## ```
-    arguments = [string_to_argument("source"),
-                 string_to_argument(config.SAVE_SHELL_STATE_EXECUTABLE)]
-    input_args_command = make_command(arguments)
-    return input_args_command
-
-## We don;t need this normally
-def restore_arguments_command():
-    ## Restore the arguments to propagate internal changes, e.g., from `shift` outside.
-    ## ```
-    ## eval "set -- \"\${pash_input_args[@]}\""
-    ## ```
-    ##
-    ## Alternative Solution: (TODO if we need extra performance -- avoiding eval) 
-    ## Implement an AST node that accepts and returns a literal string
-    ## bypassing unparsing. This would make this simpler and also more
-    ## efficient (avoiding eval).
-    ## However, it would require some work because we would need to implement
-    ## support for this node in various places of PaSh and the unparser.
-    ##      
-    ##
-    ## TODO: Maybe we need to only do this if there is a change.
-    ## 
-    set_arguments = [string_to_argument("eval"),
-                     [['Q', string_to_argument('set -- ') +
-                            [escaped_char('"')] + # The escaped quote
-                            string_to_argument('\\${pash_input_args[@]}') +
-                            [escaped_char('"')]]]]
-    set_args_node = make_command(set_arguments)
-    return set_args_node
-
-def restore_exit_code_node():
-    ## Restore the exit code (since now we have executed `set` last)
-    ## ```
-    ## ( exit "$pash_runtime_final_status")
-    ## ```
-    set_exit_status_command_arguments = [string_to_argument("exit"),
-                                         [make_quoted_variable("pash_runtime_final_status")]]
-    set_exit_status_command = make_command(set_exit_status_command_arguments)
-    set_exit_status_node = make_kv('Subshell', [0, set_exit_status_command, []])
-    return set_exit_status_node
 
 ## This function makes a command that calls the pash runtime
 ## together with the name of the file containing an IR. Then the
@@ -609,13 +542,7 @@ def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
                  string_to_argument(config.RUNTIME_EXECUTABLE)]
     runtime_node = make_command(arguments,
                                 assignments=assignments)
-
-    ## Create generic wrapper commands
-    pre_runtime_nodes = make_pre_runtime_nodes()
-    post_runtime_nodes = make_post_runtime_nodes()
-    nodes = pre_runtime_nodes + [runtime_node] + post_runtime_nodes
-    sequence = make_semi_sequence(nodes)
-    return sequence
+    return runtime_node
 
 ## TODO: Make that an actual call to the spec runtime
 def make_call_to_spec_runtime(command_id: str) -> AstNode:
