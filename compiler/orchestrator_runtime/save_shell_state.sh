@@ -29,6 +29,8 @@ export PREVIOUS_SHELL_EC="$?"
 # # echo "${PREVIOUS_SHELL_ARGS[*]}"
 # export PREVIOUS_SHELL_ARGS
 # # declare 
+export PREVIOUS_SHELL_ARGS=( "$@" )
+
 
 ## Store the current `set` status 
 export PREVIOUS_SET_STATUS=$-

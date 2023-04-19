@@ -511,7 +511,7 @@ def get_shell_from_ast(asts, ast_text=None) -> str:
 def make_pre_runtime_nodes():
     input_args_command = make_input_args_command()
     save_shell_state_command = make_save_shell_state_command()
-    return [save_shell_state_command, input_args_command]
+    return [save_shell_state_command]
 
 def make_post_runtime_nodes():
     set_args_node = restore_arguments_command()
