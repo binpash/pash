@@ -243,50 +243,27 @@ else
 
             ## Prepare a file for the `set` state of the inner shell to be output
             pash_output_set_file=$("$RUNTIME_DIR/pash_ptempfile_name.sh" "$distro")
-            pash_redir_output echo "$$: (5) Writing current BaSh set state to: $output_set_file"
+            pash_redir_output echo "$$: (5) Writing current BaSh set state to: $pash_output_set_file"
             echo "$pash_previous_set_status" > "$pash_output_set_file"
-
-            ## TODO: This can be turned to save_shell_state (together with the gathering of the final status)
-            # source "$RUNTIME_DIR/pash_runtime_shell_to_pash.sh" "$pash_output_var_file" "$pash_output_set_file"
-            ## TODO: Delete this script after we are done
 
             ##
             ## (6)
             ##
-            source "$RUNTIME_DIR/pash_runtime_complete_execution.sh"
+            source "$RUNTIME_DIR/pash_runtime_debug_complete_execution.sh"
 
             ## Restore the set state from a file because it has been rewritten by sourcing variables
             export pash_previous_set_status="$(cat "$pash_output_set_file")"
         fi
-        #         ## TODO: Refactor this commonly if possible
-        # pash_redir_output echo "$$: (7) Current PaSh set state: $-"
-        # source "$RUNTIME_DIR/pash_set_from_to.sh" "$-" "$pash_previous_set_status"
-        # pash_redir_output echo "$$: (7) Reverted to BaSh set state before exiting: $-"
     else 
         # Should we redirect errors aswell?
         # TODO: capturing the return state here isn't completely correct. 
         run_parallel <&0 &
-        pash_runtime_final_status=$?
-        ## Can't we just set the above value to 0 always?
+        ## Setting this to 0 since we can't capture this exit value
+        pash_runtime_final_status=0
         pash_redir_output echo "$$: (2) Running pipeline..."
 
         ## The only thing we can recover here is the set state:
         ##   arguments, variables, and exit code cannot be returned
-
-
-
-        ## Recover the `set` state of the previous shell
-        # pash_current_set_state=$-
-        # source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_current_set_state" "$pash_previous_set_status"
-        # pash_redir_output echo "$$: (5) Reverted to BaSh set state: $-"
-
-        ## TODO: This might not be necessary
-        ## Recover the input arguments of the previous script
-        ## Note: We don't need to care about wrap_vars arguments because we have stored all of them already.
-        #
-        # shellcheck disable=SC2086
-        # eval "set -- \"\${pash_input_args[@]}\""
-        # pash_redir_output echo "$$: (5) Reverted to BaSh input arguments: $@"
     fi
     ## Set the shell state before exiting
     pash_redir_output echo "$$: (7) Current PaSh set state: $-"
