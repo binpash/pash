@@ -54,6 +54,17 @@
 ## (1)
 ##
 
+## TODO: Make a shell script that is called wrap and
+##       takes three arguments (pre_script, script, post_script)
+##       and wraps a shell script file with a pre and a post code.
+##
+##       This wrap function should perform only the necessary shell setting,
+##       exit code, and $!, transfer. Arguments should ideally be transfered too but
+##       I don't know of a good way to do it for an external script from an internal one.
+##
+##       Maybe it can happen with eval
+##
+## The challenging aspect is how to make this work for the parallel pipelines
 export pash_previous_exit_status="$PREVIOUS_SHELL_EC"
 export pash_previous_set_status="$PREVIOUS_SET_STATUS"
 
@@ -191,6 +202,9 @@ else
         ## However, this doesn't allow the compiler to get the proper execution time for a command
         ## TODO: Properly set and restore traps and then move inform afterwards
         ##       First make a test that has set traps and set -e to exit (check set-e.sh)
+        ##
+        ## TODO: Also inform the daemon that the timing does not work now so that it
+        ##       doesn't measure time for profile driven optimizations.
         inform_daemon_exit 
         # echo $traps_set
 
