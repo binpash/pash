@@ -1,5 +1,12 @@
 #!/bin/bash
 
+## Assumes the following two variables are set:
+## pash_sequential_script_file: the sequential script. Just running it should work for all tests.
+## pash_input_ir_file: the file that contains the IR to be compiled 
+
+## TODO: Determine arguments for speculative
+
+
 ##
 ## High level design. 
 ##
@@ -73,6 +80,7 @@ pash_redir_output echo "$$: (1) Previous exit status: $pash_previous_exit_status
 pash_redir_output echo "$$: (1) Previous set state: $pash_previous_set_status"
 pash_redir_output echo "$$: (1) Set state reverted to PaSh-internal set state: $-"
 
+pash_redir_output echo "$$: Runtime arguments: $@"
 
 ##
 ## (2)
@@ -98,16 +106,29 @@ if [ "$pash_speculative_flag" -eq 1 ]; then
 else
 
     ## The first argument contains the sequential script. Just running it should work for all tests.
-    pash_sequential_script_file=$1
+    # pash_sequential_script_file=$1
 
     ## The second argument SHOULD be the file that contains the IR to be compiled 
-    pash_input_ir_file=$2
+    # pash_input_ir_file=$2
 
     ## Invoke the compiler and make any necessary preparations
     source "$RUNTIME_DIR/pash_prepare_call_compiler.sh" "$pash_sequential_script_file" "$pash_input_ir_file"
 
     function run_parallel() {
         trap inform_daemon_exit SIGTERM SIGINT EXIT
+
+        ## Recover the input arguments of the previous script
+        ## Note: We don't need to care about wrap_vars arguments because we have stored all of them already.
+        #
+        # shellcheck disable=SC2086
+        # pash_redir_output echo "$$: (3) Array: ${pash_input_args[@]}"
+        # pash_redir_output echo "$$: (3) Number of arguments: ${#pash_input_args[@]}"
+
+        # ## TODO: This can be removed if the source happens inline, but not for the paerallel
+        # eval "set -- \"\${pash_input_args[@]}\""
+        # pash_redir_output echo "$$: (3) Reverted to BaSh input arguments: $@"
+        # pash_redir_output echo "$$: (3) Number of arguments: $#"
+
         export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
         source "$RUNTIME_DIR/pash_wrap_vars.sh"
         inform_daemon_exit
@@ -149,14 +170,16 @@ else
         ##       we need to call it inside (or maybe remove the argument from wrap_vars too)
         source "$RUNTIME_DIR/save_shell_state.sh"
         pash_runtime_final_status="$PREVIOUS_SHELL_EC"
-        export pash_input_args=( "${PREVIOUS_SHELL_ARGS[@]}" )
+        # export pash_input_args=( "${PREVIOUS_SHELL_ARGS[@]}" )
         export pash_previous_set_status="$PREVIOUS_SET_STATUS"
 
         pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_runtime_final_status"
     else 
         # Should we redirect errors aswell?
         # TODO: capturing the return state here isn't completely correct. 
-        run_parallel <&0 &
+
+        ## TODO: Test that passing arguments here is OK
+        run_parallel "$@" <&0 &
         ## Setting this to 0 since we can't capture this exit value
         pash_runtime_final_status=0
         pash_redir_output echo "$$: (2) Running pipeline..."

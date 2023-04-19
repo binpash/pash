@@ -14,17 +14,23 @@ export pash_current_set_state=$-
 source "$RUNTIME_DIR/pash_set_from_to.sh" "$pash_current_set_state" "$pash_previous_set_status"
 pash_redir_output echo "$$: (3) Reverted to BaSh set state: $-"
 
-## Recover the input arguments of the previous script
-## Note: We don't need to care about wrap_vars arguments because we have stored all of them already.
-#
-# shellcheck disable=SC2086
-pash_redir_output echo "$$: (3) Array: ${pash_input_args[@]}"
-pash_redir_output echo "$$: (3) Number of arguments: ${#pash_input_args[@]}"
 
-## TODO: This can be removed if the source happens inline, but not for the paerallel
-eval "set -- \"\${pash_input_args[@]}\""
-pash_redir_output echo "$$: (3) Reverted to BaSh input arguments: $@"
-pash_redir_output echo "$$: (3) Number of arguments: $#"
+############
+## TODO: Remove this block once pash_runtime works properly
+
+# ## Recover the input arguments of the previous script
+# ## Note: We don't need to care about wrap_vars arguments because we have stored all of them already.
+# #
+# # shellcheck disable=SC2086
+# pash_redir_output echo "$$: (3) Array: ${pash_input_args[@]}"
+# pash_redir_output echo "$$: (3) Number of arguments: ${#pash_input_args[@]}"
+
+# ## TODO: This can be removed if the source happens inline, but not for the paerallel
+# eval "set -- \"\${pash_input_args[@]}\""
+# pash_redir_output echo "$$: (3) Reverted to BaSh input arguments: $@"
+# pash_redir_output echo "$$: (3) Number of arguments: $#"
+
+############
 
 ## Execute the script
 pash_redir_output echo "$$: (4) Restoring previous exit code: ${pash_previous_exit_status}"

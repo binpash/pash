@@ -514,9 +514,10 @@ def make_pre_runtime_nodes():
     return [save_shell_state_command]
 
 def make_post_runtime_nodes():
+    ## TODO: Remove this once pash_runtime is sourced with the same arguments
     set_args_node = restore_arguments_command()
     set_exit_status_node = restore_exit_code_node()
-    return [set_args_node, set_exit_status_node]
+    return [set_exit_status_node]
 
 def make_input_args_command():
     ## Save the input arguments
@@ -598,17 +599,23 @@ def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
     else:
         assignments = [["pash_disable_parallel_pipelines",
                         string_to_argument("0")]]
+    assignments.append(["pash_sequential_script_file", 
+                        string_to_argument(sequential_script_file_name)])
+    assignments.append(["pash_input_ir_file", 
+                        string_to_argument(ir_filename)])
     disable_parallel_pipelines_command = make_command([],
                                                       assignments=assignments)
 
     ## Call the runtime
     arguments = [string_to_argument("source"),
-                 string_to_argument(config.RUNTIME_EXECUTABLE),
-                 string_to_argument(sequential_script_file_name),
-                 string_to_argument(ir_filename)]
+                 string_to_argument(config.RUNTIME_EXECUTABLE)]
+    # ,
+    #              string_to_argument(sequential_script_file_name),
+    #              string_to_argument(ir_filename)]
     ## Pass all relevant argument to the planner
-    common_arguments_strings = config.pass_common_arguments(config.pash_args)
-    arguments += [string_to_argument(string) for string in common_arguments_strings]
+    ## TODO: Remove those
+    # common_arguments_strings = config.pass_common_arguments(config.pash_args)
+    # arguments += [string_to_argument(string) for string in common_arguments_strings]
     runtime_node = make_command(arguments)
 
     ## Create generic wrapper commands
