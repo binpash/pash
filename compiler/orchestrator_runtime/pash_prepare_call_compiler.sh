@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## When it completes it sets "$pash_script_to_execute"
+## OUTPUT: When it completes it sets "$pash_script_to_execute"
 
 ## Only needed for expansion
 export pash_input_args=( "$@" )

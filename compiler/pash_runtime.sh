@@ -148,8 +148,6 @@ else
     else 
         # Should we redirect errors aswell?
         # TODO: capturing the return state here isn't completely correct. 
-
-        ## TODO: Test that passing arguments here is OK
         run_parallel "$@" <&0 &
         ## Setting this to 0 since we can't capture this exit value
         pash_runtime_final_status=0
