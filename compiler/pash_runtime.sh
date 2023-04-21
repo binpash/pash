@@ -105,7 +105,7 @@ else
     function run_parallel() {
         trap inform_daemon_exit SIGTERM SIGINT EXIT
         export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
-        source "$RUNTIME_DIR/pash_wrap_vars.sh"
+        source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
         inform_daemon_exit
     }
 
@@ -137,7 +137,7 @@ else
 
         ## Run the script
         export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
-        source "$RUNTIME_DIR/pash_wrap_vars.sh"
+        source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
         ## Save the state after execution
         source "$RUNTIME_DIR/save_shell_state.sh"
         ## We don't need to save the arguments because they are already set

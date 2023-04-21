@@ -5,6 +5,19 @@
 ## Only needed for expansion
 export pash_input_args=( "$@" )
 
+## Move some pash env variables to local so that tests pass
+tmp="$pash_disable_parallel_pipelines"
+unset pash_disable_parallel_pipelines
+pash_disable_parallel_pipelines="$tmp"
+
+tmp="$pash_input_ir_file"
+unset pash_input_ir_file
+pash_input_ir_file="$tmp"
+
+tmp="$pash_sequential_script_file"
+unset pash_sequential_script_file
+pash_sequential_script_file="$tmp"
+
 ## Save the shell variables to a file (necessary for expansion)
 export pash_runtime_shell_variables_file="${PASH_TMP_PREFIX}/variables_$RANDOM$RANDOM$RANDOM"
 source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"

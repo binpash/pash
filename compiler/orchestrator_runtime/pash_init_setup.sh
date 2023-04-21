@@ -2,6 +2,7 @@
 [ -f ~/.pash_init ] && source ~/.pash_init
 ## File directory
 export RUNTIME_DIR=$(dirname "${BASH_SOURCE[0]}")
+export WRAPPER_LIB_DIR="$RUNTIME_DIR/../wrapper_library/"
 ## TODO: Is there a better way to do this?
 export RUNTIME_LIBRARY_DIR="$RUNTIME_DIR/../../runtime/"
 export PASH_REDIR="&2"
