@@ -307,6 +307,14 @@ test_star()
      dfg"
 }
 
+test_env_vars()
+{
+    local shell=$1
+    rm -f tmp1.txt tmp2.txt
+    $shell env_vars.sh
+    diff tmp1.txt tmp2.txt
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -349,6 +357,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_exclam
     run_test test_redir_var_test
     run_test test_star
+    run_test test_env_vars
 else
     for testname in $@
     do

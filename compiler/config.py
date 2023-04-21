@@ -20,6 +20,7 @@ PYTHON_VERSION = "python3"
 PLANNER_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_compiler.py")
 RUNTIME_EXECUTABLE = os.path.join(PASH_TOP, "compiler/pash_runtime.sh")
 SAVE_ARGS_EXECUTABLE = os.path.join(PASH_TOP, "runtime/save_args.sh")
+SAVE_SHELL_STATE_EXECUTABLE = os.path.join(PASH_TOP, "compiler/orchestrator_runtime/save_shell_state.sh")
 
 ## Ensure that PASH_TMP_PREFIX is set by pa.sh
 assert(not os.getenv('PASH_TMP_PREFIX') is None)
