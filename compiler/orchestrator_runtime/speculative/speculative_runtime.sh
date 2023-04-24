@@ -3,8 +3,6 @@
 
 ## TODO: Define the client in pash_spec_init_setup (which should be sourced by pash_init_setup)
 
-export pash_speculative_command_id=$1
-
 pash_redir_output echo "$$: (2) Before asking the scheduler for cmd: ${pash_speculative_command_id} exit code..."
 
 ## TODO: Correctly save variables
