@@ -4,7 +4,8 @@
 ## pash_sequential_script_file: the sequential script. Just running it should work for all tests.
 ## pash_input_ir_file: the file that contains the IR to be compiled 
 
-## TODO: Determine arguments for speculative
+## When called by spec, assumes this variable is set:
+## pash_spec_command_id: the node id for the specific command
 
 
 ##
@@ -86,10 +87,10 @@ if [ "$pash_speculative_flag" -eq 1 ]; then
     ## we just want to ask the scheduler in (3) to let us know when the df_region
     ## has finished executing and what is its exit code.
 
-    ## The first argument is just the command id
-    export pash_speculative_command_id=$1
+    ## TODO: We probably need to make this a local variable so that POSIX tests pass
+    export pash_speculative_command_id=$pash_spec_command_id
 
-    source "$RUNTIME_DIR/speculative/speculative_runtime.sh" "${pash_speculative_command_id}"
+    source "$RUNTIME_DIR/speculative/speculative_runtime.sh"
 
     ## TODO:
     ## 2. Check the flag in pash.py and if it is set, do the speculative transformation.

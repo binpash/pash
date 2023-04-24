@@ -545,19 +545,15 @@ def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
     return runtime_node
 
 ## TODO: Make that an actual call to the spec runtime
-def make_call_to_spec_runtime(command_id: str) -> AstNode:
+def make_call_to_spec_runtime(command_id: int) -> AstNode:
+    
+    assignments = [["pash_spec_command_id",
+                        string_to_argument(str(command_id))]]
     ## Call the runtime
     arguments = [string_to_argument("source"),
-                 string_to_argument(config.RUNTIME_EXECUTABLE),
-                 string_to_argument(str(command_id))]
+                 string_to_argument(config.RUNTIME_EXECUTABLE)]
     ## Pass all relevant argument to the planner
-    common_arguments_strings = config.pass_common_arguments(config.pash_args)
-    arguments += [string_to_argument(string) for string in common_arguments_strings]
-    runtime_node = make_command(arguments)
+    runtime_node = make_command(arguments,
+                                assignments=assignments)
 
-    ## Create generic wrapper commands
-    pre_runtime_nodes = make_pre_runtime_nodes()
-    post_runtime_nodes = make_post_runtime_nodes()
-    nodes = pre_runtime_nodes + [runtime_node] + post_runtime_nodes
-    sequence = make_semi_sequence(nodes)
-    return sequence
+    return runtime_node
