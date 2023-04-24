@@ -11,6 +11,9 @@ export pash_runtime_shell_variables_file="${PASH_TMP_PREFIX}/variables_$RANDOM$R
 source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
 pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_variables_file"
 
+## TODO: We want to send the environment to the scheduler.
+##       Once the scheduler determines if there are environment changes, it can then
+##       decide to rerun or not the speculated commands with the new environment.
 
 ## Send and receive from daemon
 msg="Wait:${pash_speculative_command_id}"
@@ -38,8 +41,8 @@ pash_redir_output echo "$$: (2) Scheduler returned exit code: ${cmd_exit_code} f
 
 pash_runtime_final_status=${cmd_exit_code}
 
-## TODO: Restore the variables
+## TODO: Restore the variables (doesn't work currently because variables are printed using `env`)
 pash_redir_output echo "$$: (2) Recovering script variables from: $output_variable_file"
-source "$RUNTIME_DIR/pash_source_declare_vars.sh" "$output_variable_file"
+# source "$RUNTIME_DIR/pash_source_declare_vars.sh" "$output_variable_file"
 
 ## TODO: Also need to use wrap_vars maybe to `set` properly etc
