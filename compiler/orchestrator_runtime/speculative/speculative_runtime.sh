@@ -26,6 +26,7 @@ if [[ "$daemon_response" == *"OK:"* ]]; then
     pash_redir_output echo "$$: (2) Scheduler responded: $daemon_response"
     cmd_exit_code=${response_args[1]}
     output_variable_file=${response_args[2]}
+    stdout_file=${response_args[3]}
 elif [ -z "$daemon_response" ]; then
     ## Trouble... Daemon crashed, rip
     pash_redir_output echo "$$: ERROR: (2) Scheduler crashed!"
@@ -44,5 +45,8 @@ pash_runtime_final_status=${cmd_exit_code}
 ## TODO: Restore the variables (doesn't work currently because variables are printed using `env`)
 pash_redir_output echo "$$: (2) Recovering script variables from: $output_variable_file"
 # source "$RUNTIME_DIR/pash_source_declare_vars.sh" "$output_variable_file"
+
+pash_redir_output echo "$$: (2) Recovering stdout from: $stdout_file"
+cat "${stdout_file}"
 
 ## TODO: Also need to use wrap_vars maybe to `set` properly etc
