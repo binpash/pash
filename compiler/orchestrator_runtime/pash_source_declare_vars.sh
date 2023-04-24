@@ -11,7 +11,8 @@
 
 filter_vars_file()
 {
-    cat "$1" | grep -v "^declare -\([A-Za-z]\|-\)* \(pash\|BASH\|LINENO\|EUID\|GROUPS\)"
+    cat "$1" | grep -v "^declare -\([A-Za-z]\|-\)* \(pash\|BASH\|LINENO\|EUID\|GROUPS\)" |
+        grep -v "LS_COLORS"
 }
 
 ## TODO: Error handling if the argument is empty?
