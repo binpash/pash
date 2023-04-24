@@ -17,6 +17,7 @@ import shutil
 
 LOGGING_PREFIX = "PaSh: "
 
+
 @logging_prefix(LOGGING_PREFIX)
 def main():
     ## Parse arguments
