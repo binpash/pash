@@ -475,6 +475,21 @@ def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast
         text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
         ## Generate an ID
         df_region_id = util_spec.get_next_id()
+
+        ## TODO: To support loops we also need to keep some loop related state in the traversal context:
+        ##       - loop_id_generator (that supports getting the current id and getting a next id)
+        ##       - stack of loop ids
+        ##       This should be sent to the scheduler in the beginning, and also added to the replaced cmd
+        ##       so that we can send a wait with the correct id to the scheduler.
+
+        ## TODO: For the first draft we don't need to keep track of loop iterations (since scheduling is sequential)
+        ##       so this should just work. The scheduler will know that these nodes are loop nodes
+        ##       and therefore will not execute them until it gets the wait.
+        ##       
+        ##       For the next iteration, when the scheduler unrolls the abstract partial order and cares
+        ##       about scheduling of commands in loops, we need to add some code in each loop iteration to keep
+        ##       and increase a counter, that in the JIT should also be passed to the scheduler.
+
         ## Determine its predecessors
         ## TODO: To make this properly work, we should keep some state
         ##       in the AST traversal to be able to determine predecessors.
