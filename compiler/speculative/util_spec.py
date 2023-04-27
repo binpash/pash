@@ -87,8 +87,8 @@ def serialize_partial_order(trans_options):
     ## Save the number of nodes
     save_number_of_nodes(trans_options)
 
-    ## TODO: Add loop contexts here
-    # save_loop_contexts(trans_options)
+    ## Save loop contexts
+    save_loop_contexts(trans_options)
 
     # Save the edges in the partial order file
     partial_order_file_path = trans_options.get_partial_order_file()
