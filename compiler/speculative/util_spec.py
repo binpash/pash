@@ -92,10 +92,8 @@ def save_number_of_nodes(trans_options):
         po_file.write(serialize_number_of_nodes(number_of_ids))
 
 def serialize_partial_order(trans_options):
-    ## Make the directory that contains the files in the partial order
-    dir_path = partial_order_directory()
-    os.makedirs(dir_path)
     ## Initialize the po file
+    dir_path = partial_order_directory()
     initialize_po_file(trans_options, dir_path)
 
     # Save the edges in the partial order file
