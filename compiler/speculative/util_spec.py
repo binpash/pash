@@ -62,7 +62,9 @@ def serialize_number_of_nodes(number_of_ids: int) -> str:
     return f'{number_of_ids}\n'
 
 def serialize_loop_context(node_id: int, loop_contexts) -> str:
-    return f'{node_id} loop_ctx {loop_contexts}\n'
+    ## Galaxy brain serialization
+    loop_contexts_str = ",".join([str(loop_ctx) for loop_ctx in loop_contexts])
+    return f'{node_id}-loop_ctx-{loop_contexts_str}\n'
 
 ## TODO: Eventually we might want to retrieve the number_of_ids from trans_options
 def save_number_of_nodes(trans_options):
