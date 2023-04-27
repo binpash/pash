@@ -41,7 +41,7 @@ def preprocess_asts(ast_objects, args):
     if trans_mode is ast_to_ast.TransformationType.SPECULATIVE:
         trans_options = ast_to_ast.SpeculativeTransformationState(mode=trans_mode,
                                                                   po_file=args.partial_order_file)
-        # util_spec.initialize(trans_options)
+        util_spec.initialize(trans_options)
     else:
         trans_options = ast_to_ast.TransformationState(mode=trans_mode)
 

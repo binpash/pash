@@ -31,8 +31,8 @@ def initialize(trans_options) -> None:
     ## Make the directory that contains the files in the partial order
     dir_path = partial_order_directory()
     os.makedirs(dir_path)
-    ## Initialize the po file
-    initialize_po_file(trans_options, dir_path)
+    # ## Initialize the po file
+    # initialize_po_file(trans_options, dir_path)
 
 def partial_order_directory() -> str:
     return f'{config.PASH_TMP_PREFIX}/speculative/partial_order/'
