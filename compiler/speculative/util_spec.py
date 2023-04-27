@@ -73,6 +73,7 @@ def save_number_of_nodes(trans_options):
 
 def save_loop_contexts(trans_options):
     loop_context_dict = trans_options.get_all_loop_contexts()
+    log("Loop context dict:", loop_context_dict)
     partial_order_file_path = trans_options.get_partial_order_file()
     with open(partial_order_file_path, "a") as po_file:
         for node_id in sorted(loop_context_dict.keys()):
