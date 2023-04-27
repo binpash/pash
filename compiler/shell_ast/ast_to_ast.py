@@ -43,7 +43,8 @@ class TransformationState:
         return new_id
 
     def get_current_loop_context(self):
-        return self.loop_contexts
+        ## We want to copy that
+        return self.loop_contexts[:]
 
     def enter_loop(self):
         new_loop_id = self.get_next_loop_id()
