@@ -17,12 +17,26 @@ class TransformationType(Enum):
 class TransformationState:
     def __init__(self, mode: TransformationType):
         self.mode = mode
+        self.node_counter = 0
         self.loop_counter = 0
         self.loop_contexts = []
             
     def get_mode(self):
         return self.mode
 
+    ## Node id related
+    def get_next_id(self):
+        new_id = self.node_counter
+        self.node_counter += 1
+        return new_id
+    
+    def get_current_id(self):
+        return self.node_counter - 1
+    
+    def get_number_of_ids(self):
+        return self.node_counter
+
+    ## Loop id related
     def get_next_loop_id(self):
         new_id = self.loop_counter
         self.loop_counter += 1
@@ -38,7 +52,6 @@ class TransformationState:
 
     def exit_loop(self):
         self.loop_contexts.pop(0)
-
 
 
 ## TODO: Turn it into a Transformation State class, and make a subclass for
@@ -59,11 +72,14 @@ class SpeculativeTransformationState(TransformationState):
     def add_edge(self, from_id: int, to_id: int):
         self.partial_order_edges.append((from_id, to_id))
 
+    def get_all_edges(self):
+        return self.partial_order_edges
+
     def add_node_loop_context(self, node_id: int, loop_contexts):
         self.partial_order_node_loop_contexts[node_id] = loop_contexts
 
-    def get_all_edges(self):
-        return self.partial_order_edges
+    def get_all_loop_contexts(self):
+        return self.partial_order_node_loop_contexts
 
 
 ##
@@ -515,7 +531,7 @@ def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast
     elif transformation_mode is TransformationType.SPECULATIVE:
         text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
         ## Generate an ID
-        df_region_id = util_spec.get_next_id()
+        df_region_id = trans_options.get_next_id()
 
         ## TODO: For the first draft we don't need to keep track of loop iterations (since scheduling is sequential)
         ##       so this should just work. The scheduler will know that these nodes are loop nodes

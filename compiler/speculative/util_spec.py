@@ -8,25 +8,6 @@ from shell_ast.ast_util import *
 ## This file contains utility functions useful for the speculative execution component
 ##
 
-## TODO: There is a similar class in ir.py. Could we avoid duplication?
-class IdGen:
-    def __init__(self, counter=0):
-        self.counter = counter
-    
-    def get_next_id(self):
-        new_id = self.counter
-        self.counter += 1
-        return new_id
-    
-    def get_current_id(self):
-        return self.counter - 1
-    
-    def get_number_of_ids(self):
-        return self.counter
-
-## TODO: Move this to the trans_options class
-ID_GENERATOR = IdGen()
-
 def initialize(trans_options) -> None:
     ## Make the directory that contains the files in the partial order
     dir_path = partial_order_directory()
@@ -48,10 +29,6 @@ def initialize_po_file(trans_options, dir_path) -> None:
 
 def scheduler_server_init_po_msg(partial_order_file: str) -> str:
     return f'Init:{partial_order_file}'
-
-def get_next_id():
-    global ID_GENERATOR
-    return ID_GENERATOR.get_next_id()
 
 ## TODO: To support partial orders, we need to pass some more context here,
 ##       i.e., the connections of this node. Now it assumes we have a sequence.
@@ -84,17 +61,34 @@ def serialize_edge(from_id: int, to_id: int) -> str:
 def serialize_number_of_nodes(number_of_ids: int) -> str:
     return f'{number_of_ids}\n'
 
+def serialize_loop_context(node_id: int, loop_contexts) -> str:
+    return f'{node_id} loop_ctx {loop_contexts}\n'
+
 ## TODO: Eventually we might want to retrieve the number_of_ids from trans_options
 def save_number_of_nodes(trans_options):
-    number_of_ids = ID_GENERATOR.get_number_of_ids()
+    number_of_ids = trans_options.get_number_of_ids()
     partial_order_file_path = trans_options.get_partial_order_file()
     with open(partial_order_file_path, "a") as po_file:
         po_file.write(serialize_number_of_nodes(number_of_ids))
+
+def save_loop_contexts(trans_options):
+    loop_context_dict = trans_options.get_all_loop_contexts()
+    partial_order_file_path = trans_options.get_partial_order_file()
+    with open(partial_order_file_path, "a") as po_file:
+        for node_id in sorted(loop_context_dict.keys()):
+            loop_ctx = loop_context_dict[node_id]
+            po_file.write(serialize_loop_context(node_id, loop_ctx))
 
 def serialize_partial_order(trans_options):
     ## Initialize the po file
     dir_path = partial_order_directory()
     initialize_po_file(trans_options, dir_path)
+
+    ## Save the number of nodes
+    save_number_of_nodes(trans_options)
+
+    ## TODO: Add loop contexts here
+    # save_loop_contexts(trans_options)
 
     # Save the edges in the partial order file
     partial_order_file_path = trans_options.get_partial_order_file()
@@ -102,7 +96,3 @@ def serialize_partial_order(trans_options):
     with open(partial_order_file_path, "a") as po_file:
         for from_id, to_id in edges:
             po_file.write(serialize_edge(from_id, to_id))
-
-    ## Save the number of nodes
-    ## TODO: Move that in the beginning of the file
-    save_number_of_nodes(trans_options)
