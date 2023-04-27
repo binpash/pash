@@ -24,14 +24,8 @@ class IdGen:
     def get_number_of_ids(self):
         return self.counter
 
-## TODO: Should we move this to the trans_options class 
-##       (which we could rename to trans_config) and make a subclass for
-##       the two different transformations.
+## TODO: Move this to the trans_options class
 ID_GENERATOR = IdGen()
-# Contains edges between nodes
-EDGES = []
-# Contains the loop context stack for each loop id.
-LOOP_CONTEXTS = {}
 
 def initialize(trans_options) -> None:
     ## Make the directory that contains the files in the partial order
@@ -52,8 +46,6 @@ def initialize_po_file(trans_options, dir_path) -> None:
         f.write(f'# Partial order files path:\n')
         f.write(f'{dir_path}\n')
 
-## TODO: Figure out a way to put all serialization/deserialization of messages
-##       and parsing/unparsing in a specific module.
 def scheduler_server_init_po_msg(partial_order_file: str) -> str:
     return f'Init:{partial_order_file}'
 
@@ -66,20 +58,24 @@ def get_next_id():
 def save_df_region(text_to_output: str, trans_options, df_region_id: int, predecessor_ids: int) -> None:
     ## To support loops we also need to associate nodes with their surrounding loops
     current_loop_context = trans_options.get_current_loop_context()
-    log("Loop context:", current_loop_context)
+    log("Df region:", df_region_id, "loop context:", current_loop_context)
+
+    # Add the loop context to the partial_order state
+    trans_options.add_node_loop_context(df_region_id, current_loop_context)
 
     # Save df_region as text in its own file
     df_region_path = f'{partial_order_directory()}/{df_region_id}'
     with open(df_region_path, "w") as f:
         f.write(text_to_output)
 
-    # Save the edges in the partial order file
-    partial_order_file_path = trans_options.get_partial_order_file()
-    with open(partial_order_file_path, "a") as po_file:
-        for predecessor in predecessor_ids:
-            ## Instead of serializing here, just save to the global variable
-            ## and serialize everything in the end.
-            po_file.write(serialize_edge(predecessor, df_region_id))
+    ## Save the edges in the partial order state
+    for predecessor in predecessor_ids:
+        trans_options.add_edge(predecessor, df_region_id)
+
+
+
+## TODO: Figure out a way to put all serialization/deserialization of messages
+##       and parsing/unparsing in a specific module.
 
 ## TODO: Move serialization to a partial_order_file.py
 def serialize_edge(from_id: int, to_id: int) -> str:
@@ -94,3 +90,21 @@ def save_number_of_nodes(trans_options):
     partial_order_file_path = trans_options.get_partial_order_file()
     with open(partial_order_file_path, "a") as po_file:
         po_file.write(serialize_number_of_nodes(number_of_ids))
+
+def serialize_partial_order(trans_options):
+    ## Make the directory that contains the files in the partial order
+    dir_path = partial_order_directory()
+    os.makedirs(dir_path)
+    ## Initialize the po file
+    initialize_po_file(trans_options, dir_path)
+
+    # Save the edges in the partial order file
+    partial_order_file_path = trans_options.get_partial_order_file()
+    edges = trans_options.get_all_edges()
+    with open(partial_order_file_path, "a") as po_file:
+        for from_id, to_id in edges:
+            po_file.write(serialize_edge(from_id, to_id))
+
+    ## Save the number of nodes
+    ## TODO: Move that in the beginning of the file
+    save_number_of_nodes(trans_options)

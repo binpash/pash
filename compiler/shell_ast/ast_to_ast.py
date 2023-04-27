@@ -49,11 +49,21 @@ class SpeculativeTransformationState(TransformationState):
         super().__init__(mode)
         assert(self.mode is TransformationType.SPECULATIVE)
         self.partial_order_file = po_file
+        self.partial_order_edges = []
+        self.partial_order_node_loop_contexts = {}
 
     def get_partial_order_file(self):
         assert(self.mode is TransformationType.SPECULATIVE)
         return self.partial_order_file
 
+    def add_edge(self, from_id: int, to_id: int):
+        self.partial_order_edges.append((from_id, to_id))
+
+    def add_node_loop_context(self, node_id: int, loop_contexts):
+        self.partial_order_node_loop_contexts[node_id] = loop_contexts
+
+    def get_all_edges(self):
+        return self.partial_order_edges
 
 
 ##
