@@ -14,18 +14,37 @@ class TransformationType(Enum):
 
 ## Use this object to pass options inside the preprocessing
 ## trasnformation.
-class TransformationOptions:
+class TransformationState:
     def __init__(self, mode: TransformationType):
         self.mode = mode
+        self.loop_counter = 0
+        self.loop_contexts = []
             
     def get_mode(self):
         return self.mode
+
+    def get_next_loop_id(self):
+        new_id = self.loop_counter
+        self.loop_counter += 1
+        return new_id
+
+    def get_current_loop_context(self):
+        return self.loop_contexts
+
+    def enter_loop(self):
+        new_loop_id = self.get_next_loop_id()
+        self.loop_contexts.insert(0, new_loop_id)
+        return new_loop_id
+
+    def exit_loop(self):
+        self.loop_contexts.pop(0)
+
 
 
 ## TODO: Turn it into a Transformation State class, and make a subclass for
 ##       each of the two transformations. It is important for it to be state, because
 ##       it will need to be passed around while traversing the tree.
-class SpeculativeTransformationState(TransformationOptions):
+class SpeculativeTransformationState(TransformationState):
     def __init__(self, mode: TransformationType, po_file: str):
         super().__init__(mode)
         assert(self.mode is TransformationType.SPECULATIVE)
@@ -293,6 +312,8 @@ def preprocess_node_subshell(ast_node, trans_options, last_object=False):
 ## TODO: This is not efficient at all since it calls the PaSh runtime everytime the loop is entered.
 ##       We have to find a way to improve that.
 def preprocess_node_for(ast_node, trans_options, last_object=False):
+    ## If we are in a loop, we push the loop identifier into the loop context
+    trans_options.enter_loop()
     preprocessed_body, something_replaced = preprocess_close_node(ast_node.body, trans_options, last_object=last_object)
     ## TODO: Could there be a problem with the in-place update
     ast_node.body = preprocessed_body
@@ -301,9 +322,19 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
                                               non_maximal=False,
                                               something_replaced=something_replaced,
                                               last_ast=last_object)
+    
+    ## We pop the loop identifier from the loop context.
+    ##
+    ## KK 2023-04-27: Could this exit happen before the replacement leading to wrong 
+    ##     results? I think not because we use the _close_node preprocessing variant.
+    ##     A similar issue might happen for while
+    trans_options.exit_loop()
     return preprocessed_ast_object
 
 def preprocess_node_while(ast_node, trans_options, last_object=False):
+    ## If we are in a loop, we push the loop identifier into the loop context
+    trans_options.enter_loop()
+
     preprocessed_test, sth_replaced_test = preprocess_close_node(ast_node.test, trans_options, last_object=last_object)
     preprocessed_body, sth_replaced_body = preprocess_close_node(ast_node.body, trans_options, last_object=last_object)
     ## TODO: Could there be a problem with the in-place update
@@ -315,6 +346,9 @@ def preprocess_node_while(ast_node, trans_options, last_object=False):
                                               non_maximal=False,
                                               something_replaced=something_replaced,
                                               last_ast=last_object)
+    
+    ## We pop the loop identifier from the loop context.
+    trans_options.exit_loop()
     return preprocessed_ast_object
 
 ## This is the same as the one for `For`
@@ -469,18 +503,9 @@ def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast
             script_file.write(text_to_output)
         replaced_node = make_call_to_pash_runtime(ir_filename, sequential_script_file_name, disable_parallel_pipelines)
     elif transformation_mode is TransformationType.SPECULATIVE:
-        ## TODO: This currently writes each command on its own line,
-        ##       though it should be improved to better serialize each command in its own file
-        ##       and then only saving the ids of each command in the partial order file.
         text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
         ## Generate an ID
         df_region_id = util_spec.get_next_id()
-
-        ## TODO: To support loops we also need to keep some loop related state in the traversal context:
-        ##       - loop_id_generator (that supports getting the current id and getting a next id)
-        ##       - stack of loop ids
-        ##       This should be sent to the scheduler in the beginning, and also added to the replaced cmd
-        ##       so that we can send a wait with the correct id to the scheduler.
 
         ## TODO: For the first draft we don't need to keep track of loop iterations (since scheduling is sequential)
         ##       so this should just work. The scheduler will know that these nodes are loop nodes

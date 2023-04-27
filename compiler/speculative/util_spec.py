@@ -2,6 +2,8 @@
 import os
 import config
 
+from shell_ast.ast_util import *
+
 ##
 ## This file contains utility functions useful for the speculative execution component
 ##
@@ -16,6 +18,9 @@ class IdGen:
         self.counter += 1
         return new_id
     
+    def get_current_id(self):
+        return self.counter - 1
+    
     def get_number_of_ids(self):
         return self.counter
 
@@ -23,6 +28,10 @@ class IdGen:
 ##       (which we could rename to trans_config) and make a subclass for
 ##       the two different transformations.
 ID_GENERATOR = IdGen()
+# Contains edges between nodes
+EDGES = []
+# Contains the loop context stack for each loop id.
+LOOP_CONTEXTS = {}
 
 def initialize(trans_options) -> None:
     ## Make the directory that contains the files in the partial order
@@ -55,6 +64,10 @@ def get_next_id():
 ## TODO: To support partial orders, we need to pass some more context here,
 ##       i.e., the connections of this node. Now it assumes we have a sequence.
 def save_df_region(text_to_output: str, trans_options, df_region_id: int, predecessor_ids: int) -> None:
+    ## To support loops we also need to associate nodes with their surrounding loops
+    current_loop_context = trans_options.get_current_loop_context()
+    log("Loop context:", current_loop_context)
+
     # Save df_region as text in its own file
     df_region_path = f'{partial_order_directory()}/{df_region_id}'
     with open(df_region_path, "w") as f:
@@ -64,8 +77,11 @@ def save_df_region(text_to_output: str, trans_options, df_region_id: int, predec
     partial_order_file_path = trans_options.get_partial_order_file()
     with open(partial_order_file_path, "a") as po_file:
         for predecessor in predecessor_ids:
+            ## Instead of serializing here, just save to the global variable
+            ## and serialize everything in the end.
             po_file.write(serialize_edge(predecessor, df_region_id))
 
+## TODO: Move serialization to a partial_order_file.py
 def serialize_edge(from_id: int, to_id: int) -> str:
     return f'{from_id} -> {to_id}\n'
 

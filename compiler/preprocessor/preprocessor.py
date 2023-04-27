@@ -43,7 +43,7 @@ def preprocess_asts(ast_objects, args):
                                                                   po_file=args.partial_order_file)
         util_spec.initialize(trans_options)
     else:
-        trans_options = ast_to_ast.TransformationOptions(mode=trans_mode)
+        trans_options = ast_to_ast.TransformationState(mode=trans_mode)
 
     ## Preprocess ASTs by replacing AST regions with calls to PaSh's runtime.
     ## Then the runtime will do the compilation and optimization with additional
