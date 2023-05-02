@@ -293,7 +293,6 @@ def preprocess_node_command(ast_node, trans_options, last_object=False):
 def preprocess_node_redir(ast_node, trans_options, last_object=False):
     preprocessed_node, something_replaced = preprocess_close_node(ast_node.node, trans_options,
                                                                   last_object=last_object)
-    ## TODO: Could there be a problem with the in-place update
     ast_node.node = preprocessed_node
     preprocessed_ast_object = PreprocessedAST(ast_node,
                                               replace_whole=False,
@@ -325,7 +324,6 @@ def preprocess_node_background(ast_node, trans_options, last_object=False):
 def preprocess_node_subshell(ast_node, trans_options, last_object=False):
     preprocessed_body, something_replaced = preprocess_close_node(ast_node.body, trans_options,
                                                                   last_object=last_object)
-    ## TODO: Could there be a problem with the in-place update
     ast_node.body = preprocessed_body
     preprocessed_ast_object = PreprocessedAST(ast_node,
                                               replace_whole=False,
@@ -342,8 +340,9 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
     ## If we are in a loop, we push the loop identifier into the loop context
     trans_options.enter_loop()
     preprocessed_body, something_replaced = preprocess_close_node(ast_node.body, trans_options, last_object=last_object)
-    ## TODO: Could there be a problem with the in-place update
     ast_node.body = preprocessed_body
+    ## TODO: Add an `export loop_XXX_iter=0` outside of the loop and increment in the beginning of every iteration
+    ##       Then send this iteration identifier when talking to the spec scheduler
     preprocessed_ast_object = PreprocessedAST(ast_node,
                                               replace_whole=False,
                                               non_maximal=False,
@@ -364,7 +363,6 @@ def preprocess_node_while(ast_node, trans_options, last_object=False):
 
     preprocessed_test, sth_replaced_test = preprocess_close_node(ast_node.test, trans_options, last_object=last_object)
     preprocessed_body, sth_replaced_body = preprocess_close_node(ast_node.body, trans_options, last_object=last_object)
-    ## TODO: Could there be a problem with the in-place update
     ast_node.test = preprocessed_test
     ast_node.body = preprocessed_body
     something_replaced = sth_replaced_test or sth_replaced_body
@@ -382,7 +380,6 @@ def preprocess_node_while(ast_node, trans_options, last_object=False):
 def preprocess_node_defun(ast_node, trans_options, last_object=False):
     ## TODO: For now we don't want to compile function bodies
     # preprocessed_body = preprocess_close_node(ast_node.body)
-    ## TODO: Could there be a problem with the in-place update
     # ast_node.body = preprocessed_body
     preprocessed_ast_object = PreprocessedAST(ast_node,
                                               replace_whole=False,
@@ -398,7 +395,6 @@ def preprocess_node_semi(ast_node, trans_options, last_object=False):
     ## TODO: Is it valid that only the right one is considered the last command?
     preprocessed_left, sth_replaced_left = preprocess_close_node(ast_node.left_operand, trans_options, last_object=False)
     preprocessed_right, sth_replaced_right = preprocess_close_node(ast_node.right_operand, trans_options, last_object=last_object)
-    ## TODO: Could there be a problem with the in-place update
     ast_node.left_operand = preprocessed_left
     ast_node.right_operand = preprocessed_right
     sth_replaced = sth_replaced_left or sth_replaced_right
@@ -415,7 +411,6 @@ def preprocess_node_and(ast_node, trans_options, last_object=False):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
     preprocessed_left, sth_replaced_left = preprocess_close_node(ast_node.left_operand, trans_options, last_object=last_object)
     preprocessed_right, sth_replaced_right = preprocess_close_node(ast_node.right_operand, trans_options, last_object=last_object)
-    ## TODO: Could there be a problem with the in-place update
     ast_node.left_operand = preprocessed_left
     ast_node.right_operand = preprocessed_right
     sth_replaced = sth_replaced_left or sth_replaced_right
@@ -430,7 +425,6 @@ def preprocess_node_or(ast_node, trans_options, last_object=False):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
     preprocessed_left, sth_replaced_left = preprocess_close_node(ast_node.left_operand, trans_options, last_object=last_object)
     preprocessed_right, sth_replaced_right = preprocess_close_node(ast_node.right_operand, trans_options, last_object=last_object)
-    ## TODO: Could there be a problem with the in-place update
     ast_node.left_operand = preprocessed_left
     ast_node.right_operand = preprocessed_right
     sth_replaced = sth_replaced_left or sth_replaced_right
@@ -444,7 +438,6 @@ def preprocess_node_or(ast_node, trans_options, last_object=False):
 def preprocess_node_not(ast_node, trans_options, last_object=False):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left)
     preprocessed_body, sth_replaced = preprocess_close_node(ast_node.body, trans_options, last_object=last_object)
-    ## TODO: Could there be a problem with the in-place update
     ast_node.body = preprocessed_body
     preprocessed_ast_object = PreprocessedAST(ast_node,
                                               replace_whole=False,
@@ -459,7 +452,6 @@ def preprocess_node_if(ast_node, trans_options, last_object=False):
     preprocessed_cond, sth_replaced_cond = preprocess_close_node(ast_node.cond, trans_options, last_object=last_object)
     preprocessed_then, sth_replaced_then = preprocess_close_node(ast_node.then_b, trans_options, last_object=last_object)
     preprocessed_else, sth_replaced_else = preprocess_close_node(ast_node.else_b, trans_options, last_object=last_object)
-    ## TODO: Could there be a problem with the in-place update
     ast_node.cond = preprocessed_cond
     ast_node.then_b = preprocessed_then
     ast_node.else_b = preprocessed_else
@@ -479,7 +471,6 @@ def preprocess_case(case, trans_options, last_object=False):
 def preprocess_node_case(ast_node, trans_options, last_object=False):
     preprocessed_cases_replaced = [preprocess_case(case, trans_options, last_object=last_object) for case in ast_node.cases]
     preprocessed_cases, sth_replaced_cases = list(zip(*preprocessed_cases_replaced))
-    ## TODO: Could there be a problem with the in-place update
     ast_node.cases = preprocessed_cases
     preprocessed_ast_object = PreprocessedAST(ast_node,
                                               replace_whole=False,
