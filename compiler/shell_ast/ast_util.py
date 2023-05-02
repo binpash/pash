@@ -161,6 +161,9 @@ def escaped_char(char):
 def standard_var_ast(string):
     return make_kv("V", ["Normal", False, string, []])
 
+def make_arith(arg):
+     return make_kv("A", arg)
+
 def make_quoted_variable(string):
     return make_kv("Q", [standard_var_ast(string)])
 
@@ -227,6 +230,21 @@ def make_defun(name, body):
 ##
 ## Make some nodes
 ##
+
+def make_export_var(var_name: str, value: str):
+    arguments = [string_to_argument("export"),
+                 string_to_argument(f'{var_name}={value}')]
+    ## Pass all relevant argument to the planner
+    node = make_command(arguments)
+    return node
+
+def make_increment_var(var_name: str):
+    arg = string_to_argument(f'{var_name}+1')
+    arith_expr = make_arith(arg)
+    assignments = [[var_name,
+                    [arith_expr]]]
+    node = make_command([], assignments=assignments)
+    return node
 
 def make_echo_ast(argument, var_file_path):
     nodes = []

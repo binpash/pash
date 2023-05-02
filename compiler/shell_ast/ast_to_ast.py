@@ -1,4 +1,5 @@
 from enum import Enum
+import copy
 import pickle
 
 import config
@@ -45,6 +46,12 @@ class TransformationState:
     def get_current_loop_context(self):
         ## We want to copy that
         return self.loop_contexts[:]
+
+    def get_current_loop_id(self):
+        if len(self.loop_contexts) == 0:
+            return None
+        else:
+            return self.loop_contexts[0]
 
     def enter_loop(self):
         new_loop_id = self.get_next_loop_id()
@@ -338,12 +345,26 @@ def preprocess_node_subshell(ast_node, trans_options, last_object=False):
 ##       We have to find a way to improve that.
 def preprocess_node_for(ast_node, trans_options, last_object=False):
     ## If we are in a loop, we push the loop identifier into the loop context
-    trans_options.enter_loop()
+    loop_id = trans_options.enter_loop()
     preprocessed_body, something_replaced = preprocess_close_node(ast_node.body, trans_options, last_object=last_object)
-    ast_node.body = preprocessed_body
-    ## TODO: Add an `export loop_XXX_iter=0` outside of the loop and increment in the beginning of every iteration
-    ##       Then send this iteration identifier when talking to the spec scheduler
-    preprocessed_ast_object = PreprocessedAST(ast_node,
+
+    ## TODO: Then send this iteration identifier when talking to the spec scheduler
+    ## TODO: After running checks put this behind a check to only run under speculation
+
+    ## Create a new variable that tracks loop iterations
+    var_name = f'pash_loop_{loop_id}_iter'
+    export_node = make_export_var(var_name, '0')
+    increment_node = make_increment_var(var_name)
+
+    ## Prepend the increment in the body
+    ast_node.body = make_semi_sequence([increment_node, copy.deepcopy(preprocessed_body)])
+
+    ## Prepend the export in front of the loop
+    # new_node = ast_node
+    new_node = AstNode(make_semi_sequence([export_node, ast_node]))
+    # print(new_node)
+
+    preprocessed_ast_object = PreprocessedAST(new_node,
                                               replace_whole=False,
                                               non_maximal=False,
                                               something_replaced=something_replaced,
@@ -525,13 +546,9 @@ def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast
         ## Generate an ID
         df_region_id = trans_options.get_next_id()
 
-        ## TODO: For the first draft we don't need to keep track of loop iterations (since scheduling is sequential)
-        ##       so this should just work. The scheduler will know that these nodes are loop nodes
-        ##       and therefore will not execute them until it gets the wait.
-        ##       
-        ##       For the next iteration, when the scheduler unrolls the abstract partial order and cares
-        ##       about scheduling of commands in loops, we need to add some code in each loop iteration to keep
-        ##       and increase a counter, that in the JIT should also be passed to the scheduler.
+        ## Get the current loop id and save it so that the runtime knows
+        ## which loop it is in.
+        loop_id = trans_options.get_current_loop_id()
 
         ## Determine its predecessors
         ## TODO: To make this properly work, we should keep some state
@@ -543,7 +560,7 @@ def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast
         ## Write to a file indexed by its ID
         util_spec.save_df_region(text_to_output, trans_options, df_region_id, predecessors)
         ## TODO: Add an entry point to spec through normal PaSh
-        replaced_node = make_call_to_spec_runtime(df_region_id)
+        replaced_node = make_call_to_spec_runtime(df_region_id, loop_id)
     else:
         ## Unreachable
         assert(False)
@@ -603,10 +620,17 @@ def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
     return runtime_node
 
 ## TODO: Make that an actual call to the spec runtime
-def make_call_to_spec_runtime(command_id: int) -> AstNode:
-    
+def make_call_to_spec_runtime(command_id: int, loop_id) -> AstNode:
     assignments = [["pash_spec_command_id",
                         string_to_argument(str(command_id))]]
+    if loop_id is None:
+        loop_id_str = ""
+    else:
+        loop_id_str = str(loop_id)
+    
+    assignments.append(["pash_spec_loop_id",
+                        string_to_argument(loop_id_str)])
+
     ## Call the runtime
     arguments = [string_to_argument("source"),
                  string_to_argument(config.RUNTIME_EXECUTABLE)]
