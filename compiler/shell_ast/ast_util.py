@@ -231,7 +231,18 @@ def make_defun(name, body):
 ## Make some nodes
 ##
 
-def make_export_var(var_name: str, value: str):
+def make_export_var_constant_string(var_name: str, value: str):
+    arguments = [string_to_argument("export"),
+                 string_to_argument(f'{var_name}={value}')]
+    ## Pass all relevant argument to the planner
+    node = make_command(arguments)
+    return node
+
+def make_export_var_quoted(var_name: str, arg):
+    ## arg is of type arg
+    pass
+
+def make_export_var(var_name: str, arg_char_list):
     arguments = [string_to_argument("export"),
                  string_to_argument(f'{var_name}={value}')]
     ## Pass all relevant argument to the planner
