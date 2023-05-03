@@ -15,15 +15,12 @@ pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_var
 ##       Once the scheduler determines if there are environment changes, it can then
 ##       decide to rerun or not the speculated commands with the new environment.
 
-## TODO: Determine the current loop id and iteration
-## - `pash_spec_loop_id` (NONE if empty)
-## - `pash_loop_XXX_iter` (NONE if empty)
-## and then send it with the wait
-pash_loop_iter=${pash_loop_0_iter:-None}
-pash_redir_output echo "$$: Loop node iteration $pash_loop_iter"
+## Determine all current loop iterations and send them to the scheduler
+pash_loop_iter_counters=${pash_loop_iters:-None}
+pash_redir_output echo "$$: Loop node iteration counters: $pash_loop_iter_counters"
 
 ## Send and receive from daemon
-msg="Wait:${pash_speculative_command_id}"
+msg="Wait:${pash_speculative_command_id}|Loop iters:${pash_loop_iter_counters}"
 daemon_response=$(pash_spec_communicate_scheduler "$msg") # Blocking step, daemon will not send response until it's safe to continue
 
 ## Receive an exit code

@@ -4,6 +4,7 @@ import pickle
 
 import config
 
+from env_var_names import *
 from shell_ast.ast_util import *
 from parse import from_ast_objects_to_shell
 from speculative import util_spec
@@ -352,12 +353,28 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
     ## TODO: After running checks put this behind a check to only run under speculation
 
     ## Create a new variable that tracks loop iterations
-    var_name = f'pash_loop_{loop_id}_iter'
-    export_node = make_export_var(var_name, '0')
+    var_name = loop_iter_var(loop_id)
+    export_node = make_export_var_constant_string(var_name, '0')
     increment_node = make_increment_var(var_name)
 
+    ## Also store the whole sequence of loop iters in a file
+    all_loop_ids = trans_options.get_current_loop_context()
+    if len(all_loop_ids) > 0:
+        iter_var_names = [loop_iter_var(loop_id) for loop_id in all_loop_ids]
+        iter_vars = [standard_var_ast(iter_var_name) for iter_var_name in iter_var_names]
+        concatted_vars = [iter_vars[0]]
+        for iter_var in iter_vars[1:]:
+            concatted_vars.append(char_to_arg_char('-'))
+            concatted_vars.append(iter_var)
+        quoted_vars = [quote_arg(concatted_vars)]
+    else:
+        quoted_vars = []
+
+    ## export pash_loop_iters="$pash_loop_XXX_iter $pash_loop_YYY_iter ..."
+    save_loop_iters_node = make_export_var(loop_iters_var(), quoted_vars)
+
     ## Prepend the increment in the body
-    ast_node.body = make_semi_sequence([increment_node, copy.deepcopy(preprocessed_body)])
+    ast_node.body = make_semi_sequence([increment_node, save_loop_iters_node, copy.deepcopy(preprocessed_body)])
 
     ## Prepend the export in front of the loop
     # new_node = ast_node

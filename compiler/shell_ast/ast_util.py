@@ -149,6 +149,10 @@ def string_to_argument(string):
     ret = [char_to_arg_char(char) for char in string]
     return ret
 
+def concat_arguments(arg1, arg2):
+    ## Arguments are simply `arg_char list` and therefore can just be concatenated
+    return arg1 + arg2
+
 ## FIXME: This is certainly not complete. It is used to generate the
 ## AST for the call to the distributed planner. It only handles simple
 ## characters
@@ -232,19 +236,14 @@ def make_defun(name, body):
 ##
 
 def make_export_var_constant_string(var_name: str, value: str):
-    arguments = [string_to_argument("export"),
-                 string_to_argument(f'{var_name}={value}')]
-    ## Pass all relevant argument to the planner
-    node = make_command(arguments)
+    node = make_export_var(var_name, string_to_argument(value))
     return node
 
-def make_export_var_quoted(var_name: str, arg):
-    ## arg is of type arg
-    pass
-
 def make_export_var(var_name: str, arg_char_list):
+    ## An argument is an arg_char_list
+    arg1 = string_to_argument(f'{var_name}=')
     arguments = [string_to_argument("export"),
-                 string_to_argument(f'{var_name}={value}')]
+                 concat_arguments(arg1, arg_char_list)]
     ## Pass all relevant argument to the planner
     node = make_command(arguments)
     return node
