@@ -359,26 +359,27 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
 
     ## Also store the whole sequence of loop iters in a file
     all_loop_ids = trans_options.get_current_loop_context()
-    if len(all_loop_ids) > 0:
-        iter_var_names = [loop_iter_var(loop_id) for loop_id in all_loop_ids]
-        iter_vars = [standard_var_ast(iter_var_name) for iter_var_name in iter_var_names]
-        concatted_vars = [iter_vars[0]]
-        for iter_var in iter_vars[1:]:
-            concatted_vars.append(char_to_arg_char('-'))
-            concatted_vars.append(iter_var)
-        quoted_vars = [quote_arg(concatted_vars)]
-    else:
-        quoted_vars = []
 
     ## export pash_loop_iters="$pash_loop_XXX_iter $pash_loop_YYY_iter ..."
-    save_loop_iters_node = make_export_var(loop_iters_var(), quoted_vars)
+    save_loop_iters_node = export_pash_loop_iters_for_current_context(all_loop_ids)
 
     ## Prepend the increment in the body
     ast_node.body = make_semi_sequence([increment_node, save_loop_iters_node, copy.deepcopy(preprocessed_body)])
 
+    ## We pop the loop identifier from the loop context.
+    ##
+    ## KK 2023-04-27: Could this exit happen before the replacement leading to wrong 
+    ##     results? I think not because we use the _close_node preprocessing variant.
+    ##     A similar issue might happen for while
+    trans_options.exit_loop()
+
+    ## reset the loop iters after we exit the loop
+    out_of_loop_loop_ids = trans_options.get_current_loop_context()
+    reset_loop_iters_node = export_pash_loop_iters_for_current_context(out_of_loop_loop_ids)
+
     ## Prepend the export in front of the loop
     # new_node = ast_node
-    new_node = AstNode(make_semi_sequence([export_node, ast_node]))
+    new_node = AstNode(make_semi_sequence([export_node, ast_node, reset_loop_iters_node]))
     # print(new_node)
 
     preprocessed_ast_object = PreprocessedAST(new_node,
@@ -387,12 +388,6 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
                                               something_replaced=something_replaced,
                                               last_ast=last_object)
     
-    ## We pop the loop identifier from the loop context.
-    ##
-    ## KK 2023-04-27: Could this exit happen before the replacement leading to wrong 
-    ##     results? I think not because we use the _close_node preprocessing variant.
-    ##     A similar issue might happen for while
-    trans_options.exit_loop()
     return preprocessed_ast_object
 
 def preprocess_node_while(ast_node, trans_options, last_object=False):
