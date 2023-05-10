@@ -15,6 +15,7 @@ pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_var
 ##       Once the scheduler determines if there are environment changes, it can then
 ##       decide to rerun or not the speculated commands with the new environment.
 
+
 ## Determine all current loop iterations and send them to the scheduler
 pash_loop_iter_counters=${pash_loop_iters:-None}
 pash_redir_output echo "$$: Loop node iteration counters: $pash_loop_iter_counters"
