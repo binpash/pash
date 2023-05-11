@@ -43,7 +43,7 @@ def preprocess_asts(ast_objects, args):
                                                                   po_file=args.partial_order_file)
         util_spec.initialize(trans_options)
     else:
-        trans_options = ast_to_ast.TransformationOptions(mode=trans_mode)
+        trans_options = ast_to_ast.TransformationState(mode=trans_mode)
 
     ## Preprocess ASTs by replacing AST regions with calls to PaSh's runtime.
     ## Then the runtime will do the compilation and optimization with additional
@@ -54,7 +54,7 @@ def preprocess_asts(ast_objects, args):
     ## TODO: We could stream the partial_order_file to the scheduler
     if trans_mode is ast_to_ast.TransformationType.SPECULATIVE:
         ## First complete the partial_order file
-        util_spec.save_number_of_nodes(trans_options)
+        util_spec.serialize_partial_order(trans_options)
 
         ## Then inform the scheduler that it can read it
         unix_socket_file = os.getenv("PASH_SPEC_SCHEDULER_SOCKET")
