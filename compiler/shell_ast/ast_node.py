@@ -451,3 +451,16 @@ def ast_node_to_untyped_deep(node):
         return {k: ast_node_to_untyped_deep(v) for k, v in node.items()}
     else:
         return node
+
+def make_typed_semi_sequence(asts: "list[AstNode]") -> SemiNode:
+    assert(len(asts) > 0)
+
+    if(len(asts) == 1):
+        return asts[0]
+    else:
+        acc = asts[-1]
+        ## Remove the last ast
+        iter_asts = asts[:-1]
+        for ast in iter_asts[::-1]:
+            acc = SemiNode(ast, acc)
+        return acc

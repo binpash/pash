@@ -6,7 +6,7 @@ import config
 
 from env_var_names import *
 from shell_ast.ast_util import *
-from shell_ast.untyped_to_ast import *
+from shell_ast.untyped_to_ast import to_ast_node
 from parse import from_ast_objects_to_shell
 from speculative import util_spec
 
@@ -153,8 +153,9 @@ def replace_ast_regions(ast_objects, trans_options):
             # log("Last object")
             last_object = True
 
-        ast, original_text, _linno_before, _linno_after = ast_object
-        ## TODO: Turn the untyped ast to an AstNode
+        untyped_ast, original_text, _linno_before, _linno_after = ast_object
+        ## TODO: Move this outside of this function
+        ast = to_ast_node(untyped_ast)
 
         ## Goals: This transformation can approximate in several directions.
         ##        1. Not replacing a candidate dataflow region.
@@ -237,7 +238,7 @@ def join_original_text_lines(shell_source_lines_or_none):
 
 def preprocess_node(ast_object, trans_options, last_object=False):
     global preprocess_cases
-    return ast_match_untyped(ast_object, preprocess_cases, trans_options, last_object)
+    return ast_match(ast_object, preprocess_cases, trans_options, last_object)
 
 ## This preprocesses the AST node and also replaces it if it needs replacement .
 ## It is called by constructs that cannot be included in a dataflow region.
@@ -365,7 +366,10 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
     save_loop_iters_node = export_pash_loop_iters_for_current_context(all_loop_ids)
 
     ## Prepend the increment in the body
-    ast_node.body = make_semi_sequence([increment_node, save_loop_iters_node, copy.deepcopy(preprocessed_body)])
+    ast_node.body = make_typed_semi_sequence(
+        [to_ast_node(increment_node), 
+         to_ast_node(save_loop_iters_node), 
+         copy.deepcopy(preprocessed_body)])
 
     ## We pop the loop identifier from the loop context.
     ##
@@ -380,7 +384,10 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
 
     ## Prepend the export in front of the loop
     # new_node = ast_node
-    new_node = to_ast_node(make_semi_sequence([export_node, ast_node, reset_loop_iters_node]))
+    new_node = make_typed_semi_sequence(
+        [to_ast_node(export_node), 
+         ast_node, 
+         to_ast_node(reset_loop_iters_node)])
     # print(new_node)
 
     preprocessed_ast_object = PreprocessedAST(new_node,
@@ -541,6 +548,10 @@ def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast
     transformation_mode = trans_options.get_mode()
     if transformation_mode is TransformationType.PASH:
         ir_filename = ptempfile()
+
+        log("Saving asts:")
+        log(type(asts))
+        log(asts)
 
         ## Serialize the node in a file
         with open(ir_filename, "wb") as ir_file:

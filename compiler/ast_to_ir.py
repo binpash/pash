@@ -47,12 +47,17 @@ compile_cases = {
         }
 
 
-def compile_asts(ast_objects, fileIdGen, config):
+def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
     compiled_asts = []
     acc_ir = None
     for i, ast_object in enumerate(ast_objects):
         # log("Compiling AST {}".format(i))
         # log(ast_object)
+        ## TODO: Move this outside this function
+        # assert(not isinstance(untyped_ast_object, AstNode))
+        # ast_object = to_ast_node(untyped_ast_object)
+
+        assert(isinstance(ast_object, AstNode))
 
         ## Compile subtrees of the AST to out intermediate representation
         expanded_ast = expand_command(ast_object, config)
