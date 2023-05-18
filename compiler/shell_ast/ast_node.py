@@ -68,14 +68,14 @@ class AstNode:
     #     log(self.construct)
     #     return NotImplemented 
 
-    def check(self, **kwargs):
-        # user-supplied custom checks
-        for key, value in kwargs.items():
-            try:
-                assert(value())
-            except Exception as exc:
-                log("check for {} construct failed at key {}".format(self.construct, key))
-                raise exc
+    # def check(self, **kwargs):
+    #     # user-supplied custom checks
+    #     for key, value in kwargs.items():
+    #         try:
+    #             assert(value())
+    #         except Exception as exc:
+    #             log("check for {} construct failed at key {}".format(self.construct, key))
+    #             raise exc
     
     # def json_serialize(self):
     #     if self.construct is AstNodeConstructor.FOR:

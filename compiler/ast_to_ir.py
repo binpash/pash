@@ -113,8 +113,8 @@ def compile_node_pipe(ast_node, fileIdGen, config):
     ##       be one IR
     compiled_ir = compiled_pipe_nodes[0]
     ## Note: Save the old ast for the end-to-end prototype
-    old_ast_node = make_kv(ast_node.construct.value, [ast_node.is_background, ast_node.items])
-    compiled_ir.set_ast(old_ast_node)
+    old_untyped_ast_node = ast_node.json_serialize() # make_kv(ast_node.construct.value, [ast_node.is_background, ast_node.items])
+    compiled_ir.set_ast(old_untyped_ast_node)
     ## Set the IR background so that it can be parallelized with
     ## the next command if the pipeline was run in background
     compiled_ir.set_background(ast_node.is_background)
@@ -145,9 +145,9 @@ def combine_pipe(ast_nodes):
     return [combined_nodes]
 
 def compile_node_command(ast_node, fileIdGen, config):
-    construct_str = ast_node.construct.value
-    old_ast_node = make_kv(construct_str, [ast_node.line_number,
-        ast_node.assignments, ast_node.arguments, ast_node.redir_list])
+    # construct_str = ast_node.construct.value
+    # old_ast_node = make_kv(construct_str, [ast_node.line_number,
+    #     ast_node.assignments, ast_node.arguments, ast_node.redir_list])
 
     ## TODO: Do we need the line number?
 
@@ -170,7 +170,8 @@ def compile_node_command(ast_node, fileIdGen, config):
         ## Just compile the assignments. Specifically compile the
         ## assigned values, because they might have command
         ## substitutions etc..
-        compiled_ast = make_kv(construct_str, [ast_node.line_number] +
+        ## TODO: Can we get read of this make_kv and return a proper typed node?
+        compiled_ast = make_kv(type(ast_node).NodeName, [ast_node.line_number] +
                                [compiled_assignments] + [ast_node.arguments, compiled_redirections])
     else:
         arguments = ast_node.arguments
@@ -201,14 +202,14 @@ def compile_node_command(ast_node, fileIdGen, config):
             ##       Is there any case where a non-compiled command is fine?
             # log(traceback.format_exc())
             compiled_arguments = compile_command_arguments(arguments, fileIdGen, config)
-            compiled_ast = make_kv(construct_str,
+            compiled_ast = make_kv(type(ast_node).NodeName,
                                    [ast_node.line_number, compiled_assignments,
                                     compiled_arguments, compiled_redirections])
 
         return compiled_ast
 
 def compile_node_and_or_semi(ast_node, fileIdGen, config):
-    compiled_ast = make_kv(ast_node.construct.value,
+    compiled_ast = make_kv(type(ast_node).NodeName,
             [compile_node(ast_node.left_operand, fileIdGen, config),
              compile_node(ast_node.right_operand, fileIdGen, config)])
     return compiled_ast
@@ -221,7 +222,7 @@ def compile_node_redir_subshell(ast_node, fileIdGen, config):
         ##       the IR accordingly
         compiled_ast = compiled_node
     else:
-        compiled_ast = make_kv(ast_node.construct.value, [ast_node.line_number,
+        compiled_ast = make_kv(type(ast_node).NodeName, [ast_node.line_number,
             compiled_node, ast_node.redir_list])
 
     return compiled_ast
@@ -248,6 +249,7 @@ def compile_node_background(ast_node, fileIdGen, config):
 
     return compiled_ast
 
+## TODO: Is this code ever called? I don't think so!
 def compile_node_defun(ast_node, fileIdGen, config):
     ## It is not clear how we should handle functions.
     ##
@@ -265,7 +267,7 @@ def compile_node_defun(ast_node, fileIdGen, config):
 def compile_node_for(ast_node, fileIdGen, config):
     ## TODO: Investigate what kind of check could we do to make a for
     ## loop parallel
-    compiled_ast = make_kv(ast_node.construct.value,
+    compiled_ast = make_kv(type(ast_node).NodeName,
                            [ast_node.line_number,
                             compile_command_argument(ast_node.argument, fileIdGen, config),
                             compile_node(ast_node.body, fileIdGen, config),
