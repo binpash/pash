@@ -1,6 +1,7 @@
 
 from env_var_names import *
 from shell_ast.ast_node import *
+from shell_ast.untyped_to_ast import *
 from util import *
 
 
@@ -43,18 +44,20 @@ def check_if_ast_is_supported(construct, arguments, **kwargs):
 def ast_match_untyped(untyped_ast_object, cases, *args):
     ## TODO: This should construct the complete AstNode object (not just the surface level)
     ## TODO: Remove this and then at some point make real proper use of the AstNode
-    ast_node = AstNode(untyped_ast_object)
-    if ast_node.construct is AstNodeConstructor.PIPE:
-        ast_node.check(children_count = lambda : len(ast_node.items) >= 2)
+    ast_node = to_ast_node(untyped_ast_object)
+    # if isinstance(ast_node) is PipeNode:
+    #     ast_node.check(children_count = lambda : len(ast_node.items) >= 2)
     return ast_match(ast_node, cases, *args)
 
 def ast_match(ast_node, cases, *args):
     ## TODO: Remove that once `ast_match_untyped` is fixed to
     ##       construct the whole AstNode object.
+    ## TODO: Delete this PLEASE!
     if(not isinstance(ast_node, AstNode)):
         return ast_match_untyped(ast_node, cases, *args)
 
-    return cases[ast_node.construct.value](*args)(ast_node)
+    # print(ast_node, type(ast_node), type(ast_node).NodeName)
+    return cases[type(ast_node).NodeName](*args)(ast_node)
 
 
 

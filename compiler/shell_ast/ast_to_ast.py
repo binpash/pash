@@ -6,6 +6,7 @@ import config
 
 from env_var_names import *
 from shell_ast.ast_util import *
+from shell_ast.untyped_to_ast import *
 from parse import from_ast_objects_to_shell
 from speculative import util_spec
 
@@ -379,7 +380,7 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
 
     ## Prepend the export in front of the loop
     # new_node = ast_node
-    new_node = AstNode(make_semi_sequence([export_node, ast_node, reset_loop_iters_node]))
+    new_node = to_ast_node(make_semi_sequence([export_node, ast_node, reset_loop_iters_node]))
     # print(new_node)
 
     preprocessed_ast_object = PreprocessedAST(new_node,
