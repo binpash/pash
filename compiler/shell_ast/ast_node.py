@@ -415,10 +415,10 @@ class CaseNode(AstNode):
     argument: object
     cases: object
 
-    def __init__(self, line_number, argument, body):
+    def __init__(self, line_number, argument, cases):
         self.line_number = line_number
         self.argument = argument
-        self.body = body
+        self.cases = cases
 
     def json_serialize(self):
         json_output = make_kv(CaseNode.NodeName,

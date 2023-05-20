@@ -124,6 +124,7 @@ def to_arg_char(arg_char):
     assert(False)
 
 def to_case_list(case_list):
-    new_case_list = [(to_args(case[0]), to_ast_node(case[1])) 
+    new_case_list = [{'cpattern': to_args(case['cpattern']), 
+                      'cbody': to_ast_node(case['cbody'])} 
                      for case in case_list]
     return new_case_list
