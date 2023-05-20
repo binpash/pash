@@ -153,9 +153,8 @@ def replace_ast_regions(ast_objects, trans_options):
             # log("Last object")
             last_object = True
 
-        untyped_ast, original_text, _linno_before, _linno_after = ast_object
-        ## TODO: Move this outside of this function
-        ast = to_ast_node(untyped_ast)
+        ast, original_text, _linno_before, _linno_after = ast_object
+        assert(isinstance(ast, AstNode))
 
         ## Goals: This transformation can approximate in several directions.
         ##        1. Not replacing a candidate dataflow region.
@@ -548,10 +547,6 @@ def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast
     transformation_mode = trans_options.get_mode()
     if transformation_mode is TransformationType.PASH:
         ir_filename = ptempfile()
-
-        log("Saving asts:")
-        log(type(asts))
-        log(asts)
 
         ## Serialize the node in a file
         with open(ir_filename, "wb") as ir_file:

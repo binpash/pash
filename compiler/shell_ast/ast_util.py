@@ -41,25 +41,9 @@ class UnparsedScript:
 def check_if_ast_is_supported(construct, arguments, **kwargs):
     return
 
-# def ast_match_untyped(untyped_ast_object, cases, *args):
-    ## TODO: This should construct the complete AstNode object (not just the surface level)
-    ## TODO: Remove this and then at some point make real proper use of the AstNode
-    # ast_node = to_ast_node(untyped_ast_object)
-    # if isinstance(ast_node) is PipeNode:
-    #     ast_node.check(children_count = lambda : len(ast_node.items) >= 2)
-    # return ast_match(ast_node, cases, *args)
-
+## Implements a pattern-matching style traversal over the AST
 def ast_match(ast_node, cases, *args):
-    ## TODO: Remove that once `ast_match_untyped` is fixed to
-    ##       construct the whole AstNode object.
-    ## TODO: Delete this PLEASE!
-    # if(not isinstance(ast_node, AstNode)):
-    #     return ast_match_untyped(ast_node, cases, *args)
-
-    # print(ast_node, type(ast_node), type(ast_node).NodeName)
     return cases[type(ast_node).NodeName](*args)(ast_node)
-
-
 
 def format_args(args):
     formatted_args = [format_arg_chars(arg_chars) for arg_chars in args]

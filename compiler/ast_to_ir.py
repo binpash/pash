@@ -53,10 +53,6 @@ def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
     for i, ast_object in enumerate(ast_objects):
         # log("Compiling AST {}".format(i))
         # log(ast_object)
-        ## TODO: Move this outside this function
-        # assert(not isinstance(untyped_ast_object, AstNode))
-        # ast_object = to_ast_node(untyped_ast_object)
-
         assert(isinstance(ast_object, AstNode))
 
         ## Compile subtrees of the AST to out intermediate representation
@@ -117,14 +113,12 @@ def compile_node_pipe(ast_node, fileIdGen, config):
     ##       pipeline) the compiled_pipe_nodes should always
     ##       be one IR
     compiled_ir = compiled_pipe_nodes[0]
-    ## Note: Save the old ast for the end-to-end prototype
-    old_untyped_ast_node = ast_node.json_serialize() # make_kv(ast_node.construct.value, [ast_node.is_background, ast_node.items])
+    ## Save the old ast for the end-to-end prototype
+    old_untyped_ast_node = ast_node.json_serialize()
     compiled_ir.set_ast(old_untyped_ast_node)
     ## Set the IR background so that it can be parallelized with
     ## the next command if the pipeline was run in background
     compiled_ir.set_background(ast_node.is_background)
-    ## TODO: If the pipeline is in background, I also have to
-    ## redirect its stdin, stdout
     compiled_ast = compiled_ir
     return compiled_ast
 
@@ -150,68 +144,36 @@ def combine_pipe(ast_nodes):
     return [combined_nodes]
 
 def compile_node_command(ast_node, fileIdGen, config):
-    # construct_str = ast_node.construct.value
-    # old_ast_node = make_kv(construct_str, [ast_node.line_number,
-    #     ast_node.assignments, ast_node.arguments, ast_node.redir_list])
-
-    ## TODO: Do we need the line number?
-
     ## Compile assignments and redirection list
     compiled_assignments = compile_assignments(ast_node.assignments, fileIdGen, config)
     compiled_redirections = compile_redirections(ast_node.redir_list, fileIdGen, config)
 
-    ## If there are no arguments, the command is just an
-    ## assignment
-    ##
-    ## TODO: The if-branch of this conditional should never be possible since the preprocessor
-    ##       wouldn't replace a call without arguments (simple assignment).
-    ##
-    ##       Also the return is not in the correct indentation so probably it never gets called
-    ##       in our tests.
-    ##
-    ##       We should remove it and add the following assert:
-    ##         assert len(ast_node.arguments) > 0
-    if(len(ast_node.arguments) == 0):
-        ## Just compile the assignments. Specifically compile the
-        ## assigned values, because they might have command
-        ## substitutions etc..
-        ## TODO: Can we get read of this make_kv and return a proper typed node?
-        compiled_ast = make_kv(type(ast_node).NodeName, [ast_node.line_number] +
-                               [compiled_assignments] + [ast_node.arguments, compiled_redirections])
-    else:
-        arguments = ast_node.arguments
-        command_name = arguments[0]
-        options = compile_command_arguments(arguments[1:], fileIdGen, config)
+    ## This should never be possible since the preprocessor
+    ##  wouldn't replace a call without arguments (simple assignment).
+    assert len(ast_node.arguments) > 0
 
-        ## Question: Should we return the command in an IR if one of
-        ## its arguments is a command substitution? Meaning that we
-        ## will have to wait for its command to execute first?
-        ##
-        ## ANSWER: Kind of. If a command has a command substitution or
-        ## anything that evaluates we should add it to the IR, but we
-        ## should also make sure that its category is set to the most
-        ## general one. That means that it can be executed
-        ## concurrently with other commands, but it cannot be
-        ## parallelized.
-        try:
-            ## If the command is not compileable to a DFG the following call will fail
-            ir = compile_command_to_DFG(fileIdGen,
-                                        command_name,
-                                        options,
-                                        redirections=compiled_redirections)
-            compiled_ast = ir
-        except ValueError as err:
-            ## TODO: Delete this log from here
-            log(err)
-            ## TODO: Maybe we want to fail here instead of waiting for later?
-            ##       Is there any case where a non-compiled command is fine?
-            # log(traceback.format_exc())
-            compiled_arguments = compile_command_arguments(arguments, fileIdGen, config)
-            compiled_ast = make_kv(type(ast_node).NodeName,
-                                   [ast_node.line_number, compiled_assignments,
-                                    compiled_arguments, compiled_redirections])
+    arguments = ast_node.arguments
+    command_name = arguments[0]
+    options = compile_command_arguments(arguments[1:], fileIdGen, config)
 
-        return compiled_ast
+    try:
+        ## If the command is not compileable to a DFG the following call will fail
+        ir = compile_command_to_DFG(fileIdGen,
+                                    command_name,
+                                    options,
+                                    redirections=compiled_redirections)
+        compiled_ast = ir
+    except ValueError as err:
+        log(err)
+        ## TODO: Maybe we want to fail here instead of waiting for later?
+        ##       Is there any case where a non-compiled command is fine?
+        # log(traceback.format_exc())
+        compiled_arguments = compile_command_arguments(arguments, fileIdGen, config)
+        compiled_ast = make_kv(type(ast_node).NodeName,
+                                [ast_node.line_number, compiled_assignments,
+                                compiled_arguments, compiled_redirections])
+
+    return compiled_ast
 
 def compile_node_and_or_semi(ast_node, fileIdGen, config):
     compiled_ast = make_kv(type(ast_node).NodeName,

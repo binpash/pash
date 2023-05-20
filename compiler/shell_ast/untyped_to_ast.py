@@ -1,7 +1,6 @@
 
 from shell_ast.ast_node import *
 
-## TODO: Recurse in necessary subfields and iterate deep
 def to_ast_node(obj) -> AstNode:
     k, v = obj
     if k == PipeNode.NodeName:
