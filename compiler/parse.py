@@ -5,6 +5,7 @@ import sys
 
 from shell_ast.ast_util import UnparsedScript
 from shell_ast.ast_node import AstNode, ast_node_to_untyped_deep
+from shell_ast.untyped_to_ast import to_ast_node
 
 from util import *
 
@@ -16,7 +17,14 @@ import libdash.printer
 def parse_shell_to_asts(input_script_path):
     try:
         new_ast_objects = libdash.parser.parse(input_script_path)
-        return list(new_ast_objects)
+
+        ## Transform the untyped ast objects to typed ones
+        typed_ast_objects = []
+        for untyped_ast, original_text, linno_before, linno_after, in new_ast_objects:
+             typed_ast = to_ast_node(untyped_ast)
+             typed_ast_objects.append((typed_ast, original_text, linno_before, linno_after))
+
+        return typed_ast_objects
     except libdash.parser.ParsingException as e:
         log("Parsing error!", e)
         sys.exit(1)
