@@ -40,8 +40,6 @@ compile_cases = {
                      lambda ast_node: compile_node_redir_subshell(ast_node, fileIdGen, config)),
         "Background": (lambda fileIdGen, config:
                        lambda ast_node: compile_node_background(ast_node, fileIdGen, config)),
-        "Defun": (lambda fileIdGen, config:
-                  lambda ast_node: compile_node_defun(ast_node, fileIdGen, config)),
         "For": (lambda fileIdGen, config:
                   lambda ast_node: compile_node_for(ast_node, fileIdGen, config))
         }
@@ -215,21 +213,6 @@ def compile_node_background(ast_node, fileIdGen, config):
         compiled_ast.node = compiled_node
 
     return compiled_ast
-
-## TODO: Is this code ever called? I don't think so!
-def compile_node_defun(ast_node, fileIdGen, config):
-    ## It is not clear how we should handle functions.
-    ##
-    ## - Should we transform their body to IR?
-    ## - Should we handle calls to the functions as commands?
-    ##
-    ## It seems that we should do both. But we have to think if
-    ## this introduces any possible problem.
-
-    ## TODO: Investigate whether it is fine to just compile the
-    ##       body of functions.
-    compiled_body = compile_node(ast_node.body, fileIdGen, config)
-    return make_kv(construct, [ast_node.line_number, ast_node.name, compiled_body])
 
 def compile_node_for(ast_node, fileIdGen, config):
     ## TODO: Investigate what kind of check could we do to make a for
