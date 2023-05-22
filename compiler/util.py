@@ -1,5 +1,6 @@
 from datetime import timedelta
 import functools
+import logging
 from typing import Optional, TypeVar, Union, List, Any
 TType = TypeVar("TType")
 import os
@@ -50,12 +51,16 @@ def logging_prefix(logging_prefix):
 def log(*args, end='\n', level=1):
     ## If the debug logging level is at least
     ## as high as this log message.
-    if (config.DEBUG_LEVEL >= level):
-        if(config.LOG_FILE == ""):
-            print(config.LOGGING_PREFIX, *args, file=sys.stderr, end=end, flush=True)
-        else:
-            with open(config.LOG_FILE, "a") as f:
-                print(config.LOGGING_PREFIX, *args, file=f, end=end, flush=True)
+    # if (config.DEBUG_LEVEL >= level):
+    #     if(config.LOG_FILE == ""):
+    #         print(config.LOGGING_PREFIX, *args, file=sys.stderr, end=end, flush=True)
+    #     else:
+    #         with open(config.LOG_FILE, "a") as f:
+    #             print(config.LOGGING_PREFIX, *args, file=f, end=end, flush=True)
+    ## TODO: Add more levels 
+    if level >= 1:
+        concatted_args = " ".join([str(a) for a in list(args)])
+        logging.info(f'{config.LOGGING_PREFIX} {concatted_args}')
 
 def ptempfile():
     fd, name = tempfile.mkstemp(dir=config.PASH_TMP_PREFIX)

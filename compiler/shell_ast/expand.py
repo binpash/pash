@@ -1,9 +1,12 @@
 import copy
 
 from shell_ast.ast_node import *
+## TODO: Replace occurences of log with logging.debug/info so that it can be used as a library
 from util import get_kv, log
 
 import ast_to_ir
+
+## TODO: Make this a global variable that is set so that it can be used as a library
 import config
 ## Could be useful for debugging
 # import parse
