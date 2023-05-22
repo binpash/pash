@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import subprocess
 import math
@@ -54,6 +55,25 @@ def set_config_globals_from_pash_args(given_pash_args):
     OUTPUT_TIME = pash_args.output_time
     DEBUG_LEVEL = pash_args.debug
     LOG_FILE = pash_args.log_file
+
+    ## Also set logging here
+    # Format logging
+    # ref: https://docs.python.org/3/library/logging.html#formatter-objects
+    ## TODO: When we add more logging levels bring back the levelname+time
+    if given_pash_args.log_file == "":
+        logging.basicConfig(format="%(message)s")
+    else:
+        logging.basicConfig(format="%(message)s", 
+                            filename=f"{os.path.abspath(given_pash_args.log_file)}", 
+                            filemode="w")
+
+    # Set debug level
+    if given_pash_args.debug == 1:
+        logging.getLogger().setLevel(logging.INFO)
+    elif given_pash_args.debug == 2:
+        logging.getLogger().setLevel(logging.DEBUG)
+    elif given_pash_args.debug >= 3:
+        logging.getLogger().setLevel(logging.TRACE)
 
 
 ## Increase the recursion limit (it seems that the parser/unparser needs it for bigger graphs)
