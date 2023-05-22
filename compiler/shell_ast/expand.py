@@ -1,9 +1,13 @@
 import copy
+import logging
 
 from shell_ast.ast_node import *
-from shell_ast.ast_node_c import *
+from shell_ast import ast_util
 
-import ast_to_ir
+## TODO: Remove use of get_kv when we make all ast objects classes
+from util import get_kv
+
+## TODO: Make this a global variable that is set so that it can be used as a library
 import config
 ## Could be useful for debugging
 # import parse
@@ -11,6 +15,9 @@ import config
 ################################################################################
 # SAFE EXPANSION ANALYSIS
 ################################################################################
+
+def log(msg: str):
+    logging.info('Expansion: {msg}')
 
 ## This function checks if a word is safe to expand (i.e. if it will 
 ## not have unpleasant side-effects)
@@ -126,14 +133,14 @@ def safe_command(command):
     # TODO 2020-11-24 MMG which commands are safe to run in advance?
     # TODO 2020-11-24 MMG how do we differentiate it being safe to do nested expansions?
     global safe_cases
-    return ast_to_ir.ast_match(command, safe_cases)
+    return ast_util.ast_match(command, safe_cases)
 
 def safe_pipe(node):
     return False
 
 safe_commands = ["echo", ":"]
 
-def safe_simple(node):
+def safe_simple(node: CommandNode):
     # TODO 2020-11-25 check redirs, assignments
 
     if (len(node.arguments) <= 0):
@@ -305,7 +312,7 @@ def lookup_variable_inner_unsafe(varname):
 def is_u_set():
     ## This variable is set by pash and is exported and therefore will be in the variable file.
     _type, value = config.config['shell_variables']["pash_previous_set_status"]
-    # log("Previous set status is:", value)
+    # log(f'Previous set status is: {value}')
     return "u" in value
 
 
@@ -383,8 +390,8 @@ def char_code(c):
     return [type, ord(c)]
 
 def expand_arg(arg_chars, config, quoted = False):
-    # log("expanding arg", arg_chars)
-    # log("unparsed_string:", parse.pash_string_of_arg(arg_chars))
+    # log(f'expanding arg {arg_chars}")
+    # log(f"unparsed_string: {parse.pash_string_of_arg(arg_chars)}")
     res = []
     for arg_char in arg_chars:
         new = expand_arg_char(arg_char, quoted, config)
@@ -440,7 +447,7 @@ def expand_var(fmt, null, var, arg, quoted, config):
 
     _type, value = lookup_variable(var, config)
 
-    log("Var:", var, "value:", value)
+    log(f'Var: {var} value: {value}')
 
     if isinstance(value, InvalidVariable):
         raise StuckExpansion("couldn't expand invalid variable", value)
@@ -518,7 +525,7 @@ def expand_command(command, config):
     # TODO 2020-11-24 MMG which commands are safe to run in advance?
     # TODO 2020-11-24 MMG how do we differentiate it being safe to do nested expansions?
     global expand_cases
-    return ast_to_ir.ast_match(command, expand_cases, config)
+    return ast_util.ast_match(command, expand_cases, config)
 
 def expand_pipe(node, config):
     for i, n in enumerate(node.items):
