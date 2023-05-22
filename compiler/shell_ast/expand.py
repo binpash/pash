@@ -1,7 +1,7 @@
 import copy
 
 from shell_ast.ast_node import *
-from shell_ast.ast_node_c import *
+from util import get_kv, log
 
 import ast_to_ir
 import config
@@ -133,7 +133,7 @@ def safe_pipe(node):
 
 safe_commands = ["echo", ":"]
 
-def safe_simple(node):
+def safe_simple(node: CommandNode):
     # TODO 2020-11-25 check redirs, assignments
 
     if (len(node.arguments) <= 0):
