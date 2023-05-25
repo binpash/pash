@@ -96,7 +96,9 @@ def format_expanded_arg_char(arg_char):
         ## TODO: Make this correct
         raise ValueError
 
-
+def string_to_carg_char_list(string: str) -> "list[CArgChar]":
+    ret = [CArgChar(ord(char)) for char in string]
+    return ret
 
 def string_to_arguments(string):
     return [string_to_argument(word) for word in string.split(" ")]

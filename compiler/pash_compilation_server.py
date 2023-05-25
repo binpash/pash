@@ -258,6 +258,7 @@ class Scheduler:
         print_time_delta("Daemon Compile", daemon_compile_start_time, daemon_compile_end_time)
 
         log("Optimized ast:", ast_or_ir)
+        log("TODO: LEft here")
 
         self.wait_unsafe()
         if ast_or_ir != None:

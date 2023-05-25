@@ -219,7 +219,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
                         parallelizer_list=parallelizer_list,
                         cmd_related_properties=cmd_related_properties
                         )
-
+    # log(f'Dfg node: {dfg_node}')
     node_id = dfg_node.get_id()
 
     ## Assign the from, to node in edges
@@ -235,6 +235,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
     
     dfg_nodes = {node_id : dfg_node}
     dfg = IR(dfg_nodes, dfg_edges)
+    # log(f'IR: {dfg}')
     return dfg
 
 
@@ -243,7 +244,7 @@ def compile_command_to_DFG(fileIdGen, command, options,
 ##
 
 def make_tee(input, outputs):
-    com_name = Arg(string_to_argument("tee"))
+    com_name = Arg.string_to_arg("tee")
     com_category = "pure"
     return DFGNode([input],
                    outputs,
@@ -1145,7 +1146,7 @@ class IR:
         drain_fids = [fileIdGen.next_file_id()
                       for final_auxiliary_output in final_auxiliary_outputs]
         for drain_fid in drain_fids:
-            drain_fid.set_resource(FileResource(Arg(string_to_argument('/dev/null'))))
+            drain_fid.set_resource(FileResource(Arg.string_to_arg('/dev/null')))
             new_edges.append(drain_fid)
         drain_ids = [fid.get_ident() for fid in drain_fids]
 
