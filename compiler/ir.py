@@ -381,7 +381,7 @@ class IR:
         return output
 
 
-    def to_ast(self, drain_streams):
+    def to_ast(self, drain_streams) -> "list[AstNode]":
         asts = []
 
         ## Initialize the pids_to_kill variable
@@ -442,7 +442,9 @@ class IR:
             assignment = self.collect_pid_assignment()
             asts.append(assignment)
 
-        return asts
+        ## TODO: Ideally we would like to make them as typed nodes already
+        class_asts = [to_ast_node(ast_node_to_untyped_deep(ast)) for ast in asts]
+        return class_asts
     
     def collect_pid_assignment(self):
         ## Creates:

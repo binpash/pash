@@ -1,11 +1,19 @@
 import abc
 from json import JSONEncoder
+from shasta.print_lib import * 
 
 class AstNode(metaclass=abc.ABCMeta):
     NodeName = 'None'
 
     @abc.abstractmethod
     def json(self):
+        return
+    
+    @abc.abstractmethod
+    def pretty(self) -> str:
+        """
+        Renders an AST back in shell syntax. 
+        """
         return
 
 class Command(AstNode):
@@ -39,6 +47,17 @@ class PipeNode(Command):
                                self.items])
         return json_output
 
+    def pretty(self):
+        bg = self.is_background
+        ps = self.items
+        p = intercalate(" | ", [item.pretty() for item in ps])
+
+        if bg:
+            return background(p)
+        else:
+            return p
+
+
 class CommandNode(Command):
     NodeName = 'Command'
     line_number: int
@@ -67,6 +86,20 @@ class CommandNode(Command):
                                self.arguments,
                                self.redir_list])
         return json_output
+    
+    def pretty(self):
+        assigns = self.assignments
+        cmds = self.arguments
+        redirs = self.redir_list
+
+        str = " ".join([assign.pretty() for assign in assigns])
+        if (len(assigns) == 0) or (len(cmds) == 0):
+            pass
+        else:
+            str += " "
+        str += separated(string_of_arg, cmds) + string_of_redirs(redirs)
+
+        return str
 
 class SubshellNode(Command):
     NodeName = 'Subshell'
@@ -85,6 +118,9 @@ class SubshellNode(Command):
                                self.body,
                                self.redir_list])
         return json_output
+    
+    def pretty(self):
+        return parens(self.body.pretty() + string_of_redirs(self.redir_list))
         
 class AndNode(Command):
     NodeName = 'And'
@@ -104,6 +140,9 @@ class AndNode(Command):
                               [self.left_operand,
                                self.right_operand])
         return json_output
+    
+    def pretty(self):
+        return f'{braces(self.left_operand.pretty())} && {braces(self.right_operand.pretty())}'
 
 class OrNode(Command):
     NodeName = 'Or'
@@ -124,6 +163,9 @@ class OrNode(Command):
                                self.right_operand])
         return json_output
     
+    def pretty(self):
+        return f'{braces(self.left_operand.pretty())} || {braces(self.right_operand.pretty())}'
+    
 class SemiNode(Command):
     NodeName = 'Semi'
     left_operand: Command
@@ -142,6 +184,9 @@ class SemiNode(Command):
                               [self.left_operand,
                                self.right_operand])
         return json_output
+    
+    def pretty(self):
+        return f'{braces(self.left_operand.pretty())} \n {braces(self.right_operand.pretty())}'
 
 
 class NotNode(Command):
@@ -155,6 +200,9 @@ class NotNode(Command):
         json_output = make_kv(NotNode.NodeName,
                               self.body)
         return json_output
+    
+    def pretty(self):
+        return f'! {braces(self.body.pretty())}'
 
 class RedirNode(Command):
     NodeName = 'Redir'
@@ -173,6 +221,9 @@ class RedirNode(Command):
                                self.node,
                                self.redir_list])
         return json_output
+    
+    def pretty(self):
+        return self.node.pretty() + string_of_redirs(self.redir_list)
 
 class BackgroundNode(Command):
     NodeName = 'Background'
@@ -192,6 +243,9 @@ class BackgroundNode(Command):
                                self.redir_list])
         return json_output
 
+    def pretty(self):
+        return background(self.node.pretty() + string_of_redirs(self.redir_list))
+
 class DefunNode(Command):
     NodeName = 'Defun'
     line_number: int
@@ -209,6 +263,12 @@ class DefunNode(Command):
                                self.name,
                                self.body])
         return json_output
+    
+    def pretty(self):
+        name = self.name
+        body = self.body
+        return name + "() {\n" + body.pretty() + "\n}"
+
 
 class ForNode(Command):
     NodeName = 'For'
@@ -235,6 +295,12 @@ class ForNode(Command):
                                self.variable])
         return json_output
 
+    def pretty(self):
+        a = self.argument
+        body = self.body
+        var = self.variable
+        return f'for {var} in {separated(string_of_arg, a)}; do {body.pretty()}; done'
+
 class WhileNode(Command):
     NodeName = 'While'
     test: Command
@@ -249,6 +315,17 @@ class WhileNode(Command):
                               [self.test,
                                self.body])
         return json_output
+
+    def pretty(self):
+        first = self.test
+        b = self.body
+        
+        if isinstance(first, NotNode):
+            t = first.body
+            return f'until {t.pretty()}; do {b.pretty()}; done '
+        else:
+            t = first
+            return f'while {t.pretty()}; do {b.pretty()}; done '
 
 class IfNode(Command):
     NodeName = 'If'
@@ -268,6 +345,21 @@ class IfNode(Command):
                                self.else_b])
         return json_output
 
+    def pretty(self):
+        c = self.cond
+        t = self.then_b
+        e = self.else_b
+        str1 = f'if {c.pretty()}; then {t.pretty()}'
+
+        if is_empty_cmd(e):
+            str1 += "; fi"
+        elif isinstance(e, IfNode):
+            str1 += "; el" + e.pretty()
+        else:
+            str1 += f'; else {e.pretty()}; fi'
+
+        return str1
+
 class CaseNode(Command):
     NodeName = 'Case'
     line_number: int
@@ -285,6 +377,12 @@ class CaseNode(Command):
                                self.argument,
                                self.cases])
         return json_output
+    
+    def pretty(self):
+        a = self.argument
+        cs = self.cases
+        return f'case {string_of_arg(a)} in {separated(string_of_case, cs)} esac'
+
 
 class ArgChar(AstNode):
     ## This method formats an arg_char to a string to
@@ -309,6 +407,12 @@ class CArgChar(ArgChar):
         json_output = make_kv(CArgChar.NodeName,
                               self.char)
         return json_output
+    
+    def pretty(self, quote_mode=UNQUOTED):
+        if quote_mode==QUOTED and chr(self.char) == '"':
+            return '\\"'
+        else:
+            return chr(self.char)
 
 class EArgChar(ArgChar):
     NodeName = 'E'
@@ -342,6 +446,24 @@ class EArgChar(ArgChar):
         json_output = make_kv(EArgChar.NodeName,
                               self.char)
         return json_output
+    
+    def pretty(self, quote_mode=UNQUOTED):
+        param = self.char
+        char = chr(param)
+
+        ## MMG 2021-09-20 It might be safe to move everything except for " in the second list, but no need to do it if the tests pass
+        ## '!' dropped for bash non-interactive bash compatibility
+        ## Chars to escape unconditionally
+        chars_to_escape = ["'", '"', '`', '(', ')', '{', '}', '$', '&', '|', ';']
+        ## Chars to escape only when not quoted
+        chars_to_escape_when_no_quotes = ['*', '?', '[', ']', '#', '<', '>', '~', ' ']
+        if char in chars_to_escape:
+            return '\\' + char
+        elif char in chars_to_escape_when_no_quotes and quote_mode==UNQUOTED:
+            return '\\' + char
+        else:
+            return escaped(param)
+
 
 class TArgChar(ArgChar):
     NodeName = 'T'
@@ -359,6 +481,21 @@ class TArgChar(ArgChar):
                               self.string)
         return json_output
 
+    def pretty(self, quote_mode=UNQUOTED):
+        param = self.string
+        ## TODO: Debug this
+        if param == "None":
+            return "~"
+        elif len(param) == 2:
+            if param[0] == "Some":
+                (_, u) = param
+
+                return "~" + u
+            else:
+                assert(False)
+        else:
+            print ("Unexpected param for T: %s" % param)
+
 class AArgChar(ArgChar):
     NodeName = 'A'
     arg: "list[ArgChar]"
@@ -374,6 +511,10 @@ class AArgChar(ArgChar):
         json_output = make_kv(AArgChar.NodeName,
                               self.arg)
         return json_output
+    
+    def pretty(self, quote_mode=UNQUOTED):
+        param = self.arg
+        return f'$(({string_of_arg(param, quote_mode)}))'
 
 class VArgChar(ArgChar):
     NodeName = 'V'
@@ -401,6 +542,31 @@ class VArgChar(ArgChar):
                                self.var,
                                self.arg])
         return json_output
+    
+    def pretty(self, quote_mode=UNQUOTED):
+        vt = self.fmt
+        nul = self.null
+        name = self.var
+        a = self.arg
+        if vt == "Length":
+            return "${#" + name + "}"
+        else:
+            stri = "${" + name
+
+            # Depending on who generated the JSON, nul may be
+            # a string or a boolean! In Python, non-empty strings
+            # to True.
+            if (str(nul).lower() == "true"):
+                stri += ":"
+            elif (str (nul).lower() == "false"):
+                pass
+            else:
+                assert(False)
+
+            stri += string_of_var_type(vt) + string_of_arg(a, quote_mode) + "}"
+
+            return stri
+
 
 class QArgChar(ArgChar):
     NodeName = 'Q'
@@ -422,6 +588,11 @@ class QArgChar(ArgChar):
                               self.arg)
         return json_output
 
+    def pretty(self, quote_mode=UNQUOTED):
+        param = self.arg
+        return "\"" + string_of_arg(param, quote_mode=QUOTED) + "\""
+
+
 class BArgChar(ArgChar):
     NodeName = 'B'
     node: Command
@@ -440,6 +611,10 @@ class BArgChar(ArgChar):
         json_output = make_kv(BArgChar.NodeName,
                               self.node)
         return json_output
+    
+    def pretty(self, quote_mode=UNQUOTED):
+        param = self.node
+        return "$(" + param.pretty() + ")"
 
 class AssignNode(AstNode):
     var: str
@@ -457,7 +632,14 @@ class AssignNode(AstNode):
         json_output = [self.var, self.val]
         return json_output
     
+    def pretty(self):
+        return f'{self.var}={string_of_arg(self.val)}'
+
+    
 class RedirectionNode(AstNode):
+    redir_type: str
+    fd: int
+    arg: "list[ArgChar]"
     pass
 
 class FileRedirNode(RedirectionNode):
@@ -481,6 +663,23 @@ class FileRedirNode(RedirectionNode):
                                self.fd,
                                self.arg])
         return json_output
+    
+    def pretty(self):
+        subtype = self.redir_type
+        fd = self.fd
+        a = self.arg
+        if subtype == "To":
+            return show_unless(1, fd) + ">" + string_of_arg(a)
+        elif subtype == "Clobber":
+            return show_unless(1, fd) + ">|" + string_of_arg(a)
+        elif subtype == "From":
+            return show_unless(0, fd) + "<" + string_of_arg(a)
+        elif subtype == "FromTo":
+            return show_unless(0, fd) + "<>" + string_of_arg(a)
+        elif subtype == "Append":
+            return show_unless(1, fd) + ">>" + string_of_arg(a)
+        assert(False)
+
 
 class DupRedirNode(RedirectionNode):
     NodeName = "Dup"
@@ -504,6 +703,16 @@ class DupRedirNode(RedirectionNode):
                                self.arg])
         return json_output
     
+    def pretty(self):
+        subtype = self.redir_type
+        fd = self.fd
+        tgt = self.arg
+        if subtype == "ToFD":
+            return show_unless(1, fd) + ">&" + string_of_arg(tgt)
+        elif subtype == "FromFD":
+            return show_unless(0, fd) + "<&" + string_of_arg(tgt)
+        assert(False)
+    
 class HeredocRedirNode(RedirectionNode):
     NodeName = "Heredoc"
     heredoc_type: str
@@ -525,6 +734,23 @@ class HeredocRedirNode(RedirectionNode):
                                self.fd,
                                self.arg])
         return json_output
+    
+    def pretty(self):
+        t = self.heredoc_type
+        fd = self.fd
+        a = self.arg
+        heredoc = string_of_arg(a, quote_mode=HEREDOC)
+        marker = fresh_marker0(heredoc)
+
+        stri = show_unless(0, fd) + "<<"
+        if t == "XHere":
+            stri += marker
+        else:
+            stri += "'" + marker + "'"
+
+        stri += "\n" + heredoc + marker + "\n"
+
+        return stri
 
 ## This function takes an object that contains a mix of untyped and typed AstNodes (yuck) 
 ## and turns it into untyped json-like object. It is required atm because the infrastructure that
@@ -562,6 +788,36 @@ def make_typed_semi_sequence(asts: "list[AstNode]") -> SemiNode:
         for ast in iter_asts[::-1]:
             acc = SemiNode(ast, acc)
         return acc
+
+## This has to be here and not in print_lib to avoid circular dependencies
+def string_of_arg(args, quote_mode=UNQUOTED):
+    i = 0
+    text = []
+    while i < len(args):
+        c = args[i].pretty(quote_mode=quote_mode)
+        if c == "$" and (i+1 < len(args)) and isinstance(args[i+1],EArgChar):
+            c = "\\$"
+        text.append(c)
+
+        i = i+1
+    
+    text = "".join(text)
+
+    return text
+
+def string_of_case(c):
+    pats = map(string_of_arg, c["cpattern"])
+
+    return f'{intercalate("|", pats)}) {c["cbody"].pretty()};;'
+
+
+def is_empty_cmd(e: Command):
+    return isinstance(e, CommandNode) \
+        and e.line_number == -1 \
+        and len(e.assignments) == 0 \
+        and len(e.arguments) == 0 \
+        and len(e.redir_list) == 0
+
 
 ## Implements a pattern-matching style traversal over the AST
 def ast_match(ast_node, cases, *args):
