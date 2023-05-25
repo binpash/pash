@@ -3,9 +3,8 @@ from shell_ast.ast_util import *
 from ir import *
 from util import *
 from parse import from_ast_objects_to_shell
-from shell_ast.expand import expand_command
+from shell_ast.expand import expand_command, ExpansionState
 import subprocess
-import config
 
 ## TODO: Separate the ir stuff to the bare minimum and 
 ##       try to move this to the shell_ast folder.
@@ -53,7 +52,10 @@ def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
         assert(isinstance(ast_object, AstNode))
 
         ## Compile subtrees of the AST to out intermediate representation
-        expanded_ast = expand_command(ast_object, config)
+        ## KK 2023-05-25: Would we ever want to pass this state to the expansion 
+        ##                of the next object? I don't think so.
+        exp_state = ExpansionState(config['shell_variables'])
+        expanded_ast = expand_command(ast_object, exp_state)
         # log("Expanded:", expanded_ast)
         compiled_ast = compile_node(expanded_ast, fileIdGen, config)
 
