@@ -443,6 +443,90 @@ class BArgChar(ArgChar):
                               self.node)
         return json_output
 
+class AssignNode(AstNode):
+    var: str
+    val: "list[ArgChar]"
+
+    def __init__(self, var: str, val):
+        self.var = var
+        self.val = val
+
+    # TODO: Implement
+    def __repr__(self):
+        return f'{self.var}={self.val}'
+
+    def json(self):
+        json_output = [self.var, self.val]
+        return json_output
+    
+class RedirectionNode(AstNode):
+    pass
+
+class FileRedirNode(RedirectionNode):
+    NodeName = "File"
+    redir_type: str
+    fd: int
+    arg: "list[ArgChar]"
+
+    def __init__(self, redir_type, fd, arg):
+        self.redir_type = redir_type
+        self.fd = fd
+        self.arg = arg
+
+    # TODO: Implement
+    # def __repr__(self):
+    #     return f''
+
+    def json(self):
+        json_output = make_kv(FileRedirNode.NodeName,
+                              [self.redir_type,
+                               self.fd,
+                               self.arg])
+        return json_output
+
+class DupRedirNode(RedirectionNode):
+    NodeName = "Dup"
+    dup_type: str
+    fd: int
+    arg: "list[ArgChar]"
+
+    def __init__(self, dup_type, fd, arg):
+        self.dup_type = dup_type
+        self.fd = fd
+        self.arg = arg
+
+    # TODO: Implement
+    # def __repr__(self):
+    #     return f''
+
+    def json(self):
+        json_output = make_kv(DupRedirNode.NodeName,
+                              [self.dup_type,
+                               self.fd,
+                               self.arg])
+        return json_output
+    
+class HeredocRedirNode(RedirectionNode):
+    NodeName = "Heredoc"
+    heredoc_type: str
+    fd: int
+    arg: "list[ArgChar]"
+
+    def __init__(self, heredoc_type, fd, arg):
+        self.heredoc_type = heredoc_type
+        self.fd = fd
+        self.arg = arg
+
+    # TODO: Implement
+    # def __repr__(self):
+    #     return f''
+
+    def json(self):
+        json_output = make_kv(HeredocRedirNode.NodeName,
+                              [self.heredoc_type,
+                               self.fd,
+                               self.arg])
+        return json_output
 
 ## This function takes an object that contains a mix of untyped and typed AstNodes (yuck) 
 ## and turns it into untyped json-like object. It is required atm because the infrastructure that

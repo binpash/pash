@@ -62,33 +62,31 @@ def to_ast_nodes(node_list):
     new_node_list = [to_ast_node(ast_node) for ast_node in node_list]
     return new_node_list
 
-def to_assigns(assignments):
+def to_assigns(assignments) -> "list[AssignNode]":
     new_assignments = []
     for name, val in assignments:
-        new_assignments.append(make_kv(name, to_arg(val)))
+        new_assignments.append(AssignNode(var=name, 
+                                          val=to_arg(val)))
     return new_assignments
 
 def to_redirs(redir_list):
     new_redir_list = [to_redir(redir) for redir in redir_list]
     return new_redir_list
 
-def to_redir(redir):
+def to_redir(redir) -> RedirectionNode:
     k, v = redir
     if k == "File":
-        return make_kv(k, 
-                       [v[0],
-                        v[1],
-                        to_arg(v[2])])
+        return FileRedirNode(redir_type=v[0],
+                             fd=v[1],
+                             arg=to_arg(v[2]))
     elif k == "Dup":
-        return make_kv(k, 
-                       [v[0],
-                        v[1],
-                        to_arg(v[2])])
+        return DupRedirNode(dup_type=v[0],
+                            fd=v[1],
+                            arg=to_arg(v[2]))
     elif k == "Heredoc":
-        return make_kv(k, 
-                       [v[0],
-                        v[1],
-                        to_arg(v[2])])
+        return HeredocRedirNode(heredoc_type=v[0],
+                                fd=v[1],
+                                arg=to_arg(v[2]))
     assert(False)
 
 def to_args(arg_list):
