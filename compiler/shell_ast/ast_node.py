@@ -1,8 +1,6 @@
 import abc
 from json import JSONEncoder
 
-from util import make_kv
-
 class AstNode(metaclass=abc.ABCMeta):
     NodeName = 'None'
 
@@ -564,3 +562,11 @@ def make_typed_semi_sequence(asts: "list[AstNode]") -> SemiNode:
         for ast in iter_asts[::-1]:
             acc = SemiNode(ast, acc)
         return acc
+
+## Implements a pattern-matching style traversal over the AST
+def ast_match(ast_node, cases, *args):
+    return cases[type(ast_node).NodeName](*args)(ast_node)
+
+## Util function
+def make_kv(key, val):
+    return [key, val]

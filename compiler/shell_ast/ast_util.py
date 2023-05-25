@@ -41,10 +41,6 @@ class UnparsedScript:
 def check_if_ast_is_supported(construct, arguments, **kwargs):
     return
 
-## Implements a pattern-matching style traversal over the AST
-def ast_match(ast_node, cases, *args):
-    return cases[type(ast_node).NodeName](*args)(ast_node)
-
 def format_args(args):
     formatted_args = [format_arg_chars(arg_chars) for arg_chars in args]
     return formatted_args

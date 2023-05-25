@@ -2,15 +2,9 @@ import copy
 import logging
 
 from shell_ast.ast_node import *
-from shell_ast import ast_util
-
-## TODO: Remove use of get_kv when we make all ast objects classes
-from util import get_kv
 
 ## TODO: Make this a global variable that is set so that it can be used as a library
 import config
-## Could be useful for debugging
-# import parse
 
 ################################################################################
 # SAFE EXPANSION ANALYSIS
@@ -134,7 +128,7 @@ def safe_command(command):
     # TODO 2020-11-24 MMG which commands are safe to run in advance?
     # TODO 2020-11-24 MMG how do we differentiate it being safe to do nested expansions?
     global safe_cases
-    return ast_util.ast_match(command, safe_cases)
+    return ast_match(command, safe_cases)
 
 def safe_pipe(node):
     return False
@@ -529,7 +523,7 @@ def expand_command(command, config):
     # TODO 2020-11-24 MMG which commands are safe to run in advance?
     # TODO 2020-11-24 MMG how do we differentiate it being safe to do nested expansions?
     global expand_cases
-    return ast_util.ast_match(command, expand_cases, config)
+    return ast_match(command, expand_cases, config)
 
 def expand_pipe(node, config):
     for i, n in enumerate(node.items):
