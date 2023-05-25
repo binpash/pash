@@ -27,7 +27,6 @@ class Arg:
     def to_ast(self):
         return self.arg_char_list
 
-    ## TODO: Fix
     def concatenate(self, other):
         space = [CArgChar(32)] # space
         self.arg_char_list.extend(space)

@@ -48,8 +48,8 @@ def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
     compiled_asts = []
     acc_ir = None
     for i, ast_object in enumerate(ast_objects):
-        log("Compiling AST {}".format(i))
-        log(ast_object)
+        # log("Compiling AST {}".format(i))
+        # log(ast_object)
         assert(isinstance(ast_object, AstNode))
 
         ## Compile subtrees of the AST to out intermediate representation

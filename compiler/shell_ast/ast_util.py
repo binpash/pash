@@ -53,9 +53,6 @@ def format_arg_chars(arg_chars):
     chars = [format_arg_char(arg_char) for arg_char in arg_chars]
     return "".join(chars)
 
-##
-## TODO: Don't store arguments in IR commands as a string, but rather as args
-##
 def format_arg_char(arg_char: ArgChar) -> str:
     return arg_char.format()
 

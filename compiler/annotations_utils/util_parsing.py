@@ -1,4 +1,3 @@
-import sys
 from typing import Set, List, Any
 
 from definitions.ir.arg import Arg

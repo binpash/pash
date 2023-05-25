@@ -45,7 +45,7 @@ class CommandNode(Command):
     NodeName = 'Command'
     line_number: int
     assignments: list
-    arguments: list
+    arguments: "list[list[ArgChar]]"
     redir_list: list
 
     def __init__(self, line_number, assignments, arguments, redir_list):
@@ -215,7 +215,7 @@ class DefunNode(Command):
 class ForNode(Command):
     NodeName = 'For'
     line_number: int
-    argument: object
+    argument: "list[list[ArgChar]]"
     body: Command
     variable: object
 
@@ -273,7 +273,7 @@ class IfNode(Command):
 class CaseNode(Command):
     NodeName = 'Case'
     line_number: int
-    argument: object
+    argument: "list[ArgChar]"
     cases: list
 
     def __init__(self, line_number, argument, cases):
@@ -458,7 +458,6 @@ class BArgChar(ArgChar):
 def ast_node_to_untyped_deep(node):
     if(isinstance(node, AstNode)):
         json_key, json_val = node.json_serialize()
-        # untyped_json_val = [ast_node_to_untyped_deep(obj) for obj in json_val]
         return [json_key, ast_node_to_untyped_deep(json_val)]
     elif(isinstance(node, list)):
         return [ast_node_to_untyped_deep(obj) for obj in node]
