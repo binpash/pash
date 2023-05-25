@@ -112,7 +112,7 @@ def compile_node_pipe(ast_node, fileIdGen, config):
     ##       be one IR
     compiled_ir = compiled_pipe_nodes[0]
     ## Save the old ast for the end-to-end prototype
-    old_untyped_ast_node = ast_node.json_serialize()
+    old_untyped_ast_node = ast_node.json()
     compiled_ir.set_ast(old_untyped_ast_node)
     ## Set the IR background so that it can be parallelized with
     ## the next command if the pipeline was run in background

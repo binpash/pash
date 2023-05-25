@@ -7,7 +7,7 @@ class AstNode(metaclass=abc.ABCMeta):
     NodeName = 'None'
 
     @abc.abstractmethod
-    def json_serialize(self):
+    def json(self):
         return
 
 class Command(AstNode):
@@ -16,7 +16,7 @@ class Command(AstNode):
 class CustomJSONEncoder(JSONEncoder):
     def default(self, obj):
         if isinstance(obj, AstNode):
-            return obj.json_serialize()
+            return obj.json()
         # Let the base class default method raise the TypeError
         return JSONEncoder.default(self, obj)
 
@@ -35,7 +35,7 @@ class PipeNode(Command):
         else:
             return "Pipe: {}".format(self.items)
         
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(PipeNode.NodeName,
                               [self.is_background,
                                self.items])
@@ -62,7 +62,7 @@ class CommandNode(Command):
             output += ", reds[{}]".format(self.redir_list)
         return output
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(CommandNode.NodeName,
                               [self.line_number,
                                self.assignments,
@@ -81,7 +81,7 @@ class SubshellNode(Command):
         self.body = body
         self.redir_list = redir_list
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(SubshellNode.NodeName,
                               [self.line_number,
                                self.body,
@@ -101,7 +101,7 @@ class AndNode(Command):
         output = "{} && {}".format(self.left_operand, self.right_operand)
         return output
     
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(AndNode.NodeName,
                               [self.left_operand,
                                self.right_operand])
@@ -120,7 +120,7 @@ class OrNode(Command):
         output = "{} || {}".format(self.left_operand, self.right_operand)
         return output
     
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(OrNode.NodeName,
                               [self.left_operand,
                                self.right_operand])
@@ -139,7 +139,7 @@ class SemiNode(Command):
         output = "{} ; {}".format(self.left_operand, self.right_operand)
         return output
     
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(SemiNode.NodeName,
                               [self.left_operand,
                                self.right_operand])
@@ -153,7 +153,7 @@ class NotNode(Command):
     def __init__(self, body):
         self.body = body
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(NotNode.NodeName,
                               self.body)
         return json_output
@@ -169,7 +169,7 @@ class RedirNode(Command):
         self.node = node
         self.redir_list = redir_list
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(RedirNode.NodeName,
                               [self.line_number,
                                self.node,
@@ -187,7 +187,7 @@ class BackgroundNode(Command):
         self.node = node
         self.redir_list = redir_list
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(BackgroundNode.NodeName,
                               [self.line_number,
                                self.node,
@@ -205,7 +205,7 @@ class DefunNode(Command):
         self.name = name
         self.body = body
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(DefunNode.NodeName,
                               [self.line_number,
                                self.name,
@@ -229,7 +229,7 @@ class ForNode(Command):
         output = "for {} in {}; do ({})".format(self.variable, self.argument, self.body)
         return output
     
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(ForNode.NodeName,
                               [self.line_number,
                                self.argument,
@@ -246,7 +246,7 @@ class WhileNode(Command):
         self.test = test
         self.body = body
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(WhileNode.NodeName,
                               [self.test,
                                self.body])
@@ -263,7 +263,7 @@ class IfNode(Command):
         self.then_b = then_b
         self.else_b = else_b
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(IfNode.NodeName,
                               [self.cond,
                                self.then_b,
@@ -281,7 +281,7 @@ class CaseNode(Command):
         self.argument = argument
         self.cases = cases
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(CaseNode.NodeName,
                               [self.line_number,
                                self.argument,
@@ -307,7 +307,7 @@ class CArgChar(ArgChar):
     def format(self) -> str:
         return str(chr(self.char))
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(CArgChar.NodeName,
                               self.char)
         return json_output
@@ -340,7 +340,7 @@ class EArgChar(ArgChar):
         else:
             return '\{}'.format(chr(self.char))
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(EArgChar.NodeName,
                               self.char)
         return json_output
@@ -356,7 +356,7 @@ class TArgChar(ArgChar):
     # def __repr__(self):
     #     return f''
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(TArgChar.NodeName,
                               self.string)
         return json_output
@@ -372,7 +372,7 @@ class AArgChar(ArgChar):
     # def __repr__(self):
     #     return f''
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(AArgChar.NodeName,
                               self.arg)
         return json_output
@@ -396,7 +396,7 @@ class VArgChar(ArgChar):
     def format(self) -> str:
         return '${{{}}}'.format(self.var)
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(VArgChar.NodeName,
                               [self.fmt,
                                self.null,
@@ -419,7 +419,7 @@ class QArgChar(ArgChar):
         joined_chars = "".join(chars)
         return '"{}"'.format(joined_chars)
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(QArgChar.NodeName,
                               self.arg)
         return json_output
@@ -438,7 +438,7 @@ class BArgChar(ArgChar):
     def format(self) -> str:
         return '$({})'.format(self.node)
 
-    def json_serialize(self):
+    def json(self):
         json_output = make_kv(BArgChar.NodeName,
                               self.node)
         return json_output
@@ -457,7 +457,7 @@ class BArgChar(ArgChar):
 ##    (which ATM does not interface with the typed form).
 def ast_node_to_untyped_deep(node):
     if(isinstance(node, AstNode)):
-        json_key, json_val = node.json_serialize()
+        json_key, json_val = node.json()
         return [json_key, ast_node_to_untyped_deep(json_val)]
     elif(isinstance(node, list)):
         return [ast_node_to_untyped_deep(obj) for obj in node]
