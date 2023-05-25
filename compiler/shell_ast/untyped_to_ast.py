@@ -103,23 +103,22 @@ def to_arg(arg_char_list):
 def to_arg_char(arg_char):
     k, v = arg_char
     if k == "C":
-        return arg_char
+        return CArgChar(v)
     elif k == "E":
-        return arg_char
+        return EArgChar(v)
     elif k == "T":
-        return arg_char
+        return TArgChar(v)
     elif k == "A":
-        return make_kv(k, to_arg(v))
+        return AArgChar(to_arg(v))
     elif k == "V":
-        return make_kv(k,
-                       [v[0],
-                        v[1],
-                        v[2],
-                        to_arg(v[3])])
+        return VArgChar(fmt=v[0],
+                        null=v[1],
+                        var=v[2],
+                        arg=to_arg(v[3]))
     elif k == "Q":
-        return make_kv(k, to_arg(v))
+        return QArgChar(to_arg(v))
     elif k == "B":
-        return make_kv(k, to_ast_node(v))
+        return BArgChar(to_ast_node(v))
     assert(False)
 
 def to_case_list(case_list):

@@ -1,9 +1,17 @@
+import abc
 from json import JSONEncoder
 
 from util import make_kv
 
-class AstNode:
+class AstNode(metaclass=abc.ABCMeta):
     NodeName = 'None'
+
+    @abc.abstractmethod
+    def json_serialize(self):
+        return
+
+class Command(AstNode):
+    pass
 
 class CustomJSONEncoder(JSONEncoder):
     def default(self, obj):
@@ -12,11 +20,10 @@ class CustomJSONEncoder(JSONEncoder):
         # Let the base class default method raise the TypeError
         return JSONEncoder.default(self, obj)
 
-
-class PipeNode(AstNode):
+class PipeNode(Command):
     NodeName = 'Pipe'
     is_background: bool
-    items: "list[AstNode]"
+    items: "list[Command]"
 
     def __init__(self, is_background, items):
         self.is_background = is_background
@@ -34,7 +41,7 @@ class PipeNode(AstNode):
                                self.items])
         return json_output
 
-class CommandNode(AstNode):
+class CommandNode(Command):
     NodeName = 'Command'
     line_number: int
     assignments: list
@@ -63,10 +70,10 @@ class CommandNode(AstNode):
                                self.redir_list])
         return json_output
 
-class SubshellNode(AstNode):
+class SubshellNode(Command):
     NodeName = 'Subshell'
     line_number: int
-    body: AstNode
+    body: Command
     redir_list: list
 
     def __init__(self, line_number, body, redir_list):
@@ -81,10 +88,10 @@ class SubshellNode(AstNode):
                                self.redir_list])
         return json_output
         
-class AndNode(AstNode):
+class AndNode(Command):
     NodeName = 'And'
-    left_operand: AstNode
-    right_operand: AstNode
+    left_operand: Command
+    right_operand: Command
 
     def __init__(self, left_operand, right_operand):
         self.left_operand = left_operand
@@ -100,10 +107,10 @@ class AndNode(AstNode):
                                self.right_operand])
         return json_output
 
-class OrNode(AstNode):
+class OrNode(Command):
     NodeName = 'Or'
-    left_operand: AstNode
-    right_operand: AstNode
+    left_operand: Command
+    right_operand: Command
 
     def __init__(self, left_operand, right_operand):
         self.left_operand = left_operand
@@ -119,10 +126,10 @@ class OrNode(AstNode):
                                self.right_operand])
         return json_output
     
-class SemiNode(AstNode):
+class SemiNode(Command):
     NodeName = 'Semi'
-    left_operand: AstNode
-    right_operand: AstNode
+    left_operand: Command
+    right_operand: Command
 
     def __init__(self, left_operand, right_operand):
         self.left_operand = left_operand
@@ -139,9 +146,9 @@ class SemiNode(AstNode):
         return json_output
 
 
-class NotNode(AstNode):
+class NotNode(Command):
     NodeName = 'Not'
-    body: AstNode
+    body: Command
 
     def __init__(self, body):
         self.body = body
@@ -151,10 +158,10 @@ class NotNode(AstNode):
                               self.body)
         return json_output
 
-class RedirNode(AstNode):
+class RedirNode(Command):
     NodeName = 'Redir'
     line_number: int
-    node: AstNode
+    node: Command
     redir_list: list
 
     def __init__(self, line_number, node, redir_list):
@@ -169,10 +176,10 @@ class RedirNode(AstNode):
                                self.redir_list])
         return json_output
 
-class BackgroundNode(AstNode):
+class BackgroundNode(Command):
     NodeName = 'Background'
     line_number: int
-    node: AstNode
+    node: Command
     redir_list: list
 
     def __init__(self, line_number, node, redir_list):
@@ -187,11 +194,11 @@ class BackgroundNode(AstNode):
                                self.redir_list])
         return json_output
 
-class DefunNode(AstNode):
+class DefunNode(Command):
     NodeName = 'Defun'
     line_number: int
     name: object
-    body: AstNode
+    body: Command
 
     def __init__(self, line_number, name, body):
         self.line_number = line_number
@@ -205,11 +212,11 @@ class DefunNode(AstNode):
                                self.body])
         return json_output
 
-class ForNode(AstNode):
+class ForNode(Command):
     NodeName = 'For'
     line_number: int
     argument: object
-    body: AstNode
+    body: Command
     variable: object
 
     def __init__(self, line_number, argument, body, variable):
@@ -230,10 +237,10 @@ class ForNode(AstNode):
                                self.variable])
         return json_output
 
-class WhileNode(AstNode):
+class WhileNode(Command):
     NodeName = 'While'
-    test: AstNode
-    body: AstNode
+    test: Command
+    body: Command
 
     def __init__(self, test, body):
         self.test = test
@@ -245,11 +252,11 @@ class WhileNode(AstNode):
                                self.body])
         return json_output
 
-class IfNode(AstNode):
+class IfNode(Command):
     NodeName = 'If'
-    cond: AstNode
-    then_b: AstNode
-    else_b: AstNode
+    cond: Command
+    then_b: Command
+    else_b: Command
 
     def __init__(self, cond, then_b, else_b):
         self.cond = cond
@@ -263,7 +270,7 @@ class IfNode(AstNode):
                                self.else_b])
         return json_output
 
-class CaseNode(AstNode):
+class CaseNode(Command):
     NodeName = 'Case'
     line_number: int
     argument: object
@@ -280,7 +287,163 @@ class CaseNode(AstNode):
                                self.argument,
                                self.cases])
         return json_output
+
+class ArgChar(AstNode):
+    ## This method formats an arg_char to a string to
+    ## the best of its ability
+    def format(self) -> str:
+        raise NotImplementedError
+
+class CArgChar(ArgChar):
+    NodeName = 'C'
+    char: int
+
+    def __init__(self, char: int):
+        self.char = char
+
+    def __repr__(self):
+        return self.format()
     
+    def format(self) -> str:
+        return str(chr(self.char))
+
+    def json_serialize(self):
+        json_output = make_kv(CArgChar.NodeName,
+                              self.char)
+        return json_output
+
+class EArgChar(ArgChar):
+    NodeName = 'E'
+    char: int
+
+    def __init__(self, char: int):
+        self.char = char
+
+    ## TODO: Implement
+    def __repr__(self):
+        return f'\\{chr(self.char)}'
+
+    def format(self) -> str:
+        ## TODO: This is not right. I think the main reason for the
+        ## problems is the differences between bash and the posix
+        ## standard.
+        non_escape_chars = [92, # \
+                            61, # =
+                            91, # [
+                            93, # ]
+                            45, # -
+                            58, # :
+                            126,# ~
+                            42] # *
+        if(self.char in non_escape_chars):
+            return '{}'.format(chr(self.char))
+        else:
+            return '\{}'.format(chr(self.char))
+
+    def json_serialize(self):
+        json_output = make_kv(EArgChar.NodeName,
+                              self.char)
+        return json_output
+
+class TArgChar(ArgChar):
+    NodeName = 'T'
+    string: str
+
+    def __init__(self, string: str):
+        self.string = string
+
+    ## TODO: Implement
+    # def __repr__(self):
+    #     return f''
+
+    def json_serialize(self):
+        json_output = make_kv(TArgChar.NodeName,
+                              self.string)
+        return json_output
+
+class AArgChar(ArgChar):
+    NodeName = 'A'
+    arg: "list[ArgChar]"
+
+    def __init__(self, arg: "list[ArgChar]"):
+        self.arg = arg
+
+    ## TODO: Implement
+    # def __repr__(self):
+    #     return f''
+
+    def json_serialize(self):
+        json_output = make_kv(AArgChar.NodeName,
+                              self.arg)
+        return json_output
+
+class VArgChar(ArgChar):
+    NodeName = 'V'
+    fmt: object
+    null: bool
+    var: str
+    arg: "list[ArgChar]"
+
+    def __init__(self, fmt, null: bool, var: str, arg: "list[ArgChar]"):
+        self.fmt = fmt
+        self.null = null
+        self.var = var
+        self.arg = arg
+
+    def __repr__(self):
+        return f'V({self.fmt},{self.null},{self.var},{self.arg})'
+
+    def format(self) -> str:
+        return '${{{}}}'.format(self.var)
+
+    def json_serialize(self):
+        json_output = make_kv(VArgChar.NodeName,
+                              [self.fmt,
+                               self.null,
+                               self.var,
+                               self.arg])
+        return json_output
+
+class QArgChar(ArgChar):
+    NodeName = 'Q'
+    arg: "list[ArgChar]"
+
+    def __init__(self, arg: "list[ArgChar]"):
+        self.arg = arg
+
+    def __repr__(self):
+        return f'Q({self.arg})'
+    
+    def format(self) -> str:
+        chars = [arg_char.format() for arg_char in self.arg]
+        joined_chars = "".join(chars)
+        return '"{}"'.format(joined_chars)
+
+    def json_serialize(self):
+        json_output = make_kv(QArgChar.NodeName,
+                              self.arg)
+        return json_output
+
+class BArgChar(ArgChar):
+    NodeName = 'B'
+    node: Command
+
+    def __init__(self, node: Command):
+        self.node = node
+
+    ## TODO: Implement
+    # def __repr__(self):
+    #     return f''
+
+    def format(self) -> str:
+        return '$({})'.format(self.node)
+
+    def json_serialize(self):
+        json_output = make_kv(BArgChar.NodeName,
+                              self.node)
+        return json_output
+
+
 ## This function takes an object that contains a mix of untyped and typed AstNodes (yuck) 
 ## and turns it into untyped json-like object. It is required atm because the infrastructure that
 ## we have does not translate everything to its typed form at once before compiling, and therefore
@@ -295,8 +458,8 @@ class CaseNode(AstNode):
 def ast_node_to_untyped_deep(node):
     if(isinstance(node, AstNode)):
         json_key, json_val = node.json_serialize()
-        untyped_json_val = [ast_node_to_untyped_deep(obj) for obj in json_val]
-        return [json_key, untyped_json_val]
+        # untyped_json_val = [ast_node_to_untyped_deep(obj) for obj in json_val]
+        return [json_key, ast_node_to_untyped_deep(json_val)]
     elif(isinstance(node, list)):
         return [ast_node_to_untyped_deep(obj) for obj in node]
     elif(isinstance(node, tuple)):

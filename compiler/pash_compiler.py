@@ -93,7 +93,7 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
         ret = compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config)
     except Exception as e:
         log("WARNING: Exception caught:", e)
-        # traceback.print_exc()
+        traceback.print_exc()
 
     return ret
 

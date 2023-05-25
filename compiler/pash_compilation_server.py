@@ -257,6 +257,7 @@ class Scheduler:
         daemon_compile_end_time = datetime.now()
         print_time_delta("Daemon Compile", daemon_compile_start_time, daemon_compile_end_time)
 
+        log("Optimized ast:", ast_or_ir)
 
         self.wait_unsafe()
         if ast_or_ir != None:

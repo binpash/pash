@@ -54,42 +54,10 @@ def format_arg_chars(arg_chars):
     return "".join(chars)
 
 ##
-## BIG TODO: Fix the formating of arg_chars bask to shell scripts and string.
-##           We need to do this the proper way using the parser.
+## TODO: Don't store arguments in IR commands as a string, but rather as args
 ##
-def format_arg_char(arg_char):
-    key, val = get_kv(arg_char)
-    if (key == 'C'):
-        return str(chr(val))
-    elif (key == 'B'):
-        # The $() is just for illustration. This is backticks
-        return '$({})'.format(val)
-    elif (key == 'Q'):
-        formated_val = format_arg_chars(val)
-        return '"{}"'.format(formated_val)
-    elif (key == 'V'):
-        return '${{{}}}'.format(val[2])
-    elif (key == 'E'):
-        ## TODO: This is not right. I think the main reason for the
-        ## problems is the differences between bash and the posix
-        ## standard.
-        # log(" -- escape-debug -- ", val, chr(val))
-        non_escape_chars = [92, # \
-                            61, # =
-                            91, # [
-                            93, # ]
-                            45, # -
-                            58, # :
-                            126,# ~
-                            42] # *
-        if(val in non_escape_chars):
-            return '{}'.format(chr(val))
-        else:
-            return '\{}'.format(chr(val))
-    else:
-        log("Cannot format arg_char:", arg_char)
-        ## TODO: Make this correct
-        raise NotImplementedError
+def format_arg_char(arg_char: ArgChar) -> str:
+    return arg_char.format()
 
 ## This function finds the first raw character in an argument.
 ## It needs to be called on an expanded string.
