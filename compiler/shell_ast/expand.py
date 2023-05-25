@@ -2,38 +2,30 @@ import copy
 import logging
 
 from shell_ast.ast_node import *
-from shell_ast import ast_util
-
-## TODO: Remove use of get_kv when we make all ast objects classes
-from util import get_kv
 
 ## TODO: Make this a global variable that is set so that it can be used as a library
 import config
-## Could be useful for debugging
-# import parse
 
 ################################################################################
 # SAFE EXPANSION ANALYSIS
 ################################################################################
 
 def log(msg: str):
-    logging.info('Expansion: {msg}')
+    logging.info(f'Expansion: {msg}')
 
 ## This function checks if a word is safe to expand (i.e. if it will 
 ## not have unpleasant side-effects)
-def safe_to_expand(arg_char):
-    key, val = get_kv(arg_char)
-    if (key in ['V']): # Variable
+def safe_to_expand(arg_char: ArgChar):
+    if isinstance(arg_char, VArgChar): # Variable
         return True
     return False
 
 def guess_arg(arg):
     res = ""
     for arg_char in arg:
-        key, val = get_kv(arg_char)
-
-        if (key in ['C', 'E']):
-            res += chr(val)
+        if isinstance(arg_char, CArgChar) \
+            or isinstance(arg_char, EArgChar):
+            res += chr(arg_char.char)
         else:
             return None
     return res
@@ -44,28 +36,31 @@ def safe_arg(arg):
 def safe_args(args):
     return all([safe_arg(arg) for arg in args])
 
-def safe_arg_char(arg_char):
-    key, val = get_kv(arg_char)
+def safe_arg_char(arg_char: ArgChar):
     # character, escaped---noop, but safe
-    if (key in ['C', 'E']): 
+    if isinstance(arg_char, CArgChar) \
+        or isinstance(arg_char, EArgChar):
         return True
     # tilde --- only reads system state, safe to do early assuming no writes to HOME prior
-    elif (key == 'T'):
+    elif isinstance(arg_char, TArgChar):
         return True # TODO 2020-11-24 MMG modified variable set? take in/output written vars...
     # arithmetic -- depends on what we have
-    elif (key == 'A'):
-        return safe_arith(val)
+    elif isinstance(arg_char, AArgChar):
+        return safe_arith(arg_char.arg)
     # quoted -- safe if its contents are safe
-    elif (key == 'Q'):
-        return safe_arg(val)
+    elif isinstance(arg_char, QArgChar):
+        return safe_arg(arg_char.arg)
     # variables -- safe if the format is safe as are the remaining words
-    elif (key == 'V'):
-        return safe_var(*val)
+    elif isinstance(arg_char, VArgChar):
+        return safe_var(fmt=arg_char.fmt, 
+                        null=arg_char.null, 
+                        var=arg_char.var, 
+                        arg=arg_char.arg)
     # command substitution -- depends on the command
-    elif (key == 'B'):
-        return safe_command(val)
+    elif isinstance(arg_char, BArgChar):
+        return safe_command(arg_char.node)
     
-    raise ValueError("bad key {}, expected one of CETAVQB".format(key))
+    raise ValueError("bad object {}, expected one of CETAVQB".format(arg_char))
 
 def safe_var(fmt, null, var, arg):
     if (fmt in ['Normal', 'Length']):
@@ -133,7 +128,7 @@ def safe_command(command):
     # TODO 2020-11-24 MMG which commands are safe to run in advance?
     # TODO 2020-11-24 MMG how do we differentiate it being safe to do nested expansions?
     global safe_cases
-    return ast_util.ast_match(command, safe_cases)
+    return ast_match(command, safe_cases)
 
 def safe_pipe(node):
     return False
@@ -323,15 +318,14 @@ def invalidate_variable(var, reason, config):
 def try_string(expanded):
     res = ""
     for arg_char in expanded:
-        key, val = get_kv(arg_char)
-
-        if key in ['C', 'E']:
+        if isinstance(arg_char, CArgChar) \
+            or isinstance(arg_char, EArgChar):
             res += chr(val)
-        elif key in ['Q']:
+        elif isinstance(arg_char, QArgChar):
             # TODO 2020-12-17 fields issues
-            res += try_string(val)
+            res += try_string(arg_char.arg)
         else:
-            raise StuckExpansion("left over control code", expanded, val)
+            raise StuckExpansion("left over control code", expanded, arg_char)
 
     return res
 
@@ -352,7 +346,9 @@ def expand_args(args, config, quoted = False):
         # expanded! add the string in
         res.append(new)
 
-    return split_args(res, config)
+    splitted_args = split_args(res, config)
+
+    return splitted_args
 
 def split_args(args, config):
     _, ifs = lookup_variable("IFS", config)
@@ -367,8 +363,7 @@ def split_args(args, config):
         cur = []
 
         for c in arg:
-            (key, val) = c
-            if key == 'C' and val in ifs:
+            if isinstance(c, CArgChar) and c.char in ifs:
                  # split!
                  if len(cur) > 0: # TODO(mmg): or if val isn't IFS whitespace
                      res.append(cur)
@@ -381,13 +376,11 @@ def split_args(args, config):
 
     return res
 
-def char_code(c):
-    type = "C"
-
+def char_code(c) -> ArgChar:
     if c in "'\\\"()${}[]*?":
-        type = "E"
-    
-    return [type, ord(c)]
+        return EArgChar(ord(c))
+    else:
+        return CArgChar(ord(c))
 
 def expand_arg(arg_chars, config, quoted = False):
     # log(f'expanding arg {arg_chars}")
@@ -403,19 +396,19 @@ def expand_arg(arg_chars, config, quoted = False):
 
     return res
 
-def expand_arg_char(arg_char, quoted, config):
-    key, val = get_kv(arg_char)
-    if key == 'C':
-        if val in ['*', '?', '{', '}', '[', ']'] and not quoted:
+def expand_arg_char(arg_char: ArgChar, quoted, config):
+    if isinstance(arg_char, CArgChar):
+        if arg_char.char in ['*', '?', '{', '}', '[', ']'] and not quoted:
             raise Unimplemented("globbing", arg_char)
 
         return [arg_char]
-    elif key == 'E':
+    elif isinstance(arg_char, EArgChar):
         ## 2021-09-15 MMG Just guessing here
-        if val in ['*', '?', '{', '}', '[', ']'] and not quoted:
+        if arg_char.char in ['*', '?', '{', '}', '[', ']'] and not quoted:
             raise Unimplemented("globbing", arg_char)
         return [arg_char]
-    elif key == 'T':
+    elif isinstance(arg_char, TArgChar):
+        val = arg_char.string
         if val is None or val == "" or val == "None":
             _type, val = lookup_variable("HOME", config)
 
@@ -428,19 +421,24 @@ def expand_arg_char(arg_char, quoted, config):
         else:
             # TODO 2020-12-10 getpwnam
             raise Unimplemented("~ with prefix", arg_char)
-    elif key == 'A':
+    elif isinstance(arg_char, AArgChar):
         # TODO 2020-12-10 arithmetic parser and evaluator
         raise Unimplemented("arithmetic", arg_char)
-    elif key == 'Q':
-        return [['Q', expand_arg(val, config, quoted = True)]]
-    elif key == 'V':
-        fmt, null, var, arg = val
-        return expand_var(fmt, null, var, arg, quoted, config)
-    elif key == 'B':
+    elif isinstance(arg_char, QArgChar):
+        return [QArgChar(expand_arg(arg_char.arg, config, quoted = True))]
+        # return [['Q', expand_arg(arg_char.arg, config, quoted = True)]]
+    elif isinstance(arg_char, VArgChar):
+        return expand_var(fmt=arg_char.fmt, 
+                          null=arg_char.null, 
+                          var=arg_char.var, 
+                          arg=arg_char.arg, 
+                          quoted=quoted, 
+                          config=config)
+    elif isinstance(arg_char, BArgChar):
         # TODO 2020-12-10 run commands?
         raise ImpureExpansion("command substitution", arg_char)
     else:
-        raise Unimplemented("weird key", key)
+        raise Unimplemented("weird object", arg_char)
 
 def expand_var(fmt, null, var, arg, quoted, config):
     # TODO 2020-12-10 special variables
@@ -525,7 +523,7 @@ def expand_command(command, config):
     # TODO 2020-11-24 MMG which commands are safe to run in advance?
     # TODO 2020-11-24 MMG how do we differentiate it being safe to do nested expansions?
     global expand_cases
-    return ast_util.ast_match(command, expand_cases, config)
+    return ast_match(command, expand_cases, config)
 
 def expand_pipe(node, config):
     for i, n in enumerate(node.items):

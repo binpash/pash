@@ -11,15 +11,15 @@ class DFSSplitReader(DFGNode):
                          com_assignments=com_assignments)
 
     def set_server_address(self, addr): # ex addr: 127.0.0.1:50051
-         self.com_options.append((3, Arg(string_to_argument(f"--addr {addr}"))))
+         self.com_options.append((3, Arg.string_to_arg(f"--addr {addr}")))
 
 def make_dfs_split_reader_node(inputs, output, split_num, prefix):
     split_reader_bin = os.path.join(config.PASH_TOP, config.config['runtime']['dfs_split_reader_binary'])
-    com_name = Arg(string_to_argument(split_reader_bin))
+    com_name = Arg.string_to_arg(split_reader_bin)
     com_category = "pure"
     options = []
-    options.append((1, Arg(string_to_argument(f"--prefix '{prefix}'"))))
-    options.append((2, Arg(string_to_argument(f"--split {split_num}"))))
+    options.append((1, Arg.string_to_arg(f"--prefix '{prefix}'")))
+    options.append((2, Arg.string_to_arg(f"--split {split_num}")))
 
     return DFSSplitReader(inputs,
                [output],

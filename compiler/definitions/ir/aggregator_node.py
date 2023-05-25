@@ -10,7 +10,7 @@ class MapperAggregatorNode(DFGNode):
     def __init__(self, old_node, input_ids, output_ids, name_string, new_options, flag_option_list):
 
         ## The name of the aggregator command
-        name = Arg(string_to_argument(name_string))
+        name = Arg.string_to_arg(name_string)
 
         ## TODO: The category should also be acquired through annotations (and maybe should be asserted to be at most pure)
         com_category="pure"

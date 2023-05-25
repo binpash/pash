@@ -35,6 +35,7 @@ def parse_shell_to_asts_interactive(input_script_path: str):
 def from_ast_objects_to_shell(asts):
     shell_list = []
     for ast in asts:
+        # log("Ast:", ast)
         if(isinstance(ast, UnparsedScript)):
             shell_list.append(ast.text)
         else:
@@ -44,10 +45,7 @@ def from_ast_objects_to_shell(asts):
             ##
             ## TODO: At some point this should be fixed and we should only work with the AstNode abstraction
             ##       and only serialize at the end. There is more info on that in ast_node.py
-            if(isinstance(ast, AstNode)):
-                serialized_ast = ast_node_to_untyped_deep(ast)
-            else:
-                serialized_ast = ast
+            serialized_ast = ast_node_to_untyped_deep(ast)
 
             shell_list.append(libdash.printer.to_string(serialized_ast))
     return "\n".join(shell_list) + "\n"

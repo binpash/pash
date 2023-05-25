@@ -26,7 +26,7 @@ def make_dgsh_tee_node(input_id, output_id):
                         OptionWithIO("-o", output_id),
                         Flag("-I"),
                         Flag("-f"),
-                        OptionWithIO("-b", ArgStringType(Arg(string_to_argument(str(config.config['runtime']['dgsh_buffer_size'])))))]
+                        OptionWithIO("-b", ArgStringType(Arg.string_to_arg(str(config.config['runtime']['dgsh_buffer_size']))))]
 
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=dgsh_tee_bin,

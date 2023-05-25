@@ -5,6 +5,7 @@ import pickle
 import config
 
 from env_var_names import *
+from shell_ast.ast_node import ast_match
 from shell_ast.ast_util import *
 from shell_ast.untyped_to_ast import to_ast_node
 from parse import from_ast_objects_to_shell
