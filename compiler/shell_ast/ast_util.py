@@ -41,10 +41,6 @@ class UnparsedScript:
 def check_if_ast_is_supported(construct, arguments, **kwargs):
     return
 
-## Implements a pattern-matching style traversal over the AST
-def ast_match(ast_node, cases, *args):
-    return cases[type(ast_node).NodeName](*args)(ast_node)
-
 def format_args(args):
     formatted_args = [format_arg_chars(arg_chars) for arg_chars in args]
     return formatted_args
@@ -53,82 +49,12 @@ def format_arg_chars(arg_chars):
     chars = [format_arg_char(arg_char) for arg_char in arg_chars]
     return "".join(chars)
 
-##
-## BIG TODO: Fix the formating of arg_chars bask to shell scripts and string.
-##           We need to do this the proper way using the parser.
-##
-def format_arg_char(arg_char):
-    key, val = get_kv(arg_char)
-    if (key == 'C'):
-        return str(chr(val))
-    elif (key == 'B'):
-        # The $() is just for illustration. This is backticks
-        return '$({})'.format(val)
-    elif (key == 'Q'):
-        formated_val = format_arg_chars(val)
-        return '"{}"'.format(formated_val)
-    elif (key == 'V'):
-        return '${{{}}}'.format(val[2])
-    elif (key == 'E'):
-        ## TODO: This is not right. I think the main reason for the
-        ## problems is the differences between bash and the posix
-        ## standard.
-        # log(" -- escape-debug -- ", val, chr(val))
-        non_escape_chars = [92, # \
-                            61, # =
-                            91, # [
-                            93, # ]
-                            45, # -
-                            58, # :
-                            126,# ~
-                            42] # *
-        if(val in non_escape_chars):
-            return '{}'.format(chr(val))
-        else:
-            return '\{}'.format(chr(val))
-    else:
-        log("Cannot format arg_char:", arg_char)
-        ## TODO: Make this correct
-        raise NotImplementedError
+def format_arg_char(arg_char: ArgChar) -> str:
+    return arg_char.format()
 
-## This function finds the first raw character in an argument.
-## It needs to be called on an expanded string.
-def format_expanded_arg_chars(arg_chars):
-    chars = [format_expanded_arg_char(arg_char) for arg_char in arg_chars]
-    return "".join(chars)
-
-def format_expanded_arg_char(arg_char):
-    key, val = get_kv(arg_char)
-    if (key == 'C'):
-        return str(chr(val))
-    elif (key == 'Q'):
-        formated_val = format_expanded_arg_chars(val)
-        return '{}'.format(formated_val)
-    elif (key == 'E'):
-        ## TODO: I am not sure if this should add \ or not
-        ##
-        ## TODO: This is not right. I think the main reason for the
-        ## problems is the differences between bash and the posix
-        ## standard.
-        # log(" -- escape-debug -- ", val, chr(val))
-        non_escape_chars = [92, # \
-                            61, # =
-                            91, # [
-                            93, # ]
-                            45, # -
-                            58, # :
-                            126,# ~
-                            42] # *
-        if(val in non_escape_chars):
-            return '{}'.format(chr(val))
-        else:
-            return '\{}'.format(chr(val))
-    else:
-        log("Expanded arg char should not contain:", arg_char)
-        ## TODO: Make this correct
-        raise ValueError
-
-
+def string_to_carg_char_list(string: str) -> "list[CArgChar]":
+    ret = [CArgChar(ord(char)) for char in string]
+    return ret
 
 def string_to_arguments(string):
     return [string_to_argument(word) for word in string.split(" ")]

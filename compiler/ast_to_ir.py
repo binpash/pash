@@ -1,9 +1,9 @@
+from shell_ast.ast_node import *
 from shell_ast.ast_util import *
 from ir import *
-from shell_ast.ast_node import *
 from util import *
 from parse import from_ast_objects_to_shell
-from shell_ast.expand import *
+from shell_ast.expand import expand_command
 import subprocess
 import config
 
@@ -54,6 +54,7 @@ def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
 
         ## Compile subtrees of the AST to out intermediate representation
         expanded_ast = expand_command(ast_object, config)
+        # log("Expanded:", expanded_ast)
         compiled_ast = compile_node(expanded_ast, fileIdGen, config)
 
         # log("Compiled AST:")
@@ -111,7 +112,7 @@ def compile_node_pipe(ast_node, fileIdGen, config):
     ##       be one IR
     compiled_ir = compiled_pipe_nodes[0]
     ## Save the old ast for the end-to-end prototype
-    old_untyped_ast_node = ast_node.json_serialize()
+    old_untyped_ast_node = ast_node.json()
     compiled_ir.set_ast(old_untyped_ast_node)
     ## Set the IR background so that it can be parallelized with
     ## the next command if the pipeline was run in background
@@ -161,7 +162,7 @@ def compile_node_command(ast_node, fileIdGen, config):
                                     redirections=compiled_redirections)
         compiled_ast = ir
     except ValueError as err:
-        log(err)
+        log("Command not compiled to DFG:", err)
         ## TODO: Maybe we want to fail here instead of waiting for later?
         ##       Is there any case where a non-compiled command is fine?
         # log(traceback.format_exc())
@@ -303,25 +304,25 @@ def expand_command_argument(argument, config):
 ## This function compiles an arg char by recursing if it contains quotes or command substitution.
 ##
 ## It is currently being extended to also expand any arguments that are safe to expand.
-def compile_arg_char(arg_char, fileIdGen, config):
+def compile_arg_char(arg_char: ArgChar, fileIdGen, config):
     ## Compile the arg char
-    key, val = get_kv(arg_char)
-    if (key in ['C',   # Single character
-                'E']): # Escape
+    if isinstance(arg_char, CArgChar) \
+        or isinstance(arg_char, EArgChar):
+        # Single character or escape
         return arg_char
-    elif (key == 'B'):
+    elif isinstance(arg_char, BArgChar):
         ## TODO: I probably have to redirect the input of the compiled
         ##       node (IR) to be closed, and the output to be
         ##       redirected to some file that we will use to write to
         ##       the command argument to complete the command
         ##       substitution.
-        compiled_node = compile_node(val, fileIdGen, config)
-        return [key, compiled_node]
-    elif (key == 'Q'):
-        compiled_val = compile_command_argument(val, fileIdGen, config)
-        return [key, compiled_val]
+        arg_char.node = compile_node(arg_char.node, fileIdGen, config)
+        return arg_char
+    elif isinstance(arg_char, QArgChar):
+        arg_char.arg = compile_command_argument(arg_char.arg, fileIdGen, config)
+        return arg_char
     else:
-        log("Unknown arg_char:", arg_char)
+        log(f'Unknown arg_char: {arg_char}')
         ## TODO: Complete this
         return arg_char
 
