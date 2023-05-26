@@ -9,7 +9,6 @@ from pash_annotations.annotation_generation.datatypes.parallelizability.Aggregat
 import config
 from ir import *
 from ast_to_ir import compile_asts
-from json_ast import *
 from ir_to_ast import to_shell
 from pash_graphviz import maybe_generate_graphviz
 from util import *

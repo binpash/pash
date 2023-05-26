@@ -1,7 +1,7 @@
 import copy
 import logging
 
-from shell_ast.ast_node import *
+from shasta.ast_node import *
 
 ################################################################################
 # SAFE EXPANSION ANALYSIS
@@ -533,13 +533,10 @@ def expand_redir_list(redir_list, exp_state):
 
     return redir_list
 
-def expand_redir(redirection, exp_state):
-    redir_type = redirection[0]
-    redir_subtype = redirection[1][0]
-    stream_id = redirection[1][1]
-    file_arg = expand_arg(redirection[1][2], exp_state)
+def expand_redir(redirection: RedirectionNode, exp_state):
+    file_arg = expand_arg(redirection.arg, exp_state)
 
-    redirection[1][2] = file_arg
+    redirection.arg = file_arg
     return redirection
 
 def expand_and_or_semi(node, exp_state):

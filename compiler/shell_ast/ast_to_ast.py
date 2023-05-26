@@ -5,9 +5,9 @@ import pickle
 import config
 
 from env_var_names import *
-from shell_ast.ast_node import ast_match
+from shasta.ast_node import ast_match
 from shell_ast.ast_util import *
-from shell_ast.untyped_to_ast import to_ast_node
+from shasta.untyped_to_ast import to_ast_node
 from parse import from_ast_objects_to_shell
 from speculative import util_spec
 
@@ -544,7 +544,7 @@ def preprocess_node_case(ast_node, trans_options, last_object=False):
 ##
 ## If we are need to disable parallel pipelines, e.g., if we are in the context of an if,
 ## or if we are in the end of a script, then we set a variable.
-def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast_text=None):
+def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast_text=None) -> AstNode:
     transformation_mode = trans_options.get_mode()
     if transformation_mode is TransformationType.PASH:
         ir_filename = ptempfile()
@@ -585,14 +585,13 @@ def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast
         ## Unreachable
         assert(False)
 
-    return replaced_node
+    return to_ast_node(replaced_node)
 
 
 def get_shell_from_ast(asts, ast_text=None) -> str:
     ## If we don't have the original ast text, we need to unparse the ast
     if (ast_text is None):
-        kv_asts = [ast_node_to_untyped_deep(ast) for ast in asts]
-        text_to_output = from_ast_objects_to_shell(kv_asts)
+        text_to_output = from_ast_objects_to_shell(asts)
     else:
         text_to_output = ast_text
     return text_to_output

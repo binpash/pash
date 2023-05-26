@@ -1,5 +1,5 @@
 
-from shell_ast.ast_node import *
+from shasta.ast_node import *
 
 def to_ast_node(obj) -> AstNode:
     k, v = obj
