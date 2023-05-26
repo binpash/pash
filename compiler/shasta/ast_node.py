@@ -704,7 +704,7 @@ class DupRedirNode(RedirectionNode):
         return json_output
     
     def pretty(self):
-        subtype = self.redir_type
+        subtype = self.dup_type
         fd = self.fd
         tgt = self.arg
         if subtype == "ToFD":

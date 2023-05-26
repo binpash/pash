@@ -315,6 +315,12 @@ test_env_vars()
     diff tmp1.txt tmp2.txt
 }
 
+test_redir_dup()
+{
+    local shell=$1
+    $shell redir-dup.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -358,6 +364,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_redir_var_test
     run_test test_star
     run_test test_env_vars
+    run_test test_redir_dup
 else
     for testname in $@
     do
