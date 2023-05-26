@@ -70,11 +70,8 @@ def set_config_globals_from_pash_args(given_pash_args):
     # Set debug level
     if given_pash_args.debug == 1:
         logging.getLogger().setLevel(logging.INFO)
-    elif given_pash_args.debug == 2:
+    elif given_pash_args.debug >= 2:
         logging.getLogger().setLevel(logging.DEBUG)
-    elif given_pash_args.debug >= 3:
-        logging.getLogger().setLevel(logging.TRACE)
-
 
 ## Increase the recursion limit (it seems that the parser/unparser needs it for bigger graphs)
 sys.setrecursionlimit(10000)
