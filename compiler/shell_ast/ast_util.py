@@ -1,7 +1,7 @@
 
 from env_var_names import *
-from shell_ast.ast_node import *
-from shell_ast.untyped_to_ast import *
+from shasta.ast_node import *
+from shasta.untyped_to_ast import *
 from util import *
 
 

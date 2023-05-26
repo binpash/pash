@@ -1,6 +1,6 @@
 from __future__ import annotations
+from shasta.ast_node import *
 from shell_ast.ast_util import *
-from shell_ast.ast_node import *
 from util import *
 
 class Arg:

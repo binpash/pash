@@ -4,13 +4,13 @@ import subprocess
 import sys
 
 from shell_ast.ast_util import UnparsedScript
-from shell_ast.ast_node import AstNode, ast_node_to_untyped_deep
-from shell_ast.untyped_to_ast import to_ast_node
+from shasta.ast_node import ast_node_to_untyped_deep
+from shasta.untyped_to_ast import to_ast_node
+from shasta.ast_node import string_of_arg
 
 from util import *
 
 import libdash.parser
-import libdash.printer
 
 ## Parses straight a shell script to an AST
 ## through python without calling it as an executable
@@ -39,15 +39,7 @@ def from_ast_objects_to_shell(asts):
         if(isinstance(ast, UnparsedScript)):
             shell_list.append(ast.text)
         else:
-            ## We are working with two different abstractions for ASTs, one is the class and the other
-            ## is its JSON object form. Due to Python's _disgusting_ lack of types (and our bad code)
-            ## you can sometimes end up here with both.
-            ##
-            ## TODO: At some point this should be fixed and we should only work with the AstNode abstraction
-            ##       and only serialize at the end. There is more info on that in ast_node.py
-            serialized_ast = ast_node_to_untyped_deep(ast)
-
-            shell_list.append(libdash.printer.to_string(serialized_ast))
+            shell_list.append(ast.pretty())
     return "\n".join(shell_list) + "\n"
 
 def from_ast_objects_to_shell_file(asts, new_shell_filename):
@@ -66,9 +58,9 @@ def parse_shell(input_script_path):
     return parser_output.stdout
 
 
-## Simply wraps the ceda string_of_arg
+## Simply wraps the string_of_arg
 def pash_string_of_arg(arg, quoted=False):
-    return libdash.printer.string_of_arg(arg, quoted)
+    return string_of_arg(arg, quoted)
 
 ### Legacy
 

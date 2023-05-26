@@ -1,4 +1,4 @@
-from shell_ast.ast_node import *
+from shasta.ast_node import *
 from shell_ast.ast_util import *
 from ir import *
 from util import *
@@ -344,11 +344,9 @@ def compile_assignments(assignments, fileIdGen, config):
     return compiled_assignments
 
 def compile_redirection(redirection, fileIdGen, config):
-    redir_type = redirection[0]
-    redir_subtype = redirection[1][0]
-    stream_id = redirection[1][1]
-    file_arg = compile_command_argument(redirection[1][2], fileIdGen, config)
-    return [redir_type, [redir_subtype, stream_id, file_arg]]
+    file_arg = compile_command_argument(redirection.arg, fileIdGen, config)
+    redirection.arg = file_arg
+    return redirection
 
 def compile_redirections(redirections, fileIdGen, config):
     compiled_redirections = [compile_redirection(redirection, fileIdGen, config)
