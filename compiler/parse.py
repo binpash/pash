@@ -47,25 +47,6 @@ def from_ast_objects_to_shell_file(asts, new_shell_filename):
     with open(new_shell_filename, 'w') as new_shell_file:
         new_shell_file.write(script)
 
-def parse_shell(input_script_path):
-    if(not os.path.isfile(input_script_path)):
-        log("Error! File:", input_script_path, "does not exist.", level=0)
-        sys.exit(1)
-    parser_output = subprocess.run([config.PARSER_BINARY, input_script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-    if (not parser_output.returncode == 0):
-        log(parser_output.stderr)
-        parser_output.check_returncode()
-    return parser_output.stdout
-
-
 ## Simply wraps the string_of_arg
 def pash_string_of_arg(arg, quoted=False):
     return string_of_arg(arg, quoted)
-
-### Legacy
-
-def from_ir_to_shell_legacy(ir_filename):
-    printer_output = subprocess.run([config.PRINTER_BINARY, ir_filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-    printer_output.check_returncode()
-    preprocessed_script = printer_output.stdout
-    return preprocessed_script
