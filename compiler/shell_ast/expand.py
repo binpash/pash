@@ -213,76 +213,8 @@ class InvalidVariable(RuntimeError):
         self.var = var
         self.reason = reason
 
-## TODO: Figure out if there is a way to batch calls to bash and ask it 
-##       to expand everything at once! We would need to make variable lookups asynchronous.
-##
-## TODO: `exp_state` doesn't need to be passed down since it is imported
 def lookup_variable(var, exp_state):
-    ## If the variable is input arguments then get it from pash_input_args.
-    ##
-    ## TODO KK PR#246 Do we need to split using IFS or is it always spaces?
-    ##
-    ## TODO KK PR#246 Maybe instead of this we could do this setup
-    ##      once during initialization and leave lookup unaltered?
-    ##
-    ## TODO MMG this isn't quite adequate: if pash_input_args contains
-    ##      spaces, we'll miscount. KK and I wrote a test
-    ##      evaluation/tests/interface_tests that's disabled as of PR#246.
-    ##
-    ##      the right solution here is:
-    ##
-    ##         - positional arguments get their own field in the
-    ##           exp_state---they're not store with ordinary shell
-    ##           variables
-    ##
-    ##         - we save those separately, probably in a separate file
-    ##
-    ##           ```
-    ##           echo pash_argc=$# >pash_positional_args
-    ##           for i in $(seq 0 $#)
-    ##           do
-    ##             echo "pash_arg$i=\"$i\"" >pash_positional_args
-    ##           done
-    ##           ```
-    ##
-    ##         - we load these separately. pretty annoying; here's a sketch
-    ##
-    ##           ```
-    ##           cmd="set --"
-    ##           for i in $(seq 0 $pash_argc)
-    ##           do
-    ##             cmd="$cmd \"\$pash_arg$i\""
-    ##           done
-    ##           eval "$cmd"
-
-
-    if(var == '@'):
-        argument_values = lookup_variable_inner_core('pash_input_args', exp_state)
-        expanded_var = " ".join(argument_values)
-    elif(var == '?'):
-        expanded_var = lookup_variable_inner('pash_previous_exit_status', exp_state)
-    elif(var == '-'):
-        expanded_var = lookup_variable_inner('pash_previous_set_status', exp_state)
-    elif(var == '#'):
-        argument_values = lookup_variable_inner_core('pash_input_args', exp_state)
-        expanded_var = str(len(argument_values))
-    elif(var.isnumeric() and int(var) >= 1):
-        input_args = lookup_variable_inner_core('pash_input_args', exp_state)
-        # split_args = input_args.split()
-        index = int(var) - 1
-        try:
-            expanded_var = input_args[index]
-        except:
-            ## If there are not enough arguments -u is set we need to raise
-            if is_u_set(exp_state):
-                raise StuckExpansion("-u is set and positional argument wasn't set", var)
-
-            expanded_var = ''
-    elif(var == '0'):
-        expanded_var = lookup_variable_inner('pash_shell_name', exp_state)
-    else:
-        ## TODO: We can pull this to expand any string.
-        expanded_var = lookup_variable_inner(var, exp_state)
+    expanded_var = lookup_variable_inner(var, exp_state)
     
     return None, expanded_var
 
@@ -311,8 +243,7 @@ def lookup_variable_inner_unsafe(varname, exp_state: ExpansionState):
 
 ## This function checks if the -u flag is set
 def is_u_set(exp_state: ExpansionState):
-    ## This variable is set by pash and is exported and therefore will be in the variable file.
-    _type, value = exp_state.variables["pash_previous_set_status"]
+    value = lookup_variable_inner_unsafe('-', exp_state)
     # log(f'Previous set status is: {value}')
     return "u" in value
 
@@ -322,9 +253,6 @@ def invalidate_variable(var, reason, exp_state):
     return exp_state
 
 
-## TODO: Replace this with an expansion that happens in the bash mirror
-##
-## TODO: If there is any potential side-effect, exit early
 def expand_args(args, exp_state, quoted = False):
     res = []
     for arg in args:
@@ -371,7 +299,6 @@ def char_code(c) -> ArgChar:
 
 def expand_arg(arg_chars, exp_state, quoted = False):
     # log(f'expanding arg {arg_chars}")
-    # log(f"unparsed_string: {parse.pash_string_of_arg(arg_chars)}")
     res = []
     for arg_char in arg_chars:
         new = expand_arg_char(arg_char, quoted, exp_state)
