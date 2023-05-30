@@ -10,7 +10,9 @@ cd $(dirname $0)
 if [ ! -f ./100M.txt ]; then
   curl -sf --connect-timeout 10 'ndr.md/data/dummy/100M.txt' > 100M.txt
   if [ $? -ne 0 ]; then
-    curl -f 'http://www.gutenberg.org/files/2600/2600-0.txt' | head -c 1M > 1M.txt
+    # Pipe curl through tac (twice) in order to consume all the output from curl.
+    # This way, curl can write the whole page and not emit an error code.
+    curl -fL 'http://www.gutenberg.org/files/2600/2600-0.txt' | tac | tac | head -c 1M > 1M.txt
     [ $? -ne 0 ] && eexit 'cannot find 1M.txt'
     touch 100M.txt
     for (( i = 0; i < 100; i++ )); do
