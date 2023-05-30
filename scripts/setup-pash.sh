@@ -66,7 +66,6 @@ $PASH_TOP/evaluation/tests/input/setup.sh
 # export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 echo " * * * "
 echo "Do not forget to export PASH_TOP before using pash: \`export PASH_TOP=$PASH_TOP\`"
-echo '(optionally, you can update PATH to include it: `export PATH=$PATH:$PASH_TOP`)'
 echo " * * * "
 # in case we are running on docker or CI, installation is complete at this moment
 if [[ -f /.dockerenv || -f /.githubenv ]]; then
