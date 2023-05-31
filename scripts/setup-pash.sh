@@ -22,11 +22,7 @@ mkdir -p $PYTHON_PKG_DIR
 
 echo "Installing python dependencies..."
 
-python3 -m pip install graphviz --root $PYTHON_PKG_DIR --ignore-installed
-python3 -m pip install libdash --root $PYTHON_PKG_DIR --ignore-installed
-python3 -m pip install 'pash-annotations>=0.2.0' --no-cache-dir --root $PYTHON_PKG_DIR --ignore-installed
-python3 -m pip install 'shasta==0.1.0' --no-cache-dir --root $PYTHON_PKG_DIR --ignore-installed
-python3 -m pip install sh-expand --no-cache-dir --root $PYTHON_PKG_DIR --ignore-installed
+python3 -m pip install -r "$PASH_TOP/requirements.txt" --no-cache-dir --root $PYTHON_PKG_DIR --ignore-installed
 
 ## numpy and matplotlib are only needed to generate the evaluation plots so they should not be in the main path
 if [[ "$install_eval" == 1 ]];  then

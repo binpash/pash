@@ -1,1 +1,0 @@
-cat $PASH_TOP/evaluation/tests/input/1M.txt |  tr [:lower:] [:upper:] | tr -s [:space:] | tr -d [:digit:] > out
