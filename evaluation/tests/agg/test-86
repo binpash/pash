@@ -1,3 +1,0 @@
-LC_COLLATE=C
-IN=$PASH_TOP/evaluation/tests/input/words
-cat $PASH_TOP/evaluation/tests/input/1M.txt | sort | comm -12 - $IN > out
