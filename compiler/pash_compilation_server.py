@@ -5,8 +5,9 @@ from threading import Thread
 from datetime import datetime, timedelta
 # import queue
 
+from sh_expand import env_vars_util
+
 import config
-import env_vars_util
 from pash_graphviz import maybe_generate_graphviz
 import pash_compiler
 from util import *
