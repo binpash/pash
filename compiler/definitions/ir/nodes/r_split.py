@@ -31,7 +31,7 @@ class RSplit(DFGNode):
 def make_r_split(input_id, out_ids, r_split_batch_size):
     r_split_bin = os.path.join(config.PASH_TOP, config.config['runtime']['r_split_binary'])
     operand_list = [input_id,
-                    Operand(Arg(string_to_argument(str(r_split_batch_size))))]
+                    Operand(Arg.string_to_arg(str(r_split_batch_size)))]
     operand_list.extend(out_ids)
     access_map = {output_id: make_stream_output() for output_id in out_ids}
     access_map[input_id] = make_stream_input()

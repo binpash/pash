@@ -96,8 +96,8 @@ def construct_property_container_from_list_of_properties(list_properties):
 # this function is needed to wrap a node in `r_wrap`
 def to_arg_from_cmd_inv_with_io_vars_without_streaming_inputs_or_outputs_for_wrapping(cmd_inv, edges):
     # we already expand here
-    whole_cmd = Arg(string_to_argument("\'"))
-    arg_cmd_name = Arg(string_to_argument(cmd_inv.cmd_name))
+    whole_cmd = Arg.string_to_arg("\'")
+    arg_cmd_name = Arg.string_to_arg(cmd_inv.cmd_name)
     arg_flagoptions = []
     for flagoption in cmd_inv.flag_option_list:
         arg_flagoptions += to_arg_flagoption(flagoption, edges)
@@ -107,14 +107,14 @@ def to_arg_from_cmd_inv_with_io_vars_without_streaming_inputs_or_outputs_for_wra
     all_cmd_parts_arg.extend(arg_operands)
     for part in all_cmd_parts_arg:
         whole_cmd.concatenate(part)
-    whole_cmd.concatenate(Arg(string_to_argument("\'")))
+    whole_cmd.concatenate(Arg.string_to_arg("\'"))
     return whole_cmd
 
 def to_arg_flagoption(flagoption, edges):
     if isinstance(flagoption, Flag):
-        return [Arg(string_to_argument(flagoption.get_name()))]
+        return [Arg.string_to_arg(flagoption.get_name())]
     elif isinstance(flagoption, OptionWithIO):
-        opt_name_arg = Arg(string_to_argument(flagoption.get_name()))
+        opt_name_arg = Arg.string_to_arg(flagoption.get_name())
         opt_arg_arg = translate_io_var_to_arg_if_applicable(flagoption.get_arg(), edges)
         return [opt_name_arg, opt_arg_arg]
 

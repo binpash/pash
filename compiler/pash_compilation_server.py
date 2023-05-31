@@ -2,10 +2,11 @@ import argparse
 import signal
 import traceback
 from threading import Thread
-from datetime import datetime
+from datetime import datetime, timedelta
 # import queue
 
 import config
+import env_vars_util
 from pash_graphviz import maybe_generate_graphviz
 import pash_compiler
 from util import *
@@ -55,15 +56,22 @@ def init():
 ## This class holds information for each process id
 ##
 class ProcIdInfo:
-    def __init__(self, input_ir, compiler_config, exec_time=None):
+    def __init__(self, input_ir, compiler_config, exec_time=None, start_exec_time=None):
         self.input_ir = input_ir
         self.compiler_config = compiler_config
         self.exec_time = exec_time
+        self.start_exec_time = start_exec_time
         ## TODO: Extend it with other info from scheduler, like dependencies
 
     def set_exec_time(self, exec_time):
         self.exec_time = exec_time
     
+    def set_start_exec_time(self, start_exec_time):
+        self.start_exec_time = start_exec_time
+
+    def get_start_exec_time(self):
+        return self.start_exec_time
+
     def __repr__(self):
         return f'ProcIdInfo(InputIR:{self.input_ir}, CompConfig:{self.compiler_config}, ExecTime:{self.exec_time})'
 
@@ -233,7 +241,8 @@ class Scheduler:
 
         variable_reading_start_time = datetime.now()
         # Read any shell variables files if present
-        config.read_vars_file(var_file)
+        vars_dict = env_vars_util.read_vars_file(var_file)
+        config.set_vars_file(var_file, vars_dict)
 
         variable_reading_end_time = datetime.now()
         print_time_delta("Variable Loading", variable_reading_start_time, variable_reading_end_time)
@@ -249,7 +258,6 @@ class Scheduler:
 
         daemon_compile_end_time = datetime.now()
         print_time_delta("Daemon Compile", daemon_compile_start_time, daemon_compile_end_time)
-
 
         self.wait_unsafe()
         if ast_or_ir != None:
@@ -287,6 +295,10 @@ class Scheduler:
             pass
         else:
             self.running_procs += 1
+
+        ## Get the time before we start executing (roughly) to determine how much time this command execution will take
+        command_exec_start_time = datetime.now()
+        self.process_id_input_ir_map[process_id].set_start_exec_time(command_exec_start_time)
         return response
 
     def remove_process(self, process_id):
@@ -319,13 +331,12 @@ class Scheduler:
 
     def handle_exit(self, input_cmd):
         assert(input_cmd.startswith("Exit:"))
-        exit_part, time_part = input_cmd.split("|")
-        process_id = int(exit_part.split(":")[1])
-        log("Time part is:", time_part)
-        try:
-            exec_time = float(time_part.split(":")[1])
-        except:
-            exec_time = None
+        process_id = int(input_cmd.split(":")[1])
+
+        ## Get the execution time        
+        command_finish_exec_time = datetime.now()
+        command_start_exec_time = self.process_id_input_ir_map[process_id].get_start_exec_time()
+        exec_time = (command_finish_exec_time - command_start_exec_time) / timedelta(milliseconds=1)
         log("Process:", process_id, "exited. Exec time was:", exec_time)
         self.handle_time_measurement(process_id, exec_time)
         self.remove_process(process_id)

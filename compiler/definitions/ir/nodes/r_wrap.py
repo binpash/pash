@@ -55,7 +55,7 @@ def wrap_node(node: DFGNode, edges):
     # any non-streaming inputs or outputs are converted here already!
     cmd = to_arg_from_cmd_inv_with_io_vars_without_streaming_inputs_or_outputs_for_wrapping(cmd_inv_with_io_vars, edges)
 
-    bash_command_arg = [Arg(string_to_argument("bash -c"))]
+    bash_command_arg = [Arg.string_to_arg("bash -c")]
     operand_list = bash_command_arg + [cmd]
 
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(

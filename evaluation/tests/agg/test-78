@@ -1,1 +1,0 @@
-cat $PASH_TOP/evaluation/tests/input/1M.txt |  F1={$FILE1:-"file1"} F2={$FILE2:-"file2"} sort "$F1" "$F2" > out

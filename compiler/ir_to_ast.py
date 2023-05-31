@@ -76,7 +76,7 @@ def make_rms_f_prologue_epilogue(ephemeral_fids):
         asts.append(command)
     return asts
 
-def make_ir_prologue(ephemeral_fids):
+def make_ir_prologue(ephemeral_fids) -> "list[AstNode]":
     asts = []
     ## Create an `rm -f` for each ephemeral fid
     rm_asts = make_rms_f_prologue_epilogue(ephemeral_fids)
@@ -99,9 +99,10 @@ def make_ir_prologue(ephemeral_fids):
     call_mkfifos = make_command([string_to_argument(MKFIFO_PASH_FIFOS_NAME)])
     asts.append(call_mkfifos)
 
-    return asts
+    class_asts = [to_ast_node(ast) for ast in asts]
+    return class_asts
 
-def make_ir_epilogue(ephemeral_fids, clean_up_graph, log_file):
+def make_ir_epilogue(ephemeral_fids, clean_up_graph, log_file) -> "list[AstNode]":
     asts = []
     if (clean_up_graph):
         ## TODO: Wait for all output nodes not just one
@@ -128,7 +129,9 @@ def make_ir_epilogue(ephemeral_fids, clean_up_graph, log_file):
     #    (exit $internal_exec_status)
     exit_ec_ast = make_exit_ec_ast()
     asts.append(exit_ec_ast)
-    return asts
+    
+    class_asts = [to_ast_node(ast) for ast in asts]
+    return class_asts
 
 def make_exit_ec_ast():
     command = make_command([string_to_argument("exit"), 

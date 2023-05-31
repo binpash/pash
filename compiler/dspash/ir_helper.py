@@ -11,7 +11,6 @@ sys.path.append("/pash/compiler")
 import config
 from ir import *
 from ast_to_ir import compile_asts
-from json_ast import *
 from ir_to_ast import to_shell
 from util import *
 from dspash.hdfs_utils import HDFSFileConfig

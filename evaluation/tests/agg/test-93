@@ -1,1 +1,0 @@
-cat $PASH_TOP/evaluation/tests/input/1M.txt |  FAST='computer' SLOWER='\(.[a-zA-Z0-9]\+@[a-zA-Z0-9]\+\.[a-z]\{2,\}\).*\1' SLOWEST='\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' LC_ALL=en_US.UTF-8 grep "$FAST" > out

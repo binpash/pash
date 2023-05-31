@@ -7,6 +7,7 @@ from shell_ast import ast_to_ast
 from ir import FileIdGen
 from parse import parse_shell_to_asts, from_ast_objects_to_shell
 from util import *
+import server_util
 from speculative import util_spec
 
 LOGGING_PREFIX = "PaSh Preprocessor: "
@@ -42,12 +43,23 @@ def preprocess_asts(ast_objects, args):
                                                                   po_file=args.partial_order_file)
         util_spec.initialize(trans_options)
     else:
-        trans_options = ast_to_ast.TransformationOptions(mode=trans_mode)
+        trans_options = ast_to_ast.TransformationState(mode=trans_mode)
 
     ## Preprocess ASTs by replacing AST regions with calls to PaSh's runtime.
     ## Then the runtime will do the compilation and optimization with additional
     ## information.
     preprocessed_asts = ast_to_ast.replace_ast_regions(ast_objects, trans_options)
+
+    ## Let the scheduler know that we are done with the partial_order file
+    ## TODO: We could stream the partial_order_file to the scheduler
+    if trans_mode is ast_to_ast.TransformationType.SPECULATIVE:
+        ## First complete the partial_order file
+        util_spec.serialize_partial_order(trans_options)
+
+        ## Then inform the scheduler that it can read it
+        unix_socket_file = os.getenv("PASH_SPEC_SCHEDULER_SOCKET")
+        msg = util_spec.scheduler_server_init_po_msg(trans_options.get_partial_order_file())
+        server_util.unix_socket_send_and_forget(unix_socket_file, msg)
 
     return preprocessed_asts
 
