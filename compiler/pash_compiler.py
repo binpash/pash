@@ -6,8 +6,9 @@ from datetime import datetime
 
 from pash_annotations.annotation_generation.datatypes.parallelizability.AggregatorKind import AggregatorKindEnum
 
+from sh_expand import env_vars_util
+
 import config
-import env_vars_util
 from ir import *
 from ast_to_ir import compile_asts
 from ir_to_ast import to_shell
