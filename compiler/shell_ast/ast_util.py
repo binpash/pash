@@ -1,5 +1,7 @@
 
-from shell_ast.ast_node import *
+from env_var_names import *
+from shasta.ast_node import *
+from shasta.json_to_ast import *
 from util import *
 
 
@@ -39,24 +41,6 @@ class UnparsedScript:
 def check_if_ast_is_supported(construct, arguments, **kwargs):
     return
 
-def ast_match_untyped(untyped_ast_object, cases, *args):
-    ## TODO: This should construct the complete AstNode object (not just the surface level)
-    ## TODO: Remove this and then at some point make real proper use of the AstNode
-    ast_node = AstNode(untyped_ast_object)
-    if ast_node.construct is AstNodeConstructor.PIPE:
-        ast_node.check(children_count = lambda : len(ast_node.items) >= 2)
-    return ast_match(ast_node, cases, *args)
-
-def ast_match(ast_node, cases, *args):
-    ## TODO: Remove that once `ast_match_untyped` is fixed to
-    ##       construct the whole AstNode object.
-    if(not isinstance(ast_node, AstNode)):
-        return ast_match_untyped(ast_node, cases, *args)
-
-    return cases[ast_node.construct.value](*args)(ast_node)
-
-
-
 def format_args(args):
     formatted_args = [format_arg_chars(arg_chars) for arg_chars in args]
     return formatted_args
@@ -65,82 +49,12 @@ def format_arg_chars(arg_chars):
     chars = [format_arg_char(arg_char) for arg_char in arg_chars]
     return "".join(chars)
 
-##
-## BIG TODO: Fix the formating of arg_chars bask to shell scripts and string.
-##           We need to do this the proper way using the parser.
-##
-def format_arg_char(arg_char):
-    key, val = get_kv(arg_char)
-    if (key == 'C'):
-        return str(chr(val))
-    elif (key == 'B'):
-        # The $() is just for illustration. This is backticks
-        return '$({})'.format(val)
-    elif (key == 'Q'):
-        formated_val = format_arg_chars(val)
-        return '"{}"'.format(formated_val)
-    elif (key == 'V'):
-        return '${{{}}}'.format(val[2])
-    elif (key == 'E'):
-        ## TODO: This is not right. I think the main reason for the
-        ## problems is the differences between bash and the posix
-        ## standard.
-        # log(" -- escape-debug -- ", val, chr(val))
-        non_escape_chars = [92, # \
-                            61, # =
-                            91, # [
-                            93, # ]
-                            45, # -
-                            58, # :
-                            126,# ~
-                            42] # *
-        if(val in non_escape_chars):
-            return '{}'.format(chr(val))
-        else:
-            return '\{}'.format(chr(val))
-    else:
-        log("Cannot format arg_char:", arg_char)
-        ## TODO: Make this correct
-        raise NotImplementedError
+def format_arg_char(arg_char: ArgChar) -> str:
+    return arg_char.format()
 
-## This function finds the first raw character in an argument.
-## It needs to be called on an expanded string.
-def format_expanded_arg_chars(arg_chars):
-    chars = [format_expanded_arg_char(arg_char) for arg_char in arg_chars]
-    return "".join(chars)
-
-def format_expanded_arg_char(arg_char):
-    key, val = get_kv(arg_char)
-    if (key == 'C'):
-        return str(chr(val))
-    elif (key == 'Q'):
-        formated_val = format_expanded_arg_chars(val)
-        return '{}'.format(formated_val)
-    elif (key == 'E'):
-        ## TODO: I am not sure if this should add \ or not
-        ##
-        ## TODO: This is not right. I think the main reason for the
-        ## problems is the differences between bash and the posix
-        ## standard.
-        # log(" -- escape-debug -- ", val, chr(val))
-        non_escape_chars = [92, # \
-                            61, # =
-                            91, # [
-                            93, # ]
-                            45, # -
-                            58, # :
-                            126,# ~
-                            42] # *
-        if(val in non_escape_chars):
-            return '{}'.format(chr(val))
-        else:
-            return '\{}'.format(chr(val))
-    else:
-        log("Expanded arg char should not contain:", arg_char)
-        ## TODO: Make this correct
-        raise ValueError
-
-
+def string_to_carg_char_list(string: str) -> "list[CArgChar]":
+    ret = [CArgChar(ord(char)) for char in string]
+    return ret
 
 def string_to_arguments(string):
     return [string_to_argument(word) for word in string.split(" ")]
@@ -148,6 +62,10 @@ def string_to_arguments(string):
 def string_to_argument(string):
     ret = [char_to_arg_char(char) for char in string]
     return ret
+
+def concat_arguments(arg1, arg2):
+    ## Arguments are simply `arg_char list` and therefore can just be concatenated
+    return arg1 + arg2
 
 ## FIXME: This is certainly not complete. It is used to generate the
 ## AST for the call to the distributed planner. It only handles simple
@@ -160,6 +78,9 @@ def escaped_char(char):
 
 def standard_var_ast(string):
     return make_kv("V", ["Normal", False, string, []])
+
+def make_arith(arg):
+     return make_kv("A", arg)
 
 def make_quoted_variable(string):
     return make_kv("Q", [standard_var_ast(string)])
@@ -227,6 +148,53 @@ def make_defun(name, body):
 ##
 ## Make some nodes
 ##
+
+def make_export_var_constant_string(var_name: str, value: str):
+    node = make_export_var(var_name, string_to_argument(value))
+    return node
+
+def make_export_var(var_name: str, arg_char_list):
+    ## An argument is an arg_char_list
+    arg1 = string_to_argument(f'{var_name}=')
+    arguments = [string_to_argument("export"),
+                 concat_arguments(arg1, arg_char_list)]
+    ## Pass all relevant argument to the planner
+    node = make_command(arguments)
+    return node
+
+def export_pash_loop_iters_for_current_context(all_loop_ids: "list[int]"):
+    if len(all_loop_ids) > 0:
+        iter_var_names = [loop_iter_var(loop_id) for loop_id in all_loop_ids]
+        iter_vars = [standard_var_ast(iter_var_name) for iter_var_name in iter_var_names]
+        concatted_vars = [iter_vars[0]]
+        for iter_var in iter_vars[1:]:
+            concatted_vars.append(char_to_arg_char('-'))
+            concatted_vars.append(iter_var)
+        quoted_vars = [quote_arg(concatted_vars)]
+    else:
+        quoted_vars = []
+
+    ## export pash_loop_iters="$pash_loop_XXX_iter $pash_loop_YYY_iter ..."
+    save_loop_iters_node = make_export_var(loop_iters_var(), quoted_vars)
+
+    return save_loop_iters_node
+
+
+def make_unset_var(var_name: str):
+    ## An argument is an arg_char_list
+    arguments = [string_to_argument("unset"),
+                 string_to_argument(var_name)]
+    ## Pass all relevant argument to the planner
+    node = make_command(arguments)
+    return node
+
+def make_increment_var(var_name: str):
+    arg = string_to_argument(f'{var_name}+1')
+    arith_expr = make_arith(arg)
+    assignments = [[var_name,
+                    [arith_expr]]]
+    node = make_command([], assignments=assignments)
+    return node
 
 def make_echo_ast(argument, var_file_path):
     nodes = []

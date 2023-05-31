@@ -33,6 +33,3 @@ stats "$PASH_TOP/evaluation/tests/interface_tests/output" interface
 #
 ## compiler Tests
 stats "${PASH_TOP}/evaluation/tests/results" compiler
-#
-## aggregator tests
-stats "${PASH_TOP}/evaluation/tests/agg/output" agg

@@ -10,6 +10,7 @@ from ir import *
 from parse import parse_shell_to_asts_interactive
 from pash_graphviz import maybe_init_graphviz_dir
 from preprocessor.preprocessor import preprocess
+from speculative import util_spec
 from util import *
 import config
 import shutil
@@ -26,8 +27,6 @@ def main():
     if(len(args.input) == 0 or args.interactive):
         log("ERROR: --interactive option is not supported!", level=0)
         assert(False)
-        ## This should never be used!
-        interactive(args, shell_name)
     else:
         input_script_path = args.input[0]
         input_script_arguments = args.input[1:]
@@ -60,59 +59,6 @@ def preprocess_and_execute_asts(input_script_path, args, input_script_arguments,
 
     return return_code
 
-## TODO: Create an interactive pash
-def interactive(args, shell_name):
-    ## This means that we are interactive
-    assert(len(args.input) == 0 or args.interactive)
-
-    if len(args.input) == 0:
-        ## Read from stdin
-        input_script_path = "-"
-        script_args = []
-    else:
-        input_script_path = args.input[0]
-        script_args = args.input[1:]
-
-    ## Spawn a bash shell in interactive mode
-    new_env = shell_env(shell_name)
-    subprocess_args = bash_prefix_args()
-    ## Add this option to read code from stdin
-    subprocess_args.append("-s")
-    ## Add the script arguments here
-    subprocess_args += script_args
-    with subprocess.Popen(subprocess_args,
-                          env=new_env,
-                          stdin=subprocess.PIPE,
-                          universal_newlines=True,
-                          close_fds=False) as shell_proc:
-        ## TODO: Do we need to pipe stdout/stderror
-
-        ## First send an exec so that we change the name of the shell
-        ##
-        ## TODO: Can this be done in a less ad-hoc way?
-        command = bash_exec_string(shell_name)
-        shell_proc.stdin.write(command)
-
-        ## For each parsed AST:
-        ##   1. Preprocess it
-        ##   2. Translate it to shell syntax
-        ##   3. Send it to the interactive bash 
-        ast_objects = parse_shell_to_asts_interactive(input_script_path)
-        for ast_object in ast_objects:
-            ## Preprocess each ast object and produce a preprocessed shell script fragment
-            preprocessed_shell_script = preprocess([ast_object], args)
-            log("Sending script to shell process...")
-            ## Send the preprocessed script fragment to the shell process
-            shell_proc.stdin.write(preprocessed_shell_script)
-            shell_proc.stdin.flush()
-    
-        ## Close the input and wait for the internal process to finish
-        shell_proc.stdin.close()
-        shell_proc.wait()
-        
-        log("-" * 40) #log end marker
-        ## Return the exit code of the executed script
-        sys.exit(shell_proc.returncode)
 
 
 def parse_args():
@@ -167,7 +113,7 @@ def parse_args():
     if args.speculative:
         log("PaSh is running in speculative mode...")
         args.__dict__["preprocess_mode"] = "spec"
-        args.__dict__["partial_order_file"] = ptempfile()
+        args.__dict__["partial_order_file"] = util_spec.partial_order_file_path()
         log(" -- Its partial order file will be stored in:", args.partial_order_file)
 
     ## Initialize the log file

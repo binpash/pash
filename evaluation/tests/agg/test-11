@@ -1,1 +1,0 @@
-cat $PASH_TOP/evaluation/tests/input/1M.txt |  cut -d ' ' -f9 > out

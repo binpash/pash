@@ -1,6 +1,7 @@
 import os
 import socket
 
+import config
 from util import log
 
 def success_response(string):
@@ -94,6 +95,24 @@ class UnixPipeReader:
             self.fin.close()
 
 
+def unix_socket_send_and_forget(socket_file: str, msg: str):
+    try:
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(socket_file)
+        msg_with_newline = msg + '\n'
+        byte_msg = msg_with_newline.encode('utf-8')
+        sock.sendall(byte_msg)
+        data = sock.recv(config.SOCKET_BUF_SIZE)
+        str_data = data.decode('utf-8')
+        ## There should be no response on these messages
+        assert(len(str_data) == 0)
+    finally:
+        log("Sent message:", msg, "to server.", level=1)
+        sock.close()
+    
+
+
+
 ## TODO: Instead of this, think of using a standard SocketServer
 ##   see: https://docs.python.org/3/library/socketserver.html#module-socketserver
 ##
@@ -102,7 +121,7 @@ class SocketManager:
     def __init__(self, socket_addr: str):
         ## Configure them outside
         server_address = socket_addr
-        self.buf_size = 8192
+        self.buf_size = config.SOCKET_BUF_SIZE
 
         # Make sure the socket does not already exist
         ## TODO: Is this necessary?
