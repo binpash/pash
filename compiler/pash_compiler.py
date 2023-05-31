@@ -7,6 +7,7 @@ from datetime import datetime
 from pash_annotations.annotation_generation.datatypes.parallelizability.AggregatorKind import AggregatorKindEnum
 
 import config
+import env_vars_util
 from ir import *
 from ast_to_ir import compile_asts
 from ir_to_ast import to_shell
@@ -52,7 +53,8 @@ def main_body():
     runtime_config = config.config['distr_planner']
 
     ## Read any shell variables files if present
-    config.read_vars_file(args.var_file)
+    vars_dict = env_vars_util.read_vars_file(args.var_file)
+    config.set_vars_file(args.var_file, vars_dict)
 
     log("Input:", args.input_ir, "Compiled file:", args.compiled_script_file)
 

@@ -1,10 +1,12 @@
+import subprocess
+
 from shasta.ast_node import *
+from sh_expand.expand import expand_command, ExpansionState
+
 from shell_ast.ast_util import *
 from ir import *
 from util import *
 from parse import from_ast_objects_to_shell
-from shell_ast.expand import expand_command, ExpansionState
-import subprocess
 
 ## TODO: Separate the ir stuff to the bare minimum and 
 ##       try to move this to the shell_ast folder.

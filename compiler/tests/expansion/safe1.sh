@@ -1,1 +1,0 @@
-echo ~ is always safe
