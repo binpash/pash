@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 # import queue
 
 import config
+import env_vars_util
 from pash_graphviz import maybe_generate_graphviz
 import pash_compiler
 from util import *
@@ -240,7 +241,8 @@ class Scheduler:
 
         variable_reading_start_time = datetime.now()
         # Read any shell variables files if present
-        config.read_vars_file(var_file)
+        vars_dict = env_vars_util.read_vars_file(var_file)
+        config.set_vars_file(var_file, vars_dict)
 
         variable_reading_end_time = datetime.now()
         print_time_delta("Variable Loading", variable_reading_start_time, variable_reading_end_time)
