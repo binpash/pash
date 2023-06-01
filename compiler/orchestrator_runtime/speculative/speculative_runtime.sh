@@ -42,7 +42,9 @@ if [[ "$daemon_response" == *"OK:"* ]]; then
 elif [[ "$daemon_response" == *"UNSAFE:"* ]]; then
     pash_redir_output echo "$$: (2) Scheduler responded: $daemon_response"
     pash_redir_output echo "$$: (2) Executing command: $pash_speculative_command_id"
-    ## TODO: Execute the command. This should probably happen with eval
+    ## Execute the command.
+    ## KK 2023-06-01 Does `eval` work in general? We need to be precise
+    ##               about which commands are unsafe to determine how to execute them.
     cmd=$(cat "$PASH_SPEC_NODE_DIRECTORY/$pash_speculative_command_id")
     eval $cmd
     cmd_exit_code=$?
