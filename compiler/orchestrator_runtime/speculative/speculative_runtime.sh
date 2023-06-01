@@ -46,6 +46,9 @@ elif [[ "$daemon_response" == *"UNSAFE:"* ]]; then
     ## KK 2023-06-01 Does `eval` work in general? We need to be precise
     ##               about which commands are unsafe to determine how to execute them.
     cmd=$(cat "$PASH_SPEC_NODE_DIRECTORY/$pash_speculative_command_id")
+    ## KK 2023-06-01 Not sure if this shellcheck warning must be resolved:
+    ## > note: Double quote to prevent globbing and word splitting.
+    # shellcheck disable=SC2086
     eval $cmd
     cmd_exit_code=$?
 elif [ -z "$daemon_response" ]; then
