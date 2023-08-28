@@ -1,8 +1,9 @@
-
 import os
+import subprocess
 import config
 
 from shell_ast.ast_util import *
+from util import ptempfile
 
 ##
 ## This file contains utility functions useful for the speculative execution component
@@ -66,6 +67,13 @@ def serialize_loop_context(node_id: int, loop_contexts) -> str:
     loop_contexts_str = ",".join([str(loop_ctx) for loop_ctx in loop_contexts])
     return f'{node_id}-loop_ctx-{loop_contexts_str}\n'
 
+def save_current_env_to_file(trans_options):
+    initial_env_file = ptempfile()
+    subprocess.check_output([f"{os.getenv('PASH_TOP')}/compiler/orchestrator_runtime/pash_declare_vars.sh", initial_env_file])
+    partial_order_file_path = trans_options.get_partial_order_file()
+    with open(partial_order_file_path, "a") as po_file:
+        po_file.write(f'{initial_env_file}\n')
+
 ## TODO: Eventually we might want to retrieve the number_of_ids from trans_options
 def save_number_of_nodes(trans_options):
     number_of_ids = trans_options.get_number_of_ids()
@@ -89,6 +97,9 @@ def serialize_partial_order(trans_options):
 
     ## Save the number of nodes
     save_number_of_nodes(trans_options)
+    
+    ## Save initial env to po file
+    save_current_env_to_file(trans_options)
 
     ## Save loop contexts
     save_loop_contexts(trans_options)
