@@ -29,6 +29,7 @@ if [[ "$daemon_response" == *"OK:"* ]]; then
     # shellcheck disable=SC2206
     response_args=($daemon_response)
     pash_redir_output echo "$$: (2) Scheduler responded: $daemon_response"
+    
     cmd_exit_code=${response_args[1]}
     output_variable_file=${response_args[2]}
     stdout_file=${response_args[3]}

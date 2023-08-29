@@ -94,12 +94,14 @@ def serialize_partial_order(trans_options):
     ## Initialize the po file
     dir_path = partial_order_directory()
     initialize_po_file(trans_options, dir_path)
+    
+    ## Save initial env to po file
+    save_current_env_to_file(trans_options)
 
     ## Save the number of nodes
     save_number_of_nodes(trans_options)
     
-    ## Save initial env to po file
-    save_current_env_to_file(trans_options)
+   
 
     ## Save loop contexts
     save_loop_contexts(trans_options)
