@@ -101,6 +101,14 @@ def parse_args():
     parser.add_argument("--expand_using_bash_mirror",
                         help="DEPRECATED: instead of expanding using the internal expansion code, expand using a bash mirror process (slow)",
                         action="store_true")
+    parser.add_argument("--sandbox-killing",
+                        action="store_true",
+                        default=False,
+                        help="Kill any running overlay instances before commiting to the lower layer")
+    parser.add_argument("--env-check-all-nodes-on-wait",
+                        action="store_true",
+                        default=None,
+                        help="When receiving a wait check for env changes between the current node and all other waiting nodes, instead of only examining the current wait node.")
 
     ## Set the preprocessing mode to PaSh
     parser.set_defaults(preprocess_mode='pash')
