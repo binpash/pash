@@ -109,6 +109,11 @@ def parse_args():
                         action="store_true",
                         default=None,
                         help="When receiving a wait check for env changes between the current node and all other waiting nodes, instead of only examining the current wait node.")
+    parser.add_argument("--speculate-immidiately",
+                        action="store_true",
+                        default=None,
+                        help="Speculate immidiately instead of waiting for a wait command")
+
 
     ## Set the preprocessing mode to PaSh
     parser.set_defaults(preprocess_mode='pash')
