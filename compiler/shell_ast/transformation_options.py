@@ -7,11 +7,13 @@ from shasta.json_to_ast import to_ast_node
 from speculative import util_spec
 from parse import from_ast_objects_to_shell
 
+
 ## There are two types of ast_to_ast transformations
 class TransformationType(Enum):
-    PASH = 'pash'
-    SPECULATIVE = 'spec'
-    AIRFLOW = 'airflow'
+    PASH = "pash"
+    SPECULATIVE = "spec"
+    AIRFLOW = "airflow"
+
 
 class AbstractTransformationState(ABC):
     def __init__(self):
@@ -59,13 +61,18 @@ class AbstractTransformationState(ABC):
         self._loop_contexts.pop(0)
 
     @abstractmethod
-    def replace_df_region(self, asts, disable_parallel_pipelines=False, ast_text=None) -> AstNode:
+    def replace_df_region(
+        self, asts, disable_parallel_pipelines=False, ast_text=None
+    ) -> AstNode:
         pass
+
 
 ## Use this object to pass options inside the preprocessing
 ## trasnformation.
 class TransformationState(AbstractTransformationState):
-    def replace_df_region(self, asts, disable_parallel_pipelines=False, ast_text=None) -> AstNode:
+    def replace_df_region(
+        self, asts, disable_parallel_pipelines=False, ast_text=None
+    ) -> AstNode:
         ir_filename = ptempfile()
 
         ## Serialize the node in a file
@@ -79,7 +86,9 @@ class TransformationState(AbstractTransformationState):
         ## However, if we have the original ast text, then we can simply output that.
         with open(sequential_script_file_name, "w") as script_file:
             script_file.write(text_to_output)
-        replaced_node = TransformationState.make_call_to_pash_runtime(ir_filename, sequential_script_file_name, disable_parallel_pipelines)
+        replaced_node = TransformationState.make_call_to_pash_runtime(
+            ir_filename, sequential_script_file_name, disable_parallel_pipelines
+        )
 
         return to_ast_node(replaced_node)
 
@@ -95,31 +104,32 @@ class TransformationState(AbstractTransformationState):
     ## what it returns. Maybe it would make sense to call the parser on
     ## the fly to have a cleaner implementation here?
     @staticmethod
-    def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
-                                  disable_parallel_pipelines) -> AstNode:
-
+    def make_call_to_pash_runtime(
+        ir_filename, sequential_script_file_name, disable_parallel_pipelines
+    ) -> AstNode:
         ## Disable parallel pipelines if we are in the last command of the script.
         ## ```
         ## pash_disable_parallel_pipelines=1
         ## ```
-        if(disable_parallel_pipelines):
-            assignments = [["pash_disable_parallel_pipelines",
-                            string_to_argument("1")]]
+        if disable_parallel_pipelines:
+            assignments = [["pash_disable_parallel_pipelines", string_to_argument("1")]]
         else:
-            assignments = [["pash_disable_parallel_pipelines",
-                            string_to_argument("0")]]
-        assignments.append(["pash_sequential_script_file",
-                            string_to_argument(sequential_script_file_name)])
-        assignments.append(["pash_input_ir_file",
-                            string_to_argument(ir_filename)])
+            assignments = [["pash_disable_parallel_pipelines", string_to_argument("0")]]
+        assignments.append(
+            [
+                "pash_sequential_script_file",
+                string_to_argument(sequential_script_file_name),
+            ]
+        )
+        assignments.append(["pash_input_ir_file", string_to_argument(ir_filename)])
 
         ## Call the runtime
-        arguments = [string_to_argument("source"),
-                     string_to_argument(config.RUNTIME_EXECUTABLE)]
-        runtime_node = make_command(arguments,
-                                    assignments=assignments)
+        arguments = [
+            string_to_argument("source"),
+            string_to_argument(config.RUNTIME_EXECUTABLE),
+        ]
+        runtime_node = make_command(arguments, assignments=assignments)
         return runtime_node
-
 
 
 ## TODO: Turn it into a Transformation State class, and make a subclass for
@@ -131,7 +141,9 @@ class SpeculativeTransformationState(AbstractTransformationState):
         self.partial_order_edges = []
         self.partial_order_node_loop_contexts = {}
 
-    def replace_df_region(self, asts, disable_parallel_pipelines=False, ast_text=None) -> AstNode:
+    def replace_df_region(
+        self, asts, disable_parallel_pipelines=False, ast_text=None
+    ) -> AstNode:
         text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
         ## Generate an ID
         df_region_id = self.get_next_id()
@@ -150,7 +162,9 @@ class SpeculativeTransformationState(AbstractTransformationState):
         ## Write to a file indexed by its ID
         util_spec.save_df_region(text_to_output, self, df_region_id, predecessors)
         ## TODO: Add an entry point to spec through normal PaSh
-        replaced_node = SpeculativeTransformationState.make_call_to_spec_runtime(df_region_id, loop_id)
+        replaced_node = SpeculativeTransformationState.make_call_to_spec_runtime(
+            df_region_id, loop_id
+        )
         return to_ast_node(replaced_node)
 
     def get_partial_order_file(self):
@@ -171,31 +185,32 @@ class SpeculativeTransformationState(AbstractTransformationState):
     ## TODO: Make that an actual call to the spec runtime
     @staticmethod
     def make_call_to_spec_runtime(command_id: int, loop_id) -> AstNode:
-        assignments = [["pash_spec_command_id",
-                            string_to_argument(str(command_id))]]
+        assignments = [["pash_spec_command_id", string_to_argument(str(command_id))]]
         if loop_id is None:
             loop_id_str = ""
         else:
             loop_id_str = str(loop_id)
 
-        assignments.append(["pash_spec_loop_id",
-                            string_to_argument(loop_id_str)])
+        assignments.append(["pash_spec_loop_id", string_to_argument(loop_id_str)])
 
         ## Call the runtime
-        arguments = [string_to_argument("source"),
-                     string_to_argument(config.RUNTIME_EXECUTABLE)]
+        arguments = [
+            string_to_argument("source"),
+            string_to_argument(config.RUNTIME_EXECUTABLE),
+        ]
         ## Pass all relevant argument to the planner
-        runtime_node = make_command(arguments,
-                                    assignments=assignments)
+        runtime_node = make_command(arguments, assignments=assignments)
 
         return runtime_node
+
 
 class AirflowTransformationState(TransformationState):
     pass
 
+
 def get_shell_from_ast(asts, ast_text=None) -> str:
     ## If we don't have the original ast text, we need to unparse the ast
-    if (ast_text is None):
+    if ast_text is None:
         text_to_output = from_ast_objects_to_shell(asts)
     else:
         text_to_output = ast_text
