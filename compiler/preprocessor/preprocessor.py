@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 
 import config
-from shell_ast import ast_to_ast
+from shell_ast import transformation_options, ast_to_ast
 from ir import FileIdGen
 from parse import parse_shell_to_asts, from_ast_objects_to_shell
 from util import *
@@ -30,20 +30,21 @@ def preprocess(input_script_path, args):
     ## 3. Translate the new AST back to shell syntax
     preprocessing_unparsing_start_time = datetime.now()
     preprocessed_shell_script = from_ast_objects_to_shell(preprocessed_asts)
-    
+
     preprocessing_unparsing_end_time = datetime.now()
     print_time_delta("Preprocessing -- Unparsing", preprocessing_unparsing_start_time, preprocessing_unparsing_end_time)
     return preprocessed_shell_script
 
 
 def preprocess_asts(ast_objects, args):
-    trans_mode = ast_to_ast.TransformationType(args.preprocess_mode)
-    if trans_mode is ast_to_ast.TransformationType.SPECULATIVE:
-        trans_options = ast_to_ast.SpeculativeTransformationState(mode=trans_mode,
-                                                                  po_file=args.partial_order_file)
+    trans_mode = transformation_options.TransformationType(args.preprocess_mode)
+    if trans_mode is transformation_options.TransformationType.SPECULATIVE:
+        trans_options = transformation_options.SpeculativeTransformationState(po_file=args.partial_order_file)
         util_spec.initialize(trans_options)
+    elif trans_mode is transformation_options.TransformationType.AIRFLOW:
+        trans_options = transformation_options.AirflowTransformationState()
     else:
-        trans_options = ast_to_ast.TransformationState(mode=trans_mode)
+        trans_options = transformation_options.TransformationState()
 
     ## Preprocess ASTs by replacing AST regions with calls to PaSh's runtime.
     ## Then the runtime will do the compilation and optimization with additional
@@ -52,7 +53,7 @@ def preprocess_asts(ast_objects, args):
 
     ## Let the scheduler know that we are done with the partial_order file
     ## TODO: We could stream the partial_order_file to the scheduler
-    if trans_mode is ast_to_ast.TransformationType.SPECULATIVE:
+    if trans_mode is transformation_options.TransformationType.SPECULATIVE:
         ## First complete the partial_order file
         util_spec.serialize_partial_order(trans_options)
 
@@ -85,7 +86,7 @@ def main():
     ## TODO: When we better integrate, this should be automatically set.
     parser_spec.add_argument("partial_order_file", help="the file to store the partial order (currently just a sequence)")
     parser_spec.set_defaults(preprocess_mode='spec')
-    
+
     args = parser.parse_args()
     config.set_config_globals_from_pash_args(args)
 

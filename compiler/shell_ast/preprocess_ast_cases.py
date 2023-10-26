@@ -1,12 +1,15 @@
-from shell_ast.ast_util import PreprocessedAST
-from shell_ast.ast_to_ast import TransformationState
+import copy
+
+from shell_ast.ast_util import *
+from shell_ast.transformation_options import AbstractTransformationState
 from shasta.ast_node import AstNode
 
-
 def preprocess_node(
-    ast_node: AstNode, trans_options: TransformationState, last_object: bool
+    ast_node: AstNode, trans_options: AbstractTransformationState, last_object: bool
 ) -> PreprocessedAST:
-    return globals(type(ast_node).NodeName)(ast_node, trans_options, last_object)
+    node_name = type(ast_node).NodeName.lower()
+    preprocess_fn = globals()[f"preprocess_node_{node_name}"]
+    return preprocess_fn(ast_node, trans_options, last_object)
 
 
 ## This preprocesses the AST node and also replaces it if it needs replacement .
@@ -18,7 +21,7 @@ def preprocess_close_node(ast_object, trans_options, last_object=False):
     preprocessed_ast = preprocessed_ast_object.ast
     should_replace_whole_ast = preprocessed_ast_object.should_replace_whole_ast()
     if should_replace_whole_ast:
-        final_ast = replace_df_region(
+        final_ast = trans_options.replace_df_region(
             [preprocessed_ast], trans_options, disable_parallel_pipelines=last_object
         )
         something_replaced = True
@@ -27,6 +30,27 @@ def preprocess_close_node(ast_object, trans_options, last_object=False):
         something_replaced = preprocessed_ast_object.will_anything_be_replaced()
     return final_ast, something_replaced
 
+## TODO: I am a little bit confused about how compilation happens.
+##       Does it happen bottom up or top down: i.e. when we first encounter an occurence
+##       do we recurse in it and then compile from the leaf, or just compile the surface?
+
+## Replaces IR subtrees with a command that calls them (more
+## precisely, a command that calls a python script to call them).
+##
+## Note: The traversal that replace_irs does, is exactly the same as
+## the one that is done by compile_node. Both of these functions
+## transform nodes of type t to something else.
+##
+## TODO: For now this just replaces the IRs starting from the ourside
+## one first, but it should start from the bottom up to handle
+## recursive IRs.
+
+## This function serializes a candidate df_region in a file, and in its place,
+## it adds a command that calls our distribution planner with the name of the
+## saved file.
+##
+## If we are need to disable parallel pipelines, e.g., if we are in the context of an if,
+## or if we are in the end of a script, then we set a variable.
 
 def preprocess_node_pipe(ast_node, trans_options, last_object=False):
     ## A pipeline is *always* a candidate dataflow region.
