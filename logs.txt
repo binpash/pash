@@ -1,0 +1,47 @@
+PaSh:  Arguments:
+PaSh:  input ['./evaluation/benchmarks/oneliners/bi-grams.sh']
+PaSh:  preprocess_only True
+PaSh:  output_preprocessed True
+PaSh:  interactive False
+PaSh:  command None
+PaSh:  a False
+PaSh:  v False
+PaSh:  x False
+PaSh:Daemon:  Received data: Done
+
+Daemon:  Waiting for all processes to finish. There are 0 processes remaining.
+Daemon:  SocketManager: Closed
+Daemon:  PaSh daemon is shutting down...
+Daemon:  PaSh daemon shut down successfully...
+me_completion False
+PaSh:  profile_driven False
+PaSh:  output_optimized False
+PaSh:  graphviz no
+PaSh:  graphviz_dir /tmp
+PaSh:  no_eager False
+PaSh:  no_daemon False
+PaSh:  parallel_pipelines False
+PaSh:  r_split_batch_size 1000000
+PaSh:  r_split False
+PaSh:  dgsh_tee False
+PaSh:  speculative False
+PaSh:  speculation no_spec
+PaSh:  termination clean_up_graph
+PaSh:  daemon_communicates_through_unix_pipes False
+PaSh:  distributed_exec False
+PaSh:  config_path 
+PaSh:  preprocess_mode pash
+PaSh:  ----------------------------------------
+PaSh Preprocessor:  Preprocessing -- Parsing time: 3.072  ms
+PaSh Preprocessor:  Preprocessing -- PaSh time: 1.094  ms
+PaSh Preprocessor:  Preprocessing -- Unparsing time: 0.106  ms
+PaSh:  Preprocessed script:
+PaSh:  IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/input/1G.txt}
+
+pash_disable_parallel_pipelines=0 pash_sequential_script_file=/tmp/pash_eY9eOuA/tmpnfsxlk6w pash_input_ir_file=/tmp/pash_eY9eOuA/tmppa9ouhmh source /home/castlehoney/repos/research/pash/compiler/pash_runtime.sh
+pash_disable_parallel_pipelines=1 pash_sequential_script_file=/tmp/pash_eY9eOuA/tmpy34qgtwf pash_input_ir_file=/tmp/pash_eY9eOuA/tmpyrqpyobp source /home/castlehoney/repos/research/pash/compiler/pash_runtime.sh
+
+PaSh:  Preprocessed script stored in: /tmp/pash_eY9eOuA/tmp2tomafyt
+PaSh:  ----------------------------------------
+Sending msg to compilation-server: Done
+Got response from compilation-server: All finished
