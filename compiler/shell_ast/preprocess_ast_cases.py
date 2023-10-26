@@ -4,31 +4,58 @@ from shell_ast.ast_util import *
 from shell_ast.transformation_options import AbstractTransformationState
 from shasta.ast_node import AstNode
 
+
 def preprocess_node(
-    ast_node: AstNode, trans_options: AbstractTransformationState, last_object: bool
+    ast_node: AstNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool,
 ) -> PreprocessedAST:
+    """
+    Preprocesses an AstNode. Given an AstNode of any type, it will appropriately
+    dispatch a preprocessor for the specificy node type
+
+    Parameters:
+        ast_node (AstNode): The AstNode to parse
+        trans_options (AbstractTransformationState):
+            A concrete transformation state instance corresponding to the output target
+        last_object (bool): Flag for whether this is the last AstNode
+
+    Returns:
+        PreprocessedAst: the preprocessed version of the original AstNode
+
+    Note:
+        For preprocess_node to dispatch the right function, the function being
+        called must follow the convention "preprocess_node_<node_name>"
+    """
     node_name = type(ast_node).NodeName.lower()
-    preprocess_fn = globals()[f"preprocess_node_{node_name}"]
+    preprocess_fn = globals().get(f"preprocess_node_{node_name}")
+    if preprocess_fn is None:
+        raise KeyError(f"Could not find appropriate preprocessor for {node_name}")
     return preprocess_fn(ast_node, trans_options, last_object)
 
 
 ## This preprocesses the AST node and also replaces it if it needs replacement .
 ## It is called by constructs that cannot be included in a dataflow region.
-def preprocess_close_node(ast_object, trans_options, last_object=False):
+def preprocess_close_node(
+    ast_node: AstNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     preprocessed_ast_object = preprocess_node(
-        ast_object, trans_options, last_object=last_object
+        ast_node, trans_options, last_object=last_object
     )
     preprocessed_ast = preprocessed_ast_object.ast
     should_replace_whole_ast = preprocessed_ast_object.should_replace_whole_ast()
     if should_replace_whole_ast:
         final_ast = trans_options.replace_df_region(
-            [preprocessed_ast], trans_options, disable_parallel_pipelines=last_object
+            asts=[preprocessed_ast], disable_parallel_pipelines=last_object
         )
         something_replaced = True
     else:
         final_ast = preprocessed_ast
         something_replaced = preprocessed_ast_object.will_anything_be_replaced()
     return final_ast, something_replaced
+
 
 ## TODO: I am a little bit confused about how compilation happens.
 ##       Does it happen bottom up or top down: i.e. when we first encounter an occurence
@@ -52,7 +79,12 @@ def preprocess_close_node(ast_object, trans_options, last_object=False):
 ## If we are need to disable parallel pipelines, e.g., if we are in the context of an if,
 ## or if we are in the end of a script, then we set a variable.
 
-def preprocess_node_pipe(ast_node, trans_options, last_object=False):
+
+def preprocess_node_pipe(
+    ast_node: PipeNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     ## A pipeline is *always* a candidate dataflow region.
     ## Q: Is that true?
 
@@ -72,7 +104,11 @@ def preprocess_node_pipe(ast_node, trans_options, last_object=False):
 
 
 ## TODO: Complete this
-def preprocess_node_command(ast_node, trans_options, last_object=False):
+def preprocess_node_command(
+    ast_node: CommandNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     ## TODO: Preprocess the internals of the pipe to allow
     ##       for mutually recursive calls to PaSh.
     ##
@@ -102,7 +138,11 @@ def preprocess_node_command(ast_node, trans_options, last_object=False):
 
 # Background of (linno * t * redirection list)
 ## TODO: It might be possible to actually not close the inner node but rather apply the redirections on it
-def preprocess_node_redir(ast_node, trans_options, last_object=False):
+def preprocess_node_redir(
+    ast_node: RedirNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     preprocessed_node, something_replaced = preprocess_close_node(
         ast_node.node, trans_options, last_object=last_object
     )
@@ -118,7 +158,11 @@ def preprocess_node_redir(ast_node, trans_options, last_object=False):
 
 
 ## TODO: Is that correct? Also, this should probably affect `semi`, `and`, and `or`
-def preprocess_node_background(ast_node, trans_options, last_object=False):
+def preprocess_node_background(
+    ast_node: BackgroundNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     ## A background node is *always* a candidate dataflow region.
     ## Q: Is that true?
 
@@ -137,7 +181,11 @@ def preprocess_node_background(ast_node, trans_options, last_object=False):
 ##
 ##       e.g. a subshell node should also be output as a subshell in the backend.
 ## FIXME: This might not just be suboptimal, but also wrong.
-def preprocess_node_subshell(ast_node, trans_options, last_object=False):
+def preprocess_node_subshell(
+    ast_node: SubshellNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     preprocessed_body, something_replaced = preprocess_close_node(
         ast_node.body, trans_options, last_object=last_object
     )
@@ -157,7 +205,11 @@ def preprocess_node_subshell(ast_node, trans_options, last_object=False):
 
 ## TODO: This is not efficient at all since it calls the PaSh runtime everytime the loop is entered.
 ##       We have to find a way to improve that.
-def preprocess_node_for(ast_node, trans_options, last_object=False):
+def preprocess_node_for(
+    ast_node: ForNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     ## If we are in a loop, we push the loop identifier into the loop context
     loop_id = trans_options.enter_loop()
     preprocessed_body, something_replaced = preprocess_close_node(
@@ -218,7 +270,11 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
     return preprocessed_ast_object
 
 
-def preprocess_node_while(ast_node, trans_options, last_object=False):
+def preprocess_node_while(
+    ast_node: WhileNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     ## If we are in a loop, we push the loop identifier into the loop context
     trans_options.enter_loop()
 
@@ -245,7 +301,11 @@ def preprocess_node_while(ast_node, trans_options, last_object=False):
 
 
 ## This is the same as the one for `For`
-def preprocess_node_defun(ast_node, trans_options, last_object=False):
+def preprocess_node_defun(
+    ast_node: DefunNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     ## TODO: For now we don't want to compile function bodies
     # preprocessed_body = preprocess_close_node(ast_node.body)
     # ast_node.body = preprocessed_body
@@ -260,12 +320,16 @@ def preprocess_node_defun(ast_node, trans_options, last_object=False):
 
 
 ## TODO: If the preprocessed is not maximal we actually need to combine it with the one on the right.
-def preprocess_node_semi(ast_node, trans_options, last_object=False):
+def preprocess_node_semi(
+    ast_node: SemiNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
     ##
     ## TODO: Is it valid that only the right one is considered the last command?
     preprocessed_left, sth_replaced_left = preprocess_close_node(
-        ast_node.left_operand, trans_options, last_object=False
+        ast_node.left_operand, trans_options, last_object
     )
     preprocessed_right, sth_replaced_right = preprocess_close_node(
         ast_node.right_operand, trans_options, last_object=last_object
@@ -285,7 +349,11 @@ def preprocess_node_semi(ast_node, trans_options, last_object=False):
 
 ## TODO: Make sure that what is inside an `&&`, `||`, `!` (and others) does not run in parallel_pipelines
 ##       since we need its exit code.
-def preprocess_node_and(ast_node, trans_options, last_object=False):
+def preprocess_node_and(
+    ast_node: AndNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
     preprocessed_left, sth_replaced_left = preprocess_close_node(
         ast_node.left_operand, trans_options, last_object=last_object
@@ -306,7 +374,11 @@ def preprocess_node_and(ast_node, trans_options, last_object=False):
     return preprocessed_ast_object
 
 
-def preprocess_node_or(ast_node, trans_options, last_object=False):
+def preprocess_node_or(
+    ast_node: OrNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
     preprocessed_left, sth_replaced_left = preprocess_close_node(
         ast_node.left_operand, trans_options, last_object=last_object
@@ -327,7 +399,11 @@ def preprocess_node_or(ast_node, trans_options, last_object=False):
     return preprocessed_ast_object
 
 
-def preprocess_node_not(ast_node, trans_options, last_object=False):
+def preprocess_node_not(
+    ast_node: NotNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left)
     preprocessed_body, sth_replaced = preprocess_close_node(
         ast_node.body, trans_options, last_object=last_object
@@ -343,7 +419,11 @@ def preprocess_node_not(ast_node, trans_options, last_object=False):
     return preprocessed_ast_object
 
 
-def preprocess_node_if(ast_node, trans_options, last_object=False):
+def preprocess_node_if(
+    ast_node: IfNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
     preprocessed_cond, sth_replaced_cond = preprocess_close_node(
         ast_node.cond, trans_options, last_object=last_object
@@ -368,7 +448,9 @@ def preprocess_node_if(ast_node, trans_options, last_object=False):
     return preprocessed_ast_object
 
 
-def preprocess_case(case, trans_options, last_object=False):
+def preprocess_case(
+    case, trans_options: AbstractTransformationState, last_object: bool
+):
     preprocessed_body, sth_replaced = preprocess_close_node(
         case["cbody"], trans_options, last_object=last_object
     )
@@ -376,7 +458,11 @@ def preprocess_case(case, trans_options, last_object=False):
     return case, sth_replaced
 
 
-def preprocess_node_case(ast_node, trans_options, last_object=False):
+def preprocess_node_case(
+    ast_node: CaseNode,
+    trans_options: AbstractTransformationState,
+    last_object: bool = False,
+):
     preprocessed_cases_replaced = [
         preprocess_case(case, trans_options, last_object=last_object)
         for case in ast_node.cases
