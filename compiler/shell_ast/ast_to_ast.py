@@ -15,6 +15,7 @@ from speculative import util_spec
 class TransformationType(Enum):
     PASH = 'pash'
     SPECULATIVE = 'spec'
+    AIRFLOW = 'airflow'
 
 ## Use this object to pass options inside the preprocessing
 ## trasnformation.
@@ -24,7 +25,7 @@ class TransformationState:
         self.node_counter = 0
         self.loop_counter = 0
         self.loop_contexts = []
-            
+
     def get_mode(self):
         return self.mode
 
@@ -33,10 +34,10 @@ class TransformationState:
         new_id = self.node_counter
         self.node_counter += 1
         return new_id
-    
+
     def get_current_id(self):
         return self.node_counter - 1
-    
+
     def get_number_of_ids(self):
         return self.node_counter
 
@@ -91,6 +92,11 @@ class SpeculativeTransformationState(TransformationState):
 
     def get_all_loop_contexts(self):
         return self.partial_order_node_loop_contexts
+
+class AirflowTransformationState(TransformationState):
+    def __init__(self, mode: TransformationType):
+        super().__init__(mode)
+        assert(self.mode is TransformationType.AIRFLOW)
 
 
 ##
@@ -177,12 +183,12 @@ def replace_ast_regions(ast_objects, trans_options):
         preprocessed_ast_object = preprocess_node(ast, trans_options, last_object=last_object)
         ## If the dataflow region is not maximal then it implies that the whole
         ## AST should be replaced.
-        assert(not preprocessed_ast_object.is_non_maximal() 
+        assert(not preprocessed_ast_object.is_non_maximal()
                or preprocessed_ast_object.should_replace_whole_ast())
-        
+
         ## If the whole AST needs to be replaced then it implies that
         ## something will be replaced
-        assert(not preprocessed_ast_object.should_replace_whole_ast() 
+        assert(not preprocessed_ast_object.should_replace_whole_ast()
                or preprocessed_ast_object.will_anything_be_replaced())
 
         ## If it isn't maximal then we just add it to the candidate
@@ -228,7 +234,7 @@ def replace_ast_regions(ast_objects, trans_options):
 
     return preprocessed_asts
 
-## This function joins original unparsed shell source in a safe way 
+## This function joins original unparsed shell source in a safe way
 ##   so as to deal with the case where some of the text is None (e.g., in case of stdin parsing).
 def join_original_text_lines(shell_source_lines_or_none):
     if any([text_or_none is None for text_or_none in shell_source_lines_or_none]):
@@ -298,7 +304,7 @@ def preprocess_node_command(ast_node, trans_options, last_object=False):
                                               last_ast=last_object)
     return preprocessed_ast_object
 
-# Background of (linno * t * redirection list) 
+# Background of (linno * t * redirection list)
 ## TODO: It might be possible to actually not close the inner node but rather apply the redirections on it
 def preprocess_node_redir(ast_node, trans_options, last_object=False):
     preprocessed_node, something_replaced = preprocess_close_node(ast_node.node, trans_options,
@@ -367,13 +373,13 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
 
     ## Prepend the increment in the body
     ast_node.body = make_typed_semi_sequence(
-        [to_ast_node(increment_node), 
-         to_ast_node(save_loop_iters_node), 
+        [to_ast_node(increment_node),
+         to_ast_node(save_loop_iters_node),
          copy.deepcopy(preprocessed_body)])
 
     ## We pop the loop identifier from the loop context.
     ##
-    ## KK 2023-04-27: Could this exit happen before the replacement leading to wrong 
+    ## KK 2023-04-27: Could this exit happen before the replacement leading to wrong
     ##     results? I think not because we use the _close_node preprocessing variant.
     ##     A similar issue might happen for while
     trans_options.exit_loop()
@@ -385,8 +391,8 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
     ## Prepend the export in front of the loop
     # new_node = ast_node
     new_node = make_typed_semi_sequence(
-        [to_ast_node(export_node), 
-         ast_node, 
+        [to_ast_node(export_node),
+         ast_node,
          to_ast_node(reset_loop_iters_node)])
     # print(new_node)
 
@@ -395,7 +401,7 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
                                               non_maximal=False,
                                               something_replaced=something_replaced,
                                               last_ast=last_object)
-    
+
     return preprocessed_ast_object
 
 def preprocess_node_while(ast_node, trans_options, last_object=False):
@@ -412,7 +418,7 @@ def preprocess_node_while(ast_node, trans_options, last_object=False):
                                               non_maximal=False,
                                               something_replaced=something_replaced,
                                               last_ast=last_object)
-    
+
     ## We pop the loop identifier from the loop context.
     trans_options.exit_loop()
     return preprocessed_ast_object
@@ -446,7 +452,7 @@ def preprocess_node_semi(ast_node, trans_options, last_object=False):
                                               last_ast=last_object)
     return preprocessed_ast_object
 
-## TODO: Make sure that what is inside an `&&`, `||`, `!` (and others) does not run in parallel_pipelines 
+## TODO: Make sure that what is inside an `&&`, `||`, `!` (and others) does not run in parallel_pipelines
 ##       since we need its exit code.
 def preprocess_node_and(ast_node, trans_options, last_object=False):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
@@ -626,9 +632,9 @@ def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
     else:
         assignments = [["pash_disable_parallel_pipelines",
                         string_to_argument("0")]]
-    assignments.append(["pash_sequential_script_file", 
+    assignments.append(["pash_sequential_script_file",
                         string_to_argument(sequential_script_file_name)])
-    assignments.append(["pash_input_ir_file", 
+    assignments.append(["pash_input_ir_file",
                         string_to_argument(ir_filename)])
 
     ## Call the runtime
@@ -646,7 +652,7 @@ def make_call_to_spec_runtime(command_id: int, loop_id) -> AstNode:
         loop_id_str = ""
     else:
         loop_id_str = str(loop_id)
-    
+
     assignments.append(["pash_spec_loop_id",
                         string_to_argument(loop_id_str)])
 
