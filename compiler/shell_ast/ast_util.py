@@ -1,4 +1,3 @@
-
 from env_var_names import *
 from shasta.ast_node import *
 from shasta.json_to_ast import *
@@ -20,7 +19,7 @@ class PreprocessedAST:
 
     def is_non_maximal(self):
         return self.non_maximal
-    
+
     def will_anything_be_replaced(self):
         return self.something_replaced
 
