@@ -97,7 +97,8 @@ def redir_stdout_to_file(arg):
 def redir_file_to_stdin(arg):
     return make_kv("File",["From", 0, arg])
 
-def make_background(body, redirections=[]):
+def make_background(body, redirections=None):
+    redirections = [] if redirections is None else redirections
     lineno = 0
     node = make_kv("Background", [lineno, body, redirections])
     return node
@@ -106,12 +107,15 @@ def make_backquote(node):
     node = make_kv("B", node)
     return node
 
-def make_subshell(body, redirections=[]):
+def make_subshell(body, redirections=None):
+    redirections = [] if redirections is None else redirections
     lineno = 0
     node = make_kv("Subshell", [lineno, body, redirections])
     return node
 
-def make_command(arguments, redirections=[], assignments=[]):
+def make_command(arguments, redirections=None, assignments=None):
+    assignments = [] if assignments is None else assignments
+    redirections = [] if redirections is None else redirections
     lineno = 0
     node = make_kv("Command", [lineno, assignments, arguments, redirections])
     return node

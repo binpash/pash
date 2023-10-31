@@ -185,7 +185,9 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
 
 
 def compile_command_to_DFG(fileIdGen, command, options,
-                           redirections=[]):
+                           redirections=None):
+    redirections = [] if redirections is None else redirections
+
     command_invocation: CommandInvocationInitial = parse_arg_list_to_command_invocation(command, options)
     io_info: InputOutputInfo = get_input_output_info_from_cmd_invocation_util(command_invocation)
     if io_info is None:
