@@ -192,13 +192,30 @@ class AirflowTransformationState(TransformationState):
     def replace_df_region(
         self, asts, disable_parallel_pipelines=False, ast_text=None
     ) -> AstNode:
-        text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
-        ## Generate an ID
-        df_region_id = self.next_id
+        ir_filename = ptempfile()
 
-        ## Get the current loop id and save it so that the runtime knows
-        ## which loop it is in.
-        loop_id = self.current_loop_id
+        ## Serialize the node in a file
+        with open(ir_filename, "wb") as ir_file:
+            pickle.dump(asts, ir_file)
+
+        ## Serialize the candidate df_region asts back to shell
+        ## so that the sequential script can be run in parallel to the compilation.
+        sequential_script_file_name = ptempfile()
+        text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
+        ## However, if we have the original ast text, then we can simply output that.
+        with open(sequential_script_file_name, "w") as script_file:
+            script_file.write(text_to_output)
+        replaced_node = AirflowTransformationState.make_call_to_airflow_runtime(
+            ir_filename, sequential_script_file_name, disable_parallel_pipelines
+        )
+
+        return to_ast_node(replaced_node)
+
+    @staticmethod
+    def make_call_to_airflow_runtime(
+        ir_filename, sequential_script_file_name, disable_parallel_pipelines
+    ):
+        pass
 
 
 def get_shell_from_ast(asts, ast_text=None) -> str:
