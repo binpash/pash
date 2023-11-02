@@ -16,44 +16,45 @@ class TransformationType(Enum):
 
 
 class AbstractTransformationState(ABC):
+    """
+    Use this object to pass options inside the preprocessing
+    trasnformation.
+    """
+
     def __init__(self):
         self._node_counter = 0
         self._loop_counter = 0
         self._loop_contexts = []
 
-    def get_mode(self):
-        return TransformationType.PASH
-
-    ## Node id related
-    def get_next_id(self):
+    @property
+    def next_id(self):
         new_id = self._node_counter
         self._node_counter += 1
         return new_id
 
-    def get_current_id(self):
+    @property
+    def current_id(self):
         return self._node_counter - 1
 
-    def get_number_of_ids(self):
-        return self._node_counter
-
-    ## Loop id related
-    def get_next_loop_id(self):
+    @property
+    def next_loop_id(self):
         new_id = self._loop_counter
         self._loop_counter += 1
         return new_id
 
-    def get_current_loop_context(self):
-        ## We want to copy that
-        return self._loop_contexts[:]
-
-    def get_current_loop_id(self):
+    @property
+    def current_loop_id(self):
         if len(self._loop_contexts) == 0:
             return None
         else:
             return self._loop_contexts[0]
 
+    def get_current_loop_context(self):
+        """Returns a copy of the current loop context"""
+        return self._loop_contexts[:]
+
     def enter_loop(self):
-        new_loop_id = self.get_next_loop_id()
+        new_loop_id = self.next_loop_id
         self._loop_contexts.insert(0, new_loop_id)
         return new_loop_id
 
@@ -67,8 +68,6 @@ class AbstractTransformationState(ABC):
         pass
 
 
-## Use this object to pass options inside the preprocessing
-## trasnformation.
 class TransformationState(AbstractTransformationState):
     def replace_df_region(
         self, asts, disable_parallel_pipelines=False, ast_text=None
@@ -92,25 +91,23 @@ class TransformationState(AbstractTransformationState):
 
         return to_ast_node(replaced_node)
 
-    ## This function makes a command that calls the pash runtime
-    ## together with the name of the file containing an IR. Then the
-    ## pash runtime should read from this file and continue
-    ## execution.
-    ##
-    ## TODO: At the moment this is written in python but it is in essense a simple shell script.
-    ##       Is it possible to make it be a simple string instead of manually creating the AST?
-    ##
-    ## (MAYBE) TODO: The way I did it, is by calling the parser once, and seeing
-    ## what it returns. Maybe it would make sense to call the parser on
-    ## the fly to have a cleaner implementation here?
     @staticmethod
     def make_call_to_pash_runtime(
         ir_filename, sequential_script_file_name, disable_parallel_pipelines
     ) -> AstNode:
-        ## Disable parallel pipelines if we are in the last command of the script.
-        ## ```
-        ## pash_disable_parallel_pipelines=1
-        ## ```
+        """
+        This function makes a command that calls the pash runtime
+        together with the name of the file containing an IR. Then the
+        pash runtime should read from this file and continue
+        execution.
+
+        TODO: At the moment this is written in python but it is in essense a simple shell script.
+              Is it possible to make it be a simple string instead of manually creating the AST?
+
+        (MAYBE) TODO: The way I did it, is by calling the parser once, and seeing
+        what it returns. Maybe it would make sense to call the parser on
+        the fly to have a cleaner implementation here?
+        """
         if disable_parallel_pipelines:
             assignments = [["pash_disable_parallel_pipelines", string_to_argument("1")]]
         else:
@@ -132,9 +129,6 @@ class TransformationState(AbstractTransformationState):
         return runtime_node
 
 
-## TODO: Turn it into a Transformation State class, and make a subclass for
-##       each of the two transformations. It is important for it to be state, because
-##       it will need to be passed around while traversing the tree.
 class SpeculativeTransformationState(AbstractTransformationState):
     def __init__(self, po_file: str):
         self.partial_order_file = po_file
@@ -146,11 +140,11 @@ class SpeculativeTransformationState(AbstractTransformationState):
     ) -> AstNode:
         text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
         ## Generate an ID
-        df_region_id = self.get_next_id()
+        df_region_id = self.next_id
 
         ## Get the current loop id and save it so that the runtime knows
         ## which loop it is in.
-        loop_id = self.get_current_loop_id()
+        loop_id = self.current_loop_id
 
         ## Determine its predecessors
         ## TODO: To make this properly work, we should keep some state
@@ -167,22 +161,6 @@ class SpeculativeTransformationState(AbstractTransformationState):
         )
         return to_ast_node(replaced_node)
 
-    def get_partial_order_file(self):
-        return self.partial_order_file
-
-    def add_edge(self, from_id: int, to_id: int):
-        self.partial_order_edges.append((from_id, to_id))
-
-    def get_all_edges(self):
-        return self.partial_order_edges
-
-    def add_node_loop_context(self, node_id: int, loop_contexts):
-        self.partial_order_node_loop_contexts[node_id] = loop_contexts
-
-    def get_all_loop_contexts(self):
-        return self.partial_order_node_loop_contexts
-
-    ## TODO: Make that an actual call to the spec runtime
     @staticmethod
     def make_call_to_spec_runtime(command_id: int, loop_id) -> AstNode:
         assignments = [["pash_spec_command_id", string_to_argument(str(command_id))]]
@@ -203,9 +181,24 @@ class SpeculativeTransformationState(AbstractTransformationState):
 
         return runtime_node
 
+    def add_edge(self, from_id: int, to_id: int):
+        self.partial_order_edges.append((from_id, to_id))
+
+    def add_node_loop_context(self, node_id: int, loop_contexts):
+        self.partial_order_node_loop_contexts[node_id] = loop_contexts
+
 
 class AirflowTransformationState(TransformationState):
-    pass
+    def replace_df_region(
+        self, asts, disable_parallel_pipelines=False, ast_text=None
+    ) -> AstNode:
+        text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
+        ## Generate an ID
+        df_region_id = self.next_id
+
+        ## Get the current loop id and save it so that the runtime knows
+        ## which loop it is in.
+        loop_id = self.current_loop_id
 
 
 def get_shell_from_ast(asts, ast_text=None) -> str:
