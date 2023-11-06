@@ -116,6 +116,10 @@ def parse_args():
         args.__dict__["partial_order_file"] = util_spec.partial_order_file_path()
         log(" -- Its partial order file will be stored in:", args.partial_order_file)
 
+    if args.airflow:
+        log("PaSh is exporting an Airflow DAG...")
+        args.__dict__["preprocess_mode"] = "airflow"
+
     ## Initialize the log file
     config.init_log_file()
     if not config.config:

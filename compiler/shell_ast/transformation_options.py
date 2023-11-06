@@ -63,7 +63,10 @@ class AbstractTransformationState(ABC):
 
     @abstractmethod
     def replace_df_region(
-        self, asts, disable_parallel_pipelines=False, ast_text=None
+        self,
+        asts: List[AstNode],
+        disable_parallel_pipelines: bool = False,
+        ast_text: Optional[str] = None,
     ) -> AstNode:
         pass
 
@@ -89,7 +92,7 @@ class TransformationState(AbstractTransformationState):
             ir_filename, sequential_script_file_name, disable_parallel_pipelines
         )
 
-        return to_ast_node(replaced_node)
+        return replaced_node
 
     @staticmethod
     def make_call_to_pash_runtime(
@@ -126,7 +129,7 @@ class TransformationState(AbstractTransformationState):
             string_to_argument(config.RUNTIME_EXECUTABLE),
         ]
         runtime_node = make_command(arguments, assignments=assignments)
-        return runtime_node
+        return to_ast_node(runtime_node)
 
 
 class SpeculativeTransformationState(AbstractTransformationState):
@@ -159,7 +162,7 @@ class SpeculativeTransformationState(AbstractTransformationState):
         replaced_node = SpeculativeTransformationState.make_call_to_spec_runtime(
             df_region_id, loop_id
         )
-        return to_ast_node(replaced_node)
+        return replaced_node
 
     @staticmethod
     def make_call_to_spec_runtime(command_id: int, loop_id) -> AstNode:
@@ -179,7 +182,7 @@ class SpeculativeTransformationState(AbstractTransformationState):
         ## Pass all relevant argument to the planner
         runtime_node = make_command(arguments, assignments=assignments)
 
-        return runtime_node
+        return to_ast_node(runtime_node)
 
     def add_edge(self, from_id: int, to_id: int):
         self.partial_order_edges.append((from_id, to_id))
@@ -189,33 +192,33 @@ class SpeculativeTransformationState(AbstractTransformationState):
 
 
 class AirflowTransformationState(TransformationState):
+    class AirflowNode(AstNode):
+        NodeName = "Airflow"
+
+        def __init__(self, command):
+            super().__init__()
+            self.command = command.strip()
+
+        def json(self):
+            return make_kv(
+                AirflowTransformationState.AirflowNode.NodeName, [self.command]
+            )
+
+        def pretty(self):
+            return (
+                f'command = BashOperator(task_id="task", bash_command="{self.command}")'
+            )
+
     def replace_df_region(
         self, asts, disable_parallel_pipelines=False, ast_text=None
     ) -> AstNode:
-        ir_filename = ptempfile()
-
-        ## Serialize the node in a file
-        with open(ir_filename, "wb") as ir_file:
-            pickle.dump(asts, ir_file)
-
-        ## Serialize the candidate df_region asts back to shell
-        ## so that the sequential script can be run in parallel to the compilation.
-        sequential_script_file_name = ptempfile()
-        text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
-        ## However, if we have the original ast text, then we can simply output that.
-        with open(sequential_script_file_name, "w") as script_file:
-            script_file.write(text_to_output)
-        replaced_node = AirflowTransformationState.make_call_to_airflow_runtime(
-            ir_filename, sequential_script_file_name, disable_parallel_pipelines
-        )
-
-        return to_ast_node(replaced_node)
-
-    @staticmethod
-    def make_call_to_airflow_runtime(
-        ir_filename, sequential_script_file_name, disable_parallel_pipelines
-    ):
-        pass
+        shell_list = []
+        for ast in asts:
+            if isinstance(ast, UnparsedScript):
+                shell_list.append(f"UNPARSED:: {ast.text}")
+            else:
+                shell_list.append(ast.pretty())
+        return AirflowTransformationState.AirflowNode("\n".join(shell_list) + "\n")
 
 
 def get_shell_from_ast(asts, ast_text=None) -> str:
