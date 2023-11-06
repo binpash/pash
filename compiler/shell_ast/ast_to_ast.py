@@ -16,8 +16,12 @@ from shell_ast.ast_util import *
 from shell_ast.preprocess_ast_cases import preprocess_node
 from shell_ast.transformation_options import AbstractTransformationState
 
+from parse import AstObject
 
-def replace_ast_regions(ast_objects, trans_options: AbstractTransformationState):
+
+def replace_ast_regions(
+    ast_objects: List[AstObject], trans_options: AbstractTransformationState
+) -> List[PreprocessedAST | UnparsedScript]:
     """
     Replace candidate dataflow AST regions with calls to PaSh's runtime.
     """

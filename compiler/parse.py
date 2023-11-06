@@ -3,8 +3,8 @@ import config
 import subprocess
 import sys
 
-from shell_ast.ast_util import UnparsedScript
-from shasta.ast_node import ast_node_to_untyped_deep
+from shell_ast.ast_util import PreprocessedAST, UnparsedScript
+from shasta.ast_node import ast_node_to_untyped_deep, AstNode
 from shasta.json_to_ast import to_ast_node
 from shasta.ast_node import string_of_arg
 
@@ -12,9 +12,12 @@ from util import *
 
 import libdash.parser
 
+
+AstObject = tuple[AstNode, Optional[str], int, int]
+
 ## Parses straight a shell script to an AST
 ## through python without calling it as an executable
-def parse_shell_to_asts(input_script_path):
+def parse_shell_to_asts(input_script_path: str) -> List[AstObject]:
     try:
         new_ast_objects = libdash.parser.parse(input_script_path)
 
@@ -32,7 +35,7 @@ def parse_shell_to_asts(input_script_path):
 def parse_shell_to_asts_interactive(input_script_path: str):
     return libdash.parser.parse(input_script_path)
 
-def from_ast_objects_to_shell(asts):
+def from_ast_objects_to_shell(asts: List[PreprocessedAST | UnparsedScript]) -> str:
     shell_list = []
     for ast in asts:
         # log("Ast:", ast)
