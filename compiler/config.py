@@ -170,6 +170,10 @@ def add_common_arguments(parser):
                         help="(experimental) use the speculative execution preprocessing and runtime (NOTE: this has nothing to do with --speculation, which is actually misnamed, and should be named concurrent compilation/execution and is now obsolete)",
                         action="store_true",
                         default=False)
+    parser.add_argument("--airflow",
+                        help="(experimental) use the speculative execution preprocessing and runtime (NOTE: this has nothing to do with --speculation, which is actually misnamed, and should be named concurrent compilation/execution and is now obsolete)",
+                        action="store_true",
+                        default=False)
     ## This is misnamed, it should be named concurrent compilation/execution
     parser.add_argument("--speculation",
                         help="(obsolete) does nothing -- run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
