@@ -28,7 +28,7 @@ def replace_ast_regions(
     preprocessed_asts = []
     candidate_dataflow_region = []
     last_object = False
-    for i, ast_object in enumerate(ast_objects):
+    for i, (ast, original_text, _, _) in enumerate(ast_objects):
         # log("Preprocessing AST {}".format(i))
         # log(ast_object)
         ## If we are working on the last object we need to keep that in mind when replacing.
@@ -38,7 +38,6 @@ def replace_ast_regions(
             # log("Last object")
             last_object = True
 
-        ast, original_text, _linno_before, _linno_after = ast_object
         assert isinstance(ast, AstNode)
 
         ## Goals: This transformation can approximate in several directions.

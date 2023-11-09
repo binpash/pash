@@ -1,6 +1,8 @@
 import argparse
 from datetime import datetime
 import os
+
+from shasta.ast_node import AstNode
 from compiler.shell_ast.ast_util import PreprocessedAST, UnparsedScript
 
 import config
@@ -51,7 +53,7 @@ def preprocess(input_script_path, args) -> str:
 
 def preprocess_asts(
     ast_objects: List[AstObject], args
-) -> List[PreprocessedAST | UnparsedScript]:
+) -> List[AstNode | UnparsedScript]:
     trans_mode = transformation_options.TransformationType(args.preprocess_mode)
     if trans_mode is transformation_options.TransformationType.SPECULATIVE:
         trans_options = transformation_options.SpeculativeTransformationState(
