@@ -186,6 +186,10 @@ def add_common_arguments(parser):
                         help="(experimental) execute the script in a distributed environment. Remote machines should be configured and ready",
                         action="store_true",
                         default=False)
+    parser.add_argument("--serverless_exec",
+                        help="(experimental) execute the script in a serverless environment. Serverless env (e.g., AWS account) should be configured and ready",
+                        action="store_true",
+                        default=False)
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")

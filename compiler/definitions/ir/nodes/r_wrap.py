@@ -33,6 +33,8 @@ class RWrap(DFGNode):
 
 def wrap_node(node: DFGNode, edges):
     r_wrap_bin = os.path.join(config.PASH_TOP, config.config['runtime']['r_wrap_binary'])
+    if config.pash_args.serverless_exec:
+        r_wrap_bin = config.config['runtime']['r_wrap_binary']
 
     ## At the moment we can only wrap a node that takes its input from stdin
     ## and outputs to stdout. Therefore the node needs to have only one input and one output.

@@ -326,9 +326,9 @@ class IR:
         new_edge_id = new_edge_fid.get_ident()
         old_fid, from_node, to_node = self.edges[old_edge_id]
         self.edges[new_edge_id] = (new_edge_fid, from_node, to_node)
-        if from_node:
+        if from_node is not None:
             self.get_node(from_node).replace_edge(old_edge_id, new_edge_id)
-        if to_node:
+        if to_node is not None:
             self.get_node(to_node).replace_edge(old_edge_id, new_edge_id)
         del self.edges[old_edge_id]
         

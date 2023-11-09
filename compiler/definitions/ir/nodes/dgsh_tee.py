@@ -18,6 +18,8 @@ class DGSHTee(DFGNode):
 
 def make_dgsh_tee_node(input_id, output_id):
     dgsh_tee_bin = os.path.join(config.PASH_TOP, config.config['runtime']['dgsh_tee_binary'])
+    if config.pash_args.serverless_exec:
+        dgsh_tee_bin = config.config['runtime']['dgsh_tee_binary']
 
     access_map = {output_id: make_stream_output(),
                   input_id: make_stream_input()}
