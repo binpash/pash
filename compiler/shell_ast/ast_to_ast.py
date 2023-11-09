@@ -21,7 +21,7 @@ from parse import AstObject
 
 def replace_ast_regions(
     ast_objects: List[AstObject], trans_options: AbstractTransformationState
-) -> List[PreprocessedAST | UnparsedScript]:
+) -> List[AstNode | UnparsedScript]:
     """
     Replace candidate dataflow AST regions with calls to PaSh's runtime.
     """

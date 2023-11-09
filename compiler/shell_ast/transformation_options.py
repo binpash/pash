@@ -64,7 +64,7 @@ class AbstractTransformationState(ABC):
     @abstractmethod
     def replace_df_region(
         self,
-        asts: List[AstNode],
+        asts: List[AstNode | UnparsedScript],
         disable_parallel_pipelines: bool = False,
         ast_text: Optional[str] = None,
     ) -> AstNode:
@@ -214,10 +214,28 @@ class AirflowTransformationState(TransformationState):
     ) -> AstNode:
         shell_list = []
         for ast in asts:
-            if isinstance(ast, UnparsedScript):
-                shell_list.append(f"UNPARSED:: {ast.text}")
+            if ast is UnparsedScript:
+                shell_list.append(
+                    f"command_task = BashOperator(task_id='command_task', bash_command='{ast.text}'"
+                )
+            elif ast is IfNode:
+                shell_list.append(
+                    f"cond_task = BashOperator(task_id='cond_task', bash_command='{ast.cond}), xcom_push=True\n"
+                    """
+                    @task.branch(task_id='branch')
+                    def branch_func(ti=None):
+                    xcom_value = bool(ti.xcom_pull(task_ids='cond_task'))
+                    if xcom_value:
+                       return 'then_task'
+                    else:
+                       return 'else_task'
+                    """
+                    f"then_task = BashOperator(task_id='then_task', bash_command='{ast.then_b}'"
+                    f"else_task = BashOperator(task_id='then_task', bash_command='{ast.else_b}'"
+                )
             else:
                 shell_list.append(ast.pretty())
+
         return AirflowTransformationState.AirflowNode("\n".join(shell_list) + "\n")
 
 
