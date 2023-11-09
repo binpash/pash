@@ -10,7 +10,7 @@ s3 = session.client("s3")
 
 while True:
     try:
-        response = s3.get_object(Bucket="yizhengx", Key=object_key)
+        response = s3.get_object(Bucket="nikpag", Key=object_key)
         break
     except:
         time.sleep(1)

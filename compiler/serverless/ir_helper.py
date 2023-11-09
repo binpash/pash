@@ -1,8 +1,9 @@
 import argparse
 from typing import Dict, List, Tuple
 import sys
+import os
 from uuid import uuid4
-sys.path.append("/pash/compiler")
+sys.path.append(os.path.join(os.getenv("PASH_TOP"), "compiler"))
 import definitions.ir.nodes.serverless_remote_pipe as serverless_remote_pipe
 import definitions.ir.nodes.serverless_lambda_invoke as serverless_lambda_invoke
 from definitions.ir.nodes.r_merge import RMerge
@@ -20,9 +21,9 @@ def add_stdout_fid(graph : IR, file_id_gen: FileIdGen) -> FileId:
 
 def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR]):
     """ Takes a list of subgraphs and augments subgraphs with the necessary remote
-        read/write nodes for data movement and lambda invocation nodes to trigger 
-        downstream processing. This function also produces graph that should run in 
-        the original shell in which pash was executed. This graph contains 
+        read/write nodes for data movement and lambda invocation nodes to trigger
+        downstream processing. This function also produces graph that should run in
+        the original shell in which pash was executed. This graph contains
         remote read/write nodes for stdin/stdout, named pipes, and files.
 
     Args:
@@ -36,16 +37,16 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
     """
     # The graph to execute in the main pash_compiler
     main_graph = IR({}, {})
-    subgraph_script_id_pairs = {} 
+    subgraph_script_id_pairs = {}
     main_subgraph_script_id = None
 
-    # Replace output edges and corrosponding input edges with remote read/write 
+    # Replace output edges and corrosponding input edges with remote read/write
     # with the key as old_edge_id
     for subgraph in subgraphs:
         sink_nodes = subgraph.sink_nodes()
         assert(len(sink_nodes) == 1)
         out_edges = subgraph.get_node_output_fids(sink_nodes[0])
-        for out_edge in out_edges:            
+        for out_edge in out_edges:
             # Replace the old edge with an ephemeral edge in case it isn't and
             # to avoid modifying the edge in case it's used in some other subgraph
             out_edge_id = out_edge.get_ident()
@@ -61,7 +62,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
             # Add remote-write node at the end of the subgraph
             remote_write = serverless_remote_pipe.make_serverless_remote_pipe(ephemeral_edge.get_ident(), stdout.get_ident(), False, edge_uid, None, last_subgraph)
             subgraph.add_node(remote_write)
-            
+
             # Copy the old output edge resource
             new_edge = file_id_gen.next_file_id()
             new_edge.set_resource(out_edge.get_resource())
@@ -78,10 +79,10 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 # Add edge to main graph
                 matching_subgraph = main_graph
                 matching_subgraph.add_edge(new_edge)
-                
+
             remote_read = serverless_remote_pipe.make_serverless_remote_pipe(None, new_edge.get_ident(), True, edge_uid, out_resource=new_edge.get_resource())
             matching_subgraph.add_node(remote_read)
-    
+
     # Replace non ephemeral input edges with remote read/write
     for subgraph in subgraphs:
         if subgraph not in subgraph_script_id_pairs:
@@ -113,11 +114,11 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
     """
     Reads the complete ir from filename and splits it
     into subgraphs where ony the first subgraph represent a continues
-    segment (merger segment or branched segment) in the graph. 
+    segment (merger segment or branched segment) in the graph.
     Note: All subgraphs(except first one) read and write from remote pipes.
         However, we had to add a fake stdout to avoid some problems when converting to shell code.
 
-    Args: 
+    Args:
         ir: an IR optimized by the pash compiler
         shell_vars: shell variables
         args: pash args
@@ -155,5 +156,5 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
             log("Script for first lambda saved in:"+script_name)
         else:
             log("Script for other lambda saved in:"+script_name)
-    
+
     return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script
