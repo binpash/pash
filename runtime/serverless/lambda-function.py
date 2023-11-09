@@ -9,7 +9,7 @@ def lambda_handler(event, context):
     with open("/tmp/data", "w") as f:
         f.write(data)
     id_ = event["id"]
-    print("Script ID", id_)
+    print("Executing script ID", id_)
     with open("/tmp/script.sh", "w") as f:
         f.write(scripts_dict[id_])
     script = f"/tmp/script.sh"
