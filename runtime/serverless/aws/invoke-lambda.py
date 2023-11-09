@@ -1,8 +1,8 @@
 import boto3
 import sys
 import json
-print(sys.argv[1:])
 id_, data_path = sys.argv[1:]
+print("Invoke lambda", id_)
 with open(data_path, "r") as f:
     data = f.read()
 

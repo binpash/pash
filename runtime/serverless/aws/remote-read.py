@@ -3,7 +3,7 @@ import sys
 import time
 
 object_key, outfile = sys.argv[1:]
-
+print("Remote read", object_key)
 session = boto3.Session()
 
 s3 = session.client("s3")
