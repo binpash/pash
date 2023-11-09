@@ -3,7 +3,7 @@ import sys
 import json
 
 object_key, infile, last_subgraph = sys.argv[1:]
-
+print("Remote write",object_key)
 session = boto3.Session()
 
 s3 = session.client("s3")
