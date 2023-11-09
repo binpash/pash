@@ -26,7 +26,7 @@ setup_dataset() {
   fi
 
     if [ ! -f ./1M.txt ]; then
-        curl -sf 'http://ndr.md/data/dummy/1M.txt' > 1M.txt
+        curl -sf 'atlas-group.cs.brown.edu/data/dummy/1M.txt' > 1M.txt
         if [ $? -ne 0 ]; then
             echo 'cannot find 1M.txt -- please contact the developers of pash'
             exit 1
@@ -51,7 +51,7 @@ setup_dataset() {
     fi
 
     if [ ! -f ./1G.txt ]; then
-        curl -sf 'http://ndr.md/data/dummy/1G.txt' > 1G.txt
+        curl -sf 'atlas-group.cs.brown.edu/data/dummy/1G.txt' > 1G.txt
         if [ $? -ne 0 ]; then
             echo 'cannot find 1G.txt -- please contact the developers of pash'
             exit 1
@@ -61,7 +61,7 @@ setup_dataset() {
 
   # download wamerican-insane dictionary and sort according to machine
   if [ ! -f ./dict.txt ]; then
-      curl -sf 'http://ndr.md/data/dummy/dict.txt' | sort > dict.txt
+      curl -sf 'atlas-group.cs.brown.edu/data/dummy/dict.txt' | sort > dict.txt
       if [ $? -ne 0 ]; then
           echo 'cannot find dict.txt -- please contact the developers of pash'
           exit 1
@@ -70,7 +70,7 @@ setup_dataset() {
     fi
 
     if [ ! -f ./all_cmds.txt ]; then
-        curl -sf 'http://ndr.md/data/dummy/all_cmds.txt' > all_cmds.txt
+        curl -sf 'atlas-group.cs.brown.edu/data/dummy/all_cmds.txt' > all_cmds.txt
         if [ $? -ne 0 ]; then
             # This should be OK for tests, no need for abort
             ls /usr/bin/* > all_cmds.txt
