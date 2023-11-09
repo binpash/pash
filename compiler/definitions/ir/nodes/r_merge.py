@@ -19,6 +19,8 @@ class RMerge(DFGNode):
 
 def make_r_merge_node(inputs, output):
     r_merge_bin = os.path.join(config.PASH_TOP, config.config['runtime']['r_merge_binary'])
+    if config.pash_args.serverless_exec:
+        r_merge_bin = config.config['runtime']['r_merge_binary']
     # TODO: assume that the inputs and output is provided as operands
     access_map = {input_id: make_stream_input() for input_id in inputs}
     access_map[output] = make_stream_output()

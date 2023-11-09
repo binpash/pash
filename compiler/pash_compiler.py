@@ -27,6 +27,8 @@ import definitions.ir.nodes.dgsh_tee as dgsh_tee
 import definitions.ir.nodes.dfs_split_reader as dfs_split_reader
 # Distirbuted Exec
 import dspash.hdfs_utils as hdfs_utils 
+# Serverless Exec
+# import serverless.serverless_executor as splash
 
 runtime_config = {}
 ## We want to catch all exceptions here so that they are logged correctly
@@ -125,6 +127,12 @@ def compile_optimize_output_script(ir_filename, compiled_script_file, args, comp
 
             with open(ir_filename, "wb") as f:
                 obj = (optimized_ast_or_ir, config.config['shell_variables'])
+                pickle.dump(obj, f)
+        elif args.serverless_exec:
+            ir_filename = ptempfile()
+            script_to_execute = f"$PASH_TOP/compiler/serverless/serverless_exec_graph.sh {ir_filename}\n"
+            with open(ir_filename, "wb") as f:
+                obj = (optimized_ast_or_ir, config.config['shell_variables'], args)
                 pickle.dump(obj, f)
         else:
             script_to_execute = to_shell(optimized_ast_or_ir, args)

@@ -108,6 +108,8 @@ def make_ir_epilogue(ephemeral_fids, clean_up_graph, log_file) -> "list[AstNode]
         ## TODO: Wait for all output nodes not just one
         pids = [[standard_var_ast('!')]]
         clean_up_path_script = os.path.join(config.PASH_TOP, config.config['runtime']['clean_up_graph_binary'])
+        if config.pash_args.serverless_exec:
+            clean_up_path_script = config.config['runtime']['clean_up_graph_binary']
         com_args = [string_to_argument('source'), string_to_argument(clean_up_path_script)] + pids
         if (log_file == ""):
             com = make_command(com_args)
