@@ -4,11 +4,10 @@ import os
 
 def lambda_handler(event, context):
     data = event["data"]
-    print(type(data))
-    scripts_dict = json.loads(data)
-    with open("/tmp/data", "w") as f:
-        f.write(data)
     id_ = event["id"]
+    scripts_dict = json.loads(data)
+    with open(f"/tmp/{id_}", "w") as f:
+        f.write(data)
     print("Executing script ID", id_)
     with open("/tmp/script.sh", "w") as f:
         f.write(scripts_dict[id_])
@@ -18,7 +17,7 @@ def lambda_handler(event, context):
     #         print(line)
     # print(os.getcwd())
     process = subprocess.Popen(
-        ["/bin/bash", script, "/tmp/data"], cwd=os.getcwd()
+        ["/bin/bash", script, f"/tmp/{id_}"], cwd=os.getcwd()
     )
 
     process.wait()
