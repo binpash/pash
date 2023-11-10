@@ -17,7 +17,7 @@ class ServerlessRemotePipe(DFGNode):
                          cmd_related_properties=cmd_related_properties)
 
 
-def make_serverless_remote_pipe(input_id, output_id, is_remote_read, key, out_resource=None, last_subgraph=False):
+def make_serverless_remote_pipe(input_id, output_id, is_remote_read, key, out_resource=None, is_tcp=False):
     operand_list = [Operand(Arg.string_to_arg(str(key)))]
     access_map = {}
     implicit_use_of_streaming_output = None
@@ -26,21 +26,25 @@ def make_serverless_remote_pipe(input_id, output_id, is_remote_read, key, out_re
     if output_id is not None:
         access_map[output_id] = make_stream_output()
     if is_remote_read:
-        remote_pipe_bin = os.path.join('aws','remote-read.py')
         if isinstance(out_resource, FileDescriptorResource):
             operand_list.append(Operand(Arg.string_to_arg("/dev/stdout")))
             implicit_use_of_streaming_output = output_id # avoid node not found err
         else:
             operand_list.append(output_id)
-    else:
-        remote_pipe_bin = os.path.join('aws','remote-write.py')
-        operand_list.append(input_id)
-        implicit_use_of_streaming_output = output_id
-        if last_subgraph:
+        if is_tcp:
+            remote_pipe_bin = os.path.join('aws','sendrecv.py')
             operand_list.append(Operand(Arg.string_to_arg("1")))
         else:
+            remote_pipe_bin = os.path.join('aws','s3-get-object.py')
+    else:
+        operand_list.append(input_id)
+        implicit_use_of_streaming_output = output_id
+        if is_tcp:
+            remote_pipe_bin = os.path.join('aws','sendrecv.py')
             operand_list.append(Operand(Arg.string_to_arg("0")))
-    
+        else:
+            remote_pipe_bin = os.path.join('aws','s3-put-object.py')
+
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name="python "+remote_pipe_bin,
         flag_option_list=[],
