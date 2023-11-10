@@ -60,7 +60,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
             if out_edge_id not in input_fifo_map:
                 last_subgraph = True
             # Add remote-write node at the end of the subgraph
-            remote_write = serverless_remote_pipe.make_serverless_remote_pipe(ephemeral_edge.get_ident(), stdout.get_ident(), False, edge_uid, None, last_subgraph)
+            remote_write = serverless_remote_pipe.make_serverless_remote_pipe(ephemeral_edge.get_ident(), stdout.get_ident(), False, edge_uid, None, is_tcp=(not last_subgraph))
             subgraph.add_node(remote_write)
 
             # Copy the old output edge resource
@@ -80,7 +80,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 matching_subgraph = main_graph
                 matching_subgraph.add_edge(new_edge)
 
-            remote_read = serverless_remote_pipe.make_serverless_remote_pipe(None, new_edge.get_ident(), True, edge_uid, out_resource=new_edge.get_resource())
+            remote_read = serverless_remote_pipe.make_serverless_remote_pipe(None, new_edge.get_ident(), True, edge_uid, out_resource=new_edge.get_resource(), is_tcp=True)
             matching_subgraph.add_node(remote_read)
 
     # Replace non ephemeral input edges with remote read/write
@@ -100,7 +100,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                     # Add remote read to current subgraph
                     ephemeral_edge = file_id_gen.next_ephemeral_file_id()
                     subgraph.replace_edge(in_edge.get_ident(), ephemeral_edge)
-                    remote_read = serverless_remote_pipe.make_serverless_remote_pipe(None, ephemeral_edge.get_ident(), True, filename)
+                    remote_read = serverless_remote_pipe.make_serverless_remote_pipe(None, ephemeral_edge.get_ident(), True, filename, is_tcp=False)
                     subgraph.add_node(remote_read)
                 else:
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
@@ -140,10 +140,9 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         for edge in subgraph.all_fids():
             if edge.is_ephemeral():
                 dir_set.add(os.path.join(config.PASH_TMP_PREFIX, edge.prefix))
-        mk_dirs = "mkdir "+config.PASH_TMP_PREFIX+" \n"
+        mk_dirs = "mkdir -p "+config.PASH_TMP_PREFIX+" \n"
         for dir in dir_set:
-            mk_dirs += "mkdir "+dir+" \n"
-        mk_dirs +=  "echo $1\n"
+            mk_dirs += "mkdir -p "+dir+" \n"
         script = mk_dirs+to_shell(subgraph, args)
         # generate scripts
         script_name = os.path.join(config.PASH_TMP_PREFIX, str(id_))
