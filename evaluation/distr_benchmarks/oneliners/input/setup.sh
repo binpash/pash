@@ -1,7 +1,9 @@
 #!/bin/bash
 #set -e
 
-PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
+PASH_TOP=${PASH_TOP:-$DISH_TOP/pash}
+. "$PASH_TOP/scripts/utils.sh"
+
 
 # another solution for capturing HTTP status code
 # https://superuser.com/a/590170
@@ -13,14 +15,15 @@ if [[ "$1" == "-c" ]]; then
     exit
 fi
 
-hdfs dfs -mkdir /oneliners
+hdfs dfs -mkdir -p /oneliners
 
 if [ ! -f ./1M.txt ]; then
-    curl -sf 'http://ndr.md/data/dummy/1M.txt' > 1M.txt
+    curl -sf --connect-timeout 10 'atlas-group.cs.brown.edu/data/dummy/1M.txt' > 1M.txt
     if [ $? -ne 0 ]; then
-        echo 'cannot find 1M.txt -- please contact the developers of pash'
-        exit 1
+        curl -f 'https://zenodo.org/record/7650885/files/1M.txt' > 1M.txt
+        [ $? -ne 0 ] && eexit 'cannot find 1M.txt'
     fi
+    append_nl_if_not ./1M.txt
 fi
 
 if [ ! -f ./10M.txt ]; then
@@ -38,35 +41,53 @@ if [ ! -f ./100M.txt ]; then
 fi
 
 if [ ! -f ./1G.txt ]; then
-    curl -sf 'http://ndr.md/data/dummy/1G.txt' > 1G.txt
+    curl -sf --connect-timeout 10 'atlas-group.cs.brown.edu/data/dummy/1G.txt' > 1G.txt
     if [ $? -ne 0 ]; then
-        echo 'cannot find 1G.txt -- please contact the developers of pash'
-        exit 1
+        touch 1G.txt
+        for (( i = 0; i < 10; i++ )); do
+            cat 100M.txt >> 1G.txt
+        done
     fi
+fi
+
+if [ ! -f ./words ]; then
+  curl -sf --connect-timeout 10 'http://ndr.md/data/dummy/words' > words
+  if [ $? -ne 0 ]; then
+    curl -f 'https://zenodo.org/record/7650885/files/words' > words
+    if [ $? -ne 0 ]; then
+      if [ $(uname) = 'Darwin' ]; then
+        cp /usr/share/dict/web2 words || eexit "cannot find dict file"
+      else
+        # apt install wamerican-insane
+        cp /usr/share/dict/words words || eexit "cannot find dict file"
+      fi
+    fi
+  fi
+  append_nl_if_not words
 fi
 
 # download wamerican-insane dictionary and sort according to machine
 if [ ! -f ./dict.txt ]; then
-    curl -sf 'http://ndr.md/data/dummy/dict.txt' | sort > dict.txt
+    curl -sf --connect-timeout 10 'atlas-group.cs.brown.edu/data/dummy/dict.txt' | sort > dict.txt
     if [ $? -ne 0 ]; then
-        echo 'cannot find dict.txt -- please contact the developers of pash'
-        exit 1
+        sort words > sorted_words
     fi
 fi
 
 if [ ! -f ./all_cmds.txt ]; then
-    curl -sf 'http://ndr.md/data/dummy/all_cmds.txt' > all_cmds.txt
+    curl -sf --connect-timeout 10 'atlas-group.cs.brown.edu/data/dummy/all_cmds.txt' > all_cmds.txt
     if [ $? -ne 0 ]; then
         # This should be OK for tests, no need for abort
         ls /usr/bin/* > all_cmds.txt
     fi
+    append_nl_if_not ./all_cmds.txt
 fi
 
 if [ ! -f ./all_cmdsx100.txt ]; then
-        touch all_cmdsx100.txt
-        for (( i = 0; i < 100; i++ )); do
-            cat all_cmds.txt >> all_cmdsx100.txt
-        done
+    touch all_cmdsx100.txt
+    for (( i = 0; i < 100; i++ )); do
+        cat all_cmds.txt >> all_cmdsx100.txt
+    done
 fi
 
 if [ ! -f ./3G.txt ]; then

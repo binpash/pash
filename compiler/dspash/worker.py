@@ -6,6 +6,7 @@ import sys
 import os
 import argparse
 import requests
+import time
 
 DISH_TOP = os.environ['DISH_TOP']
 PASH_TOP = os.environ['PASH_TOP']
@@ -128,26 +129,31 @@ def manage_connection(conn, addr):
             if not data:
                 break
 
-            print("got new request")
-            request = decode_request(data)
 
+            print("got new request")
+            request = decode_request(data)            
             if request['type'] == 'Exec-Graph':
                 graph, shell_vars, functions = parse_exec_graph(request)
                 debug = True if request['debug'] else False
                 save_configs(graph, dfs_configs_paths)
+                time.sleep(int(request['worker_timeout']))
                 rc = exec_graph(graph, shell_vars, functions, debug)
                 rcs.append((rc, request))
                 body = {}
+            elif request['type'] == 'Done':
+                print("Received 'Done' signal. Closing connection from the worker.")
+                break
             else:
                 print(f"Unsupported request {request}")
             send_success(conn, body)
-    print("connection ended")
 
+    # Ensure subprocesses have finished, and releasing corresponding resources
     for rc, request in rcs:
         if request['debug']:
             send_log(rc, request)
         else:
             rc.wait()
+    print("connection ended")
 
 
 def parse_args():
