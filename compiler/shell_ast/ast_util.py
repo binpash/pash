@@ -1,11 +1,19 @@
+"""Utility functions and classes for AST to AST transformations"""
+
 from env_var_names import *
-from shasta.ast_node import *
-from shasta.json_to_ast import *
+from shasta.ast_node import AstNode, ArgChar, CArgChar
+
+# from shasta.json_to_ast import *
 from util import *
 
 
 ## This class is used by the preprocessor in ast_to_ir
 class PreprocessedAST:
+    """
+    Wrapper around a preprocessed AST node. It is used to "remember" properties
+    about the transformation that occurred during preprocessing.
+    """
+
     def __init__(
         self, ast, replace_whole, non_maximal, something_replaced=True, last_ast=False
     ):
@@ -29,9 +37,12 @@ class PreprocessedAST:
         return self.last_ast
 
 
-## This class represents text that was not modified at all by preprocessing, and therefore does not
-## need to be unparsed.
 class UnparsedScript:
+    """
+    This class represents text that was not modified at all by preprocessing, and therefore does not
+    need to be unparsed.
+    """
+
     def __init__(self, text):
         self.text = text
 
@@ -59,7 +70,7 @@ def format_arg_char(arg_char: ArgChar) -> str:
     return arg_char.format()
 
 
-def string_to_carg_char_list(string: str) -> "list[CArgChar]":
+def string_to_carg_char_list(string: str) -> list[CArgChar]:
     ret = [CArgChar(ord(char)) for char in string]
     return ret
 

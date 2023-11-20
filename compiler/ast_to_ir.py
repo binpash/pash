@@ -1,3 +1,17 @@
+"""
+Compile AST -> Extended AST with IRs
+
+
+Compiles a given AST to an intermediate representation tree, which
+has some subtrees in it that are graphs representing a distributed
+computation.
+
+The above assumes that subtrees of the AST are disjoint
+computations that can be distributed separately (locally/modularly)
+without knowing about previous or later subtrees that can be
+distributed. Is that reasonable?
+"""
+
 import subprocess
 
 from shasta.ast_node import *
@@ -8,21 +22,8 @@ from ir import *
 from util import *
 from parse import from_ast_objects_to_shell
 
-## TODO: Separate the ir stuff to the bare minimum and
+# TODO: Separate the ir stuff to the bare minimum and
 ##       try to move this to the shell_ast folder.
-
-##
-## Compile AST -> Extended AST with IRs
-##
-
-## Compiles a given AST to an intermediate representation tree, which
-## has some subtrees in it that are graphs representing a distributed
-## computation.
-##
-## The above assumes that subtrees of the AST are disjoint
-## computations that can be distributed separately (locally/modularly)
-## without knowing about previous or later subtrees that can be
-## distributed. Is that reasonable?
 compile_cases = {
     "Pipe": (
         lambda fileIdGen, config: lambda ast_node: compile_node_pipe(
