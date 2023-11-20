@@ -12,34 +12,49 @@ from speculative import util_spec
 
 LOGGING_PREFIX = "PaSh Preprocessor: "
 
+
 @logging_prefix(LOGGING_PREFIX)
 def preprocess(input_script_path, args):
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
     preprocessing_parsing_start_time = datetime.now()
     ast_objects = parse_shell_to_asts(input_script_path)
     preprocessing_parsing_end_time = datetime.now()
-    print_time_delta("Preprocessing -- Parsing", preprocessing_parsing_start_time, preprocessing_parsing_end_time)
+    print_time_delta(
+        "Preprocessing -- Parsing",
+        preprocessing_parsing_start_time,
+        preprocessing_parsing_end_time,
+    )
 
     ## 2. Preprocess ASTs by replacing possible candidates for compilation
     ##    with calls to the PaSh runtime.
     preprocessing_pash_start_time = datetime.now()
     preprocessed_asts = preprocess_asts(ast_objects, args)
     preprocessing_pash_end_time = datetime.now()
-    print_time_delta("Preprocessing -- PaSh", preprocessing_pash_start_time, preprocessing_pash_end_time)
+    print_time_delta(
+        "Preprocessing -- PaSh",
+        preprocessing_pash_start_time,
+        preprocessing_pash_end_time,
+    )
 
     ## 3. Translate the new AST back to shell syntax
     preprocessing_unparsing_start_time = datetime.now()
     preprocessed_shell_script = from_ast_objects_to_shell(preprocessed_asts)
 
     preprocessing_unparsing_end_time = datetime.now()
-    print_time_delta("Preprocessing -- Unparsing", preprocessing_unparsing_start_time, preprocessing_unparsing_end_time)
+    print_time_delta(
+        "Preprocessing -- Unparsing",
+        preprocessing_unparsing_start_time,
+        preprocessing_unparsing_end_time,
+    )
     return preprocessed_shell_script
 
 
 def preprocess_asts(ast_objects, args):
     trans_mode = transformation_options.TransformationType(args.preprocess_mode)
     if trans_mode is transformation_options.TransformationType.SPECULATIVE:
-        trans_options = transformation_options.SpeculativeTransformationState(po_file=args.partial_order_file)
+        trans_options = transformation_options.SpeculativeTransformationState(
+            po_file=args.partial_order_file
+        )
         util_spec.initialize(trans_options)
     elif trans_mode is transformation_options.TransformationType.AIRFLOW:
         trans_options = transformation_options.AirflowTransformationState()
@@ -59,10 +74,13 @@ def preprocess_asts(ast_objects, args):
 
         ## Then inform the scheduler that it can read it
         unix_socket_file = os.getenv("PASH_SPEC_SCHEDULER_SOCKET")
-        msg = util_spec.scheduler_server_init_po_msg(trans_options.get_partial_order_file())
+        msg = util_spec.scheduler_server_init_po_msg(
+            trans_options.get_partial_order_file()
+        )
         server_util.unix_socket_send_and_forget(unix_socket_file, msg)
 
     return preprocessed_asts
+
 
 ##
 ## This is the command line interface for the preprocessor
@@ -71,21 +89,28 @@ def main():
     parser = argparse.ArgumentParser()
     config.add_general_config_arguments(parser)
 
-    subparsers = parser.add_subparsers(help='sub-command help')
+    subparsers = parser.add_subparsers(help="sub-command help")
 
     # create the parser for the "a" command
-    parser_pash = subparsers.add_parser('pash', help='Preprocess the script so that it can be run with PaSh')
+    parser_pash = subparsers.add_parser(
+        "pash", help="Preprocess the script so that it can be run with PaSh"
+    )
     config.add_common_arguments(parser_pash)
     parser_pash.add_argument("input", help="the script to be preprocessed")
-    parser_pash.set_defaults(preprocess_mode='pash')
+    parser_pash.set_defaults(preprocess_mode="pash")
 
     # create the parser for the "b" command
-    parser_spec = subparsers.add_parser('spec', help='Preprocess the script so that it can be run with speculation')
+    parser_spec = subparsers.add_parser(
+        "spec", help="Preprocess the script so that it can be run with speculation"
+    )
     parser_spec.add_argument("input", help="the script to be preprocessed")
 
     ## TODO: When we better integrate, this should be automatically set.
-    parser_spec.add_argument("partial_order_file", help="the file to store the partial order (currently just a sequence)")
-    parser_spec.set_defaults(preprocess_mode='spec')
+    parser_spec.add_argument(
+        "partial_order_file",
+        help="the file to store the partial order (currently just a sequence)",
+    )
+    parser_spec.set_defaults(preprocess_mode="spec")
 
     args = parser.parse_args()
     config.set_config_globals_from_pash_args(args)
@@ -99,5 +124,6 @@ def main():
     preprocessed_shell_script = preprocess(args.input, args)
     print(preprocessed_shell_script)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
