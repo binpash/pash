@@ -1,24 +1,34 @@
 from pash_annotations.datatypes.AccessKind import make_stream_input, make_stream_output
-from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+from pash_annotations.datatypes.CommandInvocationWithIOVars import (
+    CommandInvocationWithIOVars,
+)
 
 from definitions.ir.dfg_node import *
 
+
 class RMerge(DFGNode):
-    def __init__(self,
-                 cmd_invocation_with_io_vars,
-                 com_redirs=[],
-                 com_assignments=[],
-                 parallelizer_list=None,
-                 cmd_related_properties=None):
+    def __init__(
+        self,
+        cmd_invocation_with_io_vars,
+        com_redirs=[],
+        com_assignments=[],
+        parallelizer_list=None,
+        cmd_related_properties=None,
+    ):
         # TODO []: default arguments!
-        super().__init__(cmd_invocation_with_io_vars=cmd_invocation_with_io_vars,
-                         com_redirs=com_redirs,
-                         com_assignments=com_assignments,
-                         parallelizer_list=parallelizer_list,
-                         cmd_related_properties=cmd_related_properties)
+        super().__init__(
+            cmd_invocation_with_io_vars=cmd_invocation_with_io_vars,
+            com_redirs=com_redirs,
+            com_assignments=com_assignments,
+            parallelizer_list=parallelizer_list,
+            cmd_related_properties=cmd_related_properties,
+        )
+
 
 def make_r_merge_node(inputs, output):
-    r_merge_bin = os.path.join(config.PASH_TOP, config.config['runtime']['r_merge_binary'])
+    r_merge_bin = os.path.join(
+        config.PASH_TOP, config.config["runtime"]["r_merge_binary"]
+    )
     # TODO: assume that the inputs and output is provided as operands
     access_map = {input_id: make_stream_input() for input_id in inputs}
     access_map[output] = make_stream_output()
@@ -28,5 +38,6 @@ def make_r_merge_node(inputs, output):
         operand_list=inputs,
         implicit_use_of_streaming_input=None,
         implicit_use_of_streaming_output=output,
-        access_map=access_map)
+        access_map=access_map,
+    )
     return RMerge(cmd_inv_with_io_vars)

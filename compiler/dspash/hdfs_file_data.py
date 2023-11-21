@@ -38,13 +38,14 @@ class FileData(object):
             )
         return filepaths
 
+
 class HDFSFileConfig:
     def __init__(self, filedata: FileData):
-        self.blocks : List[HDFSBlock] = []
+        self.blocks: List[HDFSBlock] = []
         for i, block_path in enumerate(filedata.paths()):
             hosts = list(map(lambda addr: addr.rsplit(":", 1)[0], filedata.machines[i]))
             self.blocks.append(HDFSBlock(block_path, hosts))
-    
+
     def _serialize(self):
         data = {"blocks": []}
         for path, hosts in self.blocks:
@@ -57,7 +58,7 @@ class HDFSFileConfig:
 
     def dump(self, filepath):
         data = self._serialize()
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(data, f)
 
     def __eq__(self, __o: object) -> bool:
@@ -65,10 +66,13 @@ class HDFSFileConfig:
             return False
         return self.blocks == __o.blocks
 
+
 def get_hdfs_file_data(filename):
     info = FileData(filename)
     log = subprocess.check_output(
-        "hdfs fsck {0} -files -blocks -locations".format(filename), shell=True, stderr=subprocess.PIPE
+        "hdfs fsck {0} -files -blocks -locations".format(filename),
+        shell=True,
+        stderr=subprocess.PIPE,
     )
     count = 0
     for line in log.splitlines():
@@ -95,6 +99,7 @@ def get_hdfs_file_data(filename):
     assert info.size > 0
     return info
 
+
 def _getIPs(raw):
     rawparts = raw.split(" ")
     ips = []
@@ -102,6 +107,7 @@ def _getIPs(raw):
         index = part.find("DatanodeInfoWithStorage")
         ips.append(part[index + len("DatanodeInfoWithStorage") + 1 : part.find(",")])
     return ips
+
 
 if __name__ == "__main__":
     assert len(sys.argv) == 2

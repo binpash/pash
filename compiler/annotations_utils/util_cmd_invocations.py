@@ -1,24 +1,43 @@
 from pash_annotations.datatypes.BasicDatatypes import Flag, ArgStringType, Operand
 from pash_annotations.datatypes.BasicDatatypesWithIO import OptionWithIO
 from pash_annotations.datatypes.CommandInvocationInitial import CommandInvocationInitial
-from pash_annotations.annotation_generation.datatypes.InputOutputInfo import InputOutputInfo
-from pash_annotations.annotation_generation.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
-from pash_annotations.annotation_generation.datatypes.CommandProperties import CommandProperties
-from pash_annotations.annotation_generation.AnnotationGeneration import get_input_output_info_from_cmd_invocation, \
-    get_parallelizability_info_from_cmd_invocation
-from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+from pash_annotations.annotation_generation.datatypes.InputOutputInfo import (
+    InputOutputInfo,
+)
+from pash_annotations.annotation_generation.datatypes.ParallelizabilityInfo import (
+    ParallelizabilityInfo,
+)
+from pash_annotations.annotation_generation.datatypes.CommandProperties import (
+    CommandProperties,
+)
+from pash_annotations.annotation_generation.AnnotationGeneration import (
+    get_input_output_info_from_cmd_invocation,
+    get_parallelizability_info_from_cmd_invocation,
+)
+from pash_annotations.datatypes.CommandInvocationWithIOVars import (
+    CommandInvocationWithIOVars,
+)
 
 from definitions.ir.arg import Arg
 
 # for typing
 from pash_annotations.datatypes.CommandInvocationPrefix import CommandInvocationPrefix
 
-from shell_ast.ast_util import  string_to_argument, redir_stdout_to_file, redir_file_to_stdin, make_command
+from shell_ast.ast_util import (
+    string_to_argument,
+    redir_stdout_to_file,
+    redir_file_to_stdin,
+    make_command,
+)
+
 
 def get_command_invocation_prefix_from_dfg_node(dfg_node):
-    return CommandInvocationPrefix(cmd_name = dfg_node.com_name,
-                                   flag_option_list = dfg_node.flag_option_list,
-                                   positional_config_list = dfg_node.positional_config_list)
+    return CommandInvocationPrefix(
+        cmd_name=dfg_node.com_name,
+        flag_option_list=dfg_node.flag_option_list,
+        positional_config_list=dfg_node.positional_config_list,
+    )
+
 
 # TODO: ideally methods in the respective classes but requires refactoring of parsing infrastructure
 # TODO: isn't this `to_ast`?
@@ -48,18 +67,21 @@ def to_node_cmd_inv_with_io_vars(cmd_inv, edges, redirs, assignments):
     node = make_command(cmd_asts, redirections=new_redirs, assignments=assignments)
     return node
 
+
 def to_ast_flagoption(flagoption, edges):
     if isinstance(flagoption, Flag):
         return [string_to_argument(flagoption.get_name())]
-    elif isinstance(flagoption, OptionWithIO): # retype to IOVar
+    elif isinstance(flagoption, OptionWithIO):  # retype to IOVar
         opt_name_ast = string_to_argument(flagoption.get_name())
         opt_arg_ast = translate_io_var_if_applicable(flagoption.get_arg(), edges)
         return [opt_name_ast, opt_arg_ast]
+
 
 def to_ast_operand(operand, edges):
     if isinstance(operand, Operand):
         return translate_io_var_if_applicable(operand.get_name(), edges)
     return translate_io_var_if_applicable(operand, edges)
+
 
 def translate_io_var_if_applicable(pot_io_var, edges):
     # TODO: this is currently a hack but eventually every possible type gets their own to_ast-function
@@ -68,7 +90,7 @@ def translate_io_var_if_applicable(pot_io_var, edges):
     elif isinstance(pot_io_var, ArgStringType):
         return to_ast_arg_string_type(pot_io_var)
     elif isinstance(pot_io_var, CommandInvocationWithIOVars):
-        assert(False)
+        assert False
         # only happens as r-wrapped node
         return to_node_cmd_inv_with_io_vars(pot_io_var, edges, [], [])
     elif isinstance(pot_io_var, Arg):
@@ -76,27 +98,39 @@ def translate_io_var_if_applicable(pot_io_var, edges):
     else:
         raise Exception("Unhandled type for operand in to_ast!")
 
+
 def to_ast_arg_string_type(arg_string_type):
-    return arg_string_type.get_name().arg_char_list # is of type Arg
+    return arg_string_type.get_name().arg_char_list  # is of type Arg
+
 
 # assumes io_var is an edge id
 def dereference_io_var(io_var, edges):
     fid, _, _ = edges[io_var]
     return fid.to_ast()
 
-def get_input_output_info_from_cmd_invocation_util(cmd_invocationInitial : CommandInvocationInitial) -> InputOutputInfo:
+
+def get_input_output_info_from_cmd_invocation_util(
+    cmd_invocationInitial: CommandInvocationInitial,
+) -> InputOutputInfo:
     return get_input_output_info_from_cmd_invocation(cmd_invocationInitial)
 
-def get_parallelizability_info_from_cmd_invocation_util(cmd_invocationInitial : CommandInvocationInitial) -> ParallelizabilityInfo:
+
+def get_parallelizability_info_from_cmd_invocation_util(
+    cmd_invocationInitial: CommandInvocationInitial,
+) -> ParallelizabilityInfo:
     return get_parallelizability_info_from_cmd_invocation(cmd_invocationInitial)
+
 
 def construct_property_container_from_list_of_properties(list_properties):
     return CommandProperties(dict(list_properties))
 
+
 # this function is needed to wrap a node in `r_wrap`
-def to_arg_from_cmd_inv_with_io_vars_without_streaming_inputs_or_outputs_for_wrapping(cmd_inv, edges):
+def to_arg_from_cmd_inv_with_io_vars_without_streaming_inputs_or_outputs_for_wrapping(
+    cmd_inv, edges
+):
     # we already expand here
-    whole_cmd = Arg.string_to_arg("\'")
+    whole_cmd = Arg.string_to_arg("'")
     arg_cmd_name = Arg.string_to_arg(cmd_inv.cmd_name)
     arg_flagoptions = []
     for flagoption in cmd_inv.flag_option_list:
@@ -107,8 +141,9 @@ def to_arg_from_cmd_inv_with_io_vars_without_streaming_inputs_or_outputs_for_wra
     all_cmd_parts_arg.extend(arg_operands)
     for part in all_cmd_parts_arg:
         whole_cmd.concatenate(part)
-    whole_cmd.concatenate(Arg.string_to_arg("\'"))
+    whole_cmd.concatenate(Arg.string_to_arg("'"))
     return whole_cmd
+
 
 def to_arg_flagoption(flagoption, edges):
     if isinstance(flagoption, Flag):
@@ -118,10 +153,12 @@ def to_arg_flagoption(flagoption, edges):
         opt_arg_arg = translate_io_var_to_arg_if_applicable(flagoption.get_arg(), edges)
         return [opt_name_arg, opt_arg_arg]
 
+
 def to_arg_operand(operand, edges):
     if isinstance(operand, Operand):
         return translate_io_var_to_arg_if_applicable(operand.get_name(), edges)
     return translate_io_var_to_arg_if_applicable(operand, edges)
+
 
 def translate_io_var_to_arg_if_applicable(pot_io_var, edges):
     if isinstance(pot_io_var, int):

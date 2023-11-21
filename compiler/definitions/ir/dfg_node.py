@@ -2,9 +2,16 @@ import copy
 from definitions.ir.redirection import *
 from definitions.ir.resource import *
 
-from annotations_utils.util_cmd_invocations import to_node_cmd_inv_with_io_vars, construct_property_container_from_list_of_properties
+from annotations_utils.util_cmd_invocations import (
+    to_node_cmd_inv_with_io_vars,
+    construct_property_container_from_list_of_properties,
+)
 
-from util import return_empty_list_if_none_else_itself, return_default_if_none_else_itself
+from util import (
+    return_empty_list_if_none_else_itself,
+    return_default_if_none_else_itself,
+)
+
 
 ## Assumption: Everything related to a DFGNode must be already expanded.
 ## TODO: Ensure that this is true with assertions
@@ -17,13 +24,14 @@ class DFGNode:
     ## com_assignments : list of assignments
     ## parallelizer_list : list of parallelizers for this DFGNode
     ## cmd_related_properties : dict to store properties like commutativity
-    def __init__(self,
-                 cmd_invocation_with_io_vars,
-                 com_redirs = [],
-                 com_assignments=[],
-                 parallelizer_list=None,
-                 cmd_related_properties=None,
-                 ):
+    def __init__(
+        self,
+        cmd_invocation_with_io_vars,
+        com_redirs=[],
+        com_assignments=[],
+        parallelizer_list=None,
+        cmd_related_properties=None,
+    ):
         # TODO []: default parameters!
 
         ## @KK: can this be deleted? Was there another id in the member attributes before?
@@ -34,9 +42,15 @@ class DFGNode:
 
         self.com_redirs = [Redirection(redirection) for redirection in com_redirs]
         self.com_assignments = com_assignments
-        self.parallelizer_list = return_empty_list_if_none_else_itself(parallelizer_list)
-        default_cmd_properties = construct_property_container_from_list_of_properties([])
-        self.cmd_related_properties = return_default_if_none_else_itself(cmd_related_properties, default_cmd_properties)
+        self.parallelizer_list = return_empty_list_if_none_else_itself(
+            parallelizer_list
+        )
+        default_cmd_properties = construct_property_container_from_list_of_properties(
+            []
+        )
+        self.cmd_related_properties = return_default_if_none_else_itself(
+            cmd_related_properties, default_cmd_properties
+        )
         self.cmd_invocation_with_io_vars = cmd_invocation_with_io_vars
         # log("Node created:", self.id, self)
 
@@ -56,7 +70,6 @@ class DFGNode:
         name = self.cmd_invocation_with_io_vars.cmd_name
         basename = os.path.basename(str(name))
         return basename
-
 
     def get_id(self):
         return self.id
@@ -84,12 +97,11 @@ class DFGNode:
         return inputs.get_config_inputs()
 
     def is_commutative(self):
-        val = self.cmd_related_properties.get_property_value('is_commutative')
+        val = self.cmd_related_properties.get_property_value("is_commutative")
         if val is not None:
             return val
         else:
             return False
-
 
     ## Auxiliary method that returns any necessary redirections,
     ##   at the moment it doesn't look necessary.
@@ -97,7 +109,7 @@ class DFGNode:
         ## still used in to_ast
         ## TODO: Properly handle redirections
         ##
-        ## TODO: If one of the redirected outputs or inputs is changed in the IR 
+        ## TODO: If one of the redirected outputs or inputs is changed in the IR
         ##       (e.g. `cat < s1` was changed to read from an ephemeral file `cat < "#file5"`)
         ##       this needs to be changed in the redirections too. Maybe we can modify redirections
         ##       when replacing fid.
@@ -111,7 +123,6 @@ class DFGNode:
         ## where we recreate arguments and redirections).
         return []
 
-
     ## TODO: Improve this function to be separately implemented for different special nodes,
     ##       such as cat, eager, split, etc...
     ## I do not think this separation is reasonable anymore since we remodelled nodes in a way that the back-translation is trivial
@@ -120,7 +131,7 @@ class DFGNode:
     ##    hence assumes that non-streaming inputs/outputs will not change; with a special to_ast, we could circumvent this
     def to_ast(self, edges, drain_streams):
         ## TODO: We might not want to implement this at all actually
-        if (drain_streams):
+        if drain_streams:
             raise NotImplementedError()
         else:
             # commented since "see above"
@@ -132,7 +143,9 @@ class DFGNode:
             redirs = self._to_ast_aux_get_redirs()
             assignments = self.com_assignments
 
-            node = to_node_cmd_inv_with_io_vars(self.cmd_invocation_with_io_vars, edges, redirs, assignments)
+            node = to_node_cmd_inv_with_io_vars(
+                self.cmd_invocation_with_io_vars, edges, redirs, assignments
+            )
             # TODO: think about redirections
             # old code for this:
             # rest_argument_fids, new_redirs = create_command_arguments_redirs(com_name_ast,
@@ -157,37 +170,40 @@ class DFGNode:
         unhandled_redirs = []
         for redirection in self.com_redirs:
             ## Handle To redirections that have to do with stdout
-            if (redirection.is_to_file() and redirection.is_for_stdout()):
+            if redirection.is_to_file() and redirection.is_for_stdout():
                 # log(redirection)
                 file_resource = FileResource(redirection.file_arg)
                 success = False
                 for i in range(len(self.get_output_list())):
                     output_edge_id = self.get_output_list()[i]
                     output_fid = edges[output_edge_id][0]
-                    if(output_fid.has_file_descriptor_resource()
-                       and output_fid.resource.is_stdout()):
+                    if (
+                        output_fid.has_file_descriptor_resource()
+                        and output_fid.resource.is_stdout()
+                    ):
                         success = True
                         edges[output_edge_id][0].set_resource(file_resource)
                         # self.outputs[i].set_resource(file_resource)
-                assert(success)
-            elif (redirection.is_from_file() and redirection.is_for_stdin()):
+                assert success
+            elif redirection.is_from_file() and redirection.is_for_stdin():
                 # log(redirection)
                 file_resource = FileResource(redirection.file_arg)
                 success = False
                 for input_edge_id in self.get_input_list():
                     input_fid = edges[input_edge_id][0]
-                    if(input_fid.has_file_descriptor_resource()
-                       and input_fid.resource.is_stdin()):
+                    if (
+                        input_fid.has_file_descriptor_resource()
+                        and input_fid.resource.is_stdin()
+                    ):
                         success = True
                         edges[input_edge_id][0].set_resource(file_resource)
-                assert(success)
+                assert success
             else:
                 log("Warning -- Unhandled redirection:", redirection)
                 unhandled_redirs.append(redirection)
                 ## TODO: I am not sure if this is the correct way to handle unhandled redirections.
                 ##       Does it make any sense to keep them and have them in the Final AST.
                 raise NotImplementedError()
-
 
     ## This renames the from_id (wherever it exists in inputs or outputs)
     ## to the to_id.
@@ -202,7 +218,7 @@ class DFGNode:
     def replace_edge_in_list(self, edge_ids, from_id, to_id):
         new_edge_ids = []
         for id in edge_ids:
-            if(id == from_id):
+            if id == from_id:
                 new_edge_id = to_id
             else:
                 new_edge_id = id
@@ -212,22 +228,30 @@ class DFGNode:
     def get_option_implemented_round_robin_parallelizer(self):
         for parallelizer in self.parallelizer_list:
             splitter = parallelizer.get_splitter()
-            if splitter.is_splitter_round_robin() and parallelizer.are_all_parts_implemented():
+            if (
+                splitter.is_splitter_round_robin()
+                and parallelizer.are_all_parts_implemented()
+            ):
                 return parallelizer
         return None
 
     def get_option_implemented_round_robin_with_unwrap_parallelizer(self):
         for parallelizer in self.parallelizer_list:
             splitter = parallelizer.get_splitter()
-            if splitter.is_splitter_round_robin_with_unwrap_flag() and parallelizer.are_all_parts_implemented():
+            if (
+                splitter.is_splitter_round_robin_with_unwrap_flag()
+                and parallelizer.are_all_parts_implemented()
+            ):
                 return parallelizer
         return None
-
 
     def get_option_implemented_consecutive_chunks_parallelizer(self):
         for parallelizer in self.parallelizer_list:
             splitter = parallelizer.get_splitter()
-            if splitter.is_splitter_consec_chunks() and parallelizer.are_all_parts_implemented():
+            if (
+                splitter.is_splitter_consec_chunks()
+                and parallelizer.are_all_parts_implemented()
+            ):
                 return parallelizer
         return None
 
@@ -235,13 +259,15 @@ class DFGNode:
     def make_simple_dfg_node_from_cmd_inv_with_io_vars(cmd_inv_with_io_vars):
         return DFGNode(cmd_inv_with_io_vars)
 
-    def get_single_streaming_input_single_output_and_configuration_inputs_of_node_for_parallelization(self):
+    def get_single_streaming_input_single_output_and_configuration_inputs_of_node_for_parallelization(
+        self,
+    ):
         streaming_inputs = self.get_streaming_inputs()
-        assert (len(streaming_inputs) == 1)
+        assert len(streaming_inputs) == 1
         streaming_input = streaming_inputs[0]
         configuration_inputs = self.get_configuration_inputs()
-        assert (len(configuration_inputs) == 0)
+        assert len(configuration_inputs) == 0
         streaming_outputs = self.get_output_list()
-        assert (len(streaming_outputs) == 1)
+        assert len(streaming_outputs) == 1
         streaming_output = streaming_outputs[0]
         return streaming_input, streaming_output, configuration_inputs

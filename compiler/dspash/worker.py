@@ -11,7 +11,7 @@ import time
 import uuid
 import argparse
 
-PASH_TOP = os.environ['PASH_TOP']
+PASH_TOP = os.environ["PASH_TOP"]
 sys.path.append(os.path.join(PASH_TOP, "compiler"))
 
 import config
@@ -23,42 +23,43 @@ from dspash.utils import create_filename, write_file
 
 # from ... import config
 HOST = socket.gethostbyname(socket.gethostname())
-PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
+PORT = 65432  # Port to listen on (non-privileged ports are > 1023)
 
 
 def err_print(*args):
     print(*args, file=sys.stderr)
 
-def send_success(conn, body, msg = ""):
-    request = {
-        'status': 'OK',
-        'body': body,
-        'msg': msg
-    }
+
+def send_success(conn, body, msg=""):
+    request = {"status": "OK", "body": body, "msg": msg}
     send_msg(conn, encode_request(request))
 
+
 def parse_exec_request(request):
-    return request['cmd']
+    return request["cmd"]
+
 
 def parse_exec_graph(request):
-    return request['graph'], request['shell_variables'], request['functions']
+    return request["graph"], request["shell_variables"], request["functions"]
+
 
 def exec_graph(graph, shell_vars, functions):
-    config.config['shell_variables'] = shell_vars
+    config.config["shell_variables"] = shell_vars
     script_path = to_shell_file(graph, config.pash_args)
 
     e = os.environ.copy()
-    e['PASH_TOP'] = PASH_TOP
+    e["PASH_TOP"] = PASH_TOP
 
     # store functions
-    functions_file = create_filename(dir=config.PASH_TMP_PREFIX, prefix='pashFuncs')
+    functions_file = create_filename(dir=config.PASH_TMP_PREFIX, prefix="pashFuncs")
     write_file(functions_file, functions)
     cmd = f"source {functions_file}; source {script_path}"
     rc = subprocess.Popen(cmd, env=e, executable="/bin/bash", shell=True)
     return rc
 
+
 class Worker:
-    def __init__(self, port = None):
+    def __init__(self, port=None):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if port == None:
             # pick a random port
@@ -71,19 +72,20 @@ class Worker:
         connections = []
         with self.s:
             self.s.listen()
-            while(True):
+            while True:
                 conn, addr = self.s.accept()
-                print(f"got new connection")     
+                print(f"got new connection")
                 t = Thread(target=manage_connection, args=[conn, addr])
                 t.start()
                 connections.append(t)
         for t in connections:
             t.join()
 
+
 def manage_connection(conn, addr):
     rcs = []
     with conn:
-        print('Connected by', addr)
+        print("Connected by", addr)
         dfs_configs_paths = {}
         while True:
             data = recv_msg(conn)
@@ -92,7 +94,7 @@ def manage_connection(conn, addr):
 
             print("got new request")
             request = decode_request(data)
-            if request['type'] == 'Exec-Graph':
+            if request["type"] == "Exec-Graph":
                 graph, shell_vars, functions = parse_exec_graph(request)
                 save_configs(graph, dfs_configs_paths)
                 exec_graph(graph, shell_vars, functions)
@@ -104,12 +106,10 @@ def manage_connection(conn, addr):
     for rc in rcs:
         rc.wait()
 
+
 def parse_args():
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument("--port",
-                        type=int,
-                        help="port to use",
-                        default=65432)
+    parser = argparse.ArgumentParser(description="Process some integers.")
+    parser.add_argument("--port", type=int, help="port to use", default=65432)
     config.add_common_arguments(parser)
     args = parser.parse_args()
     config.set_config_globals_from_pash_args(args)
@@ -119,19 +119,22 @@ def parse_args():
         config.load_config(args.config_path)
     return args
 
+
 def init():
     args = parse_args()
     config.LOGGING_PREFIX = f"Worker {config.pash_args.port}: "
     ## KK: 2023-02-21 Commenting this out, we need to figure out if the new annotations work with the distribution package
     # config.annotations = load_annotation_files(
     #     config.config['distr_planner']['annotations_dir'])
-    pash_compiler.runtime_config = config.config['distr_planner']
+    pash_compiler.runtime_config = config.config["distr_planner"]
     pash_compiler.termination = ""
+
 
 def main():
     init()
     worker = Worker(config.pash_args.port)
     worker.run()
+
 
 if __name__ == "__main__":
     main()
