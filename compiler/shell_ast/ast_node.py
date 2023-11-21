@@ -7,13 +7,21 @@ unsave and expensive typecheck
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import Protocol, Tuple, TypedDict, TYPE_CHECKING
+from typing import Any, Protocol, Tuple, TypedDict, TYPE_CHECKING
 
 import shasta.ast_node
 from shasta.ast_node import Command, make_typed_semi_sequence
 from shasta.json_to_ast import to_ast_node
 
-from shell_ast.ast_util import *
+from shell_ast.ast_util import (
+    PreprocessedAST,
+    loop_iter_var,
+    make_export_var_constant_string,
+    make_increment_var,
+    export_pash_loop_iters_for_current_context,
+)
+from ir import IR
+from util import log
 
 if TYPE_CHECKING:
     from transformation_options import AbstractTransformationState as TransState
@@ -76,6 +84,10 @@ class PashMixin(ABC):
             something_replaced = preprocessed_ast_object.will_anything_be_replaced()
         return final_ast, something_replaced
 
+    @abstractmethod
+    def compile(self):
+        pass
+
 
 class PipeNode(shasta.ast_node.PipeNode, PashMixin):
     items: list[PashNode]
@@ -95,8 +107,8 @@ class PipeNode(shasta.ast_node.PipeNode, PashMixin):
 
 
 class CommandNode(shasta.ast_node.CommandNode, PashMixin):
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, line_number, assignments, arguments, redir_list):
+        super().__init__(line_number, assignments, arguments, redir_list)
 
     def preprocess(self, trans_state: "TransState", last_object: bool = False):
         if len(self.arguments) == 0:
@@ -493,6 +505,6 @@ class CaseNode(shasta.ast_node.CaseNode, PashMixin):
 
 
 def pash_node_from(shasta_node: Command) -> PashNode:
-    pash_node_class = globals()[shasta_node.NodeName]
+    pash_node_class = globals()[f"{shasta_node.NodeName}Node"]
     args = vars(shasta_node)
     return pash_node_class(**args)

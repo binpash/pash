@@ -14,7 +14,6 @@ The PaSh runtime then deserializes the(m, compiles them (if safe) and optimizes 
 from compiler.shell_ast.ast_node import pash_node_from
 from env_var_names import *
 from shell_ast.ast_util import *
-from shell_ast.preprocess_ast_cases import preprocess_node
 from shell_ast.transformation_options import AbstractTransformationState
 
 

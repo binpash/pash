@@ -1,4 +1,6 @@
-"""Utility functions and classes for AST to AST transformations"""
+"""
+Utility functions and classes for AST to AST transformations
+"""
 
 from typing import TYPE_CHECKING
 
