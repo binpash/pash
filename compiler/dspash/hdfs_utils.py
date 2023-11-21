@@ -7,7 +7,7 @@ import requests
 
 # if you are running this outside of the docker container
 # you may want to change this to localhost for testing
-host = "localhost"
+host = "namenode"
 port = "9870"
 
 daemon_quit = Event()
