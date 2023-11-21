@@ -14,10 +14,12 @@ import libdash.parser
 
 ## Parses straight a shell script to an AST
 ## through python without calling it as an executable
+INITIALIZE_LIBDASH = True
 def parse_shell_to_asts(input_script_path):
+    global INITIALIZE_LIBDASH
     try:
-        new_ast_objects = libdash.parser.parse(input_script_path)
-
+        new_ast_objects = libdash.parser.parse(input_script_path, INITIALIZE_LIBDASH)
+        INITIALIZE_LIBDASH = False
         ## Transform the untyped ast objects to typed ones
         typed_ast_objects = []
         for untyped_ast, original_text, linno_before, linno_after, in new_ast_objects:
