@@ -2,10 +2,13 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import pickle
 
-from shell_ast.ast_util import *
+from typing import TYPE_CHECKING
+
 from shasta.json_to_ast import to_ast_node
 from speculative import util_spec
 from parse import from_ast_objects_to_shell
+from shell_ast.ast_node import pash_node_from, PashNode
+from shell_ast.ast_util import *
 
 
 ## There are two types of ast_to_ast transformations
@@ -63,7 +66,7 @@ class AbstractTransformationState(ABC):
     @abstractmethod
     def replace_df_region(
         self, asts, disable_parallel_pipelines=False, ast_text=None
-    ) -> AstNode:
+    ) -> PashNode:
         pass
 
 
@@ -72,7 +75,7 @@ class AbstractTransformationState(ABC):
 class TransformationState(AbstractTransformationState):
     def replace_df_region(
         self, asts, disable_parallel_pipelines=False, ast_text=None
-    ) -> AstNode:
+    ) -> PashNode:
         ir_filename = ptempfile()
 
         ## Serialize the node in a file
@@ -90,7 +93,7 @@ class TransformationState(AbstractTransformationState):
             ir_filename, sequential_script_file_name, disable_parallel_pipelines
         )
 
-        return to_ast_node(replaced_node)
+        return pash_node_from(to_ast_node(replaced_node))
 
     ## This function makes a command that calls the pash runtime
     ## together with the name of the file containing an IR. Then the
@@ -106,7 +109,7 @@ class TransformationState(AbstractTransformationState):
     @staticmethod
     def make_call_to_pash_runtime(
         ir_filename, sequential_script_file_name, disable_parallel_pipelines
-    ) -> AstNode:
+    ) -> list:
         ## Disable parallel pipelines if we are in the last command of the script.
         ## ```
         ## pash_disable_parallel_pipelines=1
@@ -143,7 +146,7 @@ class SpeculativeTransformationState(AbstractTransformationState):
 
     def replace_df_region(
         self, asts, disable_parallel_pipelines=False, ast_text=None
-    ) -> AstNode:
+    ) -> PashNode:
         text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
         ## Generate an ID
         df_region_id = self.get_next_id()
@@ -165,7 +168,7 @@ class SpeculativeTransformationState(AbstractTransformationState):
         replaced_node = SpeculativeTransformationState.make_call_to_spec_runtime(
             df_region_id, loop_id
         )
-        return to_ast_node(replaced_node)
+        return pash_node_from(to_ast_node(replaced_node))
 
     def get_partial_order_file(self):
         return self.partial_order_file
@@ -184,7 +187,7 @@ class SpeculativeTransformationState(AbstractTransformationState):
 
     ## TODO: Make that an actual call to the spec runtime
     @staticmethod
-    def make_call_to_spec_runtime(command_id: int, loop_id) -> AstNode:
+    def make_call_to_spec_runtime(command_id: int, loop_id):
         assignments = [["pash_spec_command_id", string_to_argument(str(command_id))]]
         if loop_id is None:
             loop_id_str = ""

@@ -1,10 +1,14 @@
 """Utility functions and classes for AST to AST transformations"""
 
-from env_var_names import *
-from shasta.ast_node import AstNode, ArgChar, CArgChar
+from typing import TYPE_CHECKING
 
-# from shasta.json_to_ast import *
+from env_var_names import *
+from shasta.ast_node import ArgChar, CArgChar
+
 from util import *
+
+if TYPE_CHECKING:
+    from compiler.shell_ast.ast_node import PashNode
 
 
 ## This class is used by the preprocessor in ast_to_ir
@@ -15,9 +19,13 @@ class PreprocessedAST:
     """
 
     def __init__(
-        self, ast, replace_whole, non_maximal, something_replaced=True, last_ast=False
+        self,
+        ast: "PashNode",
+        replace_whole: bool,
+        non_maximal: bool,
+        something_replaced: bool = True,
+        last_ast: bool = False,
     ):
-        assert isinstance(ast, AstNode)
         self.ast = ast
         self.replace_whole = replace_whole
         self.non_maximal = non_maximal

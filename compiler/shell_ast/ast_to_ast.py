@@ -11,6 +11,7 @@ regions. The pass serializes all candidate dataflow regions:
 The PaSh runtime then deserializes the(m, compiles them (if safe) and optimizes them.
 """
 
+from compiler.shell_ast.ast_node import pash_node_from
 from env_var_names import *
 from shell_ast.ast_util import *
 from shell_ast.preprocess_ast_cases import preprocess_node
@@ -35,7 +36,7 @@ def replace_ast_regions(ast_objects, trans_options: AbstractTransformationState)
             last_object = True
 
         ast, original_text, _linno_before, _linno_after = ast_object
-        assert isinstance(ast, AstNode)
+        ast = pash_node_from(ast)
 
         ## Goals: This transformation can approximate in several directions.
         ##        1. Not replacing a candidate dataflow region.
@@ -54,9 +55,7 @@ def replace_ast_regions(ast_objects, trans_options: AbstractTransformationState)
         ##   then the second output is true.
         ## - If the next AST needs to be replaced too (e.g. if the current one is a background)
         ##   then the third output is true
-        preprocessed_ast_object = preprocess_node(
-            ast, trans_options, last_object=last_object
-        )
+        preprocessed_ast_object = ast.preprocess(trans_options, last_object=last_object)
         ## If the dataflow region is not maximal then it implies that the whole
         ## AST should be replaced.
         assert (
