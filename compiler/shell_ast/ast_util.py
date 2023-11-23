@@ -35,6 +35,9 @@ class UnparsedScript:
     def __init__(self, text):
         self.text = text
 
+    def pretty(self) -> str:
+        return self.text
+
 
 ##
 ## Pattern matching for the AST
