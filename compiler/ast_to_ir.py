@@ -189,8 +189,8 @@ def compile_node_command(ast_node, fileIdGen, config):
 
     try:
         ## If the command is not compileable to a DFG the following call will fail
-        ir = compile_command_to_DFG(
-            fileIdGen, command_name, options, redirections=compiled_redirections
+        ir = fileIdGen.compile_command_to_DFG(
+            command_name, options, redirections=compiled_redirections
         )
         compiled_ast = ir
     except ValueError as err:
