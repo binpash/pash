@@ -1,32 +1,3 @@
-import pash_annotations.datatypes
-
-from pash_annotations.datatypes.CommandInvocationInitial import CommandInvocationInitial
-from pash_annotations.datatypes.BasicDatatypes import ArgStringType
-from pash_annotations.datatypes.BasicDatatypesWithIO import (
-    FileNameWithIOInfo,
-    StdDescriptorWithIOInfo,
-    OptionWithIO,
-)
-from pash_annotations.annotation_generation.datatypes.InputOutputInfo import (
-    InputOutputInfo,
-)
-from pash_annotations.annotation_generation.datatypes.ParallelizabilityInfo import (
-    ParallelizabilityInfo,
-)
-from pash_annotations.annotation_generation.datatypes.CommandProperties import (
-    CommandProperties,
-)
-from pash_annotations.datatypes.CommandInvocationWithIOVars import (
-    CommandInvocationWithIOVars,
-)
-
-from annotations_utils.util_parsing import parse_arg_list_to_command_invocation
-from annotations_utils.util_cmd_invocations import (
-    get_input_output_info_from_cmd_invocation_util,
-    get_parallelizability_info_from_cmd_invocation_util,
-)
-from annotations_utils.util_file_descriptors import resource_from_file_descriptor
-
 from definitions.ir.file_id import *
 from definitions.ir.nodes.cat import *
 

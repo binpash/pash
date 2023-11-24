@@ -35,11 +35,13 @@ class FileIdGenerator:
     def __init__(self, next=0, prefix=""):
         assert config.PASH_TMP_PREFIX is not None
         directory = f"{str(uuid.uuid4().hex)}"
+        directory_path = os.path.join(config.PASH_TMP_PREFIX, prefix)
+        os.makedirs(directory_path)
 
         self.next = next + 1
         self.prefix = f"{directory}/{prefix}"
-        directory_path = os.path.join(config.PASH_TMP_PREFIX, self.prefix)
-        os.makedirs(directory_path)
+        self.dfg_edges = {}
+        self.access_map = {}
 
     def next_file_id(self):
         file_id = FileId(self.next, self.prefix)
@@ -65,31 +67,17 @@ class FileIdGenerator:
         return file_id
 
     def _add_file_id_vars(self, cmd_with_io):
-        dfg_edges, access_map = {}, {}
+        new_flagoption_list = self._make_flag_opt_list(cmd_with_io.flag_option_list)
 
-        new_flagoption_list = self._make_flag_opt_list(
-            cmd_with_io.flag_option_list, dfg_edges, access_map
-        )
+        new_operand_list = self._make_operand_list(cmd_with_io.operand_list)
 
-        new_operand_list = self._make_operand_list(
-            cmd_with_io.operand_list, dfg_edges, access_map
-        )
-
-        if cmd_with_io.implicit_use_of_streaming_input:
-            implicit_stream_in = self._add_var_for_descriptor(
-                cmd_with_io.implicit_use_of_streaming_input,
-                dfg_edges,
-                access_map,
-            )
+        if use_stream_in := cmd_with_io.implicit_use_of_streaming_input:
+            implicit_stream_in = self._add_var_for_descriptor(use_stream_in)
         else:
             implicit_stream_in = None
 
-        if cmd_with_io.implicit_use_of_streaming_output:
-            implicit_stream_out = self._add_var_for_descriptor(
-                cmd_with_io.implicit_use_of_streaming_output,
-                dfg_edges,
-                access_map,
-            )
+        if use_stream_out := cmd_with_io.implicit_use_of_streaming_output:
+            implicit_stream_out = self._add_var_for_descriptor(use_stream_out)
         else:
             implicit_stream_out = None
 
@@ -99,43 +87,41 @@ class FileIdGenerator:
             operand_list=new_operand_list,
             implicit_use_of_streaming_input=implicit_stream_in,
             implicit_use_of_streaming_output=implicit_stream_out,
-            access_map=access_map,
+            access_map=self.access_map,
         )
-        return command_invocation_with_io_vars, dfg_edges
+        return command_invocation_with_io_vars, self.dfg_edges
 
-    def _make_operand_list(self, operand_list, dfg_edges, access_map):
+    def _make_operand_list(self, operand_list):
         new_op_list = []
         for operand in operand_list:
             if isinstance(operand, FileNameWithIOInfo) or isinstance(
                 operand, StdDescriptorWithIOInfo
             ):
-                fid_id = self._add_var_for_descriptor(operand, dfg_edges, access_map)
+                fid_id = self._add_var_for_descriptor(operand)
                 new_op_list.append(fid_id)
             else:
                 new_op_list.append(operand)
         return new_op_list
 
-    def _make_flag_opt_list(self, opt_list, dfg_edges, access_map):
+    def _make_flag_opt_list(self, opt_list):
         new_opt_list = []
         for flag_opt in opt_list:
             if isinstance(flag_opt, OptionWithIO) and not isinstance(
                 flag_opt.option_arg, ArgStringType
             ):
-                fid_id = self._add_var_for_descriptor(
-                    flag_opt.option_arg, dfg_edges, access_map
-                )
+                fid_id = self._add_var_for_descriptor(flag_opt.option_arg)
                 new_option = OptionWithIOVar(flag_opt.name, fid_id)
                 new_opt_list.append(new_option)
             else:  # Flag
                 new_opt_list.append(flag_opt)
         return new_opt_list
 
-    def _add_var_for_descriptor(self, operand, dfg_edges, access_map):
+    def _add_var_for_descriptor(self, operand):
         resource = resource_from_file_descriptor(operand)
         file_id = self._create_file_id_for_resource(resource)
         fid_id = file_id.get_ident()
-        dfg_edges[fid_id] = (file_id, None, None)
-        access_map[fid_id] = operand.get_access()
+        self.dfg_edges[fid_id] = (file_id, None, None)
+        self.access_map[fid_id] = operand.get_access()
         return fid_id
 
     def compile_command_to_DFG(self, command, options, redirections=[]):
@@ -145,7 +131,7 @@ class FileIdGenerator:
             raise Exception(
                 f"InputOutputInformation for {format_arg_chars(command)} not provided so considered side-effectful."
             )
-        if io_info.has_other_outputs():
+        elif io_info.has_other_outputs():
             raise Exception(
                 f"Command {format_arg_chars(command)} has outputs other than streaming."
             )
@@ -155,22 +141,15 @@ class FileIdGenerator:
         if para_info is None:
             # defaults to no parallelizer's and all properties False
             para_info = ParallelizabilityInfo()
-        command_invocation_with_io = (
-            io_info.apply_input_output_info_to_command_invocation(command_invocation)
+        cmd_with_io = io_info.apply_input_output_info_to_command_invocation(
+            command_invocation
         )
-        if para_info is None:
-            para_info = (
-                ParallelizabilityInfo()
-            )  # defaults to no parallelizer's and all properties False
-        (
-            parallelizer_list,
-            round_robin_compatible_with_cat,
-            is_commutative,
-        ) = para_info.unpack_info()
+
+        parallelizer_lst, round_robin, commutative = para_info.unpack_info()
         property_dict = [
             {
-                "round_robin_compatible_with_cat": round_robin_compatible_with_cat,
-                "is_commutative": is_commutative,
+                "round_robin_compatible_with_cat": round_robin,
+                "is_commutative": commutative,
             }
         ]
         cmd_related_properties = CommandProperties(property_dict)
@@ -178,9 +157,7 @@ class FileIdGenerator:
         ## TODO: Make an empty IR and add edges and nodes incrementally (using the methods defined in IR).
 
         ## Add all inputs and outputs to the DFG edges
-        cmd_invocation_with_io_vars, dfg_edges = self._add_file_id_vars(
-            command_invocation_with_io
-        )
+        cmd_with_io_vars, dfg_edges = self._add_file_id_vars(cmd_with_io)
         com_redirs = redirections
         ## TODO: Add assignments
         com_assignments = []
@@ -188,10 +165,10 @@ class FileIdGenerator:
         ## Assume: Everything must be completely expanded
         ## TODO: Add an assertion about that.
         dfg_node = DFGNode(
-            cmd_invocation_with_io_vars,
+            cmd_with_io_vars,
             com_redirs=com_redirs,
             com_assignments=com_assignments,
-            parallelizer_list=parallelizer_list,
+            parallelizer_list=parallelizer_lst,
             cmd_related_properties=cmd_related_properties,
         )
         # log(f'Dfg node: {dfg_node}')
