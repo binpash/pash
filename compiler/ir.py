@@ -41,279 +41,6 @@ from util import *
 
 import config
 
-
-## Creates a file id for a given resource
-def create_file_id_for_resource(resource, fileIdGen):
-    file_id = create_split_file_id(fileIdGen)
-    file_id.set_resource(resource)
-    return file_id
-
-
-## Creates a file id that has a given maximum length
-def create_split_file_id(fileIdGen):
-    file_id = fileIdGen.next_file_id()
-    return file_id
-
-
-class FileIdGen:
-    def __init__(self, next=0, prefix=""):
-        self.next = next + 1
-        directory = f"{str(uuid.uuid4().hex)}"
-        self.prefix = f"{directory}/{prefix}"
-        directory_path = os.path.join(config.PASH_TMP_PREFIX, self.prefix)
-        os.makedirs(directory_path)
-
-    def next_file_id(self):
-        fileId = FileId(self.next, self.prefix)
-        self.next += 1
-        return fileId
-
-    def next_temporary_file_id(self):
-        fileId = self.next_file_id()
-        fileId.make_temporary_file()
-        return fileId
-
-    def next_ephemeral_file_id(self):
-        fileId = self.next_file_id()
-        fileId.make_ephemeral()
-        return fileId
-
-    def bump_counter_to_value_of(self, OtherFileIdGen):
-        # TODO: find a better solution to make unique numbers, currently: set to max-value + 1
-        self.next = OtherFileIdGen.next + 1
-
-
-## Returns the resource or file descriptor related to this specific opt_or_fd
-## NOTE: Assumes that everything is expanded.
-def get_option_or_fd(opt_or_fd, options, fileIdGen):
-    if (
-        isinstance(opt_or_fd, tuple)
-        and len(opt_or_fd) == 2
-        and opt_or_fd[0] == "option"
-    ):
-        resource = FileResource(Arg(options[opt_or_fd[1]]))
-    else:
-        ## TODO: Make this be a subtype of Resource
-        if opt_or_fd == "stdin":
-            resource = ("fd", 0)
-        elif opt_or_fd == "stdout":
-            resource = ("fd", 1)
-        elif opt_or_fd == "stderr":
-            resource = ("fd", 2)
-        else:
-            raise NotImplementedError()
-        resource = FileDescriptorResource(resource)
-
-    fid = create_file_id_for_resource(resource, fileIdGen)
-    return fid
-
-
-## Get the options as arguments
-def get_option(opt_or_fd, options, fileIdGen):
-    assert (
-        isinstance(opt_or_fd, tuple)
-        and len(opt_or_fd) == 2
-        and opt_or_fd[0] == "option"
-    )
-    arg = Arg(options[opt_or_fd[1]])
-    return (opt_or_fd[1], arg)
-
-
-## This function
-def create_edges_from_opt_or_fd_list(opt_or_fd_list, edges_dict, options, fileIdGen):
-    new_edge_list = []
-    for opt_or_fd in opt_or_fd_list:
-        fid = get_option_or_fd(opt_or_fd, options, fileIdGen)
-        fid_id = fid.get_ident()
-        edges_dict[fid_id] = (fid, None, None)
-        new_edge_list.append(fid_id)
-    return new_edge_list
-
-
-def find_input_edges(
-    positional_input_list, implicit_use_of_stdin, dfg_edges, fileIdGen
-) -> List[int]:
-    assert not implicit_use_of_stdin or len(positional_input_list) == 0
-    if implicit_use_of_stdin:
-        resources = [FileDescriptorResource(("fd", 0))]
-    else:
-        resources = [
-            resource_from_file_descriptor(input_el)
-            for input_el in positional_input_list
-        ]
-    file_ids = [
-        create_file_id_for_resource(resource, fileIdGen) for resource in resources
-    ]
-    return get_edge_list_from_file_id_list(dfg_edges, file_ids)
-
-
-def find_output_edges(
-    positional_output_list, implicit_use_of_stdout, dfg_edges, fileIdGen
-) -> List[int]:
-    assert not implicit_use_of_stdout or len(positional_output_list) == 0
-    if implicit_use_of_stdout:
-        resources = [FileDescriptorResource(("fd", 1))]
-    else:
-        resources = [
-            resource_from_file_descriptor(input_el)
-            for input_el in positional_output_list
-        ]
-    file_ids = [
-        create_file_id_for_resource(resource, fileIdGen) for resource in resources
-    ]
-    return get_edge_list_from_file_id_list(dfg_edges, file_ids)
-
-
-def get_edge_list_from_file_id_list(dfg_edges, file_ids):
-    new_edge_list = []
-    for file_id in file_ids:
-        fid_id = file_id.get_ident()
-        dfg_edges[fid_id] = (file_id, None, None)
-        new_edge_list.append(fid_id)
-    return new_edge_list
-
-
-def add_file_id_vars(command_invocation_with_io, fileIdGen):
-    # make pass over everything and create file_id for everything
-    # only for operands for now:
-    dfg_edges = {}
-    new_flagoption_list = []
-    new_operand_list = []
-    access_map = dict()
-
-    def add_var_for_descriptor(operand):
-        resource = resource_from_file_descriptor(operand)
-        file_id = create_file_id_for_resource(resource, fileIdGen)
-        fid_id = file_id.get_ident()
-        dfg_edges[fid_id] = (file_id, None, None)
-        access_map[fid_id] = operand.get_access()
-        return fid_id
-
-    for i in range(len(command_invocation_with_io.flag_option_list)):
-        flagoption = command_invocation_with_io.flag_option_list[i]
-        if isinstance(flagoption, OptionWithIO) and not isinstance(
-            flagoption.option_arg, ArgStringType
-        ):
-            fid_id = add_var_for_descriptor(flagoption.option_arg)
-            new_option = OptionWithIOVar(flagoption.name, fid_id)
-            new_flagoption_list.append(new_option)
-        else:  # Flag
-            new_flagoption_list.append(flagoption)
-
-    for i in range(len(command_invocation_with_io.operand_list)):
-        operand = command_invocation_with_io.operand_list[i]
-        if isinstance(operand, FileNameWithIOInfo) or isinstance(
-            operand, StdDescriptorWithIOInfo
-        ):
-            fid_id = add_var_for_descriptor(operand)
-            new_operand_list.append(fid_id)
-        else:
-            new_operand_list.append(operand)
-    if command_invocation_with_io.implicit_use_of_streaming_input:
-        new_implicit_use_of_streaming_input = add_var_for_descriptor(
-            command_invocation_with_io.implicit_use_of_streaming_input
-        )
-    else:
-        new_implicit_use_of_streaming_input = None
-    if command_invocation_with_io.implicit_use_of_streaming_output:
-        new_implicit_use_of_streaming_output = add_var_for_descriptor(
-            command_invocation_with_io.implicit_use_of_streaming_output
-        )
-    else:
-        new_implicit_use_of_streaming_output = None
-
-    command_invocation_with_io_vars = CommandInvocationWithIOVars(
-        cmd_name=command_invocation_with_io.cmd_name,
-        flag_option_list=new_flagoption_list,
-        operand_list=new_operand_list,
-        implicit_use_of_streaming_input=new_implicit_use_of_streaming_input,
-        implicit_use_of_streaming_output=new_implicit_use_of_streaming_output,
-        access_map=access_map,
-    )
-    return command_invocation_with_io_vars, dfg_edges
-
-
-def compile_command_to_DFG(fileIdGen, command, options, redirections=[]):
-    command_invocation: CommandInvocationInitial = parse_arg_list_to_command_invocation(
-        command, options
-    )
-    io_info: InputOutputInfo = get_input_output_info_from_cmd_invocation_util(
-        command_invocation
-    )
-    if io_info is None:
-        raise Exception(
-            f"InputOutputInformation for {format_arg_chars(command)} not provided so considered side-effectful."
-        )
-    if io_info.has_other_outputs():
-        raise Exception(
-            f"Command {format_arg_chars(command)} has outputs other than streaming."
-        )
-    para_info: ParallelizabilityInfo = (
-        get_parallelizability_info_from_cmd_invocation_util(command_invocation)
-    )
-    if para_info is None:
-        para_info = (
-            ParallelizabilityInfo()
-        )  # defaults to no parallelizer's and all properties False
-    command_invocation_with_io = io_info.apply_input_output_info_to_command_invocation(
-        command_invocation
-    )
-    if para_info is None:
-        para_info = (
-            ParallelizabilityInfo()
-        )  # defaults to no parallelizer's and all properties False
-    (
-        parallelizer_list,
-        round_robin_compatible_with_cat,
-        is_commutative,
-    ) = para_info.unpack_info()
-    property_dict = [
-        {
-            "round_robin_compatible_with_cat": round_robin_compatible_with_cat,
-            "is_commutative": is_commutative,
-        }
-    ]
-    cmd_related_properties = CommandProperties(property_dict)
-
-    ## TODO: Make an empty IR and add edges and nodes incrementally (using the methods defined in IR).
-
-    ## Add all inputs and outputs to the DFG edges
-    cmd_invocation_with_io_vars, dfg_edges = add_file_id_vars(
-        command_invocation_with_io, fileIdGen
-    )
-    com_redirs = redirections
-    ## TODO: Add assignments
-    com_assignments = []
-
-    ## Assume: Everything must be completely expanded
-    ## TODO: Add an assertion about that.
-    dfg_node = DFGNode(
-        cmd_invocation_with_io_vars,
-        com_redirs=com_redirs,
-        com_assignments=com_assignments,
-        parallelizer_list=parallelizer_list,
-        cmd_related_properties=cmd_related_properties,
-    )
-    # log(f'Dfg node: {dfg_node}')
-    node_id = dfg_node.get_id()
-
-    ## Assign the from, to node in edges
-    for fid_id in dfg_node.get_input_list():
-        fid, from_node, to_node = dfg_edges[fid_id]
-        assert to_node is None
-        dfg_edges[fid_id] = (fid, from_node, node_id)
-
-    for fid_id in dfg_node.get_output_list():
-        fid, from_node, to_node = dfg_edges[fid_id]
-        assert from_node is None
-        dfg_edges[fid_id] = (fid, node_id, to_node)
-
-    dfg_nodes = {node_id: dfg_node}
-    dfg = IR(dfg_nodes, dfg_edges)
-    # log(f'IR: {dfg}')
-    return dfg
-
-
 ##
 ## Node builder functions
 ##
@@ -481,13 +208,16 @@ class IR:
             redirect_stdin_script = os.path.join(
                 config.PASH_TOP, config.config["runtime"]["redirect_stdin_binary"]
             )
-            com_args = [
-                string_to_argument("source"),
-                string_to_argument(redirect_stdin_script),
+            args = [
+                str_to_arg_chars("source"),
+                str_to_arg_chars(redirect_stdin_script),
                 file_to_redirect_to,
             ]
-            com = make_command(com_args)
-            asts.append(com)
+            asts.append(
+                CommandNode(
+                    line_number=0, arguments=args, assignments=[], redir_list=[]
+                )
+            )
 
         ## Make the dataflow graph
         ##
@@ -511,7 +241,7 @@ class IR:
         for node_id, node in self.nodes.items():
             if not node_id in sink_node_ids:
                 node_ast = node.to_ast(self.edges, drain_streams)
-                asts.append(make_background(node_ast))
+                asts.append(BackgroundKV(node_ast))
                 ## Gather all pids
                 assignment = self.collect_pid_assignment()
                 asts.append(assignment)
@@ -520,7 +250,7 @@ class IR:
         for node_id in sink_node_ids:
             node = self.get_node(node_id)
             node_ast = node.to_ast(self.edges, drain_streams)
-            asts.append(make_background(node_ast))
+            asts.append(BackgroundKV(node_ast))
             ## Gather all pids
             assignment = self.collect_pid_assignment()
             asts.append(assignment)
@@ -529,21 +259,27 @@ class IR:
         class_asts = [to_ast_node(ast_node_to_untyped_deep(ast)) for ast in asts]
         return class_asts
 
-    def collect_pid_assignment(self):
+    def collect_pid_assignment(self) -> CommandNode:
         ## Creates:
         ## pids_to_kill="$! $pids_to_kill"
         var_name = "pids_to_kill"
-        rval = quote_arg(
-            [standard_var_ast("!"), char_to_arg_char(" "), standard_var_ast(var_name)]
+        r_val = QArgChar(
+            [
+                VArgChar(fmt="Normal", null=False, var="!", arg=[]),
+                CArgChar(ord(" ")),
+                VArgChar(fmt="Normal", null=False, var=var_name, arg=[]),
+            ]
         )
-        return make_assignment(var_name, [rval])
+        assign = AssignNode("pids_to_kill", r_val)
+        return CommandNode(
+            line_number=0, arguments=[], redir_list=[], assignments=assign
+        )
 
-    def init_pids_to_kill(self):
+    def init_pids_to_kill(self) -> CommandNode:
         ## Creates:
         ## pids_to_kill=""
         var_name = "pids_to_kill"
-        rval = quote_arg([])
-        return make_assignment(var_name, [rval])
+        return CommandNode(0, [], [], [AssignNode(var_name, QArgChar([]))])
 
     ## TODO: Delete this
     def set_ast(self, ast):
