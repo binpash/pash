@@ -19,7 +19,7 @@ if [ ! -e ./pg ]; then
   cd pg
   if [[ "$1" == "--full" ]]; then
     echo 'N.b.: download/extraction will take about 10min'
-    wget atlas-group.cs.brown.edu/data/pg.tar.xz # FIXME: moving to PG soon
+    wget ndr.md/data/pg.tar.xz
     if [ $? -ne 0 ]; then
 		cat <<-'EOF' | sed 's/^ *//'
 		Downloading input dataset failed, thus need to manually rsync all books from  project gutenberg:

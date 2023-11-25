@@ -5,7 +5,7 @@
 
 # Require: libimage-exiftool-perl, bc
 # Data:
-#   atlas-group.cs.brown.edu/data/large.pdf
+#   http://ndr.md/data/dummy/large.pdf
 # More data:
 #   https://arxiv.org/help/bulk_data
 
