@@ -4,10 +4,6 @@ import pickle
 import traceback
 from datetime import datetime
 
-from pash_annotations.annotation_generation.datatypes.parallelizability.AggregatorKind import (
-    AggregatorKindEnum,
-)
-
 from sh_expand import env_vars_util
 
 import config
@@ -19,11 +15,9 @@ from util import *
 
 from definitions.ir.aggregator_node import *
 
-from definitions.ir.dfg_node import DFGNode
 from definitions.ir.nodes.eager import *
 from definitions.ir.nodes.pash_split import *
 
-import definitions.ir.nodes.r_merge as r_merge
 import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_unwrap as r_unwrap
 import definitions.ir.nodes.dgsh_tee as dgsh_tee
@@ -213,7 +207,7 @@ def maybe_log_optimized_script(script_to_execute, args):
 
 def compile_candidate_df_region(candidate_df_region, config):
     ## This is for the files in the IR
-    fileIdGen = FileIdGen()
+    fileIdGen = FileIdGenerator()
 
     ## If the candidate DF region is not from the top level then
     ## it won't be a list and thus we need to make it into a list to compile it.

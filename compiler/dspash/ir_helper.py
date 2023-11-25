@@ -1,17 +1,13 @@
-import argparse
 import sys
 import socket
 import pickle
-import traceback
-from datetime import datetime
-from typing import List, Set, Tuple, Dict, Callable
+from typing import List, Tuple, Dict, Callable
 from uuid import uuid4
 
 sys.path.append("/pash/compiler")
 
 import config
 from ir import *
-from ast_to_ir import compile_asts
 from ir_to_ast import to_shell
 from util import *
 from dspash.hdfs_utils import HDFSFileConfig
@@ -21,13 +17,7 @@ from definitions.ir.aggregator_node import *
 from definitions.ir.nodes.eager import *
 from definitions.ir.nodes.pash_split import *
 
-import definitions.ir.nodes.r_merge as r_merge
-import definitions.ir.nodes.r_split as r_split
-import definitions.ir.nodes.r_unwrap as r_unwrap
-import definitions.ir.nodes.dgsh_tee as dgsh_tee
 import definitions.ir.nodes.remote_pipe as remote_pipe
-import shlex
-import subprocess
 import pash_compiler
 from collections import deque, defaultdict
 
@@ -140,7 +130,7 @@ def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
             # If subgraph is empty and edge isn't ephemeral the edge needs to be added
             if not input_fid.get_ident() in subgraph.edges:
                 new_fid = input_fid
-                subgraph.add_to_edge(new_fid, node_id)
+                subgraph.add_edge(new_fid, to_edge=node_id)
                 input_edge_id = new_fid.get_ident()
             else:
                 input_edge_id = input_fid.get_ident()
@@ -150,13 +140,13 @@ def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
 
         # Add edges coming out of the node
         for output_fid in output_fids:
-            subgraph.add_from_edge(node_id, output_fid)
+            subgraph.add_edge(node_id, from_edge=output_fid)
             visited_edges.add(output_fid)
 
         # Add edges coming into the node
         for input_fid in input_fids:
             if input_fid.get_ident() not in subgraph.edges:
-                subgraph.add_to_edge(input_fid, node_id)
+                subgraph.add_edge(input_fid, to_edge=node_id)
 
         # Add the node
         subgraph.add_node(node)
@@ -173,7 +163,7 @@ def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
     return subgraphs, input_fifo_map
 
 
-def add_stdout_fid(graph: IR, file_id_gen: FileIdGen) -> FileId:
+def add_stdout_fid(graph: IR, file_id_gen: FileIdGenerator) -> FileId:
     stdout = file_id_gen.next_file_id()
     stdout.set_resource(FileDescriptorResource(("fd", 1)))
     graph.add_edge(stdout)
@@ -182,7 +172,7 @@ def add_stdout_fid(graph: IR, file_id_gen: FileIdGen) -> FileId:
 
 def assign_workers_to_subgraphs(
     subgraphs: List[IR],
-    file_id_gen: FileIdGen,
+    file_id_gen: FileIdGenerator,
     input_fifo_map: Dict[int, IR],
     get_worker: Callable,
 ) -> (IR, Tuple):

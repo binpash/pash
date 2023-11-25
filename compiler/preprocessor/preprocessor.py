@@ -4,7 +4,6 @@ import os
 
 import config
 from shell_ast import transformation_options, ast_to_ast
-from ir import FileIdGen
 from parse import parse_shell_to_asts, from_ast_objects_to_shell
 from util import *
 import server_util

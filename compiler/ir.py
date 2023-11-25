@@ -1,3 +1,17 @@
+from typing import NamedTuple
+from pash_annotations.annotation_generation.datatypes.CommandProperties import (
+    CommandProperties,
+)
+from pash_annotations.annotation_generation.datatypes.ParallelizabilityInfo import (
+    ParallelizabilityInfo,
+)
+
+from shasta.json_to_ast import to_ast_node
+from compiler.annotations_utils.util_cmd_invocations import (
+    get_input_output_info_from_cmd_invocation_util,
+    get_parallelizability_info_from_cmd_invocation_util,
+)
+from compiler.annotations_utils.util_parsing import parse_arg_list_to_command_invocation
 from definitions.ir.file_id import *
 from definitions.ir.nodes.cat import *
 
@@ -9,6 +23,7 @@ import definitions.ir.nodes.r_unwrap as r_unwrap
 
 from shell_ast.ast_util import *
 from util import *
+from file_id_gen import FileIdGenerator
 
 import config
 
@@ -23,10 +38,18 @@ def make_tee(input, outputs):
     return DFGNode([input], outputs, com_name, com_category)
 
 
+class Edge(NamedTuple):
+    fid: FileId
+    from_node: Optional[DFGNode]
+    to_node: Optional[DFGNode]
+
+
 ## Note: This might need more information. E.g. all the file
 ## descriptors of the IR, and in general any other local information
 ## that might be relevant.
 class IR:
+    edges: dict[FileId, Edge]
+    nodes: dict[FileId, DFGNode]
     ## TODO: Embed the fileIdGen as a field of the IR
 
     ## IR Assumptions:
@@ -47,10 +70,7 @@ class IR:
         self.apply_redirections()
 
     def __repr__(self):
-        output = "(|-{} IR: {} {}-|)".format(
-            self.get_stdin(), list(self.nodes.values()), self.get_stdout()
-        )
-        return output
+        return f"(|-{self.get_stdin()} IR: {list(self.nodes.values())} {self.get_stdout}-|)"
 
     ## Initialize all edges
     def apply_redirections(self):
@@ -60,26 +80,11 @@ class IR:
         ## We need to merge common files after redirections have been applied.
         self.combine_common_files()
 
-    ## Refactor these to call .add_edge, and .set_edge_to/from
-    ## Add an edge that points to a node
-    def add_to_edge(self, to_edge, node_id):
-        edge_id = to_edge.get_ident()
-        assert not edge_id in self.edges
-        self.edges[edge_id] = (to_edge, None, node_id)
-
-    ## Add an edge that starts from a node
-    def add_from_edge(self, node_id, from_edge):
-        edge_id = from_edge.get_ident()
-        assert not edge_id in self.edges
-        self.edges[edge_id] = (from_edge, node_id, None)
-
     def set_edge_to(self, edge_id, to_node_id):
-        edge_fid, from_node, old_to_node = self.edges[edge_id]
-        self.edges[edge_id] = (edge_fid, from_node, to_node_id)
+        self.edges[edge_id] = self.edges[edge_id]._replace(to_node=to_node_id)
 
     def set_edge_from(self, edge_id, from_node_id):
-        edge_fid, old_from_node, to_node = self.edges[edge_id]
-        self.edges[edge_id] = (edge_fid, from_node_id, to_node)
+        self.edges[edge_id] = self.edges[edge_id]._replace(from_node=from_node_id)
 
     def get_edge_fid(self, fid_id):
         if fid_id in self.edges:
@@ -87,17 +92,11 @@ class IR:
         else:
             return None
 
-    def get_edge_from(self, edge_id):
-        if edge_id in self.edges:
-            return self.edges[edge_id][1]
-        else:
-            return None
-
     def replace_edge(self, old_edge_id, new_edge_fid):
         assert new_edge_fid not in self.all_fids()
         new_edge_id = new_edge_fid.get_ident()
-        old_fid, from_node, to_node = self.edges[old_edge_id]
-        self.edges[new_edge_id] = (new_edge_fid, from_node, to_node)
+        _, from_node, to_node = self.edges[old_edge_id]
+        self.edges[new_edge_id] = Edge(new_edge_fid, from_node, to_node)
         if from_node:
             self.get_node(from_node).replace_edge(old_edge_id, new_edge_id)
         if to_node:
@@ -174,21 +173,18 @@ class IR:
             file_to_redirect_to = fid.to_ast()
             ## Change the stdin_id to point to this resource
             _prev_fid, from_node, to_node = self.edges[stdin_id]
-            self.edges[stdin_id] = (fid, from_node, to_node)
+            self.edges[stdin_id] = Edge(fid, from_node, to_node)
             ## Create a command that redirects stdin to this ephemeral fid
             redirect_stdin_script = os.path.join(
                 config.PASH_TOP, config.config["runtime"]["redirect_stdin_binary"]
             )
-            args = [
-                str_to_arg_chars("source"),
-                str_to_arg_chars(redirect_stdin_script),
+            com_args = [
+                string_to_argument("source"),
+                string_to_argument(redirect_stdin_script),
                 file_to_redirect_to,
             ]
-            asts.append(
-                CommandNode(
-                    line_number=0, arguments=args, assignments=[], redir_list=[]
-                )
-            )
+            com = make_command(com_args)
+            asts.append(com)
 
         ## Make the dataflow graph
         ##
@@ -212,7 +208,7 @@ class IR:
         for node_id, node in self.nodes.items():
             if not node_id in sink_node_ids:
                 node_ast = node.to_ast(self.edges, drain_streams)
-                asts.append(BackgroundKV(node_ast))
+                asts.append(make_background(node_ast))
                 ## Gather all pids
                 assignment = self.collect_pid_assignment()
                 asts.append(assignment)
@@ -221,7 +217,7 @@ class IR:
         for node_id in sink_node_ids:
             node = self.get_node(node_id)
             node_ast = node.to_ast(self.edges, drain_streams)
-            asts.append(BackgroundKV(node_ast))
+            asts.append(make_background(node_ast))
             ## Gather all pids
             assignment = self.collect_pid_assignment()
             asts.append(assignment)
@@ -230,27 +226,21 @@ class IR:
         class_asts = [to_ast_node(ast_node_to_untyped_deep(ast)) for ast in asts]
         return class_asts
 
-    def collect_pid_assignment(self) -> CommandNode:
+    def collect_pid_assignment(self):
         ## Creates:
         ## pids_to_kill="$! $pids_to_kill"
         var_name = "pids_to_kill"
-        r_val = QArgChar(
-            [
-                VArgChar(fmt="Normal", null=False, var="!", arg=[]),
-                CArgChar(ord(" ")),
-                VArgChar(fmt="Normal", null=False, var=var_name, arg=[]),
-            ]
+        rval = quote_arg(
+            [standard_var_ast("!"), char_to_arg_char(" "), standard_var_ast(var_name)]
         )
-        assign = AssignNode("pids_to_kill", r_val)
-        return CommandNode(
-            line_number=0, arguments=[], redir_list=[], assignments=assign
-        )
+        return make_assignment(var_name, [rval])
 
-    def init_pids_to_kill(self) -> CommandNode:
+    def init_pids_to_kill(self):
         ## Creates:
         ## pids_to_kill=""
         var_name = "pids_to_kill"
-        return CommandNode(0, [], [], [AssignNode(var_name, QArgChar([]))])
+        rval = quote_arg([])
+        return make_assignment(var_name, [rval])
 
     ## TODO: Delete this
     def set_ast(self, ast):
@@ -458,7 +448,7 @@ class IR:
     def get_node_input_ids_fids(self, node_id):
         node = self.get_node(node_id)
         return [
-            (input_edge_id, self.edges[input_edge_id][0])
+            (input_edge_id, self.edges[input_edge_id].fid)
             for input_edge_id in node.get_input_list()
         ]
 
@@ -471,7 +461,7 @@ class IR:
     def get_node_output_ids_fids(self, node_id):
         node = self.get_node(node_id)
         return [
-            (output_edge_id, self.edges[output_edge_id][0])
+            (output_edge_id, self.edges[output_edge_id].fid)
             for output_edge_id in node.get_output_list()
         ]
 
@@ -489,7 +479,7 @@ class IR:
     ## ones.
     def get_file_id_gen(self):
         max_id = max(self.edges.keys())
-        return FileIdGen(max_id)
+        return FileIdGenerator(max_id)
 
     def remove_node(self, node_id):
         node = self.nodes.pop(node_id)
@@ -504,25 +494,24 @@ class IR:
         node_id = node.get_id()
         self.nodes[node_id] = node
         ## Add the node in the edges dictionary
-        for in_id in node.get_input_list():
+        for in_id, out_id in zip(node.get_input_list(), node.get_output_list()):
             self.set_edge_to(in_id, node_id)
-
-        for out_id in node.get_output_list():
             self.set_edge_from(out_id, node_id)
 
     def generate_ephemeral_edges(self, fileIdGen, num_of_edges):
-        file_ids = [fileIdGen.next_ephemeral_file_id() for _ in range(num_of_edges)]
-        self.add_edges(file_ids)
-        return [edge_fid.get_ident() for edge_fid in file_ids]
+        eph_edges = []
+        for _ in range(num_of_edges):
+            file_id = fileIdGen.next_ephemeral_file_id()
+            eph_edges.append(file_id.get_ident())
+            self.add_edge(file_id)
 
-    def add_edges(self, edge_fids):
-        for edge_fid in edge_fids:
-            self.add_edge(edge_fid)
+        return eph_edges
 
-    def add_edge(self, edge_fid):
+    def add_edge(self, edge_fid, to_edge=None, from_edge=None):
         fid_id = edge_fid.get_ident()
         assert not fid_id in self.edges
-        self.edges[fid_id] = (edge_fid, None, None)
+        assert to_edge is None or from_edge is None
+        self.edges[fid_id] = Edge(edge_fid, to_edge, from_edge)
 
     ## Note: We assume that the lack of nodes is an adequate condition
     ##       to check emptiness.
@@ -943,7 +932,7 @@ class IR:
 
         ## Rewire the dfg
         for edge_fid in output_fids:
-            self.add_from_edge(new_node_id, edge_fid)
+            self.add_edge(new_node_id, from_edge=edge_fid)
         self.add_node(new_node)
         self.set_edge_to(edge_id, new_node_id)
 
@@ -1102,8 +1091,8 @@ class IR:
             input_ids_for_aggregators,
             fileIdGen,
         )
-        ## Add the edges in the graph
-        self.add_edges(new_edges)
+        for e in new_edges:
+            self.add_edge(e)
         ## Add the merge commands in the graph
         for new_node in all_aggregators:
             self.add_node(new_node)
@@ -1183,3 +1172,67 @@ class IR:
         return init_func(flatten_list(input_ids), output_ids)
 
     # TODO: this is where we need to use our aggregator spec/node
+
+
+def compile_command_to_DFG(file_id_gen, command, options, redirections=[]):
+    command_invocation = parse_arg_list_to_command_invocation(command, options)
+    io_info = get_input_output_info_from_cmd_invocation_util(command_invocation)
+    if io_info is None:
+        raise Exception(
+            f"InputOutputInformation for {format_arg_chars(command)} not provided so considered side-effectful."
+        )
+    elif io_info.has_other_outputs():
+        raise Exception(
+            f"Command {format_arg_chars(command)} has outputs other than streaming."
+        )
+    para_info = get_parallelizability_info_from_cmd_invocation_util(command_invocation)
+    if para_info is None:
+        # defaults to no parallelizer's and all properties False
+        para_info = ParallelizabilityInfo()
+    cmd_with_io = io_info.apply_input_output_info_to_command_invocation(
+        command_invocation
+    )
+
+    parallelizer_lst, round_robin, commutative = para_info.unpack_info()
+    property_dict = [
+        {
+            "round_robin_compatible_with_cat": round_robin,
+            "is_commutative": commutative,
+        }
+    ]
+    cmd_related_properties = CommandProperties(property_dict)
+
+    ## TODO: Make an empty IR and add edges and nodes incrementally (using the methods defined in IR).
+
+    ## Add all inputs and outputs to the DFG edges
+    cmd_with_io_vars, dfg_edges = file_id_gen.add_file_id_vars(cmd_with_io)
+    com_redirs = redirections
+    ## TODO: Add assignments
+    com_assignments = []
+
+    ## Assume: Everything must be completely expanded
+    ## TODO: Add an assertion about that.
+    dfg_node = DFGNode(
+        cmd_with_io_vars,
+        com_redirs=com_redirs,
+        com_assignments=com_assignments,
+        parallelizer_list=parallelizer_lst,
+        cmd_related_properties=cmd_related_properties,
+    )
+    # log(f'Dfg node: {dfg_node}')
+    node_id = dfg_node.get_id()
+
+    ## Assign the from, to node in edges
+    for fid_id in dfg_node.get_input_list():
+        fid, from_node, to_node = dfg_edges[fid_id]
+        assert to_node is None
+        dfg_edges[fid_id] = (fid, from_node, node_id)
+
+    for fid_id in dfg_node.get_output_list():
+        fid, from_node, to_node = dfg_edges[fid_id]
+        assert from_node is None
+        dfg_edges[fid_id] = (fid, node_id, to_node)
+
+    dfg_nodes = {node_id: dfg_node}
+    dfg = IR(dfg_nodes, dfg_edges)
+    return dfg

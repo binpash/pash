@@ -2,7 +2,7 @@ import copy
 
 from shell_ast.ast_util import *
 from shell_ast.transformation_options import AbstractTransformationState
-from shasta.ast_node import AstNode
+from shasta.ast_node import *
 
 
 def preprocess_node(
