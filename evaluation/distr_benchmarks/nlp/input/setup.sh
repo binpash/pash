@@ -19,7 +19,7 @@ if [ ! -e ./pg ]; then
   cd pg
   if [[ "$1" == "--full" ]]; then
     echo 'N.b.: download/extraction will take about 10min'
-    wget ndr.md/data/pg.tar.xz
+    wget atlas-group.cs.brown.edu/data/pg.tar.xz # FIXME: moving to PG soon
     if [ $? -ne 0 ]; then
 		cat <<-'EOF' | sed 's/^ *//'
 		Downloading input dataset failed, thus need to manually rsync all books from  project gutenberg:
@@ -31,10 +31,21 @@ if [ ! -e ./pg ]; then
   cat pg.tar.xz | tar -xJ
   
   else
-    wget http://pac-n4.csail.mit.edu:81/pash_data/nlp.zip
-    unzip nlp.zip
-    mv data/* .
-    rm nlp.zip data -rf
+    # wget http://pac-n4.csail.mit.edu:81/pash_data/nlp.zip
+    # unzip nlp.zip
+    # mv data/* .
+    # rm nlp.zip data -rf
+    
+    # Mock 1
+    for (( i = 0; i < 60; i++ )); do
+        touch "$i".txt
+        cat ../genesis >> "$i".txt
+    done
+    # Mock 2
+    for (( i = 61; i < 120; i++ )); do
+        touch "$i".txt
+        cat ../exodus >> "$i".txt
+    done
   fi
 
   for f in *.txt; do
@@ -48,4 +59,4 @@ fi
 hdfs dfs -mkdir /nlp
 hdfs dfs -put exodus /nlp/exodus
 hdfs dfs -put genesis /nlp/genesis
-hdfs dfs -put pg /nlp/pg
+hdfs dfs -put pg /nlp

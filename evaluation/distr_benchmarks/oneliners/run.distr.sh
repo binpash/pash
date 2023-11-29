@@ -120,6 +120,9 @@ oneliners_hadoopstreaming(){
   mv "hadoop-streaming/$times_file" .
 }
 
+outputs_dir="outputs"
+rm -rf "$outputs"
+
 oneliners_bash
 
 oneliners_pash "$PASH_FLAGS" "par"
