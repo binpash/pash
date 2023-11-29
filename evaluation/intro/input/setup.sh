@@ -6,27 +6,33 @@ cd $(dirname $0)
 
 [ "$1" = "-c" ] && rm-files 100M.txt words sorted_words
 
+
 if [ ! -f ./100M.txt ]; then
-  curl -f 'ndr.md/data/dummy/100M.txt' > 100M.txt
+  curl -sf --connect-timeout 10 'atlas-group.cs.brown.edu/data/dummy/100M.txt' > 100M.txt
   if [ $? -ne 0 ]; then
-    curl -f 'http://www.gutenberg.org/files/2600/2600-0.txt' | head -c 1M > 1M.txt
+    # Pipe curl through tac (twice) in order to consume all the output from curl.
+    # This way, curl can write the whole page and not emit an error code.
+    curl -fL 'http://www.gutenberg.org/files/2600/2600-0.txt' | tac | tac | head -c 1M > 1M.txt
     [ $? -ne 0 ] && eexit 'cannot find 1M.txt'
     touch 100M.txt
-    for (( i = 0; i < 10; i++ )); do
-      cat 1M.txt >> 10M.txt
+    for (( i = 0; i < 100; i++ )); do
+      cat 1M.txt >> 100M.txt
     done
   fi
   append_nl_if_not ./100M.txt
 fi
 
 if [ ! -f ./words ]; then
-  curl -f 'http://ndr.md/data/dummy/words' > words
+  curl -sf --connect-timeout 10 'atlas-group.cs.brown.edu/data/dummy/words' > words
   if [ $? -ne 0 ]; then
-    if [ $(uname) = 'Darwin' ]; then
-      cp /usr/share/dict/web2 words || eexit "cannot find dict file"
-    else
-      # apt install wamerican-insane
-      cp /usr/share/dict/words words || eexit "cannot find dict file"
+    curl -sf 'https://zenodo.org/record/7650885/files/words' > words
+    if [ $? -ne 0 ]; then
+      if [ $(uname) = 'Darwin' ]; then
+        cp /usr/share/dict/web2 words || eexit "cannot find dict file"
+      else
+        # apt install wamerican-insane
+        cp /usr/share/dict/words words || eexit "cannot find dict file"
+      fi
     fi
   fi
   append_nl_if_not words

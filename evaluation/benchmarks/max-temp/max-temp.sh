@@ -2,7 +2,7 @@
 
 FROM=${FROM:-2015}
 TO=${TO:-2015}
-IN=${IN:-'http://ndr.md/data/noaa/'}
+IN=${IN:-'atlas-group.cs.brown.edu/data/noaa/'}
 fetch=${fetch:-"curl -s"}
 
 seq $FROM $TO |

@@ -59,46 +59,7 @@ run_bench() {
     done
 }
 
-function run_comm_du_benchmarks() {
-  # generate output folder for each run
-  export RES_FOLDER=$1
-  # clean previous runs
-  rm -rf ${RES_FOLDER}
-  mkdir -p ${RES_FOLDER}
-  cd ${PASH_TOP}/evaluation/benchmarks
-  # remove all res files from previous runs
-  find . -type d -name "outputs" | xargs rm -rf
-  # do not remove any input from the node_modules dataset
-  find . -type d -not -path "*/node_modules/*" -name "output" | xargs rm -rf 
-  find . -type d -name "pash_logs" | xargs rm -rf
-  find . -type f -name "*.res" | xargs rm -f
-  export PASH_BENCHMARK=("oneliners" "unix50" "analytics-mts" "nlp" "max-temp" "dependency_untangling")
-
-  echo 'Running all benchmark for bash'
-  time run_bash
-  
-  echo 'Running commutativity benchmarks'
-  export PASH_ALL_FLAGS=("--dgsh_tee --width 16" 
-                         "--dgsh_tee --r_split --width 16" )
-  export PASH_BENCHMARK=( "oneliners" "unix50" "analytics-mts" "max-temp")
-  export PASH_MODE=( "disabled_commutativity" 
-                    "enabled_commutativity" )
-  time run_bench
-
-  echo 'Running dependency untangling benchmarks'
-  export PASH_ALL_FLAGS=("--r_split --dgsh_tee " 
-                         "--r_split --dgsh_tee --parallel_pipelines" )
-  export PASH_BENCHMARK=( "nlp" "dependency_untangling" )
-  export PASH_MODE=( "disabled_dependency_untangling"
-                     "enabled_dependency_untangling" )
-
-  time run_bench 
-
-  # kill the hanging processes 
-  pkill -f cat
-}
-
-function run_all_benchmarks() {
+run_all_benchmarks() {
   # generate output folder for each run
   export RES_FOLDER=$1
   # clean previous runs
