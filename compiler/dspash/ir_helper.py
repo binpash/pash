@@ -76,6 +76,7 @@ def to_shell_file(graph: IR, args) -> str:
         graph = pash_runtime.add_eager_nodes(graph, args.dgsh_tee)
 
     script = to_shell(graph, args)
+    print(script)
     with open(filename, "w") as f:
         f.write(script)
     return filename
@@ -388,4 +389,14 @@ def prepare_graph_for_remote_exec(filename:str, get_worker:Callable):
     file_id_gen = ir.get_file_id_gen()
     subgraphs, mapping = split_ir(ir)
     main_graph, worker_graph_pairs = assign_workers_to_subgraphs(subgraphs, file_id_gen, mapping, get_worker)
-    return worker_graph_pairs, shell_vars, main_graph
+    return worker_graph_pairs, shell_vars, main_graph, file_id_gen, mapping
+
+def get_best_worker_for_subgraph(subgraph:IR, get_worker:Callable):
+    subgraph_critical_fids = list(filter(lambda fid: fid.has_remote_file_resource(), subgraph.all_fids()))
+    worker = get_worker(subgraph_critical_fids)
+    worker._running_processes += 1
+    return worker
+
+def assign_worker_to_subgraph(subgraph:IR, file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], get_worker:Callable):
+    main_graph, worker_graph_pairs = assign_workers_to_subgraphs([subgraph], file_id_gen, input_fifo_map, get_worker)
+    return worker_graph_pairs[0]

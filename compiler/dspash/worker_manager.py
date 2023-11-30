@@ -4,10 +4,11 @@ import time
 import queue
 import pickle
 import json
+import collections
 
 from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
 from util import log
-from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file
+from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file, get_best_worker_for_subgraph, assign_worker_to_subgraph
 from dspash.utils import read_file
 import config 
 import copy
@@ -45,21 +46,34 @@ class WorkerConnection:
         #     answer = self.socket.recv(1024)
         return self._running_processes
 
-    def send_graph_exec_request(self, graph, shell_vars, functions, debug=False) -> bool:
+    def send_graph_exec_request(self, graph, shell_vars, functions, debug=False, worker_timeout=0) -> bool:
         request_dict = { 'type': 'Exec-Graph',
                         'graph': graph,
                         'functions': functions,
                         'shell_variables': None, # Doesn't seem needed for now
-                        'debug': None     
+                        'debug': None,
+                        'worker_timeout': worker_timeout    
                     }
         if debug:
             request_dict['debug'] = {'name': self.name, 'url': f'{DEBUG_URL}/putlog'}
 
         request = encode_request(request_dict)
         #TODO: do I need to open and close connection?
+        log(self._socket, self._port)
         send_msg(self._socket, request)
         # TODO wait until the command exec finishes and run this in parallel?
-        response_data = recv_msg(self._socket)
+        retries = 0
+        MAX_RETRIES = 2
+        RETRY_DELAY = 1
+        self._socket.settimeout(5)
+        response_data = None
+        while retries < MAX_RETRIES and not response_data:
+            try:
+                response_data = recv_msg(self._socket)
+            except socket.timeout:
+                log(f"Timeout encountered. Retry {retries + 1} of {MAX_RETRIES}.")
+                retries += 1
+                time.sleep(RETRY_DELAY)
         if not response_data or decode_request(response_data)['status'] != "OK":
             raise Exception(f"didn't recieved ack on request {response_data}")
         else:
@@ -68,8 +82,9 @@ class WorkerConnection:
             return True
 
     def close(self):
-        self._socket.send("Done")
+        self._socket.send(encode_request({"type": "Done"}))
         self._socket.close()
+        self._online = False
 
     def _wait_ack(self):
         confirmation = self._socket.recv(4096)
@@ -113,6 +128,7 @@ class WorkersManager():
             raise Exception("no workers online where the date is stored")
 
         return best_worker
+    
 
     def add_worker(self, name, host, port):
         self.workers.append(WorkerConnection(name, host, port))
@@ -148,21 +164,51 @@ class WorkersManager():
                 args = request.split(':', 1)[1].strip()
                 filename, declared_functions_file = args.split()
 
-                worker_subgraph_pairs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename, workers_manager.get_worker)
-                script_fname = to_shell_file(main_graph, workers_manager.args)
-                log("Master node graph stored in ", script_fname)
+                crashed_worker = workers_manager.args.worker_timeout_choice if workers_manager.args.worker_timeout_choice != '' else "worker1" # default to be worker1
+                try:
+                    # In the naive fault tolerance, we want all workers to receive its subgraph(s) without crashing
+                    # if a crash happens, we'll re-split the IR and do it again until scheduling is done without any crash.
+                    worker_subgraph_pairs, shell_vars, main_graph, file_id_gen, input_fifo_map = prepare_graph_for_remote_exec(filename, workers_manager.get_worker)
+                    
 
-                # Read functions
-                log("Functions stored in ", declared_functions_file)
-                declared_functions = read_file(declared_functions_file)
+                    # Read functions
+                    log("Functions stored in ", declared_functions_file)
+                    declared_functions = read_file(declared_functions_file)
 
-                # Report to main shell a script to execute
-                response_msg = f"OK {script_fname}"
-                dspash_socket.respond(response_msg, conn)
+                    # Execute subgraphs on workers
+                    worker_subgraph_pairs = collections.deque(worker_subgraph_pairs)
+                    while worker_subgraph_pairs:
+                        worker, subgraph = worker_subgraph_pairs.popleft()
+                        print(worker)
+                        print(subgraph)
+                        print("==")
+                        to_shell_file(subgraph, workers_manager.args)
+                        print("==")
+                        worker_timeout = workers_manager.args.worker_timeout if worker.name == crashed_worker and workers_manager.args.worker_timeout else 0
+                        try:
+                            worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args.debug, worker_timeout)
+                        except Exception as e:
+                            # find the next best worker for the subgraph and push (worker, subgraph) pair back to the deque
+                            #main_graph, worker_graph_pair = assign_worker_to_subgraph(subgraph, file_id_gen, input_fifo_map, workers_manager.get_worker)
+                            #print(worker_graph_pair)
+                            replacement_worker = get_best_worker_for_subgraph(subgraph, workers_manager.get_worker)
+                            worker_graph_pair = (replacement_worker, subgraph)
+                            worker_subgraph_pairs.append(worker_graph_pair)
+                            # worker_subgraph_pairs.append(assign_worker_to_subgraph(subgraph, file_id_gen, input_fifo_map, workers_manager.get_worker))
+                            # worker timeout
+                            worker.close()
+                            log(f"{worker} closed")
+                    # Report to main shell a script to execute
+                    # Delay this to the very end when every worker has received the subgraph
+                    script_fname = to_shell_file(main_graph, workers_manager.args)
+                    log("Master node graph stored in ", script_fname)
+                    response_msg = f"OK {script_fname}"
+                    dspash_socket.respond(response_msg, conn)
+                except Exception as e:
+                    print(e)
 
-                # Execute subgraphs on workers
-                for worker, subgraph in worker_subgraph_pairs:
-                    worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args.debug)
+                    
+
             else:
                 raise Exception(f"Unknown request: {request}")
         
