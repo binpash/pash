@@ -14,7 +14,10 @@ The PaSh runtime then deserializes the(m, compiles them (if safe) and optimizes 
 from env_var_names import *
 from shell_ast.ast_util import *
 from shell_ast.preprocess_ast_cases import preprocess_node
-from shell_ast.transformation_options import AbstractTransformationState
+from shell_ast.transformation_options import (
+    AbstractTransformationState,
+    AirflowTransformationState,
+)
 
 from parse import AstObject
 
@@ -57,25 +60,35 @@ def replace_ast_regions(
         ##   then the second output is true.
         ## - If the next AST needs to be replaced too (e.g. if the current one is a background)
         ##   then the third output is true
+
+        if isinstance(trans_options, AirflowTransformationState):
+            replaced_ast = trans_options.replace_df_region(
+                [ast],
+                ast_text=original_text,
+                disable_parallel_pipelines=last_object,
+            )
+            preprocessed_asts.append(replaced_ast)
+            continue
+
         preprocessed_ast_object = preprocess_node(
             ast, trans_options, last_object=last_object
         )
         ## If the dataflow region is not maximal then it implies that the whole
         ## AST should be replaced.
         assert (
-            not preprocessed_ast_object.is_non_maximal()
-            or preprocessed_ast_object.should_replace_whole_ast()
+            not preprocessed_ast_object.non_maximal
+            or preprocessed_ast_object.replace_whole
         )
 
         ## If the whole AST needs to be replaced then it implies that
         ## something will be replaced
         assert (
-            not preprocessed_ast_object.should_replace_whole_ast()
-            or preprocessed_ast_object.will_anything_be_replaced()
+            not preprocessed_ast_object.replace_whole
+            or preprocessed_ast_object.something_replaced
         )
 
         ## If it isn't maximal then we just add it to the candidate
-        if preprocessed_ast_object.is_non_maximal():
+        if preprocessed_ast_object.non_maximal:
             candidate_dataflow_region.append(
                 (preprocessed_ast_object.ast, original_text)
             )
@@ -101,7 +114,7 @@ def replace_ast_regions(
                 candidate_dataflow_region = []
                 preprocessed_asts.append(replaced_ast)
             else:
-                if preprocessed_ast_object.should_replace_whole_ast():
+                if preprocessed_ast_object.replace_whole:
                     replaced_ast = trans_options.replace_df_region(
                         [preprocessed_ast_object.ast],
                         ast_text=original_text,
@@ -112,7 +125,7 @@ def replace_ast_regions(
                     ## In this case, it is possible that no replacement happened,
                     ## meaning that we can simply return the original parsed text as it was.
                     if (
-                        preprocessed_ast_object.will_anything_be_replaced()
+                        preprocessed_ast_object.something_replaced
                         or original_text is None
                     ):
                         preprocessed_asts.append(preprocessed_ast_object.ast)
