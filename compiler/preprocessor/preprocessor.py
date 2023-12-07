@@ -54,6 +54,7 @@ def preprocess(input_script_path, args) -> str:
 def preprocess_asts(
     ast_objects: List[AstObject], args
 ) -> List[AstNode | UnparsedScript]:
+    log(args.preprocess_mode)
     trans_mode = transformation_options.TransformationType(args.preprocess_mode)
     if trans_mode is transformation_options.TransformationType.SPECULATIVE:
         trans_options = transformation_options.SpeculativeTransformationState(
