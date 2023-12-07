@@ -45,7 +45,7 @@ def preprocess_close_node(
         ast_node, trans_options, last_object=last_object
     )
     preprocessed_ast = preprocessed_ast_object.ast
-    should_replace_whole_ast = preprocessed_ast_object.should_replace_whole_ast()
+    should_replace_whole_ast = preprocessed_ast_object.replace_whole
     if should_replace_whole_ast:
         final_ast = trans_options.replace_df_region(
             asts=[preprocessed_ast], disable_parallel_pipelines=last_object
@@ -53,7 +53,7 @@ def preprocess_close_node(
         something_replaced = True
     else:
         final_ast = preprocessed_ast
-        something_replaced = preprocessed_ast_object.will_anything_be_replaced()
+        something_replaced = preprocessed_ast_object.something_replaced
     return final_ast, something_replaced
 
 
