@@ -7,6 +7,9 @@ from shasta.json_to_ast import to_ast_node
 from speculative import util_spec
 from parse import from_ast_objects_to_shell
 
+from textwrap import dedent
+import functools
+
 
 ## There are two types of ast_to_ast transformations
 class TransformationType(Enum):
@@ -192,6 +195,72 @@ class SpeculativeTransformationState(AbstractTransformationState):
 
 
 class AirflowTransformationState(TransformationState):
+    def __init__(self):
+        super().__init__()
+        self._task_ids = self._id_generator()
+
+    @staticmethod
+    def _id_generator():
+        i = 0
+        while True:
+            yield i
+            i += 1
+
+    def _ast_to_airflow(self, ast):
+        id = next(self._task_ids)
+        if isinstance(ast, UnparsedScript):
+            return f"command_{id} = BashOperator(task_id='command_{id}', bash_command='{ast.text}'"
+        elif isinstance(ast, IfNode):
+            return dedent(
+                f"""
+                cond_{id} = BashOperator(task_id='cond_{id}', bash_command='{ast.cond.pretty()}'), xcom_push=True
+                @task.branch(task_id='branch_{id}')
+                def branch_func(ti=None):
+                    xcom_value = bool(ti.xcom_pull(task_ids='cond_{id}'))
+                if xcom_value:
+                    return 'then_{id}'
+                else:
+                    return 'else_{id}'
+                then_{id} = BashOperator(task_id='then_{id}', bash_command='{ast.then_b.pretty()}')
+                else_{id} = BashOperator(task_id='else_{id}', bash_command='{ast.else_b.pretty()}')
+                """
+            )
+        elif isinstance(ast, OrNode):
+            return dedent(
+                f"""
+                cond_{id}= BashOperator(task_id='cond_task', bash_command='{ast.left_operand.pretty()}'), xcom_push=True
+                @task.branch(task_id='branch_{id}')
+                def branch_func(ti=None):
+                    xcom_value = bool(ti.xcom_pull(task_ids='cond_{id}'))
+                if not xcom_value:
+                    return 'else_{id}'
+                else_{id}= BashOperator(task_id='else_{id}', bash_command='{ast.right_operand.pretty()}')
+                """
+            )
+        elif isinstance(ast, AndNode):
+            return dedent(
+                f"""
+                cond_{id}= BashOperator(task_id='cond_task', bash_command='{ast.left_operand.pretty()}'), xcom_push=True
+                @task.branch(task_id='branch_{id}')
+                def branch_func(ti=None):
+                    xcom_value = bool(ti.xcom_pull(task_ids='cond_{id}'))
+                if xcom_value:
+                    return 'then_{id}'
+                then_{id}= BashOperator(task_id='then_{id}', bash_command='{ast.right_operand.pretty()}')
+                """
+            )
+        else:
+            log(f"________________else clause {ast.__class__}")
+            return ast.pretty()
+
+    def replace_df_region(
+        self, asts, disable_parallel_pipelines=False, ast_text=None
+    ) -> AstNode:
+        airflow_script = functools.reduce(
+            lambda acc, ast: acc + self._ast_to_airflow(ast) + "\n", asts
+        )
+        return AirflowTransformationState.AirflowNode(airflow_script)
+
     class AirflowNode(AstNode):
         NodeName = "Airflow"
 
@@ -205,38 +274,7 @@ class AirflowTransformationState(TransformationState):
             )
 
         def pretty(self):
-            return (
-                f'command = BashOperator(task_id="task", bash_command="{self.command}")'
-            )
-
-    def replace_df_region(
-        self, asts, disable_parallel_pipelines=False, ast_text=None
-    ) -> AstNode:
-        shell_list = []
-        for ast in asts:
-            if ast is UnparsedScript:
-                shell_list.append(
-                    f"command_task = BashOperator(task_id='command_task', bash_command='{ast.text}'"
-                )
-            elif ast is IfNode:
-                shell_list.append(
-                    f"cond_task = BashOperator(task_id='cond_task', bash_command='{ast.cond}), xcom_push=True\n"
-                    """
-                    @task.branch(task_id='branch')
-                    def branch_func(ti=None):
-                    xcom_value = bool(ti.xcom_pull(task_ids='cond_task'))
-                    if xcom_value:
-                       return 'then_task'
-                    else:
-                       return 'else_task'
-                    """
-                    f"then_task = BashOperator(task_id='then_task', bash_command='{ast.then_b}'"
-                    f"else_task = BashOperator(task_id='then_task', bash_command='{ast.else_b}'"
-                )
-            else:
-                shell_list.append(ast.pretty())
-
-        return AirflowTransformationState.AirflowNode("\n".join(shell_list) + "\n")
+            return self.command
 
 
 def get_shell_from_ast(asts, ast_text=None) -> str:
