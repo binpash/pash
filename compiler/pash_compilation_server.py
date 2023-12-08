@@ -219,8 +219,9 @@ class Scheduler:
 
     ## This adds the time measurement, or just removes the entry if there is no exec_time (for space reclamation)
     def handle_time_measurement(self, process_id, exec_time):
-        ## TODO: Could put those behind the profile_driven check too to not fill memory
-        assert self.process_id_input_ir_map[process_id].exec_time is None
+        ## 2023-12-08 KK: When in parallel pipelines we receive two exits (when I tried to make it one something got stuck...)
+        ##                so this assert is not true
+        # assert self.process_id_input_ir_map[process_id].exec_time is None
 
         ## If we don't have the exec time we do Nothing
         ##
