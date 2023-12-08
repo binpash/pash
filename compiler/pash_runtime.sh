@@ -103,13 +103,6 @@ else
     ## Invoke the compiler and make any necessary preparations
     source "$RUNTIME_DIR/pash_prepare_call_compiler.sh"
 
-    function run_parallel() {
-        trap inform_daemon_exit SIGTERM SIGINT EXIT
-        export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
-        source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
-        inform_daemon_exit
-    }
-
     ## Check if there are traps set, and if so do not execute in parallel
     ## TODO: This might be an overkill but is conservative
     traps_set=$(trap)
@@ -147,6 +140,11 @@ else
 
         pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_runtime_final_status"
     else 
+        function run_parallel() {
+            trap inform_daemon_exit SIGTERM SIGINT EXIT
+            export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
+            source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
+        }
         # Should we redirect errors aswell?
         # TODO: capturing the return state here isn't completely correct. 
         run_parallel "$@" <&0 &
