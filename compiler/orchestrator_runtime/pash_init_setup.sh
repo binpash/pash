@@ -17,7 +17,7 @@ export pash_checking_log_file=0
 export pash_checking_debug_level=0
 export pash_avoid_pash_runtime_completion_flag=0
 export pash_profile_driven_flag=1
-export pash_parallel_pipelines=0
+export pash_no_parallel_pipelines=0
 export pash_daemon_communicates_through_unix_pipes_flag=0
 export pash_speculative_flag=0
 export show_version=0
@@ -67,8 +67,8 @@ do
         pash_checking_debug_level=1
     fi
 
-    if [ "--parallel_pipelines" == "$item" ]; then
-        export pash_parallel_pipelines=1
+    if [ "--no_parallel_pipelines" == "$item" ]; then
+        export pash_no_parallel_pipelines=1
     fi
 
     if [ "--daemon_communicates_through_unix_pipes" == "$item" ]; then

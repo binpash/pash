@@ -137,8 +137,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append("--distributed_exec")
     if pash_arguments.speculative:
         arguments.append("--speculative")
-    if pash_arguments.parallel_pipelines:
-        arguments.append("--parallel_pipelines")
+    if pash_arguments.no_parallel_pipelines:
+        arguments.append("--no_parallel_pipelines")
     if pash_arguments.daemon_communicates_through_unix_pipes:
         arguments.append("--daemon_communicates_through_unix_pipes")
     arguments.append("--r_split_batch_size")

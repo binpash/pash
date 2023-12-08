@@ -109,8 +109,8 @@ else
     pash_redir_output echo "$$: (2) Traps set: $traps_set"
     # Don't fork if compilation failed. The script might have effects on the shell state.
     if [ "$pash_runtime_return_code" -ne 0 ] ||
-        ## If parallel pipelines is not enabled we shouldn't fork 
-        [ "$pash_parallel_pipelines" -eq 0 ] ||
+        ## If parallel pipelines is disabled using a flag we shouldn't fork 
+        [ "$pash_no_parallel_pipelines" -eq 1 ] ||
         ## If parallel pipelines is explicitly disabled (e.g., due to context), no forking
         [ "$pash_disable_parallel_pipelines" -eq 1 ] ||
         ## If traps are set, no forking
