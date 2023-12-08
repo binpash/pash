@@ -47,12 +47,11 @@ n_inputs=(
 
 if [ "$EXPERIMENTAL" -eq 1 ]; then
     configurations=(
-        # "" # Commenting this out since the tests take a lot of time to finish
-        "--parallel_pipelines"
+        ""
     )
 else
     configurations=(
-        "--parallel_pipelines --profile_driven"
+        "--profile_driven"
     )
 fi
 

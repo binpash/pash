@@ -209,7 +209,13 @@ def add_common_arguments(parser):
     )
     parser.add_argument(
         "--parallel_pipelines",
-        help="Run multiple pipelines in parallel if they are safe to run",
+        help="(obsolete) Run multiple pipelines in parallel if they are safe to run. Now true by default. See --no_parallel_pipelines.",
+        action="store_true",
+        default=True,
+    )
+    parser.add_argument(
+        "--no_parallel_pipelines",
+        help="Disable parallel running of independent pipelines",
         action="store_true",
         default=False,
     )
@@ -301,8 +307,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append("--distributed_exec")
     if pash_arguments.speculative:
         arguments.append("--speculative")
-    if pash_arguments.parallel_pipelines:
-        arguments.append("--parallel_pipelines")
+    if pash_arguments.no_parallel_pipelines:
+        arguments.append("--no_parallel_pipelines")
     if pash_arguments.daemon_communicates_through_unix_pipes:
         arguments.append("--daemon_communicates_through_unix_pipes")
     arguments.append("--r_split_batch_size")
