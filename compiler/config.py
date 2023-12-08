@@ -220,6 +220,12 @@ def add_common_arguments(parser):
         default=False,
     )
     parser.add_argument(
+        "--parallel_pipelines_limit",
+        help="Maximum number of parallel independent pipelines",
+        type=int,
+        default=2,
+    )
+    parser.add_argument(
         "--r_split_batch_size",
         type=int,
         help="configure the batch size of r_split (default: 1MB)",
@@ -311,6 +317,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append("--no_parallel_pipelines")
     if pash_arguments.daemon_communicates_through_unix_pipes:
         arguments.append("--daemon_communicates_through_unix_pipes")
+    arguments.append("--parallel_pipelines_limit")
+    arguments.append(str(pash_arguments.parallel_pipelines_limit))
     arguments.append("--r_split_batch_size")
     arguments.append(str(pash_arguments.r_split_batch_size))
     arguments.append("--debug")
