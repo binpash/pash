@@ -141,6 +141,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append("--no_parallel_pipelines")
     if pash_arguments.daemon_communicates_through_unix_pipes:
         arguments.append("--daemon_communicates_through_unix_pipes")
+    arguments.append("--parallel_pipelines_limit")
+    arguments.append(str(pash_arguments.parallel_pipelines_limit))
     arguments.append("--r_split_batch_size")
     arguments.append(str(pash_arguments.r_split_batch_size))
     arguments.append("--debug")
