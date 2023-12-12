@@ -2,7 +2,7 @@
 
 FROM=${FROM:-2015}
 TO=${TO:-2015}
-IN=${IN:-'atlas-group.cs.brown.edu/data/noaa/'}
+IN=${IN:-'atlas.cs.brown.edu/data/noaa/'}
 fetch=${fetch:-"curl -s"}
 
 data_file=temperatures.txt
