@@ -6,6 +6,7 @@ import math
 
 from util import *
 
+
 ## Global
 __version__ = "0.12.2"  # FIXME add libdash version
 GIT_TOP_CMD = [
