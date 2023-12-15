@@ -249,6 +249,11 @@ class AirflowTransformationState(TransformationState):
                 then_{id}= BashOperator(task_id='then_{id}', bash_command='{ast.right_operand.pretty()}')
                 """
             )
+        elif isinstance(ast, PipeNode):
+            result = ""
+            for i, item in enumerate(ast.items):
+                result += f"pipe_{id}_cmd_{i} = BashOperator(task_id='pipe_{id}_cmd_{i}', bash_command='{item.pretty()}')\n"
+            return result
         else:
             log(f"________________else clause {ast.__class__}")
             return ast.pretty()
@@ -256,10 +261,9 @@ class AirflowTransformationState(TransformationState):
     def replace_df_region(
         self, asts, disable_parallel_pipelines=False, ast_text=None
     ) -> AstNode:
-        airflow_script = functools.reduce(
-            lambda acc, ast: acc + self._ast_to_airflow(ast) + "\n", asts
+        return AirflowTransformationState.AirflowNode(
+            "\n".join([self._ast_to_airflow(ast) for ast in asts]) + "\n"
         )
-        return AirflowTransformationState.AirflowNode(airflow_script)
 
     class AirflowNode(AstNode):
         NodeName = "Airflow"
