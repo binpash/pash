@@ -1,6 +1,4 @@
-import argparse
 import signal
-import traceback
 from threading import Thread
 from datetime import datetime, timedelta
 
@@ -14,6 +12,8 @@ import pash_compiler
 from util import *
 from dspash.worker_manager import WorkersManager
 import server_util
+
+from cli import BaseParser
 
 ##
 ## A Daemon (not with the strict Unix sense)
@@ -30,9 +30,9 @@ signal.signal(signal.SIGTERM, handler)
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(add_help=False)
-    config.add_common_arguments(parser)
-    args, unknown_args = parser.parse_known_args()
+    parser = BaseParser(add_help=False)
+    parser.add_pash_args()
+    args, _ = parser.parse_known_args()
 
     return args
 
