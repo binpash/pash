@@ -1,12 +1,7 @@
-import argparse
 import sys
 import pickle
 import traceback
 from datetime import datetime
-
-from pash_annotations.annotation_generation.datatypes.parallelizability.AggregatorKind import (
-    AggregatorKindEnum,
-)
 
 from sh_expand import env_vars_util
 
@@ -20,11 +15,9 @@ from custom_error import *
 
 from definitions.ir.aggregator_node import *
 
-from definitions.ir.dfg_node import DFGNode
 from definitions.ir.nodes.eager import *
 from definitions.ir.nodes.pash_split import *
 
-import definitions.ir.nodes.r_merge as r_merge
 import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_unwrap as r_unwrap
 import definitions.ir.nodes.dgsh_tee as dgsh_tee
@@ -32,6 +25,8 @@ import definitions.ir.nodes.dfs_split_reader as dfs_split_reader
 
 # Distirbuted Exec
 import dspash.hdfs_utils as hdfs_utils
+
+from cli import CompilerParser
 
 runtime_config = {}
 
@@ -75,21 +70,8 @@ def main_body():
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "compiled_script_file", help="the file in which to output the compiled script"
-    )
-    parser.add_argument(
-        "input_ir",
-        help="the file containing the dataflow graph to be optimized and executed",
-    )
-    parser.add_argument(
-        "--var_file",
-        help="determines the path of a file containing all shell variables.",
-        default=None,
-    )
-    config.add_common_arguments(parser)
-    args, unknown_args = parser.parse_known_args()
+    parser = CompilerParser()
+    args, _ = parser.parse_known_args()
     return args
 
 
