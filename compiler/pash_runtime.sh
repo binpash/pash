@@ -103,21 +103,14 @@ else
     ## Invoke the compiler and make any necessary preparations
     source "$RUNTIME_DIR/pash_prepare_call_compiler.sh"
 
-    function run_parallel() {
-        trap inform_daemon_exit SIGTERM SIGINT EXIT
-        export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
-        source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
-        inform_daemon_exit
-    }
-
     ## Check if there are traps set, and if so do not execute in parallel
     ## TODO: This might be an overkill but is conservative
     traps_set=$(trap)
     pash_redir_output echo "$$: (2) Traps set: $traps_set"
     # Don't fork if compilation failed. The script might have effects on the shell state.
     if [ "$pash_runtime_return_code" -ne 0 ] ||
-        ## If parallel pipelines is not enabled we shouldn't fork 
-        [ "$pash_parallel_pipelines" -eq 0 ] ||
+        ## If parallel pipelines is disabled using a flag we shouldn't fork 
+        [ "$pash_no_parallel_pipelines" -eq 1 ] ||
         ## If parallel pipelines is explicitly disabled (e.g., due to context), no forking
         [ "$pash_disable_parallel_pipelines" -eq 1 ] ||
         ## If traps are set, no forking
@@ -147,6 +140,12 @@ else
 
         pash_redir_output echo "$$: (5) BaSh script exited with ec: $pash_runtime_final_status"
     else 
+        function run_parallel() {
+            trap inform_daemon_exit SIGTERM SIGINT EXIT
+            export SCRIPT_TO_EXECUTE="$pash_script_to_execute"
+            source "$RUNTIME_DIR/pash_restore_state_and_execute.sh"
+            inform_daemon_exit
+        }
         # Should we redirect errors aswell?
         # TODO: capturing the return state here isn't completely correct. 
         run_parallel "$@" <&0 &

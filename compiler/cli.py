@@ -81,10 +81,16 @@ class BaseParser(argparse.ArgumentParser):
             default="/tmp",
         )
         self.add_argument(
-            "--parallel_pipelines",
-            help="Run multiple pipelines in parallel if they are safe to run",
+            "--no_parallel_pipelines",
+            help="Disable parallel running of independent pipelines",
             action="store_true",
             default=False,
+        )
+        self.add_argument(
+            "--parallel_pipelines_limit",
+            help="Maximum number of parallel independent pipelines",
+            type=int,
+            default=2,
         )
         self.add_argument(
             "--r_split_batch_size",

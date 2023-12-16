@@ -219,8 +219,9 @@ class Scheduler:
 
     ## This adds the time measurement, or just removes the entry if there is no exec_time (for space reclamation)
     def handle_time_measurement(self, process_id, exec_time):
-        ## TODO: Could put those behind the profile_driven check too to not fill memory
-        assert self.process_id_input_ir_map[process_id].exec_time is None
+        ## 2023-12-08 KK: When in parallel pipelines we receive two exits (when I tried to make it one something got stuck...)
+        ##                so this assert is not true
+        # assert self.process_id_input_ir_map[process_id].exec_time is None
 
         ## If we don't have the exec time we do Nothing
         ##
@@ -315,7 +316,11 @@ class Scheduler:
                 )
 
         if not run_parallel:
+            ## If we are not running in parallel everything has to finish first before scheduling for execution
             self.wait_for_all()
+        else:
+            ## Wait if we have more pipelines running than our current limit
+            self.wait_until_limit(config.pash_args.parallel_pipelines_limit)
 
         if compile_success:
             response = server_util.success_response(
@@ -367,18 +372,24 @@ class Scheduler:
 
     def wait_for_all(self):
         log(
-            "Waiting for all processes to finish. There are",
+            "Waiting for all processes to finish."
+        )
+        self.wait_until_limit(1)
+        self.unsafe_running = False
+
+    def wait_until_limit(self, limit: int):
+        log(
+            f"Waiting for less than {limit} processes to be running. There are",
             self.running_procs,
             "processes remaining.",
         )
-        while self.running_procs > 0:
+        while self.running_procs >= limit:
             input_cmd = self.get_input()
             # must be exit command or something is wrong
             if input_cmd.startswith("Exit:"):
                 self.handle_exit(input_cmd)
             else:
                 raise Exception(f"Command should be exit but it was {input_cmd}")
-        self.unsafe_running = False
 
     def handle_exit(self, input_cmd):
         assert input_cmd.startswith("Exit:")

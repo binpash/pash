@@ -5,6 +5,7 @@ import subprocess
 
 from util import *
 
+
 ## Global
 __version__ = "0.12.2"  # FIXME add libdash version
 GIT_TOP_CMD = [
@@ -137,10 +138,12 @@ def pass_common_arguments(pash_arguments):
         arguments.append("--distributed_exec")
     if pash_arguments.speculative:
         arguments.append("--speculative")
-    if pash_arguments.parallel_pipelines:
-        arguments.append("--parallel_pipelines")
+    if pash_arguments.no_parallel_pipelines:
+        arguments.append("--no_parallel_pipelines")
     if pash_arguments.daemon_communicates_through_unix_pipes:
         arguments.append("--daemon_communicates_through_unix_pipes")
+    arguments.append("--parallel_pipelines_limit")
+    arguments.append(str(pash_arguments.parallel_pipelines_limit))
     arguments.append("--r_split_batch_size")
     arguments.append(str(pash_arguments.r_split_batch_size))
     arguments.append("--debug")
