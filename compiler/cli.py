@@ -19,6 +19,12 @@ class BaseParser(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_argument(
+            "-t",
+            "--output_time",  # FIXME: --time
+            help="(obsolete, time is always logged now) output the time it took for every step",
+            action="store_true",
+        )
+        self.add_argument(
             "-d",
             "--debug",
             type=int,
@@ -112,6 +118,37 @@ class BaseParser(argparse.ArgumentParser):
         )
 
         self.add_experimental_args()
+        self.add_obsolete_args()
+
+    def add_obsolete_args(self):
+        self.add_argument(
+            "--no_daemon",
+            help="(obsolete) does nothing -- Run the compiler everytime we need a compilation instead of using the daemon",
+            action="store_true",
+            default=False,
+        )
+        self.add_argument(
+            "--parallel_pipelines",
+            help="(obsolete) Run multiple pipelines in parallel if they are safe to run. Now true by default. See --no_parallel_pipelines.",
+            action="store_true",
+            default=True,
+        )
+        self.add_argument(
+            "--r_split",
+            help="(obsolete) does nothing -- only here for old interfaces (not used anywhere in the code)",
+            action="store_true",
+        )
+        self.add_argument(
+            "--dgsh_tee",
+            help="(obsolete) does nothing -- only here for old interfaces (not used anywhere in the code)",
+            action="store_true",
+        )
+        self.add_argument(
+            "--speculation",
+            help="(obsolete) does nothing -- run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
+            choices=["no_spec", "quick_abort"],
+            default="no_spec",
+        )
 
     def add_experimental_args(self):
         self.add_argument(
