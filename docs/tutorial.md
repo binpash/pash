@@ -2,7 +2,7 @@
 Quick jump: [Introduction](#introduction) | [Running Scripts](#running-scripts) | [What Next?](#what-next)
 
 This short tutorial covers the `pash`'s main functionality.
-Before proceeding, make sure [you have installed PaSh](../install/)
+Before proceeding, make sure [you have installed PaSh](install.md)
 
 ## Introduction
 
@@ -17,11 +17,11 @@ Consider the following spell-checking script, applied to two large markdown file
 
 ```sh
 # spell-checking.sh
-cat f1.md f2.md | 
+cat f1.md f2.md |
   tr A-Z a-z |
   tr -cs A-Za-z '\n' |
   sort |
-  uniq | 
+  uniq |
   comm -13 dict.txt - > out
 cat out | wc -l | sed 's/$/ mispelled words!/'
 ```
@@ -98,7 +98,7 @@ On our evaluation infrastructure, the script takes about 41s.
 To execute it using `pash` with 2x-parallelism:
 ```sh
 time $PASH_TOP/pa.sh -w 2 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
-``` 
+```
 On our evaluation infrastructure, the 2x-parallel script takes about 28s.
 
 You can check that the results are correct by:
@@ -109,7 +109,7 @@ diff spell.out pash-spell.out
 Assuming you have more than 8 CPUs, you could also execute it with 8x-parallelism using:
 ```sh
 time $PASH_TOP/pa.sh -w 8 -d 1 --log_file pash.log demo-spell.sh > pash-spell.out
-``` 
+```
 On our evaluation infrastructure, the 8x-parallel script takes about 14s.
 
 To view the parallel code emitted by the compiler, you can inspect the log:
@@ -163,12 +163,12 @@ This section includes pointers for further exploration, depending on your needs.
 
 #### The PaSh Repo
 
-PaSh consist of three main components and a few additional "auxiliary" files and directories. 
+PaSh consist of three main components and a few additional "auxiliary" files and directories.
 The three main components are:
 
-* [annotations](../../annotations/): DSL characterizing commands, parallelizability study, and associated annotations. More specifically, (i) a lightweight annotation language allows command developers to express key parallelizability properties about their commands; (ii) an accompanying parallelizability study of POSIX and GNU commands. guides the annotation language and optimized aggregator library 
+* [annotations](../../annotations/): DSL characterizing commands, parallelizability study, and associated annotations. More specifically, (i) a lightweight annotation language allows command developers to express key parallelizability properties about their commands; (ii) an accompanying parallelizability study of POSIX and GNU commands. guides the annotation language and optimized aggregator library
 
-* [compiler](../../compiler): Shell-dataflow translations and associated parallelization transformations. Given a script, the PaSh compiler converts it to a dataflow graph, performs a series of semantics-preserving program transformations that expose parallelism, and then converts the dataflow graph back into a POSIX script. 
+* [compiler](../../compiler): Shell-dataflow translations and associated parallelization transformations. Given a script, the PaSh compiler converts it to a dataflow graph, performs a series of semantics-preserving program transformations that expose parallelism, and then converts the dataflow graph back into a POSIX script.
 
 * [runtime](../../runtime): Runtime components such as `eager`, `split`, and associated combiners. Apart from POSIX constructs added to guide parallelism explicitly, PaSh provides Unix-aware runtime primitives for addressing performance- and correctness-related issues.
 
@@ -190,7 +190,7 @@ Chat:
 
 * [Discord Server](https://discord.com/channels/947328962739187753/) ([Invite](http://join.binpa.sh/))
 
-Mailing Lists: 
+Mailing Lists:
 
 * [Discussion](https://groups.google.com/g/pash-dev): Join this mailing list for discussing all things `pash`
 * [Commits](https://groups.google.com/g/pash-commits): Join this mailing list for commit notifications

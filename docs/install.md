@@ -49,7 +49,7 @@ We refresh this image (as well as other images) on every major release.
 [//]: # "TODO(@nvasilakis, @dkarnikis): Need to automate this per release."
 
 _Build Image (Latest Commit):_
-To build the latest Docker container, run `docker build` in [scripts/docker](https://github.com/binpash/pash/tree/main/scripts/docker):
+To build the latest Docker container, run `docker build` in [scripts/docker](../scripts/docker):
 ```sh
 git clone git@github.com:binpash/pash.git
 cd pash/scripts/docker/
@@ -64,11 +64,11 @@ docker run --name pash-play -it pash:latest
 ```
 
 PaSh can be found in the container's `/opt/pash` directory, so run `cd pash; git pull` to fetch the latest updates.
-More information in the [pash-on-docker guide](../contributing/contrib.md#pash-on-docker-a-pocket-guide).
+More information in the [pash-on-docker guide](contributing.md#pash-on-docker-a-pocket-guide).
 
 ### Windows using WSL
 
 To run PaSh on windows without Docker, install [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
-A short tutorial is included in the [contributing](../contributing/contrib.md) guide.
+A short tutorial is included in the [contributing](contributing.md) guide.
 
 [//]: # "TODO(@nvasilakis, @dkarnikis): Need to add instructions for OS X."
