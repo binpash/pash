@@ -5,7 +5,7 @@ Quick Jump: [using pash](#using-pash) | [videos](#videos--video-presentations) |
 
 The following resources offer overviews of important PaSh components.
 
-* Short tutorial: [introduction](./tutorial#introduction), [installation](./install#installation), [execution](./tutorial#running-scripts), and [next steps](./tutorial#what-next)
+* Short tutorial: [introduction](tutorial.md#introduction), [installation](install.md#installation), [execution](tutorial.md#running-scripts), and [next steps](tutorial.md#what-next)
 <!-- * Annotations: [parallelizability](../annotations#main-parallelizability-classes), [study](../annotations#parallelizability-study-of-commands-in-gnu--posix), [example 1](../annotations#a-simple-example-chmod), [example 2](../annotations#another-example-cut), [howto](../annotations#how-to-annotate-a-command) -->
 * Compiler: [intro](../compiler#introduction), [overview](../compiler#compiler-overview), [details](../compiler#zooming-into-fragments), [earlier versions](../compiler#earlier-versions)
 * Runtime: [split](../runtime#stream-splitting), [eager](../runtime#eager-stream-polling),  [cleanup](../runtime#cleanup-logic),  [aggregate](../runtime#aggregators)
