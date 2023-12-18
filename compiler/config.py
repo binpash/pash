@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import subprocess
-import math
 
 from util import *
 
@@ -62,7 +61,6 @@ pash_args = None
 def set_config_globals_from_pash_args(given_pash_args):
     global pash_args, OUTPUT_TIME, DEBUG_LEVEL, LOG_FILE
     pash_args = given_pash_args
-    OUTPUT_TIME = pash_args.output_time
     DEBUG_LEVEL = pash_args.debug
     LOG_FILE = pash_args.log_file
 
@@ -113,178 +111,6 @@ def load_config(config_file_path=""):
     config = pash_config
 
 
-def getWidth():
-    cpus = os.cpu_count()
-    return math.floor(cpus / 8) if cpus >= 16 else 2
-
-
-def add_general_config_arguments(parser):
-    ## TODO: Delete that at some point, or make it have a different use (e.g., outputting time even without -d 1).
-    parser.add_argument(
-        "-t",
-        "--output_time",  # FIXME: --time
-        help="(obsolete, time is always logged now) output the time it took for every step",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-d",
-        "--debug",
-        type=int,
-        help="configure debug level; defaults to 0",
-        default=0,
-    )
-    parser.add_argument(
-        "--log_file",
-        help="configure where to write the log; defaults to stderr.",
-        default="",
-    )
-
-
-## These are arguments that are common to pash.py and pash_compiler.py
-def add_common_arguments(parser):
-    add_general_config_arguments(parser)
-
-    parser.add_argument(
-        "-w",
-        "--width",
-        type=int,
-        default=getWidth(),
-        help="set data-parallelism factor",
-    )
-    parser.add_argument(
-        "--no_optimize",
-        help="not apply transformations over the DFG",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--dry_run_compiler",
-        help="not execute the compiled script, even if the compiler succeeded",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--assert_compiler_success",
-        help="assert that the compiler succeeded (used to make tests more robust)",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--avoid_pash_runtime_completion",
-        help="avoid the pash_runtime execution completion (only relevant when --debug > 0)",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--profile_driven",
-        help="(experimental) use profiling information when optimizing",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-p",
-        "--output_optimized",  # FIXME: --print
-        help="output the parallel shell script for inspection",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--graphviz",
-        help="generates graphical representations of the dataflow graphs. The option argument corresponds to the format. PaSh stores them in a timestamped directory in the argument of --graphviz_dir",
-        choices=["no", "dot", "svg", "pdf", "png"],
-        default="no",
-    )
-    ## TODO: To discuss: Do we maybe want to have graphviz to always be included
-    ##       in the temp directory (under a graphviz subdirectory) instead of in its own?
-    ##   kk: I think that ideally we want a log-directory where we can put logs, graphviz,
-    ##       and other observability and monitoring info (instead of putting them in the temp).
-    parser.add_argument(
-        "--graphviz_dir",
-        help="the directory in which to store graphical representations",
-        default="/tmp",
-    )
-    parser.add_argument(
-        "--no_eager",
-        help="(experimental) disable eager nodes before merging nodes",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--no_daemon",
-        help="(obsolete) does nothing -- Run the compiler everytime we need a compilation instead of using the daemon",
-        action="store_true",
-        default=False,
-    )
-    parser.add_argument(
-        "--parallel_pipelines",
-        help="(obsolete) Run multiple pipelines in parallel if they are safe to run. Now true by default. See --no_parallel_pipelines.",
-        action="store_true",
-        default=True,
-    )
-    parser.add_argument(
-        "--no_parallel_pipelines",
-        help="Disable parallel running of independent pipelines",
-        action="store_true",
-        default=False,
-    )
-    parser.add_argument(
-        "--parallel_pipelines_limit",
-        help="Maximum number of parallel independent pipelines",
-        type=int,
-        default=2,
-    )
-    parser.add_argument(
-        "--r_split_batch_size",
-        type=int,
-        help="configure the batch size of r_split (default: 1MB)",
-        default=1000000,
-    )
-    parser.add_argument(
-        "--r_split",
-        help="(obsolete) does nothing -- only here for old interfaces (not used anywhere in the code)",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--dgsh_tee",
-        help="(obsolete) does nothing -- only here for old interfaces (not used anywhere in the code)",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--speculative",
-        help="(experimental) use the speculative execution preprocessing and runtime (NOTE: this has nothing to do with --speculation, which is actually misnamed, and should be named concurrent compilation/execution and is now obsolete)",
-        action="store_true",
-        default=False,
-    )
-    ## This is misnamed, it should be named concurrent compilation/execution
-    parser.add_argument(
-        "--speculation",
-        help="(obsolete) does nothing -- run the original script during compilation; if compilation succeeds, abort the original and run only the parallel (quick_abort) (Default: no_spec)",
-        choices=["no_spec", "quick_abort"],
-        default="no_spec",
-    )
-    parser.add_argument(
-        "--termination",
-        help="(experimental) determine the termination behavior of the DFG. Defaults to cleanup after the last process dies, but can drain all streams until depletion",
-        choices=["clean_up_graph", "drain_stream"],
-        default="clean_up_graph",
-    )
-    parser.add_argument(
-        "--daemon_communicates_through_unix_pipes",
-        help="(experimental) the daemon communicates through unix pipes instead of sockets",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--distributed_exec",
-        help="(experimental) execute the script in a distributed environment. Remote machines should be configured and ready",
-        action="store_true",
-        default=False,
-    )
-    parser.add_argument(
-        "--config_path",
-        help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
-        default="",
-    )
-    parser.add_argument(
-        "--version",
-        action="version",
-        version="%(prog)s {version}".format(version=__version__),
-    )
-    return
-
-
 def pass_common_arguments(pash_arguments):
     arguments = []
     if pash_arguments.no_optimize:
@@ -297,8 +123,6 @@ def pass_common_arguments(pash_arguments):
         arguments.append("--avoid_pash_runtime_completion")
     if pash_arguments.profile_driven:
         arguments.append("--profile_driven")
-    if pash_arguments.output_time:
-        arguments.append("--output_time")
     if pash_arguments.output_optimized:
         arguments.append("--output_optimized")
     arguments.append("--graphviz")
