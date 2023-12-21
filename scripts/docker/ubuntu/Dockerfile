@@ -1,4 +1,6 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
+## Necessary to avoid interactive responses in installations
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y && apt-get install -y git
 ENV PASH_TOP=/opt/pash
 # download PaSh

@@ -11,7 +11,6 @@ sys.path.append("/pash/compiler")
 import config
 from ir import *
 from ast_to_ir import compile_asts
-from json_ast import *
 from ir_to_ast import to_shell
 from util import *
 from dspash.hdfs_utils import HDFSFileConfig
@@ -28,7 +27,7 @@ import definitions.ir.nodes.dgsh_tee as dgsh_tee
 import definitions.ir.nodes.remote_pipe as remote_pipe
 import shlex
 import subprocess
-import pash_runtime
+import pash_compiler
 from collections import deque, defaultdict
 import stat, os
 
@@ -48,7 +47,7 @@ def save_configs(graph:IR, dfs_configs_paths: Dict[HDFSFileConfig, str]):
             resource : DFSSplitResource = edge.get_resource()
             config: HDFSFileConfig = resource.config
             if config not in dfs_configs_paths:
-                _, config_path = ptempfile()
+                config_path = ptempfile()
                 with open(config_path, "w") as f:
                     f.write(config)
                 dfs_configs_paths[config] = config_path
@@ -58,7 +57,7 @@ def save_configs(graph:IR, dfs_configs_paths: Dict[HDFSFileConfig, str]):
             resource.set_config_path(config_path)
 
 def to_shell_file(graph: IR, args) -> str:
-    _, filename = ptempfile()
+    filename = ptempfile()
     
     dirs = set()
     for edge in graph.all_fids():
@@ -73,7 +72,7 @@ def to_shell_file(graph: IR, args) -> str:
         # TODO: ideally we should get the next_id from the graph object
         #   to avoid conflicts across parallel processes
         DFGNode.next_id = max(DFGNode.next_id , max(graph.nodes.keys()) + 1)
-        graph = pash_runtime.add_eager_nodes(graph, args.dgsh_tee)
+        graph = pash_compiler.add_eager_nodes(graph)
 
     script = to_shell(graph, args)
     with open(filename, "w") as f:
@@ -277,7 +276,7 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
         worker_subgraph_pairs: A list of pairs representing which worker
             each subgraph should be executed on.
     """
-    # The graph to execute in the main pash_runtime
+    # The graph to execute in the main pash_compiler
     main_graph = IR({}, {})
     worker_subgraph_pairs = []
 

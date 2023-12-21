@@ -8,6 +8,7 @@ on:
         - runtime/**
         - evaluation/**
         - annotations/**
+        - scripts/**
   push:
     branches:
       - main
@@ -17,14 +18,15 @@ on:
         - runtime/**
         - evaluation/**
         - annotations/**
+        - scripts/**
 
 # Jobs section
 jobs:
     Pash-Tests:
       strategy:
+        fail-fast: false
         matrix:
           os: 
-            - ubuntu-18.04
             - ubuntu-20.04
       runs-on: ${{ matrix.os }}
       if: github.event.pull_request.draft == false
@@ -79,7 +81,9 @@ jobs:
       runs-on: ubuntu-latest
       if: github.event.pull_request.draft == false
       steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v3 
+          with:
+            ref: ${{ github.event.pull_request.head.sha }}
 
         - uses: ludeeus/action-shellcheck@master
           env:

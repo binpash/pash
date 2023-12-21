@@ -31,11 +31,10 @@ def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, id):
         remote_pipe_bin = os.path.join(
             config.DISH_TOP, config.config['runtime']['remote_write_binary'])
 
-    com_name = Arg(string_to_argument(remote_pipe_bin))
+    com_name = Arg.string_to_arg(remote_pipe_bin)
 
-    options.append(
-        (opt_count, Arg(string_to_argument(f"--addr {host_ip}:{port}"))))
-    options.append((opt_count + 1, Arg(string_to_argument(f"--id {id}"))))
+    options.append((opt_count, Arg.string_to_arg(f"--addr {host_ip}:{port}")))
+    options.append((opt_count + 1, Arg.string_to_arg(f"--id {id}")))
 
     return RemotePipe(inputs,
                       outputs,

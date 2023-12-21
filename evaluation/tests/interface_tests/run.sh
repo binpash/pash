@@ -4,7 +4,7 @@ export PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel --show-superproject-
 # time: print real in seconds, to simplify parsing
 
 bash="bash"
-pash="$PASH_TOP/pa.sh --parallel_pipelines --r_split --dgsh_tee --profile_driven"
+pash="$PASH_TOP/pa.sh --parallel_pipelines --profile_driven"
 
 output_dir="$PASH_TOP/evaluation/tests/interface_tests/output"
 rm -rf "$output_dir"
@@ -142,13 +142,10 @@ test14()
     $shell +a readonly.sh
 }
 
-## Checks interactivity
-##
-## TODO: Make the interactivity script more elaborate (variable dependencies)
 test15()
 {
     local shell=$1
-    $shell < readonly.sh 
+    $shell readonly.sh 
 }
 
 test16()
@@ -291,6 +288,39 @@ test_var_assgn_default()
     $shell var_assgn.sh
 }
 
+test_exclam()
+{
+    local shell=$1
+    $shell test-exclam.sh
+}
+
+test_redir_var_test()
+{
+    local shell=$1
+    $shell redir-var-test.sh
+}
+
+test_star()
+{
+    local shell=$1
+    $shell test-star.sh foo '*' baz 'hi michael' "abc
+     dfg"
+}
+
+test_env_vars()
+{
+    local shell=$1
+    rm -f tmp1.txt tmp2.txt
+    $shell env_vars.sh
+    diff tmp1.txt tmp2.txt
+}
+
+test_redir_dup()
+{
+    local shell=$1
+    $shell redir-dup.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -330,6 +360,11 @@ if [ "$#" -eq 0 ]; then
     run_test test_expand_u_positional
     run_test test_quoting
     run_test test_var_assgn_default
+    run_test test_exclam
+    run_test test_redir_var_test
+    run_test test_star
+    run_test test_env_vars
+    run_test test_redir_dup
 else
     for testname in $@
     do

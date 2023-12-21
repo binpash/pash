@@ -1,17 +1,18 @@
 from definitions.ir.arg import *
-from ir_utils import *
+from shell_ast.ast_util import *
 
 class Redirection():
-    def __init__(self, redirection):
-        ## Handle initialization from an existing Redirection object
-        if(isinstance(redirection, Redirection)):
-            redirection = redirection.to_ast()
-        assert(len(redirection) == 2)
-        self.redir_type = redirection[0]
-        assert(len(redirection[1]) == 3)
-        self.redir_subtype = redirection[1][0]
-        self.stream_id = redirection[1][1]
-        self.file_arg = Arg(redirection[1][2])
+    def __init__(self, redirection: RedirectionNode):
+        if isinstance(redirection, FileRedirNode):
+            self.redir_type = FileRedirNode.NodeName
+        elif isinstance(redirection, DupRedirNode):
+            self.redir_type = DupRedirNode.NodeName
+        elif isinstance(redirection, HeredocRedirNode):
+            self.redir_type = HeredocRedirNode.NodeName
+
+        self.redir_subtype = redirection.redir_type
+        self.stream_id = redirection.fd
+        self.file_arg = Arg(redirection.arg)
 
         # log(redirection)
         ## TODO: Support all redirections

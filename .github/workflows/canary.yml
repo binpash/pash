@@ -1,0 +1,28 @@
+name: Distribution canary
+
+on:
+#  push:
+  schedule:
+    - cron: '20 13 * * *'
+      
+jobs:
+  pash:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-20.04
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Install PaSh using the up script and run tests
+        run: |
+          wget https://raw.githubusercontent.com/binpash/pash/main/scripts/up.sh
+          sh up.sh
+          ## Inspect it if you wish
+          export PASH_TOP="$PWD/pash/"
+          cd pash
+          "$PASH_TOP/pa.sh" -c "echo hi"
+          "$PASH_TOP/evaluation/tests/test_evaluation_scripts.sh"
+          

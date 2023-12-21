@@ -59,7 +59,7 @@ run_bench() {
     done
 }
 
-function run_comm_du_benchmarks() {
+run_comm_du_benchmarks() {
   # generate output folder for each run
   export RES_FOLDER=$1
   # clean previous runs
@@ -98,7 +98,7 @@ function run_comm_du_benchmarks() {
   pkill -f cat
 }
 
-function run_all_benchmarks() {
+run_all_benchmarks() {
   # generate output folder for each run
   export RES_FOLDER=$1
   # clean previous runs
