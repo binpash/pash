@@ -212,7 +212,7 @@ def optimize_irs(asts_and_irs, args, compiler_config):
             ## Assert that the graph that was returned from compilation is valid
             assert(ast_or_ir.valid())
 
-            # TODO: Ramiz - preprocess hdfs cat nodes
+            # TODO Ramiz: Preprocess hdfs cat nodes
 
             # log(ir_node)
             # with cProfile.Profile() as pr:
@@ -306,7 +306,7 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen, fan_out, r_split
     Returns: A normal Cat that merges the blocks (will be removed when parallizing next_node)
     """
 
-    # TODO: Ramiz - probably modify annotations so we don't need this instance check
+    # TODO Ramiz: Probably modify annotations so we don't need this instance check
     # assert(isinstance(hdfs_cat, HDFSCat))
 
     ## At the moment this only works for nodes that have one standard input.
