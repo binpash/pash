@@ -22,6 +22,8 @@ export pash_daemon_communicates_through_unix_pipes_flag=0
 export pash_speculative_flag=0
 export show_version=0
 export distributed_exec=0
+export worker_timeout=0
+export worker_timeout_choice=0
 
 for item in "$@"
 do
@@ -81,6 +83,14 @@ do
 
     if [ "--distributed_exec" == "$item" ]; then
         export distributed_exec=1
+    fi
+
+    if [ "--worker_timeout" == "$item" ]; then
+        export worker_timeout=1
+    fi
+
+    if [ "--worker_timeout_choice" == "$item" ]; then
+        export worker_timeout_choice=1
     fi
 done
 

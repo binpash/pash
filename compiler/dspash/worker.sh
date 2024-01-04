@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # trap ctrl-c and call ctrl_c()
 trap cleanup INT
 

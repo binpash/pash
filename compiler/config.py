@@ -208,6 +208,12 @@ def add_common_arguments(parser):
     parser.add_argument("--version",
                         action='version',
                         version='%(prog)s {version}'.format(version=__version__))
+    parser.add_argument("--worker_timeout",
+                        help="determines if we will mock a timeout for worker node.",
+                        default="")
+    parser.add_argument("--worker_timeout_choice",
+                        help="determines which worker node will be timed out.",
+                        default="")
     return
 
 
