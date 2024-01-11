@@ -1,8 +1,11 @@
 import pash_annotations.datatypes
+from pash_annotations.datatypes.AccessKind import make_stream_input, make_stream_output
+from pash_annotations.datatypes.CommandInvocationWithIO import CommandInvocationWithIO
+from pash_annotations.datatypes.BasicDatatypesWithIOVar import OptionWithIOVar
 
 from pash_annotations.datatypes.CommandInvocationInitial import CommandInvocationInitial
-from pash_annotations.datatypes.BasicDatatypes import ArgStringType
-from pash_annotations.datatypes.BasicDatatypesWithIO import FileNameWithIOInfo, StdDescriptorWithIOInfo, OptionWithIO
+from pash_annotations.datatypes.BasicDatatypes import ArgStringType, get_stdout_fd
+from pash_annotations.datatypes.BasicDatatypesWithIO import BaseClassForBasicDatatypesWithIOInfo, FileNameWithIOInfo, StdDescriptorWithIOInfo, OptionWithIO, get_from_original_stddescriptor_with_ioinfo
 from pash_annotations.annotation_generation.datatypes.InputOutputInfo import InputOutputInfo
 from pash_annotations.annotation_generation.datatypes.ParallelizabilityInfo import ParallelizabilityInfo
 from pash_annotations.annotation_generation.datatypes.CommandProperties import CommandProperties
@@ -23,6 +26,9 @@ import definitions.ir.nodes.r_unwrap as r_unwrap
 
 from shell_ast.ast_util import *
 from util import *
+
+# Distirbuted Exec
+import dspash.hdfs_utils as hdfs_utils 
 
 import config
 
@@ -184,8 +190,67 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
     return command_invocation_with_io_vars, dfg_edges
 
 
+def compile_hdfs_cat(fileIdGen: FileIdGen, options):
+    split_reader_bin = os.path.join(config.PASH_TOP, config.config['runtime']['dfs_split_reader_binary'])
+    output_ids = []
+    dfg_nodes = {}
+    dfg_edges = {}
+
+    for option in options[2:]:
+        hdfs_filepath = format_arg_chars(option)
+        # Create a cat command per file block
+        file_config = hdfs_utils.get_file_config(hdfs_filepath)
+        _, dummy_config_path = ptempfile() # Dummy config file, should be updated by workers
+        for split_num, block in enumerate(file_config.blocks):
+            access_map = {}
+            resource = DFSSplitResource(file_config.dumps(), dummy_config_path, split_num, block.hosts)
+            block_fid = fileIdGen.next_file_id()
+            block_fid.set_resource(resource)
+            access_map[block_fid.get_ident()] = make_stream_input()
+
+            output_fid = fileIdGen.next_file_id()
+            output_fid.make_ephemeral()
+            output_ids.append(output_fid.get_ident())
+            access_map[output_fid.get_ident()] = make_stream_output()
+            
+            split_reader_node = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(
+                CommandInvocationWithIOVars(
+                    cmd_name=split_reader_bin,
+                    flag_option_list=[OptionWithIO("split", ArgStringType(str(split_num)))],
+                    operand_list=[block_fid.get_ident()],
+                    implicit_use_of_streaming_input=None,
+                    implicit_use_of_streaming_output=None,
+                    access_map=access_map
+                )
+            )
+            
+            dfg_nodes[split_reader_node.get_id()] = split_reader_node
+            dfg_edges[block_fid.get_ident()] = (block_fid, None, split_reader_node.get_id())
+            dfg_edges[output_fid.get_ident()] = (output_fid, split_reader_node.get_id(), None)
+
+    stdout_descriptor_with_io_info = get_from_original_stddescriptor_with_ioinfo(get_stdout_fd(), make_stream_output())
+    stdout_resource = resource_from_file_descriptor(stdout_descriptor_with_io_info)
+    stdout_fid = create_file_id_for_resource(stdout_resource, fileIdGen)
+    merger_node = make_cat_node(output_ids, stdout_fid.get_ident())
+
+    dfg_nodes[merger_node.get_id()] = merger_node
+    for output_id in output_ids:
+        fid, from_node, to_node = dfg_edges[output_id]
+        assert(to_node is None)
+        dfg_edges[output_id] = (fid, from_node, merger_node.get_id())
+    dfg_edges[stdout_fid.get_ident()] = (stdout_fid, merger_node.get_id(), None)
+
+    return IR(dfg_nodes, dfg_edges)
+
+
 def compile_command_to_DFG(fileIdGen, command, options,
                            redirections=[]):
+
+    if (format_arg_chars(command) == "hdfs" and 
+        format_arg_chars(options[0]) == "dfs" and
+        format_arg_chars(options[1]) == "-cat"):
+        return compile_hdfs_cat(fileIdGen, options)
+
     command_invocation: CommandInvocationInitial = parse_arg_list_to_command_invocation(command, options)
     io_info: InputOutputInfo = get_input_output_info_from_cmd_invocation_util(command_invocation)
     if io_info is None:
