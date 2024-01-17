@@ -42,18 +42,28 @@ def worker_log(worker):
     worker_logs = get_logs(worker)
     return render_template('wlog.html', logs=worker_logs)
 
+@app.route('/debug', methods=['POST'])
+def debug():
+    for key, val in request.json:
+        print(key, val.stderr.replace("\n", "<br />"))
+
 @app.route('/putlog', methods=['POST'])
 def put_log():
     worker = request.json['name']
     stderr = request.json['stderr']
     returncode = request.json['returncode']
     shellscript = request.json['shellscript']
-
+    
     if not worker:
         abort(401)
     
     stderr = stderr.replace("\n", "<br />")
     shellscript = shellscript.replace("\n", "<br />")
+
+    print(worker)
+    print(stderr)
+    print(shellscript)
+    print()
 
     conn = get_db_connection()
     conn.execute('INSERT INTO logs (worker, returncode, stderr, shellscript) VALUES (?, ?, ?, ?)',
