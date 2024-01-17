@@ -28,7 +28,7 @@ fi
 # convert to lowercase
 distro=$(printf '%s\n' "$distro" | LC_ALL=C tr '[:upper:]' '[:lower:]')
 # compile the list of the shared required packages
-pkgs="bc curl git graphviz python3 sudo wget"
+pkgs="bc curl git graphviz python3 sudo wget file"
 # now do different things depending on distro
 case "$distro" in
     ubuntu*)  
