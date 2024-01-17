@@ -196,7 +196,10 @@ def compile_hdfs_cat(fileIdGen: FileIdGen, options):
     dfg_nodes = {}
     dfg_edges = {}
 
-    for option in options[2:]:
+    # https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/FileSystemShell.html#cat
+    input_start_index = 3 if not options[2] == "-ignoreCrc" else 2
+
+    for option in options[input_start_index:]:
         hdfs_filepath = format_arg_chars(option)
         # Create a cat command per file block
         file_config = hdfs_utils.get_file_config(hdfs_filepath)
