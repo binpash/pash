@@ -181,6 +181,7 @@ class WorkersManager():
 
                         # Execute subgraphs on workers
                         for worker, subgraph in worker_subgraph_pairs:
+                            worker: WorkerConnection
                             worker_timeout = workers_manager.args.worker_timeout if worker.name == crashed_worker and workers_manager.args.worker_timeout else 0
                             
                             try:

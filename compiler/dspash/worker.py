@@ -16,7 +16,6 @@ from dspash.utils import create_filename, write_file
 from dspash.ir_helper import save_configs, to_shell_file, to_shell, add_debug_flags
 from dspash.socket_utils import send_msg, recv_msg
 import pash_compiler
-from annotations import load_annotation_files
 from util import log
 import config
 
