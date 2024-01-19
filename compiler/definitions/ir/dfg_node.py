@@ -3,6 +3,7 @@ from definitions.ir.redirection import *
 from definitions.ir.resource import *
 
 from annotations_utils.util_cmd_invocations import to_node_cmd_inv_with_io_vars, construct_property_container_from_list_of_properties
+from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
 
 from util import return_empty_list_if_none_else_itself, return_default_if_none_else_itself
 
@@ -18,7 +19,7 @@ class DFGNode:
     ## parallelizer_list : list of parallelizers for this DFGNode
     ## cmd_related_properties : dict to store properties like commutativity
     def __init__(self,
-                 cmd_invocation_with_io_vars,
+                 cmd_invocation_with_io_vars: CommandInvocationWithIOVars,
                  com_redirs = [],
                  com_assignments=[],
                  parallelizer_list=None,

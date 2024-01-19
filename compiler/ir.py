@@ -191,7 +191,7 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
 
 
 def compile_hdfs_cat(fileIdGen: FileIdGen, options):
-    split_reader_bin = os.path.join(config.PASH_TOP, config.config['runtime']['dfs_split_reader_binary'])
+    split_reader_bin = os.path.join(config.DISH_TOP, config.config['runtime']['dfs_split_reader_binary'])
     output_ids = []
     dfg_nodes = {}
     dfg_edges = {}
@@ -219,10 +219,10 @@ def compile_hdfs_cat(fileIdGen: FileIdGen, options):
             split_reader_node = DFGNode.make_simple_dfg_node_from_cmd_inv_with_io_vars(
                 CommandInvocationWithIOVars(
                     cmd_name=split_reader_bin,
-                    flag_option_list=[OptionWithIO("split", ArgStringType(str(split_num)))],
-                    operand_list=[block_fid.get_ident()],
-                    implicit_use_of_streaming_input=None,
-                    implicit_use_of_streaming_output=None,
+                    flag_option_list=[OptionWithIO("--split", ArgStringType(Arg.string_to_arg(str(split_num))))],
+                    operand_list=[],
+                    implicit_use_of_streaming_input=block_fid.get_ident(),
+                    implicit_use_of_streaming_output=output_fid.get_ident(),
                     access_map=access_map
                 )
             )
@@ -776,7 +776,7 @@ class IR:
             self.set_edge_from(out_id, None)
 
 
-    def add_node(self, node):
+    def add_node(self, node: DFGNode):
         node_id = node.get_id()
         self.nodes[node_id] = node
         ## Add the node in the edges dictionary

@@ -1,8 +1,6 @@
-
 import os
-
-from ir import *
-from util import *
+from ir import IR
+from util import log
 
 ## Ensure that PASH_TMP_PREFIX is set by pa.sh
 assert(not os.getenv('PASH_TIMESTAMP') is None)

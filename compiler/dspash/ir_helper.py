@@ -15,8 +15,6 @@ from ir_to_ast import to_shell
 from util import *
 from dspash.hdfs_utils import HDFSFileConfig
 
-from definitions.ir.aggregator_node import *
-
 from definitions.ir.nodes.eager import *
 from definitions.ir.nodes.pash_split import *
 
@@ -326,10 +324,6 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
         nodes = list(subgraph.nodes.keys())
         for source in nodes:
             for in_edge in subgraph.get_node_input_fids(source):
-                # If we didn't expand HDFSCat then we shouldn't modify it's input fids
-                # We might need annotation changes if we need to be more general
-                if isinstance(subgraph.get_node(source), HDFSCat):
-                    continue
                 if in_edge.has_file_resource() or in_edge.has_file_descriptor_resource():
                     old_edge_id = in_edge.get_ident()
 

@@ -1,13 +1,13 @@
 from definitions.ir.dfg_node import *
+from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
+from pash_annotations.datatypes.BasicDatatypes import ArgStringType
+from pash_annotations.datatypes.BasicDatatypesWithIO import OptionWithIO
+from pash_annotations.datatypes.AccessKind import make_stream_input, make_stream_output
 
 
 class RemotePipe(DFGNode):
-    def __init__(self, inputs, outputs, com_name, com_category,
-                 com_options=[], com_redirs=[], com_assignments=[]):
-        super().__init__(inputs, outputs, com_name, com_category,
-                         com_options=com_options,
-                         com_redirs=com_redirs,
-                         com_assignments=com_assignments)
+    def __init__(self, cmd_invocation_with_io_vars):
+        super().__init__(cmd_invocation_with_io_vars)
 
     def add_debug_flag(self):
         opt_count = len(self.com_options)
@@ -20,10 +20,6 @@ class RemotePipe(DFGNode):
 
 
 def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, id):
-    com_category = "pure"
-    options = []
-    opt_count = 0
-
     if is_remote_read:
         remote_pipe_bin = os.path.join(
             config.DISH_TOP, config.config['runtime']['remote_read_binary'])
@@ -31,13 +27,23 @@ def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, id):
         remote_pipe_bin = os.path.join(
             config.DISH_TOP, config.config['runtime']['remote_write_binary'])
 
-    com_name = Arg.string_to_arg(remote_pipe_bin)
+    options = []
+    options.append(OptionWithIO("--addr", ArgStringType(Arg.string_to_arg(f"{host_ip}:{port}"))))
+    options.append(OptionWithIO("--id", ArgStringType(Arg.string_to_arg(str(id)))))
 
-    options.append((opt_count, Arg.string_to_arg(f"--addr {host_ip}:{port}")))
-    options.append((opt_count + 1, Arg.string_to_arg(f"--id {id}")))
+    access_map = access_map = {
+        **{input_id: make_stream_input() for input_id in inputs},
+        **{output_id: make_stream_output() for output_id in outputs}
+    }
 
-    return RemotePipe(inputs,
-                      outputs,
-                      com_name,
-                      com_category,
-                      com_options=options)
+    return RemotePipe(
+        CommandInvocationWithIOVars(
+            cmd_name=remote_pipe_bin,
+            flag_option_list=options,
+            operand_list=[],
+            # This would only work if there is at most single input and output
+            implicit_use_of_streaming_input = inputs[0] if inputs else None,
+            implicit_use_of_streaming_output = outputs[0] if outputs else None,
+            access_map=access_map
+        )
+    )
