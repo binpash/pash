@@ -12,7 +12,6 @@ sys.path.append("/pash/compiler")
 import config
 from ir import *
 from ast_to_ir import compile_asts
-from json_ast import *
 from ir_to_ast import to_shell
 from util import *
 from dspash.hdfs_utils import HDFSFileConfig
@@ -28,7 +27,6 @@ import definitions.ir.nodes.dfs_split_reader as dfs_split_reader
 import definitions.ir.nodes.remote_pipe as remote_pipe
 import shlex
 import subprocess
-import pash_runtime
 from collections import deque, defaultdict
 import stat, os
 
