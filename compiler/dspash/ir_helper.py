@@ -29,6 +29,7 @@ import shlex
 import subprocess
 from collections import deque, defaultdict
 import stat, os
+import pash_compiler
 
 HOST = socket.gethostbyname(socket.gethostname())
 NEXT_PORT = 58000
@@ -71,7 +72,7 @@ def to_shell_file(graph: IR, args) -> str:
         # TODO: ideally we should get the next_id from the graph object
         #   to avoid conflicts across parallel processes
         DFGNode.next_id = max(DFGNode.next_id , max(graph.nodes.keys()) + 1)
-        graph = pash_runtime.add_eager_nodes(graph, args.dgsh_tee)
+        graph = pash_compiler.add_eager_nodes(graph, args.dgsh_tee)
 
     script = to_shell(graph, args)
     with open(filename, "w") as f:
@@ -275,7 +276,7 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
         worker_subgraph_pairs: A list of pairs representing which worker
             each subgraph should be executed on.
     """
-    # The graph to execute in the main pash_runtime
+    # The graph to execute in the main pash_compiler
     main_graph = IR({}, {})
     worker_subgraph_pairs = []
 
