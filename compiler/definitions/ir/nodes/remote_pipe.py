@@ -10,13 +10,13 @@ class RemotePipe(DFGNode):
         super().__init__(cmd_invocation_with_io_vars)
 
     def add_debug_flag(self):
-        opt_count = len(self.com_options)
-        self.com_options.append((opt_count, Arg(string_to_argument(f"-d"))))
+        opt_count = len(self.cmd_invocation_with_io_vars.flag_option_list)
+        self.cmd_invocation_with_io_vars.flag_option_list.append(OptionWithIO(str(opt_count), ArgStringType(Arg.string_to_arg(f"-d"))))
 
     def is_remote_read(self):
-        com_name = self.com_name.opt_serialize()
-        read_com = config.config['runtime']['remote_read_binary']
-        return read_com in com_name
+        cmd_name = self.cmd_invocation_with_io_vars.cmd_name
+        read_cmd = config.config['runtime']['remote_read_binary']
+        return read_cmd in cmd_name
 
 
 def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, id):
