@@ -12,16 +12,18 @@ from util import *
 
 import libdash.parser
 
-
 AstObject = tuple[AstNode, Optional[str], int, int]
-
 
 ## Parses straight a shell script to an AST
 ## through python without calling it as an executable
-def parse_shell_to_asts(input_script_path: str) -> List[AstObject]:
-    try:
-        new_ast_objects = libdash.parser.parse(input_script_path)
+INITIALIZE_LIBDASH = True
 
+
+def parse_shell_to_asts(input_script_path):
+    global INITIALIZE_LIBDASH
+    try:
+        new_ast_objects = libdash.parser.parse(input_script_path, INITIALIZE_LIBDASH)
+        INITIALIZE_LIBDASH = False
         ## Transform the untyped ast objects to typed ones
         typed_ast_objects = []
         for (
@@ -45,7 +47,7 @@ def parse_shell_to_asts_interactive(input_script_path: str):
     return libdash.parser.parse(input_script_path)
 
 
-def from_ast_objects_to_shell(asts: List[AstNode | UnparsedScript]) -> str:
+def from_ast_objects_to_shell(asts):
     shell_list = []
     for ast in asts:
         # log("Ast:", ast)

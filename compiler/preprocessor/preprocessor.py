@@ -1,4 +1,3 @@
-import argparse
 from datetime import datetime
 import os
 
@@ -12,6 +11,7 @@ from parse import parse_shell_to_asts, from_ast_objects_to_shell, AstObject
 from util import *
 import server_util
 from speculative import util_spec
+from cli import PreprocessorParser
 
 LOGGING_PREFIX = "PaSh Preprocessor: "
 
@@ -92,32 +92,7 @@ def preprocess_asts(
 ## This is the command line interface for the preprocessor
 ##
 def main():
-    parser = argparse.ArgumentParser()
-    config.add_general_config_arguments(parser)
-
-    subparsers = parser.add_subparsers(help="sub-command help")
-
-    # create the parser for the "a" command
-    parser_pash = subparsers.add_parser(
-        "pash", help="Preprocess the script so that it can be run with PaSh"
-    )
-    config.add_common_arguments(parser_pash)
-    parser_pash.add_argument("input", help="the script to be preprocessed")
-    parser_pash.set_defaults(preprocess_mode="pash")
-
-    # create the parser for the "b" command
-    parser_spec = subparsers.add_parser(
-        "spec", help="Preprocess the script so that it can be run with speculation"
-    )
-    parser_spec.add_argument("input", help="the script to be preprocessed")
-
-    ## TODO: When we better integrate, this should be automatically set.
-    parser_spec.add_argument(
-        "partial_order_file",
-        help="the file to store the partial order (currently just a sequence)",
-    )
-    parser_spec.set_defaults(preprocess_mode="spec")
-
+    parser = PreprocessorParser()
     args = parser.parse_args()
     config.set_config_globals_from_pash_args(args)
 

@@ -7,6 +7,7 @@ import uuid
 
 from definitions.ir.resource import *
 
+
 ## Note: The NULL ident is considered to be the default unknown file id
 ##
 ## TODO: WARNING: We have to make sure that a resource in our IR can
@@ -29,19 +30,19 @@ class FileId:
         self.prefix = prefix
         ## TODO: Remove all union_find
         ## Initialize the parent
-        self.resource=resource
+        self.resource = resource
 
     def __repr__(self):
-        if(isinstance(self.resource, EphemeralResource)):
+        if isinstance(self.resource, EphemeralResource):
             output = self.get_fifo_suffix()
         else:
             output = "fid:{}:{}".format(self.ident, self.resource)
         return output
 
     def serialize(self):
-        if(isinstance(self.resource, TemporaryFileResource)):
+        if isinstance(self.resource, TemporaryFileResource):
             output = self.get_temporary_file_suffix()
-        elif(isinstance(self.resource, EphemeralResource)):
+        elif isinstance(self.resource, EphemeralResource):
             output = self.get_fifo_suffix()
         else:
             output = "{}".format(self.resource)
@@ -73,17 +74,17 @@ class FileId:
         ##       check if a file id refers to a pipe
         ##
         ## TODO: I am not sure about the FileDescriptor resource
-        if(isinstance(self.resource, TemporaryFileResource)):
+        if isinstance(self.resource, TemporaryFileResource):
             suffix = self.get_temporary_file_suffix()
             string = os.path.join(config.PASH_TMP_PREFIX, suffix)
             argument = string_to_argument(string)
-        elif(isinstance(self.resource, EphemeralResource)):
+        elif isinstance(self.resource, EphemeralResource):
             suffix = self.get_fifo_suffix()
-            string = os.path.join(config.PASH_TMP_PREFIX, suffix)     
+            string = os.path.join(config.PASH_TMP_PREFIX, suffix)
             ## Quote the argument
-            argument = [make_kv('Q', string_to_argument(string))]
-        elif(isinstance(self.resource, FileDescriptorResource)):
-            if (self.resource.is_stdin() and stdin_dash):
+            argument = [make_kv("Q", string_to_argument(string))]
+        elif isinstance(self.resource, FileDescriptorResource):
+            if self.resource.is_stdin() and stdin_dash:
                 argument = string_to_argument("-")
             else:
                 raise NotImplementedError()
@@ -97,7 +98,7 @@ class FileId:
         ## The file resource cannot be reset. A pointer can never point to
         ## more than one file resource. However, we can change an ephemeral
         ## resource or a file_descriptor resource.
-        assert(not self.has_file_resource())
+        assert not self.has_file_resource()
         self.resource = resource
 
     def get_resource(self):
@@ -105,19 +106,19 @@ class FileId:
 
     ## Remove this
     def has_resource(self):
-        return (not self.resource is None)
+        return not self.resource is None
 
     def has_file_resource(self):
-        return (isinstance(self.resource, FileResource))
+        return isinstance(self.resource, FileResource)
 
     def has_file_descriptor_resource(self):
-        return (isinstance(self.resource, FileDescriptorResource))
+        return isinstance(self.resource, FileDescriptorResource)
 
     def has_remote_file_resource(self):
         return isinstance(self.resource, RemoteFileResource)
 
     def is_ephemeral(self):
-        return (isinstance(self.resource, EphemeralResource))
+        return isinstance(self.resource, EphemeralResource)
 
     def make_temporary_file(self):
         self.resource = TemporaryFileResource()
