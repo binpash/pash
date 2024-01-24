@@ -378,7 +378,7 @@ def add_eager_nodes(graph):
 
             ## Add an eager after remote_pipe
             if(isinstance(curr, remote_pipe.RemotePipe) and curr.is_remote_read()):
-                eager_input_ids = curr.outputs
+                eager_input_ids = curr.get_output_list()
                 for edge_id in eager_input_ids:
                     add_eager(edge_id, graph, fileIdGen)
 

@@ -87,6 +87,9 @@ class FileId:
                 argument = string_to_argument("-")
             else:
                 raise NotImplementedError()
+        elif(isinstance(self.resource, DFSSplitResource)):
+            config_path = self.resource.config_path
+            argument = string_to_argument(config_path)
         else:
             ## The resource holds an Argument, and we need to get its argument list
             argument = self.resource.uri.to_ast()

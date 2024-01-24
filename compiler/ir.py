@@ -197,13 +197,13 @@ def compile_hdfs_cat(fileIdGen: FileIdGen, options):
     dfg_edges = {}
 
     # https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/FileSystemShell.html#cat
-    input_start_index = 3 if not options[2] == "-ignoreCrc" else 2
+    input_start_index = 3 if options[2] == "-ignoreCrc" else 2
 
     for option in options[input_start_index:]:
         hdfs_filepath = format_arg_chars(option)
         # Create a cat command per file block
         file_config = hdfs_utils.get_file_config(hdfs_filepath)
-        _, dummy_config_path = ptempfile() # Dummy config file, should be updated by workers
+        dummy_config_path = ptempfile() # Dummy config file, should be updated by workers
         for split_num, block in enumerate(file_config.blocks):
             access_map = {}
             resource = DFSSplitResource(file_config.dumps(), dummy_config_path, split_num, block.hosts)
