@@ -56,11 +56,9 @@ def exec_graph(graph, shell_vars, functions, debug=False):
         stderr = None
 
     script_path = to_shell_file(graph, config.pash_args)
-
     e = os.environ.copy()
     e['PASH_TOP'] = PASH_TOP
     e['DISH_TOP'] = DISH_TOP
-
     # store functions
     functions_file = create_filename(
         dir=config.PASH_TMP_PREFIX, prefix='pashFuncs')
@@ -74,9 +72,8 @@ def exec_graph(graph, shell_vars, functions, debug=False):
 
 
 class Worker:
-    def __init__(self, discovery_server: subprocess.Popen, port=None):
+    def __init__(self, port=None):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.discovery_server = discovery_server
         if port == None:
             # pick a random port
             self.s.bind((HOST, 0))
@@ -137,7 +134,7 @@ def send_discovery_server_log(rc: subprocess.Popen, request):
     requests.post(url=url, json=response)
 
 
-def manage_connection(conn, addr, discovery_server: subprocess.Popen, connections: [Process]):
+def manage_connection(conn, addr):
     rcs = []
     with conn:
         log('Connected by', addr)
@@ -147,9 +144,9 @@ def manage_connection(conn, addr, discovery_server: subprocess.Popen, connection
                 data = recv_msg(conn)
                 if not data:
                     break
-                print("got new request")
+                log("got new request")
                 request = decode_request(data) 
-                print(request)           
+                log(request)           
                 if request['type'] == 'Exec-Graph':
                     graph, shell_vars, functions = parse_exec_graph(request)
                     debug = True if request['debug'] else False
@@ -159,36 +156,24 @@ def manage_connection(conn, addr, discovery_server: subprocess.Popen, connection
                     rcs.append((rc, request))
                     body = {}
                 elif request['type'] == 'Done':
-                    print("Received 'Done' signal. Closing connection from the worker.")
+                    log("Received 'Done' signal. Closing connection from the worker.")
                     break
                 elif request['type'] == 'abortAll':
                     # This is buggy so not used
                     num_aborted = 0
                     while rcs:
                         rc, request = rcs.pop()
-                        print(rc.pid)
                         os.killpg(os.getpgid(rc.pid), signal.SIGTERM)
 
                         # os.system('pkill -TERM -P {pid}'.format(pid=rc.pid))
                         num_aborted += 1
                     body = {"num_aborted": num_aborted}
-
-            log("got new request")
-            request = decode_request(data)            
-            if request['type'] == 'Exec-Graph':
-                graph, shell_vars, functions = parse_exec_graph(request)
-                debug = True if request['debug'] else False
-                save_configs(graph, dfs_configs_paths)
-                time.sleep(int(request['worker_timeout']))
-                rc = exec_graph(graph, shell_vars, functions, debug)
-                rcs.append((rc, request))
-                body = {}
-            elif request['type'] == 'Done':
-                log("Received 'Done' signal. Closing connection from the worker.")
+                else:
+                    log(f"Unsupported request {request}")
+                send_success(conn, body)
+            except Exception as e:
+                log(e)
                 break
-            else:
-                log(f"Unsupported request {request}")
-            send_success(conn, body)
 
     # Ensure subprocesses have finished, and releasing corresponding resources
 
@@ -208,8 +193,8 @@ def parse_args():
                         default=65432)
     config.add_common_arguments(parser)
     args = parser.parse_args()
-    config.pash_args = args
-    # Initialize the log file
+    config.set_config_globals_from_pash_args(args)
+    ## Initialize the log file
     config.init_log_file()
     if not config.config:
         config.load_config(args.config_path)
@@ -223,18 +208,17 @@ def init():
     # config.annotations = load_annotation_files(
     #     config.config['distr_planner']['annotations_dir'])
     pash_compiler.runtime_config = config.config['distr_planner']
-    # needed because graphs could have multiples sinks
-    config.pash_args.termination = ""
+    pash_compiler.termination = ""
 
 
 def main():
     init()
     # start discovery server and track its logs
-    dish_top = os.getenv('DISH_TOP')
-    command = [f'{dish_top}/runtime/dspash/file_reader/discovery_server', '&']
-    discovery_server = subprocess.Popen(command, stderr=subprocess.PIPE, shell=True)
+    # dish_top = os.getenv('DISH_TOP')
+    # command = [f'{dish_top}/runtime/dspash/file_reader/discovery_server', '&']
+    # discovery_server = subprocess.Popen(command, stderr=subprocess.PIPE, shell=True)
 
-    worker = Worker(discovery_server, config.pash_args.port)
+    worker = Worker(config.pash_args.port)
     worker.run()
 
 

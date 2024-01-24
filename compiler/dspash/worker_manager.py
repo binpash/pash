@@ -8,7 +8,7 @@ import collections
 
 from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
 from util import log
-from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file, get_best_worker_for_subgraph, get_remote_pipe_update_candidates, update_subgraphs, get_worker_subgraph_map, update_remote_pipe_addr
+from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file, get_best_worker_for_subgraph, get_remote_pipe_update_candidates, update_subgraphs, get_worker_subgraph_map, update_remote_pipe_addr, add_debug_flags
 from dspash.utils import read_file
 import config 
 import copy
@@ -200,29 +200,25 @@ class WorkersManager():
             elif request.startswith("Exec-Graph"):
                 args = request.split(':', 1)[1].strip()
                 filename, declared_functions_file = args.split()
-
                 crashed_worker_choice = workers_manager.args.worker_timeout_choice if workers_manager.args.worker_timeout_choice != '' else "worker1" # default to be worker1
                 try:
                     # In the naive fault tolerance, we want all workers to receive its subgraph(s) without crashing
                     # if a crash happens, we'll re-split the IR and do it again until scheduling is done without any crash.
                     worker_subgraph_pairs, shell_vars, main_graph, file_id_gen, input_fifo_map = prepare_graph_for_remote_exec(filename, workers_manager.get_worker)
-                    
                     # Read functions
                     log("Functions stored in ", declared_functions_file)
                     declared_functions = read_file(declared_functions_file)
-
                     # Execute subgraphs on workers
                     # worker_subgraph_map = get_worker_subgraph_map(worker_subgraph_pairs)
                     worker_subgraph_pairs = collections.deque(worker_subgraph_pairs)
                     #TODO: deepcopy
                     worker_subgraph_pairs_backup = self.deep_copy_worker_subgraph_pairs(worker_subgraph_pairs)
-                    
 
                     while worker_subgraph_pairs:
                         worker, subgraph = worker_subgraph_pairs.popleft()
-                        print(worker.name, worker)
-                        print(to_shell(subgraph, workers_manager.args))
-                        print('---------------------------------')
+                        log(worker.name, worker)
+                        log(to_shell(subgraph, workers_manager.args))
+                        log('---------------------------------')
                         worker_timeout = workers_manager.args.worker_timeout if worker.name == crashed_worker_choice and workers_manager.args.worker_timeout else 0
                         try:
                             worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args.debug, worker_timeout)
@@ -272,8 +268,7 @@ class WorkersManager():
                                     # Step 2
                                     # Find all write RP on subgraph and all read RP-N on neighboring subgraphs (including main_graph)
                                     update_candidates = get_remote_pipe_update_candidates(subgraphs + [main_graph], subgraph, crashed_worker)
-                                    for candidate in update_candidates:
-                                        print(candidate.get_uuid(), candidate.get_host())
+                                    
                                     # Step 3
                                     for update_candidate in update_candidates:
                                         update_remote_pipe_addr(update_candidate, replacement_worker.host())
@@ -289,9 +284,12 @@ class WorkersManager():
                                 continue
                                 # worker.getDiscoveryServerLog(workers_manager.args.debug)
 
+                        # Append debug flag for dish runtimes in worker_manager
+                        add_debug_flags(main_graph)
+
                     # Report to main shell a script to execute
                     # Delay this to the very end when every worker has received the subgraph
-                    print(to_shell(main_graph, workers_manager.args))
+                    log(to_shell(main_graph, workers_manager.args))
                     script_fname = to_shell_file(main_graph, workers_manager.args)
                     log("Master node graph storeid in ", script_fname)
                     response_msg = f"OK {script_fname}"

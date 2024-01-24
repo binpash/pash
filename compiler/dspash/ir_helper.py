@@ -23,7 +23,6 @@ import definitions.ir.nodes.r_merge as r_merge
 import definitions.ir.nodes.r_split as r_split
 import definitions.ir.nodes.r_unwrap as r_unwrap
 import definitions.ir.nodes.dgsh_tee as dgsh_tee
-import definitions.ir.nodes.dfs_split_reader as dfs_split_reader
 import definitions.ir.nodes.remote_pipe as remote_pipe
 import shlex
 import subprocess
@@ -47,7 +46,7 @@ def save_configs(graph:IR, dfs_configs_paths: Dict[HDFSFileConfig, str]):
             resource : DFSSplitResource = edge.get_resource()
             config: HDFSFileConfig = resource.config
             if config not in dfs_configs_paths:
-                _, config_path = ptempfile()
+                config_path = ptempfile()
                 with open(config_path, "w") as f:
                     f.write(config)
                 dfs_configs_paths[config] = config_path
@@ -57,23 +56,19 @@ def save_configs(graph:IR, dfs_configs_paths: Dict[HDFSFileConfig, str]):
             resource.set_config_path(config_path)
 
 def to_shell_file(graph: IR, args) -> str:
-    _, filename = ptempfile()
-    
+    filename = ptempfile()
     dirs = set()
     for edge in graph.all_fids():
         directory = os.path.join(config.PASH_TMP_PREFIX, edge.prefix)
         dirs.add(directory)
-        
     for directory in dirs:
         os.makedirs(directory, exist_ok=True)
-
     if not args.no_eager:
         # Set DFGNode next id to not clash with already existing ids
         # TODO: ideally we should get the next_id from the graph object
         #   to avoid conflicts across parallel processes
         DFGNode.next_id = max(DFGNode.next_id , max(graph.nodes.keys()) + 1)
-        graph = pash_compiler.add_eager_nodes(graph, args.dgsh_tee)
-
+        graph = pash_compiler.add_eager_nodes(graph)
     script = to_shell(graph, args)
     with open(filename, "w") as f:
         f.write(script)
