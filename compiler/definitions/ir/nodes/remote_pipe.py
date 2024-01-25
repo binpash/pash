@@ -10,11 +10,8 @@ class RemotePipe(DFGNode):
         super().__init__(cmd_invocation_with_io_vars)
 
     def add_debug_flag(self):
-        # opt_count = len(self.com_options)
-        # self.cmd_invocation_with_io_vars.flag_option_list
-        # self.com_options.append((opt_count, Arg(string_to_argument(f"-d"))))
-        # self.cmd_invocation_with_io_vars.flag_option_list.append(Flag("-d"))
-        pass
+        self.cmd_invocation_with_io_vars.flag_option_list.append(Flag("-d"))
+
 
     def is_remote_read(self):
         cmd_name = self.cmd_invocation_with_io_vars.cmd_name
