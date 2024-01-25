@@ -70,7 +70,7 @@ class WorkerConnection:
             try:
                 response_data = recv_msg(self._socket)
                 response = decode_request(response_data)
-                log(f"Recieved response from {self._socket.getsockname()}, response: {response}")
+                log(f"Socket {self._socket.getsockname()} recieved response from {self._socket.getpeername()}, response: {response}")
             except socket.timeout:
                 log(f"Timeout encountered. Retry {retries + 1} of {MAX_RETRIES}.")
                 retries += 1
