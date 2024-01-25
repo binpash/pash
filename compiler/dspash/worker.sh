@@ -29,4 +29,4 @@ cleanup() {
 FILEREADER_PID=$!
 "$DISH_TOP/runtime/dspash/file_reader/discovery_server" &
 DISCOVERY_PID=$!
-python3 "$DISH_TOP/pash/compiler/dspash/worker.py" "$@"
+python3 "$DISH_TOP/pash/compiler/dspash/worker.py" "$@" -d 1

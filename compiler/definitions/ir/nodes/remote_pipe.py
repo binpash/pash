@@ -1,6 +1,6 @@
 from definitions.ir.dfg_node import *
 from pash_annotations.datatypes.CommandInvocationWithIOVars import CommandInvocationWithIOVars
-from pash_annotations.datatypes.BasicDatatypes import ArgStringType
+from pash_annotations.datatypes.BasicDatatypes import ArgStringType, Flag
 from pash_annotations.datatypes.BasicDatatypesWithIO import OptionWithIO
 from pash_annotations.datatypes.AccessKind import make_stream_input, make_stream_output
 
@@ -13,6 +13,7 @@ class RemotePipe(DFGNode):
         # opt_count = len(self.com_options)
         # self.cmd_invocation_with_io_vars.flag_option_list
         # self.com_options.append((opt_count, Arg(string_to_argument(f"-d"))))
+        # self.cmd_invocation_with_io_vars.flag_option_list.append(Flag("-d"))
         pass
 
     def is_remote_read(self):

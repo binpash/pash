@@ -58,7 +58,6 @@ class WorkerConnection:
 
         request = encode_request(request_dict)
         #TODO: do I need to open and close connection?
-        log(self._socket, self._port)
         send_msg(self._socket, request)
         # TODO wait until the command exec finishes and run this in parallel?
         retries = 0
@@ -66,18 +65,20 @@ class WorkerConnection:
         RETRY_DELAY = 1
         self._socket.settimeout(5)
         response_data = None
+        response = None
         while retries < MAX_RETRIES and not response_data:
             try:
                 response_data = recv_msg(self._socket)
+                response = decode_request(response_data)
+                log(f"Recieved response from {self._socket.getsockname()}, response: {response}")
             except socket.timeout:
                 log(f"Timeout encountered. Retry {retries + 1} of {MAX_RETRIES}.")
                 retries += 1
                 time.sleep(RETRY_DELAY)
-        if not response_data or decode_request(response_data)['status'] != "OK":
+        if not response_data or response['status'] != "OK":
             raise Exception(f"didn't recieved ack on request {response_data}")
         else:
             # self._running_processes += 1 #TODO: decrease in case of failure or process ended
-            response = decode_request(response_data)
             return True
 
     def close(self):

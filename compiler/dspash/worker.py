@@ -48,7 +48,7 @@ def parse_exec_graph(request):
 def exec_graph(graph, shell_vars, functions, debug=False):
     config.config['shell_variables'] = shell_vars
     if debug:
-        print('debug is on')
+        log('debug is on')
         add_debug_flags(graph)
         stderr = subprocess.PIPE
     else:
@@ -66,6 +66,7 @@ def exec_graph(graph, shell_vars, functions, debug=False):
     write_file(functions_file, functions)
     cmd = f"source {functions_file}; source {script_path}"
 
+    log(f"Executing: {cmd}")
     rc = subprocess.Popen(
         cmd, env=e, executable="/bin/bash", shell=True, stderr=stderr)
     return rc
@@ -79,7 +80,7 @@ class Worker:
             self.s.bind((HOST, 0))
         else:
             self.s.bind((HOST, port))
-        print(f"Worker running on {HOST}:{self.s.getsockname()[1]}")
+        log(f"Worker running on {HOST}:{self.s.getsockname()[1]}")
 
     def run(self):
         connections = []
@@ -87,7 +88,7 @@ class Worker:
             self.s.listen()
             while (True):
                 conn, addr = self.s.accept()
-                print(f"got new connection")
+                log(f"got new connection")
                 t = Process(target=manage_connection, args=[conn, addr])
                 t.start()
                 connections.append(t)
@@ -104,7 +105,7 @@ def send_log(rc: subprocess.Popen, request):
         # timeout is set to 10s for debuggin
         _, err = rc.communicate(timeout=10)
     except:
-        print("process timedout")
+        log("process timedout")
         rc.kill()
         _, err = rc.communicate()
 
@@ -121,7 +122,7 @@ def send_log(rc: subprocess.Popen, request):
 def manage_connection(conn, addr):
     rcs = []
     with conn:
-        print('Connected by', addr)
+        log('Connected by', addr)
         dfs_configs_paths = {}
         while True:
             data = recv_msg(conn)
@@ -129,7 +130,7 @@ def manage_connection(conn, addr):
                 break
 
 
-            print("got new request")
+            log("got new request")
             request = decode_request(data)            
             if request['type'] == 'Exec-Graph':
                 graph, shell_vars, functions = parse_exec_graph(request)
@@ -140,10 +141,10 @@ def manage_connection(conn, addr):
                 rcs.append((rc, request))
                 body = {}
             elif request['type'] == 'Done':
-                print("Received 'Done' signal. Closing connection from the worker.")
+                log("Received 'Done' signal. Closing connection from the worker.")
                 break
             else:
-                print(f"Unsupported request {request}")
+                log(f"Unsupported request {request}")
             send_success(conn, body)
 
     # Ensure subprocesses have finished, and releasing corresponding resources
@@ -152,7 +153,7 @@ def manage_connection(conn, addr):
             send_log(rc, request)
         else:
             rc.wait()
-    print("connection ended")
+    log("connection ended")
 
 
 def parse_args():
