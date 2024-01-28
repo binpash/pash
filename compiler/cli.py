@@ -184,6 +184,12 @@ class BaseParser(argparse.ArgumentParser):
             action="store_true",
             default=False,
         )
+        self.add_argument(
+            "--airflow",
+            help="(experimental) airflowify the script",
+            action="store_true",
+            default=False,
+        )
 
 
 class RunnerParser(BaseParser):

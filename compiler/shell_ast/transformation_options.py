@@ -213,40 +213,43 @@ class AirflowTransformationState(TransformationState):
         elif isinstance(ast, IfNode):
             return dedent(
                 f"""
-                cond_{id} = BashOperator(task_id='cond_{id}', bash_command='{ast.cond.pretty()}'), xcom_push=True
+                cond_{id} = BashOperator(task_id='cond_{id}', bash_command='{ast.cond.pretty()}', xcom_push=True)
                 @task.branch(task_id='branch_{id}')
-                def branch_func(ti=None):
-                    xcom_value = bool(ti.xcom_pull(task_ids='cond_{id}'))
-                if xcom_value:
-                    return 'then_{id}'
-                else:
-                    return 'else_{id}'
+                def branch_func_{id}(input):
+                    if input:
+                        return 'then_{id}'
+                    else:
+                        return 'else_{id}'
                 then_{id} = BashOperator(task_id='then_{id}', bash_command='{ast.then_b.pretty()}')
                 else_{id} = BashOperator(task_id='else_{id}', bash_command='{ast.else_b.pretty()}')
+                
+                branch_func_{id}(cond_{id}.output)
                 """
             )
         elif isinstance(ast, OrNode):
             return dedent(
                 f"""
-                cond_{id}= BashOperator(task_id='cond_task', bash_command='{ast.left_operand.pretty()}'), xcom_push=True
+                cond_{id}= BashOperator(task_id='cond_task', bash_command='{ast.left_operand.pretty()}', xcom_push=True)
                 @task.branch(task_id='branch_{id}')
-                def branch_func(ti=None):
-                    xcom_value = bool(ti.xcom_pull(task_ids='cond_{id}'))
-                if not xcom_value:
-                    return 'else_{id}'
+                def branch_func_{id}(input):
+                    if not input:
+                        return 'else_{id}'
                 else_{id}= BashOperator(task_id='else_{id}', bash_command='{ast.right_operand.pretty()}')
+
+                branch_func_{id}(cond_{id}.output)
                 """
             )
         elif isinstance(ast, AndNode):
             return dedent(
                 f"""
-                cond_{id}= BashOperator(task_id='cond_task', bash_command='{ast.left_operand.pretty()}'), xcom_push=True
+                cond_{id}= BashOperator(task_id='cond_task', bash_command='{ast.left_operand.pretty()}', xcom_push=True)
                 @task.branch(task_id='branch_{id}')
-                def branch_func(ti=None):
-                    xcom_value = bool(ti.xcom_pull(task_ids='cond_{id}'))
-                if xcom_value:
-                    return 'then_{id}'
+                def branch_func_{id}(input):
+                    if input:
+                        return 'then_{id}'
                 then_{id}= BashOperator(task_id='then_{id}', bash_command='{ast.right_operand.pretty()}')
+
+                branch_func_{id}(cond_{id}.output)
                 """
             )
         elif isinstance(ast, PipeNode):
