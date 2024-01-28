@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 import pickle
+from typing import Iterator
 
 from shell_ast.ast_util import *
 from shasta.json_to_ast import to_ast_node
@@ -200,13 +201,13 @@ class AirflowTransformationState(TransformationState):
         self._task_ids = self._id_generator()
 
     @staticmethod
-    def _id_generator():
+    def _id_generator() -> Iterator[int]:
         i = 0
         while True:
             yield i
             i += 1
 
-    def _ast_to_airflow(self, ast):
+    def _ast_to_airflow(self, ast) -> str:
         id = next(self._task_ids)
         if isinstance(ast, UnparsedScript):
             return f"command_{id} = BashOperator(task_id='command_{id}', bash_command='{ast.text}'"
