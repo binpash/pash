@@ -20,7 +20,7 @@ HDFSBlock = namedtuple("HDFSBlock", ["path", "hosts"])
 # however, this class has hard to miss dependencies so it's hard to modify
 # for example I was thinking about removing the dumps() method as I was thinking
 # this class is only written but not read. However, it seems there may be go client
-# code that reads it. See $DISH_TOP/runtime/dspash/file_reader/dfs_split_reader
+# code that reads it. See dfs_split_reader.go
 class HDFSFileConfig:
     def __init__(self, blocks: List[List[str]]):
         self.blocks: List[HDFSBlock] = []

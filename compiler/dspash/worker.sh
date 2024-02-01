@@ -25,8 +25,8 @@ cleanup() {
         rm -rf "$PASH_TMP_PREFIX"
 }
 
-"$DISH_TOP/runtime/dspash/file_reader/filereader_server" &
+"$DISH_TOP/runtime/bin/filereader_server" &
 FILEREADER_PID=$!
-"$DISH_TOP/runtime/dspash/file_reader/discovery_server" &
+"$DISH_TOP/runtime/bin/discovery_server" &
 DISCOVERY_PID=$!
 python3 "$DISH_TOP/pash/compiler/dspash/worker.py" "$@" -d 1
