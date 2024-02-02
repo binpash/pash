@@ -1,3 +1,4 @@
+from typing import Dict
 import pash_annotations.datatypes
 from pash_annotations.datatypes.AccessKind import make_stream_input, make_stream_output
 from pash_annotations.datatypes.CommandInvocationWithIO import CommandInvocationWithIO
@@ -335,7 +336,7 @@ class IR:
     ## - If two nodes have the same file as output, then they both
     ##   write to it concurrently.
     def __init__(self, nodes, edges, background = False):
-        self.nodes = nodes
+        self.nodes: Dict[int, DFGNode] = nodes
         self.edges = edges
         self.background = background
 

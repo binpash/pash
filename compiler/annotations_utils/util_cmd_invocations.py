@@ -22,7 +22,7 @@ def get_command_invocation_prefix_from_dfg_node(dfg_node):
 
 # TODO: ideally methods in the respective classes but requires refactoring of parsing infrastructure
 # TODO: isn't this `to_ast`?
-def to_node_cmd_inv_with_io_vars(cmd_inv, edges, redirs, assignments):
+def to_node_cmd_inv_with_io_vars(cmd_inv: CommandInvocationWithIOVars, edges, redirs, assignments):
     ast_cmd_name = string_to_argument(cmd_inv.cmd_name)
     ast_flagoptions = []
     for flagoption in cmd_inv.flag_option_list:

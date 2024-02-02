@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from ir import IR
 
 from util import *
 from shell_ast.ast_util import *
@@ -24,7 +25,7 @@ def to_shell(ir, args):
     return output_script
 
 
-def ir2ast(ir, args):
+def ir2ast(ir: IR, args):
     clean_up_graph = False
     drain_streams = False
     if(args.termination == "clean_up_graph"):
