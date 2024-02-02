@@ -13,6 +13,10 @@ class RemotePipe(DFGNode):
         opt_count = len(self.com_options)
         self.com_options.append((opt_count, Arg(string_to_argument(f"-d"))))
 
+    def add_kill_flag(self, addr):
+        opt_count = len(self.com_options)
+        self.com_options.append((opt_count, Arg(string_to_argument(f"--kill {addr}"))))
+
     def is_remote_read(self):
         com_name = self.com_name.opt_serialize()
         read_com = config.config['runtime']['remote_read_binary']

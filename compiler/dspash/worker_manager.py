@@ -45,14 +45,15 @@ class WorkerConnection:
         #     answer = self.socket.recv(1024)
         return self._running_processes
 
-    def send_graph_exec_request(self, graph, shell_vars, functions, debug=False) -> bool:
+    def send_graph_exec_request(self, graph, shell_vars, functions, args) -> bool:
         request_dict = { 'type': 'Exec-Graph',
                         'graph': graph,
                         'functions': functions,
                         'shell_variables': None, # Doesn't seem needed for now
-                        'debug': None     
+                        'debug': None,
+                        'kill': args.kill,
                     }
-        if debug:
+        if args.debug:
             request_dict['debug'] = {'name': self.name, 'url': f'{DEBUG_URL}/putlog'}
 
         request = encode_request(request_dict)
@@ -162,7 +163,7 @@ class WorkersManager():
 
                 # Execute subgraphs on workers
                 for worker, subgraph in worker_subgraph_pairs:
-                    worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args.debug)
+                    worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args)
             else:
                 raise Exception(f"Unknown request: {request}")
         
