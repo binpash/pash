@@ -202,6 +202,9 @@ def add_common_arguments(parser):
                         help="(experimental) execute the script in a distributed environment. Remote machines should be configured and ready",
                         action="store_true",
                         default=False)
+    parser.add_argument("--kill",
+                        help="determines which node is going to be killed. Address or conatiner name must follow this parameter, like \"--kill datanode1\". Only works if distributed_exec is used.",
+                        default="")
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")

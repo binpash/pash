@@ -45,15 +45,16 @@ class WorkerConnection:
         #     answer = self.socket.recv(1024)
         return self._running_processes
 
-    def send_graph_exec_request(self, graph, shell_vars, functions, debug=False, worker_timeout=0) -> bool:
+    def send_graph_exec_request(self, graph, shell_vars, functions, args, worker_timeout=0) -> bool:
         request_dict = { 'type': 'Exec-Graph',
                         'graph': graph,
                         'functions': functions,
                         'shell_variables': None, # Doesn't seem needed for now
                         'debug': None,
-                        'worker_timeout': worker_timeout    
+                        'worker_timeout': worker_timeout,
+                        'kill': args.kill,
                     }
-        if debug:
+        if args.debug:
             request_dict['debug'] = {'name': self.name, 'url': f'{DEBUG_URL}/putlog'}
 
         request = encode_request(request_dict)
@@ -186,7 +187,7 @@ class WorkersManager():
                             worker_timeout = workers_manager.args.worker_timeout if worker.name == crashed_worker and workers_manager.args.worker_timeout else 0
                             
                             try:
-                                worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args.debug, worker_timeout)
+                                worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args, worker_timeout)
                                 numExecutedSubgraphs += 1
                             except Exception as e:
                                 # worker timeout

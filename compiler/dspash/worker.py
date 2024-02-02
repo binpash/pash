@@ -13,7 +13,7 @@ PASH_TOP = os.environ['PASH_TOP']
 sys.path.append(os.path.join(PASH_TOP, "compiler"))
 
 from dspash.utils import create_filename, write_file
-from dspash.ir_helper import save_configs, to_shell_file, to_shell, add_debug_flags
+from dspash.ir_helper import save_configs, to_shell_file, to_shell, add_debug_flags, add_kill_flags
 from dspash.socket_utils import send_msg, recv_msg
 import pash_compiler
 from util import log
@@ -45,7 +45,7 @@ def parse_exec_graph(request):
     return request['graph'], request['shell_variables'], request['functions']
 
 
-def exec_graph(graph, shell_vars, functions, debug=False):
+def exec_graph(graph, shell_vars, functions, kill, debug=False):
     config.config['shell_variables'] = shell_vars
     if debug:
         log('debug is on')
@@ -53,6 +53,10 @@ def exec_graph(graph, shell_vars, functions, debug=False):
         stderr = subprocess.PIPE
     else:
         stderr = None
+
+    if kill:
+        log(f'going to kill: {kill}')
+        add_kill_flags(graph, kill)
 
     script_path = to_shell_file(graph, config.pash_args)
 
@@ -135,9 +139,10 @@ def manage_connection(conn, addr):
             if request['type'] == 'Exec-Graph':
                 graph, shell_vars, functions = parse_exec_graph(request)
                 debug = True if request['debug'] else False
+                kill = request['kill']
                 save_configs(graph, dfs_configs_paths)
                 time.sleep(int(request['worker_timeout']))
-                rc = exec_graph(graph, shell_vars, functions, debug)
+                rc = exec_graph(graph, shell_vars, functions, kill, debug)
                 rcs.append((rc, request))
                 body = {}
             elif request['type'] == 'Done':
