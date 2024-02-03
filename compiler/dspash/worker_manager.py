@@ -4,8 +4,10 @@ import time
 import queue
 import pickle
 import json
+from typing import List
 
 from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
+from definitions.ir.file_id import FileId
 from util import log
 from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file
 from dspash.utils import read_file
@@ -29,6 +31,7 @@ class WorkerConnection:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.connect((self._host, self._port))
         except Exception as e:
+            log(f"Failed to connect to {self._host}:{self._port} with error {e}")
             self._online = False
         
     def is_online(self):
@@ -102,20 +105,21 @@ class WorkerConnection:
         return self._host
 
 class WorkersManager():
-    def __init__(self, workers: WorkerConnection = []):
+    def __init__(self, workers: List[WorkerConnection] = []):
         self.workers = workers
         self.host = socket.gethostbyname(socket.gethostname())
         self.args = copy.copy(config.pash_args)
         # Required to create a correct multi sink graph
         self.args.termination = "" 
 
-    def get_worker(self, fids = None) -> WorkerConnection:
+    def get_worker(self, fids: List[FileId] = None) -> WorkerConnection:
         if not fids:
             fids = []
 
         best_worker = None  # Online worker with least work
         for worker in self.workers:
             if not worker.is_online():
+                log(f"Skipping {worker} because it is offline")
                 continue
             
             # Skip if any provided fid isn't available on the worker machine
@@ -126,7 +130,7 @@ class WorkersManager():
                 best_worker = worker
 
         if best_worker == None:
-            raise Exception("no workers online where the date is stored")
+            raise Exception("no workers online where the data is stored")
 
         return best_worker
 

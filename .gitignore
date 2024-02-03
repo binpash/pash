@@ -56,3 +56,6 @@ runtime/dgsh-tee
 .vscode/*
 .idea/*
 .vs/*
+
+cluster.json
+install_logs
