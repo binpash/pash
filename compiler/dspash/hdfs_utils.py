@@ -229,6 +229,6 @@ def get_file_config(filepath: str) -> HDFSFileConfig:
 # used for testing
 if __name__ == "__main__":
     # print(file_to_blocks("/README.md"))
-    # print(get_live_nodes())
+    print(json.dumps(get_live_nodes(), indent=4))
     # print(file_to_blocks("/500mib-file"))
-    print(block_to_nodes("blk_1073741830"))
+    # print(block_to_nodes("blk_1073741830"))
