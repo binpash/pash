@@ -55,10 +55,14 @@ class WorkerConnection:
                         'shell_variables': None, # Doesn't seem needed for now
                         'debug': None,
                         'worker_timeout': worker_timeout,
-                        'kill': args.kill,
+                        'kill_target': None,
                     }
         if args.debug:
             request_dict['debug'] = {'name': self.name, 'url': f'{DEBUG_URL}/putlog'}
+
+        if args.kill:
+            request_dict['kill_target'] = socket.gethostbyaddr(args.kill)[2][0]
+            log(f"Kill target: {request_dict['kill_target']}")
 
         request = encode_request(request_dict)
         #TODO: do I need to open and close connection?

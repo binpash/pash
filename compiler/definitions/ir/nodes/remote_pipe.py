@@ -12,9 +12,9 @@ class RemotePipe(DFGNode):
     def add_debug_flag(self):
         self.cmd_invocation_with_io_vars.flag_option_list.append(Flag("-d"))
 
-    def add_kill_flag(self, addr):
+    def add_kill_flag(self, kill_target):
         self.cmd_invocation_with_io_vars.flag_option_list.append(
-            OptionWithIO("--kill", ArgStringType(Arg.string_to_arg(addr))))
+            OptionWithIO("--kill", ArgStringType(Arg.string_to_arg(kill_target))))
 
     def is_remote_read(self):
         cmd_name = self.cmd_invocation_with_io_vars.cmd_name

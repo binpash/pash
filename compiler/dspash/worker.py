@@ -45,7 +45,7 @@ def parse_exec_graph(request):
     return request['graph'], request['shell_variables'], request['functions']
 
 
-def exec_graph(graph, shell_vars, functions, kill, debug=False):
+def exec_graph(graph, shell_vars, functions, kill_target, debug=False):
     config.config['shell_variables'] = shell_vars
     if debug:
         log('debug is on')
@@ -54,9 +54,9 @@ def exec_graph(graph, shell_vars, functions, kill, debug=False):
     else:
         stderr = None
 
-    if kill:
-        log(f'going to kill: {kill}')
-        add_kill_flags(graph, kill)
+    if kill_target:
+        log(f'going to kill: {kill_target}')
+        add_kill_flags(graph, kill_target)
 
     script_path = to_shell_file(graph, config.pash_args)
 
@@ -139,10 +139,10 @@ def manage_connection(conn, addr):
             if request['type'] == 'Exec-Graph':
                 graph, shell_vars, functions = parse_exec_graph(request)
                 debug = True if request['debug'] else False
-                kill = request['kill']
+                kill_target = request['kill_target']
                 save_configs(graph, dfs_configs_paths)
                 time.sleep(int(request['worker_timeout']))
-                rc = exec_graph(graph, shell_vars, functions, kill, debug)
+                rc = exec_graph(graph, shell_vars, functions, kill_target, debug)
                 rcs.append((rc, request))
                 body = {}
             elif request['type'] == 'Done':
