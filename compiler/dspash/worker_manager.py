@@ -9,6 +9,7 @@ from dspash.socket_utils import SocketManager, encode_request, decode_request, s
 from util import log
 from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file
 from dspash.utils import read_file
+from dspash.hdfs_utils import start_hdfs_deamon, stop_hdfs_deamon
 import config 
 import copy
 import requests
@@ -131,8 +132,16 @@ class WorkersManager():
             host = worker['host']
             port = worker['port']
             self.add_worker(name, host, port)
-            
-            
+
+        addrs = {conn.host() for conn in self.workers}
+        start_hdfs_deamon(10, addrs, self.addr_added, self.addr_removed)
+
+    def addr_added(self, addr: str):
+        log(f"Added {addr} to active nodes")
+
+    def addr_removed(self, addr: str):
+        log(f"Removed {addr} from active nodes")
+
     def run(self):
         workers_manager = self
         workers_manager.add_workers_from_cluster_config(os.path.join(config.PASH_TOP, 'cluster.json'))
@@ -148,6 +157,7 @@ class WorkersManager():
             request, conn = dspash_socket.get_next_cmd()
             if request.startswith("Done"):
                 dspash_socket.close()
+                stop_hdfs_deamon()
                 break
             elif request.startswith("Exec-Graph"):
                 args = request.split(':', 1)[1].strip()
@@ -169,6 +179,7 @@ class WorkersManager():
                 for worker, subgraph in worker_subgraph_pairs:
                     worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args)
             else:
+                stop_hdfs_deamon()
                 raise Exception(f"Unknown request: {request}")
         
 if __name__ == "__main__":
