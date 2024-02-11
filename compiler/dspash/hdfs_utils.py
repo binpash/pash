@@ -198,20 +198,48 @@ def get_live_nodes():
     return json.loads(json.loads(r.text)["beans"][0]["LiveNodes"])
 
 
-def __hdfs_deamon():
-    daemon_state = get_live_nodes()
+def get_active_node_addresses(lastContactThreshold: int = 10):
+    """
+    Returns a list of ip addresses of the datanodes that are active.
+    If a datanode has not contacted the namenode in the last lastContactThreshold seconds, it is considered inactive.
+
+    Example output:
+    ['172.25.0.5', '172.25.0.4', '172.25.0.3']
+    """
+    live_nodes = get_live_nodes()
+    return {
+        v["infoAddr"].split(":")[0]
+        for v in live_nodes.values()
+        if v["lastContact"] < lastContactThreshold
+    }
+
+
+def __hdfs_deamon(initial_addresses, func_added, func_removed):
+    daemon_state = initial_addresses
     while not daemon_quit.is_set():
-        daemon_quit.wait(3)
-        new_deamon_state = get_live_nodes()
-        if new_deamon_state.keys() != daemon_state.keys():
-            # TODO: notify the scheduler
-            print("Notify daemon crashed")
+        daemon_quit.wait(1)
+        new_deamon_state = get_active_node_addresses()
+        if new_deamon_state != daemon_state:
+            added_addresses = new_deamon_state - daemon_state
+            removed_addresses = daemon_state - new_deamon_state
+
+            for addr in added_addresses:
+                # print(f"Added {addr} to active nodes")
+                if func_added is not None:
+                    func_added(addr)
+
+            for addr in removed_addresses:
+                # print(f"Removed {addr} from active nodes")
+                if func_removed is not None:
+                    func_removed(addr)
 
         daemon_state = new_deamon_state
 
 
-def start_hdfs_deamon():
-    Thread(target=__hdfs_deamon).start()
+def start_hdfs_deamon(initial_addresses, func_added, func_removed):
+    Thread(
+        target=__hdfs_deamon, args=(initial_addresses, func_added, func_removed)
+    ).start()
 
 
 def stop_hdfs_deamon():
@@ -229,6 +257,8 @@ def get_file_config(filepath: str) -> HDFSFileConfig:
 # used for testing
 if __name__ == "__main__":
     # print(file_to_blocks("/README.md"))
-    print(json.dumps(get_live_nodes(), indent=4))
+    # print(json.dumps(get_live_nodes(), indent=4))
+    # print(get_active_node_addresses())
+    start_hdfs_deamon(set(), None, None)
     # print(file_to_blocks("/500mib-file"))
     # print(block_to_nodes("blk_1073741830"))
