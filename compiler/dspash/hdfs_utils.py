@@ -1,7 +1,7 @@
 import json
 from collections import namedtuple
 from threading import Event, Thread
-from typing import List
+from typing import Callable, List, Set
 
 import requests
 
@@ -198,7 +198,7 @@ def get_live_nodes():
     return json.loads(json.loads(r.text)["beans"][0]["LiveNodes"])
 
 
-def get_active_node_addresses(lastContactThreshold: int = 10):
+def get_active_node_addresses(lastContactThreshold: int):
     """
     Returns a list of ip addresses of the datanodes that are active.
     If a datanode has not contacted the namenode in the last lastContactThreshold seconds, it is considered inactive.
@@ -214,31 +214,46 @@ def get_active_node_addresses(lastContactThreshold: int = 10):
     }
 
 
-def __hdfs_deamon(initial_addresses, func_added, func_removed):
+def __hdfs_deamon(
+    lastContactThreshold: int,
+    initial_addresses: Set[str],
+    func_added: Callable[[str], None],
+    func_removed: Callable[[str], None],
+):
     daemon_state = initial_addresses
     while not daemon_quit.is_set():
         daemon_quit.wait(1)
-        new_deamon_state = get_active_node_addresses()
+        new_deamon_state = get_active_node_addresses(lastContactThreshold)
         if new_deamon_state != daemon_state:
             added_addresses = new_deamon_state - daemon_state
             removed_addresses = daemon_state - new_deamon_state
 
             for addr in added_addresses:
-                # print(f"Added {addr} to active nodes")
                 if func_added is not None:
                     func_added(addr)
 
             for addr in removed_addresses:
-                # print(f"Removed {addr} from active nodes")
                 if func_removed is not None:
                     func_removed(addr)
 
         daemon_state = new_deamon_state
 
 
-def start_hdfs_deamon(initial_addresses, func_added, func_removed):
+def start_hdfs_deamon(
+    lastContactThreshold: int,
+    initial_addresses: Set[str],
+    func_added: Callable[[str], None],
+    func_removed: Callable[[str], None],
+):
+    """
+    Starts a daemon that checks the active datanodes every second.
+    If a datanode becomes active or inactive, it calls the corresponding function.
+    Active datanodes are the ones that have contacted the namenode in the last lastContactThreshold seconds.
+    initial_addresses is a set of ip addresses without ports of the datanodes that are active at the beginning.
+    """
     Thread(
-        target=__hdfs_deamon, args=(initial_addresses, func_added, func_removed)
+        target=__hdfs_deamon,
+        args=(lastContactThreshold, initial_addresses, func_added, func_removed),
     ).start()
 
 
