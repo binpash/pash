@@ -1,28 +1,35 @@
-import socket
-import os
-import time
-import queue
-import pickle
+import copy
 import json
+import os
+import socket
+import time
 from typing import List
 
-from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
-from definitions.ir.file_id import FileId
-from util import log
-from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file
-from dspash.utils import read_file
-import config 
-import copy
+import config
 import requests
+from definitions.ir.file_id import FileId
+from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file
+from dspash.socket_utils import (
+    SocketManager,
+    decode_request,
+    encode_request,
+    recv_msg,
+    send_msg,
+)
+from dspash.utils import read_file
+from util import log
 
-PORT = 65425        # Port to listen on (non-privileged ports are > 1023)
+PORT = 65425  # Port to listen on (non-privileged ports are > 1023)
 # TODO: get the url from the environment or config
-DEBUG_URL = f'http://{socket.getfqdn()}:5001' 
+DEBUG_URL = f"http://{socket.getfqdn()}:5001"
+
 
 class WorkerConnection:
     def __init__(self, name, host, port):
         self.name = name
-        self._host = socket.gethostbyaddr(host)[2][0] # get ip address in case host needs resolving
+        self._host = socket.gethostbyaddr(host)[2][
+            0
+        ]  # get ip address in case host needs resolving
         self._port = port
         self._running_processes = 0
         self._online = True
@@ -33,7 +40,7 @@ class WorkerConnection:
         except Exception as e:
             log(f"Failed to connect to {self._host}:{self._port} with error {e}")
             self._online = False
-        
+
     def is_online(self):
         # TODO: create a ping to confirm is online
         return self._online
@@ -48,24 +55,27 @@ class WorkerConnection:
         #     answer = self.socket.recv(1024)
         return self._running_processes
 
-    def send_graph_exec_request(self, graph, shell_vars, functions, args, worker_timeout=0) -> bool:
-        request_dict = { 'type': 'Exec-Graph',
-                        'graph': graph,
-                        'functions': functions,
-                        'shell_variables': None, # Doesn't seem needed for now
-                        'debug': None,
-                        'worker_timeout': worker_timeout,
-                        'kill_target': None,
-                    }
+    def send_graph_exec_request(
+        self, graph, shell_vars, functions, args, worker_timeout=0
+    ) -> bool:
+        request_dict = {
+            "type": "Exec-Graph",
+            "graph": graph,
+            "functions": functions,
+            "shell_variables": None,  # Doesn't seem needed for now
+            "debug": None,
+            "worker_timeout": worker_timeout,
+            "kill_target": None,
+        }
         if args.debug:
-            request_dict['debug'] = {'name': self.name, 'url': f'{DEBUG_URL}/putlog'}
+            request_dict["debug"] = {"name": self.name, "url": f"{DEBUG_URL}/putlog"}
 
         if args.kill:
-            request_dict['kill_target'] = socket.gethostbyaddr(args.kill)[2][0]
+            request_dict["kill_target"] = socket.gethostbyaddr(args.kill)[2][0]
             log(f"Kill target: {request_dict['kill_target']}")
 
         request = encode_request(request_dict)
-        #TODO: do I need to open and close connection?
+        # TODO: do I need to open and close connection?
         send_msg(self._socket, request)
         # TODO wait until the command exec finishes and run this in parallel?
         retries = 0
@@ -78,12 +88,14 @@ class WorkerConnection:
             try:
                 response_data = recv_msg(self._socket)
                 response = decode_request(response_data)
-                log(f"Socket {self._socket.getsockname()} recieved response from {self._socket.getpeername()}, response: {response}")
+                log(
+                    f"Socket {self._socket.getsockname()} recieved response from {self._socket.getpeername()}, response: {response}"
+                )
             except socket.timeout:
                 log(f"Timeout encountered. Retry {retries + 1} of {MAX_RETRIES}.")
                 retries += 1
                 time.sleep(RETRY_DELAY)
-        if not response_data or response['status'] != "OK":
+        if not response_data or response["status"] != "OK":
             raise Exception(f"didn't recieved ack on request {response_data}")
         else:
             # self._running_processes += 1 #TODO: decrease in case of failure or process ended
@@ -108,13 +120,14 @@ class WorkerConnection:
     def host(self):
         return self._host
 
-class WorkersManager():
+
+class WorkersManager:
     def __init__(self, workers: List[WorkerConnection] = []):
         self.workers = workers
         self.host = socket.gethostbyname(socket.gethostname())
         self.args = copy.copy(config.pash_args)
         # Required to create a correct multi sink graph
-        self.args.termination = "" 
+        self.args.termination = ""
 
     def get_worker(self, fids: List[FileId] = None) -> WorkerConnection:
         if not fids:
@@ -125,15 +138,18 @@ class WorkersManager():
             if not worker.is_online():
                 log(f"Skipping {worker} because it is offline")
                 continue
-            
+
             # Skip if any provided fid isn't available on the worker machine
             if any(map(lambda fid: not fid.is_available_on(worker.host()), fids)):
                 continue
 
-            if best_worker is None or best_worker.get_running_processes() > worker.get_running_processes():
+            if (
+                best_worker is None
+                or best_worker.get_running_processes() > worker.get_running_processes()
+            ):
                 best_worker = worker
 
-        if best_worker == None:
+        if best_worker is None:
             raise Exception("no workers online where the data is stored")
 
         return best_worker
@@ -142,45 +158,61 @@ class WorkersManager():
         self.workers.append(WorkerConnection(name, host, port))
 
     def add_workers_from_cluster_config(self, config_path):
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             cluster_config = json.load(f)
 
         workers = cluster_config["workers"]
         for name, worker in workers.items():
-            host = worker['host']
-            port = worker['port']
+            host = worker["host"]
+            port = worker["port"]
             self.add_worker(name, host, port)
-            
-            
+
     def run(self):
         workers_manager = self
-        workers_manager.add_workers_from_cluster_config(os.path.join(config.PASH_TOP, 'cluster.json'))
+        workers_manager.add_workers_from_cluster_config(
+            os.path.join(config.PASH_TOP, "cluster.json")
+        )
         if workers_manager.args.debug:
             try:
-                requests.post(f'{DEBUG_URL}/clearall') # clears all the debug server logs
+                requests.post(
+                    f"{DEBUG_URL}/clearall"
+                )  # clears all the debug server logs
             except Exception as e:
                 log(f"Failed to connect to debug server with error {e}\n")
-                workers_manager.args.debug = False # Turn off debugging
+                workers_manager.args.debug = False  # Turn off debugging
 
-        dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
+        dspash_socket = SocketManager(os.getenv("DSPASH_SOCKET"))
         while True:
             request, conn = dspash_socket.get_next_cmd()
             if request.startswith("Done"):
                 dspash_socket.close()
                 break
             elif request.startswith("Exec-Graph"):
-                args = request.split(':', 1)[1].strip()
+                args = request.split(":", 1)[1].strip()
                 filename, declared_functions_file = args.split()
                 numExecutedSubgraphs = 0
                 numTotalSubgraphs = None
-                crashed_worker = workers_manager.args.worker_timeout_choice if workers_manager.args.worker_timeout_choice != '' else "worker1" # default to be worker1
+                crashed_worker = (
+                    workers_manager.args.worker_timeout_choice
+                    if workers_manager.args.worker_timeout_choice != ""
+                    else "worker1"
+                )  # default to be worker1
                 try:
-                    while not numTotalSubgraphs or numExecutedSubgraphs < numTotalSubgraphs:
+                    while (
+                        not numTotalSubgraphs
+                        or numExecutedSubgraphs < numTotalSubgraphs
+                    ):
                         # In the naive fault tolerance, we want all workers to receive its subgraph(s) without crashing
                         # if a crash happens, we'll re-split the IR and do it again until scheduling is done without any crash.
                         numExecutedSubgraphs = 0
-                        worker_subgraph_pairs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename, workers_manager.get_worker)
-                        if numTotalSubgraphs == None:
+                        (
+                            worker_subgraph_pairs,
+                            shell_vars,
+                            main_graph,
+                        ) = prepare_graph_for_remote_exec(
+                            filename, workers_manager.get_worker
+                        )
+                        if numTotalSubgraphs is None:
                             numTotalSubgraphs = len(worker_subgraph_pairs)
                         script_fname = to_shell_file(main_graph, workers_manager.args)
                         log("Master node graph stored in ", script_fname)
@@ -192,12 +224,23 @@ class WorkersManager():
                         # Execute subgraphs on workers
                         for worker, subgraph in worker_subgraph_pairs:
                             worker: WorkerConnection
-                            worker_timeout = workers_manager.args.worker_timeout if worker.name == crashed_worker and workers_manager.args.worker_timeout else 0
-                            
+                            worker_timeout = (
+                                workers_manager.args.worker_timeout
+                                if worker.name == crashed_worker
+                                and workers_manager.args.worker_timeout
+                                else 0
+                            )
+
                             try:
-                                worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args, worker_timeout)
+                                worker.send_graph_exec_request(
+                                    subgraph,
+                                    shell_vars,
+                                    declared_functions,
+                                    workers_manager.args,
+                                    worker_timeout,
+                                )
                                 numExecutedSubgraphs += 1
-                            except Exception as e:
+                            except Exception:
                                 # worker timeout
                                 worker.close()
                                 log(f"{worker} closed")
@@ -208,10 +251,9 @@ class WorkersManager():
                 except Exception as e:
                     print(e)
 
-                    
-
             else:
                 raise Exception(f"Unknown request: {request}")
-        
+
+
 if __name__ == "__main__":
     WorkersManager().run()
