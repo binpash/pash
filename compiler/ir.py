@@ -234,7 +234,8 @@ def add_file_id_vars(command_invocation_with_io, fileIdGen):
     return command_invocation_with_io_vars, dfg_edges
 
 
-def compile_command_to_DFG(fileIdGen, command, options, redirections=[]):
+def compile_command_to_DFG(fileIdGen, command, options, redirections=None):
+    redirections = [] if redirections is None else redirections
     command_invocation: CommandInvocationInitial = parse_arg_list_to_command_invocation(
         command, options
     )

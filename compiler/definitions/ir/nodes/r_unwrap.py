@@ -10,12 +10,13 @@ class RUnwrap(DFGNode):
     def __init__(
         self,
         cmd_invocation_with_io_vars,
-        com_redirs=[],
-        com_assignments=[],
+        com_redirs=None,
+        com_assignments=None,
         parallelizer_list=None,
         cmd_related_properties=None,
     ):
-        # TODO []: default
+        com_redirs = [] if com_redirs is None else com_redirs
+        com_assignments = [] if com_assignments is None else com_assignments
         super().__init__(
             cmd_invocation_with_io_vars,
             com_redirs=com_redirs,

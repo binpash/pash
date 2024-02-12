@@ -27,12 +27,13 @@ class DFGNode:
     def __init__(
         self,
         cmd_invocation_with_io_vars,
-        com_redirs=[],
-        com_assignments=[],
+        com_redirs=None,
+        com_assignments=None,
         parallelizer_list=None,
         cmd_related_properties=None,
     ):
-        # TODO []: default parameters!
+        com_redirs = [] if com_redirs is None else com_redirs
+        com_assignments = [] if com_assignments is None else com_assignments
 
         ## @KK: can this be deleted? Was there another id in the member attributes before?
         ## Add a unique identifier to each DFGNode since id() is not guaranteed to be unique for objects that have different lifetimes.
