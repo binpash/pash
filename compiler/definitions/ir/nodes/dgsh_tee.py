@@ -10,8 +10,9 @@ from definitions.ir.dfg_node import *
 
 
 class DGSHTee(DFGNode):
-    def __init__(self, cmd_invocation_with_io_vars, com_redirs=[], com_assignments=[]):
-        # TODO []: default
+    def __init__(self, cmd_invocation_with_io_vars, com_redirs=None, com_assignments=None):
+        com_redirs = [] if com_redirs is None else com_redirs
+        com_assignments = [] if com_assignments is None else com_assignments
         super().__init__(
             cmd_invocation_with_io_vars,
             com_redirs=com_redirs,

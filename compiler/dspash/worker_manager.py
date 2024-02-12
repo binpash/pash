@@ -89,8 +89,8 @@ class WorkerConnection:
 
 
 class WorkersManager:
-    def __init__(self, workers: WorkerConnection = []):
-        self.workers = workers
+    def __init__(self, workers: WorkerConnection = None):
+        self.workers = [] if workers is None else workers
         self.host = socket.gethostbyname(socket.gethostname())
         self.args = copy.copy(config.pash_args)
         # Required to create a correct multi sink graph
