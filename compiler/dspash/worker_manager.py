@@ -8,13 +8,15 @@ import collections
 
 from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
 from util import log
-from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file, get_best_worker_for_subgraph, get_remote_pipe_update_candidates, update_subgraphs, get_worker_subgraph_map, update_remote_pipe_addr, add_debug_flags
+from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file, get_best_worker_for_subgraph, get_remote_writer_pipes, get_neighbor_remote_reader_pipes, update_subgraphs, get_worker_subgraph_map, update_remote_pipe_addr, add_debug_flags, DISCOVERY_PORT, report_exec_finish
 from dspash.utils import read_file
 import config 
 import copy
 import requests
 import definitions.ir.nodes.remote_pipe as remote_pipe
 from ir_to_ast import to_shell
+import subprocess
+import threading
 
 
 PORT = 65425        # Port to listen on (non-privileged ports are > 1023)
@@ -98,7 +100,21 @@ class WorkerConnection:
             raise Exception(f"didn't recieved ack on request {response_data}")
         else:
             response = decode_request(response_data)
-            print(response)
+
+    def updateDiscoveryServerAddr(self, id, oldAddr, newAddr):
+        request_dict = { 'type': 'updateDiscoveryServerAddr',
+                        'id': id,
+                        'oldAddr': oldAddr,
+                        'newAddr': newAddr
+                    }
+
+        request = encode_request(request_dict)
+        send_msg(self._socket, request)
+        response_data = recv_msg(self._socket)
+        if not response_data or decode_request(response_data)['status'] != "OK":
+            raise Exception(f"didn't recieved ack on request {response_data}")
+        else:
+            response = decode_request(response_data)
 
     def getDiscoveryServerLog(self, debug=False):
         request_dict = { 'type': 'getDiscoveryServerLog',
@@ -111,8 +127,8 @@ class WorkerConnection:
         send_msg(self._socket, request)
 
     def close(self):
-        self._socket.send(encode_request({"type": "Done"}))
-        self._socket.close()
+        # self._socket.send(encode_request({"type": "Done"}))
+        # self._socket.close()
         self._online = False
 
     def _wait_ack(self):
@@ -135,7 +151,15 @@ class WorkersManager():
         self.host = socket.gethostbyname(socket.gethostname())
         self.args = copy.copy(config.pash_args)
         # Required to create a correct multi sink graph
-        self.args.termination = "" 
+        self.args.termination = ""
+        self.subgraph_id_to_subgraph = {}
+        self.worker_to_subgraphs_id = collections.defaultdict(list)
+        self.subgraph_id_to_worker = collections.defaultdict(WorkerConnection)
+
+        # Create a UDP socket to listen for notifications from workers
+        self.notification_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.notification_address = ('', PORT)  # Listen on all network interfaces on port 65432
+        self.notification_socket.bind(self.notification_address)
 
     def get_worker(self, fids = None) -> WorkerConnection:
         if not fids:
@@ -157,6 +181,41 @@ class WorkersManager():
             raise Exception("no workers online where the date is stored")
 
         return best_worker
+
+    def init_metadata(self, worker_subgraph_pairs):
+        # Excluding main_graph for now
+        for worker, subgraph in worker_subgraph_pairs:
+            subgraph_id = subgraph.get_ir_id()
+            self.subgraph_id_to_subgraph[subgraph_id] = subgraph
+            self.worker_to_subgraphs_id[worker].append(subgraph_id)
+            self.subgraph_id_to_worker[subgraph_id] = worker
+
+    def get_subgraphs_for_worker(self, worker: WorkerConnection):
+        return [self.subgraph_id_to_subgraph[subgraph_id] for subgraph_id in self.worker_to_subgraphs_id[worker]]
+
+    def update_worker_subgraph_pair(self, subgraph_id: int, old_worker: WorkerConnection, new_worker: WorkerConnection):
+        # NOTE: remove metadata related to old_worker isn't needed for now because it's popped outside of this function
+
+        # add metadata related to new_worker
+        self.worker_to_subgraphs_id[new_worker].append(subgraph_id)
+        self.subgraph_id_to_worker[subgraph_id] = new_worker
+
+
+    def update_subgraph_status(self, worker: WorkerConnection, subgraph_id):
+        # when subgraph_id has finished execution
+        report_exec_finish(self.subgraph_id_to_subgraph[subgraph_id])
+
+        # del self.subgraph_id_to_subgraph[subgraph_id]
+        # self.worker_to_subgraphs_id[worker].remove(subgraph_id)
+        # del self.subgraph_id_to_worker[subgraph_id]
+
+
+
+    def get_worker_by_host(self, host):
+        for worker in self.workers:
+            if worker.host() == host:
+                return worker
+        return None
     
 
     def add_worker(self, name, host, port):
@@ -180,7 +239,17 @@ class WorkersManager():
             deep_copy.append([worker, copy.deepcopy(subgraph)])
         return collections.deque(deep_copy)
 
-            
+
+    def receive_notifications(self, subgraphs=[]):
+        while True:
+            data, addr = self.notification_socket.recvfrom(1024)
+            request = decode_request(data)
+            log(f"Received notification from {addr}: {request}")
+            if request["type"] == "Finish-Exec":
+                worker_host = addr[0]
+                self.update_subgraph_status(self.get_worker_by_host(worker_host), request["ir_id"])
+
+
     def run(self):
         workers_manager = self
         workers_manager.add_workers_from_cluster_config(os.path.join(config.PASH_TOP, 'cluster.json'))
@@ -193,10 +262,13 @@ class WorkersManager():
 
         dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
         while True:
+
             request, conn = dspash_socket.get_next_cmd()
+            print("req ", request)
             if request.startswith("Done"):
                 dspash_socket.close()
                 break
+            # elif request.startswith("Update")
             elif request.startswith("Exec-Graph"):
                 args = request.split(':', 1)[1].strip()
                 filename, declared_functions_file = args.split()
@@ -211,12 +283,18 @@ class WorkersManager():
                     # Execute subgraphs on workers
                     # worker_subgraph_map = get_worker_subgraph_map(worker_subgraph_pairs)
                     worker_subgraph_pairs = collections.deque(worker_subgraph_pairs)
-                    #TODO: deepcopy
-                    worker_subgraph_pairs_backup = self.deep_copy_worker_subgraph_pairs(worker_subgraph_pairs)
+                    # init metadata
+                    self.init_metadata(worker_subgraph_pairs)
+                    log("Number of subgraphs (except main_graph): ", len(worker_subgraph_pairs))
+                    # Start a thread to continuously receive notifications
+                    notification_thread = threading.Thread(target=self.receive_notifications)
+                    notification_thread.daemon = True
+                    notification_thread.start()
+
 
                     while worker_subgraph_pairs:
                         worker, subgraph = worker_subgraph_pairs.popleft()
-                        log(worker.name, worker)
+                        log(worker.name, worker, log(subgraph.get_ir_id()))
                         log(to_shell(subgraph, workers_manager.args))
                         log('---------------------------------')
                         worker_timeout = workers_manager.args.worker_timeout if worker.name == crashed_worker_choice and workers_manager.args.worker_timeout else 0
@@ -252,31 +330,46 @@ class WorkersManager():
 
                             # TODO: do we want to send all relevant workers a msg to abort current subgraphs?
                             # This is buggy so not used
-                            for worker in self.workers:
-                                if worker.is_online():
-                                    worker.abortAll(workers_manager.args.debug)
+                            # for worker in self.workers:
+                            #     if worker.is_online():
+                            #         worker.abortAll(workers_manager.args.debug)
 
-                            subgraphs = [pair[1] for pair in worker_subgraph_pairs_backup]
-                            for i in range(len(worker_subgraph_pairs_backup)):
-                                worker, subgraph = worker_subgraph_pairs_backup[i]
-                                if worker == crashed_worker:
+                            # NOTE: race condition here?
+                            # this is all subgraphs that are 1) not sent to workers for execution, 2) not finished executing
+                            subgraphs_id = list(self.subgraph_id_to_subgraph.keys())
+                            subgraphs = [self.subgraph_id_to_subgraph[id] for id in subgraphs_id]
+                            for subgraph_id in subgraphs_id:
+                                subgraph = self.subgraph_id_to_subgraph[subgraph_id]
+                                worker = self.subgraph_id_to_worker[subgraph_id]
+                                if worker == crashed_worker and not subgraph.is_finished():
                                     # Step 1
                                     # find the next best worker for the subgraph and push (worker, subgraph) pair back to the deque
                                     replacement_worker = get_best_worker_for_subgraph(subgraph, workers_manager.get_worker)
-                                    worker_subgraph_pairs_backup[i][0] = replacement_worker
+                                    self.update_worker_subgraph_pair(subgraph_id, worker, replacement_worker)
 
                                     # Step 2
-                                    # Find all write RP on subgraph and all read RP-N on neighboring subgraphs (including main_graph)
-                                    update_candidates = get_remote_pipe_update_candidates(subgraphs + [main_graph], subgraph, crashed_worker)
-                                    
+                                    remote_writer_pipes = get_remote_writer_pipes(subgraph, crashed_worker)
+                                    for remote_writer_pipe in remote_writer_pipes:
+                                        update_remote_pipe_addr(remote_writer_pipe, replacement_worker.host(), str(DISCOVERY_PORT))
+                                    worker_subgraph_pairs.append([replacement_worker, subgraph])
                                     # Step 3
-                                    for update_candidate in update_candidates:
-                                        update_remote_pipe_addr(update_candidate, replacement_worker.host())
-                                
-                            
-                            # Update meta-data
-                                        # TODO: DEEPCOPY
-                            worker_subgraph_pairs = self.deep_copy_worker_subgraph_pairs(worker_subgraph_pairs_backup)
+                                    neighbor_remote_reader_pipes = get_neighbor_remote_reader_pipes(subgraphs + [main_graph], remote_writer_pipes)
+                                    for neighor_remote_reader_pipe in neighbor_remote_reader_pipes:
+                                        # get worker of neighor_remote_reader_pipe
+                                        # TODO: batch processing instead of sending msg 1 for each id?
+                                        id, oldAddr, newAddr = neighor_remote_reader_pipe.get_uuid(), neighor_remote_reader_pipe.get_host(), replacement_worker.host()
+                                        worker_for_neighbor_remote_reader_pipe = self.get_worker_by_host(neighor_remote_reader_pipe.get_local_host())
+                                        if worker_for_neighbor_remote_reader_pipe:
+                                            self.get_worker_by_host(neighor_remote_reader_pipe.get_local_host()).updateDiscoveryServerAddr(id, f"{oldAddr}:{str(DISCOVERY_PORT)}", f"{newAddr}:{str(DISCOVERY_PORT)}")
+                                        else:
+                                            # worker_for_neighbor_remote_reader_pipe is scheduler, reader pipe belongs to main_graph                                        
+                                            dish_top = os.getenv('DISH_TOP')
+                                            rfifoID, oldAddr, newAddr = id, oldAddr, newAddr
+                                            command = [f'{dish_top}/runtime/dspash/file_reader/datastream_client --type=update --oldAddr {oldAddr}:{str(DISCOVERY_PORT)} --newAddr {newAddr}:{str(DISCOVERY_PORT)} --id {rfifoID}']
+                                            # command = [f'{dish_top}/runtime/dspash/file_reader/datastream_client', \
+                                            #     '--type=update', '--oldAddr {oldAddr}', '--newAddr {newAddr}', '', '&']
+                                            subprocess.run(command, shell=True)
+
 
                     if workers_manager.args.debug:
                         for worker in self.workers:
@@ -294,9 +387,9 @@ class WorkersManager():
                     log("Master node graph storeid in ", script_fname)
                     response_msg = f"OK {script_fname}"
                     dspash_socket.respond(response_msg, conn)
+                    # notification_thread.join()
                 except Exception as e:
                     print(e)
-
 
             else:
                 raise Exception(f"Unknown request: {request}")

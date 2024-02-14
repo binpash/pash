@@ -194,8 +194,10 @@ def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
             for next_id in next_ids:
                 queue.append((next_id, next_graph_policy()))
 
-    # for graph in subgraphs:
-    #     print(to_shell(graph, config.pash_args), file=sys.stderr)
+    ir_id_counter = 1
+    for graph in subgraphs:
+        graph.set_ir_id(str(ir_id_counter))
+        ir_id_counter += 1
      
     return subgraphs, input_fifo_map
 
@@ -250,7 +252,6 @@ def create_remote_pipe_from_input_edge(from_subgraph: IR, to_subgraph: IR, edge:
     old_edge_id = edge.get_ident()
 
     to_subgraph.replace_edge(old_edge_id, ephemeral_edge)
-
     remote_read = remote_pipe.make_remote_pipe([], [ephemeral_edge.get_ident()], HOST, DISCOVERY_PORT, True, edge_uid)
     to_subgraph.add_node(remote_read)
 
@@ -347,6 +348,25 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
                     continue
 
+    # At this point we know which worker corresponds to which subgraph (hence each reader remote_pipe)
+    for worker, subgraph in worker_subgraph_pairs:
+        for source_id in subgraph.source_nodes():
+            source_node = subgraph.get_node(source_id)
+            # Sanity check
+            if isinstance(source_node, remote_pipe.RemotePipe):
+                assert(source_node.is_remote_read())
+                # set local discovery server addr
+                source_node.set_local_addr(worker.host(), str(DISCOVERY_PORT))
+    # Do the same for main_graph 
+    # TODO: may not be necessary!
+    for source_id in main_graph.source_nodes():
+        source_node = main_graph.get_node(source_id)
+        # Sanity check
+        if isinstance(source_node, remote_pipe.RemotePipe):
+            assert(source_node.is_remote_read())
+            # set local discovery server addr
+            source_node.set_local_addr(str(HOST), str(DISCOVERY_PORT))
+
     # for worker, graph in worker_subgraph_pairs:
     #     print(to_shell(graph, config.pash_args), file=sys.stderr)
 
@@ -356,6 +376,9 @@ def add_debug_flags(graph: IR):
     for node in graph.nodes.values():
         if isinstance(node, remote_pipe.RemotePipe):
             node.add_debug_flag()
+
+def report_exec_finish(graph: IR):
+    graph.report_finish()
 
 def prepare_graph_for_remote_exec(filename:str, get_worker:Callable):
     """
@@ -392,34 +415,10 @@ def get_best_worker_for_subgraph(subgraph:IR, get_worker:Callable):
     worker._running_processes += 1
     return worker
 
-def get_neighbor_remote_reader_pipes(subgraphs: [IR], remote_pipe_id, exclude_subgraph: IR) -> [remote_pipe.RemotePipe]:
-    """Get all (subgraph, node) pairs such that the node has established communication
-        with the crashed_worker. This includes remote_pipes on the crashed_worker too
 
-    Assumption: the subgraph has already gone through the initial processing in prepare_graph_for_remote_exec()
-                therefore, all remote_writer_nodes are sink_nodes 
-                and all remote_reader_nodes are source_nodes 
-                (not true the other way - source_nodes can also be DFSSplitReader nodes)
 
-    subgraphs: list of IRs after split
-    remote_pipe_id: id of the remote pipe we want to find neighbors for
-    Return: set of nodes whose addresses need to be updated
-    """
-    update_remote_pipe_candidates = []
-    for subgraph in subgraphs:
-        if subgraph != exclude_subgraph:
-            for source_id in subgraph.source_nodes():
-                source_node = subgraph.get_node(source_id)
-                # Sanity check
-                if isinstance(source_node, remote_pipe.RemotePipe):
-                    assert(source_node.is_remote_read())
-                    # If the current remote_pipe had communicated with remote_pipe_id before,
-                    # append it to the set
-                    if source_node.get_uuid() == remote_pipe_id:
-                        update_remote_pipe_candidates.append(source_node)
-    return update_remote_pipe_candidates
-
-def get_remote_pipe_update_candidates(subgraphs: [IR], subgraph: IR, crashed_worker):
+def get_remote_writer_pipes(subgraph: IR, crashed_worker):
+    # TODO: change the following
     """Update remote nodes (remote writer/reader)'s host and port fields
        with the new neighbor's host
 
@@ -435,19 +434,33 @@ def get_remote_pipe_update_candidates(subgraphs: [IR], subgraph: IR, crashed_wor
     replacement_worker: the replacement worker (type: WorkerConnection) whose host should be used to update the nodes
     Return: {update_candidate:replacement_worker} where update_candidate is any remote pipe candidate for update that belong to subgraph
     """
-    # Find all remote_pipes for every remote_pipe in subgraph that needs to be updated
-    # remote_pipes whose addr is not the crashed worker don't need to be updated 
-    # (their addresses will be updated to be the same replacement_worker)
-    update_candidates = []
+    remote_writer_pipes = []
     for boundary_node_id in subgraph.sink_nodes():
         boundary_node = subgraph.get_node(boundary_node_id)
-        if isinstance(boundary_node, remote_pipe.RemotePipe) and boundary_node.get_host() == crashed_worker.host():
+        if isinstance(boundary_node, remote_pipe.RemotePipe):
             assert(boundary_node.is_remote_read() == False)
-            update_candidates.append(boundary_node)
-            neighbor_reader_rp = get_neighbor_remote_reader_pipes(subgraphs, boundary_node.get_uuid(), subgraph)
-            update_candidates = update_candidates + neighbor_reader_rp
+            assert(boundary_node.get_host() == crashed_worker.host())
+            remote_writer_pipes.append(boundary_node)
 
-    return update_candidates
+    return remote_writer_pipes
+
+def get_neighbor_remote_reader_pipes(subgraphs: [IR], remote_writer_pipes: [remote_pipe.RemotePipe]):
+    neighbor_remote_reader_pipes = []
+    remote_writer_pipes_ids = set([pipe.get_uuid() for pipe in remote_writer_pipes])
+
+    for subgraph in subgraphs:
+        for source_id in subgraph.source_nodes():
+            source_node = subgraph.get_node(source_id)
+            # Sanity check
+            if isinstance(source_node, remote_pipe.RemotePipe):
+                assert(source_node.is_remote_read())
+                # If the current remote_pipe had communicated with remote_pipe_id before,
+                # append it to the set
+                if source_node.get_uuid() in remote_writer_pipes_ids:
+                    neighbor_remote_reader_pipes.append(source_node)
+    return neighbor_remote_reader_pipes
+
+
 
 
 def update_remote_pipe_addr(update_node, new_host, new_port=DISCOVERY_PORT):

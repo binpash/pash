@@ -15,7 +15,6 @@ class RemotePipe(DFGNode):
     def add_debug_flag(self):
         self.cmd_invocation_with_io_vars.flag_option_list.append(Flag("-d"))
 
-
     def is_remote_read(self):
         cmd_name = self.cmd_invocation_with_io_vars.cmd_name
         read_com = config.config['runtime']['remote_read_binary']
@@ -23,6 +22,12 @@ class RemotePipe(DFGNode):
     
     def get_host(self):
         return self.addr[0]
+
+    def get_local_host(self):
+        for idx, option in enumerate(self.cmd_invocation_with_io_vars.flag_option_list):
+            if "--localAddr" == option.option_name:
+                return option.option_arg.name.opt_serialize().split(":")[0]
+        return ""
     
     def get_uuid(self):
         return self.uuid
@@ -35,6 +40,13 @@ class RemotePipe(DFGNode):
                 # Update metadata
                 self.addr = (host_ip, port)
 
+    def set_local_addr(self, host, port):
+        for idx, option in enumerate(self.cmd_invocation_with_io_vars.flag_option_list):
+            if "--localAddr" == option.option_name:
+                # Replace with new addr_option
+                self.cmd_invocation_with_io_vars.flag_option_list[idx] = OptionWithIO("--localAddr", ArgStringType(Arg.string_to_arg(f"{host}:{port}")))
+            return
+        self.cmd_invocation_with_io_vars.flag_option_list.append(OptionWithIO("--localAddr", ArgStringType(Arg.string_to_arg(f"{host}:{port}"))))
 
 def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, id):
     if is_remote_read:
@@ -45,6 +57,8 @@ def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, id):
             config.DISH_TOP, config.config['runtime']['remote_write_binary'])
 
     options = []
+    if is_remote_read:
+        options.append(OptionWithIO("--localAddr", ArgStringType(Arg.string_to_arg(f"{host_ip}:{port}"))))
     options.append(OptionWithIO("--addr", ArgStringType(Arg.string_to_arg(f"{host_ip}:{port}"))))
     options.append(OptionWithIO("--id", ArgStringType(Arg.string_to_arg(str(id)))))
 
