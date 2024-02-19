@@ -6,7 +6,7 @@ import config
 
 from env_var_names import *
 from shell_ast.ast_util import *
-from shasta.ast_node import ast_match
+from shasta.ast_node import ast_match, is_empty_cmd
 from shasta.json_to_ast import to_ast_node
 from parse import from_ast_objects_to_shell
 from speculative import util_spec
@@ -16,6 +16,123 @@ class TransformationType(Enum):
     PASH = 'pash'
     SPECULATIVE = 'spec'
 
+class ShellLoopContext:
+    def __init__(self, test_block, next_block):
+        self.test_block = test_block
+        self.next_block = next_block
+
+class ShellIfContext:
+    def __init__(self, test_block, next_block, has_else=False):
+        self.test_block = test_block
+        self.next_block = next_block
+        self.has_else = has_else
+
+# class ShellWhileContext:
+#     def __init__(self, test_block, next_block):
+#         self.test_block = test_block
+#         self.next_block = next_block
+
+class ShellBB:
+    commands: list[int] # not used atm
+    def __init__(self, num: int):
+        self.num = num
+        self._is_emtpy = True
+        # self.commands = []
+
+    def add_command(self, command):
+        self._is_emtpy = False
+
+    def make_non_empty(self):
+        self._is_emtpy = False
+
+    def is_empty(self):
+        return self._is_emtpy
+
+class ShellProg:
+    def __init__(self):
+        self.ast_nodes = []
+        self.init_bb = ShellBB(0)
+        self.bbs = [self.init_bb]
+        self.current_bb = 0
+        self.edges = {}
+        self.contexts = []
+
+    def add_bb(self) -> int:
+        next_bb = len(self.bbs)
+        self.bbs.append(ShellBB(next_bb))
+        return next_bb
+
+    def add_edge(self, from_bb: int, to_bb: int):
+        assert from_bb >= 0 and from_bb < len(self.bbs)
+        assert to_bb >= 0 and to_bb < len(self.bbs)
+        if not from_bb in self.edges:
+            self.edges[from_bb] = []
+        self.edges[from_bb].append(to_bb)
+
+    def enter_for(self):
+        if self.bbs[self.current_bb].is_empty():
+            test_bb = self.current_bb
+        else:
+            test_bb = self.add_bb()
+            self.add_edge(self.current_bb, test_bb)
+        self.bbs[test_bb].make_non_empty()
+        next_bb = self.add_bb()
+        self.add_edge(test_bb, next_bb)
+        body_bb = self.add_bb()
+        self.add_edge(test_bb, body_bb)
+        self.contexts.append(ShellLoopContext(test_bb, next_bb))
+        self.current_bb = body_bb
+
+    def leave_for(self):
+        loop_context = self.contexts.pop()
+        assert isinstance(loop_context, ShellLoopContext)
+        test_bb = loop_context.test_block
+        next_bb = loop_context.next_block
+        self.add_edge(self.current_bb, test_bb)
+        self.current_bb = next_bb
+
+    def enter_while(self):
+        self.enter_for()
+
+    def leave_while(self):
+        self.leave_for()
+
+    def enter_if(self):
+        test_bb = self.current_bb
+        self.bbs[self.current_bb].make_non_empty()
+        next_bb = self.add_bb()
+        body_bb = self.add_bb()
+        self.add_edge(test_bb, body_bb)
+        self.contexts.append(ShellIfContext(test_bb, next_bb))
+        self.current_bb = body_bb
+
+    def enter_else(self):
+        if_context = self.contexts.pop()
+        assert isinstance(if_context, ShellIfContext)
+        test_bb = if_context.test_block
+        next_bb = if_context.next_block
+        self.add_edge(self.current_bb, next_bb)
+        else_bb = self.add_bb()
+        self.add_edge(test_bb, else_bb)
+        self.contexts.append(ShellIfContext(test_bb, next_bb, has_else=True))
+        self.current_bb = else_bb
+
+    def leave_if(self):
+        if_context = self.contexts.pop()
+        assert isinstance(if_context, ShellIfContext)
+        test_bb = if_context.test_block
+        next_bb = if_context.next_block
+        if not if_context.has_else:
+            self.add_edge(test_bb, next_bb)
+        self.add_edge(self.current_bb, next_bb)
+        self.current_bb = next_bb
+
+    def add_break(self):
+        pass
+
+    def add_command(self, command):
+        self.bbs[self.current_bb].add_command(command)
+
 ## Use this object to pass options inside the preprocessing
 ## trasnformation.
 class TransformationState:
@@ -24,7 +141,8 @@ class TransformationState:
         self.node_counter = 0
         self.loop_counter = 0
         self.loop_contexts = []
-            
+        self.prog = ShellProg()
+
     def get_mode(self):
         return self.mode
 
@@ -33,10 +151,10 @@ class TransformationState:
         new_id = self.node_counter
         self.node_counter += 1
         return new_id
-    
+
     def get_current_id(self):
         return self.node_counter - 1
-    
+
     def get_number_of_ids(self):
         return self.node_counter
 
@@ -56,14 +174,30 @@ class TransformationState:
         else:
             return self.loop_contexts[0]
 
+    def current_bb(self):
+        return self.prog.current_bb
+
     def enter_loop(self):
         new_loop_id = self.get_next_loop_id()
         self.loop_contexts.insert(0, new_loop_id)
+        self.prog.enter_for()
         return new_loop_id
 
     def exit_loop(self):
         self.loop_contexts.pop(0)
+        self.prog.leave_for()
 
+    def enter_if(self):
+        self.prog.enter_if()
+
+    def enter_else(self):
+        self.prog.enter_else()
+
+    def exit_if(self):
+        self.prog.leave_if()
+
+    def visit_command(self, command):
+        self.prog.add_command(command)
 
 ## TODO: Turn it into a Transformation State class, and make a subclass for
 ##       each of the two transformations. It is important for it to be state, because
@@ -74,7 +208,7 @@ class SpeculativeTransformationState(TransformationState):
         assert(self.mode is TransformationType.SPECULATIVE)
         self.partial_order_file = po_file
         self.partial_order_edges = []
-        self.partial_order_node_loop_contexts = {}
+        self.partial_order_node_bb = {}
 
     def get_partial_order_file(self):
         assert(self.mode is TransformationType.SPECULATIVE)
@@ -86,11 +220,11 @@ class SpeculativeTransformationState(TransformationState):
     def get_all_edges(self):
         return self.partial_order_edges
 
-    def add_node_loop_context(self, node_id: int, loop_contexts):
-        self.partial_order_node_loop_contexts[node_id] = loop_contexts
+    def add_node_bb(self, node_id: int, bb_id: int):
+        self.partial_order_node_bb[node_id] = bb_id
 
-    def get_all_loop_contexts(self):
-        return self.partial_order_node_loop_contexts
+    def get_all_node_bb(self):
+        return self.partial_order_node_bb
 
 
 ##
@@ -177,12 +311,12 @@ def replace_ast_regions(ast_objects, trans_options):
         preprocessed_ast_object = preprocess_node(ast, trans_options, last_object=last_object)
         ## If the dataflow region is not maximal then it implies that the whole
         ## AST should be replaced.
-        assert(not preprocessed_ast_object.is_non_maximal() 
+        assert(not preprocessed_ast_object.is_non_maximal()
                or preprocessed_ast_object.should_replace_whole_ast())
-        
+
         ## If the whole AST needs to be replaced then it implies that
         ## something will be replaced
-        assert(not preprocessed_ast_object.should_replace_whole_ast() 
+        assert(not preprocessed_ast_object.should_replace_whole_ast()
                or preprocessed_ast_object.will_anything_be_replaced())
 
         ## If it isn't maximal then we just add it to the candidate
@@ -228,7 +362,7 @@ def replace_ast_regions(ast_objects, trans_options):
 
     return preprocessed_asts
 
-## This function joins original unparsed shell source in a safe way 
+## This function joins original unparsed shell source in a safe way
 ##   so as to deal with the case where some of the text is None (e.g., in case of stdin parsing).
 def join_original_text_lines(shell_source_lines_or_none):
     if any([text_or_none is None for text_or_none in shell_source_lines_or_none]):
@@ -296,9 +430,11 @@ def preprocess_node_command(ast_node, trans_options, last_object=False):
                                               replace_whole=True,
                                               non_maximal=False,
                                               last_ast=last_object)
+    trans_options.visit_command(ast_node)
+    log(f"[DEBUG_LOG] command: {ast_node}")
     return preprocessed_ast_object
 
-# Background of (linno * t * redirection list) 
+# Background of (linno * t * redirection list)
 ## TODO: It might be possible to actually not close the inner node but rather apply the redirections on it
 def preprocess_node_redir(ast_node, trans_options, last_object=False):
     preprocessed_node, something_replaced = preprocess_close_node(ast_node.node, trans_options,
@@ -367,13 +503,13 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
 
     ## Prepend the increment in the body
     ast_node.body = make_typed_semi_sequence(
-        [to_ast_node(increment_node), 
-         to_ast_node(save_loop_iters_node), 
+        [to_ast_node(increment_node),
+         to_ast_node(save_loop_iters_node),
          copy.deepcopy(preprocessed_body)])
 
     ## We pop the loop identifier from the loop context.
     ##
-    ## KK 2023-04-27: Could this exit happen before the replacement leading to wrong 
+    ## KK 2023-04-27: Could this exit happen before the replacement leading to wrong
     ##     results? I think not because we use the _close_node preprocessing variant.
     ##     A similar issue might happen for while
     trans_options.exit_loop()
@@ -385,8 +521,8 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
     ## Prepend the export in front of the loop
     # new_node = ast_node
     new_node = make_typed_semi_sequence(
-        [to_ast_node(export_node), 
-         ast_node, 
+        [to_ast_node(export_node),
+         ast_node,
          to_ast_node(reset_loop_iters_node)])
     # print(new_node)
 
@@ -395,7 +531,7 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
                                               non_maximal=False,
                                               something_replaced=something_replaced,
                                               last_ast=last_object)
-    
+
     return preprocessed_ast_object
 
 def preprocess_node_while(ast_node, trans_options, last_object=False):
@@ -412,7 +548,7 @@ def preprocess_node_while(ast_node, trans_options, last_object=False):
                                               non_maximal=False,
                                               something_replaced=something_replaced,
                                               last_ast=last_object)
-    
+
     ## We pop the loop identifier from the loop context.
     trans_options.exit_loop()
     return preprocessed_ast_object
@@ -446,7 +582,7 @@ def preprocess_node_semi(ast_node, trans_options, last_object=False):
                                               last_ast=last_object)
     return preprocessed_ast_object
 
-## TODO: Make sure that what is inside an `&&`, `||`, `!` (and others) does not run in parallel_pipelines 
+## TODO: Make sure that what is inside an `&&`, `||`, `!` (and others) does not run in parallel_pipelines
 ##       since we need its exit code.
 def preprocess_node_and(ast_node, trans_options, last_object=False):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
@@ -490,9 +626,14 @@ def preprocess_node_not(ast_node, trans_options, last_object=False):
 
 def preprocess_node_if(ast_node, trans_options, last_object=False):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
+    trans_options : TransformationState
     preprocessed_cond, sth_replaced_cond = preprocess_close_node(ast_node.cond, trans_options, last_object=last_object)
+    trans_options.enter_if()
     preprocessed_then, sth_replaced_then = preprocess_close_node(ast_node.then_b, trans_options, last_object=last_object)
+    if not is_empty_cmd(ast_node.else_b):
+        trans_options.enter_else()
     preprocessed_else, sth_replaced_else = preprocess_close_node(ast_node.else_b, trans_options, last_object=last_object)
+    trans_options.exit_if()
     ast_node.cond = preprocessed_cond
     ast_node.then_b = preprocessed_then
     ast_node.else_b = preprocessed_else
@@ -545,6 +686,7 @@ def preprocess_node_case(ast_node, trans_options, last_object=False):
 ## If we are need to disable parallel pipelines, e.g., if we are in the context of an if,
 ## or if we are in the end of a script, then we set a variable.
 def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast_text=None) -> AstNode:
+
     transformation_mode = trans_options.get_mode()
     if transformation_mode is TransformationType.PASH:
         ir_filename = ptempfile()
@@ -626,9 +768,9 @@ def make_call_to_pash_runtime(ir_filename, sequential_script_file_name,
     else:
         assignments = [["pash_disable_parallel_pipelines",
                         string_to_argument("0")]]
-    assignments.append(["pash_sequential_script_file", 
+    assignments.append(["pash_sequential_script_file",
                         string_to_argument(sequential_script_file_name)])
-    assignments.append(["pash_input_ir_file", 
+    assignments.append(["pash_input_ir_file",
                         string_to_argument(ir_filename)])
 
     ## Call the runtime
@@ -646,7 +788,7 @@ def make_call_to_spec_runtime(command_id: int, loop_id) -> AstNode:
         loop_id_str = ""
     else:
         loop_id_str = str(loop_id)
-    
+
     assignments.append(["pash_spec_loop_id",
                         string_to_argument(loop_id_str)])
 

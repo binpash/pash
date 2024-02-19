@@ -35,11 +35,11 @@ def scheduler_server_init_po_msg(partial_order_file: str) -> str:
 ##       i.e., the connections of this node. Now it assumes we have a sequence.
 def save_df_region(text_to_output: str, trans_options, df_region_id: int, predecessor_ids: int) -> None:
     ## To support loops we also need to associate nodes with their surrounding loops
-    current_loop_context = trans_options.get_current_loop_context()
-    log("Df region:", df_region_id, "loop context:", current_loop_context)
+    current_bb = trans_options.current_bb()
+    log("Df region:", df_region_id, "current bb:", current_bb)
 
     # Add the loop context to the partial_order state
-    trans_options.add_node_loop_context(df_region_id, current_loop_context)
+    trans_options.add_node_bb(df_region_id, current_bb)
 
     # Save df_region as text in its own file
     df_region_path = f'{partial_order_directory()}/{df_region_id}'
@@ -49,8 +49,6 @@ def save_df_region(text_to_output: str, trans_options, df_region_id: int, predec
     ## Save the edges in the partial order state
     for predecessor in predecessor_ids:
         trans_options.add_edge(predecessor, df_region_id)
-
-
 
 ## TODO: Figure out a way to put all serialization/deserialization of messages
 ##       and parsing/unparsing in a specific module.
@@ -62,10 +60,11 @@ def serialize_edge(from_id: int, to_id: int) -> str:
 def serialize_number_of_nodes(number_of_ids: int) -> str:
     return f'{number_of_ids}\n'
 
-def serialize_loop_context(node_id: int, loop_contexts) -> str:
+def serialize_loop_context(node_id: int, bb_id) -> str:
     ## Galaxy brain serialization
-    loop_contexts_str = ",".join([str(loop_ctx) for loop_ctx in loop_contexts])
-    return f'{node_id}-loop_ctx-{loop_contexts_str}\n'
+    # loop_contexts_str = ",".join([str(loop_ctx) for loop_ctx in loop_contexts])
+    bb_id_str = str(bb_id)
+    return f'{node_id}-loop_ctx-{bb_id_str}\n'
 
 def save_current_env_to_file(trans_options):
     initial_env_file = ptempfile()
@@ -82,32 +81,37 @@ def save_number_of_nodes(trans_options):
         po_file.write(serialize_number_of_nodes(number_of_ids))
 
 def save_loop_contexts(trans_options):
-    loop_context_dict = trans_options.get_all_loop_contexts()
-    log("Loop context dict:", loop_context_dict)
+    node_bb_dict = trans_options.get_all_node_bb()
+    log("Loop context dict:", node_bb_dict)
     partial_order_file_path = trans_options.get_partial_order_file()
     with open(partial_order_file_path, "a") as po_file:
-        for node_id in sorted(loop_context_dict.keys()):
-            loop_ctx = loop_context_dict[node_id]
-            po_file.write(serialize_loop_context(node_id, loop_ctx))
+        for node_id in sorted(node_bb_dict.keys()):
+            bb_id = node_bb_dict[node_id]
+            po_file.write(serialize_loop_context(node_id, bb_id))
 
 def serialize_partial_order(trans_options):
     ## Initialize the po file
     dir_path = partial_order_directory()
     initialize_po_file(trans_options, dir_path)
-    
     ## Save initial env to po file
     save_current_env_to_file(trans_options)
 
     ## Save the number of nodes
     save_number_of_nodes(trans_options)
-    
-   
+
+    partial_order_file_path = trans_options.get_partial_order_file()
+    with open(partial_order_file_path, "a") as po_file:
+        po_file.write('Basic blocks:\n')
+        po_file.write('Basic block edges:\n')
+        for from_bb_id, to_bb_ids in trans_options.prog.edges.items():
+            for to_bb_id in to_bb_ids:
+                po_file.write(f'{from_bb_id} -> {to_bb_id}\n')
+        po_file.write('Loop context:\n')
 
     ## Save loop contexts
     save_loop_contexts(trans_options)
 
     # Save the edges in the partial order file
-    partial_order_file_path = trans_options.get_partial_order_file()
     edges = trans_options.get_all_edges()
     with open(partial_order_file_path, "a") as po_file:
         for from_id, to_id in edges:
