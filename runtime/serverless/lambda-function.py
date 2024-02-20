@@ -1,26 +1,17 @@
 import subprocess
 import json
-import os
 
 def lambda_handler(event, context):
     data = event["data"]
     id_ = event["id"]
     scripts_dict = json.loads(data)
-    with open(f"/tmp/{id_}", "w") as f:
+    with open(f"/tmp/data-{id_}", "w") as f:
         f.write(data)
-    print("Executing script ID", id_)
-    with open("/tmp/script.sh", "w") as f:
+    print("Executing script ID", id_, flush=True)
+    with open(f"/tmp/script-{id_}.sh", "w") as f:
         f.write(scripts_dict[id_])
-    script = f"/tmp/script.sh"
-    # with open(script, "r") as f:
-    #     for line in f.readlines():
-    #         print(line)
-    # print(os.getcwd())
-    process = subprocess.Popen(
-        ["/bin/bash", script, f"/tmp/{id_}"], cwd=os.getcwd()
+    # print(f"Script: {scripts_dict[id_]}", flush=True)
+    process = subprocess.run(
+        ["/bin/bash", f"/tmp/script-{id_}.sh", f"/tmp/data-{id_}"]
     )
-
-    process.wait()
-    output, _ = process.communicate()
-    print(output)
-    return output
+    print(f"script {id_} execution return code: {process.returncode}")
