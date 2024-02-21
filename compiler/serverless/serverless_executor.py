@@ -19,7 +19,7 @@ def exec():
 def wait_msg_done():
     while True:
         sqs = boto3.client('sqs')
-        queue_url = 'https://sqs.us-east-1.amazonaws.com/347768412644/queue '
+        queue_url = 'https://sqs.us-east-1.amazonaws.com/192165654483/queue '
         # Receive message from SQS queue
         response = sqs.receive_message(
             QueueUrl=queue_url,

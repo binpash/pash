@@ -16,40 +16,55 @@ class ServerlessRemotePipe(DFGNode):
                          parallelizer_list=parallelizer_list,
                          cmd_related_properties=cmd_related_properties)
 
+def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, output_edge=None, is_tcp=False):
+    """
+    Generate a dfg node for serverless remote communication, now we handle these cases
+    1. Remote read from tcp communication
+    2. Remote read from s3
+        (1) Read from s3 to fifo
+        (2) Read from s3 to stdout or other fd
+    3. Remote write to tcp communication
+    4. Remote write to s3
 
-def make_serverless_remote_pipe(input_id, output_id, is_remote_read, key, out_resource=None, is_tcp=False):
-    operand_list = [Operand(Arg.string_to_arg(str(key)))]
+    Note: for 1/2, output_edge will be stdout (just to make the sink node has an output edge manually)
+    """
+    operand_list = []
     access_map = {}
-    implicit_use_of_streaming_output = None
-    if input_id is not None:
-        access_map[input_id] = make_stream_input()
-    if output_id is not None:
-        access_map[output_id] = make_stream_output()
+    implicit_use_of_streaming_input = implicit_use_of_streaming_output = None
+    if local_fifo_id:
+        access_map[local_fifo_id] = make_stream_input()
+    if output_edge:
+        access_map[output_edge.get_ident()] = make_stream_output()
     if is_remote_read:
-        if isinstance(out_resource, FileDescriptorResource):
-            operand_list.append(Operand(Arg.string_to_arg("/dev/stdout")))
-            implicit_use_of_streaming_output = output_id # avoid node not found err
-        else:
-            operand_list.append(output_id)
         if is_tcp:
-            remote_pipe_bin = os.path.join('aws','sendrecv.py')
-            operand_list.append(Operand(Arg.string_to_arg("1")))
+            remote_pipe_bin = "/opt/pashlib"
+            operand_list.append(Operand(Arg.string_to_arg("recv "+str(remote_key)+" 1 0")))
+            implicit_use_of_streaming_output = local_fifo_id
         else:
-            remote_pipe_bin = os.path.join('aws','s3-get-object.py')
+            remote_pipe_bin = "python aws/s3-get-object.py"
+            operand_list.append(Operand(Arg.string_to_arg(str(remote_key))))
+            if output_edge and (output_edge.get_resource() is not None):
+                # we need to redirect the output to some file or stdout
+                operand_list.append(Operand(Arg.string_to_arg("/dev/stdout")))
+                implicit_use_of_streaming_output = output_edge.get_ident() 
+            else:
+                operand_list.append(local_fifo_id)
     else:
-        operand_list.append(input_id)
-        implicit_use_of_streaming_output = output_id
+        implicit_use_of_streaming_output = output_edge.get_ident() # avoid node not found err
         if is_tcp:
-            remote_pipe_bin = os.path.join('aws','sendrecv.py')
-            operand_list.append(Operand(Arg.string_to_arg("0")))
+            remote_pipe_bin = "/opt/pashlib"
+            operand_list.append(Operand(Arg.string_to_arg("send "+str(remote_key)+" 0 1")))
+            implicit_use_of_streaming_input = local_fifo_id
         else:
-            remote_pipe_bin = os.path.join('aws','s3-put-object.py')
+            remote_pipe_bin = "python aws/s3-put-object.py"
+            operand_list.append(Operand(Arg.string_to_arg(str(remote_key))))
+            operand_list.append(local_fifo_id)
 
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
-        cmd_name="python "+remote_pipe_bin,
+        cmd_name=remote_pipe_bin,
         flag_option_list=[],
         operand_list=operand_list,
-        implicit_use_of_streaming_input=None,
+        implicit_use_of_streaming_input=implicit_use_of_streaming_input,
         implicit_use_of_streaming_output=implicit_use_of_streaming_output,
         access_map=access_map)
     return ServerlessRemotePipe(cmd_inv_with_io_vars)

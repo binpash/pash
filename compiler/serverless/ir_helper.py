@@ -50,6 +50,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
             # Replace the old edge with an ephemeral edge in case it isn't and
             # to avoid modifying the edge in case it's used in some other subgraph
             out_edge_id = out_edge.get_ident()
+            print("out_edge_id",subgraph.edges[out_edge_id])
             ephemeral_edge = file_id_gen.next_ephemeral_file_id()
             subgraph.replace_edge(out_edge_id, ephemeral_edge)
             edge_uid = uuid4()
@@ -60,13 +61,18 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
             if out_edge_id not in input_fifo_map:
                 last_subgraph = True
             # Add remote-write node at the end of the subgraph
-            remote_write = serverless_remote_pipe.make_serverless_remote_pipe(ephemeral_edge.get_ident(), stdout.get_ident(), False, edge_uid, None, is_tcp=(not last_subgraph))
+            remote_write = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
+                                                                              is_remote_read=False,
+                                                                              remote_key=edge_uid,
+                                                                              output_edge=stdout,
+                                                                              is_tcp=(not last_subgraph))
             subgraph.add_node(remote_write)
 
             # Copy the old output edge resource
             new_edge = file_id_gen.next_file_id()
             new_edge.set_resource(out_edge.get_resource())
             # Get the subgraph which "edge" writes to
+            print(out_edge_id in input_fifo_map, out_edge.is_ephemeral(),out_edge.get_resource(), out_edge.get_ident())
             if out_edge_id in input_fifo_map and out_edge.is_ephemeral():
                 matching_subgraph = input_fifo_map[out_edge_id][0]
                 matching_subgraph.replace_edge(out_edge.get_ident(), new_edge)
@@ -79,8 +85,11 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 # Add edge to main graph
                 matching_subgraph = main_graph
                 matching_subgraph.add_edge(new_edge)
-
-            remote_read = serverless_remote_pipe.make_serverless_remote_pipe(None, new_edge.get_ident(), True, edge_uid, out_resource=new_edge.get_resource(), is_tcp=True)
+            remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=new_edge.get_ident(),
+                                                                              is_remote_read=True,
+                                                                              remote_key=edge_uid,
+                                                                              output_edge=new_edge,
+                                                                              is_tcp=(not matching_subgraph is main_graph))
             matching_subgraph.add_node(remote_read)
 
     # Replace non ephemeral input edges with remote read/write
@@ -100,7 +109,11 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                     # Add remote read to current subgraph
                     ephemeral_edge = file_id_gen.next_ephemeral_file_id()
                     subgraph.replace_edge(in_edge.get_ident(), ephemeral_edge)
-                    remote_read = serverless_remote_pipe.make_serverless_remote_pipe(None, ephemeral_edge.get_ident(), True, filename, is_tcp=False)
+                    remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
+                                                                              is_remote_read=True,
+                                                                              remote_key=filename,
+                                                                              output_edge=None,
+                                                                              is_tcp=False)
                     subgraph.add_node(remote_read)
                 else:
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
