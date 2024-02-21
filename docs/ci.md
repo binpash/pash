@@ -1,12 +1,13 @@
 
 ## Continuous Integration
 
+<!-- link is broken -->
 A text-based continuous integration (CI) sever is set up at [pash.ndr.md](http://pash.ndr.md).
-The focus of CI is to monitor correctness, not performance: 
+The focus of CI is to monitor correctness, not performance:
   it runs all of PaSh's benchmarks, with small inputs, and compares results with the sequential execution.
 It additionally runs and reports on the tests from the Smoosh suite.
 
-#### Summary 
+#### Summary
 
 To get the summary of the latest 5 builds:
 
