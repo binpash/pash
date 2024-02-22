@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, auto
 import copy
 import pickle
 
@@ -6,7 +6,7 @@ import config
 
 from env_var_names import *
 from shell_ast.ast_util import *
-from shasta.ast_node import ast_match, is_empty_cmd
+from shasta.ast_node import ast_match, is_empty_cmd, string_of_arg
 from shasta.json_to_ast import to_ast_node
 from parse import from_ast_objects_to_shell
 from speculative import util_spec
@@ -48,6 +48,19 @@ class ShellBB:
     def is_empty(self):
         return self._is_emtpy
 
+class EdgeReason(Enum):
+    IF_TAKEN = auto()
+    ELSE_TAKEN = auto()
+    LOOP_TAKEN = auto()
+    LOOP_SKIP = auto()
+    LOOP_BACK = auto()
+    LOOP_BEGIN = auto()
+    LOOP_END = auto()
+    OTHER = auto()
+
+    def __str__(self):
+        return f'{self.name}'
+
 class ShellProg:
     def __init__(self):
         self.ast_nodes = []
@@ -62,24 +75,20 @@ class ShellProg:
         self.bbs.append(ShellBB(next_bb))
         return next_bb
 
-    def add_edge(self, from_bb: int, to_bb: int):
+    def add_edge(self, from_bb: int, to_bb: int, label: EdgeReason):
         assert from_bb >= 0 and from_bb < len(self.bbs)
         assert to_bb >= 0 and to_bb < len(self.bbs)
         if not from_bb in self.edges:
-            self.edges[from_bb] = []
-        self.edges[from_bb].append(to_bb)
+            self.edges[from_bb] = {}
+        self.edges[from_bb][to_bb] = label
 
     def enter_for(self):
-        if self.bbs[self.current_bb].is_empty():
-            test_bb = self.current_bb
-        else:
-            test_bb = self.add_bb()
-            self.add_edge(self.current_bb, test_bb)
-        self.bbs[test_bb].make_non_empty()
+        test_bb = self.add_bb()
+        self.add_edge(self.current_bb, test_bb, EdgeReason.LOOP_BEGIN)
         next_bb = self.add_bb()
-        self.add_edge(test_bb, next_bb)
+        self.add_edge(test_bb, next_bb, EdgeReason.LOOP_SKIP)
         body_bb = self.add_bb()
-        self.add_edge(test_bb, body_bb)
+        self.add_edge(test_bb, body_bb, EdgeReason.LOOP_TAKEN)
         self.contexts.append(ShellLoopContext(test_bb, next_bb))
         self.current_bb = body_bb
 
@@ -88,7 +97,7 @@ class ShellProg:
         assert isinstance(loop_context, ShellLoopContext)
         test_bb = loop_context.test_block
         next_bb = loop_context.next_block
-        self.add_edge(self.current_bb, test_bb)
+        self.add_edge(self.current_bb, test_bb, EdgeReason.LOOP_BACK)
         self.current_bb = next_bb
 
     def enter_while(self):
@@ -99,10 +108,9 @@ class ShellProg:
 
     def enter_if(self):
         test_bb = self.current_bb
-        self.bbs[self.current_bb].make_non_empty()
         next_bb = self.add_bb()
         body_bb = self.add_bb()
-        self.add_edge(test_bb, body_bb)
+        self.add_edge(test_bb, body_bb, EdgeReason.IF_TAKEN)
         self.contexts.append(ShellIfContext(test_bb, next_bb))
         self.current_bb = body_bb
 
@@ -111,9 +119,9 @@ class ShellProg:
         assert isinstance(if_context, ShellIfContext)
         test_bb = if_context.test_block
         next_bb = if_context.next_block
-        self.add_edge(self.current_bb, next_bb)
+        self.add_edge(self.current_bb, next_bb, EdgeReason.OTHER)
         else_bb = self.add_bb()
-        self.add_edge(test_bb, else_bb)
+        self.add_edge(test_bb, else_bb, EdgeReason.ELSE_TAKEN)
         self.contexts.append(ShellIfContext(test_bb, next_bb, has_else=True))
         self.current_bb = else_bb
 
@@ -123,12 +131,20 @@ class ShellProg:
         test_bb = if_context.test_block
         next_bb = if_context.next_block
         if not if_context.has_else:
-            self.add_edge(test_bb, next_bb)
-        self.add_edge(self.current_bb, next_bb)
+            self.add_edge(test_bb, next_bb, EdgeReason.ELSE_TAKEN)
+        self.add_edge(self.current_bb, next_bb, EdgeReason.OTHER)
         self.current_bb = next_bb
 
     def add_break(self):
-        pass
+        assert len(self.contexts) > 0
+        for context in reversed(self.contexts):
+            if isinstance(context, ShellLoopContext):
+                break
+        else:
+            assert False
+        assert isinstance(context, ShellLoopContext)
+        break_bb = self.current_bb
+        self.add_edge(break_bb, context.next_block, EdgeReason.LOOP_END)
 
     def add_command(self, command):
         self.bbs[self.current_bb].add_command(command)
@@ -197,7 +213,10 @@ class TransformationState:
         self.prog.leave_if()
 
     def visit_command(self, command):
-        self.prog.add_command(command)
+        if len(command.arguments) > 0 and string_of_arg(command.arguments[0]) == 'break':
+            self.prog.add_break()
+        else:
+            self.prog.add_command(command)
 
 ## TODO: Turn it into a Transformation State class, and make a subclass for
 ##       each of the two transformations. It is important for it to be state, because
@@ -323,33 +342,32 @@ def replace_ast_regions(ast_objects, trans_options):
         if(preprocessed_ast_object.is_non_maximal()):
             candidate_dataflow_region.append((preprocessed_ast_object.ast,
                                               original_text))
+        ## If the current candidate dataflow region is non-empty
+        ## it means that the previous AST was in the background so
+        ## the current one has to be included in the process no matter what
+        elif (len(candidate_dataflow_region) > 0):
+            candidate_dataflow_region.append((preprocessed_ast_object.ast,
+                                              original_text))
+            ## Since the current one is maximal (or not wholy replaced)
+            ## we close the candidate.
+            dataflow_region_asts, dataflow_region_lines = unzip(candidate_dataflow_region)
+            dataflow_region_text = join_original_text_lines(dataflow_region_lines)
+            replaced_ast = replace_df_region(dataflow_region_asts, trans_options,
+                                             ast_text=dataflow_region_text, disable_parallel_pipelines=last_object)
+            candidate_dataflow_region = []
+            preprocessed_asts.append(replaced_ast)
+        elif(preprocessed_ast_object.should_replace_whole_ast()):
+            replaced_ast = replace_df_region([preprocessed_ast_object.ast], trans_options,
+                                             ast_text=original_text, disable_parallel_pipelines=last_object)
+            preprocessed_asts.append(replaced_ast)
+
+        ## In this case, it is possible that no replacement happened,
+        ## meaning that we can simply return the original parsed text as it was.
+        elif(preprocessed_ast_object.will_anything_be_replaced() or original_text is None):
+            preprocessed_asts.append(preprocessed_ast_object.ast)
         else:
-            ## If the current candidate dataflow region is non-empty
-            ## it means that the previous AST was in the background so
-            ## the current one has to be included in the process no matter what
-            if (len(candidate_dataflow_region) > 0):
-                candidate_dataflow_region.append((preprocessed_ast_object.ast,
-                                                  original_text))
-                ## Since the current one is maximal (or not wholy replaced)
-                ## we close the candidate.
-                dataflow_region_asts, dataflow_region_lines = unzip(candidate_dataflow_region)
-                dataflow_region_text = join_original_text_lines(dataflow_region_lines)
-                replaced_ast = replace_df_region(dataflow_region_asts, trans_options,
-                                                 ast_text=dataflow_region_text, disable_parallel_pipelines=last_object)
-                candidate_dataflow_region = []
-                preprocessed_asts.append(replaced_ast)
-            else:
-                if(preprocessed_ast_object.should_replace_whole_ast()):
-                    replaced_ast = replace_df_region([preprocessed_ast_object.ast], trans_options,
-                                                     ast_text=original_text, disable_parallel_pipelines=last_object)
-                    preprocessed_asts.append(replaced_ast)
-                else:
-                    ## In this case, it is possible that no replacement happened,
-                    ## meaning that we can simply return the original parsed text as it was.
-                    if(preprocessed_ast_object.will_anything_be_replaced() or original_text is None):
-                        preprocessed_asts.append(preprocessed_ast_object.ast)
-                    else:
-                        preprocessed_asts.append(UnparsedScript(original_text))
+            preprocessed_asts.append(UnparsedScript(original_text))
+
 
     ## Close the final dataflow region
     if(len(candidate_dataflow_region) > 0):
@@ -416,6 +434,7 @@ def preprocess_node_command(ast_node, trans_options, last_object=False):
 
     ## If there are no arguments, the command is just an
     ## assignment (Q: or just redirections?)
+    trans_options : TransformationState
     if(len(ast_node.arguments) == 0):
         preprocessed_ast_object = PreprocessedAST(ast_node,
                                                   replace_whole=False,
