@@ -6,13 +6,16 @@ import sys
 import os
 import argparse
 import requests
+import time
+import threading
+import signal
 
 DISH_TOP = os.environ['DISH_TOP']
 PASH_TOP = os.environ['PASH_TOP']
 sys.path.append(os.path.join(PASH_TOP, "compiler"))
 
 from dspash.utils import create_filename, write_file
-from dspash.ir_helper import save_configs, to_shell_file, to_shell, add_debug_flags
+from dspash.ir_helper import save_configs, to_shell_file, to_shell, add_debug_flags, report_exec_finish
 from dspash.socket_utils import send_msg, recv_msg
 import pash_runtime
 from annotations import load_annotation_files
@@ -22,6 +25,7 @@ import config
 # from ... import config
 HOST = socket.gethostbyname(socket.gethostname())
 PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
+WORKER_MANAGER_PORT = 65425
 
 
 def err_print(*args):
@@ -45,29 +49,28 @@ def parse_exec_graph(request):
     return request['graph'], request['shell_variables'], request['functions']
 
 
-def exec_graph(graph, shell_vars, functions, debug=False):
+def exec_graph(graph, shell_vars, functions, manager_addr, debug=False):
     config.config['shell_variables'] = shell_vars
     if debug:
-        print('debug is on')
+        log('debug is on')
         add_debug_flags(graph)
         stderr = subprocess.PIPE
     else:
         stderr = None
 
     script_path = to_shell_file(graph, config.pash_args)
-
     e = os.environ.copy()
     e['PASH_TOP'] = PASH_TOP
     e['DISH_TOP'] = DISH_TOP
-
     # store functions
     functions_file = create_filename(
         dir=config.PASH_TMP_PREFIX, prefix='pashFuncs')
     write_file(functions_file, functions)
     cmd = f"source {functions_file}; source {script_path}"
 
+    log(f"Executing: {cmd}")
     rc = subprocess.Popen(
-        cmd, env=e, executable="/bin/bash", shell=True, stderr=stderr)
+        cmd, env=e, executable="/bin/bash", shell=True, stderr=stderr, preexec_fn=os.setsid)
     return rc
 
 
@@ -79,7 +82,7 @@ class Worker:
             self.s.bind((HOST, 0))
         else:
             self.s.bind((HOST, port))
-        print(f"Worker running on {HOST}:{self.s.getsockname()[1]}")
+        log(f"Worker running on {HOST}:{self.s.getsockname()[1]}")
 
     def run(self):
         connections = []
@@ -87,9 +90,10 @@ class Worker:
             self.s.listen()
             while (True):
                 conn, addr = self.s.accept()
-                print(f"got new connection")
+                log(f"got new connection")
                 t = Process(target=manage_connection, args=[conn, addr])
                 t.start()
+
                 connections.append(t)
         for t in connections:
             t.join()
@@ -102,12 +106,12 @@ def send_log(rc: subprocess.Popen, request):
 
     try:
         # timeout is set to 10s for debuggin
-        _, err = rc.communicate(timeout=10)
+        _, err = rc.communicate(timeout=500)
     except:
-        print("process timedout")
+        log("process timedout")
         rc.kill()
         _, err = rc.communicate()
-
+    log(err.decode("UTF-8"))
     response = {
         'name': name,
         'returncode': rc.returncode,
@@ -117,37 +121,112 @@ def send_log(rc: subprocess.Popen, request):
 
     requests.post(url=url, json=response)
 
+# Not currently used
+# def send_discovery_server_log(rc: subprocess.Popen, request):
+#     name = f"{request['debug']['name']}:Discovery Server"
+#     url = request['debug']['url']
+#     log_output = rc.stderr.read()
+
+#     response = {
+#         'name': name,
+#         'returncode': 0,
+#         'stderr': log_output.decode("UTF-8") if log_output else "N/A",
+#         'shellscript': 'N/A'
+#     }
+
+#     requests.post(url=url, json=response)
+
+def notify_manager(manager_host, request):
+    manager_address = (manager_host, WORKER_MANAGER_PORT)  # Replace 'manager_host' with the actual IP address or hostname of the manager
+    log(f"manager addr: {manager_address}")
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        try:
+            sock.sendto(encode_request(request), manager_address)
+            log("sent request to manager")
+        except Exception as e:
+            log(e)
+        
+
+def monitor_subprocess_status(rc: subprocess.Popen, graph, manager_addr: tuple[str, int]):
+    while rc.poll() is None:
+        # Waiting for subprocess to finish...
+        # log(f"still working on {rc}")
+        time.sleep(0.5)
+    # rc finished
+    log("finished rc: ", rc)
+    notify_manager(manager_addr[0], {"type": "Finish-Exec", "ir_id": graph.get_ir_id()})
+    # report_exec_finish(graph) # not used
+
 
 def manage_connection(conn, addr):
     rcs = []
+    monitor_threads = []
     with conn:
-        print('Connected by', addr)
+        log('Connected by', addr)
         dfs_configs_paths = {}
         while True:
-            data = recv_msg(conn)
-            if not data:
+            try:
+                data = recv_msg(conn)
+                if not data:
+                    log("No data received from the sender")
+                    break
+                request = decode_request(data)
+                log(f"got new request with type {request['type']}")
+                if request['type'] == 'Exec-Graph':
+                    if not request['naive_fault']:
+                        graph, shell_vars, functions = parse_exec_graph(request)
+                        debug = True if request['debug'] else False
+                        save_configs(graph, dfs_configs_paths)
+                        rc = exec_graph(graph, shell_vars, functions, addr, debug)
+                        rcs.append((rc, request))
+                        # monitor progress
+                        monitor_thread = threading.Thread(target=monitor_subprocess_status, args=(rc, graph, addr))
+                        # monitor_thread.daemon = True  
+                        monitor_threads.append(monitor_thread)
+                        monitor_thread.start()
+                    else:
+                        log("Injected failure, will not respond to Exec-Graph request")
+                        return
+                    
+                    body = {}
+                    send_success(conn, body)
+                # elif request['type'] == 'abortAll':
+                    # This is buggy so not used
+                    # num_aborted = 0
+                    # while rcs:
+                    #     rc, request = rcs.pop()
+                    #     os.killpg(os.getpgid(rc.pid), signal.SIGTERM)
+
+                    #     # os.system('pkill -TERM -P {pid}'.format(pid=rc.pid))
+                    #     num_aborted += 1
+                    # body = {"num_aborted": num_aborted}
+                elif request['type'] == 'updateDiscoveryServerAddr':
+                    dish_top = os.getenv('DISH_TOP')
+                    # command = [f'{dish_top}/runtime/dspash/file_reader/datastream_client', \
+                    #     '--type update', '--oldAddr {oldAddr}', '--newAddr {newAddr}', '', '&']
+                    rfifoID, oldAddr, newAddr = request['id'], request['oldAddr'], request['newAddr']
+                    command = [f'{dish_top}/runtime/dspash/file_reader/datastream_client --type=update --oldAddr {oldAddr} --newAddr {newAddr} --id {rfifoID}', '&']
+                    subprocess.Popen(command, shell=True)
+                    # subprocess.Popen(command, stderr=subprocess.PIPE, shell=True)
+                    body = {"description": "successfully updated discovery server address for pipe."}
+                    send_success(conn, body)
+                else:
+                    log(f"Unsupported request {request}")
+            except Exception as e:
+                log(e)
                 break
 
-            print("got new request")
-            request = decode_request(data)
-
-            if request['type'] == 'Exec-Graph':
-                graph, shell_vars, functions = parse_exec_graph(request)
-                debug = True if request['debug'] else False
-                save_configs(graph, dfs_configs_paths)
-                rc = exec_graph(graph, shell_vars, functions, debug)
-                rcs.append((rc, request))
-                body = {}
-            else:
-                print(f"Unsupported request {request}")
-            send_success(conn, body)
-    print("connection ended")
-
+    # Ensure subprocesses have finished, and releasing corresponding resources
     for rc, request in rcs:
         if request['debug']:
             send_log(rc, request)
         else:
             rc.wait()
+            # Send return status at the end
+    for monitor_thread in monitor_threads:
+        monitor_thread.join()
+
+    log("connection ended")
 
 
 def parse_args():
@@ -178,6 +257,11 @@ def init():
 
 def main():
     init()
+    # start discovery server and track its logs
+    # dish_top = os.getenv('DISH_TOP')
+    # command = [f'{dish_top}/runtime/dspash/file_reader/discovery_server', '&']
+    # discovery_server = subprocess.Popen(command, stderr=subprocess.PIPE, shell=True)
+
     worker = Worker(config.pash_args.port)
     worker.run()
 

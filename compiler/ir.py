@@ -263,9 +263,24 @@ class IR:
         ## have information about the edges on their own.
         self.apply_redirections()
 
+        self.ir_id = "0"
+        self.finished = False
+
     def __repr__(self):
         output = "(|-{} IR: {} {}-|)".format(self.get_stdin(), list(self.nodes.values()), self.get_stdout())
         return output
+
+    def get_ir_id(self):
+        return self.ir_id
+
+    def set_ir_id(self, new_ir_id: int):
+        self.ir_id = new_ir_id
+
+    def report_finish(self):
+        self.finished = True
+
+    def is_finished(self):
+        return self.finished
 
     ## Initialize all edges
     def apply_redirections(self):

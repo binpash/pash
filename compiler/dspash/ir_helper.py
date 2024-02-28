@@ -200,8 +200,10 @@ def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
             for next_id in next_ids:
                 queue.append((next_id, next_graph_policy()))
 
-    # for graph in subgraphs:
-    #     print(to_shell(graph, config.pash_args), file=sys.stderr)
+    ir_id_counter = 1
+    for graph in subgraphs:
+        graph.set_ir_id(str(ir_id_counter))
+        ir_id_counter += 1
      
     return subgraphs, input_fifo_map
 
@@ -286,7 +288,7 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
         subgraph_critical_fids = list(filter(lambda fid: fid.has_remote_file_resource(), subgraph.all_fids()))
         worker = get_worker(subgraph_critical_fids)
         worker._running_processes += 1
-        worker_subgraph_pairs.append((worker, subgraph))
+        worker_subgraph_pairs.append([worker, subgraph])
         sink_nodes = subgraph.sink_nodes()
         
         for sink_node in sink_nodes:
@@ -356,9 +358,33 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
                 else:
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
                     continue
+    
+    # At this point we know which worker corresponds to which subgraph (hence each reader remote_pipe)
+    for worker, subgraph in worker_subgraph_pairs:
+        for source_id in subgraph.source_nodes():
+            source_node = subgraph.get_node(source_id)
+            # Sanity check
+            if isinstance(source_node, remote_pipe.RemotePipe):
+                assert(source_node.is_remote_read())
+                # set local discovery server addr
+                source_node.set_local_addr(worker.host(), str(DISCOVERY_PORT))
+
+    # Do the same for main_graph 
+    # TODO: may not be necessary!
+    for source_id in main_graph.source_nodes():
+        source_node = main_graph.get_node(source_id)
+        # print(to_shell(main_graph, config.pash_args), file=sys.stderr)
+        # Sanity check
+        if isinstance(source_node, remote_pipe.RemotePipe):
+            if source_node.is_remote_read():
+                # set local discovery server addr
+                source_node.set_local_addr(str(HOST), str(DISCOVERY_PORT))
+            # print(to_shell(main_graph, config.pash_args), file=sys.stderr)
 
     # for worker, graph in worker_subgraph_pairs:
     #     print(to_shell(graph, config.pash_args), file=sys.stderr)
+    #     print('----------------------')
+    # print(to_shell(main_graph, config.pash_args), file=sys.stderr)
 
     return main_graph, worker_subgraph_pairs
 
@@ -389,3 +415,117 @@ def prepare_graph_for_remote_exec(filename:str, get_worker:Callable):
     subgraphs, mapping = split_ir(ir)
     main_graph, worker_graph_pairs = assign_workers_to_subgraphs(subgraphs, file_id_gen, mapping, get_worker)
     return worker_graph_pairs, shell_vars, main_graph
+
+def get_best_worker_for_subgraph(subgraph:IR, get_worker:Callable):
+    """Get the best worker for a subgraph
+    
+    subgraph: the ir we want to match with the best worker
+    get_worker: a callback for getting a worker from worker manager
+    Return: the best worker
+    """    
+    subgraph_critical_fids = list(filter(lambda fid: fid.has_remote_file_resource(), subgraph.all_fids()))
+    worker = get_worker(subgraph_critical_fids)
+    worker._running_processes += 1
+    return worker
+
+
+
+def get_remote_writer_pipes(subgraph: IR):
+    # TODO: change the following
+    """Update remote nodes (remote writer/reader)'s host and port fields
+       with the new neighbor's host
+
+    Assumption: the subgraph has already gone through the initial processing in prepare_graph_for_remote_exec()
+                therefore, all remote_writer_nodes are sink_nodes 
+                and all remote_reader_nodes are source_nodes 
+                (not true the other way - source_nodes can also be DFSSplitReader nodes)
+
+    subgraphs: list of IRs after split
+    subgraph: the target subgraph (belonged to the crashed worker) whose remote_pipe addresses [rp] we need to update
+              we also need to update remote_pipe addresses for any neighbor remote_pipes for each of the [rp] 
+    crashed_worker: the original crashed worker (type: WorkerConnection)
+    replacement_worker: the replacement worker (type: WorkerConnection) whose host should be used to update the nodes
+    Return: {update_candidate:replacement_worker} where update_candidate is any remote pipe candidate for update that belong to subgraph
+    """
+    remote_writer_pipes = []
+    for boundary_node_id in subgraph.sink_nodes():
+        boundary_node = subgraph.get_node(boundary_node_id)
+        if isinstance(boundary_node, remote_pipe.RemotePipe):
+            assert(boundary_node.is_remote_read() == False)
+            remote_writer_pipes.append(boundary_node)
+
+    return remote_writer_pipes
+
+def get_remote_reader_pipes(subgraph: IR):
+    # TODO: change the following
+    """Update remote nodes (remote writer/reader)'s host and port fields
+       with the new neighbor's host
+
+    Assumption: the subgraph has already gone through the initial processing in prepare_graph_for_remote_exec()
+                therefore, all remote_writer_nodes are sink_nodes 
+                and all remote_reader_nodes are source_nodes 
+                (not true the other way - source_nodes can also be DFSSplitReader nodes)
+
+    subgraphs: list of IRs after split
+    subgraph: the target subgraph (belonged to the crashed worker) whose remote_pipe addresses [rp] we need to update
+              we also need to update remote_pipe addresses for any neighbor remote_pipes for each of the [rp] 
+    crashed_worker: the original crashed worker (type: WorkerConnection)
+    replacement_worker: the replacement worker (type: WorkerConnection) whose host should be used to update the nodes
+    Return: {update_candidate:replacement_worker} where update_candidate is any remote pipe candidate for update that belong to subgraph
+    """
+    remote_reader_pipes = []
+    for boundary_node_id in subgraph.source_nodes():
+        boundary_node = subgraph.get_node(boundary_node_id)
+        if isinstance(boundary_node, remote_pipe.RemotePipe):
+            if boundary_node.is_remote_read():
+                remote_reader_pipes.append(boundary_node)
+
+    return remote_reader_pipes
+
+def get_neighbor_remote_reader_pipes(subgraphs: [IR], remote_writer_pipes: [remote_pipe.RemotePipe]):
+    neighbor_remote_reader_pipes = []
+    remote_writer_pipes_ids = set([pipe.get_uuid() for pipe in remote_writer_pipes])
+
+    for subgraph in subgraphs:
+        for source_id in subgraph.source_nodes():
+            source_node = subgraph.get_node(source_id)
+            # Sanity check
+            if isinstance(source_node, remote_pipe.RemotePipe):
+                if source_node.is_remote_read():
+                    # If the current remote_pipe had communicated with remote_pipe_id before,
+                    # append it to the set
+                    if source_node.get_uuid() in remote_writer_pipes_ids:
+                        neighbor_remote_reader_pipes.append(source_node)
+    return neighbor_remote_reader_pipes
+
+
+def update_remote_pipe_addr(update_node, new_host, new_port=DISCOVERY_PORT):
+    assert(isinstance(update_node, remote_pipe.RemotePipe))
+    update_node.set_addr(host=new_host, port=new_port)
+
+def update_remote_pipe_local_addr(update_node, new_host, new_port=DISCOVERY_PORT):
+    assert(isinstance(update_node, remote_pipe.RemotePipe))
+    update_node.set_local_addr(host=new_host, port=new_port)
+
+def update_subgraphs(original_to_updated_subgraphs, update_candidates_replacements_map):
+    for original_subgraph in original_to_updated_subgraphs.keys():
+        new_subgraph = copy.deepcopy(original_subgraph)
+        for boundary_node_id in new_subgraph.source_nodes() + new_subgraph.sink_nodes():
+            boundary_node = new_subgraph.get_node(boundary_node_id)
+            if isinstance(boundary_node, remote_pipe.RemotePipe):
+                if boundary_node in update_candidates_replacements_map:
+                    update_remote_pipe_addr(boundary_node, update_candidates_replacements_map[boundary_node])
+        
+        original_to_updated_subgraphs[original_subgraph] = new_subgraph
+
+def get_worker_subgraph_map(worker_subgraph_pairs):
+    worker_subgraph_map = collections.defaultdict(list)
+    for worker, subgraph in worker_subgraph_pairs:
+        worker_subgraph_map[worker].append(subgraph)
+    return worker_subgraph_map
+
+def report_exec_finish(graph: IR):
+    graph.report_finish()
+
+def is_remote_pipe(node):
+    return isinstance(node, remote_pipe.RemotePipe)
