@@ -23,6 +23,7 @@ export pash_parallel_pipelines=0
 export pash_daemon_communicates_through_unix_pipes_flag=0
 export show_version=0
 export distributed_exec=0
+export naive_fault=0
 
 for item in "$@"
 do
@@ -101,6 +102,10 @@ do
 
     if [ "--distributed_exec" == "$item" ]; then
         export distributed_exec=1
+    fi
+
+    if [ "--naive_fault" == "$item" ]; then
+        export naive_fault=1
     fi
 done
 

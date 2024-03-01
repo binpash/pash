@@ -13,6 +13,8 @@ from dspash.hdfs_utils import start_hdfs_deamon, stop_hdfs_deamon
 import config 
 import copy
 import requests
+from ir_to_ast import to_shell
+import time
 
 PORT = 65425        # Port to listen on (non-privileged ports are > 1023)
 # TODO: get the url from the environment or config
@@ -65,17 +67,31 @@ class WorkerConnection:
         #TODO: do I need to open and close connection?
         send_msg(self._socket, request)
         # TODO wait until the command exec finishes and run this in parallel?
-        response_data = recv_msg(self._socket)
-        if not response_data or decode_request(response_data)['status'] != "OK":
+        retries = 0
+        MAX_RETRIES = 2
+        RETRY_DELAY = 1
+        self._socket.settimeout(5)
+        response_data = None
+        response = None
+        while retries < MAX_RETRIES and not response_data:
+            try:
+                response_data = recv_msg(self._socket)
+                response = decode_request(response_data)
+                log(f"Socket {self._socket.getsockname()} recieved response from {self._socket.getpeername()}, response: {response}")
+            except socket.timeout:
+                log(f"Timeout encountered. Retry {retries + 1} of {MAX_RETRIES}.")
+                retries += 1
+                time.sleep(RETRY_DELAY)
+        if not response_data or response['status'] != "OK":
             raise Exception(f"didn't recieved ack on request {response_data}")
         else:
             # self._running_processes += 1 #TODO: decrease in case of failure or process ended
-            response = decode_request(response_data)
             return True
 
     def close(self):
-        self._socket.send("Done")
+        self._socket.send(encode_request({"type": "Done"}))
         self._socket.close()
+        self._online = False
 
     def _wait_ack(self):
         confirmation = self._socket.recv(4096)
@@ -129,6 +145,8 @@ class WorkersManager():
 
         workers = cluster_config["workers"]
         for name, worker in workers.items():
+            if name == "worker3":
+                continue
             host = worker['host']
             port = worker['port']
             self.add_worker(name, host, port)
@@ -162,22 +180,50 @@ class WorkersManager():
             elif request.startswith("Exec-Graph"):
                 args = request.split(':', 1)[1].strip()
                 filename, declared_functions_file = args.split()
+                numExecutedSubgraphs = 0
+                numTotalSubgraphs = None
+                crashed_worker_choice = workers_manager.args.naive_fault if workers_manager.args.naive_fault != '' else "none"
+                try:
+                    while not numTotalSubgraphs or numExecutedSubgraphs < numTotalSubgraphs:
+                        # In the naive fault tolerance, we want all workers to receive its subgraph(s) without crashing
+                        # if a crash happens, we'll re-split the IR and do it again until scheduling is done without any crash.
+                        numExecutedSubgraphs = 0
+                        worker_subgraph_pairs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename, workers_manager.get_worker)
+                        if numTotalSubgraphs == None:
+                            numTotalSubgraphs = len(worker_subgraph_pairs)
+                        log(f"num subgraphs: {numTotalSubgraphs}")
+                        script_fname = to_shell_file(main_graph, workers_manager.args)
+                        log("Master node graph stored in ", script_fname)
 
-                worker_subgraph_pairs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename, workers_manager.get_worker)
-                script_fname = to_shell_file(main_graph, workers_manager.args)
-                log("Master node graph stored in ", script_fname)
+                        # Read functions
+                        log("Functions stored in ", declared_functions_file)
+                        declared_functions = read_file(declared_functions_file)
 
-                # Read functions
-                log("Functions stored in ", declared_functions_file)
-                declared_functions = read_file(declared_functions_file)
+                        # Execute subgraphs on workers
+                        for worker, subgraph in worker_subgraph_pairs:                            
+                            try:
+                                log(worker.name, worker)
+                                log(to_shell(subgraph, workers_manager.args))
+                                log("-------------------------------------")
+                                naive_fault = worker.name == crashed_worker_choice
+                                worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args.debug, naive_fault)
+                                numExecutedSubgraphs += 1
+                            except Exception as e:
+                                # worker timeout
+                                worker.close()
+                                log(f"{worker} closed")
+                                break
+                    # Report to main shell a script to execute
+                    # Delay this to the very end when every worker has received the subgraph
+                    log(to_shell(main_graph, workers_manager.args))
+                    log("-------------------------------------")
+                    response_msg = f"OK {script_fname}"
+                    dspash_socket.respond(response_msg, conn)
+                except Exception as e:
+                    print(e)
 
-                # Report to main shell a script to execute
-                response_msg = f"OK {script_fname}"
-                dspash_socket.respond(response_msg, conn)
+                    
 
-                # Execute subgraphs on workers
-                for worker, subgraph in worker_subgraph_pairs:
-                    worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args)
             else:
                 stop_hdfs_deamon()
                 raise Exception(f"Unknown request: {request}")

@@ -177,6 +177,9 @@ def add_common_arguments(parser):
     parser.add_argument("--version",
                         action='version',
                         version='%(prog)s {version}'.format(version=__version__))
+    parser.add_argument("--naive_fault",
+                        help="determines which worker node will be timed out (naive way).",
+                        default="")
     return
 
 
