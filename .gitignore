@@ -57,5 +57,6 @@ runtime/dgsh-tee
 .idea/*
 .vs/*
 
+# runtime files
 cluster.json
 install_logs
