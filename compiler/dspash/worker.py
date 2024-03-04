@@ -24,8 +24,8 @@ HOST = socket.gethostbyname(socket.gethostname())
 PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
 
-def err_log(*args):
-    log(*args, file=sys.stderr)
+def err_print(*args):
+    print(*args, file=sys.stderr)
 
 
 def send_success(conn, body, msg=""):
@@ -48,7 +48,7 @@ def parse_exec_graph(request):
 def exec_graph(graph, shell_vars, functions, kill_target, debug=False):
     config.config['shell_variables'] = shell_vars
     if debug:
-        log('debug is on')
+        print('debug is on')
         add_debug_flags(graph)
         stderr = subprocess.PIPE
     else:
@@ -83,7 +83,7 @@ class Worker:
             self.s.bind((HOST, 0))
         else:
             self.s.bind((HOST, port))
-        log(f"Worker running on {HOST}:{self.s.getsockname()[1]}")
+        print(f"Worker running on {HOST}:{self.s.getsockname()[1]}")
 
     def run(self):
         connections = []
@@ -91,7 +91,7 @@ class Worker:
             self.s.listen()
             while (True):
                 conn, addr = self.s.accept()
-                log(f"got new connection")
+                print(f"got new connection")
                 t = Process(target=manage_connection, args=[conn, addr])
                 t.start()
                 connections.append(t)
@@ -108,7 +108,7 @@ def send_log(rc: subprocess.Popen, request):
         # timeout is set to 10s for debuggin
         _, err = rc.communicate(timeout=10)
     except:
-        log("process timedout")
+        print("process timedout")
         rc.kill()
         _, err = rc.communicate()
 
@@ -124,42 +124,35 @@ def send_log(rc: subprocess.Popen, request):
 
 def manage_connection(conn, addr):
     rcs = []
-    monitor_threads = []
     with conn:
-        log('Connected by', addr)
+        print('Connected by', addr)
         dfs_configs_paths = {}
         while True:
-            try:
-                data = recv_msg(conn)
-                if not data:
-                    log("No data received from the sender")
-                    break
-                request = decode_request(data)
-                log(f"got new request with type {request['type']}")
-                if request['type'] == 'Exec-Graph':
-                    graph, shell_vars, functions = parse_exec_graph(request)
-                    debug = True if request['debug'] else False
-                    kill_target = request['kill_target']
-                    save_configs(graph, dfs_configs_paths)
-                    rc = exec_graph(graph, shell_vars, functions, kill_target, debug)
-                    rcs.append((rc, request))
-                    body = {}
-                else:
-                    print(f"Unsupported request {request}")
-            send_success(conn, body)
-            except Exception as e:
-                log(e)
+            data = recv_msg(conn)
+            if not data:
                 break
 
-    log("connection ended")
+            print("got new request")
+            request = decode_request(data)
+
+            if request['type'] == 'Exec-Graph':
+                graph, shell_vars, functions = parse_exec_graph(request)
+                debug = True if request['debug'] else False
+                kill_target = request['kill_target']
+                save_configs(graph, dfs_configs_paths)
+                rc = exec_graph(graph, shell_vars, functions, kill_target, debug)
+                rcs.append((rc, request))
+                body = {}
+            else:
+                print(f"Unsupported request {request}")
+            send_success(conn, body)
+    print("connection ended")
 
     for rc, request in rcs:
         if request['debug']:
             send_log(rc, request)
         else:
             rc.wait()
-
-    log("connection ended")
 
 
 def parse_args():

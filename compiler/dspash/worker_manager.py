@@ -67,25 +67,12 @@ class WorkerConnection:
         #TODO: do I need to open and close connection?
         send_msg(self._socket, request)
         # TODO wait until the command exec finishes and run this in parallel?
-        retries = 0
-        MAX_RETRIES = 2
-        RETRY_DELAY = 1
-        self._socket.settimeout(5)
-        response_data = None
-        response = None
-        while retries < MAX_RETRIES and not response_data:
-            try:
-                response_data = recv_msg(self._socket)
-                response = decode_request(response_data)
-                log(f"Socket {self._socket.getsockname()} recieved response from {self._socket.getpeername()}, response: {response}")
-            except socket.timeout:
-                log(f"Timeout encountered. Retry {retries + 1} of {MAX_RETRIES}.")
-                retries += 1
-                time.sleep(RETRY_DELAY)
-        if not response_data or response['status'] != "OK":
+        response_data = recv_msg(self._socket)
+        if not response_data or decode_request(response_data)['status'] != "OK":
             raise Exception(f"didn't recieved ack on request {response_data}")
         else:
             # self._running_processes += 1 #TODO: decrease in case of failure or process ended
+            response = decode_request(response_data)
             return True
 
     def close(self):
@@ -145,8 +132,6 @@ class WorkersManager():
 
         workers = cluster_config["workers"]
         for name, worker in workers.items():
-            if name == "worker3":
-                continue
             host = worker['host']
             port = worker['port']
             self.add_worker(name, host, port)
@@ -182,7 +167,6 @@ class WorkersManager():
                 filename, declared_functions_file = args.split()
                 numExecutedSubgraphs = 0
                 numTotalSubgraphs = None
-                crashed_worker_choice = workers_manager.args.naive_fault if workers_manager.args.naive_fault != '' else "none"
                 try:
                     while not numTotalSubgraphs or numExecutedSubgraphs < numTotalSubgraphs:
                         # In the naive fault tolerance, we want all workers to receive its subgraph(s) without crashing
@@ -205,8 +189,7 @@ class WorkersManager():
                                 log(worker.name, worker)
                                 log(to_shell(subgraph, workers_manager.args))
                                 log("-------------------------------------")
-                                naive_fault = worker.name == crashed_worker_choice
-                                worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args.debug, naive_fault)
+                                worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args)
                                 numExecutedSubgraphs += 1
                             except Exception as e:
                                 # worker timeout
@@ -223,7 +206,6 @@ class WorkersManager():
                     print(e)
 
                     
-
             else:
                 stop_hdfs_deamon()
                 raise Exception(f"Unknown request: {request}")
