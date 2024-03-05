@@ -63,10 +63,10 @@ def file_to_blocks(filepath: str) -> List[List[str]]:
         - rest of the elements are the ip addresses of the datanodes that have the block
 
     Example output:
-    [['BP-68286741-172.20.0.2-1700503545710', 'blk_1073741830', '172.22.0.3:9866', '172.22.0.4:9866', '172.22.0.7:9866'],
-     ['BP-68286741-172.20.0.2-1700503545710', 'blk_1073741831', '172.22.0.3:9866', '172.22.0.5:9866', '172.22.0.7:9866'],
-     ['BP-68286741-172.20.0.2-1700503545710', 'blk_1073741832', '172.22.0.3:9866', '172.22.0.5:9866', '172.22.0.4:9866'],
-     ['BP-68286741-172.20.0.2-1700503545710', 'blk_1073741833', '172.22.0.5:9866', '172.22.0.6:9866', '172.22.0.7:9866']]
+    [['BP-68286741-172.20.0.2-1700503545710', 'blk_1073741830', '172.22.0.3', '172.22.0.4', '172.22.0.7'],
+     ['BP-68286741-172.20.0.2-1700503545710', 'blk_1073741831', '172.22.0.3', '172.22.0.5', '172.22.0.7'],
+     ['BP-68286741-172.20.0.2-1700503545710', 'blk_1073741832', '172.22.0.3', '172.22.0.5', '172.22.0.4'],
+     ['BP-68286741-172.20.0.2-1700503545710', 'blk_1073741833', '172.22.0.5', '172.22.0.6', '172.22.0.7']]
     """
     outer = []
 
@@ -107,9 +107,10 @@ def file_to_blocks(filepath: str) -> List[List[str]]:
 
                 comma_ix = line.find(",", ip_ix)
                 ip_addr = line[ip_ix:comma_ix]
+                hostname = ip_addr.split(':')[0]
                 after = comma_ix
 
-                inner.append(ip_addr)
+                inner.append(hostname)
 
             outer.append(inner)
 
@@ -124,7 +125,7 @@ def block_to_nodes(block_id: str) -> List[str]:
 
     Example:
     input: blk_1073741830
-    output: ['/500mib-file', '172.22.0.3:9866', '172.22.0.4:9866', '172.22.0.7:9866']
+    output: ['/500mib-file', '172.22.0.3', '172.22.0.4', '172.22.0.7']
     """
     res = []
 
@@ -142,7 +143,7 @@ def block_to_nodes(block_id: str) -> List[str]:
     for block in all_blocks:
         if block[1] == block_id:
             for addr in block[2:]:
-                res.append(addr)
+                res.append(addr.split(':')[0])
             break
 
     return res
