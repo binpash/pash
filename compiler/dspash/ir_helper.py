@@ -200,6 +200,10 @@ def split_ir(graph: IR) -> Tuple[List[IR], Dict[int, IR]]:
             for next_id in next_ids:
                 queue.append((next_id, next_graph_policy()))
 
+    # Convert subgraphs to a list and sort by the id of each subgraph
+    subgraphs = list(subgraphs)
+    subgraphs.sort(key=lambda g: g.id)
+
     # for graph in subgraphs:
     #     print(to_shell(graph, config.pash_args), file=sys.stderr)
      

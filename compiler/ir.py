@@ -241,7 +241,7 @@ def make_wrap_map_node(node, new_inputs, new_outputs):
 ## descriptors of the IR, and in general any other local information
 ## that might be relevant.
 class IR:
-
+    id_counter = 0
     ## TODO: Embed the fileIdGen as a field of the IR
 
     ## IR Assumptions:
@@ -255,6 +255,8 @@ class IR:
         self.nodes = nodes
         self.edges = edges
         self.background = background
+        self.id = IR.id_counter
+        IR.id_counter += 1
         # log("Nodes:", self.nodes)
         # log("Edges:", self.edges)
 
