@@ -275,6 +275,6 @@ if __name__ == "__main__":
     # print(file_to_blocks("/README.md"))
     # print(json.dumps(get_live_nodes(), indent=4))
     # print(get_active_node_addresses())
-    start_hdfs_deamon(set(), None, None)
+    start_hdfs_deamon(10, set(), None, None)
     # print(file_to_blocks("/500mib-file"))
     # print(block_to_nodes("blk_1073741830"))
