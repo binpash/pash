@@ -365,6 +365,12 @@ def replace_ast_regions(ast_objects, trans_options):
         ## meaning that we can simply return the original parsed text as it was.
         elif(preprocessed_ast_object.will_anything_be_replaced() or original_text is None):
             preprocessed_asts.append(preprocessed_ast_object.ast)
+        elif trans_options.get_mode() is TransformationType.SPECULATIVE \
+        and len(preprocessed_ast_object.ast.arguments) == 0 \
+        and len(preprocessed_ast_object.ast.assignments) > 0:
+            replaced_ast = replace_df_region([preprocessed_ast_object.ast], trans_options,
+                                            ast_text=original_text, disable_parallel_pipelines=last_object)
+            preprocessed_asts.append(replaced_ast)
         else:
             preprocessed_asts.append(UnparsedScript(original_text))
 
