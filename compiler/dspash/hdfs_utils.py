@@ -215,7 +215,7 @@ def get_active_node_addresses(lastContactThreshold: int):
     }
 
 
-def __hdfs_deamon(
+def __hdfs_daemon(
     lastContactThreshold: int,
     initial_addresses: Set[str],
     func_added: Callable[[str], None],
@@ -240,7 +240,7 @@ def __hdfs_deamon(
         daemon_state = new_deamon_state
 
 
-def start_hdfs_deamon(
+def start_hdfs_daemon(
     lastContactThreshold: int,
     initial_addresses: Set[str],
     func_added: Callable[[str], None],
@@ -253,12 +253,12 @@ def start_hdfs_deamon(
     initial_addresses is a set of ip addresses without ports of the datanodes that are active at the beginning.
     """
     Thread(
-        target=__hdfs_deamon,
+        target=__hdfs_daemon,
         args=(lastContactThreshold, initial_addresses, func_added, func_removed),
     ).start()
 
 
-def stop_hdfs_deamon():
+def stop_hdfs_daemon():
     daemon_quit.set()
 
 
@@ -275,6 +275,6 @@ if __name__ == "__main__":
     # print(file_to_blocks("/README.md"))
     # print(json.dumps(get_live_nodes(), indent=4))
     # print(get_active_node_addresses())
-    start_hdfs_deamon(10, set(), None, None)
+    start_hdfs_daemon(10, set(), None, None)
     # print(file_to_blocks("/500mib-file"))
     # print(block_to_nodes("blk_1073741830"))

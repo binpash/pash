@@ -242,6 +242,8 @@ def create_remote_pipe_from_output_edge(from_subgraph: IR, to_subgraph: IR, edge
     remote_read = remote_pipe.make_remote_pipe([], [new_edge.get_ident()], HOST, DISCOVERY_PORT, True, edge_uid)
     to_subgraph.add_node(remote_read)
 
+    return edge_uid
+
 def create_remote_pipe_from_input_edge(from_subgraph: IR, to_subgraph: IR, edge: FileId, host, port, file_id_gen: FileIdGen):
     stdout = add_stdout_fid(from_subgraph, file_id_gen)
 
@@ -264,6 +266,8 @@ def create_remote_pipe_from_input_edge(from_subgraph: IR, to_subgraph: IR, edge:
     remote_read = remote_pipe.make_remote_pipe([], [ephemeral_edge.get_ident()], HOST, DISCOVERY_PORT, True, edge_uid)
     to_subgraph.add_node(remote_read)
 
+    return edge_uid
+
 def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], get_worker: Callable) -> Tuple[IR, List]:
     """ Takes a list of subgraphs and assigns a worker to each subgraph and augment
     the subgraphs with the necessary remote read/write nodes for data movement 
@@ -280,10 +284,12 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
         main_graph: the graph to execute on main shell
         worker_subgraph_pairs: A list of pairs representing which worker
             each subgraph should be executed on.
+        uuid_to_graphs: A mapping from uuids to pair of (from_subgraph.id, to_subgraph.id)
     """
     # The graph to execute in the main pash_runtime
     main_graph = IR({}, {})
     worker_subgraph_pairs = []
+    uuid_to_graphs = {}
 
     # Replace output edges and corrosponding input edges with remote read/write
     for subgraph in subgraphs:
@@ -321,10 +327,11 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
                     subgraph.get_node(to_node).replace_edge(out_edge_id, new_output_edge.get_ident())
 
                     # Add remote pipe to write from subgraph to main graph
-                    create_remote_pipe_from_input_edge(from_subgraph=matching_subgraph, to_subgraph=subgraph, edge=new_output_edge,  host=HOST, port=DISCOVERY_PORT, file_id_gen=file_id_gen)
+                    uuid = create_remote_pipe_from_input_edge(from_subgraph=matching_subgraph, to_subgraph=subgraph, edge=new_output_edge,  host=HOST, port=DISCOVERY_PORT, file_id_gen=file_id_gen)
+                    uuid_to_graphs[uuid] = (matching_subgraph.id, subgraph.id)
 
-
-                create_remote_pipe_from_output_edge(from_subgraph=subgraph, to_subgraph=matching_subgraph, edge=out_edge, host=worker.host(), port=DISCOVERY_PORT, file_id_gen=file_id_gen)
+                uuid = create_remote_pipe_from_output_edge(from_subgraph=subgraph, to_subgraph=matching_subgraph, edge=out_edge, host=worker.host(), port=DISCOVERY_PORT, file_id_gen=file_id_gen)
+                uuid_to_graphs[uuid] = (subgraph.id, matching_subgraph.id)
 
     # Replace non ephemeral input edges with remote read/write
     for worker, subgraph in worker_subgraph_pairs:
@@ -354,9 +361,11 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
                         subgraph.get_node(from_node).replace_edge(old_edge_id, new_output_edge.get_ident())
 
                         # Add remote pipe to write from subgraph to main graph
-                        create_remote_pipe_from_output_edge(from_subgraph=subgraph, to_subgraph=main_graph, edge=new_output_edge,  host=worker.host(), port=DISCOVERY_PORT, file_id_gen=file_id_gen)
+                        uuid = create_remote_pipe_from_output_edge(from_subgraph=subgraph, to_subgraph=main_graph, edge=new_output_edge,  host=worker.host(), port=DISCOVERY_PORT, file_id_gen=file_id_gen)
+                        uuid_to_graphs[uuid] = (subgraph.id, main_graph.id)
 
-                    create_remote_pipe_from_input_edge(from_subgraph=main_graph, to_subgraph=subgraph, edge=in_edge,  host=HOST, port=DISCOVERY_PORT, file_id_gen=file_id_gen)
+                    uuid = create_remote_pipe_from_input_edge(from_subgraph=main_graph, to_subgraph=subgraph, edge=in_edge,  host=HOST, port=DISCOVERY_PORT, file_id_gen=file_id_gen)
+                    uuid_to_graphs[uuid] = (main_graph.id, subgraph.id)
                 else:
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
                     continue
@@ -364,7 +373,7 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
     # for worker, graph in worker_subgraph_pairs:
     #     print(to_shell(graph, config.pash_args), file=sys.stderr)
 
-    return main_graph, worker_subgraph_pairs
+    return main_graph, worker_subgraph_pairs, uuid_to_graphs
 
 def add_debug_flags(graph: IR):
     for node in graph.nodes.values():
@@ -396,5 +405,5 @@ def prepare_graph_for_remote_exec(filename:str, get_worker:Callable):
     ir, shell_vars = read_graph(filename)
     file_id_gen = ir.get_file_id_gen()
     subgraphs, mapping = split_ir(ir)
-    main_graph, worker_graph_pairs = assign_workers_to_subgraphs(subgraphs, file_id_gen, mapping, get_worker)
-    return worker_graph_pairs, shell_vars, main_graph
+    main_graph, worker_graph_pairs, uuid_to_graphs = assign_workers_to_subgraphs(subgraphs, file_id_gen, mapping, get_worker)
+    return worker_graph_pairs, shell_vars, main_graph, uuid_to_graphs

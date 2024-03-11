@@ -1,24 +1,26 @@
+from collections import defaultdict
 import socket
 import os
+from threading import Event, Thread
 import time
 import queue
 import pickle
 import json
+from uuid import UUID
 
 from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
 from util import log
 from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file
 from dspash.utils import read_file
-from dspash.hdfs_utils import start_hdfs_deamon, stop_hdfs_deamon
+from dspash.hdfs_utils import start_hdfs_daemon, stop_hdfs_daemon
 import config 
 import copy
 import requests
 
+HOST = socket.gethostbyname(socket.gethostname())
 PORT = 65425        # Port to listen on (non-privileged ports are > 1023)
 # TODO: get the url from the environment or config
 DEBUG_URL = f'http://{socket.getfqdn()}:5001' 
-
-ctx = {}
 
 class WorkerConnection:
     def __init__(self, name, host, port):
@@ -93,13 +95,28 @@ class WorkerConnection:
     def host(self):
         return self._host
 
-class WorkersManager():
+class WorkersManager():    
     def __init__(self, workers: WorkerConnection = []):
         self.workers = workers
         self.host = socket.gethostbyname(socket.gethostname())
         self.args = copy.copy(config.pash_args)
         # Required to create a correct multi sink graph
         self.args.termination = "" 
+
+        self.worker_subgraph_pairs = []
+        self.shell_vars = None
+        self.uuid_to_graphs = {}
+        self.graph_to_uuid = defaultdict(list)
+        self.declared_functions = None
+
+        self.daemon_quit = Event()
+        self.uuid_to_read_graph_id = {}
+        self.uuid_to_write_graph_id = {}
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.bind((HOST, PORT))
+        self.s.listen()
+        log(f"Worker manager on {HOST}:{PORT}")
+        Thread(target=self.__daemon, daemon=True).start()
 
     def get_worker(self, fids = None) -> WorkerConnection:
         if not fids:
@@ -136,7 +153,7 @@ class WorkersManager():
             self.add_worker(name, host, port)
 
         addrs = {conn.host() for conn in self.workers}
-        start_hdfs_deamon(10, addrs, self.addr_added, self.addr_removed)
+        start_hdfs_daemon(10, addrs, self.addr_added, self.addr_removed)
 
     def addr_added(self, addr: str):
         log(f"Added {addr} to active nodes")
@@ -150,59 +167,89 @@ class WorkersManager():
             if worker.host() == addr:
                 worker._online = False
 
-        for worker, subgraph in ctx['worker_subgraph_pairs']:
-            if worker.host() == addr:
-                ctx['worker_subgraph_pairs'].remove((worker, subgraph))
+        for worker, subgraph in self.worker_subgraph_pairs:
+            # second condition is to avoid sending the subgraph 
+            # if it's already sent all of it's outputs to another worker
+            if worker.host() == addr and self.graph_to_uuid[subgraph.id]:
+                self.worker_subgraph_pairs.remove((worker, subgraph))
                 subgraph_critical_fids = list(filter(lambda fid: fid.has_remote_file_resource(), subgraph.all_fids()))
                 new_worker = self.get_worker(subgraph_critical_fids)
                 new_worker._running_processes += 1
                 try:
-                    new_worker.send_graph_exec_request(subgraph, ctx['shell_vars'], ctx['declared_functions'], self.args)
+                    new_worker.send_graph_exec_request(subgraph, self.shell_vars, self.declared_functions, self.args)
                     log(f"Sent subgraph {subgraph.id} to {new_worker}")
                 except Exception as e:
                     log(f"Failed to send graph execution request with error {e}")
 
+    def __daemon(self):
+        self.s.settimeout(1)  # Set a timeout of 1 second
+        while not self.daemon_quit.is_set():
+            try:
+                conn, addr = self.s.accept()
+                Thread(target=self.__manage_connection, args=[conn, addr]).start()
+            except socket.timeout:
+                continue
+
+    def __manage_connection(self, conn: socket, addr):
+        # 1 byte for read or write and 16 byte for uuid
+        data = conn.recv(17)
+
+        # ideally do this in a loop, but it's extemely unlikely that the data will be split
+        assert len(data) == 17
+
+        # Read the first byte to get if the request is from read or write client
+        read_client = True if data[0] == 0 else False
+
+        uuid = UUID(bytes=data[1:])
+
+        if read_client:
+            responsible_graph = self.uuid_to_graphs[uuid][0]
+            self.graph_to_uuid[responsible_graph].remove(uuid)
+            log(f"Removed {uuid} from graph_to_uuid[{responsible_graph}]")
+
     def run(self):
-        workers_manager = self
-        workers_manager.add_workers_from_cluster_config(os.path.join(config.PASH_TOP, 'cluster.json'))
-        if workers_manager.args.debug:
+        self.add_workers_from_cluster_config(os.path.join(config.PASH_TOP, 'cluster.json'))
+        if self.args.debug:
             try:
                 requests.post(f'{DEBUG_URL}/clearall') # clears all the debug server logs
             except Exception as e:
                 log(f"Failed to connect to debug server with error {e}\n")
-                workers_manager.args.debug = False # Turn off debugging
+                self.args.debug = False # Turn off debugging
 
         dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
         while True:
             request, conn = dspash_socket.get_next_cmd()
             if request.startswith("Done"):
                 dspash_socket.close()
-                stop_hdfs_deamon()
+                stop_hdfs_daemon()
+                self.daemon_quit.set()
                 break
             elif request.startswith("Exec-Graph"):
                 args = request.split(':', 1)[1].strip()
                 filename, declared_functions_file = args.split()
 
-                worker_subgraph_pairs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename, workers_manager.get_worker)
-                script_fname = to_shell_file(main_graph, workers_manager.args)
+                self.worker_subgraph_pairs, self.shell_vars, main_graph, self.uuid_to_graphs = prepare_graph_for_remote_exec(filename, self.get_worker)
+                script_fname = to_shell_file(main_graph, self.args)
                 log("Master node graph stored in ", script_fname)
-                ctx["worker_subgraph_pairs"] = worker_subgraph_pairs
-                ctx["shell_vars"] = shell_vars
+
+                # These graphs are responsible for producing these outputs
+                for uuid, (from_graph, _) in self.uuid_to_graphs.items():
+                    self.graph_to_uuid[from_graph].append(uuid)
 
                 # Read functions
                 log("Functions stored in ", declared_functions_file)
-                declared_functions = read_file(declared_functions_file)
-                ctx["declared_functions"] = declared_functions
+                self.declared_functions = read_file(declared_functions_file)
 
                 # Report to main shell a script to execute
                 response_msg = f"OK {script_fname}"
                 dspash_socket.respond(response_msg, conn)
 
                 # Execute subgraphs on workers
-                for worker, subgraph in worker_subgraph_pairs:
-                    worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args)
+                for worker, subgraph in self.worker_subgraph_pairs:
+                    worker.send_graph_exec_request(subgraph, self.shell_vars, self.declared_functions, self.args)
             else:
-                stop_hdfs_deamon()
+                stop_hdfs_daemon()
+                self.daemon_quit.set()
                 raise Exception(f"Unknown request: {request}")
         
 if __name__ == "__main__":
