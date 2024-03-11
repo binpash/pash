@@ -226,7 +226,7 @@ def create_remote_pipe_from_output_edge(from_subgraph: IR, to_subgraph: IR, edge
     from_subgraph.replace_edge(edge_id, ephemeral_edge)
     edge_uid = uuid4()
     # Add remote-write node at the end of the subgraph
-    remote_write = remote_pipe.make_remote_pipe([ephemeral_edge.get_ident()], [stdout.get_ident()], host, port, False, edge_uid)
+    remote_write = remote_pipe.make_remote_pipe([ephemeral_edge.get_ident()], [stdout.get_ident()], HOST, DISCOVERY_PORT, False, edge_uid)
     from_subgraph.add_node(remote_write)
     
     # Copy the old output edge resource
@@ -239,7 +239,7 @@ def create_remote_pipe_from_output_edge(from_subgraph: IR, to_subgraph: IR, edge
     else:
         to_subgraph.add_edge(new_edge)
 
-    remote_read = remote_pipe.make_remote_pipe([], [new_edge.get_ident()], host, port, True, edge_uid)
+    remote_read = remote_pipe.make_remote_pipe([], [new_edge.get_ident()], HOST, DISCOVERY_PORT, True, edge_uid)
     to_subgraph.add_node(remote_read)
 
 def create_remote_pipe_from_input_edge(from_subgraph: IR, to_subgraph: IR, edge: FileId, host, port, file_id_gen: FileIdGen):
