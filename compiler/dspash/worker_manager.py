@@ -18,6 +18,8 @@ PORT = 65425        # Port to listen on (non-privileged ports are > 1023)
 # TODO: get the url from the environment or config
 DEBUG_URL = f'http://{socket.getfqdn()}:5001' 
 
+ctx = {}
+
 class WorkerConnection:
     def __init__(self, name, host, port):
         self.name = name
@@ -138,9 +140,27 @@ class WorkersManager():
 
     def addr_added(self, addr: str):
         log(f"Added {addr} to active nodes")
+        for worker in self.workers:
+            if worker.host() == addr:
+                worker._online = True
 
     def addr_removed(self, addr: str):
         log(f"Removed {addr} from active nodes")
+        for worker in self.workers:
+            if worker.host() == addr:
+                worker._online = False
+
+        for worker, subgraph in ctx['worker_subgraph_pairs']:
+            if worker.host() == addr:
+                ctx['worker_subgraph_pairs'].remove((worker, subgraph))
+                subgraph_critical_fids = list(filter(lambda fid: fid.has_remote_file_resource(), subgraph.all_fids()))
+                new_worker = self.get_worker(subgraph_critical_fids)
+                new_worker._running_processes += 1
+                try:
+                    new_worker.send_graph_exec_request(subgraph, ctx['shell_vars'], ctx['declared_functions'], self.args)
+                    log(f"Sent subgraph {subgraph.id} to {new_worker}")
+                except Exception as e:
+                    log(f"Failed to send graph execution request with error {e}")
 
     def run(self):
         workers_manager = self
@@ -166,10 +186,13 @@ class WorkersManager():
                 worker_subgraph_pairs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename, workers_manager.get_worker)
                 script_fname = to_shell_file(main_graph, workers_manager.args)
                 log("Master node graph stored in ", script_fname)
+                ctx["worker_subgraph_pairs"] = worker_subgraph_pairs
+                ctx["shell_vars"] = shell_vars
 
                 # Read functions
                 log("Functions stored in ", declared_functions_file)
                 declared_functions = read_file(declared_functions_file)
+                ctx["declared_functions"] = declared_functions
 
                 # Report to main shell a script to execute
                 response_msg = f"OK {script_fname}"
