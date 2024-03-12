@@ -17,10 +17,20 @@ class RemotePipe(DFGNode):
         opt_count = len(self.com_options)
         self.com_options.append((opt_count, Arg(string_to_argument(f"--kill {addr}"))))
 
+    def add_manager_server_addr(self, host, port):
+        opt_count = len(self.com_options)
+        self.com_options.append((opt_count, Arg(string_to_argument(f"--managerAddr {host}:{port}"))))
+
     def is_remote_read(self):
         com_name = self.com_name.opt_serialize()
         read_com = config.config['runtime']['remote_read_binary']
         return read_com in com_name
+
+    def get_manager_server_host(self):
+        for idx, option in enumerate(self.com_options):
+            if "--managerAddr" in option[1].opt_serialize():
+                return option[1].opt_serialize().split(' ')[1].split(':')[0]
+        return ""
 
 
 def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, id):
@@ -36,7 +46,7 @@ def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, id):
             config.DISH_TOP, config.config['runtime']['remote_write_binary'])
 
     com_name = Arg(string_to_argument(remote_pipe_bin))
-
+    # serverAddr is not necessary - just passing host_ip would be enough
     options.append(
         (opt_count, Arg(string_to_argument(f"--addr {host_ip}:{port}"))))
     options.append((opt_count + 1, Arg(string_to_argument(f"--id {id}"))))

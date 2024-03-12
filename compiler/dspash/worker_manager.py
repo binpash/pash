@@ -4,10 +4,11 @@ import time
 import queue
 import pickle
 import json
+from uuid import uuid4
 
 from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
 from util import log
-from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file
+from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file, add_debug_flags, is_merger_subgraph, has_merger_subgraph
 from dspash.utils import read_file
 from dspash.hdfs_utils import start_hdfs_deamon, stop_hdfs_deamon
 import config 
@@ -15,6 +16,7 @@ import copy
 import requests
 from ir_to_ast import to_shell
 import time
+import collections
 
 PORT = 65425        # Port to listen on (non-privileged ports are > 1023)
 # TODO: get the url from the environment or config
@@ -100,7 +102,25 @@ class WorkersManager():
         self.host = socket.gethostbyname(socket.gethostname())
         self.args = copy.copy(config.pash_args)
         # Required to create a correct multi sink graph
-        self.args.termination = "" 
+        self.args.termination = ""
+        self.request_args = [] 
+        self.dspash_socket = None
+        # metadata
+        self.subgraph_id_to_subgraph = {}
+        self.worker_to_subgraphs_id = collections.defaultdict(list)
+        self.subgraph_id_to_worker = collections.defaultdict(WorkerConnection)
+
+    def init_metadata(self, worker_subgraph_pairs):
+        # Excluding main_graph for now
+        for worker, subgraph in worker_subgraph_pairs:
+            subgraph_id = subgraph.id
+            self.subgraph_id_to_subgraph[subgraph_id] = subgraph
+            self.worker_to_subgraphs_id[worker].append(subgraph_id)
+            self.subgraph_id_to_worker[subgraph_id] = worker
+
+    def get_subgraphs_for_worker(self, worker: WorkerConnection):
+        return [self.subgraph_id_to_subgraph[subgraph_id] for subgraph_id in self.worker_to_subgraphs_id[worker]]
+
 
     def get_worker(self, fids = None) -> WorkerConnection:
         if not fids:
@@ -142,8 +162,75 @@ class WorkersManager():
     def addr_added(self, addr: str):
         log(f"Added {addr} to active nodes")
 
+    # This function is called when a datanode is found to be dead. 
+    # Fault tolerance mechanism is triggered
     def addr_removed(self, addr: str):
         log(f"Removed {addr} from active nodes")
+        worker = self.get_worker_by_host(addr.split(':')[0])
+        worker.close()
+        log(f"{worker} closed")
+        # Check if the crashed worker contains a merger subgraph
+        merger_node_crash = has_merger_subgraph(self.get_subgraphs_for_worker(worker))
+        if merger_node_crash:
+            self.schedule_graphs(True, False)
+        else:
+            self.schedule_graphs(True, True)
+        log(f"Fault tolerance mechanism triggered")
+
+    def get_worker_by_host(self, host):
+        for worker in self.workers:
+            if worker.host() == host:
+                return worker
+        return None
+    
+    # If skip_merger_subgraph, we don't schedule the merger subgraph
+    def schedule_graphs(self, executingFT: bool, skip_merger_subgraph, conn: socket.socket=None):
+        filename, declared_functions_file = self.request_args.split()
+        reExecuting = False
+        workers_manager = self
+        try:
+            # In the naive fault tolerance, if a crash happens, 
+            # we'll re-split the IR and do it again until scheduling is done without any crash.
+            worker_subgraph_pairs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename, workers_manager.get_worker, self.request_hash)
+            log(f"num subgraphs: {len(worker_subgraph_pairs)}")
+
+            self.init_metadata(worker_subgraph_pairs)
+            # Read functions
+            log("Functions stored in ", declared_functions_file)
+            declared_functions = read_file(declared_functions_file)
+
+            if not executingFT:
+                add_debug_flags(main_graph)
+
+                # Only send main_graph to client once. Re-executing logic will be handled in datastream.go
+                script_fname = to_shell_file(main_graph, workers_manager.args)
+                log("Master node graph stored in ", script_fname)
+            
+                # Report to main shell a script to execute
+                log(to_shell(main_graph, workers_manager.args))
+                log("-------------------------------------")
+                response_msg = f"OK {script_fname}"
+                self.dspash_socket.respond(response_msg, conn)
+                log("-------------------------------------")
+
+            # Execute subgraphs on workers
+            for worker, subgraph in worker_subgraph_pairs: 
+                if skip_merger_subgraph and is_merger_subgraph(subgraph):
+                    log("Skipping merger subgraph!")
+                    continue                           
+                try:
+                    log(worker.name, worker)
+                    log(to_shell(subgraph, workers_manager.args))
+                    log("-------------------------------------")
+                    worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args)
+                except Exception as e:
+                    # worker timeout
+                    worker.close()
+                    log(f"{worker} closed")
+                    break
+        except Exception as e:
+            print(e)
+
 
     def run(self):
         workers_manager = self
@@ -155,57 +242,17 @@ class WorkersManager():
                 log(f"Failed to connect to debug server with error {e}\n")
                 workers_manager.args.debug = False # Turn off debugging
 
-        dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
+        self.dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
         while True:
-            request, conn = dspash_socket.get_next_cmd()
+            request, conn = self.dspash_socket.get_next_cmd()
             if request.startswith("Done"):
-                dspash_socket.close()
+                self.dspash_socket.close()
                 stop_hdfs_deamon()
                 break
             elif request.startswith("Exec-Graph"):
-                args = request.split(':', 1)[1].strip()
-                filename, declared_functions_file = args.split()
-                numExecutedSubgraphs = 0
-                numTotalSubgraphs = None
-                try:
-                    while not numTotalSubgraphs or numExecutedSubgraphs < numTotalSubgraphs:
-                        # In the naive fault tolerance, we want all workers to receive its subgraph(s) without crashing
-                        # if a crash happens, we'll re-split the IR and do it again until scheduling is done without any crash.
-                        numExecutedSubgraphs = 0
-                        worker_subgraph_pairs, shell_vars, main_graph = prepare_graph_for_remote_exec(filename, workers_manager.get_worker)
-                        if numTotalSubgraphs == None:
-                            numTotalSubgraphs = len(worker_subgraph_pairs)
-                        log(f"num subgraphs: {numTotalSubgraphs}")
-                        script_fname = to_shell_file(main_graph, workers_manager.args)
-                        log("Master node graph stored in ", script_fname)
-
-                        # Read functions
-                        log("Functions stored in ", declared_functions_file)
-                        declared_functions = read_file(declared_functions_file)
-
-                        # Execute subgraphs on workers
-                        for worker, subgraph in worker_subgraph_pairs:                            
-                            try:
-                                log(worker.name, worker)
-                                log(to_shell(subgraph, workers_manager.args))
-                                log("-------------------------------------")
-                                worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, workers_manager.args)
-                                numExecutedSubgraphs += 1
-                            except Exception as e:
-                                # worker timeout
-                                worker.close()
-                                log(f"{worker} closed")
-                                break
-                    # Report to main shell a script to execute
-                    # Delay this to the very end when every worker has received the subgraph
-                    log(to_shell(main_graph, workers_manager.args))
-                    log("-------------------------------------")
-                    response_msg = f"OK {script_fname}"
-                    dspash_socket.respond(response_msg, conn)
-                except Exception as e:
-                    print(e)
-
-                    
+                self.request_args = request.split(':', 1)[1].strip()
+                self.request_hash = str(uuid4())
+                self.schedule_graphs(False, False, conn)
             else:
                 stop_hdfs_deamon()
                 raise Exception(f"Unknown request: {request}")

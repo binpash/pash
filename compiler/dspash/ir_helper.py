@@ -5,7 +5,7 @@ import pickle
 import traceback
 from datetime import datetime
 from typing import List, Set, Tuple, Dict, Callable
-from uuid import uuid4
+from uuid import uuid4, uuid5
 sys.path.append("/pash/compiler")
 
 import config
@@ -216,7 +216,7 @@ def add_stdout_fid(graph : IR, file_id_gen: FileIdGen) -> FileId:
     return stdout
 
 
-def create_remote_pipe_from_output_edge(from_subgraph: IR, to_subgraph: IR, edge: FileId, host, port, file_id_gen: FileIdGen):
+def create_remote_pipe_from_output_edge(from_subgraph: IR, to_subgraph: IR, edge: FileId, host, port, file_id_gen: FileIdGen, request_hash: str):
     stdout = add_stdout_fid(from_subgraph, file_id_gen)
     edge_id = edge.get_ident()
 
@@ -224,7 +224,7 @@ def create_remote_pipe_from_output_edge(from_subgraph: IR, to_subgraph: IR, edge
     # to avoid modifying the edge in case it's used in some other subgraph
     ephemeral_edge = file_id_gen.next_ephemeral_file_id()
     from_subgraph.replace_edge(edge_id, ephemeral_edge)
-    edge_uid = uuid4()
+    edge_uid = uuid5(uuid.NAMESPACE_OID, str(edge) + request_hash)
     # Add remote-write node at the end of the subgraph
     remote_write = remote_pipe.make_remote_pipe([ephemeral_edge.get_ident()], [stdout.get_ident()], host, port, False, edge_uid)
     from_subgraph.add_node(remote_write)
@@ -242,7 +242,7 @@ def create_remote_pipe_from_output_edge(from_subgraph: IR, to_subgraph: IR, edge
     remote_read = remote_pipe.make_remote_pipe([], [new_edge.get_ident()], host, port, True, edge_uid)
     to_subgraph.add_node(remote_read)
 
-def create_remote_pipe_from_input_edge(from_subgraph: IR, to_subgraph: IR, edge: FileId, host, port, file_id_gen: FileIdGen):
+def create_remote_pipe_from_input_edge(from_subgraph: IR, to_subgraph: IR, edge: FileId, host, port, file_id_gen: FileIdGen, request_hash: str):
     stdout = add_stdout_fid(from_subgraph, file_id_gen)
 
     # Copy the old input edge resource
@@ -250,21 +250,21 @@ def create_remote_pipe_from_input_edge(from_subgraph: IR, to_subgraph: IR, edge:
     new_edge.set_resource(edge.get_resource())
     from_subgraph.add_edge(new_edge)
 
-    # Add remote write to main subgraph
-    edge_uid = uuid4()
-    remote_write = remote_pipe.make_remote_pipe([new_edge.get_ident()], [stdout.get_ident()], HOST, DISCOVERY_PORT, False, edge_uid)
-    from_subgraph.add_node(remote_write)
-
     # Add remote read to current subgraph
     ephemeral_edge = file_id_gen.next_ephemeral_file_id()
     old_edge_id = edge.get_ident()
+    edge_uid = uuid5(uuid.NAMESPACE_OID, str(edge) + request_hash)
 
     to_subgraph.replace_edge(old_edge_id, ephemeral_edge)
 
     remote_read = remote_pipe.make_remote_pipe([], [ephemeral_edge.get_ident()], HOST, DISCOVERY_PORT, True, edge_uid)
     to_subgraph.add_node(remote_read)
 
-def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], get_worker: Callable) -> Tuple[IR, List]:
+    # Add remote write to main subgraph
+    remote_write = remote_pipe.make_remote_pipe([new_edge.get_ident()], [stdout.get_ident()], HOST, DISCOVERY_PORT, False, edge_uid)
+    from_subgraph.add_node(remote_write)
+
+def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], get_worker: Callable, request_hash: str) -> Tuple[IR, List]:
     """ Takes a list of subgraphs and assigns a worker to each subgraph and augment
     the subgraphs with the necessary remote read/write nodes for data movement 
     between workers. This function also produces graph that should run in 
@@ -284,7 +284,6 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
     # The graph to execute in the main pash_runtime
     main_graph = IR({}, {})
     worker_subgraph_pairs = []
-
     # Replace output edges and corrosponding input edges with remote read/write
     for subgraph in subgraphs:
         subgraph_critical_fids = list(filter(lambda fid: fid.has_remote_file_resource(), subgraph.all_fids()))
@@ -292,7 +291,6 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
         worker._running_processes += 1
         worker_subgraph_pairs.append((worker, subgraph))
         sink_nodes = subgraph.sink_nodes()
-        
         for sink_node in sink_nodes:
             for out_edge in subgraph.get_node_output_fids(sink_node):
                 out_edge_id = out_edge.get_ident()
@@ -304,7 +302,6 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
 
                 if matching_subgraph == subgraph:
                     continue
-                
                 # In case this fid from and to nodes are in the same graph
                 # we need to both read/write the fid from/to the main machine
                 # TODO: we might want to optimize this by offloading everything to the
@@ -321,10 +318,9 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
                     subgraph.get_node(to_node).replace_edge(out_edge_id, new_output_edge.get_ident())
 
                     # Add remote pipe to write from subgraph to main graph
-                    create_remote_pipe_from_input_edge(from_subgraph=matching_subgraph, to_subgraph=subgraph, edge=new_output_edge,  host=HOST, port=DISCOVERY_PORT, file_id_gen=file_id_gen)
+                    create_remote_pipe_from_input_edge(from_subgraph=matching_subgraph, to_subgraph=subgraph, edge=new_output_edge,  host=HOST, port=DISCOVERY_PORT, file_id_gen=file_id_gen, request_hash=request_hash)
 
-
-                create_remote_pipe_from_output_edge(from_subgraph=subgraph, to_subgraph=matching_subgraph, edge=out_edge, host=worker.host(), port=DISCOVERY_PORT, file_id_gen=file_id_gen)
+                create_remote_pipe_from_output_edge(from_subgraph=subgraph, to_subgraph=matching_subgraph, edge=out_edge, host=worker.host(), port=DISCOVERY_PORT, file_id_gen=file_id_gen, request_hash=request_hash)
 
     # Replace non ephemeral input edges with remote read/write
     for worker, subgraph in worker_subgraph_pairs:
@@ -352,14 +348,21 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
                         new_output_edge.set_resource(in_edge.get_resource())
                         subgraph.add_from_edge(from_node, new_output_edge)
                         subgraph.get_node(from_node).replace_edge(old_edge_id, new_output_edge.get_ident())
-
                         # Add remote pipe to write from subgraph to main graph
-                        create_remote_pipe_from_output_edge(from_subgraph=subgraph, to_subgraph=main_graph, edge=new_output_edge,  host=worker.host(), port=DISCOVERY_PORT, file_id_gen=file_id_gen)
-
-                    create_remote_pipe_from_input_edge(from_subgraph=main_graph, to_subgraph=subgraph, edge=in_edge,  host=HOST, port=DISCOVERY_PORT, file_id_gen=file_id_gen)
+                        create_remote_pipe_from_output_edge(from_subgraph=subgraph, to_subgraph=main_graph, edge=new_output_edge,  host=worker.host(), port=DISCOVERY_PORT, file_id_gen=file_id_gen, request_hash=request_hash)
+                    create_remote_pipe_from_input_edge(from_subgraph=main_graph, to_subgraph=subgraph, edge=in_edge,  host=HOST, port=DISCOVERY_PORT, file_id_gen=file_id_gen, request_hash=request_hash)
                 else:
                     # sometimes a command can have both a file resource and an ephemeral resources (example: spell oneliner)
                     continue
+    
+    # At this point we know which worker corresponds to which subgraph (hence each reader remote_pipe)
+    for _, subgraph in worker_subgraph_pairs + [[HOST, main_graph]]:
+        for boundary_node_id in subgraph.source_nodes() + subgraph.sink_nodes():
+            boundary_node = subgraph.get_node(boundary_node_id)
+            # Sanity check
+            if isinstance(boundary_node, remote_pipe.RemotePipe):
+                boundary_node.add_manager_server_addr(str(HOST), str(DISCOVERY_PORT))
+
 
     # for worker, graph in worker_subgraph_pairs:
     #     print(to_shell(graph, config.pash_args), file=sys.stderr)
@@ -376,7 +379,7 @@ def add_kill_flags(graph: IR, kill_target):
         if isinstance(node, remote_pipe.RemotePipe):
             node.add_kill_flag(kill_target)
 
-def prepare_graph_for_remote_exec(filename:str, get_worker:Callable):
+def prepare_graph_for_remote_exec(filename:str, get_worker:Callable, request_hash: str):
     """
     Reads the complete ir from filename and splits it
     into subgraphs where ony the first subgraph represent a continues
@@ -396,5 +399,27 @@ def prepare_graph_for_remote_exec(filename:str, get_worker:Callable):
     ir, shell_vars = read_graph(filename)
     file_id_gen = ir.get_file_id_gen()
     subgraphs, mapping = split_ir(ir)
-    main_graph, worker_graph_pairs = assign_workers_to_subgraphs(subgraphs, file_id_gen, mapping, get_worker)
+    main_graph, worker_graph_pairs = assign_workers_to_subgraphs(subgraphs, file_id_gen, mapping, get_worker, request_hash)
     return worker_graph_pairs, shell_vars, main_graph
+
+
+# Return if the subgraph is a merger subgraph
+def is_merger_subgraph(subgraph: IR) -> bool:
+    has_remote_reader, has_remote_writer = False, False
+    for boundary_node_id in subgraph.source_nodes() + subgraph.sink_nodes():
+            boundary_node = subgraph.get_node(boundary_node_id)
+            # Sanity check
+            if isinstance(boundary_node, remote_pipe.RemotePipe):
+                if boundary_node.is_remote_read():
+                    has_remote_reader = True
+                else:
+                    has_remote_writer = True
+            if has_remote_reader and has_remote_writer:
+                return True
+
+# Return if the list of subgraphs contain a merger subgraph
+def has_merger_subgraph(subgraphs: [IR]) -> bool:
+    for subgraph in subgraphs:
+        if is_merger_subgraph(subgraph):
+            return True
+    return False
