@@ -60,11 +60,17 @@ def serialize_edge(from_id: int, to_id: int) -> str:
 def serialize_number_of_nodes(number_of_ids: int) -> str:
     return f'{number_of_ids}\n'
 
+def serialize_number_of_var_assignments(number_of_var_assignments: int) -> str:
+    return f'{number_of_var_assignments}\n'
+
 def serialize_loop_context(node_id: int, bb_id) -> str:
     ## Galaxy brain serialization
     # loop_contexts_str = ",".join([str(loop_ctx) for loop_ctx in loop_contexts])
     bb_id_str = str(bb_id)
     return f'{node_id}-loop_ctx-{bb_id_str}\n'
+
+def serialize_var_assignments(node_id: int) -> str:
+    return f'{node_id}-var\n'
 
 def save_current_env_to_file(trans_options):
     initial_env_file = ptempfile()
@@ -89,6 +95,19 @@ def save_loop_contexts(trans_options):
             bb_id = node_bb_dict[node_id]
             po_file.write(serialize_loop_context(node_id, bb_id))
 
+def save_var_assignment_contexts(trans_options):
+    var_nodes = trans_options.get_var_nodes()
+    partial_order_file_path = trans_options.get_partial_order_file()
+    with open(partial_order_file_path, "a") as po_file:
+        for node_id in var_nodes:
+            po_file.write(serialize_var_assignments(node_id))
+            
+def save_number_of_var_assignments(trans_options):
+    number_of_var_assignments = trans_options.get_number_of_var_assignments()
+    partial_order_file_path = trans_options.get_partial_order_file()
+    with open(partial_order_file_path, "a") as po_file:
+        po_file.write(serialize_number_of_var_assignments(number_of_var_assignments))
+
 def serialize_partial_order(trans_options):
     ## Initialize the po file
     dir_path = partial_order_directory()
@@ -110,6 +129,10 @@ def serialize_partial_order(trans_options):
 
     ## Save loop contexts
     save_loop_contexts(trans_options)
+    
+    save_number_of_var_assignments(trans_options)
+    
+    save_var_assignment_contexts(trans_options)
 
     # Save the edges in the partial order file
     edges = trans_options.get_all_edges()
