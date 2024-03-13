@@ -6,7 +6,7 @@ import config
 
 from env_var_names import *
 from shell_ast.ast_util import *
-from shasta.ast_node import ast_match, is_empty_cmd, string_of_arg
+from shasta.ast_node import ast_match, is_empty_cmd, string_of_arg, BArgChar
 from shasta.json_to_ast import to_ast_node
 from parse import from_ast_objects_to_shell
 from speculative import util_spec
@@ -229,7 +229,7 @@ class TransformationState:
     def visit_command(self, command):
         if len(command.arguments) > 0 and string_of_arg(command.arguments[0]) == 'break':
             self.prog.add_break()
-        elif len(command.arguments) == 0 and len(command.assignments) > 0:
+        elif len(command.arguments) == 0 and len(command.assignments) > 0 and not contains_command_substitution(command):
             self.prog.add_var_assignment(command)
             ## GL: HACK to get ids right
             self.var_contexts.append(self.get_current_id() + 1)
@@ -308,7 +308,17 @@ preprocess_cases = {
              lambda ast_node: preprocess_node_case(ast_node, trans_options, last_object=last_object))
 }
 
-
+# Checks is var assignment value is BArgChar
+def contains_command_substitution(ast_node):
+    if len(ast_node.assignments) == 0:
+        return False
+    for assignment in ast_node.assignments:
+        if len(assignment.val) == 0:
+            return False
+        for val in assignment.val:
+            if type(val) == BArgChar:
+                return True
+    return False
 
 ## Replace candidate dataflow AST regions with calls to PaSh's runtime.
 def replace_ast_regions(ast_objects, trans_options):
@@ -456,13 +466,13 @@ def preprocess_node_command(ast_node, trans_options, last_object=False):
     trans_options : TransformationState
 
     if trans_options.get_mode() is TransformationType.PASH \
-        and (len(ast_node.arguments) == 0):
-            preprocessed_ast_object = PreprocessedAST(ast_node,
-                                                    replace_whole=False,
-                                                    non_maximal=False,
-                                                    something_replaced=False,
-                                                    last_ast=last_object)
-            return preprocessed_ast_object
+    and (len(ast_node.arguments) == 0):
+        preprocessed_ast_object = PreprocessedAST(ast_node,
+                                                replace_whole=False,
+                                                non_maximal=False,
+                                                something_replaced=False,
+                                                last_ast=last_object)
+        return preprocessed_ast_object
 
     ## This means we have a command. Commands are always candidate dataflow
     ## regions.
