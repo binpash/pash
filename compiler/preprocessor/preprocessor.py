@@ -16,7 +16,7 @@ LOGGING_PREFIX = "PaSh Preprocessor: "
 def preprocess(input_script_path, args):
     ## 1. Execute the POSIX shell parser that returns the AST in JSON
     preprocessing_parsing_start_time = datetime.now()
-    ast_objects = parse_shell_to_asts(input_script_path)
+    ast_objects = parse_shell_to_asts(input_script_path, bash_mode=args.bash)
     preprocessing_parsing_end_time = datetime.now()
     print_time_delta("Preprocessing -- Parsing", preprocessing_parsing_start_time, preprocessing_parsing_end_time)
 

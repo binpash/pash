@@ -101,6 +101,9 @@ def parse_args():
     parser.add_argument("--expand_using_bash_mirror",
                         help="DEPRECATED: instead of expanding using the internal expansion code, expand using a bash mirror process (slow)",
                         action="store_true")
+    parser.add_argument( "--bash",
+                        help="(experimental) interpret the input as a bash script file",
+                        action="store_true")
 
     ## Set the preprocessing mode to PaSh
     parser.set_defaults(preprocess_mode='pash')

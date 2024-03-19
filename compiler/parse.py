@@ -7,14 +7,34 @@ from shell_ast.ast_util import UnparsedScript
 from shasta.ast_node import ast_node_to_untyped_deep
 from shasta.json_to_ast import to_ast_node
 from shasta.ast_node import string_of_arg
+from shasta.bash_to_shasta_ast import to_ast_nodes as bash_to_ast_nodes
 
 from util import *
 
 import libdash.parser
+import libbash
+
+from .bash_expand import expand_using_bash
 
 ## Parses straight a shell script to an AST
 ## through python without calling it as an executable
-def parse_shell_to_asts(input_script_path):
+def parse_shell_to_asts(input_script_path, bash_mode=False):
+    if bash_mode:
+        try:
+            new_ast_objects = libbash.bash_to_ast(input_script_path, with_linno_info=True)
+
+            ## Transform the untyped ast objects to typed ones
+            typed_ast_objects = []
+            for untyped_ast, original_text, linno_before, linno_after, in new_ast_objects:
+                typed_ast = to_ast_node(untyped_ast)
+                typed_ast_objects.append((typed_ast, original_text, linno_before, linno_after))
+
+            return typed_ast_objects
+        except RuntimeError as e:
+            log("Parsing error!", e)
+            sys.exit(1)
+
+
     try:
         new_ast_objects = libdash.parser.parse(input_script_path)
 
