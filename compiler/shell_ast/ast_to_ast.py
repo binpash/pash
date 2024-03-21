@@ -6,7 +6,7 @@ import config
 
 from env_var_names import *
 from shell_ast.ast_util import *
-from shasta.ast_node import ast_match, is_empty_cmd, string_of_arg
+from shasta.ast_node import ast_match, is_empty_cmd, string_of_arg, BArgChar
 from shasta.json_to_ast import to_ast_node
 from parse import from_ast_objects_to_shell
 from speculative import util_spec
@@ -40,6 +40,9 @@ class ShellBB:
         # self.commands = []
 
     def add_command(self, command):
+        self._is_emtpy = False
+        
+    def add_assignment(self, assignment):
         self._is_emtpy = False
 
     def make_non_empty(self):
@@ -148,6 +151,9 @@ class ShellProg:
 
     def add_command(self, command):
         self.bbs[self.current_bb].add_command(command)
+        
+    def add_var_assignment(self, assignment):
+        self.bbs[self.current_bb].add_assignment(assignment)
 
 ## Use this object to pass options inside the preprocessing
 ## trasnformation.
@@ -157,6 +163,8 @@ class TransformationState:
         self.node_counter = 0
         self.loop_counter = 0
         self.loop_contexts = []
+        self.var_counter = 0
+        self.var_contexts = []
         self.prog = ShellProg()
 
     def get_mode(self):
@@ -190,6 +198,12 @@ class TransformationState:
         else:
             return self.loop_contexts[0]
 
+    def get_number_of_var_assignments(self):
+        return self.var_counter
+    
+    def get_var_nodes(self):
+        return self.var_contexts[:]
+
     def current_bb(self):
         return self.prog.current_bb
 
@@ -215,6 +229,11 @@ class TransformationState:
     def visit_command(self, command):
         if len(command.arguments) > 0 and string_of_arg(command.arguments[0]) == 'break':
             self.prog.add_break()
+        elif len(command.arguments) == 0 and len(command.assignments) > 0 and not contains_command_substitution(command):
+            self.prog.add_var_assignment(command)
+            ## GL: HACK to get ids right
+            self.var_contexts.append(self.get_current_id() + 1)
+            self.var_counter += 1
         else:
             self.prog.add_command(command)
 
@@ -289,7 +308,17 @@ preprocess_cases = {
              lambda ast_node: preprocess_node_case(ast_node, trans_options, last_object=last_object))
 }
 
-
+# Checks is var assignment value is BArgChar
+def contains_command_substitution(ast_node):
+    if len(ast_node.assignments) == 0:
+        return False
+    for assignment in ast_node.assignments:
+        if len(assignment.val) == 0:
+            return False
+        for val in assignment.val:
+            if type(val) == BArgChar:
+                return True
+    return False
 
 ## Replace candidate dataflow AST regions with calls to PaSh's runtime.
 def replace_ast_regions(ast_objects, trans_options):
@@ -435,16 +464,21 @@ def preprocess_node_command(ast_node, trans_options, last_object=False):
     ## If there are no arguments, the command is just an
     ## assignment (Q: or just redirections?)
     trans_options : TransformationState
-    if(len(ast_node.arguments) == 0):
+
+    if trans_options.get_mode() is TransformationType.PASH \
+    and (len(ast_node.arguments) == 0):
         preprocessed_ast_object = PreprocessedAST(ast_node,
-                                                  replace_whole=False,
-                                                  non_maximal=False,
-                                                  something_replaced=False,
-                                                  last_ast=last_object)
+                                                replace_whole=False,
+                                                non_maximal=False,
+                                                something_replaced=False,
+                                                last_ast=last_object)
         return preprocessed_ast_object
 
     ## This means we have a command. Commands are always candidate dataflow
     ## regions.
+
+    ## GL: In spec mode, we treat assignment nodes as commands
+    # breakpoint()
     preprocessed_ast_object = PreprocessedAST(ast_node,
                                               replace_whole=True,
                                               non_maximal=False,
@@ -704,7 +738,7 @@ def preprocess_node_case(ast_node, trans_options, last_object=False):
 ##
 ## If we are need to disable parallel pipelines, e.g., if we are in the context of an if,
 ## or if we are in the end of a script, then we set a variable.
-def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast_text=None) -> AstNode:
+def replace_df_region(asts, trans_options: TransformationState, disable_parallel_pipelines=False, ast_text=None, var_assignment=False) -> AstNode:
 
     transformation_mode = trans_options.get_mode()
     if transformation_mode is TransformationType.PASH:
