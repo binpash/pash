@@ -6,3 +6,4 @@ vars_file="${1?File not given}"
 
 echo "cd ${PWD}" > "$vars_file"
 declare -p >> "$vars_file"
+declare -f >> "$vars_file"
