@@ -7,14 +7,14 @@ from shell_ast.ast_util import UnparsedScript
 from shasta.ast_node import ast_node_to_untyped_deep
 from shasta.json_to_ast import to_ast_node
 from shasta.ast_node import string_of_arg
-from shasta.bash_to_shasta_ast import to_ast_nodes as bash_to_ast_nodes
+from shasta.bash_to_shasta_ast import to_ast_node as bash_to_shasta_ast
 
 from util import *
 
 import libdash.parser
 import libbash
 
-from .bash_expand import expand_using_bash
+from bash_expand import expand_using_bash
 
 ## Parses straight a shell script to an AST
 ## through python without calling it as an executable
@@ -23,11 +23,19 @@ def parse_shell_to_asts(input_script_path, bash_mode=False):
         try:
             new_ast_objects = libbash.bash_to_ast(input_script_path, with_linno_info=True)
 
-            ## Transform the untyped ast objects to typed ones
-            typed_ast_objects = []
+            ## convert the libbash AST to a shasta AST
+            unexpanded_ast_objects = []
             for untyped_ast, original_text, linno_before, linno_after, in new_ast_objects:
-                typed_ast = to_ast_node(untyped_ast)
-                typed_ast_objects.append((typed_ast, original_text, linno_before, linno_after))
+                typed_ast = bash_to_shasta_ast(untyped_ast)
+                unexpanded_ast_objects.append(typed_ast)
+            
+            # expand the shasta AST using bash
+            expanded_ast_objects = expand_using_bash(unexpanded_ast_objects)
+
+            ## Create the final AST objects with the expanded ASTs and linno info
+            typed_ast_objects = []
+            for _, original_text, linno_before, linno_after, expanded_ast in zip(new_ast_objects, expanded_ast_objects):
+                typed_ast_objects.append((expanded_ast, original_text, linno_before, linno_after))
 
             return typed_ast_objects
         except RuntimeError as e:

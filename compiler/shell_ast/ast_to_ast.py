@@ -558,8 +558,12 @@ def replace_df_region(asts, trans_options, disable_parallel_pipelines=False, ast
         sequential_script_file_name = ptempfile()
         text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
         ## However, if we have the original ast text, then we can simply output that.
-        with open(sequential_script_file_name, "w") as script_file:
-            script_file.write(text_to_output)
+        try:
+            with open(sequential_script_file_name, "w") as script_file:
+                script_file.write(text_to_output)
+        except TypeError:
+            with open(sequential_script_file_name, "wb") as script_file:
+                script_file.write(text_to_output)
         replaced_node = make_call_to_pash_runtime(ir_filename, sequential_script_file_name, disable_parallel_pipelines)
     elif transformation_mode is TransformationType.SPECULATIVE:
         text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
