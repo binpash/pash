@@ -1,5 +1,7 @@
+import signal
 import socket
 from multiprocessing import Process
+import time
 from socket_utils import encode_request, decode_request
 import subprocess
 import sys
@@ -25,7 +27,7 @@ PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
 
 def err_print(*args):
-    print(*args, file=sys.stderr)
+    print(*args, file=sys.stderr, flush=True)
 
 
 def send_success(conn, body, msg=""):
@@ -48,7 +50,7 @@ def parse_exec_graph(request):
 def exec_graph(graph, shell_vars, functions, kill_target, debug=False):
     config.config['shell_variables'] = shell_vars
     if debug:
-        print('debug is on')
+        err_print('debug is on')
         add_debug_flags(graph)
         stderr = subprocess.PIPE
     else:
@@ -69,21 +71,30 @@ def exec_graph(graph, shell_vars, functions, kill_target, debug=False):
         dir=config.PASH_TMP_PREFIX, prefix='pashFuncs')
     write_file(functions_file, functions)
     cmd = f"source {functions_file}; source {script_path}"
+    err_print(f"executing {cmd}")
 
     rc = subprocess.Popen(
-        cmd, env=e, executable="/bin/bash", shell=True, stderr=stderr)
+        cmd, env=e, executable="/bin/bash", shell=True, stderr=stderr, preexec_fn=os.setsid)
     return rc
 
 
 class Worker:
     def __init__(self, port=None):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if port == None:
-            # pick a random port
-            self.s.bind((HOST, 0))
+        for _ in range(5):
+            try:
+                if port == None:
+                    # pick a random port
+                    self.s.bind((HOST, 0))
+                else:
+                    self.s.bind((HOST, port))
+                break
+            except socket.error as e:
+                err_print(f"Bind failed with error: {e}. Retrying...")
+                time.sleep(3)
         else:
-            self.s.bind((HOST, port))
-        print(f"Worker running on {HOST}:{self.s.getsockname()[1]}")
+            raise Exception("Could not bind after multiple attempts")
+        err_print(f"Worker running on {HOST}:{self.s.getsockname()[1]}")
 
     def run(self):
         connections = []
@@ -91,7 +102,7 @@ class Worker:
             self.s.listen()
             while (True):
                 conn, addr = self.s.accept()
-                print(f"got new connection")
+                err_print(f"got new connection")
                 t = Process(target=manage_connection, args=[conn, addr])
                 t.start()
                 connections.append(t)
@@ -108,7 +119,7 @@ def send_log(rc: subprocess.Popen, request):
         # timeout is set to 10s for debuggin
         _, err = rc.communicate(timeout=10)
     except:
-        print("process timedout")
+        err_print("process timedout")
         rc.kill()
         _, err = rc.communicate()
 
@@ -125,15 +136,15 @@ def send_log(rc: subprocess.Popen, request):
 def manage_connection(conn, addr):
     rcs = []
     with conn:
-        print('Connected by', addr)
+        err_print('Connected by', addr)
         dfs_configs_paths = {}
         while True:
             data = recv_msg(conn)
             if not data:
                 break
 
-            print("got new request")
             request = decode_request(data)
+            err_print("got new request", request['type'])
 
             if request['type'] == 'Exec-Graph':
                 graph, shell_vars, functions = parse_exec_graph(request)
@@ -143,16 +154,50 @@ def manage_connection(conn, addr):
                 rc = exec_graph(graph, shell_vars, functions, kill_target, debug)
                 rcs.append((rc, request))
                 body = {}
+            elif request['type'] == 'Kill-All-Subgraphs':
+                body = handle_kill_all_subgraphs_request(rcs)
             else:
-                print(f"Unsupported request {request}")
+                err_print(f"Unsupported request {request}")
             send_success(conn, body)
-    print("connection ended")
+    err_print("connection ended")
 
+    err_print("len rcs:", len(rcs))
     for rc, request in rcs:
+        err_print("rc")
         if request['debug']:
             send_log(rc, request)
         else:
             rc.wait()
+
+
+def handle_kill_all_subgraphs_request(rcs):
+    # Record the start time
+    start_time = time.time()
+    err_print("Killing every subgraph")
+
+    # Try to terminate the subprocess gracefully
+    for rc, _ in rcs:
+        os.killpg(os.getpgid(rc.pid), signal.SIGTERM)
+        # rc.terminate()
+
+    for rc, _ in rcs:
+        try:
+            # Wait for the subprocess to terminate, with a timeout
+            rc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            # If the subprocess is still running after the timeout, kill it
+            err_print(f"Terminating subprocess {rc.pid} failed, killing it forcefully")
+            os.killpg(os.getpgid(rc.pid), signal.SIGKILL)
+            rc.wait()
+
+    # Record the end time
+    end_time = time.time()
+
+    # Calculate the time elapsed
+    elapsed_time = end_time - start_time
+
+    err_print(f"Killed every subgraph in {elapsed_time} seconds")
+    return {}
 
 
 def parse_args():

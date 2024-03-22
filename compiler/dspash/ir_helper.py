@@ -291,12 +291,19 @@ def assign_workers_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, inpu
     worker_subgraph_pairs = []
     uuid_to_graphs = {}
 
+    # First element is always merger sg
+    subgraphs[0].merger = True
+
     # Replace output edges and corrosponding input edges with remote read/write
     for subgraph in subgraphs:
         subgraph_critical_fids = list(filter(lambda fid: fid.has_remote_file_resource(), subgraph.all_fids()))
         worker = get_worker(subgraph_critical_fids)
         worker._running_processes += 1
         worker_subgraph_pairs.append((worker, subgraph))
+
+        if subgraph.merger:
+            log(f"Merger subgraph {subgraph.id} assigned to worker {worker.host()}")
+
         sink_nodes = subgraph.sink_nodes()
         
         for sink_node in sink_nodes:

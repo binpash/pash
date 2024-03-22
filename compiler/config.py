@@ -171,6 +171,9 @@ def add_common_arguments(parser):
     parser.add_argument("--kill",
                         help="determines which node is going to be killed. Address or conatiner name must follow this parameter, like \"--kill datanode1\". Only works if distributed_exec is used.",
                         default="")
+    parser.add_argument("--ft",
+                        help="determines which fault tolerance mode is going to be used. Use naive, base or optimized. Default is optimized. Only works if distributed_exec is used.",
+                        default="optimized")
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")

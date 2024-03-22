@@ -256,6 +256,7 @@ class IR:
         self.edges = edges
         self.background = background
         self.id = IR.id_counter
+        self.merger = False
         IR.id_counter += 1
         # log("Nodes:", self.nodes)
         # log("Edges:", self.edges)
