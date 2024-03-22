@@ -36,20 +36,20 @@ class ShellBB:
     commands: list[int] # not used atm
     def __init__(self, num: int):
         self.num = num
-        self._is_emtpy = True
+        self._is_empty = True
         # self.commands = []
 
     def add_command(self, command):
-        self._is_emtpy = False
+        self._is_empty = False
         
     def add_assignment(self, assignment):
-        self._is_emtpy = False
+        self._is_empty = False
 
     def make_non_empty(self):
-        self._is_emtpy = False
+        self._is_empty = False
 
     def is_empty(self):
-        return self._is_emtpy
+        return self._is_empty
 
 class EdgeReason(Enum):
     IF_TAKEN = auto()
@@ -78,20 +78,22 @@ class ShellProg:
         self.bbs.append(ShellBB(next_bb))
         return next_bb
 
-    def add_edge(self, from_bb: int, to_bb: int, label: EdgeReason):
+    def add_edge(self, from_bb: int, to_bb: int, label: EdgeReason, aux_info=None):
         assert from_bb >= 0 and from_bb < len(self.bbs)
         assert to_bb >= 0 and to_bb < len(self.bbs)
         if not from_bb in self.edges:
             self.edges[from_bb] = {}
-        self.edges[from_bb][to_bb] = label
+        if aux_info is None:
+            aux_info = ''
+        self.edges[from_bb][to_bb] = (label, aux_info)
 
-    def enter_for(self):
+    def enter_for(self, it_name):
         test_bb = self.add_bb()
         self.add_edge(self.current_bb, test_bb, EdgeReason.LOOP_BEGIN)
         next_bb = self.add_bb()
         self.add_edge(test_bb, next_bb, EdgeReason.LOOP_SKIP)
         body_bb = self.add_bb()
-        self.add_edge(test_bb, body_bb, EdgeReason.LOOP_TAKEN)
+        self.add_edge(test_bb, body_bb, EdgeReason.LOOP_TAKEN, it_name)
         self.contexts.append(ShellLoopContext(test_bb, next_bb))
         self.current_bb = body_bb
 
@@ -207,13 +209,13 @@ class TransformationState:
     def current_bb(self):
         return self.prog.current_bb
 
-    def enter_loop(self):
+    def enter_for(self, it_name):
         new_loop_id = self.get_next_loop_id()
         self.loop_contexts.insert(0, new_loop_id)
-        self.prog.enter_for()
+        self.prog.enter_for(it_name)
         return new_loop_id
 
-    def exit_loop(self):
+    def exit_for(self):
         self.loop_contexts.pop(0)
         self.prog.leave_for()
 
@@ -537,7 +539,15 @@ def preprocess_node_subshell(ast_node, trans_options, last_object=False):
 ##       We have to find a way to improve that.
 def preprocess_node_for(ast_node, trans_options, last_object=False):
     ## If we are in a loop, we push the loop identifier into the loop context
-    loop_id = trans_options.enter_loop()
+    list_eval_node = to_ast_node(make_assignment('HS_LOOP_LIST', string_to_argument('0')))
+    list_eval_node.assignments[0].val = copy.deepcopy(ast_node.argument[0])
+    list_eval_node, something_replaced = preprocess_close_node(list_eval_node, trans_options, last_object=False)
+    assert something_replaced
+
+    import pdb
+    pdb.set_trace()
+    ast_node.argument = [[to_arg_char(standard_var_ast('HS_LOOP_LIST'))]]
+    loop_id = trans_options.enter_for(ast_node.variable)
     preprocessed_body, something_replaced = preprocess_close_node(ast_node.body, trans_options, last_object=last_object)
 
     ## TODO: Then send this iteration identifier when talking to the spec scheduler
@@ -565,7 +575,7 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
     ## KK 2023-04-27: Could this exit happen before the replacement leading to wrong
     ##     results? I think not because we use the _close_node preprocessing variant.
     ##     A similar issue might happen for while
-    trans_options.exit_loop()
+    trans_options.exit_for()
 
     ## reset the loop iters after we exit the loop
     out_of_loop_loop_ids = trans_options.get_current_loop_context()
@@ -575,6 +585,7 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
     # new_node = ast_node
     new_node = make_typed_semi_sequence(
         [to_ast_node(export_node),
+         list_eval_node,
          ast_node,
          to_ast_node(reset_loop_iters_node)])
     # print(new_node)
@@ -589,7 +600,8 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
 
 def preprocess_node_while(ast_node, trans_options, last_object=False):
     ## If we are in a loop, we push the loop identifier into the loop context
-    trans_options.enter_loop()
+    # Di: explicitly faulting here. will handle while later
+    assert False
 
     preprocessed_test, sth_replaced_test = preprocess_close_node(ast_node.test, trans_options, last_object=last_object)
     preprocessed_body, sth_replaced_body = preprocess_close_node(ast_node.body, trans_options, last_object=last_object)

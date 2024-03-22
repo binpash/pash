@@ -123,8 +123,8 @@ def serialize_partial_order(trans_options):
         po_file.write('Basic blocks:\n')
         po_file.write('Basic block edges:\n')
         for from_bb_id, to_bb_ids in trans_options.prog.edges.items():
-            for to_bb_id, edge_type in to_bb_ids.items():
-                po_file.write(f'{from_bb_id} -> {to_bb_id}: {str(edge_type)}\n')
+            for to_bb_id, (edge_type, aux_info) in to_bb_ids.items():
+                po_file.write(f'{from_bb_id} -> {to_bb_id}: {str(edge_type)}:{aux_info}\n')
         po_file.write('Loop context:\n')
 
     ## Save loop contexts
