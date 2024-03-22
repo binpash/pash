@@ -86,7 +86,9 @@ def killer(delay: float):
 
 def kill():
     script_path = "$DISH_TOP/runtime/scripts/killall.sh"
-    subprocess.run(script_path, shell=True)
+    subprocess.run("/bin/sh " + script_path, shell=True)
+    print("just killed!")
+    sys.exit(1)
 
 
 class Worker:
@@ -118,11 +120,11 @@ class Worker:
             t.join()
 
     def store_exec_profile(self, profile: Dict):
-        log(f"Storing profile: {profile}")
+        print(f"Storing profile: {profile}")
         self.latest_exec_profile.value = profile
 
     def load_exec_profile(self):
-        log(f"Reading profile: {self.latest_exec_profile.value}")
+        print(f"Reading profile: {self.latest_exec_profile.value}")
         return self.latest_exec_profile.value
 
     def store_exec_time(self, time: float):
@@ -178,17 +180,18 @@ class Worker:
                     body = {}
                     send_success(conn, body)
                 elif request['type'] == 'Report-Reception':
-                    log("kill myself")
-                    kill()
+                    pass
+                    # log("kill myself")
+                    # kill()
                 else:
                     print(f"Unsupported request {request}")
         print("connection ended")
-        end_time = time.time()
         for rc, request in rcs:
             if request['debug']:
                 send_log(rc, request)
             else:
                 rc.wait()
+        end_time = time.time()
         if monitor_thread:
             monitor_thread.join()
         elapsed_time = end_time - start_time
