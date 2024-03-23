@@ -340,10 +340,6 @@ def replace_ast_regions(ast_objects, trans_options):
             # log("Last object")
             last_object = True
 
-        import pdb
-        pdb.set_trace()
-        import parse
-
         ast, original_text, _linno_before, _linno_after = ast_object
         assert(isinstance(ast, AstNode))
 
