@@ -340,6 +340,10 @@ def replace_ast_regions(ast_objects, trans_options):
             # log("Last object")
             last_object = True
 
+        import pdb
+        pdb.set_trace()
+        import parse
+
         ast, original_text, _linno_before, _linno_after = ast_object
         assert(isinstance(ast, AstNode))
 
@@ -542,7 +546,11 @@ def preprocess_node_subshell(ast_node, trans_options, last_object=False):
 def preprocess_node_for(ast_node, trans_options, last_object=False):
     ## If we are in a loop, we push the loop identifier into the loop context
     list_eval_node = to_ast_node(make_assignment('HS_LOOP_LIST', string_to_argument('0')))
-    list_eval_node.assignments[0].val = copy.deepcopy(ast_node.argument[0])
+    list_arguments = copy.deepcopy(ast_node.argument[0])
+    for a in ast_node.argument[1:]:
+        list_arguments.append(CArgChar(ord(' ')))
+        list_arguments.extend(copy.deepcopy(a))
+    list_eval_node.assignments[0].val = [QArgChar(list_arguments)]
     list_eval_node, something_replaced = preprocess_close_node(list_eval_node, trans_options, last_object=False)
     assert something_replaced
 
