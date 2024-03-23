@@ -231,7 +231,9 @@ class TransformationState:
     def visit_command(self, command):
         if len(command.arguments) > 0 and string_of_arg(command.arguments[0]) == 'break':
             self.prog.add_break()
-        elif len(command.arguments) == 0 and len(command.assignments) > 0 and not contains_command_substitution(command):
+        elif (len(command.arguments) == 0 and len(command.assignments) > 0 and
+              not contains_command_substitution(command) or
+              len(command.arguments) > 0 and string_of_arg(command.arguments[0]) == 'unset'):
             self.prog.add_var_assignment(command)
             ## GL: HACK to get ids right
             self.var_contexts.append(self.get_current_id() + 1)
@@ -544,8 +546,6 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
     list_eval_node, something_replaced = preprocess_close_node(list_eval_node, trans_options, last_object=False)
     assert something_replaced
 
-    import pdb
-    pdb.set_trace()
     ast_node.argument = [[to_arg_char(standard_var_ast('HS_LOOP_LIST'))]]
     loop_id = trans_options.enter_for(ast_node.variable)
     preprocessed_body, something_replaced = preprocess_close_node(ast_node.body, trans_options, last_object=last_object)
@@ -577,6 +577,10 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
     ##     A similar issue might happen for while
     trans_options.exit_for()
 
+    list_unset_node = to_ast_node(make_unset_var('HS_LOOP_LIST'))
+    list_unset_node, something_replaced = preprocess_close_node(list_unset_node, trans_options, last_object=False)
+    assert something_replaced
+
     ## reset the loop iters after we exit the loop
     out_of_loop_loop_ids = trans_options.get_current_loop_context()
     reset_loop_iters_node = export_pash_loop_iters_for_current_context(out_of_loop_loop_ids)
@@ -587,6 +591,7 @@ def preprocess_node_for(ast_node, trans_options, last_object=False):
         [to_ast_node(export_node),
          list_eval_node,
          ast_node,
+         list_unset_node,
          to_ast_node(reset_loop_iters_node)])
     # print(new_node)
 
