@@ -23,9 +23,14 @@ pash_spec_wait_until_scheduler_listening()
 
 start_server()
 {
-    python3 -S "$PASH_SPEC_TOP/parallel-orch/scheduler_server.py" "$@" &
-    export daemon_pid=$!
-    ## Wait until daemon has established connection
+    python3 -S "$PASH_SPEC_TOP/parallel-orch/scheduler_server.py" "$@"
+    # export daemon_pid=$!
+    # # Wait until daemon has established connection
+    # pash_spec_wait_until_scheduler_listening
+}
+
+connect_server()
+{
     pash_spec_wait_until_scheduler_listening
 }
 
@@ -47,4 +52,4 @@ export -f pash_spec_communicate_scheduler_just_send
 export -f pash_spec_wait_until_scheduler_listening
 export -f start_server
 export -f cleanup_server
-
+export -f connect_server

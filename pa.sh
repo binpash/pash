@@ -48,22 +48,35 @@ mkfifo "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 export DAEMON_SOCKET="${PASH_TMP_PREFIX}/daemon_socket"
 export DSPASH_SOCKET="${PASH_TMP_PREFIX}/dspash_socket"
 
+s=$1
+shift
+echo first option is $s
+echo remaining is $@
 ## Initialize all things necessary for pash to execute (logging/functions/etc)
 source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "$@"
 
 ## This starts a different server depending on the configuration
-if [ "$show_version" -eq 0 ]; then
-  ## Exports $daemon_pid
-  start_server "$@"
+# if [ "$show_version" -eq 0 ]; then
+#   ## Exports $daemon_pid
+#   start_server "$@"
+# fi
+
+if [ $s == "--server" ]; then
+    echo here
+    start_server $@
+    exit
+else
+    echo there
+    connect_server
 fi
 
 ## Restore the umask before executing
 umask "$old_umask"
 PASH_FROM_SH="pa.sh" python3 -S "$PASH_TOP/compiler/pash.py" "$@"
 pash_exit_code=$?
-if [ "$show_version" -eq 0 ]; then
-  cleanup_server "${daemon_pid}"
-fi
+# if [ "$show_version" -eq 0 ]; then
+#   cleanup_server "${daemon_pid}"
+# fi
 
 ## Don't delete the temporary directory if we are debugging
 if [ "$PASH_DEBUG_LEVEL" -eq 0 ]; then
