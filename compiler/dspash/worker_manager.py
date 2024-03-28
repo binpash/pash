@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
 from util import log
-from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file, add_debug_flags, is_merger_subgraph, has_merger_subgraph
+from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file, add_debug_flags, is_merger_subgraph, has_merger_subgraph, get_main_writer_graphs
 from dspash.utils import read_file
 from dspash.hdfs_utils import start_hdfs_deamon, stop_hdfs_deamon
 import config 
@@ -183,7 +183,7 @@ class WorkersManager():
                 return worker
         return None
     
-    # If skip_merger_subgraph, we don't schedule the merger subgraph
+    # If skip_merger_subgraph, it means 1) we don't schedule the merger subgraph, 2) no need to re-execute part of main_graph
     def schedule_graphs(self, executingFT: bool, skip_merger_subgraph, conn: socket.socket=None):
         filename, declared_functions_file = self.request_args.split()
         reExecuting = False
@@ -212,7 +212,38 @@ class WorkersManager():
                 response_msg = f"OK {script_fname}"
                 self.dspash_socket.respond(response_msg, conn)
                 log("-------------------------------------")
+            else:
+                if not skip_merger_subgraph:
+                    # if merger main_graph is crashed, we need to re-execute part of main_graph on client's node
 
+                    # when a main_graph is a "merger subgraph", it doesn' mean it has a merger command
+                    #       it means in addition to reading from merger subgraph with remote_read, it 
+                    #       also sends some local data (e.g. from local file on client's node) to the [actual] merger subgraph
+
+                    # Check if there's a part of main_graph that also needs to be re-executed
+                    # e.g. if main_graph contains 1) datastream write < cat dict.txt, 2) datastream read, the first part 1) needs to be re-executed
+                    
+                    # think of this as "customer service" after sending main_graph to the client initially
+                    # start a new connection to the socket, send a graph for re-execution when fault happens
+                    #                 and there's a need to re-execute part of main_grpah on the client node
+                    main_writer_graphs = get_main_writer_graphs(main_graph)
+                    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+                        sock.connect(os.getenv('DSPASH_REEXEC_SOCKET'))
+                        script_fnames = []
+                        for main_writer_graph in main_writer_graphs:
+                            if not main_writer_graph.empty():
+                                log("main_writer_graph")
+                                log(to_shell(main_writer_graph, workers_manager.args))
+                                script_fname = to_shell_file(main_writer_graph, workers_manager.args)
+                                script_fnames.append(script_fname)
+                        try:
+                            script_fnames_str = " ".join(script_fnames)
+                            message = f"REEXEC {script_fnames_str}\n"
+                            bytes_message = message.encode('utf-8')
+                            sock.sendall(bytes_message)
+                        except Exception as e:
+                            log(e)
+                        log("-------------------------------------")
             # Execute subgraphs on workers
             for worker, subgraph in worker_subgraph_pairs: 
                 if skip_merger_subgraph and is_merger_subgraph(subgraph):
