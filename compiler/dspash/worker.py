@@ -1,6 +1,6 @@
 import signal
 import socket
-from multiprocessing import Process
+from multiprocessing import Process, Manager
 import time
 from socket_utils import encode_request, decode_request
 import subprocess
@@ -8,6 +8,9 @@ import sys
 import os
 import argparse
 import requests
+from typing import Dict
+import time
+import threading
 
 DISH_TOP = os.environ['DISH_TOP']
 PASH_TOP = os.environ['PASH_TOP']
@@ -77,6 +80,17 @@ def exec_graph(graph, shell_vars, functions, kill_target, debug=False):
         cmd, env=e, executable="/bin/bash", shell=True, stderr=stderr, preexec_fn=os.setsid)
     return rc
 
+def killer(delay: float):
+    time.sleep(delay)
+    err_print(f"invoking kill() after delay: {delay}")
+    kill()
+
+
+def kill():
+    script_path = "$DISH_TOP/runtime/scripts/killall.sh"
+    subprocess.run("/bin/sh " + script_path, shell=True)
+    err_print("just killed!")
+    sys.exit(1)
 
 class Worker:
     def __init__(self, port=None):
@@ -88,6 +102,12 @@ class Worker:
                     self.s.bind((HOST, 0))
                 else:
                     self.s.bind((HOST, port))
+                 # This assumes that for one execution of DiSh,
+                # the schedular schedules subgraphs to worker in one socket connection.
+                # Otherwise this profiling design can go out of order.
+                self.manager = Manager()
+                self.latest_exec_profile = self.manager.Value(Dict, {})
+                err_print(f"Worker running on {HOST}:{self.s.getsockname()[1]}")
                 break
             except socket.error as e:
                 err_print(f"Bind failed with error: {e}. Retrying...")
@@ -103,11 +123,85 @@ class Worker:
             while (True):
                 conn, addr = self.s.accept()
                 err_print(f"got new connection")
-                t = Process(target=manage_connection, args=[conn, addr])
+                t = Process(target=self.manage_connection, args=[conn, addr])
                 t.start()
                 connections.append(t)
         for t in connections:
             t.join()
+
+    def store_exec_profile(self, profile: Dict):
+        err_print(f"Storing profile: {profile}")
+        self.latest_exec_profile.value = profile
+
+    def load_exec_profile(self):
+        err_print(f"Reading profile: {self.latest_exec_profile.value}")
+        return self.latest_exec_profile.value
+
+    def store_exec_time(self, time: float):
+        self.store_exec_profile({"time": time})
+
+    def load_exec_time(self):
+        try:
+            profile = self.load_exec_profile()
+            err_print(f"Loaded exec profile: {profile}")
+            if profile and "time" in profile:
+                return float(profile["time"])
+            else:
+                # Default: 5 seconds
+                return 5.0
+        except Exception as e:
+            err_print(e)
+            return 5.0
+
+    def manage_connection(self, conn, addr):
+        rcs = []
+        with conn:
+            err_print('Connected by', addr)
+            start_time = time.time()
+            dfs_configs_paths = {}
+            monitor_thread = None
+            while True:
+                data = recv_msg(conn)
+                if not data:
+                    break
+
+                request = decode_request(data)
+                err_print("got new request", request['type'])
+
+                if request['type'] == 'Exec-Graph':
+                    graph, shell_vars, functions = parse_exec_graph(request)
+                    debug = True if request['debug'] else False
+                    kill_target = request['kill_target']
+                    # if kill_target is current node, start delayed killer!
+                    if kill_target == HOST:
+                        err_print("Starting killer thread!")
+                        err_print(f"Last execution took {self.load_exec_time()}")
+                        monitor_thread = threading.Thread(target=killer, args=(self.load_exec_time() / 2, ))
+                        monitor_thread.start()
+                    save_configs(graph, dfs_configs_paths)
+                    rc = exec_graph(graph, shell_vars, functions, kill_target, debug)
+                    rcs.append((rc, request))
+                    body = {}
+                elif request['type'] == 'Kill-All-Subgraphs':
+                    body = handle_kill_all_subgraphs_request(rcs)
+                else:
+                    err_print(f"Unsupported request {request}")
+                send_success(conn, body)
+        err_print("connection ended")
+
+        err_print("len rcs:", len(rcs))
+        for rc, request in rcs:
+            err_print("rc")
+            if request['debug']:
+                send_log(rc, request)
+            else:
+                rc.wait()
+
+        end_time = time.time()
+        if monitor_thread:
+            monitor_thread.join()
+        elapsed_time = end_time - start_time
+        self.store_exec_time(elapsed_time)
 
 
 def send_log(rc: subprocess.Popen, request):
@@ -131,44 +225,6 @@ def send_log(rc: subprocess.Popen, request):
     }
 
     requests.post(url=url, json=response)
-
-
-def manage_connection(conn, addr):
-    rcs = []
-    with conn:
-        err_print('Connected by', addr)
-        dfs_configs_paths = {}
-        while True:
-            data = recv_msg(conn)
-            if not data:
-                break
-
-            request = decode_request(data)
-            err_print("got new request", request['type'])
-
-            if request['type'] == 'Exec-Graph':
-                graph, shell_vars, functions = parse_exec_graph(request)
-                debug = True if request['debug'] else False
-                kill_target = request['kill_target']
-                save_configs(graph, dfs_configs_paths)
-                rc = exec_graph(graph, shell_vars, functions, kill_target, debug)
-                rcs.append((rc, request))
-                body = {}
-            elif request['type'] == 'Kill-All-Subgraphs':
-                body = handle_kill_all_subgraphs_request(rcs)
-            else:
-                err_print(f"Unsupported request {request}")
-            send_success(conn, body)
-    err_print("connection ended")
-
-    err_print("len rcs:", len(rcs))
-    for rc, request in rcs:
-        err_print("rc")
-        if request['debug']:
-            send_log(rc, request)
-        else:
-            rc.wait()
-
 
 def handle_kill_all_subgraphs_request(rcs):
     # Record the start time
