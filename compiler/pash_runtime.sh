@@ -207,7 +207,6 @@ else
         source "$RUNTIME_DIR/pash_wrap_vars.sh" "$pash_script_to_execute"
         internal_exec_status=$?
         final_steps
-        clean_up
         (exit $internal_exec_status)
     }
 
