@@ -1,10 +1,4 @@
 ir_file=$1
 
-# pash_redir_output echo "Sending msg to worker manager: $message"
-response=($(echo "Exec-Graph: $ir_file $declared_functions" | nc -U "$DSPASH_SOCKET"))
-# pash_redir_output echo "Got response from worker manager: $response"   
-
-status=${response[0]} #do something if false
-script_to_execute=${response[1]}
-
-source "$script_to_execute"
+worker_manager_client="$DISH_TOP/pash/compiler/dspash/worker_manager_client.py"
+python3 "$worker_manager_client" "$ir_file" "$declared_functions" "$DSPASH_SOCKET" "$DSPASH_REEXEC_SOCKET"

@@ -12,7 +12,8 @@ from uuid import UUID
 from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
 from ir import IR
 from util import log
-from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file
+from ir_to_ast import to_shell
+from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file, add_debug_flags, get_main_writer_graphs
 from dspash.utils import read_file
 from dspash.hdfs_utils import start_hdfs_daemon, stop_hdfs_daemon
 import config 
@@ -117,6 +118,7 @@ class WorkersManager():
         self.args.termination = "" 
 
         self.worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]] = []
+        self.main_graph = IR({}, {})
         self.shell_vars = None
         self.uuid_to_graphs = {}
         self.graph_to_uuid = defaultdict(list)
@@ -243,6 +245,32 @@ class WorkersManager():
             if self.args.ft == "optimized":
                 pass
 
+            # Check if there's a part of main_graph that also needs to be re-executed
+            # e.g. if main_graph contains 1) datastream write < cat dict.txt, 2) datastream read, the first part 1) needs to be re-executed
+
+            # think of this as "customer service" after sending main_graph to the client initially
+            # start a new connection to the socket, send a graph for re-execution when fault happens
+            #                 and there's a need to re-execute part of main_grpah on the client node
+            main_writer_graphs = get_main_writer_graphs(self.main_graph)
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+                sock.connect(os.getenv('DSPASH_REEXEC_SOCKET'))
+                script_fnames = []
+                for main_writer_graph in main_writer_graphs:
+                    if not main_writer_graph.empty():
+                        log("main_writer_graph")
+                        log(to_shell(main_writer_graph, self.args))
+                        script_fname = to_shell_file(main_writer_graph, self.args)
+                        script_fnames.append(script_fname)
+                if script_fnames:
+                    try:
+                        script_fnames_str = " ".join(script_fnames)
+                        message = f"REEXEC {script_fnames_str}\n"
+                        bytes_message = message.encode('utf-8')
+                        sock.sendall(bytes_message)
+                    except Exception as e:
+                        log(e)
+                    log("-------------------------------------")
+
         except Exception as e:
             log(f"Failed to handle merger crash with error {e}")
 
@@ -258,15 +286,12 @@ class WorkersManager():
     def __manage_connection(self, conn: socket, addr):
         # 1 byte for read or write and 16 byte for uuid
         data = conn.recv(17)
-
         # ideally do this in a loop, but it's extemely unlikely that the data will be split
         assert len(data) == 17
-
         # Read the first byte to get if the request is from read or write client
         read_client = True if data[0] == 0 else False
 
         uuid = UUID(bytes=data[1:])
-
         if read_client:
             responsible_graph = self.uuid_to_graphs[uuid][0]
             self.graph_to_uuid[responsible_graph].remove(uuid)
@@ -299,8 +324,10 @@ class WorkersManager():
                 args = request.split(':', 1)[1].strip()
                 filename, declared_functions_file = args.split()
 
-                self.worker_subgraph_pairs, self.shell_vars, main_graph, self.uuid_to_graphs = prepare_graph_for_remote_exec(filename, self.get_worker)
-                script_fname = to_shell_file(main_graph, self.args)
+                self.worker_subgraph_pairs, self.shell_vars, self.main_graph, self.uuid_to_graphs = prepare_graph_for_remote_exec(filename, self.get_worker)
+                script_fname = to_shell_file(self.main_graph, self.args)
+                if self.args.debug:
+                    add_debug_flags(self.main_graph)
                 log("Master node graph stored in ", script_fname)
 
                 self.generate_or_reset_mapping()
@@ -310,6 +337,9 @@ class WorkersManager():
                 self.declared_functions = read_file(declared_functions_file)
 
                 # Report to main shell a script to execute
+                log("main graph")
+                log(to_shell(self.main_graph, self.args))
+                log("-------------------------------------")
                 response_msg = f"OK {script_fname}"
                 dspash_socket.respond(response_msg, conn)
 
