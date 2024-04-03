@@ -109,6 +109,10 @@ def parse_args():
                         action="store_true",
                         default=None,
                         help="Speculate immediately instead of waiting for a wait command")
+    parser.add_argument("--window",
+                        type=int,
+                        default=5,
+                        help="Number of commands to speculate.")
 
 
     ## Set the preprocessing mode to PaSh
