@@ -1,6 +1,7 @@
 import boto3
 import sys
 import json
+import os
 
 object_key, infile = sys.argv[1:]
 print("Remote write",object_key)
@@ -21,7 +22,7 @@ sqs_client = boto3.client("sqs")
 message_body = {"message": "done","output_file_id":object_key}
 try:
     response = sqs_client.send_message(
-        QueueUrl="https://sqs.us-east-1.amazonaws.com/347768412644/queue ", MessageBody=json.dumps(message_body)
+        QueueUrl=f"https://sqs.us-east-1.amazonaws.com/{os.environ.get('AWS_ACCOUNT_ID')}/queue ", MessageBody=json.dumps(message_body)
     )
 except Exception as e:
     print(e)
