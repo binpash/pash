@@ -4,7 +4,7 @@ import json
 import os
 
 object_key, infile = sys.argv[1:]
-print("Remote write",object_key)
+print("[s3-put-object.py] Remote write",object_key)
 session = boto3.Session()
 
 s3 = session.client("s3")
