@@ -37,9 +37,9 @@ def make_remote_pipe(inputs, outputs, host_ip, port, is_remote_read, id):
 
     com_name = Arg(string_to_argument(remote_pipe_bin))
 
-    options.append(
-        (opt_count, Arg(string_to_argument(f"--addr {host_ip}:{port}"))))
+    options.append((opt_count, Arg(string_to_argument(f"--addr {host_ip}:{port}"))))
     options.append((opt_count + 1, Arg(string_to_argument(f"--id {id}"))))
+    options.append((opt_count + 2, Arg(string_to_argument(f"--ft {config.pash_args.ft}"))))
 
     return RemotePipe(inputs,
                       outputs,

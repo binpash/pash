@@ -90,7 +90,7 @@ def kill():
     script_path = "$DISH_TOP/runtime/scripts/killall.sh"
     subprocess.run("/bin/sh " + script_path, shell=True)
     err_print("just killed!")
-    sys.exit(1)
+    # sys.exit(1)
 
 class Worker:
     def __init__(self, port=None):
@@ -180,24 +180,26 @@ class Worker:
                         monitor_thread.start()
                     save_configs(graph, dfs_configs_paths)
                     rc = exec_graph(graph, shell_vars, functions, kill_target, debug)
-                    rcs.append((rc, request))
+                    rcs.append((rc, request, request['merger_id']))
                     body = {}
-                elif request['type'] == 'Kill-All-Subgraphs':
-                    body = handle_kill_all_subgraphs_request(rcs)
+                elif request['type'] == 'Kill-Subgraphs':
+                    body = handle_kill_subgraphs_request(rcs, merger_id=request['merger_id'])
                 else:
                     err_print(f"Unsupported request {request}")
                 send_success(conn, body)
         err_print("connection ended")
 
         err_print("len rcs:", len(rcs))
-        for rc, request in rcs:
-            err_print("rc")
+        for rc, _, _ in rcs:
+            rc.wait()
+
+        # record time before sending logs
+        end_time = time.time()
+
+        for rc, request, _ in rcs:
             if request['debug']:
                 send_log(rc, request)
-            else:
-                rc.wait()
 
-        end_time = time.time()
         if monitor_thread:
             monitor_thread.join()
         elapsed_time = end_time - start_time
@@ -226,17 +228,23 @@ def send_log(rc: subprocess.Popen, request):
 
     requests.post(url=url, json=response)
 
-def handle_kill_all_subgraphs_request(rcs):
+def handle_kill_subgraphs_request(rcs, merger_id=None):
     # Record the start time
     start_time = time.time()
-    err_print("Killing every subgraph")
+    err_print(f"Killing subgraphs, merger_id: {merger_id}")
 
     # Try to terminate the subprocess gracefully
-    for rc, _ in rcs:
-        os.killpg(os.getpgid(rc.pid), signal.SIGTERM)
-        # rc.terminate()
+    kill_count = 0
+    for rc, _, m in rcs:
+        if merger_id != -1 and m != merger_id:
+            continue
+        os.killpg(os.getpgid(rc.pid), signal.SIGKILL)
+        kill_count += 1
 
-    for rc, _ in rcs:
+    for rc, _, m in rcs:
+        if merger_id != -1 and m != merger_id:
+            continue
+
         try:
             # Wait for the subprocess to terminate, with a timeout
             rc.wait(timeout=5)
@@ -252,7 +260,7 @@ def handle_kill_all_subgraphs_request(rcs):
     # Calculate the time elapsed
     elapsed_time = end_time - start_time
 
-    err_print(f"Killed every subgraph in {elapsed_time} seconds")
+    err_print(f"Killed subgraphs in {elapsed_time} seconds, {kill_count} subgraphs killed")
     return {}
 
 
