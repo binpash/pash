@@ -47,7 +47,6 @@ rm -f "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 mkfifo "$RUNTIME_IN_FIFO" "$RUNTIME_OUT_FIFO"
 export DAEMON_SOCKET="${PASH_TMP_PREFIX}/daemon_socket"
 export DSPASH_SOCKET="${PASH_TMP_PREFIX}/dspash_socket"
-export DSPASH_REEXEC_SOCKET="${PASH_TMP_PREFIX}/dspash_reexec_socket"
 
 ## Initialize all things necessary for pash to execute (logging/functions/etc)
 source "$PASH_TOP/compiler/pash_init_setup.sh" "$@"
