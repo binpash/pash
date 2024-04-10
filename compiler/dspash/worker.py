@@ -1,16 +1,17 @@
+import asyncio
 import signal
 import socket
-from multiprocessing import Process, Manager
 import time
+from typing import List
 from socket_utils import encode_request, decode_request
 import subprocess
 import sys
 import os
 import argparse
 import requests
-from typing import Dict
 import time
-import threading
+from threading import Event, Thread
+from collections import deque
 
 DISH_TOP = os.environ['DISH_TOP']
 PASH_TOP = os.environ['PASH_TOP']
@@ -21,16 +22,280 @@ from dspash.ir_helper import save_configs, to_shell_file, to_shell, add_debug_fl
 from dspash.socket_utils import send_msg, recv_msg
 import pash_runtime
 from annotations import load_annotation_files
-from util import log
 import config
 
-# from ... import config
+
 HOST = socket.gethostbyname(socket.gethostname())
-PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
+PORT = 65432
+DEBUG = True
+
+
+class Worker:
+    def __init__(self):
+        self.worker_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.last_exec_time = 5
+        for _ in range(5):
+            try:
+                self.worker_socket.bind((HOST, PORT))
+                err_print(f"Worker running on {HOST}:{self.worker_socket.getsockname()[1]}")
+                break
+            except socket.error as e:
+                err_print(f"Bind failed with error: {e}. Retrying...")
+                time.sleep(3)
+        else:
+            raise Exception("Could not bind after multiple attempts")
+
+    def run(self):
+        with self.worker_socket:
+            self.worker_socket.listen()
+            cnt = 1
+            while (True):
+                conn, addr = self.worker_socket.accept()
+                name = "RequestHandler-" + str(cnt)
+                cnt += 1
+                err_print("Got new connection running", name)
+                RequestHandler(name, conn, addr, self).start()
+
+
+class RequestHandler(Thread):
+    def __init__(self, name, conn, addr, worker: Worker):
+        Thread.__init__(self)
+        self.name = name
+        self.conn = conn
+        self.addr = addr
+        self.rc_graph_merger_list = []
+        self.dfs_configs_paths = {}
+        self.body = {}
+        self.worker = worker
+        self.env_var = os.environ.copy()
+        self.env_var['PASH_TOP'] = PASH_TOP
+        self.env_var['DISH_TOP'] = DISH_TOP
+
+    def run(self):
+        with self.conn:
+            err_print('Connected by', self.addr, 'name', self.name)
+            start_time = time.time()
+
+            while True:
+                data = recv_msg(self.conn)
+                if not data:
+                    break
+                self.request = decode_request(data)
+                err_print("Got a new request", self.request['type'])
+
+                if self.request['type'] == 'Setup':
+                    self.handle_setup_request()
+                elif self.request['type'] == 'Exec-Graph':
+                    self.handle_exec_graph_request()
+                elif self.request['type'] == 'Batch-Exec-Graph':
+                    self.handle_batch_exec_graph()
+                elif self.request['type'] == 'Kill-Subgraphs':
+                    self.handle_kill_subgraphs_request()
+                else:
+                    err_print(f"Unsupported request {self.request}")
+                send_success(self.conn, self.body)
+
+            self.cleanup(start_time)
+
+    def cleanup(self, start_time):
+        err_print("Connection ended. Subprocess count:", len(self.rc_graph_merger_list))
+
+        for rc, _, _ in self.rc_graph_merger_list:
+            rc.wait()
+
+        # record time before sending logs
+        end_time = time.time()
+
+        if self.ft == "optimized":
+            self.event_loop.quit.set()
+            self.event_loop.join()
+
+        if self.debug:
+            for rc, script_path, _ in self.rc_graph_merger_list:
+                self.send_log(rc, script_path)
+
+        elapsed_time = end_time - start_time
+        err_print(f"Execution took {elapsed_time} seconds")
+
+        if not self.kill_target:
+            self.worker.last_exec_time = elapsed_time
+        else:
+            err_print(f"Run was with a crash, not updating last execution time")
+
+    def send_log(self, rc: subprocess.Popen, script_path: str):
+        name = self.debug['name']
+        url = self.debug['url']
+        with open(script_path, 'r') as file:
+            shell_script = file.read()
+
+        try:
+            # timeout is set to 10s for debuggin
+            _, err = rc.communicate(timeout=10)
+        except:
+            err_print("process timedout")
+            rc.kill()
+            _, err = rc.communicate()
+
+        response = {
+            'name': name,
+            'returncode': rc.returncode,
+            'stderr': err.decode("UTF-8"),
+            'shellscript': shell_script,
+        }
+
+        requests.post(url=url, json=response)
+
+    def handle_setup_request(self):
+        self.debug = self.request['debug']
+        self.kill_target = self.request['kill_target']
+        self.pool_size = int(self.request['pool_size'])
+        self.ft = self.request['ft']
+
+        if self.kill_target == HOST:
+            err_print(f"Starting killer thread! Last execution took {self.worker.last_exec_time} seconds.")
+            Thread(target=kill, args=(self.worker.last_exec_time / 2, )).start()
+
+        global DEBUG
+        if self.debug:
+            DEBUG = True
+            err_print("Debugging enabled")
+        else:
+            err_print("Debugging disabled")
+            DEBUG = False
+        
+        if self.ft == "optimized":
+            self.event_loop = EventLoop(self)
+            err_print(f"Starting event loop with pool size {self.pool_size}")
+            self.event_loop.start()
+
+    def handle_exec_graph_request(self):
+        save_configs(self.request['graph'], self.dfs_configs_paths)
+
+        config.config['shell_variables'] = self.request['shell_variables']
+        if self.debug:
+            add_debug_flags(self.request['graph'])
+            stderr = subprocess.PIPE
+        else:
+            stderr = None
+
+        script_path = to_shell_file(self.request['graph'], config.pash_args)
+
+        e = os.environ.copy()
+        e['PASH_TOP'] = PASH_TOP
+        e['DISH_TOP'] = DISH_TOP
+
+        # store functions
+        functions_file = create_filename(dir=config.PASH_TMP_PREFIX, prefix='pashFuncs')
+        write_file(functions_file, self.request['functions'])
+        cmd = f"source {functions_file}; source {script_path}"
+        err_print(f"executing {cmd}")
+
+        rc = subprocess.Popen(cmd, env=e, executable="/bin/bash", shell=True, stderr=stderr, preexec_fn=os.setsid)
+        self.rc_graph_merger_list.append((rc, script_path, self.request['merger_id']))
+
+    def handle_batch_exec_graph(self):
+        # stderr is None for always for now with optimized
+        # if self.debug:
+        #     stderr = subprocess.PIPE
+        # else:
+        #     stderr = None
+
+        # this in None for now anyways
+        # config.config['shell_variables'] = self.request['shell_variables']
+      
+        functions_file = create_filename(dir=config.PASH_TMP_PREFIX, prefix='pashFuncs')
+        write_file(functions_file, self.request['functions'])
+
+        for regular in self.request['regulars']:
+            save_configs(regular, self.dfs_configs_paths)
+            if self.debug:
+                add_debug_flags(regular)
+            script_path = to_shell_file(regular, config.pash_args)
+            cmd = f"source {functions_file}; source {script_path}"
+            self.event_loop.regular_queue.append((cmd, script_path, self.request['merger_id']))
+
+        for merger in self.request['mergers']:
+            save_configs(merger, self.dfs_configs_paths)
+            if self.debug:
+                add_debug_flags(merger)
+            script_path = to_shell_file(merger, config.pash_args)
+            cmd = f"source {functions_file}; source {script_path}"
+            err_print(f"executing merger {cmd}")
+            rc = subprocess.Popen(cmd, env=self.env_var, executable="/bin/bash", shell=True, stderr=None, preexec_fn=os.setsid)
+            self.rc_graph_merger_list.append((rc, script_path, self.request['merger_id']))
+
+    def handle_kill_subgraphs_request(self):
+        merger_id = self.request['merger_id']
+        # Record the start time
+        start_time = time.time()
+        err_print(f"Killing subgraphs, merger_id: {merger_id}")
+
+        # Try to terminate the subprocess gracefully
+        kill_count = 0
+        for rc, _, m in self.rc_graph_merger_list:
+            if merger_id != -1 and m != merger_id:
+                continue
+            os.killpg(os.getpgid(rc.pid), signal.SIGKILL)
+            kill_count += 1
+
+        for rc, _, m in self.rc_graph_merger_list:
+            if merger_id != -1 and m != merger_id:
+                continue
+
+            try:
+                # Wait for the subprocess to terminate, with a timeout
+                rc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                # If the subprocess is still running after the timeout, kill it
+                err_print(f"Terminating subprocess {rc.pid} failed, killing it forcefully")
+                os.killpg(os.getpgid(rc.pid), signal.SIGKILL)
+                rc.wait()
+
+        # Record the end time
+        end_time = time.time()
+
+        # Calculate the time elapsed
+        elapsed_time = end_time - start_time
+
+        err_print(f"Killed subgraphs in {elapsed_time} seconds, {kill_count} subgraphs killed")
+        return {}
+
+
+class EventLoop(Thread):
+    def __init__(self, handler: RequestHandler):
+        Thread.__init__(self)
+        self.name = "Eventloop-" + handler.name
+        self.handler = handler
+        self.quit = Event()
+        self.regular_queue = []
+        self.running_processes: List[subprocess.Popen] = []
+        if handler.debug:
+            self.stderr = subprocess.PIPE
+        else:
+            self.stderr = None
+
+    def run(self):
+        while not self.quit.is_set():
+            # Remove finished processes
+            for i in range(len(self.running_processes)-1, -1, -1):
+                if self.running_processes[i].poll() is not None:
+                    self.running_processes.pop(i)
+
+            # Run until pool is full
+            while self.regular_queue and len(self.running_processes) < self.handler.pool_size:
+                cmd, script_path, merger_id = self.regular_queue.pop()
+                err_print(f"executing {cmd}")
+                rc = subprocess.Popen(cmd, env=self.handler.env_var, executable="/bin/bash", shell=True, stderr=None, preexec_fn=os.setsid)
+                self.running_processes.append(rc)
+                self.handler.rc_graph_merger_list.append((rc, script_path, merger_id))
+
+            # Sleep for a bit to not busy wait
+            self.quit.wait(0.1)
 
 
 def err_print(*args):
-    print(*args, file=sys.stderr, flush=True)
+    if DEBUG:
+        print(*args, file=sys.stderr, flush=True)
 
 
 def send_success(conn, body, msg=""):
@@ -42,234 +307,17 @@ def send_success(conn, body, msg=""):
     send_msg(conn, encode_request(request))
 
 
-def parse_exec_request(request):
-    return request['cmd']
-
-
-def parse_exec_graph(request):
-    return request['graph'], request['shell_variables'], request['functions']
-
-
-def exec_graph(graph, shell_vars, functions, kill_target, debug=False):
-    config.config['shell_variables'] = shell_vars
-    if debug:
-        err_print('debug is on')
-        add_debug_flags(graph)
-        stderr = subprocess.PIPE
-    else:
-        stderr = None
-
-    if kill_target:
-        log(f'going to kill: {kill_target}')
-        add_kill_flags(graph, kill_target)
-
-    script_path = to_shell_file(graph, config.pash_args)
-
-    e = os.environ.copy()
-    e['PASH_TOP'] = PASH_TOP
-    e['DISH_TOP'] = DISH_TOP
-
-    # store functions
-    functions_file = create_filename(
-        dir=config.PASH_TMP_PREFIX, prefix='pashFuncs')
-    write_file(functions_file, functions)
-    cmd = f"source {functions_file}; source {script_path}"
-    err_print(f"executing {cmd}")
-
-    rc = subprocess.Popen(
-        cmd, env=e, executable="/bin/bash", shell=True, stderr=stderr, preexec_fn=os.setsid)
-    return rc
-
-def killer(delay: float):
+def kill(delay: int):
+    err_print(f"Will kill after delay for {delay}")
     time.sleep(delay)
-    err_print(f"invoking kill() after delay: {delay}")
-    kill()
-
-
-def kill():
+    err_print(f"Killing now")
     script_path = "$DISH_TOP/runtime/scripts/killall.sh"
     subprocess.run("/bin/sh " + script_path, shell=True)
-    err_print("just killed!")
-    # sys.exit(1)
-
-class Worker:
-    def __init__(self, port=None):
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        for _ in range(5):
-            try:
-                if port == None:
-                    # pick a random port
-                    self.s.bind((HOST, 0))
-                else:
-                    self.s.bind((HOST, port))
-                 # This assumes that for one execution of DiSh,
-                # the schedular schedules subgraphs to worker in one socket connection.
-                # Otherwise this profiling design can go out of order.
-                self.manager = Manager()
-                self.latest_exec_profile = self.manager.Value(Dict, {})
-                err_print(f"Worker running on {HOST}:{self.s.getsockname()[1]}")
-                break
-            except socket.error as e:
-                err_print(f"Bind failed with error: {e}. Retrying...")
-                time.sleep(3)
-        else:
-            raise Exception("Could not bind after multiple attempts")
-        err_print(f"Worker running on {HOST}:{self.s.getsockname()[1]}")
-
-    def run(self):
-        connections = []
-        with self.s:
-            self.s.listen()
-            while (True):
-                conn, addr = self.s.accept()
-                err_print(f"got new connection")
-                t = Process(target=self.manage_connection, args=[conn, addr])
-                t.start()
-                connections.append(t)
-        for t in connections:
-            t.join()
-
-    def store_exec_profile(self, profile: Dict):
-        err_print(f"Storing profile: {profile}")
-        self.latest_exec_profile.value = profile
-
-    def load_exec_profile(self):
-        err_print(f"Reading profile: {self.latest_exec_profile.value}")
-        return self.latest_exec_profile.value
-
-    def store_exec_time(self, time: float):
-        self.store_exec_profile({"time": time})
-
-    def load_exec_time(self):
-        try:
-            profile = self.load_exec_profile()
-            err_print(f"Loaded exec profile: {profile}")
-            if profile and "time" in profile:
-                return float(profile["time"])
-            else:
-                # Default: 5 seconds
-                return 5.0
-        except Exception as e:
-            err_print(e)
-            return 5.0
-
-    def manage_connection(self, conn, addr):
-        rcs = []
-        with conn:
-            err_print('Connected by', addr)
-            start_time = time.time()
-            dfs_configs_paths = {}
-            monitor_thread = None
-            while True:
-                data = recv_msg(conn)
-                if not data:
-                    break
-
-                request = decode_request(data)
-                err_print("got new request", request['type'])
-
-                if request['type'] == 'Exec-Graph':
-                    graph, shell_vars, functions = parse_exec_graph(request)
-                    debug = True if request['debug'] else False
-                    kill_target = request['kill_target']
-                    # if kill_target is current node, start delayed killer!
-                    if kill_target == HOST:
-                        err_print("Starting killer thread!")
-                        err_print(f"Last execution took {self.load_exec_time()}")
-                        monitor_thread = threading.Thread(target=killer, args=(self.load_exec_time() / 2, ))
-                        monitor_thread.start()
-                    save_configs(graph, dfs_configs_paths)
-                    rc = exec_graph(graph, shell_vars, functions, kill_target, debug)
-                    rcs.append((rc, request, request['merger_id']))
-                    body = {}
-                elif request['type'] == 'Kill-Subgraphs':
-                    body = handle_kill_subgraphs_request(rcs, merger_id=request['merger_id'])
-                else:
-                    err_print(f"Unsupported request {request}")
-                send_success(conn, body)
-        err_print("connection ended")
-
-        err_print("len rcs:", len(rcs))
-        for rc, _, _ in rcs:
-            rc.wait()
-
-        # record time before sending logs
-        end_time = time.time()
-
-        for rc, request, _ in rcs:
-            if request['debug']:
-                send_log(rc, request)
-
-        if monitor_thread:
-            monitor_thread.join()
-        elapsed_time = end_time - start_time
-        self.store_exec_time(elapsed_time)
-
-
-def send_log(rc: subprocess.Popen, request):
-    name = request['debug']['name']
-    url = request['debug']['url']
-    shell_script = to_shell(request['graph'], config.pash_args)
-
-    try:
-        # timeout is set to 10s for debuggin
-        _, err = rc.communicate(timeout=10)
-    except:
-        err_print("process timedout")
-        rc.kill()
-        _, err = rc.communicate()
-
-    response = {
-        'name': name,
-        'returncode': rc.returncode,
-        'stderr': err.decode("UTF-8"),
-        'shellscript': shell_script,
-    }
-
-    requests.post(url=url, json=response)
-
-def handle_kill_subgraphs_request(rcs, merger_id=None):
-    # Record the start time
-    start_time = time.time()
-    err_print(f"Killing subgraphs, merger_id: {merger_id}")
-
-    # Try to terminate the subprocess gracefully
-    kill_count = 0
-    for rc, _, m in rcs:
-        if merger_id != -1 and m != merger_id:
-            continue
-        os.killpg(os.getpgid(rc.pid), signal.SIGKILL)
-        kill_count += 1
-
-    for rc, _, m in rcs:
-        if merger_id != -1 and m != merger_id:
-            continue
-
-        try:
-            # Wait for the subprocess to terminate, with a timeout
-            rc.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            # If the subprocess is still running after the timeout, kill it
-            err_print(f"Terminating subprocess {rc.pid} failed, killing it forcefully")
-            os.killpg(os.getpgid(rc.pid), signal.SIGKILL)
-            rc.wait()
-
-    # Record the end time
-    end_time = time.time()
-
-    # Calculate the time elapsed
-    elapsed_time = end_time - start_time
-
-    err_print(f"Killed subgraphs in {elapsed_time} seconds, {kill_count} subgraphs killed")
-    return {}
+    err_print("Just killed!")
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument("--port",
-                        type=int,
-                        help="port to use",
-                        default=65432)
     config.add_common_arguments(parser)
     args = parser.parse_args()
     config.pash_args = args
@@ -277,14 +325,12 @@ def parse_args():
     config.init_log_file()
     if not config.config:
         config.load_config(args.config_path)
-    return args
 
 
 def init():
-    args = parse_args()
-    config.LOGGING_PREFIX = f"Worker {config.pash_args.port}: "
-    config.annotations = load_annotation_files(
-        config.config['distr_planner']['annotations_dir'])
+    parse_args()
+    config.LOGGING_PREFIX = f"Worker {PORT}: "
+    config.annotations = load_annotation_files(config.config['distr_planner']['annotations_dir'])
     pash_runtime.runtime_config = config.config['distr_planner']
     # needed because graphs could have multiples sinks
     config.pash_args.termination = ""
@@ -292,7 +338,7 @@ def init():
 
 def main():
     init()
-    worker = Worker(config.pash_args.port)
+    worker = Worker()
     worker.run()
 
 

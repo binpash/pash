@@ -11,6 +11,7 @@ from uuid import UUID
 
 from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
 from ir import IR
+from definitions.ir.file_id import FileId
 from util import log
 from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file
 from dspash.utils import read_file
@@ -19,16 +20,19 @@ import config
 import copy
 import requests
 
+
 HOST = socket.gethostbyname(socket.gethostname())
 PORT = 65425        # Port to listen on (non-privileged ports are > 1023)
 # TODO: get the url from the environment or config
 DEBUG_URL = f'http://{socket.getfqdn()}:5001' 
 
+
 class WorkerConnection:
-    def __init__(self, name, host, port):
+    def __init__(self, name, host, port, args):
         self.name = name
         self._host = socket.gethostbyaddr(host)[2][0] # get ip address in case host needs resolving
         self._port = port
+        self.args = args
         self._running_processes = 0
         self._online = True
         # assume client service is running, can add a way to activate later
@@ -37,7 +41,7 @@ class WorkerConnection:
             self._socket.connect((self._host, self._port))
         except Exception as e:
             self._online = False
-        
+
     def is_online(self):
         # TODO: create a ping to confirm is online
         return self._online
@@ -52,47 +56,57 @@ class WorkerConnection:
         #     answer = self.socket.recv(1024)
         return self._running_processes
 
-    def send_kill_subgraphs_request(self, merger_id: int) -> bool:
-        # if merger_id is -1, it kills everything
-        request_dict = { 'type': 'Kill-Subgraphs', 'merger_id': merger_id }
+    def send_request(self, request_dict: dict):
         request = encode_request(request_dict)
         send_msg(self._socket, request)
         response_data = recv_msg(self._socket)
-        if not response_data or decode_request(response_data)['status'] != "OK":
+        if not response_data:
             raise Exception(f"didn't recieved ack on request {response_data}")
-        else:
+        # currently not using the response
+        # else:
             # response = decode_request(response_data)
-            return True
+            # return response
 
-    def send_graph_exec_request(self, graph, shell_vars, functions, merger_id, args) -> bool:
+    def send_setup_request(self):
+        request_dict = { 
+            'type': 'Setup',
+            'debug': None,
+            'kill_target': None,
+            'pool_size': self.args.pool,
+            'ft': self.args.ft,
+        }
+        if self.args.debug:
+            request_dict['debug'] = {'name': self.name, 'url': f'{DEBUG_URL}/putlog'}
+        if self.args.kill:
+            request_dict['kill_target'] = socket.gethostbyaddr(self.args.kill)[2][0]
+        self.send_request(request_dict)
+
+    def send_kill_subgraphs_request(self, merger_id: int):
+        # if merger_id is -1, it kills everything
+        request_dict = { 'type': 'Kill-Subgraphs', 'merger_id': merger_id }
+        self.send_request(request_dict)
+
+    def send_batch_graph_exec_request(self, shell_vars, functions, merger_id, regulars, mergers):
+        request_dict = { 
+            'type': 'Batch-Exec-Graph',
+            'regulars': regulars,
+            'mergers': mergers,
+            'shell_variables': None, # Doesn't seem needed for now
+            'functions': functions,
+            'merger_id': merger_id,
+        }
+        self.send_request(request_dict)
+
+    def send_graph_exec_request(self, graph, shell_vars, functions, merger_id) -> bool:
         request_dict = { 
             'type': 'Exec-Graph',
             'graph': graph,
             'shell_variables': None, # Doesn't seem needed for now
             'functions': functions,
             'merger_id': merger_id,
-            'debug': None,
-            'kill_target': None,
         }
 
-        if args.debug:
-            request_dict['debug'] = {'name': self.name, 'url': f'{DEBUG_URL}/putlog'}
-
-        if args.kill:
-            request_dict['kill_target'] = socket.gethostbyaddr(args.kill)[2][0]
-
-        log(f"Sending graph {graph.id} to {self.name}")
-        request = encode_request(request_dict)
-        #TODO: do I need to open and close connection?
-        send_msg(self._socket, request)
-        # TODO wait until the command exec finishes and run this in parallel?
-        response_data = recv_msg(self._socket)
-        if not response_data or decode_request(response_data)['status'] != "OK":
-            raise Exception(f"didn't recieved ack on request {response_data}")
-        else:
-            # self._running_processes += 1 #TODO: decrease in case of failure or process ended
-            response = decode_request(response_data)
-            return True
+        self.send_request(request_dict)
 
     def close(self):
         self._socket.send("Done")
@@ -113,7 +127,7 @@ class WorkerConnection:
         return self._host
 
 class WorkersManager():    
-    def __init__(self, workers: WorkerConnection = []):
+    def __init__(self, workers: List[WorkerConnection] = []):
         self.workers = workers
         self.host = socket.gethostbyname(socket.gethostname())
         self.args = copy.copy(config.pash_args)
@@ -137,7 +151,7 @@ class WorkersManager():
             log(f"Worker manager on {HOST}:{PORT}")
             Thread(target=self.__daemon, daemon=True).start()
 
-    def get_worker(self, fids = None) -> WorkerConnection:
+    def get_worker(self, fids: List[FileId] = None) -> WorkerConnection:
         if not fids:
             fids = []
 
@@ -159,7 +173,7 @@ class WorkersManager():
         return best_worker
 
     def add_worker(self, name, host, port):
-        self.workers.append(WorkerConnection(name, host, port))
+        self.workers.append(WorkerConnection(name, host, port, self.args))
 
     def add_workers_from_cluster_config(self, config_path):
         with open(config_path, 'r') as f:
@@ -208,7 +222,6 @@ class WorkersManager():
                 if subgraph.merger:
                     merger_id = subgraph.id
                     for worker in self.workers:
-                        worker: WorkerConnection
                         worker.send_kill_subgraphs_request(merger_id)
                         log(f"Sent kill all subgraphs request to {worker}")
                     subgraphs_to_reexecute.update(self.all_merger_to_subgraph[merger_id])
@@ -238,14 +251,12 @@ class WorkersManager():
                     self.all_merger_to_shell_vars[merger_id],
                     self.all_merger_to_declared_functions[merger_id],
                     merger_id,
-                    self.args
                 )
                 log(f"Re-execute req: Sent subgraph {subgraph.id} to {worker}")
 
     def handle_naive_crash(self, addr):
         log("Node crashed while in naive ft, killing all subgraphs")
         for worker in self.workers:
-            worker: WorkerConnection
             worker.send_kill_subgraphs_request(-1)
             log(f"Sent kill all subgraphs request to {worker}")
         log("Killed all subgraphs, will send all subgraphs again")
@@ -285,7 +296,6 @@ class WorkersManager():
                 self.all_merger_to_shell_vars[merger_id],
                 self.all_merger_to_declared_functions[merger_id],
                 merger_id,
-                self.args
             )
             log(f"Re-execute req: Sent subgraph {subgraph.id} to {worker}")
         log("Sent all subgraphs again")
@@ -324,6 +334,9 @@ class WorkersManager():
             except Exception as e:
                 log(f"Failed to connect to debug server with error {e}\n")
                 self.args.debug = False # Turn off debugging
+        
+        for worker in self.workers:
+            worker.send_setup_request()
 
         dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
         while True:
@@ -340,6 +353,7 @@ class WorkersManager():
                 filename, declared_functions_file = args.split()
 
                 worker_subgraph_pairs, shell_vars, main_graph, uuid_to_graphs = prepare_graph_for_remote_exec(filename, self.get_worker)
+                worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]]
                 script_fname = to_shell_file(main_graph, self.args)
                 log("Master node graph stored in ", script_fname)
 
@@ -369,16 +383,35 @@ class WorkersManager():
                 response_msg = f"OK {script_fname}"
                 dspash_socket.respond(response_msg, conn)
 
-                # Execute subgraphs on workers
-                for worker, subgraph in worker_subgraph_pairs:
-                    worker: WorkerConnection
-                    worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, merger_id, self.args)
+                if self.args.ft == "optimized":
+                    worker_to_regulars = defaultdict(list)
+                    worker_to_mergers = defaultdict(list)
+                    for worker, subgraph in worker_subgraph_pairs:
+                        if subgraph.merger:
+                            worker_to_mergers[worker].append(subgraph)
+                        else:
+                            worker_to_regulars[worker].append(subgraph)
+                    
+                    for worker in self.workers:
+                        worker.send_batch_graph_exec_request(
+                            shell_vars,
+                            declared_functions,
+                            merger_id,
+                            worker_to_regulars[worker],
+                            worker_to_mergers[worker]
+                        )
+
+                else:
+                    # Execute subgraphs on workers
+                    for worker, subgraph in worker_subgraph_pairs:
+                        worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, merger_id)
             else:
                 if self.args.ft != "disabled":
                     stop_hdfs_daemon()
                     if self.args.ft != "naive":
                         self.daemon_quit.set()
                 raise Exception(f"Unknown request: {request}")
-        
+
+
 if __name__ == "__main__":
     WorkersManager().run()

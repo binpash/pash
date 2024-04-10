@@ -1,4 +1,5 @@
 # Helper functions and env for hdfs support
+# source $PASH_TOP/compiler/dspash/hdfs_utils.sh
 
 datanode_dir=$(hdfs getconf -confKey dfs.datanode.data.dir) 
 export HDFS_DATANODE_DIR=${datanode_dir#"file://"} # removes file:// prefix

@@ -174,6 +174,12 @@ def add_common_arguments(parser):
     parser.add_argument("--ft",
                         help="determines which fault tolerance mode is going to be used. Use naive, base or optimized. Default is none, which means ft is disabled. Only works if distributed_exec is used.",
                         default="disabled")
+    parser.add_argument("--split",
+                        help="determines how many sub blocks each hdfs block will be split. Default is 32 which means 4MB per sub-block. Only works if distributed_exec and optimized ft is used.",
+                        default="32")
+    parser.add_argument("--pool",
+                        help="determines the pool size of optimized ft. Default is 4. Only works if distributed_exec and optimized ft is used.",
+                        default="4")
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")

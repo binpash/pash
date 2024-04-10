@@ -15,13 +15,15 @@ class DFSSplitReader(DFGNode):
         self.com_options.append((3, Arg(string_to_argument(f"--addr {addr}"))))
 
 
-def make_dfs_split_reader_node(inputs, output, split_num):
+def make_dfs_split_reader_node(inputs, output, split_num, subblock_num, subblock_cnt):
     split_reader_bin = os.path.join(
         config.DISH_TOP, config.config['runtime']['dfs_split_reader_binary'])
     com_name = Arg(string_to_argument(split_reader_bin))
     com_category = "pure"
     options = []
     options.append((1, Arg(string_to_argument(f"--split {split_num}"))))
+    options.append((2, Arg(string_to_argument(f"--subSplit {subblock_num}"))))
+    options.append((3, Arg(string_to_argument(f"--numSplits {subblock_cnt}"))))
 
     return DFSSplitReader(inputs,
                           [output],
