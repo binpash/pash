@@ -133,7 +133,21 @@ preprocess_cases = {
     "If": (lambda trans_options, last_object:
             lambda ast_node: preprocess_node_if(ast_node, trans_options, last_object=last_object)),
     "Case": (lambda trans_options, last_object:
-             lambda ast_node: preprocess_node_case(ast_node, trans_options, last_object=last_object))
+             lambda ast_node: preprocess_node_case(ast_node, trans_options, last_object=last_object)),
+    "Select": (lambda trans_options, last_object:
+               lambda ast_node: preprocess_node_select(ast_node, trans_options, last_object=last_object)),
+    "Arith": (lambda trans_options, last_object:
+               lambda ast_node: preprocess_node_arith(ast_node, trans_options, last_object=last_object)),
+    "Cond": (lambda trans_options, last_object:
+               lambda ast_node: preprocess_node_cond(ast_node, trans_options, last_object=last_object)),
+    "ArithFor": (lambda trans_options, last_object:
+               lambda ast_node: preprocess_node_arith_for(ast_node, trans_options, last_object=last_object)),
+    "Coproc": (lambda trans_options, last_object:
+               lambda ast_node: preprocess_node_coproc(ast_node, trans_options, last_object=last_object)),
+    "Time": (lambda trans_options, last_object:
+               lambda ast_node: preprocess_node_time(ast_node, trans_options, last_object=last_object)),
+    "Group": (lambda trans_options, last_object:
+               lambda ast_node: preprocess_node_group(ast_node, trans_options, last_object=last_object)),        
 }
 
 
@@ -519,6 +533,27 @@ def preprocess_node_case(ast_node, trans_options, last_object=False):
                                               something_replaced=any(sth_replaced_cases),
                                               last_ast=last_object)
     return preprocessed_ast_object
+
+def preprocess_node_select(ast_node, trans_options, last_object=False):
+    pass
+
+def preprocess_node_arith(ast_node, trans_options, last_object=False):
+    pass
+
+def preprocess_node_cond(ast_node, trans_options, last_object=False):
+    pass
+
+def preprocess_node_arith_for(ast_node, trans_options, last_object=False):
+    pass
+
+def preprocess_node_coproc(ast_node, trans_options, last_object=False):
+    pass
+
+def preprocess_node_time(ast_node, trans_options, last_object=False):
+    pass
+
+def preprocess_node_group(ast_node, trans_options, last_object=False):
+    pass
 
 
 ## TODO: I am a little bit confused about how compilation happens.
