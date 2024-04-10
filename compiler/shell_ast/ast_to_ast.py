@@ -535,25 +535,84 @@ def preprocess_node_case(ast_node, trans_options, last_object=False):
     return preprocessed_ast_object
 
 def preprocess_node_select(ast_node, trans_options, last_object=False):
-    pass
+    ast_node: SelectNode = ast_node
+    preprocessed_body, sth_replaced = preprocess_close_node(ast_node.body)
+    ast_node.body = preprocessed_body
+    preprocessed_ast_node = PreprocessedAST(ast_node,
+                                            replace_whole=False,
+                                            non_maximal=False,
+                                            something_replaced=sth_replaced,
+                                            last_ast=last_object)
+    return preprocessed_ast_node
 
 def preprocess_node_arith(ast_node, trans_options, last_object=False):
-    pass
+    preprocessed_ast_node = PreprocessedAST(ast_node,
+                                            replace_whole=False,
+                                            non_maximal=False,
+                                            something_replaced=False,
+                                            last_ast=last_object)
+    return preprocessed_ast_node
 
 def preprocess_node_cond(ast_node, trans_options, last_object=False):
-    pass
+    ast_node: CondNode = ast_node
+    preprocessed_left, sth_replaced_left = preprocess_close_node(ast_node.left) \
+        if ast_node.left is not None else (None, False)
+    preprocessed_right, sth_replaced_right = preprocess_close_node(ast_node.right) \
+        if ast_node.right is not None else (None, False)
+    ast_node.left = preprocessed_left
+    ast_node.right = preprocessed_right
+    sth_replaced = sth_replaced_left or sth_replaced_right
+    preprocessed_ast_node = PreprocessedAST(ast_node,
+                                            replace_whole=False,
+                                            non_maximal=False,
+                                            something_replaced=sth_replaced,
+                                            last_ast=last_object)
+    return preprocessed_ast_node
+
 
 def preprocess_node_arith_for(ast_node, trans_options, last_object=False):
-    pass
+    ast_node: ArithForNode = ast_node
+    preprocessed_action, sth_replaced_action = preprocess_close_node(ast_node.action)
+    ast_node.action = preprocessed_action
+    preprocessed_ast_node = PreprocessedAST(ast_node,
+                                            replace_whole=False,
+                                            non_maximal=False,
+                                            something_replaced=sth_replaced_action,
+                                            last_ast=last_object)
+    return preprocessed_ast_node
 
 def preprocess_node_coproc(ast_node, trans_options, last_object=False):
-    pass
+    ast_node: CoprocNode = ast_node
+    preprocessed_body, sth_replaced = preprocess_close_node(ast_node.body)
+    ast_node.body = preprocessed_body
+    preprocessed_ast_node = PreprocessedAST(ast_node,
+                                            replace_whole=False,
+                                            non_maximal=False,
+                                            something_replaced=sth_replaced,
+                                            last_ast=last_object)
+    return preprocessed_ast_node
 
 def preprocess_node_time(ast_node, trans_options, last_object=False):
-    pass
+    ast_node: TimeNode = ast_node
+    preprocessed_body, sth_replaced = preprocess_close_node(ast_node.command)
+    ast_node.command = preprocessed_body
+    preprocessed_ast_node = PreprocessedAST(ast_node,
+                                            replace_whole=False,
+                                            non_maximal=False,
+                                            something_replaced=sth_replaced,
+                                            last_ast=last_object)
+    return preprocessed_ast_node
 
 def preprocess_node_group(ast_node, trans_options, last_object=False):
-    pass
+    ast_node: GroupNode = ast_node
+    preprocessed_body, sth_replaced = preprocess_close_node(ast_node.body)
+    ast_node.body = preprocessed_body
+    preprocessed_ast_node = PreprocessedAST(ast_node,
+                                            replace_whole=False,
+                                            non_maximal=False,
+                                            something_replaced=sth_replaced,
+                                            last_ast=last_object)
+    return preprocessed_ast_node
 
 
 ## TODO: I am a little bit confused about how compilation happens.
