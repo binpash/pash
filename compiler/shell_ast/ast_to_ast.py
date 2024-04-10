@@ -536,7 +536,7 @@ def preprocess_node_case(ast_node, trans_options, last_object=False):
 
 def preprocess_node_select(ast_node, trans_options, last_object=False):
     ast_node: SelectNode = ast_node
-    preprocessed_body, sth_replaced = preprocess_close_node(ast_node.body)
+    preprocessed_body, sth_replaced = preprocess_close_node(ast_node.body, trans_options, last_object=last_object)
     ast_node.body = preprocessed_body
     preprocessed_ast_node = PreprocessedAST(ast_node,
                                             replace_whole=False,
@@ -555,9 +555,9 @@ def preprocess_node_arith(ast_node, trans_options, last_object=False):
 
 def preprocess_node_cond(ast_node, trans_options, last_object=False):
     ast_node: CondNode = ast_node
-    preprocessed_left, sth_replaced_left = preprocess_close_node(ast_node.left) \
+    preprocessed_left, sth_replaced_left = preprocess_close_node(ast_node.left, trans_options, last_object=last_object) \
         if ast_node.left is not None else (None, False)
-    preprocessed_right, sth_replaced_right = preprocess_close_node(ast_node.right) \
+    preprocessed_right, sth_replaced_right = preprocess_close_node(ast_node.right, trans_options, last_object=last_object) \
         if ast_node.right is not None else (None, False)
     ast_node.left = preprocessed_left
     ast_node.right = preprocessed_right
@@ -572,7 +572,7 @@ def preprocess_node_cond(ast_node, trans_options, last_object=False):
 
 def preprocess_node_arith_for(ast_node, trans_options, last_object=False):
     ast_node: ArithForNode = ast_node
-    preprocessed_action, sth_replaced_action = preprocess_close_node(ast_node.action)
+    preprocessed_action, sth_replaced_action = preprocess_close_node(ast_node.action, trans_options, last_object=last_object)
     ast_node.action = preprocessed_action
     preprocessed_ast_node = PreprocessedAST(ast_node,
                                             replace_whole=False,
@@ -583,7 +583,7 @@ def preprocess_node_arith_for(ast_node, trans_options, last_object=False):
 
 def preprocess_node_coproc(ast_node, trans_options, last_object=False):
     ast_node: CoprocNode = ast_node
-    preprocessed_body, sth_replaced = preprocess_close_node(ast_node.body)
+    preprocessed_body, sth_replaced = preprocess_close_node(ast_node.body, trans_options, last_object=last_object)
     ast_node.body = preprocessed_body
     preprocessed_ast_node = PreprocessedAST(ast_node,
                                             replace_whole=False,
@@ -594,7 +594,7 @@ def preprocess_node_coproc(ast_node, trans_options, last_object=False):
 
 def preprocess_node_time(ast_node, trans_options, last_object=False):
     ast_node: TimeNode = ast_node
-    preprocessed_body, sth_replaced = preprocess_close_node(ast_node.command)
+    preprocessed_body, sth_replaced = preprocess_close_node(ast_node.command, trans_options, last_object=last_object)
     ast_node.command = preprocessed_body
     preprocessed_ast_node = PreprocessedAST(ast_node,
                                             replace_whole=False,
@@ -605,7 +605,7 @@ def preprocess_node_time(ast_node, trans_options, last_object=False):
 
 def preprocess_node_group(ast_node, trans_options, last_object=False):
     ast_node: GroupNode = ast_node
-    preprocessed_body, sth_replaced = preprocess_close_node(ast_node.body)
+    preprocessed_body, sth_replaced = preprocess_close_node(ast_node.body, trans_options, last_object=last_object)
     ast_node.body = preprocessed_body
     preprocessed_ast_node = PreprocessedAST(ast_node,
                                             replace_whole=False,

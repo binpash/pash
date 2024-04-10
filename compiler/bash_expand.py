@@ -15,6 +15,9 @@ def expand_using_bash(ast: list[AstNode]) -> list[AstNode]:
     nodes = []
     for node in ast:
         nodes.append(compile_node(node))
+
+    os.remove(VAR_FILE_PATH)
+
     return nodes
 
 def init_bash_mirror_subprocess() -> pexpect.spawn:
@@ -31,7 +34,7 @@ def init_bash_mirror_subprocess() -> pexpect.spawn:
     return p
     
 def query_expand_bash_mirror(string: bytes, bash_mirror):
-    command = b'echo -n ' + string
+    command = f'echo -n {string}'
     return sync_run_line_command_mirror(command, bash_mirror)
 
 
@@ -39,7 +42,8 @@ def sync_run_line_command_mirror(command: bytes, bash_mirror: pexpect.spawn):
     bash_command = command
     log("Executing bash command in mirror:", bash_command)
 
-    bash_mirror.sendline(bash_command)
+    # Note: this will eventually need to be changed to support non-utf8 characters
+    bash_mirror.sendline(str(bash_command))
     
     data = wait_bash_mirror(bash_mirror)
     log("mirror done!")
@@ -95,9 +99,9 @@ def compile_node(ast_object: AstNode) -> AstNode:
         return compile_node_redir(ast_object)
     elif node_name == "Background":
         return compile_node_background(ast_object)
-    elif node_name == "DefunNode":
+    elif node_name == "Defun":
         return compile_node_defun(ast_object)
-    elif node_name == "ForNode":
+    elif node_name == "For":
         return compile_node_for(ast_object)
     elif node_name == "While":
         return compile_node_while(ast_object)
@@ -121,6 +125,7 @@ def compile_node(ast_object: AstNode) -> AstNode:
         return compile_node_group(ast_object)
     else:
         log(f'Unknown node: {node_name}')
+        print(f'Unknown node: {node_name}')
         raise NotImplementedError()
     
 
@@ -177,7 +182,8 @@ def compile_node_defun(ast_node: DefunNode):
 def compile_node_for(ast_node: ForNode):
     ast_node.variable = compile_command_argument(ast_node.variable)
     ast_node.argument = compile_command_arguments(ast_node.argument)
-    ast_node.body = compile_node(ast_node.body)
+    # we can't do this because of argument expansion
+    #ast_node.body = compile_node(ast_node.body)
     return ast_node
 
 def compile_node_while(ast_node: WhileNode):
@@ -240,12 +246,13 @@ def compile_command_arguments(arguments: List[List[ArgChar]]) -> List[List[ArgCh
 def compile_command_argument(argument: List[CArgChar]) -> List[CArgChar]:
     bash_mirror = init_bash_mirror_subprocess()
     update_bash_mirror_vars(bash_mirror)
-    expanded = query_expand_bash_mirror(bytes(argument), bash_mirror)
+    expanded = query_expand_bash_mirror("".join([chr(c.char) for c in argument]), bash_mirror)
     bash_mirror.close()
-    return bytes_to_arg_char_list(expanded)
+    node = bytes_to_arg_char_list(expanded)
+    return node
 
-def bytes_to_arg_char_list(data: bytes) -> List[ArgChar]:
-    return [CArgChar(c) for c in data]
+def bytes_to_arg_char_list(data: str) -> List[ArgChar]:
+    return [CArgChar(ord(c)) for c in data]
 
 def compile_command_assignments(assignments: List[AssignNode]) -> List[AssignNode]:
     return [compile_command_assignment(assignment) for assignment in assignments]

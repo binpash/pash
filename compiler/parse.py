@@ -14,8 +14,6 @@ from util import *
 import libdash.parser
 import libbash
 
-from bash_expand import expand_using_bash
-
 BASH_MODE = False
 
 ## Parses straight a shell script to an AST
@@ -64,7 +62,10 @@ def from_ast_objects_to_shell(asts):
             shell_list.append(ast.text)
         else:
             shell_list.append(ast.pretty())
+    
+    shell_list = [x.decode('utf-8', errors='replace') if isinstance(x, bytes) else x for x in shell_list]
     return "\n".join(shell_list) + "\n"
+        
 
 def from_ast_objects_to_shell_file(asts, new_shell_filename):
     script = from_ast_objects_to_shell(asts)
