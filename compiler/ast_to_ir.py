@@ -253,6 +253,87 @@ def compile_node_for(ast_node, fileIdGen, config):
                             ast_node.variable])
     return compiled_ast
 
+def compile_node_not(ast_node, fileIdGen, config):
+    ast_node: NotNode = ast_node
+    compiled_ast = make_kv(type(ast_node).NodeName,
+                           [compile_node(ast_node.body, fileIdGen, config)])
+    return compiled_ast                        
+
+def compile_node_defun(ast_node, fileIdGen, config):
+    ast_node: DefunNode = ast_node
+    compiled_ast = make_kv(type(ast_node).NodeName,
+                           [ast_node.line_number,
+                            compile_command_argument(ast_node.name),
+                            compile_node(ast_node.body, fileIdGen, config)])
+    return compiled_ast
+
+def compile_node_while(ast_node, fileIdGen, config):
+    ast_node: WhileNode = ast_node
+    compiled_ast = make_kv(type(ast_node).NodeName,
+                            [compile_node(ast_node.test, fileIdGen, config),
+                             compile_node(ast_node.body, fileIdGen, config)])
+    return compiled_ast
+
+def compile_node_if(ast_node, fileIdGen, config):
+    ast_node: IfNode = ast_node
+    compiled_ast = make_kv(type(ast_node).NodeName,
+                            [compile_node(ast_node.cond, fileIdGen, config),
+                             compile_node(ast_node.then_b, fileIdGen, config),
+                             compile_node(ast_node.else_b, fileIdGen, config) if ast_node.else_b else None])
+    return compiled_ast
+                           
+
+def compile_node_case(ast_node, fileIdGen, config):
+    pass
+
+def compile_node_select(ast_node, fileIdGen, config):
+    ast_node: SelectNode = ast_node
+    compiled_ast = make_kv(type(ast_node).NodeName,
+                            [ast_node.line_number,
+                             compile_command_argument(ast_node.variable, fileIdGen, config),
+                             compile_node(ast_node.body, fileIdGen, config),
+                             compile_command_arguments(ast_node.map_list, fileIdGen, config)])
+    return compiled_ast
+
+
+def compile_node_arith(ast_node, fileIdGen, config):
+    ast_node: ArithNode = ast_node
+    compiled_ast = make_kv(type(ast_node).NodeName,
+                           [ast_node.line_number,
+                            compile_command_arguments(ast_node.argument, fileIdGen, config)])
+    return compiled_ast
+                           
+
+def compile_node_cond(ast_node, fileIdGen, config):
+    ast_node: CondNode = ast_node
+    compiled_ast = make_kv(type(ast_node).NodeName,
+                            [ast_node.line_number,
+                             ast_node.cond_type,
+                             compile_command_argument(ast_node.op, fileIdGen, config) if ast_node.op else None,
+                             compile_node(ast_node.left, fileIdGen, config) if ast_node.left else None,
+                             compile_node(ast_node.right, fileIdGen, config) if ast_node.right else None,
+                             ast_node.invert_return])
+    return compiled_ast
+
+def compile_node_arith_for(ast_node, fileIdGen, config):
+    pass
+
+def compile_node_coproc(ast_node, fileIdGen, config):
+    pass
+
+def compile_node_time(ast_node, fileIdGen, config):
+    ast_node: TimeNode = ast_node
+    compiled_ast = make_kv(type(ast_node).NodeName,
+                            [compile_node(ast_node.command, fileIdGen, config)])
+    return compiled_ast
+    
+
+def compile_node_group(ast_node, fileIdGen, config):
+    ast_node: GroupNode = ast_node
+    compiled_ast = make_kv(type(ast_node).NodeName,
+                            [compile_node(ast_node.body, fileIdGen, config)])
+    return compiled_ast
+
 
 ## This function checks if we should expand an arg_char
 ##
