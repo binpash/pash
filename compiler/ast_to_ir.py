@@ -8,6 +8,7 @@ from ir import *
 from util import *
 from parse import from_ast_objects_to_shell
 
+
 ## TODO: Separate the ir stuff to the bare minimum and 
 ##       try to move this to the shell_ast folder.
 
@@ -41,7 +42,31 @@ compile_cases = {
         "Background": (lambda fileIdGen, config:
                        lambda ast_node: compile_node_background(ast_node, fileIdGen, config)),
         "For": (lambda fileIdGen, config:
-                  lambda ast_node: compile_node_for(ast_node, fileIdGen, config))
+                  lambda ast_node: compile_node_for(ast_node, fileIdGen, config)),
+        "Not": (lambda fileIdGen, config:
+                lambda ast_node: compile_node_not(ast_node, fileIdGen, config)),
+        "Defun": (lambda fileIdGen, config:
+                lambda ast_node: compile_node_defun(ast_node, fileIdGen, config)),
+        "While": (lambda fileIdGen, config:
+                lambda ast_node: compile_node_while(ast_node, fileIdGen, config)),   
+        "If": (lambda fileIdGen, config:
+                lambda ast_node: compile_node_if(ast_node, fileIdGen, config)), 
+        "Case": (lambda fileIdGen, config:
+                lambda ast_node: compile_node_case(ast_node, fileIdGen, config)), 
+        "Select": (lambda fileIdGen, config:
+                lambda ast_node: compile_node_select(ast_node, fileIdGen, config)),
+        "Arith": (lambda fileIdGen, config:
+                lambda ast_node: compile_node_arith(ast_node, fileIdGen, config)),
+        "Cond": (lambda fileIdGen, config:
+                lambda ast_node: compile_node_cond(ast_node, fileIdGen, config)),
+        "ArithFor": (lambda fileIdGen, config:
+                lambda ast_node: compile_node_arith_for(ast_node, fileIdGen, config)),
+        "Coproc": (lambda fileIdGen, config:
+                lambda ast_node: compile_node_coproc(ast_node, fileIdGen, config)),  
+        "Time": (lambda fileIdGen, config:
+                lambda ast_node: compile_node_time(ast_node, fileIdGen, config)), 
+        "Group": (lambda fileIdGen, config:
+                lambda ast_node: compile_node_group(ast_node, fileIdGen, config)),               
         }
 
 
@@ -301,7 +326,7 @@ def naive_expand(argument, config):
 ##       might have assignments of its own, therefore requiring that we use them to properly expand.
 def expand_command_argument(argument, config):
     new_arguments = [argument]
-    if(should_expand_argument(argument)):
+    if(should_expand_argument(argument)) or True:
         new_arguments = naive_expand(argument, config)
     return new_arguments
 
@@ -331,6 +356,9 @@ def compile_arg_char(arg_char: ArgChar, fileIdGen, config):
         return arg_char
 
 def compile_command_argument(argument, fileIdGen, config):
+    BASH_MODE = True
+    if BASH_MODE:
+        argument = expand_command_argument(argument, config)
     compiled_argument = [compile_arg_char(char, fileIdGen, config) for char in argument]
     return compiled_argument
 

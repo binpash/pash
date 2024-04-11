@@ -14,14 +14,10 @@ from util import *
 import libdash.parser
 import libbash
 
-BASH_MODE = False
-
 ## Parses straight a shell script to an AST
 ## through python without calling it as an executable
 def parse_shell_to_asts(input_script_path, bash_mode=False):
-    global BASH_MODE
     if bash_mode:
-        BASH_MODE = True
         try:
             new_ast_objects = libbash.bash_to_ast(input_script_path, with_linno_info=True)
 
@@ -35,7 +31,6 @@ def parse_shell_to_asts(input_script_path, bash_mode=False):
         except RuntimeError as e:
             log("Parsing error!", e)
             sys.exit(1)
-
 
     try:
         new_ast_objects = libdash.parser.parse(input_script_path)
