@@ -13,7 +13,8 @@ from dspash.socket_utils import SocketManager, encode_request, decode_request, s
 from ir import IR
 from definitions.ir.file_id import FileId
 from util import log
-from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file
+from ir_to_ast import to_shell
+from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file, add_debug_flags, split_main_graph
 from dspash.utils import read_file
 from dspash.hdfs_utils import start_hdfs_daemon, stop_hdfs_daemon
 import config 
@@ -23,6 +24,7 @@ import requests
 
 HOST = socket.gethostbyname(socket.gethostname())
 PORT = 65425        # Port to listen on (non-privileged ports are > 1023)
+PORT_CLIENT = 65432
 # TODO: get the url from the environment or config
 DEBUG_URL = f'http://{socket.getfqdn()}:5001' 
 
@@ -133,6 +135,10 @@ class WorkersManager():
         self.args = copy.copy(config.pash_args)
         # Required to create a correct multi sink graph
         self.args.termination = "" 
+        # NOTE: right now worker_manager node and client node are the same node, so we know the host/port
+        #       for the client node. When we de-couple client node from worker_manager node, we will get this
+        #       information from the Exec-Graph request from teh client node.
+        self.client_worker = WorkerConnection("client_worker", self.host, PORT_CLIENT, self.args)
 
         if self.args.ft != "disabled":
             self.all_worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]] = []
@@ -196,6 +202,7 @@ class WorkersManager():
                 worker._online = True
 
     def addr_removed(self, addr: str):
+        log("fault detected!!!!")
         log(f"Removed {addr} from active nodes")
         for worker in self.workers:
             if worker.host() == addr:
@@ -337,6 +344,7 @@ class WorkersManager():
         
         for worker in self.workers:
             worker.send_setup_request()
+        self.client_worker.send_setup_request()
 
         dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
         while True:
@@ -354,7 +362,13 @@ class WorkersManager():
 
                 worker_subgraph_pairs, shell_vars, main_graph, uuid_to_graphs = prepare_graph_for_remote_exec(filename, self.get_worker)
                 worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]]
-                script_fname = to_shell_file(main_graph, self.args)
+                # Split main_graph
+                main_reader_graph, main_writer_graphs = split_main_graph(main_graph, uuid_to_graphs)
+
+                # If main_writer_graphs, add (client_worker, main_writer_graphs) tp worker_subgraph_pairs
+                for main_writer_graph in main_writer_graphs:                    
+                    worker_subgraph_pairs.append((self.client_worker, main_writer_graph))
+                script_fname = to_shell_file(main_reader_graph, self.args)
                 log("Master node graph stored in ", script_fname)
 
                 # Read functions
@@ -364,10 +378,10 @@ class WorkersManager():
                 merger_id = -1
                 if self.args.ft != "disabled":
                     # Update the Worker Manager state for fault tolerance
-                    for _, subgraph in worker_subgraph_pairs:
+                    for _, subgraph in worker_subgraph_pairs:                        
                         if subgraph.merger:
                             merger_id = subgraph.id
-                            break
+                            break                  
                     assert merger_id != -1, "No merger found in the subgraphs"
                     self.all_worker_subgraph_pairs.extend(worker_subgraph_pairs)
                     self.all_merger_to_shell_vars[merger_id] = shell_vars

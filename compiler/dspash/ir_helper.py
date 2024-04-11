@@ -414,3 +414,88 @@ def prepare_graph_for_remote_exec(filename:str, get_worker:Callable):
     subgraphs, mapping = split_ir(ir)
     main_graph, worker_graph_pairs, uuid_to_graphs = assign_workers_to_subgraphs(subgraphs, file_id_gen, mapping, get_worker)
     return worker_graph_pairs, shell_vars, main_graph, uuid_to_graphs
+
+def split_main_graph(main_graph: IR, uuid_to_graphs) -> (IR, [IR]):
+    # like split_ir
+    # for each remote_writer node, trace all the way to the front of the pipeline and copy to the main_writer_graph
+    # assuming no ephemeral input fid at this point, main_graph is already optimized IR (from split_ir) and no circular graph
+    # NOTE: once we get to more complicated main_graph in dependency untangling, this may be buggy but we'll see!
+
+    # After splitting main_graph into 1 main_reader_graph and >=0 main_writer_graphs, we need to update uuid_to_graphs
+    main_reader_graph = IR({}, {})
+    main_writer_graphs = []
+
+    # Assumption: there will be just one main_reader_graph
+    # NOTE: may not hold for parallel pipelines, in that case we can return [main_reader_graph], [main_writer_graph]
+    for source_node_id in main_graph.source_nodes():
+        source_node = main_graph.get_node(source_node_id)
+        if isinstance(source_node, remote_pipe.RemotePipe) and source_node.is_remote_read():
+            visited = set()
+            queue = deque([source_node_id])
+            while queue:
+                old_node_id = queue.popleft()
+                old_node = main_graph.get_node(old_node_id)
+                if old_node_id in visited:
+                    continue
+                input_fids = main_graph.get_node_input_fids(old_node_id)
+                output_fids = main_graph.get_node_output_fids(old_node_id)
+                visited.add(old_node_id)
+                node = old_node.copy()
+                node_id = node.get_id()
+                # Add edges coming out of the node
+                for output_fid in output_fids:
+                    main_reader_graph.add_from_edge(node_id, output_fid)
+
+                # Add edges coming into the node
+                for input_fid in input_fids:
+                    main_reader_graph.add_to_edge(input_fid, node_id)
+
+                # Add the node
+                main_reader_graph.add_node(node)
+                for prev_node_id in main_graph.get_previous_nodes(old_node_id):
+                    queue.append(prev_node_id)
+
+            # Update uuid_to_graphs
+            for uuid, (writer_subgraph_id, reader_subgraph_id) in uuid_to_graphs.items():
+                if reader_subgraph_id == main_graph.id:
+                    uuid_to_graphs[uuid] = (writer_subgraph_id, main_reader_graph.id)
+
+    for sink_node_id in main_graph.sink_nodes():
+        sink_node = main_graph.get_node(sink_node_id)
+        if isinstance(sink_node, remote_pipe.RemotePipe) and not sink_node.is_remote_read():
+            # NOTE: as far as I know, didn't see anything cyclic graph, may not work for cyclic pipeline
+            visited = set()
+            queue = deque([sink_node_id])
+            main_writer_graph = IR({}, {})
+
+            while queue:
+                old_node_id = queue.popleft()
+                old_node = main_graph.get_node(old_node_id)
+                if old_node_id in visited:
+                    continue
+                input_fids = main_graph.get_node_input_fids(old_node_id)
+                output_fids = main_graph.get_node_output_fids(old_node_id)
+                visited.add(old_node_id)
+                node = old_node.copy()
+                node_id = node.get_id()
+                # Add edges coming out of the node
+                for output_fid in output_fids:
+                    main_writer_graph.add_from_edge(node_id, output_fid)
+
+                # Add edges coming into the node
+                for input_fid in input_fids:
+                    main_writer_graph.add_to_edge(input_fid, node_id)
+
+                # Add the node
+                main_writer_graph.add_node(node)
+                for prev_node_id in main_graph.get_previous_nodes(old_node_id):
+                    queue.append(prev_node_id)
+            
+            # Update uuid_to_graphs
+            for uuid, (writer_subgraph_id, reader_subgraph_id) in uuid_to_graphs.items():
+                if writer_subgraph_id == main_graph.id:
+                    uuid_to_graphs[uuid] = (main_writer_graph.id, reader_subgraph_id)
+
+            main_writer_graphs.append(main_writer_graph)
+
+    return main_reader_graph, main_writer_graphs
