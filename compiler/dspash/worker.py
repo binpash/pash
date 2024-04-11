@@ -13,7 +13,7 @@ import time
 from threading import Event, Thread
 from collections import deque
 
-DISH_TOP = os.environ['DISH_TOP']
+DISH_TOP = os.environ['DISH_TOP'] 
 PASH_TOP = os.environ['PASH_TOP']
 sys.path.append(os.path.join(PASH_TOP, "compiler"))
 
@@ -75,6 +75,7 @@ class RequestHandler(Thread):
         with self.conn:
             err_print('Connected by', self.addr, 'name', self.name)
             start_time = time.time()
+            doCleanup = True
 
             while True:
                 data = recv_msg(self.conn)
@@ -91,11 +92,15 @@ class RequestHandler(Thread):
                     self.handle_batch_exec_graph()
                 elif self.request['type'] == 'Kill-Subgraphs':
                     self.handle_kill_subgraphs_request()
+                elif self.request['type'] == 'resurrect':
+                    self.handle_resurrect_request()
+                    # No need to clean up if we just want to bring up the current node
+                    doCleanup = False
                 else:
                     err_print(f"Unsupported request {self.request}")
                 send_success(self.conn, self.body)
-
-            self.cleanup(start_time)
+            if doCleanup:
+                self.cleanup(start_time)
 
     def cleanup(self, start_time):
         err_print("Connection ended. Subprocess count:", len(self.rc_graph_merger_list))
@@ -259,6 +264,12 @@ class RequestHandler(Thread):
 
         err_print(f"Killed subgraphs in {elapsed_time} seconds, {kill_count} subgraphs killed")
         return {}
+
+    def handle_resurrect_request(self):
+        script_path = "$DISH_TOP/docker-hadoop/datanode/run.sh"
+        subprocess.run("/bin/bash " + script_path + " --resurrect", shell=True)
+        time.sleep(1)
+        err_print("Just brought the current node back up!")
 
 
 class EventLoop(Thread):
