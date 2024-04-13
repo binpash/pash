@@ -2,6 +2,6 @@ graphviz
 libdash
 pash-annotations==0.2.0
 pexpect
-../libbash
+libbash
 ../shasta
 sh-expand
