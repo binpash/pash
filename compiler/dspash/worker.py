@@ -33,6 +33,7 @@ DEBUG = True
 class Worker:
     def __init__(self):
         self.worker_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.worker_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.last_exec_time = 5
         for _ in range(5):
             try:
@@ -70,6 +71,9 @@ class RequestHandler(Thread):
         self.env_var = os.environ.copy()
         self.env_var['PASH_TOP'] = PASH_TOP
         self.env_var['DISH_TOP'] = DISH_TOP
+        self.ft = ""
+        self.debug = False
+        self.kill_target = None
 
     def run(self):
         with self.conn:
@@ -110,7 +114,6 @@ class RequestHandler(Thread):
 
         # record time before sending logs
         end_time = time.time()
-
         if self.ft == "optimized":
             self.event_loop.quit.set()
             self.event_loop.join()
@@ -266,10 +269,16 @@ class RequestHandler(Thread):
         return {}
 
     def handle_resurrect_request(self):
+        global DEBUG
+        DEBUG_TMP = DEBUG
+        # Temporarily enable DEBUG state
+        DEBUG = True
         script_path = "$DISH_TOP/docker-hadoop/datanode/run.sh"
         subprocess.run("/bin/bash " + script_path + " --resurrect", shell=True)
         time.sleep(1)
         err_print("Just brought the current node back up!")
+        # Restore DEBUG state
+        DEBUG = DEBUG_TMP
 
 
 class EventLoop(Thread):
@@ -330,6 +339,9 @@ def kill(delay: int):
 def parse_args():
     parser = argparse.ArgumentParser(description='Process some integers.')
     config.add_common_arguments(parser)
+    # Add an additional "resurrect" arg for bringing node back up. 
+    # This is not added to config.py because this is an internal flag
+    parser.add_argument('--resurrect', action='store_true', help='To bring up the current node')
     args = parser.parse_args()
     config.pash_args = args
     # Initialize the log file

@@ -30,4 +30,9 @@ function cleanup() {
 FILEREADER_PID=$!
 "$DISH_TOP/runtime/bin/discovery_server" &
 DISCOVERY_PID=$!
-python3 "$DISH_TOP/pash/compiler/dspash/worker.py" "$@"
+
+# No need to restart worker.py if we are resurrecting
+# because worker.py is not killed in the first place!
+if [[ "$@" != *"resurrect"* ]]; then
+    python3 "$DISH_TOP/pash/compiler/dspash/worker.py" "$@"
+fi
