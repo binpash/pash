@@ -25,7 +25,6 @@ export distributed_exec=0
 
 for item in "$@"
 do
-
     if [ "$pash_checking_log_file" -eq 1 ]; then
         export pash_checking_log_file=0
         export PASH_REDIR="$item"
@@ -40,6 +39,9 @@ do
     # if [ "--output_time" == "$item" ]; then
     #     pash_output_time_flag=1
     # fi
+    if [ "--bash" == "$item" ]; then
+        export pash_shell="bash"
+    fi
     if [ "--version" == "$item" ]; then
         export show_version=1
     fi

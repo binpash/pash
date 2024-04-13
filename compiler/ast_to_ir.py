@@ -8,6 +8,8 @@ from ir import *
 from util import *
 from parse import from_ast_objects_to_shell
 
+BASH_MODE = os.environ.get('pash_shell') == 'bash'
+
 
 ## TODO: Separate the ir stuff to the bare minimum and 
 ##       try to move this to the shell_ast folder.
@@ -282,9 +284,20 @@ def compile_node_if(ast_node, fileIdGen, config):
                              compile_node(ast_node.else_b, fileIdGen, config) if ast_node.else_b else None])
     return compiled_ast
                            
+def compile_command_cases(cases, fileIdGen, config):
+    compiled_cases = [[compile_command_argument(case["cpattern"], fileIdGen, config),
+                       compile_node(case["cbody"], fileIdGen, config)]
+                      for case in cases]
+    return compiled_cases
 
 def compile_node_case(ast_node, fileIdGen, config):
-    pass
+    ast_node: CaseNode = ast_node
+    compiled_ast = make_kv(type(ast_node).NodeName,
+                            [ast_node.line_number,
+                             compile_command_argument(ast_node.argument, fileIdGen, config),
+                             compile_command_cases(ast_node.cases, fileIdGen, config)])
+    return compiled_ast
+
 
 def compile_node_select(ast_node, fileIdGen, config):
     ast_node: SelectNode = ast_node
@@ -316,10 +329,21 @@ def compile_node_cond(ast_node, fileIdGen, config):
     return compiled_ast
 
 def compile_node_arith_for(ast_node, fileIdGen, config):
-    pass
+    ast_node: ArithForNode = ast_node
+    compiled_ast = make_kv(type(ast_node).NodeName,
+                           [ast_node.line_number,
+                            compile_command_argument(ast_node.init, fileIdGen, config),
+                            compile_command_argument(ast_node.cond, fileIdGen, config),
+                            compile_command_argument(ast_node.step, fileIdGen, config),
+                            compile_node(ast_node.action, fileIdGen, config)])
+    return compiled_ast
 
 def compile_node_coproc(ast_node, fileIdGen, config):
-    pass
+    ast_node: CoprocNode = ast_node
+    compiled_ast = make_kv(type(ast_node).NodeName,
+                            [compile_command_argument(ast_node.name, fileIdGen, config),
+                             compile_node(ast_node.body, fileIdGen, config)])
+    return compiled_ast
 
 def compile_node_time(ast_node, fileIdGen, config):
     ast_node: TimeNode = ast_node
@@ -437,7 +461,7 @@ def compile_arg_char(arg_char: ArgChar, fileIdGen, config):
         return arg_char
 
 def compile_command_argument(argument, fileIdGen, config):
-    BASH_MODE = True
+    global BASH_MODE
     if BASH_MODE:
         argument = expand_command_argument(argument, config)
     compiled_argument = [compile_arg_char(char, fileIdGen, config) for char in argument]

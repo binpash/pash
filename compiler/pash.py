@@ -15,8 +15,6 @@ from util import *
 import config
 import shutil
 
-BASH_MODE = True
-
 LOGGING_PREFIX = "PaSh: "
 
 @logging_prefix(LOGGING_PREFIX)
