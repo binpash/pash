@@ -383,16 +383,20 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen, fan_out, r_split
         hdfs_filepath = str(hdfs_fid.get_resource())
 
         ft = config.pash_args.ft
-        split = int(config.pash_args.split)
+        subblock_cnt = int(config.pash_args.split)
         if ft != 'optimized':
-            split = 1
+            subblock_cnt = 1
 
         # Create a cat command per file block
         file_config = hdfs_utils.get_file_config(hdfs_filepath)
         _, dummy_config_path = ptempfile() # Dummy config file, should be updated by workers
         for split_num, block in enumerate(file_config.blocks):
-            for i in range(split):
-                resource = DFSSplitResource(file_config.dumps(), dummy_config_path, split_num, block.hosts, i)
+            for subblock_num in range(subblock_cnt):
+                if ft == 'optimized':
+                    # Do not pass empty string
+                    resource = DFSSplitResource(None, "a", split_num, block.hosts)
+                else:
+                    resource = DFSSplitResource(file_config.dumps(), "", split_num, block.hosts)
                 block_fid = fileIdGen.next_file_id()
                 block_fid.set_resource(resource)
                 graph.add_edge(block_fid)
@@ -402,7 +406,7 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen, fan_out, r_split
                 output_ids.append(output_fid.get_ident())
                 graph.add_edge(output_fid)
 
-                split_reader_node = dfs_split_reader.make_dfs_split_reader_node([block_fid.get_ident()], output_fid.get_ident(), split_num, i, split)
+                split_reader_node = dfs_split_reader.make_dfs_split_reader_node([block_fid.get_ident()], output_fid.get_ident(), split_num, subblock_num, subblock_cnt, ft, file_config)
                 graph.add_node(split_reader_node)
 
     # Remove the HDFS Cat command as it's not used anymore

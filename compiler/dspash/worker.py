@@ -144,6 +144,9 @@ class RequestHandler(Thread):
             rc.kill()
             _, err = rc.communicate()
 
+        if err is None:
+            err = b""
+
         response = {
             'name': name,
             'returncode': rc.returncode,
@@ -198,7 +201,7 @@ class RequestHandler(Thread):
         cmd = f"source {functions_file}; source {script_path}"
         err_print(f"executing {cmd}")
 
-        rc = subprocess.Popen(cmd, env=e, executable="/bin/bash", shell=True, stderr=stderr, preexec_fn=os.setsid)
+        rc = subprocess.Popen(cmd, env=e, executable="/bin/bash", shell=True, stderr=None, preexec_fn=os.setsid)
         self.rc_graph_merger_list.append((rc, script_path, self.request['merger_id']))
 
     def handle_batch_exec_graph(self):
@@ -210,12 +213,11 @@ class RequestHandler(Thread):
 
         # this in None for now anyways
         # config.config['shell_variables'] = self.request['shell_variables']
-      
+
         functions_file = create_filename(dir=config.PASH_TMP_PREFIX, prefix='pashFuncs')
         write_file(functions_file, self.request['functions'])
 
         for regular in self.request['regulars']:
-            save_configs(regular, self.dfs_configs_paths)
             if self.debug:
                 add_debug_flags(regular)
             script_path = to_shell_file(regular, config.pash_args)
@@ -223,7 +225,6 @@ class RequestHandler(Thread):
             self.event_loop.regular_queue.append((cmd, script_path, self.request['merger_id']))
 
         for merger in self.request['mergers']:
-            save_configs(merger, self.dfs_configs_paths)
             if self.debug:
                 add_debug_flags(merger)
             script_path = to_shell_file(merger, config.pash_args)
@@ -304,8 +305,9 @@ class EventLoop(Thread):
             # Run until pool is full
             while self.regular_queue and len(self.running_processes) < self.handler.pool_size:
                 cmd, script_path, merger_id = self.regular_queue.pop()
-                err_print(f"executing {cmd}")
+                # err_print(f"executing {cmd}")
                 rc = subprocess.Popen(cmd, env=self.handler.env_var, executable="/bin/bash", shell=True, stderr=None, preexec_fn=os.setsid)
+                # rc = subprocess.Popen(f"time $({cmd})", env=self.handler.env_var, executable="/bin/bash", shell=True, stderr=None, preexec_fn=os.setsid)
                 self.running_processes.append(rc)
                 self.handler.rc_graph_merger_list.append((rc, script_path, merger_id))
 

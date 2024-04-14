@@ -220,12 +220,7 @@ def make_semi_sequence(asts):
     if(len(asts) == 1):
         return asts[0]
     else:
-        acc = asts[-1]
-        ## Remove the last ast
-        iter_asts = asts[:-1]
-        for ast in iter_asts[::-1]:
-            acc = make_kv("Semi", [ast, acc])
-        return acc
+        return make_kv("Semi", asts)
 
 def make_defun(name, body):
     lineno = 0

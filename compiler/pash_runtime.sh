@@ -206,6 +206,7 @@ else
         fi
         source "$RUNTIME_DIR/pash_wrap_vars.sh" "$pash_script_to_execute"
         internal_exec_status=$?
+        pash_runtime_final_status=$internal_exec_status
         final_steps
         (exit $internal_exec_status)
     }

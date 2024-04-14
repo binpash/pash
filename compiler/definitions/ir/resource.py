@@ -112,12 +112,11 @@ class HDFSFileResource(RemoteFileResource):
 
 # DFS logical split resource
 class DFSSplitResource(RemoteFileResource):
-    def __init__(self, config, config_path, split_num, hosts, subblock_num):
+    def __init__(self, config, config_path, split_num, hosts):
         self.config = config
         self.config_path = config_path
         self.split_num = split_num
         self.hosts = list(map(self._normalize_addr, hosts))
-        self.subblock_num = subblock_num
 
     def is_available_on(self, host):
         return host in self.hosts

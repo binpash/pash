@@ -58,16 +58,16 @@ class WorkerConnection:
         #     answer = self.socket.recv(1024)
         return self._running_processes
 
-    def send_request(self, request_dict: dict):
+    def send_request(self, request_dict: dict, wait_ack=True):
         request = encode_request(request_dict)
         send_msg(self._socket, request)
+        if wait_ack:
+            self.handle_response()
+
+    def handle_response(self):
         response_data = recv_msg(self._socket)
         if not response_data:
             raise Exception(f"didn't recieved ack on request {response_data}")
-        # currently not using the response
-        # else:
-            # response = decode_request(response_data)
-            # return response
 
     def send_setup_request(self):
         request_dict = { 
@@ -97,7 +97,7 @@ class WorkerConnection:
             'functions': functions,
             'merger_id': merger_id,
         }
-        self.send_request(request_dict)
+        self.send_request(request_dict, wait_ack=False)
 
     def send_graph_exec_request(self, graph, shell_vars, functions, merger_id) -> bool:
         request_dict = { 
@@ -415,6 +415,9 @@ class WorkersManager():
                             worker_to_regulars[worker],
                             worker_to_mergers[worker]
                         )
+
+                    for worker in self.workers:
+                        worker.handle_response()
 
                 else:
                     # Execute subgraphs on workers

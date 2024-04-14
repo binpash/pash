@@ -189,9 +189,10 @@ def to_string (ast):
 
             return "! " + braces(to_string(a))
         elif (type == "Semi"):
-            (a1, a2) = params
-
-            return braces(to_string(a1)) + " \n " + braces(to_string(a2))
+            lines = []
+            for ast in params:
+                lines.append(braces(to_string(ast)))
+            return "\n".join(lines)
         elif (type == "If"):
             (c, t, e) = params;
             return string_of_if (c, t, e);
