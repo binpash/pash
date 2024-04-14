@@ -30,8 +30,8 @@ def wait_msg_done():
             MessageAttributeNames=[
                 'All'
             ],
-            VisibilityTimeout=0,
-            WaitTimeSeconds=0
+            VisibilityTimeout=30,
+            WaitTimeSeconds=20
         )
         try:
             message = response['Messages'][0]
