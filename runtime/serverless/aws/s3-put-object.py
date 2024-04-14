@@ -14,7 +14,7 @@ with open(infile, "rb") as file:
     object_data = file.read()
 
 # Upload the object to S3
-s3.put_object(Bucket="nikpag", Key=object_key, Body=object_data)
+s3.put_object(Bucket="bucket", Key=object_key, Body=object_data)
 
 
 # notify the main shell that job is done
