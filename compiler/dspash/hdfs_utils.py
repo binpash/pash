@@ -166,7 +166,7 @@ def get_live_nodes():
             "nonDfsUsedSpace": 16368644096,
             "capacity": 1081101176832,
             "numBlocks": 8,
-            "version": "3.2.2",
+            "version": "3.4.0",
             "used": 393220096,
             "remaining": 1009346957312,
             "blockScheduled": 0,

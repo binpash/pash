@@ -44,7 +44,7 @@ max-temp_pash(){
 }
 
 max-temp_hadoop_streaming(){
-    jarpath="/opt/hadoop-3.2.2/share/hadoop/tools/lib/hadoop-streaming-3.2.2.jar" # Adjust as required
+    jarpath="/opt/hadoop-3.4.0/share/hadoop/tools/lib/hadoop-streaming-3.4.0.jar" # Adjust as required
     infile="$IN"
     output_dirs="/outputs/hadoop-streaming/max-temp"
     times_file="hadoopstreaming.res"

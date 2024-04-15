@@ -69,7 +69,7 @@ analytics-mts_pash(){
 }
 
 analytics-mts_hadoopstreaming(){
-  jarpath="/opt/hadoop-3.2.2/share/hadoop/tools/lib/hadoop-streaming-3.2.2.jar" # Adjust as required
+  jarpath="/opt/hadoop-3.4.0/share/hadoop/tools/lib/hadoop-streaming-3.4.0.jar" # Adjust as required
   times_file="hadoopstreaming.res"
   outputs_suffix="hadoopstreaming.out"
   outputs_dir="/outputs/hadoop-streaming/analytics-mts"
