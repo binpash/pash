@@ -1,0 +1,40 @@
+service: demo-spell
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  region: us-east-1
+  runtime: python3.9
+  memorySize: 2048
+  timeout: 120
+  stage: release
+  iamRoleStatements:
+  - Effect: "Allow"
+    Action:
+      - "lambda:*"
+      - "logs:*"
+      - "cloudwatch:*"
+      - "dynamodb:*"
+      - "s3:*"
+      - "sqs:*"
+      - "iam:GetPolicy"
+      - "iam:GetPolicyVersion"
+      - "iam:GetRole"
+      - "iam:GetRolePolicy"
+      - "iam:ListAttachedRolePolicies"
+      - "iam:ListRolePolicies"
+      - "iam:ListRoles"
+      - "iam:PassRole"
+    Resource:
+      - "*"
+
+functions:
+  demo-spell:
+    name: demo-spell
+    handler: lambda-function.lambda_handler
+    environment:
+      AWS_ACCOUNT_ID: ${env:AWS_ACCOUNT_ID}
+      AWS_QUEUE: ${env:AWS_QUEUE}
+      AWS_BUCKET: ${env:AWS_BUCKET}
+    maximumRetryAttempts: 0
