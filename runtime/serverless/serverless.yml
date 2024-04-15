@@ -6,11 +6,11 @@ provider:
   name: aws
   region: us-east-1
   runtime: python3.9
-  memorySize: 1024
-  timeout: 10
+  memorySize: 2048
+  timeout: 60
   stage: release
   layers:
-    - arn:aws:lambda:us-east-1:${env:AWS_ACCOUNT_ID}:layer:pashlib:17
+    - arn:aws:lambda:us-east-1:${env:AWS_ACCOUNT_ID}:layer:pashlib:2
   iamRoleStatements:
   - Effect: "Allow"
     Action:
@@ -37,3 +37,6 @@ functions:
     handler: lambda-function.lambda_handler
     environment:
       AWS_ACCOUNT_ID: ${env:AWS_ACCOUNT_ID}
+      AWS_QUEUE: ${env:AWS_QUEUE}
+      AWS_BUCKET: ${env:AWS_BUCKET}
+    maximumRetryAttempts: 0
