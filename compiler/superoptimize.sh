@@ -1,4 +1,3 @@
 #!/bin/bash
 
-echo "Superotmizer run!"
-
+echo "Superoptimizer run!"
