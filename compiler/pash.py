@@ -50,7 +50,6 @@ def preprocess_and_execute_asts(input_script_path, args, input_script_arguments,
     with open(fname, 'w') as new_shell_file:
         new_shell_file.write(preprocessed_shell_script)
 
-
     ## 4. Execute the preprocessed version of the input script
     if(not args.preprocess_only):
         return_code = execute_script(fname, args.command, input_script_arguments, shell_name)
