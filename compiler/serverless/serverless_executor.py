@@ -13,13 +13,16 @@ from util import log
 from ir import IR
 import config
 
+AWS_ACCOUNT_ID=os.environ.get("AWS_ACCOUNT_ID")
+QUEUE=os.environ.get("AWS_QUEUE")
+
 def exec():
     pass
 
 def wait_msg_done():
     while True:
         sqs = boto3.client('sqs')
-        queue_url = f'https://sqs.us-east-1.amazonaws.com/{os.environ.get("AWS_ACCOUNT_ID")}/queue '
+        queue_url = f'https://sqs.us-east-1.amazonaws.com/{AWS_ACCOUNT_ID}/{QUEUE}'
         # Receive message from SQS queue
         response = sqs.receive_message(
             QueueUrl=queue_url,
