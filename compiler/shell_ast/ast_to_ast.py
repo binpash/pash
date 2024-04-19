@@ -248,7 +248,11 @@ def join_original_text_lines(shell_source_lines_or_none):
     if any([text_or_none is None for text_or_none in shell_source_lines_or_none]):
         return None
     else:
-        return "\n".join(shell_source_lines_or_none)
+        try:
+            return "\n".join(shell_source_lines_or_none)
+        except TypeError:
+            as_strings = [text.decode('utf-8') for text in shell_source_lines_or_none]
+            return "\n".join(as_strings)
 
 def preprocess_node(ast_object, trans_options, last_object=False):
     global preprocess_cases

@@ -15,3 +15,7 @@ cd "$PASH_TOP/evaluation/tests/interface_tests"
 echo "Running compiler tests..."
 cd "$PASH_TOP/evaluation/tests/"
 ./test_evaluation_scripts.sh bash
+
+echo "Running bash interface tests..."
+cd "$PASH_TOP/evaluation/tests/interface_tests"
+./run_tests_bash.sh bash
