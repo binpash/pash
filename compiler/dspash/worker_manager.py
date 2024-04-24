@@ -279,7 +279,9 @@ class WorkersManager():
         log("Completely finished subgraphs", completely_finished_subgraphs)
 
         # clear and update the tracked subgraph state
-        self.all_graph_to_uuid[subgraph].clear()
+        for _, subgraph in self.all_worker_subgraph_pairs:
+            if subgraph not in completely_finished_subgraphs:
+                self.all_graph_to_uuid[subgraph].clear()
         for uuid, (from_graph, _) in self.all_uuid_to_graphs.items():
             if from_graph not in completely_finished_subgraphs:
                 self.all_graph_to_uuid[from_graph].append(uuid)
