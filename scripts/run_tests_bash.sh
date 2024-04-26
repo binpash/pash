@@ -18,4 +18,4 @@ cd "$PASH_TOP/evaluation/tests/"
 
 echo "Running bash interface tests..."
 cd "$PASH_TOP/evaluation/tests/interface_tests"
-./run_tests_bash.sh bash
+./run_bash_tests.sh bash

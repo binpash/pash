@@ -523,7 +523,7 @@ def preprocess_node_if(ast_node, trans_options, last_object=False):
     return preprocessed_ast_object
 
 def preprocess_case(case, trans_options, last_object=False):
-    preprocessed_body, sth_replaced = preprocess_close_node(case["cbody"], trans_options, last_object=last_object)
+    preprocessed_body, sth_replaced = preprocess_close_node(case["cbody"], trans_options, last_object=last_object) if case["cbody"] is not None else (None, False)
     case["cbody"] = preprocessed_body
     return case, sth_replaced
 

@@ -11,9 +11,9 @@ def read_vars_file(var_file_path):
         # with open(var_file_path) as f:
         #     lines = [line.rstrip() for line in f.readlines()]
 
-        with open(var_file_path) as f:
+        with open(var_file_path, 'rb') as f:
             variable_reading_start_time = datetime.now()
-            data = f.read()
+            data = f.read().decode('utf-8', errors='replace')
             variable_reading_end_time = datetime.now()
             print_time_delta("Variable Reading", variable_reading_start_time, variable_reading_end_time)
 
