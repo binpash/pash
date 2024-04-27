@@ -2900,16 +2900,26 @@ test_select.sh()
 }
 
 ## We run all tests composed with && to exit on the first that fails
+# commented out IFS tests should work but this is an issue with PaSh, bug report made
 if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     if [ "$#" -eq 0 ]; then 
         echo "Warning: these tests should be run with bash as the first argument to test the bash mode."
     fi
+    # run_test test_new-exp12.sub - ASK MICHAEL, local thing
+    # run_test test_array4.sub - seems to be the same local in function issue ASK MICHAEL
+    # run_test test_varenv18.sub - local in function ASK MICHAEL
+    # run_test test_assoc14.sub - i think its the declare here but ASK MICHAEL same thing as local it seems
+    # run_test test_attr.tests - again in issue with smth inside of function ASK MICHAEL
+    # run_test test_array28.sub - array thing again, ASK MICHAEL
+    # run_test test_exec8.sub - any uncommented script here and forward has an alias (or declare -A) or unset in it
     # run_test test_arith-for.tests - error script, looks good besides an extra error print, this is an important test
+    # run_test test_history2.sub - set -o history won't work here bc the history is gonna look different
+    # run_test test_posixexp2.tests - setting posix mode won't work this affects parsing
     run_test test_heredoc.tests
     run_test test_jobs1.sub
-    # run_test test_exec8.sub - any uncommented script here and forward has an alias (or declare -A) or unset in it
     run_test test_case1.sub
     # run_test test_nameref17.sub
+    # run_test test_set-e3a.sub - echo $- shouldn't work because it depends on variable state
     run_test test_lastpipe1.sub
     run_test test_dollar-at7.sub
     run_test test_trap4.sub
@@ -3074,7 +3084,6 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_attr1.sub - alias stuff
     run_test test_glob1.sub
     # run_test test_glob.tests
-    # run_test test_set-e3a.sub - not quite sure why erroring, could it be the set -e? ASK MICHAEL
     # run_test test_varenv13.sub
     run_test test_comsub-eof2.sub
     # run_test test_exp7.sub
@@ -3154,7 +3163,6 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_assoc13.sub
     run_test test_array7.sub
     # run_test test_exp.tests
-    # run_test test_new-exp12.sub - ASK MICHAEL
     # run_test test_new-exp.tests
     run_test test_exp12.sub
     # run_test test_comsub6.sub
@@ -3167,7 +3175,6 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_extglob4.sub - extend globbing
     # run_test test_dstack.tests
     run_test test_extglob5.sub
-    # run_test test_history2.sub - set -o history? ASK MICHAEL
     # run_test test_unicode1.sub
     run_test test_glob8.sub
     run_test test_histexp7.sub
@@ -3178,12 +3185,10 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_array6.sub
     # run_test test_assoc12.sub
     run_test test_assoc10.sub
-    # run_test test_array4.sub - seems to be the same local in function issue ASK MICHAEL
     run_test test_posixpipe.tests
     run_test test_new-exp11.sub
     # run_test test_exp11.sub
     # run_test test_comsub5.sub
-    # run_test test_varenv18.sub - local in function ASK MICHAEL
     # run_test test_posix2.tests
     # run_test test_histexp5.sub - history expansion issue
     # run_test test_printf.tests
@@ -3231,7 +3236,6 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_exp8.sub
     run_test test_new-exp15.sub
     # run_test test_complete.tests
-    # run_test test_assoc14.sub - i think its the declare here but ASK MICHAEL
     run_test test_array2.sub
     run_test test_assoc16.sub
     run_test test_vredir8.sub
@@ -3241,7 +3245,6 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_histexp3.sub - history expansion
     # run_test test_varenv22.sub - error script
     run_test test_procsub1.sub
-    # run_test test_posixexp2.tests - i think setting posix mode shouldn't work ASK MICHAEL
     run_test test_comsub3.sub
     # run_test test_history6.sub
     # run_test test_builtins.tests
@@ -3320,7 +3323,6 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_errors2.sub
     # run_test test_dollar-at-star11.sub
     run_test test_comsub-posix2.sub
-    # run_test test_attr.tests - again in issue with smth inside of function ASK MICHAEL
     # run_test test_nameref20.sub
     run_test test_invert.tests
     # run_test test_posixexp4.sub
@@ -3366,7 +3368,6 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_array15.sub
     # run_test test_exportfunc.tests
     # run_test test_array14.sub
-    # run_test test_array28.sub - array thing again, ASK MICHAEL
     # run_test test_dollar-at-star6.sub - setting IFS doesn't work
     run_test test_new-exp2.sub
     run_test test_mapfile1.sub
