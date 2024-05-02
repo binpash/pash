@@ -6,6 +6,7 @@ import time
 import queue
 import pickle
 import json
+import traceback
 from typing import List, Tuple
 from uuid import UUID
 
@@ -20,6 +21,11 @@ from dspash.hdfs_utils import start_hdfs_daemon, stop_hdfs_daemon
 import config 
 import copy
 import requests
+
+import grpc
+import dspash.proto.data_stream_pb2 as data_stream_pb2
+import dspash.proto.data_stream_pb2_grpc as data_stream_pb2_grpc
+import uuid
 
 
 HOST = socket.gethostbyname(socket.gethostname())
@@ -216,10 +222,31 @@ class WorkersManager():
                 else:
                     self.handle_crash(addr)
             except Exception as e:
-                log(f"Failed to handle ft re-execution with error {e}")
+                error_trace = traceback.format_exc()
+                log(f"Failed to handle ft re-execution with error {e}\n{error_trace}")
+
+    def update_discovery(self, addr, reply=False):
+        with grpc.insecure_channel('localhost:50052') as channel:
+            # stub = my_service_pb2_grpc.MyServiceStub(channel)
+            stub = data_stream_pb2_grpc.DiscoveryStub(channel)
+
+            # Create an RMessage object
+            r_message = data_stream_pb2.RMessage(addr=addr, reply=reply)
+
+            # Call the gRPC method
+            response = stub.RemoveAddrOptimized(r_message)
+
+            uuids = []
+            log("Received reply from discovery service")
+            for uuid_str in response.uuids:
+                uuid_obj = uuid.UUID(uuid_str)
+                uuids.append(uuid_obj)
+
+            return uuids
 
     def handle_crash(self, addr: str):
-        log("Node crashed, handling it, ft mode is", self.args.ft)
+        ft = self.args.ft
+        log("Node crashed, handling it, ft mode is", ft)
         subgraphs_to_reexecute = set()
 
         # handle crashed subgraphs
@@ -229,11 +256,27 @@ class WorkersManager():
                 # handle the dependencies of the merger subgraphs
                 if subgraph.merger:
                     merger_id = subgraph.id
-                    for worker in self.workers:
-                        worker.send_kill_subgraphs_request(merger_id)
-                        log(f"Sent kill all subgraphs request to {worker}")
+                    # no need to kill existing sgs for optimized
+                    if ft == "base":
+                        for worker in self.workers:
+                            worker.send_kill_subgraphs_request(merger_id)
+                            log(f"Sent kill all subgraphs request to {worker}")
                     subgraphs_to_reexecute.update(self.all_merger_to_subgraph[merger_id])
         log(f"Subgraphs to re-execute: {subgraphs_to_reexecute}")
+
+        # remove executions if they are already persisted
+        if ft == "optimized":
+            len1 = len(subgraphs_to_reexecute)
+            uuids = self.update_discovery(addr, reply=True)
+            for uuid_obj in uuids:
+                if uuid_obj not in self.all_uuid_to_graphs:
+                    # TODO: fix this, we need to clean up discovery service
+                    continue
+                from_graph, _ = self.all_uuid_to_graphs[uuid_obj]
+                subgraphs_to_reexecute.discard(from_graph)
+                log(f"Subgraph {from_graph} is already persisted, discarding it")
+            len2 = len(subgraphs_to_reexecute)
+            log(f"Subgraphs to re-execute reduced by: {len1 - len2}")
 
         # clear and update the tracked subgraph state
         for subgraph in subgraphs_to_reexecute:
