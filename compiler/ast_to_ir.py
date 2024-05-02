@@ -128,7 +128,6 @@ def compile_asts(ast_objects: "list[AstNode]", fileIdGen, config):
 
     return compiled_asts
 
-
 def compile_node(ast_object, fileIdGen, config):
     global compile_cases
     return ast_match(ast_object, compile_cases, fileIdGen, config)
@@ -408,7 +407,6 @@ def naive_expand(argument, config):
 
     ## Create an AST node that "echo"s the argument
     echo_asts = make_echo_ast(argument, config['shell_variables_file_path'])
-
     ## Execute the echo AST by unparsing it to shell
     ## and calling bash
     expanded_string = execute_shell_asts(echo_asts)
@@ -417,6 +415,7 @@ def naive_expand(argument, config):
 
     ## Parse the expanded string back to an arg_char
     expanded_arguments = parse_string_to_arguments(expanded_string)
+    expanded_arguments = [EArgChar(arg[1]) for arg in expanded_arguments[0]]
 
     ## TODO: Handle any errors
     # log(expanded_arg_char)
@@ -431,7 +430,7 @@ def naive_expand(argument, config):
 ##       might have assignments of its own, therefore requiring that we use them to properly expand.
 def expand_command_argument(argument, config):
     new_arguments = [argument]
-    if(should_expand_argument(argument)) or True:
+    if True or should_expand_argument(argument):
         new_arguments = naive_expand(argument, config)
     return new_arguments
 

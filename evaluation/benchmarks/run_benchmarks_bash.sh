@@ -1,10 +1,9 @@
 #!/bin/bash
-
 ## This script is necessary to ensure that sourcing happens with bash
 # source run.seq.sh
 # source run.par.sh
 
-rm oneliners/par.res oneliners/seq.res
+rm -f oneliners/par.res oneliners/seq.res
 
 compare_outputs(){
   dir=$1
@@ -35,8 +34,8 @@ oneliners(){
   mkdir -p "$outputs_dir"
 
   scripts_inputs=(
-      "nfa-regex;100M.txt"
-      # "sort;3G.txt"
+      #"nfa-regex;10M.txt" # 100M
+      "sort;100M.txt"
       # "top-n;1G.txt"
       # "wf;3G.txt"
       # "spell;1G.txt"
@@ -71,7 +70,7 @@ oneliners(){
 }
 
 oneliners_pash(){
-  #times_file="par.res"
+  times_file="par.res"
   outputs_suffix="par.out"
   time_suffix="par.time"
   outputs_dir="outputs"
@@ -89,8 +88,8 @@ oneliners_pash(){
   mkdir -p "$pash_logs_dir"
 
   scripts_inputs=(
-      "nfa-regex;1M.txt" # 100M.txt"
-      # "sort;3G.txt"
+      #"nfa-regex;10M.txt" # 100M.txt"
+      "sort;100M.txt" # 3G.txt
       # "top-n;1G.txt"
       # "wf;3G.txt"
       # "spell;1G.txt"
@@ -101,51 +100,35 @@ oneliners_pash(){
       # "shortest-scripts;all_cmdsx100.txt"
   )
 
-  width_inputs=(
-    2
-    8
-  )
-
-  flags_inputs=(
-    ""
-    "--bash"
-  )
-
   touch "$times_file"
   echo executing one-liners with pash $(date) | tee -a "$times_file"
   echo '' >> "$times_file"
 
-  width
+  width="2"
 
   for script_input in ${scripts_inputs[@]}
   do
-    for width in ${width_inputs[@]}
-    do
-      for flags in ${flags_inputs[@]}
-      do
-        times_file="$par${flags}${width}.res"
-        IFS=";" read -r -a script_input_parsed <<< "${script_input}"
-        script="${script_input_parsed[0]}"
-        input="${script_input_parsed[1]}"
-        source_var $1 $input
-        printf -v pad %30s
-        padded_script="${script}.sh:${pad}"
-        padded_script=${padded_script:0:30}
+    IFS=";" read -r -a script_input_parsed <<< "${script_input}"
+    script="${script_input_parsed[0]}"
+    input="${script_input_parsed[1]}"
+    source_var $1 $input
+    printf -v pad %30s
+    padded_script="${script}.sh:${pad}"
+    padded_script=${padded_script:0:30}
 
-        outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
-        pash_log="${pash_logs_dir}/${script}.pash.log"
-        single_time_file="${outputs_dir}/${script}.${time_suffix}"
+    outputs_file="${outputs_dir}/${script}.${outputs_suffix}"
+    pash_log="${pash_logs_dir}/${script}.pash.log"
+    single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
-        echo -n "${padded_script}" | tee -a "$times_file"
-        { time "$PASH_TOP/pa.sh" -w "${width}" "${flags}" $PASH_FLAGS --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
-        cat "${single_time_file}" | tee -a "$times_file"
-      done
-    done
+    echo -n "${padded_script}" | tee -a "$times_file"
+    { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
+    cat "${single_time_file}" | tee -a "$times_file"
   done
 
   cd ..
 }
 
 oneliners --full
+oneliners_pash --full
 
 compare_outputs "oneliners/outputs"

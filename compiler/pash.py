@@ -60,7 +60,6 @@ def preprocess_and_execute_asts(input_script_path, args, input_script_arguments,
         return_code = execute_script(fname, args.command, input_script_arguments, shell_name)
     else:
         return_code = 0
-
     return return_code
 
 

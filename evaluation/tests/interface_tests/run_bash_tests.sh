@@ -2905,16 +2905,16 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     if [ "$#" -eq 0 ]; then 
         echo "Warning: these tests should be run with bash as the first argument to test the bash mode."
     fi
-    # run_test test_new-exp12.sub - ASK MICHAEL, local thing
-    # run_test test_array4.sub - seems to be the same local in function issue ASK MICHAEL
-    # run_test test_varenv18.sub - local in function ASK MICHAEL
-    # run_test test_assoc14.sub - i think its the declare here but ASK MICHAEL same thing as local it seems
-    # run_test test_attr.tests - again in issue with smth inside of function ASK MICHAEL
-    # run_test test_array28.sub - array thing again, ASK MICHAEL
     # run_test test_exec8.sub - any uncommented script here and forward has an alias (or declare -A) or unset in it
     # run_test test_arith-for.tests - error script, looks good besides an extra error print, this is an important test
     # run_test test_history2.sub - set -o history won't work here bc the history is gonna look different
     # run_test test_posixexp2.tests - setting posix mode won't work this affects parsing
+    run_test test_new-exp12.sub 
+    run_test test_array4.sub
+    run_test test_varenv18.sub
+    run_test test_assoc14.sub
+    run_test test_attr.tests 
+    run_test test_array28.sub
     run_test test_heredoc.tests
     run_test test_jobs1.sub
     run_test test_case1.sub

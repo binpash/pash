@@ -25,8 +25,7 @@ def parse_shell_to_asts(input_script_path, bash_mode=False):
             typed_ast_objects = []
             for untyped_ast, original_text, linno_before, linno_after, in new_ast_objects:
                 typed_ast = bash_to_shasta_ast(untyped_ast)
-                typed_ast_objects.append((typed_ast, original_text, linno_before, linno_after))
-            
+                typed_ast_objects.append((typed_ast, original_text.decode('utf-8', errors='replace'), linno_before, linno_after))
             return typed_ast_objects
         except RuntimeError as e:
             log("Parsing error!", e)
@@ -38,9 +37,8 @@ def parse_shell_to_asts(input_script_path, bash_mode=False):
         ## Transform the untyped ast objects to typed ones
         typed_ast_objects = []
         for untyped_ast, original_text, linno_before, linno_after, in new_ast_objects:
-             typed_ast = to_ast_node(untyped_ast)
-             typed_ast_objects.append((typed_ast, original_text, linno_before, linno_after))
-
+            typed_ast = to_ast_node(untyped_ast)
+            typed_ast_objects.append((typed_ast, original_text, linno_before, linno_after))
         return typed_ast_objects
     except libdash.parser.ParsingException as e:
         log("Parsing error!", e)
