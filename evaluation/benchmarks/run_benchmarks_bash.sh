@@ -34,7 +34,7 @@ oneliners(){
   mkdir -p "$outputs_dir"
 
   scripts_inputs=(
-      #"nfa-regex;10M.txt" # 100M
+      "nfa-regex;10M.txt" # 100M
       "sort;100M.txt"
       # "top-n;1G.txt"
       # "wf;3G.txt"
@@ -88,7 +88,7 @@ oneliners_pash(){
   mkdir -p "$pash_logs_dir"
 
   scripts_inputs=(
-      #"nfa-regex;10M.txt" # 100M.txt"
+      "nfa-regex;10M.txt" # 100M.txt"
       "sort;100M.txt" # 3G.txt
       # "top-n;1G.txt"
       # "wf;3G.txt"
@@ -121,7 +121,7 @@ oneliners_pash(){
     single_time_file="${outputs_dir}/${script}.${time_suffix}"
 
     echo -n "${padded_script}" | tee -a "$times_file"
-    { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
+    { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS --bash --log_file "${pash_log}" ${script}.sh > "$outputs_file"; } 2> "${single_time_file}"
     cat "${single_time_file}" | tee -a "$times_file"
   done
 

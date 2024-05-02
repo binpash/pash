@@ -64,2844 +64,2845 @@ run_test()
 test_jobs1.sub()
 {
     local shell=$1
-    $shell bash_tests/jobs1.sub
+    $shell jobs1.sub
 }
 
 test_exec8.sub()
 {
     local shell=$1
-    $shell bash_tests/exec8.sub
+    $shell exec8.sub
 }
 
 test_case1.sub()
 {
     local shell=$1
-    $shell bash_tests/case1.sub
+    $shell case1.sub
 }
 
 test_nameref17.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref17.sub
+    $shell nameref17.sub
 }
 
 test_lastpipe1.sub()
 {
     local shell=$1
-    $shell bash_tests/lastpipe1.sub
+    $shell lastpipe1.sub
 }
 
 test_dollar-at7.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at7.sub
+    $shell dollar-at7.sub
 }
 
 test_trap4.sub()
 {
     local shell=$1
-    $shell bash_tests/trap4.sub
+    $shell trap4.sub
 }
 
 test_errors9.sub()
 {
     local shell=$1
-    $shell bash_tests/errors9.sub
+    $shell errors9.sub
 }
 
 test_dollar-star3.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-star3.sub
+    $shell dollar-star3.sub
 }
 
 test_assoc1.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc1.sub
+    $shell assoc1.sub
 }
 
 test_alias4.sub()
 {
     local shell=$1
-    $shell bash_tests/alias4.sub
+    $shell alias4.sub
 }
 
 test_varenv6.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv6.sub
+    $shell varenv6.sub
 }
 
 test_builtins2.sub()
 {
     local shell=$1
-    $shell bash_tests/builtins2.sub
+    $shell builtins2.sub
 }
 
 test_array25.sub()
 {
     local shell=$1
-    $shell bash_tests/array25.sub
+    $shell array25.sub
 }
 
 test_nquote1.sub()
 {
     local shell=$1
-    $shell bash_tests/nquote1.sub
+    $shell nquote1.sub
 }
 
 test_array19.sub()
 {
     local shell=$1
-    $shell bash_tests/array19.sub
+    $shell array19.sub
 }
 
 test_array18.sub()
 {
     local shell=$1
-    $shell bash_tests/array18.sub
+    $shell array18.sub
 }
 
 test_redir1.sub()
 {
     local shell=$1
-    $shell bash_tests/redir1.sub
+    $shell redir1.sub
 }
 
 test_array24.sub()
 {
     local shell=$1
-    $shell bash_tests/array24.sub
+    $shell array24.sub
 }
 
 test_array30.sub()
 {
     local shell=$1
-    $shell bash_tests/array30.sub
+    $shell array30.sub
 }
 
 test_builtins3.sub()
 {
     local shell=$1
-    $shell bash_tests/builtins3.sub
+    $shell builtins3.sub
 }
 
 test_varenv7.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv7.sub
+    $shell varenv7.sub
 }
 
 test_alias5.sub()
 {
     local shell=$1
-    $shell bash_tests/alias5.sub
+    $shell alias5.sub
 }
 
 test_dollar-star2.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-star2.sub
+    $shell dollar-star2.sub
 }
 
 test_nameref1.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref1.sub
+    $shell nameref1.sub
 }
 
 test_errors8.sub()
 {
     local shell=$1
-    $shell bash_tests/errors8.sub
+    $shell errors8.sub
 }
 
 test_trap5.sub()
 {
     local shell=$1
-    $shell bash_tests/trap5.sub
+    $shell trap5.sub
 }
 
 test_dollar-at6.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at6.sub
+    $shell dollar-at6.sub
 }
 
 test_nameref16.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref16.sub
+    $shell nameref16.sub
 }
 
 test_exec9.sub()
 {
     local shell=$1
-    $shell bash_tests/exec9.sub
+    $shell exec9.sub
 }
 
 test_heredoc1.sub()
 {
     local shell=$1
-    $shell bash_tests/heredoc1.sub
+    $shell heredoc1.sub
 }
 
 test_read1.sub()
 {
     local shell=$1
-    $shell bash_tests/read1.sub
+    $shell read1.sub
 }
 
 test_comsub-eof.tests()
 {
     local shell=$1
-    $shell bash_tests/comsub-eof.tests
+    $shell comsub-eof.tests
 }
 
 test_jobs2.sub()
 {
     local shell=$1
-    $shell bash_tests/jobs2.sub
+    $shell jobs2.sub
 }
 
 test_read3.sub()
 {
     local shell=$1
-    $shell bash_tests/read3.sub
+    $shell read3.sub
 }
 
 test_heredoc3.sub()
 {
     local shell=$1
-    $shell bash_tests/heredoc3.sub
+    $shell heredoc3.sub
 }
 
 test_trap2a.sub()
 {
     local shell=$1
-    $shell bash_tests/trap2a.sub
+    $shell trap2a.sub
 }
 
 test_case2.sub()
 {
     local shell=$1
-    $shell bash_tests/case2.sub
+    $shell case2.sub
 }
 
 test_nameref14.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref14.sub
+    $shell nameref14.sub
 }
 
 test_lastpipe2.sub()
 {
     local shell=$1
-    $shell bash_tests/lastpipe2.sub
+    $shell lastpipe2.sub
 }
 
 test_dollar-at4.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at4.sub
+    $shell dollar-at4.sub
 }
 
 test_nameref3.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref3.sub
+    $shell nameref3.sub
 }
 
 test_quotearray.tests()
 {
     local shell=$1
-    $shell bash_tests/quotearray.tests
+    $shell quotearray.tests
 }
 
 test_getopts8.sub()
 {
     local shell=$1
-    $shell bash_tests/getopts8.sub
+    $shell getopts8.sub
 }
 
 test_assoc2.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc2.sub
+    $shell assoc2.sub
 }
 
 test_builtins1.sub()
 {
     local shell=$1
-    $shell bash_tests/builtins1.sub
+    $shell builtins1.sub
 }
 
 test_dollar-at-star8.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at-star8.sub
+    $shell dollar-at-star8.sub
 }
 
 test_varenv5.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv5.sub
+    $shell varenv5.sub
 }
 
 test_type4.sub()
 {
     local shell=$1
-    $shell bash_tests/type4.sub
+    $shell type4.sub
 }
 
 test_array26.sub()
 {
     local shell=$1
-    $shell bash_tests/array26.sub
+    $shell array26.sub
 }
 
 test_nquote2.sub()
 {
     local shell=$1
-    $shell bash_tests/nquote2.sub
+    $shell nquote2.sub
 }
 
 test_redir3.sub()
 {
     local shell=$1
-    echo hi1 hi2 hi3 hi4 | $shell bash_tests/redir3.sub
+    echo hi1 hi2 hi3 hi4 | $shell redir3.sub
 }
 
 test_redir2.sub()
 {
     local shell=$1
-    $shell bash_tests/redir2.sub
+    $shell redir2.sub
 }
 
 test_nquote3.sub()
 {
     local shell=$1
-    $shell bash_tests/nquote3.sub
+    $shell nquote3.sub
 }
 
 test_array27.sub()
 {
     local shell=$1
-    $shell bash_tests/array27.sub
+    $shell array27.sub
 }
 
 test_varenv4.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv4.sub
+    $shell varenv4.sub
 }
 
 test_dollar-at-star9.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at-star9.sub
+    $shell dollar-at-star9.sub
 }
 
 test_assoc3.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc3.sub
+    $shell assoc3.sub
 }
 
 test_alias6.sub()
 {
     local shell=$1
-    $shell bash_tests/alias6.sub
+    $shell alias6.sub
 }
 
 test_posix2syntax.sub()
 {
     local shell=$1
-    $shell bash_tests/posix2syntax.sub
+    $shell posix2syntax.sub
 }
 
 test_dollar-star1.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-star1.sub
+    $shell dollar-star1.sub
 }
 
 test_getopts9.sub()
 {
     local shell=$1
-    $shell bash_tests/getopts9.sub
+    $shell getopts9.sub
 }
 
 test_dstack2.tests()
 {
     local shell=$1
-    $shell bash_tests/dstack2.tests
+    $shell dstack2.tests
 }
 
 test_trap6.sub()
 {
     local shell=$1
-    $shell bash_tests/trap6.sub
+    $shell trap6.sub
 }
 
 test_nameref2.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref2.sub
+    $shell nameref2.sub
 }
 
 test_dollar-at5.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at5.sub
+    $shell dollar-at5.sub
 }
 
 test_arith.tests()
 {
     local shell=$1
-    $shell bash_tests/arith.tests
+    $shell arith.tests
 }
 
 test_lastpipe3.sub()
 {
     local shell=$1
-    $shell bash_tests/lastpipe3.sub
+    $shell lastpipe3.sub
 }
 
 test_nameref15.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref15.sub
+    $shell nameref15.sub
 }
 
 test_case3.sub()
 {
     local shell=$1
-    $shell bash_tests/case3.sub
+    $shell case3.sub
 }
 
 test_procsub.tests()
 {
     local shell=$1
-    $shell bash_tests/procsub.tests
+    $shell procsub.tests
 }
 
 test_heredoc2.sub()
 {
     local shell=$1
-    $shell bash_tests/heredoc2.sub
+    $shell heredoc2.sub
 }
 
 test_read2.sub()
 {
     local shell=$1
-    $shell bash_tests/read2.sub
+    $shell read2.sub
 }
 
 test_jobs3.sub()
 {
     local shell=$1
-    $shell bash_tests/jobs3.sub
+    $shell jobs3.sub
 }
 
 test_heredoc6.sub()
 {
     local shell=$1
-    $shell bash_tests/heredoc6.sub
+    $shell heredoc6.sub
 }
 
 test_jobs7.sub()
 {
     local shell=$1
-    $shell bash_tests/jobs7.sub
+    $shell jobs7.sub
 }
 
 test_read6.sub()
 {
     local shell=$1
-    $shell bash_tests/read6.sub
+    $shell read6.sub
 }
 
 test_shopt.tests()
 {
     local shell=$1
-    $shell bash_tests/shopt.tests
+    $shell shopt.tests
 }
 
 test_comsub.tests()
 {
     local shell=$1
-    $shell bash_tests/comsub.tests
+    $shell comsub.tests
 }
 
 test_dollar-star10.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-star10.sub
+    $shell dollar-star10.sub
 }
 
 test_dollar-at1.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at1.sub
+    $shell dollar-at1.sub
 }
 
 test_appendop1.sub()
 {
     local shell=$1
-    $shell bash_tests/appendop1.sub
+    $shell appendop1.sub
 }
 
 test_nameref11.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref11.sub
+    $shell nameref11.sub
 }
 
 test_strip.tests()
 {
     local shell=$1
-    $shell bash_tests/strip.tests
+    $shell strip.tests
 }
 
 test_nameref6.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref6.sub
+    $shell nameref6.sub
 }
 
 test_trap2.sub()
 {
     local shell=$1
-    $shell bash_tests/trap2.sub
+    $shell trap2.sub
 }
 
 test_alias2.sub()
 {
     local shell=$1
-    $shell bash_tests/alias2.sub
+    $shell alias2.sub
 }
 
 test_assoc7.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc7.sub
+    $shell assoc7.sub
 }
 
 test_dollar-star5.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-star5.sub
+    $shell dollar-star5.sub
 }
 
 test_builtins4.sub()
 {
     local shell=$1
-    $shell bash_tests/builtins4.sub
+    $shell builtins4.sub
 }
 
 test_new-exp9.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp9.sub
+    $shell new-exp9.sub
 }
 
 test_redir6.sub()
 {
     local shell=$1
-    $shell bash_tests/redir6.sub
+    $shell redir6.sub
 }
 
 test_array23.sub()
 {
     local shell=$1
-    $shell bash_tests/array23.sub
+    $shell array23.sub
 }
 
 test_type1.sub()
 {
     local shell=$1
-    $shell bash_tests/type1.sub
+    $shell type1.sub
 }
 
 test_array22.sub()
 {
     local shell=$1
-    $shell bash_tests/array22.sub
+    $shell array22.sub
 }
 
 test_redir7.sub()
 {
     local shell=$1
-    $shell bash_tests/redir7.sub
+    $shell redir7.sub
 }
 
 test_intl1.sub()
 {
     local shell=$1
-    $shell bash_tests/intl1.sub
+    $shell intl1.sub
 }
 
 test_varenv1.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv1.sub
+    $shell varenv1.sub
 }
 
 test_builtins5.sub()
 {
     local shell=$1
-    $shell bash_tests/builtins5.sub
+    $shell builtins5.sub
 }
 
 test_new-exp8.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp8.sub
+    $shell new-exp8.sub
 }
 
 test_dollar-star4.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-star4.sub
+    $shell dollar-star4.sub
 }
 
 test_assoc6.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc6.sub
+    $shell assoc6.sub
 }
 
 test_alias3.sub()
 {
     local shell=$1
-    $shell bash_tests/alias3.sub
+    $shell alias3.sub
 }
 
 test_set-x1.sub()
 {
     local shell=$1
-    $shell bash_tests/set-x1.sub
+    $shell set-x1.sub
 }
 
 test_trap3.sub()
 {
     local shell=$1
-    $shell bash_tests/trap3.sub
+    $shell trap3.sub
 }
 
 test_nameref7.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref7.sub
+    $shell nameref7.sub
 }
 
 test_history.tests()
 {
     local shell=$1
-    $shell bash_tests/history.tests
+    $shell history.tests
 }
 
 test_nameref10.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref10.sub
+    $shell nameref10.sub
 }
 
 test_parser1.sub()
 {
     local shell=$1
-    $shell bash_tests/parser1.sub
+    $shell parser1.sub
 }
 
 test_jobs.tests()
 {
     local shell=$1
-    $shell bash_tests/jobs.tests
+    $shell jobs.tests
 }
 
 test_posixexp8.sub()
 {
     local shell=$1
-    $shell bash_tests/posixexp8.sub
+    $shell posixexp8.sub
 }
 
 test_read7.sub()
 {
     local shell=$1
-    $shell bash_tests/read7.sub
+    $shell read7.sub
 }
 
 test_jobs6.sub()
 {
     local shell=$1
-    $shell bash_tests/jobs6.sub
+    $shell jobs6.sub
 }
 
 test_heredoc7.sub()
 {
     local shell=$1
-    $shell bash_tests/heredoc7.sub
+    $shell heredoc7.sub
 }
 
 test_heredoc5.sub()
 {
     local shell=$1
-    $shell bash_tests/heredoc5.sub
+    $shell heredoc5.sub
 }
 
 test_read5.sub()
 {
     local shell=$1
-    $shell bash_tests/read5.sub
+    $shell read5.sub
 }
 
 test_jobs4.sub()
 {
     local shell=$1
-    $shell bash_tests/jobs4.sub
+    $shell jobs4.sub
 }
 
 test_case4.sub()
 {
     local shell=$1
-    $shell bash_tests/case4.sub
+    $shell case4.sub
 }
 
 test_dollar-at2.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at2.sub
+    $shell dollar-at2.sub
 }
 
 test_nameref.tests()
 {
     local shell=$1
-    $shell bash_tests/nameref.tests
+    $shell nameref.tests
 }
 
 test_nameref12.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref12.sub
+    $shell nameref12.sub
 }
 
 test_appendop2.sub()
 {
     local shell=$1
-    $shell bash_tests/appendop2.sub
+    $shell appendop2.sub
 }
 
 test_trap1.sub()
 {
     local shell=$1
-    $shell bash_tests/trap1.sub
+    $shell trap1.sub
 }
 
 test_nameref5.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref5.sub
+    $shell nameref5.sub
 }
 
 test_assoc4.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc4.sub
+    $shell assoc4.sub
 }
 
 test_tilde2.tests()
 {
     local shell=$1
-    $shell bash_tests/tilde2.tests
+    $shell tilde2.tests
 }
 
 test_vredir.tests()
 {
     local shell=$1
-    $shell bash_tests/vredir.tests
+    $shell vredir.tests
 }
 
 test_alias1.sub()
 {
     local shell=$1
-    $shell bash_tests/alias1.sub
+    $shell alias1.sub
 }
 
 test_mapfile.tests()
 {
     local shell=$1
-    $shell bash_tests/mapfile.tests
+    $shell mapfile.tests
 }
 
 test_dollar-star6.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-star6.sub
+    $shell dollar-star6.sub
 }
 
 test_parser.tests()
 {
     local shell=$1
-    $shell bash_tests/parser.tests
+    $shell parser.tests
 }
 
 test_varenv3.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv3.sub
+    $shell varenv3.sub
 }
 
 test_builtins7.sub()
 {
     local shell=$1
-    $shell bash_tests/builtins7.sub
+    $shell builtins7.sub
 }
 
 test_intl3.sub()
 {
     local shell=$1
-    $shell bash_tests/intl3.sub
+    $shell intl3.sub
 }
 
 test_redir5.sub()
 {
     local shell=$1
-    $shell bash_tests/redir5.sub
+    $shell redir5.sub
 }
 
 test_errors.tests()
 {
     local shell=$1
-    $shell bash_tests/errors.tests
+    $shell errors.tests
 }
 
 test_type2.sub()
 {
     local shell=$1
-    $shell bash_tests/type2.sub
+    $shell type2.sub
 }
 
 test_array20.sub()
 {
     local shell=$1
-    $shell bash_tests/array20.sub
+    $shell array20.sub
 }
 
 test_nquote4.sub()
 {
     local shell=$1
-    $shell bash_tests/nquote4.sub
+    $shell nquote4.sub
 }
 
 test_type3.sub()
 {
     local shell=$1
-    $shell bash_tests/type3.sub
+    $shell type3.sub
 }
 
 test_nquote5.sub()
 {
     local shell=$1
-    $shell bash_tests/nquote5.sub
+    $shell nquote5.sub
 }
 
 test_array21.sub()
 {
     local shell=$1
-    $shell bash_tests/array21.sub
+    $shell array21.sub
 }
 
 test_redir4.sub()
 {
     local shell=$1
-    $shell bash_tests/redir4.sub
+    $shell redir4.sub
 }
 
 test_intl2.sub()
 {
     local shell=$1
-    $shell bash_tests/intl2.sub
+    $shell intl2.sub
 }
 
 test_herestr1.sub()
 {
     local shell=$1
-    $shell bash_tests/herestr1.sub
+    $shell herestr1.sub
 }
 
 test_builtins6.sub()
 {
     local shell=$1
-    $shell bash_tests/builtins6.sub
+    $shell builtins6.sub
 }
 
 test_varenv2.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv2.sub
+    $shell varenv2.sub
 }
 
 test_dollar-star7.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-star7.sub
+    $shell dollar-star7.sub
 }
 
 test_assoc5.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc5.sub
+    $shell assoc5.sub
 }
 
 test_nameref4.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref4.sub
+    $shell nameref4.sub
 }
 
 test_nameref13.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref13.sub
+    $shell nameref13.sub
 }
 
 test_dollar-at3.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at3.sub
+    $shell dollar-at3.sub
 }
 
 test_extglob3.tests()
 {
     local shell=$1
-    $shell bash_tests/extglob3.tests
+    $shell extglob3.tests
 }
 
 test_jobs5.sub()
 {
     local shell=$1
-    $shell bash_tests/jobs5.sub
+    $shell jobs5.sub
 }
 
 test_read4.sub()
 {
     local shell=$1
-    $shell bash_tests/read4.sub
+    $shell read4.sub
 }
 
 test_heredoc4.sub()
 {
     local shell=$1
-    $shell bash_tests/heredoc4.sub
+    $shell heredoc4.sub
 }
 
 test_dbg-support3.sub()
 {
     local shell=$1
-    $shell bash_tests/dbg-support3.sub
+    $shell dbg-support3.sub
 }
 
 test_globstar2.sub()
 {
     local shell=$1
-    $shell bash_tests/globstar2.sub
+    $shell globstar2.sub
 }
 
 test_arith4.sub()
 {
     local shell=$1
-    $shell bash_tests/arith4.sub
+    $shell arith4.sub
 }
 
 test_vredir4.sub()
 {
     local shell=$1
-    $shell bash_tests/vredir4.sub
+    $shell vredir4.sub
 }
 
 test_exp6.sub()
 {
     local shell=$1
-    $shell bash_tests/exp6.sub
+    $shell exp6.sub
 }
 
 test_comsub-eof3.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub-eof3.sub
+    $shell comsub-eof3.sub
 }
 
 test_varenv.tests()
 {
     local shell=$1
-    $shell bash_tests/varenv.tests
+    $shell varenv.tests
 }
 
 test_rhs-exp.tests()
 {
     local shell=$1
-    $shell bash_tests/rhs-exp.tests
+    $shell rhs-exp.tests
 }
 
 test_varenv12.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv12.sub
+    $shell varenv12.sub
 }
 
 test_attr1.sub()
 {
     local shell=$1
-    $shell bash_tests/attr1.sub
+    $shell attr1.sub
 }
 
 test_glob1.sub()
 {
     local shell=$1
-    $shell bash_tests/glob1.sub
+    $shell glob1.sub
 }
 
 test_glob.tests()
 {
     local shell=$1
-    $shell bash_tests/glob.tests
+    $shell glob.tests
 }
 
 test_set-e3a.sub()
 {
     local shell=$1
-    $shell bash_tests/set-e3a.sub
+    $shell set-e3a.sub
 }
 
 test_varenv13.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv13.sub
+    $shell varenv13.sub
 }
 
 test_comsub-eof2.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub-eof2.sub
+    $shell comsub-eof2.sub
 }
 
 test_exp7.sub()
 {
     local shell=$1
-    $shell bash_tests/exp7.sub
+    $shell exp7.sub
 }
 
 test_braces.tests()
 {
     local shell=$1
-    $shell bash_tests/braces.tests
+    $shell braces.tests
 }
 
 test_vredir5.sub()
 {
     local shell=$1
-    $shell bash_tests/vredir5.sub
+    $shell vredir5.sub
 }
 
 test_globstar3.sub()
 {
     local shell=$1
-    $shell bash_tests/globstar3.sub
+    $shell globstar3.sub
 }
 
 test_arith5.sub()
 {
     local shell=$1
-    $shell bash_tests/arith5.sub
+    $shell arith5.sub
 }
 
 test_vredir7.sub()
 {
     local shell=$1
-    $shell bash_tests/vredir7.sub
+    $shell vredir7.sub
 }
 
 test_arith7.sub()
 {
     local shell=$1
-    $shell bash_tests/arith7.sub
+    $shell arith7.sub
 }
 
 test_globstar1.sub()
 {
     local shell=$1
-    $shell bash_tests/globstar1.sub
+    $shell globstar1.sub
 }
 
 test_comsub-eof0.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub-eof0.sub
+    $shell comsub-eof0.sub
 }
 
 test_exp5.sub()
 {
     local shell=$1
-    $shell bash_tests/exp5.sub
+    $shell exp5.sub
 }
 
 test_varenv11.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv11.sub
+    $shell varenv11.sub
 }
 
 test_glob3.sub()
 {
     local shell=$1
-    $shell bash_tests/glob3.sub
+    $shell glob3.sub
 }
 
 test_glob10.sub()
 {
     local shell=$1
-    $shell bash_tests/glob10.sub
+    $shell glob10.sub
 }
 
 test_dbg-support2.tests()
 {
     local shell=$1
-    $shell bash_tests/dbg-support2.tests
+    $shell dbg-support2.tests
 }
 
 test_quote4.sub()
 {
     local shell=$1
-    $shell bash_tests/quote4.sub
+    $shell quote4.sub
 }
 
 test_dynvar.tests()
 {
     local shell=$1
-    $shell bash_tests/dynvar.tests
+    $shell dynvar.tests
 }
 
 test_case.tests()
 {
     local shell=$1
-    $shell bash_tests/case.tests
+    $shell case.tests
 }
 
 test_attr2.sub()
 {
     local shell=$1
-    $shell bash_tests/attr2.sub
+    $shell attr2.sub
 }
 
 test_extglob1a.sub()
 {
     local shell=$1
-    $shell bash_tests/extglob1a.sub
+    $shell extglob1a.sub
 }
 
 test_glob2.sub()
 {
     local shell=$1
-    $shell bash_tests/glob2.sub
+    $shell glob2.sub
 }
 
 test_varenv10.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv10.sub
+    $shell varenv10.sub
 }
 
 test_exp4.sub()
 {
     local shell=$1
-    $shell bash_tests/exp4.sub
+    $shell exp4.sub
 }
 
 test_comsub-eof1.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub-eof1.sub
+    $shell comsub-eof1.sub
 }
 
 test_arith6.sub()
 {
     local shell=$1
-    $shell bash_tests/arith6.sub
+    $shell arith6.sub
 }
 
 test_vredir6.sub()
 {
     local shell=$1
-    $shell bash_tests/vredir6.sub
+    $shell vredir6.sub
 }
 
 test_assoc18.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc18.sub
+    $shell assoc18.sub
 }
 
 test_shopt1.sub()
 {
     local shell=$1
-    $shell bash_tests/shopt1.sub
+    $shell shopt1.sub
 }
 
 test_array8.sub()
 {
     local shell=$1
-    $shell bash_tests/array8.sub
+    $shell array8.sub
 }
 
 test_vredir2.sub()
 {
     local shell=$1
-    $shell bash_tests/vredir2.sub
+    $shell vredir2.sub
 }
 
 test_arith2.sub()
 {
     local shell=$1
-    $shell bash_tests/arith2.sub
+    $shell arith2.sub
 }
 
 test_varenv14.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv14.sub
+    $shell varenv14.sub
 }
 
 test_comsub-eof5.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub-eof5.sub
+    $shell comsub-eof5.sub
 }
 
 test_rsh1.sub()
 {
     local shell=$1
-    $shell bash_tests/rsh1.sub
+    $shell rsh1.sub
 }
 
 test_glob6.sub()
 {
     local shell=$1
-    $shell bash_tests/glob6.sub
+    $shell glob6.sub
 }
 
 test_arith-for.tests()
 {
     local shell=$1
-    $shell bash_tests/arith-for.tests
+    $shell arith-for.tests
 }
 
 test_quote1.sub()
 {
     local shell=$1
-    $shell bash_tests/quote1.sub
+    $shell quote1.sub
 }
 
 test_read.tests()
 {
     local shell=$1
-    $shell bash_tests/read.tests
+    $shell read.tests
 }
 
 test_cond-regexp1.sub()
 {
     local shell=$1
-    $shell bash_tests/cond-regexp1.sub
+    $shell cond-regexp1.sub
 }
 
 test_extglob2.tests()
 {
     local shell=$1
-    $shell bash_tests/extglob2.tests
+    $shell extglob2.tests
 }
 
 test_appendop.tests()
 {
     local shell=$1
-    $shell bash_tests/appendop.tests
+    $shell appendop.tests
 }
 
 test_iquote1.sub()
 {
     local shell=$1
-    $shell bash_tests/iquote1.sub
+    $shell iquote1.sub
 }
 
 test_exportfunc1.sub()
 {
     local shell=$1
-    $shell bash_tests/exportfunc1.sub
+    $shell exportfunc1.sub
 }
 
 test_extglob.tests()
 {
     local shell=$1
-    $shell bash_tests/extglob.tests
+    $shell extglob.tests
 }
 
 test_glob7.sub()
 {
     local shell=$1
-    $shell bash_tests/glob7.sub
+    $shell glob7.sub
 }
 
 test_dbg-support.tests()
 {
     local shell=$1
-    $shell bash_tests/dbg-support.tests
+    $shell dbg-support.tests
 }
 
 test_exp1.sub()
 {
     local shell=$1
-    $shell bash_tests/exp1.sub
+    $shell exp1.sub
 }
 
 test_comsub-eof4.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub-eof4.sub
+    $shell comsub-eof4.sub
 }
 
 test_rsh.tests()
 {
     local shell=$1
-    $shell bash_tests/rsh.tests
+    $shell rsh.tests
 }
 
 test_varenv15.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv15.sub
+    $shell varenv15.sub
 }
 
 test_func.tests()
 {
     local shell=$1
-    $shell bash_tests/func.tests
+    $shell func.tests
 }
 
 test_arith3.sub()
 {
     local shell=$1
-    $shell bash_tests/arith3.sub
+    $shell arith3.sub
 }
 
 test_vredir3.sub()
 {
     local shell=$1
-    $shell bash_tests/vredir3.sub
+    $shell vredir3.sub
 }
 
 test_rhs-exp1.sub()
 {
     local shell=$1
-    $shell bash_tests/rhs-exp1.sub
+    $shell rhs-exp1.sub
 }
 
 test_array9.sub()
 {
     local shell=$1
-    $shell bash_tests/array9.sub
+    $shell array9.sub
 }
 
 test_posixexp.tests()
 {
     local shell=$1
-    $shell bash_tests/posixexp.tests
+    $shell posixexp.tests
 }
 
 test_arith1.sub()
 {
     local shell=$1
-    $shell bash_tests/arith1.sub
+    $shell arith1.sub
 }
 
 test_vredir1.sub()
 {
     local shell=$1
-    $shell bash_tests/vredir1.sub
+    $shell vredir1.sub
 }
 
 test_cond.tests()
 {
     local shell=$1
-    $shell bash_tests/cond.tests
+    $shell cond.tests
 }
 
 test_ifs.tests()
 {
     local shell=$1
-    $shell bash_tests/ifs.tests
+    $shell ifs.tests
 }
 
 test_varenv17.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv17.sub
+    $shell varenv17.sub
 }
 
 test_exp3.sub()
 {
     local shell=$1
-    $shell bash_tests/exp3.sub
+    $shell exp3.sub
 }
 
 test_comsub-eof6.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub-eof6.sub
+    $shell comsub-eof6.sub
 }
 
 test_rsh2.sub()
 {
     local shell=$1
-    $shell bash_tests/rsh2.sub
+    $shell rsh2.sub
 }
 
 test_glob5.sub()
 {
     local shell=$1
-    $shell bash_tests/glob5.sub
+    $shell glob5.sub
 }
 
 test_quote2.sub()
 {
     local shell=$1
-    $shell bash_tests/quote2.sub
+    $shell quote2.sub
 }
 
 test_lastpipe.tests()
 {
     local shell=$1
-    $shell bash_tests/lastpipe.tests
+    $shell lastpipe.tests
 }
 
 test_exportfunc3.sub()
 {
     local shell=$1
-    $shell bash_tests/exportfunc3.sub
+    $shell exportfunc3.sub
 }
 
 test_cond-regexp2.sub()
 {
     local shell=$1
-    $shell bash_tests/cond-regexp2.sub
+    $shell cond-regexp2.sub
 }
 
 test_more-exp.tests()
 {
     local shell=$1
-    $shell bash_tests/more-exp.tests
+    $shell more-exp.tests
 }
 
 test_cond-regexp3.sub()
 {
     local shell=$1
-    $shell bash_tests/cond-regexp3.sub
+    $shell cond-regexp3.sub
 }
 
 test_exportfunc2.sub()
 {
     local shell=$1
-    $shell bash_tests/exportfunc2.sub
+    $shell exportfunc2.sub
 }
 
 test_quote3.sub()
 {
     local shell=$1
-    $shell bash_tests/quote3.sub
+    $shell quote3.sub
 }
 
 test_glob4.sub()
 {
     local shell=$1
-    $shell bash_tests/glob4.sub
+    $shell glob4.sub
 }
 
 test_exp2.sub()
 {
     local shell=$1
-    $shell bash_tests/exp2.sub
+    $shell exp2.sub
 }
 
 test_varenv16.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv16.sub
+    $shell varenv16.sub
 }
 
 test_assoc13.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc13.sub
+    $shell assoc13.sub
 }
 
 test_array7.sub()
 {
     local shell=$1
-    $shell bash_tests/array7.sub
+    $shell array7.sub
 }
 
 test_exp.tests()
 {
     local shell=$1
-    $shell bash_tests/exp.tests
+    $shell exp.tests
 }
 
 test_new-exp12.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp12.sub
+    $shell new-exp12.sub
 }
 
 test_new-exp.tests()
 {
     local shell=$1
-    $shell bash_tests/new-exp.tests
+    $shell new-exp.tests
 }
 
 test_exp12.sub()
 {
     local shell=$1
-    $shell bash_tests/exp12.sub
+    $shell exp12.sub
 }
 
 test_comsub6.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub6.sub
+    $shell comsub6.sub
 }
 
 test_histexp6.sub()
 {
     local shell=$1
-    $shell bash_tests/histexp6.sub
+    $shell histexp6.sub
 }
 
 test_getopts.tests()
 {
     local shell=$1
-    $shell bash_tests/getopts.tests
+    $shell getopts.tests
 }
 
 test_glob9.sub()
 {
     local shell=$1
-    $shell bash_tests/glob9.sub
+    $shell glob9.sub
 }
 
 test_input-line.sub()
 {
     local shell=$1
-    echo i | $shell bash_tests/input-line.sub
+    echo i | $shell input-line.sub
 }
 
 test_history3.sub()
 {
     local shell=$1
-    $shell bash_tests/history3.sub
+    $shell history3.sub
 }
 
 test_func1.sub()
 {
     local shell=$1
-    $shell bash_tests/func1.sub
+    $shell func1.sub
 }
 
 test_extglob4.sub()
 {
     local shell=$1
-    $shell bash_tests/extglob4.sub
+    $shell extglob4.sub
 }
 
 test_dstack.tests()
 {
     local shell=$1
-    $shell bash_tests/dstack.tests
+    $shell dstack.tests
 }
 
 test_extglob5.sub()
 {
     local shell=$1
-    $shell bash_tests/extglob5.sub
+    $shell extglob5.sub
 }
 
 test_history2.sub()
 {
     local shell=$1
-    $shell bash_tests/history2.sub
+    $shell history2.sub
 }
 
 test_unicode1.sub()
 {
     local shell=$1
-    $shell bash_tests/unicode1.sub
+    $shell unicode1.sub
 }
 
 test_glob8.sub()
 {
     local shell=$1
-    $shell bash_tests/glob8.sub
+    $shell glob8.sub
 }
 
 test_histexp7.sub()
 {
     local shell=$1
-    $shell bash_tests/histexp7.sub
+    $shell histexp7.sub
 }
 
 test_exp13.sub()
 {
     local shell=$1
-    $shell bash_tests/exp13.sub
+    $shell exp13.sub
 }
 
 test_new-exp13.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp13.sub
+    $shell new-exp13.sub
 }
 
 test_assoc.tests()
 {
     local shell=$1
-    $shell bash_tests/assoc.tests
+    $shell assoc.tests
 }
 
 test_dbg-support.sub()
 {
     local shell=$1
-    $shell bash_tests/dbg-support.sub
+    $shell dbg-support.sub
 }
 
 test_array6.sub()
 {
     local shell=$1
-    $shell bash_tests/array6.sub
+    $shell array6.sub
 }
 
 test_assoc12.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc12.sub
+    $shell assoc12.sub
 }
 
 test_assoc10.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc10.sub
+    $shell assoc10.sub
 }
 
 test_array4.sub()
 {
     local shell=$1
-    $shell bash_tests/array4.sub
+    $shell array4.sub
 }
 
 test_posixpipe.tests()
 {
     local shell=$1
-    $shell bash_tests/posixpipe.tests
+    $shell posixpipe.tests
 }
 
 test_new-exp11.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp11.sub
+    $shell new-exp11.sub
 }
 
 test_exp11.sub()
 {
     local shell=$1
-    $shell bash_tests/exp11.sub
+    $shell exp11.sub
 }
 
 test_comsub5.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub5.sub
+    $shell comsub5.sub
 }
 
 test_varenv18.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv18.sub
+    $shell varenv18.sub
 }
 
 test_posix2.tests()
 {
     local shell=$1
-    $shell bash_tests/posix2.tests
+    $shell posix2.tests
 }
 
 test_histexp5.sub()
 {
     local shell=$1
-    $shell bash_tests/histexp5.sub
+    $shell histexp5.sub
 }
 
 test_printf.tests()
 {
     local shell=$1
-    $shell bash_tests/printf.tests
+    $shell printf.tests
 }
 
 test_unicode3.sub()
 {
     local shell=$1
-    $shell bash_tests/unicode3.sub
+    $shell unicode3.sub
 }
 
 test_set-x.tests()
 {
     local shell=$1
-    $shell bash_tests/set-x.tests
+    $shell set-x.tests
 }
 
 test_extglob7.sub()
 {
     local shell=$1
-    $shell bash_tests/extglob7.sub
+    $shell extglob7.sub
 }
 
 test_func2.sub()
 {
     local shell=$1
-    $shell bash_tests/func2.sub
+    $shell func2.sub
 }
 
 test_comsub-posix.tests()
 {
     local shell=$1
-    $shell bash_tests/comsub-posix.tests
+    $shell comsub-posix.tests
 }
 
 test_quote.tests()
 {
     local shell=$1
-    $shell bash_tests/quote.tests
+    $shell quote.tests
 }
 
 test_extglob6.sub()
 {
     local shell=$1
-    $shell bash_tests/extglob6.sub
+    $shell extglob6.sub
 }
 
 test_func3.sub()
 {
     local shell=$1
-    $shell bash_tests/func3.sub
+    $shell func3.sub
 }
 
 test_history1.sub()
 {
     local shell=$1
-    $shell bash_tests/history1.sub
+    $shell history1.sub
 }
 
 test_unicode2.sub()
 {
     local shell=$1
-    $shell bash_tests/unicode2.sub
+    $shell unicode2.sub
 }
 
 test_tilde3.sub()
 {
     local shell=$1
-    $shell bash_tests/tilde3.sub
+    $shell tilde3.sub
 }
 
 test_casemod.tests()
 {
     local shell=$1
-    $shell bash_tests/casemod.tests
+    $shell casemod.tests
 }
 
 test_histexp4.sub()
 {
     local shell=$1
-    $shell bash_tests/histexp4.sub
+    $shell histexp4.sub
 }
 
 test_comsub4.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub4.sub
+    $shell comsub4.sub
 }
 
 test_getopts10.sub()
 {
     local shell=$1
-    $shell bash_tests/getopts10.sub
+    $shell getopts10.sub
 }
 
 test_varenv19.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv19.sub
+    $shell varenv19.sub
 }
 
 test_exp10.sub()
 {
     local shell=$1
-    $shell bash_tests/exp10.sub
+    $shell exp10.sub
 }
 
 test_nquote5.tests()
 {
     local shell=$1
-    $shell bash_tests/nquote5.tests
+    $shell nquote5.tests
 }
 
 test_new-exp10.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp10.sub
+    $shell new-exp10.sub
 }
 
 test_array5.sub()
 {
     local shell=$1
-    $shell bash_tests/array5.sub
+    $shell array5.sub
 }
 
 test_test1.sub()
 {
     local shell=$1
-    $shell bash_tests/test1.sub
+    $shell test1.sub
 }
 
 test_assoc11.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc11.sub
+    $shell assoc11.sub
 }
 
 test_array1.sub()
 {
     local shell=$1
-    $shell bash_tests/array1.sub
+    $shell array1.sub
 }
 
 test_assoc15.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc15.sub
+    $shell assoc15.sub
 }
 
 test_new-exp14.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp14.sub
+    $shell new-exp14.sub
 }
 
 test_varenv21.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv21.sub
+    $shell varenv21.sub
 }
 
 test_exp9.sub()
 {
     local shell=$1
-    $shell bash_tests/exp9.sub
+    $shell exp9.sub
 }
 
 test_procsub2.sub()
 {
     local shell=$1
-    $shell bash_tests/procsub2.sub
+    $shell procsub2.sub
 }
 
 test_histexp.tests()
 {
     local shell=$1
-    $shell bash_tests/histexp.tests
+    $shell histexp.tests
 }
 
 test_history5.sub()
 {
     local shell=$1
-    $shell bash_tests/history5.sub
+    $shell history5.sub
 }
 
 test_nquote.tests()
 {
     local shell=$1
-    $shell bash_tests/nquote.tests
+    $shell nquote.tests
 }
 
 test_extglob2.sub()
 {
     local shell=$1
-    $shell bash_tests/extglob2.sub
+    $shell extglob2.sub
 }
 
 test_nquote1.tests()
 {
     local shell=$1
-    $shell bash_tests/nquote1.tests
+    $shell nquote1.tests
 }
 
 test_set-e1.sub()
 {
     local shell=$1
-    $shell bash_tests/set-e1.sub
+    $shell set-e1.sub
 }
 
 test_extglob3.sub()
 {
     local shell=$1
-    $shell bash_tests/extglob3.sub
+    $shell extglob3.sub
 }
 
 test_globstar.tests()
 {
     local shell=$1
-    $shell bash_tests/globstar.tests
+    $shell globstar.tests
 }
 
 test_history4.sub()
 {
     local shell=$1
-    $shell bash_tests/history4.sub
+    $shell history4.sub
 }
 
 test_intl.tests()
 {
     local shell=$1
-    $shell bash_tests/intl.tests
+    $shell intl.tests
 }
 
 test_comsub1.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub1.sub
+    $shell comsub1.sub
 }
 
 test_histexp1.sub()
 {
     local shell=$1
-    $shell bash_tests/histexp1.sub
+    $shell histexp1.sub
 }
 
 test_varenv20.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv20.sub
+    $shell varenv20.sub
 }
 
 test_exp8.sub()
 {
     local shell=$1
-    $shell bash_tests/exp8.sub
+    $shell exp8.sub
 }
 
 test_new-exp15.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp15.sub
+    $shell new-exp15.sub
 }
 
 test_complete.tests()
 {
     local shell=$1
-    $shell bash_tests/complete.tests
+    $shell complete.tests
 }
 
 test_assoc14.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc14.sub
+    $shell assoc14.sub
 }
 
 test_array2.sub()
 {
     local shell=$1
-    $shell bash_tests/array2.sub
+    $shell array2.sub
 }
 
 test_assoc16.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc16.sub
+    $shell assoc16.sub
 }
 
 test_vredir8.sub()
 {
     local shell=$1
-    $shell bash_tests/vredir8.sub
+    $shell vredir8.sub
 }
 
 test_cond-regexp.sub()
 {
     local shell=$1
-    $shell bash_tests/cond-regexp.sub
+    $shell cond-regexp.sub
 }
 
 test_arith8.sub()
 {
     local shell=$1
-    $shell bash_tests/arith8.sub
+    $shell arith8.sub
 }
 
 test_set-e.tests()
 {
     local shell=$1
-    $shell bash_tests/set-e.tests
+    $shell set-e.tests
 }
 
 test_histexp3.sub()
 {
     local shell=$1
-    $shell bash_tests/histexp3.sub
+    $shell histexp3.sub
 }
 
 test_varenv22.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv22.sub
+    $shell varenv22.sub
 }
 
 test_procsub1.sub()
 {
     local shell=$1
-    $shell bash_tests/procsub1.sub
+    $shell procsub1.sub
 }
 
 test_posixexp2.tests()
 {
     local shell=$1
-    $shell bash_tests/posixexp2.tests
+    $shell posixexp2.tests
 }
 
 test_comsub3.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub3.sub
+    $shell comsub3.sub
 }
 
 test_history6.sub()
 {
     local shell=$1
-    $shell bash_tests/history6.sub
+    $shell history6.sub
 }
 
 test_builtins.tests()
 {
     local shell=$1
-    $shell bash_tests/builtins.tests
+    $shell builtins.tests
 }
 
 test_extglob1.sub()
 {
     local shell=$1
-    $shell bash_tests/extglob1.sub
+    $shell extglob1.sub
 }
 
 test_func4.sub()
 {
     local shell=$1
-    $shell bash_tests/func4.sub
+    $shell func4.sub
 }
 
 test_alias.tests()
 {
     local shell=$1
-    $shell bash_tests/alias.tests
+    $shell alias.tests
 }
 
 test_set-e3.sub()
 {
     local shell=$1
-    $shell bash_tests/set-e3.sub
+    $shell set-e3.sub
 }
 
 test_set-e2.sub()
 {
     local shell=$1
-    $shell bash_tests/set-e2.sub
+    $shell set-e2.sub
 }
 
 test_nquote3.tests()
 {
     local shell=$1
-    $shell bash_tests/nquote3.tests
+    $shell nquote3.tests
 }
 
 test_comsub2.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub2.sub
+    $shell comsub2.sub
 }
 
 test_histexp2.sub()
 {
     local shell=$1
-    $shell bash_tests/histexp2.sub
+    $shell histexp2.sub
 }
 
 test_new-exp16.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp16.sub
+    $shell new-exp16.sub
 }
 
 test_assoc17.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc17.sub
+    $shell assoc17.sub
 }
 
 test_array3.sub()
 {
     local shell=$1
-    $shell bash_tests/array3.sub
+    $shell array3.sub
 }
 
 test_type.tests()
 {
     local shell=$1
-    $shell bash_tests/type.tests
+    $shell type.tests
 }
 
 test_exec1.sub()
 {
     local shell=$1
-    $shell bash_tests/exec1.sub
+    $shell exec1.sub
 }
 
 test_posixexp6.sub()
 {
     local shell=$1
-    $shell bash_tests/posixexp6.sub
+    $shell posixexp6.sub
 }
 
 test_redir11.sub()
 {
     local shell=$1
-    $shell bash_tests/redir11.sub
+    $shell redir11.sub
 }
 
 test_nameref22.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref22.sub
+    $shell nameref22.sub
 }
 
 test_getopts2.sub()
 {
     local shell=$1
-    $shell bash_tests/getopts2.sub
+    $shell getopts2.sub
 }
 
 test_nameref9.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref9.sub
+    $shell nameref9.sub
 }
 
 test_assoc8.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc8.sub
+    $shell assoc8.sub
 }
 
 test_new-exp6.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp6.sub
+    $shell new-exp6.sub
 }
 
 test_dollar-at-star2.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at-star2.sub
+    $shell dollar-at-star2.sub
 }
 
 test_exec12.sub()
 {
     local shell=$1
-    $shell bash_tests/exec12.sub
+    $shell exec12.sub
 }
 
 test_source1.sub()
 {
     local shell=$1
-    $shell bash_tests/source1.sub
+    $shell source1.sub
 }
 
 test_array10.sub()
 {
     local shell=$1
-    $shell bash_tests/array10.sub
+    $shell array10.sub
 }
 
 test_redir9.sub()
 {
     local shell=$1
-    $shell bash_tests/redir9.sub
+    $shell redir9.sub
 }
 
 test_quotearray2.sub()
 {
     local shell=$1
-    $shell bash_tests/quotearray2.sub
+    $shell quotearray2.sub
 }
 
 test_redir8.sub()
 {
     local shell=$1
-    $shell bash_tests/redir8.sub
+    $shell redir8.sub
 }
 
 test_quotearray3.sub()
 {
     local shell=$1
-    $shell bash_tests/quotearray3.sub
+    $shell quotearray3.sub
 }
 
 test_array11.sub()
 {
     local shell=$1
-    $shell bash_tests/array11.sub
+    $shell array11.sub
 }
 
 test_dollar-at-star3.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at-star3.sub
+    $shell dollar-at-star3.sub
 }
 
 test_exec13.sub()
 {
     local shell=$1
-    $shell bash_tests/exec13.sub
+    $shell exec13.sub
 }
 
 test_new-exp7.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp7.sub
+    $shell new-exp7.sub
 }
 
 test_tilde.tests()
 {
     local shell=$1
-    $shell bash_tests/tilde.tests
+    $shell tilde.tests
 }
 
 test_assoc9.sub()
 {
     local shell=$1
-    $shell bash_tests/assoc9.sub
+    $shell assoc9.sub
 }
 
 test_nquote4.tests()
 {
     local shell=$1
-    $shell bash_tests/nquote4.tests
+    $shell nquote4.tests
 }
 
 test_errors1.sub()
 {
     local shell=$1
-    $shell bash_tests/errors1.sub
+    $shell errors1.sub
 }
 
 test_nameref8.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref8.sub
+    $shell nameref8.sub
 }
 
 test_getopts3.sub()
 {
     local shell=$1
-    $shell bash_tests/getopts3.sub
+    $shell getopts3.sub
 }
 
 test_ifs-posix.tests()
 {
     local shell=$1
-    $shell bash_tests/ifs-posix.tests
+    $shell ifs-posix.tests
 }
 
 test_comsub-posix1.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub-posix1.sub
+    $shell comsub-posix1.sub
 }
 
 test_nameref23.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref23.sub
+    $shell nameref23.sub
 }
 
 test_redir10.sub()
 {
     local shell=$1
-    $shell bash_tests/redir10.sub
+    $shell redir10.sub
 }
 
 test_printf4.sub()
 {
     local shell=$1
-    $shell bash_tests/printf4.sub
+    $shell printf4.sub
 }
 
 test_posixexp7.sub()
 {
     local shell=$1
-    $shell bash_tests/posixexp7.sub
+    $shell posixexp7.sub
 }
 
 test_read8.sub()
 {
     local shell=$1
-    $shell bash_tests/read8.sub
+    $shell read8.sub
 }
 
 test_exec2.sub()
 {
     local shell=$1
-    $shell bash_tests/exec2.sub
+    $shell exec2.sub
 }
 
 test_posixexp5.sub()
 {
     local shell=$1
-    $shell bash_tests/posixexp5.sub
+    $shell posixexp5.sub
 }
 
 test_trap.tests()
 {
     local shell=$1
-    $shell bash_tests/trap.tests
+    $shell trap.tests
 }
 
 test_redir.tests()
 {
     local shell=$1
-    $shell bash_tests/redir.tests
+    $shell redir.tests
 }
 
 test_redir12.sub()
 {
     local shell=$1
-    $shell bash_tests/redir12.sub
+    $shell redir12.sub
 }
 
 test_nameref21.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref21.sub
+    $shell nameref21.sub
 }
 
 test_comsub-posix3.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub-posix3.sub
+    $shell comsub-posix3.sub
 }
 
 test_getopts1.sub()
 {
     local shell=$1
-    $shell bash_tests/getopts1.sub
+    $shell getopts1.sub
 }
 
 test_dollar-at-star10.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at-star10.sub
+    $shell dollar-at-star10.sub
 }
 
 test_errors3.sub()
 {
     local shell=$1
-    $shell bash_tests/errors3.sub
+    $shell errors3.sub
 }
 
 test_dollar-star9.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-star9.sub
+    $shell dollar-star9.sub
 }
 
 test_exec11.sub()
 {
     local shell=$1
-    $shell bash_tests/exec11.sub
+    $shell exec11.sub
 }
 
 test_dollar-at-star1.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at-star1.sub
+    $shell dollar-at-star1.sub
 }
 
 test_new-exp5.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp5.sub
+    $shell new-exp5.sub
 }
 
 test_source2.sub()
 {
     local shell=$1
-    $shell bash_tests/source2.sub
+    $shell source2.sub
 }
 
 test_quotearray1.sub()
 {
     local shell=$1
-    $shell bash_tests/quotearray1.sub
+    $shell quotearray1.sub
 }
 
 test_array13.sub()
 {
     local shell=$1
-    $shell bash_tests/array13.sub
+    $shell array13.sub
 }
 
 test_posixpat.tests()
 {
     local shell=$1
-    $shell bash_tests/posixpat.tests
+    $shell posixpat.tests
 }
 
 test_array.tests()
 {
     local shell=$1
-    $shell bash_tests/array.tests
+    $shell array.tests
 }
 
 test_array12.sub()
 {
     local shell=$1
-    $shell bash_tests/array12.sub
+    $shell array12.sub
 }
 
 test_iquote.tests()
 {
     local shell=$1
-    $shell bash_tests/iquote.tests
+    $shell iquote.tests
 }
 
 test_source3.sub()
 {
     local shell=$1
-    $shell bash_tests/source3.sub
+    $shell source3.sub
 }
 
 test_new-exp4.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp4.sub
+    $shell new-exp4.sub
 }
 
 test_cprint.tests()
 {
     local shell=$1
-    $shell bash_tests/cprint.tests
+    $shell cprint.tests
 }
 
 test_exec10.sub()
 {
     local shell=$1
-    $shell bash_tests/exec10.sub
+    $shell exec10.sub
 }
 
 test_test.tests()
 {
     local shell=$1
-    $shell bash_tests/test.tests
+    $shell test.tests
 }
 
 test_dollar-star8.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-star8.sub
+    $shell dollar-star8.sub
 }
 
 test_errors2.sub()
 {
     local shell=$1
-    $shell bash_tests/errors2.sub
+    $shell errors2.sub
 }
 
 test_dollar-at-star11.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at-star11.sub
+    $shell dollar-at-star11.sub
 }
 
 test_comsub-posix2.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub-posix2.sub
+    $shell comsub-posix2.sub
 }
 
 test_attr.tests()
 {
     local shell=$1
-    $shell bash_tests/attr.tests
+    $shell attr.tests
 }
 
 test_nameref20.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref20.sub
+    $shell nameref20.sub
 }
 
 test_invert.tests()
 {
     local shell=$1
-    $shell bash_tests/invert.tests
+    $shell invert.tests
 }
 
 test_posixexp4.sub()
 {
     local shell=$1
-    $shell bash_tests/posixexp4.sub
+    $shell posixexp4.sub
 }
 
 test_exec3.sub()
 {
     local shell=$1
-    $shell bash_tests/exec3.sub
+    $shell exec3.sub
 }
 
 test_exec7.sub()
 {
     local shell=$1
-    $shell bash_tests/exec7.sub
+    $shell exec7.sub
 }
 
 test_precedence.tests()
 {
     local shell=$1
-    $shell bash_tests/precedence.tests
+    $shell precedence.tests
 }
 
 test_printf3.sub()
 {
     local shell=$1
-    $shell bash_tests/printf3.sub
+    $shell printf3.sub
 }
 
 test_nameref18.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref18.sub
+    $shell nameref18.sub
 }
 
 test_comsub-posix6.sub()
 {
     local shell=$1
-    $shell bash_tests/comsub-posix6.sub
+    $shell comsub-posix6.sub
 }
 
 test_errors6.sub()
 {
     local shell=$1
-    $shell bash_tests/errors6.sub
+    $shell errors6.sub
 }
 
 test_getopts4.sub()
 {
     local shell=$1
-    $shell bash_tests/getopts4.sub
+    $shell getopts4.sub
 }
 
 test_herestr.tests()
 {
     local shell=$1
-    $shell bash_tests/herestr.tests
+    $shell herestr.tests
 }
 
 test_source7.sub()
 {
     local shell=$1
-    $shell bash_tests/source7.sub
+    $shell source7.sub
 }
 
 test_varenv9.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv9.sub
+    $shell varenv9.sub
 }
 
 test_dollar-at-star4.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at-star4.sub
+    $shell dollar-at-star4.sub
 }
 
 test_exec14.sub()
 {
     local shell=$1
-    $shell bash_tests/exec14.sub
+    $shell exec14.sub
 }
 
 test_quotearray4.sub()
 {
     local shell=$1
-    $shell bash_tests/quotearray4.sub
+    $shell quotearray4.sub
 }
 
 test_array16.sub()
 {
     local shell=$1
-    $shell bash_tests/array16.sub
+    $shell array16.sub
 }
 
 test_array17.sub()
 {
     local shell=$1
-    $shell bash_tests/array17.sub
+    $shell array17.sub
 }
 
 test_quotearray5.sub()
 {
     local shell=$1
-    $shell bash_tests/quotearray5.sub
+    $shell quotearray5.sub
 }
 
 test_new-exp1.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp1.sub
+    $shell new-exp1.sub
 }
 
 test_mapfile2.sub()
 {
     local shell=$1
-    $shell bash_tests/mapfile2.sub
+    $shell mapfile2.sub
 }
 
 test_dollar-at-star5.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at-star5.sub
+    $shell dollar-at-star5.sub
 }
 
 test_varenv8.sub()
 {
     local shell=$1
-    $shell bash_tests/varenv8.sub
+    $shell varenv8.sub
 }
 
 test_source6.sub()
 {
     local shell=$1
-    $shell bash_tests/source6.sub
+    $shell source6.sub
 }
 
 test_getopts5.sub()
 {
     local shell=$1
-    $shell bash_tests/getopts5.sub
+    $shell getopts5.sub
 }
 
 test_errors7.sub()
 {
     local shell=$1
-    $shell bash_tests/errors7.sub
+    $shell errors7.sub
 }
 
 test_nameref19.sub()
 {
     local shell=$1
-    $shell bash_tests/nameref19.sub
+    $shell nameref19.sub
 }
 
 test_printf2.sub()
 {
     local shell=$1
-    $shell bash_tests/printf2.sub
+    $shell printf2.sub
 }
 
 test_nquote2.tests()
 {
     local shell=$1
-    $shell bash_tests/nquote2.tests
+    $shell nquote2.tests
 }
 
 test_posixexp1.sub()
 {
     local shell=$1
-    $shell bash_tests/posixexp1.sub
+    $shell posixexp1.sub
 }
 
 test_exec6.sub()
 {
     local shell=$1
-    $shell bash_tests/exec6.sub
+    $shell exec6.sub
 }
 
 test_exec4.sub()
 {
     local shell=$1
-    $shell bash_tests/exec4.sub
+    $shell exec4.sub
 }
 
 test_posixexp3.sub()
 {
     local shell=$1
-    $shell bash_tests/posixexp3.sub
+    $shell posixexp3.sub
 }
 
 test_errors5.sub()
 {
     local shell=$1
-    $shell bash_tests/errors5.sub
+    $shell errors5.sub
 }
 
 test_ifs1.sub()
 {
     local shell=$1
-    $shell bash_tests/ifs1.sub
+    $shell ifs1.sub
 }
 
 test_getopts7.sub()
 {
     local shell=$1
-    $shell bash_tests/getopts7.sub
+    $shell getopts7.sub
 }
 
 test_coproc.tests()
 {
     local shell=$1
-    $shell bash_tests/coproc.tests
+    $shell coproc.tests
 }
 
 test_source4.sub()
 {
     local shell=$1
-    $shell bash_tests/source4.sub
+    $shell source4.sub
 }
 
 test_new-exp3.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp3.sub
+    $shell new-exp3.sub
 }
 
 test_dollar-at-star7.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at-star7.sub
+    $shell dollar-at-star7.sub
 }
 
 test_array29.sub()
 {
     local shell=$1
-    $shell bash_tests/array29.sub
+    $shell array29.sub
 }
 
 test_array15.sub()
 {
     local shell=$1
-    $shell bash_tests/array15.sub
+    $shell array15.sub
 }
 
 test_exportfunc.tests()
 {
     local shell=$1
-    $shell bash_tests/exportfunc.tests
+    $shell exportfunc.tests
 }
 
 test_array14.sub()
 {
     local shell=$1
-    $shell bash_tests/array14.sub
+    $shell array14.sub
 }
 
 test_array28.sub()
 {
     local shell=$1
-    $shell bash_tests/array28.sub
+    $shell array28.sub
 }
 
 test_dollar-at-star6.sub()
 {
     local shell=$1
-    $shell bash_tests/dollar-at-star6.sub
+    $shell dollar-at-star6.sub
 }
 
 test_new-exp2.sub()
 {
     local shell=$1
-    $shell bash_tests/new-exp2.sub
+    $shell new-exp2.sub
 }
 
 test_mapfile1.sub()
 {
     local shell=$1
-    $shell bash_tests/mapfile1.sub
+    $shell mapfile1.sub
 }
 
 test_source5.sub()
 {
     local shell=$1
-    $shell bash_tests/source5.sub
+    $shell source5.sub
 }
 
 test_getopts6.sub()
 {
     local shell=$1
-    $shell bash_tests/getopts6.sub
+    $shell getopts6.sub
 }
 
 test_errors4.sub()
 {
     local shell=$1
-    $shell bash_tests/errors4.sub
+    $shell errors4.sub
 }
 
 test_printf1.sub()
 {
     local shell=$1
-    $shell bash_tests/printf1.sub
+    $shell printf1.sub
 }
 
 test_posixexp2.sub()
 {
     local shell=$1
-    $shell bash_tests/posixexp2.sub
+    $shell posixexp2.sub
 }
 
 test_exec5.sub()
 {
     local shell=$1
-    $shell bash_tests/exec5.sub
+    $shell exec5.sub
 }
 
 test_heredoc.tests()
 {
     local shell=$1
-    $shell bash_tests/heredoc.tests
+    $shell heredoc.tests
 }
 
 test_select.sh()
 {
     local shell=$1
-    echo 1 | $shell bash_tests/select.sh
+    echo 1 | $shell select.sh
 }
 
 ## We run all tests composed with && to exit on the first that fails
 # commented out IFS tests should work but this is an issue with PaSh, bug report made
 if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
+    cd bash_tests
     if [ "$#" -eq 0 ]; then 
         echo "Warning: these tests should be run with bash as the first argument to test the bash mode."
     fi
@@ -2942,7 +2943,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_dollar-star2.sub - setting IFS, also doesn't work in dash
     # run_test test_nameref1.sub
     run_test test_errors8.sub
-    run_test test_trap5.sub
+    # run_test test_trap5.sub - I don't think this should neccesarly work since we could be catching other PaSh signals
     run_test test_dollar-at6.sub
     # run_test test_nameref16.sub
     run_test test_exec9.sub
@@ -3042,7 +3043,8 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_nameref5.sub
     # run_test test_assoc4.sub - error script
     # run_test test_tilde2.tests
-    run_test test_vredir.tests
+    # run_test test_vredir.tests - this is passing, however this script assigns file descriptors which will be different
+    # depending on what else is open, so output will look different with and without pash
     # run_test test_alias1.sub
     # run_test test_mapfile.tests
     run_test test_dollar-star6.sub
@@ -3075,7 +3077,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_dbg-support3.sub - using BASH_ARGV won't work bc call stacks will be different
     run_test test_globstar2.sub
     run_test test_arith4.sub
-    run_test test_vredir4.sub
+    # run_test test_vredir4.sub - see test_vredir.tests
     run_test test_exp6.sub
     run_test test_comsub-eof3.sub
     # run_test test_varenv.tests
@@ -3088,10 +3090,10 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     run_test test_comsub-eof2.sub
     # run_test test_exp7.sub
     # run_test test_braces.tests
-    run_test test_vredir5.sub
+    # run_test test_vredir5.sub - see test_vredir.tests
     run_test test_globstar3.sub
     run_test test_arith5.sub
-    run_test test_vredir7.sub
+    # run_test test_vredir7.sub - see test_vredir.tests
     run_test test_arith7.sub
     run_test test_globstar1.sub
     run_test test_comsub-eof0.sub
@@ -3114,7 +3116,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_assoc18.sub
     # run_test test_shopt1.sub - again weird shopt stuff here
     # run_test test_array8.sub - error script
-    run_test test_vredir2.sub
+    # run_test test_vredir2.sub - test_vredir2.sub
     run_test test_arith2.sub
     # run_test test_varenv14.sub
     run_test test_comsub-eof5.sub
@@ -3141,9 +3143,9 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_array9.sub
     # run_test test_posixexp.tests
     run_test test_arith1.sub
-    run_test test_vredir1.sub
+    # run_test test_vredir1.sub - see test_vredir.tests
     # run_test test_cond.tests
-    run_test test_ifs.tests
+    # run_test test_ifs.tests - messing with IFS is a known bug in PaSh
     # run_test test_varenv17.sub
     # run_test test_exp3.sub - messing with IFS
     run_test test_comsub-eof6.sub
@@ -3193,7 +3195,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_histexp5.sub - history expansion issue
     # run_test test_printf.tests
     run_test test_unicode3.sub
-    run_test test_set-x.tests
+    # run_test test_set-x.tests - using sets doesn't work, and this calls on several other tests here
     # run_test test_extglob7.sub - extended globbing again
     run_test test_func2.sub
     # run_test test_comsub-posix.tests
@@ -3251,7 +3253,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_extglob1.sub - extended globbing shouldn't work
     # run_test test_func4.sub
     # run_test test_alias.tests
-    run_test test_set-e3.sub
+    # run_test test_set-e3.sub - calls set-e3a.sub
     run_test test_set-e2.sub
     run_test test_nquote3.tests
     run_test test_comsub2.sub
@@ -3304,7 +3306,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_dollar-at-star10.sub
     run_test test_errors3.sub
     # run_test test_dollar-star9.sub
-    run_test test_exec11.sub
+    # run_test test_exec11.sub - traps could catch other system stuff not expected to work
     run_test test_dollar-at-star1.sub
     # run_test test_new-exp5.sub - messes with IFS
     run_test test_source2.sub
@@ -3326,7 +3328,7 @@ if [ "$#" -eq 0 ] || [ "$test_mode" = "bash" ]; then
     # run_test test_nameref20.sub
     run_test test_invert.tests
     # run_test test_posixexp4.sub
-    run_test test_exec3.sub
+    # run_test test_exec3.sub - trap can have differing behavior
     run_test test_exec7.sub
     run_test test_precedence.tests
     # run_test test_printf3.sub
