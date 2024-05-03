@@ -22,6 +22,9 @@ def make_unwrap_node(inputs, output):
     input_id = inputs[0]
     access_map = {input_id: make_stream_input(), output: make_stream_output()}
     r_unwrap_bin = os.path.join(config.PASH_TOP, config.config['runtime']['r_unwrap_binary'])
+    if config.pash_args.serverless_exec:
+        r_unwrap_bin = config.config['runtime']['r_unwrap_binary']
+
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=r_unwrap_bin,
         flag_option_list=[],
