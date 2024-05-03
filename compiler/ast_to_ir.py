@@ -405,8 +405,18 @@ def naive_expand(argument, config):
     # log(config['shell_variables'])
     # log(config['shell_variables_file_path'])
 
+    # already expanded
+    for c in argument:
+        if c.NodeName == 'E':
+            return argument
+
+    q_mode = False
+    if argument[0].char == ord('\'') and argument[-1].char == ord('\''):
+        q_mode = True
+    
     ## Create an AST node that "echo"s the argument
     echo_asts = make_echo_ast(argument, config['shell_variables_file_path'])
+
     ## Execute the echo AST by unparsing it to shell
     ## and calling bash
     expanded_string = execute_shell_asts(echo_asts)
@@ -414,8 +424,11 @@ def naive_expand(argument, config):
     log("Argument:", argument, "was expanded to:", expanded_string)
 
     ## Parse the expanded string back to an arg_char
+    chars_to_escape_when_no_quotes = [ord(c) for c in ['\\', '*', '?', '[', ']', '#', '<', '>', '~', ' ']]
     expanded_arguments = parse_string_to_arguments(expanded_string)
-    expanded_arguments = [EArgChar(arg[1]) for arg in expanded_arguments[0]]
+    expanded_arguments = [EArgChar(arg[1]) if arg[1] in chars_to_escape_when_no_quotes \
+                          else CArgChar(arg[1]) for arg in expanded_arguments[0]]
+    expanded_arguments = [QArgChar(expanded_arguments)] if q_mode else expanded_arguments
 
     ## TODO: Handle any errors
     # log(expanded_arg_char)
