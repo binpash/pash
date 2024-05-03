@@ -225,6 +225,7 @@ class WorkersManager():
                 error_trace = traceback.format_exc()
                 log(f"Failed to handle ft re-execution with error {e}\n{error_trace}")
 
+    # pip install grpcio-tools
     # python -m grpc_tools.protoc -Idspash/proto=. --python_out=/home/ramiz/dish/pash/compiler --grpc_python_out=/home/ramiz/dish/pash/compiler *.proto
     # GOPATH=$HOME/go; PATH=$PATH:$GOPATH/bin; ~/protoc/bin/protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative *.proto
     def update_discovery(self, addr, reply=False):
