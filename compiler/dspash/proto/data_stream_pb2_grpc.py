@@ -74,10 +74,15 @@ class DiscoveryStub(object):
                 request_serializer=dspash_dot_proto_dot_data__stream__pb2.AddrReq.SerializeToString,
                 response_deserializer=dspash_dot_proto_dot_data__stream__pb2.GetAddrReply.FromString,
                 _registered_method=True)
-        self.RemoveAddrOptimized = channel.unary_unary(
-                '/Discovery/RemoveAddrOptimized',
-                request_serializer=dspash_dot_proto_dot_data__stream__pb2.RMessage.SerializeToString,
-                response_deserializer=dspash_dot_proto_dot_data__stream__pb2.RMessageReply.FromString,
+        self.FindPersistedOptimized = channel.unary_unary(
+                '/Discovery/FindPersistedOptimized',
+                request_serializer=dspash_dot_proto_dot_data__stream__pb2.FPMessage.SerializeToString,
+                response_deserializer=dspash_dot_proto_dot_data__stream__pb2.FPMessageReply.FromString,
+                _registered_method=True)
+        self.RemovePersistedOptimized = channel.unary_unary(
+                '/Discovery/RemovePersistedOptimized',
+                request_serializer=dspash_dot_proto_dot_data__stream__pb2.RPMessage.SerializeToString,
+                response_deserializer=dspash_dot_proto_dot_data__stream__pb2.Status.FromString,
                 _registered_method=True)
 
 
@@ -126,7 +131,13 @@ class DiscoveryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def RemoveAddrOptimized(self, request, context):
+    def FindPersistedOptimized(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RemovePersistedOptimized(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -170,10 +181,15 @@ def add_DiscoveryServicer_to_server(servicer, server):
                     request_deserializer=dspash_dot_proto_dot_data__stream__pb2.AddrReq.FromString,
                     response_serializer=dspash_dot_proto_dot_data__stream__pb2.GetAddrReply.SerializeToString,
             ),
-            'RemoveAddrOptimized': grpc.unary_unary_rpc_method_handler(
-                    servicer.RemoveAddrOptimized,
-                    request_deserializer=dspash_dot_proto_dot_data__stream__pb2.RMessage.FromString,
-                    response_serializer=dspash_dot_proto_dot_data__stream__pb2.RMessageReply.SerializeToString,
+            'FindPersistedOptimized': grpc.unary_unary_rpc_method_handler(
+                    servicer.FindPersistedOptimized,
+                    request_deserializer=dspash_dot_proto_dot_data__stream__pb2.FPMessage.FromString,
+                    response_serializer=dspash_dot_proto_dot_data__stream__pb2.FPMessageReply.SerializeToString,
+            ),
+            'RemovePersistedOptimized': grpc.unary_unary_rpc_method_handler(
+                    servicer.RemovePersistedOptimized,
+                    request_deserializer=dspash_dot_proto_dot_data__stream__pb2.RPMessage.FromString,
+                    response_serializer=dspash_dot_proto_dot_data__stream__pb2.Status.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -375,7 +391,7 @@ class Discovery(object):
             _registered_method=True)
 
     @staticmethod
-    def RemoveAddrOptimized(request,
+    def FindPersistedOptimized(request,
             target,
             options=(),
             channel_credentials=None,
@@ -388,9 +404,36 @@ class Discovery(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/Discovery/RemoveAddrOptimized',
-            dspash_dot_proto_dot_data__stream__pb2.RMessage.SerializeToString,
-            dspash_dot_proto_dot_data__stream__pb2.RMessageReply.FromString,
+            '/Discovery/FindPersistedOptimized',
+            dspash_dot_proto_dot_data__stream__pb2.FPMessage.SerializeToString,
+            dspash_dot_proto_dot_data__stream__pb2.FPMessageReply.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RemovePersistedOptimized(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/Discovery/RemovePersistedOptimized',
+            dspash_dot_proto_dot_data__stream__pb2.RPMessage.SerializeToString,
+            dspash_dot_proto_dot_data__stream__pb2.Status.FromString,
             options,
             channel_credentials,
             insecure,

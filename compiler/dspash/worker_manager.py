@@ -227,24 +227,22 @@ class WorkersManager():
 
     # pip install grpcio-tools
     # python -m grpc_tools.protoc -Idspash/proto=. --python_out=/home/ramiz/dish/pash/compiler --grpc_python_out=/home/ramiz/dish/pash/compiler *.proto
+    # go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+    # go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
     # GOPATH=$HOME/go; PATH=$PATH:$GOPATH/bin; ~/protoc/bin/protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative *.proto
-    def update_discovery(self, addr, reply=False):
+    def check_persisted_discovery(self, addr, uuids):
         with grpc.insecure_channel('localhost:50052') as channel:
             stub = data_stream_pb2_grpc.DiscoveryStub(channel)
 
-            # Create an RMessage object
-            r_message = data_stream_pb2.RMessage(addr=addr, reply=reply)
+            # Create an FPMessage object
+            fp_message = data_stream_pb2.FPMessage(uuids=uuids, addr=addr)
 
             # Call the gRPC method
-            response = stub.RemoveAddrOptimized(r_message)
+            response = stub.FindPersistedOptimized(fp_message)
 
-            uuids = []
             log("Received reply from discovery service")
-            for uuid_str in response.uuids:
-                uuid_obj = uuid.UUID(uuid_str)
-                uuids.append(uuid_obj)
 
-            return uuids
+            return response.indexes
 
     def handle_crash(self, addr: str):
         ft = self.args.ft
@@ -266,26 +264,31 @@ class WorkersManager():
                     subgraphs_to_reexecute.update(self.all_merger_to_subgraph[merger_id])
         log(f"Subgraphs to re-execute: {subgraphs_to_reexecute}")
 
-        # remove executions if they are already persisted
-        if ft == "optimized":
-            len1 = len(subgraphs_to_reexecute)
-            uuids = self.update_discovery(addr, reply=True)
-            for uuid_obj in uuids:
-                if uuid_obj not in self.all_uuid_to_graphs:
-                    # TODO: fix this, we need to clean up discovery service
-                    continue
-                from_graph, _ = self.all_uuid_to_graphs[uuid_obj]
-                subgraphs_to_reexecute.discard(from_graph)
-                log(f"Subgraph {from_graph} is already persisted, discarding it")
-            len2 = len(subgraphs_to_reexecute)
-            log(f"Subgraphs to re-execute reduced by: {len1 - len2}")
-
         # clear and update the tracked subgraph state
         for subgraph in subgraphs_to_reexecute:
             self.all_graph_to_uuid[subgraph].clear()
         for uuid, (from_graph, _) in self.all_uuid_to_graphs.items():
             if from_graph in subgraphs_to_reexecute:
                 self.all_graph_to_uuid[from_graph].append(uuid)
+
+        # remove executions if they are already persisted
+        if ft == "optimized":
+            uuids = []
+            uuid_objs = []
+            for uuid, (from_graph, _) in self.all_uuid_to_graphs.items():
+                if from_graph in subgraphs_to_reexecute:
+                    uuids.append(str(uuid))
+                    uuid_objs.append(uuid)
+            indexes = self.check_persisted_discovery(addr, uuids)
+
+            # Remove elements by index in reverse order
+            for index in indexes:
+                uu = uuid_objs[index]
+                id = self.all_uuid_to_graphs[uu][0]
+                log(f"Subgraph {id} is already persisted, discarding it")
+                subgraphs_to_reexecute.remove(id)
+
+            log(f"Subgraphs to re-execute reduced by: {len(indexes)}")
 
         # iterate over the copy of the list to avoid modifying it while iterating
         for worker, subgraph in self.all_worker_subgraph_pairs[:]:
@@ -299,6 +302,7 @@ class WorkersManager():
                     worker = new_worker
 
                 merger_id = self.all_subgraph_to_merger[subgraph.id]
+                log(f"Re-execute req: Sending subgraph {subgraph.id} to {worker}")
                 worker.send_graph_exec_request(
                     subgraph,
                     self.all_merger_to_shell_vars[merger_id],

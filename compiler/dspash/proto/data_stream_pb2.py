@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1e\x64spash/proto/data_stream.proto\"&\n\nPutAddrMsg\x12\n\n\x02Id\x18\x01 \x01(\t\x12\x0c\n\x04\x41\x64\x64r\x18\x02 \x01(\t\"\x15\n\x07\x41\x64\x64rReq\x12\n\n\x02Id\x18\x01 \x01(\t\"-\n\x0cGetAddrReply\x12\x0f\n\x07Success\x18\x01 \x01(\x08\x12\x0c\n\x04\x41\x64\x64r\x18\x02 \x01(\t\"\x19\n\x06Status\x12\x0f\n\x07Success\x18\x01 \x01(\x08\"\"\n\x04\x44\x61ta\x12\x0e\n\x06\x62uffer\x18\x01 \x01(\x0c\x12\n\n\x02Id\x18\x02 \x01(\t\"\'\n\x08RMessage\x12\x0c\n\x04\x61\x64\x64r\x18\x01 \x01(\t\x12\r\n\x05reply\x18\x02 \x01(\x08\"\x1e\n\rRMessageReply\x12\r\n\x05uuids\x18\x01 \x03(\t2\xcc\x02\n\tDiscovery\x12!\n\x07PutAddr\x12\x0b.PutAddrMsg\x1a\x07.Status\"\x00\x12$\n\x07GetAddr\x12\x08.AddrReq\x1a\r.GetAddrReply\"\x00\x12!\n\nRemoveAddr\x12\x08.AddrReq\x1a\x07.Status\"\x00\x12!\n\nreadStream\x12\x08.AddrReq\x1a\x05.Data\"\x00\x30\x01\x12!\n\x0bwriteStream\x12\x05.Data\x1a\x07.Status\"\x00(\x01\x12*\n\x10PutAddrOptimized\x12\x0b.PutAddrMsg\x1a\x07.Status\"\x00\x12-\n\x10GetAddrOptimized\x12\x08.AddrReq\x1a\r.GetAddrReply\"\x00\x12\x32\n\x13RemoveAddrOptimized\x12\t.RMessage\x1a\x0e.RMessageReply\"\x00\x42\x14Z\x12runtime/pipe/protob\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1e\x64spash/proto/data_stream.proto\"&\n\nPutAddrMsg\x12\n\n\x02Id\x18\x01 \x01(\t\x12\x0c\n\x04\x41\x64\x64r\x18\x02 \x01(\t\"\x15\n\x07\x41\x64\x64rReq\x12\n\n\x02Id\x18\x01 \x01(\t\"-\n\x0cGetAddrReply\x12\x0f\n\x07Success\x18\x01 \x01(\x08\x12\x0c\n\x04\x41\x64\x64r\x18\x02 \x01(\t\"\x19\n\x06Status\x12\x0f\n\x07Success\x18\x01 \x01(\x08\"\"\n\x04\x44\x61ta\x12\x0e\n\x06\x62uffer\x18\x01 \x01(\x0c\x12\n\n\x02Id\x18\x02 \x01(\t\"(\n\tFPMessage\x12\r\n\x05uuids\x18\x01 \x03(\t\x12\x0c\n\x04\x61\x64\x64r\x18\x02 \x01(\t\"!\n\x0e\x46PMessageReply\x12\x0f\n\x07indexes\x18\x01 \x03(\x05\"\x1a\n\tRPMessage\x12\r\n\x05uuids\x18\x01 \x03(\t2\x84\x03\n\tDiscovery\x12!\n\x07PutAddr\x12\x0b.PutAddrMsg\x1a\x07.Status\"\x00\x12$\n\x07GetAddr\x12\x08.AddrReq\x1a\r.GetAddrReply\"\x00\x12!\n\nRemoveAddr\x12\x08.AddrReq\x1a\x07.Status\"\x00\x12!\n\nreadStream\x12\x08.AddrReq\x1a\x05.Data\"\x00\x30\x01\x12!\n\x0bwriteStream\x12\x05.Data\x1a\x07.Status\"\x00(\x01\x12*\n\x10PutAddrOptimized\x12\x0b.PutAddrMsg\x1a\x07.Status\"\x00\x12-\n\x10GetAddrOptimized\x12\x08.AddrReq\x1a\r.GetAddrReply\"\x00\x12\x37\n\x16\x46indPersistedOptimized\x12\n.FPMessage\x1a\x0f.FPMessageReply\"\x00\x12\x31\n\x18RemovePersistedOptimized\x12\n.RPMessage\x1a\x07.Status\"\x00\x42\x14Z\x12runtime/pipe/protob\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,10 +32,12 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_STATUS']._serialized_end=169
   _globals['_DATA']._serialized_start=171
   _globals['_DATA']._serialized_end=205
-  _globals['_RMESSAGE']._serialized_start=207
-  _globals['_RMESSAGE']._serialized_end=246
-  _globals['_RMESSAGEREPLY']._serialized_start=248
-  _globals['_RMESSAGEREPLY']._serialized_end=278
-  _globals['_DISCOVERY']._serialized_start=281
-  _globals['_DISCOVERY']._serialized_end=613
+  _globals['_FPMESSAGE']._serialized_start=207
+  _globals['_FPMESSAGE']._serialized_end=247
+  _globals['_FPMESSAGEREPLY']._serialized_start=249
+  _globals['_FPMESSAGEREPLY']._serialized_end=282
+  _globals['_RPMESSAGE']._serialized_start=284
+  _globals['_RPMESSAGE']._serialized_end=310
+  _globals['_DISCOVERY']._serialized_start=313
+  _globals['_DISCOVERY']._serialized_end=701
 # @@protoc_insertion_point(module_scope)

@@ -180,7 +180,8 @@ class RequestHandler(Thread):
             self.event_loop.start()
 
     def handle_exec_graph_request(self):
-        save_configs(self.request['graph'], self.dfs_configs_paths)
+        if self.ft != "optimized":
+            save_configs(self.request['graph'], self.dfs_configs_paths)
 
         config.config['shell_variables'] = self.request['shell_variables']
         if self.debug:
