@@ -18,7 +18,7 @@ setup_dataset() {
     if [ ! -d ./small ]; then
       echo "Generating small-size inputs"
       # FIXME PR: Do we need all of them?
-      curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/oneliners.zip' > oneliners.zip
+      curl -sf 'http://pac-n4.csail.mit.edu:81/pash_data/small/oneliners.zip' >oneliners.zip
       unzip oneliners.zip
       rm -f oneliners.zip
     fi
@@ -26,7 +26,7 @@ setup_dataset() {
   fi
 
     if [ ! -f ./1M.txt ]; then
-        curl -sf 'http://ndr.md/data/dummy/1M.txt' > 1M.txt
+        curl -sfL 'http://atlas-group.cs.brown.edu/data/dummy/1M.txt' >1M.txt
         if [ $? -ne 0 ]; then
             echo 'cannot find 1M.txt -- please contact the developers of pash'
             exit 1
@@ -37,7 +37,7 @@ setup_dataset() {
     if [ ! -f ./10M.txt ]; then
         touch 10M.txt
         for (( i = 0; i < 10; i++ )); do
-            cat 1M.txt >> 10M.txt
+            cat 1M.txt >>10M.txt
         done
         "$PASH_TOP/scripts/append_nl_if_not.sh" ./10M.txt
     fi
@@ -45,13 +45,13 @@ setup_dataset() {
     if [ ! -f ./100M.txt ]; then
         touch 100M.txt
         for (( i = 0; i < 10; i++ )); do
-            cat 10M.txt >> 100M.txt
+            cat 10M.txt >>100M.txt
         done
         "$PASH_TOP/scripts/append_nl_if_not.sh" ./100M.txt
     fi
 
     if [ ! -f ./1G.txt ]; then
-        curl -sf 'http://ndr.md/data/dummy/1G.txt' > 1G.txt
+        curl -sfL 'http://atlas-group.cs.brown.edu/data/dummy/1G.txt' >1G.txt
         if [ $? -ne 0 ]; then
             echo 'cannot find 1G.txt -- please contact the developers of pash'
             exit 1
@@ -61,7 +61,7 @@ setup_dataset() {
 
   # download wamerican-insane dictionary and sort according to machine
   if [ ! -f ./dict.txt ]; then
-      curl -sf 'http://ndr.md/data/dummy/dict.txt' | sort > dict.txt
+      curl -sfL 'http://atlas-group.cs.brown.edu/data/dummy/dict.txt' | sort >dict.txt
       if [ $? -ne 0 ]; then
           echo 'cannot find dict.txt -- please contact the developers of pash'
           exit 1
@@ -70,10 +70,10 @@ setup_dataset() {
     fi
 
     if [ ! -f ./all_cmds.txt ]; then
-        curl -sf 'http://ndr.md/data/dummy/all_cmds.txt' > all_cmds.txt
+        curl -sf 'http://atlas-group.cs.brown.edu/data/dummy/all_cmds.txt' >all_cmds.txt
         if [ $? -ne 0 ]; then
             # This should be OK for tests, no need for abort
-            ls /usr/bin/* > all_cmds.txt
+            ls /usr/bin/* >all_cmds.txt
         fi
         "$PASH_TOP/scripts/append_nl_if_not.sh" ./all_cmds.txt
     fi
@@ -86,7 +86,7 @@ setup_dataset() {
         if [ ! -f ./3G.txt ]; then
             touch 3G.txt
             for (( i = 0; i < 3; i++ )); do
-                cat 1G.txt >> 3G.txt
+                cat 1G.txt >>3G.txt
             done
             "$PASH_TOP/scripts/append_nl_if_not.sh" ./3G.txt
         fi
@@ -94,7 +94,7 @@ setup_dataset() {
         if [ ! -f ./10G.txt ]; then
             touch 10G.txt
             for (( i = 0; i < 10; i++ )); do
-                cat 1G.txt >> 10G.txt
+                cat 1G.txt >>10G.txt
             done
             "$PASH_TOP/scripts/append_nl_if_not.sh" ./10G.txt
         fi
@@ -102,7 +102,7 @@ setup_dataset() {
         if [ ! -f ./all_cmdsx100.txt ]; then
             touch all_cmdsx100.txt
             for (( i = 0; i < 100; i++ )); do
-                cat all_cmds.txt >> all_cmdsx100.txt
+                cat all_cmds.txt >>all_cmdsx100.txt
             done
         fi
     fi
@@ -116,3 +116,5 @@ source_var() {
         export IN="$PASH_TOP/evaluation/benchmarks/oneliners/input/$2"
     fi
 }
+
+setup_dataset
