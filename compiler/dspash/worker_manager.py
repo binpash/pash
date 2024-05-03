@@ -225,9 +225,10 @@ class WorkersManager():
                 error_trace = traceback.format_exc()
                 log(f"Failed to handle ft re-execution with error {e}\n{error_trace}")
 
+    # python -m grpc_tools.protoc -Idspash/proto=. --python_out=/home/ramiz/dish/pash/compiler --grpc_python_out=/home/ramiz/dish/pash/compiler *.proto
+    # GOPATH=$HOME/go; PATH=$PATH:$GOPATH/bin; ~/protoc/bin/protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative *.proto
     def update_discovery(self, addr, reply=False):
         with grpc.insecure_channel('localhost:50052') as channel:
-            # stub = my_service_pb2_grpc.MyServiceStub(channel)
             stub = data_stream_pb2_grpc.DiscoveryStub(channel)
 
             # Create an RMessage object
