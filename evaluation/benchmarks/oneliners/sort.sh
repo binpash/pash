@@ -1,7 +1,10 @@
 #!/bin/bash
 # Sort input
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/input/1G.txt}
+cd $(dirname $0)
+
+SIZE=500M
+
+IN=input/$SIZE.txt
 
 cat $IN | sort
-

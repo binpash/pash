@@ -1,5 +1,5 @@
 #!/bin/bash
-# Find the shortest scripts 
+# Find the shortest scripts
 # From "Wicked Cool Shell Scripts", 2nd Ed., pg. 7
 # +p.95 multiple sed
 # +p.XX crawler
