@@ -1,7 +1,7 @@
 #!/bin/bash
 # Calculate the frequency of each word in the document, and sort by frequency
 
-cd $(dirname $0)
+cd "$(dirname "$0")" || exit 1
 
 SIZE=500M
 

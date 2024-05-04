@@ -1,7 +1,7 @@
 #!/bin/bash
 # Match complex regular-expression over input
 
-cd $(dirname $0)
+cd "$(dirname "$0")" || exit 1
 
 SIZE=200M
 

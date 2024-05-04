@@ -4,12 +4,12 @@
 bigrams_aux()
 {
     s2=$(mktemp -u)
-    mkfifo $s2
-    tee $s2 |
+    mkfifo "$s2"
+    tee "$s2" |
         tail -n +2 |
-        paste $s2 - |
+        paste "$s2" - |
         sed '$d'
-    rm $s2
+    rm "$s2"
 }
 
 bigram_aux_map()
@@ -25,30 +25,30 @@ bigram_aux_map()
     aux3=$(mktemp -u)
     temp=$(mktemp -u)
 
-    mkfifo $s2
-    mkfifo $aux1
-    mkfifo $aux2
-    mkfifo $aux3
+    mkfifo "$s2"
+    mkfifo "$aux1"
+    mkfifo "$aux2"
+    mkfifo "$aux3"
 
     ## New way of doing it using an intermediate file. This is slow
     ## but doesn't deadlock
-    cat $IN > $temp
+    cat "$IN" > "$temp"
 
-    sed '$d' $temp > $aux3 &
-    cat $temp | head -n 1 > $AUX_HEAD &
-    cat $temp | tail -n 1 > $AUX_TAIL &
-    cat $temp | tail -n +2 | paste $aux3 - > $OUT &
+    sed '$d' "$temp" > "$aux3" &
+    cat "$temp" | head -n 1 > "$AUX_HEAD" &
+    cat "$temp" | tail -n 1 > "$AUX_TAIL" &
+    cat "$temp" | tail -n +2 | paste "$aux3" - > "$OUT" &
 
     # ## Old way of doing it
     # cat $IN |
-    #     tee $s2 $aux1 $aux2 |
+    #     tee "$s2" $aux1 $aux2 |
     #     tail -n +2 |
-    #     paste $s2 - > $OUT &
+    #     paste "$s2" - > $OUT &
 
-    # ## The goal of this is to write the first line of $IN in the $AUX_HEAD
+    # ## The goal of this is to write the first line of $IN in the "$AUX_HEAD"
     # ## stream and the last line of $IN in $AUX_TAIL
 
-    # cat $aux1 | ( head -n 1 > $AUX_HEAD; $PASH_TOP/evaluation/tools/drain_stream.sh ) &
+    # cat $aux1 | ( head -n 1 > "$AUX_HEAD"; $PASH_TOP/evaluation/tools/drain_stream.sh ) &
     # # while IFS= read -r line
     # # do
     # #     old_line=$line
@@ -58,11 +58,11 @@ bigram_aux_map()
 
     wait
 
-    rm $temp
-    rm $s2
-    rm $aux1
-    rm $aux2
-    rm $aux3
+    rm "$temp"
+    rm "$s2"
+    rm "$aux1"
+    rm "$aux2"
+    rm "$aux3"
 }
 
 bigram_aux_reduce()
@@ -79,16 +79,16 @@ bigram_aux_reduce()
 
     temp=$(mktemp -u)
 
-    mkfifo $temp
+    mkfifo "$temp"
 
-    cat $AUX_HEAD1 > $AUX_HEAD_OUT &
-    cat $AUX_TAIL2 > $AUX_TAIL_OUT &
-    paste $AUX_TAIL1 $AUX_HEAD2 > $temp &
-    cat $IN1 $temp $IN2 > $OUT &
+    cat "$AUX_HEAD1" > "$AUX_HEAD_OUT" &
+    cat "$AUX_TAIL2" > "$AUX_TAIL_OUT" &
+    paste "$AUX_TAIL1" "$AUX_HEAD2" > "$temp" &
+    cat "$IN1" "$temp" "$IN2" > "$OUT" &
 
     wait
 
-    rm $temp
+    rm "$temp"
 }
 
 export -f bigrams_aux

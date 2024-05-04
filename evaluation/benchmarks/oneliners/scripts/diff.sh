@@ -7,14 +7,14 @@ IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/input/1G.txt}
 
 mkfifo s1 s2
 
-cat $IN |
+cat "$IN" |
   # shuf |
-  tr [:lower:] [:upper:] |
+  tr "[:lower:]" "[:upper:]" |
   sort > s1 &
 
-cat $IN |
+cat "$IN" |
   # shuf |
-  tr [:upper:] [:lower:] |
+  tr "[:upper:]" "[:lower:]" |
   sort > s2 &
 
 diff -B s1 s2
