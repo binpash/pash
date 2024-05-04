@@ -14,7 +14,7 @@ def lambda_handler(event, context):
     # print(f"Script: {scripts_dict[id_]}", flush=True)
     start_time = time.time()
     process = subprocess.run(
-        ["/bin/bash", f"demo-spell.sh"]
+        ["/bin/bash", f"script.sh"]
     )
     end_time = time.time()
     total_time = end_time - start_time

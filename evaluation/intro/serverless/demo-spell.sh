@@ -2,12 +2,11 @@
 
 cd "$(dirname $0)"
 
-S3_FILE="input/200M.txt"
-FILE="/tmp/200M.txt"
-S3_DICT="input/sorted_words"
-DICT="/tmp/sorted_words"
+[ -z $PASH_TOP ] && {
+  echo "PASH_TOP not set, maybe $(git rev-parse --show-toplevel)?"
+  exit
+}
+FILE="input/200M.txt"
+DICT="input/sorted_words"
 
-python3 aws/s3-get-object.py $S3_FILE $FILE
-python3 aws/s3-get-object.py $S3_DICT $DICT
-
-cat "$FILE" | tr A-Z a-z | tr -cs A-Za-z '\n' | sort | uniq | comm -13 $DICT - >/dev/null
+cat "$FILE" | tr A-Z a-z | tr -cs A-Za-z '\n' | sort | uniq | comm -13 $DICT -
