@@ -35,3 +35,15 @@ do
 
     echo "Finished processing ${input}.txt"
 done
+
+# Rename {1-8}.txt to {01-08}.txt
+for i in {1..8}
+do
+    mv "${input_dir}/${i}.txt" "${input_dir}/0${i}.txt"
+done
+
+# Rename 9-{1-9}.txt to 09-{1-9}.txt
+for i in {1..9}
+do
+    mv "${input_dir}/9.${i}.txt" "${input_dir}/09.${i}.txt"
+done
