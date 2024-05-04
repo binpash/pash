@@ -6,7 +6,7 @@ cd "$(dirname $0)"
   echo "PASH_TOP not set, maybe $(git rev-parse --show-toplevel)?"
   exit
 }
-FILE="input/200M.txt"
-DICT="input/sorted_words"
+FILE="input/100M.txt"
+DICT="input/sorted_words_local"
 
 cat "$FILE" | tr A-Z a-z | tr -cs A-Za-z '\n' | sort | uniq | comm -13 $DICT -
