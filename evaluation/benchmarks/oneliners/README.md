@@ -11,8 +11,8 @@ They are written by developers who are (or approximate) experts in Unix shell sc
 6. `bi-grams.sh`           Find all 2-grams in a piece of text
 7. `diff.sh`               Compares two streams element by element
 8. `set-diff.sh`           Show the set-difference between two streams (i.e., elements in the first that are not in the second).
-9. `shortest-scripts.sh`   Find the shortest scripts 
+9. `shortest-scripts.sh`   Find the shortest scripts
 10.`sort-sort.sh`          Calculate sort twice
 
-The `bi-grams.aux.sh` script contains helper functions for `bi-grams.sh`. 
+The `bi-grams.aux.sh` script contains helper functions for `bi-grams.sh`.
 To generate inputs, run `./generate_inputs`.
