@@ -3,8 +3,11 @@
 
 cd "$(dirname "$0")" || exit 1
 
-SIZE=500M
+[ -z "$PASH_TOP" ] && {
+  echo "PASH_TOP not set, maybe $(git rev-parse --show-toplevel)?"
+  exit
+}
 
-IN=input/$SIZE.txt
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/inputs/1G.txt}
 
-cat $IN | sort
+cat "$IN" | sort
