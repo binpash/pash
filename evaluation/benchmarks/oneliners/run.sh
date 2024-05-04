@@ -30,7 +30,9 @@ WIDTH=1
 for SCRIPT_INPUT in "${SCRIPTS_INPUTS[@]}"
 do
   SCRIPT=$(echo "$SCRIPT_INPUT" | cut -d: -f1)
+  SCRIPT_PATH="${SCRIPTS_DIR}/${SCRIPT}"
   INPUT=${INPUTS_DIR}/$(echo "$SCRIPT_INPUT" | cut -d: -f2)
+  OUTPUT="${OUTPUTS_DIR}/${SCRIPT}__env${ENVIRONMENT}__mem${MEMORY}__sys${SYSTEM}__w${WIDTH}.out"
 
-  IN=$INPUT "${SCRIPTS_DIR}/${SCRIPT}" >"${OUTPUTS_DIR}/${SCRIPT}__env${ENVIRONMENT}__mem${MEMORY}__sys${SYSTEM}__w${WIDTH}.txt"
+  IN=$INPUT "$SCRIPT_PATH" >"$OUTPUT"
 done
