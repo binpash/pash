@@ -4,7 +4,7 @@
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/input/1G.txt}
 dict=${dict:-$PASH_TOP/evaluation/benchmarks/oneliners/input/dict.txt}
 
-cat $IN |
+cat "$IN" |
     iconv -f utf-8 -t ascii//translit | # remove non utf8 characters
     # groff -t -e -mandoc -Tascii |  # remove formatting commands
     col -bx |                      # remove backspaces / linefeeds
@@ -13,4 +13,4 @@ cat $IN |
     tr -d '[:punct:]' |            # remove punctuation
     sort |                         # put words in alphabetical order
     uniq |                         # remove duplicate words
-    comm -23 - $dict               # report words not in dictionary 
+    comm -23 - "$dict"             # report words not in dictionary

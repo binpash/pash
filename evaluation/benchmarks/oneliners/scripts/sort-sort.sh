@@ -1,7 +1,7 @@
 #!/bin/bash
 # Calculate sort twice
 
-cd $(dirname $0)
+cd "$(dirname "$0")" || exit 1
 
 SIZE=500M
 

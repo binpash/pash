@@ -2,7 +2,7 @@
 # Top-N (1000) terms
 # from https://dl.acm.org/doi/10.1145/5948.315654
 
-cd $(dirname $0)
+cd "$(dirname "$0")" || exit 1
 
 SIZE=500M
 
