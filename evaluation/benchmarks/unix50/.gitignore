@@ -1,3 +1,4 @@
 inputs/*
 intermediary/*
 *.txt
+*.time
