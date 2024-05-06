@@ -405,11 +405,12 @@ def naive_expand(argument, config):
     # log(config['shell_variables'])
     # log(config['shell_variables_file_path'])
 
-    # already expanded
+    # if we've already expanded this argument, don't do it again
     for c in argument:
         if c.NodeName == 'E':
             return argument
 
+    # this argument is quoted
     q_mode = False
     if argument[0].char == ord('\'') and argument[-1].char == ord('\''):
         q_mode = True
@@ -426,8 +427,10 @@ def naive_expand(argument, config):
     ## Parse the expanded string back to an arg_char
     chars_to_escape_when_no_quotes = [ord(c) for c in ['\\', '*', '?', '[', ']', '#', '<', '>', '~', ' ']]
     expanded_arguments = parse_string_to_arguments(expanded_string)
+    # we need to escape some characters if the argument is not quoted
     expanded_arguments = [EArgChar(arg[1]) if arg[1] in chars_to_escape_when_no_quotes \
                           else CArgChar(arg[1]) for arg in expanded_arguments[0]]
+    # if we've identified that the argument is quoted, we need to wrap it in quotes
     expanded_arguments = [QArgChar(expanded_arguments)] if q_mode else expanded_arguments
 
     ## TODO: Handle any errors
@@ -441,7 +444,7 @@ def naive_expand(argument, config):
 ##
 ## TODO: At the moment this has the issue that a command that has the words which we want to expand
 ##       might have assignments of its own, therefore requiring that we use them to properly expand.
-def expand_command_argument(argument, config):
+def expand_command_argument_bash(argument, config):
     new_arguments = [argument]
     if True or should_expand_argument(argument):
         new_arguments = naive_expand(argument, config)
@@ -475,7 +478,7 @@ def compile_arg_char(arg_char: ArgChar, fileIdGen, config):
 def compile_command_argument(argument, fileIdGen, config):
     global BASH_MODE
     if BASH_MODE:
-        argument = expand_command_argument(argument, config)
+        argument = expand_command_argument_bash(argument, config)
     compiled_argument = [compile_arg_char(char, fileIdGen, config) for char in argument]
     return compiled_argument
 

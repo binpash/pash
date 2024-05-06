@@ -36,14 +36,14 @@ oneliners(){
   scripts_inputs=(
       "nfa-regex;10M.txt" # 100M
       "sort;100M.txt"
-      # "top-n;1G.txt"
-      # "wf;3G.txt"
-      # "spell;1G.txt"
-      # "diff;3G.txt"
-      # "bi-grams;1G.txt"
-      # "set-diff;3G.txt"
-      # "sort-sort;1G.txt"
-      # "shortest-scripts;all_cmdsx100.txt"
+      "top-n;100M.txt"
+      "wf;100M.txt"
+      "spell;100M.txt"
+      "diff;100M.txt"
+      "bi-grams;100M.txt"
+      "set-diff;100M.txt"
+      "sort-sort;100M.txt"
+      "shortest-scripts;all_cmdsx100.txt"
   )
 
   touch "$seq_times_file"
@@ -90,14 +90,14 @@ oneliners_pash(){
   scripts_inputs=(
       "nfa-regex;10M.txt" # 100M.txt"
       "sort;100M.txt" # 3G.txt
-      # "top-n;1G.txt"
-      # "wf;3G.txt"
-      # "spell;1G.txt"
-      # "diff;3G.txt"
-      # "bi-grams;1G.txt"
-      # "set-diff;3G.txt"
-      # "sort-sort;1G.txt"
-      # "shortest-scripts;all_cmdsx100.txt"
+      "top-n;100M.txt"
+      "wf;100M.txt"
+      "spell;100M.txt"
+      "diff;100M.txt"
+      "bi-grams;100M.txt"
+      "set-diff;100M.txt"
+      "sort-sort;100M.txt"
+      "shortest-scripts;all_cmdsx100.txt"
   )
 
   touch "$times_file"
@@ -128,7 +128,69 @@ oneliners_pash(){
   cd ..
 }
 
-oneliners --full
-oneliners_pash --full
+# oneliners --full
+# oneliners_pash --full
 
-compare_outputs "oneliners/outputs"
+# compare_outputs "oneliners/outputs"
+
+web-index(){
+  times_file="seq.res"
+  outputs_suffix="seq.out"
+  outputs_dir="outputs"
+  if [ -e "web-index/${times_file}" ]; then
+    echo "skipping web-index/${times_file}"
+    return 0
+  fi
+
+  cd web-index/
+
+  install_deps_source_setup $1
+
+  source_var $1
+
+  mkdir -p "$outputs_dir"
+  
+  touch "$times_file"
+  echo executing web index $(date) | tee -a "$times_file"
+  outputs_file="${outputs_dir}/web-index.${outputs_suffix}"
+  echo web-index.sh: $({ time ./web-index.sh > "${outputs_file}"; } 2>&1) | tee -a "$times_file"
+  cd ..
+}
+
+web-index_pash(){
+  times_file="par.res"
+  outputs_suffix="par.out"
+  time_suffix="par.time"
+  outputs_dir="outputs"
+  pash_logs_dir="pash_logs"
+  width=16
+  if [ -e "web-index/${times_file}" ]; then
+    echo "skipping web-index/${times_file}"
+    return 0
+  fi
+
+  cd web-index/
+
+  install_deps_source_setup $1
+
+  source_var $1
+
+  mkdir -p "$outputs_dir"
+  mkdir -p "$pash_logs_dir"
+  touch "$times_file"
+  echo executing web index with pash $(date) | tee -a "$times_file"
+  outputs_file="${outputs_dir}/web-index.${outputs_suffix}"
+  pash_log="${pash_logs_dir}/web-index.pash.log"
+  single_time_file="${outputs_dir}/web-index.${time_suffix}"
+
+  ## FIXME: There is a bug when running with r_split at the moment. r_wrap cannot execute bash_functions
+  echo -n "web-index.sh:" | tee -a "$times_file"
+  { time "$PASH_TOP/pa.sh" -w "${width}" $PASH_FLAGS --log_file "${pash_log}" web-index.sh > "$outputs_file"; } 2> "${single_time_file}"
+  cat "${single_time_file}" | tee -a "$times_file"
+  cd ..
+}
+
+web-index --full
+web-index_pash --full
+
+compare_outputs "web-index/outputs"
