@@ -91,6 +91,8 @@ class RequestHandler(Thread):
 
                 if self.request['type'] == 'Setup':
                     self.handle_setup_request()
+                elif self.request['type'] == 'Kill-Node':
+                    self.handle_kill_node()
                 elif self.request['type'] == 'Exec-Graph':
                     self.handle_exec_graph_request()
                 elif self.request['type'] == 'Batch-Exec-Graph':
@@ -159,7 +161,6 @@ class RequestHandler(Thread):
 
     def handle_setup_request(self):
         self.debug = self.request['debug']
-        self.kill_target = self.request['kill_target']
         self.pool_size = int(self.request['pool_size'])
         self.ft = self.request['ft']
 
@@ -176,9 +177,14 @@ class RequestHandler(Thread):
             err_print(f"Starting event loop with pool size {self.pool_size}")
             self.event_loop.start()
 
+    def handle_kill_node(self):
+        self.kill_target = self.request['kill_target']
         if self.kill_target == HOST:
             err_print(f"Starting killer thread! Last execution took {self.worker.last_exec_time} seconds.")
             Thread(target=kill, args=(self.worker.last_exec_time / 2, self.event_loop)).start()
+        else:
+            # This should never happen with the new approach
+            err_print(f"Kill target {self.kill_target} is not this node, skipping kill")
 
     def handle_exec_graph_request(self):
         if self.ft != "optimized":
@@ -216,6 +222,8 @@ class RequestHandler(Thread):
         # this in None for now anyways
         # config.config['shell_variables'] = self.request['shell_variables']
 
+        err_print(f"Batch exec graph request: {len(self.request['regulars'])} regulars and {len(self.request['mergers'])} mergers")
+
         functions_file = create_filename(dir=config.PASH_TMP_PREFIX, prefix='pashFuncs')
         write_file(functions_file, self.request['functions'])
 
@@ -231,9 +239,10 @@ class RequestHandler(Thread):
                 add_debug_flags(merger)
             script_path = to_shell_file(merger, config.pash_args)
             cmd = f"source {functions_file}; source {script_path}"
-            err_print(f"executing merger {cmd}")
-            rc = subprocess.Popen(cmd, env=self.env_var, executable="/bin/bash", shell=True, stderr=None, preexec_fn=os.setsid)
-            self.rc_graph_merger_list.append((rc, script_path, self.request['merger_id']))
+            if self.event_loop.is_alive():
+                err_print(f"executing merger {cmd}")
+                rc = subprocess.Popen(cmd, env=self.env_var, executable="/bin/bash", shell=True, stderr=subprocess.DEVNULL, preexec_fn=os.setsid)
+                self.rc_graph_merger_list.append((rc, script_path, self.request['merger_id']))
 
     def handle_kill_subgraphs_request(self):
         merger_id = self.request['merger_id']
@@ -308,7 +317,7 @@ class EventLoop(Thread):
             while self.regular_queue and len(self.running_processes) < self.handler.pool_size:
                 cmd, script_path, merger_id = self.regular_queue.pop()
                 # err_print(f"executing {cmd}")
-                rc = subprocess.Popen(cmd, env=self.handler.env_var, executable="/bin/bash", shell=True, stderr=None, preexec_fn=os.setsid)
+                rc = subprocess.Popen(cmd, env=self.handler.env_var, executable="/bin/bash", shell=True, stderr=subprocess.DEVNULL, preexec_fn=os.setsid)
                 # rc = subprocess.Popen(f"time $({cmd})", env=self.handler.env_var, executable="/bin/bash", shell=True, stderr=None, preexec_fn=os.setsid)
                 self.running_processes.append(rc)
                 self.handler.rc_graph_merger_list.append((rc, script_path, merger_id))

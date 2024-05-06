@@ -79,14 +79,15 @@ class WorkerConnection:
         request_dict = { 
             'type': 'Setup',
             'debug': None,
-            'kill_target': None,
             'pool_size': self.args.pool,
             'ft': self.args.ft,
         }
         if self.args.debug:
             request_dict['debug'] = {'name': self.name, 'url': f'{DEBUG_URL}/putlog'}
-        if self.args.kill:
-            request_dict['kill_target'] = socket.gethostbyaddr(self.args.kill)[2][0]
+        self.send_request(request_dict)
+
+    def send_kill_node_request(self):
+        request_dict = { 'type': 'Kill-Node', 'kill_target': self._host}
         self.send_request(request_dict)
 
     def send_kill_subgraphs_request(self, merger_id: int):
@@ -155,6 +156,7 @@ class WorkersManager():
             # self.graph_to_uuid = defaultdict(list)
             self.all_merger_to_subgraph = {}
             self.all_subgraph_to_merger = {}
+            self.kill_node_req_sent = False
 
             self.daemon_quit = Event()
             self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -264,7 +266,7 @@ class WorkersManager():
                             worker.send_kill_subgraphs_request(merger_id)
                             log(f"Sent kill all subgraphs request to {worker}")
                     subgraphs_to_reexecute.update(self.all_merger_to_subgraph[merger_id])
-        log(f"Subgraphs to re-execute: {subgraphs_to_reexecute}")
+        log(f"Subgraphs to re-execute: {len(subgraphs_to_reexecute)}")
 
         # clear and update the tracked subgraph state
         for subgraph in subgraphs_to_reexecute:
@@ -288,7 +290,7 @@ class WorkersManager():
             for index in indexes:
                 uu = uuid_objs[index]
                 id = self.all_uuid_to_graphs[uu][0]
-                log(f"Subgraph {id} is already persisted, discarding it")
+                # log(f"Subgraph {id} is already persisted, discarding it")
                 subgraphs_to_reexecute.remove(id)
 
             log(f"Subgraphs to re-execute reduced by: {len(indexes)}")
@@ -338,6 +340,7 @@ class WorkersManager():
                         else:
                             regulars.append(s)
                     
+                    log(f"Re-execute req: Sending {len(regulars)} regulars and {len(mergers)} mergers to {worker}")
                     worker.send_batch_graph_exec_request(
                         self.all_merger_to_shell_vars[merger_id],
                         self.all_merger_to_declared_functions[merger_id],
@@ -346,6 +349,7 @@ class WorkersManager():
                         mergers,
                         wait_ack=True
                     )
+                    log(f"Re-execute req: Sent {len(regulars)} regulars and {len(mergers)} mergers to {worker}")
             log(f"Re-execute requests are sent")
 
     def handle_naive_crash(self, addr):
@@ -426,6 +430,24 @@ class WorkersManager():
                 # log(f"Failed to remove {uuid} from all_graph_to_uuid[{responsible_graph}]")
                 raise e
 
+    def handle_kill(self, worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]]):
+        for worker, subgraph in worker_subgraph_pairs:
+            if subgraph.merger:
+                merger_worker = worker
+                break
+        if self.args.kill == "merger":
+            kill_target = merger_worker
+        elif self.args.kill == "regular":
+            for worker in self.workers:
+                if worker != merger_worker:
+                    kill_target = worker
+                    break
+        else:
+            raise Exception(f"Invalid kill target {self.args.kill}. It must be either 'merger' or 'regular'")
+        kill_target.send_kill_node_request()
+        self.kill_node_req_sent = True
+        log(f"Sent kill node request to {kill_target}")
+
     def run(self):
         self.add_workers_from_cluster_config(os.path.join(config.PASH_TOP, 'cluster.json'))
         if self.args.debug:
@@ -455,6 +477,9 @@ class WorkersManager():
 
                 worker_subgraph_pairs, shell_vars, main_graph, uuid_to_graphs = prepare_graph_for_remote_exec(filename, self.get_worker)
                 worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]]
+                if self.args.kill and not self.kill_node_req_sent:
+                    self.handle_kill(worker_subgraph_pairs)
+
                 # Split main_graph
                 main_reader_graph, main_writer_graphs = split_main_graph(main_graph, uuid_to_graphs)
 

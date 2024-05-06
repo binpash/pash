@@ -169,7 +169,7 @@ def add_common_arguments(parser):
                         action="store_true",
                         default=False)
     parser.add_argument("--kill",
-                        help="determines which node is going to be killed. Address or conatiner name must follow this parameter, like \"--kill datanode1\". Only works if distributed_exec is used.",
+                        help="determines which node is going to be killed. Must be either merger or regular, like \"--kill merger\". Only works if distributed_exec is used.",
                         default="")
     parser.add_argument("--ft",
                         help="determines which fault tolerance mode is going to be used. Use naive, base or optimized. Default is none, which means ft is disabled. Only works if distributed_exec is used.",
