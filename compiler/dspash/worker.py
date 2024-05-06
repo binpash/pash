@@ -74,6 +74,7 @@ class RequestHandler(Thread):
         self.ft = ""
         self.debug = False
         self.kill_target = None
+        self.event_loop = None
 
     def run(self):
         with self.conn:
@@ -162,10 +163,6 @@ class RequestHandler(Thread):
         self.pool_size = int(self.request['pool_size'])
         self.ft = self.request['ft']
 
-        if self.kill_target == HOST:
-            err_print(f"Starting killer thread! Last execution took {self.worker.last_exec_time} seconds.")
-            Thread(target=kill, args=(self.worker.last_exec_time / 2, )).start()
-
         global DEBUG
         if self.debug:
             DEBUG = True
@@ -178,6 +175,10 @@ class RequestHandler(Thread):
             self.event_loop = EventLoop(self)
             err_print(f"Starting event loop with pool size {self.pool_size}")
             self.event_loop.start()
+
+        if self.kill_target == HOST:
+            err_print(f"Starting killer thread! Last execution took {self.worker.last_exec_time} seconds.")
+            Thread(target=kill, args=(self.worker.last_exec_time / 2, self.event_loop)).start()
 
     def handle_exec_graph_request(self):
         if self.ft != "optimized":
@@ -330,11 +331,18 @@ def send_success(conn, body, msg=""):
     send_msg(conn, encode_request(request))
 
 
-def kill(delay: int):
+def kill(delay: int, event_loop: EventLoop):
     err_print(f"Will kill after delay for {delay}")
     time.sleep(delay)
     err_print(f"Killing now")
+    if event_loop:
+        event_loop.quit.set()
+        event_loop.join()
+        err_print(f"Event loop joined")
+
     script_path = "$DISH_TOP/runtime/scripts/killall.sh"
+    subprocess.run("/bin/sh " + script_path, shell=True)
+    time.sleep(1)
     subprocess.run("/bin/sh " + script_path, shell=True)
     err_print("Just killed!")
 

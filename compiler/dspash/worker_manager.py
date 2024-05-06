@@ -7,7 +7,7 @@ import queue
 import pickle
 import json
 import traceback
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 from uuid import UUID
 
 from dspash.socket_utils import SocketManager, encode_request, decode_request, send_msg, recv_msg
@@ -25,7 +25,6 @@ import requests
 import grpc
 import dspash.proto.data_stream_pb2 as data_stream_pb2
 import dspash.proto.data_stream_pb2_grpc as data_stream_pb2_grpc
-import uuid
 
 
 HOST = socket.gethostbyname(socket.gethostname())
@@ -48,6 +47,7 @@ class WorkerConnection:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.connect((self._host, self._port))
         except Exception as e:
+            log(f"Failed to connect to {self._host}:{self._port} with error {e}")
             self._online = False
 
     def is_online(self):
@@ -94,7 +94,7 @@ class WorkerConnection:
         request_dict = { 'type': 'Kill-Subgraphs', 'merger_id': merger_id }
         self.send_request(request_dict)
 
-    def send_batch_graph_exec_request(self, shell_vars, functions, merger_id, regulars, mergers):
+    def send_batch_graph_exec_request(self, shell_vars, functions, merger_id, regulars, mergers, wait_ack=False):
         request_dict = { 
             'type': 'Batch-Exec-Graph',
             'regulars': regulars,
@@ -103,7 +103,7 @@ class WorkerConnection:
             'functions': functions,
             'merger_id': merger_id,
         }
-        self.send_request(request_dict, wait_ack=False)
+        self.send_request(request_dict, wait_ack=wait_ack)
 
     def send_graph_exec_request(self, graph, shell_vars, functions, merger_id) -> bool:
         request_dict = { 
@@ -217,10 +217,12 @@ class WorkersManager():
         
         if self.args.ft != "disabled":
             try:
+                start = time.time()
                 if self.args.ft == "naive":
                     self.handle_naive_crash(addr)
                 else:
                     self.handle_crash(addr)
+                log(f"Crash handling took {time.time() - start} seconds")
             except Exception as e:
                 error_trace = traceback.format_exc()
                 log(f"Failed to handle ft re-execution with error {e}\n{error_trace}")
@@ -267,9 +269,10 @@ class WorkersManager():
         # clear and update the tracked subgraph state
         for subgraph in subgraphs_to_reexecute:
             self.all_graph_to_uuid[subgraph].clear()
-        for uuid, (from_graph, _) in self.all_uuid_to_graphs.items():
+        for uuid, (from_graph, _) in self.all_uuid_to_graphs.copy().items():
             if from_graph in subgraphs_to_reexecute:
                 self.all_graph_to_uuid[from_graph].append(uuid)
+                # log(f"Re-added {uuid} to all_graph_to_uuid[{from_graph}]")
 
         # remove executions if they are already persisted
         if ft == "optimized":
@@ -290,6 +293,12 @@ class WorkersManager():
 
             log(f"Subgraphs to re-execute reduced by: {len(indexes)}")
 
+        if ft == "optimized":
+            # Function to return a defaultdict of list
+            def default_to_list():
+                return defaultdict(list)
+            worker_to_batches: Dict[WorkerConnection, Dict[int, List[IR]]] = defaultdict(default_to_list)
+
         # iterate over the copy of the list to avoid modifying it while iterating
         for worker, subgraph in self.all_worker_subgraph_pairs[:]:
             if subgraph.id in subgraphs_to_reexecute:
@@ -300,16 +309,44 @@ class WorkersManager():
                     new_worker._running_processes += 1
                     self.all_worker_subgraph_pairs.append((new_worker, subgraph))
                     worker = new_worker
+                    if ft == "optimized":
+                        worker_to_batches[worker][self.all_subgraph_to_merger[subgraph.id]].append(subgraph)
+                        # log(f"Re-execute req: subgraph {subgraph.id} belongs to merger {self.all_subgraph_to_merger[subgraph.id]}")
 
-                merger_id = self.all_subgraph_to_merger[subgraph.id]
-                log(f"Re-execute req: Sending subgraph {subgraph.id} to {worker}")
-                worker.send_graph_exec_request(
-                    subgraph,
-                    self.all_merger_to_shell_vars[merger_id],
-                    self.all_merger_to_declared_functions[merger_id],
-                    merger_id,
-                )
-                log(f"Re-execute req: Sent subgraph {subgraph.id} to {worker}")
+                if ft == "base":
+                    merger_id = self.all_subgraph_to_merger[subgraph.id]
+                    log(f"Re-execute req: Sending subgraph {subgraph.id} to {worker}")
+                    
+                    worker.send_graph_exec_request(
+                        subgraph,
+                        self.all_merger_to_shell_vars[merger_id],
+                        self.all_merger_to_declared_functions[merger_id],
+                        merger_id,
+                    )
+                    log(f"Re-execute req: Sent subgraph {subgraph.id} to {worker}")
+
+        if ft == "optimized":
+            log(f"Re-execute requests are being prepared...")
+            for worker in self.workers:
+                merger_id_to_batch = worker_to_batches[worker]
+                for merger_id, subgraphs in merger_id_to_batch.items():
+                    mergers = []
+                    regulars = []
+                    for s in subgraphs:
+                        if s.merger:
+                            mergers.append(s)
+                        else:
+                            regulars.append(s)
+                    
+                    worker.send_batch_graph_exec_request(
+                        self.all_merger_to_shell_vars[merger_id],
+                        self.all_merger_to_declared_functions[merger_id],
+                        merger_id,
+                        regulars,
+                        mergers,
+                        wait_ack=True
+                    )
+            log(f"Re-execute requests are sent")
 
     def handle_naive_crash(self, addr):
         log("Node crashed while in naive ft, killing all subgraphs")
@@ -382,8 +419,12 @@ class WorkersManager():
 
         if read_client:
             responsible_graph = self.all_uuid_to_graphs[uuid][0]
-            self.all_graph_to_uuid[responsible_graph].remove(uuid)
-            log(f"Removed {uuid} from all_graph_to_uuid[{responsible_graph}]")
+            try:
+                self.all_graph_to_uuid[responsible_graph].remove(uuid)
+                # log(f"Removed {uuid} from all_graph_to_uuid[{responsible_graph}]")
+            except ValueError as e:
+                # log(f"Failed to remove {uuid} from all_graph_to_uuid[{responsible_graph}]")
+                raise e
 
     def run(self):
         self.add_workers_from_cluster_config(os.path.join(config.PASH_TOP, 'cluster.json'))
