@@ -262,7 +262,7 @@ class WorkersManager():
                     merger_id = subgraph.id
                     # no need to kill existing sgs for optimized
                     if ft == "base":
-                        for worker in self.workers:
+                        for worker in self.all_workers:
                             worker.send_kill_subgraphs_request(merger_id)
                             log(f"Sent kill all subgraphs request to {worker}")
                     subgraphs_to_reexecute.update(self.all_merger_to_subgraph[merger_id])
@@ -277,6 +277,7 @@ class WorkersManager():
                 # log(f"Re-added {uuid} to all_graph_to_uuid[{from_graph}]")
 
         # remove executions if they are already persisted
+        # this may be redundant
         if ft == "optimized":
             uuids = []
             uuid_objs = []
@@ -329,7 +330,7 @@ class WorkersManager():
 
         if ft == "optimized":
             log(f"Re-execute requests are being prepared...")
-            for worker in self.workers:
+            for worker in self.all_workers:
                 merger_id_to_batch = worker_to_batches[worker]
                 for merger_id, subgraphs in merger_id_to_batch.items():
                     mergers = []
@@ -354,7 +355,7 @@ class WorkersManager():
 
     def handle_naive_crash(self, addr):
         log("Node crashed while in naive ft, killing all subgraphs")
-        for worker in self.workers:
+        for worker in self.all_workers:
             worker.send_kill_subgraphs_request(-1)
             log(f"Sent kill all subgraphs request to {worker}")
         log("Killed all subgraphs, will send all subgraphs again")
@@ -450,6 +451,9 @@ class WorkersManager():
 
     def run(self):
         self.add_workers_from_cluster_config(os.path.join(config.PASH_TOP, 'cluster.json'))
+        self.all_workers = self.workers.copy()
+        self.all_workers.append(self.client_worker)
+
         if self.args.debug:
             try:
                 requests.post(f'{DEBUG_URL}/clearall') # clears all the debug server logs
@@ -457,9 +461,8 @@ class WorkersManager():
                 log(f"Failed to connect to debug server with error {e}\n")
                 self.args.debug = False # Turn off debugging
         
-        for worker in self.workers:
+        for worker in self.all_workers:
             worker.send_setup_request()
-        self.client_worker.send_setup_request()
 
         dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
         while True:
@@ -524,8 +527,8 @@ class WorkersManager():
                             worker_to_mergers[worker].append(subgraph)
                         else:
                             worker_to_regulars[worker].append(subgraph)
-                    
-                    for worker in self.workers:
+
+                    for worker in self.all_workers:
                         worker.send_batch_graph_exec_request(
                             shell_vars,
                             declared_functions,
@@ -534,7 +537,7 @@ class WorkersManager():
                             worker_to_mergers[worker]
                         )
 
-                    for worker in self.workers:
+                    for worker in self.all_workers:
                         worker.handle_response()
 
                 else:
