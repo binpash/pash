@@ -18,12 +18,13 @@ fi
 
 source "$PASH_TOP/compiler/pash_init_setup.sh" "$@" --distributed_exec
 
-export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
+# export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
+export PASH_TMP_PREFIX="/tmp/pash_placeholder)"
 
 function cleanup() {
         kill "$FILEREADER_PID" "$DISCOVERY_PID"
         wait "$FILEREADER_PID" "$DISCOVERY_PID" 2>/dev/null
-        rm -rf "$PASH_TMP_PREFIX"
+        # rm -rf "$PASH_TMP_PREFIX"
 }
 
 "$DISH_TOP/runtime/bin/filereader_server" &

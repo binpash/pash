@@ -464,6 +464,7 @@ class WorkersManager():
         dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
         while True:
             request, conn = dspash_socket.get_next_cmd()
+            log(f"Received request: {request}")
             if request.startswith("Done"):
                 dspash_socket.close()
                 if self.args.ft != "disabled":

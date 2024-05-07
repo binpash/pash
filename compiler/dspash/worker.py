@@ -1,4 +1,4 @@
-import asyncio
+import shutil
 import signal
 import socket
 import time
@@ -75,6 +75,7 @@ class RequestHandler(Thread):
         self.debug = False
         self.kill_target = None
         self.event_loop = None
+        self.fish_out_prefix = ""
 
     def run(self):
         with self.conn:
@@ -120,10 +121,12 @@ class RequestHandler(Thread):
         if self.ft == "optimized":
             self.event_loop.quit.set()
             self.event_loop.join()
+        err_print(f"{self.event_loop.name} joined")
 
-        if self.debug:
-            for rc, script_path, _ in self.rc_graph_merger_list:
-                self.send_log(rc, script_path)
+        # Skip this for now
+        # if self.debug:
+        #     for rc, script_path, _ in self.rc_graph_merger_list:
+        #         self.send_log(rc, script_path)
 
         elapsed_time = end_time - start_time
         err_print(f"Execution took {elapsed_time} seconds")
@@ -132,6 +135,22 @@ class RequestHandler(Thread):
             self.worker.last_exec_time = elapsed_time
         else:
             err_print(f"Run was with a crash, not updating last execution time")
+
+        if self.debug:
+            result = subprocess.run(['du', '-h', '-d0', config.PASH_TMP_PREFIX], capture_output=True, text=True, check=True)
+            err_print(f"Temp dir size (includes fish out as well): {result.stdout.split()[0]}")
+            result = subprocess.run(['du', '-h', '-d0', self.fish_out_prefix], capture_output=True, text=True, check=True)
+            err_print(f"Fish out size: {result.stdout.split()[0]}")
+
+        shutil.rmtree(config.PASH_TMP_PREFIX)
+        err_print(f"Temporary directory deleted: {config.PASH_TMP_PREFIX}")
+
+        # Optionally do not delete compiled code if debugging is enabled, but I found less use for that
+        # if not self.debug:
+        #     # This will remove fish stuff as well
+        #     shutil.rmtree(config.PASH_TMP_PREFIX)
+        # elif self.fish_out_prefix:
+        #     shutil.rmtree(self.fish_out_prefix)
 
     def send_log(self, rc: subprocess.Popen, script_path: str):
         name = self.debug['name']
@@ -174,8 +193,29 @@ class RequestHandler(Thread):
         
         if self.ft == "optimized":
             self.event_loop = EventLoop(self)
-            err_print(f"Starting event loop with pool size {self.pool_size}")
+            err_print(f"Starting {self.event_loop.name} with pool size {self.pool_size}")
             self.event_loop.start()
+        
+        # Run mktemp -d to create a unique temporary directory
+        result = subprocess.run(['mktemp', '-d', '/tmp/pash_XXXXXXX'], capture_output=True, text=True)
+
+        # Extract the directory path from the output
+        if result.returncode == 0:
+            temp_directory = result.stdout.strip()
+            # Set this path as an environment variable
+            os.environ['PASH_TMP_PREFIX'] = temp_directory
+            config.PASH_TMP_PREFIX = temp_directory
+            err_print(f"Temporary directory created: {temp_directory}")
+        else:
+            raise Exception(f"Failed to create temporary directory: {result.stderr}")
+        
+        if self.ft == "optimized":
+            datastream_directory = os.path.join(temp_directory, 'datastream')
+            os.makedirs(datastream_directory, exist_ok=True)
+            os.environ['FISH_OUT_PREFIX'] = datastream_directory
+            self.env_var['FISH_OUT_PREFIX'] = datastream_directory
+            self.fish_out_prefix = datastream_directory
+            err_print(f"Datastream directory created: {datastream_directory}")
 
     def handle_kill_node(self):
         self.kill_target = self.request['kill_target']
@@ -223,6 +263,7 @@ class RequestHandler(Thread):
         # config.config['shell_variables'] = self.request['shell_variables']
 
         err_print(f"Batch exec graph request: {len(self.request['regulars'])} regulars and {len(self.request['mergers'])} mergers")
+        err_print(f"PASH_TMP_PREFIX {config.PASH_TMP_PREFIX}")
 
         functions_file = create_filename(dir=config.PASH_TMP_PREFIX, prefix='pashFuncs')
         write_file(functions_file, self.request['functions'])
@@ -240,7 +281,7 @@ class RequestHandler(Thread):
             script_path = to_shell_file(merger, config.pash_args)
             cmd = f"source {functions_file}; source {script_path}"
             if self.event_loop.is_alive():
-                err_print(f"executing merger {cmd}")
+                err_print(f"Executing merger {cmd}")
                 rc = subprocess.Popen(cmd, env=self.env_var, executable="/bin/bash", shell=True, stderr=subprocess.DEVNULL, preexec_fn=os.setsid)
                 self.rc_graph_merger_list.append((rc, script_path, self.request['merger_id']))
 
