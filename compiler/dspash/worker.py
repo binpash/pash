@@ -137,10 +137,10 @@ class RequestHandler(Thread):
             err_print(f"Run was with a crash, not updating last execution time")
 
         if self.debug:
-            result = subprocess.run(['du', '-h', '-d0', config.PASH_TMP_PREFIX], capture_output=True, text=True, check=True)
-            err_print(f"Temp dir size (includes fish out as well): {result.stdout.split()[0]}")
-            result = subprocess.run(['du', '-h', '-d0', self.fish_out_prefix], capture_output=True, text=True, check=True)
-            err_print(f"Fish out size: {result.stdout.split()[0]}")
+            result1 = subprocess.run(['du', '-h', '-d0', config.PASH_TMP_PREFIX], capture_output=True, text=True, check=True)
+            result2 = subprocess.run(['du', '-h', '-d0', self.fish_out_prefix], capture_output=True, text=True, check=True)
+            # Fish outs are inside tempdirs
+            err_print(f"Temp dir size | Fish out size: {result1.stdout.split()[0]} | {result2.stdout.split()[0]}")
 
         shutil.rmtree(config.PASH_TMP_PREFIX)
         err_print(f"Temporary directory deleted: {config.PASH_TMP_PREFIX}")
