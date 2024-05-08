@@ -121,7 +121,7 @@ class RequestHandler(Thread):
         if self.ft == "optimized":
             self.event_loop.quit.set()
             self.event_loop.join()
-        err_print(f"{self.event_loop.name} joined")
+            err_print(f"{self.event_loop.name} joined")
 
         # Skip this for now
         # if self.debug:

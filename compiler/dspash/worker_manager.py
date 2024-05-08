@@ -32,7 +32,7 @@ PORT = 65425        # Port to listen on (non-privileged ports are > 1023)
 PORT_CLIENT = 65432
 # TODO: get the url from the environment or config
 DEBUG_URL = f'http://{socket.getfqdn()}:5001' 
-
+KILL_WITNESS_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'kill_witness.log')
 
 class WorkerConnection:
     def __init__(self, name, host, port, args):
@@ -146,6 +146,7 @@ class WorkersManager():
         #       for the client node. When we de-couple client node from worker_manager node, we will get this
         #       information from the Exec-Graph request from teh client node.
         self.client_worker = WorkerConnection("client_worker", self.host, PORT_CLIENT, self.args)
+        self.kill_node_req_sent = False
 
         if self.args.ft != "disabled":
             self.all_worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]] = []
@@ -156,7 +157,6 @@ class WorkersManager():
             # self.graph_to_uuid = defaultdict(list)
             self.all_merger_to_subgraph = {}
             self.all_subgraph_to_merger = {}
-            self.kill_node_req_sent = False
 
             self.daemon_quit = Event()
             self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -445,6 +445,11 @@ class WorkersManager():
                     break
         else:
             raise Exception(f"Invalid kill target {self.args.kill}. It must be either 'merger' or 'regular'")
+
+        # Record the kill target so we can resurrect that node later
+        log(KILL_WITNESS_PATH)
+        with open(KILL_WITNESS_PATH, 'w') as witness_file:
+            witness_file.write(kill_target.host())
         kill_target.send_kill_node_request()
         self.kill_node_req_sent = True
         log(f"Sent kill node request to {kill_target}")
