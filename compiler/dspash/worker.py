@@ -137,18 +137,18 @@ class RequestHandler(Thread):
             err_print(f"Run was with a crash, not updating last execution time")
 
         if self.debug:
-            result1 = subprocess.run(['du', '-h', '-d0', config.PASH_TMP_PREFIX], capture_output=True, text=True, check=True)
+            result1 = subprocess.run(['du', '-h', '-d0', self.pash_tmp_prefix], capture_output=True, text=True, check=True)
             result2 = subprocess.run(['du', '-h', '-d0', self.fish_out_prefix], capture_output=True, text=True, check=True)
             # Fish outs are inside tempdirs
             err_print(f"Temp dir size | Fish out size: {result1.stdout.split()[0]} | {result2.stdout.split()[0]}")
 
-        shutil.rmtree(config.PASH_TMP_PREFIX)
-        err_print(f"Temporary directory deleted: {config.PASH_TMP_PREFIX}")
+        shutil.rmtree(self.pash_tmp_prefix)
+        err_print(f"Temporary directory deleted: {self.pash_tmp_prefix}")
 
         # Optionally do not delete compiled code if debugging is enabled, but I found less use for that
         # if not self.debug:
         #     # This will remove fish stuff as well
-        #     shutil.rmtree(config.PASH_TMP_PREFIX)
+        #     shutil.rmtree(self.pash_tmp_prefix)
         # elif self.fish_out_prefix:
         #     shutil.rmtree(self.fish_out_prefix)
 
@@ -204,7 +204,8 @@ class RequestHandler(Thread):
             temp_directory = result.stdout.strip()
             # Set this path as an environment variable
             os.environ['PASH_TMP_PREFIX'] = temp_directory
-            config.PASH_TMP_PREFIX = temp_directory
+            self.pash_tmp_prefix = temp_directory
+            self.pash_tmp_prefix = temp_directory
             err_print(f"Temporary directory created: {temp_directory}")
         else:
             raise Exception(f"Failed to create temporary directory: {result.stderr}")
@@ -244,7 +245,7 @@ class RequestHandler(Thread):
         e['DISH_TOP'] = DISH_TOP
 
         # store functions
-        functions_file = create_filename(dir=config.PASH_TMP_PREFIX, prefix='pashFuncs')
+        functions_file = create_filename(dir=self.pash_tmp_prefix, prefix='pashFuncs')
         write_file(functions_file, self.request['functions'])
         cmd = f"source {functions_file}; source {script_path}"
         err_print(f"executing {cmd}")
@@ -263,9 +264,9 @@ class RequestHandler(Thread):
         # config.config['shell_variables'] = self.request['shell_variables']
 
         err_print(f"Batch exec graph request: {len(self.request['regulars'])} regulars and {len(self.request['mergers'])} mergers")
-        err_print(f"PASH_TMP_PREFIX {config.PASH_TMP_PREFIX}")
+        err_print(f"PASH_TMP_PREFIX {self.pash_tmp_prefix}")
 
-        functions_file = create_filename(dir=config.PASH_TMP_PREFIX, prefix='pashFuncs')
+        functions_file = create_filename(dir=self.pash_tmp_prefix, prefix='pashFuncs')
         write_file(functions_file, self.request['functions'])
 
         for regular in self.request['regulars']:
