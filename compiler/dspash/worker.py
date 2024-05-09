@@ -80,7 +80,7 @@ class RequestHandler(Thread):
         with self.conn:
             err_print('Connected by', self.addr, 'name', self.name)
             start_time = time.time()
-            doCleanup = True
+            doCleanup = False
 
             while True:
                 data = recv_msg(self.conn)
@@ -91,14 +91,19 @@ class RequestHandler(Thread):
 
                 if self.request['type'] == 'Setup':
                     self.handle_setup_request()
+                    doCleanup = True
                 elif self.request['type'] == 'Kill-Node':
                     self.handle_kill_node()
+                    doCleanup = True
                 elif self.request['type'] == 'Exec-Graph':
                     self.handle_exec_graph_request()
+                    doCleanup = True
                 elif self.request['type'] == 'Batch-Exec-Graph':
                     self.handle_batch_exec_graph()
+                    doCleanup = True
                 elif self.request['type'] == 'Kill-Subgraphs':
                     self.handle_kill_subgraphs_request()
+                    doCleanup = True
                 elif self.request['type'] == 'resurrect':
                     self.handle_resurrect_request()
                     # No need to clean up if we just want to bring up the current node
@@ -134,12 +139,15 @@ class RequestHandler(Thread):
             self.worker.last_exec_time = elapsed_time
         else:
             err_print(f"Run was with a crash, not updating last execution time")
-
+        
         if self.debug:
-            result1 = subprocess.run(['du', '-h', '-d0', self.pash_tmp_prefix], capture_output=True, text=True, check=True)
-            result2 = subprocess.run(['du', '-h', '-d0', self.fish_out_prefix], capture_output=True, text=True, check=True)
-            # Fish outs are inside tempdirs
-            err_print(f"Temp dir size | Fish out size: {result1.stdout.split()[0]} | {result2.stdout.split()[0]}")
+            result1 = subprocess.run(['du', '-h', '-d0', config.PASH_TMP_PREFIX], capture_output=True, text=True, check=True)
+            if self.ft == "optimized":
+                result2 = subprocess.run(['du', '-h', '-d0', self.fish_out_prefix], capture_output=True, text=True, check=True)
+                # Fish outs are inside tempdirs
+                err_print(f"Temp dir size | Fish out size: {result1.stdout.split()[0]} | {result2.stdout.split()[0]}")
+            else:
+                err_print(f"Temp dir size: {result1.stdout.split()[0]}")
 
         shutil.rmtree(self.pash_tmp_prefix)
         err_print(f"Temporary directory deleted: {self.pash_tmp_prefix}")
