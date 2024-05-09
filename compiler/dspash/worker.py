@@ -72,10 +72,9 @@ class RequestHandler(Thread):
         self.env_var['PASH_TOP'] = PASH_TOP
         self.env_var['DISH_TOP'] = DISH_TOP
         self.ft = ""
-        self.debug = False
+        self.debug = 0
         self.kill_target = None
         self.event_loop = None
-        self.fish_out_prefix = ""
 
     def run(self):
         with self.conn:
@@ -123,7 +122,7 @@ class RequestHandler(Thread):
             self.event_loop.join()
             err_print(f"{self.event_loop.name} joined")
 
-        # Skip this for now
+        # Skip this for now, we no longer send logs to the flask app
         # if self.debug:
         #     for rc, script_path, _ in self.rc_graph_merger_list:
         #         self.send_log(rc, script_path)
@@ -144,13 +143,6 @@ class RequestHandler(Thread):
 
         shutil.rmtree(self.pash_tmp_prefix)
         err_print(f"Temporary directory deleted: {self.pash_tmp_prefix}")
-
-        # Optionally do not delete compiled code if debugging is enabled, but I found less use for that
-        # if not self.debug:
-        #     # This will remove fish stuff as well
-        #     shutil.rmtree(self.pash_tmp_prefix)
-        # elif self.fish_out_prefix:
-        #     shutil.rmtree(self.fish_out_prefix)
 
     def send_log(self, rc: subprocess.Popen, script_path: str):
         name = self.debug['name']
@@ -179,18 +171,23 @@ class RequestHandler(Thread):
         requests.post(url=url, json=response)
 
     def handle_setup_request(self):
-        self.debug = self.request['debug']
+        self.debug = int(self.request['debug'])
         self.pool_size = int(self.request['pool_size'])
         self.ft = self.request['ft']
 
         global DEBUG
         if self.debug:
             DEBUG = True
-            err_print("Debugging enabled")
+            err_print(f"Debugging enabled, level: {self.debug}")
         else:
-            err_print("Debugging disabled")
+            err_print(f"Debugging disabled, level: {self.debug}")
             DEBUG = False
-        
+
+        if self.debug > 1:
+            self.stderr=None
+        else:
+            self.stderr=subprocess.DEVNULL
+
         if self.ft == "optimized":
             self.event_loop = EventLoop(self)
             err_print(f"Starting {self.event_loop.name} with pool size {self.pool_size}")
@@ -204,19 +201,18 @@ class RequestHandler(Thread):
             temp_directory = result.stdout.strip()
             # Set this path as an environment variable
             os.environ['PASH_TMP_PREFIX'] = temp_directory
-            self.pash_tmp_prefix = temp_directory
+            config.PASH_TMP_PREFIX = temp_directory
             self.pash_tmp_prefix = temp_directory
             err_print(f"Temporary directory created: {temp_directory}")
         else:
             raise Exception(f"Failed to create temporary directory: {result.stderr}")
         
-        if self.ft == "optimized":
-            datastream_directory = os.path.join(temp_directory, 'datastream')
-            os.makedirs(datastream_directory, exist_ok=True)
-            os.environ['FISH_OUT_PREFIX'] = datastream_directory
-            self.env_var['FISH_OUT_PREFIX'] = datastream_directory
-            self.fish_out_prefix = datastream_directory
-            err_print(f"Datastream directory created: {datastream_directory}")
+        datastream_directory = os.path.join(temp_directory, 'datastream')
+        os.makedirs(datastream_directory, exist_ok=True)
+        os.environ['FISH_OUT_PREFIX'] = datastream_directory
+        self.env_var['FISH_OUT_PREFIX'] = datastream_directory
+        self.fish_out_prefix = datastream_directory
+        err_print(f"Datastream directory created: {datastream_directory}")
 
     def handle_kill_node(self):
         self.kill_target = self.request['kill_target']
@@ -250,16 +246,10 @@ class RequestHandler(Thread):
         cmd = f"source {functions_file}; source {script_path}"
         err_print(f"executing {cmd}")
 
-        rc = subprocess.Popen(cmd, env=e, executable="/bin/bash", shell=True, stderr=None, preexec_fn=os.setsid)
+        rc = subprocess.Popen(cmd, env=e, executable="/bin/bash", shell=True, stderr=self.stderr, preexec_fn=os.setsid)
         self.rc_graph_merger_list.append((rc, script_path, self.request['merger_id']))
 
     def handle_batch_exec_graph(self):
-        # stderr is None for always for now with optimized
-        # if self.debug:
-        #     stderr = subprocess.PIPE
-        # else:
-        #     stderr = None
-
         # this in None for now anyways
         # config.config['shell_variables'] = self.request['shell_variables']
 
@@ -270,20 +260,20 @@ class RequestHandler(Thread):
         write_file(functions_file, self.request['functions'])
 
         for regular in self.request['regulars']:
-            if self.debug:
+            if self.debug > 1:
                 add_debug_flags(regular)
             script_path = to_shell_file(regular, config.pash_args)
             cmd = f"source {functions_file}; source {script_path}"
             self.event_loop.regular_queue.append((cmd, script_path, self.request['merger_id']))
 
         for merger in self.request['mergers']:
-            if self.debug:
+            if self.debug > 1:
                 add_debug_flags(merger)
             script_path = to_shell_file(merger, config.pash_args)
             cmd = f"source {functions_file}; source {script_path}"
             if self.event_loop.is_alive():
                 err_print(f"Executing merger {cmd}")
-                rc = subprocess.Popen(cmd, env=self.env_var, executable="/bin/bash", shell=True, stderr=subprocess.DEVNULL, preexec_fn=os.setsid)
+                rc = subprocess.Popen(cmd, env=self.env_var, executable="/bin/bash", shell=True, stderr=self.stderr, preexec_fn=os.setsid)
                 self.rc_graph_merger_list.append((rc, script_path, self.request['merger_id']))
 
     def handle_kill_subgraphs_request(self):
@@ -343,10 +333,6 @@ class EventLoop(Thread):
         self.quit = Event()
         self.regular_queue = []
         self.running_processes: List[subprocess.Popen] = []
-        if handler.debug:
-            self.stderr = subprocess.PIPE
-        else:
-            self.stderr = None
 
     def run(self):
         while not self.quit.is_set():
@@ -359,7 +345,7 @@ class EventLoop(Thread):
             while self.regular_queue and len(self.running_processes) < self.handler.pool_size:
                 cmd, script_path, merger_id = self.regular_queue.pop()
                 # err_print(f"executing {cmd}")
-                rc = subprocess.Popen(cmd, env=self.handler.env_var, executable="/bin/bash", shell=True, stderr=subprocess.DEVNULL, preexec_fn=os.setsid)
+                rc = subprocess.Popen(cmd, env=self.handler.env_var, executable="/bin/bash", shell=True, stderr=self.handler.stderr, preexec_fn=os.setsid)
                 # rc = subprocess.Popen(f"time $({cmd})", env=self.handler.env_var, executable="/bin/bash", shell=True, stderr=None, preexec_fn=os.setsid)
                 self.running_processes.append(rc)
                 self.handler.rc_graph_merger_list.append((rc, script_path, merger_id))

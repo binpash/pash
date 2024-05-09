@@ -15,7 +15,7 @@ from ir import IR
 from definitions.ir.file_id import FileId
 from util import log
 from ir_to_ast import to_shell
-from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file, add_debug_flags, split_main_graph
+from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file, split_main_graph
 from dspash.utils import read_file
 from dspash.hdfs_utils import start_hdfs_daemon, stop_hdfs_daemon
 import config 
@@ -78,12 +78,14 @@ class WorkerConnection:
     def send_setup_request(self):
         request_dict = { 
             'type': 'Setup',
-            'debug': None,
+            'debug': self.args.debug,
             'pool_size': self.args.pool,
             'ft': self.args.ft,
         }
-        if self.args.debug:
-            request_dict['debug'] = {'name': self.name, 'url': f'{DEBUG_URL}/putlog'}
+        log(f"asd debug: {self.args.debug}")
+        # we no longer push logs to flask app
+        # if self.args.debug:
+        #     request_dict['debug'] = {'name': self.name, 'url': f'{DEBUG_URL}/putlog'}
         self.send_request(request_dict)
 
     def send_kill_node_request(self):
@@ -459,12 +461,12 @@ class WorkersManager():
         self.all_workers = self.workers.copy()
         self.all_workers.append(self.client_worker)
 
-        if self.args.debug:
-            try:
-                requests.post(f'{DEBUG_URL}/clearall') # clears all the debug server logs
-            except Exception as e:
-                log(f"Failed to connect to debug server with error {e}\n")
-                self.args.debug = False # Turn off debugging
+        # if self.args.debug:
+        #     try:
+        #         requests.post(f'{DEBUG_URL}/clearall') # clears all the debug server logs
+        #     except Exception as e:
+        #         log(f"Failed to connect to debug server with error {e}\n")
+        #         self.args.debug = False # Turn off debugging
         
         for worker in self.all_workers:
             worker.send_setup_request()
