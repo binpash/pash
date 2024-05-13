@@ -82,7 +82,6 @@ class WorkerConnection:
             'pool_size': self.args.pool,
             'ft': self.args.ft,
         }
-        log(f"asd debug: {self.args.debug}")
         # we no longer push logs to flask app
         # if self.args.debug:
         #     request_dict['debug'] = {'name': self.name, 'url': f'{DEBUG_URL}/putlog'}
