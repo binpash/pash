@@ -171,6 +171,9 @@ def add_common_arguments(parser):
     parser.add_argument("--kill",
                         help="determines which node is going to be killed. Must be either merger or regular, like \"--kill merger\". Only works if distributed_exec is used.",
                         default="")
+    parser.add_argument("--kill_delay",
+                        help="determintes when the node is killed in millis. Only works if distributed_exec and kill is used.",
+                        default="")
     parser.add_argument("--ft",
                         help="determines which fault tolerance mode is going to be used. Use naive, base or optimized. Default is none, which means ft is disabled. Only works if distributed_exec is used.",
                         default="disabled")

@@ -34,7 +34,7 @@ class Worker:
     def __init__(self):
         self.worker_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.worker_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.last_exec_time = 5
+        self.last_exec_time = 5000
         for _ in range(5):
             try:
                 self.worker_socket.bind((HOST, PORT))
@@ -136,7 +136,7 @@ class RequestHandler(Thread):
         err_print(f"Execution took {elapsed_time} seconds")
 
         if not self.kill_target:
-            self.worker.last_exec_time = elapsed_time
+            self.worker.last_exec_time = elapsed_time * 1000
         else:
             err_print(f"Run was with a crash, not updating last execution time")
         
@@ -225,8 +225,12 @@ class RequestHandler(Thread):
     def handle_kill_node(self):
         self.kill_target = self.request['kill_target']
         if self.kill_target == HOST:
-            err_print(f"Starting killer thread! Last execution took {self.worker.last_exec_time} seconds.")
-            Thread(target=kill, args=(self.worker.last_exec_time / 2, self.event_loop)).start()
+            if self.request['kill_delay']:
+                delay = int(self.request['kill_delay'])
+            else:
+                delay = self.worker.last_exec_time / 2
+            err_print(f"Starting killer thread! Delay is {delay} millis.")
+            Thread(target=kill, args=(delay, self.event_loop)).start()
         else:
             # This should never happen with the new approach
             err_print(f"Kill target {self.kill_target} is not this node, skipping kill")
@@ -378,7 +382,7 @@ def send_success(conn, body, msg=""):
 
 def kill(delay: int, event_loop: EventLoop):
     err_print(f"Will kill after delay for {delay}")
-    time.sleep(delay)
+    time.sleep(delay / 1000)
     err_print(f"Killing now")
     if event_loop:
         event_loop.quit.set()
