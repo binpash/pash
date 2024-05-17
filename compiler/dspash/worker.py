@@ -34,7 +34,7 @@ class Worker:
     def __init__(self):
         self.worker_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.worker_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.last_exec_time = 5000
+        self.last_exec_time_dict = {"": 5000}
         for _ in range(5):
             try:
                 self.worker_socket.bind((HOST, PORT))
@@ -136,10 +136,11 @@ class RequestHandler(Thread):
         err_print(f"Execution took {elapsed_time} seconds")
 
         if not self.kill_target:
-            self.worker.last_exec_time = elapsed_time * 1000
+            self.worker.last_exec_time[self.kill_script] = elapsed_time * 1000
+            err_print(f"Updating last execution time for \"{self.kill_script}\" to {elapsed_time} seconds")
         else:
             err_print(f"Run was with a crash, not updating last execution time")
-        
+
         if self.debug:
             result1 = subprocess.run(['du', '-h', '-d0', config.PASH_TMP_PREFIX], capture_output=True, text=True, check=True)
             if self.ft == "optimized":
@@ -223,12 +224,13 @@ class RequestHandler(Thread):
         err_print(f"Datastream directory created: {datastream_directory}")
 
     def handle_kill_node(self):
+        self.kill_script = self.request['kill_script']
         self.kill_target = self.request['kill_target']
         if self.kill_target == HOST:
             if self.request['kill_delay']:
                 delay = int(self.request['kill_delay'])
             else:
-                delay = self.worker.last_exec_time / 2
+                delay = self.worker.last_exec_time_dict[self.kill_script] / 2
             err_print(f"Starting killer thread! Delay is {delay} millis.")
             Thread(target=kill, args=(delay, self.event_loop)).start()
         else:

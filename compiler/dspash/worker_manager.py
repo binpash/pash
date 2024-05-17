@@ -88,7 +88,12 @@ class WorkerConnection:
         self.send_request(request_dict)
 
     def send_kill_node_request(self):
-        request_dict = { 'type': 'Kill-Node', 'kill_target': self._host, 'kill_delay': self.args.kill_delay}
+        request_dict = {
+            'type': 'Kill-Node', 
+            'kill_target': self._host, 
+            'kill_delay': self.args.kill_delay, 
+            'kill_script': self.args.kill_script
+        }
         self.send_request(request_dict)
 
     def send_kill_subgraphs_request(self, merger_id: int):

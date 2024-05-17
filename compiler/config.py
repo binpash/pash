@@ -174,6 +174,9 @@ def add_common_arguments(parser):
     parser.add_argument("--kill_delay",
                         help="determintes when the node is killed in millis. Only works if distributed_exec and kill is used.",
                         default="")
+    parser.add_argument("--kill_script",
+                        help="determintes which script is running. Only works if distributed_exec and kill is used.",
+                        default="")
     parser.add_argument("--ft",
                         help="determines which fault tolerance mode is going to be used. Use naive, base or optimized. Default is none, which means ft is disabled. Only works if distributed_exec is used.",
                         default="disabled")
