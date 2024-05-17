@@ -75,6 +75,7 @@ class RequestHandler(Thread):
         self.debug = 0
         self.kill_target = None
         self.event_loop = None
+        self.first_request = True
 
     def run(self):
         with self.conn:
@@ -136,8 +137,9 @@ class RequestHandler(Thread):
         err_print(f"Execution took {elapsed_time} seconds")
 
         if not self.kill_target:
-            self.worker.last_exec_time_dict[self.script_name] = elapsed_time * 1000
-            err_print(f"Updating last execution time for \"{self.script_name}\" to {elapsed_time} seconds")
+            elapsed_time_for_killing = end_time - self.first_request_time
+            self.worker.last_exec_time_dict[self.script_name] = elapsed_time_for_killing * 1000
+            err_print(f"Updating last execution time for \"{self.script_name}\" to {elapsed_time_for_killing} seconds")
         else:
             err_print(f"Run was with a crash, not updating last execution time")
 
@@ -269,6 +271,10 @@ class RequestHandler(Thread):
 
         err_print(f"Batch exec graph request: {len(self.request['regulars'])} regulars and {len(self.request['mergers'])} mergers")
         err_print(f"PASH_TMP_PREFIX {self.pash_tmp_prefix}")
+
+        if self.first_request:
+            self.first_request_time = time.time()
+            self.first_request = False
 
         functions_file = create_filename(dir=self.pash_tmp_prefix, prefix='pashFuncs')
         write_file(functions_file, self.request['functions'])
