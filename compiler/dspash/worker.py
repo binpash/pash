@@ -136,8 +136,8 @@ class RequestHandler(Thread):
         err_print(f"Execution took {elapsed_time} seconds")
 
         if not self.kill_target:
-            self.worker.last_exec_time[self.kill_script] = elapsed_time * 1000
-            err_print(f"Updating last execution time for \"{self.kill_script}\" to {elapsed_time} seconds")
+            self.worker.last_exec_time_dict[self.script_name] = elapsed_time * 1000
+            err_print(f"Updating last execution time for \"{self.script_name}\" to {elapsed_time} seconds")
         else:
             err_print(f"Run was with a crash, not updating last execution time")
 
@@ -183,6 +183,7 @@ class RequestHandler(Thread):
         self.debug = int(self.request['debug'])
         self.pool_size = int(self.request['pool_size'])
         self.ft = self.request['ft']
+        self.script_name = self.request['script_name']
 
         global DEBUG
         if self.debug:
@@ -224,14 +225,13 @@ class RequestHandler(Thread):
         err_print(f"Datastream directory created: {datastream_directory}")
 
     def handle_kill_node(self):
-        self.kill_script = self.request['kill_script']
         self.kill_target = self.request['kill_target']
         if self.kill_target == HOST:
             if self.request['kill_delay']:
                 delay = int(self.request['kill_delay'])
             else:
-                delay = self.worker.last_exec_time_dict[self.kill_script] / 2
-            err_print(f"Starting killer thread! Delay is {delay} millis.")
+                delay = self.worker.last_exec_time_dict[self.script_name] / 2
+            err_print(f"Starting killer thread for script \"{self.script_name}\"! Delay is {delay} millis.")
             Thread(target=kill, args=(delay, self.event_loop)).start()
         else:
             # This should never happen with the new approach
