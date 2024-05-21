@@ -10,6 +10,7 @@ import os
 import argparse
 import requests
 import time
+import stat
 from threading import Event, Thread
 from collections import deque
 
@@ -98,6 +99,7 @@ class RequestHandler(Thread):
                     doCleanup = True
                 elif self.request['type'] == 'Exec-Graph':
                     self.handle_exec_graph_request()
+                    self.first_request_time = time.time()
                     doCleanup = True
                 elif self.request['type'] == 'Batch-Exec-Graph':
                     self.handle_batch_exec_graph()
@@ -136,12 +138,12 @@ class RequestHandler(Thread):
         elapsed_time = end_time - start_time
         err_print(f"Execution took {elapsed_time} seconds")
 
-        if not self.kill_target:
+        if not self.kill_target and hasattr(self, "first_request_time"):
             elapsed_time_for_killing = end_time - self.first_request_time
             self.worker.last_exec_time_dict[self.script_name] = elapsed_time_for_killing * 1000
             err_print(f"Updating last execution time for \"{self.script_name}\" to {elapsed_time_for_killing} seconds")
         else:
-            err_print(f"Run was with a crash, not updating last execution time")
+            err_print(f"Run was with a crash or this is worker on manager node, not updating last execution time")
 
         if self.debug:
             result1 = subprocess.run(['du', '-h', '-d0', config.PASH_TMP_PREFIX], capture_output=True, text=True, check=True)
@@ -152,6 +154,24 @@ class RequestHandler(Thread):
             else:
                 err_print(f"Temp dir size: {result1.stdout.split()[0]}")
 
+        # Remove directory (except for unix socket files)
+        # with os.scandir(self.pash_tmp_prefix) as entries:
+        #     for entry in entries:
+        #         mode = os.stat(entry.path).st_mode
+        #         isSocket = stat.S_ISSOCK(mode)
+        #         err_print(entry.path, isSocket)
+        #         if isSocket:
+        #             err_print(f"Skipping unix socket file {entry.path}")
+        #             continue
+        #         else:
+        #             if entry.is_dir():
+        #                 shutil.rmtree(entry)
+        #             else:
+        #                 if entry.name == "dspash_socket":
+        #                     continue
+        #                 else:
+        #                     os.remove(entry.path)
+        
         shutil.rmtree(self.pash_tmp_prefix)
         err_print(f"Temporary directory deleted: {self.pash_tmp_prefix}")
 
