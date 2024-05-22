@@ -99,7 +99,6 @@ class RequestHandler(Thread):
                     doCleanup = True
                 elif self.request['type'] == 'Exec-Graph':
                     self.handle_exec_graph_request()
-                    self.first_request_time = time.time()
                     doCleanup = True
                 elif self.request['type'] == 'Batch-Exec-Graph':
                     self.handle_batch_exec_graph()
