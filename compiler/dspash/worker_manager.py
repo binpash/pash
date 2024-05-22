@@ -81,7 +81,9 @@ class WorkerConnection:
             'debug': self.args.debug,
             'pool_size': self.args.pool,
             'ft': self.args.ft,
-            'script_name': self.args.script_name
+            'script_name': self.args.script_name,
+            # here kill is either merger or regular, we send it to not update execution times
+            'kill_target': self.args.kill,
         }
         # we no longer push logs to flask app
         # if self.args.debug:

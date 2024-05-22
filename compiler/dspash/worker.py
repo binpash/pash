@@ -206,6 +206,9 @@ class RequestHandler(Thread):
         self.pool_size = int(self.request['pool_size'])
         self.ft = self.request['ft']
         self.script_name = self.request['script_name']
+        # here we won't be receiving the address but we are still required
+        # to store it to not update last exec times
+        self.kill_target = self.request['kill_target']
 
         global DEBUG
         if self.debug:
