@@ -207,7 +207,7 @@ class RequestHandler(Thread):
         self.script_name = self.request['script_name']
         # here we won't be receiving the address but we are still required
         # to store it to not update last exec times
-        self.kill_target = self.request['kill_target']
+        self.kill_target = self.request.get('kill_target', None)
 
         global DEBUG
         if self.debug:
