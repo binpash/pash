@@ -140,9 +140,9 @@ class RequestHandler(Thread):
         if not self.kill_target and hasattr(self, "first_request_time"):
             elapsed_time_for_killing = end_time - self.first_request_time
             self.worker.last_exec_time_dict[self.script_name] = elapsed_time_for_killing * 1000
-            err_print(f"Updating last execution time for \"{self.script_name}\" to {elapsed_time_for_killing} seconds")
+            err_print(f"Updating last execution time for \"{self.script_name}\" to {elapsed_time_for_killing} seconds, target is \"{self.kill_target}\"")
         else:
-            err_print(f"Run was with a crash or this is worker on manager node, not updating last execution time")
+            err_print(f"Not updating last execution time, target is \"{self.kill_target}\"")
 
         if self.debug:
             result1 = subprocess.run(['du', '-h', '-d0', config.PASH_TMP_PREFIX], capture_output=True, text=True, check=True)
