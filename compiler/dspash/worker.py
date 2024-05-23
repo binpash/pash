@@ -412,18 +412,22 @@ def send_success(conn, body, msg=""):
 
 def kill(delay: int, event_loop: EventLoop):
     err_print(f"Will kill after delay for {delay}")
+    t0 = time.time()
     time.sleep(delay / 1000)
-    err_print(f"Killing now")
+    t1 = time.time()
+    err_print(f"Killing now {t1 - t0} seconds after delay")
     if event_loop:
         event_loop.quit.set()
         event_loop.join()
-        err_print(f"Event loop joined")
+        t2 = time.time()
+        err_print(f"Event loop joined {t2 - t1} seconds after")
 
     script_path = "$DISH_TOP/runtime/scripts/killall.sh"
     subprocess.run("/bin/sh " + script_path, shell=True)
     time.sleep(1)
     subprocess.run("/bin/sh " + script_path, shell=True)
-    err_print("Just killed!")
+    t3 = time.time()
+    err_print(f"Just killed! {t3 - t2} seconds after")
 
 
 def parse_args():
