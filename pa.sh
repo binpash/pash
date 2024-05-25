@@ -32,7 +32,14 @@ then
 fi
 
 ## Create a temporary directory where PaSh can use for temporary files and logs
-export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
+if [ -n "$PASH_TMP_DIR" ]; then
+  export PASH_TMP_PREFIX="$(mktemp -d $PASH_TMP_DIR/tmp/pash_XXXXXXX)/"
+else
+  export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
+fi
+
+echo "PASH_TEMP_DIR: $PASH_TMP_DIR" >&2
+echo "PASH_TMP_PREFIX: $PASH_TMP_PREFIX" >&2
 
 ## Create a timestamp that PaSh can use for log directories 
 ##   (should not be used to create critical directories/files, only logs/monitors/etc,

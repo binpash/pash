@@ -149,7 +149,7 @@ append_pash_to_rc() {
           echo "Do you want to append \$PASH_TOP to $shell_name ($config) (y/n)?"
           read answer
           if [ "$answer" != "${answer#[Yy]}" ] ;then 
-              tmpfile=$(mktemp -u /tmp/tmp.XXXXXX)
+              tmpfile=$(mktemp -u $PASH_TMP_DIR/tmp/tmp.XXXXXX)
               # create a backup of the shell config
               cp $config ${config}.backup
               # remove all the entries pointing to PASH_TOP and PATH

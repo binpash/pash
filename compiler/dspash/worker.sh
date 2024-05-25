@@ -18,7 +18,7 @@ fi
 
 source "$PASH_TOP/compiler/orchestrator_runtime/pash_init_setup.sh" "$@" --distributed_exec
 
-export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
+export PASH_TMP_PREFIX="$(mktemp -d $PASH_TMP_DIR)/"
 
 cleanup() {
         kill "$FILEREADER_PID" "$DISCOVERY_PID"

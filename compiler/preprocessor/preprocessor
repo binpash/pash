@@ -13,6 +13,6 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 export PYTHONPATH="${PASH_TOP}/compiler/:${PASH_TOP}/python_pkgs/:${PYTHONPATH}"
 
 ## Create a temporary directory where PaSh can use for temporary files and logs
-export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
+export PASH_TMP_PREFIX="$(mktemp -d $PASH_TMP_DIR/tmp/pash_XXXXXXX)/"
 
 python3 "$PASH_TOP/compiler/preprocessor/preprocessor.py" "$@"
