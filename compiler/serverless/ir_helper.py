@@ -19,7 +19,7 @@ def add_stdout_fid(graph : IR, file_id_gen: FileIdGen) -> FileId:
     graph.add_edge(stdout)
     return stdout
 
-def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR]):
+def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fifo_map:Dict[int, IR], args: argparse.Namespace):
     """ Takes a list of subgraphs and augments subgraphs with the necessary remote
         read/write nodes for data movement and lambda invocation nodes to trigger
         downstream processing. This function also produces graph that should run in
@@ -50,20 +50,21 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
             # Replace the old edge with an ephemeral edge in case it isn't and
             # to avoid modifying the edge in case it's used in some other subgraph
             out_edge_id = out_edge.get_ident()
-            print("out_edge_id",subgraph.edges[out_edge_id])
             ephemeral_edge = file_id_gen.next_ephemeral_file_id()
             subgraph.replace_edge(out_edge_id, ephemeral_edge)
-            edge_uid = uuid4()
+            communication_key = uuid4()
             stdout = add_stdout_fid(subgraph, file_id_gen)
             # if no downstream subgraph, assuming this is the last subgraph
             # TODO: check if above assumption makes sense
             last_subgraph = False
             if out_edge_id not in input_fifo_map:
                 last_subgraph = True
+            if last_subgraph and args.sls_output != "":
+                communication_key = args.sls_output
             # Add remote-write node at the end of the subgraph
             remote_write = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
                                                                               is_remote_read=False,
-                                                                              remote_key=edge_uid,
+                                                                              remote_key=communication_key,
                                                                               output_edge=stdout,
                                                                               is_tcp=(not last_subgraph))
             subgraph.add_node(remote_write)
@@ -72,7 +73,6 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
             new_edge = file_id_gen.next_file_id()
             new_edge.set_resource(out_edge.get_resource())
             # Get the subgraph which "edge" writes to
-            print(out_edge_id in input_fifo_map, out_edge.is_ephemeral(),out_edge.get_resource(), out_edge.get_ident())
             if out_edge_id in input_fifo_map and out_edge.is_ephemeral():
                 matching_subgraph = input_fifo_map[out_edge_id][0]
                 matching_subgraph.replace_edge(out_edge.get_ident(), new_edge)
@@ -87,7 +87,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 matching_subgraph.add_edge(new_edge)
             remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=new_edge.get_ident(),
                                                                               is_remote_read=True,
-                                                                              remote_key=edge_uid,
+                                                                              remote_key=communication_key,
                                                                               output_edge=new_edge,
                                                                               is_tcp=(not matching_subgraph is main_graph))
             matching_subgraph.add_node(remote_read)
@@ -143,7 +143,7 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
     """
     # split IR
     subgraphs, mapping = split_ir(ir)
-    main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id = add_nodes_to_subgraphs(subgraphs, ir.get_file_id_gen(), mapping)
+    main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id = add_nodes_to_subgraphs(subgraphs, ir.get_file_id_gen(), mapping, args)
 
     # save the output scripts
     script_id_to_script = {}
