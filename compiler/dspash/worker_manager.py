@@ -463,21 +463,18 @@ class WorkersManager():
         log(f"Sent kill node request to {kill_target}")
 
     def run(self):
+        dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
+        log(f"Created dspash_socket at {os.getenv('DSPASH_SOCKET')}")
+
         self.add_workers_from_cluster_config(os.path.join(config.PASH_TOP, 'cluster.json'))
         self.all_workers = self.workers.copy()
         self.all_workers.append(self.client_worker)
+        log("All workers are online")
 
-        # if self.args.debug:
-        #     try:
-        #         requests.post(f'{DEBUG_URL}/clearall') # clears all the debug server logs
-        #     except Exception as e:
-        #         log(f"Failed to connect to debug server with error {e}\n")
-        #         self.args.debug = False # Turn off debugging
-        
         for worker in self.all_workers:
             worker.send_setup_request()
+        log(f"All setup requests are sent")
 
-        dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
         while True:
             request, conn = dspash_socket.get_next_cmd()
             log(f"Received request: {request}")

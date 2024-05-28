@@ -305,7 +305,7 @@ class RequestHandler(Thread):
         err_print(f"Execution took {elapsed_time} seconds")
 
         if not self.kill_target and hasattr(self, "first_request_time"):
-            elapsed_time_for_killing = end_time - self.first_request_time
+            elapsed_time_for_killing = max(end_time - self.first_request_time, 0)
             self.worker.last_exec_time_dict[self.script_name] = elapsed_time_for_killing * 1000
             err_print(f"Updating last execution time for \"{self.script_name}\" to {elapsed_time_for_killing} seconds, target is \"{self.kill_target}\"")
         else:
@@ -366,7 +366,7 @@ class TimeRecorder(Thread):
         while not self.quit.is_set():
             curr_len = len(self.handler.rc_graph_merger_list)
             if curr_len != self.last_len:
-                for rc, _, _ in self.rc_graph_merger_list[:]:
+                for rc, _, _ in self.handler.rc_graph_merger_list[:]:
                     rc.wait()
                 self.last_len = curr_len
                 self.end_time = time.time()
