@@ -114,70 +114,6 @@ class RequestHandler(Thread):
             if doCleanup:
                 self.cleanup(start_time)
 
-    def cleanup(self, start_time):
-        err_print("Connection ended. Subprocess count:", len(self.rc_graph_merger_list))
-
-        for rc, _, _ in self.rc_graph_merger_list:
-            rc.wait()
-
-        if self.ft == "optimized":
-            self.event_loop.quit.set()
-            self.event_loop.join()
-            err_print(f"{self.event_loop.name} joined")
-
-        self.time_recorder.quit.set()
-        self.time_recorder.join()
-        end_time = self.time_recorder.end_time
-        err_print(f"{self.time_recorder.name} joined")
-
-        elapsed_time = end_time - start_time
-        err_print(f"Execution took {elapsed_time} seconds")
-
-        if not self.kill_target and hasattr(self, "first_request_time"):
-            elapsed_time_for_killing = end_time - self.first_request_time
-            self.worker.last_exec_time_dict[self.script_name] = elapsed_time_for_killing * 1000
-            err_print(f"Updating last execution time for \"{self.script_name}\" to {elapsed_time_for_killing} seconds, target is \"{self.kill_target}\"")
-        else:
-            err_print(f"Not updating last execution time, target is \"{self.kill_target}\"")
-
-        if self.debug:
-            result1 = subprocess.run(['du', '-h', '-d0', config.PASH_TMP_PREFIX], capture_output=True, text=True, check=True)
-            if self.ft == "optimized":
-                result2 = subprocess.run(['du', '-h', '-d0', self.fish_out_prefix], capture_output=True, text=True, check=True)
-                # Fish outs are inside tempdirs
-                err_print(f"Temp dir size | Fish out size: {result1.stdout.split()[0]} | {result2.stdout.split()[0]}")
-            else:
-                err_print(f"Temp dir size: {result1.stdout.split()[0]}")
-
-        shutil.rmtree(self.pash_tmp_prefix)
-        err_print(f"Temporary directory deleted: {self.pash_tmp_prefix}")
-
-    def send_log(self, rc: subprocess.Popen, script_path: str):
-        name = self.debug['name']
-        url = self.debug['url']
-        with open(script_path, 'r') as file:
-            shell_script = file.read()
-
-        try:
-            # timeout is set to 10s for debuggin
-            _, err = rc.communicate(timeout=10)
-        except:
-            err_print("process timedout")
-            rc.kill()
-            _, err = rc.communicate()
-
-        if err is None:
-            err = b""
-
-        response = {
-            'name': name,
-            'returncode': rc.returncode,
-            'stderr': err.decode("UTF-8"),
-            'shellscript': shell_script,
-        }
-
-        requests.post(url=url, json=response)
-
     def handle_setup_request(self):
         self.debug = int(self.request['debug'])
         self.pool_size = int(self.request['pool_size'])
@@ -349,6 +285,44 @@ class RequestHandler(Thread):
         # Restore DEBUG state
         DEBUG = DEBUG_TMP
 
+    def cleanup(self, start_time):
+        err_print("Connection ended. Subprocess count:", len(self.rc_graph_merger_list))
+
+        for rc, _, _ in self.rc_graph_merger_list:
+            rc.wait()
+
+        if self.ft == "optimized":
+            self.event_loop.quit.set()
+            self.event_loop.join()
+            err_print(f"{self.event_loop.name} joined")
+
+        self.time_recorder.quit.set()
+        self.time_recorder.join()
+        end_time = self.time_recorder.end_time
+        err_print(f"{self.time_recorder.name} joined")
+
+        elapsed_time = end_time - start_time
+        err_print(f"Execution took {elapsed_time} seconds")
+
+        if not self.kill_target and hasattr(self, "first_request_time"):
+            elapsed_time_for_killing = end_time - self.first_request_time
+            self.worker.last_exec_time_dict[self.script_name] = elapsed_time_for_killing * 1000
+            err_print(f"Updating last execution time for \"{self.script_name}\" to {elapsed_time_for_killing} seconds, target is \"{self.kill_target}\"")
+        else:
+            err_print(f"Not updating last execution time, target is \"{self.kill_target}\"")
+
+        if self.debug:
+            result1 = subprocess.run(['du', '-h', '-d0', config.PASH_TMP_PREFIX], capture_output=True, text=True, check=True)
+            if self.ft == "optimized":
+                result2 = subprocess.run(['du', '-h', '-d0', self.fish_out_prefix], capture_output=True, text=True, check=True)
+                # Fish outs are inside tempdirs
+                err_print(f"Temp dir size | Fish out size: {result1.stdout.split()[0]} | {result2.stdout.split()[0]}")
+            else:
+                err_print(f"Temp dir size: {result1.stdout.split()[0]}")
+
+        shutil.rmtree(self.pash_tmp_prefix)
+        err_print(f"Temporary directory deleted: {self.pash_tmp_prefix}")
+
 
 class EventLoop(Thread):
     def __init__(self, handler: RequestHandler):
@@ -377,6 +351,7 @@ class EventLoop(Thread):
 
             # Sleep for a bit to not busy wait
             self.quit.wait(0.1)
+
 
 class TimeRecorder(Thread):
     def __init__(self, handler: RequestHandler):
