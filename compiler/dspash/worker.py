@@ -265,6 +265,10 @@ class RequestHandler(Thread):
         if self.ft != "optimized":
             save_configs(self.request['graph'], self.dfs_configs_paths)
 
+        if self.first_request:
+            self.first_request_time = time.time()
+            self.first_request = False
+
         config.config['shell_variables'] = self.request['shell_variables']
         if self.debug:
             add_debug_flags(self.request['graph'])
