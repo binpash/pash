@@ -10,9 +10,7 @@ import os
 import argparse
 import requests
 import time
-import stat
 from threading import Event, Thread
-from collections import deque
 
 DISH_TOP = os.environ['DISH_TOP'] 
 PASH_TOP = os.environ['PASH_TOP']
@@ -132,11 +130,6 @@ class RequestHandler(Thread):
         end_time = self.time_recorder.end_time
         err_print(f"{self.time_recorder.name} joined")
 
-        # Skip this for now, we no longer send logs to the flask app
-        # if self.debug:
-        #     for rc, script_path, _ in self.rc_graph_merger_list:
-        #         self.send_log(rc, script_path)
-
         elapsed_time = end_time - start_time
         err_print(f"Execution took {elapsed_time} seconds")
 
@@ -156,24 +149,6 @@ class RequestHandler(Thread):
             else:
                 err_print(f"Temp dir size: {result1.stdout.split()[0]}")
 
-        # Remove directory (except for unix socket files)
-        # with os.scandir(self.pash_tmp_prefix) as entries:
-        #     for entry in entries:
-        #         mode = os.stat(entry.path).st_mode
-        #         isSocket = stat.S_ISSOCK(mode)
-        #         err_print(entry.path, isSocket)
-        #         if isSocket:
-        #             err_print(f"Skipping unix socket file {entry.path}")
-        #             continue
-        #         else:
-        #             if entry.is_dir():
-        #                 shutil.rmtree(entry)
-        #             else:
-        #                 if entry.name == "dspash_socket":
-        #                     continue
-        #                 else:
-        #                     os.remove(entry.path)
-        
         shutil.rmtree(self.pash_tmp_prefix)
         err_print(f"Temporary directory deleted: {self.pash_tmp_prefix}")
 
@@ -277,11 +252,8 @@ class RequestHandler(Thread):
             self.first_request = False
 
         config.config['shell_variables'] = self.request['shell_variables']
-        if self.debug:
+        if self.debug > 1:
             add_debug_flags(self.request['graph'])
-            stderr = subprocess.PIPE
-        else:
-            stderr = None
 
         script_path = to_shell_file(self.request['graph'], config.pash_args)
 
