@@ -122,12 +122,15 @@ class RequestHandler(Thread):
         for rc, _, _ in self.rc_graph_merger_list:
             rc.wait()
 
-        # record time before sending logs
-        end_time = time.time()
         if self.ft == "optimized":
             self.event_loop.quit.set()
             self.event_loop.join()
             err_print(f"{self.event_loop.name} joined")
+
+        self.time_recorder.quit.set()
+        self.time_recorder.join()
+        end_time = self.time_recorder.end_time
+        err_print(f"{self.time_recorder.name} joined")
 
         # Skip this for now, we no longer send logs to the flask app
         # if self.debug:
@@ -226,6 +229,10 @@ class RequestHandler(Thread):
             self.event_loop = EventLoop(self)
             err_print(f"Starting {self.event_loop.name} with pool size {self.pool_size}")
             self.event_loop.start()
+        
+        self.time_recorder = TimeRecorder(self)
+        err_print(f"Starting {self.time_recorder.name}")
+        self.time_recorder.start()
         
         # Run mktemp -d to create a unique temporary directory
         result = subprocess.run(['mktemp', '-d', '/tmp/pash_XXXXXXX'], capture_output=True, text=True)
@@ -374,7 +381,7 @@ class RequestHandler(Thread):
 class EventLoop(Thread):
     def __init__(self, handler: RequestHandler):
         Thread.__init__(self)
-        self.name = "Eventloop-" + handler.name
+        self.name = "EventLoop-" + handler.name
         self.handler = handler
         self.quit = Event()
         self.regular_queue = []
@@ -398,6 +405,27 @@ class EventLoop(Thread):
 
             # Sleep for a bit to not busy wait
             self.quit.wait(0.1)
+
+class TimeRecorder(Thread):
+    def __init__(self, handler: RequestHandler):
+        Thread.__init__(self)
+        self.name = "TimeRecorder-" + handler.name
+        self.handler = handler
+        self.quit = Event()
+        self.last_len = 0
+        self.end_time = 0
+
+    def run(self):
+        while not self.quit.is_set():
+            curr_len = len(self.handler.rc_graph_merger_list)
+            if curr_len != self.last_len:
+                for rc, _, _ in self.rc_graph_merger_list[:]:
+                    rc.wait()
+                self.last_len = curr_len
+                self.end_time = time.time()
+                err_print(f"TimeRecorder: end_time recorded {self.end_time}, current length {curr_len}")
+
+        self.quit.wait(0.1)
 
 
 def err_print(*args):
