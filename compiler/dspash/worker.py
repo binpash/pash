@@ -172,7 +172,14 @@ class RequestHandler(Thread):
             if self.request['kill_delay']:
                 delay = int(self.request['kill_delay'])
             else:
-                delay = self.worker.last_exec_time_dict[self.script_name] / 2
+                if self.script_name in self.worker.last_exec_time_dict:
+                    delay = self.worker.last_exec_time_dict[self.script_name] / 2
+                else:
+                    # this can happen if no exec request was received due to small input or,
+                    # if you forgot to run faultless version first
+                    # it make sense to kill here with a small delay to not cause problems for resurrect
+                    delay = 100
+                    err_print(f"Script \"{self.script_name}\" don't have any last_exec_time, setting delay to {delay} millis.")
             err_print(f"Starting killer thread for script \"{self.script_name}\"! Delay is {delay} millis.")
             Thread(target=kill, args=(delay, self.event_loop)).start()
         else:
@@ -237,6 +244,14 @@ class RequestHandler(Thread):
                 rc = subprocess.Popen(cmd, env=self.env_var, executable="/bin/bash", shell=True, stderr=self.stderr, preexec_fn=os.setsid)
                 self.rc_graph_merger_list.append((rc, script_path, self.request['merger_id']))
 
+    def __kill_pg(self, rc):
+            try:
+                pg_id = os.getpgid(rc.pid)  # Get the process group ID
+                os.killpg(pg_id, signal.SIGKILL)
+                err_print(f"Process group {pg_id} killed successfully.")
+            except ProcessLookupError:
+                err_print(f"No such process group for PID {rc.pid}. It may have already terminated.")
+
     def handle_kill_subgraphs_request(self):
         merger_id = self.request['merger_id']
         # Record the start time
@@ -248,7 +263,7 @@ class RequestHandler(Thread):
         for rc, _, m in self.rc_graph_merger_list:
             if merger_id != -1 and m != merger_id:
                 continue
-            os.killpg(os.getpgid(rc.pid), signal.SIGKILL)
+            self.__kill_pg(rc)
             kill_count += 1
 
         for rc, _, m in self.rc_graph_merger_list:
@@ -261,7 +276,7 @@ class RequestHandler(Thread):
             except subprocess.TimeoutExpired:
                 # If the subprocess is still running after the timeout, kill it
                 err_print(f"Terminating subprocess {rc.pid} failed, killing it forcefully")
-                os.killpg(os.getpgid(rc.pid), signal.SIGKILL)
+                self.__kill_pg(rc)
                 rc.wait()
 
         # Record the end time
@@ -406,7 +421,7 @@ def kill(delay: int, event_loop: EventLoop):
     time.sleep(1)
     subprocess.run("/bin/sh " + script_path, shell=True)
     t3 = time.time()
-    err_print(f"Just killed! {t3 - t2} seconds after")
+    err_print(f"Just killed! {t3 - t1} seconds after")
 
 
 def parse_args():
