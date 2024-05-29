@@ -9,8 +9,7 @@ export AWS_QUEUE="Your queue id here"
 export AWS_BUCKET="Your bucket id here"
 
 # Second, prepare all necessary runtime binary in lambda
-cd $PASH_TOP/runtime/serverless
-cp ../{r_merge,r_split,r_unwrap,r_wrap,split} runtime/
+./binaries.sh
 
 # Then, deploy to AWS:
 sls deploy
