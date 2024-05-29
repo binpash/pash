@@ -8,5 +8,5 @@ cat "$IN" |                         # assumes saved input
   cut -d ',' -f 2 |                 # keep only bus ID
   sort |                            # preparing for uniq
   uniq -c |                         # count unique dates
-  sort -k1n |                       # sort in reverse numerical order
+  sort -k 1 -n |                    # sort in reverse numerical order
   awk "{print \$2,\$1}"             # print first date, then count
