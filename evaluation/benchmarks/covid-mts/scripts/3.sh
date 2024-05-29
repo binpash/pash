@@ -1,7 +1,7 @@
 #!/bin/bash
 # Hours each vehicle is on the road
 
-cat "$IN" |                    # assumes saved input
+cat "$IN" |                     # assumes saved input
   sed 's/T\(..\):..:../,\1/' |  # keep times only
   cut -d ',' -f 1,2,4 |         # keep only time date and bus id
   sort -u |                     # removing duplicate entries
@@ -9,4 +9,4 @@ cat "$IN" |                    # assumes saved input
   sort |                        # preparing for uniq
   uniq -c |                     # count hours per bus
   sort -k1n |                   # sort in reverse numerical order
-  awk -v OFS="\t" "{print \$2,\$1}"     # print first date, then count
+  awk "{print \$2,\$1}"         # print first date, then count

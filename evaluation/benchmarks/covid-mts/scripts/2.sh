@@ -1,7 +1,7 @@
 #!/bin/bash
 # Days a vehicle is on the road
 
-cat "$IN" |                           # assumes saved input
+cat "$IN" |                         # assumes saved input
   sed 's/T..:..:..//' |             # hide times
   cut -d ',' -f 3,1 |               # keep only day and bus ID
   sort -u |                         # removing duplicate day-buses
@@ -9,4 +9,4 @@ cat "$IN" |                           # assumes saved input
   sort |                            # preparing for uniq
   uniq -c |                         # count unique dates
   sort -k1n |                       # sort in reverse numerical order
-  awk -v OFS="\t" "{print \$2,\$1}" # print first date, then count
+  awk "{print \$2,\$1}"             # print first date, then count
