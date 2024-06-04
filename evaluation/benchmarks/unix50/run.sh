@@ -7,64 +7,168 @@ cd "$(dirname "$0")" || exit 1
   exit
 }
 
-BENCHMARK_DIR=$PASH_TOP/evaluation/benchmarks/unix50
-INPUTS_DIR=$BENCHMARK_DIR/inputs
-OUTPUTS_DIR=$BENCHMARK_DIR/outputs
-TIMES_DIR=$BENCHMARK_DIR/times
-SCRIPTS_DIR=$BENCHMARK_DIR/scripts
+[ -z "$AWS_ACCOUNT_ID" ] && {
+  echo "AWS_ACCOUNT_ID not set"
+  exit
+}
 
-# We don't run {22,27}.sh because they are empty
-SCRIPTS_INPUTS=(
-  "01.sh:01.txt"
-  "02.sh:01.txt"
-  "03.sh:01.txt"
-  "04.sh:01.txt"
-  "05.sh:02.txt"
-  "06.sh:03.txt"
-  "07.sh:04.txt"
-  "08.sh:04.txt"
-  "09.sh:04.txt"
-  "10.sh:04.txt"
-  "11.sh:04.txt"
-  "12.sh:04.txt"
-  "13.sh:05.txt"
-  "14.sh:06.txt"
-  "15.sh:07.txt"
-  "16.sh:07.txt"
-  "17.sh:07.txt"
-  "18.sh:08.txt"
-  "19.sh:08.txt"
-  "20.sh:08.txt"
-  "21.sh:08.txt"
-  "23.sh:09.1.txt"
-  "24.sh:09.2.txt"
-  "25.sh:09.3.txt"
-  "26.sh:09.4.txt"
-  "28.sh:09.6.txt"
-  "29.sh:09.7.txt"
-  "30.sh:09.8.txt"
-  "31.sh:09.9.txt"
-  "32.sh:10.txt"
-  "33.sh:10.txt"
-  "34.sh:10.txt"
-  "35.sh:11.txt"
-  "36.sh:11.txt"
+[ -z "$AWS_BUCKET" ] && {
+  echo "AWS_BUCKET not set"
+  exit
+}
+
+[ -z "$AWS_QUEUE" ] && {
+  echo "AWS_QUEUE not set"
+  exit
+}
+
+mkdir -p {outputs,times}/
+
+BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/unix50"
+INPUTS_DIR="$BENCHMARK_DIR/inputs"
+OUTPUTS_DIR="$BENCHMARK_DIR/outputs"
+TIMES_DIR="$BENCHMARK_DIR/times"
+SCRIPTS_DIR="$BENCHMARK_DIR/scripts"
+
+S3_BENCHMARK_DIR="unix50"
+S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
+S3_OUTPUTS_DIR="$S3_BENCHMARK_DIR/outputs"
+
+# ENVIRONMENT, MEMORY, SYSTEM, WIDTH
+CONFIGS=(
+  # Local:16G:Bash:1
+  # AWS:2048M:Bash:1
+  AWS:2048M:Splash:1
+  # AWS:2048M:Splash:2
+  # AWS:2048M:Splash:4
+  # AWS:2048M:Splash:8
+  # AWS:2048M:Splash:16
+  # AWS:2048M:Splash:32
+  # AWS:2048M:Splash:64
 )
 
-ENVIRONMENT=Local
-MEMORY=16G
-SYSTEM=Bash
-WIDTH=1
+if [[ "$*" == *"--small"* ]]
+then
+  SCRIPTS_INPUTS=(
+    # "1.sh:1_1M.txt"
+    # "2.sh:1_1M.txt"
+    # "3.sh:1_1M.txt"
+    # "4.sh:1_1M.txt"
+    # "5.sh:2_1M.txt"
+    # "6.sh:3_1M.txt"
+    # "7.sh:4_1M.txt"
+    # "8.sh:4_1M.txt"
+    # "9.sh:4_1M.txt"
+    # "10.sh:4_1M.txt"
+    # "11.sh:4_1M.txt"
+    # "12.sh:4_1M.txt"
+    # "13.sh:5_1M.txt"
+    # "14.sh:6_1M.txt"
+    # "15.sh:7_1M.txt"
+    # "16.sh:7_1M.txt"
+    # "17.sh:7_1M.txt"
+    # "18.sh:8_1M.txt"
+    # "19.sh:8_1M.txt"
+    # "20.sh:8_1M.txt"
+    # "21.sh:8_1M.txt"
+    # # "22.sh:8_1M.txt"
+    # "23.sh:9.1_1M.txt"
+    # "24.sh:9.2_1M.txt"
+    # "25.sh:9.3_1M.txt"
+    # "26.sh:9.4_1M.txt"
+    # # "27.sh:9.5_1M.txt"
+    # "28.sh:9.6_1M.txt"
+    # "29.sh:9.7_1M.txt"
+    # "30.sh:9.8_1M.txt"
+    # "31.sh:9.9_1M.txt"
+    # "32.sh:10_1M.txt"
+    # "33.sh:10_1M.txt"
+    "34.sh:10_1M.txt"
+    # "35.sh:11_1M.txt"
+    "36.sh:11_1M.txt"
+  )
+  INPUT_TYPE=".small"
+else
+  SCRIPTS_INPUTS=(
+    "1.sh:1_3G.txt"
+    "2.sh:1_3G.txt"
+    "3.sh:1_3G.txt"
+    "4.sh:1_3G.txt"
+    "5.sh:2_3G.txt"
+    "6.sh:3_3G.txt"
+    "7.sh:4_3G.txt"
+    "8.sh:4_3G.txt"
+    "9.sh:4_3G.txt"
+    "10.sh:4_3G.txt"
+    "11.sh:4_3G.txt"
+    "12.sh:4_3G.txt"
+    "13.sh:5_3G.txt"
+    "14.sh:6_3G.txt"
+    "15.sh:7_3G.txt"
+    "16.sh:7_3G.txt"
+    "17.sh:7_3G.txt"
+    "18.sh:8_3G.txt"
+    "19.sh:8_3G.txt"
+    "20.sh:8_3G.txt"
+    "21.sh:8_3G.txt"
+    # "22.sh:8_3G.txt"
+    "23.sh:9.1_3G.txt"
+    "24.sh:9.2_3G.txt"
+    "25.sh:9.3_3G.txt"
+    "26.sh:9.4_3G.txt"
+    # "27.sh:9.5_3G.txt"
+    "28.sh:9.6_3G.txt"
+    "29.sh:9.7_3G.txt"
+    "30.sh:9.8_3G.txt"
+    "31.sh:9.9_3G.txt"
+    "32.sh:10_3G.txt"
+    "33.sh:10_3G.txt"
+    "34.sh:10_3G.txt"
+    "35.sh:11_3G.txt"
+    "36.sh:11_3G.txt"
+  )
+  INPUT_TYPE=""
+fi
 
-for SCRIPT_INPUT in "${SCRIPTS_INPUTS[@]}"
+for CONFIG in "${CONFIGS[@]}"
 do
-  SCRIPT=$(echo "$SCRIPT_INPUT" | cut -d: -f1)
-  SCRIPT_PATH="${SCRIPTS_DIR}/${SCRIPT}"
-  INPUT=${INPUTS_DIR}/$(echo "$SCRIPT_INPUT" | cut -d: -f2)
-  OUTPUT="${OUTPUTS_DIR}/${SCRIPT}__env${ENVIRONMENT}__mem${MEMORY}__sys${SYSTEM}__w${WIDTH}.out"
-  TIME="${TIMES_DIR}/${SCRIPT}__env${ENVIRONMENT}__mem${MEMORY}__sys${SYSTEM}__w${WIDTH}.time"
+  for SCRIPT_INPUT in "${SCRIPTS_INPUTS[@]}"
+  do
+    ENVIRONMENT=$(echo "$CONFIG" | cut -d: -f1)
+    MEMORY=$(echo "$CONFIG" | cut -d: -f2)
+    SYSTEM=$(echo "$CONFIG" | cut -d: -f3)
+    WIDTH=$(echo "$CONFIG" | cut -d: -f4)
 
-  echo "Running $SCRIPT on $INPUT"
+    SCRIPT=$(echo "$SCRIPT_INPUT" | cut -d: -f1)
+    INPUT=$(echo "$SCRIPT_INPUT" | cut -d: -f2)
 
-  { time IN=$INPUT "$SCRIPT_PATH" >"$OUTPUT" ; } 2>"$TIME"
+    OUTPUT="${SCRIPT}__env${ENVIRONMENT}__mem${MEMORY}__sys${SYSTEM}__w${WIDTH}${INPUT_TYPE}.out"
+    TIME="${SCRIPT}__env${ENVIRONMENT}__mem${MEMORY}__sys${SYSTEM}__w${WIDTH}${INPUT_TYPE}.time"
+
+    SCRIPT_PATH="${SCRIPTS_DIR}/${SCRIPT}"
+    INPUT_PATH="${INPUTS_DIR}/${INPUT}"
+    OUTPUT_PATH="${OUTPUTS_DIR}/${OUTPUT}"
+    TIME_PATH="${TIMES_DIR}/${TIME}"
+
+    S3_INPUT_PATH="${S3_INPUTS_DIR}/${INPUT}"
+    S3_OUTPUT_PATH="${S3_OUTPUTS_DIR}/${OUTPUT}"
+
+    echo "CONFIG: $CONFIG, SCRIPT_INPUT: $SCRIPT_INPUT"
+
+    if [[ $ENVIRONMENT == "Local" ]]
+    then
+      { time IN=$INPUT_PATH bash "$SCRIPT_PATH" $INPUT_PATH >"$OUTPUT_PATH" ; } 2>"$TIME_PATH"
+      # IN=$INPUT_PATH bash "$SCRIPT_PATH" $INPUT_PATH ;
+
+    elif [[ $ENVIRONMENT == "AWS" && $SYSTEM == "Bash" ]]
+    then
+      echo "Not implemented yet"
+    elif [[ $ENVIRONMENT == "AWS" && $SYSTEM == "Splash" ]]
+    then
+      python3 "$PASH_TOP"/scripts/serverless/delete-log-streams.py
+      { time IN=$S3_INPUT_PATH "$PASH_TOP"/pa.sh -w "$WIDTH" -d 1 --serverless_exec "$SCRIPT_PATH" $S3_INPUT_PATH --sls_output "$S3_OUTPUT_PATH" ; } 2>"$TIME_PATH"
+    fi
+
+    grep real "$TIME_PATH"
+  done
 done

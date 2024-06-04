@@ -1,49 +1,33 @@
 #!/bin/bash
 
-cd "$(dirname "$0")" || exit 1
+cd "$(realpath $(dirname "$0"))"
+mkdir -p inputs
+cd inputs
 
-inputs=(
-    1 2 3 4 5 6 7 8 9.1 9.2 9.3 9.4 9.5 9.6 9.7 9.8 9.9 10 11 12
-)
+# inputs=(1 10 11 12 2 3 4 5 6 7 8 9.1 9.2 9.3 9.4 9.5 9.6 9.7 9.8 9.9)
+inputs=(9.7 9.8 9.9)
 
-input_dir="inputs"
 
-mkdir -p $input_dir
-
-for input in "${inputs[@]}"
+for input in ${inputs[@]}
 do
     if [ ! -f "${input}.txt" ]; then
-        wget "http://atlas-group.cs.brown.edu/data/unix50/${input}.txt" -q -P $input_dir
+        wget "http://atlas-group.cs.brown.edu/data/unix50/${input}.txt" -q
     fi
 
-    cd $input_dir || exit 1
-
-    # Concatenate file with itself until it reaches 1GB
-    while [ "$(du -m "${input}.txt" | cut -f1)" -lt 1024 ]; do
-        cat "${input}.txt" "${input}.txt" >> "${input}_temp.txt"
-        mv -f "${input}_temp.txt" "${input}.txt"
-    done
-
-    # If the file size exceeds 1GB, split it into 1GB chunks
-    if [ "$(du -m "${input}.txt" | cut -f1)" -gt 1025 ]; then
-        split -C 1024m --numeric-suffixes "${input}.txt" "${input}_"
-        mv -f "${input}_00" "${input}.txt"
-        rm "${input}_"*
+    # TODO: Maybe upload 1M and 3G files to the server?
+    if [ ! -f "${input}_1M.txt" ]; then
+        file_content_size=$(wc -c < "${input}.txt")
+        iteration_limit=$((1048576 / $file_content_size))
+        for (( i = 0; i < iteration_limit; i++ )); do
+            cat "${input}.txt" >> "${input}_1M.txt"
+        done
     fi
 
-    cd ..
+    # if [ ! -f "${input}_3G.txt" ]; then
+    #     for (( i = 0; i < 3000; i++ )); do
+    #         cat "${input}_1M.txt" >> "${input}_3G.txt"
+    #     done
+    # fi
 
     echo "Finished processing ${input}.txt"
-done
-
-# Rename {1-8}.txt to {01-08}.txt
-for i in {1..8}
-do
-    mv "${input_dir}/${i}.txt" "${input_dir}/0${i}.txt"
-done
-
-# Rename 9-{1-9}.txt to 09-{1-9}.txt
-for i in {1..9}
-do
-    mv "${input_dir}/9.${i}.txt" "${input_dir}/09.${i}.txt"
 done
