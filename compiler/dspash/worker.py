@@ -75,6 +75,7 @@ class RequestHandler(Thread):
         self.kill_target = None
         self.event_loop = None
         self.first_request = True
+        self.killed = False
 
     def run(self):
         with self.conn:
@@ -181,12 +182,37 @@ class RequestHandler(Thread):
                     delay = 100
                     err_print(f"Script \"{self.script_name}\" don't have any last_exec_time, setting delay to {delay} millis.")
             err_print(f"Starting killer thread for script \"{self.script_name}\"! Delay is {delay} millis.")
-            Thread(target=kill, args=(delay, self.event_loop)).start()
+            Thread(target=self.kill, args=(delay)).start()
         else:
             # This should never happen with the new approach
             err_print(f"Kill target {self.kill_target} is not this node, skipping kill")
 
+    def kill(self, delay: int):
+        err_print(f"Will kill after delay for {delay}")
+        t0 = time.time()
+        time.sleep(delay / 1000)
+        t1 = time.time()
+        err_print(f"Killing now {t1 - t0} seconds after delay")
+        self.killed = True
+
+        if self.event_loop:
+            self.event_loop.quit.set()
+            self.event_loop.join()
+            t2 = time.time()
+            err_print(f"Event loop joined {t2 - t1} seconds after")
+
+        script_path = "$DISH_TOP/runtime/scripts/killall.sh"
+        subprocess.run("/bin/sh " + script_path, shell=True)
+        time.sleep(1)
+        subprocess.run("/bin/sh " + script_path, shell=True)
+        t3 = time.time()
+        err_print(f"Just killed! {t3 - t1} seconds after")
+
     def handle_exec_graph_request(self):
+        if self.killed:
+            err_print("Killed, skipping exec request")
+            return
+
         if self.ft != "optimized":
             save_configs(self.request['graph'], self.dfs_configs_paths)
 
@@ -214,6 +240,9 @@ class RequestHandler(Thread):
         self.rc_graph_merger_list.append((rc, script_path, self.request['merger_id']))
 
     def handle_batch_exec_graph(self):
+        if self.killed:
+            err_print("Killed, skipping exec request")
+            return
         # this in None for now anyways
         # config.config['shell_variables'] = self.request['shell_variables']
 
@@ -402,26 +431,6 @@ def send_success(conn, body, msg=""):
         'msg': msg
     }
     send_msg(conn, encode_request(request))
-
-
-def kill(delay: int, event_loop: EventLoop):
-    err_print(f"Will kill after delay for {delay}")
-    t0 = time.time()
-    time.sleep(delay / 1000)
-    t1 = time.time()
-    err_print(f"Killing now {t1 - t0} seconds after delay")
-    if event_loop:
-        event_loop.quit.set()
-        event_loop.join()
-        t2 = time.time()
-        err_print(f"Event loop joined {t2 - t1} seconds after")
-
-    script_path = "$DISH_TOP/runtime/scripts/killall.sh"
-    subprocess.run("/bin/sh " + script_path, shell=True)
-    time.sleep(1)
-    subprocess.run("/bin/sh " + script_path, shell=True)
-    t3 = time.time()
-    err_print(f"Just killed! {t3 - t1} seconds after")
 
 
 def parse_args():
