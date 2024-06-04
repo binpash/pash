@@ -1,4 +1,4 @@
-inputs/*
-intermediary/*
-*.txt
-*.time
+inputs/
+outputs/
+times/
+debug/

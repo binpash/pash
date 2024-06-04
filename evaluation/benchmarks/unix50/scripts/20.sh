@@ -1,5 +1,4 @@
 #!/bin/bash
-export IN_PRE=${IN_PRE:-$PASH_TOP/evaluation/benchmarks/unix50/inputs}
-IN8=$IN_PRE/08.txt
+
 # 8.3: find names of the four people most involved with unix
-cat "$IN8" | grep '(' | cut -d '(' -f 2 | cut -d ')' -f 1 | head -n 1
+cat $IN | grep '(' | cut -d '(' -f 2 | cut -d ')' -f 1 | head -n 1
