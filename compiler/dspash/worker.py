@@ -80,7 +80,7 @@ class RequestHandler(Thread):
     def run(self):
         with self.conn:
             err_print('Connected by', self.addr, 'name', self.name)
-            start_time = time.time()
+            self.start_time = time.time()
             doCleanup = False
 
             while True:
@@ -88,7 +88,7 @@ class RequestHandler(Thread):
                 if not data:
                     break
                 self.request = decode_request(data)
-                err_print("Got a new request", self.request['type'])
+                self.rh_print("Got a new request", self.request['type'])
 
                 if self.request['type'] == 'Setup':
                     self.handle_setup_request()
@@ -110,10 +110,10 @@ class RequestHandler(Thread):
                     # No need to clean up if we just want to bring up the current node
                     doCleanup = False
                 else:
-                    err_print(f"Unsupported request {self.request}")
+                    self.rh_print(f"Unsupported request {self.request}")
                 send_success(self.conn, self.body)
             if doCleanup:
-                self.cleanup(start_time)
+                self.cleanup()
 
     def handle_setup_request(self):
         self.debug = int(self.request['debug'])
@@ -127,9 +127,9 @@ class RequestHandler(Thread):
         global DEBUG
         if self.debug:
             DEBUG = True
-            err_print(f"Debugging enabled, level: {self.debug}")
+            self.rh_print(f"Debugging enabled, level: {self.debug}")
         else:
-            err_print(f"Debugging disabled, level: {self.debug}")
+            self.rh_print(f"Debugging disabled, level: {self.debug}")
             DEBUG = False
 
         if self.debug > 1:
@@ -139,11 +139,11 @@ class RequestHandler(Thread):
 
         if self.ft == "optimized":
             self.event_loop = EventLoop(self)
-            err_print(f"Starting {self.event_loop.name} with pool size {self.pool_size}")
+            self.rh_print(f"Starting {self.event_loop.name} with pool size {self.pool_size}")
             self.event_loop.start()
         
         self.time_recorder = TimeRecorder(self)
-        err_print(f"Starting {self.time_recorder.name}")
+        self.rh_print(f"Starting {self.time_recorder.name}")
         self.time_recorder.start()
         
         # Run mktemp -d to create a unique temporary directory
@@ -156,7 +156,7 @@ class RequestHandler(Thread):
             os.environ['PASH_TMP_PREFIX'] = temp_directory
             config.PASH_TMP_PREFIX = temp_directory
             self.pash_tmp_prefix = temp_directory
-            err_print(f"Temporary directory created: {temp_directory}")
+            self.rh_print(f"Temporary directory created: {temp_directory}")
         else:
             raise Exception(f"Failed to create temporary directory: {result.stderr}")
         
@@ -165,7 +165,7 @@ class RequestHandler(Thread):
         os.environ['FISH_OUT_PREFIX'] = datastream_directory
         self.env_var['FISH_OUT_PREFIX'] = datastream_directory
         self.fish_out_prefix = datastream_directory
-        err_print(f"Datastream directory created: {datastream_directory}")
+        self.rh_print(f"Datastream directory created: {datastream_directory}")
 
     def handle_kill_node(self):
         self.kill_target = self.request['kill_target']
@@ -180,37 +180,37 @@ class RequestHandler(Thread):
                     # if you forgot to run faultless version first
                     # it make sense to kill here with a small delay to not cause problems for resurrect
                     delay = 100
-                    err_print(f"Script \"{self.script_name}\" don't have any last_exec_time, setting delay to {delay} millis.")
-            err_print(f"Starting killer thread for script \"{self.script_name}\"! Delay is {delay} millis.")
+                    self.rh_print(f"Script \"{self.script_name}\" don't have any last_exec_time, setting delay to {delay} millis.")
+            self.rh_print(f"Starting killer thread for script \"{self.script_name}\"! Delay is {delay} millis.")
             Thread(target=self.kill, args=(delay)).start()
         else:
             # This should never happen with the new approach
-            err_print(f"Kill target {self.kill_target} is not this node, skipping kill")
+            self.rh_print(f"Kill target {self.kill_target} is not this node, skipping kill")
 
     def kill(self, delay: int):
-        err_print(f"Will kill after delay for {delay}")
+        self.rh_print(f"Will kill after delay for {delay}")
         t0 = time.time()
         time.sleep(delay / 1000)
         t1 = time.time()
-        err_print(f"Killing now {t1 - t0} seconds after delay")
+        self.rh_print(f"Killing now {t1 - t0} seconds after delay")
         self.killed = True
 
         if self.event_loop:
             self.event_loop.quit.set()
             self.event_loop.join()
             t2 = time.time()
-            err_print(f"Event loop joined {t2 - t1} seconds after")
+            self.rh_print(f"Event loop joined {t2 - t1} seconds after")
 
         script_path = "$DISH_TOP/runtime/scripts/killall.sh"
         subprocess.run("/bin/sh " + script_path, shell=True)
         time.sleep(1)
         subprocess.run("/bin/sh " + script_path, shell=True)
         t3 = time.time()
-        err_print(f"Just killed! {t3 - t1} seconds after")
+        self.rh_print(f"Just killed! {t3 - t1} seconds after")
 
     def handle_exec_graph_request(self):
         if self.killed:
-            err_print("Killed, skipping exec request")
+            self.rh_print("Killed, skipping exec request")
             return
 
         if self.ft != "optimized":
@@ -234,20 +234,20 @@ class RequestHandler(Thread):
         functions_file = create_filename(dir=self.pash_tmp_prefix, prefix='pashFuncs')
         write_file(functions_file, self.request['functions'])
         cmd = f"source {functions_file}; source {script_path}"
-        err_print(f"executing {cmd}")
+        self.rh_print(f"executing {cmd}")
 
         rc = subprocess.Popen(cmd, env=e, executable="/bin/bash", shell=True, stderr=self.stderr, preexec_fn=os.setsid)
         self.rc_graph_merger_list.append((rc, script_path, self.request['merger_id']))
 
     def handle_batch_exec_graph(self):
         if self.killed:
-            err_print("Killed, skipping exec request")
+            self.rh_print("Killed, skipping exec request")
             return
         # this in None for now anyways
         # config.config['shell_variables'] = self.request['shell_variables']
 
-        err_print(f"Batch exec graph request: {len(self.request['regulars'])} regulars and {len(self.request['mergers'])} mergers")
-        err_print(f"PASH_TMP_PREFIX {self.pash_tmp_prefix}")
+        self.rh_print(f"Batch exec graph request: {len(self.request['regulars'])} regulars and {len(self.request['mergers'])} mergers")
+        self.rh_print(f"PASH_TMP_PREFIX {self.pash_tmp_prefix}")
 
         if self.first_request:
             self.first_request_time = time.time()
@@ -269,7 +269,7 @@ class RequestHandler(Thread):
             script_path = to_shell_file(merger, config.pash_args)
             cmd = f"source {functions_file}; source {script_path}"
             if self.event_loop.is_alive():
-                err_print(f"Executing merger {cmd}")
+                self.rh_print(f"Executing merger {cmd}")
                 rc = subprocess.Popen(cmd, env=self.env_var, executable="/bin/bash", shell=True, stderr=self.stderr, preexec_fn=os.setsid)
                 self.rc_graph_merger_list.append((rc, script_path, self.request['merger_id']))
 
@@ -277,15 +277,15 @@ class RequestHandler(Thread):
             try:
                 pg_id = os.getpgid(rc.pid)  # Get the process group ID
                 os.killpg(pg_id, signal.SIGKILL)
-                err_print(f"Process group {pg_id} killed successfully.")
+                self.rh_print(f"Process group {pg_id} killed successfully.")
             except ProcessLookupError:
-                err_print(f"No such process group for PID {rc.pid}. It may have already terminated.")
+                self.rh_print(f"No such process group for PID {rc.pid}. It may have already terminated.")
 
     def handle_kill_subgraphs_request(self):
         merger_id = self.request['merger_id']
         # Record the start time
         start_time = time.time()
-        err_print(f"Killing subgraphs, merger_id: {merger_id}")
+        self.rh_print(f"Killing subgraphs, merger_id: {merger_id}")
 
         # Try to terminate the subprocess gracefully
         kill_count = 0
@@ -304,7 +304,7 @@ class RequestHandler(Thread):
                 rc.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 # If the subprocess is still running after the timeout, kill it
-                err_print(f"Terminating subprocess {rc.pid} failed, killing it forcefully")
+                self.rh_print(f"Terminating subprocess {rc.pid} failed, killing it forcefully")
                 self.__kill_pg(rc)
                 rc.wait()
 
@@ -314,7 +314,7 @@ class RequestHandler(Thread):
         # Calculate the time elapsed
         elapsed_time = end_time - start_time
 
-        err_print(f"Killed subgraphs in {elapsed_time} seconds, {kill_count} subgraphs killed")
+        self.rh_print(f"Killed subgraphs in {elapsed_time} seconds, {kill_count} subgraphs killed")
         return {}
 
     def handle_resurrect_request(self):
@@ -325,12 +325,12 @@ class RequestHandler(Thread):
         script_path = "$DISH_TOP/docker-hadoop/datanode/run.sh"
         subprocess.run("/bin/bash " + script_path + " --resurrect", shell=True)
         time.sleep(1)
-        err_print("Just brought the current node back up!")
+        self.rh_print("Just brought the current node back up!")
         # Restore DEBUG state
         DEBUG = DEBUG_TMP
 
-    def cleanup(self, start_time):
-        err_print("Connection ended. Subprocess count:", len(self.rc_graph_merger_list))
+    def cleanup(self):
+        self.rh_print("Connection ended. Subprocess count:", len(self.rc_graph_merger_list))
 
         for rc, _, _ in self.rc_graph_merger_list:
             rc.wait()
@@ -338,34 +338,38 @@ class RequestHandler(Thread):
         if self.ft == "optimized":
             self.event_loop.quit.set()
             self.event_loop.join()
-            err_print(f"{self.event_loop.name} joined")
+            self.rh_print(f"{self.event_loop.name} joined")
 
         self.time_recorder.quit.set()
         self.time_recorder.join()
         end_time = self.time_recorder.end_time
-        err_print(f"{self.time_recorder.name} joined")
+        self.rh_print(f"{self.time_recorder.name} joined")
 
-        elapsed_time = end_time - start_time
-        err_print(f"Execution took {elapsed_time} seconds")
+        elapsed_time = end_time - self.start_time
+        self.rh_print(f"Execution took {elapsed_time} seconds")
 
         if not self.kill_target and hasattr(self, "first_request_time"):
             elapsed_time_for_killing = max(end_time - self.first_request_time, 0)
             self.worker.last_exec_time_dict[self.script_name] = elapsed_time_for_killing * 1000
-            err_print(f"Updating last execution time for \"{self.script_name}\" to {elapsed_time_for_killing} seconds, target is \"{self.kill_target}\"")
+            self.rh_print(f"Updating last execution time for \"{self.script_name}\" to {elapsed_time_for_killing} seconds, target is \"{self.kill_target}\"")
         else:
-            err_print(f"Not updating last execution time, target is \"{self.kill_target}\"")
+            self.rh_print(f"Not updating last execution time, target is \"{self.kill_target}\"")
 
         if self.debug:
             result1 = subprocess.run(['du', '-h', '-d0', config.PASH_TMP_PREFIX], capture_output=True, text=True, check=True)
             if self.ft == "optimized":
                 result2 = subprocess.run(['du', '-h', '-d0', self.fish_out_prefix], capture_output=True, text=True, check=True)
                 # Fish outs are inside tempdirs
-                err_print(f"Temp dir size | Fish out size: {result1.stdout.split()[0]} | {result2.stdout.split()[0]}")
+                self.rh_print(f"Temp dir size | Fish out size: {result1.stdout.split()[0]} | {result2.stdout.split()[0]}")
             else:
-                err_print(f"Temp dir size: {result1.stdout.split()[0]}")
+                self.rh_print(f"Temp dir size: {result1.stdout.split()[0]}")
 
         shutil.rmtree(self.pash_tmp_prefix)
-        err_print(f"Temporary directory deleted: {self.pash_tmp_prefix}")
+        self.rh_print(f"Temporary directory deleted: {self.pash_tmp_prefix}")
+
+    def rh_print(self, *args):
+        if DEBUG:
+            err_print(f"{(time.time() - self.start_time):10.6f}", *args)
 
 
 class EventLoop(Thread):
@@ -414,7 +418,7 @@ class TimeRecorder(Thread):
                     rc.wait()
                 self.last_len = curr_len
                 self.end_time = time.time()
-                err_print(f"TimeRecorder: end_time recorded {self.end_time}, current length {curr_len}")
+                err_print(f"{(self.end_time - self.handler.start_time):10.6f} TimeRecorder: end_time recorded {self.end_time}, current length {curr_len}")
 
         self.quit.wait(0.1)
 
