@@ -59,8 +59,12 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
             last_subgraph = False
             if out_edge_id not in input_fifo_map:
                 last_subgraph = True
-            if last_subgraph and args.sls_output != "":
-                communication_key = args.sls_output
+            if last_subgraph:
+                communication_key = "stdout"
+                if type(out_edge.get_resource()) is FileResource:
+                    communication_key = str(out_edge.get_resource())
+                if args.sls_output != "":
+                    communication_key = os.path.join(args.sls_output, str(communication_key))
             # Add remote-write node at the end of the subgraph
             remote_write = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
                                                                               is_remote_read=False,
