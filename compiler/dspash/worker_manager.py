@@ -26,6 +26,11 @@ import grpc
 import dspash.proto.data_stream_pb2 as data_stream_pb2
 import dspash.proto.data_stream_pb2_grpc as data_stream_pb2_grpc
 
+# For profiling
+import cProfile
+import pstats
+import io
+
 
 HOST = socket.gethostbyname(socket.gethostname())
 PORT = 65425        # Port to listen on (non-privileged ports are > 1023)
@@ -463,6 +468,10 @@ class WorkersManager():
         log(f"WM: Sent kill node request to {kill_target}")
 
     def run(self):
+        if self.args.debug and self.args.debug != 0:
+            profiler = cProfile.Profile()
+            profiler.enable()
+        
         start_time = time.time()
         dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
         log(f"WM: Created dspash_socket at {os.getenv('DSPASH_SOCKET')} at {time.time() - start_time} seconds")
@@ -486,6 +495,13 @@ class WorkersManager():
                     if self.args.ft != "naive":
                         self.daemon_quit.set()
                 log(f"WM: Done at {time.time() - start_time} seconds")
+                if self.args.debug and self.args.debug != 0:
+                    profiler.disable()
+                    s = io.StringIO()
+                    ps = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
+                    ps.print_stats()
+                    with open(f"WM_profile.log", "w") as f:
+                        f.write(s.getvalue())
                 break
             elif request.startswith("Exec-Graph"):
                 args = request.split(':', 1)[1].strip()

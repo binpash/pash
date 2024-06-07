@@ -23,6 +23,9 @@ import pash_runtime
 from annotations import load_annotation_files
 import config
 
+import cProfile
+import pstats
+import io
 
 HOST = socket.gethostbyname(socket.gethostname())
 PORT = 65432
@@ -78,6 +81,10 @@ class RequestHandler(Thread):
         self.killed = False
 
     def run(self):
+        if self.debug:
+            profiler = cProfile.Profile()
+            profiler.enable()
+
         with self.conn:
             err_print('Connected by', self.addr, 'name', self.name)
             self.start_time = time.time()
@@ -114,6 +121,13 @@ class RequestHandler(Thread):
                 send_success(self.conn, self.body)
             if doCleanup:
                 self.cleanup()
+        if self.debug:
+            profiler.disable()
+            s = io.StringIO()
+            ps = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
+            ps.print_stats()
+            with open(f"W_profile.log", "w") as f:
+                f.write(s.getvalue())
 
     def handle_setup_request(self):
         self.debug = int(self.request['debug'])
