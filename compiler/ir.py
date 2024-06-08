@@ -961,7 +961,7 @@ class IR:
                 # TODO: turn node into cmd_invocation_with_io_vars since this is the only thing required in this function
                 self.create_generic_aggregator_tree(original_cmd_invocation_with_io_vars, parallelizer, map_in_aggregator_ids, out_aggregator_id, fileIdGen)
             else:
-                raise UnparallizableError("aggregator kind not yet implemented")
+                raise UnparallelizableError("aggregator kind not yet implemented")
         else: # we got auxiliary information
             assert(parallelizer.core_aggregator_spec.is_aggregator_spec_custom_2_ary())
             map_in_aggregator_ids = in_aggregator_ids
