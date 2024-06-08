@@ -13,6 +13,7 @@ from ast_to_ir import compile_asts
 from ir_to_ast import to_shell
 from pash_graphviz import maybe_generate_graphviz
 from util import *
+from custom_error import *
 
 from definitions.ir.aggregator_node import *
 
@@ -92,10 +93,13 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
     ret = None
     try:
         ret = compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config)
+    except UnparallelizableError as e: 
+        log("WARNING: Exception caught because some region(s) are unparallelizable:", e) 
+        log(traceback.format_exc()) # get detailed reports for (I) when debugging, one could simply uncomment/introduce traceback.print_exc() ? 
     except Exception as e:
         log("WARNING: Exception caught:", e)
-        # traceback.print_exc()
-
+        log(traceback.format_exc())
+        
     return ret
 
 def compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config):
@@ -135,7 +139,7 @@ def compile_optimize_output_script(ir_filename, compiled_script_file, args, comp
     
         ret = optimized_ast_or_ir
     else:
-        raise Exception("Script failed to compile!")
+        raise UnparallelizableError("Script failed to compile!")
     
     return ret
 

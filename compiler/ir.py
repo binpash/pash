@@ -23,6 +23,7 @@ import definitions.ir.nodes.r_unwrap as r_unwrap
 
 from shell_ast.ast_util import *
 from util import *
+from custom_error import *
 
 import config
 
@@ -189,9 +190,9 @@ def compile_command_to_DFG(fileIdGen, command, options,
     command_invocation: CommandInvocationInitial = parse_arg_list_to_command_invocation(command, options)
     io_info: InputOutputInfo = get_input_output_info_from_cmd_invocation_util(command_invocation)
     if io_info is None:
-        raise Exception(f"InputOutputInformation for {format_arg_chars(command)} not provided so considered side-effectful.")
+        raise UnparallelizableError(f"InputOutputInformation for {format_arg_chars(command)} not provided so considered side-effectful.")
     if io_info.has_other_outputs():
-        raise Exception(f"Command {format_arg_chars(command)} has outputs other than streaming.")
+        raise UnparallelizableError(f"Command {format_arg_chars(command)} has outputs other than streaming.")
     para_info: ParallelizabilityInfo = get_parallelizability_info_from_cmd_invocation_util(command_invocation)
     if para_info is None:
         para_info = ParallelizabilityInfo() # defaults to no parallelizer's and all properties False
@@ -741,7 +742,7 @@ class IR:
         elif splitter.is_splitter_consec_chunks():
             self.apply_consecutive_chunks_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out)
         else:
-            raise Exception("Splitter not yet implemented")
+            raise UnparallelizableError("Splitter not yet implemented")
 
     def apply_round_robin_parallelization_to_node(self, node_id, parallelizer, fileIdGen, fan_out,
                                                   r_split_batch_size):
@@ -749,11 +750,11 @@ class IR:
         #  currently, this cannot be done since splitter etc. would be added...
         aggregator_spec = parallelizer.get_aggregator_spec()
         if aggregator_spec.is_aggregator_spec_adj_lines_merge():
-            raise Exception("adj_lines_merge not yet implemented in PaSh")
+            raise UnparallelizableError("adj_lines_merge not yet implemented in PaSh")
         elif aggregator_spec.is_aggregator_spec_adj_lines_seq():
-            raise Exception("adj_lines_seq not yet implemented in PaSh")
+            raise UnparallelizableError("adj_lines_seq not yet implemented in PaSh")
         elif aggregator_spec.is_aggregator_spec_adj_lines_func():
-            raise Exception("adj_lines_func not yet implemented in PaSh")
+            raise UnparallelizableError("adj_lines_func not yet implemented in PaSh")
         # END of what to move
 
         node = self.get_node(node_id)
@@ -960,7 +961,7 @@ class IR:
                 # TODO: turn node into cmd_invocation_with_io_vars since this is the only thing required in this function
                 self.create_generic_aggregator_tree(original_cmd_invocation_with_io_vars, parallelizer, map_in_aggregator_ids, out_aggregator_id, fileIdGen)
             else:
-                raise Exception("aggregator kind not yet implemented")
+                raise UnparallizableError("aggregator kind not yet implemented")
         else: # we got auxiliary information
             assert(parallelizer.core_aggregator_spec.is_aggregator_spec_custom_2_ary())
             map_in_aggregator_ids = in_aggregator_ids

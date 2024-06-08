@@ -7,6 +7,7 @@ from shell_ast.ast_util import *
 from ir import *
 from util import *
 from parse import from_ast_objects_to_shell
+from custom_error import *
 
 ## TODO: Separate the ir stuff to the bare minimum and 
 ##       try to move this to the shell_ast folder.
@@ -132,7 +133,7 @@ def combine_pipe(ast_nodes):
     else:
         ## If any part of the pipe is not an IR, the compilation must fail.
         log("Node: {} is not pure".format(ast_nodes[0]))
-        raise Exception('Not pure node in pipe')
+        raise UnparallelizableError('Not pure node in pipe')
 
     ## Combine the rest of the nodes
     for ast_node in ast_nodes[1:]:
@@ -141,7 +142,7 @@ def combine_pipe(ast_nodes):
         else:
             ## If any part of the pipe is not an IR, the compilation must fail.
             log("Node: {} is not pure".format(ast_nodes))
-            raise Exception('Not pure node in pipe')
+            raise UnparallelizableError('Not pure node in pipe')
 
     return [combined_nodes]
 
