@@ -742,7 +742,7 @@ class IR:
         elif splitter.is_splitter_consec_chunks():
             self.apply_consecutive_chunks_parallelization_to_node(node_id, parallelizer, fileIdGen, fan_out)
         else:
-            raise UnparallelizableError("Splitter not yet implemented")
+            raise UnparallelizableError("Splitter not yet implemented for command: {}".format(self.get_node(node_id=node_id).cmd_invocation_with_io_vars.cmd_name))
 
     def apply_round_robin_parallelization_to_node(self, node_id, parallelizer, fileIdGen, fan_out,
                                                   r_split_batch_size):
@@ -750,11 +750,11 @@ class IR:
         #  currently, this cannot be done since splitter etc. would be added...
         aggregator_spec = parallelizer.get_aggregator_spec()
         if aggregator_spec.is_aggregator_spec_adj_lines_merge():
-            raise UnparallelizableError("adj_lines_merge not yet implemented in PaSh")
+            raise AdjLineNotImplementedError("adj_lines_merge not yet implemented in PaSh")
         elif aggregator_spec.is_aggregator_spec_adj_lines_seq():
-            raise UnparallelizableError("adj_lines_seq not yet implemented in PaSh")
+            raise AdjLineNotImplementedError("adj_lines_seq not yet implemented in PaSh")
         elif aggregator_spec.is_aggregator_spec_adj_lines_func():
-            raise UnparallelizableError("adj_lines_func not yet implemented in PaSh")
+            raise AdjLineNotImplementedError("adj_lines_func not yet implemented in PaSh")
         # END of what to move
 
         node = self.get_node(node_id)
@@ -961,7 +961,7 @@ class IR:
                 # TODO: turn node into cmd_invocation_with_io_vars since this is the only thing required in this function
                 self.create_generic_aggregator_tree(original_cmd_invocation_with_io_vars, parallelizer, map_in_aggregator_ids, out_aggregator_id, fileIdGen)
             else:
-                raise UnparallelizableError("aggregator kind not yet implemented")
+                raise UnparallelizableError("aggregator kind not yet implemented for command: {}".format(original_cmd_invocation_with_io_vars.cmd_name))
         else: # we got auxiliary information
             assert(parallelizer.core_aggregator_spec.is_aggregator_spec_custom_2_ary())
             map_in_aggregator_ids = in_aggregator_ids
