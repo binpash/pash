@@ -96,7 +96,7 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
     except UnparallelizableError as e: 
         log("WARNING: Exception caught because some region(s) are unparallelizable:", e) 
         # log(traceback.format_exc()) # uncomment for exact trace report (PaSh user should see informative messages for unparellizable regions) 
-    except AdjLineNotImplementedError, NotImplementedError as e: 
+    except (AdjLineNotImplementedError, NotImplementedError) as e: 
         log("WARNING: Exception caught because some part is not implemented:", e)
         log(traceback.format_exc())
     except Exception as e:
