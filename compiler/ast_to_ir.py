@@ -8,6 +8,8 @@ from ir import *
 from util import *
 from parse import from_ast_objects_to_shell
 
+from custom_error import *
+
 ## TODO: Separate the ir stuff to the bare minimum and
 ##       try to move this to the shell_ast folder.
 

@@ -149,7 +149,7 @@ def compile_optimize_output_script(
 
         ret = optimized_ast_or_ir
     else:
-        raise Exception("Script failed to compile!")
+        raise UnparallelizableError("Script failed to compile!")
 
     return ret
 
