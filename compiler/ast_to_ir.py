@@ -159,7 +159,7 @@ def combine_pipe(ast_nodes):
     else:
         ## If any part of the pipe is not an IR, the compilation must fail.
         log("Node: {} is not pure".format(ast_nodes[0]))
-        raise Exception("Not pure node in pipe")
+        raise UnparallelizableError("Node: {} is not a pure node in pipe".format(ast_nodes[0]))
 
     ## Combine the rest of the nodes
     for ast_node in ast_nodes[1:]:
@@ -168,7 +168,7 @@ def combine_pipe(ast_nodes):
         else:
             ## If any part of the pipe is not an IR, the compilation must fail.
             log("Node: {} is not pure".format(ast_nodes))
-            raise Exception("Not pure node in pipe")
+            raise UnparallelizableError("This specific node: {} is not a pure node in pipe".format(ast_node))
 
     return [combined_nodes]
 
