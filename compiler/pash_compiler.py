@@ -4,6 +4,7 @@ import traceback
 from datetime import datetime
 
 from sh_expand import env_vars_util
+from sh_expand import ExpansionError 
 
 import config
 from ir import *

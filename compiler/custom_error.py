@@ -3,6 +3,3 @@ class UnparallelizableError(Exception):
 
 class AdjLineNotImplementedError(Exception):
     pass
-
-class ExpansionError(RuntimeError): 
-    pass 
