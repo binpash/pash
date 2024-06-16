@@ -17,31 +17,31 @@ if [ ! -f inputs/1M.txt ]; then
     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/1M.txt
 fi
 
-if [ ! -f inputs/10M.txt ]; then
-    touch inputs/10M.txt
+# if [ ! -f inputs/10M.txt ]; then
+#     touch inputs/10M.txt
 
-    for (( i = 0; i < 10; i++ )); do
-        cat inputs/1M.txt >>inputs/10M.txt
-    done
+#     for (( i = 0; i < 10; i++ )); do
+#         cat inputs/1M.txt >>inputs/10M.txt
+#     done
 
-    "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/10M.txt
-fi
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/10M.txt
+# fi
 
-if [ ! -f inputs/50M.txt ]; then
-    touch inputs/50M.txt
+# if [ ! -f inputs/50M.txt ]; then
+#     touch inputs/50M.txt
 
-    for (( i = 0; i < 5; i++ )); do
-        cat inputs/10M.txt >>inputs/50M.txt
-    done
+#     for (( i = 0; i < 50; i++ )); do
+#         cat inputs/1M.txt >>inputs/50M.txt
+#     done
 
-    "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/50M.txt
-fi
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/50M.txt
+# fi
 
 if [ ! -f inputs/100M.txt ]; then
     touch inputs/100M.txt
 
-    for (( i = 0; i < 2; i++ )); do
-        cat inputs/50M.txt >>inputs/100M.txt
+    for (( i = 0; i < 100; i++ )); do
+        cat inputs/1M.txt >>inputs/100M.txt
     done
 
     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/100M.txt
@@ -50,11 +50,21 @@ fi
 if [ ! -f inputs/200M.txt ]; then
     touch inputs/200M.txt
 
-    for (( i = 0; i < 2; i++ )); do
-        cat inputs/100M.txt >>inputs/200M.txt
+    for (( i = 0; i < 200; i++ )); do
+        cat inputs/1M.txt >>inputs/200M.txt
     done
 
     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/200M.txt
+fi
+
+if [ ! -f inputs/500M.txt ]; then
+    touch inputs/500M.txt
+
+    for (( i = 0; i < 500; i++ )); do
+        cat inputs/1M.txt >>inputs/500M.txt
+    done
+
+    "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/500M.txt
 fi
 
 if [ ! -f inputs/1G.txt ]; then

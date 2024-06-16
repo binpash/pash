@@ -14,5 +14,6 @@ cd "$(dirname "$0")" || exit 1
 }
 
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/inputs/all_cmds.txt}
-
-cat "$IN" | xargs file | grep "shell script" | cut -d: -f1 | xargs -L 1 wc -l | grep -v '^0$' | sort -n | head -15
+# cat "$IN" | xargs file | grep "shell script" | cut -d : -f 1 | xargs -L 1 wc -l | grep -v '^0$' | sort -n | head -n 15 > ${OUT}stdout.txt
+cat "$IN" | xargs file > ${OUT}stdout.txt
+# cat "$IN" | xargs file | grep "shell script" 

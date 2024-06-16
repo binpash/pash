@@ -10,4 +10,4 @@ cd "$(dirname "$0")" || exit 1
 
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/inputs/1G.txt}
 
-cat "$IN" | tr A-Z a-z | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4'
+cat "$IN" | tr A-Z a-z | grep '\(.\).*\1\(.\).*\2\(.\).*\3\(.\).*\4' > ${OUT}stdout.txt

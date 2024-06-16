@@ -4,8 +4,7 @@ cd "$(realpath $(dirname "$0"))"
 mkdir -p inputs
 cd inputs
 
-# inputs=(1 10 11 12 2 3 4 5 6 7 8 9.1 9.2 9.3 9.4 9.5 9.6 9.7 9.8 9.9)
-inputs=(9.7 9.8 9.9)
+inputs=(1 10 11 12 2 3 4 5 6 7 8 9.1 9.2 9.3 9.4 9.5 9.6 9.7 9.8 9.9)
 
 
 for input in ${inputs[@]}
@@ -23,11 +22,11 @@ do
         done
     fi
 
-    # if [ ! -f "${input}_3G.txt" ]; then
-    #     for (( i = 0; i < 3000; i++ )); do
-    #         cat "${input}_1M.txt" >> "${input}_3G.txt"
-    #     done
-    # fi
+    if [ ! -f "${input}_1G.txt" ]; then
+        for (( i = 0; i < 1000; i++ )); do
+            cat "${input}_1M.txt" >> "${input}_1G.txt"
+        done
+    fi
 
     echo "Finished processing ${input}.txt"
 done
