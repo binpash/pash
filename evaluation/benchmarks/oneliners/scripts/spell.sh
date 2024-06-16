@@ -9,15 +9,18 @@ cd "$(dirname "$0")" || exit 1
   exit
 }
 
-IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/inputs/1G.txt}
+IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/inputs/1M.txt}
 DICT=${DICT:-$PASH_TOP/evaluation/benchmarks/oneliners/inputs/dict.txt}
 
 cat "$IN" |
-    iconv -f utf-8 -t ascii//translit | # remove non utf8 characters
+    # iconv -f utf-8 -t ascii//translit | # remove non utf8 characters
     col -bx |                           # remove backspaces / linefeeds
     tr -cs A-Za-z '\n' |
     tr A-Z a-z |                        # map upper to lower case
     tr -d '[:punct:]' |                 # remove punctuation
-    sort |                              # put words in alphabetical order
+    # sort |                              # put words in alphabetical order
     uniq |                              # remove duplicate words
-    comm -23 - "$DICT"                  # report words not in dictionary
+    comm -23 - "$DICT" > ${OUT}stdout.txt               # report words not in dictionary 
+
+
+# cat "$DICT" | sort > ${OUT}dict_sorted.txt

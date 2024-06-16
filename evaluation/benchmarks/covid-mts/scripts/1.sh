@@ -9,3 +9,4 @@ cat "$IN" |                         # assumes saved input
   sort |                            # preparing for uniq
   uniq -c |                         # count unique dates
   awk "{print \$2,\$1}"             # print first date, then count
+  > "$OUT"stdout.txt                          # save output
