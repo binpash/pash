@@ -21,11 +21,12 @@ S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 
 INPUTS=(
   # 1G.txt
-  1M.txt
+  # 1M.txt
   # 10M.txt
   # 50M.txt
-  # 100M.txt
+  100M.txt
   # 200M.txt
+  # 500M.txt
   # all_cmds.txt
   # dict.txt
 )
@@ -34,5 +35,5 @@ for INPUT in "${INPUTS[@]}"; do
   INPUT_PATH="$INPUTS_DIR/$INPUT"
   S3_URI=$S3_BUCKET_PREFIX/$S3_INPUTS_DIR/$INPUT
   echo "Uploading $INPUT_PATH to $S3_URI"
-  # aws s3 cp "$INPUT_PATH" "$S3_URI"
+  aws s3 cp "$INPUT_PATH" "$S3_URI"
 done

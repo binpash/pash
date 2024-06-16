@@ -20,26 +20,47 @@ S3_BENCHMARK_DIR="unix50"
 S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 
 INPUTS=(
-  1_1M.txt
-  10_1M.txt
-  11_1M.txt
-  12_1M.txt
-  2_1M.txt
-  3_1M.txt
-  4_1M.txt
-  5_1M.txt
-  6_1M.txt
-  7_1M.txt
-  8_1M.txt
-  9.1_1M.txt
-  9.2_1M.txt
-  9.3_1M.txt
-  9.4_1M.txt
-  9.5_1M.txt
-  9.6_1M.txt
-  9.7_1M.txt
-  9.8_1M.txt
-  9.9_1M.txt
+  # 1_1M.txt
+  # 10_1M.txt
+  # 11_1M.txt
+  # 12_1M.txt
+  # 2_1M.txt
+  # 3_1M.txt
+  # 4_1M.txt
+  # 5_1M.txt
+  # 6_1M.txt
+  # 7_1M.txt
+  # 8_1M.txt
+  # 9.1_1M.txt
+  # 9.2_1M.txt
+  # 9.3_1M.txt
+  # 9.4_1M.txt
+  # 9.5_1M.txt
+  # 9.6_1M.txt
+  # 9.7_1M.txt
+  # 9.8_1M.txt
+  # 9.9_1M.txt
+
+  1_1G.txt
+  # 10_1G.txt
+  # 11_1G.txt
+  # 12_1G.txt
+  # 2_1G.txt
+  # 3_1G.txt
+  # 4_1G.txt
+  # 5_1G.txt
+  # 6_1G.txt
+  # 7_1G.txt
+  # 8_1G.txt
+  # 9.1_1G.txt
+  # 9.2_1G.txt
+  # 9.3_1G.txt
+  # 9.4_1G.txt
+  # 9.5_1G.txt
+  # 9.6_1G.txt
+  # 9.7_1G.txt
+  # 9.8_1G.txt
+  # 9.9_1G.txt
 )
 
 for INPUT in "${INPUTS[@]}"; do

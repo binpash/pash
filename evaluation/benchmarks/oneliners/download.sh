@@ -28,9 +28,9 @@ S3_OUTPUTS_DIR="$S3_BENCHMARK_DIR/outputs"
 
 CONFIGS=(
   # AWS:2048M:Bash:1
-  AWS:2048M:Splash:1
+  # AWS:2048M:Splash:1
   # AWS:2048M:Splash:2
-  # AWS:2048M:Splash:4
+  AWS:2048M:Splash:4
   # AWS:2048M:Splash:8
   # AWS:2048M:Splash:16
   # AWS:2048M:Splash:32
@@ -38,13 +38,13 @@ CONFIGS=(
 )
 
 SCRIPTS=(
-    nfa-regex.sh
+    # nfa-regex.sh
     # shortest-scripts.sh
-    # sort-sort.sh
-    # sort.sh
-    # spell.sh
-    # top-n.sh
-    # wf.sh
+    sort-sort.sh
+    sort.sh
+    spell.sh
+    top-n.sh
+    wf.sh
 )
 
 if [[ "$*" == *"--small"* ]]
@@ -66,9 +66,9 @@ do
         OUTPUT="${SCRIPT}__env${ENVIRONMENT}__mem${MEMORY}__sys${SYSTEM}__w${WIDTH}${INPUT_TYPE}.out"
 
         OUTPUT_PATH="$OUTPUTS_DIR/$OUTPUT"
-        S3_URI=$S3_BUCKET_PREFIX/$S3_OUTPUTS_DIR/$OUTPUT
+        S3_URI=$S3_BUCKET_PREFIX/$S3_OUTPUTS_DIR/$OUTPUT/stdout.txt
 
-        echo "Downloading $S3_URI to $OUTPUT_PATH"
+        echo "Downloading $S3_URI to $OUTPUT_PATH" 
 
         aws s3 cp  "$S3_URI" "$OUTPUTS_DIR/$OUTPUT"
     done
