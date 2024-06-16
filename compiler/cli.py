@@ -57,7 +57,12 @@ class BaseParser(argparse.ArgumentParser):
         )
         self.add_argument(
             "--assert_compiler_success",
-            help="assert that the compiler succeeded (used to make tests more robust)",
+            help="assert that the compiler succeeded with no general error occuring",
+            action="store_true",
+        )
+        self.add_argument(
+            "--assert_all_regions_parallelizable",
+            help="assert that the compiler succeeded with all regions being parallelizable and no general error occuring (used to make tests more robust)",
             action="store_true",
         )
         self.add_argument(

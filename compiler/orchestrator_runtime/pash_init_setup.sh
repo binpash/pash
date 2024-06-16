@@ -13,6 +13,7 @@ export pash_output_time_flag=1
 export pash_execute_flag=1
 export pash_dry_run_compiler_flag=0
 export pash_assert_compiler_success_flag=0
+export pash_assert_all_regions_parallelizable_flag=0
 export pash_checking_log_file=0
 export pash_checking_debug_level=0
 export pash_avoid_pash_runtime_completion_flag=0
@@ -49,6 +50,10 @@ do
 
     if [ "--assert_compiler_success" == "$item" ]; then
         export pash_assert_compiler_success_flag=1
+    fi
+
+    if [ "--assert_all_regions_parallelizable" == "$item" ]; then
+        export pash_assert_all_regions_parallelizable_flag=1
     fi
 
     if [ "--log_file" == "$item" ]; then

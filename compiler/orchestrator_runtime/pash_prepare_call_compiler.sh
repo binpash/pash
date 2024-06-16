@@ -33,6 +33,12 @@ pash_redir_output echo "$$: (2) Before asking the daemon for compilation..."
 msg="Compile:${pash_compiled_script_file}| Variable File:${pash_runtime_shell_variables_file}| Input IR File:${pash_input_ir_file}"
 daemon_response=$(pash_communicate_daemon "$msg") # Blocking step, daemon will not send response until it's safe to continue
 
+if [[ "$daemon_response" == *"not all regions are parallelizable"* ]]; then
+    pash_all_region_parallelizable=1 
+else 
+    pash_all_region_parallelizable=0 
+fi
+
 if [[ "$daemon_response" == *"OK:"* ]]; then
     pash_runtime_return_code=0
 elif [ -z "$daemon_response" ]; then
@@ -51,7 +57,20 @@ response_args=($daemon_response)
 process_id=${response_args[1]}
 
 pash_redir_output echo "$$: (2) Compiler exited with code: $pash_runtime_return_code"
-if [ "$pash_runtime_return_code" -ne 0 ] && [ "$pash_assert_compiler_success_flag" -eq 1 ]; then
+
+## only when --assert_all_regions_parallellizable is used do we care about all regions being parallelizable
+if [ "$pash_all_region_parallelizable" -ne 0 ] && [ "$pash_assert_all_regions_parallelizable_flag" -eq 1 ]; then
+    pash_redir_output echo "$$: ERROR: (2) Compiler failed with error code because some regions were not parallelizable: $pash_all_region_parallelizable while assert_all_regions_parallelizable_flag was enabled! Exiting PaSh..."
+    exit 1
+fi
+
+if [ "$pash_runtime_return_code" -ne 0 ] && [ "$pash_assert_all_regions_parallelizable_flag" -eq 1 ]; then
+    pash_redir_output echo "$$: ERROR: (2) Compiler failed with error code: $pash_runtime_return_code while assert_all_regions_parallelizable_flag was enabled! Exiting PaSh..."
+    exit 1
+fi
+
+## for pash_assert_compiler_success_flag, exit when return code is 0 (general exception caught) and not when all regions are parallelizable
+if [ "$pash_runtime_return_code" -ne 0 ] && [ "$pash_all_region_parallelizable" -eq 0 ] && [ "$pash_assert_compiler_success_flag" -eq 1 ]; then
     pash_redir_output echo "$$: ERROR: (2) Compiler failed with error code: $pash_runtime_return_code while assert_compiler_success was enabled! Exiting PaSh..."
     exit 1
 fi

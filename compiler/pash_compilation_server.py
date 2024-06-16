@@ -14,6 +14,7 @@ from dspash.worker_manager import WorkersManager
 import server_util
 
 from cli import BaseParser
+from custom_error import * 
 
 ##
 ## A Daemon (not with the strict Unix sense)
@@ -252,6 +253,7 @@ class Scheduler:
         process_id = self.get_next_id()
         run_parallel = False
         compile_success = False
+        all_region_parallelizable = True 
 
         variable_reading_start_time = datetime.now()
         # Read any shell variables files if present
@@ -269,9 +271,15 @@ class Scheduler:
         ## Add the process_id -> input_ir mapping
         self.add_proc_id_map(process_id, input_ir_file, compiler_config)
 
-        ast_or_ir = pash_compiler.compile_ir(
-            input_ir_file, compiled_script_file, config.pash_args, compiler_config
-        )
+        # check if any general exceptions are caught to report to --assert_compiler_success flag 
+        try: 
+            ast_or_ir = pash_compiler.compile_ir(
+                input_ir_file, compiled_script_file, config.pash_args, compiler_config
+            )
+        except NotAllRegionParallelizableError: 
+            ast_or_ir = None 
+            all_region_parallelizable = False
+                    
 
         daemon_compile_end_time = datetime.now()
         print_time_delta(
@@ -321,19 +329,28 @@ class Scheduler:
         else:
             ## Wait if we have more pipelines running than our current limit
             self.wait_until_limit(config.pash_args.parallel_pipelines_limit)
-
+        
         if compile_success:
             response = server_util.success_response(
                 f"{process_id} {compiled_script_file} {var_file} {input_ir_file}"
             )
+        elif not all_region_parallelizable: 
+            # send specified message to say not all regions are parallelizable instead of general exception caught
+            response = server_util.error_response(f"{process_id} not all regions are parallelizable; failed to compile")
+            self.unsafe_running = True
         else:
             response = server_util.error_response(f"{process_id} failed to compile")
             self.unsafe_running = True
+           
 
-        ## Do not increase the running procs if assert_compiler_success is enabled
+        ## Do not increase the running procs if assert_all_regions_parallelizable is enabled
         ##  and compilation failed, since nothing will run then.
-        if not compile_success and config.pash_args.assert_compiler_success:
-            pass
+        ## Do not increase when compile is not successful but regions are parallelizable (in the case that general exceptions are caught), 
+        ##  nothing will run in this case also 
+        if (not compile_success and config.pash_args.assert_all_regions_parallelizable): 
+            pass 
+        elif (not compile_success and all_region_parallelizable and config.pash_args.assert_compiler_success): 
+            pass 
         else:
             self.running_procs += 1
 

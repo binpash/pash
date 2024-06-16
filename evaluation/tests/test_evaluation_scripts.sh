@@ -189,7 +189,7 @@ execute_tests() {
 }
 
 execute_tests "" "${script_microbenchmarks[@]}"
-execute_tests "--assert_compiler_success" "${pipeline_microbenchmarks[@]}"
+execute_tests "--assert_all_regions_parallelizable" "${pipeline_microbenchmarks[@]}"
 
 #cat ${results_time} | sed 's/,/./' > /tmp/a
 #cat /tmp/a | sed 's/@/,/' > ${results_time}
