@@ -10,3 +10,4 @@ cat "$IN" |                     # assumes saved input
   uniq -c |                     # count hours per bus
   sort -k 1 -n |                # sort in reverse numerical order
   awk "{print \$2,\$1}"         # print first date, then count
+  > "$OUT"stdout.txt                      # save output

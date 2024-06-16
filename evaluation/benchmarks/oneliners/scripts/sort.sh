@@ -10,4 +10,4 @@ cd "$(dirname "$0")" || exit 1
 
 IN=${IN:-$PASH_TOP/evaluation/benchmarks/oneliners/inputs/1G.txt}
 
-cat "$IN" | sort
+cat "$IN" | sort > ${OUT}stdout.txt

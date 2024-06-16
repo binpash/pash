@@ -97,7 +97,7 @@ do
         OUTPUT="${SCRIPT}__env${ENVIRONMENT}__mem${MEMORY}__sys${SYSTEM}__w${WIDTH}${INPUT_TYPE}.out"
 
         OUTPUT_PATH="$OUTPUTS_DIR/$OUTPUT"
-        S3_URI=$S3_BUCKET_PREFIX/$S3_OUTPUTS_DIR/$OUTPUT
+        S3_URI=$S3_BUCKET_PREFIX/$S3_OUTPUTS_DIR/$OUTPUT/stdout.txt
 
         echo "Downloading $S3_URI to $OUTPUT_PATH"
 

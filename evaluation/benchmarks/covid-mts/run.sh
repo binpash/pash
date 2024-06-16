@@ -36,10 +36,10 @@ S3_OUTPUTS_DIR="$S3_BENCHMARK_DIR/outputs"
 
 # ENVIRONMENT, MEMORY, SYSTEM, WIDTH
 CONFIGS=(
-  Local:16G:Bash:1
+  # Local:16G:Bash:1
   # AWS:2048M:Bash:1
   # AWS:2048M:Splash:1
-  # AWS:2048M:Splash:2
+  AWS:2048M:Splash:2
   # AWS:2048M:Splash:4
   # AWS:2048M:Splash:8
   # AWS:2048M:Splash:16
@@ -59,10 +59,10 @@ then
   INPUT_TYPE=".small"
 else
   SCRIPTS_INPUTS=(
-    1.sh:in.csv
-    2.sh:in.csv
-    3.sh:in.csv
-    4.sh:in.csv
+    # 1.sh:in_200M.csv
+    # 2.sh:in_500M.csv
+    3.sh:in_500M.csv
+    # 4.sh:in_1G.csv
     # 5.sh:in.csv
   )
   INPUT_TYPE=""
@@ -89,7 +89,7 @@ do
     TIME_PATH="${TIMES_DIR}/${TIME}"
 
     S3_INPUT_PATH="${S3_INPUTS_DIR}/${INPUT}"
-    S3_OUTPUT_PATH="${S3_OUTPUTS_DIR}/${OUTPUT}"
+    S3_OUTPUT_PATH="${S3_OUTPUTS_DIR}/${OUTPUT}/"
 
     echo "CONFIG: $CONFIG, SCRIPT_INPUT: $SCRIPT_INPUT"
 
@@ -104,7 +104,7 @@ do
       echo "Running $SCRIPT with $ENVIRONMENT:$SYSTEM on $S3_INPUT_PATH"
       python3 "$PASH_TOP"/scripts/serverless/delete-log-streams.py
       time IN=$S3_INPUT_PATH "$PASH_TOP"/pa.sh -w "$WIDTH" --serverless_exec "$SCRIPT_PATH" --sls_output "$S3_OUTPUT_PATH"
-      { time IN=$S3_INPUT_PATH "$PASH_TOP"/pa.sh -w "$WIDTH" --serverless_exec "$SCRIPT_PATH" --sls_output "$S3_OUTPUT_PATH" ; } 2>"$TIME_PATH"
+      { time IN=$S3_INPUT_PATH OUT=$S3_OUTPUT_PATH "$PASH_TOP"/pa.sh -w "$WIDTH" --serverless_exec "$SCRIPT_PATH" ; } 2>"$TIME_PATH"
     fi
 
     grep real "$TIME_PATH"
