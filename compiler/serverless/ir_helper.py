@@ -160,7 +160,10 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         mk_dirs = "mkdir -p "+config.PASH_TMP_PREFIX+" \n"
         for dir in dir_set:
             mk_dirs += "mkdir -p "+dir+" \n"
-        script = mk_dirs+to_shell(subgraph, args)
+        # rust_debug = "export RUST_BACKTRACE=full\n"
+        export_path = "export PATH=$PATH:runtime\n"
+        export_lib_path = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:runtime/lib\n"
+        script = export_path+export_lib_path+mk_dirs+to_shell(subgraph, args)
         # generate scripts
         script_name = os.path.join(config.PASH_TMP_PREFIX, str(id_))
         script_id_to_script[str(id_)] = script
