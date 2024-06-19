@@ -378,8 +378,16 @@ class RequestHandler(Thread):
             else:
                 self.rh_print(f"Temp dir size: {result1.stdout.split()[0]}")
 
-        shutil.rmtree(self.pash_tmp_prefix)
-        self.rh_print(f"Temporary directory deleted: {self.pash_tmp_prefix}")
+        if self.debug:
+            self.rh_print(f"Skipping deleting temporary directory ({self.pash_tmp_prefix}) as debug enabled")
+            datastream_directory = os.path.join(self.pash_tmp_prefix, 'datastream')
+            if os.path.exists(datastream_directory):
+                shutil.rmtree(datastream_directory)
+                self.rh_print(f"Datastream directory deleted: {datastream_directory}")
+        else:
+            if os.path.exists(self.pash_tmp_prefix):
+                shutil.rmtree(self.pash_tmp_prefix)
+                self.rh_print(f"Temporary directory deleted: {self.pash_tmp_prefix}")
 
     def rh_print(self, *args):
         if DEBUG:
