@@ -196,7 +196,7 @@ class RequestHandler(Thread):
                     delay = 100
                     self.rh_print(f"Script \"{self.script_name}\" don't have any last_exec_time, setting delay to {delay} millis.")
             self.rh_print(f"Starting killer thread for script \"{self.script_name}\"! Delay is {delay} millis.")
-            Thread(target=self.kill, args=(delay)).start()
+            Thread(target=self.kill, args=(delay,)).start()
         else:
             # This should never happen with the new approach
             self.rh_print(f"Kill target {self.kill_target} is not this node, skipping kill")
