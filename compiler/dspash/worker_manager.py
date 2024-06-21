@@ -575,6 +575,10 @@ class WorkersManager():
                     for worker, subgraph in worker_subgraph_pairs:
                         worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, merger_id)
 
+                if self.args.debug:
+                    for worker, subgraph in worker_subgraph_pairs:
+                        log(f"WM: Assigned subgraph {subgraph.id} to {worker}")
+
                 log(f"WM: Sent all graph exec requests at {time.time() - start_time} seconds")
 
             else:
