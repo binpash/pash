@@ -81,10 +81,6 @@ class RequestHandler(Thread):
         self.killed = False
 
     def run(self):
-        if self.debug:
-            profiler = cProfile.Profile()
-            profiler.enable()
-
         with self.conn:
             err_print('Connected by', self.addr, 'name', self.name)
             self.start_time = time.time()
@@ -121,10 +117,10 @@ class RequestHandler(Thread):
                 send_success(self.conn, self.body)
             if doCleanup:
                 self.cleanup()
-        if self.debug:
-            profiler.disable()
+        if self.debug > 2:
+            self.profiler.disable()
             s = io.StringIO()
-            ps = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
+            ps = pstats.Stats(self.profiler, stream=s).sort_stats('cumulative')
             ps.print_stats()
             with open(f"W_profile.log", "w") as f:
                 f.write(s.getvalue())
@@ -150,6 +146,10 @@ class RequestHandler(Thread):
             self.stderr=None
         else:
             self.stderr=subprocess.DEVNULL
+
+        if self.debug > 2:
+            self.profiler = cProfile.Profile()
+            self.profiler.enable()
 
         if self.ft == "optimized":
             self.event_loop = EventLoop(self)
@@ -360,7 +360,7 @@ class RequestHandler(Thread):
         self.rh_print(f"{self.time_recorder.name} joined")
 
         elapsed_time = end_time - self.start_time
-        self.rh_print(f"Execution took {elapsed_time} seconds")
+        self.rh_print(f"Execution took {elapsed_time} seconds for \"{self.script_name}\"")
 
         if not self.kill_target and hasattr(self, "first_request_time"):
             elapsed_time_for_killing = max(end_time - self.first_request_time, 0)
