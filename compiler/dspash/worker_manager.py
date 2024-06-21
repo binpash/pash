@@ -468,7 +468,7 @@ class WorkersManager():
         log(f"WM: Sent kill node request to {kill_target}")
 
     def run(self):
-        if self.args.debug and self.args.debug != 0:
+        if self.args.debug and self.args.debug > 2:
             profiler = cProfile.Profile()
             profiler.enable()
         
@@ -495,7 +495,7 @@ class WorkersManager():
                     if self.args.ft != "naive":
                         self.daemon_quit.set()
                 log(f"WM: Done at {time.time() - start_time} seconds")
-                if self.args.debug and self.args.debug != 0:
+                if self.args.debug and self.args.debug > 2:
                     profiler.disable()
                     s = io.StringIO()
                     ps = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
