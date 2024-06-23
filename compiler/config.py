@@ -182,10 +182,10 @@ def add_common_arguments(parser):
                         default="disabled")
     parser.add_argument("--split",
                         help="determines how many sub blocks each hdfs block will be split. Default is 8 which means 16MB per sub-block. Only works if distributed_exec and optimized ft is used.",
-                        default="8")
+                        default="1")
     parser.add_argument("--pool",
-                        help="determines the pool size of optimized ft. Default is 8. Only works if distributed_exec and optimized ft is used.",
-                        default="8")
+                        help="determines the pool size of optimized ft. Default is auto which sets it to the number of cores. Only works if distributed_exec and optimized ft is used.",
+                        default="auto")
     parser.add_argument("--config_path",
                         help="determines the config file path. By default it is 'PASH_TOP/compiler/config.yaml'.",
                         default="")

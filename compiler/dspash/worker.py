@@ -127,7 +127,10 @@ class RequestHandler(Thread):
 
     def handle_setup_request(self):
         self.debug = int(self.request['debug'])
-        self.pool_size = int(self.request['pool_size'])
+        if self.request['pool_size'] == "auto":
+            self.pool_size = os.cpu_count()
+        else:
+            self.pool_size = int(self.request['pool_size'])
         self.ft = self.request['ft']
         self.script_name = self.request['script_name']
         # here we won't be receiving the address but we are still required
