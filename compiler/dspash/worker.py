@@ -226,8 +226,9 @@ class RequestHandler(Thread):
         self.rh_print(f"Just killed! {t3 - t1} seconds after")
 
     def handle_exec_graph_request(self):
+        self.rh_print(f"Exec graph request received, id: {self.request['graph'].id}, merger {self.request['graph'].merger}")
         if self.killed:
-            self.rh_print("Killed, skipping exec request")
+            self.rh_print(f"Killed, skipping exec request, id: {self.request['graph'].id}, merger {self.request['graph'].merger}")
             return
 
         if self.ft != "optimized":
@@ -255,6 +256,8 @@ class RequestHandler(Thread):
 
         rc = subprocess.Popen(cmd, env=e, executable="/bin/bash", shell=True, stderr=self.stderr, preexec_fn=os.setsid)
         self.rc_graph_merger_list.append((rc, script_path, self.request['merger_id']))
+
+        self.rh_print(f"Exec graph request handled, id: {self.request['graph'].id}, merger {self.request['graph'].merger}")
 
     def handle_batch_exec_graph(self):
         if self.killed:
