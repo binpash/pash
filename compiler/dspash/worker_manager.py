@@ -1,7 +1,7 @@
 from collections import defaultdict
 import socket
 import os
-from threading import Event, Thread
+from threading import Event, Thread, Lock
 import time
 import queue
 import pickle
@@ -160,6 +160,7 @@ class WorkersManager():
         #       information from the Exec-Graph request from teh client node.
         self.client_worker = WorkerConnection("client_worker", self.host, PORT_CLIENT, self.args)
         self.kill_node_req_sent = False
+        self.reschedule_lock = Lock()
 
         if self.args.ft != "disabled":
             self.all_worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]] = []
@@ -233,6 +234,7 @@ class WorkersManager():
         if self.args.ft != "disabled":
             try:
                 start = time.time()
+                self.reschedule_lock.acquire()
                 if self.args.ft == "naive":
                     self.handle_naive_crash(addr)
                 else:
@@ -241,6 +243,8 @@ class WorkersManager():
             except Exception as e:
                 error_trace = traceback.format_exc()
                 log(f"WM: Failed to handle ft re-execution with error {e}\n{error_trace}")
+            finally:
+                self.reschedule_lock.release()
 
     # pip install grpcio-tools
     # python -m grpc_tools.protoc -Idspash/proto=. --python_out=/home/ramiz/dish/pash/compiler --grpc_python_out=/home/ramiz/dish/pash/compiler *.proto
@@ -467,6 +471,86 @@ class WorkersManager():
         self.kill_node_req_sent = True
         log(f"WM: Sent kill node request to {kill_target}")
 
+    def handle_exec_graph(self, request, dspash_socket, conn, start_time):
+        args = request.split(':', 1)[1].strip()
+        filename, declared_functions_file = args.split()
+
+        worker_subgraph_pairs, shell_vars, main_graph, uuid_to_graphs = prepare_graph_for_remote_exec(filename, self.get_worker)
+        worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]]
+        if self.args.kill and not self.kill_node_req_sent:
+            self.handle_kill(worker_subgraph_pairs)
+
+        log(f"WM: Will split graph at {time.time() - start_time} seconds")
+        # Split main_graph
+        main_reader_graph, main_writer_graphs = split_main_graph(main_graph, uuid_to_graphs)
+        log(f"WM: Graph split at {time.time() - start_time} seconds")
+
+        # If main_writer_graphs, add (client_worker, main_writer_graphs) tp worker_subgraph_pairs
+        for main_writer_graph in main_writer_graphs:                    
+            worker_subgraph_pairs.append((self.client_worker, main_writer_graph))
+        script_fname = to_shell_file(main_reader_graph, self.args)
+        log(f"WM: Master node graph stored in {script_fname} at {time.time() - start_time} seconds")
+
+        # Read functions
+        log(f"WM: Functions stored in {declared_functions_file} at {time.time() - start_time} seconds")
+        declared_functions = read_file(declared_functions_file)
+
+        merger_id = -1
+        if self.args.ft != "disabled":
+            # Update the Worker Manager state for fault tolerance
+            for _, subgraph in worker_subgraph_pairs:                        
+                if subgraph.merger:
+                    merger_id = subgraph.id
+                    break                  
+            assert merger_id != -1, "No merger found in the subgraphs"
+            self.all_worker_subgraph_pairs.extend(worker_subgraph_pairs)
+            self.all_merger_to_shell_vars[merger_id] = shell_vars
+            self.all_merger_to_declared_functions[merger_id] = declared_functions
+            self.all_uuid_to_graphs.update(uuid_to_graphs)
+            for uuid, (from_graph, _) in uuid_to_graphs.items():
+                self.all_graph_to_uuid[from_graph].append(uuid)
+            self.all_merger_to_subgraph[merger_id] = [subgraph.id for _, subgraph in worker_subgraph_pairs]
+            self.all_subgraph_to_merger.update({subgraph.id: merger_id for _, subgraph in worker_subgraph_pairs})
+            log(f"WM: Worker Manager state updated for merger {merger_id} at {time.time() - start_time} seconds")
+
+        # Report to main shell a script to execute
+        response_msg = f"OK {script_fname}"
+        dspash_socket.respond(response_msg, conn)
+
+        if self.args.ft == "optimized":
+            worker_to_regulars = defaultdict(list)
+            worker_to_mergers = defaultdict(list)
+            for worker, subgraph in worker_subgraph_pairs:
+                if subgraph.merger:
+                    worker_to_mergers[worker].append(subgraph)
+                else:
+                    worker_to_regulars[worker].append(subgraph)
+
+            for worker in self.all_workers:
+                worker.send_batch_graph_exec_request(
+                    shell_vars,
+                    declared_functions,
+                    merger_id,
+                    worker_to_regulars[worker],
+                    worker_to_mergers[worker]
+                )
+
+            log(f"WM: Sent async batch graph exec requests (optimized) at {time.time() - start_time} seconds")
+            for worker in self.all_workers:
+                worker.handle_response()
+        else:
+            # Execute subgraphs on workers
+            for worker, subgraph in worker_subgraph_pairs:
+                log(f"WM: Assigned subgraph {subgraph.id} to {worker}, online is {worker.is_online()} at {time.time() - start_time} seconds")
+                worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, merger_id)
+                log(f"WM: Sent subgraph {subgraph.id} to {worker}, online is {worker.is_online()} at {time.time() - start_time} seconds")
+
+        if self.args.debug:
+            for worker, subgraph in worker_subgraph_pairs:
+                log(f"WM: Assigned subgraph {subgraph.id} to {worker}")
+
+        log(f"WM: Sent all graph exec requests at {time.time() - start_time} seconds")
+
     def run(self):
         if self.args.debug and self.args.debug > 2:
             profiler = cProfile.Profile()
@@ -504,85 +588,14 @@ class WorkersManager():
                         f.write(s.getvalue())
                 break
             elif request.startswith("Exec-Graph"):
-                args = request.split(':', 1)[1].strip()
-                filename, declared_functions_file = args.split()
-
-                worker_subgraph_pairs, shell_vars, main_graph, uuid_to_graphs = prepare_graph_for_remote_exec(filename, self.get_worker)
-                worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]]
-                if self.args.kill and not self.kill_node_req_sent:
-                    self.handle_kill(worker_subgraph_pairs)
-
-                log(f"WM: Will split graph at {time.time() - start_time} seconds")
-                # Split main_graph
-                main_reader_graph, main_writer_graphs = split_main_graph(main_graph, uuid_to_graphs)
-                log(f"WM: Graph split at {time.time() - start_time} seconds")
-
-                # If main_writer_graphs, add (client_worker, main_writer_graphs) tp worker_subgraph_pairs
-                for main_writer_graph in main_writer_graphs:                    
-                    worker_subgraph_pairs.append((self.client_worker, main_writer_graph))
-                script_fname = to_shell_file(main_reader_graph, self.args)
-                log(f"WM: Master node graph stored in {script_fname} at {time.time() - start_time} seconds")
-
-                # Read functions
-                log(f"WM: Functions stored in {declared_functions_file} at {time.time() - start_time} seconds")
-                declared_functions = read_file(declared_functions_file)
-
-                merger_id = -1
-                if self.args.ft != "disabled":
-                    # Update the Worker Manager state for fault tolerance
-                    for _, subgraph in worker_subgraph_pairs:                        
-                        if subgraph.merger:
-                            merger_id = subgraph.id
-                            break                  
-                    assert merger_id != -1, "No merger found in the subgraphs"
-                    self.all_worker_subgraph_pairs.extend(worker_subgraph_pairs)
-                    self.all_merger_to_shell_vars[merger_id] = shell_vars
-                    self.all_merger_to_declared_functions[merger_id] = declared_functions
-                    self.all_uuid_to_graphs.update(uuid_to_graphs)
-                    for uuid, (from_graph, _) in uuid_to_graphs.items():
-                        self.all_graph_to_uuid[from_graph].append(uuid)
-                    self.all_merger_to_subgraph[merger_id] = [subgraph.id for _, subgraph in worker_subgraph_pairs]
-                    self.all_subgraph_to_merger.update({subgraph.id: merger_id for _, subgraph in worker_subgraph_pairs})
-                    log(f"WM: Worker Manager state updated for merger {merger_id} at {time.time() - start_time} seconds")
-
-                # Report to main shell a script to execute
-                response_msg = f"OK {script_fname}"
-                dspash_socket.respond(response_msg, conn)
-
-                if self.args.ft == "optimized":
-                    worker_to_regulars = defaultdict(list)
-                    worker_to_mergers = defaultdict(list)
-                    for worker, subgraph in worker_subgraph_pairs:
-                        if subgraph.merger:
-                            worker_to_mergers[worker].append(subgraph)
-                        else:
-                            worker_to_regulars[worker].append(subgraph)
-
-                    for worker in self.all_workers:
-                        worker.send_batch_graph_exec_request(
-                            shell_vars,
-                            declared_functions,
-                            merger_id,
-                            worker_to_regulars[worker],
-                            worker_to_mergers[worker]
-                        )
-
-                    log(f"WM: Sent async batch graph exec requests (optimized) at {time.time() - start_time} seconds")
-                    for worker in self.all_workers:
-                        worker.handle_response()
-                else:
-                    # Execute subgraphs on workers
-                    for worker, subgraph in worker_subgraph_pairs:
-                        log(f"WM: Assigned subgraph {subgraph.id} to {worker}, online is {worker.is_online()} at {time.time() - start_time} seconds")
-                        worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, merger_id)
-                        log(f"WM: Sent subgraph {subgraph.id} to {worker}, online is {worker.is_online()} at {time.time() - start_time} seconds")
-
-                if self.args.debug:
-                    for worker, subgraph in worker_subgraph_pairs:
-                        log(f"WM: Assigned subgraph {subgraph.id} to {worker}")
-
-                log(f"WM: Sent all graph exec requests at {time.time() - start_time} seconds")
-
+                try:
+                    # Reschedulting must never happen with scheduling
+                    # This can happen with dependency untangling and lots of small inputs
+                    # Example: nlp 1000 books
+                    self.reschedule_lock.acquire()
+                    self.handle_exec_graph(request, dspash_socket, conn, start_time)
+                finally:
+                    self.reschedule_lock.release()
             else:
                 if self.args.ft != "disabled":
                     stop_hdfs_daemon()
