@@ -531,13 +531,14 @@ class WorkersManager():
                     worker_to_regulars[worker].append(subgraph)
 
             for worker in self.all_workers:
-                worker.send_batch_graph_exec_request(
-                    shell_vars,
-                    declared_functions,
-                    merger_id,
-                    worker_to_regulars[worker],
-                    worker_to_mergers[worker]
-                )
+                if worker_to_regulars[worker] or worker_to_mergers[worker]:
+                    worker.send_batch_graph_exec_request(
+                        shell_vars,
+                        declared_functions,
+                        merger_id,
+                        worker_to_regulars[worker],
+                        worker_to_mergers[worker]
+                    )
 
             log(f"WM: Sent async batch graph exec requests (optimized) at {time.time() - start_time} seconds")
             for worker in self.all_workers:
