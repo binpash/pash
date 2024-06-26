@@ -573,7 +573,9 @@ class WorkersManager():
                 else:
                     # Execute subgraphs on workers
                     for worker, subgraph in worker_subgraph_pairs:
+                        log(f"WM: Assigned subgraph {subgraph.id} to {worker}, online is {worker.is_online()} at {time.time() - start_time} seconds")
                         worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, merger_id)
+                        log(f"WM: Sent subgraph {subgraph.id} to {worker}, online is {worker.is_online()} at {time.time() - start_time} seconds")
 
                 if self.args.debug:
                     for worker, subgraph in worker_subgraph_pairs:
