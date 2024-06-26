@@ -220,6 +220,7 @@ class WorkersManager():
         addrs = {conn.host() for conn in self.workers}
         if self.args.ft != "disabled":
             start_hdfs_daemon(10, addrs, self.addr_added, self.addr_removed)
+            log(f"WM: Started HDFS daemon")
 
     def addr_added(self, addr: str):
         log(f"WM: Added {addr} to active nodes")
