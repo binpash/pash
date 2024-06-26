@@ -531,7 +531,7 @@ class WorkersManager():
                     worker_to_regulars[worker].append(subgraph)
 
             for worker in self.all_workers:
-                if worker_to_regulars[worker] or worker_to_mergers[worker]:
+                if len(worker_to_regulars[worker]) > 0 or len(worker_to_mergers[worker]) > 0:
                     worker.send_batch_graph_exec_request(
                         shell_vars,
                         declared_functions,
