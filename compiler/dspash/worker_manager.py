@@ -160,7 +160,6 @@ class WorkersManager():
         #       information from the Exec-Graph request from teh client node.
         self.client_worker = WorkerConnection("client_worker", self.host, PORT_CLIENT, self.args)
         self.kill_node_req_sent = False
-        self.reschedule_lock = Lock()
 
         if self.args.ft != "disabled":
             self.all_worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]] = []
@@ -171,6 +170,10 @@ class WorkersManager():
             # self.graph_to_uuid = defaultdict(list)
             self.all_merger_to_subgraph = {}
             self.all_subgraph_to_merger = {}
+
+            # Rescheduling must never happen with scheduling
+            # This can happen with dependency untangling and lots of small inputs (e.g. nlp 1000 books)
+            self.reschedule_lock = Lock()
 
             self.daemon_quit = Event()
             self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -589,13 +592,12 @@ class WorkersManager():
                 break
             elif request.startswith("Exec-Graph"):
                 try:
-                    # Reschedulting must never happen with scheduling
-                    # This can happen with dependency untangling and lots of small inputs
-                    # Example: nlp 1000 books
-                    self.reschedule_lock.acquire()
+                    if self.args.ft != "disabled":
+                        self.reschedule_lock.acquire()
                     self.handle_exec_graph(request, dspash_socket, conn, start_time)
                 finally:
-                    self.reschedule_lock.release()
+                    if self.args.ft != "disabled":
+                        self.reschedule_lock.release()
             else:
                 if self.args.ft != "disabled":
                     stop_hdfs_daemon()
