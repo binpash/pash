@@ -73,7 +73,9 @@ class WorkerConnection:
         request = encode_request(request_dict)
         send_msg(self._socket, request)
         if wait_ack:
+            log(f"WM: Waiting for ack on request {request_dict}")
             self.handle_response()
+            log(f"WM: Ack recieved on request {request_dict}")
 
     def handle_response(self):
         response_data = recv_msg(self._socket)
