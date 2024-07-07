@@ -500,22 +500,22 @@ class WorkersManager():
         declared_functions = read_file(declared_functions_file)
 
         merger_id = -1
-        if self.args.ft != "disabled":
-            # Update the Worker Manager state for fault tolerance
-            for _, subgraph in worker_subgraph_pairs:                        
-                if subgraph.merger:
-                    merger_id = subgraph.id
-                    break                  
-            assert merger_id != -1, "No merger found in the subgraphs"
-            self.all_worker_subgraph_pairs.extend(worker_subgraph_pairs)
-            self.all_merger_to_shell_vars[merger_id] = shell_vars
-            self.all_merger_to_declared_functions[merger_id] = declared_functions
-            self.all_uuid_to_graphs.update(uuid_to_graphs)
-            for uuid, (from_graph, _) in uuid_to_graphs.items():
-                self.all_graph_to_uuid[from_graph].append(uuid)
-            self.all_merger_to_subgraph[merger_id] = [subgraph.id for _, subgraph in worker_subgraph_pairs]
-            self.all_subgraph_to_merger.update({subgraph.id: merger_id for _, subgraph in worker_subgraph_pairs})
-            log(f"WM: Worker Manager state updated for merger {merger_id} at {time.time() - start_time} seconds")
+        # if self.args.ft != "disabled":
+        #     # Update the Worker Manager state for fault tolerance
+        #     for _, subgraph in worker_subgraph_pairs:                        
+        #         if subgraph.merger:
+        #             merger_id = subgraph.id
+        #             break                  
+        #     assert merger_id != -1, "No merger found in the subgraphs"
+        #     self.all_worker_subgraph_pairs.extend(worker_subgraph_pairs)
+        #     self.all_merger_to_shell_vars[merger_id] = shell_vars
+        #     self.all_merger_to_declared_functions[merger_id] = declared_functions
+        #     self.all_uuid_to_graphs.update(uuid_to_graphs)
+        #     for uuid, (from_graph, _) in uuid_to_graphs.items():
+        #         self.all_graph_to_uuid[from_graph].append(uuid)
+        #     self.all_merger_to_subgraph[merger_id] = [subgraph.id for _, subgraph in worker_subgraph_pairs]
+        #     self.all_subgraph_to_merger.update({subgraph.id: merger_id for _, subgraph in worker_subgraph_pairs})
+        #     log(f"WM: Worker Manager state updated for merger {merger_id} at {time.time() - start_time} seconds")
 
         # Report to main shell a script to execute
         response_msg = f"OK {script_fname}"
