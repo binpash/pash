@@ -584,8 +584,7 @@ class WorkersManager():
                 dspash_socket.close()
                 if self.args.ft != "disabled":
                     stop_hdfs_daemon()
-                    if self.args.ft != "naive":
-                        self.daemon_quit.set()
+                    self.daemon_quit.set()
                 log(f"WM: Done at {time.time() - start_time} seconds")
                 if self.args.debug and self.args.debug > 2:
                     profiler.disable()
@@ -606,8 +605,7 @@ class WorkersManager():
             else:
                 if self.args.ft != "disabled":
                     stop_hdfs_daemon()
-                    if self.args.ft != "naive":
-                        self.daemon_quit.set()
+                    self.daemon_quit.set()
                 raise Exception(f"Unknown request: {request}")
 
 
