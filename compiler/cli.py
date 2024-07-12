@@ -62,7 +62,7 @@ class BaseParser(argparse.ArgumentParser):
         )
         self.add_argument(
             "--assert_all_regions_parallelizable",
-            help="assert that the compiler succeeded with all regions being parallelizable and no general error occuring (used to make tests more robust)",
+            help="assert that the compiler succeeded with all regions being parallelizable and no general error occuring (used to make tests more robust); more strict than --assert_compiler_success flag",
             action="store_true",
         )
         self.add_argument(

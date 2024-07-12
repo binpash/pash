@@ -253,7 +253,7 @@ class Scheduler:
         process_id = self.get_next_id()
         run_parallel = False
         compile_success = False
-        all_region_parallelizable = True 
+        current_region_parallelizable = True 
 
         variable_reading_start_time = datetime.now()
         # Read any shell variables files if present
@@ -278,7 +278,7 @@ class Scheduler:
             )
         except NotAllRegionParallelizableError: 
             ast_or_ir = None 
-            all_region_parallelizable = False
+            current_region_parallelizable = False
                     
 
         daemon_compile_end_time = datetime.now()
@@ -334,9 +334,9 @@ class Scheduler:
             response = server_util.success_response(
                 f"{process_id} {compiled_script_file} {var_file} {input_ir_file}"
             )
-        elif not all_region_parallelizable: 
-            # send specified message to say not all regions are parallelizable instead of general exception caught
-            response = server_util.error_response(f"{process_id} not all regions are parallelizable; failed to compile")
+        elif not current_region_parallelizable: 
+            # send specified message to say current region is not parallelizable instead of general exception caught
+            response = server_util.error_response(f"{process_id} current region is not parallelizable; failed to compile")
             self.unsafe_running = True
         else:
             response = server_util.error_response(f"{process_id} failed to compile")
@@ -349,7 +349,7 @@ class Scheduler:
         ##  nothing will run in this case also 
         if (not compile_success and config.pash_args.assert_all_regions_parallelizable): 
             pass 
-        elif (not compile_success and all_region_parallelizable and config.pash_args.assert_compiler_success): 
+        elif (not compile_success and current_region_parallelizable and config.pash_args.assert_compiler_success): 
             pass 
         else:
             self.running_procs += 1
