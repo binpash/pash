@@ -19,4 +19,4 @@ while read -r fd mode offset fpath; do
 	eval $cmd
     fi
 done < ${fds_file}
-${RUNTIME_DIR}/fd_util -k -f ${fds_file}
+${RUNTIME_LIBRARY_DIR}/fd_util -k -f ${fds_file}

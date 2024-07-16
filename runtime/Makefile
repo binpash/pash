@@ -1,7 +1,7 @@
-all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee set-diff
+all: eager split r-merge r-wrap r-split r-unwrap dgsh-tee set-diff fd_util
 .PHONY: all eager-debug split-debug clean
 
-CFLAGS=-Wall
+CFLAGS=-Wall -Wno-parentheses
 
 ifeq ($(DEBUG),1)
   # We want debug mode.
@@ -24,6 +24,7 @@ else
 DGSH_ASSEMBLY_FILE=dgsh-elf.s
 endif
 
+fd_util: fd_util.c
 
 split: split.c
 	gcc ${CFLAGS} split.c -o split

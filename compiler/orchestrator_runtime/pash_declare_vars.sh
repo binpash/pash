@@ -9,4 +9,4 @@ declare -p >> "$vars_file"
 declare -f >> "$vars_file"
 trap >> "$vars_file"
 
-${RUNTIME_DIR}/fd_util -s -f "$vars_file.fds"
+${RUNTIME_LIBRARY_DIR}/fd_util -s -f "$vars_file.fds"
