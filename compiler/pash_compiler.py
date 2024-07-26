@@ -96,8 +96,10 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
         )
     except ExpansionError as e: 
         log("WARNING: Exception caught because some region(s) are not expandable and therefore unparallelizable:", e) 
+        raise NotAllRegionParallelizableError()
     except UnparallelizableError as e: 
         log("WARNING: Exception caught because some region(s) are unparallelizable:", e) 
+        raise NotAllRegionParallelizableError()
         # log(traceback.format_exc()) # uncomment for exact trace report (PaSh user should see informative messages for unparellizable regions) 
     except (AdjLineNotImplementedError, NotImplementedError) as e: 
         log("WARNING: Exception caught because some part is not implemented:", e)
