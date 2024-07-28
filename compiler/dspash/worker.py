@@ -77,8 +77,8 @@ class RequestHandler(Thread):
         self.debug = 0
         self.kill_target = None
         self.event_loop = None
-        self.first_request = True
         self.killed = False
+        self.script_name = ""
 
     def run(self):
         with self.conn:
@@ -397,7 +397,7 @@ class RequestHandler(Thread):
 
     def rh_print(self, *args):
         if DEBUG:
-            err_print(f"{self.name} \"{self.ft}\" \"{self.kill_target}\" {(time.time() - self.start_time):10.6f}", *args)
+            err_print(f"{self.name} \"{self.ft}\" \"{self.kill_target}\" \"{self.script_name}\" {(time.time() - self.start_time):10.6f}", *args)
 
 
 class EventLoop(Thread):
