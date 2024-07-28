@@ -188,42 +188,40 @@ class RequestHandler(Thread):
         self.kill_target = self.request['kill_target']
         if self.kill_target == HOST:
             if self.request['kill_delay']:
-                delay = int(self.request['kill_delay'])
+                # We take delay input in millis, so convert to seconds
+                delay = float(self.request['kill_delay']) / 1000
             else:
                 if self.script_name in self.worker.last_exec_time_dict:
                     delay = self.worker.last_exec_time_dict[self.script_name] / 2
                 else:
-                    # this can happen if no exec request was received due to small input or,
-                    # if you forgot to run faultless version first
-                    # it make sense to kill here with a small delay to not cause problems for resurrect
-                    delay = 100
-                    self.rh_print(f"Script \"{self.script_name}\" don't have any last_exec_time, setting delay to {delay} millis.")
-            self.rh_print(f"Starting killer thread for script \"{self.script_name}\"! Delay is {delay} millis.")
+                    # This can happen if no exec request was received due to small input or, if you forgot to run faultless version first.
+                    # It makes sense to kill here with a small delay to not cause problems for resurrect
+                    delay = 1
+                    self.rh_print(f"Script don't have any last_exec_time")
+            self.rh_print(f"Starting killer thread, delay is {delay}")
             Thread(target=self.kill, args=(delay,)).start()
         else:
             # This should never happen with the new approach
             self.rh_print(f"Kill target {self.kill_target} is not this node, skipping kill")
 
     def kill(self, delay: int):
-        self.rh_print(f"Will kill after delay for {delay}")
-        t0 = time.time()
-        time.sleep(delay / 1000)
-        t1 = time.time()
-        self.rh_print(f"Killing now {t1 - t0} seconds after delay")
+        self.rh_print("KT: Started")
+        time.sleep(delay)
+        self.rh_print("KT: Killing now")
         self.killed = True
 
         if self.event_loop:
             self.event_loop.quit.set()
             self.event_loop.join()
-            t2 = time.time()
-            self.rh_print(f"Event loop joined {t2 - t1} seconds after")
+            self.rh_print("KT: Event loop joined")
 
         script_path = "$DISH_TOP/runtime/scripts/killall.sh"
         subprocess.run("/bin/sh " + script_path, shell=True)
         time.sleep(1)
+
+        self.rh_print("KT: Killing once more")
         subprocess.run("/bin/sh " + script_path, shell=True)
-        t3 = time.time()
-        self.rh_print(f"Just killed! {t3 - t1} seconds after")
+        self.rh_print("KT: Kill finished")
 
     def handle_exec_graph_request(self):
         self.rh_print(f"Exec graph request received, id: {self.request['graph'].id}, merger {self.request['graph'].merger}")
@@ -233,10 +231,6 @@ class RequestHandler(Thread):
 
         if self.ft != "optimized":
             save_configs(self.request['graph'], self.dfs_configs_paths)
-
-        if self.first_request:
-            self.first_request_time = time.time()
-            self.first_request = False
 
         config.config['shell_variables'] = self.request['shell_variables']
         if self.debug > 1:
@@ -268,10 +262,6 @@ class RequestHandler(Thread):
 
         self.rh_print(f"Batch exec graph request: {len(self.request['regulars'])} regulars and {len(self.request['mergers'])} mergers")
         self.rh_print(f"PASH_TMP_PREFIX {self.pash_tmp_prefix}")
-
-        if self.first_request:
-            self.first_request_time = time.time()
-            self.first_request = False
 
         functions_file = create_filename(dir=self.pash_tmp_prefix, prefix='pashFuncs')
         write_file(functions_file, self.request['functions'])
@@ -368,12 +358,11 @@ class RequestHandler(Thread):
         elapsed_time = end_time - self.start_time
         self.rh_print(f"Execution took {elapsed_time} seconds for \"{self.script_name}\"")
 
-        if not self.kill_target and hasattr(self, "first_request_time"):
-            elapsed_time_for_killing = max(end_time - self.first_request_time, 0)
-            self.worker.last_exec_time_dict[self.script_name] = elapsed_time_for_killing * 1000
-            self.rh_print(f"Updating last execution time for \"{self.script_name}\" to {elapsed_time_for_killing} seconds, target is \"{self.kill_target}\"")
+        if not self.kill_target:
+            self.worker.last_exec_time_dict[self.script_name] = elapsed_time
+            self.rh_print(f"Updating last execution time to {elapsed_time} seconds")
         else:
-            self.rh_print(f"Not updating last execution time, target is \"{self.kill_target}\"")
+            self.rh_print(f"Not updating last execution time")
 
         if self.debug:
             result1 = subprocess.run(['du', '-h', '-d0', config.PASH_TMP_PREFIX], capture_output=True, text=True, check=True)
