@@ -397,7 +397,7 @@ class RequestHandler(Thread):
 
     def rh_print(self, *args):
         if DEBUG:
-            err_print(f"{(time.time() - self.start_time):10.6f}", *args)
+            err_print(f"{self.name} \"{self.ft}\" \"{self.kill_target}\" {(time.time() - self.start_time):10.6f}", *args)
 
 
 class EventLoop(Thread):
