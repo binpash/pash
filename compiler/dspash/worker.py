@@ -246,12 +246,12 @@ class RequestHandler(Thread):
         functions_file = create_filename(dir=self.pash_tmp_prefix, prefix='pashFuncs')
         write_file(functions_file, self.request['functions'])
         cmd = f"source {functions_file}; source {script_path}"
-        self.rh_print(f"executing {cmd}")
+        # self.rh_print(f"executing {cmd}")
 
         rc = subprocess.Popen(cmd, env=e, executable="/bin/bash", shell=True, stderr=self.stderr, preexec_fn=os.setsid)
         self.rc_graph_merger_list.append((rc, script_path, self.request['merger_id']))
 
-        self.rh_print(f"Exec graph request handled, id: {self.request['graph'].id}, merger {self.request['graph'].merger}")
+        # self.rh_print(f"Exec graph request handled, id: {self.request['graph'].id}, merger {self.request['graph'].merger}")
 
     def handle_batch_exec_graph(self):
         if self.killed:
@@ -383,6 +383,13 @@ class RequestHandler(Thread):
             if os.path.exists(self.pash_tmp_prefix):
                 shutil.rmtree(self.pash_tmp_prefix)
                 self.rh_print(f"Temporary directory deleted: {self.pash_tmp_prefix}")
+
+        self.rh_print("Cleanup done")
+        self.rh_print("=" * 100)
+        self.rh_print("=" * 100)
+        self.rh_print("=" * 100)
+        self.rh_print("=" * 100)
+        self.rh_print("=" * 100)
 
     def rh_print(self, *args):
         if DEBUG:
