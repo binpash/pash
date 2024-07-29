@@ -313,7 +313,7 @@ class WorkersManager():
             for index in indexes:
                 uu = uuid_objs[index]
                 id = self.all_uuid_to_graphs[uu][0]
-                self.wm_# log(f"Subgraph {id} is already persisted, discarding it")
+                # self.wm_log(f"Subgraph {id} is already persisted, discarding it")
                 subgraphs_to_reexecute.remove(id)
 
             self.wm_log(f"Subgraphs to re-execute reduced by: {len(indexes)}")
@@ -336,7 +336,7 @@ class WorkersManager():
                     worker = new_worker
                     if ft == "optimized":
                         worker_to_batches[worker][self.all_subgraph_to_merger[subgraph.id]].append(subgraph)
-                        self.wm_# log(f"Re-execute req: subgraph {subgraph.id} belongs to merger {self.all_subgraph_to_merger[subgraph.id]}")
+                        # self.wm_log(f"Re-execute req: subgraph {subgraph.id} belongs to merger {self.all_subgraph_to_merger[subgraph.id]}")
 
                 if ft == "base":
                     merger_id = self.all_subgraph_to_merger[subgraph.id]
