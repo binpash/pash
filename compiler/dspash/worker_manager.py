@@ -149,6 +149,8 @@ class WorkerConnection:
 
 class WorkersManager():    
     def __init__(self, workers: List[WorkerConnection] = []):
+        self.start_time = time.time()
+
         self.workers = workers
         self.host = socket.gethostbyname(socket.gethostname())
         self.args = copy.copy(config.pash_args)
@@ -564,7 +566,6 @@ class WorkersManager():
             profiler = cProfile.Profile()
             profiler.enable()
 
-        self.start_time = time.time()
         dspash_socket = SocketManager(os.getenv('DSPASH_SOCKET'))
         self.wm_log(f"Created dspash_socket at {os.getenv('DSPASH_SOCKET')}")
 
