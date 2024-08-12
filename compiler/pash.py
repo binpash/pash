@@ -67,7 +67,6 @@ def parse_args():
         prog_name = os.environ['PASH_FROM_SH']
     ## We need to set `+` as a prefix char too
     parser = argparse.ArgumentParser(prog_name, prefix_chars='-+')
-    parser.add_argument("input", nargs='*', help="the script to be compiled and executed (followed by any command-line arguments")
     parser.add_argument("--preprocess_only",
                         help="only preprocess the input script and not execute it",
                         action="store_true")
@@ -113,6 +112,7 @@ def parse_args():
                         type=int,
                         default=5,
                         help="Number of commands to speculate.")
+    parser.add_argument("input", nargs=argparse.REMAINDER, help="the script to be compiled and executed (followed by any command-line arguments")
 
 
     ## Set the preprocessing mode to PaSh

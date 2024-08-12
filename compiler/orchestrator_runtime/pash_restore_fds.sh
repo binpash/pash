@@ -20,3 +20,4 @@ while read -r fd mode offset fpath; do
     fi
 done < ${fds_file}
 ${RUNTIME_LIBRARY_DIR}/fd_util -k -f ${fds_file}
+unset fds_file

@@ -150,11 +150,11 @@ struct open_fd *load_open_fd(int fd)
 	    break;
         case 1:
 	case 2:
+        default:
 	    open_fd_entry->mode = O_WRONLY;
             break;
-        default:
-	    perror("permission");
-	    goto err;
+	    /* perror("permission"); */
+	    /* goto err; */
         }
 	break;
     case S_IWUSR:

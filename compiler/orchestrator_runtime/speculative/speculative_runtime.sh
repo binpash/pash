@@ -8,6 +8,10 @@ pash_redir_output echo "$$: (2) Before asking the scheduler for cmd: ${pash_spec
 ## TODO: Correctly save variables
 ## Save the shell variables to a file (necessary for expansion)
 export pash_runtime_shell_variables_file="${PASH_TMP_PREFIX}/variables_$RANDOM$RANDOM$RANDOM"
+unset cmd_exit_code
+unset output_variable_file
+unset stdout_file
+set +u
 source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
 pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_variables_file"
 
@@ -40,7 +44,7 @@ if [[ "$daemon_response" == *"OK:"* ]]; then
     ## TODO: Restore the variables (doesn't work currently because variables are printed using `env`)
     pash_redir_output echo "$$: (2) Recovering script variables from: $output_variable_file"
     source "$RUNTIME_DIR/pash_source_declare_vars.sh" "$output_variable_file"
-    source "$RUNTIME_DIR/pash_restore_fds.sh" "$output_variable_file.fds"
+    source "$RUNTIME_DIR/pash_restore_fds.sh" "${output_variable_file}.fds"
     
 elif [[ "$daemon_response" == *"UNSAFE:"* ]]; then
     pash_redir_output echo "$$: (2) Scheduler responded: $daemon_response"

@@ -74,6 +74,11 @@ source "$RUNTIME_DIR/save_shell_state.sh"
 export pash_previous_exit_status="$PREVIOUS_SHELL_EC"
 export pash_previous_set_status="$PREVIOUS_SET_STATUS"
 
+# This is needed by pash_source_declare_vars.sh, because "source" mess up $@
+hs_runtime_tmp_args=("$@")
+hs_set_options_cmd="$(set +o)"
+
+
 pash_redir_output echo "$$: (1) Previous exit status: $pash_previous_exit_status"
 pash_redir_output echo "$$: (1) Previous set state: $pash_previous_set_status"
 pash_redir_output echo "$$: (1) Set state reverted to PaSh-internal set state: $-"
