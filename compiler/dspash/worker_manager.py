@@ -439,7 +439,7 @@ class WorkersManager():
         # it's extemely unlikely that the data will be split
         # even so at most we duplicate execution in case of failure by returning here
         if len(data) != 17:
-            self.wm_log(f"Expected 17 bytes, got {len(data)} bytes")
+            self.wm_log(f"MCE Expected 17 bytes, got {len(data)} bytes")
             return
 
         # Read the first byte to get if the request is from read or write client
@@ -448,13 +448,21 @@ class WorkersManager():
         uuid = UUID(bytes=data[1:])
 
         if read_client:
+            if uuid not in self.all_uuid_to_graphs:
+                self.wm_log(f"MCE UUID {uuid} not found in all_uuid_to_graphs")
+                return
+
             responsible_graph = self.all_uuid_to_graphs[uuid][0]
-            try:
-                self.all_graph_to_uuid[responsible_graph].remove(uuid)
-                # self.wm_log(f"Removed {uuid} from all_graph_to_uuid[{responsible_graph}]")
-            except ValueError as e:
-                # self.wm_log(f"Failed to remove {uuid} from all_graph_to_uuid[{responsible_graph}]")
-                raise e
+
+            if responsible_graph not in self.all_graph_to_uuid:
+                self.wm_log(f"MCE Responsible graph {responsible_graph} not found in all_graph_to_uuid")
+                return
+
+            if uuid not in self.all_graph_to_uuid[responsible_graph]:
+                self.wm_log(f"MCE UUID {uuid} not found in all_graph_to_uuid[{responsible_graph}]")
+                return
+
+            self.all_graph_to_uuid[responsible_graph].remove(uuid)
 
     def handle_kill(self, worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]]):
         for worker, subgraph in worker_subgraph_pairs:
