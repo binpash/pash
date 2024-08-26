@@ -322,6 +322,8 @@ def contains_command_substitution(ast_node):
         for val in assignment.val:
             if type(val) == BArgChar:
                 return True
+            elif type(val) == QArgChar and len(val.arg) > 0 and type(val.arg[0]) == BArgChar:
+                return True
     return False
 
 ## Replace candidate dataflow AST regions with calls to PaSh's runtime.
