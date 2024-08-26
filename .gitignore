@@ -50,6 +50,7 @@ tmp*
 compiler/1-grams.txt
 compiler/2-grams.txt
 runtime/dgsh-tee
+runtime/fd_util
 *.res
 
 # IDE files
