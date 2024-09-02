@@ -1,6 +1,12 @@
 #!/bin/bash
 
 fds_file="${1?fd file not given}"
+fdout_dir="${2?fd out dir not given}"
+
+for outfile in $(ls -1 ${fdout_dir}); do
+    cmd="cat ${fdout_dir}/${outfile} >&${outfile}"
+    eval $cmd
+done
 
 while read -r fd mode offset fpath; do
     if [ "$fd" -lt "3" ]; then
