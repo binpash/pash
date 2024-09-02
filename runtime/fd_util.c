@@ -167,7 +167,7 @@ struct open_fd *load_open_fd(int fd)
 	perror("mode");
 	goto err;
     }
-    if (open_fd_entry->mode == O_RDONLY) {
+    if (1) {
 	int fdinfo_fd, i;
 	char *offstr_start = NULL;
 	snprintf(fd_path, sizeof(fd_path), "/proc/%d/fdinfo/%d", getpid(), fd);
@@ -281,7 +281,7 @@ void seek_fds(const char *infile)
     struct open_fd_vec *vec = load_open_fd_vec(infile);
     for (i = 0; i < vec->size; i++) {
 	struct open_fd *open_fd = vec->open_fds[i];
-	if (open_fd->dup_of == -1 && open_fd->mode == O_RDONLY) {
+	if (open_fd->dup_of == -1) {
 	    lseek(open_fd->fd, open_fd->offset, SEEK_SET);
 	}
     }
