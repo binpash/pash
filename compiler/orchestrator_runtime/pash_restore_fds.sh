@@ -9,6 +9,10 @@ for outfile in $(ls -1 ${fdout_dir}); do
 done
 
 while read -r fd mode offset fpath; do
+    # Known issue: we are assuming that stdin, stdout, and stderr
+    # are not being changed midway in script.
+    # This is like this for now because of stdout and stderr
+    # can be anonymous pipes
     if [ "$fd" -lt "3" ]; then
 	continue
     fi
