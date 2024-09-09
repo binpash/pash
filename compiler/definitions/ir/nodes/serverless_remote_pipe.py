@@ -59,7 +59,6 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
             remote_pipe_bin = "python aws/s3-put-object.py"
             operand_list.append(Operand(Arg.string_to_arg(str(remote_key))))
             operand_list.append(local_fifo_id)
-
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
         cmd_name=remote_pipe_bin,
         flag_option_list=[],

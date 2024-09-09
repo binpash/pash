@@ -1,4 +1,5 @@
 import argparse
+from copy import deepcopy
 from typing import Dict, List, Tuple
 import sys
 import os
@@ -39,6 +40,10 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
     main_graph = IR({}, {})
     subgraph_script_id_pairs = {}
     main_subgraph_script_id = None
+
+    subgraph_to_downstream_subgraphs = {} # subgraph -> [all downstream subgraphs], used for level order traversal
+    subgraph_to_invocation_node = {} # subgraph -> the invocation node invoking this subgraph
+    subgraphs_not_having_upstream = set(subgraphs)
 
     # Replace output edges and corrosponding input edges with remote read/write
     # with the key as old_edge_id
@@ -84,7 +89,14 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 if matching_subgraph not in subgraph_script_id_pairs:
                     script_identifier = uuid4()
                     subgraph_script_id_pairs[matching_subgraph] = script_identifier
-                    subgraph.add_node(serverless_lambda_invoke.make_serverless_lambda_invoke(script_identifier))
+                    incovation_node = serverless_lambda_invoke.make_serverless_lambda_invoke(script_identifier)
+                    subgraph.add_node(incovation_node)
+                    subgraph_to_invocation_node[matching_subgraph] = incovation_node
+                if subgraph not in subgraph_to_downstream_subgraphs:
+                    subgraph_to_downstream_subgraphs[subgraph] = []
+                # print("Adding downstream subgraph to ", subgraph_script_id_pairs[matching_subgraph])
+                subgraph_to_downstream_subgraphs[subgraph].append(matching_subgraph)
+                subgraphs_not_having_upstream.discard(matching_subgraph)
             else:
                 # Add edge to main graph
                 matching_subgraph = main_graph
@@ -124,6 +136,33 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                     continue
     main_graph_script_id = uuid4()
     subgraph_script_id_pairs[main_graph] = main_graph_script_id
+
+    if args.sls_instance == "hybrid":
+        log("Hybrid instance selected, running non-parallized subgraphs on ec2")
+        # level order traversal
+        cur_level = list(subgraphs_not_having_upstream)
+        next_level = []
+        levels = []
+        visited = deepcopy(subgraphs_not_having_upstream)
+        levels.append([item for item in cur_level])
+        while cur_level:
+            subgraph = cur_level.pop(0)
+            for downstream_subgraph in subgraph_to_downstream_subgraphs.get(subgraph, []):
+                if downstream_subgraph not in visited:
+                    next_level.append(downstream_subgraph)
+                    visited.add(downstream_subgraph)
+            if not cur_level:
+                cur_level = next_level
+                next_level = []
+                levels.append([item for item in cur_level])
+        for level in levels:
+            if len(level) == 1:
+                # only one subgraph in this level, need to make it run on ec2
+                subgraph = level[0]
+                if subgraph in subgraph_to_invocation_node:
+                    incovation_node = subgraph_to_invocation_node[subgraph]
+                    incovation_node.change_instance("ec2")
+
     return main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id
 
 
@@ -162,8 +201,9 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
             mk_dirs += "mkdir -p "+dir+" \n"
         # rust_debug = "export RUST_BACKTRACE=full\n"
         export_path = "export PATH=$PATH:runtime\n"
+        export_rust_trace = "export RUST_BACKTRACE=1\n"
         export_lib_path = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:runtime/lib\n"
-        script = export_path+export_lib_path+mk_dirs+to_shell(subgraph, args)
+        script = export_path+export_lib_path+export_rust_trace+mk_dirs+to_shell(subgraph, args)
         # generate scripts
         script_name = os.path.join(config.PASH_TMP_PREFIX, str(id_))
         script_id_to_script[str(id_)] = script
@@ -175,5 +215,6 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
             log("Script for first lambda saved in:"+script_name)
         else:
             log("Script for other lambda saved in:"+script_name)
+        # print(script)
 
     return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script

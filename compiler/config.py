@@ -190,6 +190,9 @@ def add_common_arguments(parser):
                         help="(experimental) execute the script in a serverless environment. Serverless env (e.g., AWS account) should be configured and ready",
                         action="store_true",
                         default=False)
+    parser.add_argument("--sls_instance",
+                        help="(experimental) the instance to use for serverless execution, either lambda or hybrid (ec2+lambda)",
+                        default="lambda")
     parser.add_argument("--sls_output",
                         help="(experimental) output the serverless execution result to a named file in s3",
                         default = "")
