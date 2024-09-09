@@ -3,6 +3,7 @@ import copy
 import json
 import os
 import pickle
+import socket
 import sys
 import time
 import boto3
@@ -65,6 +66,23 @@ def invoke_lambda(script_id_to_script, script_id):
     )
     return response
 
+def invoke_lambda_ec2(script_id_to_script, script_id):
+    EC2_IP = "129.114.109.71"
+    EC2_PORT = 9999
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((EC2_IP, EC2_PORT))
+    json_data = json.dumps({"id": script_id, "data": json.dumps(script_id_to_script)})
+    encoded_json_data = json_data.encode("utf-8")
+    print(len(encoded_json_data))
+    # send length first?
+    # s.sendall(str(len(encoded_json_data))+"\r\n".encode("utf-8"))
+    try:
+        s.sendall(json_data.encode("utf-8"))
+        s.close()
+    except Exception as e:
+        print(f"[invoke-lambda.py] EC2 {script_id} invocation error: {e}")
+    print(f"[invoke-lambda.py] EC2 {script_id} invocation")
+
 def init(ir_filename: str) -> Tuple[IR, argparse.Namespace, dict]:
     # init pash_args, config, logging
     ir, shell_vars, args = read_graph(ir_filename)
@@ -80,11 +98,14 @@ def main(ir_filename: str):
     # prepare scripts
     main_graph_script_id, main_subgraph_script_id, script_id_to_script = prepare_scripts_for_serverless_exec(ir, shell_vars, args)
 
-    # start serverless execution by invoking the first lambda
-    response = invoke_lambda(script_id_to_script, main_subgraph_script_id)
-    log(response)
-    wait_msg_done()
+    if args.sls_instance == 'lambda':
+        response = invoke_lambda(script_id_to_script, main_subgraph_script_id)
+        log(response)
+        wait_msg_done()
+    elif args.sls_instance == 'hybrid':
+        invoke_lambda_ec2(script_id_to_script, main_subgraph_script_id)
+        wait_msg_done()
 
 if __name__ == '__main__':
-    ir_filename= args = sys.argv[1:][0]
+    ir_filename = sys.argv[1:][0]
     main(ir_filename)

@@ -1,16 +1,16 @@
+org: yizhengx
+app: sls-pash
 service: pash
-
-frameworkVersion: '3'
 
 provider:
   name: aws
   region: us-east-1
   runtime: python3.9
-  memorySize: 2048
+  memorySize: 1792
   timeout: 120
   stage: release
   layers:
-    - arn:aws:lambda:us-east-1:${env:AWS_ACCOUNT_ID}:layer:pashlib:2
+    - arn:aws:lambda:us-east-1:${env:AWS_ACCOUNT_ID}:layer:pashlib:20
   iamRoleStatements:
   - Effect: "Allow"
     Action:
