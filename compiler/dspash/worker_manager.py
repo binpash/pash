@@ -479,12 +479,33 @@ class WorkersManager():
         self.kill_node_req_sent = True
         self.wm_log(f"Sent kill node request to {kill_target}")
 
+    def log_node_ip(self, worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]]):
+        # pick a merger worker and pick a regular worker
+        selected_merger_worker = None
+        for worker, subgraph in worker_subgraph_pairs:
+            if subgraph.merger:
+                selected_merger_worker = worker
+                break
+        selected_regular_worker = None
+        for worker in self.workers:
+            if worker != selected_merger_worker:
+                selected_regular_worker = worker
+                break
+
+        # write out the ip to file
+        log(KILL_WITNESS_PATH)
+        with open(KILL_WITNESS_PATH, 'w') as witness_file:
+            witness_file.write(selected_merger_worker.host() + '\n')
+            witness_file.write(selected_regular_worker.host() + '\n')
+
+
     def handle_exec_graph(self, request, dspash_socket, conn):
         args = request.split(':', 1)[1].strip()
         filename, declared_functions_file = args.split()
 
         worker_subgraph_pairs, shell_vars, main_graph, uuid_to_graphs = prepare_graph_for_remote_exec(filename, self.get_worker)
         worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]]
+        self.log_node_ip(worker_subgraph_pairs)
         if self.args.kill and not self.kill_node_req_sent:
             self.handle_kill(worker_subgraph_pairs)
 
@@ -502,7 +523,9 @@ class WorkersManager():
         # Read functions
         self.wm_log(f"Functions stored in {declared_functions_file}")
         declared_functions = read_file(declared_functions_file)
-
+        self.wm_log("hi")
+        for worker, _ in worker_subgraph_pairs:
+            self.wm_log(worker.host())
         merger_id = -1
         if self.args.ft != "disabled":
             # Update the Worker Manager state for fault tolerance
@@ -562,6 +585,7 @@ class WorkersManager():
         self.wm_log(f"Sent all graph exec requests")
 
     def run(self):
+        print("hey")
         if self.args.debug and self.args.debug > 2:
             profiler = cProfile.Profile()
             profiler.enable()
