@@ -593,7 +593,6 @@ class WorkersManager():
         self.wm_log(f"Sent all graph exec requests")
 
     def run(self):
-        print("hey")
         if self.args.debug and self.args.debug > 2:
             profiler = cProfile.Profile()
             profiler.enable()
