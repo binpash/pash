@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# 4.5: 4.4 + pawns
+python3 aws/s3-get-object.py "$IN" /dev/stdout | tr ' ' '\n' | grep 'x' | grep '\.' | cut -d '.' -f 2 | cut -c 1-1 | tr '[a-z]' 'P' | sort | uniq -c | sort -nr | python3 aws/s3-put-object.py ${OUT}stdout.txt /dev/stdin

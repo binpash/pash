@@ -20,11 +20,11 @@ S3_BENCHMARK_DIR="oneliners"
 S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 
 INPUTS=(
-  # 1G.txt
+  1G.txt
   # 1M.txt
   # 10M.txt
   # 50M.txt
-  100M.txt
+  # 100M.txt
   # 200M.txt
   # 500M.txt
   # all_cmds.txt

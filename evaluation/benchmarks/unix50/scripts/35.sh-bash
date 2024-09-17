@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# 11.1: year Ritchie and Thompson receive the Hamming medal
+python3 aws/s3-get-object.py "$IN" /dev/stdout | grep 'UNIX' | cut -f 1 | python3 aws/s3-put-object.py ${OUT}stdout.txt /dev/stdin

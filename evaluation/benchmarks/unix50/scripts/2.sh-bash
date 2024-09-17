@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# 1.1: extract names and sort
+python3 aws/s3-get-object.py "$IN" /dev/stdout | cut -d ' ' -f 2 | sort | python3 aws/s3-put-object.py ${OUT}stdout.txt /dev/stdin

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# 6.1: order the bodies by how easy it would be to land on them in Thompson's Space Travel game when playing at the highest simulation scale
+python3 aws/s3-get-object.py "$IN" /dev/stdout | awk "{print \$2, \$0}" | sort -nr | cut -d ' ' -f 2 | python3 aws/s3-put-object.py ${OUT}stdout.txt /dev/stdin

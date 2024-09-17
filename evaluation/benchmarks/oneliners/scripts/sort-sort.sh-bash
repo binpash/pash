@@ -1,0 +1,2 @@
+#!/bin/bash
+python3 aws/s3-get-object.py "$IN" /dev/stdout | tr A-Z a-z | sort | sort -r | python3 aws/s3-put-object.py ${OUT}stdout.txt /dev/stdin

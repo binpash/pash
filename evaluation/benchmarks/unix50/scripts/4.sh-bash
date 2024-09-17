@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# 1.3: sort top first names
+python3 aws/s3-get-object.py "$IN" /dev/stdout | cut -d ' ' -f 1 | sort | uniq -c | sort -r | python3 aws/s3-put-object.py ${OUT}stdout.txt /dev/stdin

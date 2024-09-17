@@ -47,12 +47,12 @@ INPUTS=(
   # 12_1G.txt
   # 2_1G.txt
   # 3_1G.txt
-  # 4_1G.txt
+  4_1G.txt
   # 5_1G.txt
-  # 6_1G.txt
-  # 7_1G.txt
-  # 8_1G.txt
-  # 9.1_1G.txt
+  6_1G.txt
+  7_1G.txt
+  8_1G.txt
+  9.1_1G.txt
   # 9.2_1G.txt
   # 9.3_1G.txt
   # 9.4_1G.txt
