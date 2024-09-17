@@ -22,7 +22,7 @@ class ServerlessLambdaInvoke(DFGNode):
 def make_serverless_lambda_invoke(key):
     lambda_invoke_bin = os.path.join('aws','invoke-lambda.py')
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(
-        cmd_name="python "+lambda_invoke_bin,
+        cmd_name="python3 "+lambda_invoke_bin,
         flag_option_list=[],
         operand_list=[Operand(Arg.string_to_arg(str(key))), Operand(Arg.string_to_arg("$1")), Operand(Arg.string_to_arg("lambda"))],
         implicit_use_of_streaming_input=None,

@@ -41,7 +41,7 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
             operand_list.append(Operand(Arg.string_to_arg("recv "+str(remote_key)+" 1 0")))
             implicit_use_of_streaming_output = local_fifo_id
         else:
-            remote_pipe_bin = "python aws/s3-get-object.py"
+            remote_pipe_bin = "python3 aws/s3-get-object.py"
             operand_list.append(Operand(Arg.string_to_arg(str(remote_key))))
             if output_edge and (output_edge.get_resource() is not None):
                 # we need to redirect the output to some file or stdout
@@ -56,7 +56,7 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
             operand_list.append(Operand(Arg.string_to_arg("send "+str(remote_key)+" 0 1")))
             implicit_use_of_streaming_input = local_fifo_id
         else:
-            remote_pipe_bin = "python aws/s3-put-object.py"
+            remote_pipe_bin = "python3 aws/s3-put-object.py"
             operand_list.append(Operand(Arg.string_to_arg(str(remote_key))))
             operand_list.append(local_fifo_id)
     cmd_inv_with_io_vars = CommandInvocationWithIOVars(

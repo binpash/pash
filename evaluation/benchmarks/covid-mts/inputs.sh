@@ -14,25 +14,25 @@ if [ ! -f ./in_small.csv ]; then
     gzip -d in_small.csv.gz
 fi
 
-if [ ! -f ./in_200M.csv  ]; then
-    touch in_200M.csv
+# if [ ! -f ./in_200M.csv  ]; then
+#     touch in_200M.csv
 
-    for (( i = 0; i < 25; i++ )); do
-        cat in_small.csv >>in_200M.csv
-    done
+#     for (( i = 0; i < 25; i++ )); do
+#         cat in_small.csv >>in_200M.csv
+#     done
 
-    "$PASH_TOP/scripts/append_nl_if_not.sh" in_200M.csv
-fi
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" in_200M.csv
+# fi
 
-if [ ! -f ./in_500M.csv  ]; then
-    touch in_500M.csv
+# if [ ! -f ./in_500M.csv  ]; then
+#     touch in_500M.csv
 
-    for (( i = 0; i < 62; i++ )); do
-        cat in_small.csv >>in_500M.csv
-    done
+#     for (( i = 0; i < 62; i++ )); do
+#         cat in_small.csv >>in_500M.csv
+#     done
 
-    "$PASH_TOP/scripts/append_nl_if_not.sh" in_500M.csv
-fi
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" in_500M.csv
+# fi
 
 if [ ! -f ./in_1G.csv  ]; then
     touch in_1G.csv

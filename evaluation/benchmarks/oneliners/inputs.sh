@@ -6,16 +6,16 @@ cd "$(dirname "$0")" || exit 1
 
 PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 
-if [ ! -f inputs/1M.txt ]; then
-    curl -sfL 'http://atlas-group.cs.brown.edu/data/dummy/1M.txt' >inputs/1M.txt
+# if [ ! -f inputs/1M.txt ]; then
+#     curl -sfL 'http://atlas-group.cs.brown.edu/data/dummy/1M.txt' >inputs/1M.txt
 
-    if [ $? -ne 0 ]; then
-        echo 'cannot find 1M.txt -- please contact the developers of pash'
-        exit 1
-    fi
+#     if [ $? -ne 0 ]; then
+#         echo 'cannot find 1M.txt -- please contact the developers of pash'
+#         exit 1
+#     fi
 
-    "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/1M.txt
-fi
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/1M.txt
+# fi
 
 # if [ ! -f inputs/10M.txt ]; then
 #     touch inputs/10M.txt
@@ -37,66 +37,77 @@ fi
 #     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/50M.txt
 # fi
 
-if [ ! -f inputs/100M.txt ]; then
-    touch inputs/100M.txt
+# if [ ! -f inputs/100M.txt ]; then
+#     touch inputs/100M.txt
 
-    for (( i = 0; i < 100; i++ )); do
-        cat inputs/1M.txt >>inputs/100M.txt
-    done
+#     for (( i = 0; i < 100; i++ )); do
+#         cat inputs/1M.txt >>inputs/100M.txt
+#     done
 
-    "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/100M.txt
-fi
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/100M.txt
+# fi
 
-if [ ! -f inputs/200M.txt ]; then
-    touch inputs/200M.txt
+# if [ ! -f inputs/200M.txt ]; then
+#     touch inputs/200M.txt
 
-    for (( i = 0; i < 200; i++ )); do
-        cat inputs/1M.txt >>inputs/200M.txt
-    done
+#     for (( i = 0; i < 200; i++ )); do
+#         cat inputs/1M.txt >>inputs/200M.txt
+#     done
 
-    "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/200M.txt
-fi
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/200M.txt
+# fi
 
-if [ ! -f inputs/500M.txt ]; then
-    touch inputs/500M.txt
+# if [ ! -f inputs/500M.txt ]; then
+#     touch inputs/500M.txt
 
-    for (( i = 0; i < 500; i++ )); do
-        cat inputs/1M.txt >>inputs/500M.txt
-    done
+#     for (( i = 0; i < 500; i++ )); do
+#         cat inputs/1M.txt >>inputs/500M.txt
+#     done
 
-    "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/500M.txt
-fi
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/500M.txt
+# fi
 
 if [ ! -f inputs/1G.txt ]; then
-    curl -sfL 'http://atlas-group.cs.brown.edu/data/dummy/1G.txt' >inputs/1G.txt
+    touch inputs/1G.txt
 
-    if [ $? -ne 0 ]; then
-        echo 'cannot find 1G.txt -- please contact the developers of pash'
-        exit 1
-    fi
+    for (( i = 0; i < 1000; i++ )); do
+        cat inputs/1M.txt >>inputs/1G.txt
+    done
 
     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/1G.txt
 fi
 
-# download wamerican-insane dictionary and sort according to machine
-if [ ! -f inputs/dict.txt ]; then
-    curl -sfL 'http://atlas-group.cs.brown.edu/data/dummy/dict.txt' | sort >inputs/dict.txt
 
-    if [ $? -ne 0 ]; then
-        echo 'cannot find dict.txt -- please contact the developers of pash'
-        exit 1
-    fi
+# if [ ! -f inputs/1G.txt ]; then
+#     curl -sfL 'http://atlas-group.cs.brown.edu/data/dummy/1G.txt' >inputs/1G.txt
 
-    "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/dict.txt
-fi
+#     if [ $? -ne 0 ]; then
+#         echo 'cannot find 1G.txt -- please contact the developers of pash'
+#         exit 1
+#     fi
 
-if [ ! -f inputs/all_cmds.txt ]; then
-    curl -sfL 'http://atlas-group.cs.brown.edu/data/dummy/all_cmds.txt' >inputs/all_cmds.txt
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/1G.txt
+# fi
 
-    if [ $? -ne 0 ]; then
-        # This should be OK for tests, no need for abort
-        ls /usr/bin/* >inputs/all_cmds.txt
-    fi
+# # download wamerican-insane dictionary and sort according to machine
+# if [ ! -f inputs/dict.txt ]; then
+#     curl -sfL 'http://atlas-group.cs.brown.edu/data/dummy/dict.txt' | sort >inputs/dict.txt
 
-    "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/all_cmds.txt
-fi
+#     if [ $? -ne 0 ]; then
+#         echo 'cannot find dict.txt -- please contact the developers of pash'
+#         exit 1
+#     fi
+
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/dict.txt
+# fi
+
+# if [ ! -f inputs/all_cmds.txt ]; then
+#     curl -sfL 'http://atlas-group.cs.brown.edu/data/dummy/all_cmds.txt' >inputs/all_cmds.txt
+
+#     if [ $? -ne 0 ]; then
+#         # This should be OK for tests, no need for abort
+#         ls /usr/bin/* >inputs/all_cmds.txt
+#     fi
+
+#     "$PASH_TOP/scripts/append_nl_if_not.sh" inputs/all_cmds.txt
+# fi

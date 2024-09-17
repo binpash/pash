@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# 8.4: find longest words without hyphens
+python3 aws/s3-get-object.py "$IN" /dev/stdout | tr -c "[a-z][A-Z]" '\n' | sort | awk "length >= 16" | python3 aws/s3-put-object.py ${OUT}stdout.txt /dev/stdin

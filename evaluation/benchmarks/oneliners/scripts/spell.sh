@@ -18,9 +18,6 @@ cat "$IN" |
     tr -cs A-Za-z '\n' |
     tr A-Z a-z |                        # map upper to lower case
     tr -d '[:punct:]' |                 # remove punctuation
-    # sort |                              # put words in alphabetical order
+    sort |                              # put words in alphabetical orderx
     uniq |                              # remove duplicate words
     comm -23 - "$DICT" > ${OUT}stdout.txt               # report words not in dictionary 
-
-
-# cat "$DICT" | sort > ${OUT}dict_sorted.txt
