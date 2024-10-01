@@ -38,7 +38,7 @@ PORT_CLIENT = 65432
 # TODO: get the url from the environment or config
 DEBUG_URL = f'http://{socket.getfqdn()}:5001' 
 KILL_WITNESS_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'kill_witness.log')
-
+HARD_KILL_IP_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'hard_kill_ip_path.log')
 class WorkerConnection:
     def __init__(self, name, host, port, args):
         self.name = name
@@ -501,8 +501,8 @@ class WorkersManager():
                 break
 
         # write out the ip to file
-        log(KILL_WITNESS_PATH)
-        with open(KILL_WITNESS_PATH, 'w') as witness_file:
+        log(HARD_KILL_IP_PATH)
+        with open(HARD_KILL_IP_PATH, 'w') as witness_file:
             witness_file.write(selected_merger_worker.host() + '\n')
             witness_file.write(selected_regular_worker.host() + '\n')
 
