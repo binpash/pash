@@ -185,6 +185,9 @@ def redir_append_stderr_to_string_file(string):
 def redir_stdout_to_file(arg):
     return make_kv("File",["To", 1, arg])
 
+def redir_append_stdout_to_file(arg):
+    return make_kv("File",["Append", 1, arg])
+
 def redir_file_to_stdin(arg):
     return make_kv("File",["From", 0, arg])
 

@@ -16,7 +16,7 @@ class Redirection():
         # log(redirection)
         ## TODO: Support all redirections
         assert(self.redir_type == 'File')
-        assert(self.redir_subtype in ['To', 'From'])
+        assert(self.redir_subtype in ['To', 'From', 'Append'])
 
     def __repr__(self):
         return '({}, {}, {}, {})'.format(self.redir_type,
@@ -33,7 +33,11 @@ class Redirection():
 
     def is_to_file(self):
         return (self.redir_type == 'File'
-                and self.redir_subtype == 'To')
+                and (self.redir_subtype == 'To' or self.redir_subtype == 'Append'))
+    
+    def is_append(self):
+        return (self.redir_type == 'File'
+                and self.redir_subtype == 'Append')
 
     def is_for_stdout(self):
         return (self.stream_id == 1)

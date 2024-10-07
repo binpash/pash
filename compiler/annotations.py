@@ -3,6 +3,8 @@ import os
 import json
 from ir_utils import *
 from util import *
+from definitions.ir.resource import FileResource
+from definitions.ir.file_id import FileId
 
 ##
 ## Load annotation files
@@ -69,10 +71,13 @@ def args_redirs_from_io_list(io_list, fids, ann_options, args, redirs):
     return args, redirs
 
 ## This function redirects an fid to stdout if it is not already stdout
-def redirect_to_stdout_if_not_already(fid):
+def redirect_to_stdout_if_not_already(fid: FileId):
     if (fid.has_file_descriptor_resource() and fid.resource.is_stdout()):
         return []
     else:
+        if isinstance(fid.get_resource(), FileResource) and fid.get_resource().append:
+            return [redir_append_stdout_to_file(fid.to_ast())]
+
         return [redir_stdout_to_file(fid.to_ast())]
 
 ## TODO: We need to handle args[:] followed by stdin by having a look-ahead.

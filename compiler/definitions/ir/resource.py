@@ -47,6 +47,7 @@ class FileResource(Resource):
         assert(isinstance(path, Arg))
         ## TODO: Make sure that paths are normalized
         self.uri = path
+        self.append = False
 
     def __eq__(self, other):
         if isinstance(other, FileResource):

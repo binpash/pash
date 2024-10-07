@@ -279,6 +279,7 @@ class DFGNode:
             if (redirection.is_to_file() and redirection.is_for_stdout()):
                 # log(redirection)
                 file_resource = FileResource(redirection.file_arg)
+                file_resource.append = redirection.is_append()
                 success = False
                 for i in range(len(self.outputs)):
                     output_edge_id = self.outputs[i]
