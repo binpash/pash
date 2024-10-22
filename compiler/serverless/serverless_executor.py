@@ -15,6 +15,7 @@ import config
 
 AWS_ACCOUNT_ID=os.environ.get("AWS_ACCOUNT_ID")
 QUEUE=os.environ.get("AWS_QUEUE")
+BUCKET=os.environ.get("AWS_BUCKET")
 
 def exec():
     pass
@@ -55,13 +56,31 @@ def read_graph(filename):
         ir, shell_vars, args = pickle.load(ir_file)
     return ir, shell_vars, args
 
-def invoke_lambda(script_id_to_script, script_id):
+def upload_script_id_to_script_to_s3(script_id_to_script) -> str:
+    filepath = "script_id_to_script"
+    s3_client = boto3.client("s3", region_name='us-east-1')
+    s3_client.put_object(Bucket=BUCKET, Key=filepath, Body=json.dumps(script_id_to_script))
+    return filepath
+
+# ! original
+# def invoke_lambda(script_id_to_script, script_id):
+#     lambda_client = boto3.client("lambda",region_name='us-east-1')
+#     response = lambda_client.invoke(
+#         FunctionName="lambda",
+#         InvocationType="Event",
+#         LogType="None",
+#         Payload=json.dumps({"data": json.dumps(script_id_to_script) , "id": script_id}),
+#     )
+#     return response
+
+# Modified invoke_lambda function that takes a filename in S3 that represents the script_id_to_script payload
+def invoke_lambda(script_id_to_script_s3_location, script_id):
     lambda_client = boto3.client("lambda",region_name='us-east-1')
     response = lambda_client.invoke(
         FunctionName="lambda",
         InvocationType="Event",
         LogType="None",
-        Payload=json.dumps({"data": json.dumps(script_id_to_script) , "id": script_id}),
+        Payload=json.dumps({"data": script_id_to_script_s3_location, "id": script_id}),
     )
     return response
 
@@ -82,6 +101,8 @@ def main(ir_filename: str):
 
     # start serverless execution by invoking the first lambda
     response = invoke_lambda(script_id_to_script, main_subgraph_script_id)
+    filepath = upload_script_id_to_script_to_s3(script_id_to_script)
+    response = invoke_lambda(filepath, main_subgraph_script_id)
     log(response)
     wait_msg_done()
 
