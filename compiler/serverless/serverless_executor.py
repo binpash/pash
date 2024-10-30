@@ -57,21 +57,21 @@ def read_graph(filename):
         ir, shell_vars, args = pickle.load(ir_file)
     return ir, shell_vars, args
 
-def invoke_lambda(script_id_to_script, script_id):
+def invoke_lambda(script_id_to_script, script_id, folder_id):
     lambda_client = boto3.client("lambda",region_name='us-east-1')
     response = lambda_client.invoke(
         FunctionName="lambda",
         InvocationType="Event",
         LogType="None",
-        Payload=json.dumps({"data": json.dumps(script_id_to_script) , "id": script_id}),
+        Payload=json.dumps({"folder_id": folder_id , "id": script_id}),
     )
     return response
 
-def invoke_lambda_ec2(script_id_to_script, script_id):
+def invoke_lambda_ec2(script_id_to_script, script_id, folder_id):
     EC2_PORT = 9999
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((EC2_IP, EC2_PORT))
-    json_data = json.dumps({"id": script_id, "data": json.dumps(script_id_to_script)})
+    json_data = json.dumps({"id": script_id, "folder_id": folder_id})
     # send length first?
     # s.sendall(str(len(encoded_json_data))+"\r\n".encode("utf-8"))
     try:
@@ -96,12 +96,22 @@ def main(ir_filename: str):
     # prepare scripts
     main_graph_script_id, main_subgraph_script_id, script_id_to_script = prepare_scripts_for_serverless_exec(ir, shell_vars, args)
 
+    # put scripts into s3
+    random_id = str(int(time.time()))
+    print(random_id)
+    s3 = boto3.client('s3')
+    bucket = os.getenv("AWS_BUCKET")
+    if not bucket:
+        raise Exception("AWS_BUCKET environment variable not set")
+    for script_id, script in script_id_to_script.items():
+        s3.put_object(Bucket=bucket, Key=f'sls-scripts/{random_id}/{script_id}.sh', Body=script)
+
     if args.sls_instance == 'lambda':
-        response = invoke_lambda(script_id_to_script, main_subgraph_script_id)
+        response = invoke_lambda(script_id_to_script, main_subgraph_script_id, random_id)
         log(response)
         wait_msg_done()
     elif args.sls_instance == 'hybrid':
-        invoke_lambda_ec2(script_id_to_script, main_subgraph_script_id)
+        invoke_lambda_ec2(script_id_to_script, main_subgraph_script_id, random_id)
         wait_msg_done()
 
 if __name__ == '__main__':
