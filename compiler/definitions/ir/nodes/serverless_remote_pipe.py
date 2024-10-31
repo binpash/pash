@@ -67,3 +67,22 @@ def make_serverless_remote_pipe(local_fifo_id, is_remote_read, remote_key, outpu
         implicit_use_of_streaming_output=implicit_use_of_streaming_output,
         access_map=access_map)
     return ServerlessRemotePipe(cmd_inv_with_io_vars)
+
+
+def make_serverless_remote_pipe_one_proc(list_of_arg):
+    operand_list = []
+
+    for arg in list_of_arg:
+        operand_list.append(Operand(Arg.string_to_arg(arg)))
+
+    cmd_inv_with_io_vars = CommandInvocationWithIOVars(
+        cmd_name="/opt/pashlib",
+        flag_option_list=[],
+        operand_list=operand_list,
+        access_map={},
+        implicit_use_of_streaming_input=None,
+        implicit_use_of_streaming_output=None
+        )
+    
+
+    return ServerlessRemotePipe(cmd_inv_with_io_vars)

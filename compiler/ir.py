@@ -435,6 +435,9 @@ class IR:
 
         ## Put the output node in the end for wait to work.
         for node_id in sink_node_ids:
+            # Avoid None key when using one process for Stun library
+            if not node_id:
+                continue
             node = self.get_node(node_id)
             node_ast = node.to_ast(self.edges, drain_streams)
             asts.append(make_background(node_ast))

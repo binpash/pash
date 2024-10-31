@@ -98,7 +98,7 @@ def main(ir_filename: str):
 
     # put scripts into s3
     random_id = str(int(time.time()))
-    print(random_id)
+    log(f"Uploading scripts to s3 with folder_id: {random_id}")
     s3 = boto3.client('s3')
     bucket = os.getenv("AWS_BUCKET")
     if not bucket:

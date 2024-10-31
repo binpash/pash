@@ -44,6 +44,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
     subgraph_to_downstream_subgraphs = {} # subgraph -> [all downstream subgraphs], used for level order traversal
     subgraph_to_invocation_node = {} # subgraph -> the invocation node invoking this subgraph
     subgraphs_not_having_upstream = set(subgraphs)
+    subgraph_stun_lib_args = {}
 
     # Replace output edges and corrosponding input edges with remote read/write
     # with the key as old_edge_id
@@ -71,12 +72,19 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 if args.sls_output != "":
                     communication_key = os.path.join(args.sls_output, str(communication_key))
             # Add remote-write node at the end of the subgraph
-            remote_write = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
-                                                                              is_remote_read=False,
-                                                                              remote_key=communication_key,
-                                                                              output_edge=stdout,
-                                                                              is_tcp=(not last_subgraph))
-            subgraph.add_node(remote_write)
+            if (not last_subgraph):
+                # arg = send_rdvkey_0_1_input-fifoname
+                arg = "send*"+str(communication_key)+"*0*1*"+config.PASH_TMP_PREFIX+str(ephemeral_edge)
+                if subgraph not in subgraph_stun_lib_args:
+                    subgraph_stun_lib_args[subgraph] = []
+                subgraph_stun_lib_args[subgraph].append(arg)
+            else:
+                remote_write = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=ephemeral_edge.get_ident(),
+                                                                                is_remote_read=False,
+                                                                                remote_key=communication_key,
+                                                                                output_edge=stdout,
+                                                                                is_tcp=(not last_subgraph))
+                subgraph.add_node(remote_write)
 
             # Copy the old output edge resource
             new_edge = file_id_gen.next_file_id()
@@ -101,12 +109,20 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                 # Add edge to main graph
                 matching_subgraph = main_graph
                 matching_subgraph.add_edge(new_edge)
-            remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=new_edge.get_ident(),
-                                                                              is_remote_read=True,
-                                                                              remote_key=communication_key,
-                                                                              output_edge=new_edge,
-                                                                              is_tcp=(not matching_subgraph is main_graph))
-            matching_subgraph.add_node(remote_read)
+            if (not matching_subgraph is main_graph):
+                # arg = recv_rdvkey_1_0_output-fifoname
+                
+                arg = "recv*"+str(communication_key)+"*1*0*"+config.PASH_TMP_PREFIX+str(new_edge)
+                if matching_subgraph not in subgraph_stun_lib_args:
+                    subgraph_stun_lib_args[matching_subgraph] = []
+                subgraph_stun_lib_args[matching_subgraph].append(arg)
+            else:
+                remote_read = serverless_remote_pipe.make_serverless_remote_pipe(local_fifo_id=new_edge.get_ident(),
+                                                                                is_remote_read=True,
+                                                                                remote_key=communication_key,
+                                                                                output_edge=new_edge,
+                                                                                is_tcp=(not matching_subgraph is main_graph))
+                matching_subgraph.add_node(remote_read)
 
     # Replace non ephemeral input edges with remote read/write
     for subgraph in subgraphs:
@@ -136,6 +152,10 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
                     continue
     main_graph_script_id = uuid4()
     subgraph_script_id_pairs[main_graph] = main_graph_script_id
+
+    for subgraph, stun_lib_args in subgraph_stun_lib_args.items():
+        stun_lib = serverless_remote_pipe.make_serverless_remote_pipe_one_proc(stun_lib_args)
+        subgraph.add_node(stun_lib)
 
     if args.sls_instance == "hybrid":
         log("Hybrid instance selected, running non-parallized subgraphs on ec2")
