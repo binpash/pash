@@ -52,6 +52,73 @@ def wait_msg_done():
         except:
             time.sleep(1)
 
+def create_dynamo_table():
+    dynamo = boto3.client('dynamodb')
+    table_name = 'sls-result'
+    try:
+        response = dynamo.create_table(
+            TableName=table_name,
+            KeySchema=[
+                {
+                    'AttributeName': 'key',
+                    'KeyType': 'HASH'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'key',
+                    'AttributeType': 'S'
+                }
+            ],
+            BillingMode='PAY_PER_REQUEST'
+        )
+        log(f"Table sls-result created!")
+    except Exception as e:
+        log(f"Table sls-result already exists!")
+    return
+
+
+def wait_msg_done_dynamo(key):
+    while True:
+        dynamo = boto3.client('dynamodb')
+        table_name = 'sls-result'
+        try:
+            response = dynamo.get_item(
+                TableName=table_name,
+                Key={
+                    'key': {
+                        'S': key
+                    }
+                }
+            )
+            item = response['Item']
+            log('Received message: %s' % item)
+            break
+        except:
+            # log("Waiting for message")
+            time.sleep(1)
+    return
+
+def write_to_dynamo(key, value):
+    dynamo = boto3.client('dynamodb')
+    table_name = 'sls-result'
+    try:
+        response = dynamo.put_item(
+            TableName=table_name,
+            Item={
+                'key': {
+                    'S': key
+                },
+                'output_id': {
+                    'S': value
+                }
+            }
+        )
+        log(f"Successfully wrote item {key}:{value} to dynamoDB.")
+    except Exception as e:
+        log(f"Failed to write item {key}:{value} to dynamoDB.")
+    return
+
 def read_graph(filename):
     with open(filename, "rb") as ir_file:
         ir, shell_vars, args = pickle.load(ir_file)
@@ -92,6 +159,7 @@ def init(ir_filename: str) -> Tuple[IR, argparse.Namespace, dict]:
     return ir, shell_vars, args
 
 def main(ir_filename: str):
+   
     ir, shell_vars, args = init(ir_filename)
     # prepare scripts
     main_graph_script_id, main_subgraph_script_id, script_id_to_script = prepare_scripts_for_serverless_exec(ir, shell_vars, args)
@@ -106,13 +174,16 @@ def main(ir_filename: str):
     for script_id, script in script_id_to_script.items():
         s3.put_object(Bucket=bucket, Key=f'sls-scripts/{random_id}/{script_id}.sh', Body=script)
 
+    # create dynamo table if not exists
+    create_dynamo_table()
+
     if args.sls_instance == 'lambda':
         response = invoke_lambda(script_id_to_script, main_subgraph_script_id, random_id)
         log(response)
-        wait_msg_done()
     elif args.sls_instance == 'hybrid':
         invoke_lambda_ec2(script_id_to_script, main_subgraph_script_id, random_id)
-        wait_msg_done()
+    # wait_msg_done()
+    wait_msg_done_dynamo(random_id)
 
 if __name__ == '__main__':
     ir_filename = sys.argv[1:][0]
