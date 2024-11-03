@@ -63,6 +63,12 @@ if [ "$distributed_exec" -eq 1 ]; then
     export declared_functions
 fi
 
+if [ "$serverless_exec" -eq 1 ]; then
+    declared_functions="${PASH_TMP_PREFIX}/pash_$RANDOM$RANDOM$RANDOM"
+    declare -f > "$declared_functions"
+    export declared_functions
+fi
+
 ## If the compiler failed or if we dry_run the compiler, we have to run the sequential
 if [ "$pash_runtime_return_code" -ne 0 ] || [ "$pash_dry_run_compiler_flag" -eq 1 ]; then
     export pash_script_to_execute="${pash_sequential_script_file}"

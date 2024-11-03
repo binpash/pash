@@ -158,11 +158,11 @@ def init(ir_filename: str) -> Tuple[IR, argparse.Namespace, dict]:
     config.LOGGING_PREFIX = f"Serverless Executor:"
     return ir, shell_vars, args
 
-def main(ir_filename: str):
-   
+def main(ir_filename: str, declared_functions_file_name: str):
+
     ir, shell_vars, args = init(ir_filename)
     # prepare scripts
-    main_graph_script_id, main_subgraph_script_id, script_id_to_script = prepare_scripts_for_serverless_exec(ir, shell_vars, args)
+    main_graph_script_id, main_subgraph_script_id, script_id_to_script = prepare_scripts_for_serverless_exec(ir, shell_vars, args, declared_functions_file_name)
 
     # put scripts into s3
     random_id = str(int(time.time()))
@@ -187,4 +187,5 @@ def main(ir_filename: str):
 
 if __name__ == '__main__':
     ir_filename = sys.argv[1:][0]
-    main(ir_filename)
+    declared_functions =  sys.argv[1:][1]
+    main(ir_filename, declared_functions)

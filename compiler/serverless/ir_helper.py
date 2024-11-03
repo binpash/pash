@@ -186,7 +186,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
     return main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id
 
 
-def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse.Namespace) -> Tuple[str, str, Dict[str, str]]:
+def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse.Namespace, declared_functions_filename) -> Tuple[str, str, Dict[str, str]]:
     """
     Reads the complete ir from filename and splits it
     into subgraphs where ony the first subgraph represent a continues
@@ -208,6 +208,11 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
     subgraphs, mapping = split_ir(ir)
     main_graph_script_id, subgraph_script_id_pairs, main_subgraph_script_id = add_nodes_to_subgraphs(subgraphs, ir.get_file_id_gen(), mapping, args)
 
+    # read the declared functions
+    declared_functions = ""
+    with open(declared_functions_filename, "r") as f:
+        declared_functions = f.read()
+    
     # save the output scripts
     script_id_to_script = {}
     for subgraph, id_ in subgraph_script_id_pairs.items():
@@ -223,7 +228,7 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         export_path = "export PATH=$PATH:runtime\n"
         export_rust_trace = "export RUST_BACKTRACE=1\n"
         export_lib_path = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:runtime/lib\n"
-        script = export_path+export_lib_path+export_rust_trace+mk_dirs+to_shell(subgraph, args)
+        script = export_path+export_lib_path+export_rust_trace+mk_dirs+f"{declared_functions}\n"+to_shell(subgraph, args)
         # generate scripts
         script_name = os.path.join(config.PASH_TMP_PREFIX, str(id_))
         script_id_to_script[str(id_)] = script

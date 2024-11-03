@@ -231,6 +231,8 @@ def pass_common_arguments(pash_arguments):
         arguments.append("--no_eager")
     if (pash_arguments.distributed_exec):
         arguments.append("--distributed_exec")
+    if (pash_arguments.serverless_exec):
+        arguments.append("--serverless_exec")
     if (pash_arguments.speculative):
         arguments.append("--speculative")
     if (pash_arguments.parallel_pipelines):
