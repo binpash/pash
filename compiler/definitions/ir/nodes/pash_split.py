@@ -22,7 +22,8 @@ class Split(DFGNode):
                          cmd_related_properties=cmd_related_properties)
 
 def make_split_file(input_id, out_ids):
-    auto_split_bin = os.path.join(config.PASH_TOP, config.config['runtime']['auto_split_binary'])
+    # auto_split_bin = os.path.join(config.PASH_TOP, config.config['runtime']['auto_split_binary'])
+    auto_split_bin = "runtime/auto-split.sh"
     operand_list = [input_id]
     operand_list.extend(out_ids)
     access_map = {output_id: make_stream_output() for output_id in out_ids}
