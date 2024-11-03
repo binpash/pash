@@ -204,6 +204,17 @@ if [ "$distributed_exec" -eq 1 ]; then
     }
 fi
 
+if [ "$serverless_exec" -eq 1 ]; then
+    pash_communicate_serverless()
+    {
+        local message=$1
+        pash_redir_output echo "Sending msg to serverless: $message"
+        serverless_response=$(echo "$message" | nc -U "$SERVERLESS_SOCKET")
+        pash_redir_output echo "Got response from serverless: $serverless_response"
+        echo "$serverless_response"
+    }
+fi
+
 if [ "${pash_speculative_flag}" -eq 1 ]; then
     source "$RUNTIME_DIR/speculative/pash_spec_init_setup.sh"
 else
@@ -211,7 +222,7 @@ else
     ## Exports $daemon_pid
     start_server()
     {
-        python3 -S "$PASH_TOP/compiler/pash_compilation_server.py" "$@" &
+        python3 "$PASH_TOP/compiler/pash_compilation_server.py" "$@" &
         export daemon_pid=$!
         ## Wait until daemon has established connection
         pash_wait_until_daemon_listening
@@ -229,6 +240,10 @@ else
             if [ "$distributed_exec" -eq 1 ]; then
                 # kill $worker_manager_pid
                 manager_response=$(pash_communicate_worker_manager "$msg")
+            fi
+            if [ "$serverless_exec" -eq 1 ]; then
+                # kill $serverless_pid
+                serverless_response=$(pash_communicate_serverless "$msg")
             fi
             wait 2> /dev/null 1>&2 
         fi

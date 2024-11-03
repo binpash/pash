@@ -11,6 +11,7 @@ from pash_graphviz import maybe_generate_graphviz
 import pash_compiler
 from util import *
 from dspash.worker_manager import WorkersManager
+from serverless.serverless_executor import ServerlessManager
 import server_util
 
 ##
@@ -430,6 +431,12 @@ def main():
         config.worker_manager = worker_manager
         worker_manager_thread = Thread(target=worker_manager.run)
         worker_manager_thread.start()
+    
+    if args.serverless_exec:
+        serverless_manager = ServerlessManager()
+        config.serverless_manager = serverless_manager
+        serverless_manager_thread = Thread(target=serverless_manager.run)
+        serverless_manager_thread.start()
 
     scheduler = Scheduler()
     scheduler.run()

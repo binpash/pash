@@ -158,7 +158,7 @@ def add_nodes_to_subgraphs(subgraphs:List[IR], file_id_gen: FileIdGen, input_fif
         subgraph.add_node(stun_lib)
 
     if args.sls_instance == "hybrid":
-        log("Hybrid instance selected, running non-parallized subgraphs on ec2")
+        log("[Serverless Manager] Hybrid instance selected, running non-parallized subgraphs on ec2")
         # level order traversal
         cur_level = list(subgraphs_not_having_upstream)
         next_level = []
@@ -235,11 +235,11 @@ def prepare_scripts_for_serverless_exec(ir: IR, shell_vars: dict, args: argparse
         with open (script_name, "w") as f:
             f.write(script)
         if id_ == main_graph_script_id:
-            log("Script for main shell saved in:"+script_name)
+            log("[Serverless Manager] Script for main shell saved in:"+script_name)
         elif id_ == main_subgraph_script_id:
-            log("Script for first lambda saved in:"+script_name)
+            log("[Serverless Manager] Script for first lambda saved in:"+script_name)
         else:
-            log("Script for other lambda saved in:"+script_name)
-        # print(script)
+            log("[Serverless Manager] Script for other lambda saved in:"+script_name)
+        # log(script)
 
     return str(main_graph_script_id), str(main_subgraph_script_id), script_id_to_script
