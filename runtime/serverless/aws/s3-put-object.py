@@ -9,6 +9,10 @@ BUCKET=os.environ.get("AWS_BUCKET")
 QUEUE=os.environ.get("AWS_QUEUE")
 object_key, infile, s3_folder_id = sys.argv[1:]
 
+if object_key == "/dev/null":
+    print(f"[s3-put-object.py] Get /dev/null as key, ignore.")
+    exit(0)
+
 print(f"[s3-put-object.py] Start putting {object_key}")
 start_time = time.time()
 
