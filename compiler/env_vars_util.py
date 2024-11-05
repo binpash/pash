@@ -75,6 +75,10 @@ def read_vars_file(var_file_path):
             if var_value is not None and len(var_value) >= 2 and \
                var_value[0] == "\"" and var_value[-1] == "\"":
                 var_value = var_value[1:-1]                
+
+            ## Parse escapes
+            if var_value is not None:
+                var_value = bytes(var_value, "utf-8").decode("unicode_escape")
                 
             vars_dict[var_name] = (var_type, var_value)
 
