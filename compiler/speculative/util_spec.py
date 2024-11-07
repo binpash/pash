@@ -39,7 +39,7 @@ def update_df_region(text_to_output: str, trans_option: "SpeculativeTransformati
                      df_region_id: int) -> None:
     df_region_path = f'{partial_order_directory()}/{df_region_id}'
     with open(df_region_path, "a") as f:
-        f.write(text_to_output)
+        f.write(';\n' + text_to_output.strip())
 
 ## TODO: To support partial orders, we need to pass some more context here,
 ##       i.e., the connections of this node. Now it assumes we have a sequence.
@@ -54,7 +54,7 @@ def save_df_region(text_to_output: str, trans_options, df_region_id: int, predec
     # Save df_region as text in its own file
     df_region_path = f'{partial_order_directory()}/{df_region_id}'
     with open(df_region_path, "w") as f:
-        f.write(text_to_output)
+        f.write(text_to_output.strip())
 
     ## Save the edges in the partial order state
     for predecessor in predecessor_ids:
