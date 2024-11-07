@@ -168,6 +168,7 @@ class TransformationState:
         self.var_counter = 0
         self.var_contexts = []
         self.prog = ShellProg()
+        self.start_new_df = True
 
     def get_mode(self):
         return self.mode
@@ -176,6 +177,7 @@ class TransformationState:
     def get_next_id(self):
         new_id = self.node_counter
         self.node_counter += 1
+        self.done_start_new_df()
         return new_id
 
     def get_current_id(self):
@@ -190,6 +192,15 @@ class TransformationState:
         self.loop_counter += 1
         return new_id
 
+    def should_start_new_df(self) -> bool:
+        return self.start_new_df
+
+    def done_start_new_df(self):
+        self.start_new_df = False
+
+    def do_start_new_df(self):
+        self.start_new_df = True
+        
     def get_current_loop_context(self):
         ## We want to copy that
         return self.loop_contexts[:]
@@ -213,20 +224,28 @@ class TransformationState:
         new_loop_id = self.get_next_loop_id()
         self.loop_contexts.insert(0, new_loop_id)
         self.prog.enter_for(it_name)
+        self.do_start_new_df()
         return new_loop_id
 
     def exit_for(self):
         self.loop_contexts.pop(0)
         self.prog.leave_for()
+        self.do_start_new_df()
 
+    def enter_cond(self):
+        self.do_start_new_df()
+        
     def enter_if(self):
         self.prog.enter_if()
+        self.do_start_new_df()
 
     def enter_else(self):
         self.prog.enter_else()
+        self.do_start_new_df()
 
     def exit_if(self):
         self.prog.leave_if()
+        self.do_start_new_df()
 
     def visit_command(self, command):
         if len(command.arguments) > 0 and string_of_arg(command.arguments[0]) == 'break':
@@ -362,7 +381,7 @@ def replace_ast_regions(ast_objects, trans_options):
         ##   then the second output is true.
         ## - If the next AST needs to be replaced too (e.g. if the current one is a background)
         ##   then the third output is true
-        preprocessed_ast_object = preprocess_node(ast, trans_options, last_object=last_object)
+        preprocessed_ast_object : PreprocessedAST = preprocess_node(ast, trans_options, last_object=last_object)
         ## If the dataflow region is not maximal then it implies that the whole
         ## AST should be replaced.
         assert(not preprocessed_ast_object.is_non_maximal()
@@ -390,11 +409,13 @@ def replace_ast_regions(ast_objects, trans_options):
             replaced_ast = replace_df_region(dataflow_region_asts, trans_options,
                                              ast_text=dataflow_region_text, disable_parallel_pipelines=last_object)
             candidate_dataflow_region = []
-            preprocessed_asts.append(replaced_ast)
+            if replaced_ast is not None:
+                preprocessed_asts.append(replaced_ast)
         elif(preprocessed_ast_object.should_replace_whole_ast()):
             replaced_ast = replace_df_region([preprocessed_ast_object.ast], trans_options,
                                              ast_text=original_text, disable_parallel_pipelines=last_object)
-            preprocessed_asts.append(replaced_ast)
+            if replaced_ast is not None:
+                preprocessed_asts.append(replaced_ast)
 
         ## In this case, it is possible that no replacement happened,
         ## meaning that we can simply return the original parsed text as it was.
@@ -411,7 +432,8 @@ def replace_ast_regions(ast_objects, trans_options):
         replaced_ast = replace_df_region(dataflow_region_asts, trans_options,
                                          ast_text=dataflow_region_text, disable_parallel_pipelines=True)
         candidate_dataflow_region = []
-        preprocessed_asts.append(replaced_ast)
+        if replaced_ast is not None:
+            preprocessed_asts.append(replaced_ast)
 
     return preprocessed_asts
 
@@ -436,6 +458,7 @@ def preprocess_close_node(ast_object, trans_options, last_object=False):
     if(should_replace_whole_ast):
         final_ast = replace_df_region([preprocessed_ast], trans_options,
                                       disable_parallel_pipelines=last_object)
+        assert final_ast is not None
         something_replaced = True
     else:
         final_ast = preprocessed_ast
@@ -484,7 +507,6 @@ def preprocess_node_command(ast_node, trans_options, last_object=False):
     ## regions.
 
     ## GL: In spec mode, we treat assignment nodes as commands
-    # breakpoint()
     preprocessed_ast_object = PreprocessedAST(ast_node,
                                               replace_whole=True,
                                               non_maximal=False,
@@ -703,6 +725,7 @@ def preprocess_node_not(ast_node, trans_options, last_object=False):
 def preprocess_node_if(ast_node, trans_options, last_object=False):
     # preprocessed_left, should_replace_whole_ast, is_non_maximal = preprocess_node(ast_node.left, irFileGen, config)
     trans_options : TransformationState
+    trans_options.enter_cond()
     preprocessed_cond, sth_replaced_cond = preprocess_close_node(ast_node.cond, trans_options, last_object=last_object)
     trans_options.enter_if()
     preprocessed_then, sth_replaced_then = preprocess_close_node(ast_node.then_b, trans_options, last_object=last_object)
@@ -743,7 +766,6 @@ def preprocess_node_case(ast_node, trans_options, last_object=False):
 ##       do we recurse in it and then compile from the leaf, or just compile the surface?
 
 
-
 ## Replaces IR subtrees with a command that calls them (more
 ## precisely, a command that calls a python script to call them).
 ##
@@ -781,27 +803,42 @@ def replace_df_region(asts, trans_options: TransformationState, disable_parallel
         replaced_node = make_call_to_pash_runtime(ir_filename, sequential_script_file_name, disable_parallel_pipelines)
     elif transformation_mode is TransformationType.SPECULATIVE:
         text_to_output = get_shell_from_ast(asts, ast_text=ast_text)
-        ## Generate an ID
-        df_region_id = trans_options.get_next_id()
 
-        ## Get the current loop id and save it so that the runtime knows
-        ## which loop it is in.
-        loop_id = trans_options.get_current_loop_id()
-
-        ## Determine its predecessors
-        ## TODO: To make this properly work, we should keep some state
-        ##       in the AST traversal to be able to determine predecessors.
-        if df_region_id == 0:
-            predecessors = []
+        # prev exists?
+        if (util_spec.good_to_merge(asts) and not trans_options.should_start_new_df() and
+            not (trans_options.get_current_id()+1) in trans_options.var_contexts):
+            # very obscure condition, I know, this pairs with visit_command's var_contexts hack,
+            # ultimately due to the ordering
+            df_region_id = trans_options.get_current_id()
+            util_spec.update_df_region(text_to_output, trans_options, df_region_id)
+            replaced_node = None
         else:
-            predecessors = [df_region_id - 1]
-        ## Write to a file indexed by its ID
-        util_spec.save_df_region(text_to_output, trans_options, df_region_id, predecessors)
-        ## TODO: Add an entry point to spec through normal PaSh
-        replaced_node = make_call_to_spec_runtime(df_region_id, loop_id)
+            ## Generate an ID
+            df_region_id = trans_options.get_next_id()
+            if df_region_id in trans_options.var_contexts:
+                trans_options.do_start_new_df()
+
+            ## Get the current loop id and save it so that the runtime knows
+            ## which loop it is in.
+            loop_id = trans_options.get_current_loop_id()
+
+            ## Determine its predecessors
+            ## TODO: To make this properly work, we should keep some state
+            ##       in the AST traversal to be able to determine predecessors.
+            if df_region_id == 0:
+                predecessors = []
+            else:
+                predecessors = [df_region_id - 1]
+            ## Write to a file indexed by its ID
+            util_spec.save_df_region(text_to_output, trans_options, df_region_id, predecessors)
+            ## TODO: Add an entry point to spec through normal PaSh
+            replaced_node = make_call_to_spec_runtime(df_region_id, loop_id)
     else:
         ## Unreachable
         assert(False)
+
+    if replaced_node is None:
+        replaced_node = make_nop()
 
     return to_ast_node(replaced_node)
 

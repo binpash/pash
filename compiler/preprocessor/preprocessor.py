@@ -30,7 +30,7 @@ def preprocess(input_script_path, args):
     ## 3. Translate the new AST back to shell syntax
     preprocessing_unparsing_start_time = datetime.now()
     preprocessed_shell_script = from_ast_objects_to_shell(preprocessed_asts)
-    
+
     preprocessing_unparsing_end_time = datetime.now()
     print_time_delta("Preprocessing -- Unparsing", preprocessing_unparsing_start_time, preprocessing_unparsing_end_time)
     return preprocessed_shell_script

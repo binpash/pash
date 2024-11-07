@@ -5,6 +5,7 @@ import config
 from shell_ast.ast_util import *
 from util import ptempfile
 
+
 ##
 ## This file contains utility functions useful for the speculative execution component
 ##
@@ -30,6 +31,15 @@ def initialize_po_file(trans_options, dir_path) -> None:
 
 def scheduler_server_init_po_msg(partial_order_file: str) -> str:
     return f'Init:{partial_order_file}'
+
+def good_to_merge(asts):
+    return True
+
+def update_df_region(text_to_output: str, trans_option: "SpeculativeTransformationState",
+                     df_region_id: int) -> None:
+    df_region_path = f'{partial_order_directory()}/{df_region_id}'
+    with open(df_region_path, "a") as f:
+        f.write(text_to_output)
 
 ## TODO: To support partial orders, we need to pass some more context here,
 ##       i.e., the connections of this node. Now it assumes we have a sequence.
