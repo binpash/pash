@@ -7,6 +7,7 @@ for outfile in $(ls -1 ${fdout_dir}); do
     cmd="cat ${fdout_dir}/${outfile} >&${outfile}"
     eval $cmd
 done
+unset outfile
 
 while read -r fd mode offset fpath; do
     # Known issue: we are assuming that stdin, stdout, and stderr
@@ -32,3 +33,7 @@ done < ${fds_file}
 ${RUNTIME_LIBRARY_DIR}/fd_util -k -f ${fds_file}
 unset fds_file
 unset fdout_dir
+unset fd
+unset mode
+unset offset
+unset fpath
