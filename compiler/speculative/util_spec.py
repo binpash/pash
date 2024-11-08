@@ -33,7 +33,7 @@ def scheduler_server_init_po_msg(partial_order_file: str) -> str:
     return f'Init:{partial_order_file}'
 
 def good_to_merge(asts):
-    return True
+    return False
 
 def update_df_region(text_to_output: str, trans_option: "SpeculativeTransformationState",
                      df_region_id: int) -> None:
