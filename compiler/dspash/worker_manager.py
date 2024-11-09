@@ -89,6 +89,7 @@ class WorkerConnection:
             'script_name': self.args.script_name,
             # here kill is either merger or regular, we send it to not update execution times
             'kill_target': self.args.kill,
+            'assume_singular': self.args.assume_singular,
         }
         # we no longer push logs to flask app
         # if self.args.debug:
@@ -272,7 +273,12 @@ class WorkersManager():
 
     def handle_crash(self, addr: str):
         ft = self.args.ft
-        self.wm_log("Node crashed, handling it, ft mode is", ft)
+        if ft == "dynamic":
+            # If we only swap to base when we don't have regular subgraphs,
+            # Then extra operations done for optimized isn't harmful and,
+            # lacking operations done for base isn't necessary.
+            ft = "optimized"
+        self.wm_log("Node crashed, handling it, ft mode is", self.args.ft, "will use", ft)
         subgraphs_to_reexecute = set()
 
         # handle crashed subgraphs
@@ -531,7 +537,7 @@ class WorkersManager():
         # Read functions
         self.wm_log(f"Functions stored in {declared_functions_file}")
         declared_functions = read_file(declared_functions_file)
-        self.wm_log("hi")
+
         for worker, _ in worker_subgraph_pairs:
             self.wm_log(worker.host())
         merger_id = -1
@@ -556,7 +562,7 @@ class WorkersManager():
         response_msg = f"OK {script_fname}"
         dspash_socket.respond(response_msg, conn)
 
-        if self.args.ft == "optimized":
+        if self.args.ft == "optimized" or self.args.ft == "dynamic":
             worker_to_regulars = defaultdict(list)
             worker_to_mergers = defaultdict(list)
             for worker, subgraph in worker_subgraph_pairs:

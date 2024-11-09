@@ -17,7 +17,7 @@ PASH_TOP = os.environ['PASH_TOP']
 sys.path.append(os.path.join(PASH_TOP, "compiler"))
 
 from dspash.utils import create_filename, write_file
-from dspash.ir_helper import save_configs, to_shell_file, to_shell, add_debug_flags, add_kill_flags
+from dspash.ir_helper import save_configs, to_shell_file, to_shell, add_debug_flags, add_singular_flags
 from dspash.socket_utils import send_msg, recv_msg
 import pash_runtime
 from annotations import load_annotation_files
@@ -136,6 +136,8 @@ class RequestHandler(Thread):
         # here we won't be receiving the address but we are still required
         # to store it to not update last exec times
         self.kill_target = self.request.get('kill_target', None)
+        # Assume singular is only used in dynamic mode and for microbenchmarks
+        self.assume_singular = self.request['assume_singular']
 
         global DEBUG
         if self.debug:
@@ -154,7 +156,7 @@ class RequestHandler(Thread):
             self.profiler = cProfile.Profile()
             self.profiler.enable()
 
-        if self.ft == "optimized":
+        if self.ft == "optimized" or self.ft == "dynamic":
             self.event_loop = EventLoop(self)
             self.rh_print(f"Starting {self.event_loop.name} with pool size {self.pool_size}")
             self.event_loop.start()
@@ -269,6 +271,8 @@ class RequestHandler(Thread):
         for regular in self.request['regulars']:
             if self.debug > 1:
                 add_debug_flags(regular)
+            if self.assume_singular and self.ft == "dynamic":
+                add_singular_flags(regular)
             script_path = to_shell_file(regular, config.pash_args)
             cmd = f"source {functions_file}; source {script_path}"
             self.event_loop.regular_queue.append((cmd, script_path, self.request['merger_id']))
@@ -276,6 +280,8 @@ class RequestHandler(Thread):
         for merger in self.request['mergers']:
             if self.debug > 1:
                 add_debug_flags(merger)
+            if self.ft == "dynamic" and (self.assume_singular or not self.request['regulars']):
+                add_singular_flags(merger)
             script_path = to_shell_file(merger, config.pash_args)
             cmd = f"source {functions_file}; source {script_path}"
             if self.event_loop.is_alive():
@@ -345,7 +351,7 @@ class RequestHandler(Thread):
         for rc, _, _ in self.rc_graph_merger_list:
             rc.wait()
 
-        if self.ft == "optimized":
+        if self.ft == "optimized" or self.ft == "dynamic":
             self.event_loop.quit.set()
             self.event_loop.join()
             self.rh_print(f"{self.event_loop.name} joined")

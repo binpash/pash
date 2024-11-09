@@ -178,8 +178,11 @@ def add_common_arguments(parser):
                         help="script name of the script that is to be run. Only works if distributed_exec is used. This is useful for killing purposes.",
                         default="")
     parser.add_argument("--ft",
-                        help="determines which fault tolerance mode is going to be used. Use naive, base or optimized. Default is none, which means ft is disabled. Only works if distributed_exec is used.",
+                        help="determines which fault tolerance mode is going to be used. Use naive, base, optimized or dynamic. Default is none, which means ft is disabled. Only works if distributed_exec is used.",
                         default="disabled")
+    parser.add_argument("--assume_singular",
+                        help="assumes graph is singular. Only works if distributed_exec is used and dynamic mode is used. This will break fault tolerance, only use for microbenchmarks.",
+                        default=False)
     parser.add_argument("--split",
                         help="determines how many sub blocks each hdfs block will be split. Default is 8 which means 16MB per sub-block. Only works if distributed_exec and optimized ft is used.",
                         default="1")

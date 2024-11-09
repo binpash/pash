@@ -387,10 +387,10 @@ def add_debug_flags(graph: IR):
         if isinstance(node, remote_pipe.RemotePipe):
             node.add_debug_flag()
 
-def add_kill_flags(graph: IR, kill_target):
+def add_singular_flags(graph: IR, kill_target):
     for node in graph.nodes.values():
         if isinstance(node, remote_pipe.RemotePipe):
-            node.add_kill_flag(kill_target)
+            node.add_singular_flag(kill_target)
 
 def prepare_graph_for_remote_exec(filename:str, get_worker:Callable):
     """
