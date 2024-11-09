@@ -13,7 +13,7 @@ class RemotePipe(DFGNode):
         opt_count = len(self.com_options)
         self.com_options.append((opt_count, Arg(string_to_argument(f"-d"))))
 
-    def add_singular_flag(self, addr):
+    def add_singular_flag(self):
         opt_count = len(self.com_options)
         self.com_options.append((opt_count, Arg(string_to_argument(f"-sg"))))
 
