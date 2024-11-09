@@ -15,7 +15,7 @@ from ir import IR
 from definitions.ir.file_id import FileId
 from util import log
 from ir_to_ast import to_shell
-from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file, split_main_graph
+from dspash.ir_helper import prepare_graph_for_remote_exec, to_shell_file, split_main_graph, add_singular_flags
 from dspash.utils import read_file
 from dspash.hdfs_utils import start_hdfs_daemon, stop_hdfs_daemon
 import config 
@@ -88,8 +88,7 @@ class WorkerConnection:
             'ft': self.args.ft,
             'script_name': self.args.script_name,
             # here kill is either merger or regular, we send it to not update execution times
-            'kill_target': self.args.kill,
-            'assume_singular': self.args.assume_singular,
+            'kill_target': self.args.kill
         }
         # we no longer push logs to flask app
         # if self.args.debug:
@@ -531,6 +530,20 @@ class WorkersManager():
         # If main_writer_graphs, add (client_worker, main_writer_graphs) tp worker_subgraph_pairs
         for main_writer_graph in main_writer_graphs:                    
             worker_subgraph_pairs.append((self.client_worker, main_writer_graph))
+
+        # Determine if the split is singular, add flags if so
+        if self.args.ft != "dynamic":
+            if len(worker_subgraph_pairs) == 1:
+                self.wm_log(f"Graph is singular")
+                add_singular_flags(main_reader_graph)
+                add_singular_flags(worker_subgraph_pairs[0][1])
+            # assume_singular should only be used for microbenchmarks
+            elif self.args.assume_singular:
+                self.wm_log(f"Graph is forced to be singular via assume_singular. This should be used only for microbenchmarks")
+                add_singular_flags(main_reader_graph)
+                for _, subgraph in worker_subgraph_pairs:
+                    add_singular_flags(subgraph)
+
         script_fname = to_shell_file(main_reader_graph, self.args)
         self.wm_log(f"Master node graph stored in {script_fname}")
 
