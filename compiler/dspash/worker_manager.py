@@ -584,7 +584,7 @@ class WorkersManager():
 
                     response_worker_list.append(worker)
 
-            self.wm_log(f"Sent async batch graph exec requests (optimized)")
+            self.wm_log(f"Sent async batch graph exec requests")
             for worker in response_worker_list:
                     worker.handle_response()
             for worker, subgraph in worker_subgraph_pairs:

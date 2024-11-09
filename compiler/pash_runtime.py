@@ -384,7 +384,7 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen, fan_out, r_split
 
         ft = config.pash_args.ft
         subblock_cnt = int(config.pash_args.split)
-        if ft != 'optimized':
+        if ft != "optimized" and ft != "dynamic":
             subblock_cnt = 1
 
         # Create a cat command per file block
@@ -392,7 +392,7 @@ def split_hdfs_cat_input(hdfs_cat, next_node, graph, fileIdGen, fan_out, r_split
         _, dummy_config_path = ptempfile() # Dummy config file, should be updated by workers
         for split_num, block in enumerate(file_config.blocks):
             for subblock_num in range(subblock_cnt):
-                if ft == 'optimized':
+                if ft == "optimized" or ft == "dynamic":
                     # Do not pass empty string
                     resource = DFSSplitResource(None, "a", split_num, block.hosts)
                 else:

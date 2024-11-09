@@ -20,7 +20,7 @@ def make_dfs_split_reader_node(inputs, output, split_num, subblock_num, subblock
     options = []
     options.append((1, Arg(string_to_argument(f"--split {split_num}"))))
     options.append((2, Arg(string_to_argument(f"--ft {ft}"))))
-    if ft == "optimized":
+    if ft == "optimized" or ft == "dynamic":
         options.append((3, Arg(string_to_argument(f"--subblockNum {subblock_num}"))))
         options.append((4, Arg(string_to_argument(f"--subblockCnt {subblock_cnt}"))))
         options.append((5, Arg(string_to_argument(f"--path=\\''{file_config.blocks[split_num].path}'\\'"))))
