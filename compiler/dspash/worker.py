@@ -281,7 +281,8 @@ class RequestHandler(Thread):
             if self.debug > 1:
                 add_debug_flags(merger)
             if self.ft == "dynamic" and (self.assume_singular or not self.request['regulars']):
-                add_singular_flags(merger)
+                pass
+                # add_singular_flags(merger)
             script_path = to_shell_file(merger, config.pash_args)
             cmd = f"source {functions_file}; source {script_path}"
             if self.event_loop.is_alive():
