@@ -15,7 +15,7 @@ class RemotePipe(DFGNode):
 
     def add_singular_flag(self):
         opt_count = len(self.com_options)
-        self.com_options.append((opt_count, Arg(string_to_argument(f"-sg"))))
+        self.com_options.append((opt_count, Arg(string_to_argument(f"-s"))))
 
     def is_remote_read(self):
         com_name = self.com_name.opt_serialize()
