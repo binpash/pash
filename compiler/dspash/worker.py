@@ -366,12 +366,9 @@ class RequestHandler(Thread):
 
         if self.debug:
             result1 = subprocess.run(['du', '-h', '-d0', config.PASH_TMP_PREFIX], capture_output=True, text=True, check=True)
-            if self.ft == "optimized":
-                result2 = subprocess.run(['du', '-h', '-d0', self.fish_out_prefix], capture_output=True, text=True, check=True)
-                # Fish outs are inside tempdirs
-                self.rh_print(f"Temp dir size | Fish out size: {result1.stdout.split()[0]} | {result2.stdout.split()[0]}")
-            else:
-                self.rh_print(f"Temp dir size: {result1.stdout.split()[0]}")
+            result2 = subprocess.run(['du', '-h', '-d0', self.fish_out_prefix], capture_output=True, text=True, check=True)
+            # Fish outs are inside tempdirs
+            self.rh_print(f"Temp dir size | Fish out size: {result1.stdout.split()[0]} | {result2.stdout.split()[0]}")
 
         if self.debug:
             self.rh_print(f"Skipping deleting temporary directory ({self.pash_tmp_prefix}) as debug enabled")
