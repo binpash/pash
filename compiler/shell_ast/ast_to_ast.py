@@ -806,7 +806,8 @@ def replace_df_region(asts, trans_options: TransformationState, disable_parallel
 
         # prev exists?
         if (util_spec.good_to_merge(asts) and not trans_options.should_start_new_df() and
-            not (trans_options.get_current_id()+1) in trans_options.var_contexts):
+            not (trans_options.get_current_id()+1) in trans_options.var_contexts and
+            len(asts[0].assignments) == 0):
             # very obscure condition, I know, this pairs with visit_command's var_contexts hack,
             # ultimately due to the ordering
             df_region_id = trans_options.get_current_id()

@@ -12,7 +12,13 @@ unset cmd_exit_code
 unset output_variable_file
 unset stdout_file
 set +u
+if [ -z "${PASH_OLD_IFS+x}" ]; then
+    unset IFS
+else
+    IFS="$PASH_OLD_IFS"
+fi
 source "$RUNTIME_DIR/pash_declare_vars.sh" "$pash_runtime_shell_variables_file"
+IFS=$' \t\n'
 pash_redir_output echo "$$: (1) Bash variables saved in: $pash_runtime_shell_variables_file"
 
 ## TODO: We want to send the environment to the scheduler.
@@ -43,8 +49,8 @@ if [[ "$daemon_response" == *"OK:"* ]]; then
 
     ## TODO: Restore the variables (doesn't work currently because variables are printed using `env`)
     pash_redir_output echo "$$: (2) Recovering script variables from: $output_variable_file"
-    source "$RUNTIME_DIR/pash_source_declare_vars.sh" "$output_variable_file"
     source "$RUNTIME_DIR/pash_restore_fds.sh" "${output_variable_file}.fds" "${stdout_file}"
+    source "$RUNTIME_DIR/pash_source_declare_vars.sh" "$output_variable_file"
     
 elif [[ "$daemon_response" == *"UNSAFE:"* ]]; then
     pash_redir_output echo "$$: (2) Scheduler responded: $daemon_response"
@@ -56,7 +62,7 @@ elif [[ "$daemon_response" == *"UNSAFE:"* ]]; then
     ## KK 2023-06-01 Not sure if this shellcheck warning must be resolved:
     ## > note: Double quote to prevent globbing and word splitting.
     # shellcheck disable=SC2086
-    eval $cmd
+    eval "$cmd"
     cmd_exit_code=$?
 elif [ -z "$daemon_response" ]; then
     ## Trouble... Daemon crashed, rip
