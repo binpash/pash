@@ -22,7 +22,7 @@ cd "$(dirname "$0")" || exit 1
   exit
 }
 
-mkdir -p {outputs,times}/
+mkdir -p {fifos,outputs,times}/
 
 BENCHMARK_DIR="$PASH_TOP/evaluation/benchmarks/nlp"
 INPUTS_DIR="$BENCHMARK_DIR/inputs"
@@ -34,13 +34,18 @@ S3_BENCHMARK_DIR="nlp"
 S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 S3_OUTPUTS_DIR="$S3_BENCHMARK_DIR/outputs"
 
+SERVERLESS_SCRIPTS_DIR="$PASH_TOP/scripts/serverless"
+SERVERLESS_RUNTIME_DIR="$PASH_TOP/runtime/serverless/aws"
+
+FIFOS_DIR="$BENCHMARK_DIR/fifos"
+
 # ENVIRONMENT, MEMORY, SYSTEM, WIDTH
 CONFIGS=(
-  # Local:16G:Bash:1
+  Local:16G:Bash:1
   # AWS:2048M:Bash:1
-  AWS:2048M:Splash:1
-  AWS:2048M:Splash:2
-  AWS:2048M:Splash:4
+  # AWS:2048M:Splash:1
+  # AWS:2048M:Splash:2
+  # AWS:2048M:Splash:4
   # AWS:2048M:Splash:8
   # AWS:2048M:Splash:16
   # AWS:2048M:Splash:32
@@ -50,45 +55,45 @@ CONFIGS=(
 if [[ "$*" == *"--small"* ]]
 then
   SCRIPTS_INPUTS=(
-    # 1_1.sh:pg-small
-    # 2_1.sh:pg-small
-    # 2_2.sh:pg-small
-    # 3_1.sh:pg-small
-    # 3_2.sh:pg-small
-    # 3_3.sh:pg-small
-    # 4_3b.sh:pg-small
-    # 4_3.sh:pg-small
-    # 6_1_1.sh:pg-small
-    # 6_1_2.sh:pg-small
-    # 6_1.sh:pg-small
-    # 6_2.sh:pg-small
-    # 6_3.sh:pg-small
-    # 6_4.sh:pg-small
-    # 6_5.sh:pg-small
-    # 6_7.sh:pg-small
-    # 7_1.sh:pg-small
-    # 7_2.sh:pg-small
-    # 8_1.sh:pg-small
-    # 8.2_1.sh:pg-small
-    # 8.2_2.sh:pg-small
-    # 8.3_2.sh:pg-small
-    # 8.3_3.sh:pg-small
+    1_1.sh:pg-small
+    2_1.sh:pg-small
+    2_2.sh:pg-small
+    3_1.sh:pg-small
+    3_2.sh:pg-small
+    3_3.sh:pg-small
+    4_3b.sh:pg-small
+    4_3.sh:pg-small
+    6_1_1.sh:pg-small
+    6_1_2.sh:pg-small
+    6_1.sh:pg-small
+    6_2.sh:pg-small
+    6_3.sh:pg-small
+    6_4.sh:pg-small
+    6_5.sh:pg-small
+    6_7.sh:pg-small
+    7_1.sh:pg-small
+    7_2.sh:pg-small
+    8_1.sh:pg-small
+    8.2_1.sh:pg-small
+    8.2_2.sh:pg-small
+    8.3_2.sh:pg-small
+    8.3_3.sh:pg-small
   )
   INPUT_TYPE=".small"
 else
   SCRIPTS_INPUTS=(
-    # 1_1.sh:pg
-    # 2_1.sh:pg
-    # 2_2.sh:pg
-    # 3_1.sh:pg
-    # 3_2.sh:pg
-    # 3_3.sh:pg
-    # 6_1_1.sh:pg
-    # 6_1_2.sh:pg
-    # 6_2.sh:pg
-    # 6_3.sh:pg
-    # 6_4.sh:pg
-    # 6_5.sh:pg
+    1_1.sh:pg
+    2_1.sh:pg
+    2_2.sh:pg
+    3_1.sh:pg
+    3_2.sh:pg
+    3_3.sh:pg
+    6_1_1.sh:pg
+    6_1_2.sh:pg
+    6_2.sh:pg
+    6_3.sh:pg
+    6_4.sh:pg
+    6_5.sh:pg
     6_7.sh:pg
     7_1.sh:pg
     7_2.sh:pg
@@ -116,14 +121,18 @@ do
     OUTPUT_PATH="${OUTPUTS_DIR}/${OUTPUT}"
     TIME_PATH="${TIMES_DIR}/${TIME}"
 
-    S3_INPUT_PATH="${S3_INPUTS_DIR}/${INPUT}/"
-    S3_OUTPUT_PATH="${S3_OUTPUTS_DIR}/${OUTPUT}/"
+    S3_INPUT_PATH="${S3_INPUTS_DIR}/${INPUT}"
+    S3_OUTPUT_PATH="${S3_OUTPUTS_DIR}/${OUTPUT}"
 
     echo "CONFIG: $CONFIG, SCRIPT_INPUT: $SCRIPT_INPUT"
 
     if [[ $ENVIRONMENT == "Local" ]]
     then
-      { time IN=$INPUT_PATH bash "$SCRIPT_PATH" >"$OUTPUT_PATH" ; } 2>"$TIME_PATH"
+      IN_FIFO_PATH="$FIFOS_DIR"/infifo
+      OUT_FIFO_PATH="$FIFOS_DIR"/outfifo
+      rm -f "$FIFOS_DIR"/*
+      mkfifo "$IN_FIFO_PATH" "${OUT_FIFO_PATH}stdout.txt" # Temp fix, to match with name used in scripts
+      { time SERVERLESS_RUNTIME_DIR="$SERVERLESS_RUNTIME_DIR" IN_FIFO="$IN_FIFO_PATH" OUT_FIFO="$OUT_FIFO_PATH" IN="$S3_INPUT_PATH" OUT="$S3_OUTPUT_PATH" ENTRIES=10 bash "$SCRIPT_PATH" ; } 2>"$TIME_PATH"
     elif [[ $ENVIRONMENT == "AWS" && $SYSTEM == "Bash" ]]
     then
       echo "Not implemented yet"

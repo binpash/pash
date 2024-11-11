@@ -20,8 +20,8 @@ S3_BENCHMARK_DIR="nlp"
 S3_INPUTS_DIR="$S3_BENCHMARK_DIR/inputs"
 
 INPUTS_DIRS=(
-  pg
-  # pg-small
+  # pg
+  pg-small
 )
 
 # upload small inputs

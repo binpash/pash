@@ -130,9 +130,18 @@ wvr1210.txt
 
 for input in $(echo $inputs | tr " " "\n" | head -n ${ENTRIES})
 do
-    cat $IN$input | grep -c 'light.\*light'                                 > ${OUT}${input}.out0
-    cat $IN$input | grep -c 'light.\*light.\*light'                         > ${OUT}${input}.out1
-    cat $IN$input | grep 'light.\*light' | grep -vc 'light.\*light.\*light' > ${OUT}${input}.out2
+    python3 "$SERVERLESS_RUNTIME_DIR/s3-get-object.py" "$IN/$input" /dev/stdout |
+    cat | grep -c 'light.\*light'                                 > /dev/stdout |
+    python3 "$SERVERLESS_RUNTIME_DIR/s3-put-object.py" "$OUT/$input.out0" /dev/stdin dummy # dummy object_id, not used for bash
+
+    python3 "$SERVERLESS_RUNTIME_DIR/s3-get-object.py" "$IN/$input" /dev/stdout |
+    cat | grep -c 'light.\*light.\*light'                         > /dev/stdout |
+    python3 "$SERVERLESS_RUNTIME_DIR/s3-put-object.py" "$OUT/$input.out1" /dev/stdin dummy # dummy object_id, not used for bash
+
+    python3 "$SERVERLESS_RUNTIME_DIR/s3-get-object.py" "$IN/$input" /dev/stdout |
+    cat | grep 'light.\*light' | grep -vc 'light.\*light.\*light' > /dev/stdout |
+    python3 "$SERVERLESS_RUNTIME_DIR/s3-put-object.py" "$OUT/$input.out2" /dev/stdin dummy # dummy object_id, not used for bash
+
 done
 
 echo 'done';

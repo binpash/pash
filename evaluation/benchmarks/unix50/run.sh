@@ -36,44 +36,43 @@ S3_OUTPUTS_DIR="$S3_BENCHMARK_DIR/outputs"
 
 # ENVIRONMENT, MEMORY, SYSTEM, WIDTH
 CONFIGS=(
-  # Local:16G:Bash:1
+  Local:16G:Bash:1
   # AWS:2048M:Bash:1
   # AWS:2048M:Splash:1
   # AWS:2048M:Splash:2
   # AWS:2048M:Splash:4
   # AWS:2048M:Splash:8
   # AWS:2048M:Splash:16
-  AWS:2048M:Hybrid:1
-  AWS:2048M:Hybrid:2
-  AWS:2048M:Hybrid:4
-  AWS:2048M:Hybrid:8
-  AWS:2048M:Hybrid:16
-  AWS:2048M:EC2_BASH:1
-  AWS:2048M:Lambda_BASH:1
-
+  # AWS:2048M:Hybrid:1
+  # AWS:2048M:Hybrid:2
+  # AWS:2048M:Hybrid:4
+  # AWS:2048M:Hybrid:8
+  # AWS:2048M:Hybrid:16
+  # AWS:2048M:EC2_BASH:1
+  # AWS:2048M:Lambda_BASH:1
 )
 
 if [[ "$*" == *"--small"* ]]
 then
   SCRIPTS_INPUTS=(
-    # "1.sh:1_1M.txt"
-    # # "2.sh:1_1M.txt"
-    # "3.sh:1_1M.txt"
-    # "4.sh:1_1M.txt"
-    # "5.sh:2_1M.txt"
-    # "6.sh:3_1M.txt"
-    # "7.sh:4_1M.txt"
-    # "8.sh:4_1M.txt"
-    # "9.sh:4_1M.txt"
-    # # "10.sh:4_1M.txt"
-    # # "11.sh:4_1M.txt"
-    # "13.sh:5_1M.txt"
+    "1.sh:1_1M.txt"
+    "2.sh:1_1M.txt"
+    "3.sh:1_1M.txt"
+    "4.sh:1_1M.txt"
+    "5.sh:2_1M.txt"
+    "6.sh:3_1M.txt"
+    "7.sh:4_1M.txt"
+    "8.sh:4_1M.txt"
+    "9.sh:4_1M.txt"
+    "10.sh:4_1M.txt"
+    "11.sh:4_1M.txt"
+    "13.sh:5_1M.txt"
     # # "14.sh:6_1M.txt"
-    # "15.sh:7_1M.txt"
-    # "17.sh:7_1M.txt"
-    # "18.sh:8_1M.txt"
-    # "19.sh:8_1M.txt"
-    # "20.sh:8_1M.txt"
+    "15.sh:7_1M.txt"
+    "17.sh:7_1M.txt"
+    "18.sh:8_1M.txt"
+    "19.sh:8_1M.txt"
+    "20.sh:8_1M.txt"
     # # "21.sh:8_1M.txt"
     # "23.sh:9.1_1M.txt"
     # "24.sh:9.2_1M.txt"
@@ -83,33 +82,33 @@ then
     # "29.sh:9.7_1M.txt"
     # "30.sh:9.8_1M.txt"
     # "31.sh:9.9_1M.txt"
-    # "32.sh:10_1M.txt"
-    # "33.sh:10_1M.txt"
-    # "35.sh:11_1M.txt"
+    "32.sh:10_1M.txt"
+    "33.sh:10_1M.txt"
+    "35.sh:11_1M.txt"
   )
   INPUT_TYPE=".small"
 else
   SCRIPTS_INPUTS=(
     # "1.sh:1_1G.txt"
-    "2.sh:1_1G.txt"
+    # "2.sh:1_1G.txt"
     # "3.sh:1_1G.txt"
-    "4.sh:1_1G.txt"
+    # "4.sh:1_1G.txt"
     # "5.sh:2_1G.txt"
     # "6.sh:3_1G.txt"
     # "7.sh:4_1G.txt"
     # "8.sh:4_1G.txt"
     # "9.sh:4_1G.txt"
-    "10.sh:4_1G.txt"
-    "11.sh:4_1G.txt"
+    # "10.sh:4_1G.txt"
+    # "11.sh:4_1G.txt"
     # "13.sh:5_1G.txt"
-    "14.sh:6_1G.txt"
+    # "14.sh:6_1G.txt"
     # "15.sh:7_1G.txt"
-    "17.sh:7_1G.txt"
+    # "17.sh:7_1G.txt"
     # "18.sh:8_1G.txt"
     # "19.sh:8_1G.txt"
     # "20.sh:8_1G.txt"
-    "21.sh:8_1G.txt"
-    "23.sh:9.1_1G.txt"
+    # "21.sh:8_1G.txt"
+    # "23.sh:9.1_1G.txt"
     # "24.sh:9.2_1G.txt"
     # "25.sh:9.3_1G.txt"
     # "26.sh:9.4_1G.txt"
@@ -117,13 +116,12 @@ else
     # "29.sh:9.7_1G.txt"
     # "30.sh:9.8_1G.txt"
     # "31.sh:9.9_1G.txt"
-    "32.sh:10_1G.txt"
-    "33.sh:10_1G.txt"
-    "35.sh:11_1G.txt"
+    # "32.sh:10_1G.txt"
+    # "33.sh:10_1G.txt"
+    # "35.sh:11_1G.txt"
   )
   INPUT_TYPE=""
 fi
-
 
 for SCRIPT_INPUT in "${SCRIPTS_INPUTS[@]}"
 do

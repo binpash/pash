@@ -141,7 +141,9 @@ pure_func() {
 export -f pure_func
 for input in $(echo $inputs | tr " " "\n" | head -n ${ENTRIES})
 do
-    cat $IN$input | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | pure_func $input > ${OUT}${input}.out
+    python3 "$SERVERLESS_RUNTIME_DIR/s3-get-object.py" "$IN/$input" /dev/stdout |
+    cat  | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | pure_func $input > /dev/stdout |
+    python3 "$SERVERLESS_RUNTIME_DIR/s3-put-object.py" "$OUT/$input.out" /dev/stdin dummy # dummy object_id, not used for bash
 done
 
 echo 'done';

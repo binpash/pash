@@ -129,8 +129,13 @@ wvr1210.txt
 "
 for input in $(echo $inputs | tr " " "\n" | head -n ${ENTRIES})
 do
-    cat $IN$input | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | grep -c '^....$' > ${OUT}${input}.out0
-    cat $IN$input | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | sort -u | grep -c '^....$'  > ${OUT}${input}.out1
+    python3 "$SERVERLESS_RUNTIME_DIR/s3-get-object.py" "$IN/$input" /dev/stdout |
+    cat | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | grep -c '^....$' > /dev/stdout |
+    python3 "$SERVERLESS_RUNTIME_DIR/s3-put-object.py" "$OUT/$input.out0" /dev/stdin dummy # dummy object_id, not used for bash
+
+    python3 "$SERVERLESS_RUNTIME_DIR/s3-get-object.py" "$IN/$input" /dev/stdout |
+    cat | tr -c 'A-Za-z' '[\n*]' | grep -v "^\s*$" | sort -u | grep -c '^....$'  > /dev/stdout |
+    python3 "$SERVERLESS_RUNTIME_DIR/s3-put-object.py" "$OUT/$input.out1" /dev/stdin dummy # dummy object_id, not used for bash
 done
 
 echo 'done';

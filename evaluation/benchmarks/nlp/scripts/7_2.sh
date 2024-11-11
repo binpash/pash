@@ -129,7 +129,9 @@ wvr1210.txt
 
 for input in $(echo $inputs | tr " " "\n" | head -n ${ENTRIES})
 do
-    cat $IN$input | tr '[a-z]' '[A-Z]' | tr -sc 'BCDFGHJKLMNPQRSTVWXYZ' '[\012*]' | sort | uniq -c > ${OUT}${input}.out
+    python3 "$SERVERLESS_RUNTIME_DIR/s3-get-object.py" "$IN/$input" /dev/stdout |
+    cat  | tr '[a-z]' '[A-Z]' | tr -sc 'BCDFGHJKLMNPQRSTVWXYZ' '[\012*]' | sort | uniq -c > /dev/stdout |
+    python3 "$SERVERLESS_RUNTIME_DIR/s3-put-object.py" "$OUT/$input.out" /dev/stdin dummy # dummy object_id, not used for bash
 done
 
 echo 'done';

@@ -28,7 +28,7 @@ S3_OUTPUTS_DIR="$S3_BENCHMARK_DIR/outputs"
 
 CONFIGS=(
   # AWS:2048M:Bash:1
-  AWS:2048M:Splash:1
+  # AWS:2048M:Splash:1
   # AWS:2048M:Splash:2
   # AWS:2048M:Splash:4
   # AWS:2048M:Splash:8

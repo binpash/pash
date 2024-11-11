@@ -35,17 +35,17 @@ if [ ! -e ./pg ]; then
     cd ..
 fi
 
-# if [ ! -e ./pg-small ]; then
-#     mkdir pg-small
-#     cd pg-small
-#     book_count=10
+if [ ! -e ./pg-small ]; then
+    mkdir pg-small
+    cd pg-small
+    book_count=120 # Used to be 10, made it 120 because run.sh couldn't find some files
 
-#     head -n $book_count ../book_links.txt | while IFS= read -r line
-#     do
-#         full_url="https://atlas-group.cs.brown.edu/data/gutenberg/${line}"
-#         echo "Downloading $full_url"
-#         wget -q "$full_url"
-#     done
+    head -n $book_count ../book_links.txt | while IFS= read -r line
+    do
+        full_url="https://atlas-group.cs.brown.edu/data/gutenberg/${line}"
+        echo "Downloading $full_url"
+        wget -q "$full_url"
+    done
 
-#     cd ..
-# fi
+    cd ..
+fi

@@ -56,3 +56,5 @@ runtime/dgsh-tee
 .vscode/*
 .idea/*
 .vs/*
+
+myenv/
