@@ -257,7 +257,7 @@ class Scheduler:
 
         variable_reading_start_time = datetime.now()
         # Read any shell variables files if present
-        vars_dict = env_vars_util.read_vars_file(var_file)
+        vars_dict = env_vars_util.read_vars_file(var_file, config.config["bash_version"])
         config.set_vars_file(var_file, vars_dict)
 
         variable_reading_end_time = datetime.now()
