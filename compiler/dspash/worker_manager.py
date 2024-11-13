@@ -532,7 +532,7 @@ class WorkersManager():
             worker_subgraph_pairs.append((self.client_worker, main_writer_graph))
 
         # Determine if the split is singular, add flags if so
-        if self.args.ft != "dynamic":
+        if self.args.ft == "dynamic":
             if len(worker_subgraph_pairs) == 1:
                 self.wm_log(f"Graph is singular")
                 add_singular_flags(main_reader_graph)
