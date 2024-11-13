@@ -512,24 +512,34 @@ class WorkersManager():
             witness_file.write(selected_regular_worker.host() + '\n')
 
 
-    def handle_exec_graph(self, request, dspash_socket, conn):
+    def handle_exec_graph(self, request, dspash_socket, conn, times):
+        t0 = time.time()
+
         args = request.split(':', 1)[1].strip()
         filename, declared_functions_file = args.split()
+        t1 = time.time()
+        times[1] += t1 - t0
 
         worker_subgraph_pairs, shell_vars, main_graph, uuid_to_graphs = prepare_graph_for_remote_exec(filename, self.get_worker)
         worker_subgraph_pairs: List[Tuple[WorkerConnection, IR]]
         self.log_node_ip(worker_subgraph_pairs)
         if self.args.kill and not self.kill_node_req_sent:
             self.handle_kill(worker_subgraph_pairs)
+        t2 = time.time()
+        times[2] += t2 - t1
 
         self.wm_log(f"Will split graph")
         # Split main_graph
         main_reader_graph, main_writer_graphs = split_main_graph(main_graph, uuid_to_graphs)
         self.wm_log(f"Graph split")
+        t3 = time.time()
+        times[3] += t3 - t2
 
         # If main_writer_graphs, add (client_worker, main_writer_graphs) tp worker_subgraph_pairs
         for main_writer_graph in main_writer_graphs:                    
             worker_subgraph_pairs.append((self.client_worker, main_writer_graph))
+        t4 = time.time()
+        times[4] += t4 - t3
 
         # Determine if the split is singular, add flags if so
         if self.args.ft == "dynamic":
@@ -543,6 +553,8 @@ class WorkersManager():
                 add_singular_flags(main_reader_graph)
                 for _, subgraph in worker_subgraph_pairs:
                     add_singular_flags(subgraph)
+        t5 = time.time()
+        times[5] += t5 - t4
 
         script_fname = to_shell_file(main_reader_graph, self.args)
         self.wm_log(f"Master node graph stored in {script_fname}")
@@ -550,6 +562,8 @@ class WorkersManager():
         # Read functions
         self.wm_log(f"Functions stored in {declared_functions_file}")
         declared_functions = read_file(declared_functions_file)
+        t6 = time.time()
+        times[6] += t6 - t5
 
         for worker, _ in worker_subgraph_pairs:
             self.wm_log(worker.host())
@@ -570,10 +584,14 @@ class WorkersManager():
             self.all_merger_to_subgraph[merger_id] = [subgraph.id for _, subgraph in worker_subgraph_pairs]
             self.all_subgraph_to_merger.update({subgraph.id: merger_id for _, subgraph in worker_subgraph_pairs})
             self.wm_log(f"Worker Manager state updated for merger {merger_id}")
+        t7 = time.time()
+        times[7] += t7 - t6
 
         # Report to main shell a script to execute
         response_msg = f"OK {script_fname}"
         dspash_socket.respond(response_msg, conn)
+        t8 = time.time()
+        times[8] += t8 - t7
 
         if self.args.ft == "optimized" or self.args.ft == "dynamic":
             worker_to_regulars = defaultdict(list)
@@ -608,6 +626,8 @@ class WorkersManager():
                 if worker.is_online():
                     worker.send_graph_exec_request(subgraph, shell_vars, declared_functions, merger_id)
                     self.wm_log(f"Sent subgraph {subgraph.id} to {worker}, online is {worker.is_online()}")
+        t9 = time.time()
+        times[9] += t9 - t8
 
         self.wm_log(f"Sent all graph exec requests")
 
@@ -628,10 +648,15 @@ class WorkersManager():
             worker.send_setup_request()
         self.wm_log(f"All setup requests are sent")
 
+        times = [0] * 10
+        times[0] = time.time() - self.start_time
+
         while True:
             request, conn = dspash_socket.get_next_cmd()
             self.wm_log(f"Received request: {request} from {conn}")
             if request.startswith("Done"):
+                # Log times
+                self.wm_log(f"Times: {times}")
                 dspash_socket.close()
                 if self.args.ft != "disabled":
                     stop_hdfs_daemon()
@@ -649,7 +674,7 @@ class WorkersManager():
                 try:
                     if self.args.ft != "disabled":
                         self.reschedule_lock.acquire()
-                    self.handle_exec_graph(request, dspash_socket, conn)
+                    self.handle_exec_graph(request, dspash_socket, conn, times)
                 finally:
                     if self.args.ft != "disabled":
                         self.reschedule_lock.release()
