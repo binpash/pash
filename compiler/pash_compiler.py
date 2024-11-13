@@ -57,7 +57,7 @@ def main_body():
     runtime_config = config.config["distr_planner"]
 
     ## Read any shell variables files if present
-    vars_dict = env_vars_util.read_vars_file(args.var_file, config.config["bash_version"])
+    vars_dict = env_vars_util.read_vars_file(args.var_file, config.BASH_VERSION)
     config.set_vars_file(args.var_file, vars_dict)
 
     log("Input:", args.input_ir, "Compiled file:", args.compiled_script_file)

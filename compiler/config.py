@@ -38,6 +38,8 @@ PASH_TMP_PREFIX = os.getenv("PASH_TMP_PREFIX")
 
 SOCKET_BUF_SIZE = 8192
 
+BASH_VERSION = tuple(int(i) for i in os.getenv("PASH_BASH_VERSION").split(" "))
+
 
 ##
 ## Global configuration used by all pash components
@@ -97,9 +99,6 @@ def load_config(config_file_path=""):
         config_file_path = "{}/compiler/config.json".format(PASH_TOP)
     with open(config_file_path) as config_file:
         pash_config = json.load(config_file)
-
-    # set configuration variables gotten dynamically
-    pash_config["bash_version"] = get_bash_version()
 
     if not pash_config:
         raise Exception(
@@ -177,7 +176,3 @@ def set_vars_file(var_file_path: str, var_dict: dict):
     global config
     config["shell_variables"] = var_dict
     config["shell_variables_file_path"] = var_file_path
-
-def get_bash_version():
-    out = subprocess.run(["bash", "-c", "echo ${BASH_VERSINFO[@]}"], capture_output=True)
-    return tuple(int(v) for v in out.stdout.split(b" ")[:4])
