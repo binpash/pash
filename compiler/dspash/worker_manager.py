@@ -171,6 +171,7 @@ class WorkersManager():
             # self.graph_to_uuid = defaultdict(list)
             self.all_merger_to_subgraph = {}
             self.all_subgraph_to_merger = {}
+            self.singular_graphs = set()
 
             # Rescheduling must never happen with scheduling
             # This can happen with dependency untangling and lots of small inputs (e.g. nlp 1000 books)
@@ -288,7 +289,7 @@ class WorkersManager():
                 if subgraph.merger:
                     merger_id = subgraph.id
                     # no need to kill existing sgs for optimized
-                    if ft == "base":
+                    if ft == "base" or self.args.dynamic_switch_force == "off":
                         for worker in self.all_workers:
                             worker.send_kill_subgraphs_request(merger_id)
                             self.wm_log(f"Sent kill all subgraphs request to {worker}")
@@ -304,12 +305,11 @@ class WorkersManager():
                 # self.wm_log(f"Re-added {uuid} to all_graph_to_uuid[{from_graph}]")
 
         # remove executions if they are already persisted
-        # this may be redundant
         if ft == "optimized":
             uuids = []
             uuid_objs = []
             for uuid, (from_graph, _) in self.all_uuid_to_graphs.items():
-                if from_graph in subgraphs_to_reexecute:
+                if from_graph in subgraphs_to_reexecute and from_graph not in self.singular_graphs:
                     uuids.append(str(uuid))
                     uuid_objs.append(uuid)
             indexes = self.check_persisted_discovery(addr, uuids)
@@ -321,7 +321,7 @@ class WorkersManager():
                 # self.wm_log(f"Subgraph {id} is already persisted, discarding it")
                 subgraphs_to_reexecute.remove(id)
 
-            self.wm_log(f"Subgraphs to re-execute reduced by: {len(indexes)}")
+            self.wm_log(f"Subgraphs to re-execute reduced by: {len(indexes)}, singulars: {len(self.singular_graphs)}")
 
         if ft == "optimized":
             # Function to return a defaultdict of list
@@ -543,16 +543,22 @@ class WorkersManager():
 
         # Determine if the split is singular, add flags if so
         if self.args.ft == "dynamic":
-            if len(worker_subgraph_pairs) == 1:
+            # dynamic_switch_force should only be used for microbenchmarks
+            if self.args.dynamic_switch_force:
+                if self.args.dynamic_switch_force == "off":
+                    self.wm_log(f"dynamic_switch_force is off. All graphs are singular. This should be used only for microbenchmarks")
+                    add_singular_flags(main_reader_graph, self.singular_graphs)
+                    for _, subgraph in worker_subgraph_pairs:
+                        add_singular_flags(subgraph, self.singular_graphs)
+                elif self.args.dynamic_switch_force == "on":
+                    self.wm_log(f"dynamic_switch_force is in. No graph is singular. This should be used only for microbenchmarks")
+                else:
+                    raise Exception(f"Invalid dynamic_switch_force value: {self.args.dynamic_switch_force}")
+            elif len(worker_subgraph_pairs) == 1:
                 self.wm_log(f"Graph is singular")
-                add_singular_flags(main_reader_graph)
-                add_singular_flags(worker_subgraph_pairs[0][1])
-            # assume_singular should only be used for microbenchmarks
-            elif self.args.assume_singular:
-                self.wm_log(f"Graph is forced to be singular via assume_singular. This should be used only for microbenchmarks")
-                add_singular_flags(main_reader_graph)
-                for _, subgraph in worker_subgraph_pairs:
-                    add_singular_flags(subgraph)
+                add_singular_flags(main_reader_graph, self.singular_graphs)
+                add_singular_flags(worker_subgraph_pairs[0][1], self.singular_graphs)
+
         t5 = time.time()
         times[5] += t5 - t4
 

@@ -387,7 +387,8 @@ def add_debug_flags(graph: IR):
         if isinstance(node, remote_pipe.RemotePipe):
             node.add_debug_flag()
 
-def add_singular_flags(graph: IR):
+def add_singular_flags(graph: IR, singulars: Set[int]):
+    singulars.add(graph.id)
     for node in graph.nodes.values():
         if isinstance(node, remote_pipe.RemotePipe):
             node.add_singular_flag()
