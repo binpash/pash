@@ -5,6 +5,7 @@ import os
 import pickle
 import socket
 import sys
+import threading
 import time
 import boto3
 from typing import Any, Tuple
@@ -14,6 +15,7 @@ from serverless.ir_helper import prepare_scripts_for_serverless_exec
 from util import log
 from ir import IR
 import config
+import queue
 
 AWS_ACCOUNT_ID=os.environ.get("AWS_ACCOUNT_ID")
 QUEUE=os.environ.get("AWS_QUEUE")
@@ -186,11 +188,49 @@ def main(ir_filename: str, declared_functions_file_name: str):
     # wait_msg_done()
     wait_msg_done_dynamo(random_id)
 
+def handler(request, conn):
+    args = request.split(':', 1)[1].strip()
+    ir_filename, declared_functions_file = args.split()
+
+    try:
+        ir, shell_vars, args = init(ir_filename)
+        # prepare scripts
+        main_graph_script_id, main_subgraph_script_id, script_id_to_script = prepare_scripts_for_serverless_exec(ir, shell_vars, args, declared_functions_file)
+
+        # put scripts into s3
+        random_id = str(int(time.time()))
+        log(f"[Serverless Manager] Uploading scripts to s3 with folder_id: {random_id}")
+        s3 = boto3.client('s3')
+        bucket = os.getenv("AWS_BUCKET")
+        if not bucket:
+            raise Exception("AWS_BUCKET environment variable not set")
+        for script_id, script in script_id_to_script.items():
+            s3.put_object(Bucket=bucket, Key=f'sls-scripts/{random_id}/{script_id}.sh', Body=script)
+
+        if args.sls_instance == 'lambda':
+            response = invoke_lambda(script_id_to_script, main_subgraph_script_id, random_id)
+            log(f"[Serverless Manager] Invoke lambda response {response}")
+        elif args.sls_instance == 'hybrid':
+            invoke_lambda_ec2(script_id_to_script, main_subgraph_script_id, random_id)
+
+        response_msg = f"OK {random_id}"
+        bytes_message = response_msg.encode('utf-8')
+        conn.sendall(bytes_message)
+        conn.close()
+    
+    except Exception as e:
+        log(f"[Serverless Manager] Executing lambda error {e}")
+        response_msg = f"ERR {e}"
+        bytes_message = response_msg.encode('utf-8')
+        conn.sendall(bytes_message)
+        conn.close()
 class ServerlessManager:
     def __init__(self):
         # config.init_log_file()
         # config.LOGGING_PREFIX = f"Serverless Manager:"
         create_dynamo_table()
+        # executor_thread = threading.Thread(target=invocator)
+        # executor_thread.start()
 
     def run(self):
         sls_socket = SocketManager(os.getenv('SERVERLESS_SOCKET'))
@@ -198,45 +238,16 @@ class ServerlessManager:
 
         while True:
             request, conn = sls_socket.get_next_cmd()
+
             if request.startswith("Done"):
                 response_msg = f"Shutting down serverless manager"
                 sls_socket.respond(response_msg, conn)
                 sls_socket.close()
                 break
-            elif request.startswith("Exec"):
-                args = request.split(':', 1)[1].strip()
-                ir_filename, declared_functions_file = args.split()
 
-                try:
-                    ir, shell_vars, args = init(ir_filename)
-                    # prepare scripts
-                    main_graph_script_id, main_subgraph_script_id, script_id_to_script = prepare_scripts_for_serverless_exec(ir, shell_vars, args, declared_functions_file)
-
-                    # put scripts into s3
-                    random_id = str(int(time.time()))
-                    log(f"[Serverless Manager] Uploading scripts to s3 with folder_id: {random_id}")
-                    s3 = boto3.client('s3')
-                    bucket = os.getenv("AWS_BUCKET")
-                    if not bucket:
-                        raise Exception("AWS_BUCKET environment variable not set")
-                    for script_id, script in script_id_to_script.items():
-                        s3.put_object(Bucket=bucket, Key=f'sls-scripts/{random_id}/{script_id}.sh', Body=script)
-
-                    if args.sls_instance == 'lambda':
-                        response = invoke_lambda(script_id_to_script, main_subgraph_script_id, random_id)
-                        log(f"[Serverless Manager] Invoke lambda response {response}")
-                    elif args.sls_instance == 'hybrid':
-                        invoke_lambda_ec2(script_id_to_script, main_subgraph_script_id, random_id)
-
-                    response_msg = f"OK {random_id}"
-                    sls_socket.respond(response_msg, conn)
-                
-                except Exception as e:
-                    log(f"[Serverless Manager] Executing lambda error {e}")
-                    response_msg = f"ERR {e}"
-                    sls_socket.respond(response_msg, conn)
-
-                # wait_msg_done_dynamo(random_id)
+            # multi-threaded
+            client_thread = threading.Thread(target=handler, args=(request, conn))
+            client_thread.start()
 
 if __name__ == '__main__':
     ir_filename = sys.argv[1:][0]
