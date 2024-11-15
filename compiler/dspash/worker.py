@@ -297,6 +297,15 @@ class RequestHandler(Thread):
         start_time = time.time()
         self.rh_print(f"Killing subgraphs, merger_id: {merger_id}")
 
+        # If eventloop is enabled, mark the merger for removal from the eventloop queue
+        if self.event_loop:
+            self.event_loop.merger_to_remove = merger_id
+            self.rh_print(f"Merger {merger_id} marked for removal for eventloop queue")
+            while self.event_loop.merger_to_remove != -2:
+                self.rh_print(f"Waiting for merger {merger_id} to be removed from eventloop queue")
+                self.event_loop.quit.wait(0.1)
+            self.rh_print(f"Merger {merger_id} removed from eventloop queue")
+
         # Try to terminate the subprocess gracefully
         kill_count = 0
         for rc, _, m in self.rc_graph_merger_list:
@@ -401,6 +410,8 @@ class EventLoop(Thread):
         self.quit = Event()
         self.regular_queue = []
         self.running_processes: List[subprocess.Popen] = []
+        # -2 means nothing to remove, -1 remove all, else remove merger_id and it's dependencies
+        self.merger_to_remove = -2
 
     def run(self):
         while not self.quit.is_set():
@@ -408,6 +419,17 @@ class EventLoop(Thread):
             for i in range(len(self.running_processes)-1, -1, -1):
                 if self.running_processes[i].poll() is not None:
                     self.running_processes.pop(i)
+
+            if self.merger_to_remove != -2:
+                # It's guaranteed by orchestrator that we will never recevie a new request until we finish this operation
+                self.handler.rh_print(f"Eventloop: Merger {self.merger_to_remove} received, current length {len(self.regular_queue)}")
+                if self.merger_to_remove == -1:
+                    self.regular_queue.clear()
+                else:
+                    # t = (cmd, script_path, merger_id)
+                    self.regular_queue = [t for t in self.regular_queue if t[2] != self.merger_to_remove]
+                self.merger_to_remove = -2
+                self.handler.rh_print(f"Eventloop: Merger {self.merger_to_remove} removed, current length {len(self.regular_queue)}")
 
             # Run until pool is full
             while self.regular_queue and len(self.running_processes) < self.handler.pool_size:
