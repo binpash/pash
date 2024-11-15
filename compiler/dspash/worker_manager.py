@@ -342,6 +342,8 @@ class WorkersManager():
                     if ft == "optimized":
                         worker_to_batches[worker][self.all_subgraph_to_merger[subgraph.id]].append(subgraph)
                         # self.wm_log(f"Re-execute req: subgraph {subgraph.id} belongs to merger {self.all_subgraph_to_merger[subgraph.id]}")
+                elif self.args.dynamic_switch_force == "off":
+                    worker_to_batches[worker][self.all_subgraph_to_merger[subgraph.id]].append(subgraph)
 
                 if ft == "base":
                     merger_id = self.all_subgraph_to_merger[subgraph.id]
