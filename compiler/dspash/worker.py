@@ -297,11 +297,11 @@ class RequestHandler(Thread):
         start_time = time.time()
         self.rh_print(f"Killing subgraphs, merger_id: {merger_id}")
 
-        # If eventloop is enabled, mark the merger for removal from the eventloop queue
-        if self.event_loop:
+        # If eventloop is enabled and not quit, mark the merger for removal from the eventloop queue
+        if self.event_loop and not self.event_loop.quit.is_set():
             self.event_loop.merger_to_remove = merger_id
             self.rh_print(f"Merger {merger_id} marked for removal for eventloop queue")
-            while self.event_loop.merger_to_remove != -2:
+            while self.event_loop.merger_to_remove != -2 and not self.event_loop.quit.is_set():
                 self.rh_print(f"Waiting for merger {merger_id} to be removed from eventloop queue")
                 self.event_loop.quit.wait(0.1)
             self.rh_print(f"Merger {merger_id} removed from eventloop queue")
