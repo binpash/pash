@@ -121,6 +121,7 @@ class Scheduler:
 
         ## A map that keeps mappings between proc_id and (input_ir, width, exec_time)
         self.process_id_input_ir_map = {}
+        self.parallelized_flag = False
         ## This is a map from input IRs, i.e., locations in the code, to a list of process_ids
         self.input_ir_to_process_id_map = {}
 
@@ -354,6 +355,7 @@ class Scheduler:
         else:
             self.running_procs += 1
 
+
         ## Get the time before we start executing (roughly) to determine how much time this command execution will take
         command_exec_start_time = datetime.now()
         self.process_id_input_ir_map[process_id].set_start_exec_time(
@@ -420,6 +422,8 @@ class Scheduler:
         exec_time = (command_finish_exec_time - command_start_exec_time) / timedelta(
             milliseconds=1
         )
+        command_start_exec_time = self.process_id_input_ir_map[process_id].get_start_exec_time()
+        exec_time = (command_finish_exec_time - command_start_exec_time) / timedelta(milliseconds=1)
         log("Process:", process_id, "exited. Exec time was:", exec_time)
         self.handle_time_measurement(process_id, exec_time)
         self.remove_process(process_id)
@@ -509,6 +513,16 @@ class Scheduler:
             self.parse_and_run_cmd(input_cmd)
 
         self.connection_manager.close()
+        if not self.parallelized_flag:
+            log("No parts of the input script were parallelized. Ensure commands are annotated for parallelization.")
+        elif all(
+            proc_info.exec_time is not None and proc_info.exec_time < 1
+            for proc_info in self.process_id_input_ir_map.values()
+        ):
+            log("Some script fragments were parallelized, but their execution times were negligible.")
+            log("Consider optimizing your script to include longer-running tasks.")
+        else:
+            log("Parallelization completed successfully.")
         shutdown()
 
 
