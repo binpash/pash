@@ -92,6 +92,8 @@ def compile_ir(ir_filename, compiled_script_file, args, compiler_config):
     ret = None
     try:
         ret = compile_optimize_output_script(ir_filename, compiled_script_file, args, compiler_config)
+        if ret is None:
+            log("No parallelization opportunities detected for this script.")
     except Exception as e:
         log("WARNING: Exception caught:", e)
         # traceback.print_exc()
