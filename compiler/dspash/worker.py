@@ -420,6 +420,7 @@ class EventLoop(Thread):
                 if self.running_processes[i].poll() is not None:
                     self.running_processes.pop(i)
 
+            self.handler.rh_print(f"Eventloop: Current length {len(self.regular_queue)}, running {len(self.running_processes)}, to_remove {self.merger_to_remove}")
             if self.merger_to_remove != -2:
                 # It's guaranteed by orchestrator that we will never recevie a new request until we finish this operation
                 self.handler.rh_print(f"Eventloop: Merger {self.merger_to_remove} received, current length {len(self.regular_queue)}")
