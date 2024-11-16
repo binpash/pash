@@ -8,6 +8,7 @@ import sys
 import threading
 import time
 import boto3
+from botocore.config import Config as BotocoreConfig
 from typing import Any, Tuple
 sys.path.append(os.path.join(os.getenv("PASH_TOP"), "compiler"))
 from dspash.socket_utils import SocketManager
@@ -16,15 +17,13 @@ from util import log
 from ir import IR
 import config
 import queue
+import multiprocessing
 
 AWS_ACCOUNT_ID=os.environ.get("AWS_ACCOUNT_ID")
 QUEUE=os.environ.get("AWS_QUEUE")
 EC2_IP=os.environ.get("AWS_EC2_IP")
 
-def exec():
-    pass
-
-def wait_msg_done():
+def wait_msg_done_sqs():
     while True:
         sqs = boto3.client('sqs')
         queue_url = f'https://sqs.us-east-1.amazonaws.com/{AWS_ACCOUNT_ID}/{QUEUE}'
@@ -82,10 +81,10 @@ def create_dynamo_table():
 
 
 def wait_msg_done_dynamo(key):
-    while True:
-        dynamo = boto3.client('dynamodb')
-        table_name = 'sls-result'
-        try:
+    try:
+        while True:
+            dynamo = boto3.client('dynamodb')
+            table_name = 'sls-result'
             response = dynamo.get_item(
                 TableName=table_name,
                 Key={
@@ -94,32 +93,11 @@ def wait_msg_done_dynamo(key):
                     }
                 }
             )
-            item = response['Item']
-            log('Received message: %s' % item)
-            break
-        except:
-            # log("Waiting for message")
-            time.sleep(1)
-    return
-
-def write_to_dynamo(key, value):
-    dynamo = boto3.client('dynamodb')
-    table_name = 'sls-result'
-    try:
-        response = dynamo.put_item(
-            TableName=table_name,
-            Item={
-                'key': {
-                    'S': key
-                },
-                'output_id': {
-                    'S': value
-                }
-            }
-        )
-        log(f"[Serverless Manager] Successfully wrote item {key}:{value} to dynamoDB.")
-    except Exception as e:
-        log(f"[Serverless Manager] Failed to write item {key}:{value} to dynamoDB.")
+            if 'Item' in response:
+                break
+            time.sleep(1)    
+    except:
+        log(f"[Serverless Manager] DynamoDB get item error: {e}")
     return
 
 def read_graph(filename):
@@ -199,12 +177,13 @@ def handler(request, conn):
 
         # put scripts into s3
         random_id = str(int(time.time()))
-        log(f"[Serverless Manager] Uploading scripts to s3 with folder_id: {random_id}")
         s3 = boto3.client('s3')
         bucket = os.getenv("AWS_BUCKET")
         if not bucket:
             raise Exception("AWS_BUCKET environment variable not set")
         for script_id, script in script_id_to_script.items():
+            if script_id == main_graph_script_id:
+                continue
             s3.put_object(Bucket=bucket, Key=f'sls-scripts/{random_id}/{script_id}.sh', Body=script)
 
         if args.sls_instance == 'lambda':
@@ -224,30 +203,130 @@ def handler(request, conn):
         bytes_message = response_msg.encode('utf-8')
         conn.sendall(bytes_message)
         conn.close()
+class ThreadSafeCounter:
+    def __init__(self, initial=0):
+        self.value = initial
+        self._lock = threading.Lock()
+
+    def increment(self):
+        with self._lock:
+            self.value += 1
+        return self.value
+    
+    def decrement(self):
+        with self._lock:
+            self.value -= 1
+        return self.value
+
+    def get_value(self):
+        with self._lock:
+            return self.value
+
 class ServerlessManager:
     def __init__(self):
-        # config.init_log_file()
-        # config.LOGGING_PREFIX = f"Serverless Manager:"
         create_dynamo_table()
-        # executor_thread = threading.Thread(target=invocator)
-        # executor_thread.start()
+        self.worker_threads = queue.Queue(maxsize=1000)
+        self.counter = ThreadSafeCounter()
+        self.lambda_config = BotocoreConfig(
+            read_timeout=900,
+            connect_timeout=60,
+            retries={"max_attempts": 0}
+        )
+
+    def invoke_lambda(self, folder_ids, script_ids):
+        # log(f"[Serverless Manager] Try to invoke lambda response with batches {script_ids} && {folder_ids}")
+        try:
+            lambda_client = boto3.client("lambda",region_name='us-east-1', config=self.lambda_config)
+            response = lambda_client.invoke(
+                FunctionName="lambda",
+                InvocationType="RequestResponse",
+                LogType="None",
+                Payload=json.dumps({"folder_ids": folder_ids , "ids": script_ids}),
+            )
+            # parse response
+            # log(f"[Serverless Manager] Lambda execution response with batches {script_ids} && {folder_ids}: {response}")
+            if response['StatusCode'] != 200:
+                log(f"[Serverless Manager] Lambda execution failed with batches {script_ids} && {folder_ids}: {response}")
+        except Exception as e:
+            log(f"[Serverless Manager] Lambda execution raises exception with batches {script_ids} && {folder_ids}: {e}")
+        return
+    
+    def force(self):
+        folder_ids, script_ids = [], []
+        last_time_forced = time.time()
+        while True and not self.exit:
+            if self.job_queue.empty():
+                time.sleep(1)
+                continue
+            s3_folder_id, script_id = self.job_queue.get()
+            folder_ids.append(s3_folder_id)
+            script_ids.append(script_id)
+            # force the lambda with either a batch or after one sec
+            if len(folder_ids) == self.job_batch_size or time.time() - last_time_forced > 2:
+                random_id = str(int(time.time()))
+                worker_thread = threading.Thread(target=self.invoke_lambda, args=(folder_ids, script_ids))
+                worker_thread.start()
+                self.worker_threads.put(worker_thread)
+                folder_ids, script_ids = [], []
+                last_time_forced = time.time()
 
     def run(self):
-        sls_socket = SocketManager(os.getenv('SERVERLESS_SOCKET'))
-        log("[Serverless Manager] Started")
+        self.sls_socket = SocketManager(os.getenv('SERVERLESS_SOCKET'))
 
         while True:
-            request, conn = sls_socket.get_next_cmd()
+            request, conn = self.sls_socket.get_next_cmd()
 
             if request.startswith("Done"):
-                response_msg = f"Shutting down serverless manager"
-                sls_socket.respond(response_msg, conn)
-                sls_socket.close()
+                while self.counter.get_value() > 0:
+                    time.sleep(1)
+                # self.force_thread.join()
+                response_msg = f"All jobs are done, shutting down the serverless manager"
+                self.sls_socket.respond(response_msg, conn)
+                self.sls_socket.close()
                 break
 
             # multi-threaded
-            client_thread = threading.Thread(target=handler, args=(request, conn))
+            client_thread = threading.Thread(target=self.handler, args=(request, conn))
             client_thread.start()
+            # self.worker_threads.put(client_thread)
+
+    def handler(self, request, conn):
+        args = request.split(':', 1)[1].strip()
+        ir_filename, declared_functions_file = args.split()
+
+        try:
+            now = time.time()
+            ir, shell_vars, args = init(ir_filename)
+            # prepare scripts
+            main_graph_script_id, main_subgraph_script_id, script_id_to_script = prepare_scripts_for_serverless_exec(ir, shell_vars, args, declared_functions_file)
+
+            # put scripts into s3
+            s3_folder_id = str(int(time.time()))
+            s3 = boto3.client('s3')
+            bucket = os.getenv("AWS_BUCKET")
+            if not bucket:
+                raise Exception("AWS_BUCKET environment variable not set")
+            for script_id, script in script_id_to_script.items():
+                if script_id == main_graph_script_id:
+                    continue
+                s3.put_object(Bucket=bucket, Key=f'sls-scripts/{s3_folder_id}/{script_id}.sh', Body=script)
+
+            self.counter.increment()
+            response_msg = f"OK {s3_folder_id} {main_subgraph_script_id}"
+            bytes_message = response_msg.encode('utf-8')
+            conn.sendall(bytes_message)
+            conn.close()
+            self.invoke_lambda([s3_folder_id], [main_subgraph_script_id])
+            if len(script_id_to_script) > 2:
+                wait_msg_done_dynamo(s3_folder_id)
+            self.counter.decrement()
+        
+        except Exception as e:
+            log(f"[Serverless Manager] Failed to add job to a queue: {e}")
+            response_msg = f"ERR {e}"
+            bytes_message = response_msg.encode('utf-8')
+            conn.sendall(bytes_message)
+            conn.close()
 
 if __name__ == '__main__':
     ir_filename = sys.argv[1:][0]
