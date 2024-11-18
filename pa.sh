@@ -31,6 +31,9 @@ then
     exit
 fi
 
+## get bash version for pash
+export PASH_BASH_VERSION="${BASH_VERSINFO[@]:0:3}"
+
 ## Create a temporary directory where PaSh can use for temporary files and logs
 export PASH_TMP_PREFIX="$(mktemp -d /tmp/pash_XXXXXXX)/"
 
