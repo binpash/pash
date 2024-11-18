@@ -26,8 +26,12 @@ daemon_response=$(pash_spec_communicate_scheduler "$msg") # Blocking step, daemo
 
 ## Receive an exit code
 if [[ "$daemon_response" == *"OK:"* ]]; then
+    # save IFS to restore after field splitting
+    [ -n "${IFS+set}" ] && saved_IFS=$IFS
+    unset IFS
     # shellcheck disable=SC2206
     response_args=($daemon_response)
+    [ -n "${saved_IFS+set}" ] && IFS=$saved_IFS
     pash_redir_output echo "$$: (2) Scheduler responded: $daemon_response"
     cmd_exit_code=${response_args[1]}
     output_variable_file=${response_args[2]}
@@ -46,10 +50,8 @@ elif [[ "$daemon_response" == *"UNSAFE:"* ]]; then
     ## KK 2023-06-01 Does `eval` work in general? We need to be precise
     ##               about which commands are unsafe to determine how to execute them.
     cmd=$(cat "$PASH_SPEC_NODE_DIRECTORY/$pash_speculative_command_id")
-    ## KK 2023-06-01 Not sure if this shellcheck warning must be resolved:
-    ## > note: Double quote to prevent globbing and word splitting.
-    # shellcheck disable=SC2086
-    eval $cmd
+    ## Word splitting isn't needed since eval combines all the arguments into a single string
+    eval "$cmd"
     cmd_exit_code=$?
 elif [ -z "$daemon_response" ]; then
     ## Trouble... Daemon crashed, rip

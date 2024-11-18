@@ -49,12 +49,17 @@ else
     pash_runtime_return_code=1
 fi
 
+# save IFS to restore after field splitting
+[ -n "${IFS+x}" ] && saved_IFS=$IFS
+unset IFS
 # Get assigned process id
 # We need to split the daemon response into elements of an array by
 # shell's field splitting.
 # shellcheck disable=SC2206
 response_args=($daemon_response)
 process_id=${response_args[1]}
+
+[ -n "${saved_IFS+x}" ] && IFS="$saved_IFS"
 
 pash_redir_output echo "$$: (2) Compiler exited with code: $pash_runtime_return_code"
 

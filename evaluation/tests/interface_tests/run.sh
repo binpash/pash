@@ -321,6 +321,12 @@ test_redir_dup()
     $shell redir-dup.sh
 }
 
+test_IFS()
+{
+    local shell=$1
+    $shell test-IFS.sh
+}
+
 ## We run all tests composed with && to exit on the first that fails
 if [ "$#" -eq 0 ]; then
     run_test test1
@@ -365,6 +371,7 @@ if [ "$#" -eq 0 ]; then
     run_test test_star
     run_test test_env_vars
     run_test test_redir_dup
+    run_test test_IFS
 else
     for testname in $@
     do
